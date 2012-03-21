@@ -1,0 +1,17 @@
+set bell-style                  off
+set completion-ignore-case      on
+set completion-map-case         on
+set completion-display-width    106
+set output-meta                 on
+
+"\033`s": backward-word         # ctrl-left
+"\033`t": forward-word          # ctrl-right
+"\033`O": end-of-line           # end
+"\033`G": beginning-of-line     # home
+"\033`S": delete-char           # del
+"\t":     clink-completion-shim
+C-c:      clear-line  
+C-v:      paste-from-clipboard
+C-q:      reload-lua-state
+
+$include ~/fpg_clink/clink_inputrc
