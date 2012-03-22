@@ -40,7 +40,7 @@ void get_config_dir(char* buffer, int size)
 
     buffer[0] = '\0';
 
-    app_dir = getenv("APPDATA");
+    app_dir = getenv("ALLUSERSPROFILE");
     if (app_dir == NULL)
     {
         return;
