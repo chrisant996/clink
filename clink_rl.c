@@ -327,7 +327,7 @@ static void load_history()
     char buffer[1024];
     get_history_file_name(buffer, sizeof(buffer));
     read_history(buffer);
-    history_set_pos(history_length);
+    using_history();
 }
 
 //------------------------------------------------------------------------------
@@ -419,6 +419,36 @@ static int startup_hook()
 }
 
 //------------------------------------------------------------------------------
+static void add_to_history(const char* line)
+{
+    const char* c;
+
+    // Skip leading whitespace
+    c = line;
+    while (*c)
+    {
+        if (!isspace(*c))
+        {
+            break;
+        }
+
+        ++c;
+    }
+
+    // Skip empty lines
+    if (*c == '\0')
+    {
+        return;
+    }
+
+    // All's well. Add the line.
+    using_history();
+    add_history(line);
+
+    ++g_new_history_count;
+}
+
+//------------------------------------------------------------------------------
 void CLINK_API call_readline(
     const wchar_t* prompt,
     wchar_t* result,
@@ -429,12 +459,6 @@ void CLINK_API call_readline(
     char* text;
     char prompt_utf8[1024];
 
-    static int initialised = 0;
-    if (!initialised)
-    {
-        initialised = 1;
-    }
-
     WideCharToMultiByte(
         CP_UTF8, 0,
         prompt, -1,
@@ -444,22 +468,10 @@ void CLINK_API call_readline(
     );
 
     rl_startup_hook = startup_hook;
-    text = readline(prompt_utf8);
-    if (*text != '\0')
-    {
-        char* c = text;
-        while (*c)
-        {
-            if (!isspace(*c))
-            {
-                add_history(text);
-                ++g_new_history_count;
-                break;
-            }
 
-            ++c;
-        }
-    }
+    using_history();
+    text = readline(prompt_utf8);
+    add_to_history(text);
 
     text_size = MultiByteToWideChar(CP_UTF8, 0, text, -1, result, 0);
     text_size = (size < text_size) ? size : strlen(text);
