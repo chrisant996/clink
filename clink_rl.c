@@ -39,6 +39,16 @@ extern int      rl_display_fixed;
 static int      g_new_history_count     = 0;
 
 //------------------------------------------------------------------------------
+static const char* g_header = 
+    "clink v" CLINK_VERSION " : Enhancements for cmd.exe\n"
+    "\n"
+    "Copyright (c) 2012 Martin Ridgers\n"
+    "Copyright (c) 1994-2012 Lua.org, PUC-Rio\n"
+    "Copyright (c) 1987-2010 Free Software Foundation, Inc.\n"
+    "\n"
+    ;
+
+//------------------------------------------------------------------------------
 // This ensures the cursor is visible as printing to the console usually makes
 // the cursor disappear momentarily.
 static void display()
@@ -411,6 +421,9 @@ static int startup_hook()
         load_history();
         rl_re_read_init_file(0, 0);
         rl_visible_stats = 0;               // serves no purpose under win32.
+
+        // Header.
+        hooked_fprintf(NULL, "%s", g_header);
 
         initialised = 1;
     }

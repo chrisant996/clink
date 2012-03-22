@@ -23,7 +23,6 @@
 #include "clink.h"
 
 //------------------------------------------------------------------------------
-int                     hooked_fwrite(const void*, int, int, void*);
 void                    get_config_dir(char*, int);
 void                    get_dll_dir(char*, int);
 void                    str_cat(char*, const char*, int);
@@ -31,15 +30,6 @@ void                    save_history();
 void                    shutdown_lua();
 extern int              rl_already_prompted;
 static const wchar_t*   g_last_write_buffer = NULL;
-
-//------------------------------------------------------------------------------
-static const char* g_header = 
-    "clink v" CLINK_VERSION " : Enhancements for cmd.exe\n"
-    "\n"
-    "Copyright (c) 2012 Martin Ridgers\n"
-    "Copyright (c) 1994-2012 Lua.org, PUC-Rio\n"
-    "Copyright (c) 1987-2010 Free Software Foundation, Inc.\n"
-    ;
 
 //------------------------------------------------------------------------------
 LONG WINAPI exception_filter(EXCEPTION_POINTERS* info)
@@ -206,9 +196,6 @@ BOOL WINAPI DllMain(HINSTANCE instance, DWORD reason, LPVOID unused)
 
         return TRUE;
     }
-
-    // Header.
-    hooked_fprintf(NULL, "%s", g_header);
 
     // Give readline a chance to find the inputrc by modifying the
     // environment slightly.
