@@ -28,7 +28,6 @@ void                    get_dll_dir(char*, int);
 void                    str_cat(char*, const char*, int);
 void                    save_history();
 void                    shutdown_lua();
-extern int              rl_already_prompted;
 static const wchar_t*   g_last_write_buffer = NULL;
 
 //------------------------------------------------------------------------------
@@ -88,7 +87,6 @@ static BOOL WINAPI hooked_read_console(
 
     SetUnhandledExceptionFilter(exception_filter);
 
-    rl_already_prompted = 1;
     call_readline(g_last_write_buffer, buffer, charsToRead);
 
     *charsRead = (unsigned)wcslen(buffer);

@@ -28,6 +28,7 @@ void            str_cat(char*, const char*, int);
 void            initialise_lua();
 char**          lua_generate_matches(const char*, int, int);
 void            move_cursor(int, int);
+void            clear_to_eol();
 
 int             g_match_palette[3] = { -1, -1, -1 };
 extern int      rl_visible_stats;
@@ -423,6 +424,7 @@ static int startup_hook()
         rl_visible_stats = 0;               // serves no purpose under win32.
 
         // Header.
+        clear_to_eol();
         hooked_fprintf(NULL, "%s", g_header);
 
         initialised = 1;
@@ -483,6 +485,7 @@ void CLINK_API call_readline(
     rl_startup_hook = startup_hook;
 
     using_history();
+    hooked_fprintf(NULL, "\r");
     text = readline(prompt_utf8);
     add_to_history(text);
 
