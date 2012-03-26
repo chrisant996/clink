@@ -22,20 +22,11 @@
 
 --------------------------------------------------------------------------------
 local to = ".build/"..(_ACTION or "nullaction")
+local ver = "DEV"
 
 --------------------------------------------------------------------------------
 local function build_postbuild(src, cfg)
     postbuildcommands("copy /y \"..\\..\\"..src.."\" \"bin\\"..cfg.."\" 1>nul 2>nul")
-end
-
---------------------------------------------------------------------------------
-local function get_branch_name()
-    local git_cmd = io.popen(
-        "for /f \"tokens=1* delims= \" %d in ('git branch ^| findstr *') do @echo %e",
-        "r"
-    )
-
-    return git_cmd:read():upper()
 end
 
 --------------------------------------------------------------------------------
@@ -62,7 +53,7 @@ solution("clink")
     flags("Symbols")
     defines("HAVE_CONFIG_H")
     defines("HANDLE_MULTIBYTE")
-    defines("CLINK_VERSION=\""..get_branch_name().."\"")
+    defines("CLINK_VERSION=\""..ver.."\"")
     includedirs("readline/compat")
     includedirs("readline")
 
@@ -156,9 +147,8 @@ newaction {
         os.execute("msbuild /v:m /p:configuration=release /p:platform=win32 /t:rebuild .build/vs2010/clink.sln")
         os.execute("msbuild /v:m /p:configuration=release /p:platform=x64 /t:rebuild .build/vs2010/clink.sln")
 
-        local ver = get_branch_name()
         local src = ".build\\vs2010\\bin\\release\\"
-        local dest = ".build\\release\\"..os.date("%Y%m%d_%H%M%S").."_"..get_branch_name().."\\clink_"..ver
+        local dest = ".build\\release\\"..os.date("%Y%m%d_%H%M%S").."_"..ver.."\\clink_"..ver
         if not os.isdir(src..".") then
             return
         end
