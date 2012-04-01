@@ -30,7 +30,7 @@ char**          lua_generate_matches(const char*, int, int);
 void            move_cursor(int, int);
 void            clear_to_eol();
 
-int             g_match_palette[3] = { -1, -1, -1 };
+int             g_match_palette[3]      = { -1, -1, -1 };
 extern int      rl_visible_stats;
 extern char*    _rl_term_forward_char;
 extern char*    _rl_term_clreol;
@@ -38,6 +38,7 @@ extern int      _rl_screenwidth;
 extern int      _rl_screenheight;
 extern int      rl_display_fixed;
 static int      g_new_history_count     = 0;
+static char*    g_to_reedit             = NULL;
 
 //------------------------------------------------------------------------------
 static const char* g_header = 
@@ -395,42 +396,49 @@ static int paste_from_clipboard(int count, int invoking_key)
 }
 
 //------------------------------------------------------------------------------
-static int startup_hook()
+static int initialise_hook()
 {
-    static int initialised = 0;
-    if (!initialised)
-    {
-        // This is a bit of a hack. Ideally we should take care of this in
-        // the termcap functions.
-        _rl_term_forward_char = "\013";
-        _rl_term_clreol = "\001";
+    // This is a bit of a hack. Ideally we should take care of this in
+    // the termcap functions.
+    _rl_term_forward_char = "\013";
+    _rl_term_clreol = "\001";
 
-        rl_redisplay_function = display;
-        rl_getc_function = getc_impl;
+    rl_redisplay_function = display;
+    rl_getc_function = getc_impl;
 
-        rl_completer_quote_characters = "\"";
-        rl_ignore_some_completions_function = postprocess_matches;
-        rl_basic_word_break_characters = " <>|";
-        rl_completer_word_break_characters = " <>|";
-        rl_completion_display_matches_hook = display_matches;
-        rl_attempted_completion_function = alternative_matches;
+    rl_completer_quote_characters = "\"";
+    rl_ignore_some_completions_function = postprocess_matches;
+    rl_basic_word_break_characters = " <>|";
+    rl_completer_word_break_characters = " <>|";
+    rl_completion_display_matches_hook = display_matches;
+    rl_attempted_completion_function = alternative_matches;
 
-        rl_add_funmap_entry("clink-completion-shim", completion_shim);
-        rl_add_funmap_entry("clear-line", clear_line);
-        rl_add_funmap_entry("paste-from-clipboard", paste_from_clipboard);
+    rl_add_funmap_entry("clink-completion-shim", completion_shim);
+    rl_add_funmap_entry("clear-line", clear_line);
+    rl_add_funmap_entry("paste-from-clipboard", paste_from_clipboard);
 
-        initialise_lua();
-        load_history();
-        rl_re_read_init_file(0, 0);
-        rl_visible_stats = 0;               // serves no purpose under win32.
+    initialise_lua();
+    load_history();
+    rl_re_read_init_file(0, 0);
+    rl_visible_stats = 0;               // serves no purpose under win32.
 
-        // Header.
-        clear_to_eol();
-        hooked_fprintf(NULL, "%s", g_header);
-
-        initialised = 1;
-    }
+    // Header.
+    clear_to_eol();
+    hooked_fprintf(NULL, "%s", g_header);
     
+    rl_startup_hook = NULL;
+    return 0;
+}
+
+//------------------------------------------------------------------------------
+static int reedit_hook()
+{
+    rl_insert_text(g_to_reedit);
+
+    free(g_to_reedit);
+    g_to_reedit = NULL;
+    
+    rl_startup_hook = NULL;
     return 0;
 }
 
@@ -438,6 +446,7 @@ static int startup_hook()
 static void add_to_history(const char* line)
 {
     const char* c;
+    HIST_ENTRY* hist_entry;
 
     // Skip leading whitespace
     c = line;
@@ -457,6 +466,17 @@ static void add_to_history(const char* line)
         return;
     }
 
+    // Check the line's not a duplicate of the last in the history.
+    using_history();
+    hist_entry = previous_history();
+    if (hist_entry != NULL)
+    {
+        if (strcmp(hist_entry->line, c) == 0)
+        {
+            return;
+        }
+    }
+
     // All's well. Add the line.
     using_history();
     add_history(line);
@@ -471,10 +491,14 @@ void CLINK_API call_readline(
     unsigned size
 )
 {
+    static int initialised = 0;
     unsigned text_size;
+    int expand_result;
     char* text;
+    char* expanded;
     char prompt_utf8[1024];
 
+    // Convery prompt to utf-8.
     WideCharToMultiByte(
         CP_UTF8, 0,
         prompt, -1,
@@ -483,12 +507,41 @@ void CLINK_API call_readline(
         NULL
     );
 
-    rl_startup_hook = startup_hook;
+    // Initialisation
+    if (!initialised)
+    {
+        rl_startup_hook = initialise_hook;
+        initialised = 1;
+    }
 
-    using_history();
-    hooked_fprintf(NULL, "\r");
-    text = readline(prompt_utf8);
-    add_to_history(text);
+    // Call readline
+    do
+    {
+        hooked_fprintf(NULL, "\r");
+        text = readline(prompt_utf8);
+
+        // Expand history designators in returned buffer.
+        expanded = NULL;
+        expand_result = history_expand(text, &expanded);
+        if (expand_result < 0)
+        {
+            free(expanded);
+        }
+        else
+        {
+            free(text);
+            text = expanded;
+
+            // If there was some expansion then display the expanded result.
+            if (expand_result > 0)
+            {
+                hooked_fprintf(NULL, "%s\n", text);
+            }
+        }
+
+        add_to_history(text);
+    }
+    while (expand_result == 2);
 
     text_size = MultiByteToWideChar(CP_UTF8, 0, text, -1, result, 0);
     text_size = (size < text_size) ? size : strlen(text);
