@@ -360,6 +360,7 @@ void save_history()
 //------------------------------------------------------------------------------
 static int clear_line(int count, int invoking_key)
 {
+    using_history();
     rl_delete_text(0, rl_end);
     rl_point = 0;
     return 0;
