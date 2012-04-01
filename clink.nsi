@@ -73,7 +73,7 @@ Section "!Application files"
 
     ; Create a start-menu shortcut
     CreateDirectory "$SMPROGRAMS\clink"
-    CreateShortcut "$SMPROGRAMS\clink\clink.lnk" "$INSTDIR\clink.bat" "" "cmd.exe" 0 SW_SHOWMINIMIZED 
+    CreateShortcut "$SMPROGRAMS\clink\clink.lnk" "$INSTDIR\clink.bat" "" "$SYSDIR\cmd.exe" 0 SW_SHOWMINIMIZED 
 
     ; Create an uninstaller and a shortcut to it.
     WriteUninstaller "$INSTDIR\clink_uninstall.exe"
@@ -83,6 +83,7 @@ Section "!Application files"
     WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\Product" "DisplayName" "clink"
     WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\Product" "UninstallString" "$INSTDIR\clink_uninstall.exe"
     WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\Product" "Publisher" "Martin Ridgers"
+    WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\Product" "DisplayIcon" "$SYSDIR\cmd.exe,0"
 SectionEnd
 
 ;-------------------------------------------------------------------------------
@@ -105,6 +106,7 @@ Section "!un.Application files"
     DeleteRegValue HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\Product" "DisplayName"
     DeleteRegValue HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\Product" "UninstallString"
     DeleteRegValue HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\Product" "Publisher"
+    DeleteRegValue HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\Product" "DisplayIcon"
 SectionEnd
 
 ;-------------------------------------------------------------------------------
