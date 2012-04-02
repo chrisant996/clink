@@ -157,11 +157,14 @@ static int get_env_var_names(lua_State* state)
 
                 length = length < sizeof_array(name) ? length : sizeof_array(name);
                 --length;
-                strncpy(name, string, length);
-                name[length] = L'\0';
+                if (length > 0)
+                {
+                    strncpy(name, string, length);
+                    name[length] = L'\0';
 
-                lua_pushstring(state, name);
-                lua_rawseti(state, -2, i++);
+                    lua_pushstring(state, name);
+                    lua_rawseti(state, -2, i++);
+                }
             }
 
             string += strlen(string) + 1;
