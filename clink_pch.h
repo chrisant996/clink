@@ -38,13 +38,17 @@
     typedef void* PCONSOLE_READCONSOLE_CONTROL;
 #endif
 
-#include <readline/readline.h>
-#include <readline/history.h>
-#include <readline/rldefs.h>
+#ifdef CLINK_USE_READLINE
+#   include <readline/readline.h>
+#   include <readline/history.h>
+#   include <readline/rldefs.h>
+#endif
 
-#include "lua.h"
-#include "lauxlib.h"
-#include "lualib.h"
+#ifdef CLINK_USE_LUA
+#   include "lua.h"
+#   include "lauxlib.h"
+#   include "lualib.h"
+#endif
 
 #define sizeof_array(x) (sizeof(x)/sizeof(x[0]))
 

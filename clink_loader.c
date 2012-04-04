@@ -27,6 +27,9 @@
 #include "clink.h"
 
 //------------------------------------------------------------------------------
+void log_line(const char*, ...);
+
+//------------------------------------------------------------------------------
 static DWORD get_parent_pid()
 {
     ULONG_PTR pbi[6];
@@ -117,21 +120,32 @@ int main(int argc, char** argv)
     strcat(dll_path, "\\");
     strcat(dll_path, CLINK_DLL_NAME);
 
+    log_line(NULL);
+    log_line("DLL: %s", dll_path);
+
     parent_pid = get_parent_pid();
     if (parent_pid == -1)
     {
-        fputs("Failed to find parent PID.\n", stderr);
+        log_line("GetLastError = %d", GetLastError());
+        log_line("Failed to find parent pid.");
         return -1;
     }
 
-#ifdef CLINK_DEBUG
-    printf("Parent PID: %d\n", parent_pid);
-#endif
+    log_line("Parent pid: %d", parent_pid);
 
-    parent_process = OpenProcess(PROCESS_ALL_ACCESS, FALSE, parent_pid);
+    parent_process = OpenProcess(
+        PROCESS_QUERY_INFORMATION|
+        PROCESS_CREATE_THREAD|
+        PROCESS_VM_OPERATION|
+        PROCESS_VM_WRITE|
+        PROCESS_VM_READ,
+        FALSE,
+        parent_pid
+    );
     if (parent_process == NULL)
     {
-        fputs("Failed to open parent process.\n", stderr);
+        log_line("GetLastError = %d", GetLastError());
+        log_line("Failed to open parent process.");
         return -1;
     }
 
@@ -139,7 +153,8 @@ int main(int argc, char** argv)
     IsWow64Process(GetCurrentProcess(), is_wow_64 + 1);
     if (is_wow_64[0] != is_wow_64[1])
     {
-        fputs("32/64-bit mismatch.\n", stderr);
+        log_line("GetLastError = %d", GetLastError());
+        log_line("32/64-bit mismatch. Use loader executable that matches parent architecture.");
         return -1;
     }
 
@@ -152,14 +167,16 @@ int main(int argc, char** argv)
     );
     if (buffer == NULL)
     {
-        fputs("VirtualAllocEx failed.\n", stderr);
+        log_line("GetLastError = %d", GetLastError());
+        log_line("VirtualAllocEx failed");
         return -1;
     }
 
     thread_proc = GetProcAddress(LoadLibraryA("kernel32.dll"), "LoadLibraryA");
     if (thread_proc == NULL)
     {
-        fputs("Failed to find LoadLibraryA address.\n", stderr);
+        log_line("GetLastError = %d", GetLastError());
+        log_line("Failed to find LoadLibraryA address.");
         return -1;
     }
 
@@ -172,14 +189,12 @@ int main(int argc, char** argv)
     );
     if (t == FALSE)
     {
-        fputs("WriteProcessMemory failed.\n", stderr);
+        log_line("GetLastError = %d", GetLastError());
+        log_line("WriteProcessMemory() failed.");
         return -1;
     }
 	
-#ifdef CLINK_DEBUG
-    printf("DLL to inject: %s\n", dll_path);
-    printf("Creating remote thread at: %p with param %p\n", thread_proc, buffer);
-#endif
+    log_line("Creating remote thread at %p with parameter %p", thread_proc, buffer);
 
     toggle_threads(parent_pid, 0);
     remote_thread = CreateRemoteThread(
@@ -191,8 +206,14 @@ int main(int argc, char** argv)
         0,
         &thread_id
     );
+    if (remote_thread == NULL)
+    {
+        log_line("GetLastError = %d", GetLastError());
+        log_line("CreateRemoteThread() failed.");
+        return -1;
+    }
 
-    // Wait for injection to happen.
+    // Wait for injection to complete.
     WaitForSingleObject(remote_thread, INFINITE);
     toggle_threads(parent_pid, 1);
 

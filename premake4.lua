@@ -109,6 +109,8 @@ project("clink_dll")
     files("clink_*.lua")
     includedirs("lua/src")
     defines("CLINK_DLL_BUILD")
+    defines("CLINK_USE_READLINE")
+    defines("CLINK_USE_LUA")
     pchheader("clink_pch.h")
     pchsource("clink_pch.c")
 
@@ -137,6 +139,7 @@ project("clink")
     language("c")
     kind("consoleapp")
     files("clink_loader.c")
+    files("clink_util.c")
 
 --------------------------------------------------------------------------------
 newaction {

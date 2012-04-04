@@ -84,3 +84,37 @@ void get_dll_dir(char* buffer, int size)
         *slash = '\0';
     }
 }
+
+//------------------------------------------------------------------------------
+void log_line(const char* format, ...)
+{
+    FILE* file;
+    char buffer[2048];
+    va_list v;
+
+    get_config_dir(buffer, sizeof_array(buffer));
+    str_cat(buffer, "/clink.log", sizeof_array(buffer));
+
+    if (format == NULL)
+    {
+        unlink(buffer);
+        return;
+    }
+
+    file = fopen(buffer, "at");
+    if (file == NULL)
+    {
+        return;
+    }
+
+    va_start(v, format);
+    vsnprintf(buffer, sizeof_array(buffer), format, v);
+    va_end(v);
+
+    buffer[sizeof_array(buffer) - 1] = '\0';
+
+    fputs("- ", file);
+    fputs(buffer, file);
+    fputs("\n", file);
+    fclose(file);
+}

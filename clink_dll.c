@@ -28,6 +28,7 @@ void                    get_dll_dir(char*, int);
 void                    str_cat(char*, const char*, int);
 void                    save_history();
 void                    shutdown_lua();
+void                    log_line(const char*, ...);
 static const wchar_t*   g_last_write_buffer = NULL;
 
 //------------------------------------------------------------------------------
@@ -43,6 +44,7 @@ LONG WINAPI exception_filter(EXCEPTION_POINTERS* info)
     get_config_dir(file_name, sizeof(file_name));
     str_cat(file_name, "/mini_dump.dmp", sizeof(file_name));
 
+    fputs("\n!!! CLINK'S CRASHED!", stderr);
     fputs("\n!!! Something went wrong.", stderr);
     fputs("\n!!! Writing mini dump file to: ", stderr);
     fputs(file_name, stderr);
@@ -213,7 +215,7 @@ BOOL WINAPI DllMain(HINSTANCE instance, DWORD reason, LPVOID unused)
         data_dir = nt_header->OptionalHeader.DataDirectory + 1;
         if (data_dir == NULL)
         {
-            fputs("Failed to find import table.\n", stderr);
+            log_line("Failed to find import table.");
             return TRUE;
         }
 
@@ -243,9 +245,7 @@ BOOL WINAPI DllMain(HINSTANCE instance, DWORD reason, LPVOID unused)
                         continue;
                     }
 
-#ifdef CLINK_DEBUG
-                    printf("Hooking: %p", itd);
-#endif
+                    log_line("Hooking: %p", itd);
 
                     page_state = make_page_writable(addr, sizeof(uintptr_t));
                     ok = WriteProcessMemory(
@@ -255,17 +255,20 @@ BOOL WINAPI DllMain(HINSTANCE instance, DWORD reason, LPVOID unused)
                         sizeof(uintptr_t),
                         NULL
                     );
-                    restore_page_state(addr, sizeof(uintptr_t), page_state);
+                    log_line("  GetLastError = %d", GetLastError());
+                    log_line("  ...%s", (ok != FALSE) ? "ok" : "failed - PANIC!");
 
-#ifdef CLINK_DEBUG
-                    printf(" ...%s\n", (ok != FALSE) ? "ok" : "failed - PANIC!");
-#endif
+                    restore_page_state(addr, sizeof(uintptr_t), page_state);
                     break;
                 }
             }
 
             break;
         }
+    }
+    else
+    {
+        log_line("Failed to find base address for 'cmd.exe'.");
     }
 
     return TRUE;
