@@ -42,6 +42,7 @@
 #   include <readline/readline.h>
 #   include <readline/history.h>
 #   include <readline/rldefs.h>
+#   include <compat/dirent.h>
 #endif
 
 #ifdef CLINK_USE_LUA

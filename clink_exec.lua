@@ -24,11 +24,10 @@
 dos_commands = {
     "assoc", "break", "call", "cd", "chcp", "chdir", "cls", "color", "copy",
     "date", "del", "dir", "diskcomp", "diskcopy", "echo", "endlocal", "erase",
-    "exit", "for", "format", "ftype", "goto", "graftabl", "if", "md",
-    "mkdir", "mklink", "mode", "more", "move", "path", "pause", "popd",
-    "prompt", "pushd", "rd", "rem", "ren", "rename", "rmdir", "set",
-    "setlocal", "shift", "start", "time", "title", "tree", "type", "ver",
-    "verify", "vol"
+    "exit", "for", "format", "ftype", "goto", "graftabl", "if", "md", "mkdir",
+    "mklink", "mode", "more", "move", "path", "pause", "popd", "prompt",
+    "pushd", "rd", "rem", "ren", "rename", "rmdir", "set", "setlocal", "shift",
+    "start", "time", "title", "tree", "type", "ver", "verify", "vol"
 }
 
 --------------------------------------------------------------------------------
@@ -72,15 +71,10 @@ function exec_match_generator(text, first, last)
         return false
     end
 
-    -- Skip exec matching if text is an absolute path
-    if text:find("^[a-zA-Z]:[\\/]") or text:find("^[\\/]") then
-        return false
-    end
-
     -- If there's no path separator in text then consider the environment's path
     -- otherwise just search the specified relative path.
-    local paths
-    if not text:find("[\\/]") then
+    local paths = {}
+    if not text:find("[\\/:]") then
         paths = split_on_semicolon(clink.getenv("PATH"))
 
         -- We're expecting absolute paths and as ';' is a valid path character
@@ -94,16 +88,17 @@ function exec_match_generator(text, first, last)
                 table.insert(paths_merged, paths[i])
             end
         end
+
+        -- Append slashes.
+        for i = 1, #paths_merged, 1 do
+            table.insert(paths, paths_merged[i].."\\")
+        end
+        table.insert(paths, ".\\")
         
-        paths = paths_merged;
-
         dos_cmd_match_generator(text, first, last)
+    else
+        table.insert(paths, "")
     end
-
-    if type(paths) ~= "table" then
-        paths = {}
-    end
-    table.insert(paths, ".")
 
     -- Strip off possible trailing extension.
     local needle = text;
@@ -112,23 +107,21 @@ function exec_match_generator(text, first, last)
         needle = needle:sub(1, ext_a - 1)
     end
 
+    -- Strip off any path components that may be on text
+    local prefix = ""
+    local i = text:find("[\\/:][^\\/:]*$")
+    if i then
+        prefix = text:sub(1, i)
+    end
+
     -- Combine extensions, text, and paths to find matches
     local count = #clink.matches
     local exts = split_on_semicolon(clink.getenv("PATHEXT"))
     for _, ext in ipairs(exts) do
         for _, path in ipairs(paths) do
-            local mask = path.."\\"..needle.."*"..ext
+            local mask = path..needle.."*"..ext
             for _, file in ipairs(clink.findfiles(mask)) do
-                -- treat the file slightly differently if it's relative.
-                if mask:sub(1, 2) == ".\\" then
-                    for i = #mask, 1, -1 do
-                        if mask:sub(i, i) == "\\" then
-                            file = mask:sub(3, i)..file
-                            break
-                        end
-                    end
-                end
-
+                file = prefix..file
                 if is_match(text, file) then
                     count = count + 1
                     clink.add_match(file)

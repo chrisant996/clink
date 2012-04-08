@@ -94,8 +94,13 @@ DIR *opendir(const char *name)
     if (name && name[0])
     {
         size_t base_length = strlen(name);
-        const wchar_t *all = /* search pattern must end with suitable wildcard */
-            strchr("/\\", name[base_length - 1]) ? L"*" : L"/*";
+        const wchar_t *all = L"";
+        
+        /* search pattern must end with suitable wildcard */
+        if (!strchr(name, '*'))
+        {
+            all = strchr("/\\", name[base_length - 1]) ? L"*" : L"/*";
+        }
 
         base_length += wcslen(all) + 1;
         if (volume_relative)

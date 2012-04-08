@@ -73,8 +73,8 @@ static void load_lua_scripts(const char* path)
 //------------------------------------------------------------------------------
 static int find_files(lua_State* state)
 {
-    HANDLE find;
-    WIN32_FIND_DATA fd;
+    DIR* dir;
+    struct dirent* entry;
     const char* mask;
     int i = 1;
 
@@ -91,18 +91,13 @@ static int find_files(lua_State* state)
     mask = lua_tostring(state, 1);
     lua_createtable(state, 0, 0);
 
-    find = FindFirstFile(mask, &fd);
-    while (find != INVALID_HANDLE_VALUE)
+    dir = opendir(mask);
+    while (entry = readdir(dir))
     {
-        lua_pushstring(state, fd.cFileName);
+        lua_pushstring(state, entry->d_name);
         lua_rawseti(state, -2, i++);
-
-        if (FindNextFile(find, &fd) == FALSE)
-        {
-            FindClose(find);
-            break;
-        }
     }
+    closedir(dir);
 
     return 1;
 }
