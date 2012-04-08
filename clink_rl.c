@@ -77,6 +77,7 @@ static int getc_impl(FILE* stream)
         // treat esc like cmd.exe does - clear the line.
         if (i == 0x1b)
         {
+            using_history();
             rl_delete_text(0, rl_end);
             rl_point = 0;
             display();
