@@ -2339,7 +2339,7 @@ rl_filename_completion_function (text, state)
 #if 0
 	      /* Make sure that temp has a trailing slash here. */
 	      if (users_dirname[dirlen - 1] != '/')
-		temp[dirlen++] = '/';
+		temp[dirlen++] = '/';   
 #endif
 /* end_clink_change */
 	    }
