@@ -2333,9 +2333,15 @@ rl_filename_completion_function (text, state)
 	      dirlen = strlen (users_dirname);
 	      temp = (char *)xmalloc (2 + dirlen + D_NAMLEN (entry));
 	      strcpy (temp, users_dirname);
+/* begin_clink_change
+ * Removed appending of a '/' to correctly support volume-relative paths.
+ */
+#if 0
 	      /* Make sure that temp has a trailing slash here. */
 	      if (users_dirname[dirlen - 1] != '/')
 		temp[dirlen++] = '/';
+#endif
+/* end_clink_change */
 	    }
 
 	  strcpy (temp + dirlen, convfn);

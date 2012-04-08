@@ -32,9 +32,64 @@ struct DIR
     char                *conv_buf;
 };
 
+int is_volume_relative(const char* path)
+{
+    size_t i = strlen(path);
+    if (i > 1)
+    {
+        if (path[1] == ':' && path[2] != '\\' && path[2] != '/')
+        {
+            return 1;
+        }
+    }
+
+    return 0;
+}
+
+int get_volume_path(const char* path, wchar_t* buffer, int size)
+{
+    DWORD ev_size;
+    wchar_t ev_name[4] = { L"=X:" };
+
+    if (!is_volume_relative(path))
+    {
+        return -1;
+    }
+
+    ev_name[1] = (wchar_t)path[0];
+    ev_size = GetEnvironmentVariableW(ev_name, buffer, size);
+    if (size < (int)ev_size)
+    {
+        return ev_size;
+    }
+
+    if (ev_size == 0)
+    {
+        if (buffer && (size >= 4))
+        {
+            buffer[0] = ev_name[1];
+            buffer[1] = L':';
+            buffer[2] = L'/';
+            buffer[3] = L'\0';
+        }
+
+        return 4;
+    }
+
+    if (size > (int)ev_size)
+    {
+        buffer[ev_size] = L'/';
+        buffer[ev_size + 1] = L'\0';
+    }
+
+    return ev_size + 1;
+}
+
 DIR *opendir(const char *name)
 {
     DIR *dir = 0;
+    int offset = 0;
+    int volume_relative = is_volume_relative(name);
 
     if (name && name[0])
     {
@@ -43,17 +98,30 @@ DIR *opendir(const char *name)
             strchr("/\\", name[base_length - 1]) ? L"*" : L"/*";
 
         base_length += wcslen(all) + 1;
+        if (volume_relative)
+        {
+            base_length += get_volume_path(name, NULL, 0);
+        }
         base_length *= sizeof(wchar_t);
 
         if ((dir = (DIR *) malloc(sizeof *dir)) != 0 &&
            (dir->name = (wchar_t *) malloc(base_length)) != 0)
         {
+            dir->name[0] = L'\0';
+
+            if (volume_relative)
+            {
+                offset = get_volume_path(name, dir->name, (int)base_length);
+                base_length -= offset;
+                name += 2;
+            }
+
             MultiByteToWideChar(
                 CP_UTF8,
                 0,
                 name,
                 -1,
-                dir->name,
+                dir->name + offset,
                 (int)(base_length / sizeof(wchar_t))
             );
             wcscat(dir->name, all);
