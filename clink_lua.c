@@ -215,6 +215,14 @@ void initialise_lua()
     g_lua = luaL_newstate();
     luaL_openlibs(g_lua);
 
+	// Add our API.
+	lua_createtable(g_lua, 0, 0);
+	lua_setglobal(g_lua, "clink");
+
+	lua_getglobal(g_lua, "clink");
+	luaL_setfuncs(g_lua, clink_native_methods, 0);
+	lua_pop(g_lua, 1);
+
     // Load all the .lua files alongside the dll and in the appdata folder.
     get_dll_dir(buffer, sizeof(buffer));
     i = (int)strlen(buffer);
@@ -227,10 +235,6 @@ void initialise_lua()
 
     get_config_dir(buffer, sizeof(buffer));
     load_lua_scripts(buffer);
-
-    lua_getglobal(g_lua, "clink");
-    luaL_setfuncs(g_lua, clink_native_methods, 0);
-    lua_pop(g_lua, 1);
 
     if (!once)
     {
