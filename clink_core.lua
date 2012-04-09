@@ -45,7 +45,7 @@ function clink.compute_lcd(text, list)
         end
     end
 
-    return lcd
+    return text..lcd:sub(early_out + 1)
 end
 
 --------------------------------------------------------------------------------
