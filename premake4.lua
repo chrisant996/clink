@@ -53,7 +53,6 @@ solution("clink")
     flags("Symbols")
     defines("HAVE_CONFIG_H")
     defines("HANDLE_MULTIBYTE")
-    defines("CLINK_VERSION=\""..ver.."\"")
     includedirs("readline/compat")
     includedirs("readline")
 
@@ -64,9 +63,11 @@ solution("clink")
         flags("OptimizeSize")
 
     configuration("gmake")
+        defines("CLINK_VERSION=\\\""..ver.."\\\"")
         defines("_WIN32_WINNT=0x500")
 
     configuration("vs*")
+        defines("CLINK_VERSION=\""..ver.."\"")
         defines("_CRT_SECURE_NO_WARNINGS")
         defines("_CRT_NONSTDC_NO_WARNINGS")
 

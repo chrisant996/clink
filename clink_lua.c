@@ -106,7 +106,7 @@ static int find_files(lua_State* state)
 static int get_env(lua_State* state)
 {
     unsigned size;
-    char* name;
+    const char* name;
     char* buffer;
 
     if (lua_gettop(state) == 0)
