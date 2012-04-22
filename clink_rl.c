@@ -239,6 +239,11 @@ static void display_matches(char** matches, int match_count, int max_length)
     {
         int len;
         char* slash = strrchr(matches[i], '\\');
+        if (slash == NULL)
+        {
+            slash = strrchr(matches[i], ':');
+        }
+
         new_matches[i] = (slash != NULL) ? slash + 1 : matches[i];
 
         len = (int)strlen(new_matches[i]);
