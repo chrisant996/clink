@@ -32,7 +32,7 @@ dos_commands = {
 
 --------------------------------------------------------------------------------
 function is_match(needle, candidate)
-    if candidate:sub(1, #needle):lower() == needle:lower() then
+    if clink.lower(candidate:sub(1, #needle)) == clink.lower(needle) then
         return true
     end
     return false
@@ -106,6 +106,10 @@ function exec_match_generator(text, first, last)
     if ext_a then
         needle = needle:sub(1, ext_a - 1)
     end
+
+    -- Replace '_' or '-' with '*' for improved "case insentitive" searching.
+    needle = needle:gsub("-", "*")
+    needle = needle:gsub("_", "*")
 
     -- Strip off any path components that may be on text
     local prefix = ""

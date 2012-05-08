@@ -71,6 +71,51 @@ static void load_lua_scripts(const char* path)
 }
 
 //------------------------------------------------------------------------------
+static int to_lowercase(lua_State* state)
+{
+    const char* string;
+    char* lowered;
+    int length;
+    int i;
+
+    // Check we've got at least one argument...
+    if (lua_gettop(state) == 0)
+    {
+        return 0;
+    }
+
+    // ...and that the argument is a string.
+    if (!lua_isstring(state, 1))
+    {
+        return 0;
+    }
+    
+    string = lua_tostring(state, 1);
+    length = strlen(string);
+
+    lowered = (char*)malloc(length + 1);
+    for (i = 0; i <= length; ++i)
+    {
+        char c = string[i];
+        if (c == '-')
+        {
+            c = '_';
+        }
+        else
+        {
+            c = tolower(c);
+        }
+
+        lowered[i] = c;
+    }
+
+    lua_pushstring(state, lowered);
+    free(lowered);
+
+    return 1;
+}
+
+//------------------------------------------------------------------------------
 static int find_files(lua_State* state)
 {
     DIR* dir;
@@ -201,6 +246,7 @@ void initialise_lua()
         { "getenvvarnames", get_env_var_names },
         { "setpalette", set_palette },
         { "getenv", get_env },
+        { "lower", to_lowercase },
         { NULL, NULL }
     };
 

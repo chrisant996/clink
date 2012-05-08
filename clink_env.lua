@@ -33,16 +33,16 @@ function env_vars_match_generator(text, first, last)
         return false
     end
     
-    text = text:sub(2):lower()
+    text = clink.lower(text:sub(2))
     local text_len = #text
     for _, name in ipairs(clink.getenvvarnames()) do
-        if name:sub(1, text_len):lower() == text then
+        if clink.lower(name:sub(1, text_len)) == text then
             clink.add_match('%'..name..'%')
         end
     end
 
     for _, name in ipairs(special_env_vars) do
-        if name:sub(1, text_len):lower() == text then
+        if clink.lower(name:sub(1, text_len)) == text then
             clink.add_match('%'..name..'%')
         end
     end
