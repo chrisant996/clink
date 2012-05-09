@@ -28,6 +28,7 @@ void                str_cat(char*, const char*, int);
 static int          reload_lua_state(int count, int invoking_key);
 
 extern int          g_match_palette[3];
+extern int          _rl_completion_case_map;
 static lua_State*   g_lua = NULL;
 
 //------------------------------------------------------------------------------
@@ -94,19 +95,30 @@ static int to_lowercase(lua_State* state)
     length = strlen(string);
 
     lowered = (char*)malloc(length + 1);
-    for (i = 0; i <= length; ++i)
+    if (_rl_completion_case_map)
     {
-        char c = string[i];
-        if (c == '-')
+        for (i = 0; i <= length; ++i)
         {
-            c = '_';
-        }
-        else
-        {
-            c = tolower(c);
-        }
+            char c = string[i];
+            if (c == '-')
+            {
+                c = '_';
+            }
+            else
+            {
+                c = tolower(c);
+            }
 
-        lowered[i] = c;
+            lowered[i] = c;
+        }
+    }
+    else
+    {
+        for (i = 0; i <= length; ++i)
+        {
+            char c = string[i];
+            lowered[i] = tolower(c);
+        }
     }
 
     lua_pushstring(state, lowered);
