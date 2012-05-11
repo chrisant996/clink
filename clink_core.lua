@@ -49,11 +49,35 @@ function clink.compute_lcd(text, list)
 end
 
 --------------------------------------------------------------------------------
+function clink.is_single_match(matches)
+    if #matches <= 1 then
+        return true
+    end
+
+    local first = matches[1]:lower()
+    for i = 2, #matches, 1 do
+        if not first == matches[i] then
+            return false
+        end
+    end
+
+    return true
+end
+
+--------------------------------------------------------------------------------
 function clink.generate_matches(text, first, last)
     clink.matches = {}
     for _, generator in ipairs(clink.generators) do
         if generator.f(text, first, last) then
             if #clink.matches > 1 then
+                -- Catch instances where there's many entries of a single match
+                if clink.is_single_match(clink.matches) then
+                    clink.matches = { clink.matches[1] }
+                    return true;
+                end
+
+                -- First entry in the match list should be the user's input,
+                -- modified here to be the lowest common denominator.
                 local lcd = clink.compute_lcd(text, clink.matches)
                 table.insert(clink.matches, 1, lcd)
             end
