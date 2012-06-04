@@ -56,7 +56,7 @@ function clink.is_single_match(matches)
 
     local first = matches[1]:lower()
     for i = 2, #matches, 1 do
-        if not first == matches[i] then
+        if not (first == matches[i]) then
             return false
         end
     end
