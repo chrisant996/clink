@@ -90,6 +90,7 @@ static BOOL WINAPI hooked_read_console(
     SetUnhandledExceptionFilter(exception_filter);
 
     call_readline(g_last_write_buffer, buffer, charsToRead);
+    g_last_write_buffer = L"";
 
     *charsRead = (unsigned)wcslen(buffer);
     return TRUE;
