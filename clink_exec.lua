@@ -25,9 +25,9 @@ dos_commands = {
     "assoc", "break", "call", "cd", "chcp", "chdir", "cls", "color", "copy",
     "date", "del", "dir", "diskcomp", "diskcopy", "echo", "endlocal", "erase",
     "exit", "for", "format", "ftype", "goto", "graftabl", "if", "md", "mkdir",
-    "mklink", "mode", "more", "move", "path", "pause", "popd", "prompt",
-    "pushd", "rd", "rem", "ren", "rename", "rmdir", "set", "setlocal", "shift",
-    "start", "time", "title", "tree", "type", "ver", "verify", "vol"
+    "mklink", "more", "move", "path", "pause", "popd", "prompt", "pushd", "rd",
+    "rem", "ren", "rename", "rmdir", "set", "setlocal", "shift", "start",
+    "time", "title", "tree", "type", "ver", "verify", "vol"
 }
 
 --------------------------------------------------------------------------------
