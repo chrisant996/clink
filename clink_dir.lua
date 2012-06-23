@@ -44,7 +44,7 @@ function dir_match_generator(text, first, last)
 
     -- Find dirs and add as matches.
     local has_matches = 0
-    local mask = text.."*"
+    local mask = clink.lower(text).."*"
     for _, dir in ipairs(clink.finddirs(mask)) do
         if not dir:find("^%.+$") then
             clink.add_match(prefix..dir)
@@ -52,8 +52,8 @@ function dir_match_generator(text, first, last)
         end
     end
 
-    -- If there was no matches then add input as the match. Don't tell readline
-    -- it's a file and it will think completion is done.
+    -- If there was no matches then add input as the match. DON'T tell readline
+    -- it's a file. This will have it think completion is done.
     if has_matches == 0 then
         clink.add_match(text)
     else
