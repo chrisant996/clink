@@ -10,7 +10,7 @@ set output-meta                 on
 "\033`G": beginning-of-line     # home
 "\033`S": delete-char           # del
 "\t":     clink-completion-shim
-C-c:      clear-line  
+C-c:      ctrl-c
 C-v:      paste-from-clipboard
 C-q:      reload-lua-state
 

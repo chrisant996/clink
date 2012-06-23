@@ -92,6 +92,13 @@ static BOOL WINAPI hooked_read_console(
     call_readline(g_last_write_buffer, buffer, charsToRead);
     g_last_write_buffer = L"";
 
+    // Check for control codes and convert them.
+    if (buffer[0] == L'\x03')
+    {
+        GenerateConsoleCtrlEvent(CTRL_C_EVENT, 0);
+        buffer[0] = '\0';
+    }
+
     *charsRead = (unsigned)wcslen(buffer);
     return TRUE;
 }

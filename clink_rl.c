@@ -30,15 +30,16 @@ char**          lua_generate_matches(const char*, int, int);
 void            move_cursor(int, int);
 void            clear_to_eol();
 
-int             g_match_palette[3]      = { -1, -1, -1 };
+int             g_match_palette[3]              = { -1, -1, -1 };
+int             clink_opt_passthrough_ctrl_c    = 1;
 extern int      rl_visible_stats;
 extern char*    _rl_term_forward_char;
 extern char*    _rl_term_clreol;
 extern int      _rl_screenwidth;
 extern int      _rl_screenheight;
 extern int      rl_display_fixed;
-static int      g_new_history_count     = 0;
-static char*    g_to_reedit             = NULL;
+static int      g_new_history_count             = 0;
+static char*    g_to_reedit                     = NULL;
 
 //------------------------------------------------------------------------------
 static const char* g_header = 
@@ -351,7 +352,7 @@ static void load_history()
 //------------------------------------------------------------------------------
 void save_history()
 {
-    static const int max_history = 200;
+    static const int max_history = 500;
     char buffer[1024];
 
     get_history_file_name(buffer, sizeof(buffer));
@@ -365,11 +366,29 @@ void save_history()
 }
 
 //------------------------------------------------------------------------------
-static int clear_line(int count, int invoking_key)
+static void clear_line()
 {
     using_history();
     rl_delete_text(0, rl_end);
     rl_point = 0;
+}
+
+//------------------------------------------------------------------------------
+static int ctrl_c(int count, int invoking_key)
+{
+    if (clink_opt_passthrough_ctrl_c)
+    {
+        rl_line_buffer[0] = '\x03';
+        rl_line_buffer[1] = '\x00';
+        rl_point = 1;
+        rl_end = 1;
+        rl_done = 1;
+    }
+    else
+    {
+        clear_line();
+    }
+
     return 0;
 }
 
@@ -420,7 +439,7 @@ static int initialise_hook()
     rl_attempted_completion_function = alternative_matches;
 
     rl_add_funmap_entry("clink-completion-shim", completion_shim);
-    rl_add_funmap_entry("clear-line", clear_line);
+    rl_add_funmap_entry("ctrl-c", ctrl_c);
     rl_add_funmap_entry("paste-from-clipboard", paste_from_clipboard);
 
     initialise_lua();
