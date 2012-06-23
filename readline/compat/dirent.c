@@ -12,7 +12,7 @@
 
 #include <dirent.h>
 #include <errno.h>
-#include <io.h> /* _wfindfirst and _wfindnext set errno iff they return -1 */
+#include <io.h> /* _wfindfirst64 and _wfindnext64 set errno iff they return -1 */
 #include <stdlib.h>
 #include <string.h>
 
@@ -25,11 +25,11 @@ static const int MAX_NAME_LEN = 2048;
 
 struct DIR
 {
-    long                handle; /* -1 for failed rewind */
-    struct _wfinddata_t info;
-    struct dirent       result; /* d_name null iff first time */
-    wchar_t             *name;  /* null-terminated char string */
-    char                *conv_buf;
+    long                  handle; /* -1 for failed rewind */
+    struct _wfinddata64_t info;
+    struct dirent         result; /* d_name null iff first time */
+    wchar_t               *name;  /* null-terminated char string */
+    char                  *conv_buf;
 };
 
 int is_volume_relative(const char* path)
@@ -131,7 +131,7 @@ DIR *opendir(const char *name)
             );
             wcscat(dir->name, all);
 
-            if ((dir->handle = (long) _wfindfirst(dir->name, &dir->info)) != -1)
+            if ((dir->handle = (long) _wfindfirst64(dir->name, &dir->info)) != -1)
             {
                 dir->conv_buf = (char*)malloc(MAX_NAME_LEN);
                 dir->result.d_name = 0;
@@ -188,7 +188,7 @@ struct dirent *readdir(DIR *dir)
 
     if (dir && dir->handle != -1)
     {
-        if (!dir->result.d_name || _wfindnext(dir->handle, &dir->info) != -1)
+        if (!dir->result.d_name || _wfindnext64(dir->handle, &dir->info) != -1)
         {
             WideCharToMultiByte(
                 CP_UTF8,
@@ -203,6 +203,8 @@ struct dirent *readdir(DIR *dir)
 
             result         = &dir->result;
             result->d_name = dir->conv_buf;
+            result->attrib = dir->info.attrib;
+            result->size   = dir->info.size;
         }
     }
     else
@@ -218,7 +220,7 @@ void rewinddir(DIR *dir)
     if (dir && dir->handle != -1)
     {
         _findclose(dir->handle);
-        dir->handle = (long) _wfindfirst(dir->name, &dir->info);
+        dir->handle = (long) _wfindfirst64(dir->name, &dir->info);
         dir->result.d_name = 0;
     }
     else

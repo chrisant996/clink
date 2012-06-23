@@ -188,6 +188,7 @@ static char** alternative_matches(const char* text, int start, int end)
     lua_matches = lua_generate_matches(text, start, end);
     if (lua_matches != NULL)
     {
+        rl_attempted_completion_over = 1;
         return lua_matches;
     }
 

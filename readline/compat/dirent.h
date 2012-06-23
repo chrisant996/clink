@@ -20,7 +20,9 @@ typedef struct DIR DIR;
 
 struct dirent
 {
-    char *d_name;
+    char        *d_name;
+    unsigned    attrib;
+    __int64     size;
 };
 
 DIR           *opendir(const char *);

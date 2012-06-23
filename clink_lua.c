@@ -128,12 +128,12 @@ static int to_lowercase(lua_State* state)
 }
 
 //------------------------------------------------------------------------------
-static int find_files(lua_State* state)
+static int find_files_impl(lua_State* state, int dirs_only)
 {
     DIR* dir;
     struct dirent* entry;
     const char* mask;
-    int i = 1;
+    int i;
 
     if (lua_gettop(state) == 0)
     {
@@ -144,19 +144,44 @@ static int find_files(lua_State* state)
     {
         return 0;
     }
-
+    
     mask = lua_tostring(state, 1);
     lua_createtable(state, 0, 0);
 
+    i = 1;
     dir = opendir(mask);
     while (entry = readdir(dir))
     {
+        if (dirs_only && !(entry->attrib & _A_SUBDIR))
+        {
+            continue;
+        }
+
         lua_pushstring(state, entry->d_name);
         lua_rawseti(state, -2, i++);
     }
     closedir(dir);
 
     return 1;
+}
+
+//------------------------------------------------------------------------------
+static int find_files(lua_State* state)
+{
+    return find_files_impl(state, 0);
+}
+
+//------------------------------------------------------------------------------
+static int find_dirs(lua_State* state)
+{
+    return find_files_impl(state, 1);
+}
+
+//------------------------------------------------------------------------------
+static int matches_are_files(lua_State* state)
+{
+    rl_filename_completion_desired = 1;
+    return 0;
 }
 
 //------------------------------------------------------------------------------
@@ -255,10 +280,12 @@ void initialise_lua()
     char buffer[1024];
     struct luaL_Reg clink_native_methods[] = {
         { "findfiles", find_files },
+        { "finddirs", find_dirs },
         { "getenvvarnames", get_env_var_names },
         { "setpalette", set_palette },
         { "getenv", get_env },
         { "lower", to_lowercase },
+        { "matchesarefiles", matches_are_files },
         { NULL, NULL }
     };
 
