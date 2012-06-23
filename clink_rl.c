@@ -432,6 +432,7 @@ static int initialise_hook()
     rl_redisplay_function = display;
     rl_getc_function = getc_impl;
 
+    rl_special_prefixes = "%";
     rl_completer_quote_characters = "\"";
     rl_ignore_some_completions_function = postprocess_matches;
     rl_basic_word_break_characters = " <>|";
@@ -561,7 +562,7 @@ void CLINK_API call_readline(
             // If there was some expansion then display the expanded result.
             if (expand_result > 0)
             {
-                hooked_fprintf(NULL, "%s\n", text);
+                hooked_fprintf(NULL, "History expansion: %s\n", text);
             }
         }
 
