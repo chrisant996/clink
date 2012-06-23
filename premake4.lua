@@ -144,7 +144,7 @@ project("clink")
 
 --------------------------------------------------------------------------------
 newaction {
-    trigger = "release",
+    trigger = "clink_release",
     description = "Prepares a release of clink.",
     execute = function ()
         os.execute("premake4 vs2010")
