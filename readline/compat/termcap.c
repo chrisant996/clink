@@ -19,7 +19,7 @@
  * SOFTWARE.
  */
 
-#include <windows.h>
+#include <Windows.h>
 
 #define sizeof_array(x) (sizeof(x) / sizeof(x[0]))
 
@@ -42,7 +42,7 @@ void clear_to_eol()
     CONSOLE_SCREEN_BUFFER_INFO csbi;
     int i;
     int width;
-    int length;
+    DWORD length;
     const char space[] = "                ";
 
     GetConsoleScreenBufferInfo(handle, &csbi);
@@ -51,7 +51,7 @@ void clear_to_eol()
 
     for (i = csbi.dwCursorPosition.X; i < width; i += length)
     {
-        int to_write = width - i;
+        DWORD to_write = width - i;
         if (to_write > length)
         {
             to_write = length;
