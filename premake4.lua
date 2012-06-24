@@ -22,7 +22,7 @@
 
 --------------------------------------------------------------------------------
 local to = ".build/"..(_ACTION or "nullaction")
-local ver = "DEV"
+local clink_ver = _OPTIONS["clink_ver"] or "HEAD"
 
 --------------------------------------------------------------------------------
 local function build_postbuild(src, cfg)
@@ -63,11 +63,11 @@ solution("clink")
         flags("OptimizeSize")
 
     configuration("gmake")
-        defines("CLINK_VERSION=\\\""..ver.."\\\"")
+        defines("CLINK_VERSION=\\\""..clink_ver.."\\\"")
         defines("_WIN32_WINNT=0x500")
 
     configuration("vs*")
-        defines("CLINK_VERSION=\""..ver.."\"")
+        defines("CLINK_VERSION=\""..clink_ver.."\"")
         defines("_CRT_SECURE_NO_WARNINGS")
         defines("_CRT_NONSTDC_NO_WARNINGS")
 
@@ -147,16 +147,37 @@ newaction {
     trigger = "clink_release",
     description = "Prepares a release of clink.",
     execute = function ()
-        os.execute("premake4 vs2010")
-        os.execute("msbuild /v:m /p:configuration=release /p:platform=win32 /t:rebuild .build/vs2010/clink.sln")
-        os.execute("msbuild /v:m /p:configuration=release /p:platform=x64 /t:rebuild .build/vs2010/clink.sln")
-
-        local src = ".build\\vs2010\\bin\\release\\"
-        local dest = ".build\\release\\"..os.date("%Y%m%d_%H%M%S").."_"..ver.."\\clink_"..ver
-        if not os.isdir(src..".") then
-            return
+        local exec = function(cmd)
+            print("----------------------------------------------")
+            print("-- EXEC: "..cmd)
+            print("--\n")
+            os.execute(cmd)
         end
 
+        local rls_dir_name = os.date("%Y%m%d_%H%M%S")
+        local src_dir_name = "clink_"..clink_ver.."_src"
+        local rls_dir = ".build\\release\\"..rls_dir_name.."_"..clink_ver.."\\"
+        local code_dir = rls_dir..src_dir_name
+        if not os.isdir(code_dir..".") then
+            exec("md "..code_dir)
+        end
+
+        -- clone repro in release folder and checkout the specified version
+        exec("git clone . "..code_dir)
+        if not os.chdir(code_dir) then
+            return
+        end
+        exec("git checkout "..clink_ver)
+
+        -- build the code.
+        exec("premake4 vs2010")
+        exec("msbuild /v:m /p:configuration=release /p:platform=win32 /t:rebuild .build/vs2010/clink.sln")
+        exec("msbuild /v:m /p:configuration=release /p:platform=x64 /t:rebuild .build/vs2010/clink.sln")
+
+        local src = ".build\\vs2010\\bin\\release\\"
+        local dest = "..\\clink_"..clink_ver
+
+        -- copy release files to a directory.
         local manifest = {
             "clink_x*.exe",
             "clink_dll_x*.dll",
@@ -166,13 +187,30 @@ newaction {
             "..\\..\\..\\..\\clink.bat",
         }
 
-        os.execute("md "..dest)
+        exec("md "..dest)
         for _, mask in ipairs(manifest) do
-            os.execute("copy "..src..mask.." "..dest)
+            exec("copy "..src..mask.." "..dest)
         end
 
-        os.execute("cd "..dest.." && move *.pdb ..")
-        os.execute("cd "..dest.."\\.. && 7z a -r clink_"..ver..".zip clink_"..ver)
-        os.execute("makensis /DCLINK_SOURCE="..dest.." clink.nsi")
+        -- tidy up code directory.
+        exec("rd /q /s .build")
+        exec("rd /q /s .git")
+        exec("del /q .gitignore")
+
+        -- move PDBs out of the way, package release up as zip and installer
+        os.chdir(dest)
+        exec("move *.pdb ..")
+        exec("7z a -r ../clink_"..clink_ver..".zip ../clink_"..clink_ver)
+        exec("7z a -r ../clink_"..clink_ver.."_src.zip ../"..src_dir_name)
+        exec("makensis /DCLINK_SOURCE="..dest.." ../"..src_dir_name.."/clink.nsi")
+
+        exec("rd /q /s ..\\"..src_dir_name)
     end
+}
+
+--------------------------------------------------------------------------------
+newoption {
+   trigger     = "clink_ver",
+   value       = "VER",
+   description = "The version of clink to build when using the clink_release action"
 }
