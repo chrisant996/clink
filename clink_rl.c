@@ -498,7 +498,7 @@ static void add_to_history(const char* line)
     c = line;
     while (*c)
     {
-        if (!isspace(*c))
+        if (!isspace(*c) && (*c != '\x03'))
         {
             break;
         }

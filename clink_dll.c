@@ -79,6 +79,8 @@ static BOOL WINAPI hooked_read_console(
     PCONSOLE_READCONSOLE_CONTROL inputControl
 )
 {
+    LPTOP_LEVEL_EXCEPTION_FILTER old_seh;
+
     // If cmd.exe is asking for one character at a time, use the original path
     // It does this to handle y/n/all prompts which isn't an compatible use-
     // case for readline. This saves hacking around it...
@@ -87,15 +89,21 @@ static BOOL WINAPI hooked_read_console(
         return ReadConsoleW(input, buffer, charsToRead, charsRead, inputControl);
     }
 
-    SetUnhandledExceptionFilter(exception_filter);
-
+    old_seh = SetUnhandledExceptionFilter(exception_filter);
     call_readline(g_last_write_buffer, buffer, charsToRead);
     g_last_write_buffer = L"";
+    SetUnhandledExceptionFilter(old_seh);
 
     // Check for control codes and convert them.
     if (buffer[0] == L'\x03')
     {
+        // Fire a Ctrl-C exception. Cmd.exe sets a global variable (CtrlCSeen)
+        // and ReadConsole() would normally set error code 0x3e3. Sleep() is to
+        // yield the thread so the global gets set (guess work...).
         GenerateConsoleCtrlEvent(CTRL_C_EVENT, 0);
+        SetLastError(0x3e3);
+        Sleep(0);
+
         buffer[0] = '\0';
     }
 
