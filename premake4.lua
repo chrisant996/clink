@@ -170,7 +170,7 @@ newaction {
         exec("git checkout "..clink_ver)
 
         -- build the code.
-        exec("premake4 vs2010")
+        exec("premake4 --clink_ver="..clink_ver.." vs2010")
         exec("msbuild /v:m /p:configuration=release /p:platform=win32 /t:rebuild .build/vs2010/clink.sln")
         exec("msbuild /v:m /p:configuration=release /p:platform=x64 /t:rebuild .build/vs2010/clink.sln")
 
