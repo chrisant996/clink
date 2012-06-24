@@ -38,6 +38,7 @@ extern char*    _rl_term_clreol;
 extern int      _rl_screenwidth;
 extern int      _rl_screenheight;
 extern int      rl_display_fixed;
+extern int      _rl_complete_mark_directories;
 static int      g_new_history_count             = 0;
 static char*    g_to_reedit                     = NULL;
 
@@ -239,16 +240,34 @@ static void display_matches(char** matches, int match_count, int max_length)
     new_matches = (char**)calloc(1, match_count * sizeof(char**));
     for (i = 0; i < match_count; ++i)
     {
+        int is_dir = 0;
         int len;
-        char* slash = strrchr(matches[i], '\\');
-        if (slash == NULL)
+        char* base = strrchr(matches[i], '\\');
+        if (base == NULL)
         {
-            slash = strrchr(matches[i], ':');
+            base = strrchr(matches[i], ':');
         }
 
-        new_matches[i] = (slash != NULL) ? slash + 1 : matches[i];
+        if (rl_filename_completion_desired)
+        {
+            is_dir = GetFileAttributes(matches[i]);
+            is_dir = !!(is_dir & FILE_ATTRIBUTE_DIRECTORY);
+        }
+        base = (base == NULL) ? matches[i] : base + 1;
+        len = (int)strlen(base) + is_dir;
 
-        len = (int)strlen(new_matches[i]);
+        new_matches[i] = malloc(len + 1);
+        if (is_dir)
+        {
+            // Coming soon; colours!
+            strcpy(new_matches[i], base);
+            strcat(new_matches[i], "\\");
+        }
+        else
+        {
+            strcpy(new_matches[i], base);
+        }
+
         max_length = len > max_length ? len : max_length;
     }
     --match_count;
@@ -315,7 +334,14 @@ static void display_matches(char** matches, int match_count, int max_length)
     update_screen_size();
     if (show_matches > 0)
     {
+        // Turn of '/' suffix for directories. RL assumes '/', which isn't the
+        // case, plus clink uses colours instead.
+        int j = _rl_complete_mark_directories;
+        _rl_complete_mark_directories = 0;
+
         rl_display_match_list(new_matches, match_count, max_length);
+
+        _rl_complete_mark_directories = j;
     }
     else
     {
@@ -328,6 +354,11 @@ static void display_matches(char** matches, int match_count, int max_length)
     rl_forced_update_display();
     rl_display_fixed = 1;
 
+    // Tidy up.
+    for (i = 0; i < match_count; ++i)
+    {
+        free(new_matches[i]);
+    }
     free(new_matches);
 }
 
