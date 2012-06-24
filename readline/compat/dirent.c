@@ -188,8 +188,15 @@ struct dirent *readdir(DIR *dir)
 
     if (dir && dir->handle != -1)
     {
-        if (!dir->result.d_name || _wfindnext64(dir->handle, &dir->info) != -1)
+        while (!dir->result.d_name || _wfindnext64(dir->handle, &dir->info) != -1)
         {
+            // Skip hidden and system files.
+            if (dir->info.attrib & (_A_HIDDEN|_A_SYSTEM))
+            {
+                dir->result.d_name = "";
+                continue;
+            }
+
             WideCharToMultiByte(
                 CP_UTF8,
                 0,
@@ -205,6 +212,7 @@ struct dirent *readdir(DIR *dir)
             result->d_name = dir->conv_buf;
             result->attrib = dir->info.attrib;
             result->size   = dir->info.size;
+            break;
         }
     }
     else
