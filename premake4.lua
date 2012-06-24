@@ -202,9 +202,11 @@ newaction {
         exec("move *.pdb ..")
         exec("7z a -r ../clink_"..clink_ver..".zip ../clink_"..clink_ver)
         exec("7z a -r ../clink_"..clink_ver.."_src.zip ../"..src_dir_name)
+        exec("7z a -r ../clink_"..clink_ver.."_pdb.zip ../*.pdb")
         exec("makensis /DCLINK_SOURCE="..dest.." ../"..src_dir_name.."/clink.nsi")
 
         exec("rd /q /s ..\\"..src_dir_name)
+        exec("del /q ..\\*.pdb")
     end
 }
 
