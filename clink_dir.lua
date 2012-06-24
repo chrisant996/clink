@@ -24,14 +24,14 @@
 function dir_match_generator(text, first, last)
     -- Only show directories if the command is 'dir', 'cd', or 'pushd'
     local leading = rl_line_buffer:sub(1, first - 1)
-    local cmd = leading:match("^%s*([a-zA-Z]+)%s+$")
+    local cmd = leading:match("^%s*([a-zA-Z]+)%s+")
     if not cmd then
         return false
     end
 
     -- Check it's a command that we only want to complete dirs for.
     cmd = cmd:lower()
-    if not (cmd == "dir" or cmd == "cd" or cmd == "pushd") then
+    if cmd ~= "dir" and cmd ~= "cd" and cmd ~= "pushd" and cmd ~= "rd" and cmd ~= "rmdir" then
         return false
     end
 
