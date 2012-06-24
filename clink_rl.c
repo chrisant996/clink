@@ -565,6 +565,10 @@ void CLINK_API call_readline(
     {
         hooked_fprintf(NULL, "\r");
         text = readline(prompt_utf8);
+        if (!text)
+        {
+            continue;
+        }
 
         // Expand history designators in returned buffer.
         expanded = NULL;
@@ -587,7 +591,7 @@ void CLINK_API call_readline(
 
         add_to_history(text);
     }
-    while (expand_result == 2);
+    while (!text || expand_result == 2);
 
     text_size = MultiByteToWideChar(CP_UTF8, 0, text, -1, result, 0);
     text_size = (size < text_size) ? size : strlen(text);
