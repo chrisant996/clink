@@ -489,18 +489,6 @@ static int initialise_hook()
 }
 
 //------------------------------------------------------------------------------
-static int reedit_hook()
-{
-    rl_insert_text(g_to_reedit);
-
-    free(g_to_reedit);
-    g_to_reedit = NULL;
-    
-    rl_startup_hook = NULL;
-    return 0;
-}
-
-//------------------------------------------------------------------------------
 static void add_to_history(const char* line)
 {
     const char* c;
