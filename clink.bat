@@ -80,8 +80,8 @@ goto :eof
 ::
 :install
     :: Check for an existing install
-    call :get_reg_key AutoRunPreFpgClink
-    if not "%ret%"=="" (
+    call :get_reg_key %1 AutoRunPreClinkInstall
+    if "%found%"=="1" (
         goto :eof
     )
 
@@ -90,29 +90,32 @@ goto :eof
     if not "%ret%"=="" (
         set autorun=%~s0 inject ^&^& %ret:&=^&%
     )
-    call :set_reg_key %1 AutoRunPreFpgClink "%ret%"
+    call :set_reg_key %1 AutoRunPreClinkInstall "%ret%"
     call :set_reg_key %1 AutoRun "%autorun%"
 exit /b 0
 
 :: uninstalls clink's autorun.
 ::
 :uninstall
-    call :get_reg_key %1 AutoRunPreFpgClink
+    call :get_reg_key %1 AutoRunPreClinkInstall
     if "%ret%"=="" (
         call :del_reg_key %1 AutoRun
     ) else (
         call :set_reg_key %1 AutoRun "%ret%"
     )
-    call :del_reg_key %1 AutoRunPreFpgClink
+    call :del_reg_key %1 AutoRunPreClinkInstall
 exit /b 0
 
-:: returns a registry key in the 'ret' environment variable
+:: returns a registry key in the 'ret' environment variable, setting found to
+:: 1 if a key was... found.
 ::
 :get_reg_key
     set ret=""
+    set found=0
     reg query %1 /v %2 1>nul 2>nul
     if %errorlevel%==0 (
         for /f "tokens=2* delims= " %%d in ('reg query %1 /v %2') do (
+            set found=1
             set ret="%%e"
         )
     )
