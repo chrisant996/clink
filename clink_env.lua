@@ -51,4 +51,4 @@ function env_vars_match_generator(text, first, last)
 end
 
 --------------------------------------------------------------------------------
-clink.register_match_generator(env_vars_match_generator, 100)
+clink.register_match_generator(env_vars_match_generator, 10)

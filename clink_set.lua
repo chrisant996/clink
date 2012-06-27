@@ -21,7 +21,7 @@
 --
 
 --------------------------------------------------------------------------------
-function dir_match_generator(text, first, last)
+function set_match_generator(text, first, last)
     -- Only show directories if the command is 'dir', 'cd', or 'pushd'
     local leading = rl_line_buffer:sub(1, first - 1)
     local cmd = leading:match("^%s*([a-zA-Z]+)%s+")
@@ -29,38 +29,27 @@ function dir_match_generator(text, first, last)
         return false
     end
 
-    -- Check it's a command that we only want to complete dirs for.
+    -- Check it's the set command.
     cmd = cmd:lower()
-    if cmd ~= "dir" and cmd ~= "cd" and cmd ~= "pushd" and cmd ~= "rd" and cmd ~= "rmdir" then
+    if cmd ~= "set" then
         return false
     end
 
-    -- Strip off any path components that may be on text.
-    local prefix = ""
-    local i = text:find("[\\/:][^\\/:]*$")
-    if i then
-        prefix = text:sub(1, i)
-    end
+	-- Enumerate environment variables and check for potential matches.
+    for _, name in ipairs(clink.getenvvarnames()) do
+		if clink.is_match(text, name) then
+			clink.add_match(name)
+		end
+	end
 
-    -- Find dirs and add as matches.
-    local mask = clink.lower(text).."*"
-    for _, dir in ipairs(clink.finddirs(mask)) do
-        if not dir:find("^%.+$") then
-            clink.add_match(prefix..dir)
-        end
-    end
-
-    -- If there was no matches then add input as the match. DON'T tell readline
-    -- it's a file. This will have it think completion is done.
-    if clink.match_count() == 0 then
-        clink.add_match(text)
+	-- If there was only one match, add a '=' on the end.
+	if clink.match_count() == 1 then
+		clink.set_match(1, clink.get_match(1).."=")
 		--clink.supress_char_append()
-    else
-        clink.matchesarefiles()
-    end
+	end
 
-    return true
+	return true
 end
 
 --------------------------------------------------------------------------------
-clink.register_match_generator(dir_match_generator, 50)
+clink.register_match_generator(set_match_generator, 40)

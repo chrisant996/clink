@@ -103,3 +103,26 @@ function clink.register_match_generator(func, priority)
     table.insert(clink.generators, {f=func, p=priority})
     table.sort(clink.generators, function(a, b) return a["p"] < b["p"] end)
 end
+
+--------------------------------------------------------------------------------
+function clink.is_match(needle, candidate)
+    if clink.lower(candidate:sub(1, #needle)) == clink.lower(needle) then
+        return true
+    end
+    return false
+end
+
+--------------------------------------------------------------------------------
+function clink.match_count()
+	return #clink.matches
+end
+
+--------------------------------------------------------------------------------
+function clink.set_match(i, value)
+	clink.matches[i] = value
+end
+
+--------------------------------------------------------------------------------
+function clink.get_match(i)
+	return clink.matches[i]
+end

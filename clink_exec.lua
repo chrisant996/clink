@@ -31,14 +31,6 @@ dos_commands = {
 }
 
 --------------------------------------------------------------------------------
-function is_match(needle, candidate)
-    if clink.lower(candidate:sub(1, #needle)) == clink.lower(needle) then
-        return true
-    end
-    return false
-end
-
---------------------------------------------------------------------------------
 function split_on_semicolon(str)
     local i = 0
     local ret = {}
@@ -54,7 +46,7 @@ end
 --------------------------------------------------------------------------------
 function dos_cmd_match_generator(text, first, last)
     for _, cmd in ipairs(dos_commands) do
-        if is_match(text, cmd) then
+        if clink.is_match(text, cmd) then
             clink.add_match(cmd)
         end
     end
@@ -126,7 +118,7 @@ function exec_match_generator(text, first, last)
             local mask = path..needle.."*"..ext
             for _, file in ipairs(clink.findfiles(mask)) do
                 file = prefix..file
-                if is_match(text, file) then
+                if clink.is_match(text, file) then
                     count = count + 1
                     clink.add_match(file)
                 end
