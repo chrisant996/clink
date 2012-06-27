@@ -67,7 +67,7 @@ function exec_match_generator(text, first, last)
     -- otherwise just search the specified relative path.
     local paths = {}
     if not text:find("[\\/:]") then
-        paths = split_on_semicolon(clink.getenv("PATH"))
+        paths = split_on_semicolon(clink.get_env("PATH"))
 
         -- We're expecting absolute paths and as ';' is a valid path character
         -- there maybe unneccessary splits. Here we resolve them.
@@ -112,11 +112,11 @@ function exec_match_generator(text, first, last)
 
     -- Combine extensions, text, and paths to find matches
     local count = #clink.matches
-    local exts = split_on_semicolon(clink.getenv("PATHEXT"))
+    local exts = split_on_semicolon(clink.get_env("PATHEXT"))
     for _, ext in ipairs(exts) do
         for _, path in ipairs(paths) do
             local mask = path..needle.."*"..ext
-            for _, file in ipairs(clink.findfiles(mask)) do
+            for _, file in ipairs(clink.find_files(mask)) do
                 file = prefix..file
                 if clink.is_match(text, file) then
                     count = count + 1

@@ -273,19 +273,27 @@ static int set_palette(lua_State* state)
 }
 
 //------------------------------------------------------------------------------
+static int suppress_char_append(lua_State* state)
+{
+	rl_completion_suppress_append = 1;
+	return 0;
+}
+
+//------------------------------------------------------------------------------
 void initialise_lua()
 {
     static int once = 0;
     int i;
     char buffer[1024];
     struct luaL_Reg clink_native_methods[] = {
-        { "findfiles", find_files },
-        { "finddirs", find_dirs },
-        { "getenvvarnames", get_env_var_names },
-        { "setpalette", set_palette },
-        { "getenv", get_env },
+        { "find_files", find_files },
+        { "find_dirs", find_dirs },
+        { "get_env_var_names", get_env_var_names },
+        { "set_palette", set_palette },
+        { "get_env", get_env },
         { "lower", to_lowercase },
-        { "matchesarefiles", matches_are_files },
+        { "matches_are_files", matches_are_files },
+        { "suppress_char_append", suppress_char_append },
         { NULL, NULL }
     };
 

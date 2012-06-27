@@ -36,7 +36,7 @@ function set_match_generator(text, first, last)
     end
 
 	-- Enumerate environment variables and check for potential matches.
-    for _, name in ipairs(clink.getenvvarnames()) do
+    for _, name in ipairs(clink.get_env_var_names()) do
 		if clink.is_match(text, name) then
 			clink.add_match(name)
 		end
@@ -45,7 +45,7 @@ function set_match_generator(text, first, last)
 	-- If there was only one match, add a '=' on the end.
 	if clink.match_count() == 1 then
 		clink.set_match(1, clink.get_match(1).."=")
-		--clink.supress_char_append()
+		clink.suppress_char_append()
 	end
 
 	return true

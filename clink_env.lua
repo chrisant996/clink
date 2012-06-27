@@ -35,7 +35,7 @@ function env_vars_match_generator(text, first, last)
     
     text = clink.lower(text:sub(2))
     local text_len = #text
-    for _, name in ipairs(clink.getenvvarnames()) do
+    for _, name in ipairs(clink.get_env_var_names()) do
         if clink.lower(name:sub(1, text_len)) == text then
             clink.add_match('%'..name..'%')
         end

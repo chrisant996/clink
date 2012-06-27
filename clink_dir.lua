@@ -44,7 +44,7 @@ function dir_match_generator(text, first, last)
 
     -- Find dirs and add as matches.
     local mask = clink.lower(text).."*"
-    for _, dir in ipairs(clink.finddirs(mask)) do
+    for _, dir in ipairs(clink.find_dirs(mask)) do
         if not dir:find("^%.+$") then
             clink.add_match(prefix..dir)
         end
@@ -54,9 +54,9 @@ function dir_match_generator(text, first, last)
     -- it's a file. This will have it think completion is done.
     if clink.match_count() == 0 then
         clink.add_match(text)
-		--clink.supress_char_append()
+		clink.suppress_char_append()
     else
-        clink.matchesarefiles()
+        clink.matches_are_files()
     end
 
     return true
