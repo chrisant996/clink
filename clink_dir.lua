@@ -50,11 +50,12 @@ function dir_match_generator(text, first, last)
         end
     end
 
-    -- If there was no matches then add input as the match. DON'T tell readline
-    -- it's a file. This will have it think completion is done.
+    -- If there was no matches but text is a dir then use it as the single match.
+	-- Otherwise tell readline that matches are files and it will do magic.
     if clink.match_count() == 0 then
-        clink.add_match(text)
-		clink.suppress_char_append()
+		if clink.is_dir(text) then
+	        clink.add_match(text)
+		end
     else
         clink.matches_are_files()
     end

@@ -131,8 +131,12 @@ static int postprocess_matches(char** matches)
         char* c = *m++;
         while (*c)
         {
-            need_quote |= (*c == ' ');
             *c = (*c == '/') ? '\\' : *c;
+			if (*c != '\\')
+			{
+				need_quote |= (strchr(rl_completer_word_break_characters, *c) != NULL);
+			}
+
             ++c;
         }
     }
@@ -190,7 +194,7 @@ static char** alternative_matches(const char* text, int start, int end)
     if (lua_matches != NULL)
     {
         rl_attempted_completion_over = 1;
-        return lua_matches;
+        return (lua_matches[0] != NULL) ? lua_matches : NULL;
     }
 
     // We're going to use readline's path completion, which only works with
@@ -466,7 +470,7 @@ static int initialise_hook()
     rl_special_prefixes = "%";
     rl_completer_quote_characters = "\"";
     rl_ignore_some_completions_function = postprocess_matches;
-    rl_basic_word_break_characters = " <>|%";
+    rl_basic_word_break_characters = " <>|%=";
     rl_completer_word_break_characters = rl_basic_word_break_characters;
     rl_completion_display_matches_hook = display_matches;
     rl_attempted_completion_function = alternative_matches;
