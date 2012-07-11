@@ -276,38 +276,38 @@ static int set_palette(lua_State* state)
 //------------------------------------------------------------------------------
 static int suppress_char_append(lua_State* state)
 {
-	rl_completion_suppress_append = 1;
-	return 0;
+    rl_completion_suppress_append = 1;
+    return 0;
 }
 
 //------------------------------------------------------------------------------
 static int is_dir(lua_State* state)
 {
-	const char* name;
-	DWORD attrib;
-	int i;
+    const char* name;
+    DWORD attrib;
+    int i;
 
-	if (lua_gettop(state) == 0)
-	{
-		return 0;
-	}
+    if (lua_gettop(state) == 0)
+    {
+        return 0;
+    }
 
-	if (lua_isnil(state, 1))
-	{
-		return 0;
-	}
+    if (lua_isnil(state, 1))
+    {
+        return 0;
+    }
 
-	i = 0;
-	name = lua_tostring(state, 1);
-	attrib = GetFileAttributes(name);
-	if (attrib != INVALID_FILE_ATTRIBUTES)
-	{
-		i = !!(attrib & FILE_ATTRIBUTE_DIRECTORY);
-	}
+    i = 0;
+    name = lua_tostring(state, 1);
+    attrib = GetFileAttributes(name);
+    if (attrib != INVALID_FILE_ATTRIBUTES)
+    {
+        i = !!(attrib & FILE_ATTRIBUTE_DIRECTORY);
+    }
 
-	lua_pushboolean(state, i);
+    lua_pushboolean(state, i);
 
-	return 1;
+    return 1;
 }
 
 //------------------------------------------------------------------------------
@@ -368,7 +368,7 @@ void initialise_lua()
         { "lower", to_lowercase },
         { "matches_are_files", matches_are_files },
         { "suppress_char_append", suppress_char_append },
-		{ "is_dir", is_dir },
+        { "is_dir", is_dir },
         { "get_rl_variable", get_rl_variable },
         { "is_rl_variable_true", is_rl_variable_true },
         { NULL, NULL }
@@ -383,13 +383,13 @@ void initialise_lua()
     g_lua = luaL_newstate();
     luaL_openlibs(g_lua);
 
-	// Add our API.
-	lua_createtable(g_lua, 0, 0);
-	lua_setglobal(g_lua, "clink");
+    // Add our API.
+    lua_createtable(g_lua, 0, 0);
+    lua_setglobal(g_lua, "clink");
 
-	lua_getglobal(g_lua, "clink");
-	luaL_setfuncs(g_lua, clink_native_methods, 0);
-	lua_pop(g_lua, 1);
+    lua_getglobal(g_lua, "clink");
+    luaL_setfuncs(g_lua, clink_native_methods, 0);
+    lua_pop(g_lua, 1);
 
     // Load all the .lua files alongside the dll and in the appdata folder.
     get_dll_dir(buffer, sizeof(buffer));
@@ -467,18 +467,18 @@ char** lua_generate_matches(const char* text, int start, int end)
     lua_rawget(g_lua, -2);
 
     match_count = lua_rawlen(g_lua, -1);
-	matches = (char**)calloc(match_count + 1, sizeof(*matches));
-	for (i = 0; i < match_count; ++i)
-	{
-		const char* match;
+    matches = (char**)calloc(match_count + 1, sizeof(*matches));
+    for (i = 0; i < match_count; ++i)
+    {
+        const char* match;
 
-		lua_rawgeti(g_lua, -1, i + 1);
-		match = lua_tostring(g_lua, -1);
-		matches[i] = malloc(strlen(match) + 1);
-		strcpy(matches[i], match);
+        lua_rawgeti(g_lua, -1, i + 1);
+        match = lua_tostring(g_lua, -1);
+        matches[i] = malloc(strlen(match) + 1);
+        strcpy(matches[i], match);
 
-		lua_pop(g_lua, 1);
-	}
+        lua_pop(g_lua, 1);
+    }
     lua_pop(g_lua, 2);
 
     return matches;

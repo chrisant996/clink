@@ -193,7 +193,7 @@ int main(int argc, char** argv)
         log_line("WriteProcessMemory() failed.");
         return -1;
     }
-	
+    
     log_line("Creating remote thread at %p with parameter %p", thread_proc, buffer);
 
     toggle_threads(parent_pid, 0);
