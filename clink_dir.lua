@@ -21,6 +21,19 @@
 --
 
 --------------------------------------------------------------------------------
+function get_dir_matches(prefix, mask)
+    local has_matches = 0
+    for _, dir in ipairs(clink.finddirs(mask)) do
+        if not dir:find("^%.+$") then
+            clink.add_match(prefix..dir)
+            has_matches = has_matches + 1
+        end
+    end
+
+    return has_matches
+end
+
+--------------------------------------------------------------------------------
 function dir_match_generator(text, first, last)
     -- Only show directories if the command is 'dir', 'cd', or 'pushd'
     local leading = rl_line_buffer:sub(1, first - 1)
@@ -45,11 +58,12 @@ function dir_match_generator(text, first, last)
     -- Find dirs and add as matches.
     local has_matches = 0
     local mask = clink.lower(text).."*"
-    for _, dir in ipairs(clink.finddirs(mask)) do
-        if not dir:find("^%.+$") then
-            clink.add_match(prefix..dir)
-            has_matches = has_matches + 1
-        end
+    has_matches = has_matches + get_dir_matches(prefix, mask)
+
+    -- If readline's -/_ mapping is on, adjust mask and check for more matches.
+    if clink.is_rl_variable_true("completion-map-case") then
+        mask = mask:gsub("_", "-")
+        has_matches = get_dir_matches(prefix, mask)
     end
 
     -- If there was no matches then add input as the match. DON'T tell readline
