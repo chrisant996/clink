@@ -29,6 +29,7 @@ static int          reload_lua_state(int count, int invoking_key);
 
 extern int          g_match_palette[3];
 extern int          _rl_completion_case_map;
+extern char*        rl_variable_value(char*);
 static lua_State*   g_lua = NULL;
 
 //------------------------------------------------------------------------------
@@ -310,6 +311,49 @@ static int is_dir(lua_State* state)
 }
 
 //------------------------------------------------------------------------------
+static int get_rl_variable(lua_State* state)
+{
+    char* string;
+    char* rl_cvar;
+
+    // Check we've got at least one string argument.
+    if (lua_gettop(state) == 0 || !lua_isstring(state, 1))
+    {
+        return 0;
+    }
+
+    string = lua_tostring(state, 1);
+    rl_cvar = rl_variable_value(string);
+    if (rl_cvar == NULL)
+    {
+        return 0;
+    }
+
+    lua_pushstring(state, rl_cvar);
+    return 1;
+}
+
+//------------------------------------------------------------------------------
+static int is_rl_variable_true(lua_State* state)
+{
+    int i;
+    char* cvar_value;
+
+    i = get_rl_variable(state);
+    if (i == 0)
+    {
+        return 0;
+    }
+
+    cvar_value = lua_tostring(state, -1);
+    i = (_stricmp(cvar_value, "on") == 0) || (_stricmp(cvar_value, "1") == 0);
+    lua_pop(state, 1);
+    lua_pushboolean(state, i);
+
+    return 1;
+}
+
+//------------------------------------------------------------------------------
 void initialise_lua()
 {
     static int once = 0;
@@ -325,6 +369,8 @@ void initialise_lua()
         { "matches_are_files", matches_are_files },
         { "suppress_char_append", suppress_char_append },
 		{ "is_dir", is_dir },
+        { "get_rl_variable", get_rl_variable },
+        { "is_rl_variable_true", is_rl_variable_true },
         { NULL, NULL }
     };
 
