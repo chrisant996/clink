@@ -108,7 +108,7 @@ static int getc_impl(FILE* stream)
     }
 
     // Set the "meta" key bit if the ALT key is pressed.
-    if (GetAsyncKeyState(VK_MENU) & 0x8000)
+    if (GetAsyncKeyState(VK_LMENU) & 0x8000)
     {
         i |= 0x80;
     }
