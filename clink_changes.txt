@@ -1,3 +1,10 @@
+v0.1.1
+======
+
+- Fixed AltGr+<key> on international keyboards.
+- Fixed broken completion when directories have a '-' in their name (Mark Hammond)
+- The check for single match scenarios now correctly handles case-insensitivity.
+
 v0.1
 ====
 
