@@ -21,6 +21,7 @@ extern "C"
 {
 #endif
 
+extern int _rl_match_hidden_files;
 static const int MAX_NAME_LEN = 2048;
 
 struct DIR
@@ -185,13 +186,20 @@ int closedir(DIR *dir)
 struct dirent *readdir(DIR *dir)
 {
     struct dirent *result = 0;
+    unsigned skip_mask;
+
+    // Always skip system files, and maybe skip hidden ones.
+    skip_mask = _A_SYSTEM;
+    if (!_rl_match_hidden_files)
+    {
+        skip_mask |= _A_HIDDEN;
+    }
 
     if (dir && dir->handle != -1)
     {
         while (!dir->result.d_name || _wfindnext64(dir->handle, &dir->info) != -1)
         {
-            // Skip hidden and system files.
-            if (dir->info.attrib & (_A_HIDDEN|_A_SYSTEM))
+            if (dir->info.attrib & skip_mask)
             {
                 dir->result.d_name = "";
                 continue;
