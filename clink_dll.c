@@ -105,9 +105,9 @@ void append_crlf(wchar_t* buffer, DWORD max_size)
 static BOOL WINAPI hooked_read_console(
     HANDLE input,
     wchar_t* buffer,
-    DWORD charsToRead,
-    LPDWORD charsRead,
-    PCONSOLE_READCONSOLE_CONTROL inputControl
+    DWORD buffer_size,
+    LPDWORD read_in,
+    PCONSOLE_READCONSOLE_CONTROL control
 )
 {
     LPTOP_LEVEL_EXCEPTION_FILTER old_seh;
@@ -115,13 +115,13 @@ static BOOL WINAPI hooked_read_console(
     // If cmd.exe is asking for one character at a time, use the original path
     // It does this to handle y/n/all prompts which isn't an compatible use-
     // case for readline. This saves hacking around it...
-    if (charsToRead == 1)
+    if (buffer_size == 1)
     {
-        return ReadConsoleW(input, buffer, charsToRead, charsRead, inputControl);
+        return ReadConsoleW(input, buffer, buffer_size, read_in, control);
     }
 
     old_seh = SetUnhandledExceptionFilter(exception_filter);
-    call_readline(g_last_write_buffer, buffer, charsToRead);
+    call_readline(g_last_write_buffer, buffer, buffer_size);
     g_last_write_buffer = L"";
     SetUnhandledExceptionFilter(old_seh);
 
@@ -138,10 +138,10 @@ static BOOL WINAPI hooked_read_console(
         buffer[0] = '\0';
     }
 
-    emulate_doskey(buffer, charsToRead);
-    append_crlf(buffer, charsToRead);
+    emulate_doskey(buffer, buffer_size);
+    append_crlf(buffer, buffer_size);
 
-    *charsRead = (unsigned)wcslen(buffer);
+    *read_in = (unsigned)wcslen(buffer);
     return TRUE;
 }
 
@@ -149,13 +149,13 @@ static BOOL WINAPI hooked_read_console(
 static BOOL WINAPI hooked_write_console(
     HANDLE output,
     const wchar_t* buffer,
-    DWORD charsToWrite,
-    LPDWORD charsWritten,
+    DWORD buffer_size,
+    LPDWORD written,
     void* unused
 )
 {
     g_last_write_buffer = buffer;
-    return WriteConsoleW(output, buffer, charsToWrite, charsWritten, unused);
+    return WriteConsoleW(output, buffer, buffer_size, written, unused);
 }
 
 //------------------------------------------------------------------------------
