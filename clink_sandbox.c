@@ -30,7 +30,7 @@ int main(void)
     {
         wchar_t result[1024];
         call_readline(L"X:\\>", result, sizeof(result) / sizeof(result[0]));
-        if (result[0] == 0x0d)
+        if (result[0] == L'\0')
         {
             break;
         }

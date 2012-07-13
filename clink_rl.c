@@ -600,17 +600,7 @@ void CLINK_API call_readline(
     text_size = MultiByteToWideChar(CP_UTF8, 0, text, -1, result, 0);
     text_size = (size < text_size) ? size : strlen(text);
     text_size = MultiByteToWideChar(CP_UTF8, 0, text, -1, result, size);
-    if (text_size + 2 <= size)
-    {
-        --text_size;
-        result[text_size + 0] = L'\x0d';
-        result[text_size + 1] = L'\x0a';
-        result[text_size + 2] = L'\0';
-    }
-    else if (text_size + 1 <= size)
-    {
-        result[text_size] = L'\0';
-    }
+    result[size - 1] = L'\0';
 
     free(text);
 }

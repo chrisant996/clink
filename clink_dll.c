@@ -71,6 +71,37 @@ LONG WINAPI exception_filter(EXCEPTION_POINTERS* info)
 }
 
 //------------------------------------------------------------------------------
+void emulate_doskey(wchar_t* buffer, DWORD max_size)
+{
+    // ReadConsoleW() will postprocess what the user enters, resolving any
+    // aliases that may be registered (aka doskey macros). As we've skipped this
+    // step, we have to resolve aliases ourselves.
+
+    wchar_t exe_buf[MAX_PATH];
+    wchar_t* exe;
+    wchar_t* slash;
+
+    GetModuleFileNameW(NULL, exe_buf, sizeof(exe_buf));
+    slash = wcsrchr(exe_buf, L'\\');
+    exe = (slash != NULL) ? (slash + 1) : exe_buf;
+
+    GetConsoleAliasW(buffer, buffer, max_size, exe);
+}
+
+//------------------------------------------------------------------------------
+void append_crlf(wchar_t* buffer, DWORD max_size)
+{
+    // Cmd.exe expects a CRLF combo at the end of the string, otherwise it
+    // thinks the line is part of a multi-line command.
+
+    size_t len;
+
+    len = max_size - wcslen(buffer);
+    wcsncat(buffer, L"\x0d\x0a", len);
+    buffer[max_size - 1] = L'\0';
+}
+
+//------------------------------------------------------------------------------
 static BOOL WINAPI hooked_read_console(
     HANDLE input,
     wchar_t* buffer,
@@ -106,6 +137,9 @@ static BOOL WINAPI hooked_read_console(
 
         buffer[0] = '\0';
     }
+
+    emulate_doskey(buffer, charsToRead);
+    append_crlf(buffer, charsToRead);
 
     *charsRead = (unsigned)wcslen(buffer);
     return TRUE;
