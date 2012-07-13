@@ -58,12 +58,12 @@ function dir_match_generator(text, first, last)
     -- Find dirs and add as matches.
     local has_matches = 0
     local mask = clink.lower(text).."*"
-    has_matches = has_matches + get_dir_matches(prefix, mask)
+    has_matches = get_dir_matches(prefix, mask)
 
     -- If readline's -/_ mapping is on, adjust mask and check for more matches.
     if clink.is_rl_variable_true("completion-map-case") then
         mask = mask:gsub("_", "-")
-        has_matches = get_dir_matches(prefix, mask)
+        has_matches = has_matches + get_dir_matches(prefix, mask)
     end
 
     -- If there was no matches then add input as the match. DON'T tell readline
