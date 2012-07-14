@@ -64,6 +64,36 @@ void clear_to_eol()
 }
 
 //------------------------------------------------------------------------------
+void clear_screen()
+{
+    // Scroll the whole buffer off the top. This is exactly what cmd.exe does!
+
+    HANDLE handle;
+    CONSOLE_SCREEN_BUFFER_INFO csbi;
+    SMALL_RECT full_buffer;
+    COORD dest_origin;
+    COORD cursor_pos;
+    CHAR_INFO fill;
+
+    handle = GetStdHandle(STD_OUTPUT_HANDLE);
+    GetConsoleScreenBufferInfo(handle, &csbi);
+
+    full_buffer.Left = 0;
+    full_buffer.Top = 0;
+    full_buffer.Right = csbi.dwMaximumWindowSize.X;
+    full_buffer.Bottom = csbi.dwMaximumWindowSize.Y;
+    dest_origin.X = 0;
+    dest_origin.Y = -full_buffer.Bottom - 1;
+    fill.Char.UnicodeChar = L' ';
+    fill.Attributes = csbi.wAttributes;
+    ScrollConsoleScreenBuffer(handle, &full_buffer, NULL, dest_origin, &fill);
+
+    cursor_pos.X = 0;
+    cursor_pos.Y = 0;
+    SetConsoleCursorPosition(handle, cursor_pos);
+}
+
+//------------------------------------------------------------------------------
 int tputs(const char *str, int affcnt, int (*putc_func)(int))
 {
 	switch (*str)
@@ -78,6 +108,10 @@ int tputs(const char *str, int affcnt, int (*putc_func)(int))
 
     case '\001':
         clear_to_eol();
+        break;
+
+    case '\002':
+        clear_screen();
         break;
 
     default:

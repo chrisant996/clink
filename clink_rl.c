@@ -35,6 +35,7 @@ int             clink_opt_passthrough_ctrl_c    = 1;
 extern int      rl_visible_stats;
 extern char*    _rl_term_forward_char;
 extern char*    _rl_term_clreol;
+extern char*    _rl_term_clrpag;
 extern int      _rl_screenwidth;
 extern int      _rl_screenheight;
 extern int      rl_display_fixed;
@@ -457,12 +458,18 @@ static int paste_from_clipboard(int count, int invoking_key)
 }
 
 //------------------------------------------------------------------------------
+static int clear_screen(int count, int invoking_key)
+{
+}
+
+//------------------------------------------------------------------------------
 static int initialise_hook()
 {
     // This is a bit of a hack. Ideally we should take care of this in
     // the termcap functions.
     _rl_term_forward_char = "\013";
     _rl_term_clreol = "\001";
+    _rl_term_clrpag = "\002";
 
     rl_redisplay_function = display;
     rl_getc_function = getc_impl;
@@ -478,6 +485,7 @@ static int initialise_hook()
     rl_add_funmap_entry("clink-completion-shim", completion_shim);
     rl_add_funmap_entry("ctrl-c", ctrl_c);
     rl_add_funmap_entry("paste-from-clipboard", paste_from_clipboard);
+    rl_add_funmap_entry("clear-screen", paste_from_clipboard);
 
     initialise_lua();
     load_history();
