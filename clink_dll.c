@@ -137,9 +137,11 @@ static BOOL WINAPI hooked_read_console(
 
         buffer[0] = '\0';
     }
-
-    emulate_doskey(buffer, buffer_size);
-    append_crlf(buffer, buffer_size);
+    else
+    {
+        emulate_doskey(buffer, buffer_size);
+        append_crlf(buffer, buffer_size);
+    }
 
     *read_in = (unsigned)wcslen(buffer);
     return TRUE;
