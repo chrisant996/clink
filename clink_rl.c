@@ -458,11 +458,6 @@ static int paste_from_clipboard(int count, int invoking_key)
 }
 
 //------------------------------------------------------------------------------
-static int clear_screen(int count, int invoking_key)
-{
-}
-
-//------------------------------------------------------------------------------
 static int initialise_hook()
 {
     // This is a bit of a hack. Ideally we should take care of this in
