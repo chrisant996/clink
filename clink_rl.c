@@ -41,7 +41,6 @@ extern int      _rl_screenheight;
 extern int      rl_display_fixed;
 extern int      _rl_complete_mark_directories;
 static int      g_new_history_count             = 0;
-static char*    g_to_reedit                     = NULL;
 
 //------------------------------------------------------------------------------
 // This ensures the cursor is visible as printing to the console usually makes
