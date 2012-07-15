@@ -32,6 +32,7 @@ void            clear_to_eol();
 
 int             g_match_palette[3]              = { -1, -1, -1 };
 int             clink_opt_passthrough_ctrl_c    = 1;
+int             clink_opt_ctrl_d_exit           = 1;
 extern int      rl_visible_stats;
 extern char*    _rl_term_forward_char;
 extern char*    _rl_term_clreol;
@@ -537,7 +538,7 @@ static void add_to_history(const char* line)
 }
 
 //------------------------------------------------------------------------------
-void CLINK_API call_readline(
+int CLINK_API call_readline(
     const wchar_t* prompt,
     wchar_t* result,
     unsigned size
@@ -573,7 +574,8 @@ void CLINK_API call_readline(
         text = readline(prompt_utf8);
         if (!text)
         {
-            continue;
+            // EOF situation.
+            return 1;
         }
 
         // Expand history designators in returned buffer.
@@ -605,4 +607,5 @@ void CLINK_API call_readline(
     result[size - 1] = L'\0';
 
     free(text);
+    return 0;
 }

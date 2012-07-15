@@ -29,6 +29,7 @@ void                    str_cat(char*, const char*, int);
 void                    save_history();
 void                    shutdown_lua();
 void                    log_line(const char*, ...);
+extern int              clink_opt_ctrl_d_exit;
 static const wchar_t*   g_last_write_buffer = NULL;
 
 //------------------------------------------------------------------------------
@@ -110,6 +111,7 @@ static BOOL WINAPI hooked_read_console(
     PCONSOLE_READCONSOLE_CONTROL control
 )
 {
+    int is_eof;
     LPTOP_LEVEL_EXCEPTION_FILTER old_seh;
 
     // If cmd.exe is asking for one character at a time, use the original path
@@ -121,7 +123,11 @@ static BOOL WINAPI hooked_read_console(
     }
 
     old_seh = SetUnhandledExceptionFilter(exception_filter);
-    call_readline(g_last_write_buffer, buffer, buffer_size);
+    is_eof = call_readline(g_last_write_buffer, buffer, buffer_size);
+    if (is_eof && clink_opt_ctrl_d_exit)
+    {
+        wcsncpy(buffer, L"exit", buffer_size);
+    }
     g_last_write_buffer = L"";
     SetUnhandledExceptionFilter(old_seh);
 

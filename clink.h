@@ -29,7 +29,7 @@
 #   define CLINK_API            __declspec(dllimport)
 #endif
 
-#define PROTOTYPE(x) void x(    \
+#define PROTOTYPE(x) int x(     \
     const wchar_t* prompt,      \
     wchar_t* result,            \
     unsigned result_size        \
