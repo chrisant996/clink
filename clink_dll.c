@@ -29,8 +29,20 @@ void                    str_cat(char*, const char*, int);
 void                    save_history();
 void                    shutdown_lua();
 void                    log_line(const char*, ...);
+void                    clear_to_eol();
 extern int              clink_opt_ctrl_d_exit;
 static const wchar_t*   g_last_write_buffer = NULL;
+
+//------------------------------------------------------------------------------
+static const char* g_header = 
+                                                                            "\n"
+    "clink v" CLINK_VERSION " : Enhancements for cmd.exe"                   "\n"
+                                                                            "\n"
+    "Copyright (c) 2012 Martin Ridgers"                                     "\n"
+    "Copyright (c) 1994-2012 Lua.org, PUC-Rio"                              "\n"
+    "Copyright (c) 1987-2010 Free Software Foundation, Inc."                "\n"
+                                                                            "\n"
+    ;
 
 //------------------------------------------------------------------------------
 static LONG WINAPI exception_filter(EXCEPTION_POINTERS* info)
@@ -111,6 +123,7 @@ static BOOL WINAPI hooked_read_console(
     PCONSOLE_READCONSOLE_CONTROL control
 )
 {
+    const wchar_t* lf;
     int is_eof;
     LPTOP_LEVEL_EXCEPTION_FILTER old_seh;
 
@@ -122,6 +135,11 @@ static BOOL WINAPI hooked_read_console(
         return ReadConsoleW(input, buffer, buffer_size, read_in, control);
     }
 
+    // In multi-line prompt situations, we're only interested in the last line.
+    lf = wcsrchr(g_last_write_buffer, '\n');
+    g_last_write_buffer = (lf != NULL) ? (lf + 1) : g_last_write_buffer;
+
+    // Call readline.
     old_seh = SetUnhandledExceptionFilter(exception_filter);
     is_eof = call_readline(g_last_write_buffer, buffer, buffer_size);
     if (is_eof && clink_opt_ctrl_d_exit)
@@ -154,6 +172,13 @@ static BOOL WINAPI hooked_read_console(
 }
 
 //------------------------------------------------------------------------------
+static void print_header()
+{
+    clear_to_eol();
+    hooked_fprintf(NULL, "%s", g_header);
+}
+
+//------------------------------------------------------------------------------
 static BOOL WINAPI hooked_write_console(
     HANDLE output,
     const wchar_t* buffer,
@@ -162,6 +187,14 @@ static BOOL WINAPI hooked_write_console(
     void* unused
 )
 {
+    static int once = 0;
+
+    if (!once)
+    {
+        print_header();
+        once = 1;
+    }
+
     g_last_write_buffer = buffer;
     return WriteConsoleW(output, buffer, buffer_size, written, unused);
 }

@@ -28,7 +28,6 @@ void            str_cat(char*, const char*, int);
 void            initialise_lua();
 char**          lua_generate_matches(const char*, int, int);
 void            move_cursor(int, int);
-void            clear_to_eol();
 
 int             g_match_palette[3]              = { -1, -1, -1 };
 int             clink_opt_passthrough_ctrl_c    = 1;
@@ -43,16 +42,6 @@ extern int      rl_display_fixed;
 extern int      _rl_complete_mark_directories;
 static int      g_new_history_count             = 0;
 static char*    g_to_reedit                     = NULL;
-
-//------------------------------------------------------------------------------
-static const char* g_header = 
-    "clink v" CLINK_VERSION " : Enhancements for cmd.exe\n"
-    "\n"
-    "Copyright (c) 2012 Martin Ridgers\n"
-    "Copyright (c) 1994-2012 Lua.org, PUC-Rio\n"
-    "Copyright (c) 1987-2010 Free Software Foundation, Inc.\n"
-    "\n"
-    ;
 
 //------------------------------------------------------------------------------
 // This ensures the cursor is visible as printing to the console usually makes
@@ -487,10 +476,6 @@ static int initialise_hook()
     rl_re_read_init_file(0, 0);
     rl_visible_stats = 0;               // serves no purpose under win32.
 
-    // Header.
-    clear_to_eol();
-    hooked_fprintf(NULL, "%s", g_header);
-    
     rl_startup_hook = NULL;
     return 0;
 }
