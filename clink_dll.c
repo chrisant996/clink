@@ -33,7 +33,7 @@ extern int              clink_opt_ctrl_d_exit;
 static const wchar_t*   g_last_write_buffer = NULL;
 
 //------------------------------------------------------------------------------
-LONG WINAPI exception_filter(EXCEPTION_POINTERS* info)
+static LONG WINAPI exception_filter(EXCEPTION_POINTERS* info)
 {
 #if defined(_MSC_VER)
     MINIDUMP_EXCEPTION_INFORMATION mdei = { GetCurrentThreadId(), info, FALSE };
@@ -72,7 +72,7 @@ LONG WINAPI exception_filter(EXCEPTION_POINTERS* info)
 }
 
 //------------------------------------------------------------------------------
-void emulate_doskey(wchar_t* buffer, DWORD max_size)
+static void emulate_doskey(wchar_t* buffer, DWORD max_size)
 {
     // ReadConsoleW() will postprocess what the user enters, resolving any
     // aliases that may be registered (aka doskey macros). As we've skipped this
@@ -90,7 +90,7 @@ void emulate_doskey(wchar_t* buffer, DWORD max_size)
 }
 
 //------------------------------------------------------------------------------
-void append_crlf(wchar_t* buffer, DWORD max_size)
+static void append_crlf(wchar_t* buffer, DWORD max_size)
 {
     // Cmd.exe expects a CRLF combo at the end of the string, otherwise it
     // thinks the line is part of a multi-line command.
