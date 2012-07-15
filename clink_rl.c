@@ -480,7 +480,6 @@ static int initialise_hook()
     rl_add_funmap_entry("clink-completion-shim", completion_shim);
     rl_add_funmap_entry("ctrl-c", ctrl_c);
     rl_add_funmap_entry("paste-from-clipboard", paste_from_clipboard);
-    rl_add_funmap_entry("clear-screen", paste_from_clipboard);
 
     initialise_lua();
     load_history();
