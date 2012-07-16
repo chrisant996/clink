@@ -28,7 +28,8 @@ void                    save_history();
 void                    shutdown_lua();
 void                    clear_to_eol();
 extern int              clink_opt_ctrl_d_exit;
-static const wchar_t*   g_last_write_buffer = NULL;
+static wchar_t*         g_write_cache           = NULL;
+static const int        g_write_cache_size      = 0xffff; // 0x10000 - 1 !!
 
 //------------------------------------------------------------------------------
 static const char* g_header = 
@@ -120,7 +121,7 @@ static BOOL WINAPI hooked_read_console(
     PCONSOLE_READCONSOLE_CONTROL control
 )
 {
-    const wchar_t* lf;
+    const wchar_t* prompt;
     int is_eof;
     LPTOP_LEVEL_EXCEPTION_FILTER old_seh;
 
@@ -133,17 +134,16 @@ static BOOL WINAPI hooked_read_console(
     }
 
     // In multi-line prompt situations, we're only interested in the last line.
-    lf = wcsrchr(g_last_write_buffer, '\n');
-    g_last_write_buffer = (lf != NULL) ? (lf + 1) : g_last_write_buffer;
+    prompt = wcsrchr(g_write_cache, '\n');
+    prompt = (prompt != NULL) ? (prompt + 1) : g_write_cache;
 
     // Call readline.
     old_seh = SetUnhandledExceptionFilter(exception_filter);
-    is_eof = call_readline(g_last_write_buffer, buffer, buffer_size);
+    is_eof = call_readline(prompt, buffer, buffer_size);
     if (is_eof && clink_opt_ctrl_d_exit)
     {
         wcsncpy(buffer, L"exit", buffer_size);
     }
-    g_last_write_buffer = L"";
     SetUnhandledExceptionFilter(old_seh);
 
     // Check for control codes and convert them.
@@ -185,14 +185,28 @@ static BOOL WINAPI hooked_write_console(
 )
 {
     static int once = 0;
+    int copy_size;
 
     if (!once)
     {
         print_header();
+
+        g_write_cache = VirtualAlloc(
+            NULL,
+            g_write_cache_size + 1,
+            MEM_COMMIT,
+            PAGE_READWRITE
+        );
+
         once = 1;
     }
 
-    g_last_write_buffer = buffer;
+    copy_size = (g_write_cache_size < buffer_size)
+        ? g_write_cache_size
+        : buffer_size;
+    memcpy(g_write_cache, buffer, copy_size * sizeof(wchar_t));
+    g_write_cache[copy_size] = L'\0';
+
     return WriteConsoleW(output, buffer, buffer_size, written, unused);
 }
 
