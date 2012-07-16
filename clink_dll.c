@@ -21,14 +21,11 @@
 
 #include "clink_pch.h"
 #include "clink.h"
+#include "clink_util.h"
 
 //------------------------------------------------------------------------------
-void                    get_config_dir(char*, int);
-void                    get_dll_dir(char*, int);
-void                    str_cat(char*, const char*, int);
 void                    save_history();
 void                    shutdown_lua();
-void                    log_line(const char*, ...);
 void                    clear_to_eol();
 extern int              clink_opt_ctrl_d_exit;
 static const wchar_t*   g_last_write_buffer = NULL;
@@ -260,6 +257,7 @@ BOOL WINAPI DllMain(HINSTANCE instance, DWORD reason, LPVOID unused)
 
     struct hook_t
     {
+        const char* name;
         void* to_hook;
         void* the_hook;
     };
@@ -267,10 +265,12 @@ BOOL WINAPI DllMain(HINSTANCE instance, DWORD reason, LPVOID unused)
     struct hook_t kernel32_hooks[] =
     {
         {
+            "ReadConsoleW",
             GetProcAddress(kernel32, "ReadConsoleW"),
             hooked_read_console
         },
         {
+            "WriteConsoleW",
             GetProcAddress(kernel32, "WriteConsoleW"),
             hooked_write_console
         }
@@ -301,14 +301,22 @@ BOOL WINAPI DllMain(HINSTANCE instance, DWORD reason, LPVOID unused)
         unsigned i, j;
         IMAGE_IMPORT_DESCRIPTOR* iid;
 
+        LOG_INFO("Found base address for executable at %p.", base_addr);
+
         dos_header = (IMAGE_DOS_HEADER*)base_addr;
         nt_header = (IMAGE_NT_HEADERS*)((char*)base_addr + dos_header->e_lfanew);
         data_dir = nt_header->OptionalHeader.DataDirectory + 1;
         if (data_dir == NULL)
         {
-            log_line("Failed to find import table.");
+            LOG_INFO("Failed to find import table.");
             return TRUE;
         }
+
+        LOG_INFO(
+            "Found import table at %08X/%d.",
+            data_dir->VirtualAddress,
+            data_dir->Size
+        );
 
         iid = (IMAGE_IMPORT_DESCRIPTOR*)(rva_to_addr(base_addr, data_dir->VirtualAddress));
         for (i = 0; i < data_dir->Size / sizeof(*iid); ++i)
@@ -321,35 +329,43 @@ BOOL WINAPI DllMain(HINSTANCE instance, DWORD reason, LPVOID unused)
                 continue;
             }
 
+            LOG_INFO("Found 'kernel32.dll' import table.");
+
             for (j = 0; j < sizeof_array(kernel32_hooks); ++j)
             {
+                struct hook_t* hook = kernel32_hooks + j;
+
+                LOG_INFO("Searching for '%s' import.", hook->name);
+
                 itd = rva_to_addr(base_addr, iid->FirstThunk);
                 while (itd->u1.Function > 0)
                 {
                     BOOL ok;
                     DWORD page_state;
-                    void* addr = &itd->u1.Function;
+                    uintptr_t addr = itd->u1.Function;
+                    void* addr_loc = &itd->u1.Function;
 
-                    if (itd->u1.Function != (uintptr_t)kernel32_hooks[j].to_hook)
+                    // Is this the address we want to hook?
+                    if (addr != (uintptr_t)hook->to_hook)
                     {
                         ++itd;
                         continue;
                     }
 
-                    log_line("Hooking: %p", itd);
+                    LOG_INFO("Hooking %p", itd);
 
-                    page_state = make_page_writable(addr, sizeof(uintptr_t));
+                    page_state = make_page_writable(addr_loc, sizeof(uintptr_t));
                     ok = WriteProcessMemory(
                         GetCurrentProcess(),
-                        addr,
-                        &kernel32_hooks[j].the_hook,
+                        addr_loc,
+                        &(hook->the_hook),
                         sizeof(uintptr_t),
                         NULL
                     );
-                    log_line("  GetLastError = %d", GetLastError());
-                    log_line("  ...%s", (ok != FALSE) ? "ok" : "failed - PANIC!");
+                    LOG_INFO("GetLastError = %d", GetLastError());
+                    LOG_INFO("...%s", (ok != FALSE) ? "ok" : "failed - PANIC!");
 
-                    restore_page_state(addr, sizeof(uintptr_t), page_state);
+                    restore_page_state(addr_loc, sizeof(uintptr_t), page_state);
                     break;
                 }
             }
@@ -359,7 +375,7 @@ BOOL WINAPI DllMain(HINSTANCE instance, DWORD reason, LPVOID unused)
     }
     else
     {
-        log_line("Failed to find base address for 'cmd.exe'.");
+        LOG_INFO("Failed to find base address for 'cmd.exe'.");
     }
 
     return TRUE;

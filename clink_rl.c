@@ -21,10 +21,9 @@
 
 #include "clink_pch.h"
 #include "clink.h"
+#include "clink_util.h"
 
 //------------------------------------------------------------------------------
-void            get_config_dir(char*, int);
-void            str_cat(char*, const char*, int);
 void            initialise_lua();
 char**          lua_generate_matches(const char*, int, int);
 void            move_cursor(int, int);

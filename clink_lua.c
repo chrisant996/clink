@@ -20,11 +20,9 @@
  */
 
 #include "clink_pch.h"
+#include "clink_util.h"
 
 //------------------------------------------------------------------------------
-void                get_dll_dir(char*, int);
-void                get_config_dir(char*, int);
-void                str_cat(char*, const char*, int);
 static int          reload_lua_state(int count, int invoking_key);
 
 extern int          g_match_palette[3];

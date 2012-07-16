@@ -25,9 +25,7 @@
 #include <stdio.h>
 
 #include "clink.h"
-
-//------------------------------------------------------------------------------
-void log_line(const char*, ...);
+#include "clink_util.h"
 
 //------------------------------------------------------------------------------
 static DWORD get_parent_pid()
@@ -120,18 +118,17 @@ int main(int argc, char** argv)
     strcat(dll_path, "\\");
     strcat(dll_path, CLINK_DLL_NAME);
 
-    log_line(NULL);
-    log_line("DLL: %s", dll_path);
+    LOG_INFO(NULL);
+    LOG_INFO("DLL: %s", dll_path);
 
     parent_pid = get_parent_pid();
     if (parent_pid == -1)
     {
-        log_line("GetLastError = %d", GetLastError());
-        log_line("Failed to find parent pid.");
+        LOG_ERROR("Failed to find parent pid.");
         return -1;
     }
 
-    log_line("Parent pid: %d", parent_pid);
+    LOG_INFO("Parent pid: %d", parent_pid);
 
     parent_process = OpenProcess(
         PROCESS_QUERY_INFORMATION|
@@ -144,8 +141,7 @@ int main(int argc, char** argv)
     );
     if (parent_process == NULL)
     {
-        log_line("GetLastError = %d", GetLastError());
-        log_line("Failed to open parent process.");
+        LOG_ERROR("Failed to open parent process.");
         return -1;
     }
 
@@ -153,8 +149,7 @@ int main(int argc, char** argv)
     IsWow64Process(GetCurrentProcess(), is_wow_64 + 1);
     if (is_wow_64[0] != is_wow_64[1])
     {
-        log_line("GetLastError = %d", GetLastError());
-        log_line("32/64-bit mismatch. Use loader executable that matches parent architecture.");
+        LOG_ERROR("32/64-bit mismatch. Use loader executable that matches parent architecture.");
         return -1;
     }
 
@@ -167,16 +162,14 @@ int main(int argc, char** argv)
     );
     if (buffer == NULL)
     {
-        log_line("GetLastError = %d", GetLastError());
-        log_line("VirtualAllocEx failed");
+        LOG_ERROR("VirtualAllocEx failed");
         return -1;
     }
 
     thread_proc = GetProcAddress(LoadLibraryA("kernel32.dll"), "LoadLibraryA");
     if (thread_proc == NULL)
     {
-        log_line("GetLastError = %d", GetLastError());
-        log_line("Failed to find LoadLibraryA address.");
+        LOG_ERROR("Failed to find LoadLibraryA address.");
         return -1;
     }
 
@@ -189,12 +182,11 @@ int main(int argc, char** argv)
     );
     if (t == FALSE)
     {
-        log_line("GetLastError = %d", GetLastError());
-        log_line("WriteProcessMemory() failed.");
+        LOG_ERROR("WriteProcessMemory() failed.");
         return -1;
     }
     
-    log_line("Creating remote thread at %p with parameter %p", thread_proc, buffer);
+    LOG_INFO("Creating remote thread at %p with parameter %p", thread_proc, buffer);
 
     toggle_threads(parent_pid, 0);
     remote_thread = CreateRemoteThread(
@@ -208,8 +200,7 @@ int main(int argc, char** argv)
     );
     if (remote_thread == NULL)
     {
-        log_line("GetLastError = %d", GetLastError());
-        log_line("CreateRemoteThread() failed.");
+        LOG_ERROR("CreateRemoteThread() failed.");
         return -1;
     }
 
