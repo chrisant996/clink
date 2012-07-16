@@ -33,11 +33,11 @@ static const wchar_t*   g_last_write_buffer = NULL;
 //------------------------------------------------------------------------------
 static const char* g_header = 
                                                                             "\n"
-    "clink v" CLINK_VERSION " : Enhancements for cmd.exe"                   "\n"
-                                                                            "\n"
-    "Copyright (c) 2012 Martin Ridgers"                                     "\n"
-    "Copyright (c) 1994-2012 Lua.org, PUC-Rio"                              "\n"
-    "Copyright (c) 1987-2010 Free Software Foundation, Inc."                "\n"
+    "--- clink v" CLINK_VERSION " (c) 2012 Martin Ridgers"                  "\n"
+    "--- http://code.google.com/p/clink"                                    "\n"
+    "---"                                                                   "\n"
+    "--- Copyright (c) 1994-2012 Lua.org, PUC-Rio"                          "\n"
+    "--- Copyright (c) 1987-2010 Free Software Foundation, Inc."            "\n"
                                                                             "\n"
     ;
 
