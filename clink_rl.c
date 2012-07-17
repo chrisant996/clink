@@ -121,10 +121,10 @@ static int postprocess_matches(char** matches)
         while (*c)
         {
             *c = (*c == '/') ? '\\' : *c;
-			if (*c != '\\')
-			{
-				need_quote |= (strchr(rl_completer_word_break_characters, *c) != NULL);
-			}
+            if (*c != '\\')
+            {
+                need_quote |= (strchr(rl_completer_word_break_characters, *c) != NULL);
+            }
 
             ++c;
         }

@@ -47,7 +47,7 @@ void get_config_dir(char* buffer, int size)
     }
 
     str_cat(buffer, app_dir, size);
-    str_cat(buffer, "/clink", size);
+    str_cat(buffer, "\\clink", size);
 
     if (once)
     {
@@ -113,7 +113,7 @@ static void log_line_v(
 
     // Could use fprintf here, but it appears to be broken (writing to stdout
     // instead)?!
-    _snprintf(buffer, sizeof_array(buffer), "%s():%d ", function, source_line);
+    _snprintf(buffer, sizeof_array(buffer), "%s():%d -- ", function, source_line);
     buffer[sizeof_array(buffer) - 1] = '\0';
 
     // Write out the line, tagged with function and line number.

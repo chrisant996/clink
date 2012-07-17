@@ -26,6 +26,7 @@
 
 #include "clink.h"
 #include "clink_util.h"
+#include "clink_pe.h"
 
 //------------------------------------------------------------------------------
 static DWORD get_parent_pid()
@@ -94,7 +95,7 @@ static void toggle_threads(DWORD pid, int on)
 //------------------------------------------------------------------------------
 int main(int argc, char** argv)
 {
-    int ret = 0;
+    int ret;
     DWORD parent_pid;
     HANDLE parent_process;
     BOOL is_wow_64[2];
@@ -103,24 +104,47 @@ int main(int argc, char** argv)
     BOOL t;
     void* thread_proc;
     char dll_path[512];
-    unsigned dll_path_size = sizeof(dll_path);
     HANDLE remote_thread;
+    HANDLE kernel32;
+    SYSTEM_INFO sys_info;
+    OSVERSIONINFOEX osvi;
+
+    ret = 0;
+    kernel32 = LoadLibraryA("kernel32.dll");
+
+    GetSystemInfo(&sys_info);
+
+    osvi.dwOSVersionInfoSize = sizeof(osvi);
+    GetVersionEx((void*)&osvi);
 
 #ifdef __MINGW32__
     typedef BOOL (WINAPI *_IsWow64Process)(HANDLE, BOOL*);
     _IsWow64Process IsWow64Process = (_IsWow64Process)GetProcAddress(
-        LoadLibraryA("kernel32.dll"),
+        kernel32,
         "IsWow64Process"
     );
 #endif // __MINGW32__
 
-    GetCurrentDirectory(dll_path_size, dll_path);
+    // Get path to clink's DLL that we'll inject.
+    GetCurrentDirectory(sizeof(dll_path), dll_path);
     strcat(dll_path, "\\");
     strcat(dll_path, CLINK_DLL_NAME);
 
+    // Reset log file, start logging!
     LOG_INFO(NULL);
+    LOG_INFO("System: ver=%d.%d %d.%d arch=%d cpus=%d cpu_type=%d page_size=%d",
+        osvi.dwMajorVersion,
+        osvi.dwMinorVersion,
+        osvi.wServicePackMajor,
+        osvi.wServicePackMinor,
+        sys_info.wProcessorArchitecture,
+        sys_info.dwNumberOfProcessors,
+        sys_info.dwProcessorType,
+        sys_info.dwPageSize
+    );
     LOG_INFO("DLL: %s", dll_path);
 
+    // Get the PID of the parent process that we're injecting into.
     parent_pid = get_parent_pid();
     if (parent_pid == -1)
     {
@@ -130,6 +154,7 @@ int main(int argc, char** argv)
 
     LOG_INFO("Parent pid: %d", parent_pid);
 
+    // Open the process so we can operate on it.
     parent_process = OpenProcess(
         PROCESS_QUERY_INFORMATION|
         PROCESS_CREATE_THREAD|
@@ -145,6 +170,7 @@ int main(int argc, char** argv)
         return -1;
     }
 
+    // Check arch matches.
     IsWow64Process(parent_process, is_wow_64);
     IsWow64Process(GetCurrentProcess(), is_wow_64 + 1);
     if (is_wow_64[0] != is_wow_64[1])
@@ -153,10 +179,11 @@ int main(int argc, char** argv)
         return -1;
     }
 
+    // Create a buffer in the process to write data to.
     buffer = VirtualAllocEx(
         parent_process,
         NULL,
-        dll_path_size,
+        sizeof(dll_path),
         MEM_COMMIT,
         PAGE_READWRITE
     );
@@ -166,28 +193,31 @@ int main(int argc, char** argv)
         return -1;
     }
 
-    thread_proc = GetProcAddress(LoadLibraryA("kernel32.dll"), "LoadLibraryA");
+    // We'll use LoadLibraryA as the entry point for out remote thread.
+    thread_proc = GetProcAddress(kernel32, "LoadLibraryA");
     if (thread_proc == NULL)
     {
-        LOG_ERROR("Failed to find LoadLibraryA address.");
+        LOG_ERROR("Failed to find LoadLibraryA address");
         return -1;
     }
 
+    // Tell remote process what DLL to load.
     t = WriteProcessMemory(
         parent_process,
         buffer,
         dll_path,
-        dll_path_size,
+        sizeof(dll_path),
         NULL
     );
     if (t == FALSE)
     {
-        LOG_ERROR("WriteProcessMemory() failed.");
+        LOG_ERROR("WriteProcessMemory() failed");
         return -1;
     }
     
     LOG_INFO("Creating remote thread at %p with parameter %p", thread_proc, buffer);
 
+    // Disable threads and create a remote thread.
     toggle_threads(parent_pid, 0);
     remote_thread = CreateRemoteThread(
         parent_process,
@@ -200,7 +230,7 @@ int main(int argc, char** argv)
     );
     if (remote_thread == NULL)
     {
-        LOG_ERROR("CreateRemoteThread() failed.");
+        LOG_ERROR("CreateRemoteThread() failed");
         return -1;
     }
 

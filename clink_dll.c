@@ -28,10 +28,13 @@ void                    save_history();
 void                    shutdown_lua();
 void                    clear_to_eol();
 int                     call_readline(const wchar_t*, wchar_t*, unsigned);
+int                     hook_iat(void*, const char*, const char*, void*);
+int                     hook_jmp(const char*, const char*, void*);
 
 extern int              clink_opt_ctrl_d_exit;
+int                     clink_opt_alt_hooking   = 0;
 static wchar_t*         g_write_cache           = NULL;
-static const int        g_write_cache_size      = 0xffff; // 0x10000 - 1 !!
+static const int        g_write_cache_size      = 0xffff;  // 0x10000 - 1 !!
 
 //------------------------------------------------------------------------------
 static const char* g_header = 
@@ -135,22 +138,25 @@ static BOOL WINAPI hooked_read_console(
         return ReadConsoleW(input, buffer, buffer_size, read_in, control);
     }
 
+    old_seh = SetUnhandledExceptionFilter(exception_filter);
+
     // In multi-line prompt situations, we're only interested in the last line.
     prompt = wcsrchr(g_write_cache, '\n');
     prompt = (prompt != NULL) ? (prompt + 1) : g_write_cache;
 
     // Call readline.
-    old_seh = SetUnhandledExceptionFilter(exception_filter);
     is_eof = call_readline(prompt, buffer, buffer_size);
     if (is_eof && clink_opt_ctrl_d_exit)
     {
         wcsncpy(buffer, L"exit", buffer_size);
     }
-    SetUnhandledExceptionFilter(old_seh);
+    g_write_cache[0] = L'\0';
 
     // Check for control codes and convert them.
     if (buffer[0] == L'\x03')
     {
+        SetUnhandledExceptionFilter(old_seh);
+
         // Fire a Ctrl-C exception. Cmd.exe sets a global variable (CtrlCSeen)
         // and ReadConsole() would normally set error code 0x3e3. Sleep() is to
         // yield the thread so the global gets set (guess work...).
@@ -159,12 +165,15 @@ static BOOL WINAPI hooked_read_console(
         Sleep(0);
 
         buffer[0] = '\0';
+        old_seh = SetUnhandledExceptionFilter(exception_filter);
     }
     else
     {
         emulate_doskey(buffer, buffer_size);
         append_crlf(buffer, buffer_size);
     }
+
+    SetUnhandledExceptionFilter(old_seh);
 
     *read_in = (unsigned)wcslen(buffer);
     return TRUE;
@@ -213,28 +222,11 @@ static BOOL WINAPI hooked_write_console(
 }
 
 //------------------------------------------------------------------------------
-static void* rva_to_addr(void* base_addr, unsigned rva)
-{
-    return (char*)rva + (uintptr_t)base_addr;
-}
-
-//------------------------------------------------------------------------------
-static DWORD make_page_writable(void* addr, unsigned size)
-{
-    DWORD old_state;
-    VirtualProtect(addr, size, PAGE_EXECUTE_READWRITE, &old_state);
-    return old_state;
-}
-
-//------------------------------------------------------------------------------
-static void restore_page_state(void* addr, unsigned size, unsigned state)
-{
-    VirtualProtect(addr, size, state, NULL);
-}
-
-//------------------------------------------------------------------------------
 static void prepare_env_for_inputrc(HINSTANCE instance)
 {
+    // Give readline a chance to find the inputrc by modifying the
+    // environment slightly.
+
     static const char inputrc_eq[] = "INPUTRC=";
     char* slash;
     char buffer[1024];
@@ -266,31 +258,118 @@ static void prepare_env_for_inputrc(HINSTANCE instance)
 }
 
 //------------------------------------------------------------------------------
-BOOL WINAPI DllMain(HINSTANCE instance, DWORD reason, LPVOID unused)
+static const char* get_kernel_dll()
 {
-    void* base_addr;
-    HANDLE kernel32 = LoadLibraryA("kernel32.dll");
+    // We're going to use a different DLL for Win8 (and onwards).
+
+    OSVERSIONINFOEX osvi;
+    DWORDLONG mask = 0;
+    int op=VER_GREATER_EQUAL;
+
+    ZeroMemory(&osvi, sizeof(OSVERSIONINFOEX));
+    osvi.dwOSVersionInfoSize = sizeof(OSVERSIONINFOEX);
+    osvi.dwMajorVersion = 6;
+    osvi.dwMinorVersion = 2;
+
+    VER_SET_CONDITION(mask, VER_MAJORVERSION, VER_GREATER_EQUAL);
+    VER_SET_CONDITION(mask, VER_MINORVERSION, VER_GREATER_EQUAL);
+
+    if (VerifyVersionInfo(&osvi, VER_MAJORVERSION|VER_MINORVERSION, mask))
+    {
+        return "kernelbase.dll";
+    }
+   
+    return "kernel32.dll";
+}
+
+//------------------------------------------------------------------------------
+static int apply_hooks(void* base)
+{
+    int i;
 
     struct hook_t
     {
-        const char* name;
-        void* to_hook;
-        void* the_hook;
+        const char* dlls;
+        const char* func_name;
+        void* hook;
     };
 
-    struct hook_t kernel32_hooks[] =
-    {
-        {
-            "ReadConsoleW",
-            GetProcAddress(kernel32, "ReadConsoleW"),
-            hooked_read_console
-        },
-        {
-            "WriteConsoleW",
-            GetProcAddress(kernel32, "WriteConsoleW"),
-            hooked_write_console
-        }
+    struct hook_t hooks[] = {
+        { get_kernel_dll(), "ReadConsoleW", hooked_read_console },
+        { get_kernel_dll(), "WriteConsoleW", hooked_write_console }
     };
+
+    for (i = 0; i < sizeof_array(hooks); ++i)
+    {
+        struct hook_t* hook = hooks + i;
+        int hook_ok = 0;
+
+        LOG_INFO("----------------------");
+        LOG_INFO("Hooking '%s' in '%s'", hook->func_name, hook->dlls);
+
+        // Hook method 1.
+        if (!clink_opt_alt_hooking)
+        {
+            hook_ok = hook_iat(base, hook->dlls, hook->func_name, hook->hook);
+            if (hook_ok)
+            {
+                continue;
+            }
+
+            LOG_INFO("Unable to hook IAT. Trying fallback method.\n");
+        }
+
+        // Hook method 2.
+        hook_ok = hook_jmp(hook->dlls, hook->func_name, hook->hook);
+        if (!hook_ok)
+        {
+            LOG_ERROR("Failed to hook '%s'", hook->func_name);
+            return 0;
+        }
+    }
+
+    return 1;
+}
+
+//------------------------------------------------------------------------------
+static void* validate_parent_process()
+{
+    void* base;
+     
+    base = (void*)GetModuleHandle("cmd.exe");
+    if (base == NULL)
+    {
+        LOG_INFO("Failed to find base address for 'cmd.exe'.");
+    }
+    else
+    {
+        LOG_INFO("Found base address for executable at %p.", base);
+    }
+
+    return base;
+}
+
+//------------------------------------------------------------------------------
+static void failed()
+{
+    char buffer[1024];
+
+    get_config_dir(buffer, sizeof(buffer));
+    printf(
+        "%s\n"
+        "--- !!!\n"
+        "--- !!! Sadly, clink failed to load.\n"
+        "--- !!! Log file; %s\\clink.log\n"
+        "--- !!!\n",
+        g_header,
+        buffer
+    );
+}
+
+//------------------------------------------------------------------------------
+BOOL WINAPI DllMain(HINSTANCE instance, DWORD reason, LPVOID unused)
+{
+    void* base;
 
     // We're only interested in when the dll is attached.
     if (reason != DLL_PROCESS_ATTACH)
@@ -304,94 +383,19 @@ BOOL WINAPI DllMain(HINSTANCE instance, DWORD reason, LPVOID unused)
         return TRUE;
     }
 
-    // Give readline a chance to find the inputrc by modifying the
-    // environment slightly.
     prepare_env_for_inputrc(instance);
-     
-    base_addr = (void*)GetModuleHandle("cmd.exe");
-    if (base_addr)
+
+    base = validate_parent_process();
+    if (base == NULL)
     {
-        IMAGE_DOS_HEADER* dos_header;
-        IMAGE_NT_HEADERS* nt_header;
-        IMAGE_DATA_DIRECTORY* data_dir;
-        unsigned i, j;
-        IMAGE_IMPORT_DESCRIPTOR* iid;
-
-        LOG_INFO("Found base address for executable at %p.", base_addr);
-
-        dos_header = (IMAGE_DOS_HEADER*)base_addr;
-        nt_header = (IMAGE_NT_HEADERS*)((char*)base_addr + dos_header->e_lfanew);
-        data_dir = nt_header->OptionalHeader.DataDirectory + 1;
-        if (data_dir == NULL)
-        {
-            LOG_INFO("Failed to find import table.");
-            return TRUE;
-        }
-
-        LOG_INFO(
-            "Found import table at %08X/%d.",
-            data_dir->VirtualAddress,
-            data_dir->Size
-        );
-
-        iid = (IMAGE_IMPORT_DESCRIPTOR*)(rva_to_addr(base_addr, data_dir->VirtualAddress));
-        for (i = 0; i < data_dir->Size / sizeof(*iid); ++i)
-        {
-            IMAGE_THUNK_DATA* itd;
-            char* name = (char*)rva_to_addr(base_addr, iid->Name);
-            if (stricmp(name, "kernel32.dll") != 0)
-            {
-                ++iid;
-                continue;
-            }
-
-            LOG_INFO("Found 'kernel32.dll' import table.");
-
-            for (j = 0; j < sizeof_array(kernel32_hooks); ++j)
-            {
-                struct hook_t* hook = kernel32_hooks + j;
-
-                LOG_INFO("Searching for '%s' import.", hook->name);
-
-                itd = rva_to_addr(base_addr, iid->FirstThunk);
-                while (itd->u1.Function > 0)
-                {
-                    BOOL ok;
-                    DWORD page_state;
-                    uintptr_t addr = itd->u1.Function;
-                    void* addr_loc = &itd->u1.Function;
-
-                    // Is this the address we want to hook?
-                    if (addr != (uintptr_t)hook->to_hook)
-                    {
-                        ++itd;
-                        continue;
-                    }
-
-                    LOG_INFO("Hooking %p", itd);
-
-                    page_state = make_page_writable(addr_loc, sizeof(uintptr_t));
-                    ok = WriteProcessMemory(
-                        GetCurrentProcess(),
-                        addr_loc,
-                        &(hook->the_hook),
-                        sizeof(uintptr_t),
-                        NULL
-                    );
-                    LOG_INFO("GetLastError = %d", GetLastError());
-                    LOG_INFO("...%s", (ok != FALSE) ? "ok" : "failed - PANIC!");
-
-                    restore_page_state(addr_loc, sizeof(uintptr_t), page_state);
-                    break;
-                }
-            }
-
-            break;
-        }
+        failed();
+        return FALSE;
     }
-    else
+
+    if (!apply_hooks(base))
     {
-        LOG_INFO("Failed to find base address for 'cmd.exe'.");
+        failed();
+        return FALSE;
     }
 
     return TRUE;

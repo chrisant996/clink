@@ -43,11 +43,11 @@ void clear_to_eol()
     int i;
     int width;
     DWORD length;
-    const char space[] = "                ";
+    const wchar_t spaces[] = L"                ";
 
     GetConsoleScreenBufferInfo(handle, &csbi);
     width = csbi.srWindow.Right - csbi.srWindow.Left;
-    length = sizeof_array(space) - 1;
+    length = sizeof_array(spaces) - 1;
 
     for (i = csbi.dwCursorPosition.X; i < width; i += length)
     {
@@ -57,7 +57,7 @@ void clear_to_eol()
             to_write = length;
         }
 
-        WriteConsole(handle, space, to_write, &to_write, NULL);
+        WriteConsoleW(handle, spaces, to_write, &to_write, NULL);
     }
 
     SetConsoleCursorPosition(handle, csbi.dwCursorPosition);
