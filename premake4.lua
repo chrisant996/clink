@@ -129,13 +129,6 @@ project("clink_dll")
         links("dbghelp")
 
 --------------------------------------------------------------------------------
-project("clink_sandbox")
-    language("c")
-    kind("consoleapp")
-    links("clink_dll")
-    files("clink_sandbox.c")
-
---------------------------------------------------------------------------------
 project("clink")
     language("c")
     kind("consoleapp")

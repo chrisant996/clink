@@ -29,17 +29,6 @@
 #   define CLINK_API            __declspec(dllimport)
 #endif
 
-#define PROTOTYPE(x) int x(     \
-    const wchar_t* prompt,      \
-    wchar_t* result,            \
-    unsigned result_size        \
-);
-
-PROTOTYPE(CLINK_API call_readline)
-typedef PROTOTYPE((*call_readline_t))
-
-#undef PROTOTYPE
-
 #define AS_STR(x)               AS_STR_IMPL(x)
 #define AS_STR_IMPL(x)          #x
 

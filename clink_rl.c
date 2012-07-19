@@ -521,7 +521,7 @@ static void add_to_history(const char* line)
 }
 
 //------------------------------------------------------------------------------
-int CLINK_API call_readline(
+int call_readline(
     const wchar_t* prompt,
     wchar_t* result,
     unsigned size

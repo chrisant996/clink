@@ -27,6 +27,8 @@
 void                    save_history();
 void                    shutdown_lua();
 void                    clear_to_eol();
+int                     call_readline(const wchar_t*, wchar_t*, unsigned);
+
 extern int              clink_opt_ctrl_d_exit;
 static wchar_t*         g_write_cache           = NULL;
 static const int        g_write_cache_size      = 0xffff; // 0x10000 - 1 !!
