@@ -26,7 +26,7 @@ static const int MAX_NAME_LEN = 2048;
 
 struct DIR
 {
-    long                  handle; /* -1 for failed rewind */
+    intptr_t              handle; /* -1 for failed rewind */
     struct _wfinddata64_t info;
     struct dirent         result; /* d_name null iff first time */
     wchar_t               *name;  /* null-terminated char string */
@@ -132,7 +132,7 @@ DIR *opendir(const char *name)
             );
             wcscat(dir->name, all);
 
-            if ((dir->handle = (long) _wfindfirst64(dir->name, &dir->info)) != -1)
+            if ((dir->handle = (intptr_t) _wfindfirst64(dir->name, &dir->info)) != -1)
             {
                 dir->conv_buf = (char*)malloc(MAX_NAME_LEN);
                 dir->result.d_name = 0;
@@ -236,7 +236,7 @@ void rewinddir(DIR *dir)
     if (dir && dir->handle != -1)
     {
         _findclose(dir->handle);
-        dir->handle = (long) _wfindfirst64(dir->name, &dir->info);
+        dir->handle = (intptr_t) _wfindfirst64(dir->name, &dir->info);
         dir->result.d_name = 0;
     }
     else
