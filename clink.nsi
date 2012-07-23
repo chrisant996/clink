@@ -67,6 +67,7 @@ Section "!Application files"
     SetOutPath $INSTDIR
     File ${CLINK_SOURCE}\*.dll
     File ${CLINK_SOURCE}\*.lua
+    File ${CLINK_SOURCE}\*.txt
     File ${CLINK_SOURCE}\clink_x*.exe
     File ${CLINK_SOURCE}\*.bat
     File ${CLINK_SOURCE}\*_inputrc

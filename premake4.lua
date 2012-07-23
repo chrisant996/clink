@@ -121,11 +121,13 @@ project("clink_dll")
     configuration("release")
         build_postbuild("clink_inputrc", "release")
         build_postbuild("clink_*.lua", "release")
+        build_postbuild("clink_*.txt", "release")
         build_postbuild("clink.bat", "release")
 
     configuration("debug")
         build_postbuild("clink_inputrc", "debug")
         build_postbuild("clink_*.lua", "debug")
+        build_postbuild("clink_*.txt", "debug")
         build_postbuild("clink.bat", "debug")
 
     configuration("vs*")
@@ -181,6 +183,7 @@ newaction {
             "clink_dll_x*.pdb",
             "clink_inputrc",
             "clink_*.lua",
+            "clink_*.txt",
             "..\\..\\..\\..\\clink.bat",
         }
 
