@@ -88,7 +88,7 @@ goto :eof
     set autorun=%~s0 inject
     call :get_reg_key %1 AutoRun
     if not "%ret%"=="" (
-        set autorun=%~s0 inject ^&^& %ret:&=^&%
+        set autorun=%ret:&=^&% ^&^& %~s0 inject
     )
     call :set_reg_key %1 AutoRunPreClinkInstall "%ret%"
     call :set_reg_key %1 AutoRun "%autorun%"
