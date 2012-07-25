@@ -27,6 +27,7 @@
 void                    save_history();
 void                    shutdown_lua();
 void                    clear_to_eol();
+void                    emulate_doskey(wchar_t*, unsigned);
 int                     call_readline(const wchar_t*, wchar_t*, unsigned);
 int                     hook_iat(void*, const char*, const char*, void*);
 int                     hook_jmp(const char*, const char*, void*);
@@ -84,24 +85,6 @@ static LONG WINAPI exception_filter(EXCEPTION_POINTERS* info)
     // to continue!
 
     return EXCEPTION_EXECUTE_HANDLER;
-}
-
-//------------------------------------------------------------------------------
-static void emulate_doskey(wchar_t* buffer, DWORD max_size)
-{
-    // ReadConsoleW() will postprocess what the user enters, resolving any
-    // aliases that may be registered (aka doskey macros). As we've skipped this
-    // step, we have to resolve aliases ourselves.
-
-    wchar_t exe_buf[MAX_PATH];
-    wchar_t* exe;
-    wchar_t* slash;
-
-    GetModuleFileNameW(NULL, exe_buf, sizeof(exe_buf));
-    slash = wcsrchr(exe_buf, L'\\');
-    exe = (slash != NULL) ? (slash + 1) : exe_buf;
-
-    GetConsoleAliasW(buffer, buffer, max_size, exe);
 }
 
 //------------------------------------------------------------------------------
