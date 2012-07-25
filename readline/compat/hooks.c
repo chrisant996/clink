@@ -98,16 +98,12 @@ size_t hooked_mbrlen(const char* in, size_t size, mbstate_t* state)
 //------------------------------------------------------------------------------
 int hooked_stat(const char* path, struct hooked_stat* out)
 {
+    int ret = -1;
+    WIN32_FILE_ATTRIBUTE_DATA fad;
     wchar_t buf[2048];
     size_t characters;
-#if defined(_MSC_VER)
-    struct _stat64i32 s;
-#else
-    struct _stat s;
-#endif
-    int ret;
 
-    // UTF8 to wchars.
+    // Utf8 to wchars.
     characters = MultiByteToWideChar(
         CP_UTF8, 0,
         path, -1,
@@ -117,13 +113,25 @@ int hooked_stat(const char* path, struct hooked_stat* out)
     characters = characters ? characters : sizeof_array(buf) - 1;
     buf[characters] = L'\0';
 
-    // Get stats, convert to magic struct hack thing.
-    ret = _wstat(buf, &s);
-    out->st_size = s.st_size;
-    out->st_mode = s.st_mode;
+    // Get properties.
+    out->st_size = 0;
+    out->st_mode = 0;
+    if (GetFileAttributesExW(buf, GetFileExInfoStandard, &fad) != 0)
+    {
+        unsigned dir_bit;
+
+        dir_bit = (fad.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) ? _S_IFDIR : 0;
+
+        out->st_size = fad.nFileSizeLow;
+        out->st_mode |= dir_bit;
+        ret = 0;
+    }
+    else
+    {
+        // Set errno...
+    }
 
     return ret;
-
 }
 
 //------------------------------------------------------------------------------
@@ -137,5 +145,4 @@ int hooked_fstat(int fid, struct hooked_stat* out)
     out->st_mode = s.st_mode;
 
     return ret;
-
 }
