@@ -25,6 +25,20 @@ local to = ".build/"..(_ACTION or "nullaction")
 local clink_ver = _OPTIONS["clink_ver"] or "HEAD"
 
 --------------------------------------------------------------------------------
+if _ACTION ~= "clink_release" then
+    -- Create a shim premake4 script so we can call premake from sln folder.
+    if not shimmed then
+        os.mkdir(to)
+        local out = io.open(to.."/premake4.lua", "w")
+        if out then
+            out:write("shimmed = 1", "\n")
+            out:write("dofile(\"".._SCRIPT.."\")", "\n")
+            io.close(out)
+        end
+    end
+end
+
+--------------------------------------------------------------------------------
 local function build_postbuild(src, cfg)
     postbuildcommands("copy /y \"..\\..\\"..src.."\" \"bin\\"..cfg.."\" 1>nul 2>nul")
 end
