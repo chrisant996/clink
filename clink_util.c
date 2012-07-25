@@ -33,30 +33,6 @@ void str_cat(char* dest, const char* src, int n)
 }
 
 //------------------------------------------------------------------------------
-void get_config_dir(char* buffer, int size)
-{
-    static int once = 1;
-    const char* app_dir;
-
-    buffer[0] = '\0';
-
-    app_dir = getenv("ALLUSERSPROFILE");
-    if (app_dir == NULL)
-    {
-        return;
-    }
-
-    str_cat(buffer, app_dir, size);
-    str_cat(buffer, "\\clink", size);
-
-    if (once)
-    {
-        CreateDirectory(buffer, NULL);
-        once = 0;
-    }
-}
-
-//------------------------------------------------------------------------------
 void get_dll_dir(char* buffer, int size)
 {
     BOOL ok;
@@ -82,6 +58,45 @@ void get_dll_dir(char* buffer, int size)
     if (slash != NULL)
     {
         *slash = '\0';
+    }
+}
+
+//------------------------------------------------------------------------------
+void get_config_dir(char* buffer, int size)
+{
+    static int once = 1;
+
+    int i;
+    const char* app_dir;
+    const char* env_vars[] = {
+        "ALLUSERSPROFILE",
+        "USERPROFILE"
+    };
+
+    buffer[0] = '\0';
+
+    for (i = 0; i < sizeof_array(env_vars); ++i)
+    {
+        app_dir = getenv(env_vars[i]);
+        if (app_dir != NULL)
+        {
+            break;
+        }
+    }
+
+    if (app_dir == NULL)
+    {
+        get_dll_dir(buffer, size);
+        return;
+    }
+
+    str_cat(buffer, app_dir, size);
+    str_cat(buffer, "\\clink", size);
+
+    if (once)
+    {
+        CreateDirectory(buffer, NULL);
+        once = 0;
     }
 }
 
