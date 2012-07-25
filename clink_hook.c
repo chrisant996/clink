@@ -105,17 +105,24 @@ static char* alloc_trampoline(void* hint)
 
     GetSystemInfo(&sys_info);
 
-    vm_alloc_base = get_alloc_base(hint);
-    tramp_page = (char*)vm_alloc_base - sys_info.dwPageSize;
+    do
+    {
+        vm_alloc_base = get_alloc_base(hint);
+        vm_alloc_base = vm_alloc_base ? vm_alloc_base : hint;
+        tramp_page = (char*)vm_alloc_base - sys_info.dwPageSize;
 
-    trampoline = VirtualAlloc(
-        tramp_page,
-        sys_info.dwPageSize,
-        MEM_COMMIT|MEM_RESERVE,
-        PAGE_EXECUTE_READWRITE
-    );
+        trampoline = VirtualAlloc(
+            tramp_page,
+            sys_info.dwPageSize,
+            MEM_COMMIT|MEM_RESERVE,
+            PAGE_EXECUTE_READWRITE
+        );
 
-    return trampoline ? trampoline : alloc_trampoline(tramp_page);
+        hint = tramp_page;
+    }
+    while (trampoline == NULL);
+
+    return trampoline;
 }
 
 //------------------------------------------------------------------------------
