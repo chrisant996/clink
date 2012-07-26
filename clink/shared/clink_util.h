@@ -19,38 +19,21 @@
  * SOFTWARE.
  */
 
-#ifndef CLINK_PCH
-#define CLINK_PCH
+#ifndef CLINK_UTIL_H
+#define CLINK_UTIL_H
 
-#include <stdio.h>
-#include <conio.h>
-#include <io.h>
-#include <locale.h>
-#include <stdlib.h>
-#ifdef __MINGW32__
-#   include <stdint.h>
-#endif
+void str_cat(char* dest, const char* src, int n);
+void get_config_dir(char* buffer, int size);
+void get_dll_dir(char* buffer, int size);
+void log_line(const char* function, int source_line, const char* format, ...);
+void log_error(const char* function, int source_line, const char* format, ...);
 
-#include <Windows.h>
-#ifndef __MINGW32__
-#   include <DbgHelp.h>
-#else
-    typedef void* PCONSOLE_READCONSOLE_CONTROL;
-#endif
+#define LOG_INFO(...)   log_line(__FUNCTION__, __LINE__, __VA_ARGS__)
+#define LOG_ERROR(...)  log_error(__FUNCTION__, __LINE__, __VA_ARGS__)
 
-#ifdef CLINK_USE_READLINE
-#   include <readline/readline.h>
-#   include <readline/history.h>
-#   include <readline/rldefs.h>
-#   include <compat/dirent.h>
-#endif
+#define AS_STR(x)       AS_STR_IMPL(x)
+#define AS_STR_IMPL(x)  #x
 
-#ifdef CLINK_USE_LUA
-#   include "lua.h"
-#   include "lauxlib.h"
-#   include "lualib.h"
-#endif
+#define sizeof_array(x) (sizeof((x)) / sizeof((x)[0]))
 
-#define sizeof_array(x) (sizeof(x)/sizeof(x[0]))
-
-#endif // CLINK_PCH
+#endif // CLINK_UTIL_H

@@ -19,16 +19,11 @@
  * SOFTWARE.
  */
 
-#ifndef CLINK_UTIL_H
-#define CLINK_UTIL_H
+#ifndef CLINK_PCH_H
+#define CLINK_PCH_H
 
-void str_cat(char* dest, const char* src, int n);
-void get_config_dir(char* buffer, int size);
-void get_dll_dir(char* buffer, int size);
-void log_line(const char* function, int source_line, const char* format, ...);
-void log_error(const char* function, int source_line, const char* format, ...);
+#include <stdio.h>
 
-#define LOG_INFO(...)   log_line(__FUNCTION__, __LINE__, __VA_ARGS__)
-#define LOG_ERROR(...)  log_error(__FUNCTION__, __LINE__, __VA_ARGS__)
+#include <Windows.h>
 
-#endif // CLINK_UTIL_H
+#endif // CLINK_PCH_H

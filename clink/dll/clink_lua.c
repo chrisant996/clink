@@ -20,7 +20,7 @@
  */
 
 #include "clink_pch.h"
-#include "clink_util.h"
+#include "shared/clink_util.h"
 
 //------------------------------------------------------------------------------
 static int          reload_lua_state(int count, int invoking_key);

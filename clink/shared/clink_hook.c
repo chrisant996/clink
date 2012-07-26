@@ -64,7 +64,6 @@ static void* get_proc_addr(const char* dll, const char* func_name)
 //------------------------------------------------------------------------------
 int hook_iat(void* base, const char* dll, const char* func_name, void* hook)
 {
-    const void* iat;
     void* func_addr;
     void** imp;
 
@@ -219,7 +218,6 @@ static char* write_trampoline_out(char* write, void* to_hook, void* hook)
 static char* write_trampoline_in(char* write, void* to_hook, int n)
 {
     int i;
-    intptr_t disp;
 
     // Copy
     for (i = 0; i < n; ++i)
@@ -288,7 +286,6 @@ static void* hook_jmp_impl(void* to_hook, void* hook)
         unsigned mask = asm_tag->mask;
         char* trampoline;
         char* write;
-        DWORD state;
         int n;
 
         // Find
@@ -339,7 +336,6 @@ int hook_jmp(const char* dll, const char* func_name, void* hook)
     void* our_base;
     void* func_addr;
     void* trampoline;
-    const void* iat;
     void** imp;
 
     // Get the address of the function we're going to hook.

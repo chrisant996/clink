@@ -25,7 +25,18 @@ local to = ".build/"..(_ACTION or "nullaction")
 local clink_ver = _OPTIONS["clink_ver"] or "HEAD"
 
 --------------------------------------------------------------------------------
-if _ACTION ~= "clink_release" then
+local pchheader_original = pchheader
+local function pchheader_fixed(header)
+    if _ACTION == "vs2010" then
+        header = path.getname(header)
+    end
+
+    pchheader_original(header)
+end
+pchheader = pchheader_fixed
+
+--------------------------------------------------------------------------------
+if _ACTION and _ACTION ~= "clink_release" then
     -- Create a shim premake4 script so we can call premake from sln folder.
     if not shimmed then
         os.mkdir(to)
@@ -40,7 +51,13 @@ end
 
 --------------------------------------------------------------------------------
 local function build_postbuild(src, cfg)
-    postbuildcommands("copy /y \"..\\..\\"..src.."\" \"bin\\"..cfg.."\" 1>nul 2>nul")
+    src = path.getabsolute(src)
+    src = path.translate(src)
+
+    local dest = to.."/bin/"..cfg
+    dest = path.getabsolute(dest)
+    dest = path.translate(dest)
+    postbuildcommands("copy /y \""..src.."\" \""..dest.."\" 1>nul 2>nul")
 end
 
 --------------------------------------------------------------------------------
@@ -108,49 +125,53 @@ project("lua")
 project("clink_dll")
     language("c")
     kind("sharedlib")
-
     links("lua")
     links("readline")
-    files("clink_rl.c")
-    files("clink_lua.c")
-    files("clink_dll.c")
-    files("clink_util.*")
-    files("clink_pch.c")
-    files("clink_hook.c")
-    files("clink_doskey.c")
-    files("clink_vm.*")
-    files("clink_pe.*")
-    files("clink.h")
-    files("clink_*.lua")
+    links("clink_shared")
     includedirs("lua/src")
+    includedirs("clink")
     defines("CLINK_DLL_BUILD")
     defines("CLINK_USE_READLINE")
     defines("CLINK_USE_LUA")
-    pchsource("clink_pch.c")
-    pchheader("clink_pch.h")
+    pchsource("clink/dll/clink_pch.c")
+    pchheader("clink/dll/clink_pch.h")
+    files("clink/dll/*")
 
     configuration("release")
-        build_postbuild("clink_inputrc", "release")
-        build_postbuild("clink_*.lua", "release")
-        build_postbuild("clink_*.txt", "release")
-        build_postbuild("clink.bat", "release")
+        build_postbuild("clink/dll/clink_inputrc", "release")
+        build_postbuild("clink/dll/clink_*.lua", "release")
 
     configuration("debug")
-        build_postbuild("clink_inputrc", "debug")
-        build_postbuild("clink_*.lua", "debug")
-        build_postbuild("clink_*.txt", "debug")
-        build_postbuild("clink.bat", "debug")
+        build_postbuild("clink/dll/clink_inputrc", "debug")
+        build_postbuild("clink/dll/clink_*.lua", "debug")
 
     configuration("vs*")
         links("dbghelp")
 
 --------------------------------------------------------------------------------
-project("clink")
+project("clink_loader")
     language("c")
     kind("consoleapp")
-    files("clink_loader.c")
-    files("clink_util.c")
-    files("clink_pe.*")
+    links("clink_shared")
+    targetname("clink")
+    includedirs("clink")
+    files("clink/loader/*")
+
+    configuration("release")
+        build_postbuild("clink_*.txt", "release")
+        build_postbuild("clink/loader/clink.bat", "release")
+
+    configuration("debug")
+        build_postbuild("clink_*.txt", "debug")
+        build_postbuild("clink/loader/clink.bat", "debug")
+
+--------------------------------------------------------------------------------
+project("clink_shared")
+    language("c")
+    kind("staticlib")
+    pchsource("clink/shared/clink_pch.c")
+    pchheader("clink/shared/clink_pch.h")
+    files("clink/shared/*")
 
 --------------------------------------------------------------------------------
 newaction {
@@ -195,7 +216,7 @@ newaction {
             "clink_inputrc",
             "clink_*.lua",
             "clink_*.txt",
-            "..\\..\\..\\..\\clink.bat",
+            "clink.bat",
         }
 
         exec("md "..dest)

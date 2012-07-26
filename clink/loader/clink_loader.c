@@ -24,9 +24,10 @@
 
 #include <stdio.h>
 
-#include "clink.h"
-#include "clink_util.h"
-#include "clink_pe.h"
+#include "shared/clink_util.h"
+#include "shared/clink_pe.h"
+
+#define CLINK_DLL_NAME "clink_" AS_STR(PLATFORM) "_dll.dll"
 
 //------------------------------------------------------------------------------
 static DWORD get_parent_pid()

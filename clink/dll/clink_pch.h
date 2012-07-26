@@ -19,19 +19,36 @@
  * SOFTWARE.
  */
 
-#ifndef CLINK_H
-#define CLINK_H
+#ifndef CLINK_PCH
+#define CLINK_PCH
 
-#undef CLINK_API
-#if defined(CLINK_DLL_BUILD)
-#   define CLINK_API            __declspec(dllexport)
-#else
-#   define CLINK_API            __declspec(dllimport)
+#include <stdio.h>
+#include <conio.h>
+#include <io.h>
+#include <locale.h>
+#include <stdlib.h>
+#ifdef __MINGW32__
+#   include <stdint.h>
 #endif
 
-#define AS_STR(x)               AS_STR_IMPL(x)
-#define AS_STR_IMPL(x)          #x
+#include <Windows.h>
+#ifndef __MINGW32__
+#   include <DbgHelp.h>
+#else
+    typedef void* PCONSOLE_READCONSOLE_CONTROL;
+#endif
 
-#define CLINK_DLL_NAME          "clink_dll_" AS_STR(PLATFORM) ".dll"
+#ifdef CLINK_USE_READLINE
+#   include <readline/readline.h>
+#   include <readline/history.h>
+#   include <readline/rldefs.h>
+#   include <compat/dirent.h>
+#endif
 
-#endif // CLINK_H
+#ifdef CLINK_USE_LUA
+#   include "lua.h"
+#   include "lauxlib.h"
+#   include "lualib.h"
+#endif
+
+#endif // CLINK_PCH

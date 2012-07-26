@@ -20,8 +20,7 @@
  */
 
 #include "clink_pch.h"
-#include "clink.h"
-#include "clink_util.h"
+#include "shared/clink_util.h"
 
 //------------------------------------------------------------------------------
 void            initialise_lua();
