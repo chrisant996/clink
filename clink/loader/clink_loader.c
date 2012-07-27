@@ -27,7 +27,7 @@
 #include "shared/clink_util.h"
 #include "shared/clink_pe.h"
 
-#define CLINK_DLL_NAME "clink_" AS_STR(PLATFORM) "_dll.dll"
+#define CLINK_DLL_NAME "clink_dll_" AS_STR(PLATFORM) ".dll"
 
 //------------------------------------------------------------------------------
 static DWORD get_parent_pid()
