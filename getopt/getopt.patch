@@ -1,0 +1,27 @@
+diff --git a/getopt/getopt.c b/getopt/getopt.c
+index 6986c35..41e397b 100644
+--- a/getopt/getopt.c
++++ b/getopt/getopt.c
+@@ -33,7 +33,9 @@ YOUR INFORMATION HANDLING SYSTEM OR OTHERWISE, EVEN If WE ARE
+ EXPRESSLY ADVISED OF THE POSSIBILITY OF SUCH DAMAGES. 
+ */
+ 
++#ifndef _CRT_SECURE_NO_WARNINGS
+ #define _CRT_SECURE_NO_WARNINGS
++#endif
+ #include <stdlib.h>
+ #include <stdio.h>
+ #include "getopt.h"
+diff --git a/getopt/getopt.h b/getopt/getopt.h
+index 3684acb..eba2ad4 100644
+--- a/getopt/getopt.h
++++ b/getopt/getopt.h
+@@ -42,7 +42,7 @@ EXPRESSLY ADVISED OF THE POSSIBILITY OF SUCH DAMAGES.
+ #if defined(EXPORTS_GETOPT) && defined(STATIC_GETOPT)
+ #error "The preprocessor definitions of EXPORTS_GETOPT and STATIC_GETOPT can only be used individually"
+ #elif defined(STATIC_GETOPT)
+-#pragma message("Warning static builds of getopt violate the Lesser GNU Public License")
++//#pragma message("Warning static builds of getopt violate the Lesser GNU Public License")
+ #define _GETOPT_API
+ #elif defined(EXPORTS_GETOPT)
+ #pragma message("Exporting getopt library")

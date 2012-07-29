@@ -112,6 +112,13 @@ project("readline")
     excludes("readline/readline/vi_keymap.c")
 
 --------------------------------------------------------------------------------
+project("getopt")
+    language("c")
+    kind("staticlib")
+    defines("STATIC_GETOPT")
+    files("getopt/*")
+
+--------------------------------------------------------------------------------
 project("lua")
     language("c")
     kind("staticlib")
