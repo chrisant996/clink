@@ -19,52 +19,14 @@
  * SOFTWARE.
  */
 
-#include "clink_pch.h"
-#include "shared/clink_util.h"
+#ifndef CLINK_PCH
+#define CLINK_PCH
 
-//------------------------------------------------------------------------------
-int inject(int, char**);
+#include <stdio.h>
 
-//------------------------------------------------------------------------------
-static int dispatch_verb(const char* verb, int argc, char** argv)
-{
-    struct {
-        const char* verb;
-        int (*handler)(int, char**);
-    } handlers[] = {
-        "inject", inject
-    };
+#include <Windows.h>
+#include <Tlhelp32.h>
 
-    int i;
+#include "getopt.h"
 
-    for (i = 0; i < sizeof_array(handlers); ++i)
-    {
-        if (strcmp(verb, handlers[i].verb) == 0)
-        {
-            return handlers[i].handler(argc, argv);
-        }
-    }
-
-    return -1;
-}
-
-//------------------------------------------------------------------------------
-int main(int argc, char** argv)
-{
-    int arg;
-
-    // Use getopt to find a verb.
-    opterr = 0;
-    while ((arg = getopt(argc, argv, "")) != -1)
-    {
-    }
-    opterr = 1;
-
-    // Dispatch the verb is one was found.
-    if (optind < argc)
-    {
-        return dispatch_verb(argv[optind], argc, argv);
-    }
-
-    return -1;
-}
+#endif // CLINK_PCH

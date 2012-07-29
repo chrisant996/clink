@@ -36,9 +36,9 @@ if "%1"=="" (
 if /i "%1"=="inject" (
     pushd %~dps0
     if "%PROCESSOR_ARCHITECTURE%"=="x86" (
-        %~n0_x86.exe
+        %~n0_x86.exe %*
     ) else (
-        %~n0_x64.exe
+        %~n0_x64.exe %*
     )
     popd
     goto :eof
