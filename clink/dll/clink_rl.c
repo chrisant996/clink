@@ -23,24 +23,25 @@
 #include "shared/clink_util.h"
 
 //------------------------------------------------------------------------------
-void            initialise_lua();
-char**          lua_generate_matches(const char*, int, int);
-void            move_cursor(int, int);
+void                initialise_lua();
+char**              lua_generate_matches(const char*, int, int);
+void                move_cursor(int, int);
 
-int             g_match_palette[3]              = { -1, -1, -1 };
-int             clink_opt_passthrough_ctrl_c    = 1;
-int             clink_opt_ctrl_d_exit           = 1;
-int             clink_opt_esc_clears_line       = 1; 
-extern int      rl_visible_stats;
-extern char*    _rl_term_forward_char;
-extern char*    _rl_term_clreol;
-extern char*    _rl_term_clrpag;
-extern int      _rl_screenwidth;
-extern int      _rl_screenheight;
-extern int      rl_display_fixed;
-extern int      rl_editing_mode;
-extern int      _rl_complete_mark_directories;
-static int      g_new_history_count             = 0;
+int                 g_match_palette[3]              = { -1, -1, -1 };
+int                 clink_opt_passthrough_ctrl_c    = 1;
+int                 clink_opt_ctrl_d_exit           = 1;
+int                 clink_opt_esc_clears_line       = 1; 
+extern int          rl_visible_stats;
+extern char*        _rl_term_forward_char;
+extern char*        _rl_term_clreol;
+extern char*        _rl_term_clrpag;
+extern int          _rl_screenwidth;
+extern int          _rl_screenheight;
+extern int          rl_display_fixed;
+extern int          rl_editing_mode;
+extern const char*  rl_filename_quote_characters;
+extern int          _rl_complete_mark_directories;
+static int          g_new_history_count             = 0;
 
 //------------------------------------------------------------------------------
 // This ensures the cursor is visible as printing to the console usually makes
@@ -114,6 +115,7 @@ static int postprocess_matches(char** matches)
 {
     char** m;
     int need_quote;
+    int first_needs_quotes;
 
     // Convert forward slashes to backward ones and while we're at it, check
     // for spaces.
@@ -121,21 +123,37 @@ static int postprocess_matches(char** matches)
     m = matches;
     while (*m)
     {
-        char* c = *m++;
+        char* c = *m;
         while (*c)
         {
             *c = (*c == '/') ? '\\' : *c;
             if (*c != '\\')
             {
-                need_quote |= (strchr(rl_completer_word_break_characters, *c) != NULL);
+                need_quote |= (strchr(rl_filename_quote_characters, *c) != NULL);
             }
 
             ++c;
         }
+
+        if (m == matches)
+        {
+            first_needs_quotes = need_quote;
+        }
+
+        ++m;
     }
 
-#if 0
-    // Do we need to prepend a quote?
+    // If match[0] already has a character that needs a quote, readline will
+    // do it automatically.
+    need_quote &= !first_needs_quotes;
+
+    // Readline tells us if there was a quote already.
+    need_quote &= !(rl_completion_found_quote & RL_QF_DOUBLE_QUOTE);
+
+    // It's confusing if a quote is added when the first match is empty.
+    need_quote &= !!(**matches);
+
+    // So... do we need to prepend a quote?
     if (need_quote)
     {
         char* c = malloc(strlen(matches[0]) + 2);
@@ -145,7 +163,6 @@ static int postprocess_matches(char** matches)
         c[0] = '\"';
         matches[0] = c;
     }
-#endif
 
     return 0;
 }
@@ -468,6 +485,9 @@ static int initialise_hook()
     rl_completer_word_break_characters = rl_basic_word_break_characters;
     rl_completion_display_matches_hook = display_matches;
     rl_attempted_completion_function = alternative_matches;
+
+    rl_basic_quote_characters = "\"";
+    rl_filename_quote_characters = " ";
 
     rl_add_funmap_entry("clink-completion-shim", completion_shim);
     rl_add_funmap_entry("ctrl-c", ctrl_c);
