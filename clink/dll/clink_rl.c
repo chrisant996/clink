@@ -30,6 +30,7 @@ void            move_cursor(int, int);
 int             g_match_palette[3]              = { -1, -1, -1 };
 int             clink_opt_passthrough_ctrl_c    = 1;
 int             clink_opt_ctrl_d_exit           = 1;
+int             clink_opt_esc_clears_line       = 1; 
 extern int      rl_visible_stats;
 extern char*    _rl_term_forward_char;
 extern char*    _rl_term_clreol;
@@ -37,6 +38,7 @@ extern char*    _rl_term_clrpag;
 extern int      _rl_screenwidth;
 extern int      _rl_screenheight;
 extern int      rl_display_fixed;
+extern int      rl_editing_mode;
 extern int      _rl_complete_mark_directories;
 static int      g_new_history_count             = 0;
 
@@ -64,14 +66,17 @@ static int getc_impl(FILE* stream)
             i = 0xe0;
         }
 
-        // treat esc like cmd.exe does - clear the line.
+        // Treat esc like cmd.exe does - clear the line.
         if (i == 0x1b)
         {
-            using_history();
-            rl_delete_text(0, rl_end);
-            rl_point = 0;
-            display();
-            continue;
+            if (rl_editing_mode == emacs_mode && clink_opt_esc_clears_line)
+            {
+                using_history();
+                rl_delete_text(0, rl_end);
+                rl_point = 0;
+                display();
+                continue;
+            }
         }
 
         if (i < 0x7f || i == 0xe0)
