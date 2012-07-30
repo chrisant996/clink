@@ -80,8 +80,8 @@ void clear_screen()
 
     full_buffer.Left = 0;
     full_buffer.Top = 0;
-    full_buffer.Right = csbi.dwMaximumWindowSize.X;
-    full_buffer.Bottom = csbi.dwMaximumWindowSize.Y;
+    full_buffer.Right = csbi.dwSize.X;
+    full_buffer.Bottom = csbi.dwSize.Y;
     dest_origin.X = 0;
     dest_origin.Y = -full_buffer.Bottom - 1;
     fill.Char.UnicodeChar = L' ';
