@@ -36,7 +36,7 @@ end
 pchheader = pchheader_fixed
 
 --------------------------------------------------------------------------------
-if _ACTION and _ACTION ~= "clink_release" then
+if _ACTION and _ACTION ~= "clean" and _ACTION:find("clink_") then
     -- Create a shim premake4 script so we can call premake from sln folder.
     if not shimmed then
         os.mkdir(to)
@@ -258,4 +258,25 @@ newoption {
    trigger     = "clink_ver",
    value       = "VER",
    description = "The version of clink to build when using the clink_release action"
+}
+
+--------------------------------------------------------------------------------
+newaction {
+    trigger = "clink_cmd_proj",
+    description = "Adds a project to a vs2010 solution for running cmd.exe",
+    execute = function ()
+        local sln_dir = _WORKING_DIR.."/.build/vs2010"
+        local out = io.open(sln_dir.."/clink.sln", "a")
+        if out then
+            out:write("\n")
+            out:write("Project(\"{911E67C6-3D85-4FCE-B560-20A9C3E3FF48}\") = \"cmd\", \""..os.getenv("windir").."\\system32\\cmd.exe\", \"{DF6212E5-A3BE-4EA8-B4AA-BAD0ADA67955}\"\n")
+            out:write("ProjectSection(DebuggerProjectSystem) = preProject\n")
+            out:write("Executable = "..os.getenv("windir").."\\system32\\cmd.exe\n")
+            out:write("StartingDirectory = "..path.translate(sln_dir).."\\bin\\debug\n")
+            out:write("Arguments = /k clink inject\n")
+            out:write("EndProjectSection\n")
+            out:write("EndProject\n")
+            io.close(out)
+        end
+    end
 }
