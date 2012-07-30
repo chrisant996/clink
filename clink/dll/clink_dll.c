@@ -349,6 +349,44 @@ static void failed()
 }
 
 //------------------------------------------------------------------------------
+int is_interactive()
+{
+    // Check the command line for '/c' and don't load if it's present. There's
+    // no point loading clink if cmd.exe is running a command and then exiting.
+
+    void* base;
+    wchar_t** argv;
+    int argc;
+    int i;
+    int ret;
+
+    base = GetModuleHandle("cmd.exe");
+    if (base == NULL)
+    {
+        return 1;
+    }
+
+    argv = CommandLineToArgvW(GetCommandLineW(), &argc);
+    if (argv == NULL)
+    {
+        return 1;
+    }
+
+    ret = 1;
+    for (i = 0; i < argc; ++i)
+    {
+        if (wcsicmp(argv[i], L"/c") == 0)
+        {
+            ret = 0;
+            break;
+        }
+    }
+
+    LocalFree(argv);
+    return ret;
+}
+
+//------------------------------------------------------------------------------
 BOOL WINAPI DllMain(HINSTANCE instance, DWORD reason, LPVOID unused)
 {
     void* base;
@@ -363,6 +401,11 @@ BOOL WINAPI DllMain(HINSTANCE instance, DWORD reason, LPVOID unused)
         }
 
         return TRUE;
+    }
+
+    if (!is_interactive())
+    {
+        return FALSE;
     }
 
     prepare_env_for_inputrc(instance);
