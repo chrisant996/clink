@@ -361,7 +361,6 @@ static void display_matches(char** matches, int match_count, int max_length)
     {
         rl_crlf();
     }
-    fflush(rl_outstream);
 
     // Reset console colour back to normal.
     SetConsoleTextAttribute(std_out_handle, csbi.wAttributes);
