@@ -9,6 +9,8 @@ set output-meta                 on
 "\033`O": end-of-line           # end
 "\033`G": beginning-of-line     # home
 "\033`S": delete-char           # del
+"\033`I": page-up               # page-up
+
 "\t":     clink-completion-shim
 C-c:      ctrl-c
 C-v:      paste-from-clipboard

@@ -25,6 +25,8 @@
 //------------------------------------------------------------------------------
 void                initialise_lua();
 char**              lua_generate_matches(const char*, int, int);
+void                initialise_rl_scroller();
+void                enter_scroll_mode(int);
 void                move_cursor(int, int);
 
 int                 g_match_palette[3]              = { -1, -1, -1 };
@@ -496,6 +498,13 @@ static int paste_from_clipboard(int count, int invoking_key)
 }
 
 //------------------------------------------------------------------------------
+static int page_up(int count, int invoking_key)
+{
+    enter_scroll_mode(-1);
+    return 0;
+}
+
+//------------------------------------------------------------------------------
 static int initialise_hook()
 {
     // This is a bit of a hack. Ideally we should take care of this in
@@ -521,8 +530,10 @@ static int initialise_hook()
     rl_add_funmap_entry("clink-completion-shim", completion_shim);
     rl_add_funmap_entry("ctrl-c", ctrl_c);
     rl_add_funmap_entry("paste-from-clipboard", paste_from_clipboard);
+    rl_add_funmap_entry("page-up", page_up);
 
     initialise_lua();
+    initialise_rl_scroller();
     load_history();
     rl_re_read_init_file(0, 0);
     rl_visible_stats = 0;               // serves no purpose under win32.
