@@ -111,15 +111,16 @@ static int getc_impl(FILE* stream)
 }
 
 //------------------------------------------------------------------------------
-static int postprocess_matches(char** matches)
+static void translate_matches(char** matches)
 {
     char** m;
-    int need_quote;
-    int first_needs_quotes;
 
-    // Convert forward slashes to backward ones and while we're at it, check
-    // for spaces.
-    need_quote = 0;
+    if (!rl_filename_completion_desired)
+    {
+        return;
+    }
+
+    // Convert forward slashes to back slashes
     m = matches;
     while (*m)
     {
@@ -127,34 +128,51 @@ static int postprocess_matches(char** matches)
         while (*c)
         {
             *c = (*c == '/') ? '\\' : *c;
-            if (*c != '\\')
-            {
-                need_quote |= (strchr(rl_filename_quote_characters, *c) != NULL);
-            }
-
             ++c;
-        }
-
-        if (m == matches)
-        {
-            first_needs_quotes = need_quote;
         }
 
         ++m;
     }
+}
 
-    // If match[0] already has a character that needs a quote, readline will
-    // do it automatically.
-    need_quote &= !first_needs_quotes;
+//------------------------------------------------------------------------------
+static void quote_matches(char** matches)
+{
+    // The least disruptive way to inject quotes into the command line is do it
+    // at the last possible moment. Either the first match (the lcd) needs a
+    // quote, or the next character the user may type needs quoting
 
-    // Readline tells us if there was a quote already.
-    need_quote &= !(rl_completion_found_quote & RL_QF_DOUBLE_QUOTE);
+    char** m;
+    int need_quote;
+    int lcd_length;
 
-    // It's confusing if a quote is added when the first match is empty.
-    need_quote &= !!(**matches);
+    // Does the lcd have a quote (readline does this automatically if it thinks
+    // it's completing file names.
+    need_quote = strpbrk(matches[0], rl_filename_quote_characters) != NULL;
+    need_quote &= (rl_filename_completion_desired != 0);
+    lcd_length = (int)strlen(matches[0]);
+
+    // Check other matches for characters that need quoting.
+    if (!need_quote)
+    {
+        m = matches + 1;
+        while (*m && !need_quote)
+        {
+            int i;
+
+            i = strlen(*m);
+            if (i > lcd_length)
+            {
+                int c = *(*m + lcd_length);
+                need_quote = strchr(rl_filename_quote_characters, c) != NULL;
+            }
+
+            ++m;
+        }
+    }
 
     // So... do we need to prepend a quote?
-    if (need_quote)
+    if (need_quote && !(rl_completion_found_quote & RL_QF_DOUBLE_QUOTE))
     {
         char* c = malloc(strlen(matches[0]) + 2);
         strcpy(c + 1, matches[0]);
@@ -163,6 +181,18 @@ static int postprocess_matches(char** matches)
         c[0] = '\"';
         matches[0] = c;
     }
+
+}
+
+//------------------------------------------------------------------------------
+static int postprocess_matches(char** matches)
+{
+    char** m;
+    int need_quote;
+    int first_needs_quotes;
+
+    translate_matches(matches);
+    quote_matches(matches);
 
     return 0;
 }
