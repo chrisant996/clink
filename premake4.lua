@@ -36,7 +36,7 @@ end
 pchheader = pchheader_fixed
 
 --------------------------------------------------------------------------------
-if _ACTION and _ACTION ~= "clean" and _ACTION:find("clink_") then
+if _ACTION and _ACTION ~= "clean" and _ACTION:find("clink_") == nil then
     -- Create a shim premake4 script so we can call premake from sln folder.
     if not shimmed then
         os.mkdir(to)
