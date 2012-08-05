@@ -57,10 +57,18 @@ function dir_match_generator(text, first, last)
 
     -- If readline's -/_ mapping is on, adjust mask and check for more matches.
     if clink.is_rl_variable_true("completion-map-case") then
-        mask = mask:gsub("_", "-")
+        local sep = mask:reverse():find("\\", 3)
+        if sep ~= nil then
+            sep = mask:len() - sep + 1;
+
+            local mask_left = mask:sub(1, sep)
+            local mask_right = mask:sub(sep + 1)
+            mask = mask_left..mask_right:gsub("_", "-")
+        else
+            mask = mask:gsub("_", "-")
+        end
         get_dir_matches(prefix, mask)
     end
-
 
     -- If there was no matches but text is a dir then use it as the single match.
 	-- Otherwise tell readline that matches are files and it will do magic.
