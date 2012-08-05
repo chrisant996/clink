@@ -3,6 +3,7 @@ set completion-ignore-case      on
 set completion-map-case         on
 set completion-display-width    106
 set output-meta                 on
+set history-size                1000
 
 "\033`s": backward-word         # ctrl-left
 "\033`t": forward-word          # ctrl-right

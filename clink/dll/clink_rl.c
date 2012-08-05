@@ -436,17 +436,10 @@ static void load_history()
 //------------------------------------------------------------------------------
 void save_history()
 {
-    static const int max_history = 500;
     char buffer[1024];
 
     get_history_file_name(buffer, sizeof(buffer));
-
-    // Write new history to the file, and truncate to our maximum.
-    if (append_history(g_new_history_count, buffer) != 0)
-    {
-        write_history(buffer);
-    }
-    history_truncate_file(buffer, max_history);
+    write_history(buffer);
 }
 
 //------------------------------------------------------------------------------
