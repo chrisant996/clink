@@ -35,20 +35,25 @@ function set_match_generator(text, first, last)
         return false
     end
 
-	-- Enumerate environment variables and check for potential matches.
+    -- Skip this generator if first is in the rvalue.
+    if leading:find("=") then
+        return false;
+    end
+
+    -- Enumerate environment variables and check for potential matches.
     for _, name in ipairs(clink.get_env_var_names()) do
-		if clink.is_match(text, name) then
-			clink.add_match(name)
-		end
-	end
+        if clink.is_match(text, name) then
+            clink.add_match(name)
+        end
+    end
 
-	-- If there was only one match, add a '=' on the end.
-	if clink.match_count() == 1 then
-		clink.set_match(1, clink.get_match(1).."=")
-		clink.suppress_char_append()
-	end
+    -- If there was only one match, add a '=' on the end.
+    if clink.match_count() == 1 then
+        clink.set_match(1, clink.get_match(1).."=")
+        clink.suppress_char_append()
+    end
 
-	return true
+    return true
 end
 
 --------------------------------------------------------------------------------
