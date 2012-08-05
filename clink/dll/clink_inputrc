@@ -16,4 +16,4 @@ C-c:      ctrl-c
 C-v:      paste-from-clipboard
 C-q:      reload-lua-state
 
-$include ~/fpg_clink/clink_inputrc
+$include ~/clink/clink_inputrc
