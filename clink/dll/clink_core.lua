@@ -114,15 +114,15 @@ end
 
 --------------------------------------------------------------------------------
 function clink.match_count()
-	return #clink.matches
+    return #clink.matches
 end
 
 --------------------------------------------------------------------------------
 function clink.set_match(i, value)
-	clink.matches[i] = value
+    clink.matches[i] = value
 end
 
 --------------------------------------------------------------------------------
 function clink.get_match(i)
-	return clink.matches[i]
+    return clink.matches[i]
 end
