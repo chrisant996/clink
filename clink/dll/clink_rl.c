@@ -147,34 +147,42 @@ static void quote_matches(char** matches)
     char** m;
     int need_quote;
     int lcd_length;
+    int rl_will_quote;
 
-    // Does the lcd have a quote (readline does this automatically if it thinks
+    // Does the lcd have a quote char? Readline will add the quote if it thinks
     // it's completing file names.
-    need_quote = strpbrk(matches[0], rl_filename_quote_characters) != NULL;
-    need_quote &= (rl_filename_completion_desired != 0);
-    lcd_length = (int)strlen(matches[0]);
+    rl_will_quote = strpbrk(matches[0], rl_filename_quote_characters) != NULL;
+    rl_will_quote &= (rl_filename_completion_desired != 0);
+    if (rl_will_quote)
+    {
+        return;
+    }
+
+    if (rl_completion_found_quote & RL_QF_DOUBLE_QUOTE)
+    {
+        return;
+    }
 
     // Check other matches for characters that need quoting.
-    if (!need_quote)
+    need_quote = 0;
+    lcd_length = (int)strlen(matches[0]);
+    m = matches + 1;
+    while (*m && !need_quote)
     {
-        m = matches + 1;
-        while (*m && !need_quote)
+        int i;
+
+        i = strlen(*m);
+        if (i > lcd_length)
         {
-            int i;
-
-            i = strlen(*m);
-            if (i > lcd_length)
-            {
-                int c = *(*m + lcd_length);
-                need_quote = strchr(rl_filename_quote_characters, c) != NULL;
-            }
-
-            ++m;
+            int c = *(*m + lcd_length);
+            need_quote = strchr(rl_filename_quote_characters, c) != NULL;
         }
+
+        ++m;
     }
 
     // So... do we need to prepend a quote?
-    if (need_quote && !(rl_completion_found_quote & RL_QF_DOUBLE_QUOTE))
+    if (need_quote)
     {
         char* c = malloc(strlen(matches[0]) + 2);
         strcpy(c + 1, matches[0]);
@@ -183,7 +191,6 @@ static void quote_matches(char** matches)
         c[0] = '\"';
         matches[0] = c;
     }
-
 }
 
 //------------------------------------------------------------------------------
