@@ -516,16 +516,17 @@ static int initialise_hook()
     rl_redisplay_function = display;
     rl_getc_function = getc_impl;
 
+    // Invalid filename characters; <>|?*:"\/
     rl_special_prefixes = "%";
     rl_completer_quote_characters = "\"";
     rl_ignore_some_completions_function = postprocess_matches;
-    rl_basic_word_break_characters = " <>|%=";
+    rl_basic_word_break_characters = " <>|%=;";
     rl_completer_word_break_characters = rl_basic_word_break_characters;
     rl_completion_display_matches_hook = display_matches;
     rl_attempted_completion_function = alternative_matches;
 
     rl_basic_quote_characters = "\"";
-    rl_filename_quote_characters = " ";
+    rl_filename_quote_characters = " %=;";
 
     rl_add_funmap_entry("clink-completion-shim", completion_shim);
     rl_add_funmap_entry("ctrl-c", ctrl_c);
