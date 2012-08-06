@@ -19,6 +19,9 @@
  * SOFTWARE.
  */
 
+#ifndef CLINK_VM_H
+#define CLINK_VM_H
+
 //------------------------------------------------------------------------------
 struct region_info_t
 {
@@ -33,3 +36,5 @@ void    get_region_info(void* addr, struct region_info_t* region_info);
 void    set_region_write_state(struct region_info_t* region_info, int state);
 int     write_vm(void* proc_handle, void* dest, const void* src, size_t size);
 int     read_vm(void* proc_handle, void* dest, const void* src, size_t size);
+
+#endif // CLINK_VM_H

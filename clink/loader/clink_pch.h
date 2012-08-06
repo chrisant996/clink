@@ -19,8 +19,8 @@
  * SOFTWARE.
  */
 
-#ifndef CLINK_PCH
-#define CLINK_PCH
+#ifndef CLINK_PCH_H
+#define CLINK_PCH_H
 
 #include <stdio.h>
 
@@ -29,4 +29,4 @@
 
 #include "getopt.h"
 
-#endif // CLINK_PCH
+#endif // CLINK_PCH_H
