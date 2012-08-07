@@ -21,15 +21,6 @@
 --
 
 --------------------------------------------------------------------------------
-function get_dir_matches(prefix, mask)
-    for _, dir in ipairs(clink.find_dirs(mask)) do
-        if not dir:find("^%.+$") then
-            clink.add_match(prefix..dir)
-        end
-    end
-end
-
---------------------------------------------------------------------------------
 function dir_match_generator(text, first, last)
     -- Only show directories if the command is 'dir', 'cd', or 'pushd'
     local leading = rl_line_buffer:sub(1, first - 1)
@@ -51,31 +42,43 @@ function dir_match_generator(text, first, last)
         prefix = text:sub(1, i)
     end
 
-    -- Find dirs and add as matches.
-    local mask = clink.lower(text).."*"
-    get_dir_matches(prefix, mask)
+    local mask = text.."*"
 
-    -- If readline's -/_ mapping is on, adjust mask and check for more matches.
+    -- If readline's -/_ mapping is on then adjust mask.
     if clink.is_rl_variable_true("completion-map-case") then
-        local sep = mask:reverse():find("\\", 3)
+        local function mangle_mask(m)
+            return m:gsub("_", "?"):gsub("-", "?")
+        end
+
+        local sep = mask:reverse():find("\\", 2)
         if sep ~= nil then
-            sep = mask:len() - sep + 1;
+            sep = #mask - sep + 1;
 
             local mask_left = mask:sub(1, sep)
             local mask_right = mask:sub(sep + 1)
-            mask = mask_left..mask_right:gsub("_", "-")
+
+            mask = mask_left..mangle_mask(mask_right)
         else
-            mask = mask:gsub("_", "-")
+            mask = mangle_mask(mask)
         end
-        get_dir_matches(prefix, mask)
+    end
+
+    -- Find matches.
+    for _, dir in ipairs(clink.find_dirs(mask)) do
+        if not dir:find("^%.+$") then
+            local file = prefix..dir
+            if clink.is_match(text, file) then
+                clink.add_match(prefix..dir)
+            end
+        end
     end
 
     -- If there was no matches but text is a dir then use it as the single match.
-	-- Otherwise tell readline that matches are files and it will do magic.
+    -- Otherwise tell readline that matches are files and it will do magic.
     if clink.match_count() == 0 then
-		if clink.is_dir(text) then
-	        clink.add_match(text)
-		end
+        if clink.is_dir(text) then
+            clink.add_match(text)
+        end
     else
         clink.matches_are_files()
     end
