@@ -23,6 +23,7 @@
 --------------------------------------------------------------------------------
 clink.matches = {}
 clink.generators = {}
+clink.arg_generators = {}
 
 --------------------------------------------------------------------------------
 function clink.compute_lcd(text, list)
@@ -125,4 +126,9 @@ end
 --------------------------------------------------------------------------------
 function clink.get_match(i)
     return clink.matches[i]
+end
+
+--------------------------------------------------------------------------------
+function clink.register_argument_generator(cmd, generator)
+    clink.arg_generators[cmd:lower()] = generator
 end

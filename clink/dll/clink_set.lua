@@ -22,20 +22,8 @@
 
 --------------------------------------------------------------------------------
 function set_match_generator(text, first, last)
-    -- Only show directories if the command is 'dir', 'cd', or 'pushd'
-    local leading = rl_line_buffer:sub(1, first - 1)
-    local cmd = leading:match("^%s*([a-zA-Z]+)%s+")
-    if not cmd then
-        return false
-    end
-
-    -- Check it's the set command.
-    cmd = cmd:lower()
-    if cmd ~= "set" then
-        return false
-    end
-
     -- Skip this generator if first is in the rvalue.
+    local leading = rl_line_buffer:sub(1, first - 1)
     if leading:find("=") then
         return false;
     end
@@ -43,13 +31,13 @@ function set_match_generator(text, first, last)
     -- Enumerate environment variables and check for potential matches.
     for _, name in ipairs(clink.get_env_var_names()) do
         if clink.is_match(text, name) then
-            clink.add_match(name)
+            clink.add_match(name:lower())
         end
     end
 
     -- If there was only one match, add a '=' on the end.
     if clink.match_count() == 1 then
-        clink.set_match(1, clink.get_match(1).."=")
+        --clink.set_match(1, clink.get_match(1).."=")
         clink.suppress_char_append()
     end
 
@@ -57,4 +45,4 @@ function set_match_generator(text, first, last)
 end
 
 --------------------------------------------------------------------------------
-clink.register_match_generator(set_match_generator, 40)
+clink.register_argument_generator("set", set_match_generator)
