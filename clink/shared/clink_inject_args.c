@@ -20,16 +20,21 @@
  */
 
 #include "clink_pch.h"
+#include "clink_inject_args.h"
 #include "clink_util.h"
 
 //------------------------------------------------------------------------------
-const char* g_clink_header = 
-    "clink v" CLINK_VERSION " (c) 2012 Martin Ridgers"                      "\n"
-    "http://code.google.com/p/clink"                                        "\n"
-    ;
+inject_args_t   g_inject_args   = { {'\0'} };
 
-const char* g_clink_footer =
-    "Copyright (c) 1994-2012 Lua.org, PUC-Rio"                              "\n"
-    "Copyright (c) 1987-2010 Free Software Foundation, Inc."                "\n"
-    ;
+//------------------------------------------------------------------------------
+void get_inject_arg_file(unsigned pid, char* buffer, int buffer_size)
+{
+    char pid_str[64];
 
+    itoa(pid, pid_str, 10);
+
+    GetTempPath(buffer_size, buffer);
+
+    str_cat(buffer, ".\\clink_", buffer_size);
+    str_cat(buffer, pid_str, buffer_size);
+}

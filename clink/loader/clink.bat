@@ -31,19 +31,6 @@ if "%1"=="" (
     goto :eof
 )
 
-:: Injects clink into the parent cmd.exe process
-::
-if /i "%1"=="inject" (
-    pushd %~dps0
-    if "%PROCESSOR_ARCHITECTURE%"=="x86" (
-        %~n0_x86.exe %*
-    ) else (
-        %~n0_x64.exe %*
-    )
-    popd
-    goto :eof
-)
-
 :: Add registry keys to inject clink everytime cmd.exe is started.
 ::
 if /i "%1"=="install" (
@@ -72,6 +59,16 @@ if /i "%1"=="uninstall" (
     )
     goto :eof
 )
+
+:: Pass through to appropriate loader.
+::
+pushd %~dps0
+if "%PROCESSOR_ARCHITECTURE%"=="x86" (
+    %~n0_x86.exe %*
+) else (
+    %~n0_x64.exe %*
+)
+popd
 
 goto :eof
 ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::

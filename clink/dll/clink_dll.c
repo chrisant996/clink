@@ -21,6 +21,7 @@
 
 #include "clink_pch.h"
 #include "shared/clink_util.h"
+#include "shared/clink_inject_args.h"
 
 //------------------------------------------------------------------------------
 void                    save_history();
@@ -35,17 +36,6 @@ extern int              clink_opt_ctrl_d_exit;
 int                     clink_opt_alt_hooking   = 0;
 static wchar_t*         g_write_cache           = NULL;
 static const int        g_write_cache_size      = 0xffff;  // 0x10000 - 1 !!
-
-//------------------------------------------------------------------------------
-static const char* g_header = 
-                                                                            "\n"
-    "--- clink v" CLINK_VERSION " (c) 2012 Martin Ridgers"                  "\n"
-    "--- http://code.google.com/p/clink"                                    "\n"
-    "---"                                                                   "\n"
-    "--- Copyright (c) 1994-2012 Lua.org, PUC-Rio"                          "\n"
-    "--- Copyright (c) 1987-2010 Free Software Foundation, Inc."            "\n"
-                                                                            "\n"
-    ;
 
 //------------------------------------------------------------------------------
 static LONG WINAPI exception_filter(EXCEPTION_POINTERS* info)
@@ -162,13 +152,6 @@ static BOOL WINAPI hooked_read_console(
 }
 
 //------------------------------------------------------------------------------
-static void print_header()
-{
-    clear_to_eol();
-    hooked_fprintf(NULL, "%s", g_header);
-}
-
-//------------------------------------------------------------------------------
 static BOOL WINAPI hooked_write_console(
     HANDLE output,
     const wchar_t* buffer,
@@ -182,8 +165,6 @@ static BOOL WINAPI hooked_write_console(
 
     if (!once)
     {
-        print_header();
-
         g_write_cache = VirtualAlloc(
             NULL,
             g_write_cache_size + 1,
@@ -332,23 +313,6 @@ static void* validate_parent_process()
 }
 
 //------------------------------------------------------------------------------
-static void failed()
-{
-    char buffer[1024];
-
-    get_config_dir(buffer, sizeof(buffer));
-    printf(
-        "%s\n"
-        "--- !!!\n"
-        "--- !!! Sadly, clink failed to load.\n"
-        "--- !!! Log file; %s\\clink.log\n"
-        "--- !!!\n",
-        g_header,
-        buffer
-    );
-}
-
-//------------------------------------------------------------------------------
 int is_interactive()
 {
     // Check the command line for '/c' and don't load if it's present. There's
@@ -387,6 +351,44 @@ int is_interactive()
 }
 
 //------------------------------------------------------------------------------
+static void load_inject_args(DWORD pid)
+{
+    HANDLE handle;
+    char buffer[1024];
+
+    get_inject_arg_file(pid, buffer, sizeof_array(buffer));
+    handle = CreateFile(buffer, GENERIC_READ, 0, NULL, OPEN_EXISTING, 0, NULL);
+    if (handle != INVALID_HANDLE_VALUE)
+    {
+        DWORD read_in;
+
+        ReadFile(handle, &g_inject_args, sizeof(g_inject_args), &read_in, NULL);
+        CloseHandle(handle);
+    }
+}
+
+//------------------------------------------------------------------------------
+static void success()
+{
+    extern const char* g_clink_header;
+    extern const char* g_clink_footer;
+
+    puts(g_clink_header);
+    puts(g_clink_footer);
+}
+
+//------------------------------------------------------------------------------
+static void failed()
+{
+    char buffer[1024];
+
+    buffer[0] = '\0';
+    get_config_dir(buffer, sizeof_array(buffer));
+
+    printf("Failed to load clink.\nSee log for details (%s).", buffer);
+}
+
+//------------------------------------------------------------------------------
 BOOL WINAPI DllMain(HINSTANCE instance, DWORD reason, LPVOID unused)
 {
     void* base;
@@ -408,6 +410,7 @@ BOOL WINAPI DllMain(HINSTANCE instance, DWORD reason, LPVOID unused)
         return FALSE;
     }
 
+    load_inject_args(GetCurrentProcessId());
     prepare_env_for_inputrc(instance);
 
     base = validate_parent_process();
@@ -423,5 +426,6 @@ BOOL WINAPI DllMain(HINSTANCE instance, DWORD reason, LPVOID unused)
         return FALSE;
     }
 
+    success();
     return TRUE;
 }

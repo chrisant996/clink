@@ -22,6 +22,7 @@
 #include "clink_pch.h"
 #include "shared/clink_pe.h"
 #include "shared/clink_util.h"
+#include "shared/clink_inject_args.h"
 
 #define CLINK_DLL_NAME "clink_dll_" AS_STR(PLATFORM) ".dll"
 
@@ -90,10 +91,9 @@ static void toggle_threads(DWORD pid, int on)
 }
 
 //------------------------------------------------------------------------------
-int inject(int argc, char** argv)
+static int do_inject(DWORD parent_pid)
 {
     int ret;
-    DWORD parent_pid;
     HANDLE parent_process;
     BOOL is_wow_64[2];
     DWORD thread_id;
@@ -140,14 +140,6 @@ int inject(int argc, char** argv)
         sys_info.dwPageSize
     );
     LOG_INFO("DLL: %s", dll_path);
-
-    // Get the PID of the parent process that we're injecting into.
-    parent_pid = get_parent_pid();
-    if (parent_pid == -1)
-    {
-        LOG_ERROR("Failed to find parent pid.");
-        return -1;
-    }
 
     LOG_INFO("Parent pid: %d", parent_pid);
 
@@ -235,7 +227,95 @@ int inject(int argc, char** argv)
     WaitForSingleObject(remote_thread, INFINITE);
     toggle_threads(parent_pid, 1);
 
+    // Clean up and quit
+    CloseHandle(remote_thread);
     VirtualFreeEx(parent_process, buffer, 0, MEM_RELEASE);
     CloseHandle(parent_process);
     return 0;
+}
+
+//------------------------------------------------------------------------------
+static void write_inject_args(DWORD parent_pid, const inject_args_t* args)
+{
+    HANDLE handle;
+    char buffer[1024];
+
+    get_inject_arg_file(parent_pid, buffer, sizeof_array(buffer));
+    handle = CreateFile(buffer, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, 0, NULL);
+    if (handle != INVALID_HANDLE_VALUE)
+    {
+        DWORD written;
+
+        WriteFile(handle, args, sizeof(*args), &written, NULL);
+        CloseHandle(handle);
+    }
+}
+
+//------------------------------------------------------------------------------
+static void clean_inject_args(DWORD parent_pid)
+{
+    char buffer[1024];
+
+    get_inject_arg_file(parent_pid, buffer, sizeof_array(buffer));
+    unlink(buffer);
+}
+
+//------------------------------------------------------------------------------
+int inject(int argc, char** argv)
+{
+    DWORD parent_pid;
+    int i;
+
+    struct option options[] = {
+        { "scripts",    required_argument,  NULL, 's' },
+        { "help",       no_argument,        NULL, 'h' },
+        { NULL, 0, NULL, 0 }
+    };
+
+    const char* help[] = {
+        "-s, --scripts <path>", "Alternative path to load .lua scripts from.",
+        "-h, --help",           "Shows this help text.",
+    };
+
+    extern const char* g_clink_header;
+    extern const char* g_clink_footer;
+
+    // Parse arguments
+    while ((i = getopt_long(argc, argv, "chs:", options, NULL)) != -1)
+    {
+        switch (i)
+        {
+        case 's':
+            str_cat(
+                g_inject_args.script_path,
+                optarg,
+                sizeof_array(g_inject_args.script_path)
+            );
+            break;
+
+        case '?':
+            return -1;
+
+        default:
+            puts(g_clink_header);
+            puts_help(help, sizeof_array(help));
+            puts(g_clink_footer);
+            return -1;
+        }
+    }
+
+    // Get the PID of the parent process that we're injecting into.
+    parent_pid = get_parent_pid();
+    if (parent_pid == -1)
+    {
+        LOG_ERROR("Failed to find parent pid.");
+        return -1;
+    }
+
+    // Write args to file, inject, clean up.
+    write_inject_args(parent_pid, &g_inject_args);
+    i = do_inject(parent_pid);
+    clean_inject_args(parent_pid);
+
+    return i;
 }

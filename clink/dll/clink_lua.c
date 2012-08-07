@@ -21,14 +21,15 @@
 
 #include "clink_pch.h"
 #include "shared/clink_util.h"
+#include "shared/clink_inject_args.h"
 
 //------------------------------------------------------------------------------
-static int          reload_lua_state(int count, int invoking_key);
+static int              reload_lua_state(int count, int invoking_key);
 
-extern int          g_match_palette[3];
-extern int          _rl_completion_case_map;
-extern char*        rl_variable_value(char*);
-static lua_State*   g_lua = NULL;
+extern int              g_match_palette[3];
+extern int              _rl_completion_case_map;
+extern char*            rl_variable_value(char*);
+static lua_State*       g_lua = NULL;
 
 //------------------------------------------------------------------------------
 static void load_lua_script(const char* script)
@@ -389,11 +390,20 @@ void initialise_lua()
     luaL_setfuncs(g_lua, clink_native_methods, 0);
     lua_pop(g_lua, 1);
 
-    // Load all the .lua files alongside the dll and in the appdata folder.
-    get_dll_dir(buffer, sizeof(buffer));
+    // Load all the .lua files alongside the dll and in the script folder.
+    if (g_inject_args.script_path[0] == '\0')
+    {
+        get_dll_dir(buffer, sizeof_array(buffer));
+    }
+    else
+    {
+        buffer[0] = '\0';
+        str_cat(buffer, g_inject_args.script_path, sizeof_array(buffer));
+    }
+
     i = (int)strlen(buffer);
 
-    str_cat(buffer, "/clink_core.lua", sizeof(buffer));
+    str_cat(buffer, "/clink_core.lua", sizeof_array(buffer));
     load_lua_script(buffer);
 
     buffer[i] = '\0';

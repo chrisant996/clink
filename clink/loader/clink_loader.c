@@ -45,6 +45,7 @@ static int dispatch_verb(const char* verb, int argc, char** argv)
         }
     }
 
+    printf("Unknown verb -- '%s'", verb);
     return -1;
 }
 
@@ -52,19 +53,47 @@ static int dispatch_verb(const char* verb, int argc, char** argv)
 int main(int argc, char** argv)
 {
     int arg;
+    int ret;
 
-    // Use getopt to find a verb.
-    opterr = 0;
-    while ((arg = getopt(argc, argv, "")) != -1)
+    struct option options[] = {
+        { "help",   no_argument,    NULL, 'h' },
+        { NULL,     0,              NULL, 0 }
+    };
+
+    const char* help_usage = "Usage: <verb> <verb_options>\n";
+    const char* help_verbs[] = {
+        "Verbs:",   "",
+        "inject",   "Injects clink into a process.",
+        //"autorun",  "Manage clink's entry in cmd.exe's autorun.",
+        "",         "('<verb> --help' for more details).",
+    };
+
+    extern const char* g_clink_header;
+    extern const char* g_clink_footer;
+
+    // Parse arguments
+    while ((arg = getopt_long(argc, argv, "+h", options, NULL)) != -1)
     {
-    }
-    opterr = 1;
+        switch (arg)
+        {
+        case '?':
+            return -1;
 
-    // Dispatch the verb is one was found.
+        default:
+            puts(g_clink_header);
+            puts(help_usage);
+            puts_help(help_verbs, sizeof_array(help_verbs));
+            puts(g_clink_footer);
+            return -1;
+        }
+    }
+
+    // Dispatch the verb if one was found.
+    ret = -1;
     if (optind < argc)
     {
-        return dispatch_verb(argv[optind], argc, argv);
+        ret = dispatch_verb(argv[optind], argc - 1, argv + 1);
     }
 
-    return -1;
+    return ret;
 }
