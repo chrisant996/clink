@@ -24,9 +24,29 @@
 
 //------------------------------------------------------------------------------
 int                         _rl_dispatch(int, Keymap);
+extern int                  rl_key_sequence_length;
 static COORD                g_cursor_position;
 static KEYMAP_ENTRY_ARRAY   g_scroller_keymap;
 static Keymap               g_previous_keymap;
+
+//------------------------------------------------------------------------------
+static int leave_scroll_mode(int count, int invoking_key)
+{
+    HANDLE handle;
+
+    handle = GetStdHandle(STD_OUTPUT_HANDLE);
+    SetConsoleCursorPosition(handle, g_cursor_position);
+
+    // Dispatch key to previous keymap, but only if it's a single key. This is
+    // so users don't get disorientate when leaving scroll mode via arrow keys.
+    rl_set_keymap(g_previous_keymap);
+    if (invoking_key && rl_key_sequence_length == 1)
+    {
+        _rl_dispatch(invoking_key, g_previous_keymap);
+    }
+
+    return 0;
+}
 
 //------------------------------------------------------------------------------
 static int page_up(int count, int invoking_key)
@@ -35,6 +55,11 @@ static int page_up(int count, int invoking_key)
     HANDLE handle;
     int rows_per_page;
     SMALL_RECT* wnd;
+    
+    if (rl_key_sequence_length < 3)
+    {
+        return leave_scroll_mode(count, invoking_key);
+    }
 
     handle = GetStdHandle(STD_OUTPUT_HANDLE);
     GetConsoleScreenBufferInfo(handle, &csbi);
@@ -60,6 +85,11 @@ static int page_down(int count, int invoking_key)
     HANDLE handle;
     int rows_per_page;
     SMALL_RECT* wnd;
+    
+    if (rl_key_sequence_length < 3)
+    {
+        return leave_scroll_mode(count, invoking_key);
+    }
 
     handle = GetStdHandle(STD_OUTPUT_HANDLE);
     GetConsoleScreenBufferInfo(handle, &csbi);
@@ -98,23 +128,6 @@ void enter_scroll_mode(int scroll_one_page)
 
     g_previous_keymap = rl_get_keymap();
     rl_set_keymap(g_scroller_keymap);
-}
-
-//------------------------------------------------------------------------------
-static int leave_scroll_mode(int count, int invoking_key)
-{
-    HANDLE handle;
-
-    handle = GetStdHandle(STD_OUTPUT_HANDLE);
-    SetConsoleCursorPosition(handle, g_cursor_position);
-
-    rl_set_keymap(g_previous_keymap);
-    if (invoking_key)
-    {
-        _rl_dispatch(invoking_key, g_previous_keymap);
-    }
-
-    return 0;
 }
 
 //------------------------------------------------------------------------------
