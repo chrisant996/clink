@@ -546,11 +546,11 @@ static int initialise_hook()
 //------------------------------------------------------------------------------
 static void add_to_history(const char* line)
 {
-    const char* c;
+    const unsigned char* c;
     HIST_ENTRY* hist_entry;
 
     // Skip leading whitespace
-    c = line;
+    c = (const unsigned char*)line;
     while (*c)
     {
         if (!isspace(*c) && (*c != '\x03'))
