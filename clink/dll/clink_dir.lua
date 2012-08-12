@@ -22,19 +22,6 @@
 
 --------------------------------------------------------------------------------
 function dir_match_generator(text, first, last)
-    -- Only show directories if the command is 'dir', 'cd', or 'pushd'
-    local leading = rl_line_buffer:sub(1, first - 1)
-    local cmd = leading:match("^%s*([a-zA-Z]+)%s+")
-    if not cmd then
-        return false
-    end
-
-    -- Check it's a command that we only want to complete dirs for.
-    cmd = cmd:lower()
-    if cmd ~= "dir" and cmd ~= "cd" and cmd ~= "pushd" and cmd ~= "rd" and cmd ~= "rmdir" then
-        return false
-    end
-
     -- Strip off any path components that may be on text.
     local prefix = ""
     local i = text:find("[\\/:][^\\/:]*$")
@@ -87,4 +74,11 @@ function dir_match_generator(text, first, last)
 end
 
 --------------------------------------------------------------------------------
-clink.register_match_generator(dir_match_generator, 50)
+clink.register_argument_generator("cd", dir_match_generator)
+clink.register_argument_generator("chdir", dir_match_generator)
+clink.register_argument_generator("dir", dir_match_generator)
+clink.register_argument_generator("pushd", dir_match_generator)
+clink.register_argument_generator("rd", dir_match_generator)
+clink.register_argument_generator("rmdir", dir_match_generator)
+clink.register_argument_generator("md", dir_match_generator)
+clink.register_argument_generator("mkdir", dir_match_generator)

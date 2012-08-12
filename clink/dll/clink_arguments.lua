@@ -27,12 +27,6 @@ local function traverse(generator, parts, text, first, last)
     local part = parts[1]
     table.remove(parts, 1)
 
-    -- Key/value pair is a node of the tree.
-    local next_gen = generator[part]
-    if next_gen then
-        return traverse(next_gen, parts, text, first, last)
-    end
-
     -- Functions and booleans are leafs of the tree.
     local t = type(generator)
     if t == "function" then
@@ -41,6 +35,12 @@ local function traverse(generator, parts, text, first, last)
         return generator
     elseif t ~= "table" then
         return false
+    end
+
+    -- Key/value pair is a node of the tree.
+    local next_gen = generator[part]
+    if next_gen then
+        return traverse(next_gen, parts, text, first, last)
     end
 
     for key, value in pairs(generator) do
