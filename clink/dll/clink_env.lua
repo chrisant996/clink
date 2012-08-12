@@ -21,13 +21,13 @@
 --
 
 --------------------------------------------------------------------------------
-special_env_vars = {
+local special_env_vars = {
     "cd", "date", "time", "random", "errorlevel",
     "cmdextversion", "cmdcmdline", "highestnumanodenumber"
 }
 
 --------------------------------------------------------------------------------
-function env_vars_match_generator(text, first, last)
+local function env_vars_match_generator(text, first, last)
     -- Use this match generator if out text starts with a % or "%
     if not text:find("^%%") then
         return false

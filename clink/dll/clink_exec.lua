@@ -21,7 +21,7 @@
 --
 
 --------------------------------------------------------------------------------
-dos_commands = {
+local dos_commands = {
     "assoc", "break", "call", "cd", "chcp", "chdir", "cls", "color", "copy",
     "date", "del", "dir", "diskcomp", "diskcopy", "echo", "endlocal", "erase",
     "exit", "for", "format", "ftype", "goto", "graftabl", "if", "md", "mkdir",
@@ -31,7 +31,7 @@ dos_commands = {
 }
 
 --------------------------------------------------------------------------------
-function split_on_semicolon(str)
+local function split_on_semicolon(str)
     local i = 0
     local ret = {}
     for _, j in function() return str:find(";", i, true) end do
@@ -44,7 +44,7 @@ function split_on_semicolon(str)
 end
 
 --------------------------------------------------------------------------------
-function dos_cmd_match_generator(text, first, last)
+local function dos_cmd_match_generator(text, first, last)
     for _, cmd in ipairs(dos_commands) do
         if clink.is_match(text, cmd) then
             clink.add_match(cmd)
@@ -53,7 +53,7 @@ function dos_cmd_match_generator(text, first, last)
 end
 
 --------------------------------------------------------------------------------
-function exec_match_generator(text, first, last)
+local function exec_match_generator(text, first, last)
     -- We're only interested in exec completion if this is the first word of the
     -- line, or the first word after a command separator.
     local leading = rl_line_buffer:sub(1, first - 1)

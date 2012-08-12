@@ -21,7 +21,7 @@
 --
 
 --------------------------------------------------------------------------------
-function set_match_generator(text, first, last)
+local function set_match_generator(text, first, last)
     -- Skip this generator if first is in the rvalue.
     local leading = rl_line_buffer:sub(1, first - 1)
     if leading:find("=") then
