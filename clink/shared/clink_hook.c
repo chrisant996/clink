@@ -377,6 +377,7 @@ int hook_jmp(const char* dll, const char* func_name, void* hook)
     // Patch import table so we continue to call old function.
     write_addr(imp, trampoline);
 
+    FlushInstructionCache(current_proc(), 0, 0);
     LOG_INFO("Success!");
     return 1;
 }
