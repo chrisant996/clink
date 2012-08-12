@@ -23,7 +23,10 @@
 --------------------------------------------------------------------------------
 clink.matches = {}
 clink.generators = {}
-clink.arg_generators = {}
+
+clink.arg = {}
+clink.arg.generators = {}
+clink.arg.node_flags_key = "\x01"
 
 --------------------------------------------------------------------------------
 function clink.compute_lcd(text, list)
@@ -129,6 +132,17 @@ function clink.get_match(i)
 end
 
 --------------------------------------------------------------------------------
-function clink.register_argument_generator(cmd, generator)
-    clink.arg_generators[cmd:lower()] = generator
+function clink.arg.register_tree(cmd, generator)
+    clink.arg.generators[cmd:lower()] = generator
+end
+
+--------------------------------------------------------------------------------
+function clink.arg.tree_node(flags, content)
+    local node = {}
+    for key, arg in pairs(content) do
+        node[key] = arg
+    end
+
+    node[clink.arg.node_flags_key] = flags
+    return node
 end

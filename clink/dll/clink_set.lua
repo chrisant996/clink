@@ -45,4 +45,4 @@ function set_match_generator(text, first, last)
 end
 
 --------------------------------------------------------------------------------
-clink.register_argument_generator("set", set_match_generator)
+clink.arg.register_tree("set", set_match_generator)

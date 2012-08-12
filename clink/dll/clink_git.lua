@@ -35,4 +35,4 @@ local git_argument_tree = {
     "rev-parse", "show-branch", "verify-tag", "whatchanged"
 }
 
-clink.register_argument_generator("git", git_argument_tree)
+clink.arg.register_tree("git", git_argument_tree)

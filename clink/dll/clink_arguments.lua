@@ -24,8 +24,8 @@
 local function traverse(generator, parts, text, first, last)
     -- Each part of the command line leading up to 'text' is considered as
     -- a level of the 'generator' tree.
-    local part = parts[1]
-    table.remove(parts, 1)
+    local part = parts[parts.n]
+    parts.n = parts.n + 1
 
     -- Functions and booleans are leafs of the tree.
     local t = type(generator)
@@ -43,23 +43,41 @@ local function traverse(generator, parts, text, first, last)
         return traverse(next_gen, parts, text, first, last)
     end
 
+    -- Check generator[1] for behaviour flags.
+    -- * = If generator is a leave in the tree, repeat it for ever.
+    -- + = User must have typed at least one character for matches to be added.
+    local repeat_leaf = false
+    local allow_empty_text = true
+    local node_flags = generator[clink.arg.node_flags_key]
+    if node_flags then
+        repeat_leaf = (node_flags:find("*") ~= nil)
+        allow_empty_text = (node_flags:find("+") == nil)
+    end
+
+    -- See if we should early-out if we've no text to search with.
+    if not allow_empty_text and text == "" then
+        return false
+    end
+
     for key, value in pairs(generator) do
         -- Strings are also leafs.
-        if value == part then
+        if value == part and not repeat_leaf then
             return false
         end
 
-        -- So we're in a node but don't have enough info yet to traverse further
-        -- down the tree. Attempt to pull out keys or array entries and add them
-        -- as matches.
+        -- So we're in a node but don't have enough info yet to traverse
+        -- further down the tree. Attempt to pull out keys or array entries
+        -- and add them as matches.
         local candidate = key
         if type(key) == "number" then
             candidate = value
         end
 
-        if type(candidate) == "string" then
-            if clink.is_match(text, candidate) then
-                clink.add_match(candidate)
+        if candidate ~= clink.arg.node_flags_key then
+            if type(candidate) == "string" then
+                if clink.is_match(text, candidate) then
+                    clink.add_match(candidate)
+                end
             end
         end
     end
@@ -84,7 +102,7 @@ function clink.argument_match_generator(text, first, last)
     end
 
     -- Find a registered generator.
-    local generator = clink.arg_generators[cmd]
+    local generator = clink.arg.generators[cmd]
     if generator == nil then
         return false
     end
@@ -100,6 +118,7 @@ function clink.argument_match_generator(text, first, last)
         str = str:sub(r+1)
     end
 
+    parts.n = 1
     return traverse(generator, parts, text, first, last)
 end
 
