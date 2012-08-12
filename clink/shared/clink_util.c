@@ -164,3 +164,27 @@ void log_error(const char* function, int source_line, const char* format, ...)
 
     va_end(args);
 }
+
+//------------------------------------------------------------------------------
+void puts_help(const char** help_pairs, int count)
+{
+    int i;
+    int max_len;
+
+    count &= ~1;
+
+    max_len = -1;
+    for (i = 0; i < count; i += 2)
+    {
+        max_len = max((int)strlen(help_pairs[i]), max_len);
+    }
+
+    for (i = 0; i < count; i += 2)
+    {
+        const char* arg = help_pairs[i];
+        const char* desc = help_pairs[i + 1];
+        printf("  %*s  %s\n", max_len, arg, desc);
+    }
+
+    puts("");
+}

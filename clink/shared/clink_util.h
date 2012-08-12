@@ -27,6 +27,7 @@ void get_config_dir(char* buffer, int size);
 void get_dll_dir(char* buffer, int size);
 void log_line(const char* function, int source_line, const char* format, ...);
 void log_error(const char* function, int source_line, const char* format, ...);
+void puts_help(const char** help_pairs, int count);
 
 #define LOG_INFO(...)   log_line(__FUNCTION__, __LINE__, __VA_ARGS__)
 #define LOG_ERROR(...)  log_error(__FUNCTION__, __LINE__, __VA_ARGS__)
