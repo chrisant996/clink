@@ -76,7 +76,6 @@ end
 --------------------------------------------------------------------------------
 clink.arg.register_tree("cd", dir_match_generator)
 clink.arg.register_tree("chdir", dir_match_generator)
-clink.arg.register_tree("dir", dir_match_generator)
 clink.arg.register_tree("pushd", dir_match_generator)
 clink.arg.register_tree("rd", dir_match_generator)
 clink.arg.register_tree("rmdir", dir_match_generator)
