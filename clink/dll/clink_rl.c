@@ -526,7 +526,7 @@ static int initialise_hook()
     rl_attempted_completion_function = alternative_matches;
 
     rl_basic_quote_characters = "\"";
-    rl_filename_quote_characters = " %=;";
+    rl_filename_quote_characters = " %=;&^";
 
     rl_add_funmap_entry("clink-completion-shim", completion_shim);
     rl_add_funmap_entry("ctrl-c", ctrl_c);
