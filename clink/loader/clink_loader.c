@@ -24,6 +24,7 @@
 
 //------------------------------------------------------------------------------
 int inject(int, char**);
+int autorun(int, char**);
 
 //------------------------------------------------------------------------------
 static int dispatch_verb(const char* verb, int argc, char** argv)
@@ -32,7 +33,8 @@ static int dispatch_verb(const char* verb, int argc, char** argv)
         const char* verb;
         int (*handler)(int, char**);
     } handlers[] = {
-        "inject", inject
+        "inject", inject,
+        "autorun", autorun
     };
 
     int i;
@@ -64,7 +66,7 @@ int main(int argc, char** argv)
     const char* help_verbs[] = {
         "Verbs:",   "",
         "inject",   "Injects clink into a process.",
-        //"autorun",  "Manage clink's entry in cmd.exe's autorun.",
+        "autorun",  "Manage clink's entry in cmd.exe's autorun.",
         "",         "('<verb> --help' for more details).",
     };
 

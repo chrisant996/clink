@@ -26,6 +26,9 @@ local self_tree = clink.arg.tree_node("*", {
     inject = clink.arg.tree_node("*+", {
         "--scripts", "--help"
     }),
+    autorun = clink.arg.tree_node("*+", {
+        "--install", "--uninstall", "--show", "--value"
+    }),
 })
 
 clink.arg.register_tree("clink", self_tree)
