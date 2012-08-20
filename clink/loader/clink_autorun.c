@@ -22,9 +22,6 @@
 #include "clink_pch.h"
 #include "shared/clink_util.h"
 
-// "HKLM\Software\Microsoft\Command Processor"
-// "HKLM\Software\Wow6432Node\Microsoft\Command Processor"
-
 //------------------------------------------------------------------------------
 static int does_user_have_admin_rights()
 {
@@ -111,19 +108,33 @@ static int delete_value(HKEY key, const char* name)
 //------------------------------------------------------------------------------
 static int find_clink_entry(const char* value, int* left, int* right)
 {
+    int quoted;
+    int i;
     const char* tag;
     const char* c;
 
+    const char* needles[] = {
+        "clink inject",
+        "clink\" inject",
+        "clink.exe inject",
+        "clink.exe\" inject",
+        "clink.bat inject",
+        "clink.bat\" inject",
+    };
+
     // Find roughly where clink's entry is.
-    tag = strstr(value, "clink\" inject");
+    for (i = 0; i < sizeof_array(needles); ++i)
+    {
+        tag = strstr(value, needles[i]);
+        if (tag != NULL)
+        {
+            break;
+        }
+    }
+
     if (tag == NULL)
     {
-        tag = strstr(value, "\\clink.bat inject");
-
-        if (tag == NULL)
-        {
-            return 0;
-        }
+        return 0;
     }
 
     // Find right most extents of clink's entry.
@@ -136,15 +147,27 @@ static int find_clink_entry(const char* value, int* left, int* right)
     {
         *right = (int)strlen(value);
     }
+
+    // Is clink's path quoted?
+    c = strchr(tag, ' ');
+    quoted = (c != 0) && (c[-1] == '\"');
     
-    // And find the left most extent.
+    // And find the left most extent. First search for opening quote if need
+    // be, then search for command separator.
+    i = quoted ? '\"' : '&';
     c = tag;
     while (c > value)
     {
-        if (c[0] == '&' && c[-1] == '&')
+        if (c[0] == i)
         {
-            --c;
-            break;
+            if (!quoted)
+            {
+                c -= (c[-1] == i);  // & or &&?
+                break;
+            }
+
+            quoted = 0;
+            i = '&';
         }
             
         --c;
@@ -204,6 +227,9 @@ static int uninstall_autorun(const char* clink_path, int wow64)
         }
     }
 
+    // Delete legacy values.
+    delete_value(cmd_proc_key, "AutoRunPreClinkInstall");
+
     // Tidy up.
     close_key(cmd_proc_key);
     free(key_value);
@@ -239,7 +265,7 @@ static int install_autorun(const char* clink_path, int wow64)
 
     // Build the new autorun entry by appending clink's entry to the current one.
     new_value[0] = '\0';
-    if (key_value != NULL && *key_value == '\0')
+    if (key_value != NULL && *key_value != '\0')
     {
         str_cat(new_value, key_value, i);
         str_cat(new_value, "&&", i);
@@ -365,7 +391,7 @@ int autorun(int argc, char** argv)
     clink_path[0] = '\0';
     str_cat(clink_path, _pgmptr, (int)(strrchr(_pgmptr, '\\') - _pgmptr + 1));
 
-    while ((i = getopt_long(argc, argv, "siuh", options, NULL)) != -1)
+    while ((i = getopt_long(argc, argv, "v:siuh", options, NULL)) != -1)
     {
         switch (i)
         {
