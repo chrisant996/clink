@@ -388,7 +388,7 @@ static void failed()
     buffer[0] = '\0';
     get_config_dir(buffer, sizeof_array(buffer));
 
-    printf("Failed to load clink.\nSee log for details (%s).", buffer);
+    fprintf(stderr, "Failed to load clink.\nSee log for details (%s).", buffer);
 }
 
 //------------------------------------------------------------------------------
