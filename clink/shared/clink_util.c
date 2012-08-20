@@ -183,7 +183,7 @@ void puts_help(const char** help_pairs, int count)
     {
         const char* arg = help_pairs[i];
         const char* desc = help_pairs[i + 1];
-        printf("  %*s  %s\n", max_len, arg, desc);
+        printf("  %-*s  %s\n", max_len, arg, desc);
     }
 
     puts("");
