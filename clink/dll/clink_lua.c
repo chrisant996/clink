@@ -56,7 +56,7 @@ static void load_lua_scripts(const char* path)
     find = FindFirstFile("*.lua", &fd);
     while (find != INVALID_HANDLE_VALUE)
     {
-        if (_stricmp(fd.cFileName, "clink_core.lua") != 0)
+        if (_stricmp(fd.cFileName, "clink.lua") != 0)
         {
             load_lua_script(fd.cFileName);
         }
@@ -403,7 +403,7 @@ void initialise_lua()
 
     i = (int)strlen(buffer);
 
-    str_cat(buffer, "/clink_core.lua", sizeof_array(buffer));
+    str_cat(buffer, "/clink.lua", sizeof_array(buffer));
     load_lua_script(buffer);
 
     buffer[i] = '\0';

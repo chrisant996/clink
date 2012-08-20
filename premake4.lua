@@ -147,11 +147,11 @@ project("clink_dll")
 
     configuration("release")
         build_postbuild("clink/dll/clink_inputrc", "release")
-        build_postbuild("clink/dll/clink_*.lua", "release")
+        build_postbuild("clink/dll/clink*.lua", "release")
 
     configuration("debug")
         build_postbuild("clink/dll/clink_inputrc", "debug")
-        build_postbuild("clink/dll/clink_*.lua", "debug")
+        build_postbuild("clink/dll/clink*.lua", "debug")
 
     configuration("vs*")
         links("dbghelp")
@@ -214,8 +214,8 @@ newaction {
 
         -- build the code.
         exec("premake4 --clink_ver="..clink_ver.." vs2010")
-        exec("msbuild /v:m /p:configuration=release /p:platform=win32 /t:rebuild .build/vs2010/clink.sln")
-        exec("msbuild /v:m /p:configuration=release /p:platform=x64 /t:rebuild .build/vs2010/clink.sln")
+        exec("msbuild /m /v:m /p:configuration=release /p:platform=win32 /t:rebuild .build/vs2010/clink.sln")
+        exec("msbuild /m /v:m /p:configuration=release /p:platform=x64 /t:rebuild .build/vs2010/clink.sln")
 
         local src = ".build\\vs2010\\bin\\release\\"
         local dest = "..\\clink_"..clink_ver
@@ -226,7 +226,7 @@ newaction {
             "clink_dll_x*.dll",
             "clink_dll_x*.pdb",
             "clink_inputrc",
-            "clink_*.lua",
+            "clink*.lua",
             "clink_*.txt",
             "clink.bat",
         }
@@ -235,6 +235,22 @@ newaction {
         for _, mask in ipairs(manifest) do
             exec("copy "..src..mask.." "..dest)
         end
+
+        -- lump lua files together.
+        exec("move "..dest.."\\clink.lua "..dest.."\\clink._lua")
+        local lua_lump = io.open(dest.."\\clink._lua", "a")
+        for _, i in ipairs(os.matchfiles(dest.."/*.lua")) do
+            i = path.translate(i)
+            print("lumping "..i)
+
+            lua_lump:write("\n--------------------------------------------------------------------------------\n")
+            lua_lump:write("-- ", path.getname(i), "\n")
+            lua_lump:write("--\n\n")
+            for l in io.lines(i) do lua_lump:write(l, "\n") end
+        end
+        lua_lump:close()
+        exec("del /q "..dest.."\\*.lua")
+        exec("move "..dest.."\\clink._lua "..dest.."\\clink.lua")
 
         -- tidy up code directory.
         exec("rd /q /s .build")
