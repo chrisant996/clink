@@ -33,7 +33,6 @@ int                     hook_iat(void*, const char*, const char*, void*);
 int                     hook_jmp(const char*, const char*, void*);
 
 extern int              clink_opt_ctrl_d_exit;
-int                     clink_opt_alt_hooking   = 0;
 static wchar_t*         g_write_cache           = NULL;
 static const int        g_write_cache_size      = 0xffff;  // 0x10000 - 1 !!
 
@@ -246,7 +245,7 @@ static const char* get_kernel_dll()
 }
 
 //------------------------------------------------------------------------------
-static int apply_hooks(void* base)
+static int apply_hooks(void* base, int use_alt_method)
 {
     int i;
 
@@ -271,7 +270,7 @@ static int apply_hooks(void* base)
         LOG_INFO("Hooking '%s' in '%s'", hook->func_name, hook->dlls);
 
         // Hook method 1.
-        if (!clink_opt_alt_hooking)
+        if (!use_alt_method)
         {
             hook_ok = hook_iat(base, hook->dlls, hook->func_name, hook->hook);
             if (hook_ok)
@@ -423,7 +422,7 @@ BOOL WINAPI DllMain(HINSTANCE instance, DWORD reason, LPVOID unused)
         return FALSE;
     }
 
-    if (!apply_hooks(base))
+    if (!apply_hooks(base, g_inject_args.alt_hook_method))
     {
         failed();
         return FALSE;

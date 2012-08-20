@@ -24,7 +24,7 @@
 #include "clink_util.h"
 
 //------------------------------------------------------------------------------
-inject_args_t   g_inject_args   = { 0, {'\0'} };
+inject_args_t   g_inject_args   = { 0, 0, {'\0'} };
 
 //------------------------------------------------------------------------------
 void get_inject_arg_file(unsigned pid, char* buffer, int buffer_size)

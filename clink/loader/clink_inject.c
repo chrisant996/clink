@@ -276,6 +276,7 @@ int inject(int argc, char** argv)
     const char* help[] = {
         "-s, --scripts <path>", "Alternative path to load .lua scripts from.",
         "-q, --quiet",          "Suppress copyright output.",
+        "-a, --althook",        "Use alternative method of hooking parent process.",
         "-h, --help",           "Shows this help text.",
     };
 
@@ -283,7 +284,7 @@ int inject(int argc, char** argv)
     extern const char* g_clink_footer;
 
     // Parse arguments
-    while ((i = getopt_long(argc, argv, "qhs:", options, NULL)) != -1)
+    while ((i = getopt_long(argc, argv, "aqhs:", options, NULL)) != -1)
     {
         switch (i)
         {
@@ -297,6 +298,10 @@ int inject(int argc, char** argv)
 
         case 'q':
             g_inject_args.quiet = 1;
+            break;
+
+        case 'a':
+            g_inject_args.alt_hook_method = 1;
             break;
 
         case '?':
