@@ -373,8 +373,11 @@ static void success()
     extern const char* g_clink_header;
     extern const char* g_clink_footer;
 
-    puts(g_clink_header);
-    puts(g_clink_footer);
+    if (!g_inject_args.quiet)
+    {
+        puts(g_clink_header);
+        puts(g_clink_footer);
+    }
 }
 
 //------------------------------------------------------------------------------

@@ -25,6 +25,7 @@
 //------------------------------------------------------------------------------
 struct _inject_args
 {
+    int     quiet;
     char    script_path[1024];
 };
 typedef struct _inject_args inject_args_t;
