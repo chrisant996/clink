@@ -28,8 +28,9 @@ static int              reload_lua_state(int count, int invoking_key);
 
 extern int              g_match_palette[3];
 extern int              _rl_completion_case_map;
+extern int              g_slash_translation;
 extern char*            rl_variable_value(char*);
-static lua_State*       g_lua = NULL;
+static lua_State*       g_lua                        = NULL;
 
 //------------------------------------------------------------------------------
 static void load_lua_script(const char* script)
@@ -280,6 +281,21 @@ static int suppress_char_append(lua_State* state)
 }
 
 //------------------------------------------------------------------------------
+static int slash_translation(lua_State* state)
+{
+    if (lua_gettop(state) == 0)
+    {
+        g_slash_translation = 0;
+    }
+    else
+    {
+        g_slash_translation = lua_tointeger(state, 1);
+    }
+
+    return 0;
+}
+
+//------------------------------------------------------------------------------
 static int is_dir(lua_State* state)
 {
     const char* name;
@@ -367,6 +383,7 @@ void initialise_lua()
         { "lower", to_lowercase },
         { "matches_are_files", matches_are_files },
         { "suppress_char_append", suppress_char_append },
+        { "slash_translation", slash_translation },
         { "is_dir", is_dir },
         { "get_rl_variable", get_rl_variable },
         { "is_rl_variable_true", is_rl_variable_true },

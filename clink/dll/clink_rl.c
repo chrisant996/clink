@@ -30,6 +30,7 @@ void                enter_scroll_mode(int);
 void                move_cursor(int, int);
 
 int                 g_match_palette[3]              = { -1, -1, -1 };
+int                 g_slash_translation             = 0;
 int                 clink_opt_passthrough_ctrl_c    = 1;
 int                 clink_opt_ctrl_d_exit           = 1;
 int                 clink_opt_esc_clears_line       = 1; 
@@ -113,7 +114,7 @@ static int getc_impl(FILE* stream)
 }
 
 //------------------------------------------------------------------------------
-static void translate_matches(char** matches)
+static void translate_matches(char** matches, char from, char to)
 {
     char** m;
 
@@ -129,7 +130,7 @@ static void translate_matches(char** matches)
         char* c = *m;
         while (*c)
         {
-            *c = (*c == '/') ? '\\' : *c;
+            *c = (*c == from) ? to : *c;
             ++c;
         }
 
@@ -200,10 +201,47 @@ static int postprocess_matches(char** matches)
     int need_quote;
     int first_needs_quotes;
 
-    translate_matches(matches);
+    if (g_slash_translation >= 0)
+    {
+        switch (g_slash_translation)
+        {
+        case 1:     translate_matches(matches, '\\', '/');  break;
+        default:    translate_matches(matches, '/', '\\');  break;
+        }
+    }
+
     quote_matches(matches);
 
     return 0;
+}
+
+//------------------------------------------------------------------------------
+static void suffix_translation()
+{
+    // readline's path completion may have appended a '/'. If so; flip it.
+
+    char from;
+    char* to;
+
+    if (g_slash_translation < 0)
+    {
+        return;
+    }
+
+    // Decide what direction we're going in.
+    switch (g_slash_translation)
+    {
+    case 1:     from = '\\'; to = "/";  break;
+    default:    from = '/';  to = "\\"; break;
+    }
+
+    // Swap the training slash, using readline's API to maintain undo state.
+    if ((rl_point > 0) && (rl_line_buffer[rl_point - 1] == from))
+    {
+        rl_delete_text(rl_point - 1, rl_point);
+        --rl_point;
+        rl_insert_text(to);
+    }
 }
 
 //------------------------------------------------------------------------------
@@ -219,16 +257,11 @@ static int completion_shim(int count, int invoking_key)
 
     rl_begin_undo_group();
     ret = rl_complete(count, invoking_key);
-
-    // readline's path completion may have appended a '/'. If so; flip it.
-    if ((rl_point > 0) && (rl_line_buffer[rl_point - 1] == '/'))
-    {
-        rl_delete_text(rl_point - 1, rl_point);
-        --rl_point;
-        rl_insert_text("\\");
-    }
-
+    suffix_translation();
     rl_end_undo_group();
+
+    g_slash_translation = 0;
+
     return ret;
 }
 
@@ -383,7 +416,7 @@ static void display_matches(char** matches, int match_count, int max_length)
         }
     }
 
-    // Get readline to display the matches. Flush stream so we catch set colours
+    // Get readline to display the matches.
     update_screen_size();
     if (show_matches > 0)
     {
