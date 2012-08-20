@@ -281,7 +281,7 @@ int inject(int argc, char** argv)
     extern const char* g_clink_footer;
 
     // Parse arguments
-    while ((i = getopt_long(argc, argv, "chs:", options, NULL)) != -1)
+    while ((i = getopt_long(argc, argv, "hs:", options, NULL)) != -1)
     {
         switch (i)
         {
