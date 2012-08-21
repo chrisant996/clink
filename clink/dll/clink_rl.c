@@ -25,6 +25,7 @@
 //------------------------------------------------------------------------------
 void                initialise_lua();
 char**              lua_generate_matches(const char*, int, int);
+void                lua_filter_prompt(char*, int);
 void                initialise_rl_scroller();
 void                enter_scroll_mode(int);
 void                move_cursor(int, int);
@@ -538,6 +539,20 @@ static int page_up(int count, int invoking_key)
 }
 
 //------------------------------------------------------------------------------
+static int filter_prompt()
+{
+    char prompt[1024];
+
+    prompt[0] = '\0';
+    str_cat(prompt, rl_prompt, sizeof_array(prompt));
+
+    lua_filter_prompt(prompt, sizeof_array(prompt));
+    rl_set_prompt(prompt);
+
+    return 0;
+}
+
+//------------------------------------------------------------------------------
 static int initialise_hook()
 {
     // This is a bit of a hack. Ideally we should take care of this in
@@ -572,8 +587,8 @@ static int initialise_hook()
     rl_re_read_init_file(0, 0);
     rl_visible_stats = 0;               // serves no purpose under win32.
 
-    rl_startup_hook = NULL;
-    return 0;
+    rl_startup_hook = filter_prompt;
+    return filter_prompt();
 }
 
 //------------------------------------------------------------------------------
@@ -641,7 +656,7 @@ int call_readline(
         NULL
     );
 
-    // Initialisation
+    // Initialisation (then prompt filtering after that)
     if (!initialised)
     {
         rl_startup_hook = initialise_hook;

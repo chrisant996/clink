@@ -516,3 +516,29 @@ static int reload_lua_state(int count, int invoking_key)
     initialise_lua();
     return 1;
 }
+
+//------------------------------------------------------------------------------
+void lua_filter_prompt(char* buffer, int buffer_size)
+{
+    const char* prompt;
+
+    // Call Lua to filter prompt
+    lua_getglobal(g_lua, "clink");
+    lua_pushliteral(g_lua, "filter_prompt");
+    lua_rawget(g_lua, -2);
+
+    lua_pushstring(g_lua, buffer);
+    if (lua_pcall(g_lua, 1, 1, 0) != 0)
+    {
+        puts(lua_tostring(g_lua, -1));
+        lua_pop(g_lua, 2);
+        return;
+    }
+
+    // Collect the filtered prompt.
+    prompt = lua_tostring(g_lua, -1);
+    buffer[0] = '\0';
+    str_cat(buffer, prompt, buffer_size);
+
+    lua_pop(g_lua, 2);
+}

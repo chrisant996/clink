@@ -28,6 +28,9 @@ clink.arg = {}
 clink.arg.generators = {}
 clink.arg.node_flags_key = "\x01"
 
+clink.prompt = {}
+clink.prompt.filters = {}
+
 --------------------------------------------------------------------------------
 function clink.compute_lcd(text, list)
     if #list < 2 then
@@ -145,4 +148,27 @@ function clink.arg.tree_node(flags, content)
 
     node[clink.arg.node_flags_key] = flags
     return node
+end
+
+--------------------------------------------------------------------------------
+function clink.prompt.register_filter(filter, priority)
+    if priority == nil then
+        priority = 999
+    end
+
+    table.insert(clink.prompt.filters, {f=filter, p=priority})
+    table.sort(clink.prompt.filters, function(a, b) return a["p"] < b["p"] end)
+end
+
+--------------------------------------------------------------------------------
+function clink.filter_prompt(prompt)
+    clink.prompt.value = prompt
+
+    for _, filter in ipairs(clink.prompt.filters) do
+        if filter.f() == true then
+            return clink.prompt.value
+        end
+    end
+
+    return clink.prompt.value
 end
