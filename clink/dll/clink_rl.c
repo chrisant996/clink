@@ -160,7 +160,7 @@ static void quote_matches(char** matches)
         return;
     }
 
-    if (rl_completion_found_quote & RL_QF_DOUBLE_QUOTE)
+    if (rl_completion_quote_character == '\"')
     {
         return;
     }
