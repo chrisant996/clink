@@ -21,7 +21,7 @@
 --
 
 --------------------------------------------------------------------------------
-local function dir_match_generator(text, first, last)
+function dir_match_generator(text, first, last)
     -- Strip off any path components that may be on text.
     local prefix = ""
     local i = text:find("[\\/:][^\\/:]*$")

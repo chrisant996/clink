@@ -53,21 +53,13 @@ local function dos_cmd_match_generator(text, first, last)
 end
 
 --------------------------------------------------------------------------------
-local function exec_match_generator(text, first, last)
-    -- We're only interested in exec completion if this is the first word of the
-    -- line, or the first word after a command separator.
-    local leading = rl_line_buffer:sub(1, first - 1)
-    local is_first = leading:find("^%s*\"*$")
-    local is_separated = leading:find("[|&]%s*\"*$")
-    if not is_first and not is_separated then
-        return false
-    end
+local function build_passes(text)
+    local passes = {}
 
     -- If there's no path separator in text then consider the environment's path
-    -- otherwise just search the specified relative path.
-    local paths = {}
+    -- as a first pass for matches.
     if not text:find("[\\/:]") then
-        paths = split_on_semicolon(clink.get_env("PATH"))
+        local paths = split_on_semicolon(clink.get_env("PATH"))
 
         -- We're expecting absolute paths and as ';' is a valid path character
         -- there maybe unneccessary splits. Here we resolve them.
@@ -85,23 +77,40 @@ local function exec_match_generator(text, first, last)
         for i = 1, #paths_merged, 1 do
             table.insert(paths, paths_merged[i].."\\")
         end
-        table.insert(paths, ".\\")
-        
-        dos_cmd_match_generator(text, first, last)
-    else
-        table.insert(paths, "")
+
+        table.insert(passes, { paths=paths, func=dos_cmd_match_generator })
+    end
+
+    -- The fallback solution is to use 'text' to find matches, and also add
+    -- directories.
+    table.insert(passes, { paths={""}, func=dir_match_generator })
+
+    return passes
+end
+
+--------------------------------------------------------------------------------
+local function exec_match_generator(text, first, last)
+    -- We're only interested in exec completion if this is the first word of the
+    -- line, or the first word after a command separator.
+    local leading = rl_line_buffer:sub(1, first - 1)
+    local is_first = leading:find("^%s*\"*$")
+    local is_separated = leading:find("[|&]%s*\"*$")
+    if not is_first and not is_separated then
+        return false
     end
 
     -- Strip off possible trailing extension.
-    local needle = text;
+    local needle = text
     local ext_a, ext_b = needle:find("%.[a-zA-Z]*$")
     if ext_a then
         needle = needle:sub(1, ext_a - 1)
     end
 
     -- Replace '_' or '-' with '*' for improved "case insentitive" searching.
-    needle = needle:gsub("-", "*")
-    needle = needle:gsub("_", "*")
+    if clink.is_rl_variable_true("completion-map-case") then
+        needle = needle:gsub("-", "?")
+        needle = needle:gsub("_", "?")
+    end
 
     -- Strip off any path components that may be on text
     local prefix = ""
@@ -110,25 +119,35 @@ local function exec_match_generator(text, first, last)
         prefix = text:sub(1, i)
     end
 
-    -- Combine extensions, text, and paths to find matches
-    local count = #clink.matches
+    local passes = build_passes(text)
+
+    -- Combine extensions, text, and paths to find matches - this is done in two
+    -- passes, the second pass possibly being "local" if the system-wide search
+    -- didn't find any results.
+    local n = #passes
     local exts = split_on_semicolon(clink.get_env("PATHEXT"))
-    for _, ext in ipairs(exts) do
-        for _, path in ipairs(paths) do
-            local mask = path..needle.."*"..ext
-            for _, file in ipairs(clink.find_files(mask)) do
-                file = prefix..file
-                if clink.is_match(text, file) then
-                    count = count + 1
-                    clink.add_match(file)
+    for p = 1, n do
+        local pass = passes[p]
+        for _, ext in ipairs(exts) do
+            for _, path in ipairs(pass.paths) do
+                local mask = path..needle.."*"..ext
+                for _, file in ipairs(clink.find_files(mask)) do
+                    file = prefix..file
+                    if clink.is_match(text, file) then
+                        clink.add_match(file)
+                    end
                 end
             end
         end
-    end
+        
+        if pass.func then
+            pass.func(text, first, last)
+        end
 
-    -- No point monopolising completion if there was no matches...
-    if count == 0 then
-        return false
+        -- Was there matches? Then there's no need to make any further passes.
+        if clink.match_count() > 0 then
+            break
+        end
     end
 
     return true
