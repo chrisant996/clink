@@ -170,11 +170,11 @@ project("clink_loader")
     pchheader("clink/loader/clink_pch.h")
 
     configuration("release")
-        build_postbuild("clink_*.txt", "release")
+        build_postbuild("CHANGES", "release")
+        build_postbuild("LICENSE", "release")
         build_postbuild("clink/loader/clink.bat", "release")
 
     configuration("debug")
-        build_postbuild("clink_*.txt", "debug")
         build_postbuild("clink/loader/clink.bat", "debug")
 
 --------------------------------------------------------------------------------
@@ -227,7 +227,8 @@ newaction {
             "clink_dll_x*.pdb",
             "clink_inputrc",
             "clink*.lua",
-            "clink_*.txt",
+            "CHANGES",
+            "LICENSE",
             "clink.bat",
         }
 

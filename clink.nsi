@@ -26,7 +26,7 @@ Name clink
 InstallDir "$PROGRAMFILES\clink"
 OutFile "${CLINK_SOURCE}_setup.exe"
 SetCompressor lzma
-LicenseData clink_license.txt
+LicenseData LICENSE
 LicenseForceSelection off
 RequestExecutionLevel admin
 XPStyle on
@@ -67,7 +67,8 @@ Section "!Application files"
     SetOutPath $INSTDIR
     File ${CLINK_SOURCE}\*.dll
     File ${CLINK_SOURCE}\*.lua
-    File ${CLINK_SOURCE}\*.txt
+    File ${CLINK_SOURCE}\CHANGES
+    File ${CLINK_SOURCE}\LICENSE
     File ${CLINK_SOURCE}\clink_x*.exe
     File ${CLINK_SOURCE}\*.bat
     File ${CLINK_SOURCE}\*_inputrc
