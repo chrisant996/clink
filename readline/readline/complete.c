@@ -933,6 +933,14 @@ _rl_find_completion_word (fp, dp)
       /* FOUND_QUOTE is set so we know what kind of quotes we found. */
       for (scan = pass_next = 0; scan < end; scan = MB_NEXTCHAR (rl_line_buffer, scan, 1, MB_FIND_ANY))
 	{
+/* begin_clink_change
+ * The following assumes we want to use backslashes to escape the next
+ * character. This doesn't apply on Windows as a \ is the part separator. Removing
+ * this code stops strings like the following getting misunderstood by readline;
+ *
+ * c:\>foobar.bat "c:\Program Files\"
+ */
+#if 0
 	  if (pass_next)
 	    {
 	      pass_next = 0;
@@ -949,6 +957,8 @@ _rl_find_completion_word (fp, dp)
 	      found_quote |= RL_QF_BACKSLASH;
 	      continue;
 	    }
+#endif
+/* end_clink_change */
 
 	  if (quote_char != '\0')
 	    {
