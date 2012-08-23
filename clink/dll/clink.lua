@@ -75,7 +75,7 @@ end
 function clink.generate_matches(text, first, last)
     clink.matches = {}
     for _, generator in ipairs(clink.generators) do
-        if generator.f(text, first, last) then
+        if generator.f(text, first, last) == true then
             if #clink.matches > 1 then
                 -- Catch instances where there's many entries of a single match
                 if clink.is_single_match(clink.matches) then
