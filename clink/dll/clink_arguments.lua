@@ -123,4 +123,4 @@ function clink.argument_match_generator(text, first, last)
 end
 
 --------------------------------------------------------------------------------
-clink.register_match_generator(clink.argument_match_generator, -1)
+clink.register_match_generator(clink.argument_match_generator, 25)
