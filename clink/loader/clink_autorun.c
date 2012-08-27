@@ -23,6 +23,9 @@
 #include "shared/clink_util.h"
 
 //------------------------------------------------------------------------------
+typedef int (dispatch_func_t)(const char*, int);
+
+//------------------------------------------------------------------------------
 static int does_user_have_admin_rights()
 {
     HKEY key;
@@ -332,7 +335,7 @@ static int force_autorun(const char* value, int wow64)
 }
 
 //------------------------------------------------------------------------------
-static int dispatch(int (*function)(const char*, int), const char* clink_path)
+static int dispatch(dispatch_func_t* function, const char* clink_path)
 {
     int ok;
     int i;
@@ -358,6 +361,8 @@ int autorun(int argc, char** argv)
     char* clink_path;
     int i;
     int ret;
+    dispatch_func_t* function;
+    const char* path_arg;
 
     struct option options[] = {
         { "install",    no_argument,        NULL, 'i' },
@@ -379,37 +384,34 @@ int autorun(int argc, char** argv)
     extern const char* g_clink_header;
     extern const char* g_clink_footer;
 
-    // Check we're running with sufficient privileges.
-    if (!does_user_have_admin_rights())
-    {
-        puts("You must have administator rights to access cmd.exe's autorun");
-        return -1;
-    }
-
     // Get path where clink is installed (assumed to be where this executable is)
     clink_path = malloc(strlen(_pgmptr));
     clink_path[0] = '\0';
     str_cat(clink_path, _pgmptr, (int)(strrchr(_pgmptr, '\\') - _pgmptr + 1));
+
+    function = NULL;
+    path_arg = clink_path;
 
     while ((i = getopt_long(argc, argv, "v:siuh", options, NULL)) != -1)
     {
         switch (i)
         {
         case 'i':
-            ret = dispatch(install_autorun, clink_path);
-            goto end;
+            function = install_autorun;
+            break;
 
         case 'u':
-            ret = dispatch(uninstall_autorun, clink_path);
-            goto end;
+            function = uninstall_autorun;
+            break;
 
         case 's':
-            ret = dispatch(show_autorun, clink_path);
-            goto end;
+            function = show_autorun;
+            break;
 
         case 'v':
-            ret = dispatch(force_autorun, optarg);
-            goto end;
+            function = force_autorun;
+            path_arg = optarg;
+            break;
 
         case '?':
             ret = -1;
@@ -424,8 +426,21 @@ int autorun(int argc, char** argv)
         }
     }
 
+    // Do the magic.
+    if (function != NULL)
+    {
+        // Check we're running with sufficient privileges.
+        if (!does_user_have_admin_rights())
+        {
+            puts("You must have administator rights to access cmd.exe's autorun");
+            ret = -1;
+            goto end;
+        }
+
+        ret = dispatch(function, path_arg);
+    }
+
 end:
     free(clink_path);
-
     return ret;
 }
