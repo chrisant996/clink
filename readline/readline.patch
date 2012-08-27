@@ -46,3 +46,61 @@ index 0aec9c1..e5ce3e2 100644
  
  	  if (quote_char != '\0')
  	    {
+diff --git a/readline/readline/bind.c b/readline/readline/bind.c
+index 59e7964..1b12df1 100644
+--- a/readline/readline/bind.c
++++ b/readline/readline/bind.c
+@@ -1106,6 +1106,17 @@ parser_include (args)
+ 
+   return r;
+ }
++
++/* begin_clink_change
++ * MSVC has issue with "int foo(bar) char* bar; { ... } syntax. It considers the
++ * function to have no arguments and complains when assigning function pointer
++ * to a variable. The workaround is to forward declare them _before_ assignment.
++ */
++int parser_if(char*);
++int parser_endif(char*);
++int parser_else(char*);
++int parser_include(char*);
++/* end_clink_change */
+   
+ /* Associate textual names with actual functions. */
+ static const struct {
+diff --git a/readline/readline/signals.c b/readline/readline/signals.c
+index 6a68d78..faf7803 100644
+--- a/readline/readline/signals.c
++++ b/readline/readline/signals.c
+@@ -64,7 +64,12 @@
+ 
+ /* This typedef is equivalent to the one for Function; it allows us
+    to say SigHandler *foo = signal (SIGKILL, SIG_IGN); */
+-typedef RETSIGTYPE SigHandler ();
++/* begin_clink_change
++ * Address MSVC compiler warnings. signal() returns type "void (*)(int)".
++ */
++//typedef RETSIGTYPE SigHandler ();
++typedef RETSIGTYPE SigHandler (int);
++/* end_clink_change */
+ 
+ #if defined (HAVE_POSIX_SIGNALS)
+ typedef struct sigaction sighandler_cxt;
+diff --git a/readline/readline/input.c b/readline/readline/input.c
+index 7c74c99..e59bad6 100644
+--- a/readline/readline/input.c
++++ b/readline/readline/input.c
+@@ -169,7 +169,12 @@ rl_gather_tyi ()
+   int tty;
+   register int tem, result;
+   int chars_avail, k;
+-  char input;
++/* begin_clink_change
++ * MSVC compile error
++ */
++  //char input;
++  char input = 0;
++/* end_clink_change */
+ #if defined(HAVE_SELECT)
+   fd_set readfds, exceptfds;
+   struct timeval timeout;

@@ -1106,6 +1106,17 @@ parser_include (args)
 
   return r;
 }
+
+/* begin_clink_change
+ * MSVC has issue with "int foo(bar) char* bar; { ... } syntax. It considers the
+ * function to have no arguments and complains when assigning function pointer
+ * to a variable. The workaround is to forward declare them _before_ assignment.
+ */
+int parser_if(char*);
+int parser_endif(char*);
+int parser_else(char*);
+int parser_include(char*);
+/* end_clink_change */
   
 /* Associate textual names with actual functions. */
 static const struct {

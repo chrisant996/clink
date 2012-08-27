@@ -64,7 +64,12 @@
 
 /* This typedef is equivalent to the one for Function; it allows us
    to say SigHandler *foo = signal (SIGKILL, SIG_IGN); */
-typedef RETSIGTYPE SigHandler ();
+/* begin_clink_change
+ * Address MSVC compiler warnings. signal() returns type "void (*)(int)".
+ */
+//typedef RETSIGTYPE SigHandler ();
+typedef RETSIGTYPE SigHandler (int);
+/* end_clink_change */
 
 #if defined (HAVE_POSIX_SIGNALS)
 typedef struct sigaction sighandler_cxt;

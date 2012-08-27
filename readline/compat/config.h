@@ -74,7 +74,6 @@ int                         hooked_fstat(int, struct hooked_stat*);
 #   pragma warning(disable : 4101)  // unreferenced local variable
 #   pragma warning(disable : 4244)  // conversion from 'X' to 'Y', possible loss of data
 #   pragma warning(disable : 4267)  // conversion from 'X' to 'Y', possible loss of data
-#   pragma warning(disable : 4700)  // uninitialized local variable 'X' used
 #endif // _MSC_VER
 
 #define RL_LIBRARY_VERSION  "6.2"
