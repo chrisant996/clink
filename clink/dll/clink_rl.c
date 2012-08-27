@@ -329,14 +329,18 @@ static void display_matches(char** matches, int match_count, int max_length)
     {
         int is_dir = 0;
         int len;
-        char* base = strrchr(matches[i], '\\');
-        if (base == NULL)
-        {
-            base = strrchr(matches[i], ':');
-        }
-
+        char* base = NULL;
+        
+        // If matches are files then strip off the path and establish if they
+        // are directories.
         if (rl_filename_completion_desired)
         {
+            base = strrchr(matches[i], '\\');
+            if (base == NULL)
+            {
+                base = strrchr(matches[i], ':');
+            }
+
             is_dir = GetFileAttributes(matches[i]);
             is_dir = !!(is_dir & FILE_ATTRIBUTE_DIRECTORY);
         }
