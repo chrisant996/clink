@@ -417,7 +417,7 @@ int autorun(int argc, char** argv)
             ret = -1;
             goto end;
 
-        default:
+        case 'h':
             puts(g_clink_header);
             puts_help(help, sizeof_array(help));
             puts(g_clink_footer);
