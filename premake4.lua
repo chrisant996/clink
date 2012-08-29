@@ -240,8 +240,6 @@ newaction {
                     return
                 end
             end
-            
-            return
         end
 
         local git_checkout = clink_ver
@@ -255,13 +253,16 @@ newaction {
             target_dir = target_dir..get_last_git_commit()
         else
             target_dir = ".build\\release\\"
-            target_dir = target_dir..os.date("%Y%m%d_%H%M%S_")
+            if clink_ver ~= "DEV" then
+                target_dir = target_dir..os.date("%Y%m%d_%H%M%S_")
+            end
             target_dir = target_dir..clink_ver
         end
 
         target_dir = path.translate(path.getabsolute(target_dir)).."\\"
 
         if not os.isdir(target_dir..".") then
+            exec("rd /q /s "..target_dir)
             exec("md "..target_dir)
         end
 
