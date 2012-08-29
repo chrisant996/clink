@@ -202,6 +202,7 @@ newaction {
     trigger = "clink_release",
     description = "Prepares a release of clink.",
     execute = function ()
+        -- Helper funciton to show executed commands to TTY
         local exec = function(cmd)
             print("----------------------------------------------")
             print("-- EXEC: "..cmd)
@@ -212,30 +213,52 @@ newaction {
         local git_checkout = clink_ver
         clink_ver = clink_ver:upper()
 
-        local rls_dir_name = os.date("%Y%m%d_%H%M%S")
-        local src_dir_name = "clink_"..clink_ver.."_src"
-        local rls_dir = ".build\\release\\"..rls_dir_name.."_"..clink_ver.."\\"
-        local code_dir = rls_dir..src_dir_name
-        if not os.isdir(code_dir..".") then
-            exec("md "..code_dir)
+        -- Build the output directory name
+        local target_dir = ".build\\release\\"
+        target_dir = target_dir..os.date("%Y%m%d_%H%M%S")
+        target_dir = target_dir.."_"
+        target_dir = target_dir..clink_ver
+
+        target_dir = path.translate(path.getabsolute(target_dir)).."\\"
+
+        if not os.isdir(target_dir..".") then
+            exec("md "..target_dir)
         end
 
-        -- clone repro in release folder and checkout the specified version
-        exec("git clone . "..code_dir)
-        if not os.chdir(code_dir) then
-            return
-        end
-        exec("git checkout "..git_checkout)
+        -- If we're not building DEV, create a clone and checkout correct version
+        -- and build it.
+        local src_dir_name = "."
+        if clink_ver ~= "DEV" then
+            src_dir_name = "clink_"..clink_ver.."_src"
+            local code_dir = target_dir..src_dir_name
+            if not os.isdir(code_dir..".") then
+                exec("md "..code_dir)
+            end
 
-        -- build the code.
+            -- clone repro in release folder and checkout the specified version
+            exec("git clone . "..code_dir)
+            if not os.chdir(code_dir) then
+                print("Failed to chdir to '"..code_dir.."'")
+                return
+            end
+            exec("git checkout "..git_checkout)
+        end
+
+        -- Build the code.
         exec("premake4 --clink_ver="..clink_ver.." vs2010")
-        exec("msbuild /m /v:m /p:configuration=release /p:platform=win32 /t:rebuild .build/vs2010/clink.sln")
-        exec("msbuild /m /v:m /p:configuration=release /p:platform=x64 /t:rebuild .build/vs2010/clink.sln")
+        exec("msbuild /m /v:q /p:configuration=release /p:platform=win32 .build/vs2010/clink.sln")
+        exec("msbuild /m /v:q /p:configuration=release /p:platform=x64 .build/vs2010/clink.sln")
 
         local src = ".build\\vs2010\\bin\\release\\"
-        local dest = "..\\clink_"..clink_ver
+        local dest = target_dir.."clink_"..clink_ver
 
-        -- copy release files to a directory.
+        -- Do a coarse check to make sure there's a build available.
+        if not os.isdir(src..".") then
+            print("There's no build available in '"..src.."'")
+            return
+        end
+
+        -- Copy release files to a directory.
         local manifest = {
             "clink_x*.exe",
             "clink_dll_x*.dll",
@@ -252,8 +275,9 @@ newaction {
             exec("copy "..src..mask.." "..dest)
         end
 
-        -- lump lua files together.
+        -- Lump lua files together.
         exec("move "..dest.."\\clink.lua "..dest.."\\clink._lua")
+
         local lua_lump = io.open(dest.."\\clink._lua", "a")
         for _, i in ipairs(os.matchfiles(dest.."/*.lua")) do
             i = path.translate(i)
@@ -265,23 +289,29 @@ newaction {
             for l in io.lines(i) do lua_lump:write(l, "\n") end
         end
         lua_lump:close()
+
         exec("del /q "..dest.."\\*.lua")
         exec("move "..dest.."\\clink._lua "..dest.."\\clink.lua")
 
-        -- tidy up code directory.
-        exec("rd /q /s .build")
-        exec("rd /q /s .git")
-        exec("del /q .gitignore")
+        -- Build the installer.
+        exec("makensis /DCLINK_SOURCE="..dest.." /DCLINK_VERSION="..clink_ver.." clink.nsi")
 
-        -- move PDBs out of the way, package release up as zip and installer
+        -- Tidy up code directory.
+        if clink_ver ~= "DEV" then
+            exec("rd /q /s .build")
+            exec("rd /q /s .git")
+            exec("del /q .gitignore")
+
+            os.chdir(target_dir)
+            exec("7z a -r "..target_dir.."clink_"..clink_ver.."_src.zip "..src_dir_name)
+            exec("rd /q /s "..src_dir_name)
+        end
+
+        -- Move PDBs out of the way, package release up as zips
         os.chdir(dest)
         exec("move *.pdb ..")
         exec("7z a -r ../clink_"..clink_ver..".zip ../clink_"..clink_ver)
-        exec("7z a -r ../clink_"..clink_ver.."_src.zip ../"..src_dir_name)
         exec("7z a -r ../clink_"..clink_ver.."_pdb.zip ../*.pdb")
-        exec("makensis /DCLINK_SOURCE="..dest.." /DCLINK_VERSION="..clink_ver.." ../"..src_dir_name.."/clink.nsi")
-
-        exec("rd /q /s ..\\"..src_dir_name)
         exec("del /q ..\\*.pdb")
     end
 }
