@@ -33,6 +33,15 @@ local function get_current_git_branch()
 end
 
 --------------------------------------------------------------------------------
+local function get_last_git_commit()
+    for line in io.popen("git log -1 --format=oneline 2>nul"):lines() do
+		return line:sub(1, 6)
+    end
+
+    return "?"
+end
+
+--------------------------------------------------------------------------------
 local to = ".build/"..(_ACTION or "nullaction")
 local clink_ver = _OPTIONS["clink_ver"] or get_current_git_branch() or "HEAD"
 
@@ -98,6 +107,7 @@ solution("clink")
     defines("HAVE_CONFIG_H")
     defines("HANDLE_MULTIBYTE")
     defines("CLINK_VERSION=AS_STR("..clink_ver..")")
+    defines("CLINK_COMMIT=AS_STR("..get_last_git_commit()..")")
     defines("STATIC_GETOPT")
     includedirs("readline/compat")
     includedirs("readline")
