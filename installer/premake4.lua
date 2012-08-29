@@ -116,14 +116,13 @@ newaction {
         -- Copy release files to a directory.
         local manifest = {
             "clink.bat",
-            "clink_x86.exe",
-            "clink_x64.exe",
-            "clink_dll_x86.dll",
-            "clink_dll_x64.dll",
+            "clink*.exe",
+            "clink*.dll",
+            "clink*.lua",
             "clink_inputrc",
-            "clink.lua",
             "CHANGES",
             "LICENSE",
+
             "clink_dll_x*.pdb",
         }
 
@@ -189,13 +188,16 @@ newaction {
     description = "Displays install state of clink.",
     execute = function ()
         function exec(cmd)
-            print("")
-            print("## "..cmd) 
-            os.execute(cmd)
+            print("\n## "..cmd.."\n##")
+            os.execute(cmd.."2>nul")
         end
 
         exec('dir /s /b "%programfiles(x86)%\\clink"')
         exec('dir /s /b "%localappdata%\\clink"')
+        exec('dir /s /b "%allusersprofile%\\clink"')
         exec('dir /s /b "%allusersprofile%\\Microsoft\\Windows\\Start Menu\\Programs\\clink"')
+        exec('c:\\windows\\sysnative\\cmd.exe /c reg query "hklm\\software\\wow6432node\\microsoft\\windows\\currentversion\\uninstall" /s | findstr clink')
+        exec('c:\\windows\\sysnative\\cmd.exe /c reg query "hklm\\software\\wow6432node\\microsoft\\command processor" /v autorun')
+        exec('c:\\windows\\sysnative\\cmd.exe /c reg query "hklm\\software\\microsoft\\command processor" /v autorun')
     end
 }
