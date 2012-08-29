@@ -24,6 +24,15 @@
 #include "shared/clink_inject_args.h"
 
 //------------------------------------------------------------------------------
+struct write_cache_
+{
+    wchar_t*            buffer;
+    int                 size;
+};
+
+typedef struct write_cache_ write_cache_t;
+
+//------------------------------------------------------------------------------
 void                    save_history();
 void                    shutdown_lua();
 void                    clear_to_eol();
@@ -33,7 +42,8 @@ int                     hook_iat(void*, const char*, const char*, void*);
 int                     hook_jmp(const char*, const char*, void*);
 
 extern int              clink_opt_ctrl_d_exit;
-static wchar_t*         g_write_cache           = NULL;
+static write_cache_t    g_write_cache[2]        = { {NULL, 0}, {NULL, 0} };
+static int              g_write_cache_index     = 0;
 static const int        g_write_cache_size      = 0xffff;  // 0x10000 - 1 !!
 
 //------------------------------------------------------------------------------
@@ -100,10 +110,12 @@ static BOOL WINAPI hooked_read_console(
     const wchar_t* prompt;
     int is_eof;
     LPTOP_LEVEL_EXCEPTION_FILTER old_seh;
+    int i;
+    write_cache_t* write_cache;
 
     // If cmd.exe is asking for one character at a time, use the original path
     // It does this to handle y/n/all prompts which isn't an compatible use-
-    // case for readline. This saves hacking around it...
+    // case for readline.
     if (buffer_size == 1)
     {
         return ReadConsoleW(input, buffer, buffer_size, read_in, control);
@@ -111,17 +123,18 @@ static BOOL WINAPI hooked_read_console(
 
     old_seh = SetUnhandledExceptionFilter(exception_filter);
 
-    // In multi-line prompt situations, we're only interested in the last line.
-    prompt = wcsrchr(g_write_cache, '\n');
-    prompt = (prompt != NULL) ? (prompt + 1) : g_write_cache;
+    i = (g_write_cache_index + 1) & 1;
+    write_cache = g_write_cache + i;
 
     // Call readline.
-    is_eof = call_readline(prompt, buffer, buffer_size);
+    is_eof = call_readline(write_cache->buffer, buffer, buffer_size);
     if (is_eof && clink_opt_ctrl_d_exit)
     {
         wcsncpy(buffer, L"exit", buffer_size);
     }
-    g_write_cache[0] = L'\0';
+
+    write_cache->buffer[0] = L'\0';
+    write_cache->size = 0;
 
     // Check for control codes and convert them.
     if (buffer[0] == L'\x03')
@@ -159,28 +172,55 @@ static BOOL WINAPI hooked_write_console(
     void* unused
 )
 {
+    // Writes to the console are double buffered. This stops custom prompts
+    // from flickering.
+
     static int once = 0;
     int copy_size;
+    int i;
+    write_cache_t* cache;
 
-    if (!once)
+    // First establish the next buffer to use and allocate it if need be.
+    i = g_write_cache_index;
+    g_write_cache_index = (i + 1) & 1;
+
+    cache = g_write_cache + i;
+
+    if (cache->buffer == NULL)
     {
-        g_write_cache = VirtualAlloc(
+        cache->buffer = VirtualAlloc(
             NULL,
             g_write_cache_size + 1,
             MEM_COMMIT,
             PAGE_READWRITE
         );
-
-        once = 1;
     }
 
+    // Copy the write request into the buffer.
     copy_size = (g_write_cache_size < buffer_size)
         ? g_write_cache_size
         : buffer_size;
-    memcpy(g_write_cache, buffer, copy_size * sizeof(wchar_t));
-    g_write_cache[copy_size] = L'\0';
 
-    return WriteConsoleW(output, buffer, buffer_size, written, unused);
+    cache->size = copy_size;
+    memcpy(cache->buffer, buffer, copy_size * sizeof(wchar_t));
+    cache->buffer[copy_size] = L'\0';
+
+    // Now print the previous write request.
+    i = g_write_cache_index;
+    cache = g_write_cache + i;
+
+    if (written != NULL)
+    {
+        *written = buffer_size;
+    }
+
+    if (cache->buffer != NULL)
+    {
+        DWORD j;
+        WriteConsoleW(output, cache->buffer, cache->size, &j, unused);
+    }
+
+    return TRUE;
 }
 
 //------------------------------------------------------------------------------

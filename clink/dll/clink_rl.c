@@ -676,7 +676,6 @@ int call_readline(
     // Call readline
     do
     {
-        hooked_fprintf(NULL, "\r");
         text = readline(prompt_utf8);
         if (!text)
         {
