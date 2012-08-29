@@ -22,14 +22,16 @@
 ;
 
 ;-------------------------------------------------------------------------------
-Name clink
-InstallDir "$PROGRAMFILES\clink"
-OutFile "${CLINK_SOURCE}_setup.exe"
-SetCompressor lzma
-LicenseData LICENSE
-LicenseForceSelection off
-RequestExecutionLevel admin
-XPStyle on
+Name					"clink v${CLINK_VERSION}"
+InstallDir				"$PROGRAMFILES\clink"
+OutFile					"${CLINK_SOURCE}_setup.exe"
+AllowSkipFiles			off
+SetCompressor			/SOLID lzma
+LicenseBkColor			/windows
+LicenseData				LICENSE
+LicenseForceSelection	off
+RequestExecutionLevel	admin
+XPStyle					on
 
 ;-------------------------------------------------------------------------------
 Page license
@@ -101,7 +103,7 @@ SectionEnd
 ;-------------------------------------------------------------------------------
 Section "Autorun when cmd.exe starts"
     SetShellVarContext all
-    ExecWait '"$INSTDIR\clink" autorun --install'
+    ExecWait 'cmd.exe /c "$INSTDIR\clink" autorun --install'
 SectionEnd
 
 ;-------------------------------------------------------------------------------
@@ -109,7 +111,7 @@ Section "!un.Application files"
     SectionIn RO
     SetShellVarContext all
 
-    ExecWait '"$INSTDIR\clink" autorun --uninstall'
+    ExecWait 'cmd.exe /c "$INSTDIR\clink" autorun --uninstall'
 
     RMDir /r $INSTDIR
     RMDir /r $SMPROGRAMS\clink
