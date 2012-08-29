@@ -35,7 +35,7 @@ end
 --------------------------------------------------------------------------------
 local function get_last_git_commit()
     for line in io.popen("git log -1 --format=oneline 2>nul"):lines() do
-		return line:sub(1, 6)
+        return line:sub(1, 6)
     end
 
     return "?"
@@ -43,7 +43,7 @@ end
 
 --------------------------------------------------------------------------------
 local to = ".build/"..(_ACTION or "nullaction")
-local clink_ver = _OPTIONS["clink_ver"] or get_current_git_branch() or "HEAD"
+local clink_ver = _OPTIONS["clink_ver"] or "DEV"
 
 --------------------------------------------------------------------------------
 local pchheader_original = pchheader
@@ -220,14 +220,44 @@ newaction {
             os.execute(cmd)
         end
 
+        -- Crude repurpose of this function so it can be used for nightlies
+        local nightly = nil
+        if clink_ver:lower() == "nightly" then
+            clink_ver = "dev"
+            nightly = os.getenv("CLI_ENV")..".\\..\\clink\\builds\\"
+
+            if not os.isdir(nightly..".") then
+                print("Invalid nightly directory '"..nightly.."'")
+                return
+            end
+
+            local mask = path.translate(nightly, "/").."*"
+            local hash = get_last_git_commit()
+            local chop = 0 - hash:len()
+            for _, i in ipairs(os.matchdirs(mask)) do
+                if i:sub(chop) == hash then
+                    print(hash.." already built")
+                    return
+                end
+            end
+            
+            return
+        end
+
         local git_checkout = clink_ver
         clink_ver = clink_ver:upper()
 
         -- Build the output directory name
-        local target_dir = ".build\\release\\"
-        target_dir = target_dir..os.date("%Y%m%d_%H%M%S")
-        target_dir = target_dir.."_"
-        target_dir = target_dir..clink_ver
+        local target_dir
+        if nightly then
+            target_dir = nightly
+            target_dir = target_dir..os.date("%Y%m%d_")
+            target_dir = target_dir..get_last_git_commit()
+        else
+            target_dir = ".build\\release\\"
+            target_dir = target_dir..os.date("%Y%m%d_%H%M%S_")
+            target_dir = target_dir..clink_ver
+        end
 
         target_dir = path.translate(path.getabsolute(target_dir)).."\\"
 
@@ -307,7 +337,7 @@ newaction {
         exec("makensis /DCLINK_SOURCE="..dest.." /DCLINK_VERSION="..clink_ver.." clink.nsi")
 
         -- Tidy up code directory.
-        if clink_ver ~= "DEV" then
+        if clink_ver ~= "DEV" and not nightly then
             exec("rd /q /s .build")
             exec("rd /q /s .git")
             exec("del /q .gitignore")
@@ -323,6 +353,11 @@ newaction {
         exec("7z a -r ../clink_"..clink_ver..".zip ../clink_"..clink_ver)
         exec("7z a -r ../clink_"..clink_ver.."_pdb.zip ../*.pdb")
         exec("del /q ..\\*.pdb")
+
+        if nightly then
+            os.chdir(dest..".\\..")
+            exec("rd /q /s "..dest)
+        end
     end
 }
 
