@@ -32,30 +32,24 @@ RequestExecutionLevel admin
 XPStyle on
 
 ;-------------------------------------------------------------------------------
-!if 0
-    !include "MUI2.nsh"
+Page license
+Page directory
+Page components
+;Page custom "checkForLockedFiles"
+Page instfiles
 
-    !define MUI_ABORTWARNING
+UninstPage uninstConfirm
+UninstPage components
+;UninstPage custom "un.checkForLockedFiles"
+UninstPage instfiles
 
-    ;!insertmacro MUI_PAGE_LICENSE "${NSISDIR}\Docs\Modern UI\License.txt"
-    !insertmacro MUI_PAGE_COMPONENTS
-    !insertmacro MUI_PAGE_DIRECTORY
-    !insertmacro MUI_PAGE_INSTFILES
-      
-    !insertmacro MUI_UNPAGE_CONFIRM
-    !insertmacro MUI_UNPAGE_INSTFILES
-      
-    !insertmacro MUI_LANGUAGE "English"
-!else
-    Page license
-    Page directory
-    Page components
-    Page instfiles
+;-------------------------------------------------------------------------------
+Function "checkForLockedFiles"
+FunctionEnd
 
-    UninstPage uninstConfirm
-    UninstPage components
-    UninstPage instfiles
-!endif
+;-------------------------------------------------------------------------------
+Function "un.checkForLockedFiles"
+FunctionEnd
 
 ;-------------------------------------------------------------------------------
 Section "!Application files"
@@ -65,13 +59,14 @@ Section "!Application files"
     ; Installs the main files.
     CreateDirectory $INSTDIR
     SetOutPath $INSTDIR
-    File ${CLINK_SOURCE}\*.dll
-    File ${CLINK_SOURCE}\*.lua
+    File ${CLINK_SOURCE}\clink_dll_x*.dll
+    File ${CLINK_SOURCE}\clink.lua
     File ${CLINK_SOURCE}\CHANGES
     File ${CLINK_SOURCE}\LICENSE
     File ${CLINK_SOURCE}\clink_x*.exe
-    File ${CLINK_SOURCE}\*.bat
-    File ${CLINK_SOURCE}\*_inputrc
+    File ${CLINK_SOURCE}\clink.bat
+    File ${CLINK_SOURCE}\clink_inputrc
+    WriteRegStr HKLM "Software\clink" "Version" "${CLINK_VERSION}"
 
     ; Create a start-menu shortcut
     CreateDirectory "$SMPROGRAMS\clink"
@@ -82,38 +77,51 @@ Section "!Application files"
     CreateShortcut "$SMPROGRAMS\clink\Uninstall clink.lnk" "$INSTDIR\clink_uninstall.exe"
 
     ; Add to "add/remove programs"/"programs and features"
-    WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\Product" "DisplayName" "clink"
-    WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\Product" "UninstallString" "$INSTDIR\clink_uninstall.exe"
-    WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\Product" "Publisher" "Martin Ridgers"
-    WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\Product" "DisplayIcon" "$SYSDIR\cmd.exe,0"
+    StrCpy $0 "Software\Microsoft\Windows\CurrentVersion\Uninstall"
+    WriteRegStr HKLM "$0\clink" "DisplayName" "clink"
+    WriteRegStr HKLM "$0\clink" "UninstallString" "$INSTDIR\clink_uninstall.exe"
+    WriteRegStr HKLM "$0\clink" "Publisher" "Martin Ridgers"
+    WriteRegStr HKLM "$0\clink" "DisplayIcon" "$SYSDIR\cmd.exe,0"
+    WriteRegStr HKLM "$0\clink" "URLInfoAbout" "http://code.google.com/p/clink"
+    WriteRegStr HKLM "$0\clink" "HelpLink" "http://code.google.com/p/clink"
+    WriteRegStr HKLM "$0\clink" "InstallLocation" "$INSTDIR"
+    WriteRegStr HKLM "$0\clink" "DisplayVersion" "${CLINK_VERSION}"
+
+    ; Migrate state from previous versions.
+    IfFileExists $APPDATA\clink 0 CreateClinkProfileDir
+        Rename $APPDATA\clink $LOCALAPPDATA\clink
+        Goto DoneClinkProfileDir
+    CreateClinkProfileDir:
+        CreateDirectory $LOCALAPPDATA\clink
+    DoneClinkProfileDir:
+
+    DeleteRegKey HKLM "$0\Product"
 SectionEnd
 
 ;-------------------------------------------------------------------------------
 Section "Autorun when cmd.exe starts"
     SetShellVarContext all
-    ExecWait '"$INSTDIR\clink.bat" install'
+    ExecWait '"$INSTDIR\clink" autorun --install'
 SectionEnd
-
-
 
 ;-------------------------------------------------------------------------------
 Section "!un.Application files"
+    SectionIn RO
     SetShellVarContext all
 
-    ExecWait '"$INSTDIR\clink.bat" uninstall'
+    ExecWait '"$INSTDIR\clink" autorun --uninstall'
 
     RMDir /r $INSTDIR
     RMDir /r $SMPROGRAMS\clink
 
-    DeleteRegValue HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\Product" "DisplayName"
-    DeleteRegValue HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\Product" "UninstallString"
-    DeleteRegValue HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\Product" "Publisher"
-    DeleteRegValue HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\Product" "DisplayIcon"
+    DeleteRegKey HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\clink"
+    DeleteRegKey HKLM "Software\clink"
 SectionEnd
 
 ;-------------------------------------------------------------------------------
 Section "un.User scripts and history"
-    SetShellVarContext current
+    SetShellVarContext all
 
     RMDIR /r $APPDATA\clink
+    RMDIR /r $LOCALAPPDATA\clink
 SectionEnd

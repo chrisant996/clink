@@ -264,7 +264,7 @@ newaction {
         exec("7z a -r ../clink_"..clink_ver..".zip ../clink_"..clink_ver)
         exec("7z a -r ../clink_"..clink_ver.."_src.zip ../"..src_dir_name)
         exec("7z a -r ../clink_"..clink_ver.."_pdb.zip ../*.pdb")
-        exec("makensis /DCLINK_SOURCE="..dest.." ../"..src_dir_name.."/clink.nsi")
+        exec("makensis /DCLINK_SOURCE="..dest.." /DCLINK_VERSION="..clink_ver.." ../"..src_dir_name.."/clink.nsi")
 
         exec("rd /q /s ..\\"..src_dir_name)
         exec("del /q ..\\*.pdb")
