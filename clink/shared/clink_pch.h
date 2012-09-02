@@ -25,5 +25,6 @@
 #include <stdio.h>
 
 #include <Windows.h>
+#include <Shlobj.h>
 
 #endif // CLINK_PCH_H
