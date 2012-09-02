@@ -335,14 +335,20 @@ static void display_matches(char** matches, int match_count, int max_length)
         // are directories.
         if (rl_filename_completion_desired)
         {
+            DWORD file_attrib;
+
             base = strrchr(matches[i], '\\');
             if (base == NULL)
             {
                 base = strrchr(matches[i], ':');
             }
 
-            is_dir = GetFileAttributes(matches[i]);
-            is_dir = !!(is_dir & FILE_ATTRIBUTE_DIRECTORY);
+            // Is this a dir?
+            file_attrib = GetFileAttributes(matches[i]);
+            if (file_attrib != INVALID_FILE_ATTRIBUTES)
+            {
+                is_dir = !!(file_attrib & FILE_ATTRIBUTE_DIRECTORY);
+            }
         }
         base = (base == NULL) ? matches[i] : base + 1;
         len = (int)strlen(base) + is_dir;
