@@ -197,11 +197,18 @@ static void prepare_env_for_inputrc(HINSTANCE instance)
     // to the user's profile folder.
     if (getenv("HOME") == NULL)
     {
-        const char* user_profile = getenv("APPDATA");
-        if (user_profile != NULL)
+        static const char home_eq[] = "HOME=";
+
+        strcpy(buffer, home_eq);
+        get_config_dir(
+            buffer + sizeof(home_eq) - 1,
+            sizeof(buffer) - sizeof(home_eq)
+        );
+
+        slash = strstr(buffer, "\\clink");
+        if (slash)
         {
-            strcpy(buffer, "HOME=");
-            str_cat(buffer, user_profile, sizeof(buffer));
+            *slash = '\0';
         }
 
         putenv(buffer);
