@@ -21,8 +21,20 @@
 --
 
 --------------------------------------------------------------------------------
+local function get_current_git_branch()
+    for line in io.popen("git branch 2>nul"):lines() do
+        local m = line:match("%* (.+)$")
+        if m then
+            return m
+        end
+    end
+
+    return nil
+end
+
+--------------------------------------------------------------------------------
 local to = ".build/"..(_ACTION or "nullaction")
-local clink_ver = _OPTIONS["clink_ver"] or "HEAD"
+local clink_ver = _OPTIONS["clink_ver"] or get_current_git_branch() or "HEAD"
 
 --------------------------------------------------------------------------------
 local pchheader_original = pchheader
@@ -197,6 +209,9 @@ newaction {
             os.execute(cmd)
         end
 
+        local git_checkout = clink_ver
+        clink_ver = clink_ver:upper()
+
         local rls_dir_name = os.date("%Y%m%d_%H%M%S")
         local src_dir_name = "clink_"..clink_ver.."_src"
         local rls_dir = ".build\\release\\"..rls_dir_name.."_"..clink_ver.."\\"
@@ -210,7 +225,7 @@ newaction {
         if not os.chdir(code_dir) then
             return
         end
-        exec("git checkout "..clink_ver)
+        exec("git checkout "..git_checkout)
 
         -- build the code.
         exec("premake4 --clink_ver="..clink_ver.." vs2010")
