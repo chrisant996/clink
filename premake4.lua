@@ -42,8 +42,8 @@ local function get_last_git_commit()
 end
 
 --------------------------------------------------------------------------------
+clink_ver = _OPTIONS["clink_ver"] or "DEV"
 local to = ".build/"..(_ACTION or "nullaction")
-local clink_ver = _OPTIONS["clink_ver"] or "DEV"
 
 --------------------------------------------------------------------------------
 local pchheader_original = pchheader
@@ -208,166 +208,13 @@ project("clink_shared")
     files("clink/shared/*")
 
 --------------------------------------------------------------------------------
-newaction {
-    trigger = "clink_release",
-    description = "Prepares a release of clink.",
-    execute = function ()
-        -- Helper funciton to show executed commands to TTY
-        local exec = function(cmd)
-            print("----------------------------------------------")
-            print("-- EXEC: "..cmd)
-            print("--\n")
-            os.execute(cmd)
-        end
-
-        -- Crude repurpose of this function so it can be used for nightlies
-        local nightly = nil
-        if clink_ver:lower() == "nightly" then
-            clink_ver = "dev"
-            nightly = os.getenv("CLI_ENV")..".\\..\\clink\\builds\\"
-
-            if not os.isdir(nightly..".") then
-                print("Invalid nightly directory '"..nightly.."'")
-                return
-            end
-
-            local mask = path.translate(nightly, "/").."*"
-            local hash = get_last_git_commit()
-            local chop = 0 - hash:len()
-            for _, i in ipairs(os.matchdirs(mask)) do
-                if i:sub(chop) == hash then
-                    print(hash.." already built")
-                    return
-                end
-            end
-        end
-
-        local git_checkout = clink_ver
-        clink_ver = clink_ver:upper()
-
-        -- Build the output directory name
-        local target_dir
-        if nightly then
-            target_dir = nightly
-            target_dir = target_dir..os.date("%Y%m%d_")
-            target_dir = target_dir..get_last_git_commit()
-        else
-            target_dir = ".build\\release\\"
-            if clink_ver ~= "DEV" then
-                target_dir = target_dir..os.date("%Y%m%d_%H%M%S_")
-            end
-            target_dir = target_dir..clink_ver
-        end
-
-        target_dir = path.translate(path.getabsolute(target_dir)).."\\"
-
-        if not os.isdir(target_dir..".") then
-            exec("rd /q /s "..target_dir)
-            exec("md "..target_dir)
-        end
-
-        -- If we're not building DEV, create a clone and checkout correct version
-        -- and build it.
-        local src_dir_name = "."
-        if clink_ver ~= "DEV" then
-            src_dir_name = "clink_"..clink_ver.."_src"
-            local code_dir = target_dir..src_dir_name
-            if not os.isdir(code_dir..".") then
-                exec("md "..code_dir)
-            end
-
-            -- clone repro in release folder and checkout the specified version
-            exec("git clone . "..code_dir)
-            if not os.chdir(code_dir) then
-                print("Failed to chdir to '"..code_dir.."'")
-                return
-            end
-            exec("git checkout "..git_checkout)
-        end
-
-        -- Build the code.
-        exec("premake4 --clink_ver="..clink_ver.." vs2010")
-        exec("msbuild /m /v:q /p:configuration=release /p:platform=win32 .build/vs2010/clink.sln")
-        exec("msbuild /m /v:q /p:configuration=release /p:platform=x64 .build/vs2010/clink.sln")
-
-        local src = ".build\\vs2010\\bin\\release\\"
-        local dest = target_dir.."clink_"..clink_ver
-
-        -- Do a coarse check to make sure there's a build available.
-        if not os.isdir(src..".") then
-            print("There's no build available in '"..src.."'")
-            return
-        end
-
-        -- Copy release files to a directory.
-        local manifest = {
-            "clink_x*.exe",
-            "clink_dll_x*.dll",
-            "clink_dll_x*.pdb",
-            "clink_inputrc",
-            "clink*.lua",
-            "CHANGES",
-            "LICENSE",
-            "clink.bat",
-        }
-
-        exec("md "..dest)
-        for _, mask in ipairs(manifest) do
-            exec("copy "..src..mask.." "..dest)
-        end
-
-        -- Lump lua files together.
-        exec("move "..dest.."\\clink.lua "..dest.."\\clink._lua")
-
-        local lua_lump = io.open(dest.."\\clink._lua", "a")
-        for _, i in ipairs(os.matchfiles(dest.."/*.lua")) do
-            i = path.translate(i)
-            print("lumping "..i)
-
-            lua_lump:write("\n--------------------------------------------------------------------------------\n")
-            lua_lump:write("-- ", path.getname(i), "\n")
-            lua_lump:write("--\n\n")
-            for l in io.lines(i) do lua_lump:write(l, "\n") end
-        end
-        lua_lump:close()
-
-        exec("del /q "..dest.."\\*.lua")
-        exec("move "..dest.."\\clink._lua "..dest.."\\clink.lua")
-
-        -- Build the installer.
-        exec("makensis /DCLINK_SOURCE="..dest.." /DCLINK_VERSION="..clink_ver.." clink.nsi")
-
-        -- Tidy up code directory.
-        if clink_ver ~= "DEV" and not nightly then
-            exec("rd /q /s .build")
-            exec("rd /q /s .git")
-            exec("del /q .gitignore")
-
-            os.chdir(target_dir)
-            exec("7z a -r "..target_dir.."clink_"..clink_ver.."_src.zip "..src_dir_name)
-            exec("rd /q /s "..src_dir_name)
-        end
-
-        -- Move PDBs out of the way, package release up as zips
-        os.chdir(dest)
-        exec("move *.pdb ..")
-        exec("7z a -r ../clink_"..clink_ver..".zip ../clink_"..clink_ver)
-        exec("7z a -r ../clink_"..clink_ver.."_pdb.zip ../*.pdb")
-        exec("del /q ..\\*.pdb")
-
-        if nightly then
-            os.chdir(dest..".\\..")
-            exec("rd /q /s "..dest)
-        end
-    end
-}
-
---------------------------------------------------------------------------------
 newoption {
    trigger     = "clink_ver",
    value       = "VER",
-   description = "The version of clink to build when using the clink_release action"
+   description = "The version of clink to build or being built."
 }
+
+dofile("installer/premake4.lua")
 
 --------------------------------------------------------------------------------
 newaction {
