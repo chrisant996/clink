@@ -1,0 +1,430 @@
+// vim: textwidth=81 expandtab fo+=a syntax=asciidoc
+
+Clink
+=====
+Martin Ridgers <martin.ridgers+clink@gmail.com>
+v{CLINK_VERSION}
+
+== What is Clink?
+
+http://code.google.com/p/clink
+
+Clink combines the native Windows shell cmd.exe with the powerful command line
+editing features of the GNU Readline library, which provides rich completion,
+history, and line-editing capabilities. Readline is best known its use in the
+famous Unix shell Bash, the standard shell for Mac OS X and many Linux
+distributions.
+
+== Features
+
+* Powerful Bash-like line editing from the GNU Readline library.
+* Scriptable completion using Lua. 
+* Improved path and context-sensitive completion (TAB).
+* Paste from clipboard (Ctrl-V).
+* Undo/Redo (Ctrl-_ or Ctrl-X_Ctrl-U)
+* Improved command line history.
+** Persists across sessions.
+** Searchable (Ctrl-R and Ctrl-S).
+** History expansion (e.g. !!, !<string>, and !$). 
+
+More features can be found in the
+http://cnswww.cns.cwru.edu/php/chet/readline/rluserman.html#SEC3[Readline] and
+http://cnswww.cns.cwru.edu/php/chet/readline/history.html#SEC3[History]
+manuals.
+
+== Usage
+
+There are three ways to use Clink the first of which is to add Clink to
+cmd.exe's autorun registry entry. This can be selected when installing Clink
+using the installer and Clink also provides the ability to manage this autorun
+entry from the command line. Running 'clink autorun --help' has more
+information.
+
+The second alternative is to manually run Clink using the command 'clink
+inject' from within a command prompt session to run Clink in that session.
+
+The last option is to use the Clink shortcut that the install adds to Windows'
+start menu when Clink is installed. This is in essence a shortcut to the
+command 'cmd.exe /k clink inject'.
+
+== How Clink Works
+
+When running Clink via the methods above, Clink checks the parent process is
+supported and injects a DLL into it. The DLL then hooks the WriteConsole() and
+ReadConsole() Windows functions. The former is so that Clink can capture the
+current prompt, and the latter hook allows Clink to provide it's own
+Readline-powered command line editing.
+
+== Configuring Clink
+
+Configuring Clink by and large involves configuring Readline by creating a
+'clink_inputrc' file in the current user's non-roaming application data
+directory. There is excellent documentation for all the options available to
+configure Readline in the
+http://cnswww.cns.cwru.edu/php/chet/readline/rluserman.html[Readline Manual].
+
+This user directory is usually found in one of the following locations;
+
+* c:\documents and settings\<username>\local settings\application data (XP)
+* c:\users\<username>\appdata\local (Vista onwards)
+
+== Extending Clink
+
+The Readline library allows clients to offer an alternative path for creating
+completion matches. Clink uses this to hook Lua into the completion process
+making it possible to script the generation of matches with Lua scripts. The
+following sections describe this in more detail and shows some examples.
+
+=== The Location of Lua Scripts
+
+Clink looks for Lua scripts in the user's local non-roaming application data
+directory. See the <<_configuring_clink,Configuring Clink>> section for details
+on the location of this user directory.
+
+=== Match Generators
+
+These are Lua functions that are registered with Clink and are called as part
+of Readline's completion process. Match generator functions take the following
+form;
+
+----
+function my_match_generator(text, first, last)
+    -- Use text/rl_line_buffer to create matches,
+    -- Submit matches to Clink using clink.add_match()
+    -- Return true/false.
+end
+----
+
+'Text' is the word that is being completed, 'first' and 'last' and the indices
+into the complete line buffer for 'text' (the full line buffer can be accessed
+using the variable 'rl_line_buffer'). If no further match generators need to be
+called then the function should return true.
+
+Registering the match generation function is done as follows;
+
+----
+clink.register_match_generator(my_match_generator, sort_id)
+----
+
+The 'sort_id' argument is used to sort the match generators such that
+generators with a lower sort ids are called first.
+
+Here is an simple example script that checks if 'text' begins with a '%'
+character and then uses the remained of 'text' to match the names of
+environment variables.
+
+----
+function env_vars_match_generator(text, first, last)
+    if not text:find("^%%") then
+        return false
+    end
+    
+    text = clink.lower(text:sub(2))
+    local text_len = #text
+    for _, name in ipairs(clink.get_env_var_names()) do
+        if clink.lower(name:sub(1, text_len)) == text then
+            clink.add_match('%'..name..'%')
+        end
+    end
+
+    return true
+end
+
+clink.register_match_generator(env_vars_match_generator, 10)
+----
+
+=== Argument Completion
+
+Build on top of the match generation path is a framework for scripting
+completion of specific commands. It leaves Clink to take care of matching the
+command and is driven by a tree to further facilitate contextual completion.
+
+_It is fair to say that is fairly experimental and likely to change in the
+future as the framework matures through use._
+
+Argument match generators are registered in a similar fashion to basic match
+generators, passing the name of the command in 'command_name' and the tree that
+drives the completion step in 'tree'.
+
+----
+clink.arg.register_tree(command_name, tree)
+----
+
+The most basic of tree is one that is just a function as a single node/leaf.
+When Clink encounters a function in a tree it is called just like a match
+generator function, taking the same arguments and expecting the same return
+value.
+
+----
+function clink_match_generator(text, first, last)
+    clink.add_match("--help")
+    return true
+end
+
+clink.arg.register_tree("clink", clink_match_generator)
+----
+
+More complex trees can be built using Lua tables. Clink divides the current
+line buffer into words and uses these as keys into the Lua table.  If the key
+has a value (i.e. it is a node in the tree) then traversal of the tree
+continues with that value and the next word in the line buffer.
+
+Clink will automatically generate matches for keys and array values once it has
+traversed as far as it can into the argument tree.
+
+----
+clink_arg_tree = {
+    "--help",
+    inject = { "--scripts", "--help", "--quiet" },
+    autorun = { "--install", "--uninstall" },
+}
+
+clink.arg.register_tree("clink", clink_arg_tree)
+----
+
+In the above example the root node has three branches; "--help", "inject" and
+"autorun". If the first word of the line buffer (after the command of course)
+matches either of these then traversal continues into their values. Here
+"--help" is actually an array item and thus forms a leaf of the tree so it
+would be considered a match.
+
+If tree traversal doesn't generate any matches then Readline's default file
+name match generation is used.
+
+Traversal can be controlled by tagging tree nodes with behavioural semantics.
+There is a helper function in Clink's Lua API to help with this and ensure
+nodes with behaviour are constructed correctly; 'clink.arg.tree_node()'.
+
+----
+clink_arg_tree = clink.arg.tree_node("*", {
+    "--help",
+    inject = clink.arg.tree_node("*+", {
+        "--scripts", "--help", "--quiet"
+    }),
+    autorun = clink.arg.tree_node("*+", {
+        "--install", "--uninstall"
+    }),
+})
+
+clink.arg.register_tree("clink", clink_arg_tree)
+----
+
+A **`*'** in the behaviour string will cause the deepest node achievable to
+repeat as opposed to defaulting back to Readline's file name match generation.
+
+A *`-'* tells Clink that the user must have typed at least one character before
+this node can be considered for match generation. This is useful in situations
+where mixing arguments and Readline's file name match generation is desirable.
+
+=== Customising The Prompt
+
+Before Clink displays the prompt it filters the prompt through Lua so that the
+prompt can be customised. This happens each and every time that the prompt is
+shown which allows for context sensitive customisations (such as showing the
+current branch of a git repository for example).
+
+Writing a prompt filter is straight forward and best illustrated with an
+example that displays the current git branch when the current directory is a
+git repository.
+
+----
+function git_prompt_filter()
+    for line in io.popen("git branch 2>nul"):lines() do
+        local m = line:match("%* (.+)$")
+        if m then
+            clink.prompt.value = "["..m.."] "..clink.prompt.value
+            break
+        end
+    end
+
+    return false
+end
+
+clink.prompt.register_filter(git_prompt_filter, 50)
+----
+
+The filter function takes no arguments instead receiving and modifying the
+prompt through the 'clink.prompt.value' variable. It returns true if the prompt
+filtering is finished, and false if it should continue on to the next
+registered filter.
+
+A filter function is registered into the filter chain by passing the function
+to 'clink.prompt.register_filter()' along with a sort id which dictates the
+order in which filters are called. Lower sort ids are called first.
+
+== The Clink Lua API
+
+=== Matches
+
+==== clink.add_match(text)
+
+[role="indented"]
+Outputs 'text' as a match for the active completion.
+
+==== clink.compute_lcd(text, matches)
+
+[role="indented"]
+Returns the least-common-denominator of 'matches'. It is assumed that 'text'
+was the input to generate 'matches'. As such it is expected that each match
+starts with 'text'.
+
+==== clink.get_match(index)
+
+[role="indented"]
+Returns a match by 'index' from the matches output by clink.add_match().
+
+==== clink.is_match(needle, candidate)
+
+[role="indented"]
+Given a 'needle' (such as the section of the current line buffer being
+completed), this function returns true or false if 'candidate' begins with
+'needle'. Readline's -/_ case-mapping is respected if it is enabled.
+
+==== clink.is_single_match(matches)
+
+[role="indented"]
+Checks each match in the table 'matches' and checks to see if they are all
+duplicates of each other.
+
+==== clink.match_count()
+
+[role="indented"]
+Returns the number of matches output by calls to clink.add_match().
+
+==== clink.matches_are_files()
+
+[role="indented"]
+Tells Readline that the matches we are passing back to it are files. This will
+cause Readline to append the path separator character to the line if there's
+only one match, and mark directories when displaying multiple matches.
+
+==== clink.register_match_generator(generator, sort_id)
+
+[role="indented"]
+Registers a match 'generator' function that is called to generate matches when
+the complete keys is press (TAB by default).
+
+[role="indented"]
+The generator function takes the form 'generator_function(text, first, last)'
+where 'text' is the portion of the line buffer that is to be completed, 'first'
+and 'last' are the start and end indices into the line buffer for 'text'.
+
+==== clink.set_match(index, value)
+
+[role="indented"]
+Explicitly sets match at 'index' to 'value'.
+
+=== Argument Framework
+
+==== clink.arg.register_tree(cmd, tree)
+
+[role="indented"]
+Registers an argument 'tree' for a specific command. When completion is requested
+and Clink finds 'cmd' at the beginning of the line it will use the current line
+state to traverse this tree and generate matches.
+
+==== clink.arg.tree_node(flags, content)
+
+[role="indented"]
+Nodes in an argument tree can be tagged with special characters to control the
+traversal and completion behaviour of that node's tree branch. This function
+helps to construct such a tree node. It returns a tree node with the sub-tree
+'content' and with the branch properties specified by 'flags'. See
+<<_argument_completion,Argument Completion>> for details of how to use the
+'flags' argument.
+
+=== Prompt Filtering
+
+==== clink.prompt.register_filter(filter, sort_id)
+
+[role="indented"]
+Used to register a 'filter' function to pre-process the prompt before use by
+Readline. Filters are called by 'sort_id' where lower sort ids get called
+first. Filter functions will receive no arguments and return true if filtering
+is finished. Getting and setting the prompt value is done through the
+'clink.prompt.value' variable.
+
+==== clink.prompt.value
+
+[role="indented"]
+User-provided prompt filter functions can get and set the prompt value using
+this variable.
+
+=== Miscelaneous
+
+==== clink.find_dirs(mask)
+
+[role="indented"]
+Returns a table (array) of directories that match the supplied 'mask'. There is
+no support for recursively traversing the path in 'mask'.
+
+==== clink.find_files(mask)
+
+[role="indented"]
+Returns a table (array) of files that match the supplied 'mask'. There is no
+support for recursively traversing the path in 'mask'.
+
+==== clink.get_env(env_var_name)
+
+[role="indented"]
+Returns the value of the environment variable 'env_var_name'. This is
+preferable to the built-in Lua function os.getenv() as the latter uses a cached
+version of the current process' environment which can result in incorrect
+results.
+
+==== clink.get_env_var_names()
+
+[role="indented"]
+Returns a table of the names of the current process' environment variables.
+
+==== clink.is_dir(path)
+
+[role="indented"]
+Returns true if 'path' resolves to a directory.
+
+==== clink.is_rl_variable_true(readline_var_name)
+
+[role="indented"]
+Returns the boolean value of a Readline variable. These can be set with the
+<<_configuring_clink,clink_inputrc>> file, more details of which can be found
+in the http://cnswww.cns.cwru.edu/php/chet/readline/rluserman.html[Readline
+Manual].
+
+==== clink.lower(text)
+
+[role="indented"]
+Same as os.lower() but respects Readline's case-mapping feature which will
+consider '-' and '_' as case insensitive.
+
+[role="indented"]
+Care should be taken when using this to generate masks for file/dir find
+operations due to the -/_ giving different results (unless of course Readline's
+extended case-mapping is disabled).
+
+==== clink.suppress_char_append()
+
+[role="indented"]
+This stops Readline from adding a trailing character when completion is
+finished (usually when a single match is returned). The suffixing of a
+character is enabled before completion functions are called so a call to this
+will only apply for the current completion.
+
+[role="indented"]
+By default Readline appends a space character (' ') when the is only a single
+match unless it is completing files where it will use the path separator
+instead.
+
+=== Readline Constants
+
+==== rl_line_buffer
+
+[role="indented"]
+The variable 'rl_line_buffer' contains the current state of the complete line
+being edited. The value should be considered read-only (i.e. changes to this
+variable are not fed back to Readline).
+
+==== rl_point
+
+[role="indented"]
+The current cursor position within the line buffer. This should be considered a
+read-only variable.
