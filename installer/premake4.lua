@@ -149,6 +149,10 @@ newaction {
         exec("del /q "..dest.."\\*.lua")
         exec("move "..dest.."\\clink._lua "..dest.."\\clink.lua")
 
+        -- Generate documentation.
+        exec("premake4 --clink_ver="..clink_ver.." clink_docs")
+        exec("copy .build\\docs\\clink.html "..dest)
+
         -- Build the installer.
         local nsis_cmd = "makensis"
         nsis_cmd = nsis_cmd.." /DCLINK_BUILD="..dest

@@ -1,7 +1,6 @@
 ;
 ; Copyright (c) 2012 Martin Ridgers
 ;
-;
 ; Permission is hereby granted, free of charge, to any person obtaining a copy
 ; of this software and associated documentation files (the "Software"), to deal
 ; in the Software without restriction, including without limitation the rights
@@ -85,12 +84,14 @@ Section "!Application files" app_files_id
     File ${CLINK_BUILD}\clink_x*.exe
     File ${CLINK_BUILD}\clink.bat
     File ${CLINK_BUILD}\clink_inputrc
+    File ${CLINK_BUILD}\clink.html
 
     ; Create a start-menu shortcut
     ;
     StrCpy $0 "$SMPROGRAMS\clink\${CLINK_VERSION}"
     CreateDirectory $0
     CreateShortcut "$0\clink v${CLINK_VERSION}.lnk" "$INSTDIR\clink.bat" "" "$SYSDIR\cmd.exe" 0 SW_SHOWMINIMIZED 
+    CreateShortcut "$0\clink v${CLINK_VERSION} Documentation.lnk" "$INSTDIR\clink.html"
 
     ; Create an uninstaller and a shortcut to it.
     ;
@@ -142,7 +143,8 @@ Section "!un.Application files"
     RMDir /REBOOTOK $INSTDIR\..
 
     ; Remove start menu items and uninstall registry entry.
-    RMDir /r $SMPROGRAMS\clink
+    RMDir /r $SMPROGRAMS\clink\${CLINK_VERSION}
+    RMDir $SMPROGRAMS\clink
     DeleteRegKey HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\clink_${CLINK_VERSION}"
 SectionEnd
 
