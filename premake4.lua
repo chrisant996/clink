@@ -214,6 +214,8 @@ newoption {
    description = "The version of clink to build or being built."
 }
 
+--------------------------------------------------------------------------------
+dofile("docs/premake4.lua")
 dofile("installer/premake4.lua")
 
 --------------------------------------------------------------------------------
