@@ -268,6 +268,7 @@ int inject(int argc, char** argv)
 
     struct option options[] = {
         { "scripts",    required_argument,  NULL, 's' },
+        { "althook",    no_argument,        NULL, 'a' },
         { "quiet",      no_argument,        NULL, 'q' },
         { "help",       no_argument,        NULL, 'h' },
         { NULL, 0, NULL, 0 }
