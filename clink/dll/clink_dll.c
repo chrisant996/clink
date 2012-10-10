@@ -298,14 +298,15 @@ static int apply_hooks(void* base, int use_alt_method)
 
     struct hook_t
     {
-        const char* dlls;
+        const char* exporter;
+        const char* importer;
         const char* func_name;
         void* hook;
     };
 
     struct hook_t hooks[] = {
-        { get_kernel_dll(), "ReadConsoleW", hooked_read_console },
-        { get_kernel_dll(), "WriteConsoleW", hooked_write_console }
+        { get_kernel_dll(), "kernel32.dll", "ReadConsoleW", hooked_read_console },
+        { get_kernel_dll(), "kernel32.dll", "WriteConsoleW", hooked_write_console }
     };
 
     for (i = 0; i < sizeof_array(hooks); ++i)
@@ -313,13 +314,19 @@ static int apply_hooks(void* base, int use_alt_method)
         struct hook_t* hook = hooks + i;
         int hook_ok = 0;
 
-        LOG_INFO("----------------------");
-        LOG_INFO("Hooking '%s' in '%s'", hook->func_name, hook->dlls);
+        LOG_INFO("\n----------------------");
+        LOG_INFO("Hooking '%s' from '%s'", hook->func_name, hook->exporter);
 
         // Hook method 1.
         if (!use_alt_method)
         {
-            hook_ok = hook_iat(base, hook->dlls, hook->func_name, hook->hook);
+            hook_ok = hook_iat(
+                base,
+                hook->exporter,
+                hook->func_name,
+                hook->hook
+            );
+
             if (hook_ok)
             {
                 continue;
@@ -329,7 +336,7 @@ static int apply_hooks(void* base, int use_alt_method)
         }
 
         // Hook method 2.
-        hook_ok = hook_jmp(hook->dlls, hook->func_name, hook->hook);
+        hook_ok = hook_jmp(hook->importer, hook->func_name, hook->hook);
         if (!hook_ok)
         {
             LOG_ERROR("Failed to hook '%s'", hook->func_name);
