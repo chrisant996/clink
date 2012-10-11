@@ -32,7 +32,7 @@ newaction {
 
         local cmd = "python %cli_env%\\asciidoc-8.6.8\\asciidoc.py"
         cmd = cmd.." -o .build/docs/clink.html"
-        cmd = cmd.." --theme volnitsky"
+        cmd = cmd.." --theme clink"
         cmd = cmd.." --attribute=CLINK_VERSION="..clink_ver
         cmd = cmd.." --attribute=toc"
         cmd = cmd.." -v"
