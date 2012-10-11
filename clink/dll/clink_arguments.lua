@@ -75,7 +75,7 @@ local function traverse(generator, parts, text, first, last)
 
         if candidate ~= clink.arg.node_flags_key then
             if type(candidate) == "string" then
-                if clink.is_match(text, candidate) then
+                if clink.is_match(part, candidate) then
                     clink.add_match(candidate)
                 end
             end
@@ -108,7 +108,7 @@ function clink.argument_match_generator(text, first, last)
     end
 
     -- Split the command line into parts.
-    local str = rl_line_buffer:sub(cmd_end, first - 1)
+    local str = rl_line_buffer:sub(cmd_end, last)
     local parts = {}
     for _, r, part in function () return str:find("^%s*([^%s]+)") end do
         if part:find("\"") then
@@ -116,6 +116,12 @@ function clink.argument_match_generator(text, first, last)
             table.insert(parts, part)
         end
         str = str:sub(r+1)
+    end
+
+    -- If 'text' is empty then add it as a part as it would have been skipped
+    -- by the split loop above
+    if text == "" then
+        table.insert(parts, text)
     end
 
     parts.n = 1
