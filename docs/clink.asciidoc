@@ -19,12 +19,12 @@ distributions.
 
 * Powerful Bash-like line editing from the GNU Readline library.
 * Scriptable completion using Lua. 
-* Improved path and context-sensitive completion (TAB).
-* Paste from clipboard (Ctrl-V).
-* Undo/Redo (Ctrl-_ or Ctrl-X_Ctrl-U)
+* Improved path and context-sensitive completion ('TAB').
+* Paste from clipboard ('Ctrl-V').
+* Undo/Redo ('Ctrl-_' or 'Ctrl-X_Ctrl-U')
 * Improved command line history.
 ** Persists across sessions.
-** Searchable (Ctrl-R and Ctrl-S).
+** Searchable ('Ctrl-R' and 'Ctrl-S').
 ** History expansion (e.g. !!, !<string>, and !$). 
 
 More features can be found in the
@@ -80,6 +80,9 @@ following sections describe this in more detail and shows some examples.
 Clink looks for Lua scripts in the user's local non-roaming application data
 directory. See the <<_configuring_clink,Configuring Clink>> section for details
 on the location of this user directory.
+
+By default 'Ctrl-Q' is mapped to reload all Lua scripts which can be useful
+when developing and iterating on your own scripts.
 
 === Match Generators
 
