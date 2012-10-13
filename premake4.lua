@@ -47,14 +47,22 @@ local to = ".build/"..(_ACTION or "nullaction")
 
 --------------------------------------------------------------------------------
 local keys = { "clink_ver_major", "clink_ver_minor", "clink_ver_point" }
+
+-- Divide up the version number into major, minor and point parts.
 for i in clink_ver:gmatch("%d+") do
     print(keys[1])
     _G[keys[1]] = i
     table.remove(keys, 1)
 end
+
+-- Reset remaining keys to 0
 for _, i in ipairs(keys) do
     _G[i] = "0"
 end
+
+-- 47000 = magic offset. 'stamp' gives us an hourly counter that shouldn't wrap
+-- for around 7-8 years.
+clink_ver_stamp = (math.floor(os.time() / 3600) - 47000) % 0x10000
 
 --------------------------------------------------------------------------------
 local pchheader_original = pchheader
@@ -122,6 +130,7 @@ solution("clink")
     defines("CLINK_VER_MAJOR="..clink_ver_major)
     defines("CLINK_VER_MINOR="..clink_ver_minor)
     defines("CLINK_VER_POINT="..clink_ver_point)
+    defines("CLINK_VER_STAMP="..clink_ver_stamp)
     defines("STATIC_GETOPT")
     includedirs("readline/compat")
     includedirs("readline")
