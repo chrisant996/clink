@@ -124,7 +124,7 @@ SectionEnd
 ;-------------------------------------------------------------------------------
 Section "Autorun when cmd.exe starts"
     SetShellVarContext all
-    ExecWait 'cmd.exe /c "$INSTDIR\clink" autorun --install'
+    ExecShell "open" "$INSTDIR\clink_x86.exe" "autorun --install" SW_HIDE
 SectionEnd
 
 ;-------------------------------------------------------------------------------
@@ -132,7 +132,7 @@ Section "!un.Application files"
     SectionIn RO
     SetShellVarContext all
 
-    ExecWait 'cmd.exe /c "$INSTDIR\clink" autorun --uninstall'
+    ExecShell "open" "$INSTDIR\clink_x86.exe" "autorun --uninstall" SW_HIDE
 
     ; Delete the instaltion directory and root directory if it's empty.
     ;
