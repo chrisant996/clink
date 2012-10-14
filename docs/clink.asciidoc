@@ -404,6 +404,17 @@ Care should be taken when using this to generate masks for file/dir find
 operations due to the -/_ giving different results (unless of course Readline's
 extended case-mapping is disabled).
 
+==== clink.slash_translation(type)
+
+[role="indented"]
+Controls how Clink will translate the path separating slashes for the current
+path being completed. Values for 'type' are; 
+
+[role="indented"]
+- -1 - no translation
+- 0 - to backslashes
+- 1 - to forward slashes.
+
 ==== clink.suppress_char_append()
 
 [role="indented"]
