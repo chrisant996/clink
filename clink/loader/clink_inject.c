@@ -27,6 +27,35 @@
 #define CLINK_DLL_NAME "clink_dll_" AS_STR(PLATFORM) ".dll"
 
 //------------------------------------------------------------------------------
+static int check_dll_version(const char* clink_dll)
+{
+    char buffer[1024];
+    VS_FIXEDFILEINFO* file_info;
+    int error = 0;
+
+    if (GetFileVersionInfo(clink_dll, 0, sizeof(buffer), buffer) != TRUE)
+    {
+        return 0;
+    }
+
+    if (VerQueryValue(buffer, "\\", &file_info, NULL) != TRUE)
+    {
+        return 0;
+    }
+
+    LOG_INFO("DLL version: %08x %08x",
+        file_info->dwFileVersionMS,
+        file_info->dwFileVersionLS
+    );
+
+    error = (HIWORD(file_info->dwFileVersionMS) != CLINK_VER_MAJOR);
+    error = (LOWORD(file_info->dwFileVersionMS) != CLINK_VER_MINOR);
+    error = (HIWORD(file_info->dwFileVersionLS) != CLINK_VER_POINT);
+
+    return !error;
+}
+
+//------------------------------------------------------------------------------
 static DWORD get_parent_pid()
 {
     ULONG_PTR pbi[6];
@@ -105,6 +134,7 @@ static int do_inject(DWORD parent_pid)
     HANDLE kernel32;
     SYSTEM_INFO sys_info;
     OSVERSIONINFOEX osvi;
+    char* slash;
 
     ret = 0;
     kernel32 = LoadLibraryA("kernel32.dll");
@@ -123,8 +153,12 @@ static int do_inject(DWORD parent_pid)
 #endif // __MINGW32__
 
     // Get path to clink's DLL that we'll inject.
-    GetCurrentDirectory(sizeof(dll_path), dll_path);
-    strcat(dll_path, "\\");
+    GetModuleFileName(NULL, dll_path, sizeof(dll_path));
+    slash = strrchr(dll_path, '\\');
+    if (slash != NULL)
+    {
+        *(slash + 1) = '\0';
+    }
     strcat(dll_path, CLINK_DLL_NAME);
 
     // Reset log file, start logging!
@@ -139,9 +173,21 @@ static int do_inject(DWORD parent_pid)
         sys_info.dwProcessorType,
         sys_info.dwPageSize
     );
+    LOG_INFO("Version: %d.%d.%d",
+        CLINK_VER_MAJOR,
+        CLINK_VER_MINOR,
+        CLINK_VER_POINT
+    );
     LOG_INFO("DLL: %s", dll_path);
 
     LOG_INFO("Parent pid: %d", parent_pid);
+
+    // Check Dll's version.
+    if (!check_dll_version(dll_path))
+    {
+        LOG_ERROR("DLL failed version check.");
+        return -1;
+    }
 
     // Open the process so we can operate on it.
     parent_process = OpenProcess(

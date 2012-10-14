@@ -46,6 +46,17 @@ clink_ver = _OPTIONS["clink_ver"] or "DEV"
 local to = ".build/"..(_ACTION or "nullaction")
 
 --------------------------------------------------------------------------------
+local keys = { "clink_ver_major", "clink_ver_minor", "clink_ver_point" }
+for i in clink_ver:gmatch("%d+") do
+    print(keys[1])
+    _G[keys[1]] = i
+    table.remove(keys, 1)
+end
+for _, i in ipairs(keys) do
+    _G[i] = "0"
+end
+
+--------------------------------------------------------------------------------
 local pchheader_original = pchheader
 local function pchheader_fixed(header)
     if _ACTION == "vs2010" then
@@ -108,6 +119,9 @@ solution("clink")
     defines("HANDLE_MULTIBYTE")
     defines("CLINK_VERSION=AS_STR("..clink_ver..")")
     defines("CLINK_COMMIT=AS_STR("..get_last_git_commit()..")")
+    defines("CLINK_VER_MAJOR="..clink_ver_major)
+    defines("CLINK_VER_MINOR="..clink_ver_minor)
+    defines("CLINK_VER_POINT="..clink_ver_point)
     defines("STATIC_GETOPT")
     includedirs("readline/compat")
     includedirs("readline")
@@ -166,6 +180,7 @@ project("clink_dll")
     pchsource("clink/dll/clink_pch.c")
     pchheader("clink/dll/clink_pch.h")
     files("clink/dll/*")
+    files("clink/clink_version.rc")
 
     configuration("release")
         build_postbuild("clink/dll/clink_inputrc", "release")
@@ -184,10 +199,12 @@ project("clink_loader")
     kind("consoleapp")
     links("clink_shared")
     links("getopt")
+    links("version")
     targetname("clink")
     includedirs("clink")
     includedirs("getopt")
     files("clink/loader/*")
+    files("clink/clink_version.rc")
     pchsource("clink/loader/clink_pch.c")
     pchheader("clink/loader/clink_pch.h")
 
