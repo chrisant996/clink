@@ -81,10 +81,9 @@ newaction {
 
         -- If we're not building DEV, create a clone and checkout correct version
         -- and build it.
-        local src_dir_name = "."
         if clink_ver ~= "DEV" then
-            src_dir_name = "clink_"..clink_ver.."_src"
-            local code_dir = target_dir..src_dir_name
+            repo_path = "clink_"..clink_ver.."_src"
+            local code_dir = target_dir..repo_path
             if not os.isdir(code_dir..".") then
                 exec("md "..code_dir)
             end
@@ -97,7 +96,7 @@ newaction {
             end
             exec("git checkout "..git_checkout)
         end
-        src_dir_name = path.translate(path.getabsolute(src_dir_name), "\\")
+        local src_dir_name = path.translate(path.getabsolute("."), "\\")
 
         -- Build the code.
         exec("premake4 --clink_ver="..clink_ver.." vs2010")
