@@ -36,9 +36,10 @@ newaction {
         cmd = cmd.." --attribute=CLINK_VERSION="..clink_ver
         cmd = cmd.." --attribute=toc"
         cmd = cmd.." -v"
-        cmd = cmd.." docs\\clink.asciidoc"
+        cmd = cmd.." .build\\docs\\merged.asciidoc"
 
         os.execute("mkdir .build\\docs 1>nul 2>nul")
+        os.execute("type docs\\clink.asciidoc CHANGES 1>.build\\docs\\merged.asciidoc 2>nul")
         os.execute(cmd)
     end
 }
