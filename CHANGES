@@ -1,6 +1,25 @@
 
 == Changelog
 
+==== v0.2
+
+- Basic argument completion for 'git', 'hg', 'svn', and 'p4'.
+- Traditional Bash clear screen ('Ctrl-L') and exit shortcuts ('Ctrl-D').
+- Scrollable command window using 'PgUp'/'PgDown' keys.
+- Doskey support.
+- Automatic quoting of file names with spaces.
+- Scriptable custom prompts.
+- New argument framework to ease writing context-sensitive match generators.
+- History and log file is now saved per-user rather than globally.
+- Improved Clink's command line interface ('clink --help').
+- More reliable handling of cmd.exe's autorun entry.
+- General improvements to executable and directory-command completion.
+- Symbolic link support.
+- Documentation.
+- Windows 8 support.
+- Improved hooking so Clink can be shared with other thirdparty utilities that
+  also hook cmd.exe (ConEmu, ANSICon, etc.).
+
 ==== v0.1.1
 
 - Fixed AltGr+<key> on international keyboards.
