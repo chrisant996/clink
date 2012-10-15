@@ -19,8 +19,8 @@
  * SOFTWARE.
  */
 
-#include "clink_pch.h"
-#include "clink_util.h"
+#include "pch.h"
+#include "util.h"
 
 //------------------------------------------------------------------------------
 void str_cat(char* dest, const char* src, int n)

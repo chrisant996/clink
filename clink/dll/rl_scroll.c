@@ -19,8 +19,8 @@
  * SOFTWARE.
  */
 
-#include "clink_pch.h"
-#include "shared/clink_util.h"
+#include "pch.h"
+#include "shared/util.h"
 
 //------------------------------------------------------------------------------
 int                         _rl_dispatch(int, Keymap);

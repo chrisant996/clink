@@ -19,9 +19,9 @@
  * SOFTWARE.
  */
 
-#include "clink_pch.h"
-#include "shared/clink_util.h"
-#include "shared/clink_inject_args.h"
+#include "pch.h"
+#include "shared/util.h"
+#include "shared/inject_args.h"
 
 //------------------------------------------------------------------------------
 static int              reload_lua_state(int count, int invoking_key);

@@ -19,8 +19,8 @@
  * SOFTWARE.
  */
 
-#include "clink_pch.h"
-#include "clink_util.h"
+#include "pch.h"
+#include "util.h"
 
 //------------------------------------------------------------------------------
 static void* rva_to_addr(void* base, unsigned rva)

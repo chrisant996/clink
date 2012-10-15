@@ -19,12 +19,14 @@
  * SOFTWARE.
  */
 
-#ifndef CLINK_PCH_H
-#define CLINK_PCH_H
+#ifndef PCH_H
+#define PCH_H
 
 #include <stdio.h>
 
 #include <Windows.h>
-#include <Shlobj.h>
+#include <Tlhelp32.h>
 
-#endif // CLINK_PCH_H
+#include "getopt.h"
+
+#endif // PCH_H

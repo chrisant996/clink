@@ -19,10 +19,10 @@
  * SOFTWARE.
  */
 
-#include "clink_pch.h"
-#include "clink_util.h"
-#include "clink_vm.h"
-#include "clink_pe.h"
+#include "pch.h"
+#include "util.h"
+#include "vm.h"
+#include "pe.h"
 
 //------------------------------------------------------------------------------
 static void* current_proc()

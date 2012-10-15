@@ -19,9 +19,9 @@
  * SOFTWARE.
  */
 
-#include "clink_pch.h"
-#include "clink_vm.h"
-#include "clink_util.h"
+#include "pch.h"
+#include "vm.h"
+#include "util.h"
 
 //------------------------------------------------------------------------------
 void* g_current_proc = (void*)-1;

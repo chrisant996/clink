@@ -19,22 +19,36 @@
  * SOFTWARE.
  */
 
-#include "clink_pch.h"
-#include "clink_inject_args.h"
-#include "clink_util.h"
+#ifndef PCH_H
+#define PCH_H
 
-//------------------------------------------------------------------------------
-inject_args_t   g_inject_args   = { 0, 0, {'\0'} };
+#include <stdio.h>
+#include <conio.h>
+#include <io.h>
+#include <locale.h>
+#include <stdlib.h>
+#ifdef __MINGW32__
+#   include <stdint.h>
+#endif
 
-//------------------------------------------------------------------------------
-void get_inject_arg_file(unsigned pid, char* buffer, int buffer_size)
-{
-    char pid_str[64];
+#include <Windows.h>
+#ifndef __MINGW32__
+#   include <DbgHelp.h>
+#else
+    typedef void* PCONSOLE_READCONSOLE_CONTROL;
+#endif
 
-    itoa(pid, pid_str, 10);
+#ifdef CLINK_USE_READLINE
+#   include <readline/readline.h>
+#   include <readline/history.h>
+#   include <readline/rldefs.h>
+#   include <compat/dirent.h>
+#endif
 
-    GetTempPath(buffer_size, buffer);
+#ifdef CLINK_USE_LUA
+#   include "lua.h"
+#   include "lauxlib.h"
+#   include "lualib.h"
+#endif
 
-    str_cat(buffer, ".\\clink_", buffer_size);
-    str_cat(buffer, pid_str, buffer_size);
-}
+#endif // PCH_H

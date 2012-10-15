@@ -19,17 +19,22 @@
  * SOFTWARE.
  */
 
-#include "clink_pch.h"
-#include "clink_util.h"
+#ifndef INJECT_ARG
+#define INJECT_ARG
 
 //------------------------------------------------------------------------------
-const char* g_clink_header = 
-    "clink v"CLINK_VERSION" [git:"CLINK_COMMIT"] (c) 2012 Martin Ridgers"   "\n"
-    "http://code.google.com/p/clink"                                        "\n"
-    ;
+struct _inject_args
+{
+    int     quiet;
+    int     alt_hook_method;
+    char    script_path[1024];
+};
+typedef struct _inject_args inject_args_t;
 
-const char* g_clink_footer =
-    "Copyright (c) 1994-2012 Lua.org, PUC-Rio"                              "\n"
-    "Copyright (c) 1987-2010 Free Software Foundation, Inc."                "\n"
-    ;
+//------------------------------------------------------------------------------
+extern inject_args_t g_inject_args;
 
+//------------------------------------------------------------------------------
+void get_inject_arg_file(unsigned pid, char* buffer, int buffer_size);
+
+#endif // INJECT_ARG

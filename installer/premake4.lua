@@ -117,7 +117,7 @@ newaction {
             "clink.bat",
             "clink*.exe",
             "clink*.dll",
-            "clink*.lua",
+            "*.lua",
             "clink_inputrc",
             "CHANGES",
             "LICENSE",

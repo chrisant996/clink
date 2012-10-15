@@ -19,8 +19,8 @@
  * SOFTWARE.
  */
 
-#include "clink_pch.h"
-#include "shared/clink_util.h"
+#include "pch.h"
+#include "shared/util.h"
 
 //------------------------------------------------------------------------------
 typedef int (dispatch_func_t)(const char*, int);

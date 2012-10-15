@@ -19,10 +19,10 @@
  * SOFTWARE.
  */
 
-#include "clink_pch.h"
-#include "shared/clink_pe.h"
-#include "shared/clink_util.h"
-#include "shared/clink_inject_args.h"
+#include "pch.h"
+#include "shared/pe.h"
+#include "shared/util.h"
+#include "shared/inject_args.h"
 
 #define CLINK_DLL_NAME "clink_dll_" AS_STR(PLATFORM) ".dll"
 

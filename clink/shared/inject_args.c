@@ -19,22 +19,22 @@
  * SOFTWARE.
  */
 
-#ifndef CLINK_VM_H
-#define CLINK_VM_H
+#include "pch.h"
+#include "inject_args.h"
+#include "util.h"
 
 //------------------------------------------------------------------------------
-struct region_info_t
+inject_args_t   g_inject_args   = { 0, 0, {'\0'} };
+
+//------------------------------------------------------------------------------
+void get_inject_arg_file(unsigned pid, char* buffer, int buffer_size)
 {
-    void*       base;
-    size_t      size;
-    unsigned    protect;
-};
+    char pid_str[64];
 
-//------------------------------------------------------------------------------
-void*   get_alloc_base(void* addr);
-void    get_region_info(void* addr, struct region_info_t* region_info);
-void    set_region_write_state(struct region_info_t* region_info, int state);
-int     write_vm(void* proc_handle, void* dest, const void* src, size_t size);
-int     read_vm(void* proc_handle, void* dest, const void* src, size_t size);
+    itoa(pid, pid_str, 10);
 
-#endif // CLINK_VM_H
+    GetTempPath(buffer_size, buffer);
+
+    str_cat(buffer, ".\\clink_", buffer_size);
+    str_cat(buffer, pid_str, buffer_size);
+}
