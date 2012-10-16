@@ -1,6 +1,10 @@
 
 == Changelog
 
+==== v0.2.1
+
+- Fixed segfault in loader executable.
+
 ==== v0.2
 
 - Basic argument completion for 'git', 'hg', 'svn', and 'p4'.
