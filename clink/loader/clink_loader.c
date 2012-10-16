@@ -52,16 +52,8 @@ static int dispatch_verb(const char* verb, int argc, char** argv)
 }
 
 //------------------------------------------------------------------------------
-int main(int argc, char** argv)
+static void show_usage()
 {
-    int arg;
-    int ret;
-
-    struct option options[] = {
-        { "help",   no_argument,    NULL, 'h' },
-        { NULL,     0,              NULL, 0 }
-    };
-
     const char* help_usage = "Usage: <verb> <verb_options>\n";
     const char* help_verbs[] = {
         "Verbs:",   "",
@@ -72,6 +64,30 @@ int main(int argc, char** argv)
 
     extern const char* g_clink_header;
     extern const char* g_clink_footer;
+	
+	puts(g_clink_header);
+	puts(help_usage);
+	puts_help(help_verbs, sizeof_array(help_verbs));
+	puts(g_clink_footer);
+}
+
+//------------------------------------------------------------------------------
+int main(int argc, char** argv)
+{
+    int arg;
+    int ret;
+
+    struct option options[] = {
+        { "help",   no_argument,    NULL, 'h' },
+        { NULL,     0,              NULL, 0 }
+    };
+
+	// Without arguments, show help.
+	if (argc <= 1)
+	{
+		show_usage();
+		return -1;
+	}
 
     // Parse arguments
     while ((arg = getopt_long(argc, argv, "+h", options, NULL)) != -1)
@@ -82,10 +98,7 @@ int main(int argc, char** argv)
             return -1;
 
         default:
-            puts(g_clink_header);
-            puts(help_usage);
-            puts_help(help_verbs, sizeof_array(help_verbs));
-            puts(g_clink_footer);
+			show_usage();
             return -1;
         }
     }
