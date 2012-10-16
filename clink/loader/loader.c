@@ -64,11 +64,11 @@ static void show_usage()
 
     extern const char* g_clink_header;
     extern const char* g_clink_footer;
-	
-	puts(g_clink_header);
-	puts(help_usage);
-	puts_help(help_verbs, sizeof_array(help_verbs));
-	puts(g_clink_footer);
+    
+    puts(g_clink_header);
+    puts(help_usage);
+    puts_help(help_verbs, sizeof_array(help_verbs));
+    puts(g_clink_footer);
 }
 
 //------------------------------------------------------------------------------
@@ -82,12 +82,12 @@ int main(int argc, char** argv)
         { NULL,     0,              NULL, 0 }
     };
 
-	// Without arguments, show help.
-	if (argc <= 1)
-	{
-		show_usage();
-		return -1;
-	}
+    // Without arguments, show help.
+    if (argc <= 1)
+    {
+        show_usage();
+        return -1;
+    }
 
     // Parse arguments
     while ((arg = getopt_long(argc, argv, "+h", options, NULL)) != -1)
@@ -98,7 +98,7 @@ int main(int argc, char** argv)
             return -1;
 
         default:
-			show_usage();
+            show_usage();
             return -1;
         }
     }
