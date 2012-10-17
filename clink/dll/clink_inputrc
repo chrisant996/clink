@@ -12,6 +12,8 @@ set skip-completed-text         on
 "\033`G": beginning-of-line     # home
 "\033`S": delete-char           # del
 "\033`I": page-up               # page-up
+"\033`u": kill-line             # ctrl+end
+"\033`w": backward-kill-line    # ctrl+home
 
 "\t":     clink-completion-shim
 C-c:      ctrl-c
