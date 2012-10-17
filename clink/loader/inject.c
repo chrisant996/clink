@@ -307,6 +307,38 @@ static void clean_inject_args(DWORD parent_pid)
 }
 
 //------------------------------------------------------------------------------
+static int is_clink_present(DWORD parent_pid)
+{
+    int ret;
+    BOOL ok;
+    MODULEENTRY32 module_entry;
+    
+    HANDLE th32 = CreateToolhelp32Snapshot(TH32CS_SNAPMODULE, parent_pid);
+    if (th32 == INVALID_HANDLE_VALUE)
+    {
+        LOG_INFO("Failed to snapshot module state.");
+        return 0;
+    }
+
+    ret = 0;
+    ok = Module32First(th32, &module_entry);
+    while (ok != FALSE)
+    {
+        if (_stricmp(module_entry.szModule, CLINK_DLL_NAME) == 0)
+        {
+            LOG_INFO("Clink already installed in process.");
+            ret = 1;
+            break;
+        }
+
+        ok = Module32Next(th32, &module_entry);
+    }
+
+    CloseHandle(th32);
+    return ret;
+}
+
+//------------------------------------------------------------------------------
 int inject(int argc, char** argv)
 {
     DWORD parent_pid;
@@ -367,6 +399,12 @@ int inject(int argc, char** argv)
     if (parent_pid == -1)
     {
         LOG_ERROR("Failed to find parent pid.");
+        return -1;
+    }
+
+    // Check to see if clink is already installed.
+    if (is_clink_present(parent_pid))
+    {
         return -1;
     }
 
