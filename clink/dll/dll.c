@@ -22,6 +22,8 @@
 #include "pch.h"
 #include "shared/util.h"
 #include "shared/inject_args.h"
+#include "shared/vm.h"
+#include "shared/pe.h"
 
 //------------------------------------------------------------------------------
 struct write_cache_
@@ -113,7 +115,7 @@ static void invalidate_cached_write(int index)
 
     cache = g_write_cache + index;
 
-	cache->size = 0;
+    cache->size = 0;
     if (cache->buffer != NULL)
     {
         cache->buffer[0] = L'\0';
@@ -343,57 +345,50 @@ static const char* get_kernel_dll()
 }
 
 //------------------------------------------------------------------------------
-static int apply_hooks(void* base, int use_alt_method)
+static int apply_hooks(void* base)
 {
-    int i;
+    const char* func_name;
+    void* addr;
+    void* self;
 
-    struct hook_t
+    self = get_alloc_base(apply_hooks);
+    if (self == NULL)
     {
-        const char* exporter;
-        const char* importer;
-        const char* func_name;
-        void* hook;
-    };
+        return 0;
+    }
 
-    struct hook_t hooks[] = {
-        { get_kernel_dll(), "kernel32.dll", "ReadConsoleW", hooked_read_console },
-        { get_kernel_dll(), "kernel32.dll", "WriteConsoleW", hooked_write_console }
-    };
-
-    for (i = 0; i < sizeof_array(hooks); ++i)
+    // Write hook
+    func_name = "WriteConsoleW";
+    addr = hook_iat(base, NULL, func_name, hooked_write_console, 1);
+    if (addr == NULL)
     {
-        struct hook_t* hook = hooks + i;
-        int hook_ok = 0;
+        LOG_INFO("Unable to hook %s in IAT at base %p", func_name, base);
+        return 0;
+    }
 
-        LOG_INFO("\n----------------------");
-        LOG_INFO("Hooking '%s' from '%s'", hook->func_name, hook->exporter);
+    // If the target's IAT was hooked then the hook destination is now stored in
+    // 'addr'. We hook ourselves with this address to maintain the hook.
+    if (hook_iat(self, NULL, func_name, addr, 1) == 0)
+    {
+        LOG_INFO("Failed to hook own IAT for %s", func_name);
+        return 0;
+    }
 
-        // Hook method 1.
-        if (!use_alt_method)
-        {
-            hook_ok = hook_iat(
-                base,
-                hook->exporter,
-                hook->func_name,
-                hook->hook,
-                0
-            );
+    // Read hook - So as to not disturb another utility's hooks that maybe in 
+    // place we use an alternative hooking method that doesn't involve patching
+    // the target's IAT.
+    func_name = "ReadConsoleW";
+    addr = hook_jmp(get_kernel_dll(), func_name, hooked_read_console);
+    if (addr == NULL)
+    {
+        LOG_INFO("Unable to hook %s in %s", func_name, get_kernel_dll());
+        return 0;
+    }
 
-            if (hook_ok)
-            {
-                continue;
-            }
-
-            LOG_INFO("Unable to hook IAT. Trying fallback method.\n");
-        }
-
-        // Hook method 2.
-        hook_ok = hook_jmp(hook->importer, hook->func_name, hook->hook);
-        if (!hook_ok)
-        {
-            LOG_ERROR("Failed to hook '%s'", hook->func_name);
-            return 0;
-        }
+    if (hook_iat(self, NULL, func_name, addr, 1) == 0)
+    {
+        LOG_INFO("Failed to hook own IAT for %s", func_name);
+        return 0;
     }
 
     return 1;
@@ -528,7 +523,7 @@ BOOL WINAPI DllMain(HINSTANCE instance, DWORD reason, LPVOID unused)
         return FALSE;
     }
 
-    if (!apply_hooks(base, g_inject_args.alt_hook_method))
+    if (!apply_hooks(base))
     {
         failed();
         return FALSE;

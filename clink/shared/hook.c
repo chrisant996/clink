@@ -74,16 +74,8 @@ void* hook_iat(
     void* prev_addr;
     void** imp;
 
-    // Get the address of the function we're going to hook.
-    func_addr = get_proc_addr(dll, func_name);
-    if (func_addr == NULL)
-    {
-        LOG_INFO("Failed to find function '%s' in '%s'", func_name, dll);
-        return NULL;
-    }
-
     LOG_INFO("Attempting to hook IAT for module %p", base);
-    LOG_INFO("Target is %s,%s,%p", dll, func_name, func_addr);
+    LOG_INFO("Target is %s,%s (by_name=%d)", dll, func_name, find_by_name);
     
     // Find entry and replace it.
     if (find_by_name)
@@ -92,12 +84,20 @@ void* hook_iat(
     }
     else
     {
+        // Get the address of the function we're going to hook.
+        func_addr = get_proc_addr(dll, func_name);
+        if (func_addr == NULL)
+        {
+            LOG_INFO("Failed to find function '%s' in '%s'", func_name, dll);
+            return NULL;
+        }
+
         imp = get_import_by_addr(base, NULL, func_addr);
     }
 
     if (imp == NULL)
     {
-        LOG_INFO("Unable to find import %p in IAT", func_addr);
+        LOG_INFO("Unable to find import in IAT (by_name=%d)", find_by_name);
         return NULL;
     }
 
@@ -352,10 +352,8 @@ static void* hook_jmp_impl(void* to_hook, void* hook)
 //------------------------------------------------------------------------------
 void* hook_jmp(const char* dll, const char* func_name, void* hook)
 {
-    void* our_base;
     void* func_addr;
     void* trampoline;
-    void** imp;
 
     // Get the address of the function we're going to hook.
     func_addr = get_proc_addr(dll, func_name);
@@ -368,23 +366,6 @@ void* hook_jmp(const char* dll, const char* func_name, void* hook)
     LOG_INFO("Attemping jump hook.");
     LOG_INFO("Target is %s, %s @ %p", dll, func_name, func_addr);
 
-    // Find our own import to patch.
-    our_base = get_alloc_base(hook_jmp);
-    if (our_base == NULL)
-    {
-        LOG_INFO("Our own base is null?!");
-        return NULL;
-    }
-
-    LOG_INFO("Self is located at %p", our_base);
-
-    imp = get_import_by_name(our_base, dll, func_name);
-    if (imp == NULL)
-    {
-        LOG_INFO("Unable to find import for %p in IAT", func_addr);
-        return NULL;
-    }
-
     // Install the hook.
     trampoline = hook_jmp_impl(func_addr, hook);
     if (trampoline == NULL)
@@ -392,9 +373,6 @@ void* hook_jmp(const char* dll, const char* func_name, void* hook)
         LOG_INFO("Jump hook failed.");
         return NULL;
     }
-
-    // Patch import table so we continue to call old function.
-    write_addr(imp, trampoline);
 
     LOG_INFO("Success!");
     FlushInstructionCache(current_proc(), 0, 0);

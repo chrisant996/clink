@@ -31,6 +31,9 @@ struct region_info_t
 };
 
 //------------------------------------------------------------------------------
+extern void* g_current_proc;
+
+//------------------------------------------------------------------------------
 void*   get_alloc_base(void* addr);
 void    get_region_info(void* addr, struct region_info_t* region_info);
 void    set_region_write_state(struct region_info_t* region_info, int state);
