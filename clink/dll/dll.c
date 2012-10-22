@@ -22,8 +22,6 @@
 #include "pch.h"
 #include "shared/util.h"
 #include "shared/inject_args.h"
-#include "shared/vm.h"
-#include "shared/pe.h"
 
 //------------------------------------------------------------------------------
 struct write_cache_
@@ -35,13 +33,12 @@ struct write_cache_
 typedef struct write_cache_ write_cache_t;
 
 //------------------------------------------------------------------------------
+int                     set_hook_trap();
 void                    save_history();
 void                    shutdown_lua();
 void                    clear_to_eol();
 void                    emulate_doskey(wchar_t*, unsigned);
 int                     call_readline(const wchar_t*, wchar_t*, unsigned);
-void*                   hook_iat(void*, const char*, const char*, void*, int);
-void*                   hook_jmp(const char*, const char*, void*);
 
 extern int              clink_opt_ctrl_d_exit;
 static int              g_write_cache_index     = 0;
@@ -145,7 +142,7 @@ static void dispatch_cached_write(HANDLE output, int index)
 }
 
 //------------------------------------------------------------------------------
-static BOOL WINAPI hooked_read_console(
+BOOL WINAPI hooked_read_console(
     HANDLE input,
     wchar_t* buffer,
     DWORD buffer_size,
@@ -210,7 +207,7 @@ static BOOL WINAPI hooked_read_console(
 }
 
 //------------------------------------------------------------------------------
-static BOOL WINAPI hooked_write_console(
+BOOL WINAPI hooked_write_console(
     HANDLE output,
     const wchar_t* buffer,
     DWORD buffer_size,
@@ -304,81 +301,6 @@ static void prepare_env_for_inputrc(HINSTANCE instance)
     str_cat(buffer, "/clink_inputrc", sizeof(buffer));
 
     putenv(buffer);
-}
-
-//------------------------------------------------------------------------------
-static const char* get_kernel_dll()
-{
-    // We're going to use a different DLL for Win8 (and onwards).
-
-    OSVERSIONINFOEX osvi;
-    DWORDLONG mask = 0;
-    int op=VER_GREATER_EQUAL;
-
-    ZeroMemory(&osvi, sizeof(OSVERSIONINFOEX));
-    osvi.dwOSVersionInfoSize = sizeof(OSVERSIONINFOEX);
-    osvi.dwMajorVersion = 6;
-    osvi.dwMinorVersion = 2;
-
-    VER_SET_CONDITION(mask, VER_MAJORVERSION, VER_GREATER_EQUAL);
-    VER_SET_CONDITION(mask, VER_MINORVERSION, VER_GREATER_EQUAL);
-
-    if (VerifyVersionInfo(&osvi, VER_MAJORVERSION|VER_MINORVERSION, mask))
-    {
-        return "kernelbase.dll";
-    }
-   
-    return "kernel32.dll";
-}
-
-//------------------------------------------------------------------------------
-static int apply_hooks(void* base)
-{
-    const char* func_name;
-    void* addr;
-    void* self;
-
-    self = get_alloc_base(apply_hooks);
-    if (self == NULL)
-    {
-        return 0;
-    }
-
-    // Write hook
-    func_name = "WriteConsoleW";
-    addr = hook_iat(base, NULL, func_name, hooked_write_console, 1);
-    if (addr == NULL)
-    {
-        LOG_INFO("Unable to hook %s in IAT at base %p", func_name, base);
-        return 0;
-    }
-
-    // If the target's IAT was hooked then the hook destination is now stored in
-    // 'addr'. We hook ourselves with this address to maintain the hook.
-    if (hook_iat(self, NULL, func_name, addr, 1) == 0)
-    {
-        LOG_INFO("Failed to hook own IAT for %s", func_name);
-        return 0;
-    }
-
-    // Read hook - So as to not disturb another utility's hooks that maybe in 
-    // place we use an alternative hooking method that doesn't involve patching
-    // the target's IAT.
-    func_name = "ReadConsoleW";
-    addr = hook_jmp(get_kernel_dll(), func_name, hooked_read_console);
-    if (addr == NULL)
-    {
-        LOG_INFO("Unable to hook %s in %s", func_name, get_kernel_dll());
-        return 0;
-    }
-
-    if (hook_iat(self, NULL, func_name, addr, 1) == 0)
-    {
-        LOG_INFO("Failed to hook own IAT for %s", func_name);
-        return 0;
-    }
-
-    return 1;
 }
 
 //------------------------------------------------------------------------------
@@ -510,7 +432,7 @@ BOOL WINAPI DllMain(HINSTANCE instance, DWORD reason, LPVOID unused)
         return FALSE;
     }
 
-    if (!apply_hooks(base))
+    if (!set_hook_trap())
     {
         failed();
         return FALSE;

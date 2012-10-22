@@ -102,12 +102,10 @@ void* hook_iat(
     }
 
     LOG_INFO("Found import at %p (value = %p)", imp, *imp);
-    LOG_INFO("Success!");
 
     prev_addr = *imp;
     write_addr(imp, hook);
 
-    LOG_INFO("Success!");
     FlushInstructionCache(current_proc(), 0, 0);
     return prev_addr;
 }
