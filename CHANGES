@@ -3,7 +3,10 @@
 
 ==== v0.2.1
 
+- The .history file now merges multiple sessions together.
+- Fixed missing y/n, pause, and other prompts.
 - Fixed segfault in loader executable.
+- Better ConEmu compatibility.
 
 ==== v0.2
 
