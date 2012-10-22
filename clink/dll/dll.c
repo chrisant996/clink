@@ -30,7 +30,6 @@ struct write_cache_
 {
     wchar_t*            buffer;
     int                 size;
-    int                 attributes;
 };
 
 typedef struct write_cache_ write_cache_t;
@@ -46,9 +45,9 @@ void*                   hook_jmp(const char*, const char*, void*);
 
 extern int              clink_opt_ctrl_d_exit;
 static int              g_write_cache_index     = 0;
-static const int        g_write_cache_size      = 0xffff;  // 0x10000 - 1 !!
-static write_cache_t    g_write_cache[2]        = { {NULL, 0, 0},
-                                                    {NULL, 0, 0} };
+static const int        g_write_cache_size      = 0xffff;      // 0x10000 - 1 !!
+static write_cache_t    g_write_cache[2]        = { {NULL, 0},
+                                                    {NULL, 0} };
 
 //------------------------------------------------------------------------------
 static LONG WINAPI exception_filter(EXCEPTION_POINTERS* info)
@@ -126,8 +125,6 @@ static void invalidate_cached_write(int index)
 static void dispatch_cached_write(HANDLE output, int index)
 {
     write_cache_t* cache;
-    CONSOLE_SCREEN_BUFFER_INFO csbi;
-    int attrib_restore;
 
     // Check bounds.
     if ((unsigned)index >= sizeof_array(g_write_cache))
@@ -137,19 +134,13 @@ static void dispatch_cached_write(HANDLE output, int index)
 
     cache = g_write_cache + index;
 
-    // Save current attributes so they can be restored.
-    GetConsoleScreenBufferInfo(output, &csbi);
-    attrib_restore = csbi.wAttributes;
-
     // Write the line to the console.
     if (cache->buffer != NULL)
     {
         DWORD j;
-        SetConsoleTextAttribute(output, cache->attributes);
         WriteConsoleW(output, cache->buffer, cache->size, &j, NULL);
     }
 
-    SetConsoleTextAttribute(output, attrib_restore);
     invalidate_cached_write(index);
 }
 
@@ -260,10 +251,6 @@ static BOOL WINAPI hooked_write_console(
     cache->size = copy_size;
     memcpy(cache->buffer, buffer, copy_size * sizeof(wchar_t));
     cache->buffer[copy_size] = L'\0';
-
-    // Fetch the attributes used for the write request.
-    GetConsoleScreenBufferInfo(output, &csbi);
-    cache->attributes = csbi.wAttributes;
 
     // Dispatch previous write call.
     dispatch_cached_write(output, g_write_cache_index);
