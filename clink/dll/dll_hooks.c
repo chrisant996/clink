@@ -34,6 +34,8 @@ BOOL WINAPI             hooked_read_console(HANDLE, wchar_t*, DWORD, LPDWORD,
                                             PCONSOLE_READCONSOLE_CONTROL);
 BOOL WINAPI             hooked_write_console(HANDLE, const wchar_t*, DWORD,
                                              LPDWORD, void*);
+BOOL WINAPI             hooked_read_console_input(HANDLE, INPUT_RECORD*, DWORD,
+                                                  LPDWORD);
 
 //------------------------------------------------------------------------------
 static const char* get_kernel_dll()
@@ -112,6 +114,18 @@ static int apply_hooks()
     {
         LOG_INFO("Failed to hook own IAT for %s", func_name);
         return 0;
+    }
+
+    // Read input hook to catch non-readline input.
+    func_name = "ReadConsoleInputA";
+    addr = hook_jmp(get_kernel_dll(), func_name, hooked_read_console_input);
+    if (addr == NULL)
+    {
+        LOG_INFO("No %s hook.", func_name);
+    }
+    else
+    {
+        hook_iat(self, NULL, func_name, addr, 1);
     }
 
     return 1;

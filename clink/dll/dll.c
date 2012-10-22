@@ -142,6 +142,22 @@ static void dispatch_cached_write(HANDLE output, int index)
 }
 
 //------------------------------------------------------------------------------
+BOOL WINAPI hooked_read_console_input(
+    HANDLE input,
+    INPUT_RECORD* buffer,
+    DWORD buffer_size,
+    LPDWORD events_read
+)
+{
+    int i;
+
+    i = (g_write_cache_index + 1) & 1;
+    dispatch_cached_write(GetStdHandle(STD_OUTPUT_HANDLE), i);
+
+    return ReadConsoleInputA(input, buffer, buffer_size, events_read);
+}
+
+//------------------------------------------------------------------------------
 BOOL WINAPI hooked_read_console(
     HANDLE input,
     wchar_t* buffer,
