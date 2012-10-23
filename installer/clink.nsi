@@ -82,7 +82,7 @@ Function cleanPreviousInstalls
             StrCmp $3 "clink_" 0 EndIfClinkUninstallEntry
                 ReadRegStr $4 HKLM "$0\$2" "UninstallString"
                 ExecWait '"$4" /S'
-                DeleteRegKey "$0\$2"
+                DeleteRegKey HKLM "$0\$2"
         EndIfClinkUninstallEntry:
 
         IntOp $1 $1 + 1
