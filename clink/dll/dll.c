@@ -39,7 +39,7 @@ void                    shutdown_lua();
 void                    clear_to_eol();
 void                    emulate_doskey(wchar_t*, unsigned);
 int                     call_readline(const wchar_t*, wchar_t*, unsigned);
-int                     hook_iat(void*, const char*, const char*, void*);
+int                     hook_iat(void*, const char*, const char*, void*, int);
 int                     hook_jmp(const char*, const char*, void*);
 
 extern int              clink_opt_ctrl_d_exit;
@@ -375,7 +375,8 @@ static int apply_hooks(void* base, int use_alt_method)
                 base,
                 hook->exporter,
                 hook->func_name,
-                hook->hook
+                hook->hook,
+                0
             );
 
             if (hook_ok)

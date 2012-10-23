@@ -62,7 +62,13 @@ static void* get_proc_addr(const char* dll, const char* func_name)
 }
 
 //------------------------------------------------------------------------------
-int hook_iat(void* base, const char* dll, const char* func_name, void* hook)
+int hook_iat(
+    void* base,
+    const char* dll,
+    const char* func_name,
+    void* hook,
+    int find_by_name
+)
 {
     void* func_addr;
     void** imp;
@@ -79,7 +85,14 @@ int hook_iat(void* base, const char* dll, const char* func_name, void* hook)
     LOG_INFO("Target is %s,%s,%p", dll, func_name, func_addr);
     
     // Find entry and replace it.
-    imp = get_import_by_addr(base, NULL, func_addr);
+    if (find_by_name)
+    {
+        imp = get_import_by_name(base, NULL, func_name);
+    }
+    else
+    {
+        imp = get_import_by_addr(base, NULL, func_addr);
+    }
     if (imp == NULL)
     {
         LOG_INFO("Unable to find import %p in IAT", func_addr);
@@ -90,6 +103,8 @@ int hook_iat(void* base, const char* dll, const char* func_name, void* hook)
     LOG_INFO("Success!");
 
     write_addr(imp, hook);
+
+    FlushInstructionCache(current_proc(), 0, 0);
     return 1;
 }
 
