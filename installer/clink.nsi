@@ -50,9 +50,10 @@ Function cleanLegacyInstall
 
     ; Start menu items and uninstall registry entry.
     ;
+    StrCpy $0 "Software\Microsoft\Windows\CurrentVersion\Uninstall" 
     Delete $SMPROGRAMS\clink\*
     RMDir $SMPROGRAMS\clink
-    DeleteRegKey HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\Product"
+    DeleteRegKey HKLM $0"\Product"
 
     ; Install dir
     ;
@@ -65,9 +66,38 @@ Function cleanLegacyInstall
 FunctionEnd
 
 ;-------------------------------------------------------------------------------
+Function cleanPreviousInstalls
+    StrCpy $0 "Software\Microsoft\Windows\CurrentVersion\Uninstall" 
+    StrCpy $1 0
+    EnumUninstallKeysLoop:
+        EnumRegKey $2 HKLM $0 $1
+        StrCmp $2 "" EnumUninstallKeysEnd
+
+        ; Skip installs of ourself over an existing installation.
+        ;
+        StrCmp $2 "clink_${CLINK_VERSION}" EndIfClinkUninstallEntry 0
+            ; Check for uninstaller entries that start "clink_"
+            ;
+            StrCpy $3 $2 6
+            StrCmp $3 "clink_" 0 EndIfClinkUninstallEntry
+                ReadRegStr $4 HKLM "$0\$2" "UninstallString"
+                ExecWait '"$4" /S'
+                DeleteRegKey "$0\$2"
+        EndIfClinkUninstallEntry:
+
+        IntOp $1 $1 + 1
+        Goto EnumUninstallKeysLoop
+    EnumUninstallKeysEnd:
+FunctionEnd
+
+;-------------------------------------------------------------------------------
 Section "!Application files" app_files_id
     SectionIn RO
     SetShellVarContext all
+    
+    ; Clean up version >= 0.2
+    ;
+    Call cleanPreviousInstalls
 
     ; Install to a versioned folder to reduce interference between versions.
     ;
@@ -133,7 +163,7 @@ Section "!un.Application files"
     SetShellVarContext all
 
     ExecShell "open" "$INSTDIR\clink_x86.exe" "autorun --uninstall" SW_HIDE
-    Sleep 1000
+    Sleep 600
 
     ; Delete the instaltion directory and root directory if it's empty.
     ;
