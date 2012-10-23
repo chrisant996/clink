@@ -24,16 +24,29 @@
 #include "inject_args.h"
 
 //------------------------------------------------------------------------------
-void str_cpy(char* dest, const char* src, int n)
+void str_cpy(char* dest, const char* src, int max)
 {
     dest[0] = '\0';
-    str_cat(dest, src, n);
+    str_cat(dest, src, max);
 }
 
 //------------------------------------------------------------------------------
-void str_cat(char* dest, const char* src, int n)
+void str_cat(char* dest, const char* src, int max)
 {
-    int m = n - (int)strlen(dest) - 1;
+    int m = max - (int)strlen(dest) - 1;
+    if (m > 0)
+    {
+        strncat(dest, src, m);
+    }
+}
+
+//------------------------------------------------------------------------------
+void str_cat_n(char* dest, const char* src, int max, int n)
+{
+    int m;
+
+    m = max - (int)strlen(dest) - 1;
+    m = (n < m) ? n : m;
     if (m > 0)
     {
         strncat(dest, src, m);

@@ -32,6 +32,7 @@ void                enter_scroll_mode(int);
 void                move_cursor(int, int);
 void                initialise_clink_settings();
 int                 get_clink_setting_int(const char*);
+const char*         find_next_ansi_code(const char*, int*);
 
 int                 g_slash_translation             = 0;
 extern int          rl_visible_stats;
@@ -723,14 +724,64 @@ static int page_up(int count, int invoking_key)
 //------------------------------------------------------------------------------
 static int filter_prompt()
 {
+    char* next;
     char prompt[1024];
+    char tagged_prompt[sizeof_array(prompt)];
 
+    // Get the prompt from Readline and pass it to Clink's filter framework
+    // in Lua.
     prompt[0] = '\0';
     str_cat(prompt, rl_prompt, sizeof_array(prompt));
 
     lua_filter_prompt(prompt, sizeof_array(prompt));
-    rl_set_prompt(prompt);
 
+    // Scan for ansi codes and surround them with Readline's markers for
+    // invisible characters.
+    tagged_prompt[0] ='\0';
+    next = prompt;
+    while (*next)
+    {
+        static const int tp_size = sizeof_array(tagged_prompt);
+
+        int size;
+        char* code;
+
+        code = find_next_ansi_code(next, &size);
+        str_cat_n(tagged_prompt, next, tp_size, code - next);
+        if (*code)
+        {
+            static const char* tags[] = { "\001", "\002" };
+
+            str_cat(tagged_prompt, tags[0], tp_size);
+            str_cat_n(tagged_prompt, code, tp_size, size);
+            str_cat(tagged_prompt, tags[1], tp_size);
+        }
+
+        next = code + size;
+    }
+
+    rl_set_prompt(tagged_prompt);
+
+    // Scan for ansi codes and surround them with Readline's markers for
+    // invisible characters.
+    next = prompt;
+    while (next != NULL)
+    {
+        int size;
+        char* code;
+
+        code = find_next_ansi_code(next, &size);
+        if (code == NULL)
+        {
+            next = NULL;
+        }
+        else
+        {
+            next = code + size;
+        }
+    }
+
+    rl_set_prompt(prompt);
     return 0;
 }
 

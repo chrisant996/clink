@@ -19,27 +19,30 @@
  * SOFTWARE.
  */
 
-#ifndef UTIL_H
-#define UTIL_H
+#include "pch.h"
 
-void str_cpy(char* dest, const char* src, int max);
-void str_cat(char* dest, const char* src, int max);
-void str_cat_n(char* dest, const char* src, int max, int n);
-void get_config_dir(char* buffer, int size);
-void get_dll_dir(char* buffer, int size);
-void log_line(const char* function, int source_line, const char* format, ...);
-void log_error(const char* function, int source_line, const char* format, ...);
-void puts_help(const char** help_pairs, int count);
-void cpy_path_as_abs(char* abs, const char* rel, int abs_size);
+#define ANSI_X_COMPILE
 
-#define LOG_INFO(...)   log_line(__FUNCTION__, __LINE__, __VA_ARGS__)
-#define LOG_ERROR(...)  log_error(__FUNCTION__, __LINE__, __VA_ARGS__)
+//------------------------------------------------------------------------------
 
-#define AS_STR(x)       AS_STR_IMPL(x)
-#define AS_STR_IMPL(x)  #x
+#define char_t          char
+#define ANSI_FNAME(x)   x
 
-#define sizeof_array(x) (sizeof((x)) / sizeof((x)[0]))
+#include "ansi.x"
 
-#endif // UTIL_H
+#undef char_t
+#undef ANSI_FNAME
+
+//------------------------------------------------------------------------------
+
+#define char_t          wchar_t
+#define ANSI_FNAME(x)   x##_w
+
+#include "ansi.x"
+
+#undef char_t
+#undef ANSI_FNAME
+
+#undef ANSI_X_COMPILE
 
 // vim: expandtab
