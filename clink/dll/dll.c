@@ -101,6 +101,57 @@ static void append_crlf(wchar_t* buffer, DWORD max_size)
 }
 
 //------------------------------------------------------------------------------
+static void invalidate_cached_write(int index)
+{
+    write_cache_t* cache;
+
+    // Check bounds.
+    if ((unsigned)index >= sizeof_array(g_write_cache))
+    {
+        return;
+    }
+
+    cache = g_write_cache + index;
+
+	cache->size = 0;
+    if (cache->buffer != NULL)
+    {
+        cache->buffer[0] = L'\0';
+    }
+}
+
+//------------------------------------------------------------------------------
+static void dispatch_cached_write(HANDLE output, int index)
+{
+    write_cache_t* cache;
+    CONSOLE_SCREEN_BUFFER_INFO csbi;
+    int attrib_restore;
+
+    // Check bounds.
+    if ((unsigned)index >= sizeof_array(g_write_cache))
+    {
+        return;
+    }
+
+    cache = g_write_cache + index;
+
+    // Save current attributes so they can be restored.
+    GetConsoleScreenBufferInfo(output, &csbi);
+    attrib_restore = csbi.wAttributes;
+
+    // Write the line to the console.
+    if (cache->buffer != NULL)
+    {
+        DWORD j;
+        SetConsoleTextAttribute(output, cache->attributes);
+        WriteConsoleW(output, cache->buffer, cache->size, &j, NULL);
+    }
+
+    SetConsoleTextAttribute(output, attrib_restore);
+    invalidate_cached_write(index);
+}
+
+//------------------------------------------------------------------------------
 static BOOL WINAPI hooked_read_console(
     HANDLE input,
     wchar_t* buffer,
@@ -115,18 +166,19 @@ static BOOL WINAPI hooked_read_console(
     int i;
     write_cache_t* write_cache;
 
+    i = (g_write_cache_index + 1) & 1;
+    write_cache = g_write_cache + i;
+
     // If cmd.exe is asking for one character at a time, use the original path
     // It does this to handle y/n/all prompts which isn't an compatible use-
     // case for readline.
     if (buffer_size == 1)
     {
+        dispatch_cached_write(GetStdHandle(STD_OUTPUT_HANDLE), i);
         return ReadConsoleW(input, buffer, buffer_size, read_in, control);
     }
 
     old_seh = SetUnhandledExceptionFilter(exception_filter);
-
-    i = (g_write_cache_index + 1) & 1;
-    write_cache = g_write_cache + i;
 
     // Call readline.
     is_eof = call_readline(write_cache->buffer, buffer, buffer_size);
@@ -135,8 +187,7 @@ static BOOL WINAPI hooked_read_console(
         wcsncpy(buffer, L"exit", buffer_size);
     }
 
-    write_cache->buffer[0] = L'\0';
-    write_cache->size = 0;
+    invalidate_cached_write(i);
 
     // Check for control codes and convert them.
     if (buffer[0] == L'\x03')
@@ -180,7 +231,6 @@ static BOOL WINAPI hooked_write_console(
     static int once = 0;
     int copy_size;
     int i;
-    int attrib_restore;
     write_cache_t* cache;
     CONSOLE_SCREEN_BUFFER_INFO csbi;
 
@@ -212,25 +262,15 @@ static BOOL WINAPI hooked_write_console(
     // Fetch the attributes used for the write request.
     GetConsoleScreenBufferInfo(output, &csbi);
     cache->attributes = csbi.wAttributes;
-    attrib_restore = csbi.wAttributes;
 
-    // Now print the previous write request.
-    i = g_write_cache_index;
-    cache = g_write_cache + i;
+    // Dispatch previous write call.
+    dispatch_cached_write(output, g_write_cache_index);
 
     if (written != NULL)
     {
         *written = buffer_size;
     }
 
-    if (cache->buffer != NULL)
-    {
-        DWORD j;
-        SetConsoleTextAttribute(output, cache->attributes);
-        WriteConsoleW(output, cache->buffer, cache->size, &j, unused);
-    }
-
-    SetConsoleTextAttribute(output, attrib_restore);
     return TRUE;
 }
 
