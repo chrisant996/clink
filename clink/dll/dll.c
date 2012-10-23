@@ -39,8 +39,8 @@ void                    shutdown_lua();
 void                    clear_to_eol();
 void                    emulate_doskey(wchar_t*, unsigned);
 int                     call_readline(const wchar_t*, wchar_t*, unsigned);
-int                     hook_iat(void*, const char*, const char*, void*, int);
-int                     hook_jmp(const char*, const char*, void*);
+void*                   hook_iat(void*, const char*, const char*, void*, int);
+void*                   hook_jmp(const char*, const char*, void*);
 
 extern int              clink_opt_ctrl_d_exit;
 static int              g_write_cache_index     = 0;
