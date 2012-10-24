@@ -29,7 +29,6 @@ void*                   hook_iat(void*, const char*, const char*, void*, int);
 void*                   hook_jmp(const char*, const char*, void*);
 static unsigned char*   g_hook_trap_addr        = NULL;
 static unsigned char    g_hook_trap_value       = 0;
-static void*            g_prev_seh_func         = NULL;
 BOOL WINAPI             hooked_read_console(HANDLE, wchar_t*, DWORD, LPDWORD,
                                             PCONSOLE_READCONSOLE_CONTROL);
 BOOL WINAPI             hooked_write_console(HANDLE, const wchar_t*, DWORD,
@@ -142,12 +141,24 @@ static LONG WINAPI hook_trap(EXCEPTION_POINTERS* info)
     er = info->ExceptionRecord;
     if (er->ExceptionCode != EXCEPTION_PRIV_INSTRUCTION)
     {
-        return EXCEPTION_EXECUTE_HANDLER;
+        /*
+        LOG_INFO("Unexpected exception (code=%x addr=%p)",
+            er->ExceptionCode,
+            er->ExceptionAddress
+        );
+        */
+        return EXCEPTION_CONTINUE_SEARCH;
     }
 
     if (er->ExceptionAddress != g_hook_trap_addr)
     {
-        return EXCEPTION_EXECUTE_HANDLER;
+        /*
+        LOG_INFO("Unexpected exception address (code=%x addr=%p)",
+            er->ExceptionCode,
+            er->ExceptionAddress
+        );
+        */ 
+        return EXCEPTION_CONTINUE_SEARCH;
     }
 
     // Restore original instruction.
@@ -164,7 +175,7 @@ static LONG WINAPI hook_trap(EXCEPTION_POINTERS* info)
 #elif defined(_M_X64)
     sp_reg = (void**)info->ContextRecord->Rsp; 
 #endif
-    LOG_INFO("SEH hit - caller is %p.", *sp_reg);
+    LOG_INFO("VEH hit - caller is %p.", *sp_reg);
 
     // Apply hooks.
     if (apply_hooks())
@@ -172,9 +183,6 @@ static LONG WINAPI hook_trap(EXCEPTION_POINTERS* info)
         LOG_INFO("Success!");
     }
 
-    // Tidy up. There's no need to flush the instruction cache as making the
-    // hooks would have done it multiple times.
-    SetUnhandledExceptionFilter(g_prev_seh_func);
     return EXCEPTION_CONTINUE_EXECUTION;
 }
 
@@ -185,7 +193,7 @@ int set_hook_trap()
     void* addr;
     unsigned char to_write;
 
-    // If there's a debugger attached, we can't use SEH.
+    // If there's a debugger attached, we can't use VEH.
     if (IsDebuggerPresent())
     {
         return apply_hooks();
@@ -211,7 +219,7 @@ int set_hook_trap()
     g_hook_trap_addr = addr;
     g_hook_trap_value = *g_hook_trap_addr;
 
-    g_prev_seh_func = SetUnhandledExceptionFilter(hook_trap);
+    AddVectoredExceptionHandler(1, hook_trap);
 
     // Write a HALT instruction to force an exception.
     to_write = 0xf4;
