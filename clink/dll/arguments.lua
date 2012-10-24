@@ -58,6 +58,11 @@ local function traverse(generator, parts, text, first, last)
     if not allow_empty_text and text == "" then
         return false
     end
+    
+    -- We can only proceed further if we're at a leaf.
+    if parts.n <= #parts then
+        return false
+    end
 
     for key, value in pairs(generator) do
         -- Strings are also leafs.
