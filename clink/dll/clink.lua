@@ -151,6 +151,16 @@ function clink.arg.tree_node(flags, content)
 end
 
 --------------------------------------------------------------------------------
+function clink.arg.node_transpose(a, b)
+    local c = {}
+    for _, i in ipairs(a) do
+        c[i] = b
+    end
+
+    return c
+end
+
+--------------------------------------------------------------------------------
 function clink.prompt.register_filter(filter, priority)
     if priority == nil then
         priority = 999

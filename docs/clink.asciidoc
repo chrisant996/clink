@@ -336,6 +336,26 @@ helps to construct such a tree node. It returns a tree node with the sub-tree
 <<_argument_completion,Argument Completion>> for details of how to use the
 'flags' argument.
 
+
+==== clink.arg.node_transpose(a, b)
+
+[role="indented"]
+Returns a table that uses the strings in array a as the keys, and argument b as
+the values. So for example this...
+
+----
+a = { "one", "two", "three" }
+b = 1234
+c = clink.arg.node_transpose(a, b)
+----
+
+[role="indented"]
+...will return the following;
+
+----
+c = { one = 1234, two = 1234, three = 1234 }
+----
+
 === Prompt Filtering
 
 ==== clink.prompt.register_filter(filter, sort_id)
