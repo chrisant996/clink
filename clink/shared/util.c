@@ -65,13 +65,21 @@ void get_dll_dir(char* buffer, int size)
 void get_config_dir(char* buffer, int size)
 {
     static int once = 1;
+    static char shell_dir[MAX_PATH] = { 1 };
 
-    char shell_dir[MAX_PATH];
+    // Just the once, get user's appdata folder.
+    if (shell_dir[0] == 1)
+    {
+        if (SHGetFolderPath(0, CSIDL_LOCAL_APPDATA, NULL, 0, shell_dir) != S_OK)
+        {
+            shell_dir[0] = '\0';
+        }
+    }
 
     buffer[0] = '\0';
 
     // Ask Windows for the user's non-roaming AppData folder.
-    if (SHGetFolderPath(0, CSIDL_LOCAL_APPDATA, NULL, 0, shell_dir) == S_OK)
+    if (shell_dir[0])
     {
         str_cat(buffer, shell_dir, size);
     }
