@@ -419,12 +419,13 @@ static void failed()
 //------------------------------------------------------------------------------
 BOOL WINAPI DllMain(HINSTANCE instance, DWORD reason, LPVOID unused)
 {
+    static int running = 0;
     void* base;
 
     // We're only interested in when the dll is attached.
     if (reason != DLL_PROCESS_ATTACH)
     {
-        if (reason == DLL_PROCESS_DETACH)
+        if (running && reason == DLL_PROCESS_DETACH)
         {
             save_history();
             shutdown_lua();
@@ -455,5 +456,6 @@ BOOL WINAPI DllMain(HINSTANCE instance, DWORD reason, LPVOID unused)
     }
 
     success();
+    running = 1;
     return TRUE;
 }
