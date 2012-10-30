@@ -22,7 +22,7 @@
 
 --------------------------------------------------------------------------------
 function get_current_git_branch()
-    for line in io.popen("git branch 2>nul"):lines() do
+    for line in io.popen("git branch --no-color 2>nul"):lines() do
         local m = line:match("%* (.+)$")
         if m then
             return m
@@ -34,7 +34,8 @@ end
 
 --------------------------------------------------------------------------------
 function get_last_git_commit()
-    for line in io.popen("git log -1 --format=oneline 2>nul"):lines() do
+    local git_cmd = "git log -1 --format=oneline --no-color 2>nul"
+    for line in io.popen(git_cmd):lines() do
         return line:sub(1, 6)
     end
 
