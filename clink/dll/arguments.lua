@@ -58,12 +58,8 @@ local function traverse(generator, parts, text, first, last)
     if not allow_empty_text and text == "" then
         return false
     end
-    
-    -- We can only proceed further if we're at a leaf.
-    if parts.n <= #parts then
-        return false
-    end
 
+    local matches = {}
     for key, value in pairs(generator) do
         -- Strings are also leafs.
         if value == part and not repeat_leaf then
@@ -81,12 +77,23 @@ local function traverse(generator, parts, text, first, last)
         if candidate ~= clink.arg.node_flags_key then
             if type(candidate) == "string" then
                 if clink.is_match(part, candidate) then
-                    clink.add_match(candidate)
+                    table.insert(matches, candidate)
                 end
             end
         end
     end
-
+    
+    -- Only one match, we're not at the end, and we should repeat. Down we go...
+    local last_part = (parts.n - 1 == #parts)
+    if #matches == 1 and repeat_leaf and not last_part then
+        return traverse(generator, parts, text, first, last)
+    end
+    
+    -- Transfer matches to clink.
+    for _, i in ipairs(matches) do
+        clink.add_match(i)
+    end
+    
     return clink.match_count() > 0
 end
 
@@ -113,7 +120,7 @@ function clink.argument_match_generator(text, first, last)
     end
 
     -- Split the command line into parts.
-    local str = rl_line_buffer:sub(cmd_end, last)
+    local str = rl_line_buffer:sub(cmd_end, last - 1)
     local parts = {}
     for _, r, part in function () return str:find("^%s*([^%s]+)") end do
         if part:find("\"") then
