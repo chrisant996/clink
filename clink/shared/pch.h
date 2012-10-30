@@ -23,6 +23,9 @@
 #define PCH_H
 
 #include <stdio.h>
+#ifdef __MINGW32__
+#   include <stdint.h>
+#endif
 
 #include <Windows.h>
 #include <Shlobj.h>

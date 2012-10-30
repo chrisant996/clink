@@ -104,3 +104,20 @@ index 7c74c99..e59bad6 100644
  #if defined(HAVE_SELECT)
    fd_set readfds, exceptfds;
    struct timeval timeout;
+diff --git a/readline/readline/bind.c b/readline/readline/bind.c
+index 1b12df1..4c898a6 100644
+--- a/readline/readline/bind.c
++++ b/readline/readline/bind.c
+@@ -1112,10 +1112,12 @@ parser_include (args)
+  * function to have no arguments and complains when assigning function pointer
+  * to a variable. The workaround is to forward declare them _before_ assignment.
+  */
++#ifdef _MSC_VER
+ int parser_if(char*);
+ int parser_endif(char*);
+ int parser_else(char*);
+ int parser_include(char*);
++#endif
+ /* end_clink_change */
+   
+ /* Associate textual names with actual functions. */

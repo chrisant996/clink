@@ -26,10 +26,10 @@
 //------------------------------------------------------------------------------
 static int              reload_lua_state(int count, int invoking_key);
 
+extern char*            rl_variable_value(const char*);
 extern int              g_match_palette[3];
 extern int              _rl_completion_case_map;
 extern int              g_slash_translation;
-extern char*            rl_variable_value(char*);
 static lua_State*       g_lua                        = NULL;
 
 //------------------------------------------------------------------------------
@@ -328,8 +328,8 @@ static int is_dir(lua_State* state)
 //------------------------------------------------------------------------------
 static int get_rl_variable(lua_State* state)
 {
-    char* string;
-    char* rl_cvar;
+    const char* string;
+    const char* rl_cvar;
 
     // Check we've got at least one string argument.
     if (lua_gettop(state) == 0 || !lua_isstring(state, 1))
@@ -352,7 +352,7 @@ static int get_rl_variable(lua_State* state)
 static int is_rl_variable_true(lua_State* state)
 {
     int i;
-    char* cvar_value;
+    const char* cvar_value;
 
     i = get_rl_variable(state);
     if (i == 0)

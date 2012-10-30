@@ -140,8 +140,8 @@ void initialise_rl_scroller()
         rl_bind_key_in_map(i, leave_scroll_mode, g_scroller_keymap);
     }
 
-    rl_generic_bind(ISKMAP, "\033", g_scroller_keymap, g_scroller_keymap);
-    rl_generic_bind(ISKMAP, "`", g_scroller_keymap, g_scroller_keymap);
+    rl_generic_bind(ISKMAP, "\033", (char*)g_scroller_keymap, g_scroller_keymap);
+    rl_generic_bind(ISKMAP, "`", (char*)g_scroller_keymap, g_scroller_keymap);
     rl_bind_key_in_map('I', page_up, g_scroller_keymap);
     rl_bind_key_in_map('Q', page_down, g_scroller_keymap);
 }

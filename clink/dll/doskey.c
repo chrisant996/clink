@@ -92,6 +92,16 @@ void emulate_doskey(wchar_t* buffer, unsigned max_chars)
         wchar_t* args[16];
     } parts;
 
+#ifdef __MINGW32__
+    HANDLE kernel32 = LoadLibraryA("kernel32.dll");
+
+    typedef DWORD (WINAPI *_GetConsoleAliasW)(LPWSTR, LPWSTR, DWORD, LPWSTR);
+    _GetConsoleAliasW GetConsoleAliasW = (_GetConsoleAliasW)GetProcAddress(
+        kernel32,
+        "GetConsoleAliasW"
+    );
+#endif // __MINGW32__
+
     // Allocate some buffers and fill them.
     alias = malloc(max_chars * sizeof(wchar_t) * 3);
     scratch[0] = alias + max_chars;

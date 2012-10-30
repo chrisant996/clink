@@ -38,7 +38,7 @@ static int check_dll_version(const char* clink_dll)
         return 0;
     }
 
-    if (VerQueryValue(buffer, "\\", &file_info, NULL) != TRUE)
+    if (VerQueryValue(buffer, "\\", (void**)&file_info, NULL) != TRUE)
     {
         return 0;
     }

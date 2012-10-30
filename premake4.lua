@@ -67,14 +67,30 @@ clink_ver_stamp = (math.floor(os.time() / 3600) - 47000) % 0x10000
 
 --------------------------------------------------------------------------------
 local pchheader_original = pchheader
+local pchsource_original = pchsource
+
 local function pchheader_fixed(header)
     if _ACTION == "vs2010" then
         header = path.getname(header)
     end
 
+    if _ACTION == "gmake" then
+        return
+    end
+
     pchheader_original(header)
 end
+
+local function pchsource_fixed(source)
+    if _ACTION == "gmake" then
+        return
+    end
+
+    pchsource_original(source)
+end
+
 pchheader = pchheader_fixed
+pchsource = pchsource_fixed
 
 --------------------------------------------------------------------------------
 if _ACTION and _ACTION ~= "clean" and _ACTION:find("clink_") == nil then
@@ -145,6 +161,10 @@ solution("clink")
     configuration("vs*")
         defines("_CRT_SECURE_NO_WARNINGS")
         defines("_CRT_NONSTDC_NO_WARNINGS")
+
+    configuration("gmake")
+        defines("__MSVCRT_VERSION__=0x0601")
+        defines("WINVER=0x0502")
 
 --------------------------------------------------------------------------------
 project("readline")

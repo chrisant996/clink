@@ -16,6 +16,10 @@
 #include <stdlib.h>
 #include <string.h>
 
+#ifdef __MINGW32__
+#   define _wfinddata64_t __wfinddata64_t
+#endif
+
 #ifdef __cplusplus
 extern "C"
 {

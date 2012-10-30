@@ -1112,10 +1112,12 @@ parser_include (args)
  * function to have no arguments and complains when assigning function pointer
  * to a variable. The workaround is to forward declare them _before_ assignment.
  */
+#ifdef _MSC_VER
 int parser_if(char*);
 int parser_endif(char*);
 int parser_else(char*);
 int parser_include(char*);
+#endif
 /* end_clink_change */
   
 /* Associate textual names with actual functions. */
