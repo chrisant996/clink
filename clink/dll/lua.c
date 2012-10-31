@@ -369,7 +369,7 @@ static int is_rl_variable_true(lua_State* state)
 }
 
 //------------------------------------------------------------------------------
-static int chdir(lua_State* state)
+static int change_dir(lua_State* state)
 {
     const char* path;
 
@@ -404,7 +404,7 @@ void initialise_lua()
         { "is_dir", is_dir },
         { "get_rl_variable", get_rl_variable },
         { "is_rl_variable_true", is_rl_variable_true },
-        { "chdir", chdir },
+        { "chdir", change_dir },
         { NULL, NULL }
     };
 
