@@ -264,13 +264,6 @@ order in which filters are called. Lower sort ids are called first.
 [role="indented"]
 Outputs 'text' as a match for the active completion.
 
-==== clink.chdir(path)
-
-[role="indented"]
-Changes the current working directory to 'path'. Clink caches and restores the
-working directory between calls to the match generation so that it does not
-interfere with the processes normal operation.
-
 ==== clink.compute_lcd(text, matches)
 
 [role="indented"]
@@ -385,6 +378,13 @@ User-provided prompt filter functions can get and set the prompt value using
 this variable.
 
 === Miscelaneous
+
+==== clink.chdir(path)
+
+[role="indented"]
+Changes the current working directory to 'path'. Clink caches and restores the
+working directory between calls to the match generation so that it does not
+interfere with the processes normal operation.
 
 ==== clink.find_dirs(mask)
 
