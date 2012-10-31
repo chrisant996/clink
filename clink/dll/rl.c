@@ -669,6 +669,7 @@ int call_readline(
     char* text;
     char* expanded;
     char prompt_utf8[1024];
+    char cwd_cache[MAX_PATH];
 
     // Convery prompt to utf-8.
     WideCharToMultiByte(
@@ -685,6 +686,8 @@ int call_readline(
         rl_startup_hook = initialise_hook;
         initialised = 1;
     }
+
+    GetCurrentDirectory(sizeof_array(cwd_cache), cwd_cache);
 
     // Call readline
     do
@@ -718,6 +721,8 @@ int call_readline(
         add_to_history(text);
     }
     while (!text || expand_result == 2);
+
+    SetCurrentDirectory(cwd_cache);
 
     text_size = MultiByteToWideChar(CP_UTF8, 0, text, -1, result, 0);
     text_size = (size < text_size) ? size : strlen(text);

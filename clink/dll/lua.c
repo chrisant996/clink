@@ -369,6 +369,23 @@ static int is_rl_variable_true(lua_State* state)
 }
 
 //------------------------------------------------------------------------------
+static int chdir(lua_State* state)
+{
+    const char* path;
+
+    // Check we've got at least one string argument.
+    if (lua_gettop(state) == 0 || !lua_isstring(state, 1))
+    {
+        return 0;
+    }
+
+    path = lua_tostring(state, 1);
+    SetCurrentDirectory(path);
+
+    return 0;
+}
+
+//------------------------------------------------------------------------------
 void initialise_lua()
 {
     static int once = 0;
@@ -387,6 +404,7 @@ void initialise_lua()
         { "is_dir", is_dir },
         { "get_rl_variable", get_rl_variable },
         { "is_rl_variable_true", is_rl_variable_true },
+        { "chdir", chdir },
         { NULL, NULL }
     };
 
