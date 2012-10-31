@@ -161,6 +161,27 @@ function clink.arg.node_transpose(a, b)
 end
 
 --------------------------------------------------------------------------------
+function clink.arg.node_merge(a, b)
+    c = {}
+    d = {a, b}
+    for _, i in ipairs(d) do
+        if type(i) ~= "table" then
+            i = {i}
+        end
+
+        for j, k in pairs(i) do
+            if type(j) == "number" then
+                table.insert(c, k)
+            else
+                c[j] = k
+            end
+        end
+    end
+
+    return c
+end
+
+--------------------------------------------------------------------------------
 function clink.prompt.register_filter(filter, priority)
     if priority == nil then
         priority = 999

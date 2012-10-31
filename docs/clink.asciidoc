@@ -343,6 +343,10 @@ helps to construct such a tree node. It returns a tree node with the sub-tree
 <<_argument_completion,Argument Completion>> for details of how to use the
 'flags' argument.
 
+==== clink.arg.node_merge(a, b)
+
+[role="indented"]
+Merges 'a' and 'b' into a new table and returns it.
 
 ==== clink.arg.node_transpose(a, b)
 
