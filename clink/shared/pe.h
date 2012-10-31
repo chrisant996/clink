@@ -30,3 +30,5 @@ void**  get_import_by_addr(void* base, const char* dll, void* func_addr);
 void*   get_export(void* base, const char* func_name);
 
 #endif // PE_H
+
+// vim: expandtab

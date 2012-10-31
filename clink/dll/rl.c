@@ -727,3 +727,5 @@ int call_readline(
     free(text);
     return 0;
 }
+
+// vim: expandtab

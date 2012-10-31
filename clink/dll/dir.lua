@@ -81,3 +81,5 @@ clink.arg.register_tree("rd", dir_match_generator)
 clink.arg.register_tree("rmdir", dir_match_generator)
 clink.arg.register_tree("md", dir_match_generator)
 clink.arg.register_tree("mkdir", dir_match_generator)
+
+-- vim: expandtab

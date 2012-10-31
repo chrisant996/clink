@@ -227,3 +227,5 @@ int set_hook_trap()
 
     return 1;
 }
+
+// vim: expandtab

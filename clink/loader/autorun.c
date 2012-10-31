@@ -444,3 +444,5 @@ end:
     free(clink_path);
     return ret;
 }
+
+// vim: expandtab

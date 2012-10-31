@@ -38,3 +38,5 @@ void puts_help(const char** help_pairs, int count);
 #define sizeof_array(x) (sizeof((x)) / sizeof((x)[0]))
 
 #endif // UTIL_H
+
+// vim: expandtab

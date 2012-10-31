@@ -38,3 +38,5 @@ void get_inject_arg_file(unsigned pid, char* buffer, int buffer_size)
     str_cat(buffer, ".\\clink_", buffer_size);
     str_cat(buffer, pid_str, buffer_size);
 }
+
+// vim: expandtab

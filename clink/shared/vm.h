@@ -41,3 +41,5 @@ int     write_vm(void* proc_handle, void* dest, const void* src, size_t size);
 int     read_vm(void* proc_handle, void* dest, const void* src, size_t size);
 
 #endif // VM_H
+
+// vim: expandtab

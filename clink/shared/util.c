@@ -209,3 +209,5 @@ void puts_help(const char** help_pairs, int count)
 
     puts("");
 }
+
+// vim: expandtab

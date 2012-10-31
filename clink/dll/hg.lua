@@ -32,3 +32,5 @@ local hg_tree = {
 }
 
 clink.arg.register_tree("hg", hg_tree)
+
+-- vim: expandtab

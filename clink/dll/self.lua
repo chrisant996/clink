@@ -32,3 +32,5 @@ local self_tree = clink.arg.tree_node("*", {
 })
 
 clink.arg.register_tree("clink", self_tree)
+
+-- vim: expandtab

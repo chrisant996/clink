@@ -182,3 +182,5 @@ function clink.filter_prompt(prompt)
 
     return clink.prompt.value
 end
+
+-- vim: expandtab

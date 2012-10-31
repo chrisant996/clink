@@ -31,3 +31,5 @@
 #include <Shlobj.h>
 
 #endif // PCH_H
+
+// vim: expandtab

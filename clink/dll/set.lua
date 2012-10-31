@@ -46,3 +46,5 @@ end
 
 --------------------------------------------------------------------------------
 clink.arg.register_tree("set", set_match_generator)
+
+-- vim: expandtab

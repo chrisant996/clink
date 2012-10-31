@@ -52,3 +52,5 @@ end
 
 --------------------------------------------------------------------------------
 clink.register_match_generator(env_vars_match_generator, 10)
+
+-- vim: expandtab

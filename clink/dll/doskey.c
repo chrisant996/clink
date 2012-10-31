@@ -203,3 +203,5 @@ void emulate_doskey(wchar_t* buffer, unsigned max_chars)
     buffer[max_chars - 1] = '\0';
     free(alias);
 }
+
+// vim: expandtab

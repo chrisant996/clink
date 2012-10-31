@@ -415,3 +415,5 @@ int inject(int argc, char** argv)
 
     return i;
 }
+
+// vim: expandtab

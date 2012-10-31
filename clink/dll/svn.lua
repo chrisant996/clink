@@ -33,3 +33,5 @@ local svn_tree = {
 }
 
 clink.arg.register_tree("svn", svn_tree)
+
+-- vim: expandtab

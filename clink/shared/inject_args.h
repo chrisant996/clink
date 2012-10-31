@@ -38,3 +38,5 @@ extern inject_args_t g_inject_args;
 void get_inject_arg_file(unsigned pid, char* buffer, int buffer_size);
 
 #endif // INJECT_ARG
+
+// vim: expandtab

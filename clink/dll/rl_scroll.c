@@ -145,3 +145,5 @@ void initialise_rl_scroller()
     rl_bind_key_in_map('I', page_up, g_scroller_keymap);
     rl_bind_key_in_map('Q', page_down, g_scroller_keymap);
 }
+
+// vim: expandtab
