@@ -33,26 +33,52 @@ clink.prompt.filters = {}
 
 --------------------------------------------------------------------------------
 function clink.compute_lcd(text, list)
-    if #list < 2 then
+    local list_n = #list
+    if list_n < 2 then
         return
     end
 
-    local early_out = #text
-    local lcd = list[1]
-    for i = 2, #list, 1 do
-        for j = 1, #lcd, 1 do
-            if lcd:sub(1, j):lower() ~= list[i]:sub(1, j):lower() then
-                lcd = lcd:sub(1, j - 1)
+    -- Find min and max limits
+    local max = 100000
+    for i = 1, #list, 1 do
+        local j = #(list[i])
+        if max > j then
+            max = j
+        end
+    end
+
+    -- For each character in the search range...
+    local mid = #text
+    local lcd = ""
+    for i = 1, max, 1 do
+        local same = true
+        local m = list[1]:sub(i, i):lower()
+
+        -- Compare character at the index with each other character in the
+        -- other matches.
+        for j = 2, list_n, 1 do
+            local n = list[j]:sub(i, i):lower()
+            if m ~= n then
+                same = false
                 break
             end
         end
 
-        if #lcd <= early_out then
-            break
+        -- If all characters match then use first match's character.
+        if same then
+            lcd = lcd..m 
+        else
+            -- Otherwise use what the user's typed or if we're past that then
+            -- bail out.
+            if i <= mid then
+                lcd = lcd..text:sub(i, i)
+            else
+                break
+            end
         end
     end
 
-    return text..lcd:sub(early_out + 1)
+    return lcd
 end
 
 --------------------------------------------------------------------------------
