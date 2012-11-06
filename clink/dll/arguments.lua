@@ -59,11 +59,17 @@ local function traverse(generator, parts, text, first, last)
         return false
     end
 
+    local full_match = false
     local matches = {}
     for key, value in pairs(generator) do
         -- Strings are also leafs.
-        if value == part and not repeat_leaf then
-            return false
+        if type(value) == "string" then
+            if clink.is_match(value, part) and #value == #part then
+                full_match = true
+                if not repeat_leaf then
+                    return false
+                end
+            end
         end
 
         -- So we're in a node but don't have enough info yet to traverse
@@ -82,10 +88,10 @@ local function traverse(generator, parts, text, first, last)
             end
         end
     end
-    
+
     -- Only one match, we're not at the end, and we should repeat. Down we go...
     local last_part = (parts.n - 1 == #parts)
-    if #matches == 1 and repeat_leaf and not last_part then
+    if full_match and repeat_leaf and not last_part then
         return traverse(generator, parts, text, first, last)
     end
     
