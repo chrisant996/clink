@@ -52,11 +52,9 @@ function dir_match_generator(text, first, last)
 
     -- Find matches.
     for _, dir in ipairs(clink.find_dirs(mask)) do
-        if not dir:find("^%.+$") then
-            local file = prefix..dir
-            if clink.is_match(text, file) then
-                clink.add_match(prefix..dir)
-            end
+        local file = prefix..dir
+        if clink.is_match(text, file) then
+            clink.add_match(prefix..dir)
         end
     end
 
