@@ -23,6 +23,13 @@
 #include "util.h"
 
 //------------------------------------------------------------------------------
+void str_cpy(char* dest, const char* src, int n)
+{
+    dest[0] = '\0';
+    str_cat(dest, src, n);
+}
+
+//------------------------------------------------------------------------------
 void str_cat(char* dest, const char* src, int n)
 {
     int m = n - (int)strlen(dest) - 1;

@@ -25,11 +25,11 @@
 
 //------------------------------------------------------------------------------
 static int              reload_lua_state(int count, int invoking_key);
+const char*             get_clink_setting_str(const char*);
 
-extern char*            rl_variable_value(const char*);
-extern int              g_match_palette[3];
 extern int              _rl_completion_case_map;
 extern int              g_slash_translation;
+extern char*            rl_variable_value(const char*);
 static lua_State*       g_lua                        = NULL;
 
 //------------------------------------------------------------------------------
@@ -255,22 +255,25 @@ static int get_env_var_names(lua_State* state)
 }
 
 //------------------------------------------------------------------------------
-static int set_palette(lua_State* state)
+static int get_clink_setting(lua_State* state)
 {
-    int col, i;
+    const char* c;
 
-    for (i = 0; i < lua_gettop(state) && i < sizeof_array(g_match_palette); ++i)
+    if (lua_gettop(state) == 0)
     {
-        col = -1;
-        if (lua_isnil(state, i + 1) == 0)
-        {
-            col = lua_tointeger(state, i + 1);
-        }
-
-        g_match_palette[i] = col;
+        return 0;
     }
 
-    return 0;
+    if (lua_isnil(state, 1) || !lua_isstring(state, 1))
+    {
+        return 0;
+    }
+
+    c = lua_tostring(state, 1);
+    c = get_clink_setting_str(c);
+    lua_pushstring(state, c);
+
+    return 1;
 }
 
 //------------------------------------------------------------------------------
@@ -395,7 +398,6 @@ void initialise_lua()
         { "find_files", find_files },
         { "find_dirs", find_dirs },
         { "get_env_var_names", get_env_var_names },
-        { "set_palette", set_palette },
         { "get_env", get_env },
         { "lower", to_lowercase },
         { "matches_are_files", matches_are_files },

@@ -39,8 +39,9 @@ void                    shutdown_lua();
 void                    clear_to_eol();
 void                    emulate_doskey(wchar_t*, unsigned);
 int                     call_readline(const wchar_t*, wchar_t*, unsigned);
+void                    shutdown_clink_settings();
+int                     get_clink_setting_int(const char*);
 
-extern int              clink_opt_ctrl_d_exit;
 static int              g_write_cache_index     = 0;
 static const int        g_write_cache_size      = 0xffff;      // 0x10000 - 1 !!
 static write_cache_t    g_write_cache[2]        = { {NULL, 0},
@@ -188,7 +189,7 @@ BOOL WINAPI hooked_read_console(
 
     // Call readline.
     is_eof = call_readline(write_cache->buffer, buffer, buffer_size);
-    if (is_eof && clink_opt_ctrl_d_exit)
+    if (is_eof && get_clink_setting_int("ctrld_exits"))
     {
         wcsncpy(buffer, L"exit", buffer_size);
     }
@@ -429,6 +430,7 @@ BOOL WINAPI DllMain(HINSTANCE instance, DWORD reason, LPVOID unused)
         {
             save_history();
             shutdown_lua();
+            shutdown_clink_settings();
         }
 
         return TRUE;

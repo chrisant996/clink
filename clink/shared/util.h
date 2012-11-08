@@ -23,6 +23,7 @@
 #define UTIL_H
 
 void str_cat(char* dest, const char* src, int n);
+void str_cpy(char* dest, const char* src, int n);
 void get_config_dir(char* buffer, int size);
 void get_dll_dir(char* buffer, int size);
 void log_line(const char* function, int source_line, const char* format, ...);

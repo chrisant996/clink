@@ -29,12 +29,10 @@ void                lua_filter_prompt(char*, int);
 void                initialise_rl_scroller();
 void                enter_scroll_mode(int);
 void                move_cursor(int, int);
+void                initialise_clink_settings();
+int                 get_clink_setting_int(const char*);
 
-int                 g_match_palette[3]              = { -1, -1, -1 };
 int                 g_slash_translation             = 0;
-int                 clink_opt_passthrough_ctrl_c    = 1;
-int                 clink_opt_ctrl_d_exit           = 1;
-int                 clink_opt_esc_clears_line       = 1; 
 extern int          rl_visible_stats;
 extern char*        _rl_term_forward_char;
 extern char*        _rl_term_clreol;
@@ -74,7 +72,8 @@ static int getc_impl(FILE* stream)
         // Treat esc like cmd.exe does - clear the line.
         if (i == 0x1b)
         {
-            if (rl_editing_mode == emacs_mode && clink_opt_esc_clears_line)
+            if (rl_editing_mode == emacs_mode &&
+                get_clink_setting_int("esc_clears_line"))
             {
                 using_history();
                 rl_delete_text(0, rl_end);
@@ -319,6 +318,7 @@ static void display_matches(char** matches, int match_count, int max_length)
     HANDLE std_out_handle;
     wchar_t buffer[512];
     int show_matches = 2;
+    int match_colour;
 
     // The matches need to be processed so needless path information is removed
     // (this is caused by the \ and / hurdles).
@@ -373,7 +373,8 @@ static void display_matches(char** matches, int match_count, int max_length)
     GetConsoleScreenBufferInfo(std_out_handle, &csbi);
 
     // Get the console's current colour settings
-    if (g_match_palette[0] == -1)
+    match_colour = get_clink_setting_int("match_colour");
+    if (match_colour == -1)
     {
         // Pick a suitable foreground colour, check fg isn't the same as bg, and set.
         text_attrib = csbi.wAttributes;
@@ -387,7 +388,7 @@ static void display_matches(char** matches, int match_count, int max_length)
     else
     {
         text_attrib = csbi.wAttributes & 0xf0;
-        text_attrib |= (g_match_palette[0] & 0x0f);
+        text_attrib |= (match_colour & 0x0f);
     }
 
     SetConsoleTextAttribute(std_out_handle, text_attrib);
@@ -510,7 +511,7 @@ static void clear_line()
 //------------------------------------------------------------------------------
 static int ctrl_c(int count, int invoking_key)
 {
-    if (clink_opt_passthrough_ctrl_c)
+    if (get_clink_setting_int("passthrough_ctrlc"))
     {
         rl_line_buffer[0] = '\x03';
         rl_line_buffer[1] = '\x00';
@@ -604,6 +605,7 @@ static int initialise_hook()
     rl_add_funmap_entry("paste-from-clipboard", paste_from_clipboard);
     rl_add_funmap_entry("page-up", page_up);
 
+    initialise_clink_settings();
     initialise_lua();
     initialise_rl_scroller();
     load_history();
