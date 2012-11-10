@@ -435,6 +435,17 @@ Care should be taken when using this to generate masks for file/dir find
 operations due to the -/_ giving different results (unless of course Readline's
 extended case-mapping is disabled).
 
+==== clink.quote_split(str, ql, qr)
+
+[role="indented"]
+This function takes the string 'str' which is quoted by 'ql' (the opening quote
+character) and 'qr' (the closing character) and splits it into parts as per the
+quotes. A table of these parts is returned.
+
+----
+clink.quote_split("pre(middle)post", "(", ")") = { "pre", "middle", "post" }
+----
+
 ==== clink.slash_translation(type)
 
 [role="indented"]

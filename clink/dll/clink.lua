@@ -174,6 +174,46 @@ function clink.split(str, sep)
 end
 
 --------------------------------------------------------------------------------
+function clink.quote_split(str, ql, qr)
+    if not qr then
+        qr = ql
+    end
+
+    -- First parse in "pre[ql]quote_string[qr]" chunks
+    local insert = table.insert
+    local i = 1
+    local needle = "%b"..ql..qr
+    local parts = {}
+    for l, r, quote in function() return str:find(needle, i) end do
+        -- "pre"
+        if l > 1 then
+            insert(parts, str:sub(i, l - 1))
+        end
+
+        -- "quote_string"
+        insert(parts, str:sub(l + 1, r - 1))
+        i = r + 1
+    end
+
+    -- Second parse what remains as "pre[ql]being_quoted"
+    local l = str:find(ql, i, true)
+    if l then
+        -- "pre"
+        if l > 1 then
+            insert(parts, str:sub(i, l - 1))
+        end
+
+        -- "being_quoted"
+        insert(parts, str:sub(l + 1))
+    elseif i < #str then
+        -- Finally add whatever remains...
+        insert(parts, str:sub(i))
+    end
+
+    return parts
+end
+
+--------------------------------------------------------------------------------
 function clink.arg.register_tree(cmd, generator)
     clink.arg.generators[cmd:lower()] = generator
 end
