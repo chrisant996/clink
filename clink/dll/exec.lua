@@ -31,19 +31,6 @@ local dos_commands = {
 }
 
 --------------------------------------------------------------------------------
-local function split_on_semicolon(str)
-    local i = 0
-    local ret = {}
-    for _, j in function() return str:find(";", i, true) end do
-        table.insert(ret, str:sub(i, j - 1))
-        i = j + 1
-    end
-    table.insert(ret, str:sub(i, j))
-
-    return ret
-end
-
---------------------------------------------------------------------------------
 local function dos_cmd_match_generator(text, first, last)
     for _, cmd in ipairs(dos_commands) do
         if clink.is_match(text, cmd) then
@@ -59,7 +46,7 @@ local function build_passes(text)
     -- If there's no path separator in text then consider the environment's path
     -- as a first pass for matches.
     if not text:find("[\\/:]") then
-        local paths = split_on_semicolon(clink.get_env("PATH"))
+        local paths = clink.split(clink.get_env("PATH"), ";")
 
         -- We're expecting absolute paths and as ';' is a valid path character
         -- there maybe unneccessary splits. Here we resolve them.
@@ -125,7 +112,7 @@ local function exec_match_generator(text, first, last)
     -- passes, the second pass possibly being "local" if the system-wide search
     -- didn't find any results.
     local n = #passes
-    local exts = split_on_semicolon(clink.get_env("PATHEXT"))
+    local exts = clink.split(clink.get_env("PATHEXT"), ";")
     for p = 1, n do
         local pass = passes[p]
         for _, ext in ipairs(exts) do

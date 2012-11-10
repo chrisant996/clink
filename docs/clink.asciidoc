@@ -446,6 +446,12 @@ path being completed. Values for 'type' are;
 - 0 - to backslashes
 - 1 - to forward slashes.
 
+==== clink.split(str, sep)
+
+[role="indented"]
+Splits the string 'str' into pieces separated by 'sep', returning a table of the
+pieces.
+
 ==== clink.suppress_char_append()
 
 [role="indented"]
