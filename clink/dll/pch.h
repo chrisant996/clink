@@ -32,6 +32,7 @@
 #endif
 
 #include <Windows.h>
+#include <Shlobj.h>
 #ifndef __MINGW32__
 #   include <DbgHelp.h>
 #else
@@ -46,9 +47,17 @@
 #endif
 
 #ifdef CLINK_USE_LUA
+#   include "dirent.h"
 #   include "lua.h"
 #   include "lauxlib.h"
 #   include "lualib.h"
+#endif
+
+// Defined by tests to automate input.
+#ifndef GETWCH_IMPL
+#   define GETWCH_IMPL _getwch
+#else
+    int GETWCH_IMPL();
 #endif
 
 #endif // PCH_H

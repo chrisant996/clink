@@ -27,8 +27,10 @@
 
 #include "hooks.h"
 
-//------------------------------------------------------------------------------
 #define sizeof_array(x) (sizeof(x) / sizeof(x[0]))
+
+//------------------------------------------------------------------------------
+void (*g_alt_fwrite_hook)(wchar_t*) = NULL;
 
 //------------------------------------------------------------------------------
 int hooked_fwrite(const void* data, int size, int count, void* unused)
@@ -48,13 +50,20 @@ int hooked_fwrite(const void* data, int size, int count, void* unused)
     characters = characters ? characters : sizeof_array(buf) - 1;
     buf[characters] = L'\0';
 
-    WriteConsoleW(
-        GetStdHandle(STD_OUTPUT_HANDLE),
-        buf,
-        (DWORD)wcslen(buf),
-        &written,
-        NULL
-    );
+    if (g_alt_fwrite_hook)
+    {
+        g_alt_fwrite_hook(buf);
+    }
+    else
+    {
+        WriteConsoleW(
+            GetStdHandle(STD_OUTPUT_HANDLE),
+            buf,
+            (DWORD)wcslen(buf),
+            &written,
+            NULL
+        );
+    }
 
     return size;
 }

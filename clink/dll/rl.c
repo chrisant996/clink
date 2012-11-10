@@ -63,7 +63,7 @@ static int getc_impl(FILE* stream)
         wchar_t wc[2];
         char utf8[4];
 
-        i = _getwch();
+        i = GETWCH_IMPL();
         if (i == 0)
         {
             i = 0xe0;
@@ -309,22 +309,15 @@ static void update_screen_size()
 }
 
 //------------------------------------------------------------------------------
-static void display_matches(char** matches, int match_count, int max_length)
+char** process_display_matches(char** matches, int match_count)
 {
     int i;
     char** new_matches;
-    CONSOLE_SCREEN_BUFFER_INFO csbi;
-    WORD text_attrib;
-    HANDLE std_out_handle;
-    wchar_t buffer[512];
-    int show_matches = 2;
-    int match_colour;
 
     // The matches need to be processed so needless path information is removed
     // (this is caused by the \ and / hurdles).
-    max_length = 0;
     ++match_count;
-    new_matches = (char**)calloc(1, match_count * sizeof(char**));
+    new_matches = (char**)calloc(1, match_count * sizeof(char*));
     for (i = 0; i < match_count; ++i)
     {
         int is_dir = 0;
@@ -364,10 +357,32 @@ static void display_matches(char** matches, int match_count, int max_length)
         {
             strcpy(new_matches[i], base);
         }
-
-        max_length = len > max_length ? len : max_length;
     }
-    --match_count;
+
+    return new_matches;
+}
+
+//------------------------------------------------------------------------------
+static void display_matches(char** matches, int match_count, int longest)
+{
+    int i;
+    char** new_matches;
+    CONSOLE_SCREEN_BUFFER_INFO csbi;
+    WORD text_attrib;
+    HANDLE std_out_handle;
+    wchar_t buffer[512];
+    int show_matches = 2;
+    int match_colour;
+
+    // Process matches and recalculate the longest match length.
+    new_matches = process_display_matches(matches, match_count);
+
+    longest = 0;
+    for (i = 0; i < (match_count + 1); ++i)
+    {
+        int len = (int)strlen(new_matches[i]);
+        longest = (len > longest) ? len : longest;
+    }
 
     std_out_handle = GetStdHandle(STD_OUTPUT_HANDLE);
     GetConsoleScreenBufferInfo(std_out_handle, &csbi);
@@ -437,7 +452,7 @@ static void display_matches(char** matches, int match_count, int max_length)
         int j = _rl_complete_mark_directories;
         _rl_complete_mark_directories = 0;
 
-        rl_display_match_list(new_matches, match_count, max_length);
+        rl_display_match_list(new_matches, match_count, longest);
 
         _rl_complete_mark_directories = j;
     }
@@ -594,8 +609,11 @@ static int initialise_hook()
     rl_ignore_some_completions_function = postprocess_matches;
     rl_basic_word_break_characters = " <>|%=;";
     rl_completer_word_break_characters = (char*)rl_basic_word_break_characters;
-    rl_completion_display_matches_hook = display_matches;
     rl_attempted_completion_function = alternative_matches;
+    if (rl_completion_display_matches_hook == NULL)
+    {
+        rl_completion_display_matches_hook = display_matches;
+    }
 
     rl_basic_quote_characters = "\"";
     rl_filename_quote_characters = " %=;&^";

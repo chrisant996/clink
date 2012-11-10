@@ -26,7 +26,12 @@
 //------------------------------------------------------------------------------
 static int              reload_lua_state(int count, int invoking_key);
 const char*             get_clink_setting_str(const char*);
+int                     rl_add_funmap_entry(const char*, int (*)(int, int));
 
+extern int              rl_filename_completion_desired;
+extern int              rl_completion_suppress_append;
+extern char*            rl_line_buffer;
+extern int              rl_point;
 extern int              _rl_completion_case_map;
 extern int              g_slash_translation;
 extern char*            rl_variable_value(const char*);
@@ -93,7 +98,7 @@ static int to_lowercase(lua_State* state)
     }
     
     string = lua_tostring(state, 1);
-    length = strlen(string);
+    length = (int)strlen(string);
 
     lowered = (char*)malloc(length + 1);
     if (_rl_completion_case_map)
@@ -292,7 +297,7 @@ static int slash_translation(lua_State* state)
     }
     else
     {
-        g_slash_translation = lua_tointeger(state, 1);
+        g_slash_translation = (int)lua_tointeger(state, 1);
     }
 
     return 0;
@@ -389,7 +394,7 @@ static int change_dir(lua_State* state)
 }
 
 //------------------------------------------------------------------------------
-void initialise_lua()
+lua_State* initialise_lua()
 {
     static int once = 0;
     int i;
@@ -412,7 +417,7 @@ void initialise_lua()
 
     if (g_lua != NULL)
     {
-        return;
+        return g_lua;
     }
 
     // Initialise Lua.
@@ -454,6 +459,8 @@ void initialise_lua()
         rl_add_funmap_entry("reload-lua-state", reload_lua_state);
         once = 1;
     }
+
+    return g_lua;
 }
 
 //------------------------------------------------------------------------------
@@ -511,7 +518,7 @@ char** lua_generate_matches(const char* text, int start, int end)
     lua_pushliteral(g_lua, "matches");
     lua_rawget(g_lua, -2);
 
-    match_count = lua_rawlen(g_lua, -1);
+    match_count = (int)lua_rawlen(g_lua, -1);
     matches = (char**)calloc(match_count + 1, sizeof(*matches));
     for (i = 0; i < match_count; ++i)
     {

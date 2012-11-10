@@ -50,7 +50,7 @@ static write_cache_t    g_write_cache[2]        = { {NULL, 0},
 //------------------------------------------------------------------------------
 static LONG WINAPI exception_filter(EXCEPTION_POINTERS* info)
 {
-#if defined(_MSC_VER)
+#if defined(_MSC_VER) && defined(CLINK_USE_SEH)
     MINIDUMP_EXCEPTION_INFORMATION mdei = { GetCurrentThreadId(), info, FALSE };
     DWORD pid;
     HANDLE process;
@@ -278,7 +278,7 @@ BOOL WINAPI hooked_write_console(
 }
 
 //------------------------------------------------------------------------------
-static void prepare_env_for_inputrc(HINSTANCE instance)
+void prepare_env_for_inputrc()
 {
     // Give readline a chance to find the inputrc by modifying the
     // environment slightly.
