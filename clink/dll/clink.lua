@@ -52,7 +52,8 @@ function clink.compute_lcd(text, list)
     local lcd = ""
     for i = 1, max, 1 do
         local same = true
-        local m = list[1]:sub(i, i):lower()
+        local l = list[1]:sub(i, i)
+        local m = l:lower()
 
         -- Compare character at the index with each other character in the
         -- other matches.
@@ -66,7 +67,7 @@ function clink.compute_lcd(text, list)
 
         -- If all characters match then use first match's character.
         if same then
-            lcd = lcd..m 
+            lcd = lcd..l 
         else
             -- Otherwise use what the user's typed or if we're past that then
             -- bail out.
