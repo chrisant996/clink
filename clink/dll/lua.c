@@ -26,6 +26,7 @@
 //------------------------------------------------------------------------------
 static int              reload_lua_state(int count, int invoking_key);
 const char*             get_clink_setting_str(const char*);
+int                     get_clink_setting_int(const char*);
 int                     rl_add_funmap_entry(const char*, int (*)(int, int));
 
 extern int              rl_filename_completion_desired;
@@ -260,7 +261,7 @@ static int get_env_var_names(lua_State* state)
 }
 
 //------------------------------------------------------------------------------
-static int get_clink_setting(lua_State* state)
+static int get_clink_setting_str(lua_State* state)
 {
     const char* c;
 
@@ -277,6 +278,29 @@ static int get_clink_setting(lua_State* state)
     c = lua_tostring(state, 1);
     c = get_clink_setting_str(c);
     lua_pushstring(state, c);
+
+    return 1;
+}
+
+//------------------------------------------------------------------------------
+static int get_clink_setting_int(lua_State* state)
+{
+    int i;
+    const char* c;
+
+    if (lua_gettop(state) == 0)
+    {
+        return 0;
+    }
+
+    if (lua_isnil(state, 1) || !lua_isstring(state, 1))
+    {
+        return 0;
+    }
+
+    c = lua_tostring(state, 1);
+    i = get_clink_setting_int(c);
+    lua_pushinteger(state, i);
 
     return 1;
 }
@@ -407,6 +431,8 @@ lua_State* initialise_lua()
         { "lower", to_lowercase },
         { "matches_are_files", matches_are_files },
         { "suppress_char_append", suppress_char_append },
+        { "get_setting_str", get_setting_str },
+        { "get_setting_int", get_setting_int },
         { "slash_translation", slash_translation },
         { "is_dir", is_dir },
         { "get_rl_variable", get_rl_variable },
