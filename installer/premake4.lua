@@ -115,7 +115,7 @@ newaction {
         -- Copy release files to a directory.
         local manifest = {
             "clink.bat",
-            "clink*.exe",
+            "clink_x*.exe",
             "clink*.dll",
             "*.lua",
             "clink_inputrc",
