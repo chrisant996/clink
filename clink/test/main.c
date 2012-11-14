@@ -31,7 +31,7 @@ char**              process_display_matches(char**, int);
 extern void         (*g_alt_fwrite_hook)(wchar_t*);
 
 static const char*  g_getc_automatic    = NULL;
-static const char*  g_caught_matches    = NULL;
+static char*        g_caught_matches    = NULL;
 
 //------------------------------------------------------------------------------
 int getwch_automatic()
