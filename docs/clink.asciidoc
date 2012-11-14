@@ -68,6 +68,22 @@ This user directory is usually found in one of the following locations;
 * c:\documents and settings\<username>\local settings\application data (XP)
 * c:\users\<username>\appdata\local (Vista onwards)
 
+=== Settings
+
+It is also possible to configure settings specific to Clink. These are stored
+in a file called 'settings' which is found in the non-roaming profile folder
+mentioned in the previous section. The settings file gets created the first
+time Clink is run.
+
+The following table describes the available settings;
+
+|===
+|ctrld_exits       |Ctrl-D exits the process when it is pressed on an empty line.
+|passthrough_ctrlc |When Ctrl-C is pressed Clink will pass it thourgh to the parent.
+|esc_clears_line   |Clink clears the current line when Esc is pressed (unless Readline's Vi mode is enabled).
+|match_colour      |Colour to use when displaying matches. A value less than 0 will be the opposite brightness of the default colour.
+|===
+
 == Extending Clink
 
 The Readline library allows clients to offer an alternative path for creating
@@ -411,6 +427,34 @@ results.
 [role="indented"]
 Returns a table of the names of the current process' environment variables.
 
+==== clink.get_screen_info()
+
+[role="indented"]
+Returns a table describing the current console buffer's state with the following
+contents;
+
+----
+{
+    -- Dimensions of the console's buffer.
+    buffer_width
+    buffer_height
+
+    -- Dimensions of the visible area of the console buffer.
+    window_width
+    window_height
+}
+----
+
+==== clink.get_setting_str(name)
+
+[role="indented"] Retrieves the Clink setting 'name', returning it as a string.
+See <<_settings,Settings>> for more information on the available settings.
+
+==== clink.get_setting_int(name)
+
+[role="indented"]
+As 'clink.get_setting_str' but returning a number instead.
+
 ==== clink.is_dir(path)
 
 [role="indented"]
@@ -443,7 +487,9 @@ character) and 'qr' (the closing character) and splits it into parts as per the
 quotes. A table of these parts is returned.
 
 ----
-clink.quote_split("pre(middle)post", "(", ")") = { "pre", "middle", "post" }
+clink.quote_split("pre(middle)post", "(", ")") = {
+    "pre", "middle", "post"
+}
 ----
 
 ==== clink.slash_translation(type)
