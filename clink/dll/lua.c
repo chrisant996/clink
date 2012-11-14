@@ -418,6 +418,45 @@ static int change_dir(lua_State* state)
 }
 
 //------------------------------------------------------------------------------
+static int get_screen_info(lua_State* state)
+{
+    int i;
+    int buffer_width, buffer_height;
+    int window_width, window_height;
+    CONSOLE_SCREEN_BUFFER_INFO csbi;
+
+    struct table_t {
+        const char* name;
+        int         value;
+    };
+
+    GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &csbi);
+    buffer_width = csbi.dwSize.X;
+    buffer_height = csbi.dwSize.Y;
+    window_width = csbi.srWindow.Right - csbi.srWindow.Left;
+    window_height = csbi.srWindow.Bottom - csbi.srWindow.Top;
+
+    lua_createtable(state, 0, 4);
+    {
+        struct table_t table[] = {
+            { "buffer_width", buffer_width },
+            { "buffer_height", buffer_height },
+            { "window_width", window_width },
+            { "window_height", window_height },
+        };
+
+        for (i = 0; i < sizeof_array(table); ++i)
+        {
+            lua_pushstring(state, table[i].name);
+            lua_pushinteger(state, table[i].value);
+            lua_rawset(state, -3);
+        }
+    }
+
+    return 1;
+}
+
+//------------------------------------------------------------------------------
 lua_State* initialise_lua()
 {
     static int once = 0;
@@ -427,6 +466,7 @@ lua_State* initialise_lua()
         { "find_files", find_files },
         { "find_dirs", find_dirs },
         { "get_env_var_names", get_env_var_names },
+        { "get_screen_info", get_screen_info },
         { "get_env", get_env },
         { "lower", to_lowercase },
         { "matches_are_files", matches_are_files },
