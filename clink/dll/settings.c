@@ -55,7 +55,7 @@ static const setting_decl_t g_clink_settings_decl[] = {
         "match_colour",
         "Match display colour",
         "Colour to use when displaying matches. A value less than 0 will be "
-        "the opposite of the default colour.",
+        "the opposite brightness of the default colour.",
         SETTING_TYPE_INT,
         0, "-1"
     },
