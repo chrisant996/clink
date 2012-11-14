@@ -261,7 +261,7 @@ static int get_env_var_names(lua_State* state)
 }
 
 //------------------------------------------------------------------------------
-static int get_clink_setting_str(lua_State* state)
+static int get_setting_str(lua_State* state)
 {
     const char* c;
 
@@ -283,7 +283,7 @@ static int get_clink_setting_str(lua_State* state)
 }
 
 //------------------------------------------------------------------------------
-static int get_clink_setting_int(lua_State* state)
+static int get_setting_int(lua_State* state)
 {
     int i;
     const char* c;
