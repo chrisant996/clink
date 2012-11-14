@@ -84,4 +84,29 @@ clink.test.test_output(
     ".\\one_dir\\two_dir_local.exe "
 )
 
+--------------------------------------------------------------------------------
+local exec_match_style = 0
+local old_getter = clink.get_setting_int
+function clink.get_setting_int(name)
+    if name == "exec_match_style" then
+        return exec_match_style
+    end
+
+    return old_getter(name)
+end
+
+exec_match_style = 1
+clink.test.test_matches(
+    "Style - cwd (no dirs)",
+    "one_",
+    { "one_local.exe", "one_path.exe", "one_path.py" }
+)
+
+exec_match_style = 2
+clink.test.test_matches(
+    "Style - cwd (all)",
+    "one-",
+    { "one_local.exe", "one_path.exe", "one_path.py", "one_dir" }
+)
+
 -- vim: expandtab
