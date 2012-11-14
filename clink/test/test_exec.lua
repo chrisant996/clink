@@ -84,6 +84,24 @@ clink.test.test_output(
     ".\\one_dir\\two_dir_local.exe "
 )
 
+clink.test.test_output(
+    "Separator |",
+    "nullcmd | one_p",
+    "nullcmd | one_path.exe "
+)
+
+clink.test.test_matches(
+    "Separator &",
+    "nullcmd & one_",
+    { "one_path.exe", "one_two.py" }
+)
+
+clink.test.test_output(
+    "Separator &&",
+    "nullcmd && one_p",
+    "nullcmd && one_path.exe "
+)
+
 --------------------------------------------------------------------------------
 local exec_match_style = 0
 local old_getter = clink.get_setting_int
