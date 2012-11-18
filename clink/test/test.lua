@@ -257,6 +257,7 @@ function clink.test.run()
     run_test("test_quotes")
     run_test("test_set")
     run_test("test_exec")
+    run_test("test_env")
 
     ch_dir(scripts_path)
     rm_dir(test_fs_path)
