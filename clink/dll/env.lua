@@ -27,27 +27,62 @@ local special_env_vars = {
 }
 
 --------------------------------------------------------------------------------
+local function env_vars_display_filter(matches)
+    local to_display = {}
+    for _, m in ipairs(matches) do
+        local _, _, out = m:find("(%%[^%%]+%%)$")
+        table.insert(to_display, out)
+    end
+
+    return to_display
+end
+
+--------------------------------------------------------------------------------
+local function env_vars_find_matches(candidates, prefix, part)
+    local part_len = #part
+    for _, name in ipairs(candidates) do
+        if clink.lower(name:sub(1, part_len)) == part then
+            clink.add_match(prefix..'%'..name:lower()..'%')
+        end
+    end
+end
+
+--------------------------------------------------------------------------------
 local function env_vars_match_generator(text, first, last)
-    -- Use this match generator if out text starts with a % or "%
-    if not text:find("^%%") then
+    local all = rl_line_buffer:sub(1, last)
+
+    -- Skip pairs of %s
+    local i = 1
+    for _, r in function () return all:find("%b%%", i) end do
+        i = r + 2
+    end
+
+    -- Find a solitary %
+    local i = all:find("%%", i)
+    if not i then
         return false
     end
-    
-    text = clink.lower(text:sub(2))
-    local text_len = #text
-    for _, name in ipairs(clink.get_env_var_names()) do
-        if clink.lower(name:sub(1, text_len)) == text then
-            clink.add_match('%'..name..'%')
-        end
+
+    if i < first then
+        return false
     end
 
-    for _, name in ipairs(special_env_vars) do
-        if clink.lower(name:sub(1, text_len)) == text then
-            clink.add_match('%'..name..'%')
-        end
+    local part = clink.lower(all:sub(i + 1))
+    local part_len = #part
+
+    i = i - first
+    local prefix = text:sub(1, i)
+
+    env_vars_find_matches(clink.get_env_var_names(), prefix, part)
+    env_vars_find_matches(special_env_vars, prefix, part)
+
+    if clink.match_count() >= 1 then
+        clink.match_display_filter = env_vars_display_filter
+        clink.suppress_char_append()
+        return true
     end
 
-    return true
+    return false
 end
 
 --------------------------------------------------------------------------------
