@@ -26,6 +26,7 @@
 void                initialise_lua();
 char**              lua_generate_matches(const char*, int, int);
 void                lua_filter_prompt(char*, int);
+char**              lua_match_display_filter(char**, int);
 void                initialise_rl_scroller();
 void                enter_scroll_mode(int);
 void                move_cursor(int, int);
@@ -309,14 +310,23 @@ static void update_screen_size()
 }
 
 //------------------------------------------------------------------------------
-char** process_display_matches(char** matches, int match_count)
+char** match_display_filter(char** matches, int match_count)
 {
     int i;
     char** new_matches;
 
+    ++match_count;
+
+    // First, see if there's a Lua function registered to filter matches for
+    // display (this is set via clink.match_display_filter).
+    new_matches = lua_match_display_filter(matches, match_count);
+    if (new_matches != NULL)
+    {
+        return new_matches;
+    }
+
     // The matches need to be processed so needless path information is removed
     // (this is caused by the \ and / hurdles).
-    ++match_count;
     new_matches = (char**)calloc(1, match_count * sizeof(char*));
     for (i = 0; i < match_count; ++i)
     {
@@ -375,7 +385,7 @@ static void display_matches(char** matches, int match_count, int longest)
     int match_colour;
 
     // Process matches and recalculate the longest match length.
-    new_matches = process_display_matches(matches, match_count);
+    new_matches = match_display_filter(matches, match_count);
 
     longest = 0;
     for (i = 0; i < (match_count + 1); ++i)

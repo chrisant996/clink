@@ -27,7 +27,7 @@
 void                prepare_env_for_inputrc();
 lua_State*          initialise_lua();
 int                 call_readline(const wchar_t*, wchar_t*, unsigned);
-char**              process_display_matches(char**, int);
+char**              match_display_filter(char**, int);
 extern void         (*g_alt_fwrite_hook)(wchar_t*);
 
 static const char*  g_getc_automatic    = NULL;
@@ -61,7 +61,7 @@ static void match_catch(char** matches, int match_count, int longest)
     free(g_caught_matches);
     g_caught_matches = malloc((longest * 2) * match_count);
 
-    matches = process_display_matches(matches, match_count);
+    matches = match_display_filter(matches, match_count);
 
     write = g_caught_matches;
     for (i = 1; i <= match_count; ++i)

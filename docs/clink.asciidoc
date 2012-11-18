@@ -235,6 +235,43 @@ A *`-'* tells Clink that the user must have typed at least one character before
 this node can be considered for match generation. This is useful in situations
 where mixing arguments and Readline's file name match generation is desirable.
 
+=== Filtering The Match Display
+
+In some instances it may be preferable to display potential matches in an
+alternative form than the generated matches passed to and used internally by
+Readline. This happens for example with Readline's standard file name matches,
+where the matches are the whole word being completed but only the last part of
+the path is shown (e.g. the match 'foo/bar' is displayed as 'bar').
+
+To facilitate custom match generators that may wish to do this there is the
+'clink.match_display_filter' variable. This can be set to a function that will
+then be called before matches are to be displayed.
+
+----
+function my_display_filter(matches)
+    new_matches = {}
+
+    for _, m in ipairs(matches) do
+        local _, _, n = m:find("\\([^\\]+)$")
+        table.insert(new_matches, n)
+    end
+
+    return new_matches
+end
+
+function my_match_generator(text, first, last)
+    ...
+
+    clink.match_display_filter = my_display_filter
+    return true
+end
+----
+
+The function's single argument 'matches' is a table containing what Clink is
+going to display. The return value is a table with the input matches filtered
+as required by the match generator. The value of 'clink.match_display_filter'
+is reset every time match generation is invoked.
+
 === Customising The Prompt
 
 Before Clink displays the prompt it filters the prompt through Lua so that the
@@ -309,6 +346,13 @@ duplicates of each other.
 
 [role="indented"]
 Returns the number of matches output by calls to clink.add_match().
+
+==== clink.match_display_filter
+
+[role="indented"]
+This variable can be set to a function so that matches can be filtered before
+they are displayed. See <<_filtering_the_match_display,display filtering>>
+section for more info.
 
 ==== clink.matches_are_files()
 

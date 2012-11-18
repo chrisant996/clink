@@ -101,6 +101,8 @@ end
 --------------------------------------------------------------------------------
 function clink.generate_matches(text, first, last)
     clink.matches = {}
+    clink.match_display_filter = nil
+
     for _, generator in ipairs(clink.generators) do
         if generator.f(text, first, last) == true then
             if #clink.matches > 1 then
