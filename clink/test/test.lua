@@ -136,8 +136,8 @@ local function test_runner(name, input, expected_out, expected_matches)
 
         passed = passed and (#matches == #expected_matches)
         for _, i in ipairs(matches) do
+            local found = false
             for _, j in ipairs(expected_matches) do
-                local found = false
 
                 if i == j then
                     found = true
@@ -216,7 +216,7 @@ function clink.test.run()
     local t = {}
     for k, v in pairs(test_fs) do
         if type(k) ~= "number" then
-            v = k
+            v = k.."\\"
         end
 
         table.insert(t, v)
