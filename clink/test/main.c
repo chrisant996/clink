@@ -88,7 +88,6 @@ static int call_readline_lua(lua_State* lua)
     char utf8[sizeof_array(output)];
     char* read;
     int i;
-	FILE* stdout_off = NULL;
 
     // Check we've got at least one string argument.
     if (lua_gettop(lua) == 0 || !lua_isstring(lua, 1))
@@ -295,9 +294,11 @@ int main(int argc, char** argv)
     lua_pushstring(lua, specific_test);
     lua_setglobal(lua, "specific_test");
 
-    str_cpy(buffer, scripts_path, sizeof_array(buffer));
-    str_cat(buffer, "/test.lua", sizeof_array(buffer));
-    luaL_dofile(lua, buffer);
+    if (luaL_dofile(lua, "test.lua"))
+    {
+        puts(lua_tostring(lua, -1));
+        return 0;
+    }
 
     // Run the test, collecting the results.
     lua_getglobal(lua, "clink");
