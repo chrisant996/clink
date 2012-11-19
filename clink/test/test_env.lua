@@ -55,8 +55,9 @@ clink.test.test_matches(
 )
 
 clink.test.test_matches(
-    "File matches after %var%",
-    "nullcmd %simple%\t="
+    "Mid-word",
+    "nullcmd One%Two%Three%dash",
+    { "%dash-1%", "%dash_2%" }
 )
 
 clink.test.test_output(

@@ -32,6 +32,9 @@ clink.test.test_fs({
         "two_dir_local.exe",
         "two_dir_local.txt"
     },
+    foodir = {
+        "two_dir_local.exe",
+    },
     "one_local.exe",
     "two_local.exe",
     "one_local.txt"
@@ -75,11 +78,17 @@ clink.test.test_matches(
 clink.test.test_matches(
     "Relative path",
     ".\\",
-    { "one_local.exe", "two_local.exe", "one_dir\\" }
+    { "one_local.exe", "two_local.exe", "one_dir\\", "foodir\\" }
 )
 
 clink.test.test_output(
     "Relative path dir",
+    ".\\foodir\\",
+    ".\\foodir\\two_dir_local.exe "
+)
+
+clink.test.test_output(
+    "Relative path dir (with '_')",
     ".\\one_dir\\",
     ".\\one_dir\\two_dir_local.exe "
 )
