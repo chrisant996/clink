@@ -187,12 +187,28 @@ int settings_load(settings_t* s, const char* file)
     line = strtok(data, "\n\r");
     while (line != NULL && *line)
     {
-        char* c = strchr(line, ' ');
+        char* c;
+            
+        c = strchr(line, '=');
         if (c != NULL)
         {
+            char* d;
             const setting_decl_t* decl;
 
             *c++ = '\0';
+
+            // Trim whitespace.
+            d = c - 2;
+            while (d >= line && isspace(*d))
+            {
+                --d;
+            }
+            *(d + 1) = '\0';
+
+            while (*c && isspace(*c))
+            {
+                ++c;
+            }            
 
             decl = get_decl(s, line);
             if (decl != NULL)
@@ -227,7 +243,7 @@ int settings_save(settings_t* s, const char* file)
         const setting_decl_t* decl;
 
         decl = s->decls + i;
-        fprintf(out, "%s %s\n", decl->name, s->values[i]);
+        fprintf(out, "%s=%s\n", decl->name, s->values[i]);
     }
 
     fclose(out);
