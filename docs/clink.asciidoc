@@ -82,6 +82,7 @@ The following table describes the available settings;
 |passthrough_ctrlc |When Ctrl-C is pressed Clink will pass it thourgh to the parent.
 |esc_clears_line   |Clink clears the current line when Esc is pressed (unless Readline's Vi mode is enabled).
 |match_colour      |Colour to use when displaying matches. A value less than 0 will be the opposite brightness of the default colour.
+|exec_match_style  |Changes how Clink will match executables when there is no path separator on the line. 0 = PATH only, 1 = PATH and CWD, 2 = PATH, CWD, and directories. In all cases both executables and directories are matched when there is a path separator present.
 |===
 
 == Extending Clink

@@ -126,14 +126,14 @@ exec_match_style = 1
 clink.test.test_matches(
     "Style - cwd (no dirs)",
     "one_",
-    { "one_local.exe", "one_path.exe", "one_path.py" }
+    { "one_local.exe", "one_path.exe", "one_two.py" }
 )
 
 exec_match_style = 2
 clink.test.test_matches(
     "Style - cwd (all)",
-    "one-",
-    { "one_local.exe", "one_path.exe", "one_path.py", "one_dir" }
+    "one-\t",
+    { "one_local.exe", "one_path.exe", "one_two.py", "one_dir\\" }
 )
 
 -- vim: expandtab

@@ -21,6 +21,7 @@
 --
 
 --------------------------------------------------------------------------------
+local match_style = 0
 local dos_commands = {
     "assoc", "break", "call", "cd", "chcp", "chdir", "cls", "color", "copy",
     "date", "del", "dir", "diskcomp", "diskcopy", "echo", "endlocal", "erase",
@@ -37,6 +38,12 @@ local function dos_cmd_match_generator(text, first, last)
             clink.add_match(cmd)
         end
     end
+end
+
+--------------------------------------------------------------------------------
+local function dos_and_dir_match_generators(text, first, last)
+    dos_cmd_match_generator(text, first, last)
+    dir_match_generator(text, first, last)
 end
 
 --------------------------------------------------------------------------------
@@ -65,7 +72,18 @@ local function build_passes(text)
             table.insert(paths, paths_merged[i].."\\")
         end
 
-        table.insert(passes, { paths=paths, func=dos_cmd_match_generator })
+        -- Depending on match style add empty path so 'text' is used.
+        if match_style > 0 then
+            table.insert(paths, "")
+        end
+
+        -- Should directories be considered too?
+        local extra_func = dos_cmd_match_generator
+        if match_style > 1 then
+            extra_func = dos_and_dir_match_generators
+        end
+
+        table.insert(passes, { paths=paths, func=extra_func })
     end
 
     -- The fallback solution is to use 'text' to find matches, and also add
@@ -100,6 +118,7 @@ local function exec_match_generator(text, first, last)
         prefix = text:sub(1, i)
     end
 
+    match_style = clink.get_setting_int("exec_match_style")
     local passes = build_passes(text)
 
     -- Combine extensions, text, and paths to find matches - this is done in two
