@@ -93,12 +93,6 @@ local function exec_match_generator(text, first, last)
         needle = needle:sub(1, ext_a - 1)
     end
 
-    -- Replace '_' or '-' with '*' for improved "case insentitive" searching.
-    if clink.is_rl_variable_true("completion-map-case") then
-        needle = needle:gsub("-", "?")
-        needle = needle:gsub("_", "?")
-    end
-
     -- Strip off any path components that may be on text
     local prefix = ""
     local i = text:find("[\\/:][^\\/:]*$")
@@ -118,7 +112,7 @@ local function exec_match_generator(text, first, last)
         for _, ext in ipairs(exts) do
             for _, path in ipairs(pass.paths) do
                 local mask = path..needle.."*"..ext
-                for _, file in ipairs(clink.find_files(mask)) do
+                for _, file in ipairs(clink.find_files(mask, true)) do
                     file = prefix..file
                     if clink.is_match(text, file) then
                         clink.add_match(file)

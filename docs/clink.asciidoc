@@ -446,17 +446,23 @@ Changes the current working directory to 'path'. Clink caches and restores the
 working directory between calls to the match generation so that it does not
 interfere with the processes normal operation.
 
-==== clink.find_dirs(mask)
+==== clink.find_dirs(mask, case_map)
 
 [role="indented"]
-Returns a table (array) of directories that match the supplied 'mask'. There is
-no support for recursively traversing the path in 'mask'.
+Returns a table (array) of directories that match the supplied 'mask'. If
+'case_map' is 'true' then Clink will adjust the last part of the mask's path so
+that returned matches respect Readline's case-mapping feature (if it is
+enabled). For example; '.\foo_foo\bar_bar*' becomes '.\foo_foo\bar?bar*'.
 
-==== clink.find_files(mask)
+There is no support for recursively traversing the path in 'mask'.
+
+==== clink.find_files(mask, case_map)
 
 [role="indented"]
-Returns a table (array) of files that match the supplied 'mask'. There is no
-support for recursively traversing the path in 'mask'.
+Returns a table (array) of files that match the supplied 'mask'. See
+'find_dirs' for details on the 'case_map' argument.
+
+There is no support for recursively traversing the path in 'mask'.
 
 ==== clink.get_env(env_var_name)
 

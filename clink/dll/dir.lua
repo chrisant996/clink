@@ -31,27 +31,8 @@ function dir_match_generator(text, first, last)
 
     local mask = text.."*"
 
-    -- If readline's -/_ mapping is on then adjust mask.
-    if clink.is_rl_variable_true("completion-map-case") then
-        local function mangle_mask(m)
-            return m:gsub("_", "?"):gsub("-", "?")
-        end
-
-        local sep = mask:reverse():find("\\", 2)
-        if sep ~= nil then
-            sep = #mask - sep + 1;
-
-            local mask_left = mask:sub(1, sep)
-            local mask_right = mask:sub(sep + 1)
-
-            mask = mask_left..mangle_mask(mask_right)
-        else
-            mask = mangle_mask(mask)
-        end
-    end
-
     -- Find matches.
-    for _, dir in ipairs(clink.find_dirs(mask)) do
+    for _, dir in ipairs(clink.find_dirs(mask, true)) do
         local file = prefix..dir
         if clink.is_match(text, file) then
             clink.add_match(prefix..dir)

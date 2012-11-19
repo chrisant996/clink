@@ -209,20 +209,44 @@ static int find_files_impl(lua_State* state, int dirs_only)
 {
     DIR* dir;
     struct dirent* entry;
+    char buffer[512];
     const char* mask;
     int i;
+    int case_map;
 
-    if (lua_gettop(state) == 0)
+    // Check arguments.
+    i = lua_gettop(state);
+    if (i == 0 && lua_isnil(state, 1))
     {
         return 0;
     }
 
-    if (lua_isnil(state, 1))
+    mask = lua_tostring(state, 1);
+
+    // Should the mask be adjusted for -/_ case mapping?
+    if (_rl_completion_case_map && i > 1 && lua_toboolean(state, 2))
     {
-        return 0;
+        char* slash;
+
+        str_cpy(buffer, mask, sizeof_array(buffer));
+        mask = buffer;
+
+        slash = strrchr(buffer, '\\');
+        slash = slash ? slash : strrchr(buffer, '/');
+        slash = slash ? slash + 1 : mask;
+
+        while (*slash)
+        {
+            char c = *slash;
+            if (c == '_' || c == '-')
+            {
+                *slash = '?';
+            }
+
+            ++slash;
+        }
     }
     
-    mask = lua_tostring(state, 1);
     lua_createtable(state, 0, 0);
 
     i = 1;
