@@ -346,6 +346,7 @@ int inject(int argc, char** argv)
 
     struct option options[] = {
         { "scripts",    required_argument,  NULL, 's' },
+        { "profile",    required_argument,  NULL, 'p' },
         { "althook",    no_argument,        NULL, 'a' },
         { "quiet",      no_argument,        NULL, 'q' },
         { "help",       no_argument,        NULL, 'h' },
@@ -354,6 +355,7 @@ int inject(int argc, char** argv)
 
     const char* help[] = {
         "-s, --scripts <path>", "Alternative path to load .lua scripts from.",
+        "-p, --profile <path>", "Specifies and alternative path for profile data.",
         "-q, --quiet",          "Suppress copyright output.",
         "-a, --althook",        "Use alternative method of hooking parent process.",
         "-h, --help",           "Shows this help text.",
@@ -363,15 +365,23 @@ int inject(int argc, char** argv)
     extern const char* g_clink_footer;
 
     // Parse arguments
-    while ((i = getopt_long(argc, argv, "aqhs:", options, NULL)) != -1)
+    while ((i = getopt_long(argc, argv, "aqhp:s:", options, NULL)) != -1)
     {
         switch (i)
         {
         case 's':
-            str_cat(
+            cpy_path_as_abs(
                 g_inject_args.script_path,
                 optarg,
                 sizeof_array(g_inject_args.script_path)
+            );
+            break;
+
+        case 'p':
+            cpy_path_as_abs(
+                g_inject_args.profile_path,
+                optarg,
+                sizeof_array(g_inject_args.profile_path)
             );
             break;
 

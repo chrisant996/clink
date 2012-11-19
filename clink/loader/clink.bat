@@ -33,10 +33,8 @@ if "%1"=="" (
 
 :: Pass through to appropriate loader.
 ::
-pushd %~dps0
 if "%PROCESSOR_ARCHITECTURE%"=="x86" (
-    %~n0_x86.exe %*
+    %~dpsn0_x86.exe %*
 ) else (
-    %~n0_x64.exe %*
+    %~dpsn0_x64.exe %*
 )
-popd

@@ -21,6 +21,7 @@
 
 #include "pch.h"
 #include "util.h"
+#include "inject_args.h"
 
 //------------------------------------------------------------------------------
 void str_cpy(char* dest, const char* src, int n)
@@ -85,41 +86,49 @@ void get_config_dir(char* buffer, int size)
 
     buffer[0] = '\0';
 
-    // Ask Windows for the user's non-roaming AppData folder.
-    if (shell_dir[0])
+    // Maybe the user specified an alternative location?
+    if (g_inject_args.profile_path[0] != '\0')
     {
-        str_cat(buffer, shell_dir, size);
+        str_cpy(buffer, g_inject_args.profile_path, size);
     }
     else
     {
-        int i;
-        const char* app_dir;
-        const char* env_vars[] = {
-            "LOCALAPPDATA",
-            "USERPROFILE"
-        };
-
-        // Windows doesn't know where it is. Try using the environment.
-        for (i = 0; i < sizeof_array(env_vars); ++i)
+        // Ask Windows for the user's non-roaming AppData folder.
+        if (shell_dir[0])
         {
-            app_dir = getenv(env_vars[i]);
-            if (app_dir != NULL)
+            str_cat(buffer, shell_dir, size);
+        }
+        else
+        {
+            int i;
+            const char* app_dir;
+            const char* env_vars[] = {
+                "LOCALAPPDATA",
+                "USERPROFILE"
+            };
+
+            // Windows doesn't know where it is. Try using the environment.
+            for (i = 0; i < sizeof_array(env_vars); ++i)
             {
-                break;
+                app_dir = getenv(env_vars[i]);
+                if (app_dir != NULL)
+                {
+                    break;
+                }
             }
+
+            // Still no good? Use clink's directory then.
+            if (app_dir == NULL)
+            {
+                get_dll_dir(buffer, size);
+                return;
+            }
+
+            str_cat(buffer, app_dir, size);
         }
 
-        // Still no good? Use clink's directory then.
-        if (app_dir == NULL)
-        {
-            get_dll_dir(buffer, size);
-            return;
-        }
-
-        str_cat(buffer, app_dir, size);
+        str_cat(buffer, "\\clink", size);
     }
-
-    str_cat(buffer, "\\clink", size);
 
     // Try and create the directory if it doesn't already exist. Just this once.
     if (once)
@@ -215,6 +224,18 @@ void puts_help(const char** help_pairs, int count)
     }
 
     puts("");
+}
+
+//------------------------------------------------------------------------------
+void cpy_path_as_abs(char* abs, const char* rel, int abs_size)
+{
+    char* ret;
+
+    ret = _fullpath(abs, rel, abs_size);
+    if (ret == NULL)
+    {
+        str_cpy(abs, rel, abs_size);
+    }
 }
 
 // vim: expandtab

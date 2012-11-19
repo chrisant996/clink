@@ -28,6 +28,7 @@ struct _inject_args
     int     quiet;
     int     alt_hook_method;
     char    script_path[1024];
+    char    profile_path[1024];
 };
 typedef struct _inject_args inject_args_t;
 
