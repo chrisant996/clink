@@ -233,7 +233,7 @@ static int find_files_impl(lua_State* state, int dirs_only)
 
         slash = strrchr(buffer, '\\');
         slash = slash ? slash : strrchr(buffer, '/');
-        slash = slash ? slash + 1 : mask;
+        slash = slash ? slash + 1 : buffer;
 
         while (*slash)
         {
