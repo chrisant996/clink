@@ -44,6 +44,7 @@ extern int          rl_display_fixed;
 extern int          rl_editing_mode;
 extern const char*  rl_filename_quote_characters;
 extern int          _rl_complete_mark_directories;
+extern char*        _rl_comment_begin;
 static int          g_new_history_count             = 0;
 
 //------------------------------------------------------------------------------
@@ -679,6 +680,7 @@ static int initialise_hook()
     rl_getc_function = getc_impl;
 
     // Invalid filename characters; <>|?*:"\/
+    _rl_comment_begin = "::";
     rl_completer_quote_characters = "\"";
     rl_ignore_some_completions_function = postprocess_matches;
     rl_basic_word_break_characters = " <>|=;";
