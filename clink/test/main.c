@@ -34,7 +34,7 @@ static const char*  g_getc_automatic    = NULL;
 static char*        g_caught_matches    = NULL;
 
 //------------------------------------------------------------------------------
-int getwch_automatic()
+int getwch_automatic(int* alt)
 {
     if (g_getc_automatic != NULL)
     {

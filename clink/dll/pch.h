@@ -55,7 +55,7 @@
 
 // Defined by tests to automate input.
 #ifndef GETWCH_IMPL
-#   define GETWCH_IMPL _getwch
+#   define GETWCH_IMPL getc_internal
 #else
     int GETWCH_IMPL();
 #endif

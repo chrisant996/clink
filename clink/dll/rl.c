@@ -56,19 +56,88 @@ static void display()
 }
 
 //------------------------------------------------------------------------------
+static int getc_internal(int* alt)
+{
+    static int carry = 0;           // Multithreading? What's that?
+
+    int a;
+    int b;
+    int extended_key;
+    HANDLE handle;
+    DWORD mode;
+
+    handle = GetStdHandle(STD_INPUT_HANDLE);
+    GetConsoleMode(handle, &mode);
+    SetConsoleMode(handle, mode & ~(ENABLE_ECHO_INPUT|ENABLE_PROCESSED_INPUT));
+
+loop:
+    a = 0;
+    *alt = 0;
+
+    // Read a key or use what was carried across from a previous call.
+    if (carry)
+    {
+        a = carry;
+        carry = 0;
+    }
+    else
+    {
+        INPUT_RECORD record;
+        const KEY_EVENT_RECORD* key;
+
+        ReadConsoleInputW(handle, &record, 1, &a);
+
+        if (record.EventType != KEY_EVENT)
+        {
+            goto loop;
+        }
+
+        key = &record.Event.KeyEvent;
+        if (key->bKeyDown == FALSE)
+        {
+            goto loop;
+        }
+
+        a = key->uChar.UnicodeChar;
+        b = key->wVirtualKeyCode;
+        *alt = !!(key->dwControlKeyState & LEFT_ALT_PRESSED);
+        extended_key = key->dwControlKeyState & ENHANCED_KEY;
+    }
+
+    if (a == 0)
+    {
+        #define CONTAINS(l, r) (unsigned)(b - l) <= (r - l)
+        if (extended_key)
+        {
+            carry = MapVirtualKey(b, MAPVK_VK_TO_VSC);
+            b = 0xe0;
+        }
+        else if (CONTAINS('A', 'Z'))    b -= 'A' - 1;
+        else if (CONTAINS(0xdb, 0xdd))  b -= 0xdb - 0x1b;
+        else if (b == 0x32)             b = 0;
+        else if (b == 0x36)             b = 0x1e;
+        else if (b == 0xbd)             b = 0x1f;
+        else                            goto loop;
+        #undef CONTAINS
+
+        a = b;
+    }
+
+    SetConsoleMode(handle, mode);
+    return a;
+}
+
+//------------------------------------------------------------------------------
 static int getc_impl(FILE* stream)
 {
+    int alt;
     int i;
     while (1)
     {
         wchar_t wc[2];
         char utf8[4];
 
-        i = GETWCH_IMPL();
-        if (i == 0)
-        {
-            i = 0xe0;
-        }
+        i = GETWCH_IMPL(&alt);
 
         // Treat esc like cmd.exe does - clear the line.
         if (i == 0x1b)
@@ -84,7 +153,8 @@ static int getc_impl(FILE* stream)
             }
         }
 
-        if (i < 0x7f || i == 0xe0)
+        // Mask off top bits, they're used to track ALT key state.
+        if (i < 0x80 || i == 0xe0)
         {
             break;
         }
@@ -105,13 +175,8 @@ static int getc_impl(FILE* stream)
         display();
     }
 
-    // Set the "meta" key bit if the ALT key is pressed.
-    if (GetAsyncKeyState(VK_LMENU) & 0x8000)
-    {
-        i |= 0x80;
-    }
-
-    return i;
+    alt = alt ? 0x80 : 0;
+    return i|alt;
 }
 
 //------------------------------------------------------------------------------
