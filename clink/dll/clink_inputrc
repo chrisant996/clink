@@ -19,5 +19,6 @@ set skip-completed-text         on
 C-c:      ctrl-c
 C-v:      paste-from-clipboard
 C-q:      reload-lua-state
+C-z:      undo
 
 $include ~/clink/clink_inputrc
