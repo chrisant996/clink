@@ -79,7 +79,7 @@ local function traverse(generator, parts, text, first, last)
         if candidate ~= clink.arg.node_flags_key then
             if type(candidate) == "string" then
                 if clink.is_match(part, candidate) then
-                    full_match = full_match or (#value == #candidate)
+                    full_match = full_match or (#part == #candidate)
                     table.insert(matches, candidate)
                 end
             end
