@@ -53,19 +53,26 @@ static void load_lua_script(const char* script)
 //------------------------------------------------------------------------------
 static void load_lua_scripts(const char* path)
 {
-    char old_dir[1024];
+    int i;
+    char pbuf[1024];
     HANDLE find;
     WIN32_FIND_DATA fd;
 
-    GetCurrentDirectory(sizeof(old_dir), old_dir);
-    SetCurrentDirectory(path);
+    str_cpy(pbuf, path, sizeof_array(pbuf));
+    str_cat(pbuf, "\\", sizeof_array(pbuf));
+    i = strlen(pbuf);
 
-    find = FindFirstFile("*.lua", &fd);
+    str_cat(pbuf, "*.lua", sizeof_array(pbuf));
+    find = FindFirstFile(pbuf, &fd);
+    pbuf[i] = '\0';
+
     while (find != INVALID_HANDLE_VALUE)
     {
         if (_stricmp(fd.cFileName, "clink.lua") != 0)
         {
-            load_lua_script(fd.cFileName);
+            str_cat(pbuf, fd.cFileName, sizeof_array(pbuf));
+            load_lua_script(pbuf);
+            pbuf[i] = '\0';
         }
 
         if (FindNextFile(find, &fd) == FALSE)
@@ -74,8 +81,6 @@ static void load_lua_scripts(const char* path)
             break;
         }
     }
-
-    SetCurrentDirectory(old_dir);
 }
 
 //------------------------------------------------------------------------------
