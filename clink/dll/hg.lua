@@ -28,7 +28,8 @@ local hg_tree = {
     "incoming", "init", "locate", "log", "manifest", "merge", "outgoing",
     "parents", "paths", "pull", "push", "recover", "remove", "rename", "resolve",
     "revert", "rollback", "root", "serve", "showconfig", "status", "summary",
-    "tag", "tags", "tip", "unbundle", "update", "verify", "version"
+    "tag", "tags", "tip", "unbundle", "update", "verify", "version", "graft",
+    "phases"
 }
 
 clink.arg.register_tree("hg", hg_tree)
