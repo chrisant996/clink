@@ -275,15 +275,37 @@ end
 
 --------------------------------------------------------------------------------
 function clink.filter_prompt(prompt)
+    local function add_ansi_codes(p)
+        local c = tonumber(clink.get_setting_int("prompt_colour"))
+        if c < 0 then
+            return p
+        end
+
+        -- Clamp
+        if c > 15 then
+            c = 15
+        end
+
+        -- Build ANSI code
+        local code = "\x1b[0;"
+        if c > 7 then
+            c = c - 8
+            code = code.."1;"
+        end
+        code = code..(c + 30).."m"
+
+        return code..p.."\x1b[0m"
+    end
+
     clink.prompt.value = prompt
 
     for _, filter in ipairs(clink.prompt.filters) do
         if filter.f() == true then
-            return clink.prompt.value
+            return add_ansi_codes(clink.prompt.value)
         end
     end
 
-    return clink.prompt.value
+    return add_ansi_codes(clink.prompt.value)
 end
 
 -- vim: expandtab

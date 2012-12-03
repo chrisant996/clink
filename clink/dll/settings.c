@@ -70,6 +70,14 @@ static const setting_decl_t g_clink_settings_decl[] = {
         "PATH only\0PATH and CWD\0PATH, CWD, and directories",
         "-1"
     },
+    {
+        "prompt_colour",
+        "Prompt colour",
+        "Surrounds the prompt in ANSI escape codes to set the prompt's colour. "
+        "Disabled when the value is less than 0.",
+        SETTING_TYPE_INT,
+        0, "-1"
+    },
 };
 
 //------------------------------------------------------------------------------
