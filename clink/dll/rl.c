@@ -57,13 +57,32 @@ static void display()
 }
 
 //------------------------------------------------------------------------------
+/*
+    Taken from msvcrt.dll's getextendedkeycode()
+
+                          ELSE SHFT CTRL ALTS
+    00000000`723d36e0  1c 000d 000d 000a a600
+    00000000`723d36ea  35 002f 003f 9500 a400
+    00000000`723d36f4  47 47e0 47e0 77e0 9700
+    00000000`723d36fe  48 48e0 48e0 8de0 9800
+    00000000`723d3708  49 49e0 49e0 86e0 9900
+    00000000`723d3712  4b 4be0 4be0 73e0 9b00
+    00000000`723d371c  4d 4de0 4de0 74e0 9d00
+    00000000`723d3726  4f 4fe0 4fe0 75e0 9f00
+    00000000`723d3730  50 50e0 50e0 91e0 a000
+    00000000`723d373a  51 51e0 51e0 76e0 a100
+    00000000`723d3744  52 52e0 52e0 92e0 a200
+    00000000`723d374e  53 53e0 53e0 93e0 a300
+*/
 static int getc_internal(int* alt)
 {
-    static int carry = 0;           // Multithreading? What's that?
+    static int       carry        = 0; // Multithreading? What's that?
+    static const int CTRL_PRESSED = LEFT_CTRL_PRESSED|RIGHT_CTRL_PRESSED;
 
-    int a;
-    int b;
-    int extended_key;
+    int key_char;
+    int key_vk;
+    int key_sc;
+    int key_flags;
     HANDLE handle;
     DWORD mode;
 
@@ -72,13 +91,15 @@ static int getc_internal(int* alt)
     SetConsoleMode(handle, mode & ~(ENABLE_ECHO_INPUT|ENABLE_PROCESSED_INPUT));
 
 loop:
-    a = 0;
+    key_char = 0;
+    key_vk = 0;
+    key_sc = 0;
     *alt = 0;
 
     // Read a key or use what was carried across from a previous call.
     if (carry)
     {
-        a = carry;
+        key_char = carry;
         carry = 0;
     }
     else
@@ -86,7 +107,8 @@ loop:
         INPUT_RECORD record;
         const KEY_EVENT_RECORD* key;
 
-        ReadConsoleInputW(handle, &record, 1, &a);
+        // Fresh read from the console.
+        ReadConsoleInputW(handle, &record, 1, &key_char);
 
         if (record.EventType != KEY_EVENT)
         {
@@ -99,33 +121,77 @@ loop:
             goto loop;
         }
 
-        a = key->uChar.UnicodeChar;
-        b = key->wVirtualKeyCode;
-        *alt = !!(key->dwControlKeyState & LEFT_ALT_PRESSED);
-        extended_key = key->dwControlKeyState & ENHANCED_KEY;
+        key_char = key->uChar.UnicodeChar;
+        key_vk = key->wVirtualKeyCode;
+        key_sc = key->wVirtualScanCode;
+        key_flags = key->dwControlKeyState;
+
+        *alt = !!(key_flags & LEFT_ALT_PRESSED);
     }
 
-    if (a == 0)
+    // No Unicode character? Then some post-processing is required to make the
+    // output compatible with whatever standard Linux terminals adhere to and
+    // that which Readline expects.
+    if (key_char == 0)
     {
-        #define CONTAINS(l, r) (unsigned)(b - l) <= (r - l)
-        if (extended_key)
+        // Differentiate enhanced keys depending on modifier key state. MSVC's
+        // runtime does something similar. Slightly non-standard.
+        if (key_flags & ENHANCED_KEY)
         {
-            carry = MapVirtualKey(b, MAPVK_VK_TO_VSC);
-            b = 0xe0;
+            int i;
+            static const int mod_map[][4] =
+            {
+                //Nrml  Shft  Ctrl  CtSh
+                { 0x47, 0x61, 0x77, 0x21 }, // home
+                { 0x48, 0x62, 0x54, 0x22 }, // up
+                { 0x49, 0x63, 0x55, 0x23 }, // pgup
+                { 0x4b, 0x64, 0x73, 0x24 }, // left
+                { 0x4d, 0x65, 0x74, 0x25 }, // right
+                { 0x4f, 0x66, 0x75, 0x26 }, // end
+                { 0x50, 0x67, 0x56, 0x27 }, // down
+                { 0x51, 0x68, 0x76, 0x28 }, // pgdn
+                { 0x52, 0x69, 0x57, 0x29 }, // insert
+                { 0x53, 0x6a, 0x58, 0x2a }, // delete
+            };
+
+            for (i = 0; i < sizeof_array(mod_map); ++i)
+            {
+                int j = 0;
+                if (mod_map[i][j] != key_sc)
+                {
+                    continue;
+                }
+
+                j += !!(key_flags & SHIFT_PRESSED);
+                j += !!(key_flags & CTRL_PRESSED) << 1;
+                carry = mod_map[i][j];
+                break;
+            }
+
+            // Blacklist.
+            if (!carry)
+            {
+                goto loop;
+            }
+
+            key_vk = 0xe0;
         }
-        else if (CONTAINS('A', 'Z'))    b -= 'A' - 1;
-        else if (CONTAINS(0xdb, 0xdd))  b -= 0xdb - 0x1b;
-        else if (b == 0x32)             b = 0;
-        else if (b == 0x36)             b = 0x1e;
-        else if (b == 0xbd)             b = 0x1f;
+        // This builds Ctrl-<key> map to match that as described by Readline's
+        // source for the emacs/vi keymaps.
+        #define CONTAINS(l, r) (unsigned)(key_vk - l) <= (r - l)
+        else if (CONTAINS('A', 'Z'))    key_vk -= 'A' - 1;
+        else if (CONTAINS(0xdb, 0xdd))  key_vk -= 0xdb - 0x1b;
+        else if (key_vk == 0x32)        key_vk = 0;
+        else if (key_vk == 0x36)        key_vk = 0x1e;
+        else if (key_vk == 0xbd)        key_vk = 0x1f;
         else                            goto loop;
         #undef CONTAINS
 
-        a = b;
+        key_char = key_vk;
     }
 
     SetConsoleMode(handle, mode);
-    return a;
+    return key_char;
 }
 
 //------------------------------------------------------------------------------
