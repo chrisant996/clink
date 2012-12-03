@@ -104,11 +104,12 @@ loop:
     }
     else
     {
+        DWORD count;
         INPUT_RECORD record;
         const KEY_EVENT_RECORD* key;
 
         // Fresh read from the console.
-        ReadConsoleInputW(handle, &record, 1, &key_char);
+        ReadConsoleInputW(handle, &record, 1, &count);
 
         if (record.EventType != KEY_EVENT)
         {
