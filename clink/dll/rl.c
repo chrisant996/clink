@@ -746,7 +746,7 @@ static int filter_prompt()
         int size;
         char* code;
 
-        code = find_next_ansi_code(next, &size);
+        code = (char*)find_next_ansi_code(next, &size);
         str_cat_n(tagged_prompt, next, tp_size, code - next);
         if (*code)
         {
@@ -761,27 +761,6 @@ static int filter_prompt()
     }
 
     rl_set_prompt(tagged_prompt);
-
-    // Scan for ansi codes and surround them with Readline's markers for
-    // invisible characters.
-    next = prompt;
-    while (next != NULL)
-    {
-        int size;
-        char* code;
-
-        code = find_next_ansi_code(next, &size);
-        if (code == NULL)
-        {
-            next = NULL;
-        }
-        else
-        {
-            next = code + size;
-        }
-    }
-
-    rl_set_prompt(prompt);
     return 0;
 }
 
