@@ -1,4 +1,4 @@
-set bell-style                  off
+set bell-style                  visible
 set completion-ignore-case      on
 set completion-map-case         on
 set completion-display-width    106

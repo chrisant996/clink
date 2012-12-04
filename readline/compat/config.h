@@ -65,9 +65,11 @@ int                         hooked_fstat(int, struct hooked_stat*);
 #   define snprintf         _snprintf
 
 #   define __STDC__         0
+/*
 #   define __MINGW32__
 #   define __MSDOS__
 #   define __WIN32__
+*/
 
 #   pragma warning(disable : 4018)  // signed/unsigned mismatch
 #   pragma warning(disable : 4090)  // different 'const' qualifiers

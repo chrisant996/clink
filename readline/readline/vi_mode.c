@@ -677,6 +677,12 @@ int
 rl_vi_insertion_mode (count, key)
      int count, key;
 {
+/* begin_clink_change
+ * Change cursor appearance to reflect vi edit mode
+ */
+  _rl_set_cursor(RL_IM_INSERT, 1);
+/* end_clink_change */
+
   _rl_keymap = vi_insertion_keymap;
   _rl_vi_last_key_before_insert = key;
   return (0);
@@ -718,6 +724,11 @@ _rl_vi_save_insert (up)
 void
 _rl_vi_done_inserting ()
 {
+/* begin_clink_change
+ * Change cursor appearance to reflect vi edit mode
+ */
+  _rl_set_cursor(RL_IM_OVERWRITE, 1);
+/* end_clink_change */
   if (_rl_vi_doing_insert)
     {
       /* The `C', `s', and `S' commands set this. */
@@ -1908,6 +1919,12 @@ rl_vi_replace (count, key)
      int count, key;
 {
   int i;
+
+/* begin_clink_change
+ * Change cursor appearance to reflect vi edit mode
+ */
+  _rl_set_cursor(RL_IM_INSERT, 1);
+/* end_clink_change */
 
   vi_replace_count = 0;
 

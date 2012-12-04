@@ -121,3 +121,80 @@ index 1b12df1..4c898a6 100644
  /* end_clink_change */
    
  /* Associate textual names with actual functions. */
+diff --git a/readline/readline/complete.c b/readline/readline/complete.c
+index e5ce3e2..3ed21cc 100644
+--- a/readline/readline/complete.c
++++ b/readline/readline/complete.c
+@@ -2031,7 +2031,12 @@ rl_username_completion_function (text, state)
+      const char *text;
+      int state;
+ {
+-#if defined (__WIN32__) || defined (__OPENNT)
++/*
++ * begin_clink_change
++ * Disable username completion.
++ */
++#if defined (__WIN32__) || defined (__OPENNT) || 1
++/* end_clink_change */
+   return (char *)NULL;
+ #else /* !__WIN32__ && !__OPENNT) */
+   static char *username = (char *)NULL;
+diff --git a/readline/readline/rldefs.h b/readline/readline/rldefs.h
+index 0257754..e211213 100644
+--- a/readline/readline/rldefs.h
++++ b/readline/readline/rldefs.h
+@@ -40,7 +40,11 @@
+ #  if defined (HAVE_TERMIO_H)
+ #    define TERMIO_TTY_DRIVER
+ #  else
+-#    if !defined (__MINGW32__)
++/* begin_clink_change
++ * Ensure NO_TTY_DRIVER is defined
++ */
++#    if !defined (__MINGW32__) && 0
++/* end_clink_change */
+ #      define NEW_TTY_DRIVER
+ #    else
+ #      define NO_TTY_DRIVER
+diff --git a/readline/readline/vi_mode.c b/readline/readline/vi_mode.c
+index 41e1dbb..4743444 100644
+--- a/readline/readline/vi_mode.c
++++ b/readline/readline/vi_mode.c
+@@ -677,6 +677,12 @@ int
+ rl_vi_insertion_mode (count, key)
+      int count, key;
+ {
++/* begin_clink_change
++ * Change cursor appearance to reflect vi edit mode
++ */
++  _rl_set_cursor(RL_IM_INSERT, 1);
++/* end_clink_change */
++
+   _rl_keymap = vi_insertion_keymap;
+   _rl_vi_last_key_before_insert = key;
+   return (0);
+@@ -718,6 +724,11 @@ _rl_vi_save_insert (up)
+ void
+ _rl_vi_done_inserting ()
+ {
++/* begin_clink_change
++ * Change cursor appearance to reflect vi edit mode
++ */
++  _rl_set_cursor(RL_IM_OVERWRITE, 1);
++/* end_clink_change */
+   if (_rl_vi_doing_insert)
+     {
+       /* The `C', `s', and `S' commands set this. */
+@@ -1909,6 +1920,12 @@ rl_vi_replace (count, key)
+ {
+   int i;
+ 
++/* begin_clink_change
++ * Change cursor appearance to reflect vi edit mode
++ */
++  _rl_set_cursor(RL_IM_INSERT, 1);
++/* end_clink_change */
++
+   vi_replace_count = 0;
+ 
+   if (!vi_replace_map)

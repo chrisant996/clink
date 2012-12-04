@@ -36,15 +36,11 @@ const char*         find_next_ansi_code(const char*, int*);
 
 int                 g_slash_translation             = 0;
 extern int          rl_visible_stats;
-extern char*        _rl_term_forward_char;
-extern char*        _rl_term_clreol;
-extern char*        _rl_term_clrpag;
-extern int          _rl_screenwidth;
-extern int          _rl_screenheight;
 extern int          rl_display_fixed;
 extern int          rl_editing_mode;
 extern const char*  rl_filename_quote_characters;
 extern int          _rl_complete_mark_directories;
+extern int          _rl_vis_botlin;
 extern char*        _rl_comment_begin;
 static int          g_new_history_count             = 0;
 
@@ -55,6 +51,97 @@ static void display()
 {
     rl_redisplay();
     move_cursor(0, 0);
+}
+
+//------------------------------------------------------------------------------
+static void simulate_sigwinch(COORD expected_cursor_pos)
+{
+    // In the land of POSIX a terminal would raise a SIGWINCH signal when it is
+    // resized. See rl_sigwinch_handler() in readline/signal.c.
+
+    extern int _rl_vis_botlin;
+    extern int _rl_last_v_pos;
+    CONSOLE_SCREEN_BUFFER_INFO csbi;
+    rl_voidfunc_t* redisplay_func_cache;
+    int base_y;
+    int bottom_line;
+    HANDLE handle;
+
+    bottom_line = _rl_vis_botlin - 1;
+    handle = GetStdHandle(STD_OUTPUT_HANDLE);
+
+    // Cache redisplay function. Need original as it handles redraw correctly.
+    redisplay_func_cache = rl_redisplay_function;
+    rl_redisplay_function = rl_redisplay;
+
+    // Cursor may be out of sync with where Readline expects the cursor to be.
+    // Put it back where it was, clamping if necessary.
+    GetConsoleScreenBufferInfo(handle, &csbi);
+    if (expected_cursor_pos.X >= csbi.dwSize.X)
+    {
+        expected_cursor_pos.X = csbi.dwSize.X - 1;
+    }
+    if (expected_cursor_pos.Y >= csbi.dwSize.Y)
+    {
+        expected_cursor_pos.Y = csbi.dwSize.Y - 1;
+    }
+    SetConsoleCursorPosition(handle, expected_cursor_pos);
+
+    // Let Readline handle the buffer resize.
+    RL_SETSTATE(RL_STATE_SIGHANDLER);
+    rl_resize_terminal();
+    RL_UNSETSTATE(RL_STATE_SIGHANDLER);
+
+    rl_redisplay_function = redisplay_func_cache;
+
+    // Now some redraw edge cases need to be handled.
+    GetConsoleScreenBufferInfo(handle, &csbi);
+    base_y = csbi.dwCursorPosition.Y - _rl_last_v_pos;
+
+    if (bottom_line > _rl_vis_botlin)
+    {
+        // Readline SIGWINCH handling assumes that at most one line needs to
+        // be cleared which is not the case when resizing from small to large
+        // widths.
+
+        CHAR_INFO fill;
+        SMALL_RECT rect;
+        COORD coord;
+
+        rect.Left = 0;
+        rect.Right = csbi.dwSize.X;
+        rect.Top = base_y + _rl_vis_botlin + 1;
+        rect.Bottom = base_y + bottom_line;
+
+        fill.Char.AsciiChar = ' ';
+        fill.Attributes = csbi.wAttributes;
+
+        coord.X = rect.Right + 1;
+        coord.Y = rect.Top;
+
+        ScrollConsoleScreenBuffer(handle, &rect, NULL, coord, &fill);
+    }
+    else
+    {
+        // Readline never writes to the last column as it wraps the cursor. The
+        // last column will have noise when making the width smaller. Clear it.
+
+        CHAR_INFO fill;
+        SMALL_RECT rect;
+        COORD coord;
+
+        rect.Left = rect.Right = csbi.dwSize.X - 1;
+        rect.Top = base_y;
+        rect.Bottom = base_y + _rl_vis_botlin;
+
+        fill.Char.AsciiChar = ' ';
+        fill.Attributes = csbi.wAttributes;
+
+        coord.X = rect.Right + 1;
+        coord.Y = rect.Top;
+
+        ScrollConsoleScreenBuffer(handle, &rect, NULL, coord, &fill);
+    }
 }
 
 //------------------------------------------------------------------------------
@@ -92,7 +179,6 @@ static int getc_internal(int* alt)
     // key presses such as Ctrl-C and Ctrl-S from being swallowed.
     handle = GetStdHandle(STD_INPUT_HANDLE);
     GetConsoleMode(handle, &mode);
-    SetConsoleMode(handle, 0);
 
 loop:
     key_char = 0;
@@ -109,12 +195,24 @@ loop:
     }
     else
     {
+        HANDLE handle_stdout = GetStdHandle(STD_OUTPUT_HANDLE);
+        CONSOLE_SCREEN_BUFFER_INFO csbi;
         DWORD count;
         INPUT_RECORD record;
         const KEY_EVENT_RECORD* key;
 
+        GetConsoleScreenBufferInfo(handle_stdout, &csbi);
+
         // Fresh read from the console.
+        SetConsoleMode(handle, ENABLE_WINDOW_INPUT);
         ReadConsoleInputW(handle, &record, 1, &count);
+
+        // Simulate SIGWINCH signals.
+        if (record.EventType == WINDOW_BUFFER_SIZE_EVENT)
+        {
+            simulate_sigwinch(csbi.dwCursorPosition);
+            goto loop;
+        }
 
         if (record.EventType != KEY_EVENT)
         {
@@ -447,23 +545,6 @@ static char** alternative_matches(const char* text, int start, int end)
 }
 
 //------------------------------------------------------------------------------
-static void update_screen_size()
-{
-    HANDLE handle;
-    CONSOLE_SCREEN_BUFFER_INFO csbi;
-
-    handle = GetStdHandle(STD_OUTPUT_HANDLE);
-    if (handle != INVALID_HANDLE_VALUE)
-    {
-        if (GetConsoleScreenBufferInfo(handle, &csbi))
-        {
-            _rl_screenwidth = csbi.srWindow.Right - csbi.srWindow.Left;
-            _rl_screenheight = csbi.srWindow.Bottom - csbi.srWindow.Top;
-        }
-    }
-}
-
-//------------------------------------------------------------------------------
 char** match_display_filter(char** matches, int match_count)
 {
     int i;
@@ -608,7 +689,6 @@ static void display_matches(char** matches, int match_count, int longest)
     }
 
     // Get readline to display the matches.
-    update_screen_size();
     if (show_matches > 0)
     {
         // Turn of '/' suffix for directories. RL assumes '/', which isn't the
@@ -800,12 +880,6 @@ static int filter_prompt()
 //------------------------------------------------------------------------------
 static int initialise_hook()
 {
-    // This is a bit of a hack. Ideally we should take care of this in
-    // the termcap functions.
-    _rl_term_forward_char = "\013";
-    _rl_term_clreol = "\001";
-    _rl_term_clrpag = "\002";
-
     rl_redisplay_function = display;
     rl_getc_function = getc_impl;
 

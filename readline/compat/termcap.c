@@ -19,9 +19,68 @@
  * SOFTWARE.
  */
 
+#define TERMCAP_DEBUG               0
+#define TERMCAP_DEBUG_FIXED_SIZE    0
+
 #include <Windows.h>
 
+#if TERMCAP_DEBUG
+#   include <stdio.h>
+#endif
+
 #define sizeof_array(x) (sizeof(x) / sizeof(x[0]))
+
+#define AS_INT(x)       (*(int*)(x))
+#define MAKE_CAP(x)     ((AS_INT(x) >> 8)|(AS_INT(x) << 8) & 0xffff)
+
+/*
+    "@7" End key
+    "DC" String to delete n characters starting at the cursor.
+    "IC" String to insert n character positions at the cursor.
+    "ce" String to clear from the cursor to the end of the line.
+    "cl" String to clear the entire screen and put cursor at upper left corner.
+    "cr" String to move cursor sideways to left margin.
+    "dc" String to delete one character position at the cursor.
+    "ei" String to leave insert mode.
+    "ic" String to insert one character position at the cursor.
+    "im" String to enter insert mode.
+    "kD" String of input sent by the "delete character" key.
+    "kH" String of input sent by the "home down" key.
+    "kI" String of input sent by the "insert character" or "enter insert mode" key.
+    "kd" String of input sent by typing the down-arrow key.
+    "ke" String to make the function keys work locally.
+    "kh" String of input sent by typing the "home-position" key.
+    "kl" String of input sent by typing the left-arrow key.
+    "kr" String of input sent by typing the right-arrow key.
+    "ks" String to make the function keys transmit.
+    "ku" String of input sent by typing the up-arrow key.
+    "le" String to move the cursor left one column.
+    "mm" String to enable the functioning of the Meta key.
+    "mo" String to disable the functioning of the Meta key.
+    "nd" String to move the cursor right one column.
+    "pc" String containing character for padding.
+    "up" String to move the cursor vertically up one line.
+    "vb" String to make the screen flash.
+    "ve" String to return the cursor to normal.
+    "vs" String to enhance the cursor.
+    "co" Number: width of the screen.
+    "li" Number: height of the screen.
+    "am" Flag: output to last column wraps cursor to next line.
+    "km" Flag: the terminal has a Meta key.
+    "xn" Flag: cursor wraps in a strange way.
+*/
+
+//------------------------------------------------------------------------------
+static int    g_default_cursor_size   = -1;
+
+//------------------------------------------------------------------------------
+struct tgoto_data
+{
+    short   base;
+    int     x;
+    int     y;
+};
+typedef struct tgoto_data tgoto_data_t;
 
 //------------------------------------------------------------------------------
 void move_cursor(int dx, int dy)
@@ -36,31 +95,89 @@ void move_cursor(int dx, int dy)
 }
 
 //------------------------------------------------------------------------------
+static void set_cursor(int x, int y)
+{
+    CONSOLE_SCREEN_BUFFER_INFO i;
+    COORD o;
+
+    GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &i);
+    o.X = (x >= 0) ? x : i.dwCursorPosition.X;
+    o.Y = (y >= 0) ? y : i.dwCursorPosition.Y;
+    SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), o);
+}
+
+//------------------------------------------------------------------------------
+static void delete_chars(int count)
+{
+    HANDLE handle = GetStdHandle(STD_OUTPUT_HANDLE);
+    CONSOLE_SCREEN_BUFFER_INFO csbi;
+    SMALL_RECT rect;
+    CHAR_INFO fill;
+
+    if (count < 0)
+    {
+        return;
+    }
+
+    GetConsoleScreenBufferInfo(handle, &csbi);
+
+    rect.Left = csbi.dwCursorPosition.X + count;
+    rect.Right = csbi.dwSize.X;
+    rect.Top = rect.Bottom = csbi.dwCursorPosition.Y;
+
+    fill.Char.AsciiChar = ' ';
+    fill.Attributes = csbi.wAttributes;
+
+    ScrollConsoleScreenBuffer(
+        handle,
+        &rect,
+        NULL,
+        csbi.dwCursorPosition,
+        &fill
+    );
+}
+
+//------------------------------------------------------------------------------
+static void insert_chars(int count)
+{
+    HANDLE handle = GetStdHandle(STD_OUTPUT_HANDLE);
+    CONSOLE_SCREEN_BUFFER_INFO csbi;
+    SMALL_RECT rect;
+    CHAR_INFO fill;
+
+    if (count < 0)
+    {
+        return;
+    }
+
+    GetConsoleScreenBufferInfo(handle, &csbi);
+
+    rect.Left = csbi.dwCursorPosition.X;
+    rect.Right = csbi.dwSize.X;
+    rect.Top = rect.Bottom = csbi.dwCursorPosition.Y;
+
+    fill.Char.AsciiChar = ' ';
+    fill.Attributes = csbi.wAttributes;
+
+    csbi.dwCursorPosition.X += count;
+
+    ScrollConsoleScreenBuffer(
+        handle,
+        &rect,
+        NULL,
+        csbi.dwCursorPosition,
+        &fill
+    );
+}
+
+//------------------------------------------------------------------------------
 void clear_to_eol()
 {
     HANDLE handle = GetStdHandle(STD_OUTPUT_HANDLE);
     CONSOLE_SCREEN_BUFFER_INFO csbi;
-    int i;
-    int width;
-    DWORD length;
-    const wchar_t spaces[] = L"                ";
 
     GetConsoleScreenBufferInfo(handle, &csbi);
-    width = csbi.srWindow.Right - csbi.srWindow.Left;
-    length = sizeof_array(spaces) - 1;
-
-    for (i = csbi.dwCursorPosition.X; i < width; i += length)
-    {
-        DWORD to_write = width - i;
-        if (to_write > length)
-        {
-            to_write = length;
-        }
-
-        WriteConsoleW(handle, spaces, to_write, &to_write, NULL);
-    }
-
-    SetConsoleCursorPosition(handle, csbi.dwCursorPosition);
+    insert_chars(csbi.dwSize.X - csbi.dwCursorPosition.X);
 }
 
 //------------------------------------------------------------------------------
@@ -94,57 +211,324 @@ void clear_screen()
 }
 
 //------------------------------------------------------------------------------
-int tputs(const char *str, int affcnt, int (*putc_func)(int))
+static void get_screen_size(int visible_or_buffer, int* width, int* height)
 {
-	switch (*str)
-	{
-	case '\b':
-        move_cursor(-1, 0);
-		break;
+    HANDLE handle;
+    CONSOLE_SCREEN_BUFFER_INFO csbi;
 
-	case '\v':
-        move_cursor(1, 0);
-		break;
+#if TERMCAP_DEBUG && TERMCAP_DEBUG_FIXED_SIZE
+    *width = 40;
+    *height = 25;
+    return;
+#endif
 
-    case '\001':
-        clear_to_eol();
-        break;
-
-    case '\002':
-        clear_screen();
-        break;
-
-    default:
-        while (*str)
+    handle = GetStdHandle(STD_OUTPUT_HANDLE);
+    if (handle != INVALID_HANDLE_VALUE)
+    {
+        if (GetConsoleScreenBufferInfo(handle, &csbi))
         {
-            putc_func(*str++);
+            if (visible_or_buffer)
+            {
+                *width = csbi.srWindow.Right - csbi.srWindow.Left;
+                *height = csbi.srWindow.Bottom - csbi.srWindow.Top;
+            }
+            else
+            {
+                *width = csbi.dwSize.X;
+                *height = csbi.dwSize.Y;
+            }
+
+            return;
         }
-        break;
-	}
+    }
+
+    *width = 80;
+    *height = 25;
+}
+
+//------------------------------------------------------------------------------
+static void cursor_style(int style)
+{
+    CONSOLE_CURSOR_INFO ci;
+    HANDLE handle;
+
+    handle = GetStdHandle(STD_OUTPUT_HANDLE);
+    GetConsoleCursorInfo(handle, &ci);
+
+    // Assume first encounter of cursor size is the default size.
+    if (g_default_cursor_size < 0)
+    {
+        g_default_cursor_size = ci.dwSize;
+    }
+
+    if (g_default_cursor_size > 75)
+    {
+        style = !style;
+    }
+
+    ci.dwSize = style ? 100 : g_default_cursor_size;
+    SetConsoleCursorInfo(handle, &ci);
+}
+
+//------------------------------------------------------------------------------
+static void visible_bell()
+{
+    cursor_style(1);
+    move_cursor(0, 0);
+    Sleep(40);
+    cursor_style(0);
+}
+
+//------------------------------------------------------------------------------
+static void termcap_debug(const char* str)
+{
+#if TERMCAP_DEBUG
+    static struct {
+        char buffer[64];
+        int index;
+        int count;
+        int param;
+    } buf[16];
+    static unsigned int index = 0;
+
+    unsigned int i;
+    HANDLE handle;
+    CONSOLE_SCREEN_BUFFER_INFO csbi;
+    COORD cpos;
+
+    handle = GetStdHandle(STD_OUTPUT_HANDLE);
+    GetConsoleScreenBufferInfo(handle, &csbi);
+
+    i = (index - 1) % sizeof_array(buf);
+    if (!strcmp(buf[i].buffer, str) && buf[i].index == index - 1)
+    {
+        ++buf[i].count;
+    }
+    else
+    {
+        i = index % sizeof_array(buf);
+        strcpy(buf[i].buffer, str);
+        buf[i].index = index;
+        buf[i].count = 1;
+        buf[i].param = 0;
+        ++index;
+
+        if ((str[0] == 'D' || str[0] == 'I') && str[1] == 'C')
+        {
+            const tgoto_data_t* data = (const tgoto_data_t*)str;
+            buf[i].param = data->x << 16 | (data->y & 0xffff);
+        }
+    }
+
+    cpos.X = csbi.srWindow.Right - 32;
+    cpos.Y = csbi.srWindow.Bottom - 2;
+    for (i = 0; i < sizeof_array(buf); ++i)
+    {
+        int j;
+
+        SetConsoleCursorPosition(handle, cpos);
+        cpos.Y -= 1;
+
+        j = (index + i) % sizeof_array(buf);
+        printf("%02d (%03d) %s", index + i, buf[j].count, buf[j].buffer);
+
+        if (buf[j].param != 0)
+        {
+            printf(" %08x", buf[j].param);
+        }
+        else
+        {
+            printf(" % 8s", "");
+        }
+    }
+
+    SetConsoleCursorPosition(handle, csbi.dwCursorPosition);
+#endif
+}
+
+//------------------------------------------------------------------------------
+int tputs(const char* str, int count, int (*putc_func)(int))
+{
+    unsigned short cap = MAKE_CAP(str);
+
+    if (str == NULL || *str == '\0')
+    {
+        return 0;
+    }
+
+    termcap_debug(str);
+
+    switch (cap)
+    {
+    case 'cr': set_cursor(0, -1);   return 0;
+    case 'up': move_cursor(0, -1);  return 0;
+    case 'le': move_cursor(-1, 0);  return 0;
+    case 'nd': move_cursor(1, 0);   return 0;
+    case 'ce': clear_to_eol();      return 0;
+    case 'cl': clear_screen();      return 0;
+
+    case 'vb': visible_bell();      return 0;
+
+    case 've': cursor_style(0);     return 0;
+    case 'vs': cursor_style(1);     return 0;
+
+    case 'IC':
+    case 'DC':
+        {
+            const tgoto_data_t* data = (const tgoto_data_t*)str;
+            if (cap == 'DC')
+            {
+                delete_chars(data->x);
+            }
+            else
+            {
+                insert_chars(data->y);
+            }
+        }
+        return 0;
+
+    case 'ic':  return 0;
+    case 'dc':  delete_chars(1); return 0;
+    }
+
+    // Default to simply printing the string.
+    while (*str)
+    {
+        putc_func(*str++);
+    }
 
     return 0;
 }
 
 //------------------------------------------------------------------------------
-int tgetflag(char *capname)
+int tgetent(char* bp, const char* name)
 {
+    *bp = '\0';
+    return 1;
+}
+
+//------------------------------------------------------------------------------
+int tgetnum(char* cap_name)
+{
+    int width, height;
+    unsigned short cap = MAKE_CAP(cap_name);
+
+    get_screen_size(0, &width, &height);
+
+    switch (cap)
+    {
+    case 'co': return width;
+    case 'li': return height;
+    }
+
     return 0;
 }
 
 //------------------------------------------------------------------------------
-char* tgetstr(char* id, char** capname)
+int tgetflag(char* cap_name)
 {
-    return "";
-}
+    unsigned short cap = MAKE_CAP(cap_name);
 
-//------------------------------------------------------------------------------
-int tgetent(char *bp, const char *name)
-{
+    switch (cap)
+    {
+    case 'am':  return 1;
+    case 'km':  return 1;
+    case 'xn':  return 0;
+    }
+
     return 0;
 }
 
 //------------------------------------------------------------------------------
-int tgetnum(char *id)
+char* tgetstr(char* cap_name, char** out)
 {
-    return 0;
+    size_t i;
+    char* ret;
+    const char* str;
+    unsigned short cap = MAKE_CAP(cap_name);
+
+    str = cap_name;
+    switch (cap)
+    {
+    // Insert and delete N and single characters.
+    case 'DC': str = "DC";  break;
+    case 'dc': str = "dc";  break;
+
+    case 'IC': str = "IC";  break;
+    case 'ic': str = "ic";  break;
+
+    // Clear to EOL and the screen.
+    case 'ce': str = "ce";  break;
+    case 'cl': str = "cl";  break;
+
+    // Enter and leave insert mode. Used in insert_some_chars(), called when
+    // drawing the line. Windows' console is always in an "insert" mode.
+    case 'im': str = "";    break;
+    case 'ei': str = "";    break;
+
+    // Echo/Send movement keys modes. Called in rl_(de)prep_terminal functions
+    // which are never called.
+    case 'ke': str = "";    break;
+    case 'ks': str = "";    break;
+
+    // Movement key bindings.
+    case 'kH': str = "[kh]";        break; // Home "down"?! Unused.
+    case 'kh': str = "\033`\x47";   break;
+    case '@7': str = "\033`\x4f";   break;
+    case 'kD': str = "\033`\x53";   break;
+    case 'kI': str = "\033`\x52";   break;
+    case 'ku': str = "\033`\x48";   break;
+    case 'kd': str = "\033`\x50";   break;
+    case 'kl': str = "\033`\x4b";   break;
+    case 'kr': str = "\033`\x4d";   break;
+
+    // Cursor movement.
+    case 'cr': str = "cr";  break;
+    case 'le': str = "le";  break;
+    case 'nd': str = "nd";  break;
+    case 'up': str = "up";  break;
+
+    // meta-mode on (m) and off (o)
+    case 'mm': str = "";    break;
+    case 'mo': str = "";    break;
+
+    // Cursor style
+    case 've': str = "ve";  break;
+    case 'vs': str = "vs";  break;
+
+    // Misc.
+    case 'vb': str = "vb";  break;
+    case 'pc': str = "";    break; // The "padding char". A relic left over from
+                                   // when terminals took 1.3ms to pad a line
+                                   // and 1200baud ruled the roost.
+    }
+
+    i = strlen(str) + 1;
+    if (out != NULL)
+    {
+        ret = *out;
+        *out += i;
+        strcpy(ret, str);
+    }
+    else
+    {
+        ret = malloc(i);
+        strcpy(ret, str);
+    }
+
+    return ret;
 }
+
+//------------------------------------------------------------------------------
+char* tgoto(char* base, int x, int y)
+{
+    static tgoto_data_t data;
+
+    data.base = *(short*)base;
+    data.x = x;
+    data.y = y;
+
+    return (char*)&data;
+}
+
+// vim: expandtab

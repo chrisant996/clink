@@ -2031,7 +2031,12 @@ rl_username_completion_function (text, state)
      const char *text;
      int state;
 {
-#if defined (__WIN32__) || defined (__OPENNT)
+/*
+ * begin_clink_change
+ * Disable username completion.
+ */
+#if defined (__WIN32__) || defined (__OPENNT) || 1
+/* end_clink_change */
   return (char *)NULL;
 #else /* !__WIN32__ && !__OPENNT) */
   static char *username = (char *)NULL;
