@@ -27,8 +27,14 @@
 //------------------------------------------------------------------------------
 const char_t* ANSI_FNAME(find_next_ansi_code)(const char_t* buffer, int* size)
 {
+    int size_temp;
     const char_t* read;
     int state;
+
+    if (size == NULL)
+    {
+        size = &size_temp;
+    }
 
     read = buffer;
     state = -1;
@@ -57,11 +63,9 @@ const char_t* ANSI_FNAME(find_next_ansi_code)(const char_t* buffer, int* size)
             if ((c < '0' || c > '9') && c != ';')
             {
                 buffer += state;
-                if (size != NULL)
-                {
-                    *size = (int)(read - buffer);
-                    *size += 1;
-                }
+
+                *size = (int)(read - buffer);
+                *size += 1;
 
                 return buffer;
             }
@@ -70,7 +74,8 @@ const char_t* ANSI_FNAME(find_next_ansi_code)(const char_t* buffer, int* size)
         ++read;
     }
 
-    return NULL;
+    *size = 0;
+    return (buffer +  ansi_str_len(buffer));
 }
 
 // vim: expandtab syntax=c
