@@ -139,7 +139,7 @@ loop:
             puts("");
             for (i = 0; i < sizeof(*key); ++i)
             {
-                printf("%02x ", ((char*)key)[i]);
+                printf("%02x ", ((unsigned char*)key)[i]);
             }
         }
 #endif
@@ -207,7 +207,7 @@ loop:
     }
 
 #if defined(DEBUG_GETC) && defined(_DEBUG)
-    printf("%08x\n", key_char);
+    printf("\n%08x '%c'", key_char, key_char);
 #endif
 
     SetConsoleMode(handle, mode);
