@@ -733,6 +733,19 @@ static int paste_from_clipboard(int count, int invoking_key)
 }
 
 //------------------------------------------------------------------------------
+static int up_directory(int count, int invoking_key)
+{
+    rl_begin_undo_group();
+    rl_delete_text(0, rl_end);
+    rl_point = 0;
+    rl_insert_text("cd ..");
+    rl_end_undo_group();
+    rl_done = 1;
+
+    return 0;
+}
+
+//------------------------------------------------------------------------------
 static int page_up(int count, int invoking_key)
 {
     enter_scroll_mode(-1);
@@ -813,6 +826,7 @@ static int initialise_hook()
     rl_add_funmap_entry("ctrl-c", ctrl_c);
     rl_add_funmap_entry("paste-from-clipboard", paste_from_clipboard);
     rl_add_funmap_entry("page-up", page_up);
+    rl_add_funmap_entry("up-directory", up_directory);
 
     initialise_clink_settings();
     initialise_lua();

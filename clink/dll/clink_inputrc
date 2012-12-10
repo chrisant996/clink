@@ -6,14 +6,15 @@ set output-meta                 on
 set history-size                1000
 set skip-completed-text         on
 
-"\033`s": backward-word         # ctrl-left
-"\033`t": forward-word          # ctrl-right
-"\033`O": end-of-line           # end
-"\033`G": beginning-of-line     # home
-"\033`S": delete-char           # del
-"\033`I": page-up               # page-up
-"\033`u": kill-line             # ctrl+end
-"\033`w": backward-kill-line    # ctrl+home
+"\033`s": backward-word      # ctrl-left
+"\033`t": forward-word       # ctrl-right
+"\033`O": end-of-line        # end
+"\033`G": beginning-of-line  # home
+"\033`S": delete-char        # del
+"\033`I": page-up            # page-up
+"\033`u": kill-line          # ctrl+end
+"\033`w": backward-kill-line # ctrl+home
+"\033`b": up-directory       # shift-up
 
 "\t":     clink-completion-shim
 C-c:      ctrl-c
