@@ -58,6 +58,7 @@ static void display()
 }
 
 //------------------------------------------------------------------------------
+//#define DEBUG_GETC
 /*
     Taken from msvcrt.dll's getextendedkeycode()
 
@@ -87,9 +88,11 @@ static int getc_internal(int* alt)
     HANDLE handle;
     DWORD mode;
 
+    // Clear all flags so the console doesn't do anything special. This prevents
+    // key presses such as Ctrl-C and Ctrl-S from being swallowed.
     handle = GetStdHandle(STD_INPUT_HANDLE);
     GetConsoleMode(handle, &mode);
-    SetConsoleMode(handle, mode & ~(ENABLE_ECHO_INPUT|ENABLE_PROCESSED_INPUT));
+    SetConsoleMode(handle, 0);
 
 loop:
     key_char = 0;
@@ -129,6 +132,17 @@ loop:
         key_flags = key->dwControlKeyState;
 
         *alt = !!(key_flags & LEFT_ALT_PRESSED);
+
+#if defined(DEBUG_GETC) && defined(_DEBUG)
+        {
+            int i;
+            puts("");
+            for (i = 0; i < sizeof(*key); ++i)
+            {
+                printf("%02x ", ((char*)key)[i]);
+            }
+        }
+#endif
     }
 
     // No Unicode character? Then some post-processing is required to make the
@@ -191,6 +205,10 @@ loop:
 
         key_char = key_vk;
     }
+
+#if defined(DEBUG_GETC) && defined(_DEBUG)
+    printf("%08x\n", key_char);
+#endif
 
     SetConsoleMode(handle, mode);
     return key_char;
