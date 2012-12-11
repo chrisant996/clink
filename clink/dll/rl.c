@@ -98,6 +98,7 @@ loop:
     key_char = 0;
     key_vk = 0;
     key_sc = 0;
+    key_flags = 0;
     *alt = 0;
 
     // Read a key or use what was carried across from a previous call.
