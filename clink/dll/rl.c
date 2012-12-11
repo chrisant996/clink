@@ -263,6 +263,7 @@ static int getc_impl(FILE* stream)
         display();
     }
 
+    alt = RL_ISSTATE(RL_STATE_MOREINPUT) ? 0 : alt;
     alt = alt ? 0x80 : 0;
     return i|alt;
 }
