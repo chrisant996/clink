@@ -281,6 +281,26 @@ function clink.filter_prompt(prompt)
             return p
         end
 
+        c = c % 16
+
+        --[[
+            <4              >=4             %2
+            0 0  0 Black    4 1 -3 Blue     0
+            1 4  3 Red      5 5  0 Magenta  1
+            2 2  0 Green    6 3 -3 Cyan     0
+            3 6  3 Yellow   7 7  0 Gray     1
+        --]]
+
+        -- Convert from cmd.exe colour indices to ANSI ones.
+        local colour_id = c % 8
+        if (colour_id % 2) == 1 then
+            if colour_id < 4 then
+                c = c + 3
+            end
+        elseif colour_id >= 4 then
+            c = c - 3
+        end
+
         -- Clamp
         if c > 15 then
             c = 15
