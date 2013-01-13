@@ -120,7 +120,7 @@ static void toggle_threads(DWORD pid, int on)
 }
 
 //------------------------------------------------------------------------------
-static int do_inject(DWORD parent_pid)
+static int do_inject(DWORD target_pid)
 {
     int ret;
     HANDLE parent_process;
@@ -180,7 +180,7 @@ static int do_inject(DWORD parent_pid)
     );
     LOG_INFO("DLL: %s", dll_path);
 
-    LOG_INFO("Parent pid: %d", parent_pid);
+    LOG_INFO("Parent pid: %d", target_pid);
 
     // Check Dll's version.
     if (!check_dll_version(dll_path))
@@ -197,7 +197,7 @@ static int do_inject(DWORD parent_pid)
         PROCESS_VM_WRITE|
         PROCESS_VM_READ,
         FALSE,
-        parent_pid
+        target_pid
     );
     if (parent_process == NULL)
     {
@@ -253,7 +253,7 @@ static int do_inject(DWORD parent_pid)
     LOG_INFO("Creating remote thread at %p with parameter %p", thread_proc, buffer);
 
     // Disable threads and create a remote thread.
-    toggle_threads(parent_pid, 0);
+    toggle_threads(target_pid, 0);
     remote_thread = CreateRemoteThread(
         parent_process,
         NULL,
@@ -271,7 +271,7 @@ static int do_inject(DWORD parent_pid)
 
     // Wait for injection to complete.
     WaitForSingleObject(remote_thread, INFINITE);
-    toggle_threads(parent_pid, 1);
+    toggle_threads(target_pid, 1);
 
     // Clean up and quit
     CloseHandle(remote_thread);
@@ -281,12 +281,12 @@ static int do_inject(DWORD parent_pid)
 }
 
 //------------------------------------------------------------------------------
-static void write_inject_args(DWORD parent_pid, const inject_args_t* args)
+static void write_inject_args(DWORD target_pid, const inject_args_t* args)
 {
     HANDLE handle;
     char buffer[1024];
 
-    get_inject_arg_file(parent_pid, buffer, sizeof_array(buffer));
+    get_inject_arg_file(target_pid, buffer, sizeof_array(buffer));
     handle = CreateFile(buffer, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, 0, NULL);
     if (handle != INVALID_HANDLE_VALUE)
     {
@@ -298,22 +298,22 @@ static void write_inject_args(DWORD parent_pid, const inject_args_t* args)
 }
 
 //------------------------------------------------------------------------------
-static void clean_inject_args(DWORD parent_pid)
+static void clean_inject_args(DWORD target_pid)
 {
     char buffer[1024];
 
-    get_inject_arg_file(parent_pid, buffer, sizeof_array(buffer));
+    get_inject_arg_file(target_pid, buffer, sizeof_array(buffer));
     unlink(buffer);
 }
 
 //------------------------------------------------------------------------------
-static int is_clink_present(DWORD parent_pid)
+static int is_clink_present(DWORD target_pid)
 {
     int ret;
     BOOL ok;
     MODULEENTRY32 module_entry;
     
-    HANDLE th32 = CreateToolhelp32Snapshot(TH32CS_SNAPMODULE, parent_pid);
+    HANDLE th32 = CreateToolhelp32Snapshot(TH32CS_SNAPMODULE, target_pid);
     if (th32 == INVALID_HANDLE_VALUE)
     {
         LOG_INFO("Failed to snapshot module state.");
@@ -341,15 +341,17 @@ static int is_clink_present(DWORD parent_pid)
 //------------------------------------------------------------------------------
 int inject(int argc, char** argv)
 {
-    DWORD parent_pid;
+    DWORD target_pid = 0;
     int i;
 
     struct option options[] = {
-        { "scripts",    required_argument,  NULL, 's' },
-        { "profile",    required_argument,  NULL, 'p' },
-        { "althook",    no_argument,        NULL, 'a' },
-        { "quiet",      no_argument,        NULL, 'q' },
-        { "help",       no_argument,        NULL, 'h' },
+        { "scripts",     required_argument,  NULL, 's' },
+        { "profile",     required_argument,  NULL, 'p' },
+        { "althook",     no_argument,        NULL, 'a' },
+        { "quiet",       no_argument,        NULL, 'q' },
+        { "pid",         required_argument,  NULL, 'd' },
+        { "nohostcheck", no_argument,        NULL, 'n' },
+        { "help",        no_argument,        NULL, 'h' },
         { NULL, 0, NULL, 0 }
     };
 
@@ -358,6 +360,7 @@ int inject(int argc, char** argv)
         "-p, --profile <path>", "Specifies and alternative path for profile data.",
         "-q, --quiet",          "Suppress copyright output.",
         "-a, --althook",        "Use alternative method of hooking parent process.",
+        "-d, --pid <pid>",      "Inject into the process specified by <pid>.",
         "-h, --help",           "Shows this help text.",
     };
 
@@ -365,7 +368,7 @@ int inject(int argc, char** argv)
     extern const char* g_clink_footer;
 
     // Parse arguments
-    while ((i = getopt_long(argc, argv, "aqhp:s:", options, NULL)) != -1)
+    while ((i = getopt_long(argc, argv, "aqhp:s:d:", options, NULL)) != -1)
     {
         switch (i)
         {
@@ -396,6 +399,10 @@ int inject(int argc, char** argv)
         case '?':
             return -1;
 
+        case 'd':
+            target_pid = atoi(optarg);
+            break;
+
         default:
             puts(g_clink_header);
             puts_help(help, sizeof_array(help));
@@ -404,24 +411,28 @@ int inject(int argc, char** argv)
         }
     }
 
-    // Get the PID of the parent process that we're injecting into.
-    parent_pid = get_parent_pid();
-    if (parent_pid == -1)
+    // Unless a target pid was specified on the command line, use our parent
+    // process pid.
+    if (target_pid == 0)
     {
-        LOG_ERROR("Failed to find parent pid.");
-        return -1;
+        target_pid = get_parent_pid();
+        if (target_pid == -1)
+        {
+            LOG_ERROR("Failed to find parent pid.");
+            return -1;
+        }
     }
 
     // Check to see if clink is already installed.
-    if (is_clink_present(parent_pid))
+    if (is_clink_present(target_pid))
     {
         return -1;
     }
 
     // Write args to file, inject, clean up.
-    write_inject_args(parent_pid, &g_inject_args);
-    i = do_inject(parent_pid);
-    clean_inject_args(parent_pid);
+    write_inject_args(target_pid, &g_inject_args);
+    i = do_inject(target_pid);
+    clean_inject_args(target_pid);
 
     return i;
 }
