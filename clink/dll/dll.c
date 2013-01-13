@@ -324,8 +324,11 @@ void prepare_env_for_inputrc()
 static void* validate_parent_process()
 {
     void* base;
+    const char* name;
      
-    base = (void*)GetModuleHandle("cmd.exe");
+    name = g_inject_args.no_host_check ? NULL : "cmd.exe";
+
+    base = (void*)GetModuleHandle(name);
     if (base == NULL)
     {
         LOG_INFO("Failed to find base address for 'cmd.exe'.");

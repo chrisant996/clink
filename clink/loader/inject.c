@@ -360,6 +360,7 @@ int inject(int argc, char** argv)
         "-p, --profile <path>", "Specifies and alternative path for profile data.",
         "-q, --quiet",          "Suppress copyright output.",
         "-a, --althook",        "Use alternative method of hooking parent process.",
+        "-n, --nohostcheck",    "Do not check that host is cmd.exe.",
         "-d, --pid <pid>",      "Inject into the process specified by <pid>.",
         "-h, --help",           "Shows this help text.",
     };
@@ -368,7 +369,7 @@ int inject(int argc, char** argv)
     extern const char* g_clink_footer;
 
     // Parse arguments
-    while ((i = getopt_long(argc, argv, "aqhp:s:d:", options, NULL)) != -1)
+    while ((i = getopt_long(argc, argv, "naqhp:s:d:", options, NULL)) != -1)
     {
         switch (i)
         {
@@ -386,6 +387,10 @@ int inject(int argc, char** argv)
                 optarg,
                 sizeof_array(g_inject_args.profile_path)
             );
+            break;
+
+        case 'n':
+            g_inject_args.no_host_check = 1;
             break;
 
         case 'q':
