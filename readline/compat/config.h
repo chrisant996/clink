@@ -94,7 +94,7 @@ int                         hooked_fstat(int, struct hooked_stat*);
 #define HAVE_MBRTOWC 1
 #define HAVE_MBSRTOWCS 1
 #define HAVE_MEMMOVE 1
-#define HAVE_PUTENV 1
+//#define HAVE_PUTENV 1
 #define HAVE_SETLOCALE 1
 #define HAVE_STRCASECMP 1
 #define HAVE_STRCOLL 1
