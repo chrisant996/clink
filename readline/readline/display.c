@@ -55,6 +55,15 @@
 #include "rlprivate.h"
 #include "xmalloc.h"
 
+/* begin_clink_change
+ * __MSDOS__ is used for both platform-specific file handling and terminal
+ * display, but Clink has a sufficient implementation of the Termcap library.
+ */
+#ifdef __MSDOS__
+#   undef __MSDOS__
+#endif
+/* end_clink_change */
+
 #if !defined (strchr) && !defined (__STDC__)
 extern char *strchr (), *strrchr ();
 #endif /* !strchr && !__STDC__ */

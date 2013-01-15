@@ -1133,7 +1133,11 @@ bind_arrow_keys_internal (map)
   xkeymap = _rl_keymap;
   _rl_keymap = map;
 
-#if defined (__MSDOS__)
+/* begin_clink_change
+ * Clink's inputrc takes care of this.
+ */
+#if defined (__MSDOS__) && 0
+/* end_clink_change */
   rl_bind_keyseq_if_unbound ("\033[0A", rl_get_previous_history);
   rl_bind_keyseq_if_unbound ("\033[0B", rl_backward_char);
   rl_bind_keyseq_if_unbound ("\033[0C", rl_forward_char);

@@ -198,3 +198,55 @@ index 41e1dbb..4743444 100644
    vi_replace_count = 0;
  
    if (!vi_replace_map)
+diff --git a/readline/compat/config.h b/readline/compat/config.h
+index fe2aa39..907b46d 100644
+--- a/readline/compat/config.h
++++ b/readline/compat/config.h
+@@ -65,9 +65,9 @@ int                         hooked_fstat(int, struct hooked_stat*);
+ #   define snprintf         _snprintf
+ 
+ #   define __STDC__         0
++#   define __MSDOS__
+ /*
+ #   define __MINGW32__
+-#   define __MSDOS__
+ #   define __WIN32__
+ */
+ 
+diff --git a/readline/readline/display.c b/readline/readline/display.c
+index e4105ee..c520ea2 100644
+--- a/readline/readline/display.c
++++ b/readline/readline/display.c
+@@ -55,6 +55,15 @@
+ #include "rlprivate.h"
+ #include "xmalloc.h"
+ 
++/* begin_clink_change
++ * __MSDOS__ is used for both platform-specific file handling and terminal
++ * display, but Clink has a sufficient implementation of the Termcap library.
++ */
++#ifdef __MSDOS__
++#   undef __MSDOS__
++#endif
++/* end_clink_change */
++
+ #if !defined (strchr) && !defined (__STDC__)
+ extern char *strchr (), *strrchr ();
+ #endif /* !strchr && !__STDC__ */
+diff --git a/readline/readline/readline.c b/readline/readline/readline.c
+index f2e4d93..5fb030c 100644
+--- a/readline/readline/readline.c
++++ b/readline/readline/readline.c
+@@ -1133,7 +1133,11 @@ bind_arrow_keys_internal (map)
+   xkeymap = _rl_keymap;
+   _rl_keymap = map;
+ 
+-#if defined (__MSDOS__)
++/* begin_clink_change
++ * Clink's inputrc takes care of this.
++ */
++#if defined (__MSDOS__) && 0
++/* end_clink_change */
+   rl_bind_keyseq_if_unbound ("\033[0A", rl_get_previous_history);
+   rl_bind_keyseq_if_unbound ("\033[0B", rl_backward_char);
+   rl_bind_keyseq_if_unbound ("\033[0C", rl_forward_char);
