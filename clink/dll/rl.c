@@ -40,7 +40,6 @@ extern int          rl_display_fixed;
 extern int          rl_editing_mode;
 extern const char*  rl_filename_quote_characters;
 extern int          _rl_complete_mark_directories;
-extern int          _rl_vis_botlin;
 extern char*        _rl_comment_begin;
 static int          g_new_history_count             = 0;
 

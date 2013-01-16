@@ -24,13 +24,11 @@
 #include "shared/inject_args.h"
 
 //------------------------------------------------------------------------------
-struct write_cache_
+typedef struct
 {
     wchar_t*            buffer;
     int                 size;
-};
-
-typedef struct write_cache_ write_cache_t;
+} write_cache_t;
 
 //------------------------------------------------------------------------------
 int                     set_hook_trap();
@@ -159,6 +157,67 @@ BOOL WINAPI hooked_read_console_input(
 }
 
 //------------------------------------------------------------------------------
+static int check_auto_answer(const wchar_t* prompt)
+{
+    if (prompt == NULL || prompt[0] == L'\0')
+    {
+        return 0;
+    }
+
+    if (wcscmp(prompt, L"Terminate batch job (Y/N)? ") == 0)
+    {
+        int setting = get_clink_setting_int("terminate_autoanswer");
+        if (setting > 0)
+        {
+            return (setting == 1) ? 'y' : 'n';
+        }
+    }
+
+    return 0;
+}
+
+//------------------------------------------------------------------------------
+static BOOL WINAPI handle_single_byte_read(
+    HANDLE input,
+    wchar_t* buffer,
+    DWORD buffer_size,
+    LPDWORD read_in,
+    PCONSOLE_READCONSOLE_CONTROL control
+)
+{
+    int i;
+    int reply;
+    write_cache_t* write_cache;
+
+    i = (g_write_cache_index + 1) & 1;
+    write_cache = g_write_cache + i;
+
+    if (reply = check_auto_answer(write_cache->buffer))
+    {
+        // cmd.exe's PromptUser() method reads a character at a time until
+        // it encounters a \n. The way Clink handle's this is a bit 'hacky'.
+        static int visit_count = 0;
+
+        ++visit_count;
+        if (visit_count >= 2)
+        {
+            invalidate_cached_write(i);
+
+            reply = '\n';
+            visit_count = 0;
+        }
+
+        *buffer = reply;
+        *read_in = 1;
+        return TRUE;
+    }
+
+    // Default behaviour.
+    dispatch_cached_write(GetStdHandle(STD_OUTPUT_HANDLE), i);
+    return ReadConsoleW(input, buffer, buffer_size, read_in, control);
+}
+
+//------------------------------------------------------------------------------
 BOOL WINAPI hooked_read_console(
     HANDLE input,
     wchar_t* buffer,
@@ -173,17 +232,23 @@ BOOL WINAPI hooked_read_console(
     int i;
     write_cache_t* write_cache;
 
-    i = (g_write_cache_index + 1) & 1;
-    write_cache = g_write_cache + i;
-
     // If cmd.exe is asking for one character at a time, use the original path
     // It does this to handle y/n/all prompts which isn't an compatible use-
     // case for readline.
     if (buffer_size == 1)
     {
-        dispatch_cached_write(GetStdHandle(STD_OUTPUT_HANDLE), i);
-        return ReadConsoleW(input, buffer, buffer_size, read_in, control);
+        return handle_single_byte_read(
+            input,
+            buffer,
+            buffer_size,
+            read_in,
+            control
+        );
     }
+
+    // Get index to last cached write. This is our prompt.
+    i = (g_write_cache_index + 1) & 1;
+    write_cache = g_write_cache + i;
 
     old_seh = SetUnhandledExceptionFilter(exception_filter);
 

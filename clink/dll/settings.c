@@ -78,6 +78,15 @@ static const setting_decl_t g_clink_settings_decl[] = {
         SETTING_TYPE_INT,
         0, "-1"
     },
+    {
+        "terminate_autoanswer",
+        "Auto-answer terminate prompt",
+        "Automatically answers cmd.exe's 'Terminate batch job (Y/N)?' prompts. "
+        " 0 = disabled, 1 = answer 'Y', 2 = answer 'N'.",
+        SETTING_TYPE_ENUM,
+        "Disabled\0Answer 'Y'\0Answer 'N'",
+        "0"
+    },
 };
 
 //------------------------------------------------------------------------------
