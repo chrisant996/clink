@@ -309,6 +309,10 @@ static int get_env(lua_State* state)
 
     name = lua_tostring(state, 1);
     size = GetEnvironmentVariable(name, NULL, 0);
+    if (!size)
+    {
+        return 0;
+    }
     
     buffer = (char*)malloc(size);
     GetEnvironmentVariable(name, buffer, size);
