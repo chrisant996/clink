@@ -24,6 +24,13 @@
 @echo off
 setlocal
 
+:: Mimic cmd.exe's behaviour when starting from the start menu.
+::
+if /i "%1"=="startmenu" (
+    cd /d %userprofile%
+    shift /1
+)
+
 :: If the .bat is run without any arguments, then start a cmd.exe instance.
 ::
 if "%1"=="" (
