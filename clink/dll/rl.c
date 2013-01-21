@@ -322,6 +322,7 @@ static int getc_impl(FILE* stream)
         wchar_t wc[2];
         char utf8[4];
 
+        alt = 0;
         i = GETWCH_IMPL(&alt);
 
         // Treat esc like cmd.exe does - clear the line.
