@@ -22,6 +22,7 @@
 
 --------------------------------------------------------------------------------
 local env_path = clink.test.test_fs({
+    "spa ce.exe",
     "one_path.exe",
     "one_two.py",
     "one_three.txt"
@@ -29,6 +30,7 @@ local env_path = clink.test.test_fs({
 
 clink.test.test_fs({
     one_dir = {
+        "spa ce.exe",
         "two_dir_local.exe",
         "two_dir_local.txt"
     },
@@ -89,7 +91,7 @@ clink.test.test_output(
 
 clink.test.test_output(
     "Relative path dir (with '_')",
-    ".\\one_dir\\",
+    ".\\one_dir\\t",
     ".\\one_dir\\two_dir_local.exe "
 )
 
@@ -109,6 +111,18 @@ clink.test.test_output(
     "Separator &&",
     "nullcmd && one_p",
     "nullcmd && one_path.exe "
+)
+
+clink.test.test_output(
+    "Spaces (path)",
+    "spa",
+    "\"spa ce.exe\" "
+)
+
+clink.test.test_output(
+    "Spaces (relative)",
+    ".\\one_dir\\spa",
+    "\".\\one_dir\\spa ce.exe\" "
 )
 
 --------------------------------------------------------------------------------
