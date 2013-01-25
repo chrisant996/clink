@@ -142,8 +142,8 @@ void initialise_rl_scroller()
 
     rl_generic_bind(ISKMAP, "\033", (char*)g_scroller_keymap, g_scroller_keymap);
     rl_generic_bind(ISKMAP, "`", (char*)g_scroller_keymap, g_scroller_keymap);
-    rl_bind_key_in_map('I', page_up, g_scroller_keymap);
-    rl_bind_key_in_map('Q', page_down, g_scroller_keymap);
+    rl_bind_key_in_map('c', page_up, g_scroller_keymap);
+    rl_bind_key_in_map('h', page_down, g_scroller_keymap);
 }
 
 // vim: expandtab
