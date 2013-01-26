@@ -54,6 +54,20 @@ void str_cat_n(char* dest, const char* src, int max, int n)
 }
 
 //------------------------------------------------------------------------------
+void normalise_path_format(char* buffer, int size)
+{
+    char* slash;
+
+    GetShortPathName(buffer, buffer, size);
+
+    slash = strrchr(buffer, '\\');
+    if (slash != NULL && slash[1] == '\0')
+    {
+        *slash = '\0';
+    }
+}
+
+//------------------------------------------------------------------------------
 void get_dll_dir(char* buffer, int size)
 {
     BOOL ok;
@@ -80,6 +94,8 @@ void get_dll_dir(char* buffer, int size)
     {
         *slash = '\0';
     }
+
+    normalise_path_format(buffer, size);
 }
 
 //------------------------------------------------------------------------------
@@ -149,6 +165,8 @@ void get_config_dir(char* buffer, int size)
         CreateDirectory(buffer, NULL);
         once = 0;
     }
+
+    normalise_path_format(buffer, size);
 }
 
 //------------------------------------------------------------------------------
@@ -249,6 +267,20 @@ void cpy_path_as_abs(char* abs, const char* rel, int abs_size)
     {
         str_cpy(abs, rel, abs_size);
     }
+}
+
+//------------------------------------------------------------------------------
+int hash_string(const char* str)
+{
+    int hash = 0;
+    int c;
+
+    while (c = *str++)
+    {
+        hash = c + (hash << 6) + (hash << 16) - hash;
+    }
+
+    return hash;
 }
 
 // vim: expandtab

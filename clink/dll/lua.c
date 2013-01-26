@@ -54,25 +54,25 @@ static void load_lua_script(const char* script)
 static void load_lua_scripts(const char* path)
 {
     int i;
-    char pbuf[1024];
+    char path_buf[1024];
     HANDLE find;
     WIN32_FIND_DATA fd;
 
-    str_cpy(pbuf, path, sizeof_array(pbuf));
-    str_cat(pbuf, "\\", sizeof_array(pbuf));
-    i = strlen(pbuf);
+    str_cpy(path_buf, path, sizeof_array(path_buf));
+    str_cat(path_buf, "\\", sizeof_array(path_buf));
+    i = strlen(path_buf);
 
-    str_cat(pbuf, "*.lua", sizeof_array(pbuf));
-    find = FindFirstFile(pbuf, &fd);
-    pbuf[i] = '\0';
+    str_cat(path_buf, "*.lua", sizeof_array(path_buf));
+    find = FindFirstFile(path_buf, &fd);
+    path_buf[i] = '\0';
 
     while (find != INVALID_HANDLE_VALUE)
     {
         if (_stricmp(fd.cFileName, "clink.lua") != 0)
         {
-            str_cat(pbuf, fd.cFileName, sizeof_array(pbuf));
-            load_lua_script(pbuf);
-            pbuf[i] = '\0';
+            str_cat(path_buf, fd.cFileName, sizeof_array(path_buf));
+            load_lua_script(path_buf);
+            path_buf[i] = '\0';
         }
 
         if (FindNextFile(find, &fd) == FALSE)
@@ -564,6 +564,7 @@ lua_State* initialise_lua()
 {
     static int once = 0;
     int i;
+    int path_hash;
     char buffer[1024];
     struct luaL_Reg clink_native_methods[] = {
         { "find_files", find_files },
@@ -612,6 +613,7 @@ lua_State* initialise_lua()
         str_cat(buffer, g_inject_args.script_path, sizeof_array(buffer));
     }
 
+    path_hash = hash_string(buffer);
     i = (int)strlen(buffer);
 
     str_cat(buffer, "/clink.lua", sizeof_array(buffer));
@@ -621,7 +623,10 @@ lua_State* initialise_lua()
     load_lua_scripts(buffer);
 
     get_config_dir(buffer, sizeof(buffer));
-    load_lua_scripts(buffer);
+    if (hash_string(buffer) != path_hash)
+    {
+        load_lua_scripts(buffer);
+    }
 
     if (!once)
     {
