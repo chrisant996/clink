@@ -54,7 +54,7 @@ void str_cat_n(char* dest, const char* src, int max, int n)
 }
 
 //------------------------------------------------------------------------------
-void normalise_path_format(char* buffer, int size)
+static void normalise_path_format(char* buffer, int size)
 {
     char* slash;
 
