@@ -1,4 +1,4 @@
-/* Copyright (c) 2012 Martin Ridgers
+/* Copyright (c) 2013 Martin Ridgers
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -19,24 +19,12 @@
  * SOFTWARE.
  */
 
-#include "pch.h"
-#include "inject_args.h"
-#include "util.h"
+#ifndef HOOK_H
+#define HOOK_H
 
-//------------------------------------------------------------------------------
-inject_args_t   g_inject_args   = { 0, 0, 0, {'\0'}, {'\0'} };
+void* hook_iat(void* base, const char* dll, const char* func_name, void* hook, int find_by_name);
+void* hook_jmp(const char* dll, const char* func_name, void* hook);
 
-//------------------------------------------------------------------------------
-void get_inject_arg_file(unsigned pid, char* buffer, int buffer_size)
-{
-    char pid_str[64];
-
-    itoa(pid, pid_str, 10);
-
-    GetTempPath(buffer_size, buffer);
-
-    str_cat(buffer, ".\\clink_", buffer_size);
-    str_cat(buffer, pid_str, buffer_size);
-}
+#endif // HOOK_H
 
 // vim: expandtab

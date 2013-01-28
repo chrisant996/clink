@@ -22,7 +22,8 @@
 #include "pch.h"
 #include "shared/pe.h"
 #include "shared/util.h"
-#include "shared/inject_args.h"
+#include "shared/shared_mem.h"
+#include "dll/inject_args.h"
 
 #define CLINK_DLL_NAME "clink_dll_" AS_STR(PLATFORM) ".dll"
 
@@ -281,32 +282,6 @@ static int do_inject(DWORD target_pid)
 }
 
 //------------------------------------------------------------------------------
-static void write_inject_args(DWORD target_pid, const inject_args_t* args)
-{
-    HANDLE handle;
-    char buffer[1024];
-
-    get_inject_arg_file(target_pid, buffer, sizeof_array(buffer));
-    handle = CreateFile(buffer, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, 0, NULL);
-    if (handle != INVALID_HANDLE_VALUE)
-    {
-        DWORD written;
-
-        WriteFile(handle, args, sizeof(*args), &written, NULL);
-        CloseHandle(handle);
-    }
-}
-
-//------------------------------------------------------------------------------
-static void clean_inject_args(DWORD target_pid)
-{
-    char buffer[1024];
-
-    get_inject_arg_file(target_pid, buffer, sizeof_array(buffer));
-    unlink(buffer);
-}
-
-//------------------------------------------------------------------------------
 static int is_clink_present(DWORD target_pid)
 {
     int ret;
@@ -343,6 +318,8 @@ int inject(int argc, char** argv)
 {
     DWORD target_pid = 0;
     int i;
+    shared_mem_t* shared_mem;
+    inject_args_t inject_args = { 0 };
 
     struct option options[] = {
         { "scripts",     required_argument,  NULL, 's' },
@@ -375,30 +352,30 @@ int inject(int argc, char** argv)
         {
         case 's':
             cpy_path_as_abs(
-                g_inject_args.script_path,
+                inject_args.script_path,
                 optarg,
-                sizeof_array(g_inject_args.script_path)
+                sizeof_array(inject_args.script_path)
             );
             break;
 
         case 'p':
             cpy_path_as_abs(
-                g_inject_args.profile_path,
+                inject_args.profile_path,
                 optarg,
-                sizeof_array(g_inject_args.profile_path)
+                sizeof_array(inject_args.profile_path)
             );
             break;
 
         case 'n':
-            g_inject_args.no_host_check = 1;
+            inject_args.no_host_check = 1;
             break;
 
         case 'q':
-            g_inject_args.quiet = 1;
+            inject_args.quiet = 1;
             break;
 
         case 'a':
-            g_inject_args.alt_hook_method = 1;
+            inject_args.alt_hook_method = 1;
             break;
 
         case '?':
@@ -434,10 +411,11 @@ int inject(int argc, char** argv)
         return -1;
     }
 
-    // Write args to file, inject, clean up.
-    write_inject_args(target_pid, &g_inject_args);
+    // Write args to shared memory, inject, and clean up.
+    shared_mem = create_shared_mem(1, "clink", target_pid);
+    memcpy(shared_mem->ptr, &inject_args, sizeof(inject_args));
     i = do_inject(target_pid);
-    clean_inject_args(target_pid);
+    close_shared_mem(shared_mem);
 
     return i;
 }

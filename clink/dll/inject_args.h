@@ -23,21 +23,14 @@
 #define INJECT_ARG
 
 //------------------------------------------------------------------------------
-struct _inject_args
+typedef struct
 {
     int     quiet;
     int     alt_hook_method;
     int     no_host_check;
     char    script_path[1024];
     char    profile_path[1024];
-};
-typedef struct _inject_args inject_args_t;
-
-//------------------------------------------------------------------------------
-extern inject_args_t g_inject_args;
-
-//------------------------------------------------------------------------------
-void get_inject_arg_file(unsigned pid, char* buffer, int buffer_size);
+} inject_args_t;
 
 #endif // INJECT_ARG
 

@@ -19,21 +19,50 @@
  * SOFTWARE.
  */
 
-#ifndef SHARED_MEM_H
-#define SHARED_MEM_H
+#include "pch.h"
 
 //------------------------------------------------------------------------------
-typedef struct {
-    void*   handle;
-    void*   ptr;
-    int     size;
-} shared_mem_t;
+void str_cat(char* dest, const char* src, int max)
+{
+    int m = max - (int)strlen(dest) - 1;
+    if (m > 0)
+    {
+        strncat(dest, src, m);
+    }
+}
 
 //------------------------------------------------------------------------------
-shared_mem_t*   create_shared_mem(int page_count, const char* tag, int id);
-shared_mem_t*   open_shared_mem(int page_count, const char* tag, int id);
-void            close_shared_mem(shared_mem_t* info);
+void str_cat_n(char* dest, const char* src, int max, int n)
+{
+    int m;
 
-#endif // SHARED_MEM_H
+    m = max - (int)strlen(dest) - 1;
+    m = (n < m) ? n : m;
+    if (m > 0)
+    {
+        strncat(dest, src, m);
+    }
+}
+
+//------------------------------------------------------------------------------
+void str_cpy(char* dest, const char* src, int max)
+{
+    dest[0] = '\0';
+    str_cat(dest, src, max);
+}
+
+//------------------------------------------------------------------------------
+int hash_string(const char* str)
+{
+    int hash = 0;
+    int c;
+
+    while (c = *str++)
+    {
+        hash = c + (hash << 6) + (hash << 16) - hash;
+    }
+
+    return hash;
+}
 
 // vim: expandtab

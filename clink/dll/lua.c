@@ -20,8 +20,8 @@
  */
 
 #include "pch.h"
+#include "inject_args.h"
 #include "shared/util.h"
-#include "shared/inject_args.h"
 
 //------------------------------------------------------------------------------
 static int              reload_lua_state(int count, int invoking_key);
@@ -29,6 +29,7 @@ const char*             get_clink_setting_str(const char*);
 int                     get_clink_setting_int(const char*);
 int                     rl_add_funmap_entry(const char*, int (*)(int, int));
 
+extern inject_args_t    g_inject_args;
 extern int              rl_filename_completion_desired;
 extern int              rl_completion_suppress_append;
 extern char*            rl_line_buffer;

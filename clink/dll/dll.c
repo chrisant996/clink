@@ -20,8 +20,9 @@
  */
 
 #include "pch.h"
+#include "inject_args.h"
 #include "shared/util.h"
-#include "shared/inject_args.h"
+#include "shared/shared_mem.h"
 
 //------------------------------------------------------------------------------
 typedef struct
@@ -40,6 +41,7 @@ int                     call_readline(const wchar_t*, wchar_t*, unsigned);
 void                    shutdown_clink_settings();
 int                     get_clink_setting_int(const char*);
 
+inject_args_t           g_inject_args;
 static int              g_write_cache_index     = 0;
 static const int        g_write_cache_size      = 0xffff;      // 0x10000 - 1 !!
 static write_cache_t    g_write_cache[2]        = { {NULL, 0},
@@ -445,20 +447,12 @@ int is_interactive()
 }
 
 //------------------------------------------------------------------------------
-static void load_inject_args(DWORD pid)
+static void get_inject_args(DWORD pid)
 {
-    HANDLE handle;
-    char buffer[1024];
-
-    get_inject_arg_file(pid, buffer, sizeof_array(buffer));
-    handle = CreateFile(buffer, GENERIC_READ, 0, NULL, OPEN_EXISTING, 0, NULL);
-    if (handle != INVALID_HANDLE_VALUE)
-    {
-        DWORD read_in;
-
-        ReadFile(handle, &g_inject_args, sizeof(g_inject_args), &read_in, NULL);
-        CloseHandle(handle);
-    }
+    shared_mem_t* shared_mem;
+    shared_mem = open_shared_mem(1, "clink", pid);
+    memcpy(&g_inject_args, shared_mem->ptr, sizeof(g_inject_args));
+    close_shared_mem(shared_mem);
 }
 
 //------------------------------------------------------------------------------
@@ -509,7 +503,12 @@ BOOL WINAPI DllMain(HINSTANCE instance, DWORD reason, LPVOID unused)
         return FALSE;
     }
 
-    load_inject_args(GetCurrentProcessId());
+    get_inject_args(GetCurrentProcessId());
+    if (g_inject_args.profile_path[0] != '\0')
+    {
+        set_config_dir_override(g_inject_args.profile_path);
+    }
+
     prepare_env_for_inputrc(instance);
 
     base = validate_parent_process();

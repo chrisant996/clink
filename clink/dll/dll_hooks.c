@@ -20,13 +20,12 @@
  */
 
 #include "pch.h"
+#include "shared/hook.h"
 #include "shared/util.h"
 #include "shared/vm.h"
 #include "shared/pe.h"
 
 //------------------------------------------------------------------------------
-void*                   hook_iat(void*, const char*, const char*, void*, int);
-void*                   hook_jmp(const char*, const char*, void*);
 static unsigned char*   g_hook_trap_addr        = NULL;
 static unsigned char    g_hook_trap_value       = 0;
 BOOL WINAPI             hooked_read_console(HANDLE, wchar_t*, DWORD, LPDWORD,
