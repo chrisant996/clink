@@ -25,6 +25,8 @@
 //------------------------------------------------------------------------------
 typedef int (dispatch_func_t)(const char*, int);
 
+const char* g_clink_args = NULL;
+
 //------------------------------------------------------------------------------
 static int does_user_have_admin_rights()
 {
@@ -263,7 +265,7 @@ static int install_autorun(const char* clink_path, int wow64)
     get_value(cmd_proc_key, "AutoRun", &key_value);
 
     i = key_value ? (int)strlen(key_value) : 0;
-    i += 1024;
+    i += 2048;
     new_value = malloc(i);
 
     // Build the new autorun entry by appending clink's entry to the current one.
@@ -276,6 +278,12 @@ static int install_autorun(const char* clink_path, int wow64)
     str_cat(new_value, "\"", i);
     str_cat(new_value, clink_path, i);
     str_cat(new_value, "\\clink\" inject", i);
+
+    if (g_clink_args != NULL)
+    {
+        str_cat(new_value, " ", i);
+        str_cat(new_value, g_clink_args, i);
+    }
 
     // Set it
     i = 1;
@@ -379,6 +387,7 @@ int autorun(int argc, char** argv)
         "-s, --show",           "Displays the current autorun settings.",
         "-v, --value <string>", "Sets the autorun to <string>.",
         "-h, --help",           "Shows this help text.",
+        "-- <args>",            "Pass <args> that follow '--' on to Clink."
     };
 
     extern const char* g_clink_header;
@@ -426,6 +435,19 @@ int autorun(int argc, char** argv)
         }
     }
 
+    // Collect arguments to pass on to Clink.
+    if (optind < argc && strcmp(argv[optind - 1], "--") == 0)
+    {
+        const char* cmd_line;
+
+        cmd_line = GetCommandLine();
+        cmd_line = strstr(cmd_line, " -- ");
+        if (cmd_line != NULL)
+        {
+            g_clink_args = cmd_line + 4;
+        }
+    }
+
     // Do the magic.
     if (function != NULL)
     {
@@ -438,6 +460,13 @@ int autorun(int argc, char** argv)
         }
 
         ret = dispatch(function, path_arg);
+    }
+    else
+    {
+        puts(g_clink_header);
+        puts_help(help, sizeof_array(help));
+        puts(g_clink_footer);
+        ret = -1;
     }
 
 end:
