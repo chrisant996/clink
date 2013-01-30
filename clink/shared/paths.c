@@ -142,6 +142,12 @@ void get_config_dir(char* buffer, int size)
 }
 
 //------------------------------------------------------------------------------
+void set_config_dir_override(const char* dir)
+{
+    g_config_dir_override = dir;
+}
+
+//------------------------------------------------------------------------------
 void cpy_path_as_abs(char* abs, const char* rel, int abs_size)
 {
     char* ret;
@@ -153,12 +159,6 @@ void cpy_path_as_abs(char* abs, const char* rel, int abs_size)
     }
 
     normalise_path_format(abs, abs_size);
-}
-
-//------------------------------------------------------------------------------
-void set_config_dir_override(const char* dir)
-{
-    g_config_dir_override = dir;
 }
 
 // vim: expandtab
