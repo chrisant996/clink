@@ -119,8 +119,9 @@ Section "!Application files" app_files_id
     ; Create a start-menu shortcut
     ;
     StrCpy $0 "$SMPROGRAMS\clink\${CLINK_VERSION}"
+    StrCpy $1 "$LOCALAPPDATA\clink"
     CreateDirectory $0
-    CreateShortcut "$0\clink v${CLINK_VERSION}.lnk" "$INSTDIR\clink.bat" "startmenu" "$SYSDIR\cmd.exe" 0 SW_SHOWMINIMIZED 
+    CreateShortcut "$0\clink v${CLINK_VERSION}.lnk" "$INSTDIR\clink.bat" 'startmenu --profile "$1"' "$SYSDIR\cmd.exe" 0 SW_SHOWMINIMIZED 
     CreateShortcut "$0\clink v${CLINK_VERSION} Documentation.lnk" "$INSTDIR\clink.html"
 
     ; Create an uninstaller and a shortcut to it.
@@ -154,7 +155,9 @@ SectionEnd
 ;-------------------------------------------------------------------------------
 Section "Autorun when cmd.exe starts"
     SetShellVarContext all
-    ExecShell "open" "$INSTDIR\clink_x86.exe" "autorun --install" SW_HIDE
+
+    StrCpy $0 "$LOCALAPPDATA\clink"
+    ExecShell "open" "$INSTDIR\clink_x86.exe" 'autorun --install -- --profile "$0"' SW_HIDE
 SectionEnd
 
 ;-------------------------------------------------------------------------------

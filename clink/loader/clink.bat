@@ -31,10 +31,17 @@ if /i "%1"=="startmenu" (
     shift /1
 )
 
+:: Check for the --profile option.
+if /i "%1"=="--profile" (
+    set profile=--profile "%~2"
+    shift /1
+    shift /1
+)
+
 :: If the .bat is run without any arguments, then start a cmd.exe instance.
 ::
 if "%1"=="" (
-    start "" cmd.exe /k "%~s0 inject && title clink"
+    start "" cmd.exe /k "%~s0 inject %profile% && title clink"
     goto :eof
 )
 
