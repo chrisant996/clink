@@ -87,6 +87,7 @@ shared_mem_t* create_shared_mem(int page_count, const char* tag, int id)
     ptr = map_shared_mem(handle, size);
     if (ptr == NULL)
     {
+        LOG_ERROR("Failed to map shared memory");
         return NULL;
     }
 
@@ -123,6 +124,7 @@ shared_mem_t* open_shared_mem(int page_count, const char* tag, int id)
     ptr = map_shared_mem(handle, size);
     if (ptr == NULL)
     {
+        LOG_ERROR("Failed to map shared memory");
         return NULL;
     }
 
