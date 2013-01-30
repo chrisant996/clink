@@ -22,4 +22,4 @@ C-v:      paste-from-clipboard
 C-q:      reload-lua-state
 C-z:      undo
 
-$include ~/clink/clink_inputrc
+$include ~/clink_inputrc

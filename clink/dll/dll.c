@@ -350,41 +350,30 @@ void prepare_env_for_inputrc()
     // Give readline a chance to find the inputrc by modifying the
     // environment slightly.
 
-    static const char inputrc_eq[] = "INPUTRC=";
-    char* slash;
     char buffer[1024];
 
-    // Unless set to something else, set the environment variable "HOME"
-    // to the user's profile folder.
-    if (getenv("HOME") == NULL)
+    // HOME is where Readline will expand ~ to.
     {
         static const char home_eq[] = "HOME=";
+        int size = sizeof_array(home_eq);
 
         strcpy(buffer, home_eq);
-        get_config_dir(
-            buffer + sizeof(home_eq) - 1,
-            sizeof(buffer) - sizeof(home_eq)
-        );
-
-        slash = strstr(buffer, "\\clink");
-        if (slash)
-        {
-            *slash = '\0';
-        }
+        get_config_dir(buffer + size - 1, sizeof_array(buffer) - size);
 
         putenv(buffer);
     }
 
-    // Set INPUTRC variable to be a .inputrc file that's alongside this DLL.
-    strcpy(buffer, inputrc_eq);
-    get_dll_dir(
-        buffer + sizeof(inputrc_eq) - 1,
-        sizeof(buffer) - sizeof(inputrc_eq)
-    );
+    // INPUTRC is the path where looks for it's configuration file.
+    {
+        static const char inputrc_eq[] = "INPUTRC=";
+        int size = sizeof_array(inputrc_eq);
 
-    str_cat(buffer, "/clink_inputrc", sizeof(buffer));
+        strcpy(buffer, inputrc_eq);
+        get_dll_dir(buffer + size - 1, sizeof_array(buffer) - size);
+        str_cat(buffer, "/clink_inputrc_base", sizeof_array(buffer));
 
-    putenv(buffer);
+        putenv(buffer);
+    }
 }
 
 //------------------------------------------------------------------------------

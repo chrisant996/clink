@@ -118,7 +118,7 @@ newaction {
             "clink_x*.exe",
             "clink*.dll",
             "*.lua",
-            "clink_inputrc",
+            "clink_inputrc_base",
             "CHANGES",
             "LICENSE",
 
