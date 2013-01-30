@@ -148,6 +148,41 @@ void set_config_dir_override(const char* dir)
 }
 
 //------------------------------------------------------------------------------
+void get_log_dir(char* buffer, int size)
+{
+    static once = 1;
+    static char log_dir[MAX_PATH] = { 1 };
+
+    // Just the once, get user's appdata folder.
+    if (log_dir[0] == 1)
+    {
+        if (SHGetFolderPath(0, CSIDL_LOCAL_APPDATA, NULL, 0, log_dir) != S_OK)
+        {
+            const char* str;
+            if ((str = getenv("USERPROFILE")) == NULL)
+            {
+                GetTempPath(sizeof_array(log_dir), log_dir);
+            }
+
+            str_cpy(log_dir, str, sizeof_array(log_dir));
+        }
+
+        str_cat(log_dir, "./clink", sizeof_array(log_dir));
+    }
+
+    str_cpy(buffer, log_dir, size);
+
+    // Try and create the directory if it doesn't already exist. Just this once.
+    if (once)
+    {
+        CreateDirectory(buffer, NULL);
+        once = 0;
+    }
+
+    normalise_path_format(buffer, size);
+}
+
+//------------------------------------------------------------------------------
 void cpy_path_as_abs(char* abs, const char* rel, int abs_size)
 {
     char* ret;

@@ -33,7 +33,7 @@ static void log_line_v(
     FILE* file;
     char buffer[512];
 
-    get_config_dir(buffer, sizeof_array(buffer));
+    get_log_dir(buffer, sizeof_array(buffer));
     str_cat(buffer, "/clink.log", sizeof_array(buffer));
 
     if (format == NULL)

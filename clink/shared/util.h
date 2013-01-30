@@ -26,6 +26,7 @@ void str_cpy(char* dest, const char* src, int max);
 void str_cat(char* dest, const char* src, int max);
 void str_cat_n(char* dest, const char* src, int max, int n);
 void get_config_dir(char* buffer, int size);
+void get_log_dir(char* buffer, int size);
 void get_dll_dir(char* buffer, int size);
 void set_config_dir_override(const char* path);
 void log_line(const char* function, int source_line, const char* format, ...);
