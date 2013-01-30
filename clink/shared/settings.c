@@ -24,6 +24,15 @@
 #include "util.h"
 
 //------------------------------------------------------------------------------
+static const char* g_type_names[SETTING_TYPE_COUNT] = {
+    "bool",
+    "int",
+    "enum",
+    "string",
+    "path",
+};
+
+//------------------------------------------------------------------------------
 struct settings
 {
     int                     count;
@@ -188,9 +197,15 @@ int settings_load(settings_t* s, const char* file)
     while (line != NULL && *line)
     {
         char* c;
+
+        // Skip line's leading whitespace.
+        while (isspace(*line))
+        {
+            ++line;
+        }
             
         c = strchr(line, '=');
-        if (c != NULL)
+        if (c != NULL && *line != '#')
         {
             char* d;
             const setting_decl_t* decl;
@@ -225,6 +240,45 @@ int settings_load(settings_t* s, const char* file)
 }
 
 //------------------------------------------------------------------------------
+static void wrapped_write(
+    FILE* out,
+    const char* prefix,
+    const char* str,
+    int width)
+{
+    int i;
+    char buffer[256];
+
+    width = (sizeof_array(buffer) > width) ? width : sizeof_array(buffer);
+
+    i = (int)strlen(str);
+    while (i > 0)
+    {
+        const char* end;
+
+        i -= width;
+        end = str + width;
+
+        if (i > 0)
+        {
+            // Work out the wrap point be searching backwards from the end of the
+            // printed with looking for whitespace.
+            while (!isspace(*end) && end > str)
+            {
+                --end;
+            }
+            ++end;
+        }
+
+        str_cpy(buffer, str, (int)(intptr_t)(end - str));
+        fprintf(out, "%s%s\n", prefix, buffer);
+
+        i += width - (int)(intptr_t)(end - str);
+        str = end;
+    }
+}
+
+//------------------------------------------------------------------------------
 int settings_save(settings_t* s, const char* file)
 {
     int i;
@@ -243,7 +297,11 @@ int settings_save(settings_t* s, const char* file)
         const setting_decl_t* decl;
 
         decl = s->decls + i;
-        fprintf(out, "%s=%s\n", decl->name, s->values[i]);
+
+        fprintf(out, "# name: %s\n", decl->friendly_name);
+        fprintf(out, "# type: %s\n", g_type_names[decl->type]);
+        wrapped_write(out, "# ", decl->description, 78);
+        fprintf(out, "%s = %s\n\n", decl->name, s->values[i]);
     }
 
     fclose(out);
