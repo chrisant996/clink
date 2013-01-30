@@ -179,7 +179,7 @@ int settings_load(settings_t* s, const char* file)
     in = fopen(file, "rb");
     if (in == NULL)
     {
-        return 1;
+        return 0;
     }
 
     // Buffer the file.
@@ -236,7 +236,7 @@ int settings_load(settings_t* s, const char* file)
     }
 
     free(data);
-    return 0;
+    return 1;
 }
 
 //------------------------------------------------------------------------------
@@ -288,7 +288,7 @@ int settings_save(settings_t* s, const char* file)
     out = fopen(file, "wt");
     if (out == NULL)
     {
-        return 1;
+        return 0;
     }
 
     // Iterate over each setting and write it out to the file.
@@ -305,7 +305,7 @@ int settings_save(settings_t* s, const char* file)
     }
 
     fclose(out);
-    return 0;
+    return 1;
 }
 
 //------------------------------------------------------------------------------

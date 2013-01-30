@@ -108,8 +108,11 @@ void initialise_clink_settings(lua_State* lua)
         sizeof_array(g_clink_settings_decl)
     );
 
-    settings_load(g_settings, settings_file);
-    settings_save(g_settings, settings_file);   // Force a settings file to disk
+    if (!settings_load(g_settings, settings_file))
+    {
+        // Force a settings file to disk.
+        settings_save(g_settings, settings_file);
+    }
 }
 
 //------------------------------------------------------------------------------
