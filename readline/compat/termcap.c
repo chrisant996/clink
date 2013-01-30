@@ -229,13 +229,13 @@ static void get_screen_size(int visible_or_buffer, int* width, int* height)
         {
             if (visible_or_buffer)
             {
-                *width = csbi.srWindow.Right - csbi.srWindow.Left;
-                *height = csbi.srWindow.Bottom - csbi.srWindow.Top;
+                *width = csbi.dwSize.X;
+                *height = csbi.dwSize.Y;
             }
             else
             {
-                *width = csbi.dwSize.X;
-                *height = csbi.dwSize.Y;
+                *width = csbi.srWindow.Right - csbi.srWindow.Left;
+                *height = csbi.srWindow.Bottom - csbi.srWindow.Top;
             }
 
             return;
