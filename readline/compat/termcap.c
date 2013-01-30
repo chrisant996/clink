@@ -71,7 +71,8 @@
 */
 
 //------------------------------------------------------------------------------
-static int    g_default_cursor_size   = -1;
+static int      g_default_cursor_size   = -1;
+static int      g_enhanced_cursor       = 0;
 
 //------------------------------------------------------------------------------
 struct tgoto_data
@@ -273,10 +274,10 @@ static void cursor_style(int style)
 //------------------------------------------------------------------------------
 static void visible_bell()
 {
-    cursor_style(1);
+    cursor_style(!g_enhanced_cursor);
     move_cursor(0, 0);
     Sleep(40);
-    cursor_style(0);
+    cursor_style(g_enhanced_cursor);
 }
 
 //------------------------------------------------------------------------------
@@ -369,8 +370,13 @@ int tputs(const char* str, int count, int (*putc_func)(int))
 
     case 'vb': visible_bell();      return 0;
 
-    case 've': cursor_style(0);     return 0;
-    case 'vs': cursor_style(1);     return 0;
+    case 've': cursor_style(0);
+               g_enhanced_cursor = 0;
+               return 0;
+
+    case 'vs': cursor_style(1);
+               g_enhanced_cursor = 1;
+               return 0;
 
     case 'IC':
     case 'DC':
