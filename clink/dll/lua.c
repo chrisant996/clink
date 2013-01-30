@@ -522,6 +522,16 @@ static int change_dir(lua_State* state)
 }
 
 //------------------------------------------------------------------------------
+static int get_cwd(lua_State* state)
+{
+    const char path[MAX_PATH];
+
+    GetCurrentDirectory(sizeof_array(path), path);
+    lua_pushstring(state, path);
+    return 1; 
+}
+
+//------------------------------------------------------------------------------
 static int get_screen_info(lua_State* state)
 {
     int i;
@@ -583,6 +593,7 @@ lua_State* initialise_lua()
         { "get_rl_variable", get_rl_variable },
         { "is_rl_variable_true", is_rl_variable_true },
         { "chdir", change_dir },
+        { "get_cwd", get_cwd },
         { NULL, NULL }
     };
 

@@ -23,6 +23,7 @@
 ** clink.get_screen_info() (issue 71).
 ** clink.split() (for splitting strings).
 ** clink.chdir().
+** clink.get_cwd().
 ** Functions to query Clink's settings.
 * New command line options;
 ** '--profile <dir>' to override default profile directory.

@@ -467,6 +467,11 @@ Returns a table (array) of files that match the supplied 'mask'. See
 
 There is no support for recursively traversing the path in 'mask'.
 
+==== clink.get_cwd()
+
+[role="indented"]
+Returns the current working directory.
+
 ==== clink.get_env(env_var_name)
 
 [role="indented"]
