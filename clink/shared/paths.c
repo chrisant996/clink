@@ -74,18 +74,6 @@ void get_dll_dir(char* buffer, int size)
 void get_config_dir(char* buffer, int size)
 {
     static int once = 1;
-    static char shell_dir[MAX_PATH] = { 1 };
-
-    // Just the once, get user's appdata folder.
-    if (shell_dir[0] == 1)
-    {
-        if (SHGetFolderPath(0, CSIDL_LOCAL_APPDATA, NULL, 0, shell_dir) != S_OK)
-        {
-            shell_dir[0] = '\0';
-        }
-    }
-
-    buffer[0] = '\0';
 
     // Maybe the user specified an alternative location?
     if (g_config_dir_override != NULL)
@@ -94,41 +82,8 @@ void get_config_dir(char* buffer, int size)
     }
     else
     {
-        // Ask Windows for the user's non-roaming AppData folder.
-        if (shell_dir[0])
-        {
-            str_cat(buffer, shell_dir, size);
-        }
-        else
-        {
-            int i;
-            const char* app_dir;
-            const char* env_vars[] = {
-                "LOCALAPPDATA",
-                "USERPROFILE"
-            };
-
-            // Windows doesn't know where it is. Try using the environment.
-            for (i = 0; i < sizeof_array(env_vars); ++i)
-            {
-                app_dir = getenv(env_vars[i]);
-                if (app_dir != NULL)
-                {
-                    break;
-                }
-            }
-
-            // Still no good? Use clink's directory then.
-            if (app_dir == NULL)
-            {
-                get_dll_dir(buffer, size);
-                return;
-            }
-
-            str_cat(buffer, app_dir, size);
-        }
-
-        str_cat(buffer, "\\clink", size);
+        get_dll_dir(buffer, size);
+        str_cat(buffer, ".\\profile", size);
     }
 
     // Try and create the directory if it doesn't already exist. Just this once.
