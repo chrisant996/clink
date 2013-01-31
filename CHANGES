@@ -31,6 +31,7 @@
 ** '--pid' specifies the process to inject into.
 * Update Mercurial completion (issue 73).
 * Start menu shortcut starts in USERPROFILE, like cmd.exe
+* Zip distribution is now portable.
 
 ==== v0.2.1
 
