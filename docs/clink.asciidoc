@@ -43,9 +43,9 @@ information.
 The second alternative is to manually run Clink using the command 'clink
 inject' from within a command prompt session to run Clink in that session.
 
-The last option is to use the Clink shortcut that the install adds to Windows'
-start menu when Clink is installed. This is in essence a shortcut to the
-command 'cmd.exe /k clink inject'.
+The last option is to use the Clink shortcut that the installer adds to
+Windows' start menu. This is in essence a shortcut to the command 'cmd.exe /k
+clink inject'.
 
 == How Clink Works
 
@@ -58,22 +58,32 @@ Readline-powered command line editing.
 == Configuring Clink
 
 Configuring Clink by and large involves configuring Readline by creating a
-'clink_inputrc' file in the current user's non-roaming application data
-directory. There is excellent documentation for all the options available to
-configure Readline in the
+'clink_inputrc' file. There is excellent documentation for all the options
+available to configure Readline in the
 http://cnswww.cns.cwru.edu/php/chet/readline/rluserman.html[Readline Manual].
 
-This user directory is usually found in one of the following locations;
+Where Clink looks for 'clink_inputrc' (as well as .lua scripts and the settings
+file) depends on which distribution of Clink was used. If you installed Clink
+using the .exe installer then Clink uses the current user's non-roaming
+application data folder. This user directory is usually found in one of the
+following locations;
 
 * c:\documents and settings\<username>\local settings\application data (XP)
 * c:\users\<username>\appdata\local (Vista onwards)
 
+The .zip distribution of Clink uses a 'profile' folder in the same folder where
+Clink's core files are found.
+
+All of the above locations can be overriden using the '--profile <path>'
+command line option which is specified when injecting Clink into cmd.exe using
+'clink inject'.
+
 === Settings
 
 It is also possible to configure settings specific to Clink. These are stored
-in a file called 'settings' which is found in the non-roaming profile folder
-mentioned in the previous section. The settings file gets created the first
-time Clink is run.
+in a file called 'settings' which is found in one of the locations mentioned in
+the previous section. The settings file gets created the first time Clink is
+run.
 
 The following table describes the available settings;
 
@@ -96,12 +106,10 @@ following sections describe this in more detail and shows some examples.
 
 === The Location of Lua Scripts
 
-Clink looks for Lua scripts in the user's local non-roaming application data
-directory. See the <<_configuring_clink,Configuring Clink>> section for details
-on the location of this user directory.
-
-By default 'Ctrl-Q' is mapped to reload all Lua scripts which can be useful
-when developing and iterating on your own scripts.
+Clink looks for Lua scripts in the folders as described in the
+<<_configuring_clink,Configuring Clink>> section. By default 'Ctrl-Q' is mapped
+to reload all Lua scripts which can be useful when developing and iterating on
+your own scripts.
 
 === Match Generators
 
