@@ -46,6 +46,13 @@ local function traverse(generator, parts, text, first, last)
     -- Key/value pair is a node of the tree.
     local next_gen = generator[part]
     if next_gen then
+        -- If this is the last part and we should be completing it then it's a
+        -- valid match.
+        if last_part and part:sub(-1) ~= " " then
+            clink.add_match(part)
+            return true
+        end
+
         return traverse(next_gen, parts, text, first, last)
     end
 
