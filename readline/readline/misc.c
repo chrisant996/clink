@@ -623,6 +623,13 @@ rl_emacs_editing_mode (count, key)
   rl_editing_mode = emacs_mode;
   _rl_set_insert_mode (RL_IM_INSERT, 1); /* emacs mode default is insert mode */
   _rl_keymap = emacs_standard_keymap;
+
+/* begin_clink_change
+ * Change cursor appearance to reflect vi edit mode
+ */
+  _rl_set_cursor(RL_IM_INSERT, 1);
+/* end_clink_change */
+
   return 0;
 }
 
