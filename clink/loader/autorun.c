@@ -183,6 +183,17 @@ static int find_clink_entry(const char* value, int* left, int* right)
 }
 
 //------------------------------------------------------------------------------
+static const char* get_cmd_start(const char* cmd)
+{
+    while (isspace(*cmd) || *cmd == '&')
+    {
+        ++cmd;
+    }
+
+    return cmd;
+}
+
+//------------------------------------------------------------------------------
 static int uninstall_autorun(const char* clink_path, int wow64)
 {
     HKEY cmd_proc_key;
@@ -202,7 +213,7 @@ static int uninstall_autorun(const char* clink_path, int wow64)
     ret = 1;
     if (key_value && find_clink_entry(key_value, &left, &right))
     {
-        char* read;
+        const char* read;
         char* write;
         int i, n;
 
@@ -218,7 +229,8 @@ static int uninstall_autorun(const char* clink_path, int wow64)
             ++read;
         }
 
-        if (*key_value == '\0')
+        read = get_cmd_start(key_value);
+        if (*read == '\0')
         {
             // Empty key. We might as well delete it.
             if (!delete_value(cmd_proc_key, "AutoRun"))
@@ -226,7 +238,7 @@ static int uninstall_autorun(const char* clink_path, int wow64)
                 ret = 0;
             }
         }
-        else if (!set_value(cmd_proc_key, "AutoRun", key_value))
+        else if (!set_value(cmd_proc_key, "AutoRun", read))
         {
             ret = 0;
         }
@@ -245,6 +257,7 @@ static int uninstall_autorun(const char* clink_path, int wow64)
 static int install_autorun(const char* clink_path, int wow64)
 {
     HKEY cmd_proc_key;
+    const char* value;
     char* new_value;
     char* key_value;
     int i;
@@ -286,8 +299,9 @@ static int install_autorun(const char* clink_path, int wow64)
     }
 
     // Set it
+    value = get_cmd_start(new_value);
     i = 1;
-    if (!set_value(cmd_proc_key, "AutoRun", new_value))
+    if (!set_value(cmd_proc_key, "AutoRun", value))
     {
         i = 0;
     }
