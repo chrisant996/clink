@@ -288,3 +288,23 @@ index 9f45773..1bb6b1f 100644
    return 0;
  }
  
+diff --git a/premake4.lua b/premake4.lua
+diff --git a/readline/readline/text.c b/readline/readline/text.c
+index 536e31a..8f5aa22 100644
+--- a/readline/readline/text.c
++++ b/readline/readline/text.c
+@@ -1004,7 +1004,13 @@ int
+ rl_do_lowercase_version (ignore1, ignore2)
+      int ignore1, ignore2;
+ {
+-  return 0;
++/* begin_clink_change
++ * This function was the same as _rl_null_function(). MSVC's linker would
++ * give these two symbols the same address such that do_lowercase == null_func
++ * which breaks function pointer comparisons in RL's subseq dispatching...
++ */
++  return 1;
++/* end_clink_change */
+ }
+ 
+ /* This is different from what vi does, so the code's not shared.  Emacs

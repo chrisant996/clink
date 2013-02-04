@@ -1004,7 +1004,13 @@ int
 rl_do_lowercase_version (ignore1, ignore2)
      int ignore1, ignore2;
 {
-  return 0;
+/* begin_clink_change
+ * This function was the same as _rl_null_function(). MSVC's linker would
+ * give these two symbols the same address such that do_lowercase == null_func
+ * which breaks function pointer comparisons in RL's subseq dispatching...
+ */
+  return 1;
+/* end_clink_change */
 }
 
 /* This is different from what vi does, so the code's not shared.  Emacs
