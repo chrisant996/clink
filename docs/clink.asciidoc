@@ -17,20 +17,21 @@ distributions.
 
 == Features
 
-* Powerful Bash-like line editing from the GNU Readline library.
-* Scriptable completion using Lua. 
-* Improved path and context-sensitive completion ('TAB').
+* The same line editing as Bash (from GNU's Readline library).
+* History persistence between sessions.
 * Paste from clipboard ('Ctrl-V').
-* Undo/Redo ('Ctrl-_' or 'Ctrl-X_Ctrl-U')
-* Improved command line history.
-** Persists across sessions.
-** Searchable ('Ctrl-R' and 'Ctrl-S').
-** History expansion (e.g. !!, !<string>, and !$). 
+* Incremental history search ('Ctrl-R'/'Ctrl-S').
+* Context-sensitive completion ('TAB').
+* Undo ('Ctrl-Z').
+* Lua scriptable completion. 
+* Coloured and scriptable prompt.
+* Auto-answering of the "Terminate batch job?" prompt.
+* Completion for Get, Mercurial, SVN, and P4.
 
 More features can be found in the
 http://cnswww.cns.cwru.edu/php/chet/readline/rluserman.html#SEC3[Readline] and
 http://cnswww.cns.cwru.edu/php/chet/readline/history.html#SEC3[History]
-manuals.
+manuals. By default Clink also binds 'Alt-H' to display current key bindings.
 
 == Usage
 
