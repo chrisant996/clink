@@ -26,7 +26,7 @@ distributions.
 * Lua scriptable completion. 
 * Coloured and scriptable prompt.
 * Auto-answering of the "Terminate batch job?" prompt.
-* Completion for Get, Mercurial, SVN, and P4.
+* Completion for Git, Mercurial, SVN, and P4.
 
 More features can be found in the
 http://cnswww.cns.cwru.edu/php/chet/readline/rluserman.html#SEC3[Readline] and
