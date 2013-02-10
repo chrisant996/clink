@@ -28,10 +28,11 @@ distributions.
 * Auto-answering of the "Terminate batch job?" prompt.
 * Completion for Git, Mercurial, SVN, and P4.
 
-More features can be found in the
+By default Clink binds 'Alt-H' to display the current key bindings. More
+features can also be found in GNU's
 http://cnswww.cns.cwru.edu/php/chet/readline/rluserman.html#SEC3[Readline] and
 http://cnswww.cns.cwru.edu/php/chet/readline/history.html#SEC3[History]
-manuals. By default Clink also binds 'Alt-H' to display current key bindings.
+libraries' manuals. 
 
 == Usage
 
