@@ -34,6 +34,7 @@ void                initialise_clink_settings();
 int                 get_clink_setting_int(const char*);
 const char*         find_next_ansi_code(const char*, int*);
 int                 getc_impl(FILE* stream);
+int                 show_rl_help(int, int);
 
 int                 g_slash_translation             = 0;
 extern int          rl_visible_stats;
@@ -590,6 +591,7 @@ static int initialise_hook()
     rl_add_funmap_entry("paste-from-clipboard", paste_from_clipboard);
     rl_add_funmap_entry("page-up", page_up);
     rl_add_funmap_entry("up-directory", up_directory);
+    rl_add_funmap_entry("show-rl-help", show_rl_help);
 
     initialise_clink_settings();
     initialise_lua();

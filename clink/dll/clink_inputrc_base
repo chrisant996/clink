@@ -16,10 +16,25 @@ set skip-completed-text         on
 "\033`w": backward-kill-line # ctrl+home
 "\033`b": up-directory       # shift-up
 
-"\t":     clink-completion-shim
-C-c:      ctrl-c
-C-v:      paste-from-clipboard
-C-q:      reload-lua-state
-C-z:      undo
+set keymap    emacs
+"\t":         clink-completion-shim
+C-c:          ctrl-c
+C-v:          paste-from-clipboard
+C-q:          reload-lua-state
+C-z:          undo
+M-h:          show-rl-help
+
+set keymap    vi-insert
+"\t":         clink-completion-shim
+C-c:          ctrl-c
+C-v:          paste-from-clipboard
+C-z:          undo
+M-h:          show-rl-help
+
+set keymap    vi-move
+C-c:          ctrl-c
+C-v:          paste-from-clipboard
+C-z:          undo
+M-h:          show-rl-help
 
 $include ~/clink_inputrc

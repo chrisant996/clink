@@ -453,6 +453,7 @@ static void success()
     if (!g_inject_args.quiet)
     {
         puts(g_clink_header);
+        puts("  ** Press Alt-H to show key bindings. **\n");
         puts(g_clink_footer);
     }
 }
