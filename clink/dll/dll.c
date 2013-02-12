@@ -161,12 +161,53 @@ BOOL WINAPI hooked_read_console_input(
 //------------------------------------------------------------------------------
 static int check_auto_answer(const wchar_t* prompt)
 {
+    static wchar_t* prompt_to_answer = (wchar_t*)1;
+
     if (prompt == NULL || prompt[0] == L'\0')
     {
         return 0;
     }
 
-    if (wcscmp(prompt, L"Terminate batch job (Y/N)? ") == 0)
+    // Try and find the localised prompt.
+    if (prompt_to_answer == (wchar_t*)1)
+    {
+        static wchar_t* fallback = L"Terminate batch job (Y/N)? ";
+        static int string_id = 0x237b;
+
+        DWORD flags;
+        DWORD ok;
+
+        flags = FORMAT_MESSAGE_ALLOCATE_BUFFER;
+        flags |= FORMAT_MESSAGE_FROM_HMODULE;
+        flags |= FORMAT_MESSAGE_IGNORE_INSERTS;
+        ok = FormatMessageW(
+            flags, NULL, 0x237b, 0,
+            (void*)&prompt_to_answer, 0, NULL
+        );
+        if (ok)
+        {
+            wchar_t* c = prompt_to_answer;
+            while (*c)
+            {
+                // Strip off new line chars.
+                if (*c == '\r' || *c == '\n')
+                {
+                    *c = '\0';
+                }
+
+                ++c;
+            }
+
+            LOG_INFO("Auto-answer prompt = '%ls'", prompt_to_answer);
+        }
+        else
+        {
+            prompt_to_answer = fallback;
+            LOG_INFO("Using fallback auto-answer prompt.");
+        }
+    }
+
+    if (wcscmp(prompt, prompt_to_answer) == 0)
     {
         int setting = get_clink_setting_int("terminate_autoanswer");
         if (setting > 0)
