@@ -102,7 +102,7 @@ local function print_result(name, passed)
 
     cat(name)
     for i = 1, 48 - #out, 1 do
-        cat(" ")
+        cat(".")
     end
     cat(result)
 
@@ -113,16 +113,26 @@ end
 local function test_runner(name, input, expected_out, expected_matches)
     test_id = test_id + 1
 
-    local passed = true
-    local output, matches = call_readline(input)
-
     -- Skip test?
     if specific_test ~= "" then
-        local tid = tostring(test_sid).."."..tostring(test_id)
-        if specific_test ~= tid then
+        local should_run = false
+        local tid = tostring(test_sid)
+        if specific_test == tid then
+            should_run = true
+        end
+
+        tid = tid.."."..tostring(test_id)
+        if specific_test == tid then
+            should_run = true
+        end
+
+        if not should_run then
             return
         end
     end
+
+    local passed = true
+    local output, matches = call_readline(input)
 
     -- Check Readline's output.
     if expected_out and expected_out ~= output then
@@ -158,14 +168,14 @@ local function test_runner(name, input, expected_out, expected_matches)
     if not passed or verbose ~= 0 then
         print(colour(5).."\n    -- Results --")
         print(colour(5).."          Cwd: "..get_cwd())
-        print(colour(5).."        Input: "..input:gsub("\t", "<TAB>"))
-        print(colour(5).."       Output: "..output)
+        print(colour(5).."        Input: "..input:gsub("\t", "<TAB>").."_")
+        print(colour(5).."       Output: "..output.."_")
         for _, i in ipairs(matches) do
             print(colour(5).."      Matches: "..i)
         end
 
         print(colour(5).."\n    -- Expected --")
-        print(colour(5).."       Output: "..(expected_out or ""))
+        print(colour(5).."       Output: "..(expected_out or "<nothing>").."_")
         for _, i in ipairs(expected_matches or {}) do
             print(colour(5).."      Matches: "..i)
         end
@@ -258,6 +268,7 @@ function clink.test.run()
     run_test("test_set")
     run_test("test_exec")
     run_test("test_env")
+    run_test("test_args")
 
     ch_dir(scripts_path)
     rm_dir(test_fs_path)

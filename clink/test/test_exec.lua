@@ -123,6 +123,11 @@ clink.test.test_output(
     "Spaces (relative)",
     ".\\one_dir\\spa",
     "\".\\one_dir\\spa ce.exe\" "
+
+clink.test.test_matches(
+    "Separator false positive",
+    "nullcmd \"&&\" o\t",
+    { "one_local.exe", "one_local.txt", "one_dir\\" }
 )
 
 --------------------------------------------------------------------------------

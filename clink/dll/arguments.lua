@@ -21,98 +21,343 @@
 --
 
 --------------------------------------------------------------------------------
-local function traverse(generator, parts, text, first, last)
-    -- Each part of the command line leading up to 'text' is considered as
-    -- a level of the 'generator' tree.
-    local part = parts[parts.n]
-    local last_part = (parts.n >= #parts)
-    parts.n = parts.n + 1
+clink.arg = {}
 
-    -- Non-table types are leafs of the tree.
-    local t = type(generator)
-    if t == "function" then
-        return generator(text, first, last)
-    elseif t == "boolean" then
-        return generator
-    elseif t == "string" then
-        if last_part then
-            clink.add_match(generator)
+--------------------------------------------------------------------------------
+local argument_generators = {}
+local node_meta = {}
+local node_props = {
+    loop        = 0x0001,
+    conditional = 0x0002,
+}
+
+--------------------------------------------------------------------------------
+local traverse
+local traverse_loop_shim
+local set_prop
+local has_prop
+local is_node
+local create_node
+local node_insert
+local nodes_from_key_table
+local loop_point
+
+--------------------------------------------------------------------------------
+function node_meta.__concat(lhs, rhs)
+    if not is_node(rhs) then
+        error("Right-handside must be clink.arg.node()")
+    end
+
+    if is_node(lhs) then
+        error("Left-handside must not be a clink.arg.node()")
+    end
+
+    if type(lhs) == "table" then
+        local outer = create_node()
+        nodes_from_key_table(outer, lhs, rhs)
+        return outer
+    end
+
+    -- Already got a key?
+    if rawget(rhs,  "_key") ~= nil then
+        local node = create_node()
+        node_insert(node, rhs)
+        rhs = node
+    end
+
+    rawset(rhs, "_key", lhs)
+    return rhs
+end
+
+--------------------------------------------------------------------------------
+function is_node(n)
+    return type(n) == "table" and getmetatable(n) == node_meta
+end
+
+--------------------------------------------------------------------------------
+function set_prop(node, name)
+    local bit = node_props[name]
+    if bit == nil then
+        return
+    end
+
+    if not has_prop(node, name) then
+        local p = rawget(node, "_props")
+        if p == nil then
+            p = 0
         end
-        return last_part
-    elseif t ~= "table" then
-        return false
+
+        p = p + bit
+        rawset(node, "_props", p)
     end
+end
 
-    -- Key/value pair is a node of the tree.
-    local next_gen = generator[part]
-    if next_gen then
-        -- If this is the last part and we should be completing it then it's a
-        -- valid match.
-        if last_part and part:sub(-1) ~= " " then
-            clink.add_match(part)
-            return true
-        end
-
-        return traverse(next_gen, parts, text, first, last)
-    end
-
-    -- Check generator[1] for behaviour flags.
-    -- * = If generator is a leave in the tree, repeat it for ever.
-    -- + = User must have typed at least one character for matches to be added.
-    local repeat_node = false
-    local allow_empty_text = true
-    local node_flags = generator[clink.arg.node_flags_key]
-    if node_flags then
-        repeat_node = (node_flags:find("*") ~= nil)
-        allow_empty_text = (node_flags:find("+") == nil)
-    end
-
-    -- See if we should early-out if we've no text to search with.
-    if not allow_empty_text and text == "" then
-        return false
-    end
-
-    local full_match = false
-    local matches = {}
-    for key, value in pairs(generator) do
-        -- So we're in a node but don't have enough info yet to traverse
-        -- further down the tree. Attempt to pull out keys or array entries
-        -- and add them as matches.
-        local candidate = key
-        if type(key) == "number" then
-            candidate = value
-        end
-
-        if candidate ~= clink.arg.node_flags_key then
-            if type(candidate) == "string" then
-                if clink.is_match(part, candidate) then
-                    full_match = full_match or (#part == #candidate)
-                    table.insert(matches, candidate)
-                end
+--------------------------------------------------------------------------------
+function has_prop(node, name)
+    local bit = node_props[name]
+    if bit ~= nil then
+        local p = rawget(node, "_props")
+        if p ~= nil then
+            if (p % (bit * 2)) >= bit then
+                return true
             end
         end
     end
 
-    -- One full match, we're not at the end, and we should repeat. Down we go...
-    if not last_part then
-        if full_match and repeat_node then
-            return traverse(generator, parts, text, first, last)
-        end
-    else
-        -- Transfer matches to clink.
-        for _, i in ipairs(matches) do
-            clink.add_match(i)
-        end
-    end
-    
-    return clink.match_count() > 0
+    return false
 end
 
 --------------------------------------------------------------------------------
-function clink.argument_match_generator(text, first, last)
-    -- Extract the command name (naively)
+function nodes_from_key_table(out, keys, value)
+    for _, i in ipairs(keys) do
+        if is_node(i) then
+            error("Left-handside must not be a clink.arg.node()")
+        end
+
+        if type(i) == "table" then
+            nodes_from_key_table(out, i, value)
+        else
+            local inner = create_node()
+            rawset(inner, "_key", i)
+            node_insert(inner, value)
+            table.insert(out, inner)
+        end
+    end
+end
+
+--------------------------------------------------------------------------------
+function create_node()
+    local node = {}
+    setmetatable(node, node_meta)
+    node.loop = function(node)
+        set_prop(node, "loop")
+        return node
+    end
+    return node
+end
+
+--------------------------------------------------------------------------------
+function node_insert(node, i)
+    if type(i) == "table" and rawget(i, "_key") == nil then
+        for _, j in ipairs(i) do
+            table.insert(node, j)
+        end
+
+        return
+    end
+
+    table.insert(node, i)
+end
+
+--------------------------------------------------------------------------------
+function clink.arg.node(...)
+    local node = create_node()
+
+    for _, i in ipairs({...}) do
+        node_insert(node, i)
+    end
+
+    return node
+end
+
+--------------------------------------------------------------------------------
+function clink.arg.condition(func, ...)
+    if type(func) ~= "function" then
+        error("First argument to clink.arg.condition() must be a function")
+    end
+
+    local node = create_node()
+    set_prop(node, "conditional")
+    node._key = func 
+
+    for _, i in ipairs({...}) do
+        local n = create_node()
+        if not is_node(i) and type(i) == "table" then
+            node_insert(n, i)
+        else
+            table.insert(n, i)
+        end
+        table.insert(node, n)
+    end
+
+    return node
+end
+
+--------------------------------------------------------------------------------
+function clink.arg.print_tree(tree, s)
+    if s == nil then s = "+-" end
+    if type(tree) == "table" then
+        print(s..tostring(rawget(tree, "_key")))
+
+        local p = rawget(tree, "_props")
+        if p ~= nil then
+            local t = ""
+            for i, j in pairs(node_props) do
+                if has_prop(tree, i) then
+                    t = t..","..i
+                end
+            end
+            print("| "..s.."props: "..t.." "..p)
+        end
+
+        for _, i in ipairs(tree) do
+            local t = s
+            if type(i) == "table" then
+                t = "| "..t
+            end
+
+            clink.arg.print_tree(i, t)
+        end
+    else
+        print("| "..s..tostring(tree))
+    end
+end
+
+--------------------------------------------------------------------------------
+function clink.arg.register_tree(cmd, generator)
+    if not is_node(generator) or has_prop(generator, "conditional") then
+        generator = clink.arg.node(generator)
+    end
+
+    cmd = cmd:lower()
+    local prev = argument_generators[cmd]
+    if prev ~= nil then
+        node_insert(prev, generator)
+    else
+        argument_generators[cmd] = generator
+    end
+end
+
+--------------------------------------------------------------------------------
+function clink.arg.stop()
+    return clink.arg.node(true)
+end
+
+--------------------------------------------------------------------------------
+function clink.arg.file_matches()
+    return clink.arg.node(false)
+end
+
+--------------------------------------------------------------------------------
+local function get_matches(part, value, out, text, first, last)
+    local t = type(value)
+
+    if t == "string" then
+        if clink.is_match(part, value) then
+            table.insert(out, value)
+        end
+    elseif t == "function" then
+        local matches = value(part, text, first, last)
+        if matches == nil or matches == false then
+            return false
+        end
+
+        for _, i in ipairs(matches) do
+            table.insert(out, i)
+        end
+    elseif t == "number" then
+        if clink.is_match(part, tostring(value)) then
+            table.insert(out, value)
+        end
+    elseif t == "boolean" then
+        return value
+    end
+end
+
+--------------------------------------------------------------------------------
+function traverse(node, parts, text, first, last)
+    local part = parts[parts.n]
+    local last_part = (parts.n >= #parts)
+    parts.n = parts.n + 1
+
+    if part == nil then
+        return false
+    end
+
+    local full_match = nil
+    local partial_matches = {}
+
+    -- If the traversal has reached a condition node, then call the selector
+    -- function and traverse down the path selected.
+    if has_prop(node, "conditional") then
+        local selector = node._key;
+        local index = selector(part)
+        index = tonumber(index)
+        if index < 1 then index = 1 end
+        if index > #node then index = #node end
+
+        parts.n = parts.n - 1
+        return traverse_loop_shim(node[index], parts, text, first, last)
+    end
+
+    for _, i in ipairs(node) do
+        if is_node(i) then
+            local key = rawget(i, "_key")
+            if not key or has_prop(i, "conditional") then
+                parts.n = parts.n - 1
+                return traverse_loop_shim(i, parts, text, first, last)
+            end
+
+            local matches = {}
+            get_matches(part, key, matches, text, first, last)
+
+            if #matches == 1 and #(matches[1]) == #part then
+                full_match = i
+            end
+
+            for _, j in ipairs(matches) do
+                table.insert(partial_matches, j)
+            end
+        else
+            local ret = get_matches(part, i, partial_matches, text, first, last)
+            if ret ~= nil then
+                return ret
+            end
+        end
+    end
+
+    if last_part then
+        for _, i in ipairs(partial_matches) do
+            clink.add_match(i)
+        end
+    elseif full_match and #partial_matches == 1 then
+        return traverse_loop_shim(full_match, parts, text, first, last)
+    end
+
+    return (clink.match_count() > 0)
+end
+
+--------------------------------------------------------------------------------
+function traverse_loop_shim(node, parts, text, first, last)
+    local ret = traverse(node, parts, text, first, last)
+
+    if parts.n <= #parts and not ret then
+        if has_prop(node, "loop") then
+            ret = traverse_loop_shim(node, parts, text, first, last)
+        end
+    end
+
+    return ret
+end
+
+--------------------------------------------------------------------------------
+local function argument_match_generator(text, first, last)
     local leading = rl_line_buffer:sub(1, first - 1):lower()
-    local cmd_start, cmd_end, cmd, ext = leading:find("^%s*([%w%-_]+)(%.*[%l]*)%s+")
+
+    -- Find any valid command separators and if found, manipulate the completion
+    -- state a little bit.
+    local sep_found, _, post_sep = leading:find("[|&]+%s*([^|&]*)$")
+    if sep_found then
+        local delta = #rl_line_buffer - #post_sep - 1
+        rl_line_buffer = rl_line_buffer:sub(delta + 1)
+        first = first - delta
+        last = last - delta
+
+        leading = post_sep
+    end
+
+    -- Extract the command name (naively)
+    local cmd_start, cmd_end, cmd, ext = leading:find("^%s*\"*([%w%-_]+)(%.*[%l]*)\"*%s+")
     if not cmd_start then
         return false
     end
@@ -125,7 +370,7 @@ function clink.argument_match_generator(text, first, last)
     end
 
     -- Find a registered generator.
-    local generator = clink.arg.generators[cmd]
+    local generator = argument_generators[cmd]
     if generator == nil then
         return false
     end
@@ -146,11 +391,12 @@ function clink.argument_match_generator(text, first, last)
         table.insert(parts, text)
     end
 
+    loop_point = nil
     parts.n = 1
-    return traverse(generator, parts, text, first, last)
+    return traverse_loop_shim(generator, parts, text, first, last)
 end
 
 --------------------------------------------------------------------------------
-clink.register_match_generator(clink.argument_match_generator, 25)
+clink.register_match_generator(argument_match_generator, 25)
 
 -- vim: expandtab

@@ -24,10 +24,6 @@
 clink.matches = {}
 clink.generators = {}
 
-clink.arg = {}
-clink.arg.generators = {}
-clink.arg.node_flags_key = "\x01"
-
 clink.prompt = {}
 clink.prompt.filters = {}
 
@@ -214,53 +210,6 @@ function clink.quote_split(str, ql, qr)
     end
 
     return parts
-end
-
---------------------------------------------------------------------------------
-function clink.arg.register_tree(cmd, generator)
-    clink.arg.generators[cmd:lower()] = generator
-end
-
---------------------------------------------------------------------------------
-function clink.arg.tree_node(flags, content)
-    local node = {}
-    for key, arg in pairs(content) do
-        node[key] = arg
-    end
-
-    node[clink.arg.node_flags_key] = flags
-    return node
-end
-
---------------------------------------------------------------------------------
-function clink.arg.node_transpose(a, b)
-    local c = {}
-    for _, i in ipairs(a) do
-        c[i] = b
-    end
-
-    return c
-end
-
---------------------------------------------------------------------------------
-function clink.arg.node_merge(a, b)
-    c = {}
-    d = {a, b}
-    for _, i in ipairs(d) do
-        if type(i) ~= "table" then
-            i = {i}
-        end
-
-        for j, k in pairs(i) do
-            if type(j) == "number" then
-                table.insert(c, k)
-            else
-                c[j] = k
-            end
-        end
-    end
-
-    return c
 end
 
 --------------------------------------------------------------------------------
