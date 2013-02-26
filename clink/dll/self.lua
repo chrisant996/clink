@@ -21,15 +21,35 @@
 --
 
 --------------------------------------------------------------------------------
-local self_tree = clink.arg.tree_node("*", {
-    "--help",
-    inject = clink.arg.tree_node("*+", {
-        "--scripts", "--help", "--quiet", "--althook"
-    }),
-    autorun = clink.arg.tree_node("*+", {
-        "--install", "--uninstall", "--show", "--value"
-    }),
-})
+local function starts_with_hyphen(word)
+    if word:sub(1, 1) == "-" then
+        return 2
+    end
+
+    return 1
+end
+
+--------------------------------------------------------------------------------
+local clag = clink.arg
+local self_tree = clag.node(
+    "--help" .. clag.node(true),
+    "inject" .. clag.node(
+        "--althook",
+        "--help",
+        "--nohostcheck",
+        "--pid" .. clag.node(true),
+        "--profile" .. clag.node(false),
+        "--quiet",
+        "--scripts" .. clag.node(false)
+    ):loop(),
+    "autorun" .. clag.node(
+        "--install" .. clag.node(true),
+        "--uninstall" .. clag.node(true),
+        "--show" .. clag.node(true),
+        "--value" .. clag.node(false),
+        "--help" .. clag.node(true)
+    )
+)
 
 clink.arg.register_tree("clink", self_tree)
 
