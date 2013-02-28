@@ -28,6 +28,7 @@ static int              reload_lua_state(int count, int invoking_key);
 const char*             get_clink_setting_str(const char*);
 int                     get_clink_setting_int(const char*);
 int                     rl_add_funmap_entry(const char*, int (*)(int, int));
+int                     lua_execute(lua_State* state);
 
 extern inject_args_t    g_inject_args;
 extern int              rl_filename_completion_desired;
@@ -594,6 +595,7 @@ lua_State* initialise_lua()
         { "is_rl_variable_true", is_rl_variable_true },
         { "chdir", change_dir },
         { "get_cwd", get_cwd },
+        { "execute", lua_execute },
         { NULL, NULL }
     };
 
