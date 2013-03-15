@@ -24,13 +24,14 @@
 
 //------------------------------------------------------------------------------
 const char* g_clink_header = 
-    "Clink v"CLINK_VERSION" [git:"CLINK_COMMIT"] (c) 2013 Martin Ridgers"   "\n"
-    "http://code.google.com/p/clink"                                        "\n"
+    "Clink v"CLINK_VERSION" [git:"CLINK_COMMIT"] "
+    "Copyright (c) 2013 Martin Ridgers\n"
+    "http://code.google.com/p/clink\n"
     ;
 
 const char* g_clink_footer =
-    "Copyright (c) 1994-2012 Lua.org, PUC-Rio"                              "\n"
-    "Copyright (c) 1987-2010 Free Software Foundation, Inc."                "\n"
+    "Copyright (c) 1994-2012 Lua.org, PUC-Rio\n"
+    "Copyright (c) 1987-2010 Free Software Foundation, Inc.\n"
     ;
 
 
