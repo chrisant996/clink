@@ -41,7 +41,7 @@ if /i "%1"=="--profile" (
 :: If the .bat is run without any arguments, then start a cmd.exe instance.
 ::
 if "%1"=="" (
-    start "" cmd.exe /k "%~s0 inject %profile% && title clink"
+    start "" cmd.exe /k "%~s0 inject %profile% && title Clink"
     goto :eof
 )
 
