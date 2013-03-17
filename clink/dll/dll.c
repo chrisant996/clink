@@ -418,17 +418,43 @@ void prepare_env_for_inputrc()
 }
 
 //------------------------------------------------------------------------------
+static void failed()
+{
+    char buffer[1024];
+
+    buffer[0] = '\0';
+    get_config_dir(buffer, sizeof_array(buffer));
+
+    fprintf(stderr, "Failed to load clink.\nSee log for details (%s).\n", buffer);
+}
+
+//------------------------------------------------------------------------------
 static void* validate_parent_process()
 {
     void* base;
     const char* name;
-     
+    char buffer[MAX_PATH];
+
+    // Blacklist TCC which uses cmd.exe's autorun.
+    if (GetModuleFileName(NULL, buffer, sizeof_array(buffer)))
+    {
+        const char* slash = strrchr(buffer, '\\');
+        slash = slash ? slash + 1 : buffer;
+
+        if (strnicmp(slash, "tcc", 3) == 0)
+        {
+            LOG_INFO("Detected unsupported TCC.");
+            return NULL;
+        }
+    }
+
     name = g_inject_args.no_host_check ? NULL : "cmd.exe";
 
     base = (void*)GetModuleHandle(name);
     if (base == NULL)
     {
         LOG_INFO("Failed to find base address for 'cmd.exe'.");
+        failed();
     }
     else
     {
@@ -500,17 +526,6 @@ static void success()
 }
 
 //------------------------------------------------------------------------------
-static void failed()
-{
-    char buffer[1024];
-
-    buffer[0] = '\0';
-    get_config_dir(buffer, sizeof_array(buffer));
-
-    fprintf(stderr, "Failed to load clink.\nSee log for details (%s).", buffer);
-}
-
-//------------------------------------------------------------------------------
 BOOL WINAPI DllMain(HINSTANCE instance, DWORD reason, LPVOID unused)
 {
     static int running = 0;
@@ -545,7 +560,6 @@ BOOL WINAPI DllMain(HINSTANCE instance, DWORD reason, LPVOID unused)
     base = validate_parent_process();
     if (base == NULL)
     {
-        failed();
         return FALSE;
     }
 
