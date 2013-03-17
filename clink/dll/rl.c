@@ -503,6 +503,32 @@ static int paste_from_clipboard(int count, int invoking_key)
 }
 
 //------------------------------------------------------------------------------
+static int copy_line_to_clipboard(int count, int invoking_key)
+{
+    HGLOBAL mem;
+    void* data;
+    int size;
+
+    size = (strlen(rl_line_buffer) + 1) * sizeof(wchar_t);
+    mem = GlobalAlloc(GMEM_MOVEABLE, size);
+    if (mem != NULL)
+    {
+        data = GlobalLock(mem);
+        MultiByteToWideChar(CP_UTF8, 0, rl_line_buffer, -1, data, size);
+        GlobalUnlock(mem);
+
+        if (OpenClipboard(NULL) != FALSE)
+        {
+            SetClipboardData(CF_TEXT, NULL);
+            SetClipboardData(CF_UNICODETEXT, mem);
+            CloseClipboard();
+        }
+    }
+
+    return 0;
+}
+
+//------------------------------------------------------------------------------
 static int up_directory(int count, int invoking_key)
 {
     rl_begin_undo_group();
@@ -592,6 +618,7 @@ static int initialise_hook()
     rl_add_funmap_entry("page-up", page_up);
     rl_add_funmap_entry("up-directory", up_directory);
     rl_add_funmap_entry("show-rl-help", show_rl_help);
+    rl_add_funmap_entry("copy-line-to-clipboard", copy_line_to_clipboard);
 
     initialise_clink_settings();
     initialise_lua();
