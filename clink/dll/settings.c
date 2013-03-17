@@ -68,7 +68,7 @@ static const setting_decl_t g_clink_settings_decl[] = {
         "are matched when there is a path separator present.",
         SETTING_TYPE_ENUM,
         "PATH only\0PATH and CWD\0PATH, CWD, and directories",
-        "-1"
+        "2"
     },
     {
         "prompt_colour",

@@ -119,6 +119,10 @@ local function exec_match_generator(text, first, last)
     end
 
     match_style = clink.get_setting_int("exec_match_style")
+    if match_style < 0 then
+        match_style = 2
+    end
+
     local passes = build_passes(text)
 
     -- Combine extensions, text, and paths to find matches - this is done in two
