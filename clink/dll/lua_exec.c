@@ -283,7 +283,7 @@ int lua_execute(lua_State* state)
 
     proc_ret = -1;
     GetExitCodeProcess(exec_state.pi.hProcess, &proc_ret);
-    lua_pushinteger(proc_ret);
+    lua_pushinteger(state, proc_ret);
 
     CloseHandle(exec_state.pi.hThread);
     CloseHandle(thread);
