@@ -21,6 +21,17 @@
 --
 
 --------------------------------------------------------------------------------
+local exec_match_style = 0
+local old_getter = clink.get_setting_int
+function clink.get_setting_int(name)
+    if name == "exec_match_style" then
+        return exec_match_style
+    end
+
+    return old_getter(name)
+end
+
+--------------------------------------------------------------------------------
 local env_path = clink.test.test_fs({
     "spa ce.exe",
     "one_path.exe",
@@ -123,6 +134,7 @@ clink.test.test_output(
     "Spaces (relative)",
     ".\\one_dir\\spa",
     "\".\\one_dir\\spa ce.exe\" "
+)
 
 clink.test.test_matches(
     "Separator false positive",
@@ -131,16 +143,6 @@ clink.test.test_matches(
 )
 
 --------------------------------------------------------------------------------
-local exec_match_style = 0
-local old_getter = clink.get_setting_int
-function clink.get_setting_int(name)
-    if name == "exec_match_style" then
-        return exec_match_style
-    end
-
-    return old_getter(name)
-end
-
 exec_match_style = 1
 clink.test.test_matches(
     "Style - cwd (no dirs)",
