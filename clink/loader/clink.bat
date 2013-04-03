@@ -27,7 +27,7 @@ setlocal
 :: Mimic cmd.exe's behaviour when starting from the start menu.
 ::
 if /i "%1"=="startmenu" (
-    cd /d %userprofile%
+    cd /d "%userprofile%"
     shift /1
 )
 
@@ -41,14 +41,28 @@ if /i "%1"=="--profile" (
 :: If the .bat is run without any arguments, then start a cmd.exe instance.
 ::
 if "%1"=="" (
-    start "" cmd.exe /k "%~s0 inject %profile% && title clink"
+    call :launch
     goto :eof
 )
 
 :: Pass through to appropriate loader.
 ::
 if "%PROCESSOR_ARCHITECTURE%"=="x86" (
-    %~dpsn0_x86.exe %*
+    call :loader_x86 %*
 ) else (
-    %~dpsn0_x64.exe %*
+    call :loader_x64 %*
 )
+goto :eof
+
+:: Helper functions to avoid cmd.exe's issues with brackets.
+:loader_x86
+"%~dpn0_x86.exe" %*
+exit /b 0
+
+:loader_x64
+"%~dpn0_x64.exe" %*
+exit /b 0
+
+:launch
+start "" cmd.exe /s /k ""%~dpnx0" inject %profile% && title clink"
+exit /b 0
