@@ -45,11 +45,11 @@ local loop_point
 --------------------------------------------------------------------------------
 function node_meta.__concat(lhs, rhs)
     if not is_node(rhs) then
-        error("Right-handside must be clink.arg.node()")
+        error("Right-handside must be clink.arg.node()", 2)
     end
 
     if is_node(lhs) then
-        error("Left-handside must not be a clink.arg.node()")
+        error("Left-handside must not be a clink.arg.node()", 2)
     end
 
     if type(lhs) == "table" then
@@ -111,7 +111,7 @@ end
 function nodes_from_key_table(out, keys, value)
     for _, i in ipairs(keys) do
         if is_node(i) then
-            error("Left-handside must not be a clink.arg.node()")
+            error("Left-handside must not be a clink.arg.node()", 2)
         end
 
         if type(i) == "table" then
@@ -163,7 +163,7 @@ end
 --------------------------------------------------------------------------------
 function clink.arg.condition(func, ...)
     if type(func) ~= "function" then
-        error("First argument to clink.arg.condition() must be a function")
+        error("First argument to clink.arg.condition() must be a function", 2)
     end
 
     local node = create_node()
