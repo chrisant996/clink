@@ -123,6 +123,14 @@ end
 
 --------------------------------------------------------------------------------
 function clink.add_match(match)
+    if type(match) == "table" then
+        for _, i in ipairs(match) do
+            table.insert(clink.matches, i)
+        end
+
+        return
+    end
+
     table.insert(clink.matches, match)
 end
 
