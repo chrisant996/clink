@@ -332,12 +332,12 @@ clag.register_tree("argcmd_substr", t);
 
 clink.test.test_matches(
     "Full match is also partial match 1",
-    "argcmd_table one",
+    "argcmd_substr one",
     { "one", "onetwo", "onethree" }
 )
 
 clink.test.test_matches(
     "Full match is also partial match 2",
-    "argcmd_table one f",
+    "argcmd_substr one f",
     { "four", "five" }
 )
