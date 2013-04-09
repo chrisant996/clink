@@ -21,7 +21,7 @@
 --
 
 --------------------------------------------------------------------------------
-function dir_match_generator(text, first, last)
+function dir_match_generator(word, text, first, last)
     -- Strip off any path components that may be on text.
     local prefix = ""
     local i = text:find("[\\/:][^\\/:]*$")
@@ -29,27 +29,28 @@ function dir_match_generator(text, first, last)
         prefix = text:sub(1, i)
     end
 
+    local matches = {}
     local mask = text.."*"
 
     -- Find matches.
     for _, dir in ipairs(clink.find_dirs(mask, true)) do
         local file = prefix..dir
         if clink.is_match(text, file) then
-            clink.add_match(prefix..dir)
+            table.insert(matches, prefix..dir)
         end
     end
 
     -- If there was no matches but text is a dir then use it as the single match.
     -- Otherwise tell readline that matches are files and it will do magic.
-    if clink.match_count() == 0 then
+    if #matches == 0 then
         if clink.is_dir(text) then
-            clink.add_match(text)
+            table.insert(matches, text)
         end
     else
         clink.matches_are_files()
     end
 
-    return true
+    return matches
 end
 
 --------------------------------------------------------------------------------

@@ -248,7 +248,7 @@ local function get_matches(part, value, out, text, first, last)
         end
     elseif t == "function" then
         local matches = value(part, text, first, last)
-        if matches == nil or matches == false then
+        if matches == nil or type(matches) ~= "table" then
             return false
         end
 
