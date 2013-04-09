@@ -32,18 +32,27 @@ local dos_commands = {
 }
 
 --------------------------------------------------------------------------------
-local function dos_cmd_match_generator(text, first, last)
+local function dos_cmd_match_generator(word, text, first, last)
+    local matches = {}
     for _, cmd in ipairs(dos_commands) do
         if clink.is_match(text, cmd) then
-            clink.add_match(cmd)
+            table.insert(matches, cmd)
         end
     end
+
+    return matches
 end
 
 --------------------------------------------------------------------------------
-local function dos_and_dir_match_generators(text, first, last)
-    dos_cmd_match_generator(text, first, last)
-    dir_match_generator(text, first, last)
+local function dos_and_dir_match_generators(word, text, first, last)
+    local matches = dos_cmd_match_generator(word, text, first, last)
+
+    local dirs = dir_match_generator(word, text, first, last)
+    for _, i in ipairs(dirs) do
+        table.insert(matches, i)
+    end
+
+    return matches
 end
 
 --------------------------------------------------------------------------------
@@ -145,7 +154,7 @@ local function exec_match_generator(text, first, last)
         end
         
         if pass.func then
-            pass.func(text, first, last)
+            clink.add_match(pass.func(nil, text, first, last))
         end
 
         -- Was there matches? Then there's no need to make any further passes.
@@ -154,6 +163,7 @@ local function exec_match_generator(text, first, last)
         end
     end
 
+    clink.matches_are_files()
     return true
 end
 

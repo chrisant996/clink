@@ -146,6 +146,10 @@ end
 
 --------------------------------------------------------------------------------
 function clink.is_match(needle, candidate)
+    if needle == nil then
+        error("Nil needle value when calling clink.is_match()", 2)
+    end
+
     if clink.lower(candidate:sub(1, #needle)) == clink.lower(needle) then
         return true
     end
