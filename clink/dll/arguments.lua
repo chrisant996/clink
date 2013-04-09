@@ -292,20 +292,24 @@ function traverse(node, parts, text, first, last)
 
     for _, i in ipairs(node) do
         if is_node(i) then
+            -- Pass through nodes that have no key or are conditional.
             local key = rawget(i, "_key")
             if not key or has_prop(i, "conditional") then
                 parts.n = parts.n - 1
                 return traverse_loop_shim(i, parts, text, first, last)
             end
 
+            -- Get matches from the node.
             local matches = {}
             get_matches(part, key, matches, text, first, last)
 
-            if #matches == 1 and #(matches[1]) == #part then
-                full_match = i
-            end
-
             for _, j in ipairs(matches) do
+                -- If this is deemed to be a full match and there's more of the
+                -- tree to traverse into, traverse into it.
+                if not last_part and clink.is_match(j, part) then
+                    return traverse_loop_shim(i, parts, text, first, last)
+                end
+
                 table.insert(partial_matches, j)
             end
         else
@@ -320,8 +324,6 @@ function traverse(node, parts, text, first, last)
         for _, i in ipairs(partial_matches) do
             clink.add_match(i)
         end
-    elseif full_match and #partial_matches == 1 then
-        return traverse_loop_shim(full_match, parts, text, first, last)
     end
 
     return (clink.match_count() > 0)
