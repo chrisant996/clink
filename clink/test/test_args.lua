@@ -323,3 +323,21 @@ clink.test.test_matches(
     "argcmd_table t",
     { "two", "three" }
 )
+
+--------------------------------------------------------------------------------
+local t = clag.node(
+	{ "one", "onetwo", "onethree" } .. clag.node("four", "five")
+)
+clag.register_tree("argcmd_substr", t);
+
+clink.test.test_matches(
+    "Full match is also partial match 1",
+    "argcmd_table one",
+    { "one", "onetwo", "onethree" }
+)
+
+clink.test.test_matches(
+    "Full match is also partial match 2",
+    "argcmd_table one f",
+    { "four", "five" }
+)
