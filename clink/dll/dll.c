@@ -40,6 +40,7 @@ void                    emulate_doskey(wchar_t*, unsigned);
 int                     call_readline(const wchar_t*, wchar_t*, unsigned);
 void                    shutdown_clink_settings();
 int                     get_clink_setting_int(const char*);
+void                    prepare_env_for_inputrc();
 
 inject_args_t           g_inject_args;
 static int              g_write_cache_index     = 0;
@@ -383,38 +384,6 @@ BOOL WINAPI hooked_write_console(
     }
 
     return TRUE;
-}
-
-//------------------------------------------------------------------------------
-void prepare_env_for_inputrc()
-{
-    // Give readline a chance to find the inputrc by modifying the
-    // environment slightly.
-
-    char buffer[1024];
-
-    // HOME is where Readline will expand ~ to.
-    {
-        static const char home_eq[] = "HOME=";
-        int size = sizeof_array(home_eq);
-
-        strcpy(buffer, home_eq);
-        get_config_dir(buffer + size - 1, sizeof_array(buffer) - size);
-
-        putenv(buffer);
-    }
-
-    // INPUTRC is the path where looks for it's configuration file.
-    {
-        static const char inputrc_eq[] = "INPUTRC=";
-        int size = sizeof_array(inputrc_eq);
-
-        strcpy(buffer, inputrc_eq);
-        get_dll_dir(buffer + size - 1, sizeof_array(buffer) - size);
-        str_cat(buffer, "/clink_inputrc_base", sizeof_array(buffer));
-
-        putenv(buffer);
-    }
 }
 
 //------------------------------------------------------------------------------
