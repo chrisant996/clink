@@ -108,25 +108,20 @@ void initialise_clink_settings(lua_State* lua)
         sizeof_array(g_clink_settings_decl)
     );
 
-    settings_load(g_settings, settings_file);
-    settings_save(g_settings, settings_file);
+    if (!settings_load(g_settings, settings_file))
+    {
+        settings_save(g_settings, settings_file);
+    }
 }
 
 //------------------------------------------------------------------------------
 void shutdown_clink_settings()
 {
-    char settings_file[MAX_PATH];
-
-    if (g_settings == NULL)
+    if (g_settings != NULL)
     {
-        return;
+        settings_shutdown(g_settings);
+        g_settings = NULL;
     }
-
-    get_settings_file(settings_file, sizeof_array(settings_file));
-
-    settings_shutdown(g_settings);
-
-    g_settings = NULL;
 }
 
 //------------------------------------------------------------------------------
