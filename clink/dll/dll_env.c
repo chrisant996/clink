@@ -45,6 +45,7 @@ static void apply_env(const char* env, int clear)
     c = strings;
     while (*c)
     {
+        int len = (int)strlen(c);
         char* value = strchr(c, '=');
         if ((value != NULL) && (*c != '='))
         {
@@ -54,7 +55,7 @@ static void apply_env(const char* env, int clear)
             SetEnvironmentVariable(c, clear ? NULL : value);
         }
 
-        c += strlen(c) + 1;
+        c += len + 1;
     }
 
     free(strings);
