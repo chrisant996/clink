@@ -41,6 +41,7 @@ extern int          rl_visible_stats;
 extern int          rl_display_fixed;
 extern int          rl_editing_mode;
 extern const char*  rl_filename_quote_characters;
+extern int          rl_catch_signals;
 extern int          _rl_complete_mark_directories;
 extern char*        _rl_comment_begin;
 static int          g_new_history_count             = 0;
@@ -611,6 +612,7 @@ static int initialise_hook()
 
     rl_basic_quote_characters = "\"";
     rl_filename_quote_characters = " %=;&^";
+    rl_catch_signals = 0;
 
     rl_add_funmap_entry("clink-completion-shim", completion_shim);
     rl_add_funmap_entry("ctrl-c", ctrl_c);
