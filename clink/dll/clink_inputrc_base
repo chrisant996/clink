@@ -15,31 +15,39 @@ set skip-completed-text         on
 "\033`u": kill-line          # ctrl+end
 "\033`w": backward-kill-line # ctrl+home
 
-set keymap    emacs
-"\t":         clink-completion-shim
-C-c:          ctrl-c
-C-v:          paste-from-clipboard
-C-q:          reload-lua-state
-C-z:          undo
-M-h:          show-rl-help
-M-C-c:        copy-line-to-clipboard
-M-C-u:        up-directory
+set keymap          emacs
+"\t":               clink-completion-shim
+C-v:                paste-from-clipboard
+C-q:                reload-lua-state
+C-z:                undo
+M-h:                show-rl-help
+M-C-c:              copy-line-to-clipboard
+C-c:                ctrl-c
 
-set keymap    vi-insert
-"\t":         clink-completion-shim
-C-c:          ctrl-c
-C-v:          paste-from-clipboard
-C-z:          undo
-M-h:          show-rl-help
-M-C-c:        copy-line-to-clipboard
-M-C-u:        up-directory
+set keymap          vi-insert
+"\t":               clink-completion-shim
+C-v:                paste-from-clipboard
+C-z:                undo
+M-h:                show-rl-help
+M-C-c:              copy-line-to-clipboard
+C-c:                ctrl-c
 
-set keymap    vi-move
-C-c:          ctrl-c
-C-v:          paste-from-clipboard
-C-z:          undo
-M-h:          show-rl-help
-M-C-c:        copy-line-to-clipboard
-M-C-u:        up-directory
+set keymap          vi-move
+C-v:                paste-from-clipboard
+C-z:                undo
+M-h:                show-rl-help
+M-C-c:              copy-line-to-clipboard
+C-c:                ctrl-c
+
+$if cmd.exe
+    set keymap      emacs
+    M-C-u:          up-directory
+
+    set keymap      vi-insert
+    M-C-u:          up-directory
+
+    set keymap      vi-move
+    M-C-u:          up-directory
+$endif
 
 $include ~/clink_inputrc

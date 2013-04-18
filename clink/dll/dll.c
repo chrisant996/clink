@@ -407,8 +407,14 @@ static void* validate_parent_process()
     // Blacklist TCC which uses cmd.exe's autorun.
     if (GetModuleFileName(NULL, buffer, sizeof_array(buffer)))
     {
-        const char* slash = strrchr(buffer, '\\');
+        static char exe_name[64];
+        const char* slash;
+        
+        slash = strrchr(buffer, '\\');
         slash = slash ? slash + 1 : buffer;
+
+        str_cpy(exe_name, slash, sizeof(exe_name));
+        rl_readline_name = exe_name;
 
         if (strnicmp(slash, "tcc", 3) == 0)
         {
