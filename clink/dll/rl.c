@@ -28,13 +28,12 @@ char**              lua_generate_matches(const char*, int, int);
 void                lua_filter_prompt(char*, int);
 char**              lua_match_display_filter(char**, int);
 void                initialise_rl_scroller();
-void                enter_scroll_mode(int);
 void                move_cursor(int, int);
 void                initialise_clink_settings();
-int                 get_clink_setting_int(const char*);
 const char*         find_next_ansi_code(const char*, int*);
 int                 getc_impl(FILE* stream);
-int                 show_rl_help(int, int);
+int                 get_clink_setting_int(const char*);
+void                clink_register_rl_funcs();
 
 int                 g_slash_translation             = 0;
 extern int          rl_visible_stats;
@@ -449,107 +448,6 @@ void save_history()
 }
 
 //------------------------------------------------------------------------------
-static void clear_line()
-{
-    using_history();
-    rl_delete_text(0, rl_end);
-    rl_point = 0;
-}
-
-//------------------------------------------------------------------------------
-static int ctrl_c(int count, int invoking_key)
-{
-    if (get_clink_setting_int("passthrough_ctrlc"))
-    {
-        rl_line_buffer[0] = '\x03';
-        rl_line_buffer[1] = '\x00';
-        rl_point = 1;
-        rl_end = 1;
-        rl_done = 1;
-    }
-    else
-    {
-        clear_line();
-    }
-
-    return 0;
-}
-
-//------------------------------------------------------------------------------
-static int paste_from_clipboard(int count, int invoking_key)
-{
-    if (OpenClipboard(NULL) != FALSE)
-    {
-        HANDLE clip_data = GetClipboardData(CF_UNICODETEXT);
-        if (clip_data != NULL)
-        {
-            wchar_t* from_clipboard = (wchar_t*)clip_data;
-            char utf8[1024];
-
-            WideCharToMultiByte(
-                CP_UTF8, 0,
-                from_clipboard, -1,
-                utf8, sizeof(utf8),
-                NULL, NULL
-            );
-            utf8[sizeof(utf8) - 1] = '\0';
-
-            rl_insert_text(utf8);
-        }
-
-        CloseClipboard();
-    }
-    
-    return 0;
-}
-
-//------------------------------------------------------------------------------
-static int copy_line_to_clipboard(int count, int invoking_key)
-{
-    HGLOBAL mem;
-    void* data;
-    int size;
-
-    size = (strlen(rl_line_buffer) + 1) * sizeof(wchar_t);
-    mem = GlobalAlloc(GMEM_MOVEABLE, size);
-    if (mem != NULL)
-    {
-        data = GlobalLock(mem);
-        MultiByteToWideChar(CP_UTF8, 0, rl_line_buffer, -1, data, size);
-        GlobalUnlock(mem);
-
-        if (OpenClipboard(NULL) != FALSE)
-        {
-            SetClipboardData(CF_TEXT, NULL);
-            SetClipboardData(CF_UNICODETEXT, mem);
-            CloseClipboard();
-        }
-    }
-
-    return 0;
-}
-
-//------------------------------------------------------------------------------
-static int up_directory(int count, int invoking_key)
-{
-    rl_begin_undo_group();
-    rl_delete_text(0, rl_end);
-    rl_point = 0;
-    rl_insert_text("cd ..");
-    rl_end_undo_group();
-    rl_done = 1;
-
-    return 0;
-}
-
-//------------------------------------------------------------------------------
-static int page_up(int count, int invoking_key)
-{
-    enter_scroll_mode(-1);
-    return 0;
-}
-
-//------------------------------------------------------------------------------
 static int filter_prompt()
 {
     char* next;
@@ -615,17 +513,13 @@ static int initialise_hook()
     rl_catch_signals = 0;
 
     rl_add_funmap_entry("clink-completion-shim", completion_shim);
-    rl_add_funmap_entry("ctrl-c", ctrl_c);
-    rl_add_funmap_entry("paste-from-clipboard", paste_from_clipboard);
-    rl_add_funmap_entry("page-up", page_up);
-    rl_add_funmap_entry("up-directory", up_directory);
-    rl_add_funmap_entry("show-rl-help", show_rl_help);
-    rl_add_funmap_entry("copy-line-to-clipboard", copy_line_to_clipboard);
 
+    clink_register_rl_funcs();
     initialise_clink_settings();
     initialise_lua();
     initialise_rl_scroller();
     load_history();
+
     rl_re_read_init_file(0, 0);
     rl_visible_stats = 0;               // serves no purpose under win32.
 
