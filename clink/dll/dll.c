@@ -305,26 +305,8 @@ BOOL WINAPI hooked_read_console(
 
     invalidate_cached_write(i);
 
-    // Check for control codes and convert them.
-    if (buffer[0] == L'\x03')
-    {
-        SetUnhandledExceptionFilter(old_seh);
-
-        // Fire a Ctrl-C exception. Cmd.exe sets a global variable (CtrlCSeen)
-        // and ReadConsole() would normally set error code 0x3e3. Sleep() is to
-        // yield the thread so the global gets set (guess work...).
-        GenerateConsoleCtrlEvent(CTRL_C_EVENT, 0);
-        SetLastError(0x3e3);
-        Sleep(0);
-
-        buffer[0] = '\0';
-        old_seh = SetUnhandledExceptionFilter(exception_filter);
-    }
-    else
-    {
-        emulate_doskey(buffer, buffer_size);
-        append_crlf(buffer, buffer_size);
-    }
+    emulate_doskey(buffer, buffer_size);
+    append_crlf(buffer, buffer_size);
 
     SetUnhandledExceptionFilter(old_seh);
 

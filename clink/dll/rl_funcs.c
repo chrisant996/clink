@@ -37,17 +37,23 @@ static void clear_line()
 //------------------------------------------------------------------------------
 static int ctrl_c(int count, int invoking_key)
 {
-    if (get_clink_setting_int("passthrough_ctrlc"))
+    DWORD mode;
+
+    clear_line();
+    rl_crlf();
+    rl_done = 1;
+
+    if (GetConsoleMode(GetStdHandle(STD_INPUT_HANDLE), &mode))
     {
-        rl_line_buffer[0] = '\x03';
-        rl_line_buffer[1] = '\x00';
-        rl_point = 1;
-        rl_end = 1;
-        rl_done = 1;
-    }
-    else
-    {
-        clear_line();
+        if (mode & ENABLE_PROCESSED_INPUT)
+        {
+            // Fire a Ctrl-C event and stop Readline. ReadConsole would also
+            // set error 0x3e3 (ERROR_OPERATION_ABORTED) too.
+            GenerateConsoleCtrlEvent(CTRL_C_EVENT, 0);
+            Sleep(5);
+
+            SetLastError(0x3e3);
+        }
     }
 
     return 0;

@@ -36,14 +36,6 @@ static const setting_decl_t g_clink_settings_decl[] = {
         0, "1"
     },
     {
-        "passthrough_ctrlc",
-        "Ctrl-C raises exception",
-        "When Ctrl-C is pressed Clink will pass it thourgh to the parent "
-        "by raising the appropriate exception.",
-        SETTING_TYPE_BOOL,
-        0, "1"
-    },
-    {
         "esc_clears_line",
         "Esc clears line",
         "Clink clears the current line when Esc is pressed (unless Readline's "
