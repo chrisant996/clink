@@ -103,7 +103,16 @@ int hooked_putc(int c, void* unused)
 //------------------------------------------------------------------------------
 size_t hooked_mbrtowc(wchar_t* out, const char* in, size_t size, mbstate_t* state)
 {
-    MultiByteToWideChar(CP_UTF8, 0, in, 5, out, 1);
+    wchar_t buffer[8];
+
+    if (size <= 0)
+    {
+        return 0;
+    }
+
+    MultiByteToWideChar(CP_UTF8, 0, in, 5, buffer, sizeof_array(buffer));
+    *out = buffer[0];
+
     return (*out > 0) + (*out > 0x7f) + (*out > 0x7ff);
 }
 
