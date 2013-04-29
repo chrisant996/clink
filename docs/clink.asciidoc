@@ -495,6 +495,11 @@ results.
 [role="indented"]
 Returns a table of the names of the current process' environment variables.
 
+==== clink.get_host_process()
+
+[role="indented"]
+Returns the name of the host process (the rl_readline_name variable).
+
 ==== clink.get_screen_info()
 
 [role="indented"]

@@ -506,6 +506,13 @@ static int is_rl_variable_true(lua_State* state)
 }
 
 //------------------------------------------------------------------------------
+static int get_host_process(lua_State* state)
+{
+    lua_pushstring(state, rl_readline_name);
+    return 1;
+}
+
+//------------------------------------------------------------------------------
 static int change_dir(lua_State* state)
 {
     const char* path;
@@ -586,6 +593,7 @@ lua_State* initialise_lua()
         { "get_cwd", get_cwd },
         { "get_env", get_env },
         { "get_env_var_names", get_env_var_names },
+        { "get_host_process", get_host_process },
         { "get_rl_variable", get_rl_variable },
         { "get_screen_info", get_screen_info },
         { "get_setting_int", get_setting_int },
