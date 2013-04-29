@@ -175,7 +175,7 @@ local function test_runner(name, input, expected_out, expected_matches)
         end
 
         print(colour(5).."\n    -- Expected --")
-        print(colour(5).."       Output: "..(expected_out or "<nothing>").."_")
+        print(colour(5).."       Output: "..(expected_out or "<no_test>").."_")
         for _, i in ipairs(expected_matches or {}) do
             print(colour(5).."      Matches: "..i)
         end
