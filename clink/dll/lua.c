@@ -579,23 +579,23 @@ lua_State* initialise_lua()
     int path_hash;
     char buffer[1024];
     struct luaL_Reg clink_native_methods[] = {
-        { "find_files", find_files },
+        { "chdir", change_dir },
+        { "execute", lua_execute },
         { "find_dirs", find_dirs },
-        { "get_env_var_names", get_env_var_names },
-        { "get_screen_info", get_screen_info },
+        { "find_files", find_files },
+        { "get_cwd", get_cwd },
         { "get_env", get_env },
+        { "get_env_var_names", get_env_var_names },
+        { "get_rl_variable", get_rl_variable },
+        { "get_screen_info", get_screen_info },
+        { "get_setting_int", get_setting_int },
+        { "get_setting_str", get_setting_str },
+        { "is_dir", is_dir },
+        { "is_rl_variable_true", is_rl_variable_true },
         { "lower", to_lowercase },
         { "matches_are_files", matches_are_files },
-        { "suppress_char_append", suppress_char_append },
-        { "get_setting_str", get_setting_str },
-        { "get_setting_int", get_setting_int },
         { "slash_translation", slash_translation },
-        { "is_dir", is_dir },
-        { "get_rl_variable", get_rl_variable },
-        { "is_rl_variable_true", is_rl_variable_true },
-        { "chdir", change_dir },
-        { "get_cwd", get_cwd },
-        { "execute", lua_execute },
+        { "suppress_char_append", suppress_char_append },
         { NULL, NULL }
     };
 
