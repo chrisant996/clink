@@ -693,7 +693,7 @@ char** lua_generate_matches(const char* text, int start, int end)
 
     lua_pushstring(g_lua, text);
     lua_pushinteger(g_lua, start + 1);
-    lua_pushinteger(g_lua, end + 1);
+    lua_pushinteger(g_lua, end);
     if (lua_pcall(g_lua, 3, 1, 0) != 0)
     {
         puts(lua_tostring(g_lua, -1));
