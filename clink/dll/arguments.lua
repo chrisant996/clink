@@ -346,18 +346,6 @@ end
 local function argument_match_generator(text, first, last)
     local leading = rl_line_buffer:sub(1, first - 1):lower()
 
-    -- Find any valid command separators and if found, manipulate the completion
-    -- state a little bit.
-    local sep_found, _, post_sep = leading:find("[|&]+%s*([^|&]*)$")
-    if sep_found then
-        local delta = #rl_line_buffer - #post_sep - 1
-        rl_line_buffer = rl_line_buffer:sub(delta + 1)
-        first = first - delta
-        last = last - delta
-
-        leading = post_sep
-    end
-
     -- Extract the command name (naively)
     local cmd_start, cmd_end, cmd, ext = leading:find("^%s*\"*([%w%-_]+)(%.*[%l]*)\"*%s+")
     if not cmd_start then
@@ -378,7 +366,7 @@ local function argument_match_generator(text, first, last)
     end
 
     -- Split the command line into parts.
-    local str = rl_line_buffer:sub(cmd_end, last - 1)
+    local str = rl_line_buffer:sub(cmd_end, last)
     local parts = {}
     for _, sub_str in ipairs(clink.quote_split(str, "\"")) do
         for _, r, part in function () return sub_str:find("^%s*([^%s]+)") end do

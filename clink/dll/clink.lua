@@ -95,7 +95,61 @@ function clink.is_single_match(matches)
 end
 
 --------------------------------------------------------------------------------
+function clink.is_point_in_quote(str, i)
+    if i > #str then
+        i = #str
+    end
+
+    local c = 1
+    local q = string.byte("\"")
+    for j = 1, i do
+        if string.byte(str, j) == q then
+            c = c * -1
+        end
+    end
+
+    if c < 0 then
+        return true
+    end
+
+    return false
+end
+
+--------------------------------------------------------------------------------
+function clink.adjust_for_separator(buffer, first, last)
+    local seps = nil
+    if clink.get_host_process() ~= "cmd.exe" then
+        seps = "|&"
+    end
+
+    if seps then
+        -- Find any valid command separators and if found, manipulate the
+        -- completion state a little bit.
+        local leading = buffer:sub(1, first - 1)
+
+        -- regex is: <sep> <whitespace> <not_seps> <eol>
+        local regex = "["..seps.."]%s*([^"..seps.."]*)$"
+        local sep_found, _, post_sep = leading:find(regex)
+
+        if sep_found and not clink.is_point_in_quote(leading, sep_found) then
+            local delta = #leading - #post_sep
+            buffer = buffer:sub(delta + 1)
+            first = first - delta
+            last = last - delta
+        end
+    end
+
+    return buffer, first, last
+end
+
+--------------------------------------------------------------------------------
 function clink.generate_matches(text, first, last)
+    rl_line_buffer, first, last = clink.adjust_for_separator(
+        rl_line_buffer,
+        first,
+        last
+    )
+
     clink.matches = {}
     clink.match_display_filter = nil
 
