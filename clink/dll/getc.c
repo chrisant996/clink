@@ -263,6 +263,11 @@ loop:
 
             key_vk = 0xe0;
         }
+        else if (!(key_flags & CTRL_PRESSED))
+        {
+            goto loop;
+        }
+
         // This builds Ctrl-<key> map to match that as described by Readline's
         // source for the emacs/vi keymaps.
         #define CONTAINS(l, r) (unsigned)(key_vk - l) <= (r - l)
