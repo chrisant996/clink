@@ -180,6 +180,7 @@ int show_rl_help(int count, int invoking_key)
     // Display the matches.
     if (rl_completion_display_matches_hook != NULL)
     {
+        rl_filename_completion_desired = 0;
         rl_completion_display_matches_hook(collector, offset - 1, longest); 
     }
 
