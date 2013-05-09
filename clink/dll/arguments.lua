@@ -347,7 +347,8 @@ local function argument_match_generator(text, first, last)
     local leading = rl_line_buffer:sub(1, first - 1):lower()
 
     -- Extract the command name (naively)
-    local cmd_start, cmd_end, cmd, ext = leading:find("^%s*\"*([%w%-_]+)(%.*[%l]*)\"*%s+")
+    local regex = "^%s*\"*([%w%-_]+)(%.*[%l]*)\"*%s+"
+    local cmd_start, cmd_end, cmd, ext = leading:find(regex)
     if not cmd_start then
         return false
     end
@@ -369,9 +370,20 @@ local function argument_match_generator(text, first, last)
     local str = rl_line_buffer:sub(cmd_end, last)
     local parts = {}
     for _, sub_str in ipairs(clink.quote_split(str, "\"")) do
-        for _, r, part in function () return sub_str:find("^%s*([^%s]+)") end do
-            table.insert(parts, part)
-            sub_str = sub_str:sub(r+1)
+        -- Quoted strings still have their quotes. Look for those type of
+        -- strings, strip the quotes and add it completely.
+        if sub_str:sub(1, 1) == "\"" then
+            local l, r = sub_str:find("\"[^\"]+")
+            if l then
+                local part = sub_str:sub(l + 1, r)
+                table.insert(parts, part)
+            end
+        else
+            -- Extract non-whitespace parts.
+            for _, r, part in function () return sub_str:find("^%s*([^%s]+)") end do
+                table.insert(parts, part)
+                sub_str = sub_str:sub(r + 1)
+            end
         end
     end
 
