@@ -21,7 +21,7 @@
 --
 
 --------------------------------------------------------------------------------
-function dir_match_generator(word, text, first, last)
+function dir_match_generator_impl(text)
     -- Strip off any path components that may be on text.
     local prefix = ""
     local i = text:find("[\\/:][^\\/:]*$")
@@ -39,6 +39,13 @@ function dir_match_generator(word, text, first, last)
             table.insert(matches, prefix..dir)
         end
     end
+
+    return matches
+end
+
+--------------------------------------------------------------------------------
+local function dir_match_generator(word, text, first, last)
+    local matches = dir_match_generator_impl(text, first, last)
 
     -- If there was no matches but text is a dir then use it as the single match.
     -- Otherwise tell readline that matches are files and it will do magic.

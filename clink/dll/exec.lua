@@ -32,7 +32,7 @@ local dos_commands = {
 }
 
 --------------------------------------------------------------------------------
-local function dos_cmd_match_generator(word, text, first, last)
+local function dos_cmd_match_generator(text)
     local matches = {}
     for _, cmd in ipairs(dos_commands) do
         if clink.is_match(text, cmd) then
@@ -44,10 +44,10 @@ local function dos_cmd_match_generator(word, text, first, last)
 end
 
 --------------------------------------------------------------------------------
-local function dos_and_dir_match_generators(word, text, first, last)
-    local matches = dos_cmd_match_generator(word, text, first, last)
+local function dos_and_dir_match_generators(text)
+    local matches = dos_cmd_match_generator(text)
 
-    local dirs = dir_match_generator(word, text, first, last)
+    local dirs = dir_match_generator_impl(text)
     for _, i in ipairs(dirs) do
         table.insert(matches, i)
     end
@@ -97,7 +97,7 @@ local function build_passes(text)
 
     -- The fallback solution is to use 'text' to find matches, and also add
     -- directories.
-    table.insert(passes, { paths={""}, func=dir_match_generator })
+    table.insert(passes, { paths={""}, func=dir_match_generator_impl })
 
     return passes
 end
@@ -154,7 +154,7 @@ local function exec_match_generator(text, first, last)
         end
         
         if pass.func then
-            clink.add_match(pass.func(nil, text, first, last))
+            clink.add_match(pass.func(text))
         end
 
         -- Was there matches? Then there's no need to make any further passes.
