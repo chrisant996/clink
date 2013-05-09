@@ -256,7 +256,7 @@ function clink.quote_split(str, ql, qr)
         end
 
         -- "quote_string"
-        insert(parts, str:sub(l + 1, r - 1))
+        insert(parts, str:sub(l, r))
         i = r + 1
     end
 
@@ -269,7 +269,7 @@ function clink.quote_split(str, ql, qr)
         end
 
         -- "being_quoted"
-        insert(parts, str:sub(l + 1))
+        insert(parts, str:sub(l))
     elseif i < #str then
         -- Finally add whatever remains...
         insert(parts, str:sub(i))
