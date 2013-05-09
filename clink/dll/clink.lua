@@ -270,7 +270,7 @@ function clink.quote_split(str, ql, qr)
 
         -- "being_quoted"
         insert(parts, str:sub(l))
-    elseif i < #str then
+    elseif i <= #str then
         -- Finally add whatever remains...
         insert(parts, str:sub(i))
     end
