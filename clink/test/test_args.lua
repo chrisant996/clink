@@ -27,7 +27,8 @@ local clag = clink.arg
 local t = clag.node(
     "one",
     "two",
-    "three" .. clag.node("four" .. clag.node("five", "six")):loop()
+    "three" .. clag.node("four" .. clag.node("five", "six")):loop(),
+    "spa ce" .. clag.node("one", "two")
 )
 --clag.print_tree(t)
 clag.register_tree("argcmd", t)
@@ -35,7 +36,7 @@ clag.register_tree("argcmd", t)
 clink.test.test_matches(
     "Node matches 1",
     "argcmd ",
-    { "one", "two", "three" }
+    { "one", "two", "three", "spa ce" }
 )
 
 clink.test.test_matches(
@@ -104,15 +105,33 @@ clink.test.test_matches(
 )
 
 clink.test.test_matches(
-    "Quoted traversal 2",
+    "Quoted traversal 2a",
     "argcmd three four \"",
     { "five", "six" }
 )
 
 clink.test.test_output(
+    "Quoted traversal 2b",
+    "argcmd three four \"fi",
+    "argcmd three four \"five\" four "
+)
+
+clink.test.test_output(
     "Quoted traversal 3",
     "argcmd \"three\"",
-    "argcmd \"three\" four "
+    "argcmd three four "
+)
+
+clink.test.test_matches(
+    "Quoted traversal 4",
+    "argcmd \"spa ce\" ",
+    { "one", "two" }
+)
+
+clink.test.test_output(
+    "Quoted traversal 5",
+    "argcmd spa",
+    "argcmd \"spa ce\" "
 )
 
 clink.test.test_matches(
@@ -228,7 +247,7 @@ clag.register_tree("argcmd", t)
 clink.test.test_matches(
     "Merged trees",
     "argcmd ",
-    { "one", "two", "three", "eleven" }
+    { "one", "two", "three", "spa ce", "eleven" }
 )
 
 --------------------------------------------------------------------------------
