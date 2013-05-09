@@ -346,12 +346,24 @@ end
 local function argument_match_generator(text, first, last)
     local leading = rl_line_buffer:sub(1, first - 1):lower()
 
-    -- Extract the command name (naively)
-    local regex = "^%s*\"*([%w%-_]+)(%.*[%l]*)\"*%s+"
-    local cmd_start, cmd_end, cmd, ext = leading:find(regex)
-    if not cmd_start then
+    -- Extract the command.
+    local cmd_l, cmd_r
+    if leading:find("^%s*\"") then
+        -- Command appears to be surround by quotes.
+        cmd_l, cmd_r = leading:find("%b\"\"")
+        cmd_l = cmd_l + 1
+        cmd_r = cmd_r - 1
+    else
+        -- No quotes so the first, longest, non-whitespace word is extracted.
+        cmd_l, cmd_r = leading:find("[^%s]+")
+    end
+
+    if not cmd_l then
         return false
     end
+
+    local regex = "[\\/:]*([^\\/:.]+)(%.*[%l]*)%s*$"
+    local _, _, cmd, ext = leading:sub(cmd_l, cmd_r):lower():find(regex)
 
     -- Check to make sure the extension extracted is in pathext.
     if ext and ext ~= "" then
@@ -359,7 +371,7 @@ local function argument_match_generator(text, first, last)
             return false
         end
     end
-
+    
     -- Find a registered generator.
     local generator = argument_generators[cmd]
     if generator == nil then
@@ -367,7 +379,7 @@ local function argument_match_generator(text, first, last)
     end
 
     -- Split the command line into parts.
-    local str = rl_line_buffer:sub(cmd_end, last)
+    local str = rl_line_buffer:sub(cmd_r + 2, last)
     local parts = {}
     for _, sub_str in ipairs(clink.quote_split(str, "\"")) do
         -- Quoted strings still have their quotes. Look for those type of
