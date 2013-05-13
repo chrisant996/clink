@@ -233,6 +233,11 @@ function clink.test.run()
     end
     test_fs = t
 
+    -- Fake the host to be cmd.exe (by default at least)
+    clink.get_host_process = function()
+        return "cmd.exe"
+    end
+
     -- Copy clink table's functions so they can be restored.
     for n, f in pairs(clink) do
         if type(f) == "function" then
