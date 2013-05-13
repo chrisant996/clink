@@ -108,8 +108,7 @@ local function exec_match_generator(text, first, last)
     -- line, or the first word after a command separator.
     local leading = rl_line_buffer:sub(1, first - 1)
     local is_first = leading:find("^%s*\"*$")
-    local is_separated = leading:find("[|&]%s*\"*$")
-    if not is_first and not is_separated then
+    if not is_first then
         return false
     end
 

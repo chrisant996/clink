@@ -118,7 +118,7 @@ end
 --------------------------------------------------------------------------------
 function clink.adjust_for_separator(buffer, first, last)
     local seps = nil
-    if clink.get_host_process() ~= "cmd.exe" then
+    if clink.get_host_process() == "cmd.exe" then
         seps = "|&"
     end
 
