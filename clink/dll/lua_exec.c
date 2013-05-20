@@ -21,77 +21,15 @@
 
 #include "pch.h"
 #include "shared/util.h"
+#include "shared/pipe.h"
 
 //------------------------------------------------------------------------------
-typedef struct 
-{
-    HANDLE  read;
-    HANDLE  write;
-} pipe_t;
-
 typedef struct
 {
    PROCESS_INFORMATION  pi; 
    HANDLE               job;
    int                  timeout;
 } exec_state_t;
-
-enum
-{
-    ReadHandleInheritable   = 1 << 0,
-    WriteHandleInheritable  = 1 << 1,
-};
-
-//------------------------------------------------------------------------------
-int create_pipe(int flags, pipe_t* pipe)
-{
-    BOOL ok;
-    SECURITY_ATTRIBUTES sa;
-
-    // Init data.
-    pipe->read = NULL;
-    pipe->write = NULL;
-
-    sa.nLength = sizeof(sa);
-    sa.lpSecurityDescriptor = NULL;
-    sa.bInheritHandle = TRUE;
-    
-    // Create the pipe.
-    ok = CreatePipe(&pipe->read, &pipe->write, &sa, 0);
-    if (ok == FALSE)
-    {
-        return 0;
-    }
-
-    // Adjust inherit flags on the handles.
-    if (!(flags & ReadHandleInheritable))
-    {
-        SetHandleInformation(pipe->read, HANDLE_FLAG_INHERIT, 0);
-    }
-
-    if (!(flags & WriteHandleInheritable))
-    {
-        SetHandleInformation(pipe->write, HANDLE_FLAG_INHERIT, 0);
-    }
-
-    return 1;
-}
-
-//------------------------------------------------------------------------------
-void destroy_pipe(pipe_t* pipe)
-{
-    if (pipe->read)
-    {
-        CloseHandle(pipe->read);
-        pipe->read = NULL;
-    }
-
-    if (pipe->write)
-    {
-        CloseHandle(pipe->write);
-        pipe->write = NULL;
-    }
-}
 
 //------------------------------------------------------------------------------
 static HANDLE create_job()
