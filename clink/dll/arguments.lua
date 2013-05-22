@@ -140,7 +140,11 @@ end
 function node_insert(node, i)
     if type(i) == "table" and rawget(i, "_key") == nil then
         for _, j in ipairs(i) do
-            table.insert(node, j)
+            if type(j) == "table" then
+                node_insert(node, j)
+            else
+                table.insert(node, j)
+            end
         end
 
         return

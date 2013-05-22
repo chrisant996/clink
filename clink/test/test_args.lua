@@ -360,3 +360,23 @@ clink.test.test_matches(
     "argcmd_substr one f",
     { "four", "five" }
 )
+
+--------------------------------------------------------------------------------
+local tbl_1 = { "one", "two", "three" }
+local tbl_2 = { "four", "five", tbl_1 }
+local t = clag.node(
+    { "once", tbl_1 } .. clag.node({"fifth", tbl_2})
+)
+clag.register_tree("argcmd_nested", t);
+
+clink.test.test_matches(
+    "Nested table: simple",
+    "argcmd_nested on",
+    { "once", "one" }
+)
+
+clink.test.test_matches(
+    "Nested table: leaf node",
+    "argcmd_nested once f",
+    { "fifth", "four", "five" }
+)
