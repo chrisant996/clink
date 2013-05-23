@@ -21,6 +21,7 @@
 
 #include "pch.h"
 #include "inject_args.h"
+#include "shell.h"
 #include "shared/util.h"
 #include "shared/shared_mem.h"
 
@@ -32,7 +33,6 @@ typedef struct
 } write_cache_t;
 
 //------------------------------------------------------------------------------
-int                     set_hook_trap();
 void                    save_history();
 void                    shutdown_lua();
 void                    clear_to_eol();
@@ -41,12 +41,16 @@ int                     call_readline(const wchar_t*, wchar_t*, unsigned);
 void                    shutdown_clink_settings();
 int                     get_clink_setting_int(const char*);
 void                    prepare_env_for_inputrc();
+int                     check_auto_answer(const wchar_t*);
 
 inject_args_t           g_inject_args;
+static const shell_t*   g_shell                 = NULL;
 static int              g_write_cache_index     = 0;
 static const int        g_write_cache_size      = 0xffff;      // 0x10000 - 1 !!
 static write_cache_t    g_write_cache[2]        = { {NULL, 0},
                                                     {NULL, 0} };
+extern shell_t          shell_cmd;
+extern shell_t          shell_generic;
 
 //------------------------------------------------------------------------------
 static LONG WINAPI exception_filter(EXCEPTION_POINTERS* info)
@@ -85,19 +89,6 @@ static LONG WINAPI exception_filter(EXCEPTION_POINTERS* info)
     // to continue!
 
     return EXCEPTION_EXECUTE_HANDLER;
-}
-
-//------------------------------------------------------------------------------
-static void append_crlf(wchar_t* buffer, DWORD max_size)
-{
-    // Cmd.exe expects a CRLF combo at the end of the string, otherwise it
-    // thinks the line is part of a multi-line command.
-
-    size_t len;
-
-    len = max_size - wcslen(buffer);
-    wcsncat(buffer, L"\x0d\x0a", len);
-    buffer[max_size - 1] = L'\0';
 }
 
 //------------------------------------------------------------------------------
@@ -160,67 +151,6 @@ BOOL WINAPI hooked_read_console_input(
 }
 
 //------------------------------------------------------------------------------
-static int check_auto_answer(const wchar_t* prompt)
-{
-    static wchar_t* prompt_to_answer = (wchar_t*)1;
-
-    if (prompt == NULL || prompt[0] == L'\0')
-    {
-        return 0;
-    }
-
-    // Try and find the localised prompt.
-    if (prompt_to_answer == (wchar_t*)1)
-    {
-        static wchar_t* fallback = L"Terminate batch job (Y/N)? ";
-        static int string_id = 0x237b;
-
-        DWORD flags;
-        DWORD ok;
-
-        flags = FORMAT_MESSAGE_ALLOCATE_BUFFER;
-        flags |= FORMAT_MESSAGE_FROM_HMODULE;
-        flags |= FORMAT_MESSAGE_IGNORE_INSERTS;
-        ok = FormatMessageW(
-            flags, NULL, 0x237b, 0,
-            (void*)&prompt_to_answer, 0, NULL
-        );
-        if (ok)
-        {
-            wchar_t* c = prompt_to_answer;
-            while (*c)
-            {
-                // Strip off new line chars.
-                if (*c == '\r' || *c == '\n')
-                {
-                    *c = '\0';
-                }
-
-                ++c;
-            }
-
-            LOG_INFO("Auto-answer prompt = '%ls'", prompt_to_answer);
-        }
-        else
-        {
-            prompt_to_answer = fallback;
-            LOG_INFO("Using fallback auto-answer prompt.");
-        }
-    }
-
-    if (wcscmp(prompt, prompt_to_answer) == 0)
-    {
-        int setting = get_clink_setting_int("terminate_autoanswer");
-        if (setting > 0)
-        {
-            return (setting == 1) ? 'y' : 'n';
-        }
-    }
-
-    return 0;
-}
-
-//------------------------------------------------------------------------------
 static BOOL WINAPI handle_single_byte_read(
     HANDLE input,
     wchar_t* buffer,
@@ -259,6 +189,19 @@ static BOOL WINAPI handle_single_byte_read(
     // Default behaviour.
     dispatch_cached_write(GetStdHandle(STD_OUTPUT_HANDLE), i);
     return ReadConsoleW(input, buffer, buffer_size, read_in, control);
+}
+
+//------------------------------------------------------------------------------
+static void append_crlf(wchar_t* buffer, DWORD max_size)
+{
+    // Cmd.exe expects a CRLF combo at the end of the string, otherwise it
+    // thinks the line is part of a multi-line command.
+
+    size_t len;
+
+    len = max_size - wcslen(buffer);
+    wcsncat(buffer, L"\x0d\x0a", len);
+    buffer[max_size - 1] = L'\0';
 }
 
 //------------------------------------------------------------------------------
@@ -369,24 +312,10 @@ BOOL WINAPI hooked_write_console(
 }
 
 //------------------------------------------------------------------------------
-static void failed()
+static void set_rl_readline_name()
 {
-    char buffer[1024];
-
-    buffer[0] = '\0';
-    get_config_dir(buffer, sizeof_array(buffer));
-
-    fprintf(stderr, "Failed to load clink.\nSee log for details (%s).\n", buffer);
-}
-
-//------------------------------------------------------------------------------
-static void* validate_parent_process()
-{
-    void* base;
-    const char* name;
     char buffer[MAX_PATH];
 
-    // Blacklist TCC which uses cmd.exe's autorun.
     if (GetModuleFileName(NULL, buffer, sizeof_array(buffer)))
     {
         static char exe_name[64];
@@ -398,65 +327,8 @@ static void* validate_parent_process()
         str_cpy(exe_name, slash, sizeof(exe_name));
         rl_readline_name = exe_name;
 
-        if (strnicmp(slash, "tcc", 3) == 0)
-        {
-            LOG_INFO("Detected unsupported TCC.");
-            return NULL;
-        }
+        LOG_INFO("Setting rl_readline_name to '%s'", exe_name);
     }
-
-    name = g_inject_args.no_host_check ? NULL : "cmd.exe";
-
-    base = (void*)GetModuleHandle(name);
-    if (base == NULL)
-    {
-        LOG_INFO("Failed to find base address for 'cmd.exe'.");
-        failed();
-    }
-    else
-    {
-        LOG_INFO("Found base address for executable at %p.", base);
-    }
-
-    return base;
-}
-
-//------------------------------------------------------------------------------
-int is_interactive()
-{
-    // Check the command line for '/c' and don't load if it's present. There's
-    // no point loading clink if cmd.exe is running a command and then exiting.
-
-    void* base;
-    wchar_t** argv;
-    int argc;
-    int i;
-    int ret;
-
-    base = GetModuleHandle("cmd.exe");
-    if (base == NULL)
-    {
-        return 1;
-    }
-
-    argv = CommandLineToArgvW(GetCommandLineW(), &argc);
-    if (argv == NULL)
-    {
-        return 1;
-    }
-
-    ret = 1;
-    for (i = 0; i < argc; ++i)
-    {
-        if (wcsicmp(argv[i], L"/c") == 0)
-        {
-            ret = 0;
-            break;
-        }
-    }
-
-    LocalFree(argv);
-    return ret;
 }
 
 //------------------------------------------------------------------------------
@@ -483,51 +355,104 @@ static void success()
 }
 
 //------------------------------------------------------------------------------
-BOOL WINAPI DllMain(HINSTANCE instance, DWORD reason, LPVOID unused)
+static void failed()
 {
-    static int running = 0;
+    char buffer[1024];
+
+    buffer[0] = '\0';
+    get_config_dir(buffer, sizeof_array(buffer));
+
+    fprintf(stderr, "Failed to load clink.\nSee log for details (%s).\n", buffer);
+}
+
+//------------------------------------------------------------------------------
+static BOOL on_dll_attach()
+{
     void* base;
 
-    // We're only interested in when the dll is attached.
-    if (reason != DLL_PROCESS_ATTACH)
-    {
-        if (running && reason == DLL_PROCESS_DETACH)
-        {
-            save_history();
-            shutdown_lua();
-            shutdown_clink_settings();
-        }
-
-        return TRUE;
-    }
-
-    if (!is_interactive())
-    {
-        return FALSE;
-    }
-
+    // Get the inject arguments.
     get_inject_args(GetCurrentProcessId());
     if (g_inject_args.profile_path[0] != '\0')
     {
         set_config_dir_override(g_inject_args.profile_path);
     }
 
-    prepare_env_for_inputrc(instance);
+    // Prepare the process and environment for Readline.
+    set_rl_readline_name();
+    prepare_env_for_inputrc();
 
-    base = validate_parent_process();
-    if (base == NULL)
+    // Search for a supported shell.
     {
+        int i;
+        struct {
+            const char*     name;
+            const shell_t*  shell;
+        } shells[] = {
+            { "cmd.exe", &shell_cmd },
+        };
+
+        for (i = 0; i < sizeof_array(shells); ++i)
+        {
+            if (stricmp(rl_readline_name, shells[i].name) == 0)
+            {
+                g_shell = shells[i].shell;
+                break;
+            }
+        }
+    }
+
+    // Not a supported shell?
+    if (g_shell == NULL)
+    {
+        if (!g_inject_args.no_host_check)
+        {
+            LOG_INFO("Unsupported shell '%s'", rl_readline_name);
+            return FALSE;
+        }
+
+        g_shell = &shell_generic;
+    }
+
+    if (!g_shell->validate())
+    {
+        LOG_INFO("Shell validation failed.");
         return FALSE;
     }
 
-    if (!set_hook_trap())
+    if (!g_shell->initialise())
     {
         failed();
         return FALSE;
     }
 
     success();
-    running = 1;
+    return TRUE;
+}
+
+//------------------------------------------------------------------------------
+static BOOL on_dll_detach()
+{
+    if (g_shell != NULL)
+    {
+        g_shell->shutdown();
+
+        save_history();
+        shutdown_lua();
+        shutdown_clink_settings();
+    }
+
+    return TRUE;
+}
+
+//------------------------------------------------------------------------------
+BOOL WINAPI DllMain(HINSTANCE instance, DWORD reason, LPVOID unused)
+{
+    switch (reason)
+    {
+    case DLL_PROCESS_ATTACH:    return on_dll_attach();
+    case DLL_PROCESS_DETACH:    return on_dll_detach();
+    }
+
     return TRUE;
 }
 
