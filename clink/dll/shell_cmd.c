@@ -93,7 +93,7 @@ int check_auto_answer(const wchar_t* prompt)
         flags |= FORMAT_MESSAGE_FROM_HMODULE;
         flags |= FORMAT_MESSAGE_IGNORE_INSERTS;
         ok = FormatMessageW(
-            flags, NULL, 0x237b, 0,
+            flags, NULL, string_id, 0,
             (void*)&prompt_to_answer, 0, NULL
         );
         if (ok)
