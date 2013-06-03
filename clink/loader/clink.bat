@@ -47,9 +47,9 @@ if "%1"=="" (
 
 :: Pass through to appropriate loader.
 ::
-if "%PROCESSOR_ARCHITECTURE%"=="x86" (
+if /i "%PROCESSOR_ARCHITECTURE%"=="x86" (
     call :loader_x86 %*
-) else (
+) else if /i "%PROCESSOR_ARCHITECTURE%"=="amd64" (
     call :loader_x64 %*
 )
 goto :eof
