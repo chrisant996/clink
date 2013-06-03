@@ -26,7 +26,7 @@
 //------------------------------------------------------------------------------
 void                prepare_env_for_inputrc();
 lua_State*          initialise_lua();
-int                 call_readline(const wchar_t*, wchar_t*, unsigned);
+int                 call_readline_w(const wchar_t*, wchar_t*, unsigned);
 char**              match_display_filter(char**, int);
 extern void         (*g_alt_fwrite_hook)(wchar_t*);
 
@@ -100,7 +100,7 @@ static int call_readline_lua(lua_State* lua)
     // Call Readline.
     g_alt_fwrite_hook = stdout_catch;
     rl_completion_display_matches_hook = match_catch;
-    call_readline(L"", output, sizeof_array(output));
+    call_readline_w(L"", output, sizeof_array(output));
 
     // Get output.
     WideCharToMultiByte(CP_UTF8, 0, output, -1, utf8, sizeof(utf8), NULL, NULL);

@@ -580,28 +580,13 @@ static void add_to_history(const char* line)
 }
 
 //------------------------------------------------------------------------------
-int call_readline(
-    const wchar_t* prompt,
-    wchar_t* result,
-    unsigned size
-)
+char* call_readline_impl(const char* prompt)
 {
     static int initialised = 0;
-    unsigned text_size;
     int expand_result;
     char* text;
     char* expanded;
-    char prompt_utf8[1024];
     char cwd_cache[MAX_PATH];
-
-    // Convery prompt to utf-8.
-    WideCharToMultiByte(
-        CP_UTF8, 0,
-        prompt, -1,
-        prompt_utf8, sizeof(prompt_utf8),
-        NULL,
-        NULL
-    );
 
     // Initialisation (then prompt filtering after that)
     if (!initialised)
@@ -615,11 +600,11 @@ int call_readline(
     // Call readline
     do
     {
-        text = readline(prompt_utf8);
+        text = readline(prompt);
         if (!text)
         {
             // EOF situation.
-            return 1;
+            return NULL;
         }
 
         // Expand history designators in returned buffer.
@@ -646,7 +631,60 @@ int call_readline(
     while (!text || expand_result == 2);
 
     SetCurrentDirectory(cwd_cache);
+    return text;
+}
 
+//------------------------------------------------------------------------------
+int call_readline_utf8(const char* prompt, char* result, unsigned result_size)
+{
+    int text_size;
+    char* text;
+
+    // Call readline.
+    text = call_readline_impl(prompt);
+    if (text == NULL)
+    {
+        // EOF.
+        return 1;
+    }
+
+    // Convert result back to wchar_t.
+    text_size = strlen(text) + 1;
+    if (text_size > result_size)
+    {
+        text_size = result_size;
+    }
+
+    strcpy(result, text);
+    free(text);
+    return 0;
+}
+
+//------------------------------------------------------------------------------
+int call_readline_w(const wchar_t* prompt, wchar_t* result, unsigned size)
+{
+    unsigned text_size;
+    char* text;
+    char prompt_utf8[1024];
+
+    // Convert prompt to utf-8.
+    WideCharToMultiByte(
+        CP_UTF8, 0,
+        prompt, -1,
+        prompt_utf8, sizeof(prompt_utf8),
+        NULL,
+        NULL
+    );
+
+    // Call readline.
+    text = call_readline_impl(prompt_utf8);
+    if (text == NULL)
+    {
+        // EOF.
+        return 1;
+    }
+
+    // Convert result back to wchar_t.
     text_size = MultiByteToWideChar(CP_UTF8, 0, text, -1, result, 0);
     text_size = (size < text_size) ? size : strlen(text);
     text_size = MultiByteToWideChar(CP_UTF8, 0, text, -1, result, size);
