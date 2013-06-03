@@ -79,6 +79,14 @@ static const setting_decl_t g_clink_settings_decl[] = {
         "Disabled\0Answer 'Y'\0Answer 'N'",
         "0"
     },
+    {
+        "persist_history",
+        "Persistent command history",
+        "Enable or disable the saving and loading of command history "
+        "between sessions.",
+        SETTING_TYPE_BOOL,
+        0, "1"
+    },
 };
 
 //------------------------------------------------------------------------------

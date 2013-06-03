@@ -96,6 +96,7 @@ The following table describes the available settings;
 |match_colour        |Colour to use when displaying matches. A value less than 0 will be the opposite brightness of the default colour.
 |prompt_colour       |Surrounds the prompt in ANSI escape codes to set the prompt's colour. Disabled when the value is less than 0.
 |terminate_autoanswer|Automatically answers cmd.exe's 'Terminate batch job (Y/N)?' prompts. 0 = disabled, 1 = answer 'Y', 2 = answer 'N'.
+|persist_history     |Enable or disable the saving and loading of command history between sessions.
 |===
 
 == Extending Clink

@@ -420,8 +420,13 @@ static void get_history_file_name(char* buffer, int size)
 static void load_history()
 {
     char buffer[1024];
-    get_history_file_name(buffer, sizeof(buffer));
-    read_history(buffer);
+
+    if (get_clink_setting_int("persist_history"))
+    {
+        get_history_file_name(buffer, sizeof(buffer));
+        read_history(buffer);
+    }
+
     using_history();
 }
 
@@ -431,6 +436,11 @@ void save_history()
     int max_history;
     char buffer[1024];
     const char* c;
+
+    if (get_clink_setting_int("persist_history") == 0)
+    {
+        return;
+    }
 
     get_history_file_name(buffer, sizeof(buffer));
 
