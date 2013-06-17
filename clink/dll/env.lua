@@ -78,7 +78,10 @@ local function env_vars_match_generator(text, first, last)
 
     if clink.match_count() >= 1 then
         clink.match_display_filter = env_vars_display_filter
+
         clink.suppress_char_append()
+        clink.suppress_quoting()
+
         return true
     end
 
