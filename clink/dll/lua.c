@@ -418,6 +418,13 @@ static int suppress_char_append(lua_State* state)
 }
 
 //------------------------------------------------------------------------------
+static int suppress_quoting(lua_State* state)
+{
+    rl_completion_suppress_quote = 1;
+    return 0;
+}
+
+//------------------------------------------------------------------------------
 static int slash_translation(lua_State* state)
 {
     if (lua_gettop(state) == 0)
@@ -604,6 +611,7 @@ lua_State* initialise_lua()
         { "matches_are_files", matches_are_files },
         { "slash_translation", slash_translation },
         { "suppress_char_append", suppress_char_append },
+        { "suppress_quoting", suppress_quoting },
         { NULL, NULL }
     };
 

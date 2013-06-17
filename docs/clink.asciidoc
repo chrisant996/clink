@@ -595,6 +595,14 @@ By default Readline appends a space character (' ') when the is only a single
 match unless it is completing files where it will use the path separator
 instead.
 
+==== clink.suppress_quoting()
+
+[role="indented"]
+
+Suppress the prefixing and suffixing of quotes even if there is a character in
+the current word being completed that would ordinarily need surrounding in
+quotes. 
+
 === Readline Constants
 
 ==== rl_line_buffer
