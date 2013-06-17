@@ -89,13 +89,12 @@ static void quote_matches(char** matches)
     char** m;
     int need_quote;
     int lcd_length;
-    int rl_will_quote;
+    int lcd_needs_quote;
 
     // Does the lcd have a quote char? Readline will add the quote if it thinks
     // it's completing file names.
-    rl_will_quote = strpbrk(matches[0], rl_filename_quote_characters) != NULL;
-    rl_will_quote &= (rl_filename_completion_desired != 0);
-    if (rl_will_quote)
+    lcd_needs_quote = strpbrk(matches[0], rl_filename_quote_characters) != NULL;
+    if (lcd_needs_quote && (rl_filename_completion_desired != 0))
     {
         return;
     }
@@ -105,8 +104,13 @@ static void quote_matches(char** matches)
         return;
     }
 
+    if (rl_completion_suppress_quote)
+    {
+        return;
+    }
+
     // Check other matches for characters that need quoting.
-    need_quote = 0;
+    need_quote = lcd_needs_quote;
     lcd_length = (int)strlen(matches[0]);
     m = matches + 1;
     while (*m && !need_quote)
@@ -126,12 +130,18 @@ static void quote_matches(char** matches)
     // So... do we need to prepend a quote?
     if (need_quote)
     {
-        char* c = malloc(strlen(matches[0]) + 2);
+        char* c = malloc(strlen(matches[0]) + 8);
         strcpy(c + 1, matches[0]);
         free(matches[0]);
 
         c[0] = '\"';
         matches[0] = c;
+
+        // If there's a single match then there should be a closing quote.
+        if (m - matches == 1)
+        {
+            strcat(c, "\"");
+        }
     }
 }
 
