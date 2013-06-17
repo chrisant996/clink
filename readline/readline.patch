@@ -308,3 +308,20 @@ index 536e31a..8f5aa22 100644
  }
  
  /* This is different from what vi does, so the code's not shared.  Emacs
+diff --git a/readline/readline/complete.c b/readline/readline/complete.c
+index 3ed21cc..03bcbde 100644
+--- a/readline/readline/complete.c
++++ b/readline/readline/complete.c
+@@ -1309,6 +1309,12 @@ postprocess_matches (matchesp, matching_filenames)
+   char *t, **matches, **temp_matches;
+   int nmatch, i;
+ 
++/* begin_clink_change
++ * Always postprocess matches even if they're not filenames.
++ */
++  matching_filenames = 1;
++/* end_clink_change */
++
+   matches = *matchesp;
+ 
+   if (matches == 0)

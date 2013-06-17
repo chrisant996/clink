@@ -1309,6 +1309,12 @@ postprocess_matches (matchesp, matching_filenames)
   char *t, **matches, **temp_matches;
   int nmatch, i;
 
+/* begin_clink_change
+ * Always postprocess matches even if they're not filenames.
+ */
+  matching_filenames = 1;
+/* end_clink_change */
+
   matches = *matchesp;
 
   if (matches == 0)
