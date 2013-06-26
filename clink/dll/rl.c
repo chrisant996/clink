@@ -530,7 +530,6 @@ static int initialise_hook()
 
     rl_basic_quote_characters = "\"";
     rl_filename_quote_characters = " %=;&^";
-    rl_catch_signals = 0;
 
     rl_add_funmap_entry("clink-completion-shim", completion_shim);
 
@@ -601,6 +600,7 @@ char* call_readline_impl(const char* prompt)
     // Initialisation (then prompt filtering after that)
     if (!initialised)
     {
+        rl_catch_signals = 0;
         rl_startup_hook = initialise_hook;
         initialised = 1;
     }
