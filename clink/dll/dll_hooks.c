@@ -20,143 +20,84 @@
  */
 
 #include "pch.h"
+#include "dll_hooks.h"
 #include "shared/hook.h"
 #include "shared/util.h"
 #include "shared/vm.h"
 #include "shared/pe.h"
 
 //------------------------------------------------------------------------------
+static int              (*g_hook_trap)()        = NULL;
 static unsigned char*   g_hook_trap_addr        = NULL;
 static unsigned char    g_hook_trap_value       = 0;
-BOOL WINAPI             hooked_read_console(HANDLE, wchar_t*, DWORD, LPDWORD,
-                                            PCONSOLE_READCONSOLE_CONTROL);
-BOOL WINAPI             hooked_write_console(HANDLE, const wchar_t*, DWORD,
-                                             LPDWORD, void*);
-BOOL WINAPI             hooked_read_console_input(HANDLE, INPUT_RECORD*, DWORD,
-                                                  LPDWORD);
 
 //------------------------------------------------------------------------------
-static const char* get_kernel_dll()
+static int apply_hook_iat(void* self, const hook_decl_t* hook, int by_name)
 {
-    // We're going to use a different DLL for Win8 (and onwards).
-
-    OSVERSIONINFOEX osvi;
-    DWORDLONG mask = 0;
-    int op=VER_GREATER_EQUAL;
-
-    ZeroMemory(&osvi, sizeof(OSVERSIONINFOEX));
-    osvi.dwOSVersionInfoSize = sizeof(OSVERSIONINFOEX);
-    osvi.dwMajorVersion = 6;
-    osvi.dwMinorVersion = 2;
-
-    VER_SET_CONDITION(mask, VER_MAJORVERSION, VER_GREATER_EQUAL);
-    VER_SET_CONDITION(mask, VER_MINORVERSION, VER_GREATER_EQUAL);
-
-    if (VerifyVersionInfo(&osvi, VER_MAJORVERSION|VER_MINORVERSION, mask))
-    {
-        return "kernelbase.dll";
-    }
-   
-    return "kernel32.dll";
-}
-
-//------------------------------------------------------------------------------
-static int apply_hooks()
-{
-    const char* func_name;
     void* addr;
-    void* self;
-    void* base;
 
-    base = GetModuleHandle("cmd.exe");
-    if (base == NULL)
-    {
-        LOG_INFO("Invalid process base address; %p.", base);
-    }
-
-    self = get_alloc_base(apply_hooks);
-    if (self == NULL)
-    {
-        return 0;
-    }
-
-    // Write hook
-    func_name = "WriteConsoleW";
-    addr = hook_iat(base, NULL, func_name, hooked_write_console, 1);
+    addr = hook_iat(hook->base, hook->dll, hook->name_or_addr, hook->hook, by_name);
     if (addr == NULL)
     {
-        LOG_INFO("Unable to hook %s in IAT at base %p", func_name, base);
+        LOG_INFO(
+            "Unable to hook %s in IAT at base %p",
+            hook->name_or_addr,
+            hook->base
+        );
         return 0;
     }
 
-    // If the target's IAT was hooked then the hook destination is now stored in
-    // 'addr'. We hook ourselves with this address to maintain the hook.
-    if (hook_iat(self, NULL, func_name, addr, 1) == 0)
+    // If the target's IAT was hooked then the hook destination is now
+    // stored in 'addr'. We hook ourselves with this address to maintain
+    // the hook.
+    if (hook_iat(self, NULL, hook->name_or_addr, addr, 1) == 0)
     {
-        LOG_INFO("Failed to hook own IAT for %s", func_name);
+        LOG_INFO("Failed to hook own IAT for %s", hook->name_or_addr);
         return 0;
-    }
-
-    // Read hook - So as to not disturb another utility's hooks that maybe in 
-    // place we use an alternative hooking method that doesn't involve patching
-    // the target's IAT.
-    func_name = "ReadConsoleW";
-    addr = hook_jmp(get_kernel_dll(), func_name, hooked_read_console);
-    if (addr == NULL)
-    {
-        LOG_INFO("Unable to hook %s in %s", func_name, get_kernel_dll());
-        return 0;
-    }
-
-    if (hook_iat(self, NULL, func_name, addr, 1) == 0)
-    {
-        LOG_INFO("Failed to hook own IAT for %s", func_name);
-        return 0;
-    }
-
-    // Read input hook to catch non-readline input.
-    func_name = "ReadConsoleInputA";
-    addr = hook_jmp(get_kernel_dll(), func_name, hooked_read_console_input);
-    if (addr == NULL)
-    {
-        LOG_INFO("No %s hook.", func_name);
-    }
-    else
-    {
-        hook_iat(self, NULL, func_name, addr, 1);
     }
 
     return 1;
 }
 
 //------------------------------------------------------------------------------
-static LONG WINAPI hook_trap(EXCEPTION_POINTERS* info)
+static int apply_hook_jmp(void* self, const hook_decl_t* hook)
+{
+    void* addr;
+
+    // Hook into a DLL's import by patching the start of the function. 'addr' is
+    // the trampoline to call the original. This method doesn't use the IAT.
+
+    addr = hook_jmp(hook->dll, hook->name_or_addr, hook->hook);
+    if (addr == NULL)
+    {
+        LOG_INFO("Unable to hook %s in %s", hook->name_or_addr, hook->dll);
+        return 0;
+    }
+
+    if (hook_iat(self, NULL, hook->name_or_addr, addr, 1) == 0)
+    {
+        LOG_INFO("Failed to hook own IAT for %s", hook->name_or_addr);
+        return 0;
+    }
+
+    return 1;
+}
+
+//------------------------------------------------------------------------------
+static LONG WINAPI hook_trap_veh(EXCEPTION_POINTERS* info)
 {
     const EXCEPTION_RECORD* er;
-    void* base;
     void** sp_reg;
 
     // Check exception record is the exception we've forced.
     er = info->ExceptionRecord;
     if (er->ExceptionCode != EXCEPTION_PRIV_INSTRUCTION)
     {
-        /*
-        LOG_INFO("Unexpected exception (code=%x addr=%p)",
-            er->ExceptionCode,
-            er->ExceptionAddress
-        );
-        */
         return EXCEPTION_CONTINUE_SEARCH;
     }
 
     if (er->ExceptionAddress != g_hook_trap_addr)
     {
-        /*
-        LOG_INFO("Unexpected exception address (code=%x addr=%p)",
-            er->ExceptionCode,
-            er->ExceptionAddress
-        );
-        */ 
         return EXCEPTION_CONTINUE_SEARCH;
     }
 
@@ -169,7 +110,7 @@ static LONG WINAPI hook_trap(EXCEPTION_POINTERS* info)
     );
 
     // Who called us?
-#ifdef _M_IX86
+#if defined(_M_IX86)
     sp_reg = (void**)info->ContextRecord->Esp; 
 #elif defined(_M_X64)
     sp_reg = (void**)info->ContextRecord->Rsp; 
@@ -177,16 +118,59 @@ static LONG WINAPI hook_trap(EXCEPTION_POINTERS* info)
     LOG_INFO("VEH hit - caller is %p.", *sp_reg);
 
     // Apply hooks.
-    if (apply_hooks())
+    if (g_hook_trap != NULL && !g_hook_trap())
     {
-        LOG_INFO("Success!");
+        LOG_INFO("Hook trap %p failed.", g_hook_trap);
     }
 
     return EXCEPTION_CONTINUE_EXECUTION;
 }
 
 //------------------------------------------------------------------------------
-int set_hook_trap()
+int apply_hooks(const hook_decl_t* hooks, int hook_count)
+{
+    const char* func_name;
+    void* addr;
+    void* self;
+    int i;
+
+    // Each hook needs fixing up, so we find the base address of our module.
+    self = get_alloc_base(apply_hooks);
+    if (self == NULL)
+    {
+        return 0;
+    }
+
+    for (i = 0; i < hook_count; ++i)
+    {
+        void* addr;
+        const hook_decl_t* hook;
+
+        hook = hooks + i;
+        switch (hook->type)
+        {
+        case HOOK_TYPE_IAT_BY_NAME:
+        case HOOK_TYPE_IAT_BY_ADDR:
+            if (!apply_hook_iat(self, hook, hook->type))
+            {
+                return 0;
+            }
+            break;
+
+        case HOOK_TYPE_JMP:
+            if (!apply_hook_jmp(self, hook))
+            {
+                return 0;
+            }
+            break;
+        }
+    }
+
+    return 1;
+}
+
+//------------------------------------------------------------------------------
+int set_hook_trap(const char* dll, const char* func_name, int (*trap)())
 {
     void* base;
     void* addr;
@@ -195,30 +179,28 @@ int set_hook_trap()
     // If there's a debugger attached, we can't use VEH.
     if (IsDebuggerPresent())
     {
-        return apply_hooks();
+        return trap();
     }
 
-    base = GetModuleHandle(get_kernel_dll());
+    base = GetModuleHandle(dll);
     if (base == NULL)
     {
-        LOG_INFO("Failed to find base for %s.", get_kernel_dll());
+        LOG_INFO("Failed to find base for %s.", dll);
         return 0;
     }
 
-    addr = get_export(base, "GetCurrentDirectoryW");
+    addr = get_export(base, func_name);
     if (addr == NULL)
     {
-        LOG_INFO(
-            "Unable to resolve address for GetCurrentDirectoryW in %s",
-            get_kernel_dll()
-        );
+        LOG_INFO("Unable to resolve address for %s in %s", dll, func_name);
         return 0;
     }
 
+    g_hook_trap = trap;
     g_hook_trap_addr = addr;
     g_hook_trap_value = *g_hook_trap_addr;
 
-    AddVectoredExceptionHandler(1, hook_trap);
+    AddVectoredExceptionHandler(1, hook_trap_veh);
 
     // Write a HALT instruction to force an exception.
     to_write = 0xf4;

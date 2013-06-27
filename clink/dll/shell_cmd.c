@@ -21,14 +21,18 @@
 
 #include "pch.h"
 #include "shell.h"
+#include "dll_hooks.h"
 #include "shared/util.h"
 
 //------------------------------------------------------------------------------
-int             set_hook_trap();
 int             get_clink_setting_int(const char*);
 static int      cmd_validate();
 static int      cmd_initialise();
 static void     cmd_shutdown();
+
+BOOL WINAPI     hooked_read_console(HANDLE, wchar_t*, DWORD, LPDWORD, PCONSOLE_READCONSOLE_CONTROL);
+BOOL WINAPI     hooked_write_console(HANDLE, const wchar_t*, DWORD, LPDWORD, void*);
+BOOL WINAPI     hooked_read_console_input(HANDLE, INPUT_RECORD*, DWORD, LPDWORD);
 
 shell_t         shell_cmd = { cmd_validate, cmd_initialise, cmd_shutdown };
 
@@ -132,6 +136,46 @@ int check_auto_answer(const wchar_t* prompt)
 }
 
 //------------------------------------------------------------------------------
+static const char* get_kernel_dll()
+{
+    // We're going to use a different DLL for Win8 (and onwards).
+
+    OSVERSIONINFOEX osvi;
+    DWORDLONG mask = 0;
+    int op=VER_GREATER_EQUAL;
+
+    ZeroMemory(&osvi, sizeof(OSVERSIONINFOEX));
+    osvi.dwOSVersionInfoSize = sizeof(OSVERSIONINFOEX);
+    osvi.dwMajorVersion = 6;
+    osvi.dwMinorVersion = 2;
+
+    VER_SET_CONDITION(mask, VER_MAJORVERSION, VER_GREATER_EQUAL);
+    VER_SET_CONDITION(mask, VER_MINORVERSION, VER_GREATER_EQUAL);
+
+    if (VerifyVersionInfo(&osvi, VER_MAJORVERSION|VER_MINORVERSION, mask))
+    {
+        return "kernelbase.dll";
+    }
+   
+    return "kernel32.dll";
+}
+
+//------------------------------------------------------------------------------
+static int hook_trap()
+{
+    void* base = GetModuleHandle(NULL);
+    const char* dll = get_kernel_dll();
+
+    hook_decl_t hooks[] = {
+        { HOOK_TYPE_IAT_BY_NAME, base, NULL, "WriteConsoleW",     hooked_write_console },
+        { HOOK_TYPE_JMP,         NULL, dll,  "ReadConsoleW",      hooked_read_console },
+        { HOOK_TYPE_JMP,         NULL, dll,  "ReadConsoleInputA", hooked_read_console_input },
+    };
+
+    return apply_hooks(hooks, sizeof_array(hooks));
+}
+
+//------------------------------------------------------------------------------
 static int cmd_validate()
 {
     if (!is_interactive())
@@ -145,7 +189,10 @@ static int cmd_validate()
 //------------------------------------------------------------------------------
 static int cmd_initialise()
 {
-    if (!set_hook_trap())
+    const char* dll = get_kernel_dll();
+    const char* func_name = "GetCurrentDirectoryW";
+
+    if (!set_hook_trap(dll, func_name, hook_trap))
     {
         return 0;
     }
