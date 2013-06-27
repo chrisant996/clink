@@ -324,7 +324,6 @@ int inject(int argc, char** argv)
     struct option options[] = {
         { "scripts",     required_argument,  NULL, 's' },
         { "profile",     required_argument,  NULL, 'p' },
-        { "althook",     no_argument,        NULL, 'a' },
         { "quiet",       no_argument,        NULL, 'q' },
         { "pid",         required_argument,  NULL, 'd' },
         { "nohostcheck", no_argument,        NULL, 'n' },
@@ -336,7 +335,6 @@ int inject(int argc, char** argv)
         "-s, --scripts <path>", "Alternative path to load .lua scripts from.",
         "-p, --profile <path>", "Specifies and alternative path for profile data.",
         "-q, --quiet",          "Suppress copyright output.",
-        "-a, --althook",        "Use alternative method of hooking parent process.",
         "-n, --nohostcheck",    "Do not check that host is cmd.exe.",
         "-d, --pid <pid>",      "Inject into the process specified by <pid>.",
         "-h, --help",           "Shows this help text.",
@@ -372,10 +370,6 @@ int inject(int argc, char** argv)
 
         case 'q':
             inject_args.quiet = 1;
-            break;
-
-        case 'a':
-            inject_args.alt_hook_method = 1;
             break;
 
         case '?':

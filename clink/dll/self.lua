@@ -34,7 +34,6 @@ local clag = clink.arg
 local self_tree = clag.node(
     "--help" .. clag.node(true),
     "inject" .. clag.node(
-        "--althook",
         "--help",
         "--nohostcheck",
         "--pid" .. clag.node(true),
