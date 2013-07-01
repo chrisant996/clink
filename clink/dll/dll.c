@@ -45,10 +45,6 @@ int                     check_auto_answer(const wchar_t*);
 
 inject_args_t           g_inject_args;
 static const shell_t*   g_shell                 = NULL;
-static int              g_write_cache_index     = 0;
-static const int        g_write_cache_size      = 0xffff;      // 0x10000 - 1 !!
-static write_cache_t    g_write_cache[2]        = { {NULL, 0},
-                                                    {NULL, 0} };
 extern shell_t          g_shell_cmd;
 extern shell_t          g_shell_generic;
 
@@ -92,65 +88,6 @@ static LONG WINAPI exception_filter(EXCEPTION_POINTERS* info)
 }
 
 //------------------------------------------------------------------------------
-static void invalidate_cached_write(int index)
-{
-    write_cache_t* cache;
-
-    // Check bounds.
-    if ((unsigned)index >= sizeof_array(g_write_cache))
-    {
-        return;
-    }
-
-    cache = g_write_cache + index;
-
-    cache->size = 0;
-    if (cache->buffer != NULL)
-    {
-        cache->buffer[0] = L'\0';
-    }
-}
-
-//------------------------------------------------------------------------------
-static void dispatch_cached_write(HANDLE output, int index)
-{
-    write_cache_t* cache;
-
-    // Check bounds.
-    if ((unsigned)index >= sizeof_array(g_write_cache))
-    {
-        return;
-    }
-
-    cache = g_write_cache + index;
-
-    // Write the line to the console.
-    if (cache->buffer != NULL)
-    {
-        DWORD j;
-        WriteConsoleW(output, cache->buffer, cache->size, &j, NULL);
-    }
-
-    invalidate_cached_write(index);
-}
-
-//------------------------------------------------------------------------------
-BOOL WINAPI hooked_read_console_input(
-    HANDLE input,
-    INPUT_RECORD* buffer,
-    DWORD buffer_size,
-    LPDWORD events_read
-)
-{
-    int i;
-
-    i = (g_write_cache_index + 1) & 1;
-    dispatch_cached_write(GetStdHandle(STD_OUTPUT_HANDLE), i);
-
-    return ReadConsoleInputA(input, buffer, buffer_size, events_read);
-}
-
-//------------------------------------------------------------------------------
 static BOOL WINAPI handle_single_byte_read(
     HANDLE input,
     wchar_t* buffer,
@@ -161,12 +98,8 @@ static BOOL WINAPI handle_single_byte_read(
 {
     int i;
     int reply;
-    write_cache_t* write_cache;
 
-    i = (g_write_cache_index + 1) & 1;
-    write_cache = g_write_cache + i;
-
-    if (reply = check_auto_answer(write_cache->buffer))
+    if (reply = check_auto_answer(L""))
     {
         // cmd.exe's PromptUser() method reads a character at a time until
         // it encounters a \n. The way Clink handle's this is a bit 'hacky'.
@@ -175,8 +108,6 @@ static BOOL WINAPI handle_single_byte_read(
         ++visit_count;
         if (visit_count >= 2)
         {
-            invalidate_cached_write(i);
-
             reply = '\n';
             visit_count = 0;
         }
@@ -187,7 +118,6 @@ static BOOL WINAPI handle_single_byte_read(
     }
 
     // Default behaviour.
-    dispatch_cached_write(GetStdHandle(STD_OUTPUT_HANDLE), i);
     return ReadConsoleW(input, buffer, buffer_size, read_in, control);
 }
 
@@ -217,7 +147,6 @@ BOOL WINAPI hooked_read_console(
     int is_eof;
     LPTOP_LEVEL_EXCEPTION_FILTER old_seh;
     int i;
-    write_cache_t* write_cache;
 
     // If cmd.exe is asking for one character at a time, use the original path
     // It does this to handle y/n/all prompts which isn't an compatible use-
@@ -233,20 +162,14 @@ BOOL WINAPI hooked_read_console(
         );
     }
 
-    // Get index to last cached write. This is our prompt.
-    i = (g_write_cache_index + 1) & 1;
-    write_cache = g_write_cache + i;
-
     old_seh = SetUnhandledExceptionFilter(exception_filter);
 
     // Call readline.
-    is_eof = call_readline_w(write_cache->buffer, buffer, buffer_size);
+    is_eof = call_readline_w(L"", buffer, buffer_size);
     if (is_eof && get_clink_setting_int("ctrld_exits"))
     {
         wcsncpy(buffer, L"exit", buffer_size);
     }
-
-    invalidate_cached_write(i);
 
     emulate_doskey(buffer, buffer_size);
     append_crlf(buffer, buffer_size);
@@ -254,60 +177,6 @@ BOOL WINAPI hooked_read_console(
     SetUnhandledExceptionFilter(old_seh);
 
     *read_in = (unsigned)wcslen(buffer);
-    return TRUE;
-}
-
-//------------------------------------------------------------------------------
-BOOL WINAPI hooked_write_console(
-    HANDLE output,
-    const wchar_t* buffer,
-    DWORD buffer_size,
-    LPDWORD written,
-    void* unused
-)
-{
-    // Writes to the console are double buffered. This stops custom prompts
-    // from flickering.
-
-    static int once = 0;
-    int copy_size;
-    int i;
-    write_cache_t* cache;
-    CONSOLE_SCREEN_BUFFER_INFO csbi;
-
-    // First establish the next buffer to use and allocate it if need be.
-    i = g_write_cache_index;
-    g_write_cache_index = (i + 1) & 1;
-
-    cache = g_write_cache + i;
-
-    if (cache->buffer == NULL)
-    {
-        cache->buffer = VirtualAlloc(
-            NULL,
-            g_write_cache_size + 1,
-            MEM_COMMIT,
-            PAGE_READWRITE
-        );
-    }
-
-    // Copy the write request into the buffer.
-    copy_size = (g_write_cache_size < buffer_size)
-        ? g_write_cache_size
-        : buffer_size;
-
-    cache->size = copy_size;
-    memcpy(cache->buffer, buffer, copy_size * sizeof(wchar_t));
-    cache->buffer[copy_size] = L'\0';
-
-    // Dispatch previous write call.
-    dispatch_cached_write(output, g_write_cache_index);
-
-    if (written != NULL)
-    {
-        *written = buffer_size;
-    }
-
     return TRUE;
 }
 

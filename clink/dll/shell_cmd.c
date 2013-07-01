@@ -31,8 +31,6 @@ static int      cmd_initialise();
 static void     cmd_shutdown();
 
 BOOL WINAPI     hooked_read_console(HANDLE, wchar_t*, DWORD, LPDWORD, PCONSOLE_READCONSOLE_CONTROL);
-BOOL WINAPI     hooked_write_console(HANDLE, const wchar_t*, DWORD, LPDWORD, void*);
-BOOL WINAPI     hooked_read_console_input(HANDLE, INPUT_RECORD*, DWORD, LPDWORD);
 
 shell_t         g_shell_cmd = { cmd_validate, cmd_initialise, cmd_shutdown };
 
@@ -167,9 +165,9 @@ static int hook_trap()
     const char* dll = get_kernel_dll();
 
     hook_decl_t hooks[] = {
-        { HOOK_TYPE_IAT_BY_NAME, base, NULL, "WriteConsoleW",     hooked_write_console },
         { HOOK_TYPE_JMP,         NULL, dll,  "ReadConsoleW",      hooked_read_console },
-        { HOOK_TYPE_JMP,         NULL, dll,  "ReadConsoleInputA", hooked_read_console_input },
+        //{ HOOK_TYPE_IAT_BY_NAME, base, NULL, "WriteConsoleW",     hooked_write_console },
+        //{ HOOK_TYPE_JMP,         NULL, dll,  "ReadConsoleInputA", hooked_read_console_input },
     };
 
     return apply_hooks(hooks, sizeof_array(hooks));
