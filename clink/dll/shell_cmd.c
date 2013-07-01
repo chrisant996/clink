@@ -34,7 +34,7 @@ BOOL WINAPI     hooked_read_console(HANDLE, wchar_t*, DWORD, LPDWORD, PCONSOLE_R
 BOOL WINAPI     hooked_write_console(HANDLE, const wchar_t*, DWORD, LPDWORD, void*);
 BOOL WINAPI     hooked_read_console_input(HANDLE, INPUT_RECORD*, DWORD, LPDWORD);
 
-shell_t         shell_cmd = { cmd_validate, cmd_initialise, cmd_shutdown };
+shell_t         g_shell_cmd = { cmd_validate, cmd_initialise, cmd_shutdown };
 
 //------------------------------------------------------------------------------
 static int is_interactive()

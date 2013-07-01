@@ -49,8 +49,8 @@ static int              g_write_cache_index     = 0;
 static const int        g_write_cache_size      = 0xffff;      // 0x10000 - 1 !!
 static write_cache_t    g_write_cache[2]        = { {NULL, 0},
                                                     {NULL, 0} };
-extern shell_t          shell_cmd;
-extern shell_t          shell_generic;
+extern shell_t          g_shell_cmd;
+extern shell_t          g_shell_generic;
 
 //------------------------------------------------------------------------------
 static LONG WINAPI exception_filter(EXCEPTION_POINTERS* info)
@@ -388,7 +388,7 @@ static BOOL on_dll_attach()
             const char*     name;
             const shell_t*  shell;
         } shells[] = {
-            { "cmd.exe", &shell_cmd },
+            { "cmd.exe", &g_shell_cmd },
         };
 
         for (i = 0; i < sizeof_array(shells); ++i)
@@ -410,7 +410,7 @@ static BOOL on_dll_attach()
             return FALSE;
         }
 
-        g_shell = &shell_generic;
+        g_shell = &g_shell_generic;
     }
 
     if (!g_shell->validate())

@@ -27,7 +27,7 @@ static int      generic_validate();
 static int      generic_initialise();
 static void     generic_shutdown();
 
-shell_t         shell_generic = {
+shell_t         g_shell_generic = {
                     generic_validate,
                     generic_initialise,
                     generic_shutdown };
