@@ -25,12 +25,10 @@
 //------------------------------------------------------------------------------
 void                initialise_lua();
 char**              lua_generate_matches(const char*, int, int);
-void                lua_filter_prompt(char*, int);
 char**              lua_match_display_filter(char**, int);
 void                initialise_rl_scroller();
 void                move_cursor(int, int);
 void                initialise_clink_settings();
-const char*         find_next_ansi_code(const char*, int*);
 int                 getc_impl(FILE* stream);
 int                 get_clink_setting_int(const char*);
 void                clink_register_rl_funcs();
@@ -468,49 +466,6 @@ void save_history()
 }
 
 //------------------------------------------------------------------------------
-static int filter_prompt()
-{
-    char* next;
-    char prompt[1024];
-    char tagged_prompt[sizeof_array(prompt)];
-
-    // Get the prompt from Readline and pass it to Clink's filter framework
-    // in Lua.
-    prompt[0] = '\0';
-    str_cat(prompt, rl_prompt, sizeof_array(prompt));
-
-    lua_filter_prompt(prompt, sizeof_array(prompt));
-
-    // Scan for ansi codes and surround them with Readline's markers for
-    // invisible characters.
-    tagged_prompt[0] ='\0';
-    next = prompt;
-    while (*next)
-    {
-        static const int tp_size = sizeof_array(tagged_prompt);
-
-        int size;
-        char* code;
-
-        code = (char*)find_next_ansi_code(next, &size);
-        str_cat_n(tagged_prompt, next, tp_size, code - next);
-        if (*code)
-        {
-            static const char* tags[] = { "\001", "\002" };
-
-            str_cat(tagged_prompt, tags[0], tp_size);
-            str_cat_n(tagged_prompt, code, tp_size, size);
-            str_cat(tagged_prompt, tags[1], tp_size);
-        }
-
-        next = code + size;
-    }
-
-    rl_set_prompt(tagged_prompt);
-    return 0;
-}
-
-//------------------------------------------------------------------------------
 static int initialise_hook()
 {
     rl_redisplay_function = display;
@@ -542,8 +497,7 @@ static int initialise_hook()
     rl_re_read_init_file(0, 0);
     rl_visible_stats = 0;               // serves no purpose under win32.
 
-    rl_startup_hook = filter_prompt;
-    return filter_prompt();
+    return 0;
 }
 
 //------------------------------------------------------------------------------
@@ -589,15 +543,59 @@ static void add_to_history(const char* line)
 }
 
 //------------------------------------------------------------------------------
+static const char* extract_prompt()
+{
+    char* prompt;
+    wchar_t* buffer;
+    CONSOLE_SCREEN_BUFFER_INFO csbi;
+    HANDLE handle;
+    int length;
+    COORD cur;
+    DWORD chars_read;
+
+    // Find where the cursor is (tip; it's at the end of the prompt).
+    handle = GetStdHandle(STD_OUTPUT_HANDLE);
+    GetConsoleScreenBufferInfo(handle, &csbi);
+
+    // Work out prompt length and allocate some working buffer space.
+    cur = csbi.dwCursorPosition;
+    length = cur.X;
+    cur.X = 0;
+    prompt = malloc(length * 8);
+
+    // Get the prompt from the terminal.
+    buffer = (wchar_t*)prompt + length + 1;
+    ReadConsoleOutputCharacterW(handle, buffer, length, cur, &chars_read);
+
+    // Convert to Utf8 and return.
+    length = WideCharToMultiByte(
+        CP_UTF8, 0,
+        buffer, length,
+        prompt, (char*)buffer - prompt,
+        NULL,
+        NULL
+    );
+
+    if (length <= 0)
+    {
+        return NULL;
+    }
+
+    prompt[length] = '\0';
+    return prompt;
+}
+
+//------------------------------------------------------------------------------
 char* call_readline_impl(const char* prompt)
 {
     static int initialised = 0;
     int expand_result;
     char* text;
     char* expanded;
+    const char* extracted_prompt;
     char cwd_cache[MAX_PATH];
 
-    // Initialisation (then prompt filtering after that)
+    // Initialisation
     if (!initialised)
     {
         rl_catch_signals = 0;
@@ -605,16 +603,28 @@ char* call_readline_impl(const char* prompt)
         initialised = 1;
     }
 
+    // If no prompt was provided assume the line is prompted already and
+    // extract it.
+    extracted_prompt = NULL;
+    if (prompt == NULL)
+    {
+        extracted_prompt = extract_prompt();
+        if (extracted_prompt == NULL)
+        {
+            prompt = "";
+        }
+    }
+
     GetCurrentDirectory(sizeof_array(cwd_cache), cwd_cache);
 
     // Call readline
     do
     {
-        text = readline(prompt);
+        rl_already_prompted = (prompt == NULL);
+        text = readline(prompt ? prompt : extracted_prompt);
         if (!text)
         {
-            // EOF situation.
-            return NULL;
+            goto call_readline_prolog;
         }
 
         // Expand history designators in returned buffer.
@@ -640,6 +650,8 @@ char* call_readline_impl(const char* prompt)
     }
     while (!text || expand_result == 2);
 
+call_readline_prolog:
+    free(extracted_prompt);
     SetCurrentDirectory(cwd_cache);
     return text;
 }
@@ -678,16 +690,19 @@ int call_readline_w(const wchar_t* prompt, wchar_t* result, unsigned size)
     char prompt_utf8[1024];
 
     // Convert prompt to utf-8.
-    WideCharToMultiByte(
-        CP_UTF8, 0,
-        prompt, -1,
-        prompt_utf8, sizeof(prompt_utf8),
-        NULL,
-        NULL
-    );
+    if (prompt != NULL)
+    {
+        WideCharToMultiByte(
+            CP_UTF8, 0,
+            prompt, -1,
+            prompt_utf8, sizeof(prompt_utf8),
+            NULL,
+            NULL
+        );
+    }
 
     // Call readline.
-    text = call_readline_impl(prompt_utf8);
+    text = call_readline_impl(prompt ? prompt_utf8 : NULL);
     if (text == NULL)
     {
         // EOF.

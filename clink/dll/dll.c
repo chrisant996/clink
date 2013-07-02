@@ -165,7 +165,7 @@ BOOL WINAPI hooked_read_console(
     old_seh = SetUnhandledExceptionFilter(exception_filter);
 
     // Call readline.
-    is_eof = call_readline_w(L"", buffer, buffer_size);
+    is_eof = call_readline_w(NULL, buffer, buffer_size);
     if (is_eof && get_clink_setting_int("ctrld_exits"))
     {
         wcsncpy(buffer, L"exit", buffer_size);
