@@ -28,126 +28,14 @@
 //------------------------------------------------------------------------------
 void                    save_history();
 void                    shutdown_lua();
-void                    clear_to_eol();
-void                    emulate_doskey(wchar_t*, unsigned);
-int                     call_readline_w(const wchar_t*, wchar_t*, unsigned);
 void                    shutdown_clink_settings();
 int                     get_clink_setting_int(const char*);
 void                    prepare_env_for_inputrc();
-int                     check_auto_answer(const wchar_t*);
-void*                   push_exception_filter();
-void                    pop_exception_filter(void* old_filter);
 
 inject_args_t           g_inject_args;
 static const shell_t*   g_shell                 = NULL;
 extern shell_t          g_shell_cmd;
 extern shell_t          g_shell_generic;
-
-//------------------------------------------------------------------------------
-static void append_crlf(wchar_t* buffer, DWORD max_size)
-{
-    // Cmd.exe expects a CRLF combo at the end of the string, otherwise it
-    // thinks the line is part of a multi-line command.
-
-    size_t len;
-
-    len = max_size - wcslen(buffer);
-    wcsncat(buffer, L"\x0d\x0a", len);
-    buffer[max_size - 1] = L'\0';
-}
-
-//------------------------------------------------------------------------------
-static BOOL WINAPI handle_single_byte_read(
-    HANDLE input,
-    wchar_t* buffer,
-    DWORD buffer_size,
-    LPDWORD read_in,
-    PCONSOLE_READCONSOLE_CONTROL control
-)
-{
-    int i;
-    int reply;
-
-    if (reply = check_auto_answer(L""))
-    {
-        // cmd.exe's PromptUser() method reads a character at a time until
-        // it encounters a \n. The way Clink handle's this is a bit 'hacky'.
-        static int visit_count = 0;
-
-        ++visit_count;
-        if (visit_count >= 2)
-        {
-            reply = '\n';
-            visit_count = 0;
-        }
-
-        *buffer = reply;
-        *read_in = 1;
-        return TRUE;
-    }
-
-    // Default behaviour.
-    return ReadConsoleW(input, buffer, buffer_size, read_in, control);
-}
-
-//------------------------------------------------------------------------------
-static void append_crlf(wchar_t* buffer, DWORD max_size)
-{
-    // Cmd.exe expects a CRLF combo at the end of the string, otherwise it
-    // thinks the line is part of a multi-line command.
-
-    size_t len;
-
-    len = max_size - wcslen(buffer);
-    wcsncat(buffer, L"\x0d\x0a", len);
-    buffer[max_size - 1] = L'\0';
-}
-
-//------------------------------------------------------------------------------
-BOOL WINAPI hooked_read_console(
-    HANDLE input,
-    wchar_t* buffer,
-    DWORD buffer_size,
-    LPDWORD read_in,
-    PCONSOLE_READCONSOLE_CONTROL control
-)
-{
-    const wchar_t* prompt;
-    int is_eof;
-    void* old_exception_filter;
-    int i;
-
-    // If cmd.exe is asking for one character at a time, use the original path
-    // It does this to handle y/n/all prompts which isn't an compatible use-
-    // case for readline.
-    if (buffer_size == 1)
-    {
-        return handle_single_byte_read(
-            input,
-            buffer,
-            buffer_size,
-            read_in,
-            control
-        );
-    }
-
-    old_exception_filter = push_exception_filter();
-
-    // Call readline.
-    is_eof = call_readline_w(NULL, buffer, buffer_size);
-    if (is_eof && get_clink_setting_int("ctrld_exits"))
-    {
-        wcsncpy(buffer, L"exit", buffer_size);
-    }
-
-    emulate_doskey(buffer, buffer_size);
-    append_crlf(buffer, buffer_size);
-
-    pop_exception_filter(old_exception_filter);
-
-    *read_in = (unsigned)wcslen(buffer);
-    return TRUE;
-}
 
 //------------------------------------------------------------------------------
 static void set_rl_readline_name()
