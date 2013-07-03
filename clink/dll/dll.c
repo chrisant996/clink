@@ -35,6 +35,8 @@ void                    shutdown_clink_settings();
 int                     get_clink_setting_int(const char*);
 void                    prepare_env_for_inputrc();
 int                     check_auto_answer(const wchar_t*);
+void*                   push_exception_filter();
+void                    pop_exception_filter(void* old_filter);
 
 inject_args_t           g_inject_args;
 static const shell_t*   g_shell                 = NULL;
@@ -42,42 +44,16 @@ extern shell_t          g_shell_cmd;
 extern shell_t          g_shell_generic;
 
 //------------------------------------------------------------------------------
-static LONG WINAPI exception_filter(EXCEPTION_POINTERS* info)
+static void append_crlf(wchar_t* buffer, DWORD max_size)
 {
-#if defined(_MSC_VER) && defined(CLINK_USE_SEH)
-    MINIDUMP_EXCEPTION_INFORMATION mdei = { GetCurrentThreadId(), info, FALSE };
-    DWORD pid;
-    HANDLE process;
-    HANDLE file;
-    char file_name[1024];
+    // Cmd.exe expects a CRLF combo at the end of the string, otherwise it
+    // thinks the line is part of a multi-line command.
 
-    get_config_dir(file_name, sizeof(file_name));
-    str_cat(file_name, "/mini_dump.dmp", sizeof(file_name));
+    size_t len;
 
-    fputs("\n!!! CLINK'S CRASHED!", stderr);
-    fputs("\n!!! Something went wrong.", stderr);
-    fputs("\n!!! Writing mini dump file to: ", stderr);
-    fputs(file_name, stderr);
-    fputs("\n", stderr);
-
-    file = CreateFile(file_name, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, 0, NULL);
-    if (file != INVALID_HANDLE_VALUE)
-    {
-        pid = GetCurrentProcessId();
-        process = OpenProcess(PROCESS_ALL_ACCESS, FALSE, pid);
-        if (process != NULL)
-        {
-            MiniDumpWriteDump(process, pid, file, MiniDumpNormal, &mdei, NULL, NULL);
-        }
-        CloseHandle(process);
-    }
-    CloseHandle(file);
-#endif // _MSC_VER
-
-    // Would be awesome if we could unhook ourself, unload, and allow cmd.exe
-    // to continue!
-
-    return EXCEPTION_EXECUTE_HANDLER;
+    len = max_size - wcslen(buffer);
+    wcsncat(buffer, L"\x0d\x0a", len);
+    buffer[max_size - 1] = L'\0';
 }
 
 //------------------------------------------------------------------------------
@@ -138,7 +114,7 @@ BOOL WINAPI hooked_read_console(
 {
     const wchar_t* prompt;
     int is_eof;
-    LPTOP_LEVEL_EXCEPTION_FILTER old_seh;
+    void* old_exception_filter;
     int i;
 
     // If cmd.exe is asking for one character at a time, use the original path
@@ -155,7 +131,7 @@ BOOL WINAPI hooked_read_console(
         );
     }
 
-    old_seh = SetUnhandledExceptionFilter(exception_filter);
+    old_exception_filter = push_exception_filter();
 
     // Call readline.
     is_eof = call_readline_w(NULL, buffer, buffer_size);
@@ -167,7 +143,7 @@ BOOL WINAPI hooked_read_console(
     emulate_doskey(buffer, buffer_size);
     append_crlf(buffer, buffer_size);
 
-    SetUnhandledExceptionFilter(old_seh);
+    pop_exception_filter(old_exception_filter);
 
     *read_in = (unsigned)wcslen(buffer);
     return TRUE;

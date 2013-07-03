@@ -21,8 +21,8 @@
 
 #include "pch.h"
 #include "dll_hooks.h"
-#include "shared/hook.h"
 #include "shared/util.h"
+#include "shared/hook.h"
 #include "shared/vm.h"
 #include "shared/pe.h"
 
