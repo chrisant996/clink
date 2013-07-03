@@ -26,13 +26,6 @@
 #include "shared/shared_mem.h"
 
 //------------------------------------------------------------------------------
-typedef struct
-{
-    wchar_t*            buffer;
-    int                 size;
-} write_cache_t;
-
-//------------------------------------------------------------------------------
 void                    save_history();
 void                    shutdown_lua();
 void                    clear_to_eol();
