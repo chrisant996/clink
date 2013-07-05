@@ -149,7 +149,7 @@ static void append_crlf(wchar_t* buffer, DWORD max_size)
 }
 
 //------------------------------------------------------------------------------
-static BOOL WINAPI handle_single_byte_read(
+static BOOL WINAPI single_char_read(
     HANDLE input,
     wchar_t* buffer,
     DWORD buffer_size,
@@ -183,7 +183,7 @@ static BOOL WINAPI handle_single_byte_read(
 }
 
 //------------------------------------------------------------------------------
-static BOOL WINAPI hooked_read_console(
+static BOOL WINAPI read_console(
     HANDLE input,
     wchar_t* buffer,
     DWORD buffer_size,
@@ -201,13 +201,7 @@ static BOOL WINAPI hooked_read_console(
     // case for readline.
     if (buffer_size == 1)
     {
-        return handle_single_byte_read(
-            input,
-            buffer,
-            buffer_size,
-            read_in,
-            control
-        );
+        return single_char_read(input, buffer, buffer_size, read_in, control);
     }
 
     old_exception_filter = push_exception_filter();
@@ -260,9 +254,8 @@ static int hook_trap()
     const char* dll = get_kernel_dll();
 
     hook_decl_t hooks[] = {
-        { HOOK_TYPE_JMP,         NULL, dll,  "ReadConsoleW",      hooked_read_console },
-        //{ HOOK_TYPE_IAT_BY_NAME, base, NULL, "WriteConsoleW",     hooked_write_console },
-        //{ HOOK_TYPE_JMP,         NULL, dll,  "ReadConsoleInputA", hooked_read_console_input },
+        { HOOK_TYPE_JMP,         NULL, dll,  "ReadConsoleW",   read_console },
+        //{ HOOK_TYPE_IAT_BY_NAME, base, NULL, "WriteConsoleW",  write_console },
     };
 
     return apply_hooks(hooks, sizeof_array(hooks));
