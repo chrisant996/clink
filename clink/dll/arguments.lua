@@ -355,14 +355,16 @@ local function argument_match_generator(text, first, last)
     if leading:find("^%s*\"") then
         -- Command appears to be surround by quotes.
         cmd_l, cmd_r = leading:find("%b\"\"")
-        cmd_l = cmd_l + 1
-        cmd_r = cmd_r - 1
+        if cmd_l and cmd_r then
+            cmd_l = cmd_l + 1
+            cmd_r = cmd_r - 1
+        end
     else
         -- No quotes so the first, longest, non-whitespace word is extracted.
         cmd_l, cmd_r = leading:find("[^%s]+")
     end
 
-    if not cmd_l then
+    if not cmd_l or not cmd_r then
         return false
     end
 
