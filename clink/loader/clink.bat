@@ -22,7 +22,6 @@
 ::
 
 @echo off
-setlocal
 
 :: Mimic cmd.exe's behaviour when starting from the start menu.
 ::
@@ -33,7 +32,7 @@ if /i "%1"=="startmenu" (
 
 :: Check for the --profile option.
 if /i "%1"=="--profile" (
-    set profile=--profile "%~2"
+    set clink_profile_arg=--profile "%~2"
     shift /1
     shift /1
 )
@@ -42,7 +41,7 @@ if /i "%1"=="--profile" (
 ::
 if "%1"=="" (
     call :launch
-    goto :eof
+    goto :end
 )
 
 :: Pass through to appropriate loader.
@@ -52,6 +51,9 @@ if /i "%PROCESSOR_ARCHITECTURE%"=="x86" (
 ) else if /i "%PROCESSOR_ARCHITECTURE%"=="amd64" (
     call :loader_x64 %*
 )
+
+:end
+set clink_profile_arg=
 goto :eof
 
 :: Helper functions to avoid cmd.exe's issues with brackets.
@@ -64,5 +66,5 @@ exit /b 0
 exit /b 0
 
 :launch
-start "" cmd.exe /s /k ""%~dpnx0" inject %profile% && title Clink"
+start "" cmd.exe /s /k ""%~dpnx0" inject %clink_profile_arg% && title Clink"
 exit /b 0
