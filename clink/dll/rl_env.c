@@ -119,3 +119,5 @@ void prepare_env_for_inputrc()
 
     pop_env(env_handle);
 }
+
+// vim: expandtab

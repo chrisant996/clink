@@ -68,3 +68,5 @@ static int filter_prompt()
     rl_set_prompt(tagged_prompt);
     return 0;
 }
+
+// vim: expandtab

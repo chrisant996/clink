@@ -48,3 +48,5 @@ static int generic_initialise()
 static void generic_shutdown()
 {
 }
+
+// vim: expandtab

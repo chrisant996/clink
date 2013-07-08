@@ -290,3 +290,5 @@ static int cmd_initialise()
 static void cmd_shutdown()
 {
 }
+
+// vim: expandtab

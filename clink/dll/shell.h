@@ -19,9 +19,12 @@
  * SOFTWARE.
  */
 
+
 typedef struct
 {
     int     (*validate)();
     int     (*initialise)();
     void    (*shutdown)();
 } shell_t;
+
+// vim: expandtab

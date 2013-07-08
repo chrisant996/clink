@@ -72,3 +72,5 @@ void pop_exception_filter(void* old_filter)
 {
     AddVectoredExceptionHandler(1, old_filter);
 }
+
+// vim: expandtab

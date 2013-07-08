@@ -143,3 +143,5 @@ void clink_register_rl_funcs()
     rl_add_funmap_entry("show-rl-help", show_rl_help);
     rl_add_funmap_entry("copy-line-to-clipboard", copy_line_to_clipboard);
 }
+
+// vim: expandtab
