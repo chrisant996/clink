@@ -27,6 +27,12 @@ const char*         find_next_ansi_code(const char*, int*);
 void                lua_filter_prompt(char*, int);
 
 //------------------------------------------------------------------------------
+#define MR(x)                    x "\x08"
+const char g_prompt_tag[]        = "@CLINK_PROMPT";
+const char g_prompt_tag_hidden[] = MR("C") MR("L") MR("I") MR("N") MR("K") MR(" ");
+#undef MR
+
+//------------------------------------------------------------------------------
 static int filter_prompt()
 {
     char* next;

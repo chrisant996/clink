@@ -25,16 +25,22 @@
 #include "shared/util.h"
 
 //------------------------------------------------------------------------------
-int             get_clink_setting_int(const char*);
-void*           push_exception_filter();
-void            pop_exception_filter(void* old_filter);
-int             call_readline_w(const wchar_t*, wchar_t*, unsigned);
-void            emulate_doskey(wchar_t*, unsigned);
-static int      cmd_validate();
-static int      cmd_initialise();
-static void     cmd_shutdown();
+int                 get_clink_setting_int(const char*);
+void*               push_exception_filter();
+void                pop_exception_filter(void* old_filter);
+int                 call_readline_w(const wchar_t*, wchar_t*, unsigned);
+void                emulate_doskey(wchar_t*, unsigned);
+static int          cmd_validate();
+static int          cmd_initialise();
+static void         cmd_shutdown();
 
-shell_t         g_shell_cmd = { cmd_validate, cmd_initialise, cmd_shutdown };
+extern const char   g_prompt_tag_hidden[];
+
+shell_t             g_shell_cmd = {
+                        cmd_validate,
+                        cmd_initialise,
+                        cmd_shutdown
+                    };
 
 //------------------------------------------------------------------------------
 static int is_interactive()
@@ -223,6 +229,56 @@ static BOOL WINAPI read_console(
 }
 
 //------------------------------------------------------------------------------
+static BOOL WINAPI write_console(
+    HANDLE handle,
+    const wchar_t* buffer,
+    DWORD to_write,
+    LPDWORD written,
+    LPVOID unused
+)
+{
+    return WriteConsoleW(handle, buffer, to_write, written, unused);
+}
+
+//------------------------------------------------------------------------------
+static void tag_prompt()
+{
+    // Prefixes the 'prompt' environment variable with a known tag so that Clink
+    // can identify console writes that are the prompt.
+
+    static const char* name = "prompt";
+    static const int buffer_size = 0x10000;
+
+    int tag_size;
+    char* buffer;
+
+    buffer = malloc(buffer_size);
+    tag_size = strlen(g_prompt_tag_hidden);
+
+    strcpy(buffer, g_prompt_tag_hidden);
+    GetEnvironmentVariableA(name, buffer + tag_size, buffer_size - tag_size);
+    SetEnvironmentVariableA(name, buffer);
+
+    free(buffer);
+}
+
+//------------------------------------------------------------------------------
+static BOOL WINAPI set_env_var(
+    const wchar_t* name,
+    const wchar_t* value
+)
+{
+    BOOL ret = SetEnvironmentVariableW(name, value);
+
+    if (_wcsicmp(name, L"prompt") == 0)
+    {
+        tag_prompt();
+    }
+
+    return ret;
+}
+
+//------------------------------------------------------------------------------
 static const char* get_kernel_dll()
 {
     // We're going to use a different DLL for Win8 (and onwards).
@@ -254,8 +310,9 @@ static int hook_trap()
     const char* dll = get_kernel_dll();
 
     hook_decl_t hooks[] = {
-        { HOOK_TYPE_JMP,         NULL, dll,  "ReadConsoleW",   read_console },
-        //{ HOOK_TYPE_IAT_BY_NAME, base, NULL, "WriteConsoleW",  write_console },
+        { HOOK_TYPE_JMP,         NULL, dll,  "ReadConsoleW",            read_console },
+        { HOOK_TYPE_IAT_BY_NAME, base, NULL, "WriteConsoleW",           write_console },
+        { HOOK_TYPE_IAT_BY_NAME, base, NULL, "SetEnvironmentVariableW", set_env_var },
     };
 
     return apply_hooks(hooks, sizeof_array(hooks));
@@ -282,6 +339,8 @@ static int cmd_initialise()
     {
         return 0;
     }
+
+    tag_prompt();
 
     return 1;
 }
