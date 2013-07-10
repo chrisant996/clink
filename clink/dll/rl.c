@@ -32,8 +32,12 @@ void                initialise_clink_settings();
 int                 getc_impl(FILE* stream);
 int                 get_clink_setting_int(const char*);
 void                clink_register_rl_funcs();
+char*               filter_prompt(const char*);
+char*               extract_prompt();
+void                free_prompt(void*);
 
 int                 g_slash_translation             = 0;
+static int          g_new_history_count             = 0;
 extern int          rl_visible_stats;
 extern int          rl_display_fixed;
 extern int          rl_editing_mode;
@@ -41,7 +45,6 @@ extern const char*  rl_filename_quote_characters;
 extern int          rl_catch_signals;
 extern int          _rl_complete_mark_directories;
 extern char*        _rl_comment_begin;
-static int          g_new_history_count             = 0;
 
 //------------------------------------------------------------------------------
 // This ensures the cursor is visible as printing to the console usually makes
@@ -489,10 +492,7 @@ static int initialise_hook()
     rl_add_funmap_entry("clink-completion-shim", completion_shim);
 
     clink_register_rl_funcs();
-    initialise_clink_settings();
-    initialise_lua();
     initialise_rl_scroller();
-    load_history();
 
     rl_re_read_init_file(0, 0);
     rl_visible_stats = 0;               // serves no purpose under win32.
@@ -543,76 +543,37 @@ static void add_to_history(const char* line)
 }
 
 //------------------------------------------------------------------------------
-static const char* extract_prompt()
-{
-    char* prompt;
-    wchar_t* buffer;
-    CONSOLE_SCREEN_BUFFER_INFO csbi;
-    HANDLE handle;
-    int length;
-    COORD cur;
-    DWORD chars_read;
-
-    // Find where the cursor is (tip; it's at the end of the prompt).
-    handle = GetStdHandle(STD_OUTPUT_HANDLE);
-    GetConsoleScreenBufferInfo(handle, &csbi);
-
-    // Work out prompt length and allocate some working buffer space.
-    cur = csbi.dwCursorPosition;
-    length = cur.X;
-    cur.X = 0;
-    prompt = malloc(length * 8);
-
-    // Get the prompt from the terminal.
-    buffer = (wchar_t*)prompt + length + 1;
-    ReadConsoleOutputCharacterW(handle, buffer, length, cur, &chars_read);
-
-    // Convert to Utf8 and return.
-    length = WideCharToMultiByte(
-        CP_UTF8, 0,
-        buffer, length,
-        prompt, (char*)buffer - prompt,
-        NULL,
-        NULL
-    );
-
-    if (length <= 0)
-    {
-        return NULL;
-    }
-
-    prompt[length] = '\0';
-    return prompt;
-}
-
-//------------------------------------------------------------------------------
-char* call_readline_impl(const char* prompt)
+static char* call_readline_impl(const char* prompt)
 {
     static int initialised = 0;
     int expand_result;
     char* text;
     char* expanded;
-    const char* extracted_prompt;
+    char* prepared_prompt;
     char cwd_cache[MAX_PATH];
 
     // Initialisation
     if (!initialised)
     {
+        initialise_clink_settings();
+        initialise_lua();
+        load_history();
+
         rl_catch_signals = 0;
         rl_startup_hook = initialise_hook;
         initialised = 1;
     }
 
     // If no prompt was provided assume the line is prompted already and
-    // extract it.
-    extracted_prompt = NULL;
+    // extract it. If a prompt was provided filter it through Lua.
+    prepared_prompt = NULL;
     if (prompt == NULL)
     {
-        extracted_prompt = extract_prompt();
-        if (extracted_prompt == NULL)
-        {
-            prompt = "";
-        }
+        prepared_prompt = extract_prompt();
+    }
+    else
+    {
+        prepared_prompt = filter_prompt(prompt);
     }
 
     GetCurrentDirectory(sizeof_array(cwd_cache), cwd_cache);
@@ -621,7 +582,7 @@ char* call_readline_impl(const char* prompt)
     do
     {
         rl_already_prompted = (prompt == NULL);
-        text = readline(prompt ? prompt : extracted_prompt);
+        text = readline(prepared_prompt ? prepared_prompt : "");
         if (!text)
         {
             goto call_readline_prolog;
@@ -651,7 +612,7 @@ char* call_readline_impl(const char* prompt)
     while (!text || expand_result == 2);
 
 call_readline_prolog:
-    free(extracted_prompt);
+    free_prompt(prepared_prompt);
     SetCurrentDirectory(cwd_cache);
     return text;
 }

@@ -30,12 +30,14 @@ void*               push_exception_filter();
 void                pop_exception_filter(void* old_filter);
 int                 call_readline_w(const wchar_t*, wchar_t*, unsigned);
 void                emulate_doskey(wchar_t*, unsigned);
+wchar_t*            detect_tagged_prompt_w(const wchar_t*, int);
+void                free_prompt(void*);
 static int          cmd_validate();
 static int          cmd_initialise();
 static void         cmd_shutdown();
 
 extern const char   g_prompt_tag_hidden[];
-
+static wchar_t*     g_prompt_w;
 shell_t             g_shell_cmd = {
                         cmd_validate,
                         cmd_initialise,
@@ -213,7 +215,7 @@ static BOOL WINAPI read_console(
     old_exception_filter = push_exception_filter();
 
     // Call readline.
-    is_eof = call_readline_w(NULL, buffer, buffer_size);
+    is_eof = call_readline_w(g_prompt_w, buffer, buffer_size);
     if (is_eof && get_clink_setting_int("ctrld_exits"))
     {
         wcsncpy(buffer, L"exit", buffer_size);
@@ -237,6 +239,25 @@ static BOOL WINAPI write_console(
     LPVOID unused
 )
 {
+    // Clink tags the prompt so that it can be detected when cmd.exe writes it
+    // to the console.
+
+    const wchar_t* prompt = detect_tagged_prompt_w(buffer, to_write);
+    if (prompt != NULL)
+    {
+        // Copy the prompt.
+        free_prompt(g_prompt_w);
+        g_prompt_w = prompt;
+
+        // Convince caller (cmd.exe) that we wrote something to the console.
+        if (written != NULL)
+        {
+            *written = to_write;
+        }
+
+        return TRUE;
+    }
+
     return WriteConsoleW(handle, buffer, to_write, written, unused);
 }
 

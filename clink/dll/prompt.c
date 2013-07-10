@@ -27,52 +27,168 @@ const char*         find_next_ansi_code(const char*, int*);
 void                lua_filter_prompt(char*, int);
 
 //------------------------------------------------------------------------------
-#define MR(x)                    x "\x08"
-const char g_prompt_tag[]        = "@CLINK_PROMPT";
-const char g_prompt_tag_hidden[] = MR("C") MR("L") MR("I") MR("N") MR("K") MR(" ");
+#define MR(x)                     x "\x08"
+const char  g_prompt_tag[]        = "@CLINK_PROMPT";
+const char  g_prompt_tag_hidden[] = MR("C") MR("L") MR("I") MR("N") MR("K") MR(" ");
+const char* g_prompt_tags[]       = { g_prompt_tag, g_prompt_tag_hidden };
 #undef MR
 
 //------------------------------------------------------------------------------
-static int filter_prompt()
+wchar_t* detect_tagged_prompt_w(const wchar_t* buffer, int length)
 {
+    int i;
+
+    // For each accepted tag...
+    for (i = 0; i < sizeof_array(g_prompt_tags); ++i)
+    {
+        const char* tag = g_prompt_tags[i];
+        int tag_length = strlen(tag);
+        int j, n;
+
+        // Count the number of matching characters.
+        int matched = 0;
+        for (j = 0, n = min(length, tag_length); j < n; ++j)
+        {
+            matched += (tag[j] == buffer[j]);
+        }
+
+        // Found a match? Convert the remainer to Utf8 and return it.
+        if (matched == tag_length)
+        {
+            wchar_t* out;
+
+            out = malloc(length * sizeof(wchar_t));
+            length -= matched;
+
+            wcsncpy(out, buffer + matched, length);
+            out[length] = '\0';
+
+            return out;
+        }
+    }
+
+    return NULL;
+}
+
+//------------------------------------------------------------------------------
+char* detect_tagged_prompt(const char* buffer, int length)
+{
+    int i;
+
+    // For each accepted tag...
+    for (i = 0; i < sizeof_array(g_prompt_tags); ++i)
+    {
+        const char* tag = g_prompt_tags[i];
+        int tag_length = strlen(tag);
+
+        // Does the buffer start with the tag?
+        if (strncmp(buffer, tag, tag_length) == 0)
+        {
+            char* out;
+            
+            out = malloc(length);
+            memcpy(out, buffer + tag_length, length - tag_length);
+
+            out[length - tag_length] = '\0';
+            return out;
+        }
+    }
+
+    return NULL;
+}
+
+//------------------------------------------------------------------------------
+void free_prompt(void* buffer)
+{
+    free(buffer);
+}
+
+//------------------------------------------------------------------------------
+char* filter_prompt(const char* in_prompt)
+{
+    static const int buf_size = 0x4000;
+
     char* next;
-    char prompt[1024];
-    char tagged_prompt[sizeof_array(prompt)];
+    char* out_prompt;
+    char* lua_prompt;
+
+    // Allocate the buffers. We'll allocate once and divide it in two.
+    out_prompt = malloc(buf_size * 2);
+    lua_prompt = out_prompt + buf_size;
 
     // Get the prompt from Readline and pass it to Clink's filter framework
     // in Lua.
-    prompt[0] = '\0';
-    str_cat(prompt, rl_prompt, sizeof_array(prompt));
+    lua_prompt[0] = '\0';
+    str_cat(lua_prompt, in_prompt, buf_size);
 
-    lua_filter_prompt(prompt, sizeof_array(prompt));
+    lua_filter_prompt(lua_prompt, buf_size);
 
     // Scan for ansi codes and surround them with Readline's markers for
     // invisible characters.
-    tagged_prompt[0] ='\0';
-    next = prompt;
+    out_prompt[0] ='\0';
+    next = lua_prompt;
     while (*next)
     {
-        static const int tp_size = sizeof_array(tagged_prompt);
-
         int size;
         char* code;
 
         code = (char*)find_next_ansi_code(next, &size);
-        str_cat_n(tagged_prompt, next, tp_size, code - next);
+        str_cat_n(out_prompt, next, buf_size, code - next);
         if (*code)
         {
             static const char* tags[] = { "\001", "\002" };
 
-            str_cat(tagged_prompt, tags[0], tp_size);
-            str_cat_n(tagged_prompt, code, tp_size, size);
-            str_cat(tagged_prompt, tags[1], tp_size);
+            str_cat(out_prompt, tags[0], buf_size);
+            str_cat_n(out_prompt, code, buf_size, size);
+            str_cat(out_prompt, tags[1], buf_size);
         }
 
         next = code + size;
     }
 
-    rl_set_prompt(tagged_prompt);
-    return 0;
+    return out_prompt;
+}
+
+//------------------------------------------------------------------------------
+char* extract_prompt()
+{
+    char* prompt;
+    wchar_t* buffer;
+    CONSOLE_SCREEN_BUFFER_INFO csbi;
+    HANDLE handle;
+    int length;
+    COORD cur;
+    DWORD chars_read;
+
+    // Find where the cursor is (tip; it's at the end of the prompt).
+    handle = GetStdHandle(STD_OUTPUT_HANDLE);
+    GetConsoleScreenBufferInfo(handle, &csbi);
+
+    // Work out prompt length and allocate some working buffer space.
+    cur = csbi.dwCursorPosition;
+    length = cur.X;
+    cur.X = 0;
+    prompt = malloc(length * 8);
+
+    // Get the prompt from the terminal.
+    buffer = (wchar_t*)prompt + length + 1;
+    ReadConsoleOutputCharacterW(handle, buffer, length, cur, &chars_read);
+
+    // Convert to Utf8 and return.
+    length = WideCharToMultiByte(
+        CP_UTF8, 0,
+        buffer, length,
+        prompt, (char*)buffer - prompt,
+        NULL, NULL
+    );
+
+    if (length <= 0)
+    {
+        return NULL;
+    }
+
+    prompt[length] = '\0';
+    return prompt;
 }
 
 // vim: expandtab
