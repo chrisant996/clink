@@ -145,7 +145,8 @@ static BOOL on_dll_attach()
         return FALSE;
     }
 
-    if (!g_shell->initialise())
+    base = GetModuleHandle(NULL);
+    if (!g_shell->initialise(base))
     {
         failed();
         return FALSE;

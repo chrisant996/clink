@@ -23,7 +23,7 @@
 typedef struct
 {
     int     (*validate)();
-    int     (*initialise)();
+    int     (*initialise)(void*);
     void    (*shutdown)();
 } shell_t;
 

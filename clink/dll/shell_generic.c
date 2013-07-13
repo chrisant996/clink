@@ -21,11 +21,18 @@
 
 #include "pch.h"
 #include "shell.h"
+#include "dll_hooks.h"
+#include "shared/util.h"
 
 //------------------------------------------------------------------------------
-static int      generic_validate();
-static int      generic_initialise();
-static void     generic_shutdown();
+int             generic_validate();
+int             generic_initialise(void*);
+void            generic_shutdown();
+const char*     get_kernel_dll();
+void*           push_exception_filter();
+void            pop_exception_filter(void* old_filter);
+int             call_readline_w(const wchar_t*, wchar_t*, unsigned);
+void            append_crlf(wchar_t*, unsigned);
 
 shell_t         g_shell_generic = {
                     generic_validate,
@@ -33,19 +40,53 @@ shell_t         g_shell_generic = {
                     generic_shutdown };
 
 //------------------------------------------------------------------------------
-static int generic_validate()
+static BOOL WINAPI read_console_w(
+    HANDLE input,
+    wchar_t* buffer,
+    DWORD buffer_size,
+    LPDWORD read_in,
+    PCONSOLE_READCONSOLE_CONTROL control
+)
+{
+    int is_eof;
+    void* old_exception_filter;
+
+    old_exception_filter = push_exception_filter();
+    call_readline_w(NULL, buffer, buffer_size);
+    append_crlf(buffer, buffer_size);
+    pop_exception_filter(old_exception_filter);
+
+    *read_in = (unsigned)wcslen(buffer);
+    return TRUE;
+}
+
+//------------------------------------------------------------------------------
+static int initialise_w(void* base)
+{
+    const char* dll = get_kernel_dll();
+
+    hook_decl_t hooks[] = {
+        { HOOK_TYPE_JMP,         NULL, dll,  "ReadConsoleW",    read_console_w },
+        //{ HOOK_TYPE_IAT_BY_NAME, base, NULL, "WriteConsoleW",  write_console_w },
+    };
+
+    return apply_hooks(hooks, sizeof_array(hooks));
+}
+
+//------------------------------------------------------------------------------
+int generic_validate()
 {
     return 1;
 }
 
 //------------------------------------------------------------------------------
-static int generic_initialise()
+int generic_initialise(void* base)
 {
-    return 1;
+    return initialise_w(base);
 }
 
 //------------------------------------------------------------------------------
-static void generic_shutdown()
+void generic_shutdown()
 {
 }
 

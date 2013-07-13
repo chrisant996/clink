@@ -33,7 +33,7 @@ void                emulate_doskey(wchar_t*, unsigned);
 wchar_t*            detect_tagged_prompt_w(const wchar_t*, int);
 void                free_prompt(void*);
 static int          cmd_validate();
-static int          cmd_initialise();
+static int          cmd_initialise(void*);
 static void         cmd_shutdown();
 
 extern const char   g_prompt_tag_hidden[];
@@ -144,7 +144,7 @@ static int check_auto_answer(const wchar_t* prompt)
 }
 
 //------------------------------------------------------------------------------
-static void append_crlf(wchar_t* buffer, DWORD max_size)
+void append_crlf(wchar_t* buffer, unsigned max_size)
 {
     // Cmd.exe expects a CRLF combo at the end of the string, otherwise it
     // thinks the line is part of a multi-line command.
@@ -300,7 +300,7 @@ static BOOL WINAPI set_env_var(
 }
 
 //------------------------------------------------------------------------------
-static const char* get_kernel_dll()
+const char* get_kernel_dll()
 {
     // We're going to use a different DLL for Win8 (and onwards).
 
@@ -351,7 +351,7 @@ static int cmd_validate()
 }
 
 //------------------------------------------------------------------------------
-static int cmd_initialise()
+static int cmd_initialise(void* base)
 {
     const char* dll = get_kernel_dll();
     const char* func_name = "GetCurrentDirectoryW";
