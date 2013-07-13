@@ -165,7 +165,6 @@ static BOOL WINAPI single_char_read(
     PCONSOLE_READCONSOLE_CONTROL control
 )
 {
-    int i;
     int reply;
 
     if (reply = check_auto_answer(L""))
@@ -199,10 +198,8 @@ static BOOL WINAPI read_console(
     PCONSOLE_READCONSOLE_CONTROL control
 )
 {
-    const wchar_t* prompt;
     int is_eof;
     void* old_exception_filter;
-    int i;
 
     // If cmd.exe is asking for one character at a time, use the original path
     // It does this to handle y/n/all prompts which isn't an compatible use-
