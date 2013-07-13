@@ -35,6 +35,7 @@ void                    prepare_env_for_inputrc();
 inject_args_t           g_inject_args;
 static const shell_t*   g_shell                 = NULL;
 extern shell_t          g_shell_cmd;
+extern shell_t          g_shell_ps;
 extern shell_t          g_shell_generic;
 
 //------------------------------------------------------------------------------
@@ -115,6 +116,7 @@ static BOOL on_dll_attach()
             const shell_t*  shell;
         } shells[] = {
             { "cmd.exe", &g_shell_cmd },
+            { "powershell.exe", &g_shell_ps },
         };
 
         for (i = 0; i < sizeof_array(shells); ++i)
