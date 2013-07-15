@@ -64,13 +64,13 @@ static LONG WINAPI exception_filter(EXCEPTION_POINTERS* info)
 //------------------------------------------------------------------------------
 void* push_exception_filter()
 {
-    return AddVectoredExceptionHandler(1, exception_filter);
+    return SetUnhandledExceptionFilter(exception_filter);
 }
 
 //------------------------------------------------------------------------------
 void pop_exception_filter(void* old_filter)
 {
-    AddVectoredExceptionHandler(1, old_filter);
+    SetUnhandledExceptionFilter(old_filter);
 }
 
 // vim: expandtab
