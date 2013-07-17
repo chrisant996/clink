@@ -134,6 +134,27 @@ static int page_up(int count, int invoking_key)
 }
 
 //------------------------------------------------------------------------------
+static int expand_env_vars(int count, int invoking_key)
+{
+    static const int buffer_size = 0x8000;
+    char* buffer;
+
+    buffer = malloc(buffer_size);
+    if (!ExpandEnvironmentStrings(rl_line_buffer, buffer, buffer_size))
+    {
+        return 0;
+    }
+
+    rl_begin_undo_group();
+    rl_delete_text(0, rl_end);
+    rl_point = 0;
+    rl_insert_text(buffer);
+    rl_end_undo_group();
+
+    return 0;
+}
+
+//------------------------------------------------------------------------------
 void clink_register_rl_funcs()
 {
     rl_add_funmap_entry("ctrl-c", ctrl_c);
@@ -142,6 +163,7 @@ void clink_register_rl_funcs()
     rl_add_funmap_entry("up-directory", up_directory);
     rl_add_funmap_entry("show-rl-help", show_rl_help);
     rl_add_funmap_entry("copy-line-to-clipboard", copy_line_to_clipboard);
+    rl_add_funmap_entry("expand-env-vars", expand_env_vars);
 }
 
 // vim: expandtab

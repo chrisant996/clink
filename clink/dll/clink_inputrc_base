@@ -42,12 +42,15 @@ C-c:                ctrl-c
 $if cmd.exe
     set keymap      emacs
     M-C-u:          up-directory
+    M-C-e:          expand-env-vars
 
     set keymap      vi-insert
     M-C-u:          up-directory
+    M-C-e:          expand-env-vars
 
     set keymap      vi-move
     M-C-u:          up-directory
+    M-C-e:          expand-env-vars
 $endif
 
 $include ~/clink_inputrc
