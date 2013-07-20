@@ -20,6 +20,7 @@
  */
 
 #include "pch.h"
+#include "shared/util.h"
 
 //------------------------------------------------------------------------------
 void                enter_scroll_mode(int);
@@ -134,23 +135,76 @@ static int page_up(int count, int invoking_key)
 }
 
 //------------------------------------------------------------------------------
+static void get_word_bounds(const char* str, int cursor, int* left, int* right)
+{
+    int i;
+    int delim;
+    const char* post;
+
+    // Determine the word delimiter depending on whether the word's quoted.
+    delim = 0;
+    for (i = 0; i < cursor; ++i)
+    {
+        char c = str[i];
+        delim += (c == '\"');
+    }
+
+    // Search outwards from the cursor for the delimiter.
+    delim = (delim & 1) ? '\"' : ' ';
+    *left = 0;
+    for (i = cursor - 1; i >= 0; --i)
+    {
+        char c = str[i];
+        if (c == delim)
+        {
+            *left = i + 1;
+            break;
+        }
+    }
+
+    post = strchr(str + cursor, delim);
+    if (post != NULL)
+    {
+        *right = post - str;
+    }
+    else
+    {
+        *right = strlen(str);
+    }
+}
+
+//------------------------------------------------------------------------------
 static int expand_env_vars(int count, int invoking_key)
 {
     static const int buffer_size = 0x8000;
-    char* buffer;
+    char* in;
+    char* out;
+    int word_left, word_right;
 
-    buffer = malloc(buffer_size);
-    if (!ExpandEnvironmentStrings(rl_line_buffer, buffer, buffer_size))
+    // Create some buffers to work in.
+    out = malloc(buffer_size * 2);
+    in = out + buffer_size;
+
+    // Extract the word under the cursor.
+    str_cpy(in, rl_line_buffer, buffer_size);
+    get_word_bounds(in, rl_point, &word_left, &word_right);
+    in[word_right] = '\0';
+    in += word_left;
+
+    // Do the environment variable expansion.
+    if (!ExpandEnvironmentStrings(in, out, buffer_size))
     {
         return 0;
     }
 
+    // Update Readline with the resulting expansion.
     rl_begin_undo_group();
-    rl_delete_text(0, rl_end);
-    rl_point = 0;
-    rl_insert_text(buffer);
+    rl_delete_text(word_left, word_right);
+    rl_point = word_left;
+    rl_insert_text(out);
     rl_end_undo_group();
 
+    free(out);
     return 0;
 }
 
