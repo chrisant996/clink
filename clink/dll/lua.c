@@ -688,11 +688,17 @@ char** lua_generate_matches(const char* text, int start, int end)
     char** matches = NULL;
 
     // Expose some of the readline state to lua.
-    lua_pushstring(g_lua, rl_line_buffer);
-    lua_setglobal(g_lua, "rl_line_buffer");
+    lua_createtable(g_lua, 2, 0);
 
+    lua_pushliteral(g_lua, "line_buffer");
+    lua_pushstring(g_lua, rl_line_buffer);
+    lua_rawset(g_lua, -3);
+
+    lua_pushliteral(g_lua, "point");
     lua_pushinteger(g_lua, rl_point + 1);
-    lua_setglobal(g_lua, "rl_point");
+    lua_rawset(g_lua, -3);
+
+    lua_setglobal(g_lua, "rl_state");
 
     // Call to Lua to generate matches.
     lua_getglobal(g_lua, "clink");

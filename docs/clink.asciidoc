@@ -121,7 +121,7 @@ form;
 
 ----
 function my_match_generator(text, first, last)
-    -- Use text/rl_line_buffer to create matches,
+    -- Use text/rl_state.line_buffer to create matches,
     -- Submit matches to Clink using clink.add_match()
     -- Return true/false.
 end
@@ -129,8 +129,8 @@ end
 
 'Text' is the word that is being completed, 'first' and 'last' and the indices
 into the complete line buffer for 'text' (the full line buffer can be accessed
-using the variable 'rl_line_buffer'). If no further match generators need to be
-called then the function should return true.
+using the variable 'rl_state.line_buffer'). If no further match generators need
+to be called then the function should return true.
 
 Registering the match generation function is done as follows;
 
@@ -539,15 +539,17 @@ quotes.
 
 === Readline Constants
 
-==== rl_line_buffer
+Clink exposes a small amount of state from Readline in the global 'rl_state'
+table. Readline's nomenclature is maintained (minus the *rl* prefix) so
+Readline's manual can also be used as reference. This table should be considered
+read-only - changes to the table's members are not fed back to Readline.
+
+==== rl_state.line_buffer
 
 [role="indented"]
-The variable 'rl_line_buffer' contains the current state of the complete line
-being edited. The value should be considered read-only (i.e. changes to this
-variable are not fed back to Readline).
+This variable contains the current state of the whole line being edited.
 
-==== rl_point
+==== rl_state.point
 
 [role="indented"]
-The current cursor position within the line buffer. This should be considered a
-read-only variable.
+The current cursor position within the line buffer.
