@@ -49,7 +49,7 @@ end
 
 --------------------------------------------------------------------------------
 local function env_vars_match_generator(text, first, last)
-    local all = rl_line_buffer:sub(1, last)
+    local all = rl_state.line_buffer:sub(1, last)
 
     -- Skip pairs of %s
     local i = 1

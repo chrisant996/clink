@@ -116,7 +116,7 @@ function clink.is_point_in_quote(str, i)
 end
 
 --------------------------------------------------------------------------------
-function clink.adjust_for_separator(buffer, first, last)
+function clink.adjust_for_separator(buffer, point, first, last)
     local seps = nil
     if clink.get_host_process() == "cmd.exe" then
         seps = "|&"
@@ -136,19 +136,27 @@ function clink.adjust_for_separator(buffer, first, last)
             buffer = buffer:sub(delta + 1)
             first = first - delta
             last = last - delta
+            point = point - delta
         end
     end
 
-    return buffer, first, last
+    return buffer, point, first, last
 end
 
 --------------------------------------------------------------------------------
 function clink.generate_matches(text, first, last)
-    rl_line_buffer, first, last = clink.adjust_for_separator(
-        rl_line_buffer,
+    local line_buffer
+    local point
+
+    line_buffer, point, first, last = clink.adjust_for_separator(
+        rl_state.line_buffer,
+        rl_state.point,
         first,
         last
     )
+
+    rl_state.line_buffer = line_buffer
+    rl_state.point = point
 
     clink.matches = {}
     clink.match_display_filter = nil

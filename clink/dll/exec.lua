@@ -106,7 +106,7 @@ end
 local function exec_match_generator(text, first, last)
     -- We're only interested in exec completion if this is the first word of the
     -- line, or the first word after a command separator.
-    local leading = rl_line_buffer:sub(1, first - 1)
+    local leading = rl_state.line_buffer:sub(1, first - 1)
     local is_first = leading:find("^%s*\"*$")
     if not is_first then
         return false

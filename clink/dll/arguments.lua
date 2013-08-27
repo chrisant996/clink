@@ -420,7 +420,7 @@ end
 
 --------------------------------------------------------------------------------
 local function argument_match_generator(text, first, last)
-    local leading = rl_line_buffer:sub(1, first - 1):lower()
+    local leading = rl_state.line_buffer:sub(1, first - 1):lower()
 
     -- Extract the command.
     local cmd_l, cmd_r
@@ -457,7 +457,7 @@ local function argument_match_generator(text, first, last)
     end
 
     -- Split the command line into parts.
-    local str = rl_line_buffer:sub(cmd_r + 2, last)
+    local str = rl_state.line_buffer:sub(cmd_r + 2, last)
     local parts = {}
     for _, sub_str in ipairs(clink.quote_split(str, "\"")) do
         -- Quoted strings still have their quotes. Look for those type of
@@ -482,6 +482,11 @@ local function argument_match_generator(text, first, last)
     if text == "" then
         table.insert(parts, text)
     end
+
+    -- Extend rl_state with match generation state; text, first, and last.
+    rl_state.text = text
+    rl_state.first = first
+    rl_state.last = last
 
     -- Call the parser.
     local needle = parts[#parts]
