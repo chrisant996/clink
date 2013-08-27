@@ -48,7 +48,6 @@ static BOOL WINAPI read_console_w(
     PCONSOLE_READCONSOLE_CONTROL control
 )
 {
-    int is_eof;
     void* old_exception_filter;
 
     old_exception_filter = push_exception_filter();
