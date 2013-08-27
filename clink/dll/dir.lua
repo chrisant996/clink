@@ -44,14 +44,14 @@ function dir_match_generator_impl(text)
 end
 
 --------------------------------------------------------------------------------
-local function dir_match_generator(word, text, first, last)
-    local matches = dir_match_generator_impl(text, first, last)
+local function dir_match_generator(word)
+    local matches = dir_match_generator_impl(word)
 
     -- If there was no matches but text is a dir then use it as the single match.
     -- Otherwise tell readline that matches are files and it will do magic.
     if #matches == 0 then
-        if clink.is_dir(text) then
-            table.insert(matches, text)
+        if clink.is_dir(rl_state.text) then
+            table.insert(matches, rl_state.text)
         end
     else
         clink.matches_are_files()

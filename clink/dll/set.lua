@@ -21,17 +21,17 @@
 --
 
 --------------------------------------------------------------------------------
-local function set_match_generator(word, text, first, last)
+local function set_match_generator(word)
     -- Skip this generator if first is in the rvalue.
-    local leading = rl_line_buffer:sub(1, first - 1)
+    local leading = rl_state.line_buffer:sub(1, rl_state.first - 1)
     if leading:find("=") then
-        return false;
+        return false
     end
 
     -- Enumerate environment variables and check for potential matches.
     local matches = {}
     for _, name in ipairs(clink.get_env_var_names()) do
-        if clink.is_match(text, name) then
+        if clink.is_match(word, name) then
             table.insert(matches, name:lower())
         end
     end
