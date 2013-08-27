@@ -36,6 +36,6 @@ local p4_tree = {
     "unshelve", "update", "user", "users", "where", "workspace", "workspaces"
 }
 
-clink.arg.register_tree("p4", p4_tree)
+clink.arg.register_parser("p4", p4_tree)
 
 -- vim: expandtab

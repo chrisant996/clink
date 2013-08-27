@@ -61,12 +61,12 @@ local function dir_match_generator(word, text, first, last)
 end
 
 --------------------------------------------------------------------------------
-clink.arg.register_tree("cd", dir_match_generator)
-clink.arg.register_tree("chdir", dir_match_generator)
-clink.arg.register_tree("pushd", dir_match_generator)
-clink.arg.register_tree("rd", dir_match_generator)
-clink.arg.register_tree("rmdir", dir_match_generator)
-clink.arg.register_tree("md", dir_match_generator)
-clink.arg.register_tree("mkdir", dir_match_generator)
+clink.arg.register_parser("cd", dir_match_generator)
+clink.arg.register_parser("chdir", dir_match_generator)
+clink.arg.register_parser("pushd", dir_match_generator)
+clink.arg.register_parser("rd", dir_match_generator)
+clink.arg.register_parser("rmdir", dir_match_generator)
+clink.arg.register_parser("md", dir_match_generator)
+clink.arg.register_parser("mkdir", dir_match_generator)
 
 -- vim: expandtab

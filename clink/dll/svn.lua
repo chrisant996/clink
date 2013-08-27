@@ -32,6 +32,6 @@ local svn_tree = {
     "unlock", "update", "up"
 }
 
-clink.arg.register_tree("svn", svn_tree)
+clink.arg.register_parser("svn", svn_tree)
 
 -- vim: expandtab

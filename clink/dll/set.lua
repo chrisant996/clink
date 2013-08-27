@@ -41,6 +41,6 @@ local function set_match_generator(word, text, first, last)
 end
 
 --------------------------------------------------------------------------------
-clink.arg.register_tree("set", set_match_generator)
+clink.arg.register_parser("set", set_match_generator)
 
 -- vim: expandtab

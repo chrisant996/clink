@@ -21,35 +21,41 @@
 --
 
 --------------------------------------------------------------------------------
-local function starts_with_hyphen(word)
-    if word:sub(1, 1) == "-" then
-        return 2
-    end
+local inject_parser
+local autorun_parser
+local self_parser
 
-    return 1
-end
-
---------------------------------------------------------------------------------
-local clag = clink.arg
-local self_tree = clag.node(
-    "--help" .. clag.node(true),
-    "inject" .. clag.node(
+inject_parser = clink.arg.new_parser()
+inject_parser:set_flags(
+    {
         "--help",
         "--nohostcheck",
-        "--pid" .. clag.node(true),
-        "--profile" .. clag.node(false),
+        "--pid",
+        "--profile",
         "--quiet",
-        "--scripts" .. clag.node(false)
-    ):loop(),
-    "autorun" .. clag.node(
-        "--install" .. clag.node(true),
-        "--uninstall" .. clag.node(true),
-        "--show" .. clag.node(true),
-        "--value" .. clag.node(false),
-        "--help" .. clag.node(true)
-    )
+        "--scripts",
+    }
 )
 
-clink.arg.register_tree("clink", self_tree)
+autorun_parser = clink.arg.new_parser()
+autorun_parser:set_flags(
+    {
+        "--help",
+        "--install",
+        "--uninstall",
+        "--show",
+        "--value",
+    }
+)
+
+self_parser = clink.arg.new_parser()
+self_parser:set_arguments(
+    {
+        "inject" .. inject_parser,
+        "autorun" .. autorun_parser,
+    }
+)
+
+clink.arg.register_parser("clink", self_parser)
 
 -- vim: expandtab

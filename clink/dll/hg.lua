@@ -32,6 +32,6 @@ local hg_tree = {
     "phases"
 }
 
-clink.arg.register_tree("hg", hg_tree)
+clink.arg.register_parser("hg", hg_tree)
 
 -- vim: expandtab
