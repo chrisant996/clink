@@ -268,6 +268,7 @@ int main(int argc, char** argv)
     }
 
     prepare_env_for_inputrc();
+    rl_readline_name = "cmd.exe";
 
     // Load root test.lua script into Clink's Lua state.
     lua = initialise_lua();
