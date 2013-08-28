@@ -478,7 +478,7 @@ static int initialise_hook()
     _rl_comment_begin = "::";
     rl_completer_quote_characters = "\"";
     rl_ignore_some_completions_function = postprocess_matches;
-    rl_basic_word_break_characters = " <>|=;";
+    rl_basic_word_break_characters = " <>|=;&";
     rl_completer_word_break_characters = (char*)rl_basic_word_break_characters;
     rl_attempted_completion_function = alternative_matches;
     if (rl_completion_display_matches_hook == NULL)

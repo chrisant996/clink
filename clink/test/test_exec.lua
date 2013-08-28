@@ -107,21 +107,39 @@ clink.test.test_output(
 )
 
 clink.test.test_output(
-    "Separator |",
+    "Separator | 1",
     "nullcmd | one_p",
     "nullcmd | one_path.exe "
 )
 
+clink.test.test_output(
+    "Separator | 2",
+    "nullcmd |one_p",
+    "nullcmd |one_path.exe "
+)
+
 clink.test.test_matches(
-    "Separator &",
+    "Separator & 1",
     "nullcmd & one_",
     { "one_path.exe", "one_two.py" }
 )
 
+clink.test.test_matches(
+    "Separator & 2",
+    "nullcmd &one_",
+    { "one_path.exe", "one_two.py" }
+)
+
 clink.test.test_output(
-    "Separator &&",
+    "Separator && 1",
     "nullcmd && one_p",
     "nullcmd && one_path.exe "
+)
+
+clink.test.test_output(
+    "Separator && 2",
+    "nullcmd &&one_p",
+    "nullcmd &&one_path.exe "
 )
 
 clink.test.test_output(

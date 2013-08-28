@@ -127,8 +127,8 @@ function clink.adjust_for_separator(buffer, point, first, last)
         -- completion state a little bit.
         local leading = buffer:sub(1, first - 1)
 
-        -- regex is: <sep> <whitespace> <not_seps> <eol>
-        local regex = "["..seps.."]%s*([^"..seps.."]*)$"
+        -- regex is: <sep> <not_seps> <eol>
+        local regex = "["..seps.."]([^"..seps.."]*)$"
         local sep_found, _, post_sep = leading:find(regex)
 
         if sep_found and not clink.is_point_in_quote(leading, sep_found) then
@@ -137,6 +137,10 @@ function clink.adjust_for_separator(buffer, point, first, last)
             first = first - delta
             last = last - delta
             point = point - delta
+
+            if first < 1 then
+                first = 1
+            end
         end
     end
 

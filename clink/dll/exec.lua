@@ -156,7 +156,7 @@ local function exec_match_generator(text, first, last)
             clink.add_match(pass.func(text))
         end
 
-        -- Was there matches? Then there's no need to make any further passes.
+        -- Were there matches? Then there's no need to make any further passes.
         if clink.match_count() > 0 then
             break
         end
