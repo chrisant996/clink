@@ -81,6 +81,8 @@ local function parser_set_arguments(parser, ...)
         unfold_table(i, arguments)
         table.insert(parser.arguments, arguments)
     end
+
+    return parser
 end
 
 --------------------------------------------------------------------------------
@@ -106,6 +108,7 @@ local function parser_set_flags(parser, ...)
     end
 
     parser.flags = flags
+    return parser
 end
 
 --------------------------------------------------------------------------------
@@ -339,6 +342,7 @@ end
 --------------------------------------------------------------------------------
 function parser_be_precise(parser)
     parser.precise = true
+    return parser
 end
 
 --------------------------------------------------------------------------------
@@ -364,6 +368,7 @@ end
 --------------------------------------------------------------------------------
 local function parser_disable_file_matching(parser)
     parser.use_file_matching = false
+    return parser
 end
 
 --------------------------------------------------------------------------------
@@ -373,6 +378,7 @@ local function parser_loop(parser, loop_point)
     end
 
     parser.loop_point = loop_point
+    return parser
 end
 
 --------------------------------------------------------------------------------
