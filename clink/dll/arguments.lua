@@ -39,8 +39,16 @@ function parser_meta_table.__concat(lhs, rhs)
         error("Right-handside must be parser.", 2)
     end
 
-    if type(lhs) ~= "string" then
-        error("Left-handside must be a string.", 2)
+    local t = type(lhs)
+    if t == "table" then
+        local ret = {}
+        for _, i in ipairs(lhs) do
+            table.insert(ret, i .. rhs)
+        end
+
+        return ret
+    elseif t ~= "string" then
+        error("Left-handside must be a string or a table.", 2)
     end
 
     return new_sub_parser(lhs, rhs)
