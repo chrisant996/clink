@@ -21,17 +21,33 @@
 --
 
 --------------------------------------------------------------------------------
-local clag = clink.arg
+local p
+local q
+local r
+local s
 
 --------------------------------------------------------------------------------
-local t = clag.node(
-    "one",
-    "two",
-    "three" .. clag.node("four" .. clag.node("five", "six")):loop(),
-    "spa ce" .. clag.node("one", "two")
+s = clink.arg.new_parser()
+s:set_arguments({ "one" , "two" })
+
+r = clink.arg.new_parser()
+r:set_arguments({ "five", "six" })
+r:loop()
+
+q = clink.arg.new_parser()
+q:set_arguments({ "four" .. r })
+
+p = clink.arg.new_parser()
+p:set_arguments(
+    {
+        "one",
+        "two",
+        "three" .. q,
+        "spa ce" .. s,
+    }
 )
---clag.print_tree(t)
-clag.register_tree("argcmd", t)
+
+clink.arg.register_parser("argcmd", p)
 
 clink.test.test_matches(
     "Node matches 1",
@@ -113,7 +129,13 @@ clink.test.test_matches(
 clink.test.test_output(
     "Quoted traversal 2b",
     "argcmd three four \"fi",
-    "argcmd three four \"five\" four "
+    "argcmd three four \"five\" "
+)
+
+clink.test.test_output(
+    "Quoted traversal 2c",
+    "argcmd three four \"five\" five five s",
+    "argcmd three four \"five\" five five six "
 )
 
 clink.test.test_output(
@@ -203,7 +225,7 @@ clink.test.test_matches(
 clink.test.test_output(
     "Not separator",
     "argcmd three four \"  &&foobar\" f",
-    "argcmd three four \"  &&foobar\" four "
+    "argcmd three four \"  &&foobar\" five "
 )
 
 clink.test.test_matches(
@@ -219,135 +241,73 @@ clink.test.test_matches(
 )
 
 --------------------------------------------------------------------------------
-local t = clag.node(
-    "true" .. clag.node(true),
-    "false" .. clag.node(false)
-)
---clag.print_tree(t)
-clag.register_tree("argcmd_bool", t)
+p = clink.arg.new_parser()
+p:set_arguments({
+    "true",
+    "sub_parser" .. clink.arg.new_parser():disable_file_matching(),
+    "this_parser"
+})
 
-clink.test.test_output(
-    "Boolean: true",
-    "argcmd_bool true ",
-    "argcmd_bool true "
-)
+clink.arg.register_parser("argcmd_file", p)
 
 clink.test.test_matches(
-    "Boolean: false",
-    "argcmd_bool false "
+    "File matching enabled",
+    "argcmd_file true "
+)
+
+clink.test.test_output(
+    "File matching disabled: sub",
+    "argcmd_file sub_parser ",
+    "argcmd_file sub_parser "
+)
+
+p:disable_file_matching()
+clink.test.test_output(
+    "File matching disabled: this",
+    "argcmd_file this_parser ",
+    "argcmd_file this_parser "
 )
 
 --------------------------------------------------------------------------------
-local t = clag.node(
-    "eleven"
-)
-
-clag.register_tree("argcmd", t)
+p = clink.arg.new_parser():set_arguments({ "eleven" }, { "twelve" })
+clink.arg.register_parser("argcmd", p)
 
 clink.test.test_matches(
-    "Merged trees",
+    "Merged parsers 1",
     "argcmd ",
     { "one", "two", "three", "spa ce", "eleven" }
 )
 
---------------------------------------------------------------------------------
-local t = clag.node(
-    clag.condition(
-        function (word)
-            word = word:sub(1, 1)
-            if word == "1" then
-                return -100
-            elseif word == "2" then
-                return 2
-            else
-                return 300
-            end
-        end,
-        10,
-        clag.node(20):loop(),
-        "key" .. clag.node("one", "two", "three")
-    ):loop()
-)
-clag.register_tree("argcmd_condition", t);
-
 clink.test.test_output(
-    "Conditional: under bound",
-    "argcmd_condition 1",
-    "argcmd_condition 10 key "
+    "Merged parsers 2",
+    "argcmd eleven ",
+    "argcmd eleven twelve "
 )
 
 clink.test.test_output(
-    "Conditional: in bound",
-    "argcmd_condition 2",
-    "argcmd_condition 20 20 "
-)
-
-clink.test.test_output(
-    "Conditional: over bound",
-    "argcmd_condition k",
-    "argcmd_condition key "
-)
-
-clink.test.test_matches(
-    "Conditional: traversal",
-    "argcmd_condition key t",
-    { "two", "three" }
-)
-
-clink.test.test_output(
-    "Conditional: loop self",
-    "argcmd_condition 10 k",
-    "argcmd_condition 10 key "
-)
-
-clink.test.test_output(
-    "Conditional: loop choice",
-    "argcmd_condition 20 ",
-    "argcmd_condition 20 20 20 "
-)
-
-clink.test.test_output(
-    "Conditional: loop choice",
-    "argcmd_condition 20 20 k",
-    "argcmd_condition 20 20 k"
+    "Merged parsers 3",
+    "argcmd \"spa ce\" tw",
+    "argcmd \"spa ce\" two "
 )
 
 --------------------------------------------------------------------------------
-local t = clag.condition(
-    function (word)
-        return 2
-    end,
-    false,
-    clag.node("one", "two", "three")
-):loop()
-clag.register_tree("argcmd_condition_as_root", t);
+clink.arg.register_parser("argcmd_table", {"two", "three", "one"});
 
 clink.test.test_matches(
-    "Condition as root",
-    "argcmd_condition_as_root t",
-    { "two", "three" }
-)
-
-clink.test.test_output(
-    "Condition as root (looping)",
-    "argcmd_condition_as_root one two th",
-    "argcmd_condition_as_root one two three "
-)
-
---------------------------------------------------------------------------------
-clag.register_tree("argcmd_table", {"two", "three", "one"});
-
-clink.test.test_matches(
-    "Tree-less: table",
+    "Parserless: table",
     "argcmd_table t",
     { "two", "three" }
 )
 
 --------------------------------------------------------------------------------
-local t = clag.node(
-	{ "one", "onetwo", "onethree" } .. clag.node("four", "five")
+q = clink.arg.new_parser()
+q:set_arguments({ "four", "five" })
+
+p = clink.arg.new_parser()
+p:set_arguments(
+	{ "one", "onetwo", "onethree" } .. q
 )
-clag.register_tree("argcmd_substr", t);
+clink.arg.register_parser("argcmd_substr", p);
 
 clink.test.test_matches(
     "Full match is also partial match 1",
@@ -364,10 +324,14 @@ clink.test.test_matches(
 --------------------------------------------------------------------------------
 local tbl_1 = { "one", "two", "three" }
 local tbl_2 = { "four", "five", tbl_1 }
-local t = clag.node(
-    { "once", tbl_1 } .. clag.node({"fifth", tbl_2})
-)
-clag.register_tree("argcmd_nested", t);
+
+q = clink.arg.new_parser()
+q:set_arguments({ "fifth", tbl_2 })
+
+p = clink.arg.new_parser()
+p:set_arguments({ "once", tbl_1 } .. q)
+
+clink.arg.register_parser("argcmd_nested", p)
 
 clink.test.test_matches(
     "Nested table: simple",
@@ -376,7 +340,7 @@ clink.test.test_matches(
 )
 
 clink.test.test_matches(
-    "Nested table: leaf node",
+    "Nested table: sub-parser",
     "argcmd_nested once f",
     { "fifth", "four", "five" }
 )
