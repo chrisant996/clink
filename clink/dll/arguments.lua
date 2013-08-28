@@ -416,6 +416,27 @@ function clink.arg.new_parser()
 end
 
 --------------------------------------------------------------------------------
+local function merge_parsers(lhs, rhs)
+    -- Remove (and save value of) the first argument in RHS.
+    local rhs_arg_1 = table.remove(rhs.arguments, 1)
+    if rhs_arg_1 == nil then
+        return
+    end
+
+    -- Get reference to the LHS's first argument table (creating it if needed).
+    local lhs_arg_1 = lhs.arguments[1]
+    if lhs_arg_1 == nil then
+        lhs_arg_1 = {}
+        table.insert(lhs.arguments, lhs_arg_1)
+    end
+
+    -- Link RHS to LHS through sub-parsers.
+    for _, rarg in ipairs(rhs_arg_1) do
+        table.insert(lhs_arg_1, rarg .. rhs)
+    end
+end
+
+--------------------------------------------------------------------------------
 function clink.arg.register_parser(cmd, parser)
     if not is_parser(parser) then
         local p = clink.arg.new_parser()
@@ -426,7 +447,7 @@ function clink.arg.register_parser(cmd, parser)
     cmd = cmd:lower()
     local prev = parsers[cmd]
     if prev ~= nil then
-        -- Merge parsers...
+        merge_parsers(prev, parser)
     else
         parsers[cmd] = parser
     end
