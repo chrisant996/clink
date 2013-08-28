@@ -173,6 +173,7 @@ char* extract_prompt()
     // Get the prompt from the terminal.
     buffer = (wchar_t*)prompt + length + 1;
     ReadConsoleOutputCharacterW(handle, buffer, length, cur, &chars_read);
+    buffer[chars_read] = L'\0';
 
     // Convert to Utf8 and return.
     length = WideCharToMultiByte(

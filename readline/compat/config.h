@@ -42,8 +42,9 @@ size_t                      hooked_mbrtowc(wchar_t*, const char*, size_t, mbstat
 size_t                      hooked_mbrlen(const char*, size_t, mbstate_t*);
 int                         hooked_stat(const char*, struct hooked_stat*);
 int                         hooked_fstat(int, struct hooked_stat*);
+int                         hooked_wcwidth(wchar_t wc);
 
-#define wcwidth(x)          (1)
+#define wcwidth(x)          (((x) > 0x7f) ? hooked_wcwidth(x) : 1)
 #define fwrite              hooked_fwrite
 #define fprintf             hooked_fprintf
 #define putc                hooked_putc
