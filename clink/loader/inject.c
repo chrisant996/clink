@@ -327,6 +327,7 @@ int inject(int argc, char** argv)
         { "quiet",       no_argument,        NULL, 'q' },
         { "pid",         required_argument,  NULL, 'd' },
         { "nohostcheck", no_argument,        NULL, 'n' },
+        { "ansi",        no_argument,        NULL, 'a' },
         { "help",        no_argument,        NULL, 'h' },
         { NULL, 0, NULL, 0 }
     };
@@ -335,8 +336,9 @@ int inject(int argc, char** argv)
         "-s, --scripts <path>", "Alternative path to load .lua scripts from.",
         "-p, --profile <path>", "Specifies and alternative path for profile data.",
         "-q, --quiet",          "Suppress copyright output.",
-        "-n, --nohostcheck",    "Do not check that host is cmd.exe.",
+        "-n, --nohostcheck",    "Do not check that host is a supported shell.",
         "-d, --pid <pid>",      "Inject into the process specified by <pid>.",
+        "-a, --ansi",           "Target shell uses Windows' ANSI console API.",
         "-h, --help",           "Shows this help text.",
     };
 
@@ -366,6 +368,10 @@ int inject(int argc, char** argv)
 
         case 'n':
             inject_args.no_host_check = 1;
+            break;
+
+        case 'a':
+            inject_args.ansi_mode = 1;
             break;
 
         case 'q':
