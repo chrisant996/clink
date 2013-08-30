@@ -547,6 +547,59 @@ static int get_cwd(lua_State* state)
 }
 
 //------------------------------------------------------------------------------
+static int get_console_aliases(lua_State* state)
+{
+    char* buffer;
+
+    do
+    {
+        static const int BUF_SIZE = 0x300;
+        int i;
+        char* alias;
+
+        buffer = malloc(BUF_SIZE);
+        lua_createtable(state, 0, 0);
+
+        // Get the aliases (aka. doskey macros).
+        i = GetConsoleAliasesLength(rl_readline_name);
+        if (i == 0 || i >= BUF_SIZE)
+        {
+            break;
+        }
+
+        if (GetConsoleAliases(buffer, BUF_SIZE, rl_readline_name) == 0)
+        {
+            break;
+        }
+
+        buffer[i] = '\0';
+
+        // Parse the result into a lua table.
+        alias = buffer;
+        i = 1;
+        while (*alias != '\0')
+        {
+            char* c = strchr(alias, '=');
+            if (c == NULL)
+            {
+                break;
+            }
+
+            *c = '\0';
+            lua_pushstring(state, alias);
+            lua_rawseti(state, -2, i++);
+
+            ++c;
+            alias = c + strlen(c) + 1;
+        }
+    }
+    while (0);
+
+    free(buffer);
+    return 1;
+}
+
+//------------------------------------------------------------------------------
 static int get_screen_info(lua_State* state)
 {
     int i;
@@ -597,6 +650,7 @@ lua_State* initialise_lua()
         { "execute", lua_execute },
         { "find_dirs", find_dirs },
         { "find_files", find_files },
+        { "get_console_aliases", get_console_aliases },
         { "get_cwd", get_cwd },
         { "get_env", get_env },
         { "get_env_var_names", get_env_var_names },
