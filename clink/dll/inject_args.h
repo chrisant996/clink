@@ -27,8 +27,8 @@ typedef struct
 {
     int     quiet;
     int     no_host_check;
-    char    script_path[1024];
-    char    profile_path[1024];
+    char    script_path[512];
+    char    profile_path[512];
 } inject_args_t;
 
 #endif // INJECT_ARG
