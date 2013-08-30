@@ -23,23 +23,31 @@
 --------------------------------------------------------------------------------
 newaction {
     trigger = "clink_docs",
-    description = "Generates clink's documentation.",
+    description = "Generates Clink's documentation.",
     execute = function ()
         if not os.getenv("cli_env") then
             print("CLI_ENV not set...")
             return
         end
 
-        local cmd = "python %cli_env%\\asciidoc-8.6.8\\asciidoc.py"
-        cmd = cmd.." -o .build/docs/clink.html"
-        cmd = cmd.." --theme clink"
-        cmd = cmd.." --attribute=CLINK_VERSION="..clink_ver
-        cmd = cmd.." --attribute=toc"
-        cmd = cmd.." -v"
-        cmd = cmd.." .build\\docs\\merged.asciidoc"
+        local cmd = "%cli_env%\\python-2.7.1\\python.exe"
+        cmd = cmd.." %cli_env%/txt2tags-2.6/txt2tags"
+        cmd = cmd.." --target=html"
+        cmd = cmd.." --style=../../docs/clink.css"
+        cmd = cmd.." --css-inside"
+        cmd = cmd.." --toc"
+        cmd = cmd.." -o .build/docs/temp.html"
+        cmd = cmd.." .build/docs/merged.t2t"
 
         os.execute("mkdir .build\\docs 1>nul 2>nul")
-        os.execute("type docs\\clink.asciidoc CHANGES 1>.build\\docs\\merged.asciidoc 2>nul")
+        os.execute("type docs\\clink.t2t CHANGES 1>.build\\docs\\merged.t2t 2>nul")
         os.execute(cmd)
+
+        local out = io.open(".build/docs/clink.html", "w")
+        for i in io.lines(".build/docs/temp.html") do
+            local j = i:gsub("CLINK_VERSION", tostring(clink_ver))
+            out:write(j.."\n")
+        end
+        out:close()
     end
 }

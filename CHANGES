@@ -1,70 +1,74 @@
 
-== Changelog
+== Changelog ==
 
-==== v0.3
+==== v0.3 ====
 
-* Automatic answering of cmd.exe's 'Terminate batch script?' prompt.
-* Coloured prompts (requires ANSICON or ConEmu).
-* Added Shift-Up keyboard shortcut to automatically execute "cd .."
-* Mapped Ctrl-Z to undo, Microsoft style.
-* Improved integration of Readline;
-** New input handling code (Ctrl-Alt combos now work).
-** An implementation of the Termcap library.
-** Fully functional Vi-mode support.
-** Support for resizable consoles.
-** Line wrapping now works correctly (issue 50).
-* Adjustable executable match style (issue 65).
-* Improved environment variable completion.
-* Added settings file to customise Clink.
-* New Lua features and functions;
-** Matches can now be filtered in Lua before they are display.
-** clink.quote_split().
-** clink.arg.node_merge().
-** clink.get_screen_info() (issue 71).
-** clink.split() (for splitting strings).
-** clink.chdir().
-** clink.get_cwd().
-** Functions to query Clink's settings.
-* New command line options;
-** '--profile <dir>' to override default profile directory.
-** '--nohostcheck' disables verification that host is cmd.exe.
-** '--pid' specifies the process to inject into.
-* Update Mercurial completion (issue 73).
-* Start menu shortcut starts in USERPROFILE, like cmd.exe
-* Zip distribution is now portable.
+- Automatic answering of cmd.exe's 'Terminate batch script?' prompt.
+- Coloured prompts (requires ANSICON or ConEmu).
+- Added Shift-Up keyboard shortcut to automatically execute "cd .."
+- Mapped Ctrl-Z to undo, Microsoft style.
+- Improved integration of Readline;
+ - New input handling code (Ctrl-Alt combos now work).
+ - An implementation of the Termcap library.
+ - Fully functional Vi-mode support.
+ - Support for resizable consoles.
+ - Line wrapping now works correctly (issue 50).
+- Adjustable executable match style (issue 65).
+- Improved environment variable completion.
+- Added settings file to customise Clink.
+- New Lua features and functions;
+ - Matches can now be filtered in Lua before they are display.
+ - clink.quote_split().
+ - clink.arg.node_merge().
+ - clink.get_screen_info() (issue 71).
+ - clink.split() (for splitting strings).
+ - clink.chdir().
+ - clink.get_cwd().
+ - Functions to query Clink's settings.
+- New command line options;
+ - '--profile <dir>' to override default profile directory.
+ - '--nohostcheck' disables verification that host is cmd.exe.
+ - '--pid' specifies the process to inject into.
+- Update Mercurial completion (issue 73).
+- Start menu shortcut starts in USERPROFILE, like cmd.exe
+- Zip distribution is now portable.
 
-==== v0.2.1
 
-* The .history file now merges multiple sessions together.
-* Fixed missing y/n, pause, and other prompts.
-* Fixed segfault in loader executable.
-* Better ConEmu compatibility.
+==== v0.2.1 ====
 
-==== v0.2
+- The .history file now merges multiple sessions together.
+- Fixed missing y/n, pause, and other prompts.
+- Fixed segfault in loader executable.
+- Better ConEmu compatibility.
 
-* Basic argument completion for 'git', 'hg', 'svn', and 'p4'.
-* Traditional Bash clear screen ('Ctrl-L') and exit shortcuts ('Ctrl-D').
-* Scrollable command window using 'PgUp'/'PgDown' keys.
-* Doskey support.
-* Automatic quoting of file names with spaces.
-* Scriptable custom prompts.
-* New argument framework to ease writing context-sensitive match generators.
-* History and log file is now saved per-user rather than globally.
-* Improved Clink's command line interface ('clink --help').
-* More reliable handling of cmd.exe's autorun entry.
-* General improvements to executable and directory-command completion.
-* Symbolic link support.
-* Documentation.
-* Windows 8 support.
-* Improved hooking so Clink can be shared with other thirdparty utilities that
+
+==== v0.2 ====
+
+- Basic argument completion for 'git', 'hg', 'svn', and 'p4'.
+- Traditional Bash clear screen ('Ctrl-L') and exit shortcuts ('Ctrl-D').
+- Scrollable command window using 'PgUp'/'PgDown' keys.
+- Doskey support.
+- Automatic quoting of file names with spaces.
+- Scriptable custom prompts.
+- New argument framework to ease writing context-sensitive match generators.
+- History and log file is now saved per-user rather than globally.
+- Improved Clink's command line interface ('clink --help').
+- More reliable handling of cmd.exe's autorun entry.
+- General improvements to executable and directory-command completion.
+- Symbolic link support.
+- Documentation.
+- Windows 8 support.
+- Improved hooking so Clink can be shared with other thirdparty utilities that
   also hook cmd.exe (ConEmu, ANSICon, etc.).
 
-==== v0.1.1
 
-* Fixed AltGr+<key> on international keyboards.
-* Fixed broken completion when directories have a '-' in their name (Mark Hammond)
-* The check for single match scenarios now correctly handles case-insensitivity.
+==== v0.1.1 ====
 
-==== v0.1
+- Fixed AltGr+<key> on international keyboards.
+- Fixed broken completion when directories have a '-' in their name (Mark Hammond)
+- The check for single match scenarios now correctly handles case-insensitivity.
 
-* Initial release.
+
+==== v0.1 ====
+
+- Initial release.
