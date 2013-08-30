@@ -144,7 +144,7 @@ static int check_auto_answer(const wchar_t* prompt)
 }
 
 //------------------------------------------------------------------------------
-void append_crlf(wchar_t* buffer, unsigned max_size)
+static void append_crlf(wchar_t* buffer, unsigned max_size)
 {
     // Cmd.exe expects a CRLF combo at the end of the string, otherwise it
     // thinks the line is part of a multi-line command.
