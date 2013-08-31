@@ -161,20 +161,7 @@ clink.register_match_generator(env_vars_match_generator, 10)
 
 === Argument Completion ===
 
-Build on top of the match generation path is a framework for scripting
-completion of specific commands. It leaves Clink to take care of matching the
-command and is driven by a tree to further facilitate contextual completion.
-
-_It is fair to say that is fairly experimental and likely to change in the
-future as the framework matures through use._
-
-Argument match generators are registered in a similar fashion to basic match
-generators, passing the name of the command in //command_name// and the tree that
-drives the completion step in //tree//.
-
-```
-clink.arg.register_tree(command_name, tree)
-```
+To do...
 
 === Filtering The Match Display ===
 
@@ -309,41 +296,7 @@ Explicitly sets match at //index// to //value//.
 
 === Argument Framework ===
 
-==== clink.arg.register_tree(cmd, tree) ====
-
-Registers an argument //tree// for a specific command. When completion is requested
-and Clink finds //cmd// at the beginning of the line it will use the current line
-state to traverse this tree and generate matches.
-
-==== clink.arg.tree_node(flags, content) ====
-
-Nodes in an argument tree can be tagged with special characters to control the
-traversal and completion behaviour of that node's tree branch. This function
-helps to construct such a tree node. It returns a tree node with the sub-tree
-//content// and with the branch properties specified by //flags//. See
-<<_argument_completion,Argument Completion>> for details of how to use the
-//flags// argument.
-
-==== clink.arg.node_merge(a, b) ====
-
-Merges //a// and //b// into a new table and returns it.
-
-==== clink.arg.node_transpose(a, b) ====
-
-Returns a table that uses the strings in array a as the keys, and argument b as
-the values. So for example this...
-
-```
-a = { "one", "two", "three" }
-b = 1234
-c = clink.arg.node_transpose(a, b)
-```
-
-...will return the following;
-
-```
-c = { one = 1234, two = 1234, three = 1234 }
-```
+To do...
 
 === Prompt Filtering ===
 
