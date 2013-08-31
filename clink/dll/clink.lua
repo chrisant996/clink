@@ -238,6 +238,40 @@ function clink.get_match(i)
 end
 
 --------------------------------------------------------------------------------
+function clink.match_files(text, mask, find_func)
+    -- Fill out default values
+    if type(find_func) ~= "function" then
+        find_func = clink.find_files
+    end
+
+    if not mask then
+        mask = ""
+    end
+
+    -- Glob files.
+    text = text:gsub("/", "\\")
+    local glob = find_func(text..mask.."*", true)
+
+    -- Get glob's base.
+    local base = ""
+    local i = text:find("[\\:][^\\:]*$")
+    if i then
+        base = text:sub(1, i)
+    end
+
+    -- Match them
+    local count = clink.match_count()
+    for _, i in ipairs(glob) do
+        local full = base..i
+        if true or clink.is_match(text, full) then
+            clink.add_match(full)
+        end
+    end
+
+    return clink.match_count() - count
+end
+
+--------------------------------------------------------------------------------
 function clink.split(str, sep)
     local i = 1
     local ret = {}

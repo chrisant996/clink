@@ -406,6 +406,12 @@ Care should be taken when using this to generate masks for file/dir find
 operations due to the -/_ giving different results (unless of course Readline's
 extended case-mapping is disabled).
 
+==== clink.match_files(text, mask, find_func) ====
+
+Globs files using //mask// and adds matches that match //text//. The last
+argument //find_func// is the function to use to do the globbing. If it's
+unspecified (or nil) Clink falls back to //clink.find_files//.
+
 ==== clink.quote_split(str, ql, qr) ====
 
 This function takes the string //str// which is quoted by //ql// (the opening quote
