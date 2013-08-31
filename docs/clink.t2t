@@ -388,6 +388,11 @@ There is no support for recursively traversing the path in //mask//.
 
 Returns the current working directory.
 
+==== clink.get_console_aliases() ====
+
+Returns a table of all the registered console aliases. Windows' console alias API
+is exposed via ''doskey'' or progromatically via the AddConsoleAlias() function.
+
 ==== clink.get_env(env_var_name) ====
 
 Returns the value of the environment variable //env_var_name//. This is
