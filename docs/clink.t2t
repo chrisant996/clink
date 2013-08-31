@@ -344,7 +344,7 @@ Returns the current working directory.
 ==== clink.get_console_aliases() ====
 
 Returns a table of all the registered console aliases. Windows' console alias API
-is exposed via ''doskey'' or progromatically via the AddConsoleAlias() function.
+is exposed via //doskey// or progromatically via the AddConsoleAlias() function.
 
 ==== clink.get_env(env_var_name) ====
 
