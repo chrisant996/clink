@@ -55,14 +55,14 @@ static int is_interactive()
     // Check the host is cmd.exe.
     if (GetModuleHandle("cmd.exe") == NULL)
     {
-        return 1;
+        return 0;
     }
 
     // Get the command line.
     args = GetCommandLineW();
     if (args == NULL)
     {
-        return 1;
+        return 0;
     }
 
     // Cmd.exe's argument parsing is basic, simply searching for '/' characters
@@ -86,7 +86,7 @@ static int is_interactive()
         }
     }
 
-    return 0;
+    return 1;
 }
 
 //------------------------------------------------------------------------------
