@@ -478,4 +478,4 @@ This variable contains the current state of the whole line being edited.
 
 The current cursor position within the line buffer.
 
-% vim: textwidth=81 expandtab fo+=a syntax=asciidoc
+% vim: textwidth=81 expandtab fo+=a fo-=q syntax=asciidoc nosmartindent
