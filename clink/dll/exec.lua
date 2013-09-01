@@ -21,7 +21,6 @@
 --
 
 --------------------------------------------------------------------------------
-local match_style = 0
 local dos_commands = {
     "assoc", "break", "call", "cd", "chcp", "chdir", "cls", "color", "copy",
     "date", "del", "dir", "diskcomp", "diskcopy", "echo", "endlocal", "erase",
@@ -32,74 +31,27 @@ local dos_commands = {
 }
 
 --------------------------------------------------------------------------------
-local function dos_cmd_match_generator(text)
-    local matches = {}
-    for _, cmd in ipairs(dos_commands) do
-        if clink.is_match(text, cmd) then
-            table.insert(matches, cmd)
+local function get_environment_paths()
+    local paths = clink.split(clink.get_env("PATH"), ";")
+
+    -- We're expecting absolute paths and as ';' is a valid path character
+    -- there maybe unneccessary splits. Here we resolve them.
+    local paths_merged = { paths[1] }
+    for i = 2, #paths, 1 do
+        if not paths[i]:find("^[a-zA-Z]:") then
+            local t = paths_merged[#paths_merged];
+            paths_merged[#paths_merged] = t..paths[i]
+        else
+            table.insert(paths_merged, paths[i])
         end
     end
 
-    return matches
-end
-
---------------------------------------------------------------------------------
-local function dos_and_dir_match_generators(text)
-    local matches = dos_cmd_match_generator(text)
-
-    local dirs = dir_match_generator_impl(text)
-    for _, i in ipairs(dirs) do
-        table.insert(matches, i)
+    -- Append slashes.
+    for i = 1, #paths_merged, 1 do
+        table.insert(paths, paths_merged[i].."\\")
     end
 
-    return matches
-end
-
---------------------------------------------------------------------------------
-local function build_passes(text)
-    local passes = {}
-
-    -- If there's no path separator in text then consider the environment's path
-    -- as a first pass for matches.
-    if not text:find("[\\/:]") then
-        local paths = clink.split(clink.get_env("PATH"), ";")
-
-        -- We're expecting absolute paths and as ';' is a valid path character
-        -- there maybe unneccessary splits. Here we resolve them.
-        local paths_merged = { paths[1] }
-        for i = 2, #paths, 1 do
-            if not paths[i]:find("^[a-zA-Z]:") then
-                local t = paths_merged[#paths_merged];
-                paths_merged[#paths_merged] = t..paths[i]
-            else
-                table.insert(paths_merged, paths[i])
-            end
-        end
-
-        -- Append slashes.
-        for i = 1, #paths_merged, 1 do
-            table.insert(paths, paths_merged[i].."\\")
-        end
-
-        -- Depending on match style add empty path so 'text' is used.
-        if match_style > 0 then
-            table.insert(paths, "")
-        end
-
-        -- Should directories be considered too?
-        local extra_func = dos_cmd_match_generator
-        if match_style > 1 then
-            extra_func = dos_and_dir_match_generators
-        end
-
-        table.insert(passes, { paths=paths, func=extra_func })
-    end
-
-    -- The fallback solution is to use 'text' to find matches, and also add
-    -- directories.
-    table.insert(passes, { paths={""}, func=dir_match_generator_impl })
-
-    return passes
+    return paths
 end
 
 --------------------------------------------------------------------------------
@@ -112,13 +64,6 @@ local function exec_match_generator(text, first, last)
         return false
     end
 
-    -- Strip off possible trailing extension.
-    local needle = text
-    local ext_a, ext_b = needle:find("%.[a-zA-Z]*$")
-    if ext_a then
-        needle = needle:sub(1, ext_a - 1)
-    end
-
     -- Strip off any path components that may be on text
     local prefix = ""
     local i = text:find("[\\/:][^\\/:]*$")
@@ -126,40 +71,50 @@ local function exec_match_generator(text, first, last)
         prefix = text:sub(1, i)
     end
 
-    match_style = clink.get_setting_int("exec_match_style")
+    local suffices = clink.split(clink.get_env("pathext"), ";")
+    for i = 1, #suffices, 1 do
+        suffices[i] = text.."*"..suffices[i]
+    end
+
+    -- Get the executable match style.
+    local match_style = clink.get_setting_int("exec_match_style")
     if match_style < 0 then
         match_style = 2
     end
 
-    local passes = build_passes(text)
-
-    -- Combine extensions, text, and paths to find matches - this is done in two
-    -- passes, the second pass possibly being "local" if the system-wide search
-    -- didn't find any results.
-    local n = #passes
-    local exts = clink.split(clink.get_env("PATHEXT"), ";")
-    for p = 1, n do
-        local pass = passes[p]
-        for _, ext in ipairs(exts) do
-            for _, path in ipairs(pass.paths) do
-                local mask = path..needle.."*"..ext
-                for _, file in ipairs(clink.find_files(mask, true)) do
-                    file = prefix..file
-                    if clink.is_match(text, file) then
-                        clink.add_match(file)
-                    end
-                end
+    -- First step is to match executables in the environment's path.
+    if not text:find("[\\/:]") then
+        local paths = get_environment_paths()
+        for _, suffix in ipairs(suffices) do
+            for _, path in ipairs(paths) do
+                clink.match_files(path..suffix, false)
             end
         end
-        
-        if pass.func then
-            clink.add_match(pass.func(text))
+
+        -- If the terminal is cmd.exe check it's commands for matches.
+        if clink.get_host_process() == "cmd.exe" then
+            clink.match_words(text, dos_commands)
         end
 
-        -- Were there matches? Then there's no need to make any further passes.
-        if clink.match_count() > 0 then
-            break
+        -- Lastly add console aliases as matches.
+        local aliases = clink.get_console_aliases()
+        clink.match_words(text, aliases)
+    elseif match_style < 1 then
+        -- 'text' is an absolute or relative path. If we're doing Bash-style
+        -- matching should now consider directories.
+        match_style = 2
+    end
+
+    -- Optionally include executables in the cwd (or absolute/relative path).
+    if clink.match_count() == 0 or match_style >= 1 then
+        for _, suffix in ipairs(suffices) do
+            clink.match_files(suffix)
         end
+    end
+
+    -- Lastly we may wish to consider directories too.
+    if clink.match_count() == 0 or match_style >= 2 then
+        clink.match_files(text.."*", true, clink.find_dirs)
     end
 
     clink.matches_are_files()
