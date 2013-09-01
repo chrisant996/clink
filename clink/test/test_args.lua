@@ -344,3 +344,25 @@ clink.test.test_matches(
     "argcmd_nested once f",
     { "fifth", "four", "five" }
 )
+
+--------------------------------------------------------------------------------
+q = clink.arg.new_parser()
+q:set_arguments({ "two", "three" }, { "four", "banana" })
+q:loop()
+
+p = clink.arg.new_parser()
+p:set_arguments({ "one" }, q)
+
+clink.arg.register_parser("argcmd_parser", p)
+
+clink.test.test_matches(
+    "Nested full parser",
+    "argcmd_parser one t",
+    { "two", "three" }
+)
+
+clink.test.test_matches(
+    "Nested full parser - loop",
+    "argcmd_parser one two four t",
+    { "two", "three" }
+)

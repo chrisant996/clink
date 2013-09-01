@@ -81,13 +81,23 @@ local function parser_set_arguments(parser, ...)
     for _, i in ipairs({...}) do
         -- Check all arguments are tables.
         if type(i) ~= "table" then
-            error("All arguments to set_arguments() must be tables", 2)
+            error("All arguments to set_arguments() must be tables.", 2)
         end
 
-        -- Expand out nested tables and insert into object's arguments table.
-        local arguments = {}
-        unfold_table(i, arguments)
-        table.insert(parser.arguments, arguments)
+        -- Only parsers are allowed to be specified without being wrapped in a
+        -- containing table.
+        if getmetatable(i) ~= nil then
+            if is_parser(i) then
+                table.insert(parser.arguments, i)
+            else
+                error("Tables can't have meta-tables.", 2)
+            end
+        else
+            -- Expand out nested tables and insert into object's arguments table.
+            local arguments = {}
+            unfold_table(i, arguments)
+            table.insert(parser.arguments, arguments)
+        end
     end
 
     return parser
@@ -170,6 +180,12 @@ local function parser_go_args(parser, state)
     local arg_index = state.arg_index
     local arg_opts = parser.arguments[arg_index]
     local arg_count = #parser.arguments
+
+    -- Is the next argument a parser? Parse control directly on to it.
+    if is_parser(arg_opts) then
+        state.arg_index = 1
+        return parser_go_impl(arg_opts, state)
+    end
 
     -- Advance parts state.
     state.part_index = state.part_index + 1
