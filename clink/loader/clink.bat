@@ -32,6 +32,11 @@ if /i "%1"=="startmenu" (
 
 :: Check for the --profile option.
 if /i "%1"=="--profile" (
+    set clink_profile_root=%localappdata%
+    if "%localappdata%"=="" (
+        set clink_profile_root=%appdata%
+    )
+
     set clink_profile_arg=--profile "%~2"
     shift /1
     shift /1
