@@ -238,6 +238,19 @@ function clink.get_match(i)
 end
 
 --------------------------------------------------------------------------------
+function clink.match_words(text, words)
+    local count = clink.match_count()
+
+    for _, i in ipairs(words) do
+        if clink.is_match(text, i) then
+            clink.add_match(i)
+        end
+    end
+
+    return clink.match_count() - count
+end
+
+--------------------------------------------------------------------------------
 function clink.match_files(pattern, full_path, find_func)
     -- Fill out default values
     if type(find_func) ~= "function" then

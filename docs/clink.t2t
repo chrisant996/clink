@@ -414,6 +414,11 @@ only the file names are included). The last argument //find_func// is the
 function to use to do the globbing. If it's unspecified (or nil) Clink falls back
 to //clink.find_files//.
 
+==== clink.match_words(text, words)
+
+Calls clink.is_match() on each word in the table //words// and adds matches to
+Clink that match the needle //text//.
+
 ==== clink.quote_split(str, ql, qr) ====
 
 This function takes the string //str// which is quoted by //ql// (the opening quote
