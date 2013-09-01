@@ -121,19 +121,19 @@ Section "!Application files" app_files_id
     StrCpy $0 "$SMPROGRAMS\clink\${CLINK_VERSION}"
     StrCpy $1 "%clink_profile_root%\clink"
     CreateDirectory $0
-    CreateShortcut "$0\clink v${CLINK_VERSION}.lnk" "$INSTDIR\clink.bat" 'startmenu --profile "$1"' "$SYSDIR\cmd.exe" 0 SW_SHOWMINIMIZED 
-    CreateShortcut "$0\clink v${CLINK_VERSION} Documentation.lnk" "$INSTDIR\clink.html"
+    CreateShortcut "$0\Clink v${CLINK_VERSION}.lnk" "$INSTDIR\clink.bat" 'startmenu --profile "$1"' "$SYSDIR\cmd.exe" 0 SW_SHOWMINIMIZED 
+    CreateShortcut "$0\Clink v${CLINK_VERSION} Documentation.lnk" "$INSTDIR\clink.html"
 
     ; Create an uninstaller and a shortcut to it.
     ;
     StrCpy $1 "clink_uninstall_${CLINK_VERSION}.exe"
     WriteUninstaller "$INSTDIR\$1"
-    CreateShortcut "$0\Uninstall clink v${CLINK_VERSION}.lnk" "$INSTDIR\$1"
+    CreateShortcut "$0\Uninstall Clink v${CLINK_VERSION}.lnk" "$INSTDIR\$1"
 
     ; Add to "add/remove programs" or "programs and features"
     ;
     StrCpy $0 "Software\Microsoft\Windows\CurrentVersion\Uninstall\clink_${CLINK_VERSION}"
-    WriteRegStr HKLM $0 "DisplayName"       "clink v${CLINK_VERSION}"
+    WriteRegStr HKLM $0 "DisplayName"       "Clink v${CLINK_VERSION}"
     WriteRegStr HKLM $0 "UninstallString"   "$INSTDIR\$1"
     WriteRegStr HKLM $0 "Publisher"         "Martin Ridgers"
     WriteRegStr HKLM $0 "DisplayIcon"       "$SYSDIR\cmd.exe,0"
