@@ -50,36 +50,43 @@ static int is_interactive()
     // Check the command line for '/c' and don't load if it's present. There's
     // no point loading clink if cmd.exe is running a command and then exiting.
 
-    void* base;
-    wchar_t** argv;
-    int argc;
-    int i;
-    int ret;
+    wchar_t* args;
 
-    base = GetModuleHandle("cmd.exe");
-    if (base == NULL)
+    // Check the host is cmd.exe.
+    if (GetModuleHandle("cmd.exe") == NULL)
     {
         return 1;
     }
 
-    argv = CommandLineToArgvW(GetCommandLineW(), &argc);
-    if (argv == NULL)
+    // Get the command line.
+    args = GetCommandLineW();
+    if (args == NULL)
     {
         return 1;
     }
 
-    ret = 1;
-    for (i = 0; i < argc; ++i)
+    // Cmd.exe's argument parsing is basic, simply searching for '/' characters
+    // and checking the following character.
+    while (1)
     {
-        if (wcsicmp(argv[i], L"/c") == 0)
+        int i;
+
+        args = wcschr(args, L'/');
+        if (args == NULL)
         {
-            ret = 0;
             break;
+        }
+
+        i = tolower(*++args);
+        switch (i)
+        {
+        case 'c':
+        case 'k':
+            return (i == 'k');
         }
     }
 
-    LocalFree(argv);
-    return ret;
+    return 0;
 }
 
 //------------------------------------------------------------------------------
