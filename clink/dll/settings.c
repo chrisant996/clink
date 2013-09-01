@@ -31,7 +31,7 @@ static const setting_decl_t g_clink_settings_decl[] = {
     {
         "ctrld_exits",
         "Ctrl-D exits",
-        "Ctrl-D exits the process when it is pressed on an empty line.",
+        "Ctrl-D exits cmd.exe when it is pressed on an empty line.",
         SETTING_TYPE_BOOL,
         0, "1"
     },
