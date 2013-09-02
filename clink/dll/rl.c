@@ -624,6 +624,7 @@ int call_readline_utf8(const char* prompt, char* result, unsigned result_size)
     char* text;
 
     // Call readline.
+    result[0] = '\0';
     text = call_readline_impl(prompt);
     if (text == NULL)
     {
@@ -663,6 +664,7 @@ int call_readline_w(const wchar_t* prompt, wchar_t* result, unsigned size)
     }
 
     // Call readline.
+    result[0] = L'\0';
     text = call_readline_impl(prompt ? prompt_utf8 : NULL);
     if (text == NULL)
     {
