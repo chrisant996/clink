@@ -585,7 +585,7 @@ static char* call_readline_impl(const char* prompt)
         text = readline(prepared_prompt ? prepared_prompt : "");
         if (!text)
         {
-            goto call_readline_prolog;
+            goto call_readline_epilogue;
         }
 
         // Expand history designators in returned buffer.
@@ -611,7 +611,7 @@ static char* call_readline_impl(const char* prompt)
     }
     while (!text || expand_result == 2);
 
-call_readline_prolog:
+call_readline_epilogue:
     free_prompt(prepared_prompt);
     SetCurrentDirectory(cwd_cache);
     return text;
