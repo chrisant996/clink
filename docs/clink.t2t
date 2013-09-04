@@ -161,7 +161,83 @@ clink.register_match_generator(env_vars_match_generator, 10)
 
 === Argument Completion ===
 
-To do...
+Clink provides a framework for writing complex argument match generators in Lua.
+It works by creating a parser object that describes a command's arguments and
+flags and then registering the parser with Clink. When Clink detects the command
+is being entered on the current command line being editied, it uses the parser to
+generate matches.
+
+Here is an example of a simple parser for the command //foobar//;
+
+```
+my_parser = clink.arg.new_parser()
+my_parser:set_flags("-foo", "-bar")
+my_parser:set_arguments(
+    { "hello", "hi" },
+    { "world", "wombles" }
+)
+
+clink.arg.register_parser("foobar", my_parser)
+```
+
+This parser describes a command that has two positional arguments each with two
+potential options. It also has two flags which the parser considers to be
+position independent meaning that provided the word being completed starts with a
+certain prefix the parser with attempt to match the from the set of flags.
+
+On the command line completion would look something like this;
+
+```
+C:\>foobar hello -foo wo
+world   wombles
+C:\>foobar hello -foo wo_
+```
+
+==== More Advanced Stuff ====
+
+===== Linking Parsers =====
+
+There are often situations where the parsing of a command's arguments is
+dependent on the previous words (//git merge ...// compared to //git log ...//
+for example). For these scenarios Clink allows you to link parsers to arguments'
+words using Lua's concatenation operator. Parsers can also be concatenated with
+flags too.
+
+```
+a_parser = clink.arg.new_parser():set_arguments({"foo", "bar" })
+b_parser = clink.arg.new_parser():set_arguments({ "abc", "123" })
+c_parser = clink.arg.new_parser()
+c_parser:set_arguments(
+    { "foobar" .. b_parser },
+    { c_parser }
+)
+```
+
+As the example above shows, it is also possible to use a parser without
+concatenating it to a word. When Clink follows a link to a parser it is permanent
+and it will not return to the previous parser.
+
+===== Functions As Argument Options =====
+
+Argument options are not limited solely to strings. Clink also accepts functions
+too so more context aware argument options can be used.
+
+```
+function rainbow_function(word)
+    return { "red", "white", "blue" }
+end
+
+the_parser = clink.arg.new_parser()
+the_parser:set_arguments(
+    { "zippy", "bungle", "george" },
+    { rainbow_function, "yellow", "green" }
+)
+```
+
+The functions take a single argument which is a word from the command line being
+edited (or partial word if it is the one under the cursor). Functions should
+return a table of potential matches (or an empty table if it calls
+clink.add_match() directly itself).
 
 === Filtering The Match Display ===
 
@@ -287,8 +363,8 @@ the complete keys is press (TAB by default).
 
 The generator function takes the form //generator_function(text, first, last)//
 where //text// is the portion of the line buffer that is to be completed,
-//first//
-and //last// are the start and end indices into the line buffer for //text//.
+//first// and //last// are the start and end indices into the line buffer for
+//text//.
 
 ==== clink.set_match(index, value) ====
 
@@ -296,7 +372,47 @@ Explicitly sets match at //index// to //value//.
 
 === Argument Framework ===
 
-To do...
+==== parser:be_precise() ====
+
+Ordinarily Clink only loosely matches word as it traverses a parser. Calling this
+will make Clink only accept an exact matching word to consider moving onto the
+next one.
+
+==== parser:disable_file_matching() ====
+
+If this is called then Clink will not default to matching the file system if
+parsing comes to an end or can not be completed.
+
+==== parser:dump() ====
+
+Prints the parser to stdout.
+
+==== parser:go(parts) ====
+
+This runs the parser for the table of words //parts//. It returns a table of
+argument options. It is this method that Clink uses internally.
+
+==== parser:is_flag(word) ====
+
+Returns true of //word// is a valid flag.
+
+==== parser:loop(index) ====
+
+By default parsers do not loop and parsing comes to an end when there are no more
+arguments to traverse through. If loop() is called Clink will loop back to
+argument at //index// rather than terminating the parse.
+
+==== parser:set_arguments(table1, table2, ...) ====
+
+This method sets the parsers positional arguments. Each of the variable number of
+arguments to the method is a table of potential options for the argument at that
+position.
+
+==== parser:set_flags(flag1, flag2, ...) ====
+
+Sets the parser's flags (which can be thought of as position independent
+arguments). Each argument is a string and must start with the expected flag
+prefix ("-" by default).
 
 === Prompt Filtering ===
 
@@ -414,7 +530,7 @@ only the file names are included). The last argument //find_func// is the
 function to use to do the globbing. If it's unspecified (or nil) Clink falls back
 to //clink.find_files//.
 
-==== clink.match_words(text, words)
+==== clink.match_words(text, words) ====
 
 Calls clink.is_match() on each word in the table //words// and adds matches to
 Clink that match the needle //text//.
