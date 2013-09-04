@@ -104,6 +104,37 @@ void free_prompt(void* buffer)
 }
 
 //------------------------------------------------------------------------------
+static int parse_backspaces(char* prompt, int n)
+{
+    // This function does not null terminate!
+
+    char* write;
+    char* read;
+
+    write = prompt;
+    read = prompt;
+    while (*read && read < (prompt + n))
+    {
+        if (*read == '\b')
+        {
+            if (write > prompt)
+            {
+                --write;
+            }
+        }
+        else
+        {
+            *write = *read;
+            ++write;
+        }
+
+        ++read;
+    }
+
+    return write - prompt;
+}
+
+//------------------------------------------------------------------------------
 char* filter_prompt(const char* in_prompt)
 {
     static const int buf_size = 0x4000;
@@ -129,21 +160,27 @@ char* filter_prompt(const char* in_prompt)
     next = lua_prompt;
     while (*next)
     {
-        int size;
-        char* code;
+        int len;
+        int ansi_size;
+        char* ansi_code;
 
-        code = (char*)find_next_ansi_code(next, &size);
-        str_cat_n(out_prompt, next, buf_size, code - next);
-        if (*code)
+        ansi_code = (char*)find_next_ansi_code(next, &ansi_size);
+
+        len = parse_backspaces(next, ansi_code - next);
+        str_cat_n(out_prompt, next, buf_size, len);
+
+        if (*ansi_code)
         {
             static const char* tags[] = { "\001", "\002" };
 
+            len = parse_backspaces(ansi_code, ansi_size);
+
             str_cat(out_prompt, tags[0], buf_size);
-            str_cat_n(out_prompt, code, buf_size, size);
+            str_cat_n(out_prompt, ansi_code, buf_size, len);
             str_cat(out_prompt, tags[1], buf_size);
         }
 
-        next = code + size;
+        next = ansi_code + ansi_size;
     }
 
     return out_prompt;
