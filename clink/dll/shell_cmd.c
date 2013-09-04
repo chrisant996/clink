@@ -216,6 +216,12 @@ static BOOL WINAPI read_console(
         return single_char_read(input, buffer, buffer_size, read_in, control);
     }
 
+    // Sometimes cmd.exe wants line input for reasons other than command entry.
+    if (g_prompt_w == NULL || *g_prompt_w == L'\0')
+    {
+        return ReadConsoleW(input, buffer, buffer_size, read_in, control);
+    }
+
     old_exception_filter = push_exception_filter();
 
     // Call readline.
@@ -260,6 +266,10 @@ static BOOL WINAPI write_console(
         }
 
         return TRUE;
+    }
+    else if (g_prompt_w != NULL)
+    {
+        g_prompt_w[0] = L'\0';
     }
 
     return WriteConsoleW(handle, buffer, to_write, written, unused);
