@@ -23,7 +23,7 @@
 #include "shared/util.h"
 
 //------------------------------------------------------------------------------
-int                 get_clink_setting_int(const char*);
+int get_clink_setting_int(const char*);
 
 //------------------------------------------------------------------------------
 static void simulate_sigwinch(COORD expected_cursor_pos)
