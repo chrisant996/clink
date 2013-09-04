@@ -159,8 +159,10 @@ local function parser_flatten_argument(parser, index, part)
             local t = type(i)
             if t == "function" then
                 local results = i(part)
-                for _, j in ipairs(results) do
-                    table.insert(opts, j)
+                if type(results) == "table" then
+                    for _, j in ipairs(results) do
+                        table.insert(opts, j)
+                    end
                 end
             elseif t == "string" or t == "number" then
                 table.insert(opts, tostring(i))
