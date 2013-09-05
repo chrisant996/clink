@@ -39,19 +39,17 @@
     typedef void* PCONSOLE_READCONSOLE_CONTROL;
 #endif
 
-#ifdef CLINK_USE_READLINE
-#   include <readline/readline.h>
-#   include <readline/history.h>
-#   include <readline/rldefs.h>
-#   include <compat/dirent.h>
-#endif
+// Readline includes.
+#include <readline/readline.h>
+#include <readline/history.h>
+#include <readline/rldefs.h>
+#include <compat/dirent.h>
 
-#ifdef CLINK_USE_LUA
-#   include "dirent.h"
-#   include "lua.h"
-#   include "lauxlib.h"
-#   include "lualib.h"
-#endif
+// Lua includes.
+#include "dirent.h"
+#include "lua.h"
+#include "lauxlib.h"
+#include "lualib.h"
 
 // Defined by tests to automate input.
 #ifndef GETWCH_IMPL

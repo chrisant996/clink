@@ -205,9 +205,6 @@ project("clink_dll")
     includedirs("lua/src")
     includedirs("clink")
     defines("CLINK_DLL_BUILD")
-    defines("CLINK_USE_READLINE")
-    defines("CLINK_USE_LUA")
-    defines("CLINK_USE_SEH")
     pchsource("clink/dll/pch.c")
     pchheader("clink/dll/pch.h")
     files("clink/dll/*")
@@ -263,8 +260,6 @@ project("clink_test")
     links("getopt")
     links("readline")
     links("clink_shared")
-    defines("CLINK_USE_LUA")
-    defines("CLINK_USE_READLINE")
     defines("GETWCH_IMPL=getwch_automatic")
     includedirs("getopt")
     includedirs("lua/src")
@@ -281,6 +276,9 @@ project("clink_test")
 
     configuration("debug")
         --build_postbuild("", "debug")
+
+    configuration("vs*")
+        links("dbghelp")
 
 --------------------------------------------------------------------------------
 newoption {

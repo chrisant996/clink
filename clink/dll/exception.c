@@ -25,7 +25,7 @@
 //------------------------------------------------------------------------------
 static LONG WINAPI exception_filter(EXCEPTION_POINTERS* info)
 {
-#if defined(_MSC_VER) && defined(CLINK_USE_SEH)
+#if defined(_MSC_VER)
     MINIDUMP_EXCEPTION_INFORMATION mdei = { GetCurrentThreadId(), info, FALSE };
     DWORD pid;
     HANDLE process;
