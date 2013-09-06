@@ -27,7 +27,7 @@
 static settings_t*  g_settings      = NULL;
 
 //------------------------------------------------------------------------------
-static const setting_decl_t g_clink_settings_decl[] = {
+static const setting_decl_t g_settings_decl[] = {
     {
         "ctrld_exits",
         "Ctrl-D exits",
@@ -97,21 +97,20 @@ static void get_settings_file(char* buffer, int buffer_size)
 }
 
 //------------------------------------------------------------------------------
-void initialise_clink_settings(lua_State* lua)
+void* initialise_clink_settings()
 {
     char settings_file[MAX_PATH];
 
     get_settings_file(settings_file, sizeof_array(settings_file));
 
-    g_settings = settings_init(
-        g_clink_settings_decl,
-        sizeof_array(g_clink_settings_decl)
-    );
+    g_settings = settings_init(g_settings_decl, sizeof_array(g_settings_decl));
 
     if (!settings_load(g_settings, settings_file))
     {
         settings_save(g_settings, settings_file);
     }
+
+    return g_settings;
 }
 
 //------------------------------------------------------------------------------
@@ -146,4 +145,4 @@ const char* get_clink_setting_str(const char* name)
     return settings_get_str(g_settings, name);
 }
 
-// vim: expandtab
+//vim: expandtab

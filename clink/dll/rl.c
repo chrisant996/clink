@@ -28,7 +28,7 @@ char**              lua_generate_matches(const char*, int, int);
 char**              lua_match_display_filter(char**, int);
 void                initialise_rl_scroller();
 void                move_cursor(int, int);
-void                initialise_clink_settings();
+void*               initialise_clink_settings();
 int                 getc_impl(FILE* stream);
 int                 get_clink_setting_int(const char*);
 void                clink_register_rl_funcs();
