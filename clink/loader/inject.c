@@ -385,6 +385,7 @@ int inject(int argc, char** argv)
             target_pid = atoi(optarg);
             break;
 
+        case 'h':
         default:
             puts(g_clink_header);
             puts_help(help, sizeof_array(help));
