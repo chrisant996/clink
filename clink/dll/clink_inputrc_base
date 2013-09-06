@@ -53,4 +53,5 @@ $if cmd.exe
     M-C-e:          expand-env-vars
 $endif
 
+set keymap emacs
 $include ~/clink_inputrc
