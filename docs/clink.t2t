@@ -56,6 +56,11 @@ Readline-powered command line editing.
 
 == Configuring Clink ==
 
+The easiest way to configure Clink is to use Clink's //set// command line option.
+This can list, query, and set Clink's settings. Run //clink set --help// from a
+Clink-installed cmd.exe process to learn more both about how to use it and to get
+descriptions for Clink's various options.
+
 Configuring Clink by and large involves configuring Readline by creating a
 //clink_inputrc// file. There is excellent documentation for all the options
 available to configure Readline in Readline's [manual http://tinyurl.com/oum26rp].
@@ -594,4 +599,4 @@ This variable contains the current state of the whole line being edited.
 
 The current cursor position within the line buffer.
 
-% vim: textwidth=81 expandtab fo+=a fo-=q syntax=asciidoc nosmartindent
+% vim: textwidth=81 expandtab fo+=a fo-=q nosmartindent

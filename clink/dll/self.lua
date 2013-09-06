@@ -23,28 +23,40 @@
 --------------------------------------------------------------------------------
 local inject_parser
 local autorun_parser
+local set_parser
 local self_parser
 
 inject_parser = clink.arg.new_parser()
 inject_parser:set_flags(
-    {
-        "--help",
-        "--nohostcheck",
-        "--pid",
-        "--profile",
-        "--quiet",
-        "--scripts",
-    }
+    "--help",
+    "--nohostcheck",
+    "--pid",
+    "--profile",
+    "--quiet",
+    "--scripts"
 )
 
 autorun_parser = clink.arg.new_parser()
 autorun_parser:set_flags(
+    "--help",
+    "--install",
+    "--uninstall",
+    "--show",
+    "--value"
+)
+
+set_parser = clink.arg.new_parser()
+set_parser:disable_file_matching()
+set_parser:set_flags("--help")
+set_parser:set_arguments(
     {
-        "--help",
-        "--install",
-        "--uninstall",
-        "--show",
-        "--value",
+        "ctrld_exits",
+        "esc_clears_line",
+        "exec_match_style",
+        "match_colour",
+        "persist_history",
+        "prompt_colour",
+        "terminate_autoanswer",
     }
 )
 
@@ -53,6 +65,7 @@ self_parser:set_arguments(
     {
         "inject" .. inject_parser,
         "autorun" .. autorun_parser,
+        "set" .. set_parser,
     }
 )
 

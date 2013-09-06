@@ -383,6 +383,29 @@ static int cmd_initialise(void* base)
 
     tag_prompt();
 
+    // Add an alias to Clink so it can be run from anywhere. Similar to adding
+    // it to the path but this way we can add the config path too.
+    {
+        #define BUF_SIZE 512
+
+        char dll_path[BUF_SIZE];
+        char cfg_path[BUF_SIZE];
+        char buffer[BUF_SIZE];
+
+        get_dll_dir(dll_path, BUF_SIZE);
+        get_config_dir(cfg_path, BUF_SIZE);
+
+        strcpy(buffer, "\"");
+        str_cat(buffer, dll_path, BUF_SIZE);
+        str_cat(buffer, "/clink_" AS_STR(PLATFORM) ".exe\" --cfgdir \"", BUF_SIZE);
+        str_cat(buffer, cfg_path, BUF_SIZE);
+        str_cat(buffer, "\" $*", BUF_SIZE);
+
+        AddConsoleAlias("clink", buffer, rl_readline_name);
+
+        #undef BUF_SIZE
+    }
+
     return 1;
 }
 

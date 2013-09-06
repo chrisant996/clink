@@ -23,8 +23,10 @@
 #include "shared/util.h"
 
 //------------------------------------------------------------------------------
+int g_in_clink_context;
 int inject(int, char**);
 int autorun(int, char**);
+int set(int, char**);
 
 //------------------------------------------------------------------------------
 static int dispatch_verb(const char* verb, int argc, char** argv)
@@ -34,7 +36,8 @@ static int dispatch_verb(const char* verb, int argc, char** argv)
         int (*handler)(int, char**);
     } handlers[] = {
         "inject", inject,
-        "autorun", autorun
+        "autorun", autorun,
+        "set", set
     };
 
     int i;
@@ -57,8 +60,9 @@ static void show_usage()
     const char* help_usage = "Usage: <verb> <verb_options>\n";
     const char* help_verbs[] = {
         "Verbs:",   "",
-        "inject",   "Injects clink into a process.",
-        "autorun",  "Manage clink's entry in cmd.exe's autorun.",
+        "inject",   "Injects Clink into a process.",
+        "autorun",  "Manage Clink's entry in cmd.exe's autorun.",
+        "set",      "Adjust Clink's settings.",
         "",         "('<verb> --help' for more details).",
     };
 
@@ -78,8 +82,9 @@ int main(int argc, char** argv)
     int ret;
 
     struct option options[] = {
-        { "help",   no_argument,    NULL, 'h' },
-        { NULL,     0,              NULL, 0 }
+        { "help",   no_argument,       NULL, 'h' },
+        { "cfgdir", required_argument, NULL, 'c' },
+        { NULL,     0,                 NULL, 0 }
     };
 
     // Without arguments, show help.
@@ -90,10 +95,15 @@ int main(int argc, char** argv)
     }
 
     // Parse arguments
-    while ((arg = getopt_long(argc, argv, "+h", options, NULL)) != -1)
+    while ((arg = getopt_long(argc, argv, "+hc:", options, NULL)) != -1)
     {
         switch (arg)
         {
+        case 'c':
+            g_in_clink_context = 1;
+            set_config_dir_override(optarg);
+            break;
+
         case '?':
             return -1;
 
@@ -107,7 +117,7 @@ int main(int argc, char** argv)
     ret = -1;
     if (optind < argc)
     {
-        ret = dispatch_verb(argv[optind], argc - 1, argv + 1);
+        ret = dispatch_verb(argv[optind], argc - optind, argv + optind);
     }
 
     return ret;
