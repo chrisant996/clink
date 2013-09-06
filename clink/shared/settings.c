@@ -83,7 +83,7 @@ static void set_value(
 }
 
 //------------------------------------------------------------------------------
-static const setting_decl_t* get_decl(settings_t* s, const char* name)
+const setting_decl_t* settings_get_decl_by_name(settings_t* s, const char* name)
 {
     int i;
     for (i = 0; i < s->count; ++i)
@@ -101,7 +101,7 @@ static const setting_decl_t* get_decl(settings_t* s, const char* name)
 //------------------------------------------------------------------------------
 static int get_decl_index(settings_t* s, const char* name)
 {
-    const setting_decl_t* decl = get_decl(s, name);
+    const setting_decl_t* decl = settings_get_decl_by_name(s, name);
     if (decl != NULL)
     {
         return (int)(decl - s->decls);
@@ -113,7 +113,7 @@ static int get_decl_index(settings_t* s, const char* name)
 //------------------------------------------------------------------------------
 static const char* get_decl_default(settings_t* s, const char* name)
 {
-    const setting_decl_t* decl = get_decl(s, name);
+    const setting_decl_t* decl = settings_get_decl_by_name(s, name);
     if (decl != NULL)
     {
         return decl->default_value;
@@ -228,7 +228,7 @@ int settings_load(settings_t* s, const char* file)
                 ++c;
             }            
 
-            decl = get_decl(s, line);
+            decl = settings_get_decl_by_name(s, line);
             if (decl != NULL)
             {
                 set_value(s, decl, c);
@@ -295,7 +295,7 @@ int settings_get_int(settings_t* s, const char* name)
 //------------------------------------------------------------------------------
 void settings_set_int(settings_t* s, const char* name, int value)
 {
-    const setting_decl_t* decl = get_decl(s, name);
+    const setting_decl_t* decl = settings_get_decl_by_name(s, name);
     if (decl != NULL)
     {
         char buffer[32];
@@ -307,11 +307,42 @@ void settings_set_int(settings_t* s, const char* name, int value)
 //------------------------------------------------------------------------------
 void settings_set_str(settings_t* s, const char* name, const char* value)
 {
-    const setting_decl_t* decl = get_decl(s, name);
+    const setting_decl_t* decl = settings_get_decl_by_name(s, name);
     if (decl != NULL)
     {
         set_value(s, decl, value);
     }
+}
+
+//------------------------------------------------------------------------------
+void settings_set(settings_t* s, const char* name, const char* value)
+{
+    const setting_decl_t* decl = settings_get_decl_by_name(s, name);
+    if (decl != NULL)
+    {
+        if (decl_is_string_type(decl))
+        {
+            set_value(s, decl, value);
+        }
+        else
+        {
+            int i;
+            i = atoi(value);
+            settings_set_int(s, name, i);
+        }
+    }
+}
+
+//------------------------------------------------------------------------------
+const setting_decl_t* settings_get_decls(settings_t* s)
+{
+    return s->decls;
+}
+
+//------------------------------------------------------------------------------
+int settings_get_decl_count(settings_t* s)
+{
+    return s->count;
 }
 
 // vim: expandtab
