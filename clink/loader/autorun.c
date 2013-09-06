@@ -479,6 +479,11 @@ int autorun(int argc, char** argv)
     {
         puts(g_clink_header);
         puts_help(help, sizeof_array(help));
+        puts(
+            "Access to cmd.exe's registry entries is restricted to members "
+            "of the\nAdministors group so you must have sufficient rights "
+            "to view and\nedit the registry.\n"
+        );
         puts(g_clink_footer);
         ret = -1;
     }
