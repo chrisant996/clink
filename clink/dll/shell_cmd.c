@@ -208,6 +208,12 @@ static BOOL WINAPI read_console(
     int is_eof;
     void* old_exception_filter;
 
+    // If the file past in isn't a console handle then go the default route.
+    if (GetFileType(input) != FILE_TYPE_CHAR)
+    {
+        return ReadConsoleW(input, buffer, buffer_size, read_in, control);
+    }
+
     // If cmd.exe is asking for one character at a time, use the original path
     // It does this to handle y/n/all prompts which isn't an compatible use-
     // case for readline.
