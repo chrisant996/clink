@@ -68,13 +68,18 @@ static BOOL WINAPI read_console_w(
     PCONSOLE_READCONSOLE_CONTROL control
 )
 {
+    int is_eof;
     void* old_exception_filter;
 
     old_exception_filter = push_exception_filter();
-    call_readline_w(NULL, buffer, buffer_size);
-    append_crlf_w(buffer, buffer_size);
+    do
+    {
+        is_eof = call_readline_w(NULL, buffer, buffer_size);
+    }
+    while (is_eof);
     pop_exception_filter(old_exception_filter);
 
+    append_crlf_w(buffer, buffer_size);
     *read_in = (unsigned)wcslen(buffer);
     return TRUE;
 }
@@ -88,13 +93,18 @@ static BOOL WINAPI read_console_a(
     PCONSOLE_READCONSOLE_CONTROL control
 )
 {
+    int is_eof;
     void* old_exception_filter;
 
     old_exception_filter = push_exception_filter();
-    call_readline_utf8(NULL, buffer, buffer_size);
-    append_crlf_a(buffer, buffer_size);
+    do
+    {
+        is_eof = call_readline_utf8(NULL, buffer, buffer_size);
+    }
+    while (is_eof);
     pop_exception_filter(old_exception_filter);
 
+    append_crlf_a(buffer, buffer_size);
     *read_in = (unsigned)strlen(buffer);
     return TRUE;
 }

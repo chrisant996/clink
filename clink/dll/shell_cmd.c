@@ -205,7 +205,6 @@ static BOOL WINAPI read_console(
     PCONSOLE_READCONSOLE_CONTROL control
 )
 {
-    int is_eof;
     void* old_exception_filter;
 
     // If the file past in isn't a console handle then go the default route.
@@ -231,10 +230,21 @@ static BOOL WINAPI read_console(
     old_exception_filter = push_exception_filter();
 
     // Call readline.
-    is_eof = call_readline_w(g_prompt_w, buffer, buffer_size);
-    if (is_eof && get_clink_setting_int("ctrld_exits"))
+    while (1)
     {
-        wcsncpy(buffer, L"exit", buffer_size);
+        int is_eof = call_readline_w(g_prompt_w, buffer, buffer_size);
+        if (!is_eof)
+        {
+            break;
+        }
+
+        if (get_clink_setting_int("ctrld_exits"))
+        {
+            wcsncpy(buffer, L"exit", buffer_size);
+            break;
+        }
+
+        rl_crlf();
     }
 
     emulate_doskey(buffer, buffer_size);
