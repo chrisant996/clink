@@ -56,6 +56,12 @@ end
 
 --------------------------------------------------------------------------------
 local function exec_match_generator(text, first, last)
+    -- If match style setting is < 0 then consider executable matching disabled.
+    local match_style = clink.get_setting_int("exec_match_style")
+    if match_style < 0 then
+        return false
+    end
+
     -- We're only interested in exec completion if this is the first word of the
     -- line, or the first word after a command separator.
     local leading = rl_state.line_buffer:sub(1, first - 1)
@@ -74,12 +80,6 @@ local function exec_match_generator(text, first, last)
     local suffices = clink.split(clink.get_env("pathext"), ";")
     for i = 1, #suffices, 1 do
         suffices[i] = text.."*"..suffices[i]
-    end
-
-    -- Get the executable match style.
-    local match_style = clink.get_setting_int("exec_match_style")
-    if match_style < 0 then
-        match_style = 2
     end
 
     -- First step is to match executables in the environment's path.

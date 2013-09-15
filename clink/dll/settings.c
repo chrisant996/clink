@@ -57,7 +57,8 @@ static const setting_decl_t g_settings_decl[] = {
         "Changes how Clink will match executables when there is no path "
         "separator on the line. 0 = PATH only, 1 = PATH and CWD, 2 = PATH, "
         "CWD, and directories. In all cases both executables and directories "
-        "are matched when there is a path separator present.",
+        "are matched when there is a path separator present. A value of -1 "
+        "will disable executable matching completely.",
         SETTING_TYPE_ENUM,
         "PATH only\0PATH and CWD\0PATH, CWD, and directories",
         "2"
