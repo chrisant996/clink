@@ -32,6 +32,7 @@ int                 call_readline_w(const wchar_t*, wchar_t*, unsigned);
 void                emulate_doskey(wchar_t*, unsigned);
 wchar_t*            detect_tagged_prompt_w(const wchar_t*, int);
 void                free_prompt(void*);
+void*               extract_prompt(int);
 static int          cmd_validate();
 static int          cmd_initialise(void*);
 static void         cmd_shutdown();
@@ -90,11 +91,16 @@ static int is_interactive()
 }
 
 //------------------------------------------------------------------------------
-static int check_auto_answer(const wchar_t* prompt)
+static int check_auto_answer()
 {
     static wchar_t* prompt_to_answer = (wchar_t*)1;
 
-    if (prompt == NULL || prompt[0] == L'\0')
+    int setting;
+    wchar_t* prompt;
+
+    // Skip the feature if it's not enabled.
+    setting = get_clink_setting_int("terminate_autoanswer");
+    if (setting <= 0)
     {
         return 0;
     }
@@ -138,15 +144,14 @@ static int check_auto_answer(const wchar_t* prompt)
         }
     }
 
-    if (wcscmp(prompt, prompt_to_answer) == 0)
+    prompt = extract_prompt(0);
+    if (prompt != NULL && wcsstr(prompt, prompt_to_answer) != 0)
     {
-        int setting = get_clink_setting_int("terminate_autoanswer");
-        if (setting > 0)
-        {
-            return (setting == 1) ? 'y' : 'n';
-        }
+        free_prompt(prompt);
+        return (setting == 1) ? 'y' : 'n';
     }
 
+    free_prompt(prompt);
     return 0;
 }
 
@@ -174,10 +179,10 @@ static BOOL WINAPI single_char_read(
 {
     int reply;
 
-    if (reply = check_auto_answer(L""))
+    if (reply = check_auto_answer())
     {
         // cmd.exe's PromptUser() method reads a character at a time until
-        // it encounters a \n. The way Clink handle's this is a bit 'hacky'.
+        // it encounters a \n. The way Clink handle's this is a bit 'wacky'.
         static int visit_count = 0;
 
         ++visit_count;

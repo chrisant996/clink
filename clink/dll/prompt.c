@@ -187,7 +187,7 @@ char* filter_prompt(const char* in_prompt)
 }
 
 //------------------------------------------------------------------------------
-char* extract_prompt()
+void* extract_prompt(int ret_as_utf8)
 {
     char* prompt;
     wchar_t* buffer;
@@ -208,24 +208,30 @@ char* extract_prompt()
     prompt = malloc(length * 8);
 
     // Get the prompt from the terminal.
-    buffer = (wchar_t*)prompt + length + 1;
+    buffer = (wchar_t*)prompt + length + 2;
     ReadConsoleOutputCharacterW(handle, buffer, length, cur, &chars_read);
     buffer[chars_read] = L'\0';
 
     // Convert to Utf8 and return.
-    length = WideCharToMultiByte(
-        CP_UTF8, 0,
-        buffer, length,
-        prompt, (char*)buffer - prompt,
-        NULL, NULL
-    );
-
-    if (length <= 0)
+    if (ret_as_utf8)
     {
-        return NULL;
+        length = WideCharToMultiByte(
+            CP_UTF8, 0,
+            buffer, length,
+            prompt, (char*)buffer - prompt,
+            NULL, NULL
+        );
+
+        if (length <= 0)
+        {
+            return NULL;
+        }
+
+        prompt[length] = '\0';
+        return prompt;
     }
 
-    prompt[length] = '\0';
+    wcscpy((wchar_t*)prompt, buffer);
     return prompt;
 }
 

@@ -33,7 +33,7 @@ int                 getc_impl(FILE* stream);
 int                 get_clink_setting_int(const char*);
 void                clink_register_rl_funcs();
 char*               filter_prompt(const char*);
-char*               extract_prompt();
+void*               extract_prompt(int);
 void                free_prompt(void*);
 
 int                 g_slash_translation             = 0;
@@ -569,7 +569,7 @@ static char* call_readline_impl(const char* prompt)
     prepared_prompt = NULL;
     if (prompt == NULL)
     {
-        prepared_prompt = extract_prompt();
+        prepared_prompt = extract_prompt(1);
     }
     else
     {
