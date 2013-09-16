@@ -44,7 +44,7 @@ static int does_user_have_admin_rights()
 }
 
 //------------------------------------------------------------------------------
-static HKEY open_software_key(const char* key, int wow64)
+static HKEY open_software_key(const char* key, int wow64, int writable)
 {
     LONG ok;
     DWORD flags;
@@ -59,7 +59,7 @@ static HKEY open_software_key(const char* key, int wow64)
     }
     str_cat(buffer, key, sizeof_array(buffer));
 
-    flags = KEY_READ|KEY_WRITE;
+    flags = KEY_READ|(writable ? KEY_WRITE : 0);
     flags |= KEY_WOW64_64KEY;
 
     ok = RegCreateKeyEx(HKEY_LOCAL_MACHINE, buffer, 0, NULL,
@@ -201,7 +201,7 @@ static int uninstall_autorun(const char* clink_path, int wow64)
     int ret;
     int left, right;
 
-    cmd_proc_key = open_software_key("Microsoft\\Command Processor", wow64);
+    cmd_proc_key = open_software_key("Microsoft\\Command Processor", wow64, 1);
     if (cmd_proc_key == NULL)
     {
         return 0;
@@ -268,7 +268,7 @@ static int install_autorun(const char* clink_path, int wow64)
     // play nicely with other projects that hook cmd.exe and install autoruns.
     uninstall_autorun(clink_path, wow64);
 
-    cmd_proc_key = open_software_key("Microsoft\\Command Processor", wow64);
+    cmd_proc_key = open_software_key("Microsoft\\Command Processor", wow64, 1);
     if (cmd_proc_key == NULL)
     {
         return 0;
@@ -319,7 +319,7 @@ static int show_autorun(const char* clink_path, int wow64)
     HKEY cmd_proc_key;
     char* key_value;
 
-    cmd_proc_key = open_software_key("Microsoft\\Command Processor", wow64);
+    cmd_proc_key = open_software_key("Microsoft\\Command Processor", wow64, 0);
     if (cmd_proc_key == NULL)
     {
         return 0;
@@ -344,7 +344,7 @@ static int force_autorun(const char* value, int wow64)
     HKEY cmd_proc_key;
     int i;
 
-    cmd_proc_key = open_software_key("Microsoft\\Command Processor", wow64);
+    cmd_proc_key = open_software_key("Microsoft\\Command Processor", wow64, 1);
     if (cmd_proc_key == NULL)
     {
         return 0;
@@ -383,6 +383,7 @@ int autorun(int argc, char** argv)
     char* clink_path;
     int i;
     int ret;
+    int need_admin_rights;
     dispatch_func_t* function;
     const char* path_arg;
 
@@ -414,6 +415,7 @@ int autorun(int argc, char** argv)
 
     function = NULL;
     path_arg = clink_path;
+    need_admin_rights = 1;
 
     while ((i = getopt_long(argc, argv, "v:siuh", options, NULL)) != -1)
     {
@@ -429,6 +431,7 @@ int autorun(int argc, char** argv)
 
         case 's':
             function = show_autorun;
+            need_admin_rights = 0;
             break;
 
         case 'v':
@@ -466,7 +469,7 @@ int autorun(int argc, char** argv)
     if (function != NULL)
     {
         // Check we're running with sufficient privileges.
-        if (!does_user_have_admin_rights())
+        if (need_admin_rights && !does_user_have_admin_rights())
         {
             puts("You must have administator rights to access cmd.exe's autorun");
             ret = -1;
@@ -482,7 +485,7 @@ int autorun(int argc, char** argv)
         puts(
             "Access to cmd.exe's registry entries is restricted to members "
             "of the\nAdministors group so you must have sufficient rights "
-            "to view and\nedit the registry.\n"
+            "to edit\n the registry.\n"
         );
         puts(g_clink_footer);
         ret = -1;
