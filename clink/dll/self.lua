@@ -56,6 +56,7 @@ set_parser:set_arguments(
         "match_colour",
         "persist_history",
         "prompt_colour",
+        "space_prefix_match_files",
         "terminate_autoanswer",
     }
 )

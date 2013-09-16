@@ -22,10 +22,13 @@
 
 --------------------------------------------------------------------------------
 local exec_match_style = 0
+local space_prefix_match_files = 0
 local old_getter = clink.get_setting_int
 function clink.get_setting_int(name)
     if name == "exec_match_style" then
         return exec_match_style
+    elseif name == "space_prefix_match_files" then
+        return space_prefix_match_files
     end
 
     return old_getter(name)
@@ -173,6 +176,27 @@ clink.test.test_matches(
     "Style - cwd (all)",
     "one-\t",
     { "one_local.exe", "one_path.exe", "one_two.py", "one_dir\\" }
+)
+
+--------------------------------------------------------------------------------
+exec_match_style = 0
+space_prefix_match_files = 1
+clink.test.test_matches(
+    "Space prefix; none",
+    "one_",
+    { "one_path.exe", "one_two.py" }
+)
+
+clink.test.test_matches(
+    "Space prefix; space",
+    " one_",
+    { "one_dir\\", "one_local.txt", "one_local.exe" }
+)
+
+clink.test.test_matches(
+    "Space prefix; spaces",
+    "   one_",
+    { "one_dir\\", "one_local.txt", "one_local.exe" }
 )
 
 -- vim: expandtab

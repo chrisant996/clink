@@ -64,6 +64,14 @@ static const setting_decl_t g_settings_decl[] = {
         "2"
     },
     {
+        "space_prefix_match_files",
+        "Whitespace prefix matches files",
+        "If the line begins with whitespace then Clink bypasses executable "
+        "matching and will match all files and directories instead.",
+        SETTING_TYPE_BOOL,
+        0, "1"
+    },
+    {
         "prompt_colour",
         "Prompt colour",
         "Surrounds the prompt in ANSI escape codes to set the prompt's colour. "
