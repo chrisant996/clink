@@ -109,7 +109,7 @@ static int check_auto_answer()
     if (prompt_to_answer == (wchar_t*)1)
     {
         static wchar_t* fallback = L"Terminate batch job (Y/N)? ";
-        static int string_id = 0x237b;
+        static int string_id = 0x237b; // Extracted from cmd.exe.mui file.
 
         DWORD flags;
         DWORD ok;
