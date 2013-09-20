@@ -314,6 +314,25 @@ static int is_clink_present(DWORD target_pid)
 }
 
 //------------------------------------------------------------------------------
+void get_profile_path(const char* in, char* out, int out_size)
+{
+    if (in[0] == '~' && (in[1] == '\\' || in[1] == '/'))
+    {
+        char dir[MAX_PATH];
+
+        if (SHGetFolderPath(0, CSIDL_LOCAL_APPDATA, NULL, 0, dir) == S_OK)
+        {
+            str_cpy(out, dir, out_size);
+            str_cat(out, ".", out_size);
+            str_cat(out, in + 1, out_size);
+            return;
+        }
+    }
+
+    cpy_path_as_abs(out, in, out_size);
+}
+
+//------------------------------------------------------------------------------
 int inject(int argc, char** argv)
 {
     DWORD target_pid = 0;
@@ -359,11 +378,11 @@ int inject(int argc, char** argv)
             break;
 
         case 'p':
-            cpy_path_as_abs(
-                inject_args.profile_path,
-                optarg,
-                sizeof_array(inject_args.profile_path)
-            );
+            {
+                char* buffer = inject_args.profile_path;
+                int buffer_size = sizeof_array(inject_args.profile_path);
+                get_profile_path(optarg, buffer, buffer_size);
+            }
             break;
 
         case 'n':

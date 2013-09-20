@@ -26,6 +26,7 @@
 
 #include <Windows.h>
 #include <Tlhelp32.h>
+#include <Shlobj.h>
 
 #include "getopt.h"
 
