@@ -187,7 +187,7 @@ static void suffix_translation()
     default:    from = '/';  to = "\\"; break;
     }
 
-    // Swap the training slash, using readline's API to maintain undo state.
+    // Swap the trailing slash, using Readline's API to maintain undo state.
     if ((rl_point > 0) && (rl_line_buffer[rl_point - 1] == from))
     {
         rl_delete_text(rl_point - 1, rl_point);
