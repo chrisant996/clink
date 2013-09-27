@@ -275,6 +275,7 @@ function clink.test.run()
     run_test("test_exec")
     run_test("test_env")
     run_test("test_args")
+    run_test("test_merge")
 
     ch_dir(scripts_path)
     rm_dir(test_fs_path)

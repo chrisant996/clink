@@ -29,6 +29,7 @@ local is_parser
 local is_sub_parser
 local new_sub_parser
 local parser_go_impl
+local merge_parsers
 
 local parser_meta_table     = {}
 local sub_parser_meta_table = {}
@@ -434,7 +435,10 @@ function clink.arg.new_parser()
 end
 
 --------------------------------------------------------------------------------
-local function merge_parsers(lhs, rhs)
+function merge_parsers(lhs, rhs)
+    -- Merging parsers is not a trivial matter and this implementation is far
+    -- from correct. It is however sufficient for the majority of cases.
+
     -- Remove (and save value of) the first argument in RHS.
     local rhs_arg_1 = table.remove(rhs.arguments, 1)
     if rhs_arg_1 == nil then
@@ -450,7 +454,23 @@ local function merge_parsers(lhs, rhs)
 
     -- Link RHS to LHS through sub-parsers.
     for _, rarg in ipairs(rhs_arg_1) do
-        table.insert(lhs_arg_1, rarg .. rhs)
+        local child = nil
+
+        -- Split sub parser
+        if is_sub_parser(rarg) then
+            child = rarg.parser     
+            rarg = rarg.key
+        end
+
+        -- If LHS's first argument has rarg in it that links to a sub-parser
+        -- then we need to recursively merge them
+
+        table.insert(lhs_arg_1, rarg .. (child or rhs))
+    end
+
+    -- Merge flags.
+    for _, rflag in ipairs(rhs.flags) do
+        table.insert(lhs.flags, rflag)
     end
 end
 

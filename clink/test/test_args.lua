@@ -269,28 +269,6 @@ clink.test.test_output(
 )
 
 --------------------------------------------------------------------------------
-p = clink.arg.new_parser():set_arguments({ "eleven" }, { "twelve" })
-clink.arg.register_parser("argcmd", p)
-
-clink.test.test_matches(
-    "Merged parsers 1",
-    "argcmd ",
-    { "one", "two", "three", "spa ce", "eleven" }
-)
-
-clink.test.test_output(
-    "Merged parsers 2",
-    "argcmd eleven ",
-    "argcmd eleven twelve "
-)
-
-clink.test.test_output(
-    "Merged parsers 3",
-    "argcmd \"spa ce\" tw",
-    "argcmd \"spa ce\" two "
-)
-
---------------------------------------------------------------------------------
 clink.arg.register_parser("argcmd_table", {"two", "three", "one"});
 
 clink.test.test_matches(
