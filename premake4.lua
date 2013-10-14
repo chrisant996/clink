@@ -140,6 +140,7 @@ solution("clink")
     location(to)
 
     flags("Symbols")
+    flags("StaticRuntime")
     defines("HAVE_CONFIG_H")
     defines("HANDLE_MULTIBYTE")
     defines("CLINK_VERSION=AS_STR("..clink_ver..")")
