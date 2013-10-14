@@ -46,7 +46,16 @@ static int dispatch_verb(const char* verb, int argc, char** argv)
     {
         if (strcmp(verb, handlers[i].verb) == 0)
         {
-            return handlers[i].handler(argc, argv);
+            int ret;
+            int t;
+
+            t = optind;
+            optind = 1;
+
+            ret = handlers[i].handler(argc, argv);
+
+            optind = t;
+            return ret;
         }
     }
 
