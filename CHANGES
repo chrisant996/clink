@@ -1,6 +1,38 @@
 
 == Changelog ==
 
+==== v0.4 ====
+
+- New features;
+ - Better 'clink.arg' API. Easier, more intuitive, and more powerful.
+ - Whitespace prefix skips exec matching.
+ - Added a 'set' verb to easily change settings from the command line.
+ - Basic support for a shells other than cmd.exe.
+ - Completion for Go (contributed by Dobroslaw Zybort).
+ - Setting 'exec_match_style' to -1 disables it entirely.
+ - Make history persistence optional.
+ - Alias/doskey completion.
+ - Very basic support for Powershell.
+ - View cmd.exe's autorun entry without needing admin rights.
+- New key bindings;
+ - Ctrl-Alt-C : Copy command line to the clipboard.
+ - Ctrl-Alt-E : Expand environment variable under cursor.
+ - Ctrl-Alt-U : 'up directory' (formerly Shift-Up).
+ - Ctrl-U : Adds '..\' to the command line.
+ - Alt-H : Shows active keymap's key bindings.
+- New Lua functions;
+ - clink.execute().
+ - clink.get_host_process().
+ - clink.match_files().
+ - clink.match_words().
+ - clink.get_console_aliases().
+- Lots of bug fixes, including;
+ - Better command extraction.
+ - Fixed cmd.exe command paging and Ctrl-C/Ctrl-Break handling.
+ - Multiple locale fixes.
+ - Use localised text for 'Terminate batch job?' prompt.
+
+
 ==== v0.3 ====
 
 - Automatic answering of cmd.exe's 'Terminate batch script?' prompt.
