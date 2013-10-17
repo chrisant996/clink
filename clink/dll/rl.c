@@ -26,6 +26,7 @@
 void                initialise_lua();
 char**              lua_generate_matches(const char*, int, int);
 char**              lua_match_display_filter(char**, int);
+void                lua_filter_prompt(char*, int);
 void                initialise_rl_scroller();
 void                move_cursor(int, int);
 void*               initialise_clink_settings();
@@ -570,6 +571,17 @@ static char* call_readline_impl(const char* prompt)
     if (prompt == NULL)
     {
         prepared_prompt = extract_prompt(1);
+
+        // Even though we're not going to display filtered result the extracted
+        // prompt is run through Lua. This is a little bit of a hack, but helps
+        // to keep behaviour consistent.
+        if (prepared_prompt != NULL)
+        {
+            char buffer[1024];
+
+            str_cpy(buffer, prepared_prompt, sizeof(buffer));
+            lua_filter_prompt(buffer, sizeof_array(buffer));
+        }
     }
     else
     {
