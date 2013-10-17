@@ -434,7 +434,7 @@ is finished. Getting and setting the prompt value is done through the
 User-provided prompt filter functions can get and set the prompt value using
 this variable.
 
-=== Miscelaneous ===
+=== Miscellaneous ===
 
 ==== clink.chdir(path) ====
 
