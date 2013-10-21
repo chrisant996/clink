@@ -16,14 +16,21 @@ distributions.
 
 - The same line editing as Bash (from GNU's Readline library).
 - History persistence between sessions.
-- Paste from clipboard (//Ctrl-V//).
-- Incremental history search (//Ctrl-R/Ctrl-S//).
-- Context-sensitive completion (//TAB//).
-- Undo (//Ctrl-Z//).
-- Lua scriptable completion. 
+- Scriptable completion with Lua.
+- New keyboard shortcuts;
+ - Paste from clipboard (//Ctrl-V//).
+ - Incremental history search (//Ctrl-R/Ctrl-S//).
+ - Powerful completion (//TAB//).
+ - Undo (//Ctrl-Z//).
+ - Automatic "cd .." (//Ctrl-Alt-U//).
+ - Environment variable expansion (//Ctrl-Alt-E//).
 - Coloured and scriptable prompt.
+- Context sensitive completion;
+ - Executables (and aliases).
+ - Directory commands.
+ - Environment variables
+ - Thirdparty tools; Git, Mercurial, SVN, Go, and P4.
 - Auto-answering of the "Terminate batch job?" prompt.
-- Completion for Git, Mercurial, SVN, and P4.
 
 
 By default Clink binds //Alt-H// to display the current key bindings. More
@@ -564,8 +571,8 @@ path being completed. Values for //type// are;
 
 ==== clink.split(str, sep) ====
 
-Splits the string //str// into pieces separated by //sep//, returning a table of the
-pieces.
+Splits the string //str// into pieces separated by //sep//, returning a table of
+the pieces.
 
 ==== clink.suppress_char_append() ====
 
@@ -598,5 +605,11 @@ This variable contains the current state of the whole line being edited.
 ==== rl_state.point ====
 
 The current cursor position within the line buffer.
+
+== Powershell ==
+
+Clink has basic support for Powershell. In order to show completion correctly
+Clink needs to parse Powershell's prompt to extract the current directory. If the
+prompt has been customized Clink is unlikely to work as expected.
 
 % vim: textwidth=81 expandtab fo+=a fo-=q nosmartindent
