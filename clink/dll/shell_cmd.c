@@ -303,16 +303,23 @@ static void tag_prompt()
     // can identify console writes that are the prompt.
 
     static const char* name = "prompt";
+    static const char* default_prompt = "$p$g";
     static const int buffer_size = 0x10000;
 
     int tag_size;
     char* buffer;
+    char* suffix;
 
     buffer = malloc(buffer_size);
     tag_size = strlen(g_prompt_tag_hidden);
+    suffix = buffer + tag_size;
 
     strcpy(buffer, g_prompt_tag_hidden);
-    GetEnvironmentVariableA(name, buffer + tag_size, buffer_size - tag_size);
+    if (!GetEnvironmentVariableA(name, suffix, buffer_size - tag_size))
+    {
+        SetEnvironmentVariableA(name, default_prompt);
+        GetEnvironmentVariableA(name, suffix, buffer_size - tag_size);
+    }
     SetEnvironmentVariableA(name, buffer);
 
     free(buffer);
