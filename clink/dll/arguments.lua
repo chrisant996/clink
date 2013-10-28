@@ -240,13 +240,18 @@ local function parser_go_args(parser, state)
         end
     end
 
-    -- If we've no more arguments to traverse but there's still parts
-    -- remaining then default Readline's file matching (unless
-    -- otherwise disabled).
+    -- If we've no more arguments to traverse but there's still parts remaining
+    -- then we start skipping arguments but keep going so that flags still get
+    -- parsed (as flags have no position).
     if exhausted_args then
         state.part_index = state.part_index - 1
 
         if not exhausted_parts then
+            if state.depth <= 1 then
+                state.skip_args = true
+                return
+            end
+
             return parser.use_file_matching
         end
     end
@@ -268,13 +273,19 @@ local function parser_go_flags(parser, state)
         if is_sub_parser(arg_opt) then
             if arg_opt.key == part then
                 local arg_index_cache = state.arg_index
+                local skip_args_cache = state.skip_args
+
                 state.arg_index = 1
+                state.skip_args = false
+                state.depth = state.depth + 1
 
                 local ret = parser_go_impl(arg_opt.parser, state)
                 if type(ret) == "table" then
                     return ret
                 end
 
+                state.depth = state.depth - 1
+                state.skip_args = skip_args_cache
                 state.arg_index = arg_index_cache
             end
         end
@@ -283,23 +294,25 @@ end
 
 --------------------------------------------------------------------------------
 function parser_go_impl(parser, state)
-    local part
-    local dispatch_func
-    local ret
     local has_flags = #parser.flags > 0
 
     while state.part_index <= #state.parts do
-        part = state.parts[state.part_index]
+        local part = state.parts[state.part_index]
+        local dispatch_func
 
         if has_flags and parser:is_flag(part) then
             dispatch_func = parser_go_flags
-        else
+        elseif not state.skip_args then
             dispatch_func = parser_go_args
         end
 
-        ret = dispatch_func(parser, state)
-        if ret ~= nil then
-            return ret
+        if dispatch_func ~= nil then
+            local ret = dispatch_func(parser, state)
+            if ret ~= nil then
+                return ret
+            end
+        else
+            state.part_index = state.part_index + 1
         end
     end
 
@@ -328,6 +341,8 @@ local function parser_go(parser, parts)
         arg_index = 1,
         part_index = 1,
         parts = parts,
+        skip_args = false,
+        depth = 1,
     }
 
     return parser_go_impl(parser, state)
