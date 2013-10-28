@@ -176,6 +176,11 @@ static void suffix_translation()
     char from;
     char* to;
 
+    if (!rl_filename_completion_desired)
+    {
+        return;
+    }
+
     if (g_slash_translation < 0)
     {
         return;
