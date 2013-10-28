@@ -344,3 +344,97 @@ clink.test.test_matches(
     "argcmd_parser one two four t",
     { "two", "three" }
 )
+
+--------------------------------------------------------------------------------
+p = clink.arg.new_parser()
+p:set_flags("/one", "/two", "/twenty")
+
+q = clink.arg.new_parser()
+q:set_flags("-one", "-two", "-twenty")
+
+clink.arg.register_parser("argcmd_flags_s", p)
+clink.arg.register_parser("argcmd_flags_d", q)
+
+clink.test.test_output(
+    "Flags: slash 1a",
+    "argcmd_flags_s nothing /",
+    "argcmd_flags_s nothing /"
+)
+
+clink.test.test_output(
+    "Flags: slash 1b",
+    "argcmd_flags_s /",
+    "argcmd_flags_s /"
+)
+
+p:disable_file_matching()
+
+clink.test.test_output(
+    "Flags: slash 1c",
+    "argcmd_flags_s /",
+    "argcmd_flags_s /"
+)
+
+clink.test.test_output(
+    "Flags: slash 1d",
+    "argcmd_flags_s nothing /",
+    "argcmd_flags_s nothing /"
+)
+
+clink.test.test_matches(
+    "Flags: slash 2a",
+    "argcmd_flags_s nothing /tw",
+    { "/two", "/twenty" }
+)
+
+clink.test.test_matches(
+    "Flags: slash 2b",
+    "argcmd_flags_s out of bounds /tw",
+    { "/two", "/twenty" }
+)
+
+clink.test.test_matches(
+    "Flags: slash 2c",
+    "argcmd_flags_s /tw",
+    { "/two", "/twenty" }
+)
+
+clink.test.test_output(
+    "Flags: dash 1",
+    "argcmd_flags_d -t",
+    "argcmd_flags_d -tw"
+)
+
+clink.test.test_matches(
+    "Flags: dash 2",
+    "argcmd_flags_d -tw",
+    { "-two", "-twenty" }
+)
+
+--------------------------------------------------------------------------------
+q = clink.arg.new_parser()
+q:set_arguments({ "two", "three" })
+
+p = clink.arg.new_parser()
+p:set_arguments({ "one" }, { "nine" })
+p:set_flags("-flag_a" .. q, "-flag_b" .. q)
+
+clink.arg.register_parser("argcmd_skip", p)
+
+clink.test.test_matches(
+    "Skip 1",
+    "argcmd_skip one two -fla\t",
+    { "-flag_a", "-flag_b" }
+)
+
+clink.test.test_matches(
+    "Skip 2",
+    "argcmd_skip one two -flag_a t",
+    { "two", "three" }
+)
+
+clink.test.test_matches(
+    "Skip 3",
+    "argcmd_skip one two -flag_a two four five -f\t",
+    { "-flag_a", "-flag_b" }
+)
