@@ -134,6 +134,11 @@ static void simulate_sigwinch(COORD expected_cursor_pos)
     00000000`723d373a  51 51e0 51e0 76e0 a100
     00000000`723d3744  52 52e0 52e0 92e0 a200
     00000000`723d374e  53 53e0 53e0 93e0 a300
+
+    home 01 00 00 00 01 00 24 00 47 00 00 00 00 00 00 00
+    end  01 00 00 00 01 00 23 00 4f 00 00 00 00 00 00 00
+    pgup 01 00 00 00 01 00 21 00 49 00 00 00 00 00 00 00
+    pgdn 01 00 00 00 01 00 22 00 51 00 00 00 00 00 00 00
 */
 static int getc_internal(int* alt)
 {
