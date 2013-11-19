@@ -25,25 +25,25 @@
 #include "shared/util.h"
 
 //------------------------------------------------------------------------------
-int                 get_clink_setting_int(const char*);
-void*               push_exception_filter();
-void                pop_exception_filter(void* old_filter);
-int                 call_readline_w(const wchar_t*, wchar_t*, unsigned);
-void                emulate_doskey(wchar_t*, unsigned);
-wchar_t*            detect_tagged_prompt_w(const wchar_t*, int);
-void                free_prompt(void*);
-void*               extract_prompt(int);
-static int          cmd_validate();
-static int          cmd_initialise(void*);
-static void         cmd_shutdown();
+int                     get_clink_setting_int(const char*);
+void*                   push_exception_filter();
+void                    pop_exception_filter(void* old_filter);
+int                     call_readline_w(const wchar_t*, wchar_t*, unsigned);
+void                    emulate_doskey(wchar_t*, unsigned);
+wchar_t*                detect_tagged_prompt_w(const wchar_t*, int);
+void                    free_prompt(void*);
+void*                   extract_prompt(int);
+static int              cmd_validate();
+static int              cmd_initialise(void*);
+static void             cmd_shutdown();
 
-extern const char   g_prompt_tag_hidden[];
-static wchar_t*     g_prompt_w;
-shell_t             g_shell_cmd = {
-                        cmd_validate,
-                        cmd_initialise,
-                        cmd_shutdown
-                    };
+extern const wchar_t    g_prompt_tag_hidden[];
+static wchar_t*         g_prompt_w;
+shell_t                 g_shell_cmd = {
+                            cmd_validate,
+                            cmd_initialise,
+                            cmd_shutdown
+                        };
 
 //------------------------------------------------------------------------------
 static int is_interactive()
@@ -302,25 +302,25 @@ static void tag_prompt()
     // Prefixes the 'prompt' environment variable with a known tag so that Clink
     // can identify console writes that are the prompt.
 
-    static const char* name = "prompt";
-    static const char* default_prompt = "$p$g";
+    static const wchar_t* name = L"prompt";
+    static const wchar_t* default_prompt = L"$p$g";
     static const int buffer_size = 0x10000;
 
     int tag_size;
-    char* buffer;
-    char* suffix;
+    wchar_t* buffer;
+    wchar_t* suffix;
 
-    buffer = malloc(buffer_size);
-    tag_size = strlen(g_prompt_tag_hidden);
+    buffer = malloc(buffer_size * sizeof(*buffer));
+    tag_size = wcslen(g_prompt_tag_hidden);
     suffix = buffer + tag_size;
 
-    strcpy(buffer, g_prompt_tag_hidden);
-    if (!GetEnvironmentVariableA(name, suffix, buffer_size - tag_size))
+    wcscpy(buffer, g_prompt_tag_hidden);
+    if (!GetEnvironmentVariableW(name, suffix, buffer_size - tag_size))
     {
-        SetEnvironmentVariableA(name, default_prompt);
-        GetEnvironmentVariableA(name, suffix, buffer_size - tag_size);
+        SetEnvironmentVariableW(name, default_prompt);
+        GetEnvironmentVariableW(name, suffix, buffer_size - tag_size);
     }
-    SetEnvironmentVariableA(name, buffer);
+    SetEnvironmentVariableW(name, buffer);
 
     free(buffer);
 }

@@ -27,10 +27,10 @@ const char*         find_next_ansi_code(const char*, int*);
 void                lua_filter_prompt(char*, int);
 
 //------------------------------------------------------------------------------
-#define MR(x)                     x "\x08"
-const char  g_prompt_tag[]        = "@CLINK_PROMPT";
-const char  g_prompt_tag_hidden[] = MR("C") MR("L") MR("I") MR("N") MR("K") MR(" ");
-const char* g_prompt_tags[]       = { g_prompt_tag, g_prompt_tag_hidden };
+#define MR(x)                        L##x L"\x08"
+const wchar_t  g_prompt_tag[]        = L"@CLINK_PROMPT";
+const wchar_t  g_prompt_tag_hidden[] = MR("C") MR("L") MR("I") MR("N") MR("K") MR(" ");
+const wchar_t* g_prompt_tags[]       = { g_prompt_tag, g_prompt_tag_hidden };
 #undef MR
 
 //------------------------------------------------------------------------------
@@ -41,26 +41,18 @@ wchar_t* detect_tagged_prompt_w(const wchar_t* buffer, int length)
     // For each accepted tag...
     for (i = 0; i < sizeof_array(g_prompt_tags); ++i)
     {
-        const char* tag = g_prompt_tags[i];
-        int tag_length = strlen(tag);
-        int j, n;
-
-        // Count the number of matching characters.
-        int matched = 0;
-        for (j = 0, n = min(length, tag_length); j < n; ++j)
-        {
-            matched += (tag[j] == buffer[j]);
-        }
+        const wchar_t* tag = g_prompt_tags[i];
+        int tag_length = wcslen(tag);
 
         // Found a match? Convert the remainer to Utf8 and return it.
-        if (matched == tag_length)
+        if (wcsncmp(buffer, tag, tag_length) == 0)
         {
             wchar_t* out;
+            
+            out = malloc(length * sizeof(*out));
+            length -= tag_length;
 
-            out = malloc(length * sizeof(wchar_t));
-            length -= matched;
-
-            wcsncpy(out, buffer + matched, length);
+            wcsncpy(out, buffer + tag_length, length);
             out[length] = '\0';
 
             return out;
@@ -78,18 +70,28 @@ char* detect_tagged_prompt(const char* buffer, int length)
     // For each accepted tag...
     for (i = 0; i < sizeof_array(g_prompt_tags); ++i)
     {
-        const char* tag = g_prompt_tags[i];
-        int tag_length = strlen(tag);
+        const wchar_t* tag = g_prompt_tags[i];
+        int tag_length = wcslen(tag);
+        int j, n;
+
+        // Count the number of matching characters.
+        int matched = 0;
+        for (j = 0, n = min(length, tag_length); j < n; ++j)
+        {
+            matched += (tag[j] == buffer[j]);
+        }
 
         // Does the buffer start with the tag?
-        if (strncmp(buffer, tag, tag_length) == 0)
+        if (matched == tag_length)
         {
             char* out;
-            
-            out = malloc(length);
-            memcpy(out, buffer + tag_length, length - tag_length);
 
-            out[length - tag_length] = '\0';
+            out = malloc(length * sizeof(*out));
+            length -= tag_length;
+
+            strncpy(out, buffer + tag_length, length);
+            out[length] = '\0';
+
             return out;
         }
     }
