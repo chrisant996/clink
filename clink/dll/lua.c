@@ -553,26 +553,26 @@ static int get_console_aliases(lua_State* state)
 
     do
     {
-        static const int BUF_SIZE = 0x300;
         int i;
+        int buffer_size;
         char* alias;
 
-        buffer = malloc(BUF_SIZE);
         lua_createtable(state, 0, 0);
 
         // Get the aliases (aka. doskey macros).
-        i = GetConsoleAliasesLength(rl_readline_name);
-        if (i == 0 || i >= BUF_SIZE)
+        buffer_size = GetConsoleAliasesLength(rl_readline_name);
+        if (buffer_size == 0)
         {
             break;
         }
 
-        if (GetConsoleAliases(buffer, BUF_SIZE, rl_readline_name) == 0)
+        buffer = malloc(buffer_size + 1);
+        if (GetConsoleAliases(buffer, buffer_size, rl_readline_name) == 0)
         {
             break;
         }
 
-        buffer[i] = '\0';
+        buffer[buffer_size] = '\0';
 
         // Parse the result into a lua table.
         alias = buffer;
