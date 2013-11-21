@@ -23,7 +23,7 @@ C-z:                undo
 M-h:                show-rl-help
 M-C-c:              copy-line-to-clipboard
 C-c:                ctrl-c
-C-u:                "..\\"
+M-a:                "..\\"
 
 set keymap          vi-insert
 "\t":               clink-completion-shim
@@ -32,7 +32,7 @@ C-z:                undo
 M-h:                show-rl-help
 M-C-c:              copy-line-to-clipboard
 C-c:                ctrl-c
-C-u:                "..\\"
+M-a:                "..\\"
 
 set keymap          vi-move
 C-v:                paste-from-clipboard
@@ -40,7 +40,7 @@ C-z:                undo
 M-h:                show-rl-help
 M-C-c:              copy-line-to-clipboard
 C-c:                ctrl-c
-C-u:                "..\\"
+M-a:                "..\\"
 
 $if cmd.exe
     set keymap      emacs
