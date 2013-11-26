@@ -96,6 +96,15 @@ static const setting_decl_t g_settings_decl[] = {
         SETTING_TYPE_BOOL,
         0, "1"
     },
+    {
+        "use_altgr_substitute",
+        "Support Windows' Ctrl-Alt substitute",
+        "Windows provides Ctrl-Alt as a substitute for AltGr, historically to "
+        "support keyboards with no AltGr key. This may collide with some of "
+        "Readline's bindings.",
+        SETTING_TYPE_BOOL,
+        0, "1"
+    },
 };
 
 //------------------------------------------------------------------------------

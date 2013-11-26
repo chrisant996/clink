@@ -58,6 +58,7 @@ set_parser:set_arguments(
         "prompt_colour",
         "space_prefix_match_files",
         "terminate_autoanswer",
+        "use_altgr_substitute",
     }
 )
 

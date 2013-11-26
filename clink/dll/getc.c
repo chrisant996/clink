@@ -177,6 +177,7 @@ loop:
         DWORD count;
         INPUT_RECORD record;
         const KEY_EVENT_RECORD* key;
+        int altgr_sub;
 
         GetConsoleScreenBufferInfo(handle_stdout, &csbi);
 
@@ -207,7 +208,17 @@ loop:
         key_sc = key->wVirtualScanCode;
         key_flags = key->dwControlKeyState;
 
-        *alt = !!(key_flags & LEFT_ALT_PRESSED);
+        // Windows supports an AltGr substitute which we check for here. As it
+        // collides with Readline mappings Clink's support can be disabled.
+        altgr_sub = !!(key_flags & LEFT_ALT_PRESSED);
+        altgr_sub &= !!(key_flags & (LEFT_CTRL_PRESSED|RIGHT_CTRL_PRESSED));
+        altgr_sub &= !!key_char;
+        altgr_sub &= get_clink_setting_int("use_altgr_substitute");
+
+        if (!altgr_sub)
+        {
+            *alt = !!(key_flags & LEFT_ALT_PRESSED);
+        }
 
 #if defined(DEBUG_GETC) && defined(_DEBUG)
         {
