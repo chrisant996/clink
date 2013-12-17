@@ -167,7 +167,19 @@ void emulate_doskey(wchar_t* buffer, unsigned max_chars)
                 // tag, and then feed it piece by piece to each ReadConsole()
                 // call. This is most inconvenient. Instead we're using &&.
                 // Maybe this makes this emulation incompatible with other exes?
-                insert = L"&&";
+                insert = L"&";
+            }
+            else if (towlower(c) == 'g')
+            {
+                insert = L">";
+            }
+            else if (towlower(c) == 'l')
+            {
+                insert = L"<";
+            }
+            else if (towlower(c) == 'b')
+            {
+                insert = L"|";
             }
             else
             {
