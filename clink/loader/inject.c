@@ -97,14 +97,27 @@ static DWORD get_parent_pid()
 static void toggle_threads(DWORD pid, int on)
 {
     BOOL ok;
-    THREADENTRY32 te;
+    HANDLE th32;
+    THREADENTRY32 te = { sizeof(te) };
 
-    HANDLE th32 = CreateToolhelp32Snapshot(TH32CS_SNAPTHREAD, pid);
+    th32 = CreateToolhelp32Snapshot(TH32CS_SNAPTHREAD, pid);
+    if (th32 == INVALID_HANDLE_VALUE)
+    {
+        return;
+    }
 
     ok = Thread32First(th32, &te);
     while (ok != FALSE)
     {
-        HANDLE thread = OpenThread(THREAD_ALL_ACCESS, FALSE, te.th32ThreadID);
+        HANDLE thread;
+
+        if (te.th32OwnerProcessID != pid)
+        {
+            ok = Thread32Next(th32, &te);
+            continue;
+        }
+
+        thread = OpenThread(THREAD_ALL_ACCESS, FALSE, te.th32ThreadID);
         if (on)
         {
             ResumeThread(thread);
@@ -114,7 +127,8 @@ static void toggle_threads(DWORD pid, int on)
             SuspendThread(thread);
         }
         CloseHandle(thread);
-        Thread32Next(th32, &te);
+
+        ok = Thread32Next(th32, &te);
     }
 
     CloseHandle(th32);
