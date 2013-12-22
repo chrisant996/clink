@@ -378,6 +378,8 @@ static int hook_trap()
         { HOOK_TYPE_IAT_BY_NAME, base, NULL, "SetEnvironmentVariableW", set_env_var },
     };
 
+    tag_prompt();
+
     return apply_hooks(hooks, sizeof_array(hooks));
 }
 
@@ -396,14 +398,12 @@ static int cmd_validate()
 static int cmd_initialise(void* base)
 {
     const char* dll = get_kernel_dll();
-    const char* func_name = "GetCurrentDirectoryW";
+    const char* func_name = "GetEnvironmentVariableW";
 
     if (!set_hook_trap(dll, func_name, hook_trap))
     {
         return 0;
     }
-
-    tag_prompt();
 
     // Add an alias to Clink so it can be run from anywhere. Similar to adding
     // it to the path but this way we can add the config path too.
