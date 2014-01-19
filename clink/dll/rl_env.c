@@ -64,7 +64,7 @@ static void apply_env(const char* env, int clear)
 //------------------------------------------------------------------------------
 static void* push_env()
 {
-    return GetEnvironmentStrings();
+    return GetEnvironmentStringsW();
 }
 
 //------------------------------------------------------------------------------
@@ -72,15 +72,15 @@ static void pop_env(void* handle)
 {
     void* to_clear;
 
-    to_clear = GetEnvironmentStrings();
+    to_clear = GetEnvironmentStringsW();
     if (to_clear != NULL)
     {
         apply_env(to_clear, 1);
-        FreeEnvironmentStrings(to_clear);
+        FreeEnvironmentStringsW(to_clear);
     }
 
     apply_env(handle, 0);
-    FreeEnvironmentStrings(handle);
+    FreeEnvironmentStringsW(handle);
 }
 
 //------------------------------------------------------------------------------
