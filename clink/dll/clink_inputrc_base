@@ -6,17 +6,16 @@ set output-meta                 on
 set history-size                1000
 set skip-completed-text         on
 
-"\033`s": backward-word      # ctrl-left
-"\033`t": forward-word       # ctrl-right
-"\033`O": end-of-line        # end
-"\033`G": beginning-of-line  # home
-"\033`S": delete-char        # del
-"\033`c": page-up            # shift page-up
-"\033`u": kill-line          # ctrl+end
-"\033`w": backward-kill-line # ctrl+home
-
-"\033`I": history-search-backward # page-up
-"\033`Q": history-search-forward  # page-down
+"\e`s": backward-word           # ctrl-left
+"\e`t": forward-word            # ctrl-right
+"\e`O": end-of-line             # end
+"\e`G": beginning-of-line       # home
+"\e`S": delete-char             # del
+"\e`c": page-up                 # shift page-up
+"\e`u": kill-line               # ctrl+end
+"\e`w": backward-kill-line      # ctrl+home
+"\e`I": history-search-backward # page-up
+"\e`Q": history-search-forward  # page-down
 
 set keymap          emacs
 "\t":               clink-completion-shim
