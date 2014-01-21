@@ -15,6 +15,9 @@ set skip-completed-text         on
 "\033`u": kill-line          # ctrl+end
 "\033`w": backward-kill-line # ctrl+home
 
+"\033`I": history-search-backward # page-up
+"\033`Q": history-search-forward  # page-down
+
 set keymap          emacs
 "\t":               clink-completion-shim
 C-v:                paste-from-clipboard
