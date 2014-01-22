@@ -606,7 +606,34 @@ This variable contains the current state of the whole line being edited.
 
 The current cursor position within the line buffer.
 
-== Powershell ==
+== Usage ==
+
+=== Binding special keys ===
+
+Due to differences between Windows and Linux, escape codes for keys like
+PageUp/Down and the arrow keys are different in Clink. Escape codes take the
+format //\e`?// where '?' is one of the characters from the following table;
+
+|| Key | Normal | Shift | Ctrl | Ctrl-Shift
+|  Home  |  I  |  a  |  w  |  !  
+|  Up  |  J  |  b  |  T  |  "  
+|  PageUp  |  K  |  c  |  U  |  #  
+|  Left  |  L  |  d  |  s  |  $  
+|  Right  |  M  |  e  |  t  |  %  
+|  End  |  O  |  f  |  u  |  &  
+|  Down  |  P  |  g  |  V  |  '  
+|  PageDown  |  Q  |  h  |  v  |  (  
+|  Insert  |  R  |  i  |  W  |  )  
+|  Delete  |  S  |  j  |  X  |  *  
+
+Here is an example line from a clink_inputrc file that binds Shift-End to the
+Readline function //transpose-word// function;
+
+```
+"\e`f": transpose-word
+```
+
+=== Powershell ===
 
 Clink has basic support for Powershell. In order to show completion correctly
 Clink needs to parse Powershell's prompt to extract the current directory. If the
