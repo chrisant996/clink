@@ -23,6 +23,9 @@
 #include "util.h"
 
 //------------------------------------------------------------------------------
+static int g_disable_log = 0;
+
+//------------------------------------------------------------------------------
 static void log_line_v(
     const char* function,
     int source_line,
@@ -64,26 +67,38 @@ static void log_line_v(
 //------------------------------------------------------------------------------
 void log_line(const char* function, int source_line, const char* format, ...)
 {
-    va_list args;
-    va_start(args, format);
-    log_line_v(function, source_line, format, args);
-    va_end(args);
+    if (!g_disable_log)
+    {
+        va_list args;
+        va_start(args, format);
+        log_line_v(function, source_line, format, args);
+        va_end(args);
+    }
 }
 
 //------------------------------------------------------------------------------
 void log_error(const char* function, int source_line, const char* format, ...)
 {
-    va_list args;
-    DWORD last_error;
+    if (!g_disable_log)
+    {
+        va_list args;
+        DWORD last_error;
 
-    last_error = GetLastError();
-    va_start(args, format);
+        last_error = GetLastError();
+        va_start(args, format);
 
-    log_line(function, source_line, "ERROR...");
-    log_line_v(function, source_line, format, args);
-    log_line(function, source_line, "(last_error = %d)", last_error);
+        log_line(function, source_line, "ERROR...");
+        log_line_v(function, source_line, format, args);
+        log_line(function, source_line, "(last_error = %d)", last_error);
 
-    va_end(args);
+        va_end(args);
+    }
+}
+
+//------------------------------------------------------------------------------
+void disable_log()
+{
+    g_disable_log = 1;
 }
 
 // vim: expandtab

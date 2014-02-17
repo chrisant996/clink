@@ -103,6 +103,10 @@ static BOOL on_dll_attach()
     {
         set_config_dir_override(g_inject_args.profile_path);
     }
+    if (g_inject_args.no_log)
+    {
+        disable_log();
+    }
 
     // Prepare the process and environment for Readline.
     set_rl_readline_name();

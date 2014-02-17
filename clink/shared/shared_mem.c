@@ -91,8 +91,6 @@ shared_mem_t* create_shared_mem(int page_count, const char* tag, int id)
         return NULL;
     }
 
-    LOG_INFO("Created shared memory: %p %d %s.", ptr, size, name);
-
     info = malloc(sizeof(shared_mem_t));
     info->handle = handle;
     info->ptr = ptr;
@@ -128,8 +126,6 @@ shared_mem_t* open_shared_mem(int page_count, const char* tag, int id)
         return NULL;
     }
 
-    LOG_INFO("Opened shared memory: %p %d %s.", ptr, size, name);
-
     info = malloc(sizeof(shared_mem_t));
     info->handle = handle;
     info->ptr = ptr;
@@ -140,8 +136,6 @@ shared_mem_t* open_shared_mem(int page_count, const char* tag, int id)
 //------------------------------------------------------------------------------
 void close_shared_mem(shared_mem_t* info)
 {
-    LOG_INFO("Closing shared memory: %p.", info->ptr);
-
     if (info->ptr != NULL)
     {
         UnmapViewOfFile(info->ptr);

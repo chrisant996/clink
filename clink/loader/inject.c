@@ -361,6 +361,7 @@ int inject(int argc, char** argv)
         { "pid",         required_argument,  NULL, 'd' },
         { "nohostcheck", no_argument,        NULL, 'n' },
         { "ansi",        no_argument,        NULL, 'a' },
+        { "nolog",       no_argument,        NULL, 'l' },
         { "help",        no_argument,        NULL, 'h' },
         { NULL, 0, NULL, 0 }
     };
@@ -372,6 +373,7 @@ int inject(int argc, char** argv)
         "-n, --nohostcheck",    "Do not check that host is a supported shell.",
         "-d, --pid <pid>",      "Inject into the process specified by <pid>.",
         "-a, --ansi",           "Target shell uses Windows' ANSI console API.",
+        "-l, --nolog",          "Disable file logging.",
         "-h, --help",           "Shows this help text.",
     };
 
@@ -379,7 +381,7 @@ int inject(int argc, char** argv)
     extern const char* g_clink_footer;
 
     // Parse arguments
-    while ((i = getopt_long(argc, argv, "naqhp:s:d:", options, NULL)) != -1)
+    while ((i = getopt_long(argc, argv, "nalqhp:s:d:", options, NULL)) != -1)
     {
         switch (i)
         {
@@ -399,24 +401,17 @@ int inject(int argc, char** argv)
             }
             break;
 
-        case 'n':
-            inject_args.no_host_check = 1;
+        case 'n': inject_args.no_host_check = 1; break;
+        case 'a': inject_args.ansi_mode = 1;     break;
+        case 'q': inject_args.quiet = 1;         break;
+        case 'd': target_pid = atoi(optarg);     break;
+
+        case 'l':
+            inject_args.no_log = 1;
+            disable_log();
             break;
 
-        case 'a':
-            inject_args.ansi_mode = 1;
-            break;
-
-        case 'q':
-            inject_args.quiet = 1;
-            break;
-
-        case '?':
-            return -1;
-
-        case 'd':
-            target_pid = atoi(optarg);
-            break;
+        case '?': return -1;
 
         case 'h':
         default:
