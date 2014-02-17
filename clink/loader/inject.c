@@ -285,7 +285,7 @@ static int do_inject(DWORD target_pid)
     }
 
     // Wait for injection to complete.
-    WaitForSingleObject(remote_thread, INFINITE);
+    WaitForSingleObject(remote_thread, 1000);
     toggle_threads(target_pid, 1);
 
     // Clean up and quit
