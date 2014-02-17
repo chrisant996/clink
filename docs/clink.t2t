@@ -615,10 +615,10 @@ PageUp/Down and the arrow keys are different in Clink. Escape codes take the
 format //\e`?// where '?' is one of the characters from the following table;
 
 || Key | Normal | Shift | Ctrl | Ctrl-Shift
-|  Home  |  I  |  a  |  w  |  !  
-|  Up  |  J  |  b  |  T  |  "  
-|  PageUp  |  K  |  c  |  U  |  #  
-|  Left  |  L  |  d  |  s  |  $  
+|  Home  |  G  |  a  |  w  |  !  
+|  Up  |  H  |  b  |  T  |  "  
+|  PageUp  |  I  |  c  |  U  |  #  
+|  Left  |  K  |  d  |  s  |  $  
 |  Right  |  M  |  e  |  t  |  %  
 |  End  |  O  |  f  |  u  |  &  
 |  Down  |  P  |  g  |  V  |  '  
