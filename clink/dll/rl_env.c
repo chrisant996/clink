@@ -23,17 +23,17 @@
 #include "shared/util.h"
 
 //------------------------------------------------------------------------------
-static void apply_env(const char* env, int clear)
+static void apply_env(const wchar_t* env, int clear)
 {
     int size;
-    char* strings;
-    char* c;
+    wchar_t* strings;
+    wchar_t* c;
 
     // Find length of the environment block.
     c = env;
     while (*c)
     {
-        c += strlen(c) + 1;
+        c += wcslen(c) + 1;
     }
 
     // Copy the block.
@@ -45,14 +45,14 @@ static void apply_env(const char* env, int clear)
     c = strings;
     while (*c)
     {
-        int len = (int)strlen(c);
-        char* value = strchr(c, '=');
+        int len = (int)wcslen(c);
+        wchar_t* value = wcschr(c, '=');
         if ((value != NULL) && (*c != '='))
         {
             *value = '\0';
             ++value;
 
-            SetEnvironmentVariable(c, clear ? NULL : value);
+            SetEnvironmentVariableW(c, clear ? NULL : value);
         }
 
         c += len + 1;
