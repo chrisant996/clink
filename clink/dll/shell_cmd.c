@@ -273,7 +273,7 @@ static BOOL WINAPI write_console(
     // Clink tags the prompt so that it can be detected when cmd.exe writes it
     // to the console.
 
-    const wchar_t* prompt = detect_tagged_prompt_w(buffer, to_write);
+    wchar_t* prompt = detect_tagged_prompt_w(buffer, to_write);
     if (prompt != NULL)
     {
         // Copy the prompt.
@@ -423,7 +423,9 @@ static int cmd_initialise(void* base)
         str_cat(buffer, cfg_path, BUF_SIZE);
         str_cat(buffer, "\" $*", BUF_SIZE);
 
+#if !defined(__MINGW32__)
         AddConsoleAlias("clink", buffer, rl_readline_name);
+#endif // !__MINGW32__
 
         #undef BUF_SIZE
     }

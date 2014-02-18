@@ -539,7 +539,7 @@ static int change_dir(lua_State* state)
 //------------------------------------------------------------------------------
 static int get_cwd(lua_State* state)
 {
-    const char path[MAX_PATH];
+    char path[MAX_PATH];
 
     GetCurrentDirectory(sizeof_array(path), path);
     lua_pushstring(state, path);
@@ -549,7 +549,7 @@ static int get_cwd(lua_State* state)
 //------------------------------------------------------------------------------
 static int get_console_aliases(lua_State* state)
 {
-    char* buffer;
+    char* buffer = NULL;
 
     do
     {
@@ -559,6 +559,7 @@ static int get_console_aliases(lua_State* state)
 
         lua_createtable(state, 0, 0);
 
+#if !defined(__MINGW32__)
         // Get the aliases (aka. doskey macros).
         buffer_size = GetConsoleAliasesLength(rl_readline_name);
         if (buffer_size == 0)
@@ -592,6 +593,7 @@ static int get_console_aliases(lua_State* state)
             ++c;
             alias = c + strlen(c) + 1;
         }
+#endif // !__MINGW32__
     }
     while (0);
 

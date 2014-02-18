@@ -115,7 +115,7 @@ static int initialise(void* base, const char* read_func, void* hook_func)
     const char* dll = get_kernel_dll();
 
     hook_decl_t hooks[] = {
-        { HOOK_TYPE_JMP, NULL, dll, read_func, hook_func },
+        { HOOK_TYPE_JMP, NULL, dll, (void*)read_func, hook_func },
     };
 
     return apply_hooks(hooks, sizeof_array(hooks));

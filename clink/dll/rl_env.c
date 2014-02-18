@@ -28,16 +28,17 @@ static void apply_env(const wchar_t* env, int clear)
     int size;
     wchar_t* strings;
     wchar_t* c;
+    const wchar_t* cc;
 
     // Find length of the environment block.
-    c = env;
-    while (*c)
+    cc = env;
+    while (*cc)
     {
-        c += wcslen(c) + 1;
+        cc += wcslen(cc) + 1;
     }
 
     // Copy the block.
-    size = (int)(c - env + 1);
+    size = (int)(cc - env + 1);
     strings = malloc(size);
     memcpy(strings, env, size);
 

@@ -23,6 +23,10 @@
 #include "shared/util.h"
 #include "shared/pipe.h"
 
+#if defined(__MINGW32__)
+#   define JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE 0x2000
+#endif
+
 //------------------------------------------------------------------------------
 typedef struct
 {
@@ -103,7 +107,7 @@ int lua_execute(lua_State* state)
     pipe_t pipe_stderr;
     pipe_t pipe_stdin;
     exec_state_t exec_state;
-    int proc_ret;
+    DWORD proc_ret;
     HANDLE thread;
 
     // Get the command line to execute.
@@ -143,8 +147,8 @@ int lua_execute(lua_State* state)
     si.hStdInput = pipe_stdin.read;
     si.dwFlags = STARTF_USESTDHANDLES;
 
-    ok = CreateProcess(NULL, cmd, NULL, NULL, TRUE, process_flags, NULL, NULL,
-        &si, &exec_state.pi
+    ok = CreateProcess(NULL, (char*)cmd, NULL, NULL, TRUE, process_flags, NULL,
+        NULL, &si, &exec_state.pi
     );
     if (ok == FALSE)
     {
@@ -173,7 +177,9 @@ int lua_execute(lua_State* state)
     }
 
     AssignProcessToJobObject(exec_state.job, exec_state.pi.hProcess);
-    thread = CreateThread(NULL, 0, thread_proc, &exec_state, 0, NULL);
+    thread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)thread_proc,
+        &exec_state, 0, NULL
+    );
 
     // Release our references to the child-side pipes. We don't use them, and
     // it means ReadFile() will leave the loop below once the child closes

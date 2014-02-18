@@ -25,7 +25,7 @@
 //------------------------------------------------------------------------------
 static const char* get_function_name(void* func_addr)
 {
-    const FUNMAP** funcs = funmap;
+    FUNMAP** funcs = funmap;
     while (*funcs != NULL)
     {
         FUNMAP* func = *funcs;

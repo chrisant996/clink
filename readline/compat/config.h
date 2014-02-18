@@ -44,6 +44,16 @@ int                         hooked_stat(const char*, struct hooked_stat*);
 int                         hooked_fstat(int, struct hooked_stat*);
 int                         hooked_wcwidth(wchar_t wc);
 
+#if defined(__MINGW32__)
+#   undef fwrite
+#   undef fprintf
+#   undef putc
+#   undef mbrtowc
+#   undef mbrlen
+#   undef stat
+#   undef fstat
+#endif
+
 #define wcwidth(x)          (((x) > 0x7f) ? hooked_wcwidth(x) : 1)
 #define fwrite              hooked_fwrite
 #define fprintf             hooked_fprintf
@@ -140,3 +150,5 @@ int                         hooked_wcwidth(wchar_t wc);
 #endif
 
 #endif // CONFIG_H
+
+// vim: expandtab
