@@ -25,7 +25,7 @@
 //------------------------------------------------------------------------------
 static void* rva_to_addr(void* base, unsigned rva)
 {
-    return (char*)rva + (uintptr_t)base;
+    return (char*)(uintptr_t)rva + (uintptr_t)base;
 }
 
 //------------------------------------------------------------------------------
