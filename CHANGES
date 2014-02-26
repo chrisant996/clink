@@ -1,7 +1,7 @@
 
-== Changelog ==
+### Changelog
 
-==== v0.4.1 ====
+##### v0.4.1
 
 - Bug fixes;
  - Various Unicode fixes causing corrupt environment variables.
@@ -14,8 +14,7 @@
 - Added documentation covering escape codes for special keys.
 - Added support for Windows' AltGr substitute Ctrl-Alt.
 
-
-==== v0.4 ====
+##### v0.4
 
 - New features;
  - Better 'clink.arg' API. Easier, more intuitive, and more powerful.
@@ -46,8 +45,7 @@
  - Multiple locale fixes.
  - Use localised text for 'Terminate batch job?' prompt.
 
-
-==== v0.3 ====
+##### v0.3
 
 - Automatic answering of cmd.exe's 'Terminate batch script?' prompt.
 - Coloured prompts (requires ANSICON or ConEmu).
@@ -79,16 +77,14 @@
 - Start menu shortcut starts in USERPROFILE, like cmd.exe
 - Zip distribution is now portable.
 
-
-==== v0.2.1 ====
+##### v0.2.1
 
 - The .history file now merges multiple sessions together.
 - Fixed missing y/n, pause, and other prompts.
 - Fixed segfault in loader executable.
 - Better ConEmu compatibility.
 
-
-==== v0.2 ====
+##### v0.2
 
 - Basic argument completion for 'git', 'hg', 'svn', and 'p4'.
 - Traditional Bash clear screen ('Ctrl-L') and exit shortcuts ('Ctrl-D').
@@ -107,14 +103,12 @@
 - Improved hooking so Clink can be shared with other thirdparty utilities that
   also hook cmd.exe (ConEmu, ANSICon, etc.).
 
-
-==== v0.1.1 ====
+##### v0.1.1
 
 - Fixed AltGr+<key> on international keyboards.
 - Fixed broken completion when directories have a '-' in their name (Mark Hammond)
 - The check for single match scenarios now correctly handles case-insensitivity.
 
-
-==== v0.1 ====
+##### v0.1
 
 - Initial release.
