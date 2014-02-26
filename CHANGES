@@ -1,6 +1,20 @@
 
 == Changelog ==
 
+==== v0.4.1 ====
+
+- Bug fixes;
+ - Various Unicode fixes causing corrupt environment variables.
+ - Fixed thread resume/suspend causing rare system-wide deadlock.
+ - Fixed incorrect translation of suffixed slash when completing flags.
+- Add --nolog argument to disable file logging. Fix #187 Fix #154
+- Added missing escape sequences from doskey emulation.
+- Reinstated unix-kill-line key binding.
+- Mapped PgUp/Down to search history using line typed so far.
+- Added documentation covering escape codes for special keys.
+- Added support for Windows' AltGr substitute Ctrl-Alt.
+
+
 ==== v0.4 ====
 
 - New features;
