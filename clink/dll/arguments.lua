@@ -29,7 +29,7 @@ local is_parser
 local is_sub_parser
 local new_sub_parser
 local parser_go_impl
-local merge_parsers
+--local merge_parsers
 
 local parser_meta_table     = {}
 local sub_parser_meta_table = {}
@@ -398,6 +398,17 @@ function is_sub_parser(sp)
 end
 
 --------------------------------------------------------------------------------
+local function get_sub_parser(argument, str)
+    for _, arg in ipairs(argument) do
+        if is_sub_parser(arg) then
+            if arg.key == str then
+                return arg.parser
+            end
+        end
+    end
+end
+
+--------------------------------------------------------------------------------
 function new_sub_parser(key, parser)
     local sub_parser = {}
     sub_parser.key = key
@@ -469,18 +480,29 @@ function merge_parsers(lhs, rhs)
 
     -- Link RHS to LHS through sub-parsers.
     for _, rarg in ipairs(rhs_arg_1) do
-        local child = nil
+        local child
 
         -- Split sub parser
         if is_sub_parser(rarg) then
             child = rarg.parser     
             rarg = rarg.key
+        else
+            child = rhs
         end
 
-        -- If LHS's first argument has rarg in it that links to a sub-parser
-        -- then we need to recursively merge them
+        -- If LHS's first argument has rarg in it which links to a sub-parser
+        -- then we need to recursively merge them.
+        local lhs_sub_parser = get_sub_parser(lhs_arg_1, rarg)
+        if lhs_sub_parser then
+            merge_parsers(lhs_sub_parser, child)
+        else
+            local to_add = rarg
+            if type(rarg) ~= "function" then
+                to_add = rarg .. child
+            end
 
-        table.insert(lhs_arg_1, rarg .. (child or rhs))
+            table.insert(lhs_arg_1, to_add)
+        end
     end
 
     -- Merge flags.
