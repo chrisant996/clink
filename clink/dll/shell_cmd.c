@@ -174,7 +174,7 @@ static BOOL WINAPI single_char_read(
     wchar_t* buffer,
     DWORD buffer_size,
     LPDWORD read_in,
-    PCONSOLE_READCONSOLE_CONTROL control
+    void* control
 )
 {
     int reply;
@@ -207,7 +207,7 @@ static BOOL WINAPI read_console(
     wchar_t* buffer,
     DWORD buffer_size,
     LPDWORD read_in,
-    PCONSOLE_READCONSOLE_CONTROL control
+    void* control
 )
 {
     void* old_exception_filter;

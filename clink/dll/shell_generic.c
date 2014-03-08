@@ -65,7 +65,7 @@ static BOOL WINAPI read_console_w(
     wchar_t* buffer,
     DWORD buffer_size,
     LPDWORD read_in,
-    PCONSOLE_READCONSOLE_CONTROL control
+    void* control
 )
 {
     int is_eof;
@@ -90,7 +90,7 @@ static BOOL WINAPI read_console_a(
     char* buffer,
     DWORD buffer_size,
     LPDWORD read_in,
-    PCONSOLE_READCONSOLE_CONTROL control
+    void* control
 )
 {
     int is_eof;

@@ -35,10 +35,6 @@
 #include <Shlobj.h>
 #ifndef __MINGW32__
 #   include <DbgHelp.h>
-#else
-#   ifndef __MINGW64__
-        typedef void* PCONSOLE_READCONSOLE_CONTROL;
-#   endif
 #endif
 
 // Readline includes.
