@@ -70,7 +70,7 @@ local pchheader_original = pchheader
 local pchsource_original = pchsource
 
 local function pchheader_fixed(header)
-    if _ACTION == "vs2010" then
+    if _ACTION == "vs2010" or _ACTION == "vs2012" then
         header = path.getname(header)
     end
 
