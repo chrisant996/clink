@@ -38,7 +38,7 @@ static void apply_env(const wchar_t* env, int clear)
     }
 
     // Copy the block.
-    size = (int)(cc - env + 1);
+    size = (int)(cc - env + 1) * 2;
     strings = malloc(size);
     memcpy(strings, env, size);
 
