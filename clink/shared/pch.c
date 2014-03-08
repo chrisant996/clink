@@ -34,5 +34,4 @@ const char* g_clink_footer =
     "Copyright (c) 1987-2010 Free Software Foundation, Inc.\n"
     ;
 
-
-	// vim: expandtab
+// vim: expandtab
