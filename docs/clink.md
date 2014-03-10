@@ -1,8 +1,3 @@
-## Clink vCLINK_VERSION
-
-http://github.com/mridgers/clink
-[Martin Ridgers](http://twitter.com/choddlander)
-
 ### What is Clink?
 
 Clink combines the native Windows shell cmd.exe with the powerful command line editing features of the GNU Readline library, which provides rich completion, history, and line-editing capabilities. Readline is best known for its use in the famous Unix shell Bash, the standard shell for Mac OS X and many Linux distributions.

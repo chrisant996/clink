@@ -30,17 +30,18 @@ newaction {
             return
         end
 
-        local cmd = "%cli_env%\\python-2.7.1\\python.exe"
-        cmd = cmd.." %cli_env%/txt2tags-2.6/txt2tags"
-        cmd = cmd.." --target=html"
-        cmd = cmd.." --style=../../docs/clink.css"
-        cmd = cmd.." --css-inside"
+        local cmd = "pandoc"
+        cmd = cmd.." --from=markdown"
+        cmd = cmd.." --to=html"
+        cmd = cmd.." --css=docs/clink.css"
+        cmd = cmd.." --template=docs/template.html"
         cmd = cmd.." --toc"
+        cmd = cmd.." --self-contained"
         cmd = cmd.." -o .build/docs/temp.html"
-        cmd = cmd.." .build/docs/merged.t2t"
+        cmd = cmd.." docs/clink.md"
+        cmd = cmd.." changes"
 
-        os.execute("mkdir .build\\docs 1>nul 2>nul")
-        os.execute("type docs\\clink.t2t CHANGES 1>.build\\docs\\merged.t2t 2>nul")
+        os.execute("1>nul 2>&1 mkdir .build\\docs")
         os.execute(cmd)
 
         local out = io.open(".build/docs/clink.html", "w")
@@ -49,5 +50,7 @@ newaction {
             out:write(j.."\n")
         end
         out:close()
+
+        os.execute("del .build\\docs\\temp.html")
     end
 }
