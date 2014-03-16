@@ -32,6 +32,7 @@
 
 #define AS_INT(x)       (*(int*)(x))
 #define MAKE_CAP(x)     ((AS_INT(x) >> 8)|(AS_INT(x) << 8) & 0xffff)
+#define CAP(a, b)       ((b) | ((a) << 8))
 
 /*
     "@7" End key
@@ -361,28 +362,28 @@ int tputs(const char* str, int count, int (*putc_func)(int))
 
     switch (cap)
     {
-    case 'cr': set_cursor(0, -1);   return 0;
-    case 'up': move_cursor(0, -1);  return 0;
-    case 'le': move_cursor(-1, 0);  return 0;
-    case 'nd': move_cursor(1, 0);   return 0;
-    case 'ce': clear_to_eol();      return 0;
-    case 'cl': clear_screen();      return 0;
+    case CAP('c', 'r'): set_cursor(0, -1);   return 0;
+    case CAP('u', 'p'): move_cursor(0, -1);  return 0;
+    case CAP('l', 'e'): move_cursor(-1, 0);  return 0;
+    case CAP('n', 'd'): move_cursor(1, 0);   return 0;
+    case CAP('c', 'e'): clear_to_eol();      return 0;
+    case CAP('c', 'l'): clear_screen();      return 0;
 
-    case 'vb': visible_bell();      return 0;
+    case CAP('v', 'b'): visible_bell();      return 0;
 
-    case 've': cursor_style(0);
-               g_enhanced_cursor = 0;
-               return 0;
+    case CAP('v', 'e'): cursor_style(0);
+                        g_enhanced_cursor = 0;
+                        return 0;
 
-    case 'vs': cursor_style(1);
-               g_enhanced_cursor = 1;
-               return 0;
+    case CAP('v', 's'): cursor_style(1);
+                        g_enhanced_cursor = 1;
+                        return 0;
 
-    case 'IC':
-    case 'DC':
+    case CAP('I', 'C'):
+    case CAP('D', 'C'):
         {
             const tgoto_data_t* data = (const tgoto_data_t*)str;
-            if (cap == 'DC')
+            if (cap == CAP('D', 'C'))
             {
                 delete_chars(data->x);
             }
@@ -393,8 +394,8 @@ int tputs(const char* str, int count, int (*putc_func)(int))
         }
         return 0;
 
-    case 'ic':  return 0;
-    case 'dc':  delete_chars(1); return 0;
+    case CAP('i', 'c'):  return 0;
+    case CAP('d', 'c'):  delete_chars(1); return 0;
     }
 
     // Default to simply printing the string.
@@ -423,8 +424,8 @@ int tgetnum(char* cap_name)
 
     switch (cap)
     {
-    case 'co': return width;
-    case 'li': return height;
+    case CAP('c', 'o'): return width;
+    case CAP('l', 'i'): return height;
     }
 
     return 0;
@@ -437,9 +438,9 @@ int tgetflag(char* cap_name)
 
     switch (cap)
     {
-    case 'am':  return 1;
-    case 'km':  return 1;
-    case 'xn':  return 0;
+    case CAP('a', 'm'):  return 1;
+    case CAP('k', 'm'):  return 1;
+    case CAP('x', 'n'):  return 0;
     }
 
     return 0;
@@ -457,56 +458,56 @@ char* tgetstr(char* cap_name, char** out)
     switch (cap)
     {
     // Insert and delete N and single characters.
-    case 'DC': str = "DC";  break;
-    case 'dc': str = "dc";  break;
+    case CAP('D', 'C'): str = "DC";  break;
+    case CAP('d', 'c'): str = "dc";  break;
 
-    case 'IC': str = "IC";  break;
-    case 'ic': str = "ic";  break;
+    case CAP('I', 'C'): str = "IC";  break;
+    case CAP('i', 'c'): str = "ic";  break;
 
     // Clear to EOL and the screen.
-    case 'ce': str = "ce";  break;
-    case 'cl': str = "cl";  break;
+    case CAP('c', 'e'): str = "ce";  break;
+    case CAP('c', 'l'): str = "cl";  break;
 
     // Enter and leave insert mode. Used in insert_some_chars(), called when
     // drawing the line. Windows' console is always in an "insert" mode.
-    case 'im': str = "";    break;
-    case 'ei': str = "";    break;
+    case CAP('i', 'm'): str = "";    break;
+    case CAP('e', 'i'): str = "";    break;
 
     // Echo/Send movement keys modes. Called in rl_(de)prep_terminal functions
     // which are never called.
-    case 'ke': str = "";    break;
-    case 'ks': str = "";    break;
+    case CAP('k', 'e'): str = "";    break;
+    case CAP('k', 's'): str = "";    break;
 
     // Movement key bindings.
-    case 'kH': str = "[kh]";        break; // Home "down"?! Unused.
-    case 'kh': str = "\033`\x47";   break;
-    case '@7': str = "\033`\x4f";   break;
-    case 'kD': str = "\033`\x53";   break;
-    case 'kI': str = "\033`\x52";   break;
-    case 'ku': str = "\033`\x48";   break;
-    case 'kd': str = "\033`\x50";   break;
-    case 'kl': str = "\033`\x4b";   break;
-    case 'kr': str = "\033`\x4d";   break;
+    case CAP('k', 'H'): str = "[kh]";        break; // Home "down"?! Unused.
+    case CAP('k', 'h'): str = "\033`\x47";   break;
+    case CAP('@', '7'): str = "\033`\x4f";   break;
+    case CAP('k', 'D'): str = "\033`\x53";   break;
+    case CAP('k', 'I'): str = "\033`\x52";   break;
+    case CAP('k', 'u'): str = "\033`\x48";   break;
+    case CAP('k', 'd'): str = "\033`\x50";   break;
+    case CAP('k', 'l'): str = "\033`\x4b";   break;
+    case CAP('k', 'r'): str = "\033`\x4d";   break;
 
     // Cursor movement.
-    case 'cr': str = "cr";  break;
-    case 'le': str = "le";  break;
-    case 'nd': str = "nd";  break;
-    case 'up': str = "up";  break;
+    case CAP('c', 'r'): str = "cr";  break;
+    case CAP('l', 'e'): str = "le";  break;
+    case CAP('n', 'd'): str = "nd";  break;
+    case CAP('u', 'p'): str = "up";  break;
 
     // meta-mode on (m) and off (o)
-    case 'mm': str = "";    break;
-    case 'mo': str = "";    break;
+    case CAP('m', 'm'): str = "";    break;
+    case CAP('m', 'o'): str = "";    break;
 
     // Cursor style
-    case 've': str = "ve";  break;
-    case 'vs': str = "vs";  break;
+    case CAP('v', 'e'): str = "ve";  break;
+    case CAP('v', 's'): str = "vs";  break;
 
     // Misc.
-    case 'vb': str = "vb";  break;
-    case 'pc': str = "";    break; // The "padding char". A relic left over from
-                                   // when terminals took 1.3ms to pad a line
-                                   // and 1200baud ruled the roost.
+    case CAP('v', 'b'): str = "vb";  break;
+    case CAP('p', 'c'): str = "";    break; // The "padding char". A relic left over from
+                                            // when terminals took 1.3ms to pad a line
+                                            // and 1200baud ruled the roost.
     }
 
     i = strlen(str) + 1;
