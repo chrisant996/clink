@@ -4,9 +4,9 @@
 ##### v0.4.1
 
 - Bug fixes;
- - Various Unicode fixes causing corrupt environment variables.
- - Fixed thread resume/suspend causing rare system-wide deadlock.
- - Fixed incorrect translation of suffixed slash when completing flags.
+    - Various Unicode fixes causing corrupt environment variables.
+    - Fixed thread resume/suspend causing rare system-wide deadlock.
+    - Fixed incorrect translation of suffixed slash when completing flags.
 - Add --nolog argument to disable file logging. Fix #187 Fix #154
 - Added missing escape sequences from doskey emulation.
 - Reinstated unix-kill-line key binding.
@@ -17,33 +17,33 @@
 ##### v0.4
 
 - New features;
- - Better 'clink.arg' API. Easier, more intuitive, and more powerful.
- - Whitespace prefix skips exec matching.
- - Added a 'set' verb to easily change settings from the command line.
- - Basic support for a shells other than cmd.exe.
- - Completion for Go (contributed by Dobroslaw Zybort).
- - Setting 'exec_match_style' to -1 disables it entirely.
- - Make history persistence optional.
- - Alias/doskey completion.
- - Very basic support for Powershell.
- - View cmd.exe's autorun entry without needing admin rights.
+    - Better 'clink.arg' API. Easier, more intuitive, and more powerful.
+    - Whitespace prefix skips exec matching.
+    - Added a 'set' verb to easily change settings from the command line.
+    - Basic support for a shells other than cmd.exe.
+    - Completion for Go (contributed by Dobroslaw Zybort).
+    - Setting 'exec_match_style' to -1 disables it entirely.
+    - Make history persistence optional.
+    - Alias/doskey completion.
+    - Very basic support for Powershell.
+    - View cmd.exe's autorun entry without needing admin rights.
 - New key bindings;
- - Ctrl-Alt-C : Copy command line to the clipboard.
- - Ctrl-Alt-E : Expand environment variable under cursor.
- - Ctrl-Alt-U : 'up directory' (formerly Shift-Up).
- - Ctrl-U : Adds '..\' to the command line.
- - Alt-H : Shows active keymap's key bindings.
+    - Ctrl-Alt-C : Copy command line to the clipboard.
+    - Ctrl-Alt-E : Expand environment variable under cursor.
+    - Ctrl-Alt-U : 'up directory' (formerly Shift-Up).
+    - Ctrl-U : Adds '..\' to the command line.
+    - Alt-H : Shows active keymap's key bindings.
 - New Lua functions;
- - clink.execute().
- - clink.get_host_process().
- - clink.match_files().
- - clink.match_words().
- - clink.get_console_aliases().
+    - clink.execute().
+    - clink.get_host_process().
+    - clink.match_files().
+    - clink.match_words().
+    - clink.get_console_aliases().
 - Lots of bug fixes, including;
- - Better command extraction.
- - Fixed cmd.exe command paging and Ctrl-C/Ctrl-Break handling.
- - Multiple locale fixes.
- - Use localised text for 'Terminate batch job?' prompt.
+    - Better command extraction.
+    - Fixed cmd.exe command paging and Ctrl-C/Ctrl-Break handling.
+    - Multiple locale fixes.
+    - Use localised text for 'Terminate batch job?' prompt.
 
 ##### v0.3
 
@@ -52,27 +52,27 @@
 - Added Shift-Up keyboard shortcut to automatically execute "cd .."
 - Mapped Ctrl-Z to undo, Microsoft style.
 - Improved integration of Readline;
- - New input handling code (Ctrl-Alt combos now work).
- - An implementation of the Termcap library.
- - Fully functional Vi-mode support.
- - Support for resizable consoles.
- - Line wrapping now works correctly (issue 50).
+    - New input handling code (Ctrl-Alt combos now work).
+    - An implementation of the Termcap library.
+    - Fully functional Vi-mode support.
+    - Support for resizable consoles.
+    - Line wrapping now works correctly (issue 50).
 - Adjustable executable match style (issue 65).
 - Improved environment variable completion.
 - Added settings file to customise Clink.
 - New Lua features and functions;
- - Matches can now be filtered in Lua before they are display.
- - clink.quote_split().
- - clink.arg.node_merge().
- - clink.get_screen_info() (issue 71).
- - clink.split() (for splitting strings).
- - clink.chdir().
- - clink.get_cwd().
- - Functions to query Clink's settings.
+    - Matches can now be filtered in Lua before they are display.
+    - clink.quote_split().
+    - clink.arg.node_merge().
+    - clink.get_screen_info() (issue 71).
+    - clink.split() (for splitting strings).
+    - clink.chdir().
+    - clink.get_cwd().
+    - Functions to query Clink's settings.
 - New command line options;
- - '--profile <dir>' to override default profile directory.
- - '--nohostcheck' disables verification that host is cmd.exe.
- - '--pid' specifies the process to inject into.
+    - '--profile <dir>' to override default profile directory.
+    - '--nohostcheck' disables verification that host is cmd.exe.
+    - '--pid' specifies the process to inject into.
 - Update Mercurial completion (issue 73).
 - Start menu shortcut starts in USERPROFILE, like cmd.exe
 - Zip distribution is now portable.

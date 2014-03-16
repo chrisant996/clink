@@ -4,25 +4,25 @@ Clink combines the native Windows shell **cmd.exe** with the powerful command li
 
 ### Download
 
-Downloads for the latest build of Clink can be found [here](https://github.com/mridgers/clink/releases).
+Downloads for the latest release of Clink can be found [here](https://github.com/mridgers/clink/releases).
 
 ### Features
 
 - The same line editing as Bash (from GNU's Readline library).
 - History persistence between sessions.
 - Context sensitive completion;
- - Executables (and aliases).
- - Directory commands.
- - Environment variables
- - Thirdparty tools; Git, Mercurial, SVN, Go, and P4.
+    - Executables (and aliases).
+    - Directory commands.
+    - Environment variables
+    - Thirdparty tools; Git, Mercurial, SVN, Go, and P4.
 - New keyboard shortcuts;
- - Paste from clipboard (**Ctrl-V**).
- - Incremental history search (**Ctrl-R/Ctrl-S**).
- - Powerful completion (**TAB**).
- - Undo (**Ctrl-Z**).
- - Automatic "cd .." (**Ctrl-Alt-U**).
- - Environment variable expansion (**Ctrl-Alt-E**).
- - (press **Alt-H** for many more...)
+    - Paste from clipboard (**Ctrl-V**).
+    - Incremental history search (**Ctrl-R/Ctrl-S**).
+    - Powerful completion (**TAB**).
+    - Undo (**Ctrl-Z**).
+    - Automatic "cd .." (**Ctrl-Alt-U**).
+    - Environment variable expansion (**Ctrl-Alt-E**).
+    - (press **Alt-H** for many more...)
 - Scriptable completion with Lua.
 - Coloured and scriptable prompt.
 - Auto-answering of the "Terminate batch job?" prompt.
@@ -33,11 +33,11 @@ There are a variety of ways to start Clink;
 
 1. If you installed the auto-run, just start **cmd.exe**. Run **clink autorun --help** for more info.
 2. To manually start, run the Clink shortcut from the Start menu (or the clink.bat located in the install directory).
-3. To establish Clink to an existing cmd.exe process, use "<install_dir>\clink.exe inject"
+3. To establish Clink to an existing cmd.exe process, use "&lt;install_dir&gt;\clink.exe inject"
 
 ### Extending Clink
 
-Clink can be extended through it's Lua API which allows easy creation context sensitive match generators, prompt filtering, and more. More details can be found in Clink's documentation which can be found [here](http://github.com/mridgers/clink/docs).
+Clink can be extended through it's Lua API which allows easy creation context sensitive match generators, prompt filtering, and more. More details can be found in Clink's documentation which can be found [here](https://github.com/mridgers/clink/blob/master/docs/clink.md).
 
 ### Building Clink
 
@@ -52,9 +52,9 @@ N.B. There is a bug in Premake 4.3 that generates corrupt .vcxproj files. Please
 
 ### Development Builds
 
-Builds from the git repository can be found here;
+Builds from the Git repository can be found here;
 
 https://www.dropbox.com/sh/r9oqmn2mqfp3okp/Jm_F3pJSNI
 
-<!-- vim: wrap nolist linebreak ft=markdown
+<!-- vim: ft=markdown
 -->
