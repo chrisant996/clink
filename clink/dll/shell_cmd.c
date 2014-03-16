@@ -423,9 +423,9 @@ static int cmd_initialise(void* base)
         str_cat(buffer, cfg_path, BUF_SIZE);
         str_cat(buffer, "\" $*", BUF_SIZE);
 
-#if !defined(__MINGW32__)
-        AddConsoleAlias("clink", buffer, rl_readline_name);
-#endif // !__MINGW32__
+#if !defined(__MINGW32__) && !defined(__MINGW64__)
+        AddConsoleAlias("clink", buffer, (char*)rl_readline_name);
+#endif // !__MINGW32__ && !__MINGW64__
 
         #undef BUF_SIZE
     }

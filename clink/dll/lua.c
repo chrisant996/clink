@@ -559,9 +559,9 @@ static int get_console_aliases(lua_State* state)
 
         lua_createtable(state, 0, 0);
 
-#if !defined(__MINGW32__)
+#if !defined(__MINGW32__) && !defined(__MINGW64__)
         // Get the aliases (aka. doskey macros).
-        buffer_size = GetConsoleAliasesLength(rl_readline_name);
+        buffer_size = GetConsoleAliasesLength((char*)rl_readline_name);
         if (buffer_size == 0)
         {
             break;
@@ -593,7 +593,7 @@ static int get_console_aliases(lua_State* state)
             ++c;
             alias = c + strlen(c) + 1;
         }
-#endif // !__MINGW32__
+#endif // !__MINGW32__ && !__MINGW64__
     }
     while (0);
 
