@@ -1,0 +1,83 @@
+body {
+    font-family:      'roboto slab', serif;
+    font-size:        1em;
+    margin:           0em;
+}
+
+.content a {
+    text-decoration:  underline;
+    color:            #666;
+}
+
+h1 {
+    font-size:        3.5em;
+    margin:           0em;
+}
+
+.full_width {
+    overflow:         hidden;
+    position:         relative;
+    width:            100%;
+}
+
+.black_bg {
+    background-color: black;
+    color:            white;
+}
+
+.title {
+    margin:           0px auto;
+    padding-top:      2.5em;
+    padding-bottom:   1em;
+    width:            640px;
+    position:         relative;
+}
+
+.download_title {
+    padding:          0.3em;
+    text-align:       center;
+}
+
+.download_boxes {
+    position:         absolute;
+    top:              1em;
+    right:            -4em;
+}
+
+.download_box {
+    float:            left;
+    background-color: #ff7600;
+    padding:          0.3em;
+    width:            4em;
+    margin-left:      0.5em;
+    font-size:        1.2em;
+    text-align:       center;
+}
+
+.download_box a {
+    text-decoration:  none;
+    color:            #fff;
+}
+
+.download_desc {
+    font-size:        0.6em;
+}
+
+.ribbon {
+    position:         absolute;
+    top:              0px;
+    right:            0px;
+    border:           0px;
+}
+
+.content {
+    margin:           0px auto;
+    width:            640px;
+}
+
+.content img {
+    display:          block;
+    margin-left:      auto;
+    margin-right:     auto;
+    margin-top:       1em;
+}
