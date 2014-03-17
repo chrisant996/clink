@@ -5,6 +5,7 @@ set completion-display-width    106
 set output-meta                 on
 set history-size                1000
 set skip-completed-text         on
+set convert-meta                on
 
 "\e`s": backward-word           # ctrl-left
 "\e`t": forward-word            # ctrl-right
