@@ -25,8 +25,8 @@
 //------------------------------------------------------------------------------
 const char* g_clink_header = 
     "Clink v"CLINK_VERSION" [git:"CLINK_COMMIT"] "
-    "Copyright (c) 2013 Martin Ridgers\n"
-    "http://code.google.com/p/clink\n"
+    "Copyright (c) 2014 Martin Ridgers\n"
+    "http://mridgers.github.io/clink"
     ;
 
 const char* g_clink_footer =
