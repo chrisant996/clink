@@ -29,6 +29,27 @@ int autorun(int, char**);
 int set(int, char**);
 
 //------------------------------------------------------------------------------
+static void show_usage()
+{
+    const char* help_usage = "Usage: <verb> <verb_options>\n";
+    const char* help_verbs[] = {
+        "Verbs:",   "",
+        "inject",   "Injects Clink into a process.",
+        "autorun",  "Manage Clink's entry in cmd.exe's autorun.",
+        "set",      "Adjust Clink's settings.",
+        "",         "('<verb> --help' for more details).",
+    };
+
+    extern const char* g_clink_header;
+    extern const char* g_clink_footer;
+    
+    puts(g_clink_header);
+    puts(help_usage);
+    puts_help(help_verbs, sizeof_array(help_verbs));
+    puts(g_clink_footer);
+}
+
+//------------------------------------------------------------------------------
 static int dispatch_verb(const char* verb, int argc, char** argv)
 {
     struct {
@@ -59,29 +80,9 @@ static int dispatch_verb(const char* verb, int argc, char** argv)
         }
     }
 
-    printf("Unknown verb -- '%s'", verb);
+    printf("*** ERROR: Unknown verb -- '%s'\n", verb);
+    show_usage();
     return -1;
-}
-
-//------------------------------------------------------------------------------
-static void show_usage()
-{
-    const char* help_usage = "Usage: <verb> <verb_options>\n";
-    const char* help_verbs[] = {
-        "Verbs:",   "",
-        "inject",   "Injects Clink into a process.",
-        "autorun",  "Manage Clink's entry in cmd.exe's autorun.",
-        "set",      "Adjust Clink's settings.",
-        "",         "('<verb> --help' for more details).",
-    };
-
-    extern const char* g_clink_header;
-    extern const char* g_clink_footer;
-    
-    puts(g_clink_header);
-    puts(help_usage);
-    puts_help(help_verbs, sizeof_array(help_verbs));
-    puts(g_clink_footer);
 }
 
 //------------------------------------------------------------------------------
@@ -127,6 +128,10 @@ int main(int argc, char** argv)
     if (optind < argc)
     {
         ret = dispatch_verb(argv[optind], argc - optind, argv + optind);
+    }
+    else
+    {
+        show_usage();
     }
 
     return ret;
