@@ -83,9 +83,24 @@ local function exec_match_generator(text, first, last)
         prefix = text:sub(1, i)
     end
 
+    -- Extract any possible extension that maybe on the text being completed.
+    local ext = nil
+    local dot = text:find("%.[^.]*")
+    if dot then
+        ext = text:sub(dot):lower()
+    end
+
     local suffices = clink.split(clink.get_env("pathext"), ";")
     for i = 1, #suffices, 1 do
-        suffices[i] = text.."*"..suffices[i]
+        local suffix = suffices[i]
+
+        -- Does 'text' contain some of the suffix (i.e. "cmd.e")? If it does
+        -- then merge them so we get "cmd.exe" rather than "cmd.*.exe".
+        if ext and suffix:sub(1, #ext):lower() == ext then
+            suffix = ""
+        end
+
+        suffices[i] = text.."*"..suffix
     end
 
     -- First step is to match executables in the environment's path.
