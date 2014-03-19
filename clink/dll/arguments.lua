@@ -448,7 +448,8 @@ local function parser_loop(parser, loop_point)
 end
 
 --------------------------------------------------------------------------------
-function clink.arg.new_parser()
+function clink.arg.new_parser( ... )
+
     local parser = {}
 
     -- Methods
@@ -471,6 +472,23 @@ function clink.arg.new_parser()
     parser.loop_point = 0
 
     setmetatable(parser, parser_meta_table)
+
+    -- If any arguments provided, threat them as parser's arguments or flags
+    if ... and #... > 0 then
+
+        local arguments = {}
+        local flags = {}
+        
+        for _, word in ipairs({...}) do
+            if type(word) == "string" then table.insert(flags, word)
+            elseif type(word) == "table" then table.insert(arguments, word) end
+        end
+
+        for _, a in ipairs(arguments) do parser:add_arguments(a) end
+        parser:set_flags(flags)
+
+    end
+
     return parser
 end
 
