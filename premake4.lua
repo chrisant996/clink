@@ -100,7 +100,7 @@ if _ACTION and _ACTION ~= "clean" and _ACTION:find("clink_") == nil then
         local out = io.open(to.."/premake4.lua", "w")
         if out then
             out:write("shimmed = 1", "\n")
-            out:write("_WORKING_DIR = \"".._WORKING_DIR.."\"")
+            out:write("_WORKING_DIR = \""..(_WORKING_DIR or "").."\"")
             out:write("dofile(\"".._SCRIPT.."\")", "\n")
             io.close(out)
         end
