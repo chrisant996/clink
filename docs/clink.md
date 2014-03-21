@@ -147,6 +147,23 @@ world   wombles
 C:\>foobar hello -foo wo_
 ```
 
+Also you can provide parser flags and arguments directly into `clink.arg.new_parser()` like following:
+
+```
+some_parser = clink.arg.new_parser(
+    {arg1-1, arg1-2, ...},
+    {arg2-1, arg2-2, ...},
+    flag1, flag2...)
+```
+
+You may replace `clink.arg.new_parser` with short name like
+
+```
+parser = clink.arg.new_parser
+```
+
+and use in your definition.
+
 ##### More Advanced Stuff
 
 ###### Linking Parsers
@@ -159,6 +176,17 @@ b_parser = clink.arg.new_parser():set_arguments({ "abc", "123" })
 c_parser = clink.arg.new_parser()
 c_parser:set_arguments(
     { "foobar" .. b_parser },
+    { c_parser }
+)
+```
+
+With syntax from preceeded section this converts into:
+
+```
+parser = clink.arg.new_parser
+a_parser = parser({"foo", "bar" })
+c_parser = parser(
+    { "foobar" .. parser({ "abc", "123" }) },
     { c_parser }
 )
 ```
