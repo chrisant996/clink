@@ -172,6 +172,7 @@ project("readline")
     language("c")
     kind("staticlib")
 
+    defines("BUILD_READLINE")
     files("readline/readline/*.c")
     files("readline/readline/*.h")
     files("readline/compat/*.c")

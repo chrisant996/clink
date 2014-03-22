@@ -52,6 +52,12 @@ int                         hooked_wcwidth(wchar_t wc);
 #   undef mbrlen
 #   undef stat
 #   undef fstat
+#   define __MSDOS__
+
+    // We compile Readline the same way MSVC does for consistency.
+#   if defined(BUILD_READLINE)
+#       undef __MINGW32__
+#   endif
 #endif
 
 #define wcwidth(x)          (((x) > 0x7f) ? hooked_wcwidth(x) : 1)
