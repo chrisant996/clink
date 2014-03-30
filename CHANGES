@@ -13,6 +13,7 @@
 - Mapped PgUp/Down to search history using line typed so far.
 - Added documentation covering escape codes for special keys.
 - Added support for Windows' AltGr substitute Ctrl-Alt.
+- Support for Readline's 'menu' style completion (see docs).
 
 ##### v0.4
 
