@@ -457,7 +457,7 @@ This variable contains the current state of the whole line being edited.
 
 The current cursor position within the line buffer.
 
-### Usage
+### Miscellaneous
 
 #### Binding special keys
 
