@@ -482,6 +482,10 @@ Here is an example line from a clink_inputrc file that binds Shift-End to the Re
 "\e`f": transpose-word
 ```
 
+#### Readline's menu-complete
+
+Clink supports Readline's menu-complete command (which is similar to vanilla cmd.exe completion that cycles through matches rather than displaying available ones). To use this menu-style completion Clink provides the alternative command **clink-menu-completion-shim**. Using this ensures that appropriate path separator translation takes place.
+
 #### Powershell
 
 Clink has basic support for Powershell. In order to show completion correctly Clink needs to parse Powershell's prompt to extract the current directory. If the prompt has been customized Clink is unlikely to work as expected.
