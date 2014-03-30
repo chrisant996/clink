@@ -224,6 +224,27 @@ static int completion_shim(int count, int invoking_key)
 }
 
 //------------------------------------------------------------------------------
+static int menu_completion_shim(int count, int invoking_key)
+{
+	int ret;
+
+	// rl_complete checks if it was called previously.
+	if (rl_last_func == menu_completion_shim)
+	{
+		rl_last_func = rl_menu_complete;
+	}
+
+	rl_begin_undo_group();
+	ret = rl_menu_complete(count, invoking_key);
+	suffix_translation();
+	rl_end_undo_group();
+
+	g_slash_translation = 0;
+
+	return ret;
+}
+
+//------------------------------------------------------------------------------
 static char** alternative_matches(const char* text, int start, int end)
 {
     char* c;
@@ -496,6 +517,7 @@ static int initialise_hook()
     rl_filename_quote_characters = " %=;&^";
 
     rl_add_funmap_entry("clink-completion-shim", completion_shim);
+	rl_add_funmap_entry("clink-menu-completion-shim", menu_completion_shim);
 
     clink_register_rl_funcs();
     initialise_rl_scroller();
