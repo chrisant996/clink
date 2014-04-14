@@ -230,6 +230,8 @@ int lua_execute(lua_State* state)
     lua_pushinteger(state, proc_ret);
 
     CloseHandle(exec_state.pi.hThread);
+
+    WaitForSingleObject(thread, INFINITE);
     CloseHandle(thread);
 
     destroy_pipe(&pipe_stdout);
