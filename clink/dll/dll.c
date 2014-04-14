@@ -63,8 +63,11 @@ static void get_inject_args(DWORD pid)
 {
     shared_mem_t* shared_mem;
     shared_mem = open_shared_mem(1, "clink", pid);
-    memcpy(&g_inject_args, shared_mem->ptr, sizeof(g_inject_args));
-    close_shared_mem(shared_mem);
+    if (shared_mem)
+    {
+        memcpy(&g_inject_args, shared_mem->ptr, sizeof(g_inject_args));
+        close_shared_mem(shared_mem);
+    }
 }
 
 //------------------------------------------------------------------------------
