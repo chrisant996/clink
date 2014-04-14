@@ -197,20 +197,54 @@ int lua_execute(lua_State* state)
 
     // Read process' stdout, adding completed lines to Lua.
     {
-        static const BUF_SIZE = 1024;
+        static const RESERVE = 4 * 1024 * 1024;
 
-        DWORD bytes_read;
-        char* buffer;
-        int line_count;
+        void* buffer;
+        char* write;
+        int remaining;
+        int page_size;
+        SYSTEM_INFO sys_info;
 
-        line_count = 0;
-        buffer = malloc(BUF_SIZE + 1);
-        while (ReadFile(pipe_stdout.read, buffer, BUF_SIZE, &bytes_read, NULL) != FALSE)
+        GetSystemInfo(&sys_info);
+        page_size = sys_info.dwAllocationGranularity;
+        buffer = VirtualAlloc(NULL, RESERVE, MEM_RESERVE, PAGE_READWRITE);
+
+        write = (char*)buffer;
+        remaining = 0;
+
+        // Collect all the process's output.
+        while (1)
         {
-            char* line = buffer;
+            DWORD bytes_read;
+            BOOL ok;
+
+            // Commit the next page if we're out of buffer space.
+            if (remaining <= 1)
+            {
+                remaining = page_size;
+                if (!VirtualAlloc(write, page_size, MEM_COMMIT, PAGE_READWRITE))
+                {
+                    break;
+                }
+            }
+
+            // Read from the pipe ("- 1" to keep a null terminator around)
+            ok = ReadFile(pipe_stdout.read, write, remaining - 1, &bytes_read, NULL);
+            if (ok != TRUE)
+            {
+                break;
+            }
+
+            remaining -= bytes_read;
+            write += bytes_read;
+        }
+
+        // Extract lines from the process's output.
+        {
+            int line_count = 0;
+            char* line = (char*)buffer;
             char* next = NULL;
 
-            buffer[bytes_read] = 0;
             do
             {
                 next = next_line(line);
@@ -223,6 +257,8 @@ int lua_execute(lua_State* state)
             }
             while (next);
         }
+
+        VirtualFree(buffer, 0, MEM_RELEASE);
     }
 
     proc_ret = -1;
