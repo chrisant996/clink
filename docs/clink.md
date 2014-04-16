@@ -64,7 +64,7 @@ Name                     | Description
 **esc_clears_line**      | Clink clears the current line when Esc is pressed (unless Readline's Vi mode is enabled).
 **exec_match_style**     | Changes how Clink will match executables when there is no path separator on the line. 0 = PATH only, 1 = PATH and CWD, 2 = PATH, CWD, and directories. In all cases both executables and directories are matched when there is a path separator present.
 **match_colour**         | Colour to use when displaying matches. A value less than 0 will be the opposite brightness of the default colour.
-**prompt_colour**        | Surrounds the prompt in ANSI escape codes to set the prompt's colour. Disabled when the value is less than 0.
+**prompt_colour**        | Surrounds the prompt in ANSI escape codes to set the prompt's colour (0..15). Disabled when the value is less than 0.
 **terminate_autoanswer** | Automatically answers cmd.exe's **Terminate batch job (Y/N)?** prompts. 0 = disabled, 1 = answer Y, 2 = answer N.
 **persist_history**      | Enable or disable the saving and loading of command history between sessions.
 
