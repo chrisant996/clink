@@ -31,13 +31,37 @@ end
 local go_tool_parser = clink.arg.new_parser()
 go_tool_parser:set_flags("-n")
 go_tool_parser:set_arguments({
-    "8a", "8c", "8g", "8l", "addr2line", "api", "cgo", "colcmp", "dist",
-    "ebnflint", "gotype", "nm", "objdump", "pack", "pprof", "yacc",
-    "cov"  .. flags("-l", "-s", "-v", "-g", "-m"),
-    "fix"  .. flags("-diff", "-r", "-?"),
-    "prof" .. flags("-p", "-t", "-d", "-P", "-h", "-f", "-l", "-r", "-s"),
-    "vet"  .. flags("-printf", "-methods", "-structtags", "-composites", "-v",
-                    "-printfuncs"),
+    "8a", "8c", "8g", "8l", "addr2line", "cgo", "dist", "nm", "objdump",
+    "pack", "yacc",
+    "cover" .. flags("-func", "-html", "-mode", "-o", "-var"),
+    "fix"   .. flags("-diff", "-force", "-r"),
+    "prof"  .. flags("-p", "-t", "-d", "-P", "-h", "-f", "-l", "-r", "-s",
+                     "-hs"),
+    "pprof" .. flags(-- Options:
+                     "--cum", "--base", "--interactive", "--seconds",
+                     "--add_lib", "--lib_prefix",
+                     -- Reporting Granularity:
+                     "--addresses", "--lines", "--functions", "--files",
+                     -- Output type:
+                     "--text", "--callgrind", "--gv", "--web", "--list",
+                     "--disasm", "--symbols", "--dot", "--ps", "--pdf",
+                     "--svg", "--gif", "--raw",
+                     -- Heap-Profile Options:
+                     "--inuse_space", "--inuse_objects", "--alloc_space",
+                     "--alloc_objects", "--show_bytes", "--drop_negative",
+                     -- Contention-profile options:
+                     "--total_delay", "--contentions", "--mean_delay",
+                     -- Call-graph Options:
+                     "--nodecount", "--nodefraction", "--edgefraction",
+                     "--focus", "--ignore", "--scale", "--heapcheck",
+                     -- Miscellaneous:
+                     "--tools", "--test", "--help", "--version"),
+    "vet"   .. flags("-all", "-asmdecl", "-assign", "-atomic", "-buildtags",
+                     "-composites", "-compositewhitelist", "-copylocks",
+                     "-methods", "-nilfunc", "-printf", "-printfuncs",
+                     "-rangeloops", "-shadow", "-shadowstrict", "-structtags",
+                     "-test", "-unreachable", "-v"),
+    "yacc"  .. flags("-l", "-o", "-p", "-v"),
 })
 
 --------------------------------------------------------------------------------
@@ -50,7 +74,6 @@ go_parser:set_arguments({
                         "-ccflags", "-compiler", "-gccgoflags", "-gcflags",
                         "-ldflags", "-tags"),
     "clean"    .. flags("-i", "-n", "-r", "-x"),
-    "doc"      .. flags("-n", "-x"),
     "fmt"      .. flags("-n", "-x"),
     "get"      .. flags("-a", "-d", "-fix", "-n", "-p", "-u", "-v", "-x"),
     "install"  .. flags("-a", "-n", "-p", "-v", "-work", "-x", "-race",
