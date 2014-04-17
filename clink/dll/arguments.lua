@@ -77,8 +77,14 @@ local function parser_is_flag(parser, part)
 end
 
 --------------------------------------------------------------------------------
-local function parser_set_arguments(parser, ...)
-    parser.arguments = {}
+local function parser_add_arguments(parser, ...)
+    
+    -- This string commented out to prevent clearing of parser.arguments table
+    -- With this, call of this function will add new arguments to parser
+    -- instead of replacing them
+
+    -- parser.arguments = {}
+
     for _, i in ipairs({...}) do
         -- Check all arguments are tables.
         if type(i) ~= "table" then
@@ -101,6 +107,13 @@ local function parser_set_arguments(parser, ...)
         end
     end
 
+    return parser
+end
+
+--------------------------------------------------------------------------------
+local function parser_set_arguments(parser, ...)
+    parser.arguments = {}
+    parser_add_arguments(parser, ...)
     return parser
 end
 
@@ -435,12 +448,14 @@ local function parser_loop(parser, loop_point)
 end
 
 --------------------------------------------------------------------------------
-function clink.arg.new_parser()
+function clink.arg.new_parser( ... )
+
     local parser = {}
 
     -- Methods
     parser.set_flags = parser_set_flags
     parser.set_arguments = parser_set_arguments
+    parser.add_arguments = parser_add_arguments
     parser.dump = parser_dump
     parser.go = parser_go
     parser.flatten_argument = parser_flatten_argument
@@ -457,6 +472,23 @@ function clink.arg.new_parser()
     parser.loop_point = 0
 
     setmetatable(parser, parser_meta_table)
+
+    -- If any arguments provided, threat them as parser's arguments or flags
+    if ... and #... > 0 then
+
+        local arguments = {}
+        local flags = {}
+        
+        for _, word in ipairs({...}) do
+            if type(word) == "string" then table.insert(flags, word)
+            elseif type(word) == "table" then table.insert(arguments, word) end
+        end
+
+        for _, a in ipairs(arguments) do parser:add_arguments(a) end
+        parser:set_flags(flags)
+
+    end
+
     return parser
 end
 
