@@ -147,22 +147,15 @@ world   wombles
 C:\>foobar hello -foo wo_
 ```
 
-Also you can provide parser flags and arguments directly into `clink.arg.new_parser()` like following:
+As an alternative to calling **clink.arg.set_arguments()** and **clink.arg.set_flags()** you can instead provide the parser's flags and positional arguments as arguments to **clink.arg.new_parser()** as follows;
 
 ```
 some_parser = clink.arg.new_parser(
-    {arg1-1, arg1-2, ...},
-    {arg2-1, arg2-2, ...},
-    flag1, flag2...)
+    { "arg1-1", "arg1-2" },
+    { "arg2-1", "arg2-2" },
+    "-flag1", "-flag2"
+)
 ```
-
-You may replace `clink.arg.new_parser` with short name like
-
-```
-parser = clink.arg.new_parser
-```
-
-and use in your definition.
 
 ##### More Advanced Stuff
 
@@ -313,6 +306,14 @@ Explicitly sets match at **index** to **value**.
 
 #### Argument Framework
 
+##### parser:add_arguments(table1, table2, ...)
+
+Adds more positional arguments to the parser. See **parser:set_arguments()**.
+
+##### parser:add_flags(flag1, flag2, ...)
+
+Adds more flags to the parser. See **parser:set_flags()**.
+
 ##### parser:be_precise()
 
 Ordinarily Clink only loosely matches word as it traverses a parser. Calling this will make Clink only accept an exact matching word to consider moving onto the next one.
@@ -339,11 +340,11 @@ By default parsers do not loop and parsing comes to an end when there are no mor
 
 ##### parser:set_arguments(table1, table2, ...)
 
-This method sets the parsers positional arguments. Each of the variable number of arguments to the method is a table of potential options for the argument at that position.
+This method sets the parser's positional arguments. Each of the variable number of arguments to the method is a table of potential options for the argument at that position. Note that calling this method replaces any existing positional arguments the parser may already have. Use **parser:add_arguments()** to append more positional arguments.
 
 ##### parser:set_flags(flag1, flag2, ...)
 
-Sets the parser's flags (which can be thought of as position independent arguments). Each argument is a string and must start with the expected flag prefix ("-" by default).
+Sets the parser's flags (which can be thought of as position independent arguments). Each argument is a string and must start with the expected flag prefix ("-" by default). Be aware that calling **set_flags()** will replace the parser's existing flags. To add more use **parser:add_flags()**.
 
 #### Prompt Filtering
 
