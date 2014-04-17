@@ -378,7 +378,6 @@ int inject(int argc, char** argv)
     };
 
     extern const char* g_clink_header;
-    extern const char* g_clink_footer;
 
     // Parse arguments
     while ((i = getopt_long(argc, argv, "nalqhp:s:d:", options, NULL)) != -1)
@@ -417,7 +416,6 @@ int inject(int argc, char** argv)
         default:
             puts(g_clink_header);
             puts_help(help, sizeof_array(help));
-            puts(g_clink_footer);
             return -1;
         }
     }

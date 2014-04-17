@@ -98,7 +98,6 @@ static int set_value(const char* key, const char* value)
 void print_usage()
 {
     extern const char* g_clink_header;
-    extern const char* g_clink_footer;
 
     const char* help[] = {
         "setting_name", "Name of the setting who's value is to be set.",
@@ -110,7 +109,6 @@ void print_usage()
     puts_help(help, sizeof_array(help));
     puts("  If 'settings_name' is omitted then all settings are list.");
     puts("  Omit 'value' for more detailed info about a setting.\n");
-    puts(g_clink_footer);
 }
 
 //------------------------------------------------------------------------------

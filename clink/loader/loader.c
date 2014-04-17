@@ -41,12 +41,10 @@ static void show_usage()
     };
 
     extern const char* g_clink_header;
-    extern const char* g_clink_footer;
     
     puts(g_clink_header);
     puts(help_usage);
     puts_help(help_verbs, sizeof_array(help_verbs));
-    puts(g_clink_footer);
 }
 
 //------------------------------------------------------------------------------

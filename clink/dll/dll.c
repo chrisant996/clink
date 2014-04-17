@@ -74,13 +74,10 @@ static void get_inject_args(DWORD pid)
 static void success()
 {
     extern const char* g_clink_header;
-    extern const char* g_clink_footer;
 
     if (!g_inject_args.quiet)
     {
         puts(g_clink_header);
-        puts("  ** Press Alt-H to show key bindings. **\n");
-        puts(g_clink_footer);
     }
 }
 

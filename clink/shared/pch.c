@@ -26,12 +26,7 @@
 const char* g_clink_header = 
     "Clink v"CLINK_VERSION" [git:"CLINK_COMMIT"] "
     "Copyright (c) 2014 Martin Ridgers\n"
-    "http://mridgers.github.io/clink"
-    ;
-
-const char* g_clink_footer =
-    "Copyright (c) 1994-2012 Lua.org, PUC-Rio\n"
-    "Copyright (c) 1987-2010 Free Software Foundation, Inc.\n"
+    "http://mridgers.github.io/clink\n"
     ;
 
 // vim: expandtab

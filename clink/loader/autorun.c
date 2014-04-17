@@ -406,7 +406,6 @@ int autorun(int argc, char** argv)
     };
 
     extern const char* g_clink_header;
-    extern const char* g_clink_footer;
 
     // Get path where clink is installed (assumed to be where this executable is)
     clink_path = malloc(strlen(_pgmptr));
@@ -446,7 +445,6 @@ int autorun(int argc, char** argv)
         case 'h':
             puts(g_clink_header);
             puts_help(help, sizeof_array(help));
-            puts(g_clink_footer);
             ret = -1;
             goto end;
         }
@@ -487,7 +485,6 @@ int autorun(int argc, char** argv)
             "of the\nAdministors group so you must have sufficient rights "
             "to edit\n the registry.\n"
         );
-        puts(g_clink_footer);
         ret = -1;
     }
 
