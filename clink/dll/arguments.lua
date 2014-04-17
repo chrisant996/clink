@@ -78,13 +78,6 @@ end
 
 --------------------------------------------------------------------------------
 local function parser_add_arguments(parser, ...)
-    
-    -- This string commented out to prevent clearing of parser.arguments table
-    -- With this, call of this function will add new arguments to parser
-    -- instead of replacing them
-
-    -- parser.arguments = {}
-
     for _, i in ipairs({...}) do
         -- Check all arguments are tables.
         if type(i) ~= "table" then
@@ -113,12 +106,11 @@ end
 --------------------------------------------------------------------------------
 local function parser_set_arguments(parser, ...)
     parser.arguments = {}
-    parser_add_arguments(parser, ...)
-    return parser
+    return parser:add_arguments(...)
 end
 
 --------------------------------------------------------------------------------
-local function parser_set_flags(parser, ...)
+local function parser_add_flags(parser, ...)
     local flags = {}
     unfold_table({...}, flags)
 
@@ -139,8 +131,18 @@ local function parser_set_flags(parser, ...)
         end
     end
 
-    parser.flags = flags
+    -- Append flags to parser's existing table of flags.
+    for _, i in ipairs(flags) do
+        table.insert(parser.flags, i)
+    end
+
     return parser
+end
+
+--------------------------------------------------------------------------------
+local function parser_set_flags(parser, ...)
+    parser.flags = {}
+    return parser:add_flags(...)
 end
 
 --------------------------------------------------------------------------------
@@ -448,12 +450,12 @@ local function parser_loop(parser, loop_point)
 end
 
 --------------------------------------------------------------------------------
-function clink.arg.new_parser( ... )
-
+function clink.arg.new_parser(...)
     local parser = {}
 
     -- Methods
     parser.set_flags = parser_set_flags
+    parser.add_flags = parser_add_flags
     parser.set_arguments = parser_set_arguments
     parser.add_arguments = parser_add_arguments
     parser.dump = parser_dump
@@ -473,7 +475,7 @@ function clink.arg.new_parser( ... )
 
     setmetatable(parser, parser_meta_table)
 
-    -- If any arguments provided, threat them as parser's arguments or flags
+    -- If any arguments are provided, treat them as parser's arguments or flags
     if ... and #... > 0 then
 
         local arguments = {}
