@@ -70,32 +70,32 @@ go_parser:set_arguments({
     "env",
     "fix",
     "version",
-    "build"    .. flags("-o", "-a", "-n", "-p", "-race", "-v", "-work", "-x",
-                        "-ccflags", "-compiler", "-gccgoflags", "-gcflags",
-                        "-installsuffix", "-ldflags", "-tags"),
+    "build"    .. flags("-o", "-a", "-n", "-p", "-installsuffix", "-v", "-x",
+                        "-work", "-gcflags", "-ccflags", "-ldflags",
+                        "-gccgoflags", "-tags", "-compiler", "-race"),
     "clean"    .. flags("-i", "-n", "-r", "-x"),
     "fmt"      .. flags("-n", "-x"),
     "get"      .. flags("-d", "-fix", "-t", "-u",
                         -- Build flags
-                        "-a", "-n", "-p", "-x", "-work", "-gcflags", "-exec",
-                        "-ldflags", "-gccgoflags", "-tags", "-compiler",
-                        "-race", "-installsuffix"),
+                        "-a", "-n", "-p", "-installsuffix", "-v", "-x",
+                        "-work", "-gcflags", "-ccflags", "-ldflags",
+                        "-gccgoflags", "-tags", "-compiler", "-race"),
     "install"  .. flags(-- All `go build` flags
-                        "-o", "-a", "-n", "-p", "-race", "-v", "-work", "-x",
-                        "-ccflags", "-compiler", "-gccgoflags", "-gcflags",
-                        "-installsuffix", "-ldflags", "-tags"),
+                        "-o", "-a", "-n", "-p", "-installsuffix", "-v", "-x",
+                        "-work", "-gcflags", "-ccflags", "-ldflags",
+                        "-gccgoflags", "-tags", "-compiler", "-race"),
     "list"     .. flags("-e", "-race", "-f", "-json", "-tags"),
     "run"      .. flags("-exec",
                         -- Build flags
-                        "-a", "-n", "-p", "-x", "-work", "-gcflags", "-exec",
-                        "-ldflags", "-gccgoflags", "-tags", "-compiler",
-                        "-race", "-installsuffix"),
+                        "-a", "-n", "-p", "-installsuffix", "-v", "-x",
+                        "-work", "-gcflags", "-ccflags", "-ldflags",
+                        "-gccgoflags", "-tags", "-compiler", "-race"),
     "test"     .. flags(-- Local.
                         "-c", "-file", "-i", "-cover", "-coverpkg",
                         -- Build flags
-                        "-a", "-n", "-p", "-x", "-work", "-gcflags", "-exec",
-                        "-ldflags", "-gccgoflags", "-tags", "-compiler",
-                        "-race", "-installsuffix", 
+                        "-a", "-n", "-p", "-x", "-work", "-ccflags",
+                        "-gcflags", "-exec", "-ldflags", "-gccgoflags",
+                        "-tags", "-compiler", "-race", "-installsuffix", 
                         -- Passed to 6.out
                         "-bench", "-benchmem", "-benchtime", "-covermode",
                         "-coverprofile", "-cpu", "-cpuprofile", "-memprofile",
@@ -117,9 +117,10 @@ go_help_parser:set_arguments({
 --------------------------------------------------------------------------------
 local godoc_parser = clink.arg.new_parser()
 godoc_parser:set_flags(
-    "-goroot", "-html", "-http", "-index", "-index_files", "-index_throttle",
-    "-maxresults", "-play", "-q", "-server", "-src", "-tabwidth", "-templates",
-    "-testdir", "-timestamps", "-url", "-v", "-write_index", "-zip"
+    "-zip", "-write_index", "-analysis", "-http", "-server", "-html","-src",
+    "-url", "-q", "-v", "-goroot", "-tabwidth", "-timestamps", "-templates",
+    "-play", "-ex", "-links", "-index", "-index_files", "-maxresults",
+    "-index_throttle", "-notes", "-httptest.serve"
 )
 
 --------------------------------------------------------------------------------
