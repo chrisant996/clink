@@ -31,13 +31,37 @@ end
 local go_tool_parser = clink.arg.new_parser()
 go_tool_parser:set_flags("-n")
 go_tool_parser:set_arguments({
-    "8a", "8c", "8g", "8l", "addr2line", "api", "cgo", "colcmp", "dist",
-    "ebnflint", "gotype", "nm", "objdump", "pack", "pprof", "yacc",
-    "cov"  .. flags("-l", "-s", "-v", "-g", "-m"),
-    "fix"  .. flags("-diff", "-r", "-?"),
-    "prof" .. flags("-p", "-t", "-d", "-P", "-h", "-f", "-l", "-r", "-s"),
-    "vet"  .. flags("-printf", "-methods", "-structtags", "-composites", "-v",
-                    "-printfuncs"),
+    "8a", "8c", "8g", "8l", "addr2line", "cgo", "dist", "nm", "objdump",
+    "pack",
+    "cover" .. flags("-func", "-html", "-mode", "-o", "-var"),
+    "fix"   .. flags("-diff", "-force", "-r"),
+    "prof"  .. flags("-p", "-t", "-d", "-P", "-h", "-f", "-l", "-r", "-s",
+                     "-hs"),
+    "pprof" .. flags(-- Options:
+                     "--cum", "--base", "--interactive", "--seconds",
+                     "--add_lib", "--lib_prefix",
+                     -- Reporting Granularity:
+                     "--addresses", "--lines", "--functions", "--files",
+                     -- Output type:
+                     "--text", "--callgrind", "--gv", "--web", "--list",
+                     "--disasm", "--symbols", "--dot", "--ps", "--pdf",
+                     "--svg", "--gif", "--raw",
+                     -- Heap-Profile Options:
+                     "--inuse_space", "--inuse_objects", "--alloc_space",
+                     "--alloc_objects", "--show_bytes", "--drop_negative",
+                     -- Contention-profile options:
+                     "--total_delay", "--contentions", "--mean_delay",
+                     -- Call-graph Options:
+                     "--nodecount", "--nodefraction", "--edgefraction",
+                     "--focus", "--ignore", "--scale", "--heapcheck",
+                     -- Miscellaneous:
+                     "--tools", "--test", "--help", "--version"),
+    "vet"   .. flags("-all", "-asmdecl", "-assign", "-atomic", "-buildtags",
+                     "-composites", "-compositewhitelist", "-copylocks",
+                     "-methods", "-nilfunc", "-printf", "-printfuncs",
+                     "-rangeloops", "-shadow", "-shadowstrict", "-structtags",
+                     "-test", "-unreachable", "-v"),
+    "yacc"  .. flags("-l", "-o", "-p", "-v"),
 })
 
 --------------------------------------------------------------------------------
@@ -46,23 +70,38 @@ go_parser:set_arguments({
     "env",
     "fix",
     "version",
-    "build"    .. flags("-a", "-n", "-p", "-v", "-work", "-x", "-race",
-                        "-ccflags", "-compiler", "-gccgoflags", "-gcflags",
-                        "-ldflags", "-tags"),
+    "build"    .. flags("-o", "-a", "-n", "-p", "-installsuffix", "-v", "-x",
+                        "-work", "-gcflags", "-ccflags", "-ldflags",
+                        "-gccgoflags", "-tags", "-compiler", "-race"),
     "clean"    .. flags("-i", "-n", "-r", "-x"),
-    "doc"      .. flags("-n", "-x"),
     "fmt"      .. flags("-n", "-x"),
-    "get"      .. flags("-a", "-d", "-fix", "-n", "-p", "-u", "-v", "-x"),
-    "install"  .. flags("-a", "-n", "-p", "-v", "-work", "-x", "-race",
-                        "-ccflags", "-compiler", "-gccgoflags", "-gcflags",
-                        "-ldflags", "-tags"),
-    "list"     .. flags("-e", "-f", "-json"),
-    "run"      .. flags("-a", "-n", "-p", "-v", "-work", "-x", "-race",
-                        "-ccflags", "-compiler", "-gccgoflags", "-gcflags",
-                        "-ldflags", "-tags"),
-    "test"     .. flags("-c", "-i", "-a", "-n", "-p", "-v", "-work", "-x",
-                        "-race", "-ccflags", "-compiler", "-gccgoflags",
-                        "-gcflags", "-ldflags", "-tags"),
+    "get"      .. flags("-d", "-fix", "-t", "-u",
+                        -- Build flags
+                        "-a", "-n", "-p", "-installsuffix", "-v", "-x",
+                        "-work", "-gcflags", "-ccflags", "-ldflags",
+                        "-gccgoflags", "-tags", "-compiler", "-race"),
+    "install"  .. flags(-- All `go build` flags
+                        "-o", "-a", "-n", "-p", "-installsuffix", "-v", "-x",
+                        "-work", "-gcflags", "-ccflags", "-ldflags",
+                        "-gccgoflags", "-tags", "-compiler", "-race"),
+    "list"     .. flags("-e", "-race", "-f", "-json", "-tags"),
+    "run"      .. flags("-exec",
+                        -- Build flags
+                        "-a", "-n", "-p", "-installsuffix", "-v", "-x",
+                        "-work", "-gcflags", "-ccflags", "-ldflags",
+                        "-gccgoflags", "-tags", "-compiler", "-race"),
+    "test"     .. flags(-- Local.
+                        "-c", "-file", "-i", "-cover", "-coverpkg",
+                        -- Build flags
+                        "-a", "-n", "-p", "-x", "-work", "-ccflags",
+                        "-gcflags", "-exec", "-ldflags", "-gccgoflags",
+                        "-tags", "-compiler", "-race", "-installsuffix", 
+                        -- Passed to 6.out
+                        "-bench", "-benchmem", "-benchtime", "-covermode",
+                        "-coverprofile", "-cpu", "-cpuprofile", "-memprofile",
+                        "-memprofilerate", "-blockprofile",
+                        "-blockprofilerate", "-outputdir", "-parallel", "-run",
+                        "-short", "-timeout", "-v"),
     "tool"     .. go_tool_parser,
     "vet"      .. flags("-n", "-x"),
 })
@@ -78,17 +117,16 @@ go_help_parser:set_arguments({
 --------------------------------------------------------------------------------
 local godoc_parser = clink.arg.new_parser()
 godoc_parser:set_flags(
-    "-goroot", "-html", "-http", "-index", "-index_files", "-index_throttle",
-    "-maxresults", "-play", "-q", "-server", "-src", "-tabwidth", "-templates",
-    "-testdir", "-timestamps", "-url", "-v", "-write_index", "-zip"
+    "-zip", "-write_index", "-analysis", "-http", "-server", "-html","-src",
+    "-url", "-q", "-v", "-goroot", "-tabwidth", "-timestamps", "-templates",
+    "-play", "-ex", "-links", "-index", "-index_files", "-maxresults",
+    "-index_throttle", "-notes", "-httptest.serve"
 )
 
 --------------------------------------------------------------------------------
 local gofmt_parser = clink.arg.new_parser()
 gofmt_parser:set_flags(
-    "-d", "-e", "-l", "-r", "-s", "-w",
-    -- Formatting control flags
-    "-comments", "-tabs", "-tabwidth"
+    "-cpuprofile", "-d", "-e", "-l", "-r", "-s", "-w"
 )
 
 --------------------------------------------------------------------------------
