@@ -23,24 +23,23 @@
 #include "shared/util.h"
 
 //------------------------------------------------------------------------------
-static void apply_env(const wchar_t* env, int clear)
+struct env_block
+{
+    int         size;
+    const void* data;
+};
+typedef struct env_block env_block_t;
+
+//------------------------------------------------------------------------------
+static void apply_env_impl(const env_block_t* block, int clear)
 {
     int size;
     wchar_t* strings;
     wchar_t* c;
-    const wchar_t* cc;
-
-    // Find length of the environment block.
-    cc = env;
-    while (*cc)
-    {
-        cc += wcslen(cc) + 1;
-    }
 
     // Copy the block.
-    size = (int)(cc - env + 1) * 2;
-    strings = malloc(size);
-    memcpy(strings, env, size);
+    strings = malloc(block->size);
+    memcpy(strings, block->data, block->size);
 
     // Apply each environment variable.
     c = strings;
@@ -63,25 +62,54 @@ static void apply_env(const wchar_t* env, int clear)
 }
 
 //------------------------------------------------------------------------------
-static void* push_env()
+static void capture_env(env_block_t* block)
 {
-    return GetEnvironmentStringsW();
+    void* env;
+    const wchar_t* c;
+    void* data;
+    int size;
+
+    env = GetEnvironmentStringsW();
+
+    size = 0;
+    c = (const wchar_t*)env;
+    while (1)
+    {
+        if (*((const int*)(c)) == 0)
+        {
+            size += 4;
+            break;
+        }
+
+        size += 2;
+        ++c;
+    }
+
+    data = malloc(size);
+    memcpy(data, env, size);
+
+    block->data = data;
+    block->size = size;
+
+    FreeEnvironmentStringsW(env);
 }
 
 //------------------------------------------------------------------------------
-static void pop_env(void* handle)
+static void free_env(const env_block_t* block)
 {
-    void* to_clear;
+    free((void*)(block->data));
+}
 
-    to_clear = GetEnvironmentStringsW();
-    if (to_clear != NULL)
-    {
-        apply_env(to_clear, 1);
-        FreeEnvironmentStringsW(to_clear);
-    }
+//------------------------------------------------------------------------------
+static void apply_env(const env_block_t* block)
+{
+    env_block_t to_clear;
 
-    apply_env(handle, 0);
-    FreeEnvironmentStringsW(handle);
+    capture_env(&to_clear);
+    apply_env_impl(&to_clear, 1);
+    free_env(&to_clear);
+
+    apply_env_impl(block, 0);
 }
 
 //------------------------------------------------------------------------------
@@ -92,8 +120,9 @@ void prepare_env_for_inputrc()
 
     char buffer[1024];
     void* env_handle;
+    env_block_t env_block;
 
-    env_handle = push_env();
+    capture_env(&env_block);
 
     // HOME is where Readline will expand ~ to.
     {
@@ -118,7 +147,8 @@ void prepare_env_for_inputrc()
         putenv(buffer);
     }
 
-    pop_env(env_handle);
+    apply_env(&env_block);
+    free_env(&env_block);
 }
 
 // vim: expandtab
