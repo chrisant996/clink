@@ -40,16 +40,6 @@ int hooked_fwrite(const void* data, int size, int count, void* unused)
     DWORD written;
 
     size *= count;
-
-#if 0
-    if (*(char*)data == '\n')
-    {
-        static int i = 0;
-        static const char b[] = "!@#$%^&*()_+|";
-        hooked_fwrite(b + (i % sizeof_array(b)), 1, 1, 0);
-        ++i;
-    }
-#endif
     
     characters = MultiByteToWideChar(
         CP_UTF8, 0,
@@ -66,13 +56,8 @@ int hooked_fwrite(const void* data, int size, int count, void* unused)
     }
     else
     {
-        WriteConsoleW(
-            GetStdHandle(STD_OUTPUT_HANDLE),
-            buf,
-            (DWORD)wcslen(buf),
-            &written,
-            NULL
-        );
+        HANDLE handle = GetStdHandle(STD_OUTPUT_HANDLE);
+        WriteConsoleW(handle, buf, (DWORD)wcslen(buf), &written, NULL);
     }
 
     return size;

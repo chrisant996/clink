@@ -25,6 +25,25 @@
 #endif
 
 //------------------------------------------------------------------------------
+static int ANSI_FNAME(is_csi)(const char_t* str)
+{
+    if ((str[0] == 0x1b) && (str[1] == '['))
+    {
+        return 2;
+    }
+    else if (str[0] == 0x9b)
+    {
+        return 1;
+    }
+    else if ((str[0] == 0xc2) && (str[1] == 0x9b))
+    {
+        return 2;
+    }
+
+    return 0;
+}
+
+//------------------------------------------------------------------------------
 const char_t* ANSI_FNAME(find_next_ansi_code)(const char_t* buffer, int* size)
 {
     int size_temp;
@@ -42,19 +61,11 @@ const char_t* ANSI_FNAME(find_next_ansi_code)(const char_t* buffer, int* size)
     {
         if (state < 0)
         {
-            // CSI
-            if ((read[0] == 0x1b) && (read[1] == '['))
+            int csi_len = ANSI_FNAME(is_csi)(read);
+            if (csi_len)
             {
                 state = read - buffer;
-                ++read;
-            }
-            else if (read[0] == 0x9b)
-            {
-                state = read - buffer;
-            }
-            else if ((read[0] == 0xc2) && (read[1] == 0x9b))
-            {
-                state = read - buffer;
+                read += (csi_len > 1);
             }
         }
         else
@@ -76,6 +87,63 @@ const char_t* ANSI_FNAME(find_next_ansi_code)(const char_t* buffer, int* size)
 
     *size = 0;
     return (buffer +  ansi_str_len(buffer));
+}
+
+//------------------------------------------------------------------------------
+int ANSI_FNAME(parse_ansi_code)(const char_t* code, int* params, int max_params)
+{
+    int i;
+    int command;
+    int csi_len;
+
+    csi_len = ANSI_FNAME(is_csi)(code);
+    if (csi_len <= 0)
+    {
+        return -1;
+    }
+
+    code += csi_len;
+    i = 0;
+    command = -1;
+
+    params[i] = 0;
+    --max_params;       // one param must be -1 terminator.
+
+    while (*code)
+    {
+        // Accumilate numerics.
+        unsigned int n = (unsigned int)*code - '0';
+        if (n < 9)
+        {
+            if (i < max_params)
+            {
+                params[i] *= 10;
+                params[i] += n;
+            }
+
+            ++code;
+            continue;
+        }
+
+        // Still room to move onto the next parameter?
+        if (i < max_params)
+        {
+            ++i;
+            params[i] = 0;
+        }
+
+        // Anything but [0-9;] indicates the end of the sequence
+        if (*code != ';')
+        {
+            command = *code;
+            break;
+        }
+
+        ++code;
+    }
+
+    params[i] = -1;
+    return command;
 }
 
 // vim: expandtab syntax=c

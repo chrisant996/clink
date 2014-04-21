@@ -36,6 +36,8 @@ void                clink_register_rl_funcs();
 char*               filter_prompt(const char*);
 void*               extract_prompt(int);
 void                free_prompt(void*);
+const wchar_t*      find_next_ansi_code_w(const wchar_t*, int*);
+int                 parse_ansi_code_w(const wchar_t*, int*, int);
 
 int                 g_slash_translation             = 0;
 static int          g_new_history_count             = 0;
@@ -46,6 +48,7 @@ extern const char*  rl_filename_quote_characters;
 extern int          rl_catch_signals;
 extern int          _rl_complete_mark_directories;
 extern char*        _rl_comment_begin;
+extern void         (*g_alt_fwrite_hook)(wchar_t*);
 
 //------------------------------------------------------------------------------
 // This ensures the cursor is visible as printing to the console usually makes
@@ -445,6 +448,112 @@ static void display_matches(char** matches, int match_count, int longest)
 }
 
 //------------------------------------------------------------------------------
+static int ansi_to_attr(int colour)
+{
+    static const int map[] = { 0, 4, 2, 6, 1, 5, 3, 7 };
+    return map[colour & 7];
+}
+
+//------------------------------------------------------------------------------
+static void fwrite_ansi_code(const wchar_t* code, int defaults)
+{
+    int i;
+    int params[32];
+    HANDLE handle;
+    int attr;
+
+    i = parse_ansi_code_w(code, params, sizeof_array(params));
+    if (i != 'm')
+    {
+        return;
+    }
+
+    handle = GetStdHandle(STD_OUTPUT_HANDLE);
+    attr = defaults;
+
+    for (i = 0; i < sizeof_array(params); ++i)
+    {
+        int param = params[i];
+        if (param < 0)
+        {
+            break;
+        }
+
+        if (param == 0) // reset
+        {
+            attr = defaults;
+        }
+        else if (param == 1) // fg intensity
+        {
+            attr |= 0x08;
+        }
+        else if (param == 2) // fg intensity
+        {
+            attr &= ~0x08;
+        }
+        else if (param == 4) // bg intensity
+        {
+            attr |= 0x80;
+        }
+        else if ((unsigned int)param - 30 < 8) // fg colour
+        {
+            attr = (attr & 0xf8) | ansi_to_attr(param - 30);
+        }
+        else if (param == 39) // default fg colour
+        {
+            attr = (attr & 0xf8) | (defaults & 0x07);
+        }
+        else if ((unsigned int)param - 40 < 8) // bg colour
+        {
+            attr = (attr & 0x8f) | (ansi_to_attr(param - 40) << 4);
+        }
+        else if (param == 49) // default bg colour
+        {
+            attr = (attr & 0x8f) | (defaults & 0x70);
+        }
+    }
+
+    SetConsoleTextAttribute(handle, attr);
+}
+
+//------------------------------------------------------------------------------
+static void fwrite_hook(wchar_t* str)
+{
+    const wchar_t* next;
+    HANDLE handle;
+    DWORD written;
+    CONSOLE_SCREEN_BUFFER_INFO csbi;
+    int attr;
+
+    handle = GetStdHandle(STD_OUTPUT_HANDLE);
+
+    GetConsoleScreenBufferInfo(handle, &csbi);
+    attr = csbi.wAttributes;
+
+    next = str;
+    while (*next)
+    {
+        int ansi_size;
+        const wchar_t* ansi_code;
+
+        ansi_code = find_next_ansi_code_w(next, &ansi_size);
+
+        // Dispatch console write
+        WriteConsoleW(handle, next, ansi_code - next, &written, NULL);
+
+        // Process ansi code.
+        if (*ansi_code)
+        {
+            fwrite_ansi_code(ansi_code, attr);
+        }
+
+        next = ansi_code + ansi_size;
+    }
+
+    SetConsoleTextAttribute(handle, attr);
+}
+
+//------------------------------------------------------------------------------
 static void get_history_file_name(char* buffer, int size)
 {
     get_config_dir(buffer, size);
@@ -524,6 +633,11 @@ static int initialise_hook()
 
     rl_re_read_init_file(0, 0);
     rl_visible_stats = 0;               // serves no purpose under win32.
+
+    if (g_alt_fwrite_hook == NULL)
+    {
+        g_alt_fwrite_hook = fwrite_hook;
+    }
 
     return 0;
 }
