@@ -54,3 +54,5 @@ newaction {
         os.execute("del .build\\docs\\temp.html")
     end
 }
+
+-- vim: expandtab

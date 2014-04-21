@@ -43,6 +43,10 @@ function get_last_git_commit()
 end
 
 --------------------------------------------------------------------------------
+-- Work around a bug in Premake5
+path.normalize = function(i) return i end
+
+--------------------------------------------------------------------------------
 clink_ver = _OPTIONS["clink_ver"] or "DEV"
 local to = ".build/"..(_ACTION or "nullaction")
 
@@ -64,33 +68,6 @@ end
 -- 47000 = magic offset. 'stamp' gives us an hourly counter that shouldn't wrap
 -- for around 7-8 years.
 clink_ver_stamp = (math.floor(os.time() / 3600) - 47000) % 0x10000
-
---------------------------------------------------------------------------------
-local pchheader_original = pchheader
-local pchsource_original = pchsource
-
-local function pchheader_fixed(header)
-    if _ACTION == "vs2010" or _ACTION == "vs2012" then
-        header = path.getname(header)
-    end
-
-    if _ACTION == "gmake" then
-        return
-    end
-
-    pchheader_original(header)
-end
-
-local function pchsource_fixed(source)
-    if _ACTION == "gmake" then
-        return
-    end
-
-    pchsource_original(source)
-end
-
-pchheader = pchheader_fixed
-pchsource = pchsource_fixed
 
 --------------------------------------------------------------------------------
 if _ACTION and _ACTION ~= "clean" and _ACTION:find("clink_") == nil then
@@ -208,7 +185,7 @@ project("clink_dll")
     includedirs("clink")
     defines("CLINK_DLL_BUILD")
     pchsource("clink/dll/pch.c")
-    pchheader("clink/dll/pch.h")
+    pchheader("pch.h")
     files("clink/dll/*")
     files("clink/version.rc")
 
@@ -238,7 +215,7 @@ project("clink_loader")
     files("clink/loader/*")
     files("clink/version.rc")
     pchsource("clink/loader/pch.c")
-    pchheader("clink/loader/pch.h")
+    pchheader("pch.h")
 
     configuration("release")
         build_postbuild("CHANGES", "release")
@@ -253,7 +230,7 @@ project("clink_shared")
     language("c")
     kind("staticlib")
     pchsource("clink/shared/pch.c")
-    pchheader("clink/shared/pch.h")
+    pchheader("pch.h")
     files("clink/shared/*")
 
 --------------------------------------------------------------------------------
@@ -273,7 +250,7 @@ project("clink_test")
     files("clink/dll/*")
     files("clink/version.rc")
     pchsource("clink/dll/pch.c")
-    pchheader("clink/dll/pch.h")
+    pchheader("pch.h")
 
     configuration("release")
         --build_postbuild("", "release")
@@ -294,3 +271,5 @@ newoption {
 --------------------------------------------------------------------------------
 dofile("docs/premake4.lua")
 dofile("installer/premake4.lua")
+
+-- vim: expandtab

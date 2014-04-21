@@ -99,11 +99,13 @@ newaction {
         local src_dir_name = path.translate(path.getabsolute("."), "\\")
 
         -- Build the code.
-        exec("premake4 --clink_ver="..clink_ver.." vs2010")
-        exec("msbuild /m /v:q /p:configuration=release /p:platform=win32 .build/vs2010/clink.sln")
-        exec("msbuild /m /v:q /p:configuration=release /p:platform=x64 .build/vs2010/clink.sln")
+        local vs_ver = _OPTIONS["clink_vs_ver"] or "vs2010"
+        local premake = _PREMAKE_COMMAND or "premake4"
+        exec(premake.." --clink_ver="..clink_ver.." "..vs_ver)
+        exec("msbuild /m /v:q /p:configuration=release /p:platform=win32 .build/"..vs_ver.."/clink.sln")
+        exec("msbuild /m /v:q /p:configuration=release /p:platform=x64 .build/"..vs_ver.."/clink.sln")
 
-        local src = ".build\\vs2010\\bin\\release\\"
+        local src = ".build\\"..vs_ver.."\\bin\\release\\"
         local dest = target_dir.."clink_"..clink_ver
 
         -- Do a coarse check to make sure there's a build available.
@@ -151,7 +153,7 @@ newaction {
         exec("move "..dest.."\\clink._lua "..dest.."\\clink.lua")
 
         -- Generate documentation.
-        exec("premake4 --clink_ver="..clink_ver.." clink_docs")
+        exec(premake.." --clink_ver="..clink_ver.." clink_docs")
         exec("copy .build\\docs\\clink.html "..dest)
 
         -- Build the installer.
@@ -206,3 +208,12 @@ newaction {
         exec('c:\\windows\\sysnative\\cmd.exe /c reg query "hklm\\software\\microsoft\\command processor" /v autorun')
     end
 }
+
+--------------------------------------------------------------------------------
+newoption {
+   trigger     = "clink_vs_ver",
+   value       = "VER",
+   description = "Version of Visual Studio to build release with."
+}
+
+-- vim: expandtab
