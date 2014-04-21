@@ -277,6 +277,19 @@ const char* settings_get_str(settings_t* s, const char* name)
 {
     int i;
 
+    // Check for an environment variable override.
+    {
+        static char buffer[256];
+
+        strcpy(buffer, "clink.");
+        str_cat(buffer, name, sizeof_array(buffer));
+
+        if (GetEnvironmentVariableA(buffer, buffer, sizeof_array(buffer)))
+        {
+            return buffer;
+        }
+    }
+
     i = get_decl_index(s, name);
     if (i != -1)
     {
