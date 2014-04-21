@@ -67,7 +67,7 @@ Name                         | Description
 **exec_match_style**         | Changes how Clink will match executables when there is no path separator on the line. 0 = PATH only, 1 = PATH and CWD, 2 = PATH, CWD, and directories. In all cases both executables and directories are matched when there is a path separator present.
 **match_colour**             | Colour to use when displaying matches. A value less than 0 will be the opposite brightness of the default colour.
 **persist_history**          | Enable or disable the saving and loading of command history between sessions.
-**prompt_colour**            | Surrounds the prompt in ANSI escape codes to set the prompt's colour. Disabled when the value is less than 0.
+**prompt_colour**            | Surrounds the prompt in ANSI escape codes to set the prompt's colour (0..15). Disabled when the value is less than 0.
 **space_prefix_match_files** | If the line begins with whitespace then Clink bypasses executable matching and will match all files and directories instead.
 **terminate_autoanswer**     | Automatically answers cmd.exe's **Terminate batch job (Y/N)?** prompts. 0 = disabled, 1 = answer Y, 2 = answer N.
 **use_altgr_substitute**     | Windows provides Ctrl-Alt as a substitute for AltGr, historically to support keyboards with no AltGr key. This may collide with some of Readline's bindings.
