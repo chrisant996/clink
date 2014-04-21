@@ -45,12 +45,12 @@ Configuring Clink by and large involves configuring Readline by creating a **cli
 
 Where Clink looks for **clink_inputrc** (as well as .lua scripts and the settings file) depends on which distribution of Clink was used. If you installed Clink using the .exe installer then Clink uses the current user's non-roaming application data folder. This user directory is usually found in one of the following locations;
 
-- c:\Documents and Settings\\<username\>\Local Settings\Application Data (XP)
-- c:\Users\\<username\>\AppData\Local (Vista onwards)
+- c:\Documents and Settings\&lt;username&gt;\Local Settings\Application Data (XP)
+- c:\Users\&lt;username&gt;\AppData\Local (Vista onwards)
 
 The .zip distribution of Clink uses a **profile** folder in the same folder where Clink's core files are found.
 
-All of the above locations can be overriden using the **--profile <path>** command line option which is specified when injecting Clink into cmd.exe using **clink inject**.
+All of the above locations can be overriden using the **--profile &lt;path&gt;** command line option which is specified when injecting Clink into cmd.exe using **clink inject**.
 
 #### Settings
 
