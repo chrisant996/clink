@@ -184,8 +184,6 @@ project("clink_dll")
     includedirs("lua/src")
     includedirs("clink")
     defines("CLINK_DLL_BUILD")
-    pchsource("clink/dll/pch.c")
-    pchheader("pch.h")
     files("clink/dll/*")
     files("clink/version.rc")
 
@@ -199,6 +197,8 @@ project("clink_dll")
 
     configuration("vs*")
         links("dbghelp")
+        pchsource("clink/dll/pch.c")
+        pchheader("pch.h")
 
 --------------------------------------------------------------------------------
 project("clink_loader")
@@ -214,8 +214,6 @@ project("clink_loader")
     files("clink/dll/settings.c")
     files("clink/loader/*")
     files("clink/version.rc")
-    pchsource("clink/loader/pch.c")
-    pchheader("pch.h")
 
     configuration("release")
         build_postbuild("CHANGES", "release")
@@ -225,13 +223,19 @@ project("clink_loader")
     configuration("debug")
         build_postbuild("clink/loader/clink.bat", "debug")
 
+    configuration("vs*")
+        pchsource("clink/loader/pch.c")
+        pchheader("pch.h")
+
 --------------------------------------------------------------------------------
 project("clink_shared")
     language("c")
     kind("staticlib")
-    pchsource("clink/shared/pch.c")
-    pchheader("pch.h")
     files("clink/shared/*")
+
+    configuration("vs*")
+        pchsource("clink/shared/pch.c")
+        pchheader("pch.h")
 
 --------------------------------------------------------------------------------
 project("clink_test")
@@ -249,8 +253,6 @@ project("clink_test")
     files("clink/test/*")
     files("clink/dll/*")
     files("clink/version.rc")
-    pchsource("clink/dll/pch.c")
-    pchheader("pch.h")
 
     configuration("release")
         --build_postbuild("", "release")
@@ -260,6 +262,8 @@ project("clink_test")
 
     configuration("vs*")
         links("dbghelp")
+        pchsource("clink/dll/pch.c")
+        pchheader("pch.h")
 
 --------------------------------------------------------------------------------
 newoption {
