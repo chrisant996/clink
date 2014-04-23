@@ -58,11 +58,15 @@ goto :eof
 
 :: Helper functions to avoid cmd.exe's issues with brackets.
 :loader_x86
-"%~dpn0_x86.exe" %*
+if exist "%~dpn0_x86.exe" (
+    "%~dpn0_x86.exe" %*
+)
 exit /b 0
 
 :loader_x64
-"%~dpn0_x64.exe" %*
+if exist "%~dpn0_x64.exe" (
+    "%~dpn0_x64.exe" %*
+)
 exit /b 0
 
 :launch
