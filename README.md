@@ -37,7 +37,7 @@ There are a variety of ways to start Clink;
 
 ### Extending Clink
 
-Clink can be extended through it's Lua API which allows easy creation context sensitive match generators, prompt filtering, and more. More details can be found in Clink's documentation which can be found [here](https://github.com/mridgers/clink/blob/master/docs/clink.md).
+Clink can be extended through its Lua API which allows easy creation context sensitive match generators, prompt filtering, and more. More details can be found in Clink's documentation which can be found [here](https://github.com/mridgers/clink/blob/master/docs/clink.md).
 
 ### Building Clink
 
