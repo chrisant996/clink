@@ -52,9 +52,7 @@ N.B. There is a bug in Premake 4.3 that generates corrupt .vcxproj files. Please
 
 ### Development Builds
 
-Builds from the Git repository can be found here;
-
-https://www.dropbox.com/sh/r9oqmn2mqfp3okp/Jm_F3pJSNI
+Builds from the Git repository can be found [here](https://www.dropbox.com/sh/r9oqmn2mqfp3okp/Jm_F3pJSNI).
 
 <!-- vim: ft=markdown
 -->
