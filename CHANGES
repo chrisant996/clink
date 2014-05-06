@@ -1,6 +1,19 @@
 
 ### Changelog
 
+##### v0.4.2
+
+- Prompt colouring no longer requires third party ANSI code utility.
+- Override settings with environment variables prefixed with "clink."
+- Ctrl-PgUp goes up a directory.
+- Updated Go completions (by matrixik).
+- Arguments to clink.arg.new_parser() now initialise parser's flags/args (from vladimir-kotikov).
+- New clink.arg.add_flags() and clink.arg.add_arguments() functions.
+- Removed footer and Alt-H tip for more succinct stdout output.
+- Bug fixes;
+    - Windows XP works again.
+    - Fixed race condition in lua_execute().
+
 ##### v0.4.1
 
 - Bug fixes;
