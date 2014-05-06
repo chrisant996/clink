@@ -20,7 +20,7 @@ Downloads for the latest release of Clink can be found [here](https://github.com
     - Incremental history search (**Ctrl-R/Ctrl-S**).
     - Powerful completion (**TAB**).
     - Undo (**Ctrl-Z**).
-    - Automatic "cd .." (**Ctrl-Alt-U**).
+    - Automatic "cd .." (**Ctrl-PgUp**).
     - Environment variable expansion (**Ctrl-Alt-E**).
     - (press **Alt-H** for many more...)
 - Scriptable completion with Lua.
