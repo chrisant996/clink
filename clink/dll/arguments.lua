@@ -499,6 +499,11 @@ function merge_parsers(lhs, rhs)
     -- Merging parsers is not a trivial matter and this implementation is far
     -- from correct. It is however sufficient for the majority of cases.
 
+    -- Merge flags.
+    for _, rflag in ipairs(rhs.flags) do
+        table.insert(lhs.flags, rflag)
+    end
+
     -- Remove (and save value of) the first argument in RHS.
     local rhs_arg_1 = table.remove(rhs.arguments, 1)
     if rhs_arg_1 == nil then
@@ -537,11 +542,6 @@ function merge_parsers(lhs, rhs)
 
             table.insert(lhs_arg_1, to_add)
         end
-    end
-
-    -- Merge flags.
-    for _, rflag in ipairs(rhs.flags) do
-        table.insert(lhs.flags, rflag)
     end
 end
 
