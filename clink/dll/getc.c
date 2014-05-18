@@ -198,15 +198,22 @@ loop:
         }
 
         key = &record.Event.KeyEvent;
-        if (key->bKeyDown == FALSE)
-        {
-            goto loop;
-        }
-
         key_char = key->uChar.UnicodeChar;
         key_vk = key->wVirtualKeyCode;
         key_sc = key->wVirtualScanCode;
         key_flags = key->dwControlKeyState;
+
+        if (key->bKeyDown == FALSE)
+        {
+            // Some times conhost can send through ALT codes, with the resulting
+            // Unicode code point in the Alt key-up event.
+            if (key_vk == VK_MENU && key_char)
+            {
+                return key_char;
+            }
+
+            goto loop;
+        }
 
         // Windows supports an AltGr substitute which we check for here. As it
         // collides with Readline mappings Clink's support can be disabled.
