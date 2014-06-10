@@ -81,7 +81,7 @@ local function parser_add_arguments(parser, ...)
     for _, i in ipairs({...}) do
         -- Check all arguments are tables.
         if type(i) ~= "table" then
-            error("All arguments to set_arguments() must be tables.", 2)
+            error("All arguments to add_arguments() must be tables.", 2)
         end
 
         -- Only parsers are allowed to be specified without being wrapped in a
@@ -477,18 +477,18 @@ function clink.arg.new_parser(...)
 
     -- If any arguments are provided, treat them as parser's arguments or flags
     if ... and #... > 0 then
-
-        local arguments = {}
-        local flags = {}
         
         for _, word in ipairs({...}) do
-            if type(word) == "string" then table.insert(flags, word)
-            elseif type(word) == "table" then table.insert(arguments, word) end
+            if type(word) == "string" then parser:add_flags({word})
+            elseif type(word) == "table" then
+                if getmetatable(word) == sub_parser_meta_table
+                    and parser_is_flag(nil, word.key) then
+                    parser:add_flags({word})
+                else
+                    parser:add_arguments(word)
+                end
+            end
         end
-
-        for _, a in ipairs(arguments) do parser:add_arguments(a) end
-        parser:set_flags(flags)
-
     end
 
     return parser
