@@ -113,7 +113,7 @@ int ANSI_FNAME(parse_ansi_code)(const char_t* code, int* params, int max_params)
     {
         // Accumilate numerics.
         unsigned int n = (unsigned int)*code - '0';
-        if (n < 9)
+        if (n < 10)
         {
             if (i < max_params)
             {
