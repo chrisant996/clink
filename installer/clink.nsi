@@ -136,8 +136,8 @@ Section "!Application files" app_files_id
     WriteRegStr HKLM $0 "UninstallString"   "$INSTDIR\$1"
     WriteRegStr HKLM $0 "Publisher"         "Martin Ridgers"
     WriteRegStr HKLM $0 "DisplayIcon"       "$SYSDIR\cmd.exe,0"
-    WriteRegStr HKLM $0 "URLInfoAbout"      "http://code.google.com/p/clink"
-    WriteRegStr HKLM $0 "HelpLink"          "http://code.google.com/p/clink"
+    WriteRegStr HKLM $0 "URLInfoAbout"      "http://mridgers.github.io/clink"
+    WriteRegStr HKLM $0 "HelpLink"          "http://mridgers.github.io/clink"
     WriteRegStr HKLM $0 "InstallLocation"   "$INSTDIR"
     WriteRegStr HKLM $0 "DisplayVersion"    "${CLINK_VERSION}"
 
