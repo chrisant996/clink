@@ -103,16 +103,7 @@ Builds from the Git repository can be found [here](https://www.dropbox.com/sh/hq
 | `Alt-*`         | insert-completions                     |
 | `Alt--`         | digit-argument                         |
 | `Alt-.`         | yank-last-arg                          |
-| `Alt-0`         | digit-argument                         |
-| `Alt-1`         | digit-argument                         |
-| `Alt-2`         | digit-argument                         |
-| `Alt-3`         | digit-argument                         |
-| `Alt-4`         | digit-argument                         |
-| `Alt-5`         | digit-argument                         |
-| `Alt-6`         | digit-argument                         |
-| `Alt-7`         | digit-argument                         |
-| `Alt-8`         | digit-argument                         |
-| `Alt-9`         | digit-argument                         |
+| `Alt-[0-9]`     | digit-argument                         |
 | `Alt-<`         | beginning-of-history                   |
 | `Alt-=`         | possible-completions                   |
 | `Alt->`         | end-of-history                         |
