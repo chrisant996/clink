@@ -56,7 +56,9 @@ Builds from the Git repository can be found [here](https://www.dropbox.com/sh/hq
 
 ### Hotkeys
 
-| Hotkey          | Functionality                          |
+The list below can also be displayed within Clink by pressing Alt-h. More information on the Readline functions can be found in the Readline [manual](http://tinyurl.com/oum26rp).
+
+| Hotkey          | Readline function                      |
 |-----------------|----------------------------------------|
 | `Ctrl-@`        | set-mark                               |
 | `Ctrl-a`        | beginning-of-line                      |
