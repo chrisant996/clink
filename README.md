@@ -11,18 +11,18 @@ Downloads for the latest release of Clink can be found [here](https://github.com
 - The same line editing as Bash (from GNU's Readline library).
 - History persistence between sessions.
 - Context sensitive completion;
-	- Executables (and aliases).
-	- Directory commands.
-	- Environment variables
-	- Thirdparty tools; Git, Mercurial, SVN, Go, and P4.
+    - Executables (and aliases).
+    - Directory commands.
+    - Environment variables
+    - Thirdparty tools; Git, Mercurial, SVN, Go, and P4.
 - New keyboard shortcuts;
-	- Paste from clipboard (**Ctrl-V**).
-	- Incremental history search (**Ctrl-R/Ctrl-S**).
-	- Powerful completion (**TAB**).
-	- Undo (**Ctrl-Z**).
-	- Automatic "cd .." (**Ctrl-PgUp**).
-	- Environment variable expansion (**Ctrl-Alt-E**).
-	- (press **Alt-H** for many more...)
+    - Paste from clipboard (**Ctrl-V**).
+    - Incremental history search (**Ctrl-R/Ctrl-S**).
+    - Powerful completion (**TAB**).
+    - Undo (**Ctrl-Z**).
+    - Automatic "cd .." (**Ctrl-PgUp**).
+    - Environment variable expansion (**Ctrl-Alt-E**).
+    - (press **Alt-H** for many more...)
 - Scriptable completion with Lua.
 - Coloured and scriptable prompt.
 - Auto-answering of the "Terminate batch job?" prompt.
