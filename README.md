@@ -54,9 +54,6 @@ N.B. There is a bug in Premake 4.3 that generates corrupt .vcxproj files. Please
 
 Builds from the Git repository can be found [here](https://www.dropbox.com/sh/hqbrpkf0dpmmizq/gGX4XWAWIA).
 
-<!-- vim: ft=markdown
--->
-
 ### Hotkeys
 
 | Hotkey          | Functionality                          |
@@ -142,3 +139,6 @@ Builds from the Git repository can be found [here](https://www.dropbox.com/sh/hq
 | `Ctrl-x,(`      | start-kbd-macro                        |
 | `Ctrl-x,)`      | end-kbd-macro                          |
 | `Ctrl-x,e`      | call-last-kbd-macro                    |
+
+<!-- vim: ft=markdown
+-->
