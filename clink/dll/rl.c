@@ -38,6 +38,9 @@ void*               extract_prompt(int);
 void                free_prompt(void*);
 const wchar_t*      find_next_ansi_code_w(const wchar_t*, int*);
 int                 parse_ansi_code_w(const wchar_t*, int*, int);
+static int          completion_shim_impl(int, int, int (*)(int, int));
+int                 rl_complete(int, int);
+int                 rl_menu_complete(int, int);
 
 int                 g_slash_translation             = 0;
 static int          g_new_history_count             = 0;
@@ -208,37 +211,28 @@ static void suffix_translation()
 //------------------------------------------------------------------------------
 static int completion_shim(int count, int invoking_key)
 {
-    int ret;
-
-    // rl_complete checks if it was called previously.
-    if (rl_last_func == completion_shim)
-    {
-        rl_last_func = rl_complete;
-    }
-
-    rl_begin_undo_group();
-    ret = rl_complete(count, invoking_key);
-    suffix_translation();
-    rl_end_undo_group();
-
-    g_slash_translation = 0;
-
-    return ret;
+    return completion_shim_impl(count, invoking_key, rl_complete);
 }
 
 //------------------------------------------------------------------------------
 static int menu_completion_shim(int count, int invoking_key)
 {
+    return completion_shim_impl(count, invoking_key, rl_menu_complete);
+}
+
+//------------------------------------------------------------------------------
+static int completion_shim_impl(int count, int invoking_key, int (*rl_func)(int, int))
+{
     int ret;
 
-    // rl_complete checks if it was called previously.
-    if (rl_last_func == menu_completion_shim)
+    // rl complete functions checks if it was called previously, so restore it.
+    if (rl_last_func == completion_shim || rl_last_func == menu_completion_shim)
     {
-        rl_last_func = rl_menu_complete;
+        rl_last_func = rl_func;
     }
 
     rl_begin_undo_group();
-    ret = rl_menu_complete(count, invoking_key);
+    ret = rl_func(count, invoking_key);
     suffix_translation();
     rl_end_undo_group();
 
