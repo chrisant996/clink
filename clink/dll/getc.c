@@ -203,13 +203,24 @@ loop:
         key_sc = key->wVirtualScanCode;
         key_flags = key->dwControlKeyState;
 
+#if defined(DEBUG_GETC) && defined(_DEBUG)
+        {
+            int i;
+            puts("");
+            for (i = 0; i < sizeof(*key); ++i)
+            {
+                printf("%02x ", ((unsigned char*)key)[i]);
+            }
+        }
+#endif
+
         if (key->bKeyDown == FALSE)
         {
             // Some times conhost can send through ALT codes, with the resulting
             // Unicode code point in the Alt key-up event.
             if (key_vk == VK_MENU && key_char)
             {
-                return key_char;
+                goto end;
             }
 
             goto loop;
@@ -226,17 +237,6 @@ loop:
         {
             *alt = !!(key_flags & LEFT_ALT_PRESSED);
         }
-
-#if defined(DEBUG_GETC) && defined(_DEBUG)
-        {
-            int i;
-            puts("");
-            for (i = 0; i < sizeof(*key); ++i)
-            {
-                printf("%02x ", ((unsigned char*)key)[i]);
-            }
-        }
-#endif
     }
 
     // No Unicode character? Then some post-processing is required to make the
@@ -322,6 +322,7 @@ loop:
         key_char = key_vk;
     }
 
+end:
 #if defined(DEBUG_GETC) && defined(_DEBUG)
     printf("\n%08x '%c'", key_char, key_char);
 #endif
