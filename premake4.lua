@@ -70,21 +70,6 @@ end
 clink_ver_stamp = (math.floor(os.time() / 3600) - 47000) % 0x10000
 
 --------------------------------------------------------------------------------
-if _ACTION and _ACTION ~= "clean" and _ACTION:find("clink_") == nil then
-    -- Create a shim premake4 script so we can call premake from sln folder.
-    if not shimmed then
-        os.mkdir(to)
-        local out = io.open(to.."/premake4.lua", "w")
-        if out then
-            out:write("shimmed = 1", "\n")
-            out:write("_WORKING_DIR = \""..(_WORKING_DIR or "").."\"")
-            out:write("dofile(\"".._SCRIPT.."\")", "\n")
-            io.close(out)
-        end
-    end
-end
-
---------------------------------------------------------------------------------
 local function build_postbuild(src, cfg)
     src = path.getabsolute(src)
     src = path.translate(src)
