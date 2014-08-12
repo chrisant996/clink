@@ -41,9 +41,11 @@ int                 parse_ansi_code_w(const wchar_t*, int*, int);
 static int          completion_shim_impl(int, int, int (*)(int, int));
 int                 rl_complete(int, int);
 int                 rl_menu_complete(int, int);
+void                load_history();
+void                add_to_history(const char*);
+int                 expand_from_history(const char*, char**);
 
 int                 g_slash_translation             = 0;
-static int          g_new_history_count             = 0;
 extern int          rl_visible_stats;
 extern int          rl_display_fixed;
 extern int          rl_editing_mode;
@@ -548,57 +550,6 @@ static void fwrite_hook(wchar_t* str)
 }
 
 //------------------------------------------------------------------------------
-static void get_history_file_name(char* buffer, int size)
-{
-    get_config_dir(buffer, size);
-    if (buffer[0])
-    {
-        str_cat(buffer, "/.history", size);
-    }
-}
-
-//------------------------------------------------------------------------------
-static void load_history()
-{
-    char buffer[1024];
-
-    if (get_clink_setting_int("persist_history"))
-    {
-        get_history_file_name(buffer, sizeof(buffer));
-        read_history(buffer);
-    }
-
-    using_history();
-}
-
-//------------------------------------------------------------------------------
-void save_history()
-{
-    int max_history;
-    char buffer[1024];
-    const char* c;
-
-    if (get_clink_setting_int("persist_history") == 0)
-    {
-        return;
-    }
-
-    get_history_file_name(buffer, sizeof(buffer));
-
-    // Get max history size.
-    c = rl_variable_value("history-size");
-    max_history = (c != NULL) ? atoi(c) : 1000;
-
-    // Write new history to the file, and truncate to our maximum.
-    if (append_history(g_new_history_count, buffer) != 0)
-    {
-        write_history(buffer);
-    }
-
-    history_truncate_file(buffer, max_history);
-}
-
-//------------------------------------------------------------------------------
 static int initialise_hook()
 {
     rl_redisplay_function = display;
@@ -634,48 +585,6 @@ static int initialise_hook()
     }
 
     return 0;
-}
-
-//------------------------------------------------------------------------------
-static void add_to_history(const char* line)
-{
-    const unsigned char* c;
-    HIST_ENTRY* hist_entry;
-
-    // Skip leading whitespace
-    c = (const unsigned char*)line;
-    while (*c)
-    {
-        if (!isspace(*c))
-        {
-            break;
-        }
-
-        ++c;
-    }
-
-    // Skip empty lines
-    if (*c == '\0')
-    {
-        return;
-    }
-
-    // Check the line's not a duplicate of the last in the history.
-    using_history();
-    hist_entry = previous_history();
-    if (hist_entry != NULL)
-    {
-        if (strcmp(hist_entry->line, c) == 0)
-        {
-            return;
-        }
-    }
-
-    // All's well. Add the line.
-    using_history();
-    add_history(line);
-
-    ++g_new_history_count;
 }
 
 //------------------------------------------------------------------------------
@@ -737,12 +646,8 @@ static char* call_readline_impl(const char* prompt)
 
         // Expand history designators in returned buffer.
         expanded = NULL;
-        expand_result = history_expand(text, &expanded);
-        if (expand_result < 0)
-        {
-            free(expanded);
-        }
-        else
+        expand_result = expand_from_history(text, &expanded);
+        if (expand_result >= 0)
         {
             free(text);
             text = expanded;
