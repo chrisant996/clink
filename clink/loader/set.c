@@ -47,7 +47,7 @@ static int print_keys()
     puts("Available options:");
     for (i = 0, n = settings_get_decl_count(g_settings); i < n; ++i)
     {
-        printf("%24s %4s %s\n",
+        printf("%24s %6s %s\n",
             decl->name,
             settings_get_str(g_settings, decl->name),
             decl->friendly_name
