@@ -73,10 +73,27 @@ void save_history()
 }
 
 //------------------------------------------------------------------------------
+static int find_duplicate(const char* line)
+{
+    HIST_ENTRY* hist_entry;
+
+    using_history();
+    while (hist_entry = previous_history())
+    {
+        if (strcmp(hist_entry->line, line) == 0)
+        {
+            return where_history();
+        }
+    }
+
+    return 0;
+}
+
+//------------------------------------------------------------------------------
 void add_to_history(const char* line)
 {
+    int dupe_mode;
     const unsigned char* c;
-    HIST_ENTRY* hist_entry;
 
     // Maybe we shouldn't add this line to the history at all?
     c = (const unsigned char*)line;
@@ -102,21 +119,27 @@ void add_to_history(const char* line)
         return;
     }
 
-    // Check the line's not a duplicate of the last in the history.
-    using_history();
-    hist_entry = previous_history();
-    if (hist_entry != NULL)
+    // Check if the line's a duplicate of and existing history entry.
+    dupe_mode = get_clink_setting_int("history_dupe_mode");
+    if (dupe_mode > 0)
     {
-        if (strcmp(hist_entry->line, c) == 0)
+        int where = find_duplicate(c);
+        if (where >= 0)
         {
-            return;
+            if (dupe_mode > 1)
+            {
+                remove_history(where);
+            }
+            else
+            {
+                return;
+            }
         }
     }
 
     // All's well. Add the line.
     using_history();
     add_history(line);
-
     ++g_new_history_count;
 }
 

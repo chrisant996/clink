@@ -53,6 +53,7 @@ set_parser:set_arguments(
         "ctrld_exits",
         "esc_clears_line",
         "exec_match_style",
+        "history_dupe_mode",
         "history_file_lines",
         "history_ignore_space",
         "match_colour",

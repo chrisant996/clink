@@ -106,6 +106,16 @@ static const setting_decl_t g_settings_decl[] = {
         0, "0"
     },
     {
+        "history_dupe_mode",
+        "Controls how duplicates entries are handled.",
+        "If a line is a duplicate of an existing history entry Clink will "
+        "erase the duplicate when this is set 2. A value of 1 will not add "
+        "duplicates to the history and a value of 0 will always add lines.",
+        SETTING_TYPE_ENUM,
+        "Always add\0Ignore\0Erase",
+        "2"
+    },
+    {
         "use_altgr_substitute",
         "Support Windows' Ctrl-Alt substitute",
         "Windows provides Ctrl-Alt as a substitute for AltGr, historically to "
