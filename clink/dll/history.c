@@ -41,12 +41,8 @@ void load_history()
 {
     char buffer[512];
 
-    if (get_clink_setting_int("persist_history"))
-    {
-        get_history_file_name(buffer, sizeof(buffer));
-        read_history(buffer);
-    }
-
+    get_history_file_name(buffer, sizeof(buffer));
+    read_history(buffer);
     using_history();
 }
 
@@ -55,18 +51,17 @@ void save_history()
 {
     int max_history;
     char buffer[512];
-    const char* c;
-
-    if (get_clink_setting_int("persist_history") == 0)
-    {
-        return;
-    }
 
     get_history_file_name(buffer, sizeof(buffer));
 
     // Get max history size.
-    c = rl_variable_value("history-size");
-    max_history = (c != NULL) ? atoi(c) : 1000;
+    max_history = get_clink_setting_int("history_file_lines");
+    max_history = (max_history == 0) ? INT_MAX : max_history;
+    if (max_history < 0)
+    {
+        unlink(buffer);
+        return;
+    }
 
     // Write new history to the file, and truncate to our maximum.
     if (append_history(g_new_history_count, buffer) != 0)

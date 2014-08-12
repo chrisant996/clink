@@ -65,13 +65,13 @@ Name                         | Description
 **ctrld_exits**              | Ctrl-D exits the process when it is pressed on an empty line.
 **esc_clears_line**          | Clink clears the current line when Esc is pressed (unless Readline's Vi mode is enabled).
 **exec_match_style**         | Changes how Clink will match executables when there is no path separator on the line. 0 = PATH only, 1 = PATH and CWD, 2 = PATH, CWD, and directories. In all cases both executables and directories are matched when there is a path separator present.
+**history_file_lines**       | When set to a positive integer this is the number of lines of history that will persist when Clink saves the command history to disk. Use 0 for infinite lines and &lt;0 to disable history persistence.
 **match_colour**             | Colour to use when displaying matches. A value less than 0 will be the opposite brightness of the default colour.
-**persist_history**          | Enable or disable the saving and loading of command history between sessions.
 **prompt_colour**            | Surrounds the prompt in ANSI escape codes to set the prompt's colour (0..15). Disabled when the value is less than 0.
 **space_prefix_match_files** | If the line begins with whitespace then Clink bypasses executable matching and will match all files and directories instead.
 **terminate_autoanswer**     | Automatically answers cmd.exe's **Terminate batch job (Y/N)?** prompts. 0 = disabled, 1 = answer Y, 2 = answer N.
 **use_altgr_substitute**     | Windows provides Ctrl-Alt as a substitute for AltGr, historically to support keyboards with no AltGr key. This may collide with some of Readline's bindings.
- 
+
 ### Extending Clink
 
 The Readline library allows clients to offer an alternative path for creating completion matches. Clink uses this to hook Lua into the completion process making it possible to script the generation of matches with Lua scripts. The following sections describe this in more detail and shows some examples.

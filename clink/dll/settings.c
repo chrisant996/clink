@@ -89,12 +89,13 @@ static const setting_decl_t g_settings_decl[] = {
         "0"
     },
     {
-        "persist_history",
-        "Persistent command history",
-        "Enable or disable the saving and loading of command history "
-        "between sessions.",
-        SETTING_TYPE_BOOL,
-        0, "1"
+        "history_file_lines",
+        "Lines of history saved to disk",
+        "When set to a positive integer this is the number of lines of history "
+        "that will persist when Clink saves the command history to disk. Use 0 "
+        "for infinite lines and <0 to disable history persistence.",
+        SETTING_TYPE_INT,
+        0, "10000"
     },
     {
         "use_altgr_substitute",

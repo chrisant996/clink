@@ -647,7 +647,7 @@ static char* call_readline_impl(const char* prompt)
         // Expand history designators in returned buffer.
         expanded = NULL;
         expand_result = expand_from_history(text, &expanded);
-        if (expand_result >= 0)
+        if (expand_result > 0 && expanded != NULL)
         {
             free(text);
             text = expanded;
