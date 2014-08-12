@@ -149,7 +149,7 @@ int expand_from_history(const char* text, char** expanded)
     int result;
 
     expanded = NULL;
-    result = history_expand(text, &expanded);
+    result = history_expand((char*)text, expanded);
     if (result < 0)
     {
         free(expanded);
