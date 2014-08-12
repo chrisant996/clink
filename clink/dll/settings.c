@@ -98,6 +98,14 @@ static const setting_decl_t g_settings_decl[] = {
         0, "10000"
     },
     {
+        "history_ignore_space",
+        "Skip adding lines prefixed with whitespace.",
+        "Ignore lines that begin with whitespace when adding lines in to "
+        "the history.",
+        SETTING_TYPE_BOOL,
+        0, "0"
+    },
+    {
         "use_altgr_substitute",
         "Support Windows' Ctrl-Alt substitute",
         "Windows provides Ctrl-Alt as a substitute for AltGr, historically to "

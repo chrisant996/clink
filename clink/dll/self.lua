@@ -54,6 +54,7 @@ set_parser:set_arguments(
         "esc_clears_line",
         "exec_match_style",
         "history_file_lines",
+        "history_ignore_space",
         "match_colour",
         "prompt_colour",
         "space_prefix_match_files",
