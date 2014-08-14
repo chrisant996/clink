@@ -59,6 +59,7 @@ set_parser:set_arguments(
         "match_colour",
         "prompt_colour",
         "space_prefix_match_files",
+        "strip_crlf_on_paste",
         "terminate_autoanswer",
         "use_altgr_substitute",
     }

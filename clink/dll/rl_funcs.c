@@ -61,6 +61,43 @@ static int ctrl_c(int count, int invoking_key)
 }
 
 //------------------------------------------------------------------------------
+static void strip_crlf(char* line)
+{
+    char* read;
+    char* write;
+    int prev_was_crlf;
+    int setting;
+
+    setting = get_clink_setting_int("strip_crlf_on_paste");
+    if (setting <= 0)
+    {
+        return;
+    }
+
+    read = write = line;
+    while (*read)
+    {
+        char c = *read;
+        if (c != '\n' && c != '\r')
+        {
+            prev_was_crlf = 0;
+            *write = c;
+            ++write;
+        }
+        else if (setting > 1 && !prev_was_crlf)
+        {
+            prev_was_crlf = 1;
+            *write = ' ';
+            ++write;
+        }
+
+        ++read;
+    }
+
+    *write = '\0';
+}
+
+//------------------------------------------------------------------------------
 static int paste_from_clipboard(int count, int invoking_key)
 {
     if (OpenClipboard(NULL) != FALSE)
@@ -79,6 +116,7 @@ static int paste_from_clipboard(int count, int invoking_key)
             );
             utf8[sizeof(utf8) - 1] = '\0';
 
+            strip_crlf(utf8);
             rl_insert_text(utf8);
         }
 

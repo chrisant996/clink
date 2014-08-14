@@ -124,6 +124,16 @@ static const setting_decl_t g_settings_decl[] = {
         SETTING_TYPE_BOOL,
         0, "1"
     },
+    {
+        "strip_crlf_on_paste",
+        "Strips CR and LF chars when pasting.",
+        "Setting this to a value >0 will make Clink strip CR and LF characters "
+        "from text pasted into the current line. Set this to 1 to strip all "
+        "newline characters and 2 to replace them with a space.",
+        SETTING_TYPE_ENUM,
+        "Paste unchanged\0Strip\0As space",
+        "2"
+    },
 };
 
 //------------------------------------------------------------------------------
