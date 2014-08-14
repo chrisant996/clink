@@ -189,7 +189,7 @@ void clear_screen()
 
     HANDLE handle;
     CONSOLE_SCREEN_BUFFER_INFO csbi;
-    SMALL_RECT full_buffer;
+    SMALL_RECT to_scroll;
     COORD dest_origin;
     COORD cursor_pos;
     CHAR_INFO fill;
@@ -197,18 +197,25 @@ void clear_screen()
     handle = GetStdHandle(STD_OUTPUT_HANDLE);
     GetConsoleScreenBufferInfo(handle, &csbi);
 
-    full_buffer.Left = 0;
-    full_buffer.Top = 0;
-    full_buffer.Right = csbi.dwSize.X;
-    full_buffer.Bottom = csbi.dwSize.Y;
+    // Set up the rectangle to be scrolled upwards.
+    to_scroll.Left = 0;
+    to_scroll.Top = 0;
+    to_scroll.Right = csbi.dwSize.X;
+    to_scroll.Bottom = csbi.dwCursorPosition.Y;
+
+    // Coordinates of where to move the rectangle to.
     dest_origin.X = 0;
-    dest_origin.Y = -full_buffer.Bottom - 1;
+    dest_origin.Y = csbi.srWindow.Top - to_scroll.Bottom;
+
+    // How the new space should be filled.
     fill.Char.UnicodeChar = L' ';
     fill.Attributes = csbi.wAttributes;
-    ScrollConsoleScreenBuffer(handle, &full_buffer, NULL, dest_origin, &fill);
 
+    ScrollConsoleScreenBuffer(handle, &to_scroll, NULL, dest_origin, &fill);
+
+    // Move the cursor to the top of the visible window.
     cursor_pos.X = 0;
-    cursor_pos.Y = 0;
+    cursor_pos.Y = csbi.srWindow.Top;
     SetConsoleCursorPosition(handle, cursor_pos);
 }
 
