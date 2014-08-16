@@ -54,6 +54,10 @@ N.B. There is a bug in Premake 4.3 that generates corrupt .vcxproj files. Please
 
 Builds from the Git repository can be found [here](https://www.dropbox.com/sh/hqbrpkf0dpmmizq/gGX4XWAWIA).
 
+### License
+
+Clink is distributed under the terms of the GNU General Public License v3.0.
+
 ### Hotkeys
 
 The list below can also be displayed within Clink by pressing Alt-h. More information on the Readline functions can be found in the Readline [manual](http://tinyurl.com/oum26rp).
