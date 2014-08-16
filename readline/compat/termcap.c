@@ -185,37 +185,63 @@ void clear_to_eol()
 //------------------------------------------------------------------------------
 void clear_screen()
 {
-    // Scroll the whole buffer off the top. This is exactly what cmd.exe does!
+    // Moves the visible window up so the cursor's at the top. If there's not
+    // enough buffer available then the it's scroll up enough to create space.
 
     HANDLE handle;
     CONSOLE_SCREEN_BUFFER_INFO csbi;
-    SMALL_RECT to_scroll;
-    COORD dest_origin;
+    int dy;
+    int window_rows;
+    SMALL_RECT window;
     COORD cursor_pos;
-    CHAR_INFO fill;
 
     handle = GetStdHandle(STD_OUTPUT_HANDLE);
     GetConsoleScreenBufferInfo(handle, &csbi);
+    window = csbi.srWindow;
 
-    // Set up the rectangle to be scrolled upwards.
-    to_scroll.Left = 0;
-    to_scroll.Top = 0;
-    to_scroll.Right = csbi.dwSize.X;
-    to_scroll.Bottom = csbi.dwCursorPosition.Y;
+    // How much do we need to move?
+    dy = csbi.dwCursorPosition.Y - window.Top;
+    if (dy == 0)
+    {
+        return;
+    }
 
-    // Coordinates of where to move the rectangle to.
-    dest_origin.X = 0;
-    dest_origin.Y = csbi.srWindow.Top - to_scroll.Bottom;
+    // Is there not enough buffer space to put the cursor at the top?
+    window_rows = window.Bottom - window.Top;
+    if (window_rows > csbi.dwSize.Y - csbi.dwCursorPosition.Y)
+    {
+        COORD dest_origin;
+        CHAR_INFO fill;
 
-    // How the new space should be filled.
-    fill.Char.UnicodeChar = L' ';
-    fill.Attributes = csbi.wAttributes;
+        // Set up the rectangle to be scrolled upwards.
+        window.Left = 0;
+        window.Top = 0;
+        window.Right = csbi.dwSize.X;
+        window.Bottom = csbi.dwCursorPosition.Y;
 
-    ScrollConsoleScreenBuffer(handle, &to_scroll, NULL, dest_origin, &fill);
+        // Coordinates of where to move the rectangle to.
+        dest_origin.X = 0;
+        dest_origin.Y = -dy;
+
+        // How the new space should be filled.
+        fill.Char.UnicodeChar = L' ';
+        fill.Attributes = csbi.wAttributes;
+
+        ScrollConsoleScreenBuffer(handle, &window, NULL, dest_origin, &fill);
+    }
+    else
+    {
+        // Move the visible window.
+        SMALL_RECT delta_window = { 0, dy, 0, dy };
+        SetConsoleWindowInfo(handle, FALSE, &delta_window);
+
+        window.Top += dy;
+        window.Bottom += dy;
+    }
 
     // Move the cursor to the top of the visible window.
     cursor_pos.X = 0;
-    cursor_pos.Y = csbi.srWindow.Top;
+    cursor_pos.Y = window.Top;
     SetConsoleCursorPosition(handle, cursor_pos);
 }
 
