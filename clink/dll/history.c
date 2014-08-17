@@ -97,7 +97,7 @@ void add_to_history(const char* line)
 
     // Maybe we shouldn't add this line to the history at all?
     c = (const unsigned char*)line;
-    if (isspace(*c) && get_clink_setting_int("history_ignore_space"))
+    if (isspace(*c) && get_clink_setting_int("history_ignore_space") > 0)
     {
         return;
     }
