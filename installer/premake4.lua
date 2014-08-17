@@ -136,6 +136,7 @@ newaction {
         exec("copy /b "..dest.."\\clink.lua /b + "..dest.."\\arguments.lua /b "..dest.."\\clink._lua /b")
         exec("del /q "..dest.."\\clink.lua")
         exec("del /q "..dest.."\\arguments.lua")
+        exec("del /q "..dest.."\\debugger.lua")
 
         local lua_lump = io.open(dest.."\\clink._lua", "a")
         for _, i in ipairs(os.matchfiles(dest.."/*.lua")) do
