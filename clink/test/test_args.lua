@@ -438,3 +438,30 @@ clink.test.test_matches(
     "argcmd_skip one two -flag_a two four five -f\t",
     { "-flag_a", "-flag_b" }
 )
+
+--------------------------------------------------------------------------------
+p = clink.arg.new_parser(
+    "-flag" .. clink.arg.new_parser({ "red", "green", "blue"}),
+    { "one", "two", "three" },
+    { "four", "five" }
+)
+
+clink.arg.register_parser("argcmd_lazy", p)
+
+clink.test.test_output(
+    "Lazy init 1",
+    "argcmd_lazy o",
+    "argcmd_lazy one f"
+)
+
+clink.test.test_matches(
+    "Lazy init 2",
+    "argcmd_lazy one f",
+    { "four", "five" }
+)
+
+clink.test.test_matches(
+    "Lazy init 2",
+    "argcmd_lazy one four -flag ",
+    { "red", "green", "blue" }
+)
