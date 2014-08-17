@@ -86,7 +86,7 @@ static int find_duplicate(const char* line)
         }
     }
 
-    return 0;
+    return -1;
 }
 
 //------------------------------------------------------------------------------
