@@ -476,7 +476,7 @@ function clink.arg.new_parser(...)
     setmetatable(parser, parser_meta_table)
 
     -- If any arguments are provided, treat them as parser's arguments or flags
-    if ... and #... > 0 then
+    if ... then
         
         for _, word in ipairs({...}) do
             if type(word) == "string" then parser:add_flags({word})
