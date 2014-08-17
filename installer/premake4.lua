@@ -99,7 +99,7 @@ newaction {
         local src_dir_name = path.translate(path.getabsolute("."), "\\")
 
         -- Build the code.
-        local vs_ver = _OPTIONS["clink_vs_ver"] or "vs2010"
+        local vs_ver = _OPTIONS["clink_vs_ver"] or "vs2013"
         local premake = _PREMAKE_COMMAND or "premake4"
         exec(premake.." --clink_ver="..clink_ver.." "..vs_ver)
         exec("msbuild /m /v:q /p:configuration=release /p:platform=win32 .build/"..vs_ver.."/clink.sln")
