@@ -450,6 +450,24 @@ local function parser_loop(parser, loop_point)
 end
 
 --------------------------------------------------------------------------------
+local function parser_initialise(parser, ...)
+    for _, word in ipairs({...}) do
+        local t = type(word)
+        if t == "string" then
+            parser:add_flags(word)
+        elseif t == "table" then
+            if is_sub_parser(word) and parser_is_flag(nil, word.key) then
+                parser:add_flags(word)
+            else
+                parser:add_arguments(word)
+            end
+        else
+            error("Additional arguments to new_parser() must be tables or strings", 2)
+        end
+    end
+end
+
+--------------------------------------------------------------------------------
 function clink.arg.new_parser(...)
     local parser = {}
 
@@ -475,19 +493,11 @@ function clink.arg.new_parser(...)
 
     setmetatable(parser, parser_meta_table)
 
-    -- If any arguments are provided, treat them as parser's arguments or flags
+    -- If any arguments are provided treat them as parser's arguments or flags
     if ... then
-        
-        for _, word in ipairs({...}) do
-            if type(word) == "string" then parser:add_flags({word})
-            elseif type(word) == "table" then
-                if getmetatable(word) == sub_parser_meta_table
-                    and parser_is_flag(nil, word.key) then
-                    parser:add_flags({word})
-                else
-                    parser:add_arguments(word)
-                end
-            end
+        success, msg = pcall(parser_initialise, parser, ...)
+        if not success then
+            error(msg, 2)
         end
     end
 
