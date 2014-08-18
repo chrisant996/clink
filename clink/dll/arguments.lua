@@ -238,7 +238,7 @@ local function parser_go_args(parser, state)
                 end
             end
 
-            -- Check so see if the part has an exact match in the agrument. Note
+            -- Check so see if the part has an exact match in the argument. Note
             -- that only string-type options are considered.
             if type(arg_opt) == "string" then
                 exact = exact or arg_opt == part
