@@ -441,7 +441,7 @@ end
 
 --------------------------------------------------------------------------------
 local function parser_loop(parser, loop_point)
-    if loop_point == nil or type(loop_point) ~= "number" then
+    if loop_point == nil or type(loop_point) ~= "number" or loop_point < 1 then
         loop_point = 1
     end
 
