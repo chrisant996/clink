@@ -451,7 +451,7 @@ static int ansi_to_attr(int colour)
 }
 
 //------------------------------------------------------------------------------
-static void fwrite_ansi_code(const wchar_t* code, int defaults)
+static int fwrite_ansi_code(const wchar_t* code, int current, int defaults)
 {
     int i;
     int params[32];
@@ -461,11 +461,11 @@ static void fwrite_ansi_code(const wchar_t* code, int defaults)
     i = parse_ansi_code_w(code, params, sizeof_array(params));
     if (i != 'm')
     {
-        return;
+        return current;
     }
 
     handle = GetStdHandle(STD_OUTPUT_HANDLE);
-    attr = defaults;
+    attr = current;
 
     for (i = 0; i < sizeof_array(params); ++i)
     {
@@ -479,17 +479,21 @@ static void fwrite_ansi_code(const wchar_t* code, int defaults)
         {
             attr = defaults;
         }
-        else if (param == 1) // fg intensity
+        else if (param == 1) // fg intensity (bright)
         {
             attr |= 0x08;
         }
-        else if (param == 2) // fg intensity
+        else if (param == 2 || param == 22) // fg intensity (normal)
         {
             attr &= ~0x08;
         }
-        else if (param == 4) // bg intensity
+        else if (param == 4) // bg intensity (bright)
         {
             attr |= 0x80;
+        }
+        else if (param == 24) // bg intensity (normal)
+        {
+            attr &= ~0x80;
         }
         else if ((unsigned int)param - 30 < 8) // fg colour
         {
@@ -510,6 +514,7 @@ static void fwrite_ansi_code(const wchar_t* code, int defaults)
     }
 
     SetConsoleTextAttribute(handle, attr);
+    return attr;
 }
 
 //------------------------------------------------------------------------------
@@ -519,13 +524,14 @@ static void fwrite_hook(wchar_t* str)
     HANDLE handle;
     DWORD written;
     CONSOLE_SCREEN_BUFFER_INFO csbi;
-    int attr;
+    int attr_def;
+    int attr_cur;
 
     handle = GetStdHandle(STD_OUTPUT_HANDLE);
-
     GetConsoleScreenBufferInfo(handle, &csbi);
-    attr = csbi.wAttributes;
 
+    attr_def = csbi.wAttributes;
+    attr_cur = attr_def;
     next = str;
     while (*next)
     {
@@ -540,13 +546,13 @@ static void fwrite_hook(wchar_t* str)
         // Process ansi code.
         if (*ansi_code)
         {
-            fwrite_ansi_code(ansi_code, attr);
+            attr_cur = fwrite_ansi_code(ansi_code, attr_cur, attr_def);
         }
 
         next = ansi_code + ansi_size;
     }
 
-    SetConsoleTextAttribute(handle, attr);
+    SetConsoleTextAttribute(handle, attr_def);
 }
 
 //------------------------------------------------------------------------------
