@@ -29,7 +29,7 @@ local is_parser
 local is_sub_parser
 local new_sub_parser
 local parser_go_impl
---local merge_parsers
+local merge_parsers
 
 local parser_meta_table     = {}
 local sub_parser_meta_table = {}
