@@ -317,15 +317,10 @@ char** match_display_filter(char** matches, int match_count)
         len = (int)strlen(base) + is_dir;
 
         new_matches[i] = malloc(len + 1);
+        strcpy(new_matches[i], base);
         if (is_dir)
         {
-            // Coming soon; colours!
-            strcpy(new_matches[i], base);
             strcat(new_matches[i], "\\");
-        }
-        else
-        {
-            strcpy(new_matches[i], base);
         }
     }
 
