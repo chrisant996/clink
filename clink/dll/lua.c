@@ -136,7 +136,7 @@ char** lua_match_display_filter(char** matches, int match_count)
         lua_rawgeti(g_lua, -1, i);
         if (lua_isnil(g_lua, -1))
         {
-            match = matches[i];
+            match = "nil";
         }
         else
         {
