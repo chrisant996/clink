@@ -228,6 +228,8 @@ void clear_screen()
         fill.Attributes = csbi.wAttributes;
 
         ScrollConsoleScreenBuffer(handle, &window, NULL, dest_origin, &fill);
+
+        window.Top = csbi.dwCursorPosition.Y - dy;
     }
     else
     {
