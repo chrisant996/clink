@@ -193,12 +193,13 @@ static char* write_trampoline_out(char* write, void* to_hook, void* hook)
     rel_addr = 0;
     patch = (char*)to_hook - 5;
 
-    // Check we've got a nop slide to patch into.
+    // Check we've got a nop slide or int3 block to patch into.
     for (i = 0; i < 5; ++i)
     {
-        if ((unsigned char)patch[i] != 0x90)
+        unsigned char c = patch[i];
+        if (c != 0x90 && c != 0xcc)
         {
-            LOG_INFO("No nop-slide detected prior to hook target.");
+            LOG_INFO("No nop slide or int3 block detected prior to hook target.");
             return NULL;
         }
     }
@@ -263,6 +264,7 @@ static void* hook_jmp_impl(void* to_hook, void* hook)
 #ifdef _M_X64
         { 0x38ec8348, 0xffffffff },      // sub rsp,38h  
         { 0x0000f3ff, 0x0000ffff },      // push rbx  
+        { 0x00005340, 0x0000ffff },      // push rbx
         { 0x00dc8b4c, 0x00ffffff },      // mov r11, rsp
 #elif defined _M_IX86
         { 0x0000ff8b, 0x0000ffff },      // mov edi,edi  
