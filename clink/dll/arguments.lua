@@ -171,7 +171,12 @@ local function parser_flatten_argument(parser, index, func_thunk)
             local t = type(i)
             if t == "function" then
                 local results = func_thunk(i)
-                if type(results) == "table" then
+                local t = type(results)
+                if not results then
+                    return parser.use_file_matching
+                elseif t == "boolean" then
+                    return (results and parser.use_file_matching)
+                elseif t == "table" then
                     for _, j in ipairs(results) do
                         table.insert(opts, j)
                     end

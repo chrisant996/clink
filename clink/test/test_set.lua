@@ -49,8 +49,20 @@ clink.test.test_matches(
 )
 
 clink.test.test_matches(
-    "File matches after =",
+    "File matches after = #1",
     "set sim\t="
+)
+
+clink.test.test_matches(
+    "File matches after = #2",
+    "set sim\t=dir",
+    { "dir1\\", "dir2\\" }
+)
+
+clink.test.test_matches(
+    "File matches after = #3",
+    "set sim\t=dir1\\file",
+    { "file1", "file2" }
 )
 
 -- vim: expandtab
