@@ -43,19 +43,26 @@ static int print_keys()
         return 1;
     }
 
-    printf("    Settings path: %s\n", g_settings_path);
-    puts("Available options:");
+    puts("Available options:\n");
     for (i = 0, n = settings_get_decl_count(g_settings); i < n; ++i)
     {
-        printf("%24s %6s %s\n",
-            decl->name,
-            settings_get_str(g_settings, decl->name),
-            decl->friendly_name
-        );
+        static const char dots[] = ".......................... ";
+        const char* name = decl->name;
+        int dot_count;
+
+        printf("%s ", name);
+        dot_count = sizeof_array(dots) - (int)strlen(name);
+        if (dot_count > 0)
+        {
+            printf("%s", dots + sizeof_array(dots) - dot_count);
+        }
+
+        printf("%-6s %s\n", settings_get_str(g_settings, name), decl->friendly_name);
 
         ++decl;
     }
 
+    printf("\nSettings path: %s\n", g_settings_path);
     return 0;
 }
 
