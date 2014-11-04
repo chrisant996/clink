@@ -68,6 +68,7 @@ Name                         | Description
 **history_dupe_mode**        | If a line is a duplicate of an existing history entry Clink will erase the duplicate when this is set 2. A value of 1 will not add duplicates to the history and a value of 0 will always add lines.
 **history_file_lines**       | When set to a positive integer this is the number of lines of history that will persist when Clink saves the command history to disk. Use 0 for infinite lines and &lt;0 to disable history persistence.
 **history_ignore_space**     | Ignore lines that begin with whitespace when adding lines in to the history.
+**history_io**               | Use this setting to control when the history is written to disk and when it is read back. A value of 1 will read the history before editing of a new line commences, 2 will write the history, and 3 will do both. The default (0) is to write the history when the process exits.",
 **match_colour**             | Colour to use when displaying matches. A value less than 0 will be the opposite brightness of the default colour.
 **prompt_colour**            | Surrounds the prompt in ANSI escape codes to set the prompt's colour (0..15). Disabled when the value is less than 0.
 **space_prefix_match_files** | If the line begins with whitespace then Clink bypasses executable matching and will match all files and directories instead.

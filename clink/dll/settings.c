@@ -107,13 +107,22 @@ static const setting_decl_t g_settings_decl[] = {
     },
     {
         "history_dupe_mode",
-        "Controls how duplicates entries are handled.",
+        "Controls how duplicate entries are handled",
         "If a line is a duplicate of an existing history entry Clink will "
         "erase the duplicate when this is set 2. A value of 1 will not add "
-        "duplicates to the history and a value of 0 will always add lines.",
+        "duplicates to the history and a value of 0 will always add lines. "
+        "Note that history is not deduplicated when reading/writing to disk.",
         SETTING_TYPE_ENUM,
-        "Always add\0Ignore\0Erase",
+        "Always add\0Ignore\0Erase previous",
         "2"
+    },
+    {
+        "history_io",
+        "Read/write history file each line edited",
+        "When non-zero the history will be read from disk before editing a "
+        "new line and written to disk afterwards.",
+        SETTING_TYPE_BOOL,
+        0, "0"
     },
     {
         "use_altgr_substitute",

@@ -42,6 +42,7 @@ static int          completion_shim_impl(int, int, int (*)(int, int));
 int                 rl_complete(int, int);
 int                 rl_menu_complete(int, int);
 void                load_history();
+void                save_history();
 void                add_to_history(const char*);
 int                 expand_from_history(const char*, char**);
 
@@ -635,9 +636,18 @@ static char* call_readline_impl(const char* prompt)
 
     GetCurrentDirectory(sizeof_array(cwd_cache), cwd_cache);
 
-    // Call readline
     do
     {
+        int do_history_io;
+
+        // Should we read the history from disk.
+        do_history_io = get_clink_setting_int("history_io");
+        if (do_history_io != 0)
+        {
+            load_history();
+        }
+
+        // Call readline
         rl_already_prompted = (prompt == NULL);
         text = readline(prepared_prompt ? prepared_prompt : "");
         if (!text)
@@ -661,6 +671,12 @@ static char* call_readline_impl(const char* prompt)
         }
 
         add_to_history(text);
+
+        // Should we read the history from disk.
+        if (do_history_io != 0)
+        {
+            save_history();
+        }
     }
     while (!text || expand_result == 2);
 

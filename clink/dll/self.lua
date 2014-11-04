@@ -56,6 +56,7 @@ set_parser:set_arguments(
         "history_dupe_mode",
         "history_file_lines",
         "history_ignore_space",
+        "history_io",
         "match_colour",
         "prompt_colour",
         "space_prefix_match_files",
