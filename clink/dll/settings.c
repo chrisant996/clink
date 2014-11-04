@@ -30,14 +30,14 @@ static settings_t*  g_settings      = NULL;
 static const setting_decl_t g_settings_decl[] = {
     {
         "ctrld_exits",
-        "Ctrl-D exits",
+        "Pressing Ctrl-D exits session",
         "Ctrl-D exits cmd.exe when it is pressed on an empty line.",
         SETTING_TYPE_BOOL,
         0, "1"
     },
     {
         "esc_clears_line",
-        "Esc clears line",
+        "Toggle if pressing Esc clears line",
         "Clink clears the current line when Esc is pressed (unless Readline's "
         "Vi mode is enabled).",
         SETTING_TYPE_BOOL,
@@ -73,7 +73,7 @@ static const setting_decl_t g_settings_decl[] = {
     },
     {
         "prompt_colour",
-        "Prompt colour",
+        "Colour of the prompt",
         "Surrounds the prompt in ANSI escape codes to set the prompt's colour. "
         "Disabled when the value is less than 0.",
         SETTING_TYPE_INT,
@@ -99,7 +99,7 @@ static const setting_decl_t g_settings_decl[] = {
     },
     {
         "history_ignore_space",
-        "Skip adding lines prefixed with whitespace.",
+        "Skip adding lines prefixed with whitespace",
         "Ignore lines that begin with whitespace when adding lines in to "
         "the history.",
         SETTING_TYPE_BOOL,
@@ -126,7 +126,7 @@ static const setting_decl_t g_settings_decl[] = {
     },
     {
         "strip_crlf_on_paste",
-        "Strips CR and LF chars when pasting.",
+        "Strips CR and LF chars on paste",
         "Setting this to a value >0 will make Clink strip CR and LF characters "
         "from text pasted into the current line. Set this to 1 to strip all "
         "newline characters and 2 to replace them with a space.",
