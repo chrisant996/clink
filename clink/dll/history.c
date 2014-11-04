@@ -42,6 +42,13 @@ void load_history()
     char buffer[512];
 
     get_history_file_name(buffer, sizeof(buffer));
+
+    // Clear existing history.
+    stifle_history(0);
+    unstifle_history();
+    g_new_history_count = 0;
+
+    // Read from disk.
     read_history(buffer);
     using_history();
 }
