@@ -76,7 +76,12 @@ void save_history()
         write_history(buffer);
     }
 
-    history_truncate_file(buffer, max_history);
+    if (max_history != INT_MAX)
+    {
+        history_truncate_file(buffer, max_history);
+    }
+
+    g_new_history_count = 0;
 }
 
 //------------------------------------------------------------------------------
