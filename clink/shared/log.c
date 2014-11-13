@@ -35,6 +35,7 @@ static void log_line_v(
 {
     FILE* file;
     char buffer[512];
+    DWORD pid = GetCurrentProcessId();
 
     get_log_dir(buffer, sizeof_array(buffer));
     str_cat(buffer, "/clink.log", sizeof_array(buffer));
@@ -53,7 +54,7 @@ static void log_line_v(
 
     // Could use fprintf here, but it appears to be broken (writing to stdout
     // instead)?!
-    _snprintf(buffer, sizeof_array(buffer), "%s():%d -- ", function, source_line);
+    _snprintf(buffer, sizeof_array(buffer), "%5d %-25s %4d ", pid, function, source_line);
     buffer[sizeof_array(buffer) - 1] = '\0';
 
     // Write out the line, tagged with function and line number.
