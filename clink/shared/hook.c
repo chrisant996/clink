@@ -142,13 +142,13 @@ static char* alloc_trampoline(void* hint)
 }
 
 //------------------------------------------------------------------------------
-static int bytes_of_mask(unsigned mask)
+static int get_mask_size(unsigned mask)
 {
     // Just for laughs, a sledgehammer for a nut.
     mask &= 0x01010101;
-    mask = (mask >> 16) + (mask & 0xffff);
-    mask = (mask >> 8) + (mask & 0xff);
-    return mask;
+    mask += mask >> 16;
+    mask += mask >> 8;
+    return mask & 0x0f;
 }
 
 //------------------------------------------------------------------------------
@@ -252,8 +252,11 @@ static char* write_trampoline_in(char* write, void* to_hook, int n)
 }
 
 //------------------------------------------------------------------------------
-static void* hook_jmp_impl(void* to_hook, void* hook)
+static int get_instruction_length(void* addr)
 {
+    unsigned prolog;
+    int i;
+
     struct asm_tag_t
     {
         unsigned expected;
@@ -262,91 +265,118 @@ static void* hook_jmp_impl(void* to_hook, void* hook)
 
     struct asm_tag_t asm_tags[] = {
 #ifdef _M_X64
-        { 0x38ec8348, 0xffffffff },      // sub rsp,38h  
-        { 0x0000f3ff, 0x0000ffff },      // push rbx  
-        { 0x00005340, 0x0000ffff },      // push rbx
-        { 0x00dc8b4c, 0x00ffffff },      // mov r11, rsp
+        { 0x38ec8348, 0xffffffff },  // sub rsp,38h  
+        { 0x0000f3ff, 0x0000ffff },  // push rbx  
+        { 0x00005340, 0x0000ffff },  // push rbx
+        { 0x00dc8b4c, 0x00ffffff },  // mov r11, rsp
+        { 0x0000b848, 0x0000f8ff },  // mov reg64, imm64  = 10-byte length
 #elif defined _M_IX86
-        { 0x0000ff8b, 0x0000ffff },      // mov edi,edi  
+        { 0x0000ff8b, 0x0000ffff },  // mov edi,edi  
+        { 0x000000e9, 0x000000ff },  // jmp addr32        = 5-byte length
 #endif
-        //{ 0x000025ff, 0x0000ffff },      // jmp [addr]
     };
 
-    struct region_info_t region_info;
-    unsigned prolog;
-    int i;
-
-    LOG_INFO("Attempting to hook at %p with %p", to_hook, hook);
-
-    get_region_info(to_hook, &region_info);
-
-    // Follow jumps.
-    if (*((unsigned short*)to_hook) == 0x25ff)
-    {
-        char* t = to_hook;
-        void* addr;
-        int* imm = (int*)(t + 2);
-
-#ifdef _M_X64
-        addr = t + *imm + 6;
-#elif defined _M_IX86
-        addr = (void*)(intptr_t)(*imm);
-#endif
-
-        to_hook = *(void**)addr;
-
-        LOG_INFO("Following jump to %p", to_hook);
-    }
-
-    prolog = *((unsigned*)to_hook);
+    prolog = *(unsigned*)(addr);
     for (i = 0; i < sizeof_array(asm_tags); ++i)
     {
-        struct asm_tag_t* asm_tag = asm_tags + i;
-        unsigned mask = asm_tag->mask;
-        char* trampoline;
-        char* write;
-        int n;
+        int length;
+        unsigned expected = asm_tags[i].expected;
+        unsigned mask = asm_tags[i].mask;
 
-        // Find
-        if (asm_tag->expected != (prolog & mask))
+        if (expected != (prolog & mask))
         {
             continue;
         }
 
+        length = get_mask_size(mask);
+
+        // Checks for instructions that "expected" only partially matches.
+        if (expected == 0x0000b848)
+        {
+            length = 10;
+        }
+        else if (expected == 0xe9)
+        {
+            // jmp [imm32]
+            length = 5;
+        }
+
         LOG_INFO("Matched prolog %08X (mask = %08X)", prolog, mask);
-
-        // Prepare
-        n = bytes_of_mask(mask);
-        trampoline = write = alloc_trampoline(to_hook);
-        if (trampoline == NULL)
-        {
-            LOG_INFO("Failed to allocate a page for trampolines.");
-            break;
-        }
-
-        // In
-        write = write_trampoline_in(trampoline, to_hook, n);
-        if (write == NULL)
-        {
-            LOG_INFO("Failed to write trampoline in.");
-            break;
-        }
-
-        // Out
-        set_region_write_state(&region_info, 1);
-        write = write_trampoline_out(write, to_hook, hook);
-        set_region_write_state(&region_info, 0);
-        if (write == NULL)
-        {
-            LOG_INFO("Failed to write trampoline out.");
-            break;
-        }
-
-        return trampoline;
+        return length;
     }
 
-    LOG_INFO("Unable to match prolog %08X", prolog);
-    return NULL;
+    return 0;
+}
+
+//------------------------------------------------------------------------------
+static void* follow_jump(void* addr)
+{
+    void* dest;
+    char* t = addr;
+    int* imm = (int*)(t + 2);
+
+    if (*((unsigned short*)addr) != 0x25ff)
+        return addr;
+
+#ifdef _M_X64
+    dest = t + *imm + 6;
+#elif defined _M_IX86
+    dest = (void*)(intptr_t)(*imm);
+#endif
+
+    LOG_INFO("Following jump to %p", dest);
+    return dest;
+}
+
+//------------------------------------------------------------------------------
+static void* hook_jmp_impl(void* to_hook, void* hook)
+{
+    struct region_info_t region_info;
+    char* trampoline;
+    char* write;
+    int inst_len;
+
+    LOG_INFO("Attempting to hook at %p with %p", to_hook, hook);
+
+    to_hook = follow_jump(to_hook);
+
+    // Work out the length of the first instruction. It will be copied it into
+    // the trampoline.
+    inst_len = get_instruction_length(to_hook);
+    if (inst_len <= 0)
+    {
+        LOG_INFO("Unable to match instruction %08X", *(int*)(to_hook));
+        return NULL;
+    }
+
+    // Prepare
+    trampoline = write = alloc_trampoline(to_hook);
+    if (trampoline == NULL)
+    {
+        LOG_INFO("Failed to allocate a page for trampolines.");
+        return NULL;
+    }
+
+    // In
+    write = write_trampoline_in(trampoline, to_hook, inst_len);
+    if (write == NULL)
+    {
+        LOG_INFO("Failed to write trampoline in.");
+        return NULL;
+    }
+
+    // Out
+    get_region_info(to_hook, &region_info);
+    set_region_write_state(&region_info, 1);
+    write = write_trampoline_out(write, to_hook, hook);
+    set_region_write_state(&region_info, 0);
+    if (write == NULL)
+    {
+        LOG_INFO("Failed to write trampoline out.");
+        return NULL;
+    }
+
+    return trampoline;
 }
 
 //------------------------------------------------------------------------------
