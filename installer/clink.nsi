@@ -1,5 +1,5 @@
 ;
-; Copyright (c) 2012 Martin Ridgers
+; Copyright (c) 2014 Martin Ridgers
 ;
 ; Permission is hereby granted, free of charge, to any person obtaining a copy
 ; of this software and associated documentation files (the "Software"), to deal
@@ -19,6 +19,8 @@
 ; OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 ; SOFTWARE.
 ;
+
+!include "winmessages.nsh"
 
 ;-------------------------------------------------------------------------------
 Name                    "clink v${CLINK_VERSION}"
@@ -160,6 +162,16 @@ Section "Autorun when cmd.exe starts"
 SectionEnd
 
 ;-------------------------------------------------------------------------------
+Section "Set %CLINK_DIR% to install location"
+    SetShellVarContext all
+
+    StrCpy $0 "System\CurrentControlSet\Control\Session Manager\Environment"
+    WriteRegExpandStr HKLM $0 "CLINK_DIR" $INSTDIR
+
+    SendMessage ${HWND_BROADCAST} ${WM_WININICHANGE} 0 "STR:Environment" /TIMEOUT=1000
+SectionEnd
+
+;-------------------------------------------------------------------------------
 Section "!un.Application files"
     SectionIn RO
     SetShellVarContext all
@@ -175,10 +187,13 @@ Section "!un.Application files"
     RMDir /REBOOTOK $INSTDIR
     RMDir /REBOOTOK $INSTDIR\..
 
-    ; Remove start menu items and uninstall registry entry.
+    ; Remove start menu items and uninstall registry entries.
     RMDir /r $SMPROGRAMS\clink\${CLINK_VERSION}
     RMDir $SMPROGRAMS\clink
     DeleteRegKey HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\clink_${CLINK_VERSION}"
+    DeleteRegValue HKLM "System\CurrentControlSet\Control\Session Manager\Environment" "CLINK_DIR"
+
+    SendMessage ${HWND_BROADCAST} ${WM_WININICHANGE} 0 "STR:Environment" /TIMEOUT=1000
 SectionEnd
 
 ;-------------------------------------------------------------------------------
