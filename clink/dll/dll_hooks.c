@@ -49,7 +49,7 @@ static int apply_hook_iat(void* self, const hook_decl_t* hook, int by_name)
 
     // If the target's IAT was hooked then the hook destination is now
     // stored in 'addr'. We hook ourselves with this address to maintain
-    // the hook.
+    // any IAT hooks that may already exist.
     if (hook_iat(self, NULL, hook->name_or_addr, addr, 1) == 0)
     {
         LOG_INFO("Failed to hook own IAT for %s", hook->name_or_addr);
@@ -74,6 +74,8 @@ static int apply_hook_jmp(void* self, const hook_decl_t* hook)
         return 0;
     }
 
+    // Patch our own IAT with the address of a trampoline that the jmp-style
+    // hook creates that calls the original function (i.e. a hook bypass).
     if (hook_iat(self, NULL, hook->name_or_addr, addr, 1) == 0)
     {
         LOG_INFO("Failed to hook own IAT for %s", hook->name_or_addr);
