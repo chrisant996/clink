@@ -205,11 +205,12 @@ loop:
 
 #if defined(DEBUG_GETC) && defined(_DEBUG)
         {
+            static int id = 0;
             int i;
-            puts("");
-            for (i = 0; i < sizeof(*key); ++i)
+            printf("\n%03d: %s ", id++, key->bKeyDown ? "+" : "-");
+            for (i = 2; i < sizeof(*key) / sizeof(short); ++i)
             {
-                printf("%02x ", ((unsigned char*)key)[i]);
+                printf("%04x ", ((unsigned short*)key)[i]);
             }
         }
 #endif
