@@ -167,6 +167,7 @@ loop:
     // Read a key or use what was carried across from a previous call.
     if (carry)
     {
+        key_flags = ENHANCED_KEY;
         key_char = carry;
         carry = 0;
     }
@@ -322,6 +323,10 @@ loop:
 
         key_char = key_vk;
     }
+    else if (!(key_flags & ENHANCED_KEY) && key_char > 0x7f)
+    {
+        key_char |= 0x8000000;
+    }
 
 end:
 #if defined(DEBUG_GETC) && defined(_DEBUG)
@@ -335,6 +340,7 @@ end:
 //------------------------------------------------------------------------------
 int getc_impl(FILE* stream)
 {
+    int printable;
     int alt;
     int i;
     while (1)
@@ -344,6 +350,10 @@ int getc_impl(FILE* stream)
 
         alt = 0;
         i = GETWCH_IMPL(&alt);
+
+        // MSB is set if value represents a printable character.
+        printable = (i & 0x80000000);
+        i &= ~printable;
 
         // Treat esc like cmd.exe does - clear the line.
         if (i == 0x1b)
@@ -360,7 +370,7 @@ int getc_impl(FILE* stream)
         }
 
         // Mask off top bits, they're used to track ALT key state.
-        if (i < 0x80 || i == 0xe0)
+        if (i < 0x80 || (i == 0xe0 && !printable))
         {
             break;
         }
@@ -368,14 +378,7 @@ int getc_impl(FILE* stream)
         // Convert to utf-8 and insert directly into rl's line buffer.
         wc[0] = (wchar_t)i;
         wc[1] = L'\0';
-
-        WideCharToMultiByte(
-            CP_UTF8, 0,
-            wc, -1,
-            utf8, sizeof(utf8),
-            NULL,
-            NULL
-        );
+        WideCharToMultiByte(CP_UTF8, 0, wc, -1, utf8, sizeof(utf8), NULL, NULL);
 
         rl_insert_text(utf8);
         rl_redisplay();
