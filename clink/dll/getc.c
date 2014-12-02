@@ -23,7 +23,8 @@
 #include "shared/util.h"
 
 //------------------------------------------------------------------------------
-int get_clink_setting_int(const char*);
+DWORD   g_knownBufferSize = 0;
+int     get_clink_setting_int(const char*);
 
 //------------------------------------------------------------------------------
 static void simulate_sigwinch(COORD expected_cursor_pos)
@@ -175,24 +176,25 @@ loop:
     {
         HANDLE handle_stdout = GetStdHandle(STD_OUTPUT_HANDLE);
         CONSOLE_SCREEN_BUFFER_INFO csbi;
-        DWORD count;
+        DWORD i;
         INPUT_RECORD record;
         const KEY_EVENT_RECORD* key;
         int altgr_sub;
 
         GetConsoleScreenBufferInfo(handle_stdout, &csbi);
 
-        // Fresh read from the console.
-        SetConsoleMode(handle, ENABLE_WINDOW_INPUT);
-        ReadConsoleInputW(handle, &record, 1, &count);
-
-        // Simulate SIGWINCH signals.
-        if (record.EventType == WINDOW_BUFFER_SIZE_EVENT)
+        // Check for a new buffer size for simulated SIGWINCH signals.
+        i = (csbi.dwSize.X << 16) | csbi.dwSize.Y;
+        if (!g_knownBufferSize || g_knownBufferSize != i)
         {
             simulate_sigwinch(csbi.dwCursorPosition);
+            g_knownBufferSize = i;
             goto loop;
         }
 
+        // Fresh read from the console.
+        SetConsoleMode(handle, 0);
+        ReadConsoleInputW(handle, &record, 1, &i);
         if (record.EventType != KEY_EVENT)
         {
             goto loop;
