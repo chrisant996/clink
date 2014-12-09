@@ -36,8 +36,6 @@ void                clink_register_rl_funcs();
 char*               filter_prompt(const char*);
 void*               extract_prompt(int);
 void                free_prompt(void*);
-const wchar_t*      find_next_ansi_code_w(const wchar_t*, int*);
-int                 parse_ansi_code_w(const wchar_t*, int*, int);
 static int          completion_shim_impl(int, int, int (*)(int, int));
 int                 rl_complete(int, int);
 int                 rl_menu_complete(int, int);
@@ -45,6 +43,7 @@ void                load_history();
 void                save_history();
 void                add_to_history(const char*);
 int                 expand_from_history(const char*, char**);
+void                fwrite_hook(wchar_t*);
 
 int                 g_slash_translation             = 0;
 extern int          rl_visible_stats;
@@ -437,118 +436,6 @@ static void display_matches(char** matches, int match_count, int longest)
         free(new_matches[i]);
     }
     free(new_matches);
-}
-
-//------------------------------------------------------------------------------
-static int ansi_to_attr(int colour)
-{
-    static const int map[] = { 0, 4, 2, 6, 1, 5, 3, 7 };
-    return map[colour & 7];
-}
-
-//------------------------------------------------------------------------------
-static int fwrite_ansi_code(const wchar_t* code, int current, int defaults)
-{
-    int i;
-    int params[32];
-    HANDLE handle;
-    int attr;
-
-    i = parse_ansi_code_w(code, params, sizeof_array(params));
-    if (i != 'm')
-    {
-        return current;
-    }
-
-    handle = GetStdHandle(STD_OUTPUT_HANDLE);
-    attr = current;
-
-    for (i = 0; i < sizeof_array(params); ++i)
-    {
-        int param = params[i];
-        if (param < 0)
-        {
-            break;
-        }
-
-        if (param == 0) // reset
-        {
-            attr = defaults;
-        }
-        else if (param == 1) // fg intensity (bright)
-        {
-            attr |= 0x08;
-        }
-        else if (param == 2 || param == 22) // fg intensity (normal)
-        {
-            attr &= ~0x08;
-        }
-        else if (param == 4) // bg intensity (bright)
-        {
-            attr |= 0x80;
-        }
-        else if (param == 24) // bg intensity (normal)
-        {
-            attr &= ~0x80;
-        }
-        else if ((unsigned int)param - 30 < 8) // fg colour
-        {
-            attr = (attr & 0xf8) | ansi_to_attr(param - 30);
-        }
-        else if (param == 39) // default fg colour
-        {
-            attr = (attr & 0xf8) | (defaults & 0x07);
-        }
-        else if ((unsigned int)param - 40 < 8) // bg colour
-        {
-            attr = (attr & 0x8f) | (ansi_to_attr(param - 40) << 4);
-        }
-        else if (param == 49) // default bg colour
-        {
-            attr = (attr & 0x8f) | (defaults & 0x70);
-        }
-    }
-
-    SetConsoleTextAttribute(handle, attr);
-    return attr;
-}
-
-//------------------------------------------------------------------------------
-static void fwrite_hook(wchar_t* str)
-{
-    const wchar_t* next;
-    HANDLE handle;
-    DWORD written;
-    CONSOLE_SCREEN_BUFFER_INFO csbi;
-    int attr_def;
-    int attr_cur;
-
-    handle = GetStdHandle(STD_OUTPUT_HANDLE);
-    GetConsoleScreenBufferInfo(handle, &csbi);
-
-    attr_def = csbi.wAttributes;
-    attr_cur = attr_def;
-    next = str;
-    while (*next)
-    {
-        int ansi_size;
-        const wchar_t* ansi_code;
-
-        ansi_code = find_next_ansi_code_w(next, &ansi_size);
-
-        // Dispatch console write
-        WriteConsoleW(handle, next, ansi_code - next, &written, NULL);
-
-        // Process ansi code.
-        if (*ansi_code)
-        {
-            attr_cur = fwrite_ansi_code(ansi_code, attr_cur, attr_def);
-        }
-
-        next = ansi_code + ansi_size;
-    }
-
-    SetConsoleTextAttribute(handle, attr_def);
 }
 
 //------------------------------------------------------------------------------
