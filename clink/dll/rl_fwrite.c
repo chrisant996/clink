@@ -36,27 +36,29 @@ static int ansi_to_attr(int colour)
 //------------------------------------------------------------------------------
 static int fwrite_ansi_code(const wchar_t* code, int current, int defaults)
 {
-    int i;
+    int i, n;
     int params[32];
     HANDLE handle;
     int attr;
 
     i = parse_ansi_code_w(code, params, sizeof_array(params));
     if (i != 'm')
-    {
         return current;
-    }
 
     handle = GetStdHandle(STD_OUTPUT_HANDLE);
     attr = current;
 
+    // Count the number of parameters the code has.
+    n = 0;
+    while (n < sizeof_array(params) && params[n] >= 0)
+    {
+        ++n;
+    }
+
+    // Process each code that is supported.
     for (i = 0; i < sizeof_array(params); ++i)
     {
         int param = params[i];
-        if (param < 0)
-        {
-            break;
-        }
 
         if (param == 0) // reset
         {
@@ -93,6 +95,21 @@ static int fwrite_ansi_code(const wchar_t* code, int current, int defaults)
         else if (param == 49) // default bg colour
         {
             attr = (attr & 0x8f) | (defaults & 0x70);
+        }
+        else if (param == 38 || param == 48) // extended colour (skipped)
+        {
+            // format = param;5;[0-255] or param;2;r;g;b
+            ++i;
+            if (i >= n)
+                break;
+
+            switch (params[i])
+            {
+            case 2: i += 3; break;
+            case 5: i += 1; break;
+            }
+
+            continue;
         }
     }
 
