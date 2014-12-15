@@ -29,7 +29,7 @@ static int clink_opt_improved_doskey = 0;
 static int tokenise(wchar_t* source, wchar_t** tokens, int max_tokens)
 {
     // The doskey tokenisation (done by conhost.exe on Win7 and in theory
-    // available to any console app) is pretty amateur. Doesn't take quotes into
+    // available to any console app) is pretty basic. Doesn't take quotes into
     // account. Doesn't skip leading whitespace.
 
     int i;
@@ -153,9 +153,10 @@ void emulate_doskey(wchar_t* buffer, unsigned max_chars)
                 c -= 'a' - 9;
                 insert = (c < arg_count) ? parts.args[c] : L"";
             }
-            else if (c == '*' && arg_count)
+            else if (c == '*')
             {
-                insert = scratch[1] + (parts.args[0] - parts.command);
+                if (arg_count)
+                    insert = scratch[1] + (parts.args[0] - parts.command);
             }
             else if (c == '$')
             {
@@ -165,7 +166,7 @@ void emulate_doskey(wchar_t* buffer, unsigned max_chars)
             {
                 // Normally, the alias expansion would add a crlf pair for this
                 // tag, and then feed it piece by piece to each ReadConsole()
-                // call. This is most inconvenient. Instead we're using &&.
+                // call. This is most inconvenient. Instead we're using &.
                 // Maybe this makes this emulation incompatible with other exes?
                 insert = L"&";
             }
@@ -190,7 +191,7 @@ void emulate_doskey(wchar_t* buffer, unsigned max_chars)
                 else
                 {
                     // Vanilla alias expansion just gives up if it encounters a
-                    // tag it doesn't know.
+                    // tag it doesn't understand.
                     break;
                 }
             }
