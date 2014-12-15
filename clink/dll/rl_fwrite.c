@@ -24,6 +24,7 @@
 
 //------------------------------------------------------------------------------
 const wchar_t*      find_next_ansi_code_w(const wchar_t*, int*);
+int                 get_clink_setting_int(const char*);
 int                 parse_ansi_code_w(const wchar_t*, int*, int);
 
 //------------------------------------------------------------------------------
@@ -155,3 +156,41 @@ void fwrite_hook(wchar_t* str)
     SetConsoleTextAttribute(handle, attr_def);
 }
 
+//------------------------------------------------------------------------------
+void initialise_fwrite()
+{
+    extern void (*g_alt_fwrite_hook)(wchar_t*);
+
+    // The test framework may have got there before us so do not overwrite it.
+    if (g_alt_fwrite_hook != NULL)
+        return;
+
+    // Check for the presence of known third party tools that also provide ANSI
+    // escape code support.
+    {
+        int i;
+        const char* dll_names[] = {
+            "conemuhk.dll",
+            "conemuhk64.dll",
+            "ansi.dll",
+            "ansi32.dll",
+            "ansi64.dll",
+        };
+
+        for (i = 0; i < sizeof_array(dll_names); ++i)
+        {
+            const char* dll_name = dll_names[i];
+            if (GetModuleHandle(dll_name) != NULL)
+            {
+                LOG_INFO("Disabling ANSI support. Found '%s'", dll_name);
+                return;
+            }
+        }
+    }
+
+    // Give the user the option to disable ANSI support.
+    if (get_clink_setting_int("ansi_code_support") == 0)
+        return;
+
+    g_alt_fwrite_hook = fwrite_hook;
+}

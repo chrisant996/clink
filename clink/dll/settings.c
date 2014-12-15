@@ -143,6 +143,16 @@ static const setting_decl_t g_settings_decl[] = {
         "Paste unchanged\0Strip\0As space",
         "2"
     },
+    {
+        "ansi_code_support",
+        "Enables basic ANSI escape code support",
+        "When printing the prompt, Clink has basic built-in support for SGR "
+        "ANSI escape codes to control the text colours. This is automatically "
+        "disabled if a third party tool is detected that also provides this "
+        "facility. It can also be disabled by setting this to 0.",
+        SETTING_TYPE_BOOL,
+        0, "1"
+    },
 };
 
 //------------------------------------------------------------------------------

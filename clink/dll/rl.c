@@ -43,7 +43,7 @@ void                load_history();
 void                save_history();
 void                add_to_history(const char*);
 int                 expand_from_history(const char*, char**);
-void                fwrite_hook(wchar_t*);
+void                initialise_fwrite();
 
 int                 g_slash_translation             = 0;
 extern int          rl_visible_stats;
@@ -53,7 +53,6 @@ extern const char*  rl_filename_quote_characters;
 extern int          rl_catch_signals;
 extern int          _rl_complete_mark_directories;
 extern char*        _rl_comment_begin;
-extern void         (*g_alt_fwrite_hook)(wchar_t*);
 
 //------------------------------------------------------------------------------
 // This ensures the cursor is visible as printing to the console usually makes
@@ -468,11 +467,6 @@ static int initialise_hook()
     rl_re_read_init_file(0, 0);
     rl_visible_stats = 0;               // serves no purpose under win32.
 
-    if (g_alt_fwrite_hook == NULL)
-    {
-        g_alt_fwrite_hook = fwrite_hook;
-    }
-
     rl_startup_hook = NULL;
     return 0;
 }
@@ -492,6 +486,7 @@ static char* call_readline_impl(const char* prompt)
     {
         initialise_clink_settings();
         initialise_lua();
+        initialise_fwrite();
         load_history();
 
         rl_catch_signals = 0;

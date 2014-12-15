@@ -50,6 +50,7 @@ set_parser:disable_file_matching()
 set_parser:set_flags("--help")
 set_parser:set_arguments(
     {
+        "ansi_code_support",
         "ctrld_exits",
         "esc_clears_line",
         "exec_match_style",
