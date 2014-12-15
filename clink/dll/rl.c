@@ -473,6 +473,7 @@ static int initialise_hook()
         g_alt_fwrite_hook = fwrite_hook;
     }
 
+    rl_startup_hook = NULL;
     return 0;
 }
 
