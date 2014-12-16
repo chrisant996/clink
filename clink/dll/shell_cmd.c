@@ -123,7 +123,6 @@ static int check_auto_answer()
     // Try and find the localised prompt.
     if (prompt_to_answer == (wchar_t*)1)
     {
-
         // cmd.exe's translations are stored in a message table result in
         // the cmd.exe.mui overlay.
 
