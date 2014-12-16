@@ -91,9 +91,24 @@ static int is_interactive()
 }
 
 //------------------------------------------------------------------------------
+static wchar_t* get_mui_string(int id)
+{
+    DWORD flags, ok;
+    wchar_t* ret;
+
+    flags = FORMAT_MESSAGE_ALLOCATE_BUFFER;
+    flags |= FORMAT_MESSAGE_FROM_HMODULE;
+    flags |= FORMAT_MESSAGE_IGNORE_INSERTS;
+    ok = FormatMessageW(flags, NULL, id, 0, (void*)&ret, 0, NULL);
+
+    return ok ? ret : NULL;
+}
+
+//------------------------------------------------------------------------------
 static int check_auto_answer()
 {
     static wchar_t* prompt_to_answer = (wchar_t*)1;
+    static wchar_t* no_yes;
 
     int setting;
     wchar_t* prompt;
@@ -108,38 +123,33 @@ static int check_auto_answer()
     // Try and find the localised prompt.
     if (prompt_to_answer == (wchar_t*)1)
     {
-        static wchar_t* fallback = L"Terminate batch job (Y/N)? ";
-        static int string_id = 0x237b; // Extracted from cmd.exe.mui file.
 
-        DWORD flags;
-        DWORD ok;
+        // cmd.exe's translations are stored in a message table result in
+        // the cmd.exe.mui overlay.
 
-        flags = FORMAT_MESSAGE_ALLOCATE_BUFFER;
-        flags |= FORMAT_MESSAGE_FROM_HMODULE;
-        flags |= FORMAT_MESSAGE_IGNORE_INSERTS;
-        ok = FormatMessageW(
-            flags, NULL, string_id, 0,
-            (void*)&prompt_to_answer, 0, NULL
-        );
-        if (ok)
+        prompt_to_answer = get_mui_string(0x237b);
+        no_yes = get_mui_string(0x2328);
+
+        if (prompt_to_answer != NULL)
         {
+            no_yes = no_yes ? no_yes : L"ny";
+
+            // Strip off new line chars.
             wchar_t* c = prompt_to_answer;
             while (*c)
             {
-                // Strip off new line chars.
                 if (*c == '\r' || *c == '\n')
-                {
                     *c = '\0';
-                }
 
                 ++c;
             }
 
-            LOG_INFO("Auto-answer prompt = '%ls'", prompt_to_answer);
+            LOG_INFO("Auto-answer prompt = '%ls' (%ls)", prompt_to_answer, no_yes);
         }
         else
         {
-            prompt_to_answer = fallback;
+            prompt_to_answer = L"Terminate batch job (Y/N)? ";
+            no_yes = L"ny";
             LOG_INFO("Using fallback auto-answer prompt.");
         }
     }
@@ -148,7 +158,7 @@ static int check_auto_answer()
     if (prompt != NULL && wcsstr(prompt, prompt_to_answer) != 0)
     {
         free_prompt(prompt);
-        return (setting == 1) ? 'y' : 'n';
+        return (setting == 1) ? no_yes[1] : no_yes[0];
     }
 
     free_prompt(prompt);
