@@ -44,8 +44,7 @@ void load_history()
     get_history_file_name(buffer, sizeof(buffer));
 
     // Clear existing history.
-    stifle_history(0);
-    unstifle_history();
+    clear_history();
     g_new_history_count = 0;
 
     // Read from disk.
