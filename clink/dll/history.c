@@ -140,7 +140,8 @@ void add_to_history(const char* line)
         {
             if (dupe_mode > 1)
             {
-                remove_history(where);
+                HIST_ENTRY* entry = remove_history(where);
+                free_history_entry(entry);
             }
             else
             {
