@@ -521,15 +521,6 @@ static char* call_readline_impl(const char* prompt)
 
     do
     {
-        int do_history_io;
-
-        // Should we read the history from disk.
-        do_history_io = get_clink_setting_int("history_io");
-        if (do_history_io != 0)
-        {
-            load_history();
-        }
-
         // Call readline
         rl_already_prompted = (prompt == NULL);
         text = readline(prepared_prompt ? prepared_prompt : "");
@@ -553,13 +544,15 @@ static char* call_readline_impl(const char* prompt)
             }
         }
 
-        add_to_history(text);
-
         // Should we read the history from disk.
-        if (do_history_io != 0)
+        if (get_clink_setting_int("history_io"))
         {
+            load_history();
+            add_to_history(text);
             save_history();
         }
+        else
+            add_to_history(text);
     }
     while (!text || expand_result == 2);
 
