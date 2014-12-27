@@ -55,9 +55,11 @@ void load_history()
 //------------------------------------------------------------------------------
 void save_history()
 {
+    int always_write;
     int max_history;
     char buffer[512];
 
+    always_write = get_clink_setting_int("history_io");
     get_history_file_name(buffer, sizeof(buffer));
 
     // Get max history size.
@@ -70,7 +72,7 @@ void save_history()
     }
 
     // Write new history to the file, and truncate to our maximum.
-    if (append_history(g_new_history_count, buffer) != 0)
+    if (always_write || append_history(g_new_history_count, buffer) != 0)
     {
         write_history(buffer);
     }
