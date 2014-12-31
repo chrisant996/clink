@@ -25,6 +25,7 @@
 
 //------------------------------------------------------------------------------
 void                prepare_env_for_inputrc();
+void                clear_history();
 lua_State*          initialise_lua();
 int                 call_readline_w(const wchar_t*, wchar_t*, unsigned);
 char**              match_display_filter(char**, int);
@@ -79,6 +80,13 @@ static void match_catch(char** matches, int match_count, int longest)
 //------------------------------------------------------------------------------
 static void stdout_catch(wchar_t* buffer)
 {
+}
+
+//------------------------------------------------------------------------------
+static int clear_history_lua(lua_State* lua)
+{
+    clear_history();
+    return 0;
 }
 
 //------------------------------------------------------------------------------
@@ -275,10 +283,11 @@ int main(int argc, char** argv)
     {
         struct luaL_Reg native_methods[] = {
             { "call_readline", call_readline_lua },
-            { "get_cwd", get_cwd },
-            { "ch_dir", ch_dir },
-            { "mk_dir", mk_dir },
-            { "rm_dir", rm_dir },
+            { "ch_dir",        ch_dir },
+            { "clear_history", clear_history_lua },
+            { "get_cwd",       get_cwd },
+            { "mk_dir",        mk_dir },
+            { "rm_dir",        rm_dir },
             { NULL, NULL }
         };
 
