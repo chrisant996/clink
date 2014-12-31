@@ -110,6 +110,22 @@ local function print_result(name, passed)
 end
     
 --------------------------------------------------------------------------------
+local function call_readline_outer(input)
+    if type(input) == "table" then
+        local output
+        local matches
+
+        for _, i in ipairs(input) do
+            output, matches = call_readline_outer(i)
+        end
+
+        return output, matches
+    end
+
+    return call_readline(input)
+end
+
+--------------------------------------------------------------------------------
 local function test_runner(name, input, expected_out, expected_matches)
     test_id = test_id + 1
 
@@ -131,8 +147,10 @@ local function test_runner(name, input, expected_out, expected_matches)
         end
     end
 
+    clear_history()
+
     local passed = true
-    local output, matches = call_readline(input)
+    local output, matches = call_readline_outer(input)
 
     -- Check Readline's output.
     if expected_out and expected_out ~= output then
