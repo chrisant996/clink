@@ -1,6 +1,25 @@
 
 ### Changelog
 
+#### 0.4.3
+
+- Localised Y/N when auto-answering "terminate?" prompt.
+- $* would early out if there was no arguments.
+- Disable ANSI code support if third party provides it.
+- Installer can now set %CLINK_DIR% to install location.
+- Improved output from 'clink set'.
+- Support for Windows 10 Technical Preview.
+- Ctrl-L now scrolls last line to the top of the window rather than clearing.
+- New option to control how newline characters are pasted to the line.
+- New options to control history;
+    - 'history_file_lines' - maximum lines saved to disk.
+    - 'history_ignore_space' - ignore lines prefixed with whitespace.
+    - 'history_dupe_mode' - how duplicate entries are handled.
+    - 'history_io' - load/save history from disk every line.
+- Fixed nonfunctional numpad keys.
+- Fixed missing WINCH signals if other processes resize the buffer.
+- Support Alt codes sent from Conhost.
+
 ##### v0.4.2
 
 - Prompt colouring no longer requires third party ANSI code utility.
