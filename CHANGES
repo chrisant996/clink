@@ -1,7 +1,7 @@
 
 ### Changelog
 
-#### 0.4.3
+##### v0.4.3
 
 - Localised Y/N when auto-answering "terminate?" prompt.
 - $* would early out if there was no arguments.
