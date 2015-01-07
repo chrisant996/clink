@@ -400,6 +400,7 @@ static void display_matches(char** matches, int match_count, int longest)
 
             case 'n':
             case 'N':
+            case 0x03: // handling Ctrl+C
             case 0x7f:
                 show_matches = 0;
                 break;

@@ -45,7 +45,7 @@ Clink's solution and/or makefiles are generated using [Premake](http://industrio
 
 1. Cd to your clone of Clink.
 2. Run "premake &lt;toolchain&gt;" (where "&lt;toolchain&gt;" is one of Premake's actions - see "premake --help")
-3. Build scripts will be generated in ".build\&lt;toolchain&gt;\". For example; .build\vs2012\clink.sln.
+3. Build scripts will be generated in ".build\\&lt;toolchain&gt;\". For example; .build\vs2012\clink.sln.
 4. Call your toolchain of choice (VS, mingw32-make.exe, msbuild.exe, etc). GNU makefiles have a **help** target for more info.
 
 N.B. There is a bug in Premake 4.3 that generates corrupt .vcxproj files. Please use 4.4 (or newer).
