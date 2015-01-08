@@ -273,7 +273,13 @@ int main(int argc, char** argv)
     // Without arguments show help.
     if (scripts_path == NULL || argc <= 1)
     {
-        puts("Usage: --scripts=<scripts_path>");
+        extern const char* g_clink_header;
+
+        puts(g_clink_header);
+        puts("Usage: --scripts=<scripts_path> [--test=X[.Y]] [--verbose]");
+        puts("");
+        puts("  scripts : path to the Lua test scripts");
+        puts("     test : run group or individual test (e.g. --test=5.4)");
         return 0;
     }
 
