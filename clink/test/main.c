@@ -93,10 +93,16 @@ static int clear_history_lua(lua_State* lua)
 //------------------------------------------------------------------------------
 static int call_readline_lua(lua_State* lua)
 {
+    HANDLE handle;
+    CONSOLE_SCREEN_BUFFER_INFO csbi;
     wchar_t output[1024];
     char utf8[sizeof_array(output)];
     char* read;
     int i;
+
+    // Save the console's cursor position incase readline moves it.
+    handle = GetStdHandle(STD_OUTPUT_HANDLE);
+    GetConsoleScreenBufferInfo(handle, &csbi);
 
     // Check we've got at least one string argument.
     if (lua_gettop(lua) == 0 || !lua_isstring(lua, 1))
@@ -132,6 +138,7 @@ static int call_readline_lua(lua_State* lua)
     free(g_caught_matches);
     g_caught_matches = NULL;
 
+    SetConsoleCursorPosition(handle, csbi.dwCursorPosition);
     return 2;
 }
 
