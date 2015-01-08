@@ -30,6 +30,7 @@ lua_State*          initialise_lua();
 int                 call_readline_w(const wchar_t*, wchar_t*, unsigned);
 char**              match_display_filter(char**, int);
 extern void         (*g_alt_fwrite_hook)(wchar_t*);
+void                set_config_dir_override(const char* dir);
 
 static const char*  g_getc_automatic    = NULL;
 static char*        g_caught_matches    = NULL;
@@ -274,6 +275,8 @@ int main(int argc, char** argv)
         puts("Invalid scripts path");
         return 0;
     }
+
+    set_config_dir_override("c:\\");
 
     prepare_env_for_inputrc();
     rl_readline_name = "cmd.exe";
