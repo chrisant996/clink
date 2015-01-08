@@ -306,7 +306,7 @@ static void visible_bell()
 {
     cursor_style(!g_enhanced_cursor);
     move_cursor(0, 0);
-    Sleep(40);
+    Sleep(20);
     cursor_style(g_enhanced_cursor);
 }
 
