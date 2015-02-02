@@ -57,7 +57,7 @@ static int fwrite_ansi_code(const wchar_t* code, int current, int defaults)
     }
 
     // Process each code that is supported.
-    for (i = 0; i < sizeof_array(params); ++i)
+    for (i = 0; i < n; ++i)
     {
         int param = params[i];
 
