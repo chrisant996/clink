@@ -109,7 +109,7 @@ static int check_auto_answer()
 {
     static wchar_t* prompt_to_answer = (wchar_t*)1;
     static wchar_t* no_yes;
-
+	wchar_t* c;
     int setting;
     wchar_t* prompt;
 
@@ -134,7 +134,7 @@ static int check_auto_answer()
             no_yes = no_yes ? no_yes : L"ny";
 
             // Strip off new line chars.
-            wchar_t* c = prompt_to_answer;
+            c = prompt_to_answer;
             while (*c)
             {
                 if (*c == '\r' || *c == '\n')
