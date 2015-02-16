@@ -205,14 +205,6 @@ struct dirent *readdir(DIR *dir)
                 continue;
             }
 
-            // Skip . and ..
-            if (wcscmp(dir->info.name, L".") == 0 ||
-                wcscmp(dir->info.name, L"..") == 0)
-            {
-                dir->result.d_name = "";
-                continue;
-            }
-
             WideCharToMultiByte(
                 CP_UTF8,
                 0,

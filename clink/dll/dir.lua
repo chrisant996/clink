@@ -29,14 +29,19 @@ function dir_match_generator_impl(text)
         prefix = text:sub(1, i)
     end
 
+    local include_dots = text:find("%.+$") ~= nil
+
     local matches = {}
     local mask = text.."*"
 
     -- Find matches.
     for _, dir in ipairs(clink.find_dirs(mask, true)) do
         local file = prefix..dir
-        if clink.is_match(text, file) then
-            table.insert(matches, prefix..dir)
+
+        if include_dots or (dir ~= "." and dir ~= "..") then
+            if clink.is_match(text, file) then
+                table.insert(matches, prefix..dir)
+            end
         end
     end
 
