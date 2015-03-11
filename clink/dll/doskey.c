@@ -23,9 +23,6 @@
 #include "shared/util.h"
 
 //------------------------------------------------------------------------------
-static int clink_opt_improved_doskey = 0;
-
-//------------------------------------------------------------------------------
 static int tokenise(wchar_t* source, wchar_t** tokens, int max_tokens)
 {
     // The doskey tokenisation (done by conhost.exe on Win7 and in theory
@@ -41,11 +38,7 @@ static int tokenise(wchar_t* source, wchar_t** tokens, int max_tokens)
         // Skip whitespace, nulling as we go (not first time through though).
         while (*read && iswspace(*read))
         {
-            if (i | clink_opt_improved_doskey)
-            {
-                *read = '\0';
-            }
-
+            *read = i ? '\0' : *read;
             ++read;
         }
         
@@ -59,12 +52,8 @@ static int tokenise(wchar_t* source, wchar_t** tokens, int max_tokens)
         }
     }
 
-    if (!clink_opt_improved_doskey)
-    {
-        // Don't skip initial whitespace, in keeping with cmd.exe.
-        tokens[0] = source;
-    }
-
+    // Don't skip initial whitespace (in keeping with cmd.exe).
+    tokens[0] = source;
     return i;
 }
 
@@ -148,7 +137,7 @@ void emulate_doskey(wchar_t* buffer, unsigned max_chars)
                 c -= '1';
                 insert = (c < arg_count) ? parts.args[c] : L"";
             }
-            else if (c >= 'a' && c <= 'f' && clink_opt_improved_doskey)
+            else if (c >= 'a' && c <= 'f')
             {
                 c -= 'a' - 9;
                 insert = (c < arg_count) ? parts.args[c] : L"";
@@ -184,16 +173,7 @@ void emulate_doskey(wchar_t* buffer, unsigned max_chars)
             }
             else
             {
-                if (clink_opt_improved_doskey)
-                {
-                    continue;
-                }
-                else
-                {
-                    // Vanilla alias expansion just gives up if it encounters a
-                    // tag it doesn't understand.
-                    break;
-                }
+                continue;
             }
 
             insert_len = wcslen(insert);
@@ -202,6 +182,9 @@ void emulate_doskey(wchar_t* buffer, unsigned max_chars)
 
             write_size -= insert_len;
             write += insert_len;
+        }
+        else if (*read == '^')
+        {
         }
         else
         {
