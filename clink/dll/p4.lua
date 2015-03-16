@@ -38,4 +38,15 @@ local p4_tree = {
 
 clink.arg.register_parser("p4", p4_tree)
 
+--------------------------------------------------------------------------------
+local p4vc_tree = {
+    "help", "branchmappings", "branches", "diff", "groups", "branch", "change",
+    "client", "workspace", "depot", "group", "job", "label", "user", "jobs",
+    "labels", "pendingchanges", "resolve", "revisiongraph", "revgraph",
+    "streamgraph", "streams", "submit", "submittedchanges", "timelapse",
+    "timelapseview", "tlv", "users", "workspaces", "clients", "shutdown"
+}
+
+clink.arg.register_parser("p4vc", p4vc_tree)
+
 -- vim: expandtab
