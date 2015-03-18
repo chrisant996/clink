@@ -68,6 +68,7 @@ void emulate_doskey(wchar_t* buffer, unsigned max_chars)
     wchar_t* read_end;
     wchar_t* write;
     int write_size;
+    int in_quote;
 
     wchar_t* alias;
     wchar_t* scratch[2];
@@ -118,6 +119,7 @@ void emulate_doskey(wchar_t* buffer, unsigned max_chars)
     read_end = alias + wcslen(alias);
     write = buffer;
     write_size = max_chars;
+    in_quote = 0;
 
     memset(write, 0, write_size * sizeof(*write));
 
@@ -183,11 +185,22 @@ void emulate_doskey(wchar_t* buffer, unsigned max_chars)
             write_size -= insert_len;
             write += insert_len;
         }
-        else if (*read == '^')
+        else if (!in_quote && read[1] == '%' && read[0] != '^')
         {
+            if (write_size > 2)
+            {
+                write[0] = *read;
+                write[1] = '^';
+                write[2] = '%';
+                write += 3;
+                read += 2;
+            }
         }
         else
         {
+            if (*read == '\"')
+                in_quote ^= 1;
+
             *write = *read;
 
             ++write;
