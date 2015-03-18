@@ -187,11 +187,11 @@ project("clink_dll")
 
     configuration("release")
         build_postbuild("clink/dll/clink_inputrc_base", "release")
-        build_postbuild("clink/dll/*.lua", "release")
+        build_postbuild("clink/lua/*.lua", "release")
 
     configuration("debug")
         build_postbuild("clink/dll/clink_inputrc_base", "debug")
-        build_postbuild("clink/dll/*.lua", "debug")
+        build_postbuild("clink/lua/*.lua", "debug")
 
     configuration("vs*")
         links("dbghelp")
