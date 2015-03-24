@@ -1,5 +1,5 @@
 /* Copyright (c) 2013 Martin Ridgers
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
  * in the Software without restriction, including without limitation the rights
@@ -23,9 +23,12 @@
 #include "shared/util.h"
 
 //------------------------------------------------------------------------------
+extern "C" {
+int                 get_clink_setting_int(const char*);
+} // extern "C"
+
 void                enter_scroll_mode(int);
 int                 show_rl_help(int, int);
-int                 get_clink_setting_int(const char*);
 
 //------------------------------------------------------------------------------
 static void clear_line()
@@ -122,7 +125,7 @@ static int paste_from_clipboard(int count, int invoking_key)
 
         CloseClipboard();
     }
-    
+
     return 0;
 }
 
@@ -130,14 +133,14 @@ static int paste_from_clipboard(int count, int invoking_key)
 static int copy_line_to_clipboard(int count, int invoking_key)
 {
     HGLOBAL mem;
-    void* data;
+    wchar_t* data;
     int size;
 
     size = (strlen(rl_line_buffer) + 1) * sizeof(wchar_t);
     mem = GlobalAlloc(GMEM_MOVEABLE, size);
     if (mem != NULL)
     {
-        data = GlobalLock(mem);
+        data = (wchar_t*)GlobalLock(mem);
         MultiByteToWideChar(CP_UTF8, 0, rl_line_buffer, -1, data, size);
         GlobalUnlock(mem);
 
@@ -220,7 +223,7 @@ static int expand_env_vars(int count, int invoking_key)
     int word_left, word_right;
 
     // Create some buffers to work in.
-    out = malloc(buffer_size * 2);
+    out = (char*)malloc(buffer_size * 2);
     in = out + buffer_size;
 
     // Extract the word under the cursor.

@@ -1,5 +1,5 @@
-/* Copyright (c) 2012 Martin Ridgers
- * 
+/* Copyright (c) 2015 Martin Ridgers
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
  * in the Software without restriction, including without limitation the rights
@@ -19,39 +19,39 @@
  * SOFTWARE.
  */
 
-#ifndef UTIL_H
-#define UTIL_H
+#ifndef RL_BACKEND_H
+#define RL_BACKEND_H
+
+#include "backend.h"
+
+#ifdef __cplusplus
+
+//------------------------------------------------------------------------------
+class rl_backend
+    : public backend
+{
+public:
+                        rl_backend();
+    virtual             ~rl_backend();
+    virtual bool        edit_line(const wchar_t* prompt, wchar_t* out, int out_size) override;
+    virtual const char* get_shell_name() const override;
+    virtual void        set_shell_name(const char* name) override;
+
+private:
+};
+
+#endif // __cplusplus
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-void str_cpy(char* dest, const char* src, int max);
-void str_cat(char* dest, const char* src, int max);
-void str_cat_n(char* dest, const char* src, int max, int n);
-void get_config_dir(char* buffer, int size);
-void get_log_dir(char* buffer, int size);
-void get_dll_dir(char* buffer, int size);
-void set_config_dir_override(const char* path);
-void log_line(const char* function, int source_line, const char* format, ...);
-void log_error(const char* function, int source_line, const char* format, ...);
-void puts_help(const char** help_pairs, int count);
-void cpy_path_as_abs(char* abs, const char* rel, int abs_size);
-int  hash_string(const char* str);
-void disable_log();
+backend_t* get_rl_backend();
 
 #ifdef __cplusplus
-} // extern "C"
+}
 #endif
 
-#define LOG_INFO(...)   log_line(__FUNCTION__, __LINE__, __VA_ARGS__)
-#define LOG_ERROR(...)  log_error(__FUNCTION__, __LINE__, __VA_ARGS__)
-
-#define AS_STR(x)       AS_STR_IMPL(x)
-#define AS_STR_IMPL(x)  #x
-
-#define sizeof_array(x) (sizeof((x)) / sizeof((x)[0]))
-
-#endif // UTIL_H
+#endif // RL_BACKEND_H
 
 // vim: expandtab

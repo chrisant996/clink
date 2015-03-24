@@ -1,5 +1,5 @@
 /* Copyright (c) 2012 Martin Ridgers
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
  * in the Software without restriction, including without limitation the rights
@@ -23,9 +23,12 @@
 #include "shared/util.h"
 
 //------------------------------------------------------------------------------
+extern "C" {
 const wchar_t*      find_next_ansi_code_w(const wchar_t*, int*);
 int                 get_clink_setting_int(const char*);
 int                 parse_ansi_code_w(const wchar_t*, int*, int);
+extern void         (*g_alt_fwrite_hook)(wchar_t*);
+} // extern "C"
 
 //------------------------------------------------------------------------------
 static int ansi_to_attr(int colour)
@@ -159,8 +162,6 @@ void fwrite_hook(wchar_t* str)
 //------------------------------------------------------------------------------
 void initialise_fwrite()
 {
-    extern void (*g_alt_fwrite_hook)(wchar_t*);
-
     // The test framework may have got there before us so do not overwrite it.
     if (g_alt_fwrite_hook != NULL)
         return;

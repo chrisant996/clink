@@ -1,5 +1,5 @@
-/* Copyright (c) 2012 Martin Ridgers
- * 
+/* Copyright (c) 2013 Martin Ridgers
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
  * in the Software without restriction, including without limitation the rights
@@ -19,30 +19,6 @@
  * SOFTWARE.
  */
 
-#ifndef PCH_H
-#define PCH_H
-
-#include <stdio.h>
-#include <conio.h>
-#include <io.h>
-#include <locale.h>
-#include <stdlib.h>
-#ifdef __MINGW32__
-#   include <stdint.h>
-#endif
-
-#include <Windows.h>
-#include <Shlobj.h>
-#ifndef __MINGW32__
-#   include <DbgHelp.h>
-#endif
-
-// Lua includes.
-#include "dirent.h"
-#include "lua.h"
-#include "lauxlib.h"
-#include "lualib.h"
-
-#endif // PCH_H
+#include "pch.h"
 
 // vim: expandtab

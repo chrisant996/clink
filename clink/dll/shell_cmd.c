@@ -24,14 +24,14 @@
 #include "dll_hooks.h"
 #include "shared/util.h"
 
+#include <backend.h>
+
 //------------------------------------------------------------------------------
 int                     get_clink_setting_int(const char*);
 void*                   push_exception_filter();
 void                    pop_exception_filter(void* old_filter);
-int                     call_readline_w(const wchar_t*, wchar_t*, unsigned);
 int                     begin_doskey(wchar_t*, unsigned);
 int                     continue_doskey(wchar_t*, unsigned);
-void                    emulate_doskey(wchar_t*, unsigned);
 wchar_t*                detect_tagged_prompt_w(const wchar_t*, int);
 void                    free_prompt(void*);
 void*                   extract_prompt(int);
@@ -40,6 +40,7 @@ static int              cmd_initialise(void*);
 static void             cmd_shutdown();
 
 extern const wchar_t    g_prompt_tag_hidden[];
+static backend_t*       g_backend;
 static wchar_t*         g_prompt_w;
 shell_t                 g_shell_cmd = {
                             cmd_validate,
@@ -265,7 +266,7 @@ static BOOL WINAPI read_console(
     // Call readline.
     while (1)
     {
-        int is_eof = call_readline_w(g_prompt_w, buffer, buffer_size);
+        int is_eof = edit_line(g_backend, g_prompt_w, buffer, buffer_size);
         if (!is_eof)
         {
             break;
@@ -430,10 +431,12 @@ static int cmd_validate()
 }
 
 //------------------------------------------------------------------------------
-static int cmd_initialise(void* base)
+static int cmd_initialise(const backend_t* backend)
 {
     const char* dll = get_kernel_dll();
     const char* func_name = "GetEnvironmentVariableW";
+
+    g_backend = backend;
 
     if (!set_hook_trap(dll, func_name, hook_trap))
     {
@@ -459,7 +462,10 @@ static int cmd_initialise(void* base)
         str_cat(buffer, "\" $*", BUF_SIZE);
 
 #if !defined(__MINGW32__) && !defined(__MINGW64__)
-        AddConsoleAlias("clink", buffer, (char*)rl_readline_name);
+        {
+            const char* shell_name = get_shell_name(g_backend);
+            AddConsoleAlias("clink", buffer, (char*)shell_name);
+        }
 #endif // !__MINGW32__ && !__MINGW64__
 
         #undef BUF_SIZE

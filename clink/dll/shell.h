@@ -19,12 +19,18 @@
  * SOFTWARE.
  */
 
+#ifndef SHELL_H
+#define SHELL_H
+
+#include <backend.h>
 
 typedef struct
 {
     int     (*validate)();
-    int     (*initialise)(void*);
+    int     (*initialise)(backend_t*);
     void    (*shutdown)();
 } shell_t;
+
+#endif // SHELL_H
 
 // vim: expandtab

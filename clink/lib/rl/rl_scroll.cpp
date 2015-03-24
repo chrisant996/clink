@@ -1,5 +1,5 @@
 /* Copyright (c) 2012 Martin Ridgers
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
  * in the Software without restriction, including without limitation the rights
@@ -23,8 +23,12 @@
 #include "shared/util.h"
 
 //------------------------------------------------------------------------------
+extern "C" {
 int                         _rl_dispatch(int, Keymap);
 extern int                  rl_key_sequence_length;
+} // extern "C"
+
+//------------------------------------------------------------------------------
 static COORD                g_cursor_position;
 static KEYMAP_ENTRY_ARRAY   g_scroller_keymap;
 static Keymap               g_previous_keymap;
@@ -55,7 +59,7 @@ static int page_up(int count, int invoking_key)
     HANDLE handle;
     int rows_per_page;
     SMALL_RECT* wnd;
-    
+
     if (rl_key_sequence_length < 3)
     {
         return leave_scroll_mode(count, invoking_key);
@@ -85,7 +89,7 @@ static int page_down(int count, int invoking_key)
     HANDLE handle;
     int rows_per_page;
     SMALL_RECT* wnd;
-    
+
     if (rl_key_sequence_length < 3)
     {
         return leave_scroll_mode(count, invoking_key);

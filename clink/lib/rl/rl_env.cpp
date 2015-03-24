@@ -1,5 +1,5 @@
 /* Copyright (c) 2013 Martin Ridgers
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
  * in the Software without restriction, including without limitation the rights
@@ -38,7 +38,7 @@ static void apply_env_impl(const env_block_t* block, int clear)
     wchar_t* c;
 
     // Copy the block.
-    strings = malloc(block->size);
+    strings = (wchar_t*)malloc(block->size);
     memcpy(strings, block->data, block->size);
 
     // Apply each environment variable.
@@ -64,7 +64,7 @@ static void apply_env_impl(const env_block_t* block, int clear)
 //------------------------------------------------------------------------------
 static void capture_env(env_block_t* block)
 {
-    void* env;
+    wchar_t* env;
     const wchar_t* c;
     void* data;
     int size;
@@ -111,6 +111,8 @@ static void apply_env(const env_block_t* block)
 
     apply_env_impl(block, 0);
 }
+
+extern "C" {
 
 //------------------------------------------------------------------------------
 void prepare_env_for_inputrc()
@@ -159,5 +161,7 @@ void prepare_env_for_inputrc()
     apply_env(&env_block);
     free_env(&env_block);
 }
+
+} // extern "C"
 
 // vim: expandtab

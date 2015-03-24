@@ -1,5 +1,5 @@
 /* Copyright (c) 2013 Martin Ridgers
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
  * in the Software without restriction, including without limitation the rights
@@ -118,10 +118,10 @@ static char** collect_keymap(
                 if (*offset >= *max)
                 {
                     *max *= 2;
-                    collector = realloc(collector, sizeof(char*) * *max);
+                    collector = (char**)realloc(collector, sizeof(char*) * *max);
                 }
 
-                string = malloc(strlen(key) + strlen(name) + 32);
+                string = (char*)malloc(strlen(key) + strlen(name) + 32);
                 sprintf(string, "%-7s : %s", key, name);
 
                 collector[*offset] = string;
@@ -145,20 +145,20 @@ int show_rl_help(int count, int invoking_key)
     map = rl_get_keymap();
     offset = 1;
     max = 16;
-    collector = malloc(sizeof(char*) * max);
+    collector = (char**)malloc(sizeof(char*) * max);
     collector[0] = "";
 
     // Build string up the functions in the active keymap.
     collector = collect_keymap(map, collector, &offset, &max, 0);
     if (map[ESC].type == ISKMAP && map[ESC].function != NULL)
     {
-        Keymap esc_map = (void*)(map[ESC].function);
+        Keymap esc_map = (KEYMAP_ENTRY*)(map[ESC].function);
         collector = collect_keymap(esc_map, collector, &offset, &max, 1);
     }
 
     if (map == emacs_standard_keymap)
     {
-        Keymap ctrlx_map = (void*)map[24].function;
+        Keymap ctrlx_map = (KEYMAP_ENTRY*)(map[24].function);
         int type = map[24].type;
         if (type == ISKMAP && ctrlx_map != NULL)
         {
@@ -181,7 +181,7 @@ int show_rl_help(int count, int invoking_key)
     if (rl_completion_display_matches_hook != NULL)
     {
         rl_filename_completion_desired = 0;
-        rl_completion_display_matches_hook(collector, offset - 1, longest); 
+        rl_completion_display_matches_hook(collector, offset - 1, longest);
     }
 
     // Tidy up (N.B. the first match is a placeholder and shouldn't be freed).

@@ -174,24 +174,37 @@ project("lua")
     excludes("lua/src/luac.c")
 
 --------------------------------------------------------------------------------
+project("clink_lib")
+    language("c++")
+    kind("staticlib")
+    includedirs("clink")
+    includedirs("clink/lib")
+    files("clink/lib/**")
+
+    configuration("vs*")
+        pchsource("clink/lib/pch.cpp")
+        pchheader("pch.h")
+
+--------------------------------------------------------------------------------
 project("clink_dll")
     language("c")
     kind("sharedlib")
     links("lua")
     links("readline")
+    links("clink_lib")
     links("clink_shared")
     includedirs("lua/src")
     includedirs("clink")
-    defines("CLINK_DLL_BUILD")
+    includedirs("clink/lib")
     files("clink/dll/*")
     files("clink/version.rc")
 
     configuration("release")
-        build_postbuild("clink/dll/clink_inputrc_base", "release")
+        build_postbuild("clink/lib/rl/clink_inputrc_base", "release")
         build_postbuild("clink/lua/*.lua", "release")
 
     configuration("debug")
-        build_postbuild("clink/dll/clink_inputrc_base", "debug")
+        build_postbuild("clink/lib/rl/clink_inputrc_base", "debug")
         build_postbuild("clink/lua/*.lua", "debug")
 
     configuration("vs*")
@@ -237,12 +250,14 @@ project("clink_shared")
         pchheader("pch.h")
 
 --------------------------------------------------------------------------------
+--[[
 project("clink_test")
     language("c")
     kind("consoleapp")
     links("lua")
     links("getopt")
     links("readline")
+    links("clink_lib")
     links("clink_shared")
     defines("GETWCH_IMPL=getwch_automatic")
     includedirs("getopt")
@@ -250,19 +265,11 @@ project("clink_test")
     includedirs("clink/dll")
     includedirs("clink")
     files("clink/test/*")
-    files("clink/dll/*")
-    files("clink/version.rc")
-
-    configuration("release")
-        --build_postbuild("", "release")
-
-    configuration("debug")
-        --build_postbuild("", "debug")
 
     configuration("vs*")
-        links("dbghelp")
-        pchsource("clink/dll/pch.c")
+        pchsource("clink/lib/pch.c")
         pchheader("pch.h")
+--]]
 
 --------------------------------------------------------------------------------
 newoption {

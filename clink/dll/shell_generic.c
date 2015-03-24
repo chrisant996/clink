@@ -25,6 +25,8 @@
 #include "inject_args.h"
 #include "shared/util.h"
 
+#if 0
+
 //------------------------------------------------------------------------------
 int                     generic_validate();
 int                     generic_initialise(void*);
@@ -142,5 +144,7 @@ int generic_initialise(void* base)
 void generic_shutdown()
 {
 }
+
+#endif // 0
 
 // vim: expandtab

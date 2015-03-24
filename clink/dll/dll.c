@@ -25,6 +25,8 @@
 #include "shared/util.h"
 #include "shared/shared_mem.h"
 
+#include <rl/rl_backend.h>
+
 //------------------------------------------------------------------------------
 void                    load_history();
 void                    save_history();
@@ -34,13 +36,29 @@ int                     get_clink_setting_int(const char*);
 void                    prepare_env_for_inputrc();
 
 inject_args_t           g_inject_args;
+static backend_t*       g_backend               = NULL;
 static const shell_t*   g_shell                 = NULL;
 extern shell_t          g_shell_cmd;
+#if 0
 extern shell_t          g_shell_ps;
 extern shell_t          g_shell_generic;
+#endif
 
 //------------------------------------------------------------------------------
-static void set_rl_readline_name()
+static void initialise_backend()
+{
+    g_backend = initialise_rl_backend();
+}
+
+//------------------------------------------------------------------------------
+static void shutdown_backend()
+{
+    if (g_backend != NULL)
+        shutdown_rl_backend(g_backend);
+}
+
+//------------------------------------------------------------------------------
+static void initialise_shell_name()
 {
     char buffer[MAX_PATH];
 
@@ -53,9 +71,9 @@ static void set_rl_readline_name()
         slash = slash ? slash + 1 : buffer;
 
         str_cpy(exe_name, slash, sizeof(exe_name));
-        rl_readline_name = exe_name;
+        set_shell_name(g_backend, exe_name);
 
-        LOG_INFO("Setting rl_readline_name to '%s'", exe_name);
+        LOG_INFO("Setting shell name to '%s'", exe_name);
     }
 }
 
@@ -96,8 +114,6 @@ static void failed()
 //------------------------------------------------------------------------------
 static BOOL on_dll_attach()
 {
-    void* base;
-
     // Get the inject arguments.
     get_inject_args(GetCurrentProcessId());
 
@@ -115,7 +131,8 @@ static BOOL on_dll_attach()
     }
 
     // Prepare the process and environment for Readline.
-    set_rl_readline_name();
+    initialise_backend();
+    initialise_shell_name();
     prepare_env_for_inputrc();
 
     // Search for a supported shell.
@@ -126,12 +143,15 @@ static BOOL on_dll_attach()
             const shell_t*  shell;
         } shells[] = {
             { "cmd.exe", &g_shell_cmd },
+#if 0
             { "powershell.exe", &g_shell_ps },
+#endif
         };
 
         for (i = 0; i < sizeof_array(shells); ++i)
         {
-            if (stricmp(rl_readline_name, shells[i].name) == 0)
+            const char* shell_name = get_shell_name(g_backend);
+            if (stricmp(shell_name, shells[i].name) == 0)
             {
                 g_shell = shells[i].shell;
                 break;
@@ -144,11 +164,14 @@ static BOOL on_dll_attach()
     {
         if (!g_inject_args.no_host_check)
         {
-            LOG_INFO("Unsupported shell '%s'", rl_readline_name);
+            const char* shell_name = get_shell_name(g_backend);
+            LOG_INFO("Unsupported shell '%s'", shell_name);
             return FALSE;
         }
 
+#if 0
         g_shell = &g_shell_generic;
+#endif
     }
 
     if (!g_shell->validate())
@@ -157,8 +180,7 @@ static BOOL on_dll_attach()
         return FALSE;
     }
 
-    base = GetModuleHandle(NULL);
-    if (!g_shell->initialise(base))
+    if (!g_shell->initialise(g_backend))
     {
         failed();
         return FALSE;
@@ -181,6 +203,7 @@ static BOOL on_dll_detach()
         save_history();
         shutdown_lua();
         shutdown_clink_settings();
+        shutdown_backend();
     }
 
     return TRUE;

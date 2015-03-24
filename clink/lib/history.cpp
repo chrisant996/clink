@@ -1,5 +1,5 @@
 /* Copyright (c) 2012 Martin Ridgers
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
  * in the Software without restriction, including without limitation the rights
@@ -21,6 +21,8 @@
 
 #include "pch.h"
 #include "shared/util.h"
+
+extern "C" {
 
 //------------------------------------------------------------------------------
 int                 get_clink_setting_int(const char*);
@@ -136,7 +138,7 @@ void add_to_history(const char* line)
     dupe_mode = get_clink_setting_int("history_dupe_mode");
     if (dupe_mode > 0)
     {
-        int where = find_duplicate(c);
+        int where = find_duplicate((const char*)c);
         if (where >= 0)
         {
             if (dupe_mode > 1)
@@ -198,3 +200,7 @@ int history_expand_control(char* line, int marker_pos)
 
     return 0;
 }
+
+} // extern "C"
+
+// vim: expandtab

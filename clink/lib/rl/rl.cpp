@@ -1,5 +1,5 @@
 /* Copyright (c) 2012 Martin Ridgers
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
  * in the Software without restriction, including without limitation the rights
@@ -23,17 +23,21 @@
 #include "shared/util.h"
 
 //------------------------------------------------------------------------------
+int                 getc_impl(FILE* stream);
+void                initialise_rl_scroller();
+void                clink_register_rl_funcs();
+void                initialise_fwrite();
+
+//------------------------------------------------------------------------------
+extern "C" {
 void                initialise_lua();
 char**              lua_generate_matches(const char*, int, int);
 char**              lua_match_display_filter(char**, int);
 void                lua_filter_prompt(char*, int);
-void                initialise_rl_scroller();
 void                move_cursor(int, int);
 void*               initialise_clink_settings();
-int                 getc_impl(FILE* stream);
 int                 get_clink_setting_int(const char*);
 void                get_config_dir(char*, int);
-void                clink_register_rl_funcs();
 char*               filter_prompt(const char*);
 void*               extract_prompt(int);
 void                free_prompt(void*);
@@ -46,7 +50,6 @@ void                save_history();
 void                add_to_history(const char*);
 int                 expand_from_history(const char*, char**);
 int                 history_expand_control(char*, int);
-void                initialise_fwrite();
 
 int                 g_slash_translation             = 0;
 extern int          rl_visible_stats;
@@ -56,6 +59,7 @@ extern const char*  rl_filename_quote_characters;
 extern int          rl_catch_signals;
 extern int          _rl_complete_mark_directories;
 extern char*        _rl_comment_begin;
+} // extern "C"
 
 //------------------------------------------------------------------------------
 // This ensures the cursor is visible as printing to the console usually makes
@@ -142,7 +146,7 @@ static void quote_matches(char** matches)
     // So... do we need to prepend a quote?
     if (need_quote)
     {
-        char* c = malloc(strlen(matches[0]) + 8);
+        char* c = (char*)malloc(strlen(matches[0]) + 8);
         strcpy(c + 1, matches[0]);
         free(matches[0]);
 
@@ -303,7 +307,7 @@ char** match_display_filter(char** matches, int match_count)
         int is_dir = 0;
         int len;
         char* base = NULL;
-        
+
         // If matches are files then strip off the path and establish if they
         // are directories.
         if (rl_filename_completion_desired)
@@ -326,7 +330,7 @@ char** match_display_filter(char** matches, int match_count)
         base = (base == NULL) ? matches[i] : base + 1;
         len = (int)strlen(base) + is_dir;
 
-        new_matches[i] = malloc(len + 1);
+        new_matches[i] = (char*)malloc(len + 1);
         strcpy(new_matches[i], base);
         if (is_dir)
         {
@@ -532,7 +536,7 @@ static char* call_readline_impl(const char* prompt)
     prepared_prompt = NULL;
     if (prompt == NULL)
     {
-        prepared_prompt = extract_prompt(1);
+        prepared_prompt = (char*)extract_prompt(1);
 
         // Even though we're not going to display filtered result the extracted
         // prompt is run through Lua. This is a little bit of a hack, but helps

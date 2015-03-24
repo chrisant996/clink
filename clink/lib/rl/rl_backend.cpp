@@ -1,5 +1,5 @@
-/* Copyright (c) 2012 Martin Ridgers
- * 
+/* Copyright (c) 2015 Martin Ridgers
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
  * in the Software without restriction, including without limitation the rights
@@ -20,33 +20,54 @@
  */
 
 #include "pch.h"
+#include "rl_backend.h"
 
-#define ANSI_X_COMPILE
+int call_readline_w(const wchar_t*, wchar_t*, unsigned);
 
-//------------------------------------------------------------------------------
-
-#define char_t          char
-#define ANSI_FNAME(x)   x
-#define ansi_str_len(x) strlen(x)
-
-#include "ansi.x"
-
-#undef ansi_str_len
-#undef char_t
-#undef ANSI_FNAME
+extern "C" {
 
 //------------------------------------------------------------------------------
+backend_t* initialise_rl_backend()
+{
+    return (backend_t*)(new rl_backend());
+}
 
-#define char_t          wchar_t
-#define ANSI_FNAME(x)   x##_w
-#define ansi_str_len(x) wcslen(x)
+//------------------------------------------------------------------------------
+void shutdown_rl_backend(backend_t* backend)
+{
+    delete (rl_backend*)backend;
+}
 
-#include "ansi.x"
+} // extern "C"
 
-#undef ansi_str_len
-#undef char_t
-#undef ANSI_FNAME
 
-#undef ANSI_X_COMPILE
+
+//------------------------------------------------------------------------------
+rl_backend::rl_backend()
+{
+}
+
+//------------------------------------------------------------------------------
+rl_backend::~rl_backend()
+{
+}
+
+//------------------------------------------------------------------------------
+bool rl_backend::edit_line(const wchar_t* prompt, wchar_t* out, int out_size)
+{
+    return (call_readline_w(prompt, out, out_size) != 0);
+}
+
+//------------------------------------------------------------------------------
+const char* rl_backend::get_shell_name() const
+{
+    return rl_readline_name;
+}
+
+//------------------------------------------------------------------------------
+void rl_backend::set_shell_name(const char* name)
+{
+    rl_readline_name = name;
+}
 
 // vim: expandtab

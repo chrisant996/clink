@@ -1,5 +1,5 @@
-/* Copyright (c) 2012 Martin Ridgers
- * 
+/* Copyright (c) 2015 Martin Ridgers
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
  * in the Software without restriction, including without limitation the rights
@@ -19,30 +19,31 @@
  * SOFTWARE.
  */
 
-#ifndef PCH_H
-#define PCH_H
+#include "pch.h"
+#include "backend.h"
 
-#include <stdio.h>
-#include <conio.h>
-#include <io.h>
-#include <locale.h>
-#include <stdlib.h>
-#ifdef __MINGW32__
-#   include <stdint.h>
-#endif
+extern "C" {
 
-#include <Windows.h>
-#include <Shlobj.h>
-#ifndef __MINGW32__
-#   include <DbgHelp.h>
-#endif
+//------------------------------------------------------------------------------
+int edit_line(backend_t* instance, const wchar_t* prompt, wchar_t* out, int out_size)
+{
+    backend* self = (backend*)instance;
+    return (self->edit_line(prompt, out, out_size) == true);
+}
 
-// Lua includes.
-#include "dirent.h"
-#include "lua.h"
-#include "lauxlib.h"
-#include "lualib.h"
+//------------------------------------------------------------------------------
+const char* get_shell_name(backend_t* instance)
+{
+    backend* self = (backend*)instance;
+    return self->get_shell_name();
+}
 
-#endif // PCH_H
+//------------------------------------------------------------------------------
+void set_shell_name(backend_t* instance, const char* name)
+{
+    backend* self = (backend*)instance;
+    self->set_shell_name(name);
+}
 
-// vim: expandtab
+
+} // extern "C"

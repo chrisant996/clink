@@ -22,6 +22,8 @@
 #include "pch.h"
 #include "shell.h"
 
+#if 0
+
 //------------------------------------------------------------------------------
 int         generic_validate();
 int         generic_initialise(void*);
@@ -39,5 +41,7 @@ static int ps_initialise(void* base)
     base = GetModuleHandle("mscorwks.dll");
     return generic_initialise(base);
 }
+
+#endif // 0
 
 // vim: expandtab

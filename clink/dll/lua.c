@@ -33,10 +33,12 @@ int                     lua_execute(lua_State* state);
 extern inject_args_t    g_inject_args;
 extern int              rl_filename_completion_desired;
 extern int              rl_completion_suppress_append;
+extern int              rl_completion_suppress_quote;
 extern char*            rl_line_buffer;
 extern int              rl_point;
 extern int              _rl_completion_case_map;
 extern int              g_slash_translation;
+extern char*            rl_readline_name;
 extern char*            rl_variable_value(const char*);
 static lua_State*       g_lua                        = NULL;
 
