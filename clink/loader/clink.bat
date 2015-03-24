@@ -49,11 +49,11 @@ if "%1"=="" (
 if /i "%PROCESSOR_ARCHITECTURE%"=="x86" (
     call :loader_x86 %*
 ) else if /i "%PROCESSOR_ARCHITECTURE%"=="amd64" (
-    if /i "%ProgramFiles%"=="%ProgramFiles(x86)%" (
-		call :loader_x86 %*
-	) else (
-		call :loader_x64 %*
-	)
+    if defined PROCESSOR_ARCHITEW6432 (
+        call :loader_x86 %*
+    ) else (
+        call :loader_x64 %*
+    )
 )
 
 :end
