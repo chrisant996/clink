@@ -25,7 +25,7 @@
 #include "shared/util.h"
 #include "shared/shared_mem.h"
 
-#include <rl/rl_backend.h>
+#include <rl/rl_line_editor.h>
 
 //------------------------------------------------------------------------------
 void                    load_history();
@@ -36,7 +36,7 @@ int                     get_clink_setting_int(const char*);
 void                    prepare_env_for_inputrc();
 
 inject_args_t           g_inject_args;
-static backend_t*       g_backend               = NULL;
+static line_editor_t*   g_line_editor           = NULL;
 static const shell_t*   g_shell                 = NULL;
 extern shell_t          g_shell_cmd;
 #if 0
@@ -45,16 +45,16 @@ extern shell_t          g_shell_generic;
 #endif
 
 //------------------------------------------------------------------------------
-static void initialise_backend()
+static void initialise_line_editor()
 {
-    g_backend = initialise_rl_backend();
+    g_line_editor = initialise_rl_line_editor();
 }
 
 //------------------------------------------------------------------------------
-static void shutdown_backend()
+static void shutdown_line_editor()
 {
-    if (g_backend != NULL)
-        shutdown_rl_backend(g_backend);
+    if (g_line_editor != NULL)
+        shutdown_rl_line_editor(g_line_editor);
 }
 
 //------------------------------------------------------------------------------
@@ -71,7 +71,7 @@ static void initialise_shell_name()
         slash = slash ? slash + 1 : buffer;
 
         str_cpy(exe_name, slash, sizeof(exe_name));
-        set_shell_name(g_backend, exe_name);
+        set_shell_name(g_line_editor, exe_name);
 
         LOG_INFO("Setting shell name to '%s'", exe_name);
     }
@@ -131,7 +131,7 @@ static BOOL on_dll_attach()
     }
 
     // Prepare the process and environment for Readline.
-    initialise_backend();
+    initialise_line_editor();
     initialise_shell_name();
     prepare_env_for_inputrc();
 
@@ -150,7 +150,7 @@ static BOOL on_dll_attach()
 
         for (i = 0; i < sizeof_array(shells); ++i)
         {
-            const char* shell_name = get_shell_name(g_backend);
+            const char* shell_name = get_shell_name(g_line_editor);
             if (stricmp(shell_name, shells[i].name) == 0)
             {
                 g_shell = shells[i].shell;
@@ -164,7 +164,7 @@ static BOOL on_dll_attach()
     {
         if (!g_inject_args.no_host_check)
         {
-            const char* shell_name = get_shell_name(g_backend);
+            const char* shell_name = get_shell_name(g_line_editor);
             LOG_INFO("Unsupported shell '%s'", shell_name);
             return FALSE;
         }
@@ -180,7 +180,7 @@ static BOOL on_dll_attach()
         return FALSE;
     }
 
-    if (!g_shell->initialise(g_backend))
+    if (!g_shell->initialise(g_line_editor))
     {
         failed();
         return FALSE;
@@ -203,7 +203,7 @@ static BOOL on_dll_detach()
         save_history();
         shutdown_lua();
         shutdown_clink_settings();
-        shutdown_backend();
+        shutdown_line_editor();
     }
 
     return TRUE;

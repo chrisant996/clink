@@ -20,22 +20,22 @@
  */
 
 #include "pch.h"
-#include "rl_backend.h"
+#include "rl_line_editor.h"
 
 int call_readline_w(const wchar_t*, wchar_t*, unsigned);
 
 extern "C" {
 
 //------------------------------------------------------------------------------
-backend_t* initialise_rl_backend()
+line_editor_t* initialise_rl_line_editor()
 {
-    return (backend_t*)(new rl_backend());
+    return (line_editor_t*)(new rl_line_editor());
 }
 
 //------------------------------------------------------------------------------
-void shutdown_rl_backend(backend_t* backend)
+void shutdown_rl_line_editor(line_editor_t* line_editor)
 {
-    delete (rl_backend*)backend;
+    delete (rl_line_editor*)line_editor;
 }
 
 } // extern "C"
@@ -43,29 +43,29 @@ void shutdown_rl_backend(backend_t* backend)
 
 
 //------------------------------------------------------------------------------
-rl_backend::rl_backend()
+rl_line_editor::rl_line_editor()
 {
 }
 
 //------------------------------------------------------------------------------
-rl_backend::~rl_backend()
+rl_line_editor::~rl_line_editor()
 {
 }
 
 //------------------------------------------------------------------------------
-bool rl_backend::edit_line(const wchar_t* prompt, wchar_t* out, int out_size)
+bool rl_line_editor::edit_line(const wchar_t* prompt, wchar_t* out, int out_size)
 {
     return (call_readline_w(prompt, out, out_size) != 0);
 }
 
 //------------------------------------------------------------------------------
-const char* rl_backend::get_shell_name() const
+const char* rl_line_editor::get_shell_name() const
 {
     return rl_readline_name;
 }
 
 //------------------------------------------------------------------------------
-void rl_backend::set_shell_name(const char* name)
+void rl_line_editor::set_shell_name(const char* name)
 {
     rl_readline_name = name;
 }

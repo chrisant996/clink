@@ -22,12 +22,12 @@
 #ifndef SHELL_H
 #define SHELL_H
 
-#include <backend.h>
+#include <line_editor.h>
 
 typedef struct
 {
     int     (*validate)();
-    int     (*initialise)(backend_t*);
+    int     (*initialise)(line_editor_t*);
     void    (*shutdown)();
 } shell_t;
 

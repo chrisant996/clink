@@ -1,4 +1,4 @@
-/* Copyright (c) 2013 Martin Ridgers
+/* Copyright (c) 2015 Martin Ridgers
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -19,26 +19,25 @@
  * SOFTWARE.
  */
 
-#ifndef BACKEND_H
-#define BACKEND_H
+#ifndef RL_BACKEND_H
+#define RL_BACKEND_H
+
+#include "line_editor.h"
 
 #ifdef __cplusplus
 
 //------------------------------------------------------------------------------
-class backend
+class rl_line_editor
+    : public line_editor
 {
 public:
-                        backend() {}
-    virtual bool        edit_line(const wchar_t* prompt, wchar_t* out, int out_size) = 0;
-    virtual const char* get_shell_name() const = 0;
-    virtual void        set_shell_name(const char* name) = 0;
-
-protected:
-    virtual             ~backend() = 0 {}
+                        rl_line_editor();
+    virtual             ~rl_line_editor();
+    virtual bool        edit_line(const wchar_t* prompt, wchar_t* out, int out_size) override;
+    virtual const char* get_shell_name() const override;
+    virtual void        set_shell_name(const char* name) override;
 
 private:
-                        backend(const backend&);        // unimplemented
-    void                operator = (const backend&);    // unimplemented
 };
 
 #endif // __cplusplus
@@ -47,16 +46,13 @@ private:
 extern "C" {
 #endif
 
-typedef void* backend_t;
-
-int         edit_line(backend_t* instance, const wchar_t* prompt, wchar_t* out, int out_size);
-const char* get_shell_name(backend_t* instance);
-void        set_shell_name(backend_t* instance, const char* name);
+line_editor_t*  initialise_rl_line_editor();
+void            shutdown_rl_line_editor(line_editor_t* line_editor);
 
 #ifdef __cplusplus
-} // extern "C"
+}
 #endif
 
-#endif // BACKEND_H
+#endif // RL_BACKEND_H
 
 // vim: expandtab

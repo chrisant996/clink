@@ -20,30 +20,29 @@
  */
 
 #include "pch.h"
-#include "backend.h"
+#include "line_editor.h"
 
 extern "C" {
 
 //------------------------------------------------------------------------------
-int edit_line(backend_t* instance, const wchar_t* prompt, wchar_t* out, int out_size)
+int edit_line(line_editor_t* instance, const wchar_t* prompt, wchar_t* out, int out_size)
 {
-    backend* self = (backend*)instance;
+    line_editor* self = (line_editor*)instance;
     return (self->edit_line(prompt, out, out_size) == true);
 }
 
 //------------------------------------------------------------------------------
-const char* get_shell_name(backend_t* instance)
+const char* get_shell_name(line_editor_t* instance)
 {
-    backend* self = (backend*)instance;
+    line_editor* self = (line_editor*)instance;
     return self->get_shell_name();
 }
 
 //------------------------------------------------------------------------------
-void set_shell_name(backend_t* instance, const char* name)
+void set_shell_name(line_editor_t* instance, const char* name)
 {
-    backend* self = (backend*)instance;
+    line_editor* self = (line_editor*)instance;
     self->set_shell_name(name);
 }
-
 
 } // extern "C"
