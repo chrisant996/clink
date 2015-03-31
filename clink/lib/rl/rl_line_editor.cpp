@@ -21,8 +21,22 @@
 
 #include "pch.h"
 #include "rl_line_editor.h"
+#include "inputrc.h"
 
-int call_readline_w(const wchar_t*, wchar_t*, unsigned);
+#include <shared/util.h>
+
+//------------------------------------------------------------------------------
+int     call_readline_w(const wchar_t*, wchar_t*, unsigned);
+int     ctrl_c(int, int);
+int     paste_from_clipboard(int, int);
+int     page_up(int, int);
+int     up_directory(int, int);
+int     show_rl_help(int, int);
+int     copy_line_to_clipboard(int, int);
+int     expand_env_vars(int, int);
+int     completion_shim(int, int);
+int     menu_completion_shim(int, int);
+int     backward_menu_completion_shim(int, int);
 
 extern "C" {
 
@@ -45,6 +59,8 @@ void shutdown_rl_line_editor(line_editor_t* line_editor)
 //------------------------------------------------------------------------------
 rl_line_editor::rl_line_editor()
 {
+    add_funmap_entries();
+    bind_inputrc();
 }
 
 //------------------------------------------------------------------------------
@@ -68,6 +84,45 @@ const char* rl_line_editor::get_shell_name() const
 void rl_line_editor::set_shell_name(const char* name)
 {
     rl_readline_name = name;
+}
+
+//------------------------------------------------------------------------------
+void rl_line_editor::add_funmap_entries()
+{
+    struct {
+        const char*         name;
+        rl_command_func_t*  func;
+    } entries[] = {
+        { "ctrl-c",                              ctrl_c },
+        { "paste-from-clipboard",                paste_from_clipboard },
+        { "page-up",                             page_up },
+        { "up-directory",                        up_directory },
+        { "show-rl-help",                        show_rl_help },
+        { "copy-line-to-clipboard",              copy_line_to_clipboard },
+        { "expand-env-vars",                     expand_env_vars },
+        { "clink-completion-shim",               completion_shim },
+        { "clink-menu-completion-shim",          menu_completion_shim },
+        { "clink-backward-menu-completion-shim", backward_menu_completion_shim },
+    };
+
+    for(int i = 0; i < sizeof_array(entries); ++i)
+        rl_add_funmap_entry(entries[i].name, entries[i].func);
+}
+
+//------------------------------------------------------------------------------
+void
+rl_line_editor::bind_inputrc()
+{
+    // Apply Clink's embedded inputrc.
+    const char** inputrc_line = clink_inputrc;
+    while (*inputrc_line)
+    {
+        char buffer[128];
+        str_cpy(buffer, *inputrc_line, sizeof(buffer));
+        rl_parse_and_bind(buffer);
+
+        ++inputrc_line;
+    }
 }
 
 // vim: expandtab

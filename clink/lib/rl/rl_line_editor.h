@@ -38,6 +38,7 @@ public:
     virtual void        set_shell_name(const char* name) override;
 
 private:
+    void                add_funmap_entries();
 };
 
 #endif // __cplusplus

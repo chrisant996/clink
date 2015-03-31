@@ -39,7 +39,7 @@ static void clear_line()
 }
 
 //------------------------------------------------------------------------------
-static int ctrl_c(int count, int invoking_key)
+int ctrl_c(int count, int invoking_key)
 {
     DWORD mode;
 
@@ -101,7 +101,7 @@ static void strip_crlf(char* line)
 }
 
 //------------------------------------------------------------------------------
-static int paste_from_clipboard(int count, int invoking_key)
+int paste_from_clipboard(int count, int invoking_key)
 {
     if (OpenClipboard(NULL) != FALSE)
     {
@@ -130,7 +130,7 @@ static int paste_from_clipboard(int count, int invoking_key)
 }
 
 //------------------------------------------------------------------------------
-static int copy_line_to_clipboard(int count, int invoking_key)
+int copy_line_to_clipboard(int count, int invoking_key)
 {
     HGLOBAL mem;
     wchar_t* data;
@@ -156,7 +156,7 @@ static int copy_line_to_clipboard(int count, int invoking_key)
 }
 
 //------------------------------------------------------------------------------
-static int up_directory(int count, int invoking_key)
+int up_directory(int count, int invoking_key)
 {
     rl_begin_undo_group();
     rl_delete_text(0, rl_end);
@@ -169,7 +169,7 @@ static int up_directory(int count, int invoking_key)
 }
 
 //------------------------------------------------------------------------------
-static int page_up(int count, int invoking_key)
+int page_up(int count, int invoking_key)
 {
     enter_scroll_mode(-1);
     return 0;
@@ -215,7 +215,7 @@ static void get_word_bounds(const char* str, int cursor, int* left, int* right)
 }
 
 //------------------------------------------------------------------------------
-static int expand_env_vars(int count, int invoking_key)
+int expand_env_vars(int count, int invoking_key)
 {
     static const int buffer_size = 0x8000;
     char* in;
@@ -247,18 +247,6 @@ static int expand_env_vars(int count, int invoking_key)
 
     free(out);
     return 0;
-}
-
-//------------------------------------------------------------------------------
-void clink_register_rl_funcs()
-{
-    rl_add_funmap_entry("ctrl-c", ctrl_c);
-    rl_add_funmap_entry("paste-from-clipboard", paste_from_clipboard);
-    rl_add_funmap_entry("page-up", page_up);
-    rl_add_funmap_entry("up-directory", up_directory);
-    rl_add_funmap_entry("show-rl-help", show_rl_help);
-    rl_add_funmap_entry("copy-line-to-clipboard", copy_line_to_clipboard);
-    rl_add_funmap_entry("expand-env-vars", expand_env_vars);
 }
 
 // vim: expandtab

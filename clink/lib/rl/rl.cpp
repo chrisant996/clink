@@ -217,19 +217,19 @@ static void suffix_translation()
 }
 
 //------------------------------------------------------------------------------
-static int completion_shim(int count, int invoking_key)
+int completion_shim(int count, int invoking_key)
 {
     return completion_shim_impl(count, invoking_key, rl_complete);
 }
 
 //------------------------------------------------------------------------------
-static int menu_completion_shim(int count, int invoking_key)
+int menu_completion_shim(int count, int invoking_key)
 {
     return completion_shim_impl(count, invoking_key, rl_menu_complete);
 }
 
 //------------------------------------------------------------------------------
-static int backward_menu_completion_shim(int count, int invoking_key)
+int backward_menu_completion_shim(int count, int invoking_key)
 {
     return completion_shim_impl(count, invoking_key, rl_backward_menu_complete);
 }
@@ -483,11 +483,6 @@ static int initialise_hook()
     rl_basic_quote_characters = "\"";
     rl_filename_quote_characters = " %=;&^";
 
-    rl_add_funmap_entry("clink-completion-shim", completion_shim);
-    rl_add_funmap_entry("clink-menu-completion-shim", menu_completion_shim);
-    rl_add_funmap_entry("clink-backward-menu-completion-shim", backward_menu_completion_shim);
-
-    clink_register_rl_funcs();
     initialise_rl_scroller();
 
     rl_re_read_init_file(0, 0);
