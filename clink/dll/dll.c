@@ -33,7 +33,6 @@ void                    save_history();
 void                    shutdown_lua();
 void                    shutdown_clink_settings();
 int                     get_clink_setting_int(const char*);
-void                    prepare_env_for_inputrc();
 
 inject_args_t           g_inject_args;
 static line_editor_t*   g_line_editor           = NULL;
@@ -133,7 +132,6 @@ static BOOL on_dll_attach()
     // Prepare the process and environment for Readline.
     initialise_line_editor();
     initialise_shell_name();
-    prepare_env_for_inputrc();
 
     // Search for a supported shell.
     {
