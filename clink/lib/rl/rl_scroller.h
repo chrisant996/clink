@@ -19,45 +19,25 @@
  * SOFTWARE.
  */
 
-#ifndef RL_BACKEND_H
-#define RL_BACKEND_H
+#ifndef RL_SCROLLER_H
+#define RL_SCROLLER_H
 
-#include "line_editor.h"
-
-#ifdef __cplusplus
-
-#include "rl_scroller.h"
+#include "buffer_scroller.h"
 
 //------------------------------------------------------------------------------
-class rl_line_editor
-    : public line_editor
+class rl_scroller
 {
 public:
-                        rl_line_editor();
-    virtual             ~rl_line_editor();
-    virtual bool        edit_line(const wchar_t* prompt, wchar_t* out, int out_size) override;
-    virtual const char* get_shell_name() const override;
-    virtual void        set_shell_name(const char* name) override;
+                        rl_scroller();
+    void                begin(int count, int invoking_key);
+    void                end(int count, int invoking_key);
+    void                page_up(int count, int invoking_key);
+    void                page_down(int count, int invoking_key);
 
 private:
-    void                bind_inputrc();
-    void                add_funmap_entries();
-    rl_scroller         m_scroller;
+    buffer_scroller     m_scroller;
+    KEYMAP_ENTRY        m_keymap[KEYMAP_SIZE];
+    Keymap              m_prev_keymap;
 };
 
-#endif // __cplusplus
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-line_editor_t*  initialise_rl_line_editor();
-void            shutdown_rl_line_editor(line_editor_t* line_editor);
-
-#ifdef __cplusplus
-}
-#endif
-
-#endif // RL_BACKEND_H
-
-// vim: expandtab
+#endif // RL_SCROLLER_H

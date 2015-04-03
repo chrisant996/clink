@@ -169,13 +169,6 @@ int up_directory(int count, int invoking_key)
 }
 
 //------------------------------------------------------------------------------
-int page_up(int count, int invoking_key)
-{
-    enter_scroll_mode(-1);
-    return 0;
-}
-
-//------------------------------------------------------------------------------
 static void get_word_bounds(const char* str, int cursor, int* left, int* right)
 {
     int i;

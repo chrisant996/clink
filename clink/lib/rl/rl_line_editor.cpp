@@ -27,16 +27,15 @@
 
 //------------------------------------------------------------------------------
 int     call_readline_w(const wchar_t*, wchar_t*, unsigned);
-int     ctrl_c(int, int);
-int     paste_from_clipboard(int, int);
-int     page_up(int, int);
-int     up_directory(int, int);
-int     show_rl_help(int, int);
-int     copy_line_to_clipboard(int, int);
-int     expand_env_vars(int, int);
 int     completion_shim(int, int);
+int     copy_line_to_clipboard(int, int);
+int     ctrl_c(int, int);
+int     expand_env_vars(int, int);
 int     menu_completion_shim(int, int);
 int     backward_menu_completion_shim(int, int);
+int     paste_from_clipboard(int, int);
+int     show_rl_help(int, int);
+int     up_directory(int, int);
 
 extern "C" {
 
@@ -95,7 +94,6 @@ void rl_line_editor::add_funmap_entries()
     } entries[] = {
         { "ctrl-c",                              ctrl_c },
         { "paste-from-clipboard",                paste_from_clipboard },
-        { "page-up",                             page_up },
         { "up-directory",                        up_directory },
         { "show-rl-help",                        show_rl_help },
         { "copy-line-to-clipboard",              copy_line_to_clipboard },

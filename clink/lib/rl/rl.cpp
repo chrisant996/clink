@@ -24,7 +24,6 @@
 
 //------------------------------------------------------------------------------
 int                 getc_impl(FILE* stream);
-void                initialise_rl_scroller();
 void                clink_register_rl_funcs();
 void                initialise_fwrite();
 
@@ -454,15 +453,6 @@ static void display_matches(char** matches, int match_count, int longest)
 }
 
 //------------------------------------------------------------------------------
-static void read_profile_inputrc()
-{
-    char buffer[MAX_PATH];
-    get_config_dir(buffer, sizeof_array(buffer));
-    str_cat(buffer, "/clink_inputrc", sizeof_array(buffer));
-    rl_read_init_file(buffer);
-}
-
-//------------------------------------------------------------------------------
 static int initialise_hook()
 {
     rl_redisplay_function = display;
@@ -482,11 +472,6 @@ static int initialise_hook()
 
     rl_basic_quote_characters = "\"";
     rl_filename_quote_characters = " %=;&^";
-
-    initialise_rl_scroller();
-
-    rl_re_read_init_file(0, 0);
-    read_profile_inputrc();
 
     rl_visible_stats = 0;               // serves no purpose under win32.
 

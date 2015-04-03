@@ -36,7 +36,7 @@ const char* clink_inputrc[] = {
     "\"\\e`O\": end-of-line",             // end
     "\"\\e`G\": beginning-of-line",       // home
     "\"\\e`S\": delete-char",             // del
-    "\"\\e`c\": page-up",                 // shift page-up
+    "\"\\e`c\": enter-scroll-mode",       // shift page-up
     "\"\\e`u\": kill-line",               // ctrl+end
     "\"\\e`w\": backward-kill-line",      // ctrl+home
     "\"\\e`I\": history-search-backward", // page-up
@@ -69,7 +69,7 @@ const char* clink_inputrc[] = {
     "C-c:     ctrl-c",
     "M-a:     \"..\\\\\"",
 
-    "$if cmd",
+    "$if cmd.exe",
         "set keymap emacs",
         "\"\\e`U\": up-directory",
         "M-C-u:     up-directory",
