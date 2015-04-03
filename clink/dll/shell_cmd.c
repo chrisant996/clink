@@ -38,6 +38,7 @@ void*                   extract_prompt(int);
 static int              cmd_validate();
 static int              cmd_initialise(void*);
 static void             cmd_shutdown();
+int                     rl_crlf();
 
 extern const wchar_t    g_prompt_tag_hidden[];
 static line_editor_t*   g_line_editor;
@@ -347,7 +348,7 @@ static void tag_prompt()
     wchar_t* suffix;
 
     buffer = malloc(buffer_size * sizeof(*buffer));
-    tag_size = wcslen(g_prompt_tag_hidden);
+    tag_size = (int)wcslen(g_prompt_tag_hidden);
     suffix = buffer + tag_size;
 
     wcscpy(buffer, g_prompt_tag_hidden);
@@ -431,7 +432,7 @@ static int cmd_validate()
 }
 
 //------------------------------------------------------------------------------
-static int cmd_initialise(const line_editor_t* line_editor)
+static int cmd_initialise(line_editor_t* line_editor)
 {
     const char* dll = get_kernel_dll();
     const char* func_name = "GetEnvironmentVariableW";

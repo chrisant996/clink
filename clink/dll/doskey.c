@@ -53,13 +53,13 @@ static int tokenise(wchar_t* source, token_t* tokens, int max_tokens)
         while (*read && iswspace(*read))
             ++read;
 
-        tokens[i].start = read - source;
+        tokens[i].start = (short)(read - source);
 
         // Skip token to next whitespace, store token length.
         while (*read && !iswspace(*read))
             ++read;
 
-        tokens[i].length = (read - source) - tokens[i].start;
+        tokens[i].length = (short)(read - source) - tokens[i].start;
     }
 
     // Don't skip initial whitespace.
@@ -120,12 +120,12 @@ int continue_doskey(wchar_t* chars, unsigned max_chars)
             if (c == 0 && g_state.token_count > 1)
             {
                 insert_from = g_state.input + g_state.tokens[1].start;
-                insert_length = min(wcslen(insert_from), max_chars);
+                insert_length = (int)min(wcslen(insert_from), max_chars);
             }
             else if (c < g_state.token_count)
             {
                 insert_from = g_state.input + g_state.tokens[c].start;
-                insert_length = min(g_state.tokens[c].length, max_chars);
+                insert_length = (int)min(g_state.tokens[c].length, (int)max_chars);
             }
 
             if (insert_length)

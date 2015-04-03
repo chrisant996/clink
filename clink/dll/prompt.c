@@ -42,7 +42,7 @@ wchar_t* detect_tagged_prompt_w(const wchar_t* buffer, int length)
     for (i = 0; i < sizeof_array(g_prompt_tags); ++i)
     {
         const wchar_t* tag = g_prompt_tags[i];
-        int tag_length = wcslen(tag);
+        int tag_length = (int)wcslen(tag);
 
         // Found a match? Convert the remainer to Utf8 and return it.
         if (wcsncmp(buffer, tag, tag_length) == 0)
@@ -71,7 +71,7 @@ char* detect_tagged_prompt(const char* buffer, int length)
     for (i = 0; i < sizeof_array(g_prompt_tags); ++i)
     {
         const wchar_t* tag = g_prompt_tags[i];
-        int tag_length = wcslen(tag);
+        int tag_length = (int)wcslen(tag);
         int j, n;
 
         // Count the number of matching characters.
@@ -133,7 +133,7 @@ static int parse_backspaces(char* prompt, int n)
         ++read;
     }
 
-    return write - prompt;
+    return (int)(write - prompt);
 }
 
 //------------------------------------------------------------------------------
@@ -168,7 +168,7 @@ char* filter_prompt(const char* in_prompt)
 
         ansi_code = (char*)find_next_ansi_code(next, &ansi_size);
 
-        len = parse_backspaces(next, ansi_code - next);
+        len = parse_backspaces(next, (int)(ansi_code - next));
         str_cat_n(out_prompt, next, buf_size, len);
 
         if (*ansi_code)
@@ -225,7 +225,7 @@ void* extract_prompt(int ret_as_utf8)
         length = WideCharToMultiByte(
             CP_UTF8, 0,
             buffer, length,
-            prompt, (char*)buffer - prompt,
+            prompt, (int)((char*)buffer - prompt),
             NULL, NULL
         );
 

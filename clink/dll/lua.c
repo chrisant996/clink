@@ -64,7 +64,7 @@ static void load_lua_scripts(const char* path)
 
     str_cpy(path_buf, path, sizeof_array(path_buf));
     str_cat(path_buf, "\\", sizeof_array(path_buf));
-    i = strlen(path_buf);
+    i = (int)strlen(path_buf);
 
     str_cat(path_buf, "*.lua", sizeof_array(path_buf));
     find = FindFirstFile(path_buf, &fd);
@@ -222,7 +222,6 @@ static int find_files_impl(lua_State* state, int dirs_only)
     const char* mask;
     const char* mask_file;
     int i;
-    int case_map;
 
     // Check arguments.
     i = lua_gettop(state);
@@ -329,9 +328,7 @@ static int matches_are_files(lua_State* state)
     int i = 1;
 
     if (lua_gettop(state) > 0)
-    {
-        i = lua_tointeger(state, 1);
-    }
+        i = (int)lua_tointeger(state, 1);
 
     rl_filename_completion_desired = i;
     return 0;

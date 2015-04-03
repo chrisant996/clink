@@ -131,8 +131,6 @@ static LONG WINAPI hook_trap_veh(EXCEPTION_POINTERS* info)
 //------------------------------------------------------------------------------
 int apply_hooks(const hook_decl_t* hooks, int hook_count)
 {
-    const char* func_name;
-    void* addr;
     void* self;
     int i;
 
@@ -145,7 +143,6 @@ int apply_hooks(const hook_decl_t* hooks, int hook_count)
 
     for (i = 0; i < hook_count; ++i)
     {
-        void* addr;
         const hook_decl_t* hook;
 
         hook = hooks + i;

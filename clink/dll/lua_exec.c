@@ -122,7 +122,7 @@ int lua_execute(lua_State* state)
     // Get the execution timeout.
     if (arg_count > 1 && lua_isnumber(state, 2))
     {
-        exec_state.timeout = lua_tointeger(state, 2);
+        exec_state.timeout = (int)lua_tointeger(state, 2);
     }
     else
     {
