@@ -115,28 +115,35 @@ static void delete_chars(int count)
     CONSOLE_SCREEN_BUFFER_INFO csbi;
     SMALL_RECT rect;
     CHAR_INFO fill;
+    int chars_moved;
 
     if (count < 0)
-    {
         return;
-    }
 
     GetConsoleScreenBufferInfo(handle, &csbi);
 
     rect.Left = csbi.dwCursorPosition.X + count;
-    rect.Right = csbi.dwSize.X;
+    rect.Right = csbi.dwSize.X - 1; // -1 as dwSize.X isn't a visible column.
     rect.Top = rect.Bottom = csbi.dwCursorPosition.Y;
 
     fill.Char.AsciiChar = ' ';
     fill.Attributes = csbi.wAttributes;
 
-    ScrollConsoleScreenBuffer(
-        handle,
-        &rect,
-        NULL,
-        csbi.dwCursorPosition,
-        &fill
-    );
+    ScrollConsoleScreenBuffer(handle, &rect, NULL, csbi.dwCursorPosition, &fill);
+
+    chars_moved = rect.Right - rect.Left + 1;
+    if (chars_moved < count)
+    {
+        DWORD written;
+        COORD xy;
+
+        xy = csbi.dwCursorPosition;
+        xy.X += chars_moved;
+
+        count -= chars_moved;
+        FillConsoleOutputCharacterW(handle, ' ', count, xy, &written);
+        FillConsoleOutputAttribute(handle, csbi.wAttributes, count, xy, &written);
+    }
 }
 
 //------------------------------------------------------------------------------
