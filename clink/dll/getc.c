@@ -27,94 +27,43 @@ DWORD   g_knownBufferSize = 0;
 int     get_clink_setting_int(const char*);
 
 //------------------------------------------------------------------------------
-static void simulate_sigwinch(COORD expected_cursor_pos)
+static void simulate_sigwinch()
 {
     // In the land of POSIX a terminal would raise a SIGWINCH signal when it is
     // resized. See rl_sigwinch_handler() in readline/signal.c.
 
     extern int _rl_vis_botlin;
+    extern int _rl_last_c_pos;
     extern int _rl_last_v_pos;
+
     CONSOLE_SCREEN_BUFFER_INFO csbi;
-    rl_voidfunc_t* redisplay_func_cache;
-    int base_y;
-    int bottom_line;
+    COORD cursor_pos;
     HANDLE handle;
+    int cell_count;
+    DWORD written;
 
-    bottom_line = _rl_vis_botlin - 1;
     handle = GetStdHandle(STD_OUTPUT_HANDLE);
-
-    // Cache redisplay function. Need original as it handles redraw correctly.
-    redisplay_func_cache = rl_redisplay_function;
-    rl_redisplay_function = rl_redisplay;
-
-    // Cursor may be out of sync with where Readline expects the cursor to be.
-    // Put it back where it was, clamping if necessary.
     GetConsoleScreenBufferInfo(handle, &csbi);
-    if (expected_cursor_pos.X >= csbi.dwSize.X)
-    {
-        expected_cursor_pos.X = csbi.dwSize.X - 1;
-    }
-    if (expected_cursor_pos.Y >= csbi.dwSize.Y)
-    {
-        expected_cursor_pos.Y = csbi.dwSize.Y - 1;
-    }
-    SetConsoleCursorPosition(handle, expected_cursor_pos);
 
-    // Let Readline handle the buffer resize.
-    RL_SETSTATE(RL_STATE_SIGHANDLER);
+    // If the cursor was outside of the new buffer size, conhost will move it
+    // down one line. This needs to be accounted for to prevent artefacts.
+    if (_rl_last_c_pos >= csbi.dwSize.X)
+        ++_rl_last_v_pos;
+
+    // Move the cursor to the prompt line
+    cursor_pos = csbi.dwCursorPosition;
+    cursor_pos.Y -= _rl_last_v_pos;
+    cursor_pos.X = 0;
+    SetConsoleCursorPosition(handle, cursor_pos);
+
+    // Clear the buffer used by the line previously.
+    cell_count = csbi.dwSize.X * (_rl_vis_botlin + 1);
+    FillConsoleOutputCharacterW(handle, ' ', cell_count, cursor_pos, &written);
+    FillConsoleOutputAttribute(handle, csbi.wAttributes, cell_count, cursor_pos,
+        &written);
+
+    // Tell Readline the buffer's resized.
     rl_resize_terminal();
-    RL_UNSETSTATE(RL_STATE_SIGHANDLER);
-
-    rl_redisplay_function = redisplay_func_cache;
-
-    // Now some redraw edge cases need to be handled.
-    GetConsoleScreenBufferInfo(handle, &csbi);
-    base_y = csbi.dwCursorPosition.Y - _rl_last_v_pos;
-
-    if (bottom_line > _rl_vis_botlin)
-    {
-        // Readline SIGWINCH handling assumes that at most one line needs to
-        // be cleared which is not the case when resizing from small to large
-        // widths.
-
-        CHAR_INFO fill;
-        SMALL_RECT rect;
-        COORD coord;
-
-        rect.Left = 0;
-        rect.Right = csbi.dwSize.X;
-        rect.Top = base_y + _rl_vis_botlin + 1;
-        rect.Bottom = base_y + bottom_line;
-
-        fill.Char.AsciiChar = ' ';
-        fill.Attributes = csbi.wAttributes;
-
-        coord.X = rect.Right + 1;
-        coord.Y = rect.Top;
-
-        ScrollConsoleScreenBuffer(handle, &rect, NULL, coord, &fill);
-    }
-    else
-    {
-        // Readline never writes to the last column as it wraps the cursor. The
-        // last column will have noise when making the width smaller. Clear it.
-
-        CHAR_INFO fill;
-        SMALL_RECT rect;
-        COORD coord;
-
-        rect.Left = rect.Right = csbi.dwSize.X - 1;
-        rect.Top = base_y;
-        rect.Bottom = base_y + _rl_vis_botlin;
-
-        fill.Char.AsciiChar = ' ';
-        fill.Attributes = csbi.wAttributes;
-
-        coord.X = rect.Right + 1;
-        coord.Y = rect.Top;
-
-        ScrollConsoleScreenBuffer(handle, &rect, NULL, coord, &fill);
-    }
 }
 
 //------------------------------------------------------------------------------
@@ -187,16 +136,25 @@ loop:
         i = (csbi.dwSize.X << 16) | csbi.dwSize.Y;
         if (!g_knownBufferSize || g_knownBufferSize != i)
         {
-            simulate_sigwinch(csbi.dwCursorPosition);
+            if (g_knownBufferSize)
+                simulate_sigwinch();
+
             g_knownBufferSize = i;
             goto loop;
         }
 
         // Fresh read from the console.
-        SetConsoleMode(handle, 0);
+        SetConsoleMode(handle, ENABLE_WINDOW_INPUT);
         ReadConsoleInputW(handle, &record, 1, &i);
         if (record.EventType != KEY_EVENT)
+            goto loop;
+
+        GetConsoleScreenBufferInfo(handle_stdout, &csbi);
+        if (record.EventType == WINDOW_BUFFER_SIZE_EVENT)
         {
+            simulate_sigwinch();
+
+            g_knownBufferSize = (csbi.dwSize.X << 16) | csbi.dwSize.Y;
             goto loop;
         }
 
