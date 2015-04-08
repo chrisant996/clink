@@ -81,3 +81,14 @@ h1 {
     margin-right:     auto;
     margin-top:       1em;
 }
+
+.copy {
+    position:         relative;
+}
+
+.copy .link {
+    position:         absolute;
+    top:              0.2em;
+    right:            0px;
+    font-size:        0.7em;
+}

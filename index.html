@@ -42,8 +42,17 @@
     <div class="full_width">
         <div class="content">
             <img src="images/clink.png">
-            {% capture index %}{% include index.md %}{% endcapture index %}
-            {{index | markdownify }}
+            <div class="copy">
+                <div>
+                    {% capture index %}{% include index.md %}{% endcapture index %}
+                    {{index | markdownify }}
+                </div>
+                <div class="link">
+                    <a href="http://softdroid.net/clink-prodvinutoe-redaktirovanie-komandnoy-stroki-v-bash-stile">
+                    Пост доступен на сайте softdroid.net
+                    </a>
+                </div>
+            </div>
         </div>
         <div class="ribbon">
             <a onclick="ga('send', 'event', 'click', 'ribbon')" href="https://github.com/mridgers/clink">
@@ -53,3 +62,6 @@
     </div>
 </body>
 </html>
+
+<!-- vim: nobomb fileencoding=utf-8
+-->
