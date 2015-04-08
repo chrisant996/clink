@@ -72,6 +72,7 @@
 */
 
 //------------------------------------------------------------------------------
+extern int      _rl_last_v_pos;
 static int      g_default_cursor_size   = -1;
 static int      g_enhanced_cursor       = 0;
 
@@ -205,6 +206,9 @@ void clear_screen()
     handle = GetStdHandle(STD_OUTPUT_HANDLE);
     GetConsoleScreenBufferInfo(handle, &csbi);
     window = csbi.srWindow;
+
+    // Adjust for Readline's offset.
+    csbi.dwCursorPosition.Y -= _rl_last_v_pos;
 
     // Is there not enough buffer space to put the cursor at the top?
     dy = csbi.dwCursorPosition.Y - window.Top;
