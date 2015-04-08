@@ -219,7 +219,7 @@ static BOOL WINAPI read_console(
     void* control
 )
 {
-    void* old_exception_filter;
+    void* old_exception_filter = push_exception_filter();
 
     // If the file past in isn't a console handle then go the default route.
     if (GetFileType(input) != FILE_TYPE_CHAR)
@@ -240,8 +240,6 @@ static BOOL WINAPI read_console(
     {
         return ReadConsoleW(input, buffer, buffer_size, read_in, control);
     }
-
-    old_exception_filter = push_exception_filter();
 
     // Call readline.
     while (1)
@@ -264,9 +262,9 @@ static BOOL WINAPI read_console(
     emulate_doskey(buffer, buffer_size);
     append_crlf(buffer, buffer_size);
 
-    pop_exception_filter(old_exception_filter);
-
     *read_in = (unsigned)wcslen(buffer);
+
+    pop_exception_filter(old_exception_filter);
     return TRUE;
 }
 
@@ -279,6 +277,8 @@ static BOOL WINAPI write_console(
     LPVOID unused
 )
 {
+    void* old_exception_filter = push_exception_filter();
+
     // Clink tags the prompt so that it can be detected when cmd.exe writes it
     // to the console.
 
@@ -295,6 +295,7 @@ static BOOL WINAPI write_console(
             *written = to_write;
         }
 
+        pop_exception_filter(old_exception_filter);
         return TRUE;
     }
     else if (g_prompt_w != NULL)
@@ -302,6 +303,7 @@ static BOOL WINAPI write_console(
         g_prompt_w[0] = L'\0';
     }
 
+    pop_exception_filter(old_exception_filter);
     return WriteConsoleW(handle, buffer, to_write, written, unused);
 }
 
