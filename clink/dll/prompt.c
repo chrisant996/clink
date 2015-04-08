@@ -211,8 +211,9 @@ void* extract_prompt(int ret_as_utf8)
 
     // Get the prompt from the terminal.
     buffer = (wchar_t*)prompt + length + 2;
-    ReadConsoleOutputCharacterW(handle, buffer, length, cur, &chars_read);
-    buffer[chars_read] = L'\0';
+    buffer[0] = L'\0';
+    if (ReadConsoleOutputCharacterW(handle, buffer, length, cur, &chars_read))
+        buffer[chars_read] = L'\0';
 
     // Convert to Utf8 and return.
     if (ret_as_utf8)
