@@ -24,39 +24,9 @@
 
 #include "line_editor.h"
 
-#ifdef __cplusplus
-
-#include "rl_scroller.h"
-
 //------------------------------------------------------------------------------
-class rl_line_editor
-    : public line_editor
-{
-public:
-                        rl_line_editor();
-    virtual             ~rl_line_editor();
-    virtual bool        edit_line(const wchar_t* prompt, wchar_t* out, int out_size) override;
-    virtual const char* get_shell_name() const override;
-    virtual void        set_shell_name(const char* name) override;
-
-private:
-    void                bind_inputrc();
-    void                add_funmap_entries();
-    rl_scroller         m_scroller;
-};
-
-#endif // __cplusplus
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-line_editor_t*  initialise_rl_line_editor();
-void            shutdown_rl_line_editor(line_editor_t* line_editor);
-
-#ifdef __cplusplus
-}
-#endif
+line_editor*    create_rl_line_editor();
+void            destroy_rl_line_editor(line_editor* editor);
 
 #endif // RL_BACKEND_H
 

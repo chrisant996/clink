@@ -187,7 +187,7 @@ project("clink_lib")
 
 --------------------------------------------------------------------------------
 project("clink_dll")
-    language("c")
+    language("c++")
     kind("sharedlib")
     links("lua")
     links("readline")
@@ -209,7 +209,7 @@ project("clink_dll")
 
     configuration("vs*")
         links("dbghelp")
-        pchsource("clink/dll/pch.c")
+        pchsource("clink/dll/pch.cpp")
         pchheader("pch.h")
 
 --------------------------------------------------------------------------------
@@ -223,7 +223,7 @@ project("clink_loader")
     includedirs("clink")
     includedirs("getopt")
     includedirs("lua/src")
-    files("clink/dll/settings.c")
+    files("clink/dll/settings.cpp")
     files("clink/loader/*")
     files("clink/version.rc")
 

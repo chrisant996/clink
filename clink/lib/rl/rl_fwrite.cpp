@@ -23,10 +23,10 @@
 #include "shared/util.h"
 
 //------------------------------------------------------------------------------
-extern "C" {
 const wchar_t*      find_next_ansi_code_w(const wchar_t*, int*);
 int                 get_clink_setting_int(const char*);
 int                 parse_ansi_code_w(const wchar_t*, int*, int);
+extern "C" {
 extern void         (*g_alt_fwrite_hook)(wchar_t*);
 } // extern "C"
 

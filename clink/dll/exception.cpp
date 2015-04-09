@@ -1,5 +1,5 @@
 /* Copyright (c) 2013 Martin Ridgers
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
  * in the Software without restriction, including without limitation the rights
@@ -62,13 +62,13 @@ static LONG WINAPI exception_filter(EXCEPTION_POINTERS* info)
 }
 
 //------------------------------------------------------------------------------
-void* push_exception_filter()
+LPTOP_LEVEL_EXCEPTION_FILTER push_exception_filter()
 {
     return SetUnhandledExceptionFilter(exception_filter);
 }
 
 //------------------------------------------------------------------------------
-void pop_exception_filter(void* old_filter)
+void pop_exception_filter(LPTOP_LEVEL_EXCEPTION_FILTER old_filter)
 {
     SetUnhandledExceptionFilter(old_filter);
 }

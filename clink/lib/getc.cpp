@@ -23,12 +23,13 @@
 #include "shared/util.h"
 
 //------------------------------------------------------------------------------
+static DWORD    g_knownBufferSize = 0;
+int             get_clink_setting_int(const char*);
+
 extern "C" {
-DWORD       g_knownBufferSize = 0;
-int         get_clink_setting_int(const char*);
-extern int  _rl_vis_botlin;
-extern int _rl_last_c_pos;
-extern int  _rl_last_v_pos;
+extern int      _rl_vis_botlin;
+extern int      _rl_last_c_pos;
+extern int      _rl_last_v_pos;
 } // extern "C"
 
 //------------------------------------------------------------------------------

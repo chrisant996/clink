@@ -22,8 +22,6 @@
 #include "pch.h"
 #include "shared/util.h"
 
-extern "C" {
-
 //------------------------------------------------------------------------------
 int                 get_clink_setting_int(const char*);
 static int          g_new_history_count             = 0;
@@ -200,7 +198,5 @@ int history_expand_control(char* line, int marker_pos)
 
     return 0;
 }
-
-} // extern "C"
 
 // vim: expandtab

@@ -27,7 +27,7 @@
 typedef struct
 {
     int     (*validate)();
-    int     (*initialise)(line_editor_t*);
+    int     (*initialise)(line_editor*);
     void    (*shutdown)();
 } shell_t;
 

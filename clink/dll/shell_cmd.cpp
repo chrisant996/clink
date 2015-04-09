@@ -1,5 +1,5 @@
 /* Copyright (c) 2013 Martin Ridgers
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
  * in the Software without restriction, including without limitation the rights
@@ -27,27 +27,26 @@
 #include <line_editor.h>
 
 //------------------------------------------------------------------------------
-int                     get_clink_setting_int(const char*);
-void*                   push_exception_filter();
-void                    pop_exception_filter(void* old_filter);
-int                     begin_doskey(wchar_t*, unsigned);
-int                     continue_doskey(wchar_t*, unsigned);
-wchar_t*                detect_tagged_prompt_w(const wchar_t*, int);
-void                    free_prompt(void*);
-void*                   extract_prompt(int);
-static int              cmd_validate();
-static int              cmd_initialise(void*);
-static void             cmd_shutdown();
-int                     rl_crlf();
+int                             get_clink_setting_int(const char*);
+LPTOP_LEVEL_EXCEPTION_FILTER    push_exception_filter();
+void                            pop_exception_filter(LPTOP_LEVEL_EXCEPTION_FILTER);
+int                             begin_doskey(wchar_t*, unsigned);
+int                             continue_doskey(wchar_t*, unsigned);
+wchar_t*                        detect_tagged_prompt_w(const wchar_t*, int);
+void                            free_prompt(void*);
+void*                           extract_prompt(int);
+static int                      cmd_validate();
+static int                      cmd_initialise(line_editor*);
+static void                     cmd_shutdown();
 
-extern const wchar_t    g_prompt_tag_hidden[];
-static line_editor_t*   g_line_editor;
-static wchar_t*         g_prompt_w;
-shell_t                 g_shell_cmd = {
-                            cmd_validate,
-                            cmd_initialise,
-                            cmd_shutdown
-                        };
+extern const wchar_t*           g_prompt_tag_hidden;
+static line_editor*             g_line_editor;
+static wchar_t*                 g_prompt_w;
+shell_t                         g_shell_cmd = {
+                                    cmd_validate,
+                                    cmd_initialise,
+                                    cmd_shutdown
+                                };
 
 //------------------------------------------------------------------------------
 static int is_interactive()
@@ -103,7 +102,7 @@ static wchar_t* get_mui_string(int id)
     flags = FORMAT_MESSAGE_ALLOCATE_BUFFER;
     flags |= FORMAT_MESSAGE_FROM_HMODULE;
     flags |= FORMAT_MESSAGE_IGNORE_INSERTS;
-    ok = FormatMessageW(flags, NULL, id, 0, (void*)&ret, 0, NULL);
+    ok = FormatMessageW(flags, NULL, id, 0, (wchar_t*)(&ret), 0, NULL);
 
     return ok ? ret : NULL;
 }
@@ -157,7 +156,7 @@ static int check_auto_answer()
         }
     }
 
-    prompt = extract_prompt(0);
+    prompt = (wchar_t*)extract_prompt(0);
     if (prompt != NULL && wcsstr(prompt, prompt_to_answer) != 0)
     {
         free_prompt(prompt);
@@ -187,7 +186,7 @@ static BOOL WINAPI single_char_read(
     wchar_t* buffer,
     DWORD buffer_size,
     LPDWORD read_in,
-    void* control
+    CONSOLE_READCONSOLE_CONTROL* control
 )
 {
     int reply;
@@ -218,12 +217,12 @@ static BOOL WINAPI single_char_read(
 static BOOL WINAPI read_console(
     HANDLE input,
     wchar_t* buffer,
-    DWORD buffer_size,
+    DWORD buffer_count,
     LPDWORD read_in,
-    void* control
+    CONSOLE_READCONSOLE_CONTROL* control
 )
 {
-    void* old_exception_filter = push_exception_filter();
+    LPTOP_LEVEL_EXCEPTION_FILTER old_exception_filter = push_exception_filter();
     DWORD stdout_mode;
     DWORD stdin_mode;
     BOOL ret = TRUE;
@@ -234,32 +233,32 @@ static BOOL WINAPI read_console(
     // If the file past in isn't a console handle then go the default route.
     if (GetFileType(input) != FILE_TYPE_CHAR)
     {
-        ret = ReadConsoleW(input, buffer, buffer_size, read_in, control);
+        ret = ReadConsoleW(input, buffer, buffer_count, read_in, control);
         goto read_console_end;
     }
 
     // If cmd.exe is asking for one character at a time, use the original path
     // It does this to handle y/n/all prompts which isn't an compatible use-
     // case for readline.
-    if (buffer_size == 1)
+    if (buffer_count == 1)
     {
-        ret = single_char_read(input, buffer, buffer_size, read_in, control);
+        ret = single_char_read(input, buffer, buffer_count, read_in, control);
         goto read_console_end;
     }
 
     // Sometimes cmd.exe wants line input for reasons other than command entry.
     if (g_prompt_w == NULL || *g_prompt_w == L'\0')
     {
-        ret = ReadConsoleW(input, buffer, buffer_size, read_in, control);
+        ret = ReadConsoleW(input, buffer, buffer_count, read_in, control);
         goto read_console_end;
     }
 
     // Doskey is implemented on the server side of a ReadConsoleW() call (i.e.
     // in conhost.exe). Commands separated by a "$T" are returned one command
     // at a time through successive calls to ReadConsoleW().
-    if (continue_doskey(buffer, buffer_size))
+    if (continue_doskey(buffer, buffer_count))
     {
-        append_crlf(buffer, buffer_size);
+        append_crlf(buffer, buffer_count);
         *read_in = (unsigned)wcslen(buffer);
         goto read_console_end;
     }
@@ -267,7 +266,7 @@ static BOOL WINAPI read_console(
     // Call readline.
     while (1)
     {
-        int is_eof = edit_line(g_line_editor, g_prompt_w, buffer, buffer_size);
+        int is_eof = g_line_editor->edit_line(g_prompt_w, buffer, buffer_count);
         if (!is_eof)
         {
             break;
@@ -275,15 +274,17 @@ static BOOL WINAPI read_console(
 
         if (get_clink_setting_int("ctrld_exits"))
         {
-            wcsncpy(buffer, L"exit", buffer_size);
+            wcsncpy(buffer, L"exit", buffer_count);
             break;
         }
 
-        rl_crlf();
+        DWORD written;
+        HANDLE output = GetStdHandle(STD_OUTPUT_HANDLE);
+        WriteConsoleW(output, L"\r\n", 2, &written, nullptr);
     }
 
-    begin_doskey(buffer, buffer_size);
-    append_crlf(buffer, buffer_size);
+    begin_doskey(buffer, buffer_count);
+    append_crlf(buffer, buffer_count);
 
     *read_in = (unsigned)wcslen(buffer);
 
@@ -303,7 +304,7 @@ static BOOL WINAPI write_console(
     LPVOID unused
 )
 {
-    void* old_exception_filter = push_exception_filter();
+    LPTOP_LEVEL_EXCEPTION_FILTER old_exception_filter = push_exception_filter();
 
     // Clink tags the prompt so that it can be detected when cmd.exe writes it
     // to the console.
@@ -347,7 +348,7 @@ static void tag_prompt()
     wchar_t* buffer;
     wchar_t* suffix;
 
-    buffer = malloc(buffer_size * sizeof(*buffer));
+    buffer = (wchar_t*)malloc(buffer_size * sizeof(*buffer));
     tag_size = (int)wcslen(g_prompt_tag_hidden);
     suffix = buffer + tag_size;
 
@@ -399,7 +400,7 @@ const char* get_kernel_dll()
     {
         return "kernelbase.dll";
     }
-   
+
     return "kernel32.dll";
 }
 
@@ -432,7 +433,7 @@ static int cmd_validate()
 }
 
 //------------------------------------------------------------------------------
-static int cmd_initialise(line_editor_t* line_editor)
+static int cmd_initialise(line_editor* line_editor)
 {
     const char* dll = get_kernel_dll();
     const char* func_name = "GetEnvironmentVariableW";
@@ -464,7 +465,7 @@ static int cmd_initialise(line_editor_t* line_editor)
 
 #if !defined(__MINGW32__) && !defined(__MINGW64__)
         {
-            const char* shell_name = get_shell_name(g_line_editor);
+            const char* shell_name = g_line_editor->get_shell_name();
             AddConsoleAlias("clink", buffer, (char*)shell_name);
         }
 #endif // !__MINGW32__ && !__MINGW64__

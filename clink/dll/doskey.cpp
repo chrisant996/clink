@@ -1,5 +1,5 @@
 /* Copyright (c) 2012 Martin Ridgers
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
  * in the Software without restriction, including without limitation the rights
@@ -191,7 +191,7 @@ int begin_doskey(wchar_t* chars, unsigned max_chars)
 
         // It does. Allocate space and fetch it.
         bytes = max_chars * sizeof(wchar_t);
-        g_state.alias_text = malloc(bytes * 2);
+        g_state.alias_text = (wchar_t*)malloc(bytes * 2);
         GetConsoleAliasW(alias, g_state.alias_text, bytes, exe);
 
         // Copy the input and tokenise it. Lots of pointer aliasing here...

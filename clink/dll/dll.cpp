@@ -1,5 +1,5 @@
 /* Copyright (c) 2012 Martin Ridgers
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
  * in the Software without restriction, including without limitation the rights
@@ -28,6 +28,10 @@
 #include <rl/rl_line_editor.h>
 
 //------------------------------------------------------------------------------
+extern "C" {
+extern const char*      g_clink_header;
+}
+
 void                    load_history();
 void                    save_history();
 void                    shutdown_lua();
@@ -35,7 +39,7 @@ void                    shutdown_clink_settings();
 int                     get_clink_setting_int(const char*);
 
 inject_args_t           g_inject_args;
-static line_editor_t*   g_line_editor           = NULL;
+static line_editor*     g_line_editor           = NULL;
 static const shell_t*   g_shell                 = NULL;
 extern shell_t          g_shell_cmd;
 #if 0
@@ -46,14 +50,13 @@ extern shell_t          g_shell_generic;
 //------------------------------------------------------------------------------
 static void initialise_line_editor()
 {
-    g_line_editor = initialise_rl_line_editor();
+    g_line_editor = create_rl_line_editor();
 }
 
 //------------------------------------------------------------------------------
 static void shutdown_line_editor()
 {
-    if (g_line_editor != NULL)
-        shutdown_rl_line_editor(g_line_editor);
+    destroy_rl_line_editor(g_line_editor);
 }
 
 //------------------------------------------------------------------------------
@@ -65,12 +68,12 @@ static void initialise_shell_name()
     {
         static char exe_name[64];
         const char* slash;
-        
+
         slash = strrchr(buffer, '\\');
         slash = slash ? slash + 1 : buffer;
 
         str_cpy(exe_name, slash, sizeof(exe_name));
-        set_shell_name(g_line_editor, exe_name);
+        g_line_editor->set_shell_name(exe_name);
 
         LOG_INFO("Setting shell name to '%s'", exe_name);
     }
@@ -91,8 +94,6 @@ static void get_inject_args(DWORD pid)
 //------------------------------------------------------------------------------
 static void success()
 {
-    extern const char* g_clink_header;
-
     if (!g_inject_args.quiet)
     {
         puts(g_clink_header);
@@ -148,7 +149,7 @@ static BOOL on_dll_attach()
 
         for (i = 0; i < sizeof_array(shells); ++i)
         {
-            const char* shell_name = get_shell_name(g_line_editor);
+            const char* shell_name = g_line_editor->get_shell_name();
             if (stricmp(shell_name, shells[i].name) == 0)
             {
                 g_shell = shells[i].shell;
@@ -162,7 +163,7 @@ static BOOL on_dll_attach()
     {
         if (!g_inject_args.no_host_check)
         {
-            const char* shell_name = get_shell_name(g_line_editor);
+            const char* shell_name = g_line_editor->get_shell_name();
             LOG_INFO("Unsupported shell '%s'", shell_name);
             return FALSE;
         }

@@ -22,8 +22,16 @@
 #ifndef HOOK_H
 #define HOOK_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 void* hook_iat(void* base, const char* dll, const char* func_name, void* hook, int find_by_name);
 void* hook_jmp(const char* dll, const char* func_name, void* hook);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif // HOOK_H
 

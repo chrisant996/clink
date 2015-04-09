@@ -1,5 +1,5 @@
 /* Copyright (c) 2012 Martin Ridgers
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
  * in the Software without restriction, including without limitation the rights
@@ -24,22 +24,25 @@
 #include "shared/util.h"
 
 //------------------------------------------------------------------------------
-static int              reload_lua_state(int count, int invoking_key);
-const char*             get_clink_setting_str(const char*);
-int                     get_clink_setting_int(const char*);
-int                     rl_add_funmap_entry(const char*, int (*)(int, int));
-int                     lua_execute(lua_State* state);
-
-extern inject_args_t    g_inject_args;
+extern "C" {
 extern int              rl_filename_completion_desired;
 extern int              rl_completion_suppress_append;
 extern int              rl_completion_suppress_quote;
 extern char*            rl_line_buffer;
 extern int              rl_point;
 extern int              _rl_completion_case_map;
-extern int              g_slash_translation;
 extern char*            rl_readline_name;
 extern char*            rl_variable_value(const char*);
+int                     rl_add_funmap_entry(const char*, int (*)(int, int));
+} // extern "C"
+
+static int              reload_lua_state(int count, int invoking_key);
+const char*             get_clink_setting_str(const char*);
+int                     get_clink_setting_int(const char*);
+int                     lua_execute(lua_State* state);
+
+extern int              g_slash_translation;
+extern inject_args_t    g_inject_args;
 static lua_State*       g_lua                        = NULL;
 
 //------------------------------------------------------------------------------
@@ -145,7 +148,7 @@ char** lua_match_display_filter(char** matches, int match_count)
             match = lua_tostring(g_lua, -1);
         }
 
-        new_matches[i] = malloc(strlen(match) + 1);
+        new_matches[i] = (char*)malloc(strlen(match) + 1);
         strcpy(new_matches[i], match);
 
         lua_pop(g_lua, 1);
@@ -176,7 +179,7 @@ static int to_lowercase(lua_State* state)
     {
         return 0;
     }
-    
+
     string = lua_tostring(state, 1);
     length = (int)strlen(string);
 
@@ -261,7 +264,7 @@ static int find_files_impl(lua_State* state, int dirs_only)
             mask_file = strrchr(mask, '/');
         mask_file = (mask_file == NULL) ? mask : mask_file + 1;
     }
-    
+
     lua_createtable(state, 0, 0);
 
     i = 1;
@@ -340,7 +343,7 @@ static char* mbcs_to_utf8(char* buff)
     wchar_t* buf_wchar;
     char* buf_utf8;
     int len_wchar, len_utf8;
-    
+
     // Convert MBCS to WideChar.
     len_wchar = MultiByteToWideChar(CP_ACP, 0, buff, -1, NULL, 0);
     buf_wchar = (wchar_t*)malloc((len_wchar + 1) * sizeof(wchar_t));
@@ -379,14 +382,14 @@ static int get_env(lua_State* state)
     {
         return 0;
     }
-    
+
     buffer = (char*)malloc(size);
     GetEnvironmentVariable(name, buffer, size);
     buf_utf8 = mbcs_to_utf8(buffer);
     lua_pushstring(state, buf_utf8);
     free(buf_utf8);
     free(buffer);
-    
+
     return 1;
 }
 
@@ -609,14 +612,12 @@ static int get_cwd(lua_State* state)
 
     GetCurrentDirectory(sizeof_array(path), path);
     lua_pushstring(state, path);
-    return 1; 
+    return 1;
 }
 
 //------------------------------------------------------------------------------
 static int get_console_aliases(lua_State* state)
 {
-    char* buffer = NULL;
-
     do
     {
         int i;
@@ -633,7 +634,7 @@ static int get_console_aliases(lua_State* state)
             break;
         }
 
-        buffer = malloc(buffer_size + 1);
+        char* buffer = (char*)malloc(buffer_size + 1);
         if (GetConsoleAliases(buffer, buffer_size, rl_readline_name) == 0)
         {
             break;
@@ -659,11 +660,12 @@ static int get_console_aliases(lua_State* state)
             ++c;
             alias = c + strlen(c) + 1;
         }
+
+        free(buffer);
 #endif // !__MINGW32__ && !__MINGW64__
     }
     while (0);
 
-    free(buffer);
     return 1;
 }
 
@@ -858,7 +860,7 @@ char** lua_generate_matches(const char* text, int start, int end)
 
         lua_rawgeti(g_lua, -1, i + 1);
         match = lua_tostring(g_lua, -1);
-        matches[i] = malloc(strlen(match) + 1);
+        matches[i] = (char*)malloc(strlen(match) + 1);
         strcpy(matches[i], match);
 
         lua_pop(g_lua, 1);

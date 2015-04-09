@@ -22,6 +22,10 @@
 #ifndef VM_H
 #define VM_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 //------------------------------------------------------------------------------
 struct region_info_t
 {
@@ -39,6 +43,10 @@ void    get_region_info(void* addr, struct region_info_t* region_info);
 void    set_region_write_state(struct region_info_t* region_info, int state);
 int     write_vm(void* proc_handle, void* dest, const void* src, size_t size);
 int     read_vm(void* proc_handle, void* dest, const void* src, size_t size);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif // VM_H
 

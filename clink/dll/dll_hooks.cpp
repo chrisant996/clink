@@ -1,5 +1,5 @@
 /* Copyright (c) 2012 Martin Ridgers
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
  * in the Software without restriction, including without limitation the rights
@@ -28,7 +28,7 @@
 
 //------------------------------------------------------------------------------
 static int              (*g_hook_trap)()        = NULL;
-static unsigned char*   g_hook_trap_addr        = NULL;
+static void*            g_hook_trap_addr        = NULL;
 static unsigned char    g_hook_trap_value       = 0;
 
 //------------------------------------------------------------------------------
@@ -113,9 +113,9 @@ static LONG WINAPI hook_trap_veh(EXCEPTION_POINTERS* info)
 
     // Who called us?
 #if defined(_M_IX86)
-    sp_reg = (void**)info->ContextRecord->Esp; 
+    sp_reg = (void**)info->ContextRecord->Esp;
 #elif defined(_M_X64)
-    sp_reg = (void**)info->ContextRecord->Rsp; 
+    sp_reg = (void**)info->ContextRecord->Rsp;
 #endif
     LOG_INFO("VEH hit - caller is %p.", *sp_reg);
 
@@ -197,7 +197,7 @@ int set_hook_trap(const char* dll, const char* func_name, int (*trap)())
 
     g_hook_trap = trap;
     g_hook_trap_addr = addr;
-    g_hook_trap_value = *g_hook_trap_addr;
+    g_hook_trap_value = *(unsigned char*)g_hook_trap_addr;
 
     AddVectoredExceptionHandler(1, hook_trap_veh);
 

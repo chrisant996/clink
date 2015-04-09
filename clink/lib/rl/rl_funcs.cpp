@@ -23,10 +23,7 @@
 #include "shared/util.h"
 
 //------------------------------------------------------------------------------
-extern "C" {
 int                 get_clink_setting_int(const char*);
-} // extern "C"
-
 void                enter_scroll_mode(int);
 int                 show_rl_help(int, int);
 

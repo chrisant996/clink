@@ -19,44 +19,24 @@
  * SOFTWARE.
  */
 
-#ifndef BACKEND_H
-#define BACKEND_H
-
-#ifdef __cplusplus
+#ifndef LINE_EDITOR_H
+#define LINE_EDITOR_H
 
 //------------------------------------------------------------------------------
 class line_editor
 {
 public:
                         line_editor() {}
+    virtual             ~line_editor() = 0 {}
     virtual bool        edit_line(const wchar_t* prompt, wchar_t* out, int out_size) = 0;
     virtual const char* get_shell_name() const = 0;
     virtual void        set_shell_name(const char* name) = 0;
-
-protected:
-    virtual             ~line_editor() = 0 {}
 
 private:
                         line_editor(const line_editor&);    // unimplemented
     void                operator = (const line_editor&);    // unimplemented
 };
 
-#endif // __cplusplus
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-typedef void* line_editor_t;
-
-int         edit_line(line_editor_t* instance, const wchar_t* prompt, wchar_t* out, int out_size);
-const char* get_shell_name(line_editor_t* instance);
-void        set_shell_name(line_editor_t* instance, const char* name);
-
-#ifdef __cplusplus
-} // extern "C"
-#endif
-
-#endif // BACKEND_H
+#endif // LINE_EDITOR_H
 
 // vim: expandtab

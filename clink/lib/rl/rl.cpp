@@ -24,16 +24,13 @@
 
 //------------------------------------------------------------------------------
 int                 getc_impl(FILE* stream);
-void                clink_register_rl_funcs();
 void                initialise_fwrite();
 
 //------------------------------------------------------------------------------
-extern "C" {
-void                initialise_lua();
+struct lua_State*   initialise_lua();
 char**              lua_generate_matches(const char*, int, int);
 char**              lua_match_display_filter(char**, int);
 void                lua_filter_prompt(char*, int);
-void                move_cursor(int, int);
 void*               initialise_clink_settings();
 int                 get_clink_setting_int(const char*);
 void                get_config_dir(char*, int);
@@ -41,9 +38,6 @@ char*               filter_prompt(const char*);
 void*               extract_prompt(int);
 void                free_prompt(void*);
 static int          completion_shim_impl(int, int, int (*)(int, int));
-int                 rl_complete(int, int);
-int                 rl_menu_complete(int, int);
-int                 rl_backward_menu_complete(int, int);
 void                load_history();
 void                save_history();
 void                add_to_history(const char*);
@@ -51,6 +45,9 @@ int                 expand_from_history(const char*, char**);
 int                 history_expand_control(char*, int);
 
 int                 g_slash_translation             = 0;
+
+extern "C" {
+void                move_cursor(int, int);
 extern int          rl_visible_stats;
 extern int          rl_display_fixed;
 extern int          rl_editing_mode;
@@ -58,6 +55,9 @@ extern const char*  rl_filename_quote_characters;
 extern int          rl_catch_signals;
 extern int          _rl_complete_mark_directories;
 extern char*        _rl_comment_begin;
+int                 rl_complete(int, int);
+int                 rl_menu_complete(int, int);
+int                 rl_backward_menu_complete(int, int);
 } // extern "C"
 
 //------------------------------------------------------------------------------

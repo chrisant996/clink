@@ -38,7 +38,7 @@ typedef struct {
     hook_type_e     type;
     void*           base;           // unused by jmp-type
     const char*     dll;            // null makes iat-types search all
-    void*           name_or_addr;   // name only for jmp-type
+    const char*     name_or_addr;   // name only for jmp-type
     void*           hook;
 } hook_decl_t;
 

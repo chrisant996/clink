@@ -1,5 +1,5 @@
-/* Copyright (c) 2012 Martin Ridgers
- * 
+/* Copyright (c) 2013 Martin Ridgers
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
  * in the Software without restriction, including without limitation the rights
@@ -20,5 +20,28 @@
  */
 
 #include "pch.h"
+#include "shell.h"
+
+#if 0
+
+//------------------------------------------------------------------------------
+int         generic_validate();
+int         generic_initialise(void*);
+void        generic_shutdown();
+static int  ps_initialise(void*);
+
+shell_t     g_shell_ps = {
+                generic_validate,
+                ps_initialise,
+                generic_shutdown };
+
+//------------------------------------------------------------------------------
+static int ps_initialise(void* base)
+{
+    base = GetModuleHandle("mscorwks.dll");
+    return generic_initialise(base);
+}
+
+#endif // 0
 
 // vim: expandtab

@@ -1,5 +1,5 @@
 /* Copyright (c) 2013 Martin Ridgers
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
  * in the Software without restriction, including without limitation the rights
@@ -28,8 +28,8 @@ void                lua_filter_prompt(char*, int);
 
 //------------------------------------------------------------------------------
 #define MR(x)                        L##x L"\x08"
-const wchar_t  g_prompt_tag[]        = L"@CLINK_PROMPT";
-const wchar_t  g_prompt_tag_hidden[] = MR("C") MR("L") MR("I") MR("N") MR("K") MR(" ");
+const wchar_t* g_prompt_tag          = L"@CLINK_PROMPT";
+const wchar_t* g_prompt_tag_hidden   = MR("C") MR("L") MR("I") MR("N") MR("K") MR(" ");
 const wchar_t* g_prompt_tags[]       = { g_prompt_tag, g_prompt_tag_hidden };
 #undef MR
 
@@ -47,9 +47,7 @@ wchar_t* detect_tagged_prompt_w(const wchar_t* buffer, int length)
         // Found a match? Convert the remainer to Utf8 and return it.
         if (wcsncmp(buffer, tag, tag_length) == 0)
         {
-            wchar_t* out;
-            
-            out = malloc(length * sizeof(*out));
+            wchar_t* out = (wchar_t*)malloc(length * sizeof(*out));
             length -= tag_length;
 
             wcsncpy(out, buffer + tag_length, length);
@@ -84,9 +82,7 @@ char* detect_tagged_prompt(const char* buffer, int length)
         // Does the buffer start with the tag?
         if (matched == tag_length)
         {
-            char* out;
-
-            out = malloc(length * sizeof(*out));
+            char* out = (char*)malloc(length * sizeof(*out));
             length -= tag_length;
 
             strncpy(out, buffer + tag_length, length);
@@ -142,12 +138,10 @@ char* filter_prompt(const char* in_prompt)
     static const int buf_size = 0x4000;
 
     char* next;
-    char* out_prompt;
-    char* lua_prompt;
 
     // Allocate the buffers. We'll allocate once and divide it in two.
-    out_prompt = malloc(buf_size * 2);
-    lua_prompt = out_prompt + buf_size;
+    char* out_prompt = (char*)malloc(buf_size * 2);
+    char* lua_prompt = out_prompt + buf_size;
 
     // Get the prompt from Readline and pass it to Clink's filter framework
     // in Lua.
@@ -191,7 +185,6 @@ char* filter_prompt(const char* in_prompt)
 //------------------------------------------------------------------------------
 void* extract_prompt(int ret_as_utf8)
 {
-    char* prompt;
     wchar_t* buffer;
     CONSOLE_SCREEN_BUFFER_INFO csbi;
     HANDLE handle;
@@ -211,7 +204,7 @@ void* extract_prompt(int ret_as_utf8)
         return NULL;
 
     cur.X = 0;
-    prompt = malloc(length * 8);
+    char* prompt = (char*)malloc(length * 8);
 
     // Get the prompt from the terminal.
     buffer = (wchar_t*)prompt + length + 2;

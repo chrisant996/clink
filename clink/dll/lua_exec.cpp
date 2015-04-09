@@ -1,5 +1,5 @@
 /* Copyright (c) 2013 Martin Ridgers
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
  * in the Software without restriction, including without limitation the rights
@@ -30,7 +30,7 @@
 //------------------------------------------------------------------------------
 typedef struct
 {
-   PROCESS_INFORMATION  pi; 
+   PROCESS_INFORMATION  pi;
    HANDLE               job;
    int                  timeout;
 } exec_state_t;
@@ -130,7 +130,7 @@ int lua_execute(lua_State* state)
     }
 
     // Create a job object to manage the processes we'll spawn.
-    exec_state.job = create_job(exec_state.timeout);
+    exec_state.job = create_job();
     if (exec_state.job == NULL)
     {
         return 0;
@@ -197,7 +197,7 @@ int lua_execute(lua_State* state)
 
     // Read process' stdout, adding completed lines to Lua.
     {
-        static const RESERVE = 4 * 1024 * 1024;
+        static const unsigned int RESERVE = 4 * 1024 * 1024;
 
         void* buffer;
         char* write;

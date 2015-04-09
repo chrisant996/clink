@@ -22,6 +22,7 @@
 #include "pch.h"
 #include "rl_line_editor.h"
 #include "inputrc.h"
+#include "rl_scroller.h"
 
 #include <shared/util.h>
 
@@ -37,23 +38,24 @@ int     paste_from_clipboard(int, int);
 int     show_rl_help(int, int);
 int     up_directory(int, int);
 
-extern "C" {
+
 
 //------------------------------------------------------------------------------
-line_editor_t* initialise_rl_line_editor()
+class rl_line_editor
+    : public line_editor
 {
-    return (line_editor_t*)(new rl_line_editor());
-}
+public:
+                        rl_line_editor();
+    virtual             ~rl_line_editor();
+    virtual bool        edit_line(const wchar_t* prompt, wchar_t* out, int out_size) override;
+    virtual const char* get_shell_name() const override;
+    virtual void        set_shell_name(const char* name) override;
 
-//------------------------------------------------------------------------------
-void shutdown_rl_line_editor(line_editor_t* line_editor)
-{
-    delete (rl_line_editor*)line_editor;
-}
-
-} // extern "C"
-
-
+private:
+    void                bind_inputrc();
+    void                add_funmap_entries();
+    rl_scroller         m_scroller;
+};
 
 //------------------------------------------------------------------------------
 rl_line_editor::rl_line_editor()
@@ -121,6 +123,20 @@ rl_line_editor::bind_inputrc()
 
         ++inputrc_line;
     }
+}
+
+
+
+//------------------------------------------------------------------------------
+line_editor* create_rl_line_editor()
+{
+    return new rl_line_editor();
+}
+
+//------------------------------------------------------------------------------
+void destroy_rl_line_editor(line_editor* editor)
+{
+    delete editor;
 }
 
 // vim: expandtab

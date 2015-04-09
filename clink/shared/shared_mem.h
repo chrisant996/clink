@@ -22,6 +22,10 @@
 #ifndef SHARED_MEM_H
 #define SHARED_MEM_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 //------------------------------------------------------------------------------
 typedef struct {
     void*   handle;
@@ -33,6 +37,10 @@ typedef struct {
 shared_mem_t*   create_shared_mem(int page_count, const char* tag, int id);
 shared_mem_t*   open_shared_mem(int page_count, const char* tag, int id);
 void            close_shared_mem(shared_mem_t* info);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif // SHARED_MEM_H
 

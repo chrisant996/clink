@@ -21,28 +21,3 @@
 
 #include "pch.h"
 #include "line_editor.h"
-
-extern "C" {
-
-//------------------------------------------------------------------------------
-int edit_line(line_editor_t* instance, const wchar_t* prompt, wchar_t* out, int out_size)
-{
-    line_editor* self = (line_editor*)instance;
-    return (self->edit_line(prompt, out, out_size) == true);
-}
-
-//------------------------------------------------------------------------------
-const char* get_shell_name(line_editor_t* instance)
-{
-    line_editor* self = (line_editor*)instance;
-    return self->get_shell_name();
-}
-
-//------------------------------------------------------------------------------
-void set_shell_name(line_editor_t* instance, const char* name)
-{
-    line_editor* self = (line_editor*)instance;
-    self->set_shell_name(name);
-}
-
-} // extern "C"

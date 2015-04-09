@@ -1,5 +1,5 @@
 /* Copyright (c) 2012 Martin Ridgers
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
  * in the Software without restriction, including without limitation the rights
@@ -207,7 +207,7 @@ int get_clink_setting_int(const char* name)
     {
         return 0;
     }
-    
+
     return settings_get_int(g_settings, name);
 }
 
@@ -218,7 +218,7 @@ const char* get_clink_setting_str(const char* name)
     {
         return "";
     }
-    
+
     return settings_get_str(g_settings, name);
 }
 

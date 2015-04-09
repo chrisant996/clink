@@ -49,8 +49,6 @@ static int ANSI_FNAME(is_csi)(const char_t* str)
     return 0;
 }
 
-extern "C" {
-
 //------------------------------------------------------------------------------
 const char_t* ANSI_FNAME(find_next_ansi_code)(const char_t* buffer, int* size)
 {
@@ -163,7 +161,5 @@ int ANSI_FNAME(parse_ansi_code)(const char_t* code, int* params, int max_params)
     params[i] = -1;
     return command;
 }
-
-} // extern "C"
 
 // vim: expandtab syntax=c
