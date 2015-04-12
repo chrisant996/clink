@@ -333,7 +333,7 @@ int getc_impl(FILE* stream)
         char utf8[4];
 
         alt = 0;
-        i = GETWCH_IMPL(&alt);
+        i = getc_internal(&alt);
 
         // MSB is set if value represents a printable character.
         printable = (i & 0x80000000);
