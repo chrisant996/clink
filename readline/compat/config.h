@@ -22,22 +22,25 @@
 #ifndef CONFIG_H
 #define CONFIG_H
 
+#include <conio.h>
+#include <io.h>
+#include <limits.h>
+#include <process.h>
 #include <stdio.h>
-#include <wchar.h>
 #include <stdlib.h>
 #include <sys/stat.h>
-#include <io.h>
-#include <conio.h>
-#include <process.h>
-#include <limits.h>
+#include <wchar.h>
 
 #include "hooks.h"
 
-// here be dragons (for purposes of utf-8 and changing stdout handles)
+// here be dragons (for purposes of utf-8 and capturing stdio)
 //
-int                         hooked_fwrite(const void*, int, int, void*);
-void                        hooked_fprintf(const void*, const char*, ...);
-int                         hooked_putc(int, void*);
+//
+int                         hooked_fwrite(const void*, int, int, FILE*);
+void                        hooked_fprintf(FILE*, const char*, ...);
+int                         hooked_putc(int, FILE*);
+void                        hooked_fflush(FILE*);
+int                         hooked_fileno(FILE*);
 size_t                      hooked_mbrtowc(wchar_t*, const char*, size_t, mbstate_t*);
 size_t                      hooked_mbrlen(const char*, size_t, mbstate_t*);
 int                         hooked_stat(const char*, struct hooked_stat*);
@@ -48,6 +51,8 @@ int                         hooked_wcwidth(wchar_t wc);
 #   undef fwrite
 #   undef fprintf
 #   undef putc
+#   undef fflush
+#   undef fileno
 #   undef mbrtowc
 #   undef mbrlen
 #   undef stat
@@ -65,6 +70,8 @@ int                         hooked_wcwidth(wchar_t wc);
 #   define fwrite           hooked_fwrite
 #   define fprintf          hooked_fprintf
 #   define putc             hooked_putc
+#   define fflush           hooked_fflush
+#   define fileno           hooked_fileno
 #   define mbrtowc          hooked_mbrtowc
 #   define mbrlen           hooked_mbrlen
 #   define stat             hooked_stat

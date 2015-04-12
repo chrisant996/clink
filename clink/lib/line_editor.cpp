@@ -21,3 +21,9 @@
 
 #include "pch.h"
 #include "line_editor.h"
+
+//------------------------------------------------------------------------------
+line_editor::line_editor(const environment& env)
+: m_terminal(env.term)
+{
+}

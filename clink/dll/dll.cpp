@@ -21,10 +21,11 @@
 
 #include "pch.h"
 #include "inject_args.h"
-#include "shell.h"
-#include "shared/util.h"
 #include "shared/shared_mem.h"
+#include "shared/util.h"
+#include "shell.h"
 
+#include <ecma48_terminal.h>
 #include <rl/rl_line_editor.h>
 
 //------------------------------------------------------------------------------
@@ -34,6 +35,7 @@ extern const char*      g_clink_header;
 
 void                    load_history();
 void                    save_history();
+struct lua_State*       initialise_lua();
 void                    shutdown_lua();
 void                    shutdown_clink_settings();
 int                     get_clink_setting_int(const char*);
@@ -50,13 +52,20 @@ extern shell_t          g_shell_generic;
 //------------------------------------------------------------------------------
 static void initialise_line_editor()
 {
-    g_line_editor = create_rl_line_editor();
+    environment env = {
+        new ecma48_terminal(),
+    };
+
+    g_line_editor = create_rl_line_editor(env);
 }
 
 //------------------------------------------------------------------------------
 static void shutdown_line_editor()
 {
+    terminal* term = g_line_editor->get_terminal();
+
     destroy_rl_line_editor(g_line_editor);
+    delete term;
 }
 
 //------------------------------------------------------------------------------
@@ -130,9 +139,10 @@ static BOOL on_dll_attach()
         disable_log();
     }
 
-    // Prepare the process and environment for Readline.
+    // Prepare core systems.
     initialise_line_editor();
     initialise_shell_name();
+    initialise_lua();
 
     // Search for a supported shell.
     {

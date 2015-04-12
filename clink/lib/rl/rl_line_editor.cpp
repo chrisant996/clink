@@ -23,6 +23,7 @@
 #include "rl_line_editor.h"
 #include "inputrc.h"
 #include "rl_scroller.h"
+#include "terminal.h"
 
 #include <shared/util.h>
 
@@ -32,11 +33,85 @@ int     completion_shim(int, int);
 int     copy_line_to_clipboard(int, int);
 int     ctrl_c(int, int);
 int     expand_env_vars(int, int);
+int     get_clink_setting_int(const char*);
 int     menu_completion_shim(int, int);
 int     backward_menu_completion_shim(int, int);
 int     paste_from_clipboard(int, int);
 int     show_rl_help(int, int);
 int     up_directory(int, int);
+
+extern "C" {
+extern void         (*rl_fwrite_function)(FILE*, const wchar_t*, int);
+extern void         (*rl_fflush_function)(FILE*);
+} // extern "C"
+
+
+
+//------------------------------------------------------------------------------
+static int terminal_read_thunk(FILE* stream)
+{
+    int alt;
+    int i;
+
+    while (1)
+    {
+        wchar_t wc[2];
+        char utf8[4];
+
+        alt = 0;
+        terminal* term = (terminal*)stream;
+        i = term->read();
+
+        // MSB is set if value represents a printable character.
+        int printable = (i & 0x80000000);
+        i &= ~printable;
+
+        // Treat esc like cmd.exe does - clear the line.
+        if (i == 0x1b)
+        {
+            if (rl_editing_mode == emacs_mode &&
+                get_clink_setting_int("esc_clears_line"))
+            {
+                using_history();
+                rl_delete_text(0, rl_end);
+                rl_point = 0;
+                rl_redisplay();
+                continue;
+            }
+        }
+
+        // Mask off top bits, they're used to track ALT key state.
+        if (i < 0x80 || (i == 0xe0 && !printable))
+        {
+            break;
+        }
+
+        // Convert to utf-8 and insert directly into rl's line buffer.
+        wc[0] = (wchar_t)i;
+        wc[1] = L'\0';
+        WideCharToMultiByte(CP_UTF8, 0, wc, -1, utf8, sizeof(utf8), NULL, NULL);
+
+        rl_insert_text(utf8);
+        rl_redisplay();
+    }
+
+    alt = alt ? 0x80 : 0;
+    return i|alt;
+}
+
+//------------------------------------------------------------------------------
+static void terminal_write_thunk(FILE* stream, const wchar_t* chars, int char_count)
+{
+    terminal* term = (terminal*)stream;
+    return term->write(chars, char_count);
+}
+
+//------------------------------------------------------------------------------
+static void terminal_flush_thunk(FILE* stream)
+{
+    terminal* term = (terminal*)stream;
+    return term->flush();
+}
 
 
 
@@ -45,7 +120,7 @@ class rl_line_editor
     : public line_editor
 {
 public:
-                        rl_line_editor();
+                        rl_line_editor(const environment& env);
     virtual             ~rl_line_editor();
     virtual bool        edit_line(const wchar_t* prompt, wchar_t* out, int out_size) override;
     virtual const char* get_shell_name() const override;
@@ -58,10 +133,17 @@ private:
 };
 
 //------------------------------------------------------------------------------
-rl_line_editor::rl_line_editor()
+rl_line_editor::rl_line_editor(const environment& env)
+: line_editor(env)
 {
     add_funmap_entries();
     bind_inputrc();
+
+    rl_getc_function = terminal_read_thunk;
+    rl_fwrite_function = terminal_write_thunk;
+    rl_fflush_function = terminal_flush_thunk;
+    rl_instream = (FILE*)env.term;
+    rl_outstream = (FILE*)env.term;
 }
 
 //------------------------------------------------------------------------------
@@ -128,9 +210,9 @@ rl_line_editor::bind_inputrc()
 
 
 //------------------------------------------------------------------------------
-line_editor* create_rl_line_editor()
+line_editor* create_rl_line_editor(const environment& env)
 {
-    return new rl_line_editor();
+    return new rl_line_editor(env);
 }
 
 //------------------------------------------------------------------------------

@@ -19,42 +19,25 @@
  * SOFTWARE.
  */
 
-#ifndef LINE_EDITOR_H
-#define LINE_EDITOR_H
+#ifndef ECMA48_TERMINAL_H
+#define ECMA48_TERMINAL_H
 
-class terminal;
-
-//------------------------------------------------------------------------------
-struct environment
-{
-    terminal*           term;
-};
+#include "terminal.h"
 
 //------------------------------------------------------------------------------
-class line_editor
+class ecma48_terminal
+    : public terminal
 {
 public:
-                        line_editor(const environment& env);
-    virtual             ~line_editor() = 0 {}
-    virtual bool        edit_line(const wchar_t* prompt, wchar_t* out, int out_size) = 0;
-    virtual const char* get_shell_name() const = 0;
-    virtual void        set_shell_name(const char* name) = 0;
-    terminal*           get_terminal() const;
+                    ecma48_terminal();
+    virtual         ~ecma48_terminal();
+    virtual int     read() override;
+    virtual void    write(const wchar_t* chars, int char_count) override;
+    virtual void    flush() override;
 
 private:
-    terminal*           m_terminal;
-
-private:
-                        line_editor(const line_editor&);    // unimplemented
-    void                operator = (const line_editor&);    // unimplemented
+    void            check_sgr_support();
+    bool            m_enableSgr;
 };
 
-//------------------------------------------------------------------------------
-inline terminal* line_editor::get_terminal() const
-{
-    return m_terminal;
-}
-
-#endif // LINE_EDITOR_H
-
-// vim: expandtab
+#endif // ECMA48_TERMINAL_H

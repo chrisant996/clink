@@ -23,49 +23,48 @@
 
 #include <errno.h>
 #include <stdio.h>
-#include <wchar.h>
 #include <sys/stat.h>
+#include <wchar.h>
 
 #include "hooks.h"
 
 #define sizeof_array(x) (sizeof(x) / sizeof(x[0]))
 
 //------------------------------------------------------------------------------
-void (*g_alt_fwrite_hook)(wchar_t*) = NULL;
+static wchar_t  fwrite_buf[2048];
+void            (*rl_fwrite_function)(FILE*, const wchar_t*, int)   = NULL;
+void            (*rl_fflush_function)(FILE*)                        = NULL;
 
 //------------------------------------------------------------------------------
-int hooked_fwrite(const void* data, int size, int count, void* unused)
+int hooked_fwrite(const void* data, int size, int count, FILE* stream)
 {
-    wchar_t buf[2048];
     size_t characters;
-    DWORD written;
 
     size *= count;
     
     characters = MultiByteToWideChar(
         CP_UTF8, 0,
         (const char*)data, size,
-        buf, sizeof_array(buf)
+        fwrite_buf, sizeof_array(fwrite_buf)
     );
 
-    characters = characters ? characters : sizeof_array(buf) - 1;
-    buf[characters] = L'\0';
+    characters = characters ? characters : sizeof_array(fwrite_buf) - 1;
+    fwrite_buf[characters] = L'\0';
 
-    if (g_alt_fwrite_hook)
-    {
-        g_alt_fwrite_hook(buf);
-    }
+    if (rl_fwrite_function)
+        rl_fwrite_function(stream, fwrite_buf, (int)characters);
     else
     {
+        DWORD i;
         HANDLE handle = GetStdHandle(STD_OUTPUT_HANDLE);
-        WriteConsoleW(handle, buf, (DWORD)wcslen(buf), &written, NULL);
+        WriteConsoleW(handle, fwrite_buf, (DWORD)wcslen(fwrite_buf), &i, NULL);
     }
 
     return size;
 }
 
 //------------------------------------------------------------------------------
-void hooked_fprintf(const void* unused, const char* format, ...)
+void hooked_fprintf(FILE* stream, const char* format, ...)
 {
     char buffer[2048];
     va_list v;
@@ -75,15 +74,29 @@ void hooked_fprintf(const void* unused, const char* format, ...)
     va_end(v);
 
     buffer[sizeof_array(buffer) - 1] = '\0';
-    hooked_fwrite(buffer, (int)strlen(buffer), 1, NULL);
+    hooked_fwrite(buffer, (int)strlen(buffer), 1, stream);
 }
 
 //------------------------------------------------------------------------------
-int hooked_putc(int c, void* unused)
+int hooked_putc(int c, FILE* stream)
 {
     char buf[2] = { (char)c, '\0' };
-    hooked_fwrite(buf, 1, 1, NULL);
+    hooked_fwrite(buf, 1, 1, stream);
     return 1;
+}
+
+//------------------------------------------------------------------------------
+void hooked_fflush(FILE* stream)
+{
+    if (rl_fflush_function != NULL)
+        (*rl_fflush_function)(stream);
+}
+
+//------------------------------------------------------------------------------
+int hooked_fileno(FILE* stream)
+{
+    errno = EINVAL;
+    return -1;
 }
 
 //------------------------------------------------------------------------------
@@ -92,9 +105,7 @@ size_t hooked_mbrtowc(wchar_t* out, const char* in, size_t size, mbstate_t* stat
     wchar_t buffer[8];
 
     if (size <= 0)
-    {
         return 0;
-    }
 
     MultiByteToWideChar(CP_UTF8, 0, in, 5, buffer, sizeof_array(buffer));
     *out = buffer[0];
@@ -118,12 +129,7 @@ int hooked_stat(const char* path, struct hooked_stat* out)
     size_t characters;
 
     // Utf8 to wchars.
-    characters = MultiByteToWideChar(
-        CP_UTF8, 0,
-        path, -1,
-        buf, sizeof_array(buf)
-    );
-
+    characters = MultiByteToWideChar(CP_UTF8, 0, path, -1, buf, sizeof_array(buf));
     characters = characters ? characters : sizeof_array(buf) - 1;
     buf[characters] = L'\0';
 
@@ -162,14 +168,5 @@ int hooked_fstat(int fid, struct hooked_stat* out)
 //------------------------------------------------------------------------------
 int hooked_wcwidth(wchar_t wc)
 {
-    int width; 
-
-    width = WideCharToMultiByte(
-        CP_ACP, 0,
-        &wc, 1,
-        NULL, 0,
-        NULL, NULL
-    );
-
-    return width;
+    return WideCharToMultiByte(CP_ACP, 0, &wc, 1, NULL, 0, NULL, NULL);
 }
