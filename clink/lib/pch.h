@@ -45,5 +45,3 @@ extern "C" {
 #endif
 
 #endif // LIB_PCH_H
-
-// vim: expandtab

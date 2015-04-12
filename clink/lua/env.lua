@@ -92,5 +92,3 @@ end
 if clink.get_host_process() == "cmd.exe" then
     clink.register_match_generator(env_vars_match_generator, 10)
 end
-
--- vim: expandtab

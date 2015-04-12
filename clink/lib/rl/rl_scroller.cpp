@@ -90,5 +90,3 @@ rl_scroller::rl_scroller()
     MAKE_KEYMAP_THUNK(this, rl_scroller, begin);
     rl_add_funmap_entry("enter-scroll-mode", begin_thunk);
 }
-
-// vim: expandtab

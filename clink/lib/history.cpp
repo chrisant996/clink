@@ -198,5 +198,3 @@ int history_expand_control(char* line, int marker_pos)
 
     return 0;
 }
-
-// vim: expandtab

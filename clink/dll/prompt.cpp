@@ -234,5 +234,3 @@ void* extract_prompt(int ret_as_utf8)
     wcscpy((wchar_t*)prompt, buffer);
     return prompt;
 }
-
-// vim: expandtab

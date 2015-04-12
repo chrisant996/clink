@@ -146,5 +146,3 @@ void generic_shutdown()
 }
 
 #endif // 0
-
-// vim: expandtab

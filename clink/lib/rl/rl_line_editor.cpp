@@ -220,5 +220,3 @@ void destroy_rl_line_editor(line_editor* editor)
 {
     delete editor;
 }
-
-// vim: expandtab

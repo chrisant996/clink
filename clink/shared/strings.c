@@ -100,5 +100,3 @@ void wrapped_write(FILE* out, const char* prefix, const char* str, int width)
         str = end;
     }
 }
-
-// vim: expandtab

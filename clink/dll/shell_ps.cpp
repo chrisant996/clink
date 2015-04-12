@@ -43,5 +43,3 @@ static int ps_initialise(void* base)
 }
 
 #endif // 0
-
-// vim: expandtab

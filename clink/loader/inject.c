@@ -474,5 +474,3 @@ int inject(int argc, char** argv)
 end:
     return is_autorun ? 0 : ret;
 }
-
-// vim: expandtab

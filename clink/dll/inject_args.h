@@ -34,5 +34,3 @@ typedef struct
 } inject_args_t;
 
 #endif // INJECT_ARG
-
-// vim: expandtab

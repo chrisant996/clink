@@ -32,5 +32,3 @@ typedef struct
 } shell_t;
 
 #endif // SHELL_H
-
-// vim: expandtab

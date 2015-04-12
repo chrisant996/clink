@@ -370,5 +370,3 @@ int settings_get_decl_count(settings_t* s)
 {
     return s->count;
 }
-
-// vim: expandtab

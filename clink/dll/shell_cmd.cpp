@@ -480,5 +480,3 @@ static int cmd_initialise(line_editor* line_editor)
 static void cmd_shutdown()
 {
 }
-
-// vim: expandtab

@@ -36,5 +36,3 @@ local git_argument_tree = {
 }
 
 clink.arg.register_parser("git", git_argument_tree)
-
--- vim: expandtab

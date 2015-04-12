@@ -67,5 +67,3 @@ clink.test.test_output(
     "nullcmd case_map-",
     "nullcmd case_map-"
 )
-
--- vim: expandtab

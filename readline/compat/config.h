@@ -165,5 +165,3 @@ int                         hooked_wcwidth(wchar_t wc);
 #endif
 
 #endif // CONFIG_H
-
-// vim: expandtab

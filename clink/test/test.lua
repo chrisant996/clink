@@ -309,5 +309,3 @@ function clink.test.run()
     rm_dir(test_fs_path)
     return all_passed
 end
-
--- vim: expandtab

@@ -38,5 +38,3 @@ void*   get_export(void* base, const char* func_name);
 #endif
 
 #endif // PE_H
-
-// vim: expandtab

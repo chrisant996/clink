@@ -75,5 +75,3 @@ void on_terminal_resize()
         rl_redisplay_function = old_redisplay;
     }
 }
-
-// vim: expandtab

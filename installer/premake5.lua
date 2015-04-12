@@ -285,5 +285,3 @@ newoption {
    value       = "VER",
    description = "Version of Visual Studio to build release with."
 }
-
--- vim: expandtab

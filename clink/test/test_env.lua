@@ -76,5 +76,3 @@ clink.test.test_matches(
     "File matches follow %var%<TAB>",
     "nullcmd %null_env_var%"
 )
-
--- vim: expandtab

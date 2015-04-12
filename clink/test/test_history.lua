@@ -173,5 +173,3 @@ clink.test.test_output(
     { prime_history, "cmdX !?extra?:*" },
     prime_history[2]:gsub("cmd2", "cmdX")
 )
-
--- vim: expandtab

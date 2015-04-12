@@ -43,5 +43,3 @@ void            close_shared_mem(shared_mem_t* info);
 #endif
 
 #endif // SHARED_MEM_H
-
-// vim: expandtab

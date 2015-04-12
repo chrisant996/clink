@@ -47,5 +47,3 @@ int apply_hooks(const hook_decl_t* hooks, int hook_count);
 int set_hook_trap(const char* dll, const char* func_name, int (*trap)());
 
 #endif // DLL_HOOKS_H
-
-// vim: expandtab

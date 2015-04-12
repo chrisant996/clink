@@ -420,5 +420,3 @@ void* hook_jmp(const char* dll, const char* func_name, void* hook)
     FlushInstructionCache(current_proc(), 0, 0);
     return trampoline;
 }
-
-// vim: expandtab

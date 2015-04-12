@@ -82,5 +82,3 @@ int                   settings_get_decl_count(settings_t* s);
 #endif
 
 #endif // SETTINGS_H
-
-// vim: expandtab

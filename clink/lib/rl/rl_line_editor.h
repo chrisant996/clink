@@ -29,5 +29,3 @@ line_editor*    create_rl_line_editor(const environment& env);
 void            destroy_rl_line_editor(line_editor* editor);
 
 #endif // RL_BACKEND_H
-
-// vim: expandtab

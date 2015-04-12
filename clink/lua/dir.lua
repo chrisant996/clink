@@ -73,5 +73,3 @@ clink.arg.register_parser("rd", dir_match_generator)
 clink.arg.register_parser("rmdir", dir_match_generator)
 clink.arg.register_parser("md", dir_match_generator)
 clink.arg.register_parser("mkdir", dir_match_generator)
-
--- vim: expandtab

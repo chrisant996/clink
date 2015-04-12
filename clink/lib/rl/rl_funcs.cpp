@@ -238,5 +238,3 @@ int expand_env_vars(int count, int invoking_key)
     free(out);
     return 0;
 }
-
-// vim: expandtab

@@ -404,5 +404,3 @@ function clink.filter_prompt(prompt)
 
     return add_ansi_codes(clink.prompt.value)
 end
-
--- vim: expandtab

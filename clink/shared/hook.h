@@ -34,5 +34,3 @@ void* hook_jmp(const char* dll, const char* func_name, void* hook);
 #endif
 
 #endif // HOOK_H
-
-// vim: expandtab

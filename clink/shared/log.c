@@ -101,5 +101,3 @@ void disable_log()
 {
     g_disable_log = 1;
 }
-
-// vim: expandtab

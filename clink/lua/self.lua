@@ -83,5 +83,3 @@ self_parser:set_arguments(
 clink.arg.register_parser("clink", self_parser)
 clink.arg.register_parser("clink_x86", self_parser)
 clink.arg.register_parser("clink_x64", self_parser)
-
--- vim: expandtab

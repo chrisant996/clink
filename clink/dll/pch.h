@@ -46,5 +46,3 @@ extern "C" {
 } // extern "C"
 
 #endif // PCH_H
-
-// vim: expandtab

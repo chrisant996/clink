@@ -56,5 +56,3 @@ inline terminal* line_editor::get_terminal() const
 }
 
 #endif // LINE_EDITOR_H
-
-// vim: expandtab

@@ -37,5 +37,3 @@
     }
 
 #endif // KEYMAP_THUNK_H
-
-// vim: expandtab

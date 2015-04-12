@@ -44,5 +44,3 @@ clink.test.test_output(
     "nullcmd pre-s",
     "nullcmd \"pre_space"
 )
-
--- vim: expandtab

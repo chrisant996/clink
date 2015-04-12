@@ -348,5 +348,3 @@ int main(int argc, char** argv)
 
     return test_ok;
 }
-
-// vim: expandtab

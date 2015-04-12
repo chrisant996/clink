@@ -242,5 +242,3 @@ int begin_doskey(wchar_t* chars, unsigned max_chars)
 
     return continue_doskey(chars, max_chars);
 }
-
-// vim: expandtab

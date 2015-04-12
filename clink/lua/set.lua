@@ -42,5 +42,3 @@ end
 
 --------------------------------------------------------------------------------
 clink.arg.register_parser("set", set_match_generator)
-
--- vim: expandtab

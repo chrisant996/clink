@@ -276,5 +276,3 @@ int lua_execute(lua_State* state)
 
     return 2;
 }
-
-// vim: expandtab

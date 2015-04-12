@@ -161,5 +161,3 @@ int ANSI_FNAME(parse_ansi_code)(const char_t* code, int* params, int max_params)
     params[i] = -1;
     return command;
 }
-
-// vim: expandtab syntax=c

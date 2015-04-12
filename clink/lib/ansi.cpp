@@ -48,5 +48,3 @@
 #undef ANSI_FNAME
 
 #undef ANSI_X_COMPILE
-
-// vim: expandtab

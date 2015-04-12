@@ -148,5 +148,3 @@ void close_shared_mem(shared_mem_t* info)
 
     free(info);
 }
-
-// vim: expandtab

@@ -65,5 +65,3 @@ for _, i in ipairs({"cd", "rd", "rmdir", "md", "mkdir", "pushd"}) do
         i.." nest_1\\nest_2\\ " 
     )
 end
-
--- vim: expandtab

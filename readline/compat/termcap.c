@@ -578,5 +578,3 @@ char* tgoto(char* base, int x, int y)
 
     return (char*)&data;
 }
-
-// vim: expandtab

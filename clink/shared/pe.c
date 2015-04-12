@@ -220,6 +220,3 @@ void* get_export(void* base, const char* func_name)
 
     return NULL;
 }
-
-
-// vim: expandtab

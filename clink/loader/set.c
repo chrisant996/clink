@@ -188,5 +188,3 @@ int set(int argc, char** argv)
     settings_shutdown(g_settings);
     return !ret;
 }
-
-// vim: expandtab

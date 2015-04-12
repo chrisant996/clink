@@ -150,5 +150,3 @@ void cpy_path_as_abs(char* abs, const char* rel, int abs_size)
 
     normalise_path_format(abs, abs_size);
 }
-
-// vim: expandtab

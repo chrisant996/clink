@@ -49,5 +49,3 @@ int     read_vm(void* proc_handle, void* dest, const void* src, size_t size);
 #endif
 
 #endif // VM_H
-
-// vim: expandtab

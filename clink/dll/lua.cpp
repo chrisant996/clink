@@ -903,5 +903,3 @@ void lua_filter_prompt(char* buffer, int buffer_size)
 
     lua_pop(g_lua, 2);
 }
-
-// vim: expandtab

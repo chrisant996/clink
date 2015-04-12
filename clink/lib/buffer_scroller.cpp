@@ -82,5 +82,3 @@ void buffer_scroller::page_down()
 
     SetConsoleCursorPosition(m_handle, csbi.dwCursorPosition);
 }
-
-// vim: expandtab

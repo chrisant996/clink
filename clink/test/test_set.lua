@@ -64,5 +64,3 @@ clink.test.test_matches(
     "set sim\t=dir1\\file",
     { "file1", "file2" }
 )
-
--- vim: expandtab

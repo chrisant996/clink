@@ -72,5 +72,3 @@ void pop_exception_filter(LPTOP_LEVEL_EXCEPTION_FILTER old_filter)
 {
     SetUnhandledExceptionFilter(old_filter);
 }
-
-// vim: expandtab

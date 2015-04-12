@@ -28,5 +28,3 @@ const char* g_clink_header =
     "Copyright (c) 2012-2016 Martin Ridgers\n"
     "http://mridgers.github.io/clink\n"
     ;
-
-// vim: expandtab

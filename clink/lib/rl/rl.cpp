@@ -634,5 +634,3 @@ int call_readline_w(const wchar_t* prompt, wchar_t* result, unsigned size)
     free(text);
     return 0;
 }
-
-// vim: expandtab

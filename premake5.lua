@@ -280,5 +280,3 @@ newoption {
 --------------------------------------------------------------------------------
 dofile("docs/premake5.lua")
 dofile("installer/premake5.lua")
-
--- vim: expandtab

@@ -33,5 +33,3 @@ local hg_tree = {
 }
 
 clink.arg.register_parser("hg", hg_tree)
-
--- vim: expandtab

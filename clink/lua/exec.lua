@@ -151,5 +151,3 @@ end
 
 --------------------------------------------------------------------------------
 clink.register_match_generator(exec_match_generator, 50)
-
--- vim: expandtab

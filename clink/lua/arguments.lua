@@ -668,5 +668,3 @@ end
 
 --------------------------------------------------------------------------------
 clink.register_match_generator(argument_match_generator, 25)
-
--- vim: expandtab

@@ -48,5 +48,3 @@ local p4vc_tree = {
 }
 
 clink.arg.register_parser("p4vc", p4vc_tree)
-
--- vim: expandtab

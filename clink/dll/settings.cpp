@@ -221,5 +221,3 @@ const char* get_clink_setting_str(const char* name)
 
     return settings_get_str(g_settings, name);
 }
-
-//vim: expandtab

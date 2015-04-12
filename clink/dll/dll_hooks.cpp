@@ -207,5 +207,3 @@ int set_hook_trap(const char* dll, const char* func_name, int (*trap)())
 
     return 1;
 }
-
-// vim: expandtab

@@ -226,5 +226,3 @@ clink.test.test_matches(
     "   one_",
     { "one_dir\\", "one_local.txt", "one_local.exe" }
 )
-
--- vim: expandtab
