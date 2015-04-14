@@ -20,7 +20,9 @@
  */
 
 #include "pch.h"
+#include "seh_scope.h"
 #include "shared/util.h"
+
 
 //------------------------------------------------------------------------------
 static LONG WINAPI exception_filter(EXCEPTION_POINTERS* info)
@@ -61,14 +63,16 @@ static LONG WINAPI exception_filter(EXCEPTION_POINTERS* info)
     return EXCEPTION_CONTINUE_SEARCH;
 }
 
+
+
 //------------------------------------------------------------------------------
-LPTOP_LEVEL_EXCEPTION_FILTER push_exception_filter()
+seh_scope::seh_scope()
 {
-    return SetUnhandledExceptionFilter(exception_filter);
+    m_prev_filter = SetUnhandledExceptionFilter(exception_filter);
 }
 
 //------------------------------------------------------------------------------
-void pop_exception_filter(LPTOP_LEVEL_EXCEPTION_FILTER old_filter)
+seh_scope::~seh_scope()
 {
-    SetUnhandledExceptionFilter(old_filter);
+    SetUnhandledExceptionFilter((LPTOP_LEVEL_EXCEPTION_FILTER)m_prev_filter);
 }

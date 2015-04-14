@@ -22,14 +22,13 @@
 #include "pch.h"
 #include "shell.h"
 #include "dll_hooks.h"
+#include "seh_scope.h"
 #include "shared/util.h"
 
 #include <line_editor.h>
 
 //------------------------------------------------------------------------------
 int                             get_clink_setting_int(const char*);
-LPTOP_LEVEL_EXCEPTION_FILTER    push_exception_filter();
-void                            pop_exception_filter(LPTOP_LEVEL_EXCEPTION_FILTER);
 int                             begin_doskey(wchar_t*, unsigned);
 int                             continue_doskey(wchar_t*, unsigned);
 wchar_t*                        detect_tagged_prompt_w(const wchar_t*, int);
@@ -112,7 +111,7 @@ static int check_auto_answer()
 {
     static wchar_t* prompt_to_answer = (wchar_t*)1;
     static wchar_t* no_yes;
-	wchar_t* c;
+    wchar_t* c;
     int setting;
     wchar_t* prompt;
 
@@ -186,8 +185,7 @@ static BOOL WINAPI single_char_read(
     wchar_t* buffer,
     DWORD buffer_size,
     LPDWORD read_in,
-    CONSOLE_READCONSOLE_CONTROL* control
-)
+    CONSOLE_READCONSOLE_CONTROL* control)
 {
     int reply;
 
@@ -219,39 +217,44 @@ static BOOL WINAPI read_console(
     wchar_t* buffer,
     DWORD buffer_count,
     LPDWORD read_in,
-    CONSOLE_READCONSOLE_CONTROL* control
-)
+    CONSOLE_READCONSOLE_CONTROL* control)
 {
-    LPTOP_LEVEL_EXCEPTION_FILTER old_exception_filter = push_exception_filter();
-    DWORD stdout_mode;
-    DWORD stdin_mode;
-    BOOL ret = TRUE;
+    struct console_mode_scope
+    {
+        console_mode_scope(HANDLE handle)
+        : m_handle(handle)
+        {
+            GetConsoleMode(m_handle, &m_mode);
+        }
 
-    GetConsoleMode(GetStdHandle(STD_OUTPUT_HANDLE), &stdout_mode);
-    GetConsoleMode(GetStdHandle(STD_INPUT_HANDLE), &stdin_mode);
+        ~console_mode_scope()
+        {
+            SetConsoleMode(m_handle, m_mode);
+        }
+
+        HANDLE  handle;
+        DWORD   mode;
+    };
+
+    console_mode_scope stdout_mode_scope(GetStdHandle(STD_OUTPUT_HANDLE));
+    console_mode_scope stdin_mode_scope(GetStdHandle(STD_INPUT_HANDLE));
+    seh_scope seh;
+
+    BOOL ret = 0;
 
     // If the file past in isn't a console handle then go the default route.
     if (GetFileType(input) != FILE_TYPE_CHAR)
-    {
-        ret = ReadConsoleW(input, buffer, buffer_count, read_in, control);
-        goto read_console_end;
-    }
+        return ReadConsoleW(input, buffer, buffer_count, read_in, control);
 
     // If cmd.exe is asking for one character at a time, use the original path
     // It does this to handle y/n/all prompts which isn't an compatible use-
     // case for readline.
     if (buffer_count == 1)
-    {
-        ret = single_char_read(input, buffer, buffer_count, read_in, control);
-        goto read_console_end;
-    }
+        return single_char_read(input, buffer, buffer_count, read_in, control);
 
     // Sometimes cmd.exe wants line input for reasons other than command entry.
     if (g_prompt_w == NULL || *g_prompt_w == L'\0')
-    {
-        ret = ReadConsoleW(input, buffer, buffer_count, read_in, control);
-        goto read_console_end;
-    }
+        return ReadConsoleW(input, buffer, buffer_count, read_in, control);
 
     // Doskey is implemented on the server side of a ReadConsoleW() call (i.e.
     // in conhost.exe). Commands separated by a "$T" are returned one command
@@ -288,11 +291,7 @@ static BOOL WINAPI read_console(
 
     *read_in = (unsigned)wcslen(buffer);
 
-read_console_end:
-    SetConsoleMode(GetStdHandle(STD_INPUT_HANDLE), stdin_mode);
-    SetConsoleMode(GetStdHandle(STD_OUTPUT_HANDLE), stdout_mode);
-    pop_exception_filter(old_exception_filter);
-    return ret;
+    return TRUE;
 }
 
 //------------------------------------------------------------------------------
@@ -301,10 +300,9 @@ static BOOL WINAPI write_console(
     const wchar_t* buffer,
     DWORD to_write,
     LPDWORD written,
-    LPVOID unused
-)
+    LPVOID unused)
 {
-    LPTOP_LEVEL_EXCEPTION_FILTER old_exception_filter = push_exception_filter();
+    seh_scope seh;
 
     // Clink tags the prompt so that it can be detected when cmd.exe writes it
     // to the console.
@@ -322,7 +320,6 @@ static BOOL WINAPI write_console(
             *written = to_write;
         }
 
-        pop_exception_filter(old_exception_filter);
         return TRUE;
     }
     else if (g_prompt_w != NULL)
@@ -330,7 +327,6 @@ static BOOL WINAPI write_console(
         g_prompt_w[0] = L'\0';
     }
 
-    pop_exception_filter(old_exception_filter);
     return WriteConsoleW(handle, buffer, to_write, written, unused);
 }
 
