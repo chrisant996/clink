@@ -19,10 +19,10 @@
  * SOFTWARE.
  */
 
-#include "shell.h"
-
 #ifndef SHELL_CMD_H
 #define SHELL_CMD_H
+
+#include "shell.h"
 
 //------------------------------------------------------------------------------
 class shell_cmd
