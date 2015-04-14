@@ -20,12 +20,14 @@
  */
 
 #include "pch.h"
-#include "shell.h"
+#include "shell_cmd.h"
 #include "dll_hooks.h"
 #include "seh_scope.h"
 #include "shared/util.h"
 
 #include <line_editor.h>
+
+#include <Windows.h>
 
 //------------------------------------------------------------------------------
 int                             get_clink_setting_int(const char*);
@@ -34,18 +36,12 @@ int                             continue_doskey(wchar_t*, unsigned);
 wchar_t*                        detect_tagged_prompt_w(const wchar_t*, int);
 void                            free_prompt(void*);
 void*                           extract_prompt(int);
-static int                      cmd_validate();
-static int                      cmd_initialise(line_editor*);
-static void                     cmd_shutdown();
 
 extern const wchar_t*           g_prompt_tag_hidden;
 static line_editor*             g_line_editor;
 static wchar_t*                 g_prompt_w;
-shell_t                         g_shell_cmd = {
-                                    cmd_validate,
-                                    cmd_initialise,
-                                    cmd_shutdown
-                                };
+
+
 
 //------------------------------------------------------------------------------
 static int is_interactive()
@@ -57,16 +53,12 @@ static int is_interactive()
 
     // Check the host is cmd.exe.
     if (GetModuleHandle("cmd.exe") == NULL)
-    {
         return 0;
-    }
 
     // Get the command line.
     args = GetCommandLineW();
     if (args == NULL)
-    {
         return 0;
-    }
 
     // Cmd.exe's argument parsing is basic, simply searching for '/' characters
     // and checking the following character.
@@ -76,9 +68,7 @@ static int is_interactive()
 
         args = wcschr(args, L'/');
         if (args == NULL)
-        {
             break;
-        }
 
         i = tolower(*++args);
         switch (i)
@@ -118,9 +108,7 @@ static int check_auto_answer()
     // Skip the feature if it's not enabled.
     setting = get_clink_setting_int("terminate_autoanswer");
     if (setting <= 0)
-    {
         return 0;
-    }
 
     // Try and find the localised prompt.
     if (prompt_to_answer == (wchar_t*)1)
@@ -271,9 +259,7 @@ static BOOL WINAPI read_console(
     {
         int is_eof = g_line_editor->edit_line(g_prompt_w, buffer, buffer_count);
         if (!is_eof)
-        {
             break;
-        }
 
         if (get_clink_setting_int("ctrld_exits"))
         {
@@ -316,16 +302,12 @@ static BOOL WINAPI write_console(
 
         // Convince caller (cmd.exe) that we wrote something to the console.
         if (written != NULL)
-        {
             *written = to_write;
-        }
 
         return TRUE;
     }
     else if (g_prompt_w != NULL)
-    {
         g_prompt_w[0] = L'\0';
-    }
 
     return WriteConsoleW(handle, buffer, to_write, written, unused);
 }
@@ -360,17 +342,12 @@ static void tag_prompt()
 }
 
 //------------------------------------------------------------------------------
-static BOOL WINAPI set_env_var(
-    const wchar_t* name,
-    const wchar_t* value
-)
+static BOOL WINAPI set_env_var(const wchar_t* name, const wchar_t* value)
 {
     BOOL ret = SetEnvironmentVariableW(name, value);
 
     if (_wcsicmp(name, L"prompt") == 0)
-    {
         tag_prompt();
-    }
 
     return ret;
 }
@@ -393,9 +370,7 @@ const char* get_kernel_dll()
     VER_SET_CONDITION(mask, VER_MINORVERSION, VER_GREATER_EQUAL);
 
     if (VerifyVersionInfo(&osvi, VER_MAJORVERSION|VER_MINORVERSION, mask))
-    {
         return "kernelbase.dll";
-    }
 
     return "kernel32.dll";
 }
@@ -417,62 +392,61 @@ static int hook_trap()
     return apply_hooks(hooks, sizeof_array(hooks));
 }
 
-//------------------------------------------------------------------------------
-static int cmd_validate()
-{
-    if (!is_interactive())
-    {
-        return 0;
-    }
 
-    return 1;
+
+//------------------------------------------------------------------------------
+shell_cmd::shell_cmd(line_editor* editor)
+: shell(editor)
+{
+    g_line_editor = editor;
 }
 
 //------------------------------------------------------------------------------
-static int cmd_initialise(line_editor* line_editor)
+shell_cmd::~shell_cmd()
+{
+}
+
+//------------------------------------------------------------------------------
+bool shell_cmd::validate()
+{
+    if (!is_interactive())
+        return false;
+
+    return true;
+}
+
+//------------------------------------------------------------------------------
+bool shell_cmd::initialise()
 {
     const char* dll = get_kernel_dll();
     const char* func_name = "GetEnvironmentVariableW";
 
-    g_line_editor = line_editor;
-
     if (!set_hook_trap(dll, func_name, hook_trap))
-    {
-        return 0;
-    }
+        return false;
 
     // Add an alias to Clink so it can be run from anywhere. Similar to adding
     // it to the path but this way we can add the config path too.
-    {
-        #define BUF_SIZE 512
+    static const int BUF_SIZE = MAX_PATH;
+    char dll_path[BUF_SIZE];
+    char cfg_path[BUF_SIZE];
+    char buffer[BUF_SIZE];
 
-        char dll_path[BUF_SIZE];
-        char cfg_path[BUF_SIZE];
-        char buffer[BUF_SIZE];
+    get_dll_dir(dll_path, BUF_SIZE);
+    get_config_dir(cfg_path, BUF_SIZE);
 
-        get_dll_dir(dll_path, BUF_SIZE);
-        get_config_dir(cfg_path, BUF_SIZE);
+    strcpy(buffer, "\"");
+    str_cat(buffer, dll_path, BUF_SIZE);
+    str_cat(buffer, "/clink_" AS_STR(PLATFORM) ".exe\" --cfgdir \"", BUF_SIZE);
+    str_cat(buffer, cfg_path, BUF_SIZE);
+    str_cat(buffer, "\" $*", BUF_SIZE);
 
-        strcpy(buffer, "\"");
-        str_cat(buffer, dll_path, BUF_SIZE);
-        str_cat(buffer, "/clink_" AS_STR(PLATFORM) ".exe\" --cfgdir \"", BUF_SIZE);
-        str_cat(buffer, cfg_path, BUF_SIZE);
-        str_cat(buffer, "\" $*", BUF_SIZE);
+    const char* shell_name = get_line_editor()->get_shell_name();
+    AddConsoleAlias("clink", buffer, (char*)shell_name);
 
-#if !defined(__MINGW32__) && !defined(__MINGW64__)
-        {
-            const char* shell_name = g_line_editor->get_shell_name();
-            AddConsoleAlias("clink", buffer, (char*)shell_name);
-        }
-#endif // !__MINGW32__ && !__MINGW64__
-
-        #undef BUF_SIZE
-    }
-
-    return 1;
+    return true;
 }
 
 //------------------------------------------------------------------------------
-static void cmd_shutdown()
+void shell_cmd::shutdown()
 {
 }

@@ -1,5 +1,5 @@
-/* Copyright (c) 2013 Martin Ridgers
- * 
+/* Copyright (c) 2015 Martin Ridgers
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
  * in the Software without restriction, including without limitation the rights
@@ -19,36 +19,21 @@
  * SOFTWARE.
  */
 
-#ifndef SHELL_H
-#define SHELL_H
+#include "shell.h"
 
-class line_editor;
+#ifndef SHELL_CMD_H
+#define SHELL_CMD_H
 
 //------------------------------------------------------------------------------
-class shell
+class shell_cmd
+    : public shell
 {
 public:
-                    shell(line_editor* editor);
-    virtual         ~shell() = 0 {}
-    virtual bool    validate() = 0;
-    virtual bool    initialise() = 0;
-    virtual void    shutdown() = 0;
-    line_editor*    get_line_editor() const;
-
-private:
-    line_editor*    m_line_editor;
+            shell_cmd(line_editor* editor);
+            ~shell_cmd();
+    bool    validate() override;
+    bool    initialise() override;
+    void    shutdown() override;
 };
 
-//------------------------------------------------------------------------------
-inline shell::shell(line_editor* editor)
-: m_line_editor(editor)
-{
-}
-
-//------------------------------------------------------------------------------
-inline line_editor* shell::get_line_editor() const
-{
-    return m_line_editor;
-}
-
-#endif // SHELL_H
+#endif // SHELL_CMD_H

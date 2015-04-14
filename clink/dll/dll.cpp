@@ -24,6 +24,7 @@
 #include "shared/shared_mem.h"
 #include "shared/util.h"
 #include "shell.h"
+#include "shell_cmd.h"
 
 #include <ecma48_terminal.h>
 #include <rl/rl_line_editor.h>
@@ -41,10 +42,9 @@ void                    shutdown_clink_settings();
 int                     get_clink_setting_int(const char*);
 
 inject_args_t           g_inject_args;
-static line_editor*     g_line_editor           = NULL;
-static const shell_t*   g_shell                 = NULL;
-extern shell_t          g_shell_cmd;
-#if 0
+static line_editor*     g_line_editor           = nullptr;
+static shell*           g_shell                 = nullptr;
+#if MODE4
 extern shell_t          g_shell_ps;
 extern shell_t          g_shell_generic;
 #endif
@@ -104,9 +104,7 @@ static void get_inject_args(DWORD pid)
 static void success()
 {
     if (!g_inject_args.quiet)
-    {
         puts(g_clink_header);
-    }
 }
 
 //------------------------------------------------------------------------------
@@ -121,6 +119,12 @@ static void failed()
 }
 
 //------------------------------------------------------------------------------
+static shell* create_shell_cmd(line_editor* editor)
+{
+    return new shell_cmd(editor);
+}
+
+//------------------------------------------------------------------------------
 static BOOL on_dll_attach()
 {
     // Get the inject arguments.
@@ -131,13 +135,10 @@ static BOOL on_dll_attach()
         sizeof_array(g_inject_args.profile_path));
 
     if (g_inject_args.profile_path[0] != '\0')
-    {
         set_config_dir_override(g_inject_args.profile_path);
-    }
+
     if (g_inject_args.no_log)
-    {
         disable_log();
-    }
 
     // Prepare core systems.
     initialise_line_editor();
@@ -145,31 +146,28 @@ static BOOL on_dll_attach()
     initialise_lua();
 
     // Search for a supported shell.
-    {
-        int i;
-        struct {
-            const char*     name;
-            const shell_t*  shell;
-        } shells[] = {
-            { "cmd.exe", &g_shell_cmd },
-#if 0
-            { "powershell.exe", &g_shell_ps },
+    struct {
+        const char* name;
+        shell*      (*creator)(line_editor*);
+    } shells[] = {
+        { "cmd.exe",        create_shell_cmd },
+#if MODE4
+        { "powershell.exe", create_shell_ps },
 #endif
-        };
+    };
 
-        for (i = 0; i < sizeof_array(shells); ++i)
+    for (int i = 0; i < sizeof_array(shells); ++i)
+    {
+        const char* shell_name = g_line_editor->get_shell_name();
+        if (stricmp(shell_name, shells[i].name) == 0)
         {
-            const char* shell_name = g_line_editor->get_shell_name();
-            if (stricmp(shell_name, shells[i].name) == 0)
-            {
-                g_shell = shells[i].shell;
-                break;
-            }
+            g_shell = (shells[i].creator)(g_line_editor);
+            break;
         }
     }
 
     // Not a supported shell?
-    if (g_shell == NULL)
+    if (g_shell == nullptr)
     {
         if (!g_inject_args.no_host_check)
         {
@@ -178,7 +176,7 @@ static BOOL on_dll_attach()
             return FALSE;
         }
 
-#if 0
+#if MODE4
         g_shell = &g_shell_generic;
 #endif
     }
@@ -189,7 +187,7 @@ static BOOL on_dll_attach()
         return FALSE;
     }
 
-    if (!g_shell->initialise(g_line_editor))
+    if (!g_shell->initialise())
     {
         failed();
         return FALSE;
