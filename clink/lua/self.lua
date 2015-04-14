@@ -27,7 +27,6 @@ null_parser:disable_file_matching()
 local inject_parser = clink.arg.new_parser()
 inject_parser:set_flags(
     "--help",
-    "--nohostcheck",
     "--pid",
     "--profile",
     "--quiet",

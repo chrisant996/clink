@@ -46,7 +46,6 @@ static line_editor*     g_line_editor           = nullptr;
 static shell*           g_shell                 = nullptr;
 #if MODE4
 extern shell_t          g_shell_ps;
-extern shell_t          g_shell_generic;
 #endif
 
 //------------------------------------------------------------------------------
@@ -164,21 +163,6 @@ static BOOL on_dll_attach()
             g_shell = (shells[i].creator)(g_line_editor);
             break;
         }
-    }
-
-    // Not a supported shell?
-    if (g_shell == nullptr)
-    {
-        if (!g_inject_args.no_host_check)
-        {
-            const char* shell_name = g_line_editor->get_shell_name();
-            LOG_INFO("Unsupported shell '%s'", shell_name);
-            return FALSE;
-        }
-
-#if MODE4
-        g_shell = &g_shell_generic;
-#endif
     }
 
     if (!g_shell->validate())
