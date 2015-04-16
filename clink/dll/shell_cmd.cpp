@@ -21,7 +21,7 @@
 
 #include "pch.h"
 #include "shell_cmd.h"
-#include "dll_hooks.h"
+#include "hook_setter.h"
 #include "seh_scope.h"
 #include "shared/util.h"
 
@@ -353,7 +353,7 @@ static BOOL WINAPI set_env_var(const wchar_t* name, const wchar_t* value)
 }
 
 //------------------------------------------------------------------------------
-const char* get_kernel_dll()
+void* get_kernel_dll()
 {
     // We're going to use a different DLL for Win8 (and onwards).
 
@@ -370,26 +370,22 @@ const char* get_kernel_dll()
     VER_SET_CONDITION(mask, VER_MINORVERSION, VER_GREATER_EQUAL);
 
     if (VerifyVersionInfo(&osvi, VER_MAJORVERSION|VER_MINORVERSION, mask))
-        return "kernelbase.dll";
+        return GetModuleHandle("kernelbase.dll");
 
-    return "kernel32.dll";
+    return GetModuleHandle("kernel32.dll");
 }
 
 //------------------------------------------------------------------------------
-static int hook_trap()
+static bool hook_trap()
 {
-    void* base = GetModuleHandle(NULL);
-    const char* dll = get_kernel_dll();
-
-    hook_decl_t hooks[] = {
-        { HOOK_TYPE_JMP,         NULL, dll,  "ReadConsoleW",            read_console },
-        { HOOK_TYPE_IAT_BY_NAME, base, NULL, "WriteConsoleW",           write_console },
-        { HOOK_TYPE_IAT_BY_NAME, base, NULL, "SetEnvironmentVariableW", set_env_var },
-    };
-
     tag_prompt();
 
-    return apply_hooks(hooks, sizeof_array(hooks));
+    void* base = GetModuleHandle(NULL);
+    hook_setter hooks;
+    hooks.add_jmp(get_kernel_dll(), "ReadConsoleW",            read_console);
+    hooks.add_iat(base,             "WriteConsoleW",           write_console);
+    hooks.add_iat(base,             "SetEnvironmentVariableW", set_env_var);
+    return (hooks.commit() == 3);
 }
 
 
@@ -418,10 +414,10 @@ bool shell_cmd::validate()
 //------------------------------------------------------------------------------
 bool shell_cmd::initialise()
 {
-    const char* dll = get_kernel_dll();
-    const char* func_name = "GetEnvironmentVariableW";
-
-    if (!set_hook_trap(dll, func_name, hook_trap))
+    // Set a trap to get a callback when cmd.exe fetches a environment variable.
+    hook_setter hook;
+    hook.add_trap(get_kernel_dll(), "GetEnvironmentVariableW", hook_trap);
+    if (hook.commit() == 0)
         return false;
 
     // Add an alias to Clink so it can be run from anywhere. Similar to adding

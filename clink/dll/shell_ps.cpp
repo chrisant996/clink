@@ -21,14 +21,14 @@
 
 #include "pch.h"
 #include "shell_ps.h"
-#include "dll_hooks.h"
+#include "hook_setter.h"
 #include "seh_scope.h"
 #include "shared/util.h"
 #include "line_editor.h"
 
 //------------------------------------------------------------------------------
 line_editor*    g_line_editor       = nullptr;
-const char*     get_kernel_dll();
+void*           get_kernel_dll();
 
 
 
@@ -84,13 +84,9 @@ bool shell_ps::validate()
 //------------------------------------------------------------------------------
 bool shell_ps::initialise()
 {
-    const char* dll = get_kernel_dll();
-
-    hook_decl_t hooks[] = {
-        { HOOK_TYPE_JMP, NULL, dll, "ReadConsoleW", read_console },
-    };
-
-    return (apply_hooks(hooks, sizeof_array(hooks)) != 0);
+    hook_setter hooks;
+    hooks.add_jmp(get_kernel_dll(), "ReadConsoleW", read_console);
+    return (hooks.commit() == 1);
 }
 
 //------------------------------------------------------------------------------

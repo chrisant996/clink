@@ -392,21 +392,25 @@ static void* hook_jmp_impl(void* to_hook, void* hook)
 }
 
 //------------------------------------------------------------------------------
-void* hook_jmp(const char* dll, const char* func_name, void* hook)
+void* hook_jmp(void* module, const char* func_name, void* hook)
 {
     void* func_addr;
     void* trampoline;
+    char module_name[96];
+
+    module_name[0] = '\0';
+    GetModuleFileName(module, module_name, sizeof_array(module_name));
 
     // Get the address of the function we're going to hook.
-    func_addr = get_proc_addr(dll, func_name);
+    func_addr = get_export(module, func_name);
     if (func_addr == NULL)
     {
-        LOG_INFO("Failed to find function '%s' in '%s'", dll, func_name);
+        LOG_INFO("Failed to find function '%s' in '%s'", func_name, module_name);
         return NULL;
     }
 
     LOG_INFO("Attemping jump hook.");
-    LOG_INFO("Target is %s, %s @ %p", dll, func_name, func_addr);
+    LOG_INFO("Target is %s, %s @ %p", module_name, func_name, func_addr);
 
     // Install the hook.
     trampoline = hook_jmp_impl(func_addr, hook);

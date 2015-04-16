@@ -1,5 +1,5 @@
 /* Copyright (c) 2012 Martin Ridgers
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
  * in the Software without restriction, including without limitation the rights
@@ -19,31 +19,42 @@
  * SOFTWARE.
  */
 
-#ifndef DLL_HOOKS_H
-#define DLL_HOOKS_H
+#ifndef HOOK_SETTER_H
+#define HOOK_SETTER_H
 
 //------------------------------------------------------------------------------
-typedef enum {
-    SEARCH_IAT_BY_ADDR    = 0,
-    SEARCH_IAT_BY_NAME    = 1,
-} search_iat_type_e;
+class hook_setter
+{
+public:
+                        hook_setter();
+    bool                add_iat(void* module, const char* name, void* hook);
+    bool                add_jmp(void* module, const char* name, void* hook);
+    bool                add_trap(void* module, const char* name, bool (*trap)());
+    int                 commit();
 
-typedef enum {
-    HOOK_TYPE_IAT_BY_ADDR = SEARCH_IAT_BY_ADDR,
-    HOOK_TYPE_IAT_BY_NAME = SEARCH_IAT_BY_NAME,
-    HOOK_TYPE_JMP,
-} hook_type_e;
+private:
+    enum hook_type
+    {
+        HOOK_TYPE_IAT_BY_NAME,
+        //HOOK_TYPE_IAT_BY_ADDR,
+        HOOK_TYPE_JMP,
+        HOOK_TYPE_TRAP,
+    };
 
-typedef struct {
-    hook_type_e     type;
-    void*           base;           // unused by jmp-type
-    const char*     dll;            // null makes iat-types search all
-    const char*     name_or_addr;   // name only for jmp-type
-    void*           hook;
-} hook_decl_t;
+    struct hook_desc
+    {
+        void*           module;
+        const char*     name;
+        void*           hook;
+        hook_type       type;
+    };
 
-//------------------------------------------------------------------------------
-int apply_hooks(const hook_decl_t* hooks, int hook_count);
-int set_hook_trap(const char* dll, const char* func_name, int (*trap)());
+    hook_desc*          add_desc(hook_type type, void* module, const char* name, void* hook);
+    bool                commit_iat(void* self, const hook_desc& desc);
+    bool                commit_jmp(void* self, const hook_desc& desc);
+    bool                commit_trap(void* self, const hook_desc& desc);
+    hook_desc           m_descs[4];
+    int                 m_desc_count;
+};
 
-#endif // DLL_HOOKS_H
+#endif // HOOK_SETTER_H
