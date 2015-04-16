@@ -20,26 +20,80 @@
  */
 
 #include "pch.h"
-#include "shell.h"
-
-#if 0
-
-//------------------------------------------------------------------------------
-int         generic_validate();
-int         generic_initialise(void*);
-void        generic_shutdown();
-static int  ps_initialise(void*);
-
-shell_t     g_shell_ps = {
-                generic_validate,
-                ps_initialise,
-                generic_shutdown };
+#include "shell_ps.h"
+#include "dll_hooks.h"
+#include "seh_scope.h"
+#include "shared/util.h"
+#include "line_editor.h"
 
 //------------------------------------------------------------------------------
-static int ps_initialise(void* base)
+line_editor*    g_line_editor       = nullptr;
+const char*     get_kernel_dll();
+
+
+
+//------------------------------------------------------------------------------
+static void append_crlf(wchar_t* buffer, unsigned max_size)
 {
-    base = GetModuleHandle("mscorwks.dll");
-    return generic_initialise(base);
+    size_t len;
+    len = max_size - wcslen(buffer);
+    wcsncat(buffer, L"\x0d\x0a", len);
+    buffer[max_size - 1] = L'\0';
 }
 
-#endif // 0
+//------------------------------------------------------------------------------
+static BOOL WINAPI read_console(
+    HANDLE input,
+    wchar_t* buffer,
+    DWORD buffer_count,
+    LPDWORD read_in,
+    void* control
+)
+{
+    seh_scope seh;
+
+    while (1)
+        if (!g_line_editor->edit_line(NULL, buffer, buffer_count))
+            break;
+
+    append_crlf(buffer, buffer_count);
+    *read_in = (unsigned)wcslen(buffer);
+    return TRUE;
+}
+
+
+
+//------------------------------------------------------------------------------
+shell_ps::shell_ps(line_editor* editor)
+: shell(editor)
+{
+    g_line_editor = editor;
+}
+
+//------------------------------------------------------------------------------
+shell_ps::~shell_ps()
+{
+}
+
+//------------------------------------------------------------------------------
+bool shell_ps::validate()
+{
+    return true;
+}
+
+//------------------------------------------------------------------------------
+bool shell_ps::initialise()
+{
+    const char* dll = get_kernel_dll();
+
+    hook_decl_t hooks[] = {
+        { HOOK_TYPE_JMP, NULL, dll, "ReadConsoleW", read_console },
+    };
+
+    return (apply_hooks(hooks, sizeof_array(hooks)) != 0);
+}
+
+//------------------------------------------------------------------------------
+void shell_ps::shutdown()
+{
+}

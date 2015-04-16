@@ -25,6 +25,7 @@
 #include "shared/util.h"
 #include "shell.h"
 #include "shell_cmd.h"
+#include "shell_ps.h"
 
 #include <ecma48_terminal.h>
 #include <rl/rl_line_editor.h>
@@ -44,9 +45,6 @@ int                     get_clink_setting_int(const char*);
 inject_args_t           g_inject_args;
 static line_editor*     g_line_editor           = nullptr;
 static shell*           g_shell                 = nullptr;
-#if MODE4
-extern shell_t          g_shell_ps;
-#endif
 
 //------------------------------------------------------------------------------
 static void initialise_line_editor()
@@ -124,6 +122,12 @@ static shell* create_shell_cmd(line_editor* editor)
 }
 
 //------------------------------------------------------------------------------
+static shell* create_shell_ps(line_editor* editor)
+{
+    return new shell_ps(editor);
+}
+
+//------------------------------------------------------------------------------
 static BOOL on_dll_attach()
 {
     // Get the inject arguments.
@@ -150,9 +154,7 @@ static BOOL on_dll_attach()
         shell*      (*creator)(line_editor*);
     } shells[] = {
         { "cmd.exe",        create_shell_cmd },
-#if MODE4
         { "powershell.exe", create_shell_ps },
-#endif
     };
 
     for (int i = 0; i < sizeof_array(shells); ++i)
