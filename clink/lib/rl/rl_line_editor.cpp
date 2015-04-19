@@ -102,6 +102,9 @@ static int terminal_read_thunk(FILE* stream)
 //------------------------------------------------------------------------------
 static void terminal_write_thunk(FILE* stream, const wchar_t* chars, int char_count)
 {
+    if (stream == stderr)
+        return;
+
     terminal* term = (terminal*)stream;
     return term->write(chars, char_count);
 }
@@ -109,6 +112,9 @@ static void terminal_write_thunk(FILE* stream, const wchar_t* chars, int char_co
 //------------------------------------------------------------------------------
 static void terminal_flush_thunk(FILE* stream)
 {
+    if (stream == stderr)
+        return;
+
     terminal* term = (terminal*)stream;
     return term->flush();
 }
