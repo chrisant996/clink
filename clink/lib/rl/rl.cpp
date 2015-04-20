@@ -42,7 +42,6 @@ int                 history_expand_control(char*, int);
 int                 g_slash_translation             = 0;
 
 extern "C" {
-void                move_cursor(int, int);
 extern int          rl_visible_stats;
 extern int          rl_display_fixed;
 extern int          rl_editing_mode;
@@ -54,15 +53,6 @@ int                 rl_complete(int, int);
 int                 rl_menu_complete(int, int);
 int                 rl_backward_menu_complete(int, int);
 } // extern "C"
-
-//------------------------------------------------------------------------------
-// This ensures the cursor is visible as printing to the console usually makes
-// the cursor disappear momentarily.
-static void display()
-{
-    rl_redisplay();
-    move_cursor(0, 0);
-}
 
 //------------------------------------------------------------------------------
 static void translate_matches(char** matches, char from, char to)
@@ -450,8 +440,6 @@ static void display_matches(char** matches, int match_count, int longest)
 //------------------------------------------------------------------------------
 static int initialise_hook()
 {
-    rl_redisplay_function = display;
-
     // Invalid filename characters; <>|?*:"\/
     _rl_comment_begin = "::";
     rl_completer_quote_characters = "\"";

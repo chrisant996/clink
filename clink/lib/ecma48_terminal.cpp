@@ -382,6 +382,13 @@ ecma48_terminal::write(const wchar_t* chars, int char_count)
 void
 ecma48_terminal::flush()
 {
+    // When writing to the console conhost.exe will restart the cursor blink
+    // timer and hide it which can be disorientating, especially when moving
+    // around a line. The below will make sure it stays visible.
+    CONSOLE_SCREEN_BUFFER_INFO csbi;
+    HANDLE handle = GetStdHandle(STD_OUTPUT_HANDLE);
+    GetConsoleScreenBufferInfo(handle, &csbi);
+    SetConsoleCursorPosition(handle, csbi.dwCursorPosition);
 }
 
 //------------------------------------------------------------------------------
