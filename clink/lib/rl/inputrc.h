@@ -30,6 +30,7 @@ const char* clink_inputrc[] = {
     "set output-meta              on",
     "set skip-completed-text      on",
     "set convert-meta             on",
+    "set visible-stats            off",
 
     "\"\\e`s\": backward-word",           // ctrl-left
     "\"\\e`t\": forward-word",            // ctrl-right

@@ -42,7 +42,6 @@ int                 history_expand_control(char*, int);
 int                 g_slash_translation             = 0;
 
 extern "C" {
-extern int          rl_visible_stats;
 extern int          rl_display_fixed;
 extern int          rl_editing_mode;
 extern const char*  rl_filename_quote_characters;
@@ -454,8 +453,6 @@ static int initialise_hook()
 
     rl_basic_quote_characters = "\"";
     rl_filename_quote_characters = " %=;&^";
-
-    rl_visible_stats = 0;               // serves no purpose under win32.
 
     rl_startup_hook = NULL;
     return 0;
