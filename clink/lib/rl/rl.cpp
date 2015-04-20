@@ -45,9 +45,7 @@ extern "C" {
 extern int          rl_display_fixed;
 extern int          rl_editing_mode;
 extern const char*  rl_filename_quote_characters;
-extern int          rl_catch_signals;
 extern int          _rl_complete_mark_directories;
-extern char*        _rl_comment_begin;
 int                 rl_complete(int, int);
 int                 rl_menu_complete(int, int);
 int                 rl_backward_menu_complete(int, int);
@@ -145,7 +143,7 @@ static void quote_matches(char** matches)
 }
 
 //------------------------------------------------------------------------------
-static int postprocess_matches(char** matches)
+int postprocess_matches(char** matches)
 {
     char** m;
     int need_quote;
@@ -241,7 +239,7 @@ static int completion_shim_impl(int count, int invoking_key, int (*rl_func)(int,
 }
 
 //------------------------------------------------------------------------------
-static char** alternative_matches(const char* text, int start, int end)
+char** alternative_matches(const char* text, int start, int end)
 {
     char* c;
     char** lua_matches;
@@ -325,7 +323,7 @@ char** match_display_filter(char** matches, int match_count)
 }
 
 //------------------------------------------------------------------------------
-static void display_matches(char** matches, int match_count, int longest)
+void display_matches(char** matches, int match_count, int longest)
 {
     int i;
     char** new_matches;
@@ -437,28 +435,6 @@ static void display_matches(char** matches, int match_count, int longest)
 }
 
 //------------------------------------------------------------------------------
-static int initialise_hook()
-{
-    // Invalid filename characters; <>|?*:"\/
-    _rl_comment_begin = "::";
-    rl_completer_quote_characters = "\"";
-    rl_ignore_some_completions_function = postprocess_matches;
-    rl_basic_word_break_characters = " <>|=;&";
-    rl_completer_word_break_characters = (char*)rl_basic_word_break_characters;
-    rl_attempted_completion_function = alternative_matches;
-    if (rl_completion_display_matches_hook == NULL)
-    {
-        rl_completion_display_matches_hook = display_matches;
-    }
-
-    rl_basic_quote_characters = "\"";
-    rl_filename_quote_characters = " %=;&^";
-
-    rl_startup_hook = NULL;
-    return 0;
-}
-
-//------------------------------------------------------------------------------
 static char* call_readline_impl(const char* prompt)
 {
     static int initialised = 0;
@@ -481,9 +457,6 @@ static char* call_readline_impl(const char* prompt)
         initialise_clink_settings();
         load_history();
         history_inhibit_expansion_function = history_expand_control;
-
-        rl_catch_signals = 0;
-        rl_startup_hook = initialise_hook;
         initialised = 1;
     }
 

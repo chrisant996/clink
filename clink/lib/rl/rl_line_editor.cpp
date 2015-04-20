@@ -39,10 +39,15 @@ int     backward_menu_completion_shim(int, int);
 int     paste_from_clipboard(int, int);
 int     show_rl_help(int, int);
 int     up_directory(int, int);
+int     postprocess_matches(char**);
+char**  alternative_matches(const char*, int, int);
+void    display_matches(char**, int, int);
 
 extern "C" {
 extern void         (*rl_fwrite_function)(FILE*, const wchar_t*, int);
 extern void         (*rl_fflush_function)(FILE*);
+extern char*        _rl_comment_begin;
+extern int          rl_catch_signals;
 } // extern "C"
 
 
@@ -150,6 +155,18 @@ rl_line_editor::rl_line_editor(const environment& env)
     rl_fflush_function = terminal_flush_thunk;
     rl_instream = (FILE*)env.term;
     rl_outstream = (FILE*)env.term;
+
+    rl_catch_signals = 0;
+    _rl_comment_begin = "::";
+    rl_basic_word_break_characters = " <>|=;&";
+    rl_basic_quote_characters = "\"";
+    rl_completer_quote_characters = "\"";
+    rl_completer_word_break_characters = (char*)rl_basic_word_break_characters;
+    rl_filename_quote_characters = " %=;&^";
+
+    rl_ignore_some_completions_function = postprocess_matches;
+    rl_attempted_completion_function = alternative_matches;
+    rl_completion_display_matches_hook = display_matches;
 }
 
 //------------------------------------------------------------------------------
