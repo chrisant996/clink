@@ -179,7 +179,7 @@ loop:
         }
 
         // Fresh read from the console.
-        ReadConsoleInputW(handle, &record, 1, &i);
+        ReadConsoleInputW(handle_stdin, &record, 1, &i);
         if (record.EventType != KEY_EVENT)
             goto loop;
 
