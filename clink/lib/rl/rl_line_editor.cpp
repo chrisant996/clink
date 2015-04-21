@@ -23,6 +23,7 @@
 #include "rl_line_editor.h"
 #include "inputrc.h"
 #include "rl_scroller.h"
+#include "singleton.h"
 #include "terminal.h"
 
 #include <shared/util.h>
@@ -129,6 +130,7 @@ static void terminal_flush_thunk(FILE* stream)
 //------------------------------------------------------------------------------
 class rl_line_editor
     : public line_editor
+    , public singleton<rl_line_editor>
 {
 public:
                         rl_line_editor(const environment& env);
