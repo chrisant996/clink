@@ -23,17 +23,26 @@
 #define SHELL_PS_H
 
 #include "shell.h"
+#include "singleton.h"
+
+#include <Windows.h>
 
 //------------------------------------------------------------------------------
 class shell_ps
     : public shell
+    , public singleton<shell_ps>
 {
 public:
-            shell_ps(line_editor* editor);
-            ~shell_ps();
-    bool    validate() override;
-    bool    initialise() override;
-    void    shutdown() override;
+                        shell_ps(line_editor* editor);
+                        ~shell_ps();
+    bool                validate() override;
+    bool                initialise() override;
+    void                shutdown() override;
+
+private:
+    static BOOL WINAPI  read_console(HANDLE input, wchar_t* buffer, DWORD buffer_count, LPDWORD read_in, void* control);
+    void                edit_line(wchar_t* buffer, int buffer_count);
+    line_editor*        m_line_editor;
 };
 
 #endif // SHELL_PS_H

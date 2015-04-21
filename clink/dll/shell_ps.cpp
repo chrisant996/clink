@@ -27,39 +27,7 @@
 #include "line_editor.h"
 
 //------------------------------------------------------------------------------
-line_editor*    g_line_editor       = nullptr;
 void*           get_kernel_dll();
-
-
-
-//------------------------------------------------------------------------------
-static void append_crlf(wchar_t* buffer, unsigned max_size)
-{
-    size_t len;
-    len = max_size - wcslen(buffer);
-    wcsncat(buffer, L"\x0d\x0a", len);
-    buffer[max_size - 1] = L'\0';
-}
-
-//------------------------------------------------------------------------------
-static BOOL WINAPI read_console(
-    HANDLE input,
-    wchar_t* buffer,
-    DWORD buffer_count,
-    LPDWORD read_in,
-    void* control
-)
-{
-    seh_scope seh;
-
-    while (1)
-        if (!g_line_editor->edit_line(NULL, buffer, buffer_count))
-            break;
-
-    append_crlf(buffer, buffer_count);
-    *read_in = (unsigned)wcslen(buffer);
-    return TRUE;
-}
 
 
 
@@ -67,7 +35,6 @@ static BOOL WINAPI read_console(
 shell_ps::shell_ps(line_editor* editor)
 : shell(editor)
 {
-    g_line_editor = editor;
 }
 
 //------------------------------------------------------------------------------
@@ -92,4 +59,35 @@ bool shell_ps::initialise()
 //------------------------------------------------------------------------------
 void shell_ps::shutdown()
 {
+}
+
+//------------------------------------------------------------------------------
+BOOL WINAPI shell_ps::read_console(
+    HANDLE input,
+    wchar_t* chars,
+    DWORD max_chars,
+    LPDWORD read_in,
+    void* control)
+{
+    seh_scope seh;
+
+    *chars = '\0';
+    shell_ps::get()->edit_line(chars, max_chars);
+
+    size_t len = max_chars - wcslen(chars);
+    wcsncat(chars, L"\x0d\x0a", len);
+    chars[max_chars - 1] = '\0';
+
+    if (read_in != nullptr)
+        *read_in = (DWORD)wcslen(chars);
+
+    return TRUE;
+}
+
+//------------------------------------------------------------------------------
+void shell_ps::edit_line(wchar_t* chars, int max_chars)
+{
+    while (1)
+        if (!get_line_editor()->edit_line(NULL, chars, max_chars))
+            break;
 }
