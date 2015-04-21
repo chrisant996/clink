@@ -41,8 +41,6 @@ void*                           extract_prompt(int);
 extern const wchar_t*           g_prompt_tag_hidden;
 static wchar_t*                 g_prompt_w;
 
-static line_editor*             g_line_editor;
-
 
 
 //------------------------------------------------------------------------------
