@@ -121,7 +121,7 @@ static int fwrite_sgr_code(const wchar_t* code, int current, int defaults)
 
 //------------------------------------------------------------------------------
 ecma48_terminal::ecma48_terminal()
-: m_enableSgr(true)
+: m_enable_sgr(true)
 {
 }
 
@@ -346,7 +346,7 @@ ecma48_terminal::write(const wchar_t* chars, int char_count)
 {
     HANDLE handle = GetStdHandle(STD_OUTPUT_HANDLE);
 
-    if (!m_enableSgr)
+    if (!m_enable_sgr)
     {
         DWORD written;
         WriteConsoleW(handle, chars, char_count, &written, nullptr);
@@ -411,14 +411,14 @@ ecma48_terminal::check_sgr_support()
         if (GetModuleHandle(dll_name) != nullptr)
         {
             LOG_INFO("Disabling ANSI support. Found '%s'", dll_name);
-            m_enableSgr = false;
+            m_enable_sgr = false;
             return;
         }
     }
 
     // Give the user the option to disable ANSI support.
     if (get_clink_setting_int("ansi_code_support") == 0)
-        m_enableSgr = false;
+        m_enable_sgr = false;
 
     return;
 }

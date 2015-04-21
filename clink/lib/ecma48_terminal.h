@@ -37,7 +37,7 @@ public:
 
 private:
     void            check_sgr_support();
-    bool            m_enableSgr;
+    bool            m_enable_sgr;
 };
 
 #endif // ECMA48_TERMINAL_H
