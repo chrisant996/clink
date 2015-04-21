@@ -341,8 +341,7 @@ end:
 }
 
 //------------------------------------------------------------------------------
-void
-ecma48_terminal::write(const wchar_t* chars, int char_count)
+void ecma48_terminal::write(const wchar_t* chars, int char_count)
 {
     HANDLE handle = GetStdHandle(STD_OUTPUT_HANDLE);
 
@@ -379,8 +378,7 @@ ecma48_terminal::write(const wchar_t* chars, int char_count)
 }
 
 //------------------------------------------------------------------------------
-void
-ecma48_terminal::flush()
+void ecma48_terminal::flush()
 {
     // When writing to the console conhost.exe will restart the cursor blink
     // timer and hide it which can be disorientating, especially when moving
@@ -392,8 +390,7 @@ ecma48_terminal::flush()
 }
 
 //------------------------------------------------------------------------------
-void
-ecma48_terminal::check_sgr_support()
+void ecma48_terminal::check_sgr_support()
 {
     // Check for the presence of known third party tools that also provide ANSI
     // escape code support.
