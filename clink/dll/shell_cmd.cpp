@@ -24,6 +24,7 @@
 #include "hook_setter.h"
 #include "seh_scope.h"
 #include "shared/util.h"
+#include "shared/vm.h"
 
 #include <line_editor.h>
 
@@ -353,38 +354,19 @@ static BOOL WINAPI set_env_var(const wchar_t* name, const wchar_t* value)
 }
 
 //------------------------------------------------------------------------------
-void* get_kernel_dll()
-{
-    // We're going to use a different DLL for Win8 (and onwards).
-
-    OSVERSIONINFOEX osvi;
-    DWORDLONG mask = 0;
-    int op=VER_GREATER_EQUAL;
-
-    ZeroMemory(&osvi, sizeof(OSVERSIONINFOEX));
-    osvi.dwOSVersionInfoSize = sizeof(OSVERSIONINFOEX);
-    osvi.dwMajorVersion = 6;
-    osvi.dwMinorVersion = 2;
-
-    VER_SET_CONDITION(mask, VER_MAJORVERSION, VER_GREATER_EQUAL);
-    VER_SET_CONDITION(mask, VER_MINORVERSION, VER_GREATER_EQUAL);
-
-    if (VerifyVersionInfo(&osvi, VER_MAJORVERSION|VER_MINORVERSION, mask))
-        return GetModuleHandle("kernelbase.dll");
-
-    return GetModuleHandle("kernel32.dll");
-}
-
-//------------------------------------------------------------------------------
 static bool hook_trap()
 {
     tag_prompt();
 
+    void* kernel_module = get_alloc_base(ReadConsoleW);
+    if (kernel_module == nullptr)
+        return false;
+
     void* base = GetModuleHandle(NULL);
     hook_setter hooks;
-    hooks.add_jmp(get_kernel_dll(), "ReadConsoleW",            read_console);
-    hooks.add_iat(base,             "WriteConsoleW",           write_console);
-    hooks.add_iat(base,             "SetEnvironmentVariableW", set_env_var);
+    hooks.add_jmp(kernel_module, "ReadConsoleW",            read_console);
+    hooks.add_iat(base,          "WriteConsoleW",           write_console);
+    hooks.add_iat(base,          "SetEnvironmentVariableW", set_env_var);
     return (hooks.commit() == 3);
 }
 
@@ -414,9 +396,15 @@ bool shell_cmd::validate()
 //------------------------------------------------------------------------------
 bool shell_cmd::initialise()
 {
+    // Find the correct module that exports ReadConsoleW by finding the base
+    // address of the virtual memory block where the function is.
+    void* kernel_module = get_alloc_base(ReadConsoleW);
+    if (kernel_module == nullptr)
+        return false;
+
     // Set a trap to get a callback when cmd.exe fetches a environment variable.
     hook_setter hook;
-    hook.add_trap(get_kernel_dll(), "GetEnvironmentVariableW", hook_trap);
+    hook.add_trap(kernel_module, "GetEnvironmentVariableW", hook_trap);
     if (hook.commit() == 0)
         return false;
 

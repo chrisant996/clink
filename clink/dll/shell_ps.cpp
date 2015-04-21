@@ -24,12 +24,11 @@
 #include "hook_setter.h"
 #include "seh_scope.h"
 #include "shared/util.h"
-#include "line_editor.h"
+#include "shared/vm.h"
 
-//------------------------------------------------------------------------------
-void*           get_kernel_dll();
+#include <line_editor.h>
 
-
+#include <Windows.h>
 
 //------------------------------------------------------------------------------
 shell_ps::shell_ps(line_editor* editor)
@@ -51,8 +50,12 @@ bool shell_ps::validate()
 //------------------------------------------------------------------------------
 bool shell_ps::initialise()
 {
+    void* read_console_module = get_alloc_base(ReadConsoleW);
+    if (read_console_module == nullptr)
+        return false;
+
     hook_setter hooks;
-    hooks.add_jmp(get_kernel_dll(), "ReadConsoleW", read_console);
+    hooks.add_jmp(read_console_module, "ReadConsoleW", read_console);
     return (hooks.commit() == 1);
 }
 
