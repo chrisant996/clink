@@ -162,7 +162,6 @@ loop:
         DWORD i;
         INPUT_RECORD record;
         const KEY_EVENT_RECORD* key;
-        int altgr_sub;
 
         GetConsoleScreenBufferInfo(handle_stdout, &csbi);
 
@@ -204,9 +203,7 @@ loop:
             int i;
             printf("\n%03d: %s ", id++, key->bKeyDown ? "+" : "-");
             for (i = 2; i < sizeof(*key) / sizeof(short); ++i)
-            {
                 printf("%04x ", ((unsigned short*)key)[i]);
-            }
         }
 #endif
 
@@ -215,15 +212,14 @@ loop:
             // Some times conhost can send through ALT codes, with the resulting
             // Unicode code point in the Alt key-up event.
             if (key_vk == VK_MENU && key_char)
-            {
                 goto end;
-            }
 
             goto loop;
         }
 
         // Windows supports an AltGr substitute which we check for here. As it
         // collides with Readline mappings Clink's support can be disabled.
+        int altgr_sub;
         altgr_sub = !!(key_flags & LEFT_ALT_PRESSED);
         altgr_sub &= !!(key_flags & (LEFT_CTRL_PRESSED|RIGHT_CTRL_PRESSED));
         altgr_sub &= !!key_char;
@@ -243,8 +239,6 @@ loop:
     // that which Readline expects.
     if (key_char == 0)
     {
-        int i;
-
         // The numpad keys such as PgUp, End, etc. don't come through with the
         // ENHANCED_KEY flag set so we'll infer it here.
         static const int enhanced_vks[] = {
@@ -252,7 +246,7 @@ loop:
             VK_INSERT, VK_DELETE, VK_PRIOR, VK_NEXT,
         };
 
-        for (i = 0; i < sizeof_array(enhanced_vks); ++i)
+        for (int i = 0; i < sizeof_array(enhanced_vks); ++i)
         {
             if (key_vk == enhanced_vks[i])
             {
@@ -280,13 +274,11 @@ loop:
                 { 0x53, 0x6a, 0x58, 0x2a }, // SjX* delete
             };
 
-            for (i = 0; i < sizeof_array(mod_map); ++i)
+            for (int i = 0; i < sizeof_array(mod_map); ++i)
             {
                 int j = 0;
                 if (mod_map[i][j] != key_sc)
-                {
                     continue;
-                }
 
                 j += !!(key_flags & SHIFT_PRESSED);
                 j += !!(key_flags & CTRL_PRESSED) << 1;
@@ -296,16 +288,12 @@ loop:
 
             // Blacklist.
             if (!carry)
-            {
                 goto loop;
-            }
 
             key_vk = 0xe0;
         }
         else if (!(key_flags & CTRL_PRESSED))
-        {
             goto loop;
-        }
 
         // This builds Ctrl-<key> map to match that as described by Readline's
         // source for the emacs/vi keymaps.
