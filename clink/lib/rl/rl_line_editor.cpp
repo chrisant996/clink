@@ -72,20 +72,6 @@ static int terminal_read_thunk(FILE* stream)
         int printable = (i & 0x80000000);
         i &= ~printable;
 
-        // Treat esc like cmd.exe does - clear the line.
-        if (i == 0x1b)
-        {
-            if (rl_editing_mode == emacs_mode &&
-                get_clink_setting_int("esc_clears_line"))
-            {
-                using_history();
-                rl_delete_text(0, rl_end);
-                rl_point = 0;
-                rl_redisplay();
-                continue;
-            }
-        }
-
         // Mask off top bits, they're used to track ALT key state.
         if (i < 0x80 || (i == 0xe0 && !printable))
         {

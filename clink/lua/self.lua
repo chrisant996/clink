@@ -54,7 +54,6 @@ set_parser:set_arguments(
     {
         "ansi_code_support",
         "ctrld_exits",
-        "esc_clears_line",
         "exec_match_style",
         "history_dupe_mode",
         "history_expand_mode",

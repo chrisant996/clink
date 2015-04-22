@@ -49,7 +49,6 @@ Name                         | Description
 :--:                         | -----------
 **ansi_code_support**        | When printing the prompt, Clink has basic built-in support for SGR ANSI escape codes to control the text colours. This is automatically disabled if a third party tool is detected that also provides this facility. It can also be disabled by setting this to 0.
 **ctrld_exits**              | Ctrl-D exits the process when it is pressed on an empty line.
-**esc_clears_line**          | Clink clears the current line when Esc is pressed (unless Readline's Vi mode is enabled).
 **exec_match_style**         | Changes how Clink will match executables when there is no path separator on the line. 0 = PATH only, 1 = PATH and CWD, 2 = PATH, CWD, and directories. In all cases both executables and directories are matched when there is a path separator present.
 **history_dupe_mode**        | If a line is a duplicate of an existing history entry Clink will erase the duplicate when this is set 2. A value of 1 will not add duplicates to the history and a value of 0 will always add lines.
 **history_expand_mode**      | The '!' character in an entered line can be interpreted to introduce words from the history. This can be enabled and disable by setting this value to 1 or 0. Values or 2, 3 or 4 will skip any ! character quoted in single, double, or both quotes respectively.

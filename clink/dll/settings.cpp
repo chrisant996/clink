@@ -36,14 +36,6 @@ static const setting_decl_t g_settings_decl[] = {
         0, "1"
     },
     {
-        "esc_clears_line",
-        "Toggle if pressing Esc clears line",
-        "Clink clears the current line when Esc is pressed (unless Readline's "
-        "Vi mode is enabled).",
-        SETTING_TYPE_BOOL,
-        0, "1"
-    },
-    {
         "match_colour",
         "Match display colour",
         "Colour to use when displaying matches. A value less than 0 will be "
