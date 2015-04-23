@@ -69,7 +69,9 @@ const char* clink_inputrc[] = {
     "C-c:     ctrl-c",
     "M-a:     \"..\\\\\"",
 
+#if MODE4
     "$if cmd.exe",
+#endif
         "set keymap emacs",
         "\"\\eO5\": up-directory",
         "M-C-u:     up-directory",
@@ -84,7 +86,9 @@ const char* clink_inputrc[] = {
         "\"\\eO5\": up-directory",
         "M-C-u:     up-directory",
         "M-C-e:     expand-env-vars",
+#if MODE4
     "$endif",
+#endif
 
     "set keymap emacs",
     nullptr,
