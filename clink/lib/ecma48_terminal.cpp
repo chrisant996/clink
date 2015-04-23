@@ -152,8 +152,8 @@ loop:
     if (carry)
     {
         key_flags = ENHANCED_KEY;
-        key_char = carry;
-        carry = 0;
+        key_char = carry & 0xff;
+        carry = carry >> 8;
     }
     else
     {
@@ -231,7 +231,7 @@ loop:
         }
 
         if (!altgr_sub)
-            alt = !!(key_flags & LEFT_ALT_PRESSED);
+			alt = !!(key_flags & (LEFT_ALT_PRESSED|RIGHT_ALT_PRESSED));
     }
 
     // No Unicode character? Then some post-processing is required to make the
@@ -282,7 +282,7 @@ loop:
 
                 j += !!(key_flags & SHIFT_PRESSED);
                 j += !!(key_flags & CTRL_PRESSED) << 1;
-                carry = mod_map[i][j];
+                carry = '`' | (mod_map[i][j] << 8);
                 break;
             }
 
@@ -290,7 +290,7 @@ loop:
             if (!carry)
                 goto loop;
 
-            key_vk = 0xe0;
+            key_vk = 0x1b;
         }
         else if (!(key_flags & CTRL_PRESSED))
             goto loop;
@@ -308,10 +308,6 @@ loop:
 
         key_char = key_vk;
     }
-    else if (!(key_flags & ENHANCED_KEY) && key_char > 0x7f)
-    {
-        key_char |= 0x8000000;
-    }
 
     // Special case for shift-tab.
     if (key_char == '\t' && !carry && (key_flags & SHIFT_PRESSED))
@@ -324,6 +320,13 @@ end:
 #if defined(DEBUG_GETC) && defined(_DEBUG)
     printf("\n%08x '%c'", key_char, key_char);
 #endif
+
+    // Include an ESC character in the input stream if Alt is pressed.
+    if (alt && key_char < 0x80)
+    {
+        carry = (carry << 8) | key_char;
+        key_char = 0x1b;
+    }
 
     return key_char;
 }

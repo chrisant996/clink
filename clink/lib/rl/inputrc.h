@@ -27,9 +27,8 @@ const char* clink_inputrc[] = {
     "set completion-ignore-case   on",
     "set completion-map-case      on",
     "set completion-display-width 106",
-    "set output-meta              on",
+    "set output-meta              on",    // for correct utf8 output
     "set skip-completed-text      on",
-    "set convert-meta             on",
     "set visible-stats            off",
 
     "\"\\e`s\": backward-word",           // ctrl-left

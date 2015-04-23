@@ -56,39 +56,27 @@ extern int          rl_catch_signals;
 //------------------------------------------------------------------------------
 static int terminal_read_thunk(FILE* stream)
 {
-    int alt;
     int i;
 
     while (1)
     {
-        wchar_t wc[2];
-        char utf8[4];
-
-        alt = 0;
         terminal* term = (terminal*)stream;
         i = term->read();
 
-        // MSB is set if value represents a printable character.
-        int printable = (i & 0x80000000);
-        i &= ~printable;
-
         // Mask off top bits, they're used to track ALT key state.
-        if (i < 0x80 || (i == 0xe0 && !printable))
-        {
+        if (i < 0x80)
             break;
-        }
 
         // Convert to utf-8 and insert directly into rl's line buffer.
-        wc[0] = (wchar_t)i;
-        wc[1] = L'\0';
+        wchar_t wc[2] = { (wchar_t)i, 0 };
+        char utf8[4] = {};
         WideCharToMultiByte(CP_UTF8, 0, wc, -1, utf8, sizeof(utf8), NULL, NULL);
 
         rl_insert_text(utf8);
         rl_redisplay();
     }
 
-    alt = alt ? 0x80 : 0;
-    return i|alt;
+    return i;
 }
 
 //------------------------------------------------------------------------------
