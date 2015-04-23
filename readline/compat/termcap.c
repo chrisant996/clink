@@ -521,14 +521,14 @@ char* tgetstr(char* cap_name, char** out)
 
     // Movement key bindings.
     case CAP('k', 'H'): str = "[kh]";        break; // Home "down"?! Unused.
-    case CAP('k', 'h'): str = "\033`\x47";   break;
-    case CAP('@', '7'): str = "\033`\x4f";   break;
-    case CAP('k', 'D'): str = "\033`\x53";   break;
-    case CAP('k', 'I'): str = "\033`\x52";   break;
-    case CAP('k', 'u'): str = "\033`\x48";   break;
-    case CAP('k', 'd'): str = "\033`\x50";   break;
-    case CAP('k', 'l'): str = "\033`\x4b";   break;
-    case CAP('k', 'r'): str = "\033`\x4d";   break;
+    case CAP('k', 'h'): str = "\x1b[H";      break; // Home
+    case CAP('@', '7'): str = "\x1b[F";      break; // End
+    case CAP('k', 'D'): str = "\x1b[3";      break; // Del
+    case CAP('k', 'I'): str = "\x1b[2";      break; // Ins
+    case CAP('k', 'u'): str = "\x1b[A";      break; // Up
+    case CAP('k', 'd'): str = "\x1b[B";      break; // Down
+    case CAP('k', 'r'): str = "\x1b[C";      break; // Right
+    case CAP('k', 'l'): str = "\x1b[D";      break; // Left
 
     // Cursor movement.
     case CAP('c', 'r'): str = "cr";  break;

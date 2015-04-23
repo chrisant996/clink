@@ -259,30 +259,32 @@ loop:
         // runtime does something similar. Slightly non-standard.
         if (key_flags & ENHANCED_KEY)
         {
-            static const int mod_map[][4] =
+            static const int mod_map[][5] =
             {
-                //Nrml  Shft  Ctrl  CtSh
-                { 0x47, 0x61, 0x77, 0x21 }, // Gaw! home
-                { 0x48, 0x62, 0x54, 0x22 }, // HbT" up
-                { 0x49, 0x63, 0x55, 0x23 }, // IcU# pgup
-                { 0x4b, 0x64, 0x73, 0x24 }, // Kds$ left
-                { 0x4d, 0x65, 0x74, 0x25 }, // Met% right
-                { 0x4f, 0x66, 0x75, 0x26 }, // Ofu& end
-                { 0x50, 0x67, 0x56, 0x27 }, // PgV' down
-                { 0x51, 0x68, 0x76, 0x28 }, // Qhv( pgdn
-                { 0x52, 0x69, 0x57, 0x29 }, // RiW) insert
-                { 0x53, 0x6a, 0x58, 0x2a }, // SjX* delete
+                // j---->
+                // Scan Nrml Shft
+                {  'H', 'A', 'a'  }, // up      i
+                {  'P', 'B', 'b'  }, // down    |
+                {  'K', 'D', 'd'  }, // left    |
+                {  'M', 'C', 'c'  }, // right   v
+                {  'R', '2', 'w'  }, // insert
+                {  'S', '3', 'e'  }, // delete
+                {  'G', '1', 'q'  }, // home
+                {  'O', '4', 'r'  }, // end
+                {  'I', '5', 't'  }, // pgup
+                {  'Q', '6', 'y'  }, // pgdn
             };
 
             for (int i = 0; i < sizeof_array(mod_map); ++i)
             {
-                int j = 0;
-                if (mod_map[i][j] != key_sc)
+                if (mod_map[i][0] != key_sc)
                     continue;
 
-                j += !!(key_flags & SHIFT_PRESSED);
-                j += !!(key_flags & CTRL_PRESSED) << 1;
-                carry = '`' | (mod_map[i][j] << 8);
+                int j = 1 + !!(key_flags & SHIFT_PRESSED);
+
+                carry = mod_map[i][j] << 8;
+                carry |= (key_flags & CTRL_PRESSED) ? 'O' : '[';
+
                 break;
             }
 
@@ -312,8 +314,8 @@ loop:
     // Special case for shift-tab.
     if (key_char == '\t' && !carry && (key_flags & SHIFT_PRESSED))
     {
-        key_char = 0xe0;
-        carry = 'Z';
+        key_char = 0x1b;
+        carry = 'Z[';
     }
 
 end:

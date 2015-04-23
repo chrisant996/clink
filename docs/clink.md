@@ -276,26 +276,30 @@ A filter function is registered into the filter chain by passing the function to
 
 #### Binding special keys
 
-Due to differences between Windows and Linux, escape codes for keys like PageUp/Down and the arrow keys are different in Clink. Escape codes take the format **\\e`?** where '?' is one of the characters from the following table;
+Due to differences between Windows and Linux, escape codes for keys like PageUp/Down and the arrow keys are a little different in Clink. Where possible Clink will map special keys to VT220-style control sequences (as described (here)[http://invisible-island.net/xterm/ctlseqs/ctlseqs.html] and (here)[http://pasky.or.cz/cp/ansi]).
 
-Key      | Normal | Shift | Ctrl  | Ctrl-Shift
-:-:      | :-:    | :-:   | :-:   | :-:
-Home     | G      | a     | w     | !
-Up       | H      | b     | T     | "
-PageUp   | I      | c     | U     | #
-Left     | K      | d     | s     | $
-Right    | M      | e     | t     | %
-End      | O      | f     | u     | &
-Down     | P      | g     | V     | '
-PageDown | Q      | h     | v     | (
-Insert   | R      | i     | W     | )
-Delete   | S      | j     | X     | \*
-Tab      | (n/a)  | Z     | (n/a) | (n/a)
+Sequences begin with Control Sequence Introducer (CSI : **ESC [**) unless Ctrl is pressed in which case Single Shift 3 (SS3 : **ESC O**) is used. ESC is the escape character, 0x1b in hexadecimal. The end of the sequence ends with a character for the corresponding key from the following table (the shifted column is non-standard);
 
-Here is an example line from a clink_inputrc file that binds Shift-End to the Readline function **transpose-word** function;
+Key      | Normal | Shifted
+:-:      | :-:    | :-:
+Up       | A      | a
+Down     | B      | b
+Left     | D      | d
+Right    | C      | c
+Insert   | 2      | w
+Delete   | 3      | e
+Home     | 1      | q
+End      | 4      | r
+PageUp   | 5      | t
+PageDown | 6      | y
+Tab      | (n/a)  | Z
+
+Here is an example line from a clink_inputrc file that binds Up, Shift-End, and Ctrl-Shift-Right;
 
 ```
-"\e`f": transpose-word
+"\e[A": transpose-word   # Up
+"\e[r": upcase-word      # Shift-End
+"\eOc": clear-screen     # Ctrl-Shift-Right
 ```
 
 #### Readline's menu-complete

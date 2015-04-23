@@ -79,13 +79,13 @@ rl_scroller::rl_scroller()
     for (int i = 0; i < sizeof_array(m_keymap); ++i)
         rl_bind_key_in_map(i, end_thunk, m_keymap);
 
-    rl_generic_bind(ISKMAP, "\033", (char*)m_keymap, m_keymap);
-    rl_generic_bind(ISKMAP, "`", (char*)m_keymap, m_keymap);
+    rl_generic_bind(ISKMAP, "\x1b", (char*)m_keymap, m_keymap);
+    rl_generic_bind(ISKMAP, "[", (char*)m_keymap, m_keymap);
 
     MAKE_KEYMAP_THUNK(this, rl_scroller, page_up);
     MAKE_KEYMAP_THUNK(this, rl_scroller, page_down);
-    rl_bind_key_in_map('c', page_up_thunk, m_keymap);
-    rl_bind_key_in_map('h', page_down_thunk, m_keymap);
+    rl_bind_key_in_map('t', page_up_thunk, m_keymap);
+    rl_bind_key_in_map('y', page_down_thunk, m_keymap);
 
     MAKE_KEYMAP_THUNK(this, rl_scroller, begin);
     rl_add_funmap_entry("enter-scroll-mode", begin_thunk);

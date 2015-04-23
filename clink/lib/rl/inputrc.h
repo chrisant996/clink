@@ -31,16 +31,16 @@ const char* clink_inputrc[] = {
     "set skip-completed-text      on",
     "set visible-stats            off",
 
-    "\"\\e`s\": backward-word",           // ctrl-left
-    "\"\\e`t\": forward-word",            // ctrl-right
-    "\"\\e`O\": end-of-line",             // end
-    "\"\\e`G\": beginning-of-line",       // home
-    "\"\\e`S\": delete-char",             // del
-    "\"\\e`c\": enter-scroll-mode",       // shift page-up
-    "\"\\e`u\": kill-line",               // ctrl+end
-    "\"\\e`w\": backward-kill-line",      // ctrl+home
-    "\"\\e`I\": history-search-backward", // page-up
-    "\"\\e`Q\": history-search-forward",  // page-down
+    "\"\\eOD\": backward-word",           // ctrl-left
+    "\"\\eOC\": forward-word",            // ctrl-right
+    "\"\\e[4\": end-of-line",             // end
+    "\"\\e[1\": beginning-of-line",       // home
+    "\"\\e[3\": delete-char",             // del
+    "\"\\e[t\": enter-scroll-mode",       // shift-pgup
+    "\"\\eO4\": kill-line",               // ctrl-end
+    "\"\\eO1\": backward-kill-line",      // ctrl-home
+    "\"\\e[5\": history-search-backward", // pgup
+    "\"\\e[6\": history-search-forward",  // pgdn
 
     "set keymap emacs",
     "\"\\t\": clink-completion-shim",
@@ -71,17 +71,17 @@ const char* clink_inputrc[] = {
 
     "$if cmd.exe",
         "set keymap emacs",
-        "\"\\e`U\": up-directory",
+        "\"\\eO5\": up-directory",
         "M-C-u:     up-directory",
         "M-C-e:     expand-env-vars",
 
         "set keymap vi-insert",
-        "\"\\e`U\": up-directory",
+        "\"\\eO5\": up-directory",
         "M-C-u:     up-directory",
         "M-C-e:     expand-env-vars",
 
         "set keymap vi-move",
-        "\"\\e`U\": up-directory",
+        "\"\\eO5\": up-directory",
         "M-C-u:     up-directory",
         "M-C-e:     expand-env-vars",
     "$endif",
