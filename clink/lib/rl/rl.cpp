@@ -460,28 +460,8 @@ static char* call_readline_impl(const char* prompt)
         initialised = 1;
     }
 
-    // If no prompt was provided assume the line is prompted already and
-    // extract it. If a prompt was provided filter it through Lua.
-    prepared_prompt = NULL;
-    if (prompt == NULL)
-    {
-        prepared_prompt = (char*)extract_prompt(1);
-
-        // Even though we're not going to display filtered result the extracted
-        // prompt is run through Lua. This is a little bit of a hack, but helps
-        // to keep behaviour consistent.
-        if (prepared_prompt != NULL)
-        {
-            char buffer[1024];
-
-            str_cpy(buffer, prepared_prompt, sizeof(buffer));
-            lua_filter_prompt(buffer, sizeof_array(buffer));
-        }
-    }
-    else
-    {
-        prepared_prompt = filter_prompt(prompt);
-    }
+    // Filter the prompt through Lua so scripts can modify it.
+    prepared_prompt = filter_prompt(prompt);
 
     GetCurrentDirectory(sizeof_array(cwd_cache), cwd_cache);
 
@@ -502,12 +482,6 @@ static char* call_readline_impl(const char* prompt)
         {
             free(text);
             text = expanded;
-
-            // If there was some expansion then display the expanded result.
-            if (expand_result > 0)
-            {
-                hooked_fprintf(NULL, "History expansion: %s\n", text);
-            }
         }
 
         // Should we read the history from disk.
@@ -563,20 +537,12 @@ int call_readline_w(const wchar_t* prompt, wchar_t* result, unsigned size)
     char prompt_utf8[1024];
 
     // Convert prompt to utf-8.
-    if (prompt != NULL)
-    {
-        WideCharToMultiByte(
-            CP_UTF8, 0,
-            prompt, -1,
-            prompt_utf8, sizeof(prompt_utf8),
-            NULL,
-            NULL
-        );
-    }
+    WideCharToMultiByte(CP_UTF8, 0, prompt, -1, prompt_utf8, sizeof(prompt_utf8),
+        NULL, NULL);
 
     // Call readline.
     result[0] = L'\0';
-    text = call_readline_impl(prompt ? prompt_utf8 : NULL);
+    text = call_readline_impl(prompt_utf8);
     if (text == NULL)
     {
         // EOF.
