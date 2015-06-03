@@ -20,7 +20,10 @@
  */
 
 #include "pch.h"
+#include "prompt.h"
 #include "shared/util.h"
+
+#include <algorithm>
 
 //------------------------------------------------------------------------------
 const char*         find_next_ansi_code(const char*, int*);
@@ -30,76 +33,8 @@ void                lua_filter_prompt(char*, int);
 #define MR(x)                        L##x L"\x08"
 const wchar_t* g_prompt_tag          = L"@CLINK_PROMPT";
 const wchar_t* g_prompt_tag_hidden   = MR("C") MR("L") MR("I") MR("N") MR("K") MR(" ");
-const wchar_t* g_prompt_tags[]       = { g_prompt_tag, g_prompt_tag_hidden };
+const wchar_t* g_prompt_tags[]       = { g_prompt_tag_hidden, g_prompt_tag };
 #undef MR
-
-//------------------------------------------------------------------------------
-wchar_t* detect_tagged_prompt_w(const wchar_t* buffer, int length)
-{
-    int i;
-
-    // For each accepted tag...
-    for (i = 0; i < sizeof_array(g_prompt_tags); ++i)
-    {
-        const wchar_t* tag = g_prompt_tags[i];
-        int tag_length = (int)wcslen(tag);
-
-        // Found a match? Convert the remainer to Utf8 and return it.
-        if (wcsncmp(buffer, tag, tag_length) == 0)
-        {
-            wchar_t* out = (wchar_t*)malloc(length * sizeof(*out));
-            length -= tag_length;
-
-            wcsncpy(out, buffer + tag_length, length);
-            out[length] = '\0';
-
-            return out;
-        }
-    }
-
-    return NULL;
-}
-
-//------------------------------------------------------------------------------
-char* detect_tagged_prompt(const char* buffer, int length)
-{
-    int i;
-
-    // For each accepted tag...
-    for (i = 0; i < sizeof_array(g_prompt_tags); ++i)
-    {
-        const wchar_t* tag = g_prompt_tags[i];
-        int tag_length = (int)wcslen(tag);
-        int j, n;
-
-        // Count the number of matching characters.
-        int matched = 0;
-        for (j = 0, n = min(length, tag_length); j < n; ++j)
-        {
-            matched += (tag[j] == buffer[j]);
-        }
-
-        // Does the buffer start with the tag?
-        if (matched == tag_length)
-        {
-            char* out = (char*)malloc(length * sizeof(*out));
-            length -= tag_length;
-
-            strncpy(out, buffer + tag_length, length);
-            out[length] = '\0';
-
-            return out;
-        }
-    }
-
-    return NULL;
-}
-
-//------------------------------------------------------------------------------
-void free_prompt(void* buffer)
-{
-    free(buffer);
-}
 
 //------------------------------------------------------------------------------
 static int parse_backspaces(char* prompt, int n)
@@ -182,55 +117,155 @@ char* filter_prompt(const char* in_prompt)
     return out_prompt;
 }
 
+
+
 //------------------------------------------------------------------------------
-void* extract_prompt(int ret_as_utf8)
+prompt::prompt()
+: m_data(nullptr)
 {
-    wchar_t* buffer;
-    CONSOLE_SCREEN_BUFFER_INFO csbi;
-    HANDLE handle;
-    int length;
-    COORD cur;
-    DWORD chars_read;
+}
 
-    // Find where the cursor is (tip; it's at the end of the prompt).
-    handle = GetStdHandle(STD_OUTPUT_HANDLE);
-    if (GetConsoleScreenBufferInfo(handle, &csbi) == FALSE)
-        return NULL;
+//------------------------------------------------------------------------------
+prompt::prompt(prompt&& rhs)
+: m_data(nullptr)
+{
+    std::swap(m_data, rhs.m_data);
+}
 
-    // Work out prompt length and allocate some working buffer space.
-    cur = csbi.dwCursorPosition;
-    length = cur.X;
-    if (length < 0)
-        return NULL;
+//------------------------------------------------------------------------------
+prompt::~prompt()
+{
+    clear();
+}
 
-    cur.X = 0;
-    char* prompt = (char*)malloc(length * 8);
+//------------------------------------------------------------------------------
+prompt& prompt::operator = (prompt&& rhs)
+{
+    clear();
+    std::swap(m_data, rhs.m_data);
+    return *this;
+}
 
-    // Get the prompt from the terminal.
-    buffer = (wchar_t*)prompt + length + 2;
-    buffer[0] = L'\0';
-    if (ReadConsoleOutputCharacterW(handle, buffer, length, cur, &chars_read))
-        buffer[chars_read] = L'\0';
+//------------------------------------------------------------------------------
+void prompt::clear()
+{
+    if (m_data != nullptr)
+        free(m_data);
 
-    // Convert to Utf8 and return.
-    if (ret_as_utf8)
+    m_data = nullptr;
+}
+
+//------------------------------------------------------------------------------
+const wchar_t* prompt::get() const
+{
+    return m_data;
+}
+
+//------------------------------------------------------------------------------
+void prompt::set(const wchar_t* chars, int char_count)
+{
+    clear();
+
+    if (chars == nullptr)
+        return;
+
+    if (char_count <= 0)
+        char_count = int(wcslen(chars));
+
+    m_data = (wchar_t*)malloc(sizeof(*m_data) * (char_count + 1));
+    wcsncpy(m_data, chars, char_count);
+    m_data[char_count] = '\0';
+}
+
+//------------------------------------------------------------------------------
+bool prompt::is_set() const
+{
+    return (m_data != nullptr);
+}
+
+
+
+//------------------------------------------------------------------------------
+void tagged_prompt::set(const wchar_t* chars, int char_count)
+{
+    clear();
+
+    if (int tag_length = is_tagged(chars, char_count))
+        prompt::set(chars + tag_length, char_count - tag_length);
+}
+
+//------------------------------------------------------------------------------
+void tagged_prompt::tag(const wchar_t* value)
+{
+    clear();
+
+    // Just set 'value' if it is already tagged.
+    if (is_tagged(value))
     {
-        length = WideCharToMultiByte(
-            CP_UTF8, 0,
-            buffer, length,
-            prompt, (int)((char*)buffer - prompt),
-            NULL, NULL
-        );
-
-        if (length <= 0)
-        {
-            return NULL;
-        }
-
-        prompt[length] = '\0';
-        return prompt;
+        prompt::set(value);
+        return;
     }
 
-    wcscpy((wchar_t*)prompt, buffer);
-    return prompt;
+    int length = int(wcslen(value));
+    length += int(wcslen(g_prompt_tag_hidden));
+
+    m_data = (wchar_t*)malloc(sizeof(*m_data) * (length + 1));
+    wcscpy(m_data, g_prompt_tag_hidden);
+    wcscat(m_data, value);
+}
+
+//------------------------------------------------------------------------------
+int tagged_prompt::is_tagged(const wchar_t* chars, int char_count)
+{
+    if (char_count <= 0)
+        char_count = int(wcslen(chars));
+
+    // For each accepted tag...
+    for (int i = 0; i < sizeof_array(g_prompt_tags); ++i)
+    {
+        const wchar_t* tag = g_prompt_tags[i];
+        int tag_length = (int)wcslen(tag);
+
+        if (tag_length > char_count)
+            continue;
+
+        // Found a match? Store it the prompt, minus the tag.
+        if (wcsncmp(chars, tag, tag_length) == 0)
+            return tag_length;
+    }
+
+    return 0;
+}
+
+
+
+//------------------------------------------------------------------------------
+prompt prompt_utils::extract_from_console()
+{
+    // Find where the cursor is. This will be the end of the prompt to extract.
+    CONSOLE_SCREEN_BUFFER_INFO csbi;
+    HANDLE handle = GetStdHandle(STD_OUTPUT_HANDLE);
+    if (GetConsoleScreenBufferInfo(handle, &csbi) == FALSE)
+        return prompt();
+
+    // Work out prompt length.
+    COORD cursorXy = csbi.dwCursorPosition;
+    unsigned int length = cursorXy.X;
+    cursorXy.X = 0;
+
+    wchar_t buffer[256] = {};
+    if (length >= sizeof_array(buffer))
+        return prompt();
+
+    // Get the prompt from the terminal.
+    DWORD chars_in;
+    if (!ReadConsoleOutputCharacterW(handle, buffer, length, cursorXy, &chars_in))
+        return prompt();
+
+    buffer[chars_in] = '\0';
+
+    // Wrap in a prompt object and return.
+    prompt ret;
+    ret.set(buffer);
+    return ret;
 }

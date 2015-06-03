@@ -19,30 +19,45 @@
  * SOFTWARE.
  */
 
-#ifndef SHELL_PS_H
-#define SHELL_PS_H
-
-#include "shell.h"
-#include "singleton.h"
-
-#include <Windows.h>
+#ifndef PROMPT_H
+#define PROMPT_H
 
 //------------------------------------------------------------------------------
-class shell_ps
-    : public shell
-    , public singleton<shell_ps>
+class prompt
 {
 public:
-                        shell_ps(line_editor* editor);
-                        ~shell_ps();
-    bool                validate() override;
-    bool                initialise() override;
-    void                shutdown() override;
+                    prompt();
+                    prompt(prompt&& rhs);
+                    prompt(const prompt& rhs) = delete;
+                    ~prompt();
+    prompt&         operator = (prompt&& rhs);
+    prompt&         operator = (const prompt& rhs) = delete;
+    void            clear();
+    const wchar_t*  get() const;
+    void            set(const wchar_t* chars, int char_count=0);
+    bool            is_set() const;
 
-private:
-    static BOOL WINAPI  read_console(HANDLE input, wchar_t* buffer, DWORD buffer_count, LPDWORD read_in, void* control);
-    void                edit_line(const wchar_t* prompt, wchar_t* buffer, int buffer_count);
-    line_editor*        m_line_editor;
+protected:
+    wchar_t*        m_data;
 };
 
-#endif // SHELL_PS_H
+//------------------------------------------------------------------------------
+class tagged_prompt
+    : public prompt
+{
+public:
+    void            set(const wchar_t* chars, int char_count=0);
+    void            tag(const wchar_t* value);
+
+private:
+    int             is_tagged(const wchar_t* chars, int char_count=0);
+};
+
+//------------------------------------------------------------------------------
+class prompt_utils
+{
+public:
+    static prompt   extract_from_console();
+};
+
+#endif // PROMPT_H

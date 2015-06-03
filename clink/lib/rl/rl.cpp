@@ -25,13 +25,10 @@
 //------------------------------------------------------------------------------
 char**              lua_generate_matches(const char*, int, int);
 char**              lua_match_display_filter(char**, int);
-void                lua_filter_prompt(char*, int);
 void*               initialise_clink_settings();
 int                 get_clink_setting_int(const char*);
 void                get_config_dir(char*, int);
 char*               filter_prompt(const char*);
-void*               extract_prompt(int);
-void                free_prompt(void*);
 static int          completion_shim_impl(int, int, int (*)(int, int));
 void                load_history();
 void                save_history();
@@ -497,7 +494,7 @@ static char* call_readline_impl(const char* prompt)
     while (!text || expand_result == 2);
 
 call_readline_epilogue:
-    free_prompt(prepared_prompt);
+    free(prepared_prompt);
     SetCurrentDirectory(cwd_cache);
     return text;
 }

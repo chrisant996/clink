@@ -23,6 +23,7 @@
 #define SHELL_CMD_H
 
 #include "shell.h"
+#include "prompt.h"
 
 #include <singleton.h>
 
@@ -46,6 +47,7 @@ private:
     void                edit_line(const wchar_t* prompt, wchar_t* chars, int max_chars);
     bool                capture_prompt(const wchar_t* chars, int char_count);
     bool                is_interactive() const;
+    tagged_prompt       m_prompt;
 };
 
 #endif // SHELL_CMD_H

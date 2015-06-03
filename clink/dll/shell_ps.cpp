@@ -22,6 +22,7 @@
 #include "pch.h"
 #include "shell_ps.h"
 #include "hook_setter.h"
+#include "prompt.h"
 #include "seh_scope.h"
 #include "shared/util.h"
 #include "shared/vm.h"
@@ -74,13 +75,25 @@ BOOL WINAPI shell_ps::read_console(
 {
     seh_scope seh;
 
+    // Extract the prompt and reset the cursor to the beinging of the line
+    // because it will get printed again.
+    prompt prompt = prompt_utils::extract_from_console();
+
+    CONSOLE_SCREEN_BUFFER_INFO csbi;
+    HANDLE handle = GetStdHandle(STD_OUTPUT_HANDLE);
+    GetConsoleScreenBufferInfo(handle, &csbi);
+    csbi.dwCursorPosition.X = 0;
+    SetConsoleCursorPosition(handle, csbi.dwCursorPosition);
+
+    // Edit and add the CRLF that ReadConsole() adds when called.
     *chars = '\0';
-    shell_ps::get()->edit_line(chars, max_chars);
+    shell_ps::get()->edit_line(prompt.get(), chars, max_chars);
 
     size_t len = max_chars - wcslen(chars);
     wcsncat(chars, L"\x0d\x0a", len);
     chars[max_chars - 1] = '\0';
 
+    // Done!
     if (read_in != nullptr)
         *read_in = (DWORD)wcslen(chars);
 
@@ -88,9 +101,7 @@ BOOL WINAPI shell_ps::read_console(
 }
 
 //------------------------------------------------------------------------------
-void shell_ps::edit_line(wchar_t* chars, int max_chars)
+void shell_ps::edit_line(const wchar_t* prompt, wchar_t* chars, int max_chars)
 {
-    while (1)
-        if (!get_line_editor()->edit_line(NULL, chars, max_chars))
-            break;
+    get_line_editor()->edit_line(prompt, chars, max_chars);
 }
