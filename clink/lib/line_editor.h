@@ -36,12 +36,13 @@ class line_editor
 public:
                         line_editor(const environment& env);
     virtual             ~line_editor() = 0 {}
-    virtual bool        edit_line(const wchar_t* prompt, wchar_t* out, int out_size) = 0;
+    bool                edit_line(const wchar_t* prompt, wchar_t* out, int out_count);
     virtual const char* get_shell_name() const = 0;
     virtual void        set_shell_name(const char* name) = 0;
     terminal*           get_terminal() const;
 
 private:
+    virtual bool        edit_line_impl(const wchar_t* prompt, wchar_t* out, int out_count) = 0;
     terminal*           m_terminal;
 
 private:

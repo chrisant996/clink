@@ -110,7 +110,7 @@ class rl_line_editor
 public:
                         rl_line_editor(const environment& env);
     virtual             ~rl_line_editor();
-    virtual bool        edit_line(const wchar_t* prompt, wchar_t* out, int out_size) override;
+    virtual bool        edit_line_impl(const wchar_t* prompt, wchar_t* out, int out_count) override;
     virtual const char* get_shell_name() const override;
     virtual void        set_shell_name(const char* name) override;
 
@@ -154,9 +154,9 @@ rl_line_editor::~rl_line_editor()
 }
 
 //------------------------------------------------------------------------------
-bool rl_line_editor::edit_line(const wchar_t* prompt, wchar_t* out, int out_size)
+bool rl_line_editor::edit_line_impl(const wchar_t* prompt, wchar_t* out, int out_count)
 {
-    return (call_readline_w(prompt, out, out_size) != 0);
+    return (call_readline_w(prompt, out, out_count) != 0);
 }
 
 //------------------------------------------------------------------------------

@@ -34,7 +34,7 @@ void                save_history();
 void                add_to_history(const char*);
 int                 expand_from_history(const char*, char**);
 
-int                 g_slash_translation             = 0;
+int                 g_slash_translation = 0;
 
 extern "C" {
 extern int          rl_display_fixed;
@@ -436,7 +436,6 @@ static char* call_readline_impl(const char* prompt)
     char* text;
     char* expanded;
     char* prepared_prompt;
-    char cwd_cache[MAX_PATH];
 
     // Make sure that EOL wrap is on. Readline's told the terminal supports it.
     {
@@ -447,8 +446,6 @@ static char* call_readline_impl(const char* prompt)
 
     // Filter the prompt through Lua so scripts can modify it.
     prepared_prompt = filter_prompt(prompt);
-
-    GetCurrentDirectory(sizeof_array(cwd_cache), cwd_cache);
 
     do
     {
@@ -483,7 +480,6 @@ static char* call_readline_impl(const char* prompt)
 
 call_readline_epilogue:
     free(prepared_prompt);
-    SetCurrentDirectory(cwd_cache);
     return text;
 }
 

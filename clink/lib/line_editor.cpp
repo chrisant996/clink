@@ -21,9 +21,42 @@
 
 #include "pch.h"
 #include "line_editor.h"
+#include "shared/util.h"
+
+//------------------------------------------------------------------------------
+class cwd_restorer
+{
+public:
+                cwd_restorer();
+                ~cwd_restorer();
+
+private:
+    wchar_t     m_path[MAX_PATH];
+};
+
+//------------------------------------------------------------------------------
+cwd_restorer::cwd_restorer()
+{
+    GetCurrentDirectoryW(sizeof_array(m_path), m_path);
+}
+
+//------------------------------------------------------------------------------
+cwd_restorer::~cwd_restorer()
+{
+    SetCurrentDirectoryW(m_path);
+}
+
+
 
 //------------------------------------------------------------------------------
 line_editor::line_editor(const environment& env)
 : m_terminal(env.term)
 {
+}
+
+//------------------------------------------------------------------------------
+bool line_editor::edit_line(const wchar_t* prompt, wchar_t* out, int out_count)
+{
+    cwd_restorer cwd;
+    return edit_line_impl(prompt, out, out_count);
 }
