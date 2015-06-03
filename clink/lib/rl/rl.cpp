@@ -488,33 +488,6 @@ call_readline_epilogue:
 }
 
 //------------------------------------------------------------------------------
-int call_readline_utf8(const char* prompt, char* result, unsigned result_size)
-{
-    int text_size;
-    char* text;
-
-    // Call readline.
-    result[0] = '\0';
-    text = call_readline_impl(prompt);
-    if (text == NULL)
-    {
-        // EOF.
-        return 1;
-    }
-
-    // Convert result back to wchar_t.
-    text_size = strlen(text) + 1;
-    if (text_size > result_size)
-    {
-        text_size = result_size;
-    }
-
-    strcpy(result, text);
-    free(text);
-    return 0;
-}
-
-//------------------------------------------------------------------------------
 int call_readline_w(const wchar_t* prompt, wchar_t* result, unsigned size)
 {
     unsigned text_size;
