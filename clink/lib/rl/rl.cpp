@@ -25,7 +25,6 @@
 //------------------------------------------------------------------------------
 char**              lua_generate_matches(const char*, int, int);
 char**              lua_match_display_filter(char**, int);
-void*               initialise_clink_settings();
 int                 get_clink_setting_int(const char*);
 void                get_config_dir(char*, int);
 char*               filter_prompt(const char*);
@@ -34,7 +33,6 @@ void                load_history();
 void                save_history();
 void                add_to_history(const char*);
 int                 expand_from_history(const char*, char**);
-int                 history_expand_control(char*, int);
 
 int                 g_slash_translation             = 0;
 
@@ -434,7 +432,6 @@ void display_matches(char** matches, int match_count, int longest)
 //------------------------------------------------------------------------------
 static char* call_readline_impl(const char* prompt)
 {
-    static int initialised = 0;
     int expand_result;
     char* text;
     char* expanded;
@@ -446,15 +443,6 @@ static char* call_readline_impl(const char* prompt)
         int stdout_flags = ENABLE_PROCESSED_OUTPUT|ENABLE_WRAP_AT_EOL_OUTPUT;
         HANDLE handle_stdout = GetStdHandle(STD_OUTPUT_HANDLE);
         SetConsoleMode(handle_stdout, stdout_flags);
-    }
-
-    // Initialisation
-    if (!initialised)
-    {
-        initialise_clink_settings();
-        load_history();
-        history_inhibit_expansion_function = history_expand_control;
-        initialised = 1;
     }
 
     // Filter the prompt through Lua so scripts can modify it.

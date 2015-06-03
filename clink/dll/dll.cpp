@@ -35,6 +35,8 @@ extern "C" {
 extern const char*      g_clink_header;
 }
 
+struct lua_State*       initialise_lua();
+void*                   initialise_clink_settings();
 void                    load_history();
 void                    save_history();
 struct lua_State*       initialise_lua();
@@ -144,9 +146,11 @@ static BOOL on_dll_attach()
         disable_log();
 
     // Prepare core systems.
+    initialise_clink_settings();
     initialise_line_editor();
     initialise_shell_name();
     initialise_lua();
+    load_history();
 
     // Search for a supported shell.
     struct {

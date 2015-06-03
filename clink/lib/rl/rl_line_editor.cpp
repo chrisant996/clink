@@ -43,6 +43,7 @@ int     up_directory(int, int);
 int     postprocess_matches(char**);
 char**  alternative_matches(const char*, int, int);
 void    display_matches(char**, int, int);
+int     history_expand_control(char*, int);
 
 extern "C" {
 extern void         (*rl_fwrite_function)(FILE*, const wchar_t*, int);
@@ -143,6 +144,8 @@ rl_line_editor::rl_line_editor(const environment& env)
     rl_ignore_some_completions_function = postprocess_matches;
     rl_attempted_completion_function = alternative_matches;
     rl_completion_display_matches_hook = display_matches;
+
+    history_inhibit_expansion_function = history_expand_control;
 }
 
 //------------------------------------------------------------------------------
