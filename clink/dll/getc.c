@@ -288,6 +288,13 @@ loop:
         key_char |= 0x8000000;
     }
 
+    // Special case for shift-tab.
+    if (key_char == '\t' && !carry && (key_flags & SHIFT_PRESSED))
+    {
+        key_char = 0xe0;
+        carry = 'Z';
+    }
+
 end:
 #if defined(DEBUG_GETC) && defined(_DEBUG)
     printf("\n%08x '%c'", key_char, key_char);
