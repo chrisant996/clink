@@ -111,8 +111,6 @@ public:
                         rl_line_editor(const environment& env);
     virtual             ~rl_line_editor();
     virtual bool        edit_line_impl(const wchar_t* prompt, wchar_t* out, int out_count) override;
-    virtual const char* get_shell_name() const override;
-    virtual void        set_shell_name(const char* name) override;
 
 private:
     void                bind_inputrc();
@@ -133,6 +131,7 @@ rl_line_editor::rl_line_editor(const environment& env)
     rl_instream = (FILE*)env.term;
     rl_outstream = (FILE*)env.term;
 
+    rl_readline_name = get_shell_name();
     rl_catch_signals = 0;
     _rl_comment_begin = "::";
     rl_basic_word_break_characters = " <>|=;&";
@@ -157,18 +156,6 @@ rl_line_editor::~rl_line_editor()
 bool rl_line_editor::edit_line_impl(const wchar_t* prompt, wchar_t* out, int out_count)
 {
     return (call_readline_w(prompt, out, out_count) != 0);
-}
-
-//------------------------------------------------------------------------------
-const char* rl_line_editor::get_shell_name() const
-{
-    return rl_readline_name;
-}
-
-//------------------------------------------------------------------------------
-void rl_line_editor::set_shell_name(const char* name)
-{
-    rl_readline_name = name;
 }
 
 //------------------------------------------------------------------------------

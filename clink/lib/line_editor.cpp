@@ -52,6 +52,7 @@ cwd_restorer::~cwd_restorer()
 line_editor::line_editor(const environment& env)
 : m_terminal(env.term)
 {
+    str_cpy(m_shell_name, env.shell_name, sizeof_array(m_shell_name));
 }
 
 //------------------------------------------------------------------------------

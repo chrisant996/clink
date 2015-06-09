@@ -49,9 +49,10 @@ static line_editor*     g_line_editor           = nullptr;
 static shell*           g_shell                 = nullptr;
 
 //------------------------------------------------------------------------------
-static void initialise_line_editor()
+static void initialise_line_editor(const char* shell_name)
 {
     environment env = {
+        shell_name,
         new ecma48_terminal(),
     };
 
@@ -65,26 +66,6 @@ static void shutdown_line_editor()
 
     destroy_rl_line_editor(g_line_editor);
     delete term;
-}
-
-//------------------------------------------------------------------------------
-static void initialise_shell_name()
-{
-    char buffer[MAX_PATH];
-
-    if (GetModuleFileName(NULL, buffer, sizeof_array(buffer)))
-    {
-        static char exe_name[64];
-        const char* slash;
-
-        slash = strrchr(buffer, '\\');
-        slash = slash ? slash + 1 : buffer;
-
-        str_cpy(exe_name, slash, sizeof(exe_name));
-        g_line_editor->set_shell_name(exe_name);
-
-        LOG_INFO("Setting shell name to '%s'", exe_name);
-    }
 }
 
 //------------------------------------------------------------------------------
@@ -130,6 +111,24 @@ static shell* create_shell_ps(line_editor* editor)
 }
 
 //------------------------------------------------------------------------------
+static bool get_shell_name(char* out, int out_count)
+{
+    char buffer[MAX_PATH];
+    if (GetModuleFileName(nullptr, buffer, sizeof_array(buffer)))
+    {
+        const char* slash = strrchr(buffer, '\\');
+        slash = (slash != nullptr) ? slash + 1 : buffer;
+
+        str_cpy(out, slash, out_count);
+
+        LOG_INFO("Shell process is '%s'", out);
+        return true;
+    }
+
+    return false;
+}
+
+//------------------------------------------------------------------------------
 static BOOL on_dll_attach()
 {
     // Get the inject arguments.
@@ -145,10 +144,12 @@ static BOOL on_dll_attach()
     if (g_inject_args.no_log)
         disable_log();
 
+    char shell_name[64];
+    get_shell_name(shell_name, sizeof_array(shell_name));
+
     // Prepare core systems.
     initialise_clink_settings();
-    initialise_line_editor();
-    initialise_shell_name();
+    initialise_line_editor(shell_name);
     initialise_lua();
     load_history();
 
@@ -163,7 +164,6 @@ static BOOL on_dll_attach()
 
     for (int i = 0; i < sizeof_array(shells); ++i)
     {
-        const char* shell_name = g_line_editor->get_shell_name();
         if (stricmp(shell_name, shells[i].name) == 0)
         {
             g_shell = (shells[i].creator)(g_line_editor);
@@ -190,7 +190,7 @@ static BOOL on_dll_attach()
 //------------------------------------------------------------------------------
 static BOOL on_dll_detach()
 {
-    if (g_shell != NULL)
+    if (g_shell != nullptr)
     {
         g_shell->shutdown();
 

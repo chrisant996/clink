@@ -190,8 +190,13 @@ bool shell_cmd::initialise()
     str_cat(buffer, cfg_path, BUF_SIZE);
     str_cat(buffer, "\" $*", BUF_SIZE);
 
-    const char* shell_name = get_line_editor()->get_shell_name();
-    AddConsoleAlias("clink", buffer, (char*)shell_name);
+    char mod_path[MAX_PATH];
+    if (!GetModuleFileName(nullptr, mod_path, sizeof_array(mod_path)))
+    {
+        const char* slash = strrchr(mod_path, '\\');
+        const char* shell_name = (slash != nullptr) ? slash + 1 : mod_path;
+        AddConsoleAlias("clink", buffer, (char*)shell_name);
+    }
 
     return true;
 }

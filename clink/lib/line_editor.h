@@ -27,6 +27,7 @@ class terminal;
 //------------------------------------------------------------------------------
 struct environment
 {
+    const char*         shell_name;
     terminal*           term;
 };
 
@@ -37,13 +38,13 @@ public:
                         line_editor(const environment& env);
     virtual             ~line_editor() = 0 {}
     bool                edit_line(const wchar_t* prompt, wchar_t* out, int out_count);
-    virtual const char* get_shell_name() const = 0;
-    virtual void        set_shell_name(const char* name) = 0;
     terminal*           get_terminal() const;
+    const char*         get_shell_name() const;
 
 private:
     virtual bool        edit_line_impl(const wchar_t* prompt, wchar_t* out, int out_count) = 0;
     terminal*           m_terminal;
+    char                m_shell_name[32];
 
 private:
                         line_editor(const line_editor&);    // unimplemented
@@ -54,6 +55,12 @@ private:
 inline terminal* line_editor::get_terminal() const
 {
     return m_terminal;
+}
+
+//------------------------------------------------------------------------------
+inline const char* line_editor::get_shell_name() const
+{
+    return m_shell_name;
 }
 
 #endif // LINE_EDITOR_H
