@@ -113,7 +113,8 @@ public:
     virtual bool        edit_line_impl(const wchar_t* prompt, wchar_t* out, int out_count) override;
 
 private:
-    void                bind_inputrc();
+    void                bind_embedded_inputrc();
+    void                load_user_inputrc();
     void                add_funmap_entries();
     rl_scroller         m_scroller;
 };
@@ -122,9 +123,6 @@ private:
 rl_line_editor::rl_line_editor(const environment& env)
 : line_editor(env)
 {
-    add_funmap_entries();
-    bind_inputrc();
-
     rl_getc_function = terminal_read_thunk;
     rl_fwrite_function = terminal_write_thunk;
     rl_fflush_function = terminal_flush_thunk;
@@ -139,6 +137,10 @@ rl_line_editor::rl_line_editor(const environment& env)
     rl_completer_quote_characters = "\"";
     rl_completer_word_break_characters = (char*)rl_basic_word_break_characters;
     rl_filename_quote_characters = " %=;&^";
+
+    add_funmap_entries();
+    bind_embedded_inputrc();
+    load_user_inputrc();
 
     rl_ignore_some_completions_function = postprocess_matches;
     rl_attempted_completion_function = alternative_matches;
@@ -181,8 +183,7 @@ void rl_line_editor::add_funmap_entries()
 }
 
 //------------------------------------------------------------------------------
-void
-rl_line_editor::bind_inputrc()
+void rl_line_editor::bind_embedded_inputrc()
 {
     // Apply Clink's embedded inputrc.
     const char** inputrc_line = clink_inputrc;
@@ -193,6 +194,40 @@ rl_line_editor::bind_inputrc()
         rl_parse_and_bind(buffer);
 
         ++inputrc_line;
+    }
+}
+
+//------------------------------------------------------------------------------
+void rl_line_editor::load_user_inputrc()
+{
+    const char* env_vars[] = {
+        "clink_inputrc",
+        "localappdata",
+        "appdata",
+        "userprofile",
+        "home",
+    };
+
+    for (int i = 0; i < sizeof_array(env_vars); ++i)
+    {
+        char path[MAX_PATH];
+        int path_length = GetEnvironmentVariable(env_vars[i], path, sizeof_array(path));
+        if (!path_length || path_length > sizeof_array(path))
+            continue;
+
+        str_cat(path, "\\.inputrc", sizeof_array(path));
+
+        for (int j = 0; j < 2; ++j)
+        {
+            if (!rl_read_init_file(path))
+            {
+                LOG_INFO("Found Readline inputrc at '%s'", path);
+                break;
+            }
+
+            if (char* dot = strrchr(path, '.'))
+                *dot = '_';
+        }
     }
 }
 
