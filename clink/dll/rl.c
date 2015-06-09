@@ -39,6 +39,7 @@ void                free_prompt(void*);
 static int          completion_shim_impl(int, int, int (*)(int, int));
 int                 rl_complete(int, int);
 int                 rl_menu_complete(int, int);
+int                 rl_backward_menu_complete(int, int);
 void                load_history();
 void                save_history();
 void                add_to_history(const char*);
@@ -222,12 +223,20 @@ static int menu_completion_shim(int count, int invoking_key)
 }
 
 //------------------------------------------------------------------------------
+static int backward_menu_completion_shim(int count, int invoking_key)
+{
+    return completion_shim_impl(count, invoking_key, rl_backward_menu_complete);
+}
+
+//------------------------------------------------------------------------------
 static int completion_shim_impl(int count, int invoking_key, int (*rl_func)(int, int))
 {
     int ret;
 
     // rl complete functions checks if it was called previously, so restore it.
-    if (rl_last_func == completion_shim || rl_last_func == menu_completion_shim)
+    if (rl_last_func == completion_shim ||
+        rl_last_func == menu_completion_shim ||
+        rl_last_func == backward_menu_completion_shim)
     {
         rl_last_func = rl_func;
     }
@@ -461,6 +470,7 @@ static int initialise_hook()
 
     rl_add_funmap_entry("clink-completion-shim", completion_shim);
     rl_add_funmap_entry("clink-menu-completion-shim", menu_completion_shim);
+    rl_add_funmap_entry("clink-backward-menu-completion-shim", backward_menu_completion_shim);
 
     clink_register_rl_funcs();
     initialise_rl_scroller();
