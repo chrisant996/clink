@@ -35,9 +35,9 @@ class shell_cmd
 public:
                         shell_cmd(line_editor* editor);
                         ~shell_cmd();
-    bool                validate() override;
-    bool                initialise() override;
-    void                shutdown() override;
+    virtual bool        validate() override;
+    virtual bool        initialise() override;
+    virtual void        shutdown() override;
 
 private:
     static BOOL WINAPI  read_console(HANDLE input, wchar_t* buffer, DWORD buffer_count, LPDWORD read_in, CONSOLE_READCONSOLE_CONTROL* control);
