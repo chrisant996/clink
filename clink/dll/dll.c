@@ -26,6 +26,7 @@
 #include "shared/shared_mem.h"
 
 //------------------------------------------------------------------------------
+void                    load_history();
 void                    save_history();
 void                    shutdown_lua();
 void                    shutdown_clink_settings();
@@ -168,6 +169,9 @@ static BOOL on_dll_detach()
     if (g_shell != NULL)
     {
         g_shell->shutdown();
+
+        if (get_clink_setting_int("history_io"))
+            load_history();
 
         save_history();
         shutdown_lua();
