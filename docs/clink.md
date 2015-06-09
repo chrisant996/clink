@@ -498,20 +498,21 @@ The current cursor position within the line buffer.
 
 #### Binding special keys
 
-Due to differences between Windows and Linux, escape codes for keys like PageUp/Down and the arrow keys are different in Clink. Escape codes take the format **\e`?** where '?' is one of the characters from the following table;
+Due to differences between Windows and Linux, escape codes for keys like PageUp/Down and the arrow keys are different in Clink. Escape codes take the format **\\e`?** where '?' is one of the characters from the following table;
 
-Key      | Normal | Shift | Ctrl | Ctrl-Shift
-:-:      | :-:    | :-:   | :-:  | :-:
-Home     | G      | a     | w    | !
-Up       | H      | b     | T    | "
-PageUp   | I      | c     | U    | #
-Left     | K      | d     | s    | $
-Right    | M      | e     | t    | %
-End      | O      | f     | u    | &
-Down     | P      | g     | V    | '
-PageDown | Q      | h     | v    | (
-Insert   | R      | i     | W    | )
-Delete   | S      | j     | X    | *
+Key      | Normal | Shift | Ctrl  | Ctrl-Shift
+:-:      | :-:    | :-:   | :-:   | :-:
+Home     | G      | a     | w     | !
+Up       | H      | b     | T     | "
+PageUp   | I      | c     | U     | #
+Left     | K      | d     | s     | $
+Right    | M      | e     | t     | %
+End      | O      | f     | u     | &
+Down     | P      | g     | V     | '
+PageDown | Q      | h     | v     | (
+Insert   | R      | i     | W     | )
+Delete   | S      | j     | X     | \*
+Tab      | (n/a)  | Z     | (n/a) | (n/a)
 
 Here is an example line from a clink_inputrc file that binds Shift-End to the Readline function **transpose-word** function;
 
