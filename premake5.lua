@@ -43,7 +43,7 @@ function get_last_git_commit()
 end
 
 --------------------------------------------------------------------------------
-function useXpToolset(base, cfg)
+function use_xp_toolset(base, cfg)
     local p = "v110_xp"
     if _ACTION > "vs2012" then
         p = "v120_xp"
@@ -53,7 +53,7 @@ function useXpToolset(base, cfg)
         _p(2,'<PlatformToolset>%s</PlatformToolset>', p)
     end
 end
-premake.override(premake.vstudio.vc2010, 'platformToolset', useXpToolset)
+premake.override(premake.vstudio.vc2010, 'platformToolset', use_xp_toolset)
 
 --------------------------------------------------------------------------------
 -- Work around a bug in Premake5
@@ -177,6 +177,7 @@ project("lua")
 project("clink_lib")
     language("c++")
     kind("staticlib")
+    includedirs("lua/src")
     includedirs("clink")
     includedirs("clink/lib")
     files("clink/lib/**")
