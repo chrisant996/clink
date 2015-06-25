@@ -95,7 +95,7 @@ go_parser:set_arguments({
                         -- Build flags
                         "-a", "-n", "-p", "-x", "-work", "-ccflags",
                         "-gcflags", "-exec", "-ldflags", "-gccgoflags",
-                        "-tags", "-compiler", "-race", "-installsuffix", 
+                        "-tags", "-compiler", "-race", "-installsuffix",
                         -- Passed to 6.out
                         "-bench", "-benchmem", "-benchtime", "-covermode",
                         "-coverprofile", "-cpu", "-cpuprofile", "-memprofile",

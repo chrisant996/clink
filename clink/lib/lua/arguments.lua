@@ -540,7 +540,7 @@ function merge_parsers(lhs, rhs)
 
         -- Split sub parser
         if is_sub_parser(rarg) then
-            child = rarg.parser     
+            child = rarg.parser
             rarg = rarg.key
         else
             child = rhs
@@ -610,7 +610,7 @@ local function argument_match_generator(text, first, last)
             return false
         end
     end
-    
+
     -- Find a registered parser.
     local parser = parsers[cmd]
     if parser == nil then
