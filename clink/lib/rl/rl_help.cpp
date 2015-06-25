@@ -26,7 +26,7 @@
 static const char* get_function_name(void* func_addr)
 {
     FUNMAP** funcs = funmap;
-    while (*funcs != NULL)
+    while (*funcs != nullptr)
     {
         FUNMAP* func = *funcs;
         if (func->function == func_addr)
@@ -37,7 +37,7 @@ static const char* get_function_name(void* func_addr)
         ++funcs;
     }
 
-    return NULL;
+    return nullptr;
 }
 
 //------------------------------------------------------------------------------
@@ -80,7 +80,7 @@ static char** collect_keymap(
     for (i = 0; i < 127; ++i)
     {
         KEYMAP_ENTRY entry = map[i];
-        if (entry.type == ISFUNC && entry.function != NULL)
+        if (entry.type == ISFUNC && entry.function != nullptr)
         {
             int blacklisted;
             int j;
@@ -110,7 +110,7 @@ static char** collect_keymap(
                 get_key_string(i, map_id, key);
 
                 name = get_function_name(entry.function);
-                if (name == NULL)
+                if (name == nullptr)
                 {
                     continue;
                 }
@@ -150,7 +150,7 @@ int show_rl_help(int count, int invoking_key)
 
     // Build string up the functions in the active keymap.
     collector = collect_keymap(map, collector, &offset, &max, 0);
-    if (map[ESC].type == ISKMAP && map[ESC].function != NULL)
+    if (map[ESC].type == ISKMAP && map[ESC].function != nullptr)
     {
         Keymap esc_map = (KEYMAP_ENTRY*)(map[ESC].function);
         collector = collect_keymap(esc_map, collector, &offset, &max, 1);
@@ -160,7 +160,7 @@ int show_rl_help(int count, int invoking_key)
     {
         Keymap ctrlx_map = (KEYMAP_ENTRY*)(map[24].function);
         int type = map[24].type;
-        if (type == ISKMAP && ctrlx_map != NULL)
+        if (type == ISKMAP && ctrlx_map != nullptr)
         {
             collector = collect_keymap(ctrlx_map, collector, &offset, &max, 2);
         }
@@ -178,7 +178,7 @@ int show_rl_help(int count, int invoking_key)
     }
 
     // Display the matches.
-    if (rl_completion_display_matches_hook != NULL)
+    if (rl_completion_display_matches_hook != nullptr)
     {
         rl_filename_completion_desired = 0;
         rl_completion_display_matches_hook(collector, offset - 1, longest);

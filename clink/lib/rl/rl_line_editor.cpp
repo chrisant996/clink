@@ -72,7 +72,7 @@ static int terminal_read_thunk(FILE* stream)
         // Convert to utf-8 and insert directly into rl's line buffer.
         wchar_t wc[2] = { (wchar_t)i, 0 };
         char utf8[4] = {};
-        WideCharToMultiByte(CP_UTF8, 0, wc, -1, utf8, sizeof(utf8), NULL, NULL);
+        WideCharToMultiByte(CP_UTF8, 0, wc, -1, utf8, sizeof(utf8), nullptr, nullptr);
 
         rl_insert_text(utf8);
         rl_redisplay();

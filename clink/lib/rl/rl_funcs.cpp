@@ -100,10 +100,10 @@ static void strip_crlf(char* line)
 //------------------------------------------------------------------------------
 int paste_from_clipboard(int count, int invoking_key)
 {
-    if (OpenClipboard(NULL) != FALSE)
+    if (OpenClipboard(nullptr) != FALSE)
     {
         HANDLE clip_data = GetClipboardData(CF_UNICODETEXT);
-        if (clip_data != NULL)
+        if (clip_data != nullptr)
         {
             wchar_t* from_clipboard = (wchar_t*)clip_data;
             char utf8[1024];
@@ -112,7 +112,7 @@ int paste_from_clipboard(int count, int invoking_key)
                 CP_UTF8, 0,
                 from_clipboard, -1,
                 utf8, sizeof(utf8),
-                NULL, NULL
+                nullptr, nullptr
             );
             utf8[sizeof(utf8) - 1] = '\0';
 
@@ -135,15 +135,15 @@ int copy_line_to_clipboard(int count, int invoking_key)
 
     size = (strlen(rl_line_buffer) + 1) * sizeof(wchar_t);
     mem = GlobalAlloc(GMEM_MOVEABLE, size);
-    if (mem != NULL)
+    if (mem != nullptr)
     {
         data = (wchar_t*)GlobalLock(mem);
         MultiByteToWideChar(CP_UTF8, 0, rl_line_buffer, -1, data, size);
         GlobalUnlock(mem);
 
-        if (OpenClipboard(NULL) != FALSE)
+        if (OpenClipboard(nullptr) != FALSE)
         {
-            SetClipboardData(CF_TEXT, NULL);
+            SetClipboardData(CF_TEXT, nullptr);
             SetClipboardData(CF_UNICODETEXT, mem);
             CloseClipboard();
         }
@@ -194,7 +194,7 @@ static void get_word_bounds(const char* str, int cursor, int* left, int* right)
     }
 
     post = strchr(str + cursor, delim);
-    if (post != NULL)
+    if (post != nullptr)
     {
         *right = post - str;
     }

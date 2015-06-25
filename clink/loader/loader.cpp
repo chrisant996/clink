@@ -90,9 +90,9 @@ int main(int argc, char** argv)
     int ret;
 
     struct option options[] = {
-        { "help",   no_argument,       NULL, 'h' },
-        { "cfgdir", required_argument, NULL, 'c' },
-        { NULL,     0,                 NULL, 0 }
+        { "help",   no_argument,       nullptr, 'h' },
+        { "cfgdir", required_argument, nullptr, 'c' },
+        { nullptr,  0,                 nullptr, 0 }
     };
 
     // Without arguments, show help.
@@ -103,7 +103,7 @@ int main(int argc, char** argv)
     }
 
     // Parse arguments
-    while ((arg = getopt_long(argc, argv, "+hc:", options, NULL)) != -1)
+    while ((arg = getopt_long(argc, argv, "+hc:", options, nullptr)) != -1)
     {
         switch (arg)
         {

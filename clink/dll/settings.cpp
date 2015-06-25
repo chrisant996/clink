@@ -24,7 +24,7 @@
 #include "shared/util.h"
 
 //------------------------------------------------------------------------------
-static settings_t*  g_settings      = NULL;
+static settings_t*  g_settings      = nullptr;
 
 //------------------------------------------------------------------------------
 static const setting_decl_t g_settings_decl[] = {
@@ -185,17 +185,17 @@ void* initialise_clink_settings()
 //------------------------------------------------------------------------------
 void shutdown_clink_settings()
 {
-    if (g_settings != NULL)
+    if (g_settings != nullptr)
     {
         settings_shutdown(g_settings);
-        g_settings = NULL;
+        g_settings = nullptr;
     }
 }
 
 //------------------------------------------------------------------------------
 int get_clink_setting_int(const char* name)
 {
-    if (g_settings == NULL)
+    if (g_settings == nullptr)
     {
         return 0;
     }
@@ -206,7 +206,7 @@ int get_clink_setting_int(const char* name)
 //------------------------------------------------------------------------------
 const char* get_clink_setting_str(const char* name)
 {
-    if (g_settings == NULL)
+    if (g_settings == nullptr)
     {
         return "";
     }

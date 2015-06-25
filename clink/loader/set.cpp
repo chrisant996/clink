@@ -37,7 +37,7 @@ static int print_keys()
     const setting_decl_t* decl;
 
     decl = settings_get_decls(g_settings);
-    if (decl == NULL)
+    if (decl == nullptr)
     {
         puts("ERROR: Failed to find settings decl.");
         return 0;
@@ -70,7 +70,7 @@ static int print_keys()
 static int print_value(const char* key)
 {
     const setting_decl_t* decl = settings_get_decl_by_name(g_settings, key);
-    if (decl == NULL)
+    if (decl == nullptr)
     {
         printf("ERROR: Setting '%s' not found.\n", key);
         return 0;
@@ -104,7 +104,7 @@ static int print_value(const char* key)
 static int set_value(const char* key, const char* value)
 {
     const setting_decl_t* decl = settings_get_decl_by_name(g_settings, key);
-    if (decl == NULL)
+    if (decl == nullptr)
     {
         printf("ERROR: Setting '%s' not found.\n", key);
         return 0;
@@ -152,7 +152,7 @@ int set(int argc, char** argv)
 
     // Load Clink's settings.
     g_settings = (settings_t*)initialise_clink_settings();
-    if (g_settings == NULL)
+    if (g_settings == nullptr)
     {
         printf("ERROR: Failed to load Clink's settings from '%s'.", g_settings_path);
         return 1;

@@ -48,8 +48,8 @@ static HANDLE create_job()
 {
     HANDLE handle;
 
-    handle = CreateJobObject(NULL, NULL);
-    if (handle != NULL)
+    handle = CreateJobObject(nullptr, nullptr);
+    if (handle != nullptr)
     {
         JOBOBJECT_EXTENDED_LIMIT_INFORMATION limit_ex = { 0 };
         JOBOBJECT_BASIC_LIMIT_INFORMATION* limit = &limit_ex.BasicLimitInformation;
@@ -60,7 +60,7 @@ static HANDLE create_job()
             &limit_ex, sizeof(limit_ex)) == FALSE)
         {
             CloseHandle(handle);
-            handle = NULL;
+            handle = nullptr;
         }
     }
 
@@ -99,7 +99,7 @@ static char* next_line(char* str)
         eol = str + strlen(str);
     }
 
-    return *eol ? eol : NULL;
+    return *eol ? eol : nullptr;
 }
 
 //------------------------------------------------------------------------------
@@ -139,7 +139,7 @@ int lua_execute(lua_State* state)
 
     // Create a job object to manage the processes we'll spawn.
     exec_state.job = create_job();
-    if (exec_state.job == NULL)
+    if (exec_state.job == nullptr)
     {
         return 0;
     }
@@ -155,8 +155,8 @@ int lua_execute(lua_State* state)
     si.hStdInput = pipe_stdin.read;
     si.dwFlags = STARTF_USESTDHANDLES;
 
-    ok = CreateProcess(NULL, (char*)cmd, NULL, NULL, TRUE, process_flags, NULL,
-        NULL, &si, &exec_state.pi
+    ok = CreateProcess(nullptr, (char*)cmd, nullptr, nullptr, TRUE, process_flags, NULL,
+        nullptr, &si, &exec_state.pi
     );
     if (ok == FALSE)
     {
@@ -169,8 +169,8 @@ int lua_execute(lua_State* state)
             str_cpy(buffer, "cmd.exe /c ", sizeof_array(buffer));
             str_cat(buffer, cmd, sizeof_array(buffer));
 
-            ok = CreateProcess(NULL, buffer, NULL, NULL, TRUE, process_flags,
-                NULL, NULL, &si, &exec_state.pi
+            ok = CreateProcess(nullptr, buffer, nullptr, nullptr, TRUE, process_flags,
+                nullptr, nullptr, &si, &exec_state.pi
             );
         }
 
@@ -185,8 +185,8 @@ int lua_execute(lua_State* state)
     }
 
     AssignProcessToJobObject(exec_state.job, exec_state.pi.hProcess);
-    thread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)thread_proc,
-        &exec_state, 0, NULL
+    thread = CreateThread(nullptr, 0, (LPTHREAD_START_ROUTINE)thread_proc,
+        &exec_state, 0, nullptr
     );
 
     // Release our references to the child-side pipes. We don't use them, and
@@ -196,9 +196,9 @@ int lua_execute(lua_State* state)
     CloseHandle(pipe_stderr.write);
     CloseHandle(pipe_stdin.read);
 
-    pipe_stdout.write = NULL;
-    pipe_stderr.write = NULL;
-    pipe_stdin.read = NULL;
+    pipe_stdout.write = nullptr;
+    pipe_stderr.write = nullptr;
+    pipe_stdin.read = nullptr;
 
     // Create a lua table.
     lua_newtable(state);
@@ -215,7 +215,7 @@ int lua_execute(lua_State* state)
 
         GetSystemInfo(&sys_info);
         page_size = sys_info.dwAllocationGranularity;
-        buffer = VirtualAlloc(NULL, RESERVE, MEM_RESERVE, PAGE_READWRITE);
+        buffer = VirtualAlloc(nullptr, RESERVE, MEM_RESERVE, PAGE_READWRITE);
 
         write = (char*)buffer;
         remaining = 0;
@@ -237,7 +237,7 @@ int lua_execute(lua_State* state)
             }
 
             // Read from the pipe ("- 1" to keep a null terminator around)
-            ok = ReadFile(pipe_stdout.read, write, remaining - 1, &bytes_read, NULL);
+            ok = ReadFile(pipe_stdout.read, write, remaining - 1, &bytes_read, nullptr);
             if (ok != TRUE)
             {
                 break;
@@ -251,7 +251,7 @@ int lua_execute(lua_State* state)
         {
             int line_count = 0;
             char* line = (char*)buffer;
-            char* next = NULL;
+            char* next = nullptr;
 
             do
             {

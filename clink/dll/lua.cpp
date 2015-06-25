@@ -34,7 +34,7 @@ char** lua_match_display_filter(char** matches, int match_count)
     int i;
 
     top = lua_gettop(g_lua);
-    new_matches = NULL;
+    new_matches = nullptr;
 
     // Check there's a display filter set.
     lua_getglobal(g_lua, "clink");

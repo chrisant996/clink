@@ -57,7 +57,7 @@ const char_t* ANSI_FNAME(find_next_ansi_code)(const char_t* buffer, int* size)
     int state;
     int osc;
 
-    if (size == NULL)
+    if (size == nullptr)
     {
         size = &size_temp;
     }

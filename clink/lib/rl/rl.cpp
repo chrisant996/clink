@@ -84,7 +84,7 @@ static void quote_matches(char** matches)
 
     // Does the lcd have a quote char? Readline will add the quote if it thinks
     // it's completing file names.
-    lcd_needs_quote = strpbrk(matches[0], rl_filename_quote_characters) != NULL;
+    lcd_needs_quote = strpbrk(matches[0], rl_filename_quote_characters) != nullptr;
     if (lcd_needs_quote && (rl_filename_completion_desired != 0))
     {
         return;
@@ -112,7 +112,7 @@ static void quote_matches(char** matches)
         if (i > lcd_length)
         {
             int c = *(*m + lcd_length);
-            need_quote = strchr(rl_filename_quote_characters, c) != NULL;
+            need_quote = strchr(rl_filename_quote_characters, c) != nullptr;
         }
 
         ++m;
@@ -243,7 +243,7 @@ char** match_display_filter(char** matches, int match_count)
     // First, see if there's a Lua function registered to filter matches for
     // display (this is set via clink.match_display_filter).
     new_matches = lua_match_display_filter(matches, match_count);
-    if (new_matches != NULL)
+    if (new_matches != nullptr)
     {
         return new_matches;
     }
@@ -255,7 +255,7 @@ char** match_display_filter(char** matches, int match_count)
     {
         int is_dir = 0;
         int len;
-        char* base = NULL;
+        char* base = nullptr;
 
         // If matches are files then strip off the path and establish if they
         // are directories.
@@ -264,7 +264,7 @@ char** match_display_filter(char** matches, int match_count)
             DWORD file_attrib;
 
             base = strrchr(matches[i], '\\');
-            if (base == NULL)
+            if (base == nullptr)
             {
                 base = strrchr(matches[i], ':');
             }
@@ -276,7 +276,7 @@ char** match_display_filter(char** matches, int match_count)
                 is_dir = !!(file_attrib & FILE_ATTRIBUTE_DIRECTORY);
             }
         }
-        base = (base == NULL) ? matches[i] : base + 1;
+        base = (base == nullptr) ? matches[i] : base + 1;
         len = (int)strlen(base) + is_dir;
 
         new_matches[i] = (char*)malloc(len + 1);
@@ -349,7 +349,7 @@ void display_matches(char** matches, int match_count, int longest)
             L"\nDisplay all %d possibilities? (y or n)",
             match_count
         );
-        WriteConsoleW(std_out_handle, buffer, wcslen(buffer), &written, NULL);
+        WriteConsoleW(std_out_handle, buffer, wcslen(buffer), &written, nullptr);
 
         while (show_matches > 1)
         {
@@ -423,7 +423,7 @@ static char* call_readline_impl(const char* prompt)
     do
     {
         // Call readline
-        rl_already_prompted = (prompt == NULL);
+        rl_already_prompted = (prompt == nullptr);
         text = readline(prepared_prompt ? prepared_prompt : "");
         if (!text)
         {
@@ -431,9 +431,9 @@ static char* call_readline_impl(const char* prompt)
         }
 
         // Expand history designators in returned buffer.
-        expanded = NULL;
+        expanded = nullptr;
         expand_result = expand_from_history(text, &expanded);
-        if (expand_result > 0 && expanded != NULL)
+        if (expand_result > 0 && expanded != nullptr)
         {
             free(text);
             text = expanded;
@@ -465,12 +465,12 @@ int call_readline_w(const wchar_t* prompt, wchar_t* result, unsigned size)
 
     // Convert prompt to utf-8.
     WideCharToMultiByte(CP_UTF8, 0, prompt, -1, prompt_utf8, sizeof(prompt_utf8),
-        NULL, NULL);
+        nullptr, nullptr);
 
     // Call readline.
     result[0] = L'\0';
     text = call_readline_impl(prompt_utf8);
-    if (text == NULL)
+    if (text == nullptr)
     {
         // EOF.
         return 1;

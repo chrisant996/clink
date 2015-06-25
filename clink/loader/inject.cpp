@@ -41,7 +41,7 @@ static int check_dll_version(const char* clink_dll)
         return 0;
     }
 
-    if (VerQueryValue(buffer, "\\", (void**)&file_info, NULL) != TRUE)
+    if (VerQueryValue(buffer, "\\", (void**)&file_info, nullptr) != TRUE)
     {
         return 0;
     }
@@ -163,16 +163,16 @@ static int do_inject(DWORD target_pid)
 #endif // __MINGW32__
 
     // Get path to clink's DLL that we'll inject.
-    GetModuleFileName(NULL, dll_path, sizeof(dll_path));
+    GetModuleFileName(nullptr, dll_path, sizeof(dll_path));
     slash = strrchr(dll_path, '\\');
-    if (slash != NULL)
+    if (slash != nullptr)
     {
         *(slash + 1) = '\0';
     }
     strcat(dll_path, CLINK_DLL_NAME);
 
     // Reset log file, start logging!
-    LOG_INFO(NULL);
+    LOG_INFO(nullptr);
     LOG_INFO("System: ver=%d.%d %d.%d arch=%d cpus=%d cpu_type=%d page_size=%d",
         osvi.dwMajorVersion,
         osvi.dwMinorVersion,
@@ -229,7 +229,7 @@ int do_inject_impl(DWORD target_pid, const char* dll_path)
         FALSE,
         target_pid
     );
-    if (parent_process == NULL)
+    if (parent_process == nullptr)
     {
         LOG_ERROR("Failed to open parent process.");
         return 0;
@@ -247,12 +247,12 @@ int do_inject_impl(DWORD target_pid, const char* dll_path)
     // Create a buffer in the process to write data to.
     buffer = VirtualAllocEx(
         parent_process,
-        NULL,
+        nullptr,
         sizeof(dll_path),
         MEM_COMMIT,
         PAGE_READWRITE
     );
-    if (buffer == NULL)
+    if (buffer == nullptr)
     {
         LOG_ERROR("VirtualAllocEx failed");
         return 0;
@@ -260,7 +260,7 @@ int do_inject_impl(DWORD target_pid, const char* dll_path)
 
     // We'll use LoadLibraryA as the entry point for out remote thread.
     thread_proc = LoadLibraryA;
-    if (thread_proc == NULL)
+    if (thread_proc == nullptr)
     {
         LOG_ERROR("Failed to find LoadLibraryA address");
         return 0;
@@ -272,7 +272,7 @@ int do_inject_impl(DWORD target_pid, const char* dll_path)
         buffer,
         dll_path,
         strlen(dll_path) + 1,
-        NULL
+        nullptr
     );
     if (t == FALSE)
     {
@@ -286,14 +286,14 @@ int do_inject_impl(DWORD target_pid, const char* dll_path)
     toggle_threads(target_pid, 0);
     remote_thread = CreateRemoteThread(
         parent_process,
-        NULL,
+        nullptr,
         0,
         (LPTHREAD_START_ROUTINE)thread_proc,
         buffer,
         0,
         &thread_id
     );
-    if (remote_thread == NULL)
+    if (remote_thread == nullptr)
     {
         LOG_ERROR("CreateRemoteThread() failed");
         return 0;
@@ -356,7 +356,7 @@ void get_profile_path(const char* in, char* out, int out_size)
     {
         char dir[MAX_PATH];
 
-        if (SHGetFolderPath(0, CSIDL_LOCAL_APPDATA, NULL, 0, dir) == S_OK)
+        if (SHGetFolderPath(0, CSIDL_LOCAL_APPDATA, nullptr, 0, dir) == S_OK)
         {
             str_cpy(out, dir, out_size);
             str_cat(out, ".", out_size);
@@ -379,14 +379,14 @@ int inject(int argc, char** argv)
     inject_args_t inject_args = { 0 };
 
     struct option options[] = {
-        { "scripts",     required_argument,  NULL, 's' },
-        { "profile",     required_argument,  NULL, 'p' },
-        { "quiet",       no_argument,        NULL, 'q' },
-        { "pid",         required_argument,  NULL, 'd' },
-        { "nolog",       no_argument,        NULL, 'l' },
-        { "autorun",     no_argument,        NULL, '_' },
-        { "help",        no_argument,        NULL, 'h' },
-        { NULL, 0, NULL, 0 }
+        { "scripts",     required_argument,  nullptr, 's' },
+        { "profile",     required_argument,  nullptr, 'p' },
+        { "quiet",       no_argument,        nullptr, 'q' },
+        { "pid",         required_argument,  nullptr, 'd' },
+        { "nolog",       no_argument,        nullptr, 'l' },
+        { "autorun",     no_argument,        nullptr, '_' },
+        { "help",        no_argument,        nullptr, 'h' },
+        { nullptr, 0, nullptr, 0 }
     };
 
     const char* help[] = {
@@ -401,7 +401,7 @@ int inject(int argc, char** argv)
     extern const char* g_clink_header;
 
     // Parse arguments
-    while ((i = getopt_long(argc, argv, "nalqhp:s:d:", options, NULL)) != -1)
+    while ((i = getopt_long(argc, argv, "nalqhp:s:d:", options, nullptr)) != -1)
     {
         switch (i)
         {

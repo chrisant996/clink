@@ -71,15 +71,14 @@ static int tokenise(wchar_t* source, token_t* tokens, int max_tokens)
 //------------------------------------------------------------------------------
 int continue_doskey(wchar_t* chars, unsigned max_chars)
 {
-    wchar_t* read = g_state.alias_next;
-
-    if (g_state.alias_text == NULL)
+    if (g_state.alias_text == nullptr)
         return 0;
 
+    wchar_t* read = g_state.alias_next;
     if (*read == '\0')
     {
         free(g_state.alias_text);
-        g_state.alias_text = NULL;
+        g_state.alias_text = nullptr;
         return 0;
     }
 
@@ -181,9 +180,9 @@ int begin_doskey(wchar_t* chars, unsigned max_chars)
         wchar_t* exe;
         wchar_t exe_path[MAX_PATH];
 
-        GetModuleFileNameW(NULL, exe_path, sizeof_array(exe_path));
+        GetModuleFileNameW(nullptr, exe_path, sizeof_array(exe_path));
         exe = wcsrchr(exe_path, L'\\');
-        exe = (exe != NULL) ? (exe + 1) : exe_path;
+        exe = (exe != nullptr) ? (exe + 1) : exe_path;
 
         // Check it exists.
         if (!GetConsoleAliasW(alias, exe_path, 1, exe))

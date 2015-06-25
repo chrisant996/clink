@@ -281,7 +281,7 @@ static int get_env(lua_State* state)
     }
 
     name = lua_tostring(state, 1);
-    size = GetEnvironmentVariable(name, NULL, 0);
+    size = GetEnvironmentVariable(name, nullptr, 0);
     if (!size)
     {
         return 0;
@@ -305,14 +305,14 @@ int clink_lua_api::get_env_var_names(lua_State* state)
 
     lua_createtable(state, 0, 0);
     env_strings = GetEnvironmentStrings();
-    if (env_strings != NULL)
+    if (env_strings != nullptr)
     {
         char* string = env_strings;
 
         while (*string)
         {
             char* eq = strchr(string, L'=');
-            if (eq != NULL)
+            if (eq != nullptr)
             {
                 size_t length = eq - string + 1;
                 char name[1024];
@@ -456,7 +456,7 @@ int clink_lua_api::get_rl_variable(lua_State* state)
 
     string = lua_tostring(state, 1);
     rl_cvar = rl_variable_value(string);
-    if (rl_cvar == NULL)
+    if (rl_cvar == nullptr)
     {
         return 0;
     }
@@ -535,7 +535,7 @@ int clink_lua_api::get_console_aliases(lua_State* state)
         while (*alias != '\0')
         {
             char* c = strchr(alias, '=');
-            if (c == NULL)
+            if (c == nullptr)
             {
                 break;
             }

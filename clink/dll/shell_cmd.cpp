@@ -47,9 +47,9 @@ static wchar_t* get_mui_string(int id)
     flags = FORMAT_MESSAGE_ALLOCATE_BUFFER;
     flags |= FORMAT_MESSAGE_FROM_HMODULE;
     flags |= FORMAT_MESSAGE_IGNORE_INSERTS;
-    ok = FormatMessageW(flags, NULL, id, 0, (wchar_t*)(&ret), 0, NULL);
+    ok = FormatMessageW(flags, nullptr, id, 0, (wchar_t*)(&ret), 0, nullptr);
 
-    return ok ? ret : NULL;
+    return ok ? ret : nullptr;
 }
 
 //------------------------------------------------------------------------------
@@ -74,7 +74,7 @@ static int check_auto_answer()
         prompt_to_answer = get_mui_string(0x237b);
         no_yes = get_mui_string(0x2328);
 
-        if (prompt_to_answer != NULL)
+        if (prompt_to_answer != nullptr)
         {
             no_yes = no_yes ? no_yes : L"ny";
 
@@ -213,12 +213,12 @@ bool shell_cmd::is_interactive() const
     // no point loading clink if cmd.exe is running a command and then exiting.
 
     // Check the host is cmd.exe.
-    if (GetModuleHandle("cmd.exe") == NULL)
+    if (GetModuleHandle("cmd.exe") == nullptr)
         return false;
 
     // Get the command line.
     wchar_t* args = GetCommandLineW();
-    if (args == NULL)
+    if (args == nullptr)
         return false;
 
     // Cmd.exe's argument parsing is basic, simply searching for '/' characters
@@ -226,7 +226,7 @@ bool shell_cmd::is_interactive() const
     while (1)
     {
         args = wcschr(args, L'/');
-        if (args == NULL)
+        if (args == nullptr)
             break;
 
         ++args;
@@ -319,7 +319,7 @@ BOOL WINAPI shell_cmd::read_console(
 
     // Sometimes cmd.exe wants line input for reasons other than command entry.
     const wchar_t* prompt = shell_cmd::get()->m_prompt.get();
-    if (prompt == NULL || *prompt == L'\0')
+    if (prompt == nullptr || *prompt == L'\0')
         return ReadConsoleW(input, chars, max_chars, read_in, control);
 
     shell_cmd::get()->edit_line(prompt, chars, max_chars);
@@ -352,7 +352,7 @@ BOOL WINAPI shell_cmd::write_console(
     if (shell_cmd::get()->capture_prompt(chars, to_write))
     {
         // Convince caller (cmd.exe) that we wrote something to the console.
-        if (written != NULL)
+        if (written != nullptr)
             *written = to_write;
 
         return TRUE;
@@ -401,7 +401,7 @@ bool shell_cmd::hook_trap()
     if (kernel_module == nullptr)
         return false;
 
-    void* base = GetModuleHandle(NULL);
+    void* base = GetModuleHandle(nullptr);
     hook_setter hooks;
     hooks.add_jmp(kernel_module, "ReadConsoleW",            &shell_cmd::read_console);
     hooks.add_iat(base,          "WriteConsoleW",           &shell_cmd::write_console);

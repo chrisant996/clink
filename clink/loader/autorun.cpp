@@ -24,7 +24,7 @@
 
 //------------------------------------------------------------------------------
 typedef int     (dispatch_func_t)(const char*, int);
-char*           g_clink_args = NULL;
+char*           g_clink_args = nullptr;
 int             g_all_users  = 0;
 static int      show_autorun();
 
@@ -57,9 +57,9 @@ static HKEY open_software_key(int all_users, const char* key, int wow64, int wri
     flags |= KEY_WOW64_64KEY;
 
     ok = RegCreateKeyEx(all_users ? HKEY_LOCAL_MACHINE : HKEY_CURRENT_USER,
-        buffer, 0, NULL, REG_OPTION_NON_VOLATILE, flags, NULL, &result, NULL);
+        buffer, 0, nullptr, REG_OPTION_NON_VOLATILE, flags, nullptr, &result, nullptr);
 
-    return (ok == 0) ? result : NULL;
+    return (ok == 0) ? result : nullptr;
 }
 
 //------------------------------------------------------------------------------
@@ -82,15 +82,15 @@ static int get_value(HKEY key, const char* name, char** buffer)
     int i;
     DWORD req_size;
 
-    *buffer = NULL;
-    i = RegQueryValueEx(key, name, NULL, NULL, (BYTE*)*buffer, &req_size);
+    *buffer = nullptr;
+    i = RegQueryValueEx(key, name, nullptr, nullptr, (BYTE*)*buffer, &req_size);
     if (i != ERROR_SUCCESS && i != ERROR_MORE_DATA)
     {
         return 0;
     }
 
     *buffer = (char*)malloc(req_size);
-    RegQueryValueEx(key, name, NULL, NULL, (BYTE*)*buffer, &req_size);
+    RegQueryValueEx(key, name, nullptr, nullptr, (BYTE*)*buffer, &req_size);
 
     return req_size;
 }
@@ -117,13 +117,13 @@ static int check_registry_access()
     HKEY key;
 
     key = open_cmd_proc_key(g_all_users, 0, 1);
-    if (key == NULL)
+    if (key == nullptr)
         return 0;
 
     close_key(key);
 
     key = open_cmd_proc_key(g_all_users, 1, 1);
-    if (key == NULL)
+    if (key == nullptr)
         return 0;
 
     close_key(key);
@@ -153,20 +153,20 @@ static int find_clink_entry(const char* value, int* left, int* right)
     for (i = 0; i < sizeof_array(needles); ++i)
     {
         tag = strstr(value, needles[i]);
-        if (tag != NULL)
+        if (tag != nullptr)
         {
             break;
         }
     }
 
-    if (tag == NULL)
+    if (tag == nullptr)
     {
         return 0;
     }
 
     // Find right most extents of clink's entry.
     c = strchr(tag, '&');
-    if (c != NULL)
+    if (c != nullptr)
     {
         *right = (int)(c - value);
     }
@@ -224,13 +224,13 @@ static int uninstall_autorun(const char* clink_path, int wow64)
     int left, right;
 
     cmd_proc_key = open_cmd_proc_key(g_all_users, wow64, 1);
-    if (cmd_proc_key == NULL)
+    if (cmd_proc_key == nullptr)
     {
         printf("ERROR: Failed to open registry key (%d)\n", GetLastError());
         return 0;
     }
 
-    key_value = NULL;
+    key_value = nullptr;
     get_value(cmd_proc_key, "AutoRun", &key_value);
 
     ret = 1;
@@ -289,13 +289,13 @@ static int install_autorun(const char* clink_path, int wow64)
     uninstall_autorun(clink_path, wow64);
 
     cmd_proc_key = open_cmd_proc_key(g_all_users, wow64, 1);
-    if (cmd_proc_key == NULL)
+    if (cmd_proc_key == nullptr)
     {
         printf("ERROR: Failed to open registry key (%d)\n", GetLastError());
         return 0;
     }
 
-    key_value = NULL;
+    key_value = nullptr;
     get_value(cmd_proc_key, "AutoRun", &key_value);
 
     i = key_value ? (int)strlen(key_value) : 0;
@@ -304,7 +304,7 @@ static int install_autorun(const char* clink_path, int wow64)
 
     // Build the new autorun entry by appending clink's entry to the current one.
     new_value[0] = '\0';
-    if (key_value != NULL && *key_value != '\0')
+    if (key_value != nullptr && *key_value != '\0')
     {
         str_cat(new_value, key_value, i);
         str_cat(new_value, "&", i);
@@ -313,7 +313,7 @@ static int install_autorun(const char* clink_path, int wow64)
     str_cat(new_value, clink_path, i);
     str_cat(new_value, "\\clink.bat\" inject --autorun", i);
 
-    if (g_clink_args != NULL)
+    if (g_clink_args != nullptr)
     {
         str_cat(new_value, " ", i);
         str_cat(new_value, g_clink_args, i);
@@ -353,13 +353,13 @@ static int show_autorun()
             char* key_value;
 
             cmd_proc_key = open_cmd_proc_key(all_users, wow64, 0);
-            if (cmd_proc_key == NULL)
+            if (cmd_proc_key == nullptr)
             {
                 printf("ERROR: Failed to open registry key (%d)\n", GetLastError());
                 return 0;
             }
 
-            key_value = NULL;
+            key_value = nullptr;
             get_value(cmd_proc_key, "AutoRun", &key_value);
 
             printf("\n    %6s : %s",
@@ -385,13 +385,13 @@ static int set_autorun_value(const char* value, int wow64)
     int ret;
 
     cmd_proc_key = open_cmd_proc_key(g_all_users, wow64, 1);
-    if (cmd_proc_key == NULL)
+    if (cmd_proc_key == nullptr)
     {
         printf("ERROR: Failed to open registry key (%d)\n", GetLastError());
         return 0;
     }
 
-    if (value == NULL || *value == '\0')
+    if (value == nullptr || *value == '\0')
         ret = delete_value(cmd_proc_key, "AutoRun");
     else
         ret = set_value(cmd_proc_key, "AutoRun", value);
@@ -471,15 +471,15 @@ int autorun(int argc, char** argv)
     dispatch_func_t* function;
 
     struct option options[] = {
-        { "help",       no_argument,        NULL, 'h' },
-        { "allusers",   no_argument,        NULL, 'a' },
-        { NULL, 0, NULL, 0 }
+        { "help",       no_argument,    nullptr, 'h' },
+        { "allusers",   no_argument,    nullptr, 'a' },
+        {}
     };
 
-    clink_path = NULL;
+    clink_path = nullptr;
 
     // Parse command line arguments.
-    while ((i = getopt_long(argc, argv, "+ha", options, NULL)) != -1)
+    while ((i = getopt_long(argc, argv, "ha", options, nullptr)) != -1)
     {
         switch (i)
         {
@@ -498,7 +498,7 @@ int autorun(int argc, char** argv)
         }
     }
 
-    function = NULL;
+    function = nullptr;
 
     // Find out what to do by parsing the verb.
     if (optind < argc)
@@ -540,7 +540,7 @@ int autorun(int argc, char** argv)
     }
 
     // If we can't continue any further then warn the user.
-    if (function == NULL)
+    if (function == nullptr)
     {
         puts("ERROR: Invalid arguments. Run 'clink autorun --help' for info.");
         goto end;
@@ -554,12 +554,12 @@ int autorun(int argc, char** argv)
         goto end;
     }
 
-    ret = !dispatch(function, (clink_path != NULL) ? clink_path : g_clink_args);
+    ret = !dispatch(function, (clink_path != nullptr) ? clink_path : g_clink_args);
 
     // Provide the user with some feedback.
     if (ret == 0)
     {
-        const char* msg = NULL;
+        const char* msg = nullptr;
 
         if (function == install_autorun)
             msg = "Clink successfully installed to run when cmd.exe starts";
@@ -568,7 +568,7 @@ int autorun(int argc, char** argv)
         else if (function == set_autorun_value)
             msg = "Cmd.exe's AutoRun registry key set successfully";
 
-        if (msg != NULL)
+        if (msg != nullptr)
             success_message(msg);
     }
 

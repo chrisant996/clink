@@ -43,14 +43,14 @@ static LONG WINAPI exception_filter(EXCEPTION_POINTERS* info)
     fputs(file_name, stderr);
     fputs("\n", stderr);
 
-    file = CreateFile(file_name, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, 0, NULL);
+    file = CreateFile(file_name, GENERIC_WRITE, 0, nullptr, CREATE_ALWAYS, 0, nullptr);
     if (file != INVALID_HANDLE_VALUE)
     {
         pid = GetCurrentProcessId();
         process = OpenProcess(PROCESS_ALL_ACCESS, FALSE, pid);
-        if (process != NULL)
+        if (process != nullptr)
         {
-            MiniDumpWriteDump(process, pid, file, MiniDumpNormal, &mdei, NULL, NULL);
+            MiniDumpWriteDump(process, pid, file, MiniDumpNormal, &mdei, nullptr, nullptr);
         }
         CloseHandle(process);
     }
