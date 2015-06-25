@@ -21,7 +21,8 @@
 
 #include "pch.h"
 #include "line_editor.h"
-#include "shared/util.h"
+
+#include <shared/util.h>
 
 //------------------------------------------------------------------------------
 class cwd_restorer
@@ -49,10 +50,12 @@ cwd_restorer::~cwd_restorer()
 
 
 //------------------------------------------------------------------------------
-line_editor::line_editor(const environment& env)
-: m_terminal(env.term)
+line_editor::line_editor(const desc& desc)
+: m_terminal(desc.term)
+, m_match_printer(desc.match_printer)
+, m_match_generator(desc.match_generator)
 {
-    str_cpy(m_shell_name, env.shell_name, sizeof_array(m_shell_name));
+    str_cpy(m_shell_name, desc.shell_name, sizeof_array(m_shell_name));
 }
 
 //------------------------------------------------------------------------------

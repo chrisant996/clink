@@ -25,6 +25,7 @@
 #include "rl_scroller.h"
 #include "singleton.h"
 #include "terminal.h"
+#include "matches/match_generator.h"
 
 #include <shared/util.h>
 
@@ -100,6 +101,25 @@ static void terminal_flush_thunk(FILE* stream)
     return term->flush();
 }
 
+// MODE4
+template <class T, class R, class P0, class P1, class P2>
+R (*rl_delegate(T* t, R (T::*f)(P0, P1, P2)))(P0, P1, P2)
+{
+    static T* self = t;
+    static R (T::*func)(P0, P1, P2) = f;
+
+    struct thunk
+    {
+        static R impl(P0 p0, P1 p1, P2 p2)
+        {
+            return (self->*func)(p0, p1, p2);
+        }
+    };
+
+    return &thunk::impl;
+}
+// MODE4
+
 
 
 //------------------------------------------------------------------------------
@@ -108,26 +128,28 @@ class rl_line_editor
     , public singleton<rl_line_editor>
 {
 public:
-                        rl_line_editor(const environment& env);
-    virtual             ~rl_line_editor();
-    virtual bool        edit_line_impl(const wchar_t* prompt, wchar_t* out, int out_count) override;
+                    rl_line_editor(const desc& desc);
+    virtual         ~rl_line_editor();
+    virtual bool    edit_line_impl(const wchar_t* prompt, wchar_t* out, int out_count) override;
 
 private:
-    void                bind_embedded_inputrc();
-    void                load_user_inputrc();
-    void                add_funmap_entries();
-    rl_scroller         m_scroller;
+    void            bind_embedded_inputrc();
+    void            load_user_inputrc();
+    void            add_funmap_entries();
+    char**          completion(const char* line, int start, int end);
+    void            display_matches(char**, int, int);
+    rl_scroller     m_scroller;
 };
 
 //------------------------------------------------------------------------------
-rl_line_editor::rl_line_editor(const environment& env)
-: line_editor(env)
+rl_line_editor::rl_line_editor(const desc& desc)
+: line_editor(desc)
 {
     rl_getc_function = terminal_read_thunk;
     rl_fwrite_function = terminal_write_thunk;
     rl_fflush_function = terminal_flush_thunk;
-    rl_instream = (FILE*)env.term;
-    rl_outstream = (FILE*)env.term;
+    rl_instream = (FILE*)desc.term;
+    rl_outstream = (FILE*)desc.term;
 
     rl_readline_name = get_shell_name();
     rl_catch_signals = 0;
@@ -142,9 +164,8 @@ rl_line_editor::rl_line_editor(const environment& env)
     bind_embedded_inputrc();
     load_user_inputrc();
 
-    rl_ignore_some_completions_function = postprocess_matches;
-    rl_attempted_completion_function = alternative_matches;
-    rl_completion_display_matches_hook = display_matches;
+    rl_attempted_completion_function = rl_delegate(this, &rl_line_editor::completion);
+    rl_completion_display_matches_hook = rl_delegate(this, &rl_line_editor::display_matches);
 
     history_inhibit_expansion_function = history_expand_control;
 }
@@ -231,12 +252,25 @@ void rl_line_editor::load_user_inputrc()
     }
 }
 
+//------------------------------------------------------------------------------
+char** rl_line_editor::completion(const char* line, int start, int end)
+{
+    rl_attempted_completion_over = 1;
+    return get_match_generator()->generate(line, start, end);
+}
+
+//------------------------------------------------------------------------------
+void rl_line_editor::display_matches(char** matches, int match_count, int longest)
+{
+    return ::display_matches(matches, match_count, longest);
+}
+
 
 
 //------------------------------------------------------------------------------
-line_editor* create_rl_line_editor(const environment& env)
+line_editor* create_rl_line_editor(const line_editor::desc& desc)
 {
-    return new rl_line_editor(env);
+    return new rl_line_editor(desc);
 }
 
 //------------------------------------------------------------------------------

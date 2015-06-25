@@ -25,7 +25,7 @@
 #include "line_editor.h"
 
 //------------------------------------------------------------------------------
-line_editor*    create_rl_line_editor(const environment& env);
+line_editor*    create_rl_line_editor(const line_editor::desc& desc);
 void            destroy_rl_line_editor(line_editor* editor);
 
 #endif // RL_BACKEND_H

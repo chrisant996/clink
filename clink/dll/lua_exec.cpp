@@ -23,6 +23,14 @@
 #include "shared/util.h"
 #include "shared/pipe.h"
 
+// Lua includes.
+extern "C" {
+#include "dirent.h"
+#include "lua.h"
+#include "lauxlib.h"
+#include "lualib.h"
+} // extern "C"
+
 #if defined(__MINGW32__) && !defined(__MINGW64__)
 #   define JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE 0x2000
 #endif

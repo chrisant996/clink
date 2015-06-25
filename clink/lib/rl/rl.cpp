@@ -23,7 +23,6 @@
 #include "shared/util.h"
 
 //------------------------------------------------------------------------------
-char**              lua_generate_matches(const char*, int, int);
 char**              lua_match_display_filter(char**, int);
 int                 get_clink_setting_int(const char*);
 void                get_config_dir(char*, int);
@@ -231,32 +230,6 @@ static int completion_shim_impl(int count, int invoking_key, int (*rl_func)(int,
     g_slash_translation = 0;
 
     return ret;
-}
-
-//------------------------------------------------------------------------------
-char** alternative_matches(const char* text, int start, int end)
-{
-    char* c;
-    char** lua_matches;
-
-    // Try the lua match generators first
-    lua_matches = lua_generate_matches(text, start, end);
-    if (lua_matches != NULL)
-    {
-        rl_attempted_completion_over = 1;
-        return (lua_matches[0] != NULL) ? lua_matches : NULL;
-    }
-
-    // We're going to use readline's path completion, which only works with
-    // forward slashes. So, we slightly modify the completion state here.
-    c = (char*)text;
-    while (*c)
-    {
-        *c = (*c == '\\') ? '/' : *c;
-        ++c;
-    }
-
-    return NULL;
 }
 
 //------------------------------------------------------------------------------

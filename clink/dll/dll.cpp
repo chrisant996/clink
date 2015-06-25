@@ -28,6 +28,8 @@
 #include "shell_ps.h"
 
 #include <ecma48_terminal.h>
+#include <lua/lua_root.h>
+#include <matches/column_printer.h>
 #include <rl/rl_line_editor.h>
 
 //------------------------------------------------------------------------------
@@ -35,12 +37,9 @@ extern "C" {
 extern const char*      g_clink_header;
 }
 
-struct lua_State*       initialise_lua();
 void*                   initialise_clink_settings();
 void                    load_history();
 void                    save_history();
-struct lua_State*       initialise_lua();
-void                    shutdown_lua();
 void                    shutdown_clink_settings();
 int                     get_clink_setting_int(const char*);
 
@@ -51,12 +50,22 @@ static shell*           g_shell                 = nullptr;
 //------------------------------------------------------------------------------
 static void initialise_line_editor(const char* shell_name)
 {
-    environment env = {
-        shell_name,
-        new ecma48_terminal(),
-    };
+    lua_root* lua = new lua_root();
+// MODE4
+    extern const char* dll_lua_scripts[];
+    const char** lua_script = dll_lua_scripts;
+    while (*lua_script != nullptr)
+    {
+        lua->do_string(*lua_script);
+        ++lua_script;
+    }
+// MODE4
 
-    g_line_editor = create_rl_line_editor(env);
+    terminal* terminal = new ecma48_terminal();
+    match_printer* printer = new column_printer(terminal);
+
+    line_editor::desc desc = { shell_name, terminal, lua, printer };
+    g_line_editor = create_rl_line_editor(desc);
 }
 
 //------------------------------------------------------------------------------
@@ -150,7 +159,6 @@ static BOOL on_dll_attach()
     // Prepare core systems.
     initialise_clink_settings();
     initialise_line_editor(shell_name);
-    initialise_lua();
     load_history();
 
     // Search for a supported shell.
@@ -198,7 +206,6 @@ static BOOL on_dll_detach()
             load_history();
 
         save_history();
-        shutdown_lua();
         shutdown_clink_settings();
         shutdown_line_editor();
     }

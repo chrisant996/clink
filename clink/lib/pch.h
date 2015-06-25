@@ -30,15 +30,20 @@
 
 #include <Windows.h>
 
-// Readline includes.
 #ifdef __cplusplus
 extern "C" {
 #endif
 
+// Readline includes.
 #include <readline/readline.h>
 #include <readline/history.h>
 #include <readline/rldefs.h>
 #include <compat/dirent.h>
+
+// Lua includes.
+#include "lua.h"
+#include "lauxlib.h"
+#include "lualib.h"
 
 #ifdef __cplusplus
 } // extern "C"

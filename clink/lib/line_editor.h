@@ -22,39 +22,58 @@
 #ifndef LINE_EDITOR_H
 #define LINE_EDITOR_H
 
+class match_generator;
+class match_printer;
 class terminal;
-
-//------------------------------------------------------------------------------
-struct environment
-{
-    const char*         shell_name;
-    terminal*           term;
-};
 
 //------------------------------------------------------------------------------
 class line_editor
 {
 public:
-                        line_editor(const environment& env);
-    virtual             ~line_editor() = 0 {}
-    bool                edit_line(const wchar_t* prompt, wchar_t* out, int out_count);
-    terminal*           get_terminal() const;
-    const char*         get_shell_name() const;
+    struct desc
+    {
+        const char*         shell_name;
+        terminal*           term;
+        match_generator*    match_generator;
+        match_printer*      match_printer;
+    };
+
+                            line_editor(const desc& desc);
+    virtual                 ~line_editor() = 0 {}
+    bool                    edit_line(const wchar_t* prompt, wchar_t* out, int out_count);
+    terminal*               get_terminal() const;
+    match_printer*          get_match_printer() const;
+    match_generator*        get_match_generator() const;
+    const char*             get_shell_name() const;
 
 private:
-    virtual bool        edit_line_impl(const wchar_t* prompt, wchar_t* out, int out_count) = 0;
-    terminal*           m_terminal;
-    char                m_shell_name[32];
+    virtual bool            edit_line_impl(const wchar_t* prompt, wchar_t* out, int out_count) = 0;
+    terminal*               m_terminal;
+    match_printer*          m_match_printer;
+    match_generator*        m_match_generator;
+    char                    m_shell_name[32];
 
 private:
-                        line_editor(const line_editor&);    // unimplemented
-    void                operator = (const line_editor&);    // unimplemented
+                            line_editor(const line_editor&);    // unimplemented
+    void                    operator = (const line_editor&);    // unimplemented
 };
 
 //------------------------------------------------------------------------------
 inline terminal* line_editor::get_terminal() const
 {
     return m_terminal;
+}
+
+//------------------------------------------------------------------------------
+inline match_printer* line_editor::get_match_printer() const
+{
+    return m_match_printer;
+}
+
+//------------------------------------------------------------------------------
+inline match_generator* line_editor::get_match_generator() const
+{
+    return m_match_generator;
 }
 
 //------------------------------------------------------------------------------

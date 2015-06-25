@@ -37,12 +37,4 @@
 #   include <DbgHelp.h>
 #endif
 
-// Lua includes.
-extern "C" {
-#include "dirent.h"
-#include "lua.h"
-#include "lauxlib.h"
-#include "lualib.h"
-} // extern "C"
-
 #endif // PCH_H
