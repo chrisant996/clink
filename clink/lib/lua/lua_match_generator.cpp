@@ -21,6 +21,7 @@
 
 #include "pch.h"
 #include "lua_match_generator.h"
+#include "lua_script_loader.h"
 
 #include <shared/util.h>
 
@@ -44,10 +45,8 @@ lua_match_generator::~lua_match_generator()
 //------------------------------------------------------------------------------
 void lua_match_generator::initialise(lua_State* state)
 {
+    lua_load_script(state, lib, match)
     m_state = state;
-
-    extern const char* lib_script_match_lua;
-    luaL_dostring(m_state, lib_script_match_lua);
 }
 
 //------------------------------------------------------------------------------

@@ -22,6 +22,7 @@
 #include "pch.h"
 #include "clink_lua_api.h"
 #include "lua_delegate.h"
+#include "lua_script_loader.h"
 
 #include <shared/util.h>
 
@@ -75,19 +76,15 @@ void clink_lua_api::initialise(struct lua_State* state)
 
     lua_createtable(state, 0, 0);
 
-    lua_pushvalue(state, -1);
-    lua_setglobal(state, "clink");
-
     for (int i = 0; i < sizeof_array(methods); ++i)
     {
         lua_delegate::push(state, this, methods[i].method);
         lua_setfield(state, -2, methods[i].name);
     }
 
-    lua_pop(state, 1);
+    lua_setglobal(state, "clink");
 
-    extern const char* lib_script_clink_lua;
-    luaL_dostring(state, lib_script_clink_lua);
+    lua_load_script(state, lib, clink);
 }
 
 //------------------------------------------------------------------------------

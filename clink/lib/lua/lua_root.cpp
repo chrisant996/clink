@@ -21,6 +21,7 @@
 
 #include "pch.h"
 #include "lua_root.h"
+#include "lua_script_loader.h"
 
 extern "C" {
 #include "lua.h"
@@ -51,13 +52,11 @@ void lua_root::initialise()
     luaL_openlibs(m_state);
 
     m_clink.initialise(m_state);
+
     lua_match_generator::initialise(m_state);
 
-    extern const char* lib_script_prompt_lua;
-    luaL_dostring(m_state, lib_script_prompt_lua);
-
-    extern const char* lib_script_arguments_lua;
-    luaL_dostring(m_state, lib_script_arguments_lua);
+    lua_load_script(m_state, lib, prompt);
+    lua_load_script(m_state, lib, arguments);
 }
 
 //------------------------------------------------------------------------------
