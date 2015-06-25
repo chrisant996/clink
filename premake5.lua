@@ -197,16 +197,8 @@ project("clink_dll")
     includedirs("lua/src")
     includedirs("clink")
     includedirs("clink/lib")
-    files("clink/dll/*")
+    files("clink/dll/**")
     files("clink/version.rc")
-
-    configuration("release")
-        build_postbuild("clink/lib/rl/clink_inputrc_base", "release")
-        build_postbuild("clink/lua/*.lua", "release")
-
-    configuration("debug")
-        build_postbuild("clink/lib/rl/clink_inputrc_base", "debug")
-        build_postbuild("clink/lua/*.lua", "debug")
 
     configuration("vs*")
         links("dbghelp")
@@ -281,3 +273,4 @@ newoption {
 --------------------------------------------------------------------------------
 dofile("docs/premake5.lua")
 dofile("installer/premake5.lua")
+dofile("embed.lua")
