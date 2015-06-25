@@ -63,6 +63,11 @@ path.normalize = function(i) return i end
 clink_ver = _OPTIONS["clink_ver"] or "DEV"
 local to = ".build/"..(_ACTION or "nullaction")
 
+local to_root = path.getdirectory(to)
+if not os.isdir(to_root) then
+    os.mkdir(to_root)
+end
+
 --------------------------------------------------------------------------------
 local keys = { "clink_ver_major", "clink_ver_minor", "clink_ver_point" }
 
