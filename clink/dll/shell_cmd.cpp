@@ -190,8 +190,8 @@ bool shell_cmd::initialise()
     str_cat(buffer, cfg_path, BUF_SIZE);
     str_cat(buffer, "\" $*", BUF_SIZE);
 
-    char mod_path[MAX_PATH];
-    if (!GetModuleFileName(nullptr, mod_path, sizeof_array(mod_path)))
+    char mod_path[BUF_SIZE];
+    if (GetModuleFileName(nullptr, mod_path, BUF_SIZE) < BUF_SIZE)
     {
         const char* slash = strrchr(mod_path, '\\');
         const char* shell_name = (slash != nullptr) ? slash + 1 : mod_path;
