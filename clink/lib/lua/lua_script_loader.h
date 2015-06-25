@@ -46,7 +46,6 @@
                 return;
         }
 
-        puts(embed_path);
         printf("CLINK DEBUG: Failed to load '%s'\n", buffer);
     }
 
