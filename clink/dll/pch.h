@@ -19,8 +19,7 @@
  * SOFTWARE.
  */
 
-#ifndef PCH_H
-#define PCH_H
+#pragma once
 
 #include <stdio.h>
 #include <conio.h>
@@ -36,5 +35,3 @@
 #ifndef __MINGW32__
 #   include <DbgHelp.h>
 #endif
-
-#endif // PCH_H

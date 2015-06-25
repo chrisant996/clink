@@ -19,8 +19,7 @@
  * SOFTWARE.
  */
 
-#ifndef BUFFER_SCROLLER_H
-#define BUFFER_SCROLLER_H
+#pragma once
 
 #include <Windows.h>
 
@@ -38,5 +37,3 @@ private:
     HANDLE          m_handle;
     COORD           m_cursor_position;
 };
-
-#endif // BUFFER_SCROLLER_H

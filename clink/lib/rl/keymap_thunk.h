@@ -19,8 +19,7 @@
  * SOFTWARE.
  */
 
-#ifndef KEYMAP_THUNK_H
-#define KEYMAP_THUNK_H
+#pragma once
 
 #define MAKE_KEYMAP_THUNK(self, cls, func)                      \
     int (*func##_thunk)(int, int);                              \
@@ -35,5 +34,3 @@
         };                                                      \
         func##_thunk = _func##_thunk::impl;                     \
     }
-
-#endif // KEYMAP_THUNK_H

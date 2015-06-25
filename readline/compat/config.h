@@ -19,8 +19,7 @@
  * SOFTWARE.
  */
 
-#ifndef CONFIG_H
-#define CONFIG_H
+#pragma once
 
 #include <conio.h>
 #include <io.h>
@@ -163,5 +162,3 @@ int                         hooked_wcwidth(wchar_t wc);
 #    define USE_VARARGS
 #  endif
 #endif
-
-#endif // CONFIG_H

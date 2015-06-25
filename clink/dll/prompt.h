@@ -19,8 +19,7 @@
  * SOFTWARE.
  */
 
-#ifndef PROMPT_H
-#define PROMPT_H
+#pragma once
 
 //------------------------------------------------------------------------------
 class prompt
@@ -59,5 +58,3 @@ class prompt_utils
 public:
     static prompt   extract_from_console();
 };
-
-#endif // PROMPT_H

@@ -19,8 +19,7 @@
  * SOFTWARE.
  */
 
-#ifndef PCH_H
-#define PCH_H
+#pragma once
 
 #include <stdio.h>
 
@@ -29,5 +28,3 @@
 #include <Shlobj.h>
 
 #include "getopt.h"
-
-#endif // PCH_H

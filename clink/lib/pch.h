@@ -19,8 +19,7 @@
  * SOFTWARE.
  */
 
-#ifndef LIB_PCH_H
-#define LIB_PCH_H
+#pragma once
 
 #include <stdio.h>
 #include <conio.h>
@@ -44,5 +43,3 @@ extern "C" {
 #include "lualib.h"
 
 } // extern "C"
-
-#endif // LIB_PCH_H

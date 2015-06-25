@@ -19,8 +19,7 @@
  * SOFTWARE.
  */
 
-#ifndef LUA_DELEGATE_H
-#define LUA_DELEGATE_H
+#pragma once
 
 extern "C" {
 #include "lua.h"
@@ -77,5 +76,3 @@ inline const char* lua_delegate::get_metatable_name()
 {
     return "_luadel_mt";
 }
-
-#endif // LUA_DELEGATE_H

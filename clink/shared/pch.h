@@ -19,8 +19,7 @@
  * SOFTWARE.
  */
 
-#ifndef PCH_H
-#define PCH_H
+#pragma once
 
 #include <stdio.h>
 #ifdef __MINGW32__
@@ -29,5 +28,3 @@
 
 #include <Windows.h>
 #include <Shlobj.h>
-
-#endif // PCH_H

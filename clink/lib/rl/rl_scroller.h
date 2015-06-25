@@ -19,8 +19,7 @@
  * SOFTWARE.
  */
 
-#ifndef RL_SCROLLER_H
-#define RL_SCROLLER_H
+#pragma once
 
 #include "buffer_scroller.h"
 
@@ -39,5 +38,3 @@ private:
     KEYMAP_ENTRY        m_keymap[KEYMAP_SIZE];
     Keymap              m_prev_keymap;
 };
-
-#endif // RL_SCROLLER_H

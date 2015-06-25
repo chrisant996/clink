@@ -19,8 +19,7 @@
  * SOFTWARE.
  */
 
-#ifndef SHELL_PS_H
-#define SHELL_PS_H
+#pragma once
 
 #include "shell.h"
 #include "singleton.h"
@@ -44,5 +43,3 @@ private:
     void                edit_line(const wchar_t* prompt, wchar_t* buffer, int buffer_count);
     line_editor*        m_line_editor;
 };
-
-#endif // SHELL_PS_H

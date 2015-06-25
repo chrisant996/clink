@@ -19,8 +19,7 @@
  * SOFTWARE.
  */
 
-#ifndef MATCHES_RESULT_H
-#define MATCHES_RESULT_H
+#pragma once
 
 //------------------------------------------------------------------------------
 #if MODE4
@@ -39,5 +38,3 @@ private:
 #endif
 
 typedef char** match_result;
-
-#endif // MATCH_RESULT_H

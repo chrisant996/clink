@@ -19,8 +19,7 @@
  * SOFTWARE.
  */
 
-#ifndef LUA_MATCH_GENERATOR_H
-#define LUA_MATCH_GENERATOR_H
+#pragma once
 
 #include "matches/match_generator.h"
 
@@ -42,5 +41,3 @@ private:
 
     friend class lua_root;
 };
-
-#endif // LUA_MATCH_GENERATOR_H

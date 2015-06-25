@@ -19,8 +19,7 @@
  * SOFTWARE.
  */
 
-#ifndef SEH_SCOPE_H
-#define SEH_SCOPE_H
+#pragma once
 
 //------------------------------------------------------------------------------
 class seh_scope
@@ -32,5 +31,3 @@ public:
 private:
     void*       m_prev_filter;
 };
-
-#endif // SEH_SCOPE_H

@@ -19,8 +19,7 @@
  * SOFTWARE.
  */
 
-#ifndef HOOK_SETTER_H
-#define HOOK_SETTER_H
+#pragma once
 
 //------------------------------------------------------------------------------
 class hook_setter
@@ -56,5 +55,3 @@ private:
     hook_desc           m_descs[4];
     int                 m_desc_count;
 };
-
-#endif // HOOK_SETTER_H

@@ -19,8 +19,7 @@
  * SOFTWARE.
  */
 
-#ifndef SHELL_H
-#define SHELL_H
+#pragma once
 
 class line_editor;
 
@@ -50,5 +49,3 @@ inline line_editor* shell::get_line_editor() const
 {
     return m_line_editor;
 }
-
-#endif // SHELL_H

@@ -19,8 +19,7 @@
  * SOFTWARE.
  */
 
-#ifndef SINGLETON_H
-#define SINGLETON_H
+#pragma once
 
 #include <assert.h>
 
@@ -56,5 +55,3 @@ template <class T> T*& singleton<T>::get_store()
     static T* instance;
     return instance;
 }
-
-#endif // SINGLETON_H

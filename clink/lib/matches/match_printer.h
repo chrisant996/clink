@@ -19,8 +19,7 @@
  * SOFTWARE.
  */
 
-#ifndef MATCH_PRINTER_H
-#define MATCH_PRINTER_H
+#pragma once
 
 class terminal;
 class matches;
@@ -49,5 +48,3 @@ inline terminal* match_printer::get_terminal() const
 {
     return m_terminal;
 }
-
-#endif // MATCH_PRINTER_H

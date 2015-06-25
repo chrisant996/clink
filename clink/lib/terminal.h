@@ -19,8 +19,7 @@
  * SOFTWARE.
  */
 
-#ifndef TERMINAL_H
-#define TERMINAL_H
+#pragma once
 
 //------------------------------------------------------------------------------
 class terminal
@@ -33,5 +32,3 @@ public:
 
 private:
 };
-
-#endif // TERMINAL_H

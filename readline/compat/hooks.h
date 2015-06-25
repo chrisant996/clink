@@ -19,13 +19,10 @@
  * SOFTWARE.
  */
 
-#if !defined(HOOKS_H)
-#define HOOKS_H
+#pragma once
 
 struct hooked_stat
 {
     int st_size;
     int st_mode;
 };
-
-#endif // HOOKS_H

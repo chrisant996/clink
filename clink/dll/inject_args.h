@@ -19,8 +19,7 @@
  * SOFTWARE.
  */
 
-#ifndef INJECT_ARG
-#define INJECT_ARG
+#pragma once
 
 //------------------------------------------------------------------------------
 typedef struct
@@ -30,5 +29,3 @@ typedef struct
     char    script_path[512];
     char    profile_path[512];
 } inject_args_t;
-
-#endif // INJECT_ARG

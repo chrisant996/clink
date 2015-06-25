@@ -19,8 +19,7 @@
  * SOFTWARE.
  */
 
-#ifndef SHELL_CMD_H
-#define SHELL_CMD_H
+#pragma once
 
 #include "shell.h"
 #include "prompt.h"
@@ -49,5 +48,3 @@ private:
     bool                is_interactive() const;
     tagged_prompt       m_prompt;
 };
-
-#endif // SHELL_CMD_H

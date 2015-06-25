@@ -19,8 +19,7 @@
  * SOFTWARE.
  */
 
-#ifndef LINE_EDITOR_H
-#define LINE_EDITOR_H
+#pragma once
 
 class match_generator;
 class match_printer;
@@ -81,5 +80,3 @@ inline const char* line_editor::get_shell_name() const
 {
     return m_shell_name;
 }
-
-#endif // LINE_EDITOR_H

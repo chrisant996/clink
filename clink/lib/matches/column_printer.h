@@ -19,8 +19,7 @@
  * SOFTWARE.
  */
 
-#ifndef COLUMN_PRINTER_H
-#define COLUMN_PRINTER_H
+#pragma once
 
 #include "match_printer.h"
 
@@ -33,5 +32,3 @@ public:
     virtual         ~column_printer();
     virtual void    print(const matches& matches) override;
 };
-
-#endif // COLUMN_PRINTER_H

@@ -19,8 +19,7 @@
  * SOFTWARE.
  */
 
-#ifndef CLINK_LUA_API_H
-#define CLINK_LUA_API_H
+#pragma once
 
 //------------------------------------------------------------------------------
 class clink_lua_api
@@ -51,5 +50,3 @@ protected:
     int             get_console_aliases(lua_State* state);
     int             get_screen_info(lua_State* state);
 };
-
-#endif // CLINK_LUA_API_H

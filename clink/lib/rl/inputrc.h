@@ -19,8 +19,7 @@
  * SOFTWARE.
  */
 
-#ifndef INPUTRC_H
-#define INPUTRC_H
+#pragma once
 
 const char* clink_inputrc[] = {
     "set bell-style               visible",
@@ -93,5 +92,3 @@ const char* clink_inputrc[] = {
     "set keymap emacs",
     nullptr,
 };
-
-#endif // INPUTRC_H

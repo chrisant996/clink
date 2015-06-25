@@ -19,8 +19,7 @@
  * SOFTWARE.
  */
 
-#ifndef UTIL_H
-#define UTIL_H
+#pragma once
 
 void str_cpy(char* dest, const char* src, int max);
 void str_cat(char* dest, const char* src, int max);
@@ -43,5 +42,3 @@ void disable_log();
 #define AS_STR_IMPL(x)  #x
 
 #define sizeof_array(x) (sizeof((x)) / sizeof((x)[0]))
-
-#endif // UTIL_H

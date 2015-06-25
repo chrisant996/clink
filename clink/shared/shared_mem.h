@@ -19,8 +19,7 @@
  * SOFTWARE.
  */
 
-#ifndef SHARED_MEM_H
-#define SHARED_MEM_H
+#pragma once
 
 //------------------------------------------------------------------------------
 typedef struct {
@@ -33,5 +32,3 @@ typedef struct {
 shared_mem_t*   create_shared_mem(int page_count, const char* tag, int id);
 shared_mem_t*   open_shared_mem(int page_count, const char* tag, int id);
 void            close_shared_mem(shared_mem_t* info);
-
-#endif // SHARED_MEM_H

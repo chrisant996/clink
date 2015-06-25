@@ -19,8 +19,7 @@
  * SOFTWARE.
  */
 
-#ifndef LUA_SCRIPT_LOADER_H
-#define LUA_SCRIPT_LOADER_H
+#pragma once
 
 #include <shared/util.h>
 
@@ -67,5 +66,3 @@
             luaL_dostring(state, module##_script_##name##_lua);     \
         }
 #endif // _DEBUG
-
-#endif // LUA_SCRIPT_LOADER_H

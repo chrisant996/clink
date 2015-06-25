@@ -19,8 +19,7 @@
  * SOFTWARE.
  */
 
-#ifndef MATCH_GENERATOR_H
-#define MATCH_GENERATOR_H
+#pragma once
 
 #include "match_result.h"
 
@@ -33,5 +32,3 @@ public:
 
 private:
 };
-
-#endif // MATCH_GENERATOR_H

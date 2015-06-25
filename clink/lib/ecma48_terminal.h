@@ -19,8 +19,7 @@
  * SOFTWARE.
  */
 
-#ifndef ECMA48_TERMINAL_H
-#define ECMA48_TERMINAL_H
+#pragma once
 
 #include "terminal.h"
 
@@ -39,5 +38,3 @@ private:
     void            check_sgr_support();
     bool            m_enable_sgr;
 };
-
-#endif // ECMA48_TERMINAL_H

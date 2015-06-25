@@ -19,8 +19,7 @@
  * SOFTWARE.
  */
 
-#ifndef LUA_ROOT_H
-#define LUA_ROOT_H
+#pragma once
 
 #include "clink_lua_api.h"
 #include "lua_match_generator.h"
@@ -41,5 +40,3 @@ private:
     struct lua_State*   m_state;
     clink_lua_api       m_clink;
 };
-
-#endif // LUA_ROOT_H

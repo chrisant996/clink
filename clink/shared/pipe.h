@@ -19,8 +19,7 @@
  * SOFTWARE.
  */
 
-#ifndef PIPE_H
-#define PIPE_H
+#pragma once
 
 //------------------------------------------------------------------------------
 typedef struct 
@@ -40,5 +39,3 @@ int     create_pipe(int, pipe_t*);
 void    destroy_pipe(pipe_t*);
 HANDLE  duplicate_handle(HANDLE, DWORD);
 void    duplicate_pipe(pipe_t*, const pipe_t*, DWORD);
-
-#endif // PIPE_H
