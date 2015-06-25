@@ -1,5 +1,5 @@
 /* Copyright (c) 2013 Martin Ridgers
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
  * in the Software without restriction, including without limitation the rights
@@ -40,14 +40,14 @@ static void log_line_v(
     get_log_dir(buffer, sizeof_array(buffer));
     str_cat(buffer, "/clink.log", sizeof_array(buffer));
 
-    if (format == NULL)
+    if (format == nullptr)
     {
         unlink(buffer);
         return;
     }
 
     file = fopen(buffer, "at");
-    if (file == NULL)
+    if (file == nullptr)
     {
         return;
     }

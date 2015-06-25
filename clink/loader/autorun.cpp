@@ -1,5 +1,5 @@
 /* Copyright (c) 2012 Martin Ridgers
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
  * in the Software without restriction, including without limitation the rights
@@ -72,7 +72,7 @@ static void close_key(HKEY key)
 static int set_value(HKEY key, const char* name, const char* str)
 {
     LONG ok;
-    ok = RegSetValueEx(key, name, 0, REG_SZ, str, (DWORD)strlen(str) + 1);
+    ok = RegSetValueEx(key, name, 0, REG_SZ, (const BYTE*)str, (DWORD)strlen(str) + 1);
     return (ok == ERROR_SUCCESS);
 }
 
@@ -83,14 +83,14 @@ static int get_value(HKEY key, const char* name, char** buffer)
     DWORD req_size;
 
     *buffer = NULL;
-    i = RegQueryValueEx(key, name, NULL, NULL, *buffer, &req_size);
+    i = RegQueryValueEx(key, name, NULL, NULL, (BYTE*)*buffer, &req_size);
     if (i != ERROR_SUCCESS && i != ERROR_MORE_DATA)
     {
         return 0;
     }
 
-    *buffer = malloc(req_size);
-    RegQueryValueEx(key, name, NULL, NULL, *buffer, &req_size);
+    *buffer = (char*)malloc(req_size);
+    RegQueryValueEx(key, name, NULL, NULL, (BYTE*)*buffer, &req_size);
 
     return req_size;
 }
@@ -300,7 +300,7 @@ static int install_autorun(const char* clink_path, int wow64)
 
     i = key_value ? (int)strlen(key_value) : 0;
     i += 2048;
-    new_value = malloc(i);
+    new_value = (char*)malloc(i);
 
     // Build the new autorun entry by appending clink's entry to the current one.
     new_value[0] = '\0';
@@ -519,7 +519,7 @@ int autorun(int argc, char** argv)
     // Get path where clink is installed (assumed to be where this executable is)
     if (function == install_autorun)
     {
-        clink_path = malloc(strlen(_pgmptr));
+        clink_path = (char*)malloc(strlen(_pgmptr));
         clink_path[0] = '\0';
         str_cat(clink_path, _pgmptr, (int)(strrchr(_pgmptr, '\\') - _pgmptr + 1));
     }
@@ -528,7 +528,7 @@ int autorun(int argc, char** argv)
     if (function == install_autorun || function == set_autorun_value)
     {
         static const int ARG_SIZE = 1024;
-        g_clink_args = malloc(ARG_SIZE);
+        g_clink_args = (char*)malloc(ARG_SIZE);
         g_clink_args[0] = '\0';
 
         for (i = optind + 1; i < argc; ++i)

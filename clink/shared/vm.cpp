@@ -1,5 +1,5 @@
 /* Copyright (c) 2012 Martin Ridgers
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
  * in the Software without restriction, including without limitation the rights
@@ -61,7 +61,7 @@ void set_region_write_state(struct region_info_t* region_info, int state)
 int write_vm(void* proc_handle, void* dest, const void* src, size_t size)
 {
     BOOL ok;
-    ok = WriteProcessMemory((HANDLE)proc_handle, dest, src, size, NULL);
+    ok = WriteProcessMemory((HANDLE)proc_handle, dest, src, size, nullptr);
     return (ok != FALSE);
 }
 
@@ -69,6 +69,6 @@ int write_vm(void* proc_handle, void* dest, const void* src, size_t size)
 int read_vm(void* proc_handle, void* dest, const void* src, size_t size)
 {
     BOOL ok;
-    ok = ReadProcessMemory((HANDLE)proc_handle, src, dest, size, NULL);
+    ok = ReadProcessMemory((HANDLE)proc_handle, src, dest, size, nullptr);
     return (ok != FALSE);
 }

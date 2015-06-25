@@ -1,5 +1,5 @@
 /* Copyright (c) 2013 Martin Ridgers
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
  * in the Software without restriction, including without limitation the rights
@@ -151,7 +151,7 @@ int set(int argc, char** argv)
     str_cat(g_settings_path, "/settings", sizeof_array(g_settings_path));
 
     // Load Clink's settings.
-    g_settings = initialise_clink_settings();
+    g_settings = (settings_t*)initialise_clink_settings();
     if (g_settings == NULL)
     {
         printf("ERROR: Failed to load Clink's settings from '%s'.", g_settings_path);

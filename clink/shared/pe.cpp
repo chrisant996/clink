@@ -1,5 +1,5 @@
 /* Copyright (c) 2012 Martin Ridgers
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
  * in the Software without restriction, including without limitation the rights
@@ -31,31 +31,26 @@ static void* rva_to_addr(void* base, unsigned rva)
 //------------------------------------------------------------------------------
 void* get_nt_headers(void* base)
 {
-    IMAGE_DOS_HEADER* dos_header;
-
-    dos_header = base;
+    IMAGE_DOS_HEADER* dos_header = (IMAGE_DOS_HEADER*)base;
     return (char*)base + dos_header->e_lfanew;
 }
 
 //------------------------------------------------------------------------------
 void* get_data_directory(void* base, int index, int* size)
 {
-    IMAGE_NT_HEADERS* nt_headers;
-    IMAGE_DATA_DIRECTORY* data_dir;
-
-    nt_headers = get_nt_headers(base);
-    data_dir = nt_headers->OptionalHeader.DataDirectory + index;
-    if (data_dir == NULL)
+    IMAGE_NT_HEADERS* nt = (IMAGE_NT_HEADERS*)get_nt_headers(base);
+    IMAGE_DATA_DIRECTORY* data_dir = nt->OptionalHeader.DataDirectory + index;
+    if (data_dir == nullptr)
     {
-        return NULL;
+        return nullptr;
     }
 
     if (data_dir->VirtualAddress == 0)
     {
-        return NULL;
+        return nullptr;
     }
 
-    if (size != NULL)
+    if (size != nullptr)
     {
         *size = data_dir->Size;
     }
@@ -72,9 +67,8 @@ static void** iterate_imports(
 )
 {
     IMAGE_IMPORT_DESCRIPTOR* iid;
-
-    iid = get_data_directory(base, 1, NULL);
-    if (iid == NULL)
+    iid = (IMAGE_IMPORT_DESCRIPTOR*)get_data_directory(base, 1, nullptr);
+    if (iid == nullptr)
     {
         LOG_INFO("Failed to find import desc for base %p", base);
         return 0;
@@ -85,25 +79,20 @@ static void** iterate_imports(
         char* name;
         size_t len;
 
-        len = (dll != NULL) ? strlen(dll) : 0;
+        len = (dll != nullptr) ? strlen(dll) : 0;
         name = (char*)rva_to_addr(base, iid->Name);
-        if (dll == NULL || _strnicmp(name, dll, len) == 0)
+        if (dll == nullptr || _strnicmp(name, dll, len) == 0)
         {
-            void** ret;
-
             LOG_INFO("Checking imports in '%s'", name);
 
-            ret = callback(base, iid, param);
-            if (ret != NULL)
-            {
+            if (void** ret = callback(base, iid, param))
                 return ret;
-            }
         }
 
         ++iid;
     }
 
-    return NULL;
+    return nullptr;
 }
 
 //------------------------------------------------------------------------------
@@ -113,7 +102,7 @@ static void** import_by_addr(
     const void* func_addr
 )
 {
-    void** at = rva_to_addr(base, iid->FirstThunk);
+    void** at = (void**)rva_to_addr(base, iid->FirstThunk);
     while (*at != 0)
     {
         uintptr_t addr = (uintptr_t)(*at);
@@ -127,7 +116,7 @@ static void** import_by_addr(
         ++at;
     }
 
-    return NULL;
+    return nullptr;
 }
 
 //------------------------------------------------------------------------------
@@ -137,17 +126,18 @@ static void** import_by_name(
     const void* func_name
 )
 {
-    void** at = rva_to_addr(base, iid->FirstThunk);
-    intptr_t* nt = rva_to_addr(base, iid->OriginalFirstThunk);
+    void** at = (void**)rva_to_addr(base, iid->FirstThunk);
+    intptr_t* nt = (intptr_t*)rva_to_addr(base, iid->OriginalFirstThunk);
     while (*at != 0 && *nt != 0)
     {
         // Check that this import is imported by name (MSB not set)
         if (*nt > 0)
         {
             unsigned rva = (unsigned)(*nt & 0x7fffffff);
-            IMAGE_IMPORT_BY_NAME* iin = rva_to_addr(base, rva);
+            IMAGE_IMPORT_BY_NAME* iin;
+            iin = (IMAGE_IMPORT_BY_NAME*)rva_to_addr(base, rva);
 
-            if (_stricmp(iin->Name, func_name) == 0)
+            if (_stricmp((const char*)(iin->Name), (const char*)func_name) == 0)
                 return at;
         }
 
@@ -155,7 +145,7 @@ static void** import_by_name(
         ++nt;
     }
 
-    return NULL;
+    return nullptr;
 }
 
 //------------------------------------------------------------------------------
@@ -173,7 +163,6 @@ void** get_import_by_addr(void* base, const char* dll, void* func_addr)
 //------------------------------------------------------------------------------
 void* get_export(void* base, const char* func_name)
 {
-    IMAGE_DOS_HEADER* dos_header;
     IMAGE_NT_HEADERS* nt_header;
     IMAGE_DATA_DIRECTORY* data_dir;
     IMAGE_EXPORT_DIRECTORY* ied;
@@ -182,41 +171,36 @@ void* get_export(void* base, const char* func_name)
     WORD* ordinals;
     DWORD* addresses;
 
-    dos_header = base;
+    IMAGE_DOS_HEADER* dos_header = (IMAGE_DOS_HEADER*)base;
     nt_header = (IMAGE_NT_HEADERS*)((char*)base + dos_header->e_lfanew);
     data_dir = nt_header->OptionalHeader.DataDirectory;
 
-    if (data_dir == NULL)
+    if (data_dir == nullptr)
     {
         LOG_INFO("Failed to find export table for base %p", base);
-        return NULL;
+        return nullptr;
     }
 
     if (data_dir->VirtualAddress == 0)
     {
         LOG_INFO("No export directory found at base %p", base);
-        return NULL;
+        return nullptr;
     }
 
-    ied = rva_to_addr(base, data_dir->VirtualAddress);
-    names = rva_to_addr(base, ied->AddressOfNames);
-    ordinals = rva_to_addr(base, ied->AddressOfNameOrdinals);
-    addresses = rva_to_addr(base, ied->AddressOfFunctions);
+    ied = (IMAGE_EXPORT_DIRECTORY*)rva_to_addr(base, data_dir->VirtualAddress);
+    names = (DWORD*)rva_to_addr(base, ied->AddressOfNames);
+    ordinals = (WORD*)rva_to_addr(base, ied->AddressOfNameOrdinals);
+    addresses = (DWORD*)rva_to_addr(base, ied->AddressOfFunctions);
 
     for (i = 0; i < (int)(ied->NumberOfNames); ++i)
     {
-        const char* export_name;
-        WORD ordinal;
-
-        export_name = rva_to_addr(base, names[i]);
+        const char* export_name = (const char*)rva_to_addr(base, names[i]);
         if (_stricmp(export_name, func_name))
-        {
             continue;
-        }
 
-        ordinal = ordinals[i];
+        WORD ordinal = ordinals[i];
         return rva_to_addr(base, addresses[ordinal]);
     }
 
-    return NULL;
+    return nullptr;
 }

@@ -1,5 +1,5 @@
 /* Copyright (c) 2012 Martin Ridgers
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
  * in the Software without restriction, including without limitation the rights
@@ -75,7 +75,7 @@ static void set_value(
     str = value;
     len = (int)strlen(str) + 1;
 
-    new_str = malloc(len);
+    new_str = (char*)malloc(len);
     str_cpy(new_str, str, len);
 
     free(s->values[i]);
@@ -95,14 +95,14 @@ const setting_decl_t* settings_get_decl_by_name(settings_t* s, const char* name)
         }
     }
 
-    return NULL;
+    return nullptr;
 }
 
 //------------------------------------------------------------------------------
 static int get_decl_index(settings_t* s, const char* name)
 {
     const setting_decl_t* decl = settings_get_decl_by_name(s, name);
-    if (decl != NULL)
+    if (decl != nullptr)
     {
         return (int)(decl - s->decls);
     }
@@ -114,7 +114,7 @@ static int get_decl_index(settings_t* s, const char* name)
 static const char* get_decl_default(settings_t* s, const char* name)
 {
     const setting_decl_t* decl = settings_get_decl_by_name(s, name);
-    if (decl != NULL)
+    if (decl != nullptr)
     {
         return decl->default_value;
     }
@@ -125,13 +125,11 @@ static const char* get_decl_default(settings_t* s, const char* name)
 //------------------------------------------------------------------------------
 settings_t* settings_init(const setting_decl_t* decls, int decl_count)
 {
-    settings_t* s;
-
-    s = malloc(sizeof(settings_t));
+    settings_t* s = (settings_t*)malloc(sizeof(settings_t));
     s->count = decl_count;
     s->decls = decls;
 
-    s->values = calloc(sizeof(char*), decl_count);
+    s->values = (char**)calloc(sizeof(char*), decl_count);
     settings_reset(s);
 
     return s;
@@ -161,7 +159,7 @@ void settings_reset(settings_t* s)
 {
     int i;
     const setting_decl_t* decl;
-    
+
     decl = s->decls;
     for (i = 0; i < s->count; ++i)
     {
@@ -180,7 +178,7 @@ int settings_load(settings_t* s, const char* file)
 
     // Open the file.
     in = fopen(file, "rb");
-    if (in == NULL)
+    if (in == nullptr)
     {
         return 0;
     }
@@ -190,14 +188,14 @@ int settings_load(settings_t* s, const char* file)
     i = ftell(in);
     fseek(in, 0, SEEK_SET);
 
-    data = malloc(i + 1);
+    data = (char*)malloc(i + 1);
     fread(data, i, 1, in);
     fclose(in);
     data[i] = '\0';
 
     // Split at new lines.
     line = strtok(data, "\n\r");
-    while (line != NULL && *line)
+    while (line != nullptr && *line)
     {
         char* c;
 
@@ -206,9 +204,9 @@ int settings_load(settings_t* s, const char* file)
         {
             ++line;
         }
-            
+
         c = strchr(line, '=');
-        if (c != NULL && *line != '#')
+        if (c != nullptr && *line != '#')
         {
             char* d;
             const setting_decl_t* decl;
@@ -226,16 +224,16 @@ int settings_load(settings_t* s, const char* file)
             while (*c && isspace(*c))
             {
                 ++c;
-            }            
+            }
 
             decl = settings_get_decl_by_name(s, line);
-            if (decl != NULL)
+            if (decl != nullptr)
             {
                 set_value(s, decl, c);
             }
         }
 
-        line = strtok(NULL, "\n\r");
+        line = strtok(nullptr, "\n\r");
     }
 
     free(data);
@@ -250,7 +248,7 @@ int settings_save(settings_t* s, const char* file)
 
     // Open settings file.
     out = fopen(file, "wt");
-    if (out == NULL)
+    if (out == nullptr)
     {
         return 0;
     }
@@ -322,7 +320,7 @@ int settings_get_int(settings_t* s, const char* name)
 void settings_set_int(settings_t* s, const char* name, int value)
 {
     const setting_decl_t* decl = settings_get_decl_by_name(s, name);
-    if (decl != NULL)
+    if (decl != nullptr)
     {
         char buffer[32];
         itoa(value, buffer, 10);
@@ -334,7 +332,7 @@ void settings_set_int(settings_t* s, const char* name, int value)
 void settings_set_str(settings_t* s, const char* name, const char* value)
 {
     const setting_decl_t* decl = settings_get_decl_by_name(s, name);
-    if (decl != NULL)
+    if (decl != nullptr)
     {
         set_value(s, decl, value);
     }
@@ -344,7 +342,7 @@ void settings_set_str(settings_t* s, const char* name, const char* value)
 void settings_set(settings_t* s, const char* name, const char* value)
 {
     const setting_decl_t* decl = settings_get_decl_by_name(s, name);
-    if (decl != NULL)
+    if (decl != nullptr)
     {
         if (decl_is_string_type(decl))
         {

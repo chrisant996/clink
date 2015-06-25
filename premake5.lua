@@ -213,7 +213,7 @@ project("clink_dll")
 
 --------------------------------------------------------------------------------
 project("clink_loader")
-    language("c")
+    language("c++")
     kind("consoleapp")
     links("clink_shared")
     links("getopt")
@@ -223,7 +223,7 @@ project("clink_loader")
     includedirs("getopt")
     includedirs("lua/src")
     files("clink/dll/settings.cpp")
-    files("clink/loader/*")
+    files("clink/loader/**")
     files("clink/version.rc")
 
     configuration("release")
@@ -235,17 +235,17 @@ project("clink_loader")
         build_postbuild("clink/loader/clink.bat", "debug")
 
     configuration("vs*")
-        pchsource("clink/loader/pch.c")
+        pchsource("clink/loader/pch.cpp")
         pchheader("pch.h")
 
 --------------------------------------------------------------------------------
 project("clink_shared")
-    language("c")
+    language("c++")
     kind("staticlib")
-    files("clink/shared/*")
+    files("clink/shared/**")
 
     configuration("vs*")
-        pchsource("clink/shared/pch.c")
+        pchsource("clink/shared/pch.cpp")
         pchheader("pch.h")
 
 --------------------------------------------------------------------------------

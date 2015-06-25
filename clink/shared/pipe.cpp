@@ -1,5 +1,5 @@
 /* Copyright (c) 2013 Martin Ridgers
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
  * in the Software without restriction, including without limitation the rights
@@ -29,13 +29,13 @@ int create_pipe(int flags, pipe_t* pipe)
     SECURITY_ATTRIBUTES sa;
 
     // Init data.
-    pipe->read = NULL;
-    pipe->write = NULL;
+    pipe->read = nullptr;
+    pipe->write = nullptr;
 
     sa.nLength = sizeof(sa);
-    sa.lpSecurityDescriptor = NULL;
+    sa.lpSecurityDescriptor = nullptr;
     sa.bInheritHandle = !!(flags & (ReadHandleInheritable|WriteHandleInheritable));
-    
+
     // Create the pipe.
     ok = CreatePipe(&pipe->read, &pipe->write, &sa, 0);
     if (ok == FALSE)
@@ -63,13 +63,13 @@ void destroy_pipe(pipe_t* pipe)
     if (pipe->read)
     {
         CloseHandle(pipe->read);
-        pipe->read = NULL;
+        pipe->read = nullptr;
     }
 
     if (pipe->write)
     {
         CloseHandle(pipe->write);
-        pipe->write = NULL;
+        pipe->write = nullptr;
     }
 }
 
@@ -81,9 +81,9 @@ HANDLE duplicate_handle(HANDLE handle, DWORD target_pid)
     BOOL ok;
 
     process = OpenProcess(PROCESS_DUP_HANDLE, FALSE, target_pid);
-    if (process == NULL)
+    if (process == nullptr)
     {
-        return NULL;
+        return nullptr;
     }
 
     ok = DuplicateHandle(
@@ -98,7 +98,7 @@ HANDLE duplicate_handle(HANDLE handle, DWORD target_pid)
 
     if (ok != TRUE)
     {
-        out = NULL;
+        out = nullptr;
     }
 
     CloseHandle(process);

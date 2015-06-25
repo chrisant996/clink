@@ -1,5 +1,5 @@
 /* Copyright (c) 2013 Martin Ridgers
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
  * in the Software without restriction, including without limitation the rights
@@ -46,11 +46,11 @@ static void* map_shared_mem(HANDLE handle, int size)
     void* ptr;
 
     ptr = MapViewOfFile(handle, FILE_MAP_ALL_ACCESS, 0, 0, size);
-    if (ptr == NULL)
+    if (ptr == nullptr)
     {
         LOG_ERROR("Failed to map shared memory %p", handle);
         CloseHandle(handle);
-        return NULL;
+        return nullptr;
     }
 
     return ptr;
@@ -71,27 +71,27 @@ shared_mem_t* create_shared_mem(int page_count, const char* tag, int id)
     size = get_shared_mem_size(page_count);
     handle = CreateFileMapping(
         INVALID_HANDLE_VALUE,
-        NULL,
+        nullptr,
         PAGE_READWRITE,
         0,
         size,
         name
     );
-    if (handle == NULL)
+    if (handle == nullptr)
     {
         LOG_ERROR("Failed to create shared memory %s", name);
-        return NULL;
+        return nullptr;
     }
 
     // Resolve to a pointer
     ptr = map_shared_mem(handle, size);
-    if (ptr == NULL)
+    if (ptr == nullptr)
     {
         LOG_ERROR("Failed to map shared memory");
-        return NULL;
+        return nullptr;
     }
 
-    info = malloc(sizeof(shared_mem_t));
+    info = (shared_mem_t*)malloc(sizeof(shared_mem_t));
     info->handle = handle;
     info->ptr = ptr;
     info->size = size;
@@ -111,22 +111,22 @@ shared_mem_t* open_shared_mem(int page_count, const char* tag, int id)
 
     // Open the shared page.
     handle = OpenFileMapping(FILE_MAP_ALL_ACCESS, FALSE, name);
-    if (handle == NULL)
+    if (handle == nullptr)
     {
         LOG_ERROR("Failed to open shared memory %s", name);
-        return NULL;
+        return nullptr;
     }
 
     // Resolve it to a memory address.
     size = get_shared_mem_size(page_count);
     ptr = map_shared_mem(handle, size);
-    if (ptr == NULL)
+    if (ptr == nullptr)
     {
         LOG_ERROR("Failed to map shared memory");
-        return NULL;
+        return nullptr;
     }
 
-    info = malloc(sizeof(shared_mem_t));
+    info = (shared_mem_t*)malloc(sizeof(shared_mem_t));
     info->handle = handle;
     info->ptr = ptr;
     info->size = size;
@@ -136,12 +136,12 @@ shared_mem_t* open_shared_mem(int page_count, const char* tag, int id)
 //------------------------------------------------------------------------------
 void close_shared_mem(shared_mem_t* info)
 {
-    if (info->ptr != NULL)
+    if (info->ptr != nullptr)
     {
         UnmapViewOfFile(info->ptr);
     }
 
-    if (info->handle != NULL)
+    if (info->handle != nullptr)
     {
         CloseHandle(info->handle);
     }

@@ -30,9 +30,7 @@
 
 #include <Windows.h>
 
-#ifdef __cplusplus
 extern "C" {
-#endif
 
 // Readline includes.
 #include <readline/readline.h>
@@ -45,8 +43,6 @@ extern "C" {
 #include "lauxlib.h"
 #include "lualib.h"
 
-#ifdef __cplusplus
 } // extern "C"
-#endif
 
 #endif // LIB_PCH_H

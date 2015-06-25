@@ -1,5 +1,5 @@
 /* Copyright (c) 2012 Martin Ridgers
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
  * in the Software without restriction, including without limitation the rights
@@ -141,9 +141,8 @@ static int do_inject(DWORD target_pid)
 {
     int ret;
     char dll_path[512];
-    HANDLE kernel32;
+    HMODULE kernel32;
     SYSTEM_INFO sys_info;
-    OSVERSIONINFOEX osvi;
     char* slash;
 
     ret = 0;
@@ -151,8 +150,9 @@ static int do_inject(DWORD target_pid)
 
     GetSystemInfo(&sys_info);
 
+    OSVERSIONINFOEX osvi;
     osvi.dwOSVersionInfoSize = sizeof(osvi);
-    GetVersionEx((void*)&osvi);
+    GetVersionEx((OSVERSIONINFO*)&osvi);
 
 #ifdef __MINGW32__
     typedef BOOL (WINAPI *_IsWow64Process)(HANDLE, BOOL*);
@@ -279,7 +279,7 @@ int do_inject_impl(DWORD target_pid, const char* dll_path)
         LOG_ERROR("WriteProcessMemory() failed");
         return 0;
     }
-    
+
     LOG_INFO("Creating remote thread at %p with parameter %p", thread_proc, buffer);
 
     // Disable threads and create a remote thread.
@@ -288,7 +288,7 @@ int do_inject_impl(DWORD target_pid, const char* dll_path)
         parent_process,
         NULL,
         0,
-        thread_proc,
+        (LPTHREAD_START_ROUTINE)thread_proc,
         buffer,
         0,
         &thread_id
@@ -323,7 +323,7 @@ static int is_clink_present(DWORD target_pid)
     int ret;
     BOOL ok;
     MODULEENTRY32 module_entry;
-    
+
     HANDLE th32 = CreateToolhelp32Snapshot(TH32CS_SNAPMODULE, target_pid);
     if (th32 == INVALID_HANDLE_VALUE)
     {

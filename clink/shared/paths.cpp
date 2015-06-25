@@ -1,5 +1,5 @@
 /* Copyright (c) 2013 Martin Ridgers
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
  * in the Software without restriction, including without limitation the rights
@@ -23,7 +23,7 @@
 #include "util.h"
 
 //------------------------------------------------------------------------------
-static const char* g_config_dir_override = NULL;
+static const char* g_config_dir_override = nullptr;
 
 //------------------------------------------------------------------------------
 void normalise_path_format(char* buffer, int size)
@@ -33,7 +33,7 @@ void normalise_path_format(char* buffer, int size)
     GetShortPathName(buffer, buffer, size);
 
     slash = strrchr(buffer, '\\');
-    if (slash != NULL && slash[1] == '\0')
+    if (slash != nullptr && slash[1] == '\0')
     {
         *slash = '\0';
     }
@@ -62,7 +62,7 @@ void get_dll_dir(char* buffer, int size)
 
     GetModuleFileName(module, buffer, size);
     slash = strrchr(buffer, '\\');
-    if (slash != NULL)
+    if (slash != nullptr)
     {
         *slash = '\0';
     }
@@ -76,7 +76,7 @@ void get_config_dir(char* buffer, int size)
     static int once = 1;
 
     // Maybe the user specified an alternative location?
-    if (g_config_dir_override != NULL)
+    if (g_config_dir_override != nullptr)
     {
         str_cpy(buffer, g_config_dir_override, size);
     }
@@ -89,7 +89,7 @@ void get_config_dir(char* buffer, int size)
     // Try and create the directory if it doesn't already exist. Just this once.
     if (once)
     {
-        CreateDirectory(buffer, NULL);
+        CreateDirectory(buffer, nullptr);
         once = 0;
     }
 
@@ -105,16 +105,16 @@ void set_config_dir_override(const char* dir)
 //------------------------------------------------------------------------------
 void get_log_dir(char* buffer, int size)
 {
-    static once = 1;
+    static int once = 1;
     static char log_dir[MAX_PATH] = { 1 };
 
     // Just the once, get user's appdata folder.
     if (log_dir[0] == 1)
     {
-        if (SHGetFolderPath(0, CSIDL_LOCAL_APPDATA, NULL, 0, log_dir) != S_OK)
+        if (SHGetFolderPath(0, CSIDL_LOCAL_APPDATA, nullptr, 0, log_dir) != S_OK)
         {
             const char* str;
-            if ((str = getenv("USERPROFILE")) == NULL)
+            if ((str = getenv("USERPROFILE")) == nullptr)
             {
                 GetTempPath(sizeof_array(log_dir), log_dir);
             }
@@ -130,7 +130,7 @@ void get_log_dir(char* buffer, int size)
     // Try and create the directory if it doesn't already exist. Just this once.
     if (once)
     {
-        CreateDirectory(buffer, NULL);
+        CreateDirectory(buffer, nullptr);
         once = 0;
     }
 
@@ -143,7 +143,7 @@ void cpy_path_as_abs(char* abs, const char* rel, int abs_size)
     char* ret;
 
     ret = _fullpath(abs, rel, abs_size);
-    if (ret == NULL)
+    if (ret == nullptr)
     {
         str_cpy(abs, rel, abs_size);
     }

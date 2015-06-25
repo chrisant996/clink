@@ -64,7 +64,7 @@
     #define lua_load_script(state, module, name)                    \
         {                                                           \
             extern const char* module##_script_##name##_lua;        \
-            luaL_dostring(m_state, module##_script_##name##_lua);   \
+            luaL_dostring(state, module##_script_##name##_lua);     \
         }
 #endif // _DEBUG
 

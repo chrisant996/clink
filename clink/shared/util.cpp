@@ -1,5 +1,5 @@
 /* Copyright (c) 2012 Martin Ridgers
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
  * in the Software without restriction, including without limitation the rights
@@ -23,8 +23,25 @@
 #include "util.h"
 
 //------------------------------------------------------------------------------
-const char* g_clink_header = 
-    "Clink v"CLINK_VERSION" [git:"CLINK_COMMIT"] "
-    "Copyright (c) 2012-2016 Martin Ridgers\n"
-    "http://mridgers.github.io/clink\n"
-    ;
+void puts_help(const char** help_pairs, int count)
+{
+    int i;
+    int max_len;
+
+    count &= ~1;
+
+    max_len = -1;
+    for (i = 0; i < count; i += 2)
+    {
+        max_len = max((int)strlen(help_pairs[i]), max_len);
+    }
+
+    for (i = 0; i < count; i += 2)
+    {
+        const char* arg = help_pairs[i];
+        const char* desc = help_pairs[i + 1];
+        printf("  %-*s  %s\n", max_len, arg, desc);
+    }
+
+    puts("");
+}

@@ -33,10 +33,7 @@
 #include <rl/rl_line_editor.h>
 
 //------------------------------------------------------------------------------
-extern "C" {
 extern const char*      g_clink_header;
-}
-
 void*                   initialise_clink_settings();
 void                    load_history();
 void                    save_history();

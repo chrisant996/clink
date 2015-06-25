@@ -1,5 +1,5 @@
 /* Copyright (c) 2012 Martin Ridgers
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
  * in the Software without restriction, including without limitation the rights
@@ -52,10 +52,10 @@ static void* get_proc_addr(const char* dll, const char* func_name)
     void* base;
 
     base = LoadLibraryA(dll);
-    if (base == NULL)
+    if (base == nullptr)
     {
         LOG_INFO("Failed to load library '%s'", dll);
-        return NULL;
+        return nullptr;
     }
 
     return get_export(base, func_name);
@@ -76,29 +76,29 @@ void* hook_iat(
 
     LOG_INFO("Attempting to hook IAT for module %p", base);
     LOG_INFO("Target is %s,%s (by_name=%d)", dll, func_name, find_by_name);
-    
+
     // Find entry and replace it.
     if (find_by_name)
     {
-        imp = get_import_by_name(base, NULL, func_name);
+        imp = get_import_by_name(base, nullptr, func_name);
     }
     else
     {
         // Get the address of the function we're going to hook.
         func_addr = get_proc_addr(dll, func_name);
-        if (func_addr == NULL)
+        if (func_addr == nullptr)
         {
             LOG_INFO("Failed to find function '%s' in '%s'", func_name, dll);
-            return NULL;
+            return nullptr;
         }
 
-        imp = get_import_by_addr(base, NULL, func_addr);
+        imp = get_import_by_addr(base, nullptr, func_addr);
     }
 
-    if (imp == NULL)
+    if (imp == nullptr)
     {
         LOG_INFO("Unable to find import in IAT (by_name=%d)", find_by_name);
-        return NULL;
+        return nullptr;
     }
 
     LOG_INFO("Found import at %p (value = %p)", imp, *imp);
@@ -136,9 +136,9 @@ static char* alloc_trampoline(void* hint)
 
         hint = tramp_page;
     }
-    while (trampoline == NULL);
+    while (trampoline == nullptr);
 
-    return trampoline;
+    return (char*)trampoline;
 }
 
 //------------------------------------------------------------------------------
@@ -165,13 +165,13 @@ static char* write_rel_jmp(char* write, void* dest)
     disp -= (intptr_t)write;
     disp -= 5;
 
-    buffer.a = 0xe9;
+    buffer.a = (unsigned char)0xe9;
     *(int*)buffer.b = (int)disp;
 
     if (!write_vm(current_proc(), write, &buffer, sizeof(buffer)))
     {
         LOG_INFO("VM write to %p failed (err = %d)", write, GetLastError());
-        return NULL;
+        return nullptr;
     }
 
     return write + 5;
@@ -200,17 +200,17 @@ static char* write_trampoline_out(char* write, void* to_hook, void* hook)
         if (c != 0x90 && c != 0xcc)
         {
             LOG_INFO("No nop slide or int3 block detected prior to hook target.");
-            return NULL;
+            return nullptr;
         }
     }
 
     // Patch the API.
     patch = write_rel_jmp(patch, write);
-    temp = 0xf9eb;
+    temp = (unsigned short)0xf9eb;
     if (!write_vm(current_proc(), patch, &temp, sizeof(temp)))
     {
         LOG_INFO("VM write to %p failed (err = %d)", patch, GetLastError());
-        return NULL;
+        return nullptr;
     }
 
     // Long jmp.
@@ -226,7 +226,7 @@ static char* write_trampoline_out(char* write, void* to_hook, void* hook)
     if (!write_vm(current_proc(), write, &inst, sizeof(inst)))
     {
         LOG_INFO("VM write to %p failed (err = %d)", write, GetLastError());
-        return NULL;
+        return nullptr;
     }
 
     return write + sizeof(inst);
@@ -243,7 +243,7 @@ static char* write_trampoline_in(char* write, void* to_hook, int n)
         if (!write_vm(current_proc(), write, (char*)to_hook + i, 1))
         {
             LOG_INFO("VM write to %p failed (err = %d)", write, GetLastError());
-            return NULL;
+            return nullptr;
         }
         ++write;
     }
@@ -277,13 +277,13 @@ static int get_instruction_length(void* addr)
 
     struct asm_tag_t asm_tags[] = {
 #ifdef _M_X64
-        { 0x38ec8348, 0xffffffff },  // sub rsp,38h  
-        { 0x0000f3ff, 0x0000ffff },  // push rbx  
+        { 0x38ec8348, 0xffffffff },  // sub rsp,38h
+        { 0x0000f3ff, 0x0000ffff },  // push rbx
         { 0x00005340, 0x0000ffff },  // push rbx
         { 0x00dc8b4c, 0x00ffffff },  // mov r11, rsp
         { 0x0000b848, 0x0000f8ff },  // mov reg64, imm64  = 10-byte length
 #elif defined _M_IX86
-        { 0x0000ff8b, 0x0000ffff },  // mov edi,edi  
+        { 0x0000ff8b, 0x0000ffff },  // mov edi,edi
 #endif
         { 0x000000e9, 0x000000ff },  // jmp addr32        = 5-byte length
     };
@@ -324,7 +324,7 @@ static int get_instruction_length(void* addr)
 static void* follow_jump(void* addr)
 {
     void* dest;
-    char* t = addr;
+    char* t = (char*)addr;
     int* imm = (int*)(t + 2);
 
     if (*((unsigned short*)addr) != 0x25ff)
@@ -358,23 +358,23 @@ static void* hook_jmp_impl(void* to_hook, void* hook)
     if (inst_len <= 0)
     {
         LOG_INFO("Unable to match instruction %08X", *(int*)(to_hook));
-        return NULL;
+        return nullptr;
     }
 
     // Prepare
     trampoline = write = alloc_trampoline(to_hook);
-    if (trampoline == NULL)
+    if (trampoline == nullptr)
     {
         LOG_INFO("Failed to allocate a page for trampolines.");
-        return NULL;
+        return nullptr;
     }
 
     // In
     write = write_trampoline_in(trampoline, to_hook, inst_len);
-    if (write == NULL)
+    if (write == nullptr)
     {
         LOG_INFO("Failed to write trampoline in.");
-        return NULL;
+        return nullptr;
     }
 
     // Out
@@ -382,10 +382,10 @@ static void* hook_jmp_impl(void* to_hook, void* hook)
     set_region_write_state(&region_info, 1);
     write = write_trampoline_out(write, to_hook, hook);
     set_region_write_state(&region_info, 0);
-    if (write == NULL)
+    if (write == nullptr)
     {
         LOG_INFO("Failed to write trampoline out.");
-        return NULL;
+        return nullptr;
     }
 
     return trampoline;
@@ -399,14 +399,14 @@ void* hook_jmp(void* module, const char* func_name, void* hook)
     char module_name[96];
 
     module_name[0] = '\0';
-    GetModuleFileName(module, module_name, sizeof_array(module_name));
+    GetModuleFileName(HMODULE(module), module_name, sizeof_array(module_name));
 
     // Get the address of the function we're going to hook.
     func_addr = get_export(module, func_name);
-    if (func_addr == NULL)
+    if (func_addr == nullptr)
     {
         LOG_INFO("Failed to find function '%s' in '%s'", func_name, module_name);
-        return NULL;
+        return nullptr;
     }
 
     LOG_INFO("Attemping jump hook.");
@@ -414,10 +414,10 @@ void* hook_jmp(void* module, const char* func_name, void* hook)
 
     // Install the hook.
     trampoline = hook_jmp_impl(func_addr, hook);
-    if (trampoline == NULL)
+    if (trampoline == nullptr)
     {
         LOG_INFO("Jump hook failed.");
-        return NULL;
+        return nullptr;
     }
 
     LOG_INFO("Success!");

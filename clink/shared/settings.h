@@ -22,10 +22,6 @@
 #ifndef SETTINGS_H
 #define SETTINGS_H
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 //------------------------------------------------------------------------------
 enum setting_type
 {
@@ -76,9 +72,5 @@ void                  settings_set(settings_t* s, const char* name, const char* 
 const setting_decl_t* settings_get_decls(settings_t* s);
 const setting_decl_t* settings_get_decl_by_name(settings_t* s, const char* name);
 int                   settings_get_decl_count(settings_t* s);
-
-#ifdef __cplusplus
-} // extern "C"
-#endif
 
 #endif // SETTINGS_H

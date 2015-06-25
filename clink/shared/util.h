@@ -22,10 +22,6 @@
 #ifndef UTIL_H
 #define UTIL_H
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 void str_cpy(char* dest, const char* src, int max);
 void str_cat(char* dest, const char* src, int max);
 void str_cat_n(char* dest, const char* src, int max, int n);
@@ -39,10 +35,6 @@ void puts_help(const char** help_pairs, int count);
 void cpy_path_as_abs(char* abs, const char* rel, int abs_size);
 int  hash_string(const char* str);
 void disable_log();
-
-#ifdef __cplusplus
-} // extern "C"
-#endif
 
 #define LOG_INFO(...)   log_line(__FUNCTION__, __LINE__, __VA_ARGS__)
 #define LOG_ERROR(...)  log_error(__FUNCTION__, __LINE__, __VA_ARGS__)
