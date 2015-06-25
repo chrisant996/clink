@@ -47,7 +47,7 @@ function use_xp_toolset(base, cfg)
     local p = "v110_xp"
     if _ACTION > "vs2012" then
         p = "v120_xp"
-    end 
+    end
 
     if _ACTION > "vs2010" then
         _p(2,'<PlatformToolset>%s</PlatformToolset>', p)
