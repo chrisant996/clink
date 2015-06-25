@@ -54,7 +54,8 @@ local function do_embed()
         local symbols = {}
         local manifest = dofile(manifest)
         for _, file in ipairs(manifest.files) do
-            local symbol = manifest.name .. "_script_" .. file:gsub("%.", "_")
+            local name = path.getname(file)
+            local symbol = manifest.name .. "_script_" .. name:gsub("%.", "_")
             table.insert(symbols, symbol)
 
             file = path.join(root, file)
@@ -69,7 +70,19 @@ local function do_embed()
         for _, symbol in ipairs(symbols) do
             out:write(symbol .. ",")
         end
-        out:write("nullptr,};")
+        out:write("nullptr,};\n")
+
+        -- Some debug stuff so loose can files can be loaded in debug builds.
+        out:write("#ifdef _DEBUG\n")
+        out:write("const char* " .. manifest.name .. "_embed_path = __FILE__;\n")
+        for _, file in ipairs(manifest.files) do
+            local symbol = path.getname(file):gsub("%.", "_")
+            symbol = manifest.name .. "_" .. symbol .. "_script_src"
+
+            file = file:gsub("\\", "/")
+            out:write("const char* " .. symbol .. " = \"" .. file .. "\";\n")
+        end
+        out:write("#endif\n")
 
         out:close()
     end

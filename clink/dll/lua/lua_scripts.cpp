@@ -441,3 +441,17 @@ const char* dll_script_dir_lua =
 "}\n"
 "clink.arg.register_parser(\"svn\", svn_tree)\n"
 "";const char* dll_lua_scripts[] = {dll_script_dir_lua,dll_script_env_lua,dll_script_exec_lua,dll_script_git_lua,dll_script_go_lua,dll_script_hg_lua,dll_script_p4_lua,dll_script_powershell_lua,dll_script_self_lua,dll_script_set_lua,dll_script_svn_lua,nullptr,};
+#ifdef _DEBUG
+const char* dll_embed_path = __FILE__;
+const char* dll_dir_lua_script_src = "dir.lua";
+const char* dll_env_lua_script_src = "env.lua";
+const char* dll_exec_lua_script_src = "exec.lua";
+const char* dll_git_lua_script_src = "git.lua";
+const char* dll_go_lua_script_src = "go.lua";
+const char* dll_hg_lua_script_src = "hg.lua";
+const char* dll_p4_lua_script_src = "p4.lua";
+const char* dll_powershell_lua_script_src = "powershell.lua";
+const char* dll_self_lua_script_src = "self.lua";
+const char* dll_set_lua_script_src = "set.lua";
+const char* dll_svn_lua_script_src = "svn.lua";
+#endif

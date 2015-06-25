@@ -1965,3 +1965,11 @@ const char* lib_script_clink_lua =
 "end\n"
 "_TRACEBACK = debug.traceback             --Lua 5.0 function\n"
 "";const char* lib_lua_scripts[] = {lib_script_clink_lua,lib_script_match_lua,lib_script_prompt_lua,lib_script_arguments_lua,lib_script_debugger_lua,nullptr,};
+#ifdef _DEBUG
+const char* lib_embed_path = __FILE__;
+const char* lib_clink_lua_script_src = "clink.lua";
+const char* lib_match_lua_script_src = "match.lua";
+const char* lib_prompt_lua_script_src = "prompt.lua";
+const char* lib_arguments_lua_script_src = "arguments.lua";
+const char* lib_debugger_lua_script_src = "debugger.lua";
+#endif

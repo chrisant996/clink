@@ -141,6 +141,7 @@ solution("clink")
         optimize("size")
 
     configuration("vs*")
+        buildoptions("/FC")
         defines("_CRT_SECURE_NO_WARNINGS")
         defines("_CRT_NONSTDC_NO_WARNINGS")
 
