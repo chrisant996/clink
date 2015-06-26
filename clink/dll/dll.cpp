@@ -29,6 +29,7 @@
 
 #include <ecma48_terminal.h>
 #include <lua/lua_root.h>
+#include <lua/lua_script_loader.h>
 #include <matches/column_printer.h>
 #include <rl/rl_line_editor.h>
 
@@ -48,15 +49,18 @@ static shell*           g_shell                 = nullptr;
 static void initialise_line_editor(const char* shell_name)
 {
     lua_root* lua = new lua_root();
-// MODE4
-    extern const char* dll_lua_scripts[];
-    const char** lua_script = dll_lua_scripts;
-    while (*lua_script != nullptr)
-    {
-        lua->do_string(*lua_script);
-        ++lua_script;
-    }
-// MODE4
+    lua_State* state = lua->get_state();
+    lua_load_script(state, dll, dir);
+    lua_load_script(state, dll, env);
+    lua_load_script(state, dll, exec);
+    lua_load_script(state, dll, git);
+    lua_load_script(state, dll, go);
+    lua_load_script(state, dll, hg);
+    lua_load_script(state, dll, p4);
+    lua_load_script(state, dll, powershell);
+    lua_load_script(state, dll, self);
+    lua_load_script(state, dll, set);
+    lua_load_script(state, dll, svn);
 
     terminal* terminal = new ecma48_terminal();
     match_printer* printer = new column_printer(terminal);
