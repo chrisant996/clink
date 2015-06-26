@@ -55,7 +55,7 @@ local function do_embed()
         local manifest = dofile(manifest)
         for _, file in ipairs(manifest.files) do
             local name = path.getname(file)
-            local symbol = manifest.name .. "_script_" .. name:gsub("%.", "_")
+            local symbol = manifest.name .. "_" .. name:gsub("%.", "_") .. "_script"
             table.insert(symbols, symbol)
 
             file = path.join(root, file)
@@ -73,17 +73,26 @@ local function do_embed()
         out:write("nullptr,};\n")
 
         -- Some debug stuff so loose can files can be loaded in debug builds.
+        symbols = {}
         out:write("#ifdef _DEBUG\n")
         out:write("const char* " .. manifest.name .. "_embed_path = __FILE__;\n")
         for _, file in ipairs(manifest.files) do
             local symbol = path.getname(file):gsub("%.", "_")
-            symbol = manifest.name .. "_" .. symbol .. "_script_src"
+            symbol = manifest.name .. "_" .. symbol .. "_file"
+            table.insert(symbols, symbol)
 
             file = file:gsub("\\", "/")
             out:write("const char* " .. symbol .. " = \"" .. file .. "\";\n")
         end
-        out:write("#endif\n")
 
+        -- Write a manifest variable of all embedded scripts in the .cpp file.
+        out:write("const char* " .. manifest.name .. "_lua_files[] = {")
+        for _, symbol in ipairs(symbols) do
+            out:write(symbol .. ",")
+        end
+        out:write("nullptr,};\n")
+
+        out:write("#endif\n")
         out:close()
     end
 end

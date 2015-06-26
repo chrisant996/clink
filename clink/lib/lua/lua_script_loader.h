@@ -52,17 +52,17 @@
     #define lua_load_script(state, module, name)                    \
         {                                                           \
            extern const char* module##_embed_path;                  \
-           extern const char* module##_##name##_lua_script_src;     \
+           extern const char* module##_##name##_lua_file;           \
             lua_load_script_impl(state,                             \
                 module##_embed_path,                                \
-                module##_##name##_lua_script_src                    \
+                module##_##name##_lua_file                          \
             );\
         }
 #else
     //------------------------------------------------------------------------------
     #define lua_load_script(state, module, name)                    \
         {                                                           \
-            extern const char* module##_script_##name##_lua;        \
-            luaL_dostring(state, module##_script_##name##_lua);     \
+            extern const char* module##_##name##_lua_script;        \
+            luaL_dostring(state, module##_##name##_lua_script);     \
         }
 #endif // _DEBUG

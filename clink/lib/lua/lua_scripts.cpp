@@ -1,5 +1,5 @@
 #include "pch.h"
-const char* lib_script_clink_lua =
+const char* lib_clink_lua_script =
 "function clink.is_point_in_quote(str, i)\n"
 "    if i > #str then\n"
 "        i = #str\n"
@@ -16,7 +16,7 @@ const char* lib_script_clink_lua =
 "    end\n"
 "    return false\n"
 "end\n"
-"function clink.adjust_for_separator(buffer, point, first, last)\n"
+"function clink.adjust_for_separator(buffer, cursor, first, last)\n"
 "    local seps = nil\n"
 "    if clink.get_host_process() == \"cmd.exe\" then\n"
 "        seps = \"|&\"\n"
@@ -33,13 +33,13 @@ const char* lib_script_clink_lua =
 "            buffer = buffer:sub(delta + 1)\n"
 "            first = first - delta\n"
 "            last = last - delta\n"
-"            point = point - delta\n"
+"            cursor = cursor - delta\n"
 "            if first < 1 then\n"
 "                first = 1\n"
 "            end\n"
 "        end\n"
 "    end\n"
-"    return buffer, point, first, last\n"
+"    return buffer, cursor, first, last\n"
 "end\n"
 "function clink.split(str, sep)\n"
 "    local i = 1\n"
@@ -84,7 +84,7 @@ const char* lib_script_clink_lua =
 "    end\n"
 "    return parts\n"
 "end\n"
-"";const char* lib_script_match_lua =
+"";const char* lib_match_lua_script =
 "clink.matches = {}\n"
 "clink.generators = {}\n"
 "function clink.is_single_match(matches)\n"
@@ -208,16 +208,16 @@ const char* lib_script_clink_lua =
 "    return false\n"
 "end\n"
 "function clink.generate_matches(text, first, last)\n"
-"    local line_buffer\n"
-"    local point\n"
-"    line_buffer, point, first, last = clink.adjust_for_separator(\n"
-"        rl_state.line_buffer,\n"
-"        rl_state.point,\n"
+"    local line\n"
+"    local cursor\n"
+"    line, cursor, first, last = clink.adjust_for_separator(\n"
+"        line_state.line,\n"
+"        line_state.cursor,\n"
 "        first,\n"
 "        last\n"
 "    )\n"
-"    rl_state.line_buffer = line_buffer\n"
-"    rl_state.point = point\n"
+"    line_state.line = line\n"
+"    line_state.cursor = cursor\n"
 "    clink.matches = {}\n"
 "    clink.match_display_filter = nil\n"
 "    for _, generator in ipairs(clink.generators) do\n"
@@ -245,7 +245,7 @@ const char* lib_script_clink_lua =
 "    table.insert(clink.generators, {f=func, p=priority})\n"
 "    table.sort(clink.generators, function(a, b) return a[\"p\"] < b[\"p\"] end)\n"
 "end\n"
-"";const char* lib_script_prompt_lua =
+"";const char* lib_prompt_lua_script =
 "clink.prompt = {}\n"
 "clink.prompt.filters = {}\n"
 "function clink.prompt.register_filter(filter, priority)\n"
@@ -293,7 +293,7 @@ const char* lib_script_clink_lua =
 "    end\n"
 "    return add_ansi_codes(clink.prompt.value)\n"
 "end\n"
-"";const char* lib_script_arguments_lua =
+"";const char* lib_arguments_lua_script =
 "clink.arg = {}\n"
 "local parsers               = {}\n"
 "local is_parser\n"
@@ -743,7 +743,7 @@ const char* lib_script_clink_lua =
 "    end\n"
 "end\n"
 "local function argument_match_generator(text, first, last)\n"
-"    local leading = rl_state.line_buffer:sub(1, first - 1):lower()\n"
+"    local leading = line_state.line:sub(1, first - 1):lower()\n"
 "    -- Extract the command.\n"
 "    local cmd_l, cmd_r\n"
 "    if leading:find(\"^%s*\\\"\") then\n"
@@ -771,11 +771,13 @@ const char* lib_script_clink_lua =
 "    \n"
 "    -- Find a registered parser.\n"
 "    local parser = parsers[cmd]\n"
+"    print(cmd)\n"
+"    print(parser)\n"
 "    if parser == nil then\n"
 "        return false\n"
 "    end\n"
 "    -- Split the command line into parts.\n"
-"    local str = rl_state.line_buffer:sub(cmd_r + 2, last)\n"
+"    local str = line_state.line:sub(cmd_r + 2, last)\n"
 "    local parts = {}\n"
 "    for _, sub_str in ipairs(clink.quote_split(str, \"\\\"\")) do\n"
 "        -- Quoted strings still have their quotes. Look for those type of\n"
@@ -799,10 +801,10 @@ const char* lib_script_clink_lua =
 "    if text == \"\" then\n"
 "        table.insert(parts, text)\n"
 "    end\n"
-"    -- Extend rl_state with match generation state; text, first, and last.\n"
-"    rl_state.text = text\n"
-"    rl_state.first = first\n"
-"    rl_state.last = last\n"
+"    -- Extend line_state with match generation state; text, first, and last.\n"
+"    line_state.text = text\n"
+"    line_state.first = first\n"
+"    line_state.last = last\n"
 "    -- Call the parser.\n"
 "    local needle = parts[#parts]\n"
 "    local ret = parser:go(parts)\n"
@@ -818,7 +820,7 @@ const char* lib_script_clink_lua =
 "    return true\n"
 "end\n"
 "clink.register_match_generator(argument_match_generator, 25)\n"
-"";const char* lib_script_debugger_lua =
+"";const char* lib_debugger_lua_script =
 "\n"
 "local IsWindows = string.find(string.lower(os.getenv('OS') or ''),'^windows')\n"
 "local coro_debugger\n"
@@ -1964,12 +1966,13 @@ const char* lib_script_clink_lua =
 "  return assertmsg                       --carry on\n"
 "end\n"
 "_TRACEBACK = debug.traceback             --Lua 5.0 function\n"
-"";const char* lib_lua_scripts[] = {lib_script_clink_lua,lib_script_match_lua,lib_script_prompt_lua,lib_script_arguments_lua,lib_script_debugger_lua,nullptr,};
+"";const char* lib_lua_scripts[] = {lib_clink_lua_script,lib_match_lua_script,lib_prompt_lua_script,lib_arguments_lua_script,lib_debugger_lua_script,nullptr,};
 #ifdef _DEBUG
 const char* lib_embed_path = __FILE__;
-const char* lib_clink_lua_script_src = "clink.lua";
-const char* lib_match_lua_script_src = "match.lua";
-const char* lib_prompt_lua_script_src = "prompt.lua";
-const char* lib_arguments_lua_script_src = "arguments.lua";
-const char* lib_debugger_lua_script_src = "debugger.lua";
+const char* lib_clink_lua_file = "clink.lua";
+const char* lib_match_lua_file = "match.lua";
+const char* lib_prompt_lua_file = "prompt.lua";
+const char* lib_arguments_lua_file = "arguments.lua";
+const char* lib_debugger_lua_file = "debugger.lua";
+const char* lib_lua_files[] = {lib_clink_lua_file,lib_match_lua_file,lib_prompt_lua_file,lib_arguments_lua_file,lib_debugger_lua_file,nullptr,};
 #endif

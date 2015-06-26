@@ -1,5 +1,5 @@
 #include "pch.h"
-const char* dll_script_dir_lua =
+const char* dll_dir_lua_script =
 "function dir_match_generator_impl(text)\n"
 "    -- Strip off any path components that may be on text.\n"
 "    local prefix = \"\"\n"
@@ -26,8 +26,8 @@ const char* dll_script_dir_lua =
 "    -- If there was no matches but text is a dir then use it as the single match.\n"
 "    -- Otherwise tell readline that matches are files and it will do magic.\n"
 "    if #matches == 0 then\n"
-"        if clink.is_dir(rl_state.text) then\n"
-"            table.insert(matches, rl_state.text)\n"
+"        if clink.is_dir(line_state.text) then\n"
+"            table.insert(matches, line_state.text)\n"
 "        end\n"
 "    else\n"
 "        clink.matches_are_files()\n"
@@ -41,7 +41,7 @@ const char* dll_script_dir_lua =
 "clink.arg.register_parser(\"rmdir\", dir_match_generator)\n"
 "clink.arg.register_parser(\"md\", dir_match_generator)\n"
 "clink.arg.register_parser(\"mkdir\", dir_match_generator)\n"
-"";const char* dll_script_env_lua =
+"";const char* dll_env_lua_script =
 "local special_env_vars = {\n"
 "    \"cd\", \"date\", \"time\", \"random\", \"errorlevel\",\n"
 "    \"cmdextversion\", \"cmdcmdline\", \"highestnumanodenumber\"\n"
@@ -63,7 +63,7 @@ const char* dll_script_dir_lua =
 "    end\n"
 "end\n"
 "local function env_vars_match_generator(text, first, last)\n"
-"    local all = rl_state.line_buffer:sub(1, last)\n"
+"    local all = line_state.line:sub(1, last)\n"
 "    -- Skip pairs of %s\n"
 "    local i = 1\n"
 "    for _, r in function () return all:find(\"%b%%\", i) end do\n"
@@ -94,7 +94,7 @@ const char* dll_script_dir_lua =
 "if clink.get_host_process() == \"cmd.exe\" then\n"
 "    clink.register_match_generator(env_vars_match_generator, 10)\n"
 "end\n"
-"";const char* dll_script_exec_lua =
+"";const char* dll_exec_lua_script =
 "local dos_commands = {\n"
 "    \"assoc\", \"break\", \"call\", \"cd\", \"chcp\", \"chdir\", \"cls\", \"color\", \"copy\",\n"
 "    \"date\", \"del\", \"dir\", \"diskcomp\", \"diskcopy\", \"echo\", \"endlocal\", \"erase\",\n"
@@ -135,7 +135,7 @@ const char* dll_script_dir_lua =
 "            return false\n"
 "        end\n"
 "    else\n"
-"        local leading = rl_state.line_buffer:sub(1, first - 1)\n"
+"        local leading = line_state.line:sub(1, first - 1)\n"
 "        local is_first = leading:find(\"^%s*\\\"*$\")\n"
 "        if not is_first then\n"
 "            return false\n"
@@ -197,7 +197,7 @@ const char* dll_script_dir_lua =
 "    return true\n"
 "end\n"
 "clink.register_match_generator(exec_match_generator, 50)\n"
-"";const char* dll_script_git_lua =
+"";const char* dll_git_lua_script =
 "local git_argument_tree = {\n"
 "    -- Porcelain and ancillary commands from git's man page.\n"
 "    \"add\", \"am\", \"archive\", \"bisect\", \"branch\", \"bundle\", \"checkout\",\n"
@@ -212,7 +212,7 @@ const char* dll_script_dir_lua =
 "    \"rev-parse\", \"show-branch\", \"verify-tag\", \"whatchanged\"\n"
 "}\n"
 "clink.arg.register_parser(\"git\", git_argument_tree)\n"
-"";const char* dll_script_go_lua =
+"";const char* dll_go_lua_script =
 "local function flags(...)\n"
 "    local p = clink.arg.new_parser()\n"
 "    p:set_flags(...)\n"
@@ -314,7 +314,7 @@ const char* dll_script_dir_lua =
 "clink.arg.register_parser(\"go\", go_help_parser)\n"
 "clink.arg.register_parser(\"godoc\", godoc_parser)\n"
 "clink.arg.register_parser(\"gofmt\", gofmt_parser)\n"
-"";const char* dll_script_hg_lua =
+"";const char* dll_hg_lua_script =
 "local hg_tree = {\n"
 "    \"add\", \"addremove\", \"annotate\", \"archive\", \"backout\", \"bisect\", \"bookmarks\",\n"
 "    \"branch\", \"branches\", \"bundle\", \"cat\", \"clone\", \"commit\", \"copy\", \"diff\",\n"
@@ -326,7 +326,7 @@ const char* dll_script_dir_lua =
 "    \"phases\"\n"
 "}\n"
 "clink.arg.register_parser(\"hg\", hg_tree)\n"
-"";const char* dll_script_p4_lua =
+"";const char* dll_p4_lua_script =
 "local p4_tree = {\n"
 "    \"add\", \"annotate\", \"attribute\", \"branch\", \"branches\", \"browse\", \"change\",\n"
 "    \"changes\", \"changelist\", \"changelists\", \"client\", \"clients\", \"copy\",\n"
@@ -350,7 +350,7 @@ const char* dll_script_dir_lua =
 "    \"timelapseview\", \"tlv\", \"users\", \"workspaces\", \"clients\", \"shutdown\"\n"
 "}\n"
 "clink.arg.register_parser(\"p4vc\", p4vc_tree)\n"
-"";const char* dll_script_powershell_lua =
+"";const char* dll_powershell_lua_script =
 "local function powershell_prompt_filter()\n"
 "    local l, r, path = clink.prompt.value:find(\"([a-zA-Z]:\\\\.*)> $\")\n"
 "    if path ~= nil then\n"
@@ -360,7 +360,7 @@ const char* dll_script_dir_lua =
 "if clink.get_host_process() == \"powershell.exe\" then\n"
 "    clink.prompt.register_filter(powershell_prompt_filter, -493)\n"
 "end\n"
-"";const char* dll_script_self_lua =
+"";const char* dll_self_lua_script =
 "local inject_parser\n"
 "local autorun_parser\n"
 "local set_parser\n"
@@ -410,10 +410,10 @@ const char* dll_script_dir_lua =
 "    }\n"
 ")\n"
 "clink.arg.register_parser(\"clink\", self_parser)\n"
-"";const char* dll_script_set_lua =
+"";const char* dll_set_lua_script =
 "local function set_match_generator(word)\n"
 "    -- Skip this generator if first is in the rvalue.\n"
-"    local leading = rl_state.line_buffer:sub(1, rl_state.first - 1)\n"
+"    local leading = line_state.line:sub(1, line_state.first - 1)\n"
 "    if leading:find(\"=\") then\n"
 "        return false\n"
 "    end\n"
@@ -428,7 +428,7 @@ const char* dll_script_dir_lua =
 "    return matches\n"
 "end\n"
 "clink.arg.register_parser(\"set\", set_match_generator)\n"
-"";const char* dll_script_svn_lua =
+"";const char* dll_svn_lua_script =
 "local svn_tree = {\n"
 "    \"add\", \"blame\", \"praise\", \"annotate\", \"ann\", \"cat\", \"changelist\", \"cl\",\n"
 "    \"checkout\", \"co\", \"cleanup\", \"commit\", \"ci\", \"copy\", \"cp\", \"delete\", \"del\",\n"
@@ -440,18 +440,19 @@ const char* dll_script_dir_lua =
 "    \"unlock\", \"update\", \"up\"\n"
 "}\n"
 "clink.arg.register_parser(\"svn\", svn_tree)\n"
-"";const char* dll_lua_scripts[] = {dll_script_dir_lua,dll_script_env_lua,dll_script_exec_lua,dll_script_git_lua,dll_script_go_lua,dll_script_hg_lua,dll_script_p4_lua,dll_script_powershell_lua,dll_script_self_lua,dll_script_set_lua,dll_script_svn_lua,nullptr,};
+"";const char* dll_lua_scripts[] = {dll_dir_lua_script,dll_env_lua_script,dll_exec_lua_script,dll_git_lua_script,dll_go_lua_script,dll_hg_lua_script,dll_p4_lua_script,dll_powershell_lua_script,dll_self_lua_script,dll_set_lua_script,dll_svn_lua_script,nullptr,};
 #ifdef _DEBUG
 const char* dll_embed_path = __FILE__;
-const char* dll_dir_lua_script_src = "dir.lua";
-const char* dll_env_lua_script_src = "env.lua";
-const char* dll_exec_lua_script_src = "exec.lua";
-const char* dll_git_lua_script_src = "git.lua";
-const char* dll_go_lua_script_src = "go.lua";
-const char* dll_hg_lua_script_src = "hg.lua";
-const char* dll_p4_lua_script_src = "p4.lua";
-const char* dll_powershell_lua_script_src = "powershell.lua";
-const char* dll_self_lua_script_src = "self.lua";
-const char* dll_set_lua_script_src = "set.lua";
-const char* dll_svn_lua_script_src = "svn.lua";
+const char* dll_dir_lua_file = "dir.lua";
+const char* dll_env_lua_file = "env.lua";
+const char* dll_exec_lua_file = "exec.lua";
+const char* dll_git_lua_file = "git.lua";
+const char* dll_go_lua_file = "go.lua";
+const char* dll_hg_lua_file = "hg.lua";
+const char* dll_p4_lua_file = "p4.lua";
+const char* dll_powershell_lua_file = "powershell.lua";
+const char* dll_self_lua_file = "self.lua";
+const char* dll_set_lua_file = "set.lua";
+const char* dll_svn_lua_file = "svn.lua";
+const char* dll_lua_files[] = {dll_dir_lua_file,dll_env_lua_file,dll_exec_lua_file,dll_git_lua_file,dll_go_lua_file,dll_hg_lua_file,dll_p4_lua_file,dll_powershell_lua_file,dll_self_lua_file,dll_set_lua_file,dll_svn_lua_file,nullptr,};
 #endif
