@@ -183,18 +183,18 @@ end
 
 --------------------------------------------------------------------------------
 function clink.generate_matches(text, first, last)
-    local line_buffer
-    local point
+    local line
+    local cursor
 
-    line_buffer, point, first, last = clink.adjust_for_separator(
-        rl_state.line_buffer,
-        rl_state.point,
+    line, cursor, first, last = clink.adjust_for_separator(
+        line_state.line,
+        line_state.cursor,
         first,
         last
     )
 
-    rl_state.line_buffer = line_buffer
-    rl_state.point = point
+    line_state.line = line
+    line_state.cursor = cursor
 
     clink.matches = {}
     clink.match_display_filter = nil

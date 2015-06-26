@@ -42,7 +42,7 @@ function clink.is_point_in_quote(str, i)
 end
 
 --------------------------------------------------------------------------------
-function clink.adjust_for_separator(buffer, point, first, last)
+function clink.adjust_for_separator(buffer, cursor, first, last)
     local seps = nil
     if clink.get_host_process() == "cmd.exe" then
         seps = "|&"
@@ -62,7 +62,7 @@ function clink.adjust_for_separator(buffer, point, first, last)
             buffer = buffer:sub(delta + 1)
             first = first - delta
             last = last - delta
-            point = point - delta
+            cursor = cursor - delta
 
             if first < 1 then
                 first = 1
@@ -70,7 +70,7 @@ function clink.adjust_for_separator(buffer, point, first, last)
         end
     end
 
-    return buffer, point, first, last
+    return buffer, cursor, first, last
 end
 
 --------------------------------------------------------------------------------

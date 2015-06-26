@@ -55,8 +55,8 @@ local function dir_match_generator(word)
     -- If there was no matches but text is a dir then use it as the single match.
     -- Otherwise tell readline that matches are files and it will do magic.
     if #matches == 0 then
-        if clink.is_dir(rl_state.text) then
-            table.insert(matches, rl_state.text)
+        if clink.is_dir(line_state.text) then
+            table.insert(matches, line_state.text)
         end
     else
         clink.matches_are_files()

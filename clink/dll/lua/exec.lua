@@ -82,7 +82,7 @@ local function exec_match_generator(text, first, last)
             return false
         end
     else
-        local leading = rl_state.line_buffer:sub(1, first - 1)
+        local leading = line_state.line:sub(1, first - 1)
         local is_first = leading:find("^%s*\"*$")
         if not is_first then
             return false

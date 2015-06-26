@@ -581,7 +581,7 @@ end
 
 --------------------------------------------------------------------------------
 local function argument_match_generator(text, first, last)
-    local leading = rl_state.line_buffer:sub(1, first - 1):lower()
+    local leading = line_state.line:sub(1, first - 1):lower()
 
     -- Extract the command.
     local cmd_l, cmd_r
@@ -613,12 +613,13 @@ local function argument_match_generator(text, first, last)
 
     -- Find a registered parser.
     local parser = parsers[cmd]
+
     if parser == nil then
         return false
     end
 
     -- Split the command line into parts.
-    local str = rl_state.line_buffer:sub(cmd_r + 2, last)
+    local str = line_state.line:sub(cmd_r + 2, last)
     local parts = {}
     for _, sub_str in ipairs(clink.quote_split(str, "\"")) do
         -- Quoted strings still have their quotes. Look for those type of
@@ -644,10 +645,10 @@ local function argument_match_generator(text, first, last)
         table.insert(parts, text)
     end
 
-    -- Extend rl_state with match generation state; text, first, and last.
-    rl_state.text = text
-    rl_state.first = first
-    rl_state.last = last
+    -- Extend line_state with match generation state; text, first, and last.
+    line_state.text = text
+    line_state.first = first
+    line_state.last = last
 
     -- Call the parser.
     local needle = parts[#parts]

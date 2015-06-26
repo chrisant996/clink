@@ -23,7 +23,7 @@
 --------------------------------------------------------------------------------
 local function set_match_generator(word)
     -- Skip this generator if first is in the rvalue.
-    local leading = rl_state.line_buffer:sub(1, rl_state.first - 1)
+    local leading = line_state.line:sub(1, line_state.first - 1)
     if leading:find("=") then
         return false
     end

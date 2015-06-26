@@ -22,6 +22,7 @@
 #include "pch.h"
 #include "lua_match_generator.h"
 #include "lua_script_loader.h"
+#include "line_state.h"
 
 #include <shared/util.h>
 
@@ -55,30 +56,29 @@ void lua_match_generator::shutdown()
 }
 
 //------------------------------------------------------------------------------
-match_result lua_match_generator::generate(const char* line, int start, int end)
+match_result lua_match_generator::generate(const line_state& line)
 {
-// MODE4
     // Expose some of the readline state to lua.
     lua_createtable(m_state, 2, 0);
 
-    lua_pushliteral(m_state, "line_buffer");
-    lua_pushstring(m_state, rl_line_buffer);
+    lua_pushliteral(m_state, "line");
+    lua_pushstring(m_state, line.line);
     lua_rawset(m_state, -3);
 
-    lua_pushliteral(m_state, "point");
-    lua_pushinteger(m_state, rl_point + 1);
+    lua_pushliteral(m_state, "cursor");
+    lua_pushinteger(m_state, line.cursor + 1);
     lua_rawset(m_state, -3);
 
-    lua_setglobal(m_state, "rl_state");
+    lua_setglobal(m_state, "line_state");
 
     // Call to Lua to generate matches.
     lua_getglobal(m_state, "clink");
     lua_pushliteral(m_state, "generate_matches");
     lua_rawget(m_state, -2);
 
-    lua_pushstring(m_state, line);
-    lua_pushinteger(m_state, start + 1);
-    lua_pushinteger(m_state, end);
+    lua_pushstring(m_state, line.word);
+    lua_pushinteger(m_state, line.start + 1);
+    lua_pushinteger(m_state, line.end);
     if (lua_pcall(m_state, 3, 1, 0) != 0)
     {
         puts(lua_tostring(m_state, -1));
@@ -119,5 +119,4 @@ match_result lua_match_generator::generate(const char* line, int start, int end)
     lua_pop(m_state, 2);
 
     return matches;
-// MODE4
 }

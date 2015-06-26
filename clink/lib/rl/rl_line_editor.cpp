@@ -26,6 +26,7 @@
 #include "singleton.h"
 #include "terminal.h"
 #include "matches/match_generator.h"
+#include "line_state.h"
 
 #include <shared/util.h>
 
@@ -136,7 +137,7 @@ private:
     void            bind_embedded_inputrc();
     void            load_user_inputrc();
     void            add_funmap_entries();
-    char**          completion(const char* line, int start, int end);
+    char**          completion(const char* word, int start, int end);
     void            display_matches(char**, int, int);
     rl_scroller     m_scroller;
 };
@@ -253,10 +254,11 @@ void rl_line_editor::load_user_inputrc()
 }
 
 //------------------------------------------------------------------------------
-char** rl_line_editor::completion(const char* line, int start, int end)
+char** rl_line_editor::completion(const char* word, int start, int end)
 {
     rl_attempted_completion_over = 1;
-    return get_match_generator()->generate(line, start, end);
+    line_state line = { word, rl_line_buffer, start, end, rl_point };
+    return get_match_generator()->generate(line);
 }
 
 //------------------------------------------------------------------------------
