@@ -78,6 +78,7 @@ local aliases = {
     q = "exit",
     g = "run",
     dv = "dump",
+    ["??"] = "dump",
     dt = "locs",
     k = "trace",
     bp = "setb",
