@@ -57,6 +57,9 @@ void lua_root::initialise()
 
     lua_load_script(m_state, lib, prompt);
     lua_load_script(m_state, lib, arguments);
+#ifdef _DEBUG
+    lua_load_script(m_state, lib, debugger);
+#endif
 }
 
 //------------------------------------------------------------------------------
