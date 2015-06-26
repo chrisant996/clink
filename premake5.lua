@@ -249,25 +249,12 @@ project("clink_shared")
         pchheader("pch.h")
 
 --------------------------------------------------------------------------------
---[[
 project("clink_test")
-    language("c")
+    language("c++")
     kind("consoleapp")
-    links("lua")
-    links("getopt")
-    links("readline")
     links("clink_lib")
-    links("clink_shared")
-    includedirs("getopt")
-    includedirs("lua/src")
-    includedirs("clink/dll")
-    includedirs("clink")
-    files("clink/test/*")
-
-    configuration("vs*")
-        pchsource("clink/lib/pch.c")
-        pchheader("pch.h")
---]]
+    includedirs("clink/lib")
+    files("clink/test/**pp")
 
 --------------------------------------------------------------------------------
 newoption {
