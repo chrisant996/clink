@@ -19,28 +19,29 @@
  * SOFTWARE.
  */
 
-#pragma once
+#include "pch.h"
 
 #include <shared/util.h>
 
 #ifdef _DEBUG
-    //------------------------------------------------------------------------------
-    void lua_load_script_impl(struct lua_State*, const char*, const char*);
+//------------------------------------------------------------------------------
+void lua_load_script_impl(lua_State* state, const char* path, const char* name)
+{
+    char buffer[512];
+    str_cpy(buffer, path, sizeof_array(buffer));
 
-    #define lua_load_script(state, module, name)                    \
-        {                                                           \
-           extern const char* module##_embed_path;                  \
-           extern const char* module##_##name##_lua_file;           \
-            lua_load_script_impl(state,                             \
-                module##_embed_path,                                \
-                module##_##name##_lua_file                          \
-            );\
-        }
-#else
-    //------------------------------------------------------------------------------
-    #define lua_load_script(state, module, name)                    \
-        {                                                           \
-            extern const char* module##_##name##_lua_script;        \
-            luaL_dostring(state, module##_##name##_lua_script);     \
-        }
+    char* slash = strrchr(buffer, '\\');
+    if (slash == nullptr)
+        slash = strrchr(buffer, '/');
+
+    if (slash != nullptr)
+    {
+        *(slash + 1) = '\0';
+        str_cat(buffer, name, sizeof_array(buffer));
+        if (luaL_dofile(state, buffer) == 0)
+            return;
+    }
+
+    printf("CLINK DEBUG: Failed to load '%s'\n", buffer);
+}
 #endif // _DEBUG
