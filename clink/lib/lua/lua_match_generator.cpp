@@ -100,6 +100,12 @@ match_result lua_match_generator::generate(const char* line, int start, int end)
     lua_rawget(m_state, -2);
 
     int match_count = (int)lua_rawlen(m_state, -1);
+    if (match_count <= 0)
+    {
+        lua_pop(m_state, 2);
+        return nullptr;
+    }
+
     char** matches = (char**)calloc(match_count + 1, sizeof(*matches));
     for (int i = 0; i < match_count; ++i)
     {
