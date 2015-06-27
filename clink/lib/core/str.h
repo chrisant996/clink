@@ -61,12 +61,9 @@ public:
     bool            copy(const TYPE* src);
     bool            concat(const TYPE* src, int n=-1);
     bool            format(const TYPE* format, ...);
+    TYPE            operator [] (unsigned int i) const;
     str_impl&       operator << (const TYPE* rhs);
                     operator const TYPE* () const;
-
-//MODE4
-operator TYPE* () { return m_data; }
-//MODE4
 
 private:
     TYPE*           m_data;
@@ -194,6 +191,13 @@ bool str_impl<TYPE>::format(const TYPE* format, ...)
     m_data[m_size - 1] = '\0';
     va_end(args);
     return (ret >= 0);
+}
+
+//------------------------------------------------------------------------------
+template <typename TYPE>
+TYPE str_impl<TYPE>::operator [] (unsigned int i) const
+{
+    return (i < length()) ? m_data[i] : 0;
 }
 
 //------------------------------------------------------------------------------

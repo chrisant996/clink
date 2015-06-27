@@ -39,6 +39,11 @@ TEST_CASE("Strings" NAME_SUFFIX) {
 
         s.clear();
         REQUIRE(s.length() == 0);
+
+        s.copy(STR("0123456789"));
+        REQUIRE(s[0] == '0');
+        REQUIRE(s[9] == '9');
+        REQUIRE(s[99] == 0);
     }
 
     SECTION("Concatenation") {
