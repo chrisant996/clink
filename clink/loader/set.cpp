@@ -25,8 +25,6 @@
 
 //------------------------------------------------------------------------------
 void*                 initialise_clink_settings();
-void                  wrapped_write(FILE*, const char*, const char*, int);
-
 static settings_t*    g_settings;
 static char           g_settings_path[512];
 
@@ -95,7 +93,7 @@ static int print_value(const char* key)
     }
 
     puts("");
-    wrapped_write(stdout, "", decl->description, 78);
+    printf("\n%s\n", decl->description);
 
     return 1;
 }

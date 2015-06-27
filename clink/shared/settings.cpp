@@ -23,8 +23,6 @@
 #include "settings.h"
 #include "util.h"
 
-//------------------------------------------------------------------------------
-void wrapped_write(FILE*, const char*, const char*, int);
 
 //------------------------------------------------------------------------------
 static const char* g_type_names[SETTING_TYPE_COUNT] = {
@@ -275,7 +273,7 @@ int settings_save(settings_t* s, const char* file)
             }
         }
 
-        wrapped_write(out, "# ", decl->description, 78);
+        fprintf(out, "# desc: %s\n", decl->description);
         fprintf(out, "%s = %s\n\n", decl->name, s->values[i]);
     }
 
@@ -301,9 +299,7 @@ const char* settings_get_str(settings_t* s, const char* name)
 
     int i = get_decl_index(s, name);
     if (i != -1)
-    {
         return s->values[i];
-    }
 
     return "";
 }
