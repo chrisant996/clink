@@ -175,9 +175,7 @@ void* initialise_clink_settings()
     g_settings = settings_init(g_settings_decl, sizeof_array(g_settings_decl));
 
     if (!settings_load(g_settings, settings_file))
-    {
         settings_save(g_settings, settings_file);
-    }
 
     return g_settings;
 }

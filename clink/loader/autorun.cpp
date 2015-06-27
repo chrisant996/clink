@@ -85,9 +85,7 @@ static int get_value(HKEY key, const char* name, char** buffer)
     *buffer = nullptr;
     i = RegQueryValueEx(key, name, nullptr, nullptr, (BYTE*)*buffer, &req_size);
     if (i != ERROR_SUCCESS && i != ERROR_MORE_DATA)
-    {
         return 0;
-    }
 
     *buffer = (char*)malloc(req_size);
     RegQueryValueEx(key, name, nullptr, nullptr, (BYTE*)*buffer, &req_size);
@@ -323,9 +321,7 @@ static int install_autorun(const char* clink_path, int wow64)
     value = get_cmd_start(new_value);
     i = 1;
     if (!set_value(cmd_proc_key, "AutoRun", value))
-    {
         i = 0;
-    }
 
     // Tidy up.
     close_key(cmd_proc_key);

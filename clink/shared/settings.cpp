@@ -286,8 +286,6 @@ int settings_save(settings_t* s, const char* file)
 //------------------------------------------------------------------------------
 const char* settings_get_str(settings_t* s, const char* name)
 {
-    int i;
-
     // Check for an environment variable override.
     {
         static char buffer[256];
@@ -301,7 +299,7 @@ const char* settings_get_str(settings_t* s, const char* name)
         }
     }
 
-    i = get_decl_index(s, name);
+    int i = get_decl_index(s, name);
     if (i != -1)
     {
         return s->values[i];

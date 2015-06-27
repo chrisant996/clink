@@ -168,9 +168,7 @@ int clink_lua_api::find_files_impl(lua_State* state, int dirs_only)
     // Check arguments.
     i = lua_gettop(state);
     if (i == 0 || lua_isnil(state, 1))
-    {
         return 0;
-    }
 
     mask = lua_tostring(state, 1);
 
@@ -190,9 +188,7 @@ int clink_lua_api::find_files_impl(lua_State* state, int dirs_only)
         {
             char c = *slash;
             if (c == '_' || c == '-')
-            {
                 *slash = '?';
-            }
 
             ++slash;
         }
@@ -205,9 +201,7 @@ int clink_lua_api::find_files_impl(lua_State* state, int dirs_only)
     while (entry = readdir(dir))
     {
         if (dirs_only && !(entry->attrib & _A_SUBDIR))
-        {
             continue;
-        }
 
         lua_pushstring(state, entry->d_name);
         lua_rawseti(state, -2, i++);

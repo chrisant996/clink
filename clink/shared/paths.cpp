@@ -34,9 +34,7 @@ void normalise_path_format(char* buffer, int size)
 
     slash = strrchr(buffer, '\\');
     if (slash != nullptr && slash[1] == '\0')
-    {
         *slash = '\0';
-    }
 }
 
 //------------------------------------------------------------------------------
@@ -56,16 +54,12 @@ void get_dll_dir(char* buffer, int size)
     );
 
     if (ok == FALSE)
-    {
         return;
-    }
 
     GetModuleFileName(module, buffer, size);
     slash = strrchr(buffer, '\\');
     if (slash != nullptr)
-    {
         *slash = '\0';
-    }
 
     normalise_path_format(buffer, size);
 }

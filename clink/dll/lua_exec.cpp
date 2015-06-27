@@ -170,8 +170,7 @@ int lua_execute(lua_State* state)
             str_cat(buffer, cmd, sizeof_array(buffer));
 
             ok = CreateProcess(nullptr, buffer, nullptr, nullptr, TRUE, process_flags,
-                nullptr, nullptr, &si, &exec_state.pi
-            );
+                nullptr, nullptr, &si, &exec_state.pi);
         }
 
         if (ok == FALSE)

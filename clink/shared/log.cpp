@@ -48,9 +48,7 @@ static void log_line_v(
 
     file = fopen(buffer, "at");
     if (file == nullptr)
-    {
         return;
-    }
 
     // Could use fprintf here, but it appears to be broken (writing to stdout
     // instead)?!

@@ -53,8 +53,8 @@ static LONG WINAPI exception_filter(EXCEPTION_POINTERS* info)
             MiniDumpWriteDump(process, pid, file, MiniDumpNormal, &mdei, nullptr, nullptr);
         }
         CloseHandle(process);
+        CloseHandle(file);
     }
-    CloseHandle(file);
 #endif // _MSC_VER
 
     // Would be awesome if we could unhook ourself, unload, and allow cmd.exe
