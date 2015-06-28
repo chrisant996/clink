@@ -229,7 +229,7 @@ project("clink_loader")
     includedirs("clink/lib")
     includedirs("getopt")
     includedirs("lua/src")
-    files("clink/dll/settings.cpp")
+    files("clink/lib/settings.cpp")
     files("clink/loader/**")
     files("clink/version.rc")
 
