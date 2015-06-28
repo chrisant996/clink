@@ -167,7 +167,9 @@ rl_line_editor::rl_line_editor(const desc& desc)
     load_user_inputrc();
 
     rl_attempted_completion_function = rl_delegate(this, &rl_line_editor::completion);
+#if MODE4
     rl_completion_display_matches_hook = rl_delegate(this, &rl_line_editor::display_matches);
+#endif
 
     history_inhibit_expansion_function = history_expand_control;
 }

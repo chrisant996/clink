@@ -233,6 +233,7 @@ static int completion_shim_impl(int count, int invoking_key, int (*rl_func)(int,
 //------------------------------------------------------------------------------
 char** match_display_filter(char** matches, int match_count)
 {
+#if MODE4
     int i;
     char** new_matches;
 
@@ -286,11 +287,15 @@ char** match_display_filter(char** matches, int match_count)
     }
 
     return new_matches;
+#else
+    return nullptr;
+#endif // MODE4
 }
 
 //------------------------------------------------------------------------------
 void display_matches(char** matches, int match_count, int longest)
 {
+#if MODE4
     int i;
     char** new_matches;
     CONSOLE_SCREEN_BUFFER_INFO csbi;
@@ -398,6 +403,7 @@ void display_matches(char** matches, int match_count, int longest)
         free(new_matches[i]);
     }
     free(new_matches);
+#endif // MODE4
 }
 
 //------------------------------------------------------------------------------
