@@ -257,9 +257,21 @@ void rl_line_editor::load_user_inputrc()
 //------------------------------------------------------------------------------
 char** rl_line_editor::completion(const char* word, int start, int end)
 {
-    rl_attempted_completion_over = 1;
     line_state line = { word, rl_line_buffer, start, end, rl_point };
-    return get_match_generator()->generate(line);
+    match_result result = get_match_generator()->generate(line);
+
+    char** matches = (char**)malloc(sizeof(char*) * (result.get_match_count() + 1));
+    for (int i = 0, e = result.get_match_count(); i < e; ++i)
+    {
+        const char* match = result.get_match(i);
+        int match_len = int(strlen(match));
+        matches[i] = (char*)malloc(match_len + 1);
+        strcpy(matches[i], match);
+    }
+    matches[result.get_match_count()] = nullptr;
+
+    rl_attempted_completion_over = 1;
+    return matches;
 }
 
 //------------------------------------------------------------------------------

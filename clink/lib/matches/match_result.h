@@ -21,20 +21,36 @@
 
 #pragma once
 
+#include <vector>
+
 //------------------------------------------------------------------------------
-#if MODE4
 class match_result
 {
 public:
-                    match_result();
-                    ~match_result();
-                    match_result(match_result&& rhs);
-    void            operator = (match_result&& rhs);
+                        match_result();
+                        ~match_result();
+                        match_result(match_result&& rhs);
+    void                operator = (match_result&& rhs);
+    void                reserve(unsigned int count);
+    unsigned int        get_match_count() const;
+    const char*         get_match(unsigned int index) const;
+    void                add_match(const char* match);
 
 private:
-                    match_result(const match_result&);  // unimplemented
-    void            operator = (const match_result&);   // unimplemented
+    void                swap(match_result& rhs);
+                        match_result(const match_result&);  // unimplemented
+    void                operator = (const match_result&);   // unimplemented
+    std::vector<char*>  m_matches;
 };
-#endif
 
-typedef char** match_result;
+//------------------------------------------------------------------------------
+inline unsigned int match_result::get_match_count() const
+{
+    return (unsigned int)m_matches.size();
+}
+
+//------------------------------------------------------------------------------
+inline const char* match_result::get_match(unsigned int index) const
+{
+    return (index < get_match_count()) ? m_matches[index] : nullptr;
+}

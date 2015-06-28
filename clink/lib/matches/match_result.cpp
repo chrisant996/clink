@@ -21,8 +21,10 @@
 
 #include "pch.h"
 #include "match_result.h"
+#include "core/str.h"
 
-#if MODE4
+#include <algorithm>
+
 //------------------------------------------------------------------------------
 match_result::match_result()
 {
@@ -31,15 +33,39 @@ match_result::match_result()
 //------------------------------------------------------------------------------
 match_result::match_result(match_result&& rhs)
 {
+    swap(rhs);
 }
 
 //------------------------------------------------------------------------------
 match_result::~match_result()
 {
+    for (int i = 0, e = m_matches.size(); i < e; ++i)
+        delete m_matches[i];
 }
 
 //------------------------------------------------------------------------------
 void match_result::operator = (match_result&& rhs)
 {
+    swap(rhs);
 }
-#endif
+
+//------------------------------------------------------------------------------
+void match_result::swap(match_result& rhs)
+{
+    std::swap(m_matches, rhs.m_matches);
+}
+
+//------------------------------------------------------------------------------
+void match_result::reserve(unsigned int count)
+{
+    m_matches.reserve(count);
+}
+
+//------------------------------------------------------------------------------
+void match_result::add_match(const char* match)
+{
+    int len = int(strlen(match)) + 1;
+    char* out = new char[len];
+    str_base(out, len).copy(match);
+    m_matches.push_back(out);
+}

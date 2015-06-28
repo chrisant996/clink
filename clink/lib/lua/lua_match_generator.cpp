@@ -106,13 +106,14 @@ match_result lua_match_generator::generate(const line_state& line)
         return file_match_generator::generate(line);
     }
 
-    char** matches = (char**)calloc(match_count + 1, sizeof(*matches));
+    match_result matches;
+    matches.reserve(match_count);
+
     for (int i = 0; i < match_count; ++i)
     {
         lua_rawgeti(m_state, -1, i + 1);
         const char* match = lua_tostring(m_state, -1);
-        matches[i] = (char*)malloc(strlen(match) + 1);
-        strcpy(matches[i], match);
+        matches.add_match(match);
 
         lua_pop(m_state, 1);
     }
