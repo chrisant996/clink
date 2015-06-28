@@ -22,6 +22,8 @@
 #include "pch.h"
 #include "util.h"
 
+#include <core/str.h>
+
 //------------------------------------------------------------------------------
 static int g_disable_log = 0;
 
@@ -34,11 +36,11 @@ static void log_line_v(
 )
 {
     FILE* file;
-    char buffer[512];
     DWORD pid = GetCurrentProcessId();
 
-    get_log_dir(buffer, sizeof_array(buffer));
-    str_cat(buffer, "/clink.log", sizeof_array(buffer));
+    str<256> buffer;
+    get_log_dir(buffer);
+    buffer << "/clink.log";
 
     if (format == nullptr)
     {
@@ -50,12 +52,8 @@ static void log_line_v(
     if (file == nullptr)
         return;
 
-    // Could use fprintf here, but it appears to be broken (writing to stdout
-    // instead)?!
-    _snprintf(buffer, sizeof_array(buffer), "%5d %-25s %4d ", pid, function, source_line);
-    buffer[sizeof_array(buffer) - 1] = '\0';
-
     // Write out the line, tagged with function and line number.
+    buffer.format("%5d %-25s %4d ", pid, function, source_line);
     fputs(buffer, file);
     vfprintf(file, format, args);
     fputs("\n", file);
@@ -66,32 +64,32 @@ static void log_line_v(
 //------------------------------------------------------------------------------
 void log_line(const char* function, int source_line, const char* format, ...)
 {
-    if (!g_disable_log)
-    {
-        va_list args;
-        va_start(args, format);
-        log_line_v(function, source_line, format, args);
-        va_end(args);
-    }
+    if (g_disable_log)
+        return;
+
+    va_list args;
+    va_start(args, format);
+    log_line_v(function, source_line, format, args);
+    va_end(args);
 }
 
 //------------------------------------------------------------------------------
 void log_error(const char* function, int source_line, const char* format, ...)
 {
-    if (!g_disable_log)
-    {
-        va_list args;
-        DWORD last_error;
+    if (g_disable_log)
+        return;
 
-        last_error = GetLastError();
-        va_start(args, format);
+    va_list args;
+    DWORD last_error;
 
-        log_line(function, source_line, "ERROR...");
-        log_line_v(function, source_line, format, args);
-        log_line(function, source_line, "(last_error = %d)", last_error);
+    last_error = GetLastError();
+    va_start(args, format);
 
-        va_end(args);
-    }
+    log_line(function, source_line, "ERROR...");
+    log_line_v(function, source_line, format, args);
+    log_line(function, source_line, "(last_error = %d)", last_error);
+
+    va_end(args);
 }
 
 //------------------------------------------------------------------------------

@@ -176,26 +176,24 @@ bool shell_cmd::initialise()
 
     // Add an alias to Clink so it can be run from anywhere. Similar to adding
     // it to the path but this way we can add the config path too.
-    static const int BUF_SIZE = MAX_PATH;
-    char dll_path[BUF_SIZE];
-    char cfg_path[BUF_SIZE];
-    char buffer[BUF_SIZE];
-
-    get_dll_dir(dll_path, BUF_SIZE);
-    get_config_dir(cfg_path, BUF_SIZE);
-
-    strcpy(buffer, "\"");
-    str_cat(buffer, dll_path, BUF_SIZE);
-    str_cat(buffer, "/clink_" AS_STR(PLATFORM) ".exe\" --cfgdir \"", BUF_SIZE);
-    str_cat(buffer, cfg_path, BUF_SIZE);
-    str_cat(buffer, "\" $*", BUF_SIZE);
-
-    char mod_path[BUF_SIZE];
-    if (GetModuleFileName(nullptr, mod_path, BUF_SIZE) < BUF_SIZE)
+    str<256> path;
+    GetModuleFileName(nullptr, path.data(), path.size());
+    if (GetLastError() != ERROR_INSUFFICIENT_BUFFER)
     {
-        const char* slash = strrchr(mod_path, '\\');
-        const char* shell_name = (slash != nullptr) ? slash + 1 : mod_path;
-        AddConsoleAlias("clink", buffer, (char*)shell_name);
+        str<256> dll_path;
+        get_dll_dir(dll_path);
+
+        str<256> cfg_path;
+        get_config_dir(cfg_path);
+
+        str<512> buffer;
+        buffer << "\"" << dll_path;
+        buffer << "/clink_" AS_STR(PLATFORM) ".exe\" --cfgdir \"";
+        buffer << cfg_path << "\" $*";
+
+        const char* slash = strrchr(path, '\\');
+        const char* shell_name = (slash != nullptr) ? slash + 1 : path;
+        AddConsoleAlias("clink", buffer.data(), (char*)shell_name);
     }
 
     return true;

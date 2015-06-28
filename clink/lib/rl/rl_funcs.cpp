@@ -20,7 +20,9 @@
  */
 
 #include "pch.h"
-#include "shared/util.h"
+
+#include <core/str.h>
+#include <shared/util.h>
 
 //------------------------------------------------------------------------------
 int                 get_clink_setting_int(const char*);
@@ -207,26 +209,18 @@ static void get_word_bounds(const char* str, int cursor, int* left, int* right)
 //------------------------------------------------------------------------------
 int expand_env_vars(int count, int invoking_key)
 {
-    static const int buffer_size = 0x8000;
-    char* in;
-    char* out;
-    int word_left, word_right;
-
-    // Create some buffers to work in.
-    out = (char*)malloc(buffer_size * 2);
-    in = out + buffer_size;
-
     // Extract the word under the cursor.
-    str_cpy(in, rl_line_buffer, buffer_size);
-    get_word_bounds(in, rl_point, &word_left, &word_right);
-    in[word_right] = '\0';
-    in += word_left;
+    int word_left, word_right;
+    get_word_bounds(rl_line_buffer, rl_point, &word_left, &word_right);
+
+    str<1024> in;
+    in << (rl_line_buffer + word_left);
+    in.truncate(word_right - word_left);
 
     // Do the environment variable expansion.
-    if (!ExpandEnvironmentStrings(in, out, buffer_size))
-    {
+    str<1024> out;
+    if (!ExpandEnvironmentStrings(in, out.data(), out.size()))
         return 0;
-    }
 
     // Update Readline with the resulting expansion.
     rl_begin_undo_group();
@@ -235,6 +229,5 @@ int expand_env_vars(int count, int invoking_key)
     rl_insert_text(out);
     rl_end_undo_group();
 
-    free(out);
     return 0;
 }

@@ -21,6 +21,7 @@
 
 #include "pch.h"
 #include "clink_lua_api.h"
+#include "core/str.h"
 #include "lua_delegate.h"
 #include "lua_script_loader.h"
 
@@ -159,30 +160,24 @@ int clink_lua_api::to_lowercase(lua_State* state)
 //------------------------------------------------------------------------------
 int clink_lua_api::find_files_impl(lua_State* state, int dirs_only)
 {
-    DIR* dir;
-    struct dirent* entry;
-    char buffer[512];
-    const char* mask;
-    int i;
-
     // Check arguments.
-    i = lua_gettop(state);
+    int i = lua_gettop(state);
     if (i == 0 || lua_isnil(state, 1))
         return 0;
 
-    mask = lua_tostring(state, 1);
+    const char* mask = lua_tostring(state, 1);
 
     // Should the mask be adjusted for -/_ case mapping?
+    str<512> buffer;
     if (_rl_completion_case_map && i > 1 && lua_toboolean(state, 2))
     {
-        char* slash;
-
-        str_cpy(buffer, mask, sizeof_array(buffer));
+        buffer << mask;
         mask = buffer;
 
-        slash = strrchr(buffer, '\\');
-        slash = slash ? slash : strrchr(buffer, '/');
-        slash = slash ? slash + 1 : buffer;
+        char* slash;
+        slash = strrchr(buffer.data(), '\\');
+        slash = slash ? slash : strrchr(buffer.data(), '/');
+        slash = slash ? slash + 1 : buffer.data();
 
         while (*slash)
         {
@@ -197,8 +192,8 @@ int clink_lua_api::find_files_impl(lua_State* state, int dirs_only)
     lua_createtable(state, 0, 0);
 
     i = 1;
-    dir = opendir(mask);
-    while (entry = readdir(dir))
+    DIR* dir = opendir(mask);
+    while (struct dirent* entry = readdir(dir))
     {
         if (dirs_only && !(entry->attrib & _A_SUBDIR))
             continue;

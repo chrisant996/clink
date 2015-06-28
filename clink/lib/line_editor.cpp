@@ -55,7 +55,7 @@ line_editor::line_editor(const desc& desc)
 , m_match_printer(desc.match_printer)
 , m_match_generator(desc.match_generator)
 {
-    str_cpy(m_shell_name, desc.shell_name, sizeof_array(m_shell_name));
+    m_shell_name << desc.shell_name;
 }
 
 //------------------------------------------------------------------------------

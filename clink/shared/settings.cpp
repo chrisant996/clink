@@ -23,6 +23,7 @@
 #include "settings.h"
 #include "util.h"
 
+#include <core/str.h>
 
 //------------------------------------------------------------------------------
 static const char* g_type_names[SETTING_TYPE_COUNT] = {
@@ -74,7 +75,7 @@ static void set_value(
     len = (int)strlen(str) + 1;
 
     new_str = (char*)malloc(len);
-    str_cpy(new_str, str, len);
+    str_base(new_str, len).copy(str);
 
     free(s->values[i]);
     s->values[i] = new_str;
@@ -286,15 +287,11 @@ const char* settings_get_str(settings_t* s, const char* name)
 {
     // Check for an environment variable override.
     {
-        static char buffer[256];
+        static str<256> buffer;
 
-        strcpy(buffer, "clink.");
-        str_cat(buffer, name, sizeof_array(buffer));
-
-        if (GetEnvironmentVariableA(buffer, buffer, sizeof_array(buffer)))
-        {
+        buffer << "clink." << name;
+        if (GetEnvironmentVariableA(buffer, buffer.data(), buffer.size()))
             return buffer;
-        }
     }
 
     int i = get_decl_index(s, name);

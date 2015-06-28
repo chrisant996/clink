@@ -22,31 +22,28 @@
 #include "pch.h"
 #include "util.h"
 
-//------------------------------------------------------------------------------
-static const char* g_config_dir_override = nullptr;
+#include <core/str.h>
 
 //------------------------------------------------------------------------------
-void normalise_path_format(char* buffer, int size)
+static str<256> g_config_dir_override;
+
+//------------------------------------------------------------------------------
+void normalise_path_format(str_base& buffer)
 {
-    char* slash;
+    GetShortPathName(buffer.data(), buffer.data(), buffer.size());
 
-    GetShortPathName(buffer, buffer, size);
-
-    slash = strrchr(buffer, '\\');
-    if (slash != nullptr && slash[1] == '\0')
-        *slash = '\0';
+    int len = buffer.length();
+    if (len && (buffer[len - 1] == '\\' || buffer[len - 1] == '/'))
+        buffer.truncate(len - 1);
 }
 
 //------------------------------------------------------------------------------
-void get_dll_dir(char* buffer, int size)
+void get_dll_dir(str_base& buffer)
 {
-    BOOL ok;
+    buffer.clear();
+
     HINSTANCE module;
-    char* slash;
-
-    buffer[0] = '\0';
-
-    ok = GetModuleHandleEx(
+    BOOL ok = GetModuleHandleEx(
         GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS|
         GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT,
         (char*)get_dll_dir,
@@ -56,29 +53,27 @@ void get_dll_dir(char* buffer, int size)
     if (ok == FALSE)
         return;
 
-    GetModuleFileName(module, buffer, size);
-    slash = strrchr(buffer, '\\');
-    if (slash != nullptr)
-        *slash = '\0';
+    GetModuleFileName(module, buffer.data(), buffer.size());
+    int slash = buffer.last_of('\\');
+    if (slash >= 0)
+        buffer.truncate(slash);
 
-    normalise_path_format(buffer, size);
+    normalise_path_format(buffer);
 }
 
 //------------------------------------------------------------------------------
-void get_config_dir(char* buffer, int size)
+void get_config_dir(str_base& buffer)
 {
     static int once = 1;
 
     // Maybe the user specified an alternative location?
-    if (g_config_dir_override != nullptr)
+    if (g_config_dir_override.empty())
     {
-        str_cpy(buffer, g_config_dir_override, size);
+        get_dll_dir(buffer);
+        buffer << ".\\profile";
     }
     else
-    {
-        get_dll_dir(buffer, size);
-        str_cat(buffer, ".\\profile", size);
-    }
+        buffer.copy(g_config_dir_override);
 
     // Try and create the directory if it doesn't already exist. Just this once.
     if (once)
@@ -87,39 +82,36 @@ void get_config_dir(char* buffer, int size)
         once = 0;
     }
 
-    normalise_path_format(buffer, size);
+    normalise_path_format(buffer);
 }
 
 //------------------------------------------------------------------------------
 void set_config_dir_override(const char* dir)
 {
-    g_config_dir_override = dir;
+    g_config_dir_override.copy(dir);
 }
 
 //------------------------------------------------------------------------------
-void get_log_dir(char* buffer, int size)
+void get_log_dir(str_base& buffer)
 {
     static int once = 1;
-    static char log_dir[MAX_PATH] = { 1 };
+    static str<MAX_PATH> log_dir;
 
     // Just the once, get user's appdata folder.
-    if (log_dir[0] == 1)
+    if (once)
     {
-        if (SHGetFolderPath(0, CSIDL_LOCAL_APPDATA, nullptr, 0, log_dir) != S_OK)
+        if (SHGetFolderPath(0, CSIDL_LOCAL_APPDATA, nullptr, 0, log_dir.data()) != S_OK)
         {
-            const char* str;
-            if ((str = getenv("USERPROFILE")) == nullptr)
-            {
-                GetTempPath(sizeof_array(log_dir), log_dir);
-            }
-
-            str_cpy(log_dir, str, sizeof_array(log_dir));
+            if (const char* str = getenv("USERPROFILE"))
+                log_dir << str;
+            else
+                GetTempPath(log_dir.size(), log_dir.data());
         }
 
-        str_cat(log_dir, "./clink", sizeof_array(log_dir));
+        log_dir << "\\clink";
     }
 
-    str_cpy(buffer, log_dir, size);
+    buffer.copy(log_dir);
 
     // Try and create the directory if it doesn't already exist. Just this once.
     if (once)
@@ -128,19 +120,15 @@ void get_log_dir(char* buffer, int size)
         once = 0;
     }
 
-    normalise_path_format(buffer, size);
+    normalise_path_format(buffer);
 }
 
 //------------------------------------------------------------------------------
-void cpy_path_as_abs(char* abs, const char* rel, int abs_size)
+void cpy_path_as_abs(str_base& abs, const char* rel)
 {
-    char* ret;
-
-    ret = _fullpath(abs, rel, abs_size);
+    char* ret = _fullpath(abs.data(), rel, abs.size());
     if (ret == nullptr)
-    {
-        str_cpy(abs, rel, abs_size);
-    }
+        abs.copy(rel);
 
-    normalise_path_format(abs, abs_size);
+    normalise_path_format(abs);
 }

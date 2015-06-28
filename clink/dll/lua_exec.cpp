@@ -23,6 +23,8 @@
 #include "shared/util.h"
 #include "shared/pipe.h"
 
+#include <core/str.h>
+
 // Lua includes.
 extern "C" {
 #include "dirent.h"
@@ -164,13 +166,10 @@ int lua_execute(lua_State* state)
         // file? Best try running through the command processor.
         if (GetLastError() == ERROR_FILE_NOT_FOUND)
         {
-            char buffer[MAX_PATH];
-
-            str_cpy(buffer, "cmd.exe /c ", sizeof_array(buffer));
-            str_cat(buffer, cmd, sizeof_array(buffer));
-
-            ok = CreateProcess(nullptr, buffer, nullptr, nullptr, TRUE, process_flags,
-                nullptr, nullptr, &si, &exec_state.pi);
+            str<MAX_PATH> buffer;
+            buffer << "cmd.exe /c " << cmd;
+            ok = CreateProcess(nullptr, buffer.data(), nullptr, nullptr, TRUE,
+                process_flags, nullptr, nullptr, &si, &exec_state.pi);
         }
 
         if (ok == FALSE)

@@ -100,10 +100,8 @@ static void success()
 //------------------------------------------------------------------------------
 static void failed()
 {
-    char buffer[1024];
-
-    buffer[0] = '\0';
-    get_config_dir(buffer, sizeof_array(buffer));
+    str<256> buffer;
+    get_config_dir(buffer);
 
     fprintf(stderr, "Failed to load clink.\nSee log for details (%s).\n", buffer);
 }
@@ -121,21 +119,21 @@ static shell* create_shell_ps(line_editor* editor)
 }
 
 //------------------------------------------------------------------------------
-static bool get_shell_name(char* out, int out_count)
+static bool get_shell_name(str_base& out)
 {
-    char buffer[MAX_PATH];
-    if (GetModuleFileName(nullptr, buffer, sizeof_array(buffer)))
-    {
-        const char* slash = strrchr(buffer, '\\');
-        slash = (slash != nullptr) ? slash + 1 : buffer;
+    str<256> buffer;
+    if (GetModuleFileName(nullptr, buffer.data(), buffer.size()) == buffer.size())
+        return false;
 
-        str_cpy(out, slash, out_count);
+    if (GetLastError() == ERROR_INSUFFICIENT_BUFFER)
+        return false;
 
-        LOG_INFO("Shell process is '%s'", out);
-        return true;
-    }
+    const char* slash = strrchr(buffer, '\\');
+    slash = (slash != nullptr) ? slash + 1 : buffer.data();
 
-    return false;
+    out << slash;
+    LOG_INFO("Shell process is '%s'", out);
+    return true;
 }
 
 //------------------------------------------------------------------------------
@@ -154,8 +152,8 @@ static BOOL on_dll_attach()
     if (g_inject_args.no_log)
         disable_log();
 
-    char shell_name[64];
-    get_shell_name(shell_name, sizeof_array(shell_name));
+    str<64> shell_name;
+    get_shell_name(shell_name);
 
     // Prepare core systems.
     initialise_clink_settings();

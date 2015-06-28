@@ -21,18 +21,16 @@
 
 #pragma once
 
-void str_cpy(char* dest, const char* src, int max);
-void str_cat(char* dest, const char* src, int max);
-void str_cat_n(char* dest, const char* src, int max, int n);
-void get_config_dir(char* buffer, int size);
-void get_log_dir(char* buffer, int size);
-void get_dll_dir(char* buffer, int size);
+class str_base;
+
+void get_config_dir(str_base& buffer);
+void get_log_dir(str_base& buffer);
+void get_dll_dir(str_base& buffer);
 void set_config_dir_override(const char* path);
 void log_line(const char* function, int source_line, const char* format, ...);
 void log_error(const char* function, int source_line, const char* format, ...);
 void puts_help(const char** help_pairs, int count);
-void cpy_path_as_abs(char* abs, const char* rel, int abs_size);
-int  hash_string(const char* str);
+void cpy_path_as_abs(str_base& abs, const char* rel);
 void disable_log();
 
 #define LOG_INFO(...)   log_line(__FUNCTION__, __LINE__, __VA_ARGS__)

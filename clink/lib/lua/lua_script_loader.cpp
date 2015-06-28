@@ -20,6 +20,7 @@
  */
 
 #include "pch.h"
+#include "core/str.h"
 
 #include <shared/util.h>
 
@@ -27,17 +28,17 @@
 //------------------------------------------------------------------------------
 void lua_load_script_impl(lua_State* state, const char* path, const char* name)
 {
-    char buffer[512];
-    str_cpy(buffer, path, sizeof_array(buffer));
+    str<512> buffer;
+    buffer << path;
 
-    char* slash = strrchr(buffer, '\\');
-    if (slash == nullptr)
-        slash = strrchr(buffer, '/');
+    int slash = buffer.last_of('\\');
+    if (slash < 0)
+        slash = buffer.last_of('/');
 
-    if (slash != nullptr)
+    if (slash >= 0)
     {
-        *(slash + 1) = '\0';
-        str_cat(buffer, name, sizeof_array(buffer));
+        buffer.truncate(slash + 1);
+        buffer << name;
         if (luaL_dofile(state, buffer) == 0)
             return;
     }

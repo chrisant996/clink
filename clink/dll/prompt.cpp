@@ -23,6 +23,8 @@
 #include "prompt.h"
 #include "shared/util.h"
 
+#include <core/str.h>
+
 #include <algorithm>
 
 //------------------------------------------------------------------------------
@@ -70,51 +72,46 @@ static int parse_backspaces(char* prompt, int n)
 //------------------------------------------------------------------------------
 char* filter_prompt(const char* in_prompt)
 {
-    static const int buf_size = 0x4000;
-
-    char* next;
-
-    // Allocate the buffers. We'll allocate once and divide it in two.
-    char* out_prompt = (char*)malloc(buf_size * 2);
-    char* lua_prompt = out_prompt + buf_size;
-
+#if MODE4
     // Get the prompt from Readline and pass it to Clink's filter framework
     // in Lua.
-    lua_prompt[0] = '\0';
-    str_cat(lua_prompt, in_prompt, buf_size);
-
-    lua_filter_prompt(lua_prompt, buf_size);
+    str<256> lua_prompt;
+    lua_prompt << in_prompt;
+    lua_filter_prompt(lua_prompt.data(), lua_prompt.size());
 
     // Scan for ansi codes and surround them with Readline's markers for
     // invisible characters.
-    out_prompt[0] ='\0';
-    next = lua_prompt;
+    static const int buf_size = 0x4000;
+    str_base out_prompt((char*)malloc(buf_size), buf_size);
+
+    char* next = lua_prompt.data();
     while (*next)
     {
-        int len;
         int ansi_size;
-        char* ansi_code;
+        char* ansi_code = (char*)find_next_ansi_code(next, &ansi_size);
 
-        ansi_code = (char*)find_next_ansi_code(next, &ansi_size);
-
-        len = parse_backspaces(next, (int)(ansi_code - next));
-        str_cat_n(out_prompt, next, buf_size, len);
+        int len = parse_backspaces(next, (int)(ansi_code - next));
+        out_prompt.concat(next, len);
 
         if (*ansi_code)
         {
-            static const char* tags[] = { "\001", "\002" };
-
             len = parse_backspaces(ansi_code, ansi_size);
 
-            str_cat(out_prompt, tags[0], buf_size);
-            str_cat_n(out_prompt, ansi_code, buf_size, len);
-            str_cat(out_prompt, tags[1], buf_size);
+            static const char* tags[] = { "\001", "\002" };
+            out_prompt << tags[0];
+            out_prompt.concat(ansi_code, len);
+            out_prompt << tags[1];
         }
 
         next = ansi_code + ansi_size;
     }
 
-    return out_prompt;
+    return out_prompt.data();
+#else
+    str_base out_prompt((char*)malloc(0x1000), 0x1000);
+    out_prompt << in_prompt;
+    return out_prompt.data();
+#endif // MODE4
 }
 
 

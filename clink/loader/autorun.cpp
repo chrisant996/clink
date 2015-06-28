@@ -22,9 +22,11 @@
 #include "pch.h"
 #include "shared/util.h"
 
+#include <core/str.h>
+
 //------------------------------------------------------------------------------
 typedef int     (dispatch_func_t)(const char*, int);
-char*           g_clink_args = nullptr;
+str<>           g_clink_args;
 int             g_all_users  = 0;
 static int      show_autorun();
 
@@ -40,19 +42,13 @@ static void success_message(const char* message)
 //------------------------------------------------------------------------------
 static HKEY open_software_key(int all_users, const char* key, int wow64, int writable)
 {
-    LONG ok;
-    DWORD flags;
-    HKEY result;
-    char buffer[1024];
-
-    buffer[0] = '\0';
-    str_cat(buffer, "Software\\", sizeof_array(buffer));
+    str<512> buffer;
+    buffer << "Software\\";
     if (wow64)
-    {
-        str_cat(buffer, "Wow6432Node\\", sizeof(buffer));
-    }
-    str_cat(buffer, key, sizeof_array(buffer));
+        buffer << "Wow6432Node\\";
+    buffer << key;
 
+    DWORD flags;
     flags = KEY_READ|(writable ? KEY_WRITE : 0);
     flags |= KEY_WOW64_64KEY;
 
@@ -276,7 +272,6 @@ static int install_autorun(const char* clink_path, int wow64)
 {
     HKEY cmd_proc_key;
     const char* value;
-    char* new_value;
     char* key_value;
     int i;
 
@@ -298,24 +293,15 @@ static int install_autorun(const char* clink_path, int wow64)
 
     i = key_value ? (int)strlen(key_value) : 0;
     i += 2048;
-    new_value = (char*)malloc(i);
+    str_base new_value((char*)malloc(i), i);
 
     // Build the new autorun entry by appending clink's entry to the current one.
-    new_value[0] = '\0';
     if (key_value != nullptr && *key_value != '\0')
-    {
-        str_cat(new_value, key_value, i);
-        str_cat(new_value, "&", i);
-    }
-    str_cat(new_value, "\"", i);
-    str_cat(new_value, clink_path, i);
-    str_cat(new_value, "\\clink.bat\" inject --autorun", i);
+        new_value << key_value << "&";
+    new_value << "\"" << clink_path << "\\clink.bat\" inject --autorun";
 
-    if (g_clink_args != nullptr)
-    {
-        str_cat(new_value, " ", i);
-        str_cat(new_value, g_clink_args, i);
-    }
+    if (!g_clink_args.empty())
+        new_value << " " << g_clink_args;
 
     // Set it
     value = get_cmd_start(new_value);
@@ -325,7 +311,7 @@ static int install_autorun(const char* clink_path, int wow64)
 
     // Tidy up.
     close_key(cmd_proc_key);
-    free(new_value);
+    free(new_value.data());
     free(key_value);
     return i;
 }
@@ -461,18 +447,15 @@ void print_help()
 //------------------------------------------------------------------------------
 int autorun(int argc, char** argv)
 {
-    char* clink_path;
     int i;
     int ret;
-    dispatch_func_t* function;
+    str<MAX_PATH> clink_path;
 
     struct option options[] = {
         { "help",       no_argument,    nullptr, 'h' },
         { "allusers",   no_argument,    nullptr, 'a' },
         {}
     };
-
-    clink_path = nullptr;
 
     // Parse command line arguments.
     while ((i = getopt_long(argc, argv, "ha", options, nullptr)) != -1)
@@ -494,7 +477,7 @@ int autorun(int argc, char** argv)
         }
     }
 
-    function = nullptr;
+    dispatch_func_t* function = nullptr;
 
     // Find out what to do by parsing the verb.
     if (optind < argc)
@@ -515,23 +498,18 @@ int autorun(int argc, char** argv)
     // Get path where clink is installed (assumed to be where this executable is)
     if (function == install_autorun)
     {
-        clink_path = (char*)malloc(strlen(_pgmptr));
-        clink_path[0] = '\0';
-        str_cat(clink_path, _pgmptr, (int)(strrchr(_pgmptr, '\\') - _pgmptr + 1));
+        clink_path << _pgmptr;
+        clink_path.truncate(clink_path.last_of('\\'));
     }
 
     // Collect the remainder of the command line.
     if (function == install_autorun || function == set_autorun_value)
     {
-        static const int ARG_SIZE = 1024;
-        g_clink_args = (char*)malloc(ARG_SIZE);
-        g_clink_args[0] = '\0';
-
         for (i = optind + 1; i < argc; ++i)
         {
-            str_cat(g_clink_args, argv[i], ARG_SIZE);
+            g_clink_args << argv[i];
             if (i < argc - 1)
-                str_cat(g_clink_args, " ", ARG_SIZE);
+                g_clink_args << " ";
         }
     }
 
@@ -550,7 +528,9 @@ int autorun(int argc, char** argv)
         goto end;
     }
 
-    ret = !dispatch(function, (clink_path != nullptr) ? clink_path : g_clink_args);
+    const char* arg = clink_path;
+    arg = *arg ? arg : g_clink_args;
+    ret = !dispatch(function, arg);
 
     // Provide the user with some feedback.
     if (ret == 0)
@@ -569,7 +549,5 @@ int autorun(int argc, char** argv)
     }
 
 end:
-    free(g_clink_args);
-    free(clink_path);
     return ret;
 }

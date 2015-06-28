@@ -28,6 +28,7 @@
 #include "matches/match_generator.h"
 #include "line_state.h"
 
+#include <core/str.h>
 #include <shared/util.h>
 
 //------------------------------------------------------------------------------
@@ -211,10 +212,9 @@ void rl_line_editor::bind_embedded_inputrc()
     const char** inputrc_line = clink_inputrc;
     while (*inputrc_line)
     {
-        char buffer[128];
-        str_cpy(buffer, *inputrc_line, sizeof(buffer));
-        rl_parse_and_bind(buffer);
-
+        str<96> buffer;
+        buffer << *inputrc_line;
+        rl_parse_and_bind(buffer.data());
         ++inputrc_line;
     }
 }
@@ -232,12 +232,12 @@ void rl_line_editor::load_user_inputrc()
 
     for (int i = 0; i < sizeof_array(env_vars); ++i)
     {
-        char path[MAX_PATH];
-        int path_length = GetEnvironmentVariable(env_vars[i], path, sizeof_array(path));
-        if (!path_length || path_length > sizeof_array(path))
+        str<MAX_PATH> path;
+        int path_length = GetEnvironmentVariable(env_vars[i], path.data(), path.size());
+        if (!path_length || path_length > path.size())
             continue;
 
-        str_cat(path, "\\.inputrc", sizeof_array(path));
+        path << "\\.inputrc";
 
         for (int j = 0; j < 2; ++j)
         {
@@ -247,8 +247,9 @@ void rl_line_editor::load_user_inputrc()
                 break;
             }
 
-            if (char* dot = strrchr(path, '.'))
-                *dot = '_';
+            int dot = path.last_of('.');
+            if (dot >= 0)
+                path.data()[dot] = '_';
         }
     }
 }

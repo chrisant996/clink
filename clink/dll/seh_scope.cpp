@@ -23,19 +23,15 @@
 #include "seh_scope.h"
 #include "shared/util.h"
 
+#include <core/str.h>
 
 //------------------------------------------------------------------------------
 static LONG WINAPI exception_filter(EXCEPTION_POINTERS* info)
 {
 #if defined(_MSC_VER)
-    MINIDUMP_EXCEPTION_INFORMATION mdei = { GetCurrentThreadId(), info, FALSE };
-    DWORD pid;
-    HANDLE process;
-    HANDLE file;
-    char file_name[1024];
-
-    get_config_dir(file_name, sizeof(file_name));
-    str_cat(file_name, "/mini_dump.dmp", sizeof(file_name));
+    str<MAX_PATH> file_name;
+    get_config_dir(file_name);
+    file_name << "/mini_dump.dmp";
 
     fputs("\n!!! CLINK'S CRASHED!", stderr);
     fputs("\n!!! Something went wrong.", stderr);
@@ -43,13 +39,14 @@ static LONG WINAPI exception_filter(EXCEPTION_POINTERS* info)
     fputs(file_name, stderr);
     fputs("\n", stderr);
 
-    file = CreateFile(file_name, GENERIC_WRITE, 0, nullptr, CREATE_ALWAYS, 0, nullptr);
+    HANDLE file = CreateFile(file_name, GENERIC_WRITE, 0, nullptr, CREATE_ALWAYS, 0, nullptr);
     if (file != INVALID_HANDLE_VALUE)
     {
-        pid = GetCurrentProcessId();
-        process = OpenProcess(PROCESS_ALL_ACCESS, FALSE, pid);
+        DWORD pid = GetCurrentProcessId();
+        HANDLE process = OpenProcess(PROCESS_ALL_ACCESS, FALSE, pid);
         if (process != nullptr)
         {
+            MINIDUMP_EXCEPTION_INFORMATION mdei = { GetCurrentThreadId(), info, FALSE };
             MiniDumpWriteDump(process, pid, file, MiniDumpNormal, &mdei, nullptr, nullptr);
         }
         CloseHandle(process);

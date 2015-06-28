@@ -23,10 +23,12 @@
 #include "shared/util.h"
 #include "shared/settings.h"
 
+#include <core/str.h>
+
 //------------------------------------------------------------------------------
 void*                 initialise_clink_settings();
 static settings_t*    g_settings;
-static char           g_settings_path[512];
+static str<512>       g_settings_path;
 
 //------------------------------------------------------------------------------
 static int print_keys()
@@ -145,8 +147,8 @@ int set(int argc, char** argv)
     }
 
     // Get the path where Clink's storing its settings.
-    get_config_dir(g_settings_path, sizeof_array(g_settings_path));
-    str_cat(g_settings_path, "/settings", sizeof_array(g_settings_path));
+    get_config_dir(g_settings_path);
+    g_settings_path << "/settings";
 
     // Load Clink's settings.
     g_settings = (settings_t*)initialise_clink_settings();

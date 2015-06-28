@@ -25,6 +25,8 @@
 #include "shared/shared_mem.h"
 #include "dll/inject_args.h"
 
+#include <core/str.h>
+
 #define CLINK_DLL_NAME "clink_dll_" AS_STR(PLATFORM) ".dll"
 
 int do_inject_impl(DWORD, const char*);
@@ -350,22 +352,19 @@ static int is_clink_present(DWORD target_pid)
 }
 
 //------------------------------------------------------------------------------
-void get_profile_path(const char* in, char* out, int out_size)
+void get_profile_path(const char* in, str_base& out)
 {
     if (in[0] == '~' && (in[1] == '\\' || in[1] == '/'))
     {
         char dir[MAX_PATH];
-
         if (SHGetFolderPath(0, CSIDL_LOCAL_APPDATA, nullptr, 0, dir) == S_OK)
         {
-            str_cpy(out, dir, out_size);
-            str_cat(out, ".", out_size);
-            str_cat(out, in + 1, out_size);
+            out << dir << "." << (in + 1);
             return;
         }
     }
 
-    cpy_path_as_abs(out, in, out_size);
+    cpy_path_as_abs(out, in);
 }
 
 //------------------------------------------------------------------------------
@@ -406,18 +405,20 @@ int inject(int argc, char** argv)
         switch (i)
         {
         case 's':
-            cpy_path_as_abs(
-                inject_args.script_path,
-                optarg,
-                sizeof_array(inject_args.script_path)
-            );
+            {
+                char* data = inject_args.script_path;
+                int size = sizeof_array(inject_args.script_path);
+                str_base buffer(data, size);
+                cpy_path_as_abs(buffer, optarg);
+            }
             break;
 
         case 'p':
             {
-                char* buffer = inject_args.profile_path;
-                int buffer_size = sizeof_array(inject_args.profile_path);
-                get_profile_path(optarg, buffer, buffer_size);
+                char* data = inject_args.profile_path;
+                int size = sizeof_array(inject_args.profile_path);
+                str_base buffer(data, size);
+                get_profile_path(optarg, buffer);
             }
             break;
 

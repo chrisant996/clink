@@ -23,6 +23,8 @@
 #include "shared/settings.h"
 #include "shared/util.h"
 
+#include <core/str.h>
+
 //------------------------------------------------------------------------------
 static settings_t*  g_settings      = nullptr;
 
@@ -159,18 +161,17 @@ static const setting_decl_t g_settings_decl[] = {
 };
 
 //------------------------------------------------------------------------------
-static void get_settings_file(char* buffer, int buffer_size)
+static void get_settings_file(str_base& buffer)
 {
-    get_config_dir(buffer, buffer_size);
-    str_cat(buffer, "/settings", buffer_size);
+    get_config_dir(buffer);
+    buffer << "/settings";
 }
 
 //------------------------------------------------------------------------------
 void* initialise_clink_settings()
 {
-    char settings_file[MAX_PATH];
-
-    get_settings_file(settings_file, sizeof_array(settings_file));
+    str<MAX_PATH> settings_file;
+    get_settings_file(settings_file);
 
     g_settings = settings_init(g_settings_decl, sizeof_array(g_settings_decl));
 

@@ -21,6 +21,8 @@
 
 #pragma once
 
+#include "core/str.h"
+
 class match_generator;
 class match_printer;
 class terminal;
@@ -50,7 +52,7 @@ private:
     terminal*               m_terminal;
     match_printer*          m_match_printer;
     match_generator*        m_match_generator;
-    char                    m_shell_name[32];
+    str<32>                 m_shell_name;
 
 private:
                             line_editor(const line_editor&);    // unimplemented

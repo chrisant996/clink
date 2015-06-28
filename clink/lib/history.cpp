@@ -21,27 +21,24 @@
 
 #include "pch.h"
 #include "shared/util.h"
+#include "core/str.h"
 
 //------------------------------------------------------------------------------
 int                 get_clink_setting_int(const char*);
 static int          g_new_history_count             = 0;
 
 //------------------------------------------------------------------------------
-static void get_history_file_name(char* buffer, int size)
+static void get_history_file_name(str_base& buffer)
 {
-    get_config_dir(buffer, size);
-    if (buffer[0])
-    {
-        str_cat(buffer, "/.history", size);
-    }
+    get_config_dir(buffer);
+    buffer << "/history";
 }
 
 //------------------------------------------------------------------------------
 void load_history()
 {
-    char buffer[512];
-
-    get_history_file_name(buffer, sizeof(buffer));
+    str<512> buffer;
+    get_history_file_name(buffer);
 
     // Clear existing history.
     clear_history();
@@ -55,15 +52,11 @@ void load_history()
 //------------------------------------------------------------------------------
 void save_history()
 {
-    int always_write;
-    int max_history;
-    char buffer[512];
-
-    always_write = get_clink_setting_int("history_io");
-    get_history_file_name(buffer, sizeof(buffer));
+    str<512> buffer;
+    get_history_file_name(buffer);
 
     // Get max history size.
-    max_history = get_clink_setting_int("history_file_lines");
+    int max_history = get_clink_setting_int("history_file_lines");
     max_history = (max_history == 0) ? INT_MAX : max_history;
     if (max_history < 0)
     {
@@ -72,6 +65,7 @@ void save_history()
     }
 
     // Write new history to the file, and truncate to our maximum.
+    int always_write = get_clink_setting_int("history_io");
     if (always_write || append_history(g_new_history_count, buffer) != 0)
     {
         write_history(buffer);
