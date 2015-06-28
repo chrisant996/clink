@@ -34,12 +34,12 @@ public:
                      lua_root();
                      ~lua_root();
     void             initialise();
+    void             shutdown();
     bool             do_string(const char* string);
     bool             do_file(const char* path);
     lua_State*       get_state() const;
 
 private:
-    void             shutdown();
     lua_State*       m_state;
     clink_lua_api    m_clink;
 };
