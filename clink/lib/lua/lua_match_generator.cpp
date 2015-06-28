@@ -83,7 +83,7 @@ match_result lua_match_generator::generate(const line_state& line)
     {
         puts(lua_tostring(m_state, -1));
         lua_pop(m_state, 2);
-        return nullptr;
+        return file_match_generator::generate(line);
     }
 
     int use_matches = lua_toboolean(m_state, -1);
@@ -92,7 +92,7 @@ match_result lua_match_generator::generate(const line_state& line)
     if (use_matches == 0)
     {
         lua_pop(m_state, 1);
-        return nullptr;
+        return file_match_generator::generate(line);
     }
 
     // Collect matches from Lua.
@@ -103,7 +103,7 @@ match_result lua_match_generator::generate(const line_state& line)
     if (match_count <= 0)
     {
         lua_pop(m_state, 2);
-        return nullptr;
+        return file_match_generator::generate(line);
     }
 
     char** matches = (char**)calloc(match_count + 1, sizeof(*matches));

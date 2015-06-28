@@ -19,25 +19,22 @@
  * SOFTWARE.
  */
 
-#pragma once
-
+#include "pch.h"
 #include "file_match_generator.h"
 
 //------------------------------------------------------------------------------
-class lua_match_generator
-    : public file_match_generator
+file_match_generator::file_match_generator()
 {
-public:
-                            lua_match_generator();
-    virtual                 ~lua_match_generator();
-    virtual match_result    generate(const line_state& line) override;
+}
 
-private:
-    void                    initialise(struct lua_State* state);
-    void                    shutdown();
-    bool                    load_script(const char* script);
-    void                    load_scripts(const char* path);
-    struct lua_State*       m_state;
+//------------------------------------------------------------------------------
+file_match_generator::~file_match_generator()
+{
+}
 
-    friend class lua_root;
-};
+//------------------------------------------------------------------------------
+match_result file_match_generator::generate(const line_state& line)
+{
+    match_result matches = nullptr;
+    return matches;
+}
