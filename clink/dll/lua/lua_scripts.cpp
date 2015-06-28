@@ -1,4 +1,5 @@
 #include "pch.h"
+#ifdef CLINK_EMBED_LUA_SCRIPTS
 const char* dll_dir_lua_script =
 "function dir_match_generator_impl(text)\n"
 "    -- Strip off any path components that may be on text.\n"
@@ -441,7 +442,7 @@ const char* dll_dir_lua_script =
 "}\n"
 "clink.arg.register_parser(\"svn\", svn_tree)\n"
 "";const char* dll_lua_scripts[] = {dll_dir_lua_script,dll_env_lua_script,dll_exec_lua_script,dll_git_lua_script,dll_go_lua_script,dll_hg_lua_script,dll_p4_lua_script,dll_powershell_lua_script,dll_self_lua_script,dll_set_lua_script,dll_svn_lua_script,nullptr,};
-#ifdef _DEBUG
+#else
 const char* dll_embed_path = __FILE__;
 const char* dll_dir_lua_file = "dir.lua";
 const char* dll_env_lua_file = "env.lua";

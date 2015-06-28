@@ -20,11 +20,24 @@
  */
 
 #include "pch.h"
-#include "core/str.h"
 
+extern "C" {
+#include "lualib.h"
+}
+
+#ifdef CLINK_EMBED_LUA_SCRIPTS
+
+//------------------------------------------------------------------------------
+void lua_load_script_impl(lua_State* state, const char* script)
+{
+    luaL_dostring(state, script);
+}
+
+#else // CLINK_EMBED_LUA_SCRIPTS
+
+#include "core/str.h"
 #include <shared/util.h>
 
-#ifdef _DEBUG
 //------------------------------------------------------------------------------
 void lua_load_script_impl(lua_State* state, const char* path, const char* name)
 {
@@ -41,8 +54,11 @@ void lua_load_script_impl(lua_State* state, const char* path, const char* name)
         buffer << name;
         if (luaL_dofile(state, buffer) == 0)
             return;
+
+        if (luaL_dofile(state, name) == 0)
+            return;
     }
 
     printf("CLINK DEBUG: Failed to load '%s'\n", buffer);
 }
-#endif // _DEBUG
+#endif // CLINK_EMBED_LUA_SCRIPTS

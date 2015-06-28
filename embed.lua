@@ -49,6 +49,7 @@ local function do_embed()
         print("-- " .. out)
         out = io.open(out, "w")
         out:write("#include \"pch.h\"\n")
+        out:write("#ifdef CLINK_EMBED_LUA_SCRIPTS\n")
 
         -- Write each sanitised script to 'out' as a global variable.
         local symbols = {}
@@ -74,7 +75,7 @@ local function do_embed()
 
         -- Some debug stuff so loose can files can be loaded in debug builds.
         symbols = {}
-        out:write("#ifdef _DEBUG\n")
+        out:write("#else\n")
         out:write("const char* " .. manifest.name .. "_embed_path = __FILE__;\n")
         for _, file in ipairs(manifest.files) do
             local symbol = path.getname(file):gsub("%.", "_")

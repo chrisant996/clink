@@ -140,6 +140,7 @@ solution("clink")
 
     configuration("final")
         optimize("full")
+        defines("CLINK_EMBED_LUA_SCRIPTS")
 
     configuration("release")
         optimize("full")

@@ -1,4 +1,5 @@
 #include "pch.h"
+#ifdef CLINK_EMBED_LUA_SCRIPTS
 const char* lib_clink_lua_script =
 "function clink.is_point_in_quote(str, i)\n"
 "    if i > #str then\n"
@@ -771,8 +772,6 @@ const char* lib_clink_lua_script =
 "    \n"
 "    -- Find a registered parser.\n"
 "    local parser = parsers[cmd]\n"
-"    print(cmd)\n"
-"    print(parser)\n"
 "    if parser == nil then\n"
 "        return false\n"
 "    end\n"
@@ -849,6 +848,7 @@ const char* lib_clink_lua_script =
 "    q = \"exit\",\n"
 "    g = \"run\",\n"
 "    dv = \"dump\",\n"
+"    [\"??\"] = \"dump\",\n"
 "    dt = \"locs\",\n"
 "    k = \"trace\",\n"
 "    bp = \"setb\",\n"
@@ -1967,7 +1967,7 @@ const char* lib_clink_lua_script =
 "end\n"
 "_TRACEBACK = debug.traceback             --Lua 5.0 function\n"
 "";const char* lib_lua_scripts[] = {lib_clink_lua_script,lib_match_lua_script,lib_prompt_lua_script,lib_arguments_lua_script,lib_debugger_lua_script,nullptr,};
-#ifdef _DEBUG
+#else
 const char* lib_embed_path = __FILE__;
 const char* lib_clink_lua_file = "clink.lua";
 const char* lib_match_lua_file = "match.lua";
