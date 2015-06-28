@@ -21,6 +21,9 @@
 
 #include "pch.h"
 #include "file_match_generator.h"
+#include "core/path.h"
+#include "core/str.h"
+#include "line_state.h"
 
 //------------------------------------------------------------------------------
 file_match_generator::file_match_generator()
@@ -35,6 +38,28 @@ file_match_generator::~file_match_generator()
 //------------------------------------------------------------------------------
 match_result file_match_generator::generate(const line_state& line)
 {
-    match_result matches = nullptr;
+    match_result matches;
+    matches.add_match(line.word);
+
+    str<MAX_PATH> wildcard;
+    wildcard << line.word << "*";
+
+    WIN32_FIND_DATA fd;
+    HANDLE find = FindFirstFile(wildcard, &fd);
+    if (find == INVALID_HANDLE_VALUE)
+        return matches;
+
+    str<MAX_PATH> root;
+    path::get_directory(wildcard, root);
+    BOOL ok = TRUE;
+    while (ok)
+    {
+        str<MAX_PATH> result;
+        path::join(root, fd.cFileName, result);
+        matches.add_match(result);
+
+        ok = FindNextFile(find, &fd);
+    }
+
     return matches;
 }
