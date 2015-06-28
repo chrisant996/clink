@@ -88,7 +88,7 @@ end
 clink_ver_stamp = (math.floor(os.time() / 3600) - 47000) % 0x10000
 
 --------------------------------------------------------------------------------
-local function build_postbuild(src, cfg)
+local function postbuild_copy(src, cfg)
     src = path.getabsolute(src)
     src = path.translate(src)
 
@@ -115,7 +115,7 @@ end
 
 --------------------------------------------------------------------------------
 solution("clink")
-    configurations({"debug", "release"})
+    configurations({"debug", "release", "final"})
     platforms({"x32", "x64"})
     location(to)
 
@@ -134,11 +134,15 @@ solution("clink")
     includedirs("readline/compat")
     includedirs("readline")
 
+    setup_cfg("final")
     setup_cfg("release")
     setup_cfg("debug")
 
+    configuration("final")
+        optimize("full")
+
     configuration("release")
-        optimize("size")
+        optimize("full")
 
     configuration("vs*")
         buildoptions("/FC")
@@ -228,13 +232,16 @@ project("clink_loader")
     files("clink/loader/**")
     files("clink/version.rc")
 
+    configuration("final")
+        postbuild_copy("CHANGES", "final")
+        postbuild_copy("LICENSE", "final")
+        postbuild_copy("clink/loader/clink.bat", "final")
+
     configuration("release")
-        build_postbuild("CHANGES", "release")
-        build_postbuild("LICENSE", "release")
-        build_postbuild("clink/loader/clink.bat", "release")
+        postbuild_copy("clink/loader/clink.bat", "release")
 
     configuration("debug")
-        build_postbuild("clink/loader/clink.bat", "debug")
+        postbuild_copy("clink/loader/clink.bat", "debug")
 
     configuration("vs*")
         pchsource("clink/loader/pch.cpp")
