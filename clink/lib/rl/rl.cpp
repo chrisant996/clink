@@ -25,8 +25,6 @@
 //------------------------------------------------------------------------------
 char**              lua_match_display_filter(char**, int);
 int                 get_clink_setting_int(const char*);
-void                get_config_dir(char*, int);
-char*               filter_prompt(const char*);
 static int          completion_shim_impl(int, int, int (*)(int, int));
 void                load_history();
 void                save_history();
@@ -405,33 +403,22 @@ void display_matches(char** matches, int match_count, int longest)
 //------------------------------------------------------------------------------
 static char* call_readline_impl(const char* prompt)
 {
-    int expand_result;
-    char* text;
-    char* expanded;
-    char* prepared_prompt;
-
     // Make sure that EOL wrap is on. Readline's told the terminal supports it.
-    {
-        int stdout_flags = ENABLE_PROCESSED_OUTPUT|ENABLE_WRAP_AT_EOL_OUTPUT;
-        HANDLE handle_stdout = GetStdHandle(STD_OUTPUT_HANDLE);
-        SetConsoleMode(handle_stdout, stdout_flags);
-    }
+    int stdout_flags = ENABLE_PROCESSED_OUTPUT|ENABLE_WRAP_AT_EOL_OUTPUT;
+    HANDLE handle_stdout = GetStdHandle(STD_OUTPUT_HANDLE);
+    SetConsoleMode(handle_stdout, stdout_flags);
 
-    // Filter the prompt through Lua so scripts can modify it.
-    prepared_prompt = filter_prompt(prompt);
-
+    char* text;
+    int expand_result;
     do
     {
         // Call readline
-        rl_already_prompted = (prompt == nullptr);
-        text = readline(prepared_prompt ? prepared_prompt : "");
-        if (!text)
-        {
-            goto call_readline_epilogue;
-        }
+        text = readline(prompt);
+        if (text == nullptr)
+            return nullptr;
 
         // Expand history designators in returned buffer.
-        expanded = nullptr;
+        char* expanded = nullptr;
         expand_result = expand_from_history(text, &expanded);
         if (expand_result > 0 && expanded != nullptr)
         {
@@ -451,8 +438,6 @@ static char* call_readline_impl(const char* prompt)
     }
     while (!text || expand_result == 2);
 
-call_readline_epilogue:
-    free(prepared_prompt);
     return text;
 }
 
