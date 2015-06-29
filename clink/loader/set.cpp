@@ -182,7 +182,7 @@ int set(int argc, char** argv)
 
     default:
         if (set_value(argv[1], argv[2]))
-            ret = settings_save(g_settings, g_settings_path);
+            ret = settings_save(g_settings, g_settings_path.c_str());
         break;
     }
 

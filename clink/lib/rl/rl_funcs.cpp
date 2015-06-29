@@ -219,14 +219,14 @@ int expand_env_vars(int count, int invoking_key)
 
     // Do the environment variable expansion.
     str<1024> out;
-    if (!ExpandEnvironmentStrings(in, out.data(), out.size()))
+    if (!ExpandEnvironmentStrings(in.c_str(), out.data(), out.size()))
         return 0;
 
     // Update Readline with the resulting expansion.
     rl_begin_undo_group();
     rl_delete_text(word_left, word_right);
     rl_point = word_left;
-    rl_insert_text(out);
+    rl_insert_text(out.c_str());
     rl_end_undo_group();
 
     return 0;

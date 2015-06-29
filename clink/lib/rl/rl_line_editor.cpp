@@ -243,7 +243,7 @@ void rl_line_editor::load_user_inputrc()
 
         for (int j = 0; j < 2; ++j)
         {
-            if (!rl_read_init_file(path))
+            if (!rl_read_init_file(path.c_str()))
             {
                 LOG_INFO("Found Readline inputrc at '%s'", path);
                 break;

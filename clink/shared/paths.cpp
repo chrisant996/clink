@@ -73,12 +73,12 @@ void get_config_dir(str_base& buffer)
         buffer << ".\\profile";
     }
     else
-        buffer.copy(g_config_dir_override);
+        buffer << g_config_dir_override;
 
     // Try and create the directory if it doesn't already exist. Just this once.
     if (once)
     {
-        CreateDirectory(buffer, nullptr);
+        CreateDirectory(buffer.c_str(), nullptr);
         once = 0;
     }
 
@@ -111,12 +111,12 @@ void get_log_dir(str_base& buffer)
         log_dir << "\\clink";
     }
 
-    buffer.copy(log_dir);
+    buffer << log_dir;
 
     // Try and create the directory if it doesn't already exist. Just this once.
     if (once)
     {
-        CreateDirectory(buffer, nullptr);
+        CreateDirectory(buffer.c_str(), nullptr);
         once = 0;
     }
 

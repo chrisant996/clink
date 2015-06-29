@@ -36,10 +36,10 @@ static LONG WINAPI exception_filter(EXCEPTION_POINTERS* info)
     fputs("\n!!! CLINK'S CRASHED!", stderr);
     fputs("\n!!! Something went wrong.", stderr);
     fputs("\n!!! Writing mini dump file to: ", stderr);
-    fputs(file_name, stderr);
+    fputs(file_name.c_str(), stderr);
     fputs("\n", stderr);
 
-    HANDLE file = CreateFile(file_name, GENERIC_WRITE, 0, nullptr, CREATE_ALWAYS, 0, nullptr);
+    HANDLE file = CreateFile(file_name.c_str(), GENERIC_WRITE, 0, nullptr, CREATE_ALWAYS, 0, nullptr);
     if (file != INVALID_HANDLE_VALUE)
     {
         DWORD pid = GetCurrentProcessId();

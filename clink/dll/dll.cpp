@@ -128,7 +128,7 @@ static bool get_shell_name(str_base& out)
     if (GetLastError() == ERROR_INSUFFICIENT_BUFFER)
         return false;
 
-    const char* slash = strrchr(buffer, '\\');
+    const char* slash = strrchr(buffer.c_str(), '\\');
     slash = (slash != nullptr) ? slash + 1 : buffer.data();
 
     out << slash;
@@ -157,7 +157,7 @@ static BOOL on_dll_attach()
 
     // Prepare core systems.
     initialise_clink_settings();
-    initialise_line_editor(shell_name);
+    initialise_line_editor(shell_name.c_str());
     load_history();
 
     // Search for a supported shell.
@@ -171,7 +171,7 @@ static BOOL on_dll_attach()
 
     for (int i = 0; i < sizeof_array(shells); ++i)
     {
-        if (stricmp(shell_name, shells[i].name) == 0)
+        if (stricmp(shell_name.c_str(), shells[i].name) == 0)
         {
             g_shell = (shells[i].creator)(g_line_editor);
             break;

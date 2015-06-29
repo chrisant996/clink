@@ -31,7 +31,7 @@ TEST_CASE("Strings" NAME_SUFFIX) {
     SECTION("Basics") {
         str<256> s;
         REQUIRE(s.length() == 0);
-        REQUIRE(s.data() == s);
+        REQUIRE(s.data() == s.c_str());
         REQUIRE(s.size() == 256);
 
         s.copy(STR("123"));

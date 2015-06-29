@@ -45,7 +45,7 @@ void load_history()
     g_new_history_count = 0;
 
     // Read from disk.
-    read_history(buffer);
+    read_history(buffer.c_str());
     using_history();
 }
 
@@ -60,21 +60,17 @@ void save_history()
     max_history = (max_history == 0) ? INT_MAX : max_history;
     if (max_history < 0)
     {
-        unlink(buffer);
+        unlink(buffer.c_str());
         return;
     }
 
     // Write new history to the file, and truncate to our maximum.
     int always_write = get_clink_setting_int("history_io");
-    if (always_write || append_history(g_new_history_count, buffer) != 0)
-    {
-        write_history(buffer);
-    }
+    if (always_write || append_history(g_new_history_count, buffer.c_str()) != 0)
+        write_history(buffer.c_str());
 
     if (max_history != INT_MAX)
-    {
-        history_truncate_file(buffer, max_history);
-    }
+        history_truncate_file(buffer.c_str(), max_history);
 
     g_new_history_count = 0;
 }
@@ -86,12 +82,8 @@ static int find_duplicate(const char* line)
 
     using_history();
     while (hist_entry = previous_history())
-    {
         if (strcmp(hist_entry->line, line) == 0)
-        {
             return where_history();
-        }
-    }
 
     return -1;
 }
@@ -105,26 +97,20 @@ void add_to_history(const char* line)
     // Maybe we shouldn't add this line to the history at all?
     c = (const unsigned char*)line;
     if (isspace(*c) && get_clink_setting_int("history_ignore_space") > 0)
-    {
         return;
-    }
 
     // Skip leading whitespace
     while (*c)
     {
         if (!isspace(*c))
-        {
             break;
-        }
 
         ++c;
     }
 
     // Skip empty lines
     if (*c == '\0')
-    {
         return;
-    }
 
     // Check if the line's a duplicate of and existing history entry.
     dupe_mode = get_clink_setting_int("history_dupe_mode");
@@ -139,9 +125,7 @@ void add_to_history(const char* line)
                 free_history_entry(entry);
             }
             else
-            {
                 return;
-            }
         }
     }
 
@@ -158,9 +142,7 @@ int expand_from_history(const char* text, char** expanded)
 
     result = history_expand((char*)text, expanded);
     if (result < 0)
-    {
         free(*expanded);
-    }
 
     return result;
 }

@@ -54,7 +54,8 @@ static HKEY open_software_key(int all_users, const char* key, int wow64, int wri
     flags |= KEY_WOW64_64KEY;
 
     ok = RegCreateKeyEx(all_users ? HKEY_LOCAL_MACHINE : HKEY_CURRENT_USER,
-        buffer, 0, nullptr, REG_OPTION_NON_VOLATILE, flags, nullptr, &result, nullptr);
+        buffer.c_str(), 0, nullptr, REG_OPTION_NON_VOLATILE, flags, nullptr,
+        &result, nullptr);
 
     return (ok == 0) ? result : nullptr;
 }
@@ -305,7 +306,7 @@ static int install_autorun(const char* clink_path, int wow64)
         new_value << " " << g_clink_args;
 
     // Set it
-    value = get_cmd_start(new_value);
+    value = get_cmd_start(new_value.c_str());
     i = 1;
     if (!set_value(cmd_proc_key, "AutoRun", value))
         i = 0;
@@ -529,8 +530,8 @@ int autorun(int argc, char** argv)
         goto end;
     }
 
-    const char* arg = clink_path;
-    arg = *arg ? arg : g_clink_args;
+    const char* arg = clink_path.c_str();
+    arg = *arg ? arg : g_clink_args.c_str();
     ret = !dispatch(function, arg);
 
     // Provide the user with some feedback.

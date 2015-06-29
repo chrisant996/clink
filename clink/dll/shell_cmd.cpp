@@ -191,8 +191,8 @@ bool shell_cmd::initialise()
         buffer << "/clink_" AS_STR(PLATFORM) ".exe\" --cfgdir \"";
         buffer << cfg_path << "\" $*";
 
-        const char* slash = strrchr(path, '\\');
-        const char* shell_name = (slash != nullptr) ? slash + 1 : path;
+        const char* slash = strrchr(path.c_str(), '\\');
+        const char* shell_name = (slash != nullptr) ? slash + 1 : path.c_str();
         AddConsoleAlias("clink", buffer.data(), (char*)shell_name);
     }
 

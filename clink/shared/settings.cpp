@@ -290,8 +290,8 @@ const char* settings_get_str(settings_t* s, const char* name)
         static str<256> buffer;
 
         buffer << "clink." << name;
-        if (GetEnvironmentVariableA(buffer, buffer.data(), buffer.size()))
-            return buffer;
+        if (GetEnvironmentVariableA(buffer.c_str(), buffer.data(), buffer.size()))
+            return buffer.c_str();
     }
 
     int i = get_decl_index(s, name);

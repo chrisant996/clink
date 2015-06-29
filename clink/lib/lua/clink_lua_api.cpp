@@ -172,7 +172,7 @@ int clink_lua_api::find_files_impl(lua_State* state, int dirs_only)
     if (_rl_completion_case_map && i > 1 && lua_toboolean(state, 2))
     {
         buffer << mask;
-        mask = buffer;
+        mask = buffer.c_str();
 
         char* slash;
         slash = strrchr(buffer.data(), '\\');

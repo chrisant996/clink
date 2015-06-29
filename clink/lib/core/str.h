@@ -49,6 +49,7 @@ public:
                     str_impl(TYPE* data, unsigned int size);
                     str_impl(const TYPE* rhs);
     TYPE*           data();
+    const TYPE*     c_str() const;
     unsigned int    size() const;
     unsigned int    length() const;
     void            clear();
@@ -63,7 +64,6 @@ public:
     bool            format(const TYPE* format, ...);
     TYPE            operator [] (unsigned int i) const;
     str_impl&       operator << (const TYPE* rhs);
-                    operator const TYPE* () const;
     str_impl&       operator << (const str_impl& rhs);
 
 private:
@@ -83,6 +83,13 @@ str_impl<TYPE>::str_impl(TYPE* data, unsigned int size)
 //------------------------------------------------------------------------------
 template <typename TYPE>
 TYPE* str_impl<TYPE>::data()
+{
+    return m_data;
+}
+
+//------------------------------------------------------------------------------
+template <typename TYPE>
+const TYPE* str_impl<TYPE>::c_str() const
 {
     return m_data;
 }
@@ -207,13 +214,6 @@ str_impl<TYPE>& str_impl<TYPE>::operator << (const TYPE* rhs)
 {
     concat(rhs);
     return *this;
-}
-
-//------------------------------------------------------------------------------
-template <typename TYPE>
-str_impl<TYPE>::operator const TYPE* () const
-{
-    return m_data;
 }
 
 //------------------------------------------------------------------------------

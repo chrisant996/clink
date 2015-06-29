@@ -52,7 +52,7 @@ void lua_load_script_impl(lua_State* state, const char* path, const char* name)
     {
         buffer.truncate(slash + 1);
         buffer << name;
-        if (luaL_dofile(state, buffer) == 0)
+        if (luaL_dofile(state, buffer.c_str()) == 0)
             return;
 
         if (luaL_dofile(state, name) == 0)

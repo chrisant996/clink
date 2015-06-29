@@ -80,5 +80,5 @@ inline match_generator* line_editor::get_match_generator() const
 //------------------------------------------------------------------------------
 inline const char* line_editor::get_shell_name() const
 {
-    return m_shell_name;
+    return m_shell_name.c_str();
 }

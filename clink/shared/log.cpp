@@ -44,17 +44,17 @@ static void log_line_v(
 
     if (format == nullptr)
     {
-        unlink(buffer);
+        unlink(buffer.c_str());
         return;
     }
 
-    file = fopen(buffer, "at");
+    file = fopen(buffer.c_str(), "at");
     if (file == nullptr)
         return;
 
     // Write out the line, tagged with function and line number.
     buffer.format("%5d %-25s %4d ", pid, function, source_line);
-    fputs(buffer, file);
+    fputs(buffer.c_str(), file);
     vfprintf(file, format, args);
     fputs("\n", file);
 
