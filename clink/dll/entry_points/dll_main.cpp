@@ -1,4 +1,4 @@
-/* Copyright (c) 2015 Martin Ridgers
+/* Copyright (c) 2012 Martin Ridgers
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -19,45 +19,27 @@
  * SOFTWARE.
  */
 
-#include "pch.h"
-
-extern "C" {
-#include "lualib.h"
-}
-
-#ifdef CLINK_EMBED_LUA_SCRIPTS
+#include <Windows.h>
 
 //------------------------------------------------------------------------------
-void lua_load_script_impl(lua_State* state, const char* script)
-{
-    luaL_dostring(state, script);
-}
-
-#else // CLINK_EMBED_LUA_SCRIPTS
-
-#include "core/str.h"
+void    on_dll_attach();
+void    on_dll_detach();
+int     loader(int, char**);
 
 //------------------------------------------------------------------------------
-void lua_load_script_impl(lua_State* state, const char* path, const char* name)
+BOOL WINAPI DllMain(HINSTANCE instance, DWORD reason, LPVOID unused)
 {
-    str<512> buffer;
-    buffer << path;
-
-    int slash = buffer.last_of('\\');
-    if (slash < 0)
-        slash = buffer.last_of('/');
-
-    if (slash >= 0)
+    switch (reason)
     {
-        buffer.truncate(slash + 1);
-        buffer << name;
-        if (luaL_dofile(state, buffer.c_str()) == 0)
-            return;
-
-        if (luaL_dofile(state, name) == 0)
-            return;
+    case DLL_PROCESS_ATTACH:    on_dll_attach();    break;
+    case DLL_PROCESS_DETACH:    on_dll_detach();    break;
     }
 
-    printf("CLINK DEBUG: Failed to load '%s'\n", buffer);
+    return TRUE;
 }
-#endif // CLINK_EMBED_LUA_SCRIPTS
+
+//------------------------------------------------------------------------------
+__declspec(dllexport) int main_impl(int argc, char** argv)
+{
+    return loader(argc, argv);
+}

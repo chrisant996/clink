@@ -21,12 +21,15 @@
 
 #include "pch.h"
 #include "inject_args.h"
-#include "shared/shared_mem.h"
-#include "shared/util.h"
+#include "paths.h"
+#include "shared_mem.h"
 #include "shell.h"
 #include "shell_cmd.h"
 #include "shell_ps.h"
 
+#include <core/base.h>
+#include <core/log.h>
+#include <core/str.h>
 #include <ecma48_terminal.h>
 #include <lua/lua_root.h>
 #include <lua/lua_script_loader.h>
@@ -34,7 +37,13 @@
 #include <rl/rl_line_editor.h>
 
 //------------------------------------------------------------------------------
-extern const char*      g_clink_header;
+const char* g_clink_header =
+    "Clink v"CLINK_VERSION" [git:"CLINK_COMMIT"] "
+    "Copyright (c) 2012-2015 Martin Ridgers\n"
+    "http://mridgers.github.io/clink\n"
+    ;
+
+//------------------------------------------------------------------------------
 void*                   initialise_clink_settings();
 void                    load_history();
 void                    save_history();
@@ -132,12 +141,12 @@ static bool get_shell_name(str_base& out)
     slash = (slash != nullptr) ? slash + 1 : buffer.data();
 
     out << slash;
-    LOG_INFO("Shell process is '%s'", out);
+    LOG("Shell process is '%s'", out);
     return true;
 }
 
 //------------------------------------------------------------------------------
-static BOOL on_dll_attach()
+void on_dll_attach()
 {
     // Get the inject arguments.
     get_inject_args(GetCurrentProcessId());
@@ -149,8 +158,14 @@ static BOOL on_dll_attach()
     if (g_inject_args.profile_path[0] != '\0')
         set_config_dir_override(g_inject_args.profile_path);
 
-    if (g_inject_args.no_log)
-        disable_log();
+    if (!g_inject_args.no_log)
+    {
+        str<256> log_path;
+        get_log_dir(log_path);
+        log_path << "/clink.log";
+
+        new file_logger(log_path.c_str());
+    }
 
     str<64> shell_name;
     get_shell_name(shell_name);
@@ -178,48 +193,42 @@ static BOOL on_dll_attach()
         }
     }
 
+    if (g_shell == nullptr)
+    {
+        LOG("Unknown shell.");
+        return;
+    }
+
     if (!g_shell->validate())
     {
-        LOG_INFO("Shell validation failed.");
-        return FALSE;
+        LOG("Shell validation failed.");
+        return;
     }
 
     if (!g_shell->initialise())
     {
         failed();
-        return FALSE;
+        return;
     }
 
     success();
-    return TRUE;
 }
 
 //------------------------------------------------------------------------------
-static BOOL on_dll_detach()
+void on_dll_detach()
 {
-    if (g_shell != nullptr)
-    {
-        g_shell->shutdown();
+    if (logger* logger = logger::get())
+        delete logger;
 
-        if (get_clink_setting_int("history_io"))
-            load_history();
+    if (g_shell == nullptr)
+        return;
 
-        save_history();
-        shutdown_clink_settings();
-        shutdown_line_editor();
-    }
+    g_shell->shutdown();
 
-    return TRUE;
-}
+    if (get_clink_setting_int("history_io"))
+        load_history();
 
-//------------------------------------------------------------------------------
-BOOL WINAPI DllMain(HINSTANCE instance, DWORD reason, LPVOID unused)
-{
-    switch (reason)
-    {
-    case DLL_PROCESS_ATTACH:    return on_dll_attach();
-    case DLL_PROCESS_DETACH:    return on_dll_detach();
-    }
-
-    return TRUE;
+    save_history();
+    shutdown_clink_settings();
+    shutdown_line_editor();
 }

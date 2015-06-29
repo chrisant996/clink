@@ -45,18 +45,18 @@ match_result file_match_generator::generate(const line_state& line)
     wildcard << line.word << "*";
 
     WIN32_FIND_DATA fd;
-    HANDLE find = FindFirstFile(wildcard, &fd);
+    HANDLE find = FindFirstFile(wildcard.c_str(), &fd);
     if (find == INVALID_HANDLE_VALUE)
         return matches;
 
     str<MAX_PATH> root;
-    path::get_directory(wildcard, root);
+    path::get_directory(wildcard.c_str(), root);
     BOOL ok = TRUE;
     while (ok)
     {
         str<MAX_PATH> result;
-        path::join(root, fd.cFileName, result);
-        matches.add_match(result);
+        path::join(root.c_str(), fd.cFileName, result);
+        matches.add_match(result.c_str());
 
         ok = FindNextFile(find, &fd);
     }

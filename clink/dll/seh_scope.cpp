@@ -21,7 +21,7 @@
 
 #include "pch.h"
 #include "seh_scope.h"
-#include "shared/util.h"
+#include "util.h"
 
 #include <core/str.h>
 

@@ -20,52 +20,72 @@
  */
 
 #include "pch.h"
-#include "match_result.h"
-#include "core/str.h"
+#include "log.h"
 
-#include <algorithm>
+#include <stdarg.h>
 
 //------------------------------------------------------------------------------
-match_result::match_result()
+file_logger::file_logger(const char* log_path)
+{
+    m_log_path << log_path;
+}
+
+//------------------------------------------------------------------------------
+file_logger::~file_logger()
 {
 }
 
 //------------------------------------------------------------------------------
-match_result::match_result(match_result&& rhs)
+void file_logger::emit(const char* function, int line, const char* fmt, va_list args)
 {
-    swap(rhs);
+    FILE* file;
+
+    file = fopen(m_log_path.c_str(), "at");
+    if (file == nullptr)
+        return;
+
+    str<24> func_name;
+    func_name << function;
+
+    DWORD pid = GetCurrentProcessId();
+
+    str<256> buffer;
+    buffer.format("%04x %-24s %4d ", pid, func_name.c_str(), line);
+    fputs(buffer.c_str(), file);
+    vfprintf(file, fmt, args);
+    fputs("\n", file);
+
+    fclose(file);
 }
 
 //------------------------------------------------------------------------------
-match_result::~match_result()
+void logger::info(const char* function, int line, const char* fmt, ...)
 {
-    for (int i = 0, e = int(m_matches.size()); i < e; ++i)
-        delete m_matches[i];
+    logger* instance = logger::get();
+    if (instance == nullptr)
+        return;
+
+    va_list args;
+    va_start(args, fmt);
+    instance->emit(function, line, fmt, args);
+    va_end(args);
 }
 
 //------------------------------------------------------------------------------
-void match_result::operator = (match_result&& rhs)
+void logger::error(const char* function, int line, const char* fmt, ...)
 {
-    swap(rhs);
-}
+    logger* instance = logger::get();
+    if (instance == nullptr)
+        return;
 
-//------------------------------------------------------------------------------
-void match_result::swap(match_result& rhs)
-{
-    std::swap(m_matches, rhs.m_matches);
-}
+    DWORD last_error = GetLastError();
 
-//------------------------------------------------------------------------------
-void match_result::reserve(unsigned int count)
-{
-    m_matches.reserve(count);
-}
+    va_list args;
+    va_start(args, fmt);
 
-//------------------------------------------------------------------------------
-void match_result::add_match(const char* match)
-{
-    int len = int(strlen(match)) + 1;
-    char* out = new char[len];
-    str_base(out, len).copy(match);
-    m_matches.push_back(out);
+    logger::info(function, line, "*** ERROR ***");
+    instance->emit(function, line, fmt, args);
+    logger::info(function, line, "(last error = %d)", last_error);
+
+    va_end(args);
 }

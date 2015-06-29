@@ -21,11 +21,14 @@
 
 #include "pch.h"
 #include "clink_lua_api.h"
+#include "core/base.h"
 #include "core/str.h"
 #include "lua_delegate.h"
 #include "lua_script_loader.h"
 
-#include <shared/util.h>
+extern "C" {
+#include <dirent.h>
+}
 
 //------------------------------------------------------------------------------
 extern "C" {
@@ -226,7 +229,9 @@ int clink_lua_api::matches_are_files(lua_State* state)
     if (lua_gettop(state) > 0)
         i = (int)lua_tointeger(state, 1);
 
+#if MODE4
     rl_filename_completion_desired = i;
+#endif
     return 0;
 }
 
@@ -375,14 +380,18 @@ int clink_lua_api::get_setting_int(lua_State* state)
 //------------------------------------------------------------------------------
 int clink_lua_api::suppress_char_append(lua_State* state)
 {
+#if MODE4
     rl_completion_suppress_append = 1;
+#endif
     return 0;
 }
 
 //------------------------------------------------------------------------------
 int clink_lua_api::suppress_quoting(lua_State* state)
 {
+#if MODE4
     rl_completion_suppress_quote = 1;
+#endif
     return 0;
 }
 
@@ -434,24 +443,21 @@ int clink_lua_api::is_dir(lua_State* state)
 //------------------------------------------------------------------------------
 int clink_lua_api::get_rl_variable(lua_State* state)
 {
-    const char* string;
-    const char* rl_cvar;
-
     // Check we've got at least one string argument.
     if (lua_gettop(state) == 0 || !lua_isstring(state, 1))
-    {
         return 0;
-    }
 
-    string = lua_tostring(state, 1);
-    rl_cvar = rl_variable_value(string);
+#if MODE4
+    const char* string = lua_tostring(state, 1);
+    const char* rl_cvar = rl_variable_value(string);
     if (rl_cvar == nullptr)
-    {
         return 0;
-    }
 
     lua_pushstring(state, rl_cvar);
     return 1;
+#else
+    return 0;
+#endif // MODE4
 }
 
 //------------------------------------------------------------------------------

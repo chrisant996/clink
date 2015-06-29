@@ -20,7 +20,8 @@
  */
 
 #include "pch.h"
-#include "shared/util.h"
+
+#include <core/base.h>
 
 //------------------------------------------------------------------------------
 typedef struct {

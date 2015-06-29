@@ -32,6 +32,7 @@
 
 #include <Windows.h>
 #include <Shlobj.h>
+#include <TlHelp32.h>
 #ifndef __MINGW32__
 #   include <DbgHelp.h>
 #endif

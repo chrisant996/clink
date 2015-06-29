@@ -1,4 +1,4 @@
-/* Copyright (c) 2015 Martin Ridgers
+/* Copyright (c) 2012 Martin Ridgers
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -19,45 +19,25 @@
  * SOFTWARE.
  */
 
-#include "pch.h"
-
-extern "C" {
-#include "lualib.h"
-}
-
-#ifdef CLINK_EMBED_LUA_SCRIPTS
+#include <stdint.h>
+#include <Windows.h>
 
 //------------------------------------------------------------------------------
-void lua_load_script_impl(lua_State* state, const char* script)
+__declspec(dllimport) int main_impl(int argc, char** argv);
+
+#if defined(_VC_NODEFAULTLIB)
+#pragma runtime_checks("", off)
+int mainCRTStartup(uintptr_t param)
 {
-    luaL_dostring(state, script);
+    int argc;
+    LPWSTR* argv = CommandLineToArgvW(GetCommandLineW(), &argc);
+    int ret = main_impl(argc, argv);
+    LocalFree(argv);
+    return ret;
 }
-
-#else // CLINK_EMBED_LUA_SCRIPTS
-
-#include "core/str.h"
-
-//------------------------------------------------------------------------------
-void lua_load_script_impl(lua_State* state, const char* path, const char* name)
+#else
+int main(int argc, char** argv)
 {
-    str<512> buffer;
-    buffer << path;
-
-    int slash = buffer.last_of('\\');
-    if (slash < 0)
-        slash = buffer.last_of('/');
-
-    if (slash >= 0)
-    {
-        buffer.truncate(slash + 1);
-        buffer << name;
-        if (luaL_dofile(state, buffer.c_str()) == 0)
-            return;
-
-        if (luaL_dofile(state, name) == 0)
-            return;
-    }
-
-    printf("CLINK DEBUG: Failed to load '%s'\n", buffer);
+    return main_impl(argc, argv);
 }
-#endif // CLINK_EMBED_LUA_SCRIPTS
+#endif

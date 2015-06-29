@@ -23,9 +23,11 @@
 #include "shell_cmd.h"
 #include "hook_setter.h"
 #include "seh_scope.h"
-#include "shared/util.h"
-#include "shared/vm.h"
+#include "util.h"
+#include "vm.h"
 
+#include <core/base.h>
+#include <core/log.h>
 #include <line_editor.h>
 #include <terminal.h>
 
@@ -88,13 +90,13 @@ static int check_auto_answer()
                 ++c;
             }
 
-            LOG_INFO("Auto-answer prompt = '%ls' (%ls)", prompt_to_answer, no_yes);
+            LOG("Auto-answer prompt = '%ls' (%ls)", prompt_to_answer, no_yes);
         }
         else
         {
             prompt_to_answer = L"Terminate batch job (Y/N)? ";
             no_yes = L"ny";
-            LOG_INFO("Using fallback auto-answer prompt.");
+            LOG("Using fallback auto-answer prompt.");
         }
     }
 

@@ -29,6 +29,7 @@ class singleton
 {
 public:
                 singleton();
+                ~singleton();
     static T*   get();
 
 private:
@@ -43,9 +44,14 @@ template <class T> singleton<T>::singleton()
 }
 
 //------------------------------------------------------------------------------
+template <class T> singleton<T>::~singleton()
+{
+    get_store() = nullptr;
+}
+
+//------------------------------------------------------------------------------
 template <class T> T* singleton<T>::get()
 {
-    assert(get_store() != nullptr);
     return get_store();
 }
 

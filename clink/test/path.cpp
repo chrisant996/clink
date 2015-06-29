@@ -72,7 +72,7 @@ TEST_CASE("Paths") {
         SECTION("Basic") {
             SECTION("0") { t << "one/two/three/filename.ext"; }
             SECTION("1") { t << "one/two/three\\filename.ext"; }
-            path::get_directory(t, s);
+            path::get_directory(t.c_str(), s);
         }
 
         SECTION("In-place") {
@@ -93,7 +93,7 @@ TEST_CASE("Paths") {
             SECTION("4") { s << "E:\\one/filename.ext"; }
             SECTION("5") { s << "E:one/filename.ext"; }
 
-            REQUIRE(path::get_drive(s, t));
+            REQUIRE(path::get_drive(s.c_str(), t));
             REQUIRE((t.equals("e:") || t.equals("E:")));
             REQUIRE(path::get_drive(t));
         }
@@ -110,7 +110,7 @@ TEST_CASE("Paths") {
             SECTION("8") { s << "one/filename.ext"; }
             SECTION("9") { s << "filename.ext"; }
 
-            REQUIRE(!path::get_drive(s, t));
+            REQUIRE(!path::get_drive(s.c_str(), t));
             REQUIRE(!path::get_drive(s));
         }
     }

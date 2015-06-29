@@ -1,4 +1,4 @@
-/* Copyright (c) 2015 Martin Ridgers
+/* Copyright (c) 2013 Martin Ridgers
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -19,45 +19,16 @@
  * SOFTWARE.
  */
 
-#include "pch.h"
-
-extern "C" {
-#include "lualib.h"
-}
-
-#ifdef CLINK_EMBED_LUA_SCRIPTS
+#pragma once
 
 //------------------------------------------------------------------------------
-void lua_load_script_impl(lua_State* state, const char* script)
-{
-    luaL_dostring(state, script);
-}
-
-#else // CLINK_EMBED_LUA_SCRIPTS
-
-#include "core/str.h"
+typedef struct {
+    void*   handle;
+    void*   ptr;
+    int     size;
+} shared_mem_t;
 
 //------------------------------------------------------------------------------
-void lua_load_script_impl(lua_State* state, const char* path, const char* name)
-{
-    str<512> buffer;
-    buffer << path;
-
-    int slash = buffer.last_of('\\');
-    if (slash < 0)
-        slash = buffer.last_of('/');
-
-    if (slash >= 0)
-    {
-        buffer.truncate(slash + 1);
-        buffer << name;
-        if (luaL_dofile(state, buffer.c_str()) == 0)
-            return;
-
-        if (luaL_dofile(state, name) == 0)
-            return;
-    }
-
-    printf("CLINK DEBUG: Failed to load '%s'\n", buffer);
-}
-#endif // CLINK_EMBED_LUA_SCRIPTS
+shared_mem_t*   create_shared_mem(int page_count, const char* tag, int id);
+shared_mem_t*   open_shared_mem(int page_count, const char* tag, int id);
+void            close_shared_mem(shared_mem_t* info);

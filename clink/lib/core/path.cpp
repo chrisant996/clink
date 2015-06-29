@@ -88,7 +88,7 @@ bool path::get_directory(const char* in, str_base& out)
     if (slash == nullptr)
         return false;
 
-    return out.concat(in, slash - in);
+    return out.concat(in, int(slash - in));
 }
 
 //------------------------------------------------------------------------------

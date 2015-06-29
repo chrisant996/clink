@@ -1,4 +1,4 @@
-/* Copyright (c) 2015 Martin Ridgers
+/* Copyright (c) 2013 Martin Ridgers
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -19,45 +19,23 @@
  * SOFTWARE.
  */
 
-#include "pch.h"
-
-extern "C" {
-#include "lualib.h"
-}
-
-#ifdef CLINK_EMBED_LUA_SCRIPTS
+#pragma once
 
 //------------------------------------------------------------------------------
-void lua_load_script_impl(lua_State* state, const char* script)
+typedef struct
 {
-    luaL_dostring(state, script);
-}
+    HANDLE  read;
+    HANDLE  write;
+} pipe_t;
 
-#else // CLINK_EMBED_LUA_SCRIPTS
-
-#include "core/str.h"
+enum
+{
+    ReadHandleInheritable   = 1 << 0,
+    WriteHandleInheritable  = 1 << 1,
+};
 
 //------------------------------------------------------------------------------
-void lua_load_script_impl(lua_State* state, const char* path, const char* name)
-{
-    str<512> buffer;
-    buffer << path;
-
-    int slash = buffer.last_of('\\');
-    if (slash < 0)
-        slash = buffer.last_of('/');
-
-    if (slash >= 0)
-    {
-        buffer.truncate(slash + 1);
-        buffer << name;
-        if (luaL_dofile(state, buffer.c_str()) == 0)
-            return;
-
-        if (luaL_dofile(state, name) == 0)
-            return;
-    }
-
-    printf("CLINK DEBUG: Failed to load '%s'\n", buffer);
-}
-#endif // CLINK_EMBED_LUA_SCRIPTS
+int     create_pipe(int, pipe_t*);
+void    destroy_pipe(pipe_t*);
+HANDLE  duplicate_handle(HANDLE, DWORD);
+void    duplicate_pipe(pipe_t*, const pipe_t*, DWORD);

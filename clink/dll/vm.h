@@ -1,4 +1,4 @@
-/* Copyright (c) 2015 Martin Ridgers
+/* Copyright (c) 2012 Martin Ridgers
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -19,45 +19,22 @@
  * SOFTWARE.
  */
 
-#include "pch.h"
-
-extern "C" {
-#include "lualib.h"
-}
-
-#ifdef CLINK_EMBED_LUA_SCRIPTS
+#pragma once
 
 //------------------------------------------------------------------------------
-void lua_load_script_impl(lua_State* state, const char* script)
+struct region_info_t
 {
-    luaL_dostring(state, script);
-}
-
-#else // CLINK_EMBED_LUA_SCRIPTS
-
-#include "core/str.h"
+    void*       base;
+    size_t      size;
+    unsigned    protect;
+};
 
 //------------------------------------------------------------------------------
-void lua_load_script_impl(lua_State* state, const char* path, const char* name)
-{
-    str<512> buffer;
-    buffer << path;
+extern void* g_current_proc;
 
-    int slash = buffer.last_of('\\');
-    if (slash < 0)
-        slash = buffer.last_of('/');
-
-    if (slash >= 0)
-    {
-        buffer.truncate(slash + 1);
-        buffer << name;
-        if (luaL_dofile(state, buffer.c_str()) == 0)
-            return;
-
-        if (luaL_dofile(state, name) == 0)
-            return;
-    }
-
-    printf("CLINK DEBUG: Failed to load '%s'\n", buffer);
-}
-#endif // CLINK_EMBED_LUA_SCRIPTS
+//------------------------------------------------------------------------------
+void*   get_alloc_base(void* addr);
+void    get_region_info(void* addr, struct region_info_t* region_info);
+void    set_region_write_state(struct region_info_t* region_info, int state);
+int     write_vm(void* proc_handle, void* dest, const void* src, size_t size);
+int     read_vm(void* proc_handle, void* dest, const void* src, size_t size);

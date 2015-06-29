@@ -22,29 +22,27 @@
 #include "pch.h"
 #include "line_editor.h"
 
-#include <shared/util.h>
-
 //------------------------------------------------------------------------------
 class cwd_restorer
 {
 public:
-                cwd_restorer();
-                ~cwd_restorer();
+                    cwd_restorer();
+                    ~cwd_restorer();
 
 private:
-    wchar_t     m_path[MAX_PATH];
+    wstr<MAX_PATH>  m_path;
 };
 
 //------------------------------------------------------------------------------
 cwd_restorer::cwd_restorer()
 {
-    GetCurrentDirectoryW(sizeof_array(m_path), m_path);
+    GetCurrentDirectoryW(m_path.size(), m_path.data());
 }
 
 //------------------------------------------------------------------------------
 cwd_restorer::~cwd_restorer()
 {
-    SetCurrentDirectoryW(m_path);
+    SetCurrentDirectoryW(m_path.c_str());
 }
 
 

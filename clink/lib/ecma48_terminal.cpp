@@ -21,7 +21,8 @@
 
 #include "pch.h"
 #include "ecma48_terminal.h"
-#include "shared/util.h"
+#include "core/base.h"
+#include "core/log.h"
 
 //------------------------------------------------------------------------------
 static unsigned g_last_buffer_size = 0;
@@ -358,7 +359,7 @@ void ecma48_terminal::write(const wchar_t* chars, int char_count)
 
         // Dispatch console write
         DWORD written;
-        WriteConsoleW(handle, next, ansi_code - next, &written, nullptr);
+        WriteConsoleW(handle, next, DWORD(ansi_code - next), &written, nullptr);
 
         // Process ansi code.
         if (*ansi_code)
@@ -400,7 +401,7 @@ void ecma48_terminal::check_sgr_support()
         const char* dll_name = dll_names[i];
         if (GetModuleHandle(dll_name) != nullptr)
         {
-            LOG_INFO("Disabling ANSI support. Found '%s'", dll_name);
+            LOG("Disabling ANSI support. Found '%s'", dll_name);
             m_enable_sgr = false;
             return;
         }

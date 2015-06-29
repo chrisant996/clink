@@ -19,45 +19,37 @@
  * SOFTWARE.
  */
 
-#include "pch.h"
-
-extern "C" {
-#include "lualib.h"
-}
-
-#ifdef CLINK_EMBED_LUA_SCRIPTS
-
-//------------------------------------------------------------------------------
-void lua_load_script_impl(lua_State* state, const char* script)
-{
-    luaL_dostring(state, script);
-}
-
-#else // CLINK_EMBED_LUA_SCRIPTS
+#pragma once
 
 #include "core/str.h"
+#include "singleton.h"
 
 //------------------------------------------------------------------------------
-void lua_load_script_impl(lua_State* state, const char* path, const char* name)
+#define LOG(...)    logger::info(__FUNCTION__, __LINE__, __VA_ARGS__)
+#define ERR(...)    logger::error(__FUNCTION__, __LINE__, __VA_ARGS__)
+
+//------------------------------------------------------------------------------
+class logger
+    : public singleton<logger>
 {
-    str<512> buffer;
-    buffer << path;
+public:
+    virtual         ~logger() = 0 {}
+    static void     info(const char* function, int line, const char* fmt, ...);
+    static void     error(const char* function, int line, const char* fmt, ...);
 
-    int slash = buffer.last_of('\\');
-    if (slash < 0)
-        slash = buffer.last_of('/');
+protected:
+    virtual void    emit(const char* function, int line, const char* fmt, va_list args) = 0;
+};
 
-    if (slash >= 0)
-    {
-        buffer.truncate(slash + 1);
-        buffer << name;
-        if (luaL_dofile(state, buffer.c_str()) == 0)
-            return;
+//------------------------------------------------------------------------------
+class file_logger
+    : public logger
+{
+public:
+                    file_logger(const char* log_path);
+    virtual         ~file_logger();
+    virtual void    emit(const char* function, int line, const char* fmt, va_list args) override;
 
-        if (luaL_dofile(state, name) == 0)
-            return;
-    }
-
-    printf("CLINK DEBUG: Failed to load '%s'\n", buffer);
-}
-#endif // CLINK_EMBED_LUA_SCRIPTS
+private:
+    str<256>        m_log_path;
+};

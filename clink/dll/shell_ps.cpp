@@ -24,8 +24,8 @@
 #include "hook_setter.h"
 #include "prompt.h"
 #include "seh_scope.h"
-#include "shared/util.h"
-#include "shared/vm.h"
+#include "util.h"
+#include "vm.h"
 
 #include <line_editor.h>
 

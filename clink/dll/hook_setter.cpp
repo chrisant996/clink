@@ -21,17 +21,15 @@
 
 #include "pch.h"
 #include "hook_setter.h"
-#include "shared/util.h"
-#include "shared/hook.h"
-#include "shared/vm.h"
+#include "hook.h"
+#include "pe.h"
+#include "vm.h"
+
+#include <core/base.h>
+#include <core/log.h>
 
 //------------------------------------------------------------------------------
 static void             dummy() {}
-
-
-#include "shared/pe.h"
-
-//------------------------------------------------------------------------------
 static bool             (*g_hook_trap)()        = nullptr;
 static void*            g_hook_trap_addr        = nullptr;
 static unsigned char    g_hook_trap_value       = 0;
@@ -66,11 +64,11 @@ static LONG WINAPI hook_trap_veh(EXCEPTION_POINTERS* info)
 #elif defined(_M_X64)
     sp_reg = (void**)info->ContextRecord->Rsp;
 #endif
-    LOG_INFO("VEH hit - caller is %p.", *sp_reg);
+    LOG("VEH hit - caller is %p.", *sp_reg);
 
     // Apply hooks.
     if (g_hook_trap != nullptr && !g_hook_trap())
-        LOG_INFO("Hook trap %p failed.", g_hook_trap);
+        LOG("Hook trap %p failed.", g_hook_trap);
 
     return EXCEPTION_CONTINUE_EXECUTION;
 }
@@ -87,7 +85,7 @@ bool set_hook_trap(void* module, const char* func_name, bool (*trap)())
     {
         char dll[96] = {};
         GetModuleFileName(HMODULE(module), dll, sizeof_array(dll));
-        LOG_INFO("Unable to resolve address for %s in %s", dll, func_name);
+        LOG("Unable to resolve address for %s in %s", dll, func_name);
         return false;
     }
 
@@ -181,7 +179,7 @@ hook_setter::commit_iat(void* self, const hook_desc& desc)
     void* addr = hook_iat(desc.module, nullptr, desc.name, desc.hook, 1);
     if (addr == nullptr)
     {
-        LOG_INFO("Unable to hook %s in IAT at base %p", desc.name, desc.module);
+        LOG("Unable to hook %s in IAT at base %p", desc.name, desc.module);
         return false;
     }
 
@@ -190,7 +188,7 @@ hook_setter::commit_iat(void* self, const hook_desc& desc)
     // any IAT hooks that may already exist.
     if (hook_iat(self, nullptr, desc.name, addr, 1) == 0)
     {
-        LOG_INFO("Failed to hook own IAT for %s", desc.name);
+        LOG("Failed to hook own IAT for %s", desc.name);
         return false;
     }
 
@@ -208,7 +206,7 @@ hook_setter::commit_jmp(void* self, const hook_desc& desc)
     void* addr = hook_jmp(desc.module, desc.name, desc.hook);
     if (addr == nullptr)
     {
-        LOG_INFO("Unable to hook %s in %p", desc.name, desc.module);
+        LOG("Unable to hook %s in %p", desc.name, desc.module);
         return false;
     }
 
@@ -216,7 +214,7 @@ hook_setter::commit_jmp(void* self, const hook_desc& desc)
     // function calls the original.
     if (hook_iat(self, nullptr, desc.name, addr, 1) == 0)
     {
-        LOG_INFO("Failed to hook own IAT for %s", desc.name);
+        LOG("Failed to hook own IAT for %s", desc.name);
         return false;
     }
 

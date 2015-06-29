@@ -21,8 +21,9 @@
 
 #include "pch.h"
 #include "prompt.h"
-#include "shared/util.h"
+#include "util.h"
 
+#include <core/base.h>
 #include <core/str.h>
 
 #include <algorithm>

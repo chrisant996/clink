@@ -29,13 +29,15 @@
 
 #include <Windows.h>
 
-extern "C" {
-
 // Readline includes.
-#include <readline/readline.h>
+#if 0
 #include <readline/history.h>
+#include <readline/readline.h>
 #include <readline/rldefs.h>
 #include <compat/dirent.h>
+#endif
+
+extern "C" {
 
 // Lua includes.
 #include "lua.h"

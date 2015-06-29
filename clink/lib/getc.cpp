@@ -30,6 +30,7 @@ extern int      _rl_last_v_pos;
 //------------------------------------------------------------------------------
 void on_terminal_resize()
 {
+#if MODE4
     CONSOLE_SCREEN_BUFFER_INFO csbi;
     COORD cursor_pos;
     HANDLE handle;
@@ -74,4 +75,5 @@ void on_terminal_resize()
 
         rl_redisplay_function = old_redisplay;
     }
+#endif // MODE4
 }

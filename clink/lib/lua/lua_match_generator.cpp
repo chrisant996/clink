@@ -24,8 +24,6 @@
 #include "lua_script_loader.h"
 #include "line_state.h"
 
-#include <shared/util.h>
-
 extern "C" {
 #include "lua.h"
 #include "lauxlib.h"

@@ -73,7 +73,7 @@ const char_t* ANSI_FNAME(find_next_ansi_code)(const char_t* buffer, int* size)
             int csi_len = ANSI_FNAME(is_csi)(read) + osc;
             if (csi_len)
             {
-                state = read - buffer;
+                state = int(read - buffer);
                 read += (csi_len > 1);
             }
         }
@@ -81,7 +81,7 @@ const char_t* ANSI_FNAME(find_next_ansi_code)(const char_t* buffer, int* size)
         {
             int done;
 
-            char c = *read;
+            char_t c = *read;
             if (osc)
                 done = (c == 0x9c) || (c == 0x1b && read[1] == '\\');
             else
