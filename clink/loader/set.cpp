@@ -27,6 +27,7 @@
 
 //------------------------------------------------------------------------------
 void*                 initialise_clink_settings();
+void                  puts_help(const char**, int);
 static settings_t*    g_settings;
 static str<512>       g_settings_path;
 

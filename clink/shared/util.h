@@ -29,7 +29,6 @@ void get_dll_dir(str_base& buffer);
 void set_config_dir_override(const char* path);
 void log_line(const char* function, int source_line, const char* format, ...);
 void log_error(const char* function, int source_line, const char* format, ...);
-void puts_help(const char** help_pairs, int count);
 void cpy_path_as_abs(str_base& abs, const char* rel);
 void disable_log();
 

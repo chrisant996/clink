@@ -29,6 +29,25 @@ int autorun(int, char**);
 int set(int, char**);
 
 //------------------------------------------------------------------------------
+void puts_help(const char** help_pairs, int count)
+{
+    count &= ~1;
+
+    int max_len = -1;
+    for (int i = 0, n = count; i < n; i += 2)
+        max_len = max((int)strlen(help_pairs[i]), max_len);
+
+    for (int i = 0, n = count; i < n; i += 2)
+    {
+        const char* arg = help_pairs[i];
+        const char* desc = help_pairs[i + 1];
+        printf("  %-*s  %s\n", max_len, arg, desc);
+    }
+
+    puts("");
+}
+
+//------------------------------------------------------------------------------
 static void show_usage()
 {
     const char* help_usage = "Usage: <verb> <verb_options>\n";

@@ -32,6 +32,9 @@
 int do_inject_impl(DWORD, const char*);
 
 //------------------------------------------------------------------------------
+void puts_help(const char**, int);
+
+//------------------------------------------------------------------------------
 static int check_dll_version(const char* clink_dll)
 {
     char buffer[1024];

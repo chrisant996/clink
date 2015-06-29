@@ -28,6 +28,7 @@
 typedef int     (dispatch_func_t)(const char*, int);
 str<>           g_clink_args;
 int             g_all_users  = 0;
+void            puts_help(const char**, int);
 static int      show_autorun();
 
 
