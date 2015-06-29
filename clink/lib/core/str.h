@@ -64,6 +64,7 @@ public:
     TYPE            operator [] (unsigned int i) const;
     str_impl&       operator << (const TYPE* rhs);
                     operator const TYPE* () const;
+    str_impl&       operator << (const str_impl& rhs);
 
 private:
     TYPE*           m_data;
@@ -213,6 +214,14 @@ template <typename TYPE>
 str_impl<TYPE>::operator const TYPE* () const
 {
     return m_data;
+}
+
+//------------------------------------------------------------------------------
+template <typename TYPE>
+str_impl<TYPE>& str_impl<TYPE>::operator << (const str_impl& rhs)
+{
+    concat(rhs.c_str());
+    return *this;
 }
 
 
