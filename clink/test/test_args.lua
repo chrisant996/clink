@@ -283,7 +283,7 @@ q:set_arguments({ "four", "five" })
 
 p = clink.arg.new_parser()
 p:set_arguments(
-	{ "one", "onetwo", "onethree" } .. q
+    { "one", "onetwo", "onethree" } .. q
 )
 clink.arg.register_parser("argcmd_substr", p);
 
