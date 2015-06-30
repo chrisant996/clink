@@ -23,21 +23,14 @@
 #include <Windows.h>
 
 //------------------------------------------------------------------------------
-__declspec(dllimport) int main_impl(int argc, char** argv);
+__declspec(dllimport) int loader_main_thunk();
 
 #if defined(_VC_NODEFAULTLIB)
 #pragma runtime_checks("", off)
-int mainCRTStartup(uintptr_t param)
-{
-    int argc;
-    LPWSTR* argv = CommandLineToArgvW(GetCommandLineW(), &argc);
-    int ret = main_impl(argc, argv);
-    LocalFree(argv);
-    return ret;
-}
+int mainCRTStartup(uintptr_t param) // effectively a thread entry point.
 #else
 int main(int argc, char** argv)
-{
-    return main_impl(argc, argv);
-}
 #endif
+{
+    return loader_main_thunk();
+}

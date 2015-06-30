@@ -23,6 +23,7 @@
 #include "paths.h"
 
 #include <core/base.h>
+#include <core/str.h>
 
 extern "C" {
 #include <getopt.h>
@@ -157,5 +158,19 @@ int loader(int argc, char** argv)
         show_usage();
     }
 
+    return ret;
+}
+
+//------------------------------------------------------------------------------
+int loader_main_impl()
+{
+    int argc = 0;
+    LPWSTR* argv = CommandLineToArgvW(GetCommandLineW(), &argc);
+    for (int i = 0; i < argc; ++i)
+        convert((char*)argv[i], 0xffff, argv[i]);
+
+    int ret = loader(argc, (char**)argv);
+
+    LocalFree(argv);
     return ret;
 }

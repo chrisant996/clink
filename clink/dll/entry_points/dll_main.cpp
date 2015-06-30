@@ -24,7 +24,6 @@
 //------------------------------------------------------------------------------
 void    on_dll_attach();
 void    on_dll_detach();
-int     loader(int, char**);
 
 //------------------------------------------------------------------------------
 BOOL WINAPI DllMain(HINSTANCE instance, DWORD reason, LPVOID unused)
@@ -38,8 +37,12 @@ BOOL WINAPI DllMain(HINSTANCE instance, DWORD reason, LPVOID unused)
     return TRUE;
 }
 
+
+
 //------------------------------------------------------------------------------
-__declspec(dllexport) int main_impl(int argc, char** argv)
+// This function exists purely to make sure it gets exported from the DLL.
+__declspec(dllexport) int loader_main_thunk()
 {
-    return loader(argc, argv);
+    extern int loader_main_impl();
+    return loader_main_impl();
 }
