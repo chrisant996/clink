@@ -22,8 +22,6 @@
 #include "pch.h"
 #include "shared_mem.h"
 
-#include <core/log.h>
-
 //------------------------------------------------------------------------------
 static int get_shared_mem_size(int page_count)
 {
@@ -49,7 +47,6 @@ static void* map_shared_mem(HANDLE handle, int size)
     ptr = MapViewOfFile(handle, FILE_MAP_ALL_ACCESS, 0, 0, size);
     if (ptr == nullptr)
     {
-        ERR("Failed to map shared memory %p", handle);
         CloseHandle(handle);
         return nullptr;
     }
@@ -70,27 +67,15 @@ shared_mem_t* create_shared_mem(int page_count, const char* tag, int id)
 
     // Create the mapping
     size = get_shared_mem_size(page_count);
-    handle = CreateFileMapping(
-        INVALID_HANDLE_VALUE,
-        nullptr,
-        PAGE_READWRITE,
-        0,
-        size,
-        name
-    );
+    handle = CreateFileMapping(INVALID_HANDLE_VALUE, nullptr, PAGE_READWRITE, 0,
+        size, name);
     if (handle == nullptr)
-    {
-        ERR("Failed to create shared memory %s", name);
         return nullptr;
-    }
 
     // Resolve to a pointer
     ptr = map_shared_mem(handle, size);
     if (ptr == nullptr)
-    {
-        ERR("Failed to map shared memory");
         return nullptr;
-    }
 
     info = (shared_mem_t*)malloc(sizeof(shared_mem_t));
     info->handle = handle;
@@ -113,19 +98,13 @@ shared_mem_t* open_shared_mem(int page_count, const char* tag, int id)
     // Open the shared page.
     handle = OpenFileMapping(FILE_MAP_ALL_ACCESS, FALSE, name);
     if (handle == nullptr)
-    {
-        ERR("Failed to open shared memory %s", name);
         return nullptr;
-    }
 
     // Resolve it to a memory address.
     size = get_shared_mem_size(page_count);
     ptr = map_shared_mem(handle, size);
     if (ptr == nullptr)
-    {
-        ERR("Failed to map shared memory");
         return nullptr;
-    }
 
     info = (shared_mem_t*)malloc(sizeof(shared_mem_t));
     info->handle = handle;
