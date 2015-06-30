@@ -371,13 +371,6 @@ void get_profile_path(const char* in, str_base& out)
 //------------------------------------------------------------------------------
 int inject(int argc, char** argv)
 {
-    DWORD target_pid = 0;
-    int i;
-    int ret = 1;
-    int is_autorun = 0;
-    shared_mem_t* shared_mem;
-    inject_args_t inject_args = { 0 };
-
     struct option options[] = {
         { "scripts",     required_argument,  nullptr, 's' },
         { "profile",     required_argument,  nullptr, 'p' },
@@ -400,7 +393,10 @@ int inject(int argc, char** argv)
     extern const char* g_clink_header;
 
     // Parse arguments
-    while ((i = getopt_long(argc, argv, "nalqhp:s:d:", options, nullptr)) != -1)
+    bool is_autorun = false;
+    DWORD target_pid = 0;
+    inject_args_t inject_args = { 0 };
+    while ((int i = getopt_long(argc, argv, "nalqhp:s:d:", options, nullptr)) != -1)
     {
         switch (i)
         {
@@ -415,7 +411,7 @@ int inject(int argc, char** argv)
 
         case 'q': inject_args.quiet = 1;         break;
         case 'd': target_pid = atoi(optarg);     break;
-        case '_': is_autorun = 1;                break;
+        case '_': is_autorun = true;             break;
 
         case 'l':
             inject_args.no_log = 1;
@@ -456,9 +452,9 @@ int inject(int argc, char** argv)
     file_logger logger(log_path.c_str());
 
     // Write args to shared memory, inject, and clean up.
-    shared_mem = create_shared_mem(1, "clink", target_pid);
+    shared_mem_t* shared_mem = create_shared_mem(1, "clink", target_pid);
     memcpy(shared_mem->ptr, &inject_args, sizeof(inject_args));
-    ret = !do_inject(target_pid);
+    int ret = !do_inject(target_pid);
     close_shared_mem(shared_mem);
 
 end:
