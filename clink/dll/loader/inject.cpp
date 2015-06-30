@@ -390,7 +390,6 @@ int inject(int argc, char** argv)
     };
 
     const char* help[] = {
-        "-s, --scripts <path>", "Alternative path to load .lua scripts from.",
         "-p, --profile <path>", "Specifies and alternative path for profile data.",
         "-q, --quiet",          "Suppress copyright output.",
         "-d, --pid <pid>",      "Inject into the process specified by <pid>.",
@@ -405,15 +404,6 @@ int inject(int argc, char** argv)
     {
         switch (i)
         {
-        case 's':
-            {
-                char* data = inject_args.script_path;
-                int size = sizeof_array(inject_args.script_path);
-                str_base buffer(data, size);
-                cpy_path_as_abs(buffer, optarg);
-            }
-            break;
-
         case 'p':
             {
                 char* data = inject_args.profile_path;
