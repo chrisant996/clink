@@ -21,9 +21,9 @@
 
 #pragma once
 
+#include <stdarg.h>
 #include <stdio.h>
 #include <string.h>
-#include <stdarg.h>
 
 //------------------------------------------------------------------------------
 inline int  str_len(const char* s)                                   { return int(strlen(s)); }
@@ -46,12 +46,14 @@ template <typename TYPE>
 class str_impl
 {
 public:
+    typedef TYPE    char_t;
+
                     str_impl(TYPE* data, unsigned int size);
-                    str_impl(const TYPE* rhs);
     TYPE*           data();
     const TYPE*     c_str() const;
     unsigned int    size() const;
     unsigned int    length() const;
+    unsigned int    char_count() const;
     void            clear();
     bool            empty() const;
     void            truncate(unsigned int length);
@@ -227,16 +229,26 @@ str_impl<TYPE>& str_impl<TYPE>::operator << (const str_impl& rhs)
 
 
 //------------------------------------------------------------------------------
+bool convert(class str_base& out, const wchar_t* utf16);
+bool convert(char* out, int max_count, const wchar_t* utf16);
+bool convert(class wstr_base& out, const char* utf8);
+bool convert(wchar_t* out, int max_count, const char* utf8);
+
+
+
+//------------------------------------------------------------------------------
 class str_base : public str_impl<char>
 {
 public:
-    str_base(char* data, unsigned int size) : str_impl<char>(data, size) {}
+            str_base(char* data, int size) : str_impl<char>(data, size) {}
+    bool    convert(const wchar_t* utf16) { clear(); return ::convert(*this, utf16); }
 };
 
 class wstr_base : public str_impl<wchar_t>
 {
 public:
-    wstr_base(wchar_t* data, unsigned int size) : str_impl<wchar_t>(data, size) {}
+            wstr_base(wchar_t* data, int size) : str_impl<wchar_t>(data, size) {}
+    bool    convert(const char* utf8) { clear(); return ::convert(*this, utf8); }
 };
 
 
@@ -248,7 +260,9 @@ class str : public str_base
     char        m_data[COUNT];
 
 public:
-                str() : str_base(m_data, COUNT) {}
+                str() : str_base(m_data, COUNT)     {}
+                str(const char* value) : str()      { copy(value); }
+    void        operator = (const char* value)      { copy(value); }
 };
 
 template <int COUNT=128>
@@ -257,5 +271,39 @@ class wstr : public wstr_base
     wchar_t     m_data[COUNT];
 
 public:
-                wstr() : wstr_base(m_data, COUNT) {}
+                wstr() : wstr_base(m_data, COUNT)   {}
+                wstr(const wchar_t* value) : wstr() { copy(value); }
+    void        operator = (const wchar_t* value)   { copy(value); }
 };
+
+
+
+//------------------------------------------------------------------------------
+template <>
+inline unsigned int str_impl<char>::char_count() const
+{
+    int count = 0;
+    const char* ptr = c_str();
+    while (int c = *ptr++)
+        // 'count' is increased if the top two MSBs of c are not 10xxxxxx
+        count += (c & 0xc0) != 0x80;
+
+    return count;
+}
+
+template <>
+inline unsigned int str_impl<wchar_t>::char_count() const
+{
+    int count = 0;
+    const wchar_t* ptr = c_str();
+    while (unsigned short c = *ptr++)
+    {
+        ++count;
+
+        if ((c & 0xfc00) == 0xd800)
+            if ((*ptr & 0xfc00) == 0xdc00)
+                ++ptr;
+    }
+
+    return count;
+}

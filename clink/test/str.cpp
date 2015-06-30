@@ -31,6 +31,7 @@ TEST_CASE("Strings" NAME_SUFFIX) {
     SECTION("Basics") {
         str<256> s;
         REQUIRE(s.length() == 0);
+        REQUIRE(s.char_count() == s.length());
         REQUIRE(s.data() == s.c_str());
         REQUIRE(s.size() == 256);
 
@@ -44,6 +45,7 @@ TEST_CASE("Strings" NAME_SUFFIX) {
         REQUIRE(s[0] == '0');
         REQUIRE(s[9] == '9');
         REQUIRE(s[99] == 0);
+        REQUIRE(s.length() == s.char_count());
     }
 
     SECTION("Concatenation") {
