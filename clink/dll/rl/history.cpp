@@ -20,8 +20,9 @@
  */
 
 #include "pch.h"
-#include "core/str.h"
-#include "util.h"
+#include "paths.h"
+
+#include <core/str.h>
 
 extern "C" {
 #include <readline/history.h>

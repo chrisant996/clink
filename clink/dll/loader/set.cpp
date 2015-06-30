@@ -20,7 +20,7 @@
  */
 
 #include "pch.h"
-#include "util.h"
+#include "paths.h"
 #include "settings.h"
 
 #include <core/base.h>

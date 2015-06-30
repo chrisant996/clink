@@ -23,8 +23,8 @@
 #include "shell_cmd.h"
 #include "hook_setter.h"
 #include "seh_scope.h"
-#include "util.h"
-#include "vm.h"
+#include "paths.h"
+#include "process/vm.h"
 
 #include <core/base.h>
 #include <core/log.h>

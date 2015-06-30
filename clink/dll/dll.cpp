@@ -22,7 +22,7 @@
 #include "pch.h"
 #include "inject_args.h"
 #include "paths.h"
-#include "shared_mem.h"
+#include "process/shared_mem.h"
 #include "shell.h"
 #include "shell_cmd.h"
 #include "shell_ps.h"

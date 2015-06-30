@@ -21,7 +21,6 @@
 
 #include "pch.h"
 #include "settings.h"
-#include "util.h"
 
 #include <core/str.h>
 

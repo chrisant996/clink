@@ -20,8 +20,8 @@
  */
 
 #include "pch.h"
+#include "paths.h"
 #include "seh_scope.h"
-#include "util.h"
 
 #include <core/str.h>
 

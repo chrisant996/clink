@@ -22,10 +22,9 @@
 #include "pch.h"
 #include "shell_ps.h"
 #include "hook_setter.h"
+#include "process/vm.h"
 #include "prompt.h"
 #include "seh_scope.h"
-#include "util.h"
-#include "vm.h"
 
 #include <line_editor.h>
 

@@ -21,7 +21,6 @@
 
 #include "pch.h"
 #include "vm.h"
-#include "util.h"
 
 //------------------------------------------------------------------------------
 void* g_current_proc = (void*)-1;

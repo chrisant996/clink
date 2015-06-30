@@ -20,9 +20,9 @@
  */
 
 #include "pch.h"
-#include "pe.h"
-#include "util.h"
-#include "shared_mem.h"
+#include "paths.h"
+#include "process/pe.h"
+#include "process/shared_mem.h"
 #include "inject_args.h"
 
 #include <core/base.h>
@@ -36,6 +36,7 @@ int do_inject_impl(DWORD, const char*);
 
 //------------------------------------------------------------------------------
 void puts_help(const char**, int);
+void cpy_path_as_abs(str_base&, const char*);
 
 //------------------------------------------------------------------------------
 static int check_dll_version(const char* clink_dll)

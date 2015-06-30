@@ -21,9 +21,9 @@
 
 #include "pch.h"
 #include "hook_setter.h"
-#include "hook.h"
-#include "pe.h"
-#include "vm.h"
+#include "process/hook.h"
+#include "process/pe.h"
+#include "process/vm.h"
 
 #include <core/base.h>
 #include <core/log.h>
