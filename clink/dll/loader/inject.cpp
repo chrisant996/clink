@@ -396,7 +396,8 @@ int inject(int argc, char** argv)
     bool is_autorun = false;
     DWORD target_pid = 0;
     inject_args_t inject_args = { 0 };
-    while ((int i = getopt_long(argc, argv, "nalqhp:s:d:", options, nullptr)) != -1)
+    int i;
+    while ((i = getopt_long(argc, argv, "nalqhp:s:d:", options, nullptr)) != -1)
     {
         switch (i)
         {
@@ -428,6 +429,12 @@ int inject(int argc, char** argv)
         }
     }
 
+    // Restart the log file on every inject.
+    str<256> log_path;
+    get_log_dir(log_path);
+    log_path << "/clink.log";
+    unlink(log_path.c_str());
+
     // Unless a target pid was specified on the command line, use our parent
     // process pid.
     if (target_pid == 0)
@@ -443,13 +450,6 @@ int inject(int argc, char** argv)
     // Check to see if clink is already installed.
     if (is_clink_present(target_pid))
         goto end;
-
-    // Start a log file.
-    str<256> log_path;
-    get_log_dir(log_path);
-    log_path << "/clink.log";
-    unlink(log_path.c_str());
-    file_logger logger(log_path.c_str());
 
     // Write args to shared memory, inject, and clean up.
     shared_mem_t* shared_mem = create_shared_mem(1, "clink", target_pid);

@@ -29,6 +29,7 @@
 
 #include <core/base.h>
 #include <core/log.h>
+#include <core/path.h>
 #include <core/str.h>
 #include <ecma48_terminal.h>
 #include <lua/lua_root.h>
@@ -128,7 +129,7 @@ static shell* create_shell_ps(line_editor* editor)
 }
 
 //------------------------------------------------------------------------------
-static bool get_shell_name(str_base& out)
+static bool get_host_name(str_base& out)
 {
     str<256> buffer;
     if (GetModuleFileName(nullptr, buffer.data(), buffer.size()) == buffer.size())
@@ -137,17 +138,26 @@ static bool get_shell_name(str_base& out)
     if (GetLastError() == ERROR_INSUFFICIENT_BUFFER)
         return false;
 
-    const char* slash = strrchr(buffer.c_str(), '\\');
-    slash = (slash != nullptr) ? slash + 1 : buffer.data();
-
-    out << slash;
-    LOG("Shell process is '%s'", out);
-    return true;
+    return path::get_name(buffer.c_str(), out);
 }
 
 //------------------------------------------------------------------------------
 void on_dll_attach()
 {
+    // First of all lets find out which process the DLL's loaded into.
+    str<64> host_name;
+    if (!get_host_name(host_name))
+        return;
+
+    // Start a log file.
+    str<256> log_path;
+    get_log_dir(log_path);
+    log_path << "/clink.log";
+    new file_logger(log_path.c_str());
+
+    if (host_name.equals("clink_" AS_STR(PLATFORM) ".exe"))
+        return;
+
     // Get the inject arguments.
     get_inject_args(GetCurrentProcessId());
 
@@ -159,20 +169,13 @@ void on_dll_attach()
         set_config_dir_override(g_inject_args.profile_path);
 
     if (!g_inject_args.no_log)
-    {
-        str<256> log_path;
-        get_log_dir(log_path);
-        log_path << "/clink.log";
+        delete logger::get();
 
-        new file_logger(log_path.c_str());
-    }
-
-    str<64> shell_name;
-    get_shell_name(shell_name);
+    LOG("Host process is '%s'", host_name);
 
     // Prepare core systems.
     initialise_clink_settings();
-    initialise_line_editor(shell_name.c_str());
+    initialise_line_editor(host_name.c_str());
     load_history();
 
     // Search for a supported shell.
@@ -186,7 +189,7 @@ void on_dll_attach()
 
     for (int i = 0; i < sizeof_array(shells); ++i)
     {
-        if (stricmp(shell_name.c_str(), shells[i].name) == 0)
+        if (stricmp(host_name.c_str(), shells[i].name) == 0)
         {
             g_shell = (shells[i].creator)(g_line_editor);
             break;
@@ -217,9 +220,6 @@ void on_dll_attach()
 //------------------------------------------------------------------------------
 void on_dll_detach()
 {
-    if (logger* logger = logger::get())
-        delete logger;
-
     if (g_shell == nullptr)
         return;
 
@@ -231,4 +231,7 @@ void on_dll_detach()
     save_history();
     shutdown_clink_settings();
     shutdown_line_editor();
+
+    if (logger* logger = logger::get())
+        delete logger;
 }
