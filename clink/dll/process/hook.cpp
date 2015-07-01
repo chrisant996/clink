@@ -323,18 +323,29 @@ static int get_instruction_length(void* addr)
 //------------------------------------------------------------------------------
 static void* follow_jump(void* addr)
 {
-    void* dest;
-    char* t = (char*)addr;
+    void* dest = addr;
+    unsigned char* t = (unsigned char*)addr;
     int* imm = (int*)(t + 2);
 
-    if (*((unsigned short*)addr) != 0x25ff)
+    // Check the opcode.
+    if (t[0] != 0xff)
         return addr;
 
+    // Check the opcode extension from the modr/m byte.
+    if ((t[1] & 070) != 040)
+        return addr;
+
+    switch (t[1] & 007)
+    {
+    case 5:
 #ifdef _M_X64
-    dest = t + *imm + 6;
+        // dest = [rip + disp32]
+        dest = *(void**)(t + 6 + *imm);
 #elif defined _M_IX86
-    dest = (void*)(intptr_t)(*imm);
+        // dest = disp32
+        dest = (void*)(intptr_t)(*imm);
 #endif
+    }
 
     LOG("Following jump to %p", dest);
     return dest;
