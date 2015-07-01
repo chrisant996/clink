@@ -23,9 +23,9 @@
 #include "inject_args.h"
 #include "paths.h"
 #include "process/shared_mem.h"
-#include "host/shell.h"
-#include "host/shell_cmd.h"
-#include "host/shell_ps.h"
+#include "host/host.h"
+#include "host/host_cmd.h"
+#include "host/host_ps.h"
 
 #include <core/base.h>
 #include <core/log.h>
@@ -53,10 +53,10 @@ int                     get_clink_setting_int(const char*);
 
 inject_args_t           g_inject_args;
 static line_editor*     g_line_editor           = nullptr;
-static shell*           g_shell                 = nullptr;
+static host*            g_host                  = nullptr;
 
 //------------------------------------------------------------------------------
-static void initialise_line_editor(const char* shell_name)
+static void initialise_line_editor(const char* host_name)
 {
     lua_root* lua = new lua_root();
     lua_State* state = lua->get_state();
@@ -75,7 +75,7 @@ static void initialise_line_editor(const char* shell_name)
     terminal* terminal = new ecma48_terminal();
     match_printer* printer = new column_printer(terminal);
 
-    line_editor::desc desc = { shell_name, terminal, lua, printer };
+    line_editor::desc desc = { host_name, terminal, lua, printer };
     g_line_editor = create_rl_line_editor(desc);
 }
 
@@ -117,15 +117,15 @@ static void failed()
 }
 
 //------------------------------------------------------------------------------
-static shell* create_shell_cmd(line_editor* editor)
+static host* create_host_cmd(line_editor* editor)
 {
-    return new shell_cmd(editor);
+    return new host_cmd(editor);
 }
 
 //------------------------------------------------------------------------------
-static shell* create_shell_ps(line_editor* editor)
+static host* create_host_ps(line_editor* editor)
 {
-    return new shell_ps(editor);
+    return new host_ps(editor);
 }
 
 //------------------------------------------------------------------------------
@@ -178,37 +178,37 @@ void on_dll_attach()
     initialise_line_editor(host_name.c_str());
     load_history();
 
-    // Search for a supported shell.
+    // Search for a supported host.
     struct {
         const char* name;
-        shell*      (*creator)(line_editor*);
-    } shells[] = {
-        { "cmd.exe",        create_shell_cmd },
-        { "powershell.exe", create_shell_ps },
+        host*      (*creator)(line_editor*);
+    } hosts[] = {
+        { "cmd.exe",        create_host_cmd },
+        { "powershell.exe", create_host_ps },
     };
 
-    for (int i = 0; i < sizeof_array(shells); ++i)
+    for (int i = 0; i < sizeof_array(hosts); ++i)
     {
-        if (stricmp(host_name.c_str(), shells[i].name) == 0)
+        if (stricmp(host_name.c_str(), hosts[i].name) == 0)
         {
-            g_shell = (shells[i].creator)(g_line_editor);
+            g_host = (hosts[i].creator)(g_line_editor);
             break;
         }
     }
 
-    if (g_shell == nullptr)
+    if (g_host == nullptr)
     {
-        LOG("Unknown shell.");
+        LOG("Unknown host.");
         return;
     }
 
-    if (!g_shell->validate())
+    if (!g_host->validate())
     {
         LOG("Shell validation failed.");
         return;
     }
 
-    if (!g_shell->initialise())
+    if (!g_host->initialise())
     {
         failed();
         return;
@@ -220,10 +220,10 @@ void on_dll_attach()
 //------------------------------------------------------------------------------
 void on_dll_detach()
 {
-    if (g_shell == nullptr)
+    if (g_host == nullptr)
         return;
 
-    g_shell->shutdown();
+    g_host->shutdown();
 
     if (get_clink_setting_int("history_io"))
         load_history();

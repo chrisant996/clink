@@ -21,19 +21,19 @@
 
 #pragma once
 
-#include "shell.h"
+#include "host.h"
 #include "singleton.h"
 
 #include <Windows.h>
 
 //------------------------------------------------------------------------------
-class shell_ps
-    : public shell
-    , public singleton<shell_ps>
+class host_ps
+    : public host
+    , public singleton<host_ps>
 {
 public:
-                        shell_ps(line_editor* editor);
-                        ~shell_ps();
+                        host_ps(line_editor* editor);
+                        ~host_ps();
     bool                validate() override;
     bool                initialise() override;
     void                shutdown() override;

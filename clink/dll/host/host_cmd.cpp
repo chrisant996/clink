@@ -20,7 +20,7 @@
  */
 
 #include "pch.h"
-#include "shell_cmd.h"
+#include "host_cmd.h"
 #include "hook_setter.h"
 #include "seh_scope.h"
 #include "paths.h"
@@ -142,18 +142,18 @@ static BOOL WINAPI single_char_read(
 
 
 //------------------------------------------------------------------------------
-shell_cmd::shell_cmd(line_editor* editor)
-: shell(editor)
+host_cmd::host_cmd(line_editor* editor)
+: host(editor)
 {
 }
 
 //------------------------------------------------------------------------------
-shell_cmd::~shell_cmd()
+host_cmd::~host_cmd()
 {
 }
 
 //------------------------------------------------------------------------------
-bool shell_cmd::validate()
+bool host_cmd::validate()
 {
     if (!is_interactive())
         return false;
@@ -162,7 +162,7 @@ bool shell_cmd::validate()
 }
 
 //------------------------------------------------------------------------------
-bool shell_cmd::initialise()
+bool host_cmd::initialise()
 {
     // Find the correct module that exports ReadConsoleW by finding the base
     // address of the virtual memory block where the function is.
@@ -194,20 +194,20 @@ bool shell_cmd::initialise()
         buffer << cfg_path << "\" $*";
 
         const char* slash = strrchr(path.c_str(), '\\');
-        const char* shell_name = (slash != nullptr) ? slash + 1 : path.c_str();
-        AddConsoleAlias("clink", buffer.data(), (char*)shell_name);
+        const char* host_name = (slash != nullptr) ? slash + 1 : path.c_str();
+        AddConsoleAlias("clink", buffer.data(), (char*)host_name);
     }
 
     return true;
 }
 
 //------------------------------------------------------------------------------
-void shell_cmd::shutdown()
+void host_cmd::shutdown()
 {
 }
 
 //------------------------------------------------------------------------------
-bool shell_cmd::is_interactive() const
+bool host_cmd::is_interactive() const
 {
     // Check the command line for '/c' and don't load if it's present. There's
     // no point loading clink if cmd.exe is running a command and then exiting.
@@ -243,7 +243,7 @@ bool shell_cmd::is_interactive() const
 }
 
 //------------------------------------------------------------------------------
-void shell_cmd::edit_line(const wchar_t* prompt, wchar_t* chars, int max_chars)
+void host_cmd::edit_line(const wchar_t* prompt, wchar_t* chars, int max_chars)
 {
     // Doskey is implemented on the server side of a ReadConsoleW() call (i.e.
     // in conhost.exe). Commands separated by a "$T" are returned one command
@@ -275,7 +275,7 @@ void shell_cmd::edit_line(const wchar_t* prompt, wchar_t* chars, int max_chars)
 }
 
 //------------------------------------------------------------------------------
-BOOL WINAPI shell_cmd::read_console(
+BOOL WINAPI host_cmd::read_console(
     HANDLE input,
     wchar_t* chars,
     DWORD max_chars,
@@ -318,11 +318,11 @@ BOOL WINAPI shell_cmd::read_console(
         return single_char_read(input, chars, max_chars, read_in, control);
 
     // Sometimes cmd.exe wants line input for reasons other than command entry.
-    const wchar_t* prompt = shell_cmd::get()->m_prompt.get();
+    const wchar_t* prompt = host_cmd::get()->m_prompt.get();
     if (prompt == nullptr || *prompt == L'\0')
         return ReadConsoleW(input, chars, max_chars, read_in, control);
 
-    shell_cmd::get()->edit_line(prompt, chars, max_chars);
+    host_cmd::get()->edit_line(prompt, chars, max_chars);
 
     // ReadConsole will also include the CRLF of the line that was input.
     size_t len = max_chars - wcslen(chars);
@@ -336,7 +336,7 @@ BOOL WINAPI shell_cmd::read_console(
 }
 
 //------------------------------------------------------------------------------
-BOOL WINAPI shell_cmd::write_console(
+BOOL WINAPI host_cmd::write_console(
     HANDLE output,
     const wchar_t* chars,
     DWORD to_write,
@@ -349,7 +349,7 @@ BOOL WINAPI shell_cmd::write_console(
     if (GetFileType(output) != FILE_TYPE_CHAR)
         return WriteConsoleW(output, chars, to_write, written, unused);
 
-    if (shell_cmd::get()->capture_prompt(chars, to_write))
+    if (host_cmd::get()->capture_prompt(chars, to_write))
     {
         // Convince caller (cmd.exe) that we wrote something to the console.
         if (written != nullptr)
@@ -362,7 +362,7 @@ BOOL WINAPI shell_cmd::write_console(
 }
 
 //------------------------------------------------------------------------------
-bool shell_cmd::capture_prompt(const wchar_t* chars, int char_count)
+bool host_cmd::capture_prompt(const wchar_t* chars, int char_count)
 {
     // Clink tags the prompt so that it can be detected when cmd.exe writes it
     // to the console.
@@ -372,7 +372,7 @@ bool shell_cmd::capture_prompt(const wchar_t* chars, int char_count)
 }
 
 //------------------------------------------------------------------------------
-BOOL WINAPI shell_cmd::set_env_var(const wchar_t* name, const wchar_t* value)
+BOOL WINAPI host_cmd::set_env_var(const wchar_t* name, const wchar_t* value)
 {
     seh_scope seh;
 
@@ -385,7 +385,7 @@ BOOL WINAPI shell_cmd::set_env_var(const wchar_t* name, const wchar_t* value)
 }
 
 //------------------------------------------------------------------------------
-bool shell_cmd::hook_trap()
+bool host_cmd::hook_trap()
 {
     // Tag the prompt so we can detect when cmd.exe writes to the terminal.
     wchar_t buffer[256];
@@ -403,8 +403,8 @@ bool shell_cmd::hook_trap()
 
     void* base = GetModuleHandle(nullptr);
     hook_setter hooks;
-    hooks.add_jmp(kernel_module, "ReadConsoleW",            &shell_cmd::read_console);
-    hooks.add_iat(base,          "WriteConsoleW",           &shell_cmd::write_console);
-    hooks.add_iat(base,          "SetEnvironmentVariableW", &shell_cmd::set_env_var);
+    hooks.add_jmp(kernel_module, "ReadConsoleW",            &host_cmd::read_console);
+    hooks.add_iat(base,          "WriteConsoleW",           &host_cmd::write_console);
+    hooks.add_iat(base,          "SetEnvironmentVariableW", &host_cmd::set_env_var);
     return (hooks.commit() == 3);
 }

@@ -24,11 +24,11 @@
 class line_editor;
 
 //------------------------------------------------------------------------------
-class shell
+class host
 {
 public:
-                    shell(line_editor* editor);
-    virtual         ~shell() = 0 {}
+                    host(line_editor* editor);
+    virtual         ~host() = 0 {}
     virtual bool    validate() = 0;
     virtual bool    initialise() = 0;
     virtual void    shutdown() = 0;
@@ -39,13 +39,13 @@ private:
 };
 
 //------------------------------------------------------------------------------
-inline shell::shell(line_editor* editor)
+inline host::host(line_editor* editor)
 : m_line_editor(editor)
 {
 }
 
 //------------------------------------------------------------------------------
-inline line_editor* shell::get_line_editor() const
+inline line_editor* host::get_line_editor() const
 {
     return m_line_editor;
 }

@@ -21,19 +21,19 @@
 
 #pragma once
 
-#include "shell.h"
+#include "host.h"
 #include "prompt.h"
 
 #include <singleton.h>
 
 //------------------------------------------------------------------------------
-class shell_cmd
-    : public shell
-    , public singleton<shell_cmd>
+class host_cmd
+    : public host
+    , public singleton<host_cmd>
 {
 public:
-                        shell_cmd(line_editor* editor);
-                        ~shell_cmd();
+                        host_cmd(line_editor* editor);
+                        ~host_cmd();
     virtual bool        validate() override;
     virtual bool        initialise() override;
     virtual void        shutdown() override;

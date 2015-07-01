@@ -20,7 +20,7 @@
  */
 
 #include "pch.h"
-#include "shell_ps.h"
+#include "host_ps.h"
 #include "hook_setter.h"
 #include "process/vm.h"
 #include "prompt.h"
@@ -31,24 +31,24 @@
 #include <Windows.h>
 
 //------------------------------------------------------------------------------
-shell_ps::shell_ps(line_editor* editor)
-: shell(editor)
+host_ps::host_ps(line_editor* editor)
+: host(editor)
 {
 }
 
 //------------------------------------------------------------------------------
-shell_ps::~shell_ps()
+host_ps::~host_ps()
 {
 }
 
 //------------------------------------------------------------------------------
-bool shell_ps::validate()
+bool host_ps::validate()
 {
     return true;
 }
 
 //------------------------------------------------------------------------------
-bool shell_ps::initialise()
+bool host_ps::initialise()
 {
     void* read_console_module = get_alloc_base(ReadConsoleW);
     if (read_console_module == nullptr)
@@ -60,12 +60,12 @@ bool shell_ps::initialise()
 }
 
 //------------------------------------------------------------------------------
-void shell_ps::shutdown()
+void host_ps::shutdown()
 {
 }
 
 //------------------------------------------------------------------------------
-BOOL WINAPI shell_ps::read_console(
+BOOL WINAPI host_ps::read_console(
     HANDLE input,
     wchar_t* chars,
     DWORD max_chars,
@@ -86,7 +86,7 @@ BOOL WINAPI shell_ps::read_console(
 
     // Edit and add the CRLF that ReadConsole() adds when called.
     *chars = '\0';
-    shell_ps::get()->edit_line(prompt.get(), chars, max_chars);
+    host_ps::get()->edit_line(prompt.get(), chars, max_chars);
 
     size_t len = max_chars - wcslen(chars);
     wcsncat(chars, L"\x0d\x0a", len);
@@ -100,7 +100,7 @@ BOOL WINAPI shell_ps::read_console(
 }
 
 //------------------------------------------------------------------------------
-void shell_ps::edit_line(const wchar_t* prompt, wchar_t* chars, int max_chars)
+void host_ps::edit_line(const wchar_t* prompt, wchar_t* chars, int max_chars)
 {
     get_line_editor()->edit_line(prompt, chars, max_chars);
 }
