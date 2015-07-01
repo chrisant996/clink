@@ -23,9 +23,9 @@
 #include "inject_args.h"
 #include "paths.h"
 #include "process/shared_mem.h"
-#include "shell.h"
-#include "shell_cmd.h"
-#include "shell_ps.h"
+#include "host/shell.h"
+#include "host/shell_cmd.h"
+#include "host/shell_ps.h"
 
 #include <core/base.h>
 #include <core/log.h>
