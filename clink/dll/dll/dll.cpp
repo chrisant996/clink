@@ -168,7 +168,7 @@ void on_dll_attach()
     if (g_inject_args.profile_path[0] != '\0')
         set_config_dir_override(g_inject_args.profile_path);
 
-    if (!g_inject_args.no_log)
+    if (g_inject_args.no_log)
         delete logger::get();
 
     LOG("Host process is '%s'", host_name);
