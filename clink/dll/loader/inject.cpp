@@ -68,13 +68,7 @@ static DWORD get_parent_pid()
 {
     ULONG_PTR pbi[6];
     ULONG size = 0;
-    LONG (WINAPI *NtQueryInformationProcess)(
-        HANDLE,
-        ULONG,
-        PVOID,
-        ULONG,
-        PULONG
-    );
+    LONG (WINAPI *NtQueryInformationProcess)(HANDLE, ULONG, PVOID, ULONG, PULONG);
 
     *(FARPROC*)&NtQueryInformationProcess = GetProcAddress(
         LoadLibraryA("ntdll.dll"),
@@ -83,18 +77,11 @@ static DWORD get_parent_pid()
 
     if (NtQueryInformationProcess)
     {
-        LONG ret = NtQueryInformationProcess(
-            GetCurrentProcess(),
-            0,
-            &pbi,
-            sizeof(pbi),
-            &size
-        );
+        LONG ret = NtQueryInformationProcess(GetCurrentProcess(), 0, &pbi,
+            sizeof(pbi), &size);
 
         if ((ret >= 0) && (size == sizeof(pbi)))
-        {
             return (DWORD)(pbi[5]);
-        }
     }
 
     return -1;
