@@ -242,13 +242,17 @@ class str_base : public str_impl<char>
 public:
             str_base(char* data, int size) : str_impl<char>(data, size) {}
     bool    convert(const wchar_t* utf16) { clear(); return ::convert(*this, utf16); }
+    void    operator = (const char* value)      { copy(value); }
+    void    operator = (const wchar_t* value)   { convert(value); }
 };
 
 class wstr_base : public str_impl<wchar_t>
 {
 public:
             wstr_base(wchar_t* data, int size) : str_impl<wchar_t>(data, size) {}
-    bool    convert(const char* utf8) { clear(); return ::convert(*this, utf8); }
+    bool    convert(const char* utf8)           { clear(); return ::convert(*this, utf8); }
+    void    operator = (const wchar_t* value)   { copy(value); }
+    void    operator = (const char* value)      { convert(value); }
 };
 
 
@@ -257,23 +261,25 @@ public:
 template <int COUNT=128>
 class str : public str_base
 {
-    char        m_data[COUNT];
+    char    m_data[COUNT];
 
 public:
-                str() : str_base(m_data, COUNT)     {}
-                str(const char* value) : str()      { copy(value); }
-    void        operator = (const char* value)      { copy(value); }
+            str() : str_base(m_data, COUNT)     {}
+            str(const char* value) : str()      { copy(value); }
+            str(const wchar_t* value) : str()   { convert(value); }
+    using   str_base::operator =;
 };
 
 template <int COUNT=128>
 class wstr : public wstr_base
 {
-    wchar_t     m_data[COUNT];
+    wchar_t m_data[COUNT];
 
 public:
-                wstr() : wstr_base(m_data, COUNT)   {}
-                wstr(const wchar_t* value) : wstr() { copy(value); }
-    void        operator = (const wchar_t* value)   { copy(value); }
+            wstr() : wstr_base(m_data, COUNT)   {}
+            wstr(const wchar_t* value) : wstr() { copy(value); }
+            wstr(const char* value) : wstr()    { convert(value); }
+    using   wstr_base::operator =;
 };
 
 
