@@ -20,14 +20,83 @@
  */
 
 #include "catch.hpp"
-#include <line_state.h>
+#include <core/str.h>
 #include <file_match_generator.h>
+#include <line_state.h>
+#include <stdarg.h>
 
-TEST_CASE("File match generator") {
-    file_match_generator match_gen;
+//------------------------------------------------------------------------------
+static match_result run_test(const char* line)
+{
+    str<> command = line;
+    int start = command.last_of(' ') + 1;
+    int end = command.length();
+    int cursor = end;
+    const char* word = command.c_str() + start;
 
-    SECTION("Basic") {
-        line_state line = { "" };
-        match_result results = match_gen.generate(line);
+    line_state state = { word, command.c_str(), start, end, cursor };
+    return file_match_generator().generate(state);
+}
+
+//------------------------------------------------------------------------------
+static void expect(const match_result& result, ...)
+{
+    va_list arg;
+    va_start(arg, result);
+
+    int match_count = 0;
+    while (const char* match = va_arg(arg, const char*))
+    {
+        bool ok = false;
+        for (int i = 0, n = result.get_match_count(); i < n; ++i)
+            if (ok = (strcmp(match, result.get_match(i)) == 0))
+                break;
+
+        if (ok)
+            ++match_count;
     }
+
+    REQUIRE(result.get_match_count() == match_count);
+}
+
+//------------------------------------------------------------------------------
+TEST_CASE("File match generator") {
+    SECTION("File system matches") {
+        auto result = run_test("cmd ");
+        expect(result, "", "case_map-1", "case_map_2", "dir1\\", "dir2\\",
+            "file1", "file2", nullptr);
+    }
+
+    SECTION("Single file") {
+        auto result = run_test("cmd file1");
+        expect(result, "file1", "file1", nullptr);
+    }
+
+    SECTION("Single dir") {
+        auto result = run_test("cmd dir1");
+        expect(result, "dir1\\", "dir1\\", nullptr);
+    }
+
+    SECTION("Dir slash flip") {
+        auto result = run_test("cmd dir1/");
+        expect(result, "dir1/", "dir1\\only", "dir1\\file1", "dir1\\file2", nullptr);
+    }
+
+    SECTION("Path slash flip") {
+        auto result = run_test("cmd dir1/on");
+        expect(result, "dir1\\only", "dir1\\only", nullptr);
+    }
+
+    SECTION("Case mapping matches") {
+        auto result = run_test("cmd case-m");
+        expect(result, "case-map", "case_map-1", "case_map_2", nullptr);
+    }
+
+    /*
+    SECTION("Case mapping complex") {
+        auto result = run_test("cmd case_map-");
+        expect(result, "cmd case_map-");
+        REQUIRE(result.get_match_count() == 1);
+    }
+    */
 }

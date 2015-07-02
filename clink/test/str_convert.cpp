@@ -85,7 +85,6 @@ TEST_CASE("Wide character/UTF-8 conversion") {
         }
 
         SECTION("Two bytes") {
-            __debugbreak();
             s.convert("\xc2\x80");
             REQUIRE(s.equals(L"\x0080"));
 

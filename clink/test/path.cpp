@@ -77,10 +77,11 @@ TEST_CASE("Paths") {
 
         SECTION("In-place") {
             SECTION("0") { s << "one/two/three/filename.ext"; }
-            SECTION("1") { s << "one/two/three\\filename.ext"; }
+            SECTION("1") { s << "one/two\\three/filename.ext"; }
             path::get_directory(s);
         }
 
+        path::clean(s, '/');
         REQUIRE(s.equals("one/two/three"));
     }
 
@@ -154,6 +155,8 @@ TEST_CASE("Paths") {
             SECTION("2") { path::join("one/two\\", "three/four", s); }
             SECTION("3") { path::join("one/two", "/three/four", s); }
             SECTION("4") { path::join("one/two", "\\three/four", s); }
+            SECTION("5") { path::join("", "one/two\\three/four", s); }
+            SECTION("6") { path::join("one/two\\three/four", "", s); }
 
             path::clean(s);
             REQUIRE(s.equals("one\\two\\three\\four"));
