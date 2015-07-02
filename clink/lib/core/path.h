@@ -27,7 +27,7 @@ class str_base;
 class path
 {
 public:
-    static void     clean(str_base& in_out);
+    static void     clean(str_base& in_out, int sep='\\');
     static bool     get_base_name(const char* in, str_base& out);
     static bool     get_directory(const char* in, str_base& out);
     static bool     get_directory(str_base& in_out);

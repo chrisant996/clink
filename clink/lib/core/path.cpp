@@ -24,7 +24,7 @@
 #include "str.h"
 
 //------------------------------------------------------------------------------
-void path::clean(str_base& in_out)
+void path::clean(str_base& in_out, int sep)
 {
     enum clean_state
     {
@@ -40,9 +40,9 @@ void path::clean(str_base& in_out)
         switch (state)
         {
         case state_write:
-            if (c == '\\' || c == '/')
+            if (c == '\\' || c == '/' || c == sep)
             {
-                c = '\\';
+                c = sep;
                 state = state_slash;
             }
 
@@ -51,7 +51,7 @@ void path::clean(str_base& in_out)
             break;
 
         case state_slash:
-            if (c != '\\' && c != '/')
+            if (c != '\\' && c != '/' && c != sep)
             {
                 state = state_write;
                 continue;
