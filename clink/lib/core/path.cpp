@@ -81,23 +81,16 @@ bool path::get_base_name(const char* in, str_base& out)
 //------------------------------------------------------------------------------
 bool path::get_directory(const char* in, str_base& out)
 {
-    const char* slash = strrchr(in, '\\');
-    if (slash == nullptr)
-        slash = strrchr(in, '/');
+    if (const char* slash = max(strrchr(in, '\\'), strrchr(in, '/')))
+        return out.concat(in, int(slash - in));
 
-    if (slash == nullptr)
-        return false;
-
-    return out.concat(in, int(slash - in));
+    return false;
 }
 
 //------------------------------------------------------------------------------
 bool path::get_directory(str_base& in_out)
 {
-    int slash = in_out.last_of('\\');
-    if (slash < 0)
-        slash = in_out.last_of('/');
-
+    int slash = max(in_out.last_of('\\'), in_out.last_of('/'));
     if (slash < 0)
         return false;
 
@@ -137,14 +130,10 @@ bool path::get_extension(const char* in, str_base& out)
 //------------------------------------------------------------------------------
 bool path::get_name(const char* in, str_base& out)
 {
-    const char* slash = strrchr(in, '\\');
-    if (slash == nullptr)
-        slash = strrchr(in, '/');
+    if (const char* slash = max(strrchr(in, '\\'), strrchr(in, '/')))
+        return out.concat(slash + 1);
 
-    if (slash == nullptr)
-        return out.concat(in);
-
-    return out.concat(slash + 1);
+    return out.concat(in);
 }
 
 //------------------------------------------------------------------------------
