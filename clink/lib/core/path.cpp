@@ -140,10 +140,16 @@ bool path::get_name(const char* in, str_base& out)
 bool path::join(const char* lhs, const char* rhs, str_base& out)
 {
     out << lhs;
+    return append(out, rhs);
+}
 
-    int last = int(strlen(lhs) - 1);
-    if (lhs[last] != '\\' && lhs[last] != '/' && rhs[0] != '\\' && rhs[0] != '/')
-        out << "\\";
+//------------------------------------------------------------------------------
+bool path::append(str_base& out, const char* rhs)
+{
+    int last = int(out.length() - 1);
+    if (last >= 0 && *rhs)
+        if (out[last] != '\\' && out[last] != '/' && rhs[0] != '\\' && rhs[0] != '/')
+            out << "\\";
 
     return out.concat(rhs);
 }

@@ -36,6 +36,7 @@ public:
     static bool     get_extension(const char* in, str_base& out);
     static bool     get_name(const char* in, str_base& out);
     static bool     join(const char* lhs, const char* rhs, str_base& out);
+    static bool     append(str_base& out, const char* rhs);
 
 private:
                     path();
