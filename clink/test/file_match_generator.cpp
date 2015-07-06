@@ -20,82 +20,63 @@
  */
 
 #include "catch.hpp"
-#include <core/str.h>
+#include "scoped_test_fs.h"
+#include "match_generator_tester.h"
 #include <file_match_generator.h>
-#include <line_state.h>
-#include <stdarg.h>
-
-//------------------------------------------------------------------------------
-static match_result run_test(const char* line)
-{
-    str<> command = line;
-    int start = command.last_of(' ') + 1;
-    int end = command.length();
-    int cursor = end;
-    const char* word = command.c_str() + start;
-
-    line_state state = { word, command.c_str(), start, end, cursor };
-    return file_match_generator().generate(state);
-}
-
-//------------------------------------------------------------------------------
-static void expect(const match_result& result, ...)
-{
-    va_list arg;
-    va_start(arg, result);
-
-    int match_count = 0;
-    while (const char* match = va_arg(arg, const char*))
-    {
-        bool ok = false;
-        for (int i = 0, n = result.get_match_count(); i < n; ++i)
-            if (ok = (strcmp(match, result.get_match(i)) == 0))
-                break;
-
-        if (ok)
-            ++match_count;
-    }
-
-    REQUIRE(result.get_match_count() == match_count);
-}
 
 //------------------------------------------------------------------------------
 TEST_CASE("File match generator") {
+	scoped_test_fs fs;
+
     SECTION("File system matches") {
-        auto result = run_test("cmd ");
-        expect(result, "", "case_map-1", "case_map_2", "dir1\\", "dir2\\",
-            "file1", "file2", nullptr);
+        match_generator_tester<file_match_generator>(
+            "cmd ",
+            "", "case_map-1", "case_map_2", "dir1\\", "dir2\\",
+            "file1", "file2", nullptr
+        );
     }
 
     SECTION("Single file") {
-        auto result = run_test("cmd file1");
-        expect(result, "file1", "file1", nullptr);
+        match_generator_tester<file_match_generator>(
+            "cmd file1",
+            "file1", "file1", nullptr
+        );
     }
 
     SECTION("Single dir") {
-        auto result = run_test("cmd dir1");
-        expect(result, "dir1\\", "dir1\\", nullptr);
+        match_generator_tester<file_match_generator>(
+            "cmd dir1",
+            "dir1\\", "dir1\\", nullptr
+        );
     }
 
     SECTION("Dir slash flip") {
-        auto result = run_test("cmd dir1/");
-        expect(result, "dir1/", "dir1\\only", "dir1\\file1", "dir1\\file2", nullptr);
+        match_generator_tester<file_match_generator>(
+            "cmd dir1/",
+            "dir1/", "dir1\\only", "dir1\\file1", "dir1\\file2", nullptr
+        );
     }
 
     SECTION("Path slash flip") {
-        auto result = run_test("cmd dir1/on");
-        expect(result, "dir1\\only", "dir1\\only", nullptr);
+        match_generator_tester<file_match_generator>(
+            "cmd dir1/on",
+            "dir1\\only", "dir1\\only", nullptr
+        );
     }
 
     SECTION("Case mapping matches") {
-        auto result = run_test("cmd case-m");
-        expect(result, "case-map", "case_map-1", "case_map_2", nullptr);
+        match_generator_tester<file_match_generator>(
+            "cmd case-m",
+            "case-map", "case_map-1", "case_map_2", nullptr
+        );
     }
 
     /*
     SECTION("Case mapping complex") {
-        auto result = run_test("cmd case_map-");
-        expect(result, "cmd case_map-");
+        match_generator_tester<file_match_generator>(
+            "cmd case_map-",
+            expect(result, "cmd case_map-", nullptr
+        );
         REQUIRE(result.get_match_count() == 1);
     }
     */
