@@ -240,19 +240,19 @@ bool convert(wchar_t* out, int max_count, const char* utf8);
 class str_base : public str_impl<char>
 {
 public:
-            str_base(char* data, int size) : str_impl<char>(data, size) {}
-    bool    convert(const wchar_t* utf16) { clear(); return ::convert(*this, utf16); }
-    void    operator = (const char* value)      { copy(value); }
-    void    operator = (const wchar_t* value)   { convert(value); }
+         str_base(char* data, int size) : str_impl<char>(data, size) {}
+    bool convert(const wchar_t* utf16)     { clear(); return ::convert(*this, utf16); }
+    void operator = (const char* value)    { copy(value); }
+    void operator = (const wchar_t* value) { convert(value); }
 };
 
 class wstr_base : public str_impl<wchar_t>
 {
 public:
-            wstr_base(wchar_t* data, int size) : str_impl<wchar_t>(data, size) {}
-    bool    convert(const char* utf8)           { clear(); return ::convert(*this, utf8); }
-    void    operator = (const wchar_t* value)   { copy(value); }
-    void    operator = (const char* value)      { convert(value); }
+         wstr_base(wchar_t* data, int size) : str_impl<wchar_t>(data, size) {}
+    bool convert(const char* utf8)          { clear(); return ::convert(*this, utf8); }
+    void operator = (const wchar_t* value)  { copy(value); }
+    void operator = (const char* value)     { convert(value); }
 };
 
 
