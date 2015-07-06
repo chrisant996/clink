@@ -263,8 +263,12 @@ project("clink_test")
     language("c++")
     kind("consoleapp")
     removeflags("NoExceptions")
+    links("lua")
+    links("readline")
     links("clink_lib")
+    links("clink_base")
     includedirs("clink/lib")
+    includedirs("clink/dll")
     files("clink/test/**pp")
 
 --------------------------------------------------------------------------------
