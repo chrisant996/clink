@@ -23,6 +23,8 @@
 
 #include <vector>
 
+class str_base;
+
 //------------------------------------------------------------------------------
 class match_result
 {
@@ -35,6 +37,7 @@ public:
     unsigned int        get_match_count() const;
     const char*         get_match(unsigned int index) const;
     void                add_match(const char* match);
+    void                get_match_lcd(str_base& out) const;
 
 private:
     void                swap(match_result& rhs);

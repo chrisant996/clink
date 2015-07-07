@@ -32,6 +32,7 @@ match_result::match_result()
 
 //------------------------------------------------------------------------------
 match_result::match_result(match_result&& rhs)
+: match_result()
 {
     swap(rhs);
 }
@@ -68,4 +69,37 @@ void match_result::add_match(const char* match)
     char* out = new char[len];
     str_base(out, len).copy(match);
     m_matches.push_back(out);
+}
+
+//------------------------------------------------------------------------------
+void match_result::get_match_lcd(str_base& out) const
+{
+    int match_count = get_match_count();
+
+    if (match_count <= 0)
+        return;
+
+    if (match_count == 1)
+    {
+        out = m_matches[0];
+        return;
+    }
+
+    out = get_match(0);
+    int lcd_length = out.length();
+
+    for (int i = 1, n = get_match_count(); i < n; ++i)
+    {
+        const char* match = get_match(i);
+        for (int j = 0, m = min(int(strlen(match)), lcd_length); j < m; ++j)
+        {
+            if (tolower(out[j]) != tolower(match[j]))
+            {
+                lcd_length = j;
+                break;
+            }
+        }
+    }
+
+    out.truncate(lcd_length);
 }
