@@ -37,6 +37,7 @@ public:
     static bool     change_dir(const char* dir);
     static bool     make_dir(const char* dir);
     static bool     remove_dir(const char* dir);
+    static bool     unlink(const char* path);
     static bool     get_temp_dir(str_base& out);
     static bool     get_env(const char* name, str_base& out);
 

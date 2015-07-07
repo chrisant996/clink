@@ -76,6 +76,13 @@ bool os::remove_dir(const char* dir)
 }
 
 //------------------------------------------------------------------------------
+bool os::unlink(const char* path)
+{
+    wstr<MAX_PATH> wpath(path);
+    return (DeleteFileW(wpath.c_str()) == TRUE);
+}
+
+//------------------------------------------------------------------------------
 bool os::get_temp_dir(str_base& out)
 {
     return get_env("tmp", out) || get_env("temp", out);
