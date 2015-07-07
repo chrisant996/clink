@@ -39,8 +39,8 @@ public:
     static bool     append(str_base& out, const char* rhs);
 
 private:
-                    path();
-                    ~path();
-                    path(const char&);
-    void            operator = (const path&);
+                    path() = delete;
+                    ~path() = delete;
+                    path(const char&) = delete;
+    void            operator = (const path&) = delete;
 };

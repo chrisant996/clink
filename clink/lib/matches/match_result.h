@@ -32,6 +32,8 @@ public:
                         match_result();
                         ~match_result();
                         match_result(match_result&& rhs);
+                        match_result(const match_result&) = delete;
+    void                operator = (const match_result&) = delete;
     void                operator = (match_result&& rhs);
     void                reserve(unsigned int count);
     unsigned int        get_match_count() const;
@@ -41,8 +43,6 @@ public:
 
 private:
     void                swap(match_result& rhs);
-                        match_result(const match_result&);  // unimplemented
-    void                operator = (const match_result&);   // unimplemented
     std::vector<char*>  m_matches;
 };
 

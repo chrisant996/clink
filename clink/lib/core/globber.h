@@ -43,6 +43,8 @@ public:
     bool                next(str_base& out);
 
 private:
+                        globber(const globber&) = delete;
+    void                operator = (const globber&) = delete;
     void                next_file();
     WIN32_FIND_DATAW    m_data;
     HANDLE              m_handle;

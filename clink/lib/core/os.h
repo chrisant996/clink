@@ -41,8 +41,8 @@ public:
     static bool     get_env(const char* name, str_base& out);
 
 private:
-                    os();
-                    ~os();
-                    os(const os&);
-    void            operator = (const os&);
+                    os() = delete;
+                    ~os() = delete;
+                    os(const os&) = delete;
+    void            operator = (const os&) = delete;
 };
