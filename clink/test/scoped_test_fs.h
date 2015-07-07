@@ -31,6 +31,7 @@ public:
                     ~scoped_test_fs();
 
 private:
+    void            clean(const char* path);
     str<>           m_root;
     const char**    m_fs;
 };

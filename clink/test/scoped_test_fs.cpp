@@ -20,8 +20,10 @@
  */
 
 #include "scoped_test_fs.h"
+#include "catch.hpp"
 
 #include <core/base.h>
+#include <core/globber.h>
 #include <core/os.h>
 #include <core/path.h>
 
@@ -42,7 +44,7 @@ static const char* g_default_fs[] = {
 scoped_test_fs::scoped_test_fs(const char** fs)
 {
     os::get_env("tmp", m_root);
-    m_root << "/clink_test";
+    m_root << "\\clink_test\\";
 
     os::make_dir(m_root.c_str());
     os::change_dir(m_root.c_str());
@@ -68,22 +70,25 @@ scoped_test_fs::scoped_test_fs(const char** fs)
 scoped_test_fs::~scoped_test_fs()
 {
     os::change_dir(m_root.c_str());
+    os::change_dir("..");
 
-    const char** item = m_fs;
-    while (const char* file = *item)
+    clean(m_root.c_str());
+}
+
+//------------------------------------------------------------------------------
+void scoped_test_fs::clean(const char* path)
+{
+    globber::context ctx = { path };
+    globber globber(ctx);
+
+    str<MAX_PATH> file;
+    while (globber.next(file))
     {
-        unlink(file);
-        ++item;
+        if (os::get_path_type(file.c_str()) == os::path_type_dir)
+            clean(file.c_str());
+        else
+            REQUIRE(os::unlink(file.c_str()));
     }
 
-    --item;
-    while (item >= m_fs)
-    {
-        str<> dir;
-        path::get_directory(*item, dir);
-        os::remove_dir(dir.c_str());
-        --item;
-    }
-
-    os::remove_dir(m_root.c_str());
+    REQUIRE(os::remove_dir(path));
 }
