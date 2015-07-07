@@ -21,15 +21,16 @@
 
 #include "pch.h"
 #include "rl_line_editor.h"
-#include "core/base.h"
-#include "core/log.h"
-#include "core/str.h"
 #include "inputrc.h"
-#include "line_state.h"
-#include "matches/match_generator.h"
 #include "rl_scroller.h"
-#include "singleton.h"
-#include "terminal.h"
+
+#include <core/base.h>
+#include <core/log.h>
+#include <core/str.h>
+#include <line_state.h>
+#include <matches/match_generator.h>
+#include <singleton.h>
+#include <terminal.h>
 
 //------------------------------------------------------------------------------
 int     call_readline_w(const wchar_t*, wchar_t*, unsigned);
