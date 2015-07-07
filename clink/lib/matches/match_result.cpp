@@ -65,6 +65,9 @@ void match_result::reserve(unsigned int count)
 //------------------------------------------------------------------------------
 void match_result::add_match(const char* match)
 {
+    if (match == nullptr || match[0] == '\0')
+        return;
+
     int len = int(strlen(match)) + 1;
     char* out = new char[len];
     str_base(out, len).copy(match);
