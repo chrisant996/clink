@@ -114,15 +114,11 @@ int clink_lua_api::to_lowercase(lua_State* state)
 
     // Check we've got at least one argument...
     if (lua_gettop(state) == 0)
-    {
         return 0;
-    }
 
     // ...and that the argument is a string.
     if (!lua_isstring(state, 1))
-    {
         return 0;
-    }
 
     string = lua_tostring(state, 1);
     length = (int)strlen(string);
@@ -134,13 +130,9 @@ int clink_lua_api::to_lowercase(lua_State* state)
         {
             char c = string[i];
             if (c == '-')
-            {
                 c = '_';
-            }
             else
-            {
                 c = tolower(c);
-            }
 
             lowered[i] = c;
         }
@@ -265,21 +257,15 @@ static int get_env(lua_State* state)
     char* buf_utf8;
 
     if (lua_gettop(state) == 0)
-    {
         return 0;
-    }
 
     if (lua_isnil(state, 1))
-    {
         return 0;
-    }
 
     name = lua_tostring(state, 1);
     size = GetEnvironmentVariable(name, nullptr, 0);
     if (!size)
-    {
         return 0;
-    }
 
     buffer = (char*)malloc(size);
     GetEnvironmentVariable(name, buffer, size);
@@ -338,14 +324,10 @@ int clink_lua_api::get_setting_str(lua_State* state)
     const char* c;
 
     if (lua_gettop(state) == 0)
-    {
         return 0;
-    }
 
     if (lua_isnil(state, 1) || !lua_isstring(state, 1))
-    {
         return 0;
-    }
 
     c = lua_tostring(state, 1);
     c = get_clink_setting_str(c);
@@ -361,14 +343,10 @@ int clink_lua_api::get_setting_int(lua_State* state)
     const char* c;
 
     if (lua_gettop(state) == 0)
-    {
         return 0;
-    }
 
     if (lua_isnil(state, 1) || !lua_isstring(state, 1))
-    {
         return 0;
-    }
 
     c = lua_tostring(state, 1);
     i = get_clink_setting_int(c);
@@ -399,13 +377,9 @@ int clink_lua_api::suppress_quoting(lua_State* state)
 int clink_lua_api::slash_translation(lua_State* state)
 {
     if (lua_gettop(state) == 0)
-    {
         g_slash_translation = 0;
-    }
     else
-    {
         g_slash_translation = (int)lua_tointeger(state, 1);
-    }
 
     return 0;
 }
@@ -418,22 +392,16 @@ int clink_lua_api::is_dir(lua_State* state)
     int i;
 
     if (lua_gettop(state) == 0)
-    {
         return 0;
-    }
 
     if (lua_isnil(state, 1))
-    {
         return 0;
-    }
 
     i = 0;
     name = lua_tostring(state, 1);
     attrib = GetFileAttributes(name);
     if (attrib != INVALID_FILE_ATTRIBUTES)
-    {
         i = !!(attrib & FILE_ATTRIBUTE_DIRECTORY);
-    }
 
     lua_pushboolean(state, i);
 
@@ -468,9 +436,7 @@ int clink_lua_api::is_rl_variable_true(lua_State* state)
 
     i = get_rl_variable(state);
     if (i == 0)
-    {
         return 0;
-    }
 
     cvar_value = lua_tostring(state, -1);
     i = (_stricmp(cvar_value, "on") == 0) || (_stricmp(cvar_value, "1") == 0);
@@ -512,15 +478,11 @@ int clink_lua_api::get_console_aliases(lua_State* state)
         // Get the aliases (aka. doskey macros).
         buffer_size = GetConsoleAliasesLength((char*)rl_readline_name);
         if (buffer_size == 0)
-        {
             break;
-        }
 
         char* buffer = (char*)malloc(buffer_size + 1);
         if (GetConsoleAliases(buffer, buffer_size, (char*)rl_readline_name) == 0)
-        {
             break;
-        }
 
         buffer[buffer_size] = '\0';
 
@@ -531,9 +493,7 @@ int clink_lua_api::get_console_aliases(lua_State* state)
         {
             char* c = strchr(alias, '=');
             if (c == nullptr)
-            {
                 break;
-            }
 
             *c = '\0';
             lua_pushstring(state, alias);
