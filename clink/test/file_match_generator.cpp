@@ -53,7 +53,7 @@ TEST_CASE("File match generator") {
     SECTION("Dir slash flip") {
         match_generator_tester<file_match_generator>(
             "cmd dir1/",
-            "dir1/", "dir1\\only", "dir1\\file1", "dir1\\file2", nullptr
+            "dir1\\", "dir1\\only", "dir1\\file1", "dir1\\file2", nullptr
         );
     }
 

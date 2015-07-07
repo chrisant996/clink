@@ -29,37 +29,37 @@
 template <class T>
 struct match_generator_tester
 {
-            match_generator_tester(const char* line, ...);
-            match_generator_tester(const str_base& line, ...);
+            match_generator_tester(const char* line, const char* lcd, ...);
+            match_generator_tester(const str_base& line, const char* lcd, ...);
     void    initialise() {}
-    void    run(const char* line, va_list arg);
+    void    run(const char* line, const char* lcd, va_list arg);
     void    shutdown() {}
     T       m_generator;
 };
 
 //------------------------------------------------------------------------------
 template <class T>
-match_generator_tester<T>::match_generator_tester(const char* line, ...)
+match_generator_tester<T>::match_generator_tester(const char* line, const char* lcd, ...)
 {
     va_list arg;
-    va_start(arg, line);
-    run(line, arg);
+    va_start(arg, lcd);
+    run(line, lcd, arg);
     va_end(arg);
 };
 
 //------------------------------------------------------------------------------
 template <class T>
-match_generator_tester<T>::match_generator_tester(const str_base& line, ...)
+match_generator_tester<T>::match_generator_tester(const str_base& line, const char* lcd, ...)
 {
     va_list arg;
-    va_start(arg, line);
-    run(line.c_str(), arg);
+    va_start(arg, lcd);
+    run(line.c_str(), lcd, arg);
     va_end(arg);
 };
 
 //------------------------------------------------------------------------------
 template <class T>
-void match_generator_tester<T>::run(const char* line, va_list arg)
+void match_generator_tester<T>::run(const char* line, const char* lcd, va_list arg)
 {
     initialise();
 
@@ -74,9 +74,21 @@ void match_generator_tester<T>::run(const char* line, va_list arg)
     line_state state = { word, command.c_str(), start, end, cursor };
     match_result result = m_generator.generate(state);
 
+    // Check the lowest common denominator of the matches.
+    str<> result_lcd;
+    result.get_match_lcd(result_lcd);
+
+    if (result.get_match_count() && !result_lcd.equals(lcd))
+    {
+        printf(" expected: LCD '%s'\n", lcd);
+        printf("      got: LCD '%s'\n", result_lcd.c_str());
+        REQUIRE(false);
+    }
+
     // Test 'em.
     int match_count = 0;
-    while (const char* match = va_arg(arg, const char*))
+    va_list arg_iter = arg;
+    while (const char* match = va_arg(arg_iter, const char*))
     {
         bool ok = false;
         for (int i = 0, n = result.get_match_count(); i < n; ++i)
@@ -90,7 +102,18 @@ void match_generator_tester<T>::run(const char* line, va_list arg)
             ++match_count;
     }
 
-    REQUIRE(result.get_match_count() == match_count);
+    if (match_count != result.get_match_count())
+    {
+        int i = 0;
+        va_list arg_iter = arg;
+        while (const char* match = va_arg(arg_iter, const char*))
+            printf(" expected: %02d '%s'\n", i++, match);
+
+        for (int i = 0, n = result.get_match_count(); i < n; ++i)
+            printf("      got: %02d '%s'\n", i, result.get_match(i));
+    }
+
+    REQUIRE(match_count == result.get_match_count());
 
     shutdown();
 }

@@ -261,18 +261,26 @@ char** rl_line_editor::completion(const char* word, int start, int end)
     line_state line = { word, rl_line_buffer, start, end, rl_point };
     match_result result = get_match_generator()->generate(line);
 
-    char** matches = (char**)malloc(sizeof(char*) * (result.get_match_count() + 1));
+    char** matches = (char**)malloc(sizeof(char*) * (result.get_match_count() + 2));
+
+    // Lowest common denominator
+    str<MAX_PATH> lcd;
+    result.get_match_lcd(lcd);
+    matches[0] = (char*)malloc(lcd.length() + 1);
+    strcpy(matches[0], lcd.c_str());
+
+    // Matches.
+    ++matches;
     for (int i = 0, e = result.get_match_count(); i < e; ++i)
     {
         const char* match = result.get_match(i);
-        int match_len = int(strlen(match));
-        matches[i] = (char*)malloc(match_len + 1);
+        matches[i] = (char*)malloc(strlen(match) + 1);
         strcpy(matches[i], match);
     }
     matches[result.get_match_count()] = nullptr;
 
     rl_attempted_completion_over = 1;
-    return matches;
+    return --matches;
 }
 
 //------------------------------------------------------------------------------

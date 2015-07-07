@@ -25,73 +25,6 @@ clink.matches = {}
 clink.generators = {}
 
 --------------------------------------------------------------------------------
-function clink.is_single_match(matches)
-    if #matches <= 1 then
-        return true
-    end
-
-    local first = matches[1]:lower()
-    for i = 2, #matches, 1 do
-        if first ~= matches[i]:lower() then
-            return false
-        end
-    end
-
-    return true
-end
-
---------------------------------------------------------------------------------
-function clink.compute_lcd(text, list)
-    local list_n = #list
-    if list_n < 2 then
-        return
-    end
-
-    -- Find min and max limits
-    local max = 100000
-    for i = 1, #list, 1 do
-        local j = #(list[i])
-        if max > j then
-            max = j
-        end
-    end
-
-    -- For each character in the search range...
-    local mid = #text
-    local lcd = ""
-    for i = 1, max, 1 do
-        local same = true
-        local l = list[1]:sub(i, i)
-        local m = l:lower()
-
-        -- Compare character at the index with each other character in the
-        -- other matches.
-        for j = 2, list_n, 1 do
-            local n = list[j]:sub(i, i):lower()
-            if m ~= n then
-                same = false
-                break
-            end
-        end
-
-        -- If all characters match then use first match's character.
-        if same then
-            lcd = lcd..l
-        else
-            -- Otherwise use what the user's typed or if we're past that then
-            -- bail out.
-            if i <= mid then
-                lcd = lcd..text:sub(i, i)
-            else
-                break
-            end
-        end
-    end
-
-    return lcd
-end
-
---------------------------------------------------------------------------------
 function clink.match_words(text, words)
     local count = clink.match_count()
 
@@ -201,19 +134,6 @@ function clink.generate_matches(text, first, last)
 
     for _, generator in ipairs(clink.generators) do
         if generator.f(text, first, last) == true then
-            if #clink.matches > 1 then
-                -- Catch instances where there's many entries of a single match
-                if clink.is_single_match(clink.matches) then
-                    clink.matches = { clink.matches[1] }
-                    return true;
-                end
-
-                -- First entry in the match list should be the user's input,
-                -- modified here to be the lowest common denominator.
-                local lcd = clink.compute_lcd(text, clink.matches)
-                table.insert(clink.matches, 1, lcd)
-            end
-
             return true
         end
     end
