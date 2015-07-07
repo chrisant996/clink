@@ -97,12 +97,10 @@ match_result lua_match_generator::generate(const line_state& line)
     lua_pushliteral(m_state, "matches");
     lua_rawget(m_state, -2);
 
+
     int match_count = (int)lua_rawlen(m_state, -1);
     if (match_count <= 0)
-    {
-        lua_pop(m_state, 2);
-        return file_match_generator::generate(line);
-    }
+        return match_result();
 
     match_result matches;
     matches.reserve(match_count);
