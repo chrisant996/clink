@@ -23,6 +23,7 @@
 #include "clink_lua_api.h"
 #include "core/base.h"
 #include "core/str.h"
+#include "core/globber.h"
 #include "lua_delegate.h"
 #include "lua_script_loader.h"
 
@@ -153,50 +154,26 @@ int clink_lua_api::to_lowercase(lua_State* state)
 }
 
 //------------------------------------------------------------------------------
-int clink_lua_api::find_files_impl(lua_State* state, int dirs_only)
+int clink_lua_api::find_files_impl(lua_State* state, bool dirs_only)
 {
     // Check arguments.
-    int i = lua_gettop(state);
-    if (i == 0 || lua_isnil(state, 1))
+    if (!lua_gettop(state) || lua_isnil(state, 1))
         return 0;
 
     const char* mask = lua_tostring(state, 1);
 
-    // Should the mask be adjusted for -/_ case mapping?
-    str<512> buffer;
-    if (_rl_completion_case_map && i > 1 && lua_toboolean(state, 2))
-    {
-        buffer << mask;
-        mask = buffer.c_str();
-
-        char* slash;
-        slash = strrchr(buffer.data(), '\\');
-        slash = slash ? slash : strrchr(buffer.data(), '/');
-        slash = slash ? slash + 1 : buffer.data();
-
-        while (*slash)
-        {
-            char c = *slash;
-            if (c == '_' || c == '-')
-                *slash = '?';
-
-            ++slash;
-        }
-    }
-
     lua_createtable(state, 0, 0);
 
-    i = 1;
-    DIR* dir = opendir(mask);
-    while (struct dirent* entry = readdir(dir))
-    {
-        if (dirs_only && !(entry->attrib & _A_SUBDIR))
-            continue;
+    globber::context glob_ctx = { mask, "", dirs_only };
+    globber globber(glob_ctx);
 
-        lua_pushstring(state, entry->d_name);
+    int i = 1;
+    str<MAX_PATH> file;
+    while (globber.next(file))
+    {
+        lua_pushstring(state, file.c_str());
         lua_rawseti(state, -2, i++);
     }
-    closedir(dir);
 
     return 1;
 }
@@ -204,13 +181,13 @@ int clink_lua_api::find_files_impl(lua_State* state, int dirs_only)
 //------------------------------------------------------------------------------
 int clink_lua_api::find_files(lua_State* state)
 {
-    return find_files_impl(state, 0);
+    return find_files_impl(state, false);
 }
 
 //------------------------------------------------------------------------------
 int clink_lua_api::find_dirs(lua_State* state)
 {
-    return find_files_impl(state, 1);
+    return find_files_impl(state, true);
 }
 
 //------------------------------------------------------------------------------

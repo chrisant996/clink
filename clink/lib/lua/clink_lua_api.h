@@ -31,7 +31,7 @@ public:
 protected:
     int             change_dir(lua_State* state);
     int             to_lowercase(lua_State* state);
-    int             find_files_impl(lua_State* state, int dirs_only);
+    int             find_files_impl(lua_State* state, bool dirs_only);
     int             find_files(lua_State* state);
     int             find_dirs(lua_State* state);
     int             matches_are_files(lua_State* state);
