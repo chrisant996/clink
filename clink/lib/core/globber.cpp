@@ -93,6 +93,7 @@ bool globber::next(str_base& out)
     return true;
 }
 
+//------------------------------------------------------------------------------
 void globber::next_file()
 {
     if (FindNextFileW(m_handle, &m_data))
