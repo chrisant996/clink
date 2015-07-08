@@ -27,7 +27,7 @@
 globber::globber(const context& ctx)
 : m_context(ctx)
 {
-    if (m_context.path == nullptr)      m_context.wildcard = "";
+    if (m_context.path == nullptr)      m_context.path = "";
     if (m_context.wildcard == nullptr)  m_context.wildcard = "*";
 
     str<MAX_PATH> glob;
