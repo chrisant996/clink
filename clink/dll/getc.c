@@ -193,12 +193,15 @@ loop:
         altgr_sub = !!(key_flags & LEFT_ALT_PRESSED);
         altgr_sub &= !!(key_flags & (LEFT_CTRL_PRESSED|RIGHT_CTRL_PRESSED));
         altgr_sub &= !!key_char;
-        altgr_sub &= get_clink_setting_int("use_altgr_substitute");
+
+        if (altgr_sub && !get_clink_setting_int("use_altgr_substitute"))
+        {
+            altgr_sub = 0;
+            key_char = 0;
+        }
 
         if (!altgr_sub)
-        {
             *alt = !!(key_flags & LEFT_ALT_PRESSED);
-        }
     }
 
     // No Unicode character? Then some post-processing is required to make the
