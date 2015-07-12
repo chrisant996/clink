@@ -498,7 +498,9 @@ static char* call_readline_impl(const char* prompt)
         initialise_clink_settings();
         initialise_lua();
         initialise_fwrite();
+
         load_history();
+        history_quotes_inhibit_expansion = 1;
 
         rl_catch_signals = 0;
         rl_startup_hook = initialise_hook;
