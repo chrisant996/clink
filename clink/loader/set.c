@@ -77,8 +77,23 @@ static int print_value(const char* key)
     }
 
     printf("         Name: %s\n", decl->name);
-    printf("Friendly name: %s\n", decl->friendly_name);
+    printf("  Description: %s\n", decl->friendly_name);
     printf("Current value: %s\n", settings_get_str(g_settings, key));
+
+    if (decl->type == SETTING_TYPE_ENUM)
+    {
+        int i = 0;
+        const char* param = decl->type_param;
+
+        printf("       Values: ");
+        while (*param)
+        {
+            printf("%*d = %s\n", (i ? 16 : 1), i, param);
+            param += strlen(param) + 1;
+            ++i;
+        }
+    }
+
     puts("");
     wrapped_write(stdout, "", decl->description, 78);
 
