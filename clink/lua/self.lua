@@ -55,6 +55,7 @@ set_parser:set_arguments(
         "esc_clears_line",
         "exec_match_style",
         "history_dupe_mode",
+        "history_expand_mode",
         "history_file_lines",
         "history_ignore_space",
         "history_io",

@@ -125,6 +125,17 @@ static const setting_decl_t g_settings_decl[] = {
         0, "0"
     },
     {
+        "history_expand_mode",
+        "Sets how command history expansion is applied",
+        "The '!' character in an entered line can be interpreted to introduce "
+        "words from the history. This can be enabled and disable by setting this "
+        "value to 1 or 0. Values or 2, 3 or 4 will skip any ! character quoted "
+        "in single, double, or both quotes respectively.",
+        SETTING_TYPE_ENUM,
+        "Off\0On\0Not in single quotes\0Not in double quote\0Not in any quotes",
+        "2"
+    },
+    {
         "use_altgr_substitute",
         "Support Windows' Ctrl-Alt substitute",
         "Windows provides Ctrl-Alt as a substitute for AltGr, historically to "

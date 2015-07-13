@@ -44,6 +44,7 @@ void                load_history();
 void                save_history();
 void                add_to_history(const char*);
 int                 expand_from_history(const char*, char**);
+int                 history_expand_control(char*, int);
 void                initialise_fwrite();
 
 int                 g_slash_translation             = 0;
@@ -500,7 +501,7 @@ static char* call_readline_impl(const char* prompt)
         initialise_fwrite();
 
         load_history();
-        history_quotes_inhibit_expansion = 1;
+        history_inhibit_expansion_function = history_expand_control;
 
         rl_catch_signals = 0;
         rl_startup_hook = initialise_hook;

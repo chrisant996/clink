@@ -170,3 +170,31 @@ int expand_from_history(const char* text, char** expanded)
 
     return result;
 }
+
+//------------------------------------------------------------------------------
+int history_expand_control(char* line, int marker_pos)
+{
+    int setting, in_quote, i;
+
+    setting = get_clink_setting_int("history_expand_mode");
+    if (setting <= 1)
+        return (setting <= 0);
+
+    // Is marker_pos inside a quote of some kind?
+    in_quote = 0;
+    for (i = 0; i < marker_pos && *line; ++i, ++line)
+    {
+        int c = *line;
+        if (c == '\'' || c == '\"')
+            in_quote = (c == in_quote) ? 0 : c;
+    }
+
+    switch (setting)
+    {
+    case 2: return (in_quote == '\'');
+    case 3: return (in_quote == '\"');
+    case 4: return (in_quote == '\"' || in_quote == '\'');
+    }
+
+    return 0;
+}
