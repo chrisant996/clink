@@ -264,6 +264,19 @@ int settings_save(settings_t* s, const char* file)
 
         fprintf(out, "# name: %s\n", decl->friendly_name);
         fprintf(out, "# type: %s\n", g_type_names[decl->type]);
+
+        if (decl->type == SETTING_TYPE_ENUM)
+        {
+            int j = 0;
+            const char* param = decl->type_param;
+            while (*param)
+            {
+                fprintf(out, "# %2d = %s\n", j, param);
+                param += strlen(param) + 1;
+                ++j;
+            }
+        }
+
         wrapped_write(out, "# ", decl->description, 78);
         fprintf(out, "%s = %s\n\n", decl->name, s->values[i]);
     }
