@@ -137,7 +137,7 @@ static const setting_decl_t g_settings_decl[] = {
     },
     {
         "use_altgr_substitute",
-        "Support Windows' Ctrl-Alt substitute",
+        "Support Windows' Ctrl-Alt substitute for AltGr",
         "Windows provides Ctrl-Alt as a substitute for AltGr, historically to "
         "support keyboards with no AltGr key. This may collide with some of "
         "Readline's bindings.",
