@@ -29,19 +29,6 @@
 #include <lua/lua_script_loader.h>
 
 //------------------------------------------------------------------------------
-static const char* g_dir_fs[] = {
-    "one_dir/leaf",
-    "two_dir/leaf",
-    "three_dir/leaf",
-    "nest_1/nest_2/leaf",
-    "one_file",
-    "two_file",
-    "three_file",
-    "four_file",
-    nullptr,
-};
-
-//------------------------------------------------------------------------------
 class dir_lua_root : public lua_root {};
 
 template <>
@@ -53,7 +40,19 @@ void match_generator_tester<dir_lua_root>::initialise()
 
 //------------------------------------------------------------------------------
 TEST_CASE("Directory match generation.") {
-    fs_fixture fs(g_dir_fs);
+    static const char* dir_fs[] = {
+        "one_dir/leaf",
+        "two_dir/leaf",
+        "three_dir/leaf",
+        "nest_1/nest_2/leaf",
+        "one_file",
+        "two_file",
+        "three_file",
+        "four_file",
+        nullptr,
+    };
+
+    fs_fixture fs(dir_fs);
 
     const char* dir_cmds[] = { "cd", "rd", "rmdir", "md", "mkdir", "pushd" };
     for (int i = 0; i < sizeof_array(dir_cmds); ++i)
