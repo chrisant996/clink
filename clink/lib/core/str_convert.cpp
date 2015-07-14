@@ -26,37 +26,45 @@
 template <typename TYPE>
 struct builder
 {
-    builder(TYPE* data, int max_length)
-    : write(data)
-    , end(data + max_length - 1)
-    {
-    }
-
-    ~builder()
-    {
-        *write = '\0';
-    }
-
-    bool truncated() const
-    {
-        return (write > end);
-    }
-
-    builder& operator << (int value)
-    {
-        // For code points that don't fit in wchar_t there is 'surrogate pairs'.
-        if (value > 0xffff)
-            return *this << ((value >> 10) + 0xd7c0) << ((value & 0x3ff) + 0xdc00);
-
-        if (write < end)
-            *write++ = TYPE(value);
-
-        return *this;
-    }
-
-    TYPE*           write;
-    const TYPE*     end;
+                builder(TYPE* data, int max_length);
+                ~builder()                            { *write = '\0'; }
+    bool        truncated() const                     { return (write > end); }
+    builder&    operator << (int value);
+    TYPE*       write;
+    const TYPE* end;
 };
+
+//------------------------------------------------------------------------------
+template <typename TYPE>
+builder<TYPE>::builder(TYPE* data, int max_length)
+: write(data)
+, end(data + max_length - 1)
+{
+}
+
+//------------------------------------------------------------------------------
+template <>
+builder<wchar_t>& builder<wchar_t>::operator << (int value)
+{
+    // For code points that don't fit in wchar_t there is 'surrogate pairs'.
+    if (value > 0xffff)
+        return *this << ((value >> 10) + 0xd7c0) << ((value & 0x3ff) + 0xdc00);
+
+    if (write < end)
+        *write++ = wchar_t(value);
+
+    return *this;
+}
+
+//------------------------------------------------------------------------------
+template <>
+builder<char>& builder<char>::operator << (int value)
+{
+    if (write < end)
+        *write++ = char(value);
+
+    return *this;
+}
 
 
 
