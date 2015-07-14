@@ -342,7 +342,6 @@ void get_profile_path(const char* in, str_base& out)
 int inject(int argc, char** argv)
 {
     struct option options[] = {
-        { "scripts",     required_argument,  nullptr, 's' },
         { "profile",     required_argument,  nullptr, 'p' },
         { "quiet",       no_argument,        nullptr, 'q' },
         { "pid",         required_argument,  nullptr, 'd' },
@@ -367,7 +366,7 @@ int inject(int argc, char** argv)
     DWORD target_pid = 0;
     inject_args_t inject_args = { 0 };
     int i;
-    while ((i = getopt_long(argc, argv, "nalqhp:s:d:", options, nullptr)) != -1)
+    while ((i = getopt_long(argc, argv, "nalqhp:d:", options, nullptr)) != -1)
     {
         switch (i)
         {
