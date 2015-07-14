@@ -10,21 +10,9 @@
 //------------------------------------------------------------------------------
 env_fixture::env_fixture(const char** env)
 {
+    // Store the process' current environment so it can be restored.
     m_env_strings = GetEnvironmentStringsW();
-
-    // Wipe out the exisiting environment.
-    wchar_t* env_string = m_env_strings;
-    while (*env_string)
-    {
-        wchar_t* eq = wcschr(env_string, '=');
-        if (eq == env_string)
-            eq = wcschr(env_string + 1, '='); // skips cmd's hidden "=X:" vars
-
-        env_string += wcslen(env_string) + 1;
-
-        REQUIRE(eq != nullptr);
-        *eq = '\0';
-    }
+    convert_eq_to_null(m_env_strings);
 
     clear();
 
@@ -54,9 +42,29 @@ env_fixture::~env_fixture()
 }
 
 //------------------------------------------------------------------------------
+void env_fixture::convert_eq_to_null(wchar_t* env_strings)
+{
+    wchar_t* env_string = env_strings;
+    while (*env_string)
+    {
+        wchar_t* eq = wcschr(env_string, '=');
+        if (eq == env_string)
+            eq = wcschr(env_string + 1, '='); // skips cmd's hidden "=X:" vars
+
+        env_string += wcslen(env_string) + 1;
+
+        REQUIRE(eq != nullptr);
+        *eq = '\0';
+    }
+}
+
+//------------------------------------------------------------------------------
 void env_fixture::clear()
 {
-    wchar_t* env_string = m_env_strings;
+    wchar_t* env_strings = GetEnvironmentStringsW();
+    convert_eq_to_null(env_strings);
+
+    wchar_t* env_string = env_strings;
     while (*env_string)
     {
         REQUIRE(SetEnvironmentVariableW(env_string, nullptr) != FALSE);
@@ -64,6 +72,9 @@ void env_fixture::clear()
         env_string += wcslen(env_string) + 1; // value
     }
 
+    FreeEnvironmentStringsW(env_strings);
+
+    // Confirm it is empty.
     wchar_t* env_is_empty = GetEnvironmentStringsW();
     REQUIRE(*env_is_empty == 0);
     FreeEnvironmentStringsW(env_is_empty);
