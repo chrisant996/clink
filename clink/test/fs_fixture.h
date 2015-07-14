@@ -29,6 +29,7 @@ class fs_fixture
 public:
                     fs_fixture(const char** fs=nullptr);
                     ~fs_fixture();
+    const char*     get_root() const;
 
 private:
     void            clean(const char* path);

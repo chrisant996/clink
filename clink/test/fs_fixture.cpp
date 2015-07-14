@@ -92,3 +92,9 @@ void fs_fixture::clean(const char* path)
 
     REQUIRE(os::remove_dir(path));
 }
+
+//------------------------------------------------------------------------------
+const char* fs_fixture::get_root() const
+{
+    return m_root.c_str();
+}
