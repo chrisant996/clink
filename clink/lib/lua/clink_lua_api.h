@@ -3,12 +3,14 @@
 
 #pragma once
 
+struct lua_State;
+
 //------------------------------------------------------------------------------
 class clink_lua_api
 {
 public:
                     clink_lua_api();
-    void            initialise(struct lua_State* state);
+    void            initialise(lua_State* state);
 
 protected:
     int             change_dir(lua_State* state);
