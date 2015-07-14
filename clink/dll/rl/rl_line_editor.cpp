@@ -4,6 +4,7 @@
 #include "pch.h"
 #include "rl_line_editor.h"
 #include "inputrc.h"
+#include "rl_delegate.h"
 #include "rl_scroller.h"
 
 #include <core/base.h>
@@ -84,25 +85,6 @@ static void terminal_flush_thunk(FILE* stream)
     return term->flush();
 }
 
-// MODE4
-template <class T, class R, class P0, class P1, class P2>
-R (*rl_delegate(T* t, R (T::*f)(P0, P1, P2)))(P0, P1, P2)
-{
-    static T* self = t;
-    static R (T::*func)(P0, P1, P2) = f;
-
-    struct thunk
-    {
-        static R impl(P0 p0, P1 p1, P2 p2)
-        {
-            return (self->*func)(p0, p1, p2);
-        }
-    };
-
-    return &thunk::impl;
-}
-// MODE4
-
 
 
 //------------------------------------------------------------------------------
@@ -147,9 +129,9 @@ rl_line_editor::rl_line_editor(const desc& desc)
     bind_embedded_inputrc();
     load_user_inputrc();
 
-    rl_attempted_completion_function = rl_delegate(this, &rl_line_editor::completion);
+    rl_attempted_completion_function = rl_delegate(this, rl_line_editor, completion);
 #if MODE4
-    rl_completion_display_matches_hook = rl_delegate(this, &rl_line_editor::display_matches);
+    rl_completion_display_matches_hook = rl_delegate(this, rl_line_editor, display_matches);
 #endif
 
     history_inhibit_expansion_function = history_expand_control;

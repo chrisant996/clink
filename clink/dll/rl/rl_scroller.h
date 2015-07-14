@@ -14,10 +14,10 @@ class rl_scroller
 {
 public:
                         rl_scroller();
-    void                begin(int count, int invoking_key);
-    void                end(int count, int invoking_key);
-    void                page_up(int count, int invoking_key);
-    void                page_down(int count, int invoking_key);
+    int                 begin(int count, int invoking_key);
+    int                 end(int count, int invoking_key);
+    int                 page_up(int count, int invoking_key);
+    int                 page_down(int count, int invoking_key);
 
 private:
     buffer_scroller     m_scroller;
