@@ -52,7 +52,6 @@ extern void     (*rl_fwrite_function)(FILE*, const wchar_t*, int);
 extern void     (*rl_fflush_function)(FILE*);
 extern char*    _rl_comment_begin;
 extern int      rl_catch_signals;
-extern int      (*history_inhibit_expansion_function)(char*, int);
 } // extern "C"
 
 

@@ -27,10 +27,6 @@
 #include "lua_delegate.h"
 #include "lua_script_loader.h"
 
-extern "C" {
-#include <dirent.h>
-}
-
 //------------------------------------------------------------------------------
 extern "C" {
 extern int              _rl_completion_case_map;

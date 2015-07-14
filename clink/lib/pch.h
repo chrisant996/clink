@@ -29,14 +29,6 @@
 
 #include <Windows.h>
 
-// Readline includes.
-#if 0
-#include <readline/history.h>
-#include <readline/readline.h>
-#include <readline/rldefs.h>
-#include <compat/dirent.h>
-#endif
-
 extern "C" {
 
 // Lua includes.
