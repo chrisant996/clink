@@ -28,6 +28,10 @@ TEST_CASE("Strings" NAME_SUFFIX) {
         REQUIRE(s[9] == '9');
         REQUIRE(s[99] == 0);
         REQUIRE(s.length() == s.char_count());
+
+        s.clear();
+        s << nullptr;
+        REQUIRE(s.length() == 0);
     }
 
     SECTION("Concatenation") {

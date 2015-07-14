@@ -156,6 +156,9 @@ bool str_impl<TYPE>::copy(const TYPE* src)
 template <typename TYPE>
 bool str_impl<TYPE>::concat(const TYPE* src, int n)
 {
+    if (src == nullptr)
+        return false;
+
     int m = m_size - length() - 1;
 
     bool truncated = false;
