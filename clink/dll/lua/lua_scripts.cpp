@@ -367,6 +367,7 @@ const char* dll_dir_lua_script =
 "        \"ctrld_exits\",\n"
 "        \"exec_match_style\",\n"
 "        \"history_dupe_mode\",\n"
+"        \"history_expand_mode\",\n"
 "        \"history_file_lines\",\n"
 "        \"history_ignore_space\",\n"
 "        \"history_io\",\n"
