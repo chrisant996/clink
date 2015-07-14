@@ -24,11 +24,11 @@
 #include <core/str.h>
 
 //------------------------------------------------------------------------------
-class scoped_test_fs
+class fs_fixture
 {
 public:
-                    scoped_test_fs(const char** fs=nullptr);
-                    ~scoped_test_fs();
+                    fs_fixture(const char** fs=nullptr);
+                    ~fs_fixture();
 
 private:
     void            clean(const char* path);

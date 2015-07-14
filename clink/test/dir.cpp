@@ -20,7 +20,7 @@
  */
 
 #include "catch.hpp"
-#include "scoped_test_fs.h"
+#include "fs_fixture.h"
 #include "match_generator_tester.h"
 
 #include <core/base.h>
@@ -53,7 +53,7 @@ void match_generator_tester<dir_lua_root>::initialise()
 
 //------------------------------------------------------------------------------
 TEST_CASE("Directory match generation.") {
-    scoped_test_fs fs(g_dir_fs);
+    fs_fixture fs(g_dir_fs);
 
     const char* dir_cmds[] = { "cd", "rd", "rmdir", "md", "mkdir", "pushd" };
     for (int i = 0; i < sizeof_array(dir_cmds); ++i)

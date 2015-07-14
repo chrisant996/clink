@@ -19,7 +19,7 @@
  * SOFTWARE.
  */
 
-#include "scoped_test_fs.h"
+#include "fs_fixture.h"
 #include "catch.hpp"
 
 #include <core/base.h>
@@ -41,7 +41,7 @@ static const char* g_default_fs[] = {
 };
 
 //------------------------------------------------------------------------------
-scoped_test_fs::scoped_test_fs(const char** fs)
+fs_fixture::fs_fixture(const char** fs)
 {
     os::get_env("tmp", m_root);
     m_root << "\\clink_test\\";
@@ -67,7 +67,7 @@ scoped_test_fs::scoped_test_fs(const char** fs)
 }
 
 //------------------------------------------------------------------------------
-scoped_test_fs::~scoped_test_fs()
+fs_fixture::~fs_fixture()
 {
     os::change_dir(m_root.c_str());
     os::change_dir("..");
@@ -76,7 +76,7 @@ scoped_test_fs::~scoped_test_fs()
 }
 
 //------------------------------------------------------------------------------
-void scoped_test_fs::clean(const char* path)
+void fs_fixture::clean(const char* path)
 {
     globber::context ctx = { path };
     globber globber(ctx);

@@ -20,13 +20,14 @@
  */
 
 #include "catch.hpp"
-#include "scoped_test_fs.h"
+#include "fs_fixture.h"
 #include "match_generator_tester.h"
+
 #include <file_match_generator.h>
 
 //------------------------------------------------------------------------------
 TEST_CASE("File match generator") {
-	scoped_test_fs fs;
+	fs_fixture fs;
 
     SECTION("File system matches") {
         match_generator_tester<file_match_generator>(
