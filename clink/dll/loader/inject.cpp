@@ -25,12 +25,10 @@ void cpy_path_as_abs(str_base&, const char*);
 static int check_dll_version(const char* clink_dll)
 {
     char buffer[1024];
-    VS_FIXEDFILEINFO* file_info;
-    int error = 0;
-
     if (GetFileVersionInfo(clink_dll, 0, sizeof(buffer), buffer) != TRUE)
         return 0;
 
+    VS_FIXEDFILEINFO* file_info;
     if (VerQueryValue(buffer, "\\", (void**)&file_info, nullptr) != TRUE)
         return 0;
 
@@ -39,6 +37,7 @@ static int check_dll_version(const char* clink_dll)
         file_info->dwFileVersionLS
     );
 
+    int error = 0;
     error = (HIWORD(file_info->dwFileVersionMS) != CLINK_VER_MAJOR);
     error = (LOWORD(file_info->dwFileVersionMS) != CLINK_VER_MINOR);
     error = (HIWORD(file_info->dwFileVersionLS) != CLINK_VER_POINT);
@@ -49,8 +48,6 @@ static int check_dll_version(const char* clink_dll)
 //------------------------------------------------------------------------------
 static DWORD get_parent_pid()
 {
-    ULONG_PTR pbi[6];
-    ULONG size = 0;
     LONG (WINAPI *NtQueryInformationProcess)(HANDLE, ULONG, PVOID, ULONG, PULONG);
 
     *(FARPROC*)&NtQueryInformationProcess = GetProcAddress(
@@ -58,8 +55,10 @@ static DWORD get_parent_pid()
         "NtQueryInformationProcess"
     );
 
-    if (NtQueryInformationProcess)
+    if (NtQueryInformationProcess != nullptr)
     {
+        ULONG size = 0;
+        ULONG_PTR pbi[6];
         LONG ret = NtQueryInformationProcess(GetCurrentProcess(), 0, &pbi,
             sizeof(pbi), &size);
 
@@ -73,37 +72,20 @@ static DWORD get_parent_pid()
 //------------------------------------------------------------------------------
 static void toggle_threads(DWORD pid, int on)
 {
-    BOOL ok;
-    HANDLE th32;
-    THREADENTRY32 te = { sizeof(te) };
-
-    th32 = CreateToolhelp32Snapshot(TH32CS_SNAPTHREAD, pid);
+    HANDLE th32 = CreateToolhelp32Snapshot(TH32CS_SNAPTHREAD, pid);
     if (th32 == INVALID_HANDLE_VALUE)
-    {
         return;
-    }
 
-    ok = Thread32First(th32, &te);
+    THREADENTRY32 te = { sizeof(te) };
+    BOOL ok = Thread32First(th32, &te);
     while (ok != FALSE)
     {
-        HANDLE thread;
-
-        if (te.th32OwnerProcessID != pid)
+        if (te.th32OwnerProcessID == pid)
         {
-            ok = Thread32Next(th32, &te);
-            continue;
+            HANDLE thread = OpenThread(THREAD_ALL_ACCESS, FALSE, te.th32ThreadID);
+            on ? ResumeThread(thread) : SuspendThread(thread);
+            CloseHandle(thread);
         }
-
-        thread = OpenThread(THREAD_ALL_ACCESS, FALSE, te.th32ThreadID);
-        if (on)
-        {
-            ResumeThread(thread);
-        }
-        else
-        {
-            SuspendThread(thread);
-        }
-        CloseHandle(thread);
 
         ok = Thread32Next(th32, &te);
     }
@@ -114,22 +96,8 @@ static void toggle_threads(DWORD pid, int on)
 //------------------------------------------------------------------------------
 static int do_inject(DWORD target_pid)
 {
-    int ret;
-    char dll_path[512];
-    HMODULE kernel32;
-    SYSTEM_INFO sys_info;
-    char* slash;
-
-    ret = 0;
-    kernel32 = LoadLibraryA("kernel32.dll");
-
-    GetSystemInfo(&sys_info);
-
-    OSVERSIONINFOEX osvi;
-    osvi.dwOSVersionInfoSize = sizeof(osvi);
-    GetVersionEx((OSVERSIONINFO*)&osvi);
-
 #ifdef __MINGW32__
+    HMODULE kernel32 = LoadLibraryA("kernel32.dll");
     typedef BOOL (WINAPI *_IsWow64Process)(HANDLE, BOOL*);
     _IsWow64Process IsWow64Process = (_IsWow64Process)GetProcAddress(
         kernel32,
@@ -138,8 +106,9 @@ static int do_inject(DWORD target_pid)
 #endif // __MINGW32__
 
     // Get path to clink's DLL that we'll inject.
+    char dll_path[512];
     GetModuleFileName(nullptr, dll_path, sizeof(dll_path));
-    slash = strrchr(dll_path, '\\');
+    char* slash = strrchr(dll_path, '\\');
     if (slash != nullptr)
     {
         *(slash + 1) = '\0';
@@ -147,6 +116,13 @@ static int do_inject(DWORD target_pid)
     strcat(dll_path, CLINK_DLL_NAME);
 
     // Reset log file, start logging!
+    SYSTEM_INFO sys_info;
+    GetSystemInfo(&sys_info);
+
+    OSVERSIONINFOEX osvi;
+    osvi.dwOSVersionInfoSize = sizeof(osvi);
+    GetVersionEx((OSVERSIONINFO*)&osvi);
+
     LOG("System: ver=%d.%d %d.%d arch=%d cpus=%d cpu_type=%d page_size=%d",
         osvi.dwMajorVersion,
         osvi.dwMinorVersion,
@@ -194,7 +170,7 @@ int do_inject_impl(DWORD target_pid, const char* dll_path)
     int ret;
 
     // Open the process so we can operate on it.
-    parent_process = OpenProcess(
+    HANDLE parent_process = OpenProcess(
         PROCESS_QUERY_INFORMATION|
         PROCESS_CREATE_THREAD|
         PROCESS_VM_OPERATION|
@@ -210,6 +186,7 @@ int do_inject_impl(DWORD target_pid, const char* dll_path)
     }
 
     // Check arch matches.
+    BOOL is_wow_64[2];
     IsWow64Process(parent_process, is_wow_64);
     IsWow64Process(GetCurrentProcess(), is_wow_64 + 1);
     if (is_wow_64[0] != is_wow_64[1])
@@ -227,14 +204,6 @@ int do_inject_impl(DWORD target_pid, const char* dll_path)
         return 0;
     }
 
-    // We'll use LoadLibraryA as the entry point for out remote thread.
-    thread_proc = LoadLibraryA;
-    if (thread_proc == nullptr)
-    {
-        ERR("Failed to find LoadLibraryA address");
-        return 0;
-    }
-
     // Tell remote process what DLL to load.
     if (target_vm.write(buffer, dll_path, strlen(dll_path) + 1) == FALSE)
     {
@@ -242,19 +211,14 @@ int do_inject_impl(DWORD target_pid, const char* dll_path)
         return 0;
     }
 
+    void* thread_proc = LoadLibraryA;
     LOG("Creating remote thread at %p with parameter %p", thread_proc, buffer);
 
     // Disable threads and create a remote thread.
+    DWORD thread_id;
     toggle_threads(target_pid, 0);
-    remote_thread = CreateRemoteThread(
-        parent_process,
-        nullptr,
-        0,
-        (LPTHREAD_START_ROUTINE)thread_proc,
-        buffer,
-        0,
-        &thread_id
-    );
+    HANDLE remote_thread = CreateRemoteThread(parent_process, nullptr, 0,
+        (LPTHREAD_START_ROUTINE)thread_proc, buffer, 0, &thread_id);
     if (remote_thread == nullptr)
     {
         ERR("CreateRemoteThread() failed");
