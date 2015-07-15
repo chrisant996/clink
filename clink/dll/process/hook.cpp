@@ -9,23 +9,13 @@
 #include <core/log.h>
 
 //------------------------------------------------------------------------------
-static void* current_proc()
-{
-    return (void*)GetCurrentProcess();
-}
-
-//------------------------------------------------------------------------------
 static void write_addr(void** where, void* to_write)
 {
-    struct region_info_t region_info;
+    vm_region region(where);
+    region.add_access(vm_region::writeable);
 
-    get_region_info(where, &region_info);
-    set_region_write_state(&region_info, 1);
-
-    if (!write_vm(current_proc(), where, &to_write, sizeof(to_write)))
+    if (!vm_access().write(where, &to_write, sizeof(to_write)))
         LOG("VM write to %p failed (err = %d)", where, GetLastError());
-
-    set_region_write_state(&region_info, 0);
 }
 
 //------------------------------------------------------------------------------
@@ -84,7 +74,7 @@ void* hook_iat(
     void* prev_addr = *import;
     write_addr(import, hook);
 
-    FlushInstructionCache(current_proc(), 0, 0);
+    FlushInstructionCache(GetCurrentProcess(), 0, 0);
     return prev_addr;
 }
 
@@ -97,7 +87,9 @@ static char* alloc_trampoline(void* hint)
     void* trampoline = nullptr;
     while (trampoline == nullptr)
     {
-        void* vm_alloc_base = get_alloc_base(hint);
+        vm_region region = vm_region(hint).get_parent();
+
+        void* vm_alloc_base = region.get_base();
         vm_alloc_base = vm_alloc_base ? vm_alloc_base : hint;
 
         char* tramp_page = (char*)vm_alloc_base - sys_info.dwAllocationGranularity;
@@ -136,7 +128,7 @@ static char* write_rel_jmp(char* write, void* dest)
     buffer.a = (unsigned char)0xe9;
     *(int*)buffer.b = (int)disp;
 
-    if (!write_vm(current_proc(), write, &buffer, sizeof(buffer)))
+    if (!vm_access().write(write, &buffer, sizeof(buffer)))
     {
         LOG("VM write to %p failed (err = %d)", write, GetLastError());
         return nullptr;
@@ -164,7 +156,7 @@ static char* write_trampoline_out(char* write, void* to_hook, void* hook)
     // Patch the API.
     patch = write_rel_jmp(patch, write);
     short temp = (unsigned short)0xf9eb;
-    if (!write_vm(current_proc(), patch, &temp, sizeof(temp)))
+    if (!vm_access().write(patch, &temp, sizeof(temp)))
     {
         LOG("VM write to %p failed (err = %d)", patch, GetLastError());
         return nullptr;
@@ -187,7 +179,7 @@ static char* write_trampoline_out(char* write, void* to_hook, void* hook)
     *(int*)inst.b = rel_addr;
     *(void**)inst.c = hook;
 
-    if (!write_vm(current_proc(), write, &inst, sizeof(inst)))
+    if (!vm_access().write(write, &inst, sizeof(inst)))
     {
         LOG("VM write to %p failed (err = %d)", write, GetLastError());
         return nullptr;
@@ -201,7 +193,7 @@ static char* write_trampoline_in(char* write, void* to_hook, int n)
 {
     for (int i = 0; i < n; ++i)
     {
-        if (!write_vm(current_proc(), write, (char*)to_hook + i, 1))
+        if (!vm_access().write(write, (char*)to_hook + i, 1))
         {
             LOG("VM write to %p failed (err = %d)", write, GetLastError());
             return nullptr;
@@ -302,7 +294,6 @@ static void* follow_jump(void* addr)
 //------------------------------------------------------------------------------
 static void* hook_jmp_impl(void* to_hook, void* hook)
 {
-    struct region_info_t region_info;
     int inst_len;
 
     LOG("Attempting to hook at %p with %p", to_hook, hook);
@@ -335,10 +326,9 @@ static void* hook_jmp_impl(void* to_hook, void* hook)
     }
 
     // Out
-    get_region_info(to_hook, &region_info);
-    set_region_write_state(&region_info, 1);
+    vm_region region(to_hook);
+    region.add_access(vm_region::writeable);
     write = write_trampoline_out(write, to_hook, hook);
-    set_region_write_state(&region_info, 0);
     if (write == nullptr)
     {
         LOG("Failed to write trampoline out.");
@@ -378,6 +368,6 @@ void* hook_jmp(void* module, const char* func_name, void* hook)
     }
 
     LOG("Success!");
-    FlushInstructionCache(current_proc(), 0, 0);
+    FlushInstructionCache(GetCurrentProcess(), 0, 0);
     return trampoline;
 }

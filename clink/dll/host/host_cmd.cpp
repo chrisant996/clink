@@ -148,7 +148,7 @@ bool host_cmd::initialise()
 {
     // Find the correct module that exports ReadConsoleW by finding the base
     // address of the virtual memory block where the function is.
-    void* kernel_module = get_alloc_base(ReadConsoleW);
+    void* kernel_module = vm_region(ReadConsoleW).get_parent().get_base();
     if (kernel_module == nullptr)
         return false;
 
@@ -379,7 +379,7 @@ bool host_cmd::hook_trap()
     SetEnvironmentVariableW(L"prompt", prompt.get());
 
     // Get the base address of module that exports ReadConsoleW.
-    void* kernel_module = get_alloc_base(ReadConsoleW);
+    void* kernel_module = vm_region(ReadConsoleW).get_parent().get_base();
     if (kernel_module == nullptr)
         return false;
 

@@ -5,6 +5,7 @@
 #include "paths.h"
 #include "process/pe.h"
 #include "process/shared_mem.h"
+#include "process/vm.h"
 #include "inject_args.h"
 
 #include <core/base.h>
@@ -218,13 +219,8 @@ int do_inject_impl(DWORD target_pid, const char* dll_path)
     }
 
     // Create a buffer in the process to write data to.
-    buffer = VirtualAllocEx(
-        parent_process,
-        nullptr,
-        sizeof(dll_path),
-        MEM_COMMIT,
-        PAGE_READWRITE
-    );
+    vm_access target_vm(target_pid);
+    void* buffer = target_vm.alloc(sizeof(dll_path));
     if (buffer == nullptr)
     {
         ERR("VirtualAllocEx failed");
@@ -240,14 +236,7 @@ int do_inject_impl(DWORD target_pid, const char* dll_path)
     }
 
     // Tell remote process what DLL to load.
-    t = WriteProcessMemory(
-        parent_process,
-        buffer,
-        dll_path,
-        strlen(dll_path) + 1,
-        nullptr
-    );
-    if (t == FALSE)
+    if (target_vm.write(buffer, dll_path, strlen(dll_path) + 1) == FALSE)
     {
         ERR("WriteProcessMemory() failed");
         return 0;
@@ -281,7 +270,7 @@ int do_inject_impl(DWORD target_pid, const char* dll_path)
 
     // Clean up and quit
     CloseHandle(remote_thread);
-    VirtualFreeEx(parent_process, buffer, 0, MEM_RELEASE);
+    target_vm.free(buffer);
     CloseHandle(parent_process);
 
     if (!ret)

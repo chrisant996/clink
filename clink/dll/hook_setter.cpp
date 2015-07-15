@@ -33,12 +33,7 @@ static LONG WINAPI hook_trap_veh(EXCEPTION_POINTERS* info)
         return EXCEPTION_CONTINUE_SEARCH;
 
     // Restore original instruction.
-    write_vm(
-        g_current_proc,
-        g_hook_trap_addr,
-        &g_hook_trap_value,
-        sizeof(g_hook_trap_value)
-    );
+    vm_access().write(g_hook_trap_addr, &g_hook_trap_value, sizeof(g_hook_trap_value));
 
     // Who called us?
 #if defined(_M_IX86)
@@ -79,7 +74,7 @@ bool set_hook_trap(void* module, const char* func_name, bool (*trap)())
 
     // Write a HALT instruction to force an exception.
     unsigned char to_write = 0xf4;
-    write_vm(g_current_proc, addr, &to_write, sizeof(to_write));
+    vm_access().write(addr, &to_write, sizeof(to_write));
 
     return true;
 }
@@ -114,7 +109,7 @@ bool hook_setter::add_trap(void* module, const char* name, bool (*trap)())
 int hook_setter::commit()
 {
     // Each hook needs fixing up, so we find the base address of our module.
-    void* self = get_alloc_base(dummy);
+    void* self = vm_region(dummy).get_parent().get_base();
     if (self == nullptr)
         return 0;
 
