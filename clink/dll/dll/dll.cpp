@@ -153,7 +153,7 @@ void on_dll_attach()
     if (g_inject_args.no_log)
         delete logger::get();
 
-    LOG("Host process is '%s'", host_name);
+    LOG("Host process is '%s'", host_name.c_str());
 
     // Prepare core systems.
     initialise_clink_settings();
