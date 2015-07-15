@@ -6,13 +6,14 @@
 #include "settings.h"
 
 #include <core/base.h>
+#include <core/path.h>
 #include <core/str.h>
 
 //------------------------------------------------------------------------------
 void*                 initialise_clink_settings();
 void                  puts_help(const char**, int);
 static settings_t*    g_settings;
-static str<512>       g_settings_path;
+static str<MAX_PATH>  g_settings_path;
 
 //------------------------------------------------------------------------------
 static int print_keys()
@@ -43,7 +44,7 @@ static int print_keys()
         ++decl;
     }
 
-    printf("\nSettings path: %s\n", g_settings_path);
+    printf("\nSettings path: %s\n", g_settings_path.c_str());
     return 1;
 }
 
@@ -130,12 +131,13 @@ int set(int argc, char** argv)
     // Get the path where Clink's storing its settings.
     get_config_dir(g_settings_path);
     g_settings_path << "/settings";
+    path::clean(g_settings_path);
 
     // Load Clink's settings.
     g_settings = (settings_t*)initialise_clink_settings();
     if (g_settings == nullptr)
     {
-        printf("ERROR: Failed to load Clink's settings from '%s'.", g_settings_path);
+        printf("ERROR: Failed to load Clink's settings from '%s'.", g_settings_path.c_str());
         return 1;
     }
 
@@ -149,15 +151,13 @@ int set(int argc, char** argv)
         break;
 
     case 2:
-        if (_stricmp(argv[1], "--help") == 0 ||
-            _stricmp(argv[1], "-h") == 0)
+        if (_stricmp(argv[1], "--help") == 0 || _stricmp(argv[1], "-h") == 0)
         {
             print_usage();
         }
         else
-        {
             ret = print_value(argv[1]);
-        }
+
         break;
 
     default:
