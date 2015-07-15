@@ -224,6 +224,9 @@ char** rl_line_editor::completion(const char* word, int start, int end)
     rl_completion_suppress_append = 1;
     rl_completion_suppress_quote = 1;
 
+    if (result.get_match_count() == 0)
+        return nullptr;
+
     char** matches = (char**)malloc(sizeof(char*) * (result.get_match_count() + 2));
 
     // Lowest common denominator
