@@ -17,7 +17,6 @@ local function set_match_generator(word)
         end
     end
 
-    clink.suppress_char_append()
     return matches
 end
 

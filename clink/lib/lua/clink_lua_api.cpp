@@ -51,8 +51,6 @@ void clink_lua_api::initialise(struct lua_State* state)
         { "is_rl_variable_true",    &clink_lua_api::is_rl_variable_true },
         { "lower",                  &clink_lua_api::to_lowercase },
         { "matches_are_files",      &clink_lua_api::matches_are_files },
-        { "suppress_char_append",   &clink_lua_api::suppress_char_append },
-        { "suppress_quoting",       &clink_lua_api::suppress_quoting },
 // MODE4
     };
 
@@ -307,24 +305,6 @@ int clink_lua_api::get_setting_int(lua_State* state)
     lua_pushinteger(state, i);
 
     return 1;
-}
-
-//------------------------------------------------------------------------------
-int clink_lua_api::suppress_char_append(lua_State* state)
-{
-#if MODE4
-    rl_completion_suppress_append = 1;
-#endif
-    return 0;
-}
-
-//------------------------------------------------------------------------------
-int clink_lua_api::suppress_quoting(lua_State* state)
-{
-#if MODE4
-    rl_completion_suppress_quote = 1;
-#endif
-    return 0;
 }
 
 //------------------------------------------------------------------------------

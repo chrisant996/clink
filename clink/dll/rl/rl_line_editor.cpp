@@ -219,6 +219,11 @@ char** rl_line_editor::completion(const char* word, int start, int end)
     line_state line = { word, rl_line_buffer, start, end, rl_point };
     match_result result = get_match_generator()->generate(line);
 
+    // Clink has generated all matches and will take care of suffices/quotes.
+    rl_attempted_completion_over = 1;
+    rl_completion_suppress_append = 1;
+    rl_completion_suppress_quote = 1;
+
     char** matches = (char**)malloc(sizeof(char*) * (result.get_match_count() + 2));
 
     // Lowest common denominator
@@ -237,7 +242,6 @@ char** rl_line_editor::completion(const char* word, int start, int end)
     }
     matches[result.get_match_count()] = nullptr;
 
-    rl_attempted_completion_over = 1;
     return --matches;
 }
 
