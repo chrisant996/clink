@@ -46,38 +46,34 @@ TEST_CASE("Directory match generation.") {
 
         SECTION(dir_cmd) {
             SECTION("Matches") {
-                match_generator_tester<dir_lua_root>(
-                    (cmd << "t").c_str(),
-                    "t", "two_dir\\", "three_dir\\", nullptr
-                );
+                cmd << "t";
+                match_generator_tester<dir_lua_root>(cmd, "t",
+                    "two_dir\\", "three_dir\\", nullptr);
             }
 
             SECTION("Single (with -/_)") {
-                match_generator_tester<dir_lua_root>(
-                    (cmd << "one-").c_str(),
-                    "one_dir\\ ", nullptr
-                );
+                cmd << "two_d";
+                match_generator_tester<dir_lua_root>(cmd, "two_dir\\", nullptr);
+            }
+
+            SECTION("Single (with -/_)") {
+                cmd << "one-";
+                match_generator_tester<dir_lua_root>(cmd, "one_dir\\", nullptr);
             }
 
             SECTION("Relative") {
-                match_generator_tester<dir_lua_root>(
-                    (cmd << "o\\..\\o").c_str(),
-                    "o\\..\\one_dir\\ ", nullptr
-                );
+                cmd << "nest_1\\..\\o";
+                match_generator_tester<dir_lua_root>(cmd, "nest_1\\..\\one_dir\\", nullptr);
             }
 
             SECTION("No matches") {
-                match_generator_tester<dir_lua_root>(
-                    (cmd << "f").c_str(),
-                    "f", nullptr
-                );
+                cmd << "f";
+                match_generator_tester<dir_lua_root>(cmd, nullptr);
             }
 
             SECTION("Nested (forward slash)") {
-                match_generator_tester<dir_lua_root>(
-                    (cmd << "nest_1/ne").c_str(),
-                    "nest_1\\nest_2\\ ", nullptr
-                );
+                cmd << "nest_1/ne";
+                match_generator_tester<dir_lua_root>(cmd, "nest_1\\nest_2\\", nullptr);
             }
         }
     }
