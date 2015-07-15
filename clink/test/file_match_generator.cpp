@@ -13,43 +13,37 @@ TEST_CASE("File match generator") {
 
     SECTION("File system matches") {
         match_generator_tester<file_match_generator>(
-            "cmd ",
+            "",
             "", "case_map-1", "case_map_2", "dir1\\", "dir2\\",
             "file1", "file2", nullptr
         );
     }
 
     SECTION("Single file") {
-        match_generator_tester<file_match_generator>(
-            "cmd file1",
-            "file1", "file1", nullptr
-        );
+        match_generator_tester<file_match_generator>("file1", "file1", nullptr);
     }
 
     SECTION("Single dir") {
         match_generator_tester<file_match_generator>(
-            "cmd dir1",
-            "dir1\\", "dir1\\", nullptr
+            "dir1",
+            "dir1\\", nullptr
         );
     }
 
     SECTION("Dir slash flip") {
         match_generator_tester<file_match_generator>(
-            "cmd dir1/",
+            "dir1/",
             "dir1\\", "dir1\\only", "dir1\\file1", "dir1\\file2", nullptr
         );
     }
 
     SECTION("Path slash flip") {
-        match_generator_tester<file_match_generator>(
-            "cmd dir1/on",
-            "dir1\\only", "dir1\\only", nullptr
-        );
+        match_generator_tester<file_match_generator>("dir1/on", "dir1\\only", nullptr);
     }
 
     SECTION("Case mapping matches") {
         match_generator_tester<file_match_generator>(
-            "cmd case-m",
+            "case-m",
             "case-map", "case_map-1", "case_map_2", nullptr
         );
     }
