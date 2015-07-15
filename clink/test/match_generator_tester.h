@@ -11,37 +11,37 @@
 template <class T>
 struct match_generator_tester
 {
-            match_generator_tester(const char* line, const char* lcd, ...);
-            match_generator_tester(const str_base& line, const char* lcd, ...);
+            match_generator_tester(const char* line, ...);
+            match_generator_tester(const str_base& line, ...);
     void    initialise() {}
-    void    run(const char* line, const char* lcd, va_list arg);
+    void    run(const char* line, va_list arg);
     void    shutdown() {}
     T       m_generator;
 };
 
 //------------------------------------------------------------------------------
 template <class T>
-match_generator_tester<T>::match_generator_tester(const char* line, const char* lcd, ...)
+match_generator_tester<T>::match_generator_tester(const char* line, ...)
 {
     va_list arg;
-    va_start(arg, lcd);
-    run(line, lcd, arg);
+    va_start(arg, line);
+    run(line, arg);
     va_end(arg);
 };
 
 //------------------------------------------------------------------------------
 template <class T>
-match_generator_tester<T>::match_generator_tester(const str_base& line, const char* lcd, ...)
+match_generator_tester<T>::match_generator_tester(const str_base& line, ...)
 {
     va_list arg;
-    va_start(arg, lcd);
-    run(line.c_str(), lcd, arg);
+    va_start(arg, line);
+    run(line.c_str(), arg);
     va_end(arg);
 };
 
 //------------------------------------------------------------------------------
 template <class T>
-void match_generator_tester<T>::run(const char* line, const char* lcd, va_list arg)
+void match_generator_tester<T>::run(const char* line, va_list arg)
 {
     initialise();
 
@@ -56,21 +56,40 @@ void match_generator_tester<T>::run(const char* line, const char* lcd, va_list a
     line_state state = { word, command.c_str(), start, end, cursor };
     match_result result = m_generator.generate(state);
 
+    // It's possible that we're not expecting any matches...
+    va_list arg_iter = arg;
+    const char* lcd = va_arg(arg_iter, const char*);
+    if (lcd == nullptr)
+    {
+        REQUIRE(result.get_match_count() == 0);
+        return;
+    }
+
+    // ... nope, there should be matches.
+    REQUIRE(result.get_match_count() > 0);
+
     // Check the lowest common denominator of the matches.
     str<> result_lcd;
     result.get_match_lcd(result_lcd);
 
-    if (result.get_match_count() && !result_lcd.equals(lcd))
+    if (!result_lcd.equals(lcd))
     {
         printf(" expected: LCD '%s'\n", lcd);
         printf("      got: LCD '%s'\n", result_lcd.c_str());
         REQUIRE(false);
     }
 
-    // Test 'em.
+    // Provided no matches is a shortcut to say that we're only expecting one
+    // match and that lcd == match[0]. It's to save stating the same thing twice
+    va_list arg_look_ahead = arg_iter;
+    const char* match = va_arg(arg_look_ahead, const char*);
+    if (match == nullptr)
+        arg_iter = arg;
+
+    // Test we've got the matches we expected.
+    int arg_count = 0;
     int match_count = 0;
-    va_list arg_iter = arg;
-    while (const char* match = va_arg(arg_iter, const char*))
+    while (match = va_arg(arg_iter, const char*))
     {
         bool ok = false;
         for (int i = 0, n = result.get_match_count(); i < n; ++i)
