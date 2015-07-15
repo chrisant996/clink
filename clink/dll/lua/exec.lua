@@ -115,6 +115,7 @@ local function exec_match_generator(text, first, last)
             local files = clink.find_files(path.."*"..suffix, false)
             for _, file in ipairs(files) do
                 if clink.is_match(text_name, file) then
+                    file = path.getname(file)
                     clink.add_match(text_dir..file)
                 end
             end
