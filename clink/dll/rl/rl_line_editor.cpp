@@ -17,13 +17,10 @@
 
 //------------------------------------------------------------------------------
 int     call_readline_w(const wchar_t*, wchar_t*, unsigned);
-int     completion_shim(int, int);
 int     copy_line_to_clipboard(int, int);
 int     ctrl_c(int, int);
 int     expand_env_vars(int, int);
 int     get_clink_setting_int(const char*);
-int     menu_completion_shim(int, int);
-int     backward_menu_completion_shim(int, int);
 int     paste_from_clipboard(int, int);
 int     show_rl_help(int, int);
 int     up_directory(int, int);
@@ -161,9 +158,6 @@ void rl_line_editor::add_funmap_entries()
         { "show-rl-help",                        show_rl_help },
         { "copy-line-to-clipboard",              copy_line_to_clipboard },
         { "expand-env-vars",                     expand_env_vars },
-        { "clink-completion-shim",               completion_shim },
-        { "clink-menu-completion-shim",          menu_completion_shim },
-        { "clink-backward-menu-completion-shim", backward_menu_completion_shim },
     };
 
     for(int i = 0; i < sizeof_array(entries); ++i)

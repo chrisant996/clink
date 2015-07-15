@@ -25,7 +25,6 @@ protected:
     int             get_setting_int(lua_State* state);
     int             suppress_char_append(lua_State* state);
     int             suppress_quoting(lua_State* state);
-    int             slash_translation(lua_State* state);
     int             is_dir(lua_State* state);
     int             get_rl_variable(lua_State* state);
     int             is_rl_variable_true(lua_State* state);

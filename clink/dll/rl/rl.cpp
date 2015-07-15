@@ -10,7 +10,6 @@ extern "C" {
 //------------------------------------------------------------------------------
 char**              lua_match_display_filter(char**, int);
 int                 get_clink_setting_int(const char*);
-static int          completion_shim_impl(int, int, int (*)(int, int));
 void                load_history();
 void                save_history();
 void                add_to_history(const char*);
@@ -27,81 +26,6 @@ int                 rl_complete(int, int);
 int                 rl_menu_complete(int, int);
 int                 rl_backward_menu_complete(int, int);
 } // extern "C"
-
-//------------------------------------------------------------------------------
-static void suffix_translation()
-{
-    // readline's path completion may have appended a '/'. If so; flip it.
-
-    char from;
-    char* to;
-
-    if (!rl_filename_completion_desired)
-    {
-        return;
-    }
-
-    if (g_slash_translation < 0)
-    {
-        return;
-    }
-
-    // Decide what direction we're going in.
-    switch (g_slash_translation)
-    {
-    case 1:     from = '\\'; to = "/";  break;
-    default:    from = '/';  to = "\\"; break;
-    }
-
-    // Swap the trailing slash, using Readline's API to maintain undo state.
-    if ((rl_point > 0) && (rl_line_buffer[rl_point - 1] == from))
-    {
-        rl_delete_text(rl_point - 1, rl_point);
-        --rl_point;
-        rl_insert_text(to);
-    }
-}
-
-//------------------------------------------------------------------------------
-int completion_shim(int count, int invoking_key)
-{
-    return completion_shim_impl(count, invoking_key, rl_complete);
-}
-
-//------------------------------------------------------------------------------
-int menu_completion_shim(int count, int invoking_key)
-{
-    return completion_shim_impl(count, invoking_key, rl_menu_complete);
-}
-
-//------------------------------------------------------------------------------
-int backward_menu_completion_shim(int count, int invoking_key)
-{
-    return completion_shim_impl(count, invoking_key, rl_backward_menu_complete);
-}
-
-//------------------------------------------------------------------------------
-static int completion_shim_impl(int count, int invoking_key, int (*rl_func)(int, int))
-{
-    int ret;
-
-    // rl complete functions checks if it was called previously, so restore it.
-    if (rl_last_func == completion_shim ||
-        rl_last_func == menu_completion_shim ||
-        rl_last_func == backward_menu_completion_shim)
-    {
-        rl_last_func = rl_func;
-    }
-
-    rl_begin_undo_group();
-    ret = rl_func(count, invoking_key);
-    suffix_translation();
-    rl_end_undo_group();
-
-    g_slash_translation = 0;
-
-    return ret;
-}
 
 //------------------------------------------------------------------------------
 char** match_display_filter(char** matches, int match_count)

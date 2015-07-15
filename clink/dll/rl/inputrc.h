@@ -24,7 +24,6 @@ const char* clink_inputrc[] = {
     "\"\\e[6\": history-search-forward",  // pgdn
 
     "set keymap emacs",
-    "\"\\t\": clink-completion-shim",
     "C-v:     paste-from-clipboard",
     "C-q:     reload-lua-state",
     "C-z:     undo",
@@ -34,7 +33,6 @@ const char* clink_inputrc[] = {
     "M-a:     \"..\\\\\"",
 
     "set keymap vi-insert",
-    "\"\\t\": clink-completion-shim",
     "C-v:     paste-from-clipboard",
     "C-z:     undo",
     "M-h:     show-rl-help",

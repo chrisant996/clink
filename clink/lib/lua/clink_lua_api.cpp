@@ -51,7 +51,6 @@ void clink_lua_api::initialise(struct lua_State* state)
         { "is_rl_variable_true",    &clink_lua_api::is_rl_variable_true },
         { "lower",                  &clink_lua_api::to_lowercase },
         { "matches_are_files",      &clink_lua_api::matches_are_files },
-        { "slash_translation",      &clink_lua_api::slash_translation },
         { "suppress_char_append",   &clink_lua_api::suppress_char_append },
         { "suppress_quoting",       &clink_lua_api::suppress_quoting },
 // MODE4
@@ -325,17 +324,6 @@ int clink_lua_api::suppress_quoting(lua_State* state)
 #if MODE4
     rl_completion_suppress_quote = 1;
 #endif
-    return 0;
-}
-
-//------------------------------------------------------------------------------
-int clink_lua_api::slash_translation(lua_State* state)
-{
-    if (lua_gettop(state) == 0)
-        g_slash_translation = 0;
-    else
-        g_slash_translation = (int)lua_tointeger(state, 1);
-
     return 0;
 }
 
