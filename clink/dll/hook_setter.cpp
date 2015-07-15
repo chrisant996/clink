@@ -57,7 +57,7 @@ bool set_hook_trap(void* module, const char* func_name, bool (*trap)())
     if (IsDebuggerPresent())
         return trap();
 
-    void* addr = get_export(module, func_name);
+    void* addr = pe_info(module).get_export(func_name);
     if (addr == nullptr)
     {
         char dll[96] = {};

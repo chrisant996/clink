@@ -21,16 +21,11 @@ static void write_addr(void** where, void* to_write)
 //------------------------------------------------------------------------------
 static void* get_proc_addr(const char* dll, const char* func_name)
 {
-    void* base;
+    if (void* base = LoadLibraryA(dll))
+        return pe_info(base).get_export(func_name);
 
-    base = LoadLibraryA(dll);
-    if (base == nullptr)
-    {
-        LOG("Failed to load library '%s'", dll);
-        return nullptr;
-    }
-
-    return get_export(base, func_name);
+    LOG("Failed to load library '%s'", dll);
+    return nullptr;
 }
 
 //------------------------------------------------------------------------------
@@ -48,8 +43,9 @@ void* hook_iat(
     void** import;
 
     // Find entry and replace it.
+    pe_info pe(base);
     if (find_by_name)
-        import = get_import_by_name(base, nullptr, func_name);
+        import = pe.get_import_by_name(nullptr, func_name);
     else
     {
         // Get the address of the function we're going to hook.
@@ -60,7 +56,7 @@ void* hook_iat(
             return nullptr;
         }
 
-        import = get_import_by_addr(base, nullptr, func_addr);
+        import = pe.get_import_by_addr(nullptr, func_addr);
     }
 
     if (import == nullptr)
@@ -349,7 +345,7 @@ void* hook_jmp(void* module, const char* func_name, void* hook)
     GetModuleFileName(HMODULE(module), module_name, sizeof_array(module_name));
 
     // Get the address of the function we're going to hook.
-    func_addr = get_export(module, func_name);
+    func_addr = pe_info(module).get_export(func_name);
     if (func_addr == nullptr)
     {
         LOG("Failed to find function '%s' in '%s'", func_name, module_name);

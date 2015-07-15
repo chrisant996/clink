@@ -2,101 +2,58 @@
 // License: http://opensource.org/licenses/MIT
 
 #include "pch.h"
+#include "pe.h"
 
 #include <core/log.h>
+#include <Windows.h>
 
 //------------------------------------------------------------------------------
-static void* rva_to_addr(void* base, unsigned rva)
+pe_info::pe_info(void* base)
+: m_base(base)
 {
-    return (char*)(uintptr_t)rva + (uintptr_t)base;
 }
 
 //------------------------------------------------------------------------------
-void* get_nt_headers(void* base)
+void* pe_info::rva_to_addr(unsigned int rva) const
 {
-    IMAGE_DOS_HEADER* dos_header = (IMAGE_DOS_HEADER*)base;
-    return (char*)base + dos_header->e_lfanew;
+    return (char*)(uintptr_t)rva + (uintptr_t)m_base;
 }
 
 //------------------------------------------------------------------------------
-void* get_data_directory(void* base, int index, int* size)
+IMAGE_NT_HEADERS* pe_info::get_nt_headers() const
 {
-    IMAGE_NT_HEADERS* nt = (IMAGE_NT_HEADERS*)get_nt_headers(base);
+    IMAGE_DOS_HEADER* dos_header = (IMAGE_DOS_HEADER*)m_base;
+    return (IMAGE_NT_HEADERS*)((char*)m_base + dos_header->e_lfanew);
+}
+
+//------------------------------------------------------------------------------
+void* pe_info::get_data_directory(int index, int* size) const
+{
+    IMAGE_NT_HEADERS* nt = get_nt_headers();
     IMAGE_DATA_DIRECTORY* data_dir = nt->OptionalHeader.DataDirectory + index;
     if (data_dir == nullptr)
-    {
         return nullptr;
-    }
 
     if (data_dir->VirtualAddress == 0)
-    {
         return nullptr;
-    }
 
     if (size != nullptr)
-    {
         *size = data_dir->Size;
-    }
 
-    return rva_to_addr(base, data_dir->VirtualAddress);
+    return rva_to_addr(data_dir->VirtualAddress);
 }
 
 //------------------------------------------------------------------------------
-static void** iterate_imports(
-    void* base,
-    const char* dll,
-    const void* param,
-    void** (*callback)(void*, IMAGE_IMPORT_DESCRIPTOR*, const void*)
-)
+void** pe_info::import_by_addr(IMAGE_IMPORT_DESCRIPTOR* iid, const void* func_addr) const
 {
-    IMAGE_IMPORT_DESCRIPTOR* iid;
-    iid = (IMAGE_IMPORT_DESCRIPTOR*)get_data_directory(base, 1, nullptr);
-    if (iid == nullptr)
-    {
-        LOG("Failed to find import desc for base %p", base);
-        return 0;
-    }
-
-    while (iid->Characteristics)
-    {
-        char* name;
-        size_t len;
-
-        len = (dll != nullptr) ? strlen(dll) : 0;
-        name = (char*)rva_to_addr(base, iid->Name);
-        if (dll == nullptr || _strnicmp(name, dll, len) == 0)
-        {
-            void** ret = callback(base, iid, param);
-
-            LOG("Checking imports in '%s'", name);
-
-            if (ret != nullptr)
-                return ret;
-        }
-
-        ++iid;
-    }
-
-    return nullptr;
-}
-
-//------------------------------------------------------------------------------
-static void** import_by_addr(
-    void* base,
-    IMAGE_IMPORT_DESCRIPTOR* iid,
-    const void* func_addr
-)
-{
-    void** at = (void**)rva_to_addr(base, iid->FirstThunk);
+    void** at = (void**)rva_to_addr(iid->FirstThunk);
     while (*at != 0)
     {
         uintptr_t addr = (uintptr_t)(*at);
         void* addr_loc = at;
 
         if (addr == (uintptr_t)func_addr)
-        {
             return at;
-        }
 
         ++at;
     }
@@ -105,14 +62,10 @@ static void** import_by_addr(
 }
 
 //------------------------------------------------------------------------------
-static void** import_by_name(
-    void* base,
-    IMAGE_IMPORT_DESCRIPTOR* iid,
-    const void* func_name
-)
+void** pe_info::import_by_name(IMAGE_IMPORT_DESCRIPTOR* iid, const void* func_name) const
 {
-    void** at = (void**)rva_to_addr(base, iid->FirstThunk);
-    intptr_t* nt = (intptr_t*)rva_to_addr(base, iid->OriginalFirstThunk);
+    void** at = (void**)rva_to_addr(iid->FirstThunk);
+    intptr_t* nt = (intptr_t*)rva_to_addr(iid->OriginalFirstThunk);
     while (*at != 0 && *nt != 0)
     {
         // Check that this import is imported by name (MSB not set)
@@ -120,7 +73,7 @@ static void** import_by_name(
         {
             unsigned rva = (unsigned)(*nt & 0x7fffffff);
             IMAGE_IMPORT_BY_NAME* iin;
-            iin = (IMAGE_IMPORT_BY_NAME*)rva_to_addr(base, rva);
+            iin = (IMAGE_IMPORT_BY_NAME*)rva_to_addr(rva);
 
             if (_stricmp((const char*)(iin->Name), (const char*)func_name) == 0)
                 return at;
@@ -134,57 +87,76 @@ static void** import_by_name(
 }
 
 //------------------------------------------------------------------------------
-void** get_import_by_name(void* base, const char* dll, const char* func_name)
+void** pe_info::get_import_by_name(const char* dll, const char* func_name) const
 {
-    return iterate_imports(base, dll, func_name, import_by_name);
+    return iterate_imports(dll, func_name, &pe_info::import_by_name);
 }
 
 //------------------------------------------------------------------------------
-void** get_import_by_addr(void* base, const char* dll, void* func_addr)
+void** pe_info::get_import_by_addr(const char* dll, void* func_addr) const
 {
-    return iterate_imports(base, dll, func_addr, import_by_addr);
+    return iterate_imports(dll, func_addr, &pe_info::import_by_addr);
 }
 
 //------------------------------------------------------------------------------
-void* get_export(void* base, const char* func_name)
+void* pe_info::get_export(const char* func_name) const
 {
-    IMAGE_NT_HEADERS* nt_header;
-    IMAGE_DATA_DIRECTORY* data_dir;
-    IMAGE_EXPORT_DIRECTORY* ied;
-    int i;
-    DWORD* names;
-    WORD* ordinals;
-    DWORD* addresses;
+    if (m_base == nullptr)
+        return nullptr;
 
-    IMAGE_DOS_HEADER* dos_header = (IMAGE_DOS_HEADER*)base;
-    nt_header = (IMAGE_NT_HEADERS*)((char*)base + dos_header->e_lfanew);
-    data_dir = nt_header->OptionalHeader.DataDirectory;
-
-    if (data_dir == nullptr)
+    IMAGE_EXPORT_DIRECTORY* ied = (IMAGE_EXPORT_DIRECTORY*)get_data_directory(0);
+    if (ied == nullptr)
     {
-        LOG("Failed to find export table for base %p", base);
+        LOG("No export directory found at base %p", m_base);
         return nullptr;
     }
 
-    if (data_dir->VirtualAddress == 0)
-    {
-        LOG("No export directory found at base %p", base);
-        return nullptr;
-    }
+    DWORD* names = (DWORD*)rva_to_addr(ied->AddressOfNames);
+    WORD* ordinals = (WORD*)rva_to_addr(ied->AddressOfNameOrdinals);
+    DWORD* addresses = (DWORD*)rva_to_addr(ied->AddressOfFunctions);
 
-    ied = (IMAGE_EXPORT_DIRECTORY*)rva_to_addr(base, data_dir->VirtualAddress);
-    names = (DWORD*)rva_to_addr(base, ied->AddressOfNames);
-    ordinals = (WORD*)rva_to_addr(base, ied->AddressOfNameOrdinals);
-    addresses = (DWORD*)rva_to_addr(base, ied->AddressOfFunctions);
-
-    for (i = 0; i < (int)(ied->NumberOfNames); ++i)
+    for (int i = 0; i < int(ied->NumberOfNames); ++i)
     {
-        const char* export_name = (const char*)rva_to_addr(base, names[i]);
+        const char* export_name = (const char*)rva_to_addr(names[i]);
         if (_stricmp(export_name, func_name))
             continue;
 
         WORD ordinal = ordinals[i];
-        return rva_to_addr(base, addresses[ordinal]);
+        return rva_to_addr(addresses[ordinal]);
+    }
+
+    return nullptr;
+}
+
+//------------------------------------------------------------------------------
+void** pe_info::iterate_imports(const char* dll, const void* param, import_iter_t iter_func) const
+{
+    IMAGE_IMPORT_DESCRIPTOR* iid;
+    iid = (IMAGE_IMPORT_DESCRIPTOR*)get_data_directory(1, nullptr);
+    if (iid == nullptr)
+    {
+        LOG("Failed to find import desc for base %p", m_base);
+        return 0;
+    }
+
+    while (iid->Name)
+    {
+        char* name;
+        size_t len;
+
+        len = (dll != nullptr) ? strlen(dll) : 0;
+        name = (char*)rva_to_addr(iid->Name);
+        if (dll == nullptr || _strnicmp(name, dll, len) == 0)
+        {
+            void** ret = (this->*iter_func)(iid, param);
+
+            LOG("Checking imports in '%s'", name);
+
+            if (ret != nullptr)
+                return ret;
+        }
+
+        ++iid;
     }
 
     return nullptr;
