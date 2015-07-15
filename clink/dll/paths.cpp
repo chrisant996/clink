@@ -9,6 +9,7 @@
 static str<256> g_config_dir_override;
 
 //------------------------------------------------------------------------------
+// MODE4
 void normalise_path_format(str_base& buffer)
 {
     GetShortPathName(buffer.data(), buffer.data(), buffer.size());
@@ -17,6 +18,7 @@ void normalise_path_format(str_base& buffer)
     if (len && (buffer[len - 1] == '\\' || buffer[len - 1] == '/'))
         buffer.truncate(len - 1);
 }
+// MODE4
 
 //------------------------------------------------------------------------------
 void get_dll_dir(str_base& buffer)
