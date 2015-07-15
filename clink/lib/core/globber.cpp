@@ -37,42 +37,38 @@ bool globber::next(str_base& out)
     if (m_handle == nullptr)
         return false;
 
+    str<MAX_PATH> file_name = m_data.cFileName;
+
     const wchar_t* c = m_data.cFileName;
     if (c[0] == '.' && (!c[1] || (c[1] == '.' && !c[2])) && !m_context.dots)
-    {
-        next_file();
-        return next(out);
-    }
+        goto skip_file;
 
     int attr = m_data.dwFileAttributes;
+// MODE4
+    if (attr & FILE_ATTRIBUTE_REPARSE_POINT)
+        goto skip_file;
+// MODE4
+
     if ((attr & FILE_ATTRIBUTE_HIDDEN) && !m_context.hidden)
-    {
-        next_file();
-        return next(out);
-    }
+        goto skip_file;
 
     if ((attr & FILE_ATTRIBUTE_DIRECTORY) && m_context.no_directories)
-    {
-        next_file();
-        return next(out);
-    }
+        goto skip_file;
 
-    if ((attr & ~FILE_ATTRIBUTE_DIRECTORY) && m_context.no_files)
-    {
-        next_file();
-        return next(out);
-    }
-
-    str<MAX_PATH> file_name = m_data.cFileName;
+    if (!(attr & FILE_ATTRIBUTE_DIRECTORY) && m_context.no_files)
+        goto skip_file;
 
     out.clear();
     path::join(m_root.c_str(), file_name.c_str(), out);
-
     if (attr & FILE_ATTRIBUTE_DIRECTORY && !m_context.no_dir_suffix)
         out << "\\";
 
     next_file();
     return true;
+
+skip_file:
+    next_file();
+    return next(out);
 }
 
 //------------------------------------------------------------------------------
