@@ -47,9 +47,7 @@ TEST_CASE("Executable match generation.") {
     };
     env_fixture env(exec_env);
 
-    /*
     SECTION("PATH") {
         match_generator_tester<exec_lua_root>("one_p", "one_path.exe", nullptr);
     }
-    */
 }
