@@ -24,10 +24,7 @@ TEST_CASE("File match generator") {
     }
 
     SECTION("Single dir") {
-        match_generator_tester<file_match_generator>(
-            "dir1",
-            "dir1\\", nullptr
-        );
+        match_generator_tester<file_match_generator>("dir1", "dir1\\", nullptr);
     }
 
     SECTION("Dir slash flip") {
