@@ -640,9 +640,7 @@ local function argument_match_generator(text, first, last)
 
     -- Iterate through the matches the parser returned and collect matches.
     for _, match in ipairs(ret) do
-        if clink.is_match(needle, match) then
-            clink.add_match(match)
-        end
+        clink.add_match(match)
     end
 
     return true

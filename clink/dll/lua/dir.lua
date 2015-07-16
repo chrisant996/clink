@@ -7,9 +7,7 @@ local function dir_match_generator(word)
 
     -- Find matches.
     for _, dir in ipairs(clink.find_dirs(word.."*")) do
-        if clink.is_match(word, dir) then
-            table.insert(matches, dir)
-        end
+        table.insert(matches, dir)
     end
 
     return matches
