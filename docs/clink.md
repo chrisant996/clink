@@ -61,7 +61,7 @@ Settings loaded from the file can be overriden by setting environment variables 
 The following table describes the available settings;
 
 Name                         | Description
-----                         | -----------
+:--:                         | -----------
 **ansi_code_support**        | When printing the prompt, Clink has basic built-in support for SGR ANSI escape codes to control the text colours. This is automatically disabled if a third party tool is detected that also provides this facility. It can also be disabled by setting this to 0.
 **ctrld_exits**              | Ctrl-D exits the process when it is pressed on an empty line.
 **esc_clears_line**          | Clink clears the current line when Esc is pressed (unless Readline's Vi mode is enabled).

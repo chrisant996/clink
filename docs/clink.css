@@ -1,8 +1,56 @@
 body {
-    width: 600px;
+    padding-top: 3em;
+    width: 640px;
+    margin: 0 auto;
 }
 
-h3, h2 {
+h3 {
     width: 100%;
     border-bottom: 1px black solid;
+}
+
+#header {
+    float: right;
+    text-align: right;
+}
+
+#header #title {
+    font-size: 2em;
+    font-weight: bold;
+    margin-bottom: 0.4em;
+}
+
+#content {
+    clear: both;
+}
+
+#content p {
+    text-align: justify;
+}
+
+#content table {
+    margin: 0 auto;
+    width: 80%;
+}
+
+#content pre {
+    padding: 0.2em;
+    background-color: #eee;
+}
+
+#content td, #content th {
+    vertical-align: top;
+    padding: 0.2em;
+}
+
+#content th {
+    background-color: #eee;
+}
+
+#content tr:nth-child(odd) {
+    background-color: #f8f8f8;
+}
+
+#content tr:nth-child(even) {
+    background-color: #fff;
 }

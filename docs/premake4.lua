@@ -21,38 +21,32 @@
 --
 
 --------------------------------------------------------------------------------
+local function generate_file(source_path, out)
+    print("  << " .. source_path)
+    for line in io.open(source_path, "r"):lines() do
+        local include = line:match("%$%(INCLUDE +([^)]+)%)")
+        if include then
+            include = path.getdirectory(source_path) .. "/" .. include
+            generate_file(include, out)
+        else
+            line = line:gsub("%$%(CLINK_VERSION%)", tostring(clink_ver))
+            out:write(line .. "\n")
+        end
+    end
+end
+
+--------------------------------------------------------------------------------
 newaction {
     trigger = "clink_docs",
     description = "Generates Clink's documentation.",
     execute = function ()
-        if not os.getenv("cli_env") then
-            print("CLI_ENV not set...")
-            return
-        end
+        out_path = ".build/docs/clink.html"
 
-        local cmd = "pandoc"
-        cmd = cmd.." --from=markdown"
-        cmd = cmd.." --to=html"
-        cmd = cmd.." --css=docs/clink.css"
-        cmd = cmd.." --template=docs/template.html"
-        cmd = cmd.." --toc"
-        cmd = cmd.." --self-contained"
-        cmd = cmd.." -o .build/docs/temp.html"
-        cmd = cmd.." docs/clink.md"
-        cmd = cmd.." changes"
+        os.execute("1>nul 2>nul md .build\\docs")
 
-        os.execute("1>nul 2>&1 mkdir .build\\docs")
-        os.execute(cmd)
-
-        local out = io.open(".build/docs/clink.html", "w")
-        for i in io.lines(".build/docs/temp.html") do
-            local j = i:gsub("CLINK_VERSION", tostring(clink_ver))
-            out:write(j.."\n")
-        end
-        out:close()
-
-        os.execute("del .build\\docs\\temp.html")
+        print("")
+        print(">> " .. out_path)
+        generate_file("docs/clink.html", io.open(out_path, "w"))
+        print("")
     end
 }
-
--- vim: expandtab

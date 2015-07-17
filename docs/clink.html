@@ -1,0 +1,66 @@
+<html>
+<meta charset="utf-8"/>
+
+<!-- ----------------------------------------------------- -->
+<head>
+<style>
+    $(INCLUDE clink.css)
+</style>
+<script type="text/javascript">
+    $(INCLUDE marked.min.js)
+
+    function go()
+    {
+        // Convert markdown to HTML.
+        var md = document.getElementsByTagName("md")[0];
+        var html = marked(md.innerHTML);
+        document.getElementById("content").innerHTML = html;
+
+        // Generate a table of contents from h* tags.
+        var toc = document.getElementById("toc");
+        var headings = document.querySelectorAll("h3");//,h4");
+        for (var i = 0; i < headings.length; ++i)
+        {
+            var h = headings[i];
+
+            var anchor = document.createElement("a");
+            anchor.name = h.id;
+            h.parentNode.insertBefore(anchor, h);
+
+            var a = document.createElement("a");
+            a.href = "#" + h.id;
+            a.innerHTML = h.innerHTML;
+
+            var div = document.createElement("div");
+            div.appendChild(a);
+            div.className = h.tagName;
+
+            toc.appendChild(div);
+        }
+    }
+    -->
+</script>
+</head>
+
+<!-- ----------------------------------------------------- -->
+<body onload="go();">
+    <div id="header">
+        <div id="title">Clink v$(CLINK_VERSION)</div>
+        <div id="url">
+            <a href="http://github.com/mridgers/clink">
+                http://github.com/mridgers/clink
+            </a>
+        </div>
+        <div id="author">
+            <a href="http://twitter.com/choddlander">Martin Ridgers</a>
+        </div>
+    </div>
+    <div id="toc"></div>
+    <div id="content"></div>
+    <md style="display: none;"/>
+    $(INCLUDE clink.md)
+    $(INCLUDE ../CHANGES)
+    </md>
+</body>
+
+</html>
