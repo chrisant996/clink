@@ -479,13 +479,12 @@ int autorun(int argc, char** argv)
             g_all_users = 1;
             break;
 
-        case '?':
+        case 'h':
+            print_help();
             ret = -1;
             goto end;
 
-        case 'h':
-            puts(g_clink_header);
-            puts_help(help, sizeof_array(help));
+        default:
             ret = -1;
             goto end;
         }
