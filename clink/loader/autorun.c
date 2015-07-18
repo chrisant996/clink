@@ -110,6 +110,14 @@ static int delete_value(HKEY key, const char* name)
     return (ok == ERROR_SUCCESS);
 }
 
+
+
+//------------------------------------------------------------------------------
+HKEY open_cmd_proc_key(int all_users, int wow64, int writable)
+{
+    return open_software_key(all_users, "Microsoft\\Command Processor", wow64, writable);
+}
+
 //------------------------------------------------------------------------------
 static int find_clink_entry(const char* value, int* left, int* right)
 {
@@ -201,9 +209,10 @@ static int uninstall_autorun(const char* clink_path, int wow64)
     int ret;
     int left, right;
 
-    cmd_proc_key = open_software_key("Microsoft\\Command Processor", wow64, 1);
+    cmd_proc_key = open_cmd_proc_key(wow64, 1);
     if (cmd_proc_key == NULL)
     {
+        printf("ERROR: Failed to open registry key (%d)\n", GetLastError());
         return 0;
     }
 
@@ -268,9 +277,10 @@ static int install_autorun(const char* clink_path, int wow64)
     // play nicely with other projects that hook cmd.exe and install autoruns.
     uninstall_autorun(clink_path, wow64);
 
-    cmd_proc_key = open_software_key("Microsoft\\Command Processor", wow64, 1);
+    cmd_proc_key = open_cmd_proc_key(wow64, 1);
     if (cmd_proc_key == NULL)
     {
+        printf("ERROR: Failed to open registry key (%d)\n", GetLastError());
         return 0;
     }
 
@@ -319,7 +329,7 @@ static int show_autorun(const char* clink_path, int wow64)
     HKEY cmd_proc_key;
     char* key_value;
 
-    cmd_proc_key = open_software_key("Microsoft\\Command Processor", wow64, 0);
+    cmd_proc_key = open_cmd_proc_key(wow64, 0);
     if (cmd_proc_key == NULL)
     {
         return 0;
@@ -344,9 +354,10 @@ static int force_autorun(const char* value, int wow64)
     HKEY cmd_proc_key;
     int i;
 
-    cmd_proc_key = open_software_key("Microsoft\\Command Processor", wow64, 1);
+    cmd_proc_key = open_cmd_proc_key(wow64, 1);
     if (cmd_proc_key == NULL)
     {
+        printf("ERROR: Failed to open registry key (%d)\n", GetLastError());
         return 0;
     }
 
