@@ -381,7 +381,7 @@ static int show_autorun()
 static int set_autorun_value(const char* value, int wow64)
 {
     HKEY cmd_proc_key;
-    int i;
+    int ret;
 
     cmd_proc_key = open_cmd_proc_key(g_all_users, wow64, 1);
     if (cmd_proc_key == NULL)
@@ -390,10 +390,13 @@ static int set_autorun_value(const char* value, int wow64)
         return 0;
     }
 
-    i = set_value(cmd_proc_key, "AutoRun", value);
+    if (*value == '\0')
+        ret = delete_value(cmd_proc_key, "AutoRun");
+    else
+        ret = set_value(cmd_proc_key, "AutoRun", value);
 
     close_key(cmd_proc_key);
-    return 0;
+    return ret;
 }
 
 //------------------------------------------------------------------------------
