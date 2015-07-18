@@ -60,14 +60,16 @@ int                         hooked_wcwidth(wchar_t wc);
 #   endif
 #endif
 
-#define wcwidth(x)          (((x) > 0x7f) ? hooked_wcwidth(x) : 1)
-#define fwrite              hooked_fwrite
-#define fprintf             hooked_fprintf
-#define putc                hooked_putc
-#define mbrtowc             hooked_mbrtowc
-#define mbrlen              hooked_mbrlen
-#define stat                hooked_stat
-#define fstat               hooked_fstat
+#if defined(BUILD_READLINE)
+#   define wcwidth(x)       (((x) > 0x7f) ? hooked_wcwidth(x) : 1)
+#   define fwrite           hooked_fwrite
+#   define fprintf          hooked_fprintf
+#   define putc             hooked_putc
+#   define mbrtowc          hooked_mbrtowc
+#   define mbrlen           hooked_mbrlen
+#   define stat             hooked_stat
+#   define fstat            hooked_fstat
+#endif // BUILD_READLINE
 
 #undef MB_CUR_MAX
 #define MB_CUR_MAX  3       // utf-8 takes 3 bytes to encode 16 bits.
