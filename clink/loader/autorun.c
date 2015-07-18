@@ -260,9 +260,6 @@ static int uninstall_autorun(const char* clink_path, int wow64)
         }
     }
 
-    // Delete legacy values.
-    delete_value(cmd_proc_key, "AutoRunPreClinkInstall");
-
     // Tidy up.
     close_key(cmd_proc_key);
     free(key_value);
