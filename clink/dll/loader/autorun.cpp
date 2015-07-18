@@ -36,7 +36,8 @@ static HKEY open_software_key(int all_users, const char* key, int wow64, int wri
     flags = KEY_READ|(writable ? KEY_WRITE : 0);
     flags |= KEY_WOW64_64KEY;
 
-    ok = RegCreateKeyEx(all_users ? HKEY_LOCAL_MACHINE : HKEY_CURRENT_USER,
+    HKEY result;
+    BOOL ok = RegCreateKeyEx(all_users ? HKEY_LOCAL_MACHINE : HKEY_CURRENT_USER,
         buffer.c_str(), 0, nullptr, REG_OPTION_NON_VOLATILE, flags, nullptr,
         &result, nullptr);
 
