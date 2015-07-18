@@ -132,7 +132,7 @@ solution("clink")
     setup_cfg("debug")
 
     configuration("release")
-        flags("OptimizeSize")
+        optimize("size")
 
     configuration("vs*")
         defines("_CRT_SECURE_NO_WARNINGS")
