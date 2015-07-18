@@ -136,8 +136,10 @@ static int find_clink_entry(const char* value, int* left, int* right)
     const char* needles[] = {
         "clink inject",
         "clink\" inject",
-        "clink.exe inject",
-        "clink.exe\" inject",
+        "clink_x64.exe inject",
+        "clink_x86.exe inject",
+        "clink_x64.exe\" inject",
+        "clink_x86.exe\" inject",
         "clink.bat inject",
         "clink.bat\" inject",
     };
