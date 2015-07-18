@@ -374,7 +374,7 @@ static int show_autorun()
         puts("");
     }
 
-    return 0;
+    return 1;
 }
 
 //------------------------------------------------------------------------------
@@ -486,11 +486,11 @@ int autorun(int argc, char** argv)
 
         case 'h':
             print_help();
-            ret = -1;
+            ret = 1;
             goto end;
 
         default:
-            ret = -1;
+            ret = 1;
             goto end;
         }
     }
@@ -513,7 +513,7 @@ int autorun(int argc, char** argv)
         }
         else if (!strcmp(argv[optind], "show"))
         {
-            ret = show_autorun();
+            ret = !show_autorun();
             goto end;
         }
     }
@@ -540,10 +540,10 @@ int autorun(int argc, char** argv)
         goto end;
     }
 
-    ret = dispatch(function, path_arg);
+    ret = !dispatch(function, path_arg);
 
     // Provide the user with some feedback.
-    if (ret > 0)
+    if (ret == 0)
     {
         const char* msg = NULL;
 

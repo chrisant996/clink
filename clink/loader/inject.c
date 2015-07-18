@@ -201,7 +201,7 @@ static int do_inject(DWORD target_pid)
     if (!check_dll_version(dll_path))
     {
         LOG_ERROR("DLL failed version check.");
-        return -1;
+        return 0;
     }
 
     // Open the process so we can operate on it.
@@ -217,7 +217,7 @@ static int do_inject(DWORD target_pid)
     if (parent_process == NULL)
     {
         LOG_ERROR("Failed to open parent process.");
-        return -1;
+        return 0;
     }
 
     // Check arch matches.
@@ -226,7 +226,7 @@ static int do_inject(DWORD target_pid)
     if (is_wow_64[0] != is_wow_64[1])
     {
         LOG_ERROR("32/64-bit mismatch. Use loader executable that matches parent architecture.");
-        return -1;
+        return 0;
     }
 
     // Create a buffer in the process to write data to.
@@ -240,7 +240,7 @@ static int do_inject(DWORD target_pid)
     if (buffer == NULL)
     {
         LOG_ERROR("VirtualAllocEx failed");
-        return -1;
+        return 0;
     }
 
     // We'll use LoadLibraryA as the entry point for out remote thread.
@@ -248,7 +248,7 @@ static int do_inject(DWORD target_pid)
     if (thread_proc == NULL)
     {
         LOG_ERROR("Failed to find LoadLibraryA address");
-        return -1;
+        return 0;
     }
 
     // Tell remote process what DLL to load.
@@ -262,7 +262,7 @@ static int do_inject(DWORD target_pid)
     if (t == FALSE)
     {
         LOG_ERROR("WriteProcessMemory() failed");
-        return -1;
+        return 0;
     }
     
     LOG_INFO("Creating remote thread at %p with parameter %p", thread_proc, buffer);
@@ -281,7 +281,7 @@ static int do_inject(DWORD target_pid)
     if (remote_thread == NULL)
     {
         LOG_ERROR("CreateRemoteThread() failed");
-        return -1;
+        return 0;
     }
 
     // Wait for injection to complete.
@@ -292,7 +292,7 @@ static int do_inject(DWORD target_pid)
     CloseHandle(remote_thread);
     VirtualFreeEx(parent_process, buffer, 0, MEM_RELEASE);
     CloseHandle(parent_process);
-    return 0;
+    return 1;
 }
 
 //------------------------------------------------------------------------------
@@ -410,13 +410,14 @@ int inject(int argc, char** argv)
             disable_log();
             break;
 
-        case '?': return -1;
+        case '?':
+            return 1;
 
         case 'h':
         default:
             puts(g_clink_header);
             puts_help(help, sizeof_array(help));
-            return -1;
+            return 1;
         }
     }
 
@@ -427,21 +428,21 @@ int inject(int argc, char** argv)
         target_pid = get_parent_pid();
         if (target_pid == -1)
         {
-            LOG_ERROR("Failed to find parent pid.");
-            return -1;
+            LOG_ERROR("Failed to find parent process ID.");
+            return 1;
         }
     }
 
     // Check to see if clink is already installed.
     if (is_clink_present(target_pid))
     {
-        return -1;
+        return 1;
     }
 
     // Write args to shared memory, inject, and clean up.
     shared_mem = create_shared_mem(1, "clink", target_pid);
     memcpy(shared_mem->ptr, &inject_args, sizeof(inject_args));
-    i = do_inject(target_pid);
+    i = !do_inject(target_pid);
     close_shared_mem(shared_mem);
 
     return i;

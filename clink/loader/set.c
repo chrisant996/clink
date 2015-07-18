@@ -40,7 +40,7 @@ static int print_keys()
     if (decl == NULL)
     {
         puts("ERROR: Failed to find settings decl.");
-        return 1;
+        return 0;
     }
 
     puts("Available options:\n");
@@ -63,7 +63,7 @@ static int print_keys()
     }
 
     printf("\nSettings path: %s\n", g_settings_path);
-    return 0;
+    return 1;
 }
 
 //------------------------------------------------------------------------------
@@ -73,7 +73,7 @@ static int print_value(const char* key)
     if (decl == NULL)
     {
         printf("ERROR: Setting '%s' not found.\n", key);
-        return 1;
+        return 0;
     }
 
     printf("         Name: %s\n", decl->name);
@@ -97,7 +97,7 @@ static int print_value(const char* key)
     puts("");
     wrapped_write(stdout, "", decl->description, 78);
 
-    return 0;
+    return 1;
 }
 
 //------------------------------------------------------------------------------
@@ -107,13 +107,13 @@ static int set_value(const char* key, const char* value)
     if (decl == NULL)
     {
         printf("ERROR: Setting '%s' not found.\n", key);
-        return 1;
+        return 0;
     }
 
     settings_set(g_settings, key, value);
 
     printf("Settings '%s' set to '%s'\n", key, settings_get_str(g_settings, key));
-    return 0;
+    return 1;
 }
 
 //------------------------------------------------------------------------------
@@ -159,7 +159,7 @@ int set(int argc, char** argv)
     }
 
     // List or set Clink's settings.
-    ret = 0;
+    ret = 1;
     switch (argc)
     {
     case 0:
@@ -171,7 +171,6 @@ int set(int argc, char** argv)
         if (_stricmp(argv[1], "--help") == 0 ||
             _stricmp(argv[1], "-h") == 0)
         {
-            ret = 1;
             print_usage();
         }
         else
@@ -181,16 +180,13 @@ int set(int argc, char** argv)
         break;
 
     default:
-        ret = set_value(argv[1], argv[2]);
-        if (!ret)
-        {
-            settings_save(g_settings, g_settings_path);
-        }
+        if (set_value(argv[1], argv[2]))
+            ret = settings_save(g_settings, g_settings_path);
         break;
     }
 
     settings_shutdown(g_settings);
-    return ret;
+    return !ret;
 }
 
 // vim: expandtab
