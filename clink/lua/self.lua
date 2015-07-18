@@ -21,12 +21,8 @@
 --
 
 --------------------------------------------------------------------------------
-local inject_parser
-local autorun_parser
-local set_parser
-local self_parser
 
-inject_parser = clink.arg.new_parser()
+local inject_parser = clink.arg.new_parser()
 inject_parser:set_flags(
     "--help",
     "--nohostcheck",
@@ -36,7 +32,7 @@ inject_parser:set_flags(
     "--scripts"
 )
 
-autorun_parser = clink.arg.new_parser()
+local autorun_parser = clink.arg.new_parser()
 autorun_parser:set_flags(
     "--allusers",
     "--help",
@@ -46,7 +42,7 @@ autorun_parser:set_flags(
     "--value"
 )
 
-set_parser = clink.arg.new_parser()
+local set_parser = clink.arg.new_parser()
 set_parser:disable_file_matching()
 set_parser:set_flags("--help")
 set_parser:set_arguments(
@@ -69,7 +65,7 @@ set_parser:set_arguments(
     }
 )
 
-self_parser = clink.arg.new_parser()
+local self_parser = clink.arg.new_parser()
 self_parser:set_arguments(
     {
         "inject" .. inject_parser,
