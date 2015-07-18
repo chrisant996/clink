@@ -23,13 +23,18 @@
 #include "shared/util.h"
 
 //------------------------------------------------------------------------------
-typedef int (dispatch_func_t)(const char*, int);
+typedef int     (dispatch_func_t)(const char*, int);
+const char*     g_clink_args = NULL;
+int             g_all_users  = 0;
+int             show_autorun();
 
-const char* g_clink_args = NULL;
-int         g_all_users  = 0;
 
 
-
+//------------------------------------------------------------------------------
+static void success_message(const char* message)
+{
+    printf("%s (for %s)\n", message, g_all_users ? "all users" : "current user");
+    show_autorun();
 }
 
 //------------------------------------------------------------------------------
@@ -536,6 +541,22 @@ int autorun(int argc, char** argv)
     }
 
     ret = dispatch(function, path_arg);
+
+    // Provide the user with some feedback.
+    if (ret > 0)
+    {
+        const char* msg = NULL;
+
+        if (function == install_autorun)
+            msg = "Clink successfully installed to run when cmd.exe starts";
+        else if (function == uninstall_autorun)
+            msg = "Clink's autorun entry has been removed.";
+        else if (function == set_autorun_value)
+            msg = "Cmd.exe's AutoRun registry key set successfully.";
+
+        if (msg != NULL)
+            success_message(msg);
+    }
 
 end:
     free(clink_path);
