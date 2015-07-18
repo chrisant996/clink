@@ -21,6 +21,8 @@
 --
 
 --------------------------------------------------------------------------------
+local null_parser = clink.arg.new_parser()
+null_parser:disable_file_matching()
 
 local inject_parser = clink.arg.new_parser()
 inject_parser:set_flags(
@@ -32,13 +34,16 @@ inject_parser:set_flags(
     "--scripts"
 )
 
+local autorun_dashdash_parser = clink.arg.new_parser()
+autorun_dashdash_parser:set_arguments({ "--" .. inject_parser })
+
 local autorun_parser = clink.arg.new_parser()
 autorun_parser:set_flags("--allusers", "--help")
 autorun_parser:set_arguments(
     {
-        "install",
-        "uninstall",
-        "show",
+        "install"   .. autorun_dashdash_parser,
+        "uninstall" .. null_parser,
+        "show"      .. null_parser,
         "set"
     }
 )
