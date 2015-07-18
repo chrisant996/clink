@@ -411,6 +411,41 @@ static int dispatch(dispatch_func_t* function, const char* clink_path)
 }
 
 //------------------------------------------------------------------------------
+void print_help()
+{
+    const char* help_verbs[] = {
+        "install",        "Installs an autorun entry for cmd.exe.",
+        "uninstall",      "Uninstalls an autorun entry.",
+        "show",           "Displays the current autorun settings.",
+        "value <string>", "Sets the autorun to <string>.",
+    };
+
+    const char* help_args[] = {
+        "-a, --allusers",       "Install autorun for all users (requires admin rights).",
+        "-h, --help",           "Shows this help text.",
+    };
+
+    extern const char* g_clink_header;
+
+    puts(g_clink_header);
+
+    puts("Usage: autorun [options] <verb> [<string>] [-- <clink_args>]\n");
+
+    puts("Verbs:");
+    puts_help(help_verbs, sizeof_array(help_verbs));
+
+    puts("Options:");
+    puts_help(help_args, sizeof_array(help_args));
+
+    puts("All arguments that follow a '--' are added to Clink's auto command"
+        "line when\ninstalled. Available arguments can be viewed by running"
+        "'clink inject --help'\n");
+
+    puts("Write access to cmd.exe's AutoRun registry entry will require"
+        "administrator\nprivileges when using the --allusers option.");
+}
+
+//------------------------------------------------------------------------------
 int autorun(int argc, char** argv)
 {
     char* clink_path;
@@ -420,26 +455,10 @@ int autorun(int argc, char** argv)
     const char* path_arg;
 
     struct option options[] = {
-        { "install",    no_argument,        NULL, 'i' },
-        { "uninstall",  no_argument,        NULL, 'u' },
-        { "show",       no_argument,        NULL, 's' },
-        { "value",      required_argument,  NULL, 'v' },
         { "help",       no_argument,        NULL, 'h' },
         { "allusers",   no_argument,        NULL, 'a' },
         { NULL, 0, NULL, 0 }
     };
-
-    const char* help[] = {
-        "-i, --install",        "Installs an autorun entry for cmd.exe.",
-        "-u, --uninstall",      "Uninstalls an autorun entry.",
-        "-s, --show",           "Displays the current autorun settings.",
-        "-v, --value <string>", "Sets the autorun to <string>.",
-        "-a, --allusers",       "Install autorun for all users (requires admin rights).",
-        "-h, --help",           "Shows this help text.",
-        "-- <args>",            "Pass <args> that follow '--' on to Clink."
-    };
-
-    extern const char* g_clink_header;
 
     // Get path where clink is installed (assumed to be where this executable is)
     clink_path = malloc(strlen(_pgmptr));
@@ -449,27 +468,11 @@ int autorun(int argc, char** argv)
     function = NULL;
     path_arg = clink_path;
 
-    while ((i = getopt_long(argc, argv, "v:siuha", options, NULL)) != -1)
+    // Parse command line arguments.
+    while ((i = getopt_long(argc, argv, "ha", options, NULL)) != -1)
     {
         switch (i)
         {
-        case 'i':
-            function = install_autorun;
-            break;
-
-        case 'u':
-            function = uninstall_autorun;
-            break;
-
-        case 's':
-            ret = show_autorun();
-            goto end;
-
-        case 'v':
-            function = set_autorun_value;
-            path_arg = optarg;
-            break;
-
         case 'a':
             g_all_users = 1;
             break;
@@ -486,39 +489,52 @@ int autorun(int argc, char** argv)
         }
     }
 
+    // Find out what to do by parsing the verb.
+    if (optind < argc)
+    {
+        if (!strcmp(argv[optind], "install"))
+            function = install_autorun;
+        else if (!strcmp(argv[optind], "uninstall"))
+            function = uninstall_autorun;
+        else if (!strcmp(argv[optind], "set"))
+        {
+            ++optind;
+            if (optind < argc && argv[optind][0] != '-')
+            {
+                path_arg = argv[optind];
+                function = set_autorun_value;
+            }
+        }
+        else if (!strcmp(argv[optind], "show"))
+        {
+            ret = show_autorun();
+            goto end;
+        }
+    }
+
+    // If we can't continue any further then warn the user.
+    if (function == NULL)
+    {
+        puts("ERROR: Invalid arguments. Run 'clink autorun --help' for info.");
+        goto end;
+    }
+
     // Collect arguments to pass on to Clink.
-    if (optind < argc && strcmp(argv[optind - 1], "--") == 0)
     {
         const char* cmd_line;
-
-        cmd_line = GetCommandLine();
-        cmd_line = strstr(cmd_line, " -- ");
-        if (cmd_line != NULL)
-        {
+        if (cmd_line = strstr(GetCommandLine(), " -- "))
             g_clink_args = cmd_line + 4;
-        }
     }
 
     // Do the magic.
-    if (function != NULL)
+    if (!check_registry_access())
     {
-        if (!check_registry_access())
-        {
-            puts("You must have administator rights to access cmd.exe's autorun");
-            ret = -1;
-            goto end;
-        }
+        puts("You must have administator rights to access cmd.exe's autorun");
+        ret = 1;
+        goto end;
+    }
 
-        ret = dispatch(function, path_arg);
-    }
-    else
-    {
-        puts(g_clink_header);
-        puts_help(help, sizeof_array(help));
-        puts("Write access to cmd.exe's AutoRun registry entry can require\n"
-            "administrator privileges.");
-        ret = -1;
-    }
+    ret = dispatch(function, path_arg);
 
 end:
     free(clink_path);

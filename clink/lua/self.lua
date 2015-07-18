@@ -33,13 +33,14 @@ inject_parser:set_flags(
 )
 
 local autorun_parser = clink.arg.new_parser()
-autorun_parser:set_flags(
-    "--allusers",
-    "--help",
-    "--install",
-    "--uninstall",
-    "--show",
-    "--value"
+autorun_parser:set_flags("--allusers", "--help")
+autorun_parser:set_arguments(
+    {
+        "install",
+        "uninstall",
+        "show",
+        "set"
+    }
 )
 
 local set_parser = clink.arg.new_parser()
