@@ -133,7 +133,7 @@ static const setting_decl_t g_settings_decl[] = {
         "in single, double, or both quotes respectively.",
         SETTING_TYPE_ENUM,
         "Off\0On\0Not in single quotes\0Not in double quote\0Not in any quotes",
-        "2"
+        "4"
     },
     {
         "use_altgr_substitute",
