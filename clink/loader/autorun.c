@@ -27,20 +27,8 @@ typedef int (dispatch_func_t)(const char*, int);
 
 const char* g_clink_args = NULL;
 
-//------------------------------------------------------------------------------
-static int does_user_have_admin_rights()
-{
-    HKEY key;
-    LONG ok;
 
-    ok = RegOpenKeyEx(HKEY_USERS, "S-1-5-19", 0, KEY_READ, &key);
-    if (ok == ERROR_SUCCESS)
-    {
-        RegCloseKey(key);
-        return 1;
-    }
 
-    return 0;
 }
 
 //------------------------------------------------------------------------------
@@ -116,6 +104,25 @@ static int delete_value(HKEY key, const char* name)
 HKEY open_cmd_proc_key(int all_users, int wow64, int writable)
 {
     return open_software_key(all_users, "Microsoft\\Command Processor", wow64, writable);
+}
+
+//------------------------------------------------------------------------------
+static int check_registry_access()
+{
+    HKEY key;
+
+    key = open_cmd_proc_key(g_all_users, 0, 1);
+    if (key == NULL)
+        return 0;
+
+    close_key(key);
+
+    key = open_cmd_proc_key(g_all_users, 1, 1);
+    if (key == NULL)
+        return 0;
+
+    close_key(key);
+    return 1;
 }
 
 //------------------------------------------------------------------------------
@@ -394,7 +401,6 @@ int autorun(int argc, char** argv)
     char* clink_path;
     int i;
     int ret;
-    int need_admin_rights;
     dispatch_func_t* function;
     const char* path_arg;
 
@@ -441,7 +447,6 @@ int autorun(int argc, char** argv)
 
         case 's':
             function = show_autorun;
-            need_admin_rights = 0;
             break;
 
         case 'v':
@@ -477,8 +482,7 @@ int autorun(int argc, char** argv)
     // Do the magic.
     if (function != NULL)
     {
-        // Check we're running with sufficient privileges.
-        if (need_admin_rights && !does_user_have_admin_rights())
+        if (!check_registry_access())
         {
             puts("You must have administator rights to access cmd.exe's autorun");
             ret = -1;
