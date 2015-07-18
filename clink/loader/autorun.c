@@ -328,27 +328,45 @@ static int install_autorun(const char* clink_path, int wow64)
 }
 
 //------------------------------------------------------------------------------
-static int show_autorun(const char* clink_path, int wow64)
+static int show_autorun()
 {
-    HKEY cmd_proc_key;
-    char* key_value;
+    int all_users;
 
-    cmd_proc_key = open_cmd_proc_key(g_all_users, wow64, 0);
-    if (cmd_proc_key == NULL)
+    puts("\nCurrent AutoRun values");
+
+    for (all_users = 0; all_users < 2; ++all_users)
     {
-        return 0;
+        int wow64;
+
+        printf("\n  %s:\n", all_users ? "All users" : "Current user");
+
+        for (wow64 = 0; wow64 < 2; ++wow64)
+        {
+            HKEY cmd_proc_key;
+            char* key_value;
+
+            cmd_proc_key = open_cmd_proc_key(all_users, wow64, 0);
+            if (cmd_proc_key == NULL)
+            {
+                printf("ERROR: Failed to open registry key (%d)\n", GetLastError());
+                return 0;
+            }
+
+            key_value = NULL;
+            get_value(cmd_proc_key, "AutoRun", &key_value);
+
+            printf("\n    %6s : %s",
+                    wow64     ? " wow64"  : "native",
+                    key_value ? key_value : "<unset>"
+                  );
+
+            close_key(cmd_proc_key);
+            free(key_value);
+        }
+
+        puts("");
     }
 
-    key_value = NULL;
-    get_value(cmd_proc_key, "AutoRun", &key_value);
-
-    printf("%6s : %s\n",
-        wow64 ? "wow64" : "native",
-        key_value ? key_value : "<unset>"
-    );
-
-    close_key(cmd_proc_key);
-    free(key_value);
     return 0;
 }
 
@@ -444,8 +462,8 @@ int autorun(int argc, char** argv)
             break;
 
         case 's':
-            function = show_autorun;
-            break;
+            ret = show_autorun();
+            goto end;
 
         case 'v':
             function = force_autorun;
