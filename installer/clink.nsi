@@ -177,7 +177,8 @@ Section "!un.Application files"
     SectionIn RO
     SetShellVarContext all
 
-    ExecShell "open" "$INSTDIR\clink_x86.exe" "autorun --uninstall" SW_HIDE
+    ExecShell "open" "$INSTDIR\clink_x86.exe" "autorun --allusers uninstall" SW_HIDE
+    ExecShell "open" "$INSTDIR\clink_x86.exe" "autorun uninstall" SW_HIDE
     Sleep 600
 
     ; Delete the instaltion directory and root directory if it's empty.
