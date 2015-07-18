@@ -21,96 +21,171 @@
 --
 
 --------------------------------------------------------------------------------
+local function warn(msg)
+    print("WARNING: " .. msg)
+end
+
+--------------------------------------------------------------------------------
+local function exec(cmd)
+    -- Helper funciton to show executed commands to TTY
+    print("## EXEC: " .. cmd:gsub("1>nul ", ""):gsub("2>nul ", ""))
+    return os.execute(cmd)
+end
+
+--------------------------------------------------------------------------------
+local function mkdir(dir)
+    if os.isdir(dir) then
+        return
+    end
+
+    local ret = exec("1>nul 2>nul md " .. path.translate(dir))
+    if ret ~= 0 then
+        error("Failed to create directory '" .. dir .. "'")
+    end
+end
+
+--------------------------------------------------------------------------------
+local function rmdir(dir)
+    if not os.isdir(dir) then
+        return
+    end
+
+    return exec("1>nul 2>nul rd /q /s " .. path.translate(dir))
+end
+
+--------------------------------------------------------------------------------
+local function unlink(file)
+    return exec("1>nul 2>nul del /q " .. path.translate(file))
+end
+
+--------------------------------------------------------------------------------
+local function copy(src, dest)
+    src = path.translate(src)
+    dest = path.translate(dest)
+    return exec("1>nul 2>nul copy /y " .. src .. " " .. dest)
+end
+
+--------------------------------------------------------------------------------
+local function concat(one, two)
+    one = path.translate(one)
+    two = path.translate(two)
+    exec("2>nul type " .. one .. " " .. two .. " 1>MR")
+    copy("MR", one)
+    unlink("MR")
+end
+
+--------------------------------------------------------------------------------
+local function have_required_tool(name)
+    return (exec("1>nul 2>nul where " .. name) == 0)
+end
+
+--------------------------------------------------------------------------------
+local function get_target_dir(nightly)
+    local target_dir
+
+    if nightly then
+        target_dir = tostring(nightly)
+        target_dir = target_dir .. os.date("%Y%m%d_")
+        target_dir = target_dir .. get_last_git_commit()
+    else
+        target_dir = ".build/release/"
+        if clink_ver ~= "DEV" then
+            target_dir = target_dir .. os.date("%Y%m%d_%H%M%S_")
+        end
+        target_dir = target_dir .. clink_ver
+    end
+
+    target_dir = path.getabsolute(target_dir) .. "/"
+    if not os.isdir(target_dir .. ".") then
+        rmdir(target_dir)
+        mkdir(target_dir)
+    end
+
+    return target_dir
+end
+
+--------------------------------------------------------------------------------
 newaction {
     trigger = "clink_release",
-    description = "Prepares a release of clink.",
+    description = "Creates a release of Clink.",
     execute = function ()
-        -- Helper funciton to show executed commands to TTY
-        local exec = function(cmd)
-            print("----------------------------------------------")
-            print("-- EXEC: "..cmd)
-            print("--\n")
-            return os.execute(cmd)
-        end
-
-        -- Crude repurpose of this function so it can be used for nightlies
-        local nightly = nil
-        if clink_ver:lower() == "nightly" then
-            clink_ver = "dev"
-            nightly = os.getenv("CLI_ENV")..".\\..\\clink\\builds\\"
-
-            if not os.isdir(nightly..".") then
-                print("Invalid nightly directory '"..nightly.."'")
-                return
-            end
-
-            local mask = path.translate(nightly, "/").."*"
-            local hash = get_last_git_commit()
-            local chop = 0 - hash:len()
-            for _, i in ipairs(os.matchdirs(mask)) do
-                if i:sub(chop) == hash then
-                    print(hash.." already built")
-                    return
-                end
-            end
-        end
-
+        local premake = _PREMAKE_COMMAND
+        local target_dir = get_target_dir()
         local git_checkout = clink_ver
+
         clink_ver = clink_ver:upper()
 
-        -- Build the output directory name
-        local target_dir
-        if nightly then
-            target_dir = nightly
-            target_dir = target_dir..os.date("%Y%m%d_")
-            target_dir = target_dir..get_last_git_commit()
-        else
-            target_dir = ".build\\release\\"
-            if clink_ver ~= "DEV" then
-                target_dir = target_dir..os.date("%Y%m%d_%H%M%S_")
-            end
-            target_dir = target_dir..clink_ver
-        end
-
-        target_dir = path.translate(path.getabsolute(target_dir)).."\\"
-
-        if not os.isdir(target_dir..".") then
-            exec("rd /q /s "..target_dir)
-            exec("md "..target_dir)
-        end
+        -- Check we have the tools we need.
+        local have_msbuild = have_required_tool("msbuild")
+        local have_mingw = have_required_tool("mingw32-make")
+        local have_nsis = have_required_tool("makensis")
+        local have_7z = have_required_tool("7z")
 
         -- If we're not building DEV, create a clone and checkout correct version
         -- and build it.
         if clink_ver ~= "DEV" then
-            repo_path = "clink_"..clink_ver.."_src"
-            local code_dir = target_dir..repo_path
-            if not os.isdir(code_dir..".") then
-                exec("md "..code_dir)
+            local repo_path = "clink_" .. clink_ver .. "_src"
+            local code_dir = target_dir .. repo_path
+            if not os.isdir(code_dir .. ".") then
+                mkdir(code_dir)
             end
 
             -- clone repro in release folder and checkout the specified version
-            exec("git clone . "..code_dir)
+            exec("git clone . " .. code_dir)
             if not os.chdir(code_dir) then
-                print("Failed to chdir to '"..code_dir.."'")
+                print("Failed to chdir to '" .. code_dir .. "'")
                 return
             end
-            exec("git checkout "..git_checkout)
+            exec("git checkout " .. git_checkout)
         end
-        local src_dir_name = path.translate(path.getabsolute("."), "\\")
+        local src_dir_name = path.getabsolute(".")
 
         -- Build the code.
-        local vs_ver = _OPTIONS["clink_vs_ver"] or "vs2013"
-        local premake = _PREMAKE_COMMAND or "premake4"
-        exec(premake.." --clink_ver="..clink_ver.." "..vs_ver)
-        exec("msbuild /m /v:q /p:configuration=release /p:platform=win32 .build/"..vs_ver.."/clink.sln")
-        exec("msbuild /m /v:q /p:configuration=release /p:platform=x64 .build/"..vs_ver.."/clink.sln")
+        local x86_ok = true;
+        local x64_ok = true;
+        local toolchain = "ERROR"
+        if have_msbuild then
+            toolchain = _OPTIONS["clink_vs_ver"] or "vs2013"
+            exec(premake .. " --clink_ver=" .. clink_ver .. " " .. toolchain)
 
-        local src = ".build\\"..vs_ver.."\\bin\\release\\"
-        local dest = target_dir.."clink_"..clink_ver
+            ret = exec("msbuild /m /v:q /p:configuration=release /p:platform=win32 .build/" .. toolchain .. "/clink.sln")
+            if ret ~= 0 then
+                x86_ok = false
+            end
+
+            ret = exec("msbuild /m /v:q /p:configuration=release /p:platform=x64 .build/" .. toolchain .. "/clink.sln")
+            if ret ~= 0 then
+                x64_ok = false
+            end
+        elseif have_mingw then
+            toolchain = "gmake"
+            exec(premake .. " --clink_ver=" .. clink_ver .. " gmake")
+            os.chdir(".build/gmake")
+
+            local ret
+            ret = exec("1>nul mingw32-make CC=gcc config=release_x32 -j%number_of_processors%")
+            if ret ~= 0 then
+                x86_ok = false
+            end
+
+            ret = exec("1>nul mingw32-make CC=gcc config=release_x64 -j%number_of_processors%")
+            if ret ~= 0 then
+                x64_ok = false
+            end
+
+            os.chdir("../..")
+        else
+            error("Unable to locate either msbuild.exe or mingw32-make.exe.")
+        end
+
+        local src = ".build/" .. toolchain .. "/bin/release/"
+        local dest = target_dir .. "clink_" .. clink_ver
 
         -- Do a coarse check to make sure there's a build available.
-        if not os.isdir(src..".") then
-            print("There's no build available in '"..src.."'")
+        print(x86_ok)
+        print(x64_ok)
+        if not os.isdir(src .. ".") or not (x86_ok or x64_ok) then
+            print("There's no build available in '" .. src .. "'")
             return
         end
 
@@ -123,90 +198,97 @@ newaction {
             "clink_inputrc_base",
             "CHANGES",
             "LICENSE",
-
             "clink_dll_x*.pdb",
         }
 
-        exec("md "..dest)
+        mkdir(dest)
         for _, mask in ipairs(manifest) do
-            exec("copy "..src..mask.." "..dest)
+            copy(src .. mask, dest)
         end
 
         -- Lump lua files together.
-        exec("copy /b "..dest.."\\clink.lua /b + "..dest.."\\arguments.lua /b "..dest.."\\clink._lua /b")
-        exec("del /q "..dest.."\\clink.lua")
-        exec("del /q "..dest.."\\arguments.lua")
-        exec("del /q "..dest.."\\debugger.lua")
+        unlink(dest .. "/clink._lua")
+        concat(dest .. "/clink._lua", dest .. "/clink.lua")
+        concat(dest .. "/clink._lua", dest .. "/arguments.lua")
+        concat(dest .. "/clink._lua", dest .. "/debugger.lua")
+        unlink(dest .. "/clink.lua")
+        unlink(dest .. "/arguments.lua")
+        unlink(dest .. "/debugger.lua")
 
-        local lua_lump = io.open(dest.."\\clink._lua", "a")
-        for _, i in ipairs(os.matchfiles(dest.."/*.lua")) do
+        local lua_lump = io.open(dest .. "/clink._lua", "a")
+        for _, i in ipairs(os.matchfiles(dest .. "/*.lua")) do
             i = path.translate(i)
-            print("lumping "..i)
+            print("lumping " .. i)
 
             lua_lump:write("\n--------------------------------------------------------------------------------\n")
             lua_lump:write("-- ", path.getname(i), "\n")
             lua_lump:write("--\n\n")
-            for l in io.lines(i) do lua_lump:write(l, "\n") end
+
+            for l in io.lines(i, "r") do
+                lua_lump:write(l, "\n")
+            end
         end
         lua_lump:close()
 
-        exec("del /q "..dest.."\\*.lua")
-        exec("move "..dest.."\\clink._lua "..dest.."\\clink.lua")
+        unlink(dest .. "/*.lua")
+        copy(dest .. "/clink._lua", dest .. "/clink.lua")
+        unlink(dest .. "/clink._lua")
 
         -- Generate documentation.
-        exec(premake.." --clink_ver="..clink_ver.." clink_docs")
-        exec("copy .build\\docs\\clink.html "..dest)
+        exec(premake .. " --clink_ver=" .. clink_ver .. " clink_docs")
+        copy(".build/docs/clink.html", dest)
 
         -- Build the installer.
-        local nsis_cmd = "makensis"
-        nsis_cmd = nsis_cmd.." /DCLINK_BUILD="..dest
-        nsis_cmd = nsis_cmd.." /DCLINK_VERSION="..clink_ver
-        nsis_cmd = nsis_cmd.." /DCLINK_SOURCE="..src_dir_name
-        nsis_cmd = nsis_cmd.." "..src_dir_name.."/installer/clink.nsi"
-        exec(nsis_cmd)
+        if have_nsis then
+            local nsis_cmd = "makensis"
+            nsis_cmd = nsis_cmd .. " /DCLINK_BUILD=" .. dest
+            nsis_cmd = nsis_cmd .. " /DCLINK_VERSION=" .. clink_ver
+            nsis_cmd = nsis_cmd .. " /DCLINK_SOURCE=" .. src_dir_name
+            nsis_cmd = nsis_cmd .. " " .. src_dir_name .. "/installer/clink.nsi"
+            exec(nsis_cmd)
+        end
 
         -- Tidy up code directory.
         if clink_ver ~= "DEV" and not nightly then
-            exec("rd /q /s .build")
-            exec("rd /q /s .git")
-            exec("del /q .gitignore")
+            rmdir(".build")
+            rmdir(".git")
+            unlink(".gitignore")
 
+            -- Zip up the source code.
             os.chdir(target_dir)
-            exec("7z a -r "..target_dir.."clink_"..clink_ver.."_src.zip "..src_dir_name)
-            exec("rd /q /s "..src_dir_name)
+            if have_7z then
+                exec("7z a -r " .. target_dir .. "clink_" .. clink_ver .. "_src.zip " .. src_dir_name)
+            end
+            rmdir(src_dir_name)
         end
 
-        -- Move PDBs out of the way, package release up as zips
+        -- Move PDBs out of the way and zip them up.
         os.chdir(dest)
-        exec("move *.pdb ..")
-        exec("7z a -r ../clink_"..clink_ver..".zip ../clink_"..clink_ver)
-        exec("7z a -r ../clink_"..clink_ver.."_pdb.zip ../*.pdb")
-        exec("del /q ..\\*.pdb")
+        if have_msbuild then
+            exec("move *.pdb  .. ")
+            if have_7z then
+                exec("7z a -r  ../clink_" .. clink_ver .. "_pdb.zip  ../*.pdb")
+                unlink("../*.pdb")
+            end
+        end
 
+        -- Package the release up in an archive.
+        if have_7z then
+            exec("7z a -r  ../clink_" .. clink_ver .. ".zip  ../clink_" .. clink_ver)
+        end
+
+        -- Stuff...
         if nightly then
-            os.chdir(dest..".\\..")
-            exec("rd /q /s "..dest)
-        end
-    end
-}
-
---------------------------------------------------------------------------------
-newaction {
-    trigger = "clink_install_state",
-    description = "Displays install state of clink.",
-    execute = function ()
-        function exec(cmd)
-            print("\n## "..cmd.."\n##")
-            os.execute(cmd.."2>nul")
+            os.chdir(dest .. "/..")
+            rmdir(dest)
         end
 
-        exec('dir /s /b "%programfiles(x86)%\\clink"')
-        exec('dir /s /b "%localappdata%\\clink"')
-        exec('dir /s /b "%allusersprofile%\\clink"')
-        exec('dir /s /b "%allusersprofile%\\Microsoft\\Windows\\Start Menu\\Programs\\clink"')
-        exec('c:\\windows\\sysnative\\cmd.exe /c reg query "hklm\\software\\wow6432node\\microsoft\\windows\\currentversion\\uninstall" /s | findstr clink')
-        exec('c:\\windows\\sysnative\\cmd.exe /c reg query "hklm\\software\\wow6432node\\microsoft\\command processor" /v autorun')
-        exec('c:\\windows\\sysnative\\cmd.exe /c reg query "hklm\\software\\microsoft\\command processor" /v autorun')
+        -- Report some facts about what just happened.
+        print("\n\n")
+        if not have_7z then     warn("7-ZIP NOT FOUND     -- Packing to .zip files was skipped.") end
+        if not have_nsis then   warn("NSIS NOT FOUND      -- No installer was not created.") end
+        if not x86_ok then      warn("x86 BUILD FAILED") end
+        if not x64_ok then      warn("x64 BUILD FAILED") end
     end
 }
 
