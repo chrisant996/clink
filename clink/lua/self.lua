@@ -38,6 +38,7 @@ inject_parser:set_flags(
 
 autorun_parser = clink.arg.new_parser()
 autorun_parser:set_flags(
+    "--allusers",
     "--help",
     "--install",
     "--uninstall",

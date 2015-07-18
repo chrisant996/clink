@@ -26,13 +26,14 @@
 typedef int (dispatch_func_t)(const char*, int);
 
 const char* g_clink_args = NULL;
+int         g_all_users  = 0;
 
 
 
 }
 
 //------------------------------------------------------------------------------
-static HKEY open_software_key(const char* key, int wow64, int writable)
+static HKEY open_software_key(int all_users, const char* key, int wow64, int writable)
 {
     LONG ok;
     DWORD flags;
@@ -50,9 +51,8 @@ static HKEY open_software_key(const char* key, int wow64, int writable)
     flags = KEY_READ|(writable ? KEY_WRITE : 0);
     flags |= KEY_WOW64_64KEY;
 
-    ok = RegCreateKeyEx(HKEY_LOCAL_MACHINE, buffer, 0, NULL,
-        REG_OPTION_NON_VOLATILE, flags, NULL, &result, NULL
-    );
+    ok = RegCreateKeyEx(all_users ? HKEY_LOCAL_MACHINE : HKEY_CURRENT_USER,
+        buffer, 0, NULL, REG_OPTION_NON_VOLATILE, flags, NULL, &result, NULL);
 
     return (ok == 0) ? result : NULL;
 }
@@ -216,7 +216,7 @@ static int uninstall_autorun(const char* clink_path, int wow64)
     int ret;
     int left, right;
 
-    cmd_proc_key = open_cmd_proc_key(wow64, 1);
+    cmd_proc_key = open_cmd_proc_key(g_all_users, wow64, 1);
     if (cmd_proc_key == NULL)
     {
         printf("ERROR: Failed to open registry key (%d)\n", GetLastError());
@@ -284,7 +284,7 @@ static int install_autorun(const char* clink_path, int wow64)
     // play nicely with other projects that hook cmd.exe and install autoruns.
     uninstall_autorun(clink_path, wow64);
 
-    cmd_proc_key = open_cmd_proc_key(wow64, 1);
+    cmd_proc_key = open_cmd_proc_key(g_all_users, wow64, 1);
     if (cmd_proc_key == NULL)
     {
         printf("ERROR: Failed to open registry key (%d)\n", GetLastError());
@@ -336,7 +336,7 @@ static int show_autorun(const char* clink_path, int wow64)
     HKEY cmd_proc_key;
     char* key_value;
 
-    cmd_proc_key = open_cmd_proc_key(wow64, 0);
+    cmd_proc_key = open_cmd_proc_key(g_all_users, wow64, 0);
     if (cmd_proc_key == NULL)
     {
         return 0;
@@ -361,7 +361,7 @@ static int force_autorun(const char* value, int wow64)
     HKEY cmd_proc_key;
     int i;
 
-    cmd_proc_key = open_cmd_proc_key(wow64, 1);
+    cmd_proc_key = open_cmd_proc_key(g_all_users, wow64, 1);
     if (cmd_proc_key == NULL)
     {
         printf("ERROR: Failed to open registry key (%d)\n", GetLastError());
@@ -410,6 +410,7 @@ int autorun(int argc, char** argv)
         { "show",       no_argument,        NULL, 's' },
         { "value",      required_argument,  NULL, 'v' },
         { "help",       no_argument,        NULL, 'h' },
+        { "allusers",   no_argument,        NULL, 'a' },
         { NULL, 0, NULL, 0 }
     };
 
@@ -418,6 +419,7 @@ int autorun(int argc, char** argv)
         "-u, --uninstall",      "Uninstalls an autorun entry.",
         "-s, --show",           "Displays the current autorun settings.",
         "-v, --value <string>", "Sets the autorun to <string>.",
+        "-a, --allusers",       "Install autorun for all users (requires admin rights).",
         "-h, --help",           "Shows this help text.",
         "-- <args>",            "Pass <args> that follow '--' on to Clink."
     };
@@ -431,9 +433,8 @@ int autorun(int argc, char** argv)
 
     function = NULL;
     path_arg = clink_path;
-    need_admin_rights = 1;
 
-    while ((i = getopt_long(argc, argv, "v:siuh", options, NULL)) != -1)
+    while ((i = getopt_long(argc, argv, "v:siuha", options, NULL)) != -1)
     {
         switch (i)
         {
@@ -452,6 +453,10 @@ int autorun(int argc, char** argv)
         case 'v':
             function = force_autorun;
             path_arg = optarg;
+            break;
+
+        case 'a':
+            g_all_users = 1;
             break;
 
         case '?':
@@ -495,11 +500,8 @@ int autorun(int argc, char** argv)
     {
         puts(g_clink_header);
         puts_help(help, sizeof_array(help));
-        puts(
-            "Access to cmd.exe's registry entries is restricted to members "
-            "of the\nAdministors group so you must have sufficient rights "
-            "to edit\n the registry.\n"
-        );
+        puts("Write access to cmd.exe's AutoRun registry entry can require\n"
+            "administrator privileges.");
         ret = -1;
     }
 
