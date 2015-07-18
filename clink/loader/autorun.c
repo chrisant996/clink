@@ -393,18 +393,18 @@ static int set_autorun_value(const char* value, int wow64)
 static int dispatch(dispatch_func_t* function, const char* clink_path)
 {
     int ok;
-    int i;
+    int wow64;
     int is_x64_os;
     SYSTEM_INFO system_info;
 
     GetNativeSystemInfo(&system_info);
-    i = system_info.wProcessorArchitecture;
-    is_x64_os = (i == PROCESSOR_ARCHITECTURE_AMD64);
+    is_x64_os = system_info.wProcessorArchitecture;
+    is_x64_os = (is_x64_os == PROCESSOR_ARCHITECTURE_AMD64);
 
     ok = 1;
-    for (i = 0; i <= is_x64_os; ++i)
+    for (wow64 = 0; wow64 <= is_x64_os; ++wow64)
     {
-        ok &= function(clink_path, i);
+        ok &= function(clink_path, wow64);
     }
 
     return ok;
