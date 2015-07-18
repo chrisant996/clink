@@ -371,7 +371,7 @@ static int show_autorun()
 }
 
 //------------------------------------------------------------------------------
-static int force_autorun(const char* value, int wow64)
+static int set_autorun_value(const char* value, int wow64)
 {
     HKEY cmd_proc_key;
     int i;
@@ -466,7 +466,7 @@ int autorun(int argc, char** argv)
             goto end;
 
         case 'v':
-            function = force_autorun;
+            function = set_autorun_value;
             path_arg = optarg;
             break;
 
