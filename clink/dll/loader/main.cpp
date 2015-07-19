@@ -1,4 +1,4 @@
-// Copyright (c) 2012 Martin Ridgers
+// Copyright (c) 2015 Martin Ridgers
 // License: http://opensource.org/licenses/MIT
 
 #include <stdint.h>
