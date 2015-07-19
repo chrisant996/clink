@@ -159,16 +159,6 @@ static int do_inject(DWORD target_pid)
 //------------------------------------------------------------------------------
 int do_inject_impl(DWORD target_pid, const char* dll_path)
 {
-    HANDLE parent_process;
-    BOOL is_wow_64[2];
-    DWORD thread_id;
-    LPVOID buffer;
-    void* thread_proc;
-    HANDLE remote_thread;
-    BOOL t;
-    DWORD thread_ret;
-    int ret;
-
     // Open the process so we can operate on it.
     HANDLE parent_process = OpenProcess(
         PROCESS_QUERY_INFORMATION|
@@ -226,9 +216,10 @@ int do_inject_impl(DWORD target_pid, const char* dll_path)
     }
 
     // Wait for injection to complete.
+    DWORD thread_ret;
     WaitForSingleObject(remote_thread, 1000);
     GetExitCodeThread(remote_thread, &thread_ret);
-    ret = !!thread_ret;
+    int ret = !!thread_ret;
 
     toggle_threads(target_pid, 1);
 
@@ -238,7 +229,7 @@ int do_inject_impl(DWORD target_pid, const char* dll_path)
     CloseHandle(parent_process);
 
     if (!ret)
-        LOG_ERROR("Failed to inject DLL '%s'", dll_path);
+        ERR("Failed to inject DLL '%s'", dll_path);
 
     return ret;
 }
