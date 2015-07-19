@@ -27,6 +27,8 @@
 
 #define CLINK_DLL_NAME "clink_dll_" AS_STR(PLATFORM) ".dll"
 
+int do_inject_impl(DWORD, const char*);
+
 //------------------------------------------------------------------------------
 static int check_dll_version(const char* clink_dll)
 {
@@ -138,14 +140,7 @@ static void toggle_threads(DWORD pid, int on)
 static int do_inject(DWORD target_pid)
 {
     int ret;
-    HANDLE parent_process;
-    BOOL is_wow_64[2];
-    DWORD thread_id;
-    LPVOID buffer;
-    BOOL t;
-    void* thread_proc;
     char dll_path[512];
-    HANDLE remote_thread;
     HANDLE kernel32;
     SYSTEM_INFO sys_info;
     OSVERSIONINFOEX osvi;
@@ -204,6 +199,26 @@ static int do_inject(DWORD target_pid)
         return 0;
     }
 
+    // Inject Clink DLL.
+    if (!do_inject_impl(target_pid, dll_path))
+        return 0;
+
+    return 1;
+}
+
+//------------------------------------------------------------------------------
+int do_inject_impl(DWORD target_pid, const char* dll_path)
+{
+    HANDLE parent_process;
+    BOOL is_wow_64[2];
+    DWORD thread_id;
+    LPVOID buffer;
+    void* thread_proc;
+    HANDLE remote_thread;
+    BOOL t;
+    DWORD thread_ret;
+    int ret;
+
     // Open the process so we can operate on it.
     parent_process = OpenProcess(
         PROCESS_QUERY_INFORMATION|
@@ -244,7 +259,7 @@ static int do_inject(DWORD target_pid)
     }
 
     // We'll use LoadLibraryA as the entry point for out remote thread.
-    thread_proc = GetProcAddress(kernel32, "LoadLibraryA");
+    thread_proc = LoadLibraryA;
     if (thread_proc == NULL)
     {
         LOG_ERROR("Failed to find LoadLibraryA address");
@@ -256,7 +271,7 @@ static int do_inject(DWORD target_pid)
         parent_process,
         buffer,
         dll_path,
-        sizeof(dll_path),
+        strlen(dll_path) + 1,
         NULL
     );
     if (t == FALSE)
@@ -286,13 +301,20 @@ static int do_inject(DWORD target_pid)
 
     // Wait for injection to complete.
     WaitForSingleObject(remote_thread, 1000);
+    GetExitCodeThread(remote_thread, &thread_ret);
+    ret = !!thread_ret;
+
     toggle_threads(target_pid, 1);
 
     // Clean up and quit
     CloseHandle(remote_thread);
     VirtualFreeEx(parent_process, buffer, 0, MEM_RELEASE);
     CloseHandle(parent_process);
-    return 1;
+
+    if (!ret)
+        LOG_ERROR("Failed to inject DLL '%s'", dll_path);
+
+    return ret;
 }
 
 //------------------------------------------------------------------------------
