@@ -26,7 +26,7 @@
 typedef int     (dispatch_func_t)(const char*, int);
 const char*     g_clink_args = NULL;
 int             g_all_users  = 0;
-int             show_autorun();
+static int      show_autorun();
 
 
 
