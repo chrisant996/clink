@@ -51,7 +51,7 @@ builder<char>& builder<char>::operator << (int value)
 
 
 //------------------------------------------------------------------------------
-bool convert(char* out, int max_count, const wchar_t* utf16)
+bool to_utf8(char* out, int max_count, const wchar_t* utf16)
 {
     builder<char> builder(out, max_count);
 
@@ -97,7 +97,7 @@ bool convert(char* out, int max_count, const wchar_t* utf16)
 }
 
 //------------------------------------------------------------------------------
-bool convert(wchar_t* out, int max_count, const char* utf8)
+bool to_utf16(wchar_t* out, int max_count, const char* utf8)
 {
     builder<wchar_t> builder(out, max_count);
 
@@ -128,13 +128,13 @@ bool convert(wchar_t* out, int max_count, const char* utf8)
 }
 
 //------------------------------------------------------------------------------
-bool convert(str_base& out, const wchar_t* utf16)
+bool to_utf8(str_base& out, const wchar_t* utf16)
 {
-    return convert(out.data() + out.length(), out.size() - out.length(), utf16);
+    return to_utf8(out.data() + out.length(), out.size() - out.length(), utf16);
 }
 
 //------------------------------------------------------------------------------
-bool convert(wstr_base& out, const char* utf8)
+bool to_utf16(wstr_base& out, const char* utf8)
 {
-    return convert(out.data() + out.length(), out.size() - out.length(), utf8);
+    return to_utf16(out.data() + out.length(), out.size() - out.length(), utf8);
 }

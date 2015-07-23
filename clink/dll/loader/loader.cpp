@@ -143,7 +143,7 @@ int loader_main_impl()
     int argc = 0;
     LPWSTR* argv = CommandLineToArgvW(GetCommandLineW(), &argc);
     for (int i = 0; i < argc; ++i)
-        convert((char*)argv[i], 0xffff, argv[i]);
+        to_utf8((char*)argv[i], 0xffff, argv[i]);
 
     int ret = loader(argc, (char**)argv);
 
