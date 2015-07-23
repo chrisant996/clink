@@ -55,7 +55,7 @@ bool to_utf8(char* out, int max_count, const wchar_t* utf16)
 {
     builder<char> builder(out, max_count);
 
-    while (unsigned int c = *utf16++)
+    while (unsigned int c = *utf16++ && !builder.truncated())
     {
         if (c < 0x80)
         {
@@ -103,7 +103,7 @@ bool to_utf16(wchar_t* out, int max_count, const char* utf8)
 
     int ax = 0;
     int encode_length = 0;
-    while (unsigned char c = *utf8++)
+    while (unsigned char c = *utf8++ && !builder.truncated())
     {
         ax = (ax << 6) | (c & 0x7f);
         if (!encode_length)
