@@ -10,7 +10,7 @@ struct builder
 {
                 builder(TYPE* data, int max_length);
                 ~builder()                            { *write = '\0'; }
-    bool        truncated() const                     { return (write > end); }
+    bool        truncated() const                     { return (write >= end); }
     builder&    operator << (int value);
     TYPE*       write;
     const TYPE* end;
