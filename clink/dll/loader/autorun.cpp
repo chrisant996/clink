@@ -433,17 +433,17 @@ void print_help()
 //------------------------------------------------------------------------------
 int autorun(int argc, char** argv)
 {
-    int i;
-    int ret;
-    str<MAX_PATH> clink_path;
-
+    // Parse command line arguments.
     struct option options[] = {
         { "help",       no_argument,    nullptr, 'h' },
         { "allusers",   no_argument,    nullptr, 'a' },
         {}
     };
 
-    // Parse command line arguments.
+    str<MAX_PATH> clink_path;
+
+    int i;
+    int ret = 0;
     while ((i = getopt_long(argc, argv, "ha", options, nullptr)) != -1)
     {
         switch (i)
@@ -454,11 +454,11 @@ int autorun(int argc, char** argv)
 
         case 'h':
             print_help();
-            ret = 1;
+            ret = 0;
             goto end;
 
         default:
-            ret = 1;
+            ret = 0;
             goto end;
         }
     }
@@ -510,16 +510,16 @@ int autorun(int argc, char** argv)
     if (!check_registry_access())
     {
         puts("You must have administator rights to access cmd.exe's autorun");
-        ret = 1;
+        ret = 0;
         goto end;
     }
 
     const char* arg = clink_path.c_str();
     arg = *arg ? arg : g_clink_args.c_str();
-    ret = !dispatch(function, arg);
+    ret = dispatch(function, arg);
 
     // Provide the user with some feedback.
-    if (ret == 0)
+    if (ret == 1)
     {
         const char* msg = nullptr;
 

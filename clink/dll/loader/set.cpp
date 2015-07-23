@@ -138,11 +138,11 @@ int set(int argc, char** argv)
     if (g_settings == nullptr)
     {
         printf("ERROR: Failed to load Clink's settings from '%s'.", g_settings_path.c_str());
-        return 1;
+        return 0;
     }
 
     // List or set Clink's settings.
-    ret = 1;
+    ret = 0;
     switch (argc)
     {
     case 0:
@@ -167,5 +167,5 @@ int set(int argc, char** argv)
     }
 
     settings_shutdown(g_settings);
-    return !ret;
+    return ret;
 }

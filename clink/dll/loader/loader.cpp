@@ -69,7 +69,7 @@ static int dispatch_verb(const char* verb, int argc, char** argv)
 
     int i;
 
-    for (i = 0; i < sizeof_array(handlers); ++i)
+    for (int i = 0; i < sizeof_array(handlers); ++i)
     {
         if (strcmp(verb, handlers[i].verb) == 0)
         {
@@ -88,15 +88,12 @@ static int dispatch_verb(const char* verb, int argc, char** argv)
 
     printf("*** ERROR: Unknown verb -- '%s'\n", verb);
     show_usage();
-    return -1;
+    return 0;
 }
 
 //------------------------------------------------------------------------------
 int loader(int argc, char** argv)
 {
-    int arg;
-    int ret;
-
     struct option options[] = {
         { "help",   no_argument,       nullptr, 'h' },
         { "cfgdir", required_argument, nullptr, 'c' },
@@ -107,10 +104,11 @@ int loader(int argc, char** argv)
     if (argc <= 1)
     {
         show_usage();
-        return -1;
+        return 0;
     }
 
     // Parse arguments
+    int arg;
     while ((arg = getopt_long(argc, argv, "+hc:", options, nullptr)) != -1)
     {
         switch (arg)
@@ -121,24 +119,20 @@ int loader(int argc, char** argv)
             break;
 
         case '?':
-            return -1;
+            return 0;
 
         default:
             show_usage();
-            return -1;
+            return 0;
         }
     }
 
     // Dispatch the verb if one was found.
-    ret = -1;
+    int ret = 0;
     if (optind < argc)
-    {
         ret = dispatch_verb(argv[optind], argc - optind, argv + optind);
-    }
     else
-    {
         show_usage();
-    }
 
     return ret;
 }

@@ -310,6 +310,7 @@ int inject(int argc, char** argv)
     DWORD target_pid = 0;
     inject_args_t inject_args = { 0 };
     int i;
+    int ret = 0;
     while ((i = getopt_long(argc, argv, "nalqhp:d:", options, nullptr)) != -1)
     {
         switch (i)
@@ -367,9 +368,9 @@ int inject(int argc, char** argv)
     // Write args to shared memory, inject, and clean up.
     shared_mem_t* shared_mem = create_shared_mem(1, "clink", target_pid);
     memcpy(shared_mem->ptr, &inject_args, sizeof(inject_args));
-    int ret = !do_inject(target_pid);
+    ret = do_inject(target_pid);
     close_shared_mem(shared_mem);
 
 end:
-    return is_autorun ? 0 : ret;
+    return is_autorun ? 1 : ret;
 }

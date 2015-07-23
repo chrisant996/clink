@@ -14,5 +14,5 @@ int mainCRTStartup(uintptr_t param) // effectively a thread entry point.
 int main(int argc, char** argv)
 #endif
 {
-    return loader_main_thunk();
+    return !loader_main_thunk();
 }
