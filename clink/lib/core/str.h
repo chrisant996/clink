@@ -23,6 +23,9 @@ inline const wchar_t* str_chr(const wchar_t* s, int c)               { return wc
 inline const char*    str_rchr(const char* s, int c)                 { return strrchr(s, c); }
 inline const wchar_t* str_rchr(const wchar_t* s, int c)              { return wcsrchr(s, c); }
 
+unsigned int char_count(const char*);
+unsigned int char_count(const wchar_t*);
+
 //------------------------------------------------------------------------------
 template <typename TYPE>
 class str_impl
@@ -90,6 +93,13 @@ template <typename TYPE>
 unsigned int str_impl<TYPE>::length() const
 {
     return str_len(m_data);
+}
+
+//------------------------------------------------------------------------------
+template <typename TYPE>
+unsigned int str_impl<TYPE>::char_count() const
+{
+    return ::char_count(m_data);
 }
 
 //------------------------------------------------------------------------------
@@ -270,11 +280,9 @@ public:
 
 
 //------------------------------------------------------------------------------
-template <>
-inline unsigned int str_impl<char>::char_count() const
+inline unsigned int char_count(const char* ptr)
 {
-    int count = 0;
-    const char* ptr = c_str();
+    unsigned int count = 0;
     while (int c = *ptr++)
         // 'count' is increased if the top two MSBs of c are not 10xxxxxx
         count += (c & 0xc0) != 0x80;
@@ -282,11 +290,9 @@ inline unsigned int str_impl<char>::char_count() const
     return count;
 }
 
-template <>
-inline unsigned int str_impl<wchar_t>::char_count() const
+inline unsigned int char_count(const wchar_t* ptr)
 {
-    int count = 0;
-    const wchar_t* ptr = c_str();
+    unsigned int count = 0;
     while (unsigned short c = *ptr++)
     {
         ++count;
