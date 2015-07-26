@@ -9,14 +9,13 @@ struct _rl_delegate
     template <class T, class RET, class... ARGS>
     static RET (*make(T* t, RET (T::*f)(ARGS...)))(ARGS...)
     {
-        static T* self = t;
         static RET (T::*func)(ARGS...) = f;
 
         struct thunk
         {
             static RET impl(ARGS... args)
             {
-                return (self->*func)(args...);
+                return (T::get()->*func)(args...);
             }
         };
 
