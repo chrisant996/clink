@@ -2,6 +2,7 @@
 // License: http://opensource.org/licenses/MIT
 
 #include "pch.h"
+#include "base.h"
 #include "path.h"
 #include "str.h"
 
