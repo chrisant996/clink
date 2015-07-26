@@ -3,6 +3,7 @@
 
 #include "pch.h"
 #include "str.h"
+#include "str_iter.h"
 
 //------------------------------------------------------------------------------
 template <typename TYPE>
@@ -55,23 +56,14 @@ bool to_utf8(char* out, int max_count, const wchar_t* utf16)
 {
     builder<char> builder(out, max_count);
 
-    while (unsigned int c = *utf16++ && !builder.truncated())
+    int c;
+    wstr_iter iter(utf16);
+    while ((c = iter.next()) && !builder.truncated())
     {
         if (c < 0x80)
         {
             builder << c;
             continue;
-        }
-
-        // Decode surrogate pairs.
-        if ((c & 0xfc00) == 0xd800)
-        {
-            unsigned short d = *utf16;
-            if ((d & 0xfc00) == 0xdc00)
-            {
-                c = (c << 10) + d - 0x35fdc00;
-                ++utf16;
-            }
         }
 
         // How long is this encoding?
@@ -101,28 +93,10 @@ bool to_utf16(wchar_t* out, int max_count, const char* utf8)
 {
     builder<wchar_t> builder(out, max_count);
 
-    int ax = 0;
-    int encode_length = 0;
-    while (unsigned char c = *utf8++ && !builder.truncated())
-    {
-        ax = (ax << 6) | (c & 0x7f);
-        if (!encode_length)
-        {
-            if ((c & 0xc0) < 0xc0)
-            {
-                builder << ax;
-                ax = 0;
-                continue;
-            }
-
-            if (encode_length = !!(c & 0x20))
-                encode_length += !!(c & 0x10);
-
-            ax &= (0x1f >> encode_length);
-        }
-        else
-            --encode_length;
-    }
+    int c;
+    str_iter iter(utf8);
+    while ((c = iter.next()) && !builder.truncated())
+        builder << c;
 
     return builder.truncated();
 }
