@@ -137,11 +137,21 @@ TEST_CASE("Paths") {
             SECTION("2") { path::join("one/two\\", "three/four", s); }
             SECTION("3") { path::join("one/two", "/three/four", s); }
             SECTION("4") { path::join("one/two", "\\three/four", s); }
-            SECTION("5") { path::join("", "one/two\\three/four", s); }
-            SECTION("6") { path::join("one/two\\three/four", "", s); }
 
             path::clean(s);
             REQUIRE(s.equals("one\\two\\three\\four"));
+        }
+
+        SECTION("One side empty") {
+            SECTION("Left") {
+                path::join("", "one\\two", s);
+                REQUIRE(s.equals("one\\two"));
+            }
+
+            SECTION("Right") {
+                path::join("one\\two", "", s);
+                REQUIRE(s.equals("one\\two\\"));
+            }
         }
     }
 }
