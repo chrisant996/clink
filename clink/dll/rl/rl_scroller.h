@@ -4,6 +4,7 @@
 #pragma once
 
 #include "buffer_scroller.h"
+#include "singleton.h"
 
 extern "C" {
 #include <readline/readline.h>
@@ -11,6 +12,7 @@ extern "C" {
 
 //------------------------------------------------------------------------------
 class rl_scroller
+    : public singleton<rl_scroller>
 {
 public:
                         rl_scroller();
