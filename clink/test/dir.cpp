@@ -7,6 +7,7 @@
 
 #include <core/base.h>
 #include <core/str.h>
+#include <core/str_compare.h>
 #include <lua/lua_root.h>
 #include <lua/lua_script_loader.h>
 
@@ -51,12 +52,14 @@ TEST_CASE("Directory match generation.") {
                     "two_dir\\", "three_dir\\", nullptr);
             }
 
-            SECTION("Single (with -/_)") {
+            SECTION("Single (with -/_) #1") {
                 cmd << "two_d";
                 match_generator_tester<dir_lua_root>(cmd, "two_dir\\", nullptr);
             }
 
-            SECTION("Single (with -/_)") {
+            SECTION("Single (with -/_) #2") {
+                str_compare_scope _(str_compare_scope::relaxed);
+
                 cmd << "one-";
                 match_generator_tester<dir_lua_root>(cmd, "one_dir\\", nullptr);
             }
