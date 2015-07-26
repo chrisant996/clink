@@ -3,7 +3,9 @@
 
 #include "pch.h"
 #include "match_result.h"
+#include "core/base.h"
 #include "core/str.h"
+#include "core/str_compare.h"
 
 #include <algorithm>
 
@@ -76,14 +78,9 @@ void match_result::get_match_lcd(str_base& out) const
     for (int i = 1, n = get_match_count(); i < n; ++i)
     {
         const char* match = get_match(i);
-        for (int j = 0, m = min(int(strlen(match)), lcd_length); j < m; ++j)
-        {
-            if (tolower(out[j]) != tolower(match[j]))
-            {
-                lcd_length = j;
-                break;
-            }
-        }
+        int d = str_compare(match, out.c_str());
+        if (d >= 0)
+            lcd_length = min(d, lcd_length);
     }
 
     out.truncate(lcd_length);
