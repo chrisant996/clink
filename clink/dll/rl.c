@@ -493,6 +493,12 @@ static char* call_readline_impl(const char* prompt)
     char* prepared_prompt;
     char cwd_cache[MAX_PATH];
 
+    // Turn off EOL wrapping as Readline will take care of it.
+    {
+        HANDLE handle_stdout = GetStdHandle(STD_OUTPUT_HANDLE);
+        SetConsoleMode(handle_stdout, ENABLE_PROCESSED_OUTPUT);
+    }
+
     // Initialisation
     if (!initialised)
     {

@@ -465,7 +465,12 @@ int tgetnum(char* cap_name)
 
     switch (cap)
     {
-    case CAP('c', 'o'): return width;
+    // Readline will take care of wrapping the cursor at the right-hand edge
+    // of the terminal (the Windows console has been told not to do it). This
+    // is done to support thirdparty terminals that support resizing. Readline
+    // however will will subtract one from the width when it is to handle
+    // wrapping preventing use of the buffer's full width. Hence the '+1' here.
+    case CAP('c', 'o'): return width + 1;
     case CAP('l', 'i'): return height;
     }
 
@@ -479,7 +484,7 @@ int tgetflag(char* cap_name)
 
     switch (cap)
     {
-    case CAP('a', 'm'):  return 1;
+    case CAP('a', 'm'):  return 0;
     case CAP('k', 'm'):  return 1;
     case CAP('x', 'n'):  return 0;
     }
