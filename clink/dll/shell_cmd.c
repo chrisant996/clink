@@ -220,11 +220,13 @@ static BOOL WINAPI read_console(
 )
 {
     void* old_exception_filter = push_exception_filter();
+    BOOL ret = 0;
 
     // If the file past in isn't a console handle then go the default route.
     if (GetFileType(input) != FILE_TYPE_CHAR)
     {
-        return ReadConsoleW(input, buffer, buffer_size, read_in, control);
+        ret = ReadConsoleW(input, buffer, buffer_size, read_in, control);
+        goto read_console_end;
     }
 
     // If cmd.exe is asking for one character at a time, use the original path
@@ -232,13 +234,15 @@ static BOOL WINAPI read_console(
     // case for readline.
     if (buffer_size == 1)
     {
-        return single_char_read(input, buffer, buffer_size, read_in, control);
+        ret = single_char_read(input, buffer, buffer_size, read_in, control);
+        goto read_console_end;
     }
 
     // Sometimes cmd.exe wants line input for reasons other than command entry.
     if (g_prompt_w == NULL || *g_prompt_w == L'\0')
     {
-        return ReadConsoleW(input, buffer, buffer_size, read_in, control);
+        ret = ReadConsoleW(input, buffer, buffer_size, read_in, control);
+        goto read_console_end;
     }
 
     // Call readline.
