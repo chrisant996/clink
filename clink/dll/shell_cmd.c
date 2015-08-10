@@ -220,7 +220,12 @@ static BOOL WINAPI read_console(
 )
 {
     void* old_exception_filter = push_exception_filter();
+    DWORD stdout_mode;
+    DWORD stdin_mode;
     BOOL ret = 0;
+
+    GetConsoleMode(GetStdHandle(STD_OUTPUT_HANDLE), &stdout_mode);
+    GetConsoleMode(GetStdHandle(STD_INPUT_HANDLE), &stdin_mode);
 
     // If the file past in isn't a console handle then go the default route.
     if (GetFileType(input) != FILE_TYPE_CHAR)
@@ -268,6 +273,9 @@ static BOOL WINAPI read_console(
 
     *read_in = (unsigned)wcslen(buffer);
 
+read_console_end:
+    SetConsoleMode(GetStdHandle(STD_INPUT_HANDLE), stdin_mode);
+    SetConsoleMode(GetStdHandle(STD_OUTPUT_HANDLE), stdout_mode);
     pop_exception_filter(old_exception_filter);
     return TRUE;
 }
