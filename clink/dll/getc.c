@@ -99,13 +99,10 @@ static int getc_internal(int* alt)
     int key_vk;
     int key_sc;
     int key_flags;
-    HANDLE handle;
-    DWORD mode;
+    HANDLE handle_stdin;
 
-    // Clear all flags so the console doesn't do anything special. This prevents
-    // key presses such as Ctrl-C and Ctrl-S from being swallowed.
-    handle = GetStdHandle(STD_INPUT_HANDLE);
-    GetConsoleMode(handle, &mode);
+    handle_stdin = GetStdHandle(STD_INPUT_HANDLE);
+    SetConsoleMode(handle_stdin, ENABLE_WINDOW_INPUT);
 
 loop:
     key_char = 0;
@@ -144,8 +141,7 @@ loop:
         }
 
         // Fresh read from the console.
-        SetConsoleMode(handle, ENABLE_WINDOW_INPUT);
-        ReadConsoleInputW(handle, &record, 1, &i);
+        ReadConsoleInputW(handle_stdin, &record, 1, &i);
         if (record.EventType != KEY_EVENT)
             goto loop;
 
@@ -303,7 +299,6 @@ end:
     printf("\n%08x '%c'", key_char, key_char);
 #endif
 
-    SetConsoleMode(handle, mode);
     return key_char;
 }
 
