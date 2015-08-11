@@ -67,17 +67,21 @@ bool path::get_directory(const char* in, str_base& out)
     if (const char* slash = max(strrchr(in, '\\'), strrchr(in, '/')))
         return out.concat(in, int(slash - in));
 
-    return false;
+    out.clear();
+    return true;
 }
 
 //------------------------------------------------------------------------------
 bool path::get_directory(str_base& in_out)
 {
     int slash = max(in_out.last_of('\\'), in_out.last_of('/'));
-    if (slash < 0)
-        return false;
+    if (slash >= 0)
+    {
+        in_out.truncate(slash);
+        return true;
+    }
 
-    in_out.truncate(slash);
+    in_out.clear();
     return true;
 }
 

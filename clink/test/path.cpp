@@ -54,17 +54,29 @@ TEST_CASE("Paths") {
         SECTION("Basic") {
             SECTION("0") { t << "one/two/three/filename.ext"; }
             SECTION("1") { t << "one/two/three\\filename.ext"; }
+
             path::get_directory(t.c_str(), s);
+            path::clean(s, '/');
+            REQUIRE(s.equals("one/two/three"));
         }
 
         SECTION("In-place") {
             SECTION("0") { s << "one/two/three/filename.ext"; }
             SECTION("1") { s << "one/two\\three/filename.ext"; }
+
             path::get_directory(s);
+            path::clean(s, '/');
+            REQUIRE(s.equals("one/two/three"));
         }
 
-        path::clean(s, '/');
-        REQUIRE(s.equals("one/two/three"));
+        SECTION("No slash") {
+            SECTION("0") { s << "one"; }
+            SECTION("1") { s << ""; }
+
+            path::get_directory(s);
+            path::clean(s, '/');
+            REQUIRE(s.equals(""));
+        }
     }
 
     SECTION("path::get_drive()") {
