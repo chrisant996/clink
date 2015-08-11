@@ -21,13 +21,23 @@ file_match_generator::~file_match_generator()
 //------------------------------------------------------------------------------
 match_result file_match_generator::generate(const line_state& line)
 {
-    globber::context context = { line.word, "*" };
-    globber globber(context);
+    str<MAX_PATH> clean_word = line.word;
+    path::clean(clean_word);
 
     match_result result;
+    match_result_builder builder(result, clean_word.c_str());
+
+    str<MAX_PATH> word_root = line.word;
+    path::get_directory(word_root);
+    if (word_root.length())
+        word_root << "\\";
+
+    globber::context context = { word_root.c_str(), "*" };
+    globber globber(context);
+
     str<MAX_PATH> file;
     while (globber.next(file))
-        result.add_match(file.c_str());
+        builder << file.c_str();
 
     return result;
 }
