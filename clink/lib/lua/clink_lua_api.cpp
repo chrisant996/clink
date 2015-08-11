@@ -197,11 +197,11 @@ int clink_lua_api::get_env(lua_State* state)
     if (!size)
         return 0;
 
-	wstr<64> wname = name;
+    wstr<64> wname = name;
 
     buffer = (wchar_t*)malloc(size * sizeof(wchar_t));
     GetEnvironmentVariableW(wname.c_str(), buffer, size);
-	to_utf8((char*)buffer, size, buffer);
+    to_utf8((char*)buffer, size, buffer);
 
     lua_pushstring(state, (char*)buffer);
 

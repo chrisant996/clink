@@ -214,7 +214,7 @@ loop:
         }
 
         if (!altgr_sub)
-			alt = !!(key_flags & (LEFT_ALT_PRESSED|RIGHT_ALT_PRESSED));
+            alt = !!(key_flags & (LEFT_ALT_PRESSED|RIGHT_ALT_PRESSED));
     }
 
     // No Unicode character? Then some post-processing is required to make the

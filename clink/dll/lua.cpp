@@ -74,7 +74,7 @@ done:
     return new_matches;
 #endif
 
-	return nullptr;
+    return nullptr;
 }
 
 //------------------------------------------------------------------------------

@@ -9,7 +9,7 @@
 
 //------------------------------------------------------------------------------
 TEST_CASE("File match generator") {
-	fs_fixture fs;
+    fs_fixture fs;
 
     SECTION("File system matches") {
         match_generator_tester<file_match_generator>(
