@@ -73,6 +73,8 @@ done:
     lua_pop(g_lua, top);
     return new_matches;
 #endif
+
+	return nullptr;
 }
 
 //------------------------------------------------------------------------------

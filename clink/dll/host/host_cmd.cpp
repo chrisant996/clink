@@ -266,15 +266,15 @@ BOOL WINAPI host_cmd::read_console(
 {
     struct console_mode_scope
     {
-        console_mode_scope(HANDLE handle)
-        : m_handle(handle)
+        console_mode_scope(HANDLE h)
+        : handle(h)
         {
-            GetConsoleMode(m_handle, &m_mode);
+            GetConsoleMode(handle, &mode);
         }
 
         ~console_mode_scope()
         {
-            SetConsoleMode(m_handle, m_mode);
+            SetConsoleMode(handle, mode);
         }
 
         HANDLE  m_handle;
