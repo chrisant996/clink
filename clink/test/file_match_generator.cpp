@@ -5,6 +5,7 @@
 #include "fs_fixture.h"
 #include "match_generator_tester.h"
 
+#include <core/str_compare.h>
 #include <file_match_generator.h>
 
 //------------------------------------------------------------------------------
@@ -39,9 +40,11 @@ TEST_CASE("File match generator") {
     }
 
     SECTION("Case mapping matches") {
+        str_compare_scope _(str_compare_scope::relaxed);
+
         match_generator_tester<file_match_generator>(
             "case-m",
-            "case-map", "case_map-1", "case_map_2", nullptr
+            "case_map", "case_map-1", "case_map_2", nullptr
         );
     }
 
