@@ -75,6 +75,8 @@ void match_result::get_match_lcd(str_base& out) const
     out = get_match(0);
     int lcd_length = out.length();
 
+    str_compare_scope _(str_compare_scope::caseless);
+
     for (int i = 1, n = get_match_count(); i < n; ++i)
     {
         const char* match = get_match(i);
