@@ -10,6 +10,7 @@
 #include <core/base.h>
 #include <core/log.h>
 #include <core/str.h>
+#include <core/str_compare.h>
 #include <line_state.h>
 #include <matches/match_generator.h>
 #include <singleton.h>
@@ -32,6 +33,7 @@ extern void     (*rl_fwrite_function)(FILE*, const wchar_t*, int);
 extern void     (*rl_fflush_function)(FILE*);
 extern char*    _rl_comment_begin;
 extern int      rl_catch_signals;
+extern int      _rl_completion_case_map;
 } // extern "C"
 
 
@@ -216,6 +218,12 @@ void rl_line_editor::load_user_inputrc()
 //------------------------------------------------------------------------------
 char** rl_line_editor::completion(const char* word, int start, int end)
 {
+    int str_compare_mode = str_compare_scope::caseless;
+    if (_rl_completion_case_map)
+        str_compare_mode = str_compare_scope::relaxed;
+
+    str_compare_scope _(str_compare_mode);
+
     line_state line = { word, rl_line_buffer, start, end, rl_point };
     match_result result = get_match_generator()->generate(line);
 
