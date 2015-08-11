@@ -85,3 +85,26 @@ void match_result::get_match_lcd(str_base& out) const
 
     out.truncate(lcd_length);
 }
+
+
+
+//------------------------------------------------------------------------------
+match_result_builder::match_result_builder(match_result& result, const char* match_word)
+: m_result(result)
+, m_match_word(match_word)
+{
+    m_word_char_count = char_count(match_word);
+}
+
+//------------------------------------------------------------------------------
+match_result_builder::~match_result_builder()
+{
+}
+
+//------------------------------------------------------------------------------
+void match_result_builder::operator << (const char* candidate)
+{
+    int i = str_compare(candidate, m_match_word);
+    if (i < 0 || i >= m_word_char_count)
+        m_result.add_match(candidate);
+}

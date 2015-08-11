@@ -39,3 +39,19 @@ inline const char* match_result::get_match(unsigned int index) const
 {
     return (index < get_match_count()) ? m_matches[index] : nullptr;
 }
+
+
+
+//------------------------------------------------------------------------------
+class match_result_builder
+{
+public:
+                    match_result_builder(match_result& result, const char* match_word);
+                    ~match_result_builder();
+    void            operator << (const char* candidate);
+
+private:
+    match_result&   m_result;
+    const char*     m_match_word;
+    int             m_word_char_count;
+};
