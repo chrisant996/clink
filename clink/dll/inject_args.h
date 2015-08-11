@@ -4,9 +4,9 @@
 #pragma once
 
 //------------------------------------------------------------------------------
-typedef struct
+struct inject_args
 {
     char    quiet;
     char    no_log;
     char    profile_path[512];
-} inject_args_t;
+};

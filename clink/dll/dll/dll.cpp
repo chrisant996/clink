@@ -4,7 +4,6 @@
 #include "pch.h"
 #include "inject_args.h"
 #include "paths.h"
-#include "process/shared_mem.h"
 #include "host/host.h"
 #include "host/host_cmd.h"
 #include "host/host_ps.h"
@@ -33,9 +32,9 @@ void                    save_history();
 void                    shutdown_clink_settings();
 int                     get_clink_setting_int(const char*);
 
-inject_args_t           g_inject_args;
-static line_editor*     g_line_editor           = nullptr;
-static host*            g_host                  = nullptr;
+static bool             g_quiet         = false;
+static line_editor*     g_line_editor   = nullptr;
+static host*            g_host          = nullptr;
 
 //------------------------------------------------------------------------------
 static void initialise_line_editor(const char* host_name)
@@ -71,21 +70,9 @@ static void shutdown_line_editor()
 }
 
 //------------------------------------------------------------------------------
-static void get_inject_args(DWORD pid)
-{
-    shared_mem_t* shared_mem;
-    shared_mem = open_shared_mem(1, "clink", pid);
-    if (shared_mem)
-    {
-        memcpy(&g_inject_args, shared_mem->ptr, sizeof(g_inject_args));
-        close_shared_mem(shared_mem);
-    }
-}
-
-//------------------------------------------------------------------------------
 static void success()
 {
-    if (!g_inject_args.quiet)
+    if (!g_quiet)
         puts(g_clink_header);
 }
 
@@ -124,34 +111,31 @@ static bool get_host_name(str_base& out)
 }
 
 //------------------------------------------------------------------------------
-void on_dll_attach()
+int initialise_clink(const inject_args* inject_args)
 {
-    // First of all lets find out which process the DLL's loaded into.
+    // The "clink_profile" environment variable can be used to override --profile
+    GetEnvironmentVariable("clink_profile", inject_args->profile_path,
+        sizeof_array(inject_args->profile_path));
+
+    // Handle inject arguments.
+    if (inject_args->profile_path[0] != '\0')
+        set_config_dir_override(inject_args->profile_path);
+
+    if (!inject_args->no_log)
+    {
+        // Start a log file.
+        str<256> log_path;
+        get_log_dir(log_path);
+        log_path << "/clink.log";
+        new file_logger(log_path.c_str());
+    }
+
+    g_quiet = (inject_args->quiet != 0);
+
+    // What process is the DLL loaded into?
     str<64> host_name;
     if (!get_host_name(host_name))
-        return;
-
-    // Start a log file.
-    str<256> log_path;
-    get_log_dir(log_path);
-    log_path << "/clink.log";
-    new file_logger(log_path.c_str());
-
-    if (host_name.equals("clink_" AS_STR(PLATFORM) ".exe"))
-        return;
-
-    // Get the inject arguments.
-    get_inject_args(GetCurrentProcessId());
-
-    // The "clink_profile" environment variable can be used to override --profile
-    GetEnvironmentVariable("clink_profile", g_inject_args.profile_path,
-        sizeof_array(g_inject_args.profile_path));
-
-    if (g_inject_args.profile_path[0] != '\0')
-        set_config_dir_override(g_inject_args.profile_path);
-
-    if (g_inject_args.no_log)
-        delete logger::get();
+        return 0;
 
     LOG("Host process is '%s'", host_name.c_str());
 
@@ -181,26 +165,27 @@ void on_dll_attach()
     if (g_host == nullptr)
     {
         LOG("Unknown host.");
-        return;
+        return 0;
     }
 
     if (!g_host->validate())
     {
         LOG("Shell validation failed.");
-        return;
+        return 0;
     }
 
     if (!g_host->initialise())
     {
         failed();
-        return;
+        return 0;
     }
 
     success();
+    return 1;
 }
 
 //------------------------------------------------------------------------------
-void on_dll_detach()
+void shutdown_clink()
 {
     if (g_host == nullptr)
         return;

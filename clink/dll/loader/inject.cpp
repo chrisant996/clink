@@ -3,8 +3,7 @@
 
 #include "pch.h"
 #include "paths.h"
-#include "process/pe.h"
-#include "process/shared_mem.h"
+#include "process/process.h"
 #include "process/vm.h"
 #include "inject_args.h"
 
@@ -13,13 +12,13 @@
 #include <core/path.h>
 #include <core/str.h>
 #include <getopt.h>
-#include <process/process.h>
 
 #define CLINK_DLL_NAME "clink_" AS_STR(PLATFORM) ".dll"
 
 //------------------------------------------------------------------------------
-void puts_help(const char**, int);
-void cpy_path_as_abs(str_base&, const char*);
+int     initialise_clink(const inject_args*);
+void    puts_help(const char**, int);
+void    cpy_path_as_abs(str_base&, const char*);
 
 //------------------------------------------------------------------------------
 static int check_dll_version(const char* clink_dll)
@@ -176,7 +175,7 @@ int inject(int argc, char** argv)
     // Parse arguments
     bool is_autorun = false;
     DWORD target_pid = 0;
-    inject_args_t inject_args = { 0 };
+    inject_args inject_args = { 0 };
     int i;
     int ret = 0;
     while ((i = getopt_long(argc, argv, "nalqhp:d:", options, nullptr)) != -1)
@@ -233,11 +232,16 @@ int inject(int argc, char** argv)
     if (is_clink_present(target_pid))
         goto end;
 
-    // Write args to shared memory, inject, and clean up.
-    shared_mem_t* shared_mem = create_shared_mem(1, "clink", target_pid);
-    memcpy(shared_mem->ptr, &inject_args, sizeof(inject_args));
-    ret = do_inject(target_pid);
-    close_shared_mem(shared_mem);
+    // Inject Clink's DLL and remotely call Clink's initialisation function.
+    if (!do_inject(target_pid))
+        goto end;
+
+    // On Windows a DLL will have the same address in every process' address
+    // space, hence we're able to use 'initialise_clink' directly here.
+    vm_access target_vm(target_pid);
+    void* remote_inject_args = target_vm.alloc(sizeof(inject_args));
+    int ret = process(target_pid).remote_call(initialise_clink, remote_inject_args);
+    target_vm.free(remote_inject_args);
 
 end:
     return is_autorun ? 1 : ret;

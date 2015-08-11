@@ -4,17 +4,13 @@
 #include <Windows.h>
 
 //------------------------------------------------------------------------------
-void    on_dll_attach();
-void    on_dll_detach();
+void shutdown_clink();
 
 //------------------------------------------------------------------------------
 BOOL WINAPI DllMain(HINSTANCE instance, DWORD reason, LPVOID unused)
 {
-    switch (reason)
-    {
-    case DLL_PROCESS_ATTACH:    on_dll_attach();    break;
-    case DLL_PROCESS_DETACH:    on_dll_detach();    break;
-    }
+    if (reason == DLL_PROCESS_DETACH)
+        shutdown_clink();
 
     return TRUE;
 }
