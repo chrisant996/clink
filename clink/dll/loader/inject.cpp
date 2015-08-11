@@ -10,12 +10,12 @@
 
 #include <core/base.h>
 #include <core/log.h>
+#include <core/path.h>
 #include <core/str.h>
 #include <getopt.h>
+#include <process/process.h>
 
 #define CLINK_DLL_NAME "clink_" AS_STR(PLATFORM) ".dll"
-
-int do_inject_impl(DWORD, const char*);
 
 //------------------------------------------------------------------------------
 void puts_help(const char**, int);
@@ -46,54 +46,6 @@ static int check_dll_version(const char* clink_dll)
 }
 
 //------------------------------------------------------------------------------
-static DWORD get_parent_pid()
-{
-    LONG (WINAPI *NtQueryInformationProcess)(HANDLE, ULONG, PVOID, ULONG, PULONG);
-
-    *(FARPROC*)&NtQueryInformationProcess = GetProcAddress(
-        LoadLibraryA("ntdll.dll"),
-        "NtQueryInformationProcess"
-    );
-
-    if (NtQueryInformationProcess != nullptr)
-    {
-        ULONG size = 0;
-        ULONG_PTR pbi[6];
-        LONG ret = NtQueryInformationProcess(GetCurrentProcess(), 0, &pbi,
-            sizeof(pbi), &size);
-
-        if ((ret >= 0) && (size == sizeof(pbi)))
-            return (DWORD)(pbi[5]);
-    }
-
-    return -1;
-}
-
-//------------------------------------------------------------------------------
-static void toggle_threads(DWORD pid, int on)
-{
-    HANDLE th32 = CreateToolhelp32Snapshot(TH32CS_SNAPTHREAD, pid);
-    if (th32 == INVALID_HANDLE_VALUE)
-        return;
-
-    THREADENTRY32 te = { sizeof(te) };
-    BOOL ok = Thread32First(th32, &te);
-    while (ok != FALSE)
-    {
-        if (te.th32OwnerProcessID == pid)
-        {
-            HANDLE thread = OpenThread(THREAD_ALL_ACCESS, FALSE, te.th32ThreadID);
-            on ? ResumeThread(thread) : SuspendThread(thread);
-            CloseHandle(thread);
-        }
-
-        ok = Thread32Next(th32, &te);
-    }
-
-    CloseHandle(th32);
-}
-
-//------------------------------------------------------------------------------
 static int do_inject(DWORD target_pid)
 {
 #ifdef __MINGW32__
@@ -106,14 +58,10 @@ static int do_inject(DWORD target_pid)
 #endif // __MINGW32__
 
     // Get path to clink's DLL that we'll inject.
-    char dll_path[512];
-    GetModuleFileName(nullptr, dll_path, sizeof(dll_path));
-    char* slash = strrchr(dll_path, '\\');
-    if (slash != nullptr)
-    {
-        *(slash + 1) = '\0';
-    }
-    strcat(dll_path, CLINK_DLL_NAME);
+    str<256> dll_path;
+    process().get_file_name(dll_path);
+    path::get_directory(dll_path);
+    path::append(dll_path, CLINK_DLL_NAME);
 
     // Reset log file, start logging!
     SYSTEM_INFO sys_info;
@@ -143,95 +91,15 @@ static int do_inject(DWORD target_pid)
     LOG("Parent pid: %d", target_pid);
 
     // Check Dll's version.
-    if (!check_dll_version(dll_path))
+    if (!check_dll_version(dll_path.c_str()))
     {
         ERR("DLL failed version check.");
         return 0;
     }
 
     // Inject Clink DLL.
-    if (!do_inject_impl(target_pid, dll_path))
-        return 0;
-
-    return 1;
-}
-
-//------------------------------------------------------------------------------
-int do_inject_impl(DWORD target_pid, const char* dll_path)
-{
-    // Open the process so we can operate on it.
-    HANDLE parent_process = OpenProcess(
-        PROCESS_QUERY_INFORMATION|
-        PROCESS_CREATE_THREAD|
-        PROCESS_VM_OPERATION|
-        PROCESS_VM_WRITE|
-        PROCESS_VM_READ,
-        FALSE,
-        target_pid
-    );
-    if (parent_process == nullptr)
-    {
-        ERR("Failed to open parent process.");
-        return 0;
-    }
-
-    // Check arch matches.
-    BOOL is_wow_64[2];
-    IsWow64Process(parent_process, is_wow_64);
-    IsWow64Process(GetCurrentProcess(), is_wow_64 + 1);
-    if (is_wow_64[0] != is_wow_64[1])
-    {
-        ERR("32/64-bit mismatch. Use loader executable that matches parent architecture.");
-        return 0;
-    }
-
-    // Create a buffer in the process to write data to.
-    vm_access target_vm(target_pid);
-    void* buffer = target_vm.alloc(sizeof(dll_path));
-    if (buffer == nullptr)
-    {
-        ERR("VirtualAllocEx failed");
-        return 0;
-    }
-
-    // Tell remote process what DLL to load.
-    if (target_vm.write(buffer, dll_path, strlen(dll_path) + 1) == FALSE)
-    {
-        ERR("WriteProcessMemory() failed");
-        return 0;
-    }
-
-    void* thread_proc = LoadLibraryA;
-    LOG("Creating remote thread at %p with parameter %p", thread_proc, buffer);
-
-    // Disable threads and create a remote thread.
-    DWORD thread_id;
-    toggle_threads(target_pid, 0);
-    HANDLE remote_thread = CreateRemoteThread(parent_process, nullptr, 0,
-        (LPTHREAD_START_ROUTINE)thread_proc, buffer, 0, &thread_id);
-    if (remote_thread == nullptr)
-    {
-        ERR("CreateRemoteThread() failed");
-        return 0;
-    }
-
-    // Wait for injection to complete.
-    DWORD thread_ret;
-    WaitForSingleObject(remote_thread, 1000);
-    GetExitCodeThread(remote_thread, &thread_ret);
-    int ret = !!thread_ret;
-
-    toggle_threads(target_pid, 1);
-
-    // Clean up and quit
-    CloseHandle(remote_thread);
-    target_vm.free(buffer);
-    CloseHandle(parent_process);
-
-    if (!ret)
-        ERR("Failed to inject DLL '%s'", dll_path);
-
-    return ret;
+    process cmd_process(target_pid);
+    return !!cmd_process.inject_module(dll_path.c_str());
 }
 
 //------------------------------------------------------------------------------
@@ -353,8 +221,8 @@ int inject(int argc, char** argv)
     // process pid.
     if (target_pid == 0)
     {
-        target_pid = get_parent_pid();
-        if (target_pid == -1)
+        target_pid = process().get_parent_pid();
+        if (target_pid == 0)
         {
             LOG("Failed to find parent pid.");
             goto end;
