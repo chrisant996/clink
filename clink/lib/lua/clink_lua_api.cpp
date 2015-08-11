@@ -180,33 +180,11 @@ int clink_lua_api::matches_are_files(lua_State* state)
 }
 
 //------------------------------------------------------------------------------
-static char* mbcs_to_utf8(char* buff)
-{
-    wchar_t* buf_wchar;
-    char* buf_utf8;
-    int len_wchar, len_utf8;
-
-    // Convert MBCS to WideChar.
-    len_wchar = MultiByteToWideChar(CP_ACP, 0, buff, -1, NULL, 0);
-    buf_wchar = (wchar_t*)malloc((len_wchar + 1) * sizeof(wchar_t));
-    MultiByteToWideChar(CP_ACP, 0, buff, -1, buf_wchar, len_wchar);
-
-    // Convert WideChar to UTF8.
-    len_utf8 = WideCharToMultiByte(CP_UTF8, 0, buf_wchar, len_wchar, NULL, 0, NULL, NULL);
-    buf_utf8 = (char*)malloc(len_utf8 + 1);
-    WideCharToMultiByte(CP_UTF8, 0, buf_wchar, len_wchar, buf_utf8, len_utf8, NULL, NULL);
-
-    free(buf_wchar);
-    return buf_utf8;
-}
-
-//------------------------------------------------------------------------------
-static int get_env(lua_State* state)
+int clink_lua_api::get_env(lua_State* state)
 {
     unsigned size;
     const char* name;
-    char* buffer;
-    char* buf_utf8;
+    wchar_t* buffer;
 
     if (lua_gettop(state) == 0)
         return 0;
@@ -219,12 +197,13 @@ static int get_env(lua_State* state)
     if (!size)
         return 0;
 
-    buffer = (char*)malloc(size);
-    GetEnvironmentVariable(name, buffer, size);
-    buf_utf8 = mbcs_to_utf8(buffer);
-    lua_pushstring(state, buf_utf8);
-    free(buf_utf8);
-    free(buffer);
+	wstr<64> wname = name;
+
+    buffer = (wchar_t*)malloc(size * sizeof(wchar_t));
+    GetEnvironmentVariableW(wname.c_str(), buffer, size);
+	to_utf8((char*)buffer, size, buffer);
+
+    lua_pushstring(state, (char*)buffer);
 
     return 1;
 }
