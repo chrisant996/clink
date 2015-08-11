@@ -79,8 +79,8 @@ void match_generator_tester<T>::run(const char* line, va_list arg)
         REQUIRE(false);
     }
 
-    // Provided no matches is a shortcut to say that we're only expecting one
-    // match and that lcd == match[0]. It's to save stating the same thing twice
+    // Passing no matches is a shortcut to say that we're only expecting one
+    // match and that lcd == match[0]. It's to save stating the same thing twice.
     va_list arg_look_ahead = arg_iter;
     const char* match = va_arg(arg_look_ahead, const char*);
     if (match == nullptr)
