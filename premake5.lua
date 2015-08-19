@@ -121,6 +121,9 @@ solution("clink")
     setup_cfg("release")
     setup_cfg("debug")
 
+    configuration("debug")
+        optimize("off")
+
     configuration("final")
         optimize("full")
         flags("NoFramePointer")
