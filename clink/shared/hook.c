@@ -272,8 +272,8 @@ static int get_instruction_length(void* addr)
         { 0x0000b848, 0x0000f8ff },  // mov reg64, imm64  = 10-byte length
 #elif defined _M_IX86
         { 0x0000ff8b, 0x0000ffff },  // mov edi,edi  
-        { 0x000000e9, 0x000000ff },  // jmp addr32        = 5-byte length
 #endif
+        { 0x000000e9, 0x000000ff },  // jmp addr32        = 5-byte length
     };
 
     prolog = *(unsigned*)(addr);
