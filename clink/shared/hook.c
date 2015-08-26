@@ -248,6 +248,18 @@ static char* write_trampoline_in(char* write, void* to_hook, int n)
         ++write;
     }
 
+    // If the moved instruction is JMP (e9) then the displacement is relative
+    // to its original location. As we have relocated the jump the displacement
+    // needs adjusting.
+    if (*(unsigned char*)to_hook == 0xe9)
+    {
+        int displacement = *(int*)(write - 4);
+        intptr_t old_ip = (intptr_t)to_hook + n;
+        intptr_t new_ip = (intptr_t)write;
+
+        *(int*)(write - 4) = (int)(displacement + old_ip - new_ip);
+    }
+
     return write_rel_jmp(write, (char*)to_hook + n);
 }
 
