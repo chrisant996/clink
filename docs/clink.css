@@ -9,6 +9,11 @@ h3 {
     border-bottom: 1px black solid;
 }
 
+h3 { font-size: 1.21em; }
+h4 { font-size: 1.14em; }
+h5 { font-size: 1.07em; }
+h6 { font-size: 1.00em; }
+
 #header {
     float: right;
     text-align: right;
@@ -53,4 +58,12 @@ h3 {
 
 #content tr:nth-child(even) {
     background-color: #fff;
+}
+
+#content #api p {
+    margin-left: 2em;
+}
+
+#content #api h5 {
+    font-family: courier, monospace;
 }
