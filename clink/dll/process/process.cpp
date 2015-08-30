@@ -46,7 +46,7 @@ int process::get_parent_pid() const
 //------------------------------------------------------------------------------
 bool process::get_file_name(str_base& out) const
 {
-    Handle handle = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, FALSE, m_pid);
+    handle handle = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, FALSE, m_pid);
     if (!handle)
         return false;
 
@@ -67,7 +67,7 @@ process::arch process::get_arch() const
 
     if (is_x64_os)
     {
-        Handle handle = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, FALSE, m_pid);
+        handle handle = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, FALSE, m_pid);
         if (!handle)
             return arch_unknown;
 
@@ -84,7 +84,7 @@ process::arch process::get_arch() const
 //------------------------------------------------------------------------------
 void process::pause_impl(bool suspend)
 {
-    Handle th32 = CreateToolhelp32Snapshot(TH32CS_SNAPTHREAD, m_pid);
+    handle th32 = CreateToolhelp32Snapshot(TH32CS_SNAPTHREAD, m_pid);
     if (!th32)
         return;
 
@@ -94,7 +94,7 @@ void process::pause_impl(bool suspend)
     {
         if (te.th32OwnerProcessID == m_pid)
         {
-            Handle thread = OpenThread(THREAD_ALL_ACCESS, FALSE, te.th32ThreadID);
+            handle thread = OpenThread(THREAD_ALL_ACCESS, FALSE, te.th32ThreadID);
             suspend ? SuspendThread(thread) : ResumeThread(thread);
         }
 
@@ -136,7 +136,7 @@ bool process::inject_module(const char* dll_path)
 int process::remote_call(void* function, void* param)
 {
     // Open the process so we can operate on it.
-    Handle handle = OpenProcess(PROCESS_QUERY_INFORMATION|PROCESS_CREATE_THREAD,
+    handle handle = OpenProcess(PROCESS_QUERY_INFORMATION|PROCESS_CREATE_THREAD,
         FALSE, m_pid);
     if (!handle)
         return false;
@@ -146,7 +146,7 @@ int process::remote_call(void* function, void* param)
     // The 'remote call' is actually a thread that's created in the process and
     // and then waited on for completion.
     DWORD thread_id;
-    Handle remote_thread = CreateRemoteThread(handle, nullptr, 0,
+    handle remote_thread = CreateRemoteThread(handle, nullptr, 0,
         (LPTHREAD_START_ROUTINE)function, param, 0, &thread_id);
     if (!remote_thread)
     {

@@ -27,10 +27,10 @@ private:
     void    pause_impl(bool suspend);
     int     m_pid;
 
-    struct Handle
+    struct handle
     {
-        Handle(HANDLE h) : m_handle(h)  {}
-        ~Handle()                       { CloseHandle(m_handle); }
+        handle(HANDLE h) : m_handle(h)  {}
+        ~handle()                       { CloseHandle(m_handle); }
         operator bool () const          { return (m_handle != nullptr && m_handle != INVALID_HANDLE_VALUE); }
         operator HANDLE () const        { return m_handle; }
         HANDLE m_handle;
