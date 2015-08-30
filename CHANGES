@@ -28,11 +28,11 @@
 
 ##### v0.4.4
 
-- Completing .. behaves more like Bash (closes #277).
+- Completing .. behaves more like Bash (#277).
 - Escape from yes/no question when Ctrl+C is pressed.
-- Valid XP executables (fixes #278, #289).
-- Fixed n-th argument yank not working as expected (issue #254).
-- Fixed prompt colours sometimes not working (issues #279, #286).
+- Valid XP executables (#278, #289).
+- Fixed n-th argument yank not working as expected (#254).
+- Fixed prompt colours sometimes not working (#279, #286).
 - Fixed '!0' causing Clink to crash.
 - Save/restore cursor position in case Readline moves it.
 
