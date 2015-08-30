@@ -1,6 +1,31 @@
 
 ### Changelog
 
+##### v0.4.5
+
+- Improved "clink autorun". It now defaults to the Current User registry hive.
+- "clink set" gives more details for enumeration-type settings.
+- Tab completion for p4vc.
+- New settings "history_expand_mode" to control history expansion in quotes (#317).
+- Bug fixes;
+    - Use full width of the terminal (#337).
+    - Fixed MinGW compile error (#335).
+    - Autorun now defaults to the current user's hive (#332).
+    - Creating clink.html no longer needs Pandoc, plus it looks a bit better (#331).
+    - Added settings to control history expansion (#326).
+    - Correct fallback when 'use_altgr_substitute' is off (#325).
+    - Load history prior to saving it on shutdown (#318).
+    - Added Shift-Tab documentation and menu completion example (#190).
+    - Added shim for backwards menu completion (#190).
+    - Input handling now outputs '\e`Z' for Shift-Tab (#190).
+    - Updated Readme with current Premake info (#310).
+    - Guard against there being no buffer to read from (#304).
+    - Fixed artefacts when resizing conhost's buffer (#139).
+    - Clear remaining characters if scroll window was too small (#301)
+    - Escape % characters when expanding aliases (#280).
+    - Fixed leaking exception filters.
+    - Clearing the screen doesn't leave artefacts behind.
+
 ##### v0.4.4
 
 - Completing .. behaves more like Bash (closes #277).
