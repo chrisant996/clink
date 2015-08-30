@@ -12,9 +12,16 @@
     function go()
     {
         // Convert markdown to HTML.
-        var md = document.getElementsByTagName("md")[0];
-        var html = marked(md.innerHTML);
-        document.getElementById("content").innerHTML = html;
+        var content = document.getElementById("content");
+        var mds = document.getElementsByTagName("md");
+        for (var i = 0; i < mds.length; ++i)
+        {
+            var md = mds[i];
+            var div = document.createElement("div");
+            div.innerHTML = marked(md.innerHTML);
+            div.id = md.getAttribute("_id");
+            content.appendChild(div);
+        }
 
         // Generate a table of contents from h* tags.
         var toc = document.getElementById("toc");
@@ -57,9 +64,14 @@
     </div>
     <div id="toc"></div>
     <div id="content"></div>
-    <md style="display: none;"/>
-    $(INCLUDE clink.md)
-    $(INCLUDE ../CHANGES)
+    <md _id="documentation" style="display: none;">
+        $(INCLUDE clink.md)
+    </md>
+    <md _id="api" style="display: none;">
+        $(INCLUDE api.md)
+    </md>
+    <md _id="changelog" style="display: none;">
+        $(INCLUDE ../CHANGES)
     </md>
 </body>
 
