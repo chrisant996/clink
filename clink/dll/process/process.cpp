@@ -136,9 +136,9 @@ bool process::inject_module(const char* dll_path)
 int process::remote_call(void* function, void* param)
 {
     // Open the process so we can operate on it.
-    handle handle = OpenProcess(PROCESS_QUERY_INFORMATION|PROCESS_CREATE_THREAD,
+    handle process_handle = OpenProcess(PROCESS_QUERY_INFORMATION|PROCESS_CREATE_THREAD,
         FALSE, m_pid);
-    if (!handle)
+    if (!process_handle)
         return false;
 
     pause();
@@ -146,7 +146,7 @@ int process::remote_call(void* function, void* param)
     // The 'remote call' is actually a thread that's created in the process and
     // and then waited on for completion.
     DWORD thread_id;
-    handle remote_thread = CreateRemoteThread(handle, nullptr, 0,
+    handle remote_thread = CreateRemoteThread(process_handle, nullptr, 0,
         (LPTHREAD_START_ROUTINE)function, param, 0, &thread_id);
     if (!remote_thread)
     {
