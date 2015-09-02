@@ -3,28 +3,26 @@
 
 #include "pch.h"
 #include "line_editor.h"
+#include "core/os.h"
 
 //------------------------------------------------------------------------------
-class cwd_restorer
+struct cwd_restorer
 {
-public:
                     cwd_restorer();
                     ~cwd_restorer();
-
-private:
-    wstr<MAX_PATH>  m_path;
+    str<MAX_PATH>   m_path;
 };
 
 //------------------------------------------------------------------------------
 cwd_restorer::cwd_restorer()
 {
-    GetCurrentDirectoryW(m_path.size(), m_path.data());
+    os::get_current_dir(m_path);
 }
 
 //------------------------------------------------------------------------------
 cwd_restorer::~cwd_restorer()
 {
-    SetCurrentDirectoryW(m_path.c_str());
+    os::set_current_dir(m_path.c_str());
 }
 
 
