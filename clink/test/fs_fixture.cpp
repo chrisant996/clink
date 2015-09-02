@@ -29,7 +29,7 @@ fs_fixture::fs_fixture(const char** fs)
     m_root << "\\clink_test\\";
 
     os::make_dir(m_root.c_str());
-    os::change_dir(m_root.c_str());
+    os::set_current_dir(m_root.c_str());
 
     if (fs == nullptr)
         fs = g_default_fs;
@@ -51,8 +51,8 @@ fs_fixture::fs_fixture(const char** fs)
 //------------------------------------------------------------------------------
 fs_fixture::~fs_fixture()
 {
-    os::change_dir(m_root.c_str());
-    os::change_dir("..");
+    os::set_current_dir(m_root.c_str());
+    os::set_current_dir("..");
 
     clean(m_root.c_str());
 }

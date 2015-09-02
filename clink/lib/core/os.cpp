@@ -29,7 +29,7 @@ void os::get_current_dir(str_base& out)
 }
 
 //------------------------------------------------------------------------------
-bool os::change_dir(const char* dir)
+bool os::set_current_dir(const char* dir)
 {
     wstr<MAX_PATH> wdir(dir);
     return (SetCurrentDirectoryW(wdir.c_str()) == TRUE);
