@@ -21,6 +21,14 @@ int os::get_path_type(const char* path)
 }
 
 //------------------------------------------------------------------------------
+void os::get_current_dir(str_base& out)
+{
+    wstr<MAX_PATH> wdir;
+    GetCurrentDirectoryW(wdir.size(), wdir.data());
+    out = wdir.c_str();
+}
+
+//------------------------------------------------------------------------------
 bool os::change_dir(const char* dir)
 {
     wstr<MAX_PATH> wdir(dir);

@@ -16,6 +16,7 @@ public:
     };
 
     static int      get_path_type(const char* path);
+    static void     get_current_dir(str_base& out);
     static bool     change_dir(const char* dir);
     static bool     make_dir(const char* dir);
     static bool     remove_dir(const char* dir);
