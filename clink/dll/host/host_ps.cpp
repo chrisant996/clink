@@ -84,5 +84,9 @@ BOOL WINAPI host_ps::read_console(
 //------------------------------------------------------------------------------
 void host_ps::edit_line(const wchar_t* prompt, wchar_t* chars, int max_chars)
 {
-    get_line_editor()->edit_line(prompt, chars, max_chars);
+    str<128> utf8_prompt(prompt);
+    str<1024> out;
+    get_line_editor()->edit_line(utf8_prompt.c_str(), out);
+
+    to_utf16(chars, max_chars, out.c_str());
 }

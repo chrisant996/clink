@@ -3,6 +3,8 @@
 
 #include "pch.h"
 
+#include <core/str.h>
+
 extern "C" {
 #include <readline/readline.h>
 }
@@ -204,7 +206,7 @@ void display_matches(char** matches, int match_count, int longest)
 }
 
 //------------------------------------------------------------------------------
-static char* call_readline_impl(const char* prompt)
+bool call_readline(const char* prompt, str_base& out)
 {
     // Make sure that EOL wrap is on. Readline's told the terminal supports it.
     int stdout_flags = ENABLE_PROCESSED_OUTPUT|ENABLE_WRAP_AT_EOL_OUTPUT;
@@ -218,7 +220,7 @@ static char* call_readline_impl(const char* prompt)
         // Call readline
         text = readline(prompt);
         if (text == nullptr)
-            return nullptr;
+            return false;
 
         // Expand history designators in returned buffer.
         char* expanded = nullptr;
@@ -241,35 +243,7 @@ static char* call_readline_impl(const char* prompt)
     }
     while (!text || expand_result == 2);
 
-    return text;
-}
-
-//------------------------------------------------------------------------------
-int call_readline_w(const wchar_t* prompt, wchar_t* result, unsigned size)
-{
-    unsigned text_size;
-    char* text;
-    char prompt_utf8[1024];
-
-    // Convert prompt to utf-8.
-    WideCharToMultiByte(CP_UTF8, 0, prompt, -1, prompt_utf8, sizeof(prompt_utf8),
-        nullptr, nullptr);
-
-    // Call readline.
-    result[0] = L'\0';
-    text = call_readline_impl(prompt_utf8);
-    if (text == nullptr)
-    {
-        // EOF.
-        return 1;
-    }
-
-    // Convert result back to wchar_t.
-    text_size = MultiByteToWideChar(CP_UTF8, 0, text, -1, result, 0);
-    text_size = (size < text_size) ? size : int(strlen(text));
-    text_size = MultiByteToWideChar(CP_UTF8, 0, text, -1, result, size);
-    result[size - 1] = L'\0';
-
+    out = text;
     free(text);
-    return 0;
+    return true;
 }

@@ -17,7 +17,7 @@
 #include <terminal.h>
 
 //------------------------------------------------------------------------------
-int     call_readline_w(const wchar_t*, wchar_t*, unsigned);
+bool    call_readline(const char*, str_base&);
 int     copy_line_to_clipboard(int, int);
 int     ctrl_c(int, int);
 int     expand_env_vars(int, int);
@@ -94,7 +94,7 @@ class rl_line_editor
 public:
                     rl_line_editor(const desc& desc);
     virtual         ~rl_line_editor();
-    virtual bool    edit_line_impl(const wchar_t* prompt, wchar_t* out, int out_count) override;
+    virtual bool    edit_line_impl(const char* prompt, str_base& out) override;
 
 private:
     void            bind_embedded_inputrc();
@@ -142,9 +142,9 @@ rl_line_editor::~rl_line_editor()
 }
 
 //------------------------------------------------------------------------------
-bool rl_line_editor::edit_line_impl(const wchar_t* prompt, wchar_t* out, int out_count)
+bool rl_line_editor::edit_line_impl(const char* prompt, str_base& out)
 {
-    return (call_readline_w(prompt, out, out_count) != 0);
+    return call_readline(prompt, out);
 }
 
 //------------------------------------------------------------------------------

@@ -37,8 +37,8 @@ line_editor::line_editor(const desc& desc)
 }
 
 //------------------------------------------------------------------------------
-bool line_editor::edit_line(const wchar_t* prompt, wchar_t* out, int out_count)
+bool line_editor::edit_line(const char* prompt, str_base& out)
 {
     cwd_restorer cwd;
-    return edit_line_impl(prompt, out, out_count);
+    return edit_line_impl(prompt, out);
 }

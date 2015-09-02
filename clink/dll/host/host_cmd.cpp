@@ -237,14 +237,19 @@ void host_cmd::edit_line(const wchar_t* prompt, wchar_t* chars, int max_chars)
     while (1)
     {
         line_editor* editor = get_line_editor();
-        const wchar_t* prompt = m_prompt.get();
-        int is_eof = editor->edit_line(prompt, chars, max_chars);
-        if (!is_eof)
+
+        str<128> utf8_prompt(m_prompt.get());
+        str<1024> out;
+        bool ok = editor->edit_line(utf8_prompt.c_str(), out);
+        if (ok)
+        {
+            to_utf16(chars, max_chars, out.c_str());
             break;
+        }
 
         if (get_clink_setting_int("ctrld_exits"))
         {
-            wcsncpy(chars, L"exit", max_chars);
+            wstr_base(chars, max_chars) << L"exit";
             break;
         }
 

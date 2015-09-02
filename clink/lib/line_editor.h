@@ -23,14 +23,14 @@ public:
 
                             line_editor(const desc& desc);
     virtual                 ~line_editor() = 0 {}
-    bool                    edit_line(const wchar_t* prompt, wchar_t* out, int out_count);
+    bool                    edit_line(const char* prompt, str_base& out);
     terminal*               get_terminal() const;
     match_printer*          get_match_printer() const;
     match_generator*        get_match_generator() const;
     const char*             get_shell_name() const;
 
 private:
-    virtual bool            edit_line_impl(const wchar_t* prompt, wchar_t* out, int out_count) = 0;
+    virtual bool            edit_line_impl(const char* prompt, str_base& out) = 0;
     terminal*               m_terminal;
     match_printer*          m_match_printer;
     match_generator*        m_match_generator;
