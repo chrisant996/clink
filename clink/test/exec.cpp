@@ -1,7 +1,7 @@
 // Copyright (c) 2015 Martin Ridgers
 // License: http://opensource.org/licenses/MIT
 
-#include "catch.hpp"
+#include "pch.h"
 #include "fs_fixture.h"
 #include "env_fixture.h"
 #include "match_generator_tester.h"

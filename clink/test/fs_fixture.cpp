@@ -1,8 +1,8 @@
 // Copyright (c) 2015 Martin Ridgers
 // License: http://opensource.org/licenses/MIT
 
+#include "pch.h"
 #include "fs_fixture.h"
-#include "catch.hpp"
 
 #include <core/base.h>
 #include <core/globber.h>

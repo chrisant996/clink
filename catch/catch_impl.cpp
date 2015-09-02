@@ -1,11 +1,12 @@
 // Copyright (c) 2015 Martin Ridgers
 // License: http://opensource.org/licenses/MIT
 
-#include "pch.h"
+#define CATCH_CONFIG_RUNNER
+#include "catch.hpp"
 
 //------------------------------------------------------------------------------
-int main(int argc, char** argv)
+int run_catch(int argc, char** argv)
 {
-    extern int run_catch(int, char**);
-    return run_catch(argc, argv);
+    int result = Catch::Session().run(argc, argv);
+    return result;
 }

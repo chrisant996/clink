@@ -1,7 +1,7 @@
 // Copyright (c) 2015 Martin Ridgers
 // License: http://opensource.org/licenses/MIT
 
-#include "catch.hpp"
+#include "pch.h"
 
 #include <core/str.h>
 #include <core/str_compare.h>

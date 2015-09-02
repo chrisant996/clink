@@ -174,6 +174,14 @@ project("lua")
     excludes("lua/src/luac.c")
 
 --------------------------------------------------------------------------------
+project("catch")
+    language("c++")
+    kind("staticlib")
+    exceptionhandling("on")
+    files("catch/*.cpp")
+    files("catch/*.hpp")
+
+--------------------------------------------------------------------------------
 project("clink_lib")
     language("c++")
     kind("staticlib")
@@ -248,12 +256,19 @@ project("clink_test")
     kind("consoleapp")
     exceptionhandling("on")
     links("lua")
+    links("catch")
     links("readline")
     links("clink_lib")
     links("clink_base")
+    includedirs("catch")
     includedirs("clink/lib")
     includedirs("clink/dll")
-    files("clink/test/**pp")
+    files("clink/test/*.cpp")
+    files("clink/test/*.h")
+
+    configuration("vs*")
+        pchsource("clink/test/pch.cpp")
+        pchheader("pch.h")
 
 --------------------------------------------------------------------------------
 newoption {
