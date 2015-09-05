@@ -6,6 +6,7 @@
 #include "clink_lua_api.h"
 #include "lua_match_generator.h"
 #include "path_lua_api.h"
+#include "os_lua_api.h"
 
 struct lua_State;
 
@@ -26,6 +27,7 @@ private:
     lua_State*       m_state;
     clink_lua_api    m_clink;
     path_lua_api     m_path;
+    os_lua_api       m_os;
 };
 
 //------------------------------------------------------------------------------

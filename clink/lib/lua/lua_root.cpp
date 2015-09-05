@@ -35,6 +35,7 @@ void lua_root::initialise()
 
     m_clink.initialise(m_state);
     m_path.initialise(m_state);
+    m_os.initialise(m_state);
 
     lua_match_generator::initialise(m_state);
 
