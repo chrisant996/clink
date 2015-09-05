@@ -73,6 +73,22 @@ bool os::unlink(const char* path)
 }
 
 //------------------------------------------------------------------------------
+bool os::move(const char* src_path, const char* dest_path)
+{
+    wstr<MAX_PATH> wsrc_path(src_path);
+    wstr<MAX_PATH> wdest_path(dest_path);
+    return (MoveFileW(wsrc_path.c_str(), wdest_path.c_str()) == TRUE);
+}
+
+//------------------------------------------------------------------------------
+bool os::copy(const char* src_path, const char* dest_path)
+{
+    wstr<MAX_PATH> wsrc_path(src_path);
+    wstr<MAX_PATH> wdest_path(dest_path);
+    return (CopyFileW(wsrc_path.c_str(), wdest_path.c_str(), FALSE) == TRUE);
+}
+
+//------------------------------------------------------------------------------
 bool os::get_temp_dir(str_base& out)
 {
     return get_env("tmp", out) || get_env("temp", out);
