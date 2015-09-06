@@ -37,7 +37,7 @@ void path_lua_api::initialise(struct lua_State* state)
 //------------------------------------------------------------------------------
 const char* path_lua_api::get_string(lua_State* state, int index)
 {
-    if (lua_gettop(state) <= index || !lua_isstring(state, index))
+    if (lua_gettop(state) < index || !lua_isstring(state, index))
         return nullptr;
 
     return lua_tostring(state, index);
@@ -46,11 +46,11 @@ const char* path_lua_api::get_string(lua_State* state, int index)
 //------------------------------------------------------------------------------
 int path_lua_api::clean(lua_State* state)
 {
-    str<MAX_PATH> out = get_string(state, 0);
+    str<MAX_PATH> out = get_string(state, 1);
     if (out.length() == 0)
         return 0;
 
-    const char* separator = get_string(state, 1);
+    const char* separator = get_string(state, 2);
     if (separator == nullptr)
         separator = "\\";
 
@@ -62,7 +62,7 @@ int path_lua_api::clean(lua_State* state)
 //------------------------------------------------------------------------------
 int path_lua_api::get_base_name(lua_State* state)
 {
-    const char* path = get_string(state, 0);
+    const char* path = get_string(state, 1);
     if (path == nullptr)
         return 0;
 
@@ -75,7 +75,7 @@ int path_lua_api::get_base_name(lua_State* state)
 //------------------------------------------------------------------------------
 int path_lua_api::get_directory(lua_State* state)
 {
-    str<MAX_PATH> out = get_string(state, 0);
+    str<MAX_PATH> out = get_string(state, 1);
     if (out.length() == 0)
         return 0;
 
@@ -89,7 +89,7 @@ int path_lua_api::get_directory(lua_State* state)
 //------------------------------------------------------------------------------
 int path_lua_api::get_drive(lua_State* state)
 {
-    str<8> out = get_string(state, 0);
+    str<8> out = get_string(state, 1);
     if (out.length() == 0)
         return 0;
 
@@ -103,7 +103,7 @@ int path_lua_api::get_drive(lua_State* state)
 //------------------------------------------------------------------------------
 int path_lua_api::get_extension(lua_State* state)
 {
-    const char* path = get_string(state, 0);
+    const char* path = get_string(state, 1);
     if (path == nullptr)
         return 0;
 
@@ -116,7 +116,7 @@ int path_lua_api::get_extension(lua_State* state)
 //------------------------------------------------------------------------------
 int path_lua_api::get_name(lua_State* state)
 {
-    const char* path = get_string(state, 0);
+    const char* path = get_string(state, 1);
     if (path == nullptr)
         return 0;
 
@@ -129,11 +129,11 @@ int path_lua_api::get_name(lua_State* state)
 //------------------------------------------------------------------------------
 int path_lua_api::join(lua_State* state)
 {
-    const char* lhs = get_string(state, 0);
+    const char* lhs = get_string(state, 1);
     if (lhs == nullptr)
         return 0;
 
-    const char* rhs = get_string(state, 0);
+    const char* rhs = get_string(state, 2);
     if (rhs == nullptr)
         return 0;
 

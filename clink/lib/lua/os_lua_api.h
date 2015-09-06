@@ -23,7 +23,7 @@ private:
     static int          globdirs(lua_State* state);
     static int          globfiles(lua_State* state);
     static int          getenv(lua_State* state);
-    static const char*  get_string(lua_State* state, int index=0);
+    static const char*  get_string(lua_State* state, int index=1);
                         os_lua_api() = delete;
                         ~os_lua_api() = delete;
 };

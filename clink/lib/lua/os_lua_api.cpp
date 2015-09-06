@@ -42,7 +42,7 @@ void os_lua_api::initialise(lua_State* state)
 //------------------------------------------------------------------------------
 const char* os_lua_api::get_string(lua_State* state, int index)
 {
-    if (lua_gettop(state) <= index || lua_isstring(state, index))
+    if (lua_gettop(state) < index || lua_isstring(state, index))
         return nullptr;
 
     return lua_tostring(state, index);
@@ -135,8 +135,8 @@ int os_lua_api::remove(lua_State* state)
 //------------------------------------------------------------------------------
 int os_lua_api::rename(lua_State* state)
 {
-    const char* src = get_string(state, 0);
-    const char* dest = get_string(state, 1);
+    const char* src = get_string(state, 1);
+    const char* dest = get_string(state, 2);
     if (src != nullptr && dest != nullptr && os::move(src, dest))
     {
         lua_pushboolean(state, 1);
@@ -152,8 +152,8 @@ int os_lua_api::rename(lua_State* state)
 //------------------------------------------------------------------------------
 int os_lua_api::copy(lua_State* state)
 {
-    const char* src = get_string(state, 0);
-    const char* dest = get_string(state, 1);
+    const char* src = get_string(state, 1);
+    const char* dest = get_string(state, 2);
     if (src == nullptr || dest == nullptr)
         return 0;
 
