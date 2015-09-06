@@ -10,37 +10,37 @@ TEST_CASE("Wide character/UTF-8 conversion") {
         str<> s;
 
         SECTION("One byte") {
-            s.to_utf8(L"0123456789");
+            s.from_utf16(L"0123456789");
             REQUIRE(s.equals("0123456789"));
 
-            s.to_utf8(L"\x01\x7f");
+            s.from_utf16(L"\x01\x7f");
             REQUIRE(s.equals("\x01\x7f"));
 
-            s.to_utf8(L"AaBbCc");
+            s.from_utf16(L"AaBbCc");
             REQUIRE(s.equals("AaBbCc"));
         }
 
         SECTION("Two bytes") {
-            s.to_utf8(L"\x0080");
+            s.from_utf16(L"\x0080");
             REQUIRE(s.equals("\xc2\x80"));
 
-            s.to_utf8(L"\x07ff");
+            s.from_utf16(L"\x07ff");
             REQUIRE(s.equals("\xdf\xbf"));
         }
 
         SECTION("Three bytes") {
-            s.to_utf8(L"\x0800");
+            s.from_utf16(L"\x0800");
             REQUIRE(s.equals("\xe0\xa0\x80"));
 
-            s.to_utf8(L"\xffff");
+            s.from_utf16(L"\xffff");
             REQUIRE(s.equals("\xef\xbf\xbf"));
         }
 
         SECTION("Four bytes") {
-            s.to_utf8(L"\xd800\xdc00");
+            s.from_utf16(L"\xd800\xdc00");
             REQUIRE(s.equals("\xf0\x90\x80\x80"));
 
-            s.to_utf8(L"\xdbff\xdfff");
+            s.from_utf16(L"\xdbff\xdfff");
             REQUIRE(s.equals("\xf4\x8f\xbf\xbf"));
         }
 
@@ -57,37 +57,37 @@ TEST_CASE("Wide character/UTF-8 conversion") {
         wstr<> s;
 
         SECTION("One byte") {
-            s.to_utf16("0123456789");
+            s.from_utf8("0123456789");
             REQUIRE(s.equals(L"0123456789"));
 
-            s.to_utf16("\x01\x7f");
+            s.from_utf8("\x01\x7f");
             REQUIRE(s.equals(L"\x01\x7f"));
 
-            s.to_utf16("AaBbCc");
+            s.from_utf8("AaBbCc");
             REQUIRE(s.equals(L"AaBbCc"));
         }
 
         SECTION("Two bytes") {
-            s.to_utf16("\xc2\x80");
+            s.from_utf8("\xc2\x80");
             REQUIRE(s.equals(L"\x0080"));
 
-            s.to_utf16("\xdf\xbf");
+            s.from_utf8("\xdf\xbf");
             REQUIRE(s.equals(L"\x07ff"));
         }
 
         SECTION("Three bytes") {
-            s.to_utf16("\xe0\xa0\x80");
+            s.from_utf8("\xe0\xa0\x80");
             REQUIRE(s.equals(L"\x0800"));
 
-            s.to_utf16("\xef\xbf\xbf");
+            s.from_utf8("\xef\xbf\xbf");
             REQUIRE(s.equals(L"\xffff"));
         }
 
         SECTION("Four bytes") {
-            s.to_utf16("\xf0\x90\x80\x80");
+            s.from_utf8("\xf0\x90\x80\x80");
             REQUIRE(s.equals(L"\xd800\xdc00"));
 
-            s.to_utf16("\xf4\x8f\xbf\xbf");
+            s.from_utf8("\xf4\x8f\xbf\xbf");
             REQUIRE(s.equals(L"\xdbff\xdfff"));
         }
 

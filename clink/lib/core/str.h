@@ -236,18 +236,18 @@ class str_base : public str_impl<char>
 {
 public:
          str_base(char* data, int size) : str_impl<char>(data, size) {}
-    bool to_utf8(const wchar_t* utf16)     { clear(); return ::to_utf8(*this, utf16); }
+    bool from_utf16(const wchar_t* utf16)  { clear(); return to_utf8(*this, utf16); }
     void operator = (const char* value)    { copy(value); }
-    void operator = (const wchar_t* value) { to_utf8(value); }
+    void operator = (const wchar_t* value) { from_utf16(value); }
 };
 
 class wstr_base : public str_impl<wchar_t>
 {
 public:
          wstr_base(wchar_t* data, int size) : str_impl<wchar_t>(data, size) {}
-    bool to_utf16(const char* utf8)         { clear(); return ::to_utf16(*this, utf8); }
+    bool from_utf8(const char* utf8)        { clear(); return to_utf16(*this, utf8); }
     void operator = (const wchar_t* value)  { copy(value); }
-    void operator = (const char* value)     { to_utf16(value); }
+    void operator = (const char* value)     { from_utf8(value); }
 };
 
 
@@ -259,9 +259,9 @@ class str : public str_base
     char    m_data[COUNT];
 
 public:
-            str() : str_base(m_data, COUNT)     {}
+            str() : str_base(m_data, COUNT)     { set_growable(); }
             str(const char* value) : str()      { copy(value); }
-            str(const wchar_t* value) : str()   { to_utf8(value); }
+            str(const wchar_t* value) : str()   { from_utf16(value); }
     using   str_base::operator =;
 };
 
@@ -271,9 +271,9 @@ class wstr : public wstr_base
     wchar_t m_data[COUNT];
 
 public:
-            wstr() : wstr_base(m_data, COUNT)   {}
+            wstr() : wstr_base(m_data, COUNT)   { set_growable(); }
             wstr(const wchar_t* value) : wstr() { copy(value); }
-            wstr(const char* value) : wstr()    { to_utf16(value); }
+            wstr(const char* value) : wstr()    { from_utf8(value); }
     using   wstr_base::operator =;
 };
 
