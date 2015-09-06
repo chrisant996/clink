@@ -4,8 +4,9 @@
 #include "pch.h"
 #include "os_lua_api.h"
 #include "core/base.h"
-#include "core/str.h"
+#include "core/globber.h"
 #include "core/os.h"
+#include "core/str.h"
 #include "lua/lua_delegate.h"
 
 //------------------------------------------------------------------------------
@@ -24,6 +25,8 @@ void os_lua_api::initialise(lua_State* state)
         { "copy",       &os_lua_api::copy },
         { "isdir",      &os_lua_api::isdir },
         { "isfile",     &os_lua_api::isfile },
+        { "globdirs",   &os_lua_api::globdirs },
+        { "globfiles",  &os_lua_api::globfiles },
         { "getenv",     &os_lua_api::getenv },
     };
 
@@ -156,6 +159,41 @@ int os_lua_api::copy(lua_State* state)
 
     lua_pushboolean(state, (os::copy(src, dest) == true));
     return 1;
+}
+
+//------------------------------------------------------------------------------
+int os_lua_api::glob_impl(lua_State* state, bool dirs_only)
+{
+    const char* mask = get_string(state);
+    if (mask == nullptr)
+        return 0;
+
+    lua_createtable(state, 0, 0);
+
+    globber::context glob_ctx = { mask, "", dirs_only };
+    globber globber(glob_ctx);
+
+    int i = 1;
+    str<MAX_PATH> file;
+    while (globber.next(file))
+    {
+        lua_pushstring(state, file.c_str());
+        lua_rawseti(state, -2, i++);
+    }
+
+    return 1;
+}
+
+//------------------------------------------------------------------------------
+int os_lua_api::globdirs(lua_State* state)
+{
+    return glob_impl(state, true);
+}
+
+//------------------------------------------------------------------------------
+int os_lua_api::globfiles(lua_State* state)
+{
+    return glob_impl(state, false);
 }
 
 //------------------------------------------------------------------------------

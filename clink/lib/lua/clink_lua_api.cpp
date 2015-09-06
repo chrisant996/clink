@@ -5,7 +5,6 @@
 #include "clink_lua_api.h"
 #include "core/base.h"
 #include "core/str.h"
-#include "core/globber.h"
 #include "lua_delegate.h"
 #include "lua_script_loader.h"
 
@@ -31,8 +30,6 @@ void clink_lua_api::initialise(struct lua_State* state)
         { "execute", lua_execute },
         */
         { "chdir",                  &clink_lua_api::change_dir },
-        { "find_dirs",              &clink_lua_api::find_dirs },
-        { "find_files",             &clink_lua_api::find_files },
         { "get_console_aliases",    &clink_lua_api::get_console_aliases },
         { "get_cwd",                &clink_lua_api::get_cwd },
         { "get_env",                &clink_lua_api::get_env },
@@ -121,43 +118,6 @@ int clink_lua_api::to_lowercase(lua_State* state)
     free(lowered);
 
     return 1;
-}
-
-//------------------------------------------------------------------------------
-int clink_lua_api::find_files_impl(lua_State* state, bool dirs_only)
-{
-    // Check arguments.
-    if (!lua_gettop(state) || lua_isnil(state, 1))
-        return 0;
-
-    const char* mask = lua_tostring(state, 1);
-
-    lua_createtable(state, 0, 0);
-
-    globber::context glob_ctx = { mask, "", dirs_only };
-    globber globber(glob_ctx);
-
-    int i = 1;
-    str<MAX_PATH> file;
-    while (globber.next(file))
-    {
-        lua_pushstring(state, file.c_str());
-        lua_rawseti(state, -2, i++);
-    }
-
-    return 1;
-}
-
-//------------------------------------------------------------------------------
-int clink_lua_api::find_files(lua_State* state)
-{
-    return find_files_impl(state, false);
-}
-
-//------------------------------------------------------------------------------
-int clink_lua_api::find_dirs(lua_State* state)
-{
-    return find_files_impl(state, true);
 }
 
 //------------------------------------------------------------------------------

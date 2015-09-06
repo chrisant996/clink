@@ -6,7 +6,7 @@ local function dir_match_generator(word)
     local matches = {}
 
     -- Find matches.
-    for _, dir in ipairs(clink.find_dirs(word.."*")) do
+    for _, dir in ipairs(os.globdirs(word.."*")) do
         table.insert(matches, dir)
     end
 

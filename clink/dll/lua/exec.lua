@@ -112,10 +112,9 @@ local function exec_match_generator(text, first, last)
     local suffices = clink.split(clink.get_env("pathext"), ";")
     for _, suffix in ipairs(suffices) do
         for _, path in ipairs(paths) do
-            local files = clink.find_files(path.."*"..suffix, false)
-            for _, file in ipairs(files) do
+            for _, file in ipairs(os.globfiles(dir.."*"..suffix)) do
+                file = path.getname(file)
                 if clink.is_match(text_name, file) then
-                    file = path.getname(file)
                     clink.add_match(text_dir..file)
                 end
             end
@@ -124,7 +123,7 @@ local function exec_match_generator(text, first, last)
 
     -- Lastly we may wish to consider directories too.
     if clink.match_count() == 0 or match_style >= 2 then
-        clink.match_files(text.."*", true, exec_find_dirs)
+        clink.match_files(text.."*", true, os.globdirs)
     end
 
     clink.matches_are_files()

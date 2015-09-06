@@ -22,7 +22,7 @@ end
 function clink.match_files(pattern, full_path, find_func)
     -- Fill out default values
     if type(find_func) ~= "function" then
-        find_func = clink.find_files
+        find_func = os.globfiles
     end
 
     if full_path == nil then

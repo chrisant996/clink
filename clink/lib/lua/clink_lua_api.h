@@ -14,9 +14,6 @@ public:
 private:
     static int  change_dir(lua_State* state);
     static int  to_lowercase(lua_State* state);
-    static int  find_files_impl(lua_State* state, bool dirs_only);
-    static int  find_files(lua_State* state);
-    static int  find_dirs(lua_State* state);
     static int  matches_are_files(lua_State* state);
     static int  get_env(lua_State* state);
     static int  get_env_var_names(lua_State* state);
