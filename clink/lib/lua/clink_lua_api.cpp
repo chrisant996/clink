@@ -29,9 +29,7 @@ void clink_lua_api::initialise(struct lua_State* state)
         /*
         { "execute", lua_execute },
         */
-        { "chdir",                  &clink_lua_api::change_dir },
         { "get_console_aliases",    &clink_lua_api::get_console_aliases },
-        { "get_cwd",                &clink_lua_api::get_cwd },
         { "get_env",                &clink_lua_api::get_env },
         { "get_env_var_names",      &clink_lua_api::get_env_var_names },
         { "get_host_process",       &clink_lua_api::get_host_process },
@@ -39,7 +37,6 @@ void clink_lua_api::initialise(struct lua_State* state)
         { "get_screen_info",        &clink_lua_api::get_screen_info },
         { "get_setting_int",        &clink_lua_api::get_setting_int },
         { "get_setting_str",        &clink_lua_api::get_setting_str },
-        { "is_dir",                 &clink_lua_api::is_dir },
         { "is_rl_variable_true",    &clink_lua_api::is_rl_variable_true },
         { "lower",                  &clink_lua_api::to_lowercase },
         { "matches_are_files",      &clink_lua_api::matches_are_files },
@@ -57,19 +54,6 @@ void clink_lua_api::initialise(struct lua_State* state)
     lua_setglobal(state, "clink");
 
     lua_load_script(state, lib, clink);
-}
-
-//------------------------------------------------------------------------------
-int clink_lua_api::change_dir(lua_State* state)
-{
-    // Check we've got at least one string argument.
-    if (lua_gettop(state) == 0 || !lua_isstring(state, 1))
-        return 0;
-
-    const char* path = lua_tostring(state, 1);
-    SetCurrentDirectory(path);
-
-    return 0;
 }
 
 //------------------------------------------------------------------------------
@@ -242,30 +226,6 @@ int clink_lua_api::get_setting_int(lua_State* state)
 }
 
 //------------------------------------------------------------------------------
-int clink_lua_api::is_dir(lua_State* state)
-{
-    const char* name;
-    DWORD attrib;
-    int i;
-
-    if (lua_gettop(state) == 0)
-        return 0;
-
-    if (lua_isnil(state, 1))
-        return 0;
-
-    i = 0;
-    name = lua_tostring(state, 1);
-    attrib = GetFileAttributes(name);
-    if (attrib != INVALID_FILE_ATTRIBUTES)
-        i = !!(attrib & FILE_ATTRIBUTE_DIRECTORY);
-
-    lua_pushboolean(state, i);
-
-    return 1;
-}
-
-//------------------------------------------------------------------------------
 int clink_lua_api::get_rl_variable(lua_State* state)
 {
     // Check we've got at least one string argument.
@@ -307,16 +267,6 @@ int clink_lua_api::is_rl_variable_true(lua_State* state)
 int clink_lua_api::get_host_process(lua_State* state)
 {
     lua_pushstring(state, rl_readline_name);
-    return 1;
-}
-
-//------------------------------------------------------------------------------
-int clink_lua_api::get_cwd(lua_State* state)
-{
-    char path[MAX_PATH];
-
-    GetCurrentDirectory(sizeof_array(path), path);
-    lua_pushstring(state, path);
     return 1;
 }
 

@@ -5,7 +5,7 @@
 local function powershell_prompt_filter()
     local l, r, path = clink.prompt.value:find("([a-zA-Z]:\\.*)> $")
     if path ~= nil then
-        clink.chdir(path)
+        os.chdir(path)
     end
 end
 
