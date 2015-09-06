@@ -11,7 +11,7 @@
 //------------------------------------------------------------------------------
 static const char* get_string(lua_State* state, int index)
 {
-    if (lua_gettop(state) < index || lua_isstring(state, index))
+    if (lua_gettop(state) < index || !lua_isstring(state, index))
         return nullptr;
 
     return lua_tostring(state, index);
