@@ -92,66 +92,66 @@ unsigned int str_impl<TYPE>::size() const
 template <typename TYPE>
 unsigned int str_impl<TYPE>::length() const
 {
-    return str_len(m_data);
+    return str_len(c_str());
 }
 
 //------------------------------------------------------------------------------
 template <typename TYPE>
 unsigned int str_impl<TYPE>::char_count() const
 {
-    return ::char_count(m_data);
+    return ::char_count(c_str());
 }
 
 //------------------------------------------------------------------------------
 template <typename TYPE>
 void str_impl<TYPE>::clear()
 {
-    m_data[0] = '\0';
+    data()[0] = '\0';
 }
 
 //------------------------------------------------------------------------------
 template <typename TYPE>
 bool str_impl<TYPE>::empty() const
 {
-    return (m_data[0] == '\0');
+    return (c_str()[0] == '\0');
 }
 
 //------------------------------------------------------------------------------
 template <typename TYPE>
-void str_impl<TYPE>::truncate(unsigned int length)
+void str_impl<TYPE>::truncate(unsigned int pos)
 {
-    if (length < m_size)
-        m_data[length] = '\0';
+    if (pos < length())
+        data()[pos] = '\0';
 }
 
 //------------------------------------------------------------------------------
 template <typename TYPE>
 int str_impl<TYPE>::first_of(int c) const
 {
-    const TYPE* r = str_chr(m_data, c);
-    return r ? int(r - m_data) : -1;
+    const TYPE* r = str_chr(c_str(), c);
+    return r ? int(r - c_str()) : -1;
 }
 
 //------------------------------------------------------------------------------
 template <typename TYPE>
 int str_impl<TYPE>::last_of(int c) const
 {
-    const TYPE* r = str_rchr(m_data, c);
-    return r ? int(r - m_data) : -1;
+    const TYPE* r = str_rchr(c_str(), c);
+    return r ? int(r - c_str()) : -1;
 }
 
 //------------------------------------------------------------------------------
 template <typename TYPE>
 bool str_impl<TYPE>::equals(const TYPE* rhs) const
 {
-    return (str_cmp(m_data, rhs) == 0);
+    return (str_cmp(c_str(), rhs) == 0);
 }
 
 //------------------------------------------------------------------------------
 template <typename TYPE>
 bool str_impl<TYPE>::iequals(const TYPE* rhs) const
 {
-    return (str_icmp(m_data, rhs) == 0);
+    return (str_icmp(c_str(), rhs) == 0);
 }
 
 //------------------------------------------------------------------------------
@@ -181,7 +181,7 @@ bool str_impl<TYPE>::concat(const TYPE* src, int n)
         truncated = (str_len(src) > m);
 
     if (m > 0)
-        str_ncat(m_data, src, m);
+        str_ncat(data(), src, m);
 
     return !truncated;
 }
@@ -192,8 +192,8 @@ bool str_impl<TYPE>::format(const TYPE* format, ...)
 {
     va_list args;
     va_start(args, format);
-    int ret = vsnprint(m_data, m_size, format, args);
-    m_data[m_size - 1] = '\0';
+    int ret = vsnprint(data(), m_size, format, args);
+    data()[m_size - 1] = '\0';
     va_end(args);
     return (ret >= 0);
 }
@@ -202,7 +202,7 @@ bool str_impl<TYPE>::format(const TYPE* format, ...)
 template <typename TYPE>
 TYPE str_impl<TYPE>::operator [] (unsigned int i) const
 {
-    return (i < length()) ? m_data[i] : 0;
+    return (i < length()) ? c_str()[i] : 0;
 }
 
 //------------------------------------------------------------------------------
