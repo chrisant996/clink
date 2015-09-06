@@ -97,11 +97,15 @@ bool os::get_temp_dir(str_base& out)
 //------------------------------------------------------------------------------
 bool os::get_env(const char* name, str_base& out)
 {
-    wstr<48> wname(name);
-    wstr<> wvalue;
-    int len = GetEnvironmentVariableW(wname.c_str(), wvalue.data(), wvalue.size());
-    if (!len || len >= int(wvalue.size()))
+    wstr<32> wname(name);
+
+    int len = GetEnvironmentVariableW(wname.c_str(), nullptr, 0);
+    if (!len)
         return false;
+
+    wstr<> wvalue;
+    wvalue.reserve(len);
+    len = GetEnvironmentVariableW(wname.c_str(), wvalue.data(), wvalue.size());
 
     out = wvalue.c_str();
     return true;
