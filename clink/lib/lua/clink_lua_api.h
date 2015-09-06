@@ -14,8 +14,6 @@ public:
 private:
     static int  to_lowercase(lua_State* state);
     static int  matches_are_files(lua_State* state);
-    static int  get_env(lua_State* state);
-    static int  get_env_var_names(lua_State* state);
     static int  get_setting_str(lua_State* state);
     static int  get_setting_int(lua_State* state);
     static int  get_rl_variable(lua_State* state);

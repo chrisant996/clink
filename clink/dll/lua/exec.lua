@@ -13,7 +13,7 @@ local dos_commands = {
 
 --------------------------------------------------------------------------------
 local function get_environment_paths()
-    local paths = clink.split(clink.get_env("PATH"), ";")
+    local paths = clink.split(os.getenv("path"), ";")
 
     -- We're expecting absolute paths and as ';' is a valid path character
     -- there maybe unneccessary splits. Here we resolve them.
@@ -109,7 +109,7 @@ local function exec_match_generator(text, first, last)
     end
 
     -- Search 'paths' for files ending in 'suffices' and look for matches
-    local suffices = clink.split(clink.get_env("pathext"), ";")
+    local suffices = clink.split(os.getenv("pathext"), ";")
     for _, suffix in ipairs(suffices) do
         for _, path in ipairs(paths) do
             for _, file in ipairs(os.globfiles(dir.."*"..suffix)) do

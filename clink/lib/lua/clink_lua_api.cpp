@@ -30,8 +30,6 @@ void clink_lua_api::initialise(struct lua_State* state)
         { "execute", lua_execute },
         */
         { "get_console_aliases",    &clink_lua_api::get_console_aliases },
-        { "get_env",                &clink_lua_api::get_env },
-        { "get_env_var_names",      &clink_lua_api::get_env_var_names },
         { "get_host_process",       &clink_lua_api::get_host_process },
         { "get_rl_variable",        &clink_lua_api::get_rl_variable },
         { "get_screen_info",        &clink_lua_api::get_screen_info },
@@ -116,76 +114,6 @@ int clink_lua_api::matches_are_files(lua_State* state)
     rl_filename_completion_desired = i;
 #endif
     return 0;
-}
-
-//------------------------------------------------------------------------------
-int clink_lua_api::get_env(lua_State* state)
-{
-    unsigned size;
-    const char* name;
-    wchar_t* buffer;
-
-    if (lua_gettop(state) == 0)
-        return 0;
-
-    if (lua_isnil(state, 1))
-        return 0;
-
-    name = lua_tostring(state, 1);
-    size = GetEnvironmentVariable(name, nullptr, 0);
-    if (!size)
-        return 0;
-
-    wstr<64> wname = name;
-
-    buffer = (wchar_t*)malloc(size * sizeof(wchar_t));
-    GetEnvironmentVariableW(wname.c_str(), buffer, size);
-    to_utf8((char*)buffer, size, buffer);
-
-    lua_pushstring(state, (char*)buffer);
-
-    return 1;
-}
-
-//------------------------------------------------------------------------------
-int clink_lua_api::get_env_var_names(lua_State* state)
-{
-    char* env_strings;
-    int i = 1;
-
-    lua_createtable(state, 0, 0);
-    env_strings = GetEnvironmentStrings();
-    if (env_strings != nullptr)
-    {
-        char* string = env_strings;
-
-        while (*string)
-        {
-            char* eq = strchr(string, L'=');
-            if (eq != nullptr)
-            {
-                size_t length = eq - string + 1;
-                char name[1024];
-
-                length = length < sizeof_array(name) ? length : sizeof_array(name);
-                --length;
-                if (length > 0)
-                {
-                    strncpy(name, string, length);
-                    name[length] = L'\0';
-
-                    lua_pushstring(state, name);
-                    lua_rawseti(state, -2, i++);
-                }
-            }
-
-            string += strlen(string) + 1;
-        }
-
-        FreeEnvironmentStrings(env_strings);
-    }
-
-    return 1;
 }
 
 //------------------------------------------------------------------------------

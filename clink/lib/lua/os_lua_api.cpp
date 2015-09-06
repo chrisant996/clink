@@ -28,6 +28,7 @@ void os_lua_api::initialise(lua_State* state)
         { "globdirs",   &os_lua_api::globdirs },
         { "globfiles",  &os_lua_api::globfiles },
         { "getenv",     &os_lua_api::getenv },
+        { "getenvnames",&os_lua_api::getenvnames },
     };
 
     // Add set some methods to the os table.
@@ -208,5 +209,42 @@ int os_lua_api::getenv(lua_State* state)
         return 0;
 
     lua_pushstring(state, value.c_str());
+    return 1;
+}
+
+//------------------------------------------------------------------------------
+int os_lua_api::getenvnames(lua_State* state)
+{
+    lua_createtable(state, 0, 0);
+
+    char* root = GetEnvironmentStrings();
+    if (root == nullptr)
+        return 1;
+
+    char* strings = root;
+    int i = 1;
+    while (*strings)
+    {
+        // Skip env vars that start with a '='. They're hidden ones.
+        if (*strings == '=')
+        {
+            strings += strlen(strings) + 1;
+            continue;
+        }
+
+        char* eq = strchr(strings, '=');
+        if (eq == nullptr)
+            break;
+
+        *eq = '\0';
+
+        lua_pushstring(state, strings);
+        lua_rawseti(state, -2, i++);
+
+        ++eq;
+        strings = eq + strlen(eq) + 1;
+    }
+
+    FreeEnvironmentStrings(root);
     return 1;
 }

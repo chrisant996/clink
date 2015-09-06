@@ -54,7 +54,7 @@ local function env_vars_match_generator(text, first, last)
     i = i - first
     local prefix = text:sub(1, i)
 
-    env_vars_find_matches(clink.get_env_var_names(), prefix, part)
+    env_vars_find_matches(os.getenvnames(), prefix, part)
     env_vars_find_matches(special_env_vars, prefix, part)
 
     if clink.match_count() >= 1 then

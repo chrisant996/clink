@@ -587,7 +587,7 @@ local function argument_match_generator(text, first, last)
 
     -- Check to make sure the extension extracted is in pathext.
     if ext and ext ~= "" then
-        if not clink.get_env("pathext"):lower():match(ext.."[;$]", 1, true) then
+        if not os.getenv("pathext"):lower():match(ext.."[;$]", 1, true) then
             return false
         end
     end
