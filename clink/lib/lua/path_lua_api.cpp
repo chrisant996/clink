@@ -6,14 +6,13 @@
 #include "core/base.h"
 #include "core/path.h"
 #include "core/str.h"
-#include "lua_delegate.h"
 
 //------------------------------------------------------------------------------
 void path_lua_api::initialise(struct lua_State* state)
 {
     struct {
         const char* name;
-        int         (path_lua_api::*method)(lua_State*);
+        int         (*method)(lua_State*);
     } methods[] = {
         { "clean",         &path_lua_api::clean },
         { "getbasename",   &path_lua_api::get_base_name },
@@ -28,7 +27,7 @@ void path_lua_api::initialise(struct lua_State* state)
 
     for (int i = 0; i < sizeof_array(methods); ++i)
     {
-        lua_delegate::push(state, this, methods[i].method);
+        lua_pushcfunction(state, methods[i].method);
         lua_setfield(state, -2, methods[i].name);
     }
 

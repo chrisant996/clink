@@ -13,7 +13,7 @@ void os_lua_api::initialise(lua_State* state)
 {
     struct {
         const char* name;
-        int         (os_lua_api::*method)(lua_State*);
+        int         (*method)(lua_State*);
     } methods[] = {
         { "chdir",      &os_lua_api::chdir },
         { "getcwd",     &os_lua_api::getcwd },
@@ -31,7 +31,7 @@ void os_lua_api::initialise(lua_State* state)
     lua_getglobal(state, "os");
     for (int i = 0; i < sizeof_array(methods); ++i)
     {
-        lua_delegate::push(state, this, methods[i].method);
+        lua_pushcfunction(state, methods[i].method);
         lua_setfield(state, -2, methods[i].name);
     }
 }

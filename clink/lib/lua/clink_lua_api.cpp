@@ -20,16 +20,11 @@ int                     get_clink_setting_int(const char*);
 extern int              g_slash_translation;
 
 //------------------------------------------------------------------------------
-clink_lua_api::clink_lua_api()
-{
-}
-
-//------------------------------------------------------------------------------
 void clink_lua_api::initialise(struct lua_State* state)
 {
     struct {
         const char* name;
-        int         (clink_lua_api::*method)(lua_State*);
+        int         (*method)(lua_State*);
     } methods[] = {
 // MODE4
         /*
@@ -58,7 +53,7 @@ void clink_lua_api::initialise(struct lua_State* state)
 
     for (int i = 0; i < sizeof_array(methods); ++i)
     {
-        lua_delegate::push(state, this, methods[i].method);
+        lua_pushcfunction(state, methods[i].method);
         lua_setfield(state, -2, methods[i].name);
     }
 
