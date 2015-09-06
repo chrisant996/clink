@@ -4,6 +4,7 @@
 #pragma once
 
 #include <stdarg.h>
+#include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 
@@ -34,6 +35,8 @@ public:
     typedef TYPE    char_t;
 
                     str_impl(TYPE* data, unsigned int size);
+                    ~str_impl();
+    bool            reserve(unsigned int size);
     TYPE*           data();
     const TYPE*     c_str() const;
     unsigned int    size() const;
@@ -53,9 +56,15 @@ public:
     str_impl&       operator << (const TYPE* rhs);
     str_impl&       operator << (const str_impl& rhs);
 
+protected:
+    void            set_growable(bool state=true);
+
 private:
+    void            free_data();
     TYPE*           m_data;
-    unsigned int    m_size;
+    unsigned int    m_size : 30;
+    unsigned int    m_growable : 1;
+    unsigned int    m_owns_ptr : 1;
 };
 
 //------------------------------------------------------------------------------
@@ -63,8 +72,55 @@ template <typename TYPE>
 str_impl<TYPE>::str_impl(TYPE* data, unsigned int size)
 : m_data(data)
 , m_size(size)
+, m_growable(0)
+, m_owns_ptr(0)
 {
     clear();
+}
+
+//------------------------------------------------------------------------------
+template <typename TYPE>
+str_impl<TYPE>::~str_impl()
+{
+    free_data();
+}
+
+//------------------------------------------------------------------------------
+template <typename TYPE>
+void str_impl<TYPE>::set_growable(bool state)
+{
+    m_growable = state ? 1 : 0;
+}
+
+//------------------------------------------------------------------------------
+template <typename TYPE>
+bool str_impl<TYPE>::reserve(unsigned int new_size)
+{
+    if (m_size >= new_size)
+        return true;
+
+    if (!m_growable)
+        return false;
+
+    new_size = (new_size + 63) & ~63;
+
+    TYPE* new_data = (TYPE*)malloc(new_size * sizeof(TYPE));
+    memcpy(new_data, data(), m_size * sizeof(TYPE));
+
+    free_data();
+
+    m_data = new_data;
+    m_size = new_size;
+    m_owns_ptr = 1;
+    return true;
+}
+
+//------------------------------------------------------------------------------
+template <typename TYPE>
+void str_impl<TYPE>::free_data()
+{
+    if (m_owns_ptr)
+        free(data());
 }
 
 //------------------------------------------------------------------------------
@@ -169,19 +225,22 @@ bool str_impl<TYPE>::concat(const TYPE* src, int n)
     if (src == nullptr)
         return false;
 
-    int m = m_size - length() - 1;
+    if (n < 0)
+        n = str_len(src);
+
+    int len = length();
+    reserve(len + n + 1);
+
+    int remaining = m_size - len - 1;
 
     bool truncated = false;
-    if (n >= 0)
-    {
-        truncated = (m < n);
-        m = truncated ? m : n;
-    }
+    if (remaining < n)
+        truncated = true;
     else
-        truncated = (str_len(src) > m);
+        remaining = n;
 
-    if (m > 0)
-        str_ncat(data(), src, m);
+    if (remaining > 0)
+        str_ncat(data() + len, src, remaining);
 
     return !truncated;
 }
@@ -253,25 +312,25 @@ public:
 
 
 //------------------------------------------------------------------------------
-template <int COUNT=128>
+template <int COUNT=128, bool GROWABLE=true>
 class str : public str_base
 {
     char    m_data[COUNT];
 
 public:
-            str() : str_base(m_data, COUNT)     { set_growable(); }
+            str() : str_base(m_data, COUNT)     { set_growable(GROWABLE); }
             str(const char* value) : str()      { copy(value); }
             str(const wchar_t* value) : str()   { from_utf16(value); }
     using   str_base::operator =;
 };
 
-template <int COUNT=128>
+template <int COUNT=128, bool GROWABLE=true>
 class wstr : public wstr_base
 {
     wchar_t m_data[COUNT];
 
 public:
-            wstr() : wstr_base(m_data, COUNT)   { set_growable(); }
+            wstr() : wstr_base(m_data, COUNT)   { set_growable(GROWABLE); }
             wstr(const wchar_t* value) : wstr() { copy(value); }
             wstr(const char* value) : wstr()    { from_utf8(value); }
     using   wstr_base::operator =;

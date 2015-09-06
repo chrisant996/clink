@@ -35,16 +35,19 @@ TEST_CASE("Strings" NAME_SUFFIX) {
         REQUIRE(s.length() == 0);
     }
 
-    SECTION("Concatenation") {
+    SECTION("Concatenation (growable)") {
         str<4> s;
         int ones = ~0;
 
         REQUIRE(s.copy(STR("123")) == true);
-        REQUIRE(s.copy(STR("1234")) == false);
+        REQUIRE(s.equals(STR("123")) == true);
+
+        REQUIRE(s.copy(STR("1234")) == true);
+        REQUIRE(s.equals(STR("1234")) == true);
         REQUIRE(ones == ~0);
 
         s.clear();
-        REQUIRE(s.copy(STR("123456789abcdef")) == false);
+        REQUIRE(s.copy(STR("123456789abcdef")) == true);
         REQUIRE(ones == ~0);
 
         s.clear();
@@ -52,7 +55,38 @@ TEST_CASE("Strings" NAME_SUFFIX) {
         REQUIRE(s.length() == 3);
 
         s.clear();
-        REQUIRE(s.concat(STR("1234"), 4) == false);
+        REQUIRE(s.concat(STR("1234"), 4) == true);
+        REQUIRE(s.length() == 4);
+
+        s.clear();
+        REQUIRE(s.concat(STR("1234"), 0) == true);
+        REQUIRE(s.concat(STR("1234"), 1) == true);
+        REQUIRE(s.equals(STR("1")) == true);
+
+        REQUIRE(s.concat(STR("2"), 1) == true);
+        REQUIRE(s.length() == 2);
+
+        REQUIRE(s.concat(STR("345678"), 2) == true);
+        REQUIRE(s.equals(STR("1234")) == true);
+        REQUIRE(ones == ~0);
+    }
+
+    SECTION("Concatenation (fixed)") {
+        str<4, false> s;
+        int ones = ~0;
+
+        REQUIRE(s.copy(STR("123")) == true);
+        REQUIRE(s.equals(STR("123")) == true);
+
+        REQUIRE(s.copy(STR("1234")) == false);
+        REQUIRE(s.equals(STR("123")) == true);
+        REQUIRE(ones == ~0);
+
+        s.clear();
+        REQUIRE(s.copy(STR("123456789abc")) == false);
+        REQUIRE(s.equals(STR("123")) == true);
+        REQUIRE(s.size() == 4);
+        REQUIRE(ones == ~0);
 
         s.clear();
         REQUIRE(s.concat(STR("1234"), 0) == true);
