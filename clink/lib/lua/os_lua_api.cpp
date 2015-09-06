@@ -2,7 +2,6 @@
 // License: http://opensource.org/licenses/MIT
 
 #include "pch.h"
-#include "os_lua_api.h"
 #include "core/base.h"
 #include "core/globber.h"
 #include "core/os.h"
@@ -10,38 +9,7 @@
 #include "lua/lua_delegate.h"
 
 //------------------------------------------------------------------------------
-void os_lua_api::initialise(lua_State* state)
-{
-    struct {
-        const char* name;
-        int         (*method)(lua_State*);
-    } methods[] = {
-        { "chdir",      &os_lua_api::chdir },
-        { "getcwd",     &os_lua_api::getcwd },
-        { "mkdir",      &os_lua_api::mkdir },
-        { "rmdir",      &os_lua_api::rmdir },
-        { "isdir",      &os_lua_api::isdir },
-        { "isfile",     &os_lua_api::isfile },
-        { "remove",     &os_lua_api::remove },
-        { "rename",     &os_lua_api::rename },
-        { "copy",       &os_lua_api::copy },
-        { "globdirs",   &os_lua_api::globdirs },
-        { "globfiles",  &os_lua_api::globfiles },
-        { "getenv",     &os_lua_api::getenv },
-        { "getenvnames",&os_lua_api::getenvnames },
-    };
-
-    // Add set some methods to the os table.
-    lua_getglobal(state, "os");
-    for (int i = 0; i < sizeof_array(methods); ++i)
-    {
-        lua_pushcfunction(state, methods[i].method);
-        lua_setfield(state, -2, methods[i].name);
-    }
-}
-
-//------------------------------------------------------------------------------
-const char* os_lua_api::get_string(lua_State* state, int index)
+static const char* get_string(lua_State* state, int index)
 {
     if (lua_gettop(state) < index || lua_isstring(state, index))
         return nullptr;
@@ -50,10 +18,10 @@ const char* os_lua_api::get_string(lua_State* state, int index)
 }
 
 //------------------------------------------------------------------------------
-int os_lua_api::chdir(lua_State* state)
+static int chdir(lua_State* state)
 {
     bool ok = false;
-    if (const char* dir = get_string(state))
+    if (const char* dir = get_string(state, 1))
         ok = os::set_current_dir(dir);
 
     lua_pushboolean(state, (ok == true));
@@ -61,7 +29,7 @@ int os_lua_api::chdir(lua_State* state)
 }
 
 //------------------------------------------------------------------------------
-int os_lua_api::getcwd(lua_State* state)
+static int getcwd(lua_State* state)
 {
     str<MAX_PATH> dir;
     os::get_current_dir(dir);
@@ -71,10 +39,10 @@ int os_lua_api::getcwd(lua_State* state)
 }
 
 //------------------------------------------------------------------------------
-int os_lua_api::mkdir(lua_State* state)
+static int mkdir(lua_State* state)
 {
     bool ok = false;
-    if (const char* dir = get_string(state))
+    if (const char* dir = get_string(state, 1))
         ok = os::make_dir(dir);
 
     lua_pushboolean(state, (ok == true));
@@ -82,10 +50,10 @@ int os_lua_api::mkdir(lua_State* state)
 }
 
 //------------------------------------------------------------------------------
-int os_lua_api::rmdir(lua_State* state)
+static int rmdir(lua_State* state)
 {
     bool ok = false;
-    if (const char* dir = get_string(state))
+    if (const char* dir = get_string(state, 1))
         ok = os::remove_dir(dir);
 
     lua_pushboolean(state, (ok == true));
@@ -93,9 +61,9 @@ int os_lua_api::rmdir(lua_State* state)
 }
 
 //------------------------------------------------------------------------------
-int os_lua_api::isdir(lua_State* state)
+static int isdir(lua_State* state)
 {
-    const char* path = get_string(state);
+    const char* path = get_string(state, 1);
     if (path == nullptr)
         return 0;
 
@@ -104,9 +72,9 @@ int os_lua_api::isdir(lua_State* state)
 }
 
 //------------------------------------------------------------------------------
-int os_lua_api::isfile(lua_State* state)
+static int isfile(lua_State* state)
 {
-    const char* path = get_string(state);
+    const char* path = get_string(state, 1);
     if (path == nullptr)
         return 0;
 
@@ -115,9 +83,9 @@ int os_lua_api::isfile(lua_State* state)
 }
 
 //------------------------------------------------------------------------------
-int os_lua_api::remove(lua_State* state)
+static int remove(lua_State* state)
 {
-    const char* path = get_string(state);
+    const char* path = get_string(state, 1);
     if (path == nullptr)
         return 0;
 
@@ -134,7 +102,7 @@ int os_lua_api::remove(lua_State* state)
 }
 
 //------------------------------------------------------------------------------
-int os_lua_api::rename(lua_State* state)
+static int rename(lua_State* state)
 {
     const char* src = get_string(state, 1);
     const char* dest = get_string(state, 2);
@@ -151,7 +119,7 @@ int os_lua_api::rename(lua_State* state)
 }
 
 //------------------------------------------------------------------------------
-int os_lua_api::copy(lua_State* state)
+static int copy(lua_State* state)
 {
     const char* src = get_string(state, 1);
     const char* dest = get_string(state, 2);
@@ -163,9 +131,9 @@ int os_lua_api::copy(lua_State* state)
 }
 
 //------------------------------------------------------------------------------
-int os_lua_api::glob_impl(lua_State* state, bool dirs_only)
+static int glob_impl(lua_State* state, bool dirs_only)
 {
-    const char* mask = get_string(state);
+    const char* mask = get_string(state, 1);
     if (mask == nullptr)
         return 0;
 
@@ -186,21 +154,21 @@ int os_lua_api::glob_impl(lua_State* state, bool dirs_only)
 }
 
 //------------------------------------------------------------------------------
-int os_lua_api::globdirs(lua_State* state)
+static int globdirs(lua_State* state)
 {
     return glob_impl(state, true);
 }
 
 //------------------------------------------------------------------------------
-int os_lua_api::globfiles(lua_State* state)
+static int globfiles(lua_State* state)
 {
     return glob_impl(state, false);
 }
 
 //------------------------------------------------------------------------------
-int os_lua_api::getenv(lua_State* state)
+static int getenv(lua_State* state)
 {
-    const char* name = get_string(state);
+    const char* name = get_string(state, 1);
     if (name == nullptr)
         return 0;
 
@@ -213,7 +181,7 @@ int os_lua_api::getenv(lua_State* state)
 }
 
 //------------------------------------------------------------------------------
-int os_lua_api::getenvnames(lua_State* state)
+static int getenvnames(lua_State* state)
 {
     lua_createtable(state, 0, 0);
 
@@ -247,4 +215,35 @@ int os_lua_api::getenvnames(lua_State* state)
 
     FreeEnvironmentStrings(root);
     return 1;
+}
+
+//------------------------------------------------------------------------------
+void os_lua_initialise(lua_State* state)
+{
+    struct {
+        const char* name;
+        int         (*method)(lua_State*);
+    } methods[] = {
+        { "chdir",      &chdir },
+        { "getcwd",     &getcwd },
+        { "mkdir",      &mkdir },
+        { "rmdir",      &rmdir },
+        { "isdir",      &isdir },
+        { "isfile",     &isfile },
+        { "remove",     &remove },
+        { "rename",     &rename },
+        { "copy",       &copy },
+        { "globdirs",   &globdirs },
+        { "globfiles",  &globfiles },
+        { "getenv",     &getenv },
+        { "getenvnames",&getenvnames },
+    };
+
+    // Add set some methods to the os table.
+    lua_getglobal(state, "os");
+    for (int i = 0; i < sizeof_array(methods); ++i)
+    {
+        lua_pushcfunction(state, methods[i].method);
+        lua_setfield(state, -2, methods[i].name);
+    }
 }

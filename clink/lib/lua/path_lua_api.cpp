@@ -2,40 +2,12 @@
 // License: http://opensource.org/licenses/MIT
 
 #include "pch.h"
-#include "path_lua_api.h"
 #include "core/base.h"
 #include "core/path.h"
 #include "core/str.h"
 
 //------------------------------------------------------------------------------
-void path_lua_api::initialise(struct lua_State* state)
-{
-    struct {
-        const char* name;
-        int         (*method)(lua_State*);
-    } methods[] = {
-        { "clean",         &path_lua_api::clean },
-        { "getbasename",   &path_lua_api::get_base_name },
-        { "getdirectory",  &path_lua_api::get_directory },
-        { "getdrive",      &path_lua_api::get_drive },
-        { "getextension",  &path_lua_api::get_extension },
-        { "getname",       &path_lua_api::get_name },
-        { "join",          &path_lua_api::join },
-    };
-
-    lua_createtable(state, 0, 0);
-
-    for (int i = 0; i < sizeof_array(methods); ++i)
-    {
-        lua_pushcfunction(state, methods[i].method);
-        lua_setfield(state, -2, methods[i].name);
-    }
-
-    lua_setglobal(state, "path");
-}
-
-//------------------------------------------------------------------------------
-const char* path_lua_api::get_string(lua_State* state, int index)
+static const char* get_string(lua_State* state, int index)
 {
     if (lua_gettop(state) < index || !lua_isstring(state, index))
         return nullptr;
@@ -44,7 +16,7 @@ const char* path_lua_api::get_string(lua_State* state, int index)
 }
 
 //------------------------------------------------------------------------------
-int path_lua_api::clean(lua_State* state)
+static int clean(lua_State* state)
 {
     str<MAX_PATH> out = get_string(state, 1);
     if (out.length() == 0)
@@ -60,7 +32,7 @@ int path_lua_api::clean(lua_State* state)
 }
 
 //------------------------------------------------------------------------------
-int path_lua_api::get_base_name(lua_State* state)
+static int get_base_name(lua_State* state)
 {
     const char* path = get_string(state, 1);
     if (path == nullptr)
@@ -73,7 +45,7 @@ int path_lua_api::get_base_name(lua_State* state)
 }
 
 //------------------------------------------------------------------------------
-int path_lua_api::get_directory(lua_State* state)
+static int get_directory(lua_State* state)
 {
     str<MAX_PATH> out = get_string(state, 1);
     if (out.length() == 0)
@@ -87,7 +59,7 @@ int path_lua_api::get_directory(lua_State* state)
 }
 
 //------------------------------------------------------------------------------
-int path_lua_api::get_drive(lua_State* state)
+static int get_drive(lua_State* state)
 {
     str<8> out = get_string(state, 1);
     if (out.length() == 0)
@@ -101,7 +73,7 @@ int path_lua_api::get_drive(lua_State* state)
 }
 
 //------------------------------------------------------------------------------
-int path_lua_api::get_extension(lua_State* state)
+static int get_extension(lua_State* state)
 {
     const char* path = get_string(state, 1);
     if (path == nullptr)
@@ -114,7 +86,7 @@ int path_lua_api::get_extension(lua_State* state)
 }
 
 //------------------------------------------------------------------------------
-int path_lua_api::get_name(lua_State* state)
+static int get_name(lua_State* state)
 {
     const char* path = get_string(state, 1);
     if (path == nullptr)
@@ -127,7 +99,7 @@ int path_lua_api::get_name(lua_State* state)
 }
 
 //------------------------------------------------------------------------------
-int path_lua_api::join(lua_State* state)
+static int join(lua_State* state)
 {
     const char* lhs = get_string(state, 1);
     if (lhs == nullptr)
@@ -141,4 +113,31 @@ int path_lua_api::join(lua_State* state)
     path::join(lhs, rhs, out);
     lua_pushstring(state, out.c_str());
     return 1;
+}
+
+//------------------------------------------------------------------------------
+void path_lua_initialise(struct lua_State* state)
+{
+    struct {
+        const char* name;
+        int         (*method)(lua_State*);
+    } methods[] = {
+        { "clean",         &clean },
+        { "getbasename",   &get_base_name },
+        { "getdirectory",  &get_directory },
+        { "getdrive",      &get_drive },
+        { "getextension",  &get_extension },
+        { "getname",       &get_name },
+        { "join",          &join },
+    };
+
+    lua_createtable(state, 0, 0);
+
+    for (int i = 0; i < sizeof_array(methods); ++i)
+    {
+        lua_pushcfunction(state, methods[i].method);
+        lua_setfield(state, -2, methods[i].name);
+    }
+
+    lua_setglobal(state, "path");
 }

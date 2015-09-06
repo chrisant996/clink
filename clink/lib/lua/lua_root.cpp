@@ -3,16 +3,18 @@
 
 #include "pch.h"
 #include "lua_root.h"
-#include "clink_lua_api.h"
 #include "lua_script_loader.h"
-#include "os_lua_api.h"
-#include "path_lua_api.h"
 
 extern "C" {
 #include "lua.h"
 #include "lauxlib.h"
 #include "lualib.h"
 }
+
+//------------------------------------------------------------------------------
+void clink_lua_initialise(lua_State*);
+void os_lua_initialise(lua_State*);
+void path_lua_initialise(lua_State*);
 
 //------------------------------------------------------------------------------
 lua_root::lua_root()
@@ -36,9 +38,9 @@ void lua_root::initialise()
     m_state = luaL_newstate();
     luaL_openlibs(m_state);
 
-    clink_lua_api::initialise(m_state);
-    path_lua_api::initialise(m_state);
-    os_lua_api::initialise(m_state);
+    clink_lua_initialise(m_state);
+    os_lua_initialise(m_state);
+    path_lua_initialise(m_state);
 
     lua_match_generator::initialise(m_state);
 

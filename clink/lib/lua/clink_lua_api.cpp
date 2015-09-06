@@ -2,7 +2,6 @@
 // License: http://opensource.org/licenses/MIT
 
 #include "pch.h"
-#include "clink_lua_api.h"
 #include "core/base.h"
 #include "core/str.h"
 #include "lua_delegate.h"
@@ -19,43 +18,7 @@ int                     get_clink_setting_int(const char*);
 extern int              g_slash_translation;
 
 //------------------------------------------------------------------------------
-void clink_lua_api::initialise(struct lua_State* state)
-{
-    struct {
-        const char* name;
-        int         (*method)(lua_State*);
-    } methods[] = {
-// MODE4
-        /*
-        { "execute", lua_execute },
-        */
-        { "get_console_aliases",    &clink_lua_api::get_console_aliases },
-        { "get_host_process",       &clink_lua_api::get_host_process },
-        { "get_rl_variable",        &clink_lua_api::get_rl_variable },
-        { "get_screen_info",        &clink_lua_api::get_screen_info },
-        { "get_setting_int",        &clink_lua_api::get_setting_int },
-        { "get_setting_str",        &clink_lua_api::get_setting_str },
-        { "is_rl_variable_true",    &clink_lua_api::is_rl_variable_true },
-        { "lower",                  &clink_lua_api::to_lowercase },
-        { "matches_are_files",      &clink_lua_api::matches_are_files },
-// MODE4
-    };
-
-    lua_createtable(state, 0, 0);
-
-    for (int i = 0; i < sizeof_array(methods); ++i)
-    {
-        lua_pushcfunction(state, methods[i].method);
-        lua_setfield(state, -2, methods[i].name);
-    }
-
-    lua_setglobal(state, "clink");
-
-    lua_load_script(state, lib, clink);
-}
-
-//------------------------------------------------------------------------------
-int clink_lua_api::to_lowercase(lua_State* state)
+static int to_lowercase(lua_State* state)
 {
     const char* string;
     char* lowered;
@@ -103,7 +66,7 @@ int clink_lua_api::to_lowercase(lua_State* state)
 }
 
 //------------------------------------------------------------------------------
-int clink_lua_api::matches_are_files(lua_State* state)
+static int matches_are_files(lua_State* state)
 {
     int i = 1;
 
@@ -117,7 +80,7 @@ int clink_lua_api::matches_are_files(lua_State* state)
 }
 
 //------------------------------------------------------------------------------
-int clink_lua_api::get_setting_str(lua_State* state)
+static int get_setting_str(lua_State* state)
 {
     const char* c;
 
@@ -135,7 +98,7 @@ int clink_lua_api::get_setting_str(lua_State* state)
 }
 
 //------------------------------------------------------------------------------
-int clink_lua_api::get_setting_int(lua_State* state)
+static int get_setting_int(lua_State* state)
 {
     int i;
     const char* c;
@@ -154,7 +117,7 @@ int clink_lua_api::get_setting_int(lua_State* state)
 }
 
 //------------------------------------------------------------------------------
-int clink_lua_api::get_rl_variable(lua_State* state)
+static int get_rl_variable(lua_State* state)
 {
     // Check we've got at least one string argument.
     if (lua_gettop(state) == 0 || !lua_isstring(state, 1))
@@ -174,7 +137,7 @@ int clink_lua_api::get_rl_variable(lua_State* state)
 }
 
 //------------------------------------------------------------------------------
-int clink_lua_api::is_rl_variable_true(lua_State* state)
+static int is_rl_variable_true(lua_State* state)
 {
     int i;
     const char* cvar_value;
@@ -192,14 +155,14 @@ int clink_lua_api::is_rl_variable_true(lua_State* state)
 }
 
 //------------------------------------------------------------------------------
-int clink_lua_api::get_host_process(lua_State* state)
+static int get_host_process(lua_State* state)
 {
     lua_pushstring(state, rl_readline_name);
     return 1;
 }
 
 //------------------------------------------------------------------------------
-int clink_lua_api::get_console_aliases(lua_State* state)
+static int get_console_aliases(lua_State* state)
 {
     do
     {
@@ -247,7 +210,7 @@ int clink_lua_api::get_console_aliases(lua_State* state)
 }
 
 //------------------------------------------------------------------------------
-int clink_lua_api::get_screen_info(lua_State* state)
+static int get_screen_info(lua_State* state)
 {
     int i;
     int buffer_width, buffer_height;
@@ -283,4 +246,40 @@ int clink_lua_api::get_screen_info(lua_State* state)
     }
 
     return 1;
+}
+
+//------------------------------------------------------------------------------
+void clink_lua_initialise(struct lua_State* state)
+{
+    struct {
+        const char* name;
+        int         (*method)(lua_State*);
+    } methods[] = {
+// MODE4
+        /*
+        { "execute", lua_execute },
+        */
+        { "get_console_aliases",    &get_console_aliases },
+        { "get_host_process",       &get_host_process },
+        { "get_rl_variable",        &get_rl_variable },
+        { "get_screen_info",        &get_screen_info },
+        { "get_setting_int",        &get_setting_int },
+        { "get_setting_str",        &get_setting_str },
+        { "is_rl_variable_true",    &is_rl_variable_true },
+        { "lower",                  &to_lowercase },
+        { "matches_are_files",      &matches_are_files },
+// MODE4
+    };
+
+    lua_createtable(state, 0, 0);
+
+    for (int i = 0; i < sizeof_array(methods); ++i)
+    {
+        lua_pushcfunction(state, methods[i].method);
+        lua_setfield(state, -2, methods[i].name);
+    }
+
+    lua_setglobal(state, "clink");
+
+    lua_load_script(state, lib, clink);
 }
