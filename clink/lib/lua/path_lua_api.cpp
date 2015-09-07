@@ -131,7 +131,7 @@ void path_lua_initialise(struct lua_State* state)
         { "join",          &join },
     };
 
-    lua_createtable(state, 0, 0);
+    lua_createtable(state, sizeof_array(methods), 0);
 
     for (int i = 0; i < sizeof_array(methods); ++i)
     {
