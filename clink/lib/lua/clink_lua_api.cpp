@@ -4,7 +4,6 @@
 #include "pch.h"
 #include "core/base.h"
 #include "core/str.h"
-#include "lua_delegate.h"
 #include "lua_script_loader.h"
 
 //------------------------------------------------------------------------------

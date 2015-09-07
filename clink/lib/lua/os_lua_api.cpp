@@ -6,7 +6,6 @@
 #include "core/globber.h"
 #include "core/os.h"
 #include "core/str.h"
-#include "lua/lua_delegate.h"
 
 //------------------------------------------------------------------------------
 static const char* get_string(lua_State* state, int index)
