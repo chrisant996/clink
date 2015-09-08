@@ -19,12 +19,11 @@ file_match_generator::~file_match_generator()
 }
 
 //------------------------------------------------------------------------------
-match_result file_match_generator::generate(const line_state& line)
+void file_match_generator::generate(const line_state& line, match_result& result)
 {
     str<MAX_PATH> clean_word = line.word;
     path::clean(clean_word);
 
-    match_result result;
     match_result_builder builder(result, clean_word.c_str());
 
     str<MAX_PATH> word_root = line.word;
@@ -38,6 +37,4 @@ match_result file_match_generator::generate(const line_state& line)
     str<MAX_PATH> file;
     while (globber.next(file))
         builder << file.c_str();
-
-    return result;
 }

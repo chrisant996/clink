@@ -11,8 +11,7 @@ class line_state;
 class match_generator
 {
 public:
-    virtual                 ~match_generator() = 0 {}
-    virtual match_result    generate(const line_state& line) = 0;
+    virtual void    generate(const line_state& line, match_result& result) = 0;
 
 private:
 };

@@ -36,7 +36,7 @@ void lua_match_generator::shutdown()
 }
 
 //------------------------------------------------------------------------------
-match_result lua_match_generator::generate(const line_state& line)
+void lua_match_generator::generate(const line_state& line, match_result& result)
 {
     // Expose some of the readline state to lua.
     lua_createtable(m_state, 2, 0);
@@ -63,7 +63,9 @@ match_result lua_match_generator::generate(const line_state& line)
     {
         puts(lua_tostring(m_state, -1));
         lua_pop(m_state, 2);
-        return file_match_generator::generate(line);
+
+        file_match_generator::generate(line, result);
+        return;
     }
 
     int use_matches = lua_toboolean(m_state, -1);
@@ -72,30 +74,25 @@ match_result lua_match_generator::generate(const line_state& line)
     if (use_matches == 0)
     {
         lua_pop(m_state, 1);
-        return file_match_generator::generate(line);
+        file_match_generator::generate(line, result);
+        return;
     }
 
     // Collect matches from Lua.
     lua_pushliteral(m_state, "matches");
     lua_rawget(m_state, -2);
 
-
     int match_count = (int)lua_rawlen(m_state, -1);
     if (match_count <= 0)
-        return match_result();
-
-    match_result matches;
-    matches.reserve(match_count);
+        return;
 
     for (int i = 0; i < match_count; ++i)
     {
         lua_rawgeti(m_state, -1, i + 1);
         const char* match = lua_tostring(m_state, -1);
-        matches.add_match(match);
+        result.add_match(match);
 
         lua_pop(m_state, 1);
     }
     lua_pop(m_state, 2);
-
-    return matches;
 }
