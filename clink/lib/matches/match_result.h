@@ -13,10 +13,6 @@ class match_result
 public:
                         match_result();
                         ~match_result();
-                        match_result(match_result&& rhs);
-                        match_result(const match_result&) = delete;
-    void                operator = (const match_result&) = delete;
-    void                operator = (match_result&& rhs);
     void                reserve(unsigned int count);
     unsigned int        get_match_count() const;
     const char*         get_match(unsigned int index) const;
@@ -24,8 +20,13 @@ public:
     void                get_match_lcd(str_base& out) const;
 
 private:
-    void                swap(match_result& rhs);
     std::vector<char*>  m_matches;
+
+private:
+                        match_result(const match_result&) = delete;
+                        match_result(match_result&&) = delete;
+    void                operator = (const match_result&) = delete;
+    void                operator = (match_result&& rhs) = delete;
 };
 
 //------------------------------------------------------------------------------

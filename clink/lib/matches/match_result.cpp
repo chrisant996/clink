@@ -15,29 +15,10 @@ match_result::match_result()
 }
 
 //------------------------------------------------------------------------------
-match_result::match_result(match_result&& rhs)
-: match_result()
-{
-    swap(rhs);
-}
-
-//------------------------------------------------------------------------------
 match_result::~match_result()
 {
     for (int i = 0, e = int(m_matches.size()); i < e; ++i)
         delete m_matches[i];
-}
-
-//------------------------------------------------------------------------------
-void match_result::operator = (match_result&& rhs)
-{
-    swap(rhs);
-}
-
-//------------------------------------------------------------------------------
-void match_result::swap(match_result& rhs)
-{
-    std::swap(m_matches, rhs.m_matches);
 }
 
 //------------------------------------------------------------------------------
