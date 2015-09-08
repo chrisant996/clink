@@ -13,7 +13,6 @@ class match_result
 public:
                         match_result();
                         ~match_result();
-    void                reserve(unsigned int count);
     unsigned int        get_match_count() const;
     const char*         get_match(unsigned int index) const;
     void                add_match(const char* match);
