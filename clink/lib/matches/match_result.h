@@ -16,6 +16,7 @@ public:
     unsigned int        get_match_count() const;
     const char*         get_match(unsigned int index) const;
     void                add_match(const char* match);
+    void                clear_matches();
     void                get_match_lcd(str_base& out) const;
 
 private:
@@ -38,6 +39,12 @@ inline unsigned int match_result::get_match_count() const
 inline const char* match_result::get_match(unsigned int index) const
 {
     return (index < get_match_count()) ? m_matches[index] : nullptr;
+}
+
+//------------------------------------------------------------------------------
+inline void match_result::clear_matches()
+{
+    m_matches.clear();
 }
 
 
