@@ -17,6 +17,8 @@ public:
 private:
     void                initialise(struct lua_State* state);
     void                shutdown();
+    void                print_error(const char* error) const;
+    void                lua_pushlinestate(const line_state& line);
     bool                load_script(const char* script);
     void                load_scripts(const char* path);
     struct lua_State*   m_state;

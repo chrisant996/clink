@@ -36,6 +36,21 @@ void lua_match_generator::shutdown()
 }
 
 //------------------------------------------------------------------------------
+void lua_match_generator::lua_pushlinestate(const line_state& line)
+{
+    lua_pushstring(m_state, line.word);
+    lua_pushinteger(m_state, line.start + 1);
+    lua_pushinteger(m_state, line.end);
+}
+
+//------------------------------------------------------------------------------
+void lua_match_generator::print_error(const char* error) const
+{
+    puts("");
+    puts(error);
+}
+
+//------------------------------------------------------------------------------
 void lua_match_generator::generate(const line_state& line, match_result& result)
 {
     // Expose some of the readline state to lua.
@@ -56,9 +71,7 @@ void lua_match_generator::generate(const line_state& line, match_result& result)
     lua_pushliteral(m_state, "generate_matches");
     lua_rawget(m_state, -2);
 
-    lua_pushstring(m_state, line.word);
-    lua_pushinteger(m_state, line.start + 1);
-    lua_pushinteger(m_state, line.end);
+    lua_pushlinestate(line);
     if (lua_pcall(m_state, 3, 1, 0) != 0)
     {
         puts(lua_tostring(m_state, -1));
