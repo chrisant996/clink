@@ -49,7 +49,7 @@ local function exec_find_dirs(pattern, case_map)
 end
 
 --------------------------------------------------------------------------------
-local function exec_match_generator(text, first, last)
+local function exec_match_generator(text, first, last, result)
     -- If match style setting is < 0 then consider executable matching disabled.
     local match_style = clink.get_setting_int("exec_match_style")
     if match_style < 0 then
@@ -83,12 +83,12 @@ local function exec_match_generator(text, first, last)
     if not text:find("[\\/:]") then
         -- If the terminal is cmd.exe check it's commands for matches.
         if clink.get_host_process() == "cmd.exe" then
-            clink.match_words(text, dos_commands)
+            result:addmatches(dos_commands)
         end
 
         -- Add console aliases as matches.
         local aliases = clink.get_console_aliases()
-        clink.match_words(text, aliases)
+        result:addmatches(aliases)
 
         paths = get_environment_paths();
     else
@@ -115,15 +115,15 @@ local function exec_match_generator(text, first, last)
             for _, file in ipairs(os.globfiles(dir.."*"..suffix)) do
                 file = path.getname(file)
                 if clink.is_match(text_name, file) then
-                    clink.add_match(text_dir..file)
+                    result:addmatch(text_dir..file)
                 end
             end
         end
     end
 
     -- Lastly we may wish to consider directories too.
-    if clink.match_count() == 0 or match_style >= 2 then
-        clink.match_files(text.."*", true, os.globdirs)
+    if result:getmatchcount() == 0 or match_style >= 2 then
+        result:addmatches(os.globdirs(text.."*"))
     end
 
     clink.matches_are_files()

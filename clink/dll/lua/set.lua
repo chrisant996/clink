@@ -12,9 +12,7 @@ local function set_match_generator(word)
     -- Enumerate environment variables and check for potential matches.
     local matches = {}
     for _, name in ipairs(os.getenvnames()) do
-        if clink.is_match(word, name) then
-            table.insert(matches, name:lower())
-        end
+        table.insert(matches, name:lower())
     end
 
     return matches

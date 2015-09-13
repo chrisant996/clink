@@ -19,17 +19,14 @@ local function env_vars_display_filter(matches)
 end
 
 --------------------------------------------------------------------------------
-local function env_vars_find_matches(candidates, prefix, part)
-    local part_len = #part
+local function env_vars_find_matches(candidates, prefix, part, result)
     for _, name in ipairs(candidates) do
-        if clink.lower(name:sub(1, part_len)) == part then
-            clink.add_match(prefix..'%'..name:lower()..'%')
-        end
+        result:addmatch(prefix..'%'..name:lower()..'%')
     end
 end
 
 --------------------------------------------------------------------------------
-local function env_vars_match_generator(text, first, last)
+local function env_vars_match_generator(text, first, last, result)
     local all = line_state.line:sub(1, last)
 
     -- Skip pairs of %s
@@ -49,15 +46,14 @@ local function env_vars_match_generator(text, first, last)
     end
 
     local part = clink.lower(all:sub(i + 1))
-    local part_len = #part
 
     i = i - first
     local prefix = text:sub(1, i)
 
-    env_vars_find_matches(os.getenvnames(), prefix, part)
-    env_vars_find_matches(special_env_vars, prefix, part)
+    env_vars_find_matches(os.getenvnames(), prefix, part, result)
+    env_vars_find_matches(special_env_vars, prefix, part, result)
 
-    if clink.match_count() >= 1 then
+    if result:getmatchcount() >= 1 then
         clink.match_display_filter = env_vars_display_filter
         return true
     end
@@ -66,6 +62,6 @@ local function env_vars_match_generator(text, first, last)
 end
 
 --------------------------------------------------------------------------------
-if clink.get_host_process() == "cmd.exe" then
+if clink.get_host_process() == "cmd" then
     clink.register_match_generator(env_vars_match_generator, 10)
 end

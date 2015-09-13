@@ -3,8 +3,10 @@
 
 #include "pch.h"
 #include "lua_match_generator.h"
-#include "lua_script_loader.h"
 #include "line_state.h"
+#include "lua_bindable.h"
+#include "lua_script_loader.h"
+#include "match_result_lua.h"
 
 extern "C" {
 #include "lua.h"
@@ -72,40 +74,29 @@ void lua_match_generator::generate(const line_state& line, match_result& result)
     lua_rawget(m_state, -2);
 
     lua_pushlinestate(line);
-    if (lua_pcall(m_state, 3, 1, 0) != 0)
-    {
-        puts(lua_tostring(m_state, -1));
-        lua_pop(m_state, 2);
 
+    matches_lua ml(result);
+    ml.lua_bind(m_state);
+    ml.lua_push(m_state);
+
+    if (lua_pcall(m_state, 4, 1, 0) != 0)
+    {
+        if (const char* error = lua_tostring(m_state, -1))
+            print_error(error);
+
+        lua_settop(m_state, 0);
         file_match_generator::generate(line, result);
         return;
     }
+
+    ml.lua_unbind(m_state);
 
     int use_matches = lua_toboolean(m_state, -1);
-    lua_pop(m_state, 1);
+    lua_settop(m_state, 0);
 
-    if (use_matches == 0)
-    {
-        lua_pop(m_state, 1);
-        file_match_generator::generate(line, result);
-        return;
-    }
-
-    // Collect matches from Lua.
-    lua_pushliteral(m_state, "matches");
-    lua_rawget(m_state, -2);
-
-    int match_count = (int)lua_rawlen(m_state, -1);
-    if (match_count <= 0)
+    if (use_matches)
         return;
 
-    for (int i = 0; i < match_count; ++i)
-    {
-        lua_rawgeti(m_state, -1, i + 1);
-        const char* match = lua_tostring(m_state, -1);
-        result.add_match(match);
-
-        lua_pop(m_state, 1);
-    }
-    lua_pop(m_state, 2);
+    result.clear_matches();
+    file_match_generator::generate(line, result);
 }

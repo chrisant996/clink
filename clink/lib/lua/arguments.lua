@@ -561,7 +561,7 @@ function clink.arg.register_parser(cmd, parser)
 end
 
 --------------------------------------------------------------------------------
-local function argument_match_generator(text, first, last)
+local function argument_match_generator(text, first, last, result)
     local leading = line_state.line:sub(1, first - 1):lower()
 
     -- Extract the command.
@@ -638,11 +638,7 @@ local function argument_match_generator(text, first, last)
         return not ret
     end
 
-    -- Iterate through the matches the parser returned and collect matches.
-    for _, match in ipairs(ret) do
-        clink.add_match(match)
-    end
-
+    result:addmatches(ret)
     return true
 end
 
