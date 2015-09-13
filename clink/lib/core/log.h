@@ -15,7 +15,7 @@ class logger
     : public singleton<logger>
 {
 public:
-    virtual         ~logger() = 0 {}
+    virtual         ~logger();
     static void     info(const char* function, int line, const char* fmt, ...);
     static void     error(const char* function, int line, const char* fmt, ...);
 
@@ -29,7 +29,6 @@ class file_logger
 {
 public:
                     file_logger(const char* log_path);
-    virtual         ~file_logger();
     virtual void    emit(const char* function, int line, const char* fmt, va_list args) override;
 
 private:

@@ -10,7 +10,7 @@ class host
 {
 public:
                     host(line_editor* editor);
-    virtual         ~host() = 0 {}
+    virtual         ~host();
     virtual bool    validate() = 0;
     virtual bool    initialise() = 0;
     virtual void    shutdown() = 0;
@@ -23,6 +23,11 @@ private:
 //------------------------------------------------------------------------------
 inline host::host(line_editor* editor)
 : m_line_editor(editor)
+{
+}
+
+//------------------------------------------------------------------------------
+inline host::~host()
 {
 }
 

@@ -7,37 +7,8 @@
 #include <stdarg.h>
 
 //------------------------------------------------------------------------------
-file_logger::file_logger(const char* log_path)
+logger::~logger()
 {
-    m_log_path << log_path;
-}
-
-//------------------------------------------------------------------------------
-file_logger::~file_logger()
-{
-}
-
-//------------------------------------------------------------------------------
-void file_logger::emit(const char* function, int line, const char* fmt, va_list args)
-{
-    FILE* file;
-
-    file = fopen(m_log_path.c_str(), "at");
-    if (file == nullptr)
-        return;
-
-    str<24> func_name;
-    func_name << function;
-
-    DWORD pid = GetCurrentProcessId();
-
-    str<256> buffer;
-    buffer.format("%04x %-24s %4d ", pid, func_name.c_str(), line);
-    fputs(buffer.c_str(), file);
-    vfprintf(file, fmt, args);
-    fputs("\n", file);
-
-    fclose(file);
 }
 
 //------------------------------------------------------------------------------
@@ -70,4 +41,35 @@ void logger::error(const char* function, int line, const char* fmt, ...)
     logger::info(function, line, "(last error = %d)", last_error);
 
     va_end(args);
+}
+
+
+
+//------------------------------------------------------------------------------
+file_logger::file_logger(const char* log_path)
+{
+    m_log_path << log_path;
+}
+
+//------------------------------------------------------------------------------
+void file_logger::emit(const char* function, int line, const char* fmt, va_list args)
+{
+    FILE* file;
+
+    file = fopen(m_log_path.c_str(), "at");
+    if (file == nullptr)
+        return;
+
+    str<24> func_name;
+    func_name << function;
+
+    DWORD pid = GetCurrentProcessId();
+
+    str<256> buffer;
+    buffer.format("%04x %-24s %4d ", pid, func_name.c_str(), line);
+    fputs(buffer.c_str(), file);
+    vfprintf(file, fmt, args);
+    fputs("\n", file);
+
+    fclose(file);
 }

@@ -22,7 +22,7 @@ public:
     };
 
                             line_editor(const desc& desc);
-    virtual                 ~line_editor() = 0 {}
+    virtual                 ~line_editor();
     bool                    edit_line(const char* prompt, str_base& out);
     terminal*               get_terminal() const;
     match_printer*          get_match_printer() const;
@@ -40,6 +40,11 @@ private:
                             line_editor(const line_editor&);    // unimplemented
     void                    operator = (const line_editor&);    // unimplemented
 };
+
+//------------------------------------------------------------------------------
+inline line_editor::~line_editor()
+{
+}
 
 //------------------------------------------------------------------------------
 inline terminal* line_editor::get_terminal() const

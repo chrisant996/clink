@@ -7,10 +7,15 @@
 class terminal
 {
 public:
-    virtual         ~terminal() = 0 {}
+    virtual         ~terminal();
     virtual int     read() = 0;
     virtual void    write(const wchar_t* chars, int char_count) = 0;
     virtual void    flush() = 0;
 
 private:
 };
+
+//------------------------------------------------------------------------------
+inline terminal::~terminal()
+{
+}

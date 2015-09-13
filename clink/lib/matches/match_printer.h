@@ -11,7 +11,7 @@ class match_printer
 {
 public:
                     match_printer(terminal* terminal);
-    virtual         ~match_printer() = 0 {}
+    virtual         ~match_printer();
     virtual void    print(const matches& matches) = 0;
 
 private:
@@ -22,6 +22,11 @@ private:
 //------------------------------------------------------------------------------
 inline match_printer::match_printer(terminal* terminal)
 : m_terminal(terminal)
+{
+}
+
+//------------------------------------------------------------------------------
+inline match_printer::~match_printer()
 {
 }
 
