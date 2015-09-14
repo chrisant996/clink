@@ -3,7 +3,7 @@
 
 #pragma once
 
-#include "match_result.h"
+#include "matches.h"
 
 class line_state;
 

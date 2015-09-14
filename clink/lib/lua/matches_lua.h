@@ -24,6 +24,6 @@ private:
     int                     clear_matches(lua_State* state);
     int                     get_match_lcd(lua_State* state);
     matches&                m_result;
-    match_result_builder    m_builder;
+    matches_builder         m_builder;
     static method           s_methods[];
 };

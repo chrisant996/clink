@@ -2,7 +2,7 @@
 // License: http://opensource.org/licenses/MIT
 
 #include "pch.h"
-#include "match_result.h"
+#include "matches.h"
 #include "core/base.h"
 #include "core/str.h"
 #include "core/str_compare.h"
@@ -65,22 +65,22 @@ void matches::get_match_lcd(str_base& out) const
 
 
 //------------------------------------------------------------------------------
-match_result_builder::match_result_builder(matches& result, const char* match_word)
-: m_result(result)
+matches_builder::matches_builder(matches& matches, const char* match_word)
+: m_matches(matches)
 , m_match_word(match_word)
 {
     m_word_char_count = char_count(match_word);
 }
 
 //------------------------------------------------------------------------------
-match_result_builder::~match_result_builder()
+matches_builder::~matches_builder()
 {
 }
 
 //------------------------------------------------------------------------------
-void match_result_builder::operator << (const char* candidate)
+void matches_builder::operator << (const char* candidate)
 {
     int i = str_compare(candidate, m_match_word);
     if (i < 0 || i >= m_word_char_count)
-        m_result.add_match(candidate);
+        m_matches.add_match(candidate);
 }

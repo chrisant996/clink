@@ -50,15 +50,15 @@ inline void matches::clear_matches()
 
 
 //------------------------------------------------------------------------------
-class match_result_builder
+class matches_builder
 {
 public:
-                    match_result_builder(matches& result, const char* match_word);
-                    ~match_result_builder();
+                    matches_builder(matches& matches, const char* match_word);
+                    ~matches_builder();
     void            operator << (const char* candidate);
 
 private:
-    matches&        m_result;
+    matches&        m_matches;
     const char*     m_match_word;
     int             m_word_char_count;
 };

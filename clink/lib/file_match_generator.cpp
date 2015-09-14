@@ -24,7 +24,7 @@ void file_match_generator::generate(const line_state& line, matches& result)
     str<MAX_PATH> clean_word = line.word;
     path::clean(clean_word);
 
-    match_result_builder builder(result, clean_word.c_str());
+    matches_builder builder(result, clean_word.c_str());
 
     str<MAX_PATH> word_root = line.word;
     path::get_directory(word_root);
