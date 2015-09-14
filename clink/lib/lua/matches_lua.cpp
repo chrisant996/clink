@@ -42,7 +42,7 @@ int matches_lua::add_match(lua_State* state)
         if (lua_toboolean(state, 2))
             m_result.add_match(match);
         else
-            m_builder << match;
+            m_builder.consider_match(match);
     }
 
     lua_pushboolean(state, (current_count < m_result.get_match_count()));

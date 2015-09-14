@@ -78,7 +78,13 @@ matches_builder::~matches_builder()
 }
 
 //------------------------------------------------------------------------------
-void matches_builder::operator << (const char* candidate)
+void matches_builder::add_match(const char* candidate)
+{
+    m_matches.add_match(candidate);
+}
+
+//------------------------------------------------------------------------------
+void matches_builder::consider_match(const char* candidate)
 {
     int i = str_compare(candidate, m_match_word);
     if (i < 0 || i >= m_word_char_count)

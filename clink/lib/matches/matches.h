@@ -55,7 +55,8 @@ class matches_builder
 public:
                     matches_builder(matches& matches, const char* match_word);
                     ~matches_builder();
-    void            operator << (const char* candidate);
+    void            add_match(const char* match);
+    void            consider_match(const char* candidate);
 
 private:
     matches&        m_matches;

@@ -36,5 +36,5 @@ void file_match_generator::generate(const line_state& line, matches& result)
 
     str<MAX_PATH> file;
     while (globber.next(file))
-        builder << file.c_str();
+        builder.consider_match(file.c_str());
 }
