@@ -10,16 +10,18 @@ class str_base;
 //------------------------------------------------------------------------------
 class matches
 {
+    friend class matches_builder;
+
 public:
                         matches();
                         ~matches();
     unsigned int        get_match_count() const;
     const char*         get_match(unsigned int index) const;
-    void                add_match(const char* match);
-    void                clear_matches();
     void                get_match_lcd(str_base& out) const;
 
 private:
+    void                add_match(const char* match);
+    void                clear_matches();
     std::vector<char*>  m_matches;
 
 private:
@@ -57,9 +59,23 @@ public:
                     ~matches_builder();
     void            add_match(const char* match);
     void            consider_match(const char* candidate);
+    void            clear_matches();
+    const matches&  get_matches() const;
 
 private:
     matches&        m_matches;
     const char*     m_match_word;
     int             m_word_char_count;
 };
+
+//------------------------------------------------------------------------------
+inline void matches_builder::clear_matches()
+{
+    m_matches.clear_matches();
+}
+
+//------------------------------------------------------------------------------
+inline const matches& matches_builder::get_matches() const
+{
+    return m_matches;
+}

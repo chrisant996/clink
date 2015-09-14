@@ -5,6 +5,7 @@
 #include "matches_lua.h"
 #include "core/base.h"
 #include "core/str.h"
+#include "matches/matches.h"
 
 //------------------------------------------------------------------------------
 matches_lua::method matches_lua::s_methods[] = {
@@ -20,10 +21,9 @@ matches_lua::method matches_lua::s_methods[] = {
 
 
 //------------------------------------------------------------------------------
-matches_lua::matches_lua(matches& result)
+matches_lua::matches_lua(matches_builder& builder)
 : lua_bindable<matches_lua>("matches_lua", s_methods)
-, m_result(result)
-, m_builder(result, "")
+, m_builder(builder)
 {
 }
 
@@ -35,33 +35,41 @@ matches_lua::~matches_lua()
 //------------------------------------------------------------------------------
 int matches_lua::add_match(lua_State* state)
 {
-    unsigned int current_count = m_result.get_match_count();
+    unsigned int current_count = m_builder.get_matches().get_match_count();
 
     if (const char* match = lua_tostring(state, 1))
     {
         if (lua_toboolean(state, 2))
-            m_result.add_match(match);
+            m_builder.add_match(match);
         else
             m_builder.consider_match(match);
     }
 
-    lua_pushboolean(state, (current_count < m_result.get_match_count()));
+    unsigned int new_count = m_builder.get_matches().get_match_count();
+    lua_pushboolean(state, (current_count < new_count));
+
     return 1;
 }
 
 //------------------------------------------------------------------------------
 int matches_lua::add_matches(lua_State* state)
 {
-    if (!lua_istable(state, -1))
+    if (!lua_istable(state, 1))
         return 0;
 
-    int match_count = (int)lua_rawlen(state, -1);
+    int raw = lua_toboolean(state, 2);
+    int match_count = (int)lua_rawlen(state, 1);
     for (int i = 0; i < match_count; ++i)
     {
         lua_rawgeti(state, -1, i + 1);
 
         if (const char* match = lua_tostring(state, -1))
-            m_result.add_match(match);
+        {
+            if (raw)
+                m_builder.add_match(match);
+            else
+                m_builder.consider_match(match);
+        }
 
         lua_pop(state, 1);
     }
@@ -73,7 +81,7 @@ int matches_lua::add_matches(lua_State* state)
 int matches_lua::get_match(lua_State* state)
 {
     int index = int(lua_tointeger(state, 1));
-    if (const char* match = m_result.get_match(index - 1))
+    if (const char* match = m_builder.get_matches().get_match(index - 1))
     {
         lua_pushstring(state, match);
         return 1;
@@ -85,14 +93,14 @@ int matches_lua::get_match(lua_State* state)
 //------------------------------------------------------------------------------
 int matches_lua::get_match_count(lua_State* state)
 {
-    lua_pushinteger(state, m_result.get_match_count());
+    lua_pushinteger(state, m_builder.get_matches().get_match_count());
     return 1;
 }
 
 //------------------------------------------------------------------------------
 int matches_lua::clear_matches(lua_State* state)
 {
-    m_result.clear_matches();
+    m_builder.clear_matches();
     return 0;
 }
 
@@ -100,7 +108,7 @@ int matches_lua::clear_matches(lua_State* state)
 int matches_lua::get_match_lcd(lua_State* state)
 {
     str<48> lcd;
-    m_result.get_match_lcd(lcd);
+    m_builder.get_matches().get_match_lcd(lcd);
 
     lua_pushstring(state, lcd.c_str());
     return 1;

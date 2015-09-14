@@ -13,6 +13,7 @@
 #include <core/str_compare.h>
 #include <line_state.h>
 #include <matches/match_generator.h>
+#include <matches/matches.h>
 #include <singleton.h>
 #include <terminal.h>
 

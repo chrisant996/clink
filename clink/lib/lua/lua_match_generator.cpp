@@ -6,6 +6,7 @@
 #include "line_state.h"
 #include "lua_bindable.h"
 #include "lua_script_loader.h"
+#include "matches/matches.h"
 #include "matches_lua.h"
 
 extern "C" {
@@ -53,7 +54,7 @@ void lua_match_generator::print_error(const char* error) const
 }
 
 //------------------------------------------------------------------------------
-void lua_match_generator::generate(const line_state& line, matches& result)
+void lua_match_generator::generate(const line_state& line, matches_builder& builder)
 {
     // Expose some of the readline state to lua.
     lua_createtable(m_state, 2, 0);
@@ -75,7 +76,7 @@ void lua_match_generator::generate(const line_state& line, matches& result)
 
     lua_pushlinestate(line);
 
-    matches_lua ml(result);
+    matches_lua ml(builder);
     ml.lua_bind(m_state);
     ml.lua_push(m_state);
 
@@ -85,7 +86,7 @@ void lua_match_generator::generate(const line_state& line, matches& result)
             print_error(error);
 
         lua_settop(m_state, 0);
-        file_match_generator::generate(line, result);
+        file_match_generator::generate(line, builder);
         return;
     }
 
@@ -97,6 +98,6 @@ void lua_match_generator::generate(const line_state& line, matches& result)
     if (use_matches)
         return;
 
-    result.clear_matches();
-    file_match_generator::generate(line, result);
+    builder.clear_matches();
+    file_match_generator::generate(line, builder);
 }

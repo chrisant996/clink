@@ -5,6 +5,7 @@
 
 #include <core/str.h>
 #include <line_state.h>
+#include <matches/matches.h>
 #include <stdarg.h>
 
 //------------------------------------------------------------------------------
@@ -55,7 +56,8 @@ void match_generator_tester<T>::run(const char* line, va_list arg)
     // Generate the matches.
     line_state state = { word, command.c_str(), start, end, cursor };
     matches result;
-    m_generator.generate(state, result);
+    matches_builder builder(result, word);
+    m_generator.generate(state, builder);
 
     // It's possible that we're not expecting any matches...
     va_list arg_iter = arg;

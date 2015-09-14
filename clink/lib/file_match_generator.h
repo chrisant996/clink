@@ -12,7 +12,7 @@ class file_match_generator
 public:
                     file_match_generator();
     virtual         ~file_match_generator();
-    virtual void    generate(const line_state& line, matches& result) override;
+    virtual void    generate(const line_state& line, matches_builder& builder) override;
 
 private:
 };

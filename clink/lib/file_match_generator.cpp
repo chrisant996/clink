@@ -7,6 +7,7 @@
 #include "core/path.h"
 #include "core/str.h"
 #include "line_state.h"
+#include "matches/matches.h"
 
 //------------------------------------------------------------------------------
 file_match_generator::file_match_generator()
@@ -19,12 +20,10 @@ file_match_generator::~file_match_generator()
 }
 
 //------------------------------------------------------------------------------
-void file_match_generator::generate(const line_state& line, matches& result)
+void file_match_generator::generate(const line_state& line, matches_builder& builder)
 {
     str<MAX_PATH> clean_word = line.word;
     path::clean(clean_word);
-
-    matches_builder builder(result, clean_word.c_str());
 
     str<MAX_PATH> word_root = line.word;
     path::get_directory(word_root);

@@ -3,15 +3,14 @@
 
 #pragma once
 
-#include "matches.h"
-
 class line_state;
+class matches_builder;
 
 //------------------------------------------------------------------------------
 class match_generator
 {
 public:
-    virtual void    generate(const line_state& line, matches& result) = 0;
+    virtual void    generate(const line_state& line, matches_builder& builder) = 0;
 
 private:
 };
