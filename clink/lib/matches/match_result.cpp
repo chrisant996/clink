@@ -7,8 +7,6 @@
 #include "core/str.h"
 #include "core/str_compare.h"
 
-#include <algorithm>
-
 //------------------------------------------------------------------------------
 match_result::match_result()
 {
