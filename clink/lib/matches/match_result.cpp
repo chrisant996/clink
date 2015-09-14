@@ -8,20 +8,20 @@
 #include "core/str_compare.h"
 
 //------------------------------------------------------------------------------
-match_result::match_result()
+matches::matches()
 {
     m_matches.reserve(64);
 }
 
 //------------------------------------------------------------------------------
-match_result::~match_result()
+matches::~matches()
 {
     for (int i = 0, e = int(m_matches.size()); i < e; ++i)
         delete m_matches[i];
 }
 
 //------------------------------------------------------------------------------
-void match_result::add_match(const char* match)
+void matches::add_match(const char* match)
 {
     if (match == nullptr || match[0] == '\0')
         return;
@@ -33,7 +33,7 @@ void match_result::add_match(const char* match)
 }
 
 //------------------------------------------------------------------------------
-void match_result::get_match_lcd(str_base& out) const
+void matches::get_match_lcd(str_base& out) const
 {
     int match_count = get_match_count();
 
@@ -65,7 +65,7 @@ void match_result::get_match_lcd(str_base& out) const
 
 
 //------------------------------------------------------------------------------
-match_result_builder::match_result_builder(match_result& result, const char* match_word)
+match_result_builder::match_result_builder(matches& result, const char* match_word)
 : m_result(result)
 , m_match_word(match_word)
 {

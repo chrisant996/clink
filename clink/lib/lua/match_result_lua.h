@@ -13,7 +13,7 @@ class matches_lua
     : public lua_bindable<matches_lua>
 {
 public:
-                            matches_lua(match_result& result);
+                            matches_lua(matches& result);
                             ~matches_lua();
 
 private:
@@ -23,7 +23,7 @@ private:
     int                     get_match_count(lua_State* state);
     int                     clear_matches(lua_State* state);
     int                     get_match_lcd(lua_State* state);
-    match_result&           m_result;
+    matches&                m_result;
     match_result_builder    m_builder;
     static method           s_methods[];
 };

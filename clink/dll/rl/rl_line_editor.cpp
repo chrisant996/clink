@@ -225,7 +225,7 @@ char** rl_line_editor::completion(const char* word, int start, int end)
     str_compare_scope _(str_compare_mode);
 
     line_state line = { word, rl_line_buffer, start, end, rl_point };
-    match_result result;
+    matches result;
     get_match_generator()->generate(line, result);
 
     // Clink has generated all matches and will take care of suffices/quotes.

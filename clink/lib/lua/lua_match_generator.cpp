@@ -53,7 +53,7 @@ void lua_match_generator::print_error(const char* error) const
 }
 
 //------------------------------------------------------------------------------
-void lua_match_generator::generate(const line_state& line, match_result& result)
+void lua_match_generator::generate(const line_state& line, matches& result)
 {
     // Expose some of the readline state to lua.
     lua_createtable(m_state, 2, 0);

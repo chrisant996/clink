@@ -19,7 +19,7 @@ file_match_generator::~file_match_generator()
 }
 
 //------------------------------------------------------------------------------
-void file_match_generator::generate(const line_state& line, match_result& result)
+void file_match_generator::generate(const line_state& line, matches& result)
 {
     str<MAX_PATH> clean_word = line.word;
     path::clean(clean_word);

@@ -54,7 +54,7 @@ void match_generator_tester<T>::run(const char* line, va_list arg)
 
     // Generate the matches.
     line_state state = { word, command.c_str(), start, end, cursor };
-    match_result result;
+    matches result;
     m_generator.generate(state, result);
 
     // It's possible that we're not expecting any matches...

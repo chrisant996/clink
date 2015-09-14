@@ -12,7 +12,7 @@ class lua_match_generator
 public:
                         lua_match_generator();
     virtual             ~lua_match_generator();
-    virtual void        generate(const line_state& line, match_result& result) override;
+    virtual void        generate(const line_state& line, matches& result) override;
 
 private:
     void                initialise(struct lua_State* state);

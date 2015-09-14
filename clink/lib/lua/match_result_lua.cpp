@@ -20,7 +20,7 @@ matches_lua::method matches_lua::s_methods[] = {
 
 
 //------------------------------------------------------------------------------
-matches_lua::matches_lua(match_result& result)
+matches_lua::matches_lua(matches& result)
 : lua_bindable<matches_lua>("matches_lua", s_methods)
 , m_result(result)
 , m_builder(result, "")
