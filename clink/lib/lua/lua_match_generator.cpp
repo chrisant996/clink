@@ -6,7 +6,7 @@
 #include "line_state.h"
 #include "lua_bindable.h"
 #include "lua_script_loader.h"
-#include "match_result_lua.h"
+#include "matches_lua.h"
 
 extern "C" {
 #include "lua.h"

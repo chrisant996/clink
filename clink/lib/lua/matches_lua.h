@@ -4,7 +4,7 @@
 #pragma once
 
 #include "lua_bindable.h"
-#include "matches/match_result.h"
+#include "matches/matches.h"
 
 struct lua_State;
 
