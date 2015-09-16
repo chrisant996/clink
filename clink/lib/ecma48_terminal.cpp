@@ -119,10 +119,15 @@ int ecma48_terminal::read()
     static int       carry        = 0; // Multithreading? What's that?
     static const int CTRL_PRESSED = LEFT_CTRL_PRESSED|RIGHT_CTRL_PRESSED;
 
-    // Clear all flags so the console doesn't do anything special. This prevents
-    // key presses such as Ctrl-C and Ctrl-S from being swallowed.
+    // Clear 'processed input' flag so key presses such as Ctrl-C and Ctrl-S
+    // aren't swallowed. We also want events about window size changes.
     HANDLE handle_stdin = GetStdHandle(STD_INPUT_HANDLE);
-    SetConsoleMode(handle_stdin, ENABLE_WINDOW_INPUT);
+    DWORD flags;
+    GetConsoleMode(handle_stdin, &flags);
+    flags |= ENABLE_WINDOW_INPUT;
+    flags &= ~ENABLE_EXTENDED_FLAGS;
+    flags &= ~ENABLE_PROCESSED_INPUT;
+    SetConsoleMode(handle_stdin, flags);
 
 loop:
     int key_char = 0;
