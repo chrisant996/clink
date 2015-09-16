@@ -35,6 +35,7 @@ public:
     typedef TYPE    char_t;
 
                     str_impl(TYPE* data, unsigned int size);
+                    str_impl(const str_impl&) = delete;
                     ~str_impl();
     bool            reserve(unsigned int size);
     TYPE*           data();
@@ -55,6 +56,7 @@ public:
     TYPE            operator [] (unsigned int i) const;
     str_impl&       operator << (const TYPE* rhs);
     str_impl&       operator << (const str_impl& rhs);
+    void            operator = (const str_impl&) = delete;
 
 protected:
     void            set_growable(bool state=true);
@@ -298,6 +300,7 @@ public:
     bool from_utf16(const wchar_t* utf16)  { clear(); return to_utf8(*this, utf16); }
     void operator = (const char* value)    { copy(value); }
     void operator = (const wchar_t* value) { from_utf16(value); }
+    void operator = (const str_base& rhs)  = delete;
 };
 
 class wstr_base : public str_impl<wchar_t>
@@ -307,6 +310,7 @@ public:
     bool from_utf8(const char* utf8)        { clear(); return to_utf16(*this, utf8); }
     void operator = (const wchar_t* value)  { copy(value); }
     void operator = (const char* value)     { from_utf8(value); }
+    void operator = (const wstr_base& rhs)  = delete;
 };
 
 
@@ -321,6 +325,7 @@ public:
             str() : str_base(m_data, COUNT)     { set_growable(GROWABLE); }
             str(const char* value) : str()      { copy(value); }
             str(const wchar_t* value) : str()   { from_utf16(value); }
+            str(const str&) = delete;
     using   str_base::operator =;
 };
 
@@ -333,6 +338,7 @@ public:
             wstr() : wstr_base(m_data, COUNT)   { set_growable(GROWABLE); }
             wstr(const wchar_t* value) : wstr() { copy(value); }
             wstr(const char* value) : wstr()    { from_utf8(value); }
+            wstr(const wstr&) = delete;
     using   wstr_base::operator =;
 };
 
