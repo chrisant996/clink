@@ -7,6 +7,7 @@
 
 class match_generator;
 class match_printer;
+class matches;
 class terminal;
 
 //------------------------------------------------------------------------------
@@ -24,9 +25,9 @@ public:
                             line_editor(const desc& desc);
     virtual                 ~line_editor();
     bool                    edit_line(const char* prompt, str_base& out);
+    void                    generate_matches(const char* line, int cursor, matches& result) const;
     terminal*               get_terminal() const;
     match_printer*          get_match_printer() const;
-    match_generator*        get_match_generator() const;
     const char*             get_shell_name() const;
 
 private:
@@ -56,12 +57,6 @@ inline terminal* line_editor::get_terminal() const
 inline match_printer* line_editor::get_match_printer() const
 {
     return m_match_printer;
-}
-
-//------------------------------------------------------------------------------
-inline match_generator* line_editor::get_match_generator() const
-{
-    return m_match_generator;
 }
 
 //------------------------------------------------------------------------------
