@@ -600,7 +600,7 @@ local function argument_match_generator(text, first, last, result)
     end
 
     -- Split the command line into parts.
-    local str = line_state.line:sub(cmd_r + 2, last)
+    local str = line_state.line:sub(cmd_r + 2, last - 1)
     local parts = {}
     for _, sub_str in ipairs(clink.quote_split(str, "\"")) do
         -- Quoted strings still have their quotes. Look for those type of
