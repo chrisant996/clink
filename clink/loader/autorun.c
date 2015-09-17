@@ -24,7 +24,7 @@
 
 //------------------------------------------------------------------------------
 typedef int     (dispatch_func_t)(const char*, int);
-const char*     g_clink_args = NULL;
+char*           g_clink_args = NULL;
 int             g_all_users  = 0;
 static int      show_autorun();
 
@@ -462,21 +462,12 @@ int autorun(int argc, char** argv)
     int i;
     int ret;
     dispatch_func_t* function;
-    const char* path_arg;
 
     struct option options[] = {
         { "help",       no_argument,        NULL, 'h' },
         { "allusers",   no_argument,        NULL, 'a' },
         { NULL, 0, NULL, 0 }
     };
-
-    // Get path where clink is installed (assumed to be where this executable is)
-    clink_path = malloc(strlen(_pgmptr));
-    clink_path[0] = '\0';
-    str_cat(clink_path, _pgmptr, (int)(strrchr(_pgmptr, '\\') - _pgmptr + 1));
-
-    function = NULL;
-    path_arg = clink_path;
 
     // Parse command line arguments.
     while ((i = getopt_long(argc, argv, "+ha", options, NULL)) != -1)
@@ -498,6 +489,9 @@ int autorun(int argc, char** argv)
         }
     }
 
+    clink_path = NULL;
+    function = NULL;
+
     // Find out what to do by parsing the verb.
     if (optind < argc)
     {
@@ -506,18 +500,34 @@ int autorun(int argc, char** argv)
         else if (!strcmp(argv[optind], "uninstall"))
             function = uninstall_autorun;
         else if (!strcmp(argv[optind], "set"))
-        {
-            ++optind;
-            if (optind < argc && argv[optind][0] != '-')
-            {
-                path_arg = argv[optind];
-                function = set_autorun_value;
-            }
-        }
+            function = set_autorun_value;
         else if (!strcmp(argv[optind], "show"))
         {
             ret = !show_autorun();
             goto end;
+        }
+    }
+
+    // Get path where clink is installed (assumed to be where this executable is)
+    if (function == install_autorun)
+    {
+        clink_path = malloc(strlen(_pgmptr));
+        clink_path[0] = '\0';
+        str_cat(clink_path, _pgmptr, (int)(strrchr(_pgmptr, '\\') - _pgmptr + 1));
+    }
+
+    // Collect the remainder of the command line.
+    if (function == install_autorun || function == set_autorun_value)
+    {
+        static const int ARG_SIZE = 1024;
+        g_clink_args = malloc(ARG_SIZE);
+        g_clink_args[0] = '\0';
+
+        for (i = optind + 1; i < argc; ++i)
+        {
+            str_cat(g_clink_args, argv[i], ARG_SIZE);
+            if (i < argc - 1)
+                str_cat(g_clink_args, " ", ARG_SIZE);
         }
     }
 
@@ -528,13 +538,6 @@ int autorun(int argc, char** argv)
         goto end;
     }
 
-    // Collect arguments to pass on to Clink.
-    {
-        const char* cmd_line;
-        if (cmd_line = strstr(GetCommandLine(), " -- "))
-            g_clink_args = cmd_line + 4;
-    }
-
     // Do the magic.
     if (!check_registry_access())
     {
@@ -543,7 +546,7 @@ int autorun(int argc, char** argv)
         goto end;
     }
 
-    ret = !dispatch(function, path_arg);
+    ret = !dispatch(function, (clink_path != NULL) ? clink_path : g_clink_args);
 
     // Provide the user with some feedback.
     if (ret == 0)
@@ -562,6 +565,7 @@ int autorun(int argc, char** argv)
     }
 
 end:
+    free(g_clink_args);
     free(clink_path);
     return ret;
 }
