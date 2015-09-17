@@ -33,8 +33,8 @@ static int      show_autorun();
 //------------------------------------------------------------------------------
 static void success_message(const char* message)
 {
-    printf("%s (for %s)\n", message, g_all_users ? "all users" : "current user");
     show_autorun();
+    printf("%s (for %s).\n", message, g_all_users ? "all users" : "current user");
 }
 
 //------------------------------------------------------------------------------
@@ -339,7 +339,7 @@ static int show_autorun()
 {
     int all_users;
 
-    puts("\nCurrent AutoRun values");
+    puts("Current AutoRun values");
 
     for (all_users = 0; all_users < 2; ++all_users)
     {
@@ -374,6 +374,7 @@ static int show_autorun()
         puts("");
     }
 
+    puts("");
     return 1;
 }
 
@@ -424,14 +425,14 @@ static int dispatch(dispatch_func_t* function, const char* clink_path)
 void print_help()
 {
     const char* help_verbs[] = {
-        "install",      "Installs an autorun entry for cmd.exe.",
-        "uninstall",    "Uninstalls an autorun entry.",
-        "show",         "Displays the current autorun settings.",
-        "set <string>", "Sets the autorun to <string>.",
+        "install <args...>", "Installs a command to cmd.exe's autorun to start Clink",
+        "uninstall",         "Does the opposite of 'install'",
+        "show",              "Displays the values of cmd.exe's autorun variables",
+        "set <string...>",   "Explicitly sets cmd.exe's autorun to <string>",
     };
 
     const char* help_args[] = {
-        "-a, --allusers",       "Install autorun for all users (requires admin rights).",
+        "-a, --allusers",       "Modifies autorun for all users (requires admin rights).",
         "-h, --help",           "Shows this help text.",
     };
 
@@ -447,12 +448,18 @@ void print_help()
     puts("Options:");
     puts_help(help_args, sizeof_array(help_args));
 
-    puts("All arguments that follow a '--' are added to Clink's auto command"
-        "line when\ninstalled. Available arguments can be viewed by running"
-        "'clink inject --help'\n");
+    puts("Autorun simplifies making modifications to cmd.exe's autorun registry\n"
+        "variables. The value of these variables are read and executed by cmd.exe\n"
+        "when it start. The 'install/uninstall' verbs add (and remove) the\n"
+        "correct command to run Clink when cmd.exe starts. All '<args>' that\n"
+        "follow 'install' are passed to Clink - see 'clink inject --help' for\n"
+        "reference.\n");
 
-    puts("Write access to cmd.exe's AutoRun registry entry will require"
-        "administrator\nprivileges when using the --allusers option.");
+    puts("To include quotes they must be escaped with a backslash;");
+    puts("    clink autorun set \\\"foobar\\\"");
+
+    puts("Write access to cmd.exe's AutoRun registry entry will require\n"
+        "administrator privileges when using the --allusers option.");
 }
 
 //------------------------------------------------------------------------------
@@ -556,9 +563,9 @@ int autorun(int argc, char** argv)
         if (function == install_autorun)
             msg = "Clink successfully installed to run when cmd.exe starts";
         else if (function == uninstall_autorun)
-            msg = "Clink's autorun entry has been removed.";
+            msg = "Clink's autorun entry has been removed";
         else if (function == set_autorun_value)
-            msg = "Cmd.exe's AutoRun registry key set successfully.";
+            msg = "Cmd.exe's AutoRun registry key set successfully";
 
         if (msg != NULL)
             success_message(msg);
