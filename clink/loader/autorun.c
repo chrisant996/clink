@@ -479,7 +479,7 @@ int autorun(int argc, char** argv)
     path_arg = clink_path;
 
     // Parse command line arguments.
-    while ((i = getopt_long(argc, argv, "ha", options, NULL)) != -1)
+    while ((i = getopt_long(argc, argv, "+ha", options, NULL)) != -1)
     {
         switch (i)
         {
