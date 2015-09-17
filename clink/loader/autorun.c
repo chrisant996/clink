@@ -307,7 +307,7 @@ static int install_autorun(const char* clink_path, int wow64)
     if (key_value != NULL && *key_value != '\0')
     {
         str_cat(new_value, key_value, i);
-        str_cat(new_value, "&&", i);
+        str_cat(new_value, "&", i);
     }
     str_cat(new_value, "\"", i);
     str_cat(new_value, clink_path, i);
