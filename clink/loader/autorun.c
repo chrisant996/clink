@@ -424,10 +424,10 @@ static int dispatch(dispatch_func_t* function, const char* clink_path)
 void print_help()
 {
     const char* help_verbs[] = {
-        "install",        "Installs an autorun entry for cmd.exe.",
-        "uninstall",      "Uninstalls an autorun entry.",
-        "show",           "Displays the current autorun settings.",
-        "value <string>", "Sets the autorun to <string>.",
+        "install",      "Installs an autorun entry for cmd.exe.",
+        "uninstall",    "Uninstalls an autorun entry.",
+        "show",         "Displays the current autorun settings.",
+        "set <string>", "Sets the autorun to <string>.",
     };
 
     const char* help_args[] = {
