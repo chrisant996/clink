@@ -178,7 +178,7 @@ static int find_clink_entry(const char* value, int* left, int* right)
     // Is clink's path quoted?
     c = strchr(tag, ' ');
     quoted = (c != 0) && (c[-1] == '\"');
-    
+
     // And find the left most extent. First search for opening quote if need
     // be, then search for command separator.
     i = quoted ? '\"' : '&';
@@ -196,7 +196,7 @@ static int find_clink_entry(const char* value, int* left, int* right)
             quoted = 0;
             i = '&';
         }
-            
+
         --c;
     }
     *left = (int)(c - value);
