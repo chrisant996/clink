@@ -390,7 +390,7 @@ static int set_autorun_value(const char* value, int wow64)
         return 0;
     }
 
-    if (*value == '\0')
+    if (value == NULL || *value == '\0')
         ret = delete_value(cmd_proc_key, "AutoRun");
     else
         ret = set_value(cmd_proc_key, "AutoRun", value);
