@@ -222,7 +222,7 @@ static BOOL WINAPI read_console(
     void* old_exception_filter = push_exception_filter();
     DWORD stdout_mode;
     DWORD stdin_mode;
-    BOOL ret = 0;
+    BOOL ret = TRUE;
 
     GetConsoleMode(GetStdHandle(STD_OUTPUT_HANDLE), &stdout_mode);
     GetConsoleMode(GetStdHandle(STD_INPUT_HANDLE), &stdin_mode);
@@ -277,7 +277,7 @@ read_console_end:
     SetConsoleMode(GetStdHandle(STD_INPUT_HANDLE), stdin_mode);
     SetConsoleMode(GetStdHandle(STD_OUTPUT_HANDLE), stdout_mode);
     pop_exception_filter(old_exception_filter);
-    return TRUE;
+    return ret;
 }
 
 //------------------------------------------------------------------------------
