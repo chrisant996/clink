@@ -29,6 +29,8 @@ int                     get_clink_setting_int(const char*);
 void*                   push_exception_filter();
 void                    pop_exception_filter(void* old_filter);
 int                     call_readline_w(const wchar_t*, wchar_t*, unsigned);
+int                     begin_doskey(wchar_t*, unsigned);
+int                     continue_doskey(wchar_t*, unsigned);
 void                    emulate_doskey(wchar_t*, unsigned);
 wchar_t*                detect_tagged_prompt_w(const wchar_t*, int);
 void                    free_prompt(void*);
@@ -250,6 +252,16 @@ static BOOL WINAPI read_console(
         goto read_console_end;
     }
 
+    // Doskey is implemented on the server side of a ReadConsoleW() call (i.e.
+    // in conhost.exe). Commands separated by a "$T" are returned one command
+    // at a time through successive calls to ReadConsoleW().
+    if (continue_doskey(buffer, buffer_size))
+    {
+        append_crlf(buffer, buffer_size);
+        *read_in = (unsigned)wcslen(buffer);
+        goto read_console_end;
+    }
+
     // Call readline.
     while (1)
     {
@@ -268,7 +280,7 @@ static BOOL WINAPI read_console(
         rl_crlf();
     }
 
-    emulate_doskey(buffer, buffer_size);
+    begin_doskey(buffer, buffer_size);
     append_crlf(buffer, buffer_size);
 
     *read_in = (unsigned)wcslen(buffer);

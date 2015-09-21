@@ -23,7 +23,21 @@
 #include "shared/util.h"
 
 //------------------------------------------------------------------------------
-static int tokenise(wchar_t* source, wchar_t** tokens, int max_tokens)
+typedef struct {
+    short       start;
+    short       length;
+} token_t;
+
+static struct {
+    wchar_t*    alias_text;
+    wchar_t*    alias_next;
+    wchar_t*    input;
+    token_t     tokens[10];
+    unsigned    token_count;
+} g_state;
+
+//------------------------------------------------------------------------------
+static int tokenise(wchar_t* source, token_t* tokens, int max_tokens)
 {
     // The doskey tokenisation (done by conhost.exe on Win7 and in theory
     // available to any console app) is pretty basic. Doesn't take quotes into
@@ -35,182 +49,192 @@ static int tokenise(wchar_t* source, wchar_t** tokens, int max_tokens)
     read = source;
     for (i = 0; i < max_tokens && *read; ++i)
     {
-        // Skip whitespace, nulling as we go (not first time through though).
+        // Skip whitespace, store the token start.
         while (*read && iswspace(*read))
-        {
-            *read = i ? '\0' : *read;
             ++read;
-        }
-        
-        // Store start of a token.
-        tokens[i] = read;
 
-        // Skip token to next whitespace.
+        tokens[i].start = read - source;
+
+        // Skip token to next whitespace, store token length.
         while (*read && !iswspace(*read))
-        {
             ++read;
-        }
+
+        tokens[i].length = (read - source) - tokens[i].start;
     }
 
-    // Don't skip initial whitespace (in keeping with cmd.exe).
-    tokens[0] = source;
+    // Don't skip initial whitespace.
+    tokens[0].length += tokens[0].start;
+    tokens[0].start = 0;
     return i;
 }
 
 //------------------------------------------------------------------------------
-void emulate_doskey(wchar_t* buffer, unsigned max_chars)
+int continue_doskey(wchar_t* chars, unsigned max_chars)
 {
-    // ReadConsoleW() does the alias and argument expansion. Win7 onwards, this
-    // actually happens in the associated conhost.exe via an undocumented LPC.
-    // As such there's no public API for argument expansion.
+    const wchar_t* read = g_state.alias_next;
 
-    const wchar_t* read;
-    wchar_t* read_end;
-    wchar_t* write;
-    int write_size;
-    int in_quote;
+    if (g_state.alias_text == NULL)
+        return 0;
 
-    wchar_t* alias;
-    wchar_t* scratch[2];
-
-    wchar_t exe_buf[MAX_PATH];
-    wchar_t* exe;
-
-    int arg_count;
-    struct {
-        wchar_t* command;
-        wchar_t* args[16];
-    } parts;
-
-#ifdef __MINGW32__
-    HANDLE kernel32 = LoadLibraryA("kernel32.dll");
-
-    typedef DWORD (WINAPI *_GetConsoleAliasW)(LPWSTR, LPWSTR, DWORD, LPWSTR);
-    _GetConsoleAliasW GetConsoleAliasW = (_GetConsoleAliasW)GetProcAddress(
-        kernel32,
-        "GetConsoleAliasW"
-    );
-#endif // __MINGW32__
-
-    // Allocate some buffers and fill them.
-    alias = malloc(max_chars * sizeof(wchar_t) * 3);
-    scratch[0] = alias + max_chars;
-    scratch[1] = scratch[0] + max_chars;
-    memcpy(scratch[0], buffer, max_chars * sizeof(*scratch[0]));
-    memcpy(scratch[1], buffer, max_chars * sizeof(*scratch[1]));
-
-    // Tokenise
-    arg_count = tokenise(scratch[0], (wchar_t**)&parts, sizeof_array(parts.args) + 1);
-    --arg_count;
-
-    // Find alias
-    GetModuleFileNameW(NULL, exe_buf, sizeof(exe_buf));
-    exe = wcsrchr(exe_buf, L'\\');
-    exe = (exe != NULL) ? (exe + 1) : exe_buf;
-
-    if (!GetConsoleAliasW(parts.command, alias, max_chars, exe))
+    if (*read == '\0')
     {
-        free(alias);
-        return;
+        free(g_state.alias_text);
+        g_state.alias_text = NULL;
+        return 0;
     }
 
-    // Copy alias to buffer, expanding arguments as we go.
-    read = alias;
-    read_end = alias + wcslen(alias);
-    write = buffer;
-    write_size = max_chars;
-    in_quote = 0;
-
-    memset(write, 0, write_size * sizeof(*write));
-
-    while (write_size > 0 && read < read_end)
+    --max_chars;
+    while (*read > '\1' && max_chars)
     {
-        if (*read == '$')
+        wchar_t c = *read++;
+
+        // If this isn't a '$X' code then just copy the character out.
+        if (c != '$')
         {
-            int insert_len;
-            const wchar_t* insert = L"";
-            wchar_t c = *(++read);
+            *chars++ = c;
+            --max_chars;
+            continue;
+        }
 
-            ++read;
+        // This is is a '$X' code. All but argument codes have been handled so
+        // it is just argument codes to expand now.
+        c = *read++;
+        if (c >= '1' && c <= '9')   c -= '1' - 1; // -1 as first arg is token 1
+        else if (c == '*')          c = 0;
+        else if (c > '\1')          continue;
+        else                        break;
 
-            c = towlower(c);
-            if (c >= '1' && c <= '9')
+        // 'c' is the index to the argument to insert or -1 if it is all of
+        // them. 0th token is alias so arguments start at index 1.
+        if (g_state.token_count > 1)
+        {
+            wchar_t* insert_from;
+            int insert_length = 0;
+
+            if (c == 0)
             {
-                c -= '1';
-                insert = (c < arg_count) ? parts.args[c] : L"";
+                insert_from = g_state.input + g_state.tokens[0].length;
+                insert_length = min(wcslen(insert_from), max_chars);
             }
-            else if (c >= 'a' && c <= 'f')
+            else if (c < g_state.token_count)
             {
-                c -= 'a' - 9;
-                insert = (c < arg_count) ? parts.args[c] : L"";
+                insert_from = g_state.input + g_state.tokens[c].start;
+                insert_length = min(g_state.tokens[c].length, max_chars);
             }
-            else if (c == '*')
+
+            if (insert_length)
             {
-                if (arg_count)
-                    insert = scratch[1] + (parts.args[0] - parts.command);
+                wcsncpy(chars, insert_from, insert_length);
+                max_chars -= insert_length;
+                chars += insert_length;
             }
-            else if (c == '$')
+        }
+    }
+
+    *chars = '\0';
+
+    // Move g_state.next on to the next command or the end of the expansion.
+    g_state.alias_next = read;
+    while (*g_state.alias_next > '\1')
+        ++g_state.alias_next;
+
+    if (*g_state.alias_next == '\1')
+        ++g_state.alias_next;
+
+    return 1;
+}
+
+//------------------------------------------------------------------------------
+int begin_doskey(wchar_t* chars, unsigned max_chars)
+{
+    // Find the alias for which to retrieve text for.
+    wchar_t alias[64];
+    {
+        int i, n;
+        int found_word = 0;
+        const wchar_t* read = chars;
+        for (i = 0, n = min(sizeof_array(alias) - 1, max_chars); i < n && *read; ++i)
+        {
+            if (!!iswspace(*read) == found_word)
             {
-                insert = L"$";
+                if (!found_word)
+                    found_word = 1;
+                else
+                    break;
             }
-            else if (towlower(c) == 't')
+
+            alias[i] = *read++;
+        }
+
+        alias[i] = '\0';
+    }
+
+    // Find the alias' text.
+    {
+        int bytes;
+        wchar_t* exe;
+        wchar_t exe_path[MAX_PATH];
+
+        GetModuleFileNameW(NULL, exe_path, sizeof_array(exe_path));
+        exe = wcsrchr(exe_path, L'\\');
+        exe = (exe != NULL) ? (exe + 1) : exe_path;
+
+        // Check it exists.
+        if (!GetConsoleAliasW(alias, exe_path, 1, exe))
+            return 0;
+
+        // It does. Allocate space and fetch it.
+        bytes = max_chars * sizeof(wchar_t);
+        g_state.alias_text = malloc(bytes * 2);
+        GetConsoleAliasW(alias, g_state.alias_text, bytes, exe);
+
+        // Copy the input and tokenise it. Lots of pointer aliasing here...
+        g_state.input = g_state.alias_text + max_chars;
+        memcpy(g_state.input, chars, bytes);
+
+        g_state.token_count = tokenise(g_state.input, g_state.tokens,
+            sizeof_array(g_state.tokens));
+
+        g_state.alias_next = g_state.alias_text;
+    }
+
+    // Expand all '$?' codes except those that expand into arguments.
+    {
+        wchar_t* read = g_state.alias_text;
+        wchar_t* write = read;
+        while (*read)
+        {
+            if (read[0] != '$')
             {
-                // Normally, the alias expansion would add a crlf pair for this
-                // tag, and then feed it piece by piece to each ReadConsole()
-                // call. This is most inconvenient. Instead we're using &.
-                // Maybe this makes this emulation incompatible with other exes?
-                insert = L"&";
-            }
-            else if (towlower(c) == 'g')
-            {
-                insert = L">";
-            }
-            else if (towlower(c) == 'l')
-            {
-                insert = L"<";
-            }
-            else if (towlower(c) == 'b')
-            {
-                insert = L"|";
-            }
-            else
-            {
+                *write++ = *read++;
                 continue;
             }
 
-            insert_len = wcslen(insert);
-            insert_len = (insert_len > write_size) ? write_size : insert_len;
-            wcsncpy(write, insert, insert_len);
-
-            write_size -= insert_len;
-            write += insert_len;
-        }
-        else if (!in_quote && read[1] == '%' && read[0] != '^')
-        {
-            if (write_size > 2)
-            {
-                write[0] = *read;
-                write[1] = '^';
-                write[2] = '%';
-                write += 3;
-                read += 2;
-            }
-        }
-        else
-        {
-            if (*read == '\"')
-                in_quote ^= 1;
-
-            *write = *read;
-
-            ++write;
             ++read;
-            --write_size;
+            switch (*read)
+            {
+            case '$': *write++ = '$'; break;
+            case 'g':
+            case 'G': *write++ = '>'; break;
+            case 'l':
+            case 'L': *write++ = '<'; break;
+            case 'b':
+            case 'B': *write++ = '|'; break;
+            case 't':
+            case 'T': *write++ = '\1'; break;
+
+            default:
+                *write++ = '$';
+                *write++ = *read;
+            }
+
+            ++read;
         }
+
+        *write = '\0';
     }
 
-    buffer[max_chars - 1] = '\0';
-    free(alias);
+    return continue_doskey(chars, max_chars);
 }
 
 // vim: expandtab
