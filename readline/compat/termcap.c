@@ -110,11 +110,17 @@ static void set_cursor(int x, int y)
 {
     CONSOLE_SCREEN_BUFFER_INFO i;
     COORD o;
+    HANDLE handle;
 
-    GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &i);
-    o.X = (x >= 0) ? x : i.dwCursorPosition.X;
-    o.Y = (y >= 0) ? y : i.dwCursorPosition.Y;
-    SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), o);
+    handle = GetStdHandle(STD_OUTPUT_HANDLE);
+    GetConsoleScreenBufferInfo(handle, &i);
+
+    if (x < 0)  x = i.dwCursorPosition.X;
+    if (y < 0)  y = i.dwCursorPosition.Y;
+
+    o.X = clamp(x, 0, i.dwSize.X - 1);
+    o.Y = clamp(y, 0, i.dwSize.Y - 1);
+    SetConsoleCursorPosition(handle, o);
 }
 
 //------------------------------------------------------------------------------
