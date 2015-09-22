@@ -86,6 +86,14 @@ struct tgoto_data
 typedef struct tgoto_data tgoto_data_t;
 
 //------------------------------------------------------------------------------
+int clamp(int v, int mi, int mx)
+{
+    v = (v > mi) ? v : mi;
+    v = (v < mx) ? v : mx;
+    return v;
+}
+
+//------------------------------------------------------------------------------
 void move_cursor(int dx, int dy)
 {
     CONSOLE_SCREEN_BUFFER_INFO i;
