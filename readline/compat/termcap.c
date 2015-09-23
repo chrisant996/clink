@@ -100,8 +100,8 @@ void move_cursor(int dx, int dy)
     COORD o;
 
     GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &i);
-    o.X = i.dwCursorPosition.X + dx;
-    o.Y = i.dwCursorPosition.Y + dy;
+    o.X = clamp(i.dwCursorPosition.X + dx, 0, i.dwSize.X - 1);
+    o.Y = clamp(i.dwCursorPosition.Y + dy, 0, i.dwSize.Y - 1);
     SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), o);
 }
 
