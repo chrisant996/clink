@@ -23,6 +23,8 @@ public:
     };
 
                             line_editor(const desc& desc);
+                            line_editor(const line_editor&) = delete;
+    void                    operator = (const line_editor&) = delete;
     virtual                 ~line_editor();
     bool                    edit_line(const char* prompt, str_base& out);
     void                    generate_matches(const char* line, int cursor, matches& result) const;
@@ -38,8 +40,6 @@ private:
     str<32>                 m_shell_name;
 
 private:
-                            line_editor(const line_editor&);    // unimplemented
-    void                    operator = (const line_editor&);    // unimplemented
 };
 
 //------------------------------------------------------------------------------
