@@ -10,7 +10,7 @@ class matches_builder;
 class match_generator
 {
 public:
-    virtual void    generate(const line_state& line, matches_builder& builder) = 0;
+    virtual bool    generate(const line_state& line, matches_builder& builder) = 0;
 
 private:
 };

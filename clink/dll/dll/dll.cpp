@@ -7,16 +7,18 @@
 #include "host/host.h"
 #include "host/host_cmd.h"
 #include "host/host_ps.h"
+#include "rl/rl_line_editor.h"
 
 #include <core/base.h>
 #include <core/log.h>
 #include <core/path.h>
 #include <core/str.h>
 #include <ecma48_terminal.h>
+#include <lua/lua_match_generator.h>
 #include <lua/lua_root.h>
 #include <lua/lua_script_loader.h>
 #include <matches/column_printer.h>
-#include <rl/rl_line_editor.h>
+#include <file_match_generator.h>
 
 //------------------------------------------------------------------------------
 const char* g_clink_header =
@@ -39,6 +41,14 @@ static host*            g_host          = nullptr;
 //------------------------------------------------------------------------------
 static void initialise_line_editor(const char* host_name)
 {
+    terminal* terminal = new ecma48_terminal();
+    match_printer* printer = new column_printer(terminal);
+
+    line_editor::desc desc = { host_name, terminal, printer };
+    g_line_editor = create_rl_line_editor(desc);
+
+    // MODE4 - memory leaks!
+    // Initialise Lua.
     lua_root* lua = new lua_root();
     lua_State* state = lua->get_state();
     lua_load_script(state, dll, dir);
@@ -53,13 +63,15 @@ static void initialise_line_editor(const char* host_name)
     lua_load_script(state, dll, set);
     lua_load_script(state, dll, svn);
 
-    terminal* terminal = new ecma48_terminal();
-    match_printer* printer = new column_printer(terminal);
-
-    line_editor::desc desc = { host_name, terminal, printer };
-    g_line_editor = create_rl_line_editor(desc);
+    // Give the line editor about some match generators.
     match_system& match_system = g_line_editor->get_match_system();
-    match_system.add_generator(lua, 1000);
+
+    lua_match_generator* lua_generator = new lua_match_generator(state);
+    match_system.add_generator(lua_generator, 1000);
+
+    file_match_generator* file_generator = new file_match_generator();
+    match_system.add_generator(file_generator, 1001);
+    // MODE4
 }
 
 //------------------------------------------------------------------------------

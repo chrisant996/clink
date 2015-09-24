@@ -3,20 +3,21 @@
 
 #pragma once
 
-#include "file_match_generator.h"
+#include "matches/match_generator.h"
+
+struct lua_State;
 
 //------------------------------------------------------------------------------
 class lua_match_generator
-    : public file_match_generator
+    : public match_generator
 {
 public:
-                        lua_match_generator();
+                        lua_match_generator(lua_State* state);
     virtual             ~lua_match_generator();
-    virtual void        generate(const line_state& line, matches_builder& builder) override;
+    virtual bool        generate(const line_state& line, matches_builder& builder) override;
 
 private:
-    void                initialise(struct lua_State* state);
-    void                shutdown();
+    void                initialise();
     void                print_error(const char* error) const;
     void                lua_pushlinestate(const line_state& line);
     bool                load_script(const char* script);

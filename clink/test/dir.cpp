@@ -8,17 +8,33 @@
 #include <core/base.h>
 #include <core/str.h>
 #include <core/str_compare.h>
+#include <lua/lua_match_generator.h>
 #include <lua/lua_root.h>
 #include <lua/lua_script_loader.h>
 
 //------------------------------------------------------------------------------
-class dir_lua_root : public lua_root {};
-
-template <>
-void match_generator_tester<dir_lua_root>::initialise()
+struct dir_test
 {
-    lua_State* state = m_generator.get_state();
+    typedef match_generator_tester<dir_test> tester;
+
+                            dir_test();
+                            ~dir_test();
+                            operator match_generator* () { return m_generator; }
+    lua_match_generator*    m_generator;
+    lua_root                m_lua_root;
+};
+
+dir_test::dir_test()
+{
+    lua_State* state = m_lua_root.get_state();
     lua_load_script(state, dll, dir);
+
+    m_generator = new lua_match_generator(state);
+}
+
+dir_test::~dir_test()
+{
+    delete m_generator;
 }
 
 //------------------------------------------------------------------------------
@@ -48,35 +64,34 @@ TEST_CASE("Directory match generation.") {
         SECTION(dir_cmd) {
             SECTION("Matches") {
                 cmd << "t";
-                match_generator_tester<dir_lua_root>(cmd, "t",
-                    "two_dir\\", "three_dir\\", nullptr);
+                dir_test::tester(cmd, "t", "two_dir\\", "three_dir\\", nullptr);
             }
 
             SECTION("Single (with -/_) #1") {
                 cmd << "two_d";
-                match_generator_tester<dir_lua_root>(cmd, "two_dir\\", nullptr);
+                dir_test::tester(cmd, "two_dir\\", nullptr);
             }
 
             SECTION("Single (with -/_) #2") {
                 str_compare_scope _(str_compare_scope::relaxed);
 
                 cmd << "one-";
-                match_generator_tester<dir_lua_root>(cmd, "one_dir\\", nullptr);
+                dir_test::tester(cmd, "one_dir\\", nullptr);
             }
 
             SECTION("Relative") {
                 cmd << "nest_1\\..\\o";
-                match_generator_tester<dir_lua_root>(cmd, "nest_1\\..\\one_dir\\", nullptr);
+                dir_test::tester(cmd, "nest_1\\..\\one_dir\\", nullptr);
             }
 
             SECTION("No matches") {
                 cmd << "f";
-                match_generator_tester<dir_lua_root>(cmd, nullptr);
+                dir_test::tester(cmd, nullptr);
             }
 
             SECTION("Nested (forward slash)") {
                 cmd << "nest_1/ne";
-                match_generator_tester<dir_lua_root>(cmd, "nest_1\\nest_2\\", nullptr);
+                dir_test::tester(cmd, "nest_1\\nest_2\\", nullptr);
             }
         }
     }

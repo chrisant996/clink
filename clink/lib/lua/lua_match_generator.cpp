@@ -16,25 +16,14 @@ extern "C" {
 }
 
 //------------------------------------------------------------------------------
-lua_match_generator::lua_match_generator()
-: m_state(nullptr)
+lua_match_generator::lua_match_generator(lua_State* state)
+: m_state(state)
 {
+    lua_load_script(state, lib, match)
 }
 
 //------------------------------------------------------------------------------
 lua_match_generator::~lua_match_generator()
-{
-}
-
-//------------------------------------------------------------------------------
-void lua_match_generator::initialise(lua_State* state)
-{
-    lua_load_script(state, lib, match)
-    m_state = state;
-}
-
-//------------------------------------------------------------------------------
-void lua_match_generator::shutdown()
 {
 }
 
@@ -54,7 +43,7 @@ void lua_match_generator::print_error(const char* error) const
 }
 
 //------------------------------------------------------------------------------
-void lua_match_generator::generate(const line_state& line, matches_builder& builder)
+bool lua_match_generator::generate(const line_state& line, matches_builder& builder)
 {
     // Expose some of the readline state to lua.
     lua_createtable(m_state, 2, 0);
@@ -86,8 +75,7 @@ void lua_match_generator::generate(const line_state& line, matches_builder& buil
             print_error(error);
 
         lua_settop(m_state, 0);
-        file_match_generator::generate(line, builder);
-        return;
+        return false;
     }
 
     ml.lua_unbind(m_state);
@@ -95,9 +83,11 @@ void lua_match_generator::generate(const line_state& line, matches_builder& buil
     int use_matches = lua_toboolean(m_state, -1);
     lua_settop(m_state, 0);
 
-    if (use_matches)
-        return;
+    if (!use_matches)
+    {
+        builder.clear_matches();
+        return false;
+    }
 
-    builder.clear_matches();
-    file_match_generator::generate(line, builder);
+    return true;
 }

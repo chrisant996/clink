@@ -3,18 +3,15 @@
 
 #pragma once
 
-#include "lua_match_generator.h"
-
 struct lua_State;
 
 //------------------------------------------------------------------------------
 class lua_root
-    : public lua_match_generator
 {
 public:
                      lua_root();
                      ~lua_root();
-    void             initialise();
+    void             initialise(bool use_debugger=false);
     void             shutdown();
     bool             do_string(const char* string);
     bool             do_file(const char* path);

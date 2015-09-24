@@ -7,17 +7,33 @@
 #include "match_generator_tester.h"
 
 #include <core/path.h>
+#include <lua/lua_match_generator.h>
 #include <lua/lua_root.h>
 #include <lua/lua_script_loader.h>
 
 //------------------------------------------------------------------------------
-class exec_lua_root : public lua_root {};
-
-template <>
-void match_generator_tester<exec_lua_root>::initialise()
+struct exec_test
 {
-    lua_State* state = m_generator.get_state();
+    typedef match_generator_tester<exec_test> tester;
+
+                            exec_test();
+                            ~exec_test();
+                            operator match_generator* () { return m_generator; }
+    lua_match_generator*    m_generator;
+    lua_root                m_lua_root;
+};
+
+exec_test::exec_test()
+{
+    lua_State* state = m_lua_root.get_state();
     lua_load_script(state, dll, exec);
+
+    m_generator = new lua_match_generator(state);
+}
+
+exec_test::~exec_test()
+{
+    delete m_generator;
 }
 
 //------------------------------------------------------------------------------
@@ -48,6 +64,8 @@ TEST_CASE("Executable match generation.") {
     env_fixture env(exec_env);
 
     SECTION("PATH") {
-        match_generator_tester<exec_lua_root>("one_p", "one_path.exe", nullptr);
+        exec_test::tester("one_p", "one_path.exe", nullptr);
     }
+
+    // MODE4 - missing tests
 }

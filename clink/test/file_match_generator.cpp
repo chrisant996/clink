@@ -9,11 +9,20 @@
 #include <file_match_generator.h>
 
 //------------------------------------------------------------------------------
+struct file_test
+{
+    typedef match_generator_tester<file_test> tester;
+
+                            operator match_generator* () { return &m_generator; }
+    file_match_generator    m_generator;
+};
+
+//------------------------------------------------------------------------------
 TEST_CASE("File match generator") {
     fs_fixture fs;
 
     SECTION("File system matches") {
-        match_generator_tester<file_match_generator>(
+        file_test::tester(
             "",
             "", "case_map-1", "case_map_2", "dir1\\", "dir2\\",
             "file1", "file2", nullptr
@@ -21,28 +30,28 @@ TEST_CASE("File match generator") {
     }
 
     SECTION("Single file") {
-        match_generator_tester<file_match_generator>("file1", "file1", nullptr);
+        file_test::tester("file1", "file1", nullptr);
     }
 
     SECTION("Single dir") {
-        match_generator_tester<file_match_generator>("dir1", "dir1\\", nullptr);
+        file_test::tester("dir1", "dir1\\", nullptr);
     }
 
     SECTION("Dir slash flip") {
-        match_generator_tester<file_match_generator>(
+        file_test::tester(
             "dir1/",
             "dir1\\", "dir1\\only", "dir1\\file1", "dir1\\file2", nullptr
         );
     }
 
     SECTION("Path slash flip") {
-        match_generator_tester<file_match_generator>("dir1/on", "dir1\\only", nullptr);
+        file_test::tester("dir1/on", "dir1\\only", nullptr);
     }
 
     SECTION("Case mapping matches") {
         str_compare_scope _(str_compare_scope::relaxed);
 
-        match_generator_tester<file_match_generator>(
+        file_test::tester(
             "case-m",
             "case_map", "case_map-1", "case_map_2", nullptr
         );
@@ -50,7 +59,7 @@ TEST_CASE("File match generator") {
 
     /*
     SECTION("Case mapping complex") {
-        match_generator_tester<file_match_generator>(
+        file_test::tester(
             "cmd case_map-",
             expect(result, "cmd case_map-", nullptr
         );

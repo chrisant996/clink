@@ -30,7 +30,7 @@ lua_root::~lua_root()
 }
 
 //------------------------------------------------------------------------------
-void lua_root::initialise()
+void lua_root::initialise(bool use_debugger)
 {
     shutdown();
 
@@ -42,13 +42,11 @@ void lua_root::initialise()
     os_lua_initialise(m_state);
     path_lua_initialise(m_state);
 
-    lua_match_generator::initialise(m_state);
-
     lua_load_script(m_state, lib, prompt);
     lua_load_script(m_state, lib, arguments);
-#ifdef _DEBUG
-    lua_load_script(m_state, lib, debugger);
-#endif
+
+    if (use_debugger)
+        lua_load_script(m_state, lib, debugger);
 }
 
 //------------------------------------------------------------------------------
@@ -57,7 +55,6 @@ void lua_root::shutdown()
     if (m_state == nullptr)
         return;
 
-    lua_match_generator::shutdown();
     lua_close(m_state);
     m_state = nullptr;
 }

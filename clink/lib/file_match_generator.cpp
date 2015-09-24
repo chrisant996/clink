@@ -20,7 +20,7 @@ file_match_generator::~file_match_generator()
 }
 
 //------------------------------------------------------------------------------
-void file_match_generator::generate(const line_state& line, matches_builder& builder)
+bool file_match_generator::generate(const line_state& line, matches_builder& builder)
 {
     str<MAX_PATH> clean_word = line.word;
     path::clean(clean_word);
@@ -36,4 +36,6 @@ void file_match_generator::generate(const line_state& line, matches_builder& bui
     str<MAX_PATH> file;
     while (globber.next(file))
         builder.consider_match(file.c_str());
+
+    return true;
 }
