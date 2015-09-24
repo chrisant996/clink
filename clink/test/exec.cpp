@@ -26,9 +26,8 @@ struct exec_test
 exec_test::exec_test()
 {
     lua_State* state = m_lua_root.get_state();
-    lua_load_script(state, dll, exec);
-
     m_generator = new lua_match_generator(state);
+    lua_load_script(state, dll, exec);
 }
 
 exec_test::~exec_test()

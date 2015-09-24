@@ -27,9 +27,8 @@ struct dir_test
 dir_test::dir_test()
 {
     lua_State* state = m_lua_root.get_state();
-    lua_load_script(state, dll, dir);
-
     m_generator = new lua_match_generator(state);
+    lua_load_script(state, dll, dir);
 }
 
 dir_test::~dir_test()

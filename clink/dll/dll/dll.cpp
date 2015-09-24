@@ -51,6 +51,17 @@ static void initialise_line_editor(const char* host_name)
     // Initialise Lua.
     lua_root* lua = new lua_root();
     lua_State* state = lua->get_state();
+
+    // Give the line editor about some match generators.
+    match_system& match_system = g_line_editor->get_match_system();
+
+    lua_match_generator* lua_generator = new lua_match_generator(state);
+    match_system.add_generator(lua_generator, 1000);
+
+    file_match_generator* file_generator = new file_match_generator();
+    match_system.add_generator(file_generator, 1001);
+    // MODE4
+
     lua_load_script(state, dll, dir);
     lua_load_script(state, dll, env);
     lua_load_script(state, dll, exec);
@@ -62,16 +73,6 @@ static void initialise_line_editor(const char* host_name)
     lua_load_script(state, dll, self);
     lua_load_script(state, dll, set);
     lua_load_script(state, dll, svn);
-
-    // Give the line editor about some match generators.
-    match_system& match_system = g_line_editor->get_match_system();
-
-    lua_match_generator* lua_generator = new lua_match_generator(state);
-    match_system.add_generator(lua_generator, 1000);
-
-    file_match_generator* file_generator = new file_match_generator();
-    match_system.add_generator(file_generator, 1001);
-    // MODE4
 }
 
 //------------------------------------------------------------------------------

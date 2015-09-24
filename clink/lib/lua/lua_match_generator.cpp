@@ -20,6 +20,7 @@ lua_match_generator::lua_match_generator(lua_State* state)
 : m_state(state)
 {
     lua_load_script(state, lib, match)
+    lua_load_script(m_state, lib, arguments);
 }
 
 //------------------------------------------------------------------------------

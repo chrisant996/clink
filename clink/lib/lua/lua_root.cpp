@@ -43,7 +43,6 @@ void lua_root::initialise(bool use_debugger)
     path_lua_initialise(m_state);
 
     lua_load_script(m_state, lib, prompt);
-    lua_load_script(m_state, lib, arguments);
 
     if (use_debugger)
         lua_load_script(m_state, lib, debugger);
