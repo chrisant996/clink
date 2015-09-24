@@ -56,8 +56,10 @@ static void initialise_line_editor(const char* host_name)
     terminal* terminal = new ecma48_terminal();
     match_printer* printer = new column_printer(terminal);
 
-    line_editor::desc desc = { host_name, terminal, lua, printer };
+    line_editor::desc desc = { host_name, terminal, printer };
     g_line_editor = create_rl_line_editor(desc);
+    match_system& match_system = g_line_editor->get_match_system();
+    match_system.add_generator(lua, 1000);
 }
 
 //------------------------------------------------------------------------------
