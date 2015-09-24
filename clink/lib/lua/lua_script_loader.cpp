@@ -19,27 +19,26 @@ void lua_load_script_impl(lua_State* state, const char* script)
 
 #include "core/str.h"
 
+#include <algorithm>
+
 //------------------------------------------------------------------------------
 void lua_load_script_impl(lua_State* state, const char* path, const char* name)
 {
     str<512> buffer;
     buffer << path;
 
-    int slash = buffer.last_of('\\');
-    if (slash < 0)
-        slash = buffer.last_of('/');
-
+    int slash = std::max(buffer.last_of('\\'), buffer.last_of('/'));
     if (slash >= 0)
     {
         buffer.truncate(slash + 1);
         buffer << name;
         if (luaL_dofile(state, buffer.c_str()) == 0)
             return;
-
-        if (luaL_dofile(state, name) == 0)
-            return;
     }
 
-    printf("CLINK DEBUG: Failed to load '%s'\n", buffer);
+    if (const char* error = lua_tostring(state, -1))
+        puts(error);
+
+    printf("CLINK DEBUG: Failed to load '%s'\n", buffer.c_str());
 }
 #endif // CLINK_EMBED_LUA_SCRIPTS
