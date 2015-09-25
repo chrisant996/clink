@@ -22,17 +22,20 @@ file_match_generator::~file_match_generator()
 //------------------------------------------------------------------------------
 bool file_match_generator::generate(const line_state& line, matches_builder& builder)
 {
-    str<MAX_PATH> word_root = line.word;
-    path::get_directory(word_root);
-    if (word_root.length())
-        word_root << "\\";
+    str<MAX_PATH> buffer;
 
-    globber::context context = { word_root.c_str(), "*" };
+    // Get the path to match files from.
+    buffer = line.word;
+    path::get_directory(buffer);
+    if (buffer.length())
+        buffer << "/";
+
+    // Glob the files.
+    globber::context context = { buffer.c_str(), "*" };
     globber globber(context);
 
-    str<MAX_PATH> file;
-    while (globber.next(file))
-        builder.consider_match(file.c_str());
+    while (globber.next(buffer))
+        builder.consider_match(buffer.c_str());
 
     return true;
 }
