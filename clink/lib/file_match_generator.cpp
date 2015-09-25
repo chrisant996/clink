@@ -22,9 +22,6 @@ file_match_generator::~file_match_generator()
 //------------------------------------------------------------------------------
 bool file_match_generator::generate(const line_state& line, matches_builder& builder)
 {
-    str<MAX_PATH> clean_word = line.word;
-    path::clean(clean_word);
-
     str<MAX_PATH> word_root = line.word;
     path::get_directory(word_root);
     if (word_root.length())
