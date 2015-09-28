@@ -149,6 +149,10 @@ bool path::get_name(const char* in, str_base& out)
     if (const char* slash = max(strrchr(in, '\\'), strrchr(in, '/')))
         return out.concat(slash + 1);
 
+    // Windows drive letters.
+    if (in[0] && in[1] == ':')
+        in += 2;
+
     return out.concat(in);
 }
 

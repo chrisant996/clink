@@ -29,6 +29,8 @@ TEST_CASE("Paths") {
             SECTION("2") { path::get_base_name("one/two/three\\filename.ext", s); }
             SECTION("3") { path::get_base_name("filename.ext", s); }
             SECTION("4") { path::get_base_name("filename", s); }
+            SECTION("5") { path::get_base_name("c:filename.ext", s); }
+            SECTION("6") { path::get_base_name("c:filename", s); }
 
             REQUIRE(s.equals("filename"));
         }
