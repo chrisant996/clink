@@ -25,4 +25,5 @@ private:
                     ~path() = delete;
                     path(const char&) = delete;
     void            operator = (const path&) = delete;
+    static int      get_directory_end(const char* path);
 };

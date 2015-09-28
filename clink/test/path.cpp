@@ -51,9 +51,13 @@ TEST_CASE("Paths") {
     }
 
     SECTION("path::get_directory()") {
-        SECTION("Basic") {
+        SECTION("Copy") {
             SECTION("0") { t << "one/two/three/filename.ext"; }
             SECTION("1") { t << "one/two/three\\filename.ext"; }
+            SECTION("2") { t << "one/two/three/"; }
+            SECTION("3") { t << "one/two/three\\"; }
+            SECTION("4") { t << "one/two/three///"; }
+            SECTION("5") { t << "one/two/three\\\\\\"; }
 
             path::get_directory(t.c_str(), s);
             path::clean(s, '/');
@@ -79,21 +83,21 @@ TEST_CASE("Paths") {
         }
 
         SECTION("Root basic") {
-            SECTION("0") { s << "/"; }
-            SECTION("1") { s << "\\"; }
-            SECTION("3") { s << "/one"; }
-            SECTION("4") { s << "\\one"; }
+            SECTION("0") { t << "/"; }
+            SECTION("1") { t << "\\"; }
+            SECTION("2") { t << "/one"; }
+            SECTION("3") { t << "\\one"; }
 
-            path::get_directory(s.c_str(), t);
-            path::clean(t, '/');
-            REQUIRE(t.equals("/"));
+            path::get_directory(t.c_str(), s);
+            path::clean(s, '/');
+            REQUIRE(s.equals("/"));
         }
 
         SECTION("Root in-place") {
             SECTION("0") { s << "/"; }
             SECTION("1") { s << "\\"; }
-            SECTION("3") { s << "/one"; }
-            SECTION("4") { s << "\\one"; }
+            SECTION("2") { s << "/one"; }
+            SECTION("3") { s << "\\one"; }
 
             path::get_directory(s);
             path::clean(s, '/');

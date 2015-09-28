@@ -64,11 +64,9 @@ bool path::get_base_name(const char* in, str_base& out)
 //------------------------------------------------------------------------------
 bool path::get_directory(const char* in, str_base& out)
 {
-    if (const char* slash = max(strrchr(in, '\\'), strrchr(in, '/')))
-    {
-        slash += !!(slash == in); // Don't strip '/' if it's the first char.
-        return out.concat(in, int(slash - in));
-    }
+    int end = get_directory_end(in);
+    if (end >= 0)
+        return out.concat(in, end);
 
     out.clear();
     return true;
@@ -77,16 +75,43 @@ bool path::get_directory(const char* in, str_base& out)
 //------------------------------------------------------------------------------
 bool path::get_directory(str_base& in_out)
 {
-    int slash = max(in_out.last_of('\\'), in_out.last_of('/'));
-    if (slash >= 0)
+    int end = get_directory_end(in_out.c_str());
+    if (end >= 0)
     {
-        slash = slash ? slash : 1; // Don't strip '/' if it's the first char.
-        in_out.truncate(slash);
+        in_out.truncate(end);
         return true;
     }
 
     in_out.clear();
     return true;
+}
+
+//------------------------------------------------------------------------------
+int path::get_directory_end(const char* path)
+{
+    if (const char* slash = max(strrchr(path, '\\'), strrchr(path, '/')))
+    {
+        // Trim consecutive slashes unless they're leading ones.
+        const char* first_slash = slash;
+        while (first_slash >= path)
+        {
+            if (*first_slash != '/' && *first_slash != '\\')
+                break;
+
+            --first_slash;
+        }
+        ++first_slash;
+
+        if (first_slash != path)    // N.B. Condition only applies Windows.
+            slash = first_slash;
+
+        // Don't strip '/' if it's the first char.
+        slash += !!(slash == path);
+
+        return int(slash - path);
+    }
+
+    return -1;
 }
 
 //------------------------------------------------------------------------------
