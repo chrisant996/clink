@@ -27,7 +27,7 @@ bool file_match_generator::generate(const line_state& line, matches_builder& bui
     // Get the path to match files from.
     buffer = line.word;
     path::get_directory(buffer);
-    if (buffer.length())
+    if (!buffer.empty())
         buffer << "/";
 
     // Glob the files.
