@@ -162,17 +162,20 @@ bool path::join(const char* lhs, const char* rhs, str_base& out)
 //------------------------------------------------------------------------------
 bool path::append(str_base& out, const char* rhs)
 {
-    bool include_separator = true;
+    bool add_seperator = true;
 
     int last = int(out.length() - 1);
     if (last >= 0)
-        include_separator &= (out[last] != '\\' && out[last] != '/');
+    {
+        add_seperator &= (out[last] != '\\' && out[last] != '/');
+        add_seperator &= !(out[1] == ':' && out[2] == '\0');
+    }
     else
-        include_separator = false;
+        add_seperator = false;
 
-    include_separator &= (rhs[0] != '\\' && rhs[0] != '/');
+    add_seperator &= (rhs[0] != '\\' && rhs[0] != '/');
 
-    if (include_separator)
+    if (add_seperator)
         out << "\\";
 
     return out.concat(rhs);

@@ -194,5 +194,29 @@ TEST_CASE("Paths") {
                 REQUIRE(s.equals("one\\two\\"));
             }
         }
+
+        SECTION("Drive letter") {
+            // Absolute
+            s.copy("x:");
+            path::append(s, "/one");
+            REQUIRE(s.equals("x:/one"));
+
+            s.copy("x:/");
+            path::append(s, "one");
+            REQUIRE(s.equals("x:/one"));
+
+            s.copy("x:");
+            path::append(s, "\\one");
+            REQUIRE(s.equals("x:\\one"));
+
+            s.copy("x:\\");
+            path::append(s, "one");
+            REQUIRE(s.equals("x:\\one"));
+
+            // Relative
+            s.copy("x:");
+            path::append(s, "one");
+            REQUIRE(s.equals("x:one"));
+        }
     }
 }
