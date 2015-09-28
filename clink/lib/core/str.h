@@ -235,10 +235,8 @@ bool str_impl<TYPE>::concat(const TYPE* src, int n)
 
     int remaining = m_size - len - 1;
 
-    bool truncated = false;
-    if (remaining < n)
-        truncated = true;
-    else
+    bool truncated = (remaining < n);
+    if (!truncated)
         remaining = n;
 
     if (remaining > 0)
