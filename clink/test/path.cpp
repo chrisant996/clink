@@ -77,6 +77,28 @@ TEST_CASE("Paths") {
             path::clean(s, '/');
             REQUIRE(s.equals(""));
         }
+
+        SECTION("Root basic") {
+            SECTION("0") { s << "/"; }
+            SECTION("1") { s << "\\"; }
+            SECTION("3") { s << "/one"; }
+            SECTION("4") { s << "\\one"; }
+
+            path::get_directory(s.c_str(), t);
+            path::clean(t, '/');
+            REQUIRE(t.equals("/"));
+        }
+
+        SECTION("Root in-place") {
+            SECTION("0") { s << "/"; }
+            SECTION("1") { s << "\\"; }
+            SECTION("3") { s << "/one"; }
+            SECTION("4") { s << "\\one"; }
+
+            path::get_directory(s);
+            path::clean(s, '/');
+            REQUIRE(s.equals("/"));
+        }
     }
 
     SECTION("path::get_drive()") {

@@ -65,7 +65,10 @@ bool path::get_base_name(const char* in, str_base& out)
 bool path::get_directory(const char* in, str_base& out)
 {
     if (const char* slash = max(strrchr(in, '\\'), strrchr(in, '/')))
+    {
+        slash += !!(slash == in); // Don't strip '/' if it's the first char.
         return out.concat(in, int(slash - in));
+    }
 
     out.clear();
     return true;
@@ -77,6 +80,7 @@ bool path::get_directory(str_base& in_out)
     int slash = max(in_out.last_of('\\'), in_out.last_of('/'));
     if (slash >= 0)
     {
+        slash = slash ? slash : 1; // Don't strip '/' if it's the first char.
         in_out.truncate(slash);
         return true;
     }
