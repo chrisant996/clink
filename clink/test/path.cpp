@@ -14,6 +14,9 @@ TEST_CASE("Paths") {
         path::clean(s);
         REQUIRE(s.equals("X:\\0\\1\\2\\3\\4\\"));
 
+        path::clean(s, '/');
+        REQUIRE(s.equals("X:/0/1/2/3/4/"));
+
         s.copy("abcdef");
         path::clean(s);
         REQUIRE(s.equals("abcdef"));
