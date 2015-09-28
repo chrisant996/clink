@@ -65,24 +65,14 @@ bool path::get_base_name(const char* in, str_base& out)
 bool path::get_directory(const char* in, str_base& out)
 {
     int end = get_directory_end(in);
-    if (end >= 0)
-        return out.concat(in, end);
-
-    out.clear();
-    return true;
+    return out.concat(in, end);
 }
 
 //------------------------------------------------------------------------------
 bool path::get_directory(str_base& in_out)
 {
     int end = get_directory_end(in_out.c_str());
-    if (end >= 0)
-    {
-        in_out.truncate(end);
-        return true;
-    }
-
-    in_out.clear();
+    in_out.truncate(end);
     return true;
 }
 
@@ -106,17 +96,26 @@ int path::get_directory_end(const char* path)
             slash = first_slash;
 
         // Don't strip '/' if it's the first char.
-        slash += !!(slash == path);
+        if (slash == path)
+            ++slash;
+
+        // Same for Windows and it's drive prefixes.
+        if (path[0] && path[1] == ':' && slash == path + 2)
+            ++slash;
 
         return int(slash - path);
     }
 
-    return -1;
+    if (path[0] && path[1] == ':')
+        return 2;
+
+    return 0;
 }
 
 //------------------------------------------------------------------------------
 bool path::get_drive(const char* in, str_base& out)
 {
+    // Windows
     if ((in[1] != ':') || (unsigned(tolower(in[0]) - 'a') > ('z' - 'a')))
         return false;
 
@@ -126,6 +125,7 @@ bool path::get_drive(const char* in, str_base& out)
 //------------------------------------------------------------------------------
 bool path::get_drive(str_base& in_out)
 {
+    // Windows
     if ((in_out[1] != ':') || (unsigned(tolower(in_out[0]) - 'a') > ('z' - 'a')))
         return false;
 
@@ -172,7 +172,7 @@ bool path::append(str_base& out, const char* rhs)
     if (last >= 0)
     {
         add_seperator &= (out[last] != '\\' && out[last] != '/');
-        add_seperator &= !(out[1] == ':' && out[2] == '\0');
+        add_seperator &= !(out[1] == ':' && out[2] == '\0'); // Windows
     }
     else
         add_seperator = false;

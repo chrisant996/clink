@@ -108,6 +108,20 @@ TEST_CASE("Paths") {
             path::clean(s, '/');
             REQUIRE(s.equals("/"));
         }
+
+        SECTION("Drive letter") {
+            s.clear();
+            path::get_directory("e:\\one", s);
+            REQUIRE(s.equals("e:\\"));
+
+            s.clear();
+            path::get_directory("e:/one", s);
+            REQUIRE(s.equals("e:/"));
+
+            s.clear();
+            path::get_directory("e:one", s);
+            REQUIRE(s.equals("e:"));
+        }
     }
 
     SECTION("path::get_drive()") {
