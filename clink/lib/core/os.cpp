@@ -40,6 +40,8 @@ bool os::make_dir(const char* dir)
 {
     str<> next;
     path::get_directory(dir, next);
+    if (path::is_root(next.c_str()))
+        return true;
 
     if (next.length())
         if (!make_dir(next.c_str()))
