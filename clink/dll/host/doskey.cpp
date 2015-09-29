@@ -102,12 +102,12 @@ int continue_doskey(wchar_t* chars, unsigned max_chars)
             if (c == 0 && g_state.token_count > 1)
             {
                 insert_from = g_state.input + g_state.tokens[1].start;
-                insert_length = (int)min(wcslen(insert_from), max_chars);
+                insert_length = min<int>(wcslen(insert_from), max_chars);
             }
             else if (c < g_state.token_count)
             {
                 insert_from = g_state.input + g_state.tokens[c].start;
-                insert_length = (int)min(g_state.tokens[c].length, (int)max_chars);
+                insert_length = min<int>(g_state.tokens[c].length, max_chars);
             }
 
             if (insert_length)
@@ -141,7 +141,7 @@ int begin_doskey(wchar_t* chars, unsigned max_chars)
         int i, n;
         int found_word = 0;
         const wchar_t* read = chars;
-        for (i = 0, n = min(sizeof_array(alias) - 1, max_chars); i < n && *read; ++i)
+        for (i = 0, n = min<int>(sizeof_array(alias) - 1, max_chars); i < n && *read; ++i)
         {
             if (!!iswspace(*read) == found_word)
             {
