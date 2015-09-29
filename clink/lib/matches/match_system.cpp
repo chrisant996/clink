@@ -59,10 +59,10 @@ void match_system::generate_matches(
     builder_word.concat(line + word_start, cursor - word_start);
 
     // Adjust the cursor so we get more matches than needed and can have the
-    // match builder take care of deciding what's match.
+    // match builder take care of deciding what is a match.
     while (--cursor > word_start)
     {
-        if (line[cursor] == '\\' || line[cursor] == '/')
+        if (line[cursor] == '\\' || line[cursor] == '/' || line[cursor] == ':')
         {
             ++cursor;
             break;
