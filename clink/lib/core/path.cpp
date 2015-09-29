@@ -157,6 +157,28 @@ bool path::get_name(const char* in, str_base& out)
 }
 
 //------------------------------------------------------------------------------
+bool path::is_root(const char* path)
+{
+    // Windows' drives prefixes.
+    // "X:" ?
+    if (path[0] && path[1] == ':')
+    {
+        if (path[2] == '\0')
+            return true;
+
+        // "X:\" or "X://" ?
+        if (path[3] == '\0' && (path[2] == '\\' || path[2] == '/'))
+            return true;
+    }
+
+    // "[/ or /]+" ?
+    while (*path == '/' || *path == '\\')
+        ++path;
+
+    return (*path == '\0');
+}
+
+//------------------------------------------------------------------------------
 bool path::join(const char* lhs, const char* rhs, str_base& out)
 {
     out << lhs;

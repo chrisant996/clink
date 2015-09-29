@@ -187,6 +187,26 @@ TEST_CASE("Paths") {
         }
     }
 
+    SECTION("path::is_root()") {
+        SECTION("True") {
+            REQUIRE(path::is_root("e:"));
+            REQUIRE(path::is_root("e:/"));
+            REQUIRE(path::is_root("e:\\"));
+            REQUIRE(path::is_root("/"));
+            REQUIRE(path::is_root("\\"));
+            REQUIRE(path::is_root(""));
+        }
+
+        SECTION("False") {
+            REQUIRE(!path::is_root("e:one"));
+            REQUIRE(!path::is_root("e:/one"));
+            REQUIRE(!path::is_root("e:\\one"));
+            REQUIRE(!path::is_root("/one"));
+            REQUIRE(!path::is_root("\\one"));
+            REQUIRE(!path::is_root("one"));
+        }
+    }
+
     SECTION("path::join()") {
         SECTION("Basic") {
             SECTION("0") { path::join("one/two", "three/four", s); }
