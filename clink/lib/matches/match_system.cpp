@@ -72,9 +72,10 @@ void match_system::generate_matches(
     str<> word;
     word.concat(line + word_start, cursor - word_start);
 
-    // Count the number of quotes.
+    // Call each registered match generator until one says it's returned matches
     line_state state = { word.c_str(), line, word_start, cursor, cursor };
     matches_builder builder(result, builder_word.c_str());
     for (int i = 0, n = int(m_generators.size()); i < n; ++i)
-        m_generators[i].generator->generate(state, builder);
+        if (m_generators[i].generator->generate(state, builder))
+            break;
 }
