@@ -3,6 +3,7 @@
 
 #include "pch.h"
 #include "globber.h"
+#include "os.h"
 #include "path.h"
 
 //------------------------------------------------------------------------------
@@ -13,7 +14,20 @@ globber::globber(const context& ctx)
     if (m_context.wildcard == nullptr)  m_context.wildcard = "*";
 
     str<MAX_PATH> glob;
-    glob << m_context.path;
+
+    // Windows: Expand if the path to complete is drive relative (e.g. 'c:foobar')
+    // Drive X's current path is stored in the environment variable "=X:"
+    const char* path = m_context.path;
+    if (path[0] && path[1] == ':' && path[2] != '\\' && path[2] != '/')
+    {
+        char env_var[4] = { '=', path[0], ':', 0 };
+        os::get_env(env_var, glob);
+        glob << "/";
+        glob << (path + 2);
+    }
+    else
+        glob << m_context.path;
+
     glob << m_context.wildcard;
 
     wstr<MAX_PATH> wglob(glob.c_str());
@@ -21,7 +35,7 @@ globber::globber(const context& ctx)
     if (m_handle == INVALID_HANDLE_VALUE)
         m_handle = nullptr;
 
-    path::get_directory(glob.c_str(), m_root);
+    path::get_directory(path, m_root);
 }
 
 //------------------------------------------------------------------------------
