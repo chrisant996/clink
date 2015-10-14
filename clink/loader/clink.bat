@@ -64,15 +64,24 @@ goto :eof
 :loader_x86
 if exist "%~dpn0_x86.exe" (
     "%~dpn0_x86.exe" %*
-)
+) else if exist "%~dp0clink_x86.exe" (
+    "%~dp0clink_x86.exe" %*
+) 
 exit /b 0
 
 :loader_x64
 if exist "%~dpn0_x64.exe" (
     "%~dpn0_x64.exe" %*
+) else if exist "%~dp0clink_x64.exe" (
+    "%~dp0clink_x64.exe" %*
 )
 exit /b 0
 
 :launch
-start "" cmd.exe /s /k ""%~dpnx0" inject %clink_profile_arg% && title Clink"
+if exist "%~dpn0*.exe" (
+    start "" cmd.exe /s /k ""%~dpnx0" inject %clink_profile_arg% && title Clink"
+)
+else (
+    start "" cmd.exe /s /k "%~dp0clink inject %clink_profile_arg% && title Clink"
+)
 exit /b 0
