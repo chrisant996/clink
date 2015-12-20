@@ -61,10 +61,5 @@ goto :eof
 
 ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 :launch
-if exist "%~dpn0*.exe" (
-    start "" cmd.exe /s /k ""%~dpnx0" inject %clink_profile_arg% && title Clink"
-)
-else (
-    start "" cmd.exe /s /k "%~dp0clink inject %clink_profile_arg% && title Clink"
-)
+start "" cmd.exe /s /k ""%~dpnx0" inject %clink_profile_arg% && title Clink"
 exit /b 0
