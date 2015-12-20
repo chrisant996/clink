@@ -125,6 +125,7 @@ void prepare_env_for_inputrc()
     capture_env(&env_block);
 
     // HOME is where Readline will expand ~ to.
+    if (!GetEnvironmentVariable("HOME", NULL, 0))
     {
         static const char home_eq[] = "HOME=";
         int size = sizeof_array(home_eq);
