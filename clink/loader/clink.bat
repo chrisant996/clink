@@ -45,36 +45,19 @@ if "%1"=="" (
 
 :: Pass through to appropriate loader.
 ::
-if /i "%PROCESSOR_ARCHITECTURE%"=="x86" (
-    call :loader_x86 %*
-) else if /i "%PROCESSOR_ARCHITECTURE%"=="amd64" (
+if /i "%processor_architecture%"=="x86" (
+        "%~dp0\clink_x86.exe" %*
+) else if /i "%processor_architecture%"=="amd64" (
     if defined PROCESSOR_ARCHITEW6432 (
-        call :loader_x86 %*
+        "%~dp0\clink_x86.exe" %*
     ) else (
-        call :loader_x64 %*
+        "%~dp0\clink_x64.exe" %*
     )
 )
 
 :end
 set clink_profile_arg=
 goto :eof
-
-:: Helper functions to avoid cmd.exe's issues with brackets.
-:loader_x86
-if exist "%~dpn0_x86.exe" (
-    "%~dpn0_x86.exe" %*
-) else if exist "%~dp0clink_x86.exe" (
-    "%~dp0clink_x86.exe" %*
-) 
-exit /b 0
-
-:loader_x64
-if exist "%~dpn0_x64.exe" (
-    "%~dpn0_x64.exe" %*
-) else if exist "%~dp0clink_x64.exe" (
-    "%~dp0clink_x64.exe" %*
-)
-exit /b 0
 
 ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 :launch
