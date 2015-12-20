@@ -1,7 +1,6 @@
 ::
 :: Copyright (c) 2012 Martin Ridgers
 ::
-::
 :: Permission is hereby granted, free of charge, to any person obtaining a copy
 :: of this software and associated documentation files (the "Software"), to deal
 :: in the Software without restriction, including without limitation the rights
@@ -77,6 +76,7 @@ if exist "%~dpn0_x64.exe" (
 )
 exit /b 0
 
+::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 :launch
 if exist "%~dpn0*.exe" (
     start "" cmd.exe /s /k ""%~dpnx0" inject %clink_profile_arg% && title Clink"
