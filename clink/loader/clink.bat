@@ -61,5 +61,5 @@ goto :eof
 
 ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 :launch
-start "" cmd.exe /s /k ""%~dpnx0" inject %clink_profile_arg% && title Clink"
+start "Clink" cmd.exe /s /k ""%~dpnx0" inject %clink_profile_arg%"
 exit /b 0
