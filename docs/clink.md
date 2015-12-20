@@ -41,22 +41,7 @@ When running Clink via the methods above, Clink checks the parent process is sup
 
 The easiest way to configure Clink is to use Clink's **set** command line option.  This can list, query, and set Clink's settings. Run **clink set --help** from a Clink-installed cmd.exe process to learn more both about how to use it and to get descriptions for Clink's various options.
 
-Configuring Clink by and large involves configuring Readline by creating a **clink_inputrc** file. There is excellent documentation for all the options available to configure Readline in Readline's [manual](http://tinyurl.com/oum26rp).
-
-Where Clink looks for **clink_inputrc** (as well as .lua scripts and the settings file) depends on which distribution of Clink was used. If you installed Clink using the .exe installer then Clink uses the current user's non-roaming application data directory. This user directory is usually found in one of the following locations;
-
-- c:\Documents and Settings\\&lt;username&gt;\Local Settings\Application Data *(XP)*
-- c:\Users\\&lt;username&gt;\AppData\Local *(Vista onwards)*
-
-The .zip distribution of Clink creates and uses a directory called **profile** which is located in the same directory where Clink's core files are found.
-
-All of the above locations can be overriden using the **--profile &lt;path&gt;** command line option which is specified when injecting Clink into cmd.exe using **clink inject**.
-
-#### Settings
-
-It is also possible to configure settings specific to Clink. These are stored in a file called **settings** which is found in one of the locations mentioned in the previous section. The settings file gets created the first time Clink is run.
-
-Settings loaded from the file can be overriden by setting environment variables matching the setting name and prefixed with "clink.". For example, the command **set clink.prompt_colour=10** will turn the prompt green regardless of what is in the settings file. Overrides are not saved to disk.
+Settings that are loaded when Clink starts can be overridden by setting environment variables matching the setting name and prefixed with "clink.". For example, the command **set clink.prompt_colour=10** will turn the prompt green regardless of what is in the settings file. Overrides are not saved to disk.
 
 The following table describes the available settings;
 
@@ -76,6 +61,27 @@ Name                         | Description
 **space_prefix_match_files** | If the line begins with whitespace then Clink bypasses executable matching and will match all files and directories instead.
 **terminate_autoanswer**     | Automatically answers cmd.exe's **Terminate batch job (Y/N)?** prompts. 0 = disabled, 1 = answer Y, 2 = answer N.
 **use_altgr_substitute**     | Windows provides Ctrl-Alt as a substitute for AltGr, historically to support keyboards with no AltGr key. This may collide with some of Readline's bindings.
+
+#### File Locations
+
+Settings and history are persisted to disk from session to session. The location of these files depends on which distribution of Clink was used. If you installed Clink using the .exe installer then Clink uses the current user's non-roaming application data directory. This user directory is usually found in one of the following locations;
+
+- c:\Documents and Settings\\&lt;username&gt;\Local Settings\Application Data *(XP)*
+- c:\Users\\&lt;username&gt;\AppData\Local *(Vista onwards)*
+
+The .zip distribution of Clink creates and uses a directory called **profile** which is located in the same directory where Clink's core files are found.
+
+All of the above locations can be overridden using the **--profile &lt;path&gt;** command line option which is specified when injecting Clink into cmd.exe using **clink inject**.
+
+### Configuring Readline
+
+Readline itself can also be configured to add custom keybindings and macros by creating a Readline init file. There is excellent documentation for all the options available to configure Readline in Readline's [manual](http://tinyurl.com/oum26rp).
+
+Clink will search in the directory as specified by the HOME environment variable for one or all of the following files; `clink_inputrc`, `_inputrc`, and `.inputrc`. If HOME is unset then Clink will use either of the standard Windows environment variables `%homedrive%\%homepath%` or `%userprofile%`.
+
+Other software that also uses Readline will also look for the `.inputrc` file (and possibly the `_inputrc` file too). To set macros and keybindings intended only for Clink one can use the Readline init file conditional construct like this; `$if cmd.exe [...] $endif`.
+
+Editing the `clink_inputrc_base` is discouraged as this will change from version to version and may not be present in the future.
 
 ### Extending Clink
 
