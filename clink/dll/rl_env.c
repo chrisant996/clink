@@ -125,13 +125,21 @@ void prepare_env_for_inputrc()
     capture_env(&env_block);
 
     // HOME is where Readline will expand ~ to.
-    if (!GetEnvironmentVariable("HOME", NULL, 0))
+    if (getenv("home") == NULL)
     {
         static const char home_eq[] = "HOME=";
         int size = sizeof_array(home_eq);
 
         strcpy(buffer, home_eq);
-        get_config_dir(buffer + size - 1, sizeof_array(buffer) - size);
+        if (getenv("homedrive") && getenv("homepath"))
+        {
+            str_cat(buffer, getenv("homedrive"), sizeof_array(buffer));
+            str_cat(buffer, getenv("homepath"), sizeof_array(buffer));
+        }
+        else if (getenv("userprofile"))
+        {
+            str_cat(buffer, getenv("userprofile"), sizeof_array(buffer));
+        }
 
         putenv(buffer);
     }
