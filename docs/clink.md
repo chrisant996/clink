@@ -131,7 +131,7 @@ clink.register_match_generator(env_vars_match_generator, 10)
 
 #### Argument Completion
 
-Clink provides a framework for writing complex argument match generators in Lua.  It works by creating a parser object that describes a command's arguments and flags and then registering the parser with Clink. When Clink detects the command is being entered on the current command line being editied, it uses the parser to generate matches.
+Clink provides a framework for writing complex argument match generators in Lua.  It works by creating a parser object that describes a command's arguments and flags and then registering the parser with Clink. When Clink detects the command is being entered on the current command line being edited, it uses the parser to generate matches.
 
 Here is an example of a simple parser for the command **foobar**;
 
@@ -182,7 +182,7 @@ c_parser:set_arguments(
 )
 ```
 
-With syntax from preceeded section this converts into:
+With syntax from preceding section this converts into:
 
 ```
 parser = clink.arg.new_parser
