@@ -101,6 +101,13 @@ local function exec_match_generator(text, first, last)
     local dot = text:find("%.[^.]*")
     if dot then
         ext = text:sub(dot):lower()
+
+        -- If the extension is just "." then just remove it completely and don't
+        -- consider it as part of what we're using to match with.
+        if ext == "." then
+            text = text:sub(1, #text - 1)
+            ext = nil
+        end
     end
 
     local suffices = clink.split(clink.get_env("pathext"), ";")
