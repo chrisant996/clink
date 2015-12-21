@@ -163,6 +163,12 @@ clink.test.test_matches(
     { "one_local.exe", "one_local.txt", "one_dir\\" }
 )
 
+clink.test.test_output(
+    "Last char .",
+    "one_local.",
+    "one_local.exe "
+)
+
 --------------------------------------------------------------------------------
 exec_match_style = 1
 clink.test.test_matches(
