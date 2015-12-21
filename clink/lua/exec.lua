@@ -48,10 +48,10 @@ local function get_environment_paths()
 
     -- Append slashes.
     for i = 1, #paths_merged, 1 do
-        table.insert(paths, paths_merged[i].."\\")
+        paths_merged[i] = paths_merged[i].."/"
     end
 
-    return paths
+    return paths_merged
 end
 
 --------------------------------------------------------------------------------
