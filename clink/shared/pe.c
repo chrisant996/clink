@@ -89,10 +89,11 @@ static void** iterate_imports(
         name = (char*)rva_to_addr(base, iid->Name);
         if (dll == NULL || _strnicmp(name, dll, len) == 0)
         {
-            void** ret = callback(base, iid, param);
+            void** ret;
 
             LOG_INFO("Checking imports in '%s'", name);
 
+            ret = callback(base, iid, param);
             if (ret != NULL)
             {
                 return ret;
