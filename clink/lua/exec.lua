@@ -55,6 +55,19 @@ local function get_environment_paths()
 end
 
 --------------------------------------------------------------------------------
+local function exec_find_dirs(pattern, case_map)
+    local ret = {}
+
+    for _, dir in ipairs(clink.find_dirs(pattern, case_map)) do
+        if dir ~= "." and dir ~= ".." then
+            table.insert(ret, dir)
+        end
+    end
+
+    return ret
+end
+
+--------------------------------------------------------------------------------
 local function exec_match_generator(text, first, last)
     -- If match style setting is < 0 then consider executable matching disabled.
     local match_style = clink.get_setting_int("exec_match_style")
@@ -135,7 +148,7 @@ local function exec_match_generator(text, first, last)
 
     -- Lastly we may wish to consider directories too.
     if clink.match_count() == 0 or match_style >= 2 then
-        clink.match_files(text.."*", true, clink.find_dirs)
+        clink.match_files(text.."*", true, exec_find_dirs)
     end
 
     clink.matches_are_files()
