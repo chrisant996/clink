@@ -141,11 +141,14 @@ static void** import_by_name(
     intptr_t* nt = rva_to_addr(base, iid->OriginalFirstThunk);
     while (*at != 0 && *nt != 0)
     {
-        IMAGE_IMPORT_BY_NAME* iin = rva_to_addr(base, (unsigned)(*nt));
-
-        if (_stricmp(iin->Name, func_name) == 0)
+        // Check that this import is imported by name (MSB not set)
+        if (*nt > 0)
         {
-            return at;
+            unsigned rva = (unsigned)(*nt & 0x7fffffff);
+            IMAGE_IMPORT_BY_NAME* iin = rva_to_addr(base, rva);
+
+            if (_stricmp(iin->Name, func_name) == 0)
+                return at;
         }
 
         ++at;
