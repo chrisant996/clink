@@ -80,7 +80,7 @@ static void** iterate_imports(
         return 0;
     }
 
-    while (iid->Name)
+    while (iid->Characteristics)
     {
         char* name;
         size_t len;
