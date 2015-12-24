@@ -1,6 +1,22 @@
 
 ### Changelog
 
+##### v0.4.6
+
+- HOME is only set if it is currently unset.
+- Readline can be initialised with .inputrc and _inputrc files too (#258).
+- Bug fixes;
+    - Executable completion;
+        - Paths from PATH were checked twice.
+        - Incorrect results were returned for words ending in '.' or '-'.
+        - Directories . and .. were incorrectly displayed.
+    - Check there is a valid screen buffer when extracting prompt (#366).
+    - Correctly handle 'import by ordinal' bit (#351).
+    - Display errors when editing near the right-hand edge (#347).
+    - Doskey emulation (#344).
+    - Improved 'clink autorun' help (#348).
+    - Fixed launching Clink when the .bat is renamed (#357).
+
 ##### v0.4.5
 
 - Improved "clink autorun". It now defaults to the Current User registry hive.
