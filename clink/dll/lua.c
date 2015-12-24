@@ -218,6 +218,7 @@ static int find_files_impl(lua_State* state, int dirs_only)
     struct dirent* entry;
     char buffer[512];
     const char* mask;
+    const char* mask_file;
     int i;
     int case_map;
 
@@ -229,6 +230,7 @@ static int find_files_impl(lua_State* state, int dirs_only)
     }
 
     mask = lua_tostring(state, 1);
+    mask_file = NULL;
 
     // Should the mask be adjusted for -/_ case mapping?
     if (_rl_completion_case_map && i > 1 && lua_toboolean(state, 2))
@@ -252,6 +254,11 @@ static int find_files_impl(lua_State* state, int dirs_only)
 
             ++slash;
         }
+
+        mask_file = strrchr(mask, '\\');
+        if (mask_file == NULL)
+            mask_file = strrchr(mask, '/');
+        mask_file = (mask_file == NULL) ? mask : mask_file + 1;
     }
     
     lua_createtable(state, 0, 0);
@@ -263,6 +270,35 @@ static int find_files_impl(lua_State* state, int dirs_only)
         if (dirs_only && !(entry->attrib & _A_SUBDIR))
         {
             continue;
+        }
+
+        // Check the returned files against the '?' wildcard in mask for -/_
+        // if the matches should be case insensitive.
+        if (mask_file != NULL)
+        {
+            int ok = 1;
+            const char* read = mask_file;
+
+            while (*read != '\0')
+            {
+                char c = *read;
+                if (c == '?')
+                {
+                    char d = entry->d_name[read - mask_file];
+                    if (d != '-' && d != '_')
+                    {
+                        ok = 0;
+                        break;
+                    }
+                }
+                else if (c == '*')
+                    break;
+
+                ++read;
+            }
+
+            if (!ok)
+                continue;
         }
 
         lua_pushstring(state, entry->d_name);
