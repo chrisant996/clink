@@ -71,7 +71,7 @@ static int tokenise(wchar_t* source, token_t* tokens, int max_tokens)
 //------------------------------------------------------------------------------
 int continue_doskey(wchar_t* chars, unsigned max_chars)
 {
-    const wchar_t* read = g_state.alias_next;
+    wchar_t* read = g_state.alias_next;
 
     if (g_state.alias_text == NULL)
         return 0;
