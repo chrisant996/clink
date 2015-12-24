@@ -70,5 +70,10 @@ h6 { font-size: 1.00em; }
 }
 
 #content #api h5 {
+    border-top: gray dashed 1px;
+    padding-top: 0.3em;
+    margin-bottom: 0em;
+    font-size: 1.0em;
+    color: darkgreen;
     font-family: courier, monospace;
 }
