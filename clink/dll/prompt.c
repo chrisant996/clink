@@ -201,11 +201,15 @@ void* extract_prompt(int ret_as_utf8)
 
     // Find where the cursor is (tip; it's at the end of the prompt).
     handle = GetStdHandle(STD_OUTPUT_HANDLE);
-    GetConsoleScreenBufferInfo(handle, &csbi);
+    if (GetConsoleScreenBufferInfo(handle, &csbi) == FALSE)
+        return NULL;
 
     // Work out prompt length and allocate some working buffer space.
     cur = csbi.dwCursorPosition;
     length = cur.X;
+    if (length < 0)
+        return NULL;
+
     cur.X = 0;
     prompt = malloc(length * 8);
 
