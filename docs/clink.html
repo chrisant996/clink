@@ -20,6 +20,7 @@
             var div = document.createElement("div");
             div.innerHTML = marked(md.innerHTML);
             div.id = md.getAttribute("_id");
+            div.className = md.getAttribute("_class");
             content.appendChild(div);
         }
 
@@ -64,13 +65,13 @@
     </div>
     <div id="toc"></div>
     <div id="content"></div>
-    <md _id="documentation" style="display: none;">
+    <md _class="section" _id="documentation" style="display: none;">
         $(INCLUDE clink.md)
     </md>
-    <md _id="api" style="display: none;">
+    <md _class="section" _id="api" style="display: none;">
         $(INCLUDE api.md)
     </md>
-    <md _id="changelog" style="display: none;">
+    <md _class="section" _id="changes" style="display: none;">
         $(INCLUDE ../CHANGES)
     </md>
 </body>

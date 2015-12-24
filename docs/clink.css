@@ -14,6 +14,11 @@ h4 { font-size: 1.14em; }
 h5 { font-size: 1.07em; }
 h6 { font-size: 1.00em; }
 
+.section {
+    margin-top: 2em;
+    margin-bottom: 4em;
+}
+
 #header {
     float: right;
     text-align: right;
