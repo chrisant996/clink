@@ -1,5 +1,5 @@
 
-### Changelog
+### Changes
 
 ##### v0.4.6
 
@@ -10,19 +10,19 @@
         - Paths from PATH were checked twice.
         - Incorrect results were returned for words ending in '.' or '-'.
         - Directories . and .. were incorrectly displayed.
-    - Check there is a valid screen buffer when extracting prompt (#366).
-    - Correctly handle 'import by ordinal' bit (#351).
-    - Display errors when editing near the right-hand edge (#347).
+    - Fixed a crash if .bat script's stdout is redirected (#366).
+    - Occasional crash when injecting Clink (#351).
+    - Display errors when editing near the window's right-hand edge (#347).
     - Doskey emulation (#344).
     - Improved 'clink autorun' help (#348).
-    - Fixed launching Clink when the .bat is renamed (#357).
+    - Fixed launching Clink when clink.bat is renamed (#357).
 
 ##### v0.4.5
 
-- Improved "clink autorun". It now defaults to the Current User registry hive.
-- "clink set" gives more details for enumeration-type settings.
+- Improved 'clink autorun'. It now defaults to the Current User registry hive.
+- 'clink set' gives more details for enumeration-type settings.
 - Tab completion for p4vc.
-- New settings "history_expand_mode" to control history expansion in quotes (#317).
+- New settings 'history_expand_mode' to control history expansion in quotes (#317).
 - Bug fixes;
     - Use full width of the terminal (#337).
     - Fixed MinGW compile error (#335).
@@ -54,7 +54,7 @@
 
 ##### v0.4.3
 
-- Localised Y/N when auto-answering "terminate?" prompt.
+- Localised Y/N when auto-answering 'terminate?' prompt.
 - $* would early out if there was no arguments.
 - Disable ANSI code support if third party provides it.
 - Installer can now set %CLINK_DIR% to install location.
@@ -74,7 +74,7 @@
 ##### v0.4.2
 
 - Prompt colouring no longer requires third party ANSI code utility.
-- Override settings with environment variables prefixed with "clink."
+- Override settings with environment variables prefixed with 'clink'.
 - Ctrl-PgUp goes up a directory.
 - Updated Go completions (by matrixik).
 - Arguments to clink.arg.new_parser() now initialise parser's flags/args (from vladimir-kotikov).
@@ -133,7 +133,7 @@
 
 - Automatic answering of cmd.exe's 'Terminate batch script?' prompt.
 - Coloured prompts (requires ANSICON or ConEmu).
-- Added Shift-Up keyboard shortcut to automatically execute "cd .."
+- Added Shift-Up keyboard shortcut to automatically execute 'cd ..'
 - Mapped Ctrl-Z to undo, Microsoft style.
 - Improved integration of Readline;
     - New input handling code (Ctrl-Alt combos now work).
