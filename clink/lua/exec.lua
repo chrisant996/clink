@@ -89,13 +89,6 @@ local function exec_match_generator(text, first, last)
         end
     end
 
-    -- Strip off any path components that may be on text
-    local prefix = ""
-    local i = text:find("[\\/:][^\\/:]*$")
-    if i then
-        prefix = text:sub(1, i)
-    end
-
     -- Extract any possible extension that maybe on the text being completed.
     local ext = nil
     local dot = text:find("%.[^.]*")
