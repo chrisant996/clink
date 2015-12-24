@@ -89,60 +89,50 @@ local function exec_match_generator(text, first, last)
         end
     end
 
-    -- Extract any possible extension that maybe on the text being completed.
-    local ext = nil
-    local dot = text:find("%.[^.]*")
-    if dot then
-        ext = text:sub(dot):lower()
-
-        -- If the extension is just "." then just remove it completely and don't
-        -- consider it as part of what we're using to match with.
-        if ext == "." then
-            text = text:sub(1, #text - 1)
-            ext = nil
-        end
+    -- Split text into directory and name
+    local text_dir = ""
+    local text_name = text
+    local i = text:find("[\\/:][^\\/:]*$")
+    if i then
+        text_dir = text:sub(1, i)
+        text_name = text:sub(i + 1)
     end
 
-    local suffices = clink.split(clink.get_env("pathext"), ";")
-    for i = 1, #suffices, 1 do
-        local suffix = suffices[i]
-
-        -- Does 'text' contain some of the suffix (i.e. "cmd.e")? If it does
-        -- then merge them so we get "cmd.exe" rather than "cmd.*.exe".
-        if ext and suffix:sub(1, #ext):lower() == ext then
-            suffix = ""
-        end
-
-        suffices[i] = text.."*"..suffix
-    end
-
-    -- First step is to match executables in the environment's path.
+    local paths
     if not text:find("[\\/:]") then
-        local paths = get_environment_paths()
-        for _, suffix in ipairs(suffices) do
-            for _, path in ipairs(paths) do
-                clink.match_files(path..suffix, false)
-            end
-        end
-
         -- If the terminal is cmd.exe check it's commands for matches.
         if clink.get_host_process() == "cmd.exe" then
             clink.match_words(text, dos_commands)
         end
 
-        -- Lastly add console aliases as matches.
-        local aliases = clink.get_console_aliases()
-        clink.match_words(text, aliases)
-    elseif match_style < 1 then
+        paths = get_environment_paths();
+    else
+        paths = {}
+
         -- 'text' is an absolute or relative path. If we're doing Bash-style
         -- matching should now consider directories.
-        match_style = 2
+        if match_style < 1 then
+            match_style = 2
+        else
+            match_style = 1
+        end
     end
 
-    -- Optionally include executables in the cwd (or absolute/relative path).
-    if clink.match_count() == 0 or match_style >= 1 then
-        for _, suffix in ipairs(suffices) do
-            clink.match_files(suffix)
+    -- Should we also consider the path referenced by 'text'?
+    if match_style >= 1 then
+        table.insert(paths, text_dir)
+    end
+
+    -- Search 'paths' for files ending in 'suffices' and look for matches
+    local suffices = clink.split(clink.get_env("pathext"), ";")
+    for _, suffix in ipairs(suffices) do
+        for _, path in ipairs(paths) do
+            local files = clink.find_files(path.."*"..suffix, false)
+            for _, file in ipairs(files) do
+                if clink.is_match(text_name, file) then
+                    clink.add_match(text_dir..file)
+                end
+            end
         end
     end
 

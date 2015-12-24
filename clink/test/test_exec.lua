@@ -51,6 +51,10 @@ clink.test.test_fs({
     foodir = {
         "two_dir_local.exe",
     },
+    jumble = {
+        "three.exe",
+        "three-local.py",
+    },
     "one_local.exe",
     "two_local.exe",
     "one_local.txt"
@@ -66,6 +70,12 @@ function clink.get_env(name)
         error("BAD ENV:"..name)
     end
 end
+
+clink.test.test_matches(
+    "Nothing",
+    "abc123",
+    {}
+)
 
 clink.test.test_output(
     "PATH",
@@ -94,7 +104,7 @@ clink.test.test_matches(
 clink.test.test_matches(
     "Relative path",
     ".\\",
-    { "one_local.exe", "two_local.exe", "one_dir\\", "foodir\\" }
+    { "one_local.exe", "two_local.exe", "one_dir\\", "foodir\\", "jumble\\" }
 )
 
 clink.test.test_output(
@@ -164,15 +174,27 @@ clink.test.test_matches(
 )
 
 clink.test.test_output(
-    "Last char .",
-    "one_local.",
-    "one_local.exe "
+    "Last char . 1",
+    "one_path.",
+    "one_path.exe "
+)
+
+clink.test.test_output(
+    "Last char . 2",
+    "jumble\\three.",
+    "jumble\\three.exe "
+)
+
+clink.test.test_output(
+    "Last char -",
+    "one_local-",
+    "one_local-"
 )
 
 --------------------------------------------------------------------------------
 exec_match_style = 1
 clink.test.test_matches(
-    "Style - cwd (no dirs)",
+    "Style - cwd (no dirs) 1",
     "one_",
     { "one_local.exe", "one_path.exe", "one_two.py" }
 )
