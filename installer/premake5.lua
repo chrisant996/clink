@@ -80,19 +80,12 @@ local function have_required_tool(name)
 end
 
 --------------------------------------------------------------------------------
-local function get_target_dir(nightly)
-    local target_dir
-
-    if nightly then
-        target_dir = tostring(nightly)
-        target_dir = target_dir .. os.date("%Y%m%d_")
-        target_dir = target_dir .. get_last_git_commit()
-    else
-        target_dir = ".build/release/"
-        if clink_ver ~= "DEV" then
-            target_dir = target_dir .. os.date("%Y%m%d_%H%M%S_")
-        end
-        target_dir = target_dir .. clink_ver
+local function get_target_dir()
+    local target_dir = ".build/release/"
+    target_dir = target_dir .. os.date("%Y%m%d_")
+    target_dir = target_dir .. get_last_git_commit()
+    if clink_ver ~= "DEV" then
+        target_dir = target_dir .. "_" .. clink_ver
     end
 
     target_dir = path.getabsolute(target_dir) .. "/"
@@ -249,7 +242,7 @@ newaction {
         end
 
         -- Tidy up code directory.
-        if clink_ver ~= "DEV" and not nightly then
+        if clink_ver ~= "DEV" then
             rmdir(".build")
             rmdir(".git")
             unlink(".gitignore")
@@ -275,12 +268,6 @@ newaction {
         -- Package the release up in an archive.
         if have_7z then
             exec("7z a -r  ../clink_" .. clink_ver .. ".zip  ../clink_" .. clink_ver)
-        end
-
-        -- Stuff...
-        if nightly then
-            os.chdir(dest .. "/..")
-            rmdir(dest)
         end
 
         -- Report some facts about what just happened.
