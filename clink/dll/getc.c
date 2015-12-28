@@ -62,8 +62,16 @@ static void simulate_sigwinch()
     FillConsoleOutputAttribute(handle, csbi.wAttributes, cell_count, cursor_pos,
         &written);
 
-    // Tell Readline the buffer's resized.
-    rl_resize_terminal();
+    // Tell Readline the buffer's resized, but make sure we don't use Clink's
+    // redisplay path as then Readline won't redisplay multiline prompts correctly.
+    {
+        rl_voidfunc_t* old_redisplay = rl_redisplay_function;
+        rl_redisplay_function = rl_redisplay;
+
+        rl_resize_terminal();
+
+        rl_redisplay_function = old_redisplay;
+    }
 }
 
 //------------------------------------------------------------------------------
