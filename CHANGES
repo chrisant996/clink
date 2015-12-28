@@ -12,7 +12,10 @@
         - Directories . and .. were incorrectly displayed.
     - Fixed a crash if .bat script's stdout is redirected (#366).
     - Occasional crash when injecting Clink (#351).
-    - Display errors when editing near the window's right-hand edge (#347).
+    - Display errors;
+        - When editing near the window's right-hand edge (#347).
+        - Double display of multi-line prompts when resizing the terminal (#352).
+        - Very rare wrap artefacts when making the terminal window larger.
     - Doskey emulation (#344).
     - Improved 'clink autorun' help (#348).
     - Fixed launching Clink when clink.bat is renamed (#357).
