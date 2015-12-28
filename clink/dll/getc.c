@@ -66,7 +66,7 @@ static void simulate_sigwinch()
         cell_count = csbi.dwSize.X * _rl_vis_botlin;
 
         FillConsoleOutputCharacterW(handle, ' ', cell_count, cursor_pos, &written);
-        FillConsoleOutputAttribute(handle, ~csbi.wAttributes & 0x77, cell_count, cursor_pos,
+        FillConsoleOutputAttribute(handle, csbi.wAttributes, cell_count, cursor_pos,
             &written);
     }
 
