@@ -45,22 +45,30 @@ static void simulate_sigwinch()
     handle = GetStdHandle(STD_OUTPUT_HANDLE);
     GetConsoleScreenBufferInfo(handle, &csbi);
 
-    // If the cursor was outside of the new buffer size, conhost will move it
-    // down one line. This needs to be accounted for to prevent artefacts.
-    if (_rl_last_c_pos >= csbi.dwSize.X)
-        ++_rl_last_v_pos;
-
-    // Move the cursor to the prompt line
-    cursor_pos = csbi.dwCursorPosition;
-    cursor_pos.Y -= _rl_last_v_pos;
+    // If the new buffer size has clipped the cursor, conhost will move it down
+    // one line. Readline on the other hand thinks that the cursor's row remains
+    // unchanged.
     cursor_pos.X = 0;
+    cursor_pos.Y = csbi.dwCursorPosition.Y;
+    if (_rl_last_c_pos >= csbi.dwSize.X && cursor_pos.Y > 0)
+        --cursor_pos.Y;
+
     SetConsoleCursorPosition(handle, cursor_pos);
 
-    // Clear the buffer used by the line previously.
-    cell_count = csbi.dwSize.X * (_rl_vis_botlin + 1);
-    FillConsoleOutputCharacterW(handle, ' ', cell_count, cursor_pos, &written);
-    FillConsoleOutputAttribute(handle, csbi.wAttributes, cell_count, cursor_pos,
-        &written);
+    // Readline only clears the last row. If a resize causes a line to now occupy
+    // two or more fewer lines that it did previous it will leave display artefacts.
+    if (_rl_vis_botlin)
+    {
+        // _rl_last_v_pos is vertical offset of cursor from first line.
+        if (_rl_last_v_pos > 0)
+            cursor_pos.Y -= _rl_last_v_pos - 1; // '- 1' so we're line below first.
+
+        cell_count = csbi.dwSize.X * _rl_vis_botlin;
+
+        FillConsoleOutputCharacterW(handle, ' ', cell_count, cursor_pos, &written);
+        FillConsoleOutputAttribute(handle, ~csbi.wAttributes & 0x77, cell_count, cursor_pos,
+            &written);
+    }
 
     // Tell Readline the buffer's resized, but make sure we don't use Clink's
     // redisplay path as then Readline won't redisplay multiline prompts correctly.
