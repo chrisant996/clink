@@ -20,7 +20,6 @@
  */
 
 #define TERMCAP_DEBUG               0
-#define TERMCAP_DEBUG_FIXED_SIZE    0
 
 #include <Windows.h>
 
@@ -271,12 +270,6 @@ static void get_screen_size(int visible_or_buffer, int* width, int* height)
 {
     HANDLE handle;
     CONSOLE_SCREEN_BUFFER_INFO csbi;
-
-#if TERMCAP_DEBUG && TERMCAP_DEBUG_FIXED_SIZE
-    *width = 40;
-    *height = 25;
-    return;
-#endif
 
     handle = GetStdHandle(STD_OUTPUT_HANDLE);
     if (handle != INVALID_HANDLE_VALUE)
