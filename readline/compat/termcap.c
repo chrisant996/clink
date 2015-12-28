@@ -19,7 +19,7 @@
  * SOFTWARE.
  */
 
-#define TERMCAP_DEBUG               0
+#define TERMCAP_DEBUG   0
 
 #include <Windows.h>
 
@@ -275,7 +275,7 @@ static void get_screen_size(int* width, int* height)
         if (GetConsoleScreenBufferInfo(handle, &csbi))
         {
             *width = csbi.dwSize.X;
-            *height = csbi.dwSize.Y;
+            *height = (csbi.srWindow.Bottom - csbi.srWindow.Top) + 1;
             return;
         }
     }

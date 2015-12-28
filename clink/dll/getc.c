@@ -146,7 +146,8 @@ loop:
         GetConsoleScreenBufferInfo(handle_stdout, &csbi);
 
         // Check for a new buffer size for simulated SIGWINCH signals.
-        i = (csbi.dwSize.X << 16) | csbi.dwSize.Y;
+        i = (csbi.dwSize.X << 16);
+        i |= (csbi.srWindow.Bottom - csbi.srWindow.Top) + 1;
         if (!g_knownBufferSize || g_knownBufferSize != i)
         {
             if (g_knownBufferSize)
