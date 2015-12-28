@@ -266,28 +266,16 @@ void clear_screen()
 }
 
 //------------------------------------------------------------------------------
-static void get_screen_size(int visible_or_buffer, int* width, int* height)
+static void get_screen_size(int* width, int* height)
 {
-    HANDLE handle;
-    CONSOLE_SCREEN_BUFFER_INFO csbi;
-
-    handle = GetStdHandle(STD_OUTPUT_HANDLE);
+    HANDLE handle = GetStdHandle(STD_OUTPUT_HANDLE);
     if (handle != INVALID_HANDLE_VALUE)
     {
+        CONSOLE_SCREEN_BUFFER_INFO csbi;
         if (GetConsoleScreenBufferInfo(handle, &csbi))
         {
-            if (visible_or_buffer)
-            {
-                *width = csbi.dwSize.X;
-                *height = csbi.dwSize.Y;
-            }
-            else
-            {
-                // +1 because window is [l,r] and we want width of [l,r)
-                *width = csbi.srWindow.Right - csbi.srWindow.Left + 1;
-                *height = csbi.srWindow.Bottom - csbi.srWindow.Top + 1;
-            }
-
+            *width = csbi.dwSize.X;
+            *height = csbi.dwSize.Y;
             return;
         }
     }
@@ -468,7 +456,7 @@ int tgetnum(char* cap_name)
     int width, height;
     unsigned short cap = MAKE_CAP(cap_name);
 
-    get_screen_size(0, &width, &height);
+    get_screen_size(&width, &height);
 
     switch (cap)
     {
