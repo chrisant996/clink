@@ -105,6 +105,10 @@ local function exec_match_generator(text, first, last)
             clink.match_words(text, dos_commands)
         end
 
+        -- Add console aliases as matches.
+        local aliases = clink.get_console_aliases()
+        clink.match_words(text, aliases)
+
         paths = get_environment_paths();
     else
         paths = {}
