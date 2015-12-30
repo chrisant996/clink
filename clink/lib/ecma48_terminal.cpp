@@ -3,8 +3,9 @@
 
 #include "pch.h"
 #include "ecma48_terminal.h"
-#include "core/base.h"
-#include "core/log.h"
+
+#include <core/base.h>
+#include <core/log.h>
 
 //------------------------------------------------------------------------------
 static unsigned g_last_buffer_size = 0;

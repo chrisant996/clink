@@ -3,9 +3,10 @@
 
 #include "pch.h"
 #include "matches_lua.h"
-#include "core/base.h"
-#include "core/str.h"
 #include "matches/matches.h"
+
+#include <core/base.h>
+#include <core/str.h>
 
 //------------------------------------------------------------------------------
 matches_lua::method matches_lua::s_methods[] = {

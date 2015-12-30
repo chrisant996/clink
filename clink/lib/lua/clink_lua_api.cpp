@@ -2,9 +2,10 @@
 // License: http://opensource.org/licenses/MIT
 
 #include "pch.h"
-#include "core/base.h"
-#include "core/str.h"
 #include "lua_script_loader.h"
+
+#include <core/base.h>
+#include <core/str.h>
 
 //------------------------------------------------------------------------------
 extern "C" {

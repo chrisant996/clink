@@ -3,9 +3,10 @@
 
 #include "pch.h"
 #include "matches.h"
-#include "core/base.h"
-#include "core/str.h"
-#include "core/str_compare.h"
+
+#include <core/base.h>
+#include <core/str.h>
+#include <core/str_compare.h>
 
 //------------------------------------------------------------------------------
 matches::matches()

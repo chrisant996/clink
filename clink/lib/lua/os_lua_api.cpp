@@ -2,10 +2,11 @@
 // License: http://opensource.org/licenses/MIT
 
 #include "pch.h"
-#include "core/base.h"
-#include "core/globber.h"
-#include "core/os.h"
-#include "core/str.h"
+
+#include <core/base.h>
+#include <core/globber.h>
+#include <core/os.h>
+#include <core/str.h>
 
 //------------------------------------------------------------------------------
 static const char* get_string(lua_State* state, int index)

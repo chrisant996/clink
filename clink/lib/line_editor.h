@@ -3,8 +3,9 @@
 
 #pragma once
 
-#include "core/str.h"
 #include "matches/match_system.h"
+
+#include <core/str.h>
 
 class match_printer;
 class matches;

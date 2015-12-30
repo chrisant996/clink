@@ -3,10 +3,11 @@
 
 #include "pch.h"
 #include "match_system.h"
-#include "core/str.h"
 #include "line_state.h"
 #include "match_generator.h"
 #include "matches.h"
+
+#include <core/str.h>
 
 //------------------------------------------------------------------------------
 match_system::match_system()

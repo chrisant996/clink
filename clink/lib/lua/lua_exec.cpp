@@ -3,8 +3,9 @@
 
 #include "pch.h"
 #if MODE4
-#include "core/str.h"
 #include "pipe.h"
+
+#include <core/str.h>
 
 // Lua includes.
 extern "C" {

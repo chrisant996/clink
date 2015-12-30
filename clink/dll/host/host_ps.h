@@ -4,7 +4,8 @@
 #pragma once
 
 #include "host.h"
-#include "singleton.h"
+
+#include <core/singleton.h>
 
 #include <Windows.h>
 

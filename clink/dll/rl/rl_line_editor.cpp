@@ -9,12 +9,12 @@
 
 #include <core/base.h>
 #include <core/log.h>
+#include <core/singleton.h>
 #include <core/str.h>
 #include <core/str_compare.h>
 #include <line_state.h>
 #include <matches/match_generator.h>
 #include <matches/matches.h>
-#include <singleton.h>
 #include <terminal.h>
 
 //------------------------------------------------------------------------------

@@ -4,7 +4,8 @@
 #pragma once
 
 #include "buffer_scroller.h"
-#include "singleton.h"
+
+#include <core/singleton.h>
 
 extern "C" {
 #include <readline/readline.h>

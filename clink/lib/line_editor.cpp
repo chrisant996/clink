@@ -3,10 +3,11 @@
 
 #include "pch.h"
 #include "line_editor.h"
-#include "core/os.h"
 #include "line_state.h"
 #include "matches/match_generator.h"
 #include "matches/matches.h"
+
+#include <core/os.h>
 
 //------------------------------------------------------------------------------
 struct cwd_restorer

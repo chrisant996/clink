@@ -2,7 +2,8 @@
 // License: http://opensource.org/licenses/MIT
 
 #include "pch.h"
-#include "core/str.h"
+
+#include <core/str.h>
 
 extern "C" {
 #include <readline/history.h>

@@ -2,9 +2,12 @@
 // License: http://opensource.org/licenses/MIT
 
 #include "pch.h"
-#include "core/base.h"
 
+#include <core/base.h>
+
+extern "C" {
 #include <readline/readline.h>
+}
 
 //------------------------------------------------------------------------------
 static const char* get_function_name(void* func_addr)

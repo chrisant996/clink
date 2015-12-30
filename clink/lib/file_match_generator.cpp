@@ -3,11 +3,12 @@
 
 #include "pch.h"
 #include "file_match_generator.h"
-#include "core/globber.h"
-#include "core/path.h"
-#include "core/str.h"
 #include "line_state.h"
 #include "matches/matches.h"
+
+#include <core/globber.h>
+#include <core/path.h>
+#include <core/str.h>
 
 //------------------------------------------------------------------------------
 file_match_generator::file_match_generator()

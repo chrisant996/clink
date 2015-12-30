@@ -17,7 +17,7 @@ void lua_load_script_impl(lua_State* state, const char* script)
 
 #else // CLINK_EMBED_LUA_SCRIPTS
 
-#include "core/str.h"
+#include <core/str.h>
 
 #include <algorithm>
 

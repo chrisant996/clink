@@ -6,7 +6,7 @@
 #include "host.h"
 #include "prompt.h"
 
-#include <singleton.h>
+#include <core/singleton.h>
 
 //------------------------------------------------------------------------------
 class host_cmd
