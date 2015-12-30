@@ -56,26 +56,12 @@ void match_system::generate_matches(
     int word_start = (word_break < quote) ? word_break : quote;
     ++word_start;
 
-    str<> builder_word;
-    builder_word.concat(line + word_start, cursor - word_start);
-
-    // Adjust the cursor so we get more matches than needed and can have the
-    // match builder take care of deciding what is a match.
-    while (--cursor > word_start)
-    {
-        if (line[cursor] == '\\' || line[cursor] == '/' || line[cursor] == ':')
-        {
-            ++cursor;
-            break;
-        }
-    }
-
     str<> word;
     word.concat(line + word_start, cursor - word_start);
 
     // Call each registered match generator until one says it's returned matches
     line_state state = { word.c_str(), line, word_start, cursor, cursor };
-    matches_builder builder(result, builder_word.c_str());
+    matches_builder builder(result, word.c_str());
     for (int i = 0, n = int(m_generators.size()); i < n; ++i)
         if (m_generators[i].generator->generate(state, builder))
             break;
