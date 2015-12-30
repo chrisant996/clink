@@ -3,7 +3,7 @@
 
 #pragma once
 
-#include "core/str.h"
+#include "str.h"
 #include "singleton.h"
 
 //------------------------------------------------------------------------------

@@ -7,6 +7,12 @@
 #define AS_STR(x)           AS_STR_IMPL(x)
 #define AS_STR_IMPL(x)      #x
 
+#if defined(_WIN32)
+#   define PLATFORM_WINDOWS
+#else
+#   error Unsupported platform.
+#endif
+
 #if defined(_MSC_VER)
 #   define THREAD_LOCAL     __declspec(thread)
 #elif defined(__GNUC__)
