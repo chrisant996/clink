@@ -71,16 +71,11 @@ local function exec_match_generator(text, first, last, result)
     end
 
     -- Split text into directory and name
-    local text_dir = ""
-    local text_name = text
-    local i = text:find("[\\/:][^\\/:]*$")
-    if i then
-        text_dir = text:sub(1, i)
-        text_name = text:sub(i + 1)
-    end
+    local text_dir = path.getdirectory(text) or ""
+    local text_name = path.getname(text)
 
     local paths
-    if not text:find("[\\/:]") then
+    if #text_dir == 0 then
         -- If the terminal is cmd.exe check it's commands for matches.
         if clink.get_host_process() == "cmd.exe" then
             result:addmatches(dos_commands)
@@ -111,12 +106,10 @@ local function exec_match_generator(text, first, last, result)
     -- Search 'paths' for files ending in 'suffices' and look for matches
     local suffices = clink.split(os.getenv("pathext"), ";")
     for _, suffix in ipairs(suffices) do
-        for _, path in ipairs(paths) do
+        for _, dir in ipairs(paths) do
             for _, file in ipairs(os.globfiles(dir.."*"..suffix)) do
                 file = path.getname(file)
-                if clink.is_match(text_name, file) then
-                    result:addmatch(text_dir..file)
-                end
+                result:addmatch(text_dir..file)
             end
         end
     end
