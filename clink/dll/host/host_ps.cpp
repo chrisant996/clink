@@ -4,11 +4,11 @@
 #include "pch.h"
 #include "host_ps.h"
 #include "hook_setter.h"
-#include "process/vm.h"
 #include "prompt.h"
 #include "seh_scope.h"
 
 #include <line_editor.h>
+#include <process/vm.h>
 
 #include <Windows.h>
 

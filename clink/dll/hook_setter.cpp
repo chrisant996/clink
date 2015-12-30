@@ -3,12 +3,12 @@
 
 #include "pch.h"
 #include "hook_setter.h"
-#include "process/hook.h"
-#include "process/pe.h"
-#include "process/vm.h"
 
 #include <core/base.h>
 #include <core/log.h>
+#include <process/hook.h>
+#include <process/pe.h>
+#include <process/vm.h>
 
 //------------------------------------------------------------------------------
 static void             dummy() {}

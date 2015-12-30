@@ -3,11 +3,11 @@
 
 #include "pch.h"
 #include "process.h"
+#include "vm.h"
+#include "pe.h"
 
 #include <core/path.h>
 #include <core/str.h>
-#include <process/vm.h>
-#include <process/pe.h>
 #include <PsApi.h>
 #include <TlHelp32.h>
 

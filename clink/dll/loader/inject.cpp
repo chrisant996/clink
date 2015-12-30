@@ -3,8 +3,6 @@
 
 #include "pch.h"
 #include "paths.h"
-#include "process/process.h"
-#include "process/vm.h"
 #include "inject_args.h"
 
 #include <core/base.h>
@@ -12,6 +10,8 @@
 #include <core/path.h>
 #include <core/str.h>
 #include <getopt.h>
+#include <process/process.h>
+#include <process/vm.h>
 
 #define CLINK_DLL_NAME "clink_" AS_STR(PLATFORM) ".dll"
 

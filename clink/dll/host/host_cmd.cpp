@@ -6,11 +6,11 @@
 #include "hook_setter.h"
 #include "seh_scope.h"
 #include "paths.h"
-#include "process/vm.h"
 
 #include <core/base.h>
 #include <core/log.h>
 #include <line_editor.h>
+#include <process/vm.h>
 #include <terminal.h>
 
 #include <Windows.h>
