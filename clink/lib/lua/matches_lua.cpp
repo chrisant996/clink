@@ -39,12 +39,7 @@ int matches_lua::add_match(lua_State* state)
     unsigned int current_count = m_builder.get_matches().get_match_count();
 
     if (const char* match = lua_tostring(state, 1))
-    {
-        if (lua_toboolean(state, 2))
-            m_builder.add_match(match);
-        else
-            m_builder.consider_match(match);
-    }
+        m_builder.add_match(match);
 
     unsigned int new_count = m_builder.get_matches().get_match_count();
     lua_pushboolean(state, (current_count < new_count));
@@ -58,19 +53,13 @@ int matches_lua::add_matches(lua_State* state)
     if (!lua_istable(state, 1))
         return 0;
 
-    int raw = lua_toboolean(state, 2);
     int match_count = (int)lua_rawlen(state, 1);
     for (int i = 0; i < match_count; ++i)
     {
         lua_rawgeti(state, -1, i + 1);
 
         if (const char* match = lua_tostring(state, -1))
-        {
-            if (raw)
-                m_builder.add_match(match);
-            else
-                m_builder.consider_match(match);
-        }
+            m_builder.add_match(match);
 
         lua_pop(state, 1);
     }

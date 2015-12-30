@@ -61,7 +61,7 @@ void match_system::generate_matches(
 
     // Call each registered match generator until one says it's returned matches
     line_state state = { word.c_str(), line, word_start, cursor, cursor };
-    matches_builder builder(result, word.c_str());
+    matches_builder builder(result);
     for (int i = 0, n = int(m_generators.size()); i < n; ++i)
         if (m_generators[i].generator->generate(state, builder))
             break;

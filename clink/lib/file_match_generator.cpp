@@ -35,7 +35,7 @@ bool file_match_generator::generate(const line_state& line, matches_builder& bui
     globber globber(context);
 
     while (globber.next(buffer))
-        builder.consider_match(buffer.c_str());
+        builder.add_match(buffer.c_str());
 
     return true;
 }

@@ -66,11 +66,9 @@ void matches::get_match_lcd(str_base& out) const
 
 
 //------------------------------------------------------------------------------
-matches_builder::matches_builder(matches& matches, const char* match_word)
+matches_builder::matches_builder(matches& matches)
 : m_matches(matches)
-, m_match_word(match_word)
 {
-    m_word_char_count = char_count(match_word);
 }
 
 //------------------------------------------------------------------------------
@@ -82,12 +80,4 @@ matches_builder::~matches_builder()
 void matches_builder::add_match(const char* candidate)
 {
     m_matches.add_match(candidate);
-}
-
-//------------------------------------------------------------------------------
-void matches_builder::consider_match(const char* candidate)
-{
-    int i = str_compare(candidate, m_match_word);
-    if (i < 0 || i >= m_word_char_count)
-        m_matches.add_match(candidate);
 }

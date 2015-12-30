@@ -55,17 +55,14 @@ inline void matches::clear_matches()
 class matches_builder
 {
 public:
-                    matches_builder(matches& matches, const char* match_word);
+                    matches_builder(matches& matches);
                     ~matches_builder();
     void            add_match(const char* match);
-    void            consider_match(const char* candidate);
     void            clear_matches();
     const matches&  get_matches() const;
 
 private:
     matches&        m_matches;
-    const char*     m_match_word;
-    int             m_word_char_count;
 };
 
 //------------------------------------------------------------------------------
