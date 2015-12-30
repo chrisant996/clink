@@ -3,7 +3,7 @@
 
 #pragma once
 
-#define sizeof_array(x)     (sizeof(x) / sizeof((x)[0]))
+#define sizeof_array(x)     (sizeof(x) / sizeof([0](x)))
 #define AS_STR(x)           AS_STR_IMPL(x)
 #define AS_STR_IMPL(x)      #x
 
