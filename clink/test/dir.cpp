@@ -80,6 +80,11 @@ TEST_CASE("Directory match generation.") {
                 dir_test::tester(cmd, "one_dir\\", nullptr);
             }
 
+            SECTION("Single 3") {
+                cmd << "one_dir";
+                dir_test::tester(cmd, "one_dir\\", nullptr);
+            }
+
             SECTION("Relative") {
                 cmd << "nest_1\\..\\o";
                 dir_test::tester(cmd, "nest_1\\..\\one_dir\\", nullptr);
