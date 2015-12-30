@@ -202,6 +202,10 @@ project("clink_core")
     includedirs("clink/core/include/core")
     files("clink/core/src/**")
 
+    configuration("vs*")
+        pchsource("clink/core/src/pch.cpp")
+        pchheader("pch.h")
+
 --------------------------------------------------------------------------------
 project("clink_base")
     language("c++")
