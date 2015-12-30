@@ -11,6 +11,7 @@ class str_base;
 class matches
 {
     friend class matches_builder;
+    friend class match_system;
 
 public:
                         matches();

@@ -8,6 +8,7 @@
 #include "matches.h"
 
 #include <core/str.h>
+#include <core/str_compare.h>
 
 //------------------------------------------------------------------------------
 match_system::match_system()
@@ -60,9 +61,33 @@ void match_system::generate_matches(
     word.concat(line + word_start, cursor - word_start);
 
     // Call each registered match generator until one says it's returned matches
+    matches temp_result;
+    matches_builder builder(temp_result);
+
     line_state state = { word.c_str(), line, word_start, cursor, cursor };
-    matches_builder builder(result);
     for (int i = 0, n = int(m_generators.size()); i < n; ++i)
         if (m_generators[i].generator->generate(state, builder))
             break;
+
+    // Filter the matches to ones that are candidate matches for the word.
+    int word_length = word.length();
+    for (unsigned int i = 0, n = temp_result.get_match_count(); i < n; ++i)
+    {
+        const char* match = temp_result.get_match(i);
+
+        int offset = 0;
+        int j;
+        while (1)
+        {
+            j = str_compare(word.c_str() + offset, match + offset);
+            if (match[j] != '\\' && match[j] != '/')
+                break;
+
+            offset = j + 1;
+        }
+
+        j += offset;
+        if (j < 0 || j >= word_length)
+            result.add_match(match);
+    }
 }
