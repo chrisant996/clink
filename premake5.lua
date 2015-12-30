@@ -95,7 +95,7 @@ local function setup_cfg(cfg)
 end
 
 --------------------------------------------------------------------------------
-solution("clink")
+workspace("clink")
     configurations({"debug", "release", "final"})
     platforms({"x32", "x64"})
     location(to)
@@ -193,6 +193,13 @@ project("clink_lib")
     configuration("vs*")
         pchsource("clink/lib/pch.cpp")
         pchheader("pch.h")
+
+--------------------------------------------------------------------------------
+project("clink_core")
+    language("c++")
+    kind("staticlib")
+    includedirs("clink/core/include/core")
+    files("clink/core/src/**")
 
 --------------------------------------------------------------------------------
 project("clink_base")
