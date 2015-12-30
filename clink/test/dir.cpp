@@ -68,12 +68,12 @@ TEST_CASE("Directory match generation.") {
                 dir_test::tester(cmd, "t", "two_dir\\", "three_dir\\", nullptr);
             }
 
-            SECTION("Single (with -/_) #1") {
+            SECTION("Single (with -/_) 1") {
                 cmd << "two_d";
                 dir_test::tester(cmd, "two_dir\\", nullptr);
             }
 
-            SECTION("Single (with -/_) #2") {
+            SECTION("Single (with -/_) 2") {
                 str_compare_scope _(str_compare_scope::relaxed);
 
                 cmd << "one-";
