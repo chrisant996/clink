@@ -43,6 +43,8 @@ TEST_CASE("Directory match generation.") {
         "two_dir/leaf",
         "three_dir/leaf",
         "nest_1/nest_2/leaf",
+        "nest_1/nest_2/nest_3a/leaf",
+        "nest_1/nest_2/nest_3b/leaf",
         "one_file",
         "two_file",
         "three_file",
@@ -88,9 +90,18 @@ TEST_CASE("Directory match generation.") {
                 dir_test::tester(cmd, nullptr);
             }
 
-            SECTION("Nested (forward slash)") {
+            SECTION("Nested 1") {
                 cmd << "nest_1/ne";
                 dir_test::tester(cmd, "nest_1\\nest_2\\", nullptr);
+            }
+
+            SECTION("Nested 2") {
+                cmd << "nest_1/nest_2\\";
+                dir_test::tester(cmd,
+                    "nest_1\\nest_2\\nest_3",
+                    "nest_1\\nest_2\\nest_3a\\",
+                    "nest_1\\nest_2\\nest_3b\\",
+                    nullptr);
             }
         }
     }
