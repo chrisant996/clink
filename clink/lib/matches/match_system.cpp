@@ -5,6 +5,7 @@
 #include "match_system.h"
 #include "line_state.h"
 #include "match_generator.h"
+#include "match_handler.h"
 #include "matches.h"
 
 #include <core/path.h>
@@ -68,24 +69,16 @@ void match_system::generate_matches(
         if (m_generators[i].generator->generate(state, temp_result))
             break;
 
+    match_handler& handler = temp_result.get_handler();
+    result.set_handler(&handler);
+
     // Filter the matches to ones that are candidate matches for the word.
     int word_length = word.length();
     for (unsigned int i = 0, n = temp_result.get_match_count(); i < n; ++i)
     {
         const char* match = temp_result.get_match(i);
 
-        int offset = 0;
-        int j;
-        while (1)
-        {
-            j = str_compare(word.c_str() + offset, match + offset);
-            if (match[j] != '\\' && match[j] != '/')
-                break;
-
-            offset = j + 1;
-        }
-
-        j += offset;
+        int j = handler.compare(word.c_str(), match);
         if (j < 0 || j >= word_length)
         {
             char* cleaned = const_cast<char*>(match);

@@ -3,6 +3,7 @@
 
 #include "pch.h"
 #include "matches_lua.h"
+#include "matches/match_handler.h"
 #include "matches/matches.h"
 
 #include <core/base.h>
@@ -12,10 +13,11 @@
 matches_lua::method matches_lua::s_methods[] = {
     { "addmatch",       &matches_lua::add_match },
     { "addmatches",     &matches_lua::add_matches },
+    { "arefiles",       &matches_lua::set_file_handler },
     { "getmatch",       &matches_lua::get_match },
     { "getmatchcount",  &matches_lua::get_match_count },
-    { "reset",          &matches_lua::reset },
     { "getmatchlcd",    &matches_lua::get_match_lcd },
+    { "reset",          &matches_lua::reset },
     {}
 };
 
@@ -88,13 +90,6 @@ int matches_lua::get_match_count(lua_State* state)
 }
 
 //------------------------------------------------------------------------------
-int matches_lua::reset(lua_State* state)
-{
-    m_matches.reset();
-    return 0;
-}
-
-//------------------------------------------------------------------------------
 int matches_lua::get_match_lcd(lua_State* state)
 {
     str<48> lcd;
@@ -102,4 +97,22 @@ int matches_lua::get_match_lcd(lua_State* state)
 
     lua_pushstring(state, lcd.c_str());
     return 1;
+}
+
+//------------------------------------------------------------------------------
+int matches_lua::reset(lua_State* state)
+{
+    m_matches.reset();
+    return 0;
+}
+
+//------------------------------------------------------------------------------
+int matches_lua::set_file_handler(lua_State* state)
+{
+    bool set = true;
+    if (lua_gettop(state) >= 1)
+        set = lua_toboolean(state, 1) != 0;
+
+    m_matches.set_handler(set ? get_file_match_handler() : nullptr);
+    return 0;
 }

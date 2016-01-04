@@ -4,6 +4,7 @@
 #include "pch.h"
 #include "file_match_generator.h"
 #include "line_state.h"
+#include "matches/match_handler.h"
 #include "matches/matches.h"
 
 #include <core/globber.h>
@@ -37,5 +38,6 @@ bool file_match_generator::generate(const line_state& line, matches& out)
     while (globber.next(buffer))
         out.add_match(buffer.c_str());
 
+    out.set_handler(get_file_match_handler());
     return true;
 }

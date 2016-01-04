@@ -639,6 +639,7 @@ local function argument_match_generator(text, first, last, result)
     end
 
     result:addmatches(ret)
+    result:arefiles()
     return true
 end
 

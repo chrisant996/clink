@@ -3,6 +3,7 @@
 
 #include "pch.h"
 #include "matches.h"
+#include "match_handler.h"
 
 #include <core/base.h>
 #include <core/str.h>
@@ -10,6 +11,7 @@
 
 //------------------------------------------------------------------------------
 matches::matches()
+: m_handler(nullptr)
 {
     m_matches.reserve(64);
 }
@@ -61,4 +63,19 @@ void matches::get_match_lcd(str_base& out) const
     }
 
     out.truncate(lcd_length);
+}
+
+//------------------------------------------------------------------------------
+match_handler& matches::get_handler() const
+{
+    if (m_handler != nullptr)
+        return *m_handler;
+
+    return *get_generic_match_handler();
+}
+
+//------------------------------------------------------------------------------
+void matches::set_handler(match_handler* handler)
+{
+    m_handler = handler;
 }
