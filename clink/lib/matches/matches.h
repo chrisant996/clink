@@ -48,5 +48,6 @@ inline const char* matches::get_match(unsigned int index) const
 //------------------------------------------------------------------------------
 inline void matches::reset()
 {
+    set_handler(nullptr);
     m_matches.clear();
 }
