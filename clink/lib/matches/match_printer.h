@@ -13,9 +13,9 @@ public:
                     match_printer(terminal* terminal);
     virtual         ~match_printer();
     virtual void    print(const matches& matches) = 0;
+    terminal*       get_terminal() const;
 
 private:
-    terminal*       get_terminal() const;
     terminal*       m_terminal;
 };
 
