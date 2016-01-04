@@ -104,6 +104,7 @@ private:
     char**          completion(const char* word, int start, int end);
     void            display_matches(char**, int, int);
     rl_scroller     m_scroller;
+    matches         m_matches;
 };
 
 //------------------------------------------------------------------------------
@@ -225,34 +226,34 @@ char** rl_line_editor::completion(const char* word, int start, int end)
 
     str_compare_scope _(str_compare_mode);
 
-    matches result;
-    get_match_system().generate_matches(rl_line_buffer, rl_point, result);
+    m_matches.reset();
+    get_match_system().generate_matches(rl_line_buffer, rl_point, m_matches);
 
     // Clink has generated all matches and will take care of suffices/quotes.
     rl_attempted_completion_over = 1;
     rl_completion_suppress_append = 1;
     rl_completion_suppress_quote = 1;
 
-    if (result.get_match_count() == 0)
+    if (m_matches.get_match_count() == 0)
         return nullptr;
 
-    char** matches = (char**)malloc(sizeof(char*) * (result.get_match_count() + 2));
+    char** matches = (char**)malloc(sizeof(char*) * (m_matches.get_match_count() + 2));
 
     // Lowest common denominator
     str<MAX_PATH> lcd;
-    result.get_match_lcd(lcd);
+    m_matches.get_match_lcd(lcd);
     matches[0] = (char*)malloc(lcd.length() + 1);
     strcpy(matches[0], lcd.c_str());
 
     // Matches.
     ++matches;
-    for (int i = 0, e = result.get_match_count(); i < e; ++i)
+    for (int i = 0, e = m_matches.get_match_count(); i < e; ++i)
     {
-        const char* match = result.get_match(i);
+        const char* match = m_matches.get_match(i);
         matches[i] = (char*)malloc(strlen(match) + 1);
         strcpy(matches[i], match);
     }
-    matches[result.get_match_count()] = nullptr;
+    matches[m_matches.get_match_count()] = nullptr;
 
     return --matches;
 }
