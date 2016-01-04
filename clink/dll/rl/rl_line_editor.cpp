@@ -14,6 +14,7 @@
 #include <core/str_compare.h>
 #include <line_state.h>
 #include <matches/match_generator.h>
+#include <matches/match_printer.h>
 #include <matches/matches.h>
 #include <terminal.h>
 
@@ -33,8 +34,9 @@ extern "C" {
 extern void     (*rl_fwrite_function)(FILE*, const wchar_t*, int);
 extern void     (*rl_fflush_function)(FILE*);
 extern char*    _rl_comment_begin;
-extern int      rl_catch_signals;
 extern int      _rl_completion_case_map;
+extern int      rl_catch_signals;
+extern int      rl_display_fixed;
 } // extern "C"
 
 
@@ -131,9 +133,7 @@ rl_line_editor::rl_line_editor(const desc& desc)
     load_user_inputrc();
 
     rl_attempted_completion_function = rl_delegate(this, rl_line_editor, completion);
-#if MODE4
     rl_completion_display_matches_hook = rl_delegate(this, rl_line_editor, display_matches);
-#endif
 
     history_inhibit_expansion_function = history_expand_control;
 }
@@ -261,7 +261,13 @@ char** rl_line_editor::completion(const char* word, int start, int end)
 //------------------------------------------------------------------------------
 void rl_line_editor::display_matches(char** matches, int match_count, int longest)
 {
-    return ::display_matches(matches, match_count, longest);
+    rl_crlf();
+
+    if (match_printer* printer = get_match_printer())
+        printer->print(m_matches);
+
+    rl_forced_update_display();
+    rl_display_fixed = 1;
 }
 
 
