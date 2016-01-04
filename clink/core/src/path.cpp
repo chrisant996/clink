@@ -9,6 +9,15 @@
 //------------------------------------------------------------------------------
 void path::clean(str_base& in_out, int sep)
 {
+    path::clean(in_out.data(), sep);
+}
+
+//------------------------------------------------------------------------------
+void path::clean(char* in_out, int sep)
+{
+    if (!sep)
+        sep = '\\';
+
     enum clean_state
     {
         state_write,
@@ -16,7 +25,7 @@ void path::clean(str_base& in_out, int sep)
     };
 
     clean_state state = state_write;
-    char* write = in_out.data();
+    char* write = in_out;
     const char* read = write;
     while (char c = *read)
     {
