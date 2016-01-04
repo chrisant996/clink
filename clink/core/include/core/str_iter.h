@@ -13,6 +13,7 @@ public:
                 str_iter_impl(const T* s);
                 str_iter_impl(const str_impl<T>& s);
     const T*    get_pointer() const;
+    int         peek();
     int         next();
 
 private:
@@ -36,6 +37,15 @@ template <typename T> const T* str_iter_impl<T>::get_pointer() const
 {
     return m_ptr;
 };
+
+//------------------------------------------------------------------------------
+template <typename T> int str_iter_impl<T>::peek()
+{
+    const char* ptr = m_ptr;
+    int ret = next();
+    m_ptr = ptr;
+    return ret;
+}
 
 //------------------------------------------------------------------------------
 typedef str_iter_impl<char>     str_iter;
