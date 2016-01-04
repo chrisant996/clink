@@ -7,6 +7,7 @@
 #include "match_generator.h"
 #include "matches.h"
 
+#include <core/path.h>
 #include <core/str.h>
 #include <core/str_compare.h>
 
@@ -86,6 +87,11 @@ void match_system::generate_matches(
 
         j += offset;
         if (j < 0 || j >= word_length)
-            result.add_match(match);
+        {
+            char* cleaned = const_cast<char*>(match);
+            path::clean(cleaned);
+
+            result.add_match(cleaned);
+        }
     }
 }
