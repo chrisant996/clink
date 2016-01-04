@@ -44,7 +44,7 @@ void lua_match_generator::print_error(const char* error) const
 }
 
 //------------------------------------------------------------------------------
-bool lua_match_generator::generate(const line_state& line, matches_builder& builder)
+bool lua_match_generator::generate(const line_state& line, matches& out)
 {
     // Expose some of the readline state to lua.
     lua_createtable(m_state, 2, 0);
@@ -66,7 +66,7 @@ bool lua_match_generator::generate(const line_state& line, matches_builder& buil
 
     lua_pushlinestate(line);
 
-    matches_lua ml(builder);
+    matches_lua ml(out);
     ml.lua_bind(m_state);
     ml.lua_push(m_state);
 
@@ -86,7 +86,7 @@ bool lua_match_generator::generate(const line_state& line, matches_builder& buil
 
     if (!use_matches)
     {
-        builder.clear_matches();
+        out.reset();
         return false;
     }
 

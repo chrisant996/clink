@@ -62,22 +62,3 @@ void matches::get_match_lcd(str_base& out) const
 
     out.truncate(lcd_length);
 }
-
-
-
-//------------------------------------------------------------------------------
-matches_builder::matches_builder(matches& matches)
-: m_matches(matches)
-{
-}
-
-//------------------------------------------------------------------------------
-matches_builder::~matches_builder()
-{
-}
-
-//------------------------------------------------------------------------------
-void matches_builder::add_match(const char* candidate)
-{
-    m_matches.add_match(candidate);
-}

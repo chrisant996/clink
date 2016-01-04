@@ -21,7 +21,7 @@ file_match_generator::~file_match_generator()
 }
 
 //------------------------------------------------------------------------------
-bool file_match_generator::generate(const line_state& line, matches_builder& builder)
+bool file_match_generator::generate(const line_state& line, matches& out)
 {
     str<MAX_PATH> buffer;
 
@@ -35,7 +35,7 @@ bool file_match_generator::generate(const line_state& line, matches_builder& bui
     globber globber(context);
 
     while (globber.next(buffer))
-        builder.add_match(buffer.c_str());
+        out.add_match(buffer.c_str());
 
     return true;
 }

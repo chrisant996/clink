@@ -4,13 +4,13 @@
 #pragma once
 
 class line_state;
-class matches_builder;
+class matches;
 
 //------------------------------------------------------------------------------
 class match_generator
 {
 public:
-    virtual bool    generate(const line_state& line, matches_builder& builder) = 0;
+    virtual bool    generate(const line_state& line, matches& out) = 0;
 
 private:
 };

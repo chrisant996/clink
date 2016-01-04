@@ -14,7 +14,7 @@ class lua_match_generator
 public:
                         lua_match_generator(lua_State* state);
     virtual             ~lua_match_generator();
-    virtual bool        generate(const line_state& line, matches_builder& builder) override;
+    virtual bool        generate(const line_state& line, matches& out) override;
 
 private:
     void                initialise();

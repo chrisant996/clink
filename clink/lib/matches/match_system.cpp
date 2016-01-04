@@ -62,11 +62,9 @@ void match_system::generate_matches(
 
     // Call each registered match generator until one says it's returned matches
     matches temp_result;
-    matches_builder builder(temp_result);
-
     line_state state = { word.c_str(), line, word_start, cursor, cursor };
     for (int i = 0, n = int(m_generators.size()); i < n; ++i)
-        if (m_generators[i].generator->generate(state, builder))
+        if (m_generators[i].generator->generate(state, temp_result))
             break;
 
     // Filter the matches to ones that are candidate matches for the word.
