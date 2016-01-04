@@ -107,6 +107,7 @@ bool os::get_env(const char* name, str_base& out)
     wvalue.reserve(len);
     len = GetEnvironmentVariableW(wname.c_str(), wvalue.data(), wvalue.size());
 
+    out.reserve(len);
     out = wvalue.c_str();
     return true;
 }
