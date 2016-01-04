@@ -323,14 +323,17 @@ end:
 }
 
 //------------------------------------------------------------------------------
-void ecma48_terminal::write(const wchar_t* chars, int char_count)
+void ecma48_terminal::write(const char* chars, int char_count)
 {
+    wstr<> wchars = chars;
+    char_count = wchars.char_count();
+
     HANDLE handle = GetStdHandle(STD_OUTPUT_HANDLE);
 
     if (!m_enable_sgr)
     {
         DWORD written;
-        WriteConsoleW(handle, chars, char_count, &written, nullptr);
+        WriteConsoleW(handle, wchars.c_str(), char_count, &written, nullptr);
         return;
     }
 
@@ -339,7 +342,7 @@ void ecma48_terminal::write(const wchar_t* chars, int char_count)
 
     int attr_def = csbi.wAttributes;
     int attr_cur = attr_def;
-    const wchar_t* next = chars;
+    const wchar_t* next = wchars.c_str();
     while (*next)
     {
         int ansi_size;

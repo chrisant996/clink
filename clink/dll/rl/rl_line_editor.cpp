@@ -31,7 +31,7 @@ void    display_matches(char**, int, int);
 int     history_expand_control(char*, int);
 
 extern "C" {
-extern void     (*rl_fwrite_function)(FILE*, const wchar_t*, int);
+extern void     (*rl_fwrite_function)(FILE*, const char*, int);
 extern void     (*rl_fflush_function)(FILE*);
 extern char*    _rl_comment_begin;
 extern int      _rl_completion_case_map;
@@ -68,7 +68,7 @@ static int terminal_read_thunk(FILE* stream)
 }
 
 //------------------------------------------------------------------------------
-static void terminal_write_thunk(FILE* stream, const wchar_t* chars, int char_count)
+static void terminal_write_thunk(FILE* stream, const char* chars, int char_count)
 {
     if (stream == stderr)
         return;

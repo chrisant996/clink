@@ -254,7 +254,7 @@ void host_cmd::edit_line(const wchar_t* prompt, wchar_t* chars, int max_chars)
         }
 
         terminal* term = editor->get_terminal();
-        term->write(L"\r\n", 2);
+        term->write("\r\n", 2);
         term->flush();
     }
 

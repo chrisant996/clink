@@ -26,9 +26,9 @@ void column_printer::print(const matches& matches)
 
     for (int i = 0, n = matches.get_match_count(); i < n; ++i)
     {
-        wstr<> match = matches.get_match(i);
-        term->write(match.c_str(), match.length());
-        term->write(L"\n", 1);
+        const char* match = matches.get_match(i);
+        term->write(match, int(strlen(match)));
+        term->write("\n", 1);
     }
 
     term->flush();

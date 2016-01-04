@@ -14,29 +14,29 @@
 
 //------------------------------------------------------------------------------
 static wchar_t  fwrite_buf[2048];
-void            (*rl_fwrite_function)(FILE*, const wchar_t*, int)   = NULL;
-void            (*rl_fflush_function)(FILE*)                        = NULL;
+void            (*rl_fwrite_function)(FILE*, const char*, int)  = NULL;
+void            (*rl_fflush_function)(FILE*)                    = NULL;
 
 //------------------------------------------------------------------------------
 int hooked_fwrite(const void* data, int size, int count, FILE* stream)
 {
-    size_t characters;
-
     size *= count;
-    
-    characters = MultiByteToWideChar(
-        CP_UTF8, 0,
-        (const char*)data, size,
-        fwrite_buf, sizeof_array(fwrite_buf)
-    );
-
-    characters = characters ? characters : sizeof_array(fwrite_buf) - 1;
-    fwrite_buf[characters] = L'\0';
 
     if (rl_fwrite_function)
-        rl_fwrite_function(stream, fwrite_buf, (int)characters);
+        rl_fwrite_function(stream, data, size);
     else
     {
+        size_t characters;
+    
+        characters = MultiByteToWideChar(
+            CP_UTF8, 0,
+            (const char*)data, size,
+            fwrite_buf, sizeof_array(fwrite_buf)
+        );
+
+        characters = characters ? characters : sizeof_array(fwrite_buf) - 1;
+        fwrite_buf[characters] = L'\0';
+
         DWORD i;
         HANDLE handle = GetStdHandle(STD_OUTPUT_HANDLE);
         WriteConsoleW(handle, fwrite_buf, (DWORD)wcslen(fwrite_buf), &i, NULL);
