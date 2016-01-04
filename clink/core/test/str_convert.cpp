@@ -51,6 +51,18 @@ TEST_CASE("Wide character/UTF-8 conversion") {
             REQUIRE(2 == str<>("a\xf7\xbf\x8f\xa5").char_count());
             REQUIRE(2 == str<>("a\xfb\xbf\x8f\xa5\x9a").char_count());
         }
+
+        SECTION("Growable") {
+            str<4, true> t;
+            t.from_utf16(L"0123456789");
+            REQUIRE(t.length() == 10);
+        }
+
+        SECTION("Not growable") {
+            str<4, false> t;
+            t.from_utf16(L"0123456789");
+            REQUIRE(t.length() == 3);
+        }
     }
 
     SECTION("From UTF-8") {
@@ -94,6 +106,18 @@ TEST_CASE("Wide character/UTF-8 conversion") {
         SECTION("char_count()") {
             REQUIRE(wstr<>(L"\xdbff\xdfff").char_count() == 1);
             REQUIRE(wstr<>(L"\xd800\xdc00").char_count() == 1);
+        }
+
+        SECTION("Growable") {
+            wstr<4, true> t;
+            t.from_utf8("0123456789");
+            REQUIRE(t.length() == 10);
+        }
+
+        SECTION("Not growable") {
+            wstr<4, false> t;
+            t.from_utf8("0123456789");
+            REQUIRE(t.length() == 3);
         }
     }
 }
