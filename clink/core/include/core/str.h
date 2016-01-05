@@ -41,6 +41,7 @@ public:
     TYPE*           data();
     const TYPE*     c_str() const;
     unsigned int    size() const;
+    bool            is_growable() const;
     unsigned int    length() const;
     unsigned int    char_count() const;
     void            clear();
@@ -101,7 +102,7 @@ bool str_impl<TYPE>::reserve(unsigned int new_size)
     if (m_size >= new_size)
         return true;
 
-    if (!m_growable)
+    if (!is_growable())
         return false;
 
     new_size = (new_size + 63) & ~63;
@@ -144,6 +145,13 @@ template <typename TYPE>
 unsigned int str_impl<TYPE>::size() const
 {
     return m_size;
+}
+
+//------------------------------------------------------------------------------
+template <typename TYPE>
+bool str_impl<TYPE>::is_growable() const
+{
+    return m_growable;
 }
 
 //------------------------------------------------------------------------------
