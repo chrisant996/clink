@@ -10,25 +10,28 @@ template <typename T>
 class str_iter_impl
 {
 public:
-                str_iter_impl(const T* s);
-                str_iter_impl(const str_impl<T>& s);
+                str_iter_impl(const T* s, int len=-1);
+                str_iter_impl(const str_impl<T>& s, int len=-1);
     const T*    get_pointer() const;
     int         peek();
     int         next();
 
 private:
     const T*    m_ptr;
+    const T*    m_end;
 };
 
 //------------------------------------------------------------------------------
-template <typename T> str_iter_impl<T>::str_iter_impl(const T* s)
+template <typename T> str_iter_impl<T>::str_iter_impl(const T* s, int len)
 : m_ptr(s)
+, m_end(m_ptr + len)
 {
 }
 
 //------------------------------------------------------------------------------
-template <typename T> str_iter_impl<T>::str_iter_impl(const str_impl<T>& s)
+template <typename T> str_iter_impl<T>::str_iter_impl(const str_impl<T>& s, int len)
 : m_ptr(s.c_str())
+, m_end(m_ptr + len)
 {
 }
 

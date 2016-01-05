@@ -8,13 +8,12 @@
 template <> int
 str_iter_impl<char>::next()
 {
-    if (*m_ptr == '\0')
+    if (m_ptr == m_end || *m_ptr == '\0')
         return 0;
 
-    int c;
     int ax = 0;
     int encode_length = 0;
-    while (c = *m_ptr++)
+    while (int c = *m_ptr++)
     {
         ax = (ax << 6) | (c & 0x7f);
         if (encode_length)
@@ -24,36 +23,44 @@ str_iter_impl<char>::next()
         }
 
         if ((c & 0xc0) < 0xc0)
-            break;
+            return ax;
 
         if (encode_length = !!(c & 0x20))
             encode_length += !!(c & 0x10);
 
         ax &= (0x1f >> encode_length);
+
+        if (m_ptr == m_end)
+            break;
     }
 
-    return ax;
+    return 0;
 }
 
 //------------------------------------------------------------------------------
 template <> int
 str_iter_impl<wchar_t>::next()
 {
-    if (*m_ptr == '\0')
+    if (m_ptr == m_end || *m_ptr == '\0')
         return 0;
 
-    int c = *m_ptr++;
-
-    // Decode surrogate pairs.
-    if ((c & 0xfc00) == 0xd800)
+    int ax = 0;
+    while (int c = *m_ptr++)
     {
-        unsigned short d = *m_ptr;
-        if ((d & 0xfc00) == 0xdc00)
+        // Decode surrogate pairs.
+        if ((c & 0xfc00) == 0xd800)
         {
-            c = (c << 10) + d - 0x35fdc00;
-            ++m_ptr;
+            ax = c << 10;
+            continue;
         }
+        else if ((c & 0xfc00) == 0xdc00 && ax >= (1 << 10))
+            return ax + c - 0x35fdc00;
+        else
+            return c;
+
+        if (m_ptr == m_end)
+            break;
     }
 
-    return c;
+    return 0;
 }
