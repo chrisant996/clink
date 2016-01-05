@@ -5,6 +5,8 @@
 
 #include "terminal.h"
 
+#include <core/ecma48_iter.h>
+
 //------------------------------------------------------------------------------
 class ecma48_terminal
     : public terminal
@@ -17,6 +19,10 @@ public:
     virtual void    flush() override;
 
 private:
+    void            write_csi(const ecma48_csi& csi);
+    void            write_c0(int c0);
+    void            write_impl(const char* chars, int char_count);
     void            check_sgr_support();
+    ecma48_state    m_state;
     bool            m_enable_sgr;
 };

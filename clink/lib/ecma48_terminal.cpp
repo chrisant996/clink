@@ -12,11 +12,10 @@ static unsigned g_last_buffer_size = 0;
 
 int             get_clink_setting_int(const char*);
 void            on_terminal_resize();
-const wchar_t*  find_next_ansi_code_w(const wchar_t*, int*);
-int             parse_ansi_code_w(const wchar_t*, int*, int);
 
 
 
+#if MODE4
 //------------------------------------------------------------------------------
 static int sgr_to_attr(int colour)
 {
@@ -100,6 +99,7 @@ static int fwrite_sgr_code(const wchar_t* code, int current, int defaults)
     SetConsoleTextAttribute(handle, attr);
     return attr;
 }
+#endif // MODE4
 
 
 
@@ -323,43 +323,50 @@ end:
 }
 
 //------------------------------------------------------------------------------
-void ecma48_terminal::write(const char* chars, int char_count)
+void ecma48_terminal::write_csi(const ecma48_csi& csi)
 {
-    wstr<> wchars = chars;
-    char_count = wchars.char_count();
+}
 
+//------------------------------------------------------------------------------
+void ecma48_terminal::write_c0(int c0)
+{
     HANDLE handle = GetStdHandle(STD_OUTPUT_HANDLE);
 
-    if (!m_enable_sgr)
+    wchar_t c = wchar_t(c0);
+
+    DWORD written;
+    WriteConsoleW(handle, &c, 1, &written, nullptr);
+}
+
+//------------------------------------------------------------------------------
+void ecma48_terminal::write_impl(const char* chars, int char_count)
+{
+    HANDLE handle = GetStdHandle(STD_OUTPUT_HANDLE);
+
+    wchar_t wbuf[256];
+    while (int i = to_utf16(wbuf, sizeof_array(wbuf), chars))
     {
         DWORD written;
-        WriteConsoleW(handle, wchars.c_str(), char_count, &written, nullptr);
-        return;
+        WriteConsoleW(handle, wbuf, i, &written, nullptr);
+
+        chars += i;
     }
+}
 
-    CONSOLE_SCREEN_BUFFER_INFO csbi;
-    GetConsoleScreenBufferInfo(handle, &csbi);
-
-    int attr_def = csbi.wAttributes;
-    int attr_cur = attr_def;
-    const wchar_t* next = wchars.c_str();
-    while (*next)
+//------------------------------------------------------------------------------
+void ecma48_terminal::write(const char* chars, int char_count)
+{
+    ecma48_code code;
+    ecma48_iter iter(chars, m_state, char_count);
+    while (iter.next(code))
     {
-        int ansi_size;
-        const wchar_t* ansi_code = find_next_ansi_code_w(next, &ansi_size);
-
-        // Dispatch console write
-        DWORD written;
-        WriteConsoleW(handle, next, DWORD(ansi_code - next), &written, nullptr);
-
-        // Process ansi code.
-        if (*ansi_code)
-            attr_cur = fwrite_sgr_code(ansi_code, attr_cur, attr_def);
-
-        next = ansi_code + ansi_size;
+        switch (code.type)
+        {
+        case ecma48_code::type_chars:   write_impl(code.str, code.length);  break;
+        case ecma48_code::type_c0:      write_c0(code.c0);                  break;
+        case ecma48_code::type_csi:     write_csi(*(code.csi));             break;
+        }
     }
-
-    SetConsoleTextAttribute(handle, attr_def);
 }
 
 //------------------------------------------------------------------------------
