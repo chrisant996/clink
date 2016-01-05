@@ -42,8 +42,6 @@ void lua_root::initialise(bool use_debugger)
     os_lua_initialise(m_state);
     path_lua_initialise(m_state);
 
-    lua_load_script(m_state, lib, prompt);
-
     if (use_debugger)
         lua_load_script(m_state, lib, debugger);
 }

@@ -9,6 +9,7 @@ return {
         "hg.lua",
         "p4.lua",
         "powershell.lua",
+        "prompt.lua",
         "self.lua",
         "set.lua",
         "svn.lua",

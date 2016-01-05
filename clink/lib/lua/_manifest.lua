@@ -6,7 +6,6 @@ return {
     files = {
         "clink.lua",
         "match.lua",
-        "prompt.lua",
         "arguments.lua",
         "debugger.lua",
     }

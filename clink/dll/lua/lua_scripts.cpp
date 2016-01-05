@@ -327,6 +327,54 @@ const char* dll_dir_lua_script =
 "if clink.get_host_process() == \"powershell.exe\" then\n"
 "    clink.prompt.register_filter(powershell_prompt_filter, -493)\n"
 "end\n"
+"";const char* dll_prompt_lua_script = 
+"clink.prompt = {}\n"
+"clink.prompt.filters = {}\n"
+"function clink.prompt.register_filter(filter, priority)\n"
+"    if priority == nil then\n"
+"        priority = 999\n"
+"    end\n"
+"    table.insert(clink.prompt.filters, {f=filter, p=priority})\n"
+"    table.sort(clink.prompt.filters, function(a, b) return a[\"p\"] < b[\"p\"] end)\n"
+"end\n"
+"function clink.filter_prompt(prompt)\n"
+"    local function add_ansi_codes(p)\n"
+"        local c = tonumber(clink.get_setting_int(\"prompt_colour\"))\n"
+"        if c < 0 then\n"
+"            return p\n"
+"        end\n"
+"        c = c % 16\n"
+"       \n"
+"        -- Convert from cmd.exe colour indices to ANSI ones.\n"
+"        local colour_id = c % 8\n"
+"        if (colour_id % 2) == 1 then\n"
+"            if colour_id < 4 then\n"
+"                c = c + 3\n"
+"            end\n"
+"        elseif colour_id >= 4 then\n"
+"            c = c - 3\n"
+"        end\n"
+"        -- Clamp\n"
+"        if c > 15 then\n"
+"            c = 15\n"
+"        end\n"
+"        -- Build ANSI code\n"
+"        local code = \"\\x1b[0;\"\n"
+"        if c > 7 then\n"
+"            c = c - 8\n"
+"            code = code..\"1;\"\n"
+"        end\n"
+"        code = code..(c + 30)..\"m\"\n"
+"        return code..p..\"\\x1b[0m\"\n"
+"    end\n"
+"    clink.prompt.value = prompt\n"
+"    for _, filter in ipairs(clink.prompt.filters) do\n"
+"        if filter.f() == true then\n"
+"            return add_ansi_codes(clink.prompt.value)\n"
+"        end\n"
+"    end\n"
+"    return add_ansi_codes(clink.prompt.value)\n"
+"end\n"
 "";const char* dll_self_lua_script = 
 "local null_parser = clink.arg.new_parser()\n"
 "null_parser:disable_file_matching()\n"
@@ -409,7 +457,7 @@ const char* dll_dir_lua_script =
 "    \"unlock\", \"update\", \"up\"\n"
 "}\n"
 "clink.arg.register_parser(\"svn\", svn_tree)\n"
-"";const char* dll_lua_scripts[] = {dll_dir_lua_script,dll_env_lua_script,dll_exec_lua_script,dll_git_lua_script,dll_go_lua_script,dll_hg_lua_script,dll_p4_lua_script,dll_powershell_lua_script,dll_self_lua_script,dll_set_lua_script,dll_svn_lua_script,nullptr,};
+"";const char* dll_lua_scripts[] = {dll_dir_lua_script,dll_env_lua_script,dll_exec_lua_script,dll_git_lua_script,dll_go_lua_script,dll_hg_lua_script,dll_p4_lua_script,dll_powershell_lua_script,dll_prompt_lua_script,dll_self_lua_script,dll_set_lua_script,dll_svn_lua_script,nullptr,};
 #else
 const char* dll_embed_path = __FILE__;
 const char* dll_dir_lua_file = "dir.lua";
@@ -420,8 +468,9 @@ const char* dll_go_lua_file = "go.lua";
 const char* dll_hg_lua_file = "hg.lua";
 const char* dll_p4_lua_file = "p4.lua";
 const char* dll_powershell_lua_file = "powershell.lua";
+const char* dll_prompt_lua_file = "prompt.lua";
 const char* dll_self_lua_file = "self.lua";
 const char* dll_set_lua_file = "set.lua";
 const char* dll_svn_lua_file = "svn.lua";
-const char* dll_lua_files[] = {dll_dir_lua_file,dll_env_lua_file,dll_exec_lua_file,dll_git_lua_file,dll_go_lua_file,dll_hg_lua_file,dll_p4_lua_file,dll_powershell_lua_file,dll_self_lua_file,dll_set_lua_file,dll_svn_lua_file,nullptr,};
+const char* dll_lua_files[] = {dll_dir_lua_file,dll_env_lua_file,dll_exec_lua_file,dll_git_lua_file,dll_go_lua_file,dll_hg_lua_file,dll_p4_lua_file,dll_powershell_lua_file,dll_prompt_lua_file,dll_self_lua_file,dll_set_lua_file,dll_svn_lua_file,nullptr,};
 #endif

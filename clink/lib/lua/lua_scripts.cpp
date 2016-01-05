@@ -113,54 +113,6 @@ const char* lib_clink_lua_script =
 "    table.insert(clink.generators, {f=func, p=priority})\n"
 "    table.sort(clink.generators, function(a, b) return a[\"p\"] < b[\"p\"] end)\n"
 "end\n"
-"";const char* lib_prompt_lua_script = 
-"clink.prompt = {}\n"
-"clink.prompt.filters = {}\n"
-"function clink.prompt.register_filter(filter, priority)\n"
-"    if priority == nil then\n"
-"        priority = 999\n"
-"    end\n"
-"    table.insert(clink.prompt.filters, {f=filter, p=priority})\n"
-"    table.sort(clink.prompt.filters, function(a, b) return a[\"p\"] < b[\"p\"] end)\n"
-"end\n"
-"function clink.filter_prompt(prompt)\n"
-"    local function add_ansi_codes(p)\n"
-"        local c = tonumber(clink.get_setting_int(\"prompt_colour\"))\n"
-"        if c < 0 then\n"
-"            return p\n"
-"        end\n"
-"        c = c % 16\n"
-"       \n"
-"        -- Convert from cmd.exe colour indices to ANSI ones.\n"
-"        local colour_id = c % 8\n"
-"        if (colour_id % 2) == 1 then\n"
-"            if colour_id < 4 then\n"
-"                c = c + 3\n"
-"            end\n"
-"        elseif colour_id >= 4 then\n"
-"            c = c - 3\n"
-"        end\n"
-"        -- Clamp\n"
-"        if c > 15 then\n"
-"            c = 15\n"
-"        end\n"
-"        -- Build ANSI code\n"
-"        local code = \"\\x1b[0;\"\n"
-"        if c > 7 then\n"
-"            c = c - 8\n"
-"            code = code..\"1;\"\n"
-"        end\n"
-"        code = code..(c + 30)..\"m\"\n"
-"        return code..p..\"\\x1b[0m\"\n"
-"    end\n"
-"    clink.prompt.value = prompt\n"
-"    for _, filter in ipairs(clink.prompt.filters) do\n"
-"        if filter.f() == true then\n"
-"            return add_ansi_codes(clink.prompt.value)\n"
-"        end\n"
-"    end\n"
-"    return add_ansi_codes(clink.prompt.value)\n"
-"end\n"
 "";const char* lib_arguments_lua_script = 
 "clink.arg = {}\n"
 "local parsers               = {}\n"
@@ -1800,13 +1752,12 @@ const char* lib_clink_lua_script =
 "  return assertmsg                       --carry on\n"
 "end\n"
 "_TRACEBACK = debug.traceback             --Lua 5.0 function\n"
-"";const char* lib_lua_scripts[] = {lib_clink_lua_script,lib_match_lua_script,lib_prompt_lua_script,lib_arguments_lua_script,lib_debugger_lua_script,nullptr,};
+"";const char* lib_lua_scripts[] = {lib_clink_lua_script,lib_match_lua_script,lib_arguments_lua_script,lib_debugger_lua_script,nullptr,};
 #else
 const char* lib_embed_path = __FILE__;
 const char* lib_clink_lua_file = "clink.lua";
 const char* lib_match_lua_file = "match.lua";
-const char* lib_prompt_lua_file = "prompt.lua";
 const char* lib_arguments_lua_file = "arguments.lua";
 const char* lib_debugger_lua_file = "debugger.lua";
-const char* lib_lua_files[] = {lib_clink_lua_file,lib_match_lua_file,lib_prompt_lua_file,lib_arguments_lua_file,lib_debugger_lua_file,nullptr,};
+const char* lib_lua_files[] = {lib_clink_lua_file,lib_match_lua_file,lib_arguments_lua_file,lib_debugger_lua_file,nullptr,};
 #endif
