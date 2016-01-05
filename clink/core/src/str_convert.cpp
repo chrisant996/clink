@@ -12,8 +12,10 @@ struct builder
                 builder(TYPE* data, int max_length);
                 ~builder()                            { *write = '\0'; }
     bool        truncated() const                     { return (write >= end); }
+    int         get_written() const                   { return int(write - start); }
     builder&    operator << (int value);
     TYPE*       write;
+    const TYPE* start;
     const TYPE* end;
 };
 
@@ -21,6 +23,7 @@ struct builder
 template <typename TYPE>
 builder<TYPE>::builder(TYPE* data, int max_length)
 : write(data)
+, start(data)
 , end(data + max_length - 1)
 {
 }
@@ -52,7 +55,7 @@ builder<char>& builder<char>::operator << (int value)
 
 
 //------------------------------------------------------------------------------
-bool to_utf8(char* out, int max_count, const wchar_t* utf16)
+int to_utf8(char* out, int max_count, const wchar_t* utf16)
 {
     builder<char> builder(out, max_count);
 
@@ -85,11 +88,11 @@ bool to_utf8(char* out, int max_count, const wchar_t* utf16)
             builder << (out_chars[i] | 0x80);
     }
 
-    return builder.truncated();
+    return builder.get_written();
 }
 
 //------------------------------------------------------------------------------
-bool to_utf16(wchar_t* out, int max_count, const char* utf8)
+int to_utf16(wchar_t* out, int max_count, const char* utf8)
 {
     builder<wchar_t> builder(out, max_count);
 
@@ -98,11 +101,11 @@ bool to_utf16(wchar_t* out, int max_count, const char* utf8)
     while ((c = iter.next()) && !builder.truncated())
         builder << c;
 
-    return builder.truncated();
+    return builder.get_written();
 }
 
 //------------------------------------------------------------------------------
-bool to_utf8(str_base& out, const wchar_t* utf16)
+int to_utf8(str_base& out, const wchar_t* utf16)
 {
     if (out.is_growable())
         out.reserve(int(wcslen(utf16)));
@@ -111,7 +114,7 @@ bool to_utf8(str_base& out, const wchar_t* utf16)
 }
 
 //------------------------------------------------------------------------------
-bool to_utf16(wstr_base& out, const char* utf8)
+int to_utf16(wstr_base& out, const char* utf8)
 {
     if (out.is_growable())
         out.reserve(int(strlen(utf8)));

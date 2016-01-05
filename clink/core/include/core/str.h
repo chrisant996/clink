@@ -291,10 +291,10 @@ str_impl<TYPE>& str_impl<TYPE>::operator << (const str_impl& rhs)
 
 
 //------------------------------------------------------------------------------
-bool to_utf8(class str_base& out, const wchar_t* utf16);
-bool to_utf8(char* out, int max_count, const wchar_t* utf16);
-bool to_utf16(class wstr_base& out, const char* utf8);
-bool to_utf16(wchar_t* out, int max_count, const char* utf8);
+int to_utf8(class str_base& out, const wchar_t* utf16);
+int to_utf8(char* out, int max_count, const wchar_t* utf16);
+int to_utf16(class wstr_base& out, const char* utf8);
+int to_utf16(wchar_t* out, int max_count, const char* utf8);
 
 
 
@@ -303,7 +303,7 @@ class str_base : public str_impl<char>
 {
 public:
          str_base(char* data, int size) : str_impl<char>(data, size) {}
-    bool from_utf16(const wchar_t* utf16)  { clear(); return to_utf8(*this, utf16); }
+    int  from_utf16(const wchar_t* utf16)  { clear(); return to_utf8(*this, utf16); }
     void operator = (const char* value)    { copy(value); }
     void operator = (const wchar_t* value) { from_utf16(value); }
     void operator = (const str_base& rhs)  = delete;
@@ -313,7 +313,7 @@ class wstr_base : public str_impl<wchar_t>
 {
 public:
          wstr_base(wchar_t* data, int size) : str_impl<wchar_t>(data, size) {}
-    bool from_utf8(const char* utf8)        { clear(); return to_utf16(*this, utf8); }
+    int  from_utf8(const char* utf8)        { clear(); return to_utf16(*this, utf8); }
     void operator = (const wchar_t* value)  { copy(value); }
     void operator = (const char* value)     { from_utf8(value); }
     void operator = (const wstr_base& rhs)  = delete;

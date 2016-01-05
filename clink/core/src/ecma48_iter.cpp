@@ -20,8 +20,8 @@ enum
     (unsigned int)(right - value) <= (unsigned int)(right - left)
 
 //------------------------------------------------------------------------------
-ecma48_iter::ecma48_iter(const char* s, ecma48_state& state)
-: m_iter(s)
+ecma48_iter::ecma48_iter(const char* s, ecma48_state& state, int len)
+: m_iter(s, len)
 , m_state(state)
 {
 }
