@@ -26,14 +26,13 @@ public:
                             line_editor(const line_editor&) = delete;
     void                    operator = (const line_editor&) = delete;
     virtual                 ~line_editor();
-    bool                    edit_line(const char* prompt, str_base& out);
+    virtual bool            edit_line(const char* prompt, str_base& out) = 0;
     terminal*               get_terminal() const;
     match_system&           get_match_system();
     match_printer*          get_match_printer() const;
     const char*             get_shell_name() const;
 
 private:
-    virtual bool            edit_line_impl(const char* prompt, str_base& out) = 0;
     terminal*               m_terminal;
     match_system            m_match_system;
     match_printer*          m_match_printer;
@@ -41,6 +40,14 @@ private:
 
 private:
 };
+
+//------------------------------------------------------------------------------
+inline line_editor::line_editor(const desc& desc)
+: m_terminal(desc.term)
+, m_match_printer(desc.match_printer)
+{
+    m_shell_name << desc.shell_name;
+}
 
 //------------------------------------------------------------------------------
 inline line_editor::~line_editor()

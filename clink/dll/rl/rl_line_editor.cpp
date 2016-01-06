@@ -97,7 +97,7 @@ class rl_line_editor
 public:
                     rl_line_editor(const desc& desc);
     virtual         ~rl_line_editor();
-    virtual bool    edit_line_impl(const char* prompt, str_base& out) override;
+    virtual bool    edit_line(const char* prompt, str_base& out) override;
 
 private:
     void            bind_embedded_inputrc();
@@ -144,7 +144,7 @@ rl_line_editor::~rl_line_editor()
 }
 
 //------------------------------------------------------------------------------
-bool rl_line_editor::edit_line_impl(const char* prompt, str_base& out)
+bool rl_line_editor::edit_line(const char* prompt, str_base& out)
 {
     return call_readline(prompt, out);
 }

@@ -9,7 +9,6 @@
 
 #include <core/base.h>
 #include <core/log.h>
-#include <line_editor.h>
 #include <process/vm.h>
 #include <terminal.h>
 
@@ -236,11 +235,9 @@ void host_cmd::edit_line(const wchar_t* prompt, wchar_t* chars, int max_chars)
     // Call readline.
     while (1)
     {
-        line_editor* editor = get_line_editor();
-
         str<128> utf8_prompt(m_prompt.get());
         str<1024> out;
-        bool ok = editor->edit_line(utf8_prompt.c_str(), out);
+        bool ok = host::edit_line(utf8_prompt.c_str(), out);
         if (ok)
         {
             to_utf16(chars, max_chars, out.c_str());
@@ -253,9 +250,9 @@ void host_cmd::edit_line(const wchar_t* prompt, wchar_t* chars, int max_chars)
             break;
         }
 
-        terminal* term = editor->get_terminal();
-        term->write("\r\n", 2);
-        term->flush();
+        HANDLE handle = GetStdHandle(STD_OUTPUT_HANDLE);
+        DWORD written;
+        WriteConsole(handle, L"\r\n", 2, &written, nullptr);
     }
 
     begin_doskey(chars, max_chars);
