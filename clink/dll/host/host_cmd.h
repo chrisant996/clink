@@ -14,7 +14,7 @@ class host_cmd
     , public singleton<host_cmd>
 {
 public:
-                        host_cmd(line_editor* editor);
+                        host_cmd(lua_State* lua, line_editor* editor);
                         ~host_cmd();
     virtual bool        validate() override;
     virtual bool        initialise() override;

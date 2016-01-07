@@ -37,9 +37,10 @@ int                     get_clink_setting_int(const char*);
 static bool             g_quiet         = false;
 static line_editor*     g_line_editor   = nullptr;
 static host*            g_host          = nullptr;
+static lua_root*        g_lua           = nullptr;
 
 //------------------------------------------------------------------------------
-static void initialise_line_editor(const char* host_name)
+static void initialise_line_editor(lua_State* lua, const char* host_name)
 {
     terminal* terminal = new ecma48_terminal();
     match_printer* printer = new column_printer(terminal);
@@ -48,31 +49,15 @@ static void initialise_line_editor(const char* host_name)
     g_line_editor = create_rl_line_editor(desc);
 
     // MODE4 - memory leaks!
-    // Initialise Lua.
-    lua_root* lua = new lua_root();
-    lua_State* state = lua->get_state();
-
     // Give the line editor some match generators.
     match_system& match_system = g_line_editor->get_match_system();
 
-    lua_match_generator* lua_generator = new lua_match_generator(state);
+    lua_match_generator* lua_generator = new lua_match_generator(lua);
     match_system.add_generator(lua_generator, 1000);
 
     file_match_generator* file_generator = new file_match_generator();
     match_system.add_generator(file_generator, 1001);
     // MODE4
-
-    lua_load_script(state, dll, dir);
-    lua_load_script(state, dll, env);
-    lua_load_script(state, dll, exec);
-    lua_load_script(state, dll, git);
-    lua_load_script(state, dll, go);
-    lua_load_script(state, dll, hg);
-    lua_load_script(state, dll, p4);
-    lua_load_script(state, dll, powershell);
-    lua_load_script(state, dll, self);
-    lua_load_script(state, dll, set);
-    lua_load_script(state, dll, svn);
 }
 
 //------------------------------------------------------------------------------
@@ -142,25 +127,35 @@ int initialise_clink(const inject_args* inject_args)
 
     LOG("Host process is '%s'", host_name.c_str());
 
+    // Initialise Lua.
+    g_lua = new lua_root();
+    lua_State* lua = g_lua->get_state();
+
     // Prepare core systems.
     initialise_clink_settings();
-    initialise_line_editor(host_name.c_str());
+    initialise_line_editor(lua, host_name.c_str());
     load_history();
 
     // Search for a supported host.
     struct {
         const char* name;
-        host*       (*creator)(line_editor*);
+        host*       (*creator)(lua_State*, line_editor*);
     } hosts[] = {
-        { "cmd.exe",        [](line_editor* e) -> host* { return new host_cmd(e); } },
-        { "powershell.exe", [](line_editor* e) -> host* { return new host_ps(e); } },
+        {
+            "cmd.exe",
+            [](lua_State* s, line_editor* e) -> host* { return new host_cmd(s, e); }
+        },
+        {
+            "powershell.exe",
+            [](lua_State* s, line_editor* e) -> host* { return new host_ps(s, e); }
+        },
     };
 
     for (int i = 0; i < sizeof_array(hosts); ++i)
     {
         if (stricmp(host_name.c_str(), hosts[i].name) == 0)
         {
-            g_host = (hosts[i].creator)(g_line_editor);
+            g_host = (hosts[i].creator)(lua, g_line_editor);
             break;
         }
     }

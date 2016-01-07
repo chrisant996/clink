@@ -15,7 +15,7 @@ class host_ps
     , public singleton<host_ps>
 {
 public:
-                        host_ps(line_editor* editor);
+                        host_ps(lua_State* lua, line_editor* editor);
                         ~host_ps();
     bool                validate() override;
     bool                initialise() override;

@@ -9,6 +9,7 @@
 
 #include <core/base.h>
 #include <core/log.h>
+#include <lua/lua_script_loader.h>
 #include <process/vm.h>
 #include <terminal.h>
 
@@ -123,9 +124,10 @@ static BOOL WINAPI single_char_read(
 
 
 //------------------------------------------------------------------------------
-host_cmd::host_cmd(line_editor* editor)
-: host(editor)
+host_cmd::host_cmd(lua_State* lua, line_editor* editor)
+: host(lua, editor)
 {
+    lua_load_script(lua, dll, set);
 }
 
 //------------------------------------------------------------------------------

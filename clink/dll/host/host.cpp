@@ -7,6 +7,11 @@
 #include <core/os.h>
 #include <core/str.h>
 #include <line_editor.h>
+#include <lua/lua_script_loader.h>
+
+extern "C" {
+#include <lua.h>
+}
 
 //------------------------------------------------------------------------------
 struct cwd_restorer
@@ -19,9 +24,20 @@ struct cwd_restorer
 
 
 //------------------------------------------------------------------------------
-host::host(line_editor* editor)
-: m_line_editor(editor)
+host::host(lua_State* lua, line_editor* editor)
+: m_lua(lua)
+, m_line_editor(editor)
 {
+    lua_load_script(lua, dll, dir);
+    lua_load_script(lua, dll, env);
+    lua_load_script(lua, dll, exec);
+    lua_load_script(lua, dll, git);
+    lua_load_script(lua, dll, go);
+    lua_load_script(lua, dll, hg);
+    lua_load_script(lua, dll, p4);
+    lua_load_script(lua, dll, prompt);
+    lua_load_script(lua, dll, self);
+    lua_load_script(lua, dll, svn);
 }
 
 //------------------------------------------------------------------------------

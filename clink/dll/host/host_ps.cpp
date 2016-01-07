@@ -8,14 +8,16 @@
 #include "seh_scope.h"
 
 #include <line_editor.h>
+#include <lua/lua_script_loader.h>
 #include <process/vm.h>
 
 #include <Windows.h>
 
 //------------------------------------------------------------------------------
-host_ps::host_ps(line_editor* editor)
-: host(editor)
+host_ps::host_ps(lua_State* lua, line_editor* editor)
+: host(lua, editor)
 {
+    lua_load_script(lua, dll, powershell);
 }
 
 //------------------------------------------------------------------------------
