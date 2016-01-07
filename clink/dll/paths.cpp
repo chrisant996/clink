@@ -4,6 +4,7 @@
 #include "pch.h"
 
 #include <core/str.h>
+#include <core/path.h>
 
 //------------------------------------------------------------------------------
 static str<256> g_config_dir_override;
@@ -93,7 +94,8 @@ void get_log_dir(str_base& buffer)
                 GetTempPath(log_dir.size(), log_dir.data());
         }
 
-        log_dir << "\\clink";
+        log_dir << "/clink";
+        path::clean(log_dir);
     }
 
     buffer << log_dir;
