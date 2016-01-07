@@ -19,6 +19,7 @@ public:
     bool            edit_line(const char* prompt, str_base& out);
 
 private:
+    void            filter_prompt(const char* in, str_base& out);
     lua_State*      m_lua;
     line_editor*    m_line_editor;
 };

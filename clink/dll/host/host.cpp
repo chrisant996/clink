@@ -49,5 +49,32 @@ host::~host()
 bool host::edit_line(const char* prompt, str_base& out)
 {
     cwd_restorer cwd;
-    return m_line_editor->edit_line(prompt, out);
+
+    str<128> filtered_prompt;
+    filter_prompt(prompt, filtered_prompt);
+
+    return m_line_editor->edit_line(filtered_prompt.c_str(), out);
+}
+
+//------------------------------------------------------------------------------
+void host::filter_prompt(const char* in, str_base& out)
+{
+    // Call Lua to filter prompt
+    lua_getglobal(m_lua, "clink");
+    lua_pushliteral(m_lua, "filter_prompt");
+    lua_rawget(m_lua, -2);
+
+    lua_pushstring(m_lua, in);
+    if (lua_pcall(m_lua, 1, 1, 0) != 0)
+    {
+        puts(lua_tostring(m_lua, -1));
+        lua_pop(m_lua, 2);
+        return;
+    }
+
+    // Collect the filtered prompt.
+    const char* prompt = lua_tostring(m_lua, -1);
+    out = prompt;
+
+    lua_pop(m_lua, 2);
 }
