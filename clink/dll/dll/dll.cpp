@@ -29,9 +29,9 @@ const char* g_clink_header =
 
 //------------------------------------------------------------------------------
 void*                   initialise_clink_settings();
+void                    shutdown_clink_settings();
 void                    load_history();
 void                    save_history();
-void                    shutdown_clink_settings();
 int                     get_clink_setting_int(const char*);
 
 static bool             g_quiet         = false;
