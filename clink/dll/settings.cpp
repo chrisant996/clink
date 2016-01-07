@@ -269,7 +269,7 @@ const char* settings_get_str(settings_t* s, const char* name)
     // Check for an environment variable override.
     {
         static str<256> buffer;
-
+        buffer.clear();
         buffer << "clink." << name;
         if (GetEnvironmentVariableA(buffer.c_str(), buffer.data(), buffer.size()))
             return buffer.c_str();
