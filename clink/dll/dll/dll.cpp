@@ -52,7 +52,7 @@ static void initialise_line_editor(const char* host_name)
     lua_root* lua = new lua_root();
     lua_State* state = lua->get_state();
 
-    // Give the line editor about some match generators.
+    // Give the line editor some match generators.
     match_system& match_system = g_line_editor->get_match_system();
 
     lua_match_generator* lua_generator = new lua_match_generator(state);
@@ -97,7 +97,7 @@ static void failed()
     str<256> buffer;
     get_config_dir(buffer);
 
-    fprintf(stderr, "Failed to load clink.\nSee log for details (%s).\n", buffer);
+    fprintf(stderr, "Failed to load Clink.\nSee log for details (%s).\n", buffer);
 }
 
 //------------------------------------------------------------------------------
@@ -115,7 +115,7 @@ static host* create_host_ps(line_editor* editor)
 //------------------------------------------------------------------------------
 static bool get_host_name(str_base& out)
 {
-    str<256> buffer;
+    str<MAX_PATH> buffer;
     if (GetModuleFileName(nullptr, buffer.data(), buffer.size()) == buffer.size())
         return false;
 
@@ -162,7 +162,7 @@ int initialise_clink(const inject_args* inject_args)
     // Search for a supported host.
     struct {
         const char* name;
-        host*      (*creator)(line_editor*);
+        host*       (*creator)(line_editor*);
     } hosts[] = {
         { "cmd.exe",        create_host_cmd },
         { "powershell.exe", create_host_ps },
