@@ -101,18 +101,6 @@ static void failed()
 }
 
 //------------------------------------------------------------------------------
-static host* create_host_cmd(line_editor* editor)
-{
-    return new host_cmd(editor);
-}
-
-//------------------------------------------------------------------------------
-static host* create_host_ps(line_editor* editor)
-{
-    return new host_ps(editor);
-}
-
-//------------------------------------------------------------------------------
 static bool get_host_name(str_base& out)
 {
     str<MAX_PATH> buffer;
@@ -164,8 +152,8 @@ int initialise_clink(const inject_args* inject_args)
         const char* name;
         host*       (*creator)(line_editor*);
     } hosts[] = {
-        { "cmd.exe",        create_host_cmd },
-        { "powershell.exe", create_host_ps },
+        { "cmd.exe",        [](line_editor* e) -> host* { return new host_cmd(e); } },
+        { "powershell.exe", [](line_editor* e) -> host* { return new host_ps(e); } },
     };
 
     for (int i = 0; i < sizeof_array(hosts); ++i)
