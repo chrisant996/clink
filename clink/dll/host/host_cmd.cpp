@@ -16,9 +16,9 @@
 #include <Windows.h>
 
 //------------------------------------------------------------------------------
-int                             get_clink_setting_int(const char*);
-int                             begin_doskey(wchar_t*, unsigned);
-int                             continue_doskey(wchar_t*, unsigned);
+int get_clink_setting_int(const char*);
+int begin_doskey(wchar_t*, unsigned);
+int continue_doskey(wchar_t*, unsigned);
 
 
 
