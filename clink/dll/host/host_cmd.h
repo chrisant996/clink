@@ -5,6 +5,7 @@
 
 #include "host.h"
 #include "prompt.h"
+#include "doskey.h"
 
 #include <core/singleton.h>
 
@@ -29,4 +30,5 @@ private:
     bool                capture_prompt(const wchar_t* chars, int char_count);
     bool                is_interactive() const;
     tagged_prompt       m_prompt;
+    doskey              m_doskey;
 };

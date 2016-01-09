@@ -12,13 +12,12 @@
 #include <lua/lua_script_loader.h>
 #include <process/vm.h>
 #include <terminal.h>
+#include <line_editor.h>
 
 #include <Windows.h>
 
 //------------------------------------------------------------------------------
 int get_clink_setting_int(const char*);
-int begin_doskey(wchar_t*, unsigned);
-int continue_doskey(wchar_t*, unsigned);
 
 
 
@@ -126,6 +125,7 @@ static BOOL WINAPI single_char_read(
 //------------------------------------------------------------------------------
 host_cmd::host_cmd(lua_State* lua, line_editor* editor)
 : host(lua, editor)
+, m_doskey(editor->get_shell_name())
 {
     lua_load_script(lua, dll, set);
 }
@@ -161,25 +161,18 @@ bool host_cmd::initialise()
 
     // Add an alias to Clink so it can be run from anywhere. Similar to adding
     // it to the path but this way we can add the config path too.
-    str<256> path;
-    GetModuleFileName(nullptr, path.data(), path.size());
-    if (GetLastError() != ERROR_INSUFFICIENT_BUFFER)
-    {
-        str<256> dll_path;
-        get_dll_dir(dll_path);
+    str<256> dll_path;
+    get_dll_dir(dll_path);
 
-        str<256> cfg_path;
-        get_config_dir(cfg_path);
+    str<256> cfg_path;
+    get_config_dir(cfg_path);
 
-        str<512> buffer;
-        buffer << "\"" << dll_path;
-        buffer << "/clink_" AS_STR(PLATFORM) ".exe\" --cfgdir \"";
-        buffer << cfg_path << "\" $*";
+    str<512> buffer;
+    buffer << "\"" << dll_path;
+    buffer << "/clink_" AS_STR(PLATFORM) ".exe\" --cfgdir \"";
+    buffer << cfg_path << "\" $*";
 
-        const char* slash = strrchr(path.c_str(), '\\');
-        const char* host_name = (slash != nullptr) ? slash + 1 : path.c_str();
-        AddConsoleAlias("clink", buffer.data(), (char*)host_name);
-    }
+    m_doskey.add_alias("clink", buffer.c_str());
 
     return true;
 }
@@ -187,6 +180,7 @@ bool host_cmd::initialise()
 //------------------------------------------------------------------------------
 void host_cmd::shutdown()
 {
+    m_doskey.remove_alias("clink");
 }
 
 //------------------------------------------------------------------------------
@@ -231,7 +225,7 @@ void host_cmd::edit_line(const wchar_t* prompt, wchar_t* chars, int max_chars)
     // Doskey is implemented on the server side of a ReadConsoleW() call (i.e.
     // in conhost.exe). Commands separated by a "$T" are returned one command
     // at a time through successive calls to ReadConsoleW().
-    if (continue_doskey(chars, max_chars))
+    if (m_doskey.next(chars, max_chars))
         return;
 
     // Call readline.
@@ -257,7 +251,7 @@ void host_cmd::edit_line(const wchar_t* prompt, wchar_t* chars, int max_chars)
         WriteConsole(handle, L"\r\n", 2, &written, nullptr);
     }
 
-    begin_doskey(chars, max_chars);
+    m_doskey.begin(chars, max_chars);
 }
 
 //------------------------------------------------------------------------------
