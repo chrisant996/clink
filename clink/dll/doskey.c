@@ -117,9 +117,9 @@ int continue_doskey(wchar_t* chars, unsigned max_chars)
             wchar_t* insert_from;
             int insert_length = 0;
 
-            if (c == 0)
+            if (c == 0 && g_state.token_count > 1)
             {
-                insert_from = g_state.input + g_state.tokens[0].length;
+                insert_from = g_state.input + g_state.tokens[1].start;
                 insert_length = min(wcslen(insert_from), max_chars);
             }
             else if (c < g_state.token_count)
