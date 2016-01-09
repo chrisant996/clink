@@ -101,8 +101,14 @@ int continue_doskey(wchar_t* chars, unsigned max_chars)
         c = *read++;
         if (c >= '1' && c <= '9')   c -= '1' - 1; // -1 as first arg is token 1
         else if (c == '*')          c = 0;
-        else if (c > '\1')          continue;
-        else                        break;
+        else if (c > '\1')
+        {
+            --read;
+            *chars++ = '$';
+            --max_chars;
+        }
+        else
+            break;
 
         // 'c' is the index to the argument to insert or -1 if it is all of
         // them. 0th token is alias so arguments start at index 1.
