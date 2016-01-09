@@ -169,5 +169,7 @@ bool ecma48_iter::next(ecma48_code& code)
         return false;
 
     code.length = int(m_iter.get_pointer() - code.str);
+
+    m_state.state = ecma48_state_unknown;
     return code.length != 0;
 }
