@@ -228,10 +228,21 @@ void host_cmd::edit_line(const wchar_t* prompt, wchar_t* chars, int max_chars)
     if (m_doskey.next(chars, max_chars))
         return;
 
+    // Convert the prompt to Utf8 and parse backspaces in the string.
+    str<128> utf8_prompt(m_prompt.get());
+
+    char* write = utf8_prompt.data();
+    char* read = write;
+    while (char c = *read++)
+        if (c != '\b')
+            *write++ = c;
+        else if (write > utf8_prompt.c_str())
+            --write;
+    *write = '\0';
+
     // Call readline.
     while (1)
     {
-        str<128> utf8_prompt(m_prompt.get());
         str<1024> out;
         bool ok = host::edit_line(utf8_prompt.c_str(), out);
         if (ok)
