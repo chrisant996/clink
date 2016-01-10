@@ -367,11 +367,11 @@ BOOL WINAPI host_cmd::set_env_var(const wchar_t* name, const wchar_t* value)
 {
     seh_scope seh;
 
-    if (_wcsicmp(name, L"prompt") != 0)
+    if (value == nullptr || _wcsicmp(name, L"prompt") != 0)
         return SetEnvironmentVariableW(name, value);
 
     tagged_prompt prompt;
-    prompt.set(value);
+    prompt.tag(value);
     return SetEnvironmentVariableW(name, prompt.get());
 }
 
