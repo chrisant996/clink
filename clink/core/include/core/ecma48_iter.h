@@ -40,10 +40,11 @@ struct ecma48_state
 class ecma48_iter
 {
 public:
-                    ecma48_iter(const char* s, ecma48_state& state, int len=-1);
-    bool            next(ecma48_code& code);
+                        ecma48_iter(const char* s, ecma48_state& state, int len=-1);
+    const ecma48_code*  next();
 
 private:
-    str_iter        m_iter;
-    ecma48_state&   m_state;
+    str_iter            m_iter;
+    ecma48_code         m_code;
+    ecma48_state&       m_state;
 };
