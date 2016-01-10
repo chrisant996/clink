@@ -27,17 +27,17 @@ doskey::~doskey()
 //------------------------------------------------------------------------------
 bool doskey::add_alias(const char* alias, const char* text)
 {
-    wstr<64> walias = alias;
-    wstr<> wtext = text;
-    wstr<64> wshell = m_shell_name;
+    wstr<64> walias(alias);
+    wstr<> wtext(text);
+    wstr<64> wshell(m_shell_name);
     return (AddConsoleAliasW(walias.data(), wtext.data(), wshell.data()) == TRUE);
 }
 
 //------------------------------------------------------------------------------
 bool doskey::remove_alias(const char* alias)
 {
-    wstr<64> walias = alias;
-    wstr<64> wshell = m_shell_name;
+    wstr<64> walias(alias);
+    wstr<64> wshell(m_shell_name);
     return (AddConsoleAliasW(walias.data(), nullptr, wshell.data()) == TRUE);
 }
 
@@ -68,7 +68,7 @@ bool doskey::begin(wchar_t* chars, unsigned max_chars)
 
     // Find the alias' text. First check it exists.
     wchar_t wc;
-    wstr<64> wshell = m_shell_name;
+    wstr<64> wshell(m_shell_name);
     if (!GetConsoleAliasW(alias, &wc, 1, wshell.data()))
         return false;
 

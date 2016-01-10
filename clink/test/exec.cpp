@@ -53,7 +53,7 @@ TEST_CASE("Executable match generation.") {
     };
     fs_fixture fs(exec_fs);
 
-    str<260> path_path = fs.get_root();
+    str<260> path_path(fs.get_root());
     path::append(path_path, "_path");
     const char* exec_env[] = {
         "path",     path_path.c_str(),

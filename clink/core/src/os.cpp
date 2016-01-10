@@ -9,7 +9,7 @@
 //------------------------------------------------------------------------------
 int os::get_path_type(const char* path)
 {
-    wstr<MAX_PATH> wpath = path;
+    wstr<MAX_PATH> wpath(path);
     DWORD attr = GetFileAttributesW(wpath.c_str());
     if (attr == ~0)
         return path_type_invalid;

@@ -51,7 +51,7 @@ bool globber::next(str_base& out)
     if (m_handle == nullptr)
         return false;
 
-    str<MAX_PATH> file_name = m_data.cFileName;
+    str<MAX_PATH> file_name(m_data.cFileName);
 
     const wchar_t* c = m_data.cFileName;
     if (c[0] == '.' && (!c[1] || (c[1] == '.' && !c[2])) && !m_context.dots)

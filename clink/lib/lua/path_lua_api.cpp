@@ -19,7 +19,7 @@ static const char* get_string(lua_State* state, int index)
 //------------------------------------------------------------------------------
 static int clean(lua_State* state)
 {
-    str<MAX_PATH> out = get_string(state, 1);
+    str<MAX_PATH> out(get_string(state, 1));
     if (out.length() == 0)
         return 0;
 
@@ -48,7 +48,7 @@ static int get_base_name(lua_State* state)
 //------------------------------------------------------------------------------
 static int get_directory(lua_State* state)
 {
-    str<MAX_PATH> out = get_string(state, 1);
+    str<MAX_PATH> out(get_string(state, 1));
     if (out.length() == 0)
         return 0;
 
@@ -62,7 +62,7 @@ static int get_directory(lua_State* state)
 //------------------------------------------------------------------------------
 static int get_drive(lua_State* state)
 {
-    str<8> out = get_string(state, 1);
+    str<8> out(get_string(state, 1));
     if (out.length() == 0)
         return 0;
 

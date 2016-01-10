@@ -328,11 +328,11 @@ class str : public str_base
     char    m_data[COUNT];
 
 public:
-            str() : str_base(m_data, COUNT)     { set_growable(GROWABLE); }
-            str(const char* value) : str()      { copy(value); }
-            str(const wchar_t* value) : str()   { from_utf16(value); }
-            str(const str&) = delete;
-    using   str_base::operator =;
+             str() : str_base(m_data, COUNT)     { set_growable(GROWABLE); }
+    explicit str(const char* value) : str()      { copy(value); }
+    explicit str(const wchar_t* value) : str()   { from_utf16(value); }
+             str(const str&) = delete;
+    using    str_base::operator =;
 };
 
 template <int COUNT=128, bool GROWABLE=true>
@@ -341,11 +341,11 @@ class wstr : public wstr_base
     wchar_t m_data[COUNT];
 
 public:
-            wstr() : wstr_base(m_data, COUNT)   { set_growable(GROWABLE); }
-            wstr(const wchar_t* value) : wstr() { copy(value); }
-            wstr(const char* value) : wstr()    { from_utf8(value); }
-            wstr(const wstr&) = delete;
-    using   wstr_base::operator =;
+             wstr() : wstr_base(m_data, COUNT)   { set_growable(GROWABLE); }
+    explicit wstr(const wchar_t* value) : wstr() { copy(value); }
+    explicit wstr(const char* value) : wstr()    { from_utf8(value); }
+             wstr(const wstr&) = delete;
+    using    wstr_base::operator =;
 };
 
 
