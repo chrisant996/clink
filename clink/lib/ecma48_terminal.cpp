@@ -343,13 +343,17 @@ void ecma48_terminal::write_impl(const char* chars, int char_count)
 {
     HANDLE handle = GetStdHandle(STD_OUTPUT_HANDLE);
 
-    wchar_t wbuf[256];
-    while (int i = to_utf16(wbuf, sizeof_array(wbuf), chars))
+    while (char_count > 0)
     {
-        DWORD written;
-        WriteConsoleW(handle, wbuf, i, &written, nullptr);
+        wchar_t wbuf[256];
+        int n = min<int>(sizeof_array(wbuf), char_count + 1);
+        n = to_utf16(wbuf, n, chars);
 
-        chars += i;
+        DWORD written;
+        WriteConsoleW(handle, wbuf, n, &written, nullptr);
+
+        char_count -= n;
+        chars += n;
     }
 }
 
