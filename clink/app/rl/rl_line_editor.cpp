@@ -11,6 +11,7 @@
 #include <core/log.h>
 #include <core/singleton.h>
 #include <core/str.h>
+#include <core/ecma48_iter.h>
 #include <core/str_compare.h>
 #include <line_state.h>
 #include <matches/match_generator.h>
@@ -146,7 +147,21 @@ rl_line_editor::~rl_line_editor()
 //------------------------------------------------------------------------------
 bool rl_line_editor::edit_line(const char* prompt, str_base& out)
 {
-    return call_readline(prompt, out);
+    // Readline needs to be told about parts of the prompt that aren't visible
+    // by enclosing them in a pair of 0x01/0x02 chars.
+    str<128> rl_prompt;
+
+    ecma48_state state;
+    ecma48_iter iter(prompt, state);
+    while (const ecma48_code* code = iter.next())
+    {
+        bool csi = (code->type == ecma48_code::type_csi);
+        if (csi) rl_prompt.concat("\x01", 1);
+                 rl_prompt.concat(code->str, code->length);
+        if (csi) rl_prompt.concat("\x02", 1);
+    }
+
+    return call_readline(rl_prompt.c_str(), out);
 }
 
 //------------------------------------------------------------------------------
