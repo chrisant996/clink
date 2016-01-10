@@ -10,91 +10,11 @@
 #include <algorithm>
 
 //------------------------------------------------------------------------------
-const char*         find_next_ansi_code(const char*, int*);
-void                lua_filter_prompt(char*, int);
-
-//------------------------------------------------------------------------------
 #define MR(x)                        L##x L"\x08"
 const wchar_t* g_prompt_tag          = L"@CLINK_PROMPT";
 const wchar_t* g_prompt_tag_hidden   = MR("C") MR("L") MR("I") MR("N") MR("K") MR(" ");
 const wchar_t* g_prompt_tags[]       = { g_prompt_tag_hidden, g_prompt_tag };
 #undef MR
-
-//------------------------------------------------------------------------------
-static int parse_backspaces(char* prompt, int n)
-{
-    // This function does not null terminate!
-
-    char* write;
-    char* read;
-
-    write = prompt;
-    read = prompt;
-    while (*read && read < (prompt + n))
-    {
-        if (*read == '\b')
-        {
-            if (write > prompt)
-            {
-                --write;
-            }
-        }
-        else
-        {
-            *write = *read;
-            ++write;
-        }
-
-        ++read;
-    }
-
-    return (int)(write - prompt);
-}
-
-//------------------------------------------------------------------------------
-char* filter_prompt(const char* in_prompt)
-{
-#if MODE4
-    // Get the prompt from Readline and pass it to Clink's filter framework
-    // in Lua.
-    str<256> lua_prompt;
-    lua_prompt << in_prompt;
-    lua_filter_prompt(lua_prompt.data(), lua_prompt.size());
-
-    // Scan for ansi codes and surround them with Readline's markers for
-    // invisible characters.
-    static const int buf_size = 0x4000;
-    str_base out_prompt((char*)malloc(buf_size), buf_size);
-
-    char* next = lua_prompt.data();
-    while (*next)
-    {
-        int ansi_size;
-        char* ansi_code = (char*)find_next_ansi_code(next, &ansi_size);
-
-        int len = parse_backspaces(next, (int)(ansi_code - next));
-        out_prompt.concat(next, len);
-
-        if (*ansi_code)
-        {
-            len = parse_backspaces(ansi_code, ansi_size);
-
-            static const char* tags[] = { "\001", "\002" };
-            out_prompt << tags[0];
-            out_prompt.concat(ansi_code, len);
-            out_prompt << tags[1];
-        }
-
-        next = ansi_code + ansi_size;
-    }
-
-    return out_prompt.data();
-#else
-    str_base out_prompt((char*)malloc(0x1000), 0x1000);
-    out_prompt << in_prompt;
-    return out_prompt.data();
-#endif // MODE4
-}
 
 
 
