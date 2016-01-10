@@ -2,11 +2,10 @@
 // License: http://opensource.org/licenses/MIT
 
 #include "pch.h"
-#include "inject_args.h"
-#include "paths.h"
-#include "host/host.h"
 #include "host/host_cmd.h"
 #include "host/host_ps.h"
+#include "inject_args.h"
+#include "paths.h"
 #include "rl/rl_line_editor.h"
 
 #include <core/base.h>
