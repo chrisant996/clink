@@ -188,31 +188,16 @@ bool host_cmd::is_interactive() const
 {
     // Check the command line for '/c' and don't load if it's present. There's
     // no point loading clink if cmd.exe is running a command and then exiting.
-
-    // Check the host is cmd.exe.
-    if (GetModuleHandle("cmd.exe") == nullptr)
-        return false;
-
-    // Get the command line.
-    wchar_t* args = GetCommandLineW();
-    if (args == nullptr)
-        return false;
-
     // Cmd.exe's argument parsing is basic, simply searching for '/' characters
     // and checking the following character.
-    while (1)
+    wchar_t* args = GetCommandLineW();
+    while (args != nullptr && wcschr(args, '/'))
     {
-        args = wcschr(args, L'/');
-        if (args == nullptr)
-            break;
-
         ++args;
-        int i = tolower(*args);
-        switch (i)
+        switch (tolower(*args))
         {
-        case 'c':
-        case 'k':
-            return (i == 'k');
+        case 'c': return false;
+        case 'k': break;
         }
     }
 
