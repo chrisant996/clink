@@ -363,6 +363,8 @@ BOOL WINAPI host_cmd::set_env_var(const wchar_t* name, const wchar_t* value)
 //------------------------------------------------------------------------------
 bool host_cmd::hook_trap()
 {
+    seh_scope seh;
+
     // Tag the prompt so we can detect when cmd.exe writes to the terminal.
     wchar_t buffer[256];
     buffer[0] = '\0';

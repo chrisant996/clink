@@ -7,6 +7,7 @@
 #include "inject_args.h"
 #include "paths.h"
 #include "rl/rl_line_editor.h"
+#include "seh_scope.h"
 
 #include <core/base.h>
 #include <core/log.h>
@@ -100,6 +101,8 @@ static bool get_host_name(str_base& out)
 //------------------------------------------------------------------------------
 int initialise_clink(const inject_args* inject_args)
 {
+    seh_scope seh;
+
     // The "clink_profile" environment variable can be used to override --profile
     GetEnvironmentVariable("clink_profile", inject_args->profile_path,
         sizeof_array(inject_args->profile_path));
@@ -184,6 +187,8 @@ int initialise_clink(const inject_args* inject_args)
 //------------------------------------------------------------------------------
 void shutdown_clink()
 {
+    seh_scope seh;
+
     if (g_host == nullptr)
         return;
 
