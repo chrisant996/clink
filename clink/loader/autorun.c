@@ -311,7 +311,7 @@ static int install_autorun(const char* clink_path, int wow64)
     }
     str_cat(new_value, "\"", i);
     str_cat(new_value, clink_path, i);
-    str_cat(new_value, "\\clink\" inject", i);
+    str_cat(new_value, "\\clink\" inject --autorun", i);
 
     if (g_clink_args != NULL)
     {

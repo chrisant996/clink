@@ -373,6 +373,8 @@ int inject(int argc, char** argv)
 {
     DWORD target_pid = 0;
     int i;
+    int ret = 1;
+    int is_autorun = 0;
     shared_mem_t* shared_mem;
     inject_args_t inject_args = { 0 };
 
@@ -384,6 +386,7 @@ int inject(int argc, char** argv)
         { "nohostcheck", no_argument,        NULL, 'n' },
         { "ansi",        no_argument,        NULL, 'a' },
         { "nolog",       no_argument,        NULL, 'l' },
+        { "autorun",     no_argument,        NULL, '_' },
         { "help",        no_argument,        NULL, 'h' },
         { NULL, 0, NULL, 0 }
     };
@@ -426,6 +429,7 @@ int inject(int argc, char** argv)
         case 'a': inject_args.ansi_mode = 1;     break;
         case 'q': inject_args.quiet = 1;         break;
         case 'd': target_pid = atoi(optarg);     break;
+        case '_': is_autorun = 1;                break;
 
         case 'l':
             inject_args.no_log = 1;
@@ -433,13 +437,13 @@ int inject(int argc, char** argv)
             break;
 
         case '?':
-            return 1;
+            goto end;
 
         case 'h':
         default:
             puts(g_clink_header);
             puts_help(help, sizeof_array(help));
-            return 1;
+            goto end;
         }
     }
 
@@ -451,23 +455,24 @@ int inject(int argc, char** argv)
         if (target_pid == -1)
         {
             LOG_ERROR("Failed to find parent process ID.");
-            return 1;
+            goto end;
         }
     }
 
     // Check to see if clink is already installed.
     if (is_clink_present(target_pid))
     {
-        return 1;
+        goto end;
     }
 
     // Write args to shared memory, inject, and clean up.
     shared_mem = create_shared_mem(1, "clink", target_pid);
     memcpy(shared_mem->ptr, &inject_args, sizeof(inject_args));
-    i = !do_inject(target_pid);
+    ret = !do_inject(target_pid);
     close_shared_mem(shared_mem);
 
-    return i;
+end:
+    return is_autorun ? 0 : ret;
 }
 
 // vim: expandtab
