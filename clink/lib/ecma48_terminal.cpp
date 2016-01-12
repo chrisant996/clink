@@ -339,28 +339,28 @@ void ecma48_terminal::write_c0(int c0)
 }
 
 //------------------------------------------------------------------------------
-void ecma48_terminal::write_impl(const char* chars, int char_count)
+void ecma48_terminal::write_impl(const char* chars, int length)
 {
     HANDLE handle = GetStdHandle(STD_OUTPUT_HANDLE);
 
-    while (char_count > 0)
+    while (length > 0)
     {
         wchar_t wbuf[256];
-        int n = min<int>(sizeof_array(wbuf), char_count + 1);
+        int n = min<int>(sizeof_array(wbuf), length + 1);
         n = to_utf16(wbuf, n, chars);
 
         DWORD written;
         WriteConsoleW(handle, wbuf, n, &written, nullptr);
 
-        char_count -= n;
+        length -= n;
         chars += n;
     }
 }
 
 //------------------------------------------------------------------------------
-void ecma48_terminal::write(const char* chars, int char_count)
+void ecma48_terminal::write(const char* chars, int length)
 {
-    ecma48_iter iter(chars, m_state, char_count);
+    ecma48_iter iter(chars, m_state, length);
     while (const ecma48_code* code = iter.next())
     {
         switch (code->type)
