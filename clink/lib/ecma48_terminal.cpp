@@ -365,9 +365,9 @@ void ecma48_terminal::write(const char* chars, int length)
     {
         switch (code->type)
         {
-        case ecma48_code::type_chars:   write_impl(code->str, code->length);  break;
-        case ecma48_code::type_c0:      write_c0(code->c0);                  break;
-        case ecma48_code::type_csi:     write_csi(*(code->csi));             break;
+        case ecma48_code::type_chars: write_impl(code->str, code->length); break;
+        case ecma48_code::type_c0:    write_c0(code->c0);                  break;
+        case ecma48_code::type_csi:   write_csi(*(code->csi));             break;
         }
     }
 }
