@@ -1,6 +1,12 @@
 
 ### Changes
 
+##### v0.4.7
+
+- Bug fixes;
+    - Sometimes autorun tries to run clink.exe (#374).
+    - Autorun would cause cmd.exe to return an error if it wasn't interactive (#373).
+
 ##### v0.4.6
 
 - HOME is only set if it is currently unset.
