@@ -8,7 +8,7 @@
 template <> int
 str_iter_impl<char>::next()
 {
-    if (m_ptr == m_end || *m_ptr == '\0')
+    if (!more())
         return 0;
 
     int ax = 0;
@@ -30,7 +30,7 @@ str_iter_impl<char>::next()
 
         ax &= (0x1f >> encode_length);
 
-        if (m_ptr == m_end)
+        if (!more())
             break;
     }
 
@@ -41,7 +41,7 @@ str_iter_impl<char>::next()
 template <> int
 str_iter_impl<wchar_t>::next()
 {
-    if (m_ptr == m_end || *m_ptr == '\0')
+    if (!more())
         return 0;
 
     int ax = 0;
@@ -58,7 +58,7 @@ str_iter_impl<wchar_t>::next()
         else
             return c;
 
-        if (m_ptr == m_end)
+        if (!more())
             break;
     }
 

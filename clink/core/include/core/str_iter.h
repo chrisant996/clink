@@ -15,6 +15,7 @@ public:
     const T*    get_pointer() const;
     int         peek();
     int         next();
+    bool        more() const;
 
 private:
     const T*    m_ptr;
@@ -48,6 +49,12 @@ template <typename T> int str_iter_impl<T>::peek()
     int ret = next();
     m_ptr = ptr;
     return ret;
+}
+
+//------------------------------------------------------------------------------
+template <typename T> bool str_iter_impl<T>::more() const
+{
+    return (m_ptr != m_end && *m_ptr != '\0');
 }
 
 //------------------------------------------------------------------------------
