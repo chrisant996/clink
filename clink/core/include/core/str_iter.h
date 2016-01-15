@@ -10,8 +10,8 @@ template <typename T>
 class str_iter_impl
 {
 public:
-                str_iter_impl(const T* s, int len=-1);
-                str_iter_impl(const str_impl<T>& s, int len=-1);
+    explicit    str_iter_impl(const T* s, int len=-1);
+    explicit    str_iter_impl(const str_impl<T>& s, int len=-1);
     const T*    get_pointer() const;
     int         peek();
     int         next();
