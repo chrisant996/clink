@@ -6,6 +6,7 @@
 
 #include <core/base.h>
 #include <core/log.h>
+#include <core/str_iter.h>
 
 //------------------------------------------------------------------------------
 static unsigned g_last_buffer_size = 0;
@@ -343,15 +344,17 @@ void ecma48_terminal::write_impl(const char* chars, int length)
 {
     HANDLE handle = GetStdHandle(STD_OUTPUT_HANDLE);
 
+    str_iter iter(chars, length);
     while (length > 0)
     {
         wchar_t wbuf[256];
         int n = min<int>(sizeof_array(wbuf), length + 1);
-        n = to_utf16(wbuf, n, chars);
+        n = to_utf16(wbuf, n, iter);
 
         DWORD written;
         WriteConsoleW(handle, wbuf, n, &written, nullptr);
 
+        n = int(iter.get_pointer() - chars);
         length -= n;
         chars += n;
     }
