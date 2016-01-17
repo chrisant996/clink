@@ -61,9 +61,12 @@ template <class T, int MODE>
 int str_compare_impl(str_iter_impl<T>& lhs, str_iter_impl<T>& rhs)
 {
     int diff_index = 0;
-    while (int c = lhs.next())
+    while (1)
     {
-        int d = rhs.next();
+        int c = lhs.peek();
+        int d = rhs.peek();
+        if (!c || !d)
+            break;
 
         if (MODE > 0)
         {
@@ -78,10 +81,15 @@ int str_compare_impl(str_iter_impl<T>& lhs, str_iter_impl<T>& rhs)
         }
 
         if (c != d)
-            return diff_index;
+            break;
 
+        lhs.next();
+        rhs.next();
         ++diff_index;
     }
 
-    return !rhs.next() ? -1 : diff_index;
+    if (lhs.more() || rhs.more())
+        return diff_index;
+
+    return -1;
 }
