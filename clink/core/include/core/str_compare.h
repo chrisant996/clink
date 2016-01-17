@@ -60,7 +60,8 @@ int str_compare(str_iter_impl<T>& lhs, str_iter_impl<T>& rhs)
 template <class T, int MODE>
 int str_compare_impl(str_iter_impl<T>& lhs, str_iter_impl<T>& rhs)
 {
-    int diff_index = 0;
+    const T* start = lhs.get_pointer();
+
     while (1)
     {
         int c = lhs.peek();
@@ -85,11 +86,10 @@ int str_compare_impl(str_iter_impl<T>& lhs, str_iter_impl<T>& rhs)
 
         lhs.next();
         rhs.next();
-        ++diff_index;
     }
 
     if (lhs.more() || rhs.more())
-        return diff_index;
+        return int(lhs.get_pointer() - start);
 
     return -1;
 }

@@ -96,4 +96,14 @@ TEST_CASE("String compare") {
         REQUIRE(lhs_iter.peek() == '1');
         REQUIRE(rhs_iter.more() == false);
     }
+
+    SECTION("UTF-8") {
+        REQUIRE(str_compare("\xc2\x80", "\xc2\x80") == -1);
+        REQUIRE(str_compare("\xc2\x80""abc", "\xc2\x80") == 2);
+    }
+
+    SECTION("UTF-16") {
+        REQUIRE(str_compare(L"abc123", L"abc123") == -1);
+        REQUIRE(str_compare(L"\xd800\xdc00"L"abc", L"\xd800\xdc00") == 2);
+    }
 }
