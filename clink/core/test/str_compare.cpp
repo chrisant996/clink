@@ -46,13 +46,6 @@ TEST_CASE("String compare") {
         REQUIRE(str_compare("-", "_") == -1);
     }
 
-    SECTION("UTF-8/UTF-16 mix") {
-        str_compare_scope _(str_compare_scope::exact);
-
-        REQUIRE(str_compare(L"abc123!@#", "abc123!@#") == -1);
-        REQUIRE(str_compare("abc123!@#", L"abc123!@#") == -1);
-    }
-
     SECTION("Scopes") {
         str_compare_scope outer(str_compare_scope::exact);
         {
