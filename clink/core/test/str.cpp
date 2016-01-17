@@ -138,10 +138,13 @@ TEST_CASE("Strings" NAME_SUFFIX) {
     }
 
     SECTION("Format") {
-        str<> s;
+        str<6> s;
 
         REQUIRE(s.format(STR("%d"), 123) == true);
         REQUIRE(s.equals(STR("123")));
+
+        REQUIRE(s.format(STR("%d"), 1234567) == false);
+        REQUIRE(s.equals(STR("12345")));
     }
 
     SECTION("Operators") {
