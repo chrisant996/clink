@@ -60,4 +60,40 @@ TEST_CASE("String compare") {
         REQUIRE(str_compare("ABC123!@#", "abc123!@#") == 0);
         REQUIRE(str_compare("-", "_") == 0);
     }
+
+    SECTION("Iterator state (same)") {
+        str_iter lhs_iter("abc123");
+        str_iter rhs_iter("abc123");
+
+        REQUIRE(str_compare(lhs_iter, rhs_iter) == -1);
+        REQUIRE(lhs_iter.more() == false);
+        REQUIRE(rhs_iter.more() == false);
+    }
+
+    SECTION("Iterator state (different)") {
+        str_iter lhs_iter("abc123");
+        str_iter rhs_iter("abc321");
+
+        REQUIRE(str_compare(lhs_iter, rhs_iter) == 3);
+        REQUIRE(lhs_iter.peek() == '1');
+        REQUIRE(rhs_iter.peek() == '3');
+    }
+
+    SECTION("Iterator state (lhs shorter)") {
+        str_iter lhs_iter("abc");
+        str_iter rhs_iter("abc321");
+
+        REQUIRE(str_compare(lhs_iter, rhs_iter) == 3);
+        REQUIRE(lhs_iter.more() == false);
+        REQUIRE(rhs_iter.peek() == '3');
+    }
+
+    SECTION("Iterator state (lhs shorter)") {
+        str_iter lhs_iter("abc123");
+        str_iter rhs_iter("abc");
+
+        REQUIRE(str_compare(lhs_iter, rhs_iter) == 3);
+        REQUIRE(lhs_iter.peek() == '1');
+        REQUIRE(rhs_iter.more() == false);
+    }
 }
