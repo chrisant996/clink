@@ -45,7 +45,7 @@ template <typename T> const T* str_iter_impl<T>::get_pointer() const
 //------------------------------------------------------------------------------
 template <typename T> int str_iter_impl<T>::peek()
 {
-    const char* ptr = m_ptr;
+    const T* ptr = m_ptr;
     int ret = next();
     m_ptr = ptr;
     return ret;
