@@ -54,7 +54,7 @@ void column_printer::print(const matches& matches)
                 continue;
 
             const char* match = matches.get_match(index);
-            term->write(match, char_count(match));
+            term->write(match, int(strlen(match)));
 
             for (int i = longest - char_count(match); i >= 0; --i)
                 term->write(" ", 1);
