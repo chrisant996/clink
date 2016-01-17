@@ -4,6 +4,7 @@
 #include "pch.h"
 
 #include <core/str.h>
+#include <core/str_iter.h>
 
 TEST_CASE("Wide character/UTF-8 conversion") {
     SECTION("To UTF-8") {
@@ -63,6 +64,19 @@ TEST_CASE("Wide character/UTF-8 conversion") {
             t.from_utf16(L"0123456789");
             REQUIRE(t.length() == 3);
         }
+
+        SECTION("Stream") {
+            wstr_iter iter(L"01234567");
+            char out[6];
+
+            REQUIRE(to_utf8(out, 6, iter) == 5);
+            REQUIRE(out[0] == '0');
+            REQUIRE(iter.more());
+
+            REQUIRE(to_utf8(out, 6, iter) == 3);
+            REQUIRE(out[0] == '5');
+            REQUIRE(!iter.more());
+        }
     }
 
     SECTION("From UTF-8") {
@@ -118,6 +132,19 @@ TEST_CASE("Wide character/UTF-8 conversion") {
             wstr<4, false> t;
             t.from_utf8("0123456789");
             REQUIRE(t.length() == 3);
+        }
+
+        SECTION("Stream") {
+            str_iter iter("01234567");
+            wchar_t out[6];
+
+            REQUIRE(to_utf16(out, 6, iter) == 5);
+            REQUIRE(out[0] == '0');
+            REQUIRE(iter.more());
+
+            REQUIRE(to_utf16(out, 6, iter) == 3);
+            REQUIRE(out[0] == '5');
+            REQUIRE(!iter.more());
         }
     }
 }

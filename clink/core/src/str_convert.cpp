@@ -55,13 +55,12 @@ builder<char>& builder<char>::operator << (int value)
 
 
 //------------------------------------------------------------------------------
-int to_utf8(char* out, int max_count, const wchar_t* utf16)
+int to_utf8(char* out, int max_count, wstr_iter& iter)
 {
     builder<char> builder(out, max_count);
 
     int c;
-    wstr_iter iter(utf16);
-    while ((c = iter.next()) && !builder.truncated())
+    while (!builder.truncated() && (c = iter.next()))
     {
         if (c < 0x80)
         {
@@ -92,32 +91,51 @@ int to_utf8(char* out, int max_count, const wchar_t* utf16)
 }
 
 //------------------------------------------------------------------------------
-int to_utf16(wchar_t* out, int max_count, const char* utf8)
+int to_utf8(char* out, int max_count, const wchar_t* utf16)
+{
+    wstr_iter iter(utf16);
+    return to_utf8(out, max_count, iter);
+}
+
+//------------------------------------------------------------------------------
+int to_utf8(str_base& out, const wchar_t* utf16)
+{
+    int length = out.length();
+
+    if (out.is_growable())
+        out.reserve(length + int(wcslen(utf16)));
+
+    return to_utf8(out.data() + length, out.size() - length, utf16);
+}
+
+
+
+//------------------------------------------------------------------------------
+int to_utf16(wchar_t* out, int max_count, str_iter& iter)
 {
     builder<wchar_t> builder(out, max_count);
 
     int c;
-    str_iter iter(utf8);
-    while ((c = iter.next()) && !builder.truncated())
+    while (!builder.truncated() && (c = iter.next()))
         builder << c;
 
     return builder.get_written();
 }
 
 //------------------------------------------------------------------------------
-int to_utf8(str_base& out, const wchar_t* utf16)
+int to_utf16(wchar_t* out, int max_count, const char* utf8)
 {
-    if (out.is_growable())
-        out.reserve(int(wcslen(utf16)));
-
-    return to_utf8(out.data() + out.length(), out.size() - out.length(), utf16);
+    str_iter iter(utf8);
+    return to_utf16(out, max_count, iter);
 }
 
 //------------------------------------------------------------------------------
 int to_utf16(wstr_base& out, const char* utf8)
 {
-    if (out.is_growable())
-        out.reserve(int(strlen(utf8)));
+    int length = out.length();
 
-    return to_utf16(out.data() + out.length(), out.size() - out.length(), utf8);
+    if (out.is_growable())
+        out.reserve(length + int(strlen(utf8)));
+
+    return to_utf16(out.data() + length, out.size() - length, utf8);
 }
