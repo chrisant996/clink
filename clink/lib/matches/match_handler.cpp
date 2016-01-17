@@ -52,7 +52,7 @@ int file_match_handler::compare(const char* word, const char* match)
     while (1)
     {
         j = str_compare(word + offset, match + offset);
-        if (match[j] != '\\' && match[j] != '/')
+        if (j < 0 || (match[j] != '\\' && match[j] != '/'))
             break;
 
         offset = j + 1;
