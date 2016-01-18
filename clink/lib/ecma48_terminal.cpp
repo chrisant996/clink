@@ -105,22 +105,24 @@ static int fwrite_sgr_code(const wchar_t* code, int current, int defaults)
 
 
 //------------------------------------------------------------------------------
-ecma48_terminal::ecma48_terminal()
-: m_enable_sgr(true)
+xterm_input::xterm_input()
+: m_buffer_head(0)
+, m_buffer_count(0)
 {
 }
 
 //------------------------------------------------------------------------------
-ecma48_terminal::~ecma48_terminal()
+int xterm_input::read()
 {
+    if (int c = pop())
+        return c;
+    
+    return read_console();
 }
 
 //------------------------------------------------------------------------------
-int ecma48_terminal::read()
+int xterm_input::read_console()
 {
-    static int       carry        = 0; // Multithreading? What's that?
-    static const int CTRL_PRESSED = LEFT_CTRL_PRESSED|RIGHT_CTRL_PRESSED;
-
     // Clear 'processed input' flag so key presses such as Ctrl-C and Ctrl-S
     // aren't swallowed. We also want events about window size changes.
     HANDLE handle_stdin = GetStdHandle(STD_INPUT_HANDLE);
@@ -132,101 +134,91 @@ int ecma48_terminal::read()
     SetConsoleMode(handle_stdin, flags);
 
 loop:
-    int key_char = 0;
-    int key_vk = 0;
-    int key_sc = 0;
-    int key_flags = 0;
-    int alt = 0;
+    CONSOLE_SCREEN_BUFFER_INFO csbi;
+    HANDLE handle_stdout = GetStdHandle(STD_OUTPUT_HANDLE);
+    GetConsoleScreenBufferInfo(handle_stdout, &csbi);
 
-    // Read a key or use what was carried across from a previous call.
-    if (carry)
+    // Check for a new buffer size for simulated SIGWINCH signals.
+// MODE4
     {
-        key_flags = ENHANCED_KEY;
-        key_char = carry & 0xff;
-        carry = carry >> 8;
-    }
-    else
-    {
-        HANDLE handle_stdout = GetStdHandle(STD_OUTPUT_HANDLE);
-        CONSOLE_SCREEN_BUFFER_INFO csbi;
-        DWORD i;
-        INPUT_RECORD record;
-        const KEY_EVENT_RECORD* key;
-
-        GetConsoleScreenBufferInfo(handle_stdout, &csbi);
-
-        // Check for a new buffer size for simulated SIGWINCH signals.
-        i = (csbi.dwSize.X << 16);
+        DWORD i = (csbi.dwSize.X << 16);
         i |= (csbi.srWindow.Bottom - csbi.srWindow.Top) + 1;
         if (!g_last_buffer_size || g_last_buffer_size != i)
         {
             if (g_last_buffer_size)
                 on_terminal_resize();
-
+    
             g_last_buffer_size = i;
             goto loop;
         }
+    }
+// MODE4
 
-        // Fresh read from the console.
-        ReadConsoleInputW(handle_stdin, &record, 1, &i);
-        if (record.EventType != KEY_EVENT)
-            goto loop;
+    // Fresh read from the console.
+    DWORD i;
+    INPUT_RECORD record;
+    ReadConsoleInputW(handle_stdin, &record, 1, &i);
+    if (record.EventType != KEY_EVENT)
+        goto loop;
 
-        GetConsoleScreenBufferInfo(handle_stdout, &csbi);
-        if (record.EventType == WINDOW_BUFFER_SIZE_EVENT)
-        {
-            on_terminal_resize();
+    GetConsoleScreenBufferInfo(handle_stdout, &csbi);
+// MODE4
+    if (record.EventType == WINDOW_BUFFER_SIZE_EVENT)
+    {
+        on_terminal_resize();
 
-            g_last_buffer_size = (csbi.dwSize.X << 16) | csbi.dwSize.Y;
-            goto loop;
-        }
+        g_last_buffer_size = (csbi.dwSize.X << 16) | csbi.dwSize.Y;
+        goto loop;
+    }
+// MODE4
 
-        key = &record.Event.KeyEvent;
-        key_char = key->uChar.UnicodeChar;
-        key_vk = key->wVirtualKeyCode;
-        key_sc = key->wVirtualScanCode;
-        key_flags = key->dwControlKeyState;
+    const KEY_EVENT_RECORD* key = &record.Event.KeyEvent;
+    int key_char = key->uChar.UnicodeChar;
+    int key_vk = key->wVirtualKeyCode;
+    int key_sc = key->wVirtualScanCode;
+    int key_flags = key->dwControlKeyState;
 
 #if defined(DEBUG_GETC) && defined(_DEBUG)
-        {
-            static int id = 0;
-            int i;
-            printf("\n%03d: %s ", id++, key->bKeyDown ? "+" : "-");
-            for (i = 2; i < sizeof(*key) / sizeof(short); ++i)
-                printf("%04x ", ((unsigned short*)key)[i]);
-        }
+    {
+        static int id = 0;
+        int i;
+        printf("\n%03d: %s ", id++, key->bKeyDown ? "+" : "-");
+        for (i = 2; i < sizeof(*key) / sizeof(short); ++i)
+            printf("%04x ", ((unsigned short*)key)[i]);
+    }
 #endif
 
-        if (key->bKeyDown == FALSE)
-        {
-            // Some times conhost can send through ALT codes, with the resulting
-            // Unicode code point in the Alt key-up event.
-            if (key_vk == VK_MENU && key_char)
-                goto end;
+    if (key->bKeyDown == FALSE)
+    {
+        // Some times conhost can send through ALT codes, with the resulting
+        // Unicode code point in the Alt key-up event.
+        if (key_vk == VK_MENU && key_char)
+            goto end;
 
-            goto loop;
-        }
-
-        // Windows supports an AltGr substitute which we check for here. As it
-        // collides with Readline mappings Clink's support can be disabled.
-        int altgr_sub;
-        altgr_sub = !!(key_flags & LEFT_ALT_PRESSED);
-        altgr_sub &= !!(key_flags & (LEFT_CTRL_PRESSED|RIGHT_CTRL_PRESSED));
-        altgr_sub &= !!key_char;
-
-        if (altgr_sub && !get_clink_setting_int("use_altgr_substitute"))
-        {
-            altgr_sub = 0;
-            key_char = 0;
-        }
-
-        if (!altgr_sub)
-            alt = !!(key_flags & (LEFT_ALT_PRESSED|RIGHT_ALT_PRESSED));
+        goto loop;
     }
+
+    // Windows supports an AltGr substitute which we check for here. As it
+    // collides with Readline mappings Clink's support can be disabled.
+    int altgr_sub;
+    altgr_sub = !!(key_flags & LEFT_ALT_PRESSED);
+    altgr_sub &= !!(key_flags & (LEFT_CTRL_PRESSED|RIGHT_CTRL_PRESSED));
+    altgr_sub &= !!key_char;
+
+    if (altgr_sub && !get_clink_setting_int("use_altgr_substitute"))
+    {
+        altgr_sub = 0;
+        key_char = 0;
+    }
+
+    int alt = 0;
+    if (!altgr_sub)
+        alt = !!(key_flags & (LEFT_ALT_PRESSED|RIGHT_ALT_PRESSED));
 
     // No Unicode character? Then some post-processing is required to make the
     // output compatible with whatever standard Linux terminals adhere to and
     // that which Readline expects.
+    static const int CTRL_PRESSED = LEFT_CTRL_PRESSED|RIGHT_CTRL_PRESSED;
     if (key_char == 0)
     {
         // The numpad keys such as PgUp, End, etc. don't come through with the
@@ -272,14 +264,14 @@ loop:
 
                 int j = 1 + !!(key_flags & SHIFT_PRESSED);
 
-                carry = mod_map[i][j] << 8;
-                carry |= (key_flags & CTRL_PRESSED) ? 'O' : '[';
+                push((key_flags & CTRL_PRESSED) ? 'O' : '[');
+                push(mod_map[i][j]);
 
                 break;
             }
 
             // Blacklist.
-            if (!carry)
+            if (!m_buffer_count)
                 goto loop;
 
             key_vk = 0x1b;
@@ -302,10 +294,11 @@ loop:
     }
 
     // Special case for shift-tab.
-    if (key_char == '\t' && !carry && (key_flags & SHIFT_PRESSED))
+    if (key_char == '\t' && !m_buffer_count && (key_flags & SHIFT_PRESSED))
     {
         key_char = 0x1b;
-        carry = 'Z[';
+        push('[');
+        push('Z');
     }
 
 end:
@@ -316,11 +309,56 @@ end:
     // Include an ESC character in the input stream if Alt is pressed.
     if (alt && key_char < 0x80)
     {
-        carry = (carry << 8) | key_char;
+        push(key_char);
         key_char = 0x1b;
     }
 
     return key_char;
+}
+
+//------------------------------------------------------------------------------
+void xterm_input::push(int value)
+{
+    if (m_buffer_count >= sizeof_array(m_buffer))
+        return;
+
+    int index = (m_buffer_head + m_buffer_count) & (sizeof_array(m_buffer) - 1);
+
+    m_buffer[index] = value;
+    ++m_buffer_count;
+}
+
+//------------------------------------------------------------------------------
+int xterm_input::pop()
+{
+    if (!m_buffer_count)
+        return 0;
+
+    int value = m_buffer[m_buffer_head];
+
+    --m_buffer_count;
+    m_buffer_head = (m_buffer_head + 1) & (sizeof_array(m_buffer) - 1);
+
+    return value;
+}
+
+
+
+//------------------------------------------------------------------------------
+ecma48_terminal::ecma48_terminal()
+: m_enable_sgr(true)
+{
+}
+
+//------------------------------------------------------------------------------
+ecma48_terminal::~ecma48_terminal()
+{
+}
+
+//------------------------------------------------------------------------------
+int ecma48_terminal::read()
+{
+    return m_xterm_input.read();
 }
 
 //------------------------------------------------------------------------------

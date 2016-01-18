@@ -8,6 +8,24 @@
 #include <core/ecma48_iter.h>
 
 //------------------------------------------------------------------------------
+class xterm_input
+{
+public:
+                    xterm_input();
+    int             read();
+
+private:
+    int             read_console();
+    void            push(int value);
+    int             pop();
+    int             m_buffer_head;
+    int             m_buffer_count;
+    int             m_buffer[8]; // must be power of two.
+};
+
+
+
+//------------------------------------------------------------------------------
 class ecma48_terminal
     : public terminal
 {
@@ -23,6 +41,7 @@ private:
     void            write_c0(int c0);
     void            write_impl(const char* chars, int length);
     void            check_sgr_support();
+    xterm_input     m_xterm_input;
     ecma48_state    m_state;
     bool            m_enable_sgr;
 };
