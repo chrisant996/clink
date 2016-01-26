@@ -21,9 +21,11 @@ globber::globber(const context& ctx)
     if (path[0] && path[1] == ':' && path[2] != '\\' && path[2] != '/')
     {
         char env_var[4] = { '=', path[0], ':', 0 };
-        os::get_env(env_var, glob);
-        glob << "/";
-        glob << (path + 2);
+        if (os::get_env(env_var, glob))
+        {
+            glob << "/";
+            glob << (path + 2);
+        }
     }
     else
         glob << m_context.path;
