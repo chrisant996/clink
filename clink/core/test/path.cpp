@@ -57,7 +57,6 @@ TEST_CASE("path::get_base_name()")
         REQUIRE(s.equals("filename.ext"));
         s.clear();
     }
-
 }
 
 TEST_CASE("path::get_directory()")
@@ -224,6 +223,23 @@ TEST_CASE("path::get_name()")
         SECTION("2") { path::get_name("filename.ext", s); }
 
         REQUIRE(s.equals("filename.ext"));
+    }
+
+    SECTION("Trailing slash") {
+        const char* name;
+
+        SECTION("0") { name = path::get_name("one/two"); }
+        SECTION("1") { name = path::get_name("one/two/"); }
+        SECTION("2") { name = path::get_name("one/two//"); }
+        SECTION("3") { name = path::get_name("one/two///"); }
+        SECTION("4") { name = path::get_name("one\\two"); }
+        SECTION("5") { name = path::get_name("one\\two\\\\"); }
+        SECTION("6") { name = path::get_name("/two/"); }
+        SECTION("7") { name = path::get_name("two/"); }
+
+        REQUIRE(name[0] == 't');
+        REQUIRE(name[1] == 'w');
+        REQUIRE(name[2] == 'o');
     }
 }
 

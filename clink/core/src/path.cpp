@@ -202,14 +202,33 @@ bool path::get_extension(const char* in, str_base& out)
 //------------------------------------------------------------------------------
 bool path::get_name(const char* in, str_base& out)
 {
-    if (const char* slash = get_last_separator(in))
-        return out.concat(slash + 1);
+    return out.concat(get_name(in));
+}
 
-    // Windows drive letters.
+//------------------------------------------------------------------------------
+const char* path::get_name(const char* in)
+{
+    if (const char* slash = get_last_separator(in))
+    {
+        // Like get_directory() a trailing slash is not considered a delimiter.
+        if (slash[1] != '\0')
+            return slash + 1;
+
+        // Two passes; 1st to skip seperators, 2nd to skip word.
+        for (int i = 0; i < 2; ++i)
+            while (slash > in)
+                if (is_seperator(*--slash) != (i == 0))
+                    break;
+
+        return slash + is_seperator(*slash);
+    }
+
+#if defined(PLATFORM_WINDOWS)
     if (in[0] && in[1] == ':')
         in += 2;
+#endif
 
-    return out.concat(in);
+    return in;
 }
 
 //------------------------------------------------------------------------------
