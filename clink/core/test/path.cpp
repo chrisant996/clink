@@ -242,6 +242,17 @@ TEST_CASE("path::get_name()")
         REQUIRE(name[1] == 'w');
         REQUIRE(name[2] == 'o');
     }
+
+    SECTION("Other") {
+        const char* in;
+
+        SECTION("0") { in = ""; }
+        SECTION("1") { in = "//"; }
+        SECTION("2") { in = "/\\/"; }
+        SECTION("3") { in = "\\"; }
+
+        REQUIRE(path::get_name(in) == in);
+    }
 }
 
 TEST_CASE("path::is_root()")

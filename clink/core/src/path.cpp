@@ -219,10 +219,15 @@ const char* path::get_name(const char* in)
             return slash + 1;
 
         // Two passes; 1st to skip seperators, 2nd to skip word.
-        for (int i = 0; i < 2; ++i)
+        int pass = 0;
+        for (pass = 0; pass < 2 && slash > in; ++pass)
             while (slash > in)
-                if (is_seperator(*--slash) != (i == 0))
+                if (is_seperator(*--slash) != (pass == 0))
                     break;
+
+        // If the two passes didn't complete 'in' only contains seperators
+        if (pass < 2)
+            return in;
 
         return slash + is_seperator(*slash);
     }
