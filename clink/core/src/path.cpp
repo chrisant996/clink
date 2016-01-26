@@ -6,6 +6,36 @@
 #include "path.h"
 #include "str.h"
 
+#if defined(PLATFORM_WINDOWS)
+#   define PATH_SEP "\\"
+#else
+#   define PATH_SEP "/"
+#endif
+
+
+
+//------------------------------------------------------------------------------
+static bool is_path_seperator(int c)
+{
+#if defined(PLATFORM_WINDOWS)
+    return (c == '/' || c == '\\');
+#else
+    return (c == '/');
+#endif
+}
+
+//------------------------------------------------------------------------------
+static const char* get_last_separator(const char* in)
+{
+#if defined(PLATFORM_WINDOWS)
+    return max(strrchr(in, '/'), strrchr(in, '\\'));
+#else
+    return strrchr(in, '/');
+#endif
+}
+
+
+
 //------------------------------------------------------------------------------
 void path::clean(str_base& in_out, int sep)
 {
@@ -16,7 +46,7 @@ void path::clean(str_base& in_out, int sep)
 void path::clean(char* in_out, int sep)
 {
     if (!sep)
-        sep = '\\';
+        sep = PATH_SEP[0];
 
     enum clean_state
     {
@@ -32,7 +62,7 @@ void path::clean(char* in_out, int sep)
         switch (state)
         {
         case state_write:
-            if (c == '\\' || c == '/' || c == sep)
+            if (is_path_seperator(c) || c == sep)
             {
                 c = sep;
                 state = state_slash;
@@ -43,7 +73,7 @@ void path::clean(char* in_out, int sep)
             break;
 
         case state_slash:
-            if (c != '\\' && c != '/' && c != sep)
+            if (!is_path_seperator(c) && c != sep)
             {
                 state = state_write;
                 continue;
@@ -88,35 +118,39 @@ bool path::get_directory(str_base& in_out)
 //------------------------------------------------------------------------------
 int path::get_directory_end(const char* path)
 {
-    if (const char* slash = max(strrchr(path, '\\'), strrchr(path, '/')))
+    if (const char* slash = get_last_separator(path))
     {
         // Trim consecutive slashes unless they're leading ones.
         const char* first_slash = slash;
         while (first_slash >= path)
         {
-            if (*first_slash != '/' && *first_slash != '\\')
+            if (!is_path_seperator(*first_slash))
                 break;
 
             --first_slash;
         }
         ++first_slash;
 
-        if (first_slash != path)    // N.B. Condition only applies Windows.
+        if (first_slash != path)
             slash = first_slash;
 
         // Don't strip '/' if it's the first char.
         if (slash == path)
             ++slash;
 
+#if defined(PLATFORM_WINDOWS)
         // Same for Windows and it's drive prefixes.
         if (path[0] && path[1] == ':' && slash == path + 2)
             ++slash;
+#endif
 
         return int(slash - path);
     }
 
+#if defined(PLATFORM_WINDOWS)
     if (path[0] && path[1] == ':')
         return 2;
+#endif
 
     return 0;
 }
@@ -124,22 +158,28 @@ int path::get_directory_end(const char* path)
 //------------------------------------------------------------------------------
 bool path::get_drive(const char* in, str_base& out)
 {
-    // Windows
+#if defined(PLATFORM_WINDOWS)
     if ((in[1] != ':') || (unsigned(tolower(in[0]) - 'a') > ('z' - 'a')))
         return false;
 
     return out.concat(in, 2);
+#else
+    return false;
+#endif
 }
 
 //------------------------------------------------------------------------------
 bool path::get_drive(str_base& in_out)
 {
-    // Windows
+#if defined(PLATFORM_WINDOWS)
     if ((in_out[1] != ':') || (unsigned(tolower(in_out[0]) - 'a') > ('z' - 'a')))
         return false;
 
     in_out.truncate(2);
     return (in_out.size() > 2);
+#else
+    return false;
+#endif
 }
 
 //------------------------------------------------------------------------------
@@ -155,7 +195,7 @@ bool path::get_extension(const char* in, str_base& out)
 //------------------------------------------------------------------------------
 bool path::get_name(const char* in, str_base& out)
 {
-    if (const char* slash = max(strrchr(in, '\\'), strrchr(in, '/')))
+    if (const char* slash = get_last_separator(in))
         return out.concat(slash + 1);
 
     // Windows drive letters.
@@ -168,6 +208,7 @@ bool path::get_name(const char* in, str_base& out)
 //------------------------------------------------------------------------------
 bool path::is_root(const char* path)
 {
+#if defined(PLATFORM_WINDOWS)
     // Windows' drives prefixes.
     // "X:" ?
     if (path[0] && path[1] == ':')
@@ -176,12 +217,13 @@ bool path::is_root(const char* path)
             return true;
 
         // "X:\" or "X://" ?
-        if (path[3] == '\0' && (path[2] == '\\' || path[2] == '/'))
+        if (path[3] == '\0' && is_path_seperator(path[2]))
             return true;
     }
+#endif
 
     // "[/ or /]+" ?
-    while (*path == '/' || *path == '\\')
+    while (is_path_seperator(*path))
         ++path;
 
     return (*path == '\0');
@@ -202,16 +244,17 @@ bool path::append(str_base& out, const char* rhs)
     int last = int(out.length() - 1);
     if (last >= 0)
     {
-        add_seperator &= (out[last] != '\\' && out[last] != '/');
-        add_seperator &= !(out[1] == ':' && out[2] == '\0'); // Windows
+        add_seperator &= !is_path_seperator(out[last]);
+
+#if defined(PLATFORM_WINDOWS)
+        add_seperator &= !(out[1] == ':' && out[2] == '\0');
+#endif
     }
     else
         add_seperator = false;
 
-    add_seperator &= (rhs[0] != '\\' && rhs[0] != '/');
-
-    if (add_seperator)
-        out << "\\";
+    if (add_seperator && !is_path_seperator(rhs[0]))
+        out << PATH_SEP;
 
     return out.concat(rhs);
 }
