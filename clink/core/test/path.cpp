@@ -331,3 +331,23 @@ TEST_CASE("path::join()")
         REQUIRE(s.equals("x:one"));
     }
 }
+
+TEST_CASE("path::join(get_dir(), get_name())")
+{
+    const char* in = "one/two";
+
+    SECTION("0") { in = "one/two"; }
+    SECTION("1") { in = "one\\two"; }
+    SECTION("2") { in = "one/two/"; }
+    SECTION("3") { in = "one/two\\"; }
+    SECTION("4") { in = "one\\two\\"; }
+
+    str<> dir, name;
+    path::get_directory(in, dir);
+    path::get_name(in, name);
+    
+    str<> join;
+    path::join(dir.c_str(), name.c_str(), join);
+    path::clean(join, '/');
+    REQUIRE(join.equals("one/two"));
+}
