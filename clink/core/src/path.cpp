@@ -15,7 +15,7 @@
 
 
 //------------------------------------------------------------------------------
-static bool is_path_seperator(int c)
+static bool is_seperator(int c)
 {
 #if defined(PLATFORM_WINDOWS)
     return (c == '/' || c == '\\');
@@ -62,7 +62,7 @@ void path::clean(char* in_out, int sep)
         switch (state)
         {
         case state_write:
-            if (is_path_seperator(c) || c == sep)
+            if (is_seperator(c) || c == sep)
             {
                 c = sep;
                 state = state_slash;
@@ -73,7 +73,7 @@ void path::clean(char* in_out, int sep)
             break;
 
         case state_slash:
-            if (!is_path_seperator(c) && c != sep)
+            if (!is_seperator(c) && c != sep)
             {
                 state = state_write;
                 continue;
@@ -124,7 +124,7 @@ int path::get_directory_end(const char* path)
         const char* first_slash = slash;
         while (first_slash >= path)
         {
-            if (!is_path_seperator(*first_slash))
+            if (!is_seperator(*first_slash))
                 break;
 
             --first_slash;
@@ -217,13 +217,13 @@ bool path::is_root(const char* path)
             return true;
 
         // "X:\" or "X://" ?
-        if (path[3] == '\0' && is_path_seperator(path[2]))
+        if (path[3] == '\0' && is_seperator(path[2]))
             return true;
     }
 #endif
 
     // "[/ or /]+" ?
-    while (is_path_seperator(*path))
+    while (is_seperator(*path))
         ++path;
 
     return (*path == '\0');
@@ -244,7 +244,7 @@ bool path::append(str_base& out, const char* rhs)
     int last = int(out.length() - 1);
     if (last >= 0)
     {
-        add_seperator &= !is_path_seperator(out[last]);
+        add_seperator &= !is_seperator(out[last]);
 
 #if defined(PLATFORM_WINDOWS)
         add_seperator &= !(out[1] == ':' && out[2] == '\0');
@@ -253,7 +253,7 @@ bool path::append(str_base& out, const char* rhs)
     else
         add_seperator = false;
 
-    if (add_seperator && !is_path_seperator(rhs[0]))
+    if (add_seperator && !is_seperator(rhs[0]))
         out << PATH_SEP;
 
     return out.concat(rhs);
