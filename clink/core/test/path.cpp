@@ -12,10 +12,11 @@ TEST_CASE("path::clean()")
 
     s.copy("X://0/\\/1/2//\\3/\\\\//4//");
     path::clean(s);
-    REQUIRE(s.equals("X:\\0\\1\\2\\3\\4\\"));
+    REQUIRE(s.equals("X:\\0\\1\\2\\3\\4"));
 
+    s << "//\\//";
     path::clean(s, '/');
-    REQUIRE(s.equals("X:/0/1/2/3/4/"));
+    REQUIRE(s.equals("X:/0/1/2/3/4"));
 
     s.copy("abcdef");
     path::clean(s);

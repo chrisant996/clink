@@ -84,6 +84,10 @@ void path::clean(char* in_out, int sep)
         ++read;
     }
 
+    // No trailing slash unless it roots the path.
+    if (state == state_slash && write > (in_out + 1))
+        --write;
+
     *write = '\0';
 }
 
