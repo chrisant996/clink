@@ -120,6 +120,13 @@ int path::get_directory_end(const char* path)
 {
     if (const char* slash = get_last_separator(path))
     {
+        // Last slash isn't used to find end of the directory.
+        if (slash[1] == '\0')
+            for (int i = 0; i < 2; ++i)
+                while (slash > path)
+                    if (is_seperator(*--slash) != (i == 0))
+                        break;
+
         // Trim consecutive slashes unless they're leading ones.
         const char* first_slash = slash;
         while (first_slash >= path)
