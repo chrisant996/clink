@@ -18,7 +18,7 @@ static const char* g_default_fs[] = {
     "dir1/only",
     "dir1/file1",
     "dir1/file2",
-    "dir2/",
+    "dir2/.",
     nullptr,
 };
 
@@ -26,7 +26,7 @@ static const char* g_default_fs[] = {
 fs_fixture::fs_fixture(const char** fs)
 {
     os::get_env("tmp", m_root);
-    m_root << "\\clink_test\\";
+    path::append(m_root, "clink_test");
 
     os::make_dir(m_root.c_str());
     os::set_current_dir(m_root.c_str());
@@ -60,9 +60,10 @@ fs_fixture::~fs_fixture()
 //------------------------------------------------------------------------------
 void fs_fixture::clean(const char* path)
 {
-    globber globber(path);
+    str<> file;
+    path::join(path, "*", file);
 
-    str<MAX_PATH> file;
+    globber globber(file.c_str());
     while (globber.next(file))
     {
         if (os::get_path_type(file.c_str()) == os::path_type_dir)
