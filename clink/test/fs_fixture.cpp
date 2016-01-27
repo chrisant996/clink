@@ -60,8 +60,7 @@ fs_fixture::~fs_fixture()
 //------------------------------------------------------------------------------
 void fs_fixture::clean(const char* path)
 {
-    globber::context ctx = { path };
-    globber globber(ctx);
+    globber globber(path);
 
     str<MAX_PATH> file;
     while (globber.next(file))

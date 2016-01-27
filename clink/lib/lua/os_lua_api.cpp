@@ -139,8 +139,8 @@ static int glob_impl(lua_State* state, bool dirs_only)
 
     lua_createtable(state, 0, 0);
 
-    globber::context glob_ctx = { mask, "", dirs_only };
-    globber globber(glob_ctx);
+    globber globber(mask);
+    globber.files(!dirs_only);
 
     int i = 1;
     str<MAX_PATH> file;

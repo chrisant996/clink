@@ -11,19 +11,13 @@
 class globber
 {
 public:
-    struct context
-    {
-        const char*     path;
-        const char*     wildcard;
-        bool            no_files;
-        bool            no_directories;
-        bool            no_dir_suffix;
-        bool            hidden;
-        bool            dots;
-    };
-
-                        globber(const context& ctx);
+                        globber(const char* pattern);
                         ~globber();
+    void                files(bool state)       { m_files = state; }
+    void                directories(bool state) { m_directories = state; }
+    void                suffix_dirs(bool state) { m_dir_suffix = state; }
+    void                hidden(bool state)      { m_hidden = state; }
+    void                dots(bool state)        { m_dots = state; }
     bool                next(str_base& out);
 
 private:
@@ -33,5 +27,9 @@ private:
     WIN32_FIND_DATAW    m_data;
     HANDLE              m_handle;
     str<MAX_PATH>       m_root;
-    context             m_context;
+    bool                m_files;
+    bool                m_directories;
+    bool                m_dir_suffix;
+    bool                m_hidden;
+    bool                m_dots;
 };
