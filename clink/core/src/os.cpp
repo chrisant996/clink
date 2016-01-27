@@ -38,19 +38,19 @@ bool os::set_current_dir(const char* dir)
 //------------------------------------------------------------------------------
 bool os::make_dir(const char* dir)
 {
+    int type = get_path_type(dir);
+    if (type == path_type_dir)
+        return true;
+
     str<> next;
     path::get_directory(dir, next);
 
-    if (next.length() && !path::is_root(next.c_str()))
+    if (!next.empty() && !path::is_root(next.c_str()))
         if (!make_dir(next.c_str()))
             return false;
 
     if (*dir)
     {
-        int type = os::get_path_type(dir);
-        if (type == path_type_dir)
-            return true;
-
         wstr<MAX_PATH> wdir(dir);
         return (CreateDirectoryW(wdir.c_str(), nullptr) == TRUE);
     }
