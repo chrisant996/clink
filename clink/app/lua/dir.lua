@@ -5,8 +5,7 @@
 local function dir_match_generator(word)
     local matches = {}
 
-    local root = path.getdirectory(word) or ""
-    for _, dir in ipairs(os.globdirs(path.join(root, "*"))) do
+    for _, dir in ipairs(os.globdirs(word.."*")) do
         table.insert(matches, dir)
     end
 
