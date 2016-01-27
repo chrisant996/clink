@@ -12,11 +12,11 @@ TEST_CASE("path::clean()")
 
     s.copy("X://0/\\/1/2//\\3/\\\\//4//");
     path::clean(s);
-    REQUIRE(s.equals("X:\\0\\1\\2\\3\\4"));
+    REQUIRE(s.equals("X:\\0\\1\\2\\3\\4\\"));
 
     s << "//\\//";
     path::clean(s, '/');
-    REQUIRE(s.equals("X:/0/1/2/3/4"));
+    REQUIRE(s.equals("X:/0/1/2/3/4/"));
 
     s.copy("abcdef");
     path::clean(s);
@@ -334,13 +334,21 @@ TEST_CASE("path::join()")
 
 TEST_CASE("path::join(get_dir(), get_name())")
 {
-    const char* in = "one/two";
+    const char* in;
+    const char* out;
 
-    SECTION("0") { in = "one/two"; }
-    SECTION("1") { in = "one\\two"; }
-    SECTION("2") { in = "one/two/"; }
-    SECTION("3") { in = "one/two\\"; }
-    SECTION("4") { in = "one\\two\\"; }
+    SECTION("Plain") {
+        SECTION("0") { in = "one/two"; }
+        SECTION("1") { in = "one\\two"; }
+        out = "one/two";
+    }
+
+    SECTION("Trailing slash") {
+        SECTION("2") { in = "one/two/"; }
+        SECTION("3") { in = "one/two\\"; }
+        SECTION("4") { in = "one\\two\\"; }
+        out = "one/two/";
+    }
 
     str<> dir, name;
     path::get_directory(in, dir);
@@ -349,5 +357,6 @@ TEST_CASE("path::join(get_dir(), get_name())")
     str<> join;
     path::join(dir.c_str(), name.c_str(), join);
     path::clean(join, '/');
-    REQUIRE(join.equals("one/two"));
+
+    REQUIRE(join.equals(out));
 }
