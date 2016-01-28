@@ -34,6 +34,11 @@ void column_printer::print(const matches& matches)
     if (!longest)
         return;
 
+    int query_items = 100 ; // MODE4: get from rl_completion_query_items
+    if (query_items > 0 && query_items <= match_count)
+        if (!do_display_prompt(match_count))
+            return;
+
     int display_width = 106; // MODE4: take from rl's completion-display-width or terminal
     int columns = max(1, display_width / longest);
     int rows = (match_count + columns - 1) / columns;
@@ -94,4 +99,41 @@ int column_printer::do_pager(int pager_row)
 
     term->write("\r", 1);
     return pager_row + ret;
+}
+
+//------------------------------------------------------------------------------
+bool column_printer::do_display_prompt(int count)
+{
+    terminal* term = get_terminal();
+
+    str<64> prompt;
+    prompt.format("Show %d matches? [Yn]", count);
+    term->write(prompt.c_str(), prompt.length());
+    term->flush();
+
+    bool ret = true;
+    for (bool loop = true; loop; )
+    {
+        switch(term->read())
+        {
+        case 'y':
+        case 'Y':
+        case ' ':
+        case '\t':
+        case '\r':
+            loop = false;
+            break;
+
+        case 'n':
+        case 'N':
+        case 0x03:
+        case 0x7f:
+            ret = false;
+            loop = false;
+            break;
+        }
+    }
+
+    term->write("\n", 1);
+    return ret;
 }

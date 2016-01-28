@@ -16,4 +16,5 @@ public:
 
 private:
     int             do_pager(int pager_row);
+    bool            do_display_prompt(int count);
 };
