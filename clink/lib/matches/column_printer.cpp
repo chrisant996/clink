@@ -108,6 +108,9 @@ int column_printer::do_pager(int pager_row)
             loop = false;
             ret = pager_row = 0;
             break;
+
+        default:
+            term->write("\x07", 1);
         }
     }
 
@@ -145,6 +148,9 @@ bool column_printer::do_display_prompt(int count)
             ret = false;
             loop = false;
             break;
+
+        default:
+            term->write("\x07", 1);
         }
     }
 
