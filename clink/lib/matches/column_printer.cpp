@@ -12,6 +12,9 @@
 //------------------------------------------------------------------------------
 column_printer::column_printer(terminal* terminal)
 : match_printer(terminal)
+, m_query_threshold(100)
+, m_max_columns(106)
+, m_vertical(true)
 {
 }
 
@@ -34,23 +37,18 @@ void column_printer::print(const matches& matches)
     if (!longest)
         return;
 
-    int query_items = 100 ; // MODE4: get from rl_completion_query_items
-    if (query_items > 0 && query_items <= match_count)
+    if (m_query_threshold > 0 && m_query_threshold <= match_count)
         if (!do_display_prompt(match_count))
             return;
 
-    int display_width = 106; // MODE4: take from rl's completion-display-width or terminal
-    int columns = max(1, display_width / longest);
+    int columns = max(1, m_max_columns / longest);
     int rows = (match_count + columns - 1) / columns;
-
     int pager_row = term->get_rows() - 1;
 
-    bool vertical = true; // MODE4: get from readline.
-
-    int dx = vertical ? rows : 1;
+    int dx = m_vertical ? rows : 1;
     for (int y = 0; y < rows; ++y)
     {
-        int index = vertical ? y : (y * columns);
+        int index = m_vertical ? y : (y * columns);
 
         if (y == pager_row)
         {
