@@ -13,4 +13,7 @@ public:
                     column_printer(terminal* terminal);
     virtual         ~column_printer();
     virtual void    print(const matches& matches) override;
+
+private:
+    int             do_pager(int pager_row);
 };

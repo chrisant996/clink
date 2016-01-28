@@ -24,22 +24,21 @@ column_printer::~column_printer()
 void column_printer::print(const matches& matches)
 {
     terminal* term = get_terminal();
+    int match_count = matches.get_match_count();
 
     // Get the longest match length.
     int longest = 0;
-    for (int i = 0, n = matches.get_match_count(); i < n; ++i)
-    {
-        const char* match = matches.get_match(i);
-        longest = max<int>(char_count(match), longest);
-    }
+    for (int i = 0; i < match_count; ++i)
+        longest = max<int>(char_count(matches.get_match(i)), longest);
 
     if (!longest)
         return;
 
     int display_width = 106; // MODE4: take from rl's completion-display-width or terminal
-    int match_count = matches.get_match_count();
     int columns = max(1, display_width / longest);
     int rows = (match_count + columns - 1) / columns;
+
+    int pager_row = term->get_rows() - 1;
 
     bool vertical = true; // MODE4: get from readline.
 
@@ -47,6 +46,13 @@ void column_printer::print(const matches& matches)
     for (int y = 0; y < rows; ++y)
     {
         int index = vertical ? y : (y * columns);
+
+        if (y == pager_row)
+        {
+            pager_row = do_pager(pager_row);
+            if (!pager_row)
+                break;
+        }
 
         for (int x = 0; x < columns; ++x)
         {
@@ -66,4 +72,26 @@ void column_printer::print(const matches& matches)
     }
 
     term->flush();
+}
+
+//------------------------------------------------------------------------------
+int column_printer::do_pager(int pager_row)
+{
+    terminal* term = get_terminal();
+
+    int ret = term->get_rows() - 2;
+
+    static const char prompt[] = { "--More--" };
+    term->write(prompt, sizeof(prompt));
+    term->flush();
+
+    while (int i = term->read())
+    {
+        if (i == ' ')                          break;
+        if (i == '\r')                         { ret = 1; break; }
+        if (i == 'q' || i == 'Q' || i == 0x03) { ret = pager_row = 0; break; }
+    }
+
+    term->write("\r", 1);
+    return pager_row + ret;
 }
