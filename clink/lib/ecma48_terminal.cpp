@@ -455,3 +455,19 @@ void ecma48_terminal::check_sgr_support()
 
     return;
 }
+
+//------------------------------------------------------------------------------
+int ecma48_terminal::get_columns() const
+{
+    CONSOLE_SCREEN_BUFFER_INFO csbi;
+    GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &csbi);
+    return csbi.dwSize.X;
+}
+
+//------------------------------------------------------------------------------
+int ecma48_terminal::get_rows() const
+{
+    CONSOLE_SCREEN_BUFFER_INFO csbi;
+    GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &csbi);
+    return (csbi.srWindow.Bottom - csbi.srWindow.Top) + 1;
+}

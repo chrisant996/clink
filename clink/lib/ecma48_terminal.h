@@ -35,6 +35,8 @@ public:
     virtual int     read() override;
     virtual void    write(const char* chars, int length) override;
     virtual void    flush() override;
+    virtual int     get_columns() const override;
+    virtual int     get_rows() const override;
 
 private:
     void            write_csi(const ecma48_csi& csi);
