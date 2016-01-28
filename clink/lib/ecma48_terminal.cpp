@@ -371,10 +371,19 @@ void ecma48_terminal::write_c0(int c0)
 {
     HANDLE handle = GetStdHandle(STD_OUTPUT_HANDLE);
 
-    wchar_t c = wchar_t(c0);
+    switch (c0)
+    {
+    case 0x07:
+        // MODE4
+        break;
 
-    DWORD written;
-    WriteConsoleW(handle, &c, 1, &written, nullptr);
+    default:
+        {
+            wchar_t c = wchar_t(c0);
+            DWORD written;
+            WriteConsoleW(handle, &c, 1, &written, nullptr);
+        }
+    }
 }
 
 //------------------------------------------------------------------------------
