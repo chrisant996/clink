@@ -84,17 +84,33 @@ int column_printer::do_pager(int pager_row)
 {
     terminal* term = get_terminal();
 
-    int ret = term->get_rows() - 2;
-
     static const char prompt[] = { "--More--" };
     term->write(prompt, sizeof(prompt));
     term->flush();
 
-    while (int i = term->read())
+    int ret = term->get_rows() - 2;
+    for (bool loop = true; loop; )
     {
-        if (i == ' ')                          break;
-        if (i == '\r')                         { ret = 1; break; }
-        if (i == 'q' || i == 'Q' || i == 0x03) { ret = pager_row = 0; break; }
+        switch (term->read())
+        {
+        case ' ':
+        case '\t':
+            loop = false;
+            break;
+
+        case '\r':
+            loop = false;
+            ret = 1;
+            break;
+
+        case 'q':
+        case 'Q':
+        case 0x03: // ctrl-c
+        case 0x7f: // esc
+            loop = false;
+            ret = pager_row = 0;
+            break;
+        }
     }
 
     term->write("\r", 1);
