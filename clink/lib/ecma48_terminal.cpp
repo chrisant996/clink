@@ -429,7 +429,7 @@ void ecma48_terminal::flush()
 void ecma48_terminal::check_sgr_support()
 {
     // Check for the presence of known third party tools that also provide ANSI
-    // escape code support.
+    // escape code support (MODE4)
     const char* dll_names[] = {
         "conemuhk.dll",
         "conemuhk64.dll",
