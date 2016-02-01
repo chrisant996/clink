@@ -16,94 +16,6 @@ void            on_terminal_resize();
 
 
 
-#if MODE4
-//------------------------------------------------------------------------------
-static int sgr_to_attr(int colour)
-{
-    static const int map[] = { 0, 4, 2, 6, 1, 5, 3, 7 };
-    return map[colour & 7];
-}
-
-//------------------------------------------------------------------------------
-static int fwrite_sgr_code(const wchar_t* code, int current, int defaults)
-{
-    int params[32];
-    int i = parse_ansi_code_w(code, params, sizeof_array(params));
-    if (i != 'm')
-        return current;
-
-    // Count the number of parameters the code has.
-    int n = 0;
-    while (n < sizeof_array(params) && params[n] >= 0)
-        ++n;
-
-    // Process each code that is supported.
-    int attr = current;
-    for (i = 0; i < n; ++i)
-    {
-        int param = params[i];
-
-        if (param == 0) // reset
-        {
-            attr = defaults;
-        }
-        else if (param == 1) // fg intensity (bright)
-        {
-            attr |= 0x08;
-        }
-        else if (param == 2 || param == 22) // fg intensity (normal)
-        {
-            attr &= ~0x08;
-        }
-        else if (param == 4) // bg intensity (bright)
-        {
-            attr |= 0x80;
-        }
-        else if (param == 24) // bg intensity (normal)
-        {
-            attr &= ~0x80;
-        }
-        else if ((unsigned int)param - 30 < 8) // fg colour
-        {
-            attr = (attr & 0xf8) | sgr_to_attr(param - 30);
-        }
-        else if (param == 39) // default fg colour
-        {
-            attr = (attr & 0xf8) | (defaults & 0x07);
-        }
-        else if ((unsigned int)param - 40 < 8) // bg colour
-        {
-            attr = (attr & 0x8f) | (sgr_to_attr(param - 40) << 4);
-        }
-        else if (param == 49) // default bg colour
-        {
-            attr = (attr & 0x8f) | (defaults & 0x70);
-        }
-        else if (param == 38 || param == 48) // extended colour (skipped)
-        {
-            // format = param;5;[0-255] or param;2;r;g;b
-            ++i;
-            if (i >= n)
-                break;
-
-            switch (params[i])
-            {
-            case 2: i += 3; break;
-            case 5: i += 1; break;
-            }
-
-            continue;
-        }
-    }
-
-    HANDLE handle = GetStdHandle(STD_OUTPUT_HANDLE);
-    SetConsoleTextAttribute(handle, attr);
-    return attr;
-}
-#endif // MODE4
-
-
-
 //------------------------------------------------------------------------------
 xterm_input::xterm_input()
 : m_buffer_head(0)
@@ -347,6 +259,8 @@ int xterm_input::pop()
 //------------------------------------------------------------------------------
 ecma48_terminal::ecma48_terminal()
 : m_handle(nullptr)
+, m_default_attr(0)
+, m_attr(0)
 , m_enable_sgr(true)
 {
 }
@@ -360,11 +274,16 @@ ecma48_terminal::~ecma48_terminal()
 void ecma48_terminal::begin()
 {
     m_handle = GetStdHandle(STD_OUTPUT_HANDLE);
+    CONSOLE_SCREEN_BUFFER_INFO csbi;
+    GetConsoleScreenBufferInfo(m_handle, &csbi);
+    m_default_attr = csbi.wAttributes;
+    m_attr = m_default_attr;
 }
 
 //------------------------------------------------------------------------------
 void ecma48_terminal::end()
 {
+    SetConsoleTextAttribute(m_handle, m_default_attr);
 }
 
 //------------------------------------------------------------------------------
@@ -374,8 +293,20 @@ int ecma48_terminal::read()
 }
 
 //------------------------------------------------------------------------------
-void ecma48_terminal::write_csi(const ecma48_csi& csi)
+void ecma48_terminal::write_csi(const ecma48_code& code)
 {
+    const ecma48_csi& csi = *(code.csi);
+    switch (csi.func)
+    {
+    case 'm':
+        if (!m_enable_sgr)
+            break;
+
+        write_sgr(csi);
+        return;
+    }
+
+    write_impl(code.str, code.length); 
 }
 
 //------------------------------------------------------------------------------
@@ -425,7 +356,7 @@ void ecma48_terminal::write(const char* chars, int length)
         {
         case ecma48_code::type_chars: write_impl(code->str, code->length); break;
         case ecma48_code::type_c0:    write_c0(code->c0);                  break;
-        case ecma48_code::type_csi:   write_csi(*(code->csi));             break;
+        case ecma48_code::type_csi:   write_csi(*code);                    break;
         }
     }
 }
@@ -486,4 +417,70 @@ int ecma48_terminal::get_rows() const
     CONSOLE_SCREEN_BUFFER_INFO csbi;
     GetConsoleScreenBufferInfo(m_handle, &csbi);
     return (csbi.srWindow.Bottom - csbi.srWindow.Top) + 1;
+}
+
+//------------------------------------------------------------------------------
+void ecma48_terminal::write_sgr(const ecma48_csi& csi)
+{
+    static const int sgr_to_attr[] = { 0, 4, 2, 6, 1, 5, 3, 7 };
+
+    // Process each code that is supported.
+    for (int i = 0; i < csi.param_count; ++i)
+    {
+        int param = csi.params[i];
+
+        if (param == 0) // reset
+        {
+            m_attr = m_default_attr;
+        }
+        else if (param == 1) // fg intensity (bright)
+        {
+            m_attr |= 0x08;
+        }
+        else if (param == 2 || param == 22) // fg intensity (normal)
+        {
+            m_attr &= ~0x08;
+        }
+        else if (param == 4) // bg intensity (bright)
+        {
+            m_attr |= 0x80;
+        }
+        else if (param == 24) // bg intensity (normal)
+        {
+            m_attr &= ~0x80;
+        }
+        else if ((unsigned int)param - 30 < 8) // fg colour
+        {
+            m_attr = (m_attr & 0xf8) | sgr_to_attr[(param - 30) & 7];
+        }
+        else if (param == 39) // default fg colour
+        {
+            m_attr = (m_attr & 0xf8) | (m_default_attr & 0x07);
+        }
+        else if ((unsigned int)param - 40 < 8) // bg colour
+        {
+            m_attr = (m_attr & 0x8f) | (sgr_to_attr[(param - 40) & 7] << 4);
+        }
+        else if (param == 49) // default bg colour
+        {
+            m_attr = (m_attr & 0x8f) | (m_default_attr & 0x70);
+        }
+        else if (param == 38 || param == 48) // extended colour (skipped)
+        {
+            // format = param;5;[0-255] or param;2;r;g;b
+            ++i;
+            if (i >= csi.param_count)
+                break;
+
+            switch (csi.params[i])
+            {
+            case 2: i += 3; break;
+            case 5: i += 1; break;
+            }
+
+            continue;
+        }
+    }
+
+    SetConsoleTextAttribute(m_handle, m_attr);
 }

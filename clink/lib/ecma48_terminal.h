@@ -42,12 +42,15 @@ public:
     virtual int     get_rows() const override;
 
 private:
-    void            write_csi(const ecma48_csi& csi);
+    void            write_csi(const ecma48_code& code);
+    void            write_sgr(const ecma48_csi& csi);
     void            write_c0(int c0);
     void            write_impl(const char* chars, int length);
     void            check_sgr_support();
     HANDLE          m_handle;
     xterm_input     m_xterm_input;
     ecma48_state    m_state;
+    int             m_default_attr;
+    int             m_attr;
     bool            m_enable_sgr;
 };
