@@ -4,6 +4,7 @@
 #include "pch.h"
 #include "match_handler.h"
 
+#include <core/path.h>
 #include <core/str_compare.h>
 
 //------------------------------------------------------------------------------
@@ -24,6 +25,7 @@ int generic_match_handler::compare(const char* word, const char* match)
 //------------------------------------------------------------------------------
 void generic_match_handler::get_displayable(const char* match, str_base& out)
 {
+    out.copy(match);
 }
 
 //------------------------------------------------------------------------------
@@ -64,6 +66,7 @@ int file_match_handler::compare(const char* word, const char* match)
 //------------------------------------------------------------------------------
 void file_match_handler::get_displayable(const char* match, str_base& out)
 {
+    path::get_name(match, out);
 }
 
 //------------------------------------------------------------------------------
