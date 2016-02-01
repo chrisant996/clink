@@ -346,12 +346,24 @@ int xterm_input::pop()
 
 //------------------------------------------------------------------------------
 ecma48_terminal::ecma48_terminal()
-: m_enable_sgr(true)
+: m_handle(nullptr)
+, m_enable_sgr(true)
 {
 }
 
 //------------------------------------------------------------------------------
 ecma48_terminal::~ecma48_terminal()
+{
+}
+
+//------------------------------------------------------------------------------
+void ecma48_terminal::begin()
+{
+    m_handle = GetStdHandle(STD_OUTPUT_HANDLE);
+}
+
+//------------------------------------------------------------------------------
+void ecma48_terminal::end()
 {
 }
 
@@ -369,8 +381,6 @@ void ecma48_terminal::write_csi(const ecma48_csi& csi)
 //------------------------------------------------------------------------------
 void ecma48_terminal::write_c0(int c0)
 {
-    HANDLE handle = GetStdHandle(STD_OUTPUT_HANDLE);
-
     switch (c0)
     {
     case 0x07:
@@ -381,7 +391,7 @@ void ecma48_terminal::write_c0(int c0)
         {
             wchar_t c = wchar_t(c0);
             DWORD written;
-            WriteConsoleW(handle, &c, 1, &written, nullptr);
+            WriteConsoleW(m_handle, &c, 1, &written, nullptr);
         }
     }
 }
@@ -389,8 +399,6 @@ void ecma48_terminal::write_c0(int c0)
 //------------------------------------------------------------------------------
 void ecma48_terminal::write_impl(const char* chars, int length)
 {
-    HANDLE handle = GetStdHandle(STD_OUTPUT_HANDLE);
-
     str_iter iter(chars, length);
     while (length > 0)
     {
@@ -399,7 +407,7 @@ void ecma48_terminal::write_impl(const char* chars, int length)
         n = to_utf16(wbuf, n, iter);
 
         DWORD written;
-        WriteConsoleW(handle, wbuf, n, &written, nullptr);
+        WriteConsoleW(m_handle, wbuf, n, &written, nullptr);
 
         n = int(iter.get_pointer() - chars);
         length -= n;
@@ -429,9 +437,8 @@ void ecma48_terminal::flush()
     // timer and hide it which can be disorientating, especially when moving
     // around a line. The below will make sure it stays visible.
     CONSOLE_SCREEN_BUFFER_INFO csbi;
-    HANDLE handle = GetStdHandle(STD_OUTPUT_HANDLE);
-    GetConsoleScreenBufferInfo(handle, &csbi);
-    SetConsoleCursorPosition(handle, csbi.dwCursorPosition);
+    GetConsoleScreenBufferInfo(m_handle, &csbi);
+    SetConsoleCursorPosition(m_handle, csbi.dwCursorPosition);
 }
 
 //------------------------------------------------------------------------------
@@ -469,7 +476,7 @@ void ecma48_terminal::check_sgr_support()
 int ecma48_terminal::get_columns() const
 {
     CONSOLE_SCREEN_BUFFER_INFO csbi;
-    GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &csbi);
+    GetConsoleScreenBufferInfo(m_handle, &csbi);
     return csbi.dwSize.X;
 }
 
@@ -477,6 +484,6 @@ int ecma48_terminal::get_columns() const
 int ecma48_terminal::get_rows() const
 {
     CONSOLE_SCREEN_BUFFER_INFO csbi;
-    GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &csbi);
+    GetConsoleScreenBufferInfo(m_handle, &csbi);
     return (csbi.srWindow.Bottom - csbi.srWindow.Top) + 1;
 }

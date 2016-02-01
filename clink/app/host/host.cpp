@@ -8,6 +8,7 @@
 #include <core/str.h>
 #include <line_editor.h>
 #include <lua/lua_script_loader.h>
+#include <terminal.h>
 
 extern "C" {
 #include <lua.h>
@@ -53,7 +54,12 @@ bool host::edit_line(const char* prompt, str_base& out)
     str<128> filtered_prompt;
     filter_prompt(prompt, filtered_prompt);
 
-    return m_line_editor->edit_line(filtered_prompt.c_str(), out);
+    terminal* term = m_line_editor->get_terminal();
+    term->begin();
+    bool ret = m_line_editor->edit_line(filtered_prompt.c_str(), out);
+    term->end();
+
+    return ret;
 }
 
 //------------------------------------------------------------------------------

@@ -6,6 +6,7 @@
 #include "terminal.h"
 
 #include <core/ecma48_iter.h>
+#include <Windows.h>
 
 //------------------------------------------------------------------------------
 class xterm_input
@@ -32,6 +33,8 @@ class ecma48_terminal
 public:
                     ecma48_terminal();
     virtual         ~ecma48_terminal();
+    virtual void    begin() override;
+    virtual void    end() override;
     virtual int     read() override;
     virtual void    write(const char* chars, int length) override;
     virtual void    flush() override;
@@ -43,6 +46,7 @@ private:
     void            write_c0(int c0);
     void            write_impl(const char* chars, int length);
     void            check_sgr_support();
+    HANDLE          m_handle;
     xterm_input     m_xterm_input;
     ecma48_state    m_state;
     bool            m_enable_sgr;

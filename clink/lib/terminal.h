@@ -8,6 +8,8 @@ class terminal
 {
 public:
     virtual         ~terminal();
+    virtual void    begin() = 0;
+    virtual void    end() = 0;
     virtual int     read() = 0;
     virtual void    write(const char* chars, int length) = 0;
     virtual void    flush() = 0;
