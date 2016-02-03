@@ -20,6 +20,7 @@ static const setting_decl_t g_settings_decl[] = {
         SETTING_TYPE_BOOL,
         0, "1"
     },
+/* MODE4
     {
         "match_colour",
         "Match display colour",
@@ -28,6 +29,7 @@ static const setting_decl_t g_settings_decl[] = {
         SETTING_TYPE_INT,
         0, "-1"
     },
+MODE4 */
     {
         "exec_match_style",
         "Executable match style",
