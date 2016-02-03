@@ -9,10 +9,10 @@
 
 #include <core/base.h>
 #include <core/log.h>
+#include <line_editor.h>
 #include <lua/lua_script_loader.h>
 #include <process/vm.h>
 #include <terminal/terminal.h>
-#include <line_editor.h>
 
 #include <Windows.h>
 
