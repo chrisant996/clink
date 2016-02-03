@@ -17,7 +17,7 @@
 #include <matches/match_generator.h>
 #include <matches/match_printer.h>
 #include <matches/matches.h>
-#include <terminal.h>
+#include <terminal/terminal.h>
 
 //------------------------------------------------------------------------------
 bool    call_readline(const char*, str_base&);

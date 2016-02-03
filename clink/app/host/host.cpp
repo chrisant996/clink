@@ -8,7 +8,7 @@
 #include <core/str.h>
 #include <line_editor.h>
 #include <lua/lua_script_loader.h>
-#include <terminal.h>
+#include <terminal/terminal.h>
 
 extern "C" {
 #include <lua.h>

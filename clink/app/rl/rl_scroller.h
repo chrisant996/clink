@@ -3,9 +3,8 @@
 
 #pragma once
 
-#include "buffer_scroller.h"
-
 #include <core/singleton.h>
+#include <terminal/buffer_scroller.h>
 
 extern "C" {
 #include <readline/readline.h>

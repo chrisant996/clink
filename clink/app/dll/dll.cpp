@@ -13,12 +13,12 @@
 #include <core/log.h>
 #include <core/path.h>
 #include <core/str.h>
-#include <ecma48_terminal.h>
+#include <file_match_generator.h>
 #include <lua/lua_match_generator.h>
 #include <lua/lua_root.h>
 #include <lua/lua_script_loader.h>
 #include <matches/column_printer.h>
-#include <file_match_generator.h>
+#include <terminal/ecma48_terminal.h>
 
 //------------------------------------------------------------------------------
 const char* g_clink_header =

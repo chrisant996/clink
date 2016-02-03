@@ -5,10 +5,10 @@
 #include "column_printer.h"
 #include "match_handler.h"
 #include "matches.h"
-#include "terminal.h"
 
 #include <core/base.h>
 #include <core/str.h>
+#include <terminal/terminal.h>
 
 //------------------------------------------------------------------------------
 column_printer::column_printer(terminal* terminal)
