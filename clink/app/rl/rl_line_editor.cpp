@@ -28,7 +28,6 @@ int     get_clink_setting_int(const char*);
 int     paste_from_clipboard(int, int);
 int     show_rl_help(int, int);
 int     up_directory(int, int);
-void    display_matches(char**, int, int);
 int     history_expand_control(char*, int);
 
 extern "C" {
