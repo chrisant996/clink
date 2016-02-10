@@ -115,7 +115,7 @@ int column_printer::do_pager(int pager_row)
         case 'q':
         case 'Q':
         case 0x03: // ctrl-c
-        case 0x7f: // esc
+        case 0x1b: // esc
             loop = false;
             ret = pager_row = 0;
             break;
@@ -154,8 +154,8 @@ bool column_printer::do_display_prompt(int count)
 
         case 'n':
         case 'N':
-        case 0x03:
-        case 0x7f:
+        case 0x03: // ctrl-c
+        case 0x1b: // esc
             ret = false;
             loop = false;
             break;
