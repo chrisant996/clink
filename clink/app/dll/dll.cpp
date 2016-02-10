@@ -10,15 +10,22 @@
 #include "seh_scope.h"
 
 #include <core/base.h>
+#include <core/globber.h>
 #include <core/log.h>
+#include <core/os.h>
 #include <core/path.h>
 #include <core/str.h>
+#include <core/str_tokeniser.h>
 #include <file_match_generator.h>
 #include <lua/lua_match_generator.h>
 #include <lua/lua_root.h>
 #include <lua/lua_script_loader.h>
 #include <matches/column_printer.h>
 #include <terminal/ecma48_terminal.h>
+
+extern "C" {
+#include <lauxlib.h>
+}
 
 //------------------------------------------------------------------------------
 const char* g_clink_header =
@@ -33,11 +40,43 @@ void                    shutdown_clink_settings();
 void                    load_history();
 void                    save_history();
 int                     get_clink_setting_int(const char*);
+const char*             get_clink_setting_str(const char*);
 
 static bool             g_quiet         = false;
 static line_editor*     g_line_editor   = nullptr;
 static host*            g_host          = nullptr;
 static lua_root*        g_lua           = nullptr;
+
+//------------------------------------------------------------------------------
+static void load_lua_script(lua_State* lua, const char* path)
+{
+    str<> buffer;
+    path::join(path, "*.lua", buffer);
+
+    globber lua_globs(buffer.c_str());
+    lua_globs.directories(false);
+
+    while (lua_globs.next(buffer))
+    {
+        if (luaL_dofile(lua, buffer.c_str()) == 0)
+            continue;
+
+        if (const char* error = lua_tostring(lua, -1))
+            puts(error);
+    }
+}
+
+//------------------------------------------------------------------------------
+static void load_lua_scripts(lua_State* lua, const char* paths)
+{
+    if (paths == nullptr || paths[0] == '\0')
+        return;
+
+    str<> token;
+    str_tokeniser tokens(paths, ";");
+    while (tokens.next(token))
+        load_lua_script(lua, token.c_str());
+}
 
 //------------------------------------------------------------------------------
 static void initialise_line_editor(lua_State* lua, const char* host_name)
@@ -137,6 +176,14 @@ int initialise_clink(const inject_args* inject_args)
     initialise_clink_settings();
     initialise_line_editor(lua, host_name.c_str());
     load_history();
+
+    // Load match generator Lua scripts.
+    const char* setting_clink_path = get_clink_setting_str("clink_path");
+    load_lua_scripts(lua, setting_clink_path);
+
+    str<> env_clink_path;
+    os::get_env("clink_path", env_clink_path);
+    load_lua_scripts(lua, env_clink_path.c_str());
 
     // Search for a supported host.
     struct {

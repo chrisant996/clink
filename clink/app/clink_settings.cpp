@@ -134,6 +134,15 @@ MODE4 */
         "2"
     },
     {
+        "clink_path",
+        "Paths to load Lua completion scripts from",
+        "These paths will be searched for Lua scripts that provide custom "
+        "match generation. Multiple paths should be separated delimited with a "
+        "semicolon.",
+        SETTING_TYPE_STR,
+        0, ""
+    },
+    {
         "ansi_code_support",
         "Enables basic ANSI escape code support",
         "When printing the prompt, Clink has basic built-in support for SGR "
