@@ -17,9 +17,8 @@ void lua_load_script_impl(lua_State* state, const char* script)
 
 #else // CLINK_EMBED_LUA_SCRIPTS
 
+#include <core/path.h>
 #include <core/str.h>
-
-#include <algorithm>
 
 //------------------------------------------------------------------------------
 void lua_load_script_impl(lua_State* state, const char* path, const char* name)
@@ -27,14 +26,11 @@ void lua_load_script_impl(lua_State* state, const char* path, const char* name)
     str<512> buffer;
     buffer << path;
 
-    int slash = std::max(buffer.last_of('\\'), buffer.last_of('/'));
-    if (slash >= 0)
-    {
-        buffer.truncate(slash + 1);
-        buffer << name;
-        if (luaL_dofile(state, buffer.c_str()) == 0)
-            return;
-    }
+    path::get_directory(buffer);
+    path::append(buffer, name);
+
+    if (luaL_dofile(state, buffer.c_str()) == 0)
+        return;
 
     if (const char* error = lua_tostring(state, -1))
         puts(error);
