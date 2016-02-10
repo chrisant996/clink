@@ -4,7 +4,7 @@
 #include "pch.h"
 
 extern "C" {
-#include "lualib.h"
+#include <lauxlib.h>
 }
 
 #ifdef CLINK_EMBED_LUA_SCRIPTS
