@@ -5,8 +5,8 @@
 #include "str_iter.h"
 
 //------------------------------------------------------------------------------
-template <> int
-str_iter_impl<char>::next()
+template <>
+int str_iter_impl<char>::next()
 {
     if (!more())
         return 0;
@@ -38,8 +38,8 @@ str_iter_impl<char>::next()
 }
 
 //------------------------------------------------------------------------------
-template <> int
-str_iter_impl<wchar_t>::next()
+template <>
+int str_iter_impl<wchar_t>::next()
 {
     if (!more())
         return 0;
