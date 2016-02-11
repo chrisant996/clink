@@ -2,8 +2,9 @@
 // License: http://opensource.org/licenses/MIT
 
 #include "pch.h"
-#include "base.h"
 #include "ecma48_iter.h"
+
+#include <core/base.h>
 
 //------------------------------------------------------------------------------
 enum

@@ -3,8 +3,8 @@
 
 #include "pch.h"
 
-#include <core/ecma48_iter.h>
 #include <core/base.h>
+#include <terminal/ecma48_iter.h>
 
 static ecma48_state g_state;
 

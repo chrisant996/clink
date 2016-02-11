@@ -3,7 +3,7 @@
 
 #pragma once
 
-#include "str_iter.h"
+#include <core/str_iter.h>
 
 //------------------------------------------------------------------------------
 struct ecma48_csi

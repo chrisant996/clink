@@ -4,8 +4,8 @@
 #pragma once
 
 #include "terminal.h"
+#include "ecma48_iter.h"
 
-#include <core/ecma48_iter.h>
 #include <Windows.h>
 
 //------------------------------------------------------------------------------
