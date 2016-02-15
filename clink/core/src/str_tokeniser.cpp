@@ -8,6 +8,18 @@
 template <typename T>
 bool next_impl(str_iter_impl<T>& iter, str_impl<T>& out, const char* delims)
 {
+    out.clear();
+
+    // Skip initial delimiters.
+    while (int c = iter.peek())
+    {
+        if (strchr(delims, c) == nullptr)
+            break;
+
+        iter.next();
+    }
+
+    // Extract the delimited string.
     const T* start = iter.get_pointer();
 
     while (int c = iter.next())
@@ -15,10 +27,12 @@ bool next_impl(str_iter_impl<T>& iter, str_impl<T>& out, const char* delims)
             break;
 
     const T* end = iter.get_pointer();
+
+    // Empty string? Must be the end of the input. We're done here.
     if (start == end)
         return false;
 
-    out.clear();
+    // Add output string.
     out.concat(start, int(end - start));
     return true;
 }
