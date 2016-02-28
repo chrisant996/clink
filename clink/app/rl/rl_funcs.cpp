@@ -4,6 +4,7 @@
 #include "pch.h"
 
 #include <core/str.h>
+#include <settings/settings.h>
 
 extern "C" {
 #include <readline/history.h>
@@ -11,9 +12,16 @@ extern "C" {
 }
 
 //------------------------------------------------------------------------------
-int                 get_clink_setting_int(const char*);
-void                enter_scroll_mode(int);
-int                 show_rl_help(int, int);
+static setting_enum g_paste_crlf(
+    "clink.paste_crlf",
+    "Strips CR and LF chars on paste",
+    "Setting this to a value >0 will make Clink strip CR and LF characters\n"
+    "from text pasted into the current line. Set this to 1 to strip all\n"
+    "newline characters and 2 to replace them with a space.",
+    "unchanged,delete,space",
+    1);
+
+
 
 //------------------------------------------------------------------------------
 static void clear_line()
@@ -56,7 +64,7 @@ static void strip_crlf(char* line)
     int prev_was_crlf;
     int setting;
 
-    setting = get_clink_setting_int("strip_crlf_on_paste");
+    setting = g_paste_crlf.get();
     if (setting <= 0)
         return;
 

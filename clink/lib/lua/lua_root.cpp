@@ -15,6 +15,7 @@ extern "C" {
 void clink_lua_initialise(lua_State*);
 void os_lua_initialise(lua_State*);
 void path_lua_initialise(lua_State*);
+void settings_lua_initialise(lua_State*);
 
 //------------------------------------------------------------------------------
 lua_root::lua_root()
@@ -41,6 +42,7 @@ void lua_root::initialise(bool use_debugger)
     clink_lua_initialise(m_state);
     os_lua_initialise(m_state);
     path_lua_initialise(m_state);
+    settings_lua_initialise(m_state);
 
     if (use_debugger)
         lua_load_script(m_state, lib, debugger);

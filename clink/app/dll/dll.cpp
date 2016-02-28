@@ -21,6 +21,7 @@
 #include <lua/lua_root.h>
 #include <lua/lua_script_loader.h>
 #include <matches/column_printer.h>
+#include <settings/settings.h>
 #include <terminal/ecma48_terminal.h>
 
 extern "C" {
@@ -34,13 +35,23 @@ const char* g_clink_header =
     "http://mridgers.github.io/clink\n"
     ;
 
+
+
 //------------------------------------------------------------------------------
-void*                   initialise_clink_settings();
-void                    shutdown_clink_settings();
+extern setting_bool g_history_io;
+
+static setting_str g_clink_path(
+    "clink.path",
+    "Paths to load Lua completion scripts from",
+    "These paths will be searched for Lua scripts that provide custom\n"
+    "match generation. Multiple paths should be separated delimited with\n"
+    "a semicolon.",
+    "");
+
+//------------------------------------------------------------------------------
+void                    load_clink_settings();
 void                    load_history();
 void                    save_history();
-int                     get_clink_setting_int(const char*);
-const char*             get_clink_setting_str(const char*);
 
 static bool             g_quiet         = false;
 static line_editor*     g_line_editor   = nullptr;
@@ -173,15 +184,14 @@ bool initialise_clink(const inject_args* inject_args)
     lua_State* lua = g_lua->get_state();
 
     // Prepare core systems.
-    initialise_clink_settings();
     initialise_line_editor(lua, host_name.c_str());
     load_history();
 
     // Load match generator Lua scripts.
-    const char* setting_clink_path = get_clink_setting_str("clink_path");
+    const char* setting_clink_path = g_clink_path.get();
     load_lua_scripts(lua, setting_clink_path);
 
-    str<> env_clink_path;
+    str<256> env_clink_path;
     os::get_env("clink_path", env_clink_path);
     load_lua_scripts(lua, env_clink_path.c_str());
 
@@ -227,6 +237,8 @@ bool initialise_clink(const inject_args* inject_args)
         return false;
     }
 
+    load_clink_settings();
+
     success();
     return true;
 }
@@ -241,11 +253,10 @@ void shutdown_clink()
 
     g_host->shutdown();
 
-    if (get_clink_setting_int("history_io"))
+    if (g_history_io.get())
         load_history();
 
     save_history();
-    shutdown_clink_settings();
     shutdown_line_editor();
 
     delete g_lua;

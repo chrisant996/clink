@@ -3,99 +3,78 @@
 
 #include "pch.h"
 #include "paths.h"
-#include "settings.h"
 
 #include <core/base.h>
 #include <core/path.h>
 #include <core/str.h>
+#include <settings/settings.h>
 
 //------------------------------------------------------------------------------
-void*                 initialise_clink_settings();
+void                  load_clink_settings();
+void                  save_clink_settings();
 void                  puts_help(const char**, int);
-static settings_t*    g_settings;
-static str<MAX_PATH>  g_settings_path;
 
 //------------------------------------------------------------------------------
-static int print_keys()
+static bool print_keys()
 {
-    int i, n;
-    const setting_decl_t* decl;
-
-    decl = settings_get_decls(g_settings);
-    if (decl == nullptr)
+    for (setting* next = settings::first(); next != nullptr; next = next->next())
     {
-        puts("ERROR: Failed to find settings decl.");
-        return 0;
+        printf("# %s\n", next->get_short_desc());
+
+        str<> value; next->get(value);
+        const char* name = next->get_name();
+        printf("%s = %s\n\n", name, value.c_str());
     }
 
-    puts("Available options:\n");
-    for (i = 0, n = settings_get_decl_count(g_settings); i < n; ++i)
-    {
-        static const char dots[] = ".......................... ";
-        const char* name = decl->name;
-
-        printf("%s ", name);
-        int dot_count = sizeof_array(dots) - (int)strlen(name);
-        if (dot_count > 0)
-            printf("%s", dots + sizeof_array(dots) - dot_count);
-
-        printf("%-6s %s\n", settings_get_str(g_settings, name), decl->friendly_name);
-
-        ++decl;
-    }
-
-    printf("\nSettings path: %s\n", g_settings_path.c_str());
-    return 1;
+    return true;
 }
 
 //------------------------------------------------------------------------------
-static int print_value(const char* key)
+static bool print_value(const char* key)
 {
-    const setting_decl_t* decl = settings_get_decl_by_name(g_settings, key);
-    if (decl == nullptr)
+    const setting* setting = settings::find(key);
+    if (setting == nullptr)
     {
         printf("ERROR: Setting '%s' not found.\n", key);
-        return 0;
+        return false;
     }
 
-    printf("         Name: %s\n", decl->name);
-    printf("  Description: %s\n", decl->friendly_name);
-    printf("Current value: %s\n", settings_get_str(g_settings, key));
+    printf("        Name: %s\n", setting->get_name());
+    printf(" Description: %s\n", setting->get_short_desc());
 
-    if (decl->type == SETTING_TYPE_ENUM)
-    {
-        int i = 0;
-        const char* param = decl->type_param;
+    // Output an enum-type setting's options.
+    if (setting->get_type() == setting::type_enum)
+        printf("     Options: %s\n", ((setting_enum*)setting)->get_options());
 
-        printf("       Values: ");
-        while (*param)
-        {
-            printf("%*d = %s\n", (i ? 16 : 1), i, param);
-            param += strlen(param) + 1;
-            ++i;
-        }
-    }
+    str<> value;
+    setting->get(value);
+    printf("       Value: %s\n", value.c_str());
 
-    puts("");
-    printf("\n%s\n", decl->description);
+    printf("\n%s\n", setting->get_long_desc());
 
-    return 1;
+    return true;
 }
 
 //------------------------------------------------------------------------------
-static int set_value(const char* key, const char* value)
+static bool set_value(const char* key, const char* value)
 {
-    const setting_decl_t* decl = settings_get_decl_by_name(g_settings, key);
-    if (decl == nullptr)
+    setting* setting = settings::find(key);
+    if (setting == nullptr)
     {
         printf("ERROR: Setting '%s' not found.\n", key);
-        return 0;
+        return false;
     }
 
-    settings_set(g_settings, key, value);
+    if (!setting->set(value))
+    {
+        printf("ERROR: Failed to set value for '%s'.\n", key);
+        return false;
+    }
 
-    printf("Settings '%s' set to '%s'\n", key, settings_get_str(g_settings, key));
-    return 1;
+    str<> result;
+    setting->get(result);
+    printf("Settings '%s' set to '%s'\n", key, result.c_str());
+    return true;
 }
 
 //------------------------------------------------------------------------------
@@ -118,28 +97,9 @@ void print_usage()
 //------------------------------------------------------------------------------
 int set(int argc, char** argv)
 {
-    int ret;
+    bool ret = true;
 
-    // Check we're running from a Clink session.
-    extern int g_in_clink_context;
-    if (!g_in_clink_context)
-    {
-        puts("ERROR: The 'set' verb must be run from a process with Clink present");
-        return 1;
-    }
-
-    // Get the path where Clink's storing its settings.
-    get_config_dir(g_settings_path);
-    g_settings_path << "/settings";
-    path::clean(g_settings_path);
-
-    // Load Clink's settings.
-    g_settings = (settings_t*)initialise_clink_settings();
-    if (g_settings == nullptr)
-    {
-        printf("ERROR: Failed to load Clink's settings from '%s'.", g_settings_path.c_str());
-        return 0;
-    }
+    load_clink_settings();
 
     // List or set Clink's settings.
     ret = 0;
@@ -159,11 +119,11 @@ int set(int argc, char** argv)
         break;
 
     default:
-        if (set_value(argv[1], argv[2]))
-            ret = settings_save(g_settings, g_settings_path.c_str());
+        ret = set_value(argv[1], argv[2]);
+        if (ret)
+            save_clink_settings();
         break;
     }
 
-    settings_shutdown(g_settings);
-    return ret;
+    return (ret == true);
 }

@@ -3,53 +3,121 @@
 
 #pragma once
 
+#include <core/str.h>
+
+class setting;
+
 //------------------------------------------------------------------------------
-enum setting_type
+namespace settings
 {
-    SETTING_TYPE_ERROR = -1,
-
-    // int types.
-    SETTING_TYPE_BOOL,
-    SETTING_TYPE_INT,
-    SETTING_TYPE_ENUM,
-
-    // cstr types.
-    SETTING_TYPE_STR,
-    SETTING_TYPE_PATH,
-
-    SETTING_TYPE_COUNT,
-
-    SETTING_TYPE_INTS       = SETTING_TYPE_BOOL,
-    SETTING_TYPE_STRINGS    = SETTING_TYPE_STR,
+    setting*    first();
+    setting*    find(const char* name);
+    bool        load(const char* file);
+    bool        save(const char* file);
 };
-typedef enum setting_type setting_type_e;
+
+
 
 //------------------------------------------------------------------------------
-struct setting_decl
+class setting
 {
-    const char*     name;
-    const char*     friendly_name;
-    const char*     description;
-    setting_type_e  type;
-    const char*     type_param;
-    const char*     default_value;
-};
-typedef struct setting_decl setting_decl_t;
+public:
+    enum type_e {
+        type_unknown,
+        type_int,
+        type_bool,
+        type_string,
+        type_enum,
+    };
 
-typedef struct settings settings_t;
+    virtual           ~setting();
+    setting*          next() const;
+    type_e            get_type() const;
+    const char*       get_name() const;
+    const char*       get_short_desc() const;
+    const char*       get_long_desc() const;
+    virtual bool      set(const char* value) = 0;
+    virtual void      get(str_base& out) const = 0;
+
+protected:
+                      setting(const char* name, const char* short_desc, const char* long_desc, type_e type);
+    str<32, false>    m_name;
+    str<48, false>    m_short_desc;
+    str<128>          m_long_desc;
+    setting*          m_prev;
+    setting*          m_next;
+    type_e            m_type;
+};
 
 //------------------------------------------------------------------------------
-settings_t*           settings_init(const setting_decl_t* decls, int decl_count);
-void                  settings_shutdown(settings_t* s);
-void                  settings_reset(settings_t* s);
-int                   settings_load(settings_t* s, const char* file);
-int                   settings_save(settings_t* s, const char* file);
-void                  settings_gui(settings_t* s);
-int                   settings_get_int(settings_t* s, const char* name);
-const char*           settings_get_str(settings_t* s, const char* name);
-void                  settings_set_int(settings_t* s, const char* name, int value);
-void                  settings_set_str(settings_t* s, const char* name, const char* value);
-void                  settings_set(settings_t* s, const char* name, const char* value);
-const setting_decl_t* settings_get_decls(settings_t* s);
-const setting_decl_t* settings_get_decl_by_name(settings_t* s, const char* name);
-int                   settings_get_decl_count(settings_t* s);
+template <typename TYPE>
+class setting_impl
+    : public setting
+{
+public:
+                    setting_impl(const char* name, const char* short_desc, const char* long_desc, TYPE default_value);
+    TYPE            get() const;
+    virtual bool    set(const char* value) override;
+    virtual void    get(str_base& out) const override;
+
+protected:
+    template <typename TYPE> struct store
+    {
+                    operator TYPE () const { return value; }
+        TYPE        value;
+    };
+
+    template <> struct store<const char*>
+    {
+                    operator const char* () const { return value.c_str(); }
+        str<64>     value;
+    };
+
+    template <typename TYPE> struct type              { enum { id = type_unknown }; };
+    template <>              struct type<bool>        { enum { id = type_bool }; };
+    template <>              struct type<int>         { enum { id = type_int }; };
+    template <>              struct type<const char*> { enum { id = type_string }; };
+
+    store<TYPE>     m_store;
+};
+
+//------------------------------------------------------------------------------
+template <typename TYPE> setting_impl<TYPE>::setting_impl(
+    const char* name,
+    const char* short_desc,
+    const char* long_desc,
+    TYPE default_value)
+: setting(name, short_desc, long_desc, type_e(type<TYPE>::id))
+{
+    m_store.value = default_value;
+}
+
+//------------------------------------------------------------------------------
+template <typename TYPE> TYPE setting_impl<TYPE>::get() const
+{
+    return m_store;
+}
+
+
+
+//------------------------------------------------------------------------------
+typedef setting_impl<bool>         setting_bool;
+typedef setting_impl<int>          setting_int;
+typedef setting_impl<const char*>  setting_str;
+
+//------------------------------------------------------------------------------
+class setting_enum
+    : public setting_impl<int>
+{
+public:
+                       setting_enum(const char* name, const char* short_desc, const char* long_desc, const char* values, int default_value);
+    virtual bool       set(const char* value) override;
+    virtual void       get(str_base& out) const override;
+    const char*        get_options() const;
+
+    using setting_impl<int>::get;
+
+protected:
+    static const char* next_option(const char* option);
+    str<48>            m_options;
+};

@@ -2,6 +2,27 @@
 -- License: http://opensource.org/licenses/MIT
 
 --------------------------------------------------------------------------------
+settings.add("exec.enable", true, "Enable executable matching",
+"Only match executables when completing the first word of a line")
+
+settings.add("exec.path", true, "Match executables in PATH",
+[[Completes execuables found in the directories specified in the PATH
+environment system variable.]])
+
+settings.add("exec.cwd", false, "Match executables in current directory",
+[[Include executables in the current directory. This is implicit if the word
+being completed is a relative path.]])
+
+settings.add("exec.dirs", true, "Include directories",
+"Include directories relative to the current working directory as matches.")
+
+settings.add("exec.space_prefix", true, "Whitespace prefix matches files",
+[[If the line begins with whitespace then Clink bypasses executable
+matching and will do normal files matching instead.]])
+
+
+
+--------------------------------------------------------------------------------
 local dos_commands = {
     "assoc", "break", "call", "cd", "chcp", "chdir", "cls", "color", "copy",
     "date", "del", "dir", "diskcomp", "diskcopy", "echo", "endlocal", "erase",
@@ -20,7 +41,7 @@ local function get_environment_paths()
     local paths_merged = { paths[1] }
     for i = 2, #paths, 1 do
         if not paths[i]:find("^[a-zA-Z]:") then
-            local t = paths_merged[#paths_merged];
+            local t = paths_merged[#paths_merged]
             paths_merged[#paths_merged] = t..paths[i]
         else
             table.insert(paths_merged, paths[i])
@@ -51,14 +72,14 @@ end
 --------------------------------------------------------------------------------
 local function exec_match_generator(text, first, last, result)
     -- If match style setting is < 0 then consider executable matching disabled.
-    local match_style = clink.get_setting_int("exec_match_style")
-    if match_style < 0 then
+    local enabled = settings.get("exec.enable")
+    if not enabled then
         return false
     end
 
     -- We're only interested in exec completion if this is the first word of the
     -- line, or the first word after a command separator.
-    if clink.get_setting_int("space_prefix_match_files") > 0 then
+    if settings.get("exec.space_prefix") then
         if first > 1 then
             return false
         end
@@ -70,11 +91,12 @@ local function exec_match_generator(text, first, last, result)
         end
     end
 
-    -- Split text into directory and name
-    local text_dir = path.getdirectory(text) or ""
-    local text_name = path.getname(text)
+    -- Settings that control what matches are generated.
+    local match_dirs = settings.get("exec.dirs")
+    local match_cwd = settings.get("exec.cwd")
 
-    local paths
+    local paths = nil
+    local text_dir = path.getdirectory(text) or ""
     if #text_dir == 0 then
         -- If the terminal is cmd.exe check it's commands for matches.
         if clink.get_host_process() == "cmd.exe" then
@@ -85,22 +107,23 @@ local function exec_match_generator(text, first, last, result)
         local aliases = clink.get_console_aliases()
         result:addmatches(aliases)
 
-        paths = get_environment_paths();
-    else
-        paths = {}
-
-        -- 'text' is an absolute or relative path. If we're doing Bash-style
-        -- matching should now consider directories.
-        if match_style < 1 then
-            match_style = 2
-        else
-            match_style = 1
+        if settings.get("exec.path") then
+            paths = get_environment_paths()
         end
+    else
+        -- 'text' is an absolute or relative path so override settings and
+        -- match current directory and it's directories too.
+        match_dir = true
+        match_cwd = true
+    end
+
+    if not paths then
+        paths = {}
     end
 
     -- Should we also consider the path referenced by 'text'?
-    if match_style >= 1 then
-        table.insert(paths, text_dir)
+    if match_cwd then
+        table.insert(paths, text)
     end
 
     -- Search 'paths' for files ending in 'suffices' and look for matches
@@ -108,18 +131,17 @@ local function exec_match_generator(text, first, last, result)
     for _, suffix in ipairs(suffices) do
         for _, dir in ipairs(paths) do
             for _, file in ipairs(os.globfiles(dir.."*"..suffix)) do
-                file = path.getname(file)
-                result:addmatch(text_dir..file)
+                result:addmatch(file)
             end
         end
     end
 
     -- Lastly we may wish to consider directories too.
-    if result:getmatchcount() == 0 or match_style >= 2 then
+    if result:getmatchcount() == 0 or match_dirs then
         result:addmatches(os.globdirs(text.."*"))
     end
 
-    clink.matches_are_files()
+    result:arefiles()
     return true
 end
 

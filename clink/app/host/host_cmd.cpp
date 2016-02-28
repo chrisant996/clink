@@ -13,11 +13,23 @@
 #include <lua/lua_script_loader.h>
 #include <process/vm.h>
 #include <terminal/terminal.h>
+#include <settings/settings.h>
 
 #include <Windows.h>
 
 //------------------------------------------------------------------------------
-int get_clink_setting_int(const char*);
+static setting_bool g_ctrld_exits(
+    "cmd.ctrld_exits",
+    "Pressing Ctrl-D exits session",
+    "Ctrl-D exits cmd.exe when used on an empty line.",
+    true);
+
+static setting_enum g_autoanswer(
+    "cmd.autoanswer",
+    "Auto-answer terminate prompt",
+    "Automatically answers cmd.exe's 'Terminate batch job (Y/N)?' prompts.\n",
+    "off,answer_yes,answer_no",
+    0);
 
 
 
@@ -40,11 +52,9 @@ static int check_auto_answer()
 {
     static wchar_t* prompt_to_answer = (wchar_t*)1;
     static wchar_t* no_yes;
-    wchar_t* c;
-    int setting;
 
     // Skip the feature if it's not enabled.
-    setting = get_clink_setting_int("terminate_autoanswer");
+    int setting = g_autoanswer.get();
     if (setting <= 0)
         return 0;
 
@@ -62,7 +72,7 @@ static int check_auto_answer()
             no_yes = no_yes ? no_yes : L"ny";
 
             // Strip off new line chars.
-            c = prompt_to_answer;
+            wchar_t* c = prompt_to_answer;
             while (*c)
             {
                 if (*c == '\r' || *c == '\n')
@@ -236,7 +246,7 @@ void host_cmd::edit_line(const wchar_t* prompt, wchar_t* chars, int max_chars)
             break;
         }
 
-        if (get_clink_setting_int("ctrld_exits"))
+        if (g_ctrld_exits.get())
         {
             wstr_base(chars, max_chars) << L"exit";
             break;

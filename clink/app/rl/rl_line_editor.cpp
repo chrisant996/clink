@@ -24,7 +24,6 @@ bool    call_readline(const char*, str_base&);
 int     copy_line_to_clipboard(int, int);
 int     ctrl_c(int, int);
 int     expand_env_vars(int, int);
-int     get_clink_setting_int(const char*);
 int     paste_from_clipboard(int, int);
 int     show_rl_help(int, int);
 int     up_directory(int, int);

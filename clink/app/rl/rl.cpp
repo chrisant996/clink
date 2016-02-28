@@ -4,6 +4,7 @@
 #include "pch.h"
 
 #include <core/str.h>
+#include <settings/settings.h>
 
 extern "C" {
 #include <readline/readline.h>
@@ -11,13 +12,13 @@ extern "C" {
 
 //------------------------------------------------------------------------------
 char**              lua_match_display_filter(char**, int);
-int                 get_clink_setting_int(const char*);
 void                load_history();
 void                save_history();
 void                add_to_history(const char*);
 int                 expand_from_history(const char*, char**);
 
 int                 g_slash_translation = 0;
+extern setting_bool g_history_io;
 
 extern "C" {
 extern int          rl_display_fixed;
@@ -118,7 +119,7 @@ bool call_readline(const char* prompt, str_base& out)
         }
 
         // Should we read the history from disk.
-        if (get_clink_setting_int("history_io"))
+        if (g_history_io.get())
         {
             load_history();
             add_to_history(text);

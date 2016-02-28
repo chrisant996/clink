@@ -13,8 +13,6 @@ extern int              _rl_completion_case_map;
 extern const char*      rl_readline_name;
 }
 
-const char*             get_clink_setting_str(const char*);
-int                     get_clink_setting_int(const char*);
 extern int              g_slash_translation;
 
 //------------------------------------------------------------------------------
@@ -77,43 +75,6 @@ static int matches_are_files(lua_State* state)
     rl_filename_completion_desired = i;
 #endif
     return 0;
-}
-
-//------------------------------------------------------------------------------
-static int get_setting_str(lua_State* state)
-{
-    const char* c;
-
-    if (lua_gettop(state) == 0)
-        return 0;
-
-    if (lua_isnil(state, 1) || !lua_isstring(state, 1))
-        return 0;
-
-    c = lua_tostring(state, 1);
-    c = get_clink_setting_str(c);
-    lua_pushstring(state, c);
-
-    return 1;
-}
-
-//------------------------------------------------------------------------------
-static int get_setting_int(lua_State* state)
-{
-    int i;
-    const char* c;
-
-    if (lua_gettop(state) == 0)
-        return 0;
-
-    if (lua_isnil(state, 1) || !lua_isstring(state, 1))
-        return 0;
-
-    c = lua_tostring(state, 1);
-    i = get_clink_setting_int(c);
-    lua_pushinteger(state, i);
-
-    return 1;
 }
 
 //------------------------------------------------------------------------------
@@ -263,8 +224,6 @@ void clink_lua_initialise(struct lua_State* state)
         { "get_host_process",       &get_host_process },
         { "get_rl_variable",        &get_rl_variable },
         { "get_screen_info",        &get_screen_info },
-        { "get_setting_int",        &get_setting_int },
-        { "get_setting_str",        &get_setting_str },
         { "is_rl_variable_true",    &is_rl_variable_true },
         { "lower",                  &to_lowercase },
         { "matches_are_files",      &matches_are_files },

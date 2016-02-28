@@ -7,12 +7,31 @@
 #include <core/base.h>
 #include <core/log.h>
 #include <core/str_iter.h>
+#include <../../lib/settings/settings.h> // MODE4
+
+//------------------------------------------------------------------------------
+static setting_bool g_altgr(
+    "terminal.altgr",
+    "Support Windows' Ctrl-Alt substitute for AltGr",
+    "Windows provides Ctrl-Alt as a substitute for AltGr, historically to\n"
+    "support keyboards with no AltGr key. This may collide with some of\n"
+    "Readline's bindings.",
+    true);
+
+static setting_bool g_ansi(
+    "terminal.ansi",
+    "Enables basic ANSI escape code support",
+    "When printing the prompt, Clink has basic built-in support for SGR\n"
+    "ANSI escape codes to control the text colours. This is automatically\n"
+    "disabled if a third party tool is detected that also provides this\n"
+    "facility. It can also be disabled by setting this to 0.",
+    true);
+
+
 
 //------------------------------------------------------------------------------
 static unsigned g_last_buffer_size = 0;
-
-int             get_clink_setting_int(const char*);
-void            on_terminal_resize();
+void            on_terminal_resize(); // MODE4
 
 
 
@@ -117,7 +136,7 @@ loop:
     altgr_sub &= !!(key_flags & (LEFT_CTRL_PRESSED|RIGHT_CTRL_PRESSED));
     altgr_sub &= !!key_char;
 
-    if (altgr_sub && !get_clink_setting_int("use_altgr_substitute"))
+    if (altgr_sub && !g_altgr.get())
     {
         altgr_sub = 0;
         key_char = 0;
@@ -397,7 +416,7 @@ void ecma48_terminal::check_sgr_support()
     }
 
     // Give the user the option to disable ANSI support.
-    if (get_clink_setting_int("ansi_code_support") == 0)
+    if (!g_ansi.get())
         m_enable_sgr = false;
 
     return;

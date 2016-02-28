@@ -5,338 +5,341 @@
 #include "settings.h"
 
 #include <core/str.h>
+#include <core/str_tokeniser.h>
 
 //------------------------------------------------------------------------------
-static const char* g_type_names[SETTING_TYPE_COUNT] = {
-    "bool",
-    "int",
-    "enum",
-    "string",
-    "path",
-};
+static setting* g_setting_list = nullptr;
 
-//------------------------------------------------------------------------------
-struct settings
+
+
+namespace settings
 {
-    int                     count;
-    const setting_decl_t*   decls;
-    char**                  values;
-};
-typedef struct settings settings_t;
 
 //------------------------------------------------------------------------------
-static int decl_is_string_type(const setting_decl_t* decl)
+setting* first()
 {
-    int i = decl->type;
-    return (i >= SETTING_TYPE_STRINGS) && (i < SETTING_TYPE_COUNT);
+    return g_setting_list;
 }
 
 //------------------------------------------------------------------------------
-static void set_value(
-    settings_t* s,
-    const setting_decl_t* decl,
-    const char* value
-)
+setting* find(const char* name)
 {
-    char* new_str;
-    const char* str;
-    int len;
-
-    int i = (int)(decl - s->decls);
-    int type = decl->type;
-
-    // Oob check.
-    if (type < SETTING_TYPE_INTS || type >= SETTING_TYPE_COUNT)
+    setting* next = first();
+    do
     {
-        return;
+        if (stricmp(name, next->get_name()) == 0)
+            return next;
     }
-
-    // C-string type value.
-    str = value;
-    len = (int)strlen(str) + 1;
-
-    new_str = (char*)malloc(len);
-    str_base(new_str, len).copy(str);
-
-    free(s->values[i]);
-    s->values[i] = new_str;
-}
-
-//------------------------------------------------------------------------------
-const setting_decl_t* settings_get_decl_by_name(settings_t* s, const char* name)
-{
-    int i;
-    for (i = 0; i < s->count; ++i)
-    {
-        const setting_decl_t* decl = s->decls + i;
-        if (stricmp(decl->name, name) == 0)
-        {
-            return decl;
-        }
-    }
+    while (next = next->next());
 
     return nullptr;
 }
 
 //------------------------------------------------------------------------------
-static int get_decl_index(settings_t* s, const char* name)
+bool load(const char* file)
 {
-    const setting_decl_t* decl = settings_get_decl_by_name(s, name);
-    if (decl != nullptr)
-    {
-        return (int)(decl - s->decls);
-    }
-
-    return -1;
-}
-
-//------------------------------------------------------------------------------
-static const char* get_decl_default(settings_t* s, const char* name)
-{
-    const setting_decl_t* decl = settings_get_decl_by_name(s, name);
-    if (decl != nullptr)
-    {
-        return decl->default_value;
-    }
-
-    return "";
-}
-
-//------------------------------------------------------------------------------
-settings_t* settings_init(const setting_decl_t* decls, int decl_count)
-{
-    settings_t* s = (settings_t*)malloc(sizeof(settings_t));
-    s->count = decl_count;
-    s->decls = decls;
-
-    s->values = (char**)calloc(sizeof(char*), decl_count);
-    settings_reset(s);
-
-    return s;
-}
-
-//------------------------------------------------------------------------------
-void settings_shutdown(settings_t* s)
-{
-    int i;
-
-    for (i = 0; i < s->count; ++i)
-    {
-        if (!decl_is_string_type(s->decls + i))
-        {
-            continue;
-        }
-
-        free((void*)s->values[i]);
-    }
-
-    free(s->values);
-    free(s);
-}
-
-//------------------------------------------------------------------------------
-void settings_reset(settings_t* s)
-{
-    int i;
-    const setting_decl_t* decl;
-
-    decl = s->decls;
-    for (i = 0; i < s->count; ++i)
-    {
-        set_value(s, decl, decl->default_value);
-        ++decl;
-    }
-}
-
-//------------------------------------------------------------------------------
-int settings_load(settings_t* s, const char* file)
-{
-    int i;
-    FILE* in;
-    char* data;
-    char* line;
-
     // Open the file.
-    in = fopen(file, "rb");
+    FILE* in = fopen(file, "rb");
     if (in == nullptr)
-    {
-        return 0;
-    }
+        return false;
 
     // Buffer the file.
     fseek(in, 0, SEEK_END);
-    i = ftell(in);
+    int size = ftell(in);
     fseek(in, 0, SEEK_SET);
 
-    data = (char*)malloc(i + 1);
-    fread(data, i, 1, in);
+    if (size == 0)
+        return false;
+
+    str<4096> buffer;
+    buffer.reserve(size);
+
+    char* data = buffer.data();
+    fread(data, size, 1, in);
     fclose(in);
-    data[i] = '\0';
+    data[size] = '\0';
 
     // Split at new lines.
-    line = strtok(data, "\n\r");
-    while (line != nullptr && *line)
+    str<256> line;
+    str_tokeniser lines(buffer.c_str(), "\n\r");
+    while (lines.next(line))
     {
-        char* c;
+        char* line_data = line.data();
 
         // Skip line's leading whitespace.
-        while (isspace(*line))
-        {
-            ++line;
-        }
+        while (isspace(*line_data))
+            ++line_data;
 
-        c = strchr(line, '=');
-        if (c != nullptr && *line != '#')
-        {
-            char* d;
-            const setting_decl_t* decl;
+        // Comment?
+        if (line_data[0] != '#')
+            continue;
 
-            *c++ = '\0';
+        // 'key = value'?
+        char* key = strchr(line_data, '=');
+        if (key == nullptr)
+            continue;
 
-            // Trim whitespace.
-            d = c - 2;
-            while (d >= line && isspace(*d))
-            {
-                --d;
-            }
-            *(d + 1) = '\0';
+        *key++ = '\0';
 
-            while (*c && isspace(*c))
-            {
-                ++c;
-            }
+        // Trim whitespace.
+        char* value = key - 2;
+        while (value >= line_data && isspace(*value))
+            --value;
+        *(value + 1) = '\0';
 
-            decl = settings_get_decl_by_name(s, line);
-            if (decl != nullptr)
-            {
-                set_value(s, decl, c);
-            }
-        }
+        while (*key && isspace(*key))
+            ++key;
 
-        line = strtok(nullptr, "\n\r");
+        // Find the setting and set its value.
+        if (setting* s = settings::find(key))
+            s->set(value);
     }
 
-    free(data);
-    return 1;
+    return true;
 }
 
 //------------------------------------------------------------------------------
-int settings_save(settings_t* s, const char* file)
+bool save(const char* file)
 {
-    int i;
-    FILE* out;
-
     // Open settings file.
-    out = fopen(file, "wt");
+    FILE* out = fopen(file, "wt");
     if (out == nullptr)
-    {
-        return 0;
-    }
+        return false;
 
     // Iterate over each setting and write it out to the file.
-    for (i = 0; i < s->count; ++i)
+    for (const setting* iter = settings::first(); iter != nullptr; iter = iter->next())
     {
-        const setting_decl_t* decl;
+        fprintf(out, "# name: %s\n", iter->get_short_desc());
 
-        decl = s->decls + i;
-
-        fprintf(out, "# name: %s\n", decl->friendly_name);
-        fprintf(out, "# type: %s\n", g_type_names[decl->type]);
-
-        if (decl->type == SETTING_TYPE_ENUM)
+        // Write out the setting's type.
+        int type = iter->get_type();
+        const char* type_name = nullptr;
+        switch (type)
         {
-            int j = 0;
-            const char* param = decl->type_param;
-            while (*param)
-            {
-                fprintf(out, "# %2d = %s\n", j, param);
-                param += strlen(param) + 1;
-                ++j;
-            }
+        case setting::type_bool:   type_name = "boolean"; break;
+        case setting::type_int:    type_name = "integer"; break;
+        case setting::type_string: type_name = "string";  break;
+        case setting::type_enum:   type_name = "enum";    break;
         }
 
-        fprintf(out, "# desc: %s\n", decl->description);
-        fprintf(out, "%s = %s\n\n", decl->name, s->values[i]);
+        if (type_name != nullptr)
+            fprintf(out, "# type: %s\n", type_name);
+
+        // Output an enum-type setting's options.
+        if (type == setting::type_enum)
+        {
+            fprintf(out, "# options:");
+
+            const setting_enum* as_enum = (setting_enum*)iter;
+            for (const char* option = as_enum->get_options(); *option; )
+            {
+                fprintf(out, " %s", option);
+                while (*option++);
+            }
+
+            fprintf(out, "\n");
+        }
+
+        str<> value;
+        iter->get(value);
+        fprintf(out, "%s = %s\n\n", iter->get_name(), value.c_str());
     }
 
     fclose(out);
-    return 1;
+    return true;
+}
+
+} // namespace settings
+
+
+
+//------------------------------------------------------------------------------
+setting::setting(
+    const char* name,
+    const char* short_desc,
+    const char* long_desc,
+    type_e type)
+: m_name(name)
+, m_short_desc(short_desc)
+, m_long_desc(long_desc)
+, m_next(g_setting_list)
+, m_prev(nullptr)
+, m_type(type)
+{
+    g_setting_list = this;
+    if (m_next != nullptr)
+        m_next->m_prev = this;
 }
 
 //------------------------------------------------------------------------------
-const char* settings_get_str(settings_t* s, const char* name)
+setting::~setting()
 {
-    // Check for an environment variable override.
+    if (m_prev != nullptr)
+        m_prev->m_next = m_next;
+    else
+        g_setting_list = m_next;
+
+    if (m_next != nullptr)
+        m_next->m_prev = m_prev;
+}
+
+//------------------------------------------------------------------------------
+setting* setting::next() const
+{
+    return m_next;
+}
+
+//------------------------------------------------------------------------------
+setting::type_e setting::get_type() const
+{
+    return m_type;
+}
+
+//------------------------------------------------------------------------------
+const char* setting::get_name() const
+{
+    return m_name.c_str();
+}
+
+//------------------------------------------------------------------------------
+const char* setting::get_short_desc() const
+{
+    return m_short_desc.c_str();
+}
+
+//------------------------------------------------------------------------------
+const char* setting::get_long_desc() const
+{
+    return m_long_desc.c_str();
+}
+
+
+
+//------------------------------------------------------------------------------
+template <> bool setting_impl<bool>::set(const char* value)
+{
+    if (stricmp(value, "true") == 0)  { m_store.value = 1; return true; }
+    if (stricmp(value, "false") == 0) { m_store.value = 0; return true; }
+
+    if (*value >= '0' && *value <= '9')
     {
-        static str<256> buffer;
-        buffer.clear();
-        buffer << "clink." << name;
-        if (GetEnvironmentVariableA(buffer.c_str(), buffer.data(), buffer.size()))
-            return buffer.c_str();
+        m_store.value = !!atoi(value);
+        return true;
     }
 
-    int i = get_decl_index(s, name);
-    if (i != -1)
-        return s->values[i];
-
-    return "";
+    return false;
 }
 
 //------------------------------------------------------------------------------
-int settings_get_int(settings_t* s, const char* name)
+template <> bool setting_impl<int>::set(const char* value)
 {
-    return atoi(settings_get_str(s, name));
+    if (*value < '0' || *value > '9')
+        return false;
+
+    m_store.value = atoi(value);
+    return true;
 }
 
 //------------------------------------------------------------------------------
-void settings_set_int(settings_t* s, const char* name, int value)
+template <> bool setting_impl<const char*>::set(const char* value)
 {
-    const setting_decl_t* decl = settings_get_decl_by_name(s, name);
-    if (decl != nullptr)
+    m_store.value = value;
+    return true;
+}
+
+
+
+//------------------------------------------------------------------------------
+template <> void setting_impl<bool>::get(str_base& out) const
+{
+    out = m_store.value ? "True" : "False";
+}
+
+//------------------------------------------------------------------------------
+template <> void setting_impl<int>::get(str_base& out) const
+{
+    out.format("%d", m_store.value);
+}
+
+//------------------------------------------------------------------------------
+template <> void setting_impl<const char*>::get(str_base& out) const
+{
+    out = m_store.value.c_str();
+}
+
+
+
+//------------------------------------------------------------------------------
+setting_enum::setting_enum(
+    const char* name,
+    const char* short_desc,
+    const char* long_desc,
+    const char* options,
+    int default_value)
+: setting_impl<int>(name, short_desc, long_desc, default_value)
+, m_options(options)
+{
+    m_type = type_enum;
+}
+
+//------------------------------------------------------------------------------
+bool setting_enum::set(const char* value)
+{
+    int i = 0;
+    for (const char* option = m_options.c_str(); *option; ++i)
     {
-        char buffer[32];
-        itoa(value, buffer, 10);
-        set_value(s, decl, buffer);
-    }
-}
+        const char* next = next_option(option);
 
-//------------------------------------------------------------------------------
-void settings_set_str(settings_t* s, const char* name, const char* value)
-{
-    const setting_decl_t* decl = settings_get_decl_by_name(s, name);
-    if (decl != nullptr)
-    {
-        set_value(s, decl, value);
-    }
-}
+        int option_len = int(next - option);
+        if (*next)
+            --option_len;
 
-//------------------------------------------------------------------------------
-void settings_set(settings_t* s, const char* name, const char* value)
-{
-    const setting_decl_t* decl = settings_get_decl_by_name(s, name);
-    if (decl != nullptr)
-    {
-        if (decl_is_string_type(decl))
+        if (_strnicmp(option, value, option_len) == 0)
         {
-            set_value(s, decl, value);
+            m_store.value = i;
+            return true;
         }
-        else
-        {
-            int i;
-            i = atoi(value);
-            settings_set_int(s, name, i);
-        }
+
+        option = next;
+    }
+
+    return false;
+}
+
+//------------------------------------------------------------------------------
+void setting_enum::get(str_base& out) const
+{
+    int index = m_store.value;
+    if (index < 0)
+        return;
+
+    const char* option = m_options.c_str();
+    for (int i = 0; i < index && *option; ++i)
+        option = next_option(option);
+
+    if (*option)
+    {
+        const char* next = next_option(option);
+        if (*next)
+            --next;
+
+        out.clear();
+        out.concat(option, int(next - option));
     }
 }
 
 //------------------------------------------------------------------------------
-const setting_decl_t* settings_get_decls(settings_t* s)
+const char* setting_enum::get_options() const
 {
-    return s->decls;
+    return m_options.c_str();
 }
 
 //------------------------------------------------------------------------------
-int settings_get_decl_count(settings_t* s)
+const char* setting_enum::next_option(const char* option)
 {
-    return s->count;
+    while (*option)
+        if (*option++ == ',')
+            break;
+
+    return option;
 }

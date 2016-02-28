@@ -8,7 +8,32 @@
 
 #include <core/base.h>
 #include <core/str.h>
+#include <settings/settings.h>
 #include <terminal/terminal.h>
+
+//------------------------------------------------------------------------------
+// MODE4 : unused
+static setting_int g_colour_match(
+    "match.colour",
+    "Match display colour",
+    "Colour to use when displaying matches. A value less than 0 will be\n"
+    "the opposite brightness of the default colour.",
+    -1);
+
+// MODE4 : unused
+static setting_int g_colour_match_lcd(
+    "match.colour_lcd",
+    "Match LCD colour",
+    "",
+    -1);
+
+// MODE4 : unused
+static setting_int g_colour_match_next(
+    "match.colour_next",
+    "Match next character colour",
+    "",
+    -1);
+
 
 //------------------------------------------------------------------------------
 column_printer::column_printer(terminal* terminal)

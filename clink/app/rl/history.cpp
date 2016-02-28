@@ -5,13 +5,58 @@
 #include "paths.h"
 
 #include <core/str.h>
+#include <settings/settings.h>
 
 extern "C" {
 #include <readline/history.h>
 }
 
 //------------------------------------------------------------------------------
-int                 get_clink_setting_int(const char*);
+static setting_int g_max_lines(
+    "history.max_lines",
+    "Lines of history saved to disk",
+    "When set to a positive integer this is the number of lines of history\n"
+    "that will persist when Clink saves the command history to disk. Use 0\n"
+    "for infinite lines and <0 to disable history persistence.",
+    10000);
+
+static setting_int g_ignore_space(
+    "history.ignore_space",
+    "Skip adding lines prefixed with whitespace",
+    "Ignore lines that begin with whitespace when adding lines in to\n"
+    "the history.",
+    0);
+
+static setting_enum g_dupe_mode(
+    "history.dupe_mode",
+    "Controls how duplicate entries are handled",
+    "If a line is a duplicate of an existing history entry Clink will\n"
+    "erase the duplicate when this is set 2. A value of 1 will not add\n"
+    "duplicates to the history and a value of 0 will always add lines.\n"
+    "Note that history is not deduplicated when reading/writing to disk.",
+    "add,ignore,erase_dupe",
+    2);
+
+static setting_enum g_expand_mode(
+    "history.expand_mode",
+    "Sets how command history expansion is applied",
+    "The '!' character in an entered line can be interpreted to introduce\n"
+    "words from the history. This can be enabled and disable by setting this\n"
+    "value to 1 or 0. Values or 2, 3 or 4 will skip any ! character quoted\n"
+    "in single, double, or both quotes respectively.",
+    "off,on,not_squoted,not_dquoted,not_quoted",
+    4);
+
+/*static*/ setting_bool g_history_io(
+    "history.io",
+    "Read/write history file each line edited",
+    "When non-zero the history will be read from disk before editing a\n"
+    "new line and written to disk afterwards.",
+    0);
+
+
+
+//------------------------------------------------------------------------------
 static int          g_new_history_count             = 0;
 
 //------------------------------------------------------------------------------
@@ -43,7 +88,7 @@ void save_history()
     get_history_file_name(buffer);
 
     // Get max history size.
-    int max_history = get_clink_setting_int("history_file_lines");
+    int max_history = g_max_lines.get();
     max_history = (max_history == 0) ? INT_MAX : max_history;
     if (max_history < 0)
     {
@@ -52,8 +97,7 @@ void save_history()
     }
 
     // Write new history to the file, and truncate to our maximum.
-    int always_write = get_clink_setting_int("history_io");
-    if (always_write || append_history(g_new_history_count, buffer.c_str()) != 0)
+    if (g_history_io.get() || append_history(g_new_history_count, buffer.c_str()) != 0)
         write_history(buffer.c_str());
 
     if (max_history != INT_MAX)
@@ -83,7 +127,7 @@ void add_to_history(const char* line)
 
     // Maybe we shouldn't add this line to the history at all?
     c = (const unsigned char*)line;
-    if (isspace(*c) && get_clink_setting_int("history_ignore_space") > 0)
+    if (isspace(*c) && g_ignore_space.get())
         return;
 
     // Skip leading whitespace
@@ -100,7 +144,7 @@ void add_to_history(const char* line)
         return;
 
     // Check if the line's a duplicate of and existing history entry.
-    dupe_mode = get_clink_setting_int("history_dupe_mode");
+    dupe_mode = g_dupe_mode.get();
     if (dupe_mode > 0)
     {
         int where = find_duplicate((const char*)c);
@@ -139,7 +183,7 @@ int history_expand_control(char* line, int marker_pos)
 {
     int setting, in_quote, i;
 
-    setting = get_clink_setting_int("history_expand_mode");
+    setting = g_expand_mode.get();
     if (setting <= 1)
         return (setting <= 0);
 

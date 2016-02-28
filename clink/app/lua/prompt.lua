@@ -6,6 +6,13 @@ clink.prompt = {}
 clink.prompt.filters = {}
 
 --------------------------------------------------------------------------------
+settings.add("prompt.colour", -1, "Colour of the prompt",
+[[Surrounds the prompt in ANSI escape codes to set the prompt's colour.
+Disabled when the value is less than 0.]])
+
+
+
+--------------------------------------------------------------------------------
 function clink.prompt.register_filter(filter, priority)
     if priority == nil then
         priority = 999
@@ -18,7 +25,7 @@ end
 --------------------------------------------------------------------------------
 function clink.filter_prompt(prompt)
     local function add_ansi_codes(p)
-        local c = tonumber(clink.get_setting_int("prompt_colour"))
+        local c = settings.get("prompt.colour")
         if c < 0 then
             return p
         end
