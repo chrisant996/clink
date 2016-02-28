@@ -6,8 +6,11 @@
 #include "path.h"
 #include "str.h"
 
+namespace os
+{
+
 //------------------------------------------------------------------------------
-int os::get_path_type(const char* path)
+int get_path_type(const char* path)
 {
     wstr<MAX_PATH> wpath(path);
     DWORD attr = GetFileAttributesW(wpath.c_str());
@@ -21,7 +24,7 @@ int os::get_path_type(const char* path)
 }
 
 //------------------------------------------------------------------------------
-void os::get_current_dir(str_base& out)
+void get_current_dir(str_base& out)
 {
     wstr<MAX_PATH> wdir;
     GetCurrentDirectoryW(wdir.size(), wdir.data());
@@ -29,14 +32,14 @@ void os::get_current_dir(str_base& out)
 }
 
 //------------------------------------------------------------------------------
-bool os::set_current_dir(const char* dir)
+bool set_current_dir(const char* dir)
 {
     wstr<MAX_PATH> wdir(dir);
     return (SetCurrentDirectoryW(wdir.c_str()) == TRUE);
 }
 
 //------------------------------------------------------------------------------
-bool os::make_dir(const char* dir)
+bool make_dir(const char* dir)
 {
     int type = get_path_type(dir);
     if (type == path_type_dir)
@@ -59,21 +62,21 @@ bool os::make_dir(const char* dir)
 }
 
 //------------------------------------------------------------------------------
-bool os::remove_dir(const char* dir)
+bool remove_dir(const char* dir)
 {
     wstr<MAX_PATH> wdir(dir);
     return (RemoveDirectoryW(wdir.c_str()) == TRUE);
 }
 
 //------------------------------------------------------------------------------
-bool os::unlink(const char* path)
+bool unlink(const char* path)
 {
     wstr<MAX_PATH> wpath(path);
     return (DeleteFileW(wpath.c_str()) == TRUE);
 }
 
 //------------------------------------------------------------------------------
-bool os::move(const char* src_path, const char* dest_path)
+bool move(const char* src_path, const char* dest_path)
 {
     wstr<MAX_PATH> wsrc_path(src_path);
     wstr<MAX_PATH> wdest_path(dest_path);
@@ -81,7 +84,7 @@ bool os::move(const char* src_path, const char* dest_path)
 }
 
 //------------------------------------------------------------------------------
-bool os::copy(const char* src_path, const char* dest_path)
+bool copy(const char* src_path, const char* dest_path)
 {
     wstr<MAX_PATH> wsrc_path(src_path);
     wstr<MAX_PATH> wdest_path(dest_path);
@@ -89,13 +92,13 @@ bool os::copy(const char* src_path, const char* dest_path)
 }
 
 //------------------------------------------------------------------------------
-bool os::get_temp_dir(str_base& out)
+bool get_temp_dir(str_base& out)
 {
     return get_env("tmp", out) || get_env("temp", out);
 }
 
 //------------------------------------------------------------------------------
-bool os::get_env(const char* name, str_base& out)
+bool get_env(const char* name, str_base& out)
 {
     wstr<32> wname(name);
 
@@ -111,3 +114,5 @@ bool os::get_env(const char* name, str_base& out)
     out = wvalue.c_str();
     return true;
 }
+
+}; // namespace os

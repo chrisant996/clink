@@ -6,29 +6,22 @@
 class str_base;
 
 //------------------------------------------------------------------------------
-class os
+namespace os
 {
-public:
     enum {
         path_type_invalid,
         path_type_file,
         path_type_dir,
     };
 
-    static int      get_path_type(const char* path);
-    static void     get_current_dir(str_base& out);
-    static bool     set_current_dir(const char* dir);
-    static bool     make_dir(const char* dir);
-    static bool     remove_dir(const char* dir);
-    static bool     unlink(const char* path);
-    static bool     move(const char* src_path, const char* dest_path);
-    static bool     copy(const char* src_path, const char* dest_path);
-    static bool     get_temp_dir(str_base& out);
-    static bool     get_env(const char* name, str_base& out);
-
-private:
-                    os() = delete;
-                    ~os() = delete;
-                    os(const os&) = delete;
-    void            operator = (const os&) = delete;
-};
+    int     get_path_type(const char* path);
+    void    get_current_dir(str_base& out);
+    bool    set_current_dir(const char* dir);
+    bool    make_dir(const char* dir);
+    bool    remove_dir(const char* dir);
+    bool    unlink(const char* path);
+    bool    move(const char* src_path, const char* dest_path);
+    bool    copy(const char* src_path, const char* dest_path);
+    bool    get_temp_dir(str_base& out);
+    bool    get_env(const char* name, str_base& out);
+}; // namespace os
