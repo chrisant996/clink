@@ -248,6 +248,8 @@ void shutdown_clink()
     shutdown_clink_settings();
     shutdown_line_editor();
 
+    delete g_lua;
+
     if (logger* logger = logger::get())
         delete logger;
 }
