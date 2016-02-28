@@ -3,6 +3,8 @@
 
 #pragma once
 
+#include <core/str.h>
+
 extern "C" {
 #include <lua.h>
 #include <lauxlib.h>
@@ -50,7 +52,9 @@ void lua_bindable<T>::lua_bind(lua_State* state)
     void* self = lua_newuserdata(state, sizeof(void*));
     *(void**)self = this;
 
-    if (luaL_newmetatable(state, m_name))
+    str<48> mt_name;
+    mt_name << m_name << "_mt";
+    if (luaL_newmetatable(state, mt_name.c_str()))
     {
         lua_createtable(state, 0, 0);
 
