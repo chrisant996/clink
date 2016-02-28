@@ -138,7 +138,7 @@ static bool get_host_name(str_base& out)
 }
 
 //------------------------------------------------------------------------------
-int initialise_clink(const inject_args* inject_args)
+bool initialise_clink(const inject_args* inject_args)
 {
     seh_scope seh;
 
@@ -164,7 +164,7 @@ int initialise_clink(const inject_args* inject_args)
     // What process is the DLL loaded into?
     str<64> host_name;
     if (!get_host_name(host_name))
-        return 0;
+        return false;
 
     LOG("Host process is '%s'", host_name.c_str());
 
@@ -212,23 +212,23 @@ int initialise_clink(const inject_args* inject_args)
     if (g_host == nullptr)
     {
         LOG("Unknown host.");
-        return 0;
+        return false;
     }
 
     if (!g_host->validate())
     {
         LOG("Shell validation failed.");
-        return 0;
+        return false;
     }
 
     if (!g_host->initialise())
     {
         failed();
-        return 0;
+        return false;
     }
 
     success();
-    return 1;
+    return true;
 }
 
 //------------------------------------------------------------------------------
