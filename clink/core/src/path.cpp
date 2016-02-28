@@ -12,8 +12,6 @@
 #   define PATH_SEP "/"
 #endif
 
-
-
 //------------------------------------------------------------------------------
 static bool is_seperator(int c)
 {
@@ -34,89 +32,8 @@ static const char* get_last_separator(const char* in)
 #endif
 }
 
-
-
 //------------------------------------------------------------------------------
-void path::clean(str_base& in_out, int sep)
-{
-    path::clean(in_out.data(), sep);
-}
-
-//------------------------------------------------------------------------------
-void path::clean(char* in_out, int sep)
-{
-    if (!sep)
-        sep = PATH_SEP[0];
-
-    enum clean_state
-    {
-        state_write,
-        state_slash
-    };
-
-    clean_state state = state_write;
-    char* write = in_out;
-    const char* read = write;
-    while (char c = *read)
-    {
-        switch (state)
-        {
-        case state_write:
-            if (is_seperator(c) || c == sep)
-            {
-                c = sep;
-                state = state_slash;
-            }
-
-            *write = c;
-            ++write;
-            break;
-
-        case state_slash:
-            if (!is_seperator(c) && c != sep)
-            {
-                state = state_write;
-                continue;
-            }
-            break;
-        }
-
-        ++read;
-    }
-
-    *write = '\0';
-}
-
-//------------------------------------------------------------------------------
-bool path::get_base_name(const char* in, str_base& out)
-{
-    if (!get_name(in, out))
-        return false;
-
-    int dot = out.last_of('.');
-    if (dot >= 0)
-        out.truncate(dot);
-
-    return true;
-}
-
-//------------------------------------------------------------------------------
-bool path::get_directory(const char* in, str_base& out)
-{
-    int end = get_directory_end(in);
-    return out.concat(in, end);
-}
-
-//------------------------------------------------------------------------------
-bool path::get_directory(str_base& in_out)
-{
-    int end = get_directory_end(in_out.c_str());
-    in_out.truncate(end);
-    return true;
-}
-
-//------------------------------------------------------------------------------
-int path::get_directory_end(const char* path)
+static int get_directory_end(const char* path)
 {
     if (const char* slash = get_last_separator(path))
     {
@@ -162,8 +79,92 @@ int path::get_directory_end(const char* path)
     return 0;
 }
 
+
+
+namespace path
+{
+
 //------------------------------------------------------------------------------
-bool path::get_drive(const char* in, str_base& out)
+void clean(str_base& in_out, int sep)
+{
+    clean(in_out.data(), sep);
+}
+
+//------------------------------------------------------------------------------
+void clean(char* in_out, int sep)
+{
+    if (!sep)
+        sep = PATH_SEP[0];
+
+    enum clean_state
+    {
+        state_write,
+        state_slash
+    };
+
+    clean_state state = state_write;
+    char* write = in_out;
+    const char* read = write;
+    while (char c = *read)
+    {
+        switch (state)
+        {
+        case state_write:
+            if (is_seperator(c) || c == sep)
+            {
+                c = sep;
+                state = state_slash;
+            }
+
+            *write = c;
+            ++write;
+            break;
+
+        case state_slash:
+            if (!is_seperator(c) && c != sep)
+            {
+                state = state_write;
+                continue;
+            }
+            break;
+        }
+
+        ++read;
+    }
+
+    *write = '\0';
+}
+
+//------------------------------------------------------------------------------
+bool get_base_name(const char* in, str_base& out)
+{
+    if (!get_name(in, out))
+        return false;
+
+    int dot = out.last_of('.');
+    if (dot >= 0)
+        out.truncate(dot);
+
+    return true;
+}
+
+//------------------------------------------------------------------------------
+bool get_directory(const char* in, str_base& out)
+{
+    int end = get_directory_end(in);
+    return out.concat(in, end);
+}
+
+//------------------------------------------------------------------------------
+bool get_directory(str_base& in_out)
+{
+    int end = get_directory_end(in_out.c_str());
+    in_out.truncate(end);
+    return true;
+}
+
+//------------------------------------------------------------------------------
+bool get_drive(const char* in, str_base& out)
 {
 #if defined(PLATFORM_WINDOWS)
     if ((in[1] != ':') || (unsigned(tolower(in[0]) - 'a') > ('z' - 'a')))
@@ -176,7 +177,7 @@ bool path::get_drive(const char* in, str_base& out)
 }
 
 //------------------------------------------------------------------------------
-bool path::get_drive(str_base& in_out)
+bool get_drive(str_base& in_out)
 {
 #if defined(PLATFORM_WINDOWS)
     if ((in_out[1] != ':') || (unsigned(tolower(in_out[0]) - 'a') > ('z' - 'a')))
@@ -190,7 +191,7 @@ bool path::get_drive(str_base& in_out)
 }
 
 //------------------------------------------------------------------------------
-bool path::get_extension(const char* in, str_base& out)
+bool get_extension(const char* in, str_base& out)
 {
     const char* dot = strrchr(in, '.');
     if (dot == nullptr)
@@ -200,13 +201,13 @@ bool path::get_extension(const char* in, str_base& out)
 }
 
 //------------------------------------------------------------------------------
-bool path::get_name(const char* in, str_base& out)
+bool get_name(const char* in, str_base& out)
 {
     return out.concat(get_name(in));
 }
 
 //------------------------------------------------------------------------------
-const char* path::get_name(const char* in)
+const char* get_name(const char* in)
 {
     if (const char* slash = get_last_separator(in))
     {
@@ -237,7 +238,7 @@ const char* path::get_name(const char* in)
 }
 
 //------------------------------------------------------------------------------
-bool path::is_root(const char* path)
+bool is_root(const char* path)
 {
 #if defined(PLATFORM_WINDOWS)
     // Windows' drives prefixes.
@@ -261,14 +262,14 @@ bool path::is_root(const char* path)
 }
 
 //------------------------------------------------------------------------------
-bool path::join(const char* lhs, const char* rhs, str_base& out)
+bool join(const char* lhs, const char* rhs, str_base& out)
 {
     out << lhs;
     return append(out, rhs);
 }
 
 //------------------------------------------------------------------------------
-bool path::append(str_base& out, const char* rhs)
+bool append(str_base& out, const char* rhs)
 {
     bool add_seperator = true;
 
@@ -289,3 +290,5 @@ bool path::append(str_base& out, const char* rhs)
 
     return out.concat(rhs);
 }
+
+}; // namespace path
