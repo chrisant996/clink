@@ -10,9 +10,9 @@
 #include "matches_lua.h"
 
 extern "C" {
-#include "lua.h"
-#include "lauxlib.h"
-#include "lualib.h"
+#include <lua.h>
+#include <lauxlib.h>
+#include <lualib.h>
 }
 
 //------------------------------------------------------------------------------
