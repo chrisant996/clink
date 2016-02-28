@@ -58,9 +58,7 @@ static void strip_crlf(char* line)
 
     setting = get_clink_setting_int("strip_crlf_on_paste");
     if (setting <= 0)
-    {
         return;
-    }
 
     read = write = line;
     while (*read)
