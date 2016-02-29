@@ -7,8 +7,8 @@
 #include "matches.h"
 
 #include <core/base.h>
+#include <core/settings.h>
 #include <core/str.h>
-#include <settings/settings.h>
 #include <terminal/terminal.h>
 
 //------------------------------------------------------------------------------

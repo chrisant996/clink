@@ -3,8 +3,8 @@
 
 #include "pch.h"
 
+#include <core/settings.h>
 #include <core/str.h>
-#include <settings/settings.h>
 
 extern "C" {
 #include <readline/history.h>

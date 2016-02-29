@@ -9,11 +9,11 @@
 
 #include <core/base.h>
 #include <core/log.h>
+#include <core/settings.h>
 #include <line_editor.h>
 #include <lua/lua_script_loader.h>
 #include <process/vm.h>
 #include <terminal/terminal.h>
-#include <settings/settings.h>
 
 #include <Windows.h>
 

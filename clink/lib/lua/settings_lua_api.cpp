@@ -4,7 +4,7 @@
 #include "pch.h"
 
 #include <core/base.h>
-#include <settings/settings.h>
+#include <core/settings.h>
 
 #include <new.h>
 

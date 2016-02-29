@@ -4,8 +4,8 @@
 #include "pch.h"
 #include "paths.h"
 
+#include <core/settings.h>
 #include <core/str.h>
-#include <settings/settings.h>
 
 //------------------------------------------------------------------------------
 static void get_settings_file(str_base& buffer)

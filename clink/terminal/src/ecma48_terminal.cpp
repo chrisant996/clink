@@ -6,8 +6,8 @@
 
 #include <core/base.h>
 #include <core/log.h>
+#include <core/settings.h>
 #include <core/str_iter.h>
-#include <../../lib/settings/settings.h> // MODE4
 
 //------------------------------------------------------------------------------
 static setting_bool g_altgr(

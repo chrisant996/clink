@@ -3,9 +3,8 @@
 
 #include "pch.h"
 #include "settings.h"
-
-#include <core/str.h>
-#include <core/str_tokeniser.h>
+#include "str.h"
+#include "str_tokeniser.h"
 
 //------------------------------------------------------------------------------
 static setting* g_setting_list = nullptr;

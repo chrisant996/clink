@@ -6,8 +6,8 @@
 
 #include <core/base.h>
 #include <core/path.h>
+#include <core/settings.h>
 #include <core/str.h>
-#include <settings/settings.h>
 
 //------------------------------------------------------------------------------
 void                  load_clink_settings();

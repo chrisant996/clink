@@ -14,6 +14,7 @@
 #include <core/log.h>
 #include <core/os.h>
 #include <core/path.h>
+#include <core/settings.h>
 #include <core/str.h>
 #include <core/str_tokeniser.h>
 #include <file_match_generator.h>
@@ -21,7 +22,6 @@
 #include <lua/lua_root.h>
 #include <lua/lua_script_loader.h>
 #include <matches/column_printer.h>
-#include <settings/settings.h>
 #include <terminal/ecma48_terminal.h>
 
 extern "C" {
