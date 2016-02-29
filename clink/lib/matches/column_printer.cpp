@@ -12,6 +12,24 @@
 #include <terminal/terminal.h>
 
 //------------------------------------------------------------------------------
+static setting_int g_query_threshold(
+    "match.query_threshold",
+    "Ask if matches > threshold",
+    "", // MODE4
+    100);
+
+static setting_int g_max_width(
+    "match.max_width",
+    "Maximum display width",
+    "", // MODE4
+    106);
+
+static setting_bool g_vertical(
+    "match.vertical",
+    "Display matches vertically",
+    "", // MODE4
+    false);
+
 // MODE4 : unused
 static setting_int g_colour_match(
     "match.colour",
@@ -38,9 +56,6 @@ static setting_int g_colour_match_next(
 //------------------------------------------------------------------------------
 column_printer::column_printer(terminal* terminal)
 : match_printer(terminal)
-, m_query_threshold(100)
-, m_max_columns(106)
-, m_vertical(true)
 {
 }
 
@@ -70,18 +85,20 @@ void column_printer::print(const matches& matches)
     if (!longest)
         return;
 
-    if (m_query_threshold > 0 && m_query_threshold <= match_count)
+    int query_threshold = g_query_threshold.get();
+    if (query_threshold > 0 && query_threshold <= match_count)
         if (!do_display_prompt(match_count))
             return;
 
-    int columns = max(1, m_max_columns / longest);
+    int columns = max(1, g_max_width.get() / longest);
     int rows = (match_count + columns - 1) / columns;
     int pager_row = term->get_rows() - 1;
 
-    int dx = m_vertical ? rows : 1;
+    bool vertical = g_vertical.get();
+    int dx = vertical ? rows : 1;
     for (int y = 0; y < rows; ++y)
     {
-        int index = m_vertical ? y : (y * columns);
+        int index = vertical ? y : (y * columns);
 
         if (y == pager_row)
         {

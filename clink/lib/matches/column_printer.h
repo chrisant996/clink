@@ -17,7 +17,4 @@ public:
 private:
     int             do_pager(int pager_row);
     bool            do_display_prompt(int count);
-    int             m_query_threshold;  // MODE4: get from rl_completion_query_items
-    int             m_max_columns;      // MODE4: take from rl's completion-display-width or terminal
-    bool            m_vertical;         // MODE4: get from readline.
 };
