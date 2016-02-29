@@ -10,9 +10,9 @@ TEST_CASE("str_tokeniser : basic")
 {
     str<> s;
     str_tokeniser t("a;b;c", ";");
-    REQUIRE(t.next(s)); REQUIRE(s[0] == 'a');
-    REQUIRE(t.next(s)); REQUIRE(s[0] == 'b');
-    REQUIRE(t.next(s)); REQUIRE(s[0] == 'c');
+    REQUIRE(t.next(s)); REQUIRE(s.equals("a") == true);
+    REQUIRE(t.next(s)); REQUIRE(s.equals("b") == true);
+    REQUIRE(t.next(s)); REQUIRE(s.equals("c") == true);
     REQUIRE(t.next(s) == false);
 }
 
@@ -20,10 +20,10 @@ TEST_CASE("str_tokeniser : multi delims")
 {
     str<> s;
     str_tokeniser t("a;b-c.d", ";-.");
-    REQUIRE(t.next(s)); REQUIRE(s[0] == 'a');
-    REQUIRE(t.next(s)); REQUIRE(s[0] == 'b');
-    REQUIRE(t.next(s)); REQUIRE(s[0] == 'c');
-    REQUIRE(t.next(s)); REQUIRE(s[0] == 'd');
+    REQUIRE(t.next(s)); REQUIRE(s.equals("a") == true);
+    REQUIRE(t.next(s)); REQUIRE(s.equals("b") == true);
+    REQUIRE(t.next(s)); REQUIRE(s.equals("c") == true);
+    REQUIRE(t.next(s)); REQUIRE(s.equals("d") == true);
     REQUIRE(t.next(s) == false);
 }
 
@@ -34,9 +34,9 @@ TEST_CASE("str_tokeniser : ends")
     for (auto input : inputs)
     {
         str_tokeniser t(input, ";");
-        REQUIRE(t.next(s)); REQUIRE(s[0] == 'a');
-        REQUIRE(t.next(s)); REQUIRE(s[0] == 'b');
-        REQUIRE(t.next(s)); REQUIRE(s[0] == 'c');
+        REQUIRE(t.next(s)); REQUIRE(s.equals("a") == true);
+        REQUIRE(t.next(s)); REQUIRE(s.equals("b") == true);
+        REQUIRE(t.next(s)); REQUIRE(s.equals("c") == true);
         REQUIRE(t.next(s) == false);
     }
 }
@@ -48,9 +48,9 @@ TEST_CASE("str_tokeniser : delim runs")
     for (auto input : inputs)
     {
         str_tokeniser t(input, ";-");
-        REQUIRE(t.next(s)); REQUIRE(s[0] == 'a');
-        REQUIRE(t.next(s)); REQUIRE(s[0] == 'b');
-        REQUIRE(t.next(s)); REQUIRE(s[0] == 'c');
+        REQUIRE(t.next(s)); REQUIRE(s.equals("a") == true);
+        REQUIRE(t.next(s)); REQUIRE(s.equals("b") == true);
+        REQUIRE(t.next(s)); REQUIRE(s.equals("c") == true);
         REQUIRE(t.next(s) == false);
     }
 }

@@ -22,11 +22,16 @@ bool next_impl(str_iter_impl<T>& iter, str_impl<T>& out, const char* delims)
     // Extract the delimited string.
     const T* start = iter.get_pointer();
 
-    while (int c = iter.next())
+    while (int c = iter.peek())
+    {
         if (strchr(delims, c))
             break;
 
+        iter.next();
+    }
+
     const T* end = iter.get_pointer();
+    iter.next();
 
     // Empty string? Must be the end of the input. We're done here.
     if (start == end)
