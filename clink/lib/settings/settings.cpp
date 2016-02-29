@@ -75,23 +75,23 @@ bool load(const char* file)
             continue;
 
         // 'key = value'?
-        char* key = strchr(line_data, '=');
-        if (key == nullptr)
+        char* value = strchr(line_data, '=');
+        if (value == nullptr)
             continue;
 
-        *key++ = '\0';
+        *value++ = '\0';
 
         // Trim whitespace.
-        char* value = key - 2;
-        while (value >= line_data && isspace(*value))
-            --value;
-        *(value + 1) = '\0';
+        char* key_end = value - 2;
+        while (key_end >= line_data && isspace(*key_end))
+            --key_end;
+        key_end[1] = '\0';
 
-        while (*key && isspace(*key))
-            ++key;
+        while (*value && isspace(*value))
+            ++value;
 
         // Find the setting and set its value.
-        if (setting* s = settings::find(key))
+        if (setting* s = settings::find(line_data))
             s->set(value);
     }
 
