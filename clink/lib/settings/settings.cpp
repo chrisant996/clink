@@ -71,7 +71,7 @@ bool load(const char* file)
             ++line_data;
 
         // Comment?
-        if (line_data[0] != '#')
+        if (line_data[0] == '#')
             continue;
 
         // 'key = value'?
