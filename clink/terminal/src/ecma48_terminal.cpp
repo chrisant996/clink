@@ -57,8 +57,11 @@ int xterm_input::read_console()
     // Clear 'processed input' flag so key presses such as Ctrl-C and Ctrl-S
     // aren't swallowed. We also want events about window size changes.
     HANDLE handle_stdin = GetStdHandle(STD_INPUT_HANDLE);
-    DWORD flags;
-    GetConsoleMode(handle_stdin, &flags);
+
+    DWORD prev_flags;
+    GetConsoleMode(handle_stdin, &prev_flags);
+
+    DWORD flags = prev_flags;
     flags |= ENABLE_WINDOW_INPUT;
     flags &= ~ENABLE_EXTENDED_FLAGS;
     flags &= ~ENABLE_PROCESSED_INPUT;
@@ -244,6 +247,7 @@ end:
         key_char = 0x1b;
     }
 
+    SetConsoleMode(handle_stdin, prev_flags);
     return key_char;
 }
 
