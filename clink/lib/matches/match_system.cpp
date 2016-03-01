@@ -80,11 +80,6 @@ void match_system::generate_matches(
 
         int j = handler.compare(word.c_str(), match);
         if (j < 0 || j >= word_length)
-        {
-            char* cleaned = const_cast<char*>(match);
-            path::clean(cleaned);
-
-            result.add_match(cleaned);
-        }
+            result.add_match(match);
     }
 }
