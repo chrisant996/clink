@@ -11,11 +11,3 @@
 #   define WIN32_LEAN_AND_MEAN
 #   include <Windows.h>
 #endif
-
-/*
-#include <stdio.h>
-#include <conio.h>
-#include <io.h>
-#include <locale.h>
-#include <stdlib.h>
-*/
