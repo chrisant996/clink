@@ -110,8 +110,9 @@ int matches_lua::reset(lua_State* state)
 int matches_lua::set_file_handler(lua_State* state)
 {
     bool set = true;
-    if (lua_gettop(state) >= 1)
-        set = lua_toboolean(state, 1) != 0;
+    for (int i = 1, n = lua_gettop(state); i <= n; ++i)
+        if (lua_isboolean(state, i))
+            set &= (lua_toboolean(state, i) != 0);
 
     m_matches.set_handler(set ? get_file_match_handler() : nullptr);
     return 0;
