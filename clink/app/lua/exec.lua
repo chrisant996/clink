@@ -131,7 +131,8 @@ local function exec_match_generator(text, first, last, result)
     for _, suffix in ipairs(suffices) do
         for _, dir in ipairs(paths) do
             for _, file in ipairs(os.globfiles(dir.."*"..suffix)) do
-                result:addmatch(file)
+                file = path.getname(file)
+                result:addmatch(path.join(text_dir, file))
             end
         end
     end
