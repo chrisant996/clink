@@ -136,6 +136,16 @@ bool is_separator(int c)
 }
 
 //------------------------------------------------------------------------------
+const char* next_element(const char* in)
+{
+    for (; *in; ++in)
+        if (is_separator(*in))
+            return in + 1;
+
+    return nullptr;
+}
+
+//------------------------------------------------------------------------------
 bool get_base_name(const char* in, str_base& out)
 {
     if (!get_name(in, out))
