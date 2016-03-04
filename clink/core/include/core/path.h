@@ -10,6 +10,7 @@ namespace path
 {
     void        clean(str_base& in_out, int sep=0);
     void        clean(char* in_out, int sep=0);
+    bool        is_separator(int c);
     bool        get_base_name(const char* in, str_base& out);
     bool        get_directory(const char* in, str_base& out);
     bool        get_directory(str_base& in_out);

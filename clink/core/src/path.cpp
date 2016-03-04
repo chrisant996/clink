@@ -13,16 +13,6 @@
 #endif
 
 //------------------------------------------------------------------------------
-static bool is_seperator(int c)
-{
-#if defined(PLATFORM_WINDOWS)
-    return (c == '/' || c == '\\');
-#else
-    return (c == '/');
-#endif
-}
-
-//------------------------------------------------------------------------------
 static const char* get_last_separator(const char* in)
 {
 #if defined(PLATFORM_WINDOWS)
@@ -48,7 +38,7 @@ static int get_directory_end(const char* path)
         const char* first_slash = slash;
         while (first_slash >= path)
         {
-            if (!is_seperator(*first_slash))
+            if (!path::is_separator(*first_slash))
                 break;
 
             --first_slash;
@@ -110,7 +100,7 @@ void clean(char* in_out, int sep)
         switch (state)
         {
         case state_write:
-            if (is_seperator(c) || c == sep)
+            if (is_separator(c) || c == sep)
             {
                 c = sep;
                 state = state_slash;
@@ -121,7 +111,7 @@ void clean(char* in_out, int sep)
             break;
 
         case state_slash:
-            if (!is_seperator(c) && c != sep)
+            if (!is_separator(c) && c != sep)
             {
                 state = state_write;
                 continue;
@@ -133,6 +123,16 @@ void clean(char* in_out, int sep)
     }
 
     *write = '\0';
+}
+
+//------------------------------------------------------------------------------
+bool is_separator(int c)
+{
+#if defined(PLATFORM_WINDOWS)
+    return (c == '/' || c == '\\');
+#else
+    return (c == '/');
+#endif
 }
 
 //------------------------------------------------------------------------------
@@ -249,13 +249,13 @@ bool is_root(const char* path)
             return true;
 
         // "X:\" or "X://" ?
-        if (path[3] == '\0' && is_seperator(path[2]))
+        if (path[3] == '\0' && is_separator(path[2]))
             return true;
     }
 #endif
 
     // "[/ or /]+" ?
-    while (is_seperator(*path))
+    while (is_separator(*path))
         ++path;
 
     return (*path == '\0');
@@ -276,7 +276,7 @@ bool append(str_base& out, const char* rhs)
     int last = int(out.length() - 1);
     if (last >= 0)
     {
-        add_seperator &= !is_seperator(out[last]);
+        add_seperator &= !is_separator(out[last]);
 
 #if defined(PLATFORM_WINDOWS)
         add_seperator &= !(out[1] == ':' && out[2] == '\0');
@@ -285,7 +285,7 @@ bool append(str_base& out, const char* rhs)
     else
         add_seperator = false;
 
-    if (add_seperator && !is_seperator(rhs[0]))
+    if (add_seperator && !is_separator(rhs[0]))
         out << PATH_SEP;
 
     return out.concat(rhs);
