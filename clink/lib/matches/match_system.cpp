@@ -73,13 +73,10 @@ void match_system::generate_matches(
     result.set_handler(&handler);
 
     // Filter the matches to ones that are candidate matches for the word.
-    int word_length = word.length();
     for (unsigned int i = 0, n = temp_result.get_match_count(); i < n; ++i)
     {
         const char* match = temp_result.get_match(i);
-
-        int j = handler.compare(word.c_str(), match);
-        if (j < 0 || j >= word_length)
+        if (handler.compare(word.c_str(), match))
             result.add_match(match);
     }
 }

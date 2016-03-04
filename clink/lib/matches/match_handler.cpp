@@ -12,14 +12,18 @@ class generic_match_handler
     : public match_handler
 {
 public:
-    virtual int     compare(const char* word, const char* match) override;
+    virtual bool    compare(const char* word, const char* match) override;
     virtual void    get_displayable(const char* match, str_base& out) override;
 };
 
 //------------------------------------------------------------------------------
-int generic_match_handler::compare(const char* word, const char* match)
+bool generic_match_handler::compare(const char* word, const char* match)
 {
-    return str_compare(word, match);
+    int i = str_compare(word, match);
+    if (i >= 0)
+        return (word[i] != '\0');
+
+    return true;
 }
 
 //------------------------------------------------------------------------------
@@ -42,31 +46,42 @@ class file_match_handler
     : public match_handler
 {
 public:
-    virtual int     compare(const char* word, const char* match) override;
+    virtual bool    compare(const char* word, const char* match) override;
     virtual void    get_displayable(const char* match, str_base& out) override;
 };
 
 //------------------------------------------------------------------------------
-int file_match_handler::compare(const char* word, const char* match)
+bool file_match_handler::compare(const char* word, const char* match)
 {
-    int offset = 0;
-    int j;
-    while (1)
-    {
-        j = str_compare(word + offset, match + offset);
-        if (j < 0 || (match[j] != '\\' && match[j] != '/'))
-            break;
+    const char* word_name = path::get_name(word);
+    const char* match_name = path::get_name(match);
+    if (word_name - word < match_name - match)
+        match_name = match + (word_name - word);
 
-        offset = j + 1;
-    }
+    int i = str_compare(word_name, match_name);
+    if (i < 0)
+        return true;
 
-    return j += offset;
+    if (word_name[i] == '\0')
+        return true;
+
+    if (path::is_separator(match_name[i]) && match_name[i + 1] == '\0')
+        return true;
+
+    return false;
 }
 
 //------------------------------------------------------------------------------
 void file_match_handler::get_displayable(const char* match, str_base& out)
 {
-    path::get_name(match, out);
+    // We don't use path::get_name() here as its result never contains a path
+    // separator, and matches may be suffixed with a separator.
+
+    for (const char* i = match; i != nullptr; i = path::next_element(i))
+        if (i[0] != '\0')
+            match = i;
+
+    out << match;
 }
 
 //------------------------------------------------------------------------------

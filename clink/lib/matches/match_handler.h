@@ -9,7 +9,7 @@ class str_base;
 class match_handler
 {
 public:
-    virtual int     compare(const char* word, const char* match) = 0;
+    virtual bool    compare(const char* word, const char* match) = 0;
     virtual void    get_displayable(const char* match, str_base& out) = 0;
 };
 
