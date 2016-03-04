@@ -15,11 +15,11 @@
 //------------------------------------------------------------------------------
 static const char* get_last_separator(const char* in)
 {
-#if defined(PLATFORM_WINDOWS)
-    return max(strrchr(in, '/'), strrchr(in, '\\'));
-#else
-    return strrchr(in, '/');
-#endif
+    for (int i = int(strlen(in)) - 1; i >= 0; --i)
+        if (path::is_separator(in[i]))
+            return in + i;
+
+    return nullptr;
 }
 
 //------------------------------------------------------------------------------
