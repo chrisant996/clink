@@ -27,13 +27,6 @@ static int get_directory_end(const char* path)
 {
     if (const char* slash = get_last_separator(path))
     {
-        // Last slash isn't used to find end of the directory.
-        if (slash[1] == '\0')
-            for (int i = 0; i < 2; ++i)
-                while (slash > path)
-                    if (is_seperator(*--slash) != (i == 0))
-                        break;
-
         // Trim consecutive slashes unless they're leading ones.
         const char* first_slash = slash;
         while (first_slash >= path)
@@ -220,24 +213,7 @@ bool get_name(const char* in, str_base& out)
 const char* get_name(const char* in)
 {
     if (const char* slash = get_last_separator(in))
-    {
-        // Like get_directory() a trailing slash is not considered a delimiter.
-        if (slash[1] != '\0')
-            return slash + 1;
-
-        // Two passes; 1st to skip seperators, 2nd to skip word.
-        int pass = 0;
-        for (pass = 0; pass < 2 && slash > in; ++pass)
-            while (slash > in)
-                if (is_seperator(*--slash) != (pass == 0))
-                    break;
-
-        // If the two passes didn't complete 'in' only contains seperators
-        if (pass < 2)
-            return in;
-
-        return slash + is_seperator(*slash);
-    }
+        return slash + 1;
 
 #if defined(PLATFORM_WINDOWS)
     if (in[0] && in[1] == ':')
