@@ -12,8 +12,7 @@ class str_tokeniser_impl
 {
 public:
                         str_tokeniser_impl(const T* in, const char* delims);
-    void                quotes(int open_char, int close_char);
-    void                escape(int escape_char);
+                        str_tokeniser_impl(const str_iter_impl<T>& in, const char* delims);
     bool                next(str_impl<T>& out);
 
 private:
