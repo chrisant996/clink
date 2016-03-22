@@ -194,8 +194,8 @@ TEST_CASE("path::get_extension()")
         SECTION("1") { path::get_extension("one/two/three/filename.ext", s); }
         SECTION("2") { path::get_extension("one/two/three\\filename.ext", s); }
         SECTION("3") { path::get_extension("filename.ext", s); }
-        SECTION("3") { path::get_extension("filename..ext", s); }
-        SECTION("4") { path::get_extension(".ext", s); }
+        SECTION("4") { path::get_extension("filename..ext", s); }
+        SECTION("5") { path::get_extension(".ext", s); }
 
         REQUIRE(s.equals(".ext"));
     }
@@ -207,8 +207,8 @@ TEST_CASE("path::get_extension()")
             path::get_extension("..", s);
             REQUIRE(s.equals("."));
         }
-        SECTION("1") { REQUIRE(!path::get_extension("", s)); }
-        SECTION("2") { REQUIRE(!path::get_extension("abc", s)); }
+        SECTION("0") { REQUIRE(!path::get_extension("", s)); }
+        SECTION("1") { REQUIRE(!path::get_extension("abc", s)); }
     }
 }
 
@@ -227,18 +227,13 @@ TEST_CASE("path::get_name()")
     SECTION("Trailing slash") {
         const char* name;
 
-        //SECTION("0") { name = path::get_name("one/two"); }
-        SECTION("1") { name = path::get_name("one/two/"); }
-        SECTION("2") { name = path::get_name("one/two//"); }
-        SECTION("3") { name = path::get_name("one/two///"); }
-        //SECTION("4") { name = path::get_name("one\\two"); }
-        SECTION("5") { name = path::get_name("one\\two\\\\"); }
-        SECTION("6") { name = path::get_name("/two/"); }
-        SECTION("7") { name = path::get_name("two/"); }
+        SECTION("0") { name = path::get_name("one/two/"); }
+        SECTION("1") { name = path::get_name("one/two//"); }
+        SECTION("2") { name = path::get_name("one/two///"); }
+        SECTION("3") { name = path::get_name("one\\two\\\\"); }
+        SECTION("4") { name = path::get_name("/two/"); }
+        SECTION("5") { name = path::get_name("two/"); }
 
-        //REQUIRE(name[0] == 't');
-        //REQUIRE(name[1] == 'w');
-        //REQUIRE(name[2] == 'o');
         REQUIRE(name[0] == '\0');
     }
 
@@ -343,9 +338,9 @@ TEST_CASE("path::join(get_dir(), get_name())")
     }
 
     SECTION("Trailing slash") {
-        SECTION("2") { in = "one/two/"; }
-        SECTION("3") { in = "one/two\\"; }
-        SECTION("4") { in = "one\\two\\"; }
+        SECTION("0") { in = "one/two/"; }
+        SECTION("1") { in = "one/two\\"; }
+        SECTION("2") { in = "one\\two\\"; }
         out = "one/two/";
     }
 
