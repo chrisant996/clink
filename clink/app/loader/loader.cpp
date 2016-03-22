@@ -16,6 +16,7 @@ int g_in_clink_context;
 int inject(int, char**);
 int autorun(int, char**);
 int set(int, char**);
+int testbed(int, char**);
 
 //------------------------------------------------------------------------------
 void puts_help(const char** help_pairs, int count)
@@ -64,7 +65,8 @@ static int dispatch_verb(const char* verb, int argc, char** argv)
     } handlers[] = {
         "inject", inject,
         "autorun", autorun,
-        "set", set
+        "set", set,
+        "testbed", testbed,
     };
 
     int i;
