@@ -14,6 +14,7 @@ public:
                         str_tokeniser_impl(const T* in, const char* delims);
                         str_tokeniser_impl(const str_iter_impl<T>& in, const char* delims);
     bool                next(str_impl<T>& out);
+    bool                next(const T*& start, int& length);
 
 private:
     str_iter_impl<T>    m_iter;
@@ -23,6 +24,14 @@ private:
 //------------------------------------------------------------------------------
 template <typename T>
 str_tokeniser_impl<T>::str_tokeniser_impl(const T* in, const char* delims)
+: m_iter(in)
+, m_delims(delims)
+{
+}
+
+//------------------------------------------------------------------------------
+template <typename T>
+str_tokeniser_impl<T>::str_tokeniser_impl(const str_iter_impl<T>& in, const char* delims)
 : m_iter(in)
 , m_delims(delims)
 {

@@ -6,10 +6,8 @@
 
 //------------------------------------------------------------------------------
 template <typename T>
-bool next_impl(str_iter_impl<T>& iter, str_impl<T>& out, const char* delims)
+bool next_impl(str_iter_impl<T>& iter, const T*& out_start, int& out_length, const char* delims)
 {
-    out.clear();
-
     // Skip initial delimiters.
     while (int c = iter.peek())
     {
@@ -37,19 +35,44 @@ bool next_impl(str_iter_impl<T>& iter, str_impl<T>& out, const char* delims)
     if (start == end)
         return false;
 
-    // Add output string.
-    out.concat(start, int(end - start));
+    // Set the output and return.
+    out_start = start;
+    out_length = int(end - start);
     return true;
 }
 
 //------------------------------------------------------------------------------
 template <> bool str_tokeniser_impl<char>::next(str_impl<char>& out)
 {
-    return next_impl<char>(m_iter, out, m_delims);
+    const char* start;
+    int length;
+    bool ret = next_impl<char>(m_iter, start, length, m_delims);
+
+    out.clear();
+    out.concat(start, length);
+    return ret;
 }
 
 //------------------------------------------------------------------------------
 template <> bool str_tokeniser_impl<wchar_t>::next(str_impl<wchar_t>& out)
 {
-    return next_impl<wchar_t>(m_iter, out, m_delims);
+    const wchar_t* start;
+    int length;
+    bool ret = next_impl<wchar_t>(m_iter, start, length, m_delims);
+
+    out.clear();
+    out.concat(start, length);
+    return ret;
+}
+
+//------------------------------------------------------------------------------
+template <> bool str_tokeniser_impl<char>::next(const char*& start, int& length)
+{
+    return next_impl<char>(m_iter, start, length, m_delims);
+}
+
+//------------------------------------------------------------------------------
+template <> bool str_tokeniser_impl<wchar_t>::next(const wchar_t*& start, int& length)
+{
+    return next_impl<wchar_t>(m_iter, start, length, m_delims);
 }
