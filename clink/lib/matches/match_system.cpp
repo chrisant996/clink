@@ -80,3 +80,25 @@ void match_system::generate_matches(
             result.add_match(match);
     }
 }
+
+//------------------------------------------------------------------------------
+void match_system::generate_matches(const line_state_2& ls, matches& result) const
+{
+    const word* end_word = ls.words.back();
+
+    str<> word;
+    word.concat(ls.line + end_word->offset, end_word->length);
+
+    line_state state = {
+        word.c_str(),
+        ls.line,
+        end_word->offset,
+        ls.cursor,
+        ls.cursor
+    };
+
+    result.reset();
+    for (int i = 0, n = int(m_generators.size()); i < n; ++i)
+        if (m_generators[i].generator->generate(state, result))
+            break;
+}

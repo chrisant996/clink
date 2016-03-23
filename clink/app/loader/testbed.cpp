@@ -4,9 +4,11 @@
 #include <core/array.h>
 #include <core/base.h>
 #include <core/str_tokeniser.h>
-#include <terminal/ecma48_terminal.h>
-#include <matches/column_printer.h>
 #include <file_match_generator.h>
+#include <line_state.h>
+#include <matches/column_printer.h>
+#include <matches/matches.h>
+#include <terminal/ecma48_terminal.h>
 
 static void end_line(char* line)
 {
@@ -31,6 +33,7 @@ int testbed(int, char**)
     static const char* partial_delims = "\\/";
 
     unsigned int match_key = ~0;
+    matches result;
 
     for (int i = 0; ; ++i)
     {
@@ -39,15 +42,7 @@ int testbed(int, char**)
         const int line_cursor = rl_point;
 
         // Collect words.
-        struct word {
-            unsigned short offset;
-            unsigned short length;
-            unsigned short partial;
-            unsigned short delim;
-        };
-        fixed_array<word, 2> words;
-
-        int word_count = 0;
+        fixed_array<word, 128> words;
 
         str_iter token_iter(line_buffer, line_cursor);
         str_tokeniser tokens(token_iter, word_delims);
@@ -106,16 +101,24 @@ int testbed(int, char**)
         puts("");
         // SPAM!
 
+#error partial only applies to the last word
+
         // Should we generate new matches?
-        unsigned int next_match_key = end_word->offset << 20;
-        next_match_key |= (end_word->partial & 0x3ff) << 10;
+        unsigned int next_match_key = int(end_word->offset) << 20;
+        next_match_key |= int(end_word->partial & 0x3ff) << 10;
         if ((match_key & ~0x3ff) != next_match_key)
         {
-            puts("Generate!");
+            // MODE4
+            auto& system = line_editor->get_match_system();
+            line_state_2 ls = {words, line_buffer, line_cursor};
+            system.generate_matches(ls, result);
+
+            printf("Gen'd: %d\n", result.get_match_count());
         }
 
         // Should we sort and select matches?
-        next_match_key |= end_word->length & 0x3ff;
+        next_match_key |= int(end_word->length) & 0x3ff;
+        printf("%08x > %08x\n", next_match_key, match_key);
         if (match_key != next_match_key)
         {
             match_key = next_match_key;
