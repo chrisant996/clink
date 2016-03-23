@@ -49,7 +49,9 @@ template <> bool str_tokeniser_impl<char>::next(str_impl<char>& out)
     bool ret = next_impl<char>(m_iter, start, length, m_delims);
 
     out.clear();
-    out.concat(start, length);
+    if (ret)
+        out.concat(start, length);
+
     return ret;
 }
 
@@ -61,7 +63,9 @@ template <> bool str_tokeniser_impl<wchar_t>::next(str_impl<wchar_t>& out)
     bool ret = next_impl<wchar_t>(m_iter, start, length, m_delims);
 
     out.clear();
-    out.concat(start, length);
+    if (ret)
+        out.concat(start, length);
+
     return ret;
 }
 
