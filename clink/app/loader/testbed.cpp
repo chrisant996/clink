@@ -86,15 +86,16 @@ int testbed(int, char**)
         }
 
         // Adjust the completing word for partiality.
+        int partial = -1;
         end_word = words.back();
         for (int j = end_word->length - 1; j >= 0; --j)
         {
             int c = line_buffer[end_word->offset + j];
-            if (strchr(partial_delims, c) != nullptr)
-            {
-                end_word->partial = j;
-                break;
-            }
+            if (strchr(partial_delims, c) == nullptr)
+                continue;
+
+            partial = j;
+            break;
         }
 
         // SPAM!
@@ -104,11 +105,9 @@ int testbed(int, char**)
         puts("");
         // SPAM!
 
-#error partial only applies to the last word
-
         // Should we generate new matches?
         unsigned int next_match_key = int(end_word->offset) << 20;
-        next_match_key |= int(end_word->partial & 0x3ff) << 10;
+        next_match_key |= (partial & 0x3ff) << 10;
         if ((match_key & ~0x3ff) != next_match_key)
         {
             // MODE4
