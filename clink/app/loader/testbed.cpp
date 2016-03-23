@@ -144,6 +144,8 @@ int testbed(int, char**)
         printf("\n\n%03d [%08x]\n", i, rl_readline_state);
         // SPAM!
     }
+
+    rl_callback_handler_remove();
     terminal->end();
 
     return 0;
