@@ -450,7 +450,7 @@ void ecma48_terminal::write_sgr(const ecma48_csi& csi)
     // Process each code that is supported.
     for (int i = 0; i < csi.param_count; ++i)
     {
-        int param = csi.params[i];
+        unsigned int param = csi.params[i];
 
         if (param == 0) // reset
         {
@@ -472,17 +472,27 @@ void ecma48_terminal::write_sgr(const ecma48_csi& csi)
         {
             m_attr &= ~0x80;
         }
-        else if ((unsigned int)param - 30 < 8) // fg colour
+        else if (param - 30 < 8) // fg colour
         {
             m_attr = (m_attr & 0xf8) | sgr_to_attr[(param - 30) & 7];
+        }
+        else if (param - 90 < 8) // fg colour
+        {
+            m_attr |= 0x08;
+            m_attr = (m_attr & 0xf8) | sgr_to_attr[(param - 90) & 7];
         }
         else if (param == 39) // default fg colour
         {
             m_attr = (m_attr & 0xf8) | (m_default_attr & 0x07);
         }
-        else if ((unsigned int)param - 40 < 8) // bg colour
+        else if (param - 40 < 8) // bg colour
         {
             m_attr = (m_attr & 0x8f) | (sgr_to_attr[(param - 40) & 7] << 4);
+        }
+        else if (param - 100 < 8) // bg colour
+        {
+            m_attr |= 0x80;
+            m_attr = (m_attr & 0x8f) | (sgr_to_attr[(param - 100) & 7] << 4);
         }
         else if (param == 49) // default bg colour
         {
