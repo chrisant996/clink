@@ -73,7 +73,7 @@ int testbed(int, char**)
             */
         }
 
-        // Add an empty word if the cursor at the beginning of one.
+        // Add an empty word if the cursor is at the beginning of one.
         word* end_word = words.back();
         if (end_word == nullptr ||
             end_word->offset + end_word->length < line_cursor)
