@@ -4,24 +4,28 @@
 #pragma once
 
 //------------------------------------------------------------------------------
-template <typename T> unsigned int str_hash_impl(const T* in)
+template <typename T> unsigned int str_hash_impl(const T* in, unsigned int length)
 {
     unsigned int hash = 5381;
 
     while (int c = *in++)
+    {
         hash = ((hash << 5) + hash) ^ c;
+        if (--length)
+            break;
+    }
 
     return hash;
 }
 
 //------------------------------------------------------------------------------
-inline unsigned int str_hash(const char* in)
+inline unsigned int str_hash(const char* in, int length=-1)
 {
     return str_hash_impl<char>(in);
 }
 
 //------------------------------------------------------------------------------
-inline unsigned int wstr_hash(const wchar_t* in)
+inline unsigned int wstr_hash(const wchar_t* in, int length=-1)
 {
     return str_hash_impl<wchar_t>(in);
 }
