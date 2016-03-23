@@ -46,20 +46,23 @@ int testbed(int, char**)
 
         str_iter token_iter(line_buffer, line_cursor);
         str_tokeniser tokens(token_iter, word_delims);
-        const char* word_start = nullptr;
-        int word_length = 0;
-        while (tokens.next(word_start, word_length))
+        while (1)
         {
+            const char* start = nullptr;
+            int length = 0;
+            if (!tokens.next(start, length))
+                break;
+
             word* word = words.push_back();
             if (word == nullptr)
                 word = words.back();
 
-            *word = { short(word_start - line_buffer), word_length };
+            *word = { short(start - line_buffer), length };
 
             // Find the best-fit delimiter.
             /* MODE4
             const char* best_delim = word_delims;
-            const char* c = word_start - 1;
+            const char* c = start - 1;
             while (c > line_buffer)
             {
                 const char* delim = strchr(word_delims, *c);
