@@ -150,17 +150,18 @@ int testbed(int, char**)
         }
 
         // Adjust the completing word for partiality.
-        int partial = -1;
         end_word = words.back();
+        int partial = 0;
         for (int j = end_word->length - 1; j >= 0; --j)
         {
             int c = line_buffer[end_word->offset + j];
             if (strchr(partial_delims, c) == nullptr)
                 continue;
 
-            partial = j;
+            partial = j + 1;
             break;
         }
+        end_word->length = partial;
 
         // SPAM!
         int j = 0;
@@ -184,7 +185,7 @@ int testbed(int, char**)
         }
 
         // Should we sort and select matches?
-        next_match_key |= int(end_word->length) & 0x3ff;
+        next_match_key |= int(line_cursor) & 0x3ff;
         printf("%08x > %08x\n", next_match_key, match_key);
         if (match_key != next_match_key)
         {
