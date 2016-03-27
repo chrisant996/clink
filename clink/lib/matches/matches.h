@@ -5,7 +5,6 @@
 
 #include <vector>
 
-class match_handler;
 class str_base;
 
 //------------------------------------------------------------------------------
@@ -19,12 +18,9 @@ public:
     void                get_match_lcd(str_base& out) const;
     void                add_match(const char* match);
     void                reset();
-    match_handler&      get_handler() const;
-    void                set_handler(match_handler* handler);
 
 private:
     std::vector<char*>  m_matches;
-    match_handler*      m_handler;
 
 private:
                         matches(const matches&) = delete;

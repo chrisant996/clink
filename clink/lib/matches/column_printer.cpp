@@ -3,7 +3,6 @@
 
 #include "pch.h"
 #include "column_printer.h"
-#include "match_handler.h"
 #include "matches.h"
 
 #include <core/base.h>
@@ -75,11 +74,7 @@ void column_printer::print(const matches& matches)
     for (int i = 0; i < match_count; ++i)
     {
         const char* match = matches.get_match(i);
-
-        str<> displayable;
-        matches.get_handler().get_displayable(match, displayable);
-
-        longest = max<int>(displayable.char_count(), longest);
+        longest = max<int>(char_count(match), longest);
     }
 
     if (!longest)
@@ -114,9 +109,7 @@ void column_printer::print(const matches& matches)
 
             str<> displayable;
             const char* match = matches.get_match(index);
-            matches.get_handler().get_displayable(match, displayable);
-
-            term->write(displayable.c_str(), int(displayable.length()));
+            term->write(match, int(strlen(match)));
 
             for (int i = longest - displayable.char_count(); i >= 0; --i)
                 term->write(" ", 1);

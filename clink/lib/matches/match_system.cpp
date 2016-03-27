@@ -5,7 +5,6 @@
 #include "match_system.h"
 #include "line_state.h"
 #include "match_generator.h"
-#include "match_handler.h"
 #include "matches.h"
 
 #include <core/path.h>

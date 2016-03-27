@@ -3,7 +3,6 @@
 
 #include "pch.h"
 #include "matches_lua.h"
-#include "matches/match_handler.h"
 #include "matches/matches.h"
 
 #include <core/base.h>
@@ -109,11 +108,13 @@ int matches_lua::reset(lua_State* state)
 //------------------------------------------------------------------------------
 int matches_lua::set_file_handler(lua_State* state)
 {
+#if MODE4
     bool set = true;
     for (int i = 1, n = lua_gettop(state); i <= n; ++i)
         if (lua_isboolean(state, i))
             set &= (lua_toboolean(state, i) != 0);
 
     m_matches.set_handler(set ? get_file_match_handler() : nullptr);
+#endif // MODE4
     return 0;
 }
