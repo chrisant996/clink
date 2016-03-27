@@ -49,6 +49,7 @@ void match_system::generate_matches(
     int cursor,
     matches& result) const
 {
+#if MODE4
     // Find position of an opening quote.
     int quote = INT_MAX;
     for (int i = 0; i < cursor; ++i)
@@ -85,4 +86,5 @@ void match_system::generate_matches(
         if (handler.compare(word.c_str(), match))
             result.add_match(match);
     }
+#endif // MODE4
 }
