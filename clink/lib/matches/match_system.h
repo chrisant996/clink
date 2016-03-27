@@ -3,7 +3,7 @@
 
 #pragma once
 
-#include <vector>
+#include <core/array.h>
 
 class match_generator;
 class matches;
@@ -19,11 +19,16 @@ public:
     void                    generate_matches(const struct line_state_2& line_state, matches& result) const;
 
 private:
-    struct Generator
+    struct item
     {
-        match_generator*    generator;
-        int                 priority;
+        void*               ptr;
+        unsigned int        key;
     };
 
-    std::vector<Generator>  m_generators;
+    template <int SIZE>
+    using items = fixed_array<item, SIZE>;
+
+    items<8>                m_generators;
+
+    friend class match_pipeline;
 };

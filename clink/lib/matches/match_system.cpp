@@ -22,18 +22,25 @@ match_system::~match_system()
 }
 
 //------------------------------------------------------------------------------
-void match_system::add_generator(match_generator* generator, int priority)
+bool match_system::add_generator(match_generator* generator, int priority)
 {
-    if (generator == nullptr)
-        return;
+    item* iter = m_generators.push_back();
+    if (iter == nullptr)
+        return false;
 
-    int insert_at = 0;
-    for (int n = int(m_generators.size()); insert_at < n; ++insert_at)
-        if (m_generators[insert_at].priority >= priority)
+    --iter;
+    while (iter >= m_generators.begin())
+    {
+        if (int(iter->key) < priority)
             break;
 
-    Generator g = { generator, priority };
-    m_generators.insert(m_generators.begin() + insert_at, g);
+        iter[1] = iter[0];
+        --iter;
+    }
+
+    *(iter + 1) = { generator, priority };
+
+    return true;
 }
 
 //------------------------------------------------------------------------------
