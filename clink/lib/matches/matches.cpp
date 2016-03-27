@@ -17,20 +17,19 @@ matches::matches()
 //------------------------------------------------------------------------------
 matches::~matches()
 {
-    for (int i = 0, e = int(m_matches.size()); i < e; ++i)
-        delete m_matches[i];
+    reset();
 }
 
 //------------------------------------------------------------------------------
-void matches::add_match(const char* match)
+unsigned int matches::get_match_count() const
 {
-    if (match == nullptr || match[0] == '\0')
-        return;
+    return (unsigned int)m_matches.size();
+}
 
-    int len = int(strlen(match)) + 1;
-    char* out = new char[len];
-    str_base(out, len).copy(match);
-    m_matches.push_back(out);
+//------------------------------------------------------------------------------
+const char* matches::get_match(unsigned int index) const
+{
+    return (index < get_match_count()) ? m_matches[index] : nullptr;
 }
 
 //------------------------------------------------------------------------------
@@ -64,12 +63,22 @@ void matches::get_match_lcd(str_base& out) const
 }
 
 //------------------------------------------------------------------------------
+void matches::reset()
 {
+    for (int i = 0, e = int(m_matches.size()); i < e; ++i)
+        delete m_matches[i];
 
+    m_matches.clear();
 }
 
 //------------------------------------------------------------------------------
-void matches::set_handler(match_handler* handler)
+void matches::add_match(const char* match)
 {
-    m_handler = handler;
+    if (match == nullptr || match[0] == '\0')
+        return;
+
+    int len = int(strlen(match)) + 1;
+    char* out = new char[len];
+    str_base(out, len).copy(match);
+    m_matches.push_back(out);
 }
