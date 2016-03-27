@@ -166,7 +166,7 @@ int testbed(int, char**)
         // SPAM!
         int j = 0;
         for (auto word : words)
-            printf("%02d:%02d,%02d,%02d,%02x ", j++, word.offset, word.partial, word.length, word.delim);
+            printf("%02d:%02d,%02d ", j++, word.offset, word.length);
         puts("");
         // SPAM!
 
@@ -197,6 +197,7 @@ int testbed(int, char**)
             pipeline.sort();
 
             puts("Selort!");
+            draw_matches(result);
         }
 
         // Send to backend.
