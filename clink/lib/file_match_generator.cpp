@@ -28,7 +28,7 @@ bool file_match_generator::generate(const line_state& line, matches& out)
     buffer << "*";
 
     globber globber(buffer.c_str());
-    while (globber.next(buffer))
+    while (globber.next(buffer, false))
         out.add_match(buffer.c_str());
 
     return true;
