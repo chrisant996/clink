@@ -10,9 +10,73 @@
 #include <matches/matches.h>
 #include <terminal/ecma48_terminal.h>
 
-static void end_line(char* line)
+//------------------------------------------------------------------------------
+class match_pipeline
 {
-    puts("done!");
+public:
+                    match_pipeline(match_system& system, matches& result);
+    void            generate(line_state& state);
+    void            select();
+    void            sort();
+
+private:
+    match_system&   m_system;
+    matches&        m_result;
+};
+
+//------------------------------------------------------------------------------
+match_pipeline::match_pipeline(match_system& system, matches& result)
+: m_system(system)
+, m_result(result)
+{
+}
+
+//------------------------------------------------------------------------------
+void match_pipeline::generate(line_state& state)
+{
+    m_result.reset();
+    for (const auto& iter : m_system.m_generators)
+    {
+        auto* generator = (match_generator*)(iter.ptr);
+        if (generator->generate(state, m_result))
+            break;
+    }
+}
+
+//------------------------------------------------------------------------------
+void match_pipeline::select()
+{
+}
+
+//------------------------------------------------------------------------------
+void match_pipeline::sort()
+{
+}
+
+//------------------------------------------------------------------------------
+static void end_line(char* line) { puts("done!"); }
+
+void draw_matches(const matches& result)
+{
+    HANDLE handle = GetStdHandle(STD_OUTPUT_HANDLE);
+
+    CONSOLE_SCREEN_BUFFER_INFO csbi;
+    GetConsoleScreenBufferInfo(handle, &csbi);
+
+    COORD cur = { csbi.srWindow.Left, csbi.srWindow.Top };
+    SetConsoleCursorPosition(handle, cur);
+    SetConsoleTextAttribute(handle, 0x70);
+
+    for (int i = 0, n = result.get_match_count(); i < 35; ++i)
+    {
+        const char* match = "";
+        if (i < n)
+            match = result.get_match(i);
+        printf("%02d : %48s\n", i, match);
+    }
+
+    SetConsoleTextAttribute(handle, csbi.wAttributes);
+    SetConsoleCursorPosition(handle, csbi.dwCursorPosition);
 }
 
 int testbed(int, char**)
@@ -110,10 +174,11 @@ int testbed(int, char**)
         next_match_key |= (partial & 0x3ff) << 10;
         if ((match_key & ~0x3ff) != next_match_key)
         {
-            // MODE4
+            line_state state = { words, line_buffer };
+
             auto& system = line_editor->get_match_system();
-            line_state_2 ls = {words, line_buffer, line_cursor};
-            system.generate_matches(ls, result);
+            match_pipeline pipeline(system, result);
+            pipeline.generate(state);
 
             printf("Gen'd: %d\n", result.get_match_count());
         }
@@ -124,6 +189,12 @@ int testbed(int, char**)
         if (match_key != next_match_key)
         {
             match_key = next_match_key;
+
+            auto& system = line_editor->get_match_system();
+            match_pipeline pipeline(system, result);
+            pipeline.select();
+            pipeline.sort();
+
             puts("Selort!");
         }
 
