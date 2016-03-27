@@ -24,7 +24,8 @@ file_match_generator::~file_match_generator()
 bool file_match_generator::generate(const line_state& line, matches& out)
 {
     str<MAX_PATH> buffer;
-    buffer << line.word << "*";
+    line.get_end_word(buffer);
+    buffer << "*";
 
     globber globber(buffer.c_str());
     while (globber.next(buffer))

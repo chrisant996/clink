@@ -4,33 +4,46 @@
 #pragma once
 
 #include <core/array.h>
-
-//------------------------------------------------------------------------------
-// MODE4
-class line_state
-{
-public:
-    const char*     word;
-    const char*     line;
-    int             start;
-    int             end;
-    int             cursor;
-};
-// MODE4
+#include <core/str.h>
 
 //------------------------------------------------------------------------------
 struct word
 {
-    unsigned short offset;
-    unsigned short length;
-    unsigned short partial;
-    unsigned short delim;
+    unsigned short      offset;
+    unsigned short      length;
 };
 
 //------------------------------------------------------------------------------
-struct line_state_2
+class line_state
 {
-    fixed_array<word, 128>& words;
-    const char*             line;
-    int                     cursor;
+public:
+    const array<word>&  words;
+    const char*         line;
+
+    unsigned int        get_word_count() const;
+    bool                get_word(unsigned int index, str_base& out) const;
+    bool                get_end_word(str_base& out) const;
 };
+
+//------------------------------------------------------------------------------
+inline unsigned int line_state::get_word_count() const
+{
+    return words.size();
+}
+
+//------------------------------------------------------------------------------
+inline bool line_state::get_word(unsigned int index, str_base& out) const
+{
+    const word* word = words[index];
+    if (word == nullptr)
+        return false;
+
+    return out.concat(line + word->offset, word->length);
+}
+
+//------------------------------------------------------------------------------
+inline bool line_state::get_end_word(str_base& out) const
+{
+    int n = get_word_count();
+    return (n ? get_word(n - 1, out) : false);
+}

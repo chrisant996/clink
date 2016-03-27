@@ -31,9 +31,11 @@ lua_match_generator::~lua_match_generator()
 //------------------------------------------------------------------------------
 void lua_match_generator::lua_pushlinestate(const line_state& line)
 {
+#if MODE4
     lua_pushstring(m_state, line.word);
     lua_pushinteger(m_state, line.start + 1);
     lua_pushinteger(m_state, line.cursor + 1);
+#endif
 }
 
 //------------------------------------------------------------------------------
