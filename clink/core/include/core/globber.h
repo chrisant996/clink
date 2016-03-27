@@ -18,7 +18,7 @@ public:
     void                suffix_dirs(bool state) { m_dir_suffix = state; }
     void                hidden(bool state)      { m_hidden = state; }
     void                dots(bool state)        { m_dots = state; }
-    bool                next(str_base& out);
+    bool                next(str_base& out, bool rooted=true);
 
 private:
                         globber(const globber&) = delete;

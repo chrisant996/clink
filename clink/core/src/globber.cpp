@@ -44,7 +44,7 @@ globber::~globber()
 }
 
 //------------------------------------------------------------------------------
-bool globber::next(str_base& out)
+bool globber::next(str_base& out, bool rooted)
 {
     if (m_handle == nullptr)
         return false;
@@ -71,7 +71,11 @@ bool globber::next(str_base& out)
         goto skip_file;
 
     out.clear();
-    path::join(m_root.c_str(), file_name.c_str(), out);
+    if (rooted)
+        out << m_root;
+
+    path::append(out, file_name.c_str());
+
     if (attr & FILE_ATTRIBUTE_DIRECTORY && m_dir_suffix)
         out << "\\";
 
@@ -80,7 +84,7 @@ bool globber::next(str_base& out)
 
 skip_file:
     next_file();
-    return next(out);
+    return next(out, rooted);
 }
 
 //------------------------------------------------------------------------------
