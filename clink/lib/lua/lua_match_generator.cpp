@@ -48,6 +48,7 @@ void lua_match_generator::print_error(const char* error) const
 //------------------------------------------------------------------------------
 bool lua_match_generator::generate(const line_state& line, matches& out)
 {
+#if MODE4
     // Expose some of the readline state to lua.
     lua_createtable(m_state, 2, 0);
 
@@ -91,6 +92,7 @@ bool lua_match_generator::generate(const line_state& line, matches& out)
         out.reset();
         return false;
     }
+#endif // MODE4
 
     return true;
 }
