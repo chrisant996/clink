@@ -69,6 +69,7 @@ void matches::reset()
         delete m_matches[i];
 
     m_matches.clear();
+    m_infos.clear();
 }
 
 //------------------------------------------------------------------------------
@@ -80,5 +81,7 @@ void matches::add_match(const char* match)
     int len = int(strlen(match)) + 1;
     char* out = new char[len];
     str_base(out, len).copy(match);
+
     m_matches.push_back(out);
+    m_infos.push_back({ (unsigned short)(m_infos.size()) });
 }

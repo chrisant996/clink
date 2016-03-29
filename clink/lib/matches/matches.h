@@ -20,7 +20,14 @@ public:
     void                add_match(const char* match);
 
 private:
+    struct info
+    {
+        unsigned short  index : 15;
+        unsigned short  selected : 1;
+    };
+
     std::vector<char*>  m_matches;
+    std::vector<info>   m_infos;
 
 private:
                         matches(const matches&) = delete;
