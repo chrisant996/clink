@@ -3,6 +3,7 @@
 
 #include <core/array.h>
 #include <core/base.h>
+#include <core/str_compare.h>
 #include <core/str_tokeniser.h>
 #include <file_match_generator.h>
 #include <line_state.h>
@@ -81,6 +82,8 @@ void draw_matches(const matches& result)
 
 int testbed(int, char**)
 {
+    str_compare_scope _(str_compare_scope::relaxed);
+
     terminal* terminal = new ecma48_terminal();
     match_printer* printer = new column_printer(terminal);
 
