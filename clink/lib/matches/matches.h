@@ -19,7 +19,7 @@ public:
     void                reset();
     void                add_match(const char* match);
 
-private:
+//private:
     struct info
     {
         unsigned short  index : 15;
@@ -34,4 +34,6 @@ private:
                         matches(matches&&) = delete;
     void                operator = (const matches&) = delete;
     void                operator = (matches&& rhs) = delete;
+
+    friend class match_pipeline;
 };

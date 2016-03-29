@@ -11,6 +11,8 @@
 #include <matches/matches.h>
 #include <terminal/ecma48_terminal.h>
 
+#include <algorithm>
+
 //------------------------------------------------------------------------------
 class match_pipeline
 {
@@ -47,11 +49,64 @@ void match_pipeline::generate(line_state& state)
 //------------------------------------------------------------------------------
 void match_pipeline::select(const char* selector_name, const char* needle)
 {
+    int count = int(m_result.m_infos.size());
+    if (!count)
+        return;
+
+    char* const* names = &(m_result.m_matches[0]);
+    matches::info* infos = &(m_result.m_infos[0]);
+
+    for (int i = 0; i < count; ++i)
+    {
+        const char* name = names[infos[i].index];
+        int j = str_compare(needle, name);
+        infos[i].selected = (j < 0 || !needle[j]);
+    }
+
+    int j = 0;
+    for (int i = 0; i < count; ++i)
+    {
+        if (!infos[i].selected)
+            continue;
+
+        if (i != j)
+        {
+            matches::info temp = infos[j];
+            infos[j] = infos[i];
+            infos[i] = temp;
+        }
+        ++j;
+    }
 }
 
 //------------------------------------------------------------------------------
 void match_pipeline::sort(const char* sorter_name)
 {
+    int count = 0;
+    for (int i = 0, n = int(m_result.m_infos.size()); i < n; ++i, ++count)
+        if (!m_result.m_infos[i].selected)
+            break;
+
+    if (!count)
+        return;
+
+    struct predicate
+    {
+        predicate(matches& result) : result(result) {}
+
+        bool operator () (const matches::info& lhs, const matches::info& rhs)
+        {
+            return stricmp(result.m_matches[lhs.index], result.m_matches[rhs.index]) < 0;
+        }
+
+        matches& result;
+    };
+
+    std::sort(
+        m_result.m_infos.begin(),
+        m_result.m_infos.begin() + count,
+        predicate(m_result)
+    );
 }
 
 //------------------------------------------------------------------------------
@@ -71,8 +126,9 @@ void draw_matches(const matches& result)
     for (int i = 0, n = result.get_match_count(); i < 35; ++i)
     {
         const char* match = "";
-        if (i < n)
-            match = result.get_match(i);
+        if (i < n && result.m_infos[i].selected)
+            match = result.get_match(result.m_infos[i].index);
+
         printf("%02d : %48s\n", i, match);
     }
 
