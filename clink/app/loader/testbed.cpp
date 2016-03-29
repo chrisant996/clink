@@ -181,7 +181,7 @@ int testbed(int, char**)
             match_pipeline pipeline(system, result);
             pipeline.generate(state);
 
-            printf("Gen'd: %d\n", result.get_match_count());
+            printf("generate: %d\n", result.get_match_count());
         }
 
         // Should we sort and select matches?
@@ -200,7 +200,7 @@ int testbed(int, char**)
             pipeline.select("normal", needle.c_str());
             pipeline.sort("alpha");
 
-            puts("Selort!");
+            printf("select & sort: '%s'\n", needle.c_str());
             draw_matches(result);
         }
 
