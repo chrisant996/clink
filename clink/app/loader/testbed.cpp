@@ -16,8 +16,8 @@ class match_pipeline
 public:
                     match_pipeline(match_system& system, matches& result);
     void            generate(line_state& state);
-    void            select();
-    void            sort();
+    void            select(const char* selector_name, const char* needle);
+    void            sort(const char* sort_name);
 
 private:
     match_system&   m_system;
@@ -44,12 +44,12 @@ void match_pipeline::generate(line_state& state)
 }
 
 //------------------------------------------------------------------------------
-void match_pipeline::select()
+void match_pipeline::select(const char* selector_name, const char* needle)
 {
 }
 
 //------------------------------------------------------------------------------
-void match_pipeline::sort()
+void match_pipeline::sort(const char* sorter_name)
 {
 }
 
@@ -191,10 +191,14 @@ int testbed(int, char**)
         {
             match_key = next_match_key;
 
+            str<64> needle;
+            int needle_start = end_word->offset + end_word->length;
+            needle.concat(line_buffer + needle_start, line_cursor - needle_start);
+
             auto& system = line_editor->get_match_system();
             match_pipeline pipeline(system, result);
-            pipeline.select();
-            pipeline.sort();
+            pipeline.select("normal", needle.c_str());
+            pipeline.sort("alpha");
 
             puts("Selort!");
             draw_matches(result);
