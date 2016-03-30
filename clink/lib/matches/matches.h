@@ -11,8 +11,7 @@ class str_base;
 class matches
 {
 public:
-                        matches(unsigned int buffer_size=0x10000);
-                        ~matches();
+                        matches(unsigned int store_size=0x10000);
     unsigned int        get_match_count() const;
     const char*         get_match(unsigned int index) const;
     void                get_match_lcd(str_base& out) const;
@@ -22,27 +21,29 @@ public:
 //private:
     struct info
     {
-        unsigned short  index : 15;
+        unsigned short  store_id : 15;
         unsigned short  selected : 1;
     };
 
-    class buffer
+    class store
     {
     public:
-                        buffer(unsigned int size);
-                        ~buffer();
+                        store(unsigned int size);
+                        ~store();
+        void            reset();
+        const char*     get(unsigned int id) const;
         int             store_front(const char* str);
         int             store_back(const char* str);
 
     private:
-        unsigned int    get_size(const char* str);
+        unsigned int    get_size(const char* str) const;
         char*           m_ptr;
+        unsigned int    m_size;
         unsigned int    m_front;
         unsigned int    m_back;
     };
 
-    buffer              m_buffer;
-    std::vector<char*>  m_matches;
+    store               m_store;
     std::vector<info>   m_infos;
 
 private:

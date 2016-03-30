@@ -9,69 +9,98 @@
 #include <core/str_compare.h>
 
 //------------------------------------------------------------------------------
-matches::buffer::buffer(unsigned int size)
-: m_front(0)
+matches::store::store(unsigned int size)
+: m_size(size)
+, m_front(0)
 , m_back(size)
 {
     m_ptr = (char*)malloc(size);
 }
 
 //------------------------------------------------------------------------------
-matches::buffer::~buffer()
+matches::store::~store()
 {
     free(m_ptr);
 }
 
 //------------------------------------------------------------------------------
-int matches::buffer::store_front(const char* str)
+void matches::store::reset()
 {
-    unsigned int next = m_front + get_size(str);
+    m_back = m_size;
+    m_front = 0;
+}
+
+//------------------------------------------------------------------------------
+const char* matches::store::get(unsigned int id) const
+{
+    id <<= 1;
+    return (id < m_size) ? (m_ptr + id) : nullptr;
+}
+
+//------------------------------------------------------------------------------
+int matches::store::store_front(const char* str)
+{
+    unsigned int size = get_size(str);
+    unsigned int next = m_front + size;
     if (next > m_back)
         return -1;
 
+    str_base(m_ptr + m_front, size).copy(str);
+
     unsigned int ret = m_front;
     m_front = next;
-    return ret;
+    return ret >> 1;
 }
 
 //------------------------------------------------------------------------------
-int matches::buffer::store_back(const char* str)
+int matches::store::store_back(const char* str)
 {
-    unsigned int next = m_back + get_size(str);
+    unsigned int size = get_size(str);
+    unsigned int next = m_back + size;
     if (next > m_front)
         return -1;
 
+    str_base(m_ptr + m_back, size).copy(str);
+
     unsigned int ret = m_back;
     m_back = next;
-    return ret;
+    return ret >> 1;
+}
+
+//------------------------------------------------------------------------------
+unsigned int matches::store::get_size(const char* str) const
+{
+    if (str == nullptr || str[0] == '\0')
+        return ~0u;
+
+    int length = int(strlen(str) + 1);
+    length = (length + 1) & ~1;
+    return length;
 }
 
 
 
 //------------------------------------------------------------------------------
-matches::matches(unsigned int buffer_size)
-: m_buffer(min(buffer_size, 0x10000u))
+matches::matches(unsigned int store_size)
+: m_store(min(store_size, 0x10000u))
 {
-    m_matches.reserve(1024);
     m_infos.reserve(1024);
-}
-
-//------------------------------------------------------------------------------
-matches::~matches()
-{
-    reset();
 }
 
 //------------------------------------------------------------------------------
 unsigned int matches::get_match_count() const
 {
-    return (unsigned int)m_matches.size();
+    return (unsigned int)m_infos.size();
 }
 
 //------------------------------------------------------------------------------
 const char* matches::get_match(unsigned int index) const
 {
-    return (index < get_match_count()) ? m_matches[index] : nullptr;
+    if (index >= (unsigned int)m_infos.size())
+        return nullptr;
+
+    unsigned int store_id = m_infos[index].store_id;
+    return m_store.get(store_id);
 }
 
 //------------------------------------------------------------------------------
@@ -84,7 +113,7 @@ void matches::get_match_lcd(str_base& out) const
 
     if (match_count == 1)
     {
-        out = m_matches[0];
+        out = get_match(0);
         return;
     }
 
@@ -107,23 +136,16 @@ void matches::get_match_lcd(str_base& out) const
 //------------------------------------------------------------------------------
 void matches::reset()
 {
-    for (int i = 0, e = int(m_matches.size()); i < e; ++i)
-        delete m_matches[i];
-
-    m_matches.clear();
     m_infos.clear();
+    m_store.reset();
 }
 
 //------------------------------------------------------------------------------
 void matches::add_match(const char* match)
 {
-    if (match == nullptr || match[0] == '\0')
+    int store_id = m_store.store_front(match);
+    if (store_id < 0)
         return;
 
-    int len = int(strlen(match)) + 1;
-    char* out = new char[len];
-    str_base(out, len).copy(match);
-
-    m_matches.push_back(out);
-    m_infos.push_back({ (unsigned short)(m_infos.size()) });
+    m_infos.push_back({ (unsigned short)store_id });
 }
