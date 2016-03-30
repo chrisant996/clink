@@ -53,12 +53,10 @@ void match_pipeline::select(const char* selector_name, const char* needle)
     if (!count)
         return;
 
-    char* const* names = &(m_result.m_matches[0]);
     matches::info* infos = &(m_result.m_infos[0]);
-
     for (int i = 0; i < count; ++i)
     {
-        const char* name = names[infos[i].index];
+        const char* name = m_result.get_match(i);
         int j = str_compare(needle, name);
         infos[i].selected = (j < 0 || !needle[j]);
     }
@@ -127,7 +125,7 @@ void draw_matches(const matches& result)
     {
         const char* match = "";
         if (i < n && result.m_infos[i].selected)
-            match = result.get_match(result.m_infos[i].index);
+            match = result.get_match(i);
 
         printf("%02d : %48s\n", i, match);
     }
