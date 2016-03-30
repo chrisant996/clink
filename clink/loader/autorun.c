@@ -476,6 +476,8 @@ int autorun(int argc, char** argv)
         { NULL, 0, NULL, 0 }
     };
 
+    clink_path = NULL;
+
     // Parse command line arguments.
     while ((i = getopt_long(argc, argv, "+ha", options, NULL)) != -1)
     {
@@ -496,7 +498,6 @@ int autorun(int argc, char** argv)
         }
     }
 
-    clink_path = NULL;
     function = NULL;
 
     // Find out what to do by parsing the verb.
