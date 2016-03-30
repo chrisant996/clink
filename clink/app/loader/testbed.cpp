@@ -80,6 +80,7 @@ void match_pipeline::select(const char* selector_name, const char* needle)
 //------------------------------------------------------------------------------
 void match_pipeline::sort(const char* sorter_name)
 {
+#if 0
     int count = 0;
     for (int i = 0, n = int(m_result.m_infos.size()); i < n; ++i, ++count)
         if (!m_result.m_infos[i].selected)
@@ -105,6 +106,7 @@ void match_pipeline::sort(const char* sorter_name)
         m_result.m_infos.begin() + count,
         predicate(m_result)
     );
+#endif
 }
 
 //------------------------------------------------------------------------------
