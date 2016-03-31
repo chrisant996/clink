@@ -13,6 +13,9 @@
 
 #include <algorithm>
 
+void alpha_sort(const match_store&, match_info*, int);
+void normal_select(const char*, const match_store&, match_info*, int);
+
 //------------------------------------------------------------------------------
 class match_pipeline
 {
@@ -49,19 +52,11 @@ void match_pipeline::generate(line_state& state)
 //------------------------------------------------------------------------------
 void match_pipeline::select(const char* selector_name, const char* needle)
 {
-    const match_store& store = m_result.m_store;
-    match_info* infos = &(m_result.m_infos[0]);
-
-    int count = m_result.m_infos.size();
+    int count = int(m_result.m_infos.size());
     if (!count)
         return;
 
-    for (int i = 0; i < count; ++i)
-    {
-        const char* name = store.get(infos[i].store_id);
-        int j = str_compare(needle, name);
-        infos[i].selected = (j < 0 || !needle[j]);
-    }
+    normal_select(needle, m_result.get_store(), m_result.get_infos(), count);
 
     m_result.coalesce();
 }
@@ -69,13 +64,28 @@ void match_pipeline::select(const char* selector_name, const char* needle)
 //------------------------------------------------------------------------------
 void match_pipeline::sort(const char* sorter_name)
 {
-    const match_store& store = m_result.m_store;
-    match_info* infos = &(m_result.m_infos[0]);
-
     int count = m_result.get_match_count();
     if (!count)
         return;
 
+    alpha_sort(m_result.get_store(), m_result.get_infos(), count);
+}
+
+//------------------------------------------------------------------------------
+static void end_line(char* line) { puts("done!"); }
+
+void normal_select(const char* needle, const match_store& store, match_info* infos, int count)
+{
+    for (int i = 0; i < count; ++i)
+    {
+        const char* name = store.get(infos[i].store_id);
+        int j = str_compare(needle, name);
+        infos[i].selected = (j < 0 || !needle[j]);
+    }
+}
+
+void alpha_sort(const match_store& store, match_info* infos, int count)
+{
     struct predicate
     {
         predicate(const match_store& store) : store(store) {}
@@ -92,9 +102,6 @@ void match_pipeline::sort(const char* sorter_name)
 
     std::sort(infos, infos + count, predicate(store));
 }
-
-//------------------------------------------------------------------------------
-static void end_line(char* line) { puts("done!"); }
 
 void draw_matches(const matches& result)
 {
