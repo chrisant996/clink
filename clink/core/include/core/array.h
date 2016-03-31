@@ -5,10 +5,10 @@
 
 //------------------------------------------------------------------------------
 template <typename T>
-class array
+class array_base
 {
 public:
-                    array(T* ptr, unsigned int size, unsigned int capacity);
+                    array_base(T* ptr, unsigned int size, unsigned int capacity);
     T*              begin() const    { return m_ptr; }
     T*              end() const      { return m_ptr + m_size; }
     unsigned int    size() const     { return m_size; }
@@ -26,7 +26,7 @@ protected:
 
 //------------------------------------------------------------------------------
 template <typename T>
-array<T>::array(T* ptr, unsigned int size, unsigned int capacity)
+array_base<T>::array_base(T* ptr, unsigned int size, unsigned int capacity)
 : m_ptr(ptr)
 , m_size(size)
 , m_capacity(capacity)
@@ -35,7 +35,7 @@ array<T>::array(T* ptr, unsigned int size, unsigned int capacity)
 
 //------------------------------------------------------------------------------
 template <typename T>
-T* array<T>::back() const
+T* array_base<T>::back() const
 {
     if (empty())
         return nullptr;
@@ -45,7 +45,7 @@ T* array<T>::back() const
 
 //------------------------------------------------------------------------------
 template <typename T>
-const T* array<T>::operator [] (unsigned int index) const
+const T* array_base<T>::operator [] (unsigned int index) const
 {
     if (index >= capacity())
         return nullptr;
@@ -58,7 +58,7 @@ const T* array<T>::operator [] (unsigned int index) const
 //------------------------------------------------------------------------------
 template <typename T, unsigned int SIZE>
 class fixed_array
-    : public array<T>
+    : public array_base<T>
 {
 public:
                 fixed_array();
@@ -71,7 +71,7 @@ private:
 //------------------------------------------------------------------------------
 template <typename T, unsigned int SIZE>
 fixed_array<T, SIZE>::fixed_array()
-: array(m_buffer, 0, SIZE)
+: array_base(m_buffer, 0, SIZE)
 {
 }
 

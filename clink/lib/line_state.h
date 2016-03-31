@@ -9,20 +9,20 @@
 //------------------------------------------------------------------------------
 struct word
 {
-    unsigned short      offset;
-    unsigned short      length;
+    unsigned short          offset;
+    unsigned short          length;
 };
 
 //------------------------------------------------------------------------------
 class line_state
 {
 public:
-    const array<word>&  words;
-    const char*         line;
+    const array_base<word>& words;
+    const char*             line;
 
-    unsigned int        get_word_count() const;
-    bool                get_word(unsigned int index, str_base& out) const;
-    bool                get_end_word(str_base& out) const;
+    unsigned int            get_word_count() const;
+    bool                    get_word(unsigned int index, str_base& out) const;
+    bool                    get_end_word(str_base& out) const;
 };
 
 //------------------------------------------------------------------------------
