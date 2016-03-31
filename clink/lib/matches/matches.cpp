@@ -92,6 +92,18 @@ matches::matches(unsigned int store_size)
 }
 
 //------------------------------------------------------------------------------
+match_info* matches::get_infos()
+{
+    return &(m_infos[0]);
+}
+
+//------------------------------------------------------------------------------
+const match_store& matches::get_store() const
+{
+    return m_store;
+}
+
+//------------------------------------------------------------------------------
 unsigned int matches::get_match_count() const
 {
     return m_count;

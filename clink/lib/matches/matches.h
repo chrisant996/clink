@@ -37,7 +37,14 @@ public:
     unsigned int        get_match_count() const;
     const char*         get_match(unsigned int index) const;
     void                get_match_lcd(str_base& out) const;
-    void                add_match(const char* match);
+    void                add_match(const char* match); // MODE4
+
+private:
+    friend class        match_pipeline;
+    match_info*         get_infos();
+    const match_store&  get_store() const;
+    void                reset();
+    void                coalesce();
 
 private:
     class store_impl
@@ -58,8 +65,6 @@ private:
 
     typedef std::vector<match_info> infos;
 
-    void                reset();
-    void                coalesce();
     store_impl          m_store;
     infos               m_infos;
     unsigned int        m_count;
@@ -70,6 +75,4 @@ private:
                         matches(matches&&) = delete;
     void                operator = (const matches&) = delete;
     void                operator = (matches&& rhs) = delete;
-
-    friend class match_pipeline;
 };
