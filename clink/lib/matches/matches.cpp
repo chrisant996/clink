@@ -83,7 +83,7 @@ unsigned int matches::store::get_size(const char* str) const
 //------------------------------------------------------------------------------
 matches::matches(unsigned int store_size)
 : m_store(min(store_size, 0x10000u))
-, m_match_count(0)
+, m_count(0)
 , m_coalesced(false)
 {
     m_infos.reserve(1024);
@@ -92,7 +92,7 @@ matches::matches(unsigned int store_size)
 //------------------------------------------------------------------------------
 unsigned int matches::get_match_count() const
 {
-    return m_match_count;
+    return m_count;
 }
 
 //------------------------------------------------------------------------------
@@ -141,7 +141,7 @@ void matches::reset()
     m_store.reset();
     m_infos.clear();
     m_coalesced = false;
-    m_match_count = 0;
+    m_count = 0;
 }
 
 //------------------------------------------------------------------------------
@@ -155,7 +155,7 @@ void matches::add_match(const char* match)
         return;
 
     m_infos.push_back({ (unsigned short)store_id });
-    ++m_match_count;
+    ++m_count;
 }
 
 //------------------------------------------------------------------------------
@@ -178,6 +178,6 @@ void matches::coalesce()
         ++j;
     }
 
-    m_match_count = j;
+    m_count = j;
     m_coalesced = true;
 }
