@@ -19,7 +19,7 @@ public:
     void                add_match(const char* match);
     void                coalesce();
 
-//private:
+private:
     struct info
     {
         unsigned short  store_id : 15;

@@ -109,7 +109,7 @@ void draw_matches(const matches& result)
     for (int i = 0, n = result.get_match_count(); i < 35; ++i)
     {
         const char* match = "";
-        if (i < n && result.m_infos[i].selected)
+        if (i < n)
             match = result.get_match(i);
 
         printf("%02d : %48s\n", i, match);
