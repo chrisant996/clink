@@ -233,6 +233,7 @@ void rl_line_editor::load_user_inputrc()
 //------------------------------------------------------------------------------
 char** rl_line_editor::completion(const char* word, int start, int end)
 {
+#if MODE4
     int str_compare_mode = str_compare_scope::caseless;
     if (_rl_completion_case_map)
         str_compare_mode = str_compare_scope::relaxed;
@@ -269,6 +270,8 @@ char** rl_line_editor::completion(const char* word, int start, int end)
     matches[m_matches.get_match_count()] = nullptr;
 
     return --matches;
+#endif
+    return nullptr;
 }
 
 //------------------------------------------------------------------------------
