@@ -9,10 +9,51 @@
 #include <core/str_compare.h>
 
 //------------------------------------------------------------------------------
-matches::matches()
+matches::buffer::buffer(unsigned int size)
+: m_front(0)
+, m_back(size)
 {
-    m_matches.reserve(64);
-    m_infos.reserve(64);
+    m_ptr = (char*)malloc(size);
+}
+
+//------------------------------------------------------------------------------
+matches::buffer::~buffer()
+{
+    free(m_ptr);
+}
+
+//------------------------------------------------------------------------------
+int matches::buffer::store_front(const char* str)
+{
+    unsigned int next = m_front + get_size(str);
+    if (next > m_back)
+        return -1;
+
+    unsigned int ret = m_front;
+    m_front = next;
+    return ret;
+}
+
+//------------------------------------------------------------------------------
+int matches::buffer::store_back(const char* str)
+{
+    unsigned int next = m_back + get_size(str);
+    if (next > m_front)
+        return -1;
+
+    unsigned int ret = m_back;
+    m_back = next;
+    return ret;
+}
+
+
+
+//------------------------------------------------------------------------------
+matches::matches(unsigned int buffer_size)
+: m_buffer(min(buffer_size, 0x10000u))
+{
+    m_matches.reserve(1024);
+    m_infos.reserve(1024);
 }
 
 //------------------------------------------------------------------------------
