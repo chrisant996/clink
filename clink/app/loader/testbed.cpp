@@ -49,14 +49,16 @@ void match_pipeline::generate(line_state& state)
 //------------------------------------------------------------------------------
 void match_pipeline::select(const char* selector_name, const char* needle)
 {
+    const matches::store& store = m_result.m_store;
+    matches::info* infos = &(m_result.m_infos[0]);
+
     int count = m_result.get_match_count();
     if (!count)
         return;
 
-    matches::info* infos = &(m_result.m_infos[0]);
     for (int i = 0; i < count; ++i)
     {
-        const char* name = m_result.get_match(i);
+        const char* name = store.get(infos[i].store_id);
         int j = str_compare(needle, name);
         infos[i].selected = (j < 0 || !needle[j]);
     }
@@ -67,29 +69,28 @@ void match_pipeline::select(const char* selector_name, const char* needle)
 //------------------------------------------------------------------------------
 void match_pipeline::sort(const char* sorter_name)
 {
+    const matches::store& store = m_result.m_store;
+    matches::info* infos = &(m_result.m_infos[0]);
+
     int count = m_result.get_match_count();
     if (!count)
         return;
 
     struct predicate
     {
-        predicate(matches& result) : result(result) {}
+        predicate(const matches::store& store) : store(store) {}
 
         bool operator () (const matches::info& lhs, const matches::info& rhs)
         {
-            const char* l = result.m_store.get(lhs.store_id);
-            const char* r = result.m_store.get(rhs.store_id);
+            const char* l = store.get(lhs.store_id);
+            const char* r = store.get(rhs.store_id);
             return (stricmp(l, r) < 0);
         }
 
-        matches& result;
+        const matches::store& store;
     };
 
-    std::sort(
-        m_result.m_infos.begin(),
-        m_result.m_infos.begin() + count,
-        predicate(m_result)
-    );
+    std::sort(infos, infos + count, predicate(store));
 }
 
 //------------------------------------------------------------------------------
