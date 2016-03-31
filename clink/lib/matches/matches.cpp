@@ -9,36 +9,38 @@
 #include <core/str_compare.h>
 
 //------------------------------------------------------------------------------
-matches::store::store(unsigned int size)
-: m_size(size)
-, m_front(0)
+const char* match_store::get(unsigned int id) const
+{
+    id <<= 1;
+    return (id < m_size) ? (m_ptr + id) : nullptr;
+}
+
+
+
+//------------------------------------------------------------------------------
+matches::store_impl::store_impl(unsigned int size)
+: m_front(0)
 , m_back(size)
 {
+    m_size = size;
     m_ptr = (char*)malloc(size);
 }
 
 //------------------------------------------------------------------------------
-matches::store::~store()
+matches::store_impl::~store_impl()
 {
     free(m_ptr);
 }
 
 //------------------------------------------------------------------------------
-void matches::store::reset()
+void matches::store_impl::reset()
 {
     m_back = m_size;
     m_front = 0;
 }
 
 //------------------------------------------------------------------------------
-const char* matches::store::get(unsigned int id) const
-{
-    id <<= 1;
-    return (id < m_size) ? (m_ptr + id) : nullptr;
-}
-
-//------------------------------------------------------------------------------
-int matches::store::store_front(const char* str)
+int matches::store_impl::store_front(const char* str)
 {
     unsigned int size = get_size(str);
     unsigned int next = m_front + size;
@@ -53,7 +55,7 @@ int matches::store::store_front(const char* str)
 }
 
 //------------------------------------------------------------------------------
-int matches::store::store_back(const char* str)
+int matches::store_impl::store_back(const char* str)
 {
     unsigned int size = get_size(str);
     unsigned int next = m_back + size;
@@ -68,7 +70,7 @@ int matches::store::store_back(const char* str)
 }
 
 //------------------------------------------------------------------------------
-unsigned int matches::store::get_size(const char* str) const
+unsigned int matches::store_impl::get_size(const char* str) const
 {
     if (str == nullptr || str[0] == '\0')
         return ~0u;
@@ -161,7 +163,7 @@ void matches::add_match(const char* match)
 //------------------------------------------------------------------------------
 void matches::coalesce()
 {
-    info* infos = &(m_infos[0]);
+    match_info* infos = &(m_infos[0]);
 
     int j = 0;
     for (int i = 0, n = int(m_infos.size()); i < n; ++i)
@@ -171,7 +173,7 @@ void matches::coalesce()
 
         if (i != j)
         {
-            matches::info temp = infos[j];
+            match_info temp = infos[j];
             infos[j] = infos[i];
             infos[i] = temp;
         }

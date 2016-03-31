@@ -8,6 +8,28 @@
 class str_base;
 
 //------------------------------------------------------------------------------
+struct match_info
+{
+    unsigned short  store_id : 15;
+    unsigned short  selected : 1;
+};
+
+
+
+//------------------------------------------------------------------------------
+class match_store
+{
+public:
+    const char*     get(unsigned int id) const;
+
+protected:
+    char*           m_ptr;
+    unsigned int    m_size;
+};
+
+
+
+//------------------------------------------------------------------------------
 class matches
 {
 public:
@@ -18,34 +40,28 @@ public:
     void                add_match(const char* match);
 
 private:
-    struct info
-    {
-        unsigned short  store_id : 15;
-        unsigned short  selected : 1;
-    };
-
-    class store
+    class store_impl
+        : public match_store
     {
     public:
-                        store(unsigned int size);
-                        ~store();
+                        store_impl(unsigned int size);
+                        ~store_impl();
         void            reset();
-        const char*     get(unsigned int id) const;
         int             store_front(const char* str);
         int             store_back(const char* str);
 
     private:
         unsigned int    get_size(const char* str) const;
-        char*           m_ptr;
-        unsigned int    m_size;
         unsigned int    m_front;
         unsigned int    m_back;
     };
 
+    typedef std::vector<match_info> infos;
+
     void                reset();
     void                coalesce();
-    store               m_store;
-    std::vector<info>   m_infos;
+    store_impl          m_store;
+    infos               m_infos;
     unsigned int        m_count;
     bool                m_coalesced;
 
