@@ -10,8 +10,8 @@ class str_base;
 //------------------------------------------------------------------------------
 struct match_info
 {
-    unsigned short  store_id : 15;
     unsigned short  selected : 1;
+    unsigned short  store_id : 15;
 };
 
 
