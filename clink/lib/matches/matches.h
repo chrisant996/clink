@@ -17,6 +17,7 @@ public:
     void                get_match_lcd(str_base& out) const;
     void                reset();
     void                add_match(const char* match);
+    void                coalesce();
 
 //private:
     struct info
@@ -45,6 +46,8 @@ public:
 
     store               m_store;
     std::vector<info>   m_infos;
+    unsigned int        m_match_count;
+    bool                m_coalesced;
 
 private:
                         matches(const matches&) = delete;

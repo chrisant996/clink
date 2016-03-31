@@ -83,6 +83,8 @@ unsigned int matches::store::get_size(const char* str) const
 //------------------------------------------------------------------------------
 matches::matches(unsigned int store_size)
 : m_store(min(store_size, 0x10000u))
+, m_match_count(0)
+, m_coalesced(false)
 {
     m_infos.reserve(1024);
 }
@@ -90,13 +92,13 @@ matches::matches(unsigned int store_size)
 //------------------------------------------------------------------------------
 unsigned int matches::get_match_count() const
 {
-    return (unsigned int)m_infos.size();
+    return m_match_count;
 }
 
 //------------------------------------------------------------------------------
 const char* matches::get_match(unsigned int index) const
 {
-    if (index >= (unsigned int)m_infos.size())
+    if (index >= get_match_count())
         return nullptr;
 
     unsigned int store_id = m_infos[index].store_id;
@@ -136,16 +138,46 @@ void matches::get_match_lcd(str_base& out) const
 //------------------------------------------------------------------------------
 void matches::reset()
 {
-    m_infos.clear();
     m_store.reset();
+    m_infos.clear();
+    m_coalesced = false;
+    m_match_count = 0;
 }
 
 //------------------------------------------------------------------------------
 void matches::add_match(const char* match)
 {
+    if (m_coalesced)
+        return;
+
     int store_id = m_store.store_front(match);
     if (store_id < 0)
         return;
 
     m_infos.push_back({ (unsigned short)store_id });
+    ++m_match_count;
+}
+
+//------------------------------------------------------------------------------
+void matches::coalesce()
+{
+    info* infos = &(m_infos[0]);
+
+    int j = 0;
+    for (int i = 0, n = int(m_infos.size()); i < n; ++i)
+    {
+        if (!infos[i].selected)
+            continue;
+
+        if (i != j)
+        {
+            matches::info temp = infos[j];
+            infos[j] = infos[i];
+            infos[i] = temp;
+        }
+        ++j;
+    }
+
+    m_match_count = j;
+    m_coalesced = true;
 }
