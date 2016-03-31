@@ -15,9 +15,7 @@ public:
     unsigned int        get_match_count() const;
     const char*         get_match(unsigned int index) const;
     void                get_match_lcd(str_base& out) const;
-    void                reset();
     void                add_match(const char* match);
-    void                coalesce();
 
 private:
     struct info
@@ -44,9 +42,11 @@ private:
         unsigned int    m_back;
     };
 
+    void                reset();
+    void                coalesce();
     store               m_store;
     std::vector<info>   m_infos;
-    unsigned int        m_match_count;
+    unsigned int        m_count;
     bool                m_coalesced;
 
 private:

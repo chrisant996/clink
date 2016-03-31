@@ -101,7 +101,9 @@ int matches_lua::get_match_lcd(lua_State* state)
 //------------------------------------------------------------------------------
 int matches_lua::reset(lua_State* state)
 {
+#if MODE4
     m_matches.reset();
+#endif // MODE4
     return 0;
 }
 
