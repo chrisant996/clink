@@ -8,68 +8,12 @@
 #include <file_match_generator.h>
 #include <line_state.h>
 #include <matches/column_printer.h>
+#include <matches/match_pipeline.h>
 #include <matches/matches.h>
 #include <terminal/ecma48_terminal.h>
 
-#include <algorithm>
-
 void alpha_sort(const match_store&, match_info*, int);
 void normal_select(const char*, const match_store&, match_info*, int);
-
-//------------------------------------------------------------------------------
-class match_pipeline
-{
-public:
-                    match_pipeline(match_system& system, matches& result);
-    void            generate(line_state& state);
-    void            select(const char* selector_name, const char* needle);
-    void            sort(const char* sort_name);
-
-private:
-    match_system&   m_system;
-    matches&        m_result;
-};
-
-//------------------------------------------------------------------------------
-match_pipeline::match_pipeline(match_system& system, matches& result)
-: m_system(system)
-, m_result(result)
-{
-}
-
-//------------------------------------------------------------------------------
-void match_pipeline::generate(line_state& state)
-{
-    m_result.reset();
-    for (const auto& iter : m_system.m_generators)
-    {
-        auto* generator = (match_generator*)(iter.ptr);
-        if (generator->generate(state, m_result))
-            break;
-    }
-}
-
-//------------------------------------------------------------------------------
-void match_pipeline::select(const char* selector_name, const char* needle)
-{
-    int count = int(m_result.m_infos.size());
-    if (!count)
-        return;
-
-    normal_select(needle, m_result.get_store(), m_result.get_infos(), count);
-
-    m_result.coalesce();
-}
-
-//------------------------------------------------------------------------------
-void match_pipeline::sort(const char* sorter_name)
-{
-    int count = m_result.get_match_count();
-    if (!count)
-        return;
-
-    alpha_sort(m_result.get_store(), m_result.get_infos(), count);
-}
 
 //------------------------------------------------------------------------------
 static void end_line(char* line) { puts("done!"); }
