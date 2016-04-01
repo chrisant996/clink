@@ -173,12 +173,12 @@ void matches::add_match(const char* match)
 }
 
 //------------------------------------------------------------------------------
-void matches::coalesce()
+void matches::coalesce(unsigned int count_hint)
 {
     match_info* infos = &(m_infos[0]);
 
-    int j = 0;
-    for (int i = 0, n = int(m_infos.size()); i < n; ++i)
+    unsigned int j = 0;
+    for (int i = 0, n = int(m_infos.size()); i < n && j < count_hint; ++i)
     {
         if (!infos[i].selected)
             continue;

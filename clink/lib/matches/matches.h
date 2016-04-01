@@ -44,7 +44,7 @@ private:
     match_info*         get_infos();
     const match_store&  get_store() const;
     void                reset();
-    void                coalesce();
+    void                coalesce(unsigned int count_hint);
 
 private:
     class store_impl
