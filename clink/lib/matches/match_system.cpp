@@ -4,12 +4,36 @@
 #include "pch.h"
 #include "match_system.h"
 #include "line_state.h"
-#include "match_generator.h"
 #include "matches.h"
 
+#include <core/globber.h>
 #include <core/path.h>
 #include <core/str.h>
 #include <core/str_compare.h>
+
+//------------------------------------------------------------------------------
+match_generator& file_match_generator()
+{
+    static class : public match_generator
+    {
+        virtual bool generate(const line_state& line, matches& out) override
+        {
+            str<MAX_PATH> buffer;
+            line.get_end_word(buffer);
+            buffer << "*";
+
+            globber globber(buffer.c_str());
+            while (globber.next(buffer, false))
+                out.add_match(buffer.c_str());
+
+            return true;
+        }
+    } instance;
+
+    return instance;
+}
+
+
 
 //------------------------------------------------------------------------------
 match_system::match_system()
