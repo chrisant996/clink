@@ -49,6 +49,7 @@ int testbed(int, char**)
     auto* line_editor = create_rl_line_editor(desc);
 
     match_system& system = line_editor->get_match_system();
+    system.add_generator(0, file_match_generator());
     system.add_selector("normal", normal_match_selector());
     system.add_sorter("alpha", alpha_match_sorter());
 
