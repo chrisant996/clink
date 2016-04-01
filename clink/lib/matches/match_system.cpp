@@ -22,7 +22,7 @@ match_system::~match_system()
 }
 
 //------------------------------------------------------------------------------
-bool match_system::add_generator(match_generator* generator, int priority)
+bool match_system::add_generator(int priority, match_generator& generator)
 {
     item* iter = m_generators.push_back();
     if (iter == nullptr)
@@ -38,9 +38,24 @@ bool match_system::add_generator(match_generator* generator, int priority)
         --iter;
     }
 
-    *(iter + 1) = { generator, priority };
+    *(iter + 1) = { &generator, priority };
 
     return true;
+}
+
+//------------------------------------------------------------------------------
+unsigned int match_system::get_generator_count() const
+{
+    return m_generators.size();
+}
+
+//------------------------------------------------------------------------------
+match_generator* match_system::get_generator(unsigned int index) const
+{
+    if (index < m_generators.size())
+        return (match_generator*)(m_generators[index]->ptr);
+
+    return nullptr;
 }
 
 //------------------------------------------------------------------------------
