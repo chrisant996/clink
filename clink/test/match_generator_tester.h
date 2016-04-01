@@ -50,7 +50,7 @@ void match_generator_tester<T>::run(const char* line, va_list arg)
 
     // Build a testable match system.
     match_system system;
-    system.add_generator(m_generator, 0);
+    system.add_generator(0, m_generator);
 
     // Generate the matches.
     matches result;

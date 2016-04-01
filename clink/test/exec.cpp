@@ -18,7 +18,7 @@ struct exec_test
 
                             exec_test();
                             ~exec_test();
-                            operator match_generator* () { return m_generator; }
+                            operator match_generator& () { return *m_generator; }
     lua_match_generator*    m_generator;
     lua_root                m_lua_root;
 };

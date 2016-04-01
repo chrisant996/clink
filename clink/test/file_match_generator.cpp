@@ -6,15 +6,12 @@
 #include "match_generator_tester.h"
 
 #include <core/str_compare.h>
-#include <file_match_generator.h>
 
 //------------------------------------------------------------------------------
 struct file_test
 {
     typedef match_generator_tester<file_test> tester;
-
-                            operator match_generator* () { return &m_generator; }
-    file_match_generator    m_generator;
+    operator match_generator& () { return file_match_generator(); }
 };
 
 //------------------------------------------------------------------------------
