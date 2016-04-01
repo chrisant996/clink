@@ -10,6 +10,7 @@
 #include <core/path.h>
 #include <core/str.h>
 #include <core/str_compare.h>
+#include <core/str_hash.h>
 
 //------------------------------------------------------------------------------
 match_generator& file_match_generator()
@@ -68,6 +69,17 @@ bool match_system::add_generator(int priority, match_generator& generator)
 }
 
 //------------------------------------------------------------------------------
+bool match_system::add_selector(const char* name, match_selector& selector)
+{
+    item* item = m_selectors.push_back();
+    if (item == nullptr)
+        return false;
+    
+    *item = { &selector, str_hash(name) };
+    return true;
+}
+
+//------------------------------------------------------------------------------
 unsigned int match_system::get_generator_count() const
 {
     return m_generators.size();
@@ -78,6 +90,17 @@ match_generator* match_system::get_generator(unsigned int index) const
 {
     if (index < m_generators.size())
         return (match_generator*)(m_generators[index]->ptr);
+
+    return nullptr;
+}
+
+//------------------------------------------------------------------------------
+match_selector* match_system::get_selector(const char* name) const
+{
+    unsigned int hash = str_hash(name);
+    for (const auto& item : m_selectors)
+        if (item.key == hash)
+            return (match_selector*)(item.ptr);
 
     return nullptr;
 }
