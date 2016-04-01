@@ -168,7 +168,7 @@ void matches::add_match(const char* match)
     if (store_id < 0)
         return;
 
-    m_infos.push_back({ (unsigned short)store_id });
+    m_infos.push_back({ 0, (unsigned short)store_id });
     ++m_count;
 }
 
