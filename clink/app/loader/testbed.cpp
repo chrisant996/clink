@@ -5,7 +5,6 @@
 #include <core/base.h>
 #include <core/str_compare.h>
 #include <core/str_tokeniser.h>
-#include <file_match_generator.h>
 #include <line_state.h>
 #include <matches/column_printer.h>
 #include <matches/match_pipeline.h>

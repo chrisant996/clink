@@ -13,7 +13,6 @@
 #include <core/str.h>
 #include <core/str_compare.h>
 #include <line_state.h>
-#include <matches/match_generator.h>
 #include <matches/match_printer.h>
 #include <matches/matches.h>
 #include <terminal/ecma48_iter.h>
