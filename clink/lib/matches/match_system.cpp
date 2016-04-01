@@ -12,6 +12,8 @@
 #include <core/str_compare.h>
 #include <core/str_hash.h>
 
+#include <algorithm>
+
 //------------------------------------------------------------------------------
 match_generator& file_match_generator()
 {
@@ -28,6 +30,60 @@ match_generator& file_match_generator()
                 out.add_match(buffer.c_str());
 
             return true;
+        }
+    } instance;
+
+    return instance;
+}
+
+//------------------------------------------------------------------------------
+match_selector& normal_match_selector()
+{
+    static class : public match_selector
+    {
+        virtual unsigned int select(const char* needle, const match_store& store, match_info* infos, int count) override
+        {
+            int select_count = 0;
+            for (int i = 0; i < count; ++i)
+            {
+                const char* name = store.get(infos[i].store_id);
+                int j = str_compare(needle, name);
+                infos[i].selected = (j < 0 || !needle[j]);
+                ++select_count;
+            }
+
+            return select_count;
+        }
+    } instance;
+
+    return instance;
+};
+
+//------------------------------------------------------------------------------
+match_sorter& alpha_match_sorter()
+{
+    static class : public match_sorter
+    {
+        virtual void sort(const match_store& store, match_info* infos, int count) override
+        {
+            struct predicate
+            {
+                predicate(const match_store& store)
+                : store(store)
+                {
+                }
+        
+                bool operator () (const match_info& lhs, const match_info& rhs)
+                {
+                    const char* l = store.get(lhs.store_id);
+                    const char* r = store.get(rhs.store_id);
+                    return (stricmp(l, r) < 0);
+                }
+        
+                const match_store& store;
+            };
+        
+            std::sort(infos, infos + count, predicate(store));
         }
     } instance;
 

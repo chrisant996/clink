@@ -11,40 +11,8 @@
 #include <matches/matches.h>
 #include <terminal/ecma48_terminal.h>
 
-void alpha_sort(const match_store&, match_info*, int);
-void normal_select(const char*, const match_store&, match_info*, int);
-
 //------------------------------------------------------------------------------
 static void end_line(char* line) { puts("done!"); }
-
-void normal_select(const char* needle, const match_store& store, match_info* infos, int count)
-{
-    for (int i = 0; i < count; ++i)
-    {
-        const char* name = store.get(infos[i].store_id);
-        int j = str_compare(needle, name);
-        infos[i].selected = (j < 0 || !needle[j]);
-    }
-}
-
-void alpha_sort(const match_store& store, match_info* infos, int count)
-{
-    struct predicate
-    {
-        predicate(const match_store& store) : store(store) {}
-
-        bool operator () (const match_info& lhs, const match_info& rhs)
-        {
-            const char* l = store.get(lhs.store_id);
-            const char* r = store.get(rhs.store_id);
-            return (stricmp(l, r) < 0);
-        }
-
-        const match_store& store;
-    };
-
-    std::sort(infos, infos + count, predicate(store));
-}
 
 void draw_matches(const matches& result)
 {
@@ -80,8 +48,9 @@ int testbed(int, char**)
     line_editor::desc desc = { "testbed", terminal, printer };
     auto* line_editor = create_rl_line_editor(desc);
 
-    file_match_generator file_generator;
-    line_editor->get_match_system().add_generator(&file_generator, 0);
+    match_system& system = line_editor->get_match_system();
+    system.add_selector("normal", normal_match_selector());
+    system.add_sorter("alpha", alpha_match_sorter());
 
     terminal->begin();
     rl_callback_handler_install("testbed>", end_line);
