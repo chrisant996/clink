@@ -80,6 +80,17 @@ bool match_system::add_selector(const char* name, match_selector& selector)
 }
 
 //------------------------------------------------------------------------------
+bool match_system::add_sorter(const char* name, match_sorter& sorter)
+{
+    item* item = m_sorters.push_back();
+    if (item == nullptr)
+        return false;
+    
+    *item = { &sorter, str_hash(name) };
+    return true;
+}
+
+//------------------------------------------------------------------------------
 unsigned int match_system::get_generator_count() const
 {
     return m_generators.size();
@@ -101,6 +112,17 @@ match_selector* match_system::get_selector(const char* name) const
     for (const auto& item : m_selectors)
         if (item.key == hash)
             return (match_selector*)(item.ptr);
+
+    return nullptr;
+}
+
+//------------------------------------------------------------------------------
+match_sorter* match_system::get_sorter(const char* name) const
+{
+    unsigned int hash = str_hash(name);
+    for (const auto& item : m_sorters)
+        if (item.key == hash)
+            return (match_sorter*)(item.ptr);
 
     return nullptr;
 }

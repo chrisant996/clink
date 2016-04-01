@@ -36,6 +36,17 @@ match_selector& normal_match_selector();
 
 
 //------------------------------------------------------------------------------
+class match_sorter
+{
+public:
+    virtual void sort(const match_store& store, match_info* infos, int count) = 0;
+};
+
+match_sorter& alpha_match_sorter();
+
+
+
+//------------------------------------------------------------------------------
 class match_system
 {
 public:
@@ -52,6 +63,7 @@ private:
     unsigned int            get_generator_count() const;
     match_generator*        get_generator(unsigned int index) const;
     match_selector*         get_selector(const char* name) const;
+    match_sorter*           get_sorter(const char* name) const;
 
 private:
     struct item
@@ -65,4 +77,5 @@ private:
 
     items<8>                m_generators;
     items<4>                m_selectors;
+    items<4>                m_sorters;
 };
