@@ -3,7 +3,7 @@
 
 #pragma once
 
-#include "matches/match_generator.h"
+#include "matches/match_system.h"
 
 struct lua_State;
 
