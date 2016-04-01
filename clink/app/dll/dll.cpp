@@ -102,11 +102,10 @@ static void initialise_line_editor(lua_State* lua, const char* host_name)
     match_system& match_system = g_line_editor->get_match_system();
 
     lua_match_generator* lua_generator = new lua_match_generator(lua);
-    match_system.add_generator(lua_generator, 1000);
-
-    file_match_generator* file_generator = new file_match_generator();
-    match_system.add_generator(file_generator, 1001);
+    match_system.add_generator(1000, *lua_generator);
     // MODE4
+
+    match_system.add_generator(1001, file_match_generator());
 }
 
 //------------------------------------------------------------------------------
