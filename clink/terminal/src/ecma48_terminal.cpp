@@ -132,7 +132,10 @@ loop:
         // Some times conhost can send through ALT codes, with the resulting
         // Unicode code point in the Alt key-up event.
         if (key_vk == VK_MENU && key_char)
-            goto end;
+        {
+            push(key_char);
+            return;
+        }
 
         goto loop;
     }
@@ -203,17 +206,13 @@ loop:
 
                 int j = 1 + !!(key_flags & SHIFT_PRESSED);
 
+                push(0x1b);
                 push((key_flags & CTRL_PRESSED) ? 'O' : '[');
                 push(mod_map[i][j]);
-
-                break;
+                return;
             }
 
-            // Blacklist.
-            if (!m_buffer_count)
-                goto loop;
-
-            key_vk = 0x1b;
+            goto loop;
         }
         else if (!(key_flags & CTRL_PRESSED))
             goto loop;
@@ -229,36 +228,28 @@ loop:
         else                            goto loop;
         #undef CONTAINS
 
-        key_char = key_vk;
+        push(key_char);
+        return;
     }
 
     // Special case for shift-tab.
     if (key_char == '\t' && !m_buffer_count && (key_flags & SHIFT_PRESSED))
     {
-        key_char = 0x1b;
+        push(0x1b);
         push('[');
         push('Z');
+        return;
     }
 
-end:
 #if defined(DEBUG_GETC) && defined(_DEBUG)
     printf("\n%08x '%c'", key_char, key_char);
 #endif
 
-    // Expand to utf8.
-    wchar_t wc[2] = { (wchar_t)key_char, 0 };
-    char utf8[6];
-    for (int i = 1, n = to_utf8(utf8, sizeof_array(utf8), wc); i < n; ++i)
-        push(utf8[i]);
-    key_char = utf8[0];
-
     // Include an ESC character in the input stream if Alt is pressed.
     if (alt)
-    {
-        push(key_char);
-        key_char = 0x1b;
-    }
+        push(0x1b);
 
+    push(key_char);
 }
 
 //------------------------------------------------------------------------------
