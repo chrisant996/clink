@@ -43,8 +43,7 @@ extern int      rl_display_fixed;
 static int terminal_read_thunk(FILE* stream)
 {
     terminal* term = (terminal*)stream;
-    int i = term->read();
-    return i;
+    return term->read();
 }
 
 //------------------------------------------------------------------------------
