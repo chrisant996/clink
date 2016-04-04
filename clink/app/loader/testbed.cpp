@@ -154,7 +154,13 @@ bool line_editor_2::get_line(str_base& out)
     if (m_state != state_done)
         return false;
 
-    return out.copy(m_desc.backend->get_buffer());
+    if (const char* line = m_desc.backend->get_buffer())
+    {
+        out.copy(line);
+        return true;
+    }
+
+    return false;
 }
 
 //------------------------------------------------------------------------------
