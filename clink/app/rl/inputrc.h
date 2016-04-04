@@ -8,6 +8,7 @@ const char* clink_inputrc[] = {
     "set completion-ignore-case   on",
     "set completion-map-case      on",
     "set completion-display-width 106",
+    "set convert-meta             off",   // for correct utf8 input
     "set output-meta              on",    // for correct utf8 output
     "set skip-completed-text      on",
     "set visible-stats            off",
