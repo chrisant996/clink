@@ -89,9 +89,9 @@ loop:
 // MODE4
 
     // Fresh read from the console.
-    DWORD i;
+    DWORD unused;
     INPUT_RECORD record;
-    ReadConsoleInputW(handle_stdin, &record, 1, &i);
+    ReadConsoleInputW(handle_stdin, &record, 1, &unused);
     if (record.EventType != KEY_EVENT)
         goto loop;
 
