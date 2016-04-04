@@ -3,6 +3,7 @@
 
 #include <core/array.h>
 #include <core/base.h>
+#include <core/singleton.h>
 #include <core/str_compare.h>
 #include <core/str_tokeniser.h>
 #include <line_state.h>
@@ -14,27 +15,103 @@
 void draw_matches(const matches&);
 
 //------------------------------------------------------------------------------
+class line_editor_backend
+{
+public:
+    enum status
+    {
+        status_more_input,
+        status_continue,
+        status_done,
+    };
+
+    virtual void        begin() = 0;
+    virtual status      update() = 0;
+    virtual void        end() = 0;
+    virtual int         get_cursor_pos() const = 0;
+    virtual const char* get_buffer() const = 0;
+};
+
+
+
+//------------------------------------------------------------------------------
+class rl_backend
+    : public line_editor_backend
+    , public singleton<rl_backend>
+{
+public:
+    virtual void begin() override
+    {
+        auto handler = [] (char* line) { rl_backend::get()->done(line); };
+        rl_callback_handler_install("testbed $ ", handler);
+
+        m_done = false;
+        m_eof = false;
+    }
+
+    virtual status update() override
+    {
+        rl_forced_update_display(); // MODE4
+        rl_callback_read_char();
+
+        int rl_state = rl_readline_state;
+        rl_state &= ~RL_STATE_CALLBACK;
+        rl_state &= ~RL_STATE_INITIALIZED;
+        rl_state &= ~RL_STATE_OVERWRITE;
+        rl_state &= ~RL_STATE_VICMDONCE;
+
+        if (m_done)
+            return status_done;
+
+        return (rl_state ? status_more_input : status_continue);
+    }
+
+    virtual void end() override
+    {
+        rl_callback_handler_remove();
+    }
+
+    virtual int get_cursor_pos() const override
+    {
+        return rl_point;
+    }
+
+    virtual const char* get_buffer() const override
+    {
+        return (m_eof ? nullptr : rl_line_buffer);
+    }
+
+private:
+    void done(const char* line)
+    {
+        m_done = true;
+        m_eof = (line == nullptr);
+    }
+
+    bool m_done = false;
+    bool m_eof = false;
+};
+
+
+
+//------------------------------------------------------------------------------
 class line_editor_2
 {
 public:
-    enum result
-    {
-        result_more_input,
-        result_eot,
-        result_done,
-    };
+    typedef line_editor_backend backend;
 
     struct desc
     {
         const char* word_delims;
         const char* partial_delims;
         terminal*   terminal;
+        backend*    backend;
     };
 
                     line_editor_2(const desc& desc);
     bool            get_line(str_base& out);
     bool            edit(str_base& out);
-    result          update();
+    bool            update();
 
 private:
     enum
@@ -70,7 +147,7 @@ bool line_editor_2::get_line(str_base& out)
     if (m_state != state_done)
         return false;
 
-    return out.copy(rl_line_buffer);
+    return out.copy(m_desc.backend->get_buffer());
 }
 
 //------------------------------------------------------------------------------
@@ -79,14 +156,13 @@ bool line_editor_2::edit(str_base& out)
     if (m_state != state_init)
         return false;
 
-    while (m_state != state_done)
-        update();
+    while (update());
 
     return get_line(out);
 }
 
 //------------------------------------------------------------------------------
-line_editor_2::result line_editor_2::update()
+bool line_editor_2::update()
 {
     switch (m_state)
     {
@@ -96,22 +172,23 @@ line_editor_2::result line_editor_2::update()
 
     case state_input:
         update_internal();
-        break;
+        if (m_state != state_backend_input)
+            return true;
 
     case state_backend_input:
         update_backend();
-        break;
+        if (m_state != state_done)
+            return true;
     }
 
-    return result_done;
+    return false;
 }
 
 //------------------------------------------------------------------------------
 void line_editor_2::update_init()
 {
     m_desc.terminal->begin();
-    auto handler = [] (char* line) { };
-    rl_callback_handler_install("testbed $ ", handler);
+    m_desc.backend->begin();
 
     m_state = state_input;
 }
@@ -120,8 +197,8 @@ void line_editor_2::update_init()
 void line_editor_2::update_internal()
 {
     // Get line state from backend. MODE4
-    const char* line_buffer = rl_line_buffer;
-    const int line_cursor = rl_point;
+    const char* line_buffer = m_desc.backend->get_buffer();
+    const int line_cursor = m_desc.backend->get_cursor_pos();
 
     // Collect words.
     fixed_array<word, 128> words;
@@ -217,28 +294,26 @@ void line_editor_2::update_internal()
         pipeline.sort("alpha");
 
         printf("select & sort: '%s'\n", needle.c_str());
-        draw_matches(m_matches);
     }
+
+    draw_matches(m_matches);
+    m_state = state_backend_input;
 }
 
 //------------------------------------------------------------------------------
 void line_editor_2::update_backend()
 {
-    rl_forced_update_display(); // MODE4
-    rl_callback_read_char();
-
-    int rl_state = rl_readline_state;
-    rl_state &= ~RL_STATE_CALLBACK;
-    rl_state &= ~RL_STATE_INITIALIZED;
-    rl_state &= ~RL_STATE_OVERWRITE;
-    rl_state &= ~RL_STATE_VICMDONCE;
-    m_state = rl_state ? state_backend_input : state_input;
+    switch (m_desc.backend->update())
+    {
+    case backend::status_continue:  m_state = state_input;  break;
+    case backend::status_done:      m_state = state_done;   break;
+    }
 }
 
 //------------------------------------------------------------------------------
 void line_editor_2::update_done()
 {
-    rl_callback_handler_remove();
+    m_desc.backend->end();
     m_desc.terminal->end();
 
     m_state = state_done;
@@ -279,6 +354,7 @@ int testbed(int, char**)
     match_printer* printer = new column_printer(terminal);
     line_editor::desc desc = { "testbed", terminal, printer };
     auto* line_editor = create_rl_line_editor(desc);
+    rl_backend backend;
 
     match_system& system = line_editor->get_match_system();
     system.add_generator(0, file_match_generator());
@@ -295,6 +371,7 @@ int testbed(int, char**)
     d.word_delims = " \t";
     d.partial_delims = "\\/:";
     d.terminal = terminal;
+    d.backend = &backend;
     line_editor_2 editor(d);
     str<> out;
     editor.edit(out);
