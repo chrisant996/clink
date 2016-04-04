@@ -17,11 +17,12 @@ public:
 
 private:
     int             read_console();
-    void            push(int value);
+    void            push(char value);
+    void            push(int value) { push((char)(unsigned char)value); /* MODE4 */ }
     int             pop();
     int             m_buffer_head;
     int             m_buffer_count;
-    int             m_buffer[8]; // must be power of two.
+    char            m_buffer[8]; // must be power of two.
 };
 
 

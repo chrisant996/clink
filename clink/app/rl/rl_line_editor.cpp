@@ -42,26 +42,8 @@ extern int      rl_display_fixed;
 //------------------------------------------------------------------------------
 static int terminal_read_thunk(FILE* stream)
 {
-    int i;
-
-    while (1)
-    {
-        terminal* term = (terminal*)stream;
-        i = term->read();
-
-        // Mask off top bits, they're used to track ALT key state.
-        if (i < 0x80)
-            break;
-
-        // Convert to utf-8 and insert directly into rl's line buffer.
-        wchar_t wc[2] = { (wchar_t)i, 0 };
-        char utf8[4] = {};
-        WideCharToMultiByte(CP_UTF8, 0, wc, -1, utf8, sizeof(utf8), nullptr, nullptr);
-
-        rl_insert_text(utf8);
-        rl_redisplay();
-    }
-
+    terminal* term = (terminal*)stream;
+    int i = term->read();
     return i;
 }
 

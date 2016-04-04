@@ -46,9 +46,9 @@ xterm_input::xterm_input()
 int xterm_input::read()
 {
     if (int c = pop())
-        return c;
+        return (unsigned char)c;
     
-    return read_console();
+    return (unsigned char)read_console();
 }
 
 //------------------------------------------------------------------------------
@@ -240,8 +240,15 @@ end:
     printf("\n%08x '%c'", key_char, key_char);
 #endif
 
+    // Expand to utf8.
+    wchar_t wc[2] = { (wchar_t)key_char, 0 };
+    char utf8[6];
+    for (int i = 1, n = to_utf8(utf8, sizeof_array(utf8), wc); i < n; ++i)
+        push(utf8[i]);
+    key_char = utf8[0];
+
     // Include an ESC character in the input stream if Alt is pressed.
-    if (alt && key_char < 0x80)
+    if (alt)
     {
         push(key_char);
         key_char = 0x1b;
@@ -252,7 +259,7 @@ end:
 }
 
 //------------------------------------------------------------------------------
-void xterm_input::push(int value)
+void xterm_input::push(char value)
 {
     if (m_buffer_count >= sizeof_array(m_buffer))
         return;
@@ -269,7 +276,7 @@ int xterm_input::pop()
     if (!m_buffer_count)
         return 0;
 
-    int value = m_buffer[m_buffer_head];
+    int value = (unsigned char)(m_buffer[m_buffer_head]);
 
     --m_buffer_count;
     m_buffer_head = (m_buffer_head + 1) & (sizeof_array(m_buffer) - 1);
