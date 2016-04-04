@@ -71,13 +71,13 @@ void xterm_input::read_console()
     SetConsoleMode(handle_stdin, ENABLE_WINDOW_INPUT);
 
 loop:
-    CONSOLE_SCREEN_BUFFER_INFO csbi;
-    HANDLE handle_stdout = GetStdHandle(STD_OUTPUT_HANDLE);
-    GetConsoleScreenBufferInfo(handle_stdout, &csbi);
-
     // Check for a new buffer size for simulated SIGWINCH signals.
 // MODE4
     {
+        CONSOLE_SCREEN_BUFFER_INFO csbi;
+        HANDLE handle_stdout = GetStdHandle(STD_OUTPUT_HANDLE);
+        GetConsoleScreenBufferInfo(handle_stdout, &csbi);
+
         DWORD i = (csbi.dwSize.X << 16);
         i |= (csbi.srWindow.Bottom - csbi.srWindow.Top) + 1;
         if (!g_last_buffer_size || g_last_buffer_size != i)
@@ -98,11 +98,14 @@ loop:
     if (record.EventType != KEY_EVENT)
         goto loop;
 
-    GetConsoleScreenBufferInfo(handle_stdout, &csbi);
 // MODE4
     if (record.EventType == WINDOW_BUFFER_SIZE_EVENT)
     {
         on_terminal_resize();
+
+        CONSOLE_SCREEN_BUFFER_INFO csbi;
+        HANDLE handle_stdout = GetStdHandle(STD_OUTPUT_HANDLE);
+        GetConsoleScreenBufferInfo(handle_stdout, &csbi);
 
         g_last_buffer_size = (csbi.dwSize.X << 16) | csbi.dwSize.Y;
         goto loop;
