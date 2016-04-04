@@ -363,19 +363,21 @@ int testbed(int, char**)
 {
     str_compare_scope _(str_compare_scope::relaxed);
 
-    terminal* terminal = new ecma48_terminal();
+    // MODE4
+    ecma48_terminal terminal;
+    column_printer printer(&terminal);
+    line_editor::desc _desc = { "testbed", &terminal, &printer };
+    auto* line_editor = create_rl_line_editor(_desc);
+    // MODE4
 
-    match_printer* printer = new column_printer(terminal);
-    line_editor::desc desc = { "testbed", terminal, printer };
-    auto* line_editor = create_rl_line_editor(desc);
     rl_backend backend;
 
-    line_editor_2::desc d = {};
-    d.word_delims = " \t";
-    d.partial_delims = "\\/:";
-    d.terminal = terminal;
-    d.backend = &backend;
-    line_editor_2 editor(d);
+    line_editor_2::desc desc = {};
+    desc.word_delims = " \t=";
+    desc.partial_delims = "\\/:";
+    desc.terminal = &terminal;
+    desc.backend = &backend;
+    line_editor_2 editor(desc);
 
     match_system& system = editor.get_match_system();
     system.add_generator(0, file_match_generator());
