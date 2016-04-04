@@ -60,14 +60,15 @@ void xterm_input::read_console()
     // aren't swallowed. We also want events about window size changes.
     HANDLE handle_stdin = GetStdHandle(STD_INPUT_HANDLE);
 
-    DWORD prev_flags;
-    GetConsoleMode(handle_stdin, &prev_flags);
+    struct flags_scope
+    {
+        flags_scope(HANDLE h) : handle(h)   { GetConsoleMode(handle, &prev); }
+        ~flags_scope()                      { SetConsoleMode(handle, prev); }
+        DWORD prev;
+        HANDLE handle;
+    } _(handle_stdin);
 
-    DWORD flags = prev_flags;
-    flags |= ENABLE_WINDOW_INPUT;
-    flags &= ~ENABLE_EXTENDED_FLAGS;
-    flags &= ~ENABLE_PROCESSED_INPUT;
-    SetConsoleMode(handle_stdin, flags);
+    SetConsoleMode(handle_stdin, ENABLE_WINDOW_INPUT);
 
 loop:
     CONSOLE_SCREEN_BUFFER_INFO csbi;
@@ -255,8 +256,6 @@ end:
         key_char = 0x1b;
     }
 
-    SetConsoleMode(handle_stdin, prev_flags);
-    return key_char;
 }
 
 //------------------------------------------------------------------------------
