@@ -364,16 +364,11 @@ int testbed(int, char**)
     str_compare_scope _(str_compare_scope::relaxed);
 
     terminal* terminal = new ecma48_terminal();
+
     match_printer* printer = new column_printer(terminal);
     line_editor::desc desc = { "testbed", terminal, printer };
     auto* line_editor = create_rl_line_editor(desc);
     rl_backend backend;
-
-    static const char* word_delims = " \t";
-    static const char* partial_delims = "\\/:";
-
-    unsigned int match_key = ~0;
-    matches result;
 
     line_editor_2::desc d = {};
     d.word_delims = " \t";
