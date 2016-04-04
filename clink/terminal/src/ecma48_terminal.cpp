@@ -45,14 +45,16 @@ xterm_input::xterm_input()
 //------------------------------------------------------------------------------
 int xterm_input::read()
 {
-    if (int c = pop())
-        return (unsigned char)c;
+    int c = pop();
+    if (c != 0xff)
+        return c;
     
-    return (unsigned char)read_console();
+    read_console();
+    return pop();
 }
 
 //------------------------------------------------------------------------------
-int xterm_input::read_console()
+void xterm_input::read_console()
 {
     // Clear 'processed input' flag so key presses such as Ctrl-C and Ctrl-S
     // aren't swallowed. We also want events about window size changes.
@@ -258,27 +260,43 @@ end:
 }
 
 //------------------------------------------------------------------------------
-void xterm_input::push(char value)
+void xterm_input::push(unsigned int value)
 {
+    static const unsigned char mask = sizeof_array(m_buffer) - 1;
+
     if (m_buffer_count >= sizeof_array(m_buffer))
         return;
 
-    int index = (m_buffer_head + m_buffer_count) & (sizeof_array(m_buffer) - 1);
+    int index = m_buffer_head + m_buffer_count;
 
-    m_buffer[index] = value;
-    ++m_buffer_count;
+    if (value < 0x80)
+    {
+        m_buffer[index & mask] = value;
+        ++m_buffer_count;
+        return;
+    }
+
+    wchar_t wc[2] = { (wchar_t)value, 0 };
+    char utf8[8];
+    int n = to_utf8(utf8, sizeof_array(utf8), wc);
+    if (n <= mask - m_buffer_count)
+        for (int i = 0; i < n; ++i, ++index)
+            m_buffer[index & mask] = utf8[i];
+
+    m_buffer_count += n;
 }
 
 //------------------------------------------------------------------------------
-int xterm_input::pop()
+unsigned char xterm_input::pop()
 {
     if (!m_buffer_count)
-        return 0;
+        return 0xff;
 
-    int value = (unsigned char)(m_buffer[m_buffer_head]);
+    unsigned char value = m_buffer[m_buffer_head];
 
     --m_buffer_count;
-    m_buffer_head = (m_buffer_head + 1) & (sizeof_array(m_buffer) - 1);
+    ++m_buffer_head;
+    m_buffer_head &= sizeof_array(m_buffer) - 1;
 
     return value;
 }
