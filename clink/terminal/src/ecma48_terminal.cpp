@@ -118,15 +118,6 @@ loop:
     int key_sc = key->wVirtualScanCode;
     int key_flags = key->dwControlKeyState;
 
-#if defined(DEBUG_GETC) && defined(_DEBUG)
-    {
-        static int id = 0;
-        printf("\n%03d: %s ", id++, key->bKeyDown ? "+" : "-");
-        for (int i = 2; i < sizeof(*key) / sizeof(short); ++i)
-            printf("%04x ", ((unsigned short*)key)[i]);
-    }
-#endif
-
     if (key->bKeyDown == FALSE)
     {
         // Some times conhost can send through ALT codes, with the resulting
@@ -240,10 +231,6 @@ loop:
         push('Z');
         return;
     }
-
-#if defined(DEBUG_GETC) && defined(_DEBUG)
-    printf("\n%08x '%c'", key_char, key_char);
-#endif
 
     // Include an ESC character in the input stream if Alt is pressed.
     if (alt)
