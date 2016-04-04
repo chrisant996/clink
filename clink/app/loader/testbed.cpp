@@ -109,6 +109,7 @@ public:
     };
 
                     line_editor_2(const desc& desc);
+    match_system&   get_match_system();
     bool            get_line(str_base& out);
     bool            edit(str_base& out);
     bool            update();
@@ -139,6 +140,12 @@ line_editor_2::line_editor_2(const desc& desc)
 , m_state(state_init)
 , m_desc(desc)
 {
+}
+
+//------------------------------------------------------------------------------
+match_system& line_editor_2::get_match_system()
+{
+    return m_match_system;
 }
 
 //------------------------------------------------------------------------------
@@ -356,11 +363,6 @@ int testbed(int, char**)
     auto* line_editor = create_rl_line_editor(desc);
     rl_backend backend;
 
-    match_system& system = line_editor->get_match_system();
-    system.add_generator(0, file_match_generator());
-    system.add_selector("normal", normal_match_selector());
-    system.add_sorter("alpha", alpha_match_sorter());
-
     static const char* word_delims = " \t";
     static const char* partial_delims = "\\/:";
 
@@ -373,6 +375,12 @@ int testbed(int, char**)
     d.terminal = terminal;
     d.backend = &backend;
     line_editor_2 editor(d);
+
+    match_system& system = editor.get_match_system();
+    system.add_generator(0, file_match_generator());
+    system.add_selector("normal", normal_match_selector());
+    system.add_sorter("alpha", alpha_match_sorter());
+
     str<> out;
     editor.edit(out);
 
