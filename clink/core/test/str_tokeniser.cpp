@@ -60,8 +60,8 @@ TEST_CASE("str_tokeniser : quote")
     str<> s;
 
     str_tokeniser t("'-abc';(-abc);'-a)b;c", ";-");
-    t.add_quotes("'");
-    t.add_quotes("()");
+    t.add_quote_pair("'");
+    t.add_quote_pair("()");
 
     REQUIRE(t.next(s)); REQUIRE(s.equals("'-abc'") == true);
     REQUIRE(t.next(s)); REQUIRE(s.equals("(-abc)") == true);

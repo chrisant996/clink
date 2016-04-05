@@ -14,7 +14,7 @@ class str_tokeniser_impl
 public:
                         str_tokeniser_impl(const T* in, const char* delims);
                         str_tokeniser_impl(const str_iter_impl<T>& in, const char* delims);
-    bool                add_quotes(const char* pair);
+    bool                add_quote_pair(const char* pair);
     bool                next(str_impl<T>& out);
     bool                next(const T*& start, int& length);
 
@@ -52,7 +52,7 @@ str_tokeniser_impl<T>::str_tokeniser_impl(const str_iter_impl<T>& in, const char
 
 //------------------------------------------------------------------------------
 template <typename T>
-bool str_tokeniser_impl<T>::add_quotes(const char* pair)
+bool str_tokeniser_impl<T>::add_quote_pair(const char* pair)
 {
     if (pair == nullptr || !pair[0])
         return false;
