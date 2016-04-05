@@ -3,6 +3,7 @@
 
 #pragma once
 
+#include "array.h"
 #include "str.h"
 #include "str_iter.h"
 
@@ -13,10 +14,21 @@ class str_tokeniser_impl
 public:
                         str_tokeniser_impl(const T* in, const char* delims);
                         str_tokeniser_impl(const str_iter_impl<T>& in, const char* delims);
+    bool                add_quotes(const char* pair);
     bool                next(str_impl<T>& out);
     bool                next(const T*& start, int& length);
 
 private:
+    struct quote
+    {
+        unsigned char   left;
+        unsigned char   right;
+    };
+
+    typedef fixed_array<quote, 4> quotes;
+
+    bool                next_impl(const T*& out_start, int& out_length);
+    quotes              m_quotes;
     str_iter_impl<T>    m_iter;
     const char*         m_delims;
 };
@@ -35,6 +47,21 @@ str_tokeniser_impl<T>::str_tokeniser_impl(const str_iter_impl<T>& in, const char
 : m_iter(in)
 , m_delims(delims)
 {
+}
+
+//------------------------------------------------------------------------------
+template <typename T>
+bool str_tokeniser_impl<T>::add_quotes(const char* pair)
+{
+    if (pair == nullptr || !pair[0])
+        return false;
+
+    quote* q = m_quotes.push_back();
+    if (q == nullptr)
+        return false;
+
+    *q = { pair[0], pair[1] };
+    return true;
 }
 
 //------------------------------------------------------------------------------

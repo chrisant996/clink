@@ -54,3 +54,18 @@ TEST_CASE("str_tokeniser : delim runs")
         REQUIRE(t.next(s) == false);
     }
 }
+
+TEST_CASE("str_tokeniser : quote")
+{
+    str<> s;
+    auto inputs = { "'a;';b';';", ";(a;);'b;'", "''a()(;);;(b)''(;);" };
+    for (auto input : inputs)
+    {
+        str_tokeniser t(input, ";-");
+        t.add_quotes("'");
+        t.add_quotes("()");
+        REQUIRE(t.next(s)); REQUIRE(s.equals("a;") == true);
+        REQUIRE(t.next(s)); REQUIRE(s.equals("b;") == true);
+        REQUIRE(t.next(s) == false);
+    }
+}

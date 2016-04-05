@@ -6,30 +6,30 @@
 
 //------------------------------------------------------------------------------
 template <typename T>
-bool next_impl(str_iter_impl<T>& iter, const T*& out_start, int& out_length, const char* delims)
+bool str_tokeniser_impl<T>::next_impl(const T*& out_start, int& out_length)
 {
     // Skip initial delimiters.
-    while (int c = iter.peek())
+    while (int c = m_iter.peek())
     {
-        if (strchr(delims, c) == nullptr)
+        if (strchr(m_delims, c) == nullptr)
             break;
 
-        iter.next();
+        m_iter.next();
     }
 
     // Extract the delimited string.
-    const T* start = iter.get_pointer();
+    const T* start = m_iter.get_pointer();
 
-    while (int c = iter.peek())
+    while (int c = m_iter.peek())
     {
-        if (strchr(delims, c))
+        if (strchr(m_delims, c))
             break;
 
-        iter.next();
+        m_iter.next();
     }
 
-    const T* end = iter.get_pointer();
-    iter.next();
+    const T* end = m_iter.get_pointer();
+    m_iter.next();
 
     // Empty string? Must be the end of the input. We're done here.
     if (start == end)
@@ -42,11 +42,12 @@ bool next_impl(str_iter_impl<T>& iter, const T*& out_start, int& out_length, con
 }
 
 //------------------------------------------------------------------------------
-template <> bool str_tokeniser_impl<char>::next(str_impl<char>& out)
+template <>
+bool str_tokeniser_impl<char>::next(str_impl<char>& out)
 {
     const char* start;
     int length;
-    bool ret = next_impl<char>(m_iter, start, length, m_delims);
+    bool ret = next_impl(start, length);
 
     out.clear();
     if (ret)
@@ -56,11 +57,12 @@ template <> bool str_tokeniser_impl<char>::next(str_impl<char>& out)
 }
 
 //------------------------------------------------------------------------------
-template <> bool str_tokeniser_impl<wchar_t>::next(str_impl<wchar_t>& out)
+template <>
+bool str_tokeniser_impl<wchar_t>::next(str_impl<wchar_t>& out)
 {
     const wchar_t* start;
     int length;
-    bool ret = next_impl<wchar_t>(m_iter, start, length, m_delims);
+    bool ret = next_impl(start, length);
 
     out.clear();
     if (ret)
@@ -70,13 +72,15 @@ template <> bool str_tokeniser_impl<wchar_t>::next(str_impl<wchar_t>& out)
 }
 
 //------------------------------------------------------------------------------
-template <> bool str_tokeniser_impl<char>::next(const char*& start, int& length)
+template <>
+bool str_tokeniser_impl<char>::next(const char*& start, int& length)
 {
-    return next_impl<char>(m_iter, start, length, m_delims);
+    return next_impl(start, length);
 }
 
 //------------------------------------------------------------------------------
-template <> bool str_tokeniser_impl<wchar_t>::next(const wchar_t*& start, int& length)
+template <>
+bool str_tokeniser_impl<wchar_t>::next(const wchar_t*& start, int& length)
 {
-    return next_impl<wchar_t>(m_iter, start, length, m_delims);
+    return next_impl(start, length);
 }
