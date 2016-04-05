@@ -29,6 +29,7 @@ public:
     bool            full() const     { return (m_size == m_capacity); }
     T*              front() const    { return m_ptr; }
     T*              back() const     { return empty() ? nullptr : (m_ptr + m_size - 1); }
+    T*              push_back()      { return full() ? nullptr : (m_ptr + m_size++); }
     const T*        operator [] (unsigned int index) const;
 
 protected:
@@ -62,7 +63,6 @@ class fixed_array
 {
 public:
                 fixed_array();
-    T*          push_back();
 
 private:
     T           m_buffer[SIZE];
@@ -73,14 +73,4 @@ template <typename T, unsigned int SIZE>
 fixed_array<T, SIZE>::fixed_array()
 : array_base(m_buffer, 0, SIZE)
 {
-}
-
-//------------------------------------------------------------------------------
-template <typename T, unsigned int SIZE>
-T* fixed_array<T, SIZE>::push_back()
-{
-    if (full())
-        return nullptr;
-
-    return m_buffer + m_size++;
 }
