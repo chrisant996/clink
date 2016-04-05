@@ -84,15 +84,3 @@ bool str_tokeniser_impl<T>::next_impl(const T*& out_start, int& out_length)
     out_length = int(end - start);
     return true;
 }
-
-//------------------------------------------------------------------------------
-template <typename T>
-void str_tokeniser_impl<T>::dequote(str_impl<T>& out) const
-{
-}
-
-//------------------------------------------------------------------------------
-template <typename T>
-void str_tokeniser_impl<T>::dequote(const T*& start, int& length) const
-{
-}
