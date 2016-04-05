@@ -210,7 +210,7 @@ void line_editor_2::update_init()
 //------------------------------------------------------------------------------
 void line_editor_2::update_internal()
 {
-    // Get line state from backend. MODE4
+    // Get line state from backend.
     const char* line_buffer = m_desc.backend->get_buffer();
     const int line_cursor = m_desc.backend->get_cursor_pos();
 
@@ -276,16 +276,17 @@ void line_editor_2::update_internal()
     }
     end_word->length = partial;
 
-    // SPAM!
+    // MODE4
     int j = 0;
+    puts("");
     for (auto word : words)
         printf("%02d:%02d,%02d ", j++, word.offset, word.length);
     puts("");
-    // SPAM!
+    // MODE4
 
     // Should we generate new matches?
     unsigned int next_match_key = int(end_word->offset) << 20;
-    next_match_key |= (partial & 0x3ff) << 10;
+    next_match_key |= (end_word->length & 0x3ff) << 10;
     if ((m_match_key & ~0x3ff) != next_match_key)
     {
         line_state state = { words, line_buffer };
@@ -293,12 +294,11 @@ void line_editor_2::update_internal()
         match_pipeline pipeline(m_match_system, m_matches);
         pipeline.generate(state);
 
-        printf("generate: %d\n", m_matches.get_match_count());
+        /* MODE4 */ printf("generate: %d\n", m_matches.get_match_count());
     }
 
     // Should we sort and select matches?
     next_match_key |= int(line_cursor) & 0x3ff;
-    printf("%08x > %08x\n", next_match_key, m_match_key);
     if (m_match_key != next_match_key)
     {
         m_match_key = next_match_key;
@@ -311,10 +311,10 @@ void line_editor_2::update_internal()
         pipeline.select("normal", needle.c_str());
         pipeline.sort("alpha");
 
-        printf("select & sort: '%s'\n", needle.c_str());
+        /* MODE4 */ printf("select & sort: '%s'\n", needle.c_str());
     }
 
-    draw_matches(m_matches);
+    /* MODE4 */ draw_matches(m_matches);
     m_state = state_backend_input;
 }
 
