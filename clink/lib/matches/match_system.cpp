@@ -110,7 +110,7 @@ bool match_system::add_generator(int priority, match_generator& generator)
         return false;
 
     --iter;
-    while (iter >= m_generators.begin())
+    while (iter >= m_generators.front())
     {
         if (int(iter->key) < priority)
             break;
