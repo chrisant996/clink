@@ -11,35 +11,43 @@ struct word
 {
     unsigned short          offset;
     unsigned short          length;
-    bool                    quoted;
 };
 
 //------------------------------------------------------------------------------
 class line_state
 {
 public:
-    const array_base<word>& words;
-    const char*             line;
-
+                            line_state(const array_base<word>& words, const char* line);
     unsigned int            get_word_count() const;
     bool                    get_word(unsigned int index, str_base& out) const;
     bool                    get_end_word(str_base& out) const;
+
+private:
+    const array_base<word>& m_words;
+    const char*             m_line;
 };
+
+//------------------------------------------------------------------------------
+inline line_state::line_state(const array_base<word>& words, const char* line)
+: m_words(words)
+, m_line(line)
+{
+}
 
 //------------------------------------------------------------------------------
 inline unsigned int line_state::get_word_count() const
 {
-    return words.size();
+    return m_words.size();
 }
 
 //------------------------------------------------------------------------------
 inline bool line_state::get_word(unsigned int index, str_base& out) const
 {
-    const word* word = words[index];
+    const word* word = m_words[index];
     if (word == nullptr)
         return false;
 
-    return out.concat(line + word->offset, word->length);
+    return out.concat(m_line + word->offset, word->length);
 }
 
 //------------------------------------------------------------------------------

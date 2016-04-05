@@ -124,6 +124,7 @@ private:
         state_done,
     };
 
+    void            collect_words(array_base<word>& words) const;
     void            update_init();
     void            update_internal();
     void            update_backend();
@@ -199,23 +200,10 @@ bool line_editor_2::update()
 }
 
 //------------------------------------------------------------------------------
-void line_editor_2::update_init()
+void line_editor_2::collect_words(array_base<word>& words) const
 {
-    m_desc.terminal->begin();
-    m_desc.backend->begin();
-
-    m_state = state_input;
-}
-
-//------------------------------------------------------------------------------
-void line_editor_2::update_internal()
-{
-    // Get line state from backend.
     const char* line_buffer = m_desc.backend->get_buffer();
     const int line_cursor = m_desc.backend->get_cursor_pos();
-
-    // Collect words.
-    fixed_array<word, 128> words;
 
     str_iter token_iter(line_buffer, line_cursor);
     str_tokeniser tokens(token_iter, m_desc.word_delims);
@@ -227,31 +215,25 @@ void line_editor_2::update_internal()
         if (!tokens.next(start, length))
             break;
 
-        word* word = words.push_back();
-        if (word == nullptr)
-            word = words.back();
-
-        bool quoted = (start[0] == m_desc.quote_char[0]);
-        start += quoted;
-        length -= quoted;
-
-        *word = { short(start - line_buffer), length, quoted };
+        // Add the word.
+        words.push_back();
+        *(words.back()) = { short(start - line_buffer), length };
 
         // Find the best-fit delimiter.
         /* MODE4
-           const char* best_delim = word_delims;
-           const char* c = start - 1;
-           while (c > line_buffer)
-           {
-           const char* delim = strchr(word_delims, *c);
-           if (delim == nullptr)
-           break;
+        const char* best_delim = word_delims;
+        const char* c = words
+        while (c > line_buffer)
+        {
+            const char* delim = strchr(word_delims, *c);
+            if (delim == nullptr)
+                break;
 
-           best_delim = max(delim, best_delim);
-           --c;
-           }
-           word->delim = *best_delim;
-         */
+            best_delim = max(delim, best_delim);
+            --c;
+        }
+        word->delim = *best_delim;
+        MODE4 */
     }
 
     // Add an empty word if the cursor is at the beginning of one.
@@ -260,6 +242,20 @@ void line_editor_2::update_internal()
     {
         words.push_back();
         *(words.back()) = { line_cursor };
+    }
+
+    // Adjust for quotes.
+    for (word& word : words)
+    {
+        const char* start = line_buffer + word.offset;
+
+        int start_quoted = (start[0] == m_desc.quote_char[0]);
+        int end_quoted = 0;
+        if (word.length > 1)
+            end_quoted = (start[word.length - 1] == m_desc.quote_char[0]);
+
+        word.offset += start_quoted;
+        word.length -= start_quoted + end_quoted;
     }
 
     // Adjust the completing word for partiality.
@@ -283,29 +279,47 @@ void line_editor_2::update_internal()
         printf("%02d:%02d,%02d ", j++, word.offset, word.length);
     puts("");
     // MODE4
+}
+
+//------------------------------------------------------------------------------
+void line_editor_2::update_init()
+{
+    m_desc.terminal->begin();
+    m_desc.backend->begin();
+
+    m_state = state_input;
+}
+
+//------------------------------------------------------------------------------
+void line_editor_2::update_internal()
+{
+    // Collect words.
+    fixed_array<word, 128> words;
+    collect_words(words);
 
     // Should we generate new matches?
+    const word* end_word = words.back();
     unsigned int next_match_key = int(end_word->offset) << 20;
     next_match_key |= (end_word->length & 0x3ff) << 10;
     if ((m_match_key & ~0x3ff) != next_match_key)
     {
-        line_state state = { words, line_buffer };
-
         match_pipeline pipeline(m_match_system, m_matches);
-        pipeline.generate(state);
+        pipeline.generate({ words, m_desc.backend->get_buffer() });
 
         /* MODE4 */ printf("generate: %d\n", m_matches.get_match_count());
     }
 
     // Should we sort and select matches?
-    next_match_key |= int(line_cursor) & 0x3ff;
+    const int cursor = m_desc.backend->get_cursor_pos();
+    next_match_key |= int(cursor) & 0x3ff;
     if (m_match_key != next_match_key)
     {
         m_match_key = next_match_key;
 
         str<64> needle;
         int needle_start = end_word->offset + end_word->length;
-        needle.concat(line_buffer + needle_start, line_cursor - needle_start);
+        const char* line = m_desc.backend->get_buffer();
+        needle.concat(line + needle_start, cursor - needle_start);
 
         match_pipeline pipeline(m_match_system, m_matches);
         pipeline.select("normal", needle.c_str());
