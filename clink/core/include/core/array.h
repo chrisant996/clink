@@ -62,15 +62,8 @@ class fixed_array
     : public array_base<T>
 {
 public:
-                fixed_array();
+                fixed_array() : array_base(m_buffer, 0, SIZE) {}
 
 private:
     T           m_buffer[SIZE];
 };
-
-//------------------------------------------------------------------------------
-template <typename T, unsigned int SIZE>
-fixed_array<T, SIZE>::fixed_array()
-: array_base(m_buffer, 0, SIZE)
-{
-}
