@@ -34,6 +34,7 @@ static void clear_line()
 //------------------------------------------------------------------------------
 int ctrl_c(int count, int invoking_key)
 {
+    // MODE4 - cmd.exe only.
     DWORD mode;
 
     clear_line();
