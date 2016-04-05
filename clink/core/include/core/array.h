@@ -8,13 +8,27 @@ template <typename T>
 class array_base
 {
 public:
+    class iter
+    {
+    public:
+                    iter(T* t) : m_t(t) { }
+                    operator T* ()      { return m_t; }
+        void        operator ++ ()      { ++m_t; }
+        T&          operator * ()       { return *m_t; }
+        bool        operator != (T* t)  { return t != m_t; }
+
+    private:
+        T*          m_t;
+    };
+
                     array_base(T* ptr, unsigned int size, unsigned int capacity);
-    T*              begin() const    { return m_ptr; }
-    T*              end() const      { return m_ptr + m_size; }
+    iter            begin() const    { return m_ptr; }
+    iter            end() const      { return m_ptr + m_size; }
     unsigned int    size() const     { return m_size; }
     unsigned int    capacity() const { return m_size; }
     bool            empty() const    { return !m_size; }
     bool            full() const     { return (m_size == m_capacity); }
+    T*              front() const    { return m_ptr; }
     T*              back() const;
     const T*        operator [] (unsigned int index) const;
 
