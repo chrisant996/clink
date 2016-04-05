@@ -11,11 +11,10 @@ public:
     class iter
     {
     public:
-                    iter(T* t) : m_t(t) { }
-                    operator T* ()      { return m_t; }
-        void        operator ++ ()      { ++m_t; }
-        T&          operator * ()       { return *m_t; }
-        bool        operator != (T* t)  { return t != m_t; }
+                    iter(T* t) : m_t(t)               { }
+        void        operator ++ ()                    { ++m_t; }
+        T&          operator * () const               { return *m_t; }
+        bool        operator != (const iter& i) const { return i.m_t != m_t; }
 
     private:
         T*          m_t;
