@@ -11,6 +11,7 @@ struct word
 {
     unsigned short          offset;
     unsigned short          length;
+    bool                    quoted;
 };
 
 //------------------------------------------------------------------------------

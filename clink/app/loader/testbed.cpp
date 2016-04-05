@@ -102,6 +102,7 @@ public:
 
     struct desc
     {
+        const char* quote_char;
         const char* word_delims;
         const char* partial_delims;
         terminal*   terminal;
@@ -218,6 +219,7 @@ void line_editor_2::update_internal()
 
     str_iter token_iter(line_buffer, line_cursor);
     str_tokeniser tokens(token_iter, m_desc.word_delims);
+    tokens.add_quote_pair(m_desc.quote_char);
     while (1)
     {
         const char* start = nullptr;
@@ -229,7 +231,11 @@ void line_editor_2::update_internal()
         if (word == nullptr)
             word = words.back();
 
-        *word = { short(start - line_buffer), length };
+        bool quoted = (start[0] == m_desc.quote_char[0]);
+        start += quoted;
+        length -= quoted;
+
+        *word = { short(start - line_buffer), length, quoted };
 
         // Find the best-fit delimiter.
         /* MODE4
@@ -250,8 +256,7 @@ void line_editor_2::update_internal()
 
     // Add an empty word if the cursor is at the beginning of one.
     word* end_word = words.back();
-    if (end_word == nullptr ||
-            end_word->offset + end_word->length < line_cursor)
+    if (!end_word || end_word->offset + end_word->length < line_cursor)
     {
         words.push_back();
         *(words.back()) = { line_cursor };
@@ -373,6 +378,7 @@ int testbed(int, char**)
     rl_backend backend;
 
     line_editor_2::desc desc = {};
+    desc.quote_char = "\"";
     desc.word_delims = " \t=";
     desc.partial_delims = "\\/:";
     desc.terminal = &terminal;
