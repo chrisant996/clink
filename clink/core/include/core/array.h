@@ -28,7 +28,7 @@ public:
     bool            empty() const    { return !m_size; }
     bool            full() const     { return (m_size == m_capacity); }
     T*              front() const    { return m_ptr; }
-    T*              back() const;
+    T*              back() const     { return empty() ? nullptr : (m_ptr + m_size - 1); }
     const T*        operator [] (unsigned int index) const;
 
 protected:
@@ -44,16 +44,6 @@ array_base<T>::array_base(T* ptr, unsigned int size, unsigned int capacity)
 , m_size(size)
 , m_capacity(capacity)
 {
-}
-
-//------------------------------------------------------------------------------
-template <typename T>
-T* array_base<T>::back() const
-{
-    if (empty())
-        return nullptr;
-
-    return m_ptr + m_size - 1;
 }
 
 //------------------------------------------------------------------------------
