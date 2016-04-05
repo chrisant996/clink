@@ -27,6 +27,7 @@ private:
 
     typedef fixed_array<quote, 4> quotes;
 
+    int                 get_right_quote(int left) const;
     bool                next_impl(const T*& out_start, int& out_length);
     quotes              m_quotes;
     str_iter_impl<T>    m_iter;
@@ -60,7 +61,7 @@ bool str_tokeniser_impl<T>::add_quotes(const char* pair)
     if (q == nullptr)
         return false;
 
-    *q = { pair[0], pair[1] };
+    *q = { pair[0], (pair[1] ? pair[1] : pair[0]) };
     return true;
 }
 

@@ -59,13 +59,12 @@ TEST_CASE("str_tokeniser : quote")
 {
     str<> s;
 
-    str_tokeniser t("'abc';(abc);''()abc()'';'a'(bc)", ";");
+    str_tokeniser t("'-abc';(-abc);'-a)b;c", ";-");
     t.add_quotes("'");
     t.add_quotes("()");
 
-    REQUIRE(t.next(s)); REQUIRE(s.equals("abc") == true);
-    REQUIRE(t.next(s)); REQUIRE(s.equals("abc") == true);
-    REQUIRE(t.next(s)); REQUIRE(s.equals("abc") == true);
-    REQUIRE(t.next(s)); REQUIRE(s.equals("abc") == true);
+    REQUIRE(t.next(s)); REQUIRE(s.equals("'-abc'") == true);
+    REQUIRE(t.next(s)); REQUIRE(s.equals("(-abc)") == true);
+    REQUIRE(t.next(s)); REQUIRE(s.equals("'-a)b;c") == true);
     REQUIRE(t.next(s) == false);
 }

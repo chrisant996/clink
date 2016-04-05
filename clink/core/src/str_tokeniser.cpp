@@ -50,6 +50,17 @@ bool str_tokeniser_impl<wchar_t>::next(const wchar_t*& start, int& length)
 
 //------------------------------------------------------------------------------
 template <typename T>
+int str_tokeniser_impl<T>::get_right_quote(int left) const
+{
+    for (const quote& iter : m_quotes)
+        if (iter.left == left)
+            return iter.right;
+
+    return 0;
+}
+
+//------------------------------------------------------------------------------
+template <typename T>
 bool str_tokeniser_impl<T>::next_impl(const T*& out_start, int& out_length)
 {
     // Skip initial delimiters.
@@ -64,11 +75,20 @@ bool str_tokeniser_impl<T>::next_impl(const T*& out_start, int& out_length)
     // Extract the delimited string.
     const T* start = m_iter.get_pointer();
 
+    int quote_close = 0;
     while (int c = m_iter.peek())
     {
+        if (quote_close)
+        {
+            quote_close = (quote_close == c) ? 0 : quote_close;
+            m_iter.next();
+            continue;
+        }
+
         if (strchr(m_delims, c))
             break;
 
+        quote_close = get_right_quote(c);
         m_iter.next();
     }
 
