@@ -4,22 +4,31 @@
 #pragma once
 
 //------------------------------------------------------------------------------
-class terminal
+class terminal_in
 {
 public:
-    virtual         ~terminal();
-    virtual void    begin() = 0;
-    virtual void    end() = 0;
     virtual int     read() = 0;
+};
+
+//------------------------------------------------------------------------------
+class terminal_out
+{
+public:
     virtual void    write(const char* chars, int length) = 0;
     virtual void    flush() = 0;
     virtual int     get_columns() const = 0;
     virtual int     get_rows() const = 0;
-
-private:
 };
 
 //------------------------------------------------------------------------------
-inline terminal::~terminal()
+class terminal
+    : public terminal_in
+    , public terminal_out
 {
-}
+public:
+    virtual         ~terminal() {}
+    virtual void    begin() = 0;
+    virtual void    end() = 0;
+
+private:
+};
