@@ -50,10 +50,7 @@ array_base<T>::array_base(T* ptr, unsigned int size, unsigned int capacity)
 template <typename T>
 const T* array_base<T>::operator [] (unsigned int index) const
 {
-    if (index >= capacity())
-        return nullptr;
-
-    return m_ptr + index;
+    return (index >= capacity()) ? nullptr : (m_ptr + index);
 }
 
 
