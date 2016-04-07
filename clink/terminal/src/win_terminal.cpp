@@ -279,7 +279,7 @@ void win_terminal_in::push(unsigned int value)
 }
 
 //------------------------------------------------------------------------------
-unsigned char win_terminal_in::pop()
+inline unsigned char win_terminal_in::pop()
 {
     if (!m_buffer_count)
         return 0xff;
@@ -287,8 +287,7 @@ unsigned char win_terminal_in::pop()
     unsigned char value = m_buffer[m_buffer_head];
 
     --m_buffer_count;
-    ++m_buffer_head;
-    m_buffer_head &= sizeof_array(m_buffer) - 1;
+    m_buffer_head = (m_buffer_head + 1) & (sizeof_array(m_buffer) - 1);
 
     return value;
 }
@@ -414,7 +413,7 @@ int win_terminal::read()
 //------------------------------------------------------------------------------
 void win_terminal::flush()
 {
-    return win_terminal_out::flush();
+    win_terminal_out::flush();
 }
 
 //------------------------------------------------------------------------------
