@@ -82,7 +82,7 @@ private:
     void            bind_embedded_inputrc();
     void            load_user_inputrc();
     void            add_funmap_entries();
-    char**          completion(const char* word, int start, int end);
+    char*           completion(const char*, int);
     void            display_matches(char**, int, int);
     rl_scroller     m_scroller;
     matches         m_matches;
@@ -111,7 +111,7 @@ rl_line_editor::rl_line_editor(const desc& desc)
     bind_embedded_inputrc();
     load_user_inputrc();
 
-    rl_attempted_completion_function = rl_delegate(this, rl_line_editor, completion);
+    rl_completion_entry_function = rl_delegate(this, rl_line_editor, completion);
     rl_completion_display_matches_hook = rl_delegate(this, rl_line_editor, display_matches);
 
     history_inhibit_expansion_function = history_expand_control;
@@ -211,59 +211,16 @@ void rl_line_editor::load_user_inputrc()
 }
 
 //------------------------------------------------------------------------------
-char** rl_line_editor::completion(const char* word, int start, int end)
+char* rl_line_editor::completion(const char*, int)
 {
-#if MODE4
-    int str_compare_mode = str_compare_scope::caseless;
-    if (_rl_completion_case_map)
-        str_compare_mode = str_compare_scope::relaxed;
-
-    str_compare_scope _(str_compare_mode);
-
-    m_matches.reset();
-    get_match_system().generate_matches(rl_line_buffer, rl_point, m_matches);
-
-    // Clink has generated all matches and will take care of suffices/quotes.
-    rl_attempted_completion_over = 1;
-    rl_completion_suppress_append = 1;
-    rl_completion_suppress_quote = 1;
-
-    if (m_matches.get_match_count() == 0)
-        return nullptr;
-
-    char** matches = (char**)malloc(sizeof(char*) * (m_matches.get_match_count() + 2));
-
-    // Lowest common denominator
-    str<MAX_PATH> lcd;
-    m_matches.get_match_lcd(lcd);
-    matches[0] = (char*)malloc(lcd.length() + 1);
-    strcpy(matches[0], lcd.c_str());
-
-    // Matches.
-    ++matches;
-    for (int i = 0, e = m_matches.get_match_count(); i < e; ++i)
-    {
-        const char* match = m_matches.get_match(i);
-        matches[i] = (char*)malloc(strlen(match) + 1);
-        strcpy(matches[i], match);
-    }
-    matches[m_matches.get_match_count()] = nullptr;
-
-    return --matches;
-#endif
+    /* disabled */
     return nullptr;
 }
 
 //------------------------------------------------------------------------------
-void rl_line_editor::display_matches(char** matches, int match_count, int longest)
+void rl_line_editor::display_matches(char**, int, int)
 {
-    rl_crlf();
-
-    if (match_printer* printer = get_match_printer())
-        printer->print(m_matches);
-
-    rl_forced_update_display();
-    rl_display_fixed = 1;
+    /* disabled */
 }
 
 
