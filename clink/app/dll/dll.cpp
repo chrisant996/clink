@@ -21,7 +21,7 @@
 #include <lua/lua_root.h>
 #include <lua/lua_script_loader.h>
 #include <matches/column_printer.h>
-#include <terminal/ecma48_terminal.h>
+#include <terminal/win_terminal.h>
 
 extern "C" {
 #include <lauxlib.h>

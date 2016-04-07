@@ -2,7 +2,7 @@
 // License: http://opensource.org/licenses/MIT
 
 #include "pch.h"
-#include "ecma48_terminal.h"
+#include "win_terminal.h"
 
 #include <core/base.h>
 #include <core/log.h>
@@ -67,7 +67,6 @@ inline int win_terminal_in::read()
 //------------------------------------------------------------------------------
 void win_terminal_in::read_console()
 {
-loop: // MODE4 - use tail recursion.
     // Check for a new buffer size for simulated SIGWINCH signals.
 // MODE4
     {
@@ -83,7 +82,8 @@ loop: // MODE4 - use tail recursion.
                 on_terminal_resize();
     
             g_last_buffer_size = i;
-            goto loop;
+            read_console();
+            return;
         }
     }
 // MODE4
@@ -93,7 +93,10 @@ loop: // MODE4 - use tail recursion.
     INPUT_RECORD record;
     ReadConsoleInputW(m_stdin, &record, 1, &unused);
     if (record.EventType != KEY_EVENT)
-        goto loop;
+    {
+        read_console();
+        return;
+    }
 
 // MODE4
     if (record.EventType == WINDOW_BUFFER_SIZE_EVENT)
@@ -105,7 +108,8 @@ loop: // MODE4 - use tail recursion.
         GetConsoleScreenBufferInfo(handle_stdout, &csbi);
 
         g_last_buffer_size = (csbi.dwSize.X << 16) | csbi.dwSize.Y;
-        goto loop;
+        read_console();
+        return;
     }
 // MODE4
 
@@ -125,7 +129,8 @@ loop: // MODE4 - use tail recursion.
             return;
         }
 
-        goto loop;
+        read_console();
+        return;
     }
 
     // Windows supports an AltGr substitute which we check for here. As it
@@ -200,10 +205,14 @@ loop: // MODE4 - use tail recursion.
                 return;
             }
 
-            goto loop;
+            read_console();
+            return;
         }
         else if (!(key_flags & CTRL_PRESSED))
-            goto loop;
+        {
+            read_console();
+            return;
+        }
 
         // This builds Ctrl-<key> map to match that as described by Readline's
         // source for the emacs/vi keymaps.
@@ -213,7 +222,7 @@ loop: // MODE4 - use tail recursion.
         else if (key_vk == 0x32)        key_vk = 0;
         else if (key_vk == 0x36)        key_vk = 0x1e;
         else if (key_vk == 0xbd)        key_vk = 0x1f;
-        else                            goto loop;
+        else                            return read_console();
         #undef CONTAINS
 
         push(key_char);

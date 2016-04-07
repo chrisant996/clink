@@ -10,7 +10,7 @@
 #include <matches/column_printer.h>
 #include <matches/match_pipeline.h>
 #include <matches/matches.h>
-#include <terminal/ecma48_terminal.h>
+#include <terminal/win_terminal.h>
 
 void draw_matches(const matches&);
 
