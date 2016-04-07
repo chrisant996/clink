@@ -7,6 +7,7 @@
 class terminal_in
 {
 public:
+    virtual void    select() = 0;
     virtual int     read() = 0;
 };
 

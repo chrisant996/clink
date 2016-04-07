@@ -54,14 +54,20 @@ inline void win_terminal_in::end()
 }
 
 //------------------------------------------------------------------------------
+inline void win_terminal_in::select()
+{
+    if (!m_buffer_count)
+        read_console();
+}
+
+//------------------------------------------------------------------------------
 inline int win_terminal_in::read()
 {
     int c = pop();
     if (c != 0xff)
         return c;
     
-    read_console();
-    return pop();
+    return 0x04; // EOT; "should never happen"
 }
 
 //------------------------------------------------------------------------------
@@ -391,6 +397,12 @@ void win_terminal::end()
 {
     win_terminal_out::begin();
     win_terminal_in::begin();
+}
+
+//------------------------------------------------------------------------------
+void win_terminal::select()
+{
+    win_terminal_in::select();
 }
 
 //------------------------------------------------------------------------------

@@ -12,6 +12,7 @@ class win_terminal_in
 protected:
     void            begin();
     void            end();
+    void            select();
     int             read();
     void            read_console();
     void            push(unsigned int value);
@@ -58,6 +59,7 @@ class win_terminal
 public:
     virtual void    begin() override;
     virtual void    end() override;
+    virtual void    select() override;
     virtual int     read() override;
     virtual void    write(const char* chars, int length) override;
     virtual void    flush() override;
