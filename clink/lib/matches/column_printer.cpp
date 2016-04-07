@@ -111,6 +111,7 @@ void column_printer::print(const matches& matches)
             const char* match = matches.get_match(index);
             term->write(match, int(strlen(match)));
 
+            displayable = match; // MODE4
             for (int i = longest - displayable.char_count(); i >= 0; --i)
                 term->write(" ", 1);
 
