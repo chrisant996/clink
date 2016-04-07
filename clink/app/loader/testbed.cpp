@@ -383,7 +383,7 @@ int testbed(int, char**)
     str_compare_scope _(str_compare_scope::relaxed);
 
     // MODE4
-    ecma48_terminal terminal;
+    win_terminal terminal;
     column_printer printer(&terminal);
     line_editor::desc _desc = { "testbed", &terminal, &printer };
     auto* line_editor = create_rl_line_editor(_desc);

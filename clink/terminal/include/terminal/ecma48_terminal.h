@@ -6,33 +6,56 @@
 #include "terminal.h"
 #include "ecma48_iter.h"
 
-#include <Windows.h>
-
 //------------------------------------------------------------------------------
-class xterm_input
+class win_terminal_in
 {
-public:
-                    xterm_input();
+protected:
+    void            begin();
+    void            end();
     int             read();
-
-private:
     void            read_console();
     void            push(unsigned int value);
     unsigned char   pop();
-    unsigned char   m_buffer_head;
-    unsigned char   m_buffer_count;
+
+private:
+    void*           m_stdin = nullptr;
+    unsigned long   m_prev_flags = 0;
+    unsigned char   m_buffer_head = 0;
+    unsigned char   m_buffer_count = 0;
     unsigned char   m_buffer[8]; // must be power of two.
 };
 
 
 
 //------------------------------------------------------------------------------
-class ecma48_terminal
+class win_terminal_out
+{
+protected:
+    void            begin();
+    void            end();
+    void            write(const char* chars, int length);
+    void            write(const wchar_t* chars, int length);
+    void            flush();
+    int             get_columns() const;
+    int             get_rows() const;
+    unsigned char   get_default_attr() const;
+    unsigned char   get_attr() const;
+    void            set_attr(unsigned char attr);
+
+private:
+    void*           m_stdout = nullptr;
+    unsigned char   m_default_attr = 0x07;
+    unsigned char   m_attr = 0;
+};
+
+
+//------------------------------------------------------------------------------
+class win_terminal
     : public terminal
+    , public win_terminal_in
+    , public win_terminal_out
 {
 public:
-                    ecma48_terminal();
-    virtual         ~ecma48_terminal();
     virtual void    begin() override;
     virtual void    end() override;
     virtual int     read() override;
@@ -45,12 +68,7 @@ private:
     void            write_csi(const ecma48_code& code);
     void            write_sgr(const ecma48_csi& csi);
     void            write_c0(int c0);
-    void            write_impl(const char* chars, int length);
     void            check_sgr_support();
-    HANDLE          m_handle;
-    xterm_input     m_xterm_input;
     ecma48_state    m_state;
-    int             m_default_attr;
-    int             m_attr;
-    bool            m_enable_sgr;
+    bool            m_enable_sgr = true;
 };

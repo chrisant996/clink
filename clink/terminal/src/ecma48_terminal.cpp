@@ -36,14 +36,25 @@ void            on_terminal_resize(); // MODE4
 
 
 //------------------------------------------------------------------------------
-xterm_input::xterm_input()
-: m_buffer_head(0)
-, m_buffer_count(0)
+inline void win_terminal_in::begin()
 {
+    m_stdin = GetStdHandle(STD_INPUT_HANDLE);
+
+    // Clear 'processed input' flag so key presses such as Ctrl-C and Ctrl-S
+    // aren't swallowed. We also want events about window size changes.
+    GetConsoleMode(m_stdin, &m_prev_flags);
+    SetConsoleMode(m_stdin, ENABLE_WINDOW_INPUT);
 }
 
 //------------------------------------------------------------------------------
-int xterm_input::read()
+inline void win_terminal_in::end()
+{
+    SetConsoleMode(m_stdin, m_prev_flags);
+    m_stdin = nullptr;
+}
+
+//------------------------------------------------------------------------------
+inline int win_terminal_in::read()
 {
     int c = pop();
     if (c != 0xff)
@@ -54,23 +65,9 @@ int xterm_input::read()
 }
 
 //------------------------------------------------------------------------------
-void xterm_input::read_console()
+void win_terminal_in::read_console()
 {
-    // Clear 'processed input' flag so key presses such as Ctrl-C and Ctrl-S
-    // aren't swallowed. We also want events about window size changes.
-    HANDLE handle_stdin = GetStdHandle(STD_INPUT_HANDLE);
-
-    struct flags_scope
-    {
-        flags_scope(HANDLE h) : handle(h)   { GetConsoleMode(handle, &prev); }
-        ~flags_scope()                      { SetConsoleMode(handle, prev); }
-        DWORD prev;
-        HANDLE handle;
-    } _(handle_stdin);
-
-    SetConsoleMode(handle_stdin, ENABLE_WINDOW_INPUT);
-
-loop:
+loop: // MODE4 - use tail recursion.
     // Check for a new buffer size for simulated SIGWINCH signals.
 // MODE4
     {
@@ -94,7 +91,7 @@ loop:
     // Fresh read from the console.
     DWORD unused;
     INPUT_RECORD record;
-    ReadConsoleInputW(handle_stdin, &record, 1, &unused);
+    ReadConsoleInputW(m_stdin, &record, 1, &unused);
     if (record.EventType != KEY_EVENT)
         goto loop;
 
@@ -240,7 +237,7 @@ loop:
 }
 
 //------------------------------------------------------------------------------
-void xterm_input::push(unsigned int value)
+void win_terminal_in::push(unsigned int value)
 {
     static const unsigned char mask = sizeof_array(m_buffer) - 1;
 
@@ -267,7 +264,7 @@ void xterm_input::push(unsigned int value)
 }
 
 //------------------------------------------------------------------------------
-unsigned char xterm_input::pop()
+unsigned char win_terminal_in::pop()
 {
     if (!m_buffer_count)
         return 0xff;
@@ -284,43 +281,135 @@ unsigned char xterm_input::pop()
 
 
 //------------------------------------------------------------------------------
-ecma48_terminal::ecma48_terminal()
-: m_handle(nullptr)
-, m_default_attr(0)
-, m_attr(0)
-, m_enable_sgr(true)
+inline void win_terminal_out::begin()
 {
-}
-
-//------------------------------------------------------------------------------
-ecma48_terminal::~ecma48_terminal()
-{
-}
-
-//------------------------------------------------------------------------------
-void ecma48_terminal::begin()
-{
-    m_handle = GetStdHandle(STD_OUTPUT_HANDLE);
+    m_stdout = GetStdHandle(STD_OUTPUT_HANDLE);
     CONSOLE_SCREEN_BUFFER_INFO csbi;
-    GetConsoleScreenBufferInfo(m_handle, &csbi);
-    m_default_attr = csbi.wAttributes;
+    GetConsoleScreenBufferInfo(m_stdout, &csbi);
+    m_default_attr = csbi.wAttributes & 0xff;
     m_attr = m_default_attr;
 }
 
 //------------------------------------------------------------------------------
-void ecma48_terminal::end()
+inline void win_terminal_out::end()
 {
-    SetConsoleTextAttribute(m_handle, m_default_attr);
+    SetConsoleTextAttribute(m_stdout, m_default_attr);
+    m_stdout = nullptr;
 }
 
 //------------------------------------------------------------------------------
-int ecma48_terminal::read()
+void win_terminal_out::write(const char* chars, int length)
 {
-    return m_xterm_input.read();
+    str_iter iter(chars, length);
+    while (length > 0)
+    {
+        wchar_t wbuf[256];
+        int n = min<int>(sizeof_array(wbuf), length + 1);
+        n = to_utf16(wbuf, n, iter);
+
+        write(wbuf, n);
+
+        n = int(iter.get_pointer() - chars);
+        length -= n;
+        chars += n;
+    }
 }
 
 //------------------------------------------------------------------------------
-void ecma48_terminal::write_csi(const ecma48_code& code)
+inline void win_terminal_out::write(const wchar_t* chars, int length)
+{
+    DWORD written;
+    WriteConsoleW(m_stdout, chars, length, &written, nullptr);
+}
+
+//------------------------------------------------------------------------------
+inline void win_terminal_out::flush()
+{
+    // When writing to the console conhost.exe will restart the cursor blink
+    // timer and hide it which can be disorientating, especially when moving
+    // around a line. The below will make sure it stays visible.
+    CONSOLE_SCREEN_BUFFER_INFO csbi;
+    GetConsoleScreenBufferInfo(m_stdout, &csbi);
+    SetConsoleCursorPosition(m_stdout, csbi.dwCursorPosition);
+}
+
+//------------------------------------------------------------------------------
+inline int win_terminal_out::get_columns() const
+{
+    CONSOLE_SCREEN_BUFFER_INFO csbi;
+    GetConsoleScreenBufferInfo(m_stdout, &csbi);
+    return csbi.dwSize.X;
+}
+
+//------------------------------------------------------------------------------
+inline int win_terminal_out::get_rows() const
+{
+    CONSOLE_SCREEN_BUFFER_INFO csbi;
+    GetConsoleScreenBufferInfo(m_stdout, &csbi);
+    return (csbi.srWindow.Bottom - csbi.srWindow.Top) + 1;
+}
+
+//------------------------------------------------------------------------------
+inline unsigned char win_terminal_out::get_default_attr() const
+{
+    return m_default_attr;
+}
+
+//------------------------------------------------------------------------------
+inline unsigned char win_terminal_out::get_attr() const
+{
+    return m_attr;
+}
+
+//------------------------------------------------------------------------------
+inline void win_terminal_out::set_attr(unsigned char attr)
+{
+    m_attr = attr;
+    SetConsoleTextAttribute(m_stdout, attr);
+}
+
+
+
+//------------------------------------------------------------------------------
+void win_terminal::begin()
+{
+    win_terminal_in::begin();
+    win_terminal_out::begin();
+}
+
+//------------------------------------------------------------------------------
+void win_terminal::end()
+{
+    win_terminal_out::begin();
+    win_terminal_in::begin();
+}
+
+//------------------------------------------------------------------------------
+int win_terminal::read()
+{
+    return win_terminal_in::read();
+}
+
+//------------------------------------------------------------------------------
+void win_terminal::flush()
+{
+    return win_terminal_out::flush();
+}
+
+//------------------------------------------------------------------------------
+int win_terminal::get_columns() const
+{
+    return win_terminal_out::get_columns();
+}
+
+//------------------------------------------------------------------------------
+int win_terminal::get_rows() const
+{
+    return win_terminal_out::get_rows();
+}
+
+//------------------------------------------------------------------------------
+void win_terminal::write_csi(const ecma48_code& code)
 {
     const ecma48_csi& csi = *(code.csi);
     switch (csi.func)
@@ -333,11 +422,11 @@ void ecma48_terminal::write_csi(const ecma48_code& code)
         return;
     }
 
-    write_impl(code.str, code.length); 
+    win_terminal_out::write(code.str, code.length); 
 }
 
 //------------------------------------------------------------------------------
-void ecma48_terminal::write_c0(int c0)
+void win_terminal::write_c0(int c0)
 {
     switch (c0)
     {
@@ -348,59 +437,36 @@ void ecma48_terminal::write_c0(int c0)
     default:
         {
             wchar_t c = wchar_t(c0);
-            DWORD written;
-            WriteConsoleW(m_handle, &c, 1, &written, nullptr);
+            win_terminal_out::write(&c, 1);
         }
     }
 }
 
 //------------------------------------------------------------------------------
-void ecma48_terminal::write_impl(const char* chars, int length)
-{
-    str_iter iter(chars, length);
-    while (length > 0)
-    {
-        wchar_t wbuf[256];
-        int n = min<int>(sizeof_array(wbuf), length + 1);
-        n = to_utf16(wbuf, n, iter);
-
-        DWORD written;
-        WriteConsoleW(m_handle, wbuf, n, &written, nullptr);
-
-        n = int(iter.get_pointer() - chars);
-        length -= n;
-        chars += n;
-    }
-}
-
-//------------------------------------------------------------------------------
-void ecma48_terminal::write(const char* chars, int length)
+void win_terminal::write(const char* chars, int length)
 {
     ecma48_iter iter(chars, m_state, length);
     while (const ecma48_code* code = iter.next())
     {
         switch (code->type)
         {
-        case ecma48_code::type_chars: write_impl(code->str, code->length); break;
-        case ecma48_code::type_c0:    write_c0(code->c0);                  break;
-        case ecma48_code::type_csi:   write_csi(*code);                    break;
+        case ecma48_code::type_chars:
+            win_terminal_out::write(code->str, code->length);
+            break;
+
+        case ecma48_code::type_c0:
+            write_c0(code->c0);
+            break;
+
+        case ecma48_code::type_csi:
+            write_csi(*code);
+            break;
         }
     }
 }
 
 //------------------------------------------------------------------------------
-void ecma48_terminal::flush()
-{
-    // When writing to the console conhost.exe will restart the cursor blink
-    // timer and hide it which can be disorientating, especially when moving
-    // around a line. The below will make sure it stays visible.
-    CONSOLE_SCREEN_BUFFER_INFO csbi;
-    GetConsoleScreenBufferInfo(m_handle, &csbi);
-    SetConsoleCursorPosition(m_handle, csbi.dwCursorPosition);
-}
-
-//------------------------------------------------------------------------------
-void ecma48_terminal::check_sgr_support()
+void win_terminal::check_sgr_support()
 {
     // Check for the presence of known third party tools that also provide ANSI
     // escape code support (MODE4)
@@ -431,76 +497,61 @@ void ecma48_terminal::check_sgr_support()
 }
 
 //------------------------------------------------------------------------------
-int ecma48_terminal::get_columns() const
+void win_terminal::write_sgr(const ecma48_csi& csi)
 {
-    CONSOLE_SCREEN_BUFFER_INFO csbi;
-    GetConsoleScreenBufferInfo(m_handle, &csbi);
-    return csbi.dwSize.X;
-}
-
-//------------------------------------------------------------------------------
-int ecma48_terminal::get_rows() const
-{
-    CONSOLE_SCREEN_BUFFER_INFO csbi;
-    GetConsoleScreenBufferInfo(m_handle, &csbi);
-    return (csbi.srWindow.Bottom - csbi.srWindow.Top) + 1;
-}
-
-//------------------------------------------------------------------------------
-void ecma48_terminal::write_sgr(const ecma48_csi& csi)
-{
-    static const int sgr_to_attr[] = { 0, 4, 2, 6, 1, 5, 3, 7 };
+    static const unsigned char sgr_to_attr[] = { 0, 4, 2, 6, 1, 5, 3, 7 };
 
     // Process each code that is supported.
+    unsigned char attr = get_attr();
     for (int i = 0; i < csi.param_count; ++i)
     {
         unsigned int param = csi.params[i];
 
         if (param == 0) // reset
         {
-            m_attr = m_default_attr;
+            attr = get_default_attr();
         }
         else if (param == 1) // fg intensity (bright)
         {
-            m_attr |= 0x08;
+            attr |= 0x08;
         }
         else if (param == 2 || param == 22) // fg intensity (normal)
         {
-            m_attr &= ~0x08;
+            attr &= ~0x08;
         }
         else if (param == 4) // bg intensity (bright)
         {
-            m_attr |= 0x80;
+            attr |= 0x80;
         }
         else if (param == 24) // bg intensity (normal)
         {
-            m_attr &= ~0x80;
+            attr &= ~0x80;
         }
         else if (param - 30 < 8) // fg colour
         {
-            m_attr = (m_attr & 0xf8) | sgr_to_attr[(param - 30) & 7];
+            attr = (attr & 0xf8) | sgr_to_attr[(param - 30) & 7];
         }
         else if (param - 90 < 8) // fg colour
         {
-            m_attr |= 0x08;
-            m_attr = (m_attr & 0xf8) | sgr_to_attr[(param - 90) & 7];
+            attr |= 0x08;
+            attr = (attr & 0xf8) | sgr_to_attr[(param - 90) & 7];
         }
         else if (param == 39) // default fg colour
         {
-            m_attr = (m_attr & 0xf8) | (m_default_attr & 0x07);
+            attr = (attr & 0xf8) | (get_default_attr() & 0x07);
         }
         else if (param - 40 < 8) // bg colour
         {
-            m_attr = (m_attr & 0x8f) | (sgr_to_attr[(param - 40) & 7] << 4);
+            attr = (attr & 0x8f) | (sgr_to_attr[(param - 40) & 7] << 4);
         }
         else if (param - 100 < 8) // bg colour
         {
-            m_attr |= 0x80;
-            m_attr = (m_attr & 0x8f) | (sgr_to_attr[(param - 100) & 7] << 4);
+            attr |= 0x80;
+            attr = (attr & 0x8f) | (sgr_to_attr[(param - 100) & 7] << 4);
         }
         else if (param == 49) // default bg colour
         {
-            m_attr = (m_attr & 0x8f) | (m_default_attr & 0x70);
+            attr = (attr & 0x8f) | (get_default_attr() & 0x70);
         }
         else if (param == 38 || param == 48) // extended colour (skipped)
         {
@@ -519,5 +570,5 @@ void ecma48_terminal::write_sgr(const ecma48_csi& csi)
         }
     }
 
-    SetConsoleTextAttribute(m_handle, m_attr);
+    set_attr(attr);
 }

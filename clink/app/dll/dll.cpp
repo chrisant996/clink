@@ -91,7 +91,7 @@ static void load_lua_scripts(lua_State* lua, const char* paths)
 //------------------------------------------------------------------------------
 static void initialise_line_editor(lua_State* lua, const char* host_name)
 {
-    terminal* terminal = new ecma48_terminal();
+    terminal* terminal = new win_terminal();
     match_printer* printer = new column_printer(terminal);
 
     line_editor::desc desc = { host_name, terminal, printer };
