@@ -15,6 +15,34 @@
 void draw_matches(const matches&);
 
 //------------------------------------------------------------------------------
+class match_ui
+{
+public:
+    virtual void update(bool matches_changed, const matches& result, terminal* terminal) = 0;
+};
+
+//------------------------------------------------------------------------------
+class classic_match_ui
+    : public match_ui
+{
+public:
+    virtual void update(bool matches_changed, const matches& result, terminal* terminal) override
+    {
+        if (m_waiting & !matches_changed)
+        {
+            column_printer p(terminal);
+            p.print(result);
+            return;
+        }
+
+        m_waiting = true;
+    }
+
+private:
+    bool m_waiting = false;
+};
+
+//------------------------------------------------------------------------------
 class line_editor_backend
 {
 public:
@@ -51,7 +79,6 @@ public:
 
     virtual status update() override
     {
-        rl_forced_update_display(); // MODE4
         rl_callback_read_char();
 
         int rl_state = rl_readline_state;
@@ -119,7 +146,7 @@ private:
     enum
     {
         state_init,
-        state_input,
+        state_update,
         state_backend_input,
         state_done,
     };
@@ -171,7 +198,9 @@ bool line_editor_2::edit(str_base& out)
     if (m_state != state_init)
         return false;
 
-    while (update());
+    // Update first so the init state goes through.
+    while (update())
+        m_desc.terminal->select();
 
     return get_line(out);
 }
@@ -179,23 +208,24 @@ bool line_editor_2::edit(str_base& out)
 //------------------------------------------------------------------------------
 bool line_editor_2::update()
 {
-    switch (m_state)
+    if (m_state == state_init)
     {
-    case state_init:
         update_init();
-        /* fall through */
-
-    case state_input:
         update_internal();
-        if (m_state != state_backend_input)
-            return true;
-
-    case state_backend_input:
-        update_backend();
-        if (m_state != state_done)
-            return true;
+        return true;
     }
 
+    update_backend();
+    if (m_state == state_update)
+    {
+        update_internal();
+        return true;
+    }
+
+    if (m_state != state_done)
+        return true;
+
+    update_done();
     return false;
 }
 
@@ -287,7 +317,7 @@ void line_editor_2::update_init()
     m_desc.terminal->begin();
     m_desc.backend->begin();
 
-    m_state = state_input;
+    m_state = state_update;
 }
 
 //------------------------------------------------------------------------------
@@ -309,13 +339,13 @@ void line_editor_2::update_internal()
         /* MODE4 */ printf("generate: %d\n", m_matches.get_match_count());
     }
 
-    // Should we sort and select matches?
     const int cursor = m_desc.backend->get_cursor_pos();
     next_match_key |= int(cursor) & 0x3ff;
-    if (m_match_key != next_match_key)
-    {
-        m_match_key = next_match_key;
+    bool matches_changed = (m_match_key != next_match_key);
 
+    // Should we sort and select matches?
+    if (matches_changed)
+    {
         str<64> needle;
         int needle_start = end_word->offset + end_word->length;
         const char* line = m_desc.backend->get_buffer();
@@ -328,7 +358,12 @@ void line_editor_2::update_internal()
         /* MODE4 */ printf("select & sort: '%s'\n", needle.c_str());
     }
 
+    static classic_match_ui ui; // MODE4
+    ui.update(matches_changed, m_matches, m_desc.terminal);
+
     /* MODE4 */ draw_matches(m_matches);
+    /* MODE4 */ rl_forced_update_display();
+    m_match_key = next_match_key;
     m_state = state_backend_input;
 }
 
@@ -337,7 +372,7 @@ void line_editor_2::update_backend()
 {
     switch (m_desc.backend->update())
     {
-    case backend::status_continue:  m_state = state_input;  break;
+    case backend::status_continue:  m_state = state_update; break;
     case backend::status_done:      m_state = state_done;   break;
     }
 }
@@ -375,7 +410,6 @@ void draw_matches(const matches& result)
     }
 
     SetConsoleTextAttribute(handle, csbi.wAttributes);
-    SetConsoleCursorPosition(handle, csbi.dwCursorPosition);
 }
 
 int testbed(int, char**)
