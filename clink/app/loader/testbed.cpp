@@ -15,6 +15,35 @@
 void draw_matches(const matches&);
 
 //------------------------------------------------------------------------------
+class line_editor_backend
+{
+public:
+    enum status
+    {
+        status_more_input,
+        status_nop,
+        status_dirty,
+        status_done,
+    };
+
+    virtual void        begin() = 0;
+    virtual void        end() = 0;
+    virtual status      update() = 0;
+};
+
+
+
+//------------------------------------------------------------------------------
+class line_editor_buffer
+{
+public:
+    virtual const char* get_buffer() const = 0;
+    virtual int         get_cursor_pos() const = 0;
+};
+
+
+
+//------------------------------------------------------------------------------
 class match_ui
 {
 public:
@@ -24,6 +53,7 @@ public:
 //------------------------------------------------------------------------------
 class classic_match_ui
     : public match_ui
+    , public line_editor_backend
 {
 public:
     virtual void update(bool matches_changed, const matches& result, terminal* terminal) override
@@ -38,26 +68,12 @@ public:
         m_waiting = true;
     }
 
+    virtual void        begin() override {}
+    virtual void        end() override {}
+    virtual status      update() override { return status_nop; }
+
 private:
     bool m_waiting = false;
-};
-
-//------------------------------------------------------------------------------
-class line_editor_backend
-{
-public:
-    enum status
-    {
-        status_more_input,
-        status_continue,
-        status_done,
-    };
-
-    virtual void        begin() = 0;
-    virtual status      update() = 0;
-    virtual void        end() = 0;
-    virtual int         get_cursor_pos() const = 0;
-    virtual const char* get_buffer() const = 0;
 };
 
 
@@ -65,6 +81,7 @@ public:
 //------------------------------------------------------------------------------
 class rl_backend
     : public line_editor_backend
+    , public line_editor_buffer
     , public singleton<rl_backend>
 {
 public:
@@ -75,6 +92,11 @@ public:
 
         m_done = false;
         m_eof = false;
+    }
+
+    virtual void end() override
+    {
+        rl_callback_handler_remove();
     }
 
     virtual status update() override
@@ -90,22 +112,17 @@ public:
         if (m_done)
             return status_done;
 
-        return (rl_state ? status_more_input : status_continue);
-    }
-
-    virtual void end() override
-    {
-        rl_callback_handler_remove();
-    }
-
-    virtual int get_cursor_pos() const override
-    {
-        return rl_point;
+        return (rl_state ? status_more_input : status_dirty);
     }
 
     virtual const char* get_buffer() const override
     {
         return (m_eof ? nullptr : rl_line_buffer);
+    }
+
+    virtual int get_cursor_pos() const override
+    {
+        return rl_point;
     }
 
 private:
@@ -126,6 +143,7 @@ class line_editor_2
 {
 public:
     typedef line_editor_backend backend;
+    typedef line_editor_buffer  buffer;
 
     struct desc
     {
@@ -134,6 +152,7 @@ public:
         const char* partial_delims;
         terminal*   terminal;
         backend*    backend;
+        buffer*     buffer;
     };
 
                     line_editor_2(const desc& desc);
@@ -183,7 +202,7 @@ bool line_editor_2::get_line(str_base& out)
     if (m_state != state_done)
         return false;
 
-    if (const char* line = m_desc.backend->get_buffer())
+    if (const char* line = m_desc.buffer->get_buffer())
     {
         out.copy(line);
         return true;
@@ -232,8 +251,8 @@ bool line_editor_2::update()
 //------------------------------------------------------------------------------
 void line_editor_2::collect_words(array_base<word>& words) const
 {
-    const char* line_buffer = m_desc.backend->get_buffer();
-    const int line_cursor = m_desc.backend->get_cursor_pos();
+    const char* line_buffer = m_desc.buffer->get_buffer();
+    const int line_cursor = m_desc.buffer->get_cursor_pos();
 
     str_iter token_iter(line_buffer, line_cursor);
     str_tokeniser tokens(token_iter, m_desc.word_delims);
@@ -334,12 +353,12 @@ void line_editor_2::update_internal()
     if ((m_match_key & ~0x3ff) != next_match_key)
     {
         match_pipeline pipeline(m_match_system, m_matches);
-        pipeline.generate({ words, m_desc.backend->get_buffer() });
+        pipeline.generate({ words, m_desc.buffer->get_buffer() });
 
         /* MODE4 */ printf("generate: %d\n", m_matches.get_match_count());
     }
 
-    const int cursor = m_desc.backend->get_cursor_pos();
+    const int cursor = m_desc.buffer->get_cursor_pos();
     next_match_key |= int(cursor) & 0x3ff;
     bool matches_changed = (m_match_key != next_match_key);
 
@@ -348,7 +367,7 @@ void line_editor_2::update_internal()
     {
         str<64> needle;
         int needle_start = end_word->offset + end_word->length;
-        const char* line = m_desc.backend->get_buffer();
+        const char* line = m_desc.buffer->get_buffer();
         needle.concat(line + needle_start, cursor - needle_start);
 
         match_pipeline pipeline(m_match_system, m_matches);
@@ -372,8 +391,8 @@ void line_editor_2::update_backend()
 {
     switch (m_desc.backend->update())
     {
-    case backend::status_continue:  m_state = state_update; break;
-    case backend::status_done:      m_state = state_done;   break;
+    case backend::status_dirty: m_state = state_update; break;
+    case backend::status_done:  m_state = state_done;   break;
     }
 }
 
@@ -431,6 +450,7 @@ int testbed(int, char**)
     desc.partial_delims = "\\/:";
     desc.terminal = &terminal;
     desc.backend = &backend;
+    desc.buffer = &backend;
     line_editor_2 editor(desc);
 
     match_system& system = editor.get_match_system();
