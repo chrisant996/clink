@@ -52,3 +52,9 @@ void match_pipeline::sort(const char* sorter_name)
     if (match_sorter* sorter = m_system.get_sorter(sorter_name))
         sorter->sort(m_result.get_store(), m_result.get_infos(), count);
 }
+
+//------------------------------------------------------------------------------
+void match_pipeline::finalise(unsigned int key)
+{
+    m_result.set_match_key(key);
+}

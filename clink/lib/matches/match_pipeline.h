@@ -15,6 +15,7 @@ public:
     void                generate(const line_state& state);
     void                select(const char* selector_name, const char* needle);
     void                sort(const char* sort_name);
+    void                finalise(unsigned int key);
 
 private:
     const match_system& m_system;
