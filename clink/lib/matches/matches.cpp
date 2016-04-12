@@ -85,8 +85,6 @@ unsigned int matches::store_impl::get_size(const char* str) const
 //------------------------------------------------------------------------------
 matches::matches(unsigned int store_size)
 : m_store(min(store_size, 0x10000u))
-, m_count(0)
-, m_coalesced(false)
 {
     m_infos.reserve(1024);
 }

@@ -68,8 +68,8 @@ private:
 
     store_impl          m_store;
     infos               m_infos;
-    unsigned int        m_count;
-    bool                m_coalesced;
+    unsigned short      m_count = 0;
+    bool                m_coalesced = false;
 
 private:
                         matches(const matches&) = delete;
