@@ -30,7 +30,7 @@ void match_pipeline::generate(const line_state& state)
 //------------------------------------------------------------------------------
 void match_pipeline::select(const char* selector_name, const char* needle)
 {
-    int count = int(m_result.m_infos.size());
+    int count = m_result.get_info_count();
     if (!count)
         return;
 

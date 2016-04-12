@@ -41,6 +41,7 @@ public:
 
 private:
     friend class        match_pipeline;
+    unsigned int        get_info_count() const;
     match_info*         get_infos();
     const match_store&  get_store() const;
     void                reset();

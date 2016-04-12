@@ -92,6 +92,12 @@ matches::matches(unsigned int store_size)
 }
 
 //------------------------------------------------------------------------------
+unsigned int matches::get_info_count() const
+{
+    return int(m_infos.size());
+}
+
+//------------------------------------------------------------------------------
 match_info* matches::get_infos()
 {
     return &(m_infos[0]);
