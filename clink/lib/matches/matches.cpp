@@ -172,6 +172,7 @@ void matches::reset()
     m_infos.clear();
     m_coalesced = false;
     m_count = 0;
+    m_key = ~0u;
 }
 
 //------------------------------------------------------------------------------

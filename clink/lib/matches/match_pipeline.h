@@ -12,6 +12,7 @@ class match_pipeline
 {
 public:
                         match_pipeline(const match_system& system, matches& result);
+    void                reset();
     void                generate(const line_state& state);
     void                select(const char* selector_name, const char* needle);
     void                sort(const char* sort_name);
@@ -19,5 +20,5 @@ public:
 
 private:
     const match_system& m_system;
-    matches&            m_result;
+    matches&            m_matches;
 };

@@ -38,6 +38,8 @@ void            on_terminal_resize(); // MODE4
 //------------------------------------------------------------------------------
 inline void win_terminal_in::begin()
 {
+    m_buffer_count = 0;
+
     m_stdin = GetStdHandle(STD_INPUT_HANDLE);
 
     // Clear 'processed input' flag so key presses such as Ctrl-C and Ctrl-S
