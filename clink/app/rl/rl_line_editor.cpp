@@ -42,7 +42,7 @@ extern int      rl_display_fixed;
 //------------------------------------------------------------------------------
 static int terminal_read_thunk(FILE* stream)
 {
-    terminal* term = (terminal*)stream;
+    terminal_in* term = (terminal_in*)stream;
     return term->read();
 }
 
@@ -52,7 +52,7 @@ static void terminal_write_thunk(FILE* stream, const char* chars, int char_count
     if (stream == stderr)
         return;
 
-    terminal* term = (terminal*)stream;
+    terminal_out* term = (terminal_out*)stream;
     return term->write(chars, char_count);
 }
 
@@ -62,7 +62,7 @@ static void terminal_flush_thunk(FILE* stream)
     if (stream == stderr)
         return;
 
-    terminal* term = (terminal*)stream;
+    terminal_out* term = (terminal_out*)stream;
     return term->flush();
 }
 
@@ -95,8 +95,8 @@ rl_line_editor::rl_line_editor(const desc& desc)
     rl_getc_function = terminal_read_thunk;
     rl_fwrite_function = terminal_write_thunk;
     rl_fflush_function = terminal_flush_thunk;
-    rl_instream = (FILE*)desc.term;
-    rl_outstream = (FILE*)desc.term;
+    rl_instream = (FILE*)(terminal_in*)desc.term;
+    rl_outstream = (FILE*)(terminal_out*)desc.term;
 
     rl_readline_name = get_shell_name();
     rl_catch_signals = 0;

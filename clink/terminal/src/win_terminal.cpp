@@ -61,15 +61,6 @@ inline void win_terminal_in::select()
 }
 
 //------------------------------------------------------------------------------
-inline int win_terminal_in::peek()
-{
-    if (!m_buffer_count)
-        return -1;
-
-    return m_buffer[m_buffer_head];
-}
-
-//------------------------------------------------------------------------------
 inline int win_terminal_in::read()
 {
     int c = pop();
@@ -411,12 +402,6 @@ void win_terminal::end()
 void win_terminal::select()
 {
     win_terminal_in::select();
-}
-
-//------------------------------------------------------------------------------
-int win_terminal::peek()
-{
-    return win_terminal_in::peek();
 }
 
 //------------------------------------------------------------------------------

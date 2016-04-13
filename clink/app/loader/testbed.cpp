@@ -28,10 +28,11 @@ class editor_backend;
 class key_bind_resolver
 {
 public:
-    void            reset() { new (this) key_bind_resolver(); }
-    bool            is_resolved() const { return m_backend != nullptr; }
-    editor_backend* get_backend() const { return m_backend; }
-    int             get_resolve_id() const { return m_resolve_id; }
+    void            reset()                   { new (this) key_bind_resolver(); }
+    bool            is_resolved() const       { return m_backend != nullptr; }
+    void            set_resolve_id(int id)    { m_resolve_id = id; }
+    editor_backend* get_backend() const       { return m_backend; }
+    int             get_resolve_id() const    { return m_resolve_id; }
     const char*     get_resolve_input() const { return m_buffer; }
 
 private:
@@ -58,7 +59,7 @@ private:
     }
 
 private:
-    char            m_buffer[8];
+    char            m_buffer[8]; // MODE4 : not the right place for this.
     editor_backend* m_backend = nullptr;
     int             m_resolve_id = -1;
     int             m_node_index = -1;
@@ -76,7 +77,7 @@ public:
     {
     }
 
-    bool set_default_backend(editor_backend* backend)
+    void set_default_backend(editor_backend* backend)
     {
         m_default_backend = add_backend(backend);
     }
@@ -121,30 +122,21 @@ public:
         int node_index = resolver.get_node_index();
         node* current = (node_index >= 0) ? get_node(node_index) : get_root();
 
-        node* next = find_child(current, key);
-
-        // Unbound?
-        if (next == nullptr)
+        if (node* next = find_child(current, key))
         {
-            resolver.resolve(get_backend(m_default_backend), -1);
+            // More tree to follow?
+            if (next->usage == node_use_parent)
+                resolver.set_node_index(next - m_nodes);
+
+            // Key binding found?
+            else if (next->usage == node_use_bound)
+                resolver.resolve(get_backend(next->backend), next->id_or_child);
+
             return;
         }
 
-        // More tree to follow?
-        if (next->usage == node_use_parent)
-        {
-            resolver.set_node_index(next - m_nodes);
-            return;
-        }
-
-        // Key binding found?
-        if (next->usage == node_use_bound)
-        {
-            resolver.resolve(get_backend(next->backend), next->id_or_child);
-            return;
-        }
-
-        // Something went wrong - send to default backend.
+        // Unbound, or something went wrong...
+        resolver.resolve(get_backend(m_default_backend), -1);
     }
 
 private:
@@ -245,17 +237,10 @@ public:
         const matches&  matches;
     };
 
-    enum status
-    {
-        status_more_input,
-        status_continue,
-        status_break,
-        status_done,
-    };
-
-    virtual void            begin() = 0;
-    virtual void            end() = 0;
-    virtual status          update(const context& context) = 0;
+    virtual void        bind(key_binder& binder) = 0;
+    virtual void        begin() = 0;
+    virtual void        end() = 0;
+    virtual int         on_input(int id, const char* keys, const context& context) = 0;
 };
 
 
@@ -275,16 +260,15 @@ class classic_match_ui
     : public editor_backend
 {
 public:
-    virtual status update(const context& context) override
+    virtual void bind(key_binder& binder) override
+    {
+        binder.bind("\t", this, 1);
+    }
+
+    virtual int on_input(int id, const char* keys, const context& context) override
     {
         auto& terminal = context.terminal;
         auto& matches = context.matches;
-
-        int c = terminal.peek();
-        if (c != '\t')
-            return status_continue;
-
-        terminal.read();
 
         unsigned int key = matches.get_match_key();
         if (key != m_prev_key)
@@ -299,14 +283,14 @@ public:
             puts("");
             p.print(matches);
 
-            return status_break;
+            return -2;
         }
 
         // One match? Accept it.
         if (matches.get_match_count() == 1)
         {
             log("accept; %s", matches.get_match(0));
-            return status_break;
+            return -2;
         }
 
         // Valid LCD? Append it.
@@ -315,11 +299,11 @@ public:
         if (lcd.length())
         {
             log("append; %s", lcd.c_str());
-            return status_break;
+            return -2;
         }
 
         m_waiting = true;
-        return status_break;
+        return -2;
     }
 
     virtual void        begin() override {}
@@ -339,6 +323,10 @@ class rl_backend
     , public singleton<rl_backend>
 {
 public:
+    virtual void bind(key_binder& binder) override
+    {
+    }
+
     virtual void begin() override
     {
         auto handler = [] (char* line) { rl_backend::get()->done(line); };
@@ -353,8 +341,24 @@ public:
         rl_callback_handler_remove();
     }
 
-    virtual status update(const context& context) override
+    virtual int on_input(int id, const char* keys, const context& context) override
     {
+        if (id != -1)
+            return 0;
+
+        // MODE4
+        static struct : public terminal_in
+        {
+            virtual void select() {}
+            virtual int read() { return *(unsigned char*)(data++); }
+            const char* data; 
+        } term_in;
+        term_in.data = keys;
+        rl_instream = (FILE*)(&term_in);
+
+        while (*term_in.data)
+        // MODE4
+
         rl_callback_read_char();
 
         int rl_state = rl_readline_state;
@@ -364,9 +368,9 @@ public:
         rl_state &= ~RL_STATE_VICMDONCE;
 
         if (m_done)
-            return status_done;
+            return -3;
 
-        return (rl_state ? status_more_input : status_break);
+        return (rl_state ? -1 : -2);
     }
 
     virtual const char* get_buffer() const override
@@ -396,24 +400,22 @@ private:
 class line_editor_2
 {
 public:
-    typedef editor_backend backend;
-    typedef editor_buffer  buffer;
-
     struct desc
     {
-        const char* quote_char;
-        const char* word_delims;
-        const char* partial_delims;
-        terminal*   terminal;
-        backend*    backend;
-        buffer*     buffer;
+        const char*     quote_char;
+        const char*     word_delims;
+        const char*     partial_delims;
+        terminal*       terminal;
+        editor_backend* backend;
+        editor_buffer*  buffer;
     };
 
-                    line_editor_2(const desc& desc);
-    match_system&   get_match_system();
-    bool            get_line(str_base& out);
-    bool            edit(str_base& out);
-    bool            update();
+                        line_editor_2(const desc& desc);
+    bool                add_backend(editor_backend* backend);
+    match_system&       get_match_system();
+    bool                get_line(str_base& out);
+    bool                edit(str_base& out);
+    bool                update();
 
 private:
     enum state
@@ -423,16 +425,21 @@ private:
         state_backend_input,
         state_done,
     };
+    
+    typedef fixed_array<editor_backend*, 16> backends;
 
-    void            collect_words(array_base<word>& words) const;
-    void            update_init();
-    void            update_internal();
-    void            update_backend();
-    void            update_done();
-    desc            m_desc;
-    match_system    m_match_system;
-    matches         m_matches;
-    state           m_state;
+    void                begin();
+    void                end();
+    void                collect_words(array_base<word>& words) const;
+    void                update_internal();
+    void                dispatch(const char* keys);
+    desc                m_desc;
+    match_system        m_match_system;
+    backends            m_backends;
+    matches             m_matches;
+    state               m_state;
+    key_binder          m_key_binder;
+    key_bind_resolver   m_key_bind_resolver;
 };
 
 //------------------------------------------------------------------------------
@@ -440,6 +447,15 @@ line_editor_2::line_editor_2(const desc& desc)
 : m_state(state_init)
 , m_desc(desc)
 {
+    m_key_binder.set_default_backend(m_desc.backend);
+    add_backend(m_desc.backend);
+}
+
+//------------------------------------------------------------------------------
+bool line_editor_2::add_backend(editor_backend* backend)
+{
+    editor_backend** slot = m_backends.push_back();
+    return (slot != nullptr) ? *slot = backend, true : false;
 }
 
 //------------------------------------------------------------------------------
@@ -481,23 +497,62 @@ bool line_editor_2::update()
 {
     if (m_state == state_init)
     {
-        update_init();
+        begin();
         update_internal();
         return true;
     }
 
-    update_backend();
-    if (m_state == state_update)
+    int key = m_desc.terminal->read();
+    if (m_key_bind_resolver.is_resolved())
     {
-        update_internal();
-        return true;
+        char keys[] = { char(key), 0 };
+        dispatch(keys);
     }
+    else
+    {
+        m_key_binder.update_resolver(key, m_key_bind_resolver);
+        if (m_key_bind_resolver.is_resolved())
+        {
+            const char* keys = m_key_bind_resolver.get_resolve_input();
+            dispatch(keys);
+        }
+    }
+
+    if (!m_key_bind_resolver.is_resolved())
+        update_internal();
 
     if (m_state != state_done)
         return true;
 
-    update_done();
+    end();
     return false;
+}
+
+//------------------------------------------------------------------------------
+void line_editor_2::dispatch(const char* keys)
+{
+    if (!m_key_bind_resolver.is_resolved())
+        return;
+
+    editor_backend::context context = {
+        *m_desc.terminal,
+        *m_desc.buffer,
+        m_matches,
+    };
+
+    editor_backend* backend = m_key_bind_resolver.get_backend();
+    int id = m_key_bind_resolver.get_resolve_id();
+
+    int result = backend->on_input(id, keys, context);
+
+    // MODE4 : magic numbers!
+    if (result < -1)
+        if (result < -2)
+            m_state = state_done;
+        else
+            m_key_bind_resolver.reset();
+    else
+        m_key_bind_resolver.set_resolve_id(result);
 }
 
 //------------------------------------------------------------------------------
@@ -583,12 +638,26 @@ void line_editor_2::collect_words(array_base<word>& words) const
 }
 
 //------------------------------------------------------------------------------
-void line_editor_2::update_init()
+void line_editor_2::begin()
 {
+    for (auto backend : m_backends)
+        backend->bind(m_key_binder);
+
     m_desc.terminal->begin();
-    m_desc.backend->begin();
+    for (auto backend : m_backends)
+        backend->begin();
 
     m_state = state_update;
+}
+
+//------------------------------------------------------------------------------
+void line_editor_2::end()
+{
+    for (auto backend : m_backends)
+        backend->end();
+    m_desc.terminal->end();
+
+    m_state = state_done;
 }
 
 //------------------------------------------------------------------------------
@@ -643,46 +712,6 @@ void line_editor_2::update_internal()
     }
 
     /* MODE4 */ draw_matches(m_matches);
-
-    m_state = state_backend_input;
-}
-
-//------------------------------------------------------------------------------
-void line_editor_2::update_backend()
-{
-    // MODE4
-    static classic_match_ui ui;
-    backend* backends[] = { &ui, m_desc.backend };
-    // MODE4
-
-    editor_backend::context context = {
-        *m_desc.terminal,
-        *m_desc.buffer,
-        m_matches,
-    };
-
-    int status = backend::status_break;
-    for (int i = 0, n = sizeof_array(backends); i < n; ++i)
-    {
-        status = backends[i]->update(context);
-        if (status != backend::status_continue)
-            break;
-    }
-
-    switch (status)
-    {
-    case backend::status_break: m_state = state_update; break;
-    case backend::status_done:  m_state = state_done;   break;
-    }
-}
-
-//------------------------------------------------------------------------------
-void line_editor_2::update_done()
-{
-    m_desc.backend->end();
-    m_desc.terminal->end();
-
-    m_state = state_done;
 }
 
 
@@ -728,15 +757,8 @@ int testbed(int, char**)
     auto* line_editor = create_rl_line_editor(_desc);
     // MODE4
 
+    classic_match_ui ui;
     rl_backend backend;
-
-    key_binder kb;
-    kb.bind("abc", &backend, 17);
-    key_bind_resolver resolver;
-    kb.update_resolver('a', resolver);
-    kb.update_resolver('b', resolver);
-    kb.update_resolver('c', resolver);
-    kb.update_resolver('f', resolver);
 
     line_editor_2::desc desc = {};
     desc.quote_char = "\"";
@@ -746,7 +768,9 @@ int testbed(int, char**)
     desc.backend = &backend;
     desc.buffer = &backend;
     line_editor_2 editor(desc);
+    editor.add_backend(&ui);
 
+    // MODE4 : different API!
     match_system& system = editor.get_match_system();
     system.add_generator(0, file_match_generator());
     system.add_selector("normal", normal_match_selector());
@@ -754,6 +778,7 @@ int testbed(int, char**)
 
     str<> out;
     editor.edit(out);
+    editor.edit(out); // MODE4 : doesn't work.
 
     return 0;
 }

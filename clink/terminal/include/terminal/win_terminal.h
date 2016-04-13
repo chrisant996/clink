@@ -13,7 +13,6 @@ protected:
     void            begin();
     void            end();
     void            select();
-    int             peek();
     int             read();
     void            read_console();
     void            push(unsigned int value);
@@ -61,7 +60,6 @@ public:
     virtual void    begin() override;
     virtual void    end() override;
     virtual void    select() override;
-    virtual int     peek() override;
     virtual int     read() override;
     virtual void    write(const char* chars, int length) override;
     virtual void    flush() override;
