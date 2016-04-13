@@ -194,11 +194,7 @@ private:
                 return i;
 
         editor_backend** slot = m_backends.push_back();
-        if (slot == nullptr)
-            return -1;
-
-        *slot = backend;
-        return slot - m_backends.front();
+        return (slot != nullptr) ? *slot = backend, slot - m_backends.front() : -1;
     }
 
     node*       get_root()                   { return &m_root; }
