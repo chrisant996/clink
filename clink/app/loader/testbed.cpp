@@ -530,13 +530,9 @@ bool line_editor_2::update()
     record_input(key);
 
     if (!m_key_bind_resolver.is_resolved())
-    {
         m_key_binder.update_resolver(key, m_key_bind_resolver);
-        if (m_key_bind_resolver.is_resolved())
-            dispatch();
-    }
-    else
-        dispatch();
+
+    dispatch();
 
     if (!m_begun)
         return false;
