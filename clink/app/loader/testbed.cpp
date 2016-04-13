@@ -399,8 +399,8 @@ public:
                         line_editor_2(const desc& desc);
     bool                add_backend(editor_backend* backend);
     match_system&       get_match_system();
-    bool                get_line(str_base& out);
-    bool                edit(str_base& out);
+    bool                get_line(char* out, int out_size);
+    bool                edit(char* out, int out_size);
     bool                update();
 
 private:
@@ -489,14 +489,14 @@ match_system& line_editor_2::get_match_system()
 }
 
 //------------------------------------------------------------------------------
-bool line_editor_2::get_line(str_base& out)
+bool line_editor_2::get_line(char* out, int out_size)
 {
     if (m_begun)
         end_line();
 
     if (const char* line = m_desc.buffer->get_buffer())
     {
-        out.copy(line);
+        str_base(out, out_size).copy(line);
         return true;
     }
 
@@ -504,13 +504,13 @@ bool line_editor_2::get_line(str_base& out)
 }
 
 //------------------------------------------------------------------------------
-bool line_editor_2::edit(str_base& out)
+bool line_editor_2::edit(char* out, int out_size)
 {
     // Update first so the init state goes through.
     while (update())
         m_desc.terminal->select();
 
-    return get_line(out);
+    return get_line(out, out_size);
 }
 
 //------------------------------------------------------------------------------
@@ -782,14 +782,9 @@ int testbed(int, char**)
     system.add_selector("normal", normal_match_selector());
     system.add_sorter("alpha", alpha_match_sorter());
 
-    str<> out;
-    editor.edit(out);
-
-    editor.update(); terminal.select();
-    editor.update(); terminal.select();
-    editor.get_line(out);
-
-    editor.edit(out); // MODE4 : doesn't work.
+    char out[64];
+    editor.edit(out, sizeof_array(out));
+    editor.edit(out, sizeof_array(out));
 
     return 0;
 }
