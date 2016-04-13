@@ -65,6 +65,8 @@ inline void win_terminal_in::select()
 //------------------------------------------------------------------------------
 inline int win_terminal_in::read()
 {
+    // MODE4 : need protocol for no input available
+
     int c = pop();
     if (c != 0xff)
         return c;

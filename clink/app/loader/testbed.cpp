@@ -12,12 +12,14 @@
 #include <matches/matches.h>
 #include <terminal/win_terminal.h>
 
+// MODE4
 void draw_matches(const matches&);
 #if 1
 #define log(fmt, ...) printf("\n" fmt, __VA_ARGS__)
 #else
 #define log(fmt, ...)
 #endif
+// MODE4
 
 
 
@@ -206,7 +208,7 @@ private:
     backends    m_backends;
     node        m_root;
     node        m_nodes[127]; // node.sibling.bits - 1
-    int         m_default_backend;
+    int         m_default_backend; // MODE4 : no place here?
     char        m_next_node;
 };
 
