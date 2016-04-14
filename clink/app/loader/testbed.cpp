@@ -42,6 +42,18 @@ static setting_int g_query_threshold(
     "", // MODE4
     100);
 
+static setting_int g_max_width(
+    "match.max_width",
+    "Maximum display width",
+    "", // MODE4
+    106);
+
+static setting_bool g_vertical(
+    "match.vertical",
+    "Display matches vertically",
+    "", // MODE4
+    false);
+
 //------------------------------------------------------------------------------
 class classic_match_ui
     : public editor_backend
@@ -51,7 +63,7 @@ private:
     {
         state_none,
         state_query,
-        state_page,
+        state_pager,
         state_print,
     };
 
@@ -60,8 +72,11 @@ private:
     virtual void    begin_line() override {}
     virtual void    end_line() override {}
     state           begin_print(const context& context);
+    state           print(const context& context);
     bool            m_waiting = false;
     unsigned int    m_prev_key = ~0u;
+    int             m_longest;
+    int             m_row;
 };
 
 //------------------------------------------------------------------------------
@@ -87,9 +102,13 @@ editor_backend::result classic_match_ui::on_input(const context& context)
     {
         begin_print(context);
 
-        column_printer p(&terminal);
-        puts("");
-        p.print(matches);
+        while (1)
+        {
+            int y = m_row;
+            print(context);
+            if (y == m_row)
+                break;
+        }
 
         return result::next;
     }
@@ -120,15 +139,17 @@ classic_match_ui::state classic_match_ui::begin_print(const context& context)
     const matches& matches = context.matches;
     int match_count = matches.get_match_count();
 
+    m_longest = 0;
+    m_row = 0;
+
     // Get the longest match length.
-    int longest = 0;
     for (int i = 0; i < matches.get_match_count(); ++i)
     {
         const char* match = matches.get_match(i);
-        longest = max<int>(char_count(match), longest);
+        m_longest = max<int>(char_count(match), m_longest);
     }
 
-    if (!longest)
+    if (!m_longest)
         return state_none;
 
     int query_threshold = g_query_threshold.get();
@@ -138,12 +159,56 @@ classic_match_ui::state classic_match_ui::begin_print(const context& context)
     return state_print;
 }
 
+//------------------------------------------------------------------------------
+classic_match_ui::state classic_match_ui::print(const context& context)
+{
+    terminal& term = context.terminal;
+    const matches& matches = context.matches;
+
+    int match_count = matches.get_match_count();
+
+    int columns = max(1, g_max_width.get() / m_longest);
+    int rows = (match_count + columns - 1) / columns;
+    int pager_row = term.get_rows() - 1;
+
+    bool vertical = g_vertical.get();
+    int dx = vertical ? rows : 1;
+    for (; m_row < rows; ++m_row)
+    {
+        int index = vertical ? m_row : (m_row * columns);
+
+        if (m_row == pager_row)
+            return state_pager;
+
+        for (int x = 0; x < columns; ++x)
+        {
+            if (index >= match_count)
+                continue;
+
+            str<> displayable;
+            const char* match = matches.get_match(index);
+            term.write(match, int(strlen(match)));
+
+            displayable = match; // MODE4
+            for (int i = m_longest - displayable.char_count(); i >= 0; --i)
+                term.write(" ", 1);
+
+            index += dx;
+        }
+
+        term.write("\n", 1);
+    }
+
+    term.flush();
+    return state_none;
+}
+
 
 
 //------------------------------------------------------------------------------
 class rl_backend
-    : public editor_backend
-    , public line_buffer
+    : public line_buffer
+    , public editor_backend
     , public singleton<rl_backend>
 {
 public:
