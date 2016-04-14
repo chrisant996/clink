@@ -214,17 +214,42 @@ private:
 class editor_backend
 {
 public:
+    struct result
+    {
+        enum result_v {
+            next,
+            done,
+            _count_v,
+        };
+
+        enum result_uc {
+            more_input = _count_v,
+            _count_uc,
+        };
+
+        enum result_us {
+            accept_match = _count_uc,
+        };
+
+                        result(result_v result) : value(result) {}
+                        result(result_uc result, unsigned char value) : value((value << 8)|result) {}
+                        result(result_us result, unsigned short value) : value((value << 8)|result) {}
+        uintptr_t       value;
+    };
+
     struct context
     {
         terminal&       terminal;
         editor_buffer&  buffer;
         const matches&  matches;
+        const char*     keys;
+        int             id;
     };
 
     virtual void        bind(key_binder& binder) = 0;
     virtual void        begin_line() = 0;
     virtual void        end_line() = 0;
-    virtual int         on_input(int id, const char* keys, const context& context) = 0;
+    virtual result      on_input(const context& context) = 0;
 };
 
 
@@ -249,7 +274,7 @@ public:
         binder.bind("\t", this, 1);
     }
 
-    virtual int on_input(int id, const char* keys, const context& context) override
+    virtual result on_input(const context& context) override
     {
         auto& terminal = context.terminal;
         auto& matches = context.matches;
@@ -267,14 +292,14 @@ public:
             puts("");
             p.print(matches);
 
-            return -2;
+            return result::next;
         }
 
         // One match? Accept it.
         if (matches.get_match_count() == 1)
         {
             log("accept; %s", matches.get_match(0));
-            return -2;
+            return result::next;
         }
 
         // Valid LCD? Append it.
@@ -283,11 +308,11 @@ public:
         if (lcd.length())
         {
             log("append; %s", lcd.c_str());
-            return -2;
+            return result::next;
         }
 
         m_waiting = true;
-        return -2;
+        return result::next;
     }
 
     virtual void        begin_line() override {}
@@ -325,10 +350,11 @@ public:
         rl_callback_handler_remove();
     }
 
-    virtual int on_input(int id, const char* keys, const context& context) override
+    virtual result on_input(const context& context) override
     {
-        if (id != -1)
-            return 0;
+        static unsigned char more_input_id = 0xff;
+        if ((unsigned char)(context.id) != more_input_id)
+            return result::next;
 
         // MODE4
         static struct : public terminal_in
@@ -337,7 +363,7 @@ public:
             virtual int read() { return *(unsigned char*)(data++); }
             const char* data; 
         } term_in;
-        term_in.data = keys;
+        term_in.data = context.keys;
         rl_instream = (FILE*)(&term_in);
 
         while (*term_in.data)
@@ -352,9 +378,12 @@ public:
         rl_state &= ~RL_STATE_VICMDONCE;
 
         if (m_done)
-            return -3;
+            return result::done;
 
-        return (rl_state ? -1 : -2);
+        if (rl_state)
+            return {result::more_input, more_input_id};
+
+        return result::next;
     }
 
     virtual const char* get_buffer() const override
@@ -558,23 +587,28 @@ void line_editor_2::dispatch()
         *m_desc.terminal,
         *m_desc.buffer,
         m_matches,
+        m_keys,
+        m_key_bind_resolver.get_resolve_id(),
     };
 
-    editor_backend* backend = m_key_bind_resolver.get_backend();
-    int id = m_key_bind_resolver.get_resolve_id();
-
     m_keys[m_keys_size] = '\0';
-    int result = backend->on_input(id, m_keys, context);
+
+    editor_backend* backend = m_key_bind_resolver.get_backend();
+    editor_backend::result result = backend->on_input(context);
+
     m_keys_size = 0;
 
-    // MODE4 : magic numbers!
-    if (result < -1)
-        if (result < -2)
-            end_line();
-        else
-            m_key_bind_resolver.reset();
-    else
-        m_key_bind_resolver.set_resolve_id(result);
+    // MODE4 : magic shifts and masks
+    unsigned char value = result.value & 0xff;
+    switch (value)
+    {
+    case editor_backend::result::done: end_line();                  break;
+    case editor_backend::result::next: m_key_bind_resolver.reset(); break;
+
+    case editor_backend::result::more_input:
+        m_key_bind_resolver.set_resolve_id((result.value >> 8) & 0xff);
+        break;
+    }
 }
 
 //------------------------------------------------------------------------------
