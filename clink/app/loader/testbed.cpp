@@ -169,19 +169,16 @@ classic_match_ui::state classic_match_ui::print(const context& context)
 
     int columns = max(1, g_max_width.get() / m_longest);
     int rows = (match_count + columns - 1) / columns;
-    int pager_row = term.get_rows() - 1;
 
     auto_flush flusher(term);
 
+    int max_rows = min(term.get_rows() - 1 - !!m_row, rows - m_row);
+
     bool vertical = g_vertical.get();
     int dx = vertical ? rows : 1;
-    for (; m_row < rows; ++m_row)
+    for (; max_rows >= 0; --max_rows, ++m_row)
     {
         int index = vertical ? m_row : (m_row * columns);
-
-        if (m_row == pager_row)
-            return state_pager;
-
         for (int x = 0; x < columns; ++x)
         {
             if (index >= match_count)
@@ -201,7 +198,7 @@ classic_match_ui::state classic_match_ui::print(const context& context)
         term.write("\n", 1);
     }
 
-    return state_none;
+    return (m_row == rows) ? state_none : state_pager;
 }
 
 
