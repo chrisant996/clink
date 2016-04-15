@@ -52,7 +52,7 @@ static setting_bool g_vertical(
     "match.vertical",
     "Display matches vertically",
     "", // MODE4
-    false);
+    true);
 
 //------------------------------------------------------------------------------
 class classic_match_ui
@@ -65,6 +65,8 @@ private:
         state_query,
         state_pager,
         state_print,
+        state_print_one,
+        state_print_page,
     };
 
     virtual void    bind(binder& binder) override;
@@ -72,7 +74,9 @@ private:
     virtual void    begin_line() override {}
     virtual void    end_line() override {}
     state           begin_print(const context& context);
-    state           print(const context& context);
+    state           print(const context& context, bool single_row);
+    state           query_prompt(const context& context);
+    state           pager_prompt(const context& context);
     bool            m_waiting = false;
     unsigned int    m_prev_key = ~0u;
     int             m_longest;
@@ -82,7 +86,7 @@ private:
 //------------------------------------------------------------------------------
 void classic_match_ui::bind(binder& binder)
 {
-    binder.bind("\t", this, 1);
+    binder.bind("\t", this, state_none);
 }
 
 //------------------------------------------------------------------------------
@@ -100,14 +104,21 @@ editor_backend::result classic_match_ui::on_input(const context& context)
 
     if (m_waiting)
     {
-        begin_print(context);
-
-        while (1)
+        int next_state = state_none;
+        switch (context.id)
         {
-            int y = m_row;
-            print(context);
-            if (y == m_row)
-                break;
+        case state_none:    next_state = begin_print(context); break;
+        case state_query:   next_state = query_prompt(context); break;
+        case state_pager:   next_state = pager_prompt(context); break;
+        }
+
+        if (next_state > state_print)
+            next_state = print(context, next_state == state_print_one);
+
+        switch (next_state)
+        {
+        case state_query:   return { result::more_input, state_query };
+        case state_pager:   return { result::more_input, state_pager };
         }
 
         return result::next;
@@ -152,30 +163,41 @@ classic_match_ui::state classic_match_ui::begin_print(const context& context)
     if (!m_longest)
         return state_none;
 
+    context.terminal.write("\n", 1);
+
     int query_threshold = g_query_threshold.get();
     if (query_threshold > 0 && query_threshold <= match_count)
-        return state_query;
+    {
+        str<64> prompt;
+        prompt.format("Show %d matches? [Yn]", match_count);
+        context.terminal.write(prompt.c_str(), -1);
+        context.terminal.flush();
 
-    return state_print;
+        return state_query;
+    }
+
+    return state_print_page;
 }
 
 //------------------------------------------------------------------------------
-classic_match_ui::state classic_match_ui::print(const context& context)
+classic_match_ui::state classic_match_ui::print(const context& context, bool single_row)
 {
     terminal& term = context.terminal;
     const matches& matches = context.matches;
 
+    auto_flush flusher(term);
+    term.write("\r", 1);
+
     int match_count = matches.get_match_count();
 
     int columns = max(1, g_max_width.get() / m_longest);
-    int rows = (match_count + columns - 1) / columns;
-
-    auto_flush flusher(term);
-
-    int max_rows = min(term.get_rows() - 1 - !!m_row, rows - m_row);
+    int total_rows = (match_count + columns - 1) / columns;
 
     bool vertical = g_vertical.get();
-    int dx = vertical ? rows : 1;
+    int dx = vertical ? total_rows : 1;
+
+    int max_rows = single_row ? 1 : (total_rows - m_row - 1);
+    max_rows = min(term.get_rows() - 1 - !!m_row, max_rows);
     for (; max_rows >= 0; --max_rows, ++m_row)
     {
         int index = vertical ? m_row : (m_row * columns);
@@ -189,7 +211,7 @@ classic_match_ui::state classic_match_ui::print(const context& context)
             term.write(match, int(strlen(match)));
 
             displayable = match; // MODE4
-            for (int i = m_longest - displayable.char_count(); i >= 0;)
+            for (int i = m_longest - displayable.char_count() + 1; i >= 0;)
             {
                 const char spaces[] = "                ";
                 term.write(spaces, min<int>(sizeof_array(spaces) - 1, i));
@@ -202,7 +224,60 @@ classic_match_ui::state classic_match_ui::print(const context& context)
         term.write("\n", 1);
     }
 
-    return (m_row == rows) ? state_none : state_pager;
+    if (m_row == total_rows)
+        return state_none;
+
+    static const char prompt[] = { "--More--" };
+    term.write(prompt, sizeof_array(prompt) - 1);
+    return state_pager;
+}
+
+//------------------------------------------------------------------------------
+classic_match_ui::state classic_match_ui::query_prompt(const context& context)
+{
+    switch(context.keys[0])
+    {
+    case 'y':
+    case 'Y':
+    case ' ':
+    case '\t':
+    case '\r':
+        return state_print_page;
+
+    case 'n':
+    case 'N':
+    case 0x03: // ctrl-c
+    case 0x04: // ctrl-d
+    case 0x1b: // esc
+        return state_none;
+    }
+
+    context.terminal.write("\x07", 1);
+    return state_query;
+}
+
+//------------------------------------------------------------------------------
+classic_match_ui::state classic_match_ui::pager_prompt(const context& context)
+{
+    switch (context.keys[0])
+    {
+    case ' ':
+    case '\t':
+        return state_print_page;
+
+    case '\r':
+        return state_print_one;
+
+    case 'q':
+    case 'Q':
+    case 0x03: // ctrl-c
+    case 0x04: // ctrl-d
+    case 0x1b: // esc
+        return state_none;
+    }
+
+    context.terminal.write("\x07", 1);
+    return state_pager;
 }
 
 
@@ -693,7 +768,6 @@ int testbed(int, char**)
     system.add_sorter("alpha", alpha_match_sorter());
 
     char out[64];
-    editor.edit(out, sizeof_array(out));
     editor.edit(out, sizeof_array(out));
 
     return 0;
