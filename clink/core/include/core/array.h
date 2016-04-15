@@ -30,6 +30,7 @@ public:
     T*              front() const    { return m_ptr; }
     T*              back() const     { return empty() ? nullptr : (m_ptr + m_size - 1); }
     T*              push_back()      { return full() ? nullptr : (m_ptr + m_size++); }
+    void            clear();
     T const*        operator [] (unsigned int index) const;
 
 protected:
@@ -53,6 +54,18 @@ T const* array_base<T>::operator [] (unsigned int index) const
 {
     return (index >= capacity()) ? nullptr : (m_ptr + index);
 }
+
+//------------------------------------------------------------------------------
+template <typename T>
+void array_base<T>::clear()
+{
+    for (auto iter : *this)
+        iter.~T();
+
+    m_size = 0;
+}
+
+
 
 //------------------------------------------------------------------------------
 template <typename T, unsigned int SIZE>
