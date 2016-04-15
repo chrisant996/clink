@@ -33,3 +33,11 @@ public:
 
 private:
 };
+
+//------------------------------------------------------------------------------
+struct auto_flush
+{
+                    auto_flush(terminal_out& term) : m_term(term) {}
+                    ~auto_flush() { m_term.flush(); }
+    terminal_out&   m_term;
+};
