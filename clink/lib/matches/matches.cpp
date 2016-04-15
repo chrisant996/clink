@@ -178,7 +178,7 @@ void matches::reset()
 //------------------------------------------------------------------------------
 void matches::add_match(const char* match)
 {
-    if (m_coalesced)
+    if (m_coalesced || !*match)
         return;
 
     int store_id = m_store.store_front(match);
