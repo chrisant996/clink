@@ -189,8 +189,12 @@ classic_match_ui::state classic_match_ui::print(const context& context)
             term.write(match, int(strlen(match)));
 
             displayable = match; // MODE4
-            for (int i = m_longest - displayable.char_count(); i >= 0; --i)
-                term.write(" ", 1);
+            for (int i = m_longest - displayable.char_count(); i >= 0;)
+            {
+                const char spaces[] = "                ";
+                term.write(spaces, min<int>(sizeof_array(spaces) - 1, i));
+                i -= sizeof_array(spaces) - 1;
+            }
 
             index += dx;
         }
