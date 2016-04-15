@@ -126,10 +126,7 @@ editor_backend::result classic_match_ui::on_input(const context& context)
 
     // One match? Accept it.
     if (matches.get_match_count() == 1)
-    {
-        log("accept; %s", matches.get_match(0));
-        return result::next;
-    }
+        return { result::accept_match, 0 };
 
     // Valid LCD? Append it.
     str<> lcd;
@@ -348,9 +345,25 @@ public:
         return (m_eof ? nullptr : rl_line_buffer);
     }
 
-    virtual int get_cursor_pos() const override
+    virtual int get_cursor() const override
     {
         return rl_point;
+    }
+
+    virtual int set_cursor(unsigned int pos) override
+    {
+        return rl_point = pos;
+    }
+
+    virtual bool insert(const char* text) override
+    {
+        rl_insert_text(text);
+        return true;
+    }
+
+    virtual void remove(unsigned int from, unsigned int to) override
+    {
+        rl_delete_text(from, to);
     }
 
 private:
@@ -372,41 +385,43 @@ class line_editor_2
 public:
     struct desc
     {
-        const char*     quote_char;
-        const char*     word_delims;
-        const char*     partial_delims;
-        terminal*       terminal;
-        editor_backend* backend;
-        line_buffer*    buffer;
+        const char*         quote_char;
+        const char*         word_delims;
+        const char*         partial_delims;
+        terminal*           terminal;
+        editor_backend*     backend;
+        line_buffer*        buffer;
     };
 
-                        line_editor_2(const desc& desc);
-    bool                add_backend(editor_backend* backend);
-    match_system&       get_match_system();
-    bool                get_line(char* out, int out_size);
-    bool                edit(char* out, int out_size);
-    bool                update();
+                            line_editor_2(const desc& desc);
+    bool                    add_backend(editor_backend* backend);
+    match_system&           get_match_system();
+    bool                    get_line(char* out, int out_size);
+    bool                    edit(char* out, int out_size);
+    bool                    update();
 
 private:
     typedef fixed_array<editor_backend*, 16> backends;
 
-    void                initialise();
-    void                begin_line();
-    void                end_line();
-    void                collect_words(array_base<word>& words) const;
-    void                update_internal();
-    void                record_input(unsigned char key);
-    void                dispatch();
-    char                m_keys[8];
-    desc                m_desc;
-    match_system        m_match_system; // MODE4 : poor, remove!
-    backends            m_backends;
-    matches             m_matches;
-    binder              m_binder;
-    bind_resolver       m_bind_resolver;
-    unsigned char       m_keys_size;
-    bool                m_begun;
-    bool                m_initialised;
+    void                    initialise();
+    void                    begin_line();
+    void                    end_line();
+    void                    collect_words();
+    void                    update_internal();
+    void                    record_input(unsigned char key);
+    void                    dispatch();
+    void                    accept_match(unsigned int index);
+    char                    m_keys[8];
+    desc                    m_desc;
+    match_system            m_match_system; // MODE4 : poor, remove!
+    backends                m_backends;
+    binder                  m_binder;
+    bind_resolver           m_bind_resolver;
+    fixed_array<word, 72>   m_words;
+    matches                 m_matches;
+    unsigned char           m_keys_size;
+    bool                    m_begun;
+    bool                    m_initialised;
 };
 
 //------------------------------------------------------------------------------
@@ -559,8 +574,18 @@ void line_editor_2::dispatch()
     unsigned char value = result.value & 0xff;
     switch (value)
     {
-    case editor_backend::result::done: end_line();                  break;
-    case editor_backend::result::next: m_bind_resolver.reset(); break;
+    case editor_backend::result::done:
+        end_line();
+        break;
+
+    case editor_backend::result::accept_match:
+        accept_match((result.value >> 8) & 0xffff);
+        m_bind_resolver.reset();
+        break;
+
+    case editor_backend::result::next:
+        m_bind_resolver.reset();
+        break;
 
     case editor_backend::result::more_input:
         m_bind_resolver.set_id((result.value >> 8) & 0xff);
@@ -569,10 +594,12 @@ void line_editor_2::dispatch()
 }
 
 //------------------------------------------------------------------------------
-void line_editor_2::collect_words(array_base<word>& words) const
+void line_editor_2::collect_words()
 {
     const char* line_buffer = m_desc.buffer->get_buffer();
-    const int line_cursor = m_desc.buffer->get_cursor_pos();
+    const int line_cursor = m_desc.buffer->get_cursor();
+
+    m_words.clear();
 
     str_iter token_iter(line_buffer, line_cursor);
     str_tokeniser tokens(token_iter, m_desc.word_delims);
@@ -585,13 +612,13 @@ void line_editor_2::collect_words(array_base<word>& words) const
             break;
 
         // Add the word.
-        words.push_back();
-        *(words.back()) = { short(start - line_buffer), length };
+        m_words.push_back();
+        *(m_words.back()) = { short(start - line_buffer), length };
 
         // Find the best-fit delimiter.
         /* MODE4
         const char* best_delim = word_delims;
-        const char* c = words
+        const char* c = m_words
         while (c > line_buffer)
         {
             const char* delim = strchr(word_delims, *c);
@@ -606,15 +633,15 @@ void line_editor_2::collect_words(array_base<word>& words) const
     }
 
     // Add an empty word if the cursor is at the beginning of one.
-    word* end_word = words.back();
+    word* end_word = m_words.back();
     if (!end_word || end_word->offset + end_word->length < line_cursor)
     {
-        words.push_back();
-        *(words.back()) = { line_cursor };
+        m_words.push_back();
+        *(m_words.back()) = { line_cursor };
     }
 
     // Adjust for quotes.
-    for (word& word : words)
+    for (word& word : m_words)
     {
         const char* start = line_buffer + word.offset;
 
@@ -628,7 +655,7 @@ void line_editor_2::collect_words(array_base<word>& words) const
     }
 
     // Adjust the completing word for partiality.
-    end_word = words.back();
+    end_word = m_words.back();
     int partial = 0;
     for (int j = end_word->length - 1; j >= 0; --j)
     {
@@ -644,19 +671,32 @@ void line_editor_2::collect_words(array_base<word>& words) const
     // MODE4
     int j = 0;
     puts("");
-    for (auto word : words)
+    for (auto word : m_words)
         printf("%02d:%02d,%02d ", j++, word.offset, word.length);
     puts("");
     // MODE4
 }
 
 //------------------------------------------------------------------------------
+void line_editor_2::accept_match(unsigned int index)
+{
+    if (index >= m_matches.get_match_count())
+        return;
+
+    const char* match = m_matches.get_match(index);
+    word end_word = *(m_words.back());
+
+    line_buffer& buffer = *(m_desc.buffer);
+    buffer.remove(end_word.offset + end_word.length, rl_point);
+    buffer.set_cursor(end_word.offset + end_word.length);
+    buffer.insert(match);
+}
+
+//------------------------------------------------------------------------------
 void line_editor_2::update_internal()
 {
-    // Collect words.
-    fixed_array<word, 128> words;
-    collect_words(words);
-    const word& end_word = *(words.back());
+    collect_words();
+    const word& end_word = *(m_words.back());
 
     union key_t {
         struct {
@@ -678,12 +718,12 @@ void line_editor_2::update_internal()
     {
         match_pipeline pipeline(m_match_system, m_matches);
         pipeline.reset();
-        pipeline.generate({ words, m_desc.buffer->get_buffer() });
+        pipeline.generate({ m_words, m_desc.buffer->get_buffer() });
 
         log("generate: %d\n", m_matches.get_match_count());
     }
 
-    next_key.cursor_pos = m_desc.buffer->get_cursor_pos();
+    next_key.cursor_pos = m_desc.buffer->get_cursor();
     prev_key.value = m_matches.get_match_key();
 
     // Should we sort and select matches?
