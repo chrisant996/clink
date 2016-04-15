@@ -171,6 +171,8 @@ classic_match_ui::state classic_match_ui::print(const context& context)
     int rows = (match_count + columns - 1) / columns;
     int pager_row = term.get_rows() - 1;
 
+    auto_flush flusher(term);
+
     bool vertical = g_vertical.get();
     int dx = vertical ? rows : 1;
     for (; m_row < rows; ++m_row)
@@ -199,7 +201,6 @@ classic_match_ui::state classic_match_ui::print(const context& context)
         term.write("\n", 1);
     }
 
-    term.flush();
     return state_none;
 }
 
