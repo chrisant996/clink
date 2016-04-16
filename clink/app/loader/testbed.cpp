@@ -385,7 +385,7 @@ class line_editor_2
 public:
     struct desc
     {
-        const char*         quote_char;
+        const char*         quote_pair;
         const char*         word_delims;
         const char*         partial_delims;
         terminal*           terminal;
@@ -603,7 +603,7 @@ void line_editor_2::collect_words()
 
     str_iter token_iter(line_buffer, line_cursor);
     str_tokeniser tokens(token_iter, m_desc.word_delims);
-    tokens.add_quote_pair(m_desc.quote_char);
+    tokens.add_quote_pair(m_desc.quote_pair);
     while (1)
     {
         const char* start = nullptr;
@@ -645,10 +645,10 @@ void line_editor_2::collect_words()
     {
         const char* start = line_buffer + word.offset;
 
-        int start_quoted = (start[0] == m_desc.quote_char[0]);
+        int start_quoted = (start[0] == m_desc.quote_pair[0]);
         int end_quoted = 0;
         if (word.length > 1)
-            end_quoted = (start[word.length - 1] == m_desc.quote_char[0]);
+            end_quoted = (start[word.length - 1] == m_desc.quote_pair[0]);
 
         word.offset += start_quoted;
         word.length -= start_quoted + end_quoted;
@@ -792,7 +792,7 @@ int testbed(int, char**)
     rl_backend backend;
 
     line_editor_2::desc desc = {};
-    desc.quote_char = "\"";
+    desc.quote_pair = "\"";
     desc.word_delims = " \t=";
     desc.partial_delims = "\\/:";
     desc.terminal = &terminal;
