@@ -693,6 +693,23 @@ void line_editor_2::accept_match(unsigned int index)
     buffer.remove(end_word.offset + end_word.length, rl_point);
     buffer.set_cursor(end_word.offset + end_word.length);
     buffer.insert(match);
+
+    const char* buf_ptr = buffer.get_buffer();
+
+    // MODE4 - clean word if it's a valid path.
+
+    // If this match doesn't make a new partial word, close it off
+    int last_char = strlen(match) - 1;
+    if (strchr(m_desc.partial_delims, match[last_char]) == nullptr)
+    {
+        // Closing quote?
+        int pre_offset = end_word.offset - 1;
+        if (pre_offset >= 0)
+            if (const char* q = strchr(m_desc.quote_pair, buf_ptr[pre_offset]))
+                buffer.insert(q[1] ? q + 1 : q);
+
+        buffer.insert(" ");
+    }
 }
 
 //------------------------------------------------------------------------------
