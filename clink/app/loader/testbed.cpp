@@ -654,7 +654,7 @@ void line_editor_2::collect_words()
         word.length -= start_quoted + end_quoted;
     }
 
-    // Adjust the completing word for partiality.
+    // Adjust the completing word for if it's partial.
     end_word = m_words.back();
     int partial = 0;
     for (int j = end_word->length - 1; j >= 0; --j)
