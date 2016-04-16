@@ -684,6 +684,9 @@ void line_editor_2::accept_match(unsigned int index)
         return;
 
     const char* match = m_matches.get_match(index);
+    if (!*match)
+        return;
+
     word end_word = *(m_words.back());
 
     line_buffer& buffer = *(m_desc.buffer);
