@@ -34,7 +34,6 @@ class matches
 {
 public:
                         matches(unsigned int store_size=0x10000);
-    unsigned int        get_match_key() const;
     unsigned int        get_match_count() const;
     const char*         get_match(unsigned int index) const;
     void                get_match_lcd(str_base& out) const;
@@ -42,7 +41,6 @@ public:
 
 private:
     friend class        match_pipeline;
-    void                set_match_key(unsigned int key);
     unsigned int        get_info_count() const;
     match_info*         get_infos();
     const match_store&  get_store() const;
@@ -70,7 +68,6 @@ private:
 
     store_impl          m_store;
     infos               m_infos;
-    unsigned int        m_key = ~0u;
     unsigned short      m_count = 0;
     bool                m_coalesced = false;
 

@@ -90,12 +90,6 @@ matches::matches(unsigned int store_size)
 }
 
 //------------------------------------------------------------------------------
-void matches::set_match_key(unsigned int key)
-{
-    m_key = key;
-}
-
-//------------------------------------------------------------------------------
 unsigned int matches::get_info_count() const
 {
     return int(m_infos.size());
@@ -111,12 +105,6 @@ match_info* matches::get_infos()
 const match_store& matches::get_store() const
 {
     return m_store;
-}
-
-//------------------------------------------------------------------------------
-unsigned int matches::get_match_key() const
-{
-    return m_key;
 }
 
 //------------------------------------------------------------------------------
@@ -172,7 +160,6 @@ void matches::reset()
     m_infos.clear();
     m_coalesced = false;
     m_count = 0;
-    m_key = ~0u;
 }
 
 //------------------------------------------------------------------------------

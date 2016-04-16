@@ -70,17 +70,17 @@ private:
     };
 
     virtual void    bind(binder& binder) override;
-    virtual result  on_input(const context& context) override;
     virtual void    begin_line() override {}
     virtual void    end_line() override {}
+    virtual void    on_matches_changed(const context& context) override;
+    virtual result  on_input(const char* keys, int id, const context& context) override;
     state           begin_print(const context& context);
     state           print(const context& context, bool single_row);
-    state           query_prompt(const context& context);
-    state           pager_prompt(const context& context);
+    state           query_prompt(unsigned char key, const context& context);
+    state           pager_prompt(unsigned char key, const context& context);
     bool            m_waiting = false;
-    unsigned int    m_prev_key = ~0u;
-    int             m_longest;
-    int             m_row;
+    int             m_longest = 0;
+    int             m_row = 0;
 };
 
 //------------------------------------------------------------------------------
@@ -90,26 +90,28 @@ void classic_match_ui::bind(binder& binder)
 }
 
 //------------------------------------------------------------------------------
-editor_backend::result classic_match_ui::on_input(const context& context)
+void classic_match_ui::on_matches_changed(const context& context)
+{
+    m_waiting = false;
+}
+
+//------------------------------------------------------------------------------
+editor_backend::result classic_match_ui::on_input(
+    const char* keys,
+    int id,
+    const context& context)
 {
     auto& terminal = context.terminal;
     auto& matches = context.matches;
 
-    unsigned int key = matches.get_match_key();
-    if (key != m_prev_key)
-    {
-        m_waiting = false;
-        m_prev_key = key;
-    }
-
     if (m_waiting)
     {
         int next_state = state_none;
-        switch (context.id)
+        switch (id)
         {
         case state_none:    next_state = begin_print(context); break;
-        case state_query:   next_state = query_prompt(context); break;
-        case state_pager:   next_state = pager_prompt(context); break;
+        case state_query:   next_state = query_prompt(keys[0], context); break;
+        case state_pager:   next_state = pager_prompt(keys[0], context); break;
         }
 
         if (next_state > state_print)
@@ -230,9 +232,11 @@ classic_match_ui::state classic_match_ui::print(const context& context, bool sin
 }
 
 //------------------------------------------------------------------------------
-classic_match_ui::state classic_match_ui::query_prompt(const context& context)
+classic_match_ui::state classic_match_ui::query_prompt(
+    unsigned char key,
+    const context& context)
 {
-    switch(context.keys[0])
+    switch(key)
     {
     case 'y':
     case 'Y':
@@ -254,9 +258,11 @@ classic_match_ui::state classic_match_ui::query_prompt(const context& context)
 }
 
 //------------------------------------------------------------------------------
-classic_match_ui::state classic_match_ui::pager_prompt(const context& context)
+classic_match_ui::state classic_match_ui::pager_prompt(
+    unsigned char key,
+    const context& context)
 {
-    switch (context.keys[0])
+    switch (key)
     {
     case ' ':
     case '\t':
@@ -304,10 +310,14 @@ public:
         rl_callback_handler_remove();
     }
 
-    virtual result on_input(const context& context) override
+    virtual void on_matches_changed(const context& context) override
     {
-        static unsigned char more_input_id = 0xff;
-        if ((unsigned char)(context.id) != more_input_id)
+    }
+
+    virtual result on_input(const char* keys, int id, const context& context) override
+    {
+        static char more_input_id = -1;
+        if (char(id) != more_input_id)
             return result::next;
 
         // MODE4
@@ -317,7 +327,7 @@ public:
             virtual int read() { return *(unsigned char*)(data++); }
             const char* data; 
         } term_in;
-        term_in.data = context.keys;
+        term_in.data = keys;
         rl_instream = (FILE*)(&term_in);
 
         while (*term_in.data)
@@ -419,6 +429,7 @@ private:
     bind_resolver           m_bind_resolver;
     fixed_array<word, 72>   m_words;
     matches                 m_matches;
+    unsigned int            m_prev_key;
     unsigned char           m_keys_size;
     bool                    m_begun;
     bool                    m_initialised;
@@ -429,6 +440,7 @@ line_editor_2::line_editor_2(const desc& desc)
 : m_desc(desc)
 , m_initialised(false)
 , m_begun(false)
+, m_prev_key(~0u)
 {
     add_backend(m_desc.backend);
     m_binder.set_default_backend(m_desc.backend);
@@ -559,14 +571,14 @@ void line_editor_2::dispatch()
         *m_desc.terminal,
         *m_desc.buffer,
         m_matches,
-        m_keys,
-        m_bind_resolver.get_id(),
     };
 
     m_keys[m_keys_size] = '\0';
 
+    int id = m_bind_resolver.get_id();
+
     editor_backend* backend = m_bind_resolver.get_backend();
-    editor_backend::result result = backend->on_input(context);
+    editor_backend::result result = backend->on_input(m_keys, id, context);
 
     m_keys_size = 0;
 
@@ -730,7 +742,7 @@ void line_editor_2::update_internal()
     key_t next_key = { end_word.offset, end_word.length };
 
     key_t prev_key;
-    prev_key.value = m_matches.get_match_key();
+    prev_key.value = m_prev_key;
     prev_key.cursor_pos = 0;
 
     // Should we generate new matches?
@@ -744,7 +756,7 @@ void line_editor_2::update_internal()
     }
 
     next_key.cursor_pos = m_desc.buffer->get_cursor();
-    prev_key.value = m_matches.get_match_key();
+    prev_key.value = m_prev_key;
 
     // Should we sort and select matches?
     if (next_key.value != prev_key.value)
@@ -757,7 +769,18 @@ void line_editor_2::update_internal()
         match_pipeline pipeline(m_match_system, m_matches);
         pipeline.select("normal", needle.c_str());
         pipeline.sort("alpha");
-        pipeline.finalise(next_key.value);
+
+        m_prev_key = next_key.value;
+
+        // Tell all the backends that the matches changed.
+        editor_backend::context context = {
+            *m_desc.terminal,
+            *m_desc.buffer,
+            m_matches,
+        };
+
+        for (auto backend : m_backends)
+            backend->on_matches_changed(context);
 
         log("select & sort: '%s'\n", needle.c_str());
     }
