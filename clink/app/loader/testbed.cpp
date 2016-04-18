@@ -804,7 +804,7 @@ void line_editor_2::update_internal()
             backend->on_matches_changed(context);
     }
 
-    /* MODE4 */ draw_matches(m_matches);
+    //* MODE4 */ draw_matches(m_matches);
 }
 
 
@@ -865,7 +865,10 @@ int testbed(int, char**)
     editor.add_generator(file_match_generator());
 
     char out[64];
-    editor.edit(out, sizeof_array(out));
+    do {
+        terminal.write("\n", 1);
+    }
+    while (editor.edit(out, sizeof_array(out)));
 
     return 0;
 }
