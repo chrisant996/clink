@@ -95,6 +95,7 @@ char** match_display_filter(char** matches, int match_count)
 //------------------------------------------------------------------------------
 bool call_readline(const char* prompt, str_base& out)
 {
+#if MODE4
     // Make sure that EOL wrap is on. Readline's told the terminal supports it.
     int stdout_flags = ENABLE_PROCESSED_OUTPUT|ENABLE_WRAP_AT_EOL_OUTPUT;
     HANDLE handle_stdout = GetStdHandle(STD_OUTPUT_HANDLE);
@@ -132,5 +133,6 @@ bool call_readline(const char* prompt, str_base& out)
 
     out = text;
     free(text);
+#endif // MODE4
     return true;
 }
