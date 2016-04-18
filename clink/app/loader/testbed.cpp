@@ -3,6 +3,8 @@
 
 #include <core/array.h>
 #include <core/base.h>
+#include <core/os.h>
+#include <core/path.h>
 #include <core/settings.h>
 #include <core/singleton.h>
 #include <core/str_compare.h>
@@ -704,18 +706,19 @@ void line_editor_2::accept_match(unsigned int index)
     int word_end = end_word.offset + end_word.length;
 
     line_buffer& buffer = *(m_desc.buffer);
-    buffer.remove(word_end, buffer.get_cursor());
-    buffer.set_cursor(word_end);
-    buffer.insert(match);
-
     const char* buf_ptr = buffer.get_buffer();
 
     str<288> word;
-    word.concat(buf_ptr + word_start, offset.length);
+    word.concat(buf_ptr + word_start, end_word.length);
+    word << match;
+
+    // Clean the work tf it is a valid file system path.
     if (os::get_path_type(word.c_str()) != os::path_type_invalid)
         path::clean(word);
 
-    // MODE4 - clean word if it's a valid path.
+    buffer.remove(word_start, buffer.get_cursor());
+    buffer.set_cursor(word_start);
+    buffer.insert(word.c_str());
 
     // If this match doesn't make a new partial word, close it off
     int last_char = strlen(match) - 1;
