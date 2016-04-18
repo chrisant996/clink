@@ -5,6 +5,7 @@
 
 class binder;
 class line_buffer;
+class line_state;
 class matches;
 class terminal;
 
@@ -16,6 +17,7 @@ public:
     {
         enum result_v {
             next,
+            redraw,
             done,
             _count_v,
         };

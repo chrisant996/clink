@@ -114,7 +114,7 @@ editor_backend::result classic_match_ui::on_input(
         case state_pager:   return { result::more_input, state_pager };
         }
 
-        return result::next;
+        return result::redraw;
     }
 
     // One match? Accept it.
@@ -450,6 +450,7 @@ bool line_editor_2::update()
         m_binder.update_resolver(key, m_bind_resolver);
 
     dispatch();
+    m_desc.buffer->draw();
 
     if (!m_begun)
         return false;
@@ -501,6 +502,10 @@ void line_editor_2::dispatch()
         accept_match((result.value >> 8) & 0xffff);
         m_bind_resolver.reset();
         break;
+
+    case editor_backend::result::redraw:
+        m_desc.buffer->redraw();
+        /* fall through */
 
     case editor_backend::result::next:
         m_bind_resolver.reset();

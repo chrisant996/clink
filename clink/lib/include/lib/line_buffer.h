@@ -11,5 +11,7 @@ public:
     virtual unsigned int    get_cursor() const = 0;
     virtual unsigned int    set_cursor(unsigned int pos) = 0;
     virtual bool            insert(const char* text) = 0;
-    virtual void            remove(unsigned int from, unsigned int to) = 0;
+    virtual bool            remove(unsigned int from, unsigned int to) = 0;
+    virtual void            draw() = 0;
+    virtual void            redraw() = 0;
 };
