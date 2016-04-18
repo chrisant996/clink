@@ -699,8 +699,8 @@ void line_editor_2::update_internal()
         needle.concat(line + needle_start, next_key.cursor_pos - needle_start);
 
         match_pipeline pipeline(m_matches);
-        pipeline.select("normal", needle.c_str());
-        pipeline.sort("alpha");
+        pipeline.select(needle.c_str());
+        pipeline.sort();
 
         m_prev_key = next_key.value;
 

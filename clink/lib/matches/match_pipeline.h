@@ -15,8 +15,8 @@ public:
                         match_pipeline(matches& matches);
     void                reset();
     void                generate(const line_state& state, const array<match_generator*>& generators);
-    void                select(const char* selector_name, const char* needle);
-    void                sort(const char* sort_name);
+    void                select(const char* needle);
+    void                sort();
 
 private:
     matches&            m_matches;

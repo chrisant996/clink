@@ -82,7 +82,7 @@ void match_pipeline::generate(
 }
 
 //------------------------------------------------------------------------------
-void match_pipeline::select(const char* selector_name, const char* needle)
+void match_pipeline::select(const char* needle)
 {
     int count = m_matches.get_info_count();
     if (!count)
@@ -96,7 +96,7 @@ void match_pipeline::select(const char* selector_name, const char* needle)
 }
 
 //------------------------------------------------------------------------------
-void match_pipeline::sort(const char* sorter_name)
+void match_pipeline::sort()
 {
     int count = m_matches.get_match_count();
     if (!count)
