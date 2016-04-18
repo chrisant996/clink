@@ -710,6 +710,11 @@ void line_editor_2::accept_match(unsigned int index)
 
     const char* buf_ptr = buffer.get_buffer();
 
+    str<288> word;
+    word.concat(buf_ptr + word_start, offset.length);
+    if (os::get_path_type(word.c_str()) != os::path_type_invalid)
+        path::clean(word);
+
     // MODE4 - clean word if it's a valid path.
 
     // If this match doesn't make a new partial word, close it off
