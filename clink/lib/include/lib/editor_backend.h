@@ -46,7 +46,7 @@ public:
     };
 
     virtual void            bind(binder& binder) = 0;
-    virtual void            begin_line() = 0;
+    virtual void            begin_line(const char* prompt, const context& context) = 0;
     virtual void            end_line() = 0;
     virtual void            on_matches_changed(const context& context) = 0;
     virtual result          on_input(const char* keys, int id, const context& context) = 0;

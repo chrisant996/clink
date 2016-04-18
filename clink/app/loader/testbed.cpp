@@ -57,8 +57,8 @@ private:
     };
 
     virtual void    bind(binder& binder) override;
-    virtual void    begin_line() override {}
-    virtual void    end_line() override {}
+    virtual void    begin_line(const char* prompt, const context& context) override;
+    virtual void    end_line() override;
     virtual void    on_matches_changed(const context& context) override;
     virtual result  on_input(const char* keys, int id, const context& context) override;
     state           begin_print(const context& context);
@@ -74,6 +74,16 @@ private:
 void classic_match_ui::bind(binder& binder)
 {
     binder.bind("\t", *this, state_none);
+}
+
+//------------------------------------------------------------------------------
+void classic_match_ui::begin_line(const char* prompt, const context& context)
+{
+}
+
+//------------------------------------------------------------------------------
+void classic_match_ui::end_line()
+{
 }
 
 //------------------------------------------------------------------------------
@@ -374,8 +384,17 @@ void line_editor_2::begin_line()
 
     m_desc.terminal->begin();
 
+    editor_backend::context context = {
+        *m_desc.terminal,
+        *m_desc.buffer,
+        { m_words, m_desc.buffer->get_buffer() },
+        m_matches,
+    };
+
     for (auto backend : m_backends)
-        backend->begin_line();
+        backend->begin_line(m_desc.prompt, context);
+
+    //m_desc.buffer->redraw();
 }
 
 //------------------------------------------------------------------------------

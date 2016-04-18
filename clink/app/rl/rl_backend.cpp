@@ -17,7 +17,7 @@ void rl_backend::bind(binder& binder)
 }
 
 //------------------------------------------------------------------------------
-void rl_backend::begin_line()
+void rl_backend::begin_line(const char* prompt, const context& context)
 {
     auto handler = [] (char* line) { rl_backend::get()->done(line); };
     rl_callback_handler_install("testbed $ ", handler);
