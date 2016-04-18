@@ -390,8 +390,6 @@ void line_editor_2::begin_line()
     editor_backend::context context = build_context();
     for (auto backend : m_backends)
         backend->begin_line(m_desc.prompt, context);
-
-    //m_desc.buffer->redraw();
 }
 
 //------------------------------------------------------------------------------
