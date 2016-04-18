@@ -135,9 +135,20 @@ editor_backend::result classic_match_ui::on_input(
     // Valid LCD? Append it.
     str<> lcd;
     matches.get_match_lcd(lcd);
-    if (lcd.length())
+    if (int lcd_length = lcd.length())
     {
-        log("append; %s", lcd.c_str());
+        const word end_word = *(context.line.get_words().back());
+        line_buffer& buffer = context.buffer;
+
+        int word_end = end_word.offset + end_word.length;
+        int dx = lcd_length - (buffer.get_cursor() - word_end);
+        if (dx > 0)
+            buffer.insert(lcd.c_str() + (lcd_length - dx));
+        else if (dx < 0)
+            buffer.insert(""); // MODE4 - should remove instead.
+        else
+            m_waiting = true;
+
         return result::next;
     }
 
