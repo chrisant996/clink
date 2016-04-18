@@ -362,7 +362,7 @@ public:
 
     virtual unsigned int set_cursor(unsigned int pos) override
     {
-        return rl_point = pos;
+        return (pos <= rl_end) ? rl_point = pos : rl_point = rl_end;
     }
 
     virtual bool insert(const char* text) override
