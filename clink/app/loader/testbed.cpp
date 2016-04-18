@@ -572,6 +572,7 @@ void line_editor_2::dispatch()
     editor_backend::context context = {
         *m_desc.terminal,
         *m_desc.buffer,
+        { m_words, m_desc.buffer->get_buffer() },
         m_matches,
     };
 
@@ -786,6 +787,7 @@ void line_editor_2::update_internal()
         editor_backend::context context = {
             *m_desc.terminal,
             *m_desc.buffer,
+            { m_words, m_desc.buffer->get_buffer() },
             m_matches,
         };
 
