@@ -7,9 +7,68 @@
 #include <terminal/terminal.h>
 
 //------------------------------------------------------------------------------
+static FILE*    null_stream = (FILE*)1;
+
+extern "C" {
+extern void     (*rl_fwrite_function)(FILE*, const char*, int);
+extern void     (*rl_fflush_function)(FILE*);
+} // extern "C"
+
+
+
+//------------------------------------------------------------------------------
+static int terminal_read_thunk(FILE* stream)
+{
+    if (stream == null_stream)
+        return 0;
+
+    terminal_in* term = (terminal_in*)stream;
+    return term->read();
+}
+
+//------------------------------------------------------------------------------
+static void terminal_write_thunk(FILE* stream, const char* chars, int char_count)
+{
+    if (stream == stderr || stream == null_stream)
+        return;
+
+    terminal_out* term = (terminal_out*)stream;
+    return term->write(chars, char_count);
+}
+
+//------------------------------------------------------------------------------
+static void terminal_flush_thunk(FILE* stream)
+{
+    if (stream == stderr || stream == null_stream)
+        return;
+
+    terminal_out* term = (terminal_out*)stream;
+    return term->flush();
+}
+
+
+
+//------------------------------------------------------------------------------
 rl_backend::rl_backend(const char* shell_name)
 {
+    rl_getc_function = terminal_read_thunk;
+    rl_fwrite_function = terminal_write_thunk;
+    rl_fflush_function = terminal_flush_thunk;
+    rl_instream = null_stream;
+    rl_outstream = null_stream;
+
     rl_readline_name = shell_name;
+    rl_catch_signals = 0;
+
+    // Disable completion and match display.
+    rl_completion_entry_function = [](const char*, int) -> char* { return nullptr; };
+    rl_completion_display_matches_hook = [](char**, int, int) {};
+
+    /* MODE4
+    //_rl_comment_begin = "::";
+    //rl_filename_quote_characters = " %=;&^";
+    //history_inhibit_expansion_function = history_expand_control;
+    */
 }
 
 //------------------------------------------------------------------------------
@@ -20,8 +79,10 @@ void rl_backend::bind(binder& binder)
 //------------------------------------------------------------------------------
 void rl_backend::begin_line(const char* prompt, const context& context)
 {
+    rl_outstream = (FILE*)(terminal_out*)(&context.terminal);
+
     auto handler = [] (char* line) { rl_backend::get()->done(line); };
-    rl_callback_handler_install("testbed $ ", handler);
+    rl_callback_handler_install("MODE4 $ ", handler);
 
     m_need_draw = false;
     m_done = false;
@@ -50,21 +111,23 @@ editor_backend::result rl_backend::on_input(
     if (char(id) != more_input_id)
         return result::next;
 
-    // MODE4
-    static struct : public terminal_in
+    // Setup the terminal.
+    struct : public terminal_in
     {
-        virtual void select() {}
-        virtual int read() { return *(unsigned char*)(data++); }
-        const char* data; 
+        virtual void select() override  {}
+        virtual int  read() override    { return *(unsigned char*)(data++); }
+        const char*  data; 
     } term_in;
+             
     term_in.data = keys;
+
     rl_instream = (FILE*)(&term_in);
 
+    // Call Readline's until there's no characters left.
     while (*term_in.data)
-    // MODE4
+        rl_callback_read_char();
 
-    rl_callback_read_char();
-
+    // Check if Readline want's more input or if we're done.
     int rl_state = rl_readline_state;
     rl_state &= ~RL_STATE_CALLBACK;
     rl_state &= ~RL_STATE_INITIALIZED;
