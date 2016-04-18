@@ -700,10 +700,12 @@ void line_editor_2::accept_match(unsigned int index)
         return;
 
     word end_word = *(m_words.back());
+    int word_start = end_word.offset;
+    int word_end = end_word.offset + end_word.length;
 
     line_buffer& buffer = *(m_desc.buffer);
-    buffer.remove(end_word.offset + end_word.length, rl_point);
-    buffer.set_cursor(end_word.offset + end_word.length);
+    buffer.remove(word_end, buffer.get_cursor());
+    buffer.set_cursor(word_end);
     buffer.insert(match);
 
     const char* buf_ptr = buffer.get_buffer();
