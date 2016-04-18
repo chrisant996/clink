@@ -7,6 +7,13 @@
 #include <terminal/ecma48_iter.h>
 #include <terminal/terminal.h>
 
+extern "C" {
+#include <readline/history.h>
+#include <readline/readline.h>
+#include <readline/rldefs.h>
+#include <compat/dirent.h>
+}
+
 //------------------------------------------------------------------------------
 static FILE*    null_stream = (FILE*)1;
 

@@ -23,11 +23,3 @@
 #ifndef __MINGW32__
 #   include <DbgHelp.h>
 #endif
-
-// Readline includes.
-extern "C" {
-#include <readline/history.h>
-#include <readline/readline.h>
-#include <readline/rldefs.h>
-#include <compat/dirent.h>
-}

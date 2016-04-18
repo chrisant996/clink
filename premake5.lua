@@ -193,9 +193,10 @@ project("clink_lib")
     includedirs("clink/terminal/include")
     includedirs("lua/src")
     files("clink/lib/**")
+    excludes("clink/lib/lua/**")
 
     configuration("vs*")
-        pchsource("clink/lib/pch.cpp")
+        pchsource("clink/lib/src/pch.cpp")
         pchheader("pch.h")
 
 --------------------------------------------------------------------------------
@@ -238,7 +239,6 @@ project("clink_base")
     language("c++")
     kind("staticlib")
     includedirs("clink/app")
-    includedirs("clink/lib") -- MODE4
     includedirs("clink/lib/include")
     includedirs("clink/core/include")
     includedirs("clink/process/include")
@@ -310,7 +310,6 @@ project("clink_test")
     links("lua")
     links("readline")
     includedirs("catch")
-    includedirs("clink/lib") -- MODE4
     includedirs("clink/lib/include")
     includedirs("clink/app")
     includedirs("clink/core/include")

@@ -3,7 +3,7 @@
 
 #include "pch.h"
 #include "matches_lua.h"
-#include "matches/matches.h"
+#include "matches.h"
 
 #include <core/base.h>
 #include <core/str.h>

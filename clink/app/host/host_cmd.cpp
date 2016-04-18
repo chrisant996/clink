@@ -11,7 +11,7 @@
 #include <core/log.h>
 #include <core/settings.h>
 #include <lib/line_editor.h>
-#include <lua/lua_script_loader.h>
+// MODE4 #include <lua/lua_script_loader.h>
 #include <process/vm.h>
 #include <terminal/terminal.h>
 

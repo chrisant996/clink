@@ -3,7 +3,7 @@
 
 #include "pch.h"
 #include "line_editor.h"
-#include "matches/match_pipeline.h"
+#include "match_pipeline.h"
 #include "lib/line_buffer.h"
 
 #include <core/base.h>

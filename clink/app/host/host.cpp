@@ -12,7 +12,7 @@
 #include <lib/classic_match_ui.h>
 #include <lib/match_generator.h>
 #include <lib/line_editor.h>
-#include <lua/lua_script_loader.h>
+// MODE4 #include <lua/lua_script_loader.h>
 #include <terminal/win_terminal.h>
 
 /* MODE4

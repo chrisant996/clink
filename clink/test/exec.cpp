@@ -6,6 +6,8 @@
 #include "env_fixture.h"
 #include "match_generator_tester.h"
 
+#if MODE4
+
 #include <core/path.h>
 #include <lua/lua_match_generator.h>
 #include <lua/lua_root.h>
@@ -68,3 +70,5 @@ TEST_CASE("Executable match generation.") {
 
     // MODE4 - missing tests
 }
+
+#endif // MODE4

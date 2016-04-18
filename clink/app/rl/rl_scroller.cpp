@@ -3,7 +3,6 @@
 
 #include "pch.h"
 #include "rl_scroller.h"
-#include "rl_delegate.h"
 
 #include <core/base.h>
 
@@ -17,6 +16,7 @@ extern int                  rl_key_sequence_length;
 rl_scroller::rl_scroller()
 : m_prev_keymap(nullptr)
 {
+#if MODE4
     auto end_thunk = rl_delegate(this, rl_scroller, end);
 
     // Build a keymap for handling scrolling.
@@ -33,6 +33,7 @@ rl_scroller::rl_scroller()
 
     auto begin_thunk = rl_delegate(this, rl_scroller, begin);
     rl_add_funmap_entry("enter-scroll-mode", begin_thunk);
+#endif
 }
 
 //------------------------------------------------------------------------------

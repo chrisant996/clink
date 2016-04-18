@@ -69,8 +69,6 @@ static int dispatch_verb(const char* verb, int argc, char** argv)
         "testbed", testbed,
     };
 
-    int i;
-
     for (int i = 0; i < sizeof_array(handlers); ++i)
     {
         if (strcmp(verb, handlers[i].verb) == 0)

@@ -5,12 +5,15 @@
 #include "fs_fixture.h"
 #include "match_generator_tester.h"
 
+#if MODE4
+
 #include <core/base.h>
 #include <core/str.h>
 #include <core/str_compare.h>
 #include <lua/lua_match_generator.h>
 #include <lua/lua_root.h>
 #include <lua/lua_script_loader.h>
+
 
 //------------------------------------------------------------------------------
 struct dir_test
@@ -111,3 +114,5 @@ TEST_CASE("Directory match generation.") {
         }
     }
 }
+
+#endif // MODE4

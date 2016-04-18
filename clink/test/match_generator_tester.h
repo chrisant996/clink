@@ -5,7 +5,7 @@
 
 #include <core/str.h>
 #include <lib/line_state.h>
-#include <matches/matches.h>
+#include <lib/matches.h>
 
 #include <stdarg.h>
 

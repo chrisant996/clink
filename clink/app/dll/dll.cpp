@@ -16,9 +16,9 @@
 #include <core/settings.h>
 #include <core/str.h>
 #include <core/str_tokeniser.h>
-#include <lua/lua_match_generator.h>
-#include <lua/lua_root.h>
-#include <lua/lua_script_loader.h>
+// MODE4 #include <lua/lua_match_generator.h>
+// MODE4 #include <lua/lua_root.h>
+// MODE4 #include <lua/lua_script_loader.h>
 #include <terminal/win_terminal.h>
 
 /* MODE4

@@ -8,7 +8,7 @@
 #include <lib/binder.h>
 #include <lib/editor_backend.h>
 #include <lib/line_state.h>
-#include <matches/matches.h>
+#include <lib/matches.h>
 
 class editor_backend;
 class line_buffer;
