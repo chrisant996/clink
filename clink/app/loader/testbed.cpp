@@ -729,7 +729,7 @@ int testbed(int, char**)
     win_terminal terminal;
 
     classic_match_ui ui;
-    rl_backend backend;
+    rl_backend backend("testbed");
 
     line_editor_2::desc desc = {};
     desc.prompt = "testbed -> ";

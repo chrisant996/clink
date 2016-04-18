@@ -7,8 +7,9 @@
 #include <terminal/terminal.h>
 
 //------------------------------------------------------------------------------
-rl_backend::rl_backend()
+rl_backend::rl_backend(const char* shell_name)
 {
+    rl_readline_name = shell_name;
 }
 
 //------------------------------------------------------------------------------

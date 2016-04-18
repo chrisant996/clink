@@ -14,7 +14,7 @@ class rl_backend
     , public singleton<rl_backend>
 {
 public:
-                            rl_backend();
+                            rl_backend(const char* shell_name);
 
 private:
     virtual void            bind(binder& binder) override;
