@@ -65,7 +65,7 @@ private:
         unsigned int    m_back;
     };
 
-    typedef std::vector<match_info> infos;
+    typedef std::vector<match_info> infos; // MODE4
 
     store_impl          m_store;
     infos               m_infos;
