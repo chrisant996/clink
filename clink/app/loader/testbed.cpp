@@ -220,12 +220,10 @@ classic_match_ui::state classic_match_ui::print(const context& context, bool sin
             if (index >= match_count)
                 continue;
 
-            str<> displayable;
             const char* match = matches.get_match(index);
             term.write(match, int(strlen(match)));
 
-            displayable = match; // MODE4
-            for (int i = m_longest - displayable.char_count() + 1; i >= 0;)
+            for (int i = m_longest - char_count(match) + 1; i >= 0;)
             {
                 const char spaces[] = "                ";
                 term.write(spaces, min<int>(sizeof_array(spaces) - 1, i));
