@@ -305,6 +305,7 @@ class line_editor_2
 public:
     struct desc
     {
+        const char*     prompt; // MODE4
         const char*     command_delims; // MODE4
         const char*     quote_pair;
         const char*     word_delims;
@@ -731,6 +732,7 @@ int testbed(int, char**)
     rl_backend backend;
 
     line_editor_2::desc desc = {};
+    desc.prompt = "testbed -> ";
     desc.quote_pair = "\"";
     desc.word_delims = " \t=";
     desc.partial_delims = "\\/:";
