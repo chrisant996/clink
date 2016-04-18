@@ -355,12 +355,12 @@ public:
         return (m_eof ? nullptr : rl_line_buffer);
     }
 
-    virtual int get_cursor() const override
+    virtual unsigned int get_cursor() const override
     {
         return rl_point;
     }
 
-    virtual int set_cursor(unsigned int pos) override
+    virtual unsigned int set_cursor(unsigned int pos) override
     {
         return rl_point = pos;
     }
