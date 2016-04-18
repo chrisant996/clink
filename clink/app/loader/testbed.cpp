@@ -669,6 +669,9 @@ void line_editor_2::collect_words()
     // Adjust for quotes.
     for (word& word : m_words)
     {
+        if (word.length == 0)
+            continue;
+
         const char* start = line_buffer + word.offset;
 
         int start_quoted = (start[0] == m_desc.quote_pair[0]);
