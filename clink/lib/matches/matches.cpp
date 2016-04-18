@@ -164,17 +164,18 @@ void matches::reset()
 }
 
 //------------------------------------------------------------------------------
-void matches::add_match(const char* match)
+bool matches::add_match(const char* match)
 {
     if (m_coalesced || !*match)
-        return;
+        return false;
 
     int store_id = m_store.store_front(match);
     if (store_id < 0)
-        return;
+        return false;
 
     m_infos.push_back({ 0, (unsigned short)store_id });
     ++m_count;
+    return true;
 }
 
 //------------------------------------------------------------------------------

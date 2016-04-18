@@ -37,10 +37,11 @@ public:
     unsigned int        get_match_count() const;
     const char*         get_match(unsigned int index) const;
     void                get_match_lcd(str_base& out) const;
-    void                add_match(const char* match); // MODE4
 
 private:
     friend class        match_pipeline;
+    friend class        match_builder;
+    bool                add_match(const char* match);
     unsigned int        get_info_count() const;
     match_info*         get_infos();
     const match_store&  get_store() const;
@@ -77,3 +78,28 @@ private:
     void                operator = (const matches&) = delete;
     void                operator = (matches&& rhs) = delete;
 };
+
+
+
+//------------------------------------------------------------------------------
+class match_builder
+{
+public:
+                match_builder(matches& matches);
+    bool        add_match(const char* match);
+    
+private:
+    matches&    m_matches;
+};
+
+//------------------------------------------------------------------------------
+inline match_builder::match_builder(matches& matches)
+: m_matches(matches)
+{
+}
+
+//------------------------------------------------------------------------------
+inline bool match_builder::add_match(const char* match)
+{
+    return m_matches.add_match(match);
+}

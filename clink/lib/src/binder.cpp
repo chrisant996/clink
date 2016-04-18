@@ -16,13 +16,13 @@ binder::binder()
 }
 
 //------------------------------------------------------------------------------
-void binder::set_default_backend(editor_backend* backend)
+void binder::set_default_backend(editor_backend& backend)
 {
     m_default_backend = add_backend(backend);
 }
 
 //------------------------------------------------------------------------------
-bool binder::bind(const char* chord, editor_backend* backend, unsigned char id)
+bool binder::bind(const char* chord, editor_backend& backend, unsigned char id)
 {
     // Validate input
     const char* c = chord;
@@ -120,14 +120,14 @@ binder::node* binder::add_child(node* parent, unsigned char key)
 }
 
 //------------------------------------------------------------------------------
-int binder::add_backend(editor_backend* backend)
+int binder::add_backend(editor_backend& backend)
 {
     for (int i = 0, n = m_backends.size(); i < n; ++i)
-        if (*(m_backends[i]) == backend)
+        if (*(m_backends[i]) == &backend)
             return i;
 
     editor_backend** slot = m_backends.push_back();
-    return (slot != nullptr) ? *slot = backend, int(slot - m_backends.front()) : -1;
+    return (slot != nullptr) ? *slot = &backend, int(slot - m_backends.front()) : -1;
 }
 
 //------------------------------------------------------------------------------

@@ -6,7 +6,6 @@
 #include <core/str.h>
 #include <line_state.h>
 #include <matches/matches.h>
-#include <matches/match_system.h>
 
 #include <stdarg.h>
 
@@ -49,12 +48,12 @@ void match_generator_tester<T>::run(const char* line, va_list arg)
     initialise();
 
     // Build a testable match system.
-    match_system system;
-    system.add_generator(0, m_generator);
+    // MODE4 match_system system;
+    // MODE4 system.add_generator(0, m_generator);
 
     // Generate the matches.
     matches result;
-    system.generate_matches(line, int(strlen(line)), result);
+    // MODE4 system.generate_matches(line, int(strlen(line)), result);
 
     // It's possible that we're not expecting any matches...
     va_list arg_iter = arg;

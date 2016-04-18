@@ -46,7 +46,7 @@ void lua_match_generator::print_error(const char* error) const
 }
 
 //------------------------------------------------------------------------------
-bool lua_match_generator::generate(const line_state& line, matches& out)
+bool lua_match_generator::generate(const line_state& line, match_builder& builder)
 {
 #if MODE4
     // Expose some of the readline state to lua.

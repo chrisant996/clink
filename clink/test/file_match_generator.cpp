@@ -6,6 +6,7 @@
 #include "match_generator_tester.h"
 
 #include <core/str_compare.h>
+#include <lib/match_generator.h>
 
 //------------------------------------------------------------------------------
 struct file_test

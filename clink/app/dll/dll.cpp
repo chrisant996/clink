@@ -99,6 +99,7 @@ static void initialise_line_editor(lua_State* lua, const char* host_name)
 
     // MODE4 - memory leaks!
     // Give the line editor some match generators.
+    /* MODE4 : dead!
     match_system& match_system = g_line_editor->get_match_system();
 
     lua_match_generator* lua_generator = new lua_match_generator(lua);
@@ -106,6 +107,7 @@ static void initialise_line_editor(lua_State* lua, const char* host_name)
     // MODE4
 
     match_system.add_generator(1001, file_match_generator());
+    */
 }
 
 //------------------------------------------------------------------------------

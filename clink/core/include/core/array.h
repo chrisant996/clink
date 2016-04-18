@@ -5,7 +5,7 @@
 
 //------------------------------------------------------------------------------
 template <typename T>
-class array_base
+class array
 {
 public:
     class iter
@@ -20,7 +20,7 @@ public:
         T*          m_t;
     };
 
-                    array_base(T* ptr, unsigned int size, unsigned int capacity);
+                    array(T* ptr, unsigned int size, unsigned int capacity);
     iter            begin() const    { return m_ptr; }
     iter            end() const      { return m_ptr + m_size; }
     unsigned int    size() const     { return m_size; }
@@ -41,7 +41,7 @@ protected:
 
 //------------------------------------------------------------------------------
 template <typename T>
-array_base<T>::array_base(T* ptr, unsigned int size, unsigned int capacity)
+array<T>::array(T* ptr, unsigned int size, unsigned int capacity)
 : m_ptr(ptr)
 , m_size(size)
 , m_capacity(capacity)
@@ -50,14 +50,14 @@ array_base<T>::array_base(T* ptr, unsigned int size, unsigned int capacity)
 
 //------------------------------------------------------------------------------
 template <typename T>
-T const* array_base<T>::operator [] (unsigned int index) const
+T const* array<T>::operator [] (unsigned int index) const
 {
     return (index >= capacity()) ? nullptr : (m_ptr + index);
 }
 
 //------------------------------------------------------------------------------
 template <typename T>
-void array_base<T>::clear()
+void array<T>::clear()
 {
     for (auto iter : *this)
         iter.~T();
@@ -70,10 +70,10 @@ void array_base<T>::clear()
 //------------------------------------------------------------------------------
 template <typename T, unsigned int SIZE>
 class fixed_array
-    : public array_base<T>
+    : public array<T>
 {
 public:
-                fixed_array() : array_base(m_buffer, 0, SIZE) {}
+                fixed_array() : array(m_buffer, 0, SIZE) {}
 
 private:
     T           m_buffer[SIZE];

@@ -13,6 +13,7 @@
 #include <src/bind_resolver.h>
 #include <lib/binder.h>
 #include <lib/editor_backend.h>
+#include <lib/match_generator.h>
 #include <lib/line_buffer.h>
 #include <matches/column_printer.h>
 #include <matches/match_pipeline.h>
@@ -21,11 +22,6 @@
 
 // MODE4
 void draw_matches(const matches&);
-#if 1
-#define log(fmt, ...) printf("\n" fmt, __VA_ARGS__)
-#else
-#define log(fmt, ...)
-#endif
 // MODE4
 
 
@@ -88,7 +84,7 @@ private:
 //------------------------------------------------------------------------------
 void classic_match_ui::bind(binder& binder)
 {
-    binder.bind("\t", this, state_none);
+    binder.bind("\t", *this, state_none);
 }
 
 //------------------------------------------------------------------------------
@@ -138,15 +134,21 @@ editor_backend::result classic_match_ui::on_input(
     if (int lcd_length = lcd.length())
     {
         const word end_word = *(context.line.get_words().back());
+
         line_buffer& buffer = context.buffer;
+        unsigned int cursor = buffer.get_cursor();
 
         int word_end = end_word.offset + end_word.length;
-        int dx = lcd_length - (buffer.get_cursor() - word_end);
-        if (dx > 0)
-            buffer.insert(lcd.c_str() + (lcd_length - dx));
-        else if (dx < 0)
-            buffer.insert(""); // MODE4 - should remove instead.
-        else
+        int dx = lcd_length - (cursor - word_end);
+
+        if (dx < 0)
+        {
+            buffer.remove(cursor + dx, cursor);
+            buffer.set_cursor(cursor + dx);
+        }
+        else if (dx > 0)
+            buffer.insert(lcd.c_str() + lcd_length - dx);
+        else if (!dx)
             m_waiting = true;
 
         return result::next;
@@ -329,6 +331,8 @@ public:
 
     virtual result on_input(const char* keys, int id, const context& context) override
     {
+        // MODE4 : should wrap all external line edits in single undo.
+
         static char more_input_id = -1;
         if (char(id) != more_input_id)
             return result::next;
@@ -417,14 +421,16 @@ public:
     };
 
                             line_editor_2(const desc& desc);
-    bool                    add_backend(editor_backend* backend);
-    match_system&           get_match_system();
+    bool                    add_backend(editor_backend& backend);
+    bool                    add_generator(match_generator& generator);
     bool                    get_line(char* out, int out_size);
     bool                    edit(char* out, int out_size);
     bool                    update();
 
 private:
-    typedef fixed_array<editor_backend*, 16> backends;
+    typedef fixed_array<editor_backend*, 16>    backends;
+    typedef fixed_array<match_generator*, 32>   generators;
+    typedef fixed_array<word, 72>               words;
 
     void                    initialise();
     void                    begin_line();
@@ -436,11 +442,11 @@ private:
     void                    accept_match(unsigned int index);
     char                    m_keys[8];
     desc                    m_desc;
-    match_system            m_match_system; // MODE4 : poor, remove!
     backends                m_backends;
+    generators              m_generators;
     binder                  m_binder;
     bind_resolver           m_bind_resolver;
-    fixed_array<word, 72>   m_words;
+    words                   m_words;
     matches                 m_matches;
     unsigned int            m_prev_key;
     unsigned char           m_keys_size;
@@ -455,8 +461,8 @@ line_editor_2::line_editor_2(const desc& desc)
 , m_begun(false)
 , m_prev_key(~0u)
 {
-    add_backend(m_desc.backend);
-    m_binder.set_default_backend(m_desc.backend);
+    add_backend(*m_desc.backend);
+    m_binder.set_default_backend(*m_desc.backend);
 }
 
 //------------------------------------------------------------------------------
@@ -479,7 +485,7 @@ void line_editor_2::begin_line()
     m_bind_resolver.reset();
     m_keys_size = 0;
 
-    match_pipeline pipeline(m_match_system, m_matches);
+    match_pipeline pipeline(m_matches);
     pipeline.reset();
 
     m_desc.terminal->begin();
@@ -500,16 +506,17 @@ void line_editor_2::end_line()
 }
 
 //------------------------------------------------------------------------------
-bool line_editor_2::add_backend(editor_backend* backend)
+bool line_editor_2::add_backend(editor_backend& backend)
 {
     editor_backend** slot = m_backends.push_back();
-    return (slot != nullptr) ? *slot = backend, true : false;
+    return (slot != nullptr) ? *slot = &backend, true : false;
 }
 
 //------------------------------------------------------------------------------
-match_system& line_editor_2::get_match_system()
+bool line_editor_2::add_generator(match_generator& generator)
 {
-    return m_match_system;
+    match_generator** slot = m_generators.push_back();
+    return (slot != nullptr) ? *slot = &generator, true : false;
 }
 
 //------------------------------------------------------------------------------
@@ -696,14 +703,6 @@ void line_editor_2::collect_words()
         break;
     }
     end_word->length = partial;
-
-    // MODE4
-    int j = 0;
-    puts("");
-    for (auto word : m_words)
-        printf("%02d:%02d,%02d ", j++, word.offset, word.length);
-    puts("");
-    // MODE4
 }
 
 //------------------------------------------------------------------------------
@@ -773,11 +772,9 @@ void line_editor_2::update_internal()
     // Should we generate new matches?
     if (next_key.value != prev_key.value)
     {
-        match_pipeline pipeline(m_match_system, m_matches);
+        match_pipeline pipeline(m_matches);
         pipeline.reset();
-        pipeline.generate({ m_words, m_desc.buffer->get_buffer() });
-
-        log("generate: %d\n", m_matches.get_match_count());
+        pipeline.generate({ m_words, m_desc.buffer->get_buffer() }, m_generators);
     }
 
     next_key.cursor_pos = m_desc.buffer->get_cursor();
@@ -791,7 +788,7 @@ void line_editor_2::update_internal()
         const char* line = m_desc.buffer->get_buffer();
         needle.concat(line + needle_start, next_key.cursor_pos - needle_start);
 
-        match_pipeline pipeline(m_match_system, m_matches);
+        match_pipeline pipeline(m_matches);
         pipeline.select("normal", needle.c_str());
         pipeline.sort("alpha");
 
@@ -807,8 +804,6 @@ void line_editor_2::update_internal()
 
         for (auto backend : m_backends)
             backend->on_matches_changed(context);
-
-        log("select & sort: '%s'\n", needle.c_str());
     }
 
     /* MODE4 */ draw_matches(m_matches);
@@ -868,13 +863,8 @@ int testbed(int, char**)
     desc.backend = &backend;
     desc.buffer = &backend;
     line_editor_2 editor(desc);
-    editor.add_backend(&ui);
-
-    // MODE4 : different API!
-    match_system& system = editor.get_match_system();
-    system.add_generator(0, file_match_generator());
-    system.add_selector("normal", normal_match_selector());
-    system.add_sorter("alpha", alpha_match_sorter());
+    editor.add_backend(ui);
+    editor.add_generator(file_match_generator());
 
     char out[64];
     editor.edit(out, sizeof_array(out));

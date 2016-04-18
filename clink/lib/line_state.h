@@ -17,19 +17,19 @@ struct word
 class line_state
 {
 public:
-                            line_state(const array_base<word>& words, const char* line);
-    unsigned int            get_word_count() const;
-    bool                    get_word(unsigned int index, str_base& out) const;
-    bool                    get_end_word(str_base& out) const;
-    const array_base<word>& get_words() const;
+                        line_state(const array<word>& words, const char* line);
+    unsigned int        get_word_count() const;
+    bool                get_word(unsigned int index, str_base& out) const;
+    bool                get_end_word(str_base& out) const;
+    const array<word>&  get_words() const;
 
 private:
-    const array_base<word>& m_words;
-    const char*             m_line;
+    const array<word>&  m_words;
+    const char*         m_line;
 };
 
 //------------------------------------------------------------------------------
-inline line_state::line_state(const array_base<word>& words, const char* line)
+inline line_state::line_state(const array<word>& words, const char* line)
 : m_words(words)
 , m_line(line)
 {
@@ -59,7 +59,7 @@ inline bool line_state::get_end_word(str_base& out) const
 }
 
 //------------------------------------------------------------------------------
-inline const array_base<word>& line_state::get_words() const
+inline const array<word>& line_state::get_words() const
 {
     return m_words;
 }

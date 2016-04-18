@@ -3,7 +3,7 @@
 
 #pragma once
 
-#include "matches/match_system.h"
+#include <lib/match_generator.h>
 
 struct lua_State;
 
@@ -14,7 +14,7 @@ class lua_match_generator
 public:
                         lua_match_generator(lua_State* state);
     virtual             ~lua_match_generator();
-    virtual bool        generate(const line_state& line, matches& out) override;
+    virtual bool        generate(const line_state& line, match_builder& builder) override;
 
 private:
     void                initialise();

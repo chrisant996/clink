@@ -4,20 +4,20 @@
 #pragma once
 
 class line_state;
-class match_system;
+class match_generator;
 class matches;
+template <typename T> class array;
 
 //------------------------------------------------------------------------------
 class match_pipeline
 {
 public:
-                        match_pipeline(const match_system& system, matches& result);
+                        match_pipeline(matches& matches);
     void                reset();
-    void                generate(const line_state& state);
+    void                generate(const line_state& state, const array<match_generator*>& generators);
     void                select(const char* selector_name, const char* needle);
     void                sort(const char* sort_name);
 
 private:
-    const match_system& m_system;
     matches&            m_matches;
 };

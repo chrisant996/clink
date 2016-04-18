@@ -187,6 +187,7 @@ project("clink_lib")
     kind("staticlib")
     includedirs("clink")
     includedirs("clink/lib") -- MODE4
+    includedirs("clink/lib/include") -- MODE4
     includedirs("clink/lib/include/lib")
     includedirs("clink/core/include")
     includedirs("clink/terminal/include")

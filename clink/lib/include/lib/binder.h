@@ -13,8 +13,8 @@ class binder
 {
 public:
                         binder();
-    void                set_default_backend(editor_backend* backend);
-    bool                bind(const char* chord, editor_backend* backend, unsigned char id);
+    void                set_default_backend(editor_backend& backend);
+    bool                bind(const char* chord, editor_backend& backend, unsigned char id);
     void                update_resolver(unsigned char key, bind_resolver& resolver);
 
 private:
@@ -42,7 +42,7 @@ private:
     node*               find_child(node* parent, unsigned char key);
     node*               insert_child(node* parent, unsigned char key);
     node*               add_child(node* parent, unsigned char key);
-    int                 add_backend(editor_backend* backend);
+    int                 add_backend(editor_backend& backend);
     node*               get_root();
     node*               get_node(unsigned int index);
     int                 alloc_node();
