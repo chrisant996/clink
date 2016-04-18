@@ -289,6 +289,7 @@ classic_match_ui::state classic_match_ui::pager_prompt(
     case 0x03: // ctrl-c
     case 0x04: // ctrl-d
     case 0x1b: // esc
+        context.terminal.write("\n", 1);
         return state_none;
     }
 
