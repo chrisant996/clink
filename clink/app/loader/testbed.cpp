@@ -299,6 +299,7 @@ class line_editor_2
 public:
     struct desc
     {
+        const char*     command_delims; // MODE4
         const char*     quote_pair;
         const char*     word_delims;
         const char*     partial_delims;
