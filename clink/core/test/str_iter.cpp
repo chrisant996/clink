@@ -80,4 +80,31 @@ TEST_CASE("String iterator (wstr_iter)", "[wstr_iter]") {
         REQUIRE(iter.next() == 0xdfff);
         REQUIRE(iter.next() == 0);
     }
+
+    SECTION("OOB") {
+        str_iter iter("", 10);
+        REQUIRE(iter.next() == 0);
+
+        wstr_iter witer(L"", 10);
+        REQUIRE(witer.next() == 0);
+    }
+
+    SECTION("Length") {
+        {
+            str_iter iter("");          REQUIRE(iter.length() == 0);
+            wstr_iter witer(L"");       REQUIRE(iter.length() == 0);
+        }
+        {
+            str_iter iter("", 10);      REQUIRE(iter.length() == 10);
+            wstr_iter witer(L"", 10);   REQUIRE(iter.length() == 10);
+        }
+        {
+            str_iter iter("abc");       REQUIRE(iter.length() == 3);
+            wstr_iter witer(L"abc");    REQUIRE(iter.length() == 3);
+        }
+        {
+            str_iter iter("abc", 2);    REQUIRE(iter.length() == 2);
+            wstr_iter witer(L"abc", 2); REQUIRE(iter.length() == 2);
+        }
+    }
 }

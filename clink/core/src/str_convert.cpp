@@ -98,14 +98,21 @@ int to_utf8(char* out, int max_count, const wchar_t* utf16)
 }
 
 //------------------------------------------------------------------------------
-int to_utf8(str_base& out, const wchar_t* utf16)
+int to_utf8(str_base& out, str_iter_impl<wchar_t>& utf16)
 {
     int length = out.length();
 
     if (out.is_growable())
-        out.reserve(length + int(wcslen(utf16)));
+        out.reserve(length + utf16.length());
 
     return to_utf8(out.data() + length, out.size() - length, utf16);
+}
+
+//------------------------------------------------------------------------------
+int to_utf8(str_base& out, const wchar_t* utf16)
+{
+    wstr_iter iter(utf16);
+    return to_utf8(out, iter);
 }
 
 
@@ -130,12 +137,19 @@ int to_utf16(wchar_t* out, int max_count, const char* utf8)
 }
 
 //------------------------------------------------------------------------------
-int to_utf16(wstr_base& out, const char* utf8)
+int to_utf16(wstr_base& out, str_iter_impl<char>& utf8)
 {
     int length = out.length();
 
     if (out.is_growable())
-        out.reserve(length + int(strlen(utf8)));
+        out.reserve(length + utf8.length());
 
     return to_utf16(out.data() + length, out.size() - length, utf8);
+}
+
+//------------------------------------------------------------------------------
+int to_utf16(wstr_base& out, const char* utf8)
+{
+    str_iter iter(utf8);
+    return to_utf16(out, iter);
 }

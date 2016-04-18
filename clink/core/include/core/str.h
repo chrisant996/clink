@@ -294,10 +294,12 @@ str_impl<TYPE>& str_impl<TYPE>::operator << (const str_impl& rhs)
 template <typename T> class str_iter_impl;
 
 int to_utf8(class str_base& out, const wchar_t* utf16);
+int to_utf8(class str_base& out, str_iter_impl<wchar_t>& iter);
 int to_utf8(char* out, int max_count, const wchar_t* utf16);
 int to_utf8(char* out, int max_count, str_iter_impl<wchar_t>& iter);
 
 int to_utf16(class wstr_base& out, const char* utf8);
+int to_utf16(class wstr_base& out, str_iter_impl<char>& iter);
 int to_utf16(wchar_t* out, int max_count, const char* utf8);
 int to_utf16(wchar_t* out, int max_count, str_iter_impl<char>& iter);
 

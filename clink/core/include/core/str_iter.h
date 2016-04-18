@@ -10,16 +10,17 @@ template <typename T>
 class str_iter_impl
 {
 public:
-    explicit    str_iter_impl(const T* s, int len=-1);
-    explicit    str_iter_impl(const str_impl<T>& s, int len=-1);
-    const T*    get_pointer() const;
-    int         peek();
-    int         next();
-    bool        more() const;
+    explicit        str_iter_impl(const T* s, int len=-1);
+    explicit        str_iter_impl(const str_impl<T>& s, int len=-1);
+    const T*        get_pointer() const;
+    int             peek();
+    int             next();
+    bool            more() const;
+    unsigned int    length() const;
 
 private:
-    const T*    m_ptr;
-    const T*    m_end;
+    const T*        m_ptr;
+    const T*        m_end;
 };
 
 //------------------------------------------------------------------------------
@@ -56,6 +57,8 @@ template <typename T> bool str_iter_impl<T>::more() const
 {
     return (m_ptr != m_end && *m_ptr != '\0');
 }
+
+
 
 //------------------------------------------------------------------------------
 typedef str_iter_impl<char>     str_iter;
