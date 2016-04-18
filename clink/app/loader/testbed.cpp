@@ -758,9 +758,6 @@ int testbed(int, char**)
     editor.add_generator(file_match_generator());
 
     char out[64];
-    do {
-        terminal.write("\n", 1);
-    }
     while (editor.edit(out, sizeof_array(out)));
 
     return 0;
