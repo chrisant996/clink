@@ -1,5 +1,4 @@
 #include "pch.h"
-#include "rl/rl_line_editor.h"
 #include "rl/rl_backend.h"
 
 #include <core/array.h>
@@ -14,14 +13,9 @@
 #include <lib/binder.h>
 #include <lib/editor_backend.h>
 #include <lib/match_generator.h>
-#include <matches/column_printer.h>
 #include <matches/match_pipeline.h>
 #include <matches/matches.h>
 #include <terminal/win_terminal.h>
-
-// MODE4
-void draw_matches(const matches&);
-// MODE4
 
 class line_buffer;
 class editor_backend;
@@ -44,6 +38,8 @@ static setting_bool g_vertical(
     "Display matches vertically",
     "", // MODE4
     true);
+
+
 
 //------------------------------------------------------------------------------
 class classic_match_ui
@@ -698,8 +694,6 @@ void line_editor_2::update_internal()
         for (auto backend : m_backends)
             backend->on_matches_changed(context);
     }
-
-    //* MODE4 */ draw_matches(m_matches);
 }
 
 
@@ -708,42 +702,11 @@ void line_editor_2::update_internal()
 //------------------------------------------------------------------------------
 //------------------------------------------------------------------------------
 //------------------------------------------------------------------------------
-void draw_matches(const matches& result)
-{
-    HANDLE handle = GetStdHandle(STD_OUTPUT_HANDLE);
-
-    CONSOLE_SCREEN_BUFFER_INFO csbi;
-    GetConsoleScreenBufferInfo(handle, &csbi);
-
-    COORD cur = { csbi.srWindow.Left, csbi.srWindow.Top };
-    SetConsoleCursorPosition(handle, cur);
-    SetConsoleTextAttribute(handle, 0x70);
-
-    for (int i = 0, n = result.get_match_count(); i < 35; ++i)
-    {
-        const char* match = "";
-        if (i < n)
-            match = result.get_match(i);
-
-        printf("%02d : %48s\n", i, match);
-    }
-
-    SetConsoleTextAttribute(handle, csbi.wAttributes);
-
-    rl_forced_update_display();
-}
-
 int testbed(int, char**)
 {
     str_compare_scope _(str_compare_scope::relaxed);
 
     win_terminal terminal;
-
-    // MODE4
-    column_printer printer(&terminal);
-    line_editor::desc _desc = { "testbed", &terminal, &printer };
-    auto* line_editor = create_rl_line_editor(_desc);
-    // MODE4
 
     classic_match_ui ui;
     rl_backend backend;
