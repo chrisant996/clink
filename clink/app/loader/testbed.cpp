@@ -323,6 +323,7 @@ public:
     bool                update();
 
 private:
+    typedef editor_backend                      backend;
     typedef fixed_array<editor_backend*, 16>    backends;
     typedef fixed_array<match_generator*, 32>   generators;
     typedef fixed_array<word, 72>               words;
@@ -335,6 +336,7 @@ private:
     void                record_input(unsigned char key);
     void                dispatch();
     void                accept_match(unsigned int index);
+    backend::context    build_context() const;
     char                m_keys[8];
     desc                m_desc;
     backends            m_backends;
@@ -385,13 +387,7 @@ void line_editor_2::begin_line()
 
     m_desc.terminal->begin();
 
-    editor_backend::context context = {
-        *m_desc.terminal,
-        *m_desc.buffer,
-        { m_words, m_desc.buffer->get_buffer() },
-        m_matches,
-    };
-
+    editor_backend::context context = build_context();
     for (auto backend : m_backends)
         backend->begin_line(m_desc.prompt, context);
 
@@ -492,18 +488,12 @@ void line_editor_2::dispatch()
     if (!m_bind_resolver.is_resolved())
         return;
 
-    editor_backend::context context = {
-        *m_desc.terminal,
-        *m_desc.buffer,
-        { m_words, m_desc.buffer->get_buffer() },
-        m_matches,
-    };
-
     m_keys[m_keys_size] = '\0';
 
     int id = m_bind_resolver.get_id();
 
     editor_backend* backend = m_bind_resolver.get_backend();
+    editor_backend::context context = build_context();
     editor_backend::result result = backend->on_input(m_keys, id, context);
 
     m_keys_size = 0;
@@ -658,6 +648,17 @@ void line_editor_2::accept_match(unsigned int index)
 }
 
 //------------------------------------------------------------------------------
+editor_backend::context line_editor_2::build_context() const
+{
+    return {
+        *m_desc.terminal,
+        *m_desc.buffer,
+        { m_words, m_desc.buffer->get_buffer() },
+        m_matches,
+    };
+}
+
+//------------------------------------------------------------------------------
 void line_editor_2::update_internal()
 {
     collect_words();
@@ -704,13 +705,7 @@ void line_editor_2::update_internal()
         m_prev_key = next_key.value;
 
         // Tell all the backends that the matches changed.
-        editor_backend::context context = {
-            *m_desc.terminal,
-            *m_desc.buffer,
-            { m_words, m_desc.buffer->get_buffer() },
-            m_matches,
-        };
-
+        editor_backend::context context = build_context();
         for (auto backend : m_backends)
             backend->on_matches_changed(context);
     }
