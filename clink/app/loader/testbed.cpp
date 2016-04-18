@@ -305,7 +305,7 @@ class line_editor_2
 public:
     struct desc
     {
-        const char*     prompt; // MODE4
+        const char*     prompt;
         const char*     command_delims; // MODE4
         const char*     quote_pair;
         const char*     word_delims;
