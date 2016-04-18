@@ -21,6 +21,7 @@ public:
     unsigned int            get_word_count() const;
     bool                    get_word(unsigned int index, str_base& out) const;
     bool                    get_end_word(str_base& out) const;
+    const array_base<word>& get_words() const;
 
 private:
     const array_base<word>& m_words;
@@ -55,4 +56,10 @@ inline bool line_state::get_end_word(str_base& out) const
 {
     int n = get_word_count();
     return (n ? get_word(n - 1, out) : false);
+}
+
+//------------------------------------------------------------------------------
+inline const array_base<word>& line_state::get_words() const
+{
+    return m_words;
 }
