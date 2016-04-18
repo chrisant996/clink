@@ -1,12 +1,12 @@
 #include "pch.h"
 #include "rl/rl_line_editor.h"
+#include "rl/rl_backend.h"
 
 #include <core/array.h>
 #include <core/base.h>
 #include <core/os.h>
 #include <core/path.h>
 #include <core/settings.h>
-#include <core/singleton.h>
 #include <core/str_compare.h>
 #include <core/str_tokeniser.h>
 #include <line_state.h>
@@ -14,7 +14,6 @@
 #include <lib/binder.h>
 #include <lib/editor_backend.h>
 #include <lib/match_generator.h>
-#include <lib/line_buffer.h>
 #include <matches/column_printer.h>
 #include <matches/match_pipeline.h>
 #include <matches/matches.h>
@@ -24,14 +23,8 @@
 void draw_matches(const matches&);
 // MODE4
 
-
-
 class line_buffer;
 class editor_backend;
-
-
-
-
 
 //------------------------------------------------------------------------------
 static setting_int g_query_threshold(
@@ -296,112 +289,6 @@ classic_match_ui::state classic_match_ui::pager_prompt(
     context.terminal.write("\x07", 1);
     return state_pager;
 }
-
-
-
-//------------------------------------------------------------------------------
-class rl_backend
-    : public line_buffer
-    , public editor_backend
-    , public singleton<rl_backend>
-{
-public:
-    virtual void bind(binder& binder) override
-    {
-    }
-
-    virtual void begin_line() override
-    {
-        auto handler = [] (char* line) { rl_backend::get()->done(line); };
-        rl_callback_handler_install("testbed $ ", handler);
-
-        m_done = false;
-        m_eof = false;
-    }
-
-    virtual void end_line() override
-    {
-        rl_callback_handler_remove();
-    }
-
-    virtual void on_matches_changed(const context& context) override
-    {
-    }
-
-    virtual result on_input(const char* keys, int id, const context& context) override
-    {
-        // MODE4 : should wrap all external line edits in single undo.
-
-        static char more_input_id = -1;
-        if (char(id) != more_input_id)
-            return result::next;
-
-        // MODE4
-        static struct : public terminal_in
-        {
-            virtual void select() {}
-            virtual int read() { return *(unsigned char*)(data++); }
-            const char* data; 
-        } term_in;
-        term_in.data = keys;
-        rl_instream = (FILE*)(&term_in);
-
-        while (*term_in.data)
-        // MODE4
-
-        rl_callback_read_char();
-
-        int rl_state = rl_readline_state;
-        rl_state &= ~RL_STATE_CALLBACK;
-        rl_state &= ~RL_STATE_INITIALIZED;
-        rl_state &= ~RL_STATE_OVERWRITE;
-        rl_state &= ~RL_STATE_VICMDONCE;
-
-        if (m_done)
-            return result::done;
-
-        if (rl_state)
-            return {result::more_input, more_input_id};
-
-        return result::next;
-    }
-
-    virtual const char* get_buffer() const override
-    {
-        return (m_eof ? nullptr : rl_line_buffer);
-    }
-
-    virtual unsigned int get_cursor() const override
-    {
-        return rl_point;
-    }
-
-    virtual unsigned int set_cursor(unsigned int pos) override
-    {
-        return (pos <= rl_end) ? rl_point = pos : rl_point = rl_end;
-    }
-
-    virtual bool insert(const char* text) override
-    {
-        rl_insert_text(text);
-        return true;
-    }
-
-    virtual void remove(unsigned int from, unsigned int to) override
-    {
-        rl_delete_text(from, to);
-    }
-
-private:
-    void done(const char* line)
-    {
-        m_done = true;
-        m_eof = (line == nullptr);
-    }
-
-    bool m_done = false;
-    bool m_eof = false;
-};
 
 
 
