@@ -6,7 +6,9 @@
 #include "rl/rl_backend.h"
 
 #include <core/os.h>
+#include <core/settings.h>
 #include <core/str.h>
+#include <core/str_compare.h>
 #include <lib/classic_match_ui.h>
 #include <lib/match_generator.h>
 #include <lib/line_editor.h>
@@ -18,6 +20,22 @@ extern "C" {
 #include <lua.h>
 }
 MODE4 */
+
+//------------------------------------------------------------------------------
+static setting_bool g_case_sensitive(
+    "match.case_sensitive",
+    "Case sensitive matching.",
+    "", // MODE4
+    false);
+
+//------------------------------------------------------------------------------
+static setting_bool g_case_relaxed(
+    "match.case_relaxed",
+    "Also consider - and _ as equal.",
+    "", // MODE4
+    true);
+
+
 
 //------------------------------------------------------------------------------
 host::host(const char* name)
@@ -61,9 +79,11 @@ bool host::edit_line(const char* prompt, str_base& out)
     filter_prompt(prompt, filtered_prompt);
 #endif
 
-#if MODE4
-    str_compare_scope _(str_compare_scope::relaxed);
-#endif
+    int cmp_mode = str_compare_scope::exact;
+    if (!g_case_sensitive.get())
+        cmp_mode = g_case_relaxed.get() ? str_compare_scope::relaxed : str_compare_scope::caseless;
+
+    str_compare_scope compare(cmp_mode);
 
     static rl_backend backend(m_name);
     win_terminal terminal;
