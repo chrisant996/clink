@@ -690,8 +690,8 @@ void line_editor_2::update_internal()
     {
         str<64> needle;
         int needle_start = end_word.offset + end_word.length;
-        const char* line = m_desc.buffer->get_buffer();
-        needle.concat(line + needle_start, next_key.cursor_pos - needle_start);
+        const char* buffer = m_desc.buffer->get_buffer();
+        needle.concat(buffer + needle_start, next_key.cursor_pos - needle_start);
 
         match_pipeline pipeline(m_matches);
         pipeline.select(needle.c_str());
