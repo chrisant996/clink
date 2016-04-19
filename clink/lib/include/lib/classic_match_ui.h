@@ -3,6 +3,8 @@
 
 #pragma once
 
+#include <lib/editor_backend.h>
+
 //------------------------------------------------------------------------------
 class classic_match_ui
     : public editor_backend
