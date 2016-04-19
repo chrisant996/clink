@@ -61,7 +61,7 @@ bool host::edit_line(const char* prompt, str_base& out)
     line_editor::desc desc = {};
     desc.prompt = prompt;
     desc.quote_pair = "\"";
-    desc.word_delims = " \t=";
+    desc.word_delims = " \t<>=;";
     desc.partial_delims = "\\/:";
     desc.terminal = &terminal;
     desc.backend = &backend;
