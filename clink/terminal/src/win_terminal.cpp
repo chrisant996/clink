@@ -44,14 +44,14 @@ inline void win_terminal_in::begin()
 
     // Clear 'processed input' flag so key presses such as Ctrl-C and Ctrl-S
     // aren't swallowed. We also want events about window size changes.
-    GetConsoleMode(m_stdin, &m_prev_flags);
+    GetConsoleMode(m_stdin, &m_prev_mode);
     SetConsoleMode(m_stdin, ENABLE_WINDOW_INPUT);
 }
 
 //------------------------------------------------------------------------------
 inline void win_terminal_in::end()
 {
-    SetConsoleMode(m_stdin, m_prev_flags);
+    SetConsoleMode(m_stdin, m_prev_mode);
     m_stdin = nullptr;
 }
 
@@ -302,16 +302,21 @@ inline unsigned char win_terminal_in::pop()
 inline void win_terminal_out::begin()
 {
     m_stdout = GetStdHandle(STD_OUTPUT_HANDLE);
+
     CONSOLE_SCREEN_BUFFER_INFO csbi;
     GetConsoleScreenBufferInfo(m_stdout, &csbi);
     m_default_attr = csbi.wAttributes & 0xff;
     m_attr = m_default_attr;
+
+    GetConsoleMode(m_stdout, &m_prev_mode);
 }
 
 //------------------------------------------------------------------------------
 inline void win_terminal_out::end()
 {
+    SetConsoleMode(m_stdout, m_prev_mode);
     SetConsoleTextAttribute(m_stdout, m_default_attr);
+
     m_stdout = nullptr;
 }
 

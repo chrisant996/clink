@@ -30,6 +30,7 @@ private:
     virtual void            draw() override;
     virtual void            redraw() override;
     void                    done(const char* line);
+    char*                   m_rl_buffer;
     bool                    m_need_draw;
     bool                    m_done;
     bool                    m_eof;

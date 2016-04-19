@@ -8,21 +8,28 @@ template <typename T>
 class array
 {
 public:
-    class iter
+    template <int D>
+    class iter_impl
     {
     public:
-                    iter(T* t) : m_t(t)               { }
-        void        operator ++ ()                    { ++m_t; }
-        T&          operator * () const               { return *m_t; }
-        bool        operator != (const iter& i) const { return i.m_t != m_t; }
+                    iter_impl(T* t) : m_t(t)               {}
+        void        operator ++ ()                         { m_t += D; }
+        T&          operator * () const                    { return *m_t; }
+        T&          operator -> () const                   { return *m_t; }
+        bool        operator != (const iter_impl& i) const { return i.m_t != m_t; }
 
     private:
         T*          m_t;
     };
 
+    typedef iter_impl<1>    iter;
+    typedef iter_impl<-1>   riter;
+
                     array(T* ptr, unsigned int size, unsigned int capacity);
     iter            begin() const    { return m_ptr; }
     iter            end() const      { return m_ptr + m_size; }
+    riter           rbegin() const   { return m_ptr + m_size - 1; }
+    riter           rend() const     { return m_ptr - 1; }
     unsigned int    size() const     { return m_size; }
     unsigned int    capacity() const { return m_size; }
     bool            empty() const    { return !m_size; }

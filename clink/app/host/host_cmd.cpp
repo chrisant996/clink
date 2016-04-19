@@ -133,11 +133,11 @@ static BOOL WINAPI single_char_read(
 
 
 //------------------------------------------------------------------------------
-host_cmd::host_cmd(lua_State* lua, line_editor* editor)
-: host(lua, editor)
-, m_doskey(editor->get_shell_name())
+host_cmd::host_cmd()
+: host("cmd.exe")
+, m_doskey("cmd.exe")
 {
-    lua_load_script(lua, dll, set);
+    // MODE4 lua_load_script(lua, dll, set);
 }
 
 //------------------------------------------------------------------------------
@@ -200,6 +200,7 @@ bool host_cmd::is_interactive() const
     // no point loading clink if cmd.exe is running a command and then exiting.
     // Cmd.exe's argument parsing is basic, simply searching for '/' characters
     // and checking the following character.
+
     wchar_t* args = GetCommandLineW();
     while (args != nullptr && wcschr(args, '/'))
     {
@@ -210,6 +211,8 @@ bool host_cmd::is_interactive() const
         case 'k': break;
         }
     }
+
+    // MODE4 - also check IO is a character device?
 
     return true;
 }
@@ -268,30 +271,7 @@ BOOL WINAPI host_cmd::read_console(
     LPDWORD read_in,
     CONSOLE_READCONSOLE_CONTROL* control)
 {
-    struct console_mode_scope
-    {
-        console_mode_scope(HANDLE h)
-        : handle(h)
-        {
-            GetConsoleMode(handle, &mode);
-        }
-
-        ~console_mode_scope()
-        {
-            SetConsoleMode(handle, mode);
-        }
-
-        HANDLE  handle;
-        DWORD   mode;
-    };
-
-    console_mode_scope stdout_mode_scope(GetStdHandle(STD_OUTPUT_HANDLE));
-    console_mode_scope stdin_mode_scope(GetStdHandle(STD_INPUT_HANDLE));
     seh_scope seh;
-
-    // If the file past in isn't a console handle then go the default route.
-    if (GetFileType(input) != FILE_TYPE_CHAR)
-        return ReadConsoleW(input, chars, max_chars, read_in, control);
 
     // if the input handle isn't a console handle then go the default route.
     if (GetFileType(input) != FILE_TYPE_CHAR)
@@ -350,8 +330,8 @@ BOOL WINAPI host_cmd::write_console(
 //------------------------------------------------------------------------------
 bool host_cmd::capture_prompt(const wchar_t* chars, int char_count)
 {
-    // Clink tags the prompt so that it can be detected when cmd.exe writes it
-    // to the console.
+    // Clink tags the prompt so that it can be detected when cmd.exe
+    // writes it to the console.
 
     m_prompt.set(chars, char_count);
     return (m_prompt.get() != nullptr);

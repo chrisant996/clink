@@ -2,6 +2,7 @@
 // License: http://opensource.org/licenses/MIT
 
 #include "pch.h"
+/* MODE4
 #include "rl_line_editor.h"
 #include "inputrc.h"
 #include "rl_delegate.h"
@@ -213,14 +214,14 @@ void rl_line_editor::load_user_inputrc()
 //------------------------------------------------------------------------------
 char* rl_line_editor::completion(const char*, int)
 {
-    /* disabled */
+    // disabled
     return nullptr;
 }
 
 //------------------------------------------------------------------------------
 void rl_line_editor::display_matches(char**, int, int)
 {
-    /* disabled */
+    // disabled
 }
 
 
@@ -236,3 +237,4 @@ void destroy_rl_line_editor(line_editor* editor)
 {
     delete editor;
 }
+MODE4 */

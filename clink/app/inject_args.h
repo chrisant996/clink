@@ -6,7 +6,10 @@
 //------------------------------------------------------------------------------
 struct inject_args
 {
-    char    quiet;
-    char    no_log;
+    // Must be kept simple as it's blitted
+    // from one process to another.
+
     char    profile_path[512];
+    bool    quiet;
+    bool    no_log;
 };

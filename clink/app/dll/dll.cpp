@@ -23,9 +23,11 @@
 #include <matches/column_printer.h>
 #include <terminal/win_terminal.h>
 
+/* MODE4
 extern "C" {
 #include <lauxlib.h>
 }
+*/
 
 //------------------------------------------------------------------------------
 const char* g_clink_header =
@@ -49,14 +51,16 @@ static setting_str g_clink_path(
 
 //------------------------------------------------------------------------------
 void                    load_clink_settings();
+/* MODE4
 void                    load_history();
 void                    save_history();
+MODE4 */
 
-static bool             g_quiet         = false;
-static line_editor*     g_line_editor   = nullptr;
+// MODE4 static line_editor*     g_line_editor   = nullptr;
 static host*            g_host          = nullptr;
-static lua_root*        g_lua           = nullptr;
+// MODE4 static lua_root*        g_lua           = nullptr;
 
+#if MODE4
 //------------------------------------------------------------------------------
 static void load_lua_script(lua_State* lua, const char* path)
 {
@@ -87,8 +91,10 @@ static void load_lua_scripts(lua_State* lua, const char* paths)
     while (tokens.next(token))
         load_lua_script(lua, token.c_str());
 }
+#endif // MODE4
 
 //------------------------------------------------------------------------------
+/* MODE4
 static void initialise_line_editor(lua_State* lua, const char* host_name)
 {
     terminal* terminal = new win_terminal();
@@ -97,9 +103,7 @@ static void initialise_line_editor(lua_State* lua, const char* host_name)
     line_editor::desc desc = { host_name, terminal, printer };
     g_line_editor = create_rl_line_editor(desc);
 
-    // MODE4 - memory leaks!
     // Give the line editor some match generators.
-    /* MODE4 : dead!
     match_system& match_system = g_line_editor->get_match_system();
 
     lua_match_generator* lua_generator = new lua_match_generator(lua);
@@ -107,7 +111,6 @@ static void initialise_line_editor(lua_State* lua, const char* host_name)
     // MODE4
 
     match_system.add_generator(1001, file_match_generator());
-    */
 }
 
 //------------------------------------------------------------------------------
@@ -118,11 +121,12 @@ static void shutdown_line_editor()
     destroy_rl_line_editor(g_line_editor);
     delete term;
 }
+MODE4 */
 
 //------------------------------------------------------------------------------
-static void success()
+static void success(bool quiet)
 {
-    if (!g_quiet)
+    if (!quiet)
         puts(g_clink_header);
 }
 
@@ -159,6 +163,7 @@ bool initialise_clink(const inject_args* inject_args)
 
     // Handle inject arguments.
     if (inject_args->profile_path[0] != '\0')
+        /* MODE4 */
         set_config_dir_override(inject_args->profile_path);
 
     if (!inject_args->no_log)
@@ -170,8 +175,6 @@ bool initialise_clink(const inject_args* inject_args)
         new file_logger(log_path.c_str());
     }
 
-    g_quiet = (inject_args->quiet != 0);
-
     // What process is the DLL loaded into?
     str<64> host_name;
     if (!get_host_name(host_name))
@@ -179,6 +182,7 @@ bool initialise_clink(const inject_args* inject_args)
 
     LOG("Host process is '%s'", host_name.c_str());
 
+/* MODE4
     // Initialise Lua.
     g_lua = new lua_root();
     lua_State* lua = g_lua->get_state();
@@ -194,40 +198,33 @@ bool initialise_clink(const inject_args* inject_args)
     str<256> env_clink_path;
     os::get_env("clink_path", env_clink_path);
     load_lua_scripts(lua, env_clink_path.c_str());
+MODE4 */
 
     // Search for a supported host.
     struct {
         const char* name;
-        host*       (*creator)(lua_State*, line_editor*);
+        host*       (*creator)();
     } hosts[] = {
-        {
-            "cmd.exe",
-            [](lua_State* s, line_editor* e) -> host* { return new host_cmd(s, e); }
-        },
-        {
-            "powershell.exe",
-            [](lua_State* s, line_editor* e) -> host* { return new host_ps(s, e); }
-        },
+        { "cmd.exe",        []() -> host* { static host_cmd x; return &x; } },
+        { "powershell.exe", []() -> host* { static host_ps x; return &x; } },
     };
 
     for (int i = 0; i < sizeof_array(hosts); ++i)
-    {
         if (stricmp(host_name.c_str(), hosts[i].name) == 0)
-        {
-            g_host = (hosts[i].creator)(lua, g_line_editor);
-            break;
-        }
-    }
+            if (g_host = (hosts[i].creator)())
+                break;
 
+    // Bail out if this isn't a supported host.
     if (g_host == nullptr)
     {
         LOG("Unknown host.");
         return false;
     }
 
+    // Validate and initialise.
     if (!g_host->validate())
     {
-        LOG("Shell validation failed.");
+        LOG("Host validation failed.");
         return false;
     }
 
@@ -238,8 +235,7 @@ bool initialise_clink(const inject_args* inject_args)
     }
 
     load_clink_settings();
-
-    success();
+    success(inject_args->quiet);
     return true;
 }
 
@@ -253,6 +249,7 @@ void shutdown_clink()
 
     g_host->shutdown();
 
+    /* MODE4
     if (g_history_io.get())
         load_history();
 
@@ -260,6 +257,7 @@ void shutdown_clink()
     shutdown_line_editor();
 
     delete g_lua;
+    MODE4 */
 
     if (logger* logger = logger::get())
         delete logger;

@@ -3,23 +3,26 @@
 
 #pragma once
 
-class line_editor;
-struct lua_State;
 class str_base;
 
 //------------------------------------------------------------------------------
 class host
 {
 public:
-                    host(lua_State* lua, line_editor* editor);
+                    host(const char* name);
     virtual         ~host();
     virtual bool    validate() = 0;
     virtual bool    initialise() = 0;
     virtual void    shutdown() = 0;
+
+protected:
     bool            edit_line(const char* prompt, str_base& out);
 
 private:
     void            filter_prompt(const char* in, str_base& out);
+    const char*     m_name;
+    /* MODE4
     lua_State*      m_lua;
     line_editor*    m_line_editor;
+    MODE4 */
 };

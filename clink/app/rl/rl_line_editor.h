@@ -5,6 +5,8 @@
 
 #include "line_editor.h"
 
+/* MODE4
 //------------------------------------------------------------------------------
 line_editor*    create_rl_line_editor(const line_editor::desc& desc);
 void            destroy_rl_line_editor(line_editor* editor);
+MODE4 */

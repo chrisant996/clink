@@ -20,7 +20,7 @@ protected:
 
 private:
     void*           m_stdin = nullptr;
-    unsigned long   m_prev_flags = 0;
+    unsigned long   m_prev_mode = 0;
     unsigned char   m_buffer_head = 0;
     unsigned char   m_buffer_count = 0;
     unsigned char   m_buffer[8]; // must be power of two.
@@ -45,6 +45,7 @@ protected:
 
 private:
     void*           m_stdout = nullptr;
+    unsigned long   m_prev_mode = 0;
     unsigned char   m_default_attr = 0x07;
     unsigned char   m_attr = 0;
 };

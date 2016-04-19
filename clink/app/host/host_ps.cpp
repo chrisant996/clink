@@ -7,6 +7,7 @@
 #include "prompt.h"
 #include "seh_scope.h"
 
+#include <core/str.h>
 #include <line_editor.h>
 #include <lua/lua_script_loader.h>
 #include <process/vm.h>
@@ -14,10 +15,10 @@
 #include <Windows.h>
 
 //------------------------------------------------------------------------------
-host_ps::host_ps(lua_State* lua, line_editor* editor)
-: host(lua, editor)
+host_ps::host_ps()
+: host("powershell.exe")
 {
-    lua_load_script(lua, dll, powershell);
+    // MODE4 lua_load_script(lua, dll, powershell);
 }
 
 //------------------------------------------------------------------------------

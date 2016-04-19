@@ -4,6 +4,7 @@
 #include "pch.h"
 #include "rl_backend.h"
 
+#include <terminal/ecma48_iter.h>
 #include <terminal/terminal.h>
 
 //------------------------------------------------------------------------------
@@ -50,6 +51,7 @@ static void terminal_flush_thunk(FILE* stream)
 
 //------------------------------------------------------------------------------
 rl_backend::rl_backend(const char* shell_name)
+: m_rl_buffer(nullptr)
 {
     rl_getc_function = terminal_read_thunk;
     rl_fwrite_function = terminal_write_thunk;
@@ -81,8 +83,22 @@ void rl_backend::begin_line(const char* prompt, const context& context)
 {
     rl_outstream = (FILE*)(terminal_out*)(&context.terminal);
 
+    // Readline needs to be told about parts of the prompt that aren't visible
+    // by enclosing them in a pair of 0x01/0x02 chars.
+    str<128> rl_prompt;
+
+    ecma48_state state;
+    ecma48_iter iter(prompt, state);
+    while (const ecma48_code* code = iter.next())
+    {
+        bool csi = (code->type == ecma48_code::type_csi);
+        if (csi) rl_prompt.concat("\x01", 1);
+                 rl_prompt.concat(code->str, code->length);
+        if (csi) rl_prompt.concat("\x02", 1);
+    }
+
     auto handler = [] (char* line) { rl_backend::get()->done(line); };
-    rl_callback_handler_install("MODE4 $ ", handler);
+    rl_callback_handler_install(rl_prompt.c_str(), handler);
 
     m_need_draw = false;
     m_done = false;
@@ -92,6 +108,11 @@ void rl_backend::begin_line(const char* prompt, const context& context)
 //------------------------------------------------------------------------------
 void rl_backend::end_line()
 {
+    if (m_rl_buffer != nullptr)
+    {
+        rl_line_buffer = m_rl_buffer;
+        m_rl_buffer = nullptr;
+    }
 }
 
 //------------------------------------------------------------------------------
@@ -124,8 +145,11 @@ editor_backend::result rl_backend::on_input(
     rl_instream = (FILE*)(&term_in);
 
     // Call Readline's until there's no characters left.
-    while (*term_in.data)
+    while (*term_in.data && !m_done)
         rl_callback_read_char();
+
+    if (m_done)
+        return result::done;
 
     // Check if Readline want's more input or if we're done.
     int rl_state = rl_readline_state;
@@ -133,9 +157,6 @@ editor_backend::result rl_backend::on_input(
     rl_state &= ~RL_STATE_INITIALIZED;
     rl_state &= ~RL_STATE_OVERWRITE;
     rl_state &= ~RL_STATE_VICMDONCE;
-
-    if (m_done)
-        return result::done;
 
     if (rl_state)
         return {result::more_input, more_input_id};
@@ -190,6 +211,12 @@ void rl_backend::done(const char* line)
 {
     m_done = true;
     m_eof = (line == nullptr);
+
+    // Readline will reset the line state on returning from this call. Here we
+    // trick it into reseting something else so we can use rl_line_buffer later.
+    static char dummy_buffer = 0;
+    m_rl_buffer = rl_line_buffer;
+    rl_line_buffer = &dummy_buffer;
 
     rl_callback_handler_remove();
 }
