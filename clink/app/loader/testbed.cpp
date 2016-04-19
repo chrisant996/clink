@@ -336,7 +336,7 @@ private:
     void                record_input(unsigned char key);
     void                dispatch();
     void                accept_match(unsigned int index);
-    backend::context    build_context() const;
+    backend::context    make_context(const line_state& line) const;
     char                m_keys[8];
     desc                m_desc;
     backends            m_backends;
@@ -387,7 +387,8 @@ void line_editor_2::begin_line()
 
     m_desc.terminal->begin();
 
-    editor_backend::context context = build_context();
+    line_state line = { m_words, m_desc.buffer->get_buffer() };
+    editor_backend::context context = make_context(line);
     for (auto backend : m_backends)
         backend->begin_line(m_desc.prompt, context);
 }
@@ -490,8 +491,9 @@ void line_editor_2::dispatch()
 
     int id = m_bind_resolver.get_id();
 
+    line_state line = { m_words, m_desc.buffer->get_buffer() };
+    editor_backend::context context = make_context(line);
     editor_backend* backend = m_bind_resolver.get_backend();
-    editor_backend::context context = build_context();
     editor_backend::result result = backend->on_input(m_keys, id, context);
 
     m_keys_size = 0;
@@ -646,14 +648,9 @@ void line_editor_2::accept_match(unsigned int index)
 }
 
 //------------------------------------------------------------------------------
-editor_backend::context line_editor_2::build_context() const
+editor_backend::context line_editor_2::make_context(const line_state& line) const
 {
-    return {
-        *m_desc.terminal,
-        *m_desc.buffer,
-        { m_words, m_desc.buffer->get_buffer() },
-        m_matches,
-    };
+    return { *m_desc.terminal, *m_desc.buffer, line, m_matches };
 }
 
 //------------------------------------------------------------------------------
@@ -703,7 +700,8 @@ void line_editor_2::update_internal()
         m_prev_key = next_key.value;
 
         // Tell all the backends that the matches changed.
-        editor_backend::context context = build_context();
+        line_state line = { m_words, buffer };
+        editor_backend::context context = make_context(line);
         for (auto backend : m_backends)
             backend->on_matches_changed(context);
     }
