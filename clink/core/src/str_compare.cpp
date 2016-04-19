@@ -1,4 +1,4 @@
-// Copyright (c) 2013 Martin Ridgers
+// Copyright (c) 2015 Martin Ridgers
 // License: http://opensource.org/licenses/MIT
 
 #include "pch.h"
