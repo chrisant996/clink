@@ -55,6 +55,15 @@ bool host::edit_line(const char* prompt, str_base& out)
         str<288>        m_path;
     } cwd;
 
+#if MODE4
+    str<128> filtered_prompt;
+    filter_prompt(prompt, filtered_prompt);
+#endif
+
+#if MODE4
+    str_compare_scope _(str_compare_scope::relaxed);
+#endif
+
     static rl_backend backend(m_name);
     win_terminal terminal;
 
@@ -72,26 +81,12 @@ bool host::edit_line(const char* prompt, str_base& out)
     editor.add_generator(file_match_generator());
 
     return editor.edit(out.data(), out.size());
-
-/* MODE4
-    str<128> filtered_prompt;
-    filter_prompt(prompt, filtered_prompt);
-
-    terminal* term = m_line_editor->get_terminal();
-    term->begin();
-    bool ret = m_line_editor->edit_line(filtered_prompt.c_str(), out);
-    term->end();
-
-    return ret;
-MODE4 */
-
-    return true;
 }
 
 //------------------------------------------------------------------------------
 void host::filter_prompt(const char* in, str_base& out)
 {
-/* MODE4
+#if MODE4
     // Call Lua to filter prompt
     lua_getglobal(m_lua, "clink");
     lua_pushliteral(m_lua, "filter_prompt");
@@ -110,5 +105,5 @@ void host::filter_prompt(const char* in, str_base& out)
     out = prompt;
 
     lua_pop(m_lua, 2);
-MODE4 */
+#endif // MODE4
 }
