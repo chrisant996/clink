@@ -65,6 +65,9 @@ editor_backend::result classic_match_ui::on_input(
     auto& terminal = context.terminal;
     auto& matches = context.matches;
 
+    if (matches.get_match_count() == 0)
+        return result::next;
+
     if (m_waiting)
     {
         int next_state = state_none;
@@ -131,7 +134,7 @@ classic_match_ui::state classic_match_ui::begin_print(const context& context)
     m_row = 0;
 
     // Get the longest match length.
-    for (int i = 0; i < matches.get_match_count(); ++i)
+    for (int i = 0, n = matches.get_match_count(); i < n; ++i)
     {
         const char* match = matches.get_match(i);
         m_longest = max<int>(char_count(match), m_longest);
