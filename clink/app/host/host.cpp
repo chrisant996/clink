@@ -9,7 +9,7 @@
 #include <core/str.h>
 #include <lib/classic_match_ui.h>
 #include <lib/match_generator.h>
-#include <line_editor.h>
+#include <lib/line_editor.h>
 #include <lua/lua_script_loader.h>
 #include <terminal/win_terminal.h>
 

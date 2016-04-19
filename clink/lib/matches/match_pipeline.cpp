@@ -8,6 +8,7 @@
 #include "match_pipeline.h"
 #include "matches.h"
 
+#include <core/array.h>
 #include <core/str_compare.h>
 
 #include <algorithm>

@@ -6,7 +6,6 @@
 #include "host/host_ps.h"
 #include "inject_args.h"
 #include "paths.h"
-#include "rl/rl_line_editor.h"
 #include "seh_scope.h"
 
 #include <core/base.h>
@@ -20,7 +19,6 @@
 #include <lua/lua_match_generator.h>
 #include <lua/lua_root.h>
 #include <lua/lua_script_loader.h>
-#include <matches/column_printer.h>
 #include <terminal/win_terminal.h>
 
 /* MODE4

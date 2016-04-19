@@ -4,7 +4,7 @@
 #include "pch.h"
 #include "match_generator.h"
 #include "line_state.h"
-#include "matches/matches.h"
+#include "matches.h"
 
 #include <core/globber.h>
 #include <core/path.h>

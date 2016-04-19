@@ -8,7 +8,7 @@
 #include "seh_scope.h"
 
 #include <core/str.h>
-#include <line_editor.h>
+#include <lib/line_editor.h>
 #include <lua/lua_script_loader.h>
 #include <process/vm.h>
 

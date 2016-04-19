@@ -7,16 +7,13 @@
 #include <core/path.h>
 #include <core/str_compare.h>
 #include <core/str_tokeniser.h>
-#include <line_editor.h>
 #include <lib/bind_resolver.h>
 #include <lib/classic_match_ui.h>
+#include <lib/line_editor.h>
 #include <lib/match_generator.h>
 #include <matches/match_pipeline.h>
 #include <terminal/win_terminal.h>
 
-//------------------------------------------------------------------------------
-//------------------------------------------------------------------------------
-//------------------------------------------------------------------------------
 //------------------------------------------------------------------------------
 int testbed(int, char**)
 {
