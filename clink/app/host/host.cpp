@@ -66,8 +66,9 @@ bool host::edit_line(const char* prompt, str_base& out)
     desc.terminal = &terminal;
     desc.backend = &backend;
     desc.buffer = &backend;
+
     line_editor editor(desc);
-    // MODE4 editor.add_backend(ui);
+    editor.add_backend(ui);
     editor.add_generator(file_match_generator());
 
     return editor.edit(out.data(), out.size());
