@@ -7,8 +7,9 @@
 
 #include <core/os.h>
 #include <core/str.h>
-#include <line_editor.h>
+#include <lib/classic_match_ui.h>
 #include <lib/match_generator.h>
+#include <line_editor.h>
 #include <lua/lua_script_loader.h>
 #include <terminal/win_terminal.h>
 
@@ -66,6 +67,7 @@ bool host::edit_line(const char* prompt, str_base& out)
 
     static rl_backend backend(m_name);
     win_terminal terminal;
+    classic_match_ui ui;
 
     line_editor::desc desc = {};
     desc.prompt = prompt;

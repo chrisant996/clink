@@ -7,6 +7,7 @@
 #include <core/base.h>
 #include <core/settings.h>
 #include <lib/binder.h>
+#include <lib/line_buffer.h>
 #include <lib/editor_backend.h>
 #include <line_state.h>
 #include <matches/matches.h>
