@@ -90,22 +90,39 @@ editor_backend::result classic_match_ui::on_input(
         return result::redraw;
     }
 
+    int match_count = matches.get_match_count();
+
     // One match? Accept it.
-    if (matches.get_match_count() == 1)
+    if (match_count == 1)
         return { result::accept_match, 0 };
 
     // Valid LCD? Append it.
     str<> lcd;
     matches.get_match_lcd(lcd);
-    if (int lcd_length = lcd.length())
+    if (m_lcd_length = lcd.length())
     {
-        const word end_word = *(context.line.get_words().back());
-
         line_buffer& buffer = context.buffer;
         unsigned int cursor = buffer.get_cursor();
+        word end_word = *(context.line.get_words().back());
+
+        // Prepend a quote if the next character to type needs quoting.
+        if (matches.has_quoteable() && !end_word.quoted)
+        {
+            for (int i = 0; i < match_count; ++i)
+            {
+                if (unsigned(matches.get_first_quoteable(i)) > m_lcd_length)
+                    continue;
+    
+                buffer.set_cursor(end_word.offset);
+                buffer.insert("\"");
+                cursor = buffer.set_cursor(cursor + 1);
+                ++end_word.offset;
+                break;
+            }
+        }
 
         int word_end = end_word.offset + end_word.length;
-        int dx = lcd_length - (cursor - word_end);
+        int dx = m_lcd_length - (cursor - word_end);
 
         if (dx < 0)
         {
@@ -113,7 +130,7 @@ editor_backend::result classic_match_ui::on_input(
             buffer.set_cursor(cursor + dx);
         }
         else if (dx > 0)
-            buffer.insert(lcd.c_str() + lcd_length - dx);
+            buffer.insert(lcd.c_str() + m_lcd_length - dx);
         else if (!dx)
             m_waiting = true;
 
@@ -135,10 +152,7 @@ classic_match_ui::state classic_match_ui::begin_print(const context& context)
 
     // Get the longest match length.
     for (int i = 0, n = matches.get_match_count(); i < n; ++i)
-    {
-        const char* match = matches.get_match(i);
-        m_longest = max<int>(char_count(match), m_longest);
-    }
+        m_longest = max<int>(matches.get_visible_chars(i), m_longest);
 
     if (!m_longest)
         return state_none;
@@ -189,7 +203,8 @@ classic_match_ui::state classic_match_ui::print(const context& context, bool sin
             const char* match = matches.get_match(index);
             term.write(match, int(strlen(match)));
 
-            for (int i = m_longest - char_count(match) + 1; i >= 0;)
+            int visible_chars = matches.get_visible_chars(index);
+            for (int i = m_longest - visible_chars + 1; i >= 0;)
             {
                 const char spaces[] = "                ";
                 term.write(spaces, min<int>(sizeof_array(spaces) - 1, i));

@@ -32,4 +32,5 @@ private:
     bool            m_waiting = false;
     int             m_longest = 0;
     int             m_row = 0;
+    unsigned int    m_lcd_length = 0;
 };
