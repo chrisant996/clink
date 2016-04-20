@@ -22,11 +22,11 @@ struct match_info
 class match_store
 {
 public:
-    const char*     get(unsigned int id) const;
+    const char*         get(unsigned int id) const;
 
 protected:
-    char*           m_ptr;
-    unsigned int    m_size;
+    char*               m_ptr;
+    unsigned int        m_size;
 };
 
 
