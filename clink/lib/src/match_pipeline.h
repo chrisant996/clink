@@ -13,10 +13,10 @@ class match_pipeline
 {
 public:
                         match_pipeline(matches& matches);
-    void                reset();
-    void                generate(const line_state& state, const array<match_generator*>& generators);
-    void                select(const char* needle);
-    void                sort();
+    void                reset() const;
+    void                generate(const line_state& state, const array<match_generator*>& generators) const;
+    void                select(const char* needle) const;
+    void                sort() const;
 
 private:
     matches&            m_matches;

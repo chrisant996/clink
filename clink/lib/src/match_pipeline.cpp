@@ -64,7 +64,7 @@ match_pipeline::match_pipeline(matches& matches)
 }
 
 //------------------------------------------------------------------------------
-void match_pipeline::reset()
+void match_pipeline::reset() const
 {
     m_matches.reset();
 }
@@ -72,7 +72,7 @@ void match_pipeline::reset()
 //------------------------------------------------------------------------------
 void match_pipeline::generate(
     const line_state& state,
-    const array<match_generator*>& generators)
+    const array<match_generator*>& generators) const
 {
     match_builder builder(m_matches);
     for (auto* generator : generators)
@@ -83,7 +83,7 @@ void match_pipeline::generate(
 }
 
 //------------------------------------------------------------------------------
-void match_pipeline::select(const char* needle)
+void match_pipeline::select(const char* needle) const
 {
     int count = m_matches.get_info_count();
     if (!count)
@@ -97,7 +97,7 @@ void match_pipeline::select(const char* needle)
 }
 
 //------------------------------------------------------------------------------
-void match_pipeline::sort()
+void match_pipeline::sort() const
 {
     int count = m_matches.get_match_count();
     if (!count)
