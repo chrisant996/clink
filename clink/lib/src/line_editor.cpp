@@ -342,6 +342,7 @@ void line_editor::update_internal()
         match_pipeline pipeline(m_matches);
         pipeline.reset();
         pipeline.generate({ m_words, m_desc.buffer->get_buffer() }, m_generators);
+        pipeline.fill_info(m_desc.auto_quote_chars);
     }
 
     next_key.cursor_pos = m_desc.buffer->get_cursor();

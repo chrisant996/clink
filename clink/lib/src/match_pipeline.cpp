@@ -76,9 +76,36 @@ void match_pipeline::generate(
 {
     match_builder builder(m_matches);
     for (auto* generator : generators)
-    {
         if (generator->generate(state, builder))
             break;
+}
+
+//------------------------------------------------------------------------------
+void match_pipeline::fill_info(const char* auto_quote_chars) const
+{
+    int count = m_matches.get_info_count();
+    if (!count)
+        return;
+
+    match_info* info = m_matches.get_infos();
+    for (int i = 0; i < count; ++i, ++info)
+    {
+        const char* match = m_matches.get_store().get(info->store_id);
+
+        const char* read = match;
+        while (int c = *read++)
+            if (strchr(auto_quote_chars, c))
+                break;
+
+        if (*read != '\0')
+        {
+            info->first_quoteable = int(read - match) - 1;
+            m_matches.set_has_quoteable();
+        }
+        else
+            info->first_quoteable = -1;
+
+        info->visible_chars = char_count(match);
     }
 }
 
