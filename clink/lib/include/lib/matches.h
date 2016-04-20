@@ -10,8 +10,10 @@ class str_base;
 //------------------------------------------------------------------------------
 struct match_info
 {
-    unsigned short  selected : 1;
-    unsigned short  store_id : 15;
+    unsigned int    score;
+    unsigned short  store_id;
+    unsigned char   first_quoteable;
+    unsigned char   visible_chars;
 };
 
 
@@ -36,6 +38,9 @@ public:
                         matches(unsigned int store_size=0x10000);
     unsigned int        get_match_count() const;
     const char*         get_match(unsigned int index) const;
+    unsigned int        get_visible_chars(unsigned int index) const;
+    bool                has_quoteable() const;
+    int                 get_first_quoteable(unsigned int index) const;
     void                get_match_lcd(str_base& out) const;
 
 private:
@@ -47,6 +52,7 @@ private:
     const match_store&  get_store() const;
     void                reset();
     void                coalesce(unsigned int count_hint);
+    void                set_has_quoteable();
 
 private:
     class store_impl
@@ -71,6 +77,7 @@ private:
     infos               m_infos;
     unsigned short      m_count = 0;
     bool                m_coalesced = false;
+    bool                m_has_quotable = false;
 
 private:
                         matches(const matches&) = delete;

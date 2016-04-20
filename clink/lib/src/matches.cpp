@@ -124,6 +124,24 @@ const char* matches::get_match(unsigned int index) const
 }
 
 //------------------------------------------------------------------------------
+unsigned int matches::get_visible_chars(unsigned int index) const
+{
+    return (index < get_match_count()) ? m_infos[index].visible_chars : 0;
+}
+
+//------------------------------------------------------------------------------
+bool matches::has_quoteable() const
+{
+    return m_has_quotable;
+}
+
+//------------------------------------------------------------------------------
+int matches::get_first_quoteable(unsigned int index) const
+{
+    return (index < get_match_count()) ? m_infos[index].first_quoteable : -1;
+}
+
+//------------------------------------------------------------------------------
 void matches::get_match_lcd(str_base& out) const
 {
     int match_count = get_match_count();
@@ -161,6 +179,7 @@ void matches::reset()
     m_infos.clear();
     m_coalesced = false;
     m_count = 0;
+    m_has_quotable = false;
 }
 
 //------------------------------------------------------------------------------
@@ -186,7 +205,7 @@ void matches::coalesce(unsigned int count_hint)
     unsigned int j = 0;
     for (int i = 0, n = int(m_infos.size()); i < n && j < count_hint; ++i)
     {
-        if (!infos[i].selected)
+        if (!infos[i].score)
             continue;
 
         if (i != j)
@@ -200,4 +219,10 @@ void matches::coalesce(unsigned int count_hint)
 
     m_count = j;
     m_coalesced = true;
+}
+
+//------------------------------------------------------------------------------
+void matches::set_has_quoteable()
+{
+    m_has_quotable = true;
 }
