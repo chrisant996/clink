@@ -6,11 +6,11 @@
 
 //------------------------------------------------------------------------------
 template <>
-bool str_tokeniser_impl<char>::next(str_impl<char>& out)
+str_token str_tokeniser_impl<char>::next(str_impl<char>& out)
 {
     const char* start;
     int length;
-    bool ret = next_impl(start, length);
+    auto ret = next_impl(start, length);
 
     out.clear();
     if (ret)
@@ -21,11 +21,11 @@ bool str_tokeniser_impl<char>::next(str_impl<char>& out)
 
 //------------------------------------------------------------------------------
 template <>
-bool str_tokeniser_impl<wchar_t>::next(str_impl<wchar_t>& out)
+str_token str_tokeniser_impl<wchar_t>::next(str_impl<wchar_t>& out)
 {
     const wchar_t* start;
     int length;
-    bool ret = next_impl(start, length);
+    auto ret = next_impl(start, length);
 
     out.clear();
     if (ret)
@@ -36,14 +36,14 @@ bool str_tokeniser_impl<wchar_t>::next(str_impl<wchar_t>& out)
 
 //------------------------------------------------------------------------------
 template <>
-bool str_tokeniser_impl<char>::next(const char*& start, int& length)
+str_token str_tokeniser_impl<char>::next(const char*& start, int& length)
 {
     return next_impl(start, length);
 }
 
 //------------------------------------------------------------------------------
 template <>
-bool str_tokeniser_impl<wchar_t>::next(const wchar_t*& start, int& length)
+str_token str_tokeniser_impl<wchar_t>::next(const wchar_t*& start, int& length)
 {
     return next_impl(start, length);
 }
@@ -61,14 +61,17 @@ int str_tokeniser_impl<T>::get_right_quote(int left) const
 
 //------------------------------------------------------------------------------
 template <typename T>
-bool str_tokeniser_impl<T>::next_impl(const T*& out_start, int& out_length)
+str_token str_tokeniser_impl<T>::next_impl(const T*& out_start, int& out_length)
 {
     // Skip initial delimiters.
+    const char* max_delim = m_delims;
     while (int c = m_iter.peek())
     {
-        if (strchr(m_delims, c) == nullptr)
+        const char* delim = strchr(m_delims, c);
+        if (delim == nullptr)
             break;
 
+        max_delim = max(max_delim, delim);
         m_iter.next();
     }
 
@@ -93,14 +96,13 @@ bool str_tokeniser_impl<T>::next_impl(const T*& out_start, int& out_length)
     }
 
     const T* end = m_iter.get_pointer();
-    m_iter.next();
 
     // Empty string? Must be the end of the input. We're done here.
     if (start == end)
-        return false;
+        return 0;
 
     // Set the output and return.
     out_start = start;
     out_length = int(end - start);
-    return true;
+    return *max_delim;
 }
