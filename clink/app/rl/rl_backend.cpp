@@ -75,7 +75,6 @@ rl_backend::rl_backend(const char* shell_name)
 
     /* MODE4
     //_rl_comment_begin = "::";
-    //rl_filename_quote_characters = " %=;&^";
     //history_inhibit_expansion_function = history_expand_control;
     */
 }

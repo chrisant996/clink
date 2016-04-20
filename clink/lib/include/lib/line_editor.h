@@ -26,6 +26,7 @@ public:
         const char*     quote_pair;
         const char*     word_delims;
         const char*     partial_delims;
+        const char*     auto_quote_chars;
         terminal*       terminal;
         editor_backend* backend;
         line_buffer*    buffer;

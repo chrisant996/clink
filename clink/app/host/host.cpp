@@ -94,6 +94,7 @@ bool host::edit_line(const char* prompt, str_base& out)
     desc.quote_pair = "\"";
     desc.word_delims = " \t<>=;";
     desc.partial_delims = "\\/:";
+    desc.auto_quote_chars = " %=;&^";
     desc.terminal = &terminal;
     desc.backend = &backend;
     desc.buffer = &backend;
