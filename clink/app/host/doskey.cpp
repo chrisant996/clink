@@ -175,7 +175,7 @@ bool doskey::next(wchar_t* chars, unsigned max_chars)
             if (c == 0 && m_token_count > 1)
             {
                 insert_from = m_input + m_tokens[1].start;
-                insert_length = min<int>(wcslen(insert_from), max_chars);
+                insert_length = min<int>(int(wcslen(insert_from)), max_chars);
             }
             else if (c < m_token_count)
             {
