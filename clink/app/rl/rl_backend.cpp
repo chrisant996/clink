@@ -20,6 +20,7 @@ static FILE*    null_stream = (FILE*)1;
 extern "C" {
 extern void     (*rl_fwrite_function)(FILE*, const char*, int);
 extern void     (*rl_fflush_function)(FILE*);
+extern char*    _rl_comment_begin;
 } // extern "C"
 
 
@@ -68,13 +69,13 @@ rl_backend::rl_backend(const char* shell_name)
 
     rl_readline_name = shell_name;
     rl_catch_signals = 0;
+    _rl_comment_begin = "::"; // this'll do...
 
     // Disable completion and match display.
     rl_completion_entry_function = [](const char*, int) -> char* { return nullptr; };
     rl_completion_display_matches_hook = [](char**, int, int) {};
 
     /* MODE4
-    //_rl_comment_begin = "::";
     //history_inhibit_expansion_function = history_expand_control;
     */
 }
