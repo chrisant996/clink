@@ -191,7 +191,7 @@ void line_editor::dispatch()
 void line_editor::collect_words()
 {
     const char* line_buffer = m_desc.buffer->get_buffer();
-    const int line_cursor = m_desc.buffer->get_cursor();
+    const unsigned int line_cursor = m_desc.buffer->get_cursor();
 
     m_words.clear();
 
