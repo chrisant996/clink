@@ -200,30 +200,15 @@ void line_editor::collect_words()
     tokens.add_quote_pair(m_desc.quote_pair);
     while (1)
     {
-        const char* start = nullptr;
         int length = 0;
-        if (!tokens.next(start, length))
+        const char* start = nullptr;
+        str_token token = tokens.next(start, length);
+        if (!token)
             break;
 
         // Add the word.
         m_words.push_back();
-        *(m_words.back()) = { short(start - line_buffer), length };
-
-        // Find the best-fit delimiter.
-        /* MODE4
-        const char* best_delim = word_delims;
-        const char* c = m_words
-        while (c > line_buffer)
-        {
-            const char* delim = strchr(word_delims, *c);
-            if (delim == nullptr)
-                break;
-
-            best_delim = max(delim, best_delim);
-            --c;
-        }
-        word->delim = *best_delim;
-        MODE4 */
+        *(m_words.back()) = { short(start - line_buffer), length, 0, token.delim };
     }
 
     // Add an empty word if the cursor is at the beginning of one.
@@ -249,6 +234,7 @@ void line_editor::collect_words()
 
         word.offset += start_quoted;
         word.length -= start_quoted + end_quoted;
+        word.quoted = !!start_quoted;
     }
 
     // Adjust the completing word for if it's partial.

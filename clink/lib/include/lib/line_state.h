@@ -9,8 +9,10 @@ template <typename T> class array;
 //------------------------------------------------------------------------------
 struct word
 {
-    unsigned short          offset;
-    unsigned short          length;
+    unsigned int        offset : 14;
+    unsigned int        length : 10;
+    unsigned int        quoted : 1;
+    unsigned int        delim  : 7;
 };
 
 //------------------------------------------------------------------------------
