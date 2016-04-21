@@ -99,11 +99,13 @@ bool host::edit_line(const char* prompt, str_base& out)
     desc.backend = &backend;
     desc.buffer = &backend;
 
-    line_editor editor(desc);
-    editor.add_backend(ui);
-    editor.add_generator(file_match_generator());
+    line_editor* editor = line_editor_create(desc);
+    editor->add_backend(ui);
+    editor->add_generator(file_match_generator());
 
-    return editor.edit(out.data(), out.size());
+    bool ret = editor->edit(out.data(), out.size());
+    line_editor_destroy(editor);
+    return ret;
 }
 
 //------------------------------------------------------------------------------

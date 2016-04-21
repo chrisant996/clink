@@ -2,9 +2,9 @@
 // License: http://opensource.org/licenses/MIT
 
 #include "pch.h"
-#include "line_editor.h"
+#include "line_editor_impl.h"
+#include "line_buffer.h"
 #include "match_pipeline.h"
-#include "lib/line_buffer.h"
 
 #include <core/base.h>
 #include <core/os.h>
@@ -14,7 +14,21 @@
 #include <terminal/terminal.h>
 
 //------------------------------------------------------------------------------
-line_editor::line_editor(const desc& desc)
+line_editor* line_editor_create(const line_editor::desc& desc)
+{
+    return new line_editor_impl(desc);
+}
+
+//------------------------------------------------------------------------------
+void line_editor_destroy(line_editor* editor)
+{
+    delete editor;
+}
+
+
+
+//------------------------------------------------------------------------------
+line_editor_impl::line_editor_impl(const desc& desc)
 : m_desc(desc)
 , m_initialised(false)
 , m_begun(false)
@@ -25,7 +39,7 @@ line_editor::line_editor(const desc& desc)
 }
 
 //------------------------------------------------------------------------------
-void line_editor::initialise()
+void line_editor_impl::initialise()
 {
     if (m_initialised)
         return;
@@ -37,7 +51,7 @@ void line_editor::initialise()
 }
 
 //------------------------------------------------------------------------------
-void line_editor::begin_line()
+void line_editor_impl::begin_line()
 {
     m_begun = true;
 
@@ -56,7 +70,7 @@ void line_editor::begin_line()
 }
 
 //------------------------------------------------------------------------------
-void line_editor::end_line()
+void line_editor_impl::end_line()
 {
     for (auto i = m_backends.rbegin(), n = m_backends.rend(); i != n; ++i)
         i->end_line();
@@ -67,21 +81,21 @@ void line_editor::end_line()
 }
 
 //------------------------------------------------------------------------------
-bool line_editor::add_backend(editor_backend& backend)
+bool line_editor_impl::add_backend(editor_backend& backend)
 {
     editor_backend** slot = m_backends.push_back();
     return (slot != nullptr) ? *slot = &backend, true : false;
 }
 
 //------------------------------------------------------------------------------
-bool line_editor::add_generator(match_generator& generator)
+bool line_editor_impl::add_generator(match_generator& generator)
 {
     match_generator** slot = m_generators.push_back();
     return (slot != nullptr) ? *slot = &generator, true : false;
 }
 
 //------------------------------------------------------------------------------
-bool line_editor::get_line(char* out, int out_size)
+bool line_editor_impl::get_line(char* out, int out_size)
 {
     if (m_begun)
         end_line();
@@ -96,7 +110,7 @@ bool line_editor::get_line(char* out, int out_size)
 }
 
 //------------------------------------------------------------------------------
-bool line_editor::edit(char* out, int out_size)
+bool line_editor_impl::edit(char* out, int out_size)
 {
     // Update first so the init state goes through.
     while (update())
@@ -106,7 +120,7 @@ bool line_editor::edit(char* out, int out_size)
 }
 
 //------------------------------------------------------------------------------
-bool line_editor::update()
+bool line_editor_impl::update()
 {
     if (!m_initialised)
         initialise();
@@ -137,14 +151,14 @@ bool line_editor::update()
 }
 
 //------------------------------------------------------------------------------
-void line_editor::record_input(unsigned char key)
+void line_editor_impl::record_input(unsigned char key)
 {
     if (m_keys_size < sizeof_array(m_keys) - 1)
         m_keys[m_keys_size++] = key;
 }
 
 //------------------------------------------------------------------------------
-void line_editor::dispatch()
+void line_editor_impl::dispatch()
 {
     if (!m_bind_resolver.is_resolved())
         return;
@@ -188,7 +202,7 @@ void line_editor::dispatch()
 }
 
 //------------------------------------------------------------------------------
-void line_editor::collect_words()
+void line_editor_impl::collect_words()
 {
     const char* line_buffer = m_desc.buffer->get_buffer();
     const unsigned int line_cursor = m_desc.buffer->get_cursor();
@@ -253,7 +267,7 @@ void line_editor::collect_words()
 }
 
 //------------------------------------------------------------------------------
-void line_editor::accept_match(unsigned int index)
+void line_editor_impl::accept_match(unsigned int index)
 {
     if (index >= m_matches.get_match_count())
         return;
@@ -296,13 +310,13 @@ void line_editor::accept_match(unsigned int index)
 }
 
 //------------------------------------------------------------------------------
-editor_backend::context line_editor::make_context(const line_state& line) const
+editor_backend::context line_editor_impl::make_context(const line_state& line) const
 {
     return { *m_desc.terminal, *m_desc.buffer, line, m_matches };
 }
 
 //------------------------------------------------------------------------------
-void line_editor::update_internal()
+void line_editor_impl::update_internal()
 {
     collect_words();
     const word& end_word = *(m_words.back());

@@ -3,10 +3,10 @@
 
 #include "pch.h"
 #include "match_pipeline.h"
-#include "match_generator.h"
 #include "line_state.h"
+#include "match_generator.h"
 #include "match_pipeline.h"
-#include "matches.h"
+#include "matches_impl.h"
 
 #include <core/array.h>
 #include <core/str_compare.h>
@@ -58,7 +58,7 @@ void alpha_sorter(const match_store& store, match_info* infos, int count)
 
 
 //------------------------------------------------------------------------------
-match_pipeline::match_pipeline(matches& matches)
+match_pipeline::match_pipeline(matches_impl& matches)
 : m_matches(matches)
 {
 }

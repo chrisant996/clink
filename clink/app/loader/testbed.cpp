@@ -1,3 +1,6 @@
+// Copyright (c) 2016 Martin Ridgers
+// License: http://opensource.org/licenses/MIT
+
 #include "pch.h"
 #include "rl/rl_backend.h"
 
@@ -18,19 +21,20 @@ int testbed(int, char**)
     rl_backend backend("testbed");
 
     line_editor::desc desc = {};
-    desc.prompt = "testbed -> ";
+    desc.prompt = "testbed $ ";
     desc.quote_pair = "\"";
     desc.word_delims = " \t=";
     desc.partial_delims = "\\/:";
     desc.terminal = &terminal;
     desc.backend = &backend;
     desc.buffer = &backend;
-    line_editor editor(desc);
-    editor.add_backend(ui);
-    editor.add_generator(file_match_generator());
+    line_editor* editor = line_editor_create(desc);
+    editor->add_backend(ui);
+    editor->add_generator(file_match_generator());
 
     char out[64];
-    while (editor.edit(out, sizeof_array(out)));
+    while (editor->edit(out, sizeof_array(out)));
 
+    line_editor_destroy(editor);
     return 0;
 }

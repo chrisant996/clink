@@ -3,14 +3,14 @@
 
 #include "pch.h"
 #include "classic_match_ui.h"
+#include "binder.h"
+#include "editor_backend.h"
+#include "line_buffer.h"
+#include "line_state.h"
+#include "matches.h"
 
 #include <core/base.h>
 #include <core/settings.h>
-#include <lib/binder.h>
-#include <lib/editor_backend.h>
-#include <lib/line_buffer.h>
-#include <lib/line_state.h>
-#include <lib/matches.h>
 #include <terminal/terminal.h>
 
 //------------------------------------------------------------------------------

@@ -186,8 +186,6 @@ project("clink_lib")
     language("c++")
     kind("staticlib")
     includedirs("clink")
-    includedirs("clink/lib") -- MODE4
-    includedirs("clink/lib/include") -- MODE4
     includedirs("clink/lib/include/lib")
     includedirs("clink/core/include")
     includedirs("clink/terminal/include")
@@ -311,6 +309,8 @@ project("clink_test")
     links("readline")
     includedirs("catch")
     includedirs("clink/lib/include")
+    includedirs("clink/lib/src") -- MODE4
+    includedirs("clink/lib/include/lib") -- MODE4
     includedirs("clink/app")
     includedirs("clink/core/include")
     includedirs("clink/terminal/include")

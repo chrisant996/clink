@@ -5,7 +5,7 @@
 
 #include <core/str.h>
 #include <lib/line_state.h>
-#include <lib/matches.h>
+#include <matches_impl.h>
 
 #include <stdarg.h>
 
@@ -52,7 +52,7 @@ void match_generator_tester<T>::run(const char* line, va_list arg)
     // MODE4 system.add_generator(0, m_generator);
 
     // Generate the matches.
-    matches result;
+    matches_impl result;
     // MODE4 system.generate_matches(line, int(strlen(line)), result);
 
     // It's possible that we're not expecting any matches...

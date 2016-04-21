@@ -2,11 +2,25 @@
 // License: http://opensource.org/licenses/MIT
 
 #include "pch.h"
-#include "matches.h"
+#include "matches_impl.h"
 
 #include <core/base.h>
 #include <core/str.h>
 #include <core/str_compare.h>
+
+//------------------------------------------------------------------------------
+match_builder::match_builder(matches& matches)
+: m_matches(matches)
+{
+}
+
+//------------------------------------------------------------------------------
+bool match_builder::add_match(const char* match)
+{
+    return ((matches_impl&)m_matches).add_match(match);
+}
+
+
 
 //------------------------------------------------------------------------------
 const char* match_store::get(unsigned int id) const
@@ -18,7 +32,7 @@ const char* match_store::get(unsigned int id) const
 
 
 //------------------------------------------------------------------------------
-matches::store_impl::store_impl(unsigned int size)
+matches_impl::store_impl::store_impl(unsigned int size)
 : m_front(0)
 , m_back(size)
 {
@@ -27,20 +41,20 @@ matches::store_impl::store_impl(unsigned int size)
 }
 
 //------------------------------------------------------------------------------
-matches::store_impl::~store_impl()
+matches_impl::store_impl::~store_impl()
 {
     free(m_ptr);
 }
 
 //------------------------------------------------------------------------------
-void matches::store_impl::reset()
+void matches_impl::store_impl::reset()
 {
     m_back = m_size;
     m_front = 0;
 }
 
 //------------------------------------------------------------------------------
-int matches::store_impl::store_front(const char* str)
+int matches_impl::store_impl::store_front(const char* str)
 {
     unsigned int size = get_size(str);
     unsigned int next = m_front + size;
@@ -55,7 +69,7 @@ int matches::store_impl::store_front(const char* str)
 }
 
 //------------------------------------------------------------------------------
-int matches::store_impl::store_back(const char* str)
+int matches_impl::store_impl::store_back(const char* str)
 {
     unsigned int size = get_size(str);
     unsigned int next = m_back + size;
@@ -70,7 +84,7 @@ int matches::store_impl::store_back(const char* str)
 }
 
 //------------------------------------------------------------------------------
-unsigned int matches::store_impl::get_size(const char* str) const
+unsigned int matches_impl::store_impl::get_size(const char* str) const
 {
     if (str == nullptr || str[0] == '\0')
         return ~0u;
@@ -83,38 +97,38 @@ unsigned int matches::store_impl::get_size(const char* str) const
 
 
 //------------------------------------------------------------------------------
-matches::matches(unsigned int store_size)
+matches_impl::matches_impl(unsigned int store_size)
 : m_store(min(store_size, 0x10000u))
 {
     m_infos.reserve(1024);
 }
 
 //------------------------------------------------------------------------------
-unsigned int matches::get_info_count() const
+unsigned int matches_impl::get_info_count() const
 {
     return int(m_infos.size());
 }
 
 //------------------------------------------------------------------------------
-match_info* matches::get_infos()
+match_info* matches_impl::get_infos()
 {
     return &(m_infos[0]);
 }
 
 //------------------------------------------------------------------------------
-const match_store& matches::get_store() const
+const match_store& matches_impl::get_store() const
 {
     return m_store;
 }
 
 //------------------------------------------------------------------------------
-unsigned int matches::get_match_count() const
+unsigned int matches_impl::get_match_count() const
 {
     return m_count;
 }
 
 //------------------------------------------------------------------------------
-const char* matches::get_match(unsigned int index) const
+const char* matches_impl::get_match(unsigned int index) const
 {
     if (index >= get_match_count())
         return nullptr;
@@ -124,25 +138,25 @@ const char* matches::get_match(unsigned int index) const
 }
 
 //------------------------------------------------------------------------------
-unsigned int matches::get_visible_chars(unsigned int index) const
+unsigned int matches_impl::get_visible_chars(unsigned int index) const
 {
     return (index < get_match_count()) ? m_infos[index].visible_chars : 0;
 }
 
 //------------------------------------------------------------------------------
-bool matches::has_quoteable() const
+bool matches_impl::has_quoteable() const
 {
     return m_has_quotable;
 }
 
 //------------------------------------------------------------------------------
-int matches::get_first_quoteable(unsigned int index) const
+int matches_impl::get_first_quoteable(unsigned int index) const
 {
     return (index < get_match_count()) ? m_infos[index].first_quoteable : -1;
 }
 
 //------------------------------------------------------------------------------
-void matches::get_match_lcd(str_base& out) const
+void matches_impl::get_match_lcd(str_base& out) const
 {
     int match_count = get_match_count();
 
@@ -173,7 +187,7 @@ void matches::get_match_lcd(str_base& out) const
 }
 
 //------------------------------------------------------------------------------
-void matches::reset()
+void matches_impl::reset()
 {
     m_store.reset();
     m_infos.clear();
@@ -183,7 +197,7 @@ void matches::reset()
 }
 
 //------------------------------------------------------------------------------
-bool matches::add_match(const char* match)
+bool matches_impl::add_match(const char* match)
 {
     if (m_coalesced || !*match)
         return false;
@@ -198,7 +212,7 @@ bool matches::add_match(const char* match)
 }
 
 //------------------------------------------------------------------------------
-void matches::coalesce(unsigned int count_hint)
+void matches_impl::coalesce(unsigned int count_hint)
 {
     match_info* infos = &(m_infos[0]);
 
@@ -222,7 +236,7 @@ void matches::coalesce(unsigned int count_hint)
 }
 
 //------------------------------------------------------------------------------
-void matches::set_has_quoteable()
+void matches_impl::set_has_quoteable()
 {
     m_has_quotable = true;
 }

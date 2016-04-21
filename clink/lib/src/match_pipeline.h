@@ -5,14 +5,14 @@
 
 class line_state;
 class match_generator;
-class matches;
+class matches_impl;
 template <typename T> class array;
 
 //------------------------------------------------------------------------------
 class match_pipeline
 {
 public:
-                        match_pipeline(matches& matches);
+                        match_pipeline(matches_impl& matches);
     void                reset() const;
     void                generate(const line_state& state, const array<match_generator*>& generators) const;
     void                fill_info(const char* auto_quote_chars) const;
@@ -20,5 +20,5 @@ public:
     void                sort() const;
 
 private:
-    matches&            m_matches;
+    matches_impl&       m_matches;
 };
