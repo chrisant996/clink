@@ -30,7 +30,7 @@ static setting_bool g_case_sensitive(
 //------------------------------------------------------------------------------
 static setting_bool g_case_relaxed(
     "match.case_relaxed",
-    "Also consider - and _ as equal.",
+    "Also consider -/_ equal when case insensitive.",
     "", // MODE4
     true);
 
