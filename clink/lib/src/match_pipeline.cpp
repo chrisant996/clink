@@ -97,9 +97,10 @@ void match_pipeline::fill_info(const char* auto_quote_chars) const
             if (strchr(auto_quote_chars, c))
                 break;
 
+        --read;
         if (*read != '\0')
         {
-            info->first_quoteable = int(read - match) - 1;
+            info->first_quoteable = int(read - match);
             m_matches.set_has_quoteable();
         }
         else
