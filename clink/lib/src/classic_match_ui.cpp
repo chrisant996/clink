@@ -14,6 +14,20 @@
 #include <terminal/terminal.h>
 
 //------------------------------------------------------------------------------
+editor_backend* classic_match_ui_create()
+{
+    return new classic_match_ui();
+}
+
+//------------------------------------------------------------------------------
+void classic_match_ui_destroy(editor_backend* classic_ui)
+{
+    delete classic_ui;
+}
+
+
+
+//------------------------------------------------------------------------------
 static setting_int g_query_threshold(
     "match.query_threshold",
     "Ask if matches > threshold",

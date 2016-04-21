@@ -25,6 +25,7 @@ public:
         line_buffer*    buffer;
     };
 
+    virtual             ~line_editor() {}
     virtual bool        add_backend(editor_backend& backend) = 0;
     virtual bool        add_generator(match_generator& generator) = 0;
     virtual bool        get_line(char* out, int out_size) = 0;

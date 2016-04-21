@@ -5,7 +5,6 @@
 #include "rl/rl_backend.h"
 
 #include <core/str_compare.h>
-#include <lib/classic_match_ui.h>
 #include <lib/line_editor.h>
 #include <lib/match_generator.h>
 #include <terminal/win_terminal.h>
@@ -17,8 +16,8 @@ int testbed(int, char**)
 
     win_terminal terminal;
 
-    classic_match_ui ui;
-    rl_backend backend("testbed");
+    editor_backend* ui = classic_match_ui_create();
+    static rl_backend backend("testbed");
 
     line_editor::desc desc = {};
     desc.prompt = "testbed $ ";
@@ -29,12 +28,13 @@ int testbed(int, char**)
     desc.backend = &backend;
     desc.buffer = &backend;
     line_editor* editor = line_editor_create(desc);
-    editor->add_backend(ui);
+    editor->add_backend(*ui);
     editor->add_generator(file_match_generator());
 
     char out[64];
     while (editor->edit(out, sizeof_array(out)));
 
     line_editor_destroy(editor);
+    classic_match_ui_destroy(ui);
     return 0;
 }

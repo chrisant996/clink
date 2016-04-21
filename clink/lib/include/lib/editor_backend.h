@@ -45,6 +45,7 @@ public:
         const matches&      matches;
     };
 
+    virtual                 ~editor_backend() {}
     virtual void            bind(binder& binder) = 0;
     virtual void            begin_line(const char* prompt, const context& context) = 0;
     virtual void            end_line() = 0;

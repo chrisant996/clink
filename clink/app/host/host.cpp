@@ -9,7 +9,6 @@
 #include <core/settings.h>
 #include <core/str.h>
 #include <core/str_compare.h>
-#include <lib/classic_match_ui.h>
 #include <lib/match_generator.h>
 #include <lib/line_editor.h>
 // MODE4 #include <lua/lua_script_loader.h>
@@ -87,7 +86,7 @@ bool host::edit_line(const char* prompt, str_base& out)
 
     static rl_backend backend(m_name);
     win_terminal terminal;
-    classic_match_ui ui;
+    editor_backend* ui = classic_match_ui_create();
 
     line_editor::desc desc = {};
     desc.prompt = prompt;
@@ -100,11 +99,13 @@ bool host::edit_line(const char* prompt, str_base& out)
     desc.buffer = &backend;
 
     line_editor* editor = line_editor_create(desc);
-    editor->add_backend(ui);
+    editor->add_backend(*ui);
     editor->add_generator(file_match_generator());
 
     bool ret = editor->edit(out.data(), out.size());
+
     line_editor_destroy(editor);
+    classic_match_ui_destroy(ui);
     return ret;
 }
 
