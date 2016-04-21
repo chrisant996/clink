@@ -8,6 +8,20 @@
 
 #include <core/globber.h>
 #include <core/path.h>
+#include <core/settings.h>
+
+static setting_bool g_hidden(
+    "files.hidden",
+    "Include hidden files",
+    "", // MODE4
+    true);
+
+static setting_bool g_system(
+    "files.system",
+    "Include system files",
+    "", // MODE4
+    false);
+
 
 //------------------------------------------------------------------------------
 match_generator& file_match_generator()
@@ -21,6 +35,8 @@ match_generator& file_match_generator()
             buffer << "*";
 
             globber globber(buffer.c_str());
+            globber.hidden(g_hidden.get());
+            globber.system(g_system.get());
             while (globber.next(buffer, false))
                 builder.add_match(buffer.c_str());
 
