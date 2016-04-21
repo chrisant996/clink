@@ -17,6 +17,7 @@ public:
     void                directories(bool state) { m_directories = state; }
     void                suffix_dirs(bool state) { m_dir_suffix = state; }
     void                hidden(bool state)      { m_hidden = state; }
+    void                system(bool state)      { m_system = state; }
     void                dots(bool state)        { m_dots = state; }
     bool                next(str_base& out, bool rooted=true);
 
@@ -31,5 +32,6 @@ private:
     bool                m_directories;
     bool                m_dir_suffix;
     bool                m_hidden;
+    bool                m_system;
     bool                m_dots;
 };

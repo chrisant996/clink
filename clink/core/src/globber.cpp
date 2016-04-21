@@ -12,6 +12,7 @@ globber::globber(const char* pattern)
 , m_directories(true)
 , m_dir_suffix(true)
 , m_hidden(false)
+, m_system(false)
 , m_dots(false)
 {
     // Windows: Expand if the path to complete is drive relative (e.g. 'c:foobar')
@@ -56,10 +57,8 @@ bool globber::next(str_base& out, bool rooted)
         goto skip_file;
 
     int attr = m_data.dwFileAttributes;
-// MODE4
-    if (attr & FILE_ATTRIBUTE_REPARSE_POINT)
+    if (attr & FILE_ATTRIBUTE_SYSTEM && !m_system)
         goto skip_file;
-// MODE4
 
     if ((attr & FILE_ATTRIBUTE_HIDDEN) && !m_hidden)
         goto skip_file;
