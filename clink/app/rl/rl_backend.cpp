@@ -81,7 +81,7 @@ rl_backend::rl_backend(const char* shell_name)
 }
 
 //------------------------------------------------------------------------------
-void rl_backend::bind(binder& binder)
+void rl_backend::bind(binder_func* binder)
 {
 }
 

@@ -3,7 +3,6 @@
 
 #pragma once
 
-class binder;
 class line_buffer;
 class line_state;
 class matches;
@@ -45,8 +44,10 @@ public:
         const matches&      matches;
     };
 
+    typedef bool            (binder_func)(const char* chord, unsigned char id);
+
     virtual                 ~editor_backend() {}
-    virtual void            bind(binder& binder) = 0;
+    virtual void            bind(binder_func* func) = 0;
     virtual void            begin_line(const char* prompt, const context& context) = 0;
     virtual void            end_line() = 0;
     virtual void            on_matches_changed(const context& context) = 0;

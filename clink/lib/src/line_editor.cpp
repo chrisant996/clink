@@ -44,8 +44,17 @@ void line_editor_impl::initialise()
     if (m_initialised)
         return;
 
-    for (auto backend : m_backends)
-        backend->bind(m_binder);
+    static binder* s_binder;          // MODE4
+    static editor_backend* s_backend; // MODE4
+
+    s_binder = &m_binder;
+    for (auto* backend : m_backends)
+    {
+        s_backend = backend;
+        backend->bind([](const char* chord, unsigned char id) -> bool {
+            return s_binder->bind(chord, *s_backend, id);
+        });
+    }
 
     m_initialised = true;
 }

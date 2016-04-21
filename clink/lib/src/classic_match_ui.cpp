@@ -49,9 +49,9 @@ static setting_bool g_vertical(
 
 
 //------------------------------------------------------------------------------
-void classic_match_ui::bind(binder& binder)
+void classic_match_ui::bind(binder_func* binder)
 {
-    binder.bind("\t", *this, state_none);
+    binder("\t", state_none);
 }
 
 //------------------------------------------------------------------------------
