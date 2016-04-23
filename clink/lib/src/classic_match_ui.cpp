@@ -104,54 +104,54 @@ editor_backend::result classic_match_ui::on_input(
         return result::redraw;
     }
 
-    int match_count = matches.get_match_count();
-
-    // One match? Accept it.
-    if (match_count == 1)
-        return { result::accept_match, 0 };
-
-    // Valid LCD? Append it.
-    str<> lcd;
+    str<288> lcd;
     matches.get_match_lcd(lcd);
-    if (m_lcd_length = lcd.length())
+
+    unsigned int lcd_length = lcd.length();
+    if (!lcd_length)
     {
-        line_buffer& buffer = context.buffer;
-        unsigned int cursor = buffer.get_cursor();
-        word end_word = *(context.line.get_words().back());
-
-        // Prepend a quote if the next character to type needs quoting.
-        if (matches.has_quoteable() && !end_word.quoted)
-        {
-            for (int i = 0; i < match_count; ++i)
-            {
-                if (unsigned(matches.get_first_quoteable(i)) > m_lcd_length)
-                    continue;
-    
-                buffer.set_cursor(end_word.offset);
-                buffer.insert("\"");
-                cursor = buffer.set_cursor(cursor + 1);
-                ++end_word.offset;
-                break;
-            }
-        }
-
-        int word_end = end_word.offset + end_word.length;
-        int dx = m_lcd_length - (cursor - word_end);
-
-        if (dx < 0)
-        {
-            buffer.remove(cursor + dx, cursor);
-            buffer.set_cursor(cursor + dx);
-        }
-        else if (dx > 0)
-            buffer.insert(lcd.c_str() + m_lcd_length - dx);
-        else if (!dx)
-            m_waiting = true;
-
+        m_waiting = true;
         return result::next;
     }
 
-    m_waiting = true;
+    line_buffer& buffer = context.buffer;
+    unsigned int cursor = buffer.get_cursor();
+    word end_word = *(context.line.get_words().back());
+
+    // Prepend a quote if the next character to type needs quoting.
+    if (matches.has_quoteable() && !end_word.quoted)
+    {
+        for (int i = 0, n = matches.get_match_count(); i < n; ++i)
+        {
+            if (unsigned(matches.get_first_quoteable(i)) > lcd_length)
+                continue;
+
+            buffer.set_cursor(end_word.offset);
+            buffer.insert("\"");
+            cursor = buffer.set_cursor(cursor + 1);
+            ++end_word.offset;
+            break;
+        }
+    }
+
+    // One match? Accept it.
+    if (matches.get_match_count() == 1)
+        return { result::accept_match, 0 };
+
+    // Append as much of the lowest common denominator of matches as we can.
+    int word_end = end_word.offset + end_word.length;
+    int dx = lcd_length - (cursor - word_end);
+
+    if (dx < 0)
+    {
+        buffer.remove(cursor + dx, cursor);
+        buffer.set_cursor(cursor + dx);
+    }
+    else if (dx > 0)
+        buffer.insert(lcd.c_str() + lcd_length - dx);
+    else if (!dx)
+        m_waiting = true;
+
     return result::next;
 }
 
