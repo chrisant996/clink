@@ -100,6 +100,11 @@ static BOOL on_dll_attach()
 
     // Get the inject arguments.
     get_inject_args(GetCurrentProcessId());
+
+    // The "clink_profile" environment variable can be used to override --profile
+    GetEnvironmentVariable("clink_profile", g_inject_args.profile_path,
+        sizeof_array(g_inject_args.profile_path));
+
     if (g_inject_args.profile_path[0] != '\0')
     {
         set_config_dir_override(g_inject_args.profile_path);
