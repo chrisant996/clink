@@ -25,20 +25,26 @@
 #endif
 
 //------------------------------------------------------------------------------
+static int ANSI_FNAME(is_osc)(const char_t* str)
+{
+    if ((str[0] == 0x1b) && (str[1] == ']'))  return 2;
+    if ((str[0] == 0xc2) && (str[1] == 0x9d)) return 2;
+    if (str[0] == 0x9d)                       return 1;
+
+    // Also lump DCS under OSC too.
+    if ((str[0] == 0x1b) && (str[1] == 'P'))  return 2;
+    if ((str[0] == 0xc2) && (str[1] == 0x90)) return 2;
+    if (str[0] == 0x90)                       return 1;
+
+    return 0;
+}
+
+//------------------------------------------------------------------------------
 static int ANSI_FNAME(is_csi)(const char_t* str)
 {
-    if ((str[0] == 0x1b) && (str[1] == '['))
-    {
-        return 2;
-    }
-    else if (str[0] == 0x9b)
-    {
-        return 1;
-    }
-    else if ((str[0] == 0xc2) && (str[1] == 0x9b))
-    {
-        return 2;
-    }
+    if ((str[0] == 0x1b) && (str[1] == '['))  return 2;
+    if ((str[0] == 0xc2) && (str[1] == 0x9b)) return 2;
+    if (str[0] == 0x9b)                       return 1;
 
     return 0;
 }
@@ -49,6 +55,7 @@ const char_t* ANSI_FNAME(find_next_ansi_code)(const char_t* buffer, int* size)
     int size_temp;
     const char_t* read;
     int state;
+    int osc;
 
     if (size == NULL)
     {
@@ -57,11 +64,13 @@ const char_t* ANSI_FNAME(find_next_ansi_code)(const char_t* buffer, int* size)
 
     read = buffer;
     state = -1;
+    osc = 0;
     while (*read)
     {
         if (state < 0)
         {
-            int csi_len = ANSI_FNAME(is_csi)(read);
+            osc = ANSI_FNAME(is_osc)(read);
+            int csi_len = ANSI_FNAME(is_csi)(read) + osc;
             if (csi_len)
             {
                 state = read - buffer;
@@ -70,13 +79,20 @@ const char_t* ANSI_FNAME(find_next_ansi_code)(const char_t* buffer, int* size)
         }
         else
         {
+            int done;
+
             char c = *read;
-            if ((c < '0' || c > '9') && c != ';')
+            if (osc)
+                done = (c == 0x9c) || (c == 0x1b && read[1] == '\\');
+            else
+                done = (c < '0' || c > '9') && c != ';';
+
+            if (done)
             {
                 buffer += state;
 
                 *size = (int)(read - buffer);
-                *size += 1;
+                *size += 1 + !!osc;
 
                 return buffer;
             }
