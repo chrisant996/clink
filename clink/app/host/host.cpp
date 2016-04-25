@@ -85,8 +85,8 @@ bool host::edit_line(const char* prompt, str_base& out)
 
     str_compare_scope compare(cmp_mode);
 
-    static rl_backend backend(m_name);
     win_terminal terminal;
+    rl_backend backend(m_name);
     rl_history history;
     editor_backend* ui = classic_match_ui_create();
 
