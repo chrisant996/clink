@@ -20,7 +20,7 @@ static setting_int g_max_lines(
     "When set to a positive integer this is the number of lines of history\n"
     "that will persist when Clink saves the command history to disk. Use 0\n"
     "for infinite lines and <0 to disable history persistence.",
-    10000);
+    30000);
 
 static setting_int g_ignore_space(
     "history.ignore_space",
