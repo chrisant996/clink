@@ -45,7 +45,7 @@ host::host(const char* name)
 , m_line_editor(editor)
 MODE4 */
 {
-/* MODE
+/* MODE4
     lua_load_script(lua, dll, dir);
     lua_load_script(lua, dll, env);
     lua_load_script(lua, dll, exec);
