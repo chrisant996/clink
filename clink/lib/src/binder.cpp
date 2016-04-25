@@ -24,6 +24,8 @@ void binder::set_default_backend(editor_backend& backend)
 //------------------------------------------------------------------------------
 bool binder::bind(const char* chord, editor_backend& backend, unsigned char id)
 {
+    // MODE4 - human friendly chord.
+
     // Validate input
     const char* c = chord;
     while (*c)
