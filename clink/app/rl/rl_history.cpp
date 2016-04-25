@@ -2,8 +2,10 @@
 // License: http://opensource.org/licenses/MIT
 
 #include "pch.h"
+#include "rl_history.h"
 #include "paths.h"
 
+#include <core/os.h>
 #include <core/settings.h>
 #include <core/str.h>
 
@@ -47,63 +49,13 @@ static setting_enum g_expand_mode(
     "off,on,not_squoted,not_dquoted,not_quoted",
     4);
 
-/*static*/ setting_bool g_history_io(
-    "history.io",
-    "Read/write history file each line edited",
-    "When non-zero the history will be read from disk before editing a\n"
-    "new line and written to disk afterwards.",
-    0);
 
-
-
-//------------------------------------------------------------------------------
-static int          g_new_history_count             = 0;
 
 //------------------------------------------------------------------------------
 static void get_history_file_name(str_base& buffer)
 {
     get_config_dir(buffer);
     buffer << "/history";
-}
-
-//------------------------------------------------------------------------------
-void load_history()
-{
-    str<512> buffer;
-    get_history_file_name(buffer);
-
-    // Clear existing history.
-    clear_history();
-    g_new_history_count = 0;
-
-    // Read from disk.
-    read_history(buffer.c_str());
-    using_history();
-}
-
-//------------------------------------------------------------------------------
-void save_history()
-{
-    str<512> buffer;
-    get_history_file_name(buffer);
-
-    // Get max history size.
-    int max_history = g_max_lines.get();
-    max_history = (max_history == 0) ? INT_MAX : max_history;
-    if (max_history < 0)
-    {
-        unlink(buffer.c_str());
-        return;
-    }
-
-    // Write new history to the file, and truncate to our maximum.
-    if (g_history_io.get() || append_history(g_new_history_count, buffer.c_str()) != 0)
-        write_history(buffer.c_str());
-
-    if (max_history != INT_MAX)
-        history_truncate_file(buffer.c_str(), max_history);
-
-    g_new_history_count = 0;
 }
 
 //------------------------------------------------------------------------------
@@ -120,66 +72,7 @@ static int find_duplicate(const char* line)
 }
 
 //------------------------------------------------------------------------------
-void add_to_history(const char* line)
-{
-    int dupe_mode;
-    const unsigned char* c;
-
-    // Maybe we shouldn't add this line to the history at all?
-    c = (const unsigned char*)line;
-    if (isspace(*c) && g_ignore_space.get())
-        return;
-
-    // Skip leading whitespace
-    while (*c)
-    {
-        if (!isspace(*c))
-            break;
-
-        ++c;
-    }
-
-    // Skip empty lines
-    if (*c == '\0')
-        return;
-
-    // Check if the line's a duplicate of and existing history entry.
-    dupe_mode = g_dupe_mode.get();
-    if (dupe_mode > 0)
-    {
-        int where = find_duplicate((const char*)c);
-        if (where >= 0)
-        {
-            if (dupe_mode > 1)
-            {
-                HIST_ENTRY* entry = remove_history(where);
-                free_history_entry(entry);
-            }
-            else
-                return;
-        }
-    }
-
-    // All's well. Add the line.
-    using_history();
-    add_history(line);
-    ++g_new_history_count;
-}
-
-//------------------------------------------------------------------------------
-int expand_from_history(const char* text, char** expanded)
-{
-    int result;
-
-    result = history_expand((char*)text, expanded);
-    if (result < 0)
-        free(*expanded);
-
-    return result;
-}
-
-//------------------------------------------------------------------------------
-int history_expand_control(char* line, int marker_pos)
+static int history_expand_control(char* line, int marker_pos)
 {
     int setting, in_quote, i;
 
@@ -204,4 +97,117 @@ int history_expand_control(char* line, int marker_pos)
     }
 
     return 0;
+}
+
+
+
+//------------------------------------------------------------------------------
+rl_history::rl_history()
+{
+    history_inhibit_expansion_function = history_expand_control;
+
+    int max_lines = g_max_lines.get();
+    if (max_lines > 0)
+        stifle_history(max_lines);
+
+    load();
+}
+
+//------------------------------------------------------------------------------
+rl_history::~rl_history()
+{
+    save();
+}
+
+//------------------------------------------------------------------------------
+void rl_history::load()
+{
+    str<288> buffer;
+    get_history_file_name(buffer);
+
+    // Clear existing history.
+    clear_history();
+
+    // Read from disk.
+    read_history(buffer.c_str());
+    using_history();
+}
+
+//------------------------------------------------------------------------------
+void rl_history::save()
+{
+    str<288> buffer;
+    get_history_file_name(buffer);
+
+    // Get max history size.
+    int max_history = g_max_lines.get();
+    if (max_history < 0)
+    {
+        os::unlink(buffer.c_str());
+        return;
+    }
+
+    write_history(buffer.c_str());
+}
+
+//------------------------------------------------------------------------------
+void rl_history::add(const char* line)
+{
+    // Use the latest history state from all Clink instances.
+    load();
+
+    // Maybe we shouldn't add this line to the history at all?
+    const unsigned char* c = (const unsigned char*)line;
+    if (isspace(*c) && g_ignore_space.get())
+        return;
+
+    // Skip leading whitespace
+    while (*c)
+    {
+        if (!isspace(*c))
+            break;
+
+        ++c;
+    }
+
+    // Skip empty lines
+    if (*c == '\0')
+        return;
+
+    // Check if the line's a duplicate of and existing history entry.
+    int dupe_mode = g_dupe_mode.get();
+    if (dupe_mode > 0)
+    {
+        int where = find_duplicate((const char*)c);
+        if (where >= 0)
+        {
+            if (dupe_mode > 1)
+            {
+                HIST_ENTRY* entry = remove_history(where);
+                free_history_entry(entry);
+            }
+            else
+                return;
+        }
+    }
+
+    // All's well. Add the line.
+    using_history();
+    add_history(line);
+}
+
+//------------------------------------------------------------------------------
+int expand_from_history(const char* text, char** expanded)
+{
+#if MODE4
+    int result;
+
+    result = history_expand((char*)text, expanded);
+    if (result < 0)
+        free(*expanded);
+
+    return result;
+#else
+    return 0;
+#endif // MODE4
 }

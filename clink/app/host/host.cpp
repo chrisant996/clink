@@ -4,6 +4,7 @@
 #include "pch.h"
 #include "host.h"
 #include "rl/rl_backend.h"
+#include "rl/rl_history.h"
 
 #include <core/os.h>
 #include <core/settings.h>
@@ -86,6 +87,7 @@ bool host::edit_line(const char* prompt, str_base& out)
 
     static rl_backend backend(m_name);
     win_terminal terminal;
+    rl_history history;
     editor_backend* ui = classic_match_ui_create();
 
     line_editor::desc desc = {};
@@ -103,6 +105,9 @@ bool host::edit_line(const char* prompt, str_base& out)
     editor->add_generator(file_match_generator());
 
     bool ret = editor->edit(out.data(), out.size());
+
+    if (ret)
+        history.add(out.c_str());
 
     line_editor_destroy(editor);
     classic_match_ui_destroy(ui);

@@ -30,8 +30,6 @@ rl_line_editor::rl_line_editor(const desc& desc)
 
     rl_completion_entry_function = rl_delegate(this, rl_line_editor, completion);
     rl_completion_display_matches_hook = rl_delegate(this, rl_line_editor, display_matches);
-
-    history_inhibit_expansion_function = history_expand_control;
 }
 
 //------------------------------------------------------------------------------
