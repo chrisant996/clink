@@ -3,11 +3,12 @@
 
 #include "pch.h"
 #include "lua_match_generator.h"
-#include "line_state.h"
 #include "lua_bindable.h"
 #include "lua_script_loader.h"
-#include "matches.h"
 #include "matches_lua.h"
+
+#include <lib/line_state.h>
+#include <lib/matches.h>
 
 extern "C" {
 #include <lua.h>

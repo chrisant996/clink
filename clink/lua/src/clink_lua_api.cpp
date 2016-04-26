@@ -7,6 +7,9 @@
 #include <core/base.h>
 #include <core/str.h>
 
+#include <ctype.h>
+#include <Windows.h>
+
 //------------------------------------------------------------------------------
 extern "C" {
 extern int              _rl_completion_case_map;

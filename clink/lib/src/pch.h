@@ -14,12 +14,3 @@
 #include <stdlib.h>
 
 #include <Windows.h>
-
-extern "C" {
-
-// Lua includes.
-#include "lua.h"
-#include "lauxlib.h"
-#include "lualib.h"
-
-} // extern "C"

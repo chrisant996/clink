@@ -24,5 +24,5 @@ private:
     void                load_scripts(const char* path);
     struct lua_State*   m_state;
 
-    friend class lua_root;
+    friend class lua_state;
 };

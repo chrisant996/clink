@@ -2,7 +2,7 @@
 // License: http://opensource.org/licenses/MIT
 
 #include "pch.h"
-#include "lua_root.h"
+#include "lua_state.h"
 #include "lua_script_loader.h"
 
 extern "C" {
@@ -18,20 +18,20 @@ void path_lua_initialise(lua_State*);
 void settings_lua_initialise(lua_State*);
 
 //------------------------------------------------------------------------------
-lua_root::lua_root()
+lua_state::lua_state()
 : m_state(nullptr)
 {
     initialise();
 }
 
 //------------------------------------------------------------------------------
-lua_root::~lua_root()
+lua_state::~lua_state()
 {
     shutdown();
 }
 
 //------------------------------------------------------------------------------
-void lua_root::initialise(bool use_debugger)
+void lua_state::initialise(bool use_debugger)
 {
     shutdown();
 
@@ -49,7 +49,7 @@ void lua_root::initialise(bool use_debugger)
 }
 
 //------------------------------------------------------------------------------
-void lua_root::shutdown()
+void lua_state::shutdown()
 {
     if (m_state == nullptr)
         return;
@@ -59,7 +59,7 @@ void lua_root::shutdown()
 }
 
 //------------------------------------------------------------------------------
-bool lua_root::do_string(const char* string)
+bool lua_state::do_string(const char* string)
 {
     if (luaL_dostring(m_state, string))
         return false;
@@ -68,7 +68,7 @@ bool lua_root::do_string(const char* string)
 }
 
 //------------------------------------------------------------------------------
-bool lua_root::do_file(const char* path)
+bool lua_state::do_file(const char* path)
 {
     if (luaL_dofile(m_state, path))
         return false;

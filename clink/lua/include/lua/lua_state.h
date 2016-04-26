@@ -6,11 +6,11 @@
 struct lua_State;
 
 //------------------------------------------------------------------------------
-class lua_root
+class lua_state
 {
 public:
-                     lua_root();
-                     ~lua_root();
+                     lua_state();
+                     ~lua_state();
     void             initialise(bool use_debugger=false);
     void             shutdown();
     bool             do_string(const char* string);
@@ -22,7 +22,7 @@ private:
 };
 
 //------------------------------------------------------------------------------
-inline lua_State* lua_root::get_state() const
+inline lua_State* lua_state::get_state() const
 {
     return m_state;
 }

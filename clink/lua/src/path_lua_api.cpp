@@ -19,7 +19,7 @@ static const char* get_string(lua_State* state, int index)
 //------------------------------------------------------------------------------
 static int clean(lua_State* state)
 {
-    str<MAX_PATH> out(get_string(state, 1));
+    str<288> out(get_string(state, 1));
     if (out.length() == 0)
         return 0;
 
@@ -39,7 +39,7 @@ static int get_base_name(lua_State* state)
     if (path == nullptr)
         return 0;
 
-    str<MAX_PATH> out;
+    str<288> out;
     path::get_base_name(path, out);
     lua_pushstring(state, out.c_str());
     return 1;
@@ -48,7 +48,7 @@ static int get_base_name(lua_State* state)
 //------------------------------------------------------------------------------
 static int get_directory(lua_State* state)
 {
-    str<MAX_PATH> out(get_string(state, 1));
+    str<288> out(get_string(state, 1));
     if (out.length() == 0)
         return 0;
 
@@ -110,7 +110,7 @@ static int join(lua_State* state)
     if (rhs == nullptr)
         return 0;
 
-    str<MAX_PATH> out;
+    str<288> out;
     path::join(lhs, rhs, out);
     lua_pushstring(state, out.c_str());
     return 1;
