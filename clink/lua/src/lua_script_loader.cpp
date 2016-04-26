@@ -2,6 +2,7 @@
 // License: http://opensource.org/licenses/MIT
 
 #include "pch.h"
+#include "lua_state.h"
 
 extern "C" {
 #include <lauxlib.h>
@@ -10,9 +11,9 @@ extern "C" {
 #ifdef CLINK_EMBED_LUA_SCRIPTS
 
 //------------------------------------------------------------------------------
-void lua_load_script_impl(lua_State* state, const char* script)
+void lua_load_script_impl(lua_state& state, const char* script)
 {
-    luaL_dostring(state, script);
+    state.do_string(script);
 }
 
 #else // CLINK_EMBED_LUA_SCRIPTS
@@ -21,19 +22,21 @@ void lua_load_script_impl(lua_State* state, const char* script)
 #include <core/str.h>
 
 //------------------------------------------------------------------------------
-void lua_load_script_impl(lua_State* state, const char* path, const char* name)
+void lua_load_script_impl(lua_state& state, const char* path, const char* name)
 {
-    str<512> buffer;
+    str<288> buffer;
     buffer << path;
 
     path::get_directory(buffer);
     path::append(buffer, name);
 
-    if (luaL_dofile(state, buffer.c_str()) == 0)
+    if (state.do_string(buffer.c_str()) == 0)
         return;
 
+    /* MODE4
     if (const char* error = lua_tostring(state, -1))
         puts(error);
+    */
 
     printf("CLINK DEBUG: Failed to load '%s'\n", buffer.c_str());
 }

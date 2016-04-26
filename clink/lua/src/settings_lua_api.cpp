@@ -2,6 +2,7 @@
 // License: http://opensource.org/licenses/MIT
 
 #include "pch.h"
+#include "lua_state.h"
 
 #include <core/base.h>
 #include <core/settings.h>
@@ -141,7 +142,7 @@ static int add(lua_State* state)
 }
 
 //------------------------------------------------------------------------------
-void settings_lua_initialise(struct lua_State* state)
+void settings_lua_initialise(lua_state& lua)
 {
     struct {
         const char* name;
@@ -151,6 +152,8 @@ void settings_lua_initialise(struct lua_State* state)
         { "set",    &set },
         { "add",    &add },
     };
+
+    lua_State* state = lua.get_state();
 
     lua_createtable(state, sizeof_array(methods), 0);
 

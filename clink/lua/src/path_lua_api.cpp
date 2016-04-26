@@ -2,6 +2,7 @@
 // License: http://opensource.org/licenses/MIT
 
 #include "pch.h"
+#include "lua_state.h"
 
 #include <core/base.h>
 #include <core/path.h>
@@ -117,7 +118,7 @@ static int join(lua_State* state)
 }
 
 //------------------------------------------------------------------------------
-void path_lua_initialise(struct lua_State* state)
+void path_lua_initialise(lua_state& lua)
 {
     struct {
         const char* name;
@@ -131,6 +132,8 @@ void path_lua_initialise(struct lua_State* state)
         { "getname",       &get_name },
         { "join",          &join },
     };
+
+    lua_State* state = lua.get_state();
 
     lua_createtable(state, sizeof_array(methods), 0);
 

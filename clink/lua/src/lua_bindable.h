@@ -24,12 +24,12 @@ public:
     };
 
                         lua_bindable(const char* name, const method* methods);
+                        ~lua_bindable();
     void                lua_bind(lua_State* state);
     void                lua_unbind(lua_State* state);
     bool                lua_push(lua_State* state);
 
 private:
-
     static int          call(lua_State* state);
     const char*         m_name;
     const method*       m_methods;
@@ -41,8 +41,18 @@ template <class T>
 lua_bindable<T>::lua_bindable(const char* name, const method* methods)
 : m_methods(methods)
 , m_name(name)
-, m_registry_ref(LUA_REFNIL)
+, m_registry_ref(LUA_NOREF)
 {
+}
+
+//------------------------------------------------------------------------------
+template <class T>
+lua_bindable<T>::~lua_bindable()
+{
+/* MODE4
+    if (m_registry_ref != LUA_NOREF)
+        lua_unbind();
+MODE4 */
 }
 
 //------------------------------------------------------------------------------
@@ -87,7 +97,7 @@ void lua_bindable<T>::lua_bind(lua_State* state)
 template <class T>
 void lua_bindable<T>::lua_unbind(lua_State* state)
 {
-    if (m_registry_ref == LUA_REFNIL)
+    if (m_registry_ref == LUA_NOREF)
         return;
 
     lua_rawgeti(state, LUA_REGISTRYINDEX, m_registry_ref);
@@ -96,14 +106,14 @@ void lua_bindable<T>::lua_unbind(lua_State* state)
     lua_pop(state, 1);
 
     luaL_unref(state, LUA_REGISTRYINDEX, m_registry_ref);
-    m_registry_ref = LUA_REFNIL;
+    m_registry_ref = LUA_NOREF;
 }
 
 //------------------------------------------------------------------------------
 template <class T>
 bool lua_bindable<T>::lua_push(lua_State* state)
 {
-    if (m_registry_ref != LUA_REFNIL)
+    if (m_registry_ref != LUA_NOREF)
     {
         lua_rawgeti(state, LUA_REGISTRYINDEX, m_registry_ref);
         return true;

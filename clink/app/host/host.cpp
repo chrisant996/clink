@@ -13,6 +13,8 @@
 #include <lib/match_generator.h>
 #include <lib/line_editor.h>
 // MODE4 #include <lua/lua_script_loader.h>
+#include <lua/lua_state.h>
+#include <lua/lua_match_generator.h>
 #include <terminal/win_terminal.h>
 
 /* MODE4
@@ -90,6 +92,9 @@ bool host::edit_line(const char* prompt, str_base& out)
     rl_history history;
     editor_backend* ui = classic_match_ui_create();
 
+    lua_state lua;
+    lua_match_generator lua_generator(lua);
+
     line_editor::desc desc = {};
     desc.prompt = prompt;
     desc.quote_pair = "\"";
@@ -102,6 +107,7 @@ bool host::edit_line(const char* prompt, str_base& out)
 
     line_editor* editor = line_editor_create(desc);
     editor->add_backend(*ui);
+    editor->add_generator(lua_generator);
     editor->add_generator(file_match_generator());
 
     bool ret = editor->edit(out.data(), out.size());

@@ -5,7 +5,7 @@
 #include "lua_match_generator.h"
 #include "lua_bindable.h"
 #include "lua_script_loader.h"
-#include "matches_lua.h"
+#include "match_builder_lua.h"
 
 #include <lib/line_state.h>
 #include <lib/matches.h>
@@ -17,7 +17,7 @@ extern "C" {
 }
 
 //------------------------------------------------------------------------------
-lua_match_generator::lua_match_generator(lua_State* state)
+lua_match_generator::lua_match_generator(lua_state& state)
 : m_state(state)
 {
     lua_load_script(m_state, lib, match)
@@ -95,5 +95,5 @@ bool lua_match_generator::generate(const line_state& line, match_builder& builde
     }
 #endif // MODE4
 
-    return true;
+    return false;
 }

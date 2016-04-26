@@ -3,26 +3,26 @@
 
 #pragma once
 
+class lua_state;
+
 #ifdef CLINK_EMBED_LUA_SCRIPTS
     //------------------------------------------------------------------------------
-    void lua_load_script_impl(struct lua_State*, const char*);
+    void lua_load_script_impl(lua_state&, const char*);
 
-    #define lua_load_script(state, module, name)                           \
-        {                                                                  \
-            extern const char* module##_##name##_lua_script;               \
-            lua_load_script_impl(state, module##_##name##_lua_script);     \
+    #define lua_load_script(state, module, name)                                \
+        {                                                                       \
+            extern const char* module##_##name##_lua_script;                    \
+            lua_load_script_impl(state, module##_##name##_lua_script);          \
         }
 #else
     //------------------------------------------------------------------------------
-    void lua_load_script_impl(struct lua_State*, const char*, const char*);
+    void lua_load_script_impl(lua_state&, const char*, const char*);
 
-    #define lua_load_script(state, module, name)                           \
-        {                                                                  \
-           extern const char* module##_embed_path;                         \
-           extern const char* module##_##name##_lua_file;                  \
-            lua_load_script_impl(state,                                    \
-                module##_embed_path,                                       \
-                module##_##name##_lua_file                                 \
-            );\
+    #define lua_load_script(state, module, name)                                \
+        {                                                                       \
+            extern const char* module##_embed_path;                             \
+            extern const char* module##_##name##_lua_file;                      \
+            lua_load_script_impl(state, module##_embed_path,                    \
+                module##_##name##_lua_file);                                    \
         }
 #endif // CLINK_EMBED_LUA_SCRIPTS

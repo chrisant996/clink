@@ -3,6 +3,7 @@
 
 #include "pch.h"
 #include "lua_script_loader.h"
+#include "lua_state.h"
 
 #include <core/base.h>
 #include <core/str.h>
@@ -213,7 +214,7 @@ static int get_screen_info(lua_State* state)
 }
 
 //------------------------------------------------------------------------------
-void clink_lua_initialise(struct lua_State* state)
+void clink_lua_initialise(lua_state& lua)
 {
     struct {
         const char* name;
@@ -233,6 +234,8 @@ void clink_lua_initialise(struct lua_State* state)
 // MODE4
     };
 
+    lua_State* state = lua.get_state();
+
     lua_createtable(state, sizeof_array(methods), 0);
 
     for (int i = 0; i < sizeof_array(methods); ++i)
@@ -243,5 +246,5 @@ void clink_lua_initialise(struct lua_State* state)
 
     lua_setglobal(state, "clink");
 
-    lua_load_script(state, lib, clink);
+    lua_load_script(lua, lib, clink);
 }

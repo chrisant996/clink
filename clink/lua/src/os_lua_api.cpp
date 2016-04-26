@@ -2,6 +2,7 @@
 // License: http://opensource.org/licenses/MIT
 
 #include "pch.h"
+#include "lua_state.h"
 
 #include <core/base.h>
 #include <core/globber.h>
@@ -218,7 +219,7 @@ static int getenvnames(lua_State* state)
 }
 
 //------------------------------------------------------------------------------
-void os_lua_initialise(lua_State* state)
+void os_lua_initialise(lua_state& lua)
 {
     struct {
         const char* name;
@@ -238,6 +239,8 @@ void os_lua_initialise(lua_State* state)
         { "getenv",     &getenv },
         { "getenvnames",&getenvnames },
     };
+
+    lua_State* state = lua.get_state();
 
     // Add set some methods to the os table.
     lua_getglobal(state, "os");
