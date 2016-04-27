@@ -1,5 +1,5 @@
 return {
-    name = "dll",
+    name = "app",
     files = {
         "dir.lua",
         "env.lua",

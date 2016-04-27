@@ -13,10 +13,10 @@ class match_builder_lua
     : public lua_bindable<match_builder_lua>
 {
 public:
-                            match_builder_lua(match_builder& builder);
-                            ~match_builder_lua();
-    int                     add_match(lua_State* state);
+                    match_builder_lua(match_builder& builder);
+                    ~match_builder_lua();
+    int             add_match(lua_State* state);
 
 private:
-    match_builder&          m_builder;
+    match_builder&  m_builder;
 };

@@ -10,16 +10,17 @@ struct lua_State;
 class lua_state
 {
 public:
-                     lua_state();
-                     ~lua_state();
-    void             initialise(bool use_debugger=false);
-    void             shutdown();
-    bool             do_string(const char* string);
-    bool             do_file(const char* path);
-    lua_State*       get_state() const;
+                    lua_state(bool enable_debugger=false);
+                    ~lua_state();
+    void            initialise();
+    void            shutdown();
+    bool            do_string(const char* string);
+    bool            do_file(const char* path);
+    lua_State*      get_state() const;
 
 private:
-    lua_State*       m_state;
+    lua_State*      m_state;
+    bool            m_enable_debugger;
 };
 
 //------------------------------------------------------------------------------

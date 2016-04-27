@@ -30,14 +30,6 @@ void lua_load_script_impl(lua_state& state, const char* path, const char* name)
     path::get_directory(buffer);
     path::append(buffer, name);
 
-    if (state.do_string(buffer.c_str()) == 0)
-        return;
-
-    /* MODE4
-    if (const char* error = lua_tostring(state, -1))
-        puts(error);
-    */
-
-    printf("CLINK DEBUG: Failed to load '%s'\n", buffer.c_str());
+    state.do_file(buffer.c_str());
 }
 #endif // CLINK_EMBED_LUA_SCRIPTS

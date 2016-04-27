@@ -12,16 +12,10 @@
 #include <core/str_compare.h>
 #include <lib/match_generator.h>
 #include <lib/line_editor.h>
-// MODE4 #include <lua/lua_script_loader.h>
+#include <lua/lua_script_loader.h>
 #include <lua/lua_state.h>
 #include <lua/lua_match_generator.h>
 #include <terminal/win_terminal.h>
-
-/* MODE4
-extern "C" {
-#include <lua.h>
-}
-MODE4 */
 
 //------------------------------------------------------------------------------
 static setting_bool g_case_sensitive(
@@ -42,23 +36,7 @@ static setting_bool g_case_relaxed(
 //------------------------------------------------------------------------------
 host::host(const char* name)
 : m_name(name)
-/* MODE4
-: m_lua(lua)
-, m_line_editor(editor)
-MODE4 */
 {
-/* MODE4
-    lua_load_script(lua, dll, dir);
-    lua_load_script(lua, dll, env);
-    lua_load_script(lua, dll, exec);
-    lua_load_script(lua, dll, git);
-    lua_load_script(lua, dll, go);
-    lua_load_script(lua, dll, hg);
-    lua_load_script(lua, dll, p4);
-    lua_load_script(lua, dll, prompt);
-    lua_load_script(lua, dll, self);
-    lua_load_script(lua, dll, svn);
-MODE4 */
 }
 
 //------------------------------------------------------------------------------
@@ -94,6 +72,18 @@ bool host::edit_line(const char* prompt, str_base& out)
 
     lua_state lua;
     lua_match_generator lua_generator(lua);
+/* MODE4
+    lua_load_script(lua, app, dir);
+    lua_load_script(lua, app, env);
+    lua_load_script(lua, app, exec);
+    lua_load_script(lua, app, git);
+    lua_load_script(lua, app, go);
+    lua_load_script(lua, app, hg);
+    lua_load_script(lua, app, p4);
+    lua_load_script(lua, app, prompt);
+    lua_load_script(lua, app, svn);
+MODE4 */
+    lua_load_script(lua, app, self);
 
     line_editor::desc desc = {};
     desc.prompt = prompt;
@@ -107,6 +97,7 @@ bool host::edit_line(const char* prompt, str_base& out)
 
     line_editor* editor = line_editor_create(desc);
     editor->add_backend(*ui);
+
     editor->add_generator(lua_generator);
     editor->add_generator(file_match_generator());
 

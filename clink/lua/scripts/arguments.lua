@@ -561,29 +561,11 @@ function clink.arg.register_parser(cmd, parser)
 end
 
 --------------------------------------------------------------------------------
-local function argument_match_generator(text, first, last, result)
-    local leading = line_state.line:sub(1, first - 1):lower()
-
-    -- Extract the command.
-    local cmd_l, cmd_r
-    if leading:find("^%s*\"") then
-        -- Command appears to be surround by quotes.
-        cmd_l, cmd_r = leading:find("%b\"\"")
-        if cmd_l and cmd_r then
-            cmd_l = cmd_l + 1
-            cmd_r = cmd_r - 1
-        end
-    else
-        -- No quotes so the first, longest, non-whitespace word is extracted.
-        cmd_l, cmd_r = leading:find("[^%s]+")
-    end
-
-    if not cmd_l or not cmd_r then
-        return false
-    end
-
-    local regex = "[\\/:]*([^\\/:.]+)(%.*[%l]*)%s*$"
-    local _, _, cmd, ext = leading:sub(cmd_l, cmd_r):lower():find(regex)
+local function argument_match_generator(line_state, match_builder)
+    -- Split the first word into name and extension.
+    local first_word = line_state:getword(1)
+    local cmd = path.getbasename(first_word):lower()
+    local ext = path.getextension(first_word):lower()
 
     -- Check to make sure the extension extracted is in pathext.
     if ext and ext ~= "" then
@@ -594,45 +576,11 @@ local function argument_match_generator(text, first, last, result)
 
     -- Find a registered parser.
     local parser = parsers[cmd]
-
     if parser == nil then
         return false
     end
 
-    -- Split the command line into parts.
-    local str = line_state.line:sub(cmd_r + 2, last - 1)
-    local parts = {}
-    for _, sub_str in ipairs(clink.quote_split(str, "\"")) do
-        -- Quoted strings still have their quotes. Look for those type of
-        -- strings, strip the quotes and add it completely.
-        if sub_str:sub(1, 1) == "\"" then
-            local l, r = sub_str:find("\"[^\"]+")
-            if l then
-                local part = sub_str:sub(l + 1, r)
-                table.insert(parts, part)
-            end
-        else
-            -- Extract non-whitespace parts.
-            for _, r, part in function () return sub_str:find("^%s*([^%s]+)") end do
-                table.insert(parts, part)
-                sub_str = sub_str:sub(r + 1)
-            end
-        end
-    end
-
-    -- If 'text' is empty then add it as a part as it would have been skipped
-    -- by the split loop above.
-    if text == "" then
-        table.insert(parts, text)
-    end
-
-    -- Extend line_state with match generation state; text, first, and last.
-    line_state.text = text
-    line_state.first = first
-    line_state.last = last
-
     -- Call the parser.
-    local needle = parts[#parts]
     local ret = parser:go(parts)
     if type(ret) ~= "table" then
         return not ret

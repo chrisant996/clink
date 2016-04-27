@@ -20,10 +20,10 @@ class line_state
 {
 public:
                         line_state(const array<word>& words, const char* line);
+    const array<word>&  get_words() const;
     unsigned int        get_word_count() const;
     bool                get_word(unsigned int index, str_base& out) const;
     bool                get_end_word(str_base& out) const;
-    const array<word>&  get_words() const;
 
 private:
     const array<word>&  m_words;

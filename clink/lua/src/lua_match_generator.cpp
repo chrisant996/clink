@@ -5,6 +5,8 @@
 #include "lua_match_generator.h"
 #include "lua_bindable.h"
 #include "lua_script_loader.h"
+#include "lua_state.h"
+#include "line_state_lua.h"
 #include "match_builder_lua.h"
 
 #include <lib/line_state.h>
@@ -30,16 +32,6 @@ lua_match_generator::~lua_match_generator()
 }
 
 //------------------------------------------------------------------------------
-void lua_match_generator::lua_pushlinestate(const line_state& line)
-{
-#if MODE4
-    lua_pushstring(m_state, line.word);
-    lua_pushinteger(m_state, line.start + 1);
-    lua_pushinteger(m_state, line.cursor + 1);
-#endif
-}
-
-//------------------------------------------------------------------------------
 void lua_match_generator::print_error(const char* error) const
 {
     puts("");
@@ -49,51 +41,30 @@ void lua_match_generator::print_error(const char* error) const
 //------------------------------------------------------------------------------
 bool lua_match_generator::generate(const line_state& line, match_builder& builder)
 {
-#if MODE4
-    // Expose some of the readline state to lua.
-    lua_createtable(m_state, 2, 0);
-
-    lua_pushliteral(m_state, "line");
-    lua_pushstring(m_state, line.line);
-    lua_rawset(m_state, -3);
-
-    lua_pushliteral(m_state, "cursor");
-    lua_pushinteger(m_state, line.cursor + 1);
-    lua_rawset(m_state, -3);
-
-    lua_setglobal(m_state, "line_state");
+    lua_State* state = m_state.get_state();
 
     // Call to Lua to generate matches.
-    lua_getglobal(m_state, "clink");
-    lua_pushliteral(m_state, "generate_matches");
-    lua_rawget(m_state, -2);
+    lua_getglobal(state, "clink");
+    lua_pushliteral(state, "generate_matches");
+    lua_rawget(state, -2);
 
-    lua_pushlinestate(line);
+    line_state_lua line_lua(line);
+    line_lua.push(state);
 
-    matches_lua ml(out);
-    ml.lua_bind(m_state);
-    ml.lua_push(m_state);
+    match_builder_lua builder_lua(builder);
+    builder_lua.push(state);
 
-    if (lua_pcall(m_state, 4, 1, 0) != 0)
+    if (lua_pcall(state, 2, 1, 0) != 0)
     {
-        if (const char* error = lua_tostring(m_state, -1))
+        if (const char* error = lua_tostring(state, -1))
             print_error(error);
 
-        lua_settop(m_state, 0);
+        lua_settop(state, 0);
         return false;
     }
 
-    ml.lua_unbind(m_state);
+    int use_matches = lua_toboolean(state, -1);
+    lua_settop(state, 0);
 
-    int use_matches = lua_toboolean(m_state, -1);
-    lua_settop(m_state, 0);
-
-    if (!use_matches)
-    {
-        out.reset();
-        return false;
-    }
-#endif // MODE4
-
-    return false;
+    return !!use_matches;
 }

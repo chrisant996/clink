@@ -1,6 +1,6 @@
 #include "pch.h"
 #ifdef CLINK_EMBED_LUA_SCRIPTS
-const char* dll_dir_lua_script = 
+const char* app_dir_lua_script = 
 "local function dir_match_generator(word)\n"
 "    local matches = {}\n"
 "    for _, dir in ipairs(os.globdirs(word..\"*\")) do\n"
@@ -15,7 +15,7 @@ const char* dll_dir_lua_script =
 "clink.arg.register_parser(\"rmdir\", dir_match_generator)\n"
 "clink.arg.register_parser(\"md\", dir_match_generator)\n"
 "clink.arg.register_parser(\"mkdir\", dir_match_generator)\n"
-"";const char* dll_env_lua_script = 
+"";const char* app_env_lua_script = 
 "local special_env_vars = {\n"
 "    \"cd\", \"date\", \"time\", \"random\", \"errorlevel\",\n"
 "    \"cmdextversion\", \"cmdcmdline\", \"highestnumanodenumber\"\n"
@@ -62,7 +62,7 @@ const char* dll_dir_lua_script =
 "if clink.get_host_process() == \"cmd\" then\n"
 "    clink.register_match_generator(env_vars_match_generator, 10)\n"
 "end\n"
-"";const char* dll_exec_lua_script = 
+"";const char* app_exec_lua_script = 
 "settings.add(\"exec.enable\", true, \"Enable executable matching\",\n"
 "\"Only match executables when completing the first word of a line\")\n"
 "settings.add(\"exec.path\", true, \"Match executables in PATH\",\n"
@@ -178,7 +178,7 @@ const char* dll_dir_lua_script =
 "    return true\n"
 "end\n"
 "clink.register_match_generator(exec_match_generator, 50)\n"
-"";const char* dll_git_lua_script = 
+"";const char* app_git_lua_script = 
 "local git_argument_tree = {\n"
 "    -- Porcelain and ancillary commands from git's man page.\n"
 "    \"add\", \"am\", \"archive\", \"bisect\", \"branch\", \"bundle\", \"checkout\",\n"
@@ -193,7 +193,7 @@ const char* dll_dir_lua_script =
 "    \"rev-parse\", \"show-branch\", \"verify-tag\", \"whatchanged\"\n"
 "}\n"
 "clink.arg.register_parser(\"git\", git_argument_tree)\n"
-"";const char* dll_go_lua_script = 
+"";const char* app_go_lua_script = 
 "local function flags(...)\n"
 "    local p = clink.arg.new_parser()\n"
 "    p:set_flags(...)\n"
@@ -295,7 +295,7 @@ const char* dll_dir_lua_script =
 "clink.arg.register_parser(\"go\", go_help_parser)\n"
 "clink.arg.register_parser(\"godoc\", godoc_parser)\n"
 "clink.arg.register_parser(\"gofmt\", gofmt_parser)\n"
-"";const char* dll_hg_lua_script = 
+"";const char* app_hg_lua_script = 
 "local hg_tree = {\n"
 "    \"add\", \"addremove\", \"annotate\", \"archive\", \"backout\", \"bisect\", \"bookmarks\",\n"
 "    \"branch\", \"branches\", \"bundle\", \"cat\", \"clone\", \"commit\", \"copy\", \"diff\",\n"
@@ -307,7 +307,7 @@ const char* dll_dir_lua_script =
 "    \"phases\"\n"
 "}\n"
 "clink.arg.register_parser(\"hg\", hg_tree)\n"
-"";const char* dll_p4_lua_script = 
+"";const char* app_p4_lua_script = 
 "local p4_tree = {\n"
 "    \"add\", \"annotate\", \"attribute\", \"branch\", \"branches\", \"browse\", \"change\",\n"
 "    \"changes\", \"changelist\", \"changelists\", \"client\", \"clients\", \"copy\",\n"
@@ -331,7 +331,7 @@ const char* dll_dir_lua_script =
 "    \"timelapseview\", \"tlv\", \"users\", \"workspaces\", \"clients\", \"shutdown\"\n"
 "}\n"
 "clink.arg.register_parser(\"p4vc\", p4vc_tree)\n"
-"";const char* dll_powershell_lua_script = 
+"";const char* app_powershell_lua_script = 
 "local function powershell_prompt_filter()\n"
 "    local l, r, path = clink.prompt.value:find(\"([a-zA-Z]:\\\\.*)> $\")\n"
 "    if path ~= nil then\n"
@@ -341,7 +341,7 @@ const char* dll_dir_lua_script =
 "if clink.get_host_process() == \"powershell.exe\" then\n"
 "    clink.prompt.register_filter(powershell_prompt_filter, -493)\n"
 "end\n"
-"";const char* dll_prompt_lua_script = 
+"";const char* app_prompt_lua_script = 
 "clink.prompt = {}\n"
 "clink.prompt.filters = {}\n"
 "settings.add(\"prompt.colour\", -1, \"Colour of the prompt\",\n"
@@ -392,7 +392,7 @@ const char* dll_dir_lua_script =
 "    end\n"
 "    return add_ansi_codes(clink.prompt.value)\n"
 "end\n"
-"";const char* dll_self_lua_script = 
+"";const char* app_self_lua_script = 
 "local null_parser = clink.arg.new_parser()\n"
 "null_parser:disable_file_matching()\n"
 "local inject_parser = clink.arg.new_parser()\n"
@@ -447,7 +447,7 @@ const char* dll_dir_lua_script =
 "clink.arg.register_parser(\"clink\", self_parser)\n"
 "clink.arg.register_parser(\"clink_x86\", self_parser)\n"
 "clink.arg.register_parser(\"clink_x64\", self_parser)\n"
-"";const char* dll_set_lua_script = 
+"";const char* app_set_lua_script = 
 "local function set_match_generator(word)\n"
 "    -- Skip this generator if first is in the rvalue.\n"
 "    local leading = line_state.line:sub(1, line_state.first - 1)\n"
@@ -462,7 +462,7 @@ const char* dll_dir_lua_script =
 "    return matches\n"
 "end\n"
 "clink.arg.register_parser(\"set\", set_match_generator)\n"
-"";const char* dll_svn_lua_script = 
+"";const char* app_svn_lua_script = 
 "local svn_tree = {\n"
 "    \"add\", \"blame\", \"praise\", \"annotate\", \"ann\", \"cat\", \"changelist\", \"cl\",\n"
 "    \"checkout\", \"co\", \"cleanup\", \"commit\", \"ci\", \"copy\", \"cp\", \"delete\", \"del\",\n"
@@ -474,20 +474,20 @@ const char* dll_dir_lua_script =
 "    \"unlock\", \"update\", \"up\"\n"
 "}\n"
 "clink.arg.register_parser(\"svn\", svn_tree)\n"
-"";const char* dll_lua_scripts[] = {dll_dir_lua_script,dll_env_lua_script,dll_exec_lua_script,dll_git_lua_script,dll_go_lua_script,dll_hg_lua_script,dll_p4_lua_script,dll_powershell_lua_script,dll_prompt_lua_script,dll_self_lua_script,dll_set_lua_script,dll_svn_lua_script,nullptr,};
+"";const char* app_lua_scripts[] = {app_dir_lua_script,app_env_lua_script,app_exec_lua_script,app_git_lua_script,app_go_lua_script,app_hg_lua_script,app_p4_lua_script,app_powershell_lua_script,app_prompt_lua_script,app_self_lua_script,app_set_lua_script,app_svn_lua_script,nullptr,};
 #else
-const char* dll_embed_path = __FILE__;
-const char* dll_dir_lua_file = "dir.lua";
-const char* dll_env_lua_file = "env.lua";
-const char* dll_exec_lua_file = "exec.lua";
-const char* dll_git_lua_file = "git.lua";
-const char* dll_go_lua_file = "go.lua";
-const char* dll_hg_lua_file = "hg.lua";
-const char* dll_p4_lua_file = "p4.lua";
-const char* dll_powershell_lua_file = "powershell.lua";
-const char* dll_prompt_lua_file = "prompt.lua";
-const char* dll_self_lua_file = "self.lua";
-const char* dll_set_lua_file = "set.lua";
-const char* dll_svn_lua_file = "svn.lua";
-const char* dll_lua_files[] = {dll_dir_lua_file,dll_env_lua_file,dll_exec_lua_file,dll_git_lua_file,dll_go_lua_file,dll_hg_lua_file,dll_p4_lua_file,dll_powershell_lua_file,dll_prompt_lua_file,dll_self_lua_file,dll_set_lua_file,dll_svn_lua_file,nullptr,};
+const char* app_embed_path = __FILE__;
+const char* app_dir_lua_file = "dir.lua";
+const char* app_env_lua_file = "env.lua";
+const char* app_exec_lua_file = "exec.lua";
+const char* app_git_lua_file = "git.lua";
+const char* app_go_lua_file = "go.lua";
+const char* app_hg_lua_file = "hg.lua";
+const char* app_p4_lua_file = "p4.lua";
+const char* app_powershell_lua_file = "powershell.lua";
+const char* app_prompt_lua_file = "prompt.lua";
+const char* app_self_lua_file = "self.lua";
+const char* app_set_lua_file = "set.lua";
+const char* app_svn_lua_file = "svn.lua";
+const char* app_lua_files[] = {app_dir_lua_file,app_env_lua_file,app_exec_lua_file,app_git_lua_file,app_go_lua_file,app_hg_lua_file,app_p4_lua_file,app_powershell_lua_file,app_prompt_lua_file,app_self_lua_file,app_set_lua_file,app_svn_lua_file,nullptr,};
 #endif

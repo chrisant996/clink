@@ -15,6 +15,12 @@ line_state::line_state(const array<word>& words, const char* line)
 }
 
 //------------------------------------------------------------------------------
+const array<word>& line_state::get_words() const
+{
+    return m_words;
+}
+
+//------------------------------------------------------------------------------
 unsigned int line_state::get_word_count() const
 {
     return m_words.size();
@@ -27,7 +33,8 @@ bool line_state::get_word(unsigned int index, str_base& out) const
     if (word == nullptr)
         return false;
 
-    return out.concat(m_line + word->offset, word->length);
+    out.concat(m_line + word->offset, word->length);
+    return true;
 }
 
 //------------------------------------------------------------------------------
@@ -35,10 +42,4 @@ bool line_state::get_end_word(str_base& out) const
 {
     int n = get_word_count();
     return (n ? get_word(n - 1, out) : false);
-}
-
-//------------------------------------------------------------------------------
-const array<word>& line_state::get_words() const
-{
-    return m_words;
 }

@@ -18,8 +18,9 @@ void path_lua_initialise(lua_state&);
 void settings_lua_initialise(lua_state&);
 
 //------------------------------------------------------------------------------
-lua_state::lua_state()
+lua_state::lua_state(bool enable_debugger)
 : m_state(nullptr)
+, m_enable_debugger(enable_debugger)
 {
     initialise();
 }
@@ -31,7 +32,7 @@ lua_state::~lua_state()
 }
 
 //------------------------------------------------------------------------------
-void lua_state::initialise(bool use_debugger)
+void lua_state::initialise()
 {
     shutdown();
 
@@ -44,7 +45,7 @@ void lua_state::initialise(bool use_debugger)
     path_lua_initialise(*this);
     settings_lua_initialise(*this);
 
-    if (use_debugger)
+    if (m_enable_debugger)
         lua_load_script(*this, lib, debugger);
 }
 
@@ -61,17 +62,23 @@ void lua_state::shutdown()
 //------------------------------------------------------------------------------
 bool lua_state::do_string(const char* string)
 {
-    if (luaL_dostring(m_state, string))
-        return false;
+    bool failed;
+    if (failed = !!luaL_loadstring(m_state, string))
+        if (const char* error = lua_tostring(m_state, -1))
+            puts(error);
 
-    return true;
+    lua_settop(m_state, 0);
+    return !failed;
 }
 
 //------------------------------------------------------------------------------
 bool lua_state::do_file(const char* path)
 {
-    if (luaL_dofile(m_state, path))
-        return false;
+    bool failed;
+    if (failed = !!luaL_dofile(m_state, path))
+        if (const char* error = lua_tostring(m_state, -1))
+            puts(error);
 
-    return true;
+    lua_settop(m_state, 0);
+    return !failed;
 }
