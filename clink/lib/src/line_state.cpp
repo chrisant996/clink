@@ -15,6 +15,12 @@ line_state::line_state(const array<word>& words, const char* line)
 }
 
 //------------------------------------------------------------------------------
+const char* line_state::get_line() const
+{
+    return m_line;
+}
+
+//------------------------------------------------------------------------------
 const array<word>& line_state::get_words() const
 {
     return m_words;

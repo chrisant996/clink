@@ -20,6 +20,7 @@ class line_state
 {
 public:
                         line_state(const array<word>& words, const char* line);
+    const char*         get_line() const;
     const array<word>&  get_words() const;
     unsigned int        get_word_count() const;
     bool                get_word(unsigned int index, str_base& out) const;
