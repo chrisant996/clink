@@ -62,6 +62,4 @@ local function env_vars_match_generator(text, first, last, result)
 end
 
 --------------------------------------------------------------------------------
-if clink.get_host_process() == "cmd" then
-    clink.register_match_generator(env_vars_match_generator, 10)
-end
+clink.register_match_generator(env_vars_match_generator, 10)

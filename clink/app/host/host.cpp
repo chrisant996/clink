@@ -73,17 +73,17 @@ bool host::edit_line(const char* prompt, str_base& out)
     lua_state lua;
     lua_match_generator lua_generator(lua);
 /* MODE4
-    lua_load_script(lua, app, dir);
-    lua_load_script(lua, app, env);
-    lua_load_script(lua, app, exec);
     lua_load_script(lua, app, git);
     lua_load_script(lua, app, go);
     lua_load_script(lua, app, hg);
     lua_load_script(lua, app, p4);
-    lua_load_script(lua, app, prompt);
     lua_load_script(lua, app, svn);
+    lua_load_script(lua, app, prompt);
 MODE4 */
+    lua_load_script(lua, app, dir);
+    lua_load_script(lua, app, exec);
     lua_load_script(lua, app, self);
+    initialise_lua(lua);
 
     line_editor::desc desc = {};
     desc.prompt = prompt;

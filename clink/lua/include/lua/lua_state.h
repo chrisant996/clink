@@ -3,14 +3,13 @@
 
 #pragma once
 
-class lua_state;
 struct lua_State;
 
 //------------------------------------------------------------------------------
 class lua_state
 {
 public:
-                    lua_state(bool enable_debugger=false);
+                    lua_state();
                     ~lua_state();
     void            initialise();
     void            shutdown();
@@ -20,7 +19,6 @@ public:
 
 private:
     lua_State*      m_state;
-    bool            m_enable_debugger;
 };
 
 //------------------------------------------------------------------------------

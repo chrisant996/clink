@@ -10,7 +10,7 @@
 
 //------------------------------------------------------------------------------
 static match_builder_lua::method g_methods[] = {
-    { "addmatch", &match_builder_lua::add_match },
+    { "add", &match_builder_lua::add },
     {}
 };
 
@@ -29,11 +29,25 @@ match_builder_lua::~match_builder_lua()
 }
 
 //------------------------------------------------------------------------------
-int match_builder_lua::add_match(lua_State* state)
+int match_builder_lua::add(lua_State* state)
 {
     int ret = 0;
-    if (const char* match = lua_tostring(state, 1))
-        ret = (m_builder.add_match(match) == true);
+    if (lua_gettop(state) > 0)
+    {
+        if (lua_istable(state, 1))
+        {
+            for (int i = 1, n = int(lua_rawlen(state, 1)); i <= n; ++i)
+            {
+                lua_rawgeti(state, 1, i);
+                if (const char* match = lua_tostring(state, -1))
+                    ret |= (m_builder.add_match(match) == true);
+
+                lua_pop(state, 1);
+            }
+        }
+        else if (const char* match = lua_tostring(state, 1))
+            ret = m_builder.add_match(match), 1;
+    }
 
     lua_pushboolean(state, ret);
     return 1;

@@ -9,6 +9,8 @@
 
 #include <core/singleton.h>
 
+class lua_state;
+
 //------------------------------------------------------------------------------
 class host_cmd
     : public host
@@ -26,6 +28,7 @@ private:
     static BOOL WINAPI  write_console(HANDLE handle, const wchar_t* chars, DWORD to_write, LPDWORD written, LPVOID);
     static BOOL WINAPI  set_env_var(const wchar_t* name, const wchar_t* value);
     static bool         hook_trap();
+    virtual void        initialise_lua(lua_state& lua) override;
     void                edit_line(const wchar_t* prompt, wchar_t* chars, int max_chars);
     bool                capture_prompt(const wchar_t* chars, int char_count);
     bool                is_interactive() const;

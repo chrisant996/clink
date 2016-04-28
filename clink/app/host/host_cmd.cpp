@@ -11,7 +11,7 @@
 #include <core/log.h>
 #include <core/settings.h>
 #include <lib/line_editor.h>
-// MODE4 #include <lua/lua_script_loader.h>
+#include <lua/lua_script_loader.h>
 #include <process/vm.h>
 #include <terminal/terminal.h>
 
@@ -137,7 +137,6 @@ host_cmd::host_cmd()
 : host("cmd.exe")
 , m_doskey("cmd.exe")
 {
-    // MODE4 lua_load_script(lua, dll, set);
 }
 
 //------------------------------------------------------------------------------
@@ -191,6 +190,13 @@ bool host_cmd::initialise()
 void host_cmd::shutdown()
 {
     m_doskey.remove_alias("clink");
+}
+
+//------------------------------------------------------------------------------
+void host_cmd::initialise_lua(lua_state& lua)
+{
+    // lua_load_script(lua, app, env); MODE4 : not possible!
+    lua_load_script(lua, app, set);
 }
 
 //------------------------------------------------------------------------------

@@ -72,7 +72,8 @@ void line_editor_impl::begin_line()
 
     m_desc.terminal->begin();
 
-    line_state line = { m_words, m_desc.buffer->get_buffer() };
+    const auto* buffer = m_desc.buffer;
+    line_state line = { m_words, buffer->get_buffer(), buffer->get_cursor() };
     editor_backend::context context = make_context(line);
     for (auto backend : m_backends)
         backend->begin_line(m_desc.prompt, context);
@@ -176,7 +177,8 @@ void line_editor_impl::dispatch()
 
     int id = m_bind_resolver.get_id();
 
-    line_state line = { m_words, m_desc.buffer->get_buffer() };
+    auto* buffer = m_desc.buffer;
+    line_state line = { m_words, buffer->get_buffer(), buffer->get_cursor() };
     editor_backend::context context = make_context(line);
     editor_backend* backend = m_bind_resolver.get_backend();
     editor_backend::result result = backend->on_input(m_keys, id, context);
@@ -296,7 +298,7 @@ void line_editor_impl::accept_match(unsigned int index)
     word.concat(buf_ptr + word_start, end_word.length);
     word << match;
 
-    // Clean the work tf it is a valid file system path.
+    // Clean the word if it is a valid file system path.
     if (os::get_path_type(word.c_str()) != os::path_type_invalid)
         path::clean(word);
 
@@ -348,9 +350,11 @@ void line_editor_impl::update_internal()
     // Should we generate new matches?
     if (next_key.value != prev_key.value)
     {
+        const auto* buffer = m_desc.buffer;
+        line_state line({ m_words, buffer->get_buffer(), buffer->get_cursor() });
         match_pipeline pipeline(m_matches);
         pipeline.reset();
-        pipeline.generate({ m_words, m_desc.buffer->get_buffer() }, m_generators);
+        pipeline.generate(line, m_generators);
         pipeline.fill_info(m_desc.auto_quote_chars);
     }
 
@@ -372,7 +376,7 @@ void line_editor_impl::update_internal()
         m_prev_key = next_key.value;
 
         // Tell all the backends that the matches changed.
-        line_state line = { m_words, buffer };
+        line_state line = { m_words, buffer, m_desc.buffer->get_cursor() };
         editor_backend::context context = make_context(line);
         for (auto backend : m_backends)
             backend->on_matches_changed(context);

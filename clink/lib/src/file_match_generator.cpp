@@ -30,7 +30,7 @@ match_generator& file_match_generator()
     {
         virtual bool generate(const line_state& line, match_builder& builder) override
         {
-            str<MAX_PATH> buffer;
+            str<288> buffer;
             line.get_end_word(buffer);
             buffer << "*";
 

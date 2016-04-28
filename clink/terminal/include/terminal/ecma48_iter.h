@@ -5,6 +5,8 @@
 
 #include <core/str_iter.h>
 
+// MODE4 : better support for progressive data, c1 codes (csi, osc, etc.)
+
 //------------------------------------------------------------------------------
 struct ecma48_csi
 {

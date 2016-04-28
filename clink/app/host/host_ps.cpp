@@ -18,7 +18,6 @@
 host_ps::host_ps()
 : host("powershell.exe")
 {
-    // MODE4 lua_load_script(lua, dll, powershell);
 }
 
 //------------------------------------------------------------------------------
@@ -47,6 +46,13 @@ bool host_ps::initialise()
 //------------------------------------------------------------------------------
 void host_ps::shutdown()
 {
+}
+
+//------------------------------------------------------------------------------
+void host_ps::initialise_lua(lua_state& lua)
+{
+    // MODE4 : needs prompt filtering.
+    // lua_load_script(lua, app, powershell);
 }
 
 //------------------------------------------------------------------------------

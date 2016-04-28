@@ -3,6 +3,7 @@
 
 #pragma once
 
+class lua_state;
 class str_base;
 
 //------------------------------------------------------------------------------
@@ -17,12 +18,9 @@ public:
 
 protected:
     bool            edit_line(const char* prompt, str_base& out);
+    virtual void    initialise_lua(lua_state& lua) = 0;
 
 private:
     void            filter_prompt(const char* in, str_base& out);
     const char*     m_name;
-    /* MODE4
-    lua_State*      m_lua;
-    line_editor*    m_line_editor;
-    MODE4 */
 };

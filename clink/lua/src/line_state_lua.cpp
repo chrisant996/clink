@@ -10,6 +10,7 @@
 //------------------------------------------------------------------------------
 static line_state_lua::method g_methods[] = {
     { "getline",      &line_state_lua::get_line },
+    { "getcursor",    &line_state_lua::get_cursor },
     { "getwordcount", &line_state_lua::get_word_count },
     { "getwordinfo",  &line_state_lua::get_word_info },
     { "getword",      &line_state_lua::get_word },
@@ -24,6 +25,13 @@ line_state_lua::line_state_lua(const line_state& line)
 : lua_bindable("line_state", g_methods)
 , m_line(line)
 {
+}
+
+//------------------------------------------------------------------------------
+int line_state_lua::get_cursor(lua_State* state)
+{
+    lua_pushinteger(state, m_line.get_cursor());
+    return 0;
 }
 
 //------------------------------------------------------------------------------

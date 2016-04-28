@@ -32,7 +32,7 @@ static int chdir(lua_State* state)
 //------------------------------------------------------------------------------
 static int getcwd(lua_State* state)
 {
-    str<MAX_PATH> dir;
+    str<288> dir;
     os::get_current_dir(dir);
 
     lua_pushstring(state, dir.c_str());
@@ -144,8 +144,8 @@ static int glob_impl(lua_State* state, bool dirs_only)
     globber.files(!dirs_only);
 
     int i = 1;
-    str<MAX_PATH> file;
-    while (globber.next(file))
+    str<288> file;
+    while (globber.next(file, false))
     {
         lua_pushstring(state, file.c_str());
         lua_rawseti(state, -2, i++);

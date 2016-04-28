@@ -403,8 +403,8 @@ void win_terminal::begin()
 //------------------------------------------------------------------------------
 void win_terminal::end()
 {
-    win_terminal_out::begin();
-    win_terminal_in::begin();
+    win_terminal_out::end();
+    win_terminal_in::end();
 }
 
 //------------------------------------------------------------------------------

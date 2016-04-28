@@ -5,6 +5,8 @@
 #include "lua_state.h"
 #include "lua_script_loader.h"
 
+#include <core/settings.h>
+
 extern "C" {
 #include <lua.h>
 #include <lauxlib.h>
@@ -12,15 +14,25 @@ extern "C" {
 }
 
 //------------------------------------------------------------------------------
+static setting_bool g_debug(
+    "lua.debug",
+    "",
+    "",
+    false);
+
+
+
+//------------------------------------------------------------------------------
 void clink_lua_initialise(lua_state&);
 void os_lua_initialise(lua_state&);
 void path_lua_initialise(lua_state&);
 void settings_lua_initialise(lua_state&);
 
+
+
 //------------------------------------------------------------------------------
-lua_state::lua_state(bool enable_debugger)
+lua_state::lua_state()
 : m_state(nullptr)
-, m_enable_debugger(enable_debugger)
 {
     initialise();
 }
@@ -40,13 +52,14 @@ void lua_state::initialise()
     m_state = luaL_newstate();
     luaL_openlibs(m_state);
 
-    clink_lua_initialise(*this);
-    os_lua_initialise(*this);
-    path_lua_initialise(*this);
-    settings_lua_initialise(*this);
+    lua_state& self = *this;
+    clink_lua_initialise(self);
+    os_lua_initialise(self);
+    path_lua_initialise(self);
+    settings_lua_initialise(self);
 
-    if (m_enable_debugger)
-        lua_load_script(*this, lib, debugger);
+    if (g_debug.get())
+        lua_load_script(self, lib, debugger);
 }
 
 //------------------------------------------------------------------------------

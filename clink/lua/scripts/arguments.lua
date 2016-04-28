@@ -580,14 +580,19 @@ local function argument_match_generator(line_state, match_builder)
         return false
     end
 
+    -- Turn the line state into parts (MODE4: use line_state directly!)
+    local parts = {}
+    for i = 2, line_state:getwordcount() do
+        table.insert(parts, line_state:getword(i))
+    end
+
     -- Call the parser.
     local ret = parser:go(parts)
     if type(ret) ~= "table" then
         return not ret
     end
 
-    result:addmatches(ret)
-    result:arefiles()
+    match_builder:add(ret)
     return true
 end
 

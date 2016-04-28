@@ -3,19 +3,8 @@
 
 --------------------------------------------------------------------------------
 local function set_match_generator(word)
-    -- Skip this generator if first is in the rvalue.
-    local leading = line_state.line:sub(1, line_state.first - 1)
-    if leading:find("=") then
-        return false
-    end
-
-    -- Enumerate environment variables and check for potential matches.
-    local matches = {}
-    for _, name in ipairs(os.getenvnames()) do
-        table.insert(matches, name:lower())
-    end
-
-    return matches
+    -- MODE4 : Needs support for marking matches as partial for '='
+    return os.getenvnames()
 end
 
 --------------------------------------------------------------------------------

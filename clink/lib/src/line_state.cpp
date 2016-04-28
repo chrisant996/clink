@@ -8,9 +8,10 @@
 #include <core/str.h>
 
 //------------------------------------------------------------------------------
-line_state::line_state(const array<word>& words, const char* line)
+line_state::line_state(const array<word>& words, const char* line, unsigned int cursor)
 : m_words(words)
 , m_line(line)
+, m_cursor(cursor)
 {
 }
 
@@ -18,6 +19,12 @@ line_state::line_state(const array<word>& words, const char* line)
 const char* line_state::get_line() const
 {
     return m_line;
+}
+
+//------------------------------------------------------------------------------
+unsigned int line_state::get_cursor() const
+{
+    return m_cursor;
 }
 
 //------------------------------------------------------------------------------
