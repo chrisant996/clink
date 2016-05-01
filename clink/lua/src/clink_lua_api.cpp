@@ -12,118 +12,14 @@
 #include <Windows.h>
 
 //------------------------------------------------------------------------------
-extern "C" {
-extern int              _rl_completion_case_map;
-extern const char*      rl_readline_name;
-}
-
-extern int              g_slash_translation;
-
-//------------------------------------------------------------------------------
-static int to_lowercase(lua_State* state)
+static int get_host_process(lua_State* state)
 {
-    const char* string;
-    char* lowered;
-    int length;
-    int i;
-
-    // Check we've got at least one argument...
-    if (lua_gettop(state) == 0)
-        return 0;
-
-    // ...and that the argument is a string.
-    if (!lua_isstring(state, 1))
-        return 0;
-
-    string = lua_tostring(state, 1);
-    length = (int)strlen(string);
-
-    lowered = (char*)malloc(length + 1);
-    if (_rl_completion_case_map)
-    {
-        for (i = 0; i <= length; ++i)
-        {
-            char c = string[i];
-            if (c == '-')
-                c = '_';
-            else
-                c = tolower(c);
-
-            lowered[i] = c;
-        }
-    }
-    else
-    {
-        for (i = 0; i <= length; ++i)
-        {
-            char c = string[i];
-            lowered[i] = tolower(c);
-        }
-    }
-
-    lua_pushstring(state, lowered);
-    free(lowered);
-
-    return 1;
-}
-
-//------------------------------------------------------------------------------
-static int matches_are_files(lua_State* state)
-{
-    int i = 1;
-
-    if (lua_gettop(state) > 0)
-        i = (int)lua_tointeger(state, 1);
-
 #if MODE4
-    rl_filename_completion_desired = i;
-#endif
-    return 0;
-}
-
-//------------------------------------------------------------------------------
-static int get_rl_variable(lua_State* state)
-{
-    // Check we've got at least one string argument.
-    if (lua_gettop(state) == 0 || !lua_isstring(state, 1))
-        return 0;
-
-#if MODE4
-    const char* string = lua_tostring(state, 1);
-    const char* rl_cvar = rl_variable_value(string);
-    if (rl_cvar == nullptr)
-        return 0;
-
-    lua_pushstring(state, rl_cvar);
+    lua_pushstring(state, rl_readline_name);
     return 1;
 #else
     return 0;
-#endif // MODE4
-}
-
-//------------------------------------------------------------------------------
-static int is_rl_variable_true(lua_State* state)
-{
-    int i;
-    const char* cvar_value;
-
-    i = get_rl_variable(state);
-    if (i == 0)
-        return 0;
-
-    cvar_value = lua_tostring(state, -1);
-    i = (_stricmp(cvar_value, "on") == 0) || (_stricmp(cvar_value, "1") == 0);
-    lua_pop(state, 1);
-    lua_pushboolean(state, i);
-
-    return 1;
-}
-
-//------------------------------------------------------------------------------
-static int get_host_process(lua_State* state)
-{
-    lua_pushstring(state, rl_readline_name);
-    return 1;
+#endif
 }
 
 //------------------------------------------------------------------------------
@@ -224,13 +120,11 @@ void clink_lua_initialise(lua_state& lua)
         /*
         { "execute", lua_execute },
         */
+
+        // MODE4 : nomenclature should match Lua's
         { "get_console_aliases",    &get_console_aliases },
         { "get_host_process",       &get_host_process },
-        { "get_rl_variable",        &get_rl_variable },
         { "get_screen_info",        &get_screen_info },
-        { "is_rl_variable_true",    &is_rl_variable_true },
-        { "lower",                  &to_lowercase },
-        { "matches_are_files",      &matches_are_files },
 // MODE4
     };
 
