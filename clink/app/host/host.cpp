@@ -110,10 +110,6 @@ bool host::edit_line(const char* prompt, str_base& out)
         str<288>        m_path;
     } cwd;
 
-#if MODE4
-    str<128> filtered_prompt;
-    filter_prompt(prompt, filtered_prompt);
-#endif
     load_clink_settings();
 
     int cmp_mode = str_compare_scope::exact;
@@ -141,6 +137,11 @@ MODE4 */
     lua_load_script(lua, app, exec);
     lua_load_script(lua, app, self);
     initialise_lua(lua);
+
+#if MODE4
+    str<128> filtered_prompt;
+    filter_prompt(prompt, filtered_prompt);
+#endif
 
     line_editor::desc desc = {};
     desc.prompt = prompt;
