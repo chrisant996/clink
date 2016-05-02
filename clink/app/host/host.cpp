@@ -114,7 +114,9 @@ bool host::edit_line(const char* prompt, str_base& out)
 
     int cmp_mode = str_compare_scope::exact;
     if (!g_case_sensitive.get())
-        cmp_mode = g_case_relaxed.get() ? str_compare_scope::relaxed : str_compare_scope::caseless;
+        cmp_mode = g_case_relaxed.get()
+            ? str_compare_scope::relaxed
+            : str_compare_scope::caseless;
 
     str_compare_scope compare(cmp_mode);
 
