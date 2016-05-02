@@ -151,7 +151,7 @@ static bool get_host_name(str_base& out)
 }
 
 //------------------------------------------------------------------------------
-bool initialise_clink(const inject_args* inject_args)
+bool initialise_clink(const inject_args& inject_args)
 {
     seh_scope seh;
 
@@ -160,11 +160,11 @@ bool initialise_clink(const inject_args* inject_args)
         sizeof_array(inject_args->profile_path));
 
     // Handle inject arguments.
-    if (inject_args->profile_path[0] != '\0')
+    if (inject_args.profile_path[0] != '\0')
         /* MODE4 */
-        set_config_dir_override(inject_args->profile_path);
+        set_config_dir_override(inject_args.profile_path);
 
-    if (!inject_args->no_log)
+    if (!inject_args.no_log)
     {
         // Start a log file.
         str<256> log_path;
@@ -232,8 +232,7 @@ MODE4 */
         return false;
     }
 
-    load_clink_settings();
-    success(inject_args->quiet);
+    success(inject_args.quiet);
     return true;
 }
 
