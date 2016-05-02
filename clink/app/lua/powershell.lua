@@ -10,6 +10,4 @@ local function powershell_prompt_filter()
 end
 
 --------------------------------------------------------------------------------
-if clink.get_host_process() == "powershell.exe" then
-    clink.prompt.register_filter(powershell_prompt_filter, -493)
-end
+clink.prompt.register_filter(powershell_prompt_filter, -493)
