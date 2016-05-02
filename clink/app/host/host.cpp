@@ -18,18 +18,74 @@
 #include <terminal/win_terminal.h>
 
 //------------------------------------------------------------------------------
+static setting_str g_clink_path(
+    "clink.path",
+    "Paths to load Lua completion scripts from",
+    "These paths will be searched for Lua scripts that provide custom\n"
+    "match generation. Multiple paths should be separated delimited with\n"
+    "a semicolon.",
+    "");
+
 static setting_bool g_case_sensitive(
     "match.case_sensitive",
     "Case sensitive matching.",
     "", // MODE4
     false);
 
-//------------------------------------------------------------------------------
 static setting_bool g_case_relaxed(
     "match.case_relaxed",
     "Also consider -/_ equal when case insensitive.",
     "", // MODE4
     true);
+
+
+
+//------------------------------------------------------------------------------
+void load_clink_settings();
+
+
+
+#if MODE4
+
+    // Load match generator Lua scripts.
+    const char* setting_clink_path = g_clink_path.get();
+    load_lua_scripts(lua, setting_clink_path);
+
+    str<256> env_clink_path;
+    os::get_env("clink_path", env_clink_path);
+    load_lua_scripts(lua, env_clink_path.c_str());
+
+//------------------------------------------------------------------------------
+static void load_lua_script(lua_State* lua, const char* path)
+{
+    str<> buffer;
+    path::join(path, "*.lua", buffer);
+
+    globber lua_globs(buffer.c_str());
+    lua_globs.directories(false);
+
+    while (lua_globs.next(buffer))
+    {
+        if (luaL_dofile(lua, buffer.c_str()) == 0)
+            continue;
+
+        if (const char* error = lua_tostring(lua, -1))
+            puts(error);
+    }
+}
+
+//------------------------------------------------------------------------------
+static void load_lua_scripts(lua_State* lua, const char* paths)
+{
+    if (paths == nullptr || paths[0] == '\0')
+        return;
+
+    str<> token;
+    str_tokeniser tokens(paths, ";");
+    while (tokens.next(token))
+        load_lua_script(lua, token.c_str());
+}
+#endif // MODE4
 
 
 
@@ -58,6 +114,7 @@ bool host::edit_line(const char* prompt, str_base& out)
     str<128> filtered_prompt;
     filter_prompt(prompt, filtered_prompt);
 #endif
+    load_clink_settings();
 
     int cmp_mode = str_compare_scope::exact;
     if (!g_case_sensitive.get())
@@ -108,6 +165,7 @@ MODE4 */
 
     line_editor_destroy(editor);
     classic_match_ui_destroy(ui);
+
     return ret;
 }
 
