@@ -6,67 +6,79 @@
 #include "lua_state.h"
 
 #include <core/base.h>
+#include <core/path.h>
 #include <core/str.h>
 
 #include <ctype.h>
 #include <Windows.h>
 
 //------------------------------------------------------------------------------
+static bool get_host_process(str_base& out)
+{
+    // MODE4
+    str<288> buffer;
+    if (GetModuleFileName(nullptr, buffer.data(), buffer.size()) == buffer.size())
+        return false;
+
+    if (GetLastError() == ERROR_INSUFFICIENT_BUFFER)
+        return false;
+
+    return path::get_name(buffer.c_str(), out);
+}
+
+//------------------------------------------------------------------------------
 static int get_host_process(lua_State* state)
 {
-#if MODE4
-    lua_pushstring(state, rl_readline_name);
-    return 1;
-#else
+    str<64> name;
+    if (get_host_process(name))
+    {
+        lua_pushstring(state, name.c_str());
+        return 1;
+    }
+
     return 0;
-#endif
 }
 
 //------------------------------------------------------------------------------
 static int get_console_aliases(lua_State* state)
 {
-    do
-    {
-        int i;
-        int buffer_size;
-        char* alias;
-
-        lua_createtable(state, 0, 0);
+    lua_createtable(state, 0, 0);
 
 #if !defined(__MINGW32__) && !defined(__MINGW64__)
-        // Get the aliases (aka. doskey macros).
-        buffer_size = GetConsoleAliasesLength((char*)rl_readline_name);
-        if (buffer_size == 0)
+    str<64> name;
+    if (!get_host_process(name))
+        return 1;
+
+    // Get the aliases (aka. doskey macros).
+    int buffer_size = GetConsoleAliasesLength(name.data());
+    if (buffer_size == 0)
+        return 1;
+
+    char* buffer = (char*)malloc(buffer_size + 1);
+    if (GetConsoleAliases(buffer, buffer_size, name.data()) == 0)
+        return 1;
+
+    buffer[buffer_size] = '\0';
+
+    // Parse the result into a lua table.
+    char* alias = buffer;
+    int i = 1;
+    while (*alias != '\0')
+    {
+        char* c = strchr(alias, '=');
+        if (c == nullptr)
             break;
 
-        char* buffer = (char*)malloc(buffer_size + 1);
-        if (GetConsoleAliases(buffer, buffer_size, (char*)rl_readline_name) == 0)
-            break;
+        *c = '\0';
+        lua_pushstring(state, alias);
+        lua_rawseti(state, -2, i++);
 
-        buffer[buffer_size] = '\0';
-
-        // Parse the result into a lua table.
-        alias = buffer;
-        i = 1;
-        while (*alias != '\0')
-        {
-            char* c = strchr(alias, '=');
-            if (c == nullptr)
-                break;
-
-            *c = '\0';
-            lua_pushstring(state, alias);
-            lua_rawseti(state, -2, i++);
-
-            ++c;
-            alias = c + strlen(c) + 1;
-        }
-
-        free(buffer);
-#endif // !__MINGW32__ && !__MINGW64__
+        ++c;
+        alias = c + strlen(c) + 1;
     }
-    while (0);
 
+    free(buffer);
+#endif // __MINGW32__
     return 1;
 }
 
