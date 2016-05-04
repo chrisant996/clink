@@ -6,10 +6,13 @@
 #include "rl/rl_backend.h"
 #include "rl/rl_history.h"
 
+#include <core/globber.h>
 #include <core/os.h>
+#include <core/path.h>
 #include <core/settings.h>
 #include <core/str.h>
 #include <core/str_compare.h>
+#include <core/str_tokeniser.h>
 #include <lib/match_generator.h>
 #include <lib/line_editor.h>
 #include <lua/lua_script_loader.h>
@@ -44,19 +47,8 @@ static setting_bool g_case_relaxed(
 void load_clink_settings();
 
 
-
-#if MODE4
-
-    // Load match generator Lua scripts.
-    const char* setting_clink_path = g_clink_path.get();
-    load_lua_scripts(lua, setting_clink_path);
-
-    str<256> env_clink_path;
-    os::get_env("clink_path", env_clink_path);
-    load_lua_scripts(lua, env_clink_path.c_str());
-
 //------------------------------------------------------------------------------
-static void load_lua_script(lua_State* lua, const char* path)
+static void load_lua_script(lua_state& lua, const char* path)
 {
     str<> buffer;
     path::join(path, "*.lua", buffer);
@@ -65,17 +57,11 @@ static void load_lua_script(lua_State* lua, const char* path)
     lua_globs.directories(false);
 
     while (lua_globs.next(buffer))
-    {
-        if (luaL_dofile(lua, buffer.c_str()) == 0)
-            continue;
-
-        if (const char* error = lua_tostring(lua, -1))
-            puts(error);
-    }
+        lua.do_file(buffer.c_str());
 }
 
 //------------------------------------------------------------------------------
-static void load_lua_scripts(lua_State* lua, const char* paths)
+static void load_lua_scripts(lua_state& lua, const char* paths)
 {
     if (paths == nullptr || paths[0] == '\0')
         return;
@@ -85,7 +71,17 @@ static void load_lua_scripts(lua_State* lua, const char* paths)
     while (tokens.next(token))
         load_lua_script(lua, token.c_str());
 }
-#endif // MODE4
+
+//------------------------------------------------------------------------------
+static void load_lua_scripts(lua_state& lua)
+{
+    const char* setting_clink_path = g_clink_path.get();
+    load_lua_scripts(lua, setting_clink_path);
+
+    str<256> env_clink_path;
+    os::get_env("clink_path", env_clink_path);
+    load_lua_scripts(lua, env_clink_path.c_str());
+}
 
 
 
@@ -139,6 +135,7 @@ MODE4 */
     lua_load_script(lua, app, exec);
     lua_load_script(lua, app, self);
     initialise_lua(lua);
+    load_lua_scripts(lua);
 
 #if MODE4
     str<128> filtered_prompt;
