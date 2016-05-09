@@ -440,6 +440,7 @@ int win_terminal::get_rows() const
 //------------------------------------------------------------------------------
 void win_terminal::write_csi(const ecma48_code& code)
 {
+#if MODE4
     const ecma48_csi& csi = *(code.csi);
     switch (csi.func)
     {
@@ -452,6 +453,7 @@ void win_terminal::write_csi(const ecma48_code& code)
     }
 
     win_terminal_out::write(code.str, code.length); 
+#endif // MODE4
 }
 
 //------------------------------------------------------------------------------
@@ -487,9 +489,11 @@ void win_terminal::write(const char* chars, int length)
             write_c0(code->c0);
             break;
 
+        /* MODE4
         case ecma48_code::type_csi:
             write_csi(*code);
             break;
+        */
         }
     }
 }
@@ -526,8 +530,9 @@ void win_terminal::check_sgr_support()
 }
 
 //------------------------------------------------------------------------------
-void win_terminal::write_sgr(const ecma48_csi& csi)
+void win_terminal::write_sgr(const class ecma48_csi& csi)
 {
+#if MODE4
     static const unsigned char sgr_to_attr[] = { 0, 4, 2, 6, 1, 5, 3, 7 };
 
     // Process each code that is supported.
@@ -600,4 +605,5 @@ void win_terminal::write_sgr(const ecma48_csi& csi)
     }
 
     set_attr(attr);
+#endif // MODE4
 }

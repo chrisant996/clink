@@ -9,11 +9,14 @@
 //------------------------------------------------------------------------------
 enum
 {
-    ecma48_state_unknown,
+    ecma48_state_unknown = 0,
     ecma48_state_char,
     ecma48_state_esc,
+    ecma48_state_esc_st,
     ecma48_state_csi_p,
     ecma48_state_csi_f,
+    ecma48_state_cmd_str,
+    ecma48_state_char_str,
 };
 
 //------------------------------------------------------------------------------
@@ -34,141 +37,204 @@ const ecma48_code* ecma48_iter::next()
     m_code.str = m_iter.get_pointer();
     m_code.length = 0;
 
-    while (int c = m_iter.peek())
+    bool done = true;
+    while (1)
     {
+        int c = m_iter.peek();
+        if (!c)
+            if (m_state.state != ecma48_state_char)
+                return nullptr;
+
         switch (m_state.state)
         {
-        case ecma48_state_unknown:
-            m_iter.next();
-
-            if (c == 0x1b)
-            {
-                m_state.state = ecma48_state_esc;
-                continue;
-            }
-            else if (c == 0x9b)
-            {
-                m_state.csi = { 0, 0 };
-                m_state.state = ecma48_state_csi_p;
-                continue;
-            }
-            else if (in_range(c, 0x00, 0x1f))
-            {
-                m_code.type = ecma48_code::type_c0;
-                m_code.c0 = c;
-                goto iter_end;
-            }
-            else if (in_range(c, 0x80, 0x9f))
-            {
-                m_code.type = ecma48_code::type_c1;
-                m_code.c1 = c - 0x40; // as 7-bit code
-                goto iter_end;
-            }
-
-            m_state.state = ecma48_state_char;
-            continue;
-
-        case ecma48_state_char:
-            if (in_range(c, 0x00, 0x1f))
-            {
-                m_code.type = ecma48_code::type_chars;
-                goto iter_end;
-            }
-
-            m_iter.next();
-            continue;
-
-        case ecma48_state_esc:
-            m_iter.next();
-
-            if (c == 0x5b)
-            {
-                m_state.csi = { 0, 0 };
-                m_state.state = ecma48_state_csi_p;
-                continue;
-            }
-            else if (in_range(c, 0x40, 0x5f))
-            {
-                m_code.type = ecma48_code::type_c1;
-                m_code.c1 = c;
-                goto iter_end;
-            }
-            else if (in_range(c, 0x60, 0x7f))
-            {
-                m_code.type = ecma48_code::type_icf;
-                m_code.icf = c;
-                goto iter_end;
-            }
-
-            m_state.state = ecma48_state_char;
-            continue;
-
-        case ecma48_state_csi_p:
-            if (in_range(c, 0x30, 0x3f))
-            {
-                ecma48_csi& csi = m_state.csi;
-
-                if (!csi.param_count)
-                {
-                    csi.params[0] = 0;
-                    ++csi.param_count;
-                }
-
-                int d = c - 0x30;
-                if (d <= 9) // [0x30, 0x39]
-                {
-                    if (csi.param_count <= sizeof_array(csi.params))
-                    {
-                        int i = csi.param_count - 1;
-                        csi.params[i] *= 10;
-                        csi.params[i] += d;
-                    }
-                }
-                else if (d == 11) // 0x3b
-                {
-                    if (csi.param_count < sizeof_array(csi.params))
-                        csi.params[csi.param_count] = 0;
-
-                    ++csi.param_count;
-                }
-
-                m_iter.next();
-                continue;
-            }
-            /* fall through */
-
-        case ecma48_state_csi_f:
-            if (in_range(c, 0x20, 0x2f))
-            {
-                m_state.csi.func = short(c << 8);
-                m_iter.next();
-                continue;
-            }
-            else if (in_range(c, 0x40, 0x7e))
-            {
-                ecma48_csi& csi = m_state.csi;
-                csi.func += c;
-                csi.param_count = min<short>(csi.param_count, sizeof_array(csi.params));
-
-                m_code.type = ecma48_code::type_csi;
-                m_code.csi = &csi;
-
-                m_iter.next();
-                goto iter_end;
-            }
-
-            m_code.str = m_iter.get_pointer();
-            m_code.length = 0;
-            m_state.state = ecma48_state_unknown;
-            continue;
+        case ecma48_state_unknown:  done = next_unknown(c);  break;
+        case ecma48_state_char:     done = next_char(c);     break;
+        case ecma48_state_esc:      done = next_esc(c);      break;
+        case ecma48_state_esc_st:   done = next_esc_st(c);   break;
+        case ecma48_state_cmd_str:  done = next_cmd_str(c);  break;
+        case ecma48_state_char_str: done = next_char_str(c); break;
+        case ecma48_state_csi_p:    done = next_csi_p(c);    break;
+        case ecma48_state_csi_f:    done = next_csi_f(c);    break;
         }
+
+        if (done)
+            break;
     }
 
-    if (m_state.state != ecma48_state_char)
-        return nullptr;
-
-iter_end:
     m_code.length = int(m_iter.get_pointer() - m_code.str);
     m_state.state = ecma48_state_unknown;
     return (m_code.length != 0) ? &m_code : nullptr;
+}
+
+//------------------------------------------------------------------------------
+bool ecma48_iter::next_c1()
+{
+    switch (m_code.c1)
+    {
+        case 0x50: /* dcs */
+        case 0x5d: /* osc */
+        case 0x5e: /* pm  */
+        case 0x5f: /* apc */
+            m_state.state = ecma48_state_cmd_str;
+            return false;
+
+        case 0x5b: /* csi */
+            m_state.state = ecma48_state_csi_p;
+            return false;
+
+        case 0x58: /* sos */
+            m_state.state = ecma48_state_char_str;
+            return false;
+    }
+
+    return true;
+}
+
+//------------------------------------------------------------------------------
+bool ecma48_iter::next_char(int c)
+{
+    if (in_range(c, 0x00, 0x1f))
+    {
+        m_code.type = ecma48_code::type_chars;
+        return true;
+    }
+
+    m_iter.next();
+    return false;
+}
+
+//------------------------------------------------------------------------------
+bool ecma48_iter::next_char_str(int c)
+{
+    m_iter.next();
+
+    if (c == 0x1b)
+    {
+        m_state.state = ecma48_state_esc_st;
+        return false;
+    }
+
+    return (c == 0x9c);
+}
+
+//------------------------------------------------------------------------------
+bool ecma48_iter::next_cmd_str(int c)
+{
+    if (c == 0x1b)
+    {
+        m_iter.next();
+        m_state.state = ecma48_state_esc_st;
+        return false;
+    }
+    else if (c == 0x9c)
+    {
+        m_iter.next();
+        return true;
+    }
+    else if (in_range(c, 0x08, 0x0d) || in_range(c, 0x20, 0x7e))
+    {
+        m_iter.next();
+        return false;
+    }
+
+    // Reset
+    m_code.str = m_iter.get_pointer();
+    m_code.length = 0;
+    m_state.state = ecma48_state_unknown;
+    return false;
+}
+
+//------------------------------------------------------------------------------
+bool ecma48_iter::next_csi_f(int c)
+{
+    if (in_range(c, 0x20, 0x2f))
+    {
+        m_iter.next();
+        return false;
+    }
+    else if (in_range(c, 0x40, 0x7e))
+    {
+        m_iter.next();
+        return true;
+    }
+
+    // Reset
+    m_code.str = m_iter.get_pointer();
+    m_code.length = 0;
+    m_state.state = ecma48_state_unknown;
+    return false;
+}
+
+//------------------------------------------------------------------------------
+bool ecma48_iter::next_csi_p(int c)
+{
+    if (in_range(c, 0x30, 0x3f))
+    {
+        m_iter.next();
+        return false;
+    }
+
+    m_state.state = ecma48_state_csi_f;
+    return false;
+}
+
+//------------------------------------------------------------------------------
+bool ecma48_iter::next_esc(int c)
+{
+    m_iter.next();
+
+    if (in_range(c, 0x40, 0x5f))
+    {
+        m_code.type = ecma48_code::type_c1;
+        m_code.c1 = c;
+        return next_c1();
+    }
+    else if (in_range(c, 0x60, 0x7f))
+    {
+        m_code.type = ecma48_code::type_icf;
+        m_code.icf = c;
+        return true;
+    }
+
+    m_state.state = ecma48_state_char;
+    return false;
+}
+
+//------------------------------------------------------------------------------
+bool ecma48_iter::next_esc_st(int c)
+{
+    if (c == 0x5c)
+        return true;
+
+    m_code.str = m_iter.get_pointer();
+    m_code.length = 0;
+    m_state.state = ecma48_state_unknown;
+    return false;
+}
+
+//------------------------------------------------------------------------------
+bool ecma48_iter::next_unknown(int c)
+{
+    m_iter.next();
+
+    if (c == 0x1b)
+    {
+        m_state.state = ecma48_state_esc;
+        return false;
+    }
+    else if (in_range(c, 0x00, 0x1f))
+    {
+        m_code.type = ecma48_code::type_c0;
+        m_code.c0 = c;
+        return true;
+    }
+    else if (in_range(c, 0x80, 0x9f))
+    {
+        m_code.type = ecma48_code::type_c1;
+        m_code.c1 = c - 0x40; // as 7-bit code
+        return next_c1();
+    }
+
+    m_state.state = ecma48_state_char;
+    return false;
 }

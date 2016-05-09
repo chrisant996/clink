@@ -69,7 +69,7 @@ public:
 
 private:
     void            write_csi(const ecma48_code& code);
-    void            write_sgr(const ecma48_csi& csi);
+    void            write_sgr(const class /* MODE4 */ ecma48_csi& csi);
     void            write_c0(int c0);
     void            check_sgr_support();
     ecma48_state    m_state;
