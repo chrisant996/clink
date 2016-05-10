@@ -8,36 +8,52 @@
 // MODE4 : better support for progressive data, c1 codes (csi, osc, etc.)
 
 //------------------------------------------------------------------------------
-enum
+class ecma48_code
 {
-    ecma48_c1_apc = 0x5f,
-    ecma48_c1_csi = 0x5b,
-    ecma48_c1_dcs = 0x50,
-    ecma48_c1_osc = 0x5d,
-    ecma48_c1_pm  = 0x5e,
-    ecma48_c1_sos = 0x58,
-};
-
-//------------------------------------------------------------------------------
-struct ecma48_code
-{
-    const char*         str;
-    unsigned short      length;
-    unsigned short      type;
-    union {
-        int             c0;
-        int             c1;
-        int             icf;
+public:
+    enum type : unsigned char
+    {
+        type_none,
+        type_chars,
+        type_c0,
+        type_c1,
+        type_icf
     };
 
-    enum { type_chars, type_c0, type_c1, type_icf };
+    enum 
+    {
+        c1_apc          = 0x5f,
+        c1_csi          = 0x5b,
+        c1_dcs          = 0x50,
+        c1_osc          = 0x5d,
+        c1_pm           = 0x5e,
+        c1_sos          = 0x58,
+    };
+
+    const char*         get_str() const     { return m_str; }
+    unsigned int        get_length() const  { return m_length; }
+    type                get_type() const    { return m_type; }
+    unsigned int        get_code() const    { return m_code; }
+    int                 decode_csi(int& final, int* params, unsigned int max_params) const;
+
+private:
+    friend class        ecma48_iter;
+                        ecma48_code() {}
+    const char*         m_str;
+    unsigned short      m_length;
+    type                m_type;
+    unsigned char       m_code;
 };
+
+
 
 //------------------------------------------------------------------------------
 struct ecma48_state
 {
     int                 state = 0;
 };
+
+
 
 //------------------------------------------------------------------------------
 class ecma48_iter

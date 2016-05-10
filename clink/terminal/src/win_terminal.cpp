@@ -479,14 +479,14 @@ void win_terminal::write(const char* chars, int length)
     ecma48_iter iter(chars, m_state, length);
     while (const ecma48_code* code = iter.next())
     {
-        switch (code->type)
+        switch (code->get_type())
         {
         case ecma48_code::type_chars:
-            win_terminal_out::write(code->str, code->length);
+            win_terminal_out::write(code->get_str(), code->get_length());
             break;
 
         case ecma48_code::type_c0:
-            write_c0(code->c0);
+            write_c0(code->get_code());
             break;
 
         /* MODE4
