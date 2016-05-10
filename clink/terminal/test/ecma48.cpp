@@ -120,7 +120,17 @@ TEST_CASE("ecma48 csi params") {
     const ecma48_code* code;
     int final, params[8], param_count;
 
-    ecma48_iter iter("\x1b[1;12;123 \x40", g_state);
+    // ---
+    ecma48_iter iter("\x1b[123\x7e", g_state);
+    REQUIRE((code = iter.next()) != nullptr);
+    REQUIRE(code->get_length() == 4);
+
+    param_count = code->decode_csi(final, params, sizeof_array(params));
+    REQUIRE(param_count == 1);
+    REQUIRE(params[0] == 123);
+
+    // ---
+    new (&iter) ecma48_iter("\x1b[1;12;123 \x40", g_state);
     REQUIRE((code = iter.next()) != nullptr);
     REQUIRE(code->get_length() == 10);
 
@@ -131,6 +141,7 @@ TEST_CASE("ecma48 csi params") {
     REQUIRE(params[2] == 123);
     REQUIRE(final == 0x2040);
 
+    // ---
     new (&iter) ecma48_iter("\x1b[;@", g_state);
     REQUIRE((code = iter.next()) != nullptr);
     REQUIRE(code->get_length() == 2);
@@ -141,26 +152,27 @@ TEST_CASE("ecma48 csi params") {
     REQUIRE(params[1] == 0);
     REQUIRE(final == '@');
 
+    // ---
     new (&iter) ecma48_iter("\x1b[;;;;;;;;;;;;1;2;3;4;5 m", g_state);
     REQUIRE((code = iter.next()) != nullptr);
     REQUIRE(code->get_length() == 23);
 
     param_count = code->decode_csi(final, params, sizeof_array(params));
-    REQUIRE(param_count == 8);
+    REQUIRE(param_count == sizeof_array(params));
 }
 
-#if 0 // MODE4
 TEST_CASE("ecma48 csi invalid") {
     const ecma48_code* code;
 
     ecma48_iter iter("\x1b[1;2\01", g_state);
     REQUIRE((code = iter.next()) != nullptr);
     REQUIRE(code->get_type() == ecma48_code::type_c0);
-    REQUIRE(code->c0 == 1);
+    REQUIRE(code->get_code() == 1);
     REQUIRE(code->get_str()[0] == 1);
     REQUIRE(code->get_length() == 1);
 }
 
+#if 0 // MODE4
 TEST_CASE("ecma48 stream") {
     const ecma48_code* code;
 
@@ -198,20 +210,24 @@ TEST_CASE("ecma48 split") {
 
     REQUIRE(iter.next() == nullptr);
 }
+#endif // MODE4
 
 TEST_CASE("ecma48 utf8") {
     const ecma48_code* code;
 
-    ecma48_iter iter("\xc2\x9bz", g_state);
-    REQUIRE((code = iter.next()) != nullptr);
-    REQUIRE(code->get_type() == ecma48_code::type_csi);
-    REQUIRE(code->csi->func == 'z');
-    REQUIRE(code->get_length() == 3);
-
-    new (&iter) ecma48_iter("\xc2\x9c", g_state);
+    ecma48_iter iter("\xc2\x9c", g_state);
     REQUIRE((code = iter.next()) != nullptr);
     REQUIRE(code->get_type() == ecma48_code::type_c1);
-    REQUIRE(code->c1 == 0x5c);
+    REQUIRE(code->get_code() == 0x5c);
     REQUIRE(code->get_length() == 2);
+
+    new (&iter) ecma48_iter("\xc2\x9bz", g_state);
+    REQUIRE((code = iter.next()) != nullptr);
+    REQUIRE(code->get_type() == ecma48_code::type_c1);
+    REQUIRE(code->get_length() == 1);
+
+    int final, params[8], param_count;
+    param_count = code->decode_csi(final, params, sizeof_array(params));
+    REQUIRE(param_count == 0);
+    REQUIRE(final == 'z');
 }
-#endif // MODE4

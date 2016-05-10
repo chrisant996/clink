@@ -34,41 +34,39 @@ int ecma48_code::decode_csi(int& final, int* params, unsigned int max_params) co
     /* CSI P ... P I .... I F */
     str_iter iter(get_str(), get_length());
 
-    int c = iter.peek();
-
     // Reserved? Then skip all Ps
-    if (in_range(c, 0x3c, 0x3f))
+    if (in_range(iter.peek(), 0x3c, 0x3f))
         while (in_range(iter.peek(), 0x30, 0x3f))
             iter.next();
 
     // Extract parameters.
+    final = 0;
+    int param = 0;
     unsigned int count = 0;
-    str_tokeniser tokens(iter, "\x3b");
-    const char* param_start;
-    int param_length;
-    while (tokens.next(param_start, param_length))
+    bool trailing_param = false;
+    while (int c = iter.next())
     {
-        int param = 0;
-        bool has_param = (param_length == 0);
-        for (; param_length != 0; --param_length, ++param_start)
+        if (in_range(c, 0x30, 0x3b))
         {
-            if (!in_range(*param_start, 0x30, 0x3a))
-                break;
+            trailing_param = true;
 
-            // Blissfully ignore ':' spec.
-            has_param = true;
-            if (*param_start != 0x3a)
-                param = (param * 10) + (*param_start - 0x30);
+            if (c == 0x3b)
+            {
+                if (count < max_params)
+                    params[count++] = param;
+
+                param = 0;
+            }
+            else if (c != 0x3a) // Blissfully gloss over ':' part of spec.
+                param = (param * 10) + (c - 0x30);
         }
-
-        if (has_param && count < max_params)
-            params[count++] = param;
-
-        // Intermediates and final.
-        final = 0;
-        for (; param_length != 0; --param_length, ++param_start)
-            final = (final << 8) + *param_start;
+        else
+            final = (final << 8) + c;
     }
+
+    if (trailing_param)
+        if (count < max_params)
+            params[count++] = param;
     
     return count;
 }
