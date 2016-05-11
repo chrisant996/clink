@@ -533,7 +533,6 @@ void win_terminal::check_c1_support()
 //------------------------------------------------------------------------------
 void win_terminal::write_sgr(const array<int>& params)
 {
-#if MODE4
     static const unsigned char sgr_to_attr[] = { 0, 4, 2, 6, 1, 5, 3, 7 };
 
     // Process each code that is supported.
@@ -588,6 +587,7 @@ void win_terminal::write_sgr(const array<int>& params)
         }
         else if (param == 38 || param == 48) // extended colour (skipped)
         {
+            /* MODE4
             // format = param;5;[0-255] or param;2;r;g;b
             ++i;
             if (i >= csi.param_count)
@@ -598,11 +598,11 @@ void win_terminal::write_sgr(const array<int>& params)
             case 2: i += 3; break;
             case 5: i += 1; break;
             }
+            */
 
             continue;
         }
     }
 
     set_attr(attr);
-#endif // MODE4
 }
