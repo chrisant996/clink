@@ -98,12 +98,10 @@ void rl_backend::begin_line(const char* prompt, const context& context)
     ecma48_iter iter(prompt, state);
     while (const ecma48_code* code = iter.next())
     {
-#if MODE4
-        bool csi = (code->type == ecma48_code::type_csi);
-        if (csi) rl_prompt.concat("\x01", 1);
-                 rl_prompt.concat(code->str, code->length);
-        if (csi) rl_prompt.concat("\x02", 1);
-#endif // MODE4
+        bool c1 = (code->get_type() == ecma48_code::type_c1);
+        if (c1) rl_prompt.concat("\x01", 1);
+                rl_prompt.concat(code->get_pointer(), code->get_length());
+        if (c1) rl_prompt.concat("\x02", 1);
     }
 
     auto handler = [] (char* line) { rl_backend::get()->done(line); };
