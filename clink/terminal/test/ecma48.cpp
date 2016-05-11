@@ -191,7 +191,6 @@ TEST_CASE("ecma48 stream") {
     REQUIRE(final == 'm');
 }
 
-#if 0 // MODE4
 TEST_CASE("ecma48 split") {
     const ecma48_code* code;
 
@@ -202,8 +201,14 @@ TEST_CASE("ecma48 split") {
     REQUIRE(code->get_pointer()[0] == ' ');
 
     REQUIRE((code = iter.next()) != nullptr);
-    REQUIRE(code->get_type() == ecma48_code::type_csi);
-    REQUIRE(code->csi->func == 'x');
+    REQUIRE(code->get_type() == ecma48_code::type_c1);
+
+    int final, params[8], param_count;
+    param_count = code->decode_csi(final, params, sizeof_array(params));
+    REQUIRE(param_count == 2);
+    REQUIRE(params[0] == 1);
+    REQUIRE(params[1] == 2);
+    REQUIRE(final == 'x');
 
     REQUIRE((code = iter.next()) != nullptr);
     REQUIRE(code->get_type() == ecma48_code::type_chars);
@@ -212,7 +217,6 @@ TEST_CASE("ecma48 split") {
 
     REQUIRE(iter.next() == nullptr);
 }
-#endif // MODE4
 
 TEST_CASE("ecma48 utf8") {
     const ecma48_code* code;
