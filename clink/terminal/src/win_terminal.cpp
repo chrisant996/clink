@@ -482,7 +482,7 @@ void win_terminal::write(const char* chars, int length)
         switch (code->get_type())
         {
         case ecma48_code::type_chars:
-            win_terminal_out::write(code->get_str(), code->get_length());
+            win_terminal_out::write(code->get_pointer(), code->get_length());
             break;
 
         case ecma48_code::type_c0:

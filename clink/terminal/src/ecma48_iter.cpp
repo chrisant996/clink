@@ -7,6 +7,8 @@
 #include <core/base.h>
 #include <core/str_tokeniser.h>
 
+#include <new.h>
+
 //------------------------------------------------------------------------------
 enum
 {
@@ -32,7 +34,11 @@ int ecma48_code::decode_csi(int& final, int* params, unsigned int max_params) co
         return -1;
 
     /* CSI P ... P I .... I F */
-    str_iter iter(get_str(), get_length());
+    str_iter iter(get_pointer(), get_length());
+
+    // Skip CSI
+    if (iter.next() == 0x1b)
+        iter.next();
 
     // Reserved? Then skip all Ps
     if (in_range(iter.peek(), 0x3c, 0x3f))
@@ -87,6 +93,7 @@ const ecma48_code* ecma48_iter::next()
     m_code.m_str = m_iter.get_pointer();
     m_code.m_length = 0;
 
+    const char* copy = m_iter.get_pointer();
     bool done = true;
     while (1)
     {
@@ -107,12 +114,29 @@ const ecma48_code* ecma48_iter::next()
         case ecma48_state_unknown:  done = next_unknown(c);  break;
         }
 
+        if (m_state.state != ecma48_state_char)
+        {
+            while (copy != m_iter.get_pointer())
+            {
+                m_state.buffer[m_state.count] = *copy++;
+                m_state.count += (m_state.count < sizeof_array(m_state.buffer) - 1);
+            }
+        }
+
         if (done)
             break;
     }
 
-    m_code.m_length = int(m_iter.get_pointer() - m_code.get_str());
-    m_state.state = ecma48_state_unknown;
+    if (m_state.state != ecma48_state_char)
+    {
+        m_code.m_str = m_state.buffer;
+        m_code.m_length = m_state.count;
+    }
+    else
+        m_code.m_length = int(m_iter.get_pointer() - m_code.get_pointer());
+
+    new (&m_state) ecma48_state();
+
     return (m_code.get_length() != 0) ? &m_code : nullptr;
 }
 
@@ -123,24 +147,20 @@ bool ecma48_iter::next_c1()
     int seven_bit = (m_code.get_code() <= 0x5f);
     m_code.m_code = (m_code.m_code & 0x1f) | 0x40;
 
-    const char* str_start = m_iter.get_pointer();
     switch (m_code.get_code())
     {
         case 0x50: /* dcs */
         case 0x5d: /* osc */
         case 0x5e: /* pm  */
         case 0x5f: /* apc */
-            m_code.m_str = str_start;
             m_state.state = ecma48_state_cmd_str;
             return false;
 
         case 0x5b: /* csi */
-            m_code.m_str = str_start;
             m_state.state = ecma48_state_csi_p;
             return false;
 
         case 0x58: /* sos */
-            m_code.m_str = str_start;
             m_state.state = ecma48_state_char_str;
             return false;
     }
@@ -198,7 +218,7 @@ bool ecma48_iter::next_cmd_str(int c)
     // Reset
     m_code.m_str = m_iter.get_pointer();
     m_code.m_length = 0;
-    m_state.state = ecma48_state_unknown;
+    new (&m_state) ecma48_state();
     return false;
 }
 
@@ -219,7 +239,7 @@ bool ecma48_iter::next_csi_f(int c)
     // Reset
     m_code.m_str = m_iter.get_pointer();
     m_code.m_length = 0;
-    m_state.state = ecma48_state_unknown;
+    new (&m_state) ecma48_state();
     return false;
 }
 
@@ -233,7 +253,7 @@ bool ecma48_iter::next_csi_p(int c)
     }
 
     m_state.state = ecma48_state_csi_f;
-    return false;
+    return next_csi_f(c);
 }
 
 //------------------------------------------------------------------------------
@@ -266,7 +286,7 @@ bool ecma48_iter::next_esc_st(int c)
 
     m_code.m_str = m_iter.get_pointer();
     m_code.m_length = 0;
-    m_state.state = ecma48_state_unknown;
+    new (&m_state) ecma48_state();
     return false;
 }
 

@@ -5,8 +5,6 @@
 
 #include <core/str_iter.h>
 
-// MODE4 : better support for progressive data, c1 codes (csi, osc, etc.)
-
 //------------------------------------------------------------------------------
 class ecma48_code
 {
@@ -30,7 +28,7 @@ public:
         c1_sos          = 0x58,
     };
 
-    const char*         get_str() const     { return m_str; }
+    const char*         get_pointer() const { return m_str; }
     unsigned int        get_length() const  { return m_length; }
     type                get_type() const    { return m_type; }
     unsigned int        get_code() const    { return m_code; }
@@ -50,7 +48,11 @@ private:
 //------------------------------------------------------------------------------
 struct ecma48_state
 {
+private:
+    friend class        ecma48_iter;
     int                 state = 0;
+    char                buffer[64];
+    int                 count = 0;
 };
 
 

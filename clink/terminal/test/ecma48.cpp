@@ -16,7 +16,7 @@ TEST_CASE("ecma48 chars") {
     ecma48_iter iter(input, g_state);
     REQUIRE((code = iter.next()) != nullptr);
     REQUIRE(code->get_type() == ecma48_code::type_chars);
-    REQUIRE(code->get_str() == input);
+    REQUIRE(code->get_pointer() == input);
     REQUIRE(code->get_length() == 6);
 
     REQUIRE(iter.next() == nullptr);
@@ -35,7 +35,7 @@ TEST_CASE("ecma48 c0") {
     REQUIRE((code = iter.next()) != nullptr);
     REQUIRE(code->get_type() == ecma48_code::type_chars);
     REQUIRE(code->get_length() == 1);
-    REQUIRE(code->get_str()[0] == ' ');
+    REQUIRE(code->get_pointer()[0] == ' ');
 
     REQUIRE((code = iter.next()) != nullptr);
     REQUIRE(code->get_type() == ecma48_code::type_c0);
@@ -99,7 +99,7 @@ TEST_CASE("ecma48 csi") {
 
     REQUIRE((code = iter.next()) != nullptr);
     REQUIRE(code->get_type() == ecma48_code::type_c1);
-    REQUIRE(code->get_length() == 1);
+    REQUIRE(code->get_length() == 3);
 
     param_count = code->decode_csi(final, params, sizeof_array(params));
     REQUIRE(final == 0x40);
@@ -107,7 +107,7 @@ TEST_CASE("ecma48 csi") {
 
     REQUIRE((code = iter.next()) != nullptr);
     REQUIRE(code->get_type() == ecma48_code::type_c1);
-    REQUIRE(code->get_length() == 2);
+    REQUIRE(code->get_length() == 4);
 
     param_count = code->decode_csi(final, params, sizeof_array(params));
     REQUIRE(final == 0x207e);
@@ -123,7 +123,7 @@ TEST_CASE("ecma48 csi params") {
     // ---
     ecma48_iter iter("\x1b[123\x7e", g_state);
     REQUIRE((code = iter.next()) != nullptr);
-    REQUIRE(code->get_length() == 4);
+    REQUIRE(code->get_length() == 6);
 
     param_count = code->decode_csi(final, params, sizeof_array(params));
     REQUIRE(param_count == 1);
@@ -132,7 +132,7 @@ TEST_CASE("ecma48 csi params") {
     // ---
     new (&iter) ecma48_iter("\x1b[1;12;123 \x40", g_state);
     REQUIRE((code = iter.next()) != nullptr);
-    REQUIRE(code->get_length() == 10);
+    REQUIRE(code->get_length() == 12);
 
     param_count = code->decode_csi(final, params, sizeof_array(params));
     REQUIRE(param_count == 3);
@@ -144,7 +144,7 @@ TEST_CASE("ecma48 csi params") {
     // ---
     new (&iter) ecma48_iter("\x1b[;@", g_state);
     REQUIRE((code = iter.next()) != nullptr);
-    REQUIRE(code->get_length() == 2);
+    REQUIRE(code->get_length() == 4);
 
     param_count = code->decode_csi(final, params, sizeof_array(params));
     REQUIRE(param_count == 2);
@@ -155,7 +155,7 @@ TEST_CASE("ecma48 csi params") {
     // ---
     new (&iter) ecma48_iter("\x1b[;;;;;;;;;;;;1;2;3;4;5 m", g_state);
     REQUIRE((code = iter.next()) != nullptr);
-    REQUIRE(code->get_length() == 23);
+    REQUIRE(code->get_length() == 25);
 
     param_count = code->decode_csi(final, params, sizeof_array(params));
     REQUIRE(param_count == sizeof_array(params));
@@ -168,7 +168,7 @@ TEST_CASE("ecma48 csi invalid") {
     REQUIRE((code = iter.next()) != nullptr);
     REQUIRE(code->get_type() == ecma48_code::type_c0);
     REQUIRE(code->get_code() == 1);
-    REQUIRE(code->get_str()[0] == 1);
+    REQUIRE(code->get_pointer()[0] == 1);
     REQUIRE(code->get_length() == 1);
 }
 
@@ -197,7 +197,7 @@ TEST_CASE("ecma48 split") {
     REQUIRE((code = iter.next()) != nullptr);
     REQUIRE(code->get_type() == ecma48_code::type_chars);
     REQUIRE(code->get_length() == 1);
-    REQUIRE(code->get_str()[0] == ' ');
+    REQUIRE(code->get_pointer()[0] == ' ');
 
     REQUIRE((code = iter.next()) != nullptr);
     REQUIRE(code->get_type() == ecma48_code::type_csi);
@@ -206,7 +206,7 @@ TEST_CASE("ecma48 split") {
     REQUIRE((code = iter.next()) != nullptr);
     REQUIRE(code->get_type() == ecma48_code::type_chars);
     REQUIRE(code->get_length() == 4);
-    REQUIRE(code->get_str()[0] == '@');
+    REQUIRE(code->get_pointer()[0] == '@');
 
     REQUIRE(iter.next() == nullptr);
 }
@@ -224,7 +224,7 @@ TEST_CASE("ecma48 utf8") {
     new (&iter) ecma48_iter("\xc2\x9bz", g_state);
     REQUIRE((code = iter.next()) != nullptr);
     REQUIRE(code->get_type() == ecma48_code::type_c1);
-    REQUIRE(code->get_length() == 1);
+    REQUIRE(code->get_length() == 3);
 
     int final, params[8], param_count;
     param_count = code->decode_csi(final, params, sizeof_array(params));
