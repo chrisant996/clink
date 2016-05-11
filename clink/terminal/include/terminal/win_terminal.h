@@ -6,6 +6,8 @@
 #include "terminal.h"
 #include "ecma48_iter.h"
 
+template <typename T> class array;
+
 //------------------------------------------------------------------------------
 class win_terminal_in
 {
@@ -68,10 +70,10 @@ public:
     virtual int     get_rows() const override;
 
 private:
-    void            write_csi(const ecma48_code& code);
-    void            write_sgr(const class /* MODE4 */ ecma48_csi& csi);
+    void            write_c1(const ecma48_code& code);
+    void            write_sgr(const array<int>& params);
     void            write_c0(int c0);
-    void            check_sgr_support();
+    void            check_c1_support();
     ecma48_state    m_state;
-    bool            m_enable_sgr = true;
+    bool            m_enable_c1 = true;
 };

@@ -4,6 +4,7 @@
 #include "pch.h"
 #include "win_terminal.h"
 
+#include <core/array.h>
 #include <core/base.h>
 #include <core/log.h>
 #include <core/settings.h>
@@ -438,22 +439,27 @@ int win_terminal::get_rows() const
 }
 
 //------------------------------------------------------------------------------
-void win_terminal::write_csi(const ecma48_code& code)
+void win_terminal::write_c1(const ecma48_code& code)
 {
-#if MODE4
-    const ecma48_csi& csi = *(code.csi);
-    switch (csi.func)
+    if (!m_enable_c1)
     {
-    case 'm':
-        if (!m_enable_sgr)
-            break;
-
-        write_sgr(csi);
+        win_terminal_out::write(code.get_pointer(), code.get_length()); 
         return;
     }
 
-    win_terminal_out::write(code.str, code.length); 
-#endif // MODE4
+    if (code.get_code() != ecma48_code::c1_csi)
+        return;
+
+    int final, params[32], param_count;
+    param_count = code.decode_csi(final, params, sizeof_array(params));
+    const array<int> params_array(params, param_count);
+
+    switch (final)
+    {
+    case 'm':
+        write_sgr(params_array);
+        break;
+    }
 }
 
 //------------------------------------------------------------------------------
@@ -489,17 +495,15 @@ void win_terminal::write(const char* chars, int length)
             write_c0(code->get_code());
             break;
 
-        /* MODE4
-        case ecma48_code::type_csi:
-            write_csi(*code);
+        case ecma48_code::type_c1:
+            write_c1(*code);
             break;
-        */
         }
     }
 }
 
 //------------------------------------------------------------------------------
-void win_terminal::check_sgr_support()
+void win_terminal::check_c1_support()
 {
     // Check for the presence of known third party tools that also provide ANSI
     // escape code support (MODE4)
@@ -517,20 +521,18 @@ void win_terminal::check_sgr_support()
         if (GetModuleHandle(dll_name) != nullptr)
         {
             LOG("Disabling ANSI support. Found '%s'", dll_name);
-            m_enable_sgr = false;
+            m_enable_c1 = false;
             return;
         }
     }
 
     // Give the user the option to disable ANSI support.
     if (!g_ansi.get())
-        m_enable_sgr = false;
-
-    return;
+        m_enable_c1 = false;
 }
 
 //------------------------------------------------------------------------------
-void win_terminal::write_sgr(const class ecma48_csi& csi)
+void win_terminal::write_sgr(const array<int>& params)
 {
 #if MODE4
     static const unsigned char sgr_to_attr[] = { 0, 4, 2, 6, 1, 5, 3, 7 };
