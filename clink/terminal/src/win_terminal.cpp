@@ -527,8 +527,7 @@ void win_terminal::check_c1_support()
     }
 
     // Give the user the option to disable ANSI support.
-    if (!g_ansi.get())
-        m_enable_c1 = false;
+    m_enable_c1 = !g_ansi.get();
 }
 
 //------------------------------------------------------------------------------
