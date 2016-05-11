@@ -25,7 +25,7 @@ public:
     typedef iter_impl<1>    iter;
     typedef iter_impl<-1>   riter;
 
-                    array(T* ptr, unsigned int size, unsigned int capacity);
+                    array(T* ptr, unsigned int size, unsigned int capacity=0);
     iter            begin() const    { return m_ptr; }
     iter            end() const      { return m_ptr + m_size; }
     riter           rbegin() const   { return m_ptr + m_size - 1; }
@@ -51,7 +51,7 @@ template <typename T>
 array<T>::array(T* ptr, unsigned int size, unsigned int capacity)
 : m_ptr(ptr)
 , m_size(size)
-, m_capacity(capacity)
+, m_capacity(capacity ? capacity : size)
 {
 }
 
