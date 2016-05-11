@@ -538,10 +538,8 @@ void win_terminal::write_sgr(const array<int>& params)
 
     // Process each code that is supported.
     unsigned char attr = get_attr();
-    for (int i = 0; i < csi.param_count; ++i)
+    for (int param : params)
     {
-        unsigned int param = csi.params[i];
-
         if (param == 0) // reset
         {
             attr = get_default_attr();
