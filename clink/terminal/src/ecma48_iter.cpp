@@ -89,9 +89,7 @@ ecma48_iter::ecma48_iter(const char* s, ecma48_state& state, int len)
 //------------------------------------------------------------------------------
 const ecma48_code* ecma48_iter::next()
 {
-    m_code.m_type = ecma48_code::type_chars;
     m_code.m_str = m_iter.get_pointer();
-    m_code.m_length = 0;
 
     const char* copy = m_iter.get_pointer();
     bool done = true;
@@ -99,8 +97,12 @@ const ecma48_code* ecma48_iter::next()
     {
         int c = m_iter.peek();
         if (!c)
+        {
             if (m_state.state != ecma48_state_char)
                 return nullptr;
+            else
+                break;
+        }
 
         switch (m_state.state)
         {
@@ -313,6 +315,7 @@ bool ecma48_iter::next_unknown(int c)
         return next_c1();
     }
 
+    m_code.m_type = ecma48_code::type_chars;
     m_state.state = ecma48_state_char;
     return false;
 }

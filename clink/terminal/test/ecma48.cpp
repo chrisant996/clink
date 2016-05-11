@@ -172,7 +172,6 @@ TEST_CASE("ecma48 csi invalid") {
     REQUIRE(code->get_length() == 1);
 }
 
-#if 0 // MODE4
 TEST_CASE("ecma48 stream") {
     const ecma48_code* code;
 
@@ -181,15 +180,18 @@ TEST_CASE("ecma48 stream") {
 
     new (&iter) ecma48_iter("1m", g_state);
     REQUIRE((code = iter.next()) != nullptr);
+    REQUIRE(code->get_type() == ecma48_code::type_c1);
+    REQUIRE(code->get_length() == 7);
 
-    REQUIRE(code->get_type() == ecma48_code::type_csi);
-    REQUIRE(code->csi->func == 'm');
-    REQUIRE(code->csi->param_count == 2);
-    REQUIRE(code->csi->params[0] == 1);
-    REQUIRE(code->csi->params[1] == 21);
-    REQUIRE(code->get_length() == 2);
+    int final, params[8], param_count;
+    param_count = code->decode_csi(final, params, sizeof_array(params));
+    REQUIRE(param_count == 2);
+    REQUIRE(params[0] == 1);
+    REQUIRE(params[1] == 21);
+    REQUIRE(final == 'm');
 }
 
+#if 0 // MODE4
 TEST_CASE("ecma48 split") {
     const ecma48_code* code;
 
