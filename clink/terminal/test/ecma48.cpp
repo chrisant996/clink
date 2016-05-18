@@ -91,7 +91,7 @@ TEST_CASE("ecma48 icf") {
     REQUIRE(iter.next() == nullptr);
 }
 
-TEST_CASE("ecma48 csi") {
+TEST_CASE("ecma48 c1 csi") {
     const ecma48_code* code;
     int final, params[8], param_count;
 
@@ -116,7 +116,7 @@ TEST_CASE("ecma48 csi") {
     REQUIRE(iter.next() == nullptr);
 }
 
-TEST_CASE("ecma48 csi params") {
+TEST_CASE("ecma48 c1 csi params") {
     const ecma48_code* code;
     int final, params[8], param_count;
 
@@ -161,7 +161,7 @@ TEST_CASE("ecma48 csi params") {
     REQUIRE(param_count == sizeof_array(params));
 }
 
-TEST_CASE("ecma48 csi invalid") {
+TEST_CASE("ecma48 c1 csi invalid") {
     const ecma48_code* code;
 
     ecma48_iter iter("\x1b[1;2\01", g_state);
@@ -172,7 +172,7 @@ TEST_CASE("ecma48 csi invalid") {
     REQUIRE(code->get_length() == 1);
 }
 
-TEST_CASE("ecma48 stream") {
+TEST_CASE("ecma48 c1 csi stream") {
     const ecma48_code* code;
     const char input[] = "\x1b[1;21m";
 
@@ -195,7 +195,7 @@ TEST_CASE("ecma48 stream") {
     }
 }
 
-TEST_CASE("ecma48 split") {
+TEST_CASE("ecma48 c1 csi split") {
     const ecma48_code* code;
 
     ecma48_iter iter(" \x1b[1;2x@@@@", g_state);
@@ -220,6 +220,38 @@ TEST_CASE("ecma48 split") {
     REQUIRE(code->get_pointer()[0] == '@');
 
     REQUIRE(iter.next() == nullptr);
+}
+
+TEST_CASE("ecma48 c1 !csi") {
+    const ecma48_code* code;
+
+    const char* terminators[] = { "\x1b\\", "\xc2\x9c" };
+    for (int i = 0, n = sizeof_array(terminators); i < n; ++i)
+    {
+        const char* announcers[] = {
+            "\x1b\x5f", "\xc2\x9f",
+            "\x1b\x50", "\xc2\x90",
+            "\x1b\x5d", "\xc2\x9d",
+            "\x1b\x5e", "\xc2\x9e",
+            "\x1b\x58", "\xc2\x98",
+        };
+        for (int j = 0, m = sizeof_array(announcers); j < m; ++j)
+        {
+            str<> input;
+            input << announcers[j];
+            input << "xyz";
+            input << terminators[i];
+
+            ecma48_iter iter(input.c_str(), g_state);
+            REQUIRE((code = iter.next()) != nullptr);
+            REQUIRE(code->get_length() == input.length());
+            str<> ctrl_str;
+            code->get_c1_str(ctrl_str);
+            REQUIRE(ctrl_str.equals("xyz"));
+
+            REQUIRE(iter.next() == nullptr);
+        }
+    }
 }
 
 TEST_CASE("ecma48 utf8") {

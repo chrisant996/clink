@@ -77,6 +77,34 @@ int ecma48_code::decode_csi(int& final, int* params, unsigned int max_params) co
     return count;
 }
 
+//------------------------------------------------------------------------------
+bool ecma48_code::get_c1_str(str_base& out) const
+{
+    if (get_type() != type_c1 || get_code() == c1_csi)
+        return false;
+
+    str_iter iter(get_pointer(), get_length());
+
+    // Skip announce
+    if (iter.next() == 0x1b)
+        iter.next();
+
+    const char* start = iter.get_pointer();
+
+    // Skip until terminator
+    while (int c = iter.peek())
+    {
+        if (c == 0x9c || c == 0x1b)
+            break;
+        
+        iter.next();
+    }
+
+    out.clear();
+    out.concat(start, int(iter.get_pointer() - start));
+    return true;
+}
+
 
 
 //------------------------------------------------------------------------------
@@ -146,7 +174,6 @@ const ecma48_code* ecma48_iter::next()
 bool ecma48_iter::next_c1()
 {
     // Convert c1 code to its 7-bit version.
-    int seven_bit = (m_code.get_code() <= 0x5f);
     m_code.m_code = (m_code.m_code & 0x1f) | 0x40;
 
     switch (m_code.get_code())
@@ -284,7 +311,10 @@ bool ecma48_iter::next_esc(int c)
 bool ecma48_iter::next_esc_st(int c)
 {
     if (c == 0x5c)
+    {
+        m_iter.next();
         return true;
+    }
 
     m_code.m_str = m_iter.get_pointer();
     m_code.m_length = 0;

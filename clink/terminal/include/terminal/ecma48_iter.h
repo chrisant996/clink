@@ -33,6 +33,7 @@ public:
     type                get_type() const    { return m_type; }
     unsigned int        get_code() const    { return m_code; }
     int                 decode_csi(int& final, int* params, unsigned int max_params) const;
+    bool                get_c1_str(str_base& out) const;
 
 private:
     friend class        ecma48_iter;
