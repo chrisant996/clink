@@ -4,6 +4,7 @@
 #include "pch.h"
 #include "rl_backend.h"
 
+#include <core/base.h>
 #include <terminal/ecma48_iter.h>
 #include <terminal/terminal.h>
 
@@ -186,7 +187,7 @@ unsigned int rl_backend::get_cursor() const
 //------------------------------------------------------------------------------
 unsigned int rl_backend::set_cursor(unsigned int pos)
 {
-    return (pos <= rl_end) ? rl_point = pos : rl_point = rl_end;
+    return rl_point = min<unsigned int>(pos, rl_end);
 }
 
 //------------------------------------------------------------------------------
