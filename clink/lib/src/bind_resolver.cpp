@@ -53,9 +53,6 @@ void bind_resolver::resolve(editor_backend* backend, int id)
 {
     reset();
 
-    if (backend == nullptr)
-        return;
-
     m_backend = backend;
     m_id = id;
     m_resolved = true;
