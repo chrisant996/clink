@@ -75,10 +75,6 @@ rl_backend::rl_backend(const char* shell_name)
     // Disable completion and match display.
     rl_completion_entry_function = [](const char*, int) -> char* { return nullptr; };
     rl_completion_display_matches_hook = [](char**, int, int) {};
-
-    /* MODE4
-    //history_inhibit_expansion_function = history_expand_control;
-    */
 }
 
 //------------------------------------------------------------------------------
