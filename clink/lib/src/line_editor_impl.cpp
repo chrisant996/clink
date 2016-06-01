@@ -41,8 +41,8 @@ line_editor_impl::line_editor_impl(const desc& desc)
 , m_begun(false)
 , m_prev_key(~0u)
 {
-    add_backend(*m_desc.backend);
-    m_binder.set_default_backend(*m_desc.backend);
+    if (m_desc.backend != nullptr)
+        add_backend(*m_desc.backend);
 }
 
 //------------------------------------------------------------------------------
