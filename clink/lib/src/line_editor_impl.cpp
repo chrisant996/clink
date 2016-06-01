@@ -16,6 +16,13 @@
 //------------------------------------------------------------------------------
 line_editor* line_editor_create(const line_editor::desc& desc)
 {
+    // Check there's at least a terminal.
+    if (desc.terminal == nullptr)
+        return nullptr;
+
+    if (desc.buffer == nullptr)
+        return nullptr;
+
     return new line_editor_impl(desc);
 }
 
