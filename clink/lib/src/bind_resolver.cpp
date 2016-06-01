@@ -15,7 +15,7 @@ void bind_resolver::reset()
 //------------------------------------------------------------------------------
 bool bind_resolver::is_resolved() const
 {
-    return m_backend != nullptr;
+    return m_resolved;
 }
 
 //------------------------------------------------------------------------------
@@ -58,4 +58,5 @@ void bind_resolver::resolve(editor_backend* backend, int id)
 
     m_backend = backend;
     m_id = id;
+    m_resolved = true;
 }

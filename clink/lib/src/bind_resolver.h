@@ -23,6 +23,7 @@ private:
 
 private:
     editor_backend* m_backend = nullptr;
-    int             m_id = -1;
     int             m_node_index = -1;
+    short           m_id = -1;
+    bool            m_resolved = false;
 };
