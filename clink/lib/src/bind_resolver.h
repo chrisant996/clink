@@ -5,8 +5,6 @@
 
 class editor_backend;
 
-// MODE4 : shouldn't be public
-
 //------------------------------------------------------------------------------
 class bind_resolver
 {
