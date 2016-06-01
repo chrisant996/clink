@@ -13,7 +13,6 @@ class binder
 {
 public:
                         binder();
-    void                set_default_backend(editor_backend& backend);
     bool                bind(const char* chord, editor_backend& backend, unsigned char id);
     void                update_resolver(unsigned char key, bind_resolver& resolver);
 
@@ -50,6 +49,5 @@ private:
     backends            m_backends;
     node                m_root;
     node                m_nodes[127]; // node.sibling.bits - 1
-    int                 m_default_backend; // MODE4 : no place here?
     char                m_next_node;
 };

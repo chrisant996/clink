@@ -10,15 +10,8 @@
 //------------------------------------------------------------------------------
 binder::binder()
 : m_root({})
-, m_default_backend(-1)
 , m_next_node(0)
 {
-}
-
-//------------------------------------------------------------------------------
-void binder::set_default_backend(editor_backend& backend)
-{
-    m_default_backend = add_backend(backend);
 }
 
 //------------------------------------------------------------------------------
@@ -77,7 +70,7 @@ void binder::update_resolver(unsigned char key, bind_resolver& resolver)
     }
 
     // Unbound, or something went wrong...
-    resolver.resolve(get_backend(m_default_backend), -1);
+    resolver.resolve(nullptr, -1);
 }
 
 //------------------------------------------------------------------------------
