@@ -20,7 +20,7 @@ public:
 
         // Optional.
         editor_backend* backend = nullptr;
-        const char*     prompt = "clink $";
+        const char*     prompt = "clink $ ";
         const char*     command_delims; // MODE4
         const char*     quote_pair = "\"";
         const char*     word_delims = " \"";
