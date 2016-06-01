@@ -14,15 +14,18 @@ class line_editor
 public:
     struct desc
     {
-        const char*     prompt;
+        // Required.
+        terminal*       terminal = nullptr;
+        editor_backend* backend = nullptr;
+        line_buffer*    buffer = nullptr;
+
+        // Optional.
+        const char*     prompt = "clink $";
         const char*     command_delims; // MODE4
-        const char*     quote_pair;
-        const char*     word_delims;
-        const char*     partial_delims;
-        const char*     auto_quote_chars;
-        terminal*       terminal;
-        editor_backend* backend;
-        line_buffer*    buffer;
+        const char*     quote_pair = "\"";
+        const char*     word_delims = " \"";
+        const char*     partial_delims = "\\/";
+        const char*     auto_quote_chars = "";
     };
 
     virtual             ~line_editor() {}
