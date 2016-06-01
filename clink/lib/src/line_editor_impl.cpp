@@ -39,7 +39,6 @@ line_editor_impl::line_editor_impl(const desc& desc)
 : m_desc(desc)
 , m_initialised(false)
 , m_begun(false)
-, m_prev_key(~0u)
 {
     if (m_desc.backend != nullptr)
         add_backend(*m_desc.backend);
@@ -73,6 +72,7 @@ void line_editor_impl::begin_line()
 
     m_bind_resolver.reset();
     m_keys_size = 0;
+    m_prev_key = ~0u;
 
     match_pipeline pipeline(m_matches);
     pipeline.reset();
