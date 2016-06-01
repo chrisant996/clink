@@ -181,16 +181,22 @@ void line_editor_impl::dispatch()
         return;
 
     m_keys[m_keys_size] = '\0';
-
-    int id = m_bind_resolver.get_id();
-
-    auto* buffer = m_desc.buffer;
-    line_state line = { m_words, buffer->get_buffer(), buffer->get_cursor() };
-    editor_backend::context context = make_context(line);
-    editor_backend* backend = m_bind_resolver.get_backend();
-    editor_backend::result result = backend->on_input(m_keys, id, context);
-
     m_keys_size = 0;
+
+    editor_backend* backend = m_bind_resolver.get_backend();
+    backend = (backend != nullptr) ? backend : m_desc.backend;
+
+    editor_backend::result result(editor_backend::result::next);
+    if (backend != nullptr)
+    {
+        int id = m_bind_resolver.get_id();
+
+        auto* buffer = m_desc.buffer;
+        line_state line = { m_words, buffer->get_buffer(), buffer->get_cursor() };
+        editor_backend::context context = make_context(line);
+
+        result = backend->on_input(m_keys, id, context);
+    }
 
     // MODE4 : magic shifts and masks
     unsigned char value = result.value & 0xff;
