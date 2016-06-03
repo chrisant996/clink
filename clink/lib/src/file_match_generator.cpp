@@ -10,13 +10,13 @@
 #include <core/path.h>
 #include <core/settings.h>
 
-static setting_bool g_hidden(
+static setting_bool g_glob_hidden(
     "files.hidden",
     "Include hidden files",
     "", // MODE4
     true);
 
-static setting_bool g_system(
+static setting_bool g_glob_system(
     "files.system",
     "Include system files",
     "", // MODE4
@@ -35,8 +35,8 @@ match_generator& file_match_generator()
             buffer << "*";
 
             globber globber(buffer.c_str());
-            globber.hidden(g_hidden.get());
-            globber.system(g_system.get());
+            globber.hidden(g_glob_hidden.get());
+            globber.system(g_glob_system.get());
             while (globber.next(buffer, false))
                 builder.add_match(buffer.c_str());
 
