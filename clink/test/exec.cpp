@@ -4,7 +4,6 @@
 #include "pch.h"
 #include "fs_fixture.h"
 #include "env_fixture.h"
-#include "match_generator_tester.h"
 
 #if MODE4
 

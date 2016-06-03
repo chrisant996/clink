@@ -3,30 +3,25 @@
 
 #include "pch.h"
 #include "fs_fixture.h"
-#include "match_generator_tester.h"
 
 #include <core/str_compare.h>
 #include <lib/match_generator.h>
-
-//------------------------------------------------------------------------------
-struct file_test
-{
-    typedef match_generator_tester<file_test> tester;
-    operator match_generator& () { return file_match_generator(); }
-};
 
 //------------------------------------------------------------------------------
 TEST_CASE("File match generator") {
     fs_fixture fs;
 
     SECTION("File system matches") {
+#if 0
         file_test::tester(
             "",
             "", "case_map-1", "case_map_2", "dir1\\", "dir2\\",
             "file1", "file2", nullptr
         );
+#endif // 0
     }
 
+#if MODE4
     SECTION("Single file") {
         file_test::tester("file1", "file1", nullptr);
     }
@@ -64,4 +59,5 @@ TEST_CASE("File match generator") {
         REQUIRE(result.get_match_count() == 1);
     }
     */
+#endif // MODE4
 }
