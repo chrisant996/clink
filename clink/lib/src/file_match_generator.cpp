@@ -10,13 +10,13 @@
 #include <core/path.h>
 #include <core/settings.h>
 
-static setting_bool g_glob_hidden(
+setting_bool g_glob_hidden(
     "files.hidden",
     "Include hidden files",
     "", // MODE4
     true);
 
-static setting_bool g_glob_system(
+setting_bool g_glob_system(
     "files.system",
     "Include system files",
     "", // MODE4

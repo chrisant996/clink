@@ -7,7 +7,14 @@
 #include <core/base.h>
 #include <core/globber.h>
 #include <core/os.h>
+#include <core/settings.h>
 #include <core/str.h>
+
+//------------------------------------------------------------------------------
+extern setting_bool g_glob_hidden;
+extern setting_bool g_glob_system;
+
+
 
 //------------------------------------------------------------------------------
 static const char* get_string(lua_State* state, int index)
@@ -142,6 +149,8 @@ static int glob_impl(lua_State* state, bool dirs_only)
 
     globber globber(mask);
     globber.files(!dirs_only);
+    globber.hidden(g_glob_hidden.get());
+    globber.system(g_glob_system.get());
 
     int i = 1;
     str<288> file;
