@@ -25,7 +25,7 @@ public:
         const char*     quote_pair = "\"";
         const char*     word_delims = " \"";
         const char*     partial_delims = "\\/";
-        const char*     auto_quote_chars = "";
+        const char*     auto_quote_chars = " ";
     };
 
     virtual             ~line_editor() {}
