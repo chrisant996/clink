@@ -28,7 +28,7 @@ public:
         const char*     auto_quote_chars = " ";
     };
 
-    virtual             ~line_editor() {}
+    virtual             ~line_editor() = default;
     virtual bool        add_backend(editor_backend& backend) = 0;
     virtual bool        add_generator(match_generator& generator) = 0;
     virtual bool        get_line(char* out, int out_size) = 0;

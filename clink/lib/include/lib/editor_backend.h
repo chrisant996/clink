@@ -46,7 +46,7 @@ public:
 
     typedef bool            (binder_func)(const char* chord, unsigned char id);
 
-    virtual                 ~editor_backend() {}
+    virtual                 ~editor_backend() = default;
     virtual void            bind(binder_func* func) = 0;
     virtual void            begin_line(const char* prompt, const context& context) = 0;
     virtual void            end_line() = 0;

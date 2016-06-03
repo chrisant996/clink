@@ -27,7 +27,7 @@ class terminal
     , public terminal_out
 {
 public:
-    virtual         ~terminal() {}
+    virtual         ~terminal() = default;
     virtual void    begin() = 0;
     virtual void    end() = 0;
 

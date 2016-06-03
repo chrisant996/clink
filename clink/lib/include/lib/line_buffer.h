@@ -7,6 +7,7 @@
 class line_buffer
 {
 public:
+    virtual                 ~line_buffer() = default;
     virtual const char*     get_buffer() const = 0;
     virtual unsigned int    get_cursor() const = 0;
     virtual unsigned int    set_cursor(unsigned int pos) = 0;
