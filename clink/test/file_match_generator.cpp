@@ -3,51 +3,58 @@
 
 #include "pch.h"
 #include "fs_fixture.h"
+#include "line_editor_tester.h"
 
 #include <core/str_compare.h>
+#include <lib/line_editor.h>
 #include <lib/match_generator.h>
 
 //------------------------------------------------------------------------------
 TEST_CASE("File match generator") {
     fs_fixture fs;
+    line_editor_tester tester;
+    tester.get_editor()->add_generator(file_match_generator());
 
     SECTION("File system matches") {
-#if 0
-        file_test::tester(
-            "",
-            "", "case_map-1", "case_map_2", "dir1\\", "dir2\\",
-            "file1", "file2", nullptr
-        );
-#endif // 0
+        tester.set_input("");
+        tester.set_expected_matches("case_map-1", "case_map_2", "dir1\\",
+            "dir2\\", "file1", "file2");
+        tester.run();
     }
 
-#if MODE4
     SECTION("Single file") {
-        file_test::tester("file1", "file1", nullptr);
+        tester.set_input("file1");
+        tester.set_expected_matches("file1");
+        tester.run();
     }
 
     SECTION("Single dir") {
-        file_test::tester("dir1", "dir1\\", nullptr);
+        tester.set_input("dir1");
+        tester.set_expected_matches("dir1\\");
+        tester.run();
     }
 
     SECTION("Dir slash flip") {
-        file_test::tester(
-            "dir1/",
-            "dir1\\", "dir1\\only", "dir1\\file1", "dir1\\file2", nullptr
-        );
+        tester.set_input("dir1/");
+        tester.set_expected_matches("only", "file1", "file2");
+        //tester.set_expected_output("dir1\\"); // MODE4
+        tester.run();
     }
 
+#if 0
     SECTION("Path slash flip") {
-        file_test::tester("dir1/on", "dir1\\only", nullptr);
+        tester.set_input("dir1/on")
+        //tester.set_expected_output("dir1\\only"); // MODE4
+        tester.run();
     }
+#endif // 0
 
     SECTION("Case mapping matches") {
         str_compare_scope _(str_compare_scope::relaxed);
 
-        file_test::tester(
-            "case-m",
-            "case_map", "case_map-1", "case_map_2", nullptr
-        );
+        tester.set_input("case-m");
+        tester.set_expected_matches("case_map-1", "case_map_2");
+        //tester.set_expected_output("case_map"); // MODE4
+        tester.run();
     }
-#endif // MODE4
 }
