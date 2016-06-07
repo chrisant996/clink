@@ -49,15 +49,5 @@ TEST_CASE("File match generator") {
             "case_map", "case_map-1", "case_map_2", nullptr
         );
     }
-
-    /*
-    SECTION("Case mapping complex") {
-        file_test::tester(
-            "cmd case_map-",
-            expect(result, "cmd case_map-", nullptr
-        );
-        REQUIRE(result.get_match_count() == 1);
-    }
-    */
 #endif // MODE4
 }
