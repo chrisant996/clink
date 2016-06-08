@@ -40,6 +40,12 @@ line_editor_tester::line_editor_tester()
 }
 
 //------------------------------------------------------------------------------
+line_editor_tester::~line_editor_tester()
+{
+    line_editor_destroy(m_editor);
+}
+
+//------------------------------------------------------------------------------
 line_editor* line_editor_tester::get_editor() const
 {
     return m_editor;

@@ -54,6 +54,7 @@ class line_editor_tester
 {
 public:
                                 line_editor_tester();
+                                ~line_editor_tester();
     line_editor*                get_editor() const;
     void                        set_input(const char* input);
     template <class ...T> void  set_expected_matches(T... t); // T must be const char*
