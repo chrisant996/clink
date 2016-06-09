@@ -18,10 +18,6 @@ int testbed(int, char**)
     editor_backend* ui = classic_match_ui_create();
 
     line_editor::desc desc = {};
-    desc.prompt = "testbed $ ";
-    desc.quote_pair = "\"";
-    desc.word_delims = " \t=";
-    desc.partial_delims = "\\/:";
     desc.terminal = &terminal;
     line_editor* editor = line_editor_create(desc);
     editor->add_backend(*ui);
