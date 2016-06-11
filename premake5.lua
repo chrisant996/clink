@@ -114,6 +114,7 @@ solution("clink")
     platforms({"x32", "x64"})
     location(to)
 
+    characterset("MBCS")
     flags("Symbols")
     flags("StaticRuntime")
     defines("HAVE_CONFIG_H")
