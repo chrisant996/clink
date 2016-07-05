@@ -22,7 +22,7 @@ public:
         const char*     prompt = "clink $ ";
         const char*     command_delims; // MODE4
         const char*     quote_pair = "\"";
-        const char*     word_delims = " \"";
+        const char*     word_delims = " \t";
         const char*     partial_delims = "\\/";
         const char*     auto_quote_chars = " ";
     };
