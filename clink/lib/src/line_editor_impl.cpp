@@ -117,13 +117,12 @@ bool line_editor_impl::get_line(char* out, int out_size)
     if (check_flag(flag_editing))
         end_line();
 
-    if (const char* line = m_desc.buffer->get_buffer())
-    {
-        str_base(out, out_size).copy(line);
-        return true;
-    }
+    if (check_flag(flag_eof))
+        return false;
 
-    return false;
+    const char* line = m_buffer.get_buffer();
+    str_base(out, out_size).copy(line);
+    return true;
 }
 
 //------------------------------------------------------------------------------
@@ -202,6 +201,11 @@ void line_editor_impl::dispatch()
     unsigned char value = result.value & 0xff;
     switch (value)
     {
+    case editor_backend::result::eof:
+        set_flag(flag_eof);
+        end_line();
+        break;
+
     case editor_backend::result::done:
         end_line();
         break;

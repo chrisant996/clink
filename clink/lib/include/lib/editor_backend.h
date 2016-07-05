@@ -18,6 +18,7 @@ public:
             next,
             redraw,
             done,
+            eof,
             _count_v,
         };
 
