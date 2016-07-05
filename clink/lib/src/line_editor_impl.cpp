@@ -37,8 +37,7 @@ void line_editor_destroy(line_editor* editor)
 //------------------------------------------------------------------------------
 line_editor_impl::line_editor_impl(const desc& desc)
 : m_desc(desc)
-, m_initialised(false)
-, m_begun(false)
+, m_flags(0)
 {
     if (m_desc.backend != nullptr)
         add_backend(*m_desc.backend);
@@ -47,7 +46,7 @@ line_editor_impl::line_editor_impl(const desc& desc)
 //------------------------------------------------------------------------------
 void line_editor_impl::initialise()
 {
-    if (m_initialised)
+    if (check_flag(flag_init))
         return;
 
     static binder* s_binder;          // MODE4
@@ -62,13 +61,14 @@ void line_editor_impl::initialise()
         });
     }
 
-    m_initialised = true;
+    set_flag(flag_init);
 }
 
 //------------------------------------------------------------------------------
 void line_editor_impl::begin_line()
 {
-    m_begun = true;
+    clear_flag(~flag_init);
+    set_flag(flag_editing);
 
     m_bind_resolver.reset();
     m_keys_size = 0;
@@ -94,7 +94,7 @@ void line_editor_impl::end_line()
 
     m_desc.terminal->end();
 
-    m_begun = false;
+    clear_flag(flag_editing);
 }
 
 //------------------------------------------------------------------------------
@@ -114,7 +114,7 @@ bool line_editor_impl::add_generator(match_generator& generator)
 //------------------------------------------------------------------------------
 bool line_editor_impl::get_line(char* out, int out_size)
 {
-    if (m_begun)
+    if (check_flag(flag_editing))
         end_line();
 
     if (const char* line = m_desc.buffer->get_buffer())
@@ -139,10 +139,10 @@ bool line_editor_impl::edit(char* out, int out_size)
 //------------------------------------------------------------------------------
 bool line_editor_impl::update()
 {
-    if (!m_initialised)
+    if (!check_flag(flag_init))
         initialise();
 
-    if (!m_begun)
+    if (!check_flag(flag_editing))
     {
         begin_line();
         update_internal();
@@ -158,7 +158,7 @@ bool line_editor_impl::update()
     dispatch();
     m_desc.buffer->draw();
 
-    if (!m_begun)
+    if (!check_flag(flag_editing))
         return false;
 
     if (!m_bind_resolver.is_resolved())
@@ -337,6 +337,24 @@ void line_editor_impl::accept_match(unsigned int index)
 editor_backend::context line_editor_impl::make_context(const line_state& line) const
 {
     return { *m_desc.terminal, *m_desc.buffer, line, m_matches };
+}
+
+//------------------------------------------------------------------------------
+void line_editor_impl::set_flag(unsigned char flag)
+{
+    m_flags |= flag;
+}
+
+//------------------------------------------------------------------------------
+void line_editor_impl::clear_flag(unsigned char flag)
+{
+    m_flags &= ~flag;
+}
+
+//------------------------------------------------------------------------------
+bool line_editor_impl::check_flag(unsigned char flag) const
+{
+    return ((m_flags & flag) != 0);
 }
 
 //------------------------------------------------------------------------------

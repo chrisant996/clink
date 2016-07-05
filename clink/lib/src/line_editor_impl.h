@@ -30,6 +30,14 @@ private:
     typedef fixed_array<match_generator*, 32>   generators;
     typedef fixed_array<word, 72>               words;
 
+    enum flags : unsigned char
+    {
+        flag_init       = 1 << 0,
+        flag_editing    = 1 << 1,
+        flag_done       = 1 << 2,
+        flag_eof        = 1 << 3,
+    };
+
     void                initialise();
     void                begin_line();
     void                end_line();
@@ -39,6 +47,9 @@ private:
     void                dispatch();
     void                accept_match(unsigned int index);
     backend::context    make_context(const line_state& line) const;
+    void                set_flag(unsigned char flag);
+    void                clear_flag(unsigned char flag);
+    bool                check_flag(unsigned char flag) const;
     char                m_keys[8];
     desc                m_desc;
     backends            m_backends;
@@ -49,6 +60,5 @@ private:
     matches_impl        m_matches;
     unsigned int        m_prev_key;
     unsigned char       m_keys_size;
-    bool                m_begun;
-    bool                m_initialised;
+    unsigned char       m_flags;
 };
