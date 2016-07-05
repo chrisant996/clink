@@ -11,9 +11,8 @@
 class line_editor;
 
 //------------------------------------------------------------------------------
-class test_termbuf
+class test_terminal
     : public terminal
-    , public line_buffer
 {
 public:
     bool                    has_input() const { return (m_read == nullptr) ? false : (*m_read != '\0'); }
@@ -32,15 +31,6 @@ public:
     /* terminal */
     virtual void            begin() override {}
     virtual void            end() override {}
-
-    /* line_buffer */
-    virtual const char*     get_buffer() const override { return m_input; }
-    virtual unsigned int    get_cursor() const override { return int(m_read - m_input); }
-    virtual unsigned int    set_cursor(unsigned int pos) override { return pos; }
-    virtual bool            insert(const char* text) override { return true; }
-    virtual bool            remove(unsigned int from, unsigned int to) override { return true; }
-    virtual void            draw() override {}
-    virtual void            redraw() override {}
 
 private:
     const char*             m_input = nullptr;
@@ -63,7 +53,7 @@ public:
 
 private:
     void                        expected_matches_impl(int dummy, ...);
-    test_termbuf                m_test_termbuf;
+    test_terminal               m_test_terminal;
     std::vector<const char*>    m_expected_matches;
     const char*                 m_input = nullptr;
     const char*                 m_expected_output = nullptr;

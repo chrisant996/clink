@@ -189,6 +189,8 @@ project("clink_lib")
     includedirs("clink/lib/include/lib")
     includedirs("clink/core/include")
     includedirs("clink/terminal/include")
+    includedirs("readline")
+    includedirs("readline/compat")
     files("clink/lib/**")
 
     configuration("vs*")

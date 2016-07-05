@@ -3,7 +3,6 @@
 
 #include "pch.h"
 #include "host.h"
-#include "rl/rl_backend.h"
 #include "rl/rl_history.h"
 
 #include <core/globber.h>
@@ -117,7 +116,6 @@ bool host::edit_line(const char* prompt, str_base& out)
     str_compare_scope compare(cmp_mode);
 
     win_terminal terminal;
-    rl_backend backend(m_name);
     rl_history history;
     editor_backend* ui = classic_match_ui_create();
 
@@ -149,8 +147,6 @@ MODE4 */
     desc.partial_delims = "\\/:";
     desc.auto_quote_chars = " %=;&^";
     desc.terminal = &terminal;
-    desc.backend = &backend;
-    desc.buffer = &backend;
 
     line_editor* editor = line_editor_create(desc);
     editor->add_backend(*ui);

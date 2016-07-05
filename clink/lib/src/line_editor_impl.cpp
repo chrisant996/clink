@@ -20,9 +20,6 @@ line_editor* line_editor_create(const line_editor::desc& desc)
     if (desc.terminal == nullptr)
         return nullptr;
 
-    if (desc.buffer == nullptr)
-        return nullptr;
-
     return new line_editor_impl(desc);
 }
 
@@ -37,10 +34,10 @@ void line_editor_destroy(line_editor* editor)
 //------------------------------------------------------------------------------
 line_editor_impl::line_editor_impl(const desc& desc)
 : m_desc(desc)
+, m_backend(desc.shell_name)
 , m_flags(0)
 {
-    if (m_desc.backend != nullptr)
-        add_backend(*m_desc.backend);
+    add_backend(m_backend);
 }
 
 //------------------------------------------------------------------------------
@@ -78,9 +75,9 @@ void line_editor_impl::begin_line()
     pipeline.reset();
 
     m_desc.terminal->begin();
+    m_buffer.begin_line();
 
-    const auto* buffer = m_desc.buffer;
-    line_state line = { m_words, buffer->get_buffer(), buffer->get_cursor() };
+    line_state line = { m_words, m_buffer.get_buffer(), m_buffer.get_cursor() };
     editor_backend::context context = make_context(line);
     for (auto backend : m_backends)
         backend->begin_line(m_desc.prompt, context);
@@ -92,6 +89,7 @@ void line_editor_impl::end_line()
     for (auto i = m_backends.rbegin(), n = m_backends.rend(); i != n; ++i)
         i->end_line();
 
+    m_buffer.end_line();
     m_desc.terminal->end();
 
     clear_flag(flag_editing);
@@ -155,7 +153,7 @@ bool line_editor_impl::update()
         m_binder.update_resolver(key, m_bind_resolver);
 
     dispatch();
-    m_desc.buffer->draw();
+    m_buffer.draw();
 
     if (!check_flag(flag_editing))
         return false;
@@ -183,15 +181,14 @@ void line_editor_impl::dispatch()
     m_keys_size = 0;
 
     editor_backend* backend = m_bind_resolver.get_backend();
-    backend = (backend != nullptr) ? backend : m_desc.backend;
+    backend = (backend != nullptr) ? backend : &m_backend;
 
     editor_backend::result result(editor_backend::result::next);
     if (backend != nullptr)
     {
         int id = m_bind_resolver.get_id();
 
-        auto* buffer = m_desc.buffer;
-        line_state line = { m_words, buffer->get_buffer(), buffer->get_cursor() };
+        line_state line = { m_words, m_buffer.get_buffer(), m_buffer.get_cursor() };
         editor_backend::context context = make_context(line);
 
         result = backend->on_input(m_keys, id, context);
@@ -216,8 +213,9 @@ void line_editor_impl::dispatch()
         break;
 
     case editor_backend::result::redraw:
-        m_desc.buffer->redraw();
-        /* fall through */
+        m_buffer.redraw();
+        m_bind_resolver.reset();
+        break;
 
     case editor_backend::result::next:
         m_bind_resolver.reset();
@@ -232,8 +230,8 @@ void line_editor_impl::dispatch()
 //------------------------------------------------------------------------------
 void line_editor_impl::collect_words()
 {
-    const char* line_buffer = m_desc.buffer->get_buffer();
-    const unsigned int line_cursor = m_desc.buffer->get_cursor();
+    const char* line_buffer = m_buffer.get_buffer();
+    const unsigned int line_cursor = m_buffer.get_cursor();
 
     m_words.clear();
 
@@ -308,8 +306,7 @@ void line_editor_impl::accept_match(unsigned int index)
     int word_start = end_word.offset;
     int word_end = end_word.offset + end_word.length;
 
-    line_buffer& buffer = *(m_desc.buffer);
-    const char* buf_ptr = buffer.get_buffer();
+    const char* buf_ptr = m_buffer.get_buffer();
 
     str<288> word;
     word.concat(buf_ptr + word_start, end_word.length);
@@ -319,9 +316,9 @@ void line_editor_impl::accept_match(unsigned int index)
     if (os::get_path_type(word.c_str()) != os::path_type_invalid)
         path::clean(word);
 
-    buffer.remove(word_start, buffer.get_cursor());
-    buffer.set_cursor(word_start);
-    buffer.insert(word.c_str());
+    m_buffer.remove(word_start, m_buffer.get_cursor());
+    m_buffer.set_cursor(word_start);
+    m_buffer.insert(word.c_str());
 
     // If this match doesn't make a new partial word, close it off
     int last_char = int(strlen(match)) - 1;
@@ -331,16 +328,17 @@ void line_editor_impl::accept_match(unsigned int index)
         int pre_offset = end_word.offset - 1;
         if (pre_offset >= 0)
             if (const char* q = strchr(m_desc.quote_pair, buf_ptr[pre_offset]))
-                buffer.insert(q[1] ? q + 1 : q);
+                m_buffer.insert(q[1] ? q + 1 : q);
 
-        buffer.insert(" ");
+        m_buffer.insert(" ");
     }
 }
 
 //------------------------------------------------------------------------------
 editor_backend::context line_editor_impl::make_context(const line_state& line) const
 {
-    return { *m_desc.terminal, *m_desc.buffer, line, m_matches };
+    line_buffer* buffer = const_cast<rl_buffer*>(&m_buffer);
+    return { *m_desc.terminal, *buffer, line, m_matches };
 }
 
 //------------------------------------------------------------------------------
@@ -385,15 +383,14 @@ void line_editor_impl::update_internal()
     // Should we generate new matches?
     if (next_key.value != prev_key.value)
     {
-        const auto* buffer = m_desc.buffer;
-        line_state line({ m_words, buffer->get_buffer(), buffer->get_cursor() });
+        line_state line({ m_words, m_buffer.get_buffer(), m_buffer.get_cursor() });
         match_pipeline pipeline(m_matches);
         pipeline.reset();
         pipeline.generate(line, m_generators);
         pipeline.fill_info(m_desc.auto_quote_chars);
     }
 
-    next_key.cursor_pos = m_desc.buffer->get_cursor();
+    next_key.cursor_pos = m_buffer.get_cursor();
     prev_key.value = m_prev_key;
 
     // Should we sort and select matches?
@@ -401,8 +398,8 @@ void line_editor_impl::update_internal()
     {
         str<64> needle;
         int needle_start = end_word.offset + end_word.length;
-        const char* buffer = m_desc.buffer->get_buffer();
-        needle.concat(buffer + needle_start, next_key.cursor_pos - needle_start);
+        const char* buf_ptr = m_buffer.get_buffer();
+        needle.concat(buf_ptr + needle_start, next_key.cursor_pos - needle_start);
 
         match_pipeline pipeline(m_matches);
         pipeline.select(needle.c_str());
@@ -411,7 +408,7 @@ void line_editor_impl::update_internal()
         m_prev_key = next_key.value;
 
         // Tell all the backends that the matches changed.
-        line_state line = { m_words, buffer, m_desc.buffer->get_cursor() };
+        line_state line = { m_words, buf_ptr, m_buffer.get_cursor() };
         editor_backend::context context = make_context(line);
         for (auto backend : m_backends)
             backend->on_matches_changed(context);

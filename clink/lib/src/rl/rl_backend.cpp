@@ -12,7 +12,6 @@ extern "C" {
 #include <readline/history.h>
 #include <readline/readline.h>
 #include <readline/rldefs.h>
-#include <compat/dirent.h>
 }
 
 //------------------------------------------------------------------------------
@@ -104,7 +103,6 @@ void rl_backend::begin_line(const char* prompt, const context& context)
     auto handler = [] (char* line) { rl_backend::get()->done(line); };
     rl_callback_handler_install(rl_prompt.c_str(), handler);
 
-    m_need_draw = false;
     m_done = false;
     m_eof = false;
 }
@@ -153,7 +151,7 @@ editor_backend::result rl_backend::on_input(
         rl_callback_read_char();
 
     if (m_done)
-        return result::done;
+        return m_eof ? result::eof : result::done;
 
     // Check if Readline want's more input or if we're done.
     int rl_state = rl_readline_state;
@@ -166,48 +164,6 @@ editor_backend::result rl_backend::on_input(
         return {result::more_input, more_input_id};
 
     return result::next;
-}
-
-//------------------------------------------------------------------------------
-const char* rl_backend::get_buffer() const
-{
-    return (m_eof ? nullptr : rl_line_buffer);
-}
-
-//------------------------------------------------------------------------------
-unsigned int rl_backend::get_cursor() const
-{
-    return rl_point;
-}
-
-//------------------------------------------------------------------------------
-unsigned int rl_backend::set_cursor(unsigned int pos)
-{
-    return rl_point = min<unsigned int>(pos, rl_end);
-}
-
-//------------------------------------------------------------------------------
-bool rl_backend::insert(const char* text)
-{
-    return (m_need_draw = (text[rl_insert_text(text)] == '\0'));
-}
-
-//------------------------------------------------------------------------------
-bool rl_backend::remove(unsigned int from, unsigned int to)
-{
-    return (m_need_draw = !!rl_delete_text(from, to));
-}
-
-//------------------------------------------------------------------------------
-void rl_backend::draw()
-{
-    m_need_draw ? rl_redisplay() : nullptr;
-}
-
-//------------------------------------------------------------------------------
-void rl_backend::redraw()
-{
-    rl_forced_update_display();
 }
 
 //------------------------------------------------------------------------------

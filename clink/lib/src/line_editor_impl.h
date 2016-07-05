@@ -3,12 +3,14 @@
 
 #pragma once
 
-#include "line_editor.h"
 #include "bind_resolver.h"
 #include "binder.h"
 #include "editor_backend.h"
+#include "line_editor.h"
 #include "line_state.h"
 #include "matches_impl.h"
+#include "rl/rl_backend.h"
+#include "rl/rl_buffer.h"
 
 #include <core/array.h>
 
@@ -50,6 +52,8 @@ private:
     void                set_flag(unsigned char flag);
     void                clear_flag(unsigned char flag);
     bool                check_flag(unsigned char flag) const;
+    rl_backend          m_backend;
+    rl_buffer           m_buffer;
     char                m_keys[8];
     desc                m_desc;
     backends            m_backends;

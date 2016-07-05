@@ -33,8 +33,7 @@ line_editor_tester::line_editor_tester()
 {
     // Create a line editor.
     line_editor::desc desc;
-    desc.terminal = &m_test_termbuf;
-    desc.buffer = &m_test_termbuf;
+    desc.terminal = &m_test_terminal;
     m_editor = line_editor_create(desc);
     REQUIRE(m_editor != nullptr);
 }
@@ -71,7 +70,7 @@ void line_editor_tester::run()
     REQUIRE(has_expectations);
 
     REQUIRE(m_input != nullptr);
-    m_test_termbuf.set_input(m_input);
+    m_test_terminal.set_input(m_input);
 
     // If we're expecting some matches then add a backend to catch the
     // matches object.
@@ -86,7 +85,7 @@ void line_editor_tester::run()
     {
         REQUIRE(m_editor->update());
     }
-    while (m_test_termbuf.has_input());
+    while (m_test_terminal.has_input());
 
     if (m_has_matches)
     {

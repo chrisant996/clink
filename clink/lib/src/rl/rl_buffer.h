@@ -3,25 +3,17 @@
 
 #pragma once
 
+#include "line_buffer.h"
+
 #include <core/singleton.h>
-#include <lib/editor_backend.h>
-#include <lib/line_buffer.h>
 
 //------------------------------------------------------------------------------
-class rl_backend
+class rl_buffer
     : public line_buffer
-    , public editor_backend
-    , public singleton<rl_backend>
 {
 public:
-                            rl_backend(const char* shell_name);
-
-private:
-    virtual void            bind(binder_func* binder) override;
-    virtual void            begin_line(const char* prompt, const context& context) override;
+    virtual void            begin_line() override;
     virtual void            end_line() override;
-    virtual void            on_matches_changed(const context& context) override;
-    virtual result          on_input(const char* keys, int id, const context& context) override;
     virtual const char*     get_buffer() const override;
     virtual unsigned int    get_cursor() const override;
     virtual unsigned int    set_cursor(unsigned int pos) override;
@@ -29,9 +21,7 @@ private:
     virtual bool            remove(unsigned int from, unsigned int to) override;
     virtual void            draw() override;
     virtual void            redraw() override;
-    void                    done(const char* line);
-    char*                   m_rl_buffer;
+
+private:
     bool                    m_need_draw;
-    bool                    m_done;
-    bool                    m_eof;
 };
