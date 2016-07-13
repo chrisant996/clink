@@ -32,6 +32,7 @@ void                move_cursor(int, int);
 void*               initialise_clink_settings();
 int                 getc_impl(FILE* stream);
 int                 get_clink_setting_int(const char*);
+void                get_config_dir(char*, int);
 void                clink_register_rl_funcs();
 char*               filter_prompt(const char*);
 void*               extract_prompt(int);
@@ -449,6 +450,15 @@ static void display_matches(char** matches, int match_count, int longest)
 }
 
 //------------------------------------------------------------------------------
+static void read_profile_inputrc()
+{
+    char buffer[MAX_PATH];
+    get_config_dir(buffer, sizeof_array(buffer));
+    str_cat(buffer, "/clink_inputrc", sizeof_array(buffer));
+    rl_read_init_file(buffer);
+}
+
+//------------------------------------------------------------------------------
 static int initialise_hook()
 {
     rl_redisplay_function = display;
@@ -477,6 +487,8 @@ static int initialise_hook()
     initialise_rl_scroller();
 
     rl_re_read_init_file(0, 0);
+    read_profile_inputrc();
+
     rl_visible_stats = 0;               // serves no purpose under win32.
 
     rl_startup_hook = NULL;
