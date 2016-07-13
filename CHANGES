@@ -1,6 +1,14 @@
 
 ### Changes
 
+##### v0.4.8
+
+- Environment variable 'clink_profile' overrides Clink's profile path (#390).
+- Load a clink_inputrc file from Clink's profile directory (fixes #406).
+- Bug fixes;
+    - Redraw issues when prompts end in OSC ANSI codes (#387, #384).
+    - Fixed 'clink autorun --help' crash.
+
 ##### v0.4.7
 
 - Bug fixes;
