@@ -282,8 +282,8 @@ BOOL WINAPI host_cmd::read_console(
             SetConsoleMode(handle, mode);
         }
 
-        HANDLE  m_handle;
-        DWORD   m_mode;
+        HANDLE  handle;
+        DWORD   mode;
     };
 
     console_mode_scope stdout_mode_scope(GetStdHandle(STD_OUTPUT_HANDLE));
