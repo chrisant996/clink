@@ -66,12 +66,15 @@ bool initialise_clink(const inject_args& inject_args)
 {
     seh_scope seh;
 
-    // The "clink_profile" environment variable can be used to override --profile
-    GetEnvironmentVariable("clink_profile", inject_args->profile_path,
-        sizeof_array(inject_args->profile_path));
+    // Override the profile path by either the "clink_profile" environment
+    // variable or the --profile argument.
+    str<MAX_PATH> profile_path;
+    unsigned int i = GetEnvironmentVariable("clink_profile", profile_path.data(),
+        profile_path.size());
 
-    // Handle inject arguments.
-    if (inject_args.profile_path[0] != '\0')
+    if (i <= profile_path.size())
+        set_config_dir_override(profile_path.c_str());
+    else if (inject_args.profile_path[0] != '\0')
         /* MODE4 */
         set_config_dir_override(inject_args.profile_path);
 

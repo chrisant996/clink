@@ -173,11 +173,10 @@ int inject(int argc, char** argv)
     extern const char* g_clink_header;
 
     // Parse arguments
-    bool is_autorun = false;
     DWORD target_pid = 0;
     inject_args inject_args = { 0 };
     int i;
-    int ret = 0;
+    int ret = false;
     while ((i = getopt_long(argc, argv, "nalqhp:d:", options, nullptr)) != -1)
     {
         switch (i)
@@ -193,20 +192,20 @@ int inject(int argc, char** argv)
 
         case 'q': inject_args.quiet = 1;         break;
         case 'd': target_pid = atoi(optarg);     break;
-        case '_': is_autorun = true;             break;
+        case '_': ret = true;                    break;
 
         case 'l':
             inject_args.no_log = 1;
             break;
 
         case '?':
-            goto end;
+            return ret;
 
         case 'h':
         default:
             puts(g_clink_header);
             puts_help(help, sizeof_array(help));
-            goto end;
+            return ret;
         }
     }
 
@@ -224,25 +223,24 @@ int inject(int argc, char** argv)
         if (target_pid == 0)
         {
             LOG("Failed to find parent pid.");
-            goto end;
+            return ret;
         }
     }
 
     // Check to see if clink is already installed.
     if (is_clink_present(target_pid))
-        goto end;
+        return ret;
 
     // Inject Clink's DLL and remotely call Clink's initialisation function.
     if (!do_inject(target_pid))
-        goto end;
+        return ret;
 
     // On Windows a DLL will have the same address in every process' address
     // space, hence we're able to use 'initialise_clink' directly here.
     vm_access target_vm(target_pid);
     void* remote_inject_args = target_vm.alloc(sizeof(inject_args));
-    int ret = process(target_pid).remote_call(initialise_clink, remote_inject_args);
+    ret |= process(target_pid).remote_call(initialise_clink, remote_inject_args);
     target_vm.free(remote_inject_args);
 
-end:
-    return is_autorun ? 1 : ret;
+    return ret;
 }
