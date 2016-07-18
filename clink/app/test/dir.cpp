@@ -1,42 +1,17 @@
-// Copyright (c) 2015 Martin Ridgers
+// Copyright (c) 2016 Martin Ridgers
 // License: http://opensource.org/licenses/MIT
 
 #include "pch.h"
 #include "fs_fixture.h"
-
-#if MODE4
+#include "line_editor_tester.h"
 
 #include <core/base.h>
 #include <core/str.h>
 #include <core/str_compare.h>
+#include <lib/line_editor.h>
 #include <lua/lua_match_generator.h>
-#include <lua/lua_root.h>
 #include <lua/lua_script_loader.h>
-
-
-//------------------------------------------------------------------------------
-struct dir_test
-{
-    typedef match_generator_tester<dir_test> tester;
-
-                            dir_test();
-                            ~dir_test();
-                            operator match_generator& () { return *m_generator; }
-    lua_match_generator*    m_generator;
-    lua_root                m_lua_root;
-};
-
-dir_test::dir_test()
-{
-    lua_State* state = m_lua_root.get_state();
-    m_generator = new lua_match_generator(state);
-    lua_load_script(state, dll, dir);
-}
-
-dir_test::~dir_test()
-{
-    delete m_generator;
-}
+#include <lua/lua_state.h>
 
 //------------------------------------------------------------------------------
 TEST_CASE("Directory match generation.") {
@@ -56,7 +31,14 @@ TEST_CASE("Directory match generation.") {
 
     fs_fixture fs(dir_fs);
 
-    const char* dir_cmds[] = { "cd", "rd", "rmdir", "md", "mkdir", "pushd" };
+    lua_state lua;
+    lua_match_generator lua_generator(lua);
+    lua_load_script(lua, app, dir);
+
+    line_editor_tester tester;
+    tester.get_editor()->add_generator(lua_generator);
+
+    const char* dir_cmds[] = { "cd" };//, "rd", "rmdir", "md", "mkdir", "pushd" };
     for (int i = 0; i < sizeof_array(dir_cmds); ++i)
     {
         const char* dir_cmd = dir_cmds[i];
@@ -67,51 +49,61 @@ TEST_CASE("Directory match generation.") {
         SECTION(dir_cmd) {
             SECTION("Matches") {
                 cmd << "t";
-                dir_test::tester(cmd, "t", "two_dir\\", "three_dir\\", nullptr);
+                tester.set_input(cmd.c_str());
+                tester.set_expected_matches("two_dir\\", "three_dir\\");
+                tester.run();
             }
 
             SECTION("Single (with -/_) 1") {
                 cmd << "two_d";
-                dir_test::tester(cmd, "two_dir\\", nullptr);
+                tester.set_input(cmd.c_str());
+                tester.set_expected_matches("two_dir\\");
+                tester.run();
             }
 
             SECTION("Single (with -/_) 2") {
                 str_compare_scope _(str_compare_scope::relaxed);
 
                 cmd << "one-";
-                dir_test::tester(cmd, "one_dir\\", nullptr);
+                tester.set_input(cmd.c_str());
+                tester.set_expected_matches("one_dir\\");
+                tester.run();
             }
 
             SECTION("Single 3") {
                 cmd << "one_dir";
-                dir_test::tester(cmd, "one_dir\\", nullptr);
+                tester.set_input(cmd.c_str());
+                tester.set_expected_matches("one_dir\\");
+                tester.run();
             }
 
             SECTION("Relative") {
                 cmd << "nest_1\\..\\o";
-                dir_test::tester(cmd, "nest_1\\..\\one_dir\\", nullptr);
+                tester.set_input(cmd.c_str());
+                tester.set_expected_matches("one_dir\\");
+                tester.run();
             }
 
             SECTION("No matches") {
                 cmd << "f";
-                dir_test::tester(cmd, nullptr);
+                tester.set_input(cmd.c_str());
+                tester.set_expected_matches();
+                tester.run();
             }
 
             SECTION("Nested 1") {
                 cmd << "nest_1/ne";
-                dir_test::tester(cmd, "nest_1\\nest_2\\", nullptr);
+                tester.set_input(cmd.c_str());
+                tester.set_expected_matches("nest_2\\");
+                tester.run();
             }
 
             SECTION("Nested 2") {
                 cmd << "nest_1/nest_2\\";
-                dir_test::tester(cmd,
-                    "nest_1\\nest_2\\nest_3",
-                    "nest_1\\nest_2\\nest_3a\\",
-                    "nest_1\\nest_2\\nest_3b\\",
-                    nullptr);
+                tester.set_input(cmd.c_str());
+                tester.set_expected_matches("nest_3a\\", "nest_3b\\");
+                tester.run();
             }
         }
     }
 }
-
-#endif // MODE4
