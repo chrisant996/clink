@@ -30,8 +30,8 @@ line_state_lua::line_state_lua(const line_state& line)
 //------------------------------------------------------------------------------
 int line_state_lua::get_cursor(lua_State* state)
 {
-    lua_pushinteger(state, m_line.get_cursor());
-    return 0;
+    lua_pushinteger(state, m_line.get_cursor() + 1);
+    return 1;
 }
 
 //------------------------------------------------------------------------------
