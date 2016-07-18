@@ -194,9 +194,9 @@ project("clink_lib")
     files("clink/lib/src/**")
     files("clink/lib/include/**")
 
-    configuration("vs*")
-        pchsource("clink/lib/src/pch.cpp")
-        pchheader("pch.h")
+    includedirs("clink/lib/src")
+    pchheader("pch.h")
+    pchsource("clink/lib/src/pch.cpp")
 
 --------------------------------------------------------------------------------
 project("clink_lua")
@@ -211,9 +211,9 @@ project("clink_lua")
     files("clink/lua/include/**")
     files("clink/lua/scripts/**")
 
-    configuration("vs*")
-        pchsource("clink/lua/src/pch.cpp")
-        pchheader("pch.h")
+    includedirs("clink/lua/src")
+    pchheader("pch.h")
+    pchsource("clink/lua/src/pch.cpp")
 
 --------------------------------------------------------------------------------
 project("clink_core")
@@ -223,9 +223,9 @@ project("clink_core")
     files("clink/core/src/**")
     files("clink/core/include/**")
 
-    configuration("vs*")
-        pchsource("clink/core/src/pch.cpp")
-        pchheader("pch.h")
+    includedirs("clink/core/src")
+    pchheader("pch.h")
+    pchsource("clink/core/src/pch.cpp")
 
 --------------------------------------------------------------------------------
 project("clink_terminal")
@@ -236,9 +236,9 @@ project("clink_terminal")
     files("clink/terminal/src/**")
     files("clink/terminal/include/**")
 
-    configuration("vs*")
-        pchsource("clink/terminal/src/pch.cpp")
-        pchheader("pch.h")
+    includedirs("clink/terminal/src")
+    pchheader("pch.h")
+    pchsource("clink/terminal/src/pch.cpp")
 
 --------------------------------------------------------------------------------
 project("clink_process")
@@ -249,9 +249,9 @@ project("clink_process")
     files("clink/process/src/**")
     files("clink/process/include/**")
 
-    configuration("vs*")
-        pchsource("clink/process/src/pch.cpp")
-        pchheader("pch.h")
+    includedirs("clink/process/src")
+    pchheader("pch.h")
+    pchsource("clink/process/src/pch.cpp")
 
 --------------------------------------------------------------------------------
 project("clink_app_common")
@@ -272,9 +272,8 @@ project("clink_app_common")
     excludes("clink/app/src/dll/main.cpp")
     excludes("clink/app/src/loader/main.cpp")
 
-    configuration("vs*")
-        pchsource("clink/app/src/pch.cpp")
-        pchheader("pch.h")
+    pchheader("pch.h")
+    pchsource("clink/app/src/pch.cpp")
 
 --------------------------------------------------------------------------------
 project("clink_app_dll")
@@ -349,9 +348,8 @@ project("clink_test")
     files("clink/terminal/test/*.cpp")
     files("clink/test/**")
 
-    configuration("vs*")
-        pchsource("clink/test/src/pch.cpp")
-        pchheader("pch.h")
+    pchheader("pch.h")
+    pchsource("clink/test/src/pch.cpp")
 
 --------------------------------------------------------------------------------
 newoption {
