@@ -1,5 +1,9 @@
--- Copyright (c) 2013 Martin Ridgers
--- License: http://opensource.org/licenses/MIT
+// Copyright (c) 2016 Martin Ridgers
+// License: http://opensource.org/licenses/MIT
+
+#include "pch.h"
+
+#if MODE4
 
 --------------------------------------------------------------------------------
 local p
@@ -446,3 +450,5 @@ clink.test.test_matches(
     "argcmd_lazy one four -flag ",
     { "red", "green", "blue" }
 )
+
+#endif // MODE4

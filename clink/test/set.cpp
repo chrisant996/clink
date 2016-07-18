@@ -1,5 +1,9 @@
--- Copyright (c) 2012 Martin Ridgers
--- License: http://opensource.org/licenses/MIT
+// Copyright (c) 2012 Martin Ridgers
+// License: http://opensource.org/licenses/MIT
+
+#include "pch.h"
+
+#if MODE4
 
 --------------------------------------------------------------------------------
 function clink.get_env_var_names()
@@ -45,3 +49,5 @@ clink.test.test_matches(
     "set sim\t=dir1\\file",
     { "file1", "file2" }
 )
+
+#endif // MODE4

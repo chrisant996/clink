@@ -1,5 +1,9 @@
--- Copyright (c) 2013 Martin Ridgers
--- License: http://opensource.org/licenses/MIT
+// Copyright (c) 2013 Martin Ridgers
+// License: http://opensource.org/licenses/MIT
+
+#include "pch.h"
+
+#if MODE4
 
 --------------------------------------------------------------------------------
 local p
@@ -67,3 +71,5 @@ for _, i in ipairs(merge_tests) do
         clink.test.test_matches(test, cmd.."\t", result)
     end
 end
+
+#endif // MODE4

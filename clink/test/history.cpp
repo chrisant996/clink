@@ -1,5 +1,9 @@
--- Copyright (c) 2014 Martin Ridgers
--- License: http://opensource.org/licenses/MIT
+// Copyright (c) 2016 Martin Ridgers
+// License: http://opensource.org/licenses/MIT
+
+#include "pch.h"
+
+#if MODE4
 
 --------------------------------------------------------------------------------
 local prime_history = {
@@ -154,3 +158,5 @@ clink.test.test_output(
     { prime_history, "cmdX !?extra?:*" },
     prime_history[2]:gsub("cmd2", "cmdX")
 )
+
+#endif // MODE4

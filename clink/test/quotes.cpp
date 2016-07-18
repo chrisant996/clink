@@ -1,5 +1,9 @@
--- Copyright (c) 2012 Martin Ridgers
--- License: http://opensource.org/licenses/MIT
+// Copyright (c) 2012 Martin Ridgers
+// License: http://opensource.org/licenses/MIT
+
+#include "pch.h"
+
+#if MODE4
 
 --------------------------------------------------------------------------------
 clink.test.test_fs({
@@ -25,3 +29,5 @@ clink.test.test_output(
     "nullcmd pre-s",
     "nullcmd \"pre_space"
 )
+
+#endif // MODE4

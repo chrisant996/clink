@@ -1,5 +1,9 @@
--- Copyright (c) 2012 Martin Ridgers
--- License: http://opensource.org/licenses/MIT
+// Copyright (c) 2012 Martin Ridgers
+// License: http://opensource.org/licenses/MIT
+
+#include "pch.h"
+
+#if MODE4
 
 --------------------------------------------------------------------------------
 function clink.get_env_var_names()
@@ -57,3 +61,5 @@ clink.test.test_matches(
     "File matches follow %var%<TAB>",
     "nullcmd %null_env_var%"
 )
+
+#endif // MODE4
