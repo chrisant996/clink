@@ -134,10 +134,10 @@ TEST_CASE("Executable match generation.") {
         tester.run();
     }
 
-    SECTION("Style") {
+    SECTION("Current directory") {
         settings::find("exec.cwd")->set("1");
 
-        SECTION("Cwd (no dirs)") {
+        SECTION("No dirs") {
             settings::find("exec.dirs")->set("0");
 
             tester.set_input("one_");
@@ -145,7 +145,7 @@ TEST_CASE("Executable match generation.") {
             tester.run();
         }
 
-        SECTION("Style - cwd (all)") {
+        SECTION("All") {
             str_compare_scope _(str_compare_scope::relaxed);
 
             settings::find("exec.dirs")->set("1");
