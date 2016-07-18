@@ -28,6 +28,13 @@ line_state_lua::line_state_lua(const line_state& line)
 }
 
 //------------------------------------------------------------------------------
+int line_state_lua::get_line(lua_State* state)
+{
+    lua_pushstring(state, m_line.get_line());
+    return 1;
+}
+
+//------------------------------------------------------------------------------
 int line_state_lua::get_cursor(lua_State* state)
 {
     lua_pushinteger(state, m_line.get_cursor() + 1);
@@ -35,9 +42,9 @@ int line_state_lua::get_cursor(lua_State* state)
 }
 
 //------------------------------------------------------------------------------
-int line_state_lua::get_line(lua_State* state)
+int line_state_lua::get_word_count(lua_State* state)
 {
-    lua_pushstring(state, m_line.get_line());
+    lua_pushinteger(state, m_line.get_word_count());
     return 1;
 }
 
@@ -73,13 +80,6 @@ int line_state_lua::get_word_info(lua_State* state)
     lua_pushstring(state, delim);
     lua_rawset(state, -3);
 
-    return 1;
-}
-
-//------------------------------------------------------------------------------
-int line_state_lua::get_word_count(lua_State* state)
-{
-    lua_pushinteger(state, m_line.get_word_count());
     return 1;
 }
 
