@@ -97,14 +97,13 @@ void line_editor_tester::run()
 
         for (const char* expected : m_expected_matches)
         {
-            bool found = false;
+            bool match_found = false;
 
             for (unsigned int i = 0; i < match_count; ++i)
-                if (strcmp(expected, matches->get_match(i)) == 0)
-                    if (found = true)
-                        break;
+                if (match_found = (strcmp(expected, matches->get_match(i)) == 0))
+                    break;
 
-            REQUIRE(found);
+            REQUIRE(match_found);
         }
     }
 }
