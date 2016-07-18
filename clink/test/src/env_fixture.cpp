@@ -35,7 +35,7 @@ env_fixture::~env_fixture()
     {
         wchar_t* value = env_string + (wcslen(env_string) + 1);
         REQUIRE(SetEnvironmentVariableW(env_string, value) != FALSE);
-        env_string += wcslen(value) + 1;
+        env_string = value + wcslen(value) + 1;
     }
 
     FreeEnvironmentStringsW(m_env_strings);
