@@ -82,7 +82,7 @@ local function exec_match_generator(line_state, match_builder)
         return false
     end
 
-    -- If enabled, lines prefixed with
+    -- If enabled, lines prefixed with whitespace disable executable matching.
     if settings.get("exec.space_prefix") then
         local word_info = line_state:getwordinfo(1)
         local offset = 1
