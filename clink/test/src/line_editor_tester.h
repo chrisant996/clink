@@ -3,12 +3,11 @@
 
 #pragma once
 
+#include <lib/line_editor.h>
 #include <lib/line_buffer.h>
 #include <terminal/terminal.h>
 
 #include <vector>
-
-class line_editor;
 
 //------------------------------------------------------------------------------
 class test_terminal
@@ -44,6 +43,7 @@ class line_editor_tester
 {
 public:
                                 line_editor_tester();
+                                line_editor_tester(const line_editor::desc& desc);
                                 ~line_editor_tester();
     line_editor*                get_editor() const;
     void                        set_input(const char* input);
@@ -52,6 +52,7 @@ public:
     void                        run();
 
 private:
+    void                        create_line_editor(const line_editor::desc* desc=nullptr);
     void                        expected_matches_impl(int dummy, ...);
     test_terminal               m_test_terminal;
     std::vector<const char*>    m_expected_matches;

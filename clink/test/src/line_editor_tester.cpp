@@ -31,10 +31,25 @@ private:
 //------------------------------------------------------------------------------
 line_editor_tester::line_editor_tester()
 {
+    create_line_editor();
+}
+
+//------------------------------------------------------------------------------
+line_editor_tester::line_editor_tester(const line_editor::desc& desc)
+{
+    create_line_editor(&desc);
+}
+
+//------------------------------------------------------------------------------
+void line_editor_tester::create_line_editor(const line_editor::desc* desc)
+{
     // Create a line editor.
-    line_editor::desc desc;
-    desc.terminal = &m_test_terminal;
-    m_editor = line_editor_create(desc);
+    line_editor::desc inner_desc;
+    if (desc != nullptr)
+        inner_desc = *desc;
+    inner_desc.terminal = &m_test_terminal;
+
+    m_editor = line_editor_create(inner_desc);
     REQUIRE(m_editor != nullptr);
 }
 
