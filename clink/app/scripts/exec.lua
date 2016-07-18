@@ -116,7 +116,7 @@ local function exec_match_generator(line_state, match_builder)
     else
         -- 'text' is an absolute or relative path so override settings and
         -- match current directory and it's directories too.
-        match_dir = true
+        match_dirs = true
         match_cwd = true
     end
 
