@@ -8,16 +8,18 @@
 
 TEST_CASE("settings : basic")
 {
-    REQUIRE(settings::first() == nullptr);
+    auto* first = settings::first();
     {
         setting_bool test("one", "", "", false);
         REQUIRE(settings::first() == &test);
     }
-    REQUIRE(settings::first() == nullptr);
+    REQUIRE(settings::first() == first);
 }
 
 TEST_CASE("settings : list")
 {
+    auto* first = settings::first();
+
     auto* one   = new setting_bool("one",   "", "", false);
     auto* two   = new setting_bool("two",   "", "", false);
     auto* three = new setting_bool("three", "", "", false);
@@ -29,7 +31,7 @@ TEST_CASE("settings : list")
     REQUIRE(strcmp(iter->get_name(), "three") == 0); iter = iter->next();
     REQUIRE(strcmp(iter->get_name(), "two") == 0); iter = iter->next();
     REQUIRE(strcmp(iter->get_name(), "one") == 0); iter = iter->next();
-    REQUIRE(iter == nullptr);
+    REQUIRE(iter == first);
 
     // Middle
     delete three;
@@ -37,24 +39,24 @@ TEST_CASE("settings : list")
     REQUIRE(strcmp(iter->get_name(), "four") == 0); iter = iter->next();
     REQUIRE(strcmp(iter->get_name(), "two") == 0); iter = iter->next();
     REQUIRE(strcmp(iter->get_name(), "one") == 0); iter = iter->next();
-    REQUIRE(iter == nullptr);
+    REQUIRE(iter == first);
 
     // End
     delete one;
     iter = settings::first();
     REQUIRE(strcmp(iter->get_name(), "four") == 0); iter = iter->next();
     REQUIRE(strcmp(iter->get_name(), "two") == 0); iter = iter->next();
-    REQUIRE(iter == nullptr);
+    REQUIRE(iter == first);
 
     // First
     delete four;
     iter = settings::first();
     REQUIRE(strcmp(iter->get_name(), "two") == 0); iter = iter->next();
-    REQUIRE(iter == nullptr);
+    REQUIRE(iter == first);
 
     // Last
     delete two;
-    REQUIRE(settings::first() == nullptr);
+    REQUIRE(settings::first() == first);
 }
 
 TEST_CASE("settings : bool")
