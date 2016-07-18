@@ -8,7 +8,10 @@
 #include <core/str.h>
 
 //------------------------------------------------------------------------------
-line_state::line_state(const array<word>& words, const char* line, unsigned int cursor)
+line_state::line_state(
+    const char* line,
+    unsigned int cursor,
+    const array<word>& words)
 : m_words(words)
 , m_line(line)
 , m_cursor(cursor)

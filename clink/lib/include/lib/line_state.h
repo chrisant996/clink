@@ -19,7 +19,7 @@ struct word
 class line_state
 {
 public:
-                        line_state(const array<word>& words, const char* line, unsigned int cursor);
+                        line_state(const char* line, unsigned int cursor, const array<word>& words);
     const char*         get_line() const;
     unsigned int        get_cursor() const;
     const array<word>&  get_words() const;
