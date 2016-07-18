@@ -35,8 +35,8 @@ TEST_CASE("Executable match generation.") {
         nullptr,
     };
 
-	fs_fixture path_fs(path_fs_desc);
-	fs_fixture exec_fs(exec_fs_desc);
+    fs_fixture path_fs(path_fs_desc);
+    fs_fixture exec_fs(exec_fs_desc);
 
     str<260> path_env_var(path_fs.get_root());
     path::append(path_env_var, "_path");
@@ -86,9 +86,9 @@ TEST_CASE("Executable match generation.") {
     SECTION("Relative path") {
         tester.set_input(".\\");
         tester.set_expected_matches(
-			"one_local.exe", "two_local.exe",
+            "one_local.exe", "two_local.exe",
             "one_dir\\", "foodir\\", "jumble\\"
-		);
+        );
         tester.run();
     }
 
