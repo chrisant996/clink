@@ -20,18 +20,6 @@ settings.add("exec.space_prefix", true, "Whitespace prefix matches files",
 [[If the line begins with whitespace then Clink bypasses executable
 matching and will do normal files matching instead.]])
 
-
-
---------------------------------------------------------------------------------
-local dos_commands = {
-    "assoc", "break", "call", "cd", "chcp", "chdir", "cls", "color", "copy",
-    "date", "del", "dir", "diskcomp", "diskcopy", "echo", "endlocal", "erase",
-    "exit", "for", "format", "ftype", "goto", "graftabl", "if", "md", "mkdir",
-    "mklink", "more", "move", "path", "pause", "popd", "prompt", "pushd", "rd",
-    "rem", "ren", "rename", "rmdir", "set", "setlocal", "shift", "start",
-    "time", "title", "tree", "type", "ver", "verify", "vol"
-}
-
 --------------------------------------------------------------------------------
 local function get_environment_paths()
     local paths = clink.split(os.getenv("path"), ";")
@@ -100,11 +88,6 @@ local function exec_match_generator(line_state, match_builder)
     local text = line_state:getword(1)
     local text_dir = path.getdirectory(text) or ""
     if #text_dir == 0 then
-        -- If the terminal is cmd.exe check it's commands for matches.
-        if clink.get_host_process() == "cmd.exe" then
-            match_builder:add(dos_commands)
-        end
-
         -- Add console aliases as matches.
         local aliases = clink.get_console_aliases()
         match_builder:add(aliases)

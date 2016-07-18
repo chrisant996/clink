@@ -84,14 +84,6 @@ TEST_CASE("Executable match generation.") {
         tester.run();
     }
 
-#if MODE4 // tester's shell != cmd.exe
-    SECTION("cmd.exe commands") {
-        tester.set_input("p");
-        tester.set_expected_matches("path", "pause", "popd", "prompt", "pushd");
-        tester.run();
-    }
-#endif
-
     SECTION("Relative path") {
         tester.set_input(".\\");
         tester.set_expected_matches(
@@ -233,4 +225,35 @@ TEST_CASE("Executable match generation.") {
         { "one_local.exe", "one_local.txt", "one_dir\\" }
     )
 #endif // MODE4
+
+    SECTION("cmd.exe commands") {
+        lua_load_script(lua, app, cmd);
+
+        SECTION("Only") {
+            tester.set_input("p");
+            tester.set_expected_matches("path", "pause", "popd", "prompt", "pushd");
+            tester.run();
+        }
+
+        SECTION("Mixed") {
+            tester.set_input("s");
+            tester.set_expected_matches(
+                "set", "setlocal", "shift", "start",
+                "spa ce.exe"
+            );
+            tester.run();
+        }
+
+        SECTION("Only first word") {
+            tester.set_input("one p");
+            tester.set_expected_matches();
+            tester.run();
+        }
+
+        SECTION("Space prefix") {
+            tester.set_input(" p");
+            tester.set_expected_matches();
+            tester.run();
+        }
+    }
 }

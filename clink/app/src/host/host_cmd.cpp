@@ -195,6 +195,7 @@ void host_cmd::shutdown()
 //------------------------------------------------------------------------------
 void host_cmd::initialise_lua(lua_state& lua)
 {
+    lua_load_script(lua, app, cmd);
     // lua_load_script(lua, app, env); MODE4 : not possible!
     lua_load_script(lua, app, set);
 }
