@@ -101,19 +101,96 @@ TEST_CASE("Executable match generation.") {
         tester.run();
     }
 
-#if MODE4
-    clink.test.test_output(
-        "relative path dir",
-        ".\\foodir\\",
-        ".\\foodir\\two_dir_local.exe "
-    )
+    SECTION("Relative path dir") {
+        tester.set_input(".\\foodir\\");
+        tester.set_expected_matches("two_dir_local.exe");
+        tester.run();
+    }
 
-    clink.test.test_output(
-        "relative path dir (with '_')",
-        ".\\one_dir\\t",
-        ".\\one_dir\\two_dir_local.exe "
-    )
+    SECTION("Relative path dir (with '_')") {
+        tester.set_input(".\\one_dir\\t");
+        tester.set_expected_matches("two_dir_local.exe");
+        tester.run();
+    }
 
+    SECTION("Spaces (path)") {
+        tester.set_input("spa");
+        tester.set_expected_matches("spa ce.exe");
+        tester.run();
+    }
+
+    SECTION("Spaces (relative)") {
+        tester.set_input(".\\one_dir\\spa");
+        tester.set_expected_matches("spa ce.exe");
+        tester.run();
+    }
+
+    SECTION("Last char . 1") {
+        tester.set_input("one_path.");
+        tester.set_expected_matches("one_path.exe");
+        tester.run();
+    }
+
+    SECTION("Last char . 2") {
+        tester.set_input("jumble\\three.");
+        tester.set_expected_matches("three.exe");
+        tester.run();
+    }
+
+    SECTION("Last char -") {
+        tester.set_input("one_local-");
+        tester.set_expected_matches();
+        tester.run();
+    }
+
+    SECTION("Style") {
+        settings::find("exec.cwd")->set("1");
+
+        SECTION("Cwd (no dirs)") {
+            settings::find("exec.dirs")->set("0");
+
+            tester.set_input("one_");
+            tester.set_expected_matches("one_local.exe", "one_path.exe", "one_two.py");
+            tester.run();
+        }
+
+        SECTION("Style - cwd (all)") {
+            str_compare_scope _(str_compare_scope::relaxed);
+
+            settings::find("exec.dirs")->set("1");
+
+            tester.set_input("one-\t");
+            tester.set_expected_matches("one_local.exe", "one_path.exe",
+                "one_two.py", "one_dir\\");
+            tester.run();
+        }
+    }
+
+    SECTION("Space prefix") {
+        tester.get_editor()->add_generator(file_match_generator());
+
+        settings::find("exec.space_prefix")->set("1");
+
+        SECTION("None") {
+            tester.set_input("one_");
+            tester.set_expected_matches("one_path.exe", "one_two.py");
+            tester.run();
+        }
+
+        SECTION("Space") {
+            tester.set_input(" one_");
+            tester.set_expected_matches("one_dir\\", "one_local.txt", "one_local.exe");
+            tester.run();
+        }
+
+        SECTION("Spaces") {
+            tester.set_input("   one_");
+            tester.set_expected_matches("one_dir\\", "one_local.txt", "one_local.exe");
+            tester.run();
+        }
+    }
+
+#if MODE4 // separators not yet implemented.
     clink.test.test_output(
         "separator | 1",
         "nullcmd | one_p",
@@ -150,76 +227,10 @@ TEST_CASE("Executable match generation.") {
         "nullcmd &&one_path.exe "
     )
 
-    clink.test.test_output(
-        "spaces (path)",
-        "spa",
-        "\"spa ce.exe\" "
-    )
-
-    clink.test.test_output(
-        "spaces (relative)",
-        ".\\one_dir\\spa",
-        "\".\\one_dir\\spa ce.exe\" "
-    )
-
     clink.test.test_matches(
         "separator false positive",
         "nullcmd \"&&\" o\t",
         { "one_local.exe", "one_local.txt", "one_dir\\" }
-    )
-
-    clink.test.test_output(
-        "last char . 1",
-        "one_path.",
-        "one_path.exe "
-    )
-
-    clink.test.test_output(
-        "last char . 2",
-        "jumble\\three.",
-        "jumble\\three.exe "
-    )
-
-    clink.test.test_output(
-        "last char -",
-        "one_local-",
-        "one_local-"
-    )
-
-    --------------------------------------------------------------------------------
-    exec_match_style = 1
-    clink.test.test_matches(
-        "style - cwd (no dirs) 1",
-        "one_",
-        { "one_local.exe", "one_path.exe", "one_two.py" }
-    )
-
-    exec_match_style = 2
-    clink.test.test_matches(
-        "style - cwd (all)",
-        "one-\t",
-        { "one_local.exe", "one_path.exe", "one_two.py", "one_dir\\" }
-    )
-
-    --------------------------------------------------------------------------------
-    exec_match_style = 0
-    space_prefix_match_files = 1
-    clink.test.test_matches(
-        "space prefix; none",
-        "one_",
-        { "one_path.exe", "one_two.py" }
-    )
-
-    clink.test.test_matches(
-        "space prefix; space",
-        " one_",
-        { "one_dir\\", "one_local.txt", "one_local.exe" }
-    )
-
-    clink.test.test_matches(
-        "space prefix; spaces",
-        "   one_",
-        { "one_dir\\", "one_local.txt", "one_local.exe" }
     )
 #endif // MODE4
 }
