@@ -51,7 +51,9 @@ TEST_CASE("Executable match generation.") {
     lua_match_generator lua_generator(lua);
     lua_load_script(lua, app, exec);
 
-    line_editor_tester tester;
+    line_editor::desc desc;
+    desc.command_delims = "&|";
+    line_editor_tester tester(desc);
     tester.get_editor()->add_generator(lua_generator);
 
     settings::find("exec.cwd")->set("0");
@@ -181,49 +183,67 @@ TEST_CASE("Executable match generation.") {
         }
     }
 
-#if MODE4 // separators not yet implemented.
-    clink.test.test_output(
-        "separator | 1",
-        "nullcmd | one_p",
-        "nullcmd | one_path.exe "
-    )
+    SECTION("Command separators") {
+        settings::find("exec.space_prefix")->set("0");
 
-    clink.test.test_output(
-        "separator | 2",
-        "nullcmd |one_p",
-        "nullcmd |one_path.exe "
-    )
+        SECTION("|") {
+            SECTION("Immediate") {
+                tester.set_input("nullcmd |one_p");
+                tester.set_expected_matches("one_path.exe");
+                tester.run();
+            }
 
-    clink.test.test_matches(
-        "separator & 1",
-        "nullcmd & one_",
-        { "one_path.exe", "one_two.py" }
-    )
+            SECTION("With space") {
+                tester.set_input("nullcmd | one_p");
+                tester.set_expected_matches("one_path.exe");
+                tester.run();
+            }
 
-    clink.test.test_matches(
-        "separator & 2",
-        "nullcmd &one_",
-        { "one_path.exe", "one_two.py" }
-    )
+            SECTION("Space prefix enabled") {
+                settings::find("exec.space_prefix")->set("1");
 
-    clink.test.test_output(
-        "separator && 1",
-        "nullcmd && one_p",
-        "nullcmd && one_path.exe "
-    )
+                tester.set_input("nullcmd | one_p");
+                tester.set_expected_matches();
+                tester.run();
+            }
+        }
 
-    clink.test.test_output(
-        "separator && 2",
-        "nullcmd &&one_p",
-        "nullcmd &&one_path.exe "
-    )
+        SECTION("&") {
+            SECTION("Immediate") {
+                tester.set_input("nullcmd &one_");
+                tester.set_expected_matches("one_path.exe", "one_two.py");
+                tester.run();
+            }
 
-    clink.test.test_matches(
-        "separator false positive",
-        "nullcmd \"&&\" o\t",
-        { "one_local.exe", "one_local.txt", "one_dir\\" }
-    )
-#endif // MODE4
+            SECTION("With space") {
+                tester.set_input("nullcmd & one_");
+                tester.set_expected_matches("one_path.exe", "one_two.py");
+                tester.run();
+            }
+        }
+
+        SECTION("&&") {
+            SECTION("Immediate") {
+                tester.set_input("nullcmd &&one_p");
+                tester.set_expected_matches("one_path.exe");
+                tester.run();
+            }
+
+            SECTION("With space") {
+                tester.set_input("nullcmd && one_p");
+                tester.set_expected_matches("one_path.exe");
+                tester.run();
+            }
+
+            SECTION("False positive") {
+                tester.get_editor()->add_generator(file_match_generator());
+
+                tester.set_input("nullcmd \"&&\" o\t");
+                tester.set_expected_matches("one_local.exe", "one_local.txt", "one_dir\\");
+                tester.run();
+            }
+        }
+    }
 
     SECTION("cmd.exe commands") {
         lua_load_script(lua, app, cmd);
