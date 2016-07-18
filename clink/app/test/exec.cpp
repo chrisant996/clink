@@ -4,102 +4,104 @@
 #include "pch.h"
 #include "fs_fixture.h"
 #include "env_fixture.h"
-
-#if MODE4
+#include "line_editor_tester.h"
 
 #include <core/path.h>
+#include <core/settings.h>
+#include <core/str_compare.h>
+#include <lib/line_editor.h>
 #include <lua/lua_match_generator.h>
-#include <lua/lua_root.h>
 #include <lua/lua_script_loader.h>
-
-//------------------------------------------------------------------------------
-struct exec_test
-{
-    typedef match_generator_tester<exec_test> tester;
-
-                            exec_test();
-                            ~exec_test();
-                            operator match_generator& () { return *m_generator; }
-    lua_match_generator*    m_generator;
-    lua_root                m_lua_root;
-};
-
-exec_test::exec_test()
-{
-    lua_State* state = m_lua_root.get_state();
-    m_generator = new lua_match_generator(state);
-    lua_load_script(state, dll, exec);
-}
-
-exec_test::~exec_test()
-{
-    delete m_generator;
-}
+#include <lua/lua_state.h>
 
 //------------------------------------------------------------------------------
 TEST_CASE("Executable match generation.") {
-    static const char* exec_fs[] = {
+    static const char* path_fs_desc[] = {
         "_path/spa ce.exe",
         "_path/one_path.exe",
         "_path/one_two.py",
         "_path/one_three.txt"
+    };
+
+    static const char* exec_fs_desc[] = {
         "one_dir/spa ce.exe",
         "one_dir/two_dir_local.exe",
-        "one_dir/two_dir_local.txt"
+        "one_dir/two_dir_local.txt",
         "foodir/two_dir_local.exe",
+        "jumble/three.exe",
+        "jumble/three-local.py",
         "one_local.exe",
         "two_local.exe",
         "one_local.txt",
         nullptr,
     };
-    fs_fixture fs(exec_fs);
 
-    str<260> path_path(fs.get_root());
-    path::append(path_path, "_path");
+	fs_fixture path_fs(path_fs_desc);
+	fs_fixture exec_fs(exec_fs_desc);
+
+    str<260> path_env_var(path_fs.get_root());
+    path::append(path_env_var, "_path");
     const char* exec_env[] = {
-        "path",     path_path.c_str(),
+        "path",     path_env_var.c_str(),
         "pathext",  ".exe;.py",
         nullptr,
     };
     env_fixture env(exec_env);
 
-#if MODE4
-    clink.test.test_matches(
-        "Nothing",
-        "abc123",
-        {}
-    )
+    lua_state lua;
+    lua_match_generator lua_generator(lua);
+    lua_load_script(lua, app, exec);
+
+    line_editor_tester tester;
+    tester.get_editor()->add_generator(lua_generator);
+
+    settings::find("exec.cwd")->set("0");
+    settings::find("exec.dirs")->set("0");
+
+    SECTION("Nothing") {
+        tester.set_input("abc123");
+        tester.set_expected_matches();
+        tester.run();
+    }
+
+    SECTION("PATH single") {
+        tester.set_input("one_p");
+        tester.set_expected_matches("one_path.exe");
+        tester.run();
+    }
+
+    SECTION("PATH case mapped") {
+        str_compare_scope _(str_compare_scope::relaxed);
+
+        tester.set_input("one-p");
+        tester.set_expected_matches("one_path.exe");
+        tester.run();
+    }
+
+    SECTION("PATH matches") {
+        tester.set_input("one_");
+        tester.set_expected_matches("one_path.exe", "one_two.py");
+        tester.run();
+    }
+
+#if MODE4 // tester's shell != cmd.exe
+    SECTION("cmd.exe commands") {
+        tester.set_input("p");
+        tester.set_expected_matches("path", "pause", "popd", "prompt", "pushd");
+        tester.run();
+    }
 #endif
 
-    SECTION("PATH") {
-        exec_test::tester("one_p", "one_path.exe", nullptr);
+    SECTION("Relative path") {
+        tester.set_input(".\\");
+        tester.set_expected_matches(
+			"one_local.exe", "two_local.exe",
+            "one_dir\\", "foodir\\", "jumble\\"
+		);
+        tester.run();
     }
 
 #if MODE4
-    clink.test.test_output(
-        "path case mapped",
-        "one-p",
-        "one_path.exe "
-    )
-
-    clink.test.test_matches(
-        "path matches",
-        "one_",
-        { "one_path.exe", "one_two.py" }
-    )
-
-    clink.test.test_matches(
-        "cmd.exe commands",
-        "p",
-        { "path", "pause", "popd", "prompt", "pushd" }
-    )
-
-    clink.test.test_matches(
-        "relative path",
-        ".\\",
-        { "one_local.exe", "two_local.exe", "one_dir\\", "foodir\\", "jumble\\" }
-    )
-
     clink.test.test_output(
         "relative path dir",
         ".\\foodir\\",
@@ -221,5 +223,3 @@ TEST_CASE("Executable match generation.") {
     )
 #endif // MODE4
 }
-
-#endif // MODE4
