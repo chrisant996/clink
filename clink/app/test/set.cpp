@@ -1,53 +1,79 @@
-// Copyright (c) 2012 Martin Ridgers
+// Copyright (c) 2016 Martin Ridgers
 // License: http://opensource.org/licenses/MIT
 
 #include "pch.h"
+#include "env_fixture.h"
+#include "fs_fixture.h"
+#include "line_editor_tester.h"
 
-#if MODE4
+#include <core/str_compare.h>
+#include <lua/lua_match_generator.h>
+#include <lua/lua_script_loader.h>
+#include <lua/lua_state.h>
 
---------------------------------------------------------------------------------
-function clink.get_env_var_names()
-    return {
-        "simple",
-        "case_map",
-        "dash-1",
-        "dash_2",
+TEST_CASE("Set command.") {
+    static const char* env_desc[] = {
+        "simple",   "value",
+        "case_map", "value",
+        "dash-1",   "value",
+        "dash_2",   "value",
+        nullptr
+    };
+
+    env_fixture env(env_desc);
+    fs_fixture fs;
+
+    lua_state lua;
+    lua_match_generator lua_generator(lua);
+    lua_load_script(lua, app, set);
+
+    line_editor::desc desc;
+    desc.word_delims = " =";
+    line_editor_tester tester(desc);
+    tester.get_editor()->add_generator(lua_generator);
+
+    SECTION("Output basic") {
+        tester.set_input("set simp");
+        tester.set_expected_matches("simple");
+        tester.run();
     }
-end
 
-clink.test.test_output(
-    "Output basic",
-    "set simp",
-    "set simple"
-)
+    SECTION("Case mapped") {
+        str_compare_scope _(str_compare_scope::relaxed);
 
-clink.test.test_output(
-    "Output case map",
-    "set case_m",
-    "set case_map"
-)
+        SECTION("One match") {
+            tester.set_input("set case_m");
+            tester.set_expected_matches("case_map");
+            tester.run();
+        }
 
-clink.test.test_matches(
-    "Case mapped matches",
-    "set dash-",
-    { "dash-1", "dash_2" }
-)
+        SECTION("Many matches") {
+            tester.set_input("set dash-");
+            tester.set_expected_matches("dash-1", "dash_2");
+            tester.run();
+        }
+    }
 
-clink.test.test_matches(
-    "File matches after = #1",
-    "set sim\t="
-)
+    SECTION("File matching after '='") {
+        tester.get_editor()->add_generator(file_match_generator());
 
-clink.test.test_matches(
-    "File matches after = #2",
-    "set sim\t=dir",
-    { "dir1\\", "dir2\\" }
-)
+        SECTION("*") {
+            tester.set_input("set simple=");
+            tester.set_expected_matches("file1", "file2", "case_map-1", "case_map_2",
+                "dir1\\", "dir2\\");
+            tester.run();
+        }
 
-clink.test.test_matches(
-    "File matches after = #3",
-    "set sim\t=dir1\\file",
-    { "file1", "file2" }
-)
+        SECTION("dir*") {
+            tester.set_input("set simple=dir");
+            tester.set_expected_matches("dir1\\", "dir2\\");
+            tester.run();
+        }
 
-#endif // MODE4
+        SECTION("file*") {
+            tester.set_input("set simple=dir1\\file");
+            tester.set_expected_matches("file1", "file2");
+            tester.run();
+        }
+    }
+}
