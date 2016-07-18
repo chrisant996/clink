@@ -20,7 +20,7 @@ public:
         // Optional.
         const char*     shell_name = "clink";
         const char*     prompt = "clink $ ";
-        const char*     command_delims; // MODE4
+        const char*     command_delims = nullptr;
         const char*     quote_pair = "\"";
         const char*     word_delims = " \t";
         const char*     partial_delims = "\\/";

@@ -68,6 +68,7 @@ void line_editor_impl::begin_line()
     set_flag(flag_editing);
 
     m_bind_resolver.reset();
+    m_command_offset = 0;
     m_keys_size = 0;
     m_prev_key = ~0u;
 
@@ -80,6 +81,7 @@ void line_editor_impl::begin_line()
     line_state line = {
         m_buffer.get_buffer(),
         m_buffer.get_cursor(),
+        m_command_offset,
         m_words,
     };
     editor_backend::context context = make_context(line);
@@ -195,6 +197,7 @@ void line_editor_impl::dispatch()
         line_state line = {
             m_buffer.get_buffer(),
             m_buffer.get_cursor(),
+            m_command_offset,
             m_words,
         };
         editor_backend::context context = make_context(line);
@@ -236,14 +239,46 @@ void line_editor_impl::dispatch()
 }
 
 //------------------------------------------------------------------------------
-void line_editor_impl::collect_words()
+void line_editor_impl::find_command_bounds(const char*& start, int& length)
 {
     const char* line_buffer = m_buffer.get_buffer();
-    const unsigned int line_cursor = m_buffer.get_cursor();
+    unsigned int line_cursor = m_buffer.get_cursor();
 
+    start = line_buffer;
+    length = line_cursor;
+
+    if (m_desc.command_delims == nullptr)
+        return;
+
+    str_iter token_iter(start, length);
+    str_tokeniser tokens(token_iter, m_desc.command_delims);
+    tokens.add_quote_pair(m_desc.quote_pair);
+    while (tokens.next(start, length));
+
+    // We should expect to reach the cursor. If not then there's a trailing
+    // separator and we'll just say the command starts at the cursor.
+    if (start + length != line_buffer + line_cursor)
+    {
+        start = line_buffer + line_cursor;
+        length = 0;
+    }
+}
+
+//------------------------------------------------------------------------------
+void line_editor_impl::collect_words()
+{
     m_words.clear();
 
-    str_iter token_iter(line_buffer, line_cursor);
+    const char* line_buffer = m_buffer.get_buffer();
+    unsigned int line_cursor = m_buffer.get_cursor();
+
+    const char* command_start;
+    int command_length;
+    find_command_bounds(command_start, command_length);
+
+    m_command_offset = int(command_start - line_buffer);
+
+    str_iter token_iter(command_start, command_length);
     str_tokeniser tokens(token_iter, m_desc.word_delims);
     tokens.add_quote_pair(m_desc.quote_pair);
     while (1)
@@ -371,6 +406,7 @@ bool line_editor_impl::check_flag(unsigned char flag) const
 void line_editor_impl::update_internal()
 {
     collect_words();
+
     const word& end_word = *(m_words.back());
 
     union key_t {
@@ -394,6 +430,7 @@ void line_editor_impl::update_internal()
         line_state line({
             m_buffer.get_buffer(),
             m_buffer.get_cursor(),
+            m_command_offset,
             m_words,
         });
         match_pipeline pipeline(m_matches);
@@ -423,6 +460,7 @@ void line_editor_impl::update_internal()
         line_state line = {
             buf_ptr,
             m_buffer.get_cursor(),
+            m_command_offset,
             m_words,
         };
         editor_backend::context context = make_context(line);

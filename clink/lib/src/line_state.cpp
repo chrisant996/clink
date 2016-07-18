@@ -11,10 +11,12 @@
 line_state::line_state(
     const char* line,
     unsigned int cursor,
+    unsigned int command_offset,
     const array<word>& words)
 : m_words(words)
 , m_line(line)
 , m_cursor(cursor)
+, m_command_offset(command_offset)
 {
 }
 
@@ -28,6 +30,12 @@ const char* line_state::get_line() const
 unsigned int line_state::get_cursor() const
 {
     return m_cursor;
+}
+
+//------------------------------------------------------------------------------
+unsigned int line_state::get_command_offset() const
+{
+    return m_command_offset;
 }
 
 //------------------------------------------------------------------------------

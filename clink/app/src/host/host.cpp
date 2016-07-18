@@ -143,6 +143,7 @@ MODE4 */
     line_editor::desc desc = {};
     desc.prompt = prompt;
     desc.quote_pair = "\"";
+    desc.command_delims = "&|";
     desc.word_delims = " \t<>=;";
     desc.partial_delims = "\\/:";
     desc.auto_quote_chars = " %=;&^";

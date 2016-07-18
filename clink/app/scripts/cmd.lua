@@ -19,8 +19,8 @@ local function cmd_command_generator(line_state, match_builder)
 
     if settings.get("exec.space_prefix") then
         local word_info = line_state:getwordinfo(1)
-        local offset = 1
-        if word_info.quoted then offset = 2 end
+        local offset = line_state:getcommandoffset()
+        if word_info.quoted then offset = offset + 1 end
         if word_info.offset > offset then
             return false
         end

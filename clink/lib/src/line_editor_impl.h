@@ -43,6 +43,7 @@ private:
     void                initialise();
     void                begin_line();
     void                end_line();
+    void                find_command_bounds(const char*& start, int& length);
     void                collect_words();
     void                update_internal();
     void                record_input(unsigned char key);
@@ -63,6 +64,7 @@ private:
     words               m_words;
     matches_impl        m_matches;
     unsigned int        m_prev_key;
+    unsigned int        m_command_offset;
     unsigned char       m_keys_size;
     unsigned char       m_flags;
 };
