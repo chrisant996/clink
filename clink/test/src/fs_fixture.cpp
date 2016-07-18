@@ -25,8 +25,11 @@ static const char* g_default_fs[] = {
 //------------------------------------------------------------------------------
 fs_fixture::fs_fixture(const char** fs)
 {
+    str<64> id;
+    id.format("clink_test_%d", rand());
+
     os::get_env("tmp", m_root);
-    path::append(m_root, "clink_test");
+    path::append(m_root, id.c_str());
 
     os::make_dir(m_root.c_str());
     os::set_current_dir(m_root.c_str());
