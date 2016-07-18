@@ -5,7 +5,6 @@
 #include "line_editor_tester.h"
 
 #include <lib/editor_backend.h>
-#include <lib/line_editor.h>
 #include <lib/matches.h>
 
 //------------------------------------------------------------------------------

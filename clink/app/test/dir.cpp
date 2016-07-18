@@ -8,7 +8,6 @@
 #include <core/base.h>
 #include <core/str.h>
 #include <core/str_compare.h>
-#include <lib/line_editor.h>
 #include <lua/lua_match_generator.h>
 #include <lua/lua_script_loader.h>
 #include <lua/lua_state.h>

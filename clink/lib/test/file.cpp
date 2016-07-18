@@ -6,7 +6,6 @@
 #include "line_editor_tester.h"
 
 #include <core/str_compare.h>
-#include <lib/line_editor.h>
 #include <lib/match_generator.h>
 
 //------------------------------------------------------------------------------
