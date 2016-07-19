@@ -30,75 +30,78 @@ public:
         type_enum,
     };
 
-    virtual           ~setting();
-    setting*          next() const;
-    type_e            get_type() const;
-    const char*       get_name() const;
-    const char*       get_short_desc() const;
-    const char*       get_long_desc() const;
-    virtual bool      set(const char* value) = 0;
-    virtual void      get(str_base& out) const = 0;
+    virtual         ~setting();
+    setting*        next() const;
+    type_e          get_type() const;
+    const char*     get_name() const;
+    const char*     get_short_desc() const;
+    const char*     get_long_desc() const;
+    virtual bool    set(const char* value) = 0;
+    virtual void    get(str_base& out) const = 0;
 
 protected:
-                      setting(const char* name, const char* short_desc, const char* long_desc, type_e type);
-    str<32, false>    m_name;
-    str<48, false>    m_short_desc;
-    str<128>          m_long_desc;
-    setting*          m_prev;
-    setting*          m_next;
-    type_e            m_type;
+                    setting(const char* name, const char* short_desc, const char* long_desc, type_e type);
+    str<32, false>  m_name;
+    str<48, false>  m_short_desc;
+    str<128>        m_long_desc;
+    setting*        m_prev;
+    setting*        m_next;
+    type_e          m_type;
+
+    template <typename T>
+    struct store
+    {
+                    operator T () const { return value; }
+        T           value;
+    };
 };
 
 //------------------------------------------------------------------------------
-template <typename TYPE>
+template <> struct setting::store<const char*>
+{
+                    operator const char* () const { return value.c_str(); }
+    str<64>         value;
+};
+
+//------------------------------------------------------------------------------
+template <typename T>
 class setting_impl
     : public setting
 {
 public:
-                    setting_impl(const char* name, const char* short_desc, const char* long_desc, TYPE default_value);
-    TYPE            get() const;
+                    setting_impl(const char* name, const char* short_desc, const char* long_desc, T default_value);
+    T               get() const;
     virtual bool    set(const char* value) override;
     virtual void    get(str_base& out) const override;
 
 protected:
-    template <typename TYPE> struct store
-    {
-                    operator TYPE () const { return value; }
-        TYPE        value;
-    };
-
-    template <> struct store<const char*>
-    {
-                    operator const char* () const { return value.c_str(); }
-        str<64>     value;
-    };
-
-    template <typename TYPE> struct type              { enum { id = type_unknown }; };
-    template <>              struct type<bool>        { enum { id = type_bool }; };
-    template <>              struct type<int>         { enum { id = type_int }; };
-    template <>              struct type<const char*> { enum { id = type_string }; };
-
-    store<TYPE>     m_store;
+    struct          type;
+    store<T>        m_store;
 };
 
 //------------------------------------------------------------------------------
-template <typename TYPE> setting_impl<TYPE>::setting_impl(
+template <typename T> setting_impl<T>::setting_impl(
     const char* name,
     const char* short_desc,
     const char* long_desc,
-    TYPE default_value)
-: setting(name, short_desc, long_desc, type_e(type<TYPE>::id))
+    T default_value)
+: setting(name, short_desc, long_desc, type_e(type::id))
 {
     m_store.value = default_value;
 }
 
 //------------------------------------------------------------------------------
-template <typename TYPE> TYPE setting_impl<TYPE>::get() const
+template <typename T> T setting_impl<T>::get() const
 {
     return m_store;
 }
 
 
+
+//------------------------------------------------------------------------------
+template <> struct setting_impl<bool>::type        { enum { id = setting::type_bool }; };
+template <> struct setting_impl<int>::type         { enum { id = setting::type_int }; };
+template <> struct setting_impl<const char*>::type { enum { id = setting::type_string }; };
 
 //------------------------------------------------------------------------------
 typedef setting_impl<bool>         setting_bool;
