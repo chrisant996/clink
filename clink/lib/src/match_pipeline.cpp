@@ -14,7 +14,7 @@
 #include <algorithm>
 
 //------------------------------------------------------------------------------
-unsigned int normal_selector(
+static unsigned int normal_selector(
     const char* needle,
     const match_store& store,
     match_info* infos,
@@ -33,7 +33,7 @@ unsigned int normal_selector(
 }
 
 //------------------------------------------------------------------------------
-void alpha_sorter(const match_store& store, match_info* infos, int count)
+static void alpha_sorter(const match_store& store, match_info* infos, int count)
 {
     struct predicate
     {
