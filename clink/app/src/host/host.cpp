@@ -24,26 +24,22 @@ static setting_str g_clink_path(
     "clink.path",
     "Paths to load Lua completion scripts from",
     "These paths will be searched for Lua scripts that provide custom\n"
-    "match generation. Multiple paths should be separated delimited with\n"
-    "a semicolon.",
+    "match generation. Multiple paths should be delimited by semicolons.",
     "");
 
-static setting_bool g_case_sensitive(
-    "match.case_sensitive",
-    "Case sensitive matching.",
-    "", // MODE4
-    false);
-
-static setting_bool g_case_relaxed(
-    "match.case_relaxed",
-    "Also consider -/_ equal when case insensitive.",
-    "", // MODE4
-    true);
+static setting_enum g_ignore_case(
+    "match.ignore_case",
+    "Case insensitive matching",
+    "Toggles whether case is ignored when selecting matches. The 'relaxed'\n"
+    "option will also consider -/_ as equal.",
+    "off,on,relaxed",
+    2);
 
 
 
 //------------------------------------------------------------------------------
 void load_clink_settings();
+
 
 
 //------------------------------------------------------------------------------
@@ -107,11 +103,13 @@ bool host::edit_line(const char* prompt, str_base& out)
 
     load_clink_settings();
 
-    int cmp_mode = str_compare_scope::exact;
-    if (!g_case_sensitive.get())
-        cmp_mode = g_case_relaxed.get()
-            ? str_compare_scope::relaxed
-            : str_compare_scope::caseless;
+    int cmp_mode;
+    switch (g_ignore_case.get())
+    {
+    case 1:     cmp_mode = str_compare_scope::caseless; break;
+    case 2:     cmp_mode = str_compare_scope::relaxed;  break;
+    default:    cmp_mode = str_compare_scope::exact;    break;
+    }
 
     str_compare_scope compare(cmp_mode);
 
