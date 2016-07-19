@@ -13,13 +13,15 @@
 setting_bool g_glob_hidden(
     "files.hidden",
     "Include hidden files",
-    "", // MODE4
+    "Includes or excludes files with the 'hidden' attribute set when generating\n"
+    "file lists.",
     true);
 
 setting_bool g_glob_system(
     "files.system",
     "Include system files",
-    "", // MODE4
+    "Includes or excludes files with the 'system' attribute set when generating\n"
+    "file lists.",
     false);
 
 
