@@ -22,7 +22,7 @@ namespace settings
 class setting
 {
 public:
-    enum type_e {
+    enum type_e : unsigned char {
         type_unknown,
         type_int,
         type_bool,
