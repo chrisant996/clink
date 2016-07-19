@@ -80,7 +80,7 @@ class fixed_array
     : public array<T>
 {
 public:
-                fixed_array() : array(m_buffer, 0, SIZE) {}
+                fixed_array() : array<T>(m_buffer, 0, SIZE) {}
 
 private:
     T           m_buffer[SIZE];
