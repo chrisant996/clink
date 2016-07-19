@@ -16,7 +16,7 @@ public:
                             rl_backend(const char* shell_name);
 
 private:
-    virtual void            bind(binder_func* binder) override;
+    virtual void            bind_input(binder_func* binder) override;
     virtual void            on_begin_line(const char* prompt, const context& context) override;
     virtual void            on_end_line() override;
     virtual void            on_matches_changed(const context& context) override;

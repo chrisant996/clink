@@ -53,7 +53,7 @@ void line_editor_impl::initialise()
     for (auto* backend : m_backends)
     {
         s_backend = backend;
-        backend->bind([](const char* chord, unsigned char id) -> bool {
+        backend->bind_input([](const char* chord, unsigned char id) -> bool {
             return s_binder->bind(chord, *s_backend, id);
         });
     }
