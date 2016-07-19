@@ -57,9 +57,6 @@ int str_iter_impl<wchar_t>::next()
             return ax + c - 0x35fdc00;
         else
             return c;
-
-        if (!more())
-            break;
     }
 
     return 0;
