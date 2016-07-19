@@ -274,5 +274,11 @@ TEST_CASE("Executable match generation.") {
             tester.set_expected_matches();
             tester.run();
         }
+
+        SECTION("Not if relative") {
+            tester.set_input("/p");
+            tester.set_expected_matches();
+            tester.run();
+        }
     }
 }
