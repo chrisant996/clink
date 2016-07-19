@@ -86,14 +86,14 @@ void line_editor_impl::begin_line()
     };
     editor_backend::context context = make_context(line);
     for (auto backend : m_backends)
-        backend->begin_line(m_desc.prompt, context);
+        backend->on_begin_line(m_desc.prompt, context);
 }
 
 //------------------------------------------------------------------------------
 void line_editor_impl::end_line()
 {
     for (auto i = m_backends.rbegin(), n = m_backends.rend(); i != n; ++i)
-        i->end_line();
+        i->on_end_line();
 
     m_buffer.end_line();
     m_desc.terminal->end();

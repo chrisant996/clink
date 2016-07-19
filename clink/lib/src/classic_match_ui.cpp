@@ -55,12 +55,12 @@ void classic_match_ui::bind(binder_func* binder)
 }
 
 //------------------------------------------------------------------------------
-void classic_match_ui::begin_line(const char* prompt, const context& context)
+void classic_match_ui::on_begin_line(const char* prompt, const context& context)
 {
 }
 
 //------------------------------------------------------------------------------
-void classic_match_ui::end_line()
+void classic_match_ui::on_end_line()
 {
 }
 

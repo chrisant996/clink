@@ -17,8 +17,8 @@ public:
 
 private:
     virtual void            bind(binder_func* binder) override;
-    virtual void            begin_line(const char* prompt, const context& context) override;
-    virtual void            end_line() override;
+    virtual void            on_begin_line(const char* prompt, const context& context) override;
+    virtual void            on_end_line() override;
     virtual void            on_matches_changed(const context& context) override;
     virtual result          on_input(const char* keys, int id, const context& context) override;
     void                    done(const char* line);

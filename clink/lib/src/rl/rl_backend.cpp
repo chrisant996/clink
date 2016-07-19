@@ -82,7 +82,7 @@ void rl_backend::bind(binder_func* binder)
 }
 
 //------------------------------------------------------------------------------
-void rl_backend::begin_line(const char* prompt, const context& context)
+void rl_backend::on_begin_line(const char* prompt, const context& context)
 {
     rl_outstream = (FILE*)(terminal_out*)(&context.terminal);
 
@@ -108,7 +108,7 @@ void rl_backend::begin_line(const char* prompt, const context& context)
 }
 
 //------------------------------------------------------------------------------
-void rl_backend::end_line()
+void rl_backend::on_end_line()
 {
     if (m_rl_buffer != nullptr)
     {
