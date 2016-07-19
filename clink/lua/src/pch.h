@@ -7,9 +7,8 @@
 
 #include <Windows.h>
 
-// Lua includes.
 extern "C" {
 #include <lua.h>
 #include <lauxlib.h>
 #include <lualib.h>
-} // extern "C"
+}
