@@ -24,24 +24,12 @@ matching and will do normal files matching instead.]])
 local function get_environment_paths()
     local paths = clink.split(os.getenv("path"), ";")
 
-    -- We're expecting absolute paths and as ';' is a valid path character
-    -- there maybe unneccessary splits. Here we resolve them.
-    local paths_merged = { paths[1] }
-    for i = 2, #paths, 1 do
-        if not paths[i]:find("^[a-zA-Z]:") then
-            local t = paths_merged[#paths_merged]
-            paths_merged[#paths_merged] = t..paths[i]
-        else
-            table.insert(paths_merged, paths[i])
-        end
-    end
-
     -- Append slashes.
-    for i = 1, #paths_merged, 1 do
-        paths_merged[i] = paths_merged[i].."/"
+    for i = 1, #paths, 1 do
+        paths[i] = paths[i].."/"
     end
 
-    return paths_merged
+    return paths
 end
 
 --------------------------------------------------------------------------------
