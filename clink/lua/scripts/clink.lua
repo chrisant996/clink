@@ -3,6 +3,7 @@
 
 --------------------------------------------------------------------------------
 function clink.split(str, sep)
+    -- MODE4 : remove and add as a method to string from C++.
     local i = 1
     local ret = {}
     for _, j in function() return str:find(sep, i, true) end do

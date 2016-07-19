@@ -1,6 +1,8 @@
 -- Copyright (c) 2012 Martin Ridgers
 -- License: http://opensource.org/licenses/MIT
 
+-- MODE4 : some of this is out of date.
+
 --------------------------------------------------------------------------------
 local null_parser = clink.arg.new_parser()
 null_parser:disable_file_matching()
