@@ -20,9 +20,9 @@ inline int  str_icmp(const wchar_t* l, const wchar_t* r)             { return wc
 inline int  vsnprint(char* d, int n, const char* f, va_list a)       { return vsnprintf(d, n, f, a); }
 inline int  vsnprint(wchar_t* d, int n, const wchar_t* f, va_list a) { return _vsnwprintf(d, n, f, a); }
 inline const char*    str_chr(const char* s, int c)                  { return strchr(s, c); }
-inline const wchar_t* str_chr(const wchar_t* s, int c)               { return wcschr(s, c); }
+inline const wchar_t* str_chr(const wchar_t* s, int c)               { return wcschr(s, wchar_t(c)); }
 inline const char*    str_rchr(const char* s, int c)                 { return strrchr(s, c); }
-inline const wchar_t* str_rchr(const wchar_t* s, int c)              { return wcsrchr(s, c); }
+inline const wchar_t* str_rchr(const wchar_t* s, int c)              { return wcsrchr(s, wchar_t(c)); }
 
 unsigned int char_count(const char*);
 unsigned int char_count(const wchar_t*);

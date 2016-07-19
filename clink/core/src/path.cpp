@@ -95,7 +95,7 @@ void clean(char* in_out, int sep)
         case state_write:
             if (is_separator(c) || c == sep)
             {
-                c = sep;
+                c = char(sep);
                 state = state_slash;
             }
 

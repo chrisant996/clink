@@ -80,7 +80,7 @@ int to_utf8(char* out, int max_count, wstr_iter& iter)
         case 4: out_chars[3] = (c & 0x3f); c >>= 6;
         case 3: out_chars[2] = (c & 0x3f); c >>= 6;
         case 2: out_chars[1] = (c & 0x3f); c >>= 6;
-                out_chars[0] = (c & 0x1f) | (0xfc0 >> (n - 2));
+                out_chars[0] = (c & 0x1f) | char(0xfc0 >> (n - 2));
         }
 
         for (int i = 0; i < n; ++i)
