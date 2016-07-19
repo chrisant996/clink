@@ -56,6 +56,16 @@ void host_ps::initialise_lua(lua_state& lua)
 }
 
 //------------------------------------------------------------------------------
+void host_ps::initialise_editor_desc(line_editor::desc& desc)
+{
+    desc.quote_pair = "\"";
+    desc.command_delims = ";";
+    desc.word_delims = " \t<>";
+    desc.partial_delims = "\\/:";
+    desc.auto_quote_chars = " ;";
+}
+
+//------------------------------------------------------------------------------
 BOOL WINAPI host_ps::read_console(
     HANDLE input,
     wchar_t* chars,

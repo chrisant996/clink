@@ -25,4 +25,5 @@ private:
     static BOOL WINAPI  read_console(HANDLE input, wchar_t* buffer, DWORD buffer_count, LPDWORD read_in, void* control);
     void                edit_line(const wchar_t* prompt, wchar_t* buffer, int buffer_count);
     void                initialise_lua(lua_state& lua);
+    virtual void        initialise_editor_desc(line_editor::desc& desc) override;
 };

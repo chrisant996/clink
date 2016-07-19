@@ -201,6 +201,16 @@ void host_cmd::initialise_lua(lua_state& lua)
 }
 
 //------------------------------------------------------------------------------
+void host_cmd::initialise_editor_desc(line_editor::desc& desc)
+{
+    desc.quote_pair = "\"";
+    desc.command_delims = "&|";
+    desc.word_delims = " \t<>=;";
+    desc.partial_delims = "\\/:";
+    desc.auto_quote_chars = " %=;&^";
+}
+
+//------------------------------------------------------------------------------
 bool host_cmd::is_interactive() const
 {
     // Check the command line for '/c' and don't load if it's present. There's

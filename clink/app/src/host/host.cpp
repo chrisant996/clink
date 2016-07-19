@@ -133,18 +133,14 @@ MODE4 */
     initialise_lua(lua);
     load_lua_scripts(lua);
 
+    line_editor::desc desc = {};
+    initialise_editor_desc(desc);
+
 #if MODE4
     str<128> filtered_prompt;
     filter_prompt(prompt, filtered_prompt);
 #endif
-
-    line_editor::desc desc = {};
     desc.prompt = prompt;
-    desc.quote_pair = "\"";
-    desc.command_delims = "&|";
-    desc.word_delims = " \t<>=;";
-    desc.partial_delims = "\\/:";
-    desc.auto_quote_chars = " %=;&^";
     desc.terminal = &terminal;
 
     line_editor* editor = line_editor_create(desc);

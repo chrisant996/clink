@@ -29,6 +29,7 @@ private:
     static BOOL WINAPI  set_env_var(const wchar_t* name, const wchar_t* value);
     static bool         hook_trap();
     virtual void        initialise_lua(lua_state& lua) override;
+    virtual void        initialise_editor_desc(line_editor::desc& desc) override;
     void                edit_line(const wchar_t* prompt, wchar_t* chars, int max_chars);
     bool                capture_prompt(const wchar_t* chars, int char_count);
     bool                is_interactive() const;
