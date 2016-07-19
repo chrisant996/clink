@@ -38,5 +38,5 @@ function clink.register_match_generator(func, priority)
     end
 
     table.insert(generators, {f=func, p=priority})
-    table.sort(generators, function(a, b) return a["p"] < b["p"] end)
+    table.sort(generators, function(a, b) return a.p < b.p end)
 end

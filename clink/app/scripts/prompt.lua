@@ -19,7 +19,7 @@ function clink.prompt.register_filter(filter, priority)
     end
 
     table.insert(clink.prompt.filters, {f=filter, p=priority})
-    table.sort(clink.prompt.filters, function(a, b) return a["p"] < b["p"] end)
+    table.sort(clink.prompt.filters, function(a, b) return a.p < b.p end)
 end
 
 --------------------------------------------------------------------------------
