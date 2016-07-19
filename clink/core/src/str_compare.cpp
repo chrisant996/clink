@@ -4,7 +4,7 @@
 #include "pch.h"
 #include "str_compare.h"
 
-int str_compare_scope::ts_mode = str_compare_scope::exact;
+int THREAD_LOCAL str_compare_scope::ts_mode = str_compare_scope::exact;
 
 //------------------------------------------------------------------------------
 str_compare_scope::str_compare_scope(int mode)
