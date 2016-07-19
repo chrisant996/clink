@@ -111,12 +111,12 @@ bool host::edit_line(const char* prompt, str_base& out)
     case 2:     cmp_mode = str_compare_scope::relaxed;  break;
     default:    cmp_mode = str_compare_scope::exact;    break;
     }
-
     str_compare_scope compare(cmp_mode);
 
     rl_history history;
     editor_backend* ui = classic_match_ui_create();
 
+    // Set up Lua and load scripts into it.
     lua_state lua;
     lua_match_generator lua_generator(lua);
     prompt_filter prompt_filter(lua);
@@ -141,12 +141,13 @@ MODE4 */
     prompt_filter.filter(prompt, filtered_prompt);
     desc.prompt = filtered_prompt.c_str();
 
+    // Set the terminal that will handle all IO while editing.
     win_terminal terminal;
     desc.terminal = &terminal;
 
+    // Create the editor and add components to it.
     line_editor* editor = line_editor_create(desc);
     editor->add_backend(*ui);
-
     editor->add_generator(lua_generator);
     editor->add_generator(file_match_generator());
 
