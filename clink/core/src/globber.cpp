@@ -52,22 +52,21 @@ bool globber::next(str_base& out, bool rooted)
 
     str<MAX_PATH> file_name(m_data.cFileName);
 
+    bool skip = false;
+
     const wchar_t* c = m_data.cFileName;
-    if (c[0] == '.' && (!c[1] || (c[1] == '.' && !c[2])) && !m_dots)
-        goto skip_file;
+    skip |= (c[0] == '.' && (!c[1] || (c[1] == '.' && !c[2])) && !m_dots);
 
     int attr = m_data.dwFileAttributes;
-    if (attr & FILE_ATTRIBUTE_SYSTEM && !m_system)
-        goto skip_file;
+    skip |= (attr & FILE_ATTRIBUTE_SYSTEM) && !m_system;
+    skip |= (attr & FILE_ATTRIBUTE_HIDDEN) && !m_hidden;
+    skip |= (attr & FILE_ATTRIBUTE_DIRECTORY) && !m_directories;
+    skip |= !(attr & FILE_ATTRIBUTE_DIRECTORY) && !m_files;
 
-    if ((attr & FILE_ATTRIBUTE_HIDDEN) && !m_hidden)
-        goto skip_file;
+    next_file();
 
-    if ((attr & FILE_ATTRIBUTE_DIRECTORY) && !m_directories)
-        goto skip_file;
-
-    if (!(attr & FILE_ATTRIBUTE_DIRECTORY) && !m_files)
-        goto skip_file;
+    if (skip)
+        return next(out, rooted);
 
     out.clear();
     if (rooted)
@@ -78,12 +77,7 @@ bool globber::next(str_base& out, bool rooted)
     if (attr & FILE_ATTRIBUTE_DIRECTORY && m_dir_suffix)
         out << "\\";
 
-    next_file();
     return true;
-
-skip_file:
-    next_file();
-    return next(out, rooted);
 }
 
 //------------------------------------------------------------------------------
