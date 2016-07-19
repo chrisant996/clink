@@ -6,6 +6,14 @@
 
 #include <core/base.h>
 #include <core/str.h>
+#include <lua/lua_script_loader.h>
+#include <lua/lua_state.h>
+
+extern "C" {
+#include <lua.h>
+#include <lauxlib.h>
+#include <lualib.h>
+}
 
 #include <algorithm>
 
@@ -134,6 +142,40 @@ int tagged_prompt::is_tagged(const wchar_t* chars, int char_count)
     }
 
     return 0;
+}
+
+
+
+//------------------------------------------------------------------------------
+prompt_filter::prompt_filter(lua_state& lua)
+: m_lua(lua)
+{
+    lua_load_script(lua, app, prompt);
+}
+
+//------------------------------------------------------------------------------
+void prompt_filter::filter(const char* in, str_base& out)
+{
+    lua_State* state = m_lua.get_state();
+
+    // Call Lua to filter prompt
+    lua_getglobal(state, "prompt");
+    lua_pushliteral(state, "filter");
+    lua_rawget(state, -2);
+
+    lua_pushstring(state, in);
+    if (lua_pcall(state, 1, 1, 0) != 0)
+    {
+        puts(lua_tostring(state, -1));
+        lua_pop(state, 2);
+        return;
+    }
+
+    // Collect the filtered prompt.
+    const char* prompt = lua_tostring(state, -1);
+    out = prompt;
+
+    lua_pop(state, 2);
 }
 
 

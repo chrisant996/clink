@@ -9,7 +9,7 @@
 
 #include <core/str.h>
 #include <lib/line_editor.h>
-// MODE4 #include <lua/lua_script_loader.h>
+#include <lua/lua_script_loader.h>
 #include <process/vm.h>
 
 #include <Windows.h>
@@ -51,8 +51,7 @@ void host_ps::shutdown()
 //------------------------------------------------------------------------------
 void host_ps::initialise_lua(lua_state& lua)
 {
-    // MODE4 : needs prompt filtering.
-    // lua_load_script(lua, app, powershell);
+    lua_load_script(lua, app, powershell);
 }
 
 //------------------------------------------------------------------------------

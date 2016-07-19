@@ -3,6 +3,9 @@
 
 #pragma once
 
+class lua_state;
+class str_base;
+
 //------------------------------------------------------------------------------
 class prompt
 {
@@ -32,6 +35,17 @@ public:
 
 private:
     int             is_tagged(const wchar_t* chars, int char_count=0);
+};
+
+//------------------------------------------------------------------------------
+class prompt_filter
+{
+public:
+                    prompt_filter(lua_state& lua);
+    void            filter(const char* in, str_base& out);
+
+private:
+    lua_state&      m_lua;
 };
 
 //------------------------------------------------------------------------------

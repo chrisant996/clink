@@ -3,6 +3,7 @@
 
 #include "pch.h"
 #include "host.h"
+#include "prompt.h"
 #include "rl/rl_history.h"
 
 #include <core/globber.h>
@@ -118,13 +119,13 @@ bool host::edit_line(const char* prompt, str_base& out)
 
     lua_state lua;
     lua_match_generator lua_generator(lua);
+    prompt_filter prompt_filter(lua);
 /* MODE4
     lua_load_script(lua, app, git);
     lua_load_script(lua, app, go);
     lua_load_script(lua, app, hg);
     lua_load_script(lua, app, p4);
     lua_load_script(lua, app, svn);
-    lua_load_script(lua, app, prompt);
 MODE4 */
     lua_load_script(lua, app, dir);
     lua_load_script(lua, app, exec);
@@ -135,11 +136,10 @@ MODE4 */
     line_editor::desc desc = {};
     initialise_editor_desc(desc);
 
-#if MODE4
-    str<128> filtered_prompt;
-    filter_prompt(prompt, filtered_prompt);
-#endif
-    desc.prompt = prompt;
+    // Filter the prompt.
+    str<256> filtered_prompt;
+    prompt_filter.filter(prompt, filtered_prompt);
+    desc.prompt = filtered_prompt.c_str();
 
     win_terminal terminal;
     desc.terminal = &terminal;
@@ -157,31 +157,5 @@ MODE4 */
 
     line_editor_destroy(editor);
     classic_match_ui_destroy(ui);
-
     return ret;
-}
-
-//------------------------------------------------------------------------------
-void host::filter_prompt(const char* in, str_base& out)
-{
-#if MODE4
-    // Call Lua to filter prompt
-    lua_getglobal(m_lua, "clink");
-    lua_pushliteral(m_lua, "filter_prompt");
-    lua_rawget(m_lua, -2);
-
-    lua_pushstring(m_lua, in);
-    if (lua_pcall(m_lua, 1, 1, 0) != 0)
-    {
-        puts(lua_tostring(m_lua, -1));
-        lua_pop(m_lua, 2);
-        return;
-    }
-
-    // Collect the filtered prompt.
-    const char* prompt = lua_tostring(m_lua, -1);
-    out = prompt;
-
-    lua_pop(m_lua, 2);
-#endif // MODE4
 }
