@@ -113,7 +113,6 @@ bool host::edit_line(const char* prompt, str_base& out)
 
     str_compare_scope compare(cmp_mode);
 
-    win_terminal terminal;
     rl_history history;
     editor_backend* ui = classic_match_ui_create();
 
@@ -141,6 +140,8 @@ MODE4 */
     filter_prompt(prompt, filtered_prompt);
 #endif
     desc.prompt = prompt;
+
+    win_terminal terminal;
     desc.terminal = &terminal;
 
     line_editor* editor = line_editor_create(desc);
