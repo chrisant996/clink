@@ -45,8 +45,8 @@ int str_compare_impl(str_iter_impl<T>& lhs, str_iter_impl<T>& rhs)
 
         if (MODE > 0)
         {
-            c = (c > 0xffff) ? c : int(CharLowerW(LPWSTR(c)));
-            d = (d > 0xffff) ? d : int(CharLowerW(LPWSTR(d)));
+            c = (c > 0xffff) ? c : int(uintptr_t(CharLowerW(LPWSTR(uintptr_t(c)))));
+            d = (d > 0xffff) ? d : int(uintptr_t(CharLowerW(LPWSTR(uintptr_t(d)))));
         }
 
         if (MODE > 1)
