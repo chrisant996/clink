@@ -74,6 +74,23 @@ rl_backend::rl_backend(const char* shell_name)
     // Disable completion and match display.
     rl_completion_entry_function = [](const char*, int) -> char* { return nullptr; };
     rl_completion_display_matches_hook = [](char**, int, int) {};
+
+    // Bind extended keys so editing follows Windows' conventions.
+    static const char* ext_key_binds[][2] = {
+        { "\\eOD", "backward-word" },           // ctrl-left
+        { "\\eOC", "forward-word" },            // ctrl-right
+        { "\\e[4", "end-of-line" },             // end
+        { "\\e[1", "beginning-of-line" },       // home
+        { "\\e[3", "delete-char" },             // del
+      //{ "\\e[t", "enter-scroll-mode" },       // shift-pgup // MODE4
+        { "\\eO4", "kill-line" },               // ctrl-end
+        { "\\eO1", "backward-kill-line" },      // ctrl-home
+      //{ "\\e[5", "history-search-backward" }, // pgup // MODE4
+      //{ "\\e[6", "history-search-forward" },  // pgdn // MODE4
+    };
+
+    for (int i = 0; i < sizeof_array(ext_key_binds); ++i)
+        rl_bind_keyseq(ext_key_binds[i][0], rl_named_function(ext_key_binds[i][1]));
 }
 
 //------------------------------------------------------------------------------

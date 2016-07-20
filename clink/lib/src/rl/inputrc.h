@@ -4,17 +4,6 @@
 #pragma once
 
 const char* clink_inputrc[] = {
-    "M-OD: backward-word",           // ctrl-left
-    "M-OC: forward-word",            // ctrl-right
-    "M-[4: end-of-line",             // end
-    "M-[1: beginning-of-line",       // home
-    "M-[3: delete-char",             // del
-    "M-[t: enter-scroll-mode",       // shift-pgup
-    "M-O4: kill-line",               // ctrl-end
-    "M-O1: backward-kill-line",      // ctrl-home
-    "M-[5: history-search-backward", // pgup
-    "M-[6: history-search-forward",  // pgdn
-
     "set keymap emacs",
     "C-v:   paste-from-clipboard",
     "C-q:   reload-lua-state",
