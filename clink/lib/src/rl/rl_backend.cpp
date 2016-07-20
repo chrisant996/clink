@@ -21,6 +21,8 @@ extern "C" {
 extern void     (*rl_fwrite_function)(FILE*, const char*, int);
 extern void     (*rl_fflush_function)(FILE*);
 extern char*    _rl_comment_begin;
+extern int      _rl_convert_meta_chars_to_ascii;
+extern int      _rl_output_meta_chars;
 } // extern "C"
 
 
@@ -70,6 +72,11 @@ rl_backend::rl_backend(const char* shell_name)
     rl_readline_name = shell_name;
     rl_catch_signals = 0;
     _rl_comment_begin = "::"; // this'll do...
+
+    // Readline needs a tweak of it's handling of 'meta' (i.e. IO bytes >=0x80)
+    // so that it handles UTF-8 correctly (convert=input, output=output)
+    _rl_convert_meta_chars_to_ascii = 0;
+    _rl_output_meta_chars = 1;
 
     // Disable completion and match display.
     rl_completion_entry_function = [](const char*, int) -> char* { return nullptr; };

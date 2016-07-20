@@ -50,9 +50,6 @@ const char* clink_inputrc[] = {
     "$endif",
 #endif
 
-    "set bell-style   visible", // MODE4
-    "set convert-meta off",   // For correct utf8 input.
-    "set output-meta  on",    // For correct utf8 output
     "set keymap emacs",
     nullptr,
 };
