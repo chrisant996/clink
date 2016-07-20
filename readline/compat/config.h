@@ -60,7 +60,7 @@ int                         hooked_wcwidth(wchar_t wc);
 #endif // BUILD_READLINE
 
 #undef MB_CUR_MAX
-#define MB_CUR_MAX  3       // utf-8 takes 3 bytes to encode 16 bits.
+#define MB_CUR_MAX  4       // 4-bytes is enough for the Unicode standard.
 
 // msvc vs posix|readline|gnu
 //
