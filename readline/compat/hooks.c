@@ -84,22 +84,72 @@ int hooked_fileno(FILE* stream)
 //------------------------------------------------------------------------------
 size_t hooked_mbrtowc(wchar_t* out, const char* in, size_t size, mbstate_t* state)
 {
-    wchar_t buffer[8];
+    typedef struct {
+        unsigned char   count;
+        unsigned char   length;
+        unsigned short  value;
+    } inner_state_t;
 
-    if (size <= 0)
-        return 0;
+    inner_state_t* inner_state;
+    const char* read;
 
-    MultiByteToWideChar(CP_UTF8, 0, in, 5, buffer, sizeof_array(buffer));
-    *out = buffer[0];
+    if (state == NULL)
+    {
+        if (out != NULL)
+            *out = *in;
+        return 1;
+    }
 
-    return (*out > 0) + (*out > 0x7f) + (*out > 0x7ff);
+    read = in;
+    inner_state = (inner_state_t*)state;
+    if (!inner_state->length)
+    {
+        if (*in & 0x80)
+        {
+            inner_state->length = 2;
+            inner_state->length += (*read & 0x60) == 0x60;
+            inner_state->length += !!(*read & 0x10);
+            inner_state->value = *read & (0x1f >> inner_state->length);
+
+            inner_state->count = 1;
+            ++read;
+            --size;
+        }
+        else
+        {
+            if (out != NULL)
+                *out = *in;
+            return 1;
+        }
+    }
+
+    while (size && (inner_state->count < inner_state->length))
+    {
+        inner_state->value <<= 6;
+        inner_state->value |= (*read & 0x7f);
+
+        ++inner_state->count;
+        ++read;
+        --size;
+    }
+
+    if (inner_state->count == inner_state->length)
+    {
+        if (out != NULL)
+            *out = inner_state->value;
+
+        inner_state->length = 0;
+        return (size_t)(read - in);
+    }
+
+    return -2;
 }
 
 //------------------------------------------------------------------------------
 size_t hooked_mbrlen(const char* in, size_t size, mbstate_t* state)
 {
     wchar_t t;
-    return hooked_mbrtowc(&t, in, size, NULL);
+    return hooked_mbrtowc(&t, in, size, state);
 }
 
 //------------------------------------------------------------------------------
