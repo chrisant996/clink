@@ -70,6 +70,18 @@ int str_compare_impl(str_iter_impl<T>& lhs, str_iter_impl<T>& rhs)
 
 //------------------------------------------------------------------------------
 template <class T>
+int str_compare(str_iter_impl<T>& lhs, str_iter_impl<T>& rhs)
+{
+    switch (str_compare_scope::current())
+    {
+    case str_compare_scope::relaxed:  return str_compare_impl<T, 2>(lhs, rhs);
+    case str_compare_scope::caseless: return str_compare_impl<T, 1>(lhs, rhs);
+    default:                          return str_compare_impl<T, 0>(lhs, rhs);
+    }
+}
+
+//------------------------------------------------------------------------------
+template <class T>
 int str_compare(const T* lhs, const T* rhs)
 {
     str_iter_impl<T> lhs_iter(lhs);
@@ -84,16 +96,4 @@ int str_compare(const str_impl<T>& lhs, const str_impl<T>& rhs)
     str_iter_impl<T> lhs_iter(lhs);
     str_iter_impl<T> rhs_iter(rhs);
     return str_compare(lhs_iter, rhs_iter);
-}
-
-//------------------------------------------------------------------------------
-template <class T>
-int str_compare(str_iter_impl<T>& lhs, str_iter_impl<T>& rhs)
-{
-    switch (str_compare_scope::current())
-    {
-    case str_compare_scope::relaxed:  return str_compare_impl<T, 2>(lhs, rhs);
-    case str_compare_scope::caseless: return str_compare_impl<T, 1>(lhs, rhs);
-    default:                          return str_compare_impl<T, 0>(lhs, rhs);
-    }
 }
