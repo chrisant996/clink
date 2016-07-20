@@ -114,7 +114,6 @@ bool host::edit_line(const char* prompt, str_base& out)
     str_compare_scope compare(cmp_mode);
 
     rl_history history;
-    editor_backend* ui = classic_match_ui_create();
 
     // Set up Lua and load scripts into it.
     lua_state lua;
@@ -147,6 +146,8 @@ MODE4 */
 
     // Create the editor and add components to it.
     line_editor* editor = line_editor_create(desc);
+
+    editor_backend* ui = classic_match_ui_create();
     editor->add_backend(*ui);
     editor->add_generator(lua_generator);
     editor->add_generator(file_match_generator());
