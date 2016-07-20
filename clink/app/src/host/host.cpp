@@ -5,6 +5,7 @@
 #include "host.h"
 #include "prompt.h"
 #include "rl/rl_history.h"
+#include "utils/scroller.h"
 
 #include <core/globber.h>
 #include <core/os.h>
@@ -149,6 +150,10 @@ MODE4 */
 
     editor_backend* ui = classic_match_ui_create();
     editor->add_backend(*ui);
+
+    scroller_backend scroller;
+    editor->add_backend(scroller);
+
     editor->add_generator(lua_generator);
     editor->add_generator(file_match_generator());
 
