@@ -8,6 +8,66 @@
 #include <core/base.h>
 
 //------------------------------------------------------------------------------
+template <int SIZE> static bool translate_chord(const char* chord, char (&out)[SIZE])
+{
+    // '\M-x'           = alt-x
+    // '\C-x' or '^x'   = ctrl-x
+    // '\e[t'           = ESC [ t (aka CSI t)
+    // 'abc'            = abc
+
+    int i = 0;
+    for (; i < (SIZE - 1) && *chord; ++i, ++chord)
+    {
+        if (*chord != '\\' && *chord != '^')
+        {
+            out[i] = *chord;
+            continue;
+        }
+
+        if (*chord == '^')
+        {
+            out[i] = *chord & 0x1f;
+            continue;
+        }
+
+        ++chord;
+        switch (*chord)
+        {
+        case '\0':
+            i = SIZE;
+            continue;
+
+        case 'M':
+            if (chord[1] != '-')
+                return false;
+
+            ++chord;
+            out[i] = '\x1b';
+            continue;
+
+        case 'C':
+            if (chord[1] != '-')
+                return false;
+
+            ++chord;
+            out[i] = *chord & 0x1f;
+            continue;
+
+        // Some escape sequences for convenience.
+        case 'e':   out[i] = '\x1b';    break;
+        case 't':   out[i] = '\t';      break;
+        case 'n':   out[i] = '\n';      break;
+        case 'r':   out[i] = '\r';      break;
+        case '0':   out[i] = '\0';      break;
+        default:    out[i] = *chord;    break;
+        }
+    }
+
+    out[i] = '\0';
+    return true;
+}
+
+//------------------------------------------------------------------------------
 binder::binder()
 : m_root({})
 , m_next_node(0)
@@ -17,13 +77,18 @@ binder::binder()
 //------------------------------------------------------------------------------
 bool binder::bind(const char* chord, editor_backend& backend, unsigned char id)
 {
-    // MODE4 - human friendly chord.
-
     // Validate input
     const char* c = chord;
     while (*c)
         if (*c++ < 0)
             return false;
+
+    // Translate from ASCII representation to actual keys.
+    char translated[64];
+    if (!translate_chord(chord, translated))
+        return false;
+
+    chord = translated;
 
     // Store the backend pointer
     int index = add_backend(backend);
