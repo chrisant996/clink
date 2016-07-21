@@ -45,10 +45,13 @@ public:
         const matches&      matches;
     };
 
-    typedef bool            (binder_func)(const char* chord, unsigned char id);
+    struct binder
+    {
+        virtual bool        bind(const char* chord, unsigned char id) const = 0;
+    };
 
     virtual                 ~editor_backend() = default;
-    virtual void            bind_input(binder_func* func) = 0;
+    virtual void            bind_input(const binder& binder) = 0;
     virtual void            on_begin_line(const char* prompt, const context& context) = 0;
     virtual void            on_end_line() = 0;
     virtual void            on_matches_changed(const context& context) = 0;

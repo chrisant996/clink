@@ -15,7 +15,7 @@ public:
     const matches*          get_matches() const { return m_matches; }
 
     /* editor_backend */
-    virtual void            bind_input(binder_func* func) override {}
+    virtual void            bind_input(const binder& binder) override {}
     virtual void            on_begin_line(const char* prompt, const context& context) override {}
     virtual void            on_end_line() override {}
     virtual void            on_matches_changed(const context& context) override { m_matches = &(context.matches); }

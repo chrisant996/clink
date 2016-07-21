@@ -46,16 +46,21 @@ void line_editor_impl::initialise()
     if (check_flag(flag_init))
         return;
 
-    static binder* s_binder;          // MODE4
-    static editor_backend* s_backend; // MODE4
+    struct : public editor_backend::binder {
+        virtual bool bind(const char* chord, unsigned char key) const override
+        {
+            return binder->bind(chord, *backend, key);
+        }
 
-    s_binder = &m_binder;
+        ::binder*       binder;
+        editor_backend* backend;
+    } binder_impl;
+
+    binder_impl.binder = &m_binder;
     for (auto* backend : m_backends)
     {
-        s_backend = backend;
-        backend->bind_input([](const char* chord, unsigned char id) -> bool {
-            return s_binder->bind(chord, *s_backend, id);
-        });
+        binder_impl.backend = backend;
+        backend->bind_input(binder_impl);
     }
 
     set_flag(flag_init);
