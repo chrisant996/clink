@@ -11,6 +11,7 @@
 extern "C" {
 #include <readline/readline.h>
 #include <readline/rldefs.h>
+#include <readline/xmalloc.h>
 }
 
 //------------------------------------------------------------------------------
@@ -70,7 +71,7 @@ rl_backend::rl_backend(const char* shell_name)
 
     rl_readline_name = shell_name;
     rl_catch_signals = 0;
-    _rl_comment_begin = "::"; // this'll do...
+    _rl_comment_begin = savestring("::"); // this will do...
 
     // Readline needs a tweak of it's handling of 'meta' (i.e. IO bytes >=0x80)
     // so that it handles UTF-8 correctly (convert=input, output=output)
