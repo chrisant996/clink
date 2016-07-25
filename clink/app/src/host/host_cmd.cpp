@@ -229,7 +229,15 @@ bool host_cmd::is_interactive() const
         }
     }
 
-    // MODE4 - also check IO is a character device?
+    // Also check that IO is a character device (i.e. a console).
+    HANDLE handles[] = {
+        GetStdHandle(STD_INPUT_HANDLE),
+        GetStdHandle(STD_OUTPUT_HANDLE),
+    };
+
+    for (auto handle : handles)
+        if (GetFileType(handle) != FILE_TYPE_CHAR)
+            return false;
 
     return true;
 }
