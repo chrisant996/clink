@@ -10,18 +10,6 @@
 static str<256> g_config_dir_override;
 
 //------------------------------------------------------------------------------
-// MODE4
-void normalise_path_format(str_base& buffer)
-{
-    GetShortPathName(buffer.data(), buffer.data(), buffer.size());
-
-    int len = buffer.length();
-    if (len && (buffer[len - 1] == '\\' || buffer[len - 1] == '/'))
-        buffer.truncate(len - 1);
-}
-// MODE4
-
-//------------------------------------------------------------------------------
 void get_dll_dir(str_base& buffer)
 {
     buffer.clear();
@@ -42,7 +30,7 @@ void get_dll_dir(str_base& buffer)
     if (slash >= 0)
         buffer.truncate(slash);
 
-    normalise_path_format(buffer);
+    path::clean(buffer);
 }
 
 //------------------------------------------------------------------------------
@@ -66,7 +54,7 @@ void get_config_dir(str_base& buffer)
         once = 0;
     }
 
-    normalise_path_format(buffer);
+    path::clean(buffer);
 }
 
 //------------------------------------------------------------------------------
@@ -107,7 +95,7 @@ void get_log_dir(str_base& buffer)
         once = 0;
     }
 
-    normalise_path_format(buffer);
+    path::clean(buffer);
 }
 
 //------------------------------------------------------------------------------
@@ -117,5 +105,5 @@ void cpy_path_as_abs(str_base& abs, const char* rel)
     if (ret == nullptr)
         abs.copy(rel);
 
-    normalise_path_format(abs);
+    path::clean(abs);
 }
