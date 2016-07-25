@@ -4,6 +4,7 @@
 #include "pch.h"
 #include "line_editor_tester.h"
 
+#include <core/base.h>
 #include <lib/editor_backend.h>
 #include <lib/matches.h>
 
@@ -73,7 +74,6 @@ void line_editor_tester::set_input(const char* input)
 //------------------------------------------------------------------------------
 void line_editor_tester::set_expected_output(const char* expected)
 {
-    REQUIRE(false); // MODE4: Not implemented.
     m_expected_output = expected;
 }
 
@@ -119,6 +119,14 @@ void line_editor_tester::run()
 
             REQUIRE(match_found);
         }
+    }
+
+    // Check the output is as expected.
+    if (m_expected_output != nullptr)
+    {
+        char line[256];
+        REQUIRE(m_editor->get_line(line, sizeof_array(line)));
+        REQUIRE(strcmp(m_expected_output, line) == 0);
     }
 }
 
