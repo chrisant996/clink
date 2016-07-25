@@ -9,7 +9,6 @@
 #include <terminal/terminal.h>
 
 extern "C" {
-#include <readline/history.h>
 #include <readline/readline.h>
 #include <readline/rldefs.h>
 }
