@@ -84,7 +84,7 @@ void line_editor_impl::begin_line()
     m_buffer.begin_line();
 
     line_state line = get_linestate();
-    editor_backend::context context = make_context(line);
+    editor_backend::context context = get_context(line);
     for (auto backend : m_backends)
         backend->on_begin_line(m_desc.prompt, context);
 }
@@ -194,7 +194,7 @@ void line_editor_impl::dispatch()
     {
         int id = m_bind_resolver.get_id();
         line_state line = get_linestate();
-        editor_backend::context context = make_context(line);
+        editor_backend::context context = get_context(line);
         result = backend->on_input(m_keys, id, context);
     }
 
@@ -382,7 +382,7 @@ line_state line_editor_impl::get_linestate() const
 }
 
 //------------------------------------------------------------------------------
-editor_backend::context line_editor_impl::make_context(const line_state& line) const
+editor_backend::context line_editor_impl::get_context(const line_state& line) const
 {
     line_buffer* buffer = const_cast<rl_buffer*>(&m_buffer);
     return { *m_desc.terminal, *buffer, line, m_matches };
@@ -457,7 +457,7 @@ void line_editor_impl::update_internal()
 
         // Tell all the backends that the matches changed.
         line_state line = get_linestate();
-        editor_backend::context context = make_context(line);
+        editor_backend::context context = get_context(line);
         for (auto backend : m_backends)
             backend->on_matches_changed(context);
     }

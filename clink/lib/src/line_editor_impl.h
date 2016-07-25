@@ -49,7 +49,7 @@ private:
     void                record_input(unsigned char key);
     void                dispatch();
     void                accept_match(unsigned int index);
-    backend::context    make_context(const line_state& line) const;
+    backend::context    get_context(const line_state& line) const;
     line_state          get_linestate() const;
     void                set_flag(unsigned char flag);
     void                clear_flag(unsigned char flag);
