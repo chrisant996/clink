@@ -83,7 +83,7 @@ int line_state_lua::get_word_info(lua_State* state)
     lua_pushboolean(state, word.quoted);
     lua_rawset(state, -3);
 
-    char delim[2] = { word.delim };
+    char delim[2] = { char(word.delim) };
     lua_pushstring(state, "delim");
     lua_pushstring(state, delim);
     lua_rawset(state, -3);
