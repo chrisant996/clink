@@ -83,12 +83,7 @@ void line_editor_impl::begin_line()
     m_desc.terminal->begin();
     m_buffer.begin_line();
 
-    line_state line = {
-        m_buffer.get_buffer(),
-        m_buffer.get_cursor(),
-        m_command_offset,
-        m_words,
-    };
+    line_state line = get_linestate();
     editor_backend::context context = make_context(line);
     for (auto backend : m_backends)
         backend->on_begin_line(m_desc.prompt, context);
@@ -198,15 +193,8 @@ void line_editor_impl::dispatch()
     if (backend != nullptr)
     {
         int id = m_bind_resolver.get_id();
-
-        line_state line = {
-            m_buffer.get_buffer(),
-            m_buffer.get_cursor(),
-            m_command_offset,
-            m_words,
-        };
+        line_state line = get_linestate();
         editor_backend::context context = make_context(line);
-
         result = backend->on_input(m_keys, id, context);
     }
 
@@ -383,6 +371,17 @@ void line_editor_impl::accept_match(unsigned int index)
 }
 
 //------------------------------------------------------------------------------
+line_state line_editor_impl::get_linestate() const
+{
+    return {
+        m_buffer.get_buffer(),
+        m_buffer.get_cursor(),
+        m_command_offset,
+        m_words,
+    };
+}
+
+//------------------------------------------------------------------------------
 editor_backend::context line_editor_impl::make_context(const line_state& line) const
 {
     line_buffer* buffer = const_cast<rl_buffer*>(&m_buffer);
@@ -432,12 +431,7 @@ void line_editor_impl::update_internal()
     // Should we generate new matches?
     if (next_key.value != prev_key.value)
     {
-        line_state line({
-            m_buffer.get_buffer(),
-            m_buffer.get_cursor(),
-            m_command_offset,
-            m_words,
-        });
+        line_state line = get_linestate();
         match_pipeline pipeline(m_matches);
         pipeline.reset();
         pipeline.generate(line, m_generators);
@@ -462,12 +456,7 @@ void line_editor_impl::update_internal()
         m_prev_key = next_key.value;
 
         // Tell all the backends that the matches changed.
-        line_state line = {
-            buf_ptr,
-            m_buffer.get_cursor(),
-            m_command_offset,
-            m_words,
-        };
+        line_state line = get_linestate();
         editor_backend::context context = make_context(line);
         for (auto backend : m_backends)
             backend->on_matches_changed(context);
