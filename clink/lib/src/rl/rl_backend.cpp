@@ -92,8 +92,8 @@ rl_backend::rl_backend(const char* shell_name)
       //{ "\\e[t", "enter-scroll-mode" },       // shift-pgup // MODE4
         { "\\eO4", "kill-line" },               // ctrl-end
         { "\\eO1", "backward-kill-line" },      // ctrl-home
-      //{ "\\e[5", "history-search-backward" }, // pgup // MODE4
-      //{ "\\e[6", "history-search-forward" },  // pgdn // MODE4
+        { "\\e[5", "history-search-backward" }, // pgup
+        { "\\e[6", "history-search-forward" },  // pgdn
     };
 
     for (int i = 0; i < sizeof_array(ext_key_binds); ++i)
