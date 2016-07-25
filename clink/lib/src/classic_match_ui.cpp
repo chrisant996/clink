@@ -30,20 +30,21 @@ void classic_match_ui_destroy(editor_backend* classic_ui)
 //------------------------------------------------------------------------------
 static setting_int g_query_threshold(
     "match.query_threshold",
-    "Ask if matches > threshold",
-    "", // MODE4
+    "Ask if no. matches > threshold",
+    "If there are more than 'threshold' matches then ask the user before\n"
+    "displaying them all.",
     100);
 
 static setting_int g_max_width(
     "match.max_width",
     "Maximum display width",
-    "", // MODE4
+    "The maximum number of terminal columns to use when displaying matches.",
     106);
 
 static setting_bool g_vertical(
     "match.vertical",
     "Display matches vertically",
-    "", // MODE4
+    "Toggles the display of ordered matches between columns or rows.",
     true);
 
 
