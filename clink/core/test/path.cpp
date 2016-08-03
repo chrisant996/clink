@@ -193,9 +193,10 @@ TEST_CASE("path::get_extension()")
         SECTION("0") { path::get_extension("one/two/three/filename.ext", s); }
         SECTION("1") { path::get_extension("one/two/three/filename.ext", s); }
         SECTION("2") { path::get_extension("one/two/three\\filename.ext", s); }
-        SECTION("3") { path::get_extension("filename.ext", s); }
-        SECTION("4") { path::get_extension("filename..ext", s); }
-        SECTION("5") { path::get_extension(".ext", s); }
+        SECTION("3") { path::get_extension("./two/three\\filename.ext", s); }
+        SECTION("4") { path::get_extension("filename.ext", s); }
+        SECTION("5") { path::get_extension("filename..ext", s); }
+        SECTION("6") { path::get_extension(".ext", s); }
 
         REQUIRE(s.equals(".ext"));
     }
@@ -203,12 +204,10 @@ TEST_CASE("path::get_extension()")
     SECTION("Misc") {
         str<> s;
 
-        SECTION("0") {
-            path::get_extension("..", s);
-            REQUIRE(s.equals("."));
-        }
-        SECTION("0") { REQUIRE(!path::get_extension("", s)); }
-        SECTION("1") { REQUIRE(!path::get_extension("abc", s)); }
+        SECTION("0") { REQUIRE(!path::get_extension("..", s)); }
+        SECTION("1") { REQUIRE(!path::get_extension("", s)); }
+        SECTION("2") { REQUIRE(!path::get_extension("abc", s)); }
+        SECTION("3") { REQUIRE(!path::get_extension("./one/two", s)); }
     }
 }
 

@@ -200,6 +200,13 @@ bool get_extension(const char* in, str_base& out)
     if (dot == nullptr)
         return false;
 
+    if (dot[1] == '\0')
+        return false;
+
+    int end = get_directory_end(in);
+    if (in + end > dot)
+        return false;
+
     return out.concat(dot);
 }
 
