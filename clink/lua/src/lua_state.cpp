@@ -76,7 +76,7 @@ void lua_state::shutdown()
 bool lua_state::do_string(const char* string)
 {
     bool failed;
-    if (failed = !!luaL_loadstring(m_state, string))
+    if (failed = !!luaL_dostring(m_state, string))
         if (const char* error = lua_tostring(m_state, -1))
             puts(error);
 
