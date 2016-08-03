@@ -6,7 +6,6 @@
 const char* clink_inputrc[] = {
     "set keymap emacs",
     "C-v:   paste-from-clipboard",
-    "C-q:   reload-lua-state",
     "C-z:   undo",
     "M-h:   show-rl-help",
     "M-C-c: copy-line-to-clipboard",
