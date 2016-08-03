@@ -9,7 +9,6 @@
 #include <lua/lua_match_generator.h>
 #include <lua/lua_state.h>
 
-#if MODE4
 
 //------------------------------------------------------------------------------
 TEST_CASE("Lua arg parsers.") {
@@ -18,256 +17,274 @@ TEST_CASE("Lua arg parsers.") {
     lua_state lua;
     lua_match_generator lua_generator(lua);
 
-    line_editor_tester tester;
+    line_editor::desc desc;
+    desc.command_delims = "&|";
+    line_editor_tester tester(desc);
     tester.get_editor()->add_generator(lua_generator);
+    tester.get_editor()->add_generator(file_match_generator());
+
+    SECTION("Main") {
+        const char* script = "\
+            s = clink.arg.new_parser()\
+            s:set_arguments({ 'one' , 'two' })\
+            \
+            r = clink.arg.new_parser()\
+            r:set_arguments({ 'five', 'six' })\
+            r:loop()\
+            \
+            q = clink.arg.new_parser()\
+            q:set_arguments({ 'four' .. r })\
+            \
+            p = clink.arg.new_parser()\
+            p:set_arguments(\
+                {\
+                    'one',\
+                    'two',\
+                    'three' .. q,\
+                    'spa ce' .. s,\
+                }\
+            )\
+            \
+            clink.arg.register_parser('argcmd', p)\
+        ";
+
+        //__debugbreak();
+        REQUIRE(lua.do_string(script));
+
+        SECTION("Node matches 1") {
+            tester.set_input("argcmd ");
+            tester.set_expected_matches("one", "two", "three", "spa ce");
+            tester.run();
+        }
+
+        SECTION("Node matches 2") {
+            tester.set_input("argcmd t");
+            tester.set_expected_matches("two", "three");
+            tester.run();
+        }
+
+        SECTION("Node matches 3 (.exe)") {
+            tester.set_input("argcmd.exe t");
+            tester.set_expected_matches("two", "three");
+            tester.run();
+        }
+
+        SECTION("Node matches 4 (.bat)") {
+            tester.set_input("argcmd.bat t");
+            tester.set_expected_matches("two", "three");
+            tester.run();
+        }
+
+        SECTION("Node matches quoted 1") {
+            tester.set_input("argcmd \"t");
+            tester.set_expected_matches("two", "three");
+            tester.run();
+        }
+
+        SECTION("Node matches quoted executable") {
+            tester.set_input("\"argcmd\" t");
+            tester.set_expected_matches("two", "three");
+            tester.run();
+        }
+
+        SECTION("Key as only match.") {
+            tester.set_input("argcmd three ");
+            tester.set_expected_matches("four");
+            tester.run();
+        }
+
+        SECTION("Simple traversal 1") {
+            tester.set_input("argcmd three four ");
+            tester.set_expected_matches("five", "six");
+            tester.run();
+        }
+
+        SECTION("Simple traversal 2") {
+            tester.set_input("argcmd three f");
+            tester.set_expected_matches("four");
+            tester.run();
+        }
+
+        SECTION("Simple traversal 3") {
+            tester.set_input("argcmd one one one");
+            tester.set_expected_matches();
+            tester.run();
+        }
+
+        SECTION("Simple traversal 4") {
+            tester.set_input("argcmd one one ");
+            tester.set_expected_matches("file1", "file2", "case_map-1", "case_map_2",
+                "dir1\\", "dir2\\");
+            tester.run();
+        }
+
+        SECTION("Quoted traversal 1") {
+            tester.set_input("argcmd \"three\" four ");
+            tester.set_expected_matches("five", "six");
+            tester.run();
+        }
+
+        SECTION("Quoted traversal 2a") {
+            tester.set_input("argcmd three four \"");
+            tester.set_expected_matches("five", "six");
+            tester.run();
+        }
+
+        SECTION("Quoted traversal 2b") {
+            tester.set_input("argcmd three four \"fi");
+            tester.set_expected_matches("five");
+            tester.run();
+        }
+
+        SECTION("Quoted traversal 2c") {
+            tester.set_input("argcmd three four \"five\" five five s");
+            tester.set_expected_matches("six");
+            tester.run();
+        }
+
+        SECTION("Quoted traversal 3") {
+            tester.set_input("argcmd \"three\" ");
+            tester.set_expected_matches("four");
+            tester.run();
+        }
+
+        SECTION("Quoted traversal 4") {
+            tester.set_input("argcmd \"spa ce\" ");
+            tester.set_expected_matches("one", "two");
+            tester.run();
+        }
+
+        SECTION("Quoted traversal 5") {
+            tester.set_input("argcmd spa");
+            tester.set_expected_matches("spa ce");
+            tester.run();
+        }
+
+        SECTION("Loop property: basic") {
+            tester.set_input("argcmd three four six ");
+            tester.set_expected_matches("five", "six");
+            tester.run();
+        }
+
+        SECTION("Loop property: miss") {
+            tester.set_input("argcmd three four green four ");
+            tester.set_expected_matches("five", "six");
+            tester.run();
+        }
+
+        SECTION("Separator && 1") {
+            tester.set_input("nullcmd && argcmd t");
+            tester.set_expected_matches("two", "three");
+            tester.run();
+        }
+
+        SECTION("Separator && 1") {
+            tester.set_input("nullcmd &&argcmd t");
+            tester.set_expected_matches("two", "three");
+            tester.run();
+        }
+
+        SECTION("Separator && 2") {
+            tester.set_input("nullcmd \"&&\" && argcmd t");
+            tester.set_expected_matches("two", "three");
+            tester.run();
+        }
+
+        SECTION("Separator && 3") {
+            tester.set_input("nullcmd \"&&\"&&argcmd t");
+            tester.set_expected_matches("two", "three");
+            tester.run();
+        }
+
+        SECTION("Separator &") {
+            tester.set_input("nullcmd & argcmd t");
+            tester.set_expected_matches("two", "three");
+            tester.run();
+        }
+
+        SECTION("Separator | 1") {
+            tester.set_input("nullcmd | argcmd t");
+            tester.set_expected_matches("two", "three");
+            tester.run();
+        }
+
+        SECTION("Separator | 2") {
+            tester.set_input("nullcmd|argcmd t");
+            tester.set_expected_matches("two", "three");
+            tester.run();
+        }
+
+        SECTION("Separator multiple 1") {
+            tester.set_input("nullcmd | nullcmd && argcmd t");
+            tester.set_expected_matches("two", "three");
+            tester.run();
+        }
+
+        SECTION("Separator multiple 2") {
+            tester.set_input("nullcmd | nullcmd && argcmd |argcmd t");
+            tester.set_expected_matches("two", "three");
+            tester.run();
+        }
+
+        SECTION("No separator") {
+            tester.set_input("argcmd three four \"  &&foobar\" f");
+            tester.set_expected_matches("five");
+            tester.run();
+        }
+
+        SECTION("Path: relative") {
+            tester.set_input(".\\foo\\bar\\argcmd t");
+            tester.set_expected_matches("two", "three");
+            tester.run();
+        }
+
+        SECTION("Path: absolute") {
+            tester.set_input("c:\\foo\\bar\\argcmd t");
+            tester.set_expected_matches("two", "three");
+            tester.run();
+        }
+    }
+
+    SECTION("File matching control.") {
+        const char* script = "\
+            p = clink.arg.new_parser()\
+            p:set_arguments({\
+                'true',\
+                'sub_parser' .. clink.arg.new_parser():disable_file_matching(),\
+                'this_parser'\
+            })\
+            \
+            clink.arg.register_parser('argcmd_file', p)\
+        ";
+
+        REQUIRE(lua.do_string(script));
+
+        SECTION("Enabled") {
+            puts("...");
+            tester.set_input("argcmd_file true ");
+            tester.set_expected_matches("file1", "file2", "case_map-1", "case_map_2",
+                "dir1\\", "dir2\\");
+            tester.run();
+        }
+
+        SECTION("Disabled: sub") {
+            tester.set_input("argcmd_file sub_parser ");
+            tester.set_expected_matches();
+            tester.run();
+        }
+
+        SECTION("Disabled: this") {
+            lua.do_string("p:disable_file_matching()");
+            tester.set_input("argcmd_file this_parser ");
+            tester.set_expected_matches();
+            tester.run();
+        }
+    }
+}
+
+
 
 #if MODE4
---------------------------------------------------------------------------------
-s = clink.arg.new_parser()
-s:set_arguments({ 'one' , 'two' })
-
-r = clink.arg.new_parser()
-r:set_arguments({ 'five', 'six' })
-r:loop()
-
-q = clink.arg.new_parser()
-q:set_arguments({ 'four' .. r })
-
-p = clink.arg.new_parser()
-p:set_arguments(
-    {
-        'one',
-        'two',
-        'three' .. q,
-        'spa ce' .. s,
-    }
-)
-
-clink.arg.register_parser('argcmd', p)
-#endif // MODE4
-
-    SECTION("Node matches 1") {
-        tester.set_input("argcmd ");
-        tester.set_expected_matches("one", "two", "three", "spa ce");
-        tester.run();
-    }
-
-    SECTION("Node matches 2") {
-        tester.set_input("argcmd t");
-        tester.set_expected_matches("two", "three");
-        tester.run();
-    }
-
-    SECTION("Node matches 3 (.exe)") {
-        tester.set_input("argcmd.exe t");
-        tester.set_expected_matches("two", "three");
-        tester.run();
-    }
-
-    SECTION("Node matches 4 (.bat)") {
-        tester.set_input("argcmd.bat t");
-        tester.set_expected_matches("two", "three");
-        tester.run();
-    }
-
-    SECTION("Node matches quoted 1") {
-        tester.set_input("argcmd \"t");
-        tester.set_expected_matches("two", "three");
-        tester.run();
-    }
-
-    SECTION("Node matches quoted executable") {
-        tester.set_input("\"argcmd\" t");
-        tester.set_expected_matches("two", "three");
-        tester.run();
-    }
-
-    SECTION("Key as only match.") {
-        tester.set_input("argcmd three");
-        tester.set_expected_matches("four");
-        tester.run();
-    }
-
-    SECTION("Simple traversal 1") {
-        tester.set_input("argcmd three four ");
-        tester.set_expected_matches("five", "six");
-        tester.run();
-    }
-
-    SECTION("Simple traversal 2") {
-        tester.set_input("argcmd three f");
-        tester.set_expected_matches("four");
-        tester.run();
-    }
-
-    SECTION("Simple traversal 3") {
-        tester.set_input("argcmd one one one");
-        tester.set_expected_matches();
-        tester.run();
-    }
-
-    SECTION("Simple traversal 4") {
-        tester.set_input("argcmd one one ");
-        tester.set_expected_matches();
-        tester.run();
-    }
-
-    SECTION("Quoted traversal 1") {
-        tester.set_input("argcmd \"three\" four ");
-        tester.set_expected_matches("five", "six");
-        tester.run();
-    }
-
-    SECTION("Quoted traversal 2a") {
-        tester.set_input("argcmd three four \"");
-        tester.set_expected_matches("five", "six");
-        tester.run();
-    }
-
-    SECTION("Quoted traversal 2b") {
-        tester.set_input("argcmd three four \"fi");
-        tester.set_expected_matches("five");
-        tester.run();
-    }
-
-    SECTION("Quoted traversal 2c") {
-        tester.set_input("argcmd three four \"five\" five five s");
-        tester.set_expected_matches("six");
-        tester.run();
-    }
-
-    SECTION("Quoted traversal 3") {
-        tester.set_input("argcmd \"three\"");
-        tester.set_expected_matches("four");
-        tester.run();
-    }
-
-    SECTION("Quoted traversal 4") {
-        tester.set_input("argcmd \"spa ce\" ");
-        tester.set_expected_matches("one", "two");
-        tester.run();
-    }
-
-    SECTION("Quoted traversal 5") {
-        tester.set_input("argcmd spa");
-        tester.set_expected_matches("spa ce");
-        tester.run();
-    }
-
-    SECTION("Loop property: basic") {
-        tester.set_input("argcmd three four six ");
-        tester.set_expected_matches("five", "six");
-        tester.run();
-    }
-
-    SECTION("Loop property: miss") {
-        tester.set_input("argcmd three four green four ");
-        tester.set_expected_matches("five", "six");
-        tester.run();
-    }
-
-    SECTION("Separator && 1") {
-        tester.set_input("nullcmd && argcmd t");
-        tester.set_expected_matches("two", "three");
-        tester.run();
-    }
-
-    SECTION("Separator && 1") {
-        tester.set_input("nullcmd &&argcmd t");
-        tester.set_expected_matches("two", "three");
-        tester.run();
-    }
-
-    SECTION("Separator && 2") {
-        tester.set_input("nullcmd \"&&\" && argcmd t");
-        tester.set_expected_matches("two", "three");
-        tester.run();
-    }
-
-    SECTION("Separator && 3") {
-        tester.set_input("nullcmd \"&&\"&&argcmd t");
-        tester.set_expected_matches("two", "three");
-        tester.run();
-    }
-
-    SECTION("Separator &") {
-        tester.set_input("nullcmd & argcmd t");
-        tester.set_expected_matches("two", "three");
-        tester.run();
-    }
-
-    SECTION("Separator | 1") {
-        tester.set_input("nullcmd | argcmd t");
-        tester.set_expected_matches("two", "three");
-        tester.run();
-    }
-
-    SECTION("Separator | 2") {
-        tester.set_input("nullcmd|argcmd t");
-        tester.set_expected_matches("two", "three");
-        tester.run();
-    }
-
-    SECTION("Separator multiple 1") {
-        tester.set_input("nullcmd | nullcmd && argcmd t");
-        tester.set_expected_matches("two", "three");
-        tester.run();
-    }
-
-    SECTION("Separator multiple 2") {
-        tester.set_input("nullcmd | nullcmd && argcmd |argcmd t");
-        tester.set_expected_matches("two", "three");
-        tester.run();
-    }
-
-    SECTION("No separator") {
-        tester.set_input("argcmd three four \"  &&foobar\" f");
-        tester.set_expected_matches("five");
-        tester.run();
-    }
-
-    SECTION("Path: relative") {
-        tester.set_input(".\\foo\\bar\\argcmd t");
-        tester.set_expected_matches("two", "three");
-        tester.run();
-    }
-
-    SECTION("Path: absolute") {
-        tester.set_input("c:\\foo\\bar\\argcmd t");
-        tester.set_expected_matches("two", "three");
-        tester.run();
-    }
-
-#if MODE4
---------------------------------------------------------------------------------
-p = clink.arg.new_parser()
-p:set_arguments({
-    "true",
-    "sub_parser" .. clink.arg.new_parser():disable_file_matching(),
-    "this_parser"
-})
-
-clink.arg.register_parser("argcmd_file", p)
-
-    SECTION("File matching enabled") {
-        tester.set_input("argcmd_file true ");
-        tester.set_expected_matches("fallthrough");
-        tester.run();
-    }
-
-    SECTION("File matching disabled: sub") {
-        tester.set_input("argcmd_file sub_parser ");
-        tester.set_expected_matches();
-        tester.run();
-    }
-
-p:disable_file_matching()
-    SECTION("File matching disabled: this") {
-        tester.set_input("argcmd_file this_parser ");
-        tester.set_expected_matches();
-        tester.run();
-    }
-
 --------------------------------------------------------------------------------
 clink.arg.register_parser("argcmd_table", {"two", "three", "one"});
 
@@ -465,8 +482,4 @@ clink.arg.register_parser("argcmd_lazy", p)
         tester.set_expected_matches("red", "green", "blue");
         tester.run();
     }
-
-#endif // MODE4
-}
-
 #endif // MODE4
