@@ -2,6 +2,7 @@
 #ifdef CLINK_EMBED_LUA_SCRIPTS
 const char* lib_clink_lua_script = 
 "function clink.split(str, sep)\n"
+"    -- MODE4 : remove and add as a method to string from C++.\n"
 "    local i = 1\n"
 "    local ret = {}\n"
 "    for _, j in function() return str:find(sep, i, true) end do\n"
@@ -38,7 +39,7 @@ const char* lib_clink_lua_script =
 "        priority = 999\n"
 "    end\n"
 "    table.insert(generators, {f=func, p=priority})\n"
-"    table.sort(generators, function(a, b) return a[\"p\"] < b[\"p\"] end)\n"
+"    table.sort(generators, function(a, b) return a.p < b.p end)\n"
 "end\n"
 "";const char* lib_arguments_lua_script = 
 "clink.arg = {}\n"
