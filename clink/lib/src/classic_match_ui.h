@@ -20,16 +20,17 @@ private:
         state_print_page,
     };
 
-    virtual void    bind_input(const binder& binder) override;
+    virtual void    bind_input(binder& binder) override;
     virtual void    on_begin_line(const char* prompt, const context& context) override;
     virtual void    on_end_line() override;
     virtual void    on_matches_changed(const context& context) override;
-    virtual result  on_input(const char* keys, int id, const context& context) override;
+    virtual void    on_input(const input& input, result& result, const context& context) override;
     state           begin_print(const context& context);
     state           print(const context& context, bool single_row);
-    state           query_prompt(unsigned char key, const context& context);
-    state           pager_prompt(unsigned char key, const context& context);
-    bool            m_waiting = false;
     int             m_longest = 0;
     int             m_row = 0;
+    int             m_prompt_bind_group = -1;
+    int             m_pager_bind_group = -1;
+    int             m_prev_group = -1;
+    bool            m_waiting = false;
 };

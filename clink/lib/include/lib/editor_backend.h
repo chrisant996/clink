@@ -14,27 +14,17 @@ class editor_backend
 public:
     struct result
     {
-        enum result_v {
-            next,
-            redraw,
-            done,
-            eof,
-            _count_v,
-        };
+        virtual void        pass() = 0;
+        virtual void        redraw() = 0;
+        virtual void        done(bool eof) = 0;
+        virtual void        accept_match(unsigned int index) = 0;
+        virtual int         set_bind_group(int bind_group) = 0;
+    };
 
-        enum result_uc {
-            more_input = _count_v,
-            _count_uc,
-        };
-
-        enum result_us {
-            accept_match = _count_uc,
-        };
-
-                            result(result_v result) : value(result) {}
-                            result(result_uc result, unsigned char value) : value((value << 8)|result) {}
-                            result(result_us result, unsigned short value) : value((value << 8)|result) {}
-        uintptr_t           value;
+    struct input
+    {
+        const char*         keys;
+        unsigned char       id;
     };
 
     struct context
@@ -47,13 +37,15 @@ public:
 
     struct binder
     {
-        virtual bool        bind(const char* chord, unsigned char id) const = 0;
+        virtual int         get_group(const char* name=nullptr) const = 0;
+        virtual int         create_group(const char* name) = 0;
+        virtual bool        bind(unsigned int group, const char* chord, unsigned char id) = 0;
     };
 
     virtual                 ~editor_backend() = default;
-    virtual void            bind_input(const binder& binder) = 0;
+    virtual void            bind_input(binder& binder) = 0;
     virtual void            on_begin_line(const char* prompt, const context& context) = 0;
     virtual void            on_end_line() = 0;
     virtual void            on_matches_changed(const context& context) = 0;
-    virtual result          on_input(const char* keys, int id, const context& context) = 0;
+    virtual void            on_input(const input& input, result& result, const context& context) = 0;
 };

@@ -6,6 +6,9 @@
 #include "bind_resolver.h"
 
 #include <core/base.h>
+#include <core/str_hash.h>
+
+#include <algorithm>
 
 //------------------------------------------------------------------------------
 template <int SIZE> static bool translate_chord(const char* chord, char (&out)[SIZE])
@@ -67,17 +70,74 @@ template <int SIZE> static bool translate_chord(const char* chord, char (&out)[S
     return true;
 }
 
+
+
 //------------------------------------------------------------------------------
 binder::binder()
-: m_root({})
-, m_next_node(0)
 {
+    // Initialise the default group.
+    m_nodes[0] = { 1 };
+    m_nodes[1] = { 0 };
+    m_next_node = 2;
+
+    static_assert(sizeof(node) == sizeof(group_node), "Size assumption");
 }
 
 //------------------------------------------------------------------------------
-bool binder::bind(const char* chord, editor_backend& backend, unsigned char id)
+int binder::get_group(const char* name)
+{
+    if (name == nullptr || name[0] == '\0')
+        return 1;
+
+    unsigned int hash = str_hash(name);
+
+    int index = get_group_node(0)->next;
+    while (index)
+    {
+        const group_node* node = get_group_node(index);
+        if (*(int*)(node->hash) == hash)
+            return index;
+
+        index = node->next;
+    }
+
+    return -1;
+}
+
+//------------------------------------------------------------------------------
+int binder::create_group(const char* name)
+{
+    int index = alloc_nodes(2);
+    if (index < 0)
+        return -1;
+
+    // Create a new group node;
+    group_node* group = get_group_node(index);
+    *(int*)(group->hash) = str_hash(name);
+    group->is_group = 1;
+
+    // Link the new node into the front of the list.
+    group_node* master = get_group_node(0);
+    group->next = master->next;
+    master->next = index;
+
+    // Next node along is the group's root.
+    ++index;
+    m_nodes[index] = {};
+    return index;
+}
+
+//------------------------------------------------------------------------------
+bool binder::bind(
+    unsigned int group,
+    const char* chord,
+    editor_backend& backend,
+    unsigned char id)
 {
     // Validate input
+    if (group >= sizeof_array(m_nodes))
+        return false;
+
     const char* c = chord;
     while (*c)
         if (*c++ < 0)
@@ -91,92 +151,152 @@ bool binder::bind(const char* chord, editor_backend& backend, unsigned char id)
     chord = translated;
 
     // Store the backend pointer
-    int index = add_backend(backend);
-    if (index < 0)
+    int backend_index = add_backend(backend);
+    if (backend_index < 0)
         return false;
 
     // Add the chord of keys into the node graph.
-    node* parent = get_root();
-    for (; *chord && parent != nullptr; ++chord)
-        parent = insert_child(parent, *chord);
+    int depth = 0;
+    int head = group;
+    for (; *chord; ++chord, ++depth)
+        if (!(head = insert_child(head, *chord)))
+            return false;
 
-    if (parent == nullptr || parent->usage)
+    --chord;
+
+    // If the insert point is already bound we'll duplicate the node at the end
+    // of the list. Also check if this is a duplicate of the existing bind.
+    node* bindee = m_nodes + head;
+    if (bindee->bound)
+    {
+        int check = head;
+        while (check > head)
+        {
+            if (bindee->key == *chord && bindee->backend == backend_index && bindee->id == id)
+                return true;
+
+            check = bindee->next;
+            bindee = m_nodes + check;
+        }
+
+        head = append(head, *chord);
+    }
+
+    if (!head)
         return false;
 
-    node new_parent = *parent;
-    new_parent.usage = node_use_bound;
-    new_parent.backend = index;
-    new_parent.id_or_child = id;
+    bindee = m_nodes + head;
+    bindee->backend = backend_index;
+    bindee->bound = 1;
+    bindee->depth = depth;
+    bindee->id = id;
 
-    *parent = new_parent;
     return true;
 }
 
 //------------------------------------------------------------------------------
-void binder::update_resolver(unsigned char key, bind_resolver& resolver)
+int binder::insert_child(int parent, unsigned char key)
 {
-    if (resolver.is_resolved())
-        resolver.reset();
+    if (int child = find_child(parent, key))
+        return child;
 
-    int node_index = resolver.get_node_index();
-    node* current = (node_index >= 0) ? get_node(node_index) : get_root();
-
-    if (node* next = find_child(current, key))
-    {
-        // More tree to follow?
-        if (next->usage == node_use_parent)
-            resolver.set_node_index(int(next - m_nodes));
-
-        // Key binding found?
-        else if (next->usage == node_use_bound)
-            resolver.resolve(get_backend(next->backend), next->id_or_child);
-
-        return;
-    }
-
-    // Unbound, or something went wrong...
-    resolver.resolve(nullptr, -1);
+    return add_child(parent, key);
 }
 
 //------------------------------------------------------------------------------
-binder::node* binder::find_child(node* parent, unsigned char key)
+int binder::find_child(int parent, unsigned char key) const
 {
-    node* child = nullptr;
-    if (parent->usage == node_use_parent)
-        child = get_node(parent->id_or_child);
+    const node* node = m_nodes + parent;
 
-    for (; child != nullptr; child = get_node(child->sibling))
-        if (child->key == key)
-            return child;
+    int index = node->child;
+    for (; index > parent; index = node->next)
+    {
+        node = m_nodes + index;
+        if (node->key == key)
+            return index;
+    }
+
+    return 0;
+}
+
+//------------------------------------------------------------------------------
+int binder::add_child(int parent, unsigned char key)
+{
+    int child = alloc_nodes();
+    if (child < 0)
+        return 0;
+
+    node addee = {};
+    addee.key = key;
+
+    int current_child = m_nodes[parent].child;
+    if (current_child < parent)
+    {
+        addee.next = parent;
+        m_nodes[parent].child = child;
+    }
+    else
+    {
+        int tail = find_tail(current_child);
+        addee.next = parent;
+        m_nodes[tail].next = child;
+    }
+
+    m_nodes[child] = addee;
+    return child;
+}
+
+//------------------------------------------------------------------------------
+int binder::find_tail(int head)
+{
+    while (m_nodes[head].next > head)
+        head = m_nodes[head].next;
+
+    return head;
+}
+
+//------------------------------------------------------------------------------
+int binder::append(int head, unsigned char key)
+{
+    int index = alloc_nodes();
+    if (index < 0)
+        return 0;
+
+    int tail = find_tail(head);
+
+    node addee = {};
+    addee.key = key;
+    addee.next = m_nodes[tail].next;
+    m_nodes[tail].next = index;
+
+    m_nodes[index] = addee;
+    return index;
+}
+
+//------------------------------------------------------------------------------
+const binder::node& binder::get_node(unsigned int index) const
+{
+    if (index < sizeof_array(m_nodes))
+        return m_nodes[index];
+
+    static const node zero = {};
+    return zero;
+}
+
+//------------------------------------------------------------------------------
+binder::group_node* binder::get_group_node(unsigned int index)
+{
+    if (index < sizeof_array(m_nodes))
+        return (group_node*)(m_nodes + index);
 
     return nullptr;
 }
 
 //------------------------------------------------------------------------------
-binder::node* binder::insert_child(node* parent, unsigned char key)
+int binder::alloc_nodes(unsigned int count)
 {
-    node* child = find_child(parent, key);
-    return (child != nullptr) ? child : add_child(parent, key);
-}
-
-//------------------------------------------------------------------------------
-binder::node* binder::add_child(node* parent, unsigned char key)
-{
-    int index = alloc_node();
-    if (index == sentinal)
-        return nullptr;
-
-    node new_child = {};
-    new_child.key = key;
-    new_child.sibling = (parent->usage == node_use_parent) ? parent->id_or_child : sentinal;
-
-    node* child = get_node(index);
-    *child = new_child;
-
-    parent->usage = node_use_parent;
-    parent->id_or_child = index;
-
-    return child;
+    m_next_node += count;
+    return (m_next_node < sizeof_array(m_nodes)) ? (m_next_node - count) : -1;
 }
 
 //------------------------------------------------------------------------------
@@ -186,30 +306,18 @@ int binder::add_backend(editor_backend& backend)
         if (*(m_backends[i]) == &backend)
             return i;
 
-    editor_backend** slot = m_backends.push_back();
-    return (slot != nullptr) ? *slot = &backend, int(slot - m_backends.front()) : -1;
-}
+    if (editor_backend** slot = m_backends.push_back())
+    {
+        *slot = &backend;
+        return int(slot - m_backends.front());
+    }
 
-//------------------------------------------------------------------------------
-binder::node* binder::get_root()
-{
-    return &m_root;
-}
-
-//------------------------------------------------------------------------------
-binder::node* binder::get_node(unsigned int index)
-{
-    return (index < sentinal) ? m_nodes + index : nullptr;
-}
-
-//------------------------------------------------------------------------------
-int binder::alloc_node()
-{
-    return (m_next_node < sizeof_array(m_nodes)) ? m_next_node++ : sentinal;
+    return -1;
 }
 
 //------------------------------------------------------------------------------
 editor_backend* binder::get_backend(unsigned int index) const
 {
-    auto b = m_backends[index]; return b ? *b : nullptr;
+    auto b = m_backends[index];
+    return b ? *b : nullptr;
 }

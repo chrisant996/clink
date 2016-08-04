@@ -50,9 +50,44 @@ static setting_bool g_vertical(
 
 
 //------------------------------------------------------------------------------
-void classic_match_ui::bind_input(const binder& binder)
+enum {
+    bind_id_prompt      = 20,
+    bind_id_prompt_yes,
+    bind_id_prompt_no,
+    bind_id_pager_page,
+    bind_id_pager_line,
+    bind_id_pager_stop,
+};
+
+
+
+//------------------------------------------------------------------------------
+void classic_match_ui::bind_input(binder& binder)
 {
-    binder.bind("\t", state_none);
+    int default_group = binder.get_group();
+    binder.bind(default_group, "\t", state_none);
+
+    m_prompt_bind_group = binder.create_group("tab_complete_prompt");
+    binder.bind(m_prompt_bind_group, "y", bind_id_prompt_yes);
+    binder.bind(m_prompt_bind_group, "Y", bind_id_prompt_yes);
+    binder.bind(m_prompt_bind_group, " ", bind_id_prompt_yes);
+    binder.bind(m_prompt_bind_group, "\t", bind_id_prompt_yes);
+    binder.bind(m_prompt_bind_group, "\r", bind_id_prompt_yes);
+    binder.bind(m_prompt_bind_group, "n", bind_id_prompt_no);
+    binder.bind(m_prompt_bind_group, "N", bind_id_prompt_no);
+    binder.bind(m_prompt_bind_group, "^C", bind_id_prompt_no); // ctrl-c
+    binder.bind(m_prompt_bind_group, "^D", bind_id_prompt_no); // ctrl-d
+    binder.bind(m_prompt_bind_group, "^[", bind_id_prompt_no); // esc
+
+    m_pager_bind_group = binder.create_group("tab_complete_pager");
+    binder.bind(m_pager_bind_group, " ", bind_id_pager_page);
+    binder.bind(m_pager_bind_group, "\t", bind_id_pager_page);
+    binder.bind(m_pager_bind_group, "\r", bind_id_pager_line);
+    binder.bind(m_pager_bind_group, "q", bind_id_pager_stop);
+    binder.bind(m_pager_bind_group, "Q", bind_id_pager_stop);
+    binder.bind(m_pager_bind_group, "^C", bind_id_pager_stop); // ctrl-c
+    binder.bind(m_pager_bind_group, "^D", bind_id_pager_stop); // ctrl-d
+    binder.bind(m_pager_bind_group, "^[", bind_id_pager_stop); // esc
 }
 
 //------------------------------------------------------------------------------
@@ -72,25 +107,25 @@ void classic_match_ui::on_matches_changed(const context& context)
 }
 
 //------------------------------------------------------------------------------
-editor_backend::result classic_match_ui::on_input(
-    const char* keys,
-    int id,
-    const context& context)
+void classic_match_ui::on_input(const input& input, result& result, const context& context)
 {
-    auto& terminal = context.terminal;
     auto& matches = context.matches;
-
     if (matches.get_match_count() == 0)
-        return result::next;
+        return;
 
     if (m_waiting)
     {
+        const char* keys = input.keys;
         int next_state = state_none;
-        switch (id)
+
+        switch (input.id)
         {
-        case state_none:    next_state = begin_print(context); break;
-        case state_query:   next_state = query_prompt(keys[0], context); break;
-        case state_pager:   next_state = pager_prompt(keys[0], context); break;
+        case state_none:            next_state = begin_print(context);  break;
+        case bind_id_prompt_no:     next_state = state_none;            break;
+        case bind_id_prompt_yes:    next_state = state_print_page;      break;
+        case bind_id_pager_page:    next_state = state_print_page;      break;
+        case bind_id_pager_line:    next_state = state_print_one;       break;
+        case bind_id_pager_stop:    next_state = state_none;            break;
         }
 
         if (next_state > state_print)
@@ -98,13 +133,22 @@ editor_backend::result classic_match_ui::on_input(
 
         switch (next_state)
         {
-        case state_query:   return { result::more_input, state_query };
-        case state_pager:   return { result::more_input, state_pager };
+        case state_query:
+            m_prev_group = result.set_bind_group(m_prompt_bind_group);
+            return;
+
+        case state_pager:
+            m_prev_group = result.set_bind_group(m_pager_bind_group);
+            return;
         }
 
-        return result::redraw;
+        result.set_bind_group(m_prev_group);
+        m_prev_group = -1;
+        result.redraw();
+        return;
     }
 
+    // Is there some common match text we can add to the line?
     str<288> lcd;
     matches.get_match_lcd(lcd);
 
@@ -112,7 +156,7 @@ editor_backend::result classic_match_ui::on_input(
     if (!lcd_length)
     {
         m_waiting = true;
-        return result::next;
+        return;
     }
 
     line_buffer& buffer = context.buffer;
@@ -137,7 +181,10 @@ editor_backend::result classic_match_ui::on_input(
 
     // One match? Accept it.
     if (matches.get_match_count() == 1)
-        return { result::accept_match, 0 };
+    {
+        result.accept_match(0);
+        return;
+    }
 
     // Append as much of the lowest common denominator of matches as we can.
     int word_end = end_word.offset + end_word.length;
@@ -152,8 +199,6 @@ editor_backend::result classic_match_ui::on_input(
         buffer.insert(lcd.c_str() + lcd_length - dx);
     else if (!dx)
         m_waiting = true;
-
-    return result::next;
 }
 
 //------------------------------------------------------------------------------
@@ -237,59 +282,5 @@ classic_match_ui::state classic_match_ui::print(const context& context, bool sin
 
     static const char prompt[] = { "--More--" };
     term.write(prompt, sizeof_array(prompt) - 1);
-    return state_pager;
-}
-
-//------------------------------------------------------------------------------
-classic_match_ui::state classic_match_ui::query_prompt(
-    unsigned char key,
-    const context& context)
-{
-    switch(key)
-    {
-    case 'y':
-    case 'Y':
-    case ' ':
-    case '\t':
-    case '\r':
-        return state_print_page;
-
-    case 'n':
-    case 'N':
-    case 0x03: // ctrl-c
-    case 0x04: // ctrl-d
-    case 0x1b: // esc
-        context.terminal.write("\n", 1);
-        return state_none;
-    }
-
-    context.terminal.write("\x07", 1);
-    return state_query;
-}
-
-//------------------------------------------------------------------------------
-classic_match_ui::state classic_match_ui::pager_prompt(
-    unsigned char key,
-    const context& context)
-{
-    switch (key)
-    {
-    case ' ':
-    case '\t':
-        return state_print_page;
-
-    case '\r':
-        return state_print_one;
-
-    case 'q':
-    case 'Q':
-    case 0x03: // ctrl-c
-    case 0x04: // ctrl-d
-    case 0x1b: // esc
-        context.terminal.write("\n", 1);
-        return state_none;
-    }
-
-    context.terminal.write("\x07", 1);
     return state_pager;
 }

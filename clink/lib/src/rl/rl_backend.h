@@ -13,16 +13,18 @@ class rl_backend
     , public singleton<rl_backend>
 {
 public:
-                            rl_backend(const char* shell_name);
+                    rl_backend(const char* shell_name);
 
 private:
-    virtual void            bind_input(const binder& binder) override;
-    virtual void            on_begin_line(const char* prompt, const context& context) override;
-    virtual void            on_end_line() override;
-    virtual void            on_matches_changed(const context& context) override;
-    virtual result          on_input(const char* keys, int id, const context& context) override;
-    void                    done(const char* line);
-    char*                   m_rl_buffer;
-    bool                    m_done;
-    bool                    m_eof;
+    virtual void    bind_input(binder& binder) override;
+    virtual void    on_begin_line(const char* prompt, const context& context) override;
+    virtual void    on_end_line() override;
+    virtual void    on_matches_changed(const context& context) override;
+    virtual void    on_input(const input& input, result& result, const context& context) override;
+    void            done(const char* line);
+    char*           m_rl_buffer;
+    int             m_prev_group;
+    int             m_catch_group;
+    bool            m_done;
+    bool            m_eof;
 };

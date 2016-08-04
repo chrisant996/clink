@@ -62,6 +62,7 @@ static void terminal_flush_thunk(FILE* stream)
 //------------------------------------------------------------------------------
 rl_backend::rl_backend(const char* shell_name)
 : m_rl_buffer(nullptr)
+, m_prev_group(-1)
 {
     rl_getc_function = terminal_read_thunk;
     rl_fwrite_function = terminal_write_thunk;
@@ -89,7 +90,6 @@ rl_backend::rl_backend(const char* shell_name)
         { "\\e[4", "end-of-line" },             // end
         { "\\e[1", "beginning-of-line" },       // home
         { "\\e[3", "delete-char" },             // del
-      //{ "\\e[t", "enter-scroll-mode" },       // shift-pgup // MODE4
         { "\\eO4", "kill-line" },               // ctrl-end
         { "\\eO1", "backward-kill-line" },      // ctrl-home
         { "\\e[5", "history-search-backward" }, // pgup
@@ -101,8 +101,13 @@ rl_backend::rl_backend(const char* shell_name)
 }
 
 //------------------------------------------------------------------------------
-void rl_backend::bind_input(const binder& binder)
+void rl_backend::bind_input(binder& binder)
 {
+    int default_group = binder.get_group();
+    binder.bind(default_group, "", 0);
+
+    m_catch_group = binder.create_group("readline");
+    binder.bind(m_catch_group, "", 0);
 }
 
 //------------------------------------------------------------------------------
@@ -129,6 +134,7 @@ void rl_backend::on_begin_line(const char* prompt, const context& context)
 
     m_done = false;
     m_eof = false;
+    m_prev_group = -1;
 }
 
 //------------------------------------------------------------------------------
@@ -147,16 +153,9 @@ void rl_backend::on_matches_changed(const context& context)
 }
 
 //------------------------------------------------------------------------------
-editor_backend::result rl_backend::on_input(
-    const char* keys,
-    int id,
-    const context& context)
+void rl_backend::on_input(const input& input, result& result, const context& context)
 {
     // MODE4 : should wrap all external line edits in single undo.
-
-    static char more_input_id = -1;
-    if (char(id) != more_input_id)
-        return result::next;
 
     // Setup the terminal.
     struct : public terminal_in
@@ -166,7 +165,7 @@ editor_backend::result rl_backend::on_input(
         const char*  data; 
     } term_in;
              
-    term_in.data = keys;
+    term_in.data = input.keys;
 
     rl_instream = (FILE*)(&term_in);
 
@@ -175,7 +174,10 @@ editor_backend::result rl_backend::on_input(
         rl_callback_read_char();
 
     if (m_done)
-        return m_eof ? result::eof : result::done;
+    {
+        result.done(m_eof);
+        return;
+    }
 
     // Check if Readline want's more input or if we're done.
     int rl_state = rl_readline_state;
@@ -183,11 +185,16 @@ editor_backend::result rl_backend::on_input(
     rl_state &= ~RL_STATE_INITIALIZED;
     rl_state &= ~RL_STATE_OVERWRITE;
     rl_state &= ~RL_STATE_VICMDONCE;
-
     if (rl_state)
-        return {result::more_input, more_input_id};
-
-    return result::next;
+    {
+        if (m_prev_group < 0)
+            m_prev_group = result.set_bind_group(m_catch_group);
+    }
+    else if (m_prev_group >= 0)
+    {
+        result.set_bind_group(m_prev_group);
+        m_prev_group = -1;
+    }
 }
 
 //------------------------------------------------------------------------------

@@ -5,7 +5,6 @@
 
 #include <core/array.h>
 
-class bind_resolver;
 class editor_backend;
 
 //------------------------------------------------------------------------------
@@ -13,41 +12,49 @@ class binder
 {
 public:
                         binder();
-    bool                bind(const char* chord, editor_backend& backend, unsigned char id);
-    void                update_resolver(unsigned char key, bind_resolver& resolver);
+    int                 get_group(const char* name=nullptr);
+    int                 create_group(const char* name);
+    bool                bind(unsigned int group, const char* chord, editor_backend& backend, unsigned char id);
 
 private:
-    enum
-    {
-        node_use_none,
-        node_use_bound,
-        node_use_parent,
-        // node.usage.bits
-    };
+    static const int    link_bits = 9;
+    static const int    backend_bits = 5;
 
     struct node
     {
-        unsigned int    key         : 7;
-        unsigned int    sibling     : 7;
-        unsigned int    usage       : 2;
-        unsigned int    id_or_child : 8;
-        unsigned int    backend     : 4;
-        unsigned int                : 4;
+        unsigned short  is_group    : 1; 
+        unsigned short  next        : link_bits;
+        unsigned short  backend     : backend_bits;
+        unsigned short  bound       : 1;
+        unsigned short  child       : link_bits;
+        unsigned short  depth       : 3;
+        unsigned short              : 4;
+        unsigned char   key;
+        unsigned char   id;
     };
 
-    static const unsigned int sentinal = 0x7f;
-    typedef fixed_array<editor_backend*, 16> backends; // node.backend.bits - 1
+    struct group_node
+    {
+        unsigned short  is_group    : 1;
+        unsigned short  next        : link_bits;
+        unsigned short              : 6;
+        unsigned short  hash[2];
+    };
 
-    node*               find_child(node* parent, unsigned char key);
-    node*               insert_child(node* parent, unsigned char key);
-    node*               add_child(node* parent, unsigned char key);
+    typedef fixed_array<editor_backend*, (1 << backend_bits)> backends;
+
+    friend class        bind_resolver;
+    int                 insert_child(int parent, unsigned char key);
+    int                 find_child(int parent, unsigned char key) const;
+    int                 add_child(int parent, unsigned char key);
+    int                 find_tail(int head);
+    int                 append(int head, unsigned char key);
+    const node&         get_node(unsigned int index) const;
+    group_node*         get_group_node(unsigned int index);
+    int                 alloc_nodes(unsigned int count=1);
     int                 add_backend(editor_backend& backend);
-    node*               get_root();
-    node*               get_node(unsigned int index);
-    int                 alloc_node();
     editor_backend*     get_backend(unsigned int index) const;
     backends            m_backends;
-    node                m_root;
-    node                m_nodes[127]; // node.sibling.bits - 1
-    char                m_next_node;
+    node                m_nodes[1 << link_bits];
+    unsigned int        m_next_node;
 };

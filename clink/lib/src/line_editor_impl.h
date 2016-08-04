@@ -46,8 +46,7 @@ private:
     void                find_command_bounds(const char*& start, int& length);
     void                collect_words();
     void                update_internal();
-    void                record_input(unsigned char key);
-    void                dispatch();
+    void                update_input();
     void                accept_match(unsigned int index);
     backend::context    get_context(const line_state& line) const;
     line_state          get_linestate() const;
@@ -56,16 +55,15 @@ private:
     bool                check_flag(unsigned char flag) const;
     rl_backend          m_backend;
     rl_buffer           m_buffer;
-    char                m_keys[8];
     desc                m_desc;
     backends            m_backends;
     generators          m_generators;
     binder              m_binder;
-    bind_resolver       m_bind_resolver;
+    bind_resolver       m_bind_resolver = { m_binder };
     words               m_words;
     matches_impl        m_matches;
     unsigned int        m_prev_key;
     unsigned int        m_command_offset;
     unsigned char       m_keys_size;
-    unsigned char       m_flags;
+    unsigned char       m_flags = 0;
 };

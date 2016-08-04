@@ -3,27 +3,49 @@
 
 #pragma once
 
+class binder;
 class editor_backend;
+class str_base;
 
 //------------------------------------------------------------------------------
 class bind_resolver
 {
 public:
-    void            reset();
-    bool            is_resolved() const;
-    void            set_id(int id);
-    editor_backend* get_backend() const;
-    int             get_id() const;
+    class binding
+    {
+    public:
+        explicit        operator bool () const;
+        editor_backend* get_backend() const;
+        unsigned char   get_id() const;
+        void            get_chord(str_base& chord) const;
+        void            claim();
+
+    private:
+        friend class    bind_resolver;
+                        binding() = default;
+                        binding(bind_resolver* resolver, int node_index);
+        bind_resolver*  m_outer = nullptr;
+        unsigned short  m_node_index;
+        unsigned char   m_backend;
+        unsigned char   m_depth;
+        unsigned char   m_id;
+    };
+
+                        bind_resolver(const binder& binder);
+    void                set_group(int group);
+    int                 get_group() const;
+    bool                step(unsigned char key);
+    binding             next();
+    void                reset();
 
 private:
-    friend class    binder;
-    int             get_node_index() const;
-    void            set_node_index(int index);
-    void            resolve(editor_backend* backend, int id);
-
-private:
-    editor_backend* m_backend = nullptr;
-    int             m_node_index = -1;
-    short           m_id = -1;
-    bool            m_resolved = false;
+    void                claim(binding& binding);
+    bool                step_impl(unsigned char key);
+    const binder&       m_binder;
+    unsigned short      m_node_index = 1;
+    unsigned short      m_group = 1;
+    bool                m_pending_input = false;
+    unsigned char       m_tail = 0;
+    unsigned char       m_key_count = 0;
+    char                m_keys[8];
 };

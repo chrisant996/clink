@@ -33,9 +33,8 @@ void line_editor_destroy(line_editor* editor)
 
 //------------------------------------------------------------------------------
 line_editor_impl::line_editor_impl(const desc& desc)
-: m_desc(desc)
-, m_backend(desc.shell_name)
-, m_flags(0)
+: m_backend(desc.shell_name)
+, m_desc(desc)
 {
     add_backend(m_backend);
 }
@@ -47,9 +46,19 @@ void line_editor_impl::initialise()
         return;
 
     struct : public editor_backend::binder {
-        virtual bool bind(const char* chord, unsigned char key) const override
+        virtual int get_group(const char* name) const override
         {
-            return binder->bind(chord, *backend, key);
+            return binder->get_group(name);
+        }
+
+        virtual int create_group(const char* name) override
+        {
+            return binder->create_group(name);
+        }
+
+        virtual bool bind(unsigned int group, const char* chord, unsigned char key) override
+        {
+            return binder->bind(group, chord, *backend, key);
         }
 
         ::binder*       binder;
@@ -152,83 +161,90 @@ bool line_editor_impl::update()
         return true;
     }
 
-    int key = m_desc.terminal->read();
-    record_input(key);
-
-    if (!m_bind_resolver.is_resolved())
-        m_binder.update_resolver(key, m_bind_resolver);
-
-    dispatch();
-    m_buffer.draw();
+    update_input();
 
     if (!check_flag(flag_editing))
         return false;
 
-    if (!m_bind_resolver.is_resolved())
-        update_internal();
-
+    update_internal();
     return true;
 }
 
 //------------------------------------------------------------------------------
-void line_editor_impl::record_input(unsigned char key)
+void line_editor_impl::update_input()
 {
-    if (m_keys_size < sizeof_array(m_keys) - 1)
-        m_keys[m_keys_size++] = key;
-}
-
-//------------------------------------------------------------------------------
-void line_editor_impl::dispatch()
-{
-    if (!m_bind_resolver.is_resolved())
+    int key = m_desc.terminal->read();
+    if (!m_bind_resolver.step(key))
         return;
 
-    m_keys[m_keys_size] = '\0';
-    m_keys_size = 0;
-
-    editor_backend* backend = m_bind_resolver.get_backend();
-    backend = (backend != nullptr) ? backend : &m_backend;
-
-    editor_backend::result result(editor_backend::result::next);
-    if (backend != nullptr)
+    struct result_impl : public editor_backend::result
     {
-        int id = m_bind_resolver.get_id();
+        enum
+        {
+            flag_pass   = 1 << 0,
+            flag_done   = 1 << 1,
+            flag_eof    = 1 << 2,
+            flag_redraw = 1 << 3,
+        };
+
+        virtual void    pass() override                           { flags |= flag_pass; }
+        virtual void    done(bool eof) override                   { flags |= flag_done|(eof ? flag_eof : 0); }
+        virtual void    redraw() override                         { flags |= flag_redraw; }
+        virtual void    accept_match(unsigned int index) override { match = index; }
+        virtual int     set_bind_group(int id) override           { int t = group; group = id; return t; }
+        int             match;  // = -1;  <!
+        unsigned short  group;  //        <! MSVC bugs; see connect
+        unsigned char   flags;  // = 0;   <! issues about C2905
+    };
+
+    while (auto binding = m_bind_resolver.next())
+    {
+        // Binding found, dispatch it off to the backend.
+        result_impl result;
+        result.match = -1;
+        result.flags = 0;
+        result.group = m_bind_resolver.get_group();
+
+        str<16> chord;
+        editor_backend* backend = binding.get_backend();
+        int id = binding.get_id();
+        binding.get_chord(chord);
+
         line_state line = get_linestate();
         editor_backend::context context = get_context(line);
-        result = backend->on_input(m_keys, id, context);
+        editor_backend::input input = { chord.c_str(), id };
+        backend->on_input(input, result, context);
+
+        m_bind_resolver.set_group(result.group);
+
+        // Process what result_impl has collected.
+        if (result.flags & result_impl::flag_pass)
+            continue;
+
+        binding.claim();
+
+        if (result.flags & result_impl::flag_done)
+        {
+            end_line();
+
+            if (result.flags & result_impl::flag_eof)
+                set_flag(flag_eof);
+        }
+
+        if (!check_flag(flag_editing))
+            return;
+
+        if (result.flags & result_impl::flag_redraw)
+        {
+            m_desc.terminal->write("\n", 1);
+            m_buffer.redraw();
+        }
+
+        if (result.match >= 0)
+            accept_match(result.match);
     }
 
-    // MODE4 : magic shifts and masks
-    unsigned char value = result.value & 0xff;
-    switch (value)
-    {
-    case editor_backend::result::eof:
-        set_flag(flag_eof);
-        end_line();
-        break;
-
-    case editor_backend::result::done:
-        end_line();
-        break;
-
-    case editor_backend::result::accept_match:
-        accept_match((result.value >> 8) & 0xffff);
-        m_bind_resolver.reset();
-        break;
-
-    case editor_backend::result::redraw:
-        m_buffer.redraw();
-        m_bind_resolver.reset();
-        break;
-
-    case editor_backend::result::next:
-        m_bind_resolver.reset();
-        break;
-
-    case editor_backend::result::more_input:
-        m_bind_resolver.set_id((result.value >> 8) & 0xff);
-        break;
-    }
+    m_buffer.draw();
 }
 
 //------------------------------------------------------------------------------
