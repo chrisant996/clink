@@ -29,7 +29,8 @@ template <int SIZE> static bool translate_chord(const char* chord, char (&out)[S
 
         if (*chord == '^')
         {
-            out[i] = *chord & 0x1f;
+            ++chord;
+            *chord ? out[i] = *chord & 0x1f : i = SIZE;
             continue;
         }
 
