@@ -97,7 +97,7 @@ int binder::get_group(const char* name)
     {
         const group_node* node = get_group_node(index);
         if (*(int*)(node->hash) == hash)
-            return index;
+            return index + 1;
 
         index = node->next;
     }
