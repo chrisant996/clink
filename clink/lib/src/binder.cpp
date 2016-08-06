@@ -108,6 +108,9 @@ int binder::get_group(const char* name)
 //------------------------------------------------------------------------------
 int binder::create_group(const char* name)
 {
+    if (name == nullptr || name[0] == '\0')
+        return -1;
+
     int index = alloc_nodes(2);
     if (index < 0)
         return -1;
