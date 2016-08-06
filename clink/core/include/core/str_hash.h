@@ -11,7 +11,7 @@ template <typename T> unsigned int str_hash_impl(const T* in, unsigned int lengt
     while (int c = *in++)
     {
         hash = ((hash << 5) + hash) ^ c;
-        if (--length)
+        if (!--length)
             break;
     }
 
