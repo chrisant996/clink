@@ -142,11 +142,6 @@ bool binder::bind(
     if (group >= sizeof_array(m_nodes))
         return false;
 
-    const char* c = chord;
-    while (*c)
-        if (*c++ < 0)
-            return false;
-
     // Translate from ASCII representation to actual keys.
     char translated[64];
     if (!translate_chord(chord, translated))
