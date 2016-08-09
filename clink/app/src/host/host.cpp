@@ -3,6 +3,7 @@
 
 #include "pch.h"
 #include "host.h"
+#include "host_backend.h"
 #include "prompt.h"
 #include "rl/rl_history.h"
 #include "utils/scroller.h"
@@ -153,6 +154,9 @@ MODE4 */
 
     scroller_backend scroller;
     editor->add_backend(scroller);
+
+    host_backend host_backend;
+    editor->add_backend(host_backend);
 
     editor->add_generator(lua_generator);
     editor->add_generator(file_match_generator());
