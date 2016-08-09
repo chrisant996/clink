@@ -29,8 +29,13 @@ template <int SIZE> static bool translate_chord(const char* chord, char (&out)[S
 
         if (*chord == '^')
         {
-            ++chord;
-            *chord ? out[i] = *chord & 0x1f : i = SIZE;
+            if (!*++chord)
+            {
+                out[i] = '^';
+                --chord;
+            }
+            else
+                out[i] = *chord & 0x1f;
             continue;
         }
 
@@ -38,22 +43,34 @@ template <int SIZE> static bool translate_chord(const char* chord, char (&out)[S
         switch (*chord)
         {
         case '\0':
-            i = SIZE;
+            out[i] = '\\';
+            --chord;
             continue;
 
         case 'M':
-            if (chord[1] != '-')
+            if (chord[1] != '-' || !chord[2])
                 return false;
 
-            ++chord;
             out[i] = '\x1b';
+
+            ++chord; // move to '-'
+            if (chord[1] == 'C' && chord[2] == '-') // 'C-' following?
+            {
+                ++i;
+                chord += 3; // move past '-C-'
+
+                if (i >= (SIZE - 1) || !*chord)
+                    return false;
+
+                out[i] = *chord & 0x1f;
+            }
             continue;
 
         case 'C':
-            if (chord[1] != '-')
+            if (chord[1] != '-' || !chord[2])
                 return false;
 
-            ++chord;
+            chord += 2;
             out[i] = *chord & 0x1f;
             continue;
 
