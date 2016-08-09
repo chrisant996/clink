@@ -311,8 +311,12 @@ binder::group_node* binder::get_group_node(unsigned int index)
 //------------------------------------------------------------------------------
 int binder::alloc_nodes(unsigned int count)
 {
-    m_next_node += count;
-    return (m_next_node < sizeof_array(m_nodes)) ? (m_next_node - count) : -1;
+    int next = m_next_node + count;
+    if (next > sizeof_array(m_nodes))
+        return -1;
+
+    m_next_node = next;
+    return m_next_node - count;
 }
 
 //------------------------------------------------------------------------------
