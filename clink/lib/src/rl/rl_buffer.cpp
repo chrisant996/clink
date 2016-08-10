@@ -54,7 +54,10 @@ bool rl_buffer::insert(const char* text)
 //------------------------------------------------------------------------------
 bool rl_buffer::remove(unsigned int from, unsigned int to)
 {
-    return (m_need_draw = !!rl_delete_text(from, to));
+    to = min(to, get_length());
+    m_need_draw = !!rl_delete_text(from, to);
+    set_cursor(get_cursor());
+    return m_need_draw;
 }
 
 //------------------------------------------------------------------------------
