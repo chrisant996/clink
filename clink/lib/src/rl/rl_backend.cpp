@@ -28,6 +28,14 @@ extern int      _rl_output_meta_chars;
 
 
 //------------------------------------------------------------------------------
+enum {
+    bind_id_input,
+    bind_id_more_input,
+};
+
+
+
+//------------------------------------------------------------------------------
 static int terminal_read_thunk(FILE* stream)
 {
     if (stream == null_stream)
@@ -104,10 +112,10 @@ rl_backend::rl_backend(const char* shell_name)
 void rl_backend::bind_input(binder& binder)
 {
     int default_group = binder.get_group();
-    binder.bind(default_group, "", 0);
+    binder.bind(default_group, "", bind_id_input);
 
     m_catch_group = binder.create_group("readline");
-    binder.bind(m_catch_group, "", 0);
+    binder.bind(m_catch_group, "", bind_id_more_input);
 }
 
 //------------------------------------------------------------------------------
