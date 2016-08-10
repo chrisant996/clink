@@ -16,6 +16,7 @@ extern "C" {
 
 //------------------------------------------------------------------------------
 static FILE*    null_stream = (FILE*)1;
+void            show_rl_help(class terminal&);
 
 extern "C" {
 extern void     (*rl_fwrite_function)(FILE*, const char*, int);
@@ -31,6 +32,7 @@ extern int      _rl_output_meta_chars;
 enum {
     bind_id_input,
     bind_id_more_input,
+    bind_id_rl_help,
 };
 
 
@@ -113,6 +115,7 @@ void rl_backend::bind_input(binder& binder)
 {
     int default_group = binder.get_group();
     binder.bind(default_group, "", bind_id_input);
+    binder.bind(default_group, "\\M-h", bind_id_rl_help);
 
     m_catch_group = binder.create_group("readline");
     binder.bind(m_catch_group, "", bind_id_more_input);
@@ -164,6 +167,13 @@ void rl_backend::on_matches_changed(const context& context)
 void rl_backend::on_input(const input& input, result& result, const context& context)
 {
     // MODE4 : should wrap all external line edits in single undo.
+
+    if (input.id == bind_id_rl_help)
+    {
+        show_rl_help(context.terminal);
+        result.redraw();
+        return;
+    }
 
     // Setup the terminal.
     struct : public terminal_in

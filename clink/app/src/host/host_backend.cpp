@@ -11,7 +11,6 @@
 #include <terminal/terminal.h>
 
 #if MODE4
-    "M-h:   show-rl-help",
     "C-z:   undo"
 #endif // MODE4
 

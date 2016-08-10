@@ -35,17 +35,17 @@ static setting_int g_query_threshold(
     "displaying them all.",
     100);
 
-static setting_int g_max_width(
-    "match.max_width",
-    "Maximum display width",
-    "The maximum number of terminal columns to use when displaying matches.",
-    106);
-
 static setting_bool g_vertical(
     "match.vertical",
     "Display matches vertically",
     "Toggles the display of ordered matches between columns or rows.",
     true);
+
+setting_int g_max_width(
+    "match.max_width",
+    "Maximum display width",
+    "The maximum number of terminal columns to use when displaying matches.",
+    106);
 
 
 

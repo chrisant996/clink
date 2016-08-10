@@ -4,10 +4,15 @@
 #include "pch.h"
 
 #include <core/base.h>
+#include <core/settings.h>
+#include <terminal/terminal.h>
 
 extern "C" {
 #include <readline/readline.h>
 }
+
+//------------------------------------------------------------------------------
+extern setting_int g_max_width;
 
 //------------------------------------------------------------------------------
 static const char* get_function_name(void* func_addr)
@@ -59,8 +64,7 @@ static char** collect_keymap(
     char** collector,
     int* offset,
     int* max,
-    int map_id
-)
+    int map_id)
 {
     int i;
 
@@ -121,26 +125,20 @@ static char** collect_keymap(
 }
 
 //------------------------------------------------------------------------------
-int show_rl_help(int count, int invoking_key)
+void show_rl_help(terminal& terminal)
 {
-    char** collector;
-    int offset, max;
-    Keymap map;
-    int i;
-    int longest;
-
-    map = rl_get_keymap();
-    offset = 1;
-    max = 16;
-    collector = (char**)malloc(sizeof(char*) * max);
+    Keymap map = rl_get_keymap();
+    int offset = 1;
+    int max_collect = 64;
+    char** collector = (char**)malloc(sizeof(char*) * max_collect);
     collector[0] = "";
 
     // Build string up the functions in the active keymap.
-    collector = collect_keymap(map, collector, &offset, &max, 0);
+    collector = collect_keymap(map, collector, &offset, &max_collect, 0);
     if (map[ESC].type == ISKMAP && map[ESC].function != nullptr)
     {
         Keymap esc_map = (KEYMAP_ENTRY*)(map[ESC].function);
-        collector = collect_keymap(esc_map, collector, &offset, &max, 1);
+        collector = collect_keymap(esc_map, collector, &offset, &max_collect, 1);
     }
 
     if (map == emacs_standard_keymap)
@@ -149,33 +147,44 @@ int show_rl_help(int count, int invoking_key)
         int type = map[24].type;
         if (type == ISKMAP && ctrlx_map != nullptr)
         {
-            collector = collect_keymap(ctrlx_map, collector, &offset, &max, 2);
+            collector = collect_keymap(ctrlx_map, collector, &offset, &max_collect, 2);
         }
     }
 
     // Find the longest match.
-    longest = 0;
-    for (i = 0; i < offset; ++i)
+    int longest = 0;
+    for (int i = 1; i < offset; ++i)
     {
         int l = (int)strlen(collector[i]);
         if (l > longest)
-        {
             longest = l;
-        }
     }
 
     // Display the matches.
-    if (rl_completion_display_matches_hook != nullptr)
+    terminal.write("\n", 1);
+
+    int max_width = min<int>(terminal.get_columns() - 3, g_max_width.get());
+    int columns = max(1, max_width / (longest + 1));
+    for (int i = 1, j = columns - 1; i < offset; ++i, --j)
     {
-        rl_filename_completion_desired = 0;
-        rl_completion_display_matches_hook(collector, offset - 1, longest);
+        const char* match = collector[i];
+
+        int length = int(strlen(match));
+        terminal.write(match, length);
+
+        const char spaces[] = "                                         ";
+        int space_count = max(longest - length, 0) + 1;
+        terminal.write(spaces, min<int>(sizeof(spaces) - 1, space_count));
+
+        if (j)
+            continue;
+
+        j = columns;
+        terminal.write("\n", 1);
     }
 
     // Tidy up (N.B. the first match is a placeholder and shouldn't be freed).
     while (--offset)
-    {
         free(collector[offset]);
-    }
     free(collector);
-    return 0;
 }
