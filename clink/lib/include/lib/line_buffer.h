@@ -11,6 +11,7 @@ public:
     virtual void            begin_line() = 0;
     virtual void            end_line() = 0;
     virtual const char*     get_buffer() const = 0;
+    virtual unsigned int    get_length() const = 0;
     virtual unsigned int    get_cursor() const = 0;
     virtual unsigned int    set_cursor(unsigned int pos) = 0;
     virtual bool            insert(const char* text) = 0;

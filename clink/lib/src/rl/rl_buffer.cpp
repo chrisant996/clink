@@ -28,6 +28,12 @@ const char* rl_buffer::get_buffer() const
 }
 
 //------------------------------------------------------------------------------
+unsigned int rl_buffer::get_length() const
+{
+    return rl_end;
+}
+
+//------------------------------------------------------------------------------
 unsigned int rl_buffer::get_cursor() const
 {
     return rl_point;

@@ -15,6 +15,7 @@ public:
     virtual void            begin_line() override;
     virtual void            end_line() override;
     virtual const char*     get_buffer() const override;
+    virtual unsigned int    get_length() const override;
     virtual unsigned int    get_cursor() const override;
     virtual unsigned int    set_cursor(unsigned int pos) override;
     virtual bool            insert(const char* text) override;
