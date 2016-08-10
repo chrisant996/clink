@@ -18,17 +18,19 @@ public:
 
 private:
     static const int    link_bits = 9;
-    static const int    backend_bits = 5;
+    static const int    backend_bits = 6;
 
     struct node
     {
         unsigned short  is_group    : 1; 
         unsigned short  next        : link_bits;
         unsigned short  backend     : backend_bits;
-        unsigned short  bound       : 1;
+
         unsigned short  child       : link_bits;
-        unsigned short  depth       : 3;
-        unsigned short              : 4;
+        unsigned short  depth       : 4;
+        unsigned short  bound       : 1;
+        unsigned short              : 2;
+
         unsigned char   key;
         unsigned char   id;
     };

@@ -37,7 +37,7 @@ TEST_CASE("Binder") {
 
     SECTION("Overflow : backend") {
         int group = binder.get_group();
-        for (int i = 0; i < 32; ++i)
+        for (int i = 0; i < 64; ++i)
             REQUIRE(binder.bind(group, "", ((editor_backend*)0)[i], char(i)));
 
         auto& backend = ((editor_backend*)0)[0xff];
