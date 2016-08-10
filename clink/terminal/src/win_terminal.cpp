@@ -236,7 +236,10 @@ void win_terminal_in::read_console()
         else                            return read_console();
         #undef CONTAINS
 
-        push(key_char);
+        if (alt)
+            push(0x1b);
+
+        push(key_vk);
         return;
     }
 
