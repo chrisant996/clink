@@ -69,3 +69,15 @@ void rl_buffer::redraw()
 {
     rl_forced_update_display();
 }
+
+//------------------------------------------------------------------------------
+void rl_buffer::begin_undo_group()
+{
+    rl_begin_undo_group();
+}
+
+//------------------------------------------------------------------------------
+void rl_buffer::end_undo_group()
+{
+    rl_end_undo_group();
+}

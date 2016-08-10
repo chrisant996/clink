@@ -16,6 +16,8 @@ public:
     virtual unsigned int    set_cursor(unsigned int pos) = 0;
     virtual bool            insert(const char* text) = 0;
     virtual bool            remove(unsigned int from, unsigned int to) = 0;
+    virtual void            begin_undo_group() = 0;
+    virtual void            end_undo_group() = 0;
     virtual void            draw() = 0;
     virtual void            redraw() = 0;
 };

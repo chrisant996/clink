@@ -22,6 +22,8 @@ public:
     virtual bool            remove(unsigned int from, unsigned int to) override;
     virtual void            draw() override;
     virtual void            redraw() override;
+    virtual void            begin_undo_group() override;
+    virtual void            end_undo_group() override;
 
 private:
     bool                    m_need_draw;
