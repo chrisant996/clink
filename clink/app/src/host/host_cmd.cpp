@@ -3,9 +3,9 @@
 
 #include "pch.h"
 #include "host_cmd.h"
-#include "seh_scope.h"
 #include "paths.h"
 #include "utils/hook_setter.h"
+#include "utils/seh_scope.h"
 
 #include <core/base.h>
 #include <core/log.h>

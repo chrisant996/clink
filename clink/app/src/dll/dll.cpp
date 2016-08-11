@@ -6,7 +6,7 @@
 #include "host/host_ps.h"
 #include "inject_args.h"
 #include "paths.h"
-#include "seh_scope.h"
+#include "utils/seh_scope.h"
 
 #include <core/base.h>
 #include <core/globber.h>
