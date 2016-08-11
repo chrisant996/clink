@@ -25,7 +25,7 @@ static unsigned int normal_selector(
     {
         const char* name = store.get(infos[i].store_id);
         int j = str_compare(needle, name);
-        infos[i].score = (j < 0 || !needle[j]);
+        infos[i].select = (j < 0 || !needle[j]);
         ++select_count;
     }
 

@@ -10,10 +10,10 @@
 //------------------------------------------------------------------------------
 struct match_info
 {
-    unsigned int    score;
     unsigned short  store_id;
     unsigned char   first_quoteable;
     unsigned char   visible_chars;
+    bool            select;
 };
 
 

@@ -206,7 +206,7 @@ bool matches_impl::add_match(const char* match)
     if (store_id < 0)
         return false;
 
-    m_infos.push_back({ 0, (unsigned short)store_id });
+    m_infos.push_back({ (unsigned short)store_id });
     ++m_count;
     return true;
 }
@@ -219,7 +219,7 @@ void matches_impl::coalesce(unsigned int count_hint)
     unsigned int j = 0;
     for (int i = 0, n = int(m_infos.size()); i < n && j < count_hint; ++i)
     {
-        if (!infos[i].score)
+        if (!infos[i].select)
             continue;
 
         if (i != j)
