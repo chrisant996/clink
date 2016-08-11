@@ -260,7 +260,6 @@ TEST_CASE("Lua arg parsers.") {
         REQUIRE(lua.do_string(script));
 
         SECTION("Enabled") {
-            puts("...");
             tester.set_input("argcmd_file true ");
             tester.set_expected_matches("file1", "file2", "case_map-1", "case_map_2",
                 "dir1\\", "dir2\\");
@@ -280,206 +279,250 @@ TEST_CASE("Lua arg parsers.") {
             tester.run();
         }
     }
-}
 
+    SECTION("Tables : parserless") {
+        const char* script = "\
+            clink.arg.register_parser('argcmd_table', {'two', 'three', 'one'});\
+        ";
 
+        REQUIRE(lua.do_string(script));
 
-#if MODE4
---------------------------------------------------------------------------------
-clink.arg.register_parser("argcmd_table", {"two", "three", "one"});
-
-    SECTION("Parserless: table") {
-        tester.set_input("argcmd_table t");
-        tester.set_expected_matches("two", "three");
-        tester.run();
+        SECTION("Parserless: table") {
+            tester.set_input("argcmd_table t");
+            tester.set_expected_matches("two", "three");
+            tester.run();
+        }
     }
 
---------------------------------------------------------------------------------
-q = clink.arg.new_parser()
-q:set_arguments({ "four", "five" })
+    SECTION("Tables 1") {
+        const char* script = "\
+            q = clink.arg.new_parser()\
+            q:set_arguments({ 'four', 'five' })\
+            \
+            p = clink.arg.new_parser()\
+            p:set_arguments(\
+                { 'one', 'onetwo', 'onethree' } .. q\
+            )\
+            \
+            clink.arg.register_parser('argcmd_substr', p);\
+        ";
 
-p = clink.arg.new_parser()
-p:set_arguments(
-    { "one", "onetwo", "onethree" } .. q
-)
-clink.arg.register_parser("argcmd_substr", p);
+        REQUIRE(lua.do_string(script));
 
-    SECTION("Full match is also partial match 1") {
-        tester.set_input("argcmd_substr one");
-        tester.set_expected_matches("one", "onetwo", "onethree");
-        tester.run();
+        SECTION("Full match is also partial match 1") {
+            tester.set_input("argcmd_substr one");
+            tester.set_expected_matches("one", "onetwo", "onethree");
+            tester.run();
+        }
+
+        SECTION("Full match is also partial match 2") {
+            tester.set_input("argcmd_substr one f");
+            tester.set_expected_matches("four", "five");
+            tester.run();
+        }
     }
 
-    SECTION("Full match is also partial match 2") {
-        tester.set_input("argcmd_substr one f");
-        tester.set_expected_matches("four", "five");
-        tester.run();
+    SECTION("Tables 2") {
+        const char* script = "\
+            local tbl_1 = { 'one', 'two', 'three' }\
+            local tbl_2 = { 'four', 'five', tbl_1 }\
+            \
+            q = clink.arg.new_parser()\
+            q:set_arguments({ 'fifth', tbl_2 })\
+            \
+            p = clink.arg.new_parser()\
+            p:set_arguments({ 'once', tbl_1 } .. q)\
+            \
+            clink.arg.register_parser('argcmd_nested', p)\
+        ";
+
+        REQUIRE(lua.do_string(script));
+
+        SECTION("Nested table: simple") {
+            tester.set_input("argcmd_nested on");
+            tester.set_expected_matches("once", "one");
+            tester.run();
+        }
+
+        SECTION("Nested table: sub-parser") {
+            tester.set_input("argcmd_nested once f");
+            tester.set_expected_matches("fifth", "four", "five");
+            tester.run();
+        }
     }
 
---------------------------------------------------------------------------------
-local tbl_1 = { "one", "two", "three" }
-local tbl_2 = { "four", "five", tbl_1 }
+    SECTION("Looping") {
+        const char* script = "\
+            q = clink.arg.new_parser()\
+            q:set_arguments({ 'two', 'three' }, { 'four', 'banana' })\
+            q:loop()\
+            \
+            p = clink.arg.new_parser()\
+            p:set_arguments({ 'one' }, q)\
+            \
+            clink.arg.register_parser('argcmd_parser', p)\
+        ";
 
-q = clink.arg.new_parser()
-q:set_arguments({ "fifth", tbl_2 })
-
-p = clink.arg.new_parser()
-p:set_arguments({ "once", tbl_1 } .. q)
-
-clink.arg.register_parser("argcmd_nested", p)
-
-    SECTION("Nested table: simple") {
-        tester.set_input("argcmd_nested on");
-        tester.set_expected_matches("once", "one");
-        tester.run();
+        REQUIRE(lua.do_string(script));
+    
+        SECTION("Nested full parser") {
+            tester.set_input("argcmd_parser one t");
+            tester.set_expected_matches("two", "three");
+            tester.run();
+        }
+    
+        SECTION("Nested full parser - loop") {
+            tester.set_input("argcmd_parser one two four t");
+            tester.set_expected_matches("two", "three");
+            tester.run();
+        }
     }
 
-    SECTION("Nested table: sub-parser") {
-        tester.set_input("argcmd_nested once f");
-        tester.set_expected_matches("fifth", "four", "five");
-        tester.run();
-    }
+#if MODE4 // flag-type arguments don't work properly yet.
+    SECTION("Flags") {
+        const char* script = "\
+            p = clink.arg.new_parser()\
+            p:set_flags('/one', '/two', '/twenty')\
+            \
+            q = clink.arg.new_parser()\
+            q:set_flags('-one', '-two', '-twenty')\
+            \
+            clink.arg.register_parser('argcmd_flags_s', p)\
+            clink.arg.register_parser('argcmd_flags_d', q)\
+        ";
 
---------------------------------------------------------------------------------
-q = clink.arg.new_parser()
-q:set_arguments({ "two", "three" }, { "four", "banana" })
-q:loop()
+        REQUIRE(lua.do_string(script));
 
-p = clink.arg.new_parser()
-p:set_arguments({ "one" }, q)
+        SECTION("Flags: slash 1") {
+            tester.set_input("argcmd_flags_s /");
+            tester.set_expected_matches("/one", "/two", "/twenty");
+            tester.run();
+        }
 
-clink.arg.register_parser("argcmd_parser", p)
+        SECTION("Flags: slash 2") {
+            tester.set_input("argcmd_flags_s nothing /");
+            tester.set_expected_matches("/one", "/two", "/twenty");
+            tester.run();
+        }
 
-    SECTION("Nested full parser") {
-        tester.set_input("argcmd_parser one t");
-        tester.set_expected_matches("two", "three");
-        tester.run();
-    }
+        SECTION("Flags: slash 3") {
+            tester.set_input("argcmd_flags_s nothing /tw");
+            tester.set_expected_matches("/two", "/twenty");
+            tester.run();
+        }
 
-    SECTION("Nested full parser - loop") {
-        tester.set_input("argcmd_parser one two four t");
-        tester.set_expected_matches("two", "three");
-        tester.run();
-    }
+        REQUIRE(lua.do_string("p:disable_file_matching()"));
 
---------------------------------------------------------------------------------
-p = clink.arg.new_parser()
-p:set_flags("/one", "/two", "/twenty")
+        SECTION("Flags: slash 4") {
+            tester.set_input("argcmd_flags_s /t");
+            tester.set_expected_matches("/two", "/twenty");
+            tester.run();
+        }
 
-q = clink.arg.new_parser()
-q:set_flags("-one", "-two", "-twenty")
+        SECTION("Flags: slash 5") {
+            tester.set_input("argcmd_flags_s nothing /");
+            tester.set_expected_matches("/one", "/two", "/twenty");
+            tester.run();
+        }
 
-clink.arg.register_parser("argcmd_flags_s", p)
-clink.arg.register_parser("argcmd_flags_d", q)
+        SECTION("Flags: slash 6") {
+            tester.set_input("argcmd_flags_s nothing /tw");
+            tester.set_expected_matches("/two", "/twenty");
+            tester.run();
+        }
 
-clink.test.test_output(
-    "Flags: slash 1a",
-    "argcmd_flags_s nothing /",
-    "argcmd_flags_s nothing /"
-)
+        SECTION("Flags: slash 7") {
+            tester.set_input("argcmd_flags_s out of bounds /t");
+            tester.set_expected_matches("/two", "/twenty");
+            tester.run();
+        }
 
-clink.test.test_output(
-    "Flags: slash 1b",
-    "argcmd_flags_s /",
-    "argcmd_flags_s /"
-)
+        SECTION("Flags: slash 8") {
+            tester.set_input("argcmd_flags_s /tw");
+            tester.set_expected_matches("/two", "/twenty");
+            tester.run();
+        }
 
-p:disable_file_matching()
+        SECTION("Flags: dash 1") {
+            tester.set_input("argcmd_flags_d -");
+            tester.set_expected_matches("-one", "-two", "-twenty");
+            tester.run();
+        }
 
-clink.test.test_output(
-    "Flags: slash 1c",
-    "argcmd_flags_s /",
-    "argcmd_flags_s /"
-)
-
-clink.test.test_output(
-    "Flags: slash 1d",
-    "argcmd_flags_s nothing /",
-    "argcmd_flags_s nothing /"
-)
-
-    SECTION("Flags: slash 2a") {
-        tester.set_input("argcmd_flags_s nothing /tw");
-        tester.set_expected_matches("/two", "/twenty");
-        tester.run();
-    }
-
-    SECTION("Flags: slash 2b") {
-        tester.set_input("argcmd_flags_s out of bounds /tw");
-        tester.set_expected_matches("/two", "/twenty");
-        tester.run();
-    }
-
-    SECTION("Flags: slash 2c") {
-        tester.set_input("argcmd_flags_s /tw");
-        tester.set_expected_matches("/two", "/twenty");
-        tester.run();
-    }
-
-clink.test.test_output(
-    "Flags: dash 1",
-    "argcmd_flags_d -t",
-    "argcmd_flags_d -tw"
-)
-
-    SECTION("Flags: dash 2") {
-        tester.set_input("argcmd_flags_d -tw");
-        tester.set_expected_matches("-two", "-twenty");
-        tester.run();
-    }
-
---------------------------------------------------------------------------------
-q = clink.arg.new_parser()
-q:set_arguments({ "two", "three" })
-
-p = clink.arg.new_parser()
-p:set_arguments({ "one" }, { "nine" })
-p:set_flags("-flag_a" .. q, "-flag_b" .. q)
-
-clink.arg.register_parser("argcmd_skip", p)
-
-    SECTION("Skip 1") {
-        tester.set_input("argcmd_skip one two -fla\t");
-        tester.set_expected_matches("-flag_a", "-flag_b");
-        tester.run();
-    }
-
-    SECTION("Skip 2") {
-        tester.set_input("argcmd_skip one two -flag_a t");
-        tester.set_expected_matches("two", "three");
-        tester.run();
-    }
-
-    SECTION("Skip 3") {
-        tester.set_input("argcmd_skip one two -flag_a two four five -f\t");
-        tester.set_expected_matches("-flag_a", "-flag_b");
-        tester.run();
-    }
-
---------------------------------------------------------------------------------
-p = clink.arg.new_parser(
-    "-flag" .. clink.arg.new_parser({ "red", "green", "blue"}),
-    { "one", "two", "three" },
-    { "four", "five" }
-)
-
-clink.arg.register_parser("argcmd_lazy", p)
-
-    SECTION("Lazy init 1") {
-        tester.set_input("argcmd_lazy o");
-        tester.set_expected_matches("one", "two", "three");
-        tester.run();
-    }
-
-    SECTION("Lazy init 2") {
-        tester.set_input("argcmd_lazy one f");
-        tester.set_expected_matches("four", "five");
-        tester.run();
-    }
-
-    SECTION("Lazy init 2") {
-        tester.set_input("argcmd_lazy one four -flag ");
-        tester.set_expected_matches("red", "green", "blue");
-        tester.run();
+        SECTION("Flags: dash 2") {
+            tester.set_input("argcmd_flags_d -tw");
+            tester.set_expected_matches("-two", "-twenty");
+            tester.run();
+        }
     }
 #endif // MODE4
+
+    SECTION("Skip") {
+        const char* script = "\
+            q = clink.arg.new_parser()\
+            q:set_arguments({ 'two', 'three' })\
+            \
+            p = clink.arg.new_parser()\
+            p:set_arguments({ 'one' }, { 'nine' })\
+            p:set_flags('-flag_a' .. q, '-flag_b' .. q)\
+            \
+            clink.arg.register_parser('argcmd_skip', p)\
+        ";
+
+        REQUIRE(lua.do_string(script));
+
+#if MODE4 // flag-type arguments don't work properly yet.
+        SECTION("Skip 1") {
+            tester.set_input("argcmd_skip one two -fla");
+            tester.set_expected_matches("-flag_a", "-flag_b");
+            tester.run();
+        }
+#endif
+
+        SECTION("Skip 2") {
+            tester.set_input("argcmd_skip one two -flag_a t");
+            tester.set_expected_matches("two", "three");
+            tester.run();
+        }
+
+#if MODE4 // flag-type arguments don't work properly yet.
+        SECTION("Skip 3") {
+            tester.set_input("argcmd_skip one two -flag_a two four five -f");
+            tester.set_expected_matches("-flag_a", "-flag_b");
+            tester.run();
+        }
+#endif
+    }
+
+    SECTION("Lazy init") {
+        const char* script = "\
+            p = clink.arg.new_parser(\
+                '-flag' .. clink.arg.new_parser({ 'red', 'green', 'blue'}),\
+                { 'one', 'two', 'three' },\
+                { 'four', 'five' }\
+            )\
+            \
+            clink.arg.register_parser('argcmd_lazy', p)\
+        ";
+
+        REQUIRE(lua.do_string(script));
+
+        SECTION("Lazy init 1") {
+            tester.set_input("argcmd_lazy o");
+            tester.set_expected_matches("one");
+            tester.run();
+        }
+
+        SECTION("Lazy init 2") {
+            tester.set_input("argcmd_lazy one f");
+            tester.set_expected_matches("four", "five");
+            tester.run();
+        }
+
+        SECTION("Lazy init 2") {
+            tester.set_input("argcmd_lazy one four -flag ");
+            tester.set_expected_matches("red", "green", "blue");
+            tester.run();
+        }
+    }
+}
