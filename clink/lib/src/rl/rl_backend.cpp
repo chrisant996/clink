@@ -104,6 +104,7 @@ rl_backend::rl_backend(const char* shell_name)
         { "\\eO1", "backward-kill-line" },      // ctrl-home
         { "\\e[5", "history-search-backward" }, // pgup
         { "\\e[6", "history-search-forward" },  // pgdn
+        { "\\C-z", "undo" },
     };
 
     for (int i = 0; i < sizeof_array(ext_key_binds); ++i)
