@@ -3,9 +3,9 @@
 
 #include "pch.h"
 #include "host_ps.h"
-#include "hook_setter.h"
 #include "prompt.h"
 #include "seh_scope.h"
+#include "utils/hook_setter.h"
 
 #include <core/str.h>
 #include <lib/line_editor.h>
