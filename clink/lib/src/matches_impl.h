@@ -11,6 +11,8 @@
 struct match_info
 {
     unsigned short  store_id;
+    unsigned short  displayable_store_id;
+    unsigned short  aux_store_id;
     unsigned char   first_quoteable;
     unsigned char   visible_chars;
     bool            select;
@@ -41,15 +43,18 @@ public:
                             matches_impl(unsigned int store_size=0x10000);
     virtual unsigned int    get_match_count() const override;
     virtual const char*     get_match(unsigned int index) const override;
+    virtual const char*     get_displayable(unsigned int index) const override;
+    virtual const char*     get_aux(unsigned int index) const override;
     virtual unsigned int    get_visible_chars(unsigned int index) const override;
     virtual bool            has_quoteable() const override;
+    virtual bool            has_aux() const override;
     virtual int             get_first_quoteable(unsigned int index) const override;
     virtual void            get_match_lcd(str_base& out) const override;
 
 private:
     friend class            match_pipeline;
     friend class            match_builder;
-    bool                    add_match(const char* match);
+    bool                    add_match(const match_desc& desc);
     unsigned int            get_info_count() const;
     match_info*             get_infos();
     const match_store&      get_store() const;
@@ -81,4 +86,5 @@ private:
     unsigned short          m_count = 0;
     bool                    m_coalesced = false;
     bool                    m_has_quotable = false;
+    bool                    m_has_aux = false;
 };

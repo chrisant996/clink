@@ -106,7 +106,8 @@ void match_pipeline::fill_info(const char* auto_quote_chars) const
         else
             info->first_quoteable = -1;
 
-        info->visible_chars = char_count(match);
+        const char* displayable = m_matches.get_displayable(i);
+        info->visible_chars = char_count(displayable);
     }
 }
 

@@ -17,7 +17,14 @@ match_builder::match_builder(matches& matches)
 //------------------------------------------------------------------------------
 bool match_builder::add_match(const char* match)
 {
-    return ((matches_impl&)m_matches).add_match(match);
+    match_desc desc = { match };
+    return add_match(desc);
+}
+
+//------------------------------------------------------------------------------
+bool match_builder::add_match(const match_desc& desc)
+{
+    return ((matches_impl&)m_matches).add_match(desc);
 }
 
 
@@ -137,6 +144,31 @@ const char* matches_impl::get_match(unsigned int index) const
 }
 
 //------------------------------------------------------------------------------
+const char* matches_impl::get_displayable(unsigned int index) const
+{
+    if (index >= get_match_count())
+        return nullptr;
+
+    unsigned int store_id = m_infos[index].displayable_store_id;
+    if (!store_id)
+        store_id = m_infos[index].store_id;
+
+    return m_store.get(store_id);
+}
+
+//------------------------------------------------------------------------------
+const char* matches_impl::get_aux(unsigned int index) const
+{
+    if (index >= get_match_count())
+        return nullptr;
+
+    if (unsigned int store_id = m_infos[index].aux_store_id)
+        return m_store.get(store_id);
+
+    return nullptr;
+}
+
+//------------------------------------------------------------------------------
 unsigned int matches_impl::get_visible_chars(unsigned int index) const
 {
     return (index < get_match_count()) ? m_infos[index].visible_chars : 0;
@@ -146,6 +178,12 @@ unsigned int matches_impl::get_visible_chars(unsigned int index) const
 bool matches_impl::has_quoteable() const
 {
     return m_has_quotable;
+}
+
+//------------------------------------------------------------------------------
+bool matches_impl::has_aux() const
+{
+    return m_has_aux;
 }
 
 //------------------------------------------------------------------------------
@@ -193,19 +231,34 @@ void matches_impl::reset()
     m_coalesced = false;
     m_count = 0;
     m_has_quotable = false;
+    m_has_aux = false;
 }
 
 //------------------------------------------------------------------------------
-bool matches_impl::add_match(const char* match)
+bool matches_impl::add_match(const match_desc& desc)
 {
-    if (m_coalesced || !*match)
+    const char* match = desc.match;
+
+    if (m_coalesced || match == nullptr || !*match)
         return false;
 
     int store_id = m_store.store_front(match);
     if (store_id < 0)
         return false;
 
-    m_infos.push_back({ (unsigned short)store_id });
+    int displayable_store_id = 0;
+    if (desc.displayable != nullptr)
+        displayable_store_id = max(0, m_store.store_back(desc.displayable));
+
+    int aux_store_id = 0;
+    if (m_has_aux = (desc.aux != nullptr))
+        aux_store_id = max(0, m_store.store_back(desc.aux));
+
+    m_infos.push_back({
+        short(store_id),
+        short(displayable_store_id),
+        short(aux_store_id),
+    });
     ++m_count;
     return true;
 }
