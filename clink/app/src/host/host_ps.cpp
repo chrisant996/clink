@@ -104,7 +104,8 @@ void host_ps::edit_line(const wchar_t* prompt, wchar_t* chars, int max_chars)
 {
     str<128> utf8_prompt(prompt);
     str<1024> out;
-    host::edit_line(utf8_prompt.c_str(), out);
+    if (!host::edit_line(utf8_prompt.c_str(), out))
+        out.copy("exit");
 
     to_utf16(chars, max_chars, out.c_str());
 }
