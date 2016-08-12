@@ -20,6 +20,41 @@ static setting_enum g_paste_crlf(
     "unchanged,delete,space",
     1);
 
+static setting_str g_key_paste(
+    "keybind.paste",
+    "Inserts clipboard contents",
+    "^v");
+
+static setting_str g_key_ctrlc(
+    "keybind.ctrlc",
+    "Cancels current line edit",
+    "^c");
+
+static setting_str g_key_copy_line(
+    "keybind.copy_line",
+    "Copies line to clipboard",
+    "\\M-C-c");
+
+static setting_str g_key_copy_cwd(
+    "keybind.copy_cwd",
+    "Copies current directory",
+    "\\M-C");
+
+static setting_str g_key_up_dir(
+    "keybind.up_dir",
+    "Goes up a directory",
+    "\\eO5");
+
+static setting_str g_key_dotdot(
+    "keybind.dotdot",
+    "Inserts ..\\",
+    "\\M-a");
+
+static setting_str g_key_expand_env(
+    "keybind.expand_env",
+    "Expands %envvar% under cursor",
+    "\\M-C-e");
+
 
 
 //------------------------------------------------------------------------------
@@ -246,15 +281,15 @@ host_backend::host_backend(const char* host_name)
 void host_backend::bind_input(binder& binder)
 {
     int default_group = binder.get_group();
-    binder.bind(default_group, "^v", bind_id_paste);
-    binder.bind(default_group, "^c", bind_id_ctrlc);
-    binder.bind(default_group, "\\M-C-c", bind_id_copy_line);
-    binder.bind(default_group, "\\M-C", bind_id_copy_cwd);
-    binder.bind(default_group, "\\eO5", bind_id_up_dir);
-    binder.bind(default_group, "\\M-a", bind_id_dotdot);
+    binder.bind(default_group, g_key_paste.get(), bind_id_paste);
+    binder.bind(default_group, g_key_ctrlc.get(), bind_id_ctrlc);
+    binder.bind(default_group, g_key_copy_line.get(), bind_id_copy_line);
+    binder.bind(default_group, g_key_copy_cwd.get(), bind_id_copy_cwd);
+    binder.bind(default_group, g_key_up_dir.get(), bind_id_up_dir);
+    binder.bind(default_group, g_key_dotdot.get(), bind_id_dotdot);
 
     if (stricmp(m_host_name, "cmd.exe") == 0)
-        binder.bind(default_group, "\\M-C-e", bind_id_expand_env);
+        binder.bind(default_group, g_key_expand_env.get(), bind_id_expand_env);
 }
 
 //------------------------------------------------------------------------------
