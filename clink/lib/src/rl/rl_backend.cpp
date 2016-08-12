@@ -5,6 +5,7 @@
 #include "rl_backend.h"
 
 #include <core/base.h>
+#include <core/log.h>
 #include <terminal/ecma48_iter.h>
 #include <terminal/terminal.h>
 
@@ -25,6 +26,45 @@ extern char*    _rl_comment_begin;
 extern int      _rl_convert_meta_chars_to_ascii;
 extern int      _rl_output_meta_chars;
 } // extern "C"
+
+
+
+//------------------------------------------------------------------------------
+static void load_user_inputrc()
+{
+#if defined(PLATFORM_WINDOWS)
+    const char* env_vars[] = {
+        "clink_inputrc",
+        "localappdata",
+        "appdata",
+        "userprofile",
+        "home",
+    };
+
+    for (int i = 0; i < sizeof_array(env_vars); ++i)
+    {
+        str<MAX_PATH> path;
+        int path_length = GetEnvironmentVariable(env_vars[i], path.data(), path.size());
+        if (!path_length || path_length > int(path.size()))
+            continue;
+
+        path << "\\.inputrc";
+
+        for (int j = 0; j < 2; ++j)
+        {
+            if (!rl_read_init_file(path.c_str()))
+            {
+                LOG("Found Readline inputrc at '%s'", path);
+                break;
+            }
+
+            int dot = path.last_of('.');
+            if (dot >= 0)
+                path.data()[dot] = '_';
+        }
+    }
+#endif // PLATFORM_WINDOWS
+}
 
 
 
@@ -109,6 +149,8 @@ rl_backend::rl_backend(const char* shell_name)
 
     for (int i = 0; i < sizeof_array(ext_key_binds); ++i)
         rl_bind_keyseq(ext_key_binds[i][0], rl_named_function(ext_key_binds[i][1]));
+
+    load_user_inputrc();
 }
 
 //------------------------------------------------------------------------------
