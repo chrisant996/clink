@@ -78,7 +78,7 @@ local function exec_match_generator(line_state, match_builder)
     if #text_dir == 0 then
         -- Add console aliases as matches.
         local aliases = clink.get_console_aliases()
-        match_builder:add(aliases)
+        match_builder:addmatches(aliases)
 
         -- Add environment's PATH variable as paths to search.
         if settings.get("exec.path") then
@@ -106,14 +106,14 @@ local function exec_match_generator(line_state, match_builder)
     for _, suffix in ipairs(suffices) do
         for _, dir in ipairs(paths) do
             for _, file in ipairs(os.globfiles(dir.."*"..suffix)) do
-                added = match_builder:add(file) or added
+                added = match_builder:addmatch(file) or added
             end
         end
     end
 
     -- Lastly we may wish to consider directories too.
     if match_dirs or not added then
-        match_builder:add(os.globdirs(text.."*"))
+        match_builder:addmatches(os.globdirs(text.."*"))
     end
 
     return true

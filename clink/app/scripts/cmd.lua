@@ -35,7 +35,7 @@ local function cmd_command_generator(line_state, match_builder)
         return false
     end
 
-    match_builder:add(cmd_commands)
+    match_builder:addmatches(cmd_commands)
     return false
 end
 

@@ -592,7 +592,7 @@ local function argument_match_generator(line_state, match_builder)
         return not ret
     end
 
-    match_builder:add(ret)
+    match_builder:addmatches(ret)
     return true
 end
 

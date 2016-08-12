@@ -15,8 +15,10 @@ class match_builder_lua
 public:
                     match_builder_lua(match_builder& builder);
                     ~match_builder_lua();
-    int             add(lua_State* state);
+    int             add_match(lua_State* state);
+    int             add_matches(lua_State* state);
 
 private:
+    bool            add_match_impl(lua_State* state, int stack_index);
     match_builder&  m_builder;
 };
