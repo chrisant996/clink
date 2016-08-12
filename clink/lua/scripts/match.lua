@@ -6,8 +6,6 @@ local generators = {}
 
 --------------------------------------------------------------------------------
 local function generate_matches_impl(line_state, match_builder)
-    -- clink.match_display_filter = nil MODE4
-
     for _, generator in ipairs(generators) do
         local ret = generator.f(line_state, match_builder)
         if ret == true then

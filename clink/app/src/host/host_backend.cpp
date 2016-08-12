@@ -10,10 +10,6 @@
 #include <lib/line_buffer.h>
 #include <terminal/terminal.h>
 
-#if MODE4
-    "C-z:   undo"
-#endif // MODE4
-
 //------------------------------------------------------------------------------
 static setting_enum g_paste_crlf(
     "clink.paste_crlf",

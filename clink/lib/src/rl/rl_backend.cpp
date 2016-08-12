@@ -167,8 +167,6 @@ void rl_backend::on_matches_changed(const context& context)
 //------------------------------------------------------------------------------
 void rl_backend::on_input(const input& input, result& result, const context& context)
 {
-    // MODE4 : should wrap all external line edits in single undo.
-
     if (input.id == bind_id_rl_help)
     {
         show_rl_help(context.terminal);
