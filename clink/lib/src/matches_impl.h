@@ -25,6 +25,8 @@ public:
     const char*             get(unsigned int id) const;
 
 protected:
+    static const int        alignment_bits = 1;
+    static const int        alignment = 1 << alignment_bits;
     char*                   m_ptr;
     unsigned int            m_size;
 };

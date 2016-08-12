@@ -25,7 +25,7 @@ bool match_builder::add_match(const char* match)
 //------------------------------------------------------------------------------
 const char* match_store::get(unsigned int id) const
 {
-    id <<= 1;
+    id <<= alignment_bits;
     return (id < m_size) ? (m_ptr + id) : nullptr;
 }
 
@@ -65,7 +65,7 @@ int matches_impl::store_impl::store_front(const char* str)
 
     unsigned int ret = m_front;
     m_front = next;
-    return ret >> 1;
+    return ret >> alignment_bits;
 }
 
 //------------------------------------------------------------------------------
@@ -80,7 +80,7 @@ int matches_impl::store_impl::store_back(const char* str)
 
     unsigned int ret = m_back;
     m_back = next;
-    return ret >> 1;
+    return ret >> alignment_bits;
 }
 
 //------------------------------------------------------------------------------
@@ -90,7 +90,7 @@ unsigned int matches_impl::store_impl::get_size(const char* str) const
         return ~0u;
 
     int length = int(strlen(str) + 1);
-    length = (length + 1) & ~1;
+    length = (length + alignment - 1) & ~(alignment - 1);
     return length;
 }
 
