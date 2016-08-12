@@ -261,7 +261,7 @@ classic_match_ui::state classic_match_ui::print(const context& context, bool sin
             if (index >= match_count)
                 continue;
 
-            const char* match = matches.get_match(index);
+            const char* match = matches.get_displayable(index);
             term.write(match, int(strlen(match)));
 
             int visible_chars = matches.get_visible_chars(index);
