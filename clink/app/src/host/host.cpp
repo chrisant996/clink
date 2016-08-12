@@ -155,7 +155,7 @@ MODE4 */
     scroller_backend scroller;
     editor->add_backend(scroller);
 
-    host_backend host_backend;
+    host_backend host_backend(m_name);
     editor->add_backend(host_backend);
 
     editor->add_generator(lua_generator);

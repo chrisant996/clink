@@ -238,6 +238,14 @@ enum
     bind_id_dotdot,
 };
 
+
+
+//------------------------------------------------------------------------------
+host_backend::host_backend(const char* host_name)
+: m_host_name(host_name)
+{
+}
+
 //------------------------------------------------------------------------------
 void host_backend::bind_input(binder& binder)
 {
@@ -247,8 +255,10 @@ void host_backend::bind_input(binder& binder)
     binder.bind(default_group, "\\M-C-c", bind_id_copy_line);
     binder.bind(default_group, "\\M-C", bind_id_copy_cwd);
     binder.bind(default_group, "\\eO5", bind_id_up_dir);
-    binder.bind(default_group, "\\M-C-e", bind_id_expand_env);
     binder.bind(default_group, "\\M-a", bind_id_dotdot);
+
+    if (stricmp(m_host_name, "cmd.exe") == 0)
+        binder.bind(default_group, "\\M-C-e", bind_id_expand_env);
 }
 
 //------------------------------------------------------------------------------
