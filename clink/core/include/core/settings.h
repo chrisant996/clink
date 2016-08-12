@@ -69,6 +69,7 @@ class setting_impl
     : public setting
 {
 public:
+                    setting_impl(const char* name, const char* short_desc, T default_value);
                     setting_impl(const char* name, const char* short_desc, const char* long_desc, T default_value);
     T               get() const;
     virtual bool    set(const char* value) override;
@@ -78,6 +79,15 @@ protected:
     struct          type;
     store<T>        m_store;
 };
+
+//------------------------------------------------------------------------------
+template <typename T> setting_impl<T>::setting_impl(
+    const char* name,
+    const char* short_desc,
+    T default_value)
+: setting_impl<T>(name, short_desc, nullptr, default_value)
+{
+}
 
 //------------------------------------------------------------------------------
 template <typename T> setting_impl<T>::setting_impl(
@@ -113,6 +123,7 @@ class setting_enum
     : public setting_impl<int>
 {
 public:
+                       setting_enum(const char* name, const char* short_desc, const char* values, int default_value);
                        setting_enum(const char* name, const char* short_desc, const char* long_desc, const char* values, int default_value);
     virtual bool       set(const char* value) override;
     virtual void       get(str_base& out) const override;

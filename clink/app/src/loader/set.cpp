@@ -50,7 +50,9 @@ static bool print_value(const char* key)
     setting->get(value);
     printf("       Value: %s\n", value.c_str());
 
-    printf("\n%s\n", setting->get_long_desc());
+    const char* long_desc = setting->get_long_desc();
+    if (long_desc != nullptr && *long_desc)
+        printf("\n%s\n", setting->get_long_desc());
 
     return true;
 }

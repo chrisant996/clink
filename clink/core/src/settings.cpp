@@ -160,7 +160,7 @@ setting::setting(
     type_e type)
 : m_name(name)
 , m_short_desc(short_desc)
-, m_long_desc(long_desc)
+, m_long_desc(long_desc ? long_desc : "")
 , m_next(g_setting_list)
 , m_prev(nullptr)
 , m_type(type)
@@ -267,6 +267,16 @@ template <> void setting_impl<const char*>::get(str_base& out) const
 }
 
 
+
+//------------------------------------------------------------------------------
+setting_enum::setting_enum(
+    const char* name,
+    const char* short_desc,
+    const char* options,
+    int default_value)
+: setting_enum(name, short_desc, nullptr, options, default_value)
+{
+}
 
 //------------------------------------------------------------------------------
 setting_enum::setting_enum(
