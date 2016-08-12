@@ -134,11 +134,12 @@ void classic_match_ui::on_input(const input& input, result& result, const contex
         switch (next_state)
         {
         case state_query:
-            m_prev_group = result.set_bind_group(m_prompt_bind_group);
+            if (m_prev_group == -1)
+                m_prev_group = result.set_bind_group(m_prompt_bind_group);
             return;
 
         case state_pager:
-            m_prev_group = result.set_bind_group(m_pager_bind_group);
+            result.set_bind_group(m_pager_bind_group);
             return;
         }
 
