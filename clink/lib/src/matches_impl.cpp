@@ -72,15 +72,14 @@ int matches_impl::store_impl::store_front(const char* str)
 int matches_impl::store_impl::store_back(const char* str)
 {
     unsigned int size = get_size(str);
-    unsigned int next = m_back + size;
-    if (next > m_front)
+    unsigned int next = m_back - size;
+    if (next < m_front)
         return -1;
 
+    m_back = next;
     str_base(m_ptr + m_back, size).copy(str);
 
-    unsigned int ret = m_back;
-    m_back = next;
-    return ret >> alignment_bits;
+    return m_back >> alignment_bits;
 }
 
 //------------------------------------------------------------------------------
