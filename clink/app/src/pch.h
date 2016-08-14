@@ -23,3 +23,7 @@
 #ifndef __MINGW32__
 #   include <DbgHelp.h>
 #endif
+
+#include <core/base.h>
+
+#define CLINK_DLL "clink_" AS_STR(ARCHITECTURE) ".dll"

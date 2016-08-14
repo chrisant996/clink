@@ -13,8 +13,6 @@
 #include <process/process.h>
 #include <process/vm.h>
 
-#define CLINK_DLL_NAME "clink_" AS_STR(ARCHITECTURE) ".dll"
-
 //------------------------------------------------------------------------------
 bool    initialise_clink(const inject_args&);
 void    puts_help(const char**, int);
@@ -60,7 +58,7 @@ static int do_inject(DWORD target_pid)
     str<256> dll_path;
     process().get_file_name(dll_path);
     path::get_directory(dll_path);
-    path::append(dll_path, CLINK_DLL_NAME);
+    path::append(dll_path, CLINK_DLL);
 
     // Reset log file, start logging!
     SYSTEM_INFO sys_info;
@@ -119,7 +117,7 @@ static int is_clink_present(DWORD target_pid)
     ok = Module32First(th32, &module_entry);
     while (ok != FALSE)
     {
-        if (_stricmp(module_entry.szModule, CLINK_DLL_NAME) == 0)
+        if (_stricmp(module_entry.szModule, CLINK_DLL) == 0)
         {
             LOG("Clink already installed in process.");
             ret = 1;
