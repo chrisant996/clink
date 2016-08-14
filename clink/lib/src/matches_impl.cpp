@@ -169,6 +169,15 @@ const char* matches_impl::get_aux(unsigned int index) const
 }
 
 //------------------------------------------------------------------------------
+char matches_impl::get_suffix(unsigned int index) const
+{
+    if (index >= get_match_count())
+        return 0;
+
+    return m_infos[index].suffix;
+}
+
+//------------------------------------------------------------------------------
 unsigned int matches_impl::get_visible_chars(unsigned int index) const
 {
     return (index < get_match_count()) ? m_infos[index].visible_chars : 0;
@@ -255,9 +264,10 @@ bool matches_impl::add_match(const match_desc& desc)
         aux_store_id = max(0, m_store.store_back(desc.aux));
 
     m_infos.push_back({
-        short(store_id),
-        short(displayable_store_id),
-        short(aux_store_id),
+        (unsigned short)store_id,
+        (unsigned short)displayable_store_id,
+        (unsigned short)aux_store_id,
+        max<char>(0, desc.suffix),
     });
     ++m_count;
     return true;

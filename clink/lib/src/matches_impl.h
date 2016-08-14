@@ -13,6 +13,7 @@ struct match_info
     unsigned short  store_id;
     unsigned short  displayable_store_id;
     unsigned short  aux_store_id;
+    char            suffix;
     unsigned char   first_quoteable;
     unsigned char   visible_chars;
     bool            select;
@@ -45,6 +46,7 @@ public:
     virtual const char*     get_match(unsigned int index) const override;
     virtual const char*     get_displayable(unsigned int index) const override;
     virtual const char*     get_aux(unsigned int index) const override;
+    virtual char            get_suffix(unsigned int index) const override;
     virtual unsigned int    get_visible_chars(unsigned int index) const override;
     virtual bool            has_quoteable() const override;
     virtual bool            has_aux() const override;

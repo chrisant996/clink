@@ -13,6 +13,7 @@ public:
     virtual const char*     get_match(unsigned int index) const = 0;
     virtual const char*     get_displayable(unsigned int index) const = 0;
     virtual const char*     get_aux(unsigned int index) const = 0;
+    virtual char            get_suffix(unsigned int index) const = 0;
     virtual unsigned int    get_visible_chars(unsigned int index) const = 0;
     virtual bool            has_quoteable() const = 0;
     virtual bool            has_aux() const = 0;
@@ -28,6 +29,7 @@ struct match_desc
     const char*             match;
     const char*             displayable;
     const char*             aux;
+    char                    suffix;
 };
 
 //------------------------------------------------------------------------------
