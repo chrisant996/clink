@@ -19,6 +19,14 @@
 #   define THREAD_LOCAL     __thread
 #endif
 
+#if defined(_M_AMD64)
+#   define ARCHITECTURE     x64
+#elif define(_M_IX86)
+#   define ARCHITECTURE     x86
+#else
+#   error Unknown architecture
+#endif
+
 #undef min
 template <class A> A min(A a, A b) { return (a < b) ? a : b; }
 
