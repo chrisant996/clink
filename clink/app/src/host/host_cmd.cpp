@@ -178,7 +178,7 @@ bool host_cmd::initialise()
 
     str<512> buffer;
     buffer << "\"" << dll_path;
-    buffer << "/clink_" AS_STR(PLATFORM) ".exe\" --cfgdir \"";
+    buffer << "/clink_" AS_STR(ARCHITECTURE) ".exe\" --cfgdir \"";
     buffer << cfg_path << "\" $*";
 
     m_doskey.add_alias("clink", buffer.c_str());

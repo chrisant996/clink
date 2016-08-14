@@ -87,11 +87,9 @@ local function setup_cfg(cfg)
 
     configuration({cfg, "x32"})
         targetsuffix("_x86")
-        defines("PLATFORM=x86")
 
     configuration({cfg, "x64"})
         targetsuffix("_x64")
-        defines("PLATFORM=x64")
 end
 
 --------------------------------------------------------------------------------

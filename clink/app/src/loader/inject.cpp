@@ -13,7 +13,7 @@
 #include <process/process.h>
 #include <process/vm.h>
 
-#define CLINK_DLL_NAME "clink_" AS_STR(PLATFORM) ".dll"
+#define CLINK_DLL_NAME "clink_" AS_STR(ARCHITECTURE) ".dll"
 
 //------------------------------------------------------------------------------
 bool    initialise_clink(const inject_args&);
