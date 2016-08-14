@@ -40,13 +40,11 @@ TEST_CASE("File match generator") {
         tester.run();
     }
 
-#if 0
     SECTION("Path slash flip") {
-        tester.set_input("dir1/on")
-        //tester.set_expected_output("dir1\\only"); // MODE4
+        tester.set_input("dir1/on\t");
+        tester.set_expected_output("dir1\\only ");
         tester.run();
     }
-#endif // 0
 
     SECTION("Case mapping matches") {
         str_compare_scope _(str_compare_scope::relaxed);
