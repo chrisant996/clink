@@ -8,34 +8,42 @@ template <typename T>
 class array
 {
 public:
-    template <int D>
+    template <int D, typename U>
     class iter_impl
     {
     public:
-                    iter_impl(T* t) : m_t(t)               {}
-        void        operator ++ ()                         { m_t += D; }
-        T&          operator * () const                    { return *m_t; }
-        T&          operator -> () const                   { return *m_t; }
-        bool        operator != (const iter_impl& i) const { return i.m_t != m_t; }
+                    iter_impl(U* u) : m_u(u)               {}
+        void        operator ++ ()                         { m_u += D; }
+        U&          operator * () const                    { return *m_u; }
+        U&          operator -> () const                   { return *m_u; }
+        bool        operator != (const iter_impl& i) const { return i.m_u != m_u; }
 
     private:
-        T*          m_t;
+        U*          m_u;
     };
 
-    typedef iter_impl<1>    iter;
-    typedef iter_impl<-1>   riter;
+    typedef iter_impl<1, T>         iter;
+    typedef iter_impl<1, T const>   citer;
+    typedef iter_impl<-1, T>        riter;
+    typedef iter_impl<-1, T const>  rciter;
 
                     array(T* ptr, unsigned int size, unsigned int capacity=0);
-    iter            begin() const    { return m_ptr; }
-    iter            end() const      { return m_ptr + m_size; }
-    riter           rbegin() const   { return m_ptr + m_size - 1; }
-    riter           rend() const     { return m_ptr - 1; }
+    iter            begin()          { return m_ptr; }
+    iter            end()            { return m_ptr + m_size; }
+    citer           begin() const    { return m_ptr; }
+    citer           end() const      { return m_ptr + m_size; }
+    riter           rbegin()         { return m_ptr + m_size - 1; }
+    riter           rend()           { return m_ptr - 1; }
+    rciter          rbegin() const   { return m_ptr + m_size - 1; }
+    rciter          rend() const     { return m_ptr - 1; }
     unsigned int    size() const     { return m_size; }
     unsigned int    capacity() const { return m_size; }
     bool            empty() const    { return !m_size; }
     bool            full() const     { return (m_size == m_capacity); }
-    T*              front() const    { return m_ptr; }
-    T*              back() const     { return empty() ? nullptr : (m_ptr + m_size - 1); }
+    T const*        front() const    { return m_ptr; }
+    T*              front()          { return m_ptr; }
+    T const*        back() const     { return empty() ? nullptr : (m_ptr + m_size - 1); }
+    T*              back()           { return empty() ? nullptr : (m_ptr + m_size - 1); }
     T*              push_back()      { return full() ? nullptr : (m_ptr + m_size++); }
     void            clear();
     T const*        operator [] (unsigned int index) const;
