@@ -113,7 +113,6 @@ workspace("clink")
     defines("CLINK_VER_POINT="..clink_ver_point)
     defines("CLINK_VER_STAMP="..clink_ver_stamp)
     defines("STATIC_GETOPT")
-    defines("_HAS_EXCEPTIONS=0")
 
     setup_cfg("final")
     setup_cfg("release")
@@ -134,6 +133,7 @@ workspace("clink")
 
     configuration("vs*")
         buildoptions("/FC")
+        defines("_HAS_EXCEPTIONS=0")
         defines("_CRT_SECURE_NO_WARNINGS")
         defines("_CRT_NONSTDC_NO_WARNINGS")
 
