@@ -372,17 +372,26 @@ void line_editor_impl::accept_match(unsigned int index)
     m_buffer.set_cursor(word_start);
     m_buffer.insert(word.c_str());
 
-    // If this match doesn't make a new partial word, close it off
-    int last_char = int(strlen(match)) - 1;
-    if (strchr(m_desc.partial_delims, match[last_char]) == nullptr)
+    // Use a suffix if one's associated with the match, otherwise derive it.
+    char suffix = m_matches.get_suffix(index);
+    if (!suffix)
     {
-        // Closing quote?
+        int last_char = int(strlen(match)) - 1;
+        if (strchr(m_desc.partial_delims, match[last_char]) == nullptr)
+            suffix = ' ';
+    }
+
+    // If this match doesn't make a new partial word, close it off
+    if (suffix)
+    {
+        // Is a closing quote required?
         int pre_offset = end_word.offset - 1;
         if (pre_offset >= 0)
             if (const char* q = strchr(m_desc.quote_pair, buf_ptr[pre_offset]))
                 m_buffer.insert(q[1] ? q + 1 : q);
 
-        m_buffer.insert(" ");
+        char suffix_str[2] = { suffix };
+        m_buffer.insert(suffix_str);
     }
 }
 
