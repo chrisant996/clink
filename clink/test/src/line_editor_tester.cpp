@@ -9,22 +9,57 @@
 #include <lib/matches.h>
 
 //------------------------------------------------------------------------------
-class test_backend
+class empty_backend
     : public editor_backend
 {
 public:
-    const matches*          get_matches() const { return m_matches; }
-
-    /* editor_backend */
     virtual void            bind_input(binder& binder) override {}
     virtual void            on_begin_line(const char* prompt, const context& context) override {}
     virtual void            on_end_line() override {}
-    virtual void            on_matches_changed(const context& context) override { m_matches = &(context.matches); }
+    virtual void            on_matches_changed(const context& context) override {}
     virtual void            on_input(const input& input, result& result, const context& context) override {}
+};
+
+
+
+//------------------------------------------------------------------------------
+class test_backend
+    : public empty_backend
+{
+public:
+    const matches*          get_matches() const { return m_matches; }
+    virtual void            bind_input(binder& binder) override;
+    virtual void            on_matches_changed(const context& context) override;
+    virtual void            on_input(const input& input, result& result, const context& context) override;
 
 private:
     const matches*          m_matches = nullptr;
 };
+
+//------------------------------------------------------------------------------
+void test_backend::bind_input(binder& binder)
+{
+    int default_group = binder.get_group();
+    binder.bind(default_group, "\t", 0);
+}
+
+//------------------------------------------------------------------------------
+void test_backend::on_matches_changed(const context& context)
+{
+    m_matches = &(context.matches);
+}
+
+//------------------------------------------------------------------------------
+void test_backend::on_input(const input&, result& result, const context& context)
+{
+    if (context.matches.get_match_count() != 1)
+    {
+        result.pass();
+        return;
+    }
+
+    result.accept_match(0);
+}
 
 
 
@@ -89,8 +124,7 @@ void line_editor_tester::run()
     // If we're expecting some matches then add a backend to catch the
     // matches object.
     test_backend match_catch;
-    if (m_has_matches)
-        m_editor->add_backend(match_catch);
+    m_editor->add_backend(match_catch);
 
     // First update doesn't read input. We do however want to read at least one
     // character before bailing on the loop.
