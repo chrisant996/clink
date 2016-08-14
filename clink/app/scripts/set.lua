@@ -3,8 +3,12 @@
 
 --------------------------------------------------------------------------------
 local function set_match_generator(word)
-    -- MODE4 : Needs support for marking matches as partial for '='
-    return os.getenvnames()
+    local ret = {}
+    for _, i in ipairs(os.getenvnames()) do
+        table.insert(ret, { match = i, suffix = "=" })
+    end
+
+    return ret
 end
 
 --------------------------------------------------------------------------------

@@ -32,9 +32,15 @@ TEST_CASE("Set command.") {
     line_editor_tester tester(desc);
     tester.get_editor()->add_generator(lua_generator);
 
-    SECTION("Output basic") {
+    SECTION("Matches") {
         tester.set_input("set simp");
         tester.set_expected_matches("simple");
+        tester.run();
+    }
+
+    SECTION("Suffixed output") {
+        tester.set_input("set simp\t");
+        tester.set_expected_output("set simple=");
         tester.run();
     }
 
