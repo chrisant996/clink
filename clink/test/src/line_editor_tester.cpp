@@ -40,7 +40,7 @@ private:
 void test_backend::bind_input(binder& binder)
 {
     int default_group = binder.get_group();
-    binder.bind(default_group, "\t", 0);
+    binder.bind(default_group, "\b", 0);
 }
 
 //------------------------------------------------------------------------------
@@ -52,13 +52,8 @@ void test_backend::on_matches_changed(const context& context)
 //------------------------------------------------------------------------------
 void test_backend::on_input(const input&, result& result, const context& context)
 {
-    if (context.matches.get_match_count() != 1)
-    {
-        result.pass();
-        return;
-    }
-
-    result.accept_match(0);
+    if (context.matches.get_match_count() == 1)
+        result.accept_match(0);
 }
 
 
