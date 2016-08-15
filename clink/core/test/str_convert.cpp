@@ -6,6 +6,7 @@
 #include <core/str.h>
 #include <core/str_iter.h>
 
+//------------------------------------------------------------------------------
 TEST_CASE("Wide character/UTF-8 conversion") {
     SECTION("To UTF-8") {
         str<> s;

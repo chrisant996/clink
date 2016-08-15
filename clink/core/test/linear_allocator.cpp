@@ -5,6 +5,7 @@
 
 #include <core/linear_allocator.h>
 
+//------------------------------------------------------------------------------
 TEST_CASE("linear_allocator: basic")
 {
     linear_allocator allocator(8);
@@ -13,6 +14,7 @@ TEST_CASE("linear_allocator: basic")
     REQUIRE(allocator.alloc(1) == nullptr);
 }
 
+//------------------------------------------------------------------------------
 TEST_CASE("linear_allocator: invalid")
 {
     linear_allocator allocator(8);
@@ -20,6 +22,7 @@ TEST_CASE("linear_allocator: invalid")
     REQUIRE(allocator.alloc(9) == nullptr);
 }
 
+//------------------------------------------------------------------------------
 TEST_CASE("linear_allocator: calloc")
 {
     linear_allocator allocator(sizeof(int) * 8);

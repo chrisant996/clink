@@ -6,6 +6,7 @@
 #include <core/str.h>
 #include <core/str_compare.h>
 
+//------------------------------------------------------------------------------
 TEST_CASE("String compare") {
     SECTION("Exact") {
         str_compare_scope _(str_compare_scope::exact);

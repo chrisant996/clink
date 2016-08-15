@@ -6,6 +6,7 @@
 #include <core/base.h>
 #include <core/settings.h>
 
+//------------------------------------------------------------------------------
 TEST_CASE("settings : basic")
 {
     auto* first = settings::first();
@@ -16,6 +17,7 @@ TEST_CASE("settings : basic")
     REQUIRE(settings::first() == first);
 }
 
+//------------------------------------------------------------------------------
 TEST_CASE("settings : list")
 {
     auto* first = settings::first();
@@ -59,6 +61,7 @@ TEST_CASE("settings : list")
     REQUIRE(settings::first() == first);
 }
 
+//------------------------------------------------------------------------------
 TEST_CASE("settings : bool")
 {
     setting_bool test("one", "", "", true);
@@ -86,6 +89,7 @@ TEST_CASE("settings : bool")
     REQUIRE(out.equals("False"));
 }
 
+//------------------------------------------------------------------------------
 TEST_CASE("settings : int")
 {
     setting_int test("one", "", "", 1);
@@ -102,6 +106,7 @@ TEST_CASE("settings : int")
     REQUIRE(test.set("0abc")); REQUIRE(test.get() == 0);
 }
 
+//------------------------------------------------------------------------------
 TEST_CASE("settings : str")
 {
     setting_str test("one", "", "", "abc");
@@ -112,6 +117,7 @@ TEST_CASE("settings : str")
     REQUIRE(test.set("ABC")); REQUIRE(strcmp(test.get(), "ABC") == 0);
 }
 
+//------------------------------------------------------------------------------
 TEST_CASE("settings : enum")
 {
     setting_enum test("one", "", "", "zero,one,two", 1);

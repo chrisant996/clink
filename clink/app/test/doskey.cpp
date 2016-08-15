@@ -6,6 +6,7 @@
 #include <core/str.h>
 #include <host/doskey.h>
 
+//------------------------------------------------------------------------------
 TEST_CASE("Doskey add/remove") {
     doskey doskey("shell");
     REQUIRE(doskey.add_alias("alias", "text") == true);
@@ -13,6 +14,7 @@ TEST_CASE("Doskey add/remove") {
     REQUIRE(doskey.remove_alias("alias") == true);
 }
 
+//------------------------------------------------------------------------------
 TEST_CASE("Doskey expand") {
     doskey doskey("shell");
     doskey.add_alias("alias", "text");
@@ -25,6 +27,7 @@ TEST_CASE("Doskey expand") {
     doskey.remove_alias("alias");
 }
 
+//------------------------------------------------------------------------------
 TEST_CASE("Doskey args $1-9") {
     doskey doskey("shell");
     doskey.add_alias("alias", " $1$2 $3$5$6$7$8$9 "); // no $4 deliberately
@@ -42,6 +45,7 @@ TEST_CASE("Doskey args $1-9") {
     doskey.remove_alias("alias");
 }
 
+//------------------------------------------------------------------------------
 TEST_CASE("Doskey args $*") {
     doskey doskey("shell");
     doskey.add_alias("alias", " $* ");
@@ -54,6 +58,7 @@ TEST_CASE("Doskey args $*") {
     doskey.remove_alias("alias");
 }
 
+//------------------------------------------------------------------------------
 TEST_CASE("Doskey $? chars") {
     doskey doskey("shell");
     doskey.add_alias("alias", "$$ $g$G $l$L $b$B $Z");
@@ -66,6 +71,7 @@ TEST_CASE("Doskey $? chars") {
     doskey.remove_alias("alias");
 }
 
+//------------------------------------------------------------------------------
 TEST_CASE("Doskey multi-command") {
     doskey doskey("shell");
     doskey.add_alias("alias", "one $3 $t $2 two$T$*three");

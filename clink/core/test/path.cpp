@@ -6,6 +6,7 @@
 #include <core/path.h>
 #include <core/str.h>
 
+//------------------------------------------------------------------------------
 TEST_CASE("path::clean()")
 {
     str<> s;
@@ -23,6 +24,7 @@ TEST_CASE("path::clean()")
     REQUIRE(s.equals("abcdef"));
 }
 
+//------------------------------------------------------------------------------
 TEST_CASE("path::get_base_name()")
 {
     SECTION("Basic") {
@@ -60,6 +62,7 @@ TEST_CASE("path::get_base_name()")
     }
 }
 
+//------------------------------------------------------------------------------
 TEST_CASE("path::get_directory()")
 {
     SECTION("Copy") {
@@ -149,6 +152,7 @@ TEST_CASE("path::get_directory()")
     }
 }
 
+//------------------------------------------------------------------------------
 TEST_CASE("path::get_drive()")
 {
     SECTION("Has drive") {
@@ -185,6 +189,7 @@ TEST_CASE("path::get_drive()")
     }
 }
 
+//------------------------------------------------------------------------------
 TEST_CASE("path::get_extension()")
 {
     SECTION("Has extension") {
@@ -211,6 +216,7 @@ TEST_CASE("path::get_extension()")
     }
 }
 
+//------------------------------------------------------------------------------
 TEST_CASE("path::get_name()")
 {
     SECTION("Basic") {
@@ -248,6 +254,7 @@ TEST_CASE("path::get_name()")
     }
 }
 
+//------------------------------------------------------------------------------
 TEST_CASE("path::is_root()")
 {
     SECTION("True") {
@@ -269,6 +276,7 @@ TEST_CASE("path::is_root()")
     }
 }
 
+//------------------------------------------------------------------------------
 TEST_CASE("path::join()")
 {
     SECTION("Basic") {
@@ -325,6 +333,7 @@ TEST_CASE("path::join()")
     }
 }
 
+//------------------------------------------------------------------------------
 TEST_CASE("path::join(get_dir(), get_name())")
 {
     const char* in;

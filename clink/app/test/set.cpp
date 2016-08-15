@@ -11,6 +11,7 @@
 #include <lua/lua_script_loader.h>
 #include <lua/lua_state.h>
 
+//------------------------------------------------------------------------------
 TEST_CASE("Set command.") {
     static const char* env_desc[] = {
         "simple",   "value",

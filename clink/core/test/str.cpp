@@ -10,6 +10,7 @@
 #define NAME_SUFFIX " (char)"
 #endif
 
+//------------------------------------------------------------------------------
 TEST_CASE("Strings" NAME_SUFFIX) {
     SECTION("Basics") {
         str<256> s;

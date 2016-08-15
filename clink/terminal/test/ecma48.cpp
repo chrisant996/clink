@@ -8,6 +8,7 @@
 
 static ecma48_state g_state;
 
+//------------------------------------------------------------------------------
 TEST_CASE("ecma48 chars") {
     const char* input = "abc123";
 
@@ -22,6 +23,7 @@ TEST_CASE("ecma48 chars") {
     REQUIRE(iter.next() == nullptr);
 }
 
+//------------------------------------------------------------------------------
 TEST_CASE("ecma48 c0") {
     const ecma48_code* code;
 
@@ -50,6 +52,7 @@ TEST_CASE("ecma48 c0") {
     REQUIRE(iter.next() == nullptr);
 }
 
+//------------------------------------------------------------------------------
 TEST_CASE("ecma48 c1 (simple)") {
     const ecma48_code* code;
 
@@ -73,6 +76,7 @@ TEST_CASE("ecma48 c1 (simple)") {
     REQUIRE(iter.next() == nullptr);
 }
 
+//------------------------------------------------------------------------------
 TEST_CASE("ecma48 icf") {
     const ecma48_code* code;
 
@@ -91,6 +95,7 @@ TEST_CASE("ecma48 icf") {
     REQUIRE(iter.next() == nullptr);
 }
 
+//------------------------------------------------------------------------------
 TEST_CASE("ecma48 c1 csi") {
     const ecma48_code* code;
     int final, params[8], param_count;
@@ -116,6 +121,7 @@ TEST_CASE("ecma48 c1 csi") {
     REQUIRE(iter.next() == nullptr);
 }
 
+//------------------------------------------------------------------------------
 TEST_CASE("ecma48 c1 csi params") {
     const ecma48_code* code;
     int final, params[8], param_count;
@@ -161,6 +167,7 @@ TEST_CASE("ecma48 c1 csi params") {
     REQUIRE(param_count == sizeof_array(params));
 }
 
+//------------------------------------------------------------------------------
 TEST_CASE("ecma48 c1 csi invalid") {
     const ecma48_code* code;
 
@@ -172,6 +179,7 @@ TEST_CASE("ecma48 c1 csi invalid") {
     REQUIRE(code->get_length() == 1);
 }
 
+//------------------------------------------------------------------------------
 TEST_CASE("ecma48 c1 csi stream") {
     const ecma48_code* code;
     const char input[] = "\x1b[1;21m";
@@ -195,6 +203,7 @@ TEST_CASE("ecma48 c1 csi stream") {
     }
 }
 
+//------------------------------------------------------------------------------
 TEST_CASE("ecma48 c1 csi split") {
     const ecma48_code* code;
 
@@ -222,6 +231,7 @@ TEST_CASE("ecma48 c1 csi split") {
     REQUIRE(iter.next() == nullptr);
 }
 
+//------------------------------------------------------------------------------
 TEST_CASE("ecma48 c1 !csi") {
     const ecma48_code* code;
 
@@ -254,6 +264,7 @@ TEST_CASE("ecma48 c1 !csi") {
     }
 }
 
+//------------------------------------------------------------------------------
 TEST_CASE("ecma48 utf8") {
     const ecma48_code* code;
 

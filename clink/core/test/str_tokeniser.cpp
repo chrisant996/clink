@@ -6,6 +6,7 @@
 #include <core/str.h>
 #include <core/str_tokeniser.h>
 
+//------------------------------------------------------------------------------
 TEST_CASE("str_tokeniser : basic")
 {
     str_tokeniser t("a;b;c", ";");
@@ -17,6 +18,7 @@ TEST_CASE("str_tokeniser : basic")
     REQUIRE(!t.next(s));
 }
 
+//------------------------------------------------------------------------------
 TEST_CASE("str_tokeniser : multi delims")
 {
     str_tokeniser t("a;b-c.d", ";-.");
@@ -29,6 +31,7 @@ TEST_CASE("str_tokeniser : multi delims")
     REQUIRE(!t.next(s));
 }
 
+//------------------------------------------------------------------------------
 TEST_CASE("str_tokeniser : ends")
 {
     auto inputs = { "a;b;c", ";a;b;c", "a;b;c;" };
@@ -44,6 +47,7 @@ TEST_CASE("str_tokeniser : ends")
     }
 }
 
+//------------------------------------------------------------------------------
 TEST_CASE("str_tokeniser : delim runs")
 {
     auto inputs = { "a;;b--c", "-;a;-b;c", "a;b;-c-;" };
@@ -59,6 +63,7 @@ TEST_CASE("str_tokeniser : delim runs")
     }
 }
 
+//------------------------------------------------------------------------------
 TEST_CASE("str_tokeniser : quote")
 {
     str_tokeniser t("'-abc';(-abc);'-a)b;c", ";-");
@@ -72,6 +77,7 @@ TEST_CASE("str_tokeniser : quote")
     REQUIRE(!t.next(s));
 }
 
+//------------------------------------------------------------------------------
 TEST_CASE("str_tokeniser : delim return")
 {
     str_tokeniser t("a;b;-c-;d", ";-");
