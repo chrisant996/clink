@@ -161,10 +161,21 @@ MODE4 */
     editor->add_generator(lua_generator);
     editor->add_generator(file_match_generator());
 
-    bool ret = editor->edit(out.data(), out.size());
+    bool ret = false;
+    while (1)
+    {
+        if (ret = editor->edit(out.data(), out.size()))
+        {
+            if (history.expand(out.c_str(), out) == 2)
+            {
+                puts(out.c_str());
+                continue;
+            }
 
-    if (ret)
-        history.add(out.c_str());
+            history.add(out.c_str());
+        }
+        break;
+    }
 
     line_editor_destroy(editor);
     classic_match_ui_destroy(ui);

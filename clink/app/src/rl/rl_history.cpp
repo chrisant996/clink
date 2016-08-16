@@ -197,17 +197,13 @@ void rl_history::add(const char* line)
 }
 
 //------------------------------------------------------------------------------
-int expand_from_history(const char* text, char** expanded)
+int rl_history::expand(const char* line, str_base& out)
 {
-#if MODE4
-    int result;
+    char* expanded = nullptr;
+    int result = history_expand((char*)line, &expanded);
+    if (result >= 0 && expanded != nullptr)
+        out.copy(expanded);
 
-    result = history_expand((char*)text, expanded);
-    if (result < 0)
-        free(*expanded);
-
+    free(expanded);
     return result;
-#else
-    return 0;
-#endif // MODE4
 }
