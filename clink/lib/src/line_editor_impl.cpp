@@ -372,8 +372,21 @@ void line_editor_impl::accept_match(unsigned int index)
     if (os::get_path_type(word.c_str()) != os::path_type_invalid)
         path::clean(word);
 
+    // Does the selected match need quoting?
+    bool needs_quote = end_word.quoted;
+    for (const char* c = match; *c && !needs_quote; ++c)
+        needs_quote = (strchr(m_desc.word_delims, *c) != nullptr);
+
+    // Clear the word.
     m_buffer.remove(word_start, m_buffer.get_cursor());
     m_buffer.set_cursor(word_start);
+
+    // Readd the word plus the match.
+    if (needs_quote && !end_word.quoted)
+    {
+        char quote[2] = { m_desc.quote_pair[0] };
+        m_buffer.insert(quote);
+    }
     m_buffer.insert(word.c_str());
 
     // Use a suffix if one's associated with the match, otherwise derive it.
@@ -388,11 +401,13 @@ void line_editor_impl::accept_match(unsigned int index)
     // If this match doesn't make a new partial word, close it off
     if (suffix)
     {
-        // Is a closing quote required?
-        int pre_offset = end_word.offset - 1;
-        if (pre_offset >= 0)
-            if (const char* q = strchr(m_desc.quote_pair, buf_ptr[pre_offset]))
-                m_buffer.insert(q[1] ? q + 1 : q);
+        // Add a closing quote on the end if required.
+        if (needs_quote)
+        {
+            const char* q = m_desc.quote_pair;
+            char quote[2] = { q[1] ? q[1] : q[0] };
+            m_buffer.insert(quote);
+        }
 
         char suffix_str[2] = { suffix };
         m_buffer.insert(suffix_str);
