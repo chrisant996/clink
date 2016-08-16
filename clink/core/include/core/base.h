@@ -21,7 +21,7 @@
 
 #if defined(_M_AMD64)
 #   define ARCHITECTURE     x64
-#elif define(_M_IX86)
+#elif defined(_M_IX86)
 #   define ARCHITECTURE     x86
 #else
 #   error Unknown architecture
