@@ -36,6 +36,9 @@ line_editor_impl::line_editor_impl(const desc& desc)
 : m_backend(desc.shell_name)
 , m_desc(desc)
 {
+    if (m_desc.quote_pair == nullptr)
+        m_desc.quote_pair = "";
+
     add_backend(m_backend);
 }
 
