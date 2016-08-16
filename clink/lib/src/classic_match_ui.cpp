@@ -145,6 +145,7 @@ void classic_match_ui::on_input(const input& input, result& result, const contex
 
         result.set_bind_group(m_prev_group);
         m_prev_group = -1;
+        context.terminal.write("\n", 1);
         result.redraw();
         return;
     }

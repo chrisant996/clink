@@ -237,10 +237,7 @@ void line_editor_impl::update_input()
             return;
 
         if (result.flags & result_impl::flag_redraw)
-        {
-            m_desc.terminal->write("\n", 1);
             m_buffer.redraw();
-        }
 
         if (result.match >= 0)
             accept_match(result.match);
