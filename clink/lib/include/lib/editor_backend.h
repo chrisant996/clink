@@ -17,6 +17,7 @@ public:
         virtual void        pass() = 0;
         virtual void        redraw() = 0;
         virtual void        done(bool eof=false) = 0;
+        virtual void        append_match_lcd() = 0;
         virtual void        accept_match(unsigned int index) = 0;
         virtual int         set_bind_group(int bind_group) = 0;
     };

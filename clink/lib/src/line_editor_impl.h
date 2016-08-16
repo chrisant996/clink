@@ -48,6 +48,7 @@ private:
     void                update_internal();
     void                update_input();
     void                accept_match(unsigned int index);
+    void                append_match_lcd();
     backend::context    get_context(const line_state& line) const;
     line_state          get_linestate() const;
     void                set_flag(unsigned char flag);

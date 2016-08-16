@@ -160,26 +160,6 @@ void classic_match_ui::on_input(const input& input, result& result, const contex
         return;
     }
 
-    line_buffer& buffer = context.buffer;
-    unsigned int cursor = buffer.get_cursor();
-    word end_word = *(context.line.get_words().back());
-
-    // Prepend a quote if the next character to type needs quoting.
-    if (matches.has_quoteable() && !end_word.quoted)
-    {
-        for (int i = 0, n = matches.get_match_count(); i < n; ++i)
-        {
-            if (unsigned(matches.get_first_quoteable(i)) > lcd_length)
-                continue;
-
-            buffer.set_cursor(end_word.offset);
-            buffer.insert("\"");
-            cursor = buffer.set_cursor(cursor + 1);
-            ++end_word.offset;
-            break;
-        }
-    }
-
     // One match? Accept it.
     if (matches.get_match_count() == 1)
     {
@@ -188,18 +168,15 @@ void classic_match_ui::on_input(const input& input, result& result, const contex
     }
 
     // Append as much of the lowest common denominator of matches as we can.
+    line_buffer& buffer = context.buffer;
+    unsigned int cursor = buffer.get_cursor();
+
+    word end_word = *(context.line.get_words().back());
     int word_end = end_word.offset + end_word.length;
     int dx = lcd_length - (cursor - word_end);
 
-    if (dx < 0)
-    {
-        buffer.remove(cursor + dx, cursor);
-        buffer.set_cursor(cursor + dx);
-    }
-    else if (dx > 0)
-        buffer.insert(lcd.c_str() + lcd_length - dx);
-    else if (!dx)
-        m_waiting = true;
+    m_waiting = !dx;
+    result.append_match_lcd();
 }
 
 //------------------------------------------------------------------------------

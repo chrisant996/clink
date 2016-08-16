@@ -181,15 +181,17 @@ void line_editor_impl::update_input()
     {
         enum
         {
-            flag_pass   = 1 << 0,
-            flag_done   = 1 << 1,
-            flag_eof    = 1 << 2,
-            flag_redraw = 1 << 3,
+            flag_pass       = 1 << 0,
+            flag_done       = 1 << 1,
+            flag_eof        = 1 << 2,
+            flag_redraw     = 1 << 3,
+            flag_append_lcd = 1 << 4,
         };
 
         virtual void    pass() override                           { flags |= flag_pass; }
         virtual void    done(bool eof) override                   { flags |= flag_done|(eof ? flag_eof : 0); }
         virtual void    redraw() override                         { flags |= flag_redraw; }
+        virtual void    append_match_lcd() override               { flags |= flag_append_lcd; }
         virtual void    accept_match(unsigned int index) override { match = index; }
         virtual int     set_bind_group(int id) override           { int t = group; group = id; return t; }
         int             match;  // = -1;  <!
@@ -242,6 +244,8 @@ void line_editor_impl::update_input()
 
         if (result.match >= 0)
             accept_match(result.match);
+        else if (result.flags & result_impl::flag_append_lcd)
+            append_match_lcd();
     }
 
     m_buffer.draw();
@@ -392,6 +396,56 @@ void line_editor_impl::accept_match(unsigned int index)
 
         char suffix_str[2] = { suffix };
         m_buffer.insert(suffix_str);
+    }
+}
+
+//------------------------------------------------------------------------------
+void line_editor_impl::append_match_lcd()
+{
+    str<288> lcd;
+    m_matches.get_match_lcd(lcd);
+
+    unsigned int lcd_length = lcd.length();
+    if (!lcd_length)
+        return;
+
+    unsigned int cursor = m_buffer.get_cursor();
+    word end_word = *(m_words.back());
+    int word_end = end_word.offset + end_word.length;
+    int dx = lcd_length - (cursor - word_end);
+
+    if (dx < 0)
+    {
+        m_buffer.remove(cursor + dx, cursor);
+        m_buffer.set_cursor(cursor + dx);
+    }
+    else if (dx > 0)
+    {
+        int start = end_word.offset + end_word.length;
+        m_buffer.remove(start, cursor);
+        m_buffer.set_cursor(start);
+        m_buffer.insert(lcd.c_str());
+    }
+
+    // Prefix a quote if required.
+    bool needs_quote = false;
+    for (const char* c = lcd.c_str(); *c && !needs_quote; ++c)
+        needs_quote = (strchr(m_desc.word_delims, *c) != nullptr);
+
+    for (int i = 0, n = m_matches.get_match_count(); i < n && !needs_quote; ++i)
+    {
+        const char* match = m_matches.get_match(i) + lcd_length;
+        if (match[0])
+            needs_quote = (strchr(m_desc.word_delims, match[0]) != nullptr);
+    }
+
+    if (needs_quote && !end_word.quoted)
+    {
+        char quote[2] = { m_desc.quote_pair[0] };
+        int cursor = m_buffer.get_cursor();
+        m_buffer.set_cursor(end_word.offset);
+        m_buffer.insert(quote);
+        m_buffer.set_cursor(cursor + 1);
     }
 }
 
