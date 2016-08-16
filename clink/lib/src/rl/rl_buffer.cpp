@@ -64,7 +64,10 @@ bool rl_buffer::remove(unsigned int from, unsigned int to)
 void rl_buffer::draw()
 {
     if (m_need_draw)
+    {
         rl_redisplay();
+        m_need_draw = false;
+    }
 }
 
 //------------------------------------------------------------------------------
