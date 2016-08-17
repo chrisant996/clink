@@ -153,9 +153,6 @@ void rl_history::save()
 //------------------------------------------------------------------------------
 void rl_history::add(const char* line)
 {
-    // Use the latest history state from all Clink instances.
-    load();
-
     // Maybe we shouldn't add this line to the history at all?
     const unsigned char* c = (const unsigned char*)line;
     if (isspace(*c) && g_ignore_space.get())
@@ -173,6 +170,9 @@ void rl_history::add(const char* line)
     // Skip empty lines
     if (*c == '\0')
         return;
+
+    // Use the latest history state from all Clink instances.
+    load();
 
     // Check if the line's a duplicate of and existing history entry.
     int dupe_mode = g_dupe_mode.get();
