@@ -321,3 +321,8 @@ void host_backend::on_input(const input& input, result& result, const context& c
     case bind_id_dotdot:        insert_dot_dot(context.buffer);       break;
     };
 }
+
+//------------------------------------------------------------------------------
+void host_backend::on_terminal_resize(int columns, int rows, const context& context)
+{
+}

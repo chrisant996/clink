@@ -126,3 +126,8 @@ void scroller_backend::on_input(
     }
 
 }
+
+//------------------------------------------------------------------------------
+void scroller_backend::on_terminal_resize(int columns, int rows, const context& context)
+{
+}

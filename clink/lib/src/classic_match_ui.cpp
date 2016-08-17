@@ -263,3 +263,8 @@ classic_match_ui::state classic_match_ui::print(const context& context, bool sin
     term.write(prompt, sizeof_array(prompt) - 1);
     return state_pager;
 }
+
+//------------------------------------------------------------------------------
+void classic_match_ui::on_terminal_resize(int columns, int rows, const context& context)
+{
+}

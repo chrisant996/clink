@@ -30,6 +30,7 @@ private:
     virtual void    on_end_line() override;
     virtual void    on_matches_changed(const context& context) override;
     virtual void    on_input(const input& input, result& result, const context& context) override;
+    virtual void    on_terminal_resize(int columns, int rows, const context& context) override;
     scroller        m_scroller;
     int             m_bind_group;
     int             m_prev_group;

@@ -270,3 +270,8 @@ void rl_backend::done(const char* line)
 
     rl_callback_handler_remove();
 }
+
+//------------------------------------------------------------------------------
+void rl_backend::on_terminal_resize(int columns, int rows, const context& context)
+{
+}
