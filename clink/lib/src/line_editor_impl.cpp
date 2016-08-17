@@ -177,6 +177,10 @@ bool line_editor_impl::update()
 void line_editor_impl::update_input()
 {
     int key = m_desc.terminal->read();
+
+    if (key < 0)
+        return;
+
     if (!m_bind_resolver.step(key))
         return;
 

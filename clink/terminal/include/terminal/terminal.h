@@ -7,6 +7,10 @@
 class terminal_in
 {
 public:
+    enum {
+        input_none              = 0x80000000,
+    };
+
     virtual void    select() = 0;
     virtual int     read() = 0;
 };

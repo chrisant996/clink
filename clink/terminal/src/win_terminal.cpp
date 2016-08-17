@@ -66,13 +66,10 @@ inline void win_terminal_in::select()
 //------------------------------------------------------------------------------
 inline int win_terminal_in::read()
 {
-    // MODE4 : need protocol for no input available
+    if (!m_buffer_count)
+        return terminal::input_none;
 
-    int c = pop();
-    if (c != 0xff)
-        return c;
-    
-    return 0x04; // EOT; "should never happen"
+    return pop();
 }
 
 //------------------------------------------------------------------------------
