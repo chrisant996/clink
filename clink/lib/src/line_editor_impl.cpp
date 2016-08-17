@@ -178,6 +178,16 @@ void line_editor_impl::update_input()
 {
     int key = m_desc.terminal->read();
 
+    if (key == terminal::input_terminal_resize)
+    {
+        int columns = m_desc.terminal->get_columns();
+        int rows = m_desc.terminal->get_rows();
+        line_state line = get_linestate();
+        editor_backend::context context = get_context(line);
+        for (auto* backend : m_backends)
+            backend->on_terminal_resize(columns, rows, context);
+    }
+
     if (key < 0)
         return;
 
