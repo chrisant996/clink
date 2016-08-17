@@ -28,7 +28,7 @@ class test_backend
     : public empty_backend
 {
 public:
-    const matches*          get_matches() const { return m_matches; }
+    const matches*  get_matches() const;
 
 private:
     virtual void    bind_input(binder& binder) override;
@@ -36,6 +36,12 @@ private:
     virtual void    on_input(const input& input, result& result, const context& context) override;
     const matches*  m_matches = nullptr;
 };
+
+//------------------------------------------------------------------------------
+const matches* test_backend::get_matches() const
+{
+    return m_matches;
+}
 
 //------------------------------------------------------------------------------
 void test_backend::bind_input(binder& binder)
