@@ -44,6 +44,7 @@ protected:
     unsigned char   get_default_attr() const;
     unsigned char   get_attr() const;
     void            set_attr(unsigned char attr);
+    void*           get_handle() const;
 
 private:
     void*           m_stdout = nullptr;
@@ -74,6 +75,8 @@ private:
     void            write_sgr(const array<int>& params);
     void            write_c0(int c0);
     void            check_c1_support();
+    unsigned int    get_size() const;
     ecma48_state    m_state;
+    unsigned int    m_size = 0;
     bool            m_enable_c1 = true;
 };

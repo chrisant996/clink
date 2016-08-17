@@ -31,12 +31,6 @@ static setting_bool g_ansi(
 
 
 //------------------------------------------------------------------------------
-static unsigned g_last_buffer_size = 0;
-void            on_terminal_resize(); // MODE4
-
-
-
-//------------------------------------------------------------------------------
 inline void win_terminal_in::begin()
 {
     m_buffer_count = 0;
@@ -75,51 +69,20 @@ inline int win_terminal_in::read()
 //------------------------------------------------------------------------------
 void win_terminal_in::read_console()
 {
-    // Check for a new buffer size for simulated SIGWINCH signals.
-// MODE4
-    {
-        CONSOLE_SCREEN_BUFFER_INFO csbi;
-        HANDLE handle_stdout = GetStdHandle(STD_OUTPUT_HANDLE);
-        GetConsoleScreenBufferInfo(handle_stdout, &csbi);
-
-        DWORD i = (csbi.dwSize.X << 16);
-        i |= (csbi.srWindow.Bottom - csbi.srWindow.Top) + 1;
-        if (!g_last_buffer_size || g_last_buffer_size != i)
-        {
-            if (g_last_buffer_size)
-                on_terminal_resize();
-    
-            g_last_buffer_size = i;
-            read_console();
-            return;
-        }
-    }
-// MODE4
-
-    // Fresh read from the console.
     DWORD unused;
     INPUT_RECORD record;
     ReadConsoleInputW(m_stdin, &record, 1, &unused);
+
+    // Was the console was resized while we're waiting on input?
+    if (record.EventType == WINDOW_BUFFER_SIZE_EVENT)
+        return;
+
+    // Something else we're not interested in?
     if (record.EventType != KEY_EVENT)
     {
         read_console();
         return;
     }
-
-// MODE4
-    if (record.EventType == WINDOW_BUFFER_SIZE_EVENT)
-    {
-        on_terminal_resize();
-
-        CONSOLE_SCREEN_BUFFER_INFO csbi;
-        HANDLE handle_stdout = GetStdHandle(STD_OUTPUT_HANDLE);
-        GetConsoleScreenBufferInfo(handle_stdout, &csbi);
-
-        g_last_buffer_size = (csbi.dwSize.X << 16) | csbi.dwSize.Y;
-        read_console();
-        return;
-    }
-// MODE4
 
     const KEY_EVENT_RECORD* key = &record.Event.KeyEvent;
     int key_char = key->uChar.UnicodeChar;
@@ -392,11 +355,18 @@ inline void win_terminal_out::set_attr(unsigned char attr)
     SetConsoleTextAttribute(m_stdout, attr);
 }
 
+//------------------------------------------------------------------------------
+inline void* win_terminal_out::get_handle() const
+{
+    return m_stdout;
+}
+
 
 
 //------------------------------------------------------------------------------
 void win_terminal::begin()
 {
+    m_size = 0;
     win_terminal_in::begin();
     win_terminal_out::begin();
 }
@@ -411,12 +381,25 @@ void win_terminal::end()
 //------------------------------------------------------------------------------
 void win_terminal::select()
 {
+    // Has the console been resized?
+    unsigned int size = get_size();
+    if (m_size != size)
+        return;
+
     win_terminal_in::select();
 }
 
 //------------------------------------------------------------------------------
 int win_terminal::read()
 {
+    // Has the console been resized?
+    unsigned int size = get_size();
+    if (m_size != size)
+    {
+        m_size = size;
+        return input_terminal_resize;
+    }
+
     return win_terminal_in::read();
 }
 
@@ -436,6 +419,16 @@ int win_terminal::get_columns() const
 int win_terminal::get_rows() const
 {
     return win_terminal_out::get_rows();
+}
+
+//------------------------------------------------------------------------------
+unsigned int win_terminal::get_size() const
+{
+    CONSOLE_SCREEN_BUFFER_INFO csbi;
+    GetConsoleScreenBufferInfo(win_terminal_out::get_handle(), &csbi);
+
+    unsigned int terminal_size = (csbi.dwSize.X << 16);
+    return terminal_size | (csbi.srWindow.Bottom - csbi.srWindow.Top) + 1;
 }
 
 //------------------------------------------------------------------------------

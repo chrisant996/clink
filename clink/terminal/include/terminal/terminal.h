@@ -9,6 +9,7 @@ class terminal_in
 public:
     enum {
         input_none              = 0x80000000,
+        input_terminal_resize,
     };
 
     virtual void    select() = 0;
