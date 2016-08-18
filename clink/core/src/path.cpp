@@ -68,6 +68,18 @@ namespace path
 {
 
 //------------------------------------------------------------------------------
+bool abs_path(str_base& in_out)
+{
+    return false;
+}
+
+//------------------------------------------------------------------------------
+bool abs_path(const char* in, str_base& out)
+{
+    return false;
+}
+
+//------------------------------------------------------------------------------
 void clean(str_base& in_out, int sep)
 {
     clean(in_out.data(), sep);

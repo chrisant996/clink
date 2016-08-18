@@ -9,6 +9,8 @@ class str_base;
 namespace path
 {
 
+bool        abs_path(str_base& in_out);
+bool        abs_path(const char* in, str_base& out);
 void        clean(str_base& in_out, int sep=0);
 void        clean(char* in_out, int sep=0);
 bool        is_separator(int c);
