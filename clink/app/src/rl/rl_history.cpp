@@ -3,7 +3,7 @@
 
 #include "pch.h"
 #include "rl_history.h"
-#include "paths.h"
+#include "utils/app_context.h"
 
 #include <core/os.h>
 #include <core/settings.h>
@@ -50,13 +50,6 @@ static setting_enum g_expand_mode(
     4);
 
 
-
-//------------------------------------------------------------------------------
-static void get_history_file_name(str_base& buffer)
-{
-    get_config_dir(buffer);
-    buffer << "/history";
-}
 
 //------------------------------------------------------------------------------
 static int find_duplicate(const char* line)
@@ -122,8 +115,9 @@ rl_history::~rl_history()
 //------------------------------------------------------------------------------
 void rl_history::load()
 {
+    // MODE4 : make explicit instead of calling in the ctor
     str<288> buffer;
-    get_history_file_name(buffer);
+    app_context::get()->get_history_path(buffer);
 
     // Clear existing history.
     clear_history();
@@ -137,7 +131,7 @@ void rl_history::load()
 void rl_history::save()
 {
     str<288> buffer;
-    get_history_file_name(buffer);
+    app_context::get()->get_history_path(buffer);
 
     // Get max history size.
     int max_history = g_max_lines.get();

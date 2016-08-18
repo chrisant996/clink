@@ -2,23 +2,16 @@
 // License: http://opensource.org/licenses/MIT
 
 #include "pch.h"
-#include "paths.h"
+#include "utils/app_context.h"
 
 #include <core/settings.h>
 #include <core/str.h>
 
 //------------------------------------------------------------------------------
-static void get_settings_file(str_base& buffer)
-{
-    get_config_dir(buffer);
-    buffer << "/settings";
-}
-
-//------------------------------------------------------------------------------
 void load_clink_settings()
 {
     str<MAX_PATH> settings_file;
-    get_settings_file(settings_file);
+    app_context::get()->get_settings_path(settings_file);
 
     if (!settings::load(settings_file.c_str()))
         settings::save(settings_file.c_str());
@@ -28,6 +21,6 @@ void load_clink_settings()
 void save_clink_settings()
 {
     str<MAX_PATH> settings_file;
-    get_settings_file(settings_file);
+    app_context::get()->get_settings_path(settings_file);
     settings::save(settings_file.c_str());
 }

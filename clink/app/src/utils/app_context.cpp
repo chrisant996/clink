@@ -2,108 +2,109 @@
 // License: http://opensource.org/licenses/MIT
 
 #include "pch.h"
+#include "app_context.h"
 
-#include <core/str.h>
+#include <core/base.h>
+#include <core/os.h>
 #include <core/path.h>
+#include <core/str.h>
 
 //------------------------------------------------------------------------------
-static str<256> g_config_dir_override;
+static char g_clink_symbol;
+
+
 
 //------------------------------------------------------------------------------
-void get_dll_dir(str_base& buffer)
+app_context::app_context(const desc& desc)
+: m_desc(desc)
 {
-    buffer.clear();
+    if (IsDebuggerPresent())
+        __debugbreak();
 
+    str_base state_dir(m_desc.state_dir, sizeof_array(m_desc.state_dir));
+
+    // Override the profile path by either the "clink_profile" environment
+    // variable or the --profile argument.
+    str<MAX_PATH> profile_path;
+    os::get_env("clink_profile", state_dir);
+
+    // Still no state directory set? Derive one.
+    if (state_dir.empty())
+    {
+        wstr<272> wstate_dir;
+        if (SHGetFolderPathW(0, CSIDL_LOCAL_APPDATA, nullptr, 0, wstate_dir.data()) == S_OK)
+            state_dir = wstate_dir.c_str();
+        else if (!os::get_env("userprofile", state_dir))
+            os::get_temp_dir(state_dir);
+
+        if (state_dir.empty())
+            path::append(state_dir, "clink");
+    }
+
+    // Finally fallback to where the executables are.
+    if (state_dir.empty())
+        get_binaries_dir(state_dir);
+
+    path::clean(state_dir);
+    path::abs_path(state_dir);
+
+    os::make_dir(state_dir.c_str());
+}
+
+//------------------------------------------------------------------------------
+bool app_context::is_logging_enabled() const
+{
+    return m_desc.log;
+}
+
+//------------------------------------------------------------------------------
+bool app_context::is_quiet() const
+{
+    return m_desc.quiet;
+}
+
+//------------------------------------------------------------------------------
+void app_context::get_binaries_dir(str_base& out) const
+{
+    out.clear();
+
+    int flags = GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS;
+    flags |= GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT;
     HINSTANCE module;
-    BOOL ok = GetModuleHandleEx(
-        GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS|
-        GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT,
-        (char*)get_dll_dir,
-        &module
-    );
-
-    if (ok == FALSE)
+    if (!GetModuleHandleEx(flags, &g_clink_symbol, &module))
         return;
 
-    GetModuleFileName(module, buffer.data(), buffer.size());
-    int slash = buffer.last_of('\\');
-    if (slash >= 0)
-        buffer.truncate(slash);
+    GetModuleFileName(module, out.data(), out.size());
+    if (GetLastError() == ERROR_INSUFFICIENT_BUFFER)
+        return;
 
-    path::clean(buffer);
+    path::get_directory(out);
+    return;
 }
 
 //------------------------------------------------------------------------------
-void get_config_dir(str_base& buffer)
+void app_context::get_state_dir(str_base& out) const
 {
-    static int once = 1;
-
-    // Maybe the user specified an alternative location?
-    if (g_config_dir_override.empty())
-    {
-        get_dll_dir(buffer);
-        buffer << ".\\profile";
-    }
-    else
-        buffer << g_config_dir_override;
-
-    // Try and create the directory if it doesn't already exist. Just this once.
-    if (once)
-    {
-        CreateDirectory(buffer.c_str(), nullptr);
-        once = 0;
-    }
-
-    path::clean(buffer);
+    out.copy(m_desc.state_dir);
 }
 
 //------------------------------------------------------------------------------
-void set_config_dir_override(const char* dir)
+void app_context::get_log_path(str_base& out) const
 {
-#if MODE4
-    g_config_dir_override.copy(dir);
-#endif // MODE4
+    get_state_dir(out);
+    path::append(out, "clink.log");
 }
 
 //------------------------------------------------------------------------------
-void get_log_dir(str_base& buffer)
+void app_context::get_settings_path(str_base& out) const
 {
-    static int once = 1;
-    static str<MAX_PATH> log_dir;
-
-    // Just the once, get user's appdata folder.
-    if (once)
-    {
-        if (SHGetFolderPath(0, CSIDL_LOCAL_APPDATA, nullptr, 0, log_dir.data()) != S_OK)
-        {
-            if (const char* str = getenv("USERPROFILE"))
-                log_dir << str;
-            else
-                GetTempPath(log_dir.size(), log_dir.data());
-        }
-
-        log_dir << "/clink";
-        path::clean(log_dir);
-    }
-
-    buffer << log_dir;
-
-    // Try and create the directory if it doesn't already exist. Just this once.
-    if (once)
-    {
-        CreateDirectory(buffer.c_str(), nullptr);
-        once = 0;
-    }
-
-    path::clean(buffer);
+    get_state_dir(out);
+    path::append(out, "clink_settings");
 }
 
 //------------------------------------------------------------------------------
-void cpy_path_as_abs(str_base& abs, const char* rel)
+void app_context::get_history_path(str_base& out) const
 {
-    char* ret = _fullpath(abs.data(), rel, abs.size());
-    if (ret == nullptr)
-        abs.copy(rel);
-
-    path::clean(abs);
+    get_state_dir(out);
+    path::append(out, "clink_history");
 }

@@ -2,7 +2,7 @@
 // License: http://opensource.org/licenses/MIT
 
 #include "pch.h"
-#include "paths.h"
+#include "utils/app_context.h"
 
 #include <core/base.h>
 #include <core/path.h>

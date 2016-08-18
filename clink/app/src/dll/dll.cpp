@@ -4,8 +4,7 @@
 #include "pch.h"
 #include "host/host_cmd.h"
 #include "host/host_ps.h"
-#include "inject_args.h"
-#include "paths.h"
+#include "utils/app_context.h"
 #include "utils/seh_scope.h"
 
 #include <core/base.h>
@@ -33,18 +32,17 @@ static host* g_host = nullptr;
 
 
 //------------------------------------------------------------------------------
-static void success(bool quiet)
+static void success()
 {
-    if (!quiet)
+    if (!app_context::get()->is_quiet())
         puts(g_clink_header);
 }
 
 //------------------------------------------------------------------------------
 static void failed()
 {
-    str<256> buffer;
-    get_config_dir(buffer);
-
+    str<280> buffer;
+    app_context::get()->get_state_dir(buffer);
     fprintf(stderr, "Failed to load Clink.\nSee log for details (%s).\n", buffer);
 }
 
@@ -62,28 +60,17 @@ static bool get_host_name(str_base& out)
 }
 
 //------------------------------------------------------------------------------
-bool initialise_clink(const inject_args& inject_args)
+bool initialise_clink(const app_context::desc& app_desc)
 {
     seh_scope seh;
 
-    // Override the profile path by either the "clink_profile" environment
-    // variable or the --profile argument.
-    str<MAX_PATH> profile_path;
-    unsigned int i = GetEnvironmentVariable("clink_profile", profile_path.data(),
-        profile_path.size());
+    auto* app_ctx = new app_context(app_desc);
 
-    if (i <= profile_path.size())
-        set_config_dir_override(profile_path.c_str());
-    else if (inject_args.profile_path[0] != '\0')
-        /* MODE4 */
-        set_config_dir_override(inject_args.profile_path);
-
-    if (!inject_args.no_log)
+    // Start a log file.
+    if (!app_ctx->is_logging_enabled())
     {
-        // Start a log file.
         str<256> log_path;
-        get_log_dir(log_path);
-        log_path << "/clink.log";
+        app_ctx->get_log_path(log_path);
         new file_logger(log_path.c_str());
     }
 
@@ -128,7 +115,7 @@ bool initialise_clink(const inject_args& inject_args)
         return false;
     }
 
-    success(inject_args.quiet);
+    success();
     return true;
 }
 
@@ -142,4 +129,6 @@ void shutdown_clink()
 
     if (logger* logger = logger::get())
         delete logger;
+
+    delete app_context::get();
 }

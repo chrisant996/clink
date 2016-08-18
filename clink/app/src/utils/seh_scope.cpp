@@ -2,8 +2,8 @@
 // License: http://opensource.org/licenses/MIT
 
 #include "pch.h"
-#include "paths.h"
 #include "seh_scope.h"
+#include "utils/app_context.h"
 
 #include <core/str.h>
 
@@ -12,8 +12,15 @@ static LONG WINAPI exception_filter(EXCEPTION_POINTERS* info)
 {
 #if defined(_MSC_VER)
     str<MAX_PATH, false> buffer;
-    get_config_dir(buffer);
-    buffer << "/clink.dmp";
+    if (const app_context* context = app_context::get())
+        context->get_state_dir(buffer);
+    else
+    {
+        app_context::desc desc;
+        app_context app_context(desc);
+        app_context.get_state_dir(buffer);
+    }
+    buffer << "\\clink.dmp";
 
     fputs("\n!!! CLINK'S CRASHED!", stderr);
     fputs("\n!!!", stderr);

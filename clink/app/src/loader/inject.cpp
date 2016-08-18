@@ -2,8 +2,7 @@
 // License: http://opensource.org/licenses/MIT
 
 #include "pch.h"
-#include "paths.h"
-#include "inject_args.h"
+#include "utils/app_context.h"
 
 #include <core/base.h>
 #include <core/log.h>
@@ -14,7 +13,7 @@
 #include <process/vm.h>
 
 //------------------------------------------------------------------------------
-bool    initialise_clink(const inject_args&);
+bool    initialise_clink(const app_context::desc&);
 void    puts_help(const char**, int);
 void    cpy_path_as_abs(str_base&, const char*);
 
@@ -136,15 +135,17 @@ void get_profile_path(const char* in, str_base& out)
 {
     if (in[0] == '~' && (in[1] == '\\' || in[1] == '/'))
     {
-        char dir[MAX_PATH];
-        if (SHGetFolderPath(0, CSIDL_LOCAL_APPDATA, nullptr, 0, dir) == S_OK)
+        wchar_t dir[MAX_PATH];
+        if (SHGetFolderPathW(0, CSIDL_LOCAL_APPDATA, nullptr, 0, dir) == S_OK)
         {
-            out << dir << "." << (in + 1);
+            out = dir;
+            out << (in + 1);
             return;
         }
     }
 
-    cpy_path_as_abs(out, in);
+    out << in;
+    path::abs_path(out);
 }
 
 //------------------------------------------------------------------------------
@@ -172,7 +173,7 @@ int inject(int argc, char** argv)
 
     // Parse arguments
     DWORD target_pid = 0;
-    inject_args inject_args = { 0 };
+    app_context::desc app_desc = {};
     int i;
     int ret = false;
     while ((i = getopt_long(argc, argv, "nalqhp:d:", options, nullptr)) != -1)
@@ -181,19 +182,17 @@ int inject(int argc, char** argv)
         {
         case 'p':
             {
-                char* data = inject_args.profile_path;
-                int size = sizeof_array(inject_args.profile_path);
-                str_base buffer(data, size);
-                get_profile_path(optarg, buffer);
+                str_base state_dir(app_desc.state_dir);
+                get_profile_path(optarg, state_dir);
             }
             break;
 
-        case 'q': inject_args.quiet = 1;         break;
-        case 'd': target_pid = atoi(optarg);     break;
-        case '_': ret = true;                    break;
+        case 'q': app_desc.quiet = true;        break;
+        case 'd': target_pid = atoi(optarg);    break;
+        case '_': ret = true;                   break;
 
         case 'l':
-            inject_args.no_log = 1;
+            app_desc.log = false;
             break;
 
         case '?':
@@ -209,8 +208,7 @@ int inject(int argc, char** argv)
 
     // Restart the log file on every inject.
     str<256> log_path;
-    get_log_dir(log_path);
-    log_path << "/clink.log";
+    app_context::get()->get_log_path(log_path);
     unlink(log_path.c_str());
 
     // Unless a target pid was specified on the command line, use our parent
@@ -236,9 +234,10 @@ int inject(int argc, char** argv)
     // On Windows a DLL will have the same address in every process' address
     // space, hence we're able to use 'initialise_clink' directly here.
     vm_access target_vm(target_pid);
-    void* remote_inject_args = target_vm.alloc(sizeof(inject_args));
-    ret |= process(target_pid).remote_call(initialise_clink, remote_inject_args);
-    target_vm.free(remote_inject_args);
+    void* remote_app_desc = target_vm.alloc(sizeof(app_desc));
+    target_vm.write(remote_app_desc, &app_desc, sizeof(app_desc));
+    ret |= process(target_pid).remote_call(initialise_clink, remote_app_desc);
+    target_vm.free(remote_app_desc);
 
     return ret;
 }

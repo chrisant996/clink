@@ -3,7 +3,7 @@
 
 #include "pch.h"
 #include "host_cmd.h"
-#include "paths.h"
+#include "utils/app_context.h"
 #include "utils/hook_setter.h"
 #include "utils/seh_scope.h"
 
@@ -170,13 +170,15 @@ bool host_cmd::initialise()
 
     // Add an alias to Clink so it can be run from anywhere. Similar to adding
     // it to the path but this way we can add the config path too.
-    str<256> dll_path;
-    get_dll_dir(dll_path);
+    auto* context = app_context::get();
 
-    str<256> cfg_path;
-    get_config_dir(cfg_path);
+    str<280> dll_path;
+    context->get_binaries_dir(dll_path);
 
-    str<512> buffer;
+    str<280> cfg_path;
+    context->get_state_dir(cfg_path);
+
+    str<560> buffer;
     buffer << "\"" << dll_path;
     buffer << "/clink_" AS_STR(ARCHITECTURE) ".exe\" --cfgdir \"";
     buffer << cfg_path << "\" $*";

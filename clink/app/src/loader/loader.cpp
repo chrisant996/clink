@@ -2,7 +2,7 @@
 // License: http://opensource.org/licenses/MIT
 
 #include "pch.h"
-#include "paths.h"
+#include "utils/app_context.h"
 #include "utils/seh_scope.h"
 
 #include <core/base.h>
@@ -110,6 +110,8 @@ int loader(int argc, char** argv)
         return 0;
     }
 
+    app_context::desc app_desc = {};
+
     // Parse arguments
     int arg;
     while ((arg = getopt_long(argc, argv, "+hc:", options, nullptr)) != -1)
@@ -118,7 +120,7 @@ int loader(int argc, char** argv)
         {
         case 'c':
             g_in_clink_context = 1;
-            set_config_dir_override(optarg);
+            str_base(app_desc.state_dir).copy(optarg);
             break;
 
         case '?':
@@ -130,10 +132,14 @@ int loader(int argc, char** argv)
         }
     }
 
+
     // Dispatch the verb if one was found.
     int ret = 0;
     if (optind < argc)
+    {
+        app_context app_context(app_desc);
         ret = dispatch_verb(argv[optind], argc - optind, argv + optind);
+    }
     else
         show_usage();
 
