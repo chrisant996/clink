@@ -309,21 +309,23 @@ int to_utf16(wchar_t* out, int max_count, str_iter_impl<char>& iter);
 class str_base : public str_impl<char>
 {
 public:
-         str_base(char* data, int size) : str_impl<char>(data, size) {}
-    int  from_utf16(const wchar_t* utf16)  { clear(); return to_utf8(*this, utf16); }
-    void operator = (const char* value)    { copy(value); }
-    void operator = (const wchar_t* value) { from_utf16(value); }
-    void operator = (const str_base& rhs)  = delete;
+    template <int I> str_base(char (&data)[I]) : str_impl<char>(data, I) {}
+                     str_base(char* data, int size) : str_impl<char>(data, size) {}
+    int              from_utf16(const wchar_t* utf16)  { clear(); return to_utf8(*this, utf16); }
+    void             operator = (const char* value)    { copy(value); }
+    void             operator = (const wchar_t* value) { from_utf16(value); }
+    void             operator = (const str_base& rhs)  = delete;
 };
 
 class wstr_base : public str_impl<wchar_t>
 {
 public:
-         wstr_base(wchar_t* data, int size) : str_impl<wchar_t>(data, size) {}
-    int  from_utf8(const char* utf8)        { clear(); return to_utf16(*this, utf8); }
-    void operator = (const wchar_t* value)  { copy(value); }
-    void operator = (const char* value)     { from_utf8(value); }
-    void operator = (const wstr_base& rhs)  = delete;
+    template <int I> wstr_base(char (&data)[I]) : str_impl<wchar_t>(data, I) {}
+                     wstr_base(wchar_t* data, int size) : str_impl<wchar_t>(data, size) {}
+    int              from_utf8(const char* utf8)        { clear(); return to_utf16(*this, utf8); }
+    void             operator = (const wchar_t* value)  { copy(value); }
+    void             operator = (const char* value)     { from_utf8(value); }
+    void             operator = (const wstr_base& rhs)  = delete;
 };
 
 
