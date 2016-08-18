@@ -3,6 +3,7 @@
 
 #include "pch.h"
 #include "paths.h"
+#include "utils/seh_scope.h"
 
 #include <core/base.h>
 #include <core/str.h>
@@ -94,6 +95,8 @@ static int dispatch_verb(const char* verb, int argc, char** argv)
 //------------------------------------------------------------------------------
 int loader(int argc, char** argv)
 {
+    seh_scope seh;
+
     struct option options[] = {
         { "help",   no_argument,       nullptr, 'h' },
         { "cfgdir", required_argument, nullptr, 'c' },
