@@ -46,11 +46,19 @@ int process::get_parent_pid() const
 //------------------------------------------------------------------------------
 bool process::get_file_name(str_base& out) const
 {
-    handle handle = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, FALSE, m_pid);
+    handle handle = OpenProcess(PROCESS_QUERY_INFORMATION|PROCESS_VM_READ, FALSE, m_pid);
     if (!handle)
         return false;
 
-    return (GetProcessImageFileName(handle, out.data(), out.size()) != 0);
+    static DWORD (WINAPI *func)(HANDLE, HMODULE, LPTSTR, DWORD) = nullptr;
+    if (func == nullptr)
+        if (HMODULE psapi = LoadLibrary("psapi.dll"))
+            *(FARPROC*)&func = GetProcAddress(psapi, "GetModuleFileNameExA");
+
+    if (func != nullptr)
+        return (func(handle, nullptr, out.data(), out.size()) != 0);
+
+    return false;
 }
 
 //------------------------------------------------------------------------------
