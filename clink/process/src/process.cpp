@@ -50,10 +50,7 @@ bool process::get_file_name(str_base& out) const
     if (!handle)
         return false;
 
-    DWORD out_chars = out.size();
-    BOOL ok = QueryFullProcessImageName(handle, 0, out.data(), &out_chars);
-
-    return !!ok;
+    return (GetProcessImageFileName(handle, out.data(), out.size()) != 0);
 }
 
 //------------------------------------------------------------------------------
