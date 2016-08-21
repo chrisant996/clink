@@ -47,7 +47,6 @@ TEST_CASE("Lua arg parsers.") {
             clink.arg.register_parser('argcmd', p)\
         ";
 
-        //__debugbreak();
         REQUIRE(lua.do_string(script));
 
         SECTION("Node matches 1") {

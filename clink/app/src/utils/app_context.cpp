@@ -18,9 +18,6 @@ static char g_clink_symbol;
 app_context::app_context(const desc& desc)
 : m_desc(desc)
 {
-    if (IsDebuggerPresent())
-        __debugbreak();
-
     str_base state_dir(m_desc.state_dir, sizeof_array(m_desc.state_dir));
 
     // Override the profile path by either the "clink_profile" environment
