@@ -19,9 +19,9 @@
 #   define THREAD_LOCAL     __thread
 #endif
 
-#if defined(_M_AMD64)
+#if defined(_M_AMD64) || defined(__x86_64__)
 #   define ARCHITECTURE     x64
-#elif defined(_M_IX86)
+#elif defined(_M_IX86) || defined(__i386)
 #   define ARCHITECTURE     x86
 #else
 #   error Unknown architecture
