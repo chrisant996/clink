@@ -15,7 +15,6 @@ const char* lib_clink_lua_script =
 "";const char* lib_match_lua_script = 
 "local generators = {}\n"
 "local function generate_matches_impl(line_state, match_builder)\n"
-"    -- clink.match_display_filter = nil MODE4\n"
 "    for _, generator in ipairs(generators) do\n"
 "        local ret = generator.f(line_state, match_builder)\n"
 "        if ret == true then\n"
@@ -516,7 +515,7 @@ const char* lib_clink_lua_script =
 "    if type(ret) ~= \"table\" then\n"
 "        return not ret\n"
 "    end\n"
-"    match_builder:add(ret)\n"
+"    match_builder:addmatches(ret)\n"
 "    return true\n"
 "end\n"
 "clink.register_match_generator(argument_match_generator, 25)\n"
