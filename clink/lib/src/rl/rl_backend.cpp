@@ -59,7 +59,7 @@ static void load_user_inputrc()
         {
             if (!rl_read_init_file(path.c_str()))
             {
-                LOG("Found Readline inputrc at '%s'", path);
+                LOG("Found Readline inputrc at '%s'", path.c_str());
                 break;
             }
 
