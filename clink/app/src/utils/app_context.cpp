@@ -38,10 +38,6 @@ app_context::app_context(const desc& desc)
             path::append(state_dir, "clink");
     }
 
-    // Finally fallback to where the executables are.
-    if (state_dir.empty())
-        get_binaries_dir(state_dir);
-
     path::clean(state_dir);
     path::abs_path(state_dir);
 
