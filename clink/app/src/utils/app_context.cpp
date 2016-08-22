@@ -34,7 +34,7 @@ app_context::app_context(const desc& desc)
         else if (!os::get_env("userprofile", state_dir))
             os::get_temp_dir(state_dir);
 
-        if (state_dir.empty())
+        if (!state_dir.empty())
             path::append(state_dir, "clink");
     }
 
