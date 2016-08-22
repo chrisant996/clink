@@ -27,7 +27,7 @@ static const char* get_string(lua_State* state, int index)
 }
 
 //------------------------------------------------------------------------------
-static int chdir(lua_State* state)
+static int set_current_dir(lua_State* state)
 {
     bool ok = false;
     if (const char* dir = get_string(state, 1))
@@ -38,7 +38,7 @@ static int chdir(lua_State* state)
 }
 
 //------------------------------------------------------------------------------
-static int getcwd(lua_State* state)
+static int get_current_dir(lua_State* state)
 {
     str<288> dir;
     os::get_current_dir(dir);
@@ -48,7 +48,7 @@ static int getcwd(lua_State* state)
 }
 
 //------------------------------------------------------------------------------
-static int mkdir(lua_State* state)
+static int make_dir(lua_State* state)
 {
     bool ok = false;
     if (const char* dir = get_string(state, 1))
@@ -59,7 +59,7 @@ static int mkdir(lua_State* state)
 }
 
 //------------------------------------------------------------------------------
-static int rmdir(lua_State* state)
+static int remove_dir(lua_State* state)
 {
     bool ok = false;
     if (const char* dir = get_string(state, 1))
@@ -70,7 +70,7 @@ static int rmdir(lua_State* state)
 }
 
 //------------------------------------------------------------------------------
-static int isdir(lua_State* state)
+static int is_dir(lua_State* state)
 {
     const char* path = get_string(state, 1);
     if (path == nullptr)
@@ -81,7 +81,7 @@ static int isdir(lua_State* state)
 }
 
 //------------------------------------------------------------------------------
-static int isfile(lua_State* state)
+static int is_file(lua_State* state)
 {
     const char* path = get_string(state, 1);
     if (path == nullptr)
@@ -92,7 +92,7 @@ static int isfile(lua_State* state)
 }
 
 //------------------------------------------------------------------------------
-static int remove(lua_State* state)
+static int unlink(lua_State* state)
 {
     const char* path = get_string(state, 1);
     if (path == nullptr)
@@ -111,7 +111,7 @@ static int remove(lua_State* state)
 }
 
 //------------------------------------------------------------------------------
-static int rename(lua_State* state)
+static int move(lua_State* state)
 {
     const char* src = get_string(state, 1);
     const char* dest = get_string(state, 2);
@@ -165,19 +165,19 @@ static int glob_impl(lua_State* state, bool dirs_only)
 }
 
 //------------------------------------------------------------------------------
-static int globdirs(lua_State* state)
+static int glob_dirs(lua_State* state)
 {
     return glob_impl(state, true);
 }
 
 //------------------------------------------------------------------------------
-static int globfiles(lua_State* state)
+static int glob_files(lua_State* state)
 {
     return glob_impl(state, false);
 }
 
 //------------------------------------------------------------------------------
-static int getenv(lua_State* state)
+static int get_env(lua_State* state)
 {
     const char* name = get_string(state, 1);
     if (name == nullptr)
@@ -192,7 +192,7 @@ static int getenv(lua_State* state)
 }
 
 //------------------------------------------------------------------------------
-static int getenvnames(lua_State* state)
+static int get_env_names(lua_State* state)
 {
     lua_createtable(state, 0, 0);
 
@@ -246,19 +246,19 @@ void os_lua_initialise(lua_state& lua)
         const char* name;
         int         (*method)(lua_State*);
     } methods[] = {
-        { "chdir",      &chdir },
-        { "getcwd",     &getcwd },
-        { "mkdir",      &mkdir },
-        { "rmdir",      &rmdir },
-        { "isdir",      &isdir },
-        { "isfile",     &isfile },
-        { "remove",     &remove },
-        { "rename",     &rename },
-        { "copy",       &copy },
-        { "globdirs",   &globdirs },
-        { "globfiles",  &globfiles },
-        { "getenv",     &getenv },
-        { "getenvnames",&getenvnames },
+        { "chdir",       &set_current_dir },
+        { "getcwd",      &get_current_dir },
+        { "mkdir",       &make_dir },
+        { "rmdir",       &remove_dir },
+        { "isdir",       &is_dir },
+        { "isfile",      &is_file },
+        { "unlink",      &unlink },
+        { "move",        &move },
+        { "copy",        &copy },
+        { "globdirs",    &glob_dirs },
+        { "globfiles",   &glob_files },
+        { "getenv",      &get_env },
+        { "getenvnames", &get_env_names },
         { "gethost",     &get_host },
     };
 
