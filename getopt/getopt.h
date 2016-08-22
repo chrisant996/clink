@@ -97,7 +97,7 @@ gpietsch@comcast.net
 /* struct option: The type of long option */
 struct option
 {
-    char *name;                   /* the name of the long option */
+    const char *name;             /* the name of the long option */
     int has_arg;                  /* one of the above macros */
     int *flag;                    /* determines if getopt_long() returns a
                                    * value for a long option; if it is
