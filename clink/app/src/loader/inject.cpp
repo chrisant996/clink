@@ -82,7 +82,7 @@ static int do_inject(DWORD target_pid)
         CLINK_VER_MINOR,
         CLINK_VER_POINT
     );
-    LOG("DLL: %s", dll_path);
+    LOG("DLL: %s", dll_path.c_str());
 
     LOG("Parent pid: %d", target_pid);
 

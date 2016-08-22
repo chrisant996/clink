@@ -43,7 +43,7 @@ static void failed()
 {
     str<280> buffer;
     app_context::get()->get_state_dir(buffer);
-    fprintf(stderr, "Failed to load Clink.\nSee log for details (%s).\n", buffer);
+    fprintf(stderr, "Failed to load Clink.\nSee log for details (%s).\n", buffer.c_str());
 }
 
 //------------------------------------------------------------------------------
