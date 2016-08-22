@@ -116,11 +116,6 @@ void clink_lua_initialise(lua_state& lua)
         int         (*method)(lua_State*);
     } methods[] = {
 // MODE4
-        /*
-        { "execute", lua_execute },
-        */
-
-        // MODE4 : nomenclature should match Lua's
         { "get_console_aliases",    &get_console_aliases },
         { "get_screen_info",        &get_screen_info },
 // MODE4
