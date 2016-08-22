@@ -251,11 +251,13 @@ void os_lua_initialise(lua_state& lua)
 
     lua_State* state = lua.get_state();
 
-    // Add set some methods to the os table.
     lua_getglobal(state, "os");
+
     for (int i = 0; i < sizeof_array(methods); ++i)
     {
         lua_pushcfunction(state, methods[i].method);
         lua_setfield(state, -2, methods[i].name);
     }
+
+    lua_pop(state, 1);
 }
