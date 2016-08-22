@@ -27,19 +27,6 @@ static bool get_host_process(str_base& out)
 }
 
 //------------------------------------------------------------------------------
-static int get_host_process(lua_State* state)
-{
-    str<64> name;
-    if (get_host_process(name))
-    {
-        lua_pushstring(state, name.c_str());
-        return 1;
-    }
-
-    return 0;
-}
-
-//------------------------------------------------------------------------------
 static int get_console_aliases(lua_State* state)
 {
     lua_createtable(state, 0, 0);
@@ -135,7 +122,6 @@ void clink_lua_initialise(lua_state& lua)
 
         // MODE4 : nomenclature should match Lua's
         { "get_console_aliases",    &get_console_aliases },
-        { "get_host_process",       &get_host_process },
         { "get_screen_info",        &get_screen_info },
 // MODE4
     };

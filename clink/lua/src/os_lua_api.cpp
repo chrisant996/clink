@@ -9,6 +9,7 @@
 #include <core/os.h>
 #include <core/settings.h>
 #include <core/str.h>
+#include <process/process.h>
 
 //------------------------------------------------------------------------------
 extern setting_bool g_glob_hidden;
@@ -228,6 +229,17 @@ static int getenvnames(lua_State* state)
 }
 
 //------------------------------------------------------------------------------
+static int get_host(lua_State* state)
+{
+    str<280> host;
+    if (process().get_file_name(host))
+        return 0;
+
+    lua_pushstring(state, host.c_str());
+    return 1;
+}
+
+//------------------------------------------------------------------------------
 void os_lua_initialise(lua_state& lua)
 {
     struct {
@@ -247,6 +259,7 @@ void os_lua_initialise(lua_state& lua)
         { "globfiles",  &globfiles },
         { "getenv",     &getenv },
         { "getenvnames",&getenvnames },
+        { "gethost",     &get_host },
     };
 
     lua_State* state = lua.get_state();
