@@ -34,24 +34,17 @@ static setting_enum g_autoanswer(
 
 
 //------------------------------------------------------------------------------
-static wchar_t* get_mui_string(int id)
+static bool get_mui_string(int id, wstr_base& out)
 {
-    DWORD flags, ok;
-    wchar_t* ret;
-
-    flags = FORMAT_MESSAGE_ALLOCATE_BUFFER;
-    flags |= FORMAT_MESSAGE_FROM_HMODULE;
-    flags |= FORMAT_MESSAGE_IGNORE_INSERTS;
-    ok = FormatMessageW(flags, nullptr, id, 0, (wchar_t*)(&ret), 0, nullptr);
-
-    return ok ? ret : nullptr;
+    DWORD flags = FORMAT_MESSAGE_FROM_HMODULE|FORMAT_MESSAGE_IGNORE_INSERTS;
+    return !!FormatMessageW(flags, nullptr, id, 0, out.data(), out.size(), nullptr);
 }
 
 //------------------------------------------------------------------------------
 static int check_auto_answer()
 {
-    static wchar_t* prompt_to_answer = (wchar_t*)1;
-    static wchar_t* no_yes;
+    static wstr<72> target_prompt;
+    static wstr<16> no_yes;
 
     // Skip the feature if it's not enabled.
     int setting = g_autoanswer.get();
@@ -59,40 +52,33 @@ static int check_auto_answer()
         return 0;
 
     // Try and find the localised prompt.
-    if (prompt_to_answer == (wchar_t*)1)
+    if (target_prompt.empty())
     {
         // cmd.exe's translations are stored in a message table result in
         // the cmd.exe.mui overlay.
 
-        prompt_to_answer = get_mui_string(0x237b);
-        no_yes = get_mui_string(0x2328);
+        if (!get_mui_string(0x2328, no_yes))
+            no_yes = L"ny";
 
-        if (prompt_to_answer != nullptr)
+        if (get_mui_string(0x237b, target_prompt))
         {
-            no_yes = no_yes ? no_yes : L"ny";
-
             // Strip off new line chars.
-            wchar_t* c = prompt_to_answer;
-            while (*c)
-            {
+            for (wchar_t* c = target_prompt.data(); *c; ++c)
                 if (*c == '\r' || *c == '\n')
                     *c = '\0';
 
-                ++c;
-            }
-
-            LOG("Auto-answer prompt = '%ls' (%ls)", prompt_to_answer, no_yes);
+            LOG("Auto-answer; '%ls' (%ls)", target_prompt.c_str(), no_yes.c_str());
         }
         else
         {
-            prompt_to_answer = L"Terminate batch job (Y/N)? ";
+            target_prompt = L"Terminate batch job (Y/N)? ";
             no_yes = L"ny";
             LOG("Using fallback auto-answer prompt.");
         }
     }
 
     prompt prompt = prompt_utils::extract_from_console();
-    if (prompt.get() != nullptr && wcsstr(prompt.get(), prompt_to_answer) != 0)
+    if (prompt.get() != nullptr && wcsstr(prompt.get(), target_prompt.c_str()) != 0)
         return (setting == 1) ? no_yes[1] : no_yes[0];
 
     return 0;
