@@ -7,6 +7,7 @@
 #include <core/base.h>
 #include <core/globber.h>
 #include <core/os.h>
+#include <core/path.h>
 #include <core/settings.h>
 #include <core/str.h>
 #include <process/process.h>
@@ -240,6 +241,48 @@ static int get_host(lua_State* state)
 }
 
 //------------------------------------------------------------------------------
+static int get_aliases(lua_State* state)
+{
+    lua_createtable(state, 0, 0);
+
+#if !defined(__MINGW32__) && !defined(__MINGW64__)
+    str<280> path;
+    if (!process().get_file_name(path))
+        return 1;
+
+    // Not const because Windows' alias API won't accept it.
+    char* name = (char*)path::get_name(path.c_str());
+
+    // Get the aliases (aka. doskey macros).
+    int buffer_size = GetConsoleAliasesLength(name);
+    if (buffer_size == 0)
+        return 1;
+
+    str<> buffer;
+    buffer.reserve(buffer_size);
+    if (GetConsoleAliases(buffer.data(), buffer.size(), name) == 0)
+        return 1;
+
+    // Parse the result into a lua table.
+    const char* alias = buffer.c_str();
+    for (int i = 1; int(alias - buffer.c_str()) < buffer_size; ++i)
+    {
+        const char* c = strchr(alias, '=');
+        if (c == nullptr)
+            break;
+
+        lua_pushlstring(state, alias, size_t(c - alias));
+        lua_rawseti(state, -2, i++);
+
+        ++c;
+        alias = c + strlen(c) + 1;
+    }
+
+#endif // __MINGW32__
+    return 1;
+}
+
+//------------------------------------------------------------------------------
 void os_lua_initialise(lua_state& lua)
 {
     struct {
@@ -260,6 +303,7 @@ void os_lua_initialise(lua_state& lua)
         { "getenv",      &get_env },
         { "getenvnames", &get_env_names },
         { "gethost",     &get_host },
+        { "getaliases",  &get_aliases },
     };
 
     lua_State* state = lua.get_state();

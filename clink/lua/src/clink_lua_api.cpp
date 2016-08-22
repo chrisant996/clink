@@ -9,66 +9,6 @@
 #include <core/path.h>
 #include <core/str.h>
 
-#include <ctype.h>
-#include <Windows.h>
-
-//------------------------------------------------------------------------------
-static bool get_host_process(str_base& out)
-{
-    // MODE4
-    str<288> buffer;
-    if (GetModuleFileName(nullptr, buffer.data(), buffer.size()) == buffer.size())
-        return false;
-
-    if (GetLastError() == ERROR_INSUFFICIENT_BUFFER)
-        return false;
-
-    return path::get_name(buffer.c_str(), out);
-}
-
-//------------------------------------------------------------------------------
-static int get_console_aliases(lua_State* state)
-{
-    lua_createtable(state, 0, 0);
-
-#if !defined(__MINGW32__) && !defined(__MINGW64__)
-    str<64> name;
-    if (!get_host_process(name))
-        return 1;
-
-    // Get the aliases (aka. doskey macros).
-    int buffer_size = GetConsoleAliasesLength(name.data());
-    if (buffer_size == 0)
-        return 1;
-
-    char* buffer = (char*)malloc(buffer_size + 1);
-    if (GetConsoleAliases(buffer, buffer_size, name.data()) == 0)
-        return 1;
-
-    buffer[buffer_size] = '\0';
-
-    // Parse the result into a lua table.
-    char* alias = buffer;
-    int i = 1;
-    while (*alias != '\0')
-    {
-        char* c = strchr(alias, '=');
-        if (c == nullptr)
-            break;
-
-        *c = '\0';
-        lua_pushstring(state, alias);
-        lua_rawseti(state, -2, i++);
-
-        ++c;
-        alias = c + strlen(c) + 1;
-    }
-
-    free(buffer);
-#endif // __MINGW32__
-    return 1;
-}
-
 //------------------------------------------------------------------------------
 static int get_screen_info(lua_State* state)
 {
@@ -116,7 +56,6 @@ void clink_lua_initialise(lua_state& lua)
         int         (*method)(lua_State*);
     } methods[] = {
 // MODE4
-        { "get_console_aliases",    &get_console_aliases },
         { "get_screen_info",        &get_screen_info },
 // MODE4
     };

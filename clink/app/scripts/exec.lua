@@ -77,7 +77,7 @@ local function exec_match_generator(line_state, match_builder)
     local text_dir = path.getdirectory(text) or ""
     if #text_dir == 0 then
         -- Add console aliases as matches.
-        local aliases = clink.get_console_aliases()
+        local aliases = os.getaliases()
         match_builder:addmatches(aliases)
 
         -- Add environment's PATH variable as paths to search.
