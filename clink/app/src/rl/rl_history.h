@@ -3,10 +3,13 @@
 
 #pragma once
 
+#include <core/singleton.h>
+
 class str_base;
 
 //------------------------------------------------------------------------------
 class rl_history
+    : private singleton<const rl_history>
 {
 public:
                     rl_history();
