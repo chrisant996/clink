@@ -102,46 +102,36 @@ rl_history::rl_history()
     int max_lines = g_max_lines.get();
     if (max_lines > 0)
         stifle_history(max_lines);
-
-    load();
 }
 
 //------------------------------------------------------------------------------
 rl_history::~rl_history()
 {
-    save();
 }
 
 //------------------------------------------------------------------------------
-void rl_history::load()
+void rl_history::load(const char* file)
 {
-    // MODE4 : make explicit instead of calling in the ctor
-    str<288> buffer;
-    app_context::get()->get_history_path(buffer);
-
     // Clear existing history.
     clear_history();
 
     // Read from disk.
-    read_history(buffer.c_str());
+    read_history(file);
     using_history();
 }
 
 //------------------------------------------------------------------------------
-void rl_history::save()
+void rl_history::save(const char* file)
 {
-    str<288> buffer;
-    app_context::get()->get_history_path(buffer);
-
     // Get max history size.
     int max_history = g_max_lines.get();
     if (max_history < 0)
     {
-        os::unlink(buffer.c_str());
+        os::unlink(file);
         return;
     }
 
-    write_history(buffer.c_str());
+    write_history(file);
 }
 
 //------------------------------------------------------------------------------
@@ -164,9 +154,6 @@ void rl_history::add(const char* line)
     // Skip empty lines
     if (*c == '\0')
         return;
-
-    // Use the latest history state from all Clink instances.
-    load();
 
     // Check if the line's a duplicate of and existing history entry.
     int dupe_mode = g_dupe_mode.get();

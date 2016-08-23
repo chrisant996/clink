@@ -93,6 +93,8 @@ host::~host()
 //------------------------------------------------------------------------------
 bool host::edit_line(const char* prompt, str_base& out)
 {
+    const app_context* app = app_context::get();
+
     struct cwd_restorer
     {
         cwd_restorer()  { os::get_current_dir(m_path); }
@@ -115,7 +117,12 @@ bool host::edit_line(const char* prompt, str_base& out)
     }
     str_compare_scope compare(cmp_mode);
 
+    // Initialise and load history.
+    str<288> history_file;
+    app->get_history_path(history_file);
+
     rl_history history;
+    history.load(history_file.c_str());
 
     // Set up Lua and load scripts into it.
     lua_state lua;
@@ -172,10 +179,13 @@ MODE4 */
                 continue;
             }
 
+            history.load(history_file.c_str());
             history.add(out.c_str());
         }
         break;
     }
+
+    history.save(history_file.c_str());
 
     line_editor_destroy(editor);
     classic_match_ui_destroy(ui);

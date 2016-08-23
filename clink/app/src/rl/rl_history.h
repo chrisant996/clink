@@ -13,8 +13,6 @@ public:
                     ~rl_history();
     void            add(const char* line);
     int             expand(const char* line, str_base& out);
-
-private:
-    void            load();
-    void            save();
+    void            load(const char* file);
+    void            save(const char* file);
 };
