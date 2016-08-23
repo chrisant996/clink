@@ -15,7 +15,7 @@ public:
                         match_pipeline(matches_impl& matches);
     void                reset() const;
     void                generate(const line_state& state, const array<match_generator*>& generators) const;
-    void                fill_info(const char* auto_quote_chars) const;
+    void                fill_info() const;
     void                select(const char* needle) const;
     void                sort() const;
 

@@ -184,21 +184,9 @@ unsigned int matches_impl::get_visible_chars(unsigned int index) const
 }
 
 //------------------------------------------------------------------------------
-bool matches_impl::has_quoteable() const
-{
-    return m_has_quotable;
-}
-
-//------------------------------------------------------------------------------
 bool matches_impl::has_aux() const
 {
     return m_has_aux;
-}
-
-//------------------------------------------------------------------------------
-int matches_impl::get_first_quoteable(unsigned int index) const
-{
-    return (index < get_match_count()) ? m_infos[index].first_quoteable : -1;
 }
 
 //------------------------------------------------------------------------------
@@ -239,7 +227,6 @@ void matches_impl::reset()
     m_infos.clear();
     m_coalesced = false;
     m_count = 0;
-    m_has_quotable = false;
     m_has_aux = false;
 }
 
@@ -295,10 +282,4 @@ void matches_impl::coalesce(unsigned int count_hint)
 
     m_count = j;
     m_coalesced = true;
-}
-
-//------------------------------------------------------------------------------
-void matches_impl::set_has_quoteable()
-{
-    m_has_quotable = true;
 }

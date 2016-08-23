@@ -15,9 +15,7 @@ public:
     virtual const char*     get_aux(unsigned int index) const = 0;
     virtual char            get_suffix(unsigned int index) const = 0;
     virtual unsigned int    get_visible_chars(unsigned int index) const = 0;
-    virtual bool            has_quoteable() const = 0;
     virtual bool            has_aux() const = 0;
-    virtual int             get_first_quoteable(unsigned int index) const = 0;
     virtual void            get_match_lcd(str_base& out) const = 0;
 };
 

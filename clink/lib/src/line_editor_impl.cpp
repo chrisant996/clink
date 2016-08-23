@@ -543,7 +543,7 @@ void line_editor_impl::update_internal()
         match_pipeline pipeline(m_matches);
         pipeline.reset();
         pipeline.generate(line, m_generators);
-        pipeline.fill_info(m_desc.auto_quote_chars);
+        pipeline.fill_info();
     }
 
     next_key.cursor_pos = m_buffer.get_cursor();

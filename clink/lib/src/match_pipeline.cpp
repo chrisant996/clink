@@ -81,7 +81,7 @@ void match_pipeline::generate(
 }
 
 //------------------------------------------------------------------------------
-void match_pipeline::fill_info(const char* auto_quote_chars) const
+void match_pipeline::fill_info() const
 {
     int count = m_matches.get_info_count();
     if (!count)
@@ -90,22 +90,6 @@ void match_pipeline::fill_info(const char* auto_quote_chars) const
     match_info* info = m_matches.get_infos();
     for (int i = 0; i < count; ++i, ++info)
     {
-        const char* match = m_matches.get_store().get(info->store_id);
-
-        const char* read = match;
-        while (int c = *read++)
-            if (strchr(auto_quote_chars, c))
-                break;
-
-        --read;
-        if (*read != '\0')
-        {
-            info->first_quoteable = int(read - match);
-            m_matches.set_has_quoteable();
-        }
-        else
-            info->first_quoteable = -1;
-
         const char* displayable = m_matches.get_displayable(i);
         info->visible_chars = char_count(displayable);
     }

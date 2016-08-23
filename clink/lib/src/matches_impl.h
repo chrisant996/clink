@@ -14,7 +14,6 @@ struct match_info
     unsigned short  displayable_store_id;
     unsigned short  aux_store_id;
     char            suffix;
-    unsigned char   first_quoteable;
     unsigned char   visible_chars;
     bool            select;
 };
@@ -48,9 +47,7 @@ public:
     virtual const char*     get_aux(unsigned int index) const override;
     virtual char            get_suffix(unsigned int index) const override;
     virtual unsigned int    get_visible_chars(unsigned int index) const override;
-    virtual bool            has_quoteable() const override;
     virtual bool            has_aux() const override;
-    virtual int             get_first_quoteable(unsigned int index) const override;
     virtual void            get_match_lcd(str_base& out) const override;
 
 private:
@@ -62,7 +59,6 @@ private:
     const match_store&      get_store() const;
     void                    reset();
     void                    coalesce(unsigned int count_hint);
-    void                    set_has_quoteable();
 
 private:
     class store_impl
@@ -87,6 +83,5 @@ private:
     infos                   m_infos;
     unsigned short          m_count = 0;
     bool                    m_coalesced = false;
-    bool                    m_has_quotable = false;
     bool                    m_has_aux = false;
 };
