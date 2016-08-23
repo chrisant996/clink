@@ -4,7 +4,6 @@
 return {
     name = "lib",
     files = {
-        "clink.lua",
         "match.lua",
         "arguments.lua",
         "debugger.lua",

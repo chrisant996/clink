@@ -2,7 +2,6 @@
 // License: http://opensource.org/licenses/MIT
 
 #include "pch.h"
-#include "lua_script_loader.h"
 #include "lua_state.h"
 
 #include <core/base.h>
@@ -71,6 +70,4 @@ void clink_lua_initialise(lua_state& lua)
     }
 
     lua_setglobal(state, "clink");
-
-    lua_load_script(lua, lib, clink);
 }
