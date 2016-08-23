@@ -22,7 +22,7 @@ matching and will do normal files matching instead.]])
 
 --------------------------------------------------------------------------------
 local function get_environment_paths()
-    local paths = clink.split(os.getenv("path"), ";")
+    local paths = os.getenv("path"):explode(";")
 
     -- Append slashes.
     for i = 1, #paths, 1 do
@@ -102,7 +102,7 @@ local function exec_match_generator(line_state, match_builder)
 
     -- Search 'paths' for files ending in 'suffices' and look for matches
     local added = false
-    local suffices = clink.split(os.getenv("pathext"), ";")
+    local suffices = os.getenv("pathext"):explode(";")
     for _, suffix in ipairs(suffices) do
         for _, dir in ipairs(paths) do
             for _, file in ipairs(os.globfiles(dir.."*"..suffix)) do

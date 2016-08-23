@@ -27,6 +27,7 @@ void clink_lua_initialise(lua_state&);
 void os_lua_initialise(lua_state&);
 void path_lua_initialise(lua_state&);
 void settings_lua_initialise(lua_state&);
+void string_lua_initialise(lua_state&);
 
 
 
@@ -57,6 +58,7 @@ void lua_state::initialise()
     os_lua_initialise(self);
     path_lua_initialise(self);
     settings_lua_initialise(self);
+    string_lua_initialise(self);
 
     if (g_debug.get())
         lua_load_script(self, lib, debugger);
