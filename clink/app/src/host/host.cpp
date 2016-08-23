@@ -6,6 +6,7 @@
 #include "host_backend.h"
 #include "prompt.h"
 #include "rl/rl_history.h"
+#include "utils/app_context.h"
 #include "utils/scroller.h"
 
 #include <core/globber.h>
@@ -37,11 +38,6 @@ static setting_enum g_ignore_case(
     "option will also consider -/_ as equal.",
     "off,on,relaxed",
     2);
-
-
-
-//------------------------------------------------------------------------------
-void load_clink_settings();
 
 
 
@@ -104,8 +100,12 @@ bool host::edit_line(const char* prompt, str_base& out)
         str<288>        m_path;
     } cwd;
 
-    load_clink_settings();
+    // Load Clink's settings.
+    str<288> settings_file;
+    app_context::get()->get_settings_path(settings_file);
+    settings::load(settings_file.c_str());
 
+    // Set up the string comparison mode.
     int cmp_mode;
     switch (g_ignore_case.get())
     {

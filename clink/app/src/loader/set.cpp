@@ -10,9 +10,7 @@
 #include <core/str.h>
 
 //------------------------------------------------------------------------------
-void                  load_clink_settings();
-void                  save_clink_settings();
-void                  puts_help(const char**, int);
+void puts_help(const char**, int);
 
 //------------------------------------------------------------------------------
 static bool print_keys()
@@ -101,7 +99,10 @@ int set(int argc, char** argv)
 {
     bool ret = true;
 
-    load_clink_settings();
+    // Load the settings from disk.
+    str<280> settings_file;
+    app_context::get()->get_settings_path(settings_file);
+    settings::load(settings_file.c_str());
 
     // List or set Clink's settings.
     ret = 0;
@@ -123,7 +124,11 @@ int set(int argc, char** argv)
     default:
         ret = set_value(argv[1], argv[2]);
         if (ret)
-            save_clink_settings();
+        {
+            str<280> settings_file;
+            app_context::get()->get_settings_path(settings_file);
+            settings::save(settings_file.c_str());
+        }
         break;
     }
 
