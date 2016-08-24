@@ -74,8 +74,9 @@ void string_lua_initialise(lua_state& lua)
 
     for (const auto& method : methods)
     {
+        lua_pushstring(state, method.name);
         lua_pushcfunction(state, method.method);
-        lua_setfield(state, -2, method.name);
+        lua_rawset(state, -3);
     }
 
     lua_pop(state, 1);

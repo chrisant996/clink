@@ -79,12 +79,13 @@ template <typename S, typename... V> void add_impl(lua_State* state, V... value)
 
     if (luaL_newmetatable(state, "settings_mt"))
     {
+        lua_pushliteral(state, "__gc");
         lua_pushcfunction(state, [](lua_State* state) -> int {
             setting* s = (setting*)lua_touserdata(state, -1);
             s->~setting();
             return 0;
         });
-        lua_setfield(state, -2, "__gc");
+        lua_rawset(state, -3);
     }
 
     lua_setmetatable(state, -2);
@@ -159,8 +160,9 @@ void settings_lua_initialise(lua_state& lua)
 
     for (int i = 0; i < sizeof_array(methods); ++i)
     {
+        lua_pushstring(state, methods[i].name);
         lua_pushcfunction(state, methods[i].method);
-        lua_setfield(state, -2, methods[i].name);
+        lua_rawset(state, -3);
     }
 
     lua_setglobal(state, "settings");

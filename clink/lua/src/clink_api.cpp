@@ -65,8 +65,9 @@ void clink_lua_initialise(lua_state& lua)
 
     for (int i = 0; i < sizeof_array(methods); ++i)
     {
+        lua_pushstring(state, methods[i].name);
         lua_pushcfunction(state, methods[i].method);
-        lua_setfield(state, -2, methods[i].name); // MODE4 - lua_rawset?
+        lua_rawset(state, -3);
     }
 
     lua_setglobal(state, "clink");

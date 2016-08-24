@@ -75,8 +75,9 @@ void lua_bindable<T>::bind()
 
             if (luaL_newmetatable(m_state, "lua_bindable"))
             {
+                lua_pushliteral(m_state, "__call");
                 lua_pushcfunction(m_state, &lua_bindable<T>::call);
-                lua_setfield(m_state, -2, "__call");
+                lua_rawset(m_state, -3);
             }
 
             lua_setmetatable(m_state, -2);
