@@ -1,18 +1,6 @@
 #include "pch.h"
 #ifdef CLINK_EMBED_LUA_SCRIPTS
-const char* lib_clink_lua_script = 
-"function clink.split(str, sep)\n"
-"    -- MODE4 : remove and add as a method to string from C++.\n"
-"    local i = 1\n"
-"    local ret = {}\n"
-"    for _, j in function() return str:find(sep, i, true) end do\n"
-"        table.insert(ret, str:sub(i, j - 1))\n"
-"        i = j + 1\n"
-"    end\n"
-"    table.insert(ret, str:sub(i, j))\n"
-"    return ret\n"
-"end\n"
-"";const char* lib_match_lua_script = 
+const char* lib_match_lua_script = 
 "local generators = {}\n"
 "local function generate_matches_impl(line_state, match_builder)\n"
 "    for _, generator in ipairs(generators) do\n"
@@ -1638,12 +1626,11 @@ const char* lib_clink_lua_script =
 "  return assertmsg                       --carry on\n"
 "end\n"
 "_TRACEBACK = debug.traceback             --Lua 5.0 function\n"
-"";const char* lib_lua_scripts[] = {lib_clink_lua_script,lib_match_lua_script,lib_arguments_lua_script,lib_debugger_lua_script,nullptr,};
+"";const char* lib_lua_scripts[] = {lib_match_lua_script,lib_arguments_lua_script,lib_debugger_lua_script,nullptr,};
 #else
 const char* lib_embed_path = __FILE__;
-const char* lib_clink_lua_file = "clink.lua";
 const char* lib_match_lua_file = "match.lua";
 const char* lib_arguments_lua_file = "arguments.lua";
 const char* lib_debugger_lua_file = "debugger.lua";
-const char* lib_lua_files[] = {lib_clink_lua_file,lib_match_lua_file,lib_arguments_lua_file,lib_debugger_lua_file,nullptr,};
+const char* lib_lua_files[] = {lib_match_lua_file,lib_arguments_lua_file,lib_debugger_lua_file,nullptr,};
 #endif
