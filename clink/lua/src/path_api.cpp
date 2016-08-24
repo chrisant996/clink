@@ -137,10 +137,10 @@ void path_lua_initialise(lua_state& lua)
 
     lua_createtable(state, sizeof_array(methods), 0);
 
-    for (int i = 0; i < sizeof_array(methods); ++i)
+    for (const auto& method : methods)
     {
-        lua_pushstring(state, methods[i].name);
-        lua_pushcfunction(state, methods[i].method);
+        lua_pushstring(state, method.name);
+        lua_pushcfunction(state, method.method);
         lua_rawset(state, -3);
     }
 
