@@ -1,6 +1,7 @@
 #include "pch.h"
 #ifdef CLINK_EMBED_LUA_SCRIPTS
 const char* app_cmd_lua_script = 
+"local cmd_module = clink:module(40)\n"
 "local cmd_commands = {\n"
 "    \"assoc\", \"break\", \"call\", \"cd\", \"chcp\", \"chdir\", \"cls\", \"color\", \"copy\",\n"
 "    \"date\", \"del\", \"dir\", \"diskcomp\", \"diskcopy\", \"echo\", \"endlocal\", \"erase\",\n"
@@ -9,7 +10,7 @@ const char* app_cmd_lua_script =
 "    \"rem\", \"ren\", \"rename\", \"rmdir\", \"set\", \"setlocal\", \"shift\", \"start\",\n"
 "    \"time\", \"title\", \"tree\", \"type\", \"ver\", \"verify\", \"vol\"\n"
 "}\n"
-"local function cmd_command_generator(line_state, match_builder)\n"
+"function cmd_module:generate(line_state, match_builder)\n"
 "    -- Cmd commands only apply for the first word of a line.\n"
 "    if line_state:getwordcount() > 1 then\n"
 "        return false\n"
@@ -32,7 +33,6 @@ const char* app_cmd_lua_script =
 "    match_builder:addmatches(cmd_commands)\n"
 "    return false\n"
 "end\n"
-"clink.register_match_generator(cmd_command_generator, 40)\n"
 "";const char* app_dir_lua_script = 
 "local function dir_match_generator(word)\n"
 "    local matches = {}\n"
@@ -49,6 +49,7 @@ const char* app_cmd_lua_script =
 "clink.arg.register_parser(\"md\", dir_match_generator)\n"
 "clink.arg.register_parser(\"mkdir\", dir_match_generator)\n"
 "";const char* app_env_lua_script = 
+"local envvar_module = clink.module(10)\n"
 "local special_env_vars = {\n"
 "    \"cd\", \"date\", \"time\", \"random\", \"errorlevel\",\n"
 "    \"cmdextversion\", \"cmdcmdline\", \"highestnumanodenumber\"\n"
@@ -92,7 +93,6 @@ const char* app_cmd_lua_script =
 "    end\n"
 "    return false\n"
 "end\n"
-"clink.register_match_generator(env_vars_match_generator, 10)\n"
 "";const char* app_exec_lua_script = 
 "settings.add(\"exec.enable\", true, \"Enable executable matching\",\n"
 "\"Only match executables when completing the first word of a line\")\n"
@@ -124,7 +124,8 @@ const char* app_cmd_lua_script =
 "    end\n"
 "    return ret\n"
 "end\n"
-"local function exec_match_generator(line_state, match_builder)\n"
+"local exec_module = clink:module(50)\n"
+"function exec_module:generate(line_state, match_builder)\n"
 "    -- If executable matching is disabled do nothing\n"
 "    if not settings.get(\"exec.enable\") then\n"
 "        return false\n"
@@ -186,7 +187,6 @@ const char* app_cmd_lua_script =
 "    end\n"
 "    return true\n"
 "end\n"
-"clink.register_match_generator(exec_match_generator, 50)\n"
 "";const char* app_git_lua_script = 
 "local git_argument_tree = {\n"
 "    -- Porcelain and ancillary commands from git's man page.\n"
