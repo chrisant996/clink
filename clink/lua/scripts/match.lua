@@ -10,7 +10,7 @@ function clink:module(priority)
     local ret = { _priority = priority }
     table.insert(self._modules, ret)
 
-    self._module_sort_pending = true
+    self._modules_unsorted = true
     return ret
 end
 
@@ -29,11 +29,11 @@ end
 --------------------------------------------------------------------------------
 function clink:_generate(line_state, match_builder)
     -- Sort modules by priority if required.
-    if self._module_sort_pending then
+    if self._modules_unsorted then
         local lambda = function(a, b) return a._priority < b._priority end
         table.sort(self._modules, lambda)
 
-        self._module_sort_pending = false
+        self._modules_unsorted = false
     end
 
     -- Protected call to generate matches.
