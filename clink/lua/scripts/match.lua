@@ -18,6 +18,8 @@ end
 
 --------------------------------------------------------------------------------
 function clink.generate_matches(line_state, match_builder)
+    table.sort(generators, function(a, b) return a.p < b.p end)
+
     local ok, ret = pcall(generate_matches_impl, line_state, match_builder)
     if not ok then
         print("")
@@ -36,5 +38,4 @@ function clink.register_match_generator(func, priority)
     end
 
     table.insert(generators, {f=func, p=priority})
-    table.sort(generators, function(a, b) return a.p < b.p end)
 end
