@@ -3,7 +3,7 @@
 
 #pragma once
 
-#include <lib/editor_backend.h>
+#include <lib/editor_module.h>
 
 //------------------------------------------------------------------------------
 class scroller
@@ -21,8 +21,8 @@ private:
 };
 
 //------------------------------------------------------------------------------
-class scroller_backend
-    : public editor_backend
+class scroller_module
+    : public editor_module
 {
 private:
     virtual void    bind_input(binder& binder) override;

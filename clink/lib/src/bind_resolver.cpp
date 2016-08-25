@@ -18,7 +18,7 @@ bind_resolver::binding::binding(bind_resolver* resolver, int node_index)
     const binder& binder = m_outer->m_binder;
     const auto& node = binder.get_node(m_node_index);
 
-    m_backend = node.backend;
+    m_module = node.module;
     m_depth = max<unsigned char>(1, node.depth);
     m_id = node.id;
 }
@@ -30,13 +30,13 @@ bind_resolver::binding::operator bool () const
 }
 
 //------------------------------------------------------------------------------
-editor_backend* bind_resolver::binding::get_backend() const
+editor_module* bind_resolver::binding::get_module() const
 {
     if (m_outer == nullptr)
         return nullptr;
 
     const binder& binder = m_outer->m_binder;
-    return binder.get_backend(m_backend);
+    return binder.get_module(m_module);
 }
 
 //------------------------------------------------------------------------------

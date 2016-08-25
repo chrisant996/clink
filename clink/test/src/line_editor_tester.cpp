@@ -5,12 +5,12 @@
 #include "line_editor_tester.h"
 
 #include <core/base.h>
-#include <lib/editor_backend.h>
+#include <lib/editor_module.h>
 #include <lib/matches.h>
 
 //------------------------------------------------------------------------------
-class empty_backend
-    : public editor_backend
+class empty_module
+    : public editor_module
 {
 public:
     virtual void    bind_input(binder& binder) override {}
@@ -24,8 +24,8 @@ public:
 
 
 //------------------------------------------------------------------------------
-class test_backend
-    : public empty_backend
+class test_module
+    : public empty_module
 {
 public:
     const matches*  get_matches() const;
@@ -38,26 +38,26 @@ private:
 };
 
 //------------------------------------------------------------------------------
-const matches* test_backend::get_matches() const
+const matches* test_module::get_matches() const
 {
     return m_matches;
 }
 
 //------------------------------------------------------------------------------
-void test_backend::bind_input(binder& binder)
+void test_module::bind_input(binder& binder)
 {
     int default_group = binder.get_group();
     binder.bind(default_group, "\b", 0);
 }
 
 //------------------------------------------------------------------------------
-void test_backend::on_matches_changed(const context& context)
+void test_module::on_matches_changed(const context& context)
 {
     m_matches = &(context.matches);
 }
 
 //------------------------------------------------------------------------------
-void test_backend::on_input(const input&, result& result, const context& context)
+void test_module::on_input(const input&, result& result, const context& context)
 {
     if (context.matches.get_match_count() == 1)
         result.accept_match(0);
@@ -123,10 +123,10 @@ void line_editor_tester::run()
     REQUIRE(m_input != nullptr);
     m_test_terminal.set_input(m_input);
 
-    // If we're expecting some matches then add a backend to catch the
+    // If we're expecting some matches then add a module to catch the
     // matches object.
-    test_backend match_catch;
-    m_editor->add_backend(match_catch);
+    test_module match_catch;
+    m_editor->add_module(match_catch);
 
     // First update doesn't read input. We do however want to read at least one
     // character before bailing on the loop.

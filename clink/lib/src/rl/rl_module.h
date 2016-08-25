@@ -3,17 +3,17 @@
 
 #pragma once
 
-#include "editor_backend.h"
+#include "editor_module.h"
 
 #include <core/singleton.h>
 
 //------------------------------------------------------------------------------
-class rl_backend
-    : public editor_backend
-    , public singleton<rl_backend>
+class rl_module
+    : public editor_module
+    , public singleton<rl_module>
 {
 public:
-                    rl_backend(const char* shell_name);
+                    rl_module(const char* shell_name);
 
 private:
     virtual void    bind_input(binder& binder) override;

@@ -33,13 +33,13 @@ void line_editor_destroy(line_editor* editor)
 
 //------------------------------------------------------------------------------
 line_editor_impl::line_editor_impl(const desc& desc)
-: m_backend(desc.shell_name)
+: m_module(desc.shell_name)
 , m_desc(desc)
 {
     if (m_desc.quote_pair == nullptr)
         m_desc.quote_pair = "";
 
-    add_backend(m_backend);
+    add_module(m_module);
 }
 
 //------------------------------------------------------------------------------
@@ -48,7 +48,7 @@ void line_editor_impl::initialise()
     if (check_flag(flag_init))
         return;
 
-    struct : public editor_backend::binder {
+    struct : public editor_module::binder {
         virtual int get_group(const char* name) const override
         {
             return binder->get_group(name);
@@ -61,18 +61,18 @@ void line_editor_impl::initialise()
 
         virtual bool bind(unsigned int group, const char* chord, unsigned char key) override
         {
-            return binder->bind(group, chord, *backend, key);
+            return binder->bind(group, chord, *module, key);
         }
 
         ::binder*       binder;
-        editor_backend* backend;
+        editor_module*  module;
     } binder_impl;
 
     binder_impl.binder = &m_binder;
-    for (auto* backend : m_backends)
+    for (auto* module : m_modules)
     {
-        binder_impl.backend = backend;
-        backend->bind_input(binder_impl);
+        binder_impl.module = module;
+        module->bind_input(binder_impl);
     }
 
     set_flag(flag_init);
@@ -96,15 +96,15 @@ void line_editor_impl::begin_line()
     m_buffer.begin_line();
 
     line_state line = get_linestate();
-    editor_backend::context context = get_context(line);
-    for (auto backend : m_backends)
-        backend->on_begin_line(m_desc.prompt, context);
+    editor_module::context context = get_context(line);
+    for (auto module : m_modules)
+        module->on_begin_line(m_desc.prompt, context);
 }
 
 //------------------------------------------------------------------------------
 void line_editor_impl::end_line()
 {
-    for (auto i = m_backends.rbegin(), n = m_backends.rend(); i != n; ++i)
+    for (auto i = m_modules.rbegin(), n = m_modules.rend(); i != n; ++i)
         i->on_end_line();
 
     m_buffer.end_line();
@@ -114,10 +114,10 @@ void line_editor_impl::end_line()
 }
 
 //------------------------------------------------------------------------------
-bool line_editor_impl::add_backend(editor_backend& backend)
+bool line_editor_impl::add_module(editor_module& module)
 {
-    editor_backend** slot = m_backends.push_back();
-    return (slot != nullptr) ? *slot = &backend, true : false;
+    editor_module** slot = m_modules.push_back();
+    return (slot != nullptr) ? *slot = &module, true : false;
 }
 
 //------------------------------------------------------------------------------
@@ -183,9 +183,9 @@ void line_editor_impl::update_input()
         int columns = m_desc.terminal->get_columns();
         int rows = m_desc.terminal->get_rows();
         line_state line = get_linestate();
-        editor_backend::context context = get_context(line);
-        for (auto* backend : m_backends)
-            backend->on_terminal_resize(columns, rows, context);
+        editor_module::context context = get_context(line);
+        for (auto* module : m_modules)
+            module->on_terminal_resize(columns, rows, context);
     }
 
     if (key < 0)
@@ -194,7 +194,7 @@ void line_editor_impl::update_input()
     if (!m_bind_resolver.step(key))
         return;
 
-    struct result_impl : public editor_backend::result
+    struct result_impl : public editor_module::result
     {
         enum
         {
@@ -218,21 +218,21 @@ void line_editor_impl::update_input()
 
     while (auto binding = m_bind_resolver.next())
     {
-        // Binding found, dispatch it off to the backend.
+        // Binding found, dispatch it off to the module.
         result_impl result;
         result.match = -1;
         result.flags = 0;
         result.group = m_bind_resolver.get_group();
 
         str<16> chord;
-        editor_backend* backend = binding.get_backend();
+        editor_module* module = binding.get_module();
         int id = binding.get_id();
         binding.get_chord(chord);
 
         line_state line = get_linestate();
-        editor_backend::context context = get_context(line);
-        editor_backend::input input = { chord.c_str(), id };
-        backend->on_input(input, result, context);
+        editor_module::context context = get_context(line);
+        editor_module::input input = { chord.c_str(), id };
+        module->on_input(input, result, context);
 
         m_bind_resolver.set_group(result.group);
 
@@ -490,7 +490,7 @@ line_state line_editor_impl::get_linestate() const
 }
 
 //------------------------------------------------------------------------------
-editor_backend::context line_editor_impl::get_context(const line_state& line) const
+editor_module::context line_editor_impl::get_context(const line_state& line) const
 {
     line_buffer* buffer = const_cast<rl_buffer*>(&m_buffer);
     return { *m_desc.terminal, *buffer, line, m_matches };
@@ -563,10 +563,10 @@ void line_editor_impl::update_internal()
 
         m_prev_key = next_key.value;
 
-        // Tell all the backends that the matches changed.
+        // Tell all the modules that the matches changed.
         line_state line = get_linestate();
-        editor_backend::context context = get_context(line);
-        for (auto backend : m_backends)
-            backend->on_matches_changed(context);
+        editor_module::context context = get_context(line);
+        for (auto module : m_modules)
+            module->on_matches_changed(context);
     }
 }

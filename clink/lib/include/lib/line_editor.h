@@ -3,7 +3,7 @@
 
 #pragma once
 
-class editor_backend;
+class editor_module;
 class line_buffer;
 class match_generator;
 class terminal;
@@ -28,7 +28,7 @@ public:
     };
 
     virtual             ~line_editor() = default;
-    virtual bool        add_backend(editor_backend& backend) = 0;
+    virtual bool        add_module(editor_module& module) = 0;
     virtual bool        add_generator(match_generator& generator) = 0;
     virtual bool        get_line(char* out, int out_size) = 0;
     virtual bool        edit(char* out, int out_size) = 0;
@@ -40,5 +40,5 @@ public:
 //------------------------------------------------------------------------------
 line_editor*            line_editor_create(const line_editor::desc& desc);
 void                    line_editor_destroy(line_editor* editor);
-editor_backend*         classic_match_ui_create();
-void                    classic_match_ui_destroy(editor_backend* classic_ui);
+editor_module*          classic_match_ui_create();
+void                    classic_match_ui_destroy(editor_module* classic_ui);

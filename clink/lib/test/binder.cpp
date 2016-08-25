@@ -4,7 +4,7 @@
 #include "pch.h"
 #include "bind_resolver.h"
 #include "binder.h"
-#include "editor_backend.h"
+#include "editor_module.h"
 
 //------------------------------------------------------------------------------
 TEST_CASE("Binder") {
@@ -35,26 +35,26 @@ TEST_CASE("Binder") {
         REQUIRE(binder.create_group("group") == -1);
     }
 
-    SECTION("Overflow : backend") {
+    SECTION("Overflow : module") {
         int group = binder.get_group();
         for (int i = 0; i < 64; ++i)
-            REQUIRE(binder.bind(group, "", ((editor_backend*)0)[i], char(i)));
+            REQUIRE(binder.bind(group, "", ((editor_module*)0)[i], char(i)));
 
-        auto& backend = ((editor_backend*)0)[0xff];
-        REQUIRE(!binder.bind(group, "", backend, 0xff));
+        auto& module = ((editor_module*)0)[0xff];
+        REQUIRE(!binder.bind(group, "", module, 0xff));
     }
 
     SECTION("Overflow : bind") {
-        auto& null_backend = *(editor_backend*)0;
+        auto& null_module = *(editor_module*)0;
         int default_group = binder.get_group();
 
         for (int i = 0; i < 508; ++i)
         {
             char chord[] = { char(i > 0xff) + 1, char(i % 0xfe) + 1, 0 };
-            REQUIRE(binder.bind(default_group, chord, null_backend, 0x12));
+            REQUIRE(binder.bind(default_group, chord, null_module, 0x12));
         }
 
-        REQUIRE(!binder.bind(default_group, "\x01\x02\x03", null_backend, 0x12));
+        REQUIRE(!binder.bind(default_group, "\x01\x02\x03", null_module, 0x12));
     }
 
     SECTION("Valid chords") {
@@ -81,8 +81,8 @@ TEST_CASE("Binder") {
         int group = binder.get_group();
         for (const auto& chord : chords)
         {
-            auto& backend = *(editor_backend*)(&chord);
-            REQUIRE(binder.bind(group, chord.bind, backend, 123));
+            auto& module = *(editor_module*)(&chord);
+            REQUIRE(binder.bind(group, chord.bind, module, 123));
 
             bind_resolver resolver(binder);
             for (const char* c = chord.input; *c; ++c)
@@ -92,7 +92,7 @@ TEST_CASE("Binder") {
             auto binding = resolver.next();
             REQUIRE(binding);
             REQUIRE(binding.get_id() == 123);
-            REQUIRE(binding.get_backend() == &backend);
+            REQUIRE(binding.get_module() == &module);
         }
     }
 
@@ -106,7 +106,7 @@ TEST_CASE("Binder") {
         int group = binder.get_group();
         for (const char* chord : chords)
         {
-            REQUIRE(!binder.bind(group, chord, *(editor_backend*)0, 234));
+            REQUIRE(!binder.bind(group, chord, *(editor_module*)0, 234));
         }
     }
 }

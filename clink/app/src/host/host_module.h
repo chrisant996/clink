@@ -3,14 +3,14 @@
 
 #pragma once
 
-#include <lib/editor_backend.h>
+#include <lib/editor_module.h>
 
 //------------------------------------------------------------------------------
-class host_backend
-    : public editor_backend
+class host_module
+    : public editor_module
 {
 public:
-                    host_backend(const char* host_name);
+                    host_module(const char* host_name);
     virtual void    bind_input(binder& binder) override;
     virtual void    on_begin_line(const char* prompt, const context& context) override;
     virtual void    on_end_line() override;

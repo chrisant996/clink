@@ -4,7 +4,7 @@
 #include "pch.h"
 #include "classic_match_ui.h"
 #include "binder.h"
-#include "editor_backend.h"
+#include "editor_module.h"
 #include "line_buffer.h"
 #include "line_state.h"
 #include "matches.h"
@@ -14,13 +14,13 @@
 #include <terminal/terminal.h>
 
 //------------------------------------------------------------------------------
-editor_backend* classic_match_ui_create()
+editor_module* classic_match_ui_create()
 {
     return new classic_match_ui();
 }
 
 //------------------------------------------------------------------------------
-void classic_match_ui_destroy(editor_backend* classic_ui)
+void classic_match_ui_destroy(editor_module* classic_ui)
 {
     delete classic_ui;
 }

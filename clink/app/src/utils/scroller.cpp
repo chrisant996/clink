@@ -67,7 +67,7 @@ void scroller::page_down()
 
 
 //------------------------------------------------------------------------------
-void scroller_backend::bind_input(binder& binder)
+void scroller_module::bind_input(binder& binder)
 {
     m_bind_group = binder.create_group("scroller");
     if (m_bind_group >= 0)
@@ -82,22 +82,22 @@ void scroller_backend::bind_input(binder& binder)
 }
 
 //------------------------------------------------------------------------------
-void scroller_backend::on_begin_line(const char* prompt, const context& context)
+void scroller_module::on_begin_line(const char* prompt, const context& context)
 {
 }
 
 //------------------------------------------------------------------------------
-void scroller_backend::on_end_line()
+void scroller_module::on_end_line()
 {
 }
 
 //------------------------------------------------------------------------------
-void scroller_backend::on_matches_changed(const context& context)
+void scroller_module::on_matches_changed(const context& context)
 {
 }
 
 //------------------------------------------------------------------------------
-void scroller_backend::on_input(
+void scroller_module::on_input(
     const input& input,
     result& result,
     const context& context)
@@ -128,6 +128,6 @@ void scroller_backend::on_input(
 }
 
 //------------------------------------------------------------------------------
-void scroller_backend::on_terminal_resize(int columns, int rows, const context& context)
+void scroller_module::on_terminal_resize(int columns, int rows, const context& context)
 {
 }

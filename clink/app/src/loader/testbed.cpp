@@ -15,12 +15,12 @@ int testbed(int, char**)
 
     win_terminal terminal;
 
-    editor_backend* ui = classic_match_ui_create();
+    editor_module* ui = classic_match_ui_create();
 
     line_editor::desc desc = {};
     desc.terminal = &terminal;
     line_editor* editor = line_editor_create(desc);
-    editor->add_backend(*ui);
+    editor->add_module(*ui);
     editor->add_generator(file_match_generator());
 
     char out[64];

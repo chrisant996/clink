@@ -3,11 +3,11 @@
 
 #pragma once
 
-#include "editor_backend.h"
+#include "editor_module.h"
 
 //------------------------------------------------------------------------------
 class classic_match_ui
-    : public editor_backend
+    : public editor_module
 {
 private:
     enum state : unsigned char

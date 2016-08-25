@@ -3,7 +3,7 @@
 
 #include "pch.h"
 #include "host.h"
-#include "host_backend.h"
+#include "host_module.h"
 #include "prompt.h"
 #include "rl/rl_history.h"
 #include "utils/app_context.h"
@@ -156,14 +156,14 @@ MODE4 */
     // Create the editor and add components to it.
     line_editor* editor = line_editor_create(desc);
 
-    editor_backend* ui = classic_match_ui_create();
-    editor->add_backend(*ui);
+    editor_module* ui = classic_match_ui_create();
+    editor->add_module(*ui);
 
-    scroller_backend scroller;
-    editor->add_backend(scroller);
+    scroller_module scroller;
+    editor->add_module(scroller);
 
-    host_backend host_backend(m_name);
-    editor->add_backend(host_backend);
+    host_module host_module(m_name);
+    editor->add_module(host_module);
 
     editor->add_generator(lua_generator);
     editor->add_generator(file_match_generator());

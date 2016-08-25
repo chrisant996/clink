@@ -4,7 +4,7 @@
 #pragma once
 
 class binder;
-class editor_backend;
+class editor_module;
 class str_base;
 
 //------------------------------------------------------------------------------
@@ -15,7 +15,7 @@ public:
     {
     public:
         explicit        operator bool () const;
-        editor_backend* get_backend() const;
+        editor_module*  get_module() const;
         unsigned char   get_id() const;
         void            get_chord(str_base& chord) const;
         void            claim();
@@ -26,7 +26,7 @@ public:
                         binding(bind_resolver* resolver, int node_index);
         bind_resolver*  m_outer = nullptr;
         unsigned short  m_node_index;
-        unsigned char   m_backend;
+        unsigned char   m_module;
         unsigned char   m_depth;
         unsigned char   m_id;
     };

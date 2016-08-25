@@ -152,7 +152,7 @@ int binder::create_group(const char* name)
 bool binder::bind(
     unsigned int group,
     const char* chord,
-    editor_backend& backend,
+    editor_module& module,
     unsigned char id)
 {
     // Validate input
@@ -166,9 +166,9 @@ bool binder::bind(
 
     chord = translated;
 
-    // Store the backend pointer
-    int backend_index = add_backend(backend);
-    if (backend_index < 0)
+    // Store the module pointer
+    int module_index = add_module(module);
+    if (module_index < 0)
         return false;
 
     // Add the chord of keys into the node graph.
@@ -188,7 +188,7 @@ bool binder::bind(
         int check = head;
         while (check > head)
         {
-            if (bindee->key == *chord && bindee->backend == backend_index && bindee->id == id)
+            if (bindee->key == *chord && bindee->module == module_index && bindee->id == id)
                 return true;
 
             check = bindee->next;
@@ -202,7 +202,7 @@ bool binder::bind(
         return false;
 
     bindee = m_nodes + head;
-    bindee->backend = backend_index;
+    bindee->module = module_index;
     bindee->bound = 1;
     bindee->depth = depth;
     bindee->id = id;
@@ -320,24 +320,24 @@ int binder::alloc_nodes(unsigned int count)
 }
 
 //------------------------------------------------------------------------------
-int binder::add_backend(editor_backend& backend)
+int binder::add_module(editor_module& module)
 {
-    for (int i = 0, n = m_backends.size(); i < n; ++i)
-        if (*(m_backends[i]) == &backend)
+    for (int i = 0, n = m_modules.size(); i < n; ++i)
+        if (*(m_modules[i]) == &module)
             return i;
 
-    if (editor_backend** slot = m_backends.push_back())
+    if (editor_module** slot = m_modules.push_back())
     {
-        *slot = &backend;
-        return int(slot - m_backends.front());
+        *slot = &module;
+        return int(slot - m_modules.front());
     }
 
     return -1;
 }
 
 //------------------------------------------------------------------------------
-editor_backend* binder::get_backend(unsigned int index) const
+editor_module* binder::get_module(unsigned int index) const
 {
-    auto b = m_backends[index];
+    auto b = m_modules[index];
     return b ? *b : nullptr;
 }

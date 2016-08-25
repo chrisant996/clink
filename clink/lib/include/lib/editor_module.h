@@ -9,7 +9,7 @@ class matches;
 class terminal;
 
 //------------------------------------------------------------------------------
-class editor_backend
+class editor_module
 {
 public:
     struct result
@@ -43,7 +43,7 @@ public:
         virtual bool        bind(unsigned int group, const char* chord, unsigned char id) = 0;
     };
 
-    virtual                 ~editor_backend() = default;
+    virtual                 ~editor_module() = default;
     virtual void            bind_input(binder& binder) = 0;
     virtual void            on_begin_line(const char* prompt, const context& context) = 0;
     virtual void            on_end_line() = 0;

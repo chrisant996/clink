@@ -2,7 +2,7 @@
 // License: http://opensource.org/licenses/MIT
 
 #include "pch.h"
-#include "host_backend.h"
+#include "host_module.h"
 
 #include <core/path.h>
 #include <core/settings.h>
@@ -59,8 +59,8 @@ static setting_str g_key_expand_env(
 
 //------------------------------------------------------------------------------
 static void ctrl_c(
-    editor_backend::result& result,
-    const editor_backend::context& context)
+    editor_module::result& result,
+    const editor_module::context& context)
 {
     //auto& buffer = context.buffer;
     context.buffer.remove(0, ~0u);
@@ -175,7 +175,7 @@ static void copy_cwd(const line_buffer& buffer)
 }
 
 //------------------------------------------------------------------------------
-static void up_directory(editor_backend::result& result, line_buffer& buffer)
+static void up_directory(editor_module::result& result, line_buffer& buffer)
 {
     buffer.begin_undo_group();
     buffer.remove(0, ~0u);
@@ -272,13 +272,13 @@ enum
 
 
 //------------------------------------------------------------------------------
-host_backend::host_backend(const char* host_name)
+host_module::host_module(const char* host_name)
 : m_host_name(host_name)
 {
 }
 
 //------------------------------------------------------------------------------
-void host_backend::bind_input(binder& binder)
+void host_module::bind_input(binder& binder)
 {
     int default_group = binder.get_group();
     binder.bind(default_group, g_key_paste.get(), bind_id_paste);
@@ -293,22 +293,22 @@ void host_backend::bind_input(binder& binder)
 }
 
 //------------------------------------------------------------------------------
-void host_backend::on_begin_line(const char* prompt, const context& context)
+void host_module::on_begin_line(const char* prompt, const context& context)
 {
 }
 
 //------------------------------------------------------------------------------
-void host_backend::on_end_line()
+void host_module::on_end_line()
 {
 }
 
 //------------------------------------------------------------------------------
-void host_backend::on_matches_changed(const context& context)
+void host_module::on_matches_changed(const context& context)
 {
 }
 
 //------------------------------------------------------------------------------
-void host_backend::on_input(const input& input, result& result, const context& context)
+void host_module::on_input(const input& input, result& result, const context& context)
 {
     switch (input.id)
     {
@@ -323,6 +323,6 @@ void host_backend::on_input(const input& input, result& result, const context& c
 }
 
 //------------------------------------------------------------------------------
-void host_backend::on_terminal_resize(int columns, int rows, const context& context)
+void host_module::on_terminal_resize(int columns, int rows, const context& context)
 {
 }

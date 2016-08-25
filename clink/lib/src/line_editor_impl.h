@@ -5,11 +5,11 @@
 
 #include "bind_resolver.h"
 #include "binder.h"
-#include "editor_backend.h"
+#include "editor_module.h"
 #include "line_editor.h"
 #include "line_state.h"
 #include "matches_impl.h"
-#include "rl/rl_backend.h"
+#include "rl/rl_module.h"
 #include "rl/rl_buffer.h"
 
 #include <core/array.h>
@@ -20,15 +20,15 @@ class line_editor_impl
 {
 public:
                         line_editor_impl(const desc& desc);
-    virtual bool        add_backend(editor_backend& backend) override;
+    virtual bool        add_module(editor_module& module) override;
     virtual bool        add_generator(match_generator& generator) override;
     virtual bool        get_line(char* out, int out_size) override;
     virtual bool        edit(char* out, int out_size) override;
     virtual bool        update() override;
 
 private:
-    typedef editor_backend                      backend;
-    typedef fixed_array<editor_backend*, 16>    backends;
+    typedef editor_module                       module;
+    typedef fixed_array<editor_module*, 16>     modules;
     typedef fixed_array<match_generator*, 32>   generators;
     typedef fixed_array<word, 72>               words;
 
@@ -49,15 +49,15 @@ private:
     void                update_input();
     void                accept_match(unsigned int index);
     void                append_match_lcd();
-    backend::context    get_context(const line_state& line) const;
+    module::context     get_context(const line_state& line) const;
     line_state          get_linestate() const;
     void                set_flag(unsigned char flag);
     void                clear_flag(unsigned char flag);
     bool                check_flag(unsigned char flag) const;
-    rl_backend          m_backend;
+    rl_module           m_module;
     rl_buffer           m_buffer;
     desc                m_desc;
-    backends            m_backends;
+    modules             m_modules;
     generators          m_generators;
     binder              m_binder;
     bind_resolver       m_bind_resolver = { m_binder };

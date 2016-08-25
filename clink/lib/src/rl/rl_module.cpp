@@ -2,7 +2,7 @@
 // License: http://opensource.org/licenses/MIT
 
 #include "pch.h"
-#include "rl_backend.h"
+#include "rl_module.h"
 
 #include <core/base.h>
 #include <core/log.h>
@@ -115,7 +115,7 @@ static void terminal_flush_thunk(FILE* stream)
 
 
 //------------------------------------------------------------------------------
-rl_backend::rl_backend(const char* shell_name)
+rl_module::rl_module(const char* shell_name)
 : m_rl_buffer(nullptr)
 , m_prev_group(-1)
 {
@@ -159,7 +159,7 @@ rl_backend::rl_backend(const char* shell_name)
 }
 
 //------------------------------------------------------------------------------
-void rl_backend::bind_input(binder& binder)
+void rl_module::bind_input(binder& binder)
 {
     int default_group = binder.get_group();
     binder.bind(default_group, "", bind_id_input);
@@ -170,7 +170,7 @@ void rl_backend::bind_input(binder& binder)
 }
 
 //------------------------------------------------------------------------------
-void rl_backend::on_begin_line(const char* prompt, const context& context)
+void rl_module::on_begin_line(const char* prompt, const context& context)
 {
     rl_outstream = (FILE*)(terminal_out*)(&context.terminal);
 
@@ -188,7 +188,7 @@ void rl_backend::on_begin_line(const char* prompt, const context& context)
         if (c1) rl_prompt.concat("\x02", 1);
     }
 
-    auto handler = [] (char* line) { rl_backend::get()->done(line); };
+    auto handler = [] (char* line) { rl_module::get()->done(line); };
     rl_callback_handler_install(rl_prompt.c_str(), handler);
 
     m_done = false;
@@ -197,7 +197,7 @@ void rl_backend::on_begin_line(const char* prompt, const context& context)
 }
 
 //------------------------------------------------------------------------------
-void rl_backend::on_end_line()
+void rl_module::on_end_line()
 {
     if (m_rl_buffer != nullptr)
     {
@@ -207,12 +207,12 @@ void rl_backend::on_end_line()
 }
 
 //------------------------------------------------------------------------------
-void rl_backend::on_matches_changed(const context& context)
+void rl_module::on_matches_changed(const context& context)
 {
 }
 
 //------------------------------------------------------------------------------
-void rl_backend::on_input(const input& input, result& result, const context& context)
+void rl_module::on_input(const input& input, result& result, const context& context)
 {
     if (input.id == bind_id_rl_help)
     {
@@ -262,7 +262,7 @@ void rl_backend::on_input(const input& input, result& result, const context& con
 }
 
 //------------------------------------------------------------------------------
-void rl_backend::done(const char* line)
+void rl_module::done(const char* line)
 {
     m_done = true;
     m_eof = (line == nullptr);
@@ -277,7 +277,7 @@ void rl_backend::done(const char* line)
 }
 
 //------------------------------------------------------------------------------
-void rl_backend::on_terminal_resize(int columns, int rows, const context& context)
+void rl_module::on_terminal_resize(int columns, int rows, const context& context)
 {
 #if defined(PLATFORM_WINDOWS)
     // The gymnastics below shouldn't really be necessary. The underlying code
