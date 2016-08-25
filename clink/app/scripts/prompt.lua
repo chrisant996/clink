@@ -1,32 +1,48 @@
 -- Copyright (c) 2016 Martin Ridgers
 -- License: http://opensource.org/licenses/MIT
 
---------------------------------------------------------------------------------
-local function register_filter(filter, priority)
-    if priority == nil then
-        priority = 999
-    end
+clink._prompt_filters = {}
 
-    table.insert(prompt.filters, {func=filter, prio=priority})
-    table.sort(prompt.filters, function(a, b) return a.prio < b.prio end)
+--------------------------------------------------------------------------------
+function clink:promptfilter(priority)
+    if priority == nil then priority = 999 end
+
+    local ret = { _priority = priority }
+    table.insert(self._prompt_filters, ret)
+    return ret
 end
 
 --------------------------------------------------------------------------------
-local function filter_prompt(the_prompt)
-    for _, filter in ipairs(prompt.filters) do
-        local filtered, onwards = filter.func(the_prompt)
+function clink:_filter_prompt_impl(prompt)
+    for _, filter in ipairs(self._prompt_filters) do
+        local filtered, onwards = filter:filter(prompt)
         if filtered ~= nil then
             if onwards == false then return filtered end
-            the_prompt = filtered
+            prompt = filtered
         end
     end
 
-    return the_prompt
+    return prompt
 end
 
 --------------------------------------------------------------------------------
-prompt = {
-    filters         = {},
-    register_filter = register_filter,
-    filter          = filter_prompt,
-}
+function clink:_filter_prompt(prompt)
+    -- Sort by priority if required.
+    if self._prompt_filters_unsorted then
+        local lambda = function(a, b) return a._priority < b._priority end
+        table.sort(self._prompt_filters, lambda)
+
+        self._prompt_filters_unsorted = false
+    end
+
+    -- Protected call to prompt filters.
+    local ok, ret = pcall(self._filter_prompt_impl, self, prompt)
+    if not ok then
+        print("")
+        print(ret)
+        print(debug.traceback())
+        return false
+    end
+
+    return ret
+end
