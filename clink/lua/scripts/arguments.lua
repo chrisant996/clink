@@ -561,7 +561,9 @@ function clink.arg.register_parser(cmd, parser)
 end
 
 --------------------------------------------------------------------------------
-local function argument_match_generator(line_state, match_builder)
+local argmatch_module = clink:module(25)
+
+function argmatch_module:generate(line_state, match_builder)
     -- Split the first word into name and extension.
     local first_word = line_state:getword(1)
     local cmd = path.getbasename(first_word):lower()
@@ -595,6 +597,3 @@ local function argument_match_generator(line_state, match_builder)
     match_builder:addmatches(ret)
     return true
 end
-
---------------------------------------------------------------------------------
-clink.register_match_generator(argument_match_generator, 25)

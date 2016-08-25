@@ -46,7 +46,9 @@ local function exec_find_dirs(pattern, case_map)
 end
 
 --------------------------------------------------------------------------------
-local function exec_match_generator(line_state, match_builder)
+local exec_module = clink:module(50)
+
+function exec_module:generate(line_state, match_builder)
     -- If executable matching is disabled do nothing
     if not settings.get("exec.enable") then
         return false
@@ -118,6 +120,3 @@ local function exec_match_generator(line_state, match_builder)
 
     return true
 end
-
---------------------------------------------------------------------------------
-clink.register_match_generator(exec_match_generator, 50)

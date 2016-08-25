@@ -1,6 +1,8 @@
 -- Copyright (c) 2012 Martin Ridgers
 -- License: http://opensource.org/licenses/MIT
 
+local envvar_module = clink.module(10)
+
 --------------------------------------------------------------------------------
 local special_env_vars = {
     "cd", "date", "time", "random", "errorlevel",
@@ -60,6 +62,3 @@ local function env_vars_match_generator(text, first, last, result)
 
     return false
 end
-
---------------------------------------------------------------------------------
-clink.register_match_generator(env_vars_match_generator, 10)

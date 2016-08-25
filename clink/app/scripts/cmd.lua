@@ -1,6 +1,8 @@
 -- Copyright (c) 2016 Martin Ridgers
 -- License: http://opensource.org/licenses/MIT
 
+local cmd_module = clink:module(40)
+
 --------------------------------------------------------------------------------
 local cmd_commands = {
     "assoc", "break", "call", "cd", "chcp", "chdir", "cls", "color", "copy",
@@ -12,7 +14,7 @@ local cmd_commands = {
 }
 
 --------------------------------------------------------------------------------
-local function cmd_command_generator(line_state, match_builder)
+function cmd_module:generate(line_state, match_builder)
     -- Cmd commands only apply for the first word of a line.
     if line_state:getwordcount() > 1 then
         return false
@@ -38,6 +40,3 @@ local function cmd_command_generator(line_state, match_builder)
     match_builder:addmatches(cmd_commands)
     return false
 end
-
---------------------------------------------------------------------------------
-clink.register_match_generator(cmd_command_generator, 40)
