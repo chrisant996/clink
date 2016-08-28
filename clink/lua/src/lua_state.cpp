@@ -56,14 +56,15 @@ void lua_state::initialise()
     luaL_openlibs(m_state);
 
     lua_state& self = *this;
+
+    if (g_debug.get())
+        lua_load_script(self, lib, debugger);
+
     clink_lua_initialise(self);
     os_lua_initialise(self);
     path_lua_initialise(self);
     settings_lua_initialise(self);
     string_lua_initialise(self);
-
-    if (g_debug.get())
-        lua_load_script(self, lib, debugger);
 }
 
 //------------------------------------------------------------------------------
