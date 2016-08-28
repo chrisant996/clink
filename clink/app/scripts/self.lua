@@ -4,11 +4,10 @@
 -- MODE4 : some of this is out of date.
 
 --------------------------------------------------------------------------------
-local null_parser = clink.arg.new_parser()
-null_parser:disable_file_matching()
+local nothing = clink:argmatcher()
 
-local inject_parser = clink.arg.new_parser()
-inject_parser:set_flags(
+local inject = clink:argmatcher()
+:addflags(
     "--help",
     "--pid",
     "--profile",
@@ -16,63 +15,52 @@ inject_parser:set_flags(
     "--scripts"
 )
 
-local autorun_dashdash_parser = clink.arg.new_parser()
-autorun_dashdash_parser:set_arguments({ "--" .. inject_parser })
+local autorun_dashdash = clink:argmatcher()
+:addarg("--" .. inject)
 
-local autorun_parser = clink.arg.new_parser()
-autorun_parser:set_flags("--allusers", "--help")
-autorun_parser:set_arguments(
-    {
-        "install"   .. autorun_dashdash_parser,
-        "uninstall" .. null_parser,
-        "show"      .. null_parser,
-        "set"
-    }
+local autorun = clink:argmatcher()
+:addflags("--allusers", "--help")
+:addarg(
+    "install"   .. autorun_dashdash,
+    "uninstall" .. nothing,
+    "show"      .. nothing,
+    "set"
 )
 
-local set_parser = clink.arg.new_parser()
-set_parser:disable_file_matching()
-set_parser:set_flags("--help")
-set_parser:set_arguments(
-    {
-        "ansi_code_support",
-        "ctrld_exits",
-        "exec_match_style",
-        "history_dupe_mode",
-        "history_expand_mode",
-        "history_file_lines",
-        "history_ignore_space",
-        "history_io",
-        "match_colour",
-        "prompt_colour",
-        "space_prefix_match_files",
-        "strip_crlf_on_paste",
-        "terminate_autoanswer",
-        "use_altgr_substitute",
-    }
+local set = clink:argmatcher()
+:generatefiles(false)
+:addflags("--help")
+:addarg(
+    "ansi_code_support",
+    "ctrld_exits",
+    "exec_match_style",
+    "history_dupe_mode",
+    "history_expand_mode",
+    "history_file_lines",
+    "history_ignore_space",
+    "history_io",
+    "match_colour",
+    "prompt_colour",
+    "space_prefix_match_files",
+    "strip_crlf_on_paste",
+    "terminate_autoanswer",
+    "use_altgr_substitute"
 )
 
-local history_parser = clink.arg.new_parser()
-history_parser:set_flags("--help")
-history_parser:set_arguments(
-    {
-        "add",
-        "clear"     .. null_parser,
-        "delete"    .. null_parser,
-        "expand"
-    }
+local history = clink:argmatcher()
+:addflags("--help")
+:addarg(
+    "add",
+    "clear"     .. nothing,
+    "delete"    .. nothing,
+    "expand"
 )
 
-local self_parser = clink.arg.new_parser()
-self_parser:set_arguments(
-    {
-        "inject" .. inject_parser,
-        "autorun" .. autorun_parser,
-        "set" .. set_parser,
-        "history" .. history_parser,
-    }
+clink
+:argmatcher("clink", "clink_x86", "clink_x64")
+:addarg(
+    "inject"    .. inject,
+    "autorun"   .. autorun,
+    "set"       .. set,
+    "history"   .. history
 )
-
-clink.arg.register_parser("clink", self_parser)
-clink.arg.register_parser("clink_x86", self_parser)
-clink.arg.register_parser("clink_x64", self_parser)
