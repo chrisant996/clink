@@ -34,13 +34,8 @@ static setting_bool g_ansi(
 inline void win_terminal_in::begin()
 {
     m_buffer_count = 0;
-
     m_stdin = GetStdHandle(STD_INPUT_HANDLE);
-
-    // Clear 'processed input' flag so key presses such as Ctrl-C and Ctrl-S
-    // aren't swallowed. We also want events about window size changes.
     GetConsoleMode(m_stdin, &m_prev_mode);
-    SetConsoleMode(m_stdin, ENABLE_WINDOW_INPUT);
 }
 
 //------------------------------------------------------------------------------
@@ -69,6 +64,24 @@ inline int win_terminal_in::read()
 //------------------------------------------------------------------------------
 void win_terminal_in::read_console()
 {
+    // Clear 'processed input' flag so key presses such as Ctrl-C and Ctrl-S
+    // aren't swallowed. We also want events about window size changes.
+    struct mode_scope {
+        HANDLE  handle;
+        DWORD   prev_mode;
+
+        mode_scope(HANDLE handle) : handle(handle)
+        {
+            GetConsoleMode(handle, &prev_mode);
+            SetConsoleMode(handle, ENABLE_WINDOW_INPUT);
+        }
+
+        ~mode_scope()
+        {
+            SetConsoleMode(handle, prev_mode);
+        }
+    } mode_scope(m_stdin);
+
     DWORD unused;
     INPUT_RECORD record;
     ReadConsoleInputW(m_stdin, &record, 1, &unused);
