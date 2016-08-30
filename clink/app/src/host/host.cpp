@@ -128,13 +128,6 @@ bool host::edit_line(const char* prompt, str_base& out)
     lua_state lua;
     lua_match_generator lua_generator(lua);
     prompt_filter prompt_filter(lua);
-/* MODE4
-    lua_load_script(lua, app, git);
-    lua_load_script(lua, app, go);
-    lua_load_script(lua, app, hg);
-    lua_load_script(lua, app, p4);
-    lua_load_script(lua, app, svn);
-MODE4 */
     lua_load_script(lua, app, dir);
     lua_load_script(lua, app, exec);
     lua_load_script(lua, app, self);
