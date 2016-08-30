@@ -15,9 +15,9 @@ static setting_enum g_paste_crlf(
     "clink.paste_crlf",
     "Strips CR and LF chars on paste",
     "Setting this to a value >0 will make Clink strip CR and LF characters\n"
-    "from text pasted into the current line. Set this to 1 to strip all\n"
-    "newline characters and 2 to replace them with a space.",
-    "unchanged,delete,space",
+    "from text pasted into the current line. Set this to 'delete' to strip all\n"
+    "newline characters to replace them with a space.",
+    "delete,space",
     1);
 
 static setting_str g_key_paste(
@@ -88,8 +88,6 @@ static void ctrl_c(
 static void strip_crlf(char* line)
 {
     int setting = g_paste_crlf.get();
-    if (setting <= 0)
-        return;
 
     int prev_was_crlf = 0;
     char* write = line;
@@ -103,7 +101,7 @@ static void strip_crlf(char* line)
             *write = c;
             ++write;
         }
-        else if (setting > 1 && !prev_was_crlf)
+        else if (setting > 0 && !prev_was_crlf)
         {
             prev_was_crlf = 1;
             *write = ' ';
