@@ -193,6 +193,19 @@ static int get_env(lua_State* state)
 }
 
 //------------------------------------------------------------------------------
+static int set_env(lua_State* state)
+{
+    const char* name = get_string(state, 1);
+    const char* value = get_string(state, 2);
+    if (name == nullptr || value == nullptr)
+        return 0;
+
+    bool ok = os::set_env(name, value);
+    lua_pushboolean(state, (ok == true));
+    return 1;
+}
+
+//------------------------------------------------------------------------------
 static int get_env_names(lua_State* state)
 {
     lua_createtable(state, 0, 0);
@@ -301,6 +314,7 @@ void os_lua_initialise(lua_state& lua)
         { "globdirs",    &glob_dirs },
         { "globfiles",   &glob_files },
         { "getenv",      &get_env },
+        { "setenv",      &set_env },
         { "getenvnames", &get_env_names },
         { "gethost",     &get_host },
         { "getaliases",  &get_aliases },
