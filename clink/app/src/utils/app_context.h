@@ -14,6 +14,7 @@ class app_context
 public:
     struct desc
     {
+                desc();
         bool    quiet = false;
         bool    log = true;
         char    state_dir[512]; // = {}; (this crashes cl.exe v18.00.21005.1)

@@ -172,7 +172,7 @@ int inject(int argc, char** argv)
 
     // Parse arguments
     DWORD target_pid = 0;
-    app_context::desc app_desc = {};
+    app_context::desc app_desc;
     int i;
     int ret = false;
     while ((i = getopt_long(argc, argv, "nalqhp:d:", options, nullptr)) != -1)

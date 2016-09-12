@@ -110,7 +110,7 @@ int loader(int argc, char** argv)
         return 0;
     }
 
-    app_context::desc app_desc = {};
+    app_context::desc app_desc;
 
     // Parse arguments
     int arg;
