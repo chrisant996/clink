@@ -26,7 +26,7 @@ app_context::desc::desc()
 app_context::app_context(const desc& desc)
 : m_desc(desc)
 {
-    str_base state_dir(m_desc.state_dir, sizeof_array(m_desc.state_dir));
+    str_base state_dir(m_desc.state_dir);
 
     // Override the profile path by either the "clink_profile" environment
     // variable or the --profile argument.
