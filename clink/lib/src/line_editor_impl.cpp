@@ -226,7 +226,7 @@ void line_editor_impl::update_input()
 
         str<16> chord;
         editor_module* module = binding.get_module();
-        int id = binding.get_id();
+        unsigned char id = binding.get_id();
         binding.get_chord(chord);
 
         line_state line = get_linestate();
@@ -317,8 +317,9 @@ void line_editor_impl::collect_words()
             break;
 
         // Add the word.
+        unsigned int offset = unsigned(start - line_buffer);
         m_words.push_back();
-        *(m_words.back()) = { short(start - line_buffer), length, 0, token.delim };
+        *(m_words.back()) = { offset, unsigned(length), 0, token.delim };
     }
 
     // Add an empty word if the cursor is at the beginning of one.
