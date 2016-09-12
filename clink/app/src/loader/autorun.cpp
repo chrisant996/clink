@@ -280,6 +280,7 @@ static int install_autorun(const char* clink_path, int wow64)
     i = key_value ? (int)strlen(key_value) : 0;
     i += 2048;
     str_base new_value((char*)malloc(i), i);
+    new_value.clear();
 
     // Build the new autorun entry by appending clink's entry to the current one.
     if (key_value != nullptr && *key_value != '\0')

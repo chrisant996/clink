@@ -161,6 +161,11 @@ TEST_CASE("Strings" NAME_SUFFIX) {
         s << STR("abcd") << STR("1234");
         REQUIRE(s.equals(STR("abcd1234")) == true);
     }
+
+    SECTION("Construction") {
+        char buffer[] = "test";
+        REQUIRE(str_base(buffer).equals("test") == true);
+    }
 }
 
 #undef STR

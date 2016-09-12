@@ -144,7 +144,7 @@ void get_profile_path(const char* in, str_base& out)
         }
     }
 
-    out << in;
+    out = in;
     path::abs_path(out);
 }
 

@@ -78,7 +78,6 @@ str_impl<TYPE>::str_impl(TYPE* data, unsigned int size)
 , m_growable(0)
 , m_owns_ptr(0)
 {
-    clear();
 }
 
 //------------------------------------------------------------------------------
@@ -335,7 +334,7 @@ template <int COUNT=128, bool GROWABLE=true>
 class str : public str_base
 {
 public:
-                str() : str_base(m_data, COUNT)     { set_growable(GROWABLE); }
+                str() : str_base(m_data, COUNT)     { clear(); set_growable(GROWABLE); }
     explicit    str(const char* value) : str()      { copy(value); }
     explicit    str(const wchar_t* value) : str()   { from_utf16(value); }
                 str(const str&) = delete;
@@ -349,7 +348,7 @@ template <int COUNT=128, bool GROWABLE=true>
 class wstr : public wstr_base
 {
 public:
-                wstr() : wstr_base(m_data, COUNT)   { set_growable(GROWABLE); }
+                wstr() : wstr_base(m_data, COUNT)   { clear(); set_growable(GROWABLE); }
     explicit    wstr(const wchar_t* value) : wstr() { copy(value); }
     explicit    wstr(const char* value) : wstr()    { from_utf8(value); }
                 wstr(const wstr&) = delete;
