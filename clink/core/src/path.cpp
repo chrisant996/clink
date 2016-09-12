@@ -76,6 +76,7 @@ bool abs_path(str_base& in_out)
 //------------------------------------------------------------------------------
 bool abs_path(const char* in, str_base& out)
 {
+    out.copy(in);
     return false;
 }
 
