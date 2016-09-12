@@ -15,7 +15,6 @@
 //------------------------------------------------------------------------------
 bool    initialise_clink(const app_context::desc&);
 void    puts_help(const char**, int);
-void    cpy_path_as_abs(str_base&, const char*);
 
 //------------------------------------------------------------------------------
 static int check_dll_version(const char* clink_dll)
