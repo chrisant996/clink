@@ -30,7 +30,6 @@ app_context::app_context(const desc& desc)
 
     // Override the profile path by either the "clink_profile" environment
     // variable or the --profile argument.
-    str<MAX_PATH> profile_path;
     os::get_env("clink_profile", state_dir);
 
     // Still no state directory set? Derive one.
