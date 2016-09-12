@@ -270,7 +270,7 @@ void host_cmd::edit_line(const wchar_t* prompt, wchar_t* chars, int max_chars)
 
         HANDLE handle = GetStdHandle(STD_OUTPUT_HANDLE);
         DWORD written;
-        WriteConsole(handle, L"\r\n", 2, &written, nullptr);
+        WriteConsole(handle, L"\n", 1, &written, nullptr);
     }
 
     m_doskey.begin(chars, max_chars);
