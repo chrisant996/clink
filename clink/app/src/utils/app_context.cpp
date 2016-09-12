@@ -35,7 +35,7 @@ app_context::app_context(const desc& desc)
     // Still no state directory set? Derive one.
     if (state_dir.empty())
     {
-        wstr<272> wstate_dir;
+        wstr<280> wstate_dir;
         if (SHGetFolderPathW(0, CSIDL_LOCAL_APPDATA, nullptr, 0, wstate_dir.data()) == S_OK)
             state_dir = wstate_dir.c_str();
         else if (!os::get_env("userprofile", state_dir))
