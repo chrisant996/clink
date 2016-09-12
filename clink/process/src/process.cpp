@@ -31,11 +31,10 @@ int process::get_parent_pid() const
 
     if (NtQueryInformationProcess != nullptr)
     {
+        handle handle = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, FALSE, m_pid);
         ULONG size = 0;
         ULONG_PTR pbi[6];
-        LONG ret = NtQueryInformationProcess(GetCurrentProcess(), 0, &pbi,
-            sizeof(pbi), &size);
-
+        LONG ret = NtQueryInformationProcess(handle, 0, &pbi, sizeof(pbi), &size);
         if ((ret >= 0) && (size == sizeof(pbi)))
             return (DWORD)(pbi[5]);
     }
