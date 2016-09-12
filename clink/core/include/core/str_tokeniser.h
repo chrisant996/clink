@@ -32,8 +32,8 @@ public:
 private:
     struct quote
     {
-        unsigned char   left;
-        unsigned char   right;
+        char            left;
+        char            right;
     };
 
     typedef fixed_array<quote, 4> quotes;
