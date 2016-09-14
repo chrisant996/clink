@@ -119,8 +119,13 @@ bool get_env(const char* name, str_base& out)
 bool set_env(const char* name, const char* value)
 {
     wstr<32> wname(name);
-    wstr<64> wvalue(value);
-    return (SetEnvironmentVariableW(wname.c_str(), wvalue.c_str()) != 0);
+
+    wstr<64> wvalue;
+    if (value != nullptr)
+        wvalue = value;
+
+    const wchar_t* value_arg = (value != nullptr) ? wvalue.c_str() : nullptr;
+    return (SetEnvironmentVariableW(wname.c_str(), value_arg) != 0);
 }
 
 }; // namespace os

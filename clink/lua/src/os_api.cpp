@@ -197,7 +197,7 @@ static int set_env(lua_State* state)
 {
     const char* name = get_string(state, 1);
     const char* value = get_string(state, 2);
-    if (name == nullptr || value == nullptr)
+    if (name == nullptr)
         return 0;
 
     bool ok = os::set_env(name, value);
