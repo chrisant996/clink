@@ -30,5 +30,7 @@ public:
     void        get_history_path(str_base& out) const;
 
 private:
+    bool        load_from_env();
+    void        store_to_env();
     desc        m_desc;
 };

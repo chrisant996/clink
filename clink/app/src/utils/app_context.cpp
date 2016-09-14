@@ -8,9 +8,11 @@
 #include <core/os.h>
 #include <core/path.h>
 #include <core/str.h>
+#include <process/process.h>
 
 //------------------------------------------------------------------------------
 static char g_clink_symbol;
+static const char* g_state_env_format = "=clink_state_%d";
 
 
 
@@ -28,9 +30,11 @@ app_context::app_context(const desc& desc)
 {
     str_base state_dir(m_desc.state_dir);
 
-    // Override the profile path by either the "clink_profile" environment
-    // variable or the --profile argument.
-    os::get_env("clink_profile", state_dir);
+    // The environment variable 'clink_profile' overrides all other state
+    // path mechanisms.
+    if (!os::get_env("clink_profile", state_dir))
+        if (state_dir.empty())
+            load_from_env();
 
     // Still no state directory set? Derive one.
     if (state_dir.empty())
@@ -47,8 +51,38 @@ app_context::app_context(const desc& desc)
 
     path::clean(state_dir);
     path::abs_path(state_dir);
-
     os::make_dir(state_dir.c_str());
+
+    store_to_env();
+}
+
+//------------------------------------------------------------------------------
+bool app_context::load_from_env()
+{
+    // Look up through process chain to see if we've inherited a state directory
+    // in our environment.
+
+    str<32> clink_env_var;
+    str_base state_dir(m_desc.state_dir);
+
+    int pid = -1;
+    while (pid = process(pid).get_parent_pid())
+    {
+        clink_env_var.format(g_state_env_format, pid);
+        if (os::get_env(clink_env_var.c_str(), state_dir))
+            return true;
+    }
+
+    return false;
+}
+
+//------------------------------------------------------------------------------
+void app_context::store_to_env()
+{
+    // Set an environment variable that can be used to find Clink's state dir.
+    str<32> name;
+    name.format(g_state_env_format, process().get_pid());
+    os::set_env(name.c_str(), m_desc.state_dir);
 }
 
 //------------------------------------------------------------------------------
