@@ -156,18 +156,12 @@ bool host_cmd::initialise()
 
     // Add an alias to Clink so it can be run from anywhere. Similar to adding
     // it to the path but this way we can add the config path too.
-    auto* context = app_context::get();
-
     str<280> dll_path;
-    context->get_binaries_dir(dll_path);
-
-    str<280> cfg_path;
-    context->get_state_dir(cfg_path);
+    app_context::get()->get_binaries_dir(dll_path);
 
     str<560> buffer;
     buffer << "\"" << dll_path;
-    buffer << "/clink_" AS_STR(ARCHITECTURE) ".exe\" --cfgdir \"";
-    buffer << cfg_path << "\" $*";
+    buffer << "/clink_" AS_STR(ARCHITECTURE) ".exe\" $*";
 
     m_doskey.add_alias("clink", buffer.c_str());
 
