@@ -132,7 +132,6 @@ int loader(int argc, char** argv)
         }
     }
 
-
     // Dispatch the verb if one was found.
     int ret = 0;
     if (optind < argc)
