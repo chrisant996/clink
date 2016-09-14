@@ -11,7 +11,6 @@
 #include <process/process.h>
 
 //------------------------------------------------------------------------------
-static char g_clink_symbol;
 static const char* g_state_env_format = "=clink_state_%d";
 
 
@@ -105,7 +104,7 @@ void app_context::get_binaries_dir(str_base& out) const
     int flags = GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS;
     flags |= GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT;
     HINSTANCE module;
-    if (!GetModuleHandleEx(flags, &g_clink_symbol, &module))
+    if (!GetModuleHandleEx(flags, "clink", &module))
         return;
 
     GetModuleFileName(module, out.data(), out.size());
