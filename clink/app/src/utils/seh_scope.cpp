@@ -80,8 +80,8 @@ static LONG WINAPI exception_filter(EXCEPTION_POINTERS* info)
         fputs(buffer.c_str(), stderr);
     }
 
-    fputs("\n\nPress spacebar to exit...", stderr);
-    while (getc(stdin) != ' ');
+    fputs("\n\nPress enter to exit...", stderr);
+    fgetc(stdin);
 #endif // _MSC_VER
 
     // Would be awesome if we could unhook ourself, unload, and allow cmd.exe
