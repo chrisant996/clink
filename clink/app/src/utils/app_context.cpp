@@ -31,9 +31,12 @@ app_context::app_context(const desc& desc)
 
     // The environment variable 'clink_profile' overrides all other state
     // path mechanisms.
-    if (!os::get_env("clink_profile", state_dir))
-        if (state_dir.empty())
-            load_from_env();
+    if (state_dir.empty())
+        os::get_env("clink_profile", state_dir);
+
+    // Look for a state directory that's been inherited in out environment.
+    if (state_dir.empty())
+        load_from_env();
 
     // Still no state directory set? Derive one.
     if (state_dir.empty())
