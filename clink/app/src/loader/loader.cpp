@@ -40,13 +40,15 @@ void puts_help(const char** help_pairs, int count)
 //------------------------------------------------------------------------------
 static void show_usage()
 {
-    const char* help_usage = "Usage: <verb> <verb_options>\n";
+    const char* help_usage = "Usage: [options] <verb> [verb_options]\n";
     const char* help_verbs[] = {
-        "Verbs:",   "",
-        "inject",   "Injects Clink into a process.",
-        "autorun",  "Manage Clink's entry in cmd.exe's autorun.",
-        "set",      "Adjust Clink's settings.",
-        "",         "('<verb> --help' for more details).",
+        "Verbs:",          "",
+        "inject",          "Injects Clink into a process.",
+        "autorun",         "Manage Clink's entry in cmd.exe's autorun.",
+        "set",             "Adjust Clink's settings.",
+        "",                "('<verb> --help' for more details).",
+        "Options:",        "",
+        "--profile <dir>", "Use <dir> as Clink's profile directory.",
     };
 
     extern const char* g_clink_header;
@@ -97,9 +99,9 @@ int loader(int argc, char** argv)
     seh_scope seh;
 
     struct option options[] = {
-        { "help",   no_argument,       nullptr, 'h' },
-        { "cfgdir", required_argument, nullptr, 'c' },
-        { nullptr,  0,                 nullptr, 0 }
+        { "help",    no_argument,       nullptr, 'h' },
+        { "profile", required_argument, nullptr, 'p' },
+        { nullptr,   0,                 nullptr, 0 }
     };
 
     // Without arguments, show help.
@@ -113,11 +115,11 @@ int loader(int argc, char** argv)
 
     // Parse arguments
     int arg;
-    while ((arg = getopt_long(argc, argv, "+hc:", options, nullptr)) != -1)
+    while ((arg = getopt_long(argc, argv, "+hp:", options, nullptr)) != -1)
     {
         switch (arg)
         {
-        case 'c':
+        case 'p':
             str_base(app_desc.state_dir).copy(optarg);
             break;
 
