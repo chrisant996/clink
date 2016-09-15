@@ -93,6 +93,31 @@ local function setup_cfg(cfg)
 end
 
 --------------------------------------------------------------------------------
+local function clink_project(name)
+    project(name)
+    flags("fatalwarnings")
+    language("c++")
+end
+
+--------------------------------------------------------------------------------
+local function clink_lib(name)
+    clink_project(name)
+    kind("staticlib")
+end
+
+--------------------------------------------------------------------------------
+local function clink_dll(name)
+    clink_project(name)
+    kind("sharedlib")
+end
+
+--------------------------------------------------------------------------------
+local function clink_exe(name)
+    clink_project(name)
+    kind("consoleapp")
+end
+
+--------------------------------------------------------------------------------
 workspace("clink")
     configurations({"debug", "release", "final"})
     platforms({"x32", "x64"})
@@ -180,9 +205,7 @@ project("catch")
     files("catch/*.hpp")
 
 --------------------------------------------------------------------------------
-project("clink_lib")
-    language("c++")
-    kind("staticlib")
+clink_lib("clink_lib")
     includedirs("clink/lib/include/lib")
     includedirs("clink/core/include")
     includedirs("clink/terminal/include")
@@ -197,9 +220,7 @@ project("clink_lib")
         pchsource("clink/lib/src/pch.cpp")
 
 --------------------------------------------------------------------------------
-project("clink_lua")
-    language("c++")
-    kind("staticlib")
+clink_lib("clink_lua")
     includedirs("clink/lua/include/lua")
     includedirs("clink/core/include")
     includedirs("clink/lib/include")
@@ -215,9 +236,7 @@ project("clink_lua")
         pchsource("clink/lua/src/pch.cpp")
 
 --------------------------------------------------------------------------------
-project("clink_core")
-    language("c++")
-    kind("staticlib")
+clink_lib("clink_core")
     includedirs("clink/core/include/core")
     files("clink/core/src/**")
     files("clink/core/include/**")
@@ -228,9 +247,7 @@ project("clink_core")
         pchsource("clink/core/src/pch.cpp")
 
 --------------------------------------------------------------------------------
-project("clink_terminal")
-    language("c++")
-    kind("staticlib")
+clink_lib("clink_terminal")
     includedirs("clink/terminal/include/terminal")
     includedirs("clink/core/include")
     files("clink/terminal/src/**")
@@ -242,9 +259,7 @@ project("clink_terminal")
         pchsource("clink/terminal/src/pch.cpp")
 
 --------------------------------------------------------------------------------
-project("clink_process")
-    language("c++")
-    kind("staticlib")
+clink_lib("clink_process")
     includedirs("clink/core/include")
     includedirs("clink/process/include/process")
     files("clink/process/src/**")
@@ -256,9 +271,7 @@ project("clink_process")
         pchsource("clink/process/src/pch.cpp")
 
 --------------------------------------------------------------------------------
-project("clink_app_common")
-    language("c++")
-    kind("staticlib")
+clink_lib("clink_app_common")
     includedirs("clink/app/src")
     includedirs("clink/core/include")
     includedirs("clink/lib/include")
@@ -279,9 +292,7 @@ project("clink_app_common")
         pchsource("clink/app/src/pch.cpp")
 
 --------------------------------------------------------------------------------
-project("clink_app_dll")
-    language("c++")
-    kind("sharedlib")
+clink_dll("clink_app_dll")
     targetname("clink")
     links("clink_app_common")
     links("clink_core")
@@ -300,9 +311,7 @@ project("clink_app_dll")
         links("dbghelp")
 
 --------------------------------------------------------------------------------
-project("clink_app_exe")
-    language("c++")
-    kind("consoleapp")
+clink_exe("clink_app_exe")
     flags("OmitDefaultLibrary")
     removeflags("Symbols")
     targetname("clink")
@@ -322,9 +331,7 @@ project("clink_app_exe")
         postbuild_copy("clink/app/src/loader/clink.bat", "debug")
 
 --------------------------------------------------------------------------------
-project("clink_test")
-    language("c++")
-    kind("consoleapp")
+clink_exe("clink_test")
     exceptionhandling("on")
     links("catch")
     links("clink_app_common")
