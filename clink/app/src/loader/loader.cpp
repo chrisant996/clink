@@ -13,7 +13,6 @@ extern "C" {
 }
 
 //------------------------------------------------------------------------------
-int g_in_clink_context;
 int inject(int, char**);
 int autorun(int, char**);
 int set(int, char**);
@@ -119,7 +118,6 @@ int loader(int argc, char** argv)
         switch (arg)
         {
         case 'c':
-            g_in_clink_context = 1;
             str_base(app_desc.state_dir).copy(optarg);
             break;
 
