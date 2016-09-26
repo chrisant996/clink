@@ -186,7 +186,7 @@ void rl_history::add(const char* line)
 }
 
 //------------------------------------------------------------------------------
-int rl_history::expand(const char* line, str_base& out)
+int rl_history::expand(const char* line, str_base& out) const
 {
     char* expanded = nullptr;
     int result = history_expand((char*)line, &expanded);
