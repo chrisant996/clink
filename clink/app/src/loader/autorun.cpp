@@ -418,16 +418,15 @@ static void print_help()
     puts_help(help_args, sizeof_array(help_args));
 
     puts("Autorun simplifies making modifications to cmd.exe's autorun registry\n"
-        "variables. The value of these variables are read and executed by cmd.exe\n"
-        "when it start. The 'install/uninstall' verbs add (and remove) the\n"
-        "correct command to run Clink when cmd.exe starts. All '<args>' that\n"
-        "follow 'install' are passed to Clink - see 'clink inject --help' for\n"
-        "reference.\n");
+        "variables. The value of these variables are read and executed by cmd.exe when\n"
+        "it starts. The 'install/uninstall' verbs add/remove the corrent command to run\n"
+        "Clink when cmd.exe starts. All '<args>' that follow 'install' are passed to\n"
+        "Clink - see 'clink inject --help' for reference.\n");
 
-    puts("To include quotes they must be escaped with a backslash;");
-    puts("    clink autorun set \\\"foobar\\\"");
+    puts("To include quotes they must be escaped with a backslash;\n");
+    puts("  clink autorun set \\\"foobar\\\"");
 
-    puts("Write access to cmd.exe's AutoRun registry entry will require\n"
+    puts("\nWrite access to cmd.exe's AutoRun registry entry will require\n"
         "administrator privileges when using the --allusers option.");
 }
 
