@@ -39,6 +39,12 @@ static setting_enum g_ignore_case(
     "off,on,relaxed",
     2);
 
+static setting_bool g_add_history_cmd(
+    "history.add_history_cmd",
+    "Add 'history' commands.",
+    "Toggles the adding of 'history' commands to the history.",
+    true);
+
 
 
 //------------------------------------------------------------------------------
@@ -166,12 +172,25 @@ bool host::edit_line(const char* prompt, str_base& out)
     {
         if (ret = editor->edit(out.data(), out.size()))
         {
+            // Handle history event expansion.
             if (history.expand(out.c_str(), out) == 2)
             {
                 puts(out.c_str());
                 continue;
             }
 
+            // Should we skip adding lines begining with 'history'?
+            if (!g_add_history_cmd.get())
+            {
+                const char* c = out.c_str();
+                while (*c == ' ' || *c == '\t')
+                    ++c;
+
+                if (_strnicmp(c, "history", 7) == 0)
+                    break;
+            }
+
+            // Add the line to the history.
             history.load(history_file.c_str());
             history.add(out.c_str());
         }
