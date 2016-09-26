@@ -285,7 +285,7 @@ static int get_aliases(lua_State* state)
             break;
 
         lua_pushlstring(state, alias, size_t(c - alias));
-        lua_rawseti(state, -2, i++);
+        lua_rawseti(state, -2, i);
 
         ++c;
         alias = c + strlen(c) + 1;
