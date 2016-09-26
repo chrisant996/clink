@@ -78,7 +78,7 @@ static bool set_value(const char* key, const char* value)
 }
 
 //------------------------------------------------------------------------------
-void print_usage()
+static void print_help()
 {
     extern const char* g_clink_header;
 
@@ -115,7 +115,7 @@ int set(int argc, char** argv)
 
     case 2:
         if (_stricmp(argv[1], "--help") == 0 || _stricmp(argv[1], "-h") == 0)
-            print_usage();
+            print_help();
         else
             ret = print_value(argv[1]);
 
