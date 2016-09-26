@@ -63,9 +63,7 @@ bool vm_access::read(void* dest, const void* src, size_t size)
 
 
 //------------------------------------------------------------------------------
-vm_region::vm_region(void* address)
-: m_access(0)
-, m_modified(false)
+void vm_region::initialise(const void* address)
 {
     MEMORY_BASIC_INFORMATION mbi;
     VirtualQuery(address, &mbi, sizeof(mbi));

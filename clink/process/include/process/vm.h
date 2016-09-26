@@ -31,23 +31,31 @@ public:
         copyonwrite = 1 << 3,
     };
 
-                vm_region(void* address);
-                ~vm_region();
-    vm_region   get_parent() const;
-    void*       get_base() const;
-    size_t      get_size() const;
-    int         get_access() const;
-    void        set_access(int flags, bool permanent=false);
-    void        add_access(int flags, bool permanent=false);
-    void        remove_access(int flags, bool permanent=false);
+    template <typename T>   vm_region(T* address);
+                            ~vm_region();
+    vm_region               get_parent() const;
+    void*                   get_base() const;
+    size_t                  get_size() const;
+    int                     get_access() const;
+    void                    set_access(int flags, bool permanent=false);
+    void                    add_access(int flags, bool permanent=false);
+    void                    remove_access(int flags, bool permanent=false);
 
-protected:
-    void*       m_parent_base;
-    void*       m_base;
-    size_t      m_size;
-    int         m_access;
-    bool        m_modified;
+private:
+    template <typename T>   vm_region(T address) = delete;
+    void                    initialise(const void* address);
+    void*                   m_parent_base;
+    void*                   m_base;
+    size_t                  m_size;
+    int                     m_access = 0;
+    bool                    m_modified = false;
 };
+
+//------------------------------------------------------------------------------
+template <typename T> inline vm_region::vm_region(T* address)
+{
+    initialise((const void*)address);
+}
 
 //------------------------------------------------------------------------------
 inline vm_region vm_region::get_parent() const
