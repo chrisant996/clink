@@ -18,5 +18,7 @@ public:
     void            save(const char* file);
     unsigned int    get_count() const;
     void            add(const char* line);
+    bool            remove(unsigned int index);
+    void            clear();
     int             expand(const char* line, str_base& out) const;
 };

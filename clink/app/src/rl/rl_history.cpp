@@ -186,6 +186,22 @@ void rl_history::add(const char* line)
 }
 
 //------------------------------------------------------------------------------
+bool rl_history::remove(unsigned int index)
+{
+    if (index >= get_count())
+        return false;
+
+    using_history();
+    return (remove_history(index) != nullptr);
+}
+
+//------------------------------------------------------------------------------
+void rl_history::clear()
+{
+    clear_history();
+}
+
+//------------------------------------------------------------------------------
 int rl_history::expand(const char* line, str_base& out) const
 {
     char* expanded = nullptr;
