@@ -88,10 +88,12 @@ static void print_help()
     };
 
     puts(g_clink_header);
-    puts("  Usage: set [setting_name] [value]\n");
+    puts("Usage: set [setting_name] [value]\n");
+
     puts_help(help, sizeof_array(help));
-    puts("  If 'settings_name' is omitted then all settings are list.");
-    puts("  Omit 'value' for more detailed info about a setting.\n");
+
+    puts("If 'settings_name' is omitted then all settings are list. Omit 'value' for\n"
+        "more detailed info about a setting.\n");
 }
 
 //------------------------------------------------------------------------------
