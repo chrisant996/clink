@@ -107,7 +107,7 @@ int set(int argc, char** argv)
     settings::load(settings_file.c_str());
 
     // List or set Clink's settings.
-    ret = 0;
+    ret = false;
     switch (argc)
     {
     case 0:
