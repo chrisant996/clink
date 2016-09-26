@@ -86,7 +86,7 @@ static int delete_value(HKEY key, const char* name)
 
 
 //------------------------------------------------------------------------------
-HKEY open_cmd_proc_key(int all_users, int wow64, int writable)
+static HKEY open_cmd_proc_key(int all_users, int wow64, int writable)
 {
     return open_software_key(all_users, "Microsoft\\Command Processor", wow64, writable);
 }
@@ -391,7 +391,7 @@ static int dispatch(dispatch_func_t* function, const char* clink_path)
 }
 
 //------------------------------------------------------------------------------
-void print_help()
+static void print_help()
 {
     const char* help_verbs[] = {
         "install <args...>", "Installs a command to cmd.exe's autorun to start Clink",
