@@ -13,8 +13,9 @@ extern "C" {
 }
 
 //------------------------------------------------------------------------------
-int inject(int, char**);
 int autorun(int, char**);
+int history(int, char**);
+int inject(int, char**);
 int set(int, char**);
 int testbed(int, char**);
 
@@ -46,6 +47,7 @@ static void show_usage()
         "inject",          "Injects Clink into a process.",
         "autorun",         "Manage Clink's entry in cmd.exe's autorun.",
         "set",             "Adjust Clink's settings.",
+        "history",         "List and operate on the command history.",
         "",                "('<verb> --help' for more details).",
         "Options:",        "",
         "--profile <dir>", "Use <dir> as Clink's profile directory.",
@@ -65,10 +67,11 @@ static int dispatch_verb(const char* verb, int argc, char** argv)
         const char* verb;
         int (*handler)(int, char**);
     } handlers[] = {
-        "inject", inject,
-        "autorun", autorun,
-        "set", set,
-        "testbed", testbed,
+        "autorun",  autorun,
+        "history",  history,
+        "inject",   inject,
+        "set",      set,
+        "testbed",  testbed,
     };
 
     for (int i = 0; i < sizeof_array(handlers); ++i)

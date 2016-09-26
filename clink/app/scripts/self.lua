@@ -52,12 +52,24 @@ set_parser:set_arguments(
     }
 )
 
+local history_parser = clink.arg.new_parser()
+history_parser:set_flags("--help")
+history_parser:set_arguments(
+    {
+        "add",
+        "clear"     .. null_parser,
+        "delete"    .. null_parser,
+        "expand"
+    }
+)
+
 local self_parser = clink.arg.new_parser()
 self_parser:set_arguments(
     {
         "inject" .. inject_parser,
         "autorun" .. autorun_parser,
         "set" .. set_parser,
+        "history" .. history_parser,
     }
 )
 
