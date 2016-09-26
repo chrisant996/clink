@@ -18,4 +18,5 @@ public:
     int             expand(const char* line, str_base& out);
     void            load(const char* file);
     void            save(const char* file);
+    unsigned int    get_count() const;
 };

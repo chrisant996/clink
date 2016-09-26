@@ -136,6 +136,13 @@ void rl_history::save(const char* file)
 }
 
 //------------------------------------------------------------------------------
+unsigned int rl_history::get_count() const
+{
+    using_history();
+    return where_history();
+}
+
+//------------------------------------------------------------------------------
 void rl_history::add(const char* line)
 {
     // Maybe we shouldn't add this line to the history at all?
