@@ -80,7 +80,7 @@ static LONG WINAPI exception_filter(EXCEPTION_POINTERS* info)
         fputs(buffer.c_str(), stderr);
     }
 
-    fputs("\n\nPress enter to exit...", stderr);
+    fputs("\n\nPress Enter to exit...", stderr);
     fgetc(stdin);
 #endif // _MSC_VER
 
