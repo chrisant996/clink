@@ -52,9 +52,36 @@ static setting_enum g_expand_mode(
 
 
 //------------------------------------------------------------------------------
+bool history_iter::next(str_base& out)
+{
+    out.clear();
+
+    const HIST_ENTRY* entry = history_get(history_base + m_count);
+    if (entry == nullptr)
+        return false;
+
+    out << entry->line;
+    ++m_count;
+    return true;
+}
+
+//------------------------------------------------------------------------------
+void history_iter::skip(unsigned int skip_count)
+{
+    m_count += skip_count;
+}
+
+//------------------------------------------------------------------------------
+int history_iter::get_index() const
+{
+    return m_count - 1;
+}
+
+
+
+//------------------------------------------------------------------------------
 static int find_duplicate(const char* line)
 {
-
     using_history();
     while (HIST_ENTRY* hist_entry = previous_history())
         if (strcmp(hist_entry->line, line) == 0)

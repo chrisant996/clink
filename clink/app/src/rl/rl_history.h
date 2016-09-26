@@ -8,6 +8,18 @@
 class str_base;
 
 //------------------------------------------------------------------------------
+class history_iter
+{
+public:
+    bool            next(str_base& out);
+    void            skip(unsigned int skip_count);
+    int             get_index() const;
+
+private:
+    int             m_count = 0;
+};
+
+//------------------------------------------------------------------------------
 class rl_history
     : private singleton<const rl_history>
 {
