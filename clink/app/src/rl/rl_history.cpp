@@ -54,10 +54,9 @@ static setting_enum g_expand_mode(
 //------------------------------------------------------------------------------
 static int find_duplicate(const char* line)
 {
-    HIST_ENTRY* hist_entry;
 
     using_history();
-    while (hist_entry = previous_history())
+    while (HIST_ENTRY* hist_entry = previous_history())
         if (strcmp(hist_entry->line, line) == 0)
             return where_history();
 
