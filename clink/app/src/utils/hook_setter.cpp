@@ -13,7 +13,7 @@
 //------------------------------------------------------------------------------
 static void             dummy() {}
 static bool             (*g_hook_trap)()        = nullptr;
-static void*            g_hook_trap_addr        = nullptr;
+static void             (*g_hook_trap_addr)()   = nullptr;
 static unsigned char    g_hook_trap_value       = 0;
 
 
@@ -33,7 +33,11 @@ static LONG WINAPI hook_trap_veh(EXCEPTION_POINTERS* info)
         return EXCEPTION_CONTINUE_SEARCH;
 
     // Restore original instruction.
-    vm_access().write(g_hook_trap_addr, &g_hook_trap_value, sizeof(g_hook_trap_value));
+    vm_access().write(
+        (void*)g_hook_trap_addr,
+        &g_hook_trap_value,
+        sizeof(g_hook_trap_value)
+    );
 
     // Who called us?
 #if defined(_M_IX86)
@@ -57,7 +61,7 @@ bool set_hook_trap(void* module, const char* func_name, bool (*trap)())
     if (IsDebuggerPresent())
         return trap();
 
-    void* addr = pe_info(module).get_export(func_name);
+    auto* addr = pe_info(module).get_export(func_name);
     if (addr == nullptr)
     {
         char dll[96] = {};
@@ -74,7 +78,7 @@ bool set_hook_trap(void* module, const char* func_name, bool (*trap)())
 
     // Write a HALT instruction to force an exception.
     unsigned char to_write = 0xf4;
-    vm_access().write(addr, &to_write, sizeof(to_write));
+    vm_access().write((void*)addr, &to_write, sizeof(to_write));
 
     return true;
 }
@@ -88,21 +92,9 @@ hook_setter::hook_setter()
 }
 
 //------------------------------------------------------------------------------
-bool hook_setter::add_iat(void* module, const char* name, void* hook)
-{
-    return (add_desc(HOOK_TYPE_IAT_BY_NAME, module, name, hook) != nullptr);
-}
-
-//------------------------------------------------------------------------------
-bool hook_setter::add_jmp(void* module, const char* name, void* hook)
-{
-    return (add_desc(HOOK_TYPE_JMP, module, name, hook) != nullptr);
-}
-
-//------------------------------------------------------------------------------
 bool hook_setter::add_trap(void* module, const char* name, bool (*trap)())
 {
-    return (add_desc(HOOK_TYPE_TRAP, module, name, trap) != nullptr);
+    return (add_desc(hook_type_trap, module, name, funcptr_t(trap)) != nullptr);
 }
 
 //------------------------------------------------------------------------------
@@ -120,9 +112,9 @@ int hook_setter::commit()
         const hook_desc& desc = m_descs[i];
         switch (desc.type)
         {
-        case HOOK_TYPE_IAT_BY_NAME: success += !!commit_iat(self, desc);  break;
-        case HOOK_TYPE_JMP:         success += !!commit_jmp(self, desc);  break;
-        case HOOK_TYPE_TRAP:        success += !!commit_trap(self, desc); break;
+        case hook_type_iat_by_name: success += !!commit_iat(self, desc);  break;
+        case hook_type_jmp:         success += !!commit_jmp(self, desc);  break;
+        case hook_type_trap:        success += !!commit_trap(self, desc); break;
         }
     }
 
@@ -134,7 +126,7 @@ hook_setter::hook_desc* hook_setter::add_desc(
     hook_type type,
     void* module,
     const char* name,
-    void* hook)
+    funcptr_t hook)
 {
     if (m_desc_count >= sizeof_array(m_descs))
         return nullptr;
@@ -150,10 +142,9 @@ hook_setter::hook_desc* hook_setter::add_desc(
 }
 
 //------------------------------------------------------------------------------
-bool
-hook_setter::commit_iat(void* self, const hook_desc& desc)
+bool hook_setter::commit_iat(void* self, const hook_desc& desc)
 {
-    void* addr = hook_iat(desc.module, nullptr, desc.name, desc.hook, 1);
+    funcptr_t addr = hook_iat(desc.module, nullptr, desc.name, desc.hook, 1);
     if (addr == nullptr)
     {
         LOG("Unable to hook %s in IAT at base %p", desc.name, desc.module);
@@ -173,14 +164,13 @@ hook_setter::commit_iat(void* self, const hook_desc& desc)
 }
 
 //------------------------------------------------------------------------------
-bool
-hook_setter::commit_jmp(void* self, const hook_desc& desc)
+bool hook_setter::commit_jmp(void* self, const hook_desc& desc)
 {
     // Hook into a DLL's import by patching the start of the function. 'addr' is
     // the trampoline that can be used to call the original. This method doesn't
     // use the IAT.
 
-    void* addr = hook_jmp(desc.module, desc.name, desc.hook);
+    auto* addr = hook_jmp(desc.module, desc.name, desc.hook);
     if (addr == nullptr)
     {
         LOG("Unable to hook %s in %p", desc.name, desc.module);
@@ -199,8 +189,7 @@ hook_setter::commit_jmp(void* self, const hook_desc& desc)
 }
 
 //------------------------------------------------------------------------------
-bool
-hook_setter::commit_trap(void* self, const hook_desc& desc)
+bool hook_setter::commit_trap(void* self, const hook_desc& desc)
 {
     return set_hook_trap(desc.module, desc.name, (bool (*)())(desc.hook));
 }

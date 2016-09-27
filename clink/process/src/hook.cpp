@@ -2,6 +2,7 @@
 // License: http://opensource.org/licenses/MIT
 
 #include "pch.h"
+#include "hook.h"
 #include "vm.h"
 #include "pe.h"
 
@@ -9,7 +10,7 @@
 #include <core/log.h>
 
 //------------------------------------------------------------------------------
-static void write_addr(void** where, void* to_write)
+static void write_addr(funcptr_t* where, funcptr_t to_write)
 {
     vm_region region(where);
     region.add_access(vm_region::writeable);
@@ -19,7 +20,7 @@ static void write_addr(void** where, void* to_write)
 }
 
 //------------------------------------------------------------------------------
-static void* get_proc_addr(const char* dll, const char* func_name)
+static funcptr_t get_proc_addr(const char* dll, const char* func_name)
 {
     if (void* base = LoadLibraryA(dll))
         return pe_info(base).get_export(func_name);
@@ -29,18 +30,18 @@ static void* get_proc_addr(const char* dll, const char* func_name)
 }
 
 //------------------------------------------------------------------------------
-void* hook_iat(
+funcptr_t hook_iat(
     void* base,
     const char* dll,
     const char* func_name,
-    void* hook,
+    funcptr_t hook,
     int find_by_name
 )
 {
     LOG("Attempting to hook IAT for module %p", base);
     LOG("Target is %s,%s (by_name=%d)", dll, func_name, find_by_name);
 
-    void** import;
+    funcptr_t* import;
 
     // Find entry and replace it.
     pe_info pe(base);
@@ -49,7 +50,7 @@ void* hook_iat(
     else
     {
         // Get the address of the function we're going to hook.
-        void* func_addr = get_proc_addr(dll, func_name);
+        funcptr_t func_addr = get_proc_addr(dll, func_name);
         if (func_addr == nullptr)
         {
             LOG("Failed to find function '%s' in '%s'", func_name, dll);
@@ -67,7 +68,7 @@ void* hook_iat(
 
     LOG("Found import at %p (value = %p)", import, *import);
 
-    void* prev_addr = *import;
+    funcptr_t prev_addr = *import;
     write_addr(import, hook);
 
     FlushInstructionCache(GetCurrentProcess(), 0, 0);
@@ -80,7 +81,7 @@ static char* alloc_trampoline(void* hint)
     SYSTEM_INFO sys_info;
     GetSystemInfo(&sys_info);
 
-    void* trampoline = nullptr;
+    funcptr_t trampoline = nullptr;
     while (trampoline == nullptr)
     {
         vm_region region = vm_region(hint).get_parent();
@@ -90,8 +91,8 @@ static char* alloc_trampoline(void* hint)
 
         char* tramp_page = (char*)vm_alloc_base - sys_info.dwAllocationGranularity;
 
-        trampoline = VirtualAlloc(tramp_page, sys_info.dwPageSize,
-            MEM_COMMIT|MEM_RESERVE, PAGE_EXECUTE_READWRITE);
+        trampoline = funcptr_t(VirtualAlloc(tramp_page, sys_info.dwPageSize,
+            MEM_COMMIT|MEM_RESERVE, PAGE_EXECUTE_READWRITE));
 
         hint = tramp_page;
     }
@@ -109,7 +110,7 @@ static int get_mask_size(unsigned mask)
 }
 
 //------------------------------------------------------------------------------
-static char* write_rel_jmp(char* write, void* dest)
+static char* write_rel_jmp(char* write, const void* dest)
 {
     // jmp <displacement>
     intptr_t disp = (intptr_t)dest;
@@ -134,8 +135,9 @@ static char* write_rel_jmp(char* write, void* dest)
 }
 
 //------------------------------------------------------------------------------
-static char* write_trampoline_out(char* write, void* to_hook, void* hook)
+static char* write_trampoline_out(void* dest, void* to_hook, funcptr_t hook)
 {
+    char* write = (char*)dest;
     char* patch = (char*)to_hook - 5;
 
     // Check we've got a nop slide or int3 block to patch into.
@@ -162,7 +164,7 @@ static char* write_trampoline_out(char* write, void* to_hook, void* hook)
     struct {
         char a[2];
         char b[4];
-        char c[sizeof(void*)];
+        char c[sizeof(funcptr_t)];
     } inst;
 
     *(short*)inst.a = 0x25ff;
@@ -173,7 +175,7 @@ static char* write_trampoline_out(char* write, void* to_hook, void* hook)
 #endif
 
     *(int*)inst.b = rel_addr;
-    *(void**)inst.c = hook;
+    *(funcptr_t*)inst.c = hook;
 
     if (!vm_access().write(write, &inst, sizeof(inst)))
     {
@@ -185,8 +187,10 @@ static char* write_trampoline_out(char* write, void* to_hook, void* hook)
 }
 
 //------------------------------------------------------------------------------
-static char* write_trampoline_in(char* write, void* to_hook, int n)
+static void* write_trampoline_in(void* dest, void* to_hook, int n)
 {
+    char* write = (char*)dest;
+
     for (int i = 0; i < n; ++i)
     {
         if (!vm_access().write(write, (char*)to_hook + i, 1))
@@ -214,7 +218,7 @@ static char* write_trampoline_in(char* write, void* to_hook, int n)
 }
 
 //------------------------------------------------------------------------------
-static int get_instruction_length(void* addr)
+static int get_instruction_length(const void* addr)
 {
     static const struct {
         unsigned expected;
@@ -288,25 +292,24 @@ static void* follow_jump(void* addr)
 }
 
 //------------------------------------------------------------------------------
-static void* hook_jmp_impl(void* to_hook, void* hook)
+static funcptr_t hook_jmp_impl(funcptr_t to_hook, funcptr_t hook)
 {
-    int inst_len;
-
     LOG("Attempting to hook at %p with %p", to_hook, hook);
 
-    to_hook = follow_jump(to_hook);
+    void* target = (void*)to_hook;
+    target = follow_jump(target);
 
     // Work out the length of the first instruction. It will be copied it into
     // the trampoline.
-    inst_len = get_instruction_length(to_hook);
+    int inst_len = get_instruction_length(target);
     if (inst_len <= 0)
     {
-        LOG("Unable to match instruction %08X", *(int*)(to_hook));
+        LOG("Unable to match instruction %08x", *(int*)(target));
         return nullptr;
     }
 
     // Prepare
-    char* trampoline = alloc_trampoline(to_hook);
+    void* trampoline = alloc_trampoline(target);
     if (trampoline == nullptr)
     {
         LOG("Failed to allocate a page for trampolines.");
@@ -314,7 +317,7 @@ static void* hook_jmp_impl(void* to_hook, void* hook)
     }
 
     // In
-    char* write = write_trampoline_in(trampoline, to_hook, inst_len);
+    void* write = write_trampoline_in(trampoline, target, inst_len);
     if (write == nullptr)
     {
         LOG("Failed to write trampoline in.");
@@ -322,30 +325,27 @@ static void* hook_jmp_impl(void* to_hook, void* hook)
     }
 
     // Out
-    vm_region region(to_hook);
+    vm_region region(target);
     region.add_access(vm_region::writeable);
-    write = write_trampoline_out(write, to_hook, hook);
+    write = write_trampoline_out(write, target, hook);
     if (write == nullptr)
     {
         LOG("Failed to write trampoline out.");
         return nullptr;
     }
 
-    return trampoline;
+    return funcptr_t(trampoline);
 }
 
 //------------------------------------------------------------------------------
-void* hook_jmp(void* module, const char* func_name, void* hook)
+funcptr_t hook_jmp(void* module, const char* func_name, funcptr_t hook)
 {
-    void* func_addr;
-    void* trampoline;
     char module_name[96];
-
     module_name[0] = '\0';
     GetModuleFileName(HMODULE(module), module_name, sizeof_array(module_name));
 
     // Get the address of the function we're going to hook.
-    func_addr = pe_info(module).get_export(func_name);
+    funcptr_t func_addr = pe_info(module).get_export(func_name);
     if (func_addr == nullptr)
     {
         LOG("Failed to find function '%s' in '%s'", func_name, module_name);
@@ -356,7 +356,7 @@ void* hook_jmp(void* module, const char* func_name, void* hook)
     LOG("Target is %s, %s @ %p", module_name, func_name, func_addr);
 
     // Install the hook.
-    trampoline = hook_jmp_impl(func_addr, hook);
+    funcptr_t trampoline = hook_jmp_impl(func_addr, hook);
     if (trampoline == nullptr)
     {
         LOG("Jump hook failed.");

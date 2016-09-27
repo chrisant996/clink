@@ -127,9 +127,9 @@ bool process::inject_module(const char* dll_path)
     // Windows API calls in case someone's hook LoadLibrary. We'd get the wrong
     // address. Address are the same across processes.
     pe_info kernel32(LoadLibrary("kernel32.dll"));
-    void* thread_proc = kernel32.get_export("LoadLibraryA");
+    auto* thread_proc = kernel32.get_export("LoadLibraryA");
     if (thread_proc != nullptr)
-        thread_ret = remote_call(thread_proc, buffer);
+        thread_ret = remote_call_impl(thread_proc, buffer);
 
     // Clean up and quit
     target_vm.free(buffer);
@@ -137,7 +137,7 @@ bool process::inject_module(const char* dll_path)
 }
 
 //------------------------------------------------------------------------------
-int process::remote_call(void* function, void* param)
+int process::remote_call_impl(funcptr_t function, void* param)
 {
     // Open the process so we can operate on it.
     handle process_handle = OpenProcess(PROCESS_QUERY_INFORMATION|PROCESS_CREATE_THREAD,

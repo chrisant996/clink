@@ -44,7 +44,7 @@ void* pe_info::get_data_directory(int index, int* size) const
 }
 
 //------------------------------------------------------------------------------
-void** pe_info::import_by_addr(IMAGE_IMPORT_DESCRIPTOR* iid, const void* func_addr) const
+pe_info::funcptr_t* pe_info::import_by_addr(IMAGE_IMPORT_DESCRIPTOR* iid, const void* func_addr) const
 {
     void** at = (void**)rva_to_addr(iid->FirstThunk);
     while (*at != 0)
@@ -53,7 +53,7 @@ void** pe_info::import_by_addr(IMAGE_IMPORT_DESCRIPTOR* iid, const void* func_ad
         void* addr_loc = at;
 
         if (addr == (uintptr_t)func_addr)
-            return at;
+            return (funcptr_t*)at;
 
         ++at;
     }
@@ -62,7 +62,7 @@ void** pe_info::import_by_addr(IMAGE_IMPORT_DESCRIPTOR* iid, const void* func_ad
 }
 
 //------------------------------------------------------------------------------
-void** pe_info::import_by_name(IMAGE_IMPORT_DESCRIPTOR* iid, const void* func_name) const
+pe_info::funcptr_t* pe_info::import_by_name(IMAGE_IMPORT_DESCRIPTOR* iid, const void* func_name) const
 {
     void** at = (void**)rva_to_addr(iid->FirstThunk);
     intptr_t* nt = (intptr_t*)rva_to_addr(iid->OriginalFirstThunk);
@@ -76,7 +76,7 @@ void** pe_info::import_by_name(IMAGE_IMPORT_DESCRIPTOR* iid, const void* func_na
             iin = (IMAGE_IMPORT_BY_NAME*)rva_to_addr(rva);
 
             if (_stricmp((const char*)(iin->Name), (const char*)func_name) == 0)
-                return at;
+                return (funcptr_t*)at;
         }
 
         ++at;
@@ -87,19 +87,19 @@ void** pe_info::import_by_name(IMAGE_IMPORT_DESCRIPTOR* iid, const void* func_na
 }
 
 //------------------------------------------------------------------------------
-void** pe_info::get_import_by_name(const char* dll, const char* func_name) const
+pe_info::funcptr_t* pe_info::get_import_by_name(const char* dll, const char* func_name) const
 {
     return iterate_imports(dll, func_name, &pe_info::import_by_name);
 }
 
 //------------------------------------------------------------------------------
-void** pe_info::get_import_by_addr(const char* dll, void* func_addr) const
+pe_info::funcptr_t* pe_info::get_import_by_addr(const char* dll, funcptr_t func_addr) const
 {
-    return iterate_imports(dll, func_addr, &pe_info::import_by_addr);
+    return iterate_imports(dll, (const void*)func_addr, &pe_info::import_by_addr);
 }
 
 //------------------------------------------------------------------------------
-void* pe_info::get_export(const char* func_name) const
+pe_info::funcptr_t pe_info::get_export(const char* func_name) const
 {
     if (m_base == nullptr)
         return nullptr;
@@ -122,14 +122,17 @@ void* pe_info::get_export(const char* func_name) const
             continue;
 
         WORD ordinal = ordinals[i];
-        return rva_to_addr(addresses[ordinal]);
+        return funcptr_t(rva_to_addr(addresses[ordinal]));
     }
 
     return nullptr;
 }
 
 //------------------------------------------------------------------------------
-void** pe_info::iterate_imports(const char* dll, const void* param, import_iter_t iter_func) const
+pe_info::funcptr_t* pe_info::iterate_imports(
+    const char* dll,
+    const void* param,
+    import_iter_t iter_func) const
 {
     IMAGE_IMPORT_DESCRIPTOR* iid;
     iid = (IMAGE_IMPORT_DESCRIPTOR*)get_data_directory(1, nullptr);
@@ -148,11 +151,8 @@ void** pe_info::iterate_imports(const char* dll, const void* param, import_iter_
         name = (char*)rva_to_addr(iid->Name);
         if (dll == nullptr || _strnicmp(name, dll, len) == 0)
         {
-            void** ret = (this->*iter_func)(iid, param);
-
             LOG("Checking imports in '%s'", name);
-
-            if (ret != nullptr)
+            if (funcptr_t* ret = (this->*iter_func)(iid, param))
                 return ret;
         }
 
