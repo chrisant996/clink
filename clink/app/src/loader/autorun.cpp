@@ -454,12 +454,10 @@ int autorun(int argc, char** argv)
 
         case 'h':
             print_help();
-            ret = 0;
-            goto end;
+            return 0;
 
         default:
-            ret = 0;
-            goto end;
+            return 0;
         }
     }
 
@@ -475,10 +473,7 @@ int autorun(int argc, char** argv)
         else if (!strcmp(argv[optind], "set"))
             function = set_autorun_value;
         else if (!strcmp(argv[optind], "show"))
-        {
-            ret = !show_autorun();
-            goto end;
-        }
+            return show_autorun();
     }
 
     // Get path where clink is installed (assumed to be where this executable is)
@@ -503,15 +498,14 @@ int autorun(int argc, char** argv)
     if (function == nullptr)
     {
         puts("ERROR: Invalid arguments. Run 'clink autorun --help' for info.");
-        goto end;
+        return 0;
     }
 
     // Do the magic.
     if (!check_registry_access())
     {
         puts("You must have administator rights to access cmd.exe's autorun");
-        ret = 0;
-        goto end;
+        return 0;
     }
 
     const char* arg = clink_path.c_str();
@@ -534,6 +528,5 @@ int autorun(int argc, char** argv)
             success_message(msg);
     }
 
-end:
     return ret;
 }
