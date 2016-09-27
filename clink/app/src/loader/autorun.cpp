@@ -12,16 +12,8 @@ typedef int     (dispatch_func_t)(const char*, int);
 str<>           g_clink_args;
 int             g_all_users  = 0;
 void            puts_help(const char**, int);
-static int      show_autorun();
 
 
-
-//------------------------------------------------------------------------------
-static void success_message(const char* message)
-{
-    show_autorun();
-    printf("%s (for %s).\n", message, g_all_users ? "all users" : "current user");
-}
 
 //------------------------------------------------------------------------------
 static HKEY open_software_key(int all_users, const char* key, int wow64, int writable)
@@ -429,6 +421,14 @@ static void print_help()
     puts("\nWrite access to cmd.exe's AutoRun registry entry will require\n"
         "administrator privileges when using the --allusers option.");
 }
+
+//------------------------------------------------------------------------------
+static void success_message(const char* message)
+{
+    show_autorun();
+    printf("%s (for %s).\n", message, g_all_users ? "all users" : "current user");
+}
+
 
 //------------------------------------------------------------------------------
 int autorun(int argc, char** argv)
