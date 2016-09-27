@@ -105,6 +105,6 @@ TEST_CASE("String compare") {
 
     SECTION("UTF-16") {
         REQUIRE(str_compare(L"abc123", L"abc123") == -1);
-        REQUIRE(str_compare(L"\xd800\xdc00"L"abc", L"\xd800\xdc00") == 2);
+        REQUIRE(str_compare(L"\xd800\xdc00" L"abc", L"\xd800\xdc00") == 2);
     }
 }

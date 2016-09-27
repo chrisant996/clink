@@ -50,7 +50,7 @@ TEST_CASE("Binder") {
 
         for (int i = 0; i < 508; ++i)
         {
-            char chord[] = { char(i > 0xff) + 1, char(i % 0xfe) + 1, 0 };
+            char chord[] = { char((i > 0xff) + 1), char((i % 0xfe) + 1), 0 };
             REQUIRE(binder.bind(default_group, chord, null_module, 0x12));
         }
 
