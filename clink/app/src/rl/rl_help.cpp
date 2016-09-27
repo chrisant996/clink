@@ -15,7 +15,7 @@ extern "C" {
 extern setting_int g_max_width;
 
 //------------------------------------------------------------------------------
-static const char* get_function_name(void* func_addr)
+static const char* get_function_name(int (*func_addr)(int, int))
 {
     FUNMAP** funcs = funmap;
     while (*funcs != nullptr)
@@ -77,7 +77,7 @@ static char** collect_keymap(
             int j;
 
             // Blacklist some functions
-            static const void* blacklist[] = {
+            int (*blacklist[])(int, int) = {
                 rl_insert,
                 rl_do_lowercase_version,
             };
@@ -131,7 +131,7 @@ void show_rl_help(terminal& terminal)
     int offset = 1;
     int max_collect = 64;
     char** collector = (char**)malloc(sizeof(char*) * max_collect);
-    collector[0] = "";
+    collector[0] = nullptr;
 
     // Build string up the functions in the active keymap.
     collector = collect_keymap(map, collector, &offset, &max_collect, 0);
