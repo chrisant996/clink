@@ -39,7 +39,7 @@ bool host_ps::initialise()
         return false;
 
     hook_setter hooks;
-    hooks.add_jmp(read_console_module, "ReadConsoleW", read_console);
+    hooks.add_jmp(read_console_module, "ReadConsoleW", &host_ps::read_console);
     return (hooks.commit() == 1);
 }
 
@@ -70,7 +70,7 @@ BOOL WINAPI host_ps::read_console(
     wchar_t* chars,
     DWORD max_chars,
     LPDWORD read_in,
-    void* control)
+    CONSOLE_READCONSOLE_CONTROL* control)
 {
     seh_scope seh;
 
