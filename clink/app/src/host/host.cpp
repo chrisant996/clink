@@ -23,6 +23,10 @@
 #include <lua/lua_match_generator.h>
 #include <terminal/win_terminal.h>
 
+extern "C" {
+#include <lua.h>
+}
+
 //------------------------------------------------------------------------------
 static setting_str g_clink_path(
     "clink.path",
@@ -46,6 +50,20 @@ static setting_bool g_add_history_cmd(
     true);
 
 
+
+//------------------------------------------------------------------------------
+static void lua_add_globals(lua_state& lua)
+{
+    str<280> bin_path;
+    app_context::get()->get_binaries_dir(bin_path);
+
+    str<280> exe_path;
+    exe_path << "\"" << bin_path << "/" CLINK_EXE "\"";
+
+    lua_State* state = lua.get_state();
+    lua_pushstring(state, exe_path.c_str());
+    lua_setglobal(state, "CLINK_EXE");
+}
 
 //------------------------------------------------------------------------------
 static void load_lua_script(lua_state& lua, const char* path)
@@ -132,6 +150,7 @@ bool host::edit_line(const char* prompt, str_base& out)
 
     // Set up Lua and load scripts into it.
     lua_state lua;
+    lua_add_globals(lua);
     lua_match_generator lua_generator(lua);
     prompt_filter prompt_filter(lua);
     lua_load_script(lua, app, dir);
