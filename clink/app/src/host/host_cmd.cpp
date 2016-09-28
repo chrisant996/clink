@@ -161,13 +161,13 @@ bool host_cmd::initialise()
 
     str<560> buffer;
     buffer << "\"" << dll_path;
-    buffer << "/clink_" AS_STR(ARCHITECTURE) ".exe\" $*";
+    buffer << "/" CLINK_EXE "\" $*";
     m_doskey.add_alias("clink", buffer.c_str());
 
     // Add an alias to operate on the command history.
     buffer.clear();
     buffer << "\"" << dll_path;
-    buffer << "/clink_" AS_STR(ARCHITECTURE) ".exe\" history $*";
+    buffer << "/" CLINK_EXE "\" history $*";
     m_doskey.add_alias("history", buffer.c_str());
 
     return true;
