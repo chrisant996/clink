@@ -11,7 +11,6 @@
 #include <process/vm.h>
 
 //------------------------------------------------------------------------------
-static void             dummy() {}
 static bool             (*g_hook_trap)()        = nullptr;
 static void             (*g_hook_trap_addr)()   = nullptr;
 static unsigned char    g_hook_trap_value       = 0;
@@ -101,7 +100,7 @@ bool hook_setter::add_trap(void* module, const char* name, bool (*trap)())
 int hook_setter::commit()
 {
     // Each hook needs fixing up, so we find the base address of our module.
-    void* self = vm_region(dummy).get_parent().get_base();
+    void* self = vm_region("clink").get_parent().get_base();
     if (self == nullptr)
         return 0;
 
