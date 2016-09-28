@@ -8,14 +8,55 @@
 #include <core/path.h>
 #include <core/settings.h>
 #include <core/str.h>
+#include <core/str_tokeniser.h>
+
+#include <getopt.h>
 
 //------------------------------------------------------------------------------
 void puts_help(const char**, int);
 
 //------------------------------------------------------------------------------
+static void list_keys()
+{
+    for (auto* next = settings::first(); next != nullptr; next = next->next())
+        puts(next->get_name());
+}
+
+//------------------------------------------------------------------------------
+static void list_options(const char* key)
+{
+    const setting* setting = settings::find(key);
+    if (setting == nullptr)
+        return;
+
+    switch (setting->get_type())
+    {
+    case setting::type_int:
+    case setting::type_string:
+        break;
+
+    case setting::type_bool:
+        puts("true");
+        puts("false");
+        break;
+
+    case setting::type_enum:
+        {
+            const char* options = ((const setting_enum*)setting)->get_options();
+            str_tokeniser tokens(options, ",");
+            const char* start;
+            int length;
+            while (tokens.next(start, length))
+                printf("%.*s\n", length, start);
+        }
+        break;
+    }
+}
+
+//------------------------------------------------------------------------------
 static bool print_keys()
 {
-    for (setting* next = settings::first(); next != nullptr; next = next->next())
+    for (auto* next = settings::first(); next != nullptr; next = next->next())
     {
         printf("# %s\n", next->get_short_desc());
 
@@ -99,7 +140,26 @@ static void print_help()
 //------------------------------------------------------------------------------
 int set(int argc, char** argv)
 {
-    bool ret = true;
+    // Parse command line arguments.
+    struct option options[] = {
+        { "help", no_argument, nullptr, 'h' },
+        { "list", no_argument, nullptr, 'l' },
+        {}
+    };
+
+    bool complete = false;
+    int i;
+    while ((i = getopt_long(argc, argv, "hl", options, nullptr)) != -1)
+    {
+        switch (i)
+        {
+        default:
+        case 'h': print_help();     return 0;
+        case 'l': complete = true;  break;
+        }
+    }
+
+    // MODE4: Load all lua state
 
     // Load the settings from disk.
     str<280> settings_file;
@@ -107,32 +167,29 @@ int set(int argc, char** argv)
     settings::load(settings_file.c_str());
 
     // List or set Clink's settings.
-    ret = false;
-    switch (argc)
+    if (complete)
+    {
+        (optind < argc) ? list_options(argv[optind]) : list_keys();
+        return 0;
+    }
+
+    switch (argc - optind)
     {
     case 0:
+        return (print_keys() != true);
+
     case 1:
-        ret = print_keys();
-        break;
-
-    case 2:
-        if (_stricmp(argv[1], "--help") == 0 || _stricmp(argv[1], "-h") == 0)
-            print_help();
-        else
-            ret = print_value(argv[1]);
-
-        break;
+        return (print_value(argv[1]) != true);
 
     default:
-        ret = set_value(argv[1], argv[2]);
-        if (ret)
+        if (set_value(argv[1], argv[2]))
         {
             str<280> settings_file;
             app_context::get()->get_settings_path(settings_file);
             settings::save(settings_file.c_str());
+            return 0;
         }
-        break;
     }
 
-    return (ret == true);
+    return 1;
 }
