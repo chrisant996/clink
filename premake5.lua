@@ -198,6 +198,13 @@ project("lua")
     excludes("lua/src/luac.c")
 
 --------------------------------------------------------------------------------
+project("luac")
+    language("c")
+    kind("consoleapp")
+    links("lua")
+    files("lua/src/luac.c")
+
+--------------------------------------------------------------------------------
 project("catch")
     language("c++")
     kind("staticlib")
