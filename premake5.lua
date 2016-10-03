@@ -138,7 +138,6 @@ workspace("clink")
     defines("CLINK_VER_MINOR="..clink_ver_minor)
     defines("CLINK_VER_POINT="..clink_ver_point)
     defines("CLINK_VER_STAMP="..clink_ver_stamp)
-    defines("STATIC_GETOPT")
 
     setup_cfg("final")
     setup_cfg("release")
