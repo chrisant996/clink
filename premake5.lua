@@ -151,13 +151,14 @@ workspace("clink")
         flags("NoFramePointer")
         flags("NoBufferSecurityCheck")
         flags("LinkTimeOptimization")
-        defines("CLINK_EMBED_LUA_SCRIPTS")
 
     configuration("release")
         optimize("full")
 
+    configuration("debug or release")
+        defines("CLINK_BUILD_ROOT=\""..path.getabsolute(to).."\"")
+
     configuration("vs*")
-        buildoptions("/FC")
         defines("_HAS_EXCEPTIONS=0")
         defines("_CRT_SECURE_NO_WARNINGS")
         defines("_CRT_NONSTDC_NO_WARNINGS")

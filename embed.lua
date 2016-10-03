@@ -49,7 +49,7 @@ local function do_embed()
         print("-- " .. out)
         out = io.open(out, "w")
         out:write("#include \"pch.h\"\n")
-        out:write("#ifdef CLINK_EMBED_LUA_SCRIPTS\n")
+        out:write("#if defined(CLINK_FINAL)\n")
 
         -- Write each sanitised script to 'out' as a global variable.
         local symbols = {}
@@ -76,14 +76,13 @@ local function do_embed()
         -- Some debug stuff so loose can files can be loaded in debug builds.
         symbols = {}
         out:write("#else\n")
-        out:write("const char* " .. manifest.name .. "_embed_path = __FILE__;\n")
         for _, file in ipairs(manifest.files) do
             local symbol = path.getname(file):gsub("%.", "_")
             symbol = manifest.name .. "_" .. symbol .. "_file"
             table.insert(symbols, symbol)
 
             file = file:gsub("\\", "/")
-            out:write("const char* " .. symbol .. " = \"" .. file .. "\";\n")
+            out:write("const char* " .. symbol .. " = CLINK_BUILD_ROOT \"/../../" .. root .. "/" .. file .. "\";\n")
         end
 
         -- Write a manifest variable of all embedded scripts in the .cpp file.

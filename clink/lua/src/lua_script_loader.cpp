@@ -4,11 +4,7 @@
 #include "pch.h"
 #include "lua_state.h"
 
-extern "C" {
-#include <lauxlib.h>
-}
-
-#ifdef CLINK_EMBED_LUA_SCRIPTS
+#if defined(CLINK_FINAL)
 
 //------------------------------------------------------------------------------
 void lua_load_script_impl(lua_state& state, const char* script)
@@ -16,20 +12,12 @@ void lua_load_script_impl(lua_state& state, const char* script)
     state.do_string(script);
 }
 
-#else // CLINK_EMBED_LUA_SCRIPTS
-
-#include <core/path.h>
-#include <core/str.h>
+#else // CLINK_FINAL
 
 //------------------------------------------------------------------------------
-void lua_load_script_impl(lua_state& state, const char* path, const char* name)
+void lua_load_script_impl(lua_state& state, const char* path)
 {
-    str<288> buffer;
-    buffer << path;
-
-    path::get_directory(buffer);
-    path::append(buffer, name);
-
-    state.do_file(buffer.c_str());
+    state.do_file(path);
 }
-#endif // CLINK_EMBED_LUA_SCRIPTS
+
+#endif // CLINK_FINAL
