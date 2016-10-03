@@ -82,6 +82,7 @@ end
 --------------------------------------------------------------------------------
 local function setup_cfg(cfg)
     configuration(cfg)
+        defines("CLINK_"..cfg:upper())
         targetdir(to.."/bin/"..cfg)
         objdir(to.."/obj/"..cfg)
 
