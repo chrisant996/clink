@@ -1,20 +1,14 @@
 -- Copyright (c) 2012 Martin Ridgers
 -- License: http://opensource.org/licenses/MIT
 
--- MODE4 : some of this is out of date.
-
 --------------------------------------------------------------------------------
 local nothing = clink:argmatcher()
 
+--------------------------------------------------------------------------------
 local inject = clink:argmatcher()
-:addflags(
-    "--help",
-    "--pid",
-    "--profile",
-    "--quiet",
-    "--scripts"
-)
+:addflags("--help", "--pid", "--profile", "--quiet", "--nolog")
 
+--------------------------------------------------------------------------------
 local autorun_dashdash = clink:argmatcher()
 :addarg("--" .. inject)
 
@@ -27,26 +21,23 @@ local autorun = clink:argmatcher()
     "set"
 )
 
-local set = clink:argmatcher()
-:generatefiles(false)
-:addflags("--help")
-:addarg(
-    "ansi_code_support",
-    "ctrld_exits",
-    "exec_match_style",
-    "history_dupe_mode",
-    "history_expand_mode",
-    "history_file_lines",
-    "history_ignore_space",
-    "history_io",
-    "match_colour",
-    "prompt_colour",
-    "space_prefix_match_files",
-    "strip_crlf_on_paste",
-    "terminate_autoanswer",
-    "use_altgr_substitute"
-)
+--------------------------------------------------------------------------------
+local function set_handler(word_index, line_state)
+    local ret = {}
+    local name = line_state:getword(word_index) or ""
+    local cmd = io.popen(CLINK_EXE.." set --list "..name, "r")
+    for line in cmd:lines() do
+        table.insert(ret, line)
+    end
+    return ret
+end
 
+local set = clink:argmatcher()
+:addflags("--help")
+:addarg(set_handler)
+:addarg(set_handler)
+
+--------------------------------------------------------------------------------
 local history = clink:argmatcher()
 :addflags("--help")
 :addarg(
@@ -56,8 +47,11 @@ local history = clink:argmatcher()
     "expand"
 )
 
-clink
-:argmatcher("clink", "clink_x86", "clink_x64")
+--------------------------------------------------------------------------------
+clink:argmatcher(
+    "clink",
+    "clink_x86.exe",
+    "clink_x64.exe")
 :addarg(
     "inject"    .. inject,
     "autorun"   .. autorun,
