@@ -165,7 +165,7 @@ const ecma48_code* ecma48_iter::next()
     else
         m_code.m_length = int(m_iter.get_pointer() - m_code.get_pointer());
 
-    new (&m_state) ecma48_state();
+    m_state.reset();
 
     return (m_code.get_length() != 0) ? &m_code : nullptr;
 }
@@ -247,7 +247,7 @@ bool ecma48_iter::next_cmd_str(int c)
     // Reset
     m_code.m_str = m_iter.get_pointer();
     m_code.m_length = 0;
-    new (&m_state) ecma48_state();
+    m_state.reset();
     return false;
 }
 
@@ -268,7 +268,7 @@ bool ecma48_iter::next_csi_f(int c)
     // Reset
     m_code.m_str = m_iter.get_pointer();
     m_code.m_length = 0;
-    new (&m_state) ecma48_state();
+    m_state.reset();
     return false;
 }
 
@@ -318,7 +318,7 @@ bool ecma48_iter::next_esc_st(int c)
 
     m_code.m_str = m_iter.get_pointer();
     m_code.m_length = 0;
-    new (&m_state) ecma48_state();
+    m_state.reset();
     return false;
 }
 

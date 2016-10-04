@@ -49,11 +49,14 @@ private:
 //------------------------------------------------------------------------------
 struct ecma48_state
 {
+                        ecma48_state()  { reset(); }
+    void                reset()         { state = count = 0; }
+
 private:
     friend class        ecma48_iter;
-    int                 state = 0;
+    int                 state;
+    int                 count;
     char                buffer[64];
-    int                 count = 0;
 };
 
 
