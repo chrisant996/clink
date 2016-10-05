@@ -846,7 +846,11 @@ end
 
 local function report(ev, vars, file, line, idx_watch)
   function show_source()
-    show(traceinfo[1].short_src, traceinfo[1].currentline, 2, 2)
+    local src = traceinfo[1].source
+    if src:sub(1, 1) == "@" then
+      src = src:sub(2)
+    end
+    show(src, traceinfo[1].currentline, 2, 2)
   end
 
   local vars = vars or {}
