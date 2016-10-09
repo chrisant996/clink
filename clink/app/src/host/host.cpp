@@ -3,6 +3,7 @@
 
 #include "pch.h"
 #include "host.h"
+#include "host_lua.h"
 #include "host_module.h"
 #include "prompt.h"
 #include "rl/rl_history.h"
@@ -28,13 +29,6 @@ extern "C" {
 }
 
 //------------------------------------------------------------------------------
-static setting_str g_clink_path(
-    "clink.path",
-    "Paths to load Lua completion scripts from",
-    "These paths will be searched for Lua scripts that provide custom\n"
-    "match generation. Multiple paths should be delimited by semicolons.",
-    "");
-
 static setting_enum g_ignore_case(
     "match.ignore_case",
     "Case insensitive matching",
@@ -48,58 +42,6 @@ static setting_bool g_add_history_cmd(
     "Add 'history' commands.",
     "Toggles the adding of 'history' commands to the history.",
     true);
-
-
-
-//------------------------------------------------------------------------------
-static void lua_add_globals(lua_state& lua)
-{
-    str<280> bin_path;
-    app_context::get()->get_binaries_dir(bin_path);
-
-    str<280> exe_path;
-    exe_path << "\"" << bin_path << "/" CLINK_EXE "\"";
-
-    lua_State* state = lua.get_state();
-    lua_pushstring(state, exe_path.c_str());
-    lua_setglobal(state, "CLINK_EXE");
-}
-
-//------------------------------------------------------------------------------
-static void load_lua_script(lua_state& lua, const char* path)
-{
-    str<> buffer;
-    path::join(path, "*.lua", buffer);
-
-    globber lua_globs(buffer.c_str());
-    lua_globs.directories(false);
-
-    while (lua_globs.next(buffer))
-        lua.do_file(buffer.c_str());
-}
-
-//------------------------------------------------------------------------------
-static void load_lua_scripts(lua_state& lua, const char* paths)
-{
-    if (paths == nullptr || paths[0] == '\0')
-        return;
-
-    str<> token;
-    str_tokeniser tokens(paths, ";");
-    while (tokens.next(token))
-        load_lua_script(lua, token.c_str());
-}
-
-//------------------------------------------------------------------------------
-static void load_lua_scripts(lua_state& lua)
-{
-    const char* setting_clink_path = g_clink_path.get();
-    load_lua_scripts(lua, setting_clink_path);
-
-    str<256> env_clink_path;
-    os::get_env("clink_path", env_clink_path);
-    load_lua_scripts(lua, env_clink_path.c_str());
-}
 
 
 
@@ -144,12 +86,10 @@ bool host::edit_line(const char* prompt, str_base& out)
     history.load(history_file.c_str());
 
     // Set up Lua and load scripts into it.
-    lua_state lua;
-    lua_add_globals(lua);
-    lua_match_generator lua_generator(lua);
+    host_lua lua;
     prompt_filter prompt_filter(lua);
     initialise_lua(lua);
-    load_lua_scripts(lua);
+    lua.load_scripts();
 
     line_editor::desc desc = {};
     initialise_editor_desc(desc);
@@ -175,7 +115,7 @@ bool host::edit_line(const char* prompt, str_base& out)
     host_module host_module(m_name);
     editor->add_module(host_module);
 
-    editor->add_generator(lua_generator);
+    editor->add_generator(lua);
     editor->add_generator(file_match_generator());
 
     bool ret = false;
