@@ -67,7 +67,7 @@ bool initialise_clink(const app_context::desc& app_desc)
     auto* app_ctx = new app_context(app_desc);
 
     // Start a log file.
-    if (!app_ctx->is_logging_enabled())
+    if (app_ctx->is_logging_enabled())
     {
         str<256> log_path;
         app_ctx->get_log_path(log_path);
