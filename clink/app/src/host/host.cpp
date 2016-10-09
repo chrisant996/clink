@@ -110,11 +110,6 @@ host::host(const char* name)
 }
 
 //------------------------------------------------------------------------------
-host::~host()
-{
-}
-
-//------------------------------------------------------------------------------
 bool host::edit_line(const char* prompt, str_base& out)
 {
     const app_context* app = app_context::get();

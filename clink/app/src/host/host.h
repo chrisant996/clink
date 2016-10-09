@@ -13,7 +13,6 @@ class host
 {
 public:
                     host(const char* name);
-    virtual         ~host();
     virtual bool    validate() = 0;
     virtual bool    initialise() = 0;
     virtual void    shutdown() = 0;

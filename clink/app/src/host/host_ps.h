@@ -16,7 +16,6 @@ class host_ps
 {
 public:
                         host_ps();
-                        ~host_ps();
     bool                validate() override;
     bool                initialise() override;
     void                shutdown() override;

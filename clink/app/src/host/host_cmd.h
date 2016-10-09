@@ -18,7 +18,6 @@ class host_cmd
 {
 public:
                         host_cmd();
-                        ~host_cmd();
     virtual bool        validate() override;
     virtual bool        initialise() override;
     virtual void        shutdown() override;
