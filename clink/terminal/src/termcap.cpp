@@ -1,15 +1,15 @@
 // Copyright (c) 2012 Martin Ridgers
 // License: http://opensource.org/licenses/MIT
 
-#define TERMCAP_DEBUG   0
+#include "pch.h"
 
 #include <Windows.h>
 
+#define TERMCAP_DEBUG 0
 #if TERMCAP_DEBUG
+#   include <core/base.h>
 #   include <stdio.h>
 #endif
-
-#define sizeof_array(x) (sizeof(x) / sizeof(x[0]))
 
 #define AS_INT(x)       (*(int*)(x))
 #define MAKE_CAP(x)     ((AS_INT(x) >> 8)|(AS_INT(x) << 8) & 0xffff)
@@ -51,6 +51,10 @@
     "km" Flag: the terminal has a Meta key.
     "xn" Flag: cursor wraps in a strange way.
 */
+
+#if defined(__cplusplus)
+extern "C" {
+#endif
 
 //------------------------------------------------------------------------------
 extern int      _rl_last_v_pos;
@@ -234,7 +238,7 @@ void clear_screen()
     else if (dy != 0)
     {
         // Move the visible window.
-        SMALL_RECT delta_window = { 0, dy, 0, dy };
+        SMALL_RECT delta_window = { 0, short(dy), 0, short(dy) };
         SetConsoleWindowInfo(handle, FALSE, &delta_window);
 
         window.Top += dy;
@@ -542,7 +546,7 @@ char* tgetstr(char* cap_name, char** out)
     }
     else
     {
-        ret = malloc(i);
+        ret = (char*)malloc(i);
         strcpy(ret, str);
     }
 
@@ -560,3 +564,7 @@ char* tgoto(char* base, int x, int y)
 
     return (char*)&data;
 }
+
+#if defined(__cplusplus)
+} // extern "C"
+#endif
