@@ -2,6 +2,7 @@
 // License: http://opensource.org/licenses/MIT
 
 #include "pch.h"
+#include "host/host_lua.h"
 #include "utils/app_context.h"
 
 #include <core/base.h>
@@ -9,6 +10,7 @@
 #include <core/settings.h>
 #include <core/str.h>
 #include <core/str_tokeniser.h>
+#include <lua/lua_script_loader.h>
 
 #include <getopt.h>
 
@@ -159,12 +161,15 @@ int set(int argc, char** argv)
         }
     }
 
-    // MODE4: Load all lua state
-
     // Load the settings from disk.
     str<280> settings_file;
     app_context::get()->get_settings_path(settings_file);
     settings::load(settings_file.c_str());
+
+    // Load all lua state too as there is settings declared in scripts.
+    host_lua lua;
+    lua_load_script(lua, app, exec);
+    lua.load_scripts();
 
     // List or set Clink's settings.
     if (complete)
