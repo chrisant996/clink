@@ -153,9 +153,6 @@ bool host::edit_line(const char* prompt, str_base& out)
     lua_add_globals(lua);
     lua_match_generator lua_generator(lua);
     prompt_filter prompt_filter(lua);
-    lua_load_script(lua, app, dir);
-    lua_load_script(lua, app, exec);
-    lua_load_script(lua, app, self);
     initialise_lua(lua);
     load_lua_scripts(lua);
 

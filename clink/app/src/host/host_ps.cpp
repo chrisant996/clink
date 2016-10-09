@@ -51,7 +51,10 @@ void host_ps::shutdown()
 //------------------------------------------------------------------------------
 void host_ps::initialise_lua(lua_state& lua)
 {
+    lua_load_script(lua, app, dir);
+    lua_load_script(lua, app, exec);
     lua_load_script(lua, app, powershell);
+    lua_load_script(lua, app, self);
 }
 
 //------------------------------------------------------------------------------
