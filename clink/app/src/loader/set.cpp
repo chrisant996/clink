@@ -171,6 +171,9 @@ int set(int argc, char** argv)
     lua_load_script(lua, app, exec);
     lua.load_scripts();
 
+    // Loading settings _again_ now Lua's initialised ... :(
+    settings::load(settings_file.c_str());
+
     // List or set Clink's settings.
     if (complete)
     {
