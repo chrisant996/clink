@@ -25,7 +25,7 @@ static setting_bool g_ctrld_exits(
     true);
 
 static setting_enum g_autoanswer(
-    "cmd.autoanswer",
+    "cmd.auto_answer",
     "Auto-answer terminate prompt",
     "Automatically answers cmd.exe's 'Terminate batch job (Y/N)?' prompts.\n",
     "off,answer_yes,answer_no",
