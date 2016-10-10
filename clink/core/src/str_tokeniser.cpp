@@ -4,6 +4,8 @@
 #include "pch.h"
 #include "str_tokeniser.h"
 
+#include <new>
+
 //------------------------------------------------------------------------------
 template <>
 str_token str_tokeniser_impl<char>::next(str_impl<char>& out)
@@ -46,6 +48,36 @@ template <>
 str_token str_tokeniser_impl<wchar_t>::next(const wchar_t*& start, int& length)
 {
     return next_impl(start, length);
+}
+
+//------------------------------------------------------------------------------
+template <>
+str_token str_tokeniser_impl<char>::next(str_iter_impl<char>& out)
+{
+    const char* start;
+    int length;
+    if (auto ret = next_impl(start, length))
+    {
+        new (&out) str_iter_impl<char>(start, length);
+        return ret;
+    }
+
+    return 0;
+}
+
+//------------------------------------------------------------------------------
+template <>
+str_token str_tokeniser_impl<wchar_t>::next(str_iter_impl<wchar_t>& out)
+{
+    const wchar_t* start;
+    int length;
+    if (auto ret = next_impl(start, length))
+    {
+        new (&out) str_iter_impl<wchar_t>(start, length);
+        return ret;
+    }
+
+    return 0;
 }
 
 //------------------------------------------------------------------------------

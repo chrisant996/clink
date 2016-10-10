@@ -28,6 +28,7 @@ public:
     bool                add_quote_pair(const char* pair);
     str_token           next(str_impl<T>& out);
     str_token           next(const T*& start, int& length);
+    str_token           next(str_iter_impl<T>& out);
 
 private:
     struct quote
