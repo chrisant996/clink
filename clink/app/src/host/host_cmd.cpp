@@ -171,6 +171,7 @@ bool host_cmd::initialise()
 //------------------------------------------------------------------------------
 void host_cmd::shutdown()
 {
+    m_doskey.remove_alias("history");
     m_doskey.remove_alias("clink");
 }
 
