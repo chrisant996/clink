@@ -37,7 +37,7 @@ public:
     rciter          rbegin() const   { return m_ptr + m_size - 1; }
     rciter          rend() const     { return m_ptr - 1; }
     unsigned int    size() const     { return m_size; }
-    unsigned int    capacity() const { return m_size; }
+    unsigned int    capacity() const { return m_capacity; }
     bool            empty() const    { return !m_size; }
     bool            full() const     { return (m_size == m_capacity); }
     T const*        front() const    { return m_ptr; }
