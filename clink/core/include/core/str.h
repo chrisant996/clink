@@ -107,7 +107,7 @@ bool str_impl<TYPE>::reserve(unsigned int new_size)
     new_size = (new_size + 63) & ~63;
 
     TYPE* new_data = (TYPE*)malloc(new_size * sizeof(TYPE));
-    memcpy(new_data, data(), m_size * sizeof(TYPE));
+    memcpy(new_data, c_str(), m_size * sizeof(TYPE));
 
     free_data();
 
