@@ -355,7 +355,7 @@ TEST_CASE("Lua arg parsers.") {
 
     SECTION("Flags") {
         const char* script = "\
-            clink:argmatcher('argcmd_flags_s')\
+            p = clink:argmatcher('argcmd_flags_s')\
             :addflags('/one', '/two', '/twenty')\
             :setflagprefix('/')\
             \
@@ -371,26 +371,27 @@ TEST_CASE("Lua arg parsers.") {
             tester.run();
         }
 
-#if MODE4 // flag-type arguments don't work properly yet.
         SECTION("Slash 2") {
             tester.set_input("argcmd_flags_s nothing /");
             tester.set_expected_matches("/one", "/two", "/twenty");
             tester.run();
         }
 
+#if TODO // not all flag-type arguments work properly ...yet.
         SECTION("Slash 3") {
             tester.set_input("argcmd_flags_s nothing /tw");
             tester.set_expected_matches("/two", "/twenty");
             tester.run();
         }
 
-        REQUIRE(lua.do_string("p:disable_file_matching()"));
+        REQUIRE(lua.do_string("p:generatefiles(false)"));
 
         SECTION("Slash 4") {
             tester.set_input("argcmd_flags_s /t");
             tester.set_expected_matches("/two", "/twenty");
             tester.run();
         }
+#endif
 
         SECTION("Slash 5") {
             tester.set_input("argcmd_flags_s nothing /");
@@ -398,6 +399,7 @@ TEST_CASE("Lua arg parsers.") {
             tester.run();
         }
 
+#if TODO // not all flag-type arguments work properly ...yet.
         SECTION("Slash 6") {
             tester.set_input("argcmd_flags_s nothing /tw");
             tester.set_expected_matches("/two", "/twenty");
@@ -415,6 +417,7 @@ TEST_CASE("Lua arg parsers.") {
             tester.set_expected_matches("/two", "/twenty");
             tester.run();
         }
+#endif
 
         SECTION("Dash 1") {
             tester.set_input("argcmd_flags_d -");
@@ -427,20 +430,16 @@ TEST_CASE("Lua arg parsers.") {
             tester.set_expected_matches("-two", "-twenty");
             tester.run();
         }
-#endif // MODE4
     }
 
-#if MODE4 // flag-type arguments don't work properly yet.
     SECTION("Skip") {
         const char* script = "\
-            q = clink.arg.new_parser()\
-            q:set_arguments({ 'two', 'three' })\
+            q = clink:argmatcher():addarg('two', 'three')\
             \
-            p = clink.arg.new_parser()\
-            p:set_arguments({ 'one' }, { 'nine' })\
-            p:set_flags('-flag_a' .. q, '-flag_b' .. q)\
-            \
-            clink.arg.register_parser('argcmd_skip', p)\
+            p = clink:argmatcher('argcmd_skip')\
+            :addarg('one')\
+            :addarg('nine')\
+            :addflags('-flag_a' .. q, '-flag_b' .. q)\
         ";
 
         REQUIRE(lua.do_string(script));
@@ -463,7 +462,6 @@ TEST_CASE("Lua arg parsers.") {
             tester.run();
         }
     }
-#endif
 
     SECTION("Shorthand") {
         const char* script = "\
