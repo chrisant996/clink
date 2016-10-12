@@ -258,10 +258,10 @@ bool str_impl<TYPE>::format(const TYPE* format, ...)
 {
     va_list args;
     va_start(args, format);
-    int ret = vsnprint(data(), m_size, format, args);
+    unsigned int ret = vsnprint(data(), m_size, format, args);
     data()[m_size - 1] = '\0';
     va_end(args);
-    return (ret >= 0);
+    return (ret <= m_size);
 }
 
 //------------------------------------------------------------------------------
