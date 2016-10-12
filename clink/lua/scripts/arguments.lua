@@ -334,28 +334,3 @@ function argmatcher_module:generate(line_state, match_builder)
 
     return false
 end
-
-
-
-
-
-
-
--- MODE4 : remove this!
-clink:argmatcher('shh')
-    { 'one', 'two', 'three' }
-    { 'four', 'five' }
-    { 'nine', 'ten', 'eleven' }
-    { 'jumbbles', 'jumbles' .. clink:argmatcher() { 'red', 'green', 'blue'} }
-    { { '-flag', '-hips' } .. clink:argmatcher() { 'red', 'green', 'blue'}, '-guff' }
-
-clink:argmatcher('see')
-:addarg('two', 'three')
-:addarg('four', 'banana')
-:loop()
-
-clink:argmatcher('sdd')
-    :addarg("true", "sub" .. clink:argmatcher())
-    :addflags('-one', '-two', '-twenty')
-    --:addflags('/one', '/two', '/twenty')
-    --:setflagprefix('/')
