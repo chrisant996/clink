@@ -234,7 +234,8 @@ void host_cmd::edit_line(const wchar_t* prompt, wchar_t* chars, int max_chars)
     // Doskey is implemented on the server side of a ReadConsoleW() call (i.e.
     // in conhost.exe). Commands separated by a "$T" are returned one command
     // at a time through successive calls to ReadConsoleW().
-    if (m_doskey.next(chars, max_chars))
+    wstr_base out(chars, max_chars);
+    if (m_doskey_alias.next(out))
         return;
 
     // Convert the prompt to Utf8 and parse backspaces in the string.
@@ -271,7 +272,8 @@ void host_cmd::edit_line(const wchar_t* prompt, wchar_t* chars, int max_chars)
         WriteConsole(handle, L"\n", 1, &written, nullptr);
     }
 
-    m_doskey.begin(chars, max_chars);
+    m_doskey.resolve(chars, m_doskey_alias);
+    m_doskey_alias.next(out);
 }
 
 //------------------------------------------------------------------------------

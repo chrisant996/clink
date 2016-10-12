@@ -34,4 +34,5 @@ private:
     bool                is_interactive() const;
     tagged_prompt       m_prompt;
     doskey              m_doskey;
+    doskey_alias        m_doskey_alias;
 };

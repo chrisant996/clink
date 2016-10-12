@@ -3,29 +3,37 @@
 
 #pragma once
 
+#include <core/array.h>
+#include <core/str.h>
+#include <core/str_iter.h>
+
+//------------------------------------------------------------------------------
+class doskey_alias
+{
+public:
+                    doskey_alias();
+    void            reset();
+    bool            next(wstr_base& out);
+    explicit        operator bool () const;
+
+private:
+    friend class    doskey;
+    wstr<32>        m_buffer;
+    const wchar_t*  m_cursor;
+};
+
+
+
 //------------------------------------------------------------------------------
 class doskey
 {
 public:
-                doskey(const char* shell_name);
-                ~doskey();
-    bool        add_alias(const char* alias, const char* text);
-    bool        remove_alias(const char* alias);
-    bool        begin(wchar_t* chars, unsigned max_chars);
-    bool        next(wchar_t* chars, unsigned max_chars);
+                    doskey(const char* shell_name);
+    bool            add_alias(const char* alias, const char* text);
+    bool            remove_alias(const char* alias);
+    void            resolve(const wchar_t* chars, doskey_alias& out);
 
 private:
-    struct token
-    {
-        short   start;
-        short   length;
-    };
-
-    int         tokenise(wchar_t* source, token* tokens, int max_tokens);
-    const char* m_shell_name;
-    wchar_t*    m_alias_text;
-    wchar_t*    m_alias_next;
-    wchar_t*    m_input;
-    token       m_tokens[10];
-    unsigned    m_token_count;
+    bool            resolve_impl(const wstr_iter& in, wstr_base& out);
+    const char*     m_shell_name;
 };

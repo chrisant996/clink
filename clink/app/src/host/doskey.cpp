@@ -1,27 +1,124 @@
-// Copyright (c) 2012 Martin Ridgers
+// Copyright (c) 2016 Martin Ridgers
 // License: http://opensource.org/licenses/MIT
 
 #include "pch.h"
 #include "doskey.h"
 
 #include <core/base.h>
+#include <core/settings.h>
 #include <core/str.h>
+#include <core/str_tokeniser.h>
+
+//------------------------------------------------------------------------------
+static setting_bool g_enhanced_doskey(
+    "doskey.enhanced",
+    "Add enhancements to Doskey",
+    "Enhanced Doskey adds the expansion of macros that follow '|' and '&'"
+    "command separators and respects quotes around words when parsing $1...9"
+    "tags. Note that these features do not apply to Doskey use in Batch files.",
+    true);
+
+
+
+//------------------------------------------------------------------------------
+class wstr_stream
+{
+public:
+                                wstr_stream(wstr_base& x);
+    void                        operator << (int c);
+    void                        concat(const wchar_t* ptr, int length);
+
+private:
+    void                        update();
+
+    wstr_base&                  x;
+    const wchar_t* __restrict   start;
+    const wchar_t* __restrict   end;
+    wchar_t* __restrict         cursor;
+};
+
+//------------------------------------------------------------------------------
+wstr_stream::wstr_stream(wstr_base& x)
+: x(x)
+{
+    start = x.c_str();
+    end = start + x.size() - 1;
+    cursor = x.data() + x.length();
+}
+
+//------------------------------------------------------------------------------
+void wstr_stream::operator << (int c)
+{
+    if (cursor >= end)
+    {
+        x.reserve(x.size() + 128);
+        update();
+    }
+
+    *cursor++ = c;
+}
+
+//------------------------------------------------------------------------------
+void wstr_stream::concat(const wchar_t* ptr, int length)
+{
+    *cursor = '\0';
+    cursor += length;
+
+    x.concat(ptr, length);
+
+    if (start != x.c_str())
+        update();
+}
+
+//------------------------------------------------------------------------------
+void wstr_stream::update()
+{
+    int i = int(cursor - start);
+    start = x.c_str();
+    end = start + x.size() - 1;
+    cursor = x.data() + i;
+}
+
+
+
+
+//------------------------------------------------------------------------------
+doskey_alias::doskey_alias()
+{
+    m_cursor = m_buffer.c_str();
+}
+
+//------------------------------------------------------------------------------
+void doskey_alias::reset()
+{
+    m_buffer.clear();
+    m_cursor = m_buffer.c_str();
+}
+
+//------------------------------------------------------------------------------
+bool doskey_alias::next(wstr_base& out)
+{
+    if (!*this)
+        return false;
+
+    out.copy(m_cursor);
+
+    while (*m_cursor++);
+    return true;
+}
+
+//------------------------------------------------------------------------------
+doskey_alias::operator bool () const
+{
+    return (*m_cursor != 0);
+}
+
+
 
 //------------------------------------------------------------------------------
 doskey::doskey(const char* shell_name)
 : m_shell_name(shell_name)
-, m_alias_text(nullptr)
-, m_alias_next(nullptr)
-, m_input(nullptr)
-, m_token_count(0)
 {
-}
-
-//------------------------------------------------------------------------------
-doskey::~doskey()
-{
-    if (m_alias_text != nullptr)
-        free(m_alias_text);
 }
 
 //------------------------------------------------------------------------------
@@ -42,197 +139,140 @@ bool doskey::remove_alias(const char* alias)
 }
 
 //------------------------------------------------------------------------------
-bool doskey::begin(wchar_t* chars, unsigned max_chars)
+bool doskey::resolve_impl(const wstr_iter& in, wstr_base& out)
 {
     // Find the alias for which to retrieve text for.
-    wchar_t alias[64];
-    {
-        int i, n;
-        int found_word = 0;
-        const wchar_t* read = chars;
-        for (i = 0, n = min<int>(sizeof_array(alias) - 1, max_chars); i < n && *read; ++i)
-        {
-            if (!!iswspace(*read) == found_word)
-            {
-                if (!found_word)
-                    found_word = 1;
-                else
-                    break;
-            }
+    wstr_tokeniser tokens(in, " ");
+    wstr_iter token;
+    if (!tokens.next(token))
+        return false;
 
-            alias[i] = *read++;
-        }
+    // Legacy doskey doesn't allow macros that begin with whitespace so if the
+    // token does it won't ever resolve as an alias.
+    const wchar_t* alias_ptr = token.get_pointer();
+    if (!g_enhanced_doskey.get() && alias_ptr != in.get_pointer())
+        return false;
 
-        alias[i] = '\0';
-    }
+    wstr<32> alias;
+    alias.concat(alias_ptr, token.length());
 
     // Find the alias' text. First check it exists.
-    wchar_t wc;
-    wstr<64> wshell(m_shell_name);
-    if (!GetConsoleAliasW(alias, &wc, 1, wshell.data()))
+    wstr<32> wshell(m_shell_name);
+    if (!GetConsoleAliasW(alias.data(), nullptr, 1, wshell.data()))
         return false;
 
     // It does. Allocate space and fetch it.
-    int bytes = max_chars * sizeof(wchar_t);
-    m_alias_text = (wchar_t*)malloc(bytes * 2);
-    GetConsoleAliasW(alias, m_alias_text, bytes, wshell.data());
+    wstr<4> text;
+    text.reserve(512);
+    GetConsoleAliasW(alias.data(), text.data(), text.size(), wshell.data());
 
-    // Copy the input and tokenise it. Lots of pointer aliasing here...
-    m_input = m_alias_text + max_chars;
-    memcpy(m_input, chars, bytes);
+    // Collect the remaining tokens.
+    if (g_enhanced_doskey.get())
+        tokens.add_quote_pair("\"");
 
-    m_token_count = tokenise(m_input, m_tokens, sizeof_array(m_tokens));
-
-    m_alias_next = m_alias_text;
-
-    // Expand all '$?' codes except those that expand into arguments.
+    struct arg_desc { const wchar_t* ptr; int length; };
+    fixed_array<arg_desc, 10> args;
+    arg_desc* desc;
+    while (tokens.next(token) && (desc = args.push_back()))
     {
-        wchar_t* read = m_alias_text;
-        wchar_t* write = read;
-        while (*read)
-        {
-            if (read[0] != '$')
-            {
-                *write++ = *read++;
-                continue;
-            }
-
-            ++read;
-            switch (*read)
-            {
-            case '$': *write++ = '$'; break;
-            case 'g':
-            case 'G': *write++ = '>'; break;
-            case 'l':
-            case 'L': *write++ = '<'; break;
-            case 'b':
-            case 'B': *write++ = '|'; break;
-            case 't':
-            case 'T': *write++ = '\1'; break;
-
-            default:
-                *write++ = '$';
-                *write++ = *read;
-            }
-
-            ++read;
-        }
-
-        *write = '\0';
+        desc->ptr = token.get_pointer();
+        desc->length = short(token.length());
     }
 
-    return next(chars, max_chars);
-}
-
-//------------------------------------------------------------------------------
-bool doskey::next(wchar_t* chars, unsigned max_chars)
-{
-    if (m_alias_text == nullptr)
-        return false;
-
-    wchar_t* read = m_alias_next;
-    if (*read == '\0')
+    // Expand the alias' text into 'out'.
+    wstr_stream stream(out);
+    const wchar_t* read = text.c_str();
+    for (int c = *read; c = *read; ++read)
     {
-        free(m_alias_text);
-        m_alias_text = nullptr;
-        return false;
-    }
-
-    --max_chars;
-    while (*read > '\1' && max_chars)
-    {
-        wchar_t c = *read++;
-
-        // If this isn't a '$X' code then just copy the character out.
         if (c != '$')
         {
-            *chars++ = c;
-            --max_chars;
+            stream << c;
             continue;
         }
 
-        // This is is a '$X' code. All but argument codes have been handled so
-        // it is just argument codes to expand now.
-        c = *read++;
-        if (c >= '1' && c <= '9')   c -= '1' - 1; // -1 as first arg is token 1
-        else if (c == '*')          c = 0;
-        else if (c > '\1')
-        {
-            --read;
-            *chars++ = '$';
-            --max_chars;
-        }
-        else
+        c = *++read;
+        if (!c)
             break;
 
-        // 'c' is the index to the argument to insert or -1 if it is all of
-        // them. 0th token is alias so arguments start at index 1.
-        if (m_token_count > 1)
+        // Convert $x tags.
+        switch (c)
         {
-            wchar_t* insert_from;
-            int insert_length = 0;
+        case '$':           stream << '$';  continue;
+        case 'g': case 'G': stream << '>';  continue;
+        case 'l': case 'L': stream << '<';  continue;
+        case 'b': case 'B': stream << '|';  continue;
+        case 't': case 'T': stream << '\1'; continue;
+        }
 
-            if (c == 0 && m_token_count > 1)
-            {
-                insert_from = m_input + m_tokens[1].start;
-                insert_length = min<int>(int(wcslen(insert_from)), max_chars);
-            }
-            else if (c < m_token_count)
-            {
-                insert_from = m_input + m_tokens[c].start;
-                insert_length = min<int>(m_tokens[c].length, max_chars);
-            }
+        // Unknown tag? Perhaps it is a argument one?
+        if (unsigned(c - '1') < 9)  c -= '1';
+        else if (c == '*')          c = -1;
+        else
+        {
+            stream << '$';
+            stream << c;
+            continue;
+        }
 
-            if (insert_length)
-            {
-                wcsncpy(chars, insert_from, insert_length);
-                max_chars -= insert_length;
-                chars += insert_length;
-            }
+        int arg_count = args.size();
+        if (!arg_count)
+            continue;
+
+        // 'c' is now the arg index or -1 if it is all of them to be inserted.
+        if (c < 0)
+        {
+            const wchar_t* end = in.get_pointer() + in.length();
+            const wchar_t* start = args.front()->ptr;
+            stream.concat(start, int(end - start));
+        }
+        else if (c < arg_count)
+        {
+            const arg_desc& desc = args.front()[c];
+            stream.concat(desc.ptr, desc.length);
         }
     }
 
-    *chars = '\0';
-
-    // Move m_next on to the next command or the end of the expansion.
-    m_alias_next = read;
-    while (*m_alias_next > '\1')
-        ++m_alias_next;
-
-    if (*m_alias_next == '\1')
-        ++m_alias_next;
+    // Double null-terminated as aliases with $T become and array of commands.
+    stream << '\0';
+    stream << '\0';
 
     return true;
 }
 
 //------------------------------------------------------------------------------
-int doskey::tokenise(wchar_t* source, token* tokens, int max_tokens)
+void doskey::resolve(const wchar_t* chars, doskey_alias& out)
 {
-    // The doskey tokenisation (done by conhost.exe on Win7 and in theory
-    // available to any console app) is pretty basic. Doesn't take quotes into
-    // account. Doesn't skip leading whitespace.
+    out.reset();
 
-    int i;
-    wchar_t* read;
-
-    read = source;
-    for (i = 0; i < max_tokens && *read; ++i)
+    if (g_enhanced_doskey.get())
     {
-        // Skip whitespace, store the token start.
-        while (*read && iswspace(*read))
-            ++read;
+        auto& buffer = out.m_buffer;
+        const wchar_t* last = chars;
+        wstr_iter command;
+        wstr_tokeniser commands(chars, "&|");
+        commands.add_quote_pair("\"");
+        while (commands.next(command))
+        {
+            // Copy delimiters into the output buffer verbatim.
+            if (int delim_length = int(command.get_pointer() - last))
+                buffer.concat(last, delim_length);
+            last = command.get_pointer() + command.length();
 
-        tokens[i].start = (short)(read - source);
+            if (!resolve_impl(command, buffer))
+                buffer.concat(command.get_pointer(), command.length());
+        }
 
-        // Skip token to next whitespace, store token length.
-        while (*read && !iswspace(*read))
-            ++read;
-
-        tokens[i].length = (short)(read - source) - tokens[i].start;
+        // Append any trailing delimiters too.
+        if (int delim_length = int(command.get_pointer() - last))
+            buffer.concat(last, delim_length);
     }
+    else
+        resolve_impl(wstr_iter(chars), out.m_buffer);
 
-    // Don't skip initial whitespace of the first work (the alias key).
-    tokens[0].length += tokens[0].start;
-    tokens[0].start = 0;
-    return i;
+    out.m_cursor = out.m_buffer.c_str();
+
+    // Convert command delimiters to nulls.
+    for (wchar_t* __restrict c = out.m_buffer.data(); *c; ++c)
+        if (*c == '\1')
+            *c = '\0';
 }
