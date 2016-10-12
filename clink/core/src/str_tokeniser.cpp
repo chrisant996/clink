@@ -62,7 +62,7 @@ str_token str_tokeniser_impl<char>::next(str_iter_impl<char>& out)
         return ret;
     }
 
-    return 0;
+    return str_token::invalid_delim;
 }
 
 //------------------------------------------------------------------------------
@@ -77,7 +77,7 @@ str_token str_tokeniser_impl<wchar_t>::next(str_iter_impl<wchar_t>& out)
         return ret;
     }
 
-    return 0;
+    return str_token::invalid_delim;
 }
 
 //------------------------------------------------------------------------------
@@ -96,7 +96,7 @@ template <typename T>
 str_token str_tokeniser_impl<T>::next_impl(const T*& out_start, int& out_length)
 {
     // Skip initial delimiters.
-    const char* max_delim = m_delims;
+    const char* max_delim = nullptr;
     while (int c = m_iter.peek())
     {
         const char* delim = strchr(m_delims, c);
@@ -131,10 +131,10 @@ str_token str_tokeniser_impl<T>::next_impl(const T*& out_start, int& out_length)
 
     // Empty string? Must be the end of the input. We're done here.
     if (start == end)
-        return 0;
+        return str_token::invalid_delim;
 
     // Set the output and return.
     out_start = start;
     out_length = int(end - start);
-    return *max_delim;
+    return max_delim ? *max_delim : 0;
 }

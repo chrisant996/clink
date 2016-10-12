@@ -83,7 +83,7 @@ TEST_CASE("str_tokeniser : delim return")
     str_tokeniser t("a;b;-c-;d", ";-");
 
     str<> s;
-    REQUIRE(t.next(s).delim == ';'); REQUIRE(s.equals("a") == true);
+    REQUIRE(t.next(s).delim == 0);   REQUIRE(s.equals("a") == true);
     REQUIRE(t.next(s).delim == ';'); REQUIRE(s.equals("b") == true);
     REQUIRE(t.next(s).delim == '-'); REQUIRE(s.equals("c") == true);
     REQUIRE(t.next(s).delim == '-'); REQUIRE(s.equals("d") == true);

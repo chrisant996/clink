@@ -11,9 +11,12 @@
 class str_token
 {
 public:
+    enum : unsigned char {
+        invalid_delim   = 0xff,
+    };
                         str_token(char c) : delim(c) {}
+    explicit            operator bool () const       { return (delim != invalid_delim); }
     unsigned char       delim;
-    explicit            operator bool () const       { return (delim != 0); }
 };
 
 
