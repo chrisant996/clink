@@ -196,9 +196,3 @@ int hooked_fstat(int fid, struct hooked_stat* out)
 
     return ret;
 }
-
-//------------------------------------------------------------------------------
-int hooked_wcwidth(wchar_t wc)
-{
-    return WideCharToMultiByte(CP_ACP, 0, &wc, 1, NULL, 0, NULL, NULL);
-}

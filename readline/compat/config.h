@@ -17,16 +17,16 @@
 // here be dragons (for purposes of utf-8 and capturing stdio)
 //
 //
-int                         hooked_fwrite(const void*, int, int, FILE*);
-void                        hooked_fprintf(FILE*, const char*, ...);
-int                         hooked_putc(int, FILE*);
-void                        hooked_fflush(FILE*);
-int                         hooked_fileno(FILE*);
-size_t                      hooked_mbrtowc(wchar_t*, const char*, size_t, mbstate_t*);
-size_t                      hooked_mbrlen(const char*, size_t, mbstate_t*);
-int                         hooked_stat(const char*, struct hooked_stat*);
-int                         hooked_fstat(int, struct hooked_stat*);
-int                         hooked_wcwidth(wchar_t wc);
+int     hooked_fwrite(const void*, int, int, FILE*);
+void    hooked_fprintf(FILE*, const char*, ...);
+int     hooked_putc(int, FILE*);
+void    hooked_fflush(FILE*);
+int     hooked_fileno(FILE*);
+size_t  hooked_mbrtowc(wchar_t*, const char*, size_t, mbstate_t*);
+size_t  hooked_mbrlen(const char*, size_t, mbstate_t*);
+int     hooked_stat(const char*, struct hooked_stat*);
+int     hooked_fstat(int, struct hooked_stat*);
+int     wcwidth(wchar_t);
 
 #if defined(__MINGW32__)
 #   undef fwrite
@@ -47,7 +47,6 @@ int                         hooked_wcwidth(wchar_t wc);
 #endif
 
 #if defined(BUILD_READLINE)
-#   define wcwidth(x)       (((x) > 0x7f) ? hooked_wcwidth(x) : 1)
 #   define fwrite           hooked_fwrite
 #   define fprintf          hooked_fprintf
 #   define putc             hooked_putc
