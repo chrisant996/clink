@@ -84,6 +84,9 @@ int hooked_fileno(FILE* stream)
 //------------------------------------------------------------------------------
 size_t hooked_mbrtowc(wchar_t* out, const char* in, size_t size, mbstate_t* state)
 {
+#if 0
+    return mbrtowc(out, in, size, state);
+#else
     typedef struct {
         unsigned char   count;
         unsigned char   length;
@@ -92,6 +95,16 @@ size_t hooked_mbrtowc(wchar_t* out, const char* in, size_t size, mbstate_t* stat
 
     inner_state_t* inner_state;
     const char* read;
+
+    if (in == NULL)
+    {
+        in = "";
+        size = 1;
+        out = NULL;
+    }
+
+    if (!*in)
+        return 0;
 
     if (state == NULL)
     {
@@ -143,13 +156,18 @@ size_t hooked_mbrtowc(wchar_t* out, const char* in, size_t size, mbstate_t* stat
     }
 
     return -2;
+#endif // 0
 }
 
 //------------------------------------------------------------------------------
 size_t hooked_mbrlen(const char* in, size_t size, mbstate_t* state)
 {
+#if 0
+    return mbrlen(in, size, state);
+#else
     wchar_t t;
     return hooked_mbrtowc(&t, in, size, state);
+#endif // 0
 }
 
 //------------------------------------------------------------------------------
