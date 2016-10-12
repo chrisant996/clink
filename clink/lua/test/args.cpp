@@ -237,7 +237,7 @@ TEST_CASE("Lua arg parsers.") {
             p = clink:argmatcher('argcmd_file')\
             :addarg(\
                 'true',\
-                'sub_parser_1' .. clink:argmatcher():generatefiles(false),\
+                'sub_parser_1' .. clink:argmatcher():nofiles(),\
                 'sub_parser_2' .. clink:argmatcher(),\
                 'this_parser'\
             )\
@@ -271,7 +271,7 @@ TEST_CASE("Lua arg parsers.") {
         }
 
         SECTION("Disabled: this") {
-            lua.do_string("p:generatefiles(false)");
+            lua.do_string("p:nofiles()");
             tester.set_input("argcmd_file this_parser ");
             tester.set_expected_matches();
             tester.run();
@@ -384,7 +384,7 @@ TEST_CASE("Lua arg parsers.") {
             tester.run();
         }
 
-        REQUIRE(lua.do_string("p:generatefiles(false)"));
+        REQUIRE(lua.do_string("p:nofiles()"));
 
         SECTION("Slash 4") {
             tester.set_input("argcmd_flags_s /t");

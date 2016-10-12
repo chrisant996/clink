@@ -150,8 +150,8 @@ function _argmatcher:setflagprefix(...)
 end
 
 --------------------------------------------------------------------------------
-function _argmatcher:generatefiles(enabled) -- MODE4: misleading name - it's a fallback
-    self._no_file_generation = not enabled
+function _argmatcher:nofiles()
+    self._no_file_generation = true
     return self
 end
 
