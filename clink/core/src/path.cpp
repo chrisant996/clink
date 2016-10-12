@@ -70,12 +70,14 @@ namespace path
 //------------------------------------------------------------------------------
 bool abs_path(str_base& in_out)
 {
+    // TODO!
     return false;
 }
 
 //------------------------------------------------------------------------------
 bool abs_path(const char* in, str_base& out)
 {
+    // TODO!
     out.copy(in);
     return false;
 }

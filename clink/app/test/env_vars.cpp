@@ -3,7 +3,7 @@
 
 #include "pch.h"
 
-#if MODE4
+#if TODO
 
 --------------------------------------------------------------------------------
 function clink.get_env_var_names()
@@ -62,4 +62,4 @@ clink.test.test_matches(
     "nullcmd %null_env_var%"
 )
 
-#endif // MODE4
+#endif // TODO

@@ -36,7 +36,7 @@ TEST_CASE("File match generator") {
     SECTION("Dir slash flip") {
         tester.set_input("dir1/\b");
         tester.set_expected_matches("only", "file1", "file2");
-        //tester.set_expected_output("dir1\\"); // MODE4
+        //tester.set_expected_output("dir1\\"); // TODO
         tester.run();
     }
 
@@ -51,7 +51,7 @@ TEST_CASE("File match generator") {
 
         tester.set_input("case-m");
         tester.set_expected_matches("case_map-1", "case_map_2");
-        //tester.set_expected_output("case_map"); // MODE4
+        //tester.set_expected_output("case_map"); // TODO
         tester.run();
     }
 }

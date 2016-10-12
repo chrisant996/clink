@@ -54,9 +54,9 @@ void clink_lua_initialise(lua_state& lua)
         const char* name;
         int         (*method)(lua_State*);
     } methods[] = {
-// MODE4
+// TODO : move this somewhere else.
         { "get_screen_info",        &get_screen_info },
-// MODE4
+//
     };
 
     lua_State* state = lua.get_state();

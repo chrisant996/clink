@@ -474,7 +474,7 @@ void win_terminal::write_c0(int c0)
     switch (c0)
     {
     case 0x07:
-        // MODE4
+        // TODO
         break;
 
     default:
@@ -512,7 +512,7 @@ void win_terminal::write(const char* chars, int length)
 void win_terminal::check_c1_support()
 {
     // Check for the presence of known third party tools that also provide ANSI
-    // escape code support (MODE4)
+    // escape code support.
     const char* dll_names[] = {
         "conemuhk.dll",
         "conemuhk64.dll",
@@ -593,7 +593,7 @@ void win_terminal::write_sgr(const array<int>& params)
         }
         else if (param == 38 || param == 48) // extended colour (skipped)
         {
-            /* MODE4
+            /* TODO
             // format = param;5;[0-255] or param;2;r;g;b
             ++i;
             if (i >= csi.param_count)

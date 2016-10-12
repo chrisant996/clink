@@ -3,7 +3,7 @@
 
 #include "pch.h"
 
-#if MODE4
+#if TODO
 
 --------------------------------------------------------------------------------
 local p
@@ -72,4 +72,4 @@ for _, i in ipairs(merge_tests) do
     end
 end
 
-#endif // MODE4
+#endif // TODO
