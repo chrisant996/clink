@@ -16,6 +16,7 @@ extern "C" {
 int autorun(int, char**);
 int history(int, char**);
 int inject(int, char**);
+int input_echo(int, char**);
 int set(int, char**);
 int testbed(int, char**);
 
@@ -44,13 +45,14 @@ static void show_usage()
     const char* help_usage = "Usage: [options] <verb> [verb_options]\n";
     const char* help_verbs[] = {
         "Verbs:",          "",
-        "inject",          "Injects Clink into a process.",
-        "autorun",         "Manage Clink's entry in cmd.exe's autorun.",
-        "set",             "Adjust Clink's settings.",
-        "history",         "List and operate on the command history.",
-        "",                "('<verb> --help' for more details).",
+        "inject",          "Injects Clink into a process",
+        "autorun",         "Manage Clink's entry in cmd.exe's autorun",
+        "set",             "Adjust Clink's settings",
+        "history",         "List and operate on the command history",
+        "echo",            "Echo key sequences",
+        "",                "('<verb> --help' for more details)",
         "Options:",        "",
-        "--profile <dir>", "Use <dir> as Clink's profile directory.",
+        "--profile <dir>", "Use <dir> as Clink's profile directory",
     };
 
     extern const char* g_clink_header;
@@ -67,11 +69,12 @@ static int dispatch_verb(const char* verb, int argc, char** argv)
         const char* verb;
         int (*handler)(int, char**);
     } handlers[] = {
-        "autorun",  autorun,
-        "history",  history,
-        "inject",   inject,
-        "set",      set,
-        "testbed",  testbed,
+        "autorun",   autorun,
+        "echo",      input_echo,
+        "history",   history,
+        "inject",    inject,
+        "set",       set,
+        "testbed",   testbed,
     };
 
     for (int i = 0; i < sizeof_array(handlers); ++i)

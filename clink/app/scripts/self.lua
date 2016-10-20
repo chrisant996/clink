@@ -53,8 +53,9 @@ clink:argmatcher(
     "clink_x86.exe",
     "clink_x64.exe")
 :addarg(
-    "inject"    .. inject,
     "autorun"   .. autorun,
-    "set"       .. set,
-    "history"   .. history
+    "echo"      .. nothing,
+    "history"   .. history,
+    "inject"    .. inject,
+    "set"       .. set
 )

@@ -1,0 +1,54 @@
+// Copyright (c) 2016 Martin Ridgers
+// License: http://opensource.org/licenses/MIT
+
+#include "pch.h"
+
+#include <core/str.h>
+#include <terminal/win_terminal.h>
+
+//------------------------------------------------------------------------------
+int input_echo(int argc, char** argv)
+{
+    for (int i = 1; i < argc; ++i)
+    {
+        const char* arg = argv[i];
+        if (_stricmp(arg, "--help") == 0 || _stricmp(arg, "-h") == 0)
+        {
+            extern const char* g_clink_header;
+            puts(g_clink_header);
+            printf("Usage: %s\n\n", argv[0]);
+            puts("Echos the sequence of characters for each key pressed.\n");
+            return 0;
+        }
+    }
+
+    win_terminal terminal;
+    terminal.begin();
+
+    bool quit = false;
+    while (!quit)
+    {
+        terminal.select();
+        while (1)
+        {
+            int c = terminal.read();
+            if (c < 0)
+                break;
+
+            if (c > 0x7f)
+                printf("\\x%02x", unsigned(c));
+            else if (c < 0x20)
+                printf("^%c", c|0x40);
+            else
+                printf("%c", c);
+
+            if (quit = (c == ('C' & 0x1f))) // Ctrl-c
+                break;
+        }
+
+        puts("");
+    }
+
+    terminal.end();
+    return 0;
+}
