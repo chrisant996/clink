@@ -140,16 +140,16 @@ rl_module::rl_module(const char* shell_name)
 
     // Bind extended keys so editing follows Windows' conventions.
     static const char* ext_key_binds[][2] = {
-        { "\\eOD", "backward-word" },           // ctrl-left
-        { "\\eOC", "forward-word" },            // ctrl-right
-        { "\\e[4", "end-of-line" },             // end
-        { "\\e[1", "beginning-of-line" },       // home
-        { "\\e[3", "delete-char" },             // del
-        { "\\eO4", "kill-line" },               // ctrl-end
-        { "\\eO1", "backward-kill-line" },      // ctrl-home
-        { "\\e[5", "history-search-backward" }, // pgup
-        { "\\e[6", "history-search-forward" },  // pgdn
-        { "\\C-z", "undo" },
+        { "\\e[1;5D", "backward-word" },           // ctrl-left
+        { "\\e[1;5C", "forward-word" },            // ctrl-right
+        { "\\e[F",    "end-of-line" },             // end
+        { "\\e[H",    "beginning-of-line" },       // home
+        { "\\e[3~",   "delete-char" },             // del
+        { "\\e[1;5F", "kill-line" },               // ctrl-end
+        { "\\e[1;5H", "backward-kill-line" },      // ctrl-home
+        { "\\e[5~",   "history-search-backward" }, // pgup
+        { "\\e[6~",   "history-search-forward" },  // pgdn
+        { "\\C-z",    "undo" },
     };
 
     for (int i = 0; i < sizeof_array(ext_key_binds); ++i)

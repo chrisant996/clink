@@ -16,11 +16,13 @@ protected:
     void            end();
     void            select();
     int             read();
-    void            read_console();
-    void            push(unsigned int value);
     unsigned char   pop();
 
 private:
+    void            read_console();
+    void            process_input(const KEY_EVENT_RECORD& key_event);
+    void            push(unsigned int value);
+    void            push(const char* seq);
     void*           m_stdin = nullptr;
     unsigned long   m_prev_mode = 0;
     unsigned char   m_buffer_head = 0;

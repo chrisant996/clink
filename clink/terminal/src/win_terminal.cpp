@@ -11,14 +11,21 @@
 #include <core/str_iter.h>
 
 //------------------------------------------------------------------------------
-static setting_bool g_altgr(
-    "terminal.altgr",
-    "Support Windows' Ctrl-Alt substitute for AltGr",
-    "Windows provides Ctrl-Alt as a substitute for AltGr, historically to\n"
-    "support keyboards with no AltGr key. This may collide with some of\n"
-    "Readline's bindings.",
-    true);
+namespace terminfo {
+static const char* const kcuu1[] = { "\x1b[A",  "\x1b[1;2A", "\x1b[1;3A", "\x1b[1;4A", "\x1b[1;5A", "\x1b[1;6A", "\x1b[1;7A", "\x1b[1;8A" };
+static const char* const kcud1[] = { "\x1b[B",  "\x1b[1;2B", "\x1b[1;3B", "\x1b[1;4B", "\x1b[1;5B", "\x1b[1;6B", "\x1b[1;7B", "\x1b[1;8B" };
+static const char* const kcub1[] = { "\x1b[D",  "\x1b[1;2D", "\x1b[1;3D", "\x1b[1;4D", "\x1b[1;5D", "\x1b[1;6D", "\x1b[1;7D", "\x1b[1;8D" };
+static const char* const kcuf1[] = { "\x1b[C",  "\x1b[1;2C", "\x1b[1;3C", "\x1b[1;4C", "\x1b[1;5C", "\x1b[1;6C", "\x1b[1;7C", "\x1b[1;8C" };
+static const char* const kich1[] = { "\x1b[2~", "\x1b[2;2~", "\x1b[2;3~", "\x1b[2;4~", "\x1b[2;5~", "\x1b[2;6~", "\x1b[2;7~", "\x1b[2;8~" };
+static const char* const kdch1[] = { "\x1b[3~", "\x1b[3;2~", "\x1b[3;3~", "\x1b[3;4~", "\x1b[3;5~", "\x1b[3;6~", "\x1b[3;7~", "\x1b[3;8~" };
+static const char* const khome[] = { "\x1b[H",  "\x1b[1;2H", "\x1b[1;3H", "\x1b[1;4H", "\x1b[1;5H", "\x1b[1;6H", "\x1b[1;7H", "\x1b[1;8H" };
+static const char* const kend[]  = { "\x1b[F",  "\x1b[1;2F", "\x1b[1;3F", "\x1b[1;4F", "\x1b[1;5F", "\x1b[1;6F", "\x1b[1;7F", "\x1b[1;8F" };
+static const char* const kpp[]   = { "\x1b[5~", "\x1b[5;2~", "\x1b[5;3~", "\x1b[5;4~", "\x1b[5;5~", "\x1b[5;6~", "\x1b[5;7~", "\x1b[5;8~" };
+static const char* const knp[]   = { "\x1b[6~", "\x1b[6;2~", "\x1b[6;3~", "\x1b[6;4~", "\x1b[6;5~", "\x1b[6;6~", "\x1b[6;7~", "\x1b[6;8~" };
+static const char* const kcbt    = "\x1b[Z";
+} // namespace terminfo
 
+//------------------------------------------------------------------------------
 static setting_bool g_ansi(
     "terminal.ansi",
     "Enables basic ANSI escape code support",
@@ -80,28 +87,77 @@ void win_terminal_in::read_console()
         {
             SetConsoleMode(handle, prev_mode);
         }
-    } mode_scope(m_stdin);
+    };
+    
+    mode_scope _(m_stdin);
 
-    DWORD unused;
-    INPUT_RECORD record;
-    ReadConsoleInputW(m_stdin, &record, 1, &unused);
-
-    // Was the console was resized while we're waiting on input?
-    if (record.EventType == WINDOW_BUFFER_SIZE_EVENT)
-        return;
-
-    // Something else we're not interested in?
-    if (record.EventType != KEY_EVENT)
+    // Read input records sent from the terminal (aka conhost) until some
+    // input has beeen buffered.
+    unsigned int buffer_count = m_buffer_count;
+    while (buffer_count == m_buffer_count)
     {
-        read_console();
+        DWORD count;
+        INPUT_RECORD record;
+        ReadConsoleInputW(m_stdin, &record, 1, &count);
+
+        switch (record.EventType)
+        {
+        case KEY_EVENT:
+            {
+                auto& key_event = record.Event.KeyEvent;
+
+                // Some times conhost can send through ALT codes, with the
+                // resulting Unicode code point in the Alt key-up event.
+                if (!key_event.bKeyDown
+                    && key_event.wVirtualKeyCode == VK_MENU
+                    && key_event.uChar.UnicodeChar)
+                {
+                    key_event.bKeyDown = TRUE;
+                    key_event.dwControlKeyState = 0;
+                }
+
+                if (key_event.bKeyDown)
+                    process_input(key_event);
+            }
+            break;
+
+        case WINDOW_BUFFER_SIZE_EVENT:
+            return;
+        }
+    }
+}
+
+//------------------------------------------------------------------------------
+void win_terminal_in::process_input(KEY_EVENT_RECORD const& record)
+{
+    static const int CTRL_PRESSED = LEFT_CTRL_PRESSED|RIGHT_CTRL_PRESSED;
+    static const int ALT_PRESSED = LEFT_ALT_PRESSED|RIGHT_ALT_PRESSED;
+
+    int key_char = record.uChar.UnicodeChar;
+    int key_vk = record.wVirtualKeyCode;
+    int key_sc = record.wVirtualScanCode;
+    int key_flags = record.dwControlKeyState;
+
+    // Early out of unaccompanied ctrl/shift/alt key presses.
+    if (key_vk == VK_MENU || key_vk == VK_CONTROL || key_vk == VK_SHIFT)
         return;
+
+    // If the input was formed using AltGr or LeftAlt-LeftCtrl then things get
+    // tricky. But there's always a Ctrl bit set, even if the user didn't press
+    // a ctrl key. We can use this and the knowledge that Ctrl-modified keys
+    // aren't printable to clear appropriate AltGr flags.
+    if (key_char > 0x1f && (key_flags & CTRL_PRESSED))
+    {
+        key_flags &= ~CTRL_PRESSED;
+        if (key_flags & RIGHT_ALT_PRESSED)
+            key_flags &= ~RIGHT_ALT_PRESSED;
+        else
+            key_flags &= ~LEFT_ALT_PRESSED;
     }
 
-    const KEY_EVENT_RECORD* key = &record.Event.KeyEvent;
-    int key_char = key->uChar.UnicodeChar;
-    int key_vk = key->wVirtualKeyCode;
-    int key_sc = key->wVirtualScanCode;
-    int key_flags = key->dwControlKeyState;
+    // Special case for shift-tab (aka. back-tab or kcbt).
+    if (key_char == '\t' && !m_buffer_count && (key_flags & SHIFT_PRESSED))
+        return push(terminfo::kcbt);
 
     if (key->bKeyDown == FALSE)
     {
@@ -113,129 +169,108 @@ void win_terminal_in::read_console()
             return;
         }
 
-        read_console();
-        return;
-    }
-
-    // Windows supports an AltGr substitute which we check for here. As it
-    // collides with Readline mappings Clink's support can be disabled.
-    int altgr_sub;
-    altgr_sub = !!(key_flags & LEFT_ALT_PRESSED);
-    altgr_sub &= !!(key_flags & (LEFT_CTRL_PRESSED|RIGHT_CTRL_PRESSED));
-    altgr_sub &= !!key_char;
-
-    if (altgr_sub && !g_altgr.get())
-    {
-        altgr_sub = 0;
-        key_char = 0;
-    }
-
-    int alt = 0;
-    if (!altgr_sub)
-        alt = !!(key_flags & (LEFT_ALT_PRESSED|RIGHT_ALT_PRESSED));
-
-    // No Unicode character? Then some post-processing is required to make the
-    // output compatible with whatever standard Linux terminals adhere to and
-    // that which Readline expects.
-    static const int CTRL_PRESSED = LEFT_CTRL_PRESSED|RIGHT_CTRL_PRESSED;
-    if (key_char == 0)
-    {
-        // The numpad keys such as PgUp, End, etc. don't come through with the
-        // ENHANCED_KEY flag set so we'll infer it here.
-        static const int enhanced_vks[] = {
-            VK_UP, VK_DOWN, VK_LEFT, VK_RIGHT, VK_HOME, VK_END,
-            VK_INSERT, VK_DELETE, VK_PRIOR, VK_NEXT,
-        };
-
-        for (int i = 0; i < sizeof_array(enhanced_vks); ++i)
-        {
-            if (key_vk == enhanced_vks[i])
-            {
-                key_flags |= ENHANCED_KEY;
-                break;
-            }
-        }
-
-        // Differentiate enhanced keys depending on modifier key state. MSVC's
-        // runtime does something similar. Slightly non-standard.
-        if (key_flags & ENHANCED_KEY)
-        {
-            static const int mod_map[][5] =
-            {
-                // j---->
-                // Scan Nrml Shft
-                {  'H', 'A', 'a'  }, // up      i
-                {  'P', 'B', 'b'  }, // down    |
-                {  'K', 'D', 'd'  }, // left    |
-                {  'M', 'C', 'c'  }, // right   v
-                {  'R', '2', 'w'  }, // insert
-                {  'S', '3', 'e'  }, // delete
-                {  'G', '1', 'q'  }, // home
-                {  'O', '4', 'r'  }, // end
-                {  'I', '5', 't'  }, // pgup
-                {  'Q', '6', 'y'  }, // pgdn
-            };
-
-            for (int i = 0; i < sizeof_array(mod_map); ++i)
-            {
-                if (mod_map[i][0] != key_sc)
-                    continue;
-
-                int j = 1 + !!(key_flags & SHIFT_PRESSED);
-
-                push(0x1b);
-                push((key_flags & CTRL_PRESSED) ? 'O' : '[');
-                push(mod_map[i][j]);
-                return;
-            }
-
-            read_console();
-            return;
-        }
-        else if (!(key_flags & CTRL_PRESSED))
-        {
-            read_console();
-            return;
-        }
-
-        // This builds Ctrl-<key> map to match that as described by Readline's
-        // source for the emacs/vi keymaps.
-        #define CONTAINS(l, r) (unsigned)(key_vk - l) <= (r - l)
-        else if (CONTAINS('A', 'Z'))    key_vk -= 'A' - 1;
-        else if (CONTAINS(0xdb, 0xdd))  key_vk -= 0xdb - 0x1b;
-        else if (key_vk == 0x32)        key_vk = 0;
-        else if (key_vk == 0x36)        key_vk = 0x1e;
-        else if (key_vk == 0xbd)        key_vk = 0x1f;
-        else                            return read_console();
-        #undef CONTAINS
-
-        if (alt)
-            push(0x1b);
-
-        push(key_vk);
-        return;
-    }
-
-    // Special case for shift-tab.
-    if (key_char == '\t' && !m_buffer_count && (key_flags & SHIFT_PRESSED))
-    {
-        push(0x1b);
-        push('[');
-        push('Z');
         return;
     }
 
     // Include an ESC character in the input stream if Alt is pressed.
-    if (alt)
-        push(0x1b);
+    if (key_char)
+    {
+        if (key_flags & ALT_PRESSED)
+            push(0x1b);
 
-    push(key_char);
+        return push(key_char);
+    }
+
+    // The numpad keys such as PgUp, End, etc. don't come through with the
+    // ENHANCED_KEY flag set so we'll infer it here.
+    static const int enhanced_vks[] = {
+        VK_UP, VK_DOWN, VK_LEFT, VK_RIGHT, VK_HOME, VK_END,
+        VK_INSERT, VK_DELETE, VK_PRIOR, VK_NEXT,
+    };
+
+    for (int i = 0; i < sizeof_array(enhanced_vks); ++i)
+    {
+        if (key_vk == enhanced_vks[i])
+        {
+            key_flags |= ENHANCED_KEY;
+            break;
+        }
+    }
+
+    // Convert enhanced keys to normal mode xterm compatible escape sequences.
+    if (key_flags & ENHANCED_KEY)
+    {
+        static const struct {
+            int                 code;
+            const char* const*  seqs;
+        } sc_map[] = {
+            { 'H', terminfo::kcuu1, }, // up
+            { 'P', terminfo::kcud1, }, // down
+            { 'K', terminfo::kcub1, }, // left
+            { 'M', terminfo::kcuf1, }, // right
+            { 'R', terminfo::kich1, }, // insert
+            { 'S', terminfo::kdch1, }, // delete
+            { 'G', terminfo::khome, }, // home
+            { 'O', terminfo::kend, },  // end
+            { 'I', terminfo::kpp, },   // pgup
+            { 'Q', terminfo::knp, },   // pgdn
+        };
+
+        // Calculate Xterm's modifier number.
+        int i = 0;
+        i |= !!(key_flags & SHIFT_PRESSED);
+        i |= !!(key_flags & ALT_PRESSED) << 1;
+        i |= !!(key_flags & CTRL_PRESSED) << 2;
+
+        for (const auto& iter : sc_map)
+        {
+            if (iter.code != key_sc)
+                continue;
+
+            push(iter.seqs[i]);
+            break;
+        }
+
+        return;
+    }
+
+    // This builds Ctrl-<key> c0 codes. Some of these actually come though in
+    // key_char and some don't.
+    if (key_flags & CTRL_PRESSED)
+    {
+        #define CONTAINS(l, r) (unsigned)(key_vk - l) <= (r - l)
+             if (CONTAINS('A', 'Z'))    key_vk -= 'A' - 1;
+        else if (CONTAINS(0xdb, 0xdd))  key_vk -= 0xdb - 0x1b;
+        else if (key_vk == 0x32)        key_vk = 0;
+        else if (key_vk == 0x36)        key_vk = 0x1e;
+        else if (key_vk == 0xbd)        key_vk = 0x1f;
+        else                            return;
+        #undef CONTAINS
+
+        if (key_flags & ALT_PRESSED)
+            push(0x1b);
+
+        push(key_vk);
+    }
+}
+
+//------------------------------------------------------------------------------
+void win_terminal_in::push(const char* seq)
+{
+    static const unsigned int mask = sizeof_array(m_buffer) - 1;
+
+    if (m_buffer_count >= sizeof_array(m_buffer))
+        return;
+
+    int index = m_buffer_head + m_buffer_count;
+    for (; m_buffer_count <= mask && *seq; ++m_buffer_count, ++index, ++seq)
+        m_buffer[index & mask] = *seq;
 }
 
 //------------------------------------------------------------------------------
 void win_terminal_in::push(unsigned int value)
 {
-    static const unsigned char mask = sizeof_array(m_buffer) - 1;
+    static const unsigned int mask = sizeof_array(m_buffer) - 1;
 
     if (m_buffer_count >= sizeof_array(m_buffer))
         return;
@@ -250,10 +285,10 @@ void win_terminal_in::push(unsigned int value)
     }
 
     wchar_t wc[2] = { (wchar_t)value, 0 };
-    char utf8[8];
-    int n = to_utf8(utf8, sizeof_array(utf8), wc);
-    if (n <= mask - m_buffer_count)
-        for (int i = 0; i < n; ++i, ++index)
+    char utf8[mask + 1];
+    unsigned int n = to_utf8(utf8, sizeof_array(utf8), wc);
+    if (n <= unsigned(mask - m_buffer_count))
+        for (unsigned int i = 0; i < n; ++i, ++index)
             m_buffer[index & mask] = utf8[i];
 
     m_buffer_count += n;
