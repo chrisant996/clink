@@ -147,7 +147,7 @@ const char* lib_match_lua_script =
 "    return self\n"
 "end\n"
 "function _argmatcher:nofiles()\n"
-"    self._no_file_generation = true \n"
+"    self._no_file_generation = true\n"
 "    return self\n"
 "end\n"
 "function _argmatcher.__concat(lhs, rhs)\n"
