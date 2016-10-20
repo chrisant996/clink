@@ -23,6 +23,27 @@ static const char* const kend[]  = { "\x1b[F",  "\x1b[1;2F", "\x1b[1;3F", "\x1b[
 static const char* const kpp[]   = { "\x1b[5~", "\x1b[5;2~", "\x1b[5;3~", "\x1b[5;4~", "\x1b[5;5~", "\x1b[5;6~", "\x1b[5;7~", "\x1b[5;8~" };
 static const char* const knp[]   = { "\x1b[6~", "\x1b[6;2~", "\x1b[6;3~", "\x1b[6;4~", "\x1b[6;5~", "\x1b[6;6~", "\x1b[6;7~", "\x1b[6;8~" };
 static const char* const kcbt    = "\x1b[Z";
+static const char* const kfx[]   = {
+    // kf1-12 : Fx unmodified
+    "\x1bOP",   "\x1bOQ",   "\x1bOR",   "\x1bOS",
+    "\x1b[15~", "\x1b[17~", "\x1b[18~", "\x1b[19~",
+    "\x1b[20~", "\x1b[21~", "\x1b[23~", "\x1b[24~",
+
+    // kf13-24 : shift
+    "\x1b[1;2P",  "\x1b[1;2Q",  "\x1b[1;2R",  "\x1b[1;2S",
+    "\x1b[15;2~", "\x1b[17;2~", "\x1b[18;2~", "\x1b[19;2~",
+    "\x1b[20;2~", "\x1b[21;2~", "\x1b[23;2~", "\x1b[24;2~",
+
+    // kf25-36 : ctrl
+    "\x1b[1;5P",  "\x1b[1;5Q",  "\x1b[1;5R",  "\x1b[1;5S",
+    "\x1b[15;5~", "\x1b[17;5~", "\x1b[18;5~", "\x1b[19;5~",
+    "\x1b[20;5~", "\x1b[21;5~", "\x1b[23;5~", "\x1b[24;5~",
+
+    // kf37-48 : ctrl-shift
+    "\x1b[1;6P",  "\x1b[1;6Q",  "\x1b[1;6R",  "\x1b[1;6S",
+    "\x1b[15;6~", "\x1b[17;6~", "\x1b[18;6~", "\x1b[19;6~",
+    "\x1b[20;6~", "\x1b[21;6~", "\x1b[23;6~", "\x1b[24;6~",
+};
 } // namespace terminfo
 
 //------------------------------------------------------------------------------
@@ -159,15 +180,16 @@ void win_terminal_in::process_input(KEY_EVENT_RECORD const& record)
     if (key_char == '\t' && !m_buffer_count && (key_flags & SHIFT_PRESSED))
         return push(terminfo::kcbt);
 
-    if (key->bKeyDown == FALSE)
+    // Function keys (kf1-kf48 from xterm+pcf2)
+    unsigned key_func = key_vk - VK_F1;
+    if (key_func <= (VK_F12 - VK_F1))
     {
-        // Some times conhost can send through ALT codes, with the resulting
-        // Unicode code point in the Alt key-up event.
-        if (key_vk == VK_MENU && key_char)
-        {
-            push(key_char);
-            return;
-        }
+        if (key_flags & ALT_PRESSED)
+            push(0x1b);
+
+        int kfx_group = !!(key_flags & SHIFT_PRESSED);
+        kfx_group |= !!(key_flags & CTRL_PRESSED) << 1;
+        push((terminfo::kfx + (12 * kfx_group) + key_func)[0]);
 
         return;
     }
