@@ -217,7 +217,6 @@ classic_match_ui::state classic_match_ui::print(const context& context, bool sin
     auto& printer = context.printer;
     const matches& matches = context.matches;
 
-    auto_flush flusher(term);
     printer.print("\r", 1);
 
     int match_count = matches.get_match_count();

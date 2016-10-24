@@ -14,11 +14,3 @@ public:
     virtual int     get_columns() const = 0;
     virtual int     get_rows() const = 0;
 };
-
-//------------------------------------------------------------------------------
-struct auto_flush
-{
-                    auto_flush(terminal_out& term) : m_term(term) {}
-                    ~auto_flush() { m_term.flush(); }
-    terminal_out&   m_term;
-};
