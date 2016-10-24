@@ -24,7 +24,7 @@ TEST_CASE("Quoting") {
 
     fs_fixture fs(space_fs);
 
-    editor_module* module = classic_match_ui_create();
+    editor_module* module = tab_completer_create();
 
     SECTION("Double quotes") {
         line_editor_tester tester;
@@ -151,5 +151,5 @@ TEST_CASE("Quoting") {
         }
     }
 
-    classic_match_ui_destroy(module);
+    tab_completer_destroy(module);
 }

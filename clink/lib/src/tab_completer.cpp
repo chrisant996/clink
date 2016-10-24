@@ -2,7 +2,7 @@
 // License: http://opensource.org/licenses/MIT
 
 #include "pch.h"
-#include "classic_match_ui.h"
+#include "tab_completer.h"
 #include "binder.h"
 #include "editor_module.h"
 #include "line_buffer.h"
@@ -14,15 +14,15 @@
 #include <terminal/printer.h>
 
 //------------------------------------------------------------------------------
-editor_module* classic_match_ui_create()
+editor_module* tab_completer_create()
 {
-    return new classic_match_ui();
+    return new tab_completer();
 }
 
 //------------------------------------------------------------------------------
-void classic_match_ui_destroy(editor_module* classic_ui)
+void tab_completer_destroy(editor_module* completer)
 {
-    delete classic_ui;
+    delete completer;
 }
 
 
@@ -62,7 +62,7 @@ enum {
 
 
 //------------------------------------------------------------------------------
-void classic_match_ui::bind_input(binder& binder)
+void tab_completer::bind_input(binder& binder)
 {
     int default_group = binder.get_group();
     binder.bind(default_group, "\t", state_none);
@@ -91,23 +91,23 @@ void classic_match_ui::bind_input(binder& binder)
 }
 
 //------------------------------------------------------------------------------
-void classic_match_ui::on_begin_line(const char* prompt, const context& context)
+void tab_completer::on_begin_line(const char* prompt, const context& context)
 {
 }
 
 //------------------------------------------------------------------------------
-void classic_match_ui::on_end_line()
+void tab_completer::on_end_line()
 {
 }
 
 //------------------------------------------------------------------------------
-void classic_match_ui::on_matches_changed(const context& context)
+void tab_completer::on_matches_changed(const context& context)
 {
     m_waiting = false;
 }
 
 //------------------------------------------------------------------------------
-void classic_match_ui::on_input(const input& input, result& result, const context& context)
+void tab_completer::on_input(const input& input, result& result, const context& context)
 {
     auto& matches = context.matches;
     if (matches.get_match_count() == 0)
@@ -181,7 +181,7 @@ void classic_match_ui::on_input(const input& input, result& result, const contex
 }
 
 //------------------------------------------------------------------------------
-classic_match_ui::state classic_match_ui::begin_print(const context& context)
+tab_completer::state tab_completer::begin_print(const context& context)
 {
     const matches& matches = context.matches;
     int match_count = matches.get_match_count();
@@ -212,7 +212,7 @@ classic_match_ui::state classic_match_ui::begin_print(const context& context)
 }
 
 //------------------------------------------------------------------------------
-classic_match_ui::state classic_match_ui::print(const context& context, bool single_row)
+tab_completer::state tab_completer::print(const context& context, bool single_row)
 {
     auto& printer = context.printer;
     const matches& matches = context.matches;
@@ -263,6 +263,6 @@ classic_match_ui::state classic_match_ui::print(const context& context, bool sin
 }
 
 //------------------------------------------------------------------------------
-void classic_match_ui::on_terminal_resize(int columns, int rows, const context& context)
+void tab_completer::on_terminal_resize(int columns, int rows, const context& context)
 {
 }

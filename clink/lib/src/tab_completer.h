@@ -6,7 +6,7 @@
 #include "editor_module.h"
 
 //------------------------------------------------------------------------------
-class classic_match_ui
+class tab_completer
     : public editor_module
 {
 private:

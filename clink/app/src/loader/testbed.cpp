@@ -17,20 +17,20 @@ int testbed(int, char**)
     win_terminal_in input;
     win_terminal_out output;
 
-    editor_module* ui = classic_match_ui_create();
+    editor_module* completer = tab_completer_create();
 
     line_editor::desc desc;
     desc.input = &input;
     desc.output = &output;
 
     line_editor* editor = line_editor_create(desc);
-    editor->add_module(*ui);
+    editor->add_module(*completer);
     editor->add_generator(file_match_generator());
 
     char out[64];
     while (editor->edit(out, sizeof_array(out)));
 
     line_editor_destroy(editor);
-    classic_match_ui_destroy(ui);
+    tab_completer_destroy(completer);
     return 0;
 }
