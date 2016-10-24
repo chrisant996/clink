@@ -17,21 +17,21 @@
 
 /*
     "@7" End key
-    "DC" String to delete n characters starting at the cursor.
-    "IC" String to insert n character positions at the cursor.
     "ce" String to clear from the cursor to the end of the line.
     "cl" String to clear the entire screen and put cursor at upper left corner.
     "cr" String to move cursor sideways to left margin.
+    "DC" String to delete n characters starting at the cursor.
     "dc" String to delete one character position at the cursor.
     "ei" String to leave insert mode.
+    "IC" String to insert n character positions at the cursor.
     "ic" String to insert one character position at the cursor.
     "im" String to enter insert mode.
     "kD" String of input sent by the "delete character" key.
-    "kH" String of input sent by the "home down" key.
-    "kI" String of input sent by the "insert character" or "enter insert mode" key.
     "kd" String of input sent by typing the down-arrow key.
     "ke" String to make the function keys work locally.
+    "kH" String of input sent by the "home down" key.
     "kh" String of input sent by typing the "home-position" key.
+    "kI" String of input sent by the "insert character" or "enter insert mode" key.
     "kl" String of input sent by typing the left-arrow key.
     "kr" String of input sent by typing the right-arrow key.
     "ks" String to make the function keys transmit.
@@ -384,25 +384,24 @@ int tputs(const char* str, int count, int (*putc_func)(int))
 
     switch (cap)
     {
-    case CAP('c', 'r'): set_cursor(0, -1);   return 0;
-    case CAP('u', 'p'): move_cursor(0, -1);  return 0;
-    case CAP('l', 'e'): move_cursor(-1, 0);  return 0;
-    case CAP('n', 'd'): move_cursor(1, 0);   return 0;
-    case CAP('c', 'e'): clear_to_eol();      return 0;
-    case CAP('c', 'l'): clear_screen();      return 0;
+    case CAP('c', 'r'): set_cursor(0, -1);   return 0;  // cr ^M
+    case CAP('u', 'p'): move_cursor(0, -1);  return 0;  // up \E[A
+    case CAP('l', 'e'): move_cursor(-1, 0);  return 0;  // le ^H
+    case CAP('n', 'd'): move_cursor(1, 0);   return 0;  // nd \E[C
+    case CAP('c', 'e'): clear_to_eol();      return 0;  // ce \E[K
+    case CAP('c', 'l'): clear_screen();      return 0;  // cl \E[H\E[2J
+    case CAP('v', 'b'): visible_bell();      return 0;  // vb \E[?5h\E[?5l
 
-    case CAP('v', 'b'): visible_bell();      return 0;
-
-    case CAP('v', 'e'): cursor_style(0);
+    case CAP('v', 'e'): cursor_style(0);                // ve \E[?12l\E[?25h
                         g_enhanced_cursor = 0;
                         return 0;
 
-    case CAP('v', 's'): cursor_style(1);
+    case CAP('v', 's'): cursor_style(1);                // vs \E[?12;25h
                         g_enhanced_cursor = 1;
                         return 0;
 
-    case CAP('I', 'C'):
-    case CAP('D', 'C'):
+    case CAP('I', 'C'):                                 // IC \E[%d@
+    case CAP('D', 'C'):                                 // DC \E[%dP
         {
             const tgoto_data_t* data = (const tgoto_data_t*)str;
             if (cap == CAP('D', 'C'))
@@ -417,7 +416,7 @@ int tputs(const char* str, int count, int (*putc_func)(int))
         return 0;
 
     case CAP('i', 'c'):  return 0;
-    case CAP('d', 'c'):  delete_chars(1); return 0;
+    case CAP('d', 'c'):  delete_chars(1); return 0;     // dc \E[P
     }
 
     // Default to simply printing the string.
