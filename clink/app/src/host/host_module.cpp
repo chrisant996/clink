@@ -66,22 +66,6 @@ static void ctrl_c(
     context.buffer.remove(0, ~0u);
     context.printer.print("\n^C\n", 4);
     result.redraw();
-
-#if 0
-    DWORD mode;
-    if (GetConsoleMode(GetStdHandle(STD_INPUT_HANDLE), &mode))
-    {
-        if (mode & ENABLE_PROCESSED_INPUT)
-        {
-            // Fire a Ctrl-C event and stop Readline. ReadConsole would also
-            // set error 0x3e3 (ERROR_OPERATION_ABORTED) too.
-            GenerateConsoleCtrlEvent(CTRL_C_EVENT, 0);
-            Sleep(5);
-
-            SetLastError(0x3e3);
-        }
-    }
-#endif // 0
 }
 
 //------------------------------------------------------------------------------
