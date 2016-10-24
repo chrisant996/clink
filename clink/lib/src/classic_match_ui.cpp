@@ -228,7 +228,7 @@ classic_match_ui::state classic_match_ui::print(const context& context, bool sin
     int dx = vertical ? total_rows : 1;
 
     int max_rows = single_row ? 1 : (total_rows - m_row - 1);
-    max_rows = min<int>(printer.get_rows() - 1 - (m_row != 0), max_rows);
+    max_rows = min<int>(printer.get_rows() - 2 - (m_row != 0), max_rows);
     for (; max_rows >= 0; --max_rows, ++m_row)
     {
         int index = vertical ? m_row : (m_row * columns);
