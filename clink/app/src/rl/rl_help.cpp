@@ -5,7 +5,7 @@
 
 #include <core/base.h>
 #include <core/settings.h>
-#include <terminal/terminal_out.h>
+#include <terminal/printer.h>
 
 extern "C" {
 #include <readline/readline.h>
@@ -125,7 +125,7 @@ static char** collect_keymap(
 }
 
 //------------------------------------------------------------------------------
-void show_rl_help(terminal_out& terminal)
+void show_rl_help(printer& printer)
 {
     Keymap map = rl_get_keymap();
     int offset = 1;
@@ -161,26 +161,26 @@ void show_rl_help(terminal_out& terminal)
     }
 
     // Display the matches.
-    terminal.write("\n", 1);
+    printer.print("\n", 1);
 
-    int max_width = min<int>(terminal.get_columns() - 3, g_max_width.get());
+    int max_width = min<int>(printer.get_columns() - 3, g_max_width.get());
     int columns = max(1, max_width / (longest + 1));
     for (int i = 1, j = columns - 1; i < offset; ++i, --j)
     {
         const char* match = collector[i];
 
         int length = int(strlen(match));
-        terminal.write(match, length);
+        printer.print(match, length);
 
         const char spaces[] = "                                         ";
         int space_count = max(longest - length, 0) + 1;
-        terminal.write(spaces, min<int>(sizeof(spaces) - 1, space_count));
+        printer.print(spaces, min<int>(sizeof(spaces) - 1, space_count));
 
         if (j)
             continue;
 
         j = columns;
-        terminal.write("\n", 1);
+        printer.print("\n", 1);
     }
 
     // Tidy up (N.B. the first match is a placeholder and shouldn't be freed).

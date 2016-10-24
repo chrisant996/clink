@@ -7,8 +7,8 @@
 #include <core/base.h>
 #include <core/log.h>
 #include <terminal/ecma48_iter.h>
+#include <terminal/printer.h>
 #include <terminal/terminal_in.h>
-#include <terminal/terminal_out.h>
 
 extern "C" {
 #include <readline/readline.h>
@@ -18,7 +18,7 @@ extern "C" {
 
 //------------------------------------------------------------------------------
 static FILE*    null_stream = (FILE*)1;
-void            show_rl_help(terminal_out&);
+void            show_rl_help(printer&);
 
 extern "C" {
 extern void     (*rl_fwrite_function)(FILE*, const char*, int);
@@ -99,18 +99,8 @@ static void terminal_write_thunk(FILE* stream, const char* chars, int char_count
     if (stream == stderr || stream == null_stream)
         return;
 
-    terminal_out* term = (terminal_out*)stream;
-    return term->write(chars, char_count);
-}
-
-//------------------------------------------------------------------------------
-static void terminal_flush_thunk(FILE* stream)
-{
-    if (stream == stderr || stream == null_stream)
-        return;
-
-    terminal_out* term = (terminal_out*)stream;
-    return term->flush();
+    printer* pter = (printer*)stream;
+    pter->print(chars, char_count);
 }
 
 
@@ -122,7 +112,7 @@ rl_module::rl_module(const char* shell_name)
 {
     rl_getc_function = terminal_read_thunk;
     rl_fwrite_function = terminal_write_thunk;
-    rl_fflush_function = terminal_flush_thunk;
+    rl_fflush_function = [] (FILE*) {};
     rl_instream = null_stream;
     rl_outstream = null_stream;
 
@@ -180,7 +170,7 @@ void rl_module::bind_input(binder& binder)
 //------------------------------------------------------------------------------
 void rl_module::on_begin_line(const char* prompt, const context& context)
 {
-    rl_outstream = (FILE*)(terminal_out*)(&context.terminal);
+    rl_outstream = (FILE*)(terminal_out*)(&context.printer);
 
     // Readline needs to be told about parts of the prompt that aren't visible
     // by enclosing them in a pair of 0x01/0x02 chars.
@@ -224,7 +214,7 @@ void rl_module::on_input(const input& input, result& result, const context& cont
 {
     if (input.id == bind_id_rl_help)
     {
-        show_rl_help(context.terminal);
+        show_rl_help(context.printer);
         result.redraw();
         return;
     }

@@ -6,7 +6,7 @@
 class line_buffer;
 class line_state;
 class matches;
-class terminal_out;
+class printer;
 
 //------------------------------------------------------------------------------
 class editor_module
@@ -30,7 +30,7 @@ public:
 
     struct context
     {
-        terminal_out&       terminal;
+        printer&            printer;
         line_buffer&        buffer;
         const line_state&   line;
         const matches&      matches;

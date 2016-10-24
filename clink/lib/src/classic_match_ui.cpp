@@ -11,7 +11,7 @@
 
 #include <core/base.h>
 #include <core/settings.h>
-#include <terminal/terminal_out.h>
+#include <terminal/printer.h>
 
 //------------------------------------------------------------------------------
 editor_module* classic_match_ui_create()
@@ -145,7 +145,7 @@ void classic_match_ui::on_input(const input& input, result& result, const contex
 
         result.set_bind_group(m_prev_group);
         m_prev_group = -1;
-        context.terminal.write("\n", 1);
+        context.printer.print("\n", 1);
         result.redraw();
         return;
     }
@@ -196,15 +196,14 @@ classic_match_ui::state classic_match_ui::begin_print(const context& context)
     if (!m_longest)
         return state_none;
 
-    context.terminal.write("\n", 1);
+    context.printer.print("\n", 1);
 
     int query_threshold = g_query_threshold.get();
     if (query_threshold > 0 && query_threshold <= match_count)
     {
         str<64> prompt;
         prompt.format("Show %d matches? [Yn]", match_count);
-        context.terminal.write(prompt.c_str(), -1);
-        context.terminal.flush();
+        context.printer.print(prompt.c_str(), prompt.length());
 
         return state_query;
     }
@@ -215,11 +214,11 @@ classic_match_ui::state classic_match_ui::begin_print(const context& context)
 //------------------------------------------------------------------------------
 classic_match_ui::state classic_match_ui::print(const context& context, bool single_row)
 {
-    terminal_out& term = context.terminal;
+    auto& printer = context.printer;
     const matches& matches = context.matches;
 
     auto_flush flusher(term);
-    term.write("\r", 1);
+    printer.print("\r", 1);
 
     int match_count = matches.get_match_count();
 
@@ -230,7 +229,7 @@ classic_match_ui::state classic_match_ui::print(const context& context, bool sin
     int dx = vertical ? total_rows : 1;
 
     int max_rows = single_row ? 1 : (total_rows - m_row - 1);
-    max_rows = min(term.get_rows() - 1 - !!m_row, max_rows);
+    max_rows = min<int>(printer.get_rows() - 1 - (m_row != 0), max_rows);
     for (; max_rows >= 0; --max_rows, ++m_row)
     {
         int index = vertical ? m_row : (m_row * columns);
@@ -240,27 +239,27 @@ classic_match_ui::state classic_match_ui::print(const context& context, bool sin
                 continue;
 
             const char* match = matches.get_displayable(index);
-            term.write(match, int(strlen(match)));
+            printer.print(match, int(strlen(match)));
 
             int visible_chars = matches.get_visible_chars(index);
             for (int i = m_longest - visible_chars + 1; i >= 0;)
             {
                 const char spaces[] = "                ";
-                term.write(spaces, min<int>(sizeof_array(spaces) - 1, i));
+                printer.print(spaces, min<int>(sizeof_array(spaces) - 1, i));
                 i -= sizeof_array(spaces) - 1;
             }
 
             index += dx;
         }
 
-        term.write("\n", 1);
+        printer.print("\n", 1);
     }
 
     if (m_row == total_rows)
         return state_none;
 
     static const char prompt[] = { "--More--" };
-    term.write(prompt, sizeof_array(prompt) - 1);
+    printer.print(prompt, sizeof_array(prompt) - 1);
     return state_pager;
 }
 

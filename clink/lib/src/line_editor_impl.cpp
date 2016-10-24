@@ -39,6 +39,7 @@ void line_editor_destroy(line_editor* editor)
 line_editor_impl::line_editor_impl(const desc& desc)
 : m_module(desc.shell_name)
 , m_desc(desc)
+, m_printer(*desc.output)
 {
     if (m_desc.quote_pair == nullptr)
         m_desc.quote_pair = "";
@@ -501,8 +502,9 @@ line_state line_editor_impl::get_linestate() const
 //------------------------------------------------------------------------------
 editor_module::context line_editor_impl::get_context(const line_state& line) const
 {
-    line_buffer* buffer = const_cast<rl_buffer*>(&m_buffer);
-    return { *m_desc.output, *buffer, line, m_matches };
+    auto& buffer = const_cast<rl_buffer&>(m_buffer);
+    auto& pter = const_cast<printer&>(m_printer);
+    return { pter, buffer, line, m_matches };
 }
 
 //------------------------------------------------------------------------------

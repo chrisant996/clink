@@ -8,7 +8,7 @@
 #include <core/settings.h>
 #include <core/str.h>
 #include <lib/line_buffer.h>
-#include <terminal/terminal_out.h>
+#include <terminal/printer.h>
 
 //------------------------------------------------------------------------------
 static setting_enum g_paste_crlf(
@@ -64,7 +64,7 @@ static void ctrl_c(
 {
     //auto& buffer = context.buffer;
     context.buffer.remove(0, ~0u);
-    context.terminal.write("\n^C\n", 4);
+    context.printer.print("\n^C\n", 4);
     result.redraw();
 
 #if 0

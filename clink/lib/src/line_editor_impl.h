@@ -13,6 +13,7 @@
 #include "rl/rl_buffer.h"
 
 #include <core/array.h>
+#include <terminal/printer.h>
 
 //------------------------------------------------------------------------------
 class line_editor_impl
@@ -63,6 +64,7 @@ private:
     bind_resolver       m_bind_resolver = { m_binder };
     words               m_words;
     matches_impl        m_matches;
+    printer             m_printer;
     unsigned int        m_prev_key;
     unsigned int        m_command_offset;
     unsigned char       m_keys_size;
