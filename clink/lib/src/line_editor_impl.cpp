@@ -11,13 +11,17 @@
 #include <core/path.h>
 #include <core/str_iter.h>
 #include <core/str_tokeniser.h>
-#include <terminal/terminal.h>
+#include <terminal/terminal_in.h>
+#include <terminal/terminal_out.h>
 
 //------------------------------------------------------------------------------
 line_editor* line_editor_create(const line_editor::desc& desc)
 {
     // Check there's at least a terminal.
-    if (desc.terminal == nullptr)
+    if (desc.input == nullptr)
+        return nullptr;
+
+    if (desc.output == nullptr)
         return nullptr;
 
     return new line_editor_impl(desc);
@@ -92,7 +96,8 @@ void line_editor_impl::begin_line()
     match_pipeline pipeline(m_matches);
     pipeline.reset();
 
-    m_desc.terminal->begin();
+    m_desc.input->begin();
+    m_desc.output->begin();
     m_buffer.begin_line();
 
     line_state line = get_linestate();
@@ -108,7 +113,8 @@ void line_editor_impl::end_line()
         i->on_end_line();
 
     m_buffer.end_line();
-    m_desc.terminal->end();
+    m_desc.output->end();
+    m_desc.input->end();
 
     clear_flag(flag_editing);
 }
@@ -146,7 +152,7 @@ bool line_editor_impl::edit(char* out, int out_size)
 {
     // Update first so the init state goes through.
     while (update())
-        m_desc.terminal->select();
+        m_desc.input->select();
 
     return get_line(out, out_size);
 }
@@ -176,8 +182,9 @@ bool line_editor_impl::update()
 //------------------------------------------------------------------------------
 void line_editor_impl::update_input()
 {
-    int key = m_desc.terminal->read();
+    int key = m_desc.input->read();
 
+    /* TODO
     if (key == terminal::input_terminal_resize)
     {
         int columns = m_desc.terminal->get_columns();
@@ -187,6 +194,7 @@ void line_editor_impl::update_input()
         for (auto* module : m_modules)
             module->on_terminal_resize(columns, rows, context);
     }
+    */
 
     if (key < 0)
         return;
@@ -494,7 +502,7 @@ line_state line_editor_impl::get_linestate() const
 editor_module::context line_editor_impl::get_context(const line_state& line) const
 {
     line_buffer* buffer = const_cast<rl_buffer*>(&m_buffer);
-    return { *m_desc.terminal, *buffer, line, m_matches };
+    return { *m_desc.output, *buffer, line, m_matches };
 }
 
 //------------------------------------------------------------------------------

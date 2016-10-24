@@ -22,7 +22,9 @@
 #include <lua/lua_script_loader.h>
 #include <lua/lua_state.h>
 #include <lua/lua_match_generator.h>
-#include <terminal/win_terminal.h>
+#include <terminal/win_terminal_in.h>
+#include <terminal/win_terminal_out.h>
+#include <terminal/ecma48_terminal_out.h>
 
 extern "C" {
 #include <lua.h>
@@ -105,8 +107,11 @@ bool host::edit_line(const char* prompt, str_base& out)
     desc.prompt = filtered_prompt.c_str();
 
     // Set the terminal that will handle all IO while editing.
-    win_terminal terminal;
-    desc.terminal = &terminal;
+    win_terminal_in input;
+    win_terminal_out output;
+    ecma48_terminal_out ecma48_output(output);
+    desc.input = &input;
+    desc.output = &ecma48_output;
 
     // Create the editor and add components to it.
     line_editor* editor = line_editor_create(desc);

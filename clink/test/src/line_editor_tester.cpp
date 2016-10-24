@@ -84,7 +84,8 @@ void line_editor_tester::create_line_editor(const line_editor::desc* desc)
     line_editor::desc inner_desc;
     if (desc != nullptr)
         inner_desc = *desc;
-    inner_desc.terminal = &m_test_terminal;
+    inner_desc.input = &m_terminal_in;
+    inner_desc.output = &m_terminal_out;
 
     m_editor = line_editor_create(inner_desc);
     REQUIRE(m_editor != nullptr);
@@ -121,7 +122,7 @@ void line_editor_tester::run()
     REQUIRE(has_expectations);
 
     REQUIRE(m_input != nullptr);
-    m_test_terminal.set_input(m_input);
+    m_terminal_in.set_input(m_input);
 
     // If we're expecting some matches then add a module to catch the
     // matches object.
@@ -135,7 +136,7 @@ void line_editor_tester::run()
     {
         REQUIRE(m_editor->update());
     }
-    while (m_test_terminal.has_input());
+    while (m_terminal_in.has_input());
 
     if (m_has_matches)
     {

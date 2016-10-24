@@ -5,7 +5,7 @@
 
 #include <core/base.h>
 #include <core/settings.h>
-#include <terminal/terminal.h>
+#include <terminal/terminal_out.h>
 
 extern "C" {
 #include <readline/readline.h>
@@ -125,7 +125,7 @@ static char** collect_keymap(
 }
 
 //------------------------------------------------------------------------------
-void show_rl_help(terminal& terminal)
+void show_rl_help(terminal_out& terminal)
 {
     Keymap map = rl_get_keymap();
     int offset = 1;

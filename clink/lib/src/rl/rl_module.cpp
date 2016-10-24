@@ -7,7 +7,8 @@
 #include <core/base.h>
 #include <core/log.h>
 #include <terminal/ecma48_iter.h>
-#include <terminal/terminal.h>
+#include <terminal/terminal_in.h>
+#include <terminal/terminal_out.h>
 
 extern "C" {
 #include <readline/readline.h>
@@ -17,7 +18,7 @@ extern "C" {
 
 //------------------------------------------------------------------------------
 static FILE*    null_stream = (FILE*)1;
-void            show_rl_help(class terminal&);
+void            show_rl_help(terminal_out&);
 
 extern "C" {
 extern void     (*rl_fwrite_function)(FILE*, const char*, int);
@@ -159,6 +160,13 @@ rl_module::rl_module(const char* shell_name)
 }
 
 //------------------------------------------------------------------------------
+rl_module::~rl_module()
+{
+    free(_rl_comment_begin);
+    _rl_comment_begin = nullptr;
+}
+
+//------------------------------------------------------------------------------
 void rl_module::bind_input(binder& binder)
 {
     int default_group = binder.get_group();
@@ -224,6 +232,8 @@ void rl_module::on_input(const input& input, result& result, const context& cont
     // Setup the terminal.
     struct : public terminal_in
     {
+        virtual void begin() override   {}
+        virtual void end() override     {}
         virtual void select() override  {}
         virtual int  read() override    { return *(unsigned char*)(data++); }
         const char*  data; 

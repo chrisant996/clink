@@ -5,35 +5,39 @@
 
 #include <lib/line_editor.h>
 #include <lib/line_buffer.h>
-#include <terminal/terminal.h>
+#include <terminal/terminal_in.h>
+#include <terminal/terminal_out.h>
 
 #include <vector>
 
 //------------------------------------------------------------------------------
-class test_terminal
-    : public terminal
+class test_terminal_in
+    : public terminal_in
 {
 public:
     bool                    has_input() const { return (m_read == nullptr) ? false : (*m_read != '\0'); }
     void                    set_input(const char* input) { m_input = m_read = input; } 
-
-    /* terminal_in */
-    virtual void            select() override {}
-    virtual int             read() override { return *(unsigned char*)m_read++; }
-
-    /* terminal_out */
-    virtual void            write(const char* chars, int length) override {}
-    virtual void            flush() override {}
-    virtual int             get_columns() const override { return 80; }
-    virtual int             get_rows() const override { return 25; }
-
-    /* terminal */
     virtual void            begin() override {}
     virtual void            end() override {}
+    virtual void            select() override {}
+    virtual int             read() override { return *(unsigned char*)m_read++; }
 
 private:
     const char*             m_input = nullptr;
     const char*             m_read = nullptr;
+};
+
+//------------------------------------------------------------------------------
+class test_terminal_out
+    : public terminal_out
+{
+public:
+    virtual void            begin() override {}
+    virtual void            end() override {}
+    virtual void            write(const char* chars, int length) override {}
+    virtual void            flush() override {}
+    virtual int             get_columns() const override { return 80; }
+    virtual int             get_rows() const override { return 25; }
 };
 
 
@@ -54,7 +58,8 @@ public:
 private:
     void                        create_line_editor(const line_editor::desc* desc=nullptr);
     void                        expected_matches_impl(int dummy, ...);
-    test_terminal               m_test_terminal;
+    test_terminal_in            m_terminal_in;
+    test_terminal_out           m_terminal_out;
     std::vector<const char*>    m_expected_matches;
     const char*                 m_input = nullptr;
     const char*                 m_expected_output = nullptr;

@@ -6,7 +6,8 @@
 class editor_module;
 class line_buffer;
 class match_generator;
-class terminal;
+class terminal_in;
+class terminal_out;
 
 //------------------------------------------------------------------------------
 class line_editor
@@ -15,7 +16,8 @@ public:
     struct desc
     {
         // Required.
-        terminal*       terminal = nullptr;
+        terminal_in*    input = nullptr;
+        terminal_out*   output = nullptr;
 
         // Optional.
         const char*     shell_name = "clink";

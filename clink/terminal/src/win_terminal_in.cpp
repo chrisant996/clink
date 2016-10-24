@@ -1,14 +1,11 @@
-// Copyright (c) 2015 Martin Ridgers
+// Copyright (c) 2016 Martin Ridgers
 // License: http://opensource.org/licenses/MIT
 
 #include "pch.h"
-#include "win_terminal.h"
+#include "win_terminal_in.h"
 
-#include <core/array.h>
 #include <core/base.h>
-#include <core/log.h>
-#include <core/settings.h>
-#include <core/str_iter.h>
+#include <core/str.h>
 
 //------------------------------------------------------------------------------
 namespace terminfo {
@@ -46,20 +43,10 @@ static const char* const kfx[]   = {
 };
 } // namespace terminfo
 
-//------------------------------------------------------------------------------
-static setting_bool g_ansi(
-    "terminal.ansi",
-    "Enables basic ANSI escape code support",
-    "When printing the prompt, Clink has basic built-in support for SGR\n"
-    "ANSI escape codes to control the text colours. This is automatically\n"
-    "disabled if a third party tool is detected that also provides this\n"
-    "facility. It can also be disabled by setting this to 0.",
-    true);
-
 
 
 //------------------------------------------------------------------------------
-inline void win_terminal_in::begin()
+void win_terminal_in::begin()
 {
     m_buffer_count = 0;
     m_stdin = GetStdHandle(STD_INPUT_HANDLE);
@@ -67,24 +54,24 @@ inline void win_terminal_in::begin()
 }
 
 //------------------------------------------------------------------------------
-inline void win_terminal_in::end()
+void win_terminal_in::end()
 {
     SetConsoleMode(m_stdin, m_prev_mode);
     m_stdin = nullptr;
 }
 
 //------------------------------------------------------------------------------
-inline void win_terminal_in::select()
+void win_terminal_in::select()
 {
     if (!m_buffer_count)
         read_console();
 }
 
 //------------------------------------------------------------------------------
-inline int win_terminal_in::read()
+int win_terminal_in::read()
 {
     if (!m_buffer_count)
-        return terminal::input_none;
+        return terminal_in::input_none;
 
     return pop();
 }
@@ -317,7 +304,7 @@ void win_terminal_in::push(unsigned int value)
 }
 
 //------------------------------------------------------------------------------
-inline unsigned char win_terminal_in::pop()
+unsigned char win_terminal_in::pop()
 {
     if (!m_buffer_count)
         return 0xff;
@@ -328,344 +315,4 @@ inline unsigned char win_terminal_in::pop()
     m_buffer_head = (m_buffer_head + 1) & (sizeof_array(m_buffer) - 1);
 
     return value;
-}
-
-
-
-//------------------------------------------------------------------------------
-inline void win_terminal_out::begin()
-{
-    m_stdout = GetStdHandle(STD_OUTPUT_HANDLE);
-
-    CONSOLE_SCREEN_BUFFER_INFO csbi;
-    GetConsoleScreenBufferInfo(m_stdout, &csbi);
-    m_default_attr = csbi.wAttributes & 0xff;
-    m_attr = m_default_attr;
-
-    GetConsoleMode(m_stdout, &m_prev_mode);
-}
-
-//------------------------------------------------------------------------------
-inline void win_terminal_out::end()
-{
-    SetConsoleMode(m_stdout, m_prev_mode);
-    SetConsoleTextAttribute(m_stdout, m_default_attr);
-
-    m_stdout = nullptr;
-}
-
-//------------------------------------------------------------------------------
-void win_terminal_out::write(const char* chars, int length)
-{
-    str_iter iter(chars, length);
-    while (length > 0)
-    {
-        wchar_t wbuf[256];
-        int n = min<int>(sizeof_array(wbuf), length + 1);
-        n = to_utf16(wbuf, n, iter);
-
-        write(wbuf, n);
-
-        n = int(iter.get_pointer() - chars);
-        length -= n;
-        chars += n;
-    }
-}
-
-//------------------------------------------------------------------------------
-inline void win_terminal_out::write(const wchar_t* chars, int length)
-{
-    DWORD written;
-    WriteConsoleW(m_stdout, chars, length, &written, nullptr);
-}
-
-//------------------------------------------------------------------------------
-inline void win_terminal_out::flush()
-{
-    // When writing to the console conhost.exe will restart the cursor blink
-    // timer and hide it which can be disorientating, especially when moving
-    // around a line. The below will make sure it stays visible.
-    CONSOLE_SCREEN_BUFFER_INFO csbi;
-    GetConsoleScreenBufferInfo(m_stdout, &csbi);
-    SetConsoleCursorPosition(m_stdout, csbi.dwCursorPosition);
-}
-
-//------------------------------------------------------------------------------
-inline int win_terminal_out::get_columns() const
-{
-    CONSOLE_SCREEN_BUFFER_INFO csbi;
-    GetConsoleScreenBufferInfo(m_stdout, &csbi);
-    return csbi.dwSize.X;
-}
-
-//------------------------------------------------------------------------------
-inline int win_terminal_out::get_rows() const
-{
-    CONSOLE_SCREEN_BUFFER_INFO csbi;
-    GetConsoleScreenBufferInfo(m_stdout, &csbi);
-    return (csbi.srWindow.Bottom - csbi.srWindow.Top) + 1;
-}
-
-//------------------------------------------------------------------------------
-inline unsigned char win_terminal_out::get_default_attr() const
-{
-    return m_default_attr;
-}
-
-//------------------------------------------------------------------------------
-inline unsigned char win_terminal_out::get_attr() const
-{
-    return m_attr;
-}
-
-//------------------------------------------------------------------------------
-inline void win_terminal_out::set_attr(unsigned char attr)
-{
-    m_attr = attr;
-    SetConsoleTextAttribute(m_stdout, attr);
-}
-
-//------------------------------------------------------------------------------
-inline void* win_terminal_out::get_handle() const
-{
-    return m_stdout;
-}
-
-
-
-//------------------------------------------------------------------------------
-void win_terminal::begin()
-{
-    m_size = 0;
-    win_terminal_in::begin();
-    win_terminal_out::begin();
-}
-
-//------------------------------------------------------------------------------
-void win_terminal::end()
-{
-    win_terminal_out::end();
-    win_terminal_in::end();
-}
-
-//------------------------------------------------------------------------------
-void win_terminal::select()
-{
-    // Has the console been resized?
-    unsigned int size = get_size();
-    if (m_size != size)
-        return;
-
-    win_terminal_in::select();
-}
-
-//------------------------------------------------------------------------------
-int win_terminal::read()
-{
-    // Has the console been resized?
-    unsigned int size = get_size();
-    if (m_size != size)
-    {
-        m_size = size;
-        return input_terminal_resize;
-    }
-
-    return win_terminal_in::read();
-}
-
-//------------------------------------------------------------------------------
-void win_terminal::flush()
-{
-    win_terminal_out::flush();
-}
-
-//------------------------------------------------------------------------------
-int win_terminal::get_columns() const
-{
-    return win_terminal_out::get_columns();
-}
-
-//------------------------------------------------------------------------------
-int win_terminal::get_rows() const
-{
-    return win_terminal_out::get_rows();
-}
-
-//------------------------------------------------------------------------------
-unsigned int win_terminal::get_size() const
-{
-    CONSOLE_SCREEN_BUFFER_INFO csbi;
-    GetConsoleScreenBufferInfo(win_terminal_out::get_handle(), &csbi);
-
-    unsigned int terminal_size = (csbi.dwSize.X << 16);
-    return terminal_size | (csbi.srWindow.Bottom - csbi.srWindow.Top) + 1;
-}
-
-//------------------------------------------------------------------------------
-void win_terminal::write_c1(const ecma48_code& code)
-{
-    if (!m_enable_c1)
-    {
-        win_terminal_out::write(code.get_pointer(), code.get_length()); 
-        return;
-    }
-
-    if (code.get_code() != ecma48_code::c1_csi)
-        return;
-
-    int final, params[32], param_count;
-    param_count = code.decode_csi(final, params, sizeof_array(params));
-    const array<int> params_array(params, param_count);
-
-    switch (final)
-    {
-    case 'm':
-        write_sgr(params_array);
-        break;
-    }
-}
-
-//------------------------------------------------------------------------------
-void win_terminal::write_c0(int c0)
-{
-    switch (c0)
-    {
-    case 0x07:
-        // TODO
-        break;
-
-    default:
-        {
-            wchar_t c = wchar_t(c0);
-            win_terminal_out::write(&c, 1);
-        }
-    }
-}
-
-//------------------------------------------------------------------------------
-void win_terminal::write(const char* chars, int length)
-{
-    ecma48_iter iter(chars, m_state, length);
-    while (const ecma48_code* code = iter.next())
-    {
-        switch (code->get_type())
-        {
-        case ecma48_code::type_chars:
-            win_terminal_out::write(code->get_pointer(), code->get_length());
-            break;
-
-        case ecma48_code::type_c0:
-            write_c0(code->get_code());
-            break;
-
-        case ecma48_code::type_c1:
-            write_c1(*code);
-            break;
-        }
-    }
-}
-
-//------------------------------------------------------------------------------
-void win_terminal::check_c1_support()
-{
-    // Check for the presence of known third party tools that also provide ANSI
-    // escape code support.
-    const char* dll_names[] = {
-        "conemuhk.dll",
-        "conemuhk64.dll",
-        "ansi.dll",
-        "ansi32.dll",
-        "ansi64.dll",
-    };
-
-    for (int i = 0; i < sizeof_array(dll_names); ++i)
-    {
-        const char* dll_name = dll_names[i];
-        if (GetModuleHandle(dll_name) != nullptr)
-        {
-            LOG("Disabling ANSI support. Found '%s'", dll_name);
-            m_enable_c1 = false;
-            return;
-        }
-    }
-
-    // Give the user the option to disable ANSI support.
-    m_enable_c1 = !g_ansi.get();
-}
-
-//------------------------------------------------------------------------------
-void win_terminal::write_sgr(const array<int>& params)
-{
-    static const unsigned char sgr_to_attr[] = { 0, 4, 2, 6, 1, 5, 3, 7 };
-
-    // Process each code that is supported.
-    unsigned char attr = get_attr();
-    for (int param : params)
-    {
-        if (param == 0) // reset
-        {
-            attr = get_default_attr();
-        }
-        else if (param == 1) // fg intensity (bright)
-        {
-            attr |= 0x08;
-        }
-        else if (param == 2 || param == 22) // fg intensity (normal)
-        {
-            attr &= ~0x08;
-        }
-        else if (param == 4) // bg intensity (bright)
-        {
-            attr |= 0x80;
-        }
-        else if (param == 24) // bg intensity (normal)
-        {
-            attr &= ~0x80;
-        }
-        else if (param - 30 < 8) // fg colour
-        {
-            attr = (attr & 0xf8) | sgr_to_attr[(param - 30) & 7];
-        }
-        else if (param - 90 < 8) // fg colour
-        {
-            attr |= 0x08;
-            attr = (attr & 0xf8) | sgr_to_attr[(param - 90) & 7];
-        }
-        else if (param == 39) // default fg colour
-        {
-            attr = (attr & 0xf8) | (get_default_attr() & 0x07);
-        }
-        else if (param - 40 < 8) // bg colour
-        {
-            attr = (attr & 0x8f) | (sgr_to_attr[(param - 40) & 7] << 4);
-        }
-        else if (param - 100 < 8) // bg colour
-        {
-            attr |= 0x80;
-            attr = (attr & 0x8f) | (sgr_to_attr[(param - 100) & 7] << 4);
-        }
-        else if (param == 49) // default bg colour
-        {
-            attr = (attr & 0x8f) | (get_default_attr() & 0x70);
-        }
-        else if (param == 38 || param == 48) // extended colour (skipped)
-        {
-            /* TODO
-            // format = param;5;[0-255] or param;2;r;g;b
-            ++i;
-            if (i >= csi.param_count)
-                break;
-
-            switch (csi.params[i])
-            {
-            case 2: i += 3; break;
-            case 5: i += 1; break;
-            }
-            */
-
-            continue;
-        }
-    }
-
-    set_attr(attr);
 }

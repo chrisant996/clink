@@ -18,7 +18,15 @@ public:
         type_icf
     };
 
-    enum 
+    enum : unsigned char
+    {
+        c0_nul, c0_soh, c0_stx, c0_etx, c0_eot, c0_enq, c0_ack, c0_bel,
+        c0_bs,  c0_ht,  c0_lf,  c0_vt,  c0_ff,  c0_cr,  c0_so,  c0_si,
+        c0_dle, c0_dc1, c0_dc2, c0_dc3, c0_dc4, c0_nak, c0_syn, c0_etb,
+        c0_can, c0_em,  c0_sub, c0_esc, c0_fs,  c0_gs,  c0_rs,  c0_us,
+    };
+
+    enum : unsigned char
     {
         c1_apc          = 0x5f,
         c1_csi          = 0x5b,

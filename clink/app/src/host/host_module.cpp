@@ -8,7 +8,7 @@
 #include <core/settings.h>
 #include <core/str.h>
 #include <lib/line_buffer.h>
-#include <terminal/terminal.h>
+#include <terminal/terminal_out.h>
 
 //------------------------------------------------------------------------------
 static setting_enum g_paste_crlf(

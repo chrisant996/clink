@@ -4,7 +4,7 @@
 #include "pch.h"
 
 #include <core/str.h>
-#include <terminal/win_terminal.h>
+#include <terminal/win_terminal_in.h>
 
 //------------------------------------------------------------------------------
 int input_echo(int argc, char** argv)
@@ -22,16 +22,16 @@ int input_echo(int argc, char** argv)
         }
     }
 
-    win_terminal terminal;
-    terminal.begin();
+    win_terminal_in input;
+    input.begin();
 
     bool quit = false;
     while (!quit)
     {
-        terminal.select();
+        input.select();
         while (1)
         {
-            int c = terminal.read();
+            int c = input.read();
             if (c < 0)
                 break;
 
@@ -49,6 +49,6 @@ int input_echo(int argc, char** argv)
         puts("");
     }
 
-    terminal.end();
+    input.end();
     return 0;
 }

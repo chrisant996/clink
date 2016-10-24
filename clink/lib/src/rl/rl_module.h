@@ -14,6 +14,7 @@ class rl_module
 {
 public:
                     rl_module(const char* shell_name);
+                    ~rl_module();
 
 private:
     virtual void    bind_input(binder& binder) override;

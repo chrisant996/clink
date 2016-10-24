@@ -15,7 +15,6 @@
 #include <core/settings.h>
 #include <core/str.h>
 #include <core/str_tokeniser.h>
-#include <terminal/win_terminal.h>
 
 //------------------------------------------------------------------------------
 const char* g_clink_header =

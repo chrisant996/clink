@@ -11,7 +11,7 @@
 
 #include <core/base.h>
 #include <core/settings.h>
-#include <terminal/terminal.h>
+#include <terminal/terminal_out.h>
 
 //------------------------------------------------------------------------------
 editor_module* classic_match_ui_create()
@@ -215,7 +215,7 @@ classic_match_ui::state classic_match_ui::begin_print(const context& context)
 //------------------------------------------------------------------------------
 classic_match_ui::state classic_match_ui::print(const context& context, bool single_row)
 {
-    terminal& term = context.terminal;
+    terminal_out& term = context.terminal;
     const matches& matches = context.matches;
 
     auto_flush flusher(term);
