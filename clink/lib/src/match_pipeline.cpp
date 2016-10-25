@@ -35,24 +35,13 @@ static unsigned int normal_selector(
 //------------------------------------------------------------------------------
 static void alpha_sorter(const match_store& store, match_info* infos, int count)
 {
-    struct predicate
-    {
-        predicate(const match_store& store)
-        : store(store)
-        {
-        }
-
-        bool operator () (const match_info& lhs, const match_info& rhs)
-        {
-            const char* l = store.get(lhs.store_id);
-            const char* r = store.get(rhs.store_id);
-            return (stricmp(l, r) < 0);
-        }
-
-        const match_store& store;
+    auto predicate = [&] (const match_info& lhs, const match_info& rhs) {
+        const char* l = store.get(lhs.store_id);
+        const char* r = store.get(rhs.store_id);
+        return (stricmp(l, r) < 0);
     };
 
-    std::sort(infos, infos + count, predicate(store));
+    std::sort(infos, infos + count, predicate);
 }
 
 
