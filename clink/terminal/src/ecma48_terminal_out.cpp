@@ -120,7 +120,7 @@ void ecma48_terminal_out::write_sgr(const array<int>& params)
 
     // Process each code that is supported.
     unsigned char attr = get_attr();
-    for (int param : params)
+    for (unsigned int param : params)
     {
         if (param == 0) // reset
         {
