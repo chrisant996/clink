@@ -7,6 +7,7 @@
 #include <core/base.h>
 #include <core/settings.h>
 #include <core/str.h>
+#include <core/str_iter.h>
 #include <core/str_tokeniser.h>
 
 //------------------------------------------------------------------------------
@@ -24,61 +25,84 @@ static setting_bool g_enhanced_doskey(
 class wstr_stream
 {
 public:
-                                wstr_stream(wstr_base& x);
-    void                        operator << (int c);
-    void                        concat(const wchar_t* ptr, int length);
+    typedef wchar_t         TYPE;
+
+    struct range_desc
+    {
+        const TYPE* const   ptr;
+        unsigned int        count;
+    };
+
+                            wstr_stream();
+    void                    operator << (TYPE c);
+    void                    operator << (const range_desc desc);
+    void                    collect(str_impl<TYPE>& out);
+    static range_desc       range(TYPE const* ptr, unsigned int count);
+    static range_desc       range(const str_iter_impl<TYPE>& iter);
 
 private:
-    void                        update();
-
-    wstr_base&                  x;
-    const wchar_t* __restrict   start;
-    const wchar_t* __restrict   end;
-    wchar_t* __restrict         cursor;
+    void                    grow(unsigned int hint=128);
+    wchar_t* __restrict     m_start;
+    wchar_t* __restrict     m_end;
+    wchar_t* __restrict     m_cursor;
 };
 
 //------------------------------------------------------------------------------
-wstr_stream::wstr_stream(wstr_base& x)
-: x(x)
+wstr_stream::wstr_stream()
+: m_start(nullptr)
+, m_end(nullptr)
+, m_cursor(nullptr)
 {
-    start = x.c_str();
-    end = start + x.size() - 1;
-    cursor = x.data() + x.length();
 }
 
 //------------------------------------------------------------------------------
-void wstr_stream::operator << (int c)
+void wstr_stream::operator << (TYPE c)
 {
-    if (cursor >= end)
-    {
-        x.reserve(x.size() + 128);
-        update();
-    }
+    if (m_cursor >= m_end)
+        grow();
 
-    *cursor++ = c;
+    *m_cursor++ = c;
 }
 
 //------------------------------------------------------------------------------
-void wstr_stream::concat(const wchar_t* ptr, int length)
+void wstr_stream::operator << (const range_desc desc)
 {
-    *cursor = '\0';
-    cursor += length;
+    if (m_cursor + desc.count >= m_end)
+        grow(desc.count);
 
-    x.concat(ptr, length);
-
-    if (start != x.c_str())
-        update();
+    for (unsigned int i = 0; i < desc.count; ++i, ++m_cursor)
+        *m_cursor = desc.ptr[i];
 }
 
 //------------------------------------------------------------------------------
-void wstr_stream::update()
+wstr_stream::range_desc wstr_stream::range(const TYPE* ptr, unsigned int count)
 {
-    int i = int(cursor - start);
-    start = x.c_str();
-    end = start + x.size() - 1;
-    cursor = x.data() + i;
+    return { ptr, count };
 }
 
+//------------------------------------------------------------------------------
+wstr_stream::range_desc wstr_stream::range(const str_iter_impl<TYPE>& iter)
+{
+    return { iter.get_pointer(), iter.length() };
+}
+
+//------------------------------------------------------------------------------
+void wstr_stream::collect(str_impl<TYPE>& out)
+{
+    out.attach(m_start, int(m_cursor - m_start));
+    m_start = m_end = m_cursor = nullptr;
+}
+
+//------------------------------------------------------------------------------
+void wstr_stream::grow(unsigned int hint)
+{
+    hint = (hint + 127) & ~127;
+    unsigned int size = int(m_end - m_start) + hint;
+    TYPE* next = (TYPE*)realloc(m_start, size * sizeof(TYPE));
+    m_cursor = next + (m_cursor - m_start);
+    m_end = next + size;
+    m_start = next;
+}
 
 
 
@@ -98,7 +122,7 @@ void doskey_alias::reset()
 //------------------------------------------------------------------------------
 bool doskey_alias::next(wstr_base& out)
 {
-    if (!*this)
+    if (!*m_cursor)
         return false;
 
     out.copy(m_cursor);
@@ -139,7 +163,7 @@ bool doskey::remove_alias(const char* alias)
 }
 
 //------------------------------------------------------------------------------
-bool doskey::resolve_impl(const wstr_iter& in, wstr_base& out)
+bool doskey::resolve_impl(const wstr_iter& in, wstr_stream* out)
 {
     // Find the alias for which to retrieve text for.
     wstr_tokeniser tokens(in, " ");
@@ -167,6 +191,10 @@ bool doskey::resolve_impl(const wstr_iter& in, wstr_base& out)
     text.reserve(512);
     GetConsoleAliasW(alias.data(), text.data(), text.size(), wshell.data());
 
+    // Early out if not output location was provided.
+    if (out == nullptr)
+        return true;
+
     // Collect the remaining tokens.
     if (g_enhanced_doskey.get())
         tokens.add_quote_pair("\"");
@@ -181,7 +209,7 @@ bool doskey::resolve_impl(const wstr_iter& in, wstr_base& out)
     }
 
     // Expand the alias' text into 'out'.
-    wstr_stream stream(out);
+    wstr_stream& stream = *out;
     const wchar_t* read = text.c_str();
     for (int c = *read; c = *read; ++read)
     {
@@ -202,7 +230,7 @@ bool doskey::resolve_impl(const wstr_iter& in, wstr_base& out)
         case 'g': case 'G': stream << '>';  continue;
         case 'l': case 'L': stream << '<';  continue;
         case 'b': case 'B': stream << '|';  continue;
-        case 't': case 'T': stream << '\1'; continue;
+        case 't': case 'T': stream << '\0'; continue;
         }
 
         // Unknown tag? Perhaps it is a argument one?
@@ -224,18 +252,14 @@ bool doskey::resolve_impl(const wstr_iter& in, wstr_base& out)
         {
             const wchar_t* end = in.get_pointer() + in.length();
             const wchar_t* start = args.front()->ptr;
-            stream.concat(start, int(end - start));
+            stream << wstr_stream::range(start, int(end - start));
         }
         else if (c < arg_count)
         {
             const arg_desc& desc = args.front()[c];
-            stream.concat(desc.ptr, desc.length);
+            stream << wstr_stream::range(desc.ptr, desc.length);
         }
     }
-
-    // Double null-terminated as aliases with $T become and array of commands.
-    stream << '\0';
-    stream << '\0';
 
     return true;
 }
@@ -245,35 +269,53 @@ void doskey::resolve(const wchar_t* chars, doskey_alias& out)
 {
     out.reset();
 
+    wstr_stream stream;
     if (g_enhanced_doskey.get())
     {
-        auto& buffer = out.m_buffer;
-        const wchar_t* last = chars;
         wstr_iter command;
-        wstr_tokeniser commands(chars, "&|");
-        commands.add_quote_pair("\"");
-        while (commands.next(command))
-        {
-            // Copy delimiters into the output buffer verbatim.
-            if (int delim_length = int(command.get_pointer() - last))
-                buffer.concat(last, delim_length);
-            last = command.get_pointer() + command.length();
 
-            if (!resolve_impl(command, buffer))
-                buffer.concat(command.get_pointer(), command.length());
+        // Coarse check to see if there's any aliases to resolve
+        {
+            bool resolves = false;
+            wstr_tokeniser commands(chars, "&|");
+            commands.add_quote_pair("\"");
+            while (commands.next(command))
+                if (resolves = resolve_impl(command, nullptr))
+                    break;
+
+            if (!resolves)
+                return;
         }
 
-        // Append any trailing delimiters too.
-        if (int delim_length = int(command.get_pointer() - last))
-            buffer.concat(last, delim_length);
+        // This line will expand aliases so lets do that.
+        {
+            const wchar_t* last = chars;
+            wstr_tokeniser commands(chars, "&|");
+            commands.add_quote_pair("\"");
+            while (commands.next(command))
+            {
+                // Copy delimiters into the output buffer verbatim.
+                if (int delim_length = int(command.get_pointer() - last))
+                    stream << wstr_stream::range(last, delim_length);
+                last = command.get_pointer() + command.length();
+
+                if (!resolve_impl(command, &stream))
+                    stream << wstr_stream::range(command);
+            }
+
+            // Append any trailing delimiters too.
+            while (*last)
+                stream << *last++;
+        }
     }
-    else
-        resolve_impl(wstr_iter(chars), out.m_buffer);
+    else if (!resolve_impl(wstr_iter(chars), &stream))
+        return;
 
+    // Double null-terminated as aliases with $T become and array of commands.
+    stream << '\0';
+    stream << '\0';
+
+    // Collect the resolve result
+    stream.collect(out.m_buffer);
     out.m_cursor = out.m_buffer.c_str();
-
-    // Convert command delimiters to nulls.
-    for (wchar_t* __restrict c = out.m_buffer.data(); *c; ++c)
-        if (*c == '\1')
-            *c = '\0';
 }

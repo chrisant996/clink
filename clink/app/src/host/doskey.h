@@ -34,6 +34,6 @@ public:
     void            resolve(const wchar_t* chars, doskey_alias& out);
 
 private:
-    bool            resolve_impl(const wstr_iter& in, wstr_base& out);
+    bool            resolve_impl(const wstr_iter& in, class wstr_stream* out);
     const char*     m_shell_name;
 };

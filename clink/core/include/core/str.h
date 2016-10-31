@@ -37,6 +37,7 @@ public:
                     str_impl(TYPE* data, unsigned int size);
                     str_impl(const str_impl&) = delete;
                     ~str_impl();
+    void            attach(TYPE* data, unsigned int size);
     bool            reserve(unsigned int size);
     TYPE*           data();
     const TYPE*     c_str() const;
@@ -85,6 +86,24 @@ template <typename TYPE>
 str_impl<TYPE>::~str_impl()
 {
     free_data();
+}
+
+//------------------------------------------------------------------------------
+template <typename TYPE>
+void str_impl<TYPE>::attach(TYPE* data, unsigned int size)
+{
+    if (is_growable())
+    {
+        free_data();
+        m_data = data;
+        m_size = size;
+        m_owns_ptr = 1;
+    }
+    else
+    {
+        clear();
+        concat(data, size);
+    }
 }
 
 //------------------------------------------------------------------------------

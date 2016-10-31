@@ -226,6 +226,7 @@ TEST_CASE("Doskey pipe/redirect : new")
 
         REQUIRE(alias.next(line) == true);
         REQUIRE(line.equals(output) == true);
+        REQUIRE(alias.next(line) == false);
     };
 
     doskey.add_alias("alias", "one");
