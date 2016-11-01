@@ -258,6 +258,7 @@ function _argmatcher:_generate(line_state, match_builder)
 
         for _, i in ipairs(arg) do
             if type(i) == "function" then
+                -- TODO: Some sort of index breadcrumb instead of word_index?
                 match_builder:addmatches(i(word_count, line_state))
             else
                 match_builder:addmatch(i)

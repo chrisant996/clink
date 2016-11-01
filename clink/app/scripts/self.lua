@@ -23,12 +23,16 @@ local autorun = clink:argmatcher()
 
 --------------------------------------------------------------------------------
 local function set_handler(word_index, line_state)
+    local name = ""
+    if word_index > 3 then
+        name = line_state:getword(word_index - 1)
+    end
+
     local ret = {}
-    local name = line_state:getword(word_index) or ""
-    local cmd = io.popen(CLINK_EXE.." set --list "..name, "r")
-    for line in cmd:lines() do
+    for line in io.popen(CLINK_EXE.." set --list "..name, "r"):lines() do
         table.insert(ret, line)
     end
+
     return ret
 end
 
