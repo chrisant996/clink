@@ -7,7 +7,6 @@
 #include <core/base.h>
 #include <core/str_tokeniser.h>
 
-#include <new.h>
 
 //------------------------------------------------------------------------------
 enum
