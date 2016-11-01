@@ -191,7 +191,7 @@ tab_completer::state tab_completer::begin_print(const context& context)
 
     // Get the longest match length.
     for (int i = 0, n = matches.get_match_count(); i < n; ++i)
-        m_longest = max<int>(matches.get_visible_chars(i), m_longest);
+        m_longest = max<int>(matches.get_cell_count(i), m_longest);
 
     if (!m_longest)
         return state_none;
@@ -240,7 +240,7 @@ tab_completer::state tab_completer::print(const context& context, bool single_ro
             const char* match = matches.get_displayable(index);
             printer.print(match, int(strlen(match)));
 
-            int visible_chars = matches.get_visible_chars(index);
+            int visible_chars = matches.get_cell_count(index);
             for (int i = m_longest - visible_chars + 1; i >= 0;)
             {
                 const char spaces[] = "                ";

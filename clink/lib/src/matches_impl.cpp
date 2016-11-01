@@ -178,9 +178,9 @@ char matches_impl::get_suffix(unsigned int index) const
 }
 
 //------------------------------------------------------------------------------
-unsigned int matches_impl::get_visible_chars(unsigned int index) const
+unsigned int matches_impl::get_cell_count(unsigned int index) const
 {
-    return (index < get_match_count()) ? m_infos[index].visible_chars : 0;
+    return (index < get_match_count()) ? m_infos[index].cell_count : 0;
 }
 
 //------------------------------------------------------------------------------

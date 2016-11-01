@@ -14,7 +14,7 @@ struct match_info
     unsigned short  displayable_store_id;
     unsigned short  aux_store_id;
     char            suffix;
-    unsigned char   visible_chars;
+    unsigned char   cell_count;
     bool            select;
 };
 
@@ -46,7 +46,7 @@ public:
     virtual const char*     get_displayable(unsigned int index) const override;
     virtual const char*     get_aux(unsigned int index) const override;
     virtual char            get_suffix(unsigned int index) const override;
-    virtual unsigned int    get_visible_chars(unsigned int index) const override;
+    virtual unsigned int    get_cell_count(unsigned int index) const override;
     virtual bool            has_aux() const override;
     virtual void            get_match_lcd(str_base& out) const override;
 

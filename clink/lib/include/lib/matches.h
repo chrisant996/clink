@@ -14,7 +14,7 @@ public:
     virtual const char*     get_displayable(unsigned int index) const = 0;
     virtual const char*     get_aux(unsigned int index) const = 0;
     virtual char            get_suffix(unsigned int index) const = 0;
-    virtual unsigned int    get_visible_chars(unsigned int index) const = 0;
+    virtual unsigned int    get_cell_count(unsigned int index) const = 0;
     virtual bool            has_aux() const = 0;
     virtual void            get_match_lcd(str_base& out) const = 0;
 };

@@ -10,6 +10,7 @@
 
 #include <core/array.h>
 #include <core/str_compare.h>
+#include <terminal/ecma48_iter.h>
 
 #include <algorithm>
 
@@ -80,7 +81,7 @@ void match_pipeline::fill_info() const
     for (int i = 0; i < count; ++i, ++info)
     {
         const char* displayable = m_matches.get_displayable(i);
-        info->visible_chars = char_count(displayable);
+        info->cell_count = cell_count(displayable);
     }
 }
 
