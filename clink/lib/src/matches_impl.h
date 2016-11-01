@@ -13,9 +13,9 @@ struct match_info
     unsigned short  store_id;
     unsigned short  displayable_store_id;
     unsigned short  aux_store_id;
-    char            suffix;
     unsigned char   cell_count;
-    bool            select;
+    unsigned char   suffix : 7;
+    unsigned char   select : 1;
 };
 
 
