@@ -118,6 +118,12 @@ void ecma48_terminal_out::write_sgr(const array<int>& params)
 {
     static const unsigned char sgr_to_attr[] = { 0, 4, 2, 6, 1, 5, 3, 7 };
 
+    if (params.empty())
+    {
+        set_attr(get_default_attr());
+        return;
+    }
+
     // Process each code that is supported.
     unsigned char attr = get_attr();
     for (unsigned int param : params)
