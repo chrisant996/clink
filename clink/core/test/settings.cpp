@@ -102,7 +102,12 @@ TEST_CASE("settings : int")
     test.get(out);
     REQUIRE(out.equals("102"));
 
-    REQUIRE(!test.set("abc")); REQUIRE(test.get() == 102);
+    REQUIRE(test.set("-2"));  REQUIRE(test.get() == -2);
+    REQUIRE(test.set("-03")); REQUIRE(test.get() == -3);
+    REQUIRE(test.set("-14")); REQUIRE(test.get() == -14);
+
+    REQUIRE(test.set("999"));
+    REQUIRE(!test.set("abc")); REQUIRE(test.get() == 999);
     REQUIRE(test.set("0abc")); REQUIRE(test.get() == 0);
 }
 

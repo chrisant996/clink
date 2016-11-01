@@ -232,7 +232,7 @@ template <> bool setting_impl<bool>::set(const char* value)
 //------------------------------------------------------------------------------
 template <> bool setting_impl<int>::set(const char* value)
 {
-    if (*value < '0' || *value > '9')
+    if ((*value < '0' || *value > '9') && *value != '-')
         return false;
 
     m_store.value = atoi(value);
