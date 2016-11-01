@@ -309,9 +309,9 @@ end
 
 
 --------------------------------------------------------------------------------
-local argmatcher_module = clink:module(24)
+local argmatcher_generator = clink:generator(24)
 
-function argmatcher_module:generate(line_state, match_builder)
+function argmatcher_generator:generate(line_state, match_builder)
     -- Running and argmatcher only makes sense if there's two or more words.
     if line_state:getwordcount() < 2 then
         return false

@@ -1,7 +1,7 @@
 -- Copyright (c) 2016 Martin Ridgers
 -- License: http://opensource.org/licenses/MIT
 
-local cmd_module = clink:module(40)
+local cmd_generator = clink:generator(40)
 
 --------------------------------------------------------------------------------
 local cmd_commands = {
@@ -14,7 +14,7 @@ local cmd_commands = {
 }
 
 --------------------------------------------------------------------------------
-function cmd_module:generate(line_state, match_builder)
+function cmd_generator:generate(line_state, match_builder)
     -- Cmd commands only apply for the first word of a line.
     if line_state:getwordcount() > 1 then
         return false

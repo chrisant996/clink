@@ -4,7 +4,7 @@
 return {
     name = "lib",
     files = {
-        "match.lua",
+        "generator.lua",
         "arguments.lua",
         "debugger.lua",
     }

@@ -22,7 +22,7 @@ extern "C" {
 lua_match_generator::lua_match_generator(lua_state& state)
 : m_state(state)
 {
-    lua_load_script(m_state, lib, match)
+    lua_load_script(m_state, lib, generator)
     lua_load_script(m_state, lib, arguments);
 }
 

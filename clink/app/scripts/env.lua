@@ -1,7 +1,7 @@
 -- Copyright (c) 2012 Martin Ridgers
 -- License: http://opensource.org/licenses/MIT
 
-local envvar_module = clink.module(10)
+local envvar_generator = clink.generator(10)
 
 --------------------------------------------------------------------------------
 local special_env_vars = {

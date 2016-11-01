@@ -1,6 +1,6 @@
 #include "pch.h"
 #if defined(CLINK_FINAL)
-const char* lib_match_lua_script = 
+const char* lib_generator_lua_script = 
 "clink._modules = {}\n"
 "function clink:module(priority)\n"
 "    if priority == nil then priority = 999 end\n"
@@ -1408,10 +1408,10 @@ const char* lib_match_lua_script =
 "  return assertmsg                       --carry on\n"
 "end\n"
 "_TRACEBACK = debug.traceback             --Lua 5.0 function\n"
-"";const char* lib_lua_scripts[] = {lib_match_lua_script,lib_arguments_lua_script,lib_debugger_lua_script,nullptr,};
+"";const char* lib_lua_scripts[] = {lib_generator_lua_script,lib_arguments_lua_script,lib_debugger_lua_script,nullptr,};
 #else
-const char* lib_match_lua_file = CLINK_BUILD_ROOT "/../../clink/lua/scripts/match.lua";
+const char* lib_generator_lua_file = CLINK_BUILD_ROOT "/../../clink/lua/scripts/generator.lua";
 const char* lib_arguments_lua_file = CLINK_BUILD_ROOT "/../../clink/lua/scripts/arguments.lua";
 const char* lib_debugger_lua_file = CLINK_BUILD_ROOT "/../../clink/lua/scripts/debugger.lua";
-const char* lib_lua_files[] = {lib_match_lua_file,lib_arguments_lua_file,lib_debugger_lua_file,nullptr,};
+const char* lib_lua_files[] = {lib_generator_lua_file,lib_arguments_lua_file,lib_debugger_lua_file,nullptr,};
 #endif
