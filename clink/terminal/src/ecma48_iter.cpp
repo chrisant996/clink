@@ -8,6 +8,31 @@
 #include <core/str_tokeniser.h>
 
 //------------------------------------------------------------------------------
+extern "C" int wcwidth(int);
+
+
+
+//------------------------------------------------------------------------------
+unsigned int cell_count(const char* in)
+{
+    unsigned int count = 0;
+
+    ecma48_state state;
+    ecma48_iter iter(in, state);
+    while (const auto* code = iter.next())
+    {
+        if (code->get_type() != ecma48_code::type_chars)
+            continue;
+
+        str_iter inner_iter(code->get_pointer(), code->get_length());
+        while (int c = inner_iter.next())
+            count += wcwidth(c);
+    }
+
+    return count;
+}
+
+//------------------------------------------------------------------------------
 static bool in_range(int value, int left, int right)
 {
     return (unsigned(right - value) <= unsigned(right - left));
