@@ -7,6 +7,13 @@
 #include <core/base.h>
 #include <core/str_tokeniser.h>
 
+//------------------------------------------------------------------------------
+static bool in_range(int value, int left, int right)
+{
+    return (unsigned(right - value) <= unsigned(right - left));
+}
+
+
 
 //------------------------------------------------------------------------------
 enum
@@ -21,9 +28,6 @@ enum
     ecma48_state_char_str,
 };
 
-//------------------------------------------------------------------------------
-#define in_range(value, left, right)\
-    (unsigned(right - value) <= unsigned(right - left))
 
 
 //------------------------------------------------------------------------------
