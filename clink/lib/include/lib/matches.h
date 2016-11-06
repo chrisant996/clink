@@ -37,6 +37,7 @@ public:
                             match_builder(matches& matches);
     bool                    add_match(const char* match);
     bool                    add_match(const match_desc& desc);
+    void                    set_prefix_included(bool included=true);
     
 private:
     matches&                m_matches;

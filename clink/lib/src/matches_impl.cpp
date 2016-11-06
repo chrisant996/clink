@@ -27,6 +27,12 @@ bool match_builder::add_match(const match_desc& desc)
     return ((matches_impl&)m_matches).add_match(desc);
 }
 
+//------------------------------------------------------------------------------
+void match_builder::set_prefix_included(bool included)
+{
+    return ((matches_impl&)m_matches).set_prefix_included(included);
+}
+
 
 
 //------------------------------------------------------------------------------
@@ -221,6 +227,12 @@ void matches_impl::get_match_lcd(str_base& out) const
 }
 
 //------------------------------------------------------------------------------
+bool matches_impl::is_prefix_included() const
+{
+    return m_prefix_included;
+}
+
+//------------------------------------------------------------------------------
 void matches_impl::reset()
 {
     m_store.reset();
@@ -228,6 +240,13 @@ void matches_impl::reset()
     m_coalesced = false;
     m_count = 0;
     m_has_aux = false;
+    m_prefix_included = false;
+}
+
+//------------------------------------------------------------------------------
+void matches_impl::set_prefix_included(bool included)
+{
+    m_prefix_included = included;
 }
 
 //------------------------------------------------------------------------------

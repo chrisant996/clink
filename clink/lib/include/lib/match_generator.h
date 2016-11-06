@@ -10,7 +10,8 @@ class match_builder;
 class match_generator
 {
 public:
-    virtual bool generate(const line_state& line, match_builder& builder) = 0;
+    virtual bool    generate(const line_state& line, match_builder& builder) = 0;
+    virtual int     get_prefix_length(const char* start, int length) const = 0;
 
 private:
 };

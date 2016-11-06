@@ -14,20 +14,23 @@ function clink:generator(priority)
     return ret
 end
 
+
+
 --------------------------------------------------------------------------------
-function clink:_generate_impl(line_state, match_builder)
-    for _, generator in ipairs(self._generators) do
-        local ret = generator:generate(line_state, match_builder)
-        if ret == true then
-            return true
-        end
+local function pcall_dispatch(func, ...)
+    local ok, ret = pcall(func, ...)
+    if not ok then
+        print("")
+        print(ret)
+        print(debug.traceback())
+        return
     end
 
-    return false
+    return ret
 end
 
 --------------------------------------------------------------------------------
-function clink:_generate(line_state, match_builder)
+function clink:_prepare()
     -- Sort generators by priority if required.
     if self._generators_unsorted then
         local lambda = function(a, b) return a._priority < b._priority end
@@ -35,15 +38,41 @@ function clink:_generate(line_state, match_builder)
 
         self._generators_unsorted = false
     end
+end
 
-    -- Protected call to generate matches.
-    local ok, ret = pcall(self._generate_impl, self, line_state, match_builder)
-    if not ok then
-        print("")
-        print(ret)
-        print(debug.traceback())
+--------------------------------------------------------------------------------
+function clink:_generate(line_state, match_builder)
+    local impl = function ()
+        for _, generator in ipairs(self._generators) do
+            local ret = generator:generate(line_state, match_builder)
+            if ret == true then
+                return true
+            end
+        end
+
         return false
     end
 
-    return ret
+    clink:_prepare()
+    local ret = pcall_dispatch(impl)
+    return ret or false
+end
+
+--------------------------------------------------------------------------------
+function clink:_get_prefix_length(word)
+    local impl = function ()
+        local ret = 0
+        for _, generator in ipairs(self._generators) do
+            if generator.getprefixlength then
+                local i = generator:getprefixlength(word) or 0
+                if i > ret then ret = i end
+            end
+        end
+
+        return ret
+    end
+
+    clink:_prepare()
+    local ret = pcall_dispatch(impl)
+    return ret or 0
 end

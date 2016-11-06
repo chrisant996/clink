@@ -10,8 +10,9 @@
 
 //------------------------------------------------------------------------------
 static match_builder_lua::method g_methods[] = {
-    { "addmatch",   &match_builder_lua::add_match },
-    { "addmatches", &match_builder_lua::add_matches },
+    { "addmatch",           &match_builder_lua::add_match },
+    { "addmatches",         &match_builder_lua::add_matches },
+    { "setprefixincluded",  &match_builder_lua::set_prefix_included },
     {}
 };
 
@@ -38,6 +39,18 @@ int match_builder_lua::add_match(lua_State* state)
 
     lua_pushboolean(state, ret);
     return 1;
+}
+
+//------------------------------------------------------------------------------
+int match_builder_lua::set_prefix_included(lua_State* state)
+{
+    bool included = true;
+    if (lua_gettop(state) > 0)
+        included = (lua_toboolean(state, 1) != 0);
+
+    m_builder.set_prefix_included(included);
+
+    return 0;
 }
 
 //------------------------------------------------------------------------------

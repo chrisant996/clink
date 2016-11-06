@@ -66,7 +66,7 @@ private:
     matches_impl        m_matches;
     printer             m_printer;
     unsigned int        m_prev_key;
-    unsigned int        m_command_offset;
+    unsigned short      m_command_offset;
     unsigned char       m_keys_size;
     unsigned char       m_flags = 0;
 };

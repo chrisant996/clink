@@ -14,9 +14,10 @@ class lua_match_generator
 public:
                     lua_match_generator(lua_state& state);
     virtual         ~lua_match_generator();
-    virtual bool    generate(const line_state& line, match_builder& builder) override;
 
 private:
+    virtual bool    generate(const line_state& line, match_builder& builder) override;
+    virtual int     get_prefix_length(const char* start, int length) const override;
     void            initialise();
     void            print_error(const char* error) const;
     void            lua_pushlinestate(const line_state& line);

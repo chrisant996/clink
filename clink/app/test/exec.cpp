@@ -55,6 +55,7 @@ TEST_CASE("Executable match generation.") {
     desc.command_delims = "&|";
     line_editor_tester tester(desc);
     tester.get_editor()->add_generator(lua_generator);
+    tester.get_editor()->add_generator(file_match_generator());
 
     settings::find("exec.cwd")->set("0");
     settings::find("exec.dirs")->set("0");

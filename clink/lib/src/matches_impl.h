@@ -48,11 +48,13 @@ public:
     virtual char            get_suffix(unsigned int index) const override;
     virtual unsigned int    get_cell_count(unsigned int index) const override;
     virtual bool            has_aux() const override;
+    bool                    is_prefix_included() const;
     virtual void            get_match_lcd(str_base& out) const override;
 
 private:
     friend class            match_pipeline;
     friend class            match_builder;
+    void                    set_prefix_included(bool included);
     bool                    add_match(const match_desc& desc);
     unsigned int            get_info_count() const;
     match_info*             get_infos();
@@ -84,4 +86,5 @@ private:
     unsigned short          m_count = 0;
     bool                    m_coalesced = false;
     bool                    m_has_aux = false;
+    bool                    m_prefix_included = false;
 };

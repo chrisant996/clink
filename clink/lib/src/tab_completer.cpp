@@ -150,17 +150,6 @@ void tab_completer::on_input(const input& input, result& result, const context& 
         return;
     }
 
-    // Is there some common match text we can add to the line?
-    str<288> lcd;
-    matches.get_match_lcd(lcd);
-
-    unsigned int lcd_length = lcd.length();
-    if (!lcd_length)
-    {
-        m_waiting = true;
-        return;
-    }
-
     // One match? Accept it.
     if (matches.get_match_count() == 1)
     {
@@ -168,15 +157,9 @@ void tab_completer::on_input(const input& input, result& result, const context& 
         return;
     }
 
-    // Append as much of the lowest common denominator of matches as we can.
-    line_buffer& buffer = context.buffer;
-    unsigned int cursor = buffer.get_cursor();
-
-    word end_word = *(context.line.get_words().back());
-    int word_end = end_word.offset + end_word.length;
-    int dx = lcd_length - (cursor - word_end);
-
-    m_waiting = !dx;
+    // Append as much of the lowest common denominator of matches as we can. If
+    // there is an LCD then on_matches_changed() gets called.
+    m_waiting = true;
     result.append_match_lcd();
 }
 

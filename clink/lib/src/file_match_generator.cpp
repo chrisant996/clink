@@ -26,25 +26,37 @@ setting_bool g_glob_system(
 
 
 //------------------------------------------------------------------------------
+static class : public match_generator
+{
+    virtual bool generate(const line_state& line, match_builder& builder) override
+    {
+        str<288> buffer;
+        line.get_end_word(buffer);
+        buffer << "*";
+
+        globber globber(buffer.c_str());
+        globber.hidden(g_glob_hidden.get());
+        globber.system(g_glob_system.get());
+        while (globber.next(buffer, false))
+            builder.add_match(buffer.c_str());
+
+        return true;
+    }
+
+    virtual int get_prefix_length(const char* start, int length) const override
+    {
+        const char* c = start + length;
+        for (; c > start; --c)
+            if (path::is_separator(c[-1]))
+                break;
+
+        return int(c - start);
+    }
+} g_file_generator;
+
+
+//------------------------------------------------------------------------------
 match_generator& file_match_generator()
 {
-    static class : public match_generator
-    {
-        virtual bool generate(const line_state& line, match_builder& builder) override
-        {
-            str<288> buffer;
-            line.get_end_word(buffer);
-            buffer << "*";
-
-            globber globber(buffer.c_str());
-            globber.hidden(g_glob_hidden.get());
-            globber.system(g_glob_system.get());
-            while (globber.next(buffer, false))
-                builder.add_match(buffer.c_str());
-
-            return true;
-        }
-    } instance;
-
-    return instance;
+    return g_file_generator;
 }

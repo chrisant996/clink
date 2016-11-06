@@ -4,6 +4,7 @@
 #include "pch.h"
 #include "line_editor_impl.h"
 #include "line_buffer.h"
+#include "match_generator.h"
 #include "match_pipeline.h"
 
 #include <core/base.h>
@@ -355,19 +356,17 @@ void line_editor_impl::collect_words()
         word.quoted = !!start_quoted;
     }
 
-    // Adjust the completing word for if it's partial.
+    // The last word is truncated to the longest length returned by the match
+    // generators. This is a little clunky but works well enough.
     end_word = m_words.back();
-    int partial = 0;
-    for (int j = end_word->length - 1; j >= 0; --j)
+    int prefix_length = 0;
+    const char* word_start = line_buffer + end_word->offset;
+    for (const auto* generator : m_generators)
     {
-        int c = line_buffer[end_word->offset + j];
-        if (strchr(m_desc.partial_delims, c) == nullptr)
-            continue;
-
-        partial = j + 1;
-        break;
+        int i = generator->get_prefix_length(word_start, end_word->length);
+        prefix_length = max(prefix_length, i);
     }
-    end_word->length = partial;
+    end_word->length = min<unsigned int>(prefix_length, end_word->length);
 }
 
 //------------------------------------------------------------------------------
@@ -415,9 +414,16 @@ void line_editor_impl::accept_match(unsigned int index)
     char suffix = m_matches.get_suffix(index);
     if (!suffix)
     {
-        int last_char = int(strlen(match)) - 1;
-        if (strchr(m_desc.partial_delims, match[last_char]) == nullptr)
-            suffix = ' ';
+        int prefix_length = 0;
+        int match_length = int(strlen(match));
+        for (const auto* generator : m_generators)
+        {
+            int i = generator->get_prefix_length(match, match_length);
+            prefix_length = max(prefix_length, i);
+        }
+
+        if (prefix_length != match_length)
+            suffix = m_desc.word_delims[0];
     }
 
     // If this match doesn't make a new partial word, close it off
@@ -447,10 +453,13 @@ void line_editor_impl::append_match_lcd()
         return;
 
     unsigned int cursor = m_buffer.get_cursor();
-    word end_word = *(m_words.back());
-    int word_end = end_word.offset + end_word.length;
-    int dx = lcd_length - (cursor - word_end);
 
+    word end_word = *(m_words.back());
+    int word_end = end_word.offset;
+    if (!m_matches.is_prefix_included())
+        word_end += end_word.length;
+
+    int dx = lcd_length - (cursor - word_end);
     if (dx < 0)
     {
         m_buffer.remove(cursor + dx, cursor);
@@ -458,7 +467,10 @@ void line_editor_impl::append_match_lcd()
     }
     else if (dx > 0)
     {
-        int start = end_word.offset + end_word.length;
+        int start = end_word.offset;
+        if (!m_matches.is_prefix_included())
+            start += end_word.length;
+
         m_buffer.remove(start, cursor);
         m_buffer.set_cursor(start);
         m_buffer.insert(lcd.c_str());
@@ -562,7 +574,10 @@ void line_editor_impl::update_internal()
     if (next_key.value != prev_key.value)
     {
         str<64> needle;
-        int needle_start = end_word.offset + end_word.length;
+        int needle_start = end_word.offset;
+        if (!m_matches.is_prefix_included())
+            needle_start += end_word.length;
+
         const char* buf_ptr = m_buffer.get_buffer();
         needle.concat(buf_ptr + needle_start, next_key.cursor_pos - needle_start);
 

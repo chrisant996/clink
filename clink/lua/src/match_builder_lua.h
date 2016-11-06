@@ -17,6 +17,7 @@ public:
                     ~match_builder_lua();
     int             add_match(lua_State* state);
     int             add_matches(lua_State* state);
+    int             set_prefix_included(lua_State* state);
 
 private:
     bool            add_match_impl(lua_State* state, int stack_index);

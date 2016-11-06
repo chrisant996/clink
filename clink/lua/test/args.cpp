@@ -377,7 +377,6 @@ TEST_CASE("Lua arg parsers.") {
             tester.run();
         }
 
-#if TODO // not all flag-type arguments work properly ...yet.
         SECTION("Slash 3") {
             tester.set_input("argcmd_flags_s nothing /tw");
             tester.set_expected_matches("/two", "/twenty");
@@ -391,7 +390,6 @@ TEST_CASE("Lua arg parsers.") {
             tester.set_expected_matches("/two", "/twenty");
             tester.run();
         }
-#endif
 
         SECTION("Slash 5") {
             tester.set_input("argcmd_flags_s nothing /");
@@ -399,7 +397,6 @@ TEST_CASE("Lua arg parsers.") {
             tester.run();
         }
 
-#if TODO // not all flag-type arguments work properly ...yet.
         SECTION("Slash 6") {
             tester.set_input("argcmd_flags_s nothing /tw");
             tester.set_expected_matches("/two", "/twenty");
@@ -417,7 +414,6 @@ TEST_CASE("Lua arg parsers.") {
             tester.set_expected_matches("/two", "/twenty");
             tester.run();
         }
-#endif
 
         SECTION("Dash 1") {
             tester.set_input("argcmd_flags_d -");
@@ -517,7 +513,7 @@ TEST_CASE("Lua arg parsers.") {
 
         SECTION("Flag 5") {
             tester.set_input("argcmd_shorthand abc -flag X ");
-            tester.set_expected_matches("four", "five", "-flag");
+            tester.set_expected_matches("four", "five");
             tester.run();
         }
 
