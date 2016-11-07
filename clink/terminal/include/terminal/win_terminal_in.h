@@ -22,6 +22,7 @@ private:
     void            push(const char* seq);
     unsigned char   pop();
     void*           m_stdin = nullptr;
+    unsigned int    m_dimensions = 0;
     unsigned long   m_prev_mode = 0;
     unsigned char   m_buffer_head = 0;
     unsigned char   m_buffer_count = 0;

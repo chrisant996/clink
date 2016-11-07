@@ -46,6 +46,18 @@ static const char* const kfx[]   = {
 
 
 //------------------------------------------------------------------------------
+static unsigned int get_dimensions()
+{
+    CONSOLE_SCREEN_BUFFER_INFO csbi;
+    GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &csbi);
+    auto cols = short(csbi.dwSize.X);
+    auto rows = short(csbi.srWindow.Bottom - csbi.srWindow.Top) + 1;
+    return (cols << 16) | rows;
+}
+
+
+
+//------------------------------------------------------------------------------
 void win_terminal_in::begin()
 {
     m_buffer_count = 0;
@@ -70,6 +82,13 @@ void win_terminal_in::select()
 //------------------------------------------------------------------------------
 int win_terminal_in::read()
 {
+    unsigned int dimensions = get_dimensions();
+    if (dimensions != m_dimensions)
+    {
+        m_dimensions = dimensions;
+        return terminal_in::input_terminal_resize;
+    }
+
     if (!m_buffer_count)
         return terminal_in::input_none;
 
