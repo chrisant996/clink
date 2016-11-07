@@ -55,6 +55,16 @@ static unsigned int get_dimensions()
     return (cols << 16) | rows;
 }
 
+//------------------------------------------------------------------------------
+static void set_cursor_visibility(bool state)
+{
+    HANDLE handle = GetStdHandle(STD_OUTPUT_HANDLE);
+    CONSOLE_CURSOR_INFO info;
+    GetConsoleCursorInfo(handle, &info);
+    info.bVisible = BOOL(state);
+    SetConsoleCursorInfo(handle, &info);
+}
+
 
 
 //------------------------------------------------------------------------------
@@ -63,11 +73,13 @@ void win_terminal_in::begin()
     m_buffer_count = 0;
     m_stdin = GetStdHandle(STD_INPUT_HANDLE);
     GetConsoleMode(m_stdin, &m_prev_mode);
+    set_cursor_visibility(false);
 }
 
 //------------------------------------------------------------------------------
 void win_terminal_in::end()
 {
+    set_cursor_visibility(true);
     SetConsoleMode(m_stdin, m_prev_mode);
     m_stdin = nullptr;
 }
@@ -114,9 +126,14 @@ void win_terminal_in::read_console()
         {
             SetConsoleMode(handle, prev_mode);
         }
-    };
-    
-    mode_scope _(m_stdin);
+    } _ms(m_stdin);
+
+    // Hide the cursor unless we're accepting input so we don't have to see it
+    // jump around as the screen's drawn.
+    struct cursor_scope {
+        cursor_scope()  { set_cursor_visibility(true); }
+        ~cursor_scope() { set_cursor_visibility(false); }
+    } _cs;
 
     // Conhost restarts the cursor blink when writing to the console. It restarts
     // hidden which means that if you type faster than the blink the cursor turns
