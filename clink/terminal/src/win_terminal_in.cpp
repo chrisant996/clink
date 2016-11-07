@@ -118,6 +118,14 @@ void win_terminal_in::read_console()
     
     mode_scope _(m_stdin);
 
+    // Conhost restarts the cursor blink when writing to the console. It restarts
+    // hidden which means that if you type faster than the blink the cursor turns
+    // invisible. Fortunately, moving the cursor restarts the blink on visible.
+    HANDLE stdout_handle = GetStdHandle(STD_OUTPUT_HANDLE);
+    CONSOLE_SCREEN_BUFFER_INFO csbi;
+    GetConsoleScreenBufferInfo(stdout_handle, &csbi);
+    SetConsoleCursorPosition(stdout_handle, csbi.dwCursorPosition);
+
     // Read input records sent from the terminal (aka conhost) until some
     // input has beeen buffered.
     unsigned int buffer_count = m_buffer_count;
