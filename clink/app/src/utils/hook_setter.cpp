@@ -14,6 +14,7 @@
 static bool             (*g_hook_trap)()        = nullptr;
 static void             (*g_hook_trap_addr)()   = nullptr;
 static unsigned char    g_hook_trap_value       = 0;
+static void*            g_hook_veh_handle       = nullptr;
 
 
 
@@ -50,6 +51,7 @@ static LONG WINAPI hook_trap_veh(EXCEPTION_POINTERS* info)
     if (g_hook_trap != nullptr && !g_hook_trap())
         LOG("Hook trap %p failed.", g_hook_trap);
 
+    RemoveVectoredExceptionHandler(g_hook_veh_handle);
     return EXCEPTION_CONTINUE_EXECUTION;
 }
 
@@ -72,8 +74,7 @@ bool set_hook_trap(void* module, const char* func_name, bool (*trap)())
     g_hook_trap = trap;
     g_hook_trap_addr = addr;
     g_hook_trap_value = *(unsigned char*)g_hook_trap_addr;
-
-    AddVectoredExceptionHandler(1, hook_trap_veh);
+    g_hook_veh_handle = AddVectoredExceptionHandler(1, hook_trap_veh);
 
     // Write a HALT instruction to force an exception.
     unsigned char to_write = 0xf4;
