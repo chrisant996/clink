@@ -203,14 +203,14 @@ bool host_cmd::is_interactive() const
     // Cmd.exe's argument parsing is basic, simply searching for '/' characters
     // and checking the following character.
 
-    wchar_t* args = GetCommandLineW();
-    while (args != nullptr && wcschr(args, '/'))
+    const wchar_t* args = GetCommandLineW();
+    while (args != nullptr && (args = wcschr(args, '/')))
     {
         ++args;
         switch (tolower(*args))
         {
         case 'c': return false;
-        case 'k': break;
+        case 'k': args = nullptr; break;
         }
     }
 
