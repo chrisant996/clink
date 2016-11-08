@@ -68,14 +68,17 @@ bool set_hook_trap(void* module, const char* func_name, bool (*trap)())
         return false;
     }
 
+    extern void* follow_jump(void*);
+    void* target = follow_jump((void*)addr);
+
     g_hook_trap = trap;
-    g_hook_trap_addr = addr;
+    g_hook_trap_addr = funcptr_t(target);
     g_hook_trap_value = *(unsigned char*)g_hook_trap_addr;
     g_hook_veh_handle = AddVectoredExceptionHandler(1, hook_trap_veh);
 
     // Write a HALT instruction to force an exception.
     unsigned char to_write = 0xf4;
-    vm_access().write((void*)addr, &to_write, sizeof(to_write));
+    vm_access().write(target, &to_write, sizeof(to_write));
 
     FlushInstructionCache(GetCurrentProcess(), 0, 0);
 

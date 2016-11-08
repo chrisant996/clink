@@ -261,7 +261,7 @@ static int get_instruction_length(const void* addr)
 }
 
 //------------------------------------------------------------------------------
-static void* follow_jump(void* addr)
+void* follow_jump(void* addr)
 {
     unsigned char* t = (unsigned char*)addr;
 
