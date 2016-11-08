@@ -23,9 +23,7 @@ function get_last_git_commit()
     return "?"
 end
 
---------------------------------------------------------------------------------
--- Work around a bug in Premake5
-path.normalize = function(i) return i end
+
 
 --------------------------------------------------------------------------------
 clink_ver = _OPTIONS["clink_ver"] or "DEV"
