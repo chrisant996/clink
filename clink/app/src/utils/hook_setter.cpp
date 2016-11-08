@@ -59,10 +59,6 @@ static LONG WINAPI hook_trap_veh(EXCEPTION_POINTERS* info)
 //------------------------------------------------------------------------------
 bool set_hook_trap(void* module, const char* func_name, bool (*trap)())
 {
-    // If there's a debugger attached, we can't use VEH.
-    if (IsDebuggerPresent())
-        return trap();
-
     auto* addr = pe_info(module).get_export(func_name);
     if (addr == nullptr)
     {
