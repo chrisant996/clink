@@ -357,6 +357,17 @@ clink_exe("clink_test")
         pchsource("clink/test/src/pch.cpp")
 
 --------------------------------------------------------------------------------
+if _ACTION:sub(1,2) == "vs" then
+    project("_run")
+        kind("none")
+        files("premake5.lua")
+        files("docs/**")
+
+        debugcommand("cmd.exe")
+        debugargs("/k call bin\\$(configuration)\\clink.bat inject")
+end
+
+--------------------------------------------------------------------------------
 newoption {
    trigger     = "clink_ver",
    value       = "VER",
