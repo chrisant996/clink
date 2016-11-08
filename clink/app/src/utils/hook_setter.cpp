@@ -52,6 +52,7 @@ static LONG WINAPI hook_trap_veh(EXCEPTION_POINTERS* info)
         LOG("Hook trap %p failed.", g_hook_trap);
 
     RemoveVectoredExceptionHandler(g_hook_veh_handle);
+    FlushInstructionCache(GetCurrentProcess(), 0, 0);
     return EXCEPTION_CONTINUE_EXECUTION;
 }
 
@@ -79,6 +80,8 @@ bool set_hook_trap(void* module, const char* func_name, bool (*trap)())
     // Write a HALT instruction to force an exception.
     unsigned char to_write = 0xf4;
     vm_access().write((void*)addr, &to_write, sizeof(to_write));
+
+    FlushInstructionCache(GetCurrentProcess(), 0, 0);
 
     return true;
 }
