@@ -255,7 +255,7 @@ bool matches_impl::add_match(const match_desc& desc)
         (unsigned short)displayable_store_id,
         (unsigned short)aux_store_id,
         0,
-        max<char>(0, desc.suffix),
+        max<unsigned char>(0, desc.suffix),
     });
     ++m_count;
     return true;
