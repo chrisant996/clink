@@ -59,6 +59,10 @@ static int do_inject(DWORD target_pid)
     path::append(dll_path, CLINK_DLL);
 
     // Reset log file, start logging!
+#if 0
+    /* GetVersionEx() is deprecated and the VerifyVersioninfo() replacement
+     * is bonkers.
+     */
     SYSTEM_INFO sys_info;
     GetSystemInfo(&sys_info);
 
@@ -76,6 +80,7 @@ static int do_inject(DWORD target_pid)
         sys_info.dwProcessorType,
         sys_info.dwPageSize
     );
+#endif
     LOG("Version: %d.%d.%d",
         CLINK_VER_MAJOR,
         CLINK_VER_MINOR,

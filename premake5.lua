@@ -24,19 +24,6 @@ function get_last_git_commit()
 end
 
 --------------------------------------------------------------------------------
-function use_xp_toolset(base, cfg)
-    local p = "v110_xp"
-    if _ACTION > "vs2012" then
-        p = "v120_xp"
-    end
-
-    if _ACTION > "vs2010" then
-        _p(2,'<PlatformToolset>%s</PlatformToolset>', p)
-    end
-end
-premake.override(premake.vstudio.vc2010, 'platformToolset', use_xp_toolset)
-
---------------------------------------------------------------------------------
 -- Work around a bug in Premake5
 path.normalize = function(i) return i end
 
