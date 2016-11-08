@@ -264,15 +264,19 @@ static int get_instruction_length(const void* addr)
 static void* follow_jump(void* addr)
 {
     unsigned char* t = (unsigned char*)addr;
-    int* imm = (int*)(t + 2);
 
     // Check the opcode.
+    if ((t[0] & 0xf0) == 0x40) // REX prefix.
+        ++t;
+
     if (t[0] != 0xff)
         return addr;
 
     // Check the opcode extension from the modr/m byte.
     if ((t[1] & 070) != 040)
         return addr;
+
+    int* imm = (int*)(t + 2);
 
     void* dest = addr;
     switch (t[1] & 007)
