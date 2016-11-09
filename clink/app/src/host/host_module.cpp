@@ -62,8 +62,7 @@ static void ctrl_c(
     editor_module::result& result,
     const editor_module::context& context)
 {
-    //auto& buffer = context.buffer;
-    context.buffer.remove(0, ~0u);
+    context.buffer.reset();
     context.printer.print("\n^C\n", 4);
     result.redraw();
 }
