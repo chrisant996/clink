@@ -14,7 +14,7 @@ struct match_info
     unsigned short  displayable_store_id;
     unsigned short  aux_store_id;
     unsigned char   cell_count;
-    unsigned char   suffix : 7;
+    unsigned char   suffix : 7; // TODO: suffix can be in store instead of info.
     unsigned char   select : 1;
 };
 

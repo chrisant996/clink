@@ -389,6 +389,7 @@ void line_editor_impl::accept_match(unsigned int index)
     word.concat(buf_ptr + word_start, end_word.length);
     word << match;
 
+    // TODO: This has not place here and should be done somewhere else.
     // Clean the word if it is a valid file system path.
     if (os::get_path_type(word.c_str()) != os::path_type_invalid)
         path::clean(word);

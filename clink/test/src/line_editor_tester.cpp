@@ -47,7 +47,7 @@ const matches* test_module::get_matches() const
 void test_module::bind_input(binder& binder)
 {
     int default_group = binder.get_group();
-    binder.bind(default_group, "\b", 0);
+    binder.bind(default_group, "\b", 0); // TODO use macro instead of magic value
 }
 
 //------------------------------------------------------------------------------

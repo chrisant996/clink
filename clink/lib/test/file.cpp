@@ -36,7 +36,7 @@ TEST_CASE("File match generator") {
     SECTION("Dir slash flip") {
         tester.set_input("dir1/\b");
         tester.set_expected_matches("only", "file1", "file2");
-        //tester.set_expected_output("dir1\\"); // TODO
+        //tester.set_expected_output("dir1\\"); // TODO: fails because flip happens on match accept
         tester.run();
     }
 
