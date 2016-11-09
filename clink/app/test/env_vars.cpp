@@ -2,64 +2,86 @@
 // License: http://opensource.org/licenses/MIT
 
 #include "pch.h"
+#include "env_fixture.h"
+#include "fs_fixture.h"
+#include "line_editor_tester.h"
 
-#if TODO
+#include <core/str_compare.h>
+#include <lua/lua_match_generator.h>
+#include <lua/lua_script_loader.h>
+#include <lua/lua_state.h>
 
---------------------------------------------------------------------------------
-function clink.get_env_var_names()
-    return {
-        "simple",
-        "case_map",
-        "dash-1",
-        "dash_2",
+//------------------------------------------------------------------------------
+TEST_CASE("Env. vars") {
+    static const char* env_desc[] = {
+        "simple",   "0",
+        "case_map", "0",
+        "dash-1",   "0",
+        "dash_2",   "0",
+        nullptr
+    };
+
+    env_fixture env(env_desc);
+    fs_fixture fs;
+
+    lua_state lua;
+    lua_match_generator lua_generator(lua);
+    lua_load_script(lua, app, env);
+
+    line_editor::desc desc;
+    desc.word_delims = " =";
+    line_editor_tester tester(desc);
+    tester.get_editor()->add_generator(lua_generator);
+
+    SECTION("Basic") {
+        tester.set_input("nullcmd %simp");
+        tester.set_expected_matches("simple");
+        tester.run();
     }
-end
 
-clink.test.test_output(
-    "Output basic",
-    "nullcmd %simp",
-    "nullcmd %simple%"
-)
+    SECTION("Second %var%") {
+        tester.set_input("nullcmd %simple% %sim\b");
+        tester.set_expected_output("nullcmd %simple% %simple%");
+        tester.run();
+    }
 
-clink.test.test_output(
-    "Second %var%",
-    "nullcmd %simple% %sim",
-    "nullcmd %simple% %simple%"
-)
+    SECTION("Case mapped 1") {
+        str_compare_scope _(str_compare_scope::relaxed);
 
-clink.test.test_output(
-    "Output case map",
-    "nullcmd %case_m",
-    "nullcmd %case_map%"
-)
+        tester.set_input("nullcmd %case_m");
+        tester.set_expected_matches("case_map");
+        tester.run();
+    }
 
-clink.test.test_matches(
-    "Case mapped matches",
-    "nullcmd %dash-",
-    { "%dash-1%", "%dash_2%" }
-)
+    SECTION("Case mapped 2") {
+        str_compare_scope _(str_compare_scope::relaxed);
 
-clink.test.test_matches(
-    "Mid-word",
-    "nullcmd One%Two%Three%dash",
-    { "%dash-1%", "%dash_2%" }
-)
+        tester.set_input("nullcmd %dash-");
+        tester.set_expected_matches("dash-1", "dash_2");
+        tester.run();
+    }
 
-clink.test.test_output(
-    "Not in quotes",
-    "nullcmd \"arg\" %simp",
-    "nullcmd \"arg\" %simple%"
-)
+    SECTION("Mid-word 1") {
+        tester.set_input("nullcmd One%Two%Three%dash");
+        tester.set_expected_matches("dash-1", "dash_2");
+        tester.run();
+    }
 
-clink.test.test_matches(
-    "In quotes",
-    "nullcmd \"arg %dash",
-    { "%dash-1%", "%dash_2%" }
-)
+    SECTION("Mid-word 2") {
+        tester.set_input("nullcmd One%Two%");
+        tester.set_expected_matches();
+        tester.run();
+    }
 
-clink.test.test_matches(
-    "File matches follow %var%<TAB>",
-    "nullcmd %null_env_var%"
-)
+    SECTION("Not in quotes") {
+        tester.set_input("nullcmd \"arg\" %simp\b");
+        tester.set_expected_output("nullcmd \"arg\" %simple%");
+        tester.run();
+    }
 
-#endif // TODO
+    SECTION("In quotes") {
+        tester.set_input("nullcmd \"arg %sim\b");
+        tester.set_expected_output("nullcmd \"arg %simple%");
+        tester.run();
+    }
+}

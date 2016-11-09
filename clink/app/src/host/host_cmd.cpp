@@ -179,7 +179,7 @@ void host_cmd::initialise_lua(lua_state& lua)
 {
     lua_load_script(lua, app, cmd);
     lua_load_script(lua, app, dir);
-    // lua_load_script(lua, app, env); TODO : not possible!
+    lua_load_script(lua, app, env);
     lua_load_script(lua, app, exec);
     lua_load_script(lua, app, self);
     lua_load_script(lua, app, set);
