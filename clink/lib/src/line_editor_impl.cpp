@@ -412,7 +412,8 @@ void line_editor_impl::accept_match(unsigned int index)
     m_buffer.insert(word.c_str());
 
     // Use a suffix if one's associated with the match, otherwise derive it.
-    char suffix = m_matches.get_suffix(index);
+    char match_suffix = m_matches.get_suffix(index);
+    char suffix = match_suffix;
     if (!suffix)
     {
         int prefix_length = 0;
@@ -430,8 +431,9 @@ void line_editor_impl::accept_match(unsigned int index)
     // If this match doesn't make a new partial word, close it off
     if (suffix)
     {
-        // Add a closing quote on the end if required.
-        if (needs_quote)
+        // Add a closing quote on the end if required and only if the suffix
+        // did not come from the match.
+        if (needs_quote && !match_suffix)
         {
             const char* q = m_desc.quote_pair;
             char quote[2] = { q[1] ? q[1] : q[0] };
