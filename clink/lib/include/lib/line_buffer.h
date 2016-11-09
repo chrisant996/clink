@@ -8,6 +8,7 @@ class line_buffer
 {
 public:
     virtual                 ~line_buffer() = default;
+    virtual void            reset() = 0;
     virtual void            begin_line() = 0;
     virtual void            end_line() = 0;
     virtual const char*     get_buffer() const = 0;

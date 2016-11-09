@@ -7,7 +7,15 @@
 #include <core/base.h>
 
 extern "C" {
+#include <readline/history.h>
 #include <readline/readline.h>
+}
+
+//------------------------------------------------------------------------------
+void rl_buffer::reset()
+{
+    using_history();
+    remove(0, ~0u);
 }
 
 //------------------------------------------------------------------------------

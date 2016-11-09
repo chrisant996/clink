@@ -10,6 +10,7 @@ class rl_buffer
     : public line_buffer
 {
 public:
+    virtual void            reset() override;
     virtual void            begin_line() override;
     virtual void            end_line() override;
     virtual const char*     get_buffer() const override;
