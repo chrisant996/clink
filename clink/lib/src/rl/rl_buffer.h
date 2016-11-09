@@ -5,8 +5,6 @@
 
 #include "line_buffer.h"
 
-#include <core/singleton.h>
-
 //------------------------------------------------------------------------------
 class rl_buffer
     : public line_buffer
