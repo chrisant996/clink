@@ -61,6 +61,8 @@ void test_module::on_input(const input&, result& result, const context& context)
 {
     if (context.matches.get_match_count() == 1)
         result.accept_match(0);
+    else
+        result.append_match_lcd();
 }
 
 
