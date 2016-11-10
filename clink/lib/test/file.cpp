@@ -49,9 +49,9 @@ TEST_CASE("File match generator") {
     SECTION("Case mapping matches") {
         str_compare_scope _(str_compare_scope::relaxed);
 
-        tester.set_input("case-m");
+        tester.set_input("case-m\b");
         tester.set_expected_matches("case_map-1", "case_map_2");
-        //tester.set_expected_output("case_map"); // TODO
+        tester.set_expected_output("case_map");
         tester.run();
     }
 }
