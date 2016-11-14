@@ -42,8 +42,8 @@ static setting_str g_key_copy_cwd(
 
 static setting_str g_key_up_dir(
     "keybind.up_dir",
-    "Goes up a directory",
-    "\\eO5");
+    "Goes up a directory (default = Ctrl-PgUp)",
+    "\\e[5;5~");
 
 static setting_str g_key_dotdot(
     "keybind.dotdot",
