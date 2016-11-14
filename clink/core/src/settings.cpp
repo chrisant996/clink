@@ -108,6 +108,10 @@ bool save(const char* file)
     // Iterate over each setting and write it out to the file.
     for (const setting* iter = settings::first(); iter != nullptr; iter = iter->next())
     {
+        // Don't write out settings that aren't modified from their defaults.
+        if (iter->is_default())
+            continue;
+
         fprintf(out, "# name: %s\n", iter->get_short_desc());
 
         // Write out the setting's type.

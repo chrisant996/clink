@@ -36,6 +36,7 @@ public:
     const char*     get_name() const;
     const char*     get_short_desc() const;
     const char*     get_long_desc() const;
+    virtual bool    is_default() const = 0;
     virtual bool    set(const char* value) = 0;
     virtual void    get(str_base& out) const = 0;
 
@@ -51,7 +52,8 @@ protected:
     template <typename T>
     struct store
     {
-                    operator T () const { return value; }
+        explicit    operator T () const                  { return value; }
+        bool        operator == (const store& rhs) const { return value == rhs.value; }
         T           value;
     };
 };
@@ -59,7 +61,8 @@ protected:
 //------------------------------------------------------------------------------
 template <> struct setting::store<const char*>
 {
-                    operator const char* () const { return value.c_str(); }
+    explicit        operator const char* () const        { return value.c_str(); }
+    bool            operator == (const store& rhs) const { return value.equals(rhs.value.c_str()); }
     str<64>         value;
 };
 
@@ -72,12 +75,14 @@ public:
                     setting_impl(const char* name, const char* short_desc, T default_value);
                     setting_impl(const char* name, const char* short_desc, const char* long_desc, T default_value);
     T               get() const;
+    virtual bool    is_default() const override;
     virtual bool    set(const char* value) override;
     virtual void    get(str_base& out) const override;
 
 protected:
     struct          type;
     store<T>        m_store;
+    store<T>        m_default;
 };
 
 //------------------------------------------------------------------------------
@@ -97,13 +102,20 @@ template <typename T> setting_impl<T>::setting_impl(
     T default_value)
 : setting(name, short_desc, long_desc, type_e(type::id))
 {
+    m_default.value = default_value;
     m_store.value = default_value;
+}
+
+//------------------------------------------------------------------------------
+template <typename T> bool setting_impl<T>::is_default() const
+{
+    return m_store == m_default;
 }
 
 //------------------------------------------------------------------------------
 template <typename T> T setting_impl<T>::get() const
 {
-    return m_store;
+    return T(m_store);
 }
 
 
