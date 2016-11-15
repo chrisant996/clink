@@ -22,12 +22,12 @@ static setting_int g_max_lines(
     "for infinite lines and <0 to disable history persistence.",
     30000);
 
-static setting_int g_ignore_space(
+static setting_bool g_ignore_space(
     "history.ignore_space",
     "Skip adding lines prefixed with whitespace",
     "Ignore lines that begin with whitespace when adding lines in to\n"
     "the history.",
-    0);
+    true);
 
 static setting_enum g_dupe_mode(
     "history.dupe_mode",
