@@ -24,6 +24,15 @@ setting_bool g_glob_system(
     "file lists.",
     false);
 
+// TODO: dream up a way around performance problems that UNC paths pose.
+setting_bool g_glob_unc(
+    "files.unc_paths",
+    "Enables UNC/network path matches",
+    "UNC (network) paths can cause Clink to stutter slightly when it tries to\n"
+    "generate matches. Enable this if matching UNC paths is required.",
+    false);
+
+
 
 //------------------------------------------------------------------------------
 static class : public match_generator
@@ -32,6 +41,11 @@ static class : public match_generator
     {
         str<288> buffer;
         line.get_end_word(buffer);
+
+        if (path::is_separator(buffer[0]) && path::is_separator(buffer[1]))
+            if (!g_glob_unc.get())
+                return true;
+
         buffer << "*";
 
         globber globber(buffer.c_str());

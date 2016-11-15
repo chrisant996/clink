@@ -15,6 +15,7 @@
 //------------------------------------------------------------------------------
 extern setting_bool g_glob_hidden;
 extern setting_bool g_glob_system;
+extern setting_bool g_glob_unc;
 
 
 
@@ -148,6 +149,10 @@ static int glob_impl(lua_State* state, bool dirs_only)
         return 0;
 
     lua_createtable(state, 0, 0);
+
+    if (path::is_separator(mask[0]) && path::is_separator(mask[1]))
+        if (!g_glob_unc.get())
+            return 1;
 
     globber globber(mask);
     globber.files(!dirs_only);
