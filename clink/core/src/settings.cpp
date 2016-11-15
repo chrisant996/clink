@@ -58,6 +58,10 @@ bool load(const char* file)
     fclose(in);
     data[size] = '\0';
 
+    // Reset settings to default.
+    for (auto* iter = settings::first(); iter != nullptr; iter = iter->next())
+        iter->set();
+
     // Split at new lines.
     str<256> line;
     str_tokeniser lines(buffer.c_str(), "\n\r");
