@@ -181,16 +181,19 @@ TEST_CASE("ecma48 c1 csi invalid") {
 
 //------------------------------------------------------------------------------
 TEST_CASE("ecma48 c1 csi stream") {
-    const ecma48_code* code;
     const char input[] = "\x1b[1;21m";
 
+    ecma48_iter iter_1(input, g_state, 0);
     for (int i = 0; i < sizeof_array(input) - 1; ++i)
     {
-        ecma48_iter iter(input, g_state, i);
-        REQUIRE(iter.next() == nullptr);
+        const ecma48_code* code;
 
-        new (&iter) ecma48_iter(input + i, g_state, sizeof_array(input) - i);
-        REQUIRE((code = iter.next()) != nullptr);
+        memset(&iter_1, 0xab, sizeof(iter_1));
+        new (&iter_1) ecma48_iter(input, g_state, i);
+        REQUIRE(iter_1.next() == nullptr);
+
+        ecma48_iter iter_2(input + i, g_state, sizeof_array(input) - i);
+        REQUIRE((code = iter_2.next()) != nullptr);
         REQUIRE(code->get_type() == ecma48_code::type_c1);
         REQUIRE(code->get_length() == 7);
 

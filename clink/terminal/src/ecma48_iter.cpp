@@ -138,6 +138,7 @@ bool ecma48_code::get_c1_str(str_base& out) const
 //------------------------------------------------------------------------------
 ecma48_iter::ecma48_iter(const char* s, ecma48_state& state, int len)
 : m_iter(s, len)
+, m_code(state.code)
 , m_state(state)
 {
 }

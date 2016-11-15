@@ -48,7 +48,10 @@ public:
 
 private:
     friend class        ecma48_iter;
-                        ecma48_code() {}
+    friend class        ecma48_state;
+                        ecma48_code() = default;
+                        ecma48_code(ecma48_code&) = delete;
+    void                operator = (ecma48_code&) = delete;
     const char*         m_str;
     unsigned short      m_length;
     type                m_type;
@@ -58,13 +61,15 @@ private:
 
 
 //------------------------------------------------------------------------------
-struct ecma48_state
+class ecma48_state
 {
+public:
                         ecma48_state()  { reset(); }
     void                reset()         { state = count = 0; }
 
 private:
     friend class        ecma48_iter;
+    ecma48_code         code;
     int                 state;
     int                 count;
     char                buffer[64];
@@ -90,6 +95,6 @@ private:
     bool                next_esc_st(int c);
     bool                next_unknown(int c);
     str_iter            m_iter;
-    ecma48_code         m_code;
+    ecma48_code&        m_code;
     ecma48_state&       m_state;
 };
