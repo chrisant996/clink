@@ -37,6 +37,7 @@ public:
     const char*     get_short_desc() const;
     const char*     get_long_desc() const;
     virtual bool    is_default() const = 0;
+    virtual void    set() = 0;
     virtual bool    set(const char* value) = 0;
     virtual void    get(str_base& out) const = 0;
 
@@ -76,6 +77,7 @@ public:
                     setting_impl(const char* name, const char* short_desc, const char* long_desc, T default_value);
     T               get() const;
     virtual bool    is_default() const override;
+    virtual void    set() override;
     virtual bool    set(const char* value) override;
     virtual void    get(str_base& out) const override;
 
@@ -104,6 +106,12 @@ template <typename T> setting_impl<T>::setting_impl(
 {
     m_default.value = default_value;
     m_store.value = default_value;
+}
+
+//------------------------------------------------------------------------------
+template <typename T> void setting_impl<T>::set()
+{
+    m_store.value = T(m_default);
 }
 
 //------------------------------------------------------------------------------
