@@ -16,7 +16,7 @@ extern "C" {
 //------------------------------------------------------------------------------
 static setting_bool g_debug(
     "lua.debug",
-    "Enables Lua debugging.",
+    "Enables Lua debugging",
     "Loads an simple embedded command line debugger when enabled. Breakpoints\n"
     "can added by calling pause().",
     false);

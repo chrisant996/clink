@@ -41,7 +41,7 @@ static setting_enum g_ignore_case(
 
 static setting_bool g_add_history_cmd(
     "history.add_history_cmd",
-    "Add 'history' commands.",
+    "Add 'history' commands",
     "Toggles the adding of 'history' commands to the history.",
     true);
 
