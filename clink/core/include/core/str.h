@@ -64,11 +64,14 @@ protected:
     void            set_growable(bool state=true);
 
 private:
+    typedef unsigned short ushort;
+
     void            free_data();
     TYPE*           m_data;
-    unsigned int    m_size : 30;
-    unsigned int    m_growable : 1;
-    unsigned int    m_owns_ptr : 1;
+    ushort          m_size : 15;
+    ushort          m_growable : 1;
+    mutable ushort  m_length : 15;
+    ushort          m_owns_ptr : 1;
 };
 
 //------------------------------------------------------------------------------
@@ -78,6 +81,7 @@ str_impl<TYPE>::str_impl(TYPE* data, unsigned int size)
 , m_size(size)
 , m_growable(0)
 , m_owns_ptr(0)
+, m_length(0)
 {
 }
 
@@ -141,13 +145,14 @@ template <typename TYPE>
 void str_impl<TYPE>::free_data()
 {
     if (m_owns_ptr)
-        free(data());
+        free(m_data);
 }
 
 //------------------------------------------------------------------------------
 template <typename TYPE>
 TYPE* str_impl<TYPE>::data()
 {
+    m_length = 0;
     return m_data;
 }
 
@@ -176,7 +181,10 @@ bool str_impl<TYPE>::is_growable() const
 template <typename TYPE>
 unsigned int str_impl<TYPE>::length() const
 {
-    return str_len(c_str());
+    if (!m_length & !empty())
+        m_length = str_len(c_str());
+
+    return m_length;
 }
 
 //------------------------------------------------------------------------------
@@ -190,7 +198,8 @@ unsigned int str_impl<TYPE>::char_count() const
 template <typename TYPE>
 void str_impl<TYPE>::clear()
 {
-    data()[0] = '\0';
+    m_data[0] = '\0';
+    m_length = 0;
 }
 
 //------------------------------------------------------------------------------
@@ -204,8 +213,11 @@ bool str_impl<TYPE>::empty() const
 template <typename TYPE>
 void str_impl<TYPE>::truncate(unsigned int pos)
 {
-    if (pos < length())
-        data()[pos] = '\0';
+    if (pos >= m_size)
+        return;
+
+    m_data[pos] = '\0';
+    m_length = pos;
 }
 
 //------------------------------------------------------------------------------
@@ -266,7 +278,10 @@ bool str_impl<TYPE>::concat(const TYPE* src, int n)
         remaining = n;
 
     if (remaining > 0)
-        str_ncat(data() + len, src, remaining);
+    {
+        str_ncat(m_data + len, src, remaining);
+        m_length += remaining;
+    }
 
     return !truncated;
 }
@@ -277,9 +292,12 @@ bool str_impl<TYPE>::format(const TYPE* format, ...)
 {
     va_list args;
     va_start(args, format);
-    unsigned int ret = vsnprint(data(), m_size, format, args);
-    data()[m_size - 1] = '\0';
+    unsigned int ret = vsnprint(m_data, m_size, format, args);
     va_end(args);
+
+    m_data[m_size - 1] = '\0';
+    m_length = 0;
+
     return (ret <= m_size);
 }
 
