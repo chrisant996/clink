@@ -110,7 +110,7 @@ bool save(const char* file)
         return false;
 
     // Iterate over each setting and write it out to the file.
-    for (const setting* iter = settings::first(); iter != nullptr; iter = iter->next())
+    for (const auto* iter = settings::first(); iter != nullptr; iter = iter->next())
     {
         // Don't write out settings that aren't modified from their defaults.
         if (iter->is_default())
