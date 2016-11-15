@@ -17,7 +17,7 @@ globber::globber(const char* pattern)
 {
     // Windows: Expand if the path to complete is drive relative (e.g. 'c:foobar')
     // Drive X's current path is stored in the environment variable "=X:"
-    str<MAX_PATH> rooted;
+    str<288> rooted;
     if (pattern[0] && pattern[1] == ':' && pattern[2] != '\\' && pattern[2] != '/')
     {
         char env_var[4] = { '=', pattern[0], ':', 0 };
