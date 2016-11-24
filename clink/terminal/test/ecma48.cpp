@@ -6,6 +6,8 @@
 #include <core/base.h>
 #include <terminal/ecma48_iter.h>
 
+#include <new>
+
 static ecma48_state g_state;
 
 //------------------------------------------------------------------------------

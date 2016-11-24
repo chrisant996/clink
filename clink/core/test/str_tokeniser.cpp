@@ -6,6 +6,8 @@
 #include <core/str.h>
 #include <core/str_tokeniser.h>
 
+#include <initializer_list>
+
 //------------------------------------------------------------------------------
 TEST_CASE("str_tokeniser : basic")
 {

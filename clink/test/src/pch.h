@@ -3,5 +3,6 @@
 
 #pragma once
 
-#include <catch.hpp>
+#include "clatch.h"
+
 #include <Windows.h>

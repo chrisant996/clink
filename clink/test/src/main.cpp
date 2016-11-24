@@ -6,6 +6,7 @@
 //------------------------------------------------------------------------------
 int main(int argc, char** argv)
 {
-    extern int run_catch(int, char**);
-    return run_catch(argc, argv);
+    const char* prefix = (argc > 1) ? argv[1] : "";
+    clatch::run(prefix);
+    return 0;
 }

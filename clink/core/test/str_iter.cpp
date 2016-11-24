@@ -5,8 +5,10 @@
 
 #include <core/str_iter.h>
 
+#include <new>
+
 //------------------------------------------------------------------------------
-TEST_CASE("String iterator (str_iter)", "[str_iter]") {
+TEST_CASE("String iterator (str_iter)") {
     SECTION("Basic") {
         str_iter iter("123");
         REQUIRE(iter.next() == '1');
@@ -41,7 +43,7 @@ TEST_CASE("String iterator (str_iter)", "[str_iter]") {
 }
 
 //------------------------------------------------------------------------------
-TEST_CASE("String iterator (wstr_iter)", "[wstr_iter]") {
+TEST_CASE("String iterator (wstr_iter)") {
     SECTION("Basic") {
         wstr_iter iter(L"123");
         REQUIRE(iter.next() == '1');
