@@ -138,4 +138,7 @@ inline void fail(const char* expr, const char* file, int line, section* failed_s
     if (clatch::section::scope CLATCH_IDENT(scope) = clatch::section::scope(_clatch_tree_iter, CLATCH_IDENT(section)))
 
 #define REQUIRE(expr)\
-    if (!(expr)) clatch::fail(#expr, __FILE__, __LINE__, clatch::section::get_outer_store());
+    do {\
+        if (!(expr))\
+            clatch::fail(#expr, __FILE__, __LINE__, clatch::section::get_outer_store());\
+    } while(0)
