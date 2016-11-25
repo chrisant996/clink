@@ -108,15 +108,19 @@ static bool set_value(const char* key, const char* value)
         return false;
     }
 
-    if (!setting->set(value))
+    if (value == nullptr)
     {
-        printf("ERROR: Failed to set value for '%s'.\n", key);
+        setting->set();
+    }
+    else if (!setting->set(value))
+    {
+        printf("ERROR: Failed to set value '%s'.\n", key);
         return false;
     }
 
     str<> result;
     setting->get(result);
-    printf("Settings '%s' set to '%s'\n", key, result.c_str());
+    printf("Setting '%s' %sset to '%s'\n", key, value ? "" : "re", result.c_str());
     return true;
 }
 
@@ -131,12 +135,13 @@ static void print_help()
     };
 
     puts(g_clink_header);
-    puts("Usage: set [setting_name] [value]\n");
+    puts("Usage: set [<setting_name> [clear|<value>]]\n");
 
     puts_help(help, sizeof_array(help));
 
     puts("If 'settings_name' is omitted then all settings are list. Omit 'value' for\n"
-        "more detailed info about a setting.\n");
+        "more detailed info about a setting and use a value of 'clear' to set reset\n"
+        "the setting to its default value.\n");
 }
 
 //------------------------------------------------------------------------------
@@ -181,22 +186,25 @@ int set(int argc, char** argv)
         return 0;
     }
 
+    bool clear = false;
     switch (argc - optind)
     {
     case 0:
         return (print_keys() != true);
 
     case 1:
-        return (print_value(argv[1]) != true);
+        if (!clear)
+            return (print_value(argv[1]) != true);
+        return print_help(), 0;
 
     default:
-        if (set_value(argv[1], argv[2]))
+        if (_stricmp(argv[2], "clear") == 0)
         {
-            str<280> settings_file;
-            app_context::get()->get_settings_path(settings_file);
-            settings::save(settings_file.c_str());
-            return 0;
+            if (set_value(argv[1], nullptr))
+                return settings::save(settings_file.c_str()), 0;
         }
+        else if (set_value(argv[1], argv[2]))
+            return settings::save(settings_file.c_str()), 0;
     }
 
     return 1;
