@@ -41,6 +41,12 @@ static setting_bool g_vertical(
     "Toggles the display of ordered matches between columns or rows.",
     true);
 
+static setting_int g_column_pad(
+    "match.column_pad",
+    "Space between columns",
+    "Adjusts the amount of whitespace padding between columns of matches.",
+    2);
+
 setting_int g_max_width(
     "match.max_width",
     "Maximum display width",
@@ -204,11 +210,14 @@ tab_completer::state tab_completer::print(const context& context, bool single_ro
 
     int match_count = matches.get_match_count();
 
-    int columns = max(1, g_max_width.get() / m_longest);
+    // Calculate the number of columns of matches per row.
+    int column_pad = g_column_pad.get();
+    int cell_columns = min<int>(g_max_width.get(), printer.get_columns());
+    int columns = max(1, (cell_columns + column_pad) / (m_longest + column_pad));
     int total_rows = (match_count + columns - 1) / columns;
 
     bool vertical = g_vertical.get();
-    int dx = vertical ? total_rows : 1;
+    int index_step = vertical ? total_rows : 1;
 
     int max_rows = single_row ? 1 : (total_rows - m_row - 1);
     max_rows = min<int>(printer.get_rows() - 2 - (m_row != 0), max_rows);
@@ -231,7 +240,7 @@ tab_completer::state tab_completer::print(const context& context, bool single_ro
                 i -= sizeof_array(spaces) - 1;
             }
 
-            index += dx;
+            index += index_step;
         }
 
         printer.print("\n");
