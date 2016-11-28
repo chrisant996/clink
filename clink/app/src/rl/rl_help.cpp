@@ -161,7 +161,7 @@ void show_rl_help(printer& printer)
     }
 
     // Display the matches.
-    printer.print("\n", 1);
+    printer.print("\n");
 
     int max_width = min<int>(printer.get_columns() - 3, g_max_width.get());
     int columns = max(1, max_width / (longest + 1));
@@ -180,7 +180,7 @@ void show_rl_help(printer& printer)
             continue;
 
         j = columns;
-        printer.print("\n", 1);
+        printer.print("\n");
     }
 
     // Tidy up (N.B. the first match is a placeholder and shouldn't be freed).

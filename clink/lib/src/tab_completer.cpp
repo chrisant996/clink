@@ -145,7 +145,7 @@ void tab_completer::on_input(const input& input, result& result, const context& 
 
         result.set_bind_group(m_prev_group);
         m_prev_group = -1;
-        context.printer.print("\n", 1);
+        context.printer.print("\n");
         result.redraw();
         return;
     }
@@ -179,7 +179,7 @@ tab_completer::state tab_completer::begin_print(const context& context)
     if (!m_longest)
         return state_none;
 
-    context.printer.print("\n", 1);
+    context.printer.print("\n");
 
     int query_threshold = g_query_threshold.get();
     if (query_threshold > 0 && query_threshold <= match_count)
@@ -200,7 +200,7 @@ tab_completer::state tab_completer::print(const context& context, bool single_ro
     auto& printer = context.printer;
     const matches& matches = context.matches;
 
-    printer.print("\r", 1);
+    printer.print("\r");
 
     int match_count = matches.get_match_count();
 
@@ -234,14 +234,13 @@ tab_completer::state tab_completer::print(const context& context, bool single_ro
             index += dx;
         }
 
-        printer.print("\n", 1);
+        printer.print("\n");
     }
 
     if (m_row == total_rows)
         return state_none;
 
-    static const char prompt[] = { "--More--" };
-    printer.print(prompt, sizeof_array(prompt) - 1);
+    printer.print("-- More --");
     return state_pager;
 }
 

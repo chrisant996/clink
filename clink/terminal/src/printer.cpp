@@ -12,10 +12,9 @@ printer::printer(terminal_out& terminal)
 }
 
 //------------------------------------------------------------------------------
-unsigned int printer::print(const char* data, int bytes)
+void printer::print(const char* data, int bytes)
 {
     m_terminal.write(data, bytes);
-    return 0;
 }
 
 //------------------------------------------------------------------------------
