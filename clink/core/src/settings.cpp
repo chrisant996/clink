@@ -135,16 +135,8 @@ bool save(const char* file)
         // Output an enum-type setting's options.
         if (type == setting::type_enum)
         {
-            fprintf(out, "# options:");
-
             const setting_enum* as_enum = (setting_enum*)iter;
-            for (const char* option = as_enum->get_options(); *option; )
-            {
-                fprintf(out, " %s", option);
-                while (*option++);
-            }
-
-            fprintf(out, "\n");
+            fprintf(out, "# options: %s\n", as_enum->get_options());
         }
 
         str<> value;
