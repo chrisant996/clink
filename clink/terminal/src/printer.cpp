@@ -14,6 +14,9 @@ printer::printer(terminal_out& terminal)
 //------------------------------------------------------------------------------
 void printer::print(const char* data, int bytes)
 {
+    if (bytes <= 0)
+        return;
+
     m_terminal.write(data, bytes);
 }
 
