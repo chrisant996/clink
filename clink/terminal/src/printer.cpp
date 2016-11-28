@@ -28,6 +28,14 @@ void printer::print(const char* data, int bytes)
 }
 
 //------------------------------------------------------------------------------
+void printer::print(const attributes attr, const char* data, int bytes)
+{
+    attributes prev_attr = set_attributes(attr);
+    print(data, bytes);
+    set_attributes(prev_attr);
+}
+
+//------------------------------------------------------------------------------
 unsigned int printer::get_columns() const
 {
     return m_terminal.get_columns();
