@@ -3,6 +3,8 @@
 
 #pragma once
 
+#include "attributes.h"
+
 class terminal_out;
 
 //------------------------------------------------------------------------------
@@ -14,9 +16,14 @@ public:
     template <int S> void   print(const char (&data)[S]);
     unsigned int            get_columns() const;
     unsigned int            get_rows() const;
+    attributes              set_attributes(const attributes attr);
+    attributes              get_attributes() const;
 
 private:
+    void                    flush_attributes();
     terminal_out&           m_terminal;
+    attributes              m_set_attr;
+    attributes              m_next_attr;
 };
 
 //------------------------------------------------------------------------------
