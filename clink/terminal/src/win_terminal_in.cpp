@@ -150,7 +150,10 @@ void win_terminal_in::read_console()
     {
         DWORD count;
         INPUT_RECORD record;
-        ReadConsoleInputW(m_stdin, &record, 1, &count);
+        if (!ReadConsoleInputW(m_stdin, &record, 1, &count))
+        {
+            /* TODO: killing conhost.exe causes cmd.exe to spin up */
+        }
 
         switch (record.EventType)
         {
