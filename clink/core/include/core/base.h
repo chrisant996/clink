@@ -19,6 +19,12 @@
 #   define THREAD_LOCAL     __thread
 #endif
 
+#if defined(_MSC_VER) && _MSC_VER < 1900
+#   define align_to(x)       __declspec(align(x))
+#else
+#   define align_to(x)      alignas(x)
+#endif
+
 #if defined(_M_AMD64) || defined(__x86_64__)
 #   define ARCHITECTURE     x64
 #elif defined(_M_IX86) || defined(__i386)
