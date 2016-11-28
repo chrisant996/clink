@@ -224,7 +224,7 @@ tab_completer::state tab_completer::print(const context& context, bool single_ro
     for (; max_rows >= 0; --max_rows, ++m_row)
     {
         int index = vertical ? m_row : (m_row * columns);
-        for (int x = 0; x < columns; ++x)
+        for (int x = columns - 1; x >= 0; --x)
         {
             if (index >= match_count)
                 continue;
@@ -232,12 +232,16 @@ tab_completer::state tab_completer::print(const context& context, bool single_ro
             const char* match = matches.get_displayable(index);
             printer.print(match, int(strlen(match)));
 
-            int visible_chars = matches.get_cell_count(index);
-            for (int i = m_longest - visible_chars + 1; i >= 0;)
+            // Move the cursor to the next column
+            if (x)
             {
-                const char spaces[] = "                ";
-                printer.print(spaces, min<int>(sizeof_array(spaces) - 1, i));
-                i -= sizeof_array(spaces) - 1;
+                int visible_chars = matches.get_cell_count(index);
+                for (int i = m_longest - visible_chars + column_pad; i >= 0;)
+                {
+                    const char spaces[] = "                ";
+                    printer.print(spaces, min<int>(sizeof_array(spaces) - 1, i));
+                    i -= sizeof_array(spaces) - 1;
+                }
             }
 
             index += index_step;
