@@ -41,6 +41,7 @@ struct section
     section*            m_parent = nullptr;
     section*            m_child = nullptr;
     section*            m_sibling = nullptr;
+    unsigned int        m_assert_count = 0;
     bool                m_active = false;
 
     struct scope
@@ -78,6 +79,10 @@ struct test
 //------------------------------------------------------------------------------
 inline void run(const char* prefix="")
 {
+    int fail_count = 0;
+    int test_count = 0;
+    int assert_count = 0;
+
     for (test* test = test::get_head(); test != nullptr; test = test->m_next)
     {
         // Cheap lower-case prefix test.
@@ -86,13 +91,14 @@ inline void run(const char* prefix="")
         if (*a)
             continue;
 
+        ++test_count;
         printf("......... %s", test->m_name);
+
+        section root(test->m_name);
 
         try
         {
-            section root(test->m_name);
             section* tree_iter = &root;
-
             do
             {
                 section::scope x = section::scope(tree_iter, root);
@@ -110,11 +116,16 @@ inline void run(const char* prefix="")
         }
         catch (...)
         {
+            ++fail_count;
+            assert_count += root.m_assert_count;
             continue;
         }
 
+        assert_count += root.m_assert_count;
         puts("\rok ");
     }
+
+    printf("\n tests:%d  failed:%d  asserts:%d\n", test_count, fail_count, assert_count);
 }
 
 //------------------------------------------------------------------------------
@@ -158,8 +169,13 @@ void fail(const char* expr, const char* file, int line, CALLBACK&& cb)
     static clatch::section CLATCH_IDENT(section)(name);\
     if (clatch::section::scope CLATCH_IDENT(scope) = clatch::section::scope(_clatch_tree_iter, CLATCH_IDENT(section)))
 
+
 #define REQUIRE(expr, ...)\
     do {\
+        auto* _clatch_s = clatch::section::get_outer_store();\
+        for (; _clatch_s->m_parent != nullptr; _clatch_s = _clatch_s->m_parent);\
+        ++_clatch_s->m_assert_count;\
+        \
         if (!(expr))\
             clatch::fail(#expr, __FILE__, __LINE__, __VA_ARGS__);\
     } while (0)
