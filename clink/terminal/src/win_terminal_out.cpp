@@ -145,9 +145,3 @@ void win_terminal_out::set_attributes(const attributes attr)
     out_attr |= csbi.wAttributes & ~attr_mask_all;
     SetConsoleTextAttribute(m_stdout, short(out_attr));
 }
-
-//------------------------------------------------------------------------------
-void* win_terminal_out::get_handle() const
-{
-    return m_stdout;
-}
