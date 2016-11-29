@@ -55,6 +55,13 @@ setting_int g_max_width(
     "The maximum number of terminal columns to use when displaying matches.",
     106);
 
+setting_colour g_colour_interact(
+    "colour.interact",
+    "For user-interaction prompts",
+    "Used when Clink displays text or prompts such as a pager's 'More?'. Naming\n"
+    "these settings is hard. Describing them even more so.",
+    setting_colour::value_light_magenta, setting_colour::value_default);
+
 setting_colour g_colour_minor(
     "colour.minor",
     "Minor colour value",
@@ -213,9 +220,9 @@ tab_completer::state tab_completer::begin_print(const context& context)
     int query_threshold = g_query_threshold.get();
     if (query_threshold > 0 && query_threshold <= match_count)
     {
-        str<64> prompt;
+        str<40> prompt;
         prompt.format("Show %d matches? [Yn]", match_count);
-        context.printer.print(prompt.c_str(), prompt.length());
+        context.printer.print(g_colour_interact.get(), prompt.c_str(), prompt.length());
 
         return state_query;
     }
@@ -294,7 +301,7 @@ tab_completer::state tab_completer::print(const context& context, bool single_ro
     if (m_row == total_rows)
         return state_none;
 
-    printer.print("-- More --");
+    printer.print(g_colour_interact.get(), "-- More --");
     return state_pager;
 }
 
