@@ -3,6 +3,8 @@
 
 #pragma once
 
+#include "attributes.h"
+
 //------------------------------------------------------------------------------
 class terminal_out
 {
@@ -14,6 +16,7 @@ public:
     virtual void            flush() = 0;
     virtual int             get_columns() const = 0;
     virtual int             get_rows() const = 0;
+    virtual void            set_attributes(const attributes attr) = 0;
 };
 
 //------------------------------------------------------------------------------

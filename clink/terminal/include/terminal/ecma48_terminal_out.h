@@ -13,24 +13,19 @@ class ecma48_terminal_out
     : public terminal_out
 {
 public:
-                    ecma48_terminal_out(terminal_out& inner);
-    virtual void    begin() override;
-    virtual void    end() override;
-    virtual void    write(const char* chars, int length) override;
-    virtual void    flush() override;
-    virtual int     get_columns() const override;
-    virtual int     get_rows() const override;
+                        ecma48_terminal_out(terminal_out& inner);
+    virtual void        begin() override;
+    virtual void        end() override;
+    virtual void        write(const char* chars, int length) override;
+    virtual void        flush() override;
+    virtual int         get_columns() const override;
+    virtual int         get_rows() const override;
+    virtual void        set_attributes(const attributes attr) override;
 
 private:
-    void            write_c1(const ecma48_code& code);
-    void            write_sgr(const array<int>& params);
-    void            write_c0(int c0);
-    terminal_out&   m_inner;
-    ecma48_state    m_state;
-
-    unsigned char   get_default_attr() const;
-    unsigned char   get_attr() const;
-    void            set_attr(unsigned char attr);
-    unsigned char   m_default_attr = 0x07;
-    unsigned char   m_attr = 0;
+    void                write_c1(const ecma48_code& code);
+    void                write_sgr(const array<int>& params);
+    void                write_c0(int c0);
+    terminal_out&       m_inner;
+    ecma48_state        m_state;
 };

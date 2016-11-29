@@ -38,6 +38,7 @@ public:
     virtual void            flush() override {}
     virtual int             get_columns() const override { return 80; }
     virtual int             get_rows() const override { return 25; }
+    virtual void            set_attributes(const attributes attr) {}
 };
 
 

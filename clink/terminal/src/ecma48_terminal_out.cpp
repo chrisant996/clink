@@ -17,19 +17,11 @@ ecma48_terminal_out::ecma48_terminal_out(terminal_out& inner)
 void ecma48_terminal_out::begin()
 {
     m_inner.begin();
-
-    HANDLE handle = GetStdHandle(STD_OUTPUT_HANDLE);
-    CONSOLE_SCREEN_BUFFER_INFO csbi;
-    GetConsoleScreenBufferInfo(handle, &csbi);
-    m_default_attr = csbi.wAttributes & 0xff;
-    m_attr = m_default_attr;
 }
 
 //------------------------------------------------------------------------------
 void ecma48_terminal_out::end()
 {
-    HANDLE handle = GetStdHandle(STD_OUTPUT_HANDLE);
-    SetConsoleTextAttribute(handle, m_default_attr);
     m_inner.end();
 }
 
@@ -49,6 +41,12 @@ int ecma48_terminal_out::get_columns() const
 int ecma48_terminal_out::get_rows() const
 {
     return m_inner.get_rows();
+}
+
+//------------------------------------------------------------------------------
+void ecma48_terminal_out::set_attributes(const attributes attr)
+{
+    m_inner.set_attributes(attr);
 }
 
 //------------------------------------------------------------------------------
@@ -116,88 +114,49 @@ void ecma48_terminal_out::write(const char* chars, int length)
 //------------------------------------------------------------------------------
 void ecma48_terminal_out::write_sgr(const array<int>& params)
 {
-    static const unsigned char sgr_to_attr[] = { 0, 4, 2, 6, 1, 5, 3, 7 };
-
+    // Empty parameters to 'CSI SGR' implies 0 (reset).
     if (params.empty())
-    {
-        set_attr(get_default_attr());
-        return;
-    }
+        return set_attributes(attributes::defaults);
 
     // Process each code that is supported.
-    unsigned char attr = get_attr();
+    attributes attr;
     for (unsigned int param : params)
     {
-        if (param == 0) // reset
+        // Resets
+        if (param == 0)  { attr = attributes::defaults; continue; }
+        if (param == 49) { attr.reset_bg();             continue; }
+        if (param == 39) { attr.reset_fg();             continue; }
+
+        // Bold/Underline
+        if ((param == 1) | (param == 2) | (param == 22))
         {
-            attr = get_default_attr();
-        }
-        else if (param == 1) // fg intensity (bright)
-        {
-            attr |= 0x08;
-        }
-        else if (param == 2 || param == 22) // fg intensity (normal)
-        {
-            attr &= ~0x08;
-        }
-        else if (param == 4) // bg intensity (bright)
-        {
-            attr |= 0x80;
-        }
-        else if (param == 24) // bg intensity (normal)
-        {
-            attr &= ~0x80;
-        }
-        else if (param - 30 < 8) // fg colour
-        {
-            attr = (attr & 0xf8) | sgr_to_attr[(param - 30) & 7];
-        }
-        else if (param - 90 < 8) // fg colour
-        {
-            attr |= 0x08;
-            attr = (attr & 0xf8) | sgr_to_attr[(param - 90) & 7];
-        }
-        else if (param == 39) // default fg colour
-        {
-            attr = (attr & 0xf8) | (get_default_attr() & 0x07);
-        }
-        else if (param - 40 < 8) // bg colour
-        {
-            attr = (attr & 0x8f) | (sgr_to_attr[(param - 40) & 7] << 4);
-        }
-        else if (param - 100 < 8) // bg colour
-        {
-            attr |= 0x80;
-            attr = (attr & 0x8f) | (sgr_to_attr[(param - 100) & 7] << 4);
-        }
-        else if (param == 49) // default bg colour
-        {
-            attr = (attr & 0x8f) | (get_default_attr() & 0x70);
-        }
-        else if (param == 38 || param == 48) // extended colour (skipped)
+            attr.set_bold(param == 1);
             continue;
+        }
+
+        if ((param == 4) | (param == 24))
+        {
+            attr.set_underline(param == 4);
+            continue;
+        }
+
+        // Fore/background colours.
+        if ((param - 30 < 8) | (param - 90 < 8))
+        {
+            param += (param >= 90) ? 14 : 2;
+            attr.set_fg(param & 0x0f);
+            continue;
+        }
+
+        if ((param - 40 < 8) | (param - 100 < 8))
+        {
+            param += (param >= 100) ? 4 : 8;
+            attr.set_bg(param & 0x0f);
+            continue;
+        }
+
+        // TODO: Rgb/xterm256 support for terminals that support it.
     }
 
-    set_attr(attr);
-}
-
-//------------------------------------------------------------------------------
-unsigned char ecma48_terminal_out::get_default_attr() const
-{
-    return m_default_attr;
-}
-
-//------------------------------------------------------------------------------
-unsigned char ecma48_terminal_out::get_attr() const
-{
-    return m_attr;
-}
-
-//------------------------------------------------------------------------------
-void ecma48_terminal_out::set_attr(unsigned char attr)
-{
-    m_attr = attr;
-
-    HANDLE handle = GetStdHandle(STD_OUTPUT_HANDLE);
-    SetConsoleTextAttribute(handle, attr);
+    set_attributes(attr);
 }

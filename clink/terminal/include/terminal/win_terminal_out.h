@@ -10,16 +10,19 @@ class win_terminal_out
     : public terminal_out
 {
 public:
-    virtual void    begin() override;
-    virtual void    end() override;
-    virtual void    write(const char* chars, int length) override;
-    virtual void    flush() override;
-    virtual int     get_columns() const override;
-    virtual int     get_rows() const override;
+    virtual void        begin() override;
+    virtual void        end() override;
+    virtual void        write(const char* chars, int length) override;
+    virtual void        flush() override;
+    virtual int         get_columns() const override;
+    virtual int         get_rows() const override;
+    virtual void        set_attributes(const attributes attr) override;
 
 private:
-    void            write(const wchar_t* chars, int length);
-    void*           get_handle() const;
-    void*           m_stdout = nullptr;
-    unsigned long   m_prev_mode = 0;
+    void                write(const wchar_t* chars, int length);
+    void*               get_handle() const;
+    void*               m_stdout = nullptr;
+    unsigned long       m_prev_mode = 0;
+    unsigned short      m_default_attr = 0x07;
+    bool                m_bold = false;
 };
