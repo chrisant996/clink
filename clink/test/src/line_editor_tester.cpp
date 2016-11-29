@@ -149,11 +149,17 @@ void line_editor_tester::run()
 
         unsigned int match_count = matches->get_match_count();
         REQUIRE(m_expected_matches.size() == match_count, [&] () {
-            puts("expected;");
+            printf(" input; %s#\n", m_input);
+
+            char line[256];
+            m_editor->get_line(line, sizeof_array(line));
+            printf("output; %s#\n", line);
+
+            puts("\nexpected;");
             for (const char* match : m_expected_matches)
                 printf("  %s\n", match);
 
-            puts("got;");
+            puts("\ngot;");
             for (int i = 0, n = matches->get_match_count(); i < n; ++i)
                 printf("  %s\n", matches->get_match(i));
         });
@@ -178,6 +184,7 @@ void line_editor_tester::run()
         char line[256];
         REQUIRE(m_editor->get_line(line, sizeof_array(line)));
         REQUIRE(strcmp(m_expected_output, line) == 0, [&] () {
+            printf("       input; %s\n", m_input);
             printf("out expected; %s\n", m_expected_output);
             printf("     out got; %s\n", line);
         });
