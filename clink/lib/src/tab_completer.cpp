@@ -67,21 +67,21 @@ setting_colour g_colour_minor(
     "Minor colour value",
     "The colour used to display minor elements such as the lower common\n"
     "denominator of active matches in tab completion's display.",
-    setting_colour::value_default, setting_colour::value_default);
+    setting_colour::value_grey, setting_colour::value_default);
 
 setting_colour g_colour_major(
     "colour.major",
     "Major colour value",
     "The colour used to display major elements like remainder of active matches\n"
     "still to be completed.",
-    setting_colour::value_bright, setting_colour::value_default);
+    setting_colour::value_white, setting_colour::value_default);
 
 setting_colour g_colour_highlight(
     "colour.highlight",
     "Colour for highlights",
     "The colour used for displaying highlighted elements such as the next\n"
     "character when invoking tab completion.",
-    setting_colour::value_bright, setting_colour::value_blue);
+    setting_colour::value_white, setting_colour::value_blue);
 
 
 
