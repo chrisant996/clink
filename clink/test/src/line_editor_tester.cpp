@@ -193,6 +193,9 @@ void line_editor_tester::run()
     m_input = nullptr;
     m_expected_output = nullptr;
     m_expected_matches.clear();
+
+    char t;
+    m_editor->get_line(&t, 1);
 }
 
 //------------------------------------------------------------------------------
