@@ -21,7 +21,9 @@ struct section
             m_child = child;
     }
 
-    void enter(section*& tree_iter) {
+    void enter(section*& tree_iter, const char* name) {
+        m_name = name;
+
         if (m_parent == nullptr)
             if (section* parent = get_outer_store())
                 parent->add_child(this);
@@ -33,11 +35,10 @@ struct section
         get_outer_store() = this;
     }
 
-                        section(const char* name="") : m_name(name) {}
     static section*&    get_outer_store() { static section* section; return section; }
     void                leave() { get_outer_store() = m_parent; }
     explicit            operator bool () { return m_active; }
-    const char*         m_name;
+    const char*         m_name = "";
     section*            m_parent = nullptr;
     section*            m_child = nullptr;
     section*            m_sibling = nullptr;
@@ -46,7 +47,7 @@ struct section
 
     struct scope
     {
-                        scope(section*& tree_iter, section& section) : m_section(&section) { m_section->enter(tree_iter); }
+                        scope(section*& tree_iter, section& section, const char* name) : m_section(&section) { m_section->enter(tree_iter, name); }
                         ~scope() { m_section->leave(); }
         explicit        operator bool () { return bool(*m_section); }
         section*        m_section;
@@ -94,14 +95,14 @@ inline void run(const char* prefix="")
         ++test_count;
         printf("......... %s", test->m_name);
 
-        section root(test->m_name);
+        section root;
 
         try
         {
             section* tree_iter = &root;
             do
             {
-                section::scope x = section::scope(tree_iter, root);
+                section::scope x = section::scope(tree_iter, root, test->m_name);
 
                 (test->m_func)(tree_iter);
 
@@ -166,8 +167,8 @@ void fail(const char* expr, const char* file, int line, CALLBACK&& cb)
     static void CLATCH_IDENT(test_func)(clatch::section*& _clatch_tree_iter)
 
 #define SECTION(name)\
-    static clatch::section CLATCH_IDENT(section)(name);\
-    if (clatch::section::scope CLATCH_IDENT(scope) = clatch::section::scope(_clatch_tree_iter, CLATCH_IDENT(section)))
+    static clatch::section CLATCH_IDENT(section);\
+    if (clatch::section::scope CLATCH_IDENT(scope) = clatch::section::scope(_clatch_tree_iter, CLATCH_IDENT(section), name))
 
 
 #define REQUIRE(expr, ...)\
