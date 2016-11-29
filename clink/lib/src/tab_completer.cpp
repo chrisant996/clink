@@ -11,7 +11,9 @@
 
 #include <core/base.h>
 #include <core/settings.h>
+#include <core/str_iter.h>
 #include <terminal/printer.h>
+#include <terminal/setting_colour.h>
 
 //------------------------------------------------------------------------------
 editor_module* tab_completer_create()
@@ -52,6 +54,27 @@ setting_int g_max_width(
     "Maximum display width",
     "The maximum number of terminal columns to use when displaying matches.",
     106);
+
+setting_colour g_colour_minor(
+    "colour.minor",
+    "Minor colour value",
+    "The colour used to display minor elements such as the lower common\n"
+    "denominator of active matches in tab completion's display.",
+    setting_colour::value_default, setting_colour::value_default);
+
+setting_colour g_colour_major(
+    "colour.major",
+    "Major colour value",
+    "The colour used to display major elements like remainder of active matches\n"
+    "still to be completed.",
+    setting_colour::value_bright, setting_colour::value_default);
+
+setting_colour g_colour_highlight(
+    "colour.highlight",
+    "Colour for highlights",
+    "The colour used for displaying highlighted elements such as the next\n"
+    "character when invoking tab completion.",
+    setting_colour::value_bright, setting_colour::value_blue);
 
 
 
@@ -204,11 +227,20 @@ tab_completer::state tab_completer::begin_print(const context& context)
 tab_completer::state tab_completer::print(const context& context, bool single_row)
 {
     auto& printer = context.printer;
+
     const matches& matches = context.matches;
+
+    attributes minor_attr = g_colour_minor.get();
+    attributes major_attr = g_colour_major.get();
+    attributes highlight_attr = g_colour_highlight.get();
 
     printer.print("\r");
 
     int match_count = matches.get_match_count();
+
+    str<288> lcd;
+    matches.get_match_lcd(lcd);
+    int lcd_length = lcd.length();
 
     // Calculate the number of columns of matches per row.
     int column_pad = g_column_pad.get();
@@ -229,8 +261,17 @@ tab_completer::state tab_completer::print(const context& context, bool single_ro
             if (index >= match_count)
                 continue;
 
+            // Print the match.
             const char* match = matches.get_displayable(index);
-            printer.print(match, int(strlen(match)));
+            const char* post_lcd = match + lcd_length;
+
+            str_iter iter(post_lcd);
+            iter.next();
+            const char* match_tail = iter.get_pointer();
+
+            printer.print(minor_attr, match, lcd_length);
+            printer.print(highlight_attr, post_lcd, int(match_tail - post_lcd));
+            printer.print(major_attr, match_tail, int(strlen(match_tail)));
 
             // Move the cursor to the next column
             if (x)
