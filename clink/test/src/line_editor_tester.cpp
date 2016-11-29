@@ -167,11 +167,17 @@ void line_editor_tester::run()
         REQUIRE(m_editor->get_line(line, sizeof_array(line)));
         REQUIRE(strcmp(m_expected_output, line) == 0);
     }
+
+    m_input = nullptr;
+    m_expected_output = nullptr;
+    m_expected_matches.clear();
 }
 
 //------------------------------------------------------------------------------
 void line_editor_tester::expected_matches_impl(int dummy, ...)
 {
+    m_expected_matches.clear();
+
     va_list arg;
     va_start(arg, dummy);
 
