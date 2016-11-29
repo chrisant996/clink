@@ -166,7 +166,9 @@ void line_editor_tester::run()
                 if (match_found = (strcmp(expected, matches->get_match(i)) == 0))
                     break;
 
-            REQUIRE(match_found);
+            REQUIRE(match_found, [=] () {
+                printf("match '%s' not found\n", expected);
+            });
         }
     }
 
@@ -175,7 +177,10 @@ void line_editor_tester::run()
     {
         char line[256];
         REQUIRE(m_editor->get_line(line, sizeof_array(line)));
-        REQUIRE(strcmp(m_expected_output, line) == 0);
+        REQUIRE(strcmp(m_expected_output, line) == 0, [&] () {
+            printf("out expected; %s\n", m_expected_output);
+            printf("     out got; %s\n", line);
+        });
     }
 
     m_input = nullptr;
