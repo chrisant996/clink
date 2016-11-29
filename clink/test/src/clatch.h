@@ -109,16 +109,28 @@ inline void run(const char* prefix="")
 }
 
 //------------------------------------------------------------------------------
-inline void fail(const char* expr, const char* file, int line, section* failed_section)
+inline void fail(const char* expr, const char* file, int line)
 {
+    section* failed_section = clatch::section::get_outer_store();
+
     puts("\n");
     printf(" expr; %s\n", expr);
     printf("where; %s(%d)\n", file, line);
     printf("trace; ");
     for (; failed_section != nullptr; failed_section = failed_section->m_parent)
         printf("%s\n       ", failed_section->m_name);
+    puts("");
 
     abort();
+}
+
+//------------------------------------------------------------------------------
+template <typename CALLBACK>
+void fail(const char* expr, const char* file, int line, CALLBACK&& cb)
+{
+    puts("\n");
+    cb();
+    fail(expr, file, line);
 }
 
 } // namespace clatch
@@ -137,8 +149,8 @@ inline void fail(const char* expr, const char* file, int line, section* failed_s
     static clatch::section CLATCH_IDENT(section)(name);\
     if (clatch::section::scope CLATCH_IDENT(scope) = clatch::section::scope(_clatch_tree_iter, CLATCH_IDENT(section)))
 
-#define REQUIRE(expr)\
+#define REQUIRE(expr, ...)\
     do {\
         if (!(expr))\
-            clatch::fail(#expr, __FILE__, __LINE__, clatch::section::get_outer_store());\
-    } while(0)
+            clatch::fail(#expr, __FILE__, __LINE__, __VA_ARGS__);\
+    } while (0)
