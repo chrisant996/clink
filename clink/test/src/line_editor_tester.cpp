@@ -8,6 +8,8 @@
 #include <lib/editor_module.h>
 #include <lib/matches.h>
 
+#include <stdio.h>
+
 //------------------------------------------------------------------------------
 class empty_module
     : public editor_module
@@ -146,7 +148,15 @@ void line_editor_tester::run()
         REQUIRE(matches != nullptr);
 
         unsigned int match_count = matches->get_match_count();
-        REQUIRE(m_expected_matches.size() == match_count);
+        REQUIRE(m_expected_matches.size() == match_count, [&] () {
+            puts("expected;");
+            for (const char* match : m_expected_matches)
+                printf("  %s\n", match);
+
+            puts("got;");
+            for (int i = 0, n = matches->get_match_count(); i < n; ++i)
+                printf("  %s\n", matches->get_match(i));
+        });
 
         for (const char* expected : m_expected_matches)
         {
