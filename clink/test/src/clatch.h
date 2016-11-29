@@ -3,6 +3,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <exception>
 
 namespace clatch {
 
@@ -79,30 +80,38 @@ inline void run(const char* prefix="")
 {
     for (test* test = test::get_head(); test != nullptr; test = test->m_next)
     {
-        section root(test->m_name);
-        section* tree_iter = &root;
-
+        // Cheap lower-case prefix test.
         const char* a = prefix, *b = test->m_name;
         for (; (*a & ~0x20) == (*b & ~0x20); ++a, ++b);
         if (*a)
             continue;
 
-        printf("...... %s", test->m_name);
+        printf("......... %s", test->m_name);
 
-        do
+        try
         {
-            section::scope x = section::scope(tree_iter, root);
+            section root(test->m_name);
+            section* tree_iter = &root;
 
-            (test->m_func)(tree_iter);
-
-            for (section* parent; parent = tree_iter->m_parent; tree_iter = parent)
+            do
             {
-                tree_iter->m_active = false;
-                if (tree_iter = tree_iter->m_sibling)
-                    break;
+                section::scope x = section::scope(tree_iter, root);
+
+                (test->m_func)(tree_iter);
+
+                for (section* parent; parent = tree_iter->m_parent; tree_iter = parent)
+                {
+                    tree_iter->m_active = false;
+                    if (tree_iter = tree_iter->m_sibling)
+                        break;
+                }
             }
+            while (tree_iter != &root);
         }
-        while (tree_iter != &root);
+        catch (...)
+        {
+            continue;
+        }
 
         puts("\rok ");
     }
@@ -121,7 +130,7 @@ inline void fail(const char* expr, const char* file, int line)
         printf("%s\n       ", failed_section->m_name);
     puts("");
 
-    abort();
+    throw std::exception();
 }
 
 //------------------------------------------------------------------------------
