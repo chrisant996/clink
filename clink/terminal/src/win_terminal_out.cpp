@@ -127,6 +127,8 @@ void win_terminal_out::set_attributes(const attributes attr)
         out_attr = (out_attr & attr_mask_bg) | value;
         bold |= (value > 7);
     }
+    else
+        bold |= (out_attr & attr_mask_bold) != 0;
 
     if (bold)
         out_attr |= attr_mask_bold;
