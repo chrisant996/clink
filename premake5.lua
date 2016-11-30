@@ -135,6 +135,8 @@ workspace("clink")
         optimize("full")
         flags("NoFramePointer")
         flags("NoBufferSecurityCheck")
+
+    configuration({"final", "vs*"})
         flags("LinkTimeOptimization")
 
     configuration("release")
