@@ -7,8 +7,12 @@ local function warn(msg)
 end
 
 --------------------------------------------------------------------------------
-local function exec(cmd)
+local function exec(cmd, silent)
     print("## EXEC: " .. cmd)
+
+    if silent then
+        cmd = "1>nul 2>nul "..cmd
+    end
 
     -- Premake replaces os.execute() with a version that runs path.normalize()
     -- which converts \ to /. This is fine for everything except cmd.exe.
@@ -26,7 +30,7 @@ local function mkdir(dir)
         return
     end
 
-    local ret = exec("1>nul 2>nul md " .. path.translate(dir))
+    local ret = exec("md " .. path.translate(dir), true)
     if ret ~= 0 then
         error("Failed to create directory '" .. dir .. "'")
     end
@@ -38,19 +42,19 @@ local function rmdir(dir)
         return
     end
 
-    return exec("1>nul 2>nul rd /q /s " .. path.translate(dir))
+    return exec("rd /q /s " .. path.translate(dir), true)
 end
 
 --------------------------------------------------------------------------------
 local function unlink(file)
-    return exec("1>nul 2>nul del /q " .. path.translate(file))
+    return exec("del /q " .. path.translate(file), true)
 end
 
 --------------------------------------------------------------------------------
 local function copy(src, dest)
     src = path.translate(src)
     dest = path.translate(dest)
-    return exec("1>nul 2>nul copy /y " .. src .. " " .. dest)
+    return exec("copy /y " .. src .. " " .. dest, true)
 end
 
 --------------------------------------------------------------------------------
@@ -64,7 +68,7 @@ end
 
 --------------------------------------------------------------------------------
 local function have_required_tool(name)
-    return (exec("1>nul 2>nul where " .. name) == 0)
+    return (exec("where " .. name, true) == 0)
 end
 
 --------------------------------------------------------------------------------
