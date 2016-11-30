@@ -78,7 +78,7 @@ struct test
 };
 
 //------------------------------------------------------------------------------
-inline void run(const char* prefix="")
+inline bool run(const char* prefix="")
 {
     int fail_count = 0;
     int test_count = 0;
@@ -127,6 +127,8 @@ inline void run(const char* prefix="")
     }
 
     printf("\n tests:%d  failed:%d  asserts:%d\n", test_count, fail_count, assert_count);
+
+    return (fail_count == 0);
 }
 
 //------------------------------------------------------------------------------

@@ -7,6 +7,5 @@
 int main(int argc, char** argv)
 {
     const char* prefix = (argc > 1) ? argv[1] : "";
-    clatch::run(prefix);
-    return 0;
+    return (clatch::run(prefix) != true);
 }
