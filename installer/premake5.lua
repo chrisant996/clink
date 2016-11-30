@@ -159,14 +159,16 @@ newaction {
 
         -- Run tests.
         if x86_ok then
-            if os.exec(src.."/clink_test_x86.exe") ~= 0 then
-                print("x86 tests failed")
+            test_exe = path.translate(src.."/clink_test_x86.exe")
+            if exec(test_exe) ~= 0 then
+                error("x86 tests failed")
             end
         end
 
         if x64_ok then
-            if os.exec(src.."/clink_test_x64.exe") ~= 0 then
-                print("x64 tests failed")
+            test_exe = path.translate(src.."/clink_test_x64.exe")
+            if exec(test_exe) ~= 0 then
+                error("x64 tests failed")
             end
         end
 
