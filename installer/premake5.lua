@@ -159,6 +159,19 @@ newaction {
             return
         end
 
+        -- Run tests.
+        if x86_ok then
+            if os.exec(src.."/clink_test_x86.exe") ~= 0 then
+                print("x86 tests failed")
+            end
+        end
+
+        if x64_ok then
+            if os.exec(src.."/clink_test_x64.exe") ~= 0 then
+                print("x64 tests failed")
+            end
+        end
+
         -- Copy release files to a directory.
         rmdir(dest)
         mkdir(dest)
