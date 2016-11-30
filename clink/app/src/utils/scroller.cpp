@@ -73,10 +73,10 @@ void scroller_module::bind_input(binder& binder)
     if (m_bind_group >= 0)
     {
         int default_group = binder.get_group();
-        binder.bind(default_group, "\\e[t", bind_id_start);
+        binder.bind(default_group, "\\e[5;2~", bind_id_start);
 
-        binder.bind(m_bind_group, "\\e[t", bind_id_pgup);
-        binder.bind(m_bind_group, "\\e[y", bind_id_pgdown);
+        binder.bind(m_bind_group, "\\e[5;2~", bind_id_pgup);
+        binder.bind(m_bind_group, "\\e[6;2~", bind_id_pgdown);
         binder.bind(m_bind_group, "", bind_id_catchall);
     }
 }
