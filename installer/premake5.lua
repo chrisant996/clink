@@ -102,8 +102,7 @@ newaction {
 
         exec("git clone . " .. code_dir)
         if not os.chdir(code_dir) then
-            print("Failed to chdir to '" .. code_dir .. "'")
-            return
+            error("Failed to chdir to '" .. code_dir .. "'")
         end
         exec("git checkout " .. (_OPTIONS["commit"] or "HEAD"))
 
@@ -155,8 +154,7 @@ newaction {
 
         -- Do a coarse check to make sure there's a build available.
         if not os.isdir(src .. ".") or not (x86_ok or x64_ok) then
-            print("There's no build available in '" .. src .. "'")
-            return
+            error("There's no build available in '" .. src .. "'")
         end
 
         -- Run tests.
