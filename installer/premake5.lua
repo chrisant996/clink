@@ -194,13 +194,14 @@ newaction {
         copy(".build/docs/clink.html", dest)
 
         -- Build the installer.
+        local nsis_ok = false
         if have_nsis then
             local nsis_cmd = "makensis"
             nsis_cmd = nsis_cmd .. " /DCLINK_BUILD=" .. dest
             nsis_cmd = nsis_cmd .. " /DCLINK_VERSION=" .. clink_ver
             nsis_cmd = nsis_cmd .. " /DCLINK_SOURCE=" .. src_dir_name
             nsis_cmd = nsis_cmd .. " " .. src_dir_name .. "/installer/clink.nsi"
-            exec(nsis_cmd)
+            nsis_ok = exec(nsis_cmd) == 0
         end
 
         -- Tidy up code directory.
@@ -232,8 +233,9 @@ newaction {
 
         -- Report some facts about what just happened.
         print("\n\n")
-        if not have_7z then     warn("7-ZIP NOT FOUND     -- Packing to .zip files was skipped.") end
-        if not have_nsis then   warn("NSIS NOT FOUND      -- No installer was not created.") end
+        if not have_7z then     warn("7-ZIP NOT FOUND -- Packing to .zip files was skipped.") end
+        if not have_nsis then   warn("NSIS NOT FOUND -- No installer was not created.") end
+        if not nsis_ok then     warn("INSTALLER PACKAGE FAILED") end
         if not x86_ok then      warn("x86 BUILD FAILED") end
         if not x64_ok then      warn("x64 BUILD FAILED") end
     end
