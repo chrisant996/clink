@@ -30,10 +30,10 @@ static int get_screen_info(lua_State* state)
     lua_createtable(state, 0, 4);
     {
         struct table_t table[] = {
-            { "buffer_width", buffer_width },
-            { "buffer_height", buffer_height },
-            { "window_width", window_width },
-            { "window_height", window_height },
+            { "bufwidth", buffer_width },
+            { "bufheight", buffer_height },
+            { "winwidth", window_width },
+            { "winheight", window_height },
         };
 
         for (i = 0; i < sizeof_array(table); ++i)
@@ -55,7 +55,7 @@ void clink_lua_initialise(lua_state& lua)
         int         (*method)(lua_State*);
     } methods[] = {
 // TODO : move this somewhere else.
-        { "get_screen_info",        &get_screen_info },
+        { "getscreeninfo",  &get_screen_info },
 //
     };
 
