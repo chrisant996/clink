@@ -8,9 +8,16 @@ end
 
 --------------------------------------------------------------------------------
 local function exec(cmd)
-    -- Helper funciton to show executed commands to TTY
-    print("## EXEC: " .. cmd:gsub("1>nul ", ""):gsub("2>nul ", ""))
-    return os.execute(cmd)
+    print("## EXEC: " .. cmd)
+
+    -- Premake replaces os.execute() with a version that runs path.normalize()
+    -- which converts \ to /. This is fine for everything except cmd.exe.
+    local prev_norm = path.normalize
+    path.normalize = function (x) return x end
+    ret = os.execute(cmd)
+    path.normalize = prev_norm
+
+    return ret
 end
 
 --------------------------------------------------------------------------------
