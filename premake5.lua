@@ -11,16 +11,16 @@ local function get_git_info()
     for line in io.popen(git_cmd):lines() do
         local _, _, name, commit = line:find("^%*.+%s+([^ )]+)%)%s+([a-f0-9]+)")
         if name and commit then
-            return name, commit
+            return name, commit:sub(1, 6)
         end
 
         local _, _, name, commit = line:find("^%*%s+([^ ]+)%s+([a-f0-9]+)")
         if name and commit then
-            return name, commit
+            return name, commit:sub(1, 6)
         end
     end
 
-    return "unknown", "unknown"
+    return "NAME?", "COMMIT?"
 end
 
 --------------------------------------------------------------------------------
