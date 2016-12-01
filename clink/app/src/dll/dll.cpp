@@ -6,6 +6,7 @@
 #include "host/host_ps.h"
 #include "utils/app_context.h"
 #include "utils/seh_scope.h"
+#include "version.h"
 
 #include <core/base.h>
 #include <core/globber.h>
@@ -18,7 +19,7 @@
 
 //------------------------------------------------------------------------------
 const char* g_clink_header =
-    "Clink v" CLINK_VERSION " [git:" CLINK_COMMIT "] "
+    "Clink v" CLINK_VERSION_STR "/" CLINK_COMMIT
     "Copyright (c) 2012-2016 Martin Ridgers\n"
     "http://mridgers.github.io/clink\n"
     ;

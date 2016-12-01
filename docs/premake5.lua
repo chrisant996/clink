@@ -10,7 +10,7 @@ local function generate_file(source_path, out)
             include = path.getdirectory(source_path) .. "/" .. include
             generate_file(include, out)
         else
-            line = line:gsub("%$%(CLINK_VERSION%)", tostring(clink_ver))
+            line = line:gsub("%$%(CLINK_VERSION%)", clink_git_name:upper())
             out:write(line .. "\n")
         end
     end

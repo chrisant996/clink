@@ -1,57 +1,27 @@
 -- Copyright (c) 2012 Martin Ridgers
 -- License: http://opensource.org/licenses/MIT
 
+local to = ".build/"..(_ACTION or "nullaction")
+
+
+
 --------------------------------------------------------------------------------
-function get_current_git_branch()
-    for line in io.popen("git branch --no-color 2>nul"):lines() do
-        local m = line:match("%* (.+)$")
-        if m then
-            return m
+local function get_git_info()
+    local git_cmd = "git branch --verbose --no-color 2>nul"
+    for line in io.popen(git_cmd):lines() do
+        local _, _, name, commit = line:find("^%*.+%s+([^ )]+)%)%s+([a-f0-9]+)")
+        if name and commit then
+            return name, commit
+        end
+
+        local _, _, name, commit = line:find("^%*%s+([^ ]+)%s+([a-f0-9]+)")
+        if name and commit then
+            return name, commit
         end
     end
 
-    return nil
+    return "unknown", "unknown"
 end
-
---------------------------------------------------------------------------------
-function get_last_git_commit()
-    local git_cmd = "git log -1 --format=oneline --no-color 2>nul"
-    for line in io.popen(git_cmd):lines() do
-        return line:sub(1, 6)
-    end
-
-    return "?"
-end
-
-
-
---------------------------------------------------------------------------------
-clink_ver = _OPTIONS["clink_ver"] or "DEV"
-local to = ".build/"..(_ACTION or "nullaction")
-
-local to_root = path.getdirectory(to)
-if not os.isdir(to_root) then
-    os.mkdir(to_root)
-end
-
---------------------------------------------------------------------------------
-local keys = { "clink_ver_major", "clink_ver_minor", "clink_ver_point" }
-
--- Divide up the version number into major, minor and point parts.
-for i in clink_ver:gmatch("%d+") do
-    print(keys[1])
-    _G[keys[1]] = i
-    table.remove(keys, 1)
-end
-
--- Reset remaining keys to 0
-for _, i in ipairs(keys) do
-    _G[i] = "0"
-end
-
--- 47000 = magic offset. 'stamp' gives us an hourly counter that shouldn't wrap
--- for around 7-8 years.
-clink_ver_stamp = (math.floor(os.time() / 3600) - 47000) % 0x10000
 
 --------------------------------------------------------------------------------
 local function postbuild_copy(src, cfg)
@@ -78,6 +48,8 @@ local function setup_cfg(cfg)
         targetsuffix("_x64")
 end
 
+
+
 --------------------------------------------------------------------------------
 local function clink_project(name)
     project(name)
@@ -103,7 +75,11 @@ local function clink_exe(name)
     kind("consoleapp")
 end
 
+
+
 --------------------------------------------------------------------------------
+clink_git_name, clink_git_commit = get_git_info()
+
 workspace("clink")
     configurations({"debug", "release", "final"})
     platforms({"x32", "x64"})
@@ -117,12 +93,7 @@ workspace("clink")
     exceptionhandling("off")
     defines("HAVE_CONFIG_H")
     defines("HANDLE_MULTIBYTE")
-    defines("CLINK_VERSION=AS_STR("..clink_ver..")")
-    defines("CLINK_COMMIT=AS_STR("..get_last_git_commit()..")")
-    defines("CLINK_VER_MAJOR="..clink_ver_major)
-    defines("CLINK_VER_MINOR="..clink_ver_minor)
-    defines("CLINK_VER_POINT="..clink_ver_point)
-    defines("CLINK_VER_STAMP="..clink_ver_stamp)
+    defines("CLINK_COMMIT=AS_STR("..clink_git_commit..")")
 
     setup_cfg("final")
     setup_cfg("release")
@@ -358,13 +329,6 @@ if _ACTION:sub(1,2) == "vs" then
         debugcommand("cmd.exe")
         debugargs("/k call bin\\$(configuration)\\clink.bat inject")
 end
-
---------------------------------------------------------------------------------
-newoption {
-   trigger     = "clink_ver",
-   value       = "VER",
-   description = "The version of clink to build or being built."
-}
 
 --------------------------------------------------------------------------------
 dofile("docs/premake5.lua")

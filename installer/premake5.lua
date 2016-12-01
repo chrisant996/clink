@@ -65,11 +65,9 @@ end
 --------------------------------------------------------------------------------
 local function get_target_dir()
     local target_dir = ".build/release/"
-    target_dir = target_dir .. os.date("%Y%m%d_")
-    target_dir = target_dir .. get_last_git_commit()
-    if clink_ver ~= "DEV" then
-        target_dir = target_dir .. "_" .. clink_ver
-    end
+    target_dir = target_dir .. os.date("%Y%m%d")
+    target_dir = target_dir .. "_" .. clink_git_name
+    target_dir = target_dir .. "_" .. clink_git_commit
 
     target_dir = path.getabsolute(target_dir) .. "/"
     if not os.isdir(target_dir .. ".") then
@@ -95,7 +93,7 @@ newaction {
         local have_7z = have_required_tool("7z")
 
         -- Clone repro in release folder and checkout the specified version
-        local repo_path = "clink_" .. clink_ver .. "_src"
+        local repo_path = "clink_" .. clink_git_name .. "_src"
         local code_dir = target_dir .. repo_path
         rmdir(code_dir)
         mkdir(code_dir)
@@ -117,7 +115,7 @@ newaction {
         local toolchain = "ERROR"
         if have_msbuild then
             toolchain = _OPTIONS["vsver"] or "vs2013"
-            exec(premake .. " --clink_ver=" .. clink_ver .. " " .. toolchain)
+            exec(premake .. " " .. toolchain)
 
             ret = exec("msbuild /m /v:q /p:configuration=final /p:platform=win32 .build/" .. toolchain .. "/clink.sln")
             if ret ~= 0 then
@@ -130,7 +128,7 @@ newaction {
             end
         elseif have_mingw then
             toolchain = "gmake"
-            exec(premake .. " --clink_ver=" .. clink_ver .. " gmake")
+            exec(premake .. " gmake")
             os.chdir(".build/gmake")
 
             local ret
@@ -150,7 +148,7 @@ newaction {
         end
 
         local src = ".build/" .. toolchain .. "/bin/final/"
-        local dest = target_dir .. "clink_" .. clink_ver
+        local dest = target_dir .. "clink_" .. clink_git_name
 
         -- Do a coarse check to make sure there's a build available.
         if not os.isdir(src .. ".") or not (x86_ok or x64_ok) then
@@ -190,7 +188,7 @@ newaction {
         end
 
         -- Generate documentation.
-        exec(premake .. " --clink_ver=" .. clink_ver .. " clink_docs")
+        exec(premake .. " clink_docs")
         copy(".build/docs/clink.html", dest)
 
         -- Build the installer.
@@ -198,7 +196,7 @@ newaction {
         if have_nsis then
             local nsis_cmd = "makensis"
             nsis_cmd = nsis_cmd .. " /DCLINK_BUILD=" .. dest
-            nsis_cmd = nsis_cmd .. " /DCLINK_VERSION=" .. clink_ver
+            nsis_cmd = nsis_cmd .. " /DCLINK_VERSION=" .. clink_git_name
             nsis_cmd = nsis_cmd .. " /DCLINK_SOURCE=" .. src_dir_name
             nsis_cmd = nsis_cmd .. " " .. src_dir_name .. "/installer/clink.nsi"
             nsis_ok = exec(nsis_cmd) == 0
@@ -212,7 +210,7 @@ newaction {
         -- Zip up the source code.
         os.chdir(target_dir)
         if have_7z then
-            exec("7z a -r " .. target_dir .. "clink_" .. clink_ver .. "_src.zip " .. src_dir_name)
+            exec("7z a -r " .. target_dir .. "clink_" .. clink_git_name .. "_src.zip " .. src_dir_name)
         end
         rmdir(src_dir_name)
 
@@ -221,14 +219,14 @@ newaction {
         if have_msbuild then
             exec("move *.pdb  .. ")
             if have_7z then
-                exec("7z a -r  ../clink_" .. clink_ver .. "_pdb.zip  ../*.pdb")
+                exec("7z a -r  ../clink_" .. clink_git_name .. "_pdb.zip  ../*.pdb")
                 unlink("../*.pdb")
             end
         end
 
         -- Package the release in an archive.
         if have_7z then
-            exec("7z a -r  ../clink_" .. clink_ver .. ".zip  ../clink_" .. clink_ver)
+            exec("7z a -r  ../clink_" .. clink_git_name .. ".zip  ../clink_" .. clink_git_name)
         end
 
         -- Report some facts about what just happened.

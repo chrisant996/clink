@@ -3,6 +3,7 @@
 
 #include "pch.h"
 #include "utils/app_context.h"
+#include "version.h"
 
 #include <core/base.h>
 #include <core/log.h>
@@ -33,9 +34,9 @@ static int check_dll_version(const char* clink_dll)
     );
 
     int error = 0;
-    error = (HIWORD(file_info->dwFileVersionMS) != CLINK_VER_MAJOR);
-    error = (LOWORD(file_info->dwFileVersionMS) != CLINK_VER_MINOR);
-    error = (HIWORD(file_info->dwFileVersionLS) != CLINK_VER_POINT);
+    error = (HIWORD(file_info->dwFileVersionMS) != CLINK_VERSION_MAJOR);
+    error = (LOWORD(file_info->dwFileVersionMS) != CLINK_VERSION_MINOR);
+    error = (HIWORD(file_info->dwFileVersionLS) != CLINK_VERSION_PATCH);
 
     return !error;
 }
@@ -81,11 +82,7 @@ static int do_inject(DWORD target_pid)
         sys_info.dwPageSize
     );
 #endif
-    LOG("Version: %d.%d.%d",
-        CLINK_VER_MAJOR,
-        CLINK_VER_MINOR,
-        CLINK_VER_POINT
-    );
+    LOG("Version: %s/%s", CLINK_VERSION_STR, CLINK_COMMIT);
     LOG("DLL: %s", dll_path.c_str());
 
     LOG("Parent pid: %d", target_pid);
