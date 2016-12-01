@@ -3,5 +3,16 @@
 1 VERSIONINFO
     FILEVERSION CLINK_VERSION_MAJOR, CLINK_VERSION_MINOR, CLINK_VERSION_PATCH
     PRODUCTVERSION CLINK_VERSION_MAJOR, CLINK_VERSION_MINOR, CLINK_VERSION_PATCH
-BEGIN
-END
+{
+    BLOCK "StringFileInfo" {
+        BLOCK "040904b0" {
+            VALUE "CompanyName",     "Martin Ridgers"
+            VALUE "ProductName",     "Clink"
+            VALUE "FileDescription", "Improved line editing for Windows' shells"
+            VALUE "ProductVersion",  CLINK_VERSION_STR "/" CLINK_COMMIT
+        }
+    }
+    BLOCK "VarFileInfo" {
+        VALUE "Translation", 0x0409, 1200
+    }
+}
