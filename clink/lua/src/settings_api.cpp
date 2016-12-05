@@ -10,6 +10,9 @@
 #include <new.h>
 
 //------------------------------------------------------------------------------
+/// -name:  settings.get
+/// -arg:   name:string
+/// -ret:   boolean or string or integer
 static int get(lua_State* state)
 {
     if (lua_gettop(state) == 0 || !lua_isstring(state, 1))
@@ -50,6 +53,10 @@ static int get(lua_State* state)
 }
 
 //------------------------------------------------------------------------------
+/// -name:  settings.set
+/// -arg:   name:string
+/// -arg:   value:string
+/// -ret:   boolean
 static int set(lua_State* state)
 {
     if (lua_gettop(state) < 2 || !lua_isstring(state, 1))
@@ -93,6 +100,10 @@ template <typename S, typename... V> void add_impl(lua_State* state, V... value)
 }
 
 //------------------------------------------------------------------------------
+/// -name:  settings.add
+/// -arg:   name:string
+/// -arg:   default:...
+/// -ret:   boolean
 static int add(lua_State* state)
 {
     if (lua_gettop(state) < 2 || !lua_isstring(state, 1))

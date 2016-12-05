@@ -29,6 +29,9 @@ line_state_lua::line_state_lua(const line_state& line)
 }
 
 //------------------------------------------------------------------------------
+/// -name:  line:getline
+/// -ret:   string
+/// Returns the current line in its entirety.
 int line_state_lua::get_line(lua_State* state)
 {
     lua_pushstring(state, m_line.get_line());
@@ -36,6 +39,9 @@ int line_state_lua::get_line(lua_State* state)
 }
 
 //------------------------------------------------------------------------------
+/// -name:  line:getcursor
+/// -ret:   integer
+/// Returns the position of the cursor.
 int line_state_lua::get_cursor(lua_State* state)
 {
     lua_pushinteger(state, m_line.get_cursor() + 1);
@@ -43,6 +49,14 @@ int line_state_lua::get_cursor(lua_State* state)
 }
 
 //------------------------------------------------------------------------------
+/// -name:  line:getcommandoffset
+/// -ret:   integer
+/// -show:  -- Given the following line; abc& 123
+/// -show:  -- where commands are separated by & symbols.
+/// -show:  line:getcommandoffset() == 4
+/// Returns the offset to the start of the delimited command in the line that's
+/// being effectively edited. Note that this may not be the offset of the first
+/// command of the line unquoted as whitespace isn't considered for words.
 int line_state_lua::get_command_offset(lua_State* state)
 {
     lua_pushinteger(state, m_line.get_command_offset() + 1);
@@ -50,6 +64,9 @@ int line_state_lua::get_command_offset(lua_State* state)
 }
 
 //------------------------------------------------------------------------------
+/// -name:  line:getwordcount
+/// -ret:   integer
+/// Returns the number of words in the current line.
 int line_state_lua::get_word_count(lua_State* state)
 {
     lua_pushinteger(state, m_line.get_word_count());
@@ -57,6 +74,12 @@ int line_state_lua::get_word_count(lua_State* state)
 }
 
 //------------------------------------------------------------------------------
+/// -name:  line:getwordinfo
+/// -arg:   index:integer
+/// -ret:   table
+/// Returns a table of informationa about the Nth word in the line. The table
+/// returned has the following schema; { offset:integer, length:integer,
+/// quoted:boolean, delim:boolean }.
 int line_state_lua::get_word_info(lua_State* state)
 {
     if (!lua_isnumber(state, 1))
@@ -92,6 +115,10 @@ int line_state_lua::get_word_info(lua_State* state)
 }
 
 //------------------------------------------------------------------------------
+/// -name:  line:getword
+/// -arg:   index:integer
+/// -ret:   string
+/// Returns the word of the line at 'index'.
 int line_state_lua::get_word(lua_State* state)
 {
     if (!lua_isnumber(state, 1))
@@ -107,6 +134,11 @@ int line_state_lua::get_word(lua_State* state)
 }
 
 //------------------------------------------------------------------------------
+/// -name:  line:getendword
+/// -ret:   string
+/// -show:  line:getword(line:getwordcount()) == line:getendword()
+/// Returns the last word of the line. This is the word that matches are being
+/// generated for.
 int line_state_lua::get_end_word(lua_State* state)
 {
     str<128> word;

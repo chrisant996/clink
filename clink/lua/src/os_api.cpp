@@ -29,6 +29,9 @@ static const char* get_string(lua_State* state, int index)
 }
 
 //------------------------------------------------------------------------------
+/// -name:  os.chdir
+/// -arg:   path:string
+/// -ret:   boolean
 static int set_current_dir(lua_State* state)
 {
     bool ok = false;
@@ -40,6 +43,8 @@ static int set_current_dir(lua_State* state)
 }
 
 //------------------------------------------------------------------------------
+/// -name:  os.getcwd
+/// -ret:   string
 static int get_current_dir(lua_State* state)
 {
     str<288> dir;
@@ -50,6 +55,9 @@ static int get_current_dir(lua_State* state)
 }
 
 //------------------------------------------------------------------------------
+/// -name:  os.mkdir
+/// -arg:   path:string
+/// -ret:   boolean
 static int make_dir(lua_State* state)
 {
     bool ok = false;
@@ -61,6 +69,9 @@ static int make_dir(lua_State* state)
 }
 
 //------------------------------------------------------------------------------
+/// -name:  os.rmdir
+/// -arg:   path:string
+/// -ret:   boolean
 static int remove_dir(lua_State* state)
 {
     bool ok = false;
@@ -72,6 +83,9 @@ static int remove_dir(lua_State* state)
 }
 
 //------------------------------------------------------------------------------
+/// -name:  os.isdir
+/// -arg:   path:string
+/// -ret:   boolean
 static int is_dir(lua_State* state)
 {
     const char* path = get_string(state, 1);
@@ -83,6 +97,9 @@ static int is_dir(lua_State* state)
 }
 
 //------------------------------------------------------------------------------
+/// -name:  os.isfile
+/// -arg:   path:string
+/// -ret:   boolean
 static int is_file(lua_State* state)
 {
     const char* path = get_string(state, 1);
@@ -94,6 +111,9 @@ static int is_file(lua_State* state)
 }
 
 //------------------------------------------------------------------------------
+/// -name:  os.unlink
+/// -arg:   path:string
+/// -ret:   boolean
 static int unlink(lua_State* state)
 {
     const char* path = get_string(state, 1);
@@ -113,6 +133,10 @@ static int unlink(lua_State* state)
 }
 
 //------------------------------------------------------------------------------
+/// -name:  os.move
+/// -arg:   src:string
+/// -arg:   dest:string
+/// -ret:   boolean
 static int move(lua_State* state)
 {
     const char* src = get_string(state, 1);
@@ -130,6 +154,10 @@ static int move(lua_State* state)
 }
 
 //------------------------------------------------------------------------------
+/// -name:  os.copy
+/// -arg:   src:string
+/// -arg:   dest:string
+/// -ret:   boolean
 static int copy(lua_State* state)
 {
     const char* src = get_string(state, 1);
@@ -171,18 +199,27 @@ static int glob_impl(lua_State* state, bool dirs_only)
 }
 
 //------------------------------------------------------------------------------
+/// -name:  os.globdirs
+/// -arg:   globpattern:string
+/// -ret:   table
 static int glob_dirs(lua_State* state)
 {
     return glob_impl(state, true);
 }
 
 //------------------------------------------------------------------------------
+/// -name:  os.globfiles
+/// -arg:   globpattern:string
+/// -ret:   table
 static int glob_files(lua_State* state)
 {
     return glob_impl(state, false);
 }
 
 //------------------------------------------------------------------------------
+/// -name:  os.getenv
+/// -arg:   path:string
+/// -ret:   string or nil
 static int get_env(lua_State* state)
 {
     const char* name = get_string(state, 1);
@@ -198,6 +235,10 @@ static int get_env(lua_State* state)
 }
 
 //------------------------------------------------------------------------------
+/// -name:  os.setenv
+/// -arg:   name:string
+/// -arg:   value:string
+/// -ret:   boolean
 static int set_env(lua_State* state)
 {
     const char* name = get_string(state, 1);
@@ -211,6 +252,8 @@ static int set_env(lua_State* state)
 }
 
 //------------------------------------------------------------------------------
+/// -name:  os.getenvnames
+/// -ret:   table
 static int get_env_names(lua_State* state)
 {
     lua_createtable(state, 0, 0);
@@ -248,6 +291,8 @@ static int get_env_names(lua_State* state)
 }
 
 //------------------------------------------------------------------------------
+/// -name:  os.gethost
+/// -ret:   string
 static int get_host(lua_State* state)
 {
     str<280> host;
@@ -259,6 +304,8 @@ static int get_host(lua_State* state)
 }
 
 //------------------------------------------------------------------------------
+/// -name:  os.getaliases
+/// -ret:   string
 static int get_aliases(lua_State* state)
 {
     lua_createtable(state, 0, 0);

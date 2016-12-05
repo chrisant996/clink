@@ -43,7 +43,7 @@ h6 { font-size: 1.00em; }
     width: 90%;
 }
 
-#content pre {
+#content pre, #api .show {
     padding: 0.2em;
     background-color: #eee;
 }
@@ -65,15 +65,47 @@ h6 { font-size: 1.00em; }
     background-color: #fff;
 }
 
-#content #api p {
-    margin-left: 2em;
+#content hr {
+    width: 66%;
 }
 
-#content #api h5 {
-    border-top: gray dashed 1px;
-    padding-top: 0.3em;
-    margin-bottom: 0em;
-    font-size: 1.0em;
-    color: darkgreen;
-    font-family: courier, monospace;
+#content #api .show {
+    white-space: pre;
+    font-family: monospace;
+}
+
+#content #api .group {
+    margin-bottom: 1em;
+}
+
+#content #api .function {
+}
+
+#content #api .body {
+    margin-left: 1em;
+}
+
+#content #api .header .name {
+    font-weight: bold;
+    float: left;
+    width: 40%;
+}
+
+#content #api .header .signature {
+    text-align: right;
+}
+
+#content #api .group_name {
+    font-size: 1.1em;
+    font-weight: bold;
+}
+
+#content #api .function {
+    margin-left: 2em;
+    margin-bottom: 1.0em;
+}
+
+#content #api .show {
+    white-space: pre;
+    font-family: monospace;
 }

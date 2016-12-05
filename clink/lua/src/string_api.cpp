@@ -17,6 +17,9 @@ static const char* get_string(lua_State* state, int index)
 }
 
 //------------------------------------------------------------------------------
+/// -name:  string.hash
+/// -arg:   x
+/// -ret:   x
 static int hash(lua_State* state)
 {
     const char* in = get_string(state, 1);
@@ -28,6 +31,9 @@ static int hash(lua_State* state)
 }
 
 //------------------------------------------------------------------------------
+/// -name:  string.explode
+/// -arg:   x
+/// -ret:   x
 static int explode(lua_State* state)
 {
     const char* in = get_string(state, 1);

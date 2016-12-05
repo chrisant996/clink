@@ -31,6 +31,9 @@ match_builder_lua::~match_builder_lua()
 }
 
 //------------------------------------------------------------------------------
+/// -name:  builder:addmatch
+/// -arg:   match:string|table
+/// -ret:   boolean
 int match_builder_lua::add_match(lua_State* state)
 {
     int ret = 0;
@@ -42,6 +45,8 @@ int match_builder_lua::add_match(lua_State* state)
 }
 
 //------------------------------------------------------------------------------
+/// -name:  builder:setprefixincluded
+/// -arg:   [state:boolean]
 int match_builder_lua::set_prefix_included(lua_State* state)
 {
     bool included = true;
@@ -54,6 +59,12 @@ int match_builder_lua::set_prefix_included(lua_State* state)
 }
 
 //------------------------------------------------------------------------------
+/// -name:  builder:addmatches
+/// -arg:   matches:table
+/// -ret:   integer, boolean
+/// This is the equivalent of calling builder:addmatch() in a for-loop. Returns
+/// the number of matches added and a boolean indicating if all matches were
+/// added successfully.
 int match_builder_lua::add_matches(lua_State* state)
 {
     if (lua_gettop(state) <= 0 || !lua_istable(state, 1))

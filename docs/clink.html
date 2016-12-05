@@ -3,11 +3,12 @@
 
 <!-- ----------------------------------------------------- -->
 <head>
+<title>Clink v$(CLINK_VERSION)</title>
 <style>
-    $(INCLUDE clink.css)
+    $(INCLUDE docs/clink.css)
 </style>
 <script type="text/javascript">
-    $(INCLUDE marked.min.js)
+    $(INCLUDE docs/marked.min.js)
 
     function go()
     {
@@ -21,7 +22,7 @@
             div.innerHTML = marked(md.innerHTML);
             div.id = md.getAttribute("_id");
             div.className = md.getAttribute("_class");
-            content.appendChild(div);
+            content.insertBefore(div, md);
         }
 
         // Generate a table of contents from h* tags.
@@ -64,16 +65,18 @@
         </div>
     </div>
     <div id="toc"></div>
-    <div id="content"></div>
-    <md _class="section" _id="documentation" style="display: none;">
-        $(INCLUDE clink.md)
-    </md>
-    <md _class="section" _id="api" style="display: none;">
-        $(INCLUDE api.md)
-    </md>
-    <md _class="section" _id="changes" style="display: none;">
-        $(INCLUDE ../CHANGES)
-    </md>
+    <div id="content">
+        <md _class="section" _id="documentation" style="display: none;">
+            $(INCLUDE docs/clink.md)
+        </md>
+        <h3 id="lua-api">Lua API Reference</h3>
+        <div class="section" id="api">
+            $(INCLUDE .build/docs/api_html)
+        </div>
+        <md _class="section" _id="changes" style="display: none;">
+            $(INCLUDE CHANGES)
+        </md>
+    </div>
 </body>
 
 </html>
