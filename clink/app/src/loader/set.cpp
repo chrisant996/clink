@@ -60,13 +60,16 @@ static void list_options(const char* key)
 //------------------------------------------------------------------------------
 static bool print_keys()
 {
+    int longest = 0;
+    for (auto* next = settings::first(); next != nullptr; next = next->next())
+        longest = max(longest, int(strlen(next->get_name())));
+
     for (auto* next = settings::first(); next != nullptr; next = next->next())
     {
-        printf("# %s\n", next->get_short_desc());
-
-        str<> value; next->get(value);
+        str<> value;
+        next->get(value);
         const char* name = next->get_name();
-        printf("%s = %s\n\n", name, value.c_str());
+        printf("%-*s  %s\n", longest, name, value.c_str());
     }
 
     return true;
