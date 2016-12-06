@@ -40,7 +40,7 @@ TEST_CASE("Env. vars") {
     }
 
     SECTION("Second %var%") {
-        tester.set_input("nullcmd %simple% %sim\b");
+        tester.set_input("nullcmd %simple% %sim" DO_COMPLETE);
         tester.set_expected_output("nullcmd %simple% %simple%");
         tester.run();
     }
@@ -74,13 +74,13 @@ TEST_CASE("Env. vars") {
     }
 
     SECTION("Not in quotes") {
-        tester.set_input("nullcmd \"arg\" %simp\b");
+        tester.set_input("nullcmd \"arg\" %simp" DO_COMPLETE);
         tester.set_expected_output("nullcmd \"arg\" %simple%");
         tester.run();
     }
 
     SECTION("In quotes") {
-        tester.set_input("nullcmd \"arg %sim\b");
+        tester.set_input("nullcmd \"arg %sim" DO_COMPLETE);
         tester.set_expected_output("nullcmd \"arg %simple%");
         tester.run();
     }

@@ -34,14 +34,14 @@ TEST_CASE("File match generator") {
     }
 
     SECTION("Dir slash flip") {
-        tester.set_input("dir1/\b");
+        tester.set_input("dir1/" DO_COMPLETE);
         tester.set_expected_matches("only", "file1", "file2");
         //tester.set_expected_output("dir1\\"); // TODO: fails because flip happens on match accept
         tester.run();
     }
 
     SECTION("Path slash flip") {
-        tester.set_input("dir1/on\b");
+        tester.set_input("dir1/on" DO_COMPLETE);
         tester.set_expected_output("dir1\\only ");
         tester.run();
     }
@@ -49,7 +49,7 @@ TEST_CASE("File match generator") {
     SECTION("Case mapping matches") {
         str_compare_scope _(str_compare_scope::relaxed);
 
-        tester.set_input("case-m\b");
+        tester.set_input("case-m" DO_COMPLETE);
         tester.set_expected_matches("case_map-1", "case_map_2");
         tester.set_expected_output("case_map");
         tester.run();

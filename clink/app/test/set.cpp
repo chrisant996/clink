@@ -40,7 +40,7 @@ TEST_CASE("Set command.") {
     }
 
     SECTION("Suffixed output") {
-        tester.set_input("set simp\b");
+        tester.set_input("set simp" DO_COMPLETE);
         tester.set_expected_output("set simple=");
         tester.run();
     }
