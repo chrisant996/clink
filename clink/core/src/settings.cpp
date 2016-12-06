@@ -161,11 +161,26 @@ setting::setting(
 : m_name(name)
 , m_short_desc(short_desc)
 , m_long_desc(long_desc ? long_desc : "")
-, m_next(g_setting_list)
-, m_prev(nullptr)
 , m_type(type)
 {
-    g_setting_list = this;
+    setting* insert_at = nullptr;
+    for (auto* i = g_setting_list; i != nullptr; insert_at = i, i = i->next())
+        if (stricmp(name, i->get_name()) < 0)
+            break;
+
+    if (insert_at == nullptr)
+    {
+        m_prev = nullptr;
+        m_next = g_setting_list;
+        g_setting_list = this;
+    }
+    else
+    {
+        m_next = insert_at->m_next;
+        m_prev = insert_at;
+        insert_at->m_next = this;
+    }
+
     if (m_next != nullptr)
         m_next->m_prev = this;
 }

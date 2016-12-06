@@ -11,7 +11,7 @@ TEST_CASE("settings : basic")
 {
     auto* first = settings::first();
     {
-        setting_bool test("one", "", "", false);
+        setting_bool test("!one", "", "", false);
         REQUIRE(settings::first() == &test);
     }
     REQUIRE(settings::first() == first);
@@ -22,42 +22,48 @@ TEST_CASE("settings : list")
 {
     auto* first = settings::first();
 
-    auto* one   = new setting_bool("one",   "", "", false);
-    auto* two   = new setting_bool("two",   "", "", false);
-    auto* three = new setting_bool("three", "", "", false);
-    auto* four  = new setting_bool("four",  "", "", false);
+    auto count_settings = [] () {
+        int count = 0;
+        for (auto* i = settings::first(); i != nullptr; i = i->next())
+            ++count;
 
-    // All
+        return count;
+    };
+
+    int initial_count = count_settings();
+
+    // Create a few settings.
+    const char* names[] = {
+        "sed", "do", "eiusmod", "tempor", "incididunt", "ut", "labore", "Et",
+        "Dolore", "Magna", "Aliqua", "Ut", "Enim", "Ad", "minim", "veniam",
+        "quis", "nostrud", "exercitation", "ullamco", "laboris"
+    };
+
+    for (int i = 0, n = sizeof_array(names); i < n; ++i)
+        new setting_int(names[i], "", nullptr, i);
+
+    // Check they're in the order we expect.
     setting* iter = settings::first();
-    REQUIRE(strcmp(iter->get_name(), "four") == 0); iter = iter->next();
-    REQUIRE(strcmp(iter->get_name(), "three") == 0); iter = iter->next();
-    REQUIRE(strcmp(iter->get_name(), "two") == 0); iter = iter->next();
-    REQUIRE(strcmp(iter->get_name(), "one") == 0); iter = iter->next();
-    REQUIRE(iter == first);
+    const char* last_name = iter->get_name();
+    iter = iter->next();
+    for (; iter != nullptr; last_name = iter->get_name(), iter = iter->next())
+    {
+        REQUIRE(stricmp(last_name, iter->get_name()) <= 0, [=] () {
+            printf("%s < %s\n", last_name, iter->get_name());
+        });
+    }
 
-    // Middle
-    delete three;
-    iter = settings::first();
-    REQUIRE(strcmp(iter->get_name(), "four") == 0); iter = iter->next();
-    REQUIRE(strcmp(iter->get_name(), "two") == 0); iter = iter->next();
-    REQUIRE(strcmp(iter->get_name(), "one") == 0); iter = iter->next();
-    REQUIRE(iter == first);
+    REQUIRE(count_settings() - initial_count == sizeof_array(names));
 
-    // End
-    delete one;
-    iter = settings::first();
-    REQUIRE(strcmp(iter->get_name(), "four") == 0); iter = iter->next();
-    REQUIRE(strcmp(iter->get_name(), "two") == 0); iter = iter->next();
-    REQUIRE(iter == first);
+    // Delete this tests' settings
+    for (int i = 0, n = sizeof_array(names); i < n; ++i)
+    {
+        auto* s = settings::find(names[i]);
+        REQUIRE(s != nullptr);
+        delete s;
+    }
 
-    // First
-    delete four;
-    iter = settings::first();
-    REQUIRE(strcmp(iter->get_name(), "two") == 0); iter = iter->next();
-    REQUIRE(iter == first);
-
-    // Last
-    delete two;
+    REQUIRE(count_settings() == initial_count);
     REQUIRE(settings::first() == first);
 }
 
