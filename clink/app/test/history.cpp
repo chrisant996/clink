@@ -8,8 +8,16 @@
 #include <rl/rl_history.h>
 
 //------------------------------------------------------------------------------
+extern "C" {
+char* tgetstr(char*, char**);
+}
+
+//------------------------------------------------------------------------------
+#define CTRL_A "\x01"
+#define CTRL_E "\x05"
 #define CTRL_N "\x0e"
 #define CTRL_P "\x10"
+#define CTRL_R "\x12"
 
 //------------------------------------------------------------------------------
 TEST_CASE("History") {
@@ -60,6 +68,42 @@ TEST_CASE("History") {
             tester.set_input(CTRL_P CTRL_P CTRL_P CTRL_P CTRL_N);
             tester.set_expected_output(history_lines[1]);
             tester.run();
+        }
+    }
+
+    SECTION("Search") {
+        line_editor_tester tester;
+
+        SECTION("Ctrl-R Ctrl-E") {
+            tester.set_input(CTRL_R "extra" CTRL_E);
+            tester.set_expected_output(history_lines[1]);
+            tester.run();
+        }
+
+        SECTION("Ctrl-R Ctrl-A") {
+            tester.set_input(CTRL_R "cmd1" CTRL_A);
+            tester.set_expected_output(history_lines[0]);
+            tester.run();
+        }
+
+        SECTION("Ctrl-R <Esc>") {
+            tester.set_input(CTRL_R "cmd2" "\x1b");
+            tester.set_expected_output(history_lines[1]);
+            tester.run();
+        }
+
+        SECTION("Ctrl-R <Home>") {
+            char* kh;
+            kh = tgetstr("kh", nullptr);
+
+            str<> input;
+            input << CTRL_R << "cmd2" << kh;
+
+            tester.set_input(input.c_str());
+            tester.set_expected_output(history_lines[1]);
+            tester.run();
+
+            free(kh);
         }
     }
 
