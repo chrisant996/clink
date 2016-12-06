@@ -73,7 +73,7 @@ static void print_history(unsigned int tail_count)
 
     str<> line;
     while (iter.next(line))
-        printf("%5d  %s\n", iter.get_index(), line.c_str());
+        printf("%5d  %s\n", iter.get_index() + 1, line.c_str());
 }
 
 //------------------------------------------------------------------------------
