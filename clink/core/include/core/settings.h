@@ -10,10 +10,12 @@ class setting;
 //------------------------------------------------------------------------------
 namespace settings
 {
-    setting*    first();
-    setting*    find(const char* name);
-    bool        load(const char* file);
-    bool        save(const char* file);
+
+setting*            first();
+setting*            find(const char* name);
+bool                load(const char* file);
+bool                save(const char* file);
+
 };
 
 
