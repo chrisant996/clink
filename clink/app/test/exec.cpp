@@ -153,7 +153,7 @@ TEST_CASE("Executable match generation.") {
 
             settings::find("exec.dirs")->set("1");
 
-            tester.set_input("one-\t");
+            tester.set_input("one-");
             tester.set_expected_matches("one_local.exe", "one_path.exe",
                 "one_two.py", "one_dir\\");
             tester.run();
@@ -239,7 +239,7 @@ TEST_CASE("Executable match generation.") {
             SECTION("False positive") {
                 tester.get_editor()->add_generator(file_match_generator());
 
-                tester.set_input("nullcmd \"&&\" o\t");
+                tester.set_input("nullcmd \"&&\" o");
                 tester.set_expected_matches("one_local.exe", "one_local.txt", "one_dir\\");
                 tester.run();
             }
