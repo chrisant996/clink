@@ -184,9 +184,9 @@ void line_editor_tester::run()
         char line[256];
         REQUIRE(m_editor->get_line(line, sizeof_array(line)));
         REQUIRE(strcmp(m_expected_output, line) == 0, [&] () {
-            printf("       input; %s\n", m_input);
-            printf("out expected; %s\n", m_expected_output);
-            printf("     out got; %s\n", line);
+            printf("       input; %s#\n", m_input);
+            printf("out expected; %s#\n", m_expected_output);
+            printf("     out got; %s#\n", line);
         });
     }
 
