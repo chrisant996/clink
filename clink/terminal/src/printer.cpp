@@ -123,3 +123,24 @@ attributes printer::get_attributes() const
 {
     return m_next_attr;
 }
+
+//------------------------------------------------------------------------------
+void printer::insert(int count)
+{
+}
+
+//------------------------------------------------------------------------------
+void printer::move_cursor(int dc, int dr)
+{
+}
+
+//------------------------------------------------------------------------------
+void printer::set_cursor(cursor_state state)
+{
+}
+
+//------------------------------------------------------------------------------
+printer::cursor_state printer::get_cursor() const
+{
+    return 0;
+}

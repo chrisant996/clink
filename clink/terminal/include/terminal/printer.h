@@ -21,6 +21,13 @@ public:
     attributes              set_attributes(const attributes attr);
     attributes              get_attributes() const;
 
+private: /* TODO: unimplemented API */
+    typedef unsigned int    cursor_state;
+    void                    insert(int count); // -count == delete characters.
+    void                    move_cursor(int dc, int dr);
+    void                    set_cursor(cursor_state state);
+    cursor_state            get_cursor() const;
+
 private:
     void                    flush_attributes();
     terminal_out&           m_terminal;
