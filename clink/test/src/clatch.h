@@ -180,5 +180,5 @@ void fail(const char* expr, const char* file, int line, CALLBACK&& cb)
         ++_clatch_s->m_assert_count;\
         \
         if (!(expr))\
-            clatch::fail(#expr, __FILE__, __LINE__, __VA_ARGS__);\
+            clatch::fail(#expr, __FILE__, __LINE__, ##__VA_ARGS__);\
     } while (0)
