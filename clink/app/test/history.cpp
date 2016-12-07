@@ -93,8 +93,8 @@ TEST_CASE("History") {
         }
 
         SECTION("Ctrl-R <Home>") {
-            char* kh;
-            kh = tgetstr("kh", nullptr);
+            char kh_cap[] = "kh";
+            char* kh = tgetstr(kh_cap, nullptr);
 
             str<> input;
             input << CTRL_R << "cmd2" << kh;
