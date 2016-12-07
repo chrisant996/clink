@@ -9,7 +9,7 @@
             VALUE "CompanyName",     "Martin Ridgers"
             VALUE "ProductName",     "Clink"
             VALUE "FileDescription", "Improved line editing for Windows' shells"
-            VALUE "ProductVersion",  CLINK_VERSION_STR "/" CLINK_COMMIT
+            VALUE "ProductVersion",  CLINK_VERSION_STR
         }
     }
     BLOCK "VarFileInfo" {
