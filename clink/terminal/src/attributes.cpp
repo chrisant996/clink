@@ -71,14 +71,14 @@ attributes attributes::diff(const attributes from, const attributes to)
 void attributes::reset_fg()
 {
     m_flags.fg = 1;
-    m_values.fg = ~0;
+    m_values.fg = 0x7fff;
 }
 
 //------------------------------------------------------------------------------
 void attributes::reset_bg()
 {
     m_flags.bg = 1;
-    m_values.bg = ~0;
+    m_values.bg = 0x7fff;
 }
 
 //------------------------------------------------------------------------------
