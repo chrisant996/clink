@@ -196,6 +196,13 @@ void line_editor_impl::update_input()
             module->on_terminal_resize(columns, rows, context);
     }
 
+    if (key == terminal_in::input_abort)
+    {
+        m_buffer.reset();
+        end_line();
+        return;
+    }
+
     if (key < 0)
         return;
 

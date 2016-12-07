@@ -46,6 +46,16 @@ static const char* const kfx[]   = {
 
 
 //------------------------------------------------------------------------------
+enum : unsigned char
+{
+    input_abort_byte    = 0xff,
+    input_none_byte     = 0xfe,
+    input_timeout_byte  = 0xfd,
+};
+
+
+
+//------------------------------------------------------------------------------
 static unsigned int get_dimensions()
 {
     CONSOLE_SCREEN_BUFFER_INFO csbi;
@@ -104,7 +114,14 @@ int win_terminal_in::read()
     if (!m_buffer_count)
         return terminal_in::input_none;
 
-    return pop();
+    unsigned char c = pop();
+    switch (c)
+    {
+    case input_none_byte:       return terminal_in::input_none;
+    case input_timeout_byte:    return terminal_in::input_timeout;
+    case input_abort_byte:      return terminal_in::input_abort;
+    default:                    return c;
+    }
 }
 
 //------------------------------------------------------------------------------
@@ -152,7 +169,10 @@ void win_terminal_in::read_console()
         INPUT_RECORD record;
         if (!ReadConsoleInputW(m_stdin, &record, 1, &count))
         {
-            /* TODO: killing conhost.exe causes cmd.exe to spin up */
+            // Handle's probably invalid if ReadConsoleInput() failed.
+            m_buffer_count = 1;
+            m_buffer[0] = input_abort_byte;
+            return;
         }
 
         switch (record.EventType)
@@ -354,7 +374,7 @@ void win_terminal_in::push(unsigned int value)
 unsigned char win_terminal_in::pop()
 {
     if (!m_buffer_count)
-        return 0xff;
+        return input_none_byte;
 
     unsigned char value = m_buffer[m_buffer_head];
 

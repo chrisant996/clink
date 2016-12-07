@@ -17,19 +17,24 @@ extern "C" {
 }
 
 //------------------------------------------------------------------------------
-static FILE*    null_stream = (FILE*)1;
-void            show_rl_help(printer&);
+static FILE*        null_stream = (FILE*)1;
+void                show_rl_help(printer&);
+static const int    RL_MORE_INPUT_STATES = ~(
+                        RL_STATE_CALLBACK|
+                        RL_STATE_INITIALIZED|
+                        RL_STATE_OVERWRITE|
+                        RL_STATE_VICMDONCE);
 
 extern "C" {
-extern void     (*rl_fwrite_function)(FILE*, const char*, int);
-extern void     (*rl_fflush_function)(FILE*);
-extern char*    _rl_comment_begin;
-extern int      _rl_convert_meta_chars_to_ascii;
-extern int      _rl_output_meta_chars;
+extern void         (*rl_fwrite_function)(FILE*, const char*, int);
+extern void         (*rl_fflush_function)(FILE*);
+extern char*        _rl_comment_begin;
+extern int          _rl_convert_meta_chars_to_ascii;
+extern int          _rl_output_meta_chars;
 #if defined(PLATFORM_WINDOWS)
-extern int      _rl_vis_botlin;
-extern int      _rl_last_c_pos;
-extern int      _rl_last_v_pos;
+extern int          _rl_vis_botlin;
+extern int          _rl_last_c_pos;
+extern int          _rl_last_v_pos;
 #endif
 } // extern "C"
 
@@ -202,6 +207,9 @@ void rl_module::on_end_line()
         rl_line_buffer = m_rl_buffer;
         m_rl_buffer = nullptr;
     }
+
+    // This prevents any partial Readline state leaking from one line to the next
+    rl_readline_state &= ~RL_MORE_INPUT_STATES;
 }
 
 //------------------------------------------------------------------------------
@@ -254,12 +262,7 @@ void rl_module::on_input(const input& input, result& result, const context& cont
     }
 
     // Check if Readline want's more input or if we're done.
-    int rl_state = rl_readline_state;
-    rl_state &= ~RL_STATE_CALLBACK;
-    rl_state &= ~RL_STATE_INITIALIZED;
-    rl_state &= ~RL_STATE_OVERWRITE;
-    rl_state &= ~RL_STATE_VICMDONCE;
-    if (rl_state)
+    if (rl_readline_state & RL_MORE_INPUT_STATES)
     {
         if (m_prev_group < 0)
             m_prev_group = result.set_bind_group(m_catch_group);

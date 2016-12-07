@@ -9,6 +9,8 @@ class terminal_in
 public:
     enum {
         input_none              = 0x80000000,
+        input_timeout,
+        input_abort,
         input_terminal_resize,
     };
 
