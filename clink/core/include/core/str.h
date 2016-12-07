@@ -32,46 +32,48 @@ template <typename TYPE>
 class str_impl
 {
 public:
-    typedef TYPE    char_t;
+    typedef TYPE        char_t;
 
-                    str_impl(TYPE* data, unsigned int size);
-                    str_impl(const str_impl&) = delete;
-                    ~str_impl();
-    void            attach(TYPE* data, unsigned int size);
-    bool            reserve(unsigned int size);
-    TYPE*           data();
-    const TYPE*     c_str() const;
-    unsigned int    size() const;
-    bool            is_growable() const;
-    unsigned int    length() const;
-    unsigned int    char_count() const;
-    void            clear();
-    bool            empty() const;
-    void            truncate(unsigned int length);
-    int             first_of(int c) const;
-    int             last_of(int c) const;
-    bool            equals(const TYPE* rhs) const;
-    bool            iequals(const TYPE* rhs) const;
-    bool            copy(const TYPE* src);
-    bool            concat(const TYPE* src, int n=-1);
-    bool            format(const TYPE* format, ...);
-    TYPE            operator [] (unsigned int i) const;
-    str_impl&       operator << (const TYPE* rhs);
-    str_impl&       operator << (const str_impl& rhs);
-    void            operator = (const str_impl&) = delete;
+                        str_impl(TYPE* data, unsigned int size);
+                        str_impl(const str_impl&) = delete;
+                        ~str_impl();
+    void                attach(TYPE* data, unsigned int size);
+    bool                reserve(unsigned int size);
+    TYPE*               data();
+    const TYPE*         c_str() const;
+    unsigned int        size() const;
+    bool                is_growable() const;
+    unsigned int        length() const;
+    unsigned int        char_count() const;
+    void                clear();
+    bool                empty() const;
+    void                truncate(unsigned int length);
+    int                 first_of(int c) const;
+    int                 last_of(int c) const;
+    bool                equals(const TYPE* rhs) const;
+    bool                iequals(const TYPE* rhs) const;
+    bool                copy(const TYPE* src);
+    bool                concat(const TYPE* src, int n=-1);
+    bool                format(const TYPE* format, ...);
+    TYPE                operator [] (unsigned int i) const;
+    str_impl&           operator << (const TYPE* rhs);
+    template <int I>
+    str_impl&           operator << (const TYPE (&rhs)[I]);
+    str_impl&           operator << (const str_impl& rhs);
+    void                operator = (const str_impl&) = delete;
 
 protected:
-    void            set_growable(bool state=true);
+    void                set_growable(bool state=true);
 
 private:
     typedef unsigned short ushort;
 
-    void            free_data();
-    TYPE*           m_data;
-    ushort          m_size : 15;
-    ushort          m_growable : 1;
-    mutable ushort  m_length : 15;
-    ushort          m_owns_ptr : 1;
+    void                free_data();
+    TYPE*               m_data;
+    ushort              m_size : 15;
+    ushort              m_growable : 1;
+    mutable ushort      m_length : 15;
+    ushort              m_owns_ptr : 1;
 };
 
 //------------------------------------------------------------------------------
@@ -313,6 +315,14 @@ template <typename TYPE>
 str_impl<TYPE>& str_impl<TYPE>::operator << (const TYPE* rhs)
 {
     concat(rhs);
+    return *this;
+}
+
+//------------------------------------------------------------------------------
+template <typename TYPE> template <int I>
+str_impl<TYPE>& str_impl<TYPE>::operator << (const TYPE (&rhs)[I])
+{
+    concat(rhs.c_str(), I);
     return *this;
 }
 
