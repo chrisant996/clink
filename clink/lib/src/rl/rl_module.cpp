@@ -230,12 +230,22 @@ void rl_module::on_input(const input& input, result& result, const context& cont
     } term_in;
              
     term_in.data = input.keys;
-
     rl_instream = (FILE*)(&term_in);
 
     // Call Readline's until there's no characters left.
+    int is_inc_searching = rl_readline_state & RL_STATE_ISEARCH;
     while (*term_in.data && !m_done)
+    {
         rl_callback_read_char();
+
+        // Internally Readline tries to resend escape characters but it doesn't
+        // work with how Clink uses Readline. So we do it here instead.
+        if (term_in.data[-1] == 0x1b && is_inc_searching)
+        {
+            --term_in.data;
+            is_inc_searching = 0;
+        }
+    }
 
     if (m_done)
     {
