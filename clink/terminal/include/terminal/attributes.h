@@ -46,9 +46,9 @@ public:
                 unsigned short  is_rgb : 1;
             };
             unsigned short      value;
-
         };
-        bool operator == (const colour& rhs) const { return value == rhs.value; }
+
+        bool                    operator == (const colour& rhs) const { return value == rhs.value; }
     };
 
     template <typename T>
