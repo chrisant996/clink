@@ -50,7 +50,7 @@ TEST_CASE("attributes : merge") {
     attr_a.set_fg(5);
     test_merge([] (int pass, attributes merged) {
         REQUIRE(merged.get_fg());
-        REQUIRE(merged.get_fg().value.value == 5);
+        REQUIRE(merged.get_fg()->value == 5);
         REQUIRE(!merged.get_bg());
     });
 
@@ -58,7 +58,7 @@ TEST_CASE("attributes : merge") {
     attr_a.set_bg(6);
     test_merge([] (int pass, attributes merged) {
         REQUIRE(merged.get_bg());
-        REQUIRE(merged.get_bg().value.value == 6);
+        REQUIRE(merged.get_bg()->value == 6);
         REQUIRE(!merged.get_fg());
     });
 
@@ -78,7 +78,7 @@ TEST_CASE("attributes : merge") {
     attr_b.reset_bg();
     test_merge([] (int pass, attributes merged) {
         REQUIRE(merged.get_fg());
-        REQUIRE(merged.get_fg().value.value == 14);
+        REQUIRE(merged.get_fg()->value == 14);
         REQUIRE(merged.get_bg());
         REQUIRE(merged.get_bg().is_default);
         REQUIRE(merged.get_bold());
@@ -93,7 +93,7 @@ TEST_CASE("attributes : merge") {
     test_merge([] (int pass, attributes merged) {
         auto fg = merged.get_fg();
         REQUIRE(fg);
-        REQUIRE(fg.value.value == (pass ? 12 : 13));
+        REQUIRE(fg->value == (pass ? 12 : 13));
 
         auto bold = merged.get_bold();
         REQUIRE(bold);
@@ -112,6 +112,6 @@ TEST_CASE("attributes : diff") {
     diff = attributes::diff(attributes::defaults, attr_a);
     REQUIRE(diff != attributes::defaults);
     REQUIRE(diff.get_fg());
-    REQUIRE(diff.get_fg().value.value == 1);
+    REQUIRE(diff.get_fg()->value == 1);
     REQUIRE(!diff.get_bg());
 }

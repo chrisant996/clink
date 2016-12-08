@@ -55,6 +55,7 @@ public:
     struct attribute
     {
         explicit                operator bool () const  { return bool(set); }
+        const T*                operator -> () const { return &value; }
         const T                 value;
         const unsigned char     set : 1;
         const unsigned char     is_default : 1;
