@@ -80,8 +80,8 @@ void printer::flush_attributes()
             if (!fg.is_default)
             {
                 char x[] = "30";
-                x[0] += (fg.value > 7) ? 6 : 0;
-                x[1] += fg.value & 0x07;
+                x[0] += (fg.value.value > 7) ? 6 : 0;
+                x[1] += fg.value.value & 0x07;
                 add_param(x);
             }
             else
@@ -93,9 +93,9 @@ void printer::flush_attributes()
             if (!bg.is_default)
             {
                 char x[] = "100";
-                x[1] += (bg.value > 7) ? 0 : 4;
-                x[2] += bg.value & 0x07;
-                add_param((bg.value > 7) ? x : x + 1);
+                x[1] += (bg.value.value > 7) ? 0 : 4;
+                x[2] += bg.value.value & 0x07;
+                add_param((bg.value.value > 7) ? x : x + 1);
             }
             else
                 add_param("49");

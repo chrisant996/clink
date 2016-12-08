@@ -16,10 +16,14 @@ TEST_CASE("attributes : empty") {
 
 TEST_CASE("attributes : default") {
     attributes attr = attributes::defaults;
-    REQUIRE(attr.get_fg());         REQUIRE(attr.get_fg().is_default);
-    REQUIRE(attr.get_bg());         REQUIRE(attr.get_bg().is_default);
-    REQUIRE(attr.get_bold());       REQUIRE(attr.get_bold().value == 0);
-    REQUIRE(attr.get_underline());  REQUIRE(attr.get_underline().value == 0);
+    REQUIRE(attr.get_fg());
+    REQUIRE(attr.get_fg().is_default);
+    REQUIRE(attr.get_bg());
+    REQUIRE(attr.get_bg().is_default);
+    REQUIRE(attr.get_bold());
+    REQUIRE(attr.get_bold().value == 0);
+    REQUIRE(attr.get_underline());
+    REQUIRE(attr.get_underline().value == 0);
 }
 
 TEST_CASE("attributes : merge") {
@@ -36,21 +40,25 @@ TEST_CASE("attributes : merge") {
     attr_a = attributes();
     attr_b = attributes::defaults;
     test_merge([] (int pass, attributes merged) {
-        REQUIRE(merged.get_fg());   REQUIRE(merged.get_fg().is_default);
-        REQUIRE(merged.get_bg());   REQUIRE(merged.get_bg().is_default);
+        REQUIRE(merged.get_fg());
+        REQUIRE(merged.get_fg().is_default);
+        REQUIRE(merged.get_bg());
+        REQUIRE(merged.get_bg().is_default);
     });
 
     attr_a = attr_b = attributes();
     attr_a.set_fg(5);
     test_merge([] (int pass, attributes merged) {
-        REQUIRE(merged.get_fg());   REQUIRE(merged.get_fg().value == 5);
+        REQUIRE(merged.get_fg());
+        REQUIRE(merged.get_fg().value.value == 5);
         REQUIRE(!merged.get_bg());
     });
 
     attr_a = attr_b = attributes();
     attr_a.set_bg(6);
     test_merge([] (int pass, attributes merged) {
-        REQUIRE(merged.get_bg());   REQUIRE(merged.get_bg().value == 6);
+        REQUIRE(merged.get_bg());
+        REQUIRE(merged.get_bg().value.value == 6);
         REQUIRE(!merged.get_fg());
     });
 
@@ -58,8 +66,10 @@ TEST_CASE("attributes : merge") {
     attr_a.set_bold(true);
     attr_a.set_underline(false);
     test_merge([] (int pass, attributes merged) {
-        REQUIRE(merged.get_bold());       REQUIRE(merged.get_bold().value == 1);
-        REQUIRE(merged.get_underline());  REQUIRE(merged.get_underline().value == 0);
+        REQUIRE(merged.get_bold());
+        REQUIRE(merged.get_bold().value == true);
+        REQUIRE(merged.get_underline());
+        REQUIRE(merged.get_underline().value == false);
     });
 
     attr_a = attr_b = attributes();
@@ -67,9 +77,12 @@ TEST_CASE("attributes : merge") {
     attr_a.set_bold(false);
     attr_b.reset_bg();
     test_merge([] (int pass, attributes merged) {
-        REQUIRE(merged.get_fg());   REQUIRE(merged.get_fg().value == 14);
-        REQUIRE(merged.get_bg());   REQUIRE(merged.get_bg().is_default);
-        REQUIRE(merged.get_bold()); REQUIRE(merged.get_bold().value == 0);
+        REQUIRE(merged.get_fg());
+        REQUIRE(merged.get_fg().value.value == 14);
+        REQUIRE(merged.get_bg());
+        REQUIRE(merged.get_bg().is_default);
+        REQUIRE(merged.get_bold());
+        REQUIRE(merged.get_bold().value == false);
     });
 
     attr_a = attr_b = attributes();
@@ -80,11 +93,11 @@ TEST_CASE("attributes : merge") {
     test_merge([] (int pass, attributes merged) {
         auto fg = merged.get_fg();
         REQUIRE(fg);
-        REQUIRE(fg.value == (pass ? 12 : 13));
+        REQUIRE(fg.value.value == (pass ? 12 : 13));
 
         auto bold = merged.get_bold();
         REQUIRE(bold);
-        REQUIRE(bold.value == (pass ? 1 : 0));
+        REQUIRE(bold.value == !!pass);
     });
 }
 
@@ -99,6 +112,6 @@ TEST_CASE("attributes : diff") {
     diff = attributes::diff(attributes::defaults, attr_a);
     REQUIRE(diff != attributes::defaults);
     REQUIRE(diff.get_fg());
-    REQUIRE(diff.get_fg().value == 1);
+    REQUIRE(diff.get_fg().value.value == 1);
     REQUIRE(!diff.get_bg());
 }

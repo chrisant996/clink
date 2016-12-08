@@ -34,12 +34,30 @@ enum : unsigned char
 class attributes
 {
 public:
+    struct colour
+    {
+        union
+        {
+            struct
+            {
+                unsigned short  r : 5;
+                unsigned short  g : 5;
+                unsigned short  b : 5;
+                unsigned short  is_rgb : 1;
+            };
+            unsigned short      value;
+
+        };
+        bool operator == (const colour& rhs) const { return value == rhs.value; }
+    };
+
+    template <typename T>
     struct attribute
     {
         explicit                operator bool () const  { return bool(set); }
-        unsigned short          value;
-        unsigned short          set : 1;
-        unsigned short          is_default : 1;
+        const T                 value;
+        const unsigned char     set : 1;
+        const unsigned char     is_default : 1;
     };
 
     enum default_e { defaults };
@@ -54,12 +72,14 @@ public:
     void                        reset_bg();
     void                        set_fg(unsigned char value);
     void                        set_bg(unsigned char value);
+    void                        set_fg(unsigned char r, unsigned char g, unsigned char b);
+    void                        set_bg(unsigned char r, unsigned char g, unsigned char b);
     void                        set_bold(bool state=true);
     void                        set_underline(bool state=true);
-    attribute                   get_fg() const;
-    attribute                   get_bg() const;
-    attribute                   get_bold() const;
-    attribute                   get_underline() const;
+    attribute<colour>           get_fg() const;
+    attribute<colour>           get_bg() const;
+    attribute<bool>             get_bold() const;
+    attribute<bool>             get_underline() const;
 
 private:
     union flags
@@ -74,20 +94,16 @@ private:
         unsigned char           all;
     };
 
-    struct values
-    {
-        unsigned short          fg : 15;
-        unsigned short          bold : 1;
-        unsigned short          bg : 15;
-        unsigned short          underline : 1;
-    };
-
     union
     {
         struct
         {
-            values              m_values;
+            colour              m_fg;
+            colour              m_bg;
+            unsigned short      m_bold : 1;
+            unsigned short      m_underline : 1;
             flags               m_flags;
+            unsigned char       m_unused;
         };
         unsigned long long      m_state;
     };

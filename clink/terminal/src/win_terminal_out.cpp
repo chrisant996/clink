@@ -122,7 +122,7 @@ void win_terminal_out::set_attributes(const attributes attr)
     bool bold = m_bold;
     if (auto fg = attr.get_fg())
     {
-        int value = fg.is_default ? m_default_attr : swizzle(fg.value);
+        int value = fg.is_default ? m_default_attr : swizzle(fg.value.value);
         value &= attr_mask_fg;
         out_attr = (out_attr & attr_mask_bg) | value;
         bold |= (value > 7);
@@ -138,7 +138,7 @@ void win_terminal_out::set_attributes(const attributes attr)
     // Background colour
     if (auto bg = attr.get_bg())
     {
-        int value = bg.is_default ? m_default_attr : (swizzle(bg.value) << 4);
+        int value = bg.is_default ? m_default_attr : (swizzle(bg.value.value) << 4);
         out_attr = (out_attr & attr_mask_fg) | (value & attr_mask_bg);
     }
 
