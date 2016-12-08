@@ -99,6 +99,31 @@ TEST_CASE("attributes : merge") {
         REQUIRE(bold);
         REQUIRE(bold.value == !!pass);
     });
+
+    unsigned char rgb[] = { 0, 127, 255, 0 };
+    attr_a = attr_b = attributes::defaults;
+    attr_a.set_fg(rgb[0], rgb[1], rgb[2]);
+    attr_a.set_bg(rgb[1], rgb[2], rgb[3]);
+
+    test_merge([] (int pass, attributes merged) {
+        const auto fg = merged.get_fg(), bg = merged.get_bg();
+
+        REQUIRE(fg);
+        REQUIRE(fg.is_default == !pass);
+        REQUIRE(bg);
+        REQUIRE(bg.is_default == !pass);
+
+        if (pass)
+        {
+            unsigned char rgb[] = { 0, 127, 255, 0 };
+            REQUIRE(fg->r == rgb[0] >> 3);
+            REQUIRE(fg->g == rgb[1] >> 3);
+            REQUIRE(fg->b == rgb[2] >> 3);
+            REQUIRE(bg->r == rgb[1] >> 3);
+            REQUIRE(bg->g == rgb[2] >> 3);
+            REQUIRE(bg->b == rgb[3] >> 3);
+        }
+    });
 }
 
 TEST_CASE("attributes : diff") {
