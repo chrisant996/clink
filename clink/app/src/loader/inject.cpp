@@ -100,27 +100,25 @@ static int do_inject(DWORD target_pid)
 }
 
 //------------------------------------------------------------------------------
-static int is_clink_present(DWORD target_pid)
+static bool is_clink_present(DWORD target_pid)
 {
-    int ret;
-    BOOL ok;
-    MODULEENTRY32 module_entry;
-
     HANDLE th32 = CreateToolhelp32Snapshot(TH32CS_SNAPMODULE, target_pid);
     if (th32 == INVALID_HANDLE_VALUE)
     {
         LOG("Failed to snapshot module state.");
-        return 0;
+        return false;
     }
 
-    ret = 0;
-    ok = Module32First(th32, &module_entry);
+    bool ret = false;
+
+    MODULEENTRY32 module_entry = { sizeof(module_entry) };
+    BOOL ok = Module32First(th32, &module_entry);
     while (ok != FALSE)
     {
         if (_stricmp(module_entry.szModule, CLINK_DLL) == 0)
         {
             LOG("Clink already installed in process.");
-            ret = 1;
+            ret = true;
             break;
         }
 
