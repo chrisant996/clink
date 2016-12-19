@@ -110,6 +110,9 @@ function _argmatcher._new()
 end
 
 --------------------------------------------------------------------------------
+--- -name:  _argmatcher:addarg
+--- -arg:   choices...:string
+--- -ret:   self
 function _argmatcher:addarg(...)
     local list = { _links = {} }
     self:_add(list, {...})
@@ -118,6 +121,9 @@ function _argmatcher:addarg(...)
 end
 
 --------------------------------------------------------------------------------
+--- -name:  _argmatcher:addflags
+--- -arg:   flags...:string
+--- -ret:   self
 function _argmatcher:addflags(...)
     local flag_matcher = self._flags or _argmatcher()
     local list = flag_matcher._args[1] or { _links = {} }
@@ -129,12 +135,18 @@ function _argmatcher:addflags(...)
 end
 
 --------------------------------------------------------------------------------
+--- -name:  _argmatcher:loop
+--- -arg:   [index:integer]
+--- -ret:   self
 function _argmatcher:loop(index)
     self._loop = index or -1
     return self
 end
 
 --------------------------------------------------------------------------------
+--- -name:  _argmatcher:setflagprefix
+--- -arg:   [prefixes...:string]
+--- -ret:   self
 function _argmatcher:setflagprefix(...)
     local input = {...}
     if #input > 0 then
@@ -150,6 +162,8 @@ function _argmatcher:setflagprefix(...)
 end
 
 --------------------------------------------------------------------------------
+--- -name:  _argmatcher:nofiles
+--- -ret:   self
 function _argmatcher:nofiles()
     self._no_file_generation = true
     return self
@@ -291,6 +305,10 @@ clink = clink or {}
 local _argmatchers = {}
 
 --------------------------------------------------------------------------------
+--- -name:  clink.argmatcher
+--- -arg:   [priority:integer]
+--- -arg:   commands...:string
+--- -ret:   argmatcher
 function clink.argmatcher(...)
     local matcher = _argmatcher()
 

@@ -43,6 +43,9 @@ function clink._filter_prompt(prompt)
 end
 
 --------------------------------------------------------------------------------
+--- -name:  clink.promptfilter
+--- -arg:   [priority:integer]
+--- -ret:   table
 function clink.promptfilter(priority)
     if priority == nil then priority = 999 end
 

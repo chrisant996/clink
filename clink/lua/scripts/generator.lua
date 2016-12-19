@@ -70,6 +70,9 @@ function clink._get_prefix_length(word)
 end
 
 --------------------------------------------------------------------------------
+--- -name:  clink.generator
+--- -arg:   [priority:integer]
+--- -ret:   table
 function clink.generator(priority)
     if priority == nil then priority = 999 end
 
