@@ -8,7 +8,7 @@ local special_env_vars = {
 }
 
 --------------------------------------------------------------------------------
-local envvar_generator = clink:generator(10)
+local envvar_generator = clink.generator(10)
 
 function envvar_generator:generate(line_state, match_builder)
     local word = line_state:getendword()

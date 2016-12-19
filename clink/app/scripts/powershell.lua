@@ -1,7 +1,7 @@
 -- Copyright (c) 2013 Martin Ridgers
 -- License: http://opensource.org/licenses/MIT
 
-local powershell_prompt = clink:promptfilter(-493)
+local powershell_prompt = clink.promptfilter(-493)
 
 --------------------------------------------------------------------------------
 function powershell_prompt:filter(prompt)

@@ -24,10 +24,10 @@ TEST_CASE("Lua arg parsers.") {
 
     SECTION("Main") {
         const char* script = "\
-            s = clink:argmatcher():addarg('one', 'two') \
-            r = clink:argmatcher():addarg('five', 'six'):loop() \
-            q = clink:argmatcher():addarg('four' .. r) \
-            clink:argmatcher('argcmd'):addarg(\
+            s = clink.argmatcher():addarg('one', 'two') \
+            r = clink.argmatcher():addarg('five', 'six'):loop() \
+            q = clink.argmatcher():addarg('four' .. r) \
+            clink.argmatcher('argcmd'):addarg(\
                 'one',\
                 'two',\
                 'three' .. q,\
@@ -233,12 +233,12 @@ TEST_CASE("Lua arg parsers.") {
 
     SECTION("File matching control.") {
         const char* script = "\
-            q = clink:argmatcher('argcmd_file_empty') \
-            p = clink:argmatcher('argcmd_file')\
+            q = clink.argmatcher('argcmd_file_empty') \
+            p = clink.argmatcher('argcmd_file')\
             :addarg(\
                 'true',\
-                'sub_parser_1' .. clink:argmatcher():nofiles(),\
-                'sub_parser_2' .. clink:argmatcher(),\
+                'sub_parser_1' .. clink.argmatcher():nofiles(),\
+                'sub_parser_2' .. clink.argmatcher(),\
                 'this_parser'\
             )\
         ";
@@ -280,8 +280,8 @@ TEST_CASE("Lua arg parsers.") {
 
     SECTION("Tables 1") {
         const char* script = "\
-            q = clink:argmatcher():addarg('four', 'five') \
-            clink:argmatcher('argcmd_substr'):addarg(\
+            q = clink.argmatcher():addarg('four', 'five') \
+            clink.argmatcher('argcmd_substr'):addarg(\
                 { 'one', 'onetwo', 'onethree' } .. q\
             )\
         ";
@@ -305,8 +305,8 @@ TEST_CASE("Lua arg parsers.") {
         const char* script = "\
             local tbl_1 = { 'one', 'two', 'three' }\
             local tbl_2 = { 'four', 'five', tbl_1 }\
-            q = clink:argmatcher():addarg('fifth', tbl_2) \
-            clink:argmatcher('argcmd_nested'):addarg({'once', tbl_1 } .. q)\
+            q = clink.argmatcher():addarg('fifth', tbl_2) \
+            clink.argmatcher('argcmd_nested'):addarg({'once', tbl_1 } .. q)\
         ";
 
         REQUIRE(lua.do_string(script));
@@ -326,7 +326,7 @@ TEST_CASE("Lua arg parsers.") {
 
     SECTION("Looping") {
         const char* script = "\
-            clink:argmatcher('argcmd_parser')\
+            clink.argmatcher('argcmd_parser')\
             :addarg('two', 'three')\
             :addarg('four', 'banana')\
             :loop()\
@@ -355,11 +355,11 @@ TEST_CASE("Lua arg parsers.") {
 
     SECTION("Flags") {
         const char* script = "\
-            p = clink:argmatcher('argcmd_flags_s')\
+            p = clink.argmatcher('argcmd_flags_s')\
             :addflags('/one', '/two', '/twenty')\
             :setflagprefix('/')\
             \
-            clink:argmatcher('argcmd_flags_d')\
+            clink.argmatcher('argcmd_flags_d')\
             :addflags('-one', '-two', '-twenty')\
         ";
 
@@ -430,9 +430,9 @@ TEST_CASE("Lua arg parsers.") {
 
     SECTION("Skip") {
         const char* script = "\
-            q = clink:argmatcher():addarg('two', 'three')\
+            q = clink.argmatcher():addarg('two', 'three')\
             \
-            p = clink:argmatcher('argcmd_skip')\
+            p = clink.argmatcher('argcmd_skip')\
             :addarg('one')\
             :addarg('nine')\
             :addflags('-flag_a' .. q, '-flag_b' .. q)\
@@ -461,10 +461,10 @@ TEST_CASE("Lua arg parsers.") {
 
     SECTION("Shorthand") {
         const char* script = "\
-            clink:argmatcher('argcmd_shorthand')\
+            clink.argmatcher('argcmd_shorthand')\
                 { 'one', 'two', 'three' }\
                 { 'four', 'five' }\
-                { '-flag' .. clink:argmatcher() { 'red', 'green', 'blue'} }\
+                { '-flag' .. clink.argmatcher() { 'red', 'green', 'blue'} }\
         ";
 
         REQUIRE(lua.do_string(script));

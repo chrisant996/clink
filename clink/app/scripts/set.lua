@@ -2,7 +2,7 @@
 -- License: http://opensource.org/licenses/MIT
 
 --------------------------------------------------------------------------------
-clink:argmatcher("set"):addarg(
+clink.argmatcher("set"):addarg(
     function ()
         local ret = {}
         for _, i in ipairs(os.getenvnames()) do

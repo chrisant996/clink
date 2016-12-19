@@ -2,17 +2,17 @@
 -- License: http://opensource.org/licenses/MIT
 
 --------------------------------------------------------------------------------
-local nothing = clink:argmatcher()
+local nothing = clink.argmatcher()
 
 --------------------------------------------------------------------------------
-local inject = clink:argmatcher()
+local inject = clink.argmatcher()
 :addflags("--help", "--pid", "--profile", "--quiet", "--nolog")
 
 --------------------------------------------------------------------------------
-local autorun_dashdash = clink:argmatcher()
+local autorun_dashdash = clink.argmatcher()
 :addarg("--" .. inject)
 
-local autorun = clink:argmatcher()
+local autorun = clink.argmatcher()
 :addflags("--allusers", "--help")
 :addarg(
     "install"   .. autorun_dashdash,
@@ -36,13 +36,13 @@ local function set_handler(word_index, line_state)
     return ret
 end
 
-local set = clink:argmatcher()
+local set = clink.argmatcher()
 :addflags("--help")
 :addarg(set_handler)
 :addarg(set_handler)
 
 --------------------------------------------------------------------------------
-local history = clink:argmatcher()
+local history = clink.argmatcher()
 :addflags("--help")
 :addarg(
     "add",
@@ -52,7 +52,7 @@ local history = clink:argmatcher()
 )
 
 --------------------------------------------------------------------------------
-clink:argmatcher(
+clink.argmatcher(
     "clink",
     "clink_x86.exe",
     "clink_x64.exe")

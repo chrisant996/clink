@@ -287,10 +287,11 @@ end
 
 
 --------------------------------------------------------------------------------
-clink._argmatchers = {}
+clink = clink or {}
+local _argmatchers = {}
 
 --------------------------------------------------------------------------------
-function clink:argmatcher(...)
+function clink.argmatcher(...)
     local matcher = _argmatcher()
 
     -- Extract priority from the arguments.
@@ -303,7 +304,7 @@ function clink:argmatcher(...)
 
     -- Register the argmatcher
     for _, i in ipairs(input) do
-        self._argmatchers[i:lower()] = matcher
+        _argmatchers[i:lower()] = matcher
     end
 
     return matcher
@@ -312,7 +313,7 @@ end
 
 
 --------------------------------------------------------------------------------
-local argmatcher_generator = clink:generator(24)
+local argmatcher_generator = clink.generator(24)
 
 --------------------------------------------------------------------------------
 function argmatcher_generator:generate(line_state, match_builder)
@@ -330,7 +331,7 @@ function argmatcher_generator:generate(line_state, match_builder)
     }
 
     for _, key in ipairs(argmatcher_keys) do
-        local argmatcher = clink._argmatchers[key]
+        local argmatcher = _argmatchers[key]
         if argmatcher then
             return argmatcher:_generate(line_state, match_builder)
         end
@@ -344,7 +345,7 @@ function argmatcher_generator:getprefixlength(word)
     -- TODO: This should really take a line_state object and query _is_flags()
     -- for the correct argmatcher for the given line.
 
-    for _, argmatcher in pairs(clink._argmatchers) do
+    for _, argmatcher in pairs(_argmatchers) do
         if argmatcher._flags and argmatcher:_is_flag(word) then
             return 1
         end

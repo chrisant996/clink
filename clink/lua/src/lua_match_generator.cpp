@@ -48,15 +48,13 @@ bool lua_match_generator::generate(const line_state& line, match_builder& builde
     lua_pushliteral(state, "_generate");
     lua_rawget(state, -2);
 
-    lua_getglobal(state, "clink");
-
     line_state_lua line_lua(line);
     line_lua.push(state);
 
     match_builder_lua builder_lua(builder);
     builder_lua.push(state);
 
-    if (lua_pcall(state, 3, 1, 0) != 0)
+    if (lua_pcall(state, 2, 1, 0) != 0)
     {
         if (const char* error = lua_tostring(state, -1))
             print_error(error);
@@ -81,10 +79,9 @@ int lua_match_generator::get_prefix_length(const char* start, int length) const
     lua_pushliteral(state, "_get_prefix_length");
     lua_rawget(state, -2);
 
-    lua_getglobal(state, "clink");
     lua_pushlstring(state, start, length);
 
-    if (lua_pcall(state, 2, 1, 0) != 0)
+    if (lua_pcall(state, 1, 1, 0) != 0)
     {
         if (const char* error = lua_tostring(state, -1))
             print_error(error);

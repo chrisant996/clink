@@ -2,7 +2,7 @@
 -- License: http://opensource.org/licenses/MIT
 
 --------------------------------------------------------------------------------
-clink:argmatcher("cd", "chdir", "pushd", "rd", "rmdir", "md", "mkdir"):addarg(
+clink.argmatcher("cd", "chdir", "pushd", "rd", "rmdir", "md", "mkdir"):addarg(
     function (word_index, line_state)
         local word = line_state:getword(word_index)
         local matches = {}
