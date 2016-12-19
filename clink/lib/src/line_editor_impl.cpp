@@ -16,6 +16,14 @@
 #include <terminal/terminal_out.h>
 
 //------------------------------------------------------------------------------
+inline char get_closing_quote(const char* quote_pair)
+{
+    return quote_pair[1] ? quote_pair[1] : quote_pair[0];
+}
+
+
+
+//------------------------------------------------------------------------------
 line_editor* line_editor_create(const line_editor::desc& desc)
 {
     // Check there's at least a terminal.
@@ -356,7 +364,7 @@ void line_editor_impl::collect_words()
         int start_quoted = (start[0] == m_desc.quote_pair[0]);
         int end_quoted = 0;
         if (word.length > 1)
-            end_quoted = (start[word.length - 1] == m_desc.quote_pair[0]);
+            end_quoted = (start[word.length - 1] == get_closing_quote(m_desc.quote_pair));
 
         word.offset += start_quoted;
         word.length -= start_quoted + end_quoted;
@@ -442,8 +450,7 @@ void line_editor_impl::accept_match(unsigned int index)
         // did not come from the match.
         if (needs_quote && !match_suffix)
         {
-            const char* q = m_desc.quote_pair;
-            char quote[2] = { q[1] ? q[1] : q[0] };
+            char quote[2] = { get_closing_quote(m_desc.quote_pair) };
             m_buffer.insert(quote);
         }
 
