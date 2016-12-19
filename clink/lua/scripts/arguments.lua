@@ -272,12 +272,18 @@ function _argmatcher:_generate(line_state, match_builder)
 
         for _, i in ipairs(arg) do
             if type(i) == "function" then
-                -- TODO: Some sort of index breadcrumb instead of word_index?
-                match_builder:addmatches(i(word_count, line_state))
+                local j = i(word_count, line_state)
+                if type(j) ~= "table" then
+                    return j or false
+                end
+
+                match_builder:addmatches(j)
             else
                 match_builder:addmatch(i)
             end
         end
+
+        return true
     end
 
     -- Select between adding flags or matches themselves. Works in conjunction
@@ -288,8 +294,7 @@ function _argmatcher:_generate(line_state, match_builder)
     else
         local arg = matcher._args[arg_index]
         if arg then
-            add_matches(arg)
-            return true
+            return add_matches(arg) and true or false
         end
     end
 
