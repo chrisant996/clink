@@ -115,7 +115,7 @@ static bool is_clink_present(DWORD target_pid)
     BOOL ok = Module32First(th32, &module_entry);
     while (ok != FALSE)
     {
-        if (_stricmp(module_entry.szModule, CLINK_DLL) == 0)
+        if (_strnicmp(module_entry.szModule, "clink_", 6) == 0)
         {
             LOG("Clink already installed in process.");
             ret = true;
