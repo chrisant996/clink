@@ -106,6 +106,12 @@ TEST_CASE("Quoting") {
             tester.run();
         }
 
+        SECTION("End-of-word") {
+            tester.set_input("(single space)" DO_COMPLETE);
+            tester.set_expected_output("(single space) ");
+            tester.run();
+        }
+
         SECTION("Surround") {
             tester.set_input("sing" DO_COMPLETE);
             tester.set_expected_output("(single space) ");

@@ -598,6 +598,13 @@ void line_editor_impl::update_internal()
         const char* buf_ptr = m_buffer.get_buffer();
         needle.concat(buf_ptr + needle_start, next_key.cursor_pos - needle_start);
 
+        if (!needle.empty() && end_word.quoted)
+        {
+            int i = needle.length();
+            if (needle[i - 1] == get_closing_quote(m_desc.quote_pair))
+                needle.truncate(i - 1);
+        }
+
         match_pipeline pipeline(m_matches);
         pipeline.select(needle.c_str());
         pipeline.sort();
