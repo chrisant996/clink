@@ -49,6 +49,7 @@ public:
         };
 
         bool                    operator == (const colour& rhs) const { return value == rhs.value; }
+        void                    as_888(unsigned char (&out)[3]) const;
     };
 
     template <typename T>
