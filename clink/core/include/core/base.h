@@ -26,9 +26,9 @@
 #endif
 
 #if defined(_M_AMD64) || defined(__x86_64__)
-#   define ARCHITECTURE     x64
+#   define ARCHITECTURE     64
 #elif defined(_M_IX86) || defined(__i386)
-#   define ARCHITECTURE     x86
+#   define ARCHITECTURE     86
 #else
 #   error Unknown architecture
 #endif
