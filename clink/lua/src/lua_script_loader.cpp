@@ -7,15 +7,15 @@
 #if defined(CLINK_FINAL)
 
 //------------------------------------------------------------------------------
-void lua_load_script_impl(lua_state& state, const char* script)
+void lua_load_script_impl(lua_state& state, const char* script, int length)
 {
-    state.do_string(script);
+    state.do_string(script, length);
 }
 
 #else // CLINK_FINAL
 
 //------------------------------------------------------------------------------
-void lua_load_script_impl(lua_state& state, const char* path)
+void lua_load_script_impl(lua_state& state, const char* path, int length)
 {
     state.do_file(path);
 }

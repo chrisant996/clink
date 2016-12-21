@@ -77,15 +77,21 @@ void lua_state::shutdown()
 }
 
 //------------------------------------------------------------------------------
-bool lua_state::do_string(const char* string)
+bool lua_state::do_string(const char* string, int length)
 {
-    bool failed;
-    if (failed = !!luaL_dostring(m_state, string))
+    if (length < 0)
+        length = int(strlen(string));
+
+    bool ok;
+    if (ok = !luaL_loadbuffer(m_state, string, length, string))
+        ok = !lua_pcall(m_state, 0, LUA_MULTRET, 0);
+
+    if (!ok)
         if (const char* error = lua_tostring(m_state, -1))
             puts(error);
 
     lua_settop(m_state, 0);
-    return !failed;
+    return ok;
 }
 
 //------------------------------------------------------------------------------

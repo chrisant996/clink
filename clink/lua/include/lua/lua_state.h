@@ -13,7 +13,7 @@ public:
                     ~lua_state();
     void            initialise();
     void            shutdown();
-    bool            do_string(const char* string);
+    bool            do_string(const char* string, int length=-1);
     bool            do_file(const char* path);
     lua_State*      get_state() const;
 
