@@ -106,46 +106,51 @@ newaction {
 
         local src_dir_name = path.getabsolute(".")
 
-        -- Update embedded Lua scripts.
-        exec(premake .. " embed")
-
         -- Build the code.
         local x86_ok = true;
         local x64_ok = true;
         local toolchain = "ERROR"
-        if have_msbuild then
-            toolchain = _OPTIONS["vsver"] or "vs2013"
-            exec(premake .. " " .. toolchain)
+        local build_code = function ()
+            if have_msbuild then
+                toolchain = _OPTIONS["vsver"] or "vs2013"
+                exec(premake .. " " .. toolchain)
 
-            ret = exec("msbuild /m /v:q /p:configuration=final /p:platform=win32 .build/" .. toolchain .. "/clink.sln")
-            if ret ~= 0 then
-                x86_ok = false
+                ret = exec("msbuild /m /v:q /p:configuration=final /p:platform=win32 .build/" .. toolchain .. "/clink.sln")
+                if ret ~= 0 then
+                    x86_ok = false
+                end
+
+                ret = exec("msbuild /m /v:q /p:configuration=final /p:platform=x64 .build/" .. toolchain .. "/clink.sln")
+                if ret ~= 0 then
+                    x64_ok = false
+                end
+            elseif have_mingw then
+                toolchain = "gmake"
+                exec(premake .. " gmake")
+                os.chdir(".build/gmake")
+
+                local ret
+                ret = exec("1>nul mingw32-make CC=gcc config=final_x32 -j%number_of_processors%")
+                if ret ~= 0 then
+                    x86_ok = false
+                end
+
+                ret = exec("1>nul mingw32-make CC=gcc config=final_x64 -j%number_of_processors%")
+                if ret ~= 0 then
+                    x64_ok = false
+                end
+
+                os.chdir("../..")
+            else
+                error("Unable to locate either msbuild.exe or mingw32-make.exe")
             end
-
-            ret = exec("msbuild /m /v:q /p:configuration=final /p:platform=x64 .build/" .. toolchain .. "/clink.sln")
-            if ret ~= 0 then
-                x64_ok = false
-            end
-        elseif have_mingw then
-            toolchain = "gmake"
-            exec(premake .. " gmake")
-            os.chdir(".build/gmake")
-
-            local ret
-            ret = exec("1>nul mingw32-make CC=gcc config=final_x32 -j%number_of_processors%")
-            if ret ~= 0 then
-                x86_ok = false
-            end
-
-            ret = exec("1>nul mingw32-make CC=gcc config=final_x64 -j%number_of_processors%")
-            if ret ~= 0 then
-                x64_ok = false
-            end
-
-            os.chdir("../..")
-        else
-            error("Unable to locate either msbuild.exe or mingw32-make.exe")
         end
+
+        build_code()
+
+        -- Update embedded Lua scripts. Build again incase scripts changed.
+        exec(premake .. " embed")
+        build_code()
 
         local src = ".build/" .. toolchain .. "/bin/final/"
         local dest = target_dir .. "clink_" .. clink_git_name
