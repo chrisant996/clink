@@ -8,8 +8,12 @@ void lua_load_script_impl(class lua_state&, const char*, int);
 #if defined(CLINK_FINAL)
     #define lua_load_script(state, module, name)                                \
         do {                                                                    \
-            extern const char* module##_##name##_lua_script;                    \
-            lua_load_script_impl(state, module##_##name##_lua_script, 0);       \
+            extern const unsigned char* module##_##name##_lua_script;           \
+            extern int module##_##name##_lua_script_len;                        \
+            lua_load_script_impl(                                               \
+                state,                                                          \
+                (char*)module##_##name##_lua_script,                            \
+                module##_##name##_lua_script_len);                              \
         } while(0)
 #else
     #define lua_load_script(state, module, name)                                \

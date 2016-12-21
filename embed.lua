@@ -1,46 +1,21 @@
 --------------------------------------------------------------------------------
-local function load_script(script_path)
-    -- Taken from https://github.com/premake/premake-core
-
-    script_path = path.getabsolute(script_path)
-    local f = io.open(script_path)
-    local s = f:read("*a")
-    f:close()
-
-    -- strip tabs
-    s = s:gsub("[\t]", "")
-
-    -- strip any CRs
-    s = s:gsub("[\r]", "")
-
-    -- strip out block comments
-    s = s:gsub("[^\"']%-%-%[%[.-%]%]", "")
-    s = s:gsub("[^\"']%-%-%[=%[.-%]=%]", "")
-    s = s:gsub("[^\"']%-%-%[==%[.-%]==%]", "")
-
-    -- strip out inline comments
-    s = s:gsub("\n%-%-[^\n]*", "\n")
-
-    -- escape backslashes
-    s = s:gsub("\\", "\\\\")
-
-    -- strip duplicate line feeds
-    s = s:gsub("\n+", "\n")
-
-    -- strip out leading comments
-    s = s:gsub("^%-%-[^\n]*\n", "")
-
-    -- escape double quote marks
-    s = s:gsub("\"", "\\\"")
-
-    -- escape line feeds
-    s = s:gsub("\n", "\\n\"\n\"")
-
-    return "\"" .. s .. "\""
+local function exec(str)
+    -- Premake5 bug (see docs/premake5.lua)
+    local x = path.normalize
+    path.normalize = function (y) return y end
+    os.execute(str)
+    path.normalize = x
 end
 
 --------------------------------------------------------------------------------
 local function do_embed()
+    local luac = os.matchfiles(".build/*/bin/final/luac_x64.exe")[1]
+    if not luac then
+        error("Unable to find Lua compiler binary (final).")
+    end
+
+    luac = luac:gsub("/", "\\")
+
     local manifests = os.matchfiles("clink/**/_manifest.lua")
     for _, manifest in ipairs(manifests) do
         local root = path.getdirectory(manifest)
@@ -61,19 +36,30 @@ local function do_embed()
 
             file = path.join(root, file)
 
+            -- Compile the input Lua script to binary.
+            exec(luac.." -s -o .build/embed_temp "..file)
+            local bin_in = io.open(".build/embed_temp", "rb")
+            local bin_data = bin_in:read("*a")
+            bin_in:close()
+            os.remove(".build/embed_temp")
+
             print("     " .. file .. "  -->  " .. symbol)
-            out:write("const char* " .. symbol .. " = \n")
-            out:write(load_script(file) .. ";")
+            local crlf_counter = 0
+            out:write("const unsigned char " .. symbol .. "_[] = {\n")
+            for byte in string.gmatch(bin_data, ".") do
+                out:write(string.format("0x%02x, ", byte:byte()))
+                crlf_counter = crlf_counter + 1
+                if crlf_counter > 16 then
+                    out:write("\n")
+                    crlf_counter = 0
+                end
+            end
+            out:write("};\n")
+            out:write("unsigned char const* "..symbol.." = "..symbol.."_;\n")
+            out:write("int "..symbol.."_len = sizeof("..symbol.."_);\n")
         end
 
-        -- Write a manifest variable of all embedded scripts in the .cpp file.
-        out:write("const char* " .. manifest.name .. "_lua_scripts[] = {")
-        for _, symbol in ipairs(symbols) do
-            out:write(symbol .. ",")
-        end
-        out:write("nullptr,};\n")
-
-        -- Some debug stuff so loose can files can be loaded in debug builds.
+        -- Some debug stuff so loose files can be loaded in debug builds.
         symbols = {}
         out:write("#else\n")
         for _, file in ipairs(manifest.files) do
@@ -84,13 +70,6 @@ local function do_embed()
             file = file:gsub("\\", "/")
             out:write("const char* " .. symbol .. " = CLINK_BUILD_ROOT \"/../../" .. root .. "/" .. file .. "\";\n")
         end
-
-        -- Write a manifest variable of all embedded scripts in the .cpp file.
-        out:write("const char* " .. manifest.name .. "_lua_files[] = {")
-        for _, symbol in ipairs(symbols) do
-            out:write(symbol .. ",")
-        end
-        out:write("nullptr,};\n")
 
         out:write("#endif\n")
         out:close()
