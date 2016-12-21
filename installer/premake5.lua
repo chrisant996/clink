@@ -193,7 +193,7 @@ newaction {
         end
 
         -- Generate documentation.
-        exec(premake .. " clink_docs")
+        exec(premake .. " docs")
         copy(".build/docs/clink.html", dest)
 
         -- Build the installer.
