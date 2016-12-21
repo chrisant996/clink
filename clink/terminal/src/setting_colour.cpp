@@ -6,7 +6,8 @@
 
 //------------------------------------------------------------------------------
 #define COLOUR_X(x) #x ","
-static const char* colour_values = SETTING_COLOUR_XS "default";
+static const char* colour_fg_values = COLOUR_XS "normal,bright,default";
+static const char* colour_bg_values = COLOUR_XS "default";
 #undef COLOUR_X
 
 //------------------------------------------------------------------------------
@@ -28,14 +29,12 @@ setting_colour::setting_colour(
     int default_bg)
 {
     str<64> inner_name;
-
     inner_name << name << ".fg";
-    m_fg.construct(inner_name.c_str(), short_desc, long_desc, colour_values, default_fg);
+    m_fg.construct(inner_name.c_str(), short_desc, long_desc, colour_fg_values, default_fg);
 
-    // TODO: bg shouldn't have normal/bright options.
     inner_name.clear();
     inner_name << name << ".bg";
-    m_bg.construct(inner_name.c_str(), short_desc, long_desc, colour_values, default_bg);
+    m_bg.construct(inner_name.c_str(), short_desc, long_desc, colour_bg_values, default_bg);
 }
 
 //------------------------------------------------------------------------------
@@ -46,19 +45,17 @@ attributes setting_colour::get() const
     int fg = m_fg->get();
     switch (fg)
     {
-    case value_normal:  out.set_bold(false);    break;
-    case value_bright:  out.set_bold(true);     break;
-    case value_default: out.reset_fg();         break;
-    default:            out.set_fg(fg);         break;
+    case value_fg_normal:   out.set_bold(false);    break;
+    case value_fg_bright:   out.set_bold(true);     break;
+    case value_fg_default:  out.reset_fg();         break;
+    default:                out.set_fg(fg);         break;
     }
 
     int bg = m_bg->get();
     switch (bg)
     {
-    case value_normal:
-    case value_bright:                  break;
-    case value_default: out.reset_bg(); break; 
-    default:            out.set_bg(bg); break;
+    case value_bg_default:  out.reset_bg();         break;
+    default:                out.set_bg(bg);         break;
     }
 
     return out;

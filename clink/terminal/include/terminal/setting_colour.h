@@ -11,21 +11,21 @@
 #include <new>
 
 //------------------------------------------------------------------------------
-#define SETTING_COLOUR_XS\
-    COLOUR_XS\
-    COLOUR_X(normal)\
-    COLOUR_X(bright)
-
-//------------------------------------------------------------------------------
 class setting_colour
 {
 public:
     #define COLOUR_X(x) value_##x,
     enum : unsigned char
     {
-        SETTING_COLOUR_XS
-        value_default,
-        value_count,
+        COLOUR_XS
+
+        value_fg_normal,
+        value_fg_bright,
+        value_fg_default,
+        value_fg_count,
+
+        value_bg_default = value_fg_normal,
+        value_bg_count,
     };
     #undef COLOUR_X
                         setting_colour(const char* name, const char* short_desc, int default_fg, int default_bg);

@@ -60,21 +60,21 @@ setting_colour g_colour_interact(
     "For user-interaction prompts",
     "Used when Clink displays text or prompts such as a pager's 'More?'. Naming\n"
     "these settings is hard. Describing them even more so.",
-    setting_colour::value_light_magenta, setting_colour::value_default);
+    setting_colour::value_light_magenta, setting_colour::value_bg_default);
 
 setting_colour g_colour_minor(
     "colour.minor",
     "Minor colour value",
     "The colour used to display minor elements such as the lower common\n"
     "denominator of active matches in tab completion's display.",
-    setting_colour::value_grey, setting_colour::value_default);
+    setting_colour::value_grey, setting_colour::value_bg_default);
 
 setting_colour g_colour_major(
     "colour.major",
     "Major colour value",
     "The colour used to display major elements like remainder of active matches\n"
     "still to be completed.",
-    setting_colour::value_white, setting_colour::value_default);
+    setting_colour::value_white, setting_colour::value_bg_default);
 
 setting_colour g_colour_highlight(
     "colour.highlight",
