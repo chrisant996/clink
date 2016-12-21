@@ -14,6 +14,7 @@ extern "C" {
 
 //------------------------------------------------------------------------------
 int autorun(int, char**);
+int clink_info(int argc, char** argv);
 int history(int, char**);
 int inject(int, char**);
 int input_echo(int, char**);
@@ -49,6 +50,7 @@ static void show_usage()
         "autorun",         "Manage Clink's entry in cmd.exe's autorun",
         "set",             "Adjust Clink's settings",
         "history",         "List and operate on the command history",
+        "info",            "Prints information about Clink",
         "echo",            "Echo key sequences",
         "",                "('<verb> --help' for more details)",
         "Options:",        "",
@@ -72,6 +74,7 @@ static int dispatch_verb(const char* verb, int argc, char** argv)
         "autorun",   autorun,
         "echo",      input_echo,
         "history",   history,
+        "info",      clink_info,
         "inject",    inject,
         "set",       set,
         "testbed",   testbed,

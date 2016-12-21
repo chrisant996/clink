@@ -60,6 +60,7 @@ clink.argmatcher(
     "autorun"   .. autorun,
     "echo"      .. nothing,
     "history"   .. history,
+    "info"      .. nothing,
     "inject"    .. inject,
     "set"       .. set
 )
