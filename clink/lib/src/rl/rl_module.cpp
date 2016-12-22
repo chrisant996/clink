@@ -52,10 +52,10 @@ static void load_user_inputrc()
         "home",
     };
 
-    for (int i = 0; i < sizeof_array(env_vars); ++i)
+    for (const char* env_var : env_vars)
     {
         str<MAX_PATH> path;
-        int path_length = GetEnvironmentVariable(env_vars[i], path.data(), path.size());
+        int path_length = GetEnvironmentVariable(env_var, path.data(), path.size());
         if (!path_length || path_length > int(path.size()))
             continue;
 
