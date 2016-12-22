@@ -44,12 +44,14 @@ extern int          _rl_last_v_pos;
 static void load_user_inputrc()
 {
 #if defined(PLATFORM_WINDOWS)
+    // Remember to update clink_info() if anything changes in here.
+
     const char* env_vars[] = {
         "clink_inputrc",
+        "userprofile",
         "localappdata",
         "appdata",
-        "userprofile",
-        "home",
+        "home"
     };
 
     for (const char* env_var : env_vars)
