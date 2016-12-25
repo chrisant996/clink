@@ -6,6 +6,7 @@
 #include "lua_script_loader.h"
 
 #include <core/settings.h>
+#include <core/os.h>
 
 extern "C" {
 #include <lua.h>
@@ -20,6 +21,13 @@ static setting_bool g_lua_debug(
     "Loads an simple embedded command line debugger when enabled. Breakpoints\n"
     "can added by calling pause().",
     false);
+
+static setting_str g_lua_path(
+    "lua.path",
+    "'require' search path",
+    "Value to append to package.path. Used to search for Lua scripts specified\n"
+    "in require() statements.",
+    "");
 
 
 
@@ -53,6 +61,28 @@ void lua_state::initialise()
     // Create a new Lua state.
     m_state = luaL_newstate();
     luaL_openlibs(m_state);
+
+    // Set up the package.path value for require() statements.
+    str<280> path;
+    if (!os::get_env("lua_path_" LUA_VERSION_MAJOR "_" LUA_VERSION_MINOR, path))
+        os::get_env("lua_path", path);
+
+    const char* p = g_lua_path.get();
+    if (*p)
+    {
+        if (!path.empty())
+            path << ";";
+
+        path << p;
+    }
+
+    if (!path.empty())
+    {
+        lua_getglobal(m_state, "package");
+        lua_pushstring(m_state, "path");
+        lua_pushstring(m_state, path.c_str());
+        lua_rawset(m_state, -3);
+    }
 
     lua_state& self = *this;
 
