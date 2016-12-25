@@ -14,7 +14,7 @@ extern "C" {
 }
 
 //------------------------------------------------------------------------------
-static setting_bool g_debug(
+static setting_bool g_lua_debug(
     "lua.debug",
     "Enables Lua debugging",
     "Loads an simple embedded command line debugger when enabled. Breakpoints\n"
@@ -56,7 +56,7 @@ void lua_state::initialise()
 
     lua_state& self = *this;
 
-    if (g_debug.get())
+    if (g_lua_debug.get())
         lua_load_script(self, lib, debugger);
 
     clink_lua_initialise(self);
