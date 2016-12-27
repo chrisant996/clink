@@ -11,11 +11,6 @@
 #include <process/process.h>
 
 //------------------------------------------------------------------------------
-static const char* g_state_env_format = "=clink_state_%d";
-
-
-
-//------------------------------------------------------------------------------
 app_context::desc::desc()
 {
     state_dir[0] = '\0';
@@ -70,7 +65,7 @@ bool app_context::load_from_env()
     int pid = -1;
     while (pid = process(pid).get_parent_pid())
     {
-        clink_env_var.format(g_state_env_format, pid);
+        clink_env_var.format("=clink_%d", pid);
         if (os::get_env(clink_env_var.c_str(), state_dir))
             return true;
     }
@@ -83,7 +78,7 @@ void app_context::store_to_env()
 {
     // Set an environment variable that can be used to find Clink's state dir.
     str<32> name;
-    name.format(g_state_env_format, process().get_pid());
+    name.format("=clink_%d", process().get_pid());
     os::set_env(name.c_str(), m_desc.state_dir);
 }
 
