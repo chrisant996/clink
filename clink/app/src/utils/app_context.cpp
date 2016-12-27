@@ -34,7 +34,7 @@ app_context::app_context(const desc& desc)
     if (state_dir.empty())
         os::get_env("clink_profile", state_dir);
 
-    // Look for a state directory that's been inherited in out environment.
+    // Look for a state directory that's been inherited in our environment.
     if (state_dir.empty())
         load_from_env();
 
