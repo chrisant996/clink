@@ -21,6 +21,7 @@ public:
     };
 
                 app_context(const desc& desc);
+    int         get_id() const;
     bool        is_logging_enabled() const;
     bool        is_quiet() const;
     void        get_binaries_dir(str_base& out) const;
@@ -33,4 +34,5 @@ private:
     bool        load_from_env();
     void        store_to_env();
     desc        m_desc;
+    int         m_id = 0;
 };
