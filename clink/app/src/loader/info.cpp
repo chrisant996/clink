@@ -23,13 +23,14 @@ int clink_info(int argc, char** argv)
         { "history",    &app_context::get_history_path },
     };
 
+    const auto* context = app_context::get();
     const int spacing = 8;
 
     // Version information
     printf("%-*s : %s\n", spacing, "version", CLINK_VERSION_STR " (" CLINK_COMMIT ")");
+    printf("%-*s : %d\n", spacing, "session", context->get_id());
 
     // Paths
-    const auto* context = app_context::get();
     for (const auto& info : infos)
     {
         str<280> out;
