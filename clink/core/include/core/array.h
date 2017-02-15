@@ -7,6 +7,8 @@
 template <typename T>
 class array
 {
+    /* This class is really rather poor */
+
 public:
     template <int D, typename U>
     class iter_impl
