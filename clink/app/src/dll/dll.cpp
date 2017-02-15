@@ -86,8 +86,8 @@ bool initialise_clink(const app_context::desc& app_desc)
         const char* name;
         host*       (*creator)();
     } hosts[] = {
-        { "cmd.exe",        []() -> host* { static host_cmd x; return &x; } },
-        { "powershell.exe", []() -> host* { static host_ps x; return &x; } },
+        { "cmd.exe",        []() -> host* { return new host_cmd(); } },
+        { "powershell.exe", []() -> host* { return new host_ps(); } },
     };
 
     for (int i = 0; i < sizeof_array(hosts); ++i)
@@ -125,7 +125,11 @@ void shutdown_clink()
     seh_scope seh;
 
     if (g_host != nullptr)
+    {
         g_host->shutdown();
+        delete g_host;
+        g_host = nullptr;
+    }
 
     if (logger* logger = logger::get())
         delete logger;
