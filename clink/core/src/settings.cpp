@@ -48,7 +48,10 @@ bool load(const char* file)
     fseek(in, 0, SEEK_SET);
 
     if (size == 0)
+    {
+        fclose(in);
         return false;
+    }
 
     str<4096> buffer;
     buffer.reserve(size);
