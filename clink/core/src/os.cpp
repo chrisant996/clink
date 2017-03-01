@@ -24,6 +24,19 @@ int get_path_type(const char* path)
 }
 
 //------------------------------------------------------------------------------
+int get_file_size(const char* path)
+{
+    wstr<MAX_PATH> wpath(path);
+    void* handle = CreateFile(path, 0, 0, nullptr, OPEN_EXISTING, 0, nullptr);
+    if (handle == INVALID_HANDLE_VALUE)
+        return -1;
+
+    int ret = GetFileSize(handle, nullptr); // 2Gb max I suppose...
+    CloseHandle(handle);
+    return ret;
+}
+
+//------------------------------------------------------------------------------
 void get_current_dir(str_base& out)
 {
     wstr<MAX_PATH> wdir;
