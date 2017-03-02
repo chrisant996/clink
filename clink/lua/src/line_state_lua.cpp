@@ -124,12 +124,9 @@ int line_state_lua::get_word(lua_State* state)
     if (!lua_isnumber(state, 1))
         return 0;
     
-    str<128> word;
     unsigned int index = int(lua_tointeger(state, 1)) - 1;
-    if (!m_line.get_word(index, word))
-        return 0;
-
-    lua_pushstring(state, word.c_str());
+    str_iter word = m_line.get_word(index);
+    lua_pushlstring(state, word.get_pointer(), word.length());
     return 1;
 }
 
@@ -141,10 +138,7 @@ int line_state_lua::get_word(lua_State* state)
 /// generated for.
 int line_state_lua::get_end_word(lua_State* state)
 {
-    str<128> word;
-    if (!m_line.get_end_word(word))
-        return 0;
-
-    lua_pushstring(state, word.c_str());
+    str_iter word = m_line.get_end_word();
+    lua_pushlstring(state, word.get_pointer(), word.length());
     return 1;
 }
