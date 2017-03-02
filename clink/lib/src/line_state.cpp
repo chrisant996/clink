@@ -62,8 +62,24 @@ bool line_state::get_word(unsigned int index, str_base& out) const
 }
 
 //------------------------------------------------------------------------------
+str_iter line_state::get_word(unsigned int index) const
+{
+    if (const word* word = m_words[index])
+        return str_iter(m_line + word->offset, word->length);
+
+    return str_iter();
+}
+
+//------------------------------------------------------------------------------
 bool line_state::get_end_word(str_base& out) const
 {
     int n = get_word_count();
     return (n ? get_word(n - 1, out) : false);
+}
+
+//------------------------------------------------------------------------------
+str_iter line_state::get_end_word() const
+{
+    int n = get_word_count();
+    return (n ? get_word(n - 1) : str_iter());
 }

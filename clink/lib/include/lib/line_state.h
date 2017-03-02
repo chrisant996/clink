@@ -3,7 +3,8 @@
 
 #pragma once
 
-class str_base;
+#include <core/str_iter.h>
+
 template <typename T> class array;
 
 //------------------------------------------------------------------------------
@@ -26,7 +27,9 @@ public:
     const array<word>&  get_words() const;
     unsigned int        get_word_count() const;
     bool                get_word(unsigned int index, str_base& out) const;
+    str_iter            get_word(unsigned int index) const;
     bool                get_end_word(str_base& out) const;
+    str_iter            get_end_word() const;
 
 private:
     const array<word>&  m_words;
