@@ -110,3 +110,12 @@ TEST_CASE("String iterator (wstr_iter)") {
         }
     }
 }
+
+//------------------------------------------------------------------------------
+TEST_CASE("String iterator (null str_iter)") {
+    str_iter null;
+    REQUIRE(null.more() == false);
+    REQUIRE(null.next() == 0);
+    REQUIRE(null.length() == 0);
+    REQUIRE(null.get_pointer() != nullptr);
+}
