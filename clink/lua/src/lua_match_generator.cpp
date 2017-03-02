@@ -70,16 +70,17 @@ bool lua_match_generator::generate(const line_state& line, match_builder& builde
 }
 
 //------------------------------------------------------------------------------
-int lua_match_generator::get_prefix_length(const char* start, int length) const
+int lua_match_generator::get_prefix_length(const line_state& line) const
 {
     lua_State* state = m_state.get_state();
 
-    // Call to Lua to generate matches.
+    // Call to Lua to calculate prefix length.
     lua_getglobal(state, "clink");
     lua_pushliteral(state, "_get_prefix_length");
     lua_rawget(state, -2);
 
-    lua_pushlstring(state, start, length);
+    line_state_lua line_lua(line);
+    line_lua.push(state);
 
     if (lua_pcall(state, 1, 1, 0) != 0)
     {

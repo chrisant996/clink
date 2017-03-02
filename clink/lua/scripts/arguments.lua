@@ -333,13 +333,10 @@ end
 
 
 --------------------------------------------------------------------------------
-local argmatcher_generator = clink.generator(24)
-
---------------------------------------------------------------------------------
-function argmatcher_generator:generate(line_state, match_builder)
-    -- Running and argmatcher only makes sense if there's two or more words.
+local function _find_argmatcher(line_state)
+    -- Running an argmatcher only makes sense if there's two or more words.
     if line_state:getwordcount() < 2 then
-        return false
+        return
     end
 
     local first_word = line_state:getword(1)
@@ -353,22 +350,32 @@ function argmatcher_generator:generate(line_state, match_builder)
     for _, key in ipairs(argmatcher_keys) do
         local argmatcher = _argmatchers[key]
         if argmatcher then
-            return argmatcher:_generate(line_state, match_builder)
+            return argmatcher
         end
+    end
+end
+
+
+
+--------------------------------------------------------------------------------
+local argmatcher_generator = clink.generator(24)
+
+--------------------------------------------------------------------------------
+function argmatcher_generator:generate(line_state, match_builder)
+    local argmatcher = _find_argmatcher(line_state)
+    if argmatcher then
+        return argmatcher:_generate(line_state, match_builder)
     end
 
     return false
 end
 
 --------------------------------------------------------------------------------
-function argmatcher_generator:getprefixlength(word)
-    -- TODO: This should really take a line_state object and query _is_flags()
-    -- for the correct argmatcher for the given line.
-
-    for _, argmatcher in pairs(_argmatchers) do
-        if argmatcher._flags and argmatcher:_is_flag(word) then
-            return 1
-        end
+function argmatcher_generator:getprefixlength(line_state)
+    local argmatcher = _find_argmatcher(line_state)
+    local word = line_state:getendword()
+    if argmatcher and argmatcher._flags and argmatcher:_is_flag(word) then
+        return 1
     end
 
     return 0

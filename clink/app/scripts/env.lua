@@ -28,7 +28,8 @@ function envvar_generator:generate(line_state, match_builder)
 end
 
 --------------------------------------------------------------------------------
-function envvar_generator:getprefixlength(word)
+function envvar_generator:getprefixlength(line_state)
+    local word = line_state:getendword()
     local in_out = false
     local index
     for i = 1, #word do

@@ -373,12 +373,13 @@ void line_editor_impl::collect_words()
 
     // The last word is truncated to the longest length returned by the match
     // generators. This is a little clunky but works well enough.
+    line_state line = get_linestate();
     end_word = m_words.back();
     int prefix_length = 0;
     const char* word_start = line_buffer + end_word->offset;
     for (const auto* generator : m_generators)
     {
-        int i = generator->get_prefix_length(word_start, end_word->length);
+        int i = generator->get_prefix_length(line);
         prefix_length = max(prefix_length, i);
     }
     end_word->length = min<unsigned int>(prefix_length, end_word->length);
@@ -431,11 +432,16 @@ void line_editor_impl::accept_match(unsigned int index)
     char suffix = match_suffix;
     if (!suffix)
     {
+        unsigned int match_length = unsigned(strlen(match));
+
+        word match_word = { 0, match_length };
+        array<word> match_words(&match_word, 1);
+        line_state match_line = { match, match_length, 0, match_words };
+
         int prefix_length = 0;
-        int match_length = int(strlen(match));
         for (const auto* generator : m_generators)
         {
-            int i = generator->get_prefix_length(match, match_length);
+            int i = generator->get_prefix_length(match_line);
             prefix_length = max(prefix_length, i);
         }
 

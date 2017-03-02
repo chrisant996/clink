@@ -51,12 +51,12 @@ function clink._generate(line_state, match_builder)
 end
 
 --------------------------------------------------------------------------------
-function clink._get_prefix_length(word)
+function clink._get_prefix_length(line_state)
     local impl = function ()
         local ret = 0
         for _, generator in ipairs(_generators) do
             if generator.getprefixlength then
-                local i = generator:getprefixlength(word) or 0
+                local i = generator:getprefixlength(line_state) or 0
                 if i > ret then ret = i end
             end
         end

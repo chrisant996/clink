@@ -57,9 +57,12 @@ static class : public match_generator
         return true;
     }
 
-    virtual int get_prefix_length(const char* start, int length) const override
+    virtual int get_prefix_length(const line_state& line) const override
     {
-        const char* c = start + length;
+        str_iter end_word = line.get_end_word();
+        const char* start = end_word.get_pointer();
+
+        const char* c = start + end_word.length();
         for (; c > start; --c)
             if (path::is_separator(c[-1]))
                 break;
