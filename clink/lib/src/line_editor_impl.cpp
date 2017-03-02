@@ -400,14 +400,14 @@ void line_editor_impl::accept_match(unsigned int index)
 
     const char* buf_ptr = m_buffer.get_buffer();
 
-    str<288> word;
-    word.concat(buf_ptr + word_start, end_word.length);
-    word << match;
+    str<288> to_insert;
+    to_insert.concat(buf_ptr + word_start, end_word.length);
+    to_insert << match;
 
     // TODO: This has not place here and should be done somewhere else.
     // Clean the word if it is a valid file system path.
-    if (os::get_path_type(word.c_str()) != os::path_type_invalid)
-        path::clean(word);
+    if (os::get_path_type(to_insert.c_str()) != os::path_type_invalid)
+        path::clean(to_insert);
 
     // Does the selected match need quoting?
     bool needs_quote = end_word.quoted;
@@ -424,7 +424,7 @@ void line_editor_impl::accept_match(unsigned int index)
         char quote[2] = { m_desc.quote_pair[0] };
         m_buffer.insert(quote);
     }
-    m_buffer.insert(word.c_str());
+    m_buffer.insert(to_insert.c_str());
 
     // Use a suffix if one's associated with the match, otherwise derive it.
     char match_suffix = m_matches.get_suffix(index);
