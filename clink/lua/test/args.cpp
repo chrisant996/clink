@@ -361,6 +361,11 @@ TEST_CASE("Lua arg parsers.") {
             \
             clink.argmatcher('argcmd_flags_d')\
             :addflags('-one', '-two', '-twenty')\
+            \
+            clink.argmatcher('argcmd_flags_x')\
+            :setflagprefix()\
+            :addflags('-oa', '-ob', '-oc')\
+            :addarg('-od', '-oe', '-of')\
         ";
 
         REQUIRE(lua.do_string(script));
@@ -424,6 +429,24 @@ TEST_CASE("Lua arg parsers.") {
         SECTION("Dash 2") {
             tester.set_input("argcmd_flags_d -tw");
             tester.set_expected_matches("-two", "-twenty");
+            tester.run();
+        }
+
+        SECTION("No prefix 1") {
+            tester.set_input("argcmd_flags_x ");
+            tester.set_expected_matches("-od", "-oe", "-of");
+            tester.run();
+        }
+
+        SECTION("No prefix 2") {
+            tester.set_input("argcmd_flags_x -");
+            tester.set_expected_matches("-od", "-oe", "-of");
+            tester.run();
+        }
+
+        SECTION("No prefix 3") {
+            tester.set_input("argcmd_flags_x -o");
+            tester.set_expected_matches("-od", "-oe", "-of");
             tester.run();
         }
     }

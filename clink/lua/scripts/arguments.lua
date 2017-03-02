@@ -148,16 +148,13 @@ end
 --- -arg:   [prefixes...:string]
 --- -ret:   self
 function _argmatcher:setflagprefix(...)
-    local input = {...}
-    if #input > 0 then
-        for _, i in ipairs(input) do
-            if type(i) ~= "string" or #i ~= 1 then
-                error("Flag prefixes must be single character strings", 2)
-            end
+    for _, i in ipairs({...}) do
+        if type(i) ~= "string" or #i ~= 1 then
+            error("Flag prefixes must be single character strings", 2)
         end
-        self._flagprefix = input
     end
 
+    self._flagprefix = {...}
     return self
 end
 
