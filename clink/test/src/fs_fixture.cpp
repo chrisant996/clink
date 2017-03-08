@@ -31,8 +31,11 @@ fs_fixture::fs_fixture(const char** fs)
     os::get_env("tmp", m_root);
     path::append(m_root, id.c_str());
 
-    os::make_dir(m_root.c_str());
+    bool existed = !os::make_dir(m_root.c_str());
     os::set_current_dir(m_root.c_str());
+
+    if (existed)
+        clean(m_root.c_str());
 
     if (fs == nullptr)
         fs = g_default_fs;
