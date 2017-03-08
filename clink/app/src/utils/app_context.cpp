@@ -19,8 +19,9 @@ app_context::desc::desc()
 
 
 //-----------------------------------------------------------------------------
-app_context::app_context(const desc& desc)
+app_context::app_context(const desc& desc, int forced_id)
 : m_desc(desc)
+, m_id((forced_id > 0) ? forced_id : 0)
 {
     str_base state_dir(m_desc.state_dir);
 
@@ -79,14 +80,12 @@ bool app_context::load_from_env()
             continue;
 
         int comma = state_dir.last_of(',');
-        if (comma < 0)
-            continue;
+        if (comma > 0 && !m_id)
+        {
+            m_id = atoi(state_dir.c_str() + comma + 1);
+            state_dir.truncate(comma);
+        }
 
-        m_id = atoi(state_dir.c_str() + comma + 1);
-        if (!m_id)
-            continue;
-
-        state_dir.truncate(comma);
         return true;
     }
 

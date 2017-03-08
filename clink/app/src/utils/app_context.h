@@ -20,7 +20,7 @@ public:
         char    state_dir[512]; // = {}; (this crashes cl.exe v18.00.21005.1)
     };
 
-                app_context(const desc& desc);
+                app_context(const desc& desc, int forced_id=-1);
     int         get_id() const;
     bool        is_logging_enabled() const;
     bool        is_quiet() const;
@@ -34,5 +34,5 @@ private:
     bool        load_from_env();
     void        store_to_env();
     desc        m_desc;
-    int         m_id = 0;
+    int         m_id;
 };
