@@ -70,6 +70,7 @@ void fs_fixture::clean(const char* path)
     path::join(path, "*", file);
 
     globber globber(file.c_str());
+    globber.hidden(true);
     while (globber.next(file))
     {
         if (os::get_path_type(file.c_str()) == os::path_type_dir)
