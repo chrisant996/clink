@@ -21,7 +21,6 @@ app_context::desc::desc()
 //-----------------------------------------------------------------------------
 app_context::app_context(const desc& desc, int forced_id)
 : m_desc(desc)
-, m_id((forced_id > 0) ? forced_id : 0)
 {
     str_base state_dir(m_desc.state_dir);
 
@@ -51,8 +50,7 @@ app_context::app_context(const desc& desc, int forced_id)
     path::abs_path(state_dir);
     os::make_dir(state_dir.c_str());
 
-    if (!m_id)
-        m_id = process().get_pid();
+    m_id = (forced_id > 0) ? forced_id : process().get_pid();
 
     store_to_env();
 }
@@ -79,13 +77,6 @@ bool app_context::load_from_env()
         if (!os::get_env(clink_env_var.c_str(), state_dir))
             continue;
 
-        int comma = state_dir.last_of(',');
-        if (comma > 0 && !m_id)
-        {
-            m_id = atoi(state_dir.c_str() + comma + 1);
-            state_dir.truncate(comma);
-        }
-
         return true;
     }
 
@@ -98,10 +89,7 @@ void app_context::store_to_env()
     // Set an environment variable that can be used to find Clink's state dir.
     str<32> name;
     name.format("=clink_%d", process().get_pid());
-
-    str<280> value;
-    value.format("%s,%d", m_desc.state_dir, get_id());
-    os::set_env(name.c_str(), value.c_str());
+    os::set_env(name.c_str(), m_desc.state_dir);
 }
 
 //------------------------------------------------------------------------------
