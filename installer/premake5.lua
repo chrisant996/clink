@@ -110,32 +110,39 @@ newaction {
         local x86_ok = true;
         local x64_ok = true;
         local toolchain = "ERROR"
-        local build_code = function ()
+        local build_code = function (target)
             if have_msbuild then
+                target = target or "build"
+
                 toolchain = _OPTIONS["vsver"] or "vs2013"
                 exec(premake .. " " .. toolchain)
+                os.chdir(".build/" .. toolchain)
 
-                ret = exec("msbuild /m /v:q /p:configuration=final /p:platform=win32 .build/" .. toolchain .. "/clink.sln")
+                ret = exec("msbuild /m /v:q /p:configuration=final /p:platform=win32 clink.sln /t:" .. target)
                 if ret ~= 0 then
                     x86_ok = false
                 end
 
-                ret = exec("msbuild /m /v:q /p:configuration=final /p:platform=x64 .build/" .. toolchain .. "/clink.sln")
+                ret = exec("msbuild /m /v:q /p:configuration=final /p:platform=x64 clink.sln /t:" .. target)
                 if ret ~= 0 then
                     x64_ok = false
                 end
+
+                os.chdir("../..")
             elseif have_mingw then
+                target = target or "build"
+
                 toolchain = "gmake"
-                exec(premake .. " gmake")
-                os.chdir(".build/gmake")
+                exec(premake .. " " .. toolchain)
+                os.chdir(".build/" .. toolchain)
 
                 local ret
-                ret = exec("1>nul mingw32-make CC=gcc config=final_x32 -j%number_of_processors%")
+                ret = exec("1>nul mingw32-make CC=gcc config=final_x32 -j%number_of_processors% " .. target)
                 if ret ~= 0 then
                     x86_ok = false
                 end
 
-                ret = exec("1>nul mingw32-make CC=gcc config=final_x64 -j%number_of_processors%")
+                ret = exec("1>nul mingw32-make CC=gcc config=final_x64 -j%number_of_processors% " .. target)
                 if ret ~= 0 then
                     x64_ok = false
                 end
@@ -146,7 +153,7 @@ newaction {
             end
         end
 
-        build_code()
+        build_code("luac")
 
         -- Update embedded Lua scripts. Build again incase scripts changed.
         exec(premake .. " embed")
