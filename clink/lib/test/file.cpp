@@ -2,9 +2,11 @@
 // License: http://opensource.org/licenses/MIT
 
 #include "pch.h"
+#include "env_fixture.h"
 #include "fs_fixture.h"
 #include "line_editor_tester.h"
 
+#include <core/path.h>
 #include <core/str_compare.h>
 #include <lib/match_generator.h>
 
@@ -52,6 +54,19 @@ TEST_CASE("File match generator") {
         tester.set_input("case-m" DO_COMPLETE);
         tester.set_expected_matches("case_map-1", "case_map_2");
         tester.set_expected_output("case_map");
+        tester.run();
+    }
+
+    SECTION("cmd-style drive relative") {
+        str<280> fs_path;
+        path::join(fs.get_root(), "dir1", fs_path);
+
+        const char* env_vars[] = { "=m:", fs_path.c_str(), nullptr };
+
+        env_fixture env(env_vars);
+        tester.set_input("m:" DO_COMPLETE);
+        tester.set_expected_output("m:");
+        tester.set_expected_matches("only", "file1", "file2");
         tester.run();
     }
 }

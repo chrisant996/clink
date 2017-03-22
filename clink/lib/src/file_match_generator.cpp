@@ -6,6 +6,7 @@
 #include "line_state.h"
 #include "matches.h"
 
+#include <core/base.h>
 #include <core/globber.h>
 #include <core/path.h>
 #include <core/settings.h>
@@ -66,6 +67,9 @@ static class : public match_generator
         for (; c > start; --c)
             if (path::is_separator(c[-1]))
                 break;
+
+        if (start[0] && start[1] == ':')
+            c = max(start + 2, c);
 
         return int(c - start);
     }
