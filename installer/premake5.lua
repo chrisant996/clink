@@ -8,7 +8,7 @@ end
 
 --------------------------------------------------------------------------------
 local function exec(cmd, silent)
-    print("## EXEC: " .. cmd)
+    print("\n\n## EXEC: " .. cmd)
 
     if silent then
         cmd = "1>nul 2>nul "..cmd
