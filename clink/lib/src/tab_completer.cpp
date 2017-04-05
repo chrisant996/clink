@@ -81,7 +81,7 @@ setting_colour g_colour_highlight(
     "Colour for highlights",
     "The colour used for displaying highlighted elements such as the next\n"
     "character when invoking tab completion.",
-    setting_colour::value_white, setting_colour::value_blue);
+    setting_colour::value_white, setting_colour::value_red);
 
 
 
