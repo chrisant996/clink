@@ -70,12 +70,12 @@ int str_iter_impl<wchar_t>::next()
 template <>
 unsigned int str_iter_impl<char>::length() const
 {
-    return (unsigned int)((m_ptr < m_end) ? m_end - m_ptr : strlen(m_ptr));
+    return (unsigned int)((m_ptr <= m_end) ? m_end - m_ptr : strlen(m_ptr));
 }
 
 //------------------------------------------------------------------------------
 template <>
 unsigned int str_iter_impl<wchar_t>::length() const
 {
-    return (unsigned int)((m_ptr < m_end) ? m_end - m_ptr : wcslen(m_ptr));
+    return (unsigned int)((m_ptr <= m_end) ? m_end - m_ptr : wcslen(m_ptr));
 }

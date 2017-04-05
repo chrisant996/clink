@@ -11,6 +11,7 @@
 TEST_CASE("String iterator (str_iter)") {
     SECTION("Basic") {
         str_iter iter("123");
+        REQUIRE(iter.length() == 3);
         REQUIRE(iter.next() == '1');
         REQUIRE(iter.next() == '2');
         REQUIRE(iter.next() == '3');
@@ -18,7 +19,17 @@ TEST_CASE("String iterator (str_iter)") {
     }
 
     SECTION("Subset") {
-        str_iter iter("123", 2);
+        str_iter iter("123", 0);
+        REQUIRE(iter.length() == 0);
+        REQUIRE(iter.next() == 0);
+
+        new (&iter) str_iter("123", 1);
+        REQUIRE(iter.length() == 1);
+        REQUIRE(iter.next() == '1');
+        REQUIRE(iter.next() == 0);
+
+        new (&iter) str_iter("123", 2);
+        REQUIRE(iter.length() == 2);
         REQUIRE(iter.next() == '1');
         REQUIRE(iter.next() == '2');
         REQUIRE(iter.next() == 0);
