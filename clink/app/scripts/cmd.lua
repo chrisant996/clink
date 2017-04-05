@@ -20,6 +20,11 @@ function cmd_generator:generate(line_state, match_builder)
         return false
     end
 
+    -- If executable matching is disabled do nothing
+    if not settings.get("exec.enable") then
+        return false
+    end
+
     -- They should be skipped if the the line's whitespace prefixed.
     if settings.get("exec.space_prefix") then
         local word_info = line_state:getwordinfo(1)
