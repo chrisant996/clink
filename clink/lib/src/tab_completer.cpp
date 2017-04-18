@@ -167,20 +167,23 @@ void tab_completer::on_input(const input& input, result& result, const context& 
         if (next_state > state_print)
             next_state = print(context, next_state == state_print_one);
 
+        if (m_prev_group != -1)
+        {
+            result.set_bind_group(m_prev_group);
+            m_prev_group = -1;
+        }
+
         switch (next_state)
         {
         case state_query:
-            if (m_prev_group == -1)
-                m_prev_group = result.set_bind_group(m_prompt_bind_group);
+            m_prev_group = result.set_bind_group(m_prompt_bind_group);
             return;
 
         case state_pager:
-            result.set_bind_group(m_pager_bind_group);
+            m_prev_group = result.set_bind_group(m_pager_bind_group);
             return;
         }
 
-        result.set_bind_group(m_prev_group);
-        m_prev_group = -1;
         context.printer.print("\n");
         result.redraw();
         return;
