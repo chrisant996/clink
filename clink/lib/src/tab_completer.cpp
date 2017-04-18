@@ -149,57 +149,59 @@ void tab_completer::on_input(const input& input, result& result, const context& 
     if (matches.get_match_count() == 0)
         return;
 
-    if (m_waiting)
+    if (!m_waiting)
     {
-        const char* keys = input.keys;
-        int next_state = state_none;
-
-        switch (input.id)
+        // One match? Accept it.
+        if (matches.get_match_count() == 1)
         {
-        case state_none:            next_state = begin_print(context);  break;
-        case bind_id_prompt_no:     next_state = state_none;            break;
-        case bind_id_prompt_yes:    next_state = state_print_page;      break;
-        case bind_id_pager_page:    next_state = state_print_page;      break;
-        case bind_id_pager_line:    next_state = state_print_one;       break;
-        case bind_id_pager_stop:    next_state = state_none;            break;
-        }
-
-        if (next_state > state_print)
-            next_state = print(context, next_state == state_print_one);
-
-        if (m_prev_group != -1)
-        {
-            result.set_bind_group(m_prev_group);
-            m_prev_group = -1;
-        }
-
-        switch (next_state)
-        {
-        case state_query:
-            m_prev_group = result.set_bind_group(m_prompt_bind_group);
-            return;
-
-        case state_pager:
-            m_prev_group = result.set_bind_group(m_pager_bind_group);
+            result.accept_match(0);
             return;
         }
 
-        context.printer.print("\n");
-        result.redraw();
+        // Append as much of the lowest common denominator of matches as we can. If
+        // there is an LCD then on_matches_changed() gets called.
+        m_waiting = true;
+        result.append_match_lcd();
         return;
     }
 
-    // One match? Accept it.
-    if (matches.get_match_count() == 1)
+    const char* keys = input.keys;
+    int next_state = state_none;
+
+    switch (input.id)
     {
-        result.accept_match(0);
+    case state_none:            next_state = begin_print(context);  break;
+    case bind_id_prompt_no:     next_state = state_none;            break;
+    case bind_id_prompt_yes:    next_state = state_print_page;      break;
+    case bind_id_pager_page:    next_state = state_print_page;      break;
+    case bind_id_pager_line:    next_state = state_print_one;       break;
+    case bind_id_pager_stop:    next_state = state_none;            break;
+    }
+
+    if (next_state > state_print)
+        next_state = print(context, next_state == state_print_one);
+
+    // 'm_prev_group' is >= 0 if tab completer has set a bind group. As the bind
+    // groups are one-shot we restore the original back each time.
+    if (m_prev_group != -1)
+    {
+        result.set_bind_group(m_prev_group);
+        m_prev_group = -1;
+    }
+
+    switch (next_state)
+    {
+    case state_query:
+        m_prev_group = result.set_bind_group(m_prompt_bind_group);
+        return;
+
+    case state_pager:
+        m_prev_group = result.set_bind_group(m_pager_bind_group);
         return;
     }
 
-    // Append as much of the lowest common denominator of matches as we can. If
-    // there is an LCD then on_matches_changed() gets called.
-    m_waiting = true;
-    result.append_match_lcd();
+    context.printer.print("\n");
+    result.redraw();
 }
 
 //------------------------------------------------------------------------------
