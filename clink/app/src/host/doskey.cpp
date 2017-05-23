@@ -184,8 +184,9 @@ bool doskey::resolve_impl(const wstr_iter& in, wstr_stream* out)
     // Find the alias' text. First check it exists.
     wchar_t unused;
     wstr<32> wshell(m_shell_name);
-    if (!GetConsoleAliasW(alias.data(), &unused, 1, wshell.data()))
-        return false;
+    if (!GetConsoleAliasW(alias.data(), &unused, sizeof(unused), wshell.data()))
+        if (GetLastError() != ERROR_INSUFFICIENT_BUFFER)
+            return false;
 
     // It does. Allocate space and fetch it.
     wstr<4> text;
