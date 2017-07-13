@@ -185,8 +185,8 @@ int begin_doskey(wchar_t* chars, unsigned max_chars)
         exe = wcsrchr(exe_path, L'\\');
         exe = (exe != NULL) ? (exe + 1) : exe_path;
 
-        // Check it exists.
-        if (!GetConsoleAliasW(alias, exe_path, 1, exe))
+        // Check it exists. (ERROR_NOT_FOUND is set when an alias is, well, not found)
+        if (!GetConsoleAliasW(alias, exe_path, sizeof(wchar_t), exe) && GetLastError() != ERROR_INSUFFICIENT_BUFFER)
             return 0;
 
         // It does. Allocate space and fetch it.
