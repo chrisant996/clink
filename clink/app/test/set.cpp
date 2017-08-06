@@ -21,8 +21,8 @@ TEST_CASE("Set command.") {
         nullptr
     };
 
-    env_fixture env(env_desc);
     fs_fixture fs;
+    env_fixture env(env_desc);
 
     lua_state lua;
     lua_match_generator lua_generator(lua);

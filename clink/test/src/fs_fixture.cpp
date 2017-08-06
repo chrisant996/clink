@@ -25,10 +25,11 @@ static const char* g_default_fs[] = {
 //------------------------------------------------------------------------------
 fs_fixture::fs_fixture(const char** fs)
 {
+    os::get_env("tmp", m_root);
+    REQUIRE(!m_root.empty());
+
     str<64> id;
     id.format("clink_test_%d", rand());
-
-    os::get_env("tmp", m_root);
     path::append(m_root, id.c_str());
 
     bool existed = !os::make_dir(m_root.c_str());
