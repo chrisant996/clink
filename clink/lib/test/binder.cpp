@@ -7,10 +7,12 @@
 #include "editor_module.h"
 
 //------------------------------------------------------------------------------
-TEST_CASE("Binder") {
+TEST_CASE("Binder")
+{
     binder binder;
 
-    SECTION("Group") {
+    SECTION("Group")
+    {
         REQUIRE(binder.create_group("") == -1);
         REQUIRE(binder.create_group(nullptr) == -1);
 
@@ -28,14 +30,16 @@ TEST_CASE("Binder") {
         REQUIRE(binder.get_group("group2") == groups[1]);
     }
 
-    SECTION("Overflow : group") {
+    SECTION("Overflow : group")
+    {
         for (int i = 1; i < 256; ++i)
             REQUIRE(binder.create_group("group") == (i * 2) + 1);
 
         REQUIRE(binder.create_group("group") == -1);
     }
 
-    SECTION("Overflow : module") {
+    SECTION("Overflow : module")
+    {
         int group = binder.get_group();
         for (int i = 0; i < 64; ++i)
             REQUIRE(binder.bind(group, "", ((editor_module*)0)[i], char(i)));
@@ -44,7 +48,8 @@ TEST_CASE("Binder") {
         REQUIRE(!binder.bind(group, "", module, 0xff));
     }
 
-    SECTION("Overflow : bind") {
+    SECTION("Overflow : bind")
+    {
         auto& null_module = *(editor_module*)0;
         int default_group = binder.get_group();
 
@@ -57,7 +62,8 @@ TEST_CASE("Binder") {
         REQUIRE(!binder.bind(default_group, "\x01\x02\x03", null_module, 0x12));
     }
 
-    SECTION("Valid chords") {
+    SECTION("Valid chords")
+    {
         struct {
             const char* bind;
             const char* input;
@@ -96,7 +102,8 @@ TEST_CASE("Binder") {
         }
     }
 
-    SECTION("Invalid chords") {
+    SECTION("Invalid chords")
+    {
         const char* chords[] = {
             "\\C",   "\\Cx",   "\\C-",     
             "\\M",   "\\Mx",   "\\M-",     

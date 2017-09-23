@@ -11,8 +11,10 @@
 #endif
 
 //------------------------------------------------------------------------------
-TEST_CASE("Strings" NAME_SUFFIX) {
-    SECTION("Basics") {
+TEST_CASE("Strings" NAME_SUFFIX)
+{
+    SECTION("Basics")
+    {
         str<256> s;
         REQUIRE(s.length() == 0);
         REQUIRE(s.char_count() == s.length());
@@ -36,7 +38,8 @@ TEST_CASE("Strings" NAME_SUFFIX) {
         REQUIRE(s.length() == 0);
     }
 
-    SECTION("Concatenation (growable)") {
+    SECTION("Concatenation (growable)")
+    {
         str<4> s;
         int ones = ~0;
 
@@ -72,7 +75,8 @@ TEST_CASE("Strings" NAME_SUFFIX) {
         REQUIRE(ones == ~0);
     }
 
-    SECTION("Concatenation (fixed)") {
+    SECTION("Concatenation (fixed)")
+    {
         str<4, false> s;
         int ones = ~0;
 
@@ -102,7 +106,8 @@ TEST_CASE("Strings" NAME_SUFFIX) {
         REQUIRE(ones == ~0);
     }
 
-    SECTION("Truncate") {
+    SECTION("Truncate")
+    {
         str<16> s;
         s << STR("01234567");
 
@@ -119,7 +124,8 @@ TEST_CASE("Strings" NAME_SUFFIX) {
         REQUIRE(s.equals(STR("0123")) == true);
     }
 
-    SECTION("Index of") {
+    SECTION("Index of")
+    {
         str<16> s;
         s << STR("AaBbbBaA");
 
@@ -129,7 +135,8 @@ TEST_CASE("Strings" NAME_SUFFIX) {
         REQUIRE(s.last_of('Z') == -1);
     }
 
-    SECTION("Equality") {
+    SECTION("Equality")
+    {
         str<16> s;
         s.copy(STR("aBc"));
 
@@ -138,7 +145,8 @@ TEST_CASE("Strings" NAME_SUFFIX) {
         REQUIRE(s.iequals(STR("abc")) == true);
     }
 
-    SECTION("Format") {
+    SECTION("Format")
+    {
         str<6> s;
 
         REQUIRE(s.format(STR("%d"), 123) == true);
@@ -148,7 +156,8 @@ TEST_CASE("Strings" NAME_SUFFIX) {
         REQUIRE(s.equals(STR("12345")));
     }
 
-    SECTION("Operators") {
+    SECTION("Operators")
+    {
         str<> s;
 
         s << STR("abc");
@@ -162,7 +171,8 @@ TEST_CASE("Strings" NAME_SUFFIX) {
         REQUIRE(s.equals(STR("abcd1234")) == true);
     }
 
-    SECTION("Construction") {
+    SECTION("Construction")
+    {
         char buffer[] = "test";
         REQUIRE(str_base(buffer).equals("test") == true);
     }

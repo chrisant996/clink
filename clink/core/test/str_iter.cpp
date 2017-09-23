@@ -8,8 +8,10 @@
 #include <new>
 
 //------------------------------------------------------------------------------
-TEST_CASE("String iterator (str_iter)") {
-    SECTION("Basic") {
+TEST_CASE("String iterator (str_iter)")
+{
+    SECTION("Basic")
+    {
         str_iter iter("123");
         REQUIRE(iter.length() == 3);
         REQUIRE(iter.next() == '1');
@@ -18,7 +20,8 @@ TEST_CASE("String iterator (str_iter)") {
         REQUIRE(iter.next() == 0);
     }
 
-    SECTION("Subset") {
+    SECTION("Subset")
+    {
         str_iter iter("123", 0);
         REQUIRE(iter.length() == 0);
         REQUIRE(iter.next() == 0);
@@ -35,7 +38,8 @@ TEST_CASE("String iterator (str_iter)") {
         REQUIRE(iter.next() == 0);
     }
 
-    SECTION("UTF-8") {
+    SECTION("UTF-8")
+    {
         str_iter iter("\xc2\x9b\xc2\x9b\xc2\x9b");
         REQUIRE(iter.next() == 0x9b);
         REQUIRE(iter.next() == 0x9b);
@@ -43,7 +47,8 @@ TEST_CASE("String iterator (str_iter)") {
         REQUIRE(iter.next() == 0);
     }
 
-    SECTION("Partial UTF-8") {
+    SECTION("Partial UTF-8")
+    {
         str_iter iter("\xc2\x9b\xe0\xa0");
         REQUIRE(iter.next() == 0x9b);
         REQUIRE(iter.next() == 0);
@@ -54,8 +59,10 @@ TEST_CASE("String iterator (str_iter)") {
 }
 
 //------------------------------------------------------------------------------
-TEST_CASE("String iterator (wstr_iter)") {
-    SECTION("Basic") {
+TEST_CASE("String iterator (wstr_iter)")
+{
+    SECTION("Basic")
+    {
         wstr_iter iter(L"123");
         REQUIRE(iter.next() == '1');
         REQUIRE(iter.next() == '2');
@@ -63,14 +70,16 @@ TEST_CASE("String iterator (wstr_iter)") {
         REQUIRE(iter.next() == 0);
     }
 
-    SECTION("Subset") {
+    SECTION("Subset")
+    {
         wstr_iter iter(L"123", 2);
         REQUIRE(iter.next() == '1');
         REQUIRE(iter.next() == '2');
         REQUIRE(iter.next() == 0);
     }
 
-    SECTION("UTF-16") {
+    SECTION("UTF-16")
+    {
         wstr_iter iter(L"\x0001\xd800\xdc00");
         REQUIRE(iter.next() == 1);
         REQUIRE(iter.next() == 0x10000);
@@ -81,7 +90,8 @@ TEST_CASE("String iterator (wstr_iter)") {
         REQUIRE(iter.next() == 0);
     }
 
-    SECTION("Partial UTF-16") {
+    SECTION("Partial UTF-16")
+    {
         wstr_iter iter(L"\x0001\xd800");
         REQUIRE(iter.next() == 1);
         REQUIRE(iter.next() == 0);
@@ -94,7 +104,8 @@ TEST_CASE("String iterator (wstr_iter)") {
         REQUIRE(iter.next() == 0);
     }
 
-    SECTION("OOB") {
+    SECTION("OOB")
+    {
         str_iter iter("", 10);
         REQUIRE(iter.next() == 0);
 
@@ -102,7 +113,8 @@ TEST_CASE("String iterator (wstr_iter)") {
         REQUIRE(witer.next() == 0);
     }
 
-    SECTION("Length") {
+    SECTION("Length")
+    {
         {
             str_iter iter("");          REQUIRE(iter.length() == 0);
             wstr_iter witer(L"");       REQUIRE(iter.length() == 0);
@@ -123,7 +135,8 @@ TEST_CASE("String iterator (wstr_iter)") {
 }
 
 //------------------------------------------------------------------------------
-TEST_CASE("String iterator (null str_iter)") {
+TEST_CASE("String iterator (null str_iter)")
+{
     str_iter null;
     REQUIRE(null.more() == false);
     REQUIRE(null.next() == 0);

@@ -230,19 +230,28 @@ TEST_CASE("Doskey pipe/redirect : new")
     };
 
     doskey.add_alias("alias", "one");
-    SECTION("Basic 1") { test(L"alias|piped", L"one|piped"); }
-    SECTION("Basic 2") { test(L"alias|alias", L"one|one"); }
-    SECTION("Basic 3") { test(L"alias|alias&alias", L"one|one&one"); }
-    SECTION("Basic 4") { test(L"&|alias", L"&|one"); }
-    SECTION("Basic 5") { test(L"alias||", L"one||"); }
-    SECTION("Basic 6") { test(L"&&alias&|", L"&&one&|"); }
-    SECTION("Basic 5") { test(L"alias|x|alias", L"one|x|one"); }
+    SECTION("Basic 1")
+    { test(L"alias|piped", L"one|piped"); }
+    SECTION("Basic 2")
+    { test(L"alias|alias", L"one|one"); }
+    SECTION("Basic 3")
+    { test(L"alias|alias&alias", L"one|one&one"); }
+    SECTION("Basic 4")
+    { test(L"&|alias", L"&|one"); }
+    SECTION("Basic 5")
+    { test(L"alias||", L"one||"); }
+    SECTION("Basic 6")
+    { test(L"&&alias&|", L"&&one&|"); }
+    SECTION("Basic 5")
+    { test(L"alias|x|alias", L"one|x|one"); }
     doskey.remove_alias("alias");
 
     #define ARGS L"two \"three four\" 5"
     doskey.add_alias("alias", "cmd $1 $2 $3");
-    SECTION("Args 1") { test(L"alias " ARGS L"|piped", L"cmd " ARGS L"|piped"); }
-    SECTION("Args 2") { test(L"alias " ARGS L"|alias " ARGS, L"cmd " ARGS L"|cmd " ARGS); }
+    SECTION("Args 1")
+    { test(L"alias " ARGS L"|piped", L"cmd " ARGS L"|piped"); }
+    SECTION("Args 2")
+    { test(L"alias " ARGS L"|alias " ARGS, L"cmd " ARGS L"|cmd " ARGS); }
     doskey.remove_alias("alias");
     #undef ARGS
 }

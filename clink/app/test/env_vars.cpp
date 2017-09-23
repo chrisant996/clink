@@ -12,7 +12,8 @@
 #include <lua/lua_state.h>
 
 //------------------------------------------------------------------------------
-TEST_CASE("Env. vars") {
+TEST_CASE("Env. vars")
+{
     static const char* env_desc[] = {
         "simple",   "0",
         "case_map", "0",
@@ -33,19 +34,22 @@ TEST_CASE("Env. vars") {
     line_editor_tester tester(desc);
     tester.get_editor()->add_generator(lua_generator);
 
-    SECTION("Basic") {
+    SECTION("Basic")
+    {
         tester.set_input("nullcmd %simp");
         tester.set_expected_matches("simple");
         tester.run();
     }
 
-    SECTION("Second %var%") {
+    SECTION("Second %var%")
+    {
         tester.set_input("nullcmd %simple% %sim" DO_COMPLETE);
         tester.set_expected_output("nullcmd %simple% %simple%");
         tester.run();
     }
 
-    SECTION("Case mapped 1") {
+    SECTION("Case mapped 1")
+    {
         str_compare_scope _(str_compare_scope::relaxed);
 
         tester.set_input("nullcmd %case_m");
@@ -53,7 +57,8 @@ TEST_CASE("Env. vars") {
         tester.run();
     }
 
-    SECTION("Case mapped 2") {
+    SECTION("Case mapped 2")
+    {
         str_compare_scope _(str_compare_scope::relaxed);
 
         tester.set_input("nullcmd %dash-");
@@ -61,25 +66,29 @@ TEST_CASE("Env. vars") {
         tester.run();
     }
 
-    SECTION("Mid-word 1") {
+    SECTION("Mid-word 1")
+    {
         tester.set_input("nullcmd One%Two%Three%dash");
         tester.set_expected_matches("dash-1", "dash_2");
         tester.run();
     }
 
-    SECTION("Mid-word 2") {
+    SECTION("Mid-word 2")
+    {
         tester.set_input("nullcmd One%Two%");
         tester.set_expected_matches();
         tester.run();
     }
 
-    SECTION("Not in quotes") {
+    SECTION("Not in quotes")
+    {
         tester.set_input("nullcmd \"arg\" %simp" DO_COMPLETE);
         tester.set_expected_output("nullcmd \"arg\" %simple%");
         tester.run();
     }
 
-    SECTION("In quotes") {
+    SECTION("In quotes")
+    {
         tester.set_input("nullcmd \"arg %sim" DO_COMPLETE);
         tester.set_expected_output("nullcmd \"arg %simple%");
         tester.run();

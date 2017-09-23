@@ -7,8 +7,10 @@
 #include <core/str_compare.h>
 
 //------------------------------------------------------------------------------
-TEST_CASE("String compare") {
-    SECTION("Exact") {
+TEST_CASE("String compare")
+{
+    SECTION("Exact")
+    {
         str_compare_scope _(str_compare_scope::exact);
 
         REQUIRE(str_compare("abc123!@#", "abc123!@#") == -1);
@@ -21,7 +23,8 @@ TEST_CASE("String compare") {
         REQUIRE(str_compare("-", "_") == 0);
     }
 
-    SECTION("Case insensitive") {
+    SECTION("Case insensitive")
+    {
         str_compare_scope _(str_compare_scope::caseless);
 
         REQUIRE(str_compare("abc123!@#", "abc123!@#") == -1);
@@ -34,7 +37,8 @@ TEST_CASE("String compare") {
         REQUIRE(str_compare("-", "_") == 0);
     }
 
-    SECTION("Relaxed") {
+    SECTION("Relaxed")
+    {
         str_compare_scope _(str_compare_scope::relaxed);
 
         REQUIRE(str_compare("abc123!@#", "abc123!@#") == -1);
@@ -47,7 +51,8 @@ TEST_CASE("String compare") {
         REQUIRE(str_compare("-", "_") == -1);
     }
 
-    SECTION("Scopes") {
+    SECTION("Scopes")
+    {
         str_compare_scope outer(str_compare_scope::exact);
         {
             str_compare_scope inner(str_compare_scope::caseless);
@@ -62,7 +67,8 @@ TEST_CASE("String compare") {
         REQUIRE(str_compare("-", "_") == 0);
     }
 
-    SECTION("Iterator state (same)") {
+    SECTION("Iterator state (same)")
+    {
         str_iter lhs_iter("abc123");
         str_iter rhs_iter("abc123");
 
@@ -71,7 +77,8 @@ TEST_CASE("String compare") {
         REQUIRE(rhs_iter.more() == false);
     }
 
-    SECTION("Iterator state (different)") {
+    SECTION("Iterator state (different)")
+    {
         str_iter lhs_iter("abc123");
         str_iter rhs_iter("abc321");
 
@@ -80,7 +87,8 @@ TEST_CASE("String compare") {
         REQUIRE(rhs_iter.peek() == '3');
     }
 
-    SECTION("Iterator state (lhs shorter)") {
+    SECTION("Iterator state (lhs shorter)")
+    {
         str_iter lhs_iter("abc");
         str_iter rhs_iter("abc321");
 
@@ -89,7 +97,8 @@ TEST_CASE("String compare") {
         REQUIRE(rhs_iter.peek() == '3');
     }
 
-    SECTION("Iterator state (lhs shorter)") {
+    SECTION("Iterator state (lhs shorter)")
+    {
         str_iter lhs_iter("abc123");
         str_iter rhs_iter("abc");
 
@@ -98,12 +107,14 @@ TEST_CASE("String compare") {
         REQUIRE(rhs_iter.more() == false);
     }
 
-    SECTION("UTF-8") {
+    SECTION("UTF-8")
+    {
         REQUIRE(str_compare("\xc2\x80", "\xc2\x80") == -1);
         REQUIRE(str_compare("\xc2\x80""abc", "\xc2\x80") == 2);
     }
 
-    SECTION("UTF-16") {
+    SECTION("UTF-16")
+    {
         REQUIRE(str_compare(L"abc123", L"abc123") == -1);
         REQUIRE(str_compare(L"\xd800\xdc00" L"abc", L"\xd800\xdc00") == 2);
     }

@@ -6,7 +6,8 @@
 #include <terminal/attributes.h>
 
 //------------------------------------------------------------------------------
-TEST_CASE("attributes : empty") {
+TEST_CASE("attributes : empty")
+{
     attributes attr;
     REQUIRE(bool(attr.get_fg()) == false);
     REQUIRE(bool(attr.get_bg()) == false);
@@ -14,7 +15,8 @@ TEST_CASE("attributes : empty") {
     REQUIRE(bool(attr.get_underline()) == false);
 }
 
-TEST_CASE("attributes : default") {
+TEST_CASE("attributes : default")
+{
     attributes attr = attributes::defaults;
     REQUIRE(attr.get_fg());
     REQUIRE(attr.get_fg().is_default);
@@ -26,7 +28,8 @@ TEST_CASE("attributes : default") {
     REQUIRE(attr.get_underline().value == 0);
 }
 
-TEST_CASE("attributes : merge") {
+TEST_CASE("attributes : merge")
+{
     attributes attr_a, attr_b;
 
     auto test_merge = [&] (void (*tester)(int, attributes)) {
@@ -126,7 +129,8 @@ TEST_CASE("attributes : merge") {
     });
 }
 
-TEST_CASE("attributes : diff") {
+TEST_CASE("attributes : diff")
+{
     attributes attr_a, attr_b, diff;
 
     diff = attributes::diff(attributes::defaults, attributes::defaults);

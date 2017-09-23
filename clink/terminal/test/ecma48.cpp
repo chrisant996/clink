@@ -11,7 +11,8 @@
 static ecma48_state g_state;
 
 //------------------------------------------------------------------------------
-TEST_CASE("ecma48 chars") {
+TEST_CASE("ecma48 chars")
+{
     const char* input = "abc123";
 
     const ecma48_code* code;
@@ -26,7 +27,8 @@ TEST_CASE("ecma48 chars") {
 }
 
 //------------------------------------------------------------------------------
-TEST_CASE("ecma48 c0") {
+TEST_CASE("ecma48 c0")
+{
     const ecma48_code* code;
 
     ecma48_iter iter("\x01 \x10\x1f", g_state);
@@ -55,7 +57,8 @@ TEST_CASE("ecma48 c0") {
 }
 
 //------------------------------------------------------------------------------
-TEST_CASE("ecma48 c1 (simple)") {
+TEST_CASE("ecma48 c1 (simple)")
+{
     const ecma48_code* code;
 
     ecma48_iter iter("\x1b\x40\x1b\x51\x1b\x5c", g_state);
@@ -79,7 +82,8 @@ TEST_CASE("ecma48 c1 (simple)") {
 }
 
 //------------------------------------------------------------------------------
-TEST_CASE("ecma48 icf") {
+TEST_CASE("ecma48 icf")
+{
     const ecma48_code* code;
 
     ecma48_iter iter("\x1b\x60\x1b\x7f", g_state);
@@ -98,7 +102,8 @@ TEST_CASE("ecma48 icf") {
 }
 
 //------------------------------------------------------------------------------
-TEST_CASE("ecma48 c1 csi") {
+TEST_CASE("ecma48 c1 csi")
+{
     const ecma48_code* code;
     int final, params[8], param_count;
 
@@ -124,7 +129,8 @@ TEST_CASE("ecma48 c1 csi") {
 }
 
 //------------------------------------------------------------------------------
-TEST_CASE("ecma48 c1 csi params") {
+TEST_CASE("ecma48 c1 csi params")
+{
     const ecma48_code* code;
     int final, params[8], param_count;
 
@@ -170,7 +176,8 @@ TEST_CASE("ecma48 c1 csi params") {
 }
 
 //------------------------------------------------------------------------------
-TEST_CASE("ecma48 c1 csi invalid") {
+TEST_CASE("ecma48 c1 csi invalid")
+{
     const ecma48_code* code;
 
     ecma48_iter iter("\x1b[1;2\01", g_state);
@@ -182,7 +189,8 @@ TEST_CASE("ecma48 c1 csi invalid") {
 }
 
 //------------------------------------------------------------------------------
-TEST_CASE("ecma48 c1 csi stream") {
+TEST_CASE("ecma48 c1 csi stream")
+{
     const char input[] = "\x1b[1;21m";
 
     ecma48_iter iter_1(input, g_state, 0);
@@ -209,7 +217,8 @@ TEST_CASE("ecma48 c1 csi stream") {
 }
 
 //------------------------------------------------------------------------------
-TEST_CASE("ecma48 c1 csi split") {
+TEST_CASE("ecma48 c1 csi split")
+{
     const ecma48_code* code;
 
     ecma48_iter iter(" \x1b[1;2x@@@@", g_state);
@@ -237,7 +246,8 @@ TEST_CASE("ecma48 c1 csi split") {
 }
 
 //------------------------------------------------------------------------------
-TEST_CASE("ecma48 c1 !csi") {
+TEST_CASE("ecma48 c1 !csi")
+{
     const ecma48_code* code;
 
     const char* terminators[] = { "\x1b\\", "\xc2\x9c" };
@@ -270,7 +280,8 @@ TEST_CASE("ecma48 c1 !csi") {
 }
 
 //------------------------------------------------------------------------------
-TEST_CASE("ecma48 utf8") {
+TEST_CASE("ecma48 utf8")
+{
     const ecma48_code* code;
 
     ecma48_iter iter("\xc2\x9c", g_state);

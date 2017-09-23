@@ -14,7 +14,8 @@
 #include <lua/lua_state.h>
 
 //------------------------------------------------------------------------------
-TEST_CASE("Executable match generation.") {
+TEST_CASE("Executable match generation.")
+{
     static const char* path_fs_desc[] = {
         "_path/spa ce.exe",
         "_path/one_path.exe",
@@ -60,19 +61,22 @@ TEST_CASE("Executable match generation.") {
     settings::find("exec.cwd")->set("0");
     settings::find("exec.dirs")->set("0");
 
-    SECTION("Nothing") {
+    SECTION("Nothing")
+    {
         tester.set_input("abc123");
         tester.set_expected_matches();
         tester.run();
     }
 
-    SECTION("PATH single") {
+    SECTION("PATH single")
+    {
         tester.set_input("one_p");
         tester.set_expected_matches("one_path.exe");
         tester.run();
     }
 
-    SECTION("PATH case mapped") {
+    SECTION("PATH case mapped")
+    {
         str_compare_scope _(str_compare_scope::relaxed);
 
         tester.set_input("one-p");
@@ -80,13 +84,15 @@ TEST_CASE("Executable match generation.") {
         tester.run();
     }
 
-    SECTION("PATH matches") {
+    SECTION("PATH matches")
+    {
         tester.set_input("one_");
         tester.set_expected_matches("one_path.exe", "one_two.py");
         tester.run();
     }
 
-    SECTION("Relative path") {
+    SECTION("Relative path")
+    {
         tester.set_input(".\\");
         tester.set_expected_matches(
             "one_local.exe", "two_local.exe",
@@ -95,52 +101,61 @@ TEST_CASE("Executable match generation.") {
         tester.run();
     }
 
-    SECTION("Relative path dir") {
+    SECTION("Relative path dir")
+    {
         tester.set_input(".\\foodir\\");
         tester.set_expected_matches("two_dir_local.exe");
         tester.run();
     }
 
-    SECTION("Relative path dir (with '_')") {
+    SECTION("Relative path dir (with '_')")
+    {
         tester.set_input(".\\one_dir\\t");
         tester.set_expected_matches("two_dir_local.exe");
         tester.run();
     }
 
-    SECTION("Spaces (path)") {
+    SECTION("Spaces (path)")
+    {
         tester.set_input("spa");
         tester.set_expected_matches("spa ce.exe");
         tester.run();
     }
 
-    SECTION("Spaces (relative)") {
+    SECTION("Spaces (relative)")
+    {
         tester.set_input(".\\one_dir\\spa");
         tester.set_expected_matches("spa ce.exe");
         tester.run();
     }
 
-    SECTION("Last char . 1") {
+    SECTION("Last char . 1")
+    {
         tester.set_input("one_path.");
         tester.set_expected_matches("one_path.exe");
         tester.run();
     }
 
-    SECTION("Last char . 2") {
+    SECTION("Last char . 2")
+    {
         tester.set_input("jumble\\three.");
         tester.set_expected_matches("three.exe");
         tester.run();
     }
 
-    SECTION("Last char -") {
+    SECTION("Last char -")
+    {
         tester.set_input("one_local-");
         tester.set_expected_matches();
         tester.run();
     }
 
-    SECTION("Current directory") {
+    SECTION("Current directory")
+    {
         settings::find("exec.cwd")->set("1");
 
-        SECTION("No dirs") {
+        SECTION("No dirs")
+        {
             settings::find("exec.dirs")->set("0");
 
             tester.set_input("one_");
@@ -148,7 +163,8 @@ TEST_CASE("Executable match generation.") {
             tester.run();
         }
 
-        SECTION("All") {
+        SECTION("All")
+        {
             str_compare_scope _(str_compare_scope::relaxed);
 
             settings::find("exec.dirs")->set("1");
@@ -160,47 +176,56 @@ TEST_CASE("Executable match generation.") {
         }
     }
 
-    SECTION("Space prefix") {
+    SECTION("Space prefix")
+    {
         tester.get_editor()->add_generator(file_match_generator());
 
         settings::find("exec.space_prefix")->set("1");
 
-        SECTION("None") {
+        SECTION("None")
+        {
             tester.set_input("one_");
             tester.set_expected_matches("one_path.exe", "one_two.py");
             tester.run();
         }
 
-        SECTION("Space") {
+        SECTION("Space")
+        {
             tester.set_input(" one_");
             tester.set_expected_matches("one_dir\\", "one_local.txt", "one_local.exe");
             tester.run();
         }
 
-        SECTION("Spaces") {
+        SECTION("Spaces")
+        {
             tester.set_input("   one_");
             tester.set_expected_matches("one_dir\\", "one_local.txt", "one_local.exe");
             tester.run();
         }
     }
 
-    SECTION("Command separators") {
+    SECTION("Command separators")
+    {
         settings::find("exec.space_prefix")->set("0");
 
-        SECTION("|") {
-            SECTION("Immediate") {
+        SECTION("|")
+        {
+            SECTION("Immediate")
+            {
                 tester.set_input("nullcmd |one_p");
                 tester.set_expected_matches("one_path.exe");
                 tester.run();
             }
 
-            SECTION("With space") {
+            SECTION("With space")
+            {
                 tester.set_input("nullcmd | one_p");
                 tester.set_expected_matches("one_path.exe");
                 tester.run();
             }
 
-            SECTION("Space prefix enabled") {
+            SECTION("Space prefix enabled")
+            {
                 settings::find("exec.space_prefix")->set("1");
 
                 tester.set_input("nullcmd | one_p");
@@ -209,34 +234,41 @@ TEST_CASE("Executable match generation.") {
             }
         }
 
-        SECTION("&") {
-            SECTION("Immediate") {
+        SECTION("&")
+        {
+            SECTION("Immediate")
+            {
                 tester.set_input("nullcmd &one_");
                 tester.set_expected_matches("one_path.exe", "one_two.py");
                 tester.run();
             }
 
-            SECTION("With space") {
+            SECTION("With space")
+            {
                 tester.set_input("nullcmd & one_");
                 tester.set_expected_matches("one_path.exe", "one_two.py");
                 tester.run();
             }
         }
 
-        SECTION("&&") {
-            SECTION("Immediate") {
+        SECTION("&&")
+        {
+            SECTION("Immediate")
+            {
                 tester.set_input("nullcmd &&one_p");
                 tester.set_expected_matches("one_path.exe");
                 tester.run();
             }
 
-            SECTION("With space") {
+            SECTION("With space")
+            {
                 tester.set_input("nullcmd && one_p");
                 tester.set_expected_matches("one_path.exe");
                 tester.run();
             }
 
-            SECTION("False positive") {
+            SECTION("False positive")
+            {
                 tester.get_editor()->add_generator(file_match_generator());
 
                 tester.set_input("nullcmd \"&&\" o");
@@ -246,16 +278,19 @@ TEST_CASE("Executable match generation.") {
         }
     }
 
-    SECTION("cmd.exe commands") {
+    SECTION("cmd.exe commands")
+    {
         lua_load_script(lua, app, cmd);
 
-        SECTION("Only") {
+        SECTION("Only")
+        {
             tester.set_input("p");
             tester.set_expected_matches("path", "pause", "popd", "prompt", "pushd");
             tester.run();
         }
 
-        SECTION("Mixed") {
+        SECTION("Mixed")
+        {
             tester.set_input("s");
             tester.set_expected_matches(
                 "set", "setlocal", "shift", "start",
@@ -264,19 +299,22 @@ TEST_CASE("Executable match generation.") {
             tester.run();
         }
 
-        SECTION("Only first word") {
+        SECTION("Only first word")
+        {
             tester.set_input("one p");
             tester.set_expected_matches();
             tester.run();
         }
 
-        SECTION("Space prefix") {
+        SECTION("Space prefix")
+        {
             tester.set_input(" p");
             tester.set_expected_matches();
             tester.run();
         }
 
-        SECTION("Not if relative") {
+        SECTION("Not if relative")
+        {
             tester.set_input("/p");
             tester.set_expected_matches();
             tester.run();

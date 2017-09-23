@@ -13,7 +13,8 @@
 #include <lua/lua_state.h>
 
 //------------------------------------------------------------------------------
-TEST_CASE("Directory match generation.") {
+TEST_CASE("Directory match generation.")
+{
     static const char* dir_fs[] = {
         "one_dir/leaf",
         "two_dir/leaf",
@@ -46,22 +47,26 @@ TEST_CASE("Directory match generation.") {
         str<> cmd;
         cmd << dir_cmd << " ";
 
-        SECTION(dir_cmd) {
-            SECTION("Matches") {
+        SECTION(dir_cmd)
+        {
+            SECTION("Matches")
+            {
                 cmd << "t";
                 tester.set_input(cmd.c_str());
                 tester.set_expected_matches("two_dir\\", "three_dir\\");
                 tester.run();
             }
 
-            SECTION("Single (with -/_) 1") {
+            SECTION("Single (with -/_) 1")
+            {
                 cmd << "two_d";
                 tester.set_input(cmd.c_str());
                 tester.set_expected_matches("two_dir\\");
                 tester.run();
             }
 
-            SECTION("Single (with -/_) 2") {
+            SECTION("Single (with -/_) 2")
+            {
                 str_compare_scope _(str_compare_scope::relaxed);
 
                 cmd << "one-";
@@ -70,35 +75,40 @@ TEST_CASE("Directory match generation.") {
                 tester.run();
             }
 
-            SECTION("Single 3") {
+            SECTION("Single 3")
+            {
                 cmd << "one_dir";
                 tester.set_input(cmd.c_str());
                 tester.set_expected_matches("one_dir\\");
                 tester.run();
             }
 
-            SECTION("Relative") {
+            SECTION("Relative")
+            {
                 cmd << "nest_1\\..\\o";
                 tester.set_input(cmd.c_str());
                 tester.set_expected_matches("one_dir\\");
                 tester.run();
             }
 
-            SECTION("No matches") {
+            SECTION("No matches")
+            {
                 cmd << "f";
                 tester.set_input(cmd.c_str());
                 tester.set_expected_matches();
                 tester.run();
             }
 
-            SECTION("Nested 1") {
+            SECTION("Nested 1")
+            {
                 cmd << "nest_1/ne";
                 tester.set_input(cmd.c_str());
                 tester.set_expected_matches("nest_2\\");
                 tester.run();
             }
 
-            SECTION("Nested 2") {
+            SECTION("Nested 2")
+            {
                 cmd << "nest_1/nest_2\\";
                 tester.set_input(cmd.c_str());
                 tester.set_expected_matches("nest_3a\\", "nest_3b\\");

@@ -27,21 +27,30 @@ TEST_CASE("path::clean()")
 //------------------------------------------------------------------------------
 TEST_CASE("path::get_base_name()")
 {
-    SECTION("Basic") {
+    SECTION("Basic")
+    {
         str<> s;
 
-        SECTION("0") { path::get_base_name("one/two/three/filename.ext", s); }
-        SECTION("1") { path::get_base_name("one/two/three/filename.ext", s); }
-        SECTION("2") { path::get_base_name("one/two/three\\filename.ext", s); }
-        SECTION("3") { path::get_base_name("filename.ext", s); }
-        SECTION("4") { path::get_base_name("filename", s); }
-        SECTION("5") { path::get_base_name("c:filename.ext", s); }
-        SECTION("6") { path::get_base_name("c:filename", s); }
+        SECTION("0")
+        { path::get_base_name("one/two/three/filename.ext", s); }
+        SECTION("1")
+        { path::get_base_name("one/two/three/filename.ext", s); }
+        SECTION("2")
+        { path::get_base_name("one/two/three\\filename.ext", s); }
+        SECTION("3")
+        { path::get_base_name("filename.ext", s); }
+        SECTION("4")
+        { path::get_base_name("filename", s); }
+        SECTION("5")
+        { path::get_base_name("c:filename.ext", s); }
+        SECTION("6")
+        { path::get_base_name("c:filename", s); }
 
         REQUIRE(s.equals("filename"));
     }
 
-    SECTION("Other") {
+    SECTION("Other")
+    {
         str<> s;
 
         path::get_base_name("one/two/three/filename...ext", s);
@@ -65,78 +74,103 @@ TEST_CASE("path::get_base_name()")
 //------------------------------------------------------------------------------
 TEST_CASE("path::get_directory()")
 {
-    SECTION("Copy") {
+    SECTION("Copy")
+    {
         str<> s, t;
 
-        SECTION("0") { t << "one/two/three/filename.ext"; }
-        SECTION("1") { t << "one/two/three\\filename.ext"; }
+        SECTION("0")
+        { t << "one/two/three/filename.ext"; }
+        SECTION("1")
+        { t << "one/two/three\\filename.ext"; }
 
         path::get_directory(t.c_str(), s);
         path::clean(s, '/');
         REQUIRE(s.equals("one/two/three"));
     }
 
-    SECTION("In-place") {
+    SECTION("In-place")
+    {
         str<> s;
 
-        SECTION("0") { s << "one/two/three/filename.ext"; }
-        SECTION("1") { s << "one/two\\three/filename.ext"; }
+        SECTION("0")
+        { s << "one/two/three/filename.ext"; }
+        SECTION("1")
+        { s << "one/two\\three/filename.ext"; }
 
         path::get_directory(s);
         path::clean(s, '/');
         REQUIRE(s.equals("one/two/three"));
     }
 
-    SECTION("Trailing slash") {
+    SECTION("Trailing slash")
+    {
         str<> s;
 
-        SECTION("0") { s << "one/two/three/"; }
-        SECTION("1") { s << "one/two/three\\"; }
-        SECTION("2") { s << "one/two/three///"; }
-        SECTION("3") { s << "one/two/three\\\\\\"; }
+        SECTION("0")
+        { s << "one/two/three/"; }
+        SECTION("1")
+        { s << "one/two/three\\"; }
+        SECTION("2")
+        { s << "one/two/three///"; }
+        SECTION("3")
+        { s << "one/two/three\\\\\\"; }
 
         path::get_directory(s);
         path::clean(s, '/');
         REQUIRE(s.equals("one/two/three"));
     }
 
-    SECTION("No slash") {
+    SECTION("No slash")
+    {
         str<> s;
 
-        SECTION("0") { s << "one"; }
-        SECTION("1") { s << ""; }
+        SECTION("0")
+        { s << "one"; }
+        SECTION("1")
+        { s << ""; }
 
         path::get_directory(s);
         REQUIRE(s.equals(""));
     }
 
-    SECTION("Root copy") {
+    SECTION("Root copy")
+    {
         str<> s, t;
 
-        SECTION("0") { t << "/"; }
-        SECTION("1") { t << "\\"; }
-        SECTION("2") { t << "/one"; }
-        SECTION("3") { t << "\\one"; }
+        SECTION("0")
+        { t << "/"; }
+        SECTION("1")
+        { t << "\\"; }
+        SECTION("2")
+        { t << "/one"; }
+        SECTION("3")
+        { t << "\\one"; }
 
         path::get_directory(t.c_str(), s);
         path::clean(s, '/');
         REQUIRE(s.equals("/"));
     }
 
-    SECTION("Root in-place") {
+    SECTION("Root in-place")
+    {
         str<> s;
 
-        SECTION("0") { s << "/"; }
-        SECTION("1") { s << "\\"; }
-        SECTION("2") { s << "/one"; }
-        SECTION("3") { s << "\\one"; }
+        SECTION("0")
+        { s << "/"; }
+        SECTION("1")
+        { s << "\\"; }
+        SECTION("2")
+        { s << "/one"; }
+        SECTION("3")
+        { s << "\\one"; }
 
         path::get_directory(s);
         path::clean(s, '/');
         REQUIRE(s.equals("/"));
     }
 
-    SECTION("Drive letter") {
+    SECTION("Drive letter")
+    {
         str<> s;
 
         path::get_directory("e:\\one", s);
@@ -155,34 +189,52 @@ TEST_CASE("path::get_directory()")
 //------------------------------------------------------------------------------
 TEST_CASE("path::get_drive()")
 {
-    SECTION("Has drive") {
+    SECTION("Has drive")
+    {
         str<> s, t;
 
-        SECTION("0") { s << "e:"; }
-        SECTION("1") { s << "e:/"; }
-        SECTION("2") { s << "e:/one/filename.ext"; }
-        SECTION("3") { s << "e:one/filename.ext"; }
-        SECTION("4") { s << "E:\\one/filename.ext"; }
-        SECTION("5") { s << "E:one/filename.ext"; }
+        SECTION("0")
+        { s << "e:"; }
+        SECTION("1")
+        { s << "e:/"; }
+        SECTION("2")
+        { s << "e:/one/filename.ext"; }
+        SECTION("3")
+        { s << "e:one/filename.ext"; }
+        SECTION("4")
+        { s << "E:\\one/filename.ext"; }
+        SECTION("5")
+        { s << "E:one/filename.ext"; }
 
         REQUIRE(path::get_drive(s.c_str(), t));
         REQUIRE((t.equals("e:") || t.equals("E:")));
         REQUIRE(path::get_drive(t));
     }
 
-    SECTION("No drive") {
+    SECTION("No drive")
+    {
         str<> s, t;
 
-        SECTION("0") { s << ""; }
-        SECTION("1") { s << ":"; }
-        SECTION("2") { s << ":/"; }
-        SECTION("3") { s << "[:/"; }
-        SECTION("4") { s << "{:"; }
-        SECTION("5") { s << "@:"; }
-        SECTION("6") { s << "`:\\"; }
-        SECTION("7") { s << "/one/filename.ext"; }
-        SECTION("8") { s << "one/filename.ext"; }
-        SECTION("9") { s << "filename.ext"; }
+        SECTION("0")
+        { s << ""; }
+        SECTION("1")
+        { s << ":"; }
+        SECTION("2")
+        { s << ":/"; }
+        SECTION("3")
+        { s << "[:/"; }
+        SECTION("4")
+        { s << "{:"; }
+        SECTION("5")
+        { s << "@:"; }
+        SECTION("6")
+        { s << "`:\\"; }
+        SECTION("7")
+        { s << "/one/filename.ext"; }
+        SECTION("8")
+        { s << "one/filename.ext"; }
+        SECTION("9")
+        { s << "filename.ext"; }
 
         REQUIRE(!path::get_drive(s.c_str(), t));
         REQUIRE(!path::get_drive(s));
@@ -192,63 +244,92 @@ TEST_CASE("path::get_drive()")
 //------------------------------------------------------------------------------
 TEST_CASE("path::get_extension()")
 {
-    SECTION("Has extension") {
+    SECTION("Has extension")
+    {
         str<> s;
 
-        SECTION("0") { path::get_extension("one/two/three/filename.ext", s); }
-        SECTION("1") { path::get_extension("one/two/three/filename.ext", s); }
-        SECTION("2") { path::get_extension("one/two/three\\filename.ext", s); }
-        SECTION("3") { path::get_extension("./two/three\\filename.ext", s); }
-        SECTION("4") { path::get_extension("filename.ext", s); }
-        SECTION("5") { path::get_extension("filename..ext", s); }
-        SECTION("6") { path::get_extension(".ext", s); }
+        SECTION("0")
+        { path::get_extension("one/two/three/filename.ext", s); }
+        SECTION("1")
+        { path::get_extension("one/two/three/filename.ext", s); }
+        SECTION("2")
+        { path::get_extension("one/two/three\\filename.ext", s); }
+        SECTION("3")
+        { path::get_extension("./two/three\\filename.ext", s); }
+        SECTION("4")
+        { path::get_extension("filename.ext", s); }
+        SECTION("5")
+        { path::get_extension("filename..ext", s); }
+        SECTION("6")
+        { path::get_extension(".ext", s); }
 
         REQUIRE(s.equals(".ext"));
     }
 
-    SECTION("Misc") {
+    SECTION("Misc")
+    {
         str<> s;
 
-        SECTION("0") { REQUIRE(!path::get_extension("..", s)); }
-        SECTION("1") { REQUIRE(!path::get_extension("", s)); }
-        SECTION("2") { REQUIRE(!path::get_extension("abc", s)); }
-        SECTION("3") { REQUIRE(!path::get_extension("./one/two", s)); }
+        SECTION("0")
+        { REQUIRE(!path::get_extension("..", s)); }
+        SECTION("1")
+        { REQUIRE(!path::get_extension("", s)); }
+        SECTION("2")
+        { REQUIRE(!path::get_extension("abc", s)); }
+        SECTION("3")
+        { REQUIRE(!path::get_extension("./one/two", s)); }
     }
 }
 
 //------------------------------------------------------------------------------
 TEST_CASE("path::get_name()")
 {
-    SECTION("Basic") {
+    SECTION("Basic")
+    {
         str<> s;
 
-        SECTION("0") { path::get_name("one/two/three/filename.ext", s); }
-        SECTION("1") { path::get_name("one/two/three\\filename.ext", s); }
-        SECTION("2") { path::get_name("filename.ext", s); }
+        SECTION("0")
+        { path::get_name("one/two/three/filename.ext", s); }
+        SECTION("1")
+        { path::get_name("one/two/three\\filename.ext", s); }
+        SECTION("2")
+        { path::get_name("filename.ext", s); }
 
         REQUIRE(s.equals("filename.ext"));
     }
 
-    SECTION("Trailing slash") {
+    SECTION("Trailing slash")
+    {
         const char* name;
 
-        SECTION("0") { name = path::get_name("one/two/"); }
-        SECTION("1") { name = path::get_name("one/two//"); }
-        SECTION("2") { name = path::get_name("one/two///"); }
-        SECTION("3") { name = path::get_name("one\\two\\\\"); }
-        SECTION("4") { name = path::get_name("/two/"); }
-        SECTION("5") { name = path::get_name("two/"); }
+        SECTION("0")
+        { name = path::get_name("one/two/"); }
+        SECTION("1")
+        { name = path::get_name("one/two//"); }
+        SECTION("2")
+        { name = path::get_name("one/two///"); }
+        SECTION("3")
+        { name = path::get_name("one\\two\\\\"); }
+        SECTION("4")
+        { name = path::get_name("/two/"); }
+        SECTION("5")
+        { name = path::get_name("two/"); }
 
         REQUIRE(name[0] == '\0');
     }
 
-    SECTION("Other") {
+    SECTION("Other")
+    {
         const char* in;
 
-        SECTION("0") { in = ""; }
-        SECTION("1") { in = "//"; }
-        SECTION("2") { in = "/\\/"; }
-        SECTION("3") { in = "\\"; }
+        SECTION("0")
+        { in = ""; }
+        SECTION("1")
+        { in = "//"; }
+        SECTION("2")
+        { in = "/\\/"; }
+        SECTION("3")
+        { in = "\\"; }
 
         REQUIRE(path::get_name(in)[0] == '\0');
     }
@@ -257,7 +338,8 @@ TEST_CASE("path::get_name()")
 //------------------------------------------------------------------------------
 TEST_CASE("path::is_root()")
 {
-    SECTION("True") {
+    SECTION("True")
+    {
         REQUIRE(path::is_root("e:"));
         REQUIRE(path::is_root("e:/"));
         REQUIRE(path::is_root("e:\\"));
@@ -266,7 +348,8 @@ TEST_CASE("path::is_root()")
         REQUIRE(path::is_root(""));
     }
 
-    SECTION("False") {
+    SECTION("False")
+    {
         REQUIRE(!path::is_root("e:one"));
         REQUIRE(!path::is_root("e:/one"));
         REQUIRE(!path::is_root("e:\\one"));
@@ -279,34 +362,44 @@ TEST_CASE("path::is_root()")
 //------------------------------------------------------------------------------
 TEST_CASE("path::join()")
 {
-    SECTION("Basic") {
+    SECTION("Basic")
+    {
         str<> s;
 
-        SECTION("0") { path::join("one/two", "three/four", s); }
-        SECTION("1") { path::join("one/two/", "three/four", s); }
-        SECTION("2") { path::join("one/two\\", "three/four", s); }
-        SECTION("3") { path::join("one/two", "/three/four", s); }
-        SECTION("4") { path::join("one/two", "\\three/four", s); }
+        SECTION("0")
+        { path::join("one/two", "three/four", s); }
+        SECTION("1")
+        { path::join("one/two/", "three/four", s); }
+        SECTION("2")
+        { path::join("one/two\\", "three/four", s); }
+        SECTION("3")
+        { path::join("one/two", "/three/four", s); }
+        SECTION("4")
+        { path::join("one/two", "\\three/four", s); }
 
         path::clean(s);
         REQUIRE(s.equals("one\\two\\three\\four"));
     }
 
-    SECTION("One side empty") {
-        SECTION("Left") {
+    SECTION("One side empty")
+    {
+        SECTION("Left")
+        {
             str<> s;
             path::join("", "one\\two", s);
             REQUIRE(s.equals("one\\two"));
         }
 
-        SECTION("Right") {
+        SECTION("Right")
+        {
             str<> s;
             path::join("one\\two", "", s);
             REQUIRE(s.equals("one\\two\\"));
         }
     }
 
-    SECTION("Drive letter") {
+    SECTION("Drive letter")
+    {
         str<> s;
 
         // Absolute
@@ -339,16 +432,23 @@ TEST_CASE("path::join(get_dir(), get_name())")
     const char* in;
     const char* out;
 
-    SECTION("Plain") {
-        SECTION("0") { in = "one/two"; }
-        SECTION("1") { in = "one\\two"; }
+    SECTION("Plain")
+    {
+        SECTION("0")
+        { in = "one/two"; }
+        SECTION("1")
+        { in = "one\\two"; }
         out = "one/two";
     }
 
-    SECTION("Trailing slash") {
-        SECTION("0") { in = "one/two/"; }
-        SECTION("1") { in = "one/two\\"; }
-        SECTION("2") { in = "one\\two\\"; }
+    SECTION("Trailing slash")
+    {
+        SECTION("0")
+        { in = "one/two/"; }
+        SECTION("1")
+        { in = "one/two\\"; }
+        SECTION("2")
+        { in = "one\\two\\"; }
         out = "one/two/";
     }
 
