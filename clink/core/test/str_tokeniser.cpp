@@ -19,6 +19,30 @@ TEST_CASE("str_tokeniser : basic")
 }
 
 //------------------------------------------------------------------------------
+TEST_CASE("str_tokeniser : empty")
+{
+    {
+        str<> s;
+        str_tokeniser t;
+        REQUIRE(!t.next(s));
+    }{
+        str<> s;
+        str_iter i;
+        str_tokeniser t(i);
+        REQUIRE(!t.next(s));
+    }{
+        wstr<> s;
+        wstr_tokeniser t;
+        REQUIRE(!t.next(s));
+    }{
+        wstr<> s;
+        wstr_iter i;
+        wstr_tokeniser t(i);
+        REQUIRE(!t.next(s));
+    }
+}
+
+//------------------------------------------------------------------------------
 TEST_CASE("str_tokeniser : multi delims")
 {
     str_tokeniser t("a;b-c.d", ";-.");

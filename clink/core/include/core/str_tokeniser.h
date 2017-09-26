@@ -26,8 +26,8 @@ template <typename T>
 class str_tokeniser_impl
 {
 public:
-                        str_tokeniser_impl(const T* in, const char* delims);
-                        str_tokeniser_impl(const str_iter_impl<T>& in, const char* delims);
+                        str_tokeniser_impl(const T* in=(const T*)L"", const char* delims=" ");
+                        str_tokeniser_impl(const str_iter_impl<T>& in, const char* delims=" ");
     bool                add_quote_pair(const char* pair);
     str_token           next(str_impl<T>& out);
     str_token           next(const T*& start, int& length);
