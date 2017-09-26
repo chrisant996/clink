@@ -10,8 +10,12 @@ public:
     typedef void (__stdcall *funcptr_t)();
 
                                 hook_setter();
-    template <typename T> bool  add_iat(void* module, const char* name, T* hook);
-    template <typename T> bool  add_jmp(void* module, const char* name, T* hook);
+    template <typename RET,
+             typename... ARGS>
+    bool                        add_iat(void* module, const char* name, RET (__stdcall *hook)(ARGS...));
+    template <typename RET,
+             typename... ARGS>
+    bool                        add_jmp(void* module, const char* name, RET (__stdcall *hook)(ARGS...));
     bool                        add_trap(void* module, const char* name, bool (*trap)());
     int                         commit();
 
@@ -41,15 +45,15 @@ private:
 };
 
 //------------------------------------------------------------------------------
-template <typename T>
-bool hook_setter::add_iat(void* module, const char* name, T* hook)
+template <typename RET, typename... ARGS>
+bool hook_setter::add_iat(void* module, const char* name, RET (__stdcall *hook)(ARGS...))
 {
     return (add_desc(hook_type_iat_by_name, module, name, funcptr_t(hook)) != nullptr);
 }
 
 //------------------------------------------------------------------------------
-template <typename T>
-bool hook_setter::add_jmp(void* module, const char* name, T* hook)
+template <typename RET, typename... ARGS>
+bool hook_setter::add_jmp(void* module, const char* name, RET (__stdcall *hook)(ARGS...))
 {
     return (add_desc(hook_type_jmp, module, name, funcptr_t(hook)) != nullptr);
 }
