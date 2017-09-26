@@ -77,6 +77,7 @@ bool app_context::load_from_env()
         if (!os::get_env(clink_env_var.c_str(), state_dir))
             continue;
 
+        os::set_env(clink_env_var.c_str(), nullptr);
         return true;
     }
 
