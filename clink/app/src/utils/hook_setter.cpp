@@ -11,92 +11,9 @@
 #include <process/vm.h>
 
 //------------------------------------------------------------------------------
-static bool             (*g_hook_trap)()        = nullptr;
-static void             (*g_hook_trap_addr)()   = nullptr;
-static unsigned char    g_hook_trap_value       = 0;
-static void*            g_hook_veh_handle       = nullptr;
-
-
-
-//------------------------------------------------------------------------------
-static LONG WINAPI hook_trap_veh(EXCEPTION_POINTERS* info)
-{
-    const EXCEPTION_RECORD* er;
-    void** sp_reg;
-
-    // Check exception record is the exception we've forced.
-    er = info->ExceptionRecord;
-    if (er->ExceptionCode != EXCEPTION_PRIV_INSTRUCTION)
-        return EXCEPTION_CONTINUE_SEARCH;
-
-    if (er->ExceptionAddress != g_hook_trap_addr)
-        return EXCEPTION_CONTINUE_SEARCH;
-
-    // Restore original instruction.
-    vm_access().write(
-        (void*)g_hook_trap_addr,
-        &g_hook_trap_value,
-        sizeof(g_hook_trap_value)
-    );
-
-    // Who called us?
-#if defined(_M_IX86)
-    sp_reg = (void**)info->ContextRecord->Esp;
-#elif defined(_M_X64)
-    sp_reg = (void**)info->ContextRecord->Rsp;
-#endif
-    LOG("VEH hit - caller is %p.", *sp_reg);
-
-    // Apply hooks.
-    if (g_hook_trap != nullptr && !g_hook_trap())
-        LOG("Hook trap %p failed.", g_hook_trap);
-
-    RemoveVectoredExceptionHandler(g_hook_veh_handle);
-    FlushInstructionCache(GetCurrentProcess(), 0, 0);
-    return EXCEPTION_CONTINUE_EXECUTION;
-}
-
-//------------------------------------------------------------------------------
-bool set_hook_trap(void* module, const char* func_name, bool (*trap)())
-{
-    auto* addr = pe_info(module).get_export(func_name);
-    if (addr == nullptr)
-    {
-        char dll[96] = {};
-        GetModuleFileName(HMODULE(module), dll, sizeof_array(dll));
-        LOG("Unable to resolve address for %s in %s", dll, func_name);
-        return false;
-    }
-
-    extern void* follow_jump(void*);
-    void* target = follow_jump((void*)addr);
-
-    g_hook_trap = trap;
-    g_hook_trap_addr = funcptr_t(target);
-    g_hook_trap_value = *(unsigned char*)g_hook_trap_addr;
-    g_hook_veh_handle = AddVectoredExceptionHandler(1, hook_trap_veh);
-
-    // Write a HALT instruction to force an exception.
-    unsigned char to_write = 0xf4;
-    vm_access().write(target, &to_write, sizeof(to_write));
-
-    FlushInstructionCache(GetCurrentProcess(), 0, 0);
-
-    return true;
-}
-
-
-
-//------------------------------------------------------------------------------
 hook_setter::hook_setter()
 : m_desc_count(0)
 {
-}
-
-//------------------------------------------------------------------------------
-bool hook_setter::add_trap(void* module, const char* name, bool (*trap)())
-{
-    return (add_desc(hook_type_trap, module, name, funcptr_t(trap)) != nullptr);
 }
 
 //------------------------------------------------------------------------------
@@ -116,7 +33,6 @@ int hook_setter::commit()
         {
         case hook_type_iat_by_name: success += !!commit_iat(self, desc);  break;
         case hook_type_jmp:         success += !!commit_jmp(self, desc);  break;
-        case hook_type_trap:        success += !!commit_trap(self, desc); break;
         }
     }
 
@@ -188,10 +104,4 @@ bool hook_setter::commit_jmp(void* self, const hook_desc& desc)
     }
 
     return true;
-}
-
-//------------------------------------------------------------------------------
-bool hook_setter::commit_trap(void* self, const hook_desc& desc)
-{
-    return set_hook_trap(desc.module, desc.name, (bool (*)())(desc.hook));
 }

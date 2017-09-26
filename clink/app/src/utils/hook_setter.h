@@ -16,7 +16,6 @@ public:
     template <typename RET,
              typename... ARGS>
     bool                        add_jmp(void* module, const char* name, RET (__stdcall *hook)(ARGS...));
-    bool                        add_trap(void* module, const char* name, bool (*trap)());
     int                         commit();
 
 private:
@@ -25,7 +24,6 @@ private:
         hook_type_iat_by_name,
         //hook_type_iat_by_addr,
         hook_type_jmp,
-        hook_type_trap,
     };
 
     struct hook_desc
@@ -39,7 +37,6 @@ private:
     hook_desc*                  add_desc(hook_type type, void* module, const char* name, funcptr_t hook);
     bool                        commit_iat(void* self, const hook_desc& desc);
     bool                        commit_jmp(void* self, const hook_desc& desc);
-    bool                        commit_trap(void* self, const hook_desc& desc);
     hook_desc                   m_descs[4];
     int                         m_desc_count;
 };
