@@ -19,7 +19,7 @@ app_context::desc::desc()
 
 
 //-----------------------------------------------------------------------------
-app_context::app_context(const desc& desc, int forced_id)
+app_context::app_context(const desc& desc)
 : m_desc(desc)
 {
     str_base state_dir(m_desc.state_dir);
@@ -31,7 +31,7 @@ app_context::app_context(const desc& desc, int forced_id)
 
     // Look for a state directory that's been inherited in our environment.
     if (state_dir.empty())
-        load_from_env();
+        os::get_env("=clink.profile", state_dir);
 
     // Still no state directory set? Derive one.
     if (state_dir.empty())
@@ -50,47 +50,24 @@ app_context::app_context(const desc& desc, int forced_id)
     path::abs_path(state_dir);
     os::make_dir(state_dir.c_str());
 
-    m_id = (forced_id > 0) ? forced_id : process().get_pid();
+    m_id = process().get_pid();
+    if (desc.inherit_id)
+    {
+        char env_id[16];
+        if (os::get_env("=clink.id", str_base(env_id)))
+            m_id = atoi(env_id);
+    }
 
-    store_to_env();
+    str<16> id_str;
+    id_str.format("%d", m_id);
+    os::set_env("=clink.id", id_str.c_str());
+    os::set_env("=clink.profile", state_dir.c_str());
 }
 
 //-----------------------------------------------------------------------------
 int app_context::get_id() const
 {
     return m_id;
-}
-
-//------------------------------------------------------------------------------
-bool app_context::load_from_env()
-{
-    // Look up through process chain to see if we've inherited a state directory
-    // in our environment.
-
-    str<32> clink_env_var;
-    str_base state_dir(m_desc.state_dir);
-
-    int pid = -1;
-    while (pid = process(pid).get_parent_pid())
-    {
-        clink_env_var.format("=clink_%d", pid);
-        if (!os::get_env(clink_env_var.c_str(), state_dir))
-            continue;
-
-        os::set_env(clink_env_var.c_str(), nullptr);
-        return true;
-    }
-
-    return false;
-}
-
-//------------------------------------------------------------------------------
-void app_context::store_to_env()
-{
-    // Set an environment variable that can be used to find Clink's state dir.
-    str<32> name;
-    name.format("=clink_%d", process().get_pid());
-    os::set_env(name.c_str(), m_desc.state_dir);
 }
 
 //------------------------------------------------------------------------------

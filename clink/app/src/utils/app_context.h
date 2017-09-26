@@ -17,10 +17,11 @@ public:
                 desc();
         bool    quiet = false;
         bool    log = true;
-        char    state_dir[512]; // = {}; (this crashes cl.exe v18.00.21005.1)
+        bool    inherit_id = false;
+        char    state_dir[509]; // = {}; (this crashes cl.exe v18.00.21005.1)
     };
 
-                app_context(const desc& desc, int forced_id=-1);
+                app_context(const desc& desc);
     int         get_id() const;
     bool        is_logging_enabled() const;
     bool        is_quiet() const;
@@ -31,8 +32,6 @@ public:
     void        get_history_path(str_base& out) const;
 
 private:
-    bool        load_from_env();
-    void        store_to_env();
     desc        m_desc;
     int         m_id;
 };

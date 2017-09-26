@@ -121,6 +121,7 @@ int loader(int argc, char** argv)
     }
 
     app_context::desc app_desc;
+    app_desc.inherit_id = true;
 
     // Parse arguments
     int arg;
