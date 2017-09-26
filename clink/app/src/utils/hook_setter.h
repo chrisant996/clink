@@ -7,7 +7,7 @@
 class hook_setter
 {
 public:
-    typedef void (*funcptr_t)();
+    typedef void (__stdcall *funcptr_t)();
 
                                 hook_setter();
     template <typename T> bool  add_iat(void* module, const char* name, T* hook);

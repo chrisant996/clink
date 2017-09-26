@@ -7,7 +7,7 @@
 class pe_info
 {
 public:
-    typedef void        (*funcptr_t)();
+    typedef void        (__stdcall *funcptr_t)();
                         pe_info(void* base);
     funcptr_t*          get_import_by_name(const char* dll, const char* func_name) const;
     funcptr_t*          get_import_by_addr(const char* dll, funcptr_t func_addr) const;

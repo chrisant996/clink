@@ -24,7 +24,7 @@ public:
     void                        unpause();
 
 private:
-    typedef void                (*funcptr_t)();
+    typedef void                (__stdcall *funcptr_t)();
     int                         remote_call_impl(funcptr_t function, void* param);
     void                        pause_impl(bool suspend);
     int                         m_pid;

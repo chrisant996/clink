@@ -3,7 +3,7 @@
 
 #pragma once
 
-typedef void (*funcptr_t)();
+typedef void (__stdcall *funcptr_t)();
 
 funcptr_t hook_iat(void* base, const char* dll, const char* func_name, funcptr_t hook, int find_by_name);
 funcptr_t hook_jmp(void* module, const char* func_name, funcptr_t hook);
