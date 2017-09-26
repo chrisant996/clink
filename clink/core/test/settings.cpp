@@ -48,7 +48,7 @@ TEST_CASE("settings : list")
     iter = iter->next();
     for (; iter != nullptr; last_name = iter->get_name(), iter = iter->next())
     {
-        REQUIRE(stricmp(last_name, iter->get_name()) <= 0, [=] () {
+        REQUIRE(stricmp(last_name, iter->get_name()) <= 0, [&] () {
             printf("%s < %s\n", last_name, iter->get_name());
         });
     }

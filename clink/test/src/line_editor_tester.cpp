@@ -172,7 +172,7 @@ void line_editor_tester::run()
                 if (match_found = (strcmp(expected, matches->get_match(i)) == 0))
                     break;
 
-            REQUIRE(match_found, [=] () {
+            REQUIRE(match_found, [&] () {
                 printf("match '%s' not found\n", expected);
             });
         }
