@@ -60,6 +60,24 @@ static bool get_host_name(str_base& out)
 }
 
 //------------------------------------------------------------------------------
+static void shutdown_clink()
+{
+    seh_scope seh;
+
+    if (g_host != nullptr)
+    {
+        g_host->shutdown();
+        delete g_host;
+        g_host = nullptr;
+    }
+
+    if (logger* logger = logger::get())
+        delete logger;
+
+    delete app_context::get();
+}
+
+//------------------------------------------------------------------------------
 bool initialise_clink(const app_context::desc& app_desc)
 {
     seh_scope seh;
@@ -115,24 +133,8 @@ bool initialise_clink(const app_context::desc& app_desc)
         return false;
     }
 
+    atexit(shutdown_clink);
+
     success();
     return true;
-}
-
-//------------------------------------------------------------------------------
-void shutdown_clink()
-{
-    seh_scope seh;
-
-    if (g_host != nullptr)
-    {
-        g_host->shutdown();
-        delete g_host;
-        g_host = nullptr;
-    }
-
-    if (logger* logger = logger::get())
-        delete logger;
-
-    delete app_context::get();
 }
