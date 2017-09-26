@@ -5,10 +5,6 @@
 #include "str_iter.h"
 
 //------------------------------------------------------------------------------
-const char*     str_iter_impl<char>::s_empty    = "";
-const wchar_t*  str_iter_impl<wchar_t>::s_empty = L"";
-
-//------------------------------------------------------------------------------
 template <>
 int str_iter_impl<char>::next()
 {

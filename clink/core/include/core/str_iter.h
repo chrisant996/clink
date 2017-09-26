@@ -10,7 +10,7 @@ template <typename T>
 class str_iter_impl
 {
 public:
-    explicit        str_iter_impl(const T* s=s_empty, int len=-1);
+    explicit        str_iter_impl(const T* s=(const T*)L"", int len=-1);
     explicit        str_iter_impl(const str_impl<T>& s, int len=-1);
     const T*        get_pointer() const;
     int             peek();
@@ -19,7 +19,6 @@ public:
     unsigned int    length() const;
 
 private:
-    static const T* s_empty;
     const T*        m_ptr;
     const T*        m_end;
 };
