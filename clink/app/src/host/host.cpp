@@ -95,7 +95,7 @@ bool host::edit_line(const char* prompt, str_base& out)
 
     // Unfortunately we need to load settings again because some settings don't
     // exist until after Lua's up and running. But.. we can't load Lua scripts
-    // without loading settings first.
+    // without loading settings first. [TODO: find a better way]
     settings::load(settings_file.c_str());
 
     line_editor::desc desc = {};
