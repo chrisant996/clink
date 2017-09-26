@@ -263,7 +263,7 @@ void host_cmd::edit_line(const wchar_t* prompt, wchar_t* chars, int max_chars)
     // Call readline.
     while (1)
     {
-        str<1024> out;
+        str<4096> out;
         bool ok = host::edit_line(utf8_prompt.c_str(), out);
         if (ok)
         {

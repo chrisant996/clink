@@ -6,7 +6,6 @@
 #include "host_lua.h"
 #include "host_module.h"
 #include "prompt.h"
-#include "rl/rl_history.h"
 #include "utils/app_context.h"
 #include "utils/scroller.h"
 
@@ -54,6 +53,11 @@ host::host(const char* name)
 }
 
 //------------------------------------------------------------------------------
+host::~host()
+{
+}
+
+//------------------------------------------------------------------------------
 bool host::edit_line(const char* prompt, str_base& out)
 {
     const app_context* app = app_context::get();
@@ -80,13 +84,6 @@ bool host::edit_line(const char* prompt, str_base& out)
     default:    cmp_mode = str_compare_scope::exact;    break;
     }
     str_compare_scope compare(cmp_mode);
-
-    // Initialise and load history.
-    str<288> history_file;
-    app->get_history_path(history_file);
-
-    rl_history history;
-    history.load(history_file.c_str());
 
     // Set up Lua and load scripts into it.
     host_lua lua;
@@ -129,13 +126,16 @@ bool host::edit_line(const char* prompt, str_base& out)
     editor->add_generator(lua);
     editor->add_generator(file_match_generator());
 
+    m_history.initialise();
+    m_history.load_rl_history();
+
     bool ret = false;
     while (1)
     {
         if (ret = editor->edit(out.data(), out.size()))
         {
             // Handle history event expansion.
-            if (history.expand(out.c_str(), out) == 2)
+            if (m_history.expand(out.c_str(), out) == history_db::expand_print)
             {
                 puts(out.c_str());
                 continue;
@@ -153,13 +153,10 @@ bool host::edit_line(const char* prompt, str_base& out)
             }
 
             // Add the line to the history.
-            history.load(history_file.c_str());
-            history.add(out.c_str());
+            m_history.add(out.c_str());
         }
         break;
     }
-
-    history.save(history_file.c_str());
 
     line_editor_destroy(editor);
     tab_completer_destroy(completer);

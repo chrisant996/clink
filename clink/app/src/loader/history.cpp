@@ -2,7 +2,7 @@
 // License: http://opensource.org/licenses/MIT
 
 #include "pch.h"
-#include "rl/rl_history.h"
+#include "history/history_db.h"
 #include "utils/app_context.h"
 
 #include <core/base.h>
@@ -21,40 +21,23 @@ void puts_help(const char**, int);
 class history_scope
 {
 public:
-                    history_scope(bool save);
-                    ~history_scope();
-    rl_history*     operator -> ();
+                    history_scope();
+    history_db*     operator -> ()      { return &m_history; }
+    history_db&     operator * ()       { return m_history; }
 
 private:
     str<280>        m_path;
-    rl_history      m_history;
-    bool            m_save;
+    history_db      m_history;
 };
 
 //------------------------------------------------------------------------------
-history_scope::history_scope(bool save)
-: m_save(save)
+history_scope::history_scope()
 {
     // Load settings.
     app_context::get()->get_settings_path(m_path);
     settings::load(m_path.c_str());
-    
-    // Find and load the history
-    app_context::get()->get_history_path(m_path);
-    m_history.load(m_path.c_str());
-}
 
-//------------------------------------------------------------------------------
-history_scope::~history_scope()
-{
-    if (m_save)
-        m_history.save(m_path.c_str());
-}
-
-//------------------------------------------------------------------------------
-rl_history* history_scope::operator -> ()
-{
-    return &m_history;
+    m_history.initialise();
 }
 
 
@@ -62,18 +45,26 @@ rl_history* history_scope::operator -> ()
 //------------------------------------------------------------------------------
 static void print_history(unsigned int tail_count)
 {
-    history_scope history(false);
+    history_scope history;
 
-    unsigned int skip = 0;
-    if (tail_count)
-        skip = max<int>(0, history->get_count() - tail_count);
+    str_iter line;
+    char buffer[history_db::max_line_length];
 
-    history_iter iter;
-    iter.skip(skip);
+    int count = 0;
+    {
+        history_db::iter iter = history->read_lines(buffer);
+        while (iter.next(line))
+            ++count;
+    }
 
-    str<> line;
-    while (iter.next(line))
-        printf("%5d  %s\n", iter.get_index() + 1, line.c_str());
+    int index = 1;
+    history_db::iter iter = history->read_lines(buffer);
+
+    int skip = count - tail_count;
+    for (int i = 0; i < skip; ++i, ++index, iter.next(line));
+
+    for (; iter.next(line); ++index)
+        printf("%5d  %.*s\n", index, line.length(), line.get_pointer());
 }
 
 //------------------------------------------------------------------------------
@@ -81,7 +72,7 @@ static bool print_history(const char* arg)
 {
     if (arg == nullptr)
     {
-        print_history(unsigned(0));
+        print_history(INT_MIN);
         return true;
     }
 
@@ -97,7 +88,7 @@ static bool print_history(const char* arg)
 //------------------------------------------------------------------------------
 static int add(const char* line)
 {
-    history_scope history(true);
+    history_scope history;
     history->add(line);
 
     printf("Added '%s' to history.\n", line);
@@ -107,15 +98,24 @@ static int add(const char* line)
 //------------------------------------------------------------------------------
 static int remove(int index)
 {
-    history_scope history(true);
+    history_scope history;
 
-    unsigned int length = history->get_count();
-    if (index < 0)
-        index = length + index;
+    if (index <= 0)
+        return 1;
 
-    bool ok = history->remove(index);
+    char buffer[history_db::max_line_length];
+    history_db::line_id line_id = 0;
+    {
+        str_iter line;
+        history_db::iter iter = history->read_lines(buffer);
+        for (int i = index - 1; i > 0 && iter.next(line); --i);
 
-    auto fmt =  ok ?  "Deleted %d.\n" : "Unable to delete history item %d.\n";
+        line_id = iter.next(line);
+    }
+
+    bool ok = history->remove(line_id);
+
+    auto fmt =  ok ?  "Deleted item %d.\n" : "Unable to delete history item %d.\n";
     printf(fmt, index);
     return (ok != true);
 }
@@ -123,7 +123,7 @@ static int remove(int index)
 //------------------------------------------------------------------------------
 static int clear()
 {
-    history_scope history(true);
+    history_scope history;
     history->clear();
 
     puts("History cleared.");
@@ -133,7 +133,8 @@ static int clear()
 //------------------------------------------------------------------------------
 static int print_expansion(const char* line)
 {
-    history_scope history(false);
+    history_scope history;
+    history->load_rl_history();
     str<> out;
     history->expand(line, out);
     puts(out.c_str());
