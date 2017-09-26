@@ -12,6 +12,7 @@
 #include <core/settings.h>
 #include <lib/line_editor.h>
 #include <lua/lua_script_loader.h>
+#include <process/hook.h>
 #include <process/vm.h>
 
 #include <Windows.h>
@@ -115,6 +116,19 @@ static BOOL WINAPI single_char_read(
     return ReadConsoleW(input, buffer, buffer_size, read_in, control);
 }
 
+//------------------------------------------------------------------------------
+void tag_prompt()
+{
+    // Tag the prompt so we can detect when cmd.exe writes to the terminal.
+    wchar_t buffer[256];
+    buffer[0] = '\0';
+    GetEnvironmentVariableW(L"prompt", buffer, sizeof_array(buffer));
+
+    tagged_prompt prompt;
+    prompt.tag(buffer[0] ? buffer : L"$p$g");
+    SetEnvironmentVariableW(L"prompt", prompt.get());
+}
+
 
 
 //------------------------------------------------------------------------------
@@ -136,35 +150,33 @@ bool host_cmd::validate()
 //------------------------------------------------------------------------------
 bool host_cmd::initialise()
 {
-    // Find the correct module that exports ReadConsoleW by finding the base
-    // address of the virtual memory block where the function is.
-    void* kernel_module = vm_region(ReadConsoleW).get_parent().get_base();
-    if (kernel_module == nullptr)
-        return false;
+    void* base = GetModuleHandle(nullptr);
+    hook_setter hooks;
 
-    // Set a trap to get a callback when cmd.exe fetches a environment variable.
-    hook_setter hook;
-    hook.add_trap(kernel_module, "GetEnvironmentVariableW", hook_trap);
-    if (hook.commit() == 0)
-        return false;
+    // Hook the setting of the 'prompt' environment variable so we can tag
+    // it and detect command entry via a write hook.
+    tag_prompt();
+    hooks.add_iat(base, "SetEnvironmentVariableW",  &host_cmd::set_env_var);
+    hooks.add_iat(base, "WriteConsoleW",            &host_cmd::write_console);
 
-    // Add an alias to Clink so it can be run from anywhere. Similar to adding
-    // it to the path but this way we can add the config path too.
-    str<280> dll_path;
-    app_context::get()->get_binaries_dir(dll_path);
+    // Set a trap to get a callback when cmd.exe fetches stdin handle.
+    auto get_std_handle_thunk = [] (unsigned int handle_id) -> void*
+    {
+        seh_scope seh;
 
-    str<560> buffer;
-    buffer << "\"" << dll_path;
-    buffer << "/" CLINK_EXE "\" $*";
-    m_doskey.add_alias("clink", buffer.c_str());
+        void* ret = GetStdHandle(handle_id);
+        if (handle_id != STD_INPUT_HANDLE)
+            return ret;
 
-    // Add an alias to operate on the command history.
-    buffer.clear();
-    buffer << "\"" << dll_path;
-    buffer << "/" CLINK_EXE "\" history $*";
-    m_doskey.add_alias("history", buffer.c_str());
+        void* base = GetModuleHandle(nullptr);
+        hook_iat(base, nullptr, "GetStdHandle", funcptr_t(GetStdHandle), 1);
 
-    return true;
+        host_cmd::get()->initialise_system();
+        return ret;
+    };
+    hooks.add_iat<void*, unsigned>(base, "GetStdHandle", get_std_handle_thunk);
+
+    return (hooks.commit() == 3);
 }
 
 //------------------------------------------------------------------------------
@@ -362,28 +374,36 @@ BOOL WINAPI host_cmd::set_env_var(const wchar_t* name, const wchar_t* value)
 }
 
 //------------------------------------------------------------------------------
-bool host_cmd::hook_trap()
+bool host_cmd::initialise_system()
 {
-    seh_scope seh;
-
-    // Tag the prompt so we can detect when cmd.exe writes to the terminal.
-    wchar_t buffer[256];
-    buffer[0] = '\0';
-    GetEnvironmentVariableW(L"prompt", buffer, sizeof_array(buffer));
-
-    tagged_prompt prompt;
-    prompt.tag(buffer[0] ? buffer : L"$p$g");
-    SetEnvironmentVariableW(L"prompt", prompt.get());
-
     // Get the base address of module that exports ReadConsoleW.
     void* kernel_module = vm_region(ReadConsoleW).get_parent().get_base();
     if (kernel_module == nullptr)
         return false;
 
-    void* base = GetModuleHandle(nullptr);
+    // Add an alias to Clink so it can be run from anywhere. Similar to adding
+    // it to the path but this way we can add the config path too.
+    {
+        str<280> dll_path;
+        app_context::get()->get_binaries_dir(dll_path);
+
+        str<560> buffer;
+        buffer << "\"" << dll_path;
+        buffer << "/" CLINK_EXE "\" $*";
+        m_doskey.add_alias("clink", buffer.c_str());
+    
+        // Add an alias to operate on the command history.
+        buffer.clear();
+        buffer << "\"" << dll_path;
+        buffer << "/" CLINK_EXE "\" history $*";
+        m_doskey.add_alias("history", buffer.c_str());
+    }
+    
+    // Tag the prompt again just incase it got unset by by something like
+    // setlocal/endlocal in a boot Batch script.
+    tag_prompt();
+
     hook_setter hooks;
-    hooks.add_jmp(kernel_module, "ReadConsoleW",            &host_cmd::read_console);
-    hooks.add_iat(base,          "WriteConsoleW",           &host_cmd::write_console);
-    hooks.add_iat(base,          "SetEnvironmentVariableW", &host_cmd::set_env_var);
-    return (hooks.commit() == 3);
+    hooks.add_jmp(kernel_module, "ReadConsoleW",    &host_cmd::read_console);
+    return (hooks.commit() == 1);
 }

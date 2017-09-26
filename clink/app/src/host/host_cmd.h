@@ -26,7 +26,7 @@ private:
     static BOOL WINAPI  read_console(HANDLE input, wchar_t* buffer, DWORD buffer_count, LPDWORD read_in, CONSOLE_READCONSOLE_CONTROL* control);
     static BOOL WINAPI  write_console(HANDLE handle, const wchar_t* chars, DWORD to_write, LPDWORD written, LPVOID);
     static BOOL WINAPI  set_env_var(const wchar_t* name, const wchar_t* value);
-    static bool         hook_trap();
+    bool                initialise_system();
     virtual void        initialise_lua(lua_state& lua) override;
     virtual void        initialise_editor_desc(line_editor::desc& desc) override;
     void                edit_line(const wchar_t* prompt, wchar_t* chars, int max_chars);
