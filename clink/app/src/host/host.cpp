@@ -57,6 +57,7 @@ host::host(const char* name)
 bool host::edit_line(const char* prompt, str_base& out)
 {
     const app_context* app = app_context::get();
+    app->update_env();
 
     struct cwd_restorer
     {

@@ -58,10 +58,7 @@ app_context::app_context(const desc& desc)
             m_id = atoi(env_id);
     }
 
-    str<16> id_str;
-    id_str.format("%d", m_id);
-    os::set_env("=clink.id", id_str.c_str());
-    os::set_env("=clink.profile", state_dir.c_str());
+    update_env();
 }
 
 //-----------------------------------------------------------------------------
@@ -126,4 +123,13 @@ void app_context::get_history_path(str_base& out) const
 {
     get_state_dir(out);
     path::append(out, "clink_history");
+}
+
+//-----------------------------------------------------------------------------
+void app_context::update_env() const
+{
+    str<48> id_str;
+    id_str.format("%d", m_id);
+    os::set_env("=clink.id", id_str.c_str());
+    os::set_env("=clink.profile", m_desc.state_dir);
 }

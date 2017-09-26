@@ -30,6 +30,7 @@ public:
     void        get_log_path(str_base& out) const;
     void        get_settings_path(str_base& out) const;
     void        get_history_path(str_base& out) const;
+    void        update_env() const;
 
 private:
     desc        m_desc;
