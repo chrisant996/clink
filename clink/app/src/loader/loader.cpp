@@ -14,7 +14,7 @@ extern "C" {
 
 //------------------------------------------------------------------------------
 int autorun(int, char**);
-int clink_info(int argc, char** argv);
+int clink_info(int, char**);
 int history(int, char**);
 int inject(int, char**);
 int input_echo(int, char**);
