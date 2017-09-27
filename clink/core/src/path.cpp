@@ -68,14 +68,14 @@ namespace path
 {
 
 //------------------------------------------------------------------------------
-bool abs_path(str_base& in_out)
+bool abs_path(str_base& in_out, const char* root)
 {
     // TODO!
     return false;
 }
 
 //------------------------------------------------------------------------------
-bool abs_path(const char* in, str_base& out)
+bool abs_path(const char* in, str_base& out, const char* root)
 {
     // TODO!
     out.copy(in);

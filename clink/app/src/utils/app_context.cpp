@@ -46,9 +46,14 @@ app_context::app_context(const desc& desc)
             path::append(state_dir, "clink");
     }
 
-    path::clean(state_dir);
-    path::abs_path(state_dir);
-    os::make_dir(state_dir.c_str());
+    {
+        str<280> cwd;
+        os::get_current_dir(cwd);
+
+        path::clean(state_dir);
+        path::abs_path(state_dir, cwd.c_str());
+        os::make_dir(state_dir.c_str());
+    }
 
     m_id = process().get_pid();
     if (desc.inherit_id)

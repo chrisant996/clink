@@ -7,6 +7,7 @@
 
 #include <core/base.h>
 #include <core/log.h>
+#include <core/os.h>
 #include <core/path.h>
 #include <core/str.h>
 #include <getopt.h>
@@ -143,8 +144,11 @@ void get_profile_path(const char* in, str_base& out)
         }
     }
 
+    str<280> cwd;
+    os::get_current_dir(cwd);
+
     out = in;
-    path::abs_path(out);
+    path::abs_path(out, cwd.c_str());
 }
 
 //------------------------------------------------------------------------------
