@@ -50,8 +50,10 @@ app_context::app_context(const desc& desc)
         str<280> cwd;
         os::get_current_dir(cwd);
 
-        path::clean(state_dir);
-        path::abs_path(state_dir, cwd.c_str());
+        str<280> temp;
+        temp << state_dir;
+        path::clean(temp);
+        path::abs_path(temp.c_str(), state_dir, cwd.c_str());
         os::make_dir(state_dir.c_str());
     }
 
