@@ -233,6 +233,9 @@ template <class T> void read_lock::find(const char* line, T&& callback) const
         if (strncmp(line, read.get_pointer(), read.length()) != 0)
             continue;
 
+        if (line[read.length()] != '\0')
+            continue;
+
         unsigned int file_ptr = SetFilePointer(m_handle, 0, nullptr, FILE_CURRENT);
         bool abort = callback(id);
         SetFilePointer(m_handle, file_ptr, nullptr, FILE_BEGIN);
