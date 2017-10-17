@@ -39,6 +39,7 @@ public:
     void                        load_rl_history();
     void                        clear();
     bool                        add(const char* line);
+    int                         remove(const char* line);
     bool                        remove(line_id id);
     line_id                     find(const char* line) const;
     expand_result               expand(const char* line, str_base& out) const;

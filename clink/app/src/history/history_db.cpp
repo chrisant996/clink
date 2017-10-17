@@ -39,7 +39,7 @@ static setting_enum g_dupe_mode(
     "erase the duplicate when this is set 2. A value of 1 will not add\n"
     "duplicates to the history and a value of 0 will always add lines.\n"
     "Note that history is not deduplicated when reading/writing to disk.",
-    "add,ignore,erase_dupe",
+    "add,ignore,erase_prev",
     2);
 
 static setting_enum g_expand_mode(
@@ -212,6 +212,7 @@ public:
     explicit                read_lock() = default;
     explicit                read_lock(void* handle, bool exclusive=false);
     line_id_impl            find(const char* line) const;
+    template <class T> void find(const char* line, T&& callback) const;
 };
 
 //------------------------------------------------------------------------------
@@ -221,17 +222,34 @@ read_lock::read_lock(void* handle, bool exclusive)
 }
 
 //------------------------------------------------------------------------------
-line_id_impl read_lock::find(const char* line) const
+template <class T> void read_lock::find(const char* line, T&& callback) const
 {
     char buffer[history_db::max_line_length];
     line_iter iter(*this, buffer);
 
-    str_iter read;
     line_id_impl id;
-    while (id = iter.next(read))
-        if (strncmp(line, read.get_pointer(), read.length()) == 0)
-            break;
+    for (str_iter read; id = iter.next(read);)
+    {
+        if (strncmp(line, read.get_pointer(), read.length()) != 0)
+            continue;
 
+        unsigned int file_ptr = SetFilePointer(m_handle, 0, nullptr, FILE_CURRENT);
+        bool abort = callback(id);
+        SetFilePointer(m_handle, file_ptr, nullptr, FILE_BEGIN);
+
+        if (!abort)
+            break;
+    }
+}
+
+//------------------------------------------------------------------------------
+line_id_impl read_lock::find(const char* line) const
+{
+    line_id_impl id;
+    find(line, [&] (line_id_impl inner_id) {
+        id = inner_id;
+        return false;
+    });
     return id;
 }
 
@@ -639,15 +657,18 @@ bool history_db::add(const char* line)
         return false;
 
     // Handle duplicates.
-    if (int dupe_mode = g_dupe_mode.get())
+    switch (g_dupe_mode.get())
     {
+    case 1:
+        // 'ignore'
         if (line_id find_result = find(line))
-        {
-            if (dupe_mode == 1)
-                return true;
-            else
-                remove(find_result);
-        }
+            return true;
+        break;
+
+    case 2:
+        // 'erase_prev'
+        remove(line);
+        break;
     }
 
     // Add the line.
@@ -658,6 +679,23 @@ bool history_db::add(const char* line)
 
     lock.add(line);
     return true;
+}
+
+//------------------------------------------------------------------------------
+int history_db::remove(const char* line)
+{
+    int count = 0;
+    for_each_bank([line, &count] (unsigned int index, write_lock& lock)
+    {
+        lock.find(line, [&] (line_id_impl id) {
+            lock.remove(id);
+            return true;
+        });
+
+        return true;
+    });
+
+    return count;
 }
 
 //------------------------------------------------------------------------------
