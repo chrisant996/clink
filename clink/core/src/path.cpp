@@ -94,8 +94,8 @@ void clean(char* in_out, int sep)
     };
 
     clean_state state = state_write;
-    char* write = in_out;
-    const char* read = write;
+    char* __restrict write = in_out;
+    const char* __restrict read = in_out;
     while (char c = *read)
     {
         switch (state)
