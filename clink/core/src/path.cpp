@@ -68,11 +68,49 @@ namespace path
 {
 
 //------------------------------------------------------------------------------
-bool abs_path(const char* in, str_base& out, const char* root)
+void abs_path(const char* in, str_base& out, const char* root)
 {
-    // TODO!
-    out.copy(in);
-    return false;
+    if (!is_rooted(in))
+    {
+        out.copy(root);
+        append(out, in);
+    }
+    else
+        out.copy(in);
+
+    char* __restrict write = out.data();
+#if defined(PLATFORM_WINDOWS)
+    if (write[0] && write[1] == ':')
+        write += 2;
+#endif
+    write += is_separator(*write);
+
+    const char* __restrict start = write;
+    const char* __restrict read = write;
+    while (const char* __restrict next = next_element(read))
+    {
+        while (is_separator(*read))
+            ++read;
+
+        int length = int(next - read);
+        if (length == 3 && (short&)*read == '..')
+        {
+            while (write > start)
+            {
+                --write;
+                if (is_separator(write[-1]))
+                    break;
+            }
+
+            read = next;
+            continue;
+        }
+
+        while (length--)
+            *write++ = *read++;
+    }
+
+    *write = '\0';
 }
 
 //------------------------------------------------------------------------------

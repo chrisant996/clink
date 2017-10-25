@@ -486,3 +486,32 @@ TEST_CASE("path::join(get_dir(), get_name())")
 
     REQUIRE(join.equals(out));
 }
+
+//------------------------------------------------------------------------------
+TEST_CASE("path::abs_path()")
+{
+    auto test = [] (const char* root, const char* appendee, const char* result)
+    {
+        str<> out;
+        path::abs_path(appendee, out, root);
+
+        int pre_clean = out.length();
+        path::clean(out, '/');
+        REQUIRE(pre_clean == out.length());
+
+        REQUIRE(out.equals(result));
+    };
+
+    test("123/xxx", "xxx/../../456", "123/456");
+    test("/123/xxx", "xxx/../../456", "/123/456");
+    test("a:/123/xxx", "xxx/../../456", "a:/123/456");
+    test("a:/123/xxx", "xxx/../../456/", "a:/123/456/");
+    test("a:/123/xxx", "xxx/../../../../../../456/", "a:/456/");
+    test("a:/xxx/yyy", "/xxx/../../123/456", "/123/456");
+    test("a:/123/xxx", "a:/xxx/../../123/456", "a:/123/456");
+    test("a:/1/2/x", "../../2/3/4", "a:/1/2/3/4");
+    test("/1/x", "../../2/3/4", "/2/3/4");
+    test("a://1/2/", "../2", "a:/1/2");
+    test("a:/1//2///", "../2", "a:/1/2");
+    test("a://1/../1", "2", "a:/1/2");
+}
