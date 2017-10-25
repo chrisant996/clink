@@ -22,7 +22,7 @@ static const char* get_string(lua_State* state, int index)
 /// -arg:   path:string
 /// -arg:   [separator:string]
 /// -ret:   string
-/// -show:  path.clean("a////b/\\/c/") -- returns "a\b\c\" (on Windows)
+/// -show:  path.clean("a////b/\\/c/") -- returns "a\b\c\"
 /// Cleans $path by normalising separators. If $separator is provided it is used
 /// to delimit path elements, otherwise a system-specific delimiter is used.
 static int clean(lua_State* state)
