@@ -139,11 +139,12 @@ bool is_separator(int c)
 //------------------------------------------------------------------------------
 const char* next_element(const char* in)
 {
-    for (; *in; ++in)
-        if (is_separator(*in))
-            return in + 1;
+    if (*in == '\0')
+        return nullptr;
 
-    return nullptr;
+    for (; is_separator(*in); ++in);
+    for (; *in && !is_separator(*in); ++in);
+    return in + !!*in;
 }
 
 //------------------------------------------------------------------------------
