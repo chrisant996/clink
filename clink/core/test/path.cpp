@@ -336,6 +336,30 @@ TEST_CASE("path::get_name()")
 }
 
 //------------------------------------------------------------------------------
+TEST_CASE("path::is_rooted()")
+{
+    SECTION("True")
+    {
+        REQUIRE(path::is_rooted("e:/"));
+        REQUIRE(path::is_rooted("e:\\"));
+        REQUIRE(path::is_rooted("/"));
+        REQUIRE(path::is_rooted("\\"));
+        REQUIRE(path::is_rooted("e:/one"));
+        REQUIRE(path::is_rooted("e:\\one"));
+        REQUIRE(path::is_rooted("/one"));
+        REQUIRE(path::is_rooted("\\one"));
+    }
+
+    SECTION("False")
+    {
+        REQUIRE(!path::is_rooted("e:"));
+        REQUIRE(!path::is_rooted("e:one"));
+        REQUIRE(!path::is_rooted("one"));
+        REQUIRE(!path::is_rooted(""));
+    }
+}
+
+//------------------------------------------------------------------------------
 TEST_CASE("path::is_root()")
 {
     SECTION("True")

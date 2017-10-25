@@ -239,6 +239,17 @@ const char* get_name(const char* in)
 }
 
 //------------------------------------------------------------------------------
+bool is_rooted(const char* path)
+{
+#if defined(PLATFORM_WINDOWS)
+    if (path[0] && path[1] == ':')
+        path += 2;
+#endif
+
+    return is_separator(*path);
+}
+
+//------------------------------------------------------------------------------
 bool is_root(const char* path)
 {
 #if defined(PLATFORM_WINDOWS)

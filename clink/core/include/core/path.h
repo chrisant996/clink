@@ -22,6 +22,7 @@ bool        get_drive(str_base& in_out);
 bool        get_extension(const char* in, str_base& out);
 bool        get_name(const char* in, str_base& out);
 const char* get_name(const char* in);
+bool        is_rooted(const char* path);
 bool        is_root(const char* path);
 bool        join(const char* lhs, const char* rhs, str_base& out);
 bool        append(str_base& out, const char* rhs);
