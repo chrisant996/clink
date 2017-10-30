@@ -33,11 +33,11 @@ static int normalise(lua_State* state)
     if (out.length() == 0)
         return 0;
 
-    const char* separator = get_string(state, 2);
-    if (separator == nullptr)
-        separator = "\\";
+    int separator = 0;
+    if (const char* sep_str = get_string(state, 2))
+        separator = sep_str[0];
 
-    path::normalise(out, separator[0]);
+    path::normalise(out, separator);
     lua_pushstring(state, out.c_str());
     return 1;
 }
