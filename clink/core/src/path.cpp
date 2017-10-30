@@ -87,26 +87,33 @@ void abs_path(const char* in, str_base& out, const char* root)
 
     const char* __restrict start = write;
     const char* __restrict read = write;
-    while (const char* __restrict next = next_element(read))
+    for (; const char* __restrict next = next_element(read); read = next)
     {
         while (is_separator(*read))
             ++read;
 
-        int length = int(next - read);
-        if (length == 3 && (short&)*read == '..')
+        if (read[0] == '.')
         {
-            while (write > start)
-            {
-                --write;
-                if (is_separator(write[-1]))
-                    break;
-            }
+            bool two_dot = (read[1] == '.');
+            read += two_dot;
 
-            read = next;
-            continue;
+            if (is_separator(read[1]) || read[1] == '\0')
+            {
+                if (!two_dot)
+                    continue;
+
+                while (write > start)
+                {
+                    --write;
+                    if (is_separator(write[-1]))
+                        break;
+                }
+
+                continue;
+            }
         }
 
-        while (length--)
+        while (read < next)
             *write++ = *read++;
     }
 
