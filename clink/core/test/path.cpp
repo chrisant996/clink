@@ -7,24 +7,6 @@
 #include <core/str.h>
 
 //------------------------------------------------------------------------------
-TEST_CASE("path::clean()")
-{
-    str<> s;
-
-    s.copy("X://0/\\/1/2//\\3/\\\\//4//");
-    path::clean(s);
-    REQUIRE(s.equals("X:\\0\\1\\2\\3\\4\\"));
-
-    s << "//\\//";
-    path::clean(s, '/');
-    REQUIRE(s.equals("X:/0/1/2/3/4/"));
-
-    s.copy("abcdef");
-    path::clean(s);
-    REQUIRE(s.equals("abcdef"));
-}
-
-//------------------------------------------------------------------------------
 TEST_CASE("path::get_base_name()")
 {
     SECTION("Basic")
@@ -75,7 +57,7 @@ TEST_CASE("path::get_directory()")
         SECTION("1") { t << "one/two/three\\filename.ext"; }
 
         path::get_directory(t.c_str(), s);
-        path::clean(s, '/');
+        path::normalise(s, '/');
         REQUIRE(s.equals("one/two/three"));
     }
 
@@ -87,7 +69,7 @@ TEST_CASE("path::get_directory()")
         SECTION("1") { s << "one/two\\three/filename.ext"; }
 
         path::get_directory(s);
-        path::clean(s, '/');
+        path::normalise(s, '/');
         REQUIRE(s.equals("one/two/three"));
     }
 
@@ -101,7 +83,7 @@ TEST_CASE("path::get_directory()")
         SECTION("3") { s << "one/two/three\\\\\\"; }
 
         path::get_directory(s);
-        path::clean(s, '/');
+        path::normalise(s, '/');
         REQUIRE(s.equals("one/two/three"));
     }
 
@@ -126,7 +108,7 @@ TEST_CASE("path::get_directory()")
         SECTION("3") { t << "\\one"; }
 
         path::get_directory(t.c_str(), s);
-        path::clean(s, '/');
+        path::normalise(s, '/');
         REQUIRE(s.equals("/"));
     }
 
@@ -140,7 +122,7 @@ TEST_CASE("path::get_directory()")
         SECTION("3") { s << "\\one"; }
 
         path::get_directory(s);
-        path::clean(s, '/');
+        path::normalise(s, '/');
         REQUIRE(s.equals("/"));
     }
 
@@ -329,7 +311,7 @@ TEST_CASE("path::join()")
         SECTION("1") { path::join("one/two/", "three/four", s); }
         SECTION("2") { path::join("one/two\\", "three/four", s); }
 
-        path::clean(s);
+        path::normalise(s);
         REQUIRE(s.equals("one\\two\\three\\four"));
     }
 
@@ -343,8 +325,8 @@ TEST_CASE("path::join()")
         SECTION("2") { t = "b:/three/four"; }
 
         path::append(s, t.c_str());
-        path::clean(s);
-        path::clean(t);
+        path::normalise(s);
+        path::normalise(t);
         REQUIRE(s.equals(t.c_str()));
     }
 
@@ -412,18 +394,36 @@ TEST_CASE("path::join(get_dir(), get_name())")
     
     str<> join;
     path::join(dir.c_str(), name.c_str(), join);
-    path::clean(join, '/');
+    path::normalise(join, '/');
 
     REQUIRE(join.equals(out));
 }
 
 //------------------------------------------------------------------------------
-TEST_CASE("path::normalise()")
+TEST_CASE("path::normalise() 1")
+{
+    str<> s;
+
+    s.copy("X://0/\\/1/2//\\3/\\\\//4//");
+    path::normalise(s);
+    REQUIRE(s.equals("X:\\0\\1\\2\\3\\4\\"));
+
+    s << "//\\//";
+    path::normalise(s, '/');
+    REQUIRE(s.equals("X:/0/1/2/3/4/"));
+
+    s.copy("abcdef");
+    path::normalise(s);
+    REQUIRE(s.equals("abcdef"));
+}
+
+//------------------------------------------------------------------------------
+TEST_CASE("path::normalise() 2")
 {
     auto test = [] (const char* test_path, const char* expected)
     {
         str<> out(test_path);
-        path::normalise(out);
+        path::normalise(out, '/');
         REQUIRE(out.equals(expected), [&] () {
             puts(test_path);
             puts(expected);

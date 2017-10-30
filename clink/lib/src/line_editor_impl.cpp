@@ -408,7 +408,7 @@ void line_editor_impl::accept_match(unsigned int index)
     // TODO: This has not place here and should be done somewhere else.
     // Clean the word if it is a valid file system path.
     if (os::get_path_type(to_insert.c_str()) != os::path_type_invalid)
-        path::clean(to_insert);
+        path::normalise(to_insert);
 
     // Does the selected match need quoting?
     bool needs_quote = end_word.quoted;

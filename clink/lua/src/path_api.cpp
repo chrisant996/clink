@@ -19,14 +19,15 @@ static const char* get_string(lua_State* state, int index)
 }
 
 //------------------------------------------------------------------------------
-/// -name:  path.clean
+/// -name:  path.normalise
 /// -arg:   path:string
 /// -arg:   [separator:string]
 /// -ret:   string
-/// -show:  path.clean("a////b/\\/c/") -- returns "a\b\c\"
-/// Cleans $path by normalising separators. If $separator is provided it is used
-/// to delimit path elements, otherwise a system-specific delimiter is used.
-static int clean(lua_State* state)
+/// -show:  path.normalise("a////b/\\/c/") -- returns "a\b\c\"
+/// Cleans $path by normalising separators and removing ".[.]/" elements. If
+/// $separator is provided it is used to delimit path elements, otherwise a
+/// system-specific delimiter is used.
+static int normalise(lua_State* state)
 {
     str<288> out(get_string(state, 1));
     if (out.length() == 0)
@@ -36,7 +37,7 @@ static int clean(lua_State* state)
     if (separator == nullptr)
         separator = "\\";
 
-    path::clean(out, separator[0]);
+    path::normalise(out, separator[0]);
     lua_pushstring(state, out.c_str());
     return 1;
 }
@@ -160,7 +161,7 @@ void path_lua_initialise(lua_state& lua)
         const char* name;
         int         (*method)(lua_State*);
     } methods[] = {
-        { "clean",         &clean },
+        { "normalise",     &normalise },
         { "getbasename",   &get_base_name },
         { "getdirectory",  &get_directory },
         { "getdrive",      &get_drive },

@@ -150,7 +150,7 @@ static void copy_cwd(const line_buffer& buffer)
     if (length < cwd.size())
     {
         cwd << "\\";
-        path::clean(cwd);
+        path::normalise(cwd);
         copy_impl(cwd.c_str(), cwd.length());
     }
 }

@@ -68,20 +68,24 @@ namespace path
 {
 
 //------------------------------------------------------------------------------
-void normalise(str_base& in_out)
+void normalise(str_base& in_out, int sep)
 {
-    normalise(in_out.data());
+    normalise(in_out.data(), sep);
 }
 
 //------------------------------------------------------------------------------
-void normalise(char* in_out)
+void normalise(char* in_out, int sep)
 {
+    if (!sep)
+        sep = PATH_SEP[0];
+
     char* __restrict write = in_out;
 #if defined(PLATFORM_WINDOWS)
     if (write[0] && write[1] == ':')
         write += 2;
 #endif
-    write += is_separator(*write);
+    if (is_separator(*write))
+        *write++ = char(sep);
 
     const char* __restrict start = write;
     const char* __restrict read = write;
@@ -111,59 +115,8 @@ void normalise(char* in_out)
             }
         }
 
-        while (read < next)
-            *write++ = *read++;
-    }
-
-    *write = '\0';
-}
-
-//------------------------------------------------------------------------------
-void clean(str_base& in_out, int sep)
-{
-    clean(in_out.data(), sep);
-}
-
-//------------------------------------------------------------------------------
-void clean(char* in_out, int sep)
-{
-    if (!sep)
-        sep = PATH_SEP[0];
-
-    enum clean_state
-    {
-        state_write,
-        state_slash
-    };
-
-    clean_state state = state_write;
-    char* __restrict write = in_out;
-    const char* __restrict read = in_out;
-    while (char c = *read)
-    {
-        switch (state)
-        {
-        case state_write:
-            if (is_separator(c) || c == sep)
-            {
-                c = char(sep);
-                state = state_slash;
-            }
-
-            *write = c;
-            ++write;
-            break;
-
-        case state_slash:
-            if (!is_separator(c) && c != sep)
-            {
-                state = state_write;
-                continue;
-            }
-            break;
-        }
-
-        ++read;
+        for (; read < next; ++read)
+            *write++ = is_separator(*read) ? char(sep) : *read;
     }
 
     *write = '\0';
