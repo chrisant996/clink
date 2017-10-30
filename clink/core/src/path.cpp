@@ -329,6 +329,9 @@ bool join(const char* lhs, const char* rhs, str_base& out)
 //------------------------------------------------------------------------------
 bool append(str_base& out, const char* rhs)
 {
+    if (is_rooted(rhs))
+        return out.copy(rhs);
+
     bool add_seperator = true;
 
     int last = int(out.length() - 1);

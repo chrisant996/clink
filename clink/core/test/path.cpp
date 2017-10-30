@@ -328,11 +328,24 @@ TEST_CASE("path::join()")
         SECTION("0") { path::join("one/two", "three/four", s); }
         SECTION("1") { path::join("one/two/", "three/four", s); }
         SECTION("2") { path::join("one/two\\", "three/four", s); }
-        SECTION("3") { path::join("one/two", "/three/four", s); }
-        SECTION("4") { path::join("one/two", "\\three/four", s); }
 
         path::clean(s);
         REQUIRE(s.equals("one\\two\\three\\four"));
+    }
+
+    SECTION("Rooted rhs")
+    {
+        str<> s, t;
+
+        SECTION("0") { t = "/three/four"; }
+        SECTION("1") { t = "\\three/four"; }
+        SECTION("2") { t = "a:\\three/four"; }
+        SECTION("2") { t = "b:/three/four"; }
+
+        path::append(s, t.c_str());
+        path::clean(s);
+        path::clean(t);
+        REQUIRE(s.equals(t.c_str()));
     }
 
     SECTION("One side empty")
@@ -357,17 +370,9 @@ TEST_CASE("path::join()")
         str<> s;
 
         // Absolute
-        s.copy("x:");
-        path::append(s, "/one");
-        REQUIRE(s.equals("x:/one"));
-
         s.copy("x:/");
         path::append(s, "one");
         REQUIRE(s.equals("x:/one"));
-
-        s.copy("x:");
-        path::append(s, "\\one");
-        REQUIRE(s.equals("x:\\one"));
 
         s.copy("x:\\");
         path::append(s, "one");
