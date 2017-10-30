@@ -50,7 +50,6 @@ app_context::app_context(const desc& desc)
         str<280> cwd;
         os::get_current_dir(cwd);
         path::append(cwd, state_dir.c_str());
-        state_dir << cwd;
         path::normalise(state_dir);
 
         os::make_dir(state_dir.c_str());
