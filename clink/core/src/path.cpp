@@ -68,17 +68,15 @@ namespace path
 {
 
 //------------------------------------------------------------------------------
-void abs_path(const char* in, str_base& out, const char* root)
+void normalise(str_base& in_out)
 {
-    if (!is_rooted(in))
-    {
-        out.copy(root);
-        append(out, in);
-    }
-    else
-        out.copy(in);
+    normalise(in_out.data());
+}
 
-    char* __restrict write = out.data();
+//------------------------------------------------------------------------------
+void normalise(char* in_out)
+{
+    char* __restrict write = in_out;
 #if defined(PLATFORM_WINDOWS)
     if (write[0] && write[1] == ':')
         write += 2;

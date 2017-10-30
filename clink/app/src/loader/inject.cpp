@@ -144,9 +144,9 @@ void get_profile_path(const char* in, str_base& out)
         }
     }
 
-    str<280> cwd;
-    os::get_current_dir(cwd);
-    path::abs_path(in, out, cwd.c_str());
+    os::get_current_dir(out);
+    path::append(out, in);
+    path::normalise(out);
 }
 
 //------------------------------------------------------------------------------

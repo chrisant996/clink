@@ -19,29 +19,6 @@ static const char* get_string(lua_State* state, int index)
 }
 
 //------------------------------------------------------------------------------
-/// -name:  path.abspath
-/// -arg:   path:string
-/// -arg:   [root:string]
-/// -ret:   string
-/// -show:  path.abspath("a/x/../b") -- returns "a\b"
-static int abs_path(lua_State* state)
-{
-    const char* param = get_string(state, 1);
-    if (param == nullptr)
-        return 0;
-
-    str<288> root(get_string(state, 2));
-    if (root.length() == 0)
-        os::get_current_dir(root);
-
-    str<288> out;
-    path::abs_path(param, out, root.c_str());
-
-    lua_pushstring(state, out.c_str());
-    return 1;
-}
-
-//------------------------------------------------------------------------------
 /// -name:  path.clean
 /// -arg:   path:string
 /// -arg:   [separator:string]
@@ -183,7 +160,6 @@ void path_lua_initialise(lua_state& lua)
         const char* name;
         int         (*method)(lua_State*);
     } methods[] = {
-        { "abspath",       &abs_path },
         { "clean",         &clean },
         { "getbasename",   &get_base_name },
         { "getdirectory",  &get_directory },
