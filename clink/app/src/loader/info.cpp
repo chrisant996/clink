@@ -27,7 +27,7 @@ int clink_info(int argc, char** argv)
     const int spacing = 8;
 
     // Version information
-    printf("%-*s : %s\n", spacing, "version", CLINK_VERSION_STR " (" CLINK_COMMIT ")");
+    printf("%-*s : %s\n", spacing, "version", CLINK_VERSION_STR);
     printf("%-*s : %d\n", spacing, "session", context->get_id());
 
     // Paths
