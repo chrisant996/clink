@@ -4,6 +4,7 @@
 #include "pch.h"
 #include "utils/app_context.h"
 #include "utils/seh_scope.h"
+#include "version.h"
 
 #include <core/base.h>
 #include <core/str.h>
@@ -55,6 +56,7 @@ static void show_usage()
         "",                "('<verb> --help' for more details)",
         "Options:",        "",
         "--profile <dir>", "Use <dir> as Clink's profile directory",
+        "--version",       "Print Clink's version and exit",
     };
 
     extern const char* g_clink_header;
@@ -110,6 +112,7 @@ int loader(int argc, char** argv)
     struct option options[] = {
         { "help",    no_argument,       nullptr, 'h' },
         { "profile", required_argument, nullptr, 'p' },
+        { "version", no_argument,       nullptr, 'v' },
         { nullptr,   0,                 nullptr, 0 }
     };
 
@@ -132,6 +135,10 @@ int loader(int argc, char** argv)
         case 'p':
             str_base(app_desc.state_dir).copy(optarg);
             break;
+
+        case 'v':
+            puts(CLINK_VERSION_STR);
+            return 0;
 
         case '?':
             return 0;
