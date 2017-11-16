@@ -93,7 +93,7 @@ workspace("clink")
     exceptionhandling("off")
     defines("HAVE_CONFIG_H")
     defines("HANDLE_MULTIBYTE")
-    defines("CLINK_COMMIT=AS_STR("..clink_git_commit..")")
+    defines("CLINK_COMMIT="..clink_git_commit)
 
     setup_cfg("final")
     setup_cfg("release")

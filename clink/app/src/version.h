@@ -15,4 +15,4 @@
                             AS_STR(CLINK_VERSION_MINOR) "."\
                             AS_STR(CLINK_VERSION_PATCH)\
                             "a"\
-                            "." CLINK_COMMIT
+                            "." AS_STR(CLINK_COMMIT)
