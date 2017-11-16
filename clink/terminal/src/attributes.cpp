@@ -168,11 +168,11 @@ attributes::attribute<attributes::colour> attributes::get_bg() const
 //------------------------------------------------------------------------------
 attributes::attribute<bool> attributes::get_bold() const
 {
-    return { m_bold, m_flags.bold };
+    return { bool(m_bold), bool(m_flags.bold) };
 }
 
 //------------------------------------------------------------------------------
 attributes::attribute<bool> attributes::get_underline() const
 {
-    return { m_underline, m_flags.underline };
+    return { bool(m_underline), bool(m_flags.underline) };
 }

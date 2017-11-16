@@ -58,7 +58,7 @@ TEST_CASE("str_tokeniser : multi delims")
 //------------------------------------------------------------------------------
 TEST_CASE("str_tokeniser : ends")
 {
-    auto inputs = { "a;b;c", ";a;b;c", "a;b;c;" };
+    const char* inputs[] = { "a;b;c", ";a;b;c", "a;b;c;" };
     for (auto input : inputs)
     {
         str_tokeniser t(input, ";");
@@ -74,7 +74,7 @@ TEST_CASE("str_tokeniser : ends")
 //------------------------------------------------------------------------------
 TEST_CASE("str_tokeniser : delim runs")
 {
-    auto inputs = { "a;;b--c", "-;a;-b;c", "a;b;-c-;" };
+    const char* inputs[] = { "a;;b--c", "-;a;-b;c", "a;b;-c-;" };
     for (auto input : inputs)
     {
         str_tokeniser t(input, ";-");

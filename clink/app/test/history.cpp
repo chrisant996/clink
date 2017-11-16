@@ -45,7 +45,7 @@ int count_files()
     file_iter.hidden(true);
 
     int file_count = 0;
-    for (; file_iter.next(str<>()); ++file_count);
+    for (str<1, false> unused; file_iter.next(unused); ++file_count);
 
     return file_count;
 }
@@ -181,7 +181,7 @@ TEST_CASE("history db")
         for (char i = 0; i < 8; ++i)
         {
             char c = 'a' + (i * 2);
-            char line[] = { c, c + 1, '\n', 0 };
+            char line[] = { c, char(c + 1), '\n', 0 };
             lines << line;
         }
 

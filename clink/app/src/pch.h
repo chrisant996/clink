@@ -20,8 +20,16 @@
 #include <Shellapi.h>
 #include <Shlobj.h>
 #include <TlHelp32.h>
+// Some code
 #ifndef __MINGW32__
+#   ifdef _MSC_VER
+#       pragma warning(push)
+#       pragma warning(disable : 4091)
+#   endif
 #   include <DbgHelp.h>
+#   ifdef _MSC_VER
+#       pragma warning(pop)
+#   endif
 #endif
 
 #include <core/base.h>

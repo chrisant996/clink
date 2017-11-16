@@ -58,9 +58,9 @@ app_context::app_context(const desc& desc)
     m_id = process().get_pid();
     if (desc.inherit_id)
     {
-        char env_id[16];
-        if (os::get_env("=clink.id", str_base(env_id)))
-            m_id = atoi(env_id);
+        str<16, false> env_id;
+        if (os::get_env("=clink.id", env_id))
+            m_id = atoi(env_id.c_str());
     }
 
     update_env();
