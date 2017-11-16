@@ -160,7 +160,7 @@ bool host_cmd::initialise()
     hooks.add_iat(base, "WriteConsoleW",            &host_cmd::write_console);
 
     // Set a trap to get a callback when cmd.exe fetches stdin handle.
-    auto get_std_handle_thunk = [] (unsigned int handle_id) -> void*
+    auto get_std_handle = [] (unsigned int handle_id) -> void*
     {
         seh_scope seh;
 
@@ -174,7 +174,8 @@ bool host_cmd::initialise()
         host_cmd::get()->initialise_system();
         return ret;
     };
-    hooks.add_iat<void*, unsigned>(base, "GetStdHandle", get_std_handle_thunk);
+    auto* as_stdcall = static_cast<void* (__stdcall *)(unsigned)>(get_std_handle);
+    hooks.add_iat(base, "GetStdHandle", as_stdcall);
 
     return (hooks.commit() == 3);
 }
