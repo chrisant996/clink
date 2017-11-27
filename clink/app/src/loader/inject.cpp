@@ -45,15 +45,6 @@ static int check_dll_version(const char* clink_dll)
 //------------------------------------------------------------------------------
 static int do_inject(DWORD target_pid)
 {
-#ifdef __MINGW32__
-    HMODULE kernel32 = LoadLibraryA("kernel32.dll");
-    typedef BOOL (WINAPI *_IsWow64Process)(HANDLE, BOOL*);
-    _IsWow64Process IsWow64Process = (_IsWow64Process)GetProcAddress(
-        kernel32,
-        "IsWow64Process"
-    );
-#endif // __MINGW32__
-
     // Get path to clink's DLL that we'll inject.
     str<280> dll_path;
     process().get_file_name(dll_path);
