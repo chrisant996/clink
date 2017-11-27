@@ -8,40 +8,44 @@
 #include <core/str.h>
 
 //------------------------------------------------------------------------------
-namespace terminfo {
-static const char* const kcuu1[] = { "\x1b[A",  "\x1b[1;2A", "\x1b[1;3A", "\x1b[1;4A", "\x1b[1;5A", "\x1b[1;6A", "\x1b[1;7A", "\x1b[1;8A" };
-static const char* const kcud1[] = { "\x1b[B",  "\x1b[1;2B", "\x1b[1;3B", "\x1b[1;4B", "\x1b[1;5B", "\x1b[1;6B", "\x1b[1;7B", "\x1b[1;8B" };
-static const char* const kcub1[] = { "\x1b[D",  "\x1b[1;2D", "\x1b[1;3D", "\x1b[1;4D", "\x1b[1;5D", "\x1b[1;6D", "\x1b[1;7D", "\x1b[1;8D" };
-static const char* const kcuf1[] = { "\x1b[C",  "\x1b[1;2C", "\x1b[1;3C", "\x1b[1;4C", "\x1b[1;5C", "\x1b[1;6C", "\x1b[1;7C", "\x1b[1;8C" };
-static const char* const kich1[] = { "\x1b[2~", "\x1b[2;2~", "\x1b[2;3~", "\x1b[2;4~", "\x1b[2;5~", "\x1b[2;6~", "\x1b[2;7~", "\x1b[2;8~" };
-static const char* const kdch1[] = { "\x1b[3~", "\x1b[3;2~", "\x1b[3;3~", "\x1b[3;4~", "\x1b[3;5~", "\x1b[3;6~", "\x1b[3;7~", "\x1b[3;8~" };
-static const char* const khome[] = { "\x1b[H",  "\x1b[1;2H", "\x1b[1;3H", "\x1b[1;4H", "\x1b[1;5H", "\x1b[1;6H", "\x1b[1;7H", "\x1b[1;8H" };
-static const char* const kend[]  = { "\x1b[F",  "\x1b[1;2F", "\x1b[1;3F", "\x1b[1;4F", "\x1b[1;5F", "\x1b[1;6F", "\x1b[1;7F", "\x1b[1;8F" };
-static const char* const kpp[]   = { "\x1b[5~", "\x1b[5;2~", "\x1b[5;3~", "\x1b[5;4~", "\x1b[5;5~", "\x1b[5;6~", "\x1b[5;7~", "\x1b[5;8~" };
-static const char* const knp[]   = { "\x1b[6~", "\x1b[6;2~", "\x1b[6;3~", "\x1b[6;4~", "\x1b[6;5~", "\x1b[6;6~", "\x1b[6;7~", "\x1b[6;8~" };
-static const char* const kcbt    = "\x1b[Z";
+#define CSI(x) "\x1b[" #x
+#define SS3(x) "\x1bO" #x
+namespace terminfo { //                       Shf        Alt        AtlShf     Ctl        CtlShf     CtlAlt     CtlAltShf
+static const char* const kcuu1[] = { CSI(A),  CSI(1;2A), CSI(1;3A), CSI(1;4A), CSI(1;5A), CSI(1;6A), CSI(1;7A), CSI(1;8A) }; // up
+static const char* const kcud1[] = { CSI(B),  CSI(1;2B), CSI(1;3B), CSI(1;4B), CSI(1;5B), CSI(1;6B), CSI(1;7B), CSI(1;8B) }; // down
+static const char* const kcub1[] = { CSI(D),  CSI(1;2D), CSI(1;3D), CSI(1;4D), CSI(1;5D), CSI(1;6D), CSI(1;7D), CSI(1;8D) }; // left
+static const char* const kcuf1[] = { CSI(C),  CSI(1;2C), CSI(1;3C), CSI(1;4C), CSI(1;5C), CSI(1;6C), CSI(1;7C), CSI(1;8C) }; // right
+static const char* const kich1[] = { CSI(2~), CSI(2;2~), CSI(2;3~), CSI(2;4~), CSI(2;5~), CSI(2;6~), CSI(2;7~), CSI(2;8~) }; // insert
+static const char* const kdch1[] = { CSI(3~), CSI(3;2~), CSI(3;3~), CSI(3;4~), CSI(3;5~), CSI(3;6~), CSI(3;7~), CSI(3;8~) }; // delete
+static const char* const khome[] = { CSI(H),  CSI(1;2H), CSI(1;3H), CSI(1;4H), CSI(1;5H), CSI(1;6H), CSI(1;7H), CSI(1;8H) }; // home
+static const char* const kend[]  = { CSI(F),  CSI(1;2F), CSI(1;3F), CSI(1;4F), CSI(1;5F), CSI(1;6F), CSI(1;7F), CSI(1;8F) }; // end
+static const char* const kpp[]   = { CSI(5~), CSI(5;2~), CSI(5;3~), CSI(5;4~), CSI(5;5~), CSI(5;6~), CSI(5;7~), CSI(5;8~) }; // pgup
+static const char* const knp[]   = { CSI(6~), CSI(6;2~), CSI(6;3~), CSI(6;4~), CSI(6;5~), CSI(6;6~), CSI(6;7~), CSI(6;8~) }; // pgdn
+static const char* const kcbt    = CSI(Z);
 static const char* const kfx[]   = {
     // kf1-12 : Fx unmodified
-    "\x1bOP",   "\x1bOQ",   "\x1bOR",   "\x1bOS",
-    "\x1b[15~", "\x1b[17~", "\x1b[18~", "\x1b[19~",
-    "\x1b[20~", "\x1b[21~", "\x1b[23~", "\x1b[24~",
+    SS3(P),     SS3(Q),     SS3(R),     SS3(S),
+    CSI(15~),   CSI(17~),   CSI(18~),   CSI(19~),
+    CSI(20~),   CSI(21~),   CSI(23~),   CSI(24~),
 
     // kf13-24 : shift
-    "\x1b[1;2P",  "\x1b[1;2Q",  "\x1b[1;2R",  "\x1b[1;2S",
-    "\x1b[15;2~", "\x1b[17;2~", "\x1b[18;2~", "\x1b[19;2~",
-    "\x1b[20;2~", "\x1b[21;2~", "\x1b[23;2~", "\x1b[24;2~",
+    CSI(1;2P),  CSI(1;2Q),  CSI(1;2R),  CSI(1;2S),
+    CSI(15;2~), CSI(17;2~), CSI(18;2~), CSI(19;2~),
+    CSI(20;2~), CSI(21;2~), CSI(23;2~), CSI(24;2~),
 
     // kf25-36 : ctrl
-    "\x1b[1;5P",  "\x1b[1;5Q",  "\x1b[1;5R",  "\x1b[1;5S",
-    "\x1b[15;5~", "\x1b[17;5~", "\x1b[18;5~", "\x1b[19;5~",
-    "\x1b[20;5~", "\x1b[21;5~", "\x1b[23;5~", "\x1b[24;5~",
+    CSI(1;5P),  CSI(1;5Q),  CSI(1;5R),  CSI(1;5S),
+    CSI(15;5~), CSI(17;5~), CSI(18;5~), CSI(19;5~),
+    CSI(20;5~), CSI(21;5~), CSI(23;5~), CSI(24;5~),
 
     // kf37-48 : ctrl-shift
-    "\x1b[1;6P",  "\x1b[1;6Q",  "\x1b[1;6R",  "\x1b[1;6S",
-    "\x1b[15;6~", "\x1b[17;6~", "\x1b[18;6~", "\x1b[19;6~",
-    "\x1b[20;6~", "\x1b[21;6~", "\x1b[23;6~", "\x1b[24;6~",
+    CSI(1;6P),  CSI(1;6Q),  CSI(1;6R),  CSI(1;6S),
+    CSI(15;6~), CSI(17;6~), CSI(18;6~), CSI(19;6~),
+    CSI(20;6~), CSI(21;6~), CSI(23;6~), CSI(24;6~),
 };
 } // namespace terminfo
+#undef SS3
+#undef CSI
 
 
 
