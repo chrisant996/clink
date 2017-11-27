@@ -107,7 +107,20 @@ bool copy(const char* src_path, const char* dest_path)
 //------------------------------------------------------------------------------
 bool get_temp_dir(str_base& out)
 {
-    return get_env("tmp", out) || get_env("temp", out);
+    wstr<280> wout;
+    unsigned int size = GetTempPathW(wout.size(), wout.data());
+    if (!size)
+        return false;
+
+    if (size >= wout.size())
+    {
+        wout.reserve(size);
+        if (!GetTempPathW(wout.size(), wout.data()))
+            return false;
+    }
+
+    out = wout.c_str();
+    return true;
 }
 
 //------------------------------------------------------------------------------
