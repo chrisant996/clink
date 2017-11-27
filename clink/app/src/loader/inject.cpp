@@ -84,6 +84,7 @@ static int do_inject(DWORD target_pid)
     );
 #endif
     LOG("Version: %s", CLINK_VERSION_STR);
+    LOG("Arch: x%s", AS_STR(ARCHITECTURE));
     LOG("DLL: %s", dll_path.c_str());
 
     LOG("Parent pid: %d", target_pid);
