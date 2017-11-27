@@ -36,6 +36,7 @@ public:
 
                         str_impl(TYPE* data, unsigned int size);
                         str_impl(const str_impl&) = delete;
+                        str_impl(const str_impl&&) = delete;
                         ~str_impl();
     void                attach(TYPE* data, unsigned int size);
     bool                reserve(unsigned int size);
