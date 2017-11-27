@@ -19,6 +19,39 @@ bool    initialise_clink(const app_context::desc&);
 void    puts_help(const char**, int);
 
 //------------------------------------------------------------------------------
+static void copy_dll(str_base& dll_path)
+{
+    str<280> target_path;
+    if (!os::get_temp_dir(target_path))
+    {
+        LOG("Unable to get temp path");
+        return;
+    }
+
+    target_path << "/clink/dll_cache";
+    os::make_dir(target_path.c_str());
+
+    char pid[16];
+    str_base(pid).format("/%x", process().get_pid());
+    str<280> copy_path;
+    copy_path << target_path.c_str();
+    copy_path << pid;
+
+    target_path << "/clink_" AS_STR(ARCHITECTURE) "_" CLINK_VERSION_STR ".dll";
+    if (os::get_path_type(target_path.c_str()) == os::path_type_file)
+        return dll_path = target_path.c_str();
+
+    os::unlink(copy_path.c_str());
+    os::copy(dll_path.c_str(), copy_path.c_str());
+    os::move(copy_path.c_str(), target_path.c_str());
+
+    if (os::get_path_type(target_path.c_str()) != os::path_type_file)
+        return;
+
+    dll_path = target_path.c_str();
+}
+
+//------------------------------------------------------------------------------
 static int check_dll_version(const char* clink_dll)
 {
     char buffer[1024];
