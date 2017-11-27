@@ -12,7 +12,7 @@ namespace os
 //------------------------------------------------------------------------------
 int get_path_type(const char* path)
 {
-    wstr<MAX_PATH> wpath(path);
+    wstr<280> wpath(path);
     DWORD attr = GetFileAttributesW(wpath.c_str());
     if (attr == ~0)
         return path_type_invalid;
@@ -26,7 +26,7 @@ int get_path_type(const char* path)
 //------------------------------------------------------------------------------
 int get_file_size(const char* path)
 {
-    wstr<MAX_PATH> wpath(path);
+    wstr<280> wpath(path);
     void* handle = CreateFile(path, 0, 0, nullptr, OPEN_EXISTING, 0, nullptr);
     if (handle == INVALID_HANDLE_VALUE)
         return -1;
@@ -39,7 +39,7 @@ int get_file_size(const char* path)
 //------------------------------------------------------------------------------
 void get_current_dir(str_base& out)
 {
-    wstr<MAX_PATH> wdir;
+    wstr<280> wdir;
     GetCurrentDirectoryW(wdir.size(), wdir.data());
     out = wdir.c_str();
 }
@@ -47,7 +47,7 @@ void get_current_dir(str_base& out)
 //------------------------------------------------------------------------------
 bool set_current_dir(const char* dir)
 {
-    wstr<MAX_PATH> wdir(dir);
+    wstr<280> wdir(dir);
     return (SetCurrentDirectoryW(wdir.c_str()) == TRUE);
 }
 
@@ -67,7 +67,7 @@ bool make_dir(const char* dir)
 
     if (*dir)
     {
-        wstr<MAX_PATH> wdir(dir);
+        wstr<280> wdir(dir);
         return (CreateDirectoryW(wdir.c_str(), nullptr) == TRUE);
     }
 
@@ -77,30 +77,30 @@ bool make_dir(const char* dir)
 //------------------------------------------------------------------------------
 bool remove_dir(const char* dir)
 {
-    wstr<MAX_PATH> wdir(dir);
+    wstr<280> wdir(dir);
     return (RemoveDirectoryW(wdir.c_str()) == TRUE);
 }
 
 //------------------------------------------------------------------------------
 bool unlink(const char* path)
 {
-    wstr<MAX_PATH> wpath(path);
+    wstr<280> wpath(path);
     return (DeleteFileW(wpath.c_str()) == TRUE);
 }
 
 //------------------------------------------------------------------------------
 bool move(const char* src_path, const char* dest_path)
 {
-    wstr<MAX_PATH> wsrc_path(src_path);
-    wstr<MAX_PATH> wdest_path(dest_path);
+    wstr<280> wsrc_path(src_path);
+    wstr<280> wdest_path(dest_path);
     return (MoveFileW(wsrc_path.c_str(), wdest_path.c_str()) == TRUE);
 }
 
 //------------------------------------------------------------------------------
 bool copy(const char* src_path, const char* dest_path)
 {
-    wstr<MAX_PATH> wsrc_path(src_path);
-    wstr<MAX_PATH> wdest_path(dest_path);
+    wstr<280> wsrc_path(src_path);
+    wstr<280> wdest_path(dest_path);
     return (CopyFileW(wsrc_path.c_str(), wdest_path.c_str(), FALSE) == TRUE);
 }
 

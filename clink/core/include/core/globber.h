@@ -27,7 +27,7 @@ private:
     void                next_file();
     WIN32_FIND_DATAW    m_data;
     HANDLE              m_handle;
-    str<MAX_PATH>       m_root;
+    str<280>            m_root;
     bool                m_files;
     bool                m_directories;
     bool                m_dir_suffix;

@@ -55,7 +55,7 @@ static int do_inject(DWORD target_pid)
 #endif // __MINGW32__
 
     // Get path to clink's DLL that we'll inject.
-    str<256> dll_path;
+    str<280> dll_path;
     process().get_file_name(dll_path);
     path::get_directory(dll_path);
     path::append(dll_path, CLINK_DLL);

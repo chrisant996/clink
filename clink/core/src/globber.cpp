@@ -29,7 +29,7 @@ globber::globber(const char* pattern)
         }
     }
 
-    wstr<MAX_PATH> wglob(pattern);
+    wstr<280> wglob(pattern);
     m_handle = FindFirstFileW(wglob.c_str(), &m_data);
     if (m_handle == INVALID_HANDLE_VALUE)
         m_handle = nullptr;
@@ -50,7 +50,7 @@ bool globber::next(str_base& out, bool rooted)
     if (m_handle == nullptr)
         return false;
 
-    str<MAX_PATH> file_name(m_data.cFileName);
+    str<280> file_name(m_data.cFileName);
 
     bool skip = false;
 
