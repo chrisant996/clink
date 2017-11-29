@@ -12,6 +12,8 @@ local function exec(cmd, silent)
 
     if silent then
         cmd = "1>nul 2>nul "..cmd
+    else
+        cmd = "1>nul "..cmd
     end
 
     -- Premake replaces os.execute() with a version that runs path.normalize()
@@ -21,7 +23,7 @@ local function exec(cmd, silent)
     ret = os.execute(cmd)
     path.normalize = prev_norm
 
-    return ret
+    return ret and true or false
 end
 
 --------------------------------------------------------------------------------
@@ -31,8 +33,8 @@ local function mkdir(dir)
     end
 
     local ret = exec("md " .. path.translate(dir), true)
-    if ret ~= 0 then
-        error("Failed to create directory '" .. dir .. "'")
+    if not ret then
+        error("Failed to create directory '" .. dir .. "' ("..tostring(ret)..")", 2)
     end
 end
 
@@ -59,23 +61,7 @@ end
 
 --------------------------------------------------------------------------------
 local function have_required_tool(name)
-    return (exec("where " .. name, true) == 0)
-end
-
---------------------------------------------------------------------------------
-local function get_target_dir()
-    local target_dir = ".build/release/"
-    target_dir = target_dir .. os.date("%Y%m%d")
-    target_dir = target_dir .. "_" .. clink_git_name
-    target_dir = target_dir .. "_" .. clink_git_commit
-
-    target_dir = path.getabsolute(target_dir) .. "/"
-    if not os.isdir(target_dir .. ".") then
-        rmdir(target_dir)
-        mkdir(target_dir)
-    end
-
-    return target_dir
+    return exec("where " .. name, true)
 end
 
 --------------------------------------------------------------------------------
@@ -84,7 +70,7 @@ newaction {
     description = "Creates a release of Clink.",
     execute = function ()
         local premake = _PREMAKE_COMMAND
-        local target_dir = get_target_dir()
+        local root_dir = path.getabsolute(".build/release").."/"
 
         -- Check we have the tools we need.
         local have_msbuild = have_required_tool("msbuild")
@@ -93,8 +79,7 @@ newaction {
         local have_7z = have_required_tool("7z")
 
         -- Clone repro in release folder and checkout the specified version
-        local repo_path = "clink_" .. clink_git_name .. "_src"
-        local code_dir = target_dir .. repo_path
+        local code_dir = root_dir.."~working/"
         rmdir(code_dir)
         mkdir(code_dir)
 
@@ -104,11 +89,9 @@ newaction {
         end
         exec("git checkout " .. (_OPTIONS["commit"] or "HEAD"))
 
-        local src_dir_name = path.getabsolute(".")
-
         -- Build the code.
-        local x86_ok = true;
-        local x64_ok = true;
+        local x86_ok = true
+        local x64_ok = true
         local toolchain = "ERROR"
         local build_code = function (target)
             if have_msbuild then
@@ -118,6 +101,7 @@ newaction {
                 exec(premake .. " " .. toolchain)
                 os.chdir(".build/" .. toolchain)
 
+                local ret
                 ret = exec("msbuild /m /v:q /p:configuration=final /p:platform=win32 clink.sln /t:" .. target)
                 if ret ~= 0 then
                     x86_ok = false
@@ -153,14 +137,12 @@ newaction {
             end
         end
 
+        -- Build everything.
         build_code("luac")
-
-        -- Update embedded Lua scripts. Build again incase scripts changed.
         exec(premake .. " embed")
         build_code()
 
-        local src = ".build/" .. toolchain .. "/bin/final/"
-        local dest = target_dir .. "clink_" .. clink_git_name
+        local src = path.getabsolute(".build/" .. toolchain .. "/bin/final").."/"
 
         -- Do a coarse check to make sure there's a build available.
         if not os.isdir(src .. ".") or not (x86_ok or x64_ok) then
@@ -182,10 +164,27 @@ newaction {
             end
         end
 
-        -- Copy release files to a directory.
-        rmdir(dest)
+        -- Now we can extract the version from the executables.
+        local version = nil
+        local clink_exe = x86_ok and "clink_x86.exe" or "clink_x64.exe"
+        local ver_cmd = src:gsub("/", "\\")..clink_exe.." --version"
+        for line in io.popen(ver_cmd):lines() do
+            version = line
+        end
+        if not version then
+            error("Failed to extract version from build executables")
+        end
+
+        -- Now we know the version we can create our output directory.
+        local target_dir = root_dir..os.date("%Y%m%d").."_"..version.."/"
+        rmdir(target_dir)
+        mkdir(target_dir)
+
+        local clink_suffix = "clink-"..version
+        local dest = target_dir..clink_suffix.."/"
         mkdir(dest)
 
+        -- Copy release files to a directory.
         local manifest = {
             "clink.bat",
             "clink_x*.exe",
@@ -207,10 +206,10 @@ newaction {
         local nsis_ok = false
         if have_nsis then
             local nsis_cmd = "makensis"
-            nsis_cmd = nsis_cmd .. " /DCLINK_BUILD=" .. dest
-            nsis_cmd = nsis_cmd .. " /DCLINK_VERSION=" .. clink_git_name
-            nsis_cmd = nsis_cmd .. " /DCLINK_SOURCE=" .. src_dir_name
-            nsis_cmd = nsis_cmd .. " " .. src_dir_name .. "/installer/clink.nsi"
+            nsis_cmd = nsis_cmd .. " /DCLINK_BUILD=" .. path.getabsolute(dest)
+            nsis_cmd = nsis_cmd .. " /DCLINK_VERSION=" .. version
+            nsis_cmd = nsis_cmd .. " /DCLINK_SOURCE=" .. code_dir
+            nsis_cmd = nsis_cmd .. " " .. code_dir .. "/installer/clink.nsi"
             nsis_ok = exec(nsis_cmd) == 0
         end
 
@@ -220,9 +219,13 @@ newaction {
         unlink(".gitignore")
 
         -- Zip up the source code.
+        os.chdir("..")
+        local src_dir_name = target_dir..clink_suffix.."_src"
+        exec("move ~working "..src_dir_name)
+
         os.chdir(target_dir)
         if have_7z then
-            exec("7z a -r " .. target_dir .. "clink_" .. clink_git_name .. "_src.zip " .. src_dir_name)
+            exec("7z a -r " .. target_dir .. clink_suffix .. "_src.zip " .. src_dir_name)
         end
         rmdir(src_dir_name)
 
@@ -231,14 +234,14 @@ newaction {
         if have_msbuild then
             exec("move *.pdb  .. ")
             if have_7z then
-                exec("7z a -r  ../clink_" .. clink_git_name .. "_pdb.zip  ../*.pdb")
+                exec("7z a -r  ../"..clink_suffix .. "_pdb.zip  ../*.pdb")
                 unlink("../*.pdb")
             end
         end
 
         -- Package the release in an archive.
         if have_7z then
-            exec("7z a -r  ../clink_" .. clink_git_name .. ".zip  ../clink_" .. clink_git_name)
+            exec("7z a -r  ../"..clink_suffix .. ".zip  ../"..clink_suffix)
         end
 
         -- Report some facts about what just happened.
