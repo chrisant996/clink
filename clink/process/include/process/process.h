@@ -25,7 +25,7 @@ public:
 
 private:
     void*                       remote_call(void* function, const void* param, int param_size);
-    void                        pause_impl(bool suspend);
+    void                        pause(bool suspend);
     int                         m_pid;
 
     struct handle
@@ -54,11 +54,11 @@ void* process::remote_call(void* function, T const& param)
 //------------------------------------------------------------------------------
 inline void process::pause()
 {
-    pause_impl(true);
+    pause(true);
 }
 
 //------------------------------------------------------------------------------
 inline void process::unpause()
 {
-    pause_impl(false);
+    pause(false);
 }

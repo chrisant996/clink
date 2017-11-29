@@ -88,7 +88,7 @@ process::arch process::get_arch() const
 }
 
 //------------------------------------------------------------------------------
-void process::pause_impl(bool suspend)
+void process::pause(bool suspend)
 {
     handle th32 = CreateToolhelp32Snapshot(TH32CS_SNAPTHREAD, m_pid);
     if (!th32)
