@@ -114,7 +114,7 @@ static int check_dll_version(const char* clink_dll)
 }
 
 //------------------------------------------------------------------------------
-static void* do_inject(DWORD target_pid)
+static void* inject_dll(DWORD target_pid)
 {
     // Get path to clink's DLL that we'll inject.
     str<280> dll_path;
@@ -294,7 +294,7 @@ int inject(int argc, char** argv)
         return ret;
 
     // Inject Clink's DLL
-    void* remote_dll_base = do_inject(target_pid);
+    void* remote_dll_base = inject_dll(target_pid);
     if (remote_dll_base == nullptr)
         return ret;
 
