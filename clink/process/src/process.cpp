@@ -8,8 +8,10 @@
 
 #include <core/path.h>
 #include <core/str.h>
+
 #include <PsApi.h>
 #include <TlHelp32.h>
+#include <stddef.h>
 
 //------------------------------------------------------------------------------
 process::process(int pid)
@@ -107,37 +109,25 @@ void process::pause_impl(bool suspend)
 }
 
 //------------------------------------------------------------------------------
-bool process::inject_module(const char* dll_path)
+void* process::inject_module(const char* dll_path)
 {
     // Check we can inject into the target.
-    if (process().get_arch() < get_arch())
-        return false;
+    if (process().get_arch() != get_arch())
+        return nullptr;
 
-    // Create a buffer in the process to write data to.
-    vm target_vm(m_pid);
-    vm::region region = target_vm.alloc(1);
-    if (region.base == nullptr)
-        return false;
-
-    target_vm.write(region.base, dll_path, strlen(dll_path) + 1);
-
-    int thread_ret = 0;
-
-    // Get the address to LoadLibrary. Note that we do with without using any
-    // Windows API calls in case someone's hook LoadLibrary. We'd get the wrong
-    // address. Address are the same across processes.
+    // Get the address to LoadLibrary. Note that we get LoadLibrary address
+    // directly from kernel32.dll's export table. If our import table has had
+    // LoadLibraryW hooked then we'd get a potentially invalid address if we
+    // were to just use &LoadLibraryW.
     pe_info kernel32(LoadLibrary("kernel32.dll"));
-    auto* thread_proc = kernel32.get_export("LoadLibraryA");
-    if (thread_proc != nullptr)
-        thread_ret = remote_call_impl(thread_proc, region.base);
+    void* thread_proc = kernel32.get_export("LoadLibraryW");
 
-    // Clean up and quit
-    target_vm.free(region);
-    return (thread_ret != 0);
+    wstr<280> wpath(dll_path);
+    return remote_call(thread_proc, wpath.data(), wpath.length() * sizeof(wchar_t));
 }
 
 //------------------------------------------------------------------------------
-int process::remote_call_impl(funcptr_t function, void* param)
+void* process::remote_call(void* function, const void* param, int param_size)
 {
     // Open the process so we can operate on it.
     handle process_handle = OpenProcess(PROCESS_QUERY_INFORMATION|PROCESS_CREATE_THREAD,
@@ -145,25 +135,70 @@ int process::remote_call_impl(funcptr_t function, void* param)
     if (!process_handle)
         return false;
 
+#if defined(_MSC_VER)
+#   pragma warning(push)
+#   pragma warning(disable : 4200)
+#endif
+    struct thunk_data
+    {
+        void*   (*func)(void*);
+        void*   out;
+        char    in[];
+    };
+#if defined(_MSC_VER)
+#   pragma warning(pop)
+#endif
+
+    const auto& thunk = [] (thunk_data& data) {
+        data.out = data.func(data.in);
+    };
+
+    const auto* stdcall_thunk = static_cast<void (__stdcall*)(thunk_data&)>(thunk);
+    static int thunk_size;
+    if (!thunk_size)
+        for (const auto* c = (unsigned char*)stdcall_thunk; ++thunk_size, *c++ != 0xc3;);
+
+    vm vm(m_pid);
+    vm::region region = vm.alloc(1, vm::access_write);
+    if (region.base == nullptr)
+        return nullptr;
+
+    int write_offset = 0;
+    const auto& vm_write = [&] (const void* data, int size) {
+        void* addr = (char*)region.base + write_offset;
+        vm.write(addr, data, size);
+        write_offset = (write_offset + size + 7) & ~7;
+        return addr;
+    };
+
+    vm_write(stdcall_thunk, thunk_size);
+    void* thunk_ptrs[2] = { decltype(thunk_data::func)(function) };
+    char* remote_thunk_data = (char*)vm_write(thunk_ptrs, sizeof(thunk_ptrs));
+    vm_write(param, param_size);
+    vm.set_access(region, vm::access_rwx); // writeable so thunk() can write output.
+
+    static_assert(sizeof(thunk_ptrs) == sizeof(thunk_data), "");
+    static_assert((offsetof(thunk_data, in) & 7) == 0, "");
+
     pause();
 
     // The 'remote call' is actually a thread that's created in the process and
-    // and then waited on for completion.
+    // then waited on for completion.
     DWORD thread_id;
     handle remote_thread = CreateRemoteThread(process_handle, nullptr, 0,
-        (LPTHREAD_START_ROUTINE)function, param, 0, &thread_id);
+        (LPTHREAD_START_ROUTINE)region.base, remote_thunk_data, 0, &thread_id);
     if (!remote_thread)
     {
         unpause();
         return 0;
     }
 
-    // Wait for injection to complete.
-    DWORD thread_ret;
     WaitForSingleObject(remote_thread, INFINITE);
-    GetExitCodeThread(remote_thread, &thread_ret);
-
     unpause();
 
-    return thread_ret;
+    void* call_ret = nullptr;
+    vm.read(&call_ret, remote_thunk_data + offsetof(thunk_data, out), sizeof(call_ret));
+    vm.free(region);
+
+    return call_ret;
 }
