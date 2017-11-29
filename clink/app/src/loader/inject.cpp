@@ -76,7 +76,7 @@ static int check_dll_version(const char* clink_dll)
 }
 
 //------------------------------------------------------------------------------
-static int do_inject(DWORD target_pid)
+static void* do_inject(DWORD target_pid)
 {
     // Get path to clink's DLL that we'll inject.
     str<280> dll_path;
@@ -122,7 +122,7 @@ static int do_inject(DWORD target_pid)
 
     // Inject Clink DLL.
     process cmd_process(target_pid);
-    return !!cmd_process.inject_module(dll_path.c_str());
+    return cmd_process.inject_module(dll_path.c_str());
 }
 
 //------------------------------------------------------------------------------
@@ -253,13 +253,16 @@ int inject(int argc, char** argv)
     if (is_clink_present(target_pid))
         return ret;
 
-    // Inject Clink's DLL and remotely call Clink's initialisation function.
-    if (!do_inject(target_pid))
+    // Inject Clink's DLL
+    void* remote_dll_base = do_inject(target_pid);
+    if (remote_dll_base == nullptr)
         return ret;
 
-    // On Windows a DLL will have the same address in every process' address
-    // space, hence we're able to use 'initialise_clink' directly here.
-    ret |= (process(target_pid).remote_call(initialise_clink, app_desc) != nullptr);
+    // Remotely call Clink's initialisation function.
+    void* our_dll_base = vm().get_alloc_base("");
+    uintptr_t init_func = uintptr_t(remote_dll_base);
+    init_func += uintptr_t(initialise_clink) - uintptr_t(our_dll_base);
+    ret |= (process(target_pid).remote_call((void*)init_func, app_desc) != nullptr);
 
     return ret;
 }
