@@ -259,10 +259,10 @@ int inject(int argc, char** argv)
 
     // On Windows a DLL will have the same address in every process' address
     // space, hence we're able to use 'initialise_clink' directly here.
-    vm_access target_vm(target_pid);
-    void* remote_app_desc = target_vm.alloc(sizeof(app_desc));
-    target_vm.write(remote_app_desc, &app_desc, sizeof(app_desc));
-    ret |= process(target_pid).remote_call(initialise_clink, remote_app_desc);
+    vm target_vm(target_pid);
+    vm::region remote_app_desc = target_vm.alloc(1);
+    target_vm.write(remote_app_desc.base, &app_desc, sizeof(app_desc));
+    ret |= process(target_pid).remote_call(initialise_clink, remote_app_desc.base);
     target_vm.free(remote_app_desc);
 
     return ret;

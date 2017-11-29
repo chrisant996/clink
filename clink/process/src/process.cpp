@@ -114,12 +114,12 @@ bool process::inject_module(const char* dll_path)
         return false;
 
     // Create a buffer in the process to write data to.
-    vm_access target_vm(m_pid);
-    void* buffer = target_vm.alloc(sizeof(dll_path));
-    if (buffer == nullptr)
+    vm target_vm(m_pid);
+    vm::region region = target_vm.alloc(1);
+    if (region.base == nullptr)
         return false;
 
-    target_vm.write(buffer, dll_path, strlen(dll_path) + 1);
+    target_vm.write(region.base, dll_path, strlen(dll_path) + 1);
 
     int thread_ret = 0;
 
@@ -129,10 +129,10 @@ bool process::inject_module(const char* dll_path)
     pe_info kernel32(LoadLibrary("kernel32.dll"));
     auto* thread_proc = kernel32.get_export("LoadLibraryA");
     if (thread_proc != nullptr)
-        thread_ret = remote_call_impl(thread_proc, buffer);
+        thread_ret = remote_call_impl(thread_proc, region.base);
 
     // Clean up and quit
-    target_vm.free(buffer);
+    target_vm.free(region);
     return (thread_ret != 0);
 }
 

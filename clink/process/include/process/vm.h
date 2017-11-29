@@ -4,91 +4,41 @@
 #pragma once
 
 //------------------------------------------------------------------------------
-class vm_access
+class vm
 {
 public:
-                vm_access(int pid=-1);
-                ~vm_access();
-    void*       alloc(size_t size);
-    bool        free(void* address);
-    bool        write(void* dest, const void* src, size_t size);
-    bool        read(void* dest, const void* src, size_t size);
-
-private:
-    HANDLE      m_handle;
-};
-
-
-
-//------------------------------------------------------------------------------
-class vm_region
-{
-public:
-    enum {
-        readable    = 1 << 0,
-        writeable   = 1 << 1,
-        executable  = 1 << 2,
-        copyonwrite = 1 << 3,
+    enum
+    {
+        access_read     = 1 << 0,
+        access_write    = 1 << 1,
+        access_execute  = 1 << 2,
+        access_cow      = 1 << 3, // copy-on-write
+        access_rw       = access_read|access_write,
+        access_rx       = access_read|access_execute,
+        access_rwx      = access_read|access_execute|access_write,
     };
 
-    template <typename T>   vm_region(T* address);
-                            ~vm_region();
-    vm_region               get_parent() const;
-    void*                   get_base() const;
-    size_t                  get_size() const;
-    int                     get_access() const;
-    void                    set_access(int flags, bool permanent=false);
-    void                    add_access(int flags, bool permanent=false);
-    void                    remove_access(int flags, bool permanent=false);
+    struct region
+    {
+        void*           base;
+        unsigned int    page_count;
+    };
+
+                        vm(int pid=-1);
+                        ~vm();
+    static size_t       get_block_granularity();
+    static size_t       get_page_size();
+    void*               get_alloc_base(void* address);
+    region              get_region(void* address);
+    void*               get_page(void* address);
+    region              alloc(unsigned int page_count, unsigned int access=access_read|access_write);
+    void                free(const region& region);
+    int                 get_access(const region& region);
+    void                set_access(const region& region, unsigned int access);
+    bool                read(void* dest, const void* src, size_t size);
+    bool                write(void* dest, const void* src, size_t size);
+    void                flush_icache(const region& region={});
 
 private:
-    template <typename T>   vm_region(T address) = delete;
-    void                    initialise(const void* address);
-    void*                   m_parent_base;
-    void*                   m_base;
-    size_t                  m_size;
-    int                     m_access = 0;
-    bool                    m_modified = false;
+    void*               m_handle;
 };
-
-//------------------------------------------------------------------------------
-template <typename T> inline vm_region::vm_region(T* address)
-{
-    initialise((const void*)address);
-}
-
-//------------------------------------------------------------------------------
-inline vm_region vm_region::get_parent() const
-{
-    return vm_region(m_parent_base);
-}
-
-//------------------------------------------------------------------------------
-inline void* vm_region::get_base() const
-{
-    return m_base;
-}
-
-//------------------------------------------------------------------------------
-inline size_t vm_region::get_size() const
-{
-    return m_size;
-}
-
-//------------------------------------------------------------------------------
-inline int vm_region::get_access() const
-{
-    return m_access;
-}
-
-//------------------------------------------------------------------------------
-inline void vm_region::add_access(int flags, bool permanent)
-{
-    set_access(m_access | flags, permanent);
-}
-
-//------------------------------------------------------------------------------
-inline void vm_region::remove_access(int flags, bool permanent)
-{
-    set_access(m_access & ~flags, permanent);
-}

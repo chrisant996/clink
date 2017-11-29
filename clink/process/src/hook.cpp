@@ -12,11 +12,15 @@
 //------------------------------------------------------------------------------
 static void write_addr(funcptr_t* where, funcptr_t to_write)
 {
-    vm_region region(where);
-    region.add_access(vm_region::writeable);
+    vm vm;
+    vm::region region = { vm.get_page(where), 1 };
+    unsigned int prev_access = vm.get_access(region);
+    vm.set_access(region, vm::access_write);
 
-    if (!vm_access().write(where, &to_write, sizeof(to_write)))
+    if (!vm.write(where, &to_write, sizeof(to_write)))
         LOG("VM write to %p failed (err = %d)", where, GetLastError());
+
+    vm.set_access(region, prev_access);
 }
 
 //------------------------------------------------------------------------------
@@ -71,27 +75,26 @@ funcptr_t hook_iat(
     funcptr_t prev_addr = *import;
     write_addr(import, hook);
 
-    FlushInstructionCache(GetCurrentProcess(), 0, 0);
+    vm().flush_icache();
     return prev_addr;
 }
 
 //------------------------------------------------------------------------------
 static char* alloc_trampoline(void* hint)
 {
-    SYSTEM_INFO sys_info;
-    GetSystemInfo(&sys_info);
+    size_t alloc_granularity = vm::get_block_granularity();
+    size_t page_size = vm::get_page_size();
 
+    vm vm;
     funcptr_t trampoline = nullptr;
     while (trampoline == nullptr)
     {
-        vm_region region = vm_region(hint).get_parent();
-
-        void* vm_alloc_base = region.get_base();
+        void* vm_alloc_base = vm.get_alloc_base(hint);
         vm_alloc_base = vm_alloc_base ? vm_alloc_base : hint;
 
-        char* tramp_page = (char*)vm_alloc_base - sys_info.dwAllocationGranularity;
+        char* tramp_page = (char*)vm_alloc_base - alloc_granularity;
 
-        trampoline = funcptr_t(VirtualAlloc(tramp_page, sys_info.dwPageSize,
+        trampoline = funcptr_t(VirtualAlloc(tramp_page, page_size,
             MEM_COMMIT|MEM_RESERVE, PAGE_EXECUTE_READWRITE));
 
         hint = tramp_page;
@@ -125,7 +128,7 @@ static char* write_rel_jmp(char* write, const void* dest)
     buffer.a = (unsigned char)0xe9;
     *(int*)buffer.b = (int)disp;
 
-    if (!vm_access().write(write, &buffer, sizeof(buffer)))
+    if (!vm().write(write, &buffer, sizeof(buffer)))
     {
         LOG("VM write to %p failed (err = %d)", write, GetLastError());
         return nullptr;
@@ -154,7 +157,7 @@ static char* write_trampoline_out(void* dest, void* to_hook, funcptr_t hook)
     // Patch the API.
     patch = write_rel_jmp(patch, write);
     short temp = (unsigned short)0xf9eb;
-    if (!vm_access().write(patch, &temp, sizeof(temp)))
+    if (!vm().write(patch, &temp, sizeof(temp)))
     {
         LOG("VM write to %p failed (err = %d)", patch, GetLastError());
         return nullptr;
@@ -177,7 +180,7 @@ static char* write_trampoline_out(void* dest, void* to_hook, funcptr_t hook)
     *(int*)inst.b = rel_addr;
     *(funcptr_t*)inst.c = hook;
 
-    if (!vm_access().write(write, &inst, sizeof(inst)))
+    if (!vm().write(write, &inst, sizeof(inst)))
     {
         LOG("VM write to %p failed (err = %d)", write, GetLastError());
         return nullptr;
@@ -193,7 +196,7 @@ static void* write_trampoline_in(void* dest, void* to_hook, int n)
 
     for (int i = 0; i < n; ++i)
     {
-        if (!vm_access().write(write, (char*)to_hook + i, 1))
+        if (!vm().write(write, (char*)to_hook + i, 1))
         {
             LOG("VM write to %p failed (err = %d)", write, GetLastError());
             return nullptr;
@@ -329,15 +332,19 @@ static funcptr_t hook_jmp_impl(funcptr_t to_hook, funcptr_t hook)
     }
 
     // Out
-    vm_region region(target);
-    region.add_access(vm_region::writeable);
+    vm vm;
+    vm::region target_region = { vm.get_page(target), 1 };
+    unsigned int prev_access = vm.get_access(target_region);
+    vm.set_access(target_region, vm::access_write);
     write = write_trampoline_out(write, target, hook);
     if (write == nullptr)
     {
         LOG("Failed to write trampoline out.");
+        vm.set_access(target_region, prev_access);
         return nullptr;
     }
 
+    vm.set_access(target_region, prev_access);
     return funcptr_t(trampoline);
 }
 
@@ -368,6 +375,6 @@ funcptr_t hook_jmp(void* module, const char* func_name, funcptr_t hook)
     }
 
     LOG("Success!");
-    FlushInstructionCache(GetCurrentProcess(), 0, 0);
+    vm().flush_icache();
     return trampoline;
 }

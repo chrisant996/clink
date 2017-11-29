@@ -378,7 +378,7 @@ BOOL WINAPI host_cmd::set_env_var(const wchar_t* name, const wchar_t* value)
 bool host_cmd::initialise_system()
 {
     // Get the base address of module that exports ReadConsoleW.
-    void* kernel_module = vm_region(ReadConsoleW).get_parent().get_base();
+    void* kernel_module = vm().get_alloc_base(ReadConsoleW);
     if (kernel_module == nullptr)
         return false;
 

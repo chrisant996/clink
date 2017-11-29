@@ -7,8 +7,44 @@
 #include <Windows.h>
 
 //------------------------------------------------------------------------------
-vm_access::vm_access(int pid)
-: m_handle(nullptr)
+static unsigned int g_alloc_granularity = 0;
+static unsigned int g_page_size         = 0;
+
+//------------------------------------------------------------------------------
+static void initialise_page_constants()
+{
+    SYSTEM_INFO system_info;
+    GetSystemInfo(&system_info);
+    g_alloc_granularity = system_info.dwAllocationGranularity;
+    g_page_size = system_info.dwPageSize;
+}
+
+//------------------------------------------------------------------------------
+static unsigned int to_access_flags(unsigned int ms_flags)
+{
+    unsigned int ret = 0;
+    if (ms_flags & 0x22) ret |= vm::access_read;
+    if (ms_flags & 0x44) ret |= vm::access_write|vm::access_read;
+    if (ms_flags & 0x88) ret |= vm::access_cow|vm::access_write|vm::access_read;
+    if (ms_flags & 0xf0) ret |= vm::access_execute;
+    return ret;
+}
+
+//------------------------------------------------------------------------------
+static unsigned int to_ms_flags(unsigned int access_flags)
+{
+    unsigned int ret = PAGE_NOACCESS;
+    if (access_flags & vm::access_cow)          ret = PAGE_WRITECOPY;
+    else if (access_flags & vm::access_write)   ret = PAGE_READWRITE;
+    else if (access_flags & vm::access_read)    ret = PAGE_READONLY;
+    if (access_flags & vm::access_execute)      ret <<= 4;
+    return ret;
+}
+
+
+
+//------------------------------------------------------------------------------
+vm::vm(int pid)
 {
     if (pid > 0)
         m_handle = OpenProcess(PROCESS_QUERY_INFORMATION|PROCESS_VM_OPERATION|
@@ -18,32 +54,121 @@ vm_access::vm_access(int pid)
 }
 
 //------------------------------------------------------------------------------
-vm_access::~vm_access()
+vm::~vm()
 {
     if (m_handle != nullptr)
         CloseHandle(m_handle);
 }
 
 //------------------------------------------------------------------------------
-void* vm_access::alloc(size_t size)
+size_t vm::get_block_granularity()
+{
+    if (!g_alloc_granularity)
+        initialise_page_constants();
+
+    return g_alloc_granularity;
+}
+
+//------------------------------------------------------------------------------
+size_t vm::get_page_size()
+{
+    if (!g_page_size)
+        initialise_page_constants();
+
+    return g_page_size;
+}
+
+//------------------------------------------------------------------------------
+void* vm::get_alloc_base(void* address)
 {
     if (m_handle == nullptr)
         return nullptr;
 
-    return VirtualAllocEx(m_handle, nullptr, size, MEM_COMMIT, PAGE_READWRITE);
+    MEMORY_BASIC_INFORMATION mbi;
+    if (VirtualQueryEx(m_handle, address, &mbi, sizeof(mbi)))
+        return mbi.AllocationBase;
+
+    return nullptr;
 }
 
 //------------------------------------------------------------------------------
-bool vm_access::free(void* address)
+vm::region vm::get_region(void* address)
+{
+    if (m_handle == nullptr)
+        return {};
+
+    MEMORY_BASIC_INFORMATION mbi;
+    if (VirtualQueryEx(m_handle, address, &mbi, sizeof(mbi)))
+        return {mbi.BaseAddress, unsigned(mbi.RegionSize / get_page_size())};
+
+    return {};
+}
+
+//------------------------------------------------------------------------------
+void* vm::get_page(void* address)
+{
+    return (void*)(uintptr_t(address) & ~(get_page_size() - 1));
+}
+
+//------------------------------------------------------------------------------
+vm::region vm::alloc(unsigned int page_count, unsigned int access)
+{
+    if (m_handle == nullptr)
+        return {};
+
+    int ms_access = to_ms_flags(access);
+    size_t size = page_count * get_page_size();
+    if (void* base = VirtualAllocEx(m_handle, nullptr, size, MEM_COMMIT, ms_access))
+        return {base, page_count};
+
+    return {};
+}
+
+//------------------------------------------------------------------------------
+void vm::free(const region& region)
+{
+    if (m_handle == nullptr)
+        return;
+
+    size_t size = region.page_count * get_page_size();
+    VirtualFreeEx(m_handle, region.base, size, MEM_RELEASE);
+}
+
+//------------------------------------------------------------------------------
+int vm::get_access(const region& region)
+{
+    if (m_handle == nullptr)
+        return -1;
+
+    MEMORY_BASIC_INFORMATION mbi;
+    if (VirtualQueryEx(m_handle, region.base, &mbi, sizeof(mbi)))
+        return to_access_flags(mbi.Protect);
+
+    return -1;
+}
+
+//------------------------------------------------------------------------------
+void vm::set_access(const region& region, unsigned int access)
+{
+    if (m_handle == nullptr)
+        return;
+
+    DWORD ms_flags = to_ms_flags(access);
+    size_t size = region.page_count * get_page_size();
+    VirtualProtectEx(m_handle, region.base, size, ms_flags, &ms_flags);
+}
+
+//------------------------------------------------------------------------------
+bool vm::read(void* dest, const void* src, size_t size)
 {
     if (m_handle == nullptr)
         return false;
 
-    return (VirtualFreeEx(m_handle, address, 0, MEM_RELEASE) != FALSE);
+    return (ReadProcessMemory(m_handle, src, dest, size, nullptr) != FALSE);
 }
 
 //------------------------------------------------------------------------------
-bool vm_access::write(void* dest, const void* src, size_t size)
+bool vm::write(void* dest, const void* src, size_t size)
 {
     if (m_handle == nullptr)
         return false;
@@ -52,61 +177,11 @@ bool vm_access::write(void* dest, const void* src, size_t size)
 }
 
 //------------------------------------------------------------------------------
-bool vm_access::read(void* dest, const void* src, size_t size)
+void vm::flush_icache(const region& region)
 {
     if (m_handle == nullptr)
-        return false;
+        return;
 
-    return (ReadProcessMemory(m_handle, src, dest, size, nullptr) != FALSE);
-}
-
-
-
-//------------------------------------------------------------------------------
-void vm_region::initialise(const void* address)
-{
-    MEMORY_BASIC_INFORMATION mbi;
-    VirtualQuery(address, &mbi, sizeof(mbi));
-
-    m_parent_base = mbi.AllocationBase;
-    m_base = mbi.BaseAddress;
-    m_size = mbi.RegionSize;
-
-    if (mbi.Protect & 0x22)
-        m_access |= readable;
-
-    if (mbi.Protect & 0x44)
-        m_access |= writeable|readable;
-
-    if (mbi.Protect & 0x88)
-        m_access |= copyonwrite|writeable|readable;
-
-    if (mbi.Protect & 0xf0)
-        m_access |= executable;
-}
-
-//------------------------------------------------------------------------------
-vm_region::~vm_region()
-{
-    if (m_modified)
-        set_access(m_access);
-}
-
-//------------------------------------------------------------------------------
-void vm_region::set_access(int flags, bool permanent)
-{
-    DWORD vp_flags = PAGE_NOACCESS;
-    if (flags & copyonwrite)
-        vp_flags = PAGE_WRITECOPY;
-    else if (flags & writeable)
-        vp_flags = PAGE_READWRITE;
-    else if (flags & readable)
-        vp_flags = PAGE_READONLY;
-
-    if (flags & executable)
-        vp_flags <<= 4;
-
-    VirtualProtect(m_base, m_size, vp_flags, &vp_flags);
-
-    m_modified = !permanent;
+    size_t size = region.page_count * get_page_size();
+    FlushInstructionCache(m_handle, region.base, size);
 }

@@ -29,7 +29,7 @@ bool host_ps::validate()
 //------------------------------------------------------------------------------
 bool host_ps::initialise()
 {
-    void* read_console_module = vm_region(ReadConsoleW).get_parent().get_base();
+    void* read_console_module = vm().get_alloc_base(ReadConsoleW);
     if (read_console_module == nullptr)
         return false;
 

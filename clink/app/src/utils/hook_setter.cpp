@@ -20,7 +20,7 @@ hook_setter::hook_setter()
 int hook_setter::commit()
 {
     // Each hook needs fixing up, so we find the base address of our module.
-    void* self = vm_region("clink").get_parent().get_base();
+    void* self = vm().get_alloc_base("clink");
     if (self == nullptr)
         return 0;
 
