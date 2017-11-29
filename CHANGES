@@ -1,6 +1,10 @@
 
 ### Changes
 
+##### v1.0.0
+
+- TODO
+
 ##### v0.4.8
 
 - Environment variable 'clink_profile' overrides Clink's profile path (#390).
