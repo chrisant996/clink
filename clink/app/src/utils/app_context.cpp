@@ -9,6 +9,7 @@
 #include <core/path.h>
 #include <core/str.h>
 #include <process/process.h>
+#include <process/vm.h>
 
 //------------------------------------------------------------------------------
 app_context::desc::desc()
@@ -89,18 +90,34 @@ void app_context::get_binaries_dir(str_base& out) const
 {
     out.clear();
 
-    int flags = GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS;
-    flags |= GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT;
-    HINSTANCE module;
-    if (!GetModuleHandleEx(flags, "clink", &module))
+    void* base = vm().get_alloc_base("");
+    if (base == nullptr)
         return;
 
-    GetModuleFileName(module, out.data(), out.size());
+    wstr<280> wout;
+    GetModuleFileNameW(HMODULE(base), wout.data(), wout.size());
     if (GetLastError() == ERROR_INSUFFICIENT_BUFFER)
         return;
 
+    // Check for a .origin suffix indicating that we're using a copied DLL.
+    int out_length = wout.length();
+    wout << L".origin";
+    HANDLE origin = CreateFileW(wout.c_str(), GENERIC_READ, 0, nullptr,
+        OPEN_EXISTING, 0, nullptr);
+    if (origin != INVALID_HANDLE_VALUE)
+    {
+        DWORD read;
+        int size = GetFileSize(origin, nullptr);
+        out.reserve(size);
+        ReadFile(origin, out.data(), size, &read, nullptr);
+    }
+    else
+    {
+        wout.truncate(out_length);
+        out = wout.c_str();
+    }
+
     path::get_directory(out);
-    return;
 }
 
 //------------------------------------------------------------------------------

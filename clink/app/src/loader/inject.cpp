@@ -10,6 +10,7 @@
 #include <core/os.h>
 #include <core/path.h>
 #include <core/str.h>
+#include <core/str_hash.h>
 #include <getopt.h>
 #include <process/process.h>
 #include <process/vm.h>
@@ -29,25 +30,62 @@ static void copy_dll(str_base& dll_path)
     }
 
     target_path << "/clink/dll_cache";
-    os::make_dir(target_path.c_str());
+    if (!os::make_dir(target_path.c_str()))
+    {
+        LOG("Unable to create path '%s'", target_path.c_str());
+        return;
+    }
 
-    char pid[16];
-    str_base(pid).format("/%x", process().get_pid());
-    str<280> copy_path;
-    copy_path << target_path.c_str();
-    copy_path << pid;
+    char number[16];
+    str_base(number).format("/%x", process().get_pid());
+    str<280> temp_path;
+    temp_path << target_path.c_str();
+    temp_path << number;
 
-    target_path << "/clink_" AS_STR(ARCHITECTURE) "_" CLINK_VERSION_STR ".dll";
-    if (os::get_path_type(target_path.c_str()) == os::path_type_file)
-        return dll_path = target_path.c_str();
+    unsigned int dll_id = str_hash(AS_STR(ARCHITECTURE) CLINK_VERSION_STR);
+    str_base(number).format("%x", dll_id);
+    target_path << "/clink_" << number << ".dll";
 
-    os::unlink(copy_path.c_str());
-    os::copy(dll_path.c_str(), copy_path.c_str());
-    os::move(copy_path.c_str(), target_path.c_str());
+#if !defined(CLINK_FINAL)
+    // The DLL id only changes on a commit-premake cycle. During development this
+    // doesn't work so well so we'll force it through. TODO: check timestamps
+    const bool always = true;
+#else
+    const bool always = false;
+#endif
 
-    if (os::get_path_type(target_path.c_str()) != os::path_type_file)
+    if (always || os::get_path_type(target_path.c_str()) != os::path_type_file)
+    {
+        os::unlink(temp_path.c_str());
+        os::copy(dll_path.c_str(), temp_path.c_str());
+        os::move(temp_path.c_str(), target_path.c_str());
+    }
+
+    bool ok = (os::get_path_type(target_path.c_str()) == os::path_type_file);
+
+    // Write out origin path to a file so we can backtrack from the cached DLL.
+    int target_length = target_path.length();
+    target_path << ".origin";
+    if (always || os::get_path_type(target_path.c_str()) != os::path_type_file)
+    {
+        wstr<280> wcopy_path(temp_path.c_str());
+        HANDLE out = CreateFileW(wcopy_path.c_str(), GENERIC_WRITE, 0, nullptr,
+            CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, nullptr);
+        if (out != INVALID_HANDLE_VALUE)
+        {
+            DWORD written;
+            WriteFile(out, dll_path.c_str(), dll_path.length(), &written, nullptr);
+            CloseHandle(out);
+
+            os::move(temp_path.c_str(), target_path.c_str());
+        }
+    }
+
+    ok &= (os::get_path_type(target_path.c_str()) == os::path_type_file);
+    if (!ok)
         return;
 
+    target_path.truncate(target_length);
     dll_path = target_path.c_str();
 }
 
@@ -83,6 +121,8 @@ static void* do_inject(DWORD target_pid)
     process().get_file_name(dll_path);
     path::get_directory(dll_path);
     path::append(dll_path, CLINK_DLL);
+
+    copy_dll(dll_path);
 
     // Reset log file, start logging!
 #if 0
