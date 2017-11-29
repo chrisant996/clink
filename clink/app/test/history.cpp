@@ -61,8 +61,8 @@ void expect_files(const std::initializer_list<T>& names, bool exclusive=true)
         });
     }
 
-	if (exclusive)
-		REQUIRE(count_files() == names.size());
+    if (exclusive)
+        REQUIRE(count_files() == names.size());
 }
 
 
