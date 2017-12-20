@@ -20,10 +20,10 @@ local function exec(cmd, silent)
     -- which converts \ to /. This is fine for everything except cmd.exe.
     local prev_norm = path.normalize
     path.normalize = function (x) return x end
-    ret = os.execute(cmd)
+    local _, _, ret = os.execute(cmd)
     path.normalize = prev_norm
 
-    return ret and true or false
+    return ret == 0
 end
 
 --------------------------------------------------------------------------------
@@ -101,16 +101,8 @@ newaction {
                 exec(premake .. " " .. toolchain)
                 os.chdir(".build/" .. toolchain)
 
-                local ret
-                ret = exec("msbuild /m /v:q /p:configuration=final /p:platform=win32 clink.sln /t:" .. target)
-                if ret ~= 0 then
-                    x86_ok = false
-                end
-
-                ret = exec("msbuild /m /v:q /p:configuration=final /p:platform=x64 clink.sln /t:" .. target)
-                if ret ~= 0 then
-                    x64_ok = false
-                end
+                x86_ok = exec("msbuild /m /v:q /p:configuration=final /p:platform=win32 clink.sln /t:" .. target)
+                x64_ok = exec("msbuild /m /v:q /p:configuration=final /p:platform=x64 clink.sln /t:" .. target)
 
                 os.chdir("../..")
             elseif have_mingw then
@@ -120,16 +112,8 @@ newaction {
                 exec(premake .. " " .. toolchain)
                 os.chdir(".build/" .. toolchain)
 
-                local ret
-                ret = exec("1>nul mingw32-make CC=gcc config=final_x32 -j%number_of_processors% " .. target)
-                if ret ~= 0 then
-                    x86_ok = false
-                end
-
-                ret = exec("1>nul mingw32-make CC=gcc config=final_x64 -j%number_of_processors% " .. target)
-                if ret ~= 0 then
-                    x64_ok = false
-                end
+                x86_ok = exec("mingw32-make CC=gcc config=final_x32 -j%number_of_processors% " .. target)
+                x64_ok = exec("mingw32-make CC=gcc config=final_x64 -j%number_of_processors% " .. target)
 
                 os.chdir("../..")
             else
@@ -152,14 +136,14 @@ newaction {
         -- Run tests.
         if x86_ok then
             test_exe = path.translate(src.."/clink_test_x86.exe")
-            if exec(test_exe) ~= 0 then
+            if not exec(test_exe) then
                 error("x86 tests failed")
             end
         end
 
         if x64_ok then
             test_exe = path.translate(src.."/clink_test_x64.exe")
-            if exec(test_exe) ~= 0 then
+            if not exec(test_exe) then
                 error("x64 tests failed")
             end
         end
@@ -176,7 +160,7 @@ newaction {
         end
 
         -- Now we know the version we can create our output directory.
-        local target_dir = root_dir..os.date("%Y%m%d").."_"..version.."/"
+        local target_dir = root_dir..os.date("%Y%m%d_%H%M%S").."_"..version.."/"
         rmdir(target_dir)
         mkdir(target_dir)
 
@@ -210,7 +194,7 @@ newaction {
             nsis_cmd = nsis_cmd .. " /DCLINK_VERSION=" .. version
             nsis_cmd = nsis_cmd .. " /DCLINK_SOURCE=" .. code_dir
             nsis_cmd = nsis_cmd .. " " .. code_dir .. "/installer/clink.nsi"
-            nsis_ok = exec(nsis_cmd) == 0
+            nsis_ok = exec(nsis_cmd)
         end
 
         -- Tidy up code directory.
