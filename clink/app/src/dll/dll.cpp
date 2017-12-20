@@ -3,7 +3,6 @@
 
 #include "pch.h"
 #include "host/host_cmd.h"
-#include "host/host_ps.h"
 #include "utils/app_context.h"
 #include "utils/seh_scope.h"
 #include "version.h"
@@ -104,8 +103,7 @@ bool initialise_clink(const app_context::desc& app_desc)
         const char* name;
         host*       (*creator)();
     } hosts[] = {
-        { "cmd.exe",        []() -> host* { return new host_cmd(); } },
-        { "powershell.exe", []() -> host* { return new host_ps(); } },
+        { "cmd.exe", []() -> host* { return new host_cmd(); } },
     };
 
     for (int i = 0; i < sizeof_array(hosts); ++i)
