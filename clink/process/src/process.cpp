@@ -120,7 +120,7 @@ void* process::inject_module(const char* dll_path)
     // LoadLibraryW hooked then we'd get a potentially invalid address if we
     // were to just use &LoadLibraryW.
     pe_info kernel32(LoadLibrary("kernel32.dll"));
-    void* thread_proc = kernel32.get_export("LoadLibraryW");
+    void* thread_proc = (void*)kernel32.get_export("LoadLibraryW");
 
     wstr<280> wpath(dll_path);
     return remote_call(thread_proc, wpath.data(), wpath.length() * sizeof(wchar_t));
@@ -133,7 +133,7 @@ void* process::remote_call(void* function, const void* param, int param_size)
     handle process_handle = OpenProcess(PROCESS_QUERY_INFORMATION|PROCESS_CREATE_THREAD,
         FALSE, m_pid);
     if (!process_handle)
-        return false;
+        return nullptr;
 
 #if defined(_MSC_VER)
 #   pragma warning(push)
@@ -153,7 +153,7 @@ void* process::remote_call(void* function, const void* param, int param_size)
         data.out = data.func(data.in);
     };
 
-    const auto* stdcall_thunk = static_cast<void (__stdcall*)(thunk_data&)>(thunk);
+    auto* stdcall_thunk = static_cast<void (__stdcall*)(thunk_data&)>(thunk);
     static int thunk_size;
     if (!thunk_size)
         for (const auto* c = (unsigned char*)stdcall_thunk; ++thunk_size, *c++ != 0xc3;);
@@ -171,8 +171,8 @@ void* process::remote_call(void* function, const void* param, int param_size)
         return addr;
     };
 
-    vm_write(stdcall_thunk, thunk_size);
-    void* thunk_ptrs[2] = { decltype(thunk_data::func)(function) };
+    vm_write((void*)stdcall_thunk, thunk_size);
+    void* thunk_ptrs[2] = { function };
     char* remote_thunk_data = (char*)vm_write(thunk_ptrs, sizeof(thunk_ptrs));
     vm_write(param, param_size);
     vm.set_access(region, vm::access_rwx); // writeable so thunk() can write output.
