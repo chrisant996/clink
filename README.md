@@ -48,10 +48,6 @@ Clink's uses [Premake](http://premake.github.io) to generate Visual Studio solut
 3. Build scripts will be generated in ".build\\&lt;toolchain&gt;\". For example; .build\vs2013\clink.sln.
 4. Call your toolchain of choice (VS, mingw32-make.exe, msbuild.exe, etc). GNU makefiles (Premake's *gmake* target) have a **help** target for more info.
 
-### Development Builds
-
-Periodic builds from the Git repository can be found [here](https://www.dropbox.com/sh/hqbrpkf0dpmmizq/gGX4XWAWIA).
-
 ### License
 
 Clink is distributed under the terms of the GNU General Public License v3.0.
