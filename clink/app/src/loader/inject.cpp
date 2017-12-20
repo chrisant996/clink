@@ -10,7 +10,6 @@
 #include <core/os.h>
 #include <core/path.h>
 #include <core/str.h>
-#include <core/str_hash.h>
 #include <getopt.h>
 #include <process/process.h>
 #include <process/vm.h>
@@ -29,22 +28,16 @@ static void copy_dll(str_base& dll_path)
         return;
     }
 
-    target_path << "/clink/dll_cache";
-    if (!os::make_dir(target_path.c_str()))
+    target_path << "/clink/dll_cache/" CLINK_VERSION_STR;
+
+    os::make_dir(target_path.c_str());
+    if (os::get_path_type(target_path.c_str()) != os::path_type_dir)
     {
         LOG("Unable to create path '%s'", target_path.c_str());
         return;
     }
 
-    char number[16];
-    str_base(number).format("/%x", process().get_pid());
-    str<280> temp_path;
-    temp_path << target_path.c_str();
-    temp_path << number;
-
-    unsigned int dll_id = str_hash(AS_STR(ARCHITECTURE) CLINK_VERSION_STR);
-    str_base(number).format("%x", dll_id);
-    target_path << "/clink_" << number << ".dll";
+    target_path << "/" CLINK_DLL;
 
 #if !defined(CLINK_FINAL)
     // The DLL id only changes on a commit-premake cycle. During development this
@@ -54,21 +47,12 @@ static void copy_dll(str_base& dll_path)
     const bool always = false;
 #endif
 
-    if (always || os::get_path_type(target_path.c_str()) != os::path_type_file)
-    {
-        os::unlink(temp_path.c_str());
-        os::copy(dll_path.c_str(), temp_path.c_str());
-        os::move(temp_path.c_str(), target_path.c_str());
-    }
-
-    bool ok = (os::get_path_type(target_path.c_str()) == os::path_type_file);
-
     // Write out origin path to a file so we can backtrack from the cached DLL.
     int target_length = target_path.length();
     target_path << ".origin";
     if (always || os::get_path_type(target_path.c_str()) != os::path_type_file)
     {
-        wstr<280> wcopy_path(temp_path.c_str());
+        wstr<280> wcopy_path(target_path.c_str());
         HANDLE out = CreateFileW(wcopy_path.c_str(), GENERIC_WRITE, 0, nullptr,
             CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, nullptr);
         if (out != INVALID_HANDLE_VALUE)
@@ -76,16 +60,27 @@ static void copy_dll(str_base& dll_path)
             DWORD written;
             WriteFile(out, dll_path.c_str(), dll_path.length(), &written, nullptr);
             CloseHandle(out);
-
-            os::move(temp_path.c_str(), target_path.c_str());
         }
     }
 
-    ok &= (os::get_path_type(target_path.c_str()) == os::path_type_file);
-    if (!ok)
+    if (os::get_path_type(target_path.c_str()) != os::path_type_file)
+    {
+        LOG("Failed to create origin file at '%s'.", target_path.c_str());
         return;
+    }
 
     target_path.truncate(target_length);
+
+    // Copy the DLL.
+    if (always || os::get_path_type(target_path.c_str()) != os::path_type_file)
+        os::copy(dll_path.c_str(), target_path.c_str());
+
+    if (os::get_path_type(target_path.c_str()) != os::path_type_file)
+    {
+        LOG("Failed to copy DLL to '%s'", target_path.c_str());
+        return;
+    }
+
     dll_path = target_path.c_str();
 }
 
