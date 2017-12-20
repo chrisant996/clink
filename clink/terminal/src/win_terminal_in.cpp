@@ -217,8 +217,17 @@ void win_terminal_in::process_input(KEY_EVENT_RECORD const& record)
     int key_sc = record.wVirtualScanCode;
     int key_flags = record.dwControlKeyState;
 
-    // Early out of unaccompanied ctrl/shift/alt key presses.
-    if (key_vk == VK_MENU || key_vk == VK_CONTROL || key_vk == VK_SHIFT)
+    // We filter out Alt key presses unless they generated a character.
+    if (key_vk == VK_MENU)
+    {
+        if (key_char)
+            push(key_char);
+
+        return;
+    }
+
+    // Early out of unaccompanied ctrl/shift key presses.
+    if (key_vk == VK_CONTROL || key_vk == VK_SHIFT)
         return;
 
     // If the input was formed using AltGr or LeftAlt-LeftCtrl then things get
