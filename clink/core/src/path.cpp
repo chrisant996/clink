@@ -79,13 +79,19 @@ void normalise(char* in_out, int sep)
     if (!sep)
         sep = PATH_SEP[0];
 
-    char* __restrict write = in_out;
 #if defined(PLATFORM_WINDOWS)
-    if (write[0] && write[1] == ':')
-        write += 2;
+    if (in_out[0] && in_out[1] == ':')
+        in_out += 2;
 #endif
+
+    unsigned int piece_count = 0;
+
+    char* __restrict write = in_out;
     if (is_separator(*write))
+    {
         *write++ = char(sep);
+        piece_count = INT_MAX;
+    }
 
     const char* __restrict start = write;
     const char* __restrict read = write;
@@ -97,23 +103,29 @@ void normalise(char* in_out, int sep)
         if (read[0] == '.')
         {
             bool two_dot = (read[1] == '.');
-            read += two_dot;
 
-            if (is_separator(read[1]) || read[1] == '\0')
+            char c = *(read + 1 + two_dot);
+            if (is_separator(c) || !c)
             {
                 if (!two_dot)
                     continue;
 
-                while (write > start)
+                if (piece_count)
                 {
-                    --write;
-                    if (is_separator(write[-1]))
-                        break;
-                }
+                    while (write > start)
+                    {
+                        --write;
+                        if (is_separator(write[-1]))
+                            break;
+                    }
 
-                continue;
+                    piece_count -= !!piece_count;
+                    continue;
+                }
             }
         }
+        else
+            ++piece_count;
 
         for (; read < next; ++read)
             *write++ = is_separator(*read) ? char(sep) : *read;
