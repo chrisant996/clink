@@ -8,7 +8,7 @@
         BLOCK "040904b0" {
             VALUE "CompanyName",     "Martin Ridgers"
             VALUE "ProductName",     "Clink"
-            VALUE "FileDescription", "Improved line editing for Windows' shells"
+            VALUE "FileDescription", "Clink"
             VALUE "ProductVersion",  CLINK_VERSION_STR
         }
     }
