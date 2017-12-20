@@ -39,7 +39,7 @@ local function mkdir(dir)
     end
 
     local ret = exec("1>nul 2>nul md " .. path.translate(dir))
-    if ret ~= 0 then
+    if not ret then
         error("Failed to create directory '" .. dir .. "'")
     end
 end
@@ -76,7 +76,7 @@ end
 
 --------------------------------------------------------------------------------
 local function have_required_tool(name)
-    return (exec("1>nul 2>nul where " .. name) == 0)
+    return exec("1>nul 2>nul where " .. name)
 end
 
 --------------------------------------------------------------------------------
@@ -142,12 +142,12 @@ newaction {
             exec(premake .. " --clink_ver=" .. clink_ver .. " " .. toolchain)
 
             ret = exec("msbuild /m /v:q /p:configuration=release /p:platform=win32 .build/" .. toolchain .. "/clink.sln")
-            if ret ~= 0 then
+            if not ret then
                 x86_ok = false
             end
 
             ret = exec("msbuild /m /v:q /p:configuration=release /p:platform=x64 .build/" .. toolchain .. "/clink.sln")
-            if ret ~= 0 then
+            if not ret then
                 x64_ok = false
             end
         elseif have_mingw then
@@ -157,12 +157,12 @@ newaction {
 
             local ret
             ret = exec("1>nul mingw32-make CC=gcc config=release_x32 -j%number_of_processors%")
-            if ret ~= 0 then
+            if not ret then
                 x86_ok = false
             end
 
             ret = exec("1>nul mingw32-make CC=gcc config=release_x64 -j%number_of_processors%")
-            if ret ~= 0 then
+            if not ret then
                 x64_ok = false
             end
 
