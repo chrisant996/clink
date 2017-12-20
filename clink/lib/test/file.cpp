@@ -6,6 +6,7 @@
 #include "fs_fixture.h"
 #include "line_editor_tester.h"
 
+#include <core/os.h>
 #include <core/path.h>
 #include <core/str_compare.h>
 #include <lib/match_generator.h>
@@ -62,6 +63,17 @@ TEST_CASE("File match generator")
         tester.set_expected_matches("case_map-1", "case_map_2");
         tester.set_expected_output("case_map");
         tester.run();
+    }
+
+    SECTION("Relative")
+    {
+        REQUIRE(os::set_current_dir("dir1"));
+
+        tester.set_input("../dir1/on" DO_COMPLETE);
+        tester.set_expected_output("..\\dir1\\only ");
+        tester.run();
+
+        REQUIRE(os::set_current_dir(".."));
     }
 
     SECTION("cmd-style drive relative")
