@@ -217,7 +217,7 @@ newaction {
             lua_lump:write("-- ", path.getname(i), "\n")
             lua_lump:write("--\n\n")
 
-            for l in io.lines(i, "r") do
+            for l in io.lines(i, "*l") do
                 lua_lump:write(l, "\n")
             end
         end
