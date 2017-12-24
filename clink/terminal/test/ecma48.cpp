@@ -166,11 +166,15 @@ TEST_CASE("ecma48 c1 csi params")
     REQUIRE(params[1] == 0);
     REQUIRE(final == '@');
 
-    // ---
+    // Overflow
     new (&iter) ecma48_iter("\x1b[;;;;;;;;;;;;1;2;3;4;5 m", g_state);
     REQUIRE((code = iter.next()) != nullptr);
     REQUIRE(code->get_length() == 25);
 
+    param_count = code->decode_csi(final, params);
+    REQUIRE(param_count == sizeof_array(params));
+
+    new (&iter) ecma48_iter("\x1b[1;2;3;4;5;6;7;8;1;2;3;4;5;6;7;8m", g_state);
     param_count = code->decode_csi(final, params);
     REQUIRE(param_count == sizeof_array(params));
 }
