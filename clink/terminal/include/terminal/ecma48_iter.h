@@ -43,6 +43,8 @@ public:
     unsigned int        get_length() const  { return m_length; }
     type                get_type() const    { return m_type; }
     unsigned int        get_code() const    { return m_code; }
+    template <int S>
+    int                 decode_csi(int& final, int (&params)[S]) const;
     int                 decode_csi(int& final, int* params, unsigned int max_params) const;
     bool                get_c1_str(str_base& out) const;
 
@@ -57,6 +59,13 @@ private:
     type                m_type;
     unsigned char       m_code;
 };
+
+//------------------------------------------------------------------------------
+template <int S>
+int ecma48_code::decode_csi(int& final, int (&params)[S]) const
+{
+    return decode_csi(final, params, S);
+}
 
 
 

@@ -139,7 +139,7 @@ TEST_CASE("ecma48 c1 csi params")
     REQUIRE((code = iter.next()) != nullptr);
     REQUIRE(code->get_length() == 6);
 
-    param_count = code->decode_csi(final, params, sizeof_array(params));
+    param_count = code->decode_csi(final, params);
     REQUIRE(param_count == 1);
     REQUIRE(params[0] == 123);
 
@@ -148,7 +148,7 @@ TEST_CASE("ecma48 c1 csi params")
     REQUIRE((code = iter.next()) != nullptr);
     REQUIRE(code->get_length() == 12);
 
-    param_count = code->decode_csi(final, params, sizeof_array(params));
+    param_count = code->decode_csi(final, params);
     REQUIRE(param_count == 3);
     REQUIRE(params[0] == 1);
     REQUIRE(params[1] == 12);
@@ -160,7 +160,7 @@ TEST_CASE("ecma48 c1 csi params")
     REQUIRE((code = iter.next()) != nullptr);
     REQUIRE(code->get_length() == 4);
 
-    param_count = code->decode_csi(final, params, sizeof_array(params));
+    param_count = code->decode_csi(final, params);
     REQUIRE(param_count == 2);
     REQUIRE(params[0] == 0);
     REQUIRE(params[1] == 0);
@@ -171,7 +171,7 @@ TEST_CASE("ecma48 c1 csi params")
     REQUIRE((code = iter.next()) != nullptr);
     REQUIRE(code->get_length() == 25);
 
-    param_count = code->decode_csi(final, params, sizeof_array(params));
+    param_count = code->decode_csi(final, params);
     REQUIRE(param_count == sizeof_array(params));
 }
 
