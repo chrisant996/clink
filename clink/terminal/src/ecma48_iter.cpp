@@ -56,10 +56,10 @@ enum
 
 
 //------------------------------------------------------------------------------
-int ecma48_code::decode_csi(int& final, int* params, unsigned int max_params) const
+bool ecma48_code::decode_csi(csi_base& base, int* params, unsigned int max_params) const
 {
     if (get_type() != type_c1 || get_code() != c1_csi)
-        return -1;
+        return false;
 
     /* CSI P ... P I .... I F */
     str_iter iter(get_pointer(), get_length());
@@ -69,12 +69,12 @@ int ecma48_code::decode_csi(int& final, int* params, unsigned int max_params) co
         iter.next();
 
     // Is the parameter string tagged as private/experimental?
-    bool private_use;
-    if (private_use = in_range(iter.peek(), 0x3c, 0x3f))
+    if (base.private_use = in_range(iter.peek(), 0x3c, 0x3f))
         iter.next();
 
     // Extract parameters.
-    final = 0;
+    base.intermediate = 0;
+    base.final = 0;
     int param = 0;
     unsigned int count = 0;
     bool trailing_param = false;
@@ -94,18 +94,18 @@ int ecma48_code::decode_csi(int& final, int* params, unsigned int max_params) co
             else if (c != 0x3a) // Blissfully gloss over ':' part of spec.
                 param = (param * 10) + (c - 0x30);
         }
+        else if (in_range(c, 0x20, 0x2f))
+            base.intermediate = char(c);
         else if (!in_range(c, 0x3c, 0x3f))
-            final = (final << 8) + c;
+            base.final = char(c);
     }
 
     if (trailing_param)
         if (count < max_params)
             params[count++] = param;
-    
-    if (private_use)
-        count |= 0x80000000;
 
-    return count;
+    base.param_count = char(count);
+    return true;
 }
 
 //------------------------------------------------------------------------------

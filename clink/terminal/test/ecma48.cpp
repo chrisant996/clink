@@ -105,7 +105,7 @@ TEST_CASE("ecma48 icf")
 TEST_CASE("ecma48 c1 csi")
 {
     const ecma48_code* code;
-    int final, params[8], param_count;
+    ecma48_code::csi<8> csi;
 
     ecma48_iter iter("\x1b[\x40\xc2\x9b\x20\x7e", g_state);
 
@@ -113,17 +113,18 @@ TEST_CASE("ecma48 c1 csi")
     REQUIRE(code->get_type() == ecma48_code::type_c1);
     REQUIRE(code->get_length() == 3);
 
-    param_count = code->decode_csi(final, params);
-    REQUIRE(final == 0x40);
-    REQUIRE(param_count == 0);
+    REQUIRE(code->decode_csi(csi));
+    REQUIRE(csi.final == 0x40);
+    REQUIRE(csi.param_count == 0);
 
     REQUIRE((code = iter.next()) != nullptr);
     REQUIRE(code->get_type() == ecma48_code::type_c1);
     REQUIRE(code->get_length() == 4);
 
-    param_count = code->decode_csi(final, params);
-    REQUIRE(final == 0x207e);
-    REQUIRE(param_count == 0);
+    REQUIRE(code->decode_csi(csi));
+    REQUIRE(csi.param_count == 0);
+    REQUIRE(csi.intermediate == 0x20);
+    REQUIRE(csi.final == 0x7e);
 
     REQUIRE(iter.next() == nullptr);
 }
@@ -132,51 +133,52 @@ TEST_CASE("ecma48 c1 csi")
 TEST_CASE("ecma48 c1 csi params")
 {
     const ecma48_code* code;
-    int final, params[8], param_count;
+    ecma48_code::csi<8> csi;
 
     // ---
     ecma48_iter iter("\x1b[123\x7e", g_state);
     REQUIRE((code = iter.next()) != nullptr);
     REQUIRE(code->get_length() == 6);
 
-    param_count = code->decode_csi(final, params);
-    REQUIRE(param_count == 1);
-    REQUIRE(params[0] == 123);
+    REQUIRE(code->decode_csi(csi));
+    REQUIRE(csi.param_count == 1);
+    REQUIRE(csi.params[0] == 123);
 
     // ---
     new (&iter) ecma48_iter("\x1b[1;12;123 \x40", g_state);
     REQUIRE((code = iter.next()) != nullptr);
     REQUIRE(code->get_length() == 12);
 
-    param_count = code->decode_csi(final, params);
-    REQUIRE(param_count == 3);
-    REQUIRE(params[0] == 1);
-    REQUIRE(params[1] == 12);
-    REQUIRE(params[2] == 123);
-    REQUIRE(final == 0x2040);
+    REQUIRE(code->decode_csi(csi));
+    REQUIRE(csi.param_count == 3);
+    REQUIRE(csi.params[0] == 1);
+    REQUIRE(csi.params[1] == 12);
+    REQUIRE(csi.params[2] == 123);
+    REQUIRE(csi.intermediate == 0x20);
+    REQUIRE(csi.final == 0x40);
 
     // ---
     new (&iter) ecma48_iter("\x1b[;@", g_state);
     REQUIRE((code = iter.next()) != nullptr);
     REQUIRE(code->get_length() == 4);
 
-    param_count = code->decode_csi(final, params);
-    REQUIRE(param_count == 2);
-    REQUIRE(params[0] == 0);
-    REQUIRE(params[1] == 0);
-    REQUIRE(final == '@');
+    REQUIRE(code->decode_csi(csi));
+    REQUIRE(csi.param_count == 2);
+    REQUIRE(csi.params[0] == 0);
+    REQUIRE(csi.params[1] == 0);
+    REQUIRE(csi.final == '@');
 
     // Overflow
     new (&iter) ecma48_iter("\x1b[;;;;;;;;;;;;1;2;3;4;5 m", g_state);
     REQUIRE((code = iter.next()) != nullptr);
     REQUIRE(code->get_length() == 25);
 
-    param_count = code->decode_csi(final, params);
-    REQUIRE(param_count == sizeof_array(params));
+    REQUIRE(code->decode_csi(csi));
+    REQUIRE(csi.param_count == sizeof_array(csi.params));
 
     new (&iter) ecma48_iter("\x1b[1;2;3;4;5;6;7;8;1;2;3;4;5;6;7;8m", g_state);
-    param_count = code->decode_csi(final, params);
-    REQUIRE(param_count == sizeof_array(params));
+    REQUIRE(code->decode_csi(csi));
+    REQUIRE(csi.param_count == sizeof_array(csi.params));
 }
 
 //------------------------------------------------------------------------------
@@ -211,12 +213,12 @@ TEST_CASE("ecma48 c1 csi stream")
         REQUIRE(code->get_type() == ecma48_code::type_c1);
         REQUIRE(code->get_length() == 7);
 
-        int final, params[8], param_count;
-        param_count = code->decode_csi(final, params);
-        REQUIRE(param_count == 2);
-        REQUIRE(params[0] == 1);
-        REQUIRE(params[1] == 21);
-        REQUIRE(final == 'm');
+        ecma48_code::csi<8> csi;
+        REQUIRE(code->decode_csi(csi));
+        REQUIRE(csi.param_count == 2);
+        REQUIRE(csi.params[0] == 1);
+        REQUIRE(csi.params[1] == 21);
+        REQUIRE(csi.final == 'm');
     }
 }
 
@@ -234,12 +236,12 @@ TEST_CASE("ecma48 c1 csi split")
     REQUIRE((code = iter.next()) != nullptr);
     REQUIRE(code->get_type() == ecma48_code::type_c1);
 
-    int final, params[8], param_count;
-    param_count = code->decode_csi(final, params);
-    REQUIRE(param_count == 2);
-    REQUIRE(params[0] == 1);
-    REQUIRE(params[1] == 2);
-    REQUIRE(final == 'x');
+    ecma48_code::csi<8> csi;
+    REQUIRE(code->decode_csi(csi));
+    REQUIRE(csi.param_count == 2);
+    REQUIRE(csi.params[0] == 1);
+    REQUIRE(csi.params[1] == 2);
+    REQUIRE(csi.final == 'x');
 
     REQUIRE((code = iter.next()) != nullptr);
     REQUIRE(code->get_type() == ecma48_code::type_chars);
@@ -272,15 +274,13 @@ TEST_CASE("ecma48 c1 csi private use")
         ecma48_iter iter(test.input, g_state);
         REQUIRE((code = iter.next()) != nullptr);
 
-        int final, params[8], param_count;
-        param_count = code->decode_csi(final, params);
-        REQUIRE(param_count < 0);
-        REQUIRE((param_count & 0x7fffffff) >= 0);
+        ecma48_code::csi<8> csi;
+        REQUIRE(code->decode_csi(csi));
+        REQUIRE(csi.private_use);
 
-        param_count &= 0x7fffffff;
-        REQUIRE(param_count == test.param_count);
-        for (int i = 0; i < param_count; ++i)
-            REQUIRE(params[i] == test.params[i]);
+        REQUIRE(csi.param_count == test.param_count);
+        for (int i = 0; i < csi.param_count; ++i)
+            REQUIRE(csi.params[i] == test.params[i]);
     }
 }
 
@@ -334,8 +334,8 @@ TEST_CASE("ecma48 utf8")
     REQUIRE(code->get_type() == ecma48_code::type_c1);
     REQUIRE(code->get_length() == 3);
 
-    int final, params[8], param_count;
-    param_count = code->decode_csi(final, params);
-    REQUIRE(param_count == 0);
-    REQUIRE(final == 'z');
+    ecma48_code::csi<8> csi;
+    REQUIRE(code->decode_csi(csi));
+    REQUIRE(csi.param_count == 0);
+    REQUIRE(csi.final == 'z');
 }

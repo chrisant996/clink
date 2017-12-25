@@ -39,32 +39,46 @@ public:
         c1_sos          = 0x58,
     };
 
-    const char*         get_pointer() const { return m_str; }
-    unsigned int        get_length() const  { return m_length; }
-    type                get_type() const    { return m_type; }
-    unsigned int        get_code() const    { return m_code; }
-    template <int S>
-    int                 decode_csi(int& final, int (&params)[S]) const;
-    int                 decode_csi(int& final, int* params, unsigned int max_params) const;
-    bool                get_c1_str(str_base& out) const;
+    struct csi_base
+    {
+        char                final;
+        char                intermediate;
+        bool                private_use;
+        unsigned char       param_count;
+    };
+
+    template <int PARAM_N>
+    struct csi : public csi_base
+    {
+        int                 params[PARAM_N];
+    };
+
+    const char*             get_pointer() const { return m_str; }
+    unsigned int            get_length() const  { return m_length; }
+    type                    get_type() const    { return m_type; }
+    unsigned int            get_code() const    { return m_code; }
+    template <int S> bool   decode_csi(csi<S>& out) const;
+    bool                    get_c1_str(str_base& out) const;
 
 private:
-    friend class        ecma48_iter;
-    friend class        ecma48_state;
-                        ecma48_code() = default;
-                        ecma48_code(ecma48_code&) = delete;
-    void                operator = (ecma48_code&) = delete;
-    const char*         m_str;
-    unsigned short      m_length;
-    type                m_type;
-    unsigned char       m_code;
+    friend class            ecma48_iter;
+    friend class            ecma48_state;
+                            ecma48_code() = default;
+                            ecma48_code(ecma48_code&) = delete;
+                            ecma48_code(ecma48_code&&) = delete;
+    void                    operator = (ecma48_code&) = delete;
+    bool                    decode_csi(csi_base& base, int* params, unsigned int max_params) const;
+    const char*             m_str;
+    unsigned short          m_length;
+    type                    m_type;
+    unsigned char           m_code;
 };
 
 //------------------------------------------------------------------------------
 template <int S>
-int ecma48_code::decode_csi(int& final, int (&params)[S]) const
+bool ecma48_code::decode_csi(csi<S>& csi) const
 {
-    return decode_csi(final, params, S);
+    return decode_csi(csi, csi.params, S);
 }
 
 

@@ -55,11 +55,12 @@ void ecma48_terminal_out::write_c1(const ecma48_code& code)
     if (code.get_code() != ecma48_code::c1_csi)
         return;
 
-    int final, params[32], param_count;
-    param_count = code.decode_csi(final, params, sizeof_array(params));
-    const array<int> params_array(params, param_count);
+    ecma48_code::csi<32> csi;
+    code.decode_csi(csi);
 
-    switch (final)
+    const array<int> params_array(csi.params, csi.param_count);
+
+    switch (csi.final)
     {
     case 'm':
         write_sgr(params_array);
