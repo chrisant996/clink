@@ -113,7 +113,7 @@ TEST_CASE("ecma48 c1 csi")
     REQUIRE(code->get_type() == ecma48_code::type_c1);
     REQUIRE(code->get_length() == 3);
 
-    param_count = code->decode_csi(final, params, sizeof_array(params));
+    param_count = code->decode_csi(final, params);
     REQUIRE(final == 0x40);
     REQUIRE(param_count == 0);
 
@@ -121,7 +121,7 @@ TEST_CASE("ecma48 c1 csi")
     REQUIRE(code->get_type() == ecma48_code::type_c1);
     REQUIRE(code->get_length() == 4);
 
-    param_count = code->decode_csi(final, params, sizeof_array(params));
+    param_count = code->decode_csi(final, params);
     REQUIRE(final == 0x207e);
     REQUIRE(param_count == 0);
 
@@ -212,7 +212,7 @@ TEST_CASE("ecma48 c1 csi stream")
         REQUIRE(code->get_length() == 7);
 
         int final, params[8], param_count;
-        param_count = code->decode_csi(final, params, sizeof_array(params));
+        param_count = code->decode_csi(final, params);
         REQUIRE(param_count == 2);
         REQUIRE(params[0] == 1);
         REQUIRE(params[1] == 21);
@@ -235,7 +235,7 @@ TEST_CASE("ecma48 c1 csi split")
     REQUIRE(code->get_type() == ecma48_code::type_c1);
 
     int final, params[8], param_count;
-    param_count = code->decode_csi(final, params, sizeof_array(params));
+    param_count = code->decode_csi(final, params);
     REQUIRE(param_count == 2);
     REQUIRE(params[0] == 1);
     REQUIRE(params[1] == 2);
@@ -300,7 +300,7 @@ TEST_CASE("ecma48 utf8")
     REQUIRE(code->get_length() == 3);
 
     int final, params[8], param_count;
-    param_count = code->decode_csi(final, params, sizeof_array(params));
+    param_count = code->decode_csi(final, params);
     REQUIRE(param_count == 0);
     REQUIRE(final == 'z');
 }
