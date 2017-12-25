@@ -68,10 +68,10 @@ int ecma48_code::decode_csi(int& final, int* params, unsigned int max_params) co
     if (iter.next() == 0x1b)
         iter.next();
 
-    // Reserved? Then skip all Ps
-    if (in_range(iter.peek(), 0x3c, 0x3f))
-        while (in_range(iter.peek(), 0x30, 0x3f))
-            iter.next();
+    // Is the parameter string tagged as private/experimental?
+    bool private_use;
+    if (private_use = in_range(iter.peek(), 0x3c, 0x3f))
+        iter.next();
 
     // Extract parameters.
     final = 0;
@@ -94,7 +94,7 @@ int ecma48_code::decode_csi(int& final, int* params, unsigned int max_params) co
             else if (c != 0x3a) // Blissfully gloss over ':' part of spec.
                 param = (param * 10) + (c - 0x30);
         }
-        else
+        else if (!in_range(c, 0x3c, 0x3f))
             final = (final << 8) + c;
     }
 
@@ -102,6 +102,9 @@ int ecma48_code::decode_csi(int& final, int* params, unsigned int max_params) co
         if (count < max_params)
             params[count++] = param;
     
+    if (private_use)
+        count |= 0x80000000;
+
     return count;
 }
 
