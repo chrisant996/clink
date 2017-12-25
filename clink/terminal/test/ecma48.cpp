@@ -250,6 +250,41 @@ TEST_CASE("ecma48 c1 csi split")
 }
 
 //------------------------------------------------------------------------------
+TEST_CASE("ecma48 c1 csi private use")
+{
+    struct {
+        const char* input;
+        int param_count;
+        int params[8];
+    } tests[] = {
+        { "\x1b[?x",               0 },
+        { "\x1b[?99x",             1, 99 },
+        { "\x1b[?;98x",            2, 0, 98 },
+        { "\x1b[?1;2;3x",          3, 1, 2, 3 },
+        { "\x1b[?2;?4;6x",         3, 2, 4, 6 },
+        { "\x1b[?3;6?;9x",         3, 3, 6, 9 },
+        { "\x1b[?4;8?;???3;13??x", 4, 4, 8, 3, 13 },
+    };
+
+    for (auto test : tests)
+    {
+        const ecma48_code* code;
+        ecma48_iter iter(test.input, g_state);
+        REQUIRE((code = iter.next()) != nullptr);
+
+        int final, params[8], param_count;
+        param_count = code->decode_csi(final, params);
+        REQUIRE(param_count < 0);
+        REQUIRE((param_count & 0x7fffffff) >= 0);
+
+        param_count &= 0x7fffffff;
+        REQUIRE(param_count == test.param_count);
+        for (int i = 0; i < param_count; ++i)
+            REQUIRE(params[i] == test.params[i]);
+    }
+}
+
+//------------------------------------------------------------------------------
 TEST_CASE("ecma48 c1 !csi")
 {
     const ecma48_code* code;
