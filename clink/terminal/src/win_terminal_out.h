@@ -18,7 +18,6 @@ public:
     virtual int     get_rows() const override;
 
 private:
-    void            write(const wchar_t* chars, int length);
     void*           m_stdout = nullptr;
     unsigned long   m_prev_mode = 0;
     unsigned short  m_default_attr = 0x07;

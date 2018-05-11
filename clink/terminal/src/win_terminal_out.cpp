@@ -36,19 +36,13 @@ void win_terminal_out::write(const char* chars, int length)
         int n = min<int>(sizeof_array(wbuf), length + 1);
         n = to_utf16(wbuf, n, iter);
 
-        write(wbuf, n);
+        DWORD written;
+        WriteConsoleW(m_stdout, wbuf, n, &written, nullptr);
 
         n = int(iter.get_pointer() - chars);
         length -= n;
         chars += n;
     }
-}
-
-//------------------------------------------------------------------------------
-void win_terminal_out::write(const wchar_t* chars, int length)
-{
-    DWORD written;
-    WriteConsoleW(m_stdout, chars, length, &written, nullptr);
 }
 
 //------------------------------------------------------------------------------
