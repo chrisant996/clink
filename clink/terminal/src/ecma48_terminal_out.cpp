@@ -44,12 +44,6 @@ int ecma48_terminal_out::get_rows() const
 }
 
 //------------------------------------------------------------------------------
-void ecma48_terminal_out::set_attributes(const attributes attr)
-{
-    m_inner.set_attributes(attr);
-}
-
-//------------------------------------------------------------------------------
 void ecma48_terminal_out::write_c1(const ecma48_code& code)
 {
     if (code.get_code() != ecma48_code::c1_csi)
@@ -117,7 +111,7 @@ void ecma48_terminal_out::write_sgr(const array<int>& params)
 {
     // Empty parameters to 'CSI SGR' implies 0 (reset).
     if (params.empty())
-        return set_attributes(attributes::defaults);
+        return;
 
     // Process each code that is supported.
     attributes attr;
@@ -159,5 +153,4 @@ void ecma48_terminal_out::write_sgr(const array<int>& params)
         // TODO: Rgb/xterm256 support for terminals that support it.
     }
 
-    set_attributes(attr);
 }

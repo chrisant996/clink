@@ -20,7 +20,6 @@ public:
     virtual void        flush() override;
     virtual int         get_columns() const override;
     virtual int         get_rows() const override;
-    virtual void        set_attributes(const attributes attr) override;
 
 private:
     void                write_c1(const ecma48_code& code);
