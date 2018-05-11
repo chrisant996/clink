@@ -7,6 +7,8 @@
 #include <core/base.h>
 #include <core/str.h>
 
+#include <Windows.h>
+
 //------------------------------------------------------------------------------
 #define CSI(x) "\x1b[" #x
 #define SS3(x) "\x1bO" #x

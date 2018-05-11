@@ -1,10 +1,10 @@
-// Copyright (c) 2016 Martin Ridgers
+// Copyright (c) 2018 Martin Ridgers
 // License: http://opensource.org/licenses/MIT
 
 #pragma once
 
-#include "terminal_out.h"
 #include "ecma48_iter.h"
+#include "terminal_out.h"
 
 template <typename T> class array;
 

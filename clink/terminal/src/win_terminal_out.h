@@ -1,4 +1,4 @@
-// Copyright (c) 2016 Martin Ridgers
+// Copyright (c) 2018 Martin Ridgers
 // License: http://opensource.org/licenses/MIT
 
 #pragma once
