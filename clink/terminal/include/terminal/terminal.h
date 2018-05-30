@@ -3,6 +3,7 @@
 
 #pragma once
 
+class screen_buffer;
 class terminal_in;
 class terminal_out;
 
@@ -14,5 +15,5 @@ struct terminal
 };
 
 //------------------------------------------------------------------------------
-terminal            terminal_create();
+terminal            terminal_create(screen_buffer* screen=nullptr);
 void                terminal_destroy(const terminal& terminal);

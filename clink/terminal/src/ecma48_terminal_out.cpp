@@ -3,44 +3,43 @@
 
 #include "pch.h"
 #include "ecma48_terminal_out.h"
-
-#include <core/array.h>
-#include <core/base.h>
+#include "ecma48_iter.h"
+#include "screen_buffer.h"
 
 //------------------------------------------------------------------------------
-ecma48_terminal_out::ecma48_terminal_out(terminal_out& inner)
-: m_inner(inner)
+ecma48_terminal_out::ecma48_terminal_out(screen_buffer& screen)
+: m_screen(screen)
 {
 }
 
 //------------------------------------------------------------------------------
 void ecma48_terminal_out::begin()
 {
-    m_inner.begin();
+    m_screen.begin();
 }
 
 //------------------------------------------------------------------------------
 void ecma48_terminal_out::end()
 {
-    m_inner.end();
+    m_screen.end();
 }
 
 //------------------------------------------------------------------------------
 void ecma48_terminal_out::flush()
 {
-    m_inner.flush();
+    m_screen.flush();
 }
 
 //------------------------------------------------------------------------------
 int ecma48_terminal_out::get_columns() const
 {
-    return m_inner.get_columns();
+    return m_screen.get_columns();
 }
 
 //------------------------------------------------------------------------------
 int ecma48_terminal_out::get_rows() const
 {
-    return m_inner.get_rows();
+    return m_screen.get_rows();
 }
 
 //------------------------------------------------------------------------------
@@ -52,12 +51,10 @@ void ecma48_terminal_out::write_c1(const ecma48_code& code)
     ecma48_code::csi<32> csi;
     code.decode_csi(csi);
 
-    const array<int> params_array(csi.params, csi.param_count);
-
     switch (csi.final)
     {
     case 'm':
-        write_sgr(params_array);
+        set_attributes(csi);
         break;
     }
 }
@@ -92,7 +89,7 @@ void ecma48_terminal_out::write(const char* chars, int length)
         switch (code->get_type())
         {
         case ecma48_code::type_chars:
-            m_inner.write(code->get_pointer(), code->get_length());
+            m_screen.write(code->get_pointer(), code->get_length());
             break;
 
         case ecma48_code::type_c0:
@@ -107,16 +104,18 @@ void ecma48_terminal_out::write(const char* chars, int length)
 }
 
 //------------------------------------------------------------------------------
-void ecma48_terminal_out::write_sgr(const array<int>& params)
+void ecma48_terminal_out::set_attributes(const ecma48_code::csi_base& csi)
 {
     // Empty parameters to 'CSI SGR' implies 0 (reset).
-    if (params.empty())
-        return;
+    if (csi.param_count == 0)
+        return m_screen.set_attributes(attributes::defaults);
 
     // Process each code that is supported.
     attributes attr;
-    for (unsigned int param : params)
+    for (int i = 0; i < csi.param_count; ++i)
     {
+        unsigned int param = csi.params[i];
+
         // Resets
         if (param == 0)  { attr = attributes::defaults; continue; }
         if (param == 49) { attr.reset_bg();             continue; }
@@ -153,4 +152,5 @@ void ecma48_terminal_out::write_sgr(const array<int>& params)
         // TODO: Rgb/xterm256 support for terminals that support it.
     }
 
+    m_screen.set_attributes(attr);
 }

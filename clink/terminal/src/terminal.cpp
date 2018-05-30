@@ -3,18 +3,22 @@
 
 #include "pch.h"
 #include "terminal.h"
+#include "ecma48_terminal_out.h"
+#include "win_screen_buffer.h"
 #include "win_terminal_in.h"
-#include "win_terminal_out.h"
 
 #include <core/base.h>
 
 //------------------------------------------------------------------------------
-terminal terminal_create()
+terminal terminal_create(screen_buffer* screen)
 {
 #if defined(PLATFORM_WINDOWS)
+    if (screen == nullptr)
+        screen = new win_screen_buffer(); // TODO: this leaks.
+
     return {
         new win_terminal_in(),
-        new win_terminal_out(),
+        new ecma48_terminal_out(*screen),
     };
 #else
     return {};

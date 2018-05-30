@@ -6,14 +6,14 @@
 #include "ecma48_iter.h"
 #include "terminal_out.h"
 
-template <typename T> class array;
+class screen_buffer;
 
 //------------------------------------------------------------------------------
 class ecma48_terminal_out
     : public terminal_out
 {
 public:
-                        ecma48_terminal_out(terminal_out& inner);
+                        ecma48_terminal_out(screen_buffer& screen);
     virtual void        begin() override;
     virtual void        end() override;
     virtual void        write(const char* chars, int length) override;
@@ -23,8 +23,8 @@ public:
 
 private:
     void                write_c1(const ecma48_code& code);
-    void                write_sgr(const array<int>& params);
     void                write_c0(int c0);
-    terminal_out&       m_inner;
+    void                set_attributes(const ecma48_code::csi_base& csi);
     ecma48_state        m_state;
+    screen_buffer&      m_screen;
 };
