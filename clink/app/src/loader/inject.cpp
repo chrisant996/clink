@@ -10,6 +10,7 @@
 #include <core/os.h>
 #include <core/path.h>
 #include <core/str.h>
+#include <core/str_hash.h>
 #include <getopt.h>
 #include <process/process.h>
 #include <process/vm.h>
@@ -29,6 +30,10 @@ static void copy_dll(str_base& dll_path)
     }
 
     target_path << "/clink/dll_cache/" CLINK_VERSION_STR;
+
+    str<12, false> path_salt;
+    path_salt.format("_%08x", str_hash(dll_path.c_str()));
+    target_path << path_salt;
 
     os::make_dir(target_path.c_str());
     if (os::get_path_type(target_path.c_str()) != os::path_type_dir)
