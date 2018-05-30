@@ -196,6 +196,24 @@ static bool is_clink_present(DWORD target_pid)
 }
 
 //------------------------------------------------------------------------------
+static DWORD find_inject_target()
+{
+    str<512, false> buffer;
+    for (int pid = process().get_parent_pid(); pid;)
+    {
+        process process(pid);
+        process.get_file_name(buffer);
+        const char* name = path::get_name(buffer.c_str());
+        if (_stricmp(name, "cmd.exe") == 0)
+            return pid;
+
+        pid = process.get_parent_pid();
+    }
+
+    return 0;
+}
+
+//------------------------------------------------------------------------------
 void get_profile_path(const char* in, str_base& out)
 {
     if (in[0] == '~' && (in[1] == '\\' || in[1] == '/'))
@@ -277,12 +295,11 @@ int inject(int argc, char** argv)
     app_context::get()->get_log_path(log_path);
     unlink(log_path.c_str());
 
-    // Unless a target pid was specified on the command line, use our parent
-    // process pid.
+    // Unless a target pid was specified on the command line search for a
+    // compatible parent process.
     if (target_pid == 0)
     {
-        target_pid = process().get_parent_pid();
-        if (target_pid == 0)
+        if (!(target_pid = find_inject_target()))
         {
             LOG("Failed to find parent pid.");
             return ret;
