@@ -25,6 +25,13 @@ private:
     void                write_c1(const ecma48_code& code);
     void                write_c0(int c0);
     void                set_attributes(const ecma48_code::csi_base& csi);
+    void                erase_in_display(const ecma48_code::csi_base& csi);
+    void                erase_in_line(const ecma48_code::csi_base& csi);
+    void                set_cursor(const ecma48_code::csi_base& csi);
+    void                insert_chars(const ecma48_code::csi_base& csi);
+    void                delete_chars(const ecma48_code::csi_base& csi);
+    void                set_private_mode(const ecma48_code::csi_base& csi);
+    void                reset_private_mode(const ecma48_code::csi_base& csi);
     ecma48_state        m_state;
     screen_buffer&      m_screen;
 };
