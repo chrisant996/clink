@@ -3,11 +3,12 @@
 
 #include "pch.h"
 
+#include <core/base.h>
+
 #include <Windows.h>
 
 #define TERMCAP_DEBUG 0
 #if TERMCAP_DEBUG
-#   include <core/base.h>
 #   include <stdio.h>
 #endif
 
@@ -69,14 +70,6 @@ struct tgoto_data
     int     y;
 };
 typedef struct tgoto_data tgoto_data_t;
-
-//------------------------------------------------------------------------------
-int clamp(int v, int mi, int mx)
-{
-    v = (v > mi) ? v : mi;
-    v = (v < mx) ? v : mx;
-    return v;
-}
 
 //------------------------------------------------------------------------------
 void move_cursor(int dx, int dy)

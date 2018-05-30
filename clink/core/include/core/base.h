@@ -39,6 +39,9 @@ template <class A> A min(A a, A b) { return (a < b) ? a : b; }
 #undef max
 template <class A> A max(A a, A b) { return (a > b) ? a : b; }
 
+#undef clamp
+template <class A> A clamp(A v, A m, A M) { return min(max(v, m), M); }
+
 //------------------------------------------------------------------------------
 struct no_copy
 {
