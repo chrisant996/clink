@@ -14,6 +14,7 @@ public:
         input_terminal_resize,
     };
 
+    virtual         ~terminal_in() = default;
     virtual void    begin() = 0;
     virtual void    end() = 0;
     virtual void    select() = 0;

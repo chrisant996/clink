@@ -9,6 +9,7 @@
 class terminal_out
 {
 public:
+    virtual                 ~terminal_out() = default;
     virtual void            begin() = 0;
     virtual void            end() = 0;
     virtual void            write(const char* chars, int length) = 0;

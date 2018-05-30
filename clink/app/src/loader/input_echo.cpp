@@ -4,7 +4,8 @@
 #include "pch.h"
 
 #include <core/str.h>
-#include <terminal/win_terminal_in.h>
+#include <terminal/terminal.h>
+#include <terminal/terminal_in.h>
 
 //------------------------------------------------------------------------------
 int input_echo(int argc, char** argv)
@@ -22,7 +23,8 @@ int input_echo(int argc, char** argv)
         }
     }
 
-    win_terminal_in input;
+    terminal terminal = terminal_create();
+    terminal_in& input = *terminal.in;
     input.begin();
 
     bool quit = false;
