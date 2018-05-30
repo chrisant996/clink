@@ -174,11 +174,11 @@ TEST_CASE("ecma48 c1 csi params")
     REQUIRE(code->get_length() == 25);
 
     REQUIRE(code->decode_csi(csi));
-    REQUIRE(csi.param_count == sizeof_array(csi.params));
+    REQUIRE(csi.param_count == decltype(csi)::max_param_count);
 
     new (&iter) ecma48_iter("\x1b[1;2;3;4;5;6;7;8;1;2;3;4;5;6;7;8m", g_state);
     REQUIRE(code->decode_csi(csi));
-    REQUIRE(csi.param_count == sizeof_array(csi.params));
+    REQUIRE(csi.param_count == decltype(csi)::max_param_count);
 }
 
 //------------------------------------------------------------------------------

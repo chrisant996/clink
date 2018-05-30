@@ -45,12 +45,17 @@ public:
         char                intermediate;
         bool                private_use;
         unsigned char       param_count;
+        int                 params[1];
+        int                 get_param(int index, int fallback=0) const;
     };
 
     template <int PARAM_N>
     struct csi : public csi_base
     {
-        int                 params[PARAM_N];
+        static const int    max_param_count = PARAM_N;
+
+    private:
+        int                 buffer[PARAM_N - 1];
     };
 
     const char*             get_pointer() const { return m_str; }
@@ -73,6 +78,15 @@ private:
     type                    m_type;
     unsigned char           m_code;
 };
+
+//------------------------------------------------------------------------------
+inline int ecma48_code::csi_base::get_param(int index, int fallback) const
+{
+    if (unsigned(index) < unsigned(param_count))
+        return *(params + index);
+
+    return fallback;
+}
 
 //------------------------------------------------------------------------------
 template <int S>
