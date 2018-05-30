@@ -326,8 +326,6 @@ TEST_CASE("history rl")
             tester.set_input(input.c_str());
             tester.set_expected_output(history_lines[1]);
             tester.run();
-
-            free(kh);
         }
     }
 
