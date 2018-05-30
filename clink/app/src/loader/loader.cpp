@@ -16,6 +16,7 @@ extern "C" {
 //------------------------------------------------------------------------------
 int autorun(int, char**);
 int clink_info(int, char**);
+int draw_test(int, char**);
 int history(int, char**);
 int inject(int, char**);
 int input_echo(int, char**);
@@ -74,6 +75,7 @@ static int dispatch_verb(const char* verb, int argc, char** argv)
         int (*handler)(int, char**);
     } handlers[] = {
         "autorun",   autorun,
+        "drawtest",  draw_test,
         "echo",      input_echo,
         "history",   history,
         "info",      clink_info,
