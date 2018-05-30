@@ -493,6 +493,13 @@ TEST_CASE("Lua arg parsers.")
             tester.run();
         }
 
+        SECTION("Dash 3")
+        {
+            tester.set_input("argcmd_flags_d -twe" DO_COMPLETE);
+            tester.set_expected_output("argcmd_flags_d -twenty ");
+            tester.run();
+        }
+
         SECTION("No prefix 1")
         {
             tester.set_input("argcmd_flags_x ");
