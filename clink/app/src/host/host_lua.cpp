@@ -32,7 +32,7 @@ host_lua::host_lua()
     app_context::get()->get_binaries_dir(bin_path);
 
     str<280> exe_path;
-    exe_path << "\"" << bin_path << "/" CLINK_EXE "\"";
+    exe_path << bin_path << "\\" CLINK_EXE;
 
     lua_State* state = m_state.get_state();
     lua_pushstring(state, exe_path.c_str());
