@@ -13,10 +13,10 @@
 #   error Unsupported platform.
 #endif
 
-#if defined(_MSC_VER)
-#   define THREAD_LOCAL     __declspec(thread)
-#elif defined(__GNUC__)
-#   define THREAD_LOCAL     __thread
+#if defined(_MSC_VER) && _MSC_VER < 1900
+#   define threadlocal      __declspec(thread)
+#else
+#   define threadlocal      thread_local
 #endif
 
 #if defined(_MSC_VER) && _MSC_VER < 1900
