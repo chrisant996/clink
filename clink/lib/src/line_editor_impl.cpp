@@ -402,7 +402,8 @@ void line_editor_impl::accept_match(unsigned int index)
     const char* buf_ptr = m_buffer.get_buffer();
 
     str<288> to_insert;
-    to_insert.concat(buf_ptr + word_start, end_word.length);
+    if (!m_matches.is_prefix_included())
+        to_insert.concat(buf_ptr + word_start, end_word.length);
     to_insert << match;
 
     // TODO: This has not place here and should be done somewhere else.
