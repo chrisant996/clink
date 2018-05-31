@@ -29,7 +29,7 @@ local function set_handler(word_index, line_state)
     end
 
     local ret = {}
-    for line in io.popen(CLINK_EXE.." set --list "..name, "r"):lines() do
+    for line in io.popen('"'..CLINK_EXE..'" set --list '..name, "r"):lines() do
         table.insert(ret, line)
     end
 
