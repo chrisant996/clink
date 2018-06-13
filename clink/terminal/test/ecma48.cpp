@@ -18,12 +18,13 @@ TEST_CASE("ecma48 chars")
     const ecma48_code* code;
 
     ecma48_iter iter(input, g_state);
-    REQUIRE((code = iter.next()) != nullptr);
+    code = &iter.next();
+    REQUIRE(*code);
     REQUIRE(code->get_type() == ecma48_code::type_chars);
     REQUIRE(code->get_pointer() == input);
     REQUIRE(code->get_length() == 6);
 
-    REQUIRE(iter.next() == nullptr);
+    REQUIRE(!iter.next());
 }
 
 //------------------------------------------------------------------------------
@@ -33,27 +34,31 @@ TEST_CASE("ecma48 c0")
 
     ecma48_iter iter("\x01 \x10\x1f", g_state);
 
-    REQUIRE((code = iter.next()) != nullptr);
+    code = &iter.next();
+    REQUIRE(*code);
     REQUIRE(code->get_type() == ecma48_code::type_c0);
     REQUIRE(code->get_code() == 0x01);
     REQUIRE(code->get_length() == 1);
 
-    REQUIRE((code = iter.next()) != nullptr);
+    code = &iter.next();
+    REQUIRE(*code);
     REQUIRE(code->get_type() == ecma48_code::type_chars);
     REQUIRE(code->get_length() == 1);
     REQUIRE(code->get_pointer()[0] == ' ');
 
-    REQUIRE((code = iter.next()) != nullptr);
+    code = &iter.next();
+    REQUIRE(*code);
     REQUIRE(code->get_type() == ecma48_code::type_c0);
     REQUIRE(code->get_code() == 0x10);
     REQUIRE(code->get_length() == 1);
 
-    REQUIRE((code = iter.next()) != nullptr);
+    code = &iter.next();
+    REQUIRE(*code);
     REQUIRE(code->get_type() == ecma48_code::type_c0);
     REQUIRE(code->get_code() == 0x1f);
     REQUIRE(code->get_length() == 1);
 
-    REQUIRE(iter.next() == nullptr);
+    REQUIRE(!iter.next());
 }
 
 //------------------------------------------------------------------------------
@@ -63,22 +68,25 @@ TEST_CASE("ecma48 c1 (simple)")
 
     ecma48_iter iter("\x1b\x40\x1b\x51\x1b\x5c", g_state);
 
-    REQUIRE((code = iter.next()) != nullptr);
+    code = &iter.next();
+    REQUIRE(*code);
     REQUIRE(code->get_type() == ecma48_code::type_c1);
     REQUIRE(code->get_code() == 0x40);
     REQUIRE(code->get_length() == 2);
 
-    REQUIRE((code = iter.next()) != nullptr);
+    code = &iter.next();
+    REQUIRE(*code);
     REQUIRE(code->get_type() == ecma48_code::type_c1);
     REQUIRE(code->get_code() == 0x51);
     REQUIRE(code->get_length() == 2);
 
-    REQUIRE((code = iter.next()) != nullptr);
+    code = &iter.next();
+    REQUIRE(*code);
     REQUIRE(code->get_type() == ecma48_code::type_c1);
     REQUIRE(code->get_code() == 0x5c);
     REQUIRE(code->get_length() == 2);
 
-    REQUIRE(iter.next() == nullptr);
+    REQUIRE(!iter.next());
 }
 
 //------------------------------------------------------------------------------
@@ -88,17 +96,19 @@ TEST_CASE("ecma48 icf")
 
     ecma48_iter iter("\x1b\x60\x1b\x7f", g_state);
 
-    REQUIRE((code = iter.next()) != nullptr);
+    code = &iter.next();
+    REQUIRE(*code);
     REQUIRE(code->get_type() == ecma48_code::type_icf);
     REQUIRE(code->get_code() == 0x60);
     REQUIRE(code->get_length() == 2);
 
-    REQUIRE((code = iter.next()) != nullptr);
+    code = &iter.next();
+    REQUIRE(*code);
     REQUIRE(code->get_type() == ecma48_code::type_icf);
     REQUIRE(code->get_code() == 0x7f);
     REQUIRE(code->get_length() == 2);
 
-    REQUIRE(iter.next() == nullptr);
+    REQUIRE(!iter.next());
 }
 
 //------------------------------------------------------------------------------
@@ -109,7 +119,8 @@ TEST_CASE("ecma48 c1 csi")
 
     ecma48_iter iter("\x1b[\x40\xc2\x9b\x20\x7e", g_state);
 
-    REQUIRE((code = iter.next()) != nullptr);
+    code = &iter.next();
+    REQUIRE(*code);
     REQUIRE(code->get_type() == ecma48_code::type_c1);
     REQUIRE(code->get_length() == 3);
 
@@ -117,7 +128,8 @@ TEST_CASE("ecma48 c1 csi")
     REQUIRE(csi.final == 0x40);
     REQUIRE(csi.param_count == 0);
 
-    REQUIRE((code = iter.next()) != nullptr);
+    code = &iter.next();
+    REQUIRE(*code);
     REQUIRE(code->get_type() == ecma48_code::type_c1);
     REQUIRE(code->get_length() == 4);
 
@@ -126,7 +138,7 @@ TEST_CASE("ecma48 c1 csi")
     REQUIRE(csi.intermediate == 0x20);
     REQUIRE(csi.final == 0x7e);
 
-    REQUIRE(iter.next() == nullptr);
+    REQUIRE(!iter.next());
 }
 
 //------------------------------------------------------------------------------
@@ -137,7 +149,8 @@ TEST_CASE("ecma48 c1 csi params")
 
     // ---
     ecma48_iter iter("\x1b[123\x7e", g_state);
-    REQUIRE((code = iter.next()) != nullptr);
+    code = &iter.next();
+    REQUIRE(*code);
     REQUIRE(code->get_length() == 6);
 
     REQUIRE(code->decode_csi(csi));
@@ -146,7 +159,8 @@ TEST_CASE("ecma48 c1 csi params")
 
     // ---
     new (&iter) ecma48_iter("\x1b[1;12;123 \x40", g_state);
-    REQUIRE((code = iter.next()) != nullptr);
+    code = &iter.next();
+    REQUIRE(*code);
     REQUIRE(code->get_length() == 12);
 
     REQUIRE(code->decode_csi(csi));
@@ -159,7 +173,8 @@ TEST_CASE("ecma48 c1 csi params")
 
     // ---
     new (&iter) ecma48_iter("\x1b[;@", g_state);
-    REQUIRE((code = iter.next()) != nullptr);
+    code = &iter.next();
+    REQUIRE(*code);
     REQUIRE(code->get_length() == 4);
 
     REQUIRE(code->decode_csi(csi));
@@ -170,7 +185,8 @@ TEST_CASE("ecma48 c1 csi params")
 
     // Overflow
     new (&iter) ecma48_iter("\x1b[;;;;;;;;;;;;1;2;3;4;5 m", g_state);
-    REQUIRE((code = iter.next()) != nullptr);
+    code = &iter.next();
+    REQUIRE(*code);
     REQUIRE(code->get_length() == 25);
 
     REQUIRE(code->decode_csi(csi));
@@ -187,7 +203,8 @@ TEST_CASE("ecma48 c1 csi invalid")
     const ecma48_code* code;
 
     ecma48_iter iter("\x1b[1;2\01", g_state);
-    REQUIRE((code = iter.next()) != nullptr);
+    code = &iter.next();
+    REQUIRE(*code);
     REQUIRE(code->get_type() == ecma48_code::type_c0);
     REQUIRE(code->get_code() == 1);
     REQUIRE(code->get_pointer()[0] == 1);
@@ -206,10 +223,11 @@ TEST_CASE("ecma48 c1 csi stream")
 
         memset(&iter_1, 0xab, sizeof(iter_1));
         new (&iter_1) ecma48_iter(input, g_state, i);
-        REQUIRE(iter_1.next() == nullptr);
+        REQUIRE(!iter_1.next());
 
         ecma48_iter iter_2(input + i, g_state, sizeof_array(input) - i);
-        REQUIRE((code = iter_2.next()) != nullptr);
+        code = &iter_2.next();
+        REQUIRE(*code);
         REQUIRE(code->get_type() == ecma48_code::type_c1);
         REQUIRE(code->get_length() == 7);
 
@@ -228,12 +246,14 @@ TEST_CASE("ecma48 c1 csi split")
     const ecma48_code* code;
 
     ecma48_iter iter(" \x1b[1;2x@@@@", g_state);
-    REQUIRE((code = iter.next()) != nullptr);
+    code = &iter.next();
+    REQUIRE(*code);
     REQUIRE(code->get_type() == ecma48_code::type_chars);
     REQUIRE(code->get_length() == 1);
     REQUIRE(code->get_pointer()[0] == ' ');
 
-    REQUIRE((code = iter.next()) != nullptr);
+    code = &iter.next();
+    REQUIRE(*code);
     REQUIRE(code->get_type() == ecma48_code::type_c1);
 
     ecma48_code::csi<8> csi;
@@ -243,12 +263,13 @@ TEST_CASE("ecma48 c1 csi split")
     REQUIRE(csi.params[1] == 2);
     REQUIRE(csi.final == 'x');
 
-    REQUIRE((code = iter.next()) != nullptr);
+    code = &iter.next();
+    REQUIRE(*code);
     REQUIRE(code->get_type() == ecma48_code::type_chars);
     REQUIRE(code->get_length() == 4);
     REQUIRE(code->get_pointer()[0] == '@');
 
-    REQUIRE(iter.next() == nullptr);
+    REQUIRE(!iter.next());
 }
 
 //------------------------------------------------------------------------------
@@ -272,7 +293,8 @@ TEST_CASE("ecma48 c1 csi private use")
     {
         const ecma48_code* code;
         ecma48_iter iter(test.input, g_state);
-        REQUIRE((code = iter.next()) != nullptr);
+        code = &iter.next();
+        REQUIRE(*code);
 
         ecma48_code::csi<8> csi;
         REQUIRE(code->decode_csi(csi));
@@ -307,13 +329,14 @@ TEST_CASE("ecma48 c1 !csi")
             input << terminators[i];
 
             ecma48_iter iter(input.c_str(), g_state);
-            REQUIRE((code = iter.next()) != nullptr);
+            code = &iter.next();
+            REQUIRE(*code);
             REQUIRE(code->get_length() == input.length());
             str<> ctrl_str;
             code->get_c1_str(ctrl_str);
             REQUIRE(ctrl_str.equals("xyz"));
 
-            REQUIRE(iter.next() == nullptr);
+            REQUIRE(!iter.next());
         }
     }
 }
@@ -324,13 +347,15 @@ TEST_CASE("ecma48 utf8")
     const ecma48_code* code;
 
     ecma48_iter iter("\xc2\x9c", g_state);
-    REQUIRE((code = iter.next()) != nullptr);
+    code = &iter.next();
+    REQUIRE(*code);
     REQUIRE(code->get_type() == ecma48_code::type_c1);
     REQUIRE(code->get_code() == 0x5c);
     REQUIRE(code->get_length() == 2);
 
     new (&iter) ecma48_iter("\xc2\x9bz", g_state);
-    REQUIRE((code = iter.next()) != nullptr);
+    code = &iter.next();
+    REQUIRE(*code);
     REQUIRE(code->get_type() == ecma48_code::type_c1);
     REQUIRE(code->get_length() == 3);
 

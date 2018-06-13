@@ -58,10 +58,11 @@ public:
         int                 buffer[PARAM_N - 1];
     };
 
-    const char*             get_pointer() const { return m_str; }
-    unsigned int            get_length() const  { return m_length; }
-    type                    get_type() const    { return m_type; }
-    unsigned int            get_code() const    { return m_code; }
+    explicit                operator bool () const { return !!get_length(); }
+    const char*             get_pointer() const    { return m_str; }
+    unsigned int            get_length() const     { return m_length; }
+    type                    get_type() const       { return m_type; }
+    unsigned int            get_code() const       { return m_code; }
     template <int S> bool   decode_csi(csi<S>& out) const;
     bool                    get_c1_str(str_base& out) const;
 
@@ -119,7 +120,7 @@ class ecma48_iter
 {
 public:
                         ecma48_iter(const char* s, ecma48_state& state, int len=-1);
-    const ecma48_code*  next();
+    const ecma48_code&  next();
 
 private:
     bool                next_c1();

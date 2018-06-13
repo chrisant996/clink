@@ -109,20 +109,20 @@ void ecma48_terminal_out::write_c0(int c0)
 void ecma48_terminal_out::write(const char* chars, int length)
 {
     ecma48_iter iter(chars, m_state, length);
-    while (const ecma48_code* code = iter.next())
+    while (const ecma48_code& code = iter.next())
     {
-        switch (code->get_type())
+        switch (code.get_type())
         {
         case ecma48_code::type_chars:
-            m_screen.write(code->get_pointer(), code->get_length());
+            m_screen.write(code.get_pointer(), code.get_length());
             break;
 
         case ecma48_code::type_c0:
-            write_c0(code->get_code());
+            write_c0(code.get_code());
             break;
 
         case ecma48_code::type_c1:
-            write_c1(*code);
+            write_c1(code);
             break;
         }
     }

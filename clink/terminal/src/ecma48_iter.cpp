@@ -19,12 +19,12 @@ unsigned int cell_count(const char* in)
 
     ecma48_state state;
     ecma48_iter iter(in, state);
-    while (const auto* code = iter.next())
+    while (const ecma48_code& code = iter.next())
     {
-        if (code->get_type() != ecma48_code::type_chars)
+        if (code.get_type() != ecma48_code::type_chars)
             continue;
 
-        str_iter inner_iter(code->get_pointer(), code->get_length());
+        str_iter inner_iter(code.get_pointer(), code.get_length());
         while (int c = inner_iter.next())
             count += wcwidth(c);
     }
@@ -147,7 +147,7 @@ ecma48_iter::ecma48_iter(const char* s, ecma48_state& state, int len)
 }
 
 //------------------------------------------------------------------------------
-const ecma48_code* ecma48_iter::next()
+const ecma48_code& ecma48_iter::next()
 {
     m_code.m_str = m_iter.get_pointer();
 
@@ -159,9 +159,12 @@ const ecma48_code* ecma48_iter::next()
         if (!c)
         {
             if (m_state.state != ecma48_state_char)
-                return nullptr;
-            else
-                break;
+            {
+                m_code.m_length = 0;
+                return m_code;
+            }
+
+            break;
         }
 
         switch (m_state.state)
@@ -199,7 +202,7 @@ const ecma48_code* ecma48_iter::next()
 
     m_state.reset();
 
-    return (m_code.get_length() != 0) ? &m_code : nullptr;
+    return m_code;
 }
 
 //------------------------------------------------------------------------------

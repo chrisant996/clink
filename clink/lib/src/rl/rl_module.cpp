@@ -185,11 +185,11 @@ void rl_module::on_begin_line(const char* prompt, const context& context)
 
     ecma48_state state;
     ecma48_iter iter(prompt, state);
-    while (const ecma48_code* code = iter.next())
+    while (const ecma48_code& code = iter.next())
     {
-        bool c1 = (code->get_type() == ecma48_code::type_c1);
+        bool c1 = (code.get_type() == ecma48_code::type_c1);
         if (c1) rl_prompt.concat("\x01", 1);
-                rl_prompt.concat(code->get_pointer(), code->get_length());
+                rl_prompt.concat(code.get_pointer(), code.get_length());
         if (c1) rl_prompt.concat("\x02", 1);
     }
 
