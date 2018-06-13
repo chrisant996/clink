@@ -82,7 +82,7 @@ void scroller_module::bind_input(binder& binder)
 }
 
 //------------------------------------------------------------------------------
-void scroller_module::on_begin_line(const char* prompt, const context& context)
+void scroller_module::on_begin_line(const context& context)
 {
 }
 

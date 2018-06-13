@@ -175,7 +175,7 @@ void rl_module::bind_input(binder& binder)
 }
 
 //------------------------------------------------------------------------------
-void rl_module::on_begin_line(const char* prompt, const context& context)
+void rl_module::on_begin_line(const context& context)
 {
     rl_outstream = (FILE*)(terminal_out*)(&context.printer);
 
@@ -184,7 +184,7 @@ void rl_module::on_begin_line(const char* prompt, const context& context)
     str<128> rl_prompt;
 
     ecma48_state state;
-    ecma48_iter iter(prompt, state);
+    ecma48_iter iter(context.prompt, state);
     while (const ecma48_code& code = iter.next())
     {
         bool c1 = (code.get_type() == ecma48_code::type_c1);

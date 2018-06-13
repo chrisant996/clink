@@ -30,6 +30,7 @@ public:
 
     struct context
     {
+        const char*         prompt;
         printer&            printer;
         line_buffer&        buffer;
         const line_state&   line;
@@ -45,7 +46,7 @@ public:
 
     virtual                 ~editor_module() = default;
     virtual void            bind_input(binder& binder) = 0;
-    virtual void            on_begin_line(const char* prompt, const context& context) = 0;
+    virtual void            on_begin_line(const context& context) = 0;
     virtual void            on_end_line() = 0;
     virtual void            on_matches_changed(const context& context) = 0;
     virtual void            on_input(const input& input, result& result, const context& context) = 0;

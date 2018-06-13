@@ -274,7 +274,7 @@ void host_module::bind_input(binder& binder)
 }
 
 //------------------------------------------------------------------------------
-void host_module::on_begin_line(const char* prompt, const context& context)
+void host_module::on_begin_line(const context& context)
 {
 }
 

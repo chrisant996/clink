@@ -127,7 +127,7 @@ void tab_completer::bind_input(binder& binder)
 }
 
 //------------------------------------------------------------------------------
-void tab_completer::on_begin_line(const char* prompt, const context& context)
+void tab_completer::on_begin_line(const context& context)
 {
 }
 
