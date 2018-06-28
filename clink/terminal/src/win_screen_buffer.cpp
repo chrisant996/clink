@@ -155,10 +155,14 @@ void win_screen_buffer::set_cursor(int column, int row)
     CONSOLE_SCREEN_BUFFER_INFO csbi;
     GetConsoleScreenBufferInfo(m_handle, &csbi);
 
-    COORD xy = {
-        clamp(column, 0, csbi.dwSize.X - 1),
-        clamp(row, 0, csbi.dwSize.Y - 1),
-    };
+    const SMALL_RECT& window = csbi.srWindow;
+    int width = (window.Right - window.Left) + 1;
+    int height = (window.Bottom - window.Top) + 1;
+
+    column = clamp(column, 0, width);
+    row = clamp(row, 0, height);
+
+    COORD xy = { window.Left + column, window.Top + row };
     SetConsoleCursorPosition(m_handle, xy);
 }
 
