@@ -139,6 +139,7 @@ project("readline")
 
     excludes("readline/readline/emacs_keymap.c")
     excludes("readline/readline/vi_keymap.c")
+    excludes("readline/readline/support/wcwidth.c")
 
 --------------------------------------------------------------------------------
 project("getopt")

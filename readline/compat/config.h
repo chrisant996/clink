@@ -26,7 +26,7 @@ size_t  hooked_mbrtowc(wchar_t*, const char*, size_t, mbstate_t*);
 size_t  hooked_mbrlen(const char*, size_t, mbstate_t*);
 int     hooked_stat(const char*, struct hooked_stat*);
 int     hooked_fstat(int, struct hooked_stat*);
-int     wcwidth(wchar_t);
+int     wcwidth(int);
 
 #if defined(__MINGW32__)
 #   undef fwrite
