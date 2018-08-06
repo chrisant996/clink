@@ -99,7 +99,6 @@ void wstr_stream::grow(unsigned int hint)
     hint = (hint + 127) & ~127;
     unsigned int size = int(m_end - m_start) + hint;
     TYPE* next = (TYPE*)realloc(m_start, size * sizeof(TYPE));
-    free(m_start);
     m_cursor = next + (m_cursor - m_start);
     m_end = next + size;
     m_start = next;

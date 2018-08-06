@@ -131,6 +131,21 @@ TEST_CASE("Doskey args $*")
 
         doskey.remove_alias("alias");
     }
+
+    {
+        use_enhanced(false);
+
+        doskey doskey("shell");
+        doskey.add_alias("alias", "$*");
+
+        wstr<> line;
+        line << L"alias ";
+        for (int i = 0; i < 12; ++i)
+            line << L"0123456789abcdef";
+
+        doskey_alias alias;
+        doskey.resolve(line.c_str(), alias);
+    }
 }
 
 //------------------------------------------------------------------------------
