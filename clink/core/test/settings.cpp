@@ -141,7 +141,7 @@ TEST_CASE("settings : enum")
     {
         REQUIRE(test.set(options[i]));
         REQUIRE(test.get() == i);
-        
+
         test.get(out);
         REQUIRE(out.equals(options[i]));
     }

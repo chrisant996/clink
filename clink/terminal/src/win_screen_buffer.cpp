@@ -93,20 +93,20 @@ void win_screen_buffer::clear(clear_type type)
     case clear_type_all:
         width = csbi.dwSize.X;
         height = (csbi.srWindow.Bottom - csbi.srWindow.Top) + 1;
-        xy = { 0, csbi.srWindow.Top }; 
+        xy = { 0, csbi.srWindow.Top };
         break;
 
     case clear_type_before:
         width = csbi.dwSize.X;
         height = csbi.dwCursorPosition.Y - csbi.srWindow.Top;
-        xy = { 0, csbi.srWindow.Top }; 
+        xy = { 0, csbi.srWindow.Top };
         count = csbi.dwCursorPosition.X + 1;
         break;
 
     case clear_type_after:
         width = csbi.dwSize.X;
         height = csbi.srWindow.Bottom - csbi.dwCursorPosition.Y;
-        xy = { csbi.dwCursorPosition.X, csbi.dwCursorPosition.Y }; 
+        xy = { csbi.dwCursorPosition.X, csbi.dwCursorPosition.Y };
         count = width - csbi.dwCursorPosition.X;
         break;
     }
@@ -130,17 +130,17 @@ void win_screen_buffer::clear_line(clear_type type)
     {
     case clear_type_all:
         width = csbi.dwSize.X;
-        xy = { 0, csbi.dwCursorPosition.Y }; 
+        xy = { 0, csbi.dwCursorPosition.Y };
         break;
 
     case clear_type_before:
         width = csbi.dwCursorPosition.X + 1;
-        xy = { 0, csbi.dwCursorPosition.Y }; 
+        xy = { 0, csbi.dwCursorPosition.Y };
         break;
 
     case clear_type_after:
         width = csbi.dwSize.X - csbi.dwCursorPosition.X;
-        xy = { csbi.dwCursorPosition.X, csbi.dwCursorPosition.Y }; 
+        xy = { csbi.dwCursorPosition.X, csbi.dwCursorPosition.Y };
         break;
     }
 

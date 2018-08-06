@@ -19,7 +19,7 @@ class test_terminal_in
 {
 public:
     bool                    has_input() const { return (m_read == nullptr) ? false : (*m_read != '\0'); }
-    void                    set_input(const char* input) { m_input = m_read = input; } 
+    void                    set_input(const char* input) { m_input = m_read = input; }
     virtual void            begin() override {}
     virtual void            end() override {}
     virtual void            select() override {}

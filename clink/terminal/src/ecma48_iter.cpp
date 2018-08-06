@@ -127,7 +127,7 @@ bool ecma48_code::get_c1_str(str_base& out) const
     {
         if (c == 0x9c || c == 0x1b)
             break;
-        
+
         iter.next();
     }
 

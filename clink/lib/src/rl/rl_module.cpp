@@ -239,9 +239,9 @@ void rl_module::on_input(const input& input, result& result, const context& cont
         virtual void end() override     {}
         virtual void select() override  {}
         virtual int  read() override    { return *(unsigned char*)(data++); }
-        const char*  data; 
+        const char*  data;
     } term_in;
-             
+
     term_in.data = input.keys;
     rl_instream = (FILE*)(&term_in);
 

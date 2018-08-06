@@ -391,7 +391,7 @@ TEST_CASE("path::join(get_dir(), get_name())")
     str<> dir, name;
     path::get_directory(in, dir);
     path::get_name(in, name);
-    
+
     str<> join;
     path::join(dir.c_str(), name.c_str(), join);
     path::normalise(join, '/');

@@ -380,21 +380,21 @@ TEST_CASE("Lua arg parsers.")
         ";
 
         REQUIRE(lua.do_string(script));
-    
+
         SECTION("Not looped yet")
         {
             tester.set_input("argcmd_parser t");
             tester.set_expected_matches("two", "three");
             tester.run();
         }
-    
+
         SECTION("Looped once")
         {
             tester.set_input("argcmd_parser two four t");
             tester.set_expected_matches("two", "three");
             tester.run();
         }
-    
+
         SECTION("Looped twice")
         {
             tester.set_input("argcmd_parser two four abc ba");

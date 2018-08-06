@@ -105,8 +105,8 @@ TEST_CASE("Binder")
     SECTION("Invalid chords")
     {
         const char* chords[] = {
-            "\\C",   "\\Cx",   "\\C-",     
-            "\\M",   "\\Mx",   "\\M-",     
+            "\\C",   "\\Cx",   "\\C-",
+            "\\M",   "\\Mx",   "\\M-",
                                "\\M-C-",
         };
 

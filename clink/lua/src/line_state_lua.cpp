@@ -123,7 +123,7 @@ int line_state_lua::get_word(lua_State* state)
 {
     if (!lua_isnumber(state, 1))
         return 0;
-    
+
     unsigned int index = int(lua_tointeger(state, 1)) - 1;
     str_iter word = m_line.get_word(index);
     lua_pushlstring(state, word.get_pointer(), word.length());

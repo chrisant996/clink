@@ -41,7 +41,7 @@ private:
     line_editor*    m_editor;
     handle          m_thread;
 };
-                            
+
 //------------------------------------------------------------------------------
 void test_editor::start(const char* prompt)
 {
@@ -333,7 +333,7 @@ void runner::line_test()
     {
         editor.press_keys("_");
         int j = rand() % (sizeof(word) - 2);
-        editor.press_keys(word + j); 
+        editor.press_keys(word + j);
         i += sizeof(word) - j;
     }
 

@@ -392,14 +392,14 @@ bool host_cmd::initialise_system()
         buffer << "\"" << dll_path;
         buffer << "/" CLINK_EXE "\" $*";
         m_doskey.add_alias("clink", buffer.c_str());
-    
+
         // Add an alias to operate on the command history.
         buffer.clear();
         buffer << "\"" << dll_path;
         buffer << "/" CLINK_EXE "\" history $*";
         m_doskey.add_alias("history", buffer.c_str());
     }
-    
+
     // Tag the prompt again just incase it got unset by by something like
     // setlocal/endlocal in a boot Batch script.
     tag_prompt();

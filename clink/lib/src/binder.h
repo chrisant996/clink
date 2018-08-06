@@ -22,7 +22,7 @@ private:
 
     struct node
     {
-        unsigned short  is_group    : 1; 
+        unsigned short  is_group    : 1;
         unsigned short  next        : link_bits;
         unsigned short  module      : module_bits;
 
