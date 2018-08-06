@@ -3,6 +3,7 @@
 
 #include "pch.h"
 #include "rl_module.h"
+#include "line_buffer.h"
 
 #include <core/base.h>
 #include <core/log.h>
@@ -19,6 +20,8 @@ extern "C" {
 //------------------------------------------------------------------------------
 static FILE*        null_stream = (FILE*)1;
 void                show_rl_help(printer&);
+extern "C" int      wcwidth(int);
+extern "C" char*    tgetstr(char*, char**);
 static const int    RL_MORE_INPUT_STATES = ~(
                         RL_STATE_CALLBACK|
                         RL_STATE_INITIALIZED|
@@ -294,6 +297,95 @@ void rl_module::done(const char* line)
 //------------------------------------------------------------------------------
 void rl_module::on_terminal_resize(int columns, int rows, const context& context)
 {
+#if 1
     rl_reset_screen_size();
     rl_redisplay();
+#else
+    static int prev_columns = columns;
+
+    int remaining = prev_columns;
+    int line_count = 1;
+
+    auto measure = [&] (const char* input, int length) {
+        ecma48_state state;
+        ecma48_iter iter(input, state, length);
+        while (const ecma48_code& code = iter.next())
+        {
+            switch (code.get_type())
+            {
+            case ecma48_code::type_chars:
+                for (str_iter i(code.get_pointer(), code.get_length()); i.more(); )
+                {
+                    int n = wcwidth(i.next());
+                    remaining -= n;
+                    if (remaining > 0)
+                        continue;
+
+                    ++line_count;
+
+                    remaining = prev_columns - ((remaining < 0) << 1);
+                }
+                break;
+
+            case ecma48_code::type_c0:
+                switch (code.get_code())
+                {
+                case ecma48_code::c0_lf:
+                    ++line_count;
+                    /* fallthrough */
+
+                case ecma48_code::c0_cr:
+                    remaining = prev_columns;
+                    break;
+
+                case ecma48_code::c0_ht:
+                    if (int n = 8 - ((prev_columns - remaining) & 7))
+                        remaining = max(remaining - n, 0);
+                    break;
+
+                case ecma48_code::c0_bs:
+                    remaining = min(remaining + 1, prev_columns); // doesn't consider full-width
+                    break;
+                }
+                break;
+            }
+        }
+    };
+
+    measure(context.prompt, -1);
+
+    const line_buffer& buffer = context.buffer;
+    const char* buffer_ptr = buffer.get_buffer();
+    measure(buffer_ptr, buffer.get_cursor());
+    int cursor_line = line_count - 1;
+
+    buffer_ptr += buffer.get_cursor();
+    measure(buffer_ptr, -1);
+
+    static const char* const termcap_up    = tgetstr("ku", nullptr);
+    static const char* const termcap_down  = tgetstr("kd", nullptr);
+    static const char* const termcap_cr    = tgetstr("cr", nullptr);
+    static const char* const termcap_clear = tgetstr("ce", nullptr);
+
+    auto& printer = context.printer;
+
+    // Move cursor to bottom line.
+    for (int i = line_count - cursor_line; --i;)
+        printer.print(termcap_down, 64);
+
+    printer.print(termcap_cr, 64);
+    do
+    {
+        printer.print(termcap_clear, 64);
+
+        if (--line_count)
+            printer.print(termcap_up, 64);
+    }
+    while (line_count);
+
+    printer.print(context.prompt, 1024);
+    printer.print(buffer.get_buffer(), 1024);
+
+    prev_columns = columns;
+#endif
 }
