@@ -14,5 +14,5 @@
 #define CLINK_VERSION_STR   AS_STR(CLINK_VERSION_MAJOR) "."\
                             AS_STR(CLINK_VERSION_MINOR) "."\
                             AS_STR(CLINK_VERSION_PATCH)\
-                            "a0"\
+                            "a1"\
                             "." AS_STR(CLINK_COMMIT)
