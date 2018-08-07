@@ -466,8 +466,13 @@ history_db::line_id read_line_iter::next(str_iter& out)
         return 0;
 
     do
+    {
         if (line_id_impl ret = m_line_iter.next(out))
+        {
+            ret.bank_index = m_bank_index - 1;
             return ret.outer;
+        }
+    }
     while (next_bank());
 
     return 0;
