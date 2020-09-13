@@ -14,6 +14,8 @@ public:
     void            end();
     void            page_up();
     void            page_down();
+    void            line_up();
+    void            line_down();
 
 private:
     HANDLE          m_handle;
@@ -41,5 +43,7 @@ private:
         bind_id_pgup,
         bind_id_pgdown,
         bind_id_catchall,
+        bind_id_lineup,
+        bind_id_linedown,
     };
 };

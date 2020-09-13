@@ -64,6 +64,33 @@ void scroller::page_down()
     SetConsoleCursorPosition(m_handle, csbi.dwCursorPosition);
 }
 
+//------------------------------------------------------------------------------
+void scroller::line_up()
+{
+    CONSOLE_SCREEN_BUFFER_INFO csbi;
+    GetConsoleScreenBufferInfo(m_handle, &csbi);
+    SMALL_RECT* wnd = &csbi.srWindow;
+
+    csbi.dwCursorPosition.X = 0;
+    csbi.dwCursorPosition.Y = wnd->Top - 1;
+    SetConsoleCursorPosition(m_handle, csbi.dwCursorPosition);
+}
+
+//------------------------------------------------------------------------------
+void scroller::line_down()
+{
+    CONSOLE_SCREEN_BUFFER_INFO csbi;
+    GetConsoleScreenBufferInfo(m_handle, &csbi);
+    SMALL_RECT* wnd = &csbi.srWindow;
+
+    csbi.dwCursorPosition.X = 0;
+    csbi.dwCursorPosition.Y = wnd->Bottom + 1;
+    if (csbi.dwCursorPosition.Y > m_cursor_position.Y)
+        csbi.dwCursorPosition.Y = m_cursor_position.Y;
+
+    SetConsoleCursorPosition(m_handle, csbi.dwCursorPosition);
+}
+
 
 
 //------------------------------------------------------------------------------
@@ -78,6 +105,11 @@ void scroller_module::bind_input(binder& binder)
         binder.bind(m_bind_group, "\\e[5;2~", bind_id_pgup);
         binder.bind(m_bind_group, "\\e[6;2~", bind_id_pgdown);
         binder.bind(m_bind_group, "", bind_id_catchall);
+
+        binder.bind(m_bind_group, "\\e[1;3A", bind_id_lineup);
+        binder.bind(m_bind_group, "\\e[1;3B", bind_id_linedown);
+        binder.bind(m_bind_group, "\\e[5;3~", bind_id_pgup);
+        binder.bind(m_bind_group, "\\e[6;3~", bind_id_pgdown);
     }
 }
 
@@ -122,6 +154,14 @@ void scroller_module::on_input(
         m_scroller.end();
         result.set_bind_group(m_prev_group);
         result.pass();
+        return;
+
+    case bind_id_lineup:
+        m_scroller.line_up();
+        return;
+
+    case bind_id_linedown:
+        m_scroller.line_down();
         return;
     }
 
