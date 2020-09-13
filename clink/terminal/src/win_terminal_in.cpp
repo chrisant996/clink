@@ -259,7 +259,7 @@ void win_terminal_in::process_input(KEY_EVENT_RECORD const& record)
     // tricky. But there's always a Ctrl bit set, even if the user didn't press
     // a ctrl key. We can use this and the knowledge that Ctrl-modified keys
     // aren't printable to clear appropriate AltGr flags.
-    if (key_char > 0x1f && (key_flags & CTRL_PRESSED))
+    if ((key_char > 0x1f && key_char != 0x7f) && (key_flags & CTRL_PRESSED))
     {
         key_flags &= ~CTRL_PRESSED;
         if (key_flags & RIGHT_ALT_PRESSED)

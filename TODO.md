@@ -3,7 +3,6 @@
 ## PROBLEMS
 - Key bindings aren't working properly
   - **Alt+Up/Down** in scroller.cpp don't get interpreted correctly
-  - **Ctrl+Backspace** isn't recognized
   - Many keys don't work correctly
   - `show-rl-help` doesn't seem to list bindings from .inputrc, nor internal custom bindings???
   - Hook up stuff via commands instead of via hard-coded custom bindings, so that everything can be remapped and reported by `show-rl-help`
@@ -13,9 +12,6 @@
 - **Alt+PgUp/PgDn** scroll one page
 - **Alt+Home/End** scroll to top/bottom of buffer
 - A directory by itself as the input should simply change to the directory (this is the main behavior in CASH that wasn't self-contained within the input editor code)
-- **Ctrl+-** delete to end of line
-- **Ctrl+Backspace** delete word left
-- **Ctrl+Del** delete word right
 - Support ANSI sequences, etc (console mode flag)
 
 ## Commands
