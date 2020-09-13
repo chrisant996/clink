@@ -1,5 +1,13 @@
 # ChrisAnt Plans
 
+## PROBLEMS
+- Key bindings aren't working properly
+  - **Alt+Up/Down** in scroller.cpp don't get interpreted correctly
+  - **Ctrl+Backspace** isn't recognized
+  - Many keys don't work correctly
+  - `show-rl-help` doesn't seem to list bindings from .inputrc, nor internal custom bindings???
+  - Hook up stuff via commands instead of via hard-coded custom bindings, so that everything can be remapped and reported by `show-rl-help`
+
 ## Basic
 - **Alt+Up/Down** scroll one line
 - **Alt+PgUp/PgDn** scroll one page
@@ -27,7 +35,7 @@
 - Report the name of pressed key: e.g. `some-new-command` followed by **Key** to report `C-A-S-key` and/or the xterm sequence format readline uses
 
 ## CUA Editing
-- **Shift+arrows** and etc do normal CUA style editing
+- **Shift+arrows** and etc do normal CUA style editing _[or maybe just let the new conhost handle that automagically?]_
 - **Ctrl+C** do copy when CUA selection exists (might need to just intercept input handling, similar to how **Alt+H** was being intercepted), otherwise do Ctrl+C (Break)
 - **Ctrl+X** cut selection
 
