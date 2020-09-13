@@ -2,14 +2,17 @@
 
 ## PROBLEMS
 - Key bindings aren't working properly
-  - **Alt+Up/Down** in scroller.cpp don't get interpreted correctly
-  - Many keys don't work correctly
+  - Unbound special keys (**Alt+Shift+UP**, etc) accidentally emit _part_ of the key name as text
+  - **Esc** is some kind of chord or mode, and I strongly dislike that
+    - **Esc** should clear the input buffer
+    - Instead for example **Esc,Ctrl+Del** emits most of the key name for how to bind **Ctrl+Del**, and **Esc,Ctrl+Backspace** actually invokes the `kill-word` command
+  - Many keys don't work correctly (for example "\C-_" is how to get **Ctrl+-**, and there is no **Ctrl+Backspace**, etc)
   - `show-rl-help` doesn't seem to list bindings from .inputrc, nor internal custom bindings???
   - Hook up stuff via commands instead of via hard-coded custom bindings, so that everything can be remapped and reported by `show-rl-help`
 
 ## Basic
-- **Alt+Up/Down** scroll one line
-- **Alt+PgUp/PgDn** scroll one page
+- [x] **Alt+Up/Down** scroll one line
+- [x] **Alt+PgUp/PgDn** scroll one page
 - **Alt+Home/End** scroll to top/bottom of buffer
 - A directory by itself as the input should simply change to the directory (this is the main behavior in CASH that wasn't self-contained within the input editor code)
 - Support ANSI sequences, etc (console mode flag)
@@ -51,6 +54,10 @@
 - Lua scripts able to implement scrolling behavior (e.g. to scroll to next/prev compiler error, or colored text, etc)
 - Async command prompt updating as a way to solve the delay in git repos
 - Let lua scripts specify color for argument parsers
+- Scrolling mode:
+  - Have commands for scrolling up/down by a page or line (or top/bottom of buffer)
+  - The commands should each activate scrolling mode, and those same keys (and only those keys) should scroll while scrolling mode is active
+  - Because I don't want **Shift+PgUp/PgDn** hard-coded for scrolling
 
 ## ISSUES OF INTEREST [clink/issues](https://github.com/mridgers/clink/issues)
 - [541](https://github.com/mridgers/clink/issues/541) input escaped characters

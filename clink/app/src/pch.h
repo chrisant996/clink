@@ -32,6 +32,10 @@
 #   endif
 #endif
 
+// Define this to enable ChrisAnt modifications that should eventually be guarded by some kind of
+// setting, but first I'm just getting them basically working.
+#define CLINK_CHRISANT_MODS
+
 #include <core/base.h>
 
 #define CLINK_MODULE    "clink_x" AS_STR(ARCHITECTURE)

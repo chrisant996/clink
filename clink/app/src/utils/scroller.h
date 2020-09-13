@@ -39,7 +39,8 @@ private:
 
     enum
     {
-        bind_id_start,
+        bind_id_start_pgup,
+        bind_id_start_lineup,
         bind_id_pgup,
         bind_id_pgdown,
         bind_id_catchall,

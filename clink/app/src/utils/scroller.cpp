@@ -100,16 +100,25 @@ void scroller_module::bind_input(binder& binder)
     if (m_bind_group >= 0)
     {
         int default_group = binder.get_group();
-        binder.bind(default_group, "\\e[5;2~", bind_id_start);
 
-        binder.bind(m_bind_group, "\\e[5;2~", bind_id_pgup);
-        binder.bind(m_bind_group, "\\e[6;2~", bind_id_pgdown);
+        // The `bind_id_start_*` start a mode where any key not in m_bind_group
+        // cancels the scrolling mode.
+        binder.bind(default_group, "\\e[5;2~", bind_id_start_pgup);
+#ifdef CLINK_CHRISANT_MODS
+        binder.bind(default_group, "\\e[5;3~", bind_id_start_pgup);
+        binder.bind(default_group, "\\e[1;3A", bind_id_start_lineup);
+#endif
+
+        // These are the keys recognized in the scrolling mode.
+        binder.bind(m_bind_group, "\\e[5;2~", bind_id_pgup);        // shift-pgup
+        binder.bind(m_bind_group, "\\e[6;2~", bind_id_pgdown);      // shift-pgdn
+#ifdef CLINK_CHRISANT_MODS
+        binder.bind(m_bind_group, "\\e[5;3~", bind_id_pgup);        // alt-pgup
+        binder.bind(m_bind_group, "\\e[6;3~", bind_id_pgdown);      // alt-pgdn
+        binder.bind(m_bind_group, "\\e[1;3A", bind_id_lineup);      // alt-up
+        binder.bind(m_bind_group, "\\e[1;3B", bind_id_linedown);    // alt-down
+#endif
         binder.bind(m_bind_group, "", bind_id_catchall);
-
-        binder.bind(m_bind_group, "\\e[1;3A", bind_id_lineup);
-        binder.bind(m_bind_group, "\\e[1;3B", bind_id_linedown);
-        binder.bind(m_bind_group, "\\e[5;3~", bind_id_pgup);
-        binder.bind(m_bind_group, "\\e[6;3~", bind_id_pgdown);
     }
 }
 
@@ -136,9 +145,15 @@ void scroller_module::on_input(
 {
     switch (input.id)
     {
-    case bind_id_start:
+    case bind_id_start_pgup:
         m_scroller.begin();
         m_scroller.page_up();
+        m_prev_group = result.set_bind_group(m_bind_group);
+        return;
+
+    case bind_id_start_lineup:
+        m_scroller.begin();
+        m_scroller.line_up();
         m_prev_group = result.set_bind_group(m_bind_group);
         return;
 
