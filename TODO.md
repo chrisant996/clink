@@ -69,8 +69,8 @@ modifyOtherKeys resource is 1 or 2"
 - [532](https://github.com/mridgers/clink/issues/532) paste newlines, run as separate lines _[copy from CASH]_
 - [531](https://github.com/mridgers/clink/issues/531) AV detects a trojan on download _[or on execution, for me]_
 - [516](https://github.com/mridgers/clink/issues/516) $T not handled correctly in aliases
-- [503](https://github.com/mridgers/clink/issues/503) some way to scroll up/down by one line
-- [501](https://github.com/mridgers/clink/issues/501) **Backspace** vs **Ctrl+Backspace** vs **Del** don't work properly
+- [x] [503](https://github.com/mridgers/clink/issues/503) some way to scroll up/down by one line
+- [x] [501](https://github.com/mridgers/clink/issues/501) **Backspace** vs **Ctrl+Backspace** vs **Del** don't work properly
 - [486](https://github.com/mridgers/clink/issues/486) **Ctrl+C** doesn't always work properly _[might be the auto-answer prompt setting]_
 - [456](https://github.com/mridgers/clink/issues/456) clear screen not working when prompt is 2 lines long
 - [453](https://github.com/mridgers/clink/issues/453) non-printable characters mess up rendering vs caret position
