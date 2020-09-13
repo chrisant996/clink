@@ -36,6 +36,9 @@
 // setting, but first I'm just getting them basically working.
 #define CLINK_CHRISANT_MODS
 
+// Define this to enable ChrisAnt fixes that might interfere with expected behavior.
+#define CLINK_CHRISANT_FIXES
+
 #include <core/base.h>
 
 #define CLINK_MODULE    "clink_x" AS_STR(ARCHITECTURE)

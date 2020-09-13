@@ -6,13 +6,16 @@
   - **Esc** is some kind of chord or mode, and I strongly dislike that
     - **Esc** should clear the input buffer
     - Instead for example **Esc,Ctrl+Del** emits most of the key name for how to bind **Ctrl+Del**, and **Esc,Ctrl+Backspace** actually invokes the `kill-word` command
-  - Many keys don't work correctly (for example "\C-_" is how to get **Ctrl+-**, and there is no **Ctrl+Backspace**, etc)
-  - `show-rl-help` doesn't seem to list bindings from .inputrc, nor internal custom bindings???
+  - Many keys don't work correctly
+    - "\C-_" is how to get **Ctrl+-**
+    - "\C-@" is supposed to work for **Ctrl+Space** but doesn't work for **Ctrl+Shift+2** nor for **Ctrl+Space**
+    - **Ctrl+Tab** isn't distinguished from **Tab**, but supposedly "Xterm 227 can output CSI 27;5;9~ for Ctrl+Tab, if the
+modifyOtherKeys resource is 1 or 2"
+    - What about other **Ctrl+Shift+XYZ** keys?
   - Hook up stuff via commands instead of via hard-coded custom bindings, so that everything can be remapped and reported by `show-rl-help`
+  - Why did pagination disappear from **Alt+H**?
 
 ## Basic
-- [x] **Alt+Up/Down** scroll one line
-- [x] **Alt+PgUp/PgDn** scroll one page
 - **Alt+Home/End** scroll to top/bottom of buffer
 - A directory by itself as the input should simply change to the directory (this is the main behavior in CASH that wasn't self-contained within the input editor code)
 - Support ANSI sequences, etc (console mode flag)
@@ -20,12 +23,7 @@
 ## Commands
 - Add line into history but clear editor without executing the line
 - Delete current line from history (`unix-line-discard`)
-- Cycle through completions (`menu-complete` and `menu-complete-backward`)
-- Delete word left (`unix-word-rubout`)
-- Delete word right (`kill-word` is almost the same, but deletes both the word to the right and also any whitespace before it)
-- Previous history filtered (`history-search-backward`)
-  - **F8** needs a variation that wraps around
-- Next history filtered (`history-search-forward`)
+- **F8** should behave like `history-search-backward` but wrap around
 - Expand alias into the editing buffer
 - Popup completion list
 - Select all
@@ -58,6 +56,9 @@
   - Have commands for scrolling up/down by a page or line (or top/bottom of buffer)
   - The commands should each activate scrolling mode, and those same keys (and only those keys) should scroll while scrolling mode is active
   - Because I don't want **Shift+PgUp/PgDn** hard-coded for scrolling
+
+## CONFIGURATION
+- Add a setting to control default **Tab** behavior:  `complete` or `menu-complete`
 
 ## ISSUES OF INTEREST [clink/issues](https://github.com/mridgers/clink/issues)
 - [541](https://github.com/mridgers/clink/issues/541) input escaped characters

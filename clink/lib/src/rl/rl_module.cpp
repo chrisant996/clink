@@ -136,7 +136,9 @@ rl_module::rl_module(const char* shell_name)
     _rl_output_meta_chars = 1;
 
     // Disable completion and match display.
+#ifndef CLINK_CHRISANT_FIXES // No: disabling completion breaks `menu-complete`.
     rl_completion_entry_function = [](const char*, int) -> char* { return nullptr; };
+#endif
     rl_completion_display_matches_hook = [](char**, int, int) {};
 
     // Bind extended keys so editing follows Windows' conventions.
@@ -150,6 +152,10 @@ rl_module::rl_module(const char* shell_name)
         { "\\e[1;5H", "backward-kill-line" },      // ctrl-home
         { "\\e[5~",   "history-search-backward" }, // pgup
         { "\\e[6~",   "history-search-forward" },  // pgdn
+#ifdef CLINK_CHRISANT_MODS
+        { "\\e[3;5~", "kill-word" },               // ctrl+del
+        { "rubout",   "unix-word-rubout" },        // ctrl+backspace
+#endif
         { "\\C-z",    "undo" },
     };
 
