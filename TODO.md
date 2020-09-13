@@ -66,6 +66,10 @@
 - [422](https://github.com/mridgers/clink/issues/422) filename modifier only works with forward slashes; needs to support backslashes
 - _...need to examine the rest, still..._
 
+## UNIT TEST
+- 1 failure
+- tens of thousands of assertions?!
+
 ## QUESTIONS
 - What is `set-mark`?
 - How does `reverse-search-history` work?
