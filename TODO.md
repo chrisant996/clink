@@ -1,6 +1,9 @@
 # ChrisAnt Plans
 
 ## PROBLEMS
+- Premake5 generates things incorrectly:
+  - clink_process.vcxproj has Debug Just My Code enabled, and the debug build has inline expansion disabled -- both of those cause the injected code to crash because it references other functions!
+  - Various other settings are strangely inconsistent between projects (PDB generation, for example)
 - Key bindings aren't working properly
   - Unbound special keys (**Alt+Shift+UP**, etc) accidentally emit _part_ of the key name as text
   - **Esc** is some kind of chord or mode, and I strongly dislike that
