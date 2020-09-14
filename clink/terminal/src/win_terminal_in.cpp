@@ -6,8 +6,18 @@
 
 #include <core/base.h>
 #include <core/str.h>
+#include <core/settings.h>
 
 #include <Windows.h>
+
+//------------------------------------------------------------------------------
+#ifdef CLINK_CHRISANT_MODS
+static setting_bool g_esc_bindable(
+    "terminal.esc_bindable",
+    "Toggle whether pressing Esc sends a bindable key press",
+    "When enabled, pressing Esc sends \\eO\\e as the key sequence.",
+    true);
+#endif
 
 //------------------------------------------------------------------------------
 #define CSI(x) "\x1b[" #x
@@ -45,6 +55,9 @@ static const char* const kfx[]   = {
     CSI(15;6~), CSI(17;6~), CSI(18;6~), CSI(19;6~),
     CSI(20;6~), CSI(21;6~), CSI(23;6~), CSI(24;6~),
 };
+#ifdef CLINK_CHRISANT_MODS
+static const char* const bindableEsc = SS3(\x1b);
+#endif
 } // namespace terminfo
 #undef SS3
 #undef CSI
@@ -254,6 +267,14 @@ void win_terminal_in::process_input(KEY_EVENT_RECORD const& record)
     // Early out of unaccompanied ctrl/shift key presses.
     if (key_vk == VK_CONTROL || key_vk == VK_SHIFT)
         return;
+
+#ifdef CLINK_CHRISANT_MODS
+    if (key_char == 0x1b && g_esc_bindable.get())
+    {
+        // BUGBUG: vi mode doesn't support this yet
+        return push(terminfo::bindableEsc);
+    }
+#endif
 
     // If the input was formed using AltGr or LeftAlt-LeftCtrl then things get
     // tricky. But there's always a Ctrl bit set, even if the user didn't press
