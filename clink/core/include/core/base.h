@@ -54,3 +54,14 @@ private:
     void    operator = (const no_copy&) = delete;
     void    operator = (const no_copy&&) = delete;
 };
+
+//------------------------------------------------------------------------------
+// Build options:
+
+// Define this to enable ChrisAnt modifications that should eventually be guarded by some kind of
+// setting, but first I'm just getting them basically working.
+#define CLINK_CHRISANT_MODS
+
+// Define this to enable ChrisAnt fixes that might interfere with expected behavior.
+#define CLINK_CHRISANT_FIXES
+
