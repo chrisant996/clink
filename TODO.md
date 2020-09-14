@@ -1,29 +1,34 @@
 # ChrisAnt Plans
 
 ## PROBLEMS
+
+### Premake
 - Premake5 generates things incorrectly:
   - clink_process.vcxproj has Debug Just My Code enabled, and the debug build has inline expansion disabled -- both of those cause the injected code to crash because it references other functions!
   - Various other settings are strangely inconsistent between projects (PDB generation, for example)
-- Key bindings aren't working properly
-  - Unbound special keys (**Alt+Shift+UP**, etc) accidentally emit _part_ of the key name as text
-  - **Esc** is some kind of chord or mode, and I strongly dislike that
-    - **Esc** should clear the input buffer
-    - Instead for example **Esc,Ctrl+Del** emits most of the key name for how to bind **Ctrl+Del**, and **Esc,Ctrl+Backspace** actually invokes the `kill-word` command
-  - Many keys don't work correctly
-    - "\C-_" is how to get **Ctrl+-**
-    - "\C-@" is supposed to work for **Ctrl+Space** but doesn't work for **Ctrl+Shift+2** nor for **Ctrl+Space**
-    - **Ctrl+Tab** isn't distinguished from **Tab**, but supposedly "Xterm 227 can output CSI 27;5;9~ for Ctrl+Tab, if the
-modifyOtherKeys resource is 1 or 2"
-    - What about other **Ctrl+Shift+XYZ** keys?
-  - Hook up stuff via commands instead of via hard-coded custom bindings, so that everything can be remapped and reported by `show-rl-help`
-  - Why did pagination disappear from **Alt+H**?
 
-## Basic
+### Key Bindings
+- Unbound special keys (**Alt+Shift+UP**, etc) accidentally emit _part_ of the key name as text
+- **Esc** is funky
+  - [x] Now the "terminal.esc_bindable" setting controls whether **Esc** is bindable ("\eO\e")
+  - [ ] _But it isn't yet compatible with vi mode!_
+- Many keys don't work correctly
+  - "\C-_" is how to get **Ctrl+-**
+  - "\C-@" is supposed to work for **Ctrl+Space** but doesn't work for **Ctrl+Shift+2** nor for **Ctrl+Space**
+  - **Ctrl+Tab** isn't distinguished from **Tab**, but supposedly "Xterm 227 can output CSI 27;5;9~ for Ctrl+Tab, if the modifyOtherKeys resource is 1 or 2"
+- What about other **Ctrl+Shift+XYZ** keys?
+- Hook up stuff via commands instead of via hard-coded custom bindings, so that everything can be remapped and reported by `show-rl-help`
+
+### Terminal
 - **Alt+Home/End** scroll to top/bottom of buffer
-- A directory by itself as the input should simply change to the directory (this is the main behavior in CASH that wasn't self-contained within the input editor code)
-- Support ANSI sequences, etc (console mode flag)
+- Win10 console mode flag to support ANSI sequences and colors
+- Why did pagination disappear from **Alt+H**?
+- Translate terminal sequences into "C-A-S-name" in `show-rl-help`
+- Add terminal sequences for **Ctrl+Shift+Letter** and **Ctrl+Shift+2** and **Ctrl+Space** and so on
+- Implement modes so it can be compatible with v0.4.9 key sequences?
 
-## Commands
+## COMMANDS
+- A directory by itself as the input should simply change to the directory (this is the main behavior in CASH that wasn't self-contained within the input editor code)
 - Add line into history but clear editor without executing the line
 - Delete current line from history (`unix-line-discard`)
 - **F8** should behave like `history-search-backward` but wrap around
@@ -34,22 +39,20 @@ modifyOtherKeys resource is 1 or 2"
 - Accept input raw character: e.g. `some-new-command` followed by **Ctrl+G** to input `^G` (BEL) character (issue #541)
 - Report the name of pressed key: e.g. `some-new-command` followed by **Key** to report `C-A-S-key` and/or the xterm sequence format readline uses
 
-## CUA Editing
+## CUA EDITING
 - **Shift+arrows** and etc do normal CUA style editing _[or maybe just let the new conhost handle that automagically?]_
 - **Ctrl+C** do copy when CUA selection exists (might need to just intercept input handling, similar to how **Alt+H** was being intercepted), otherwise do Ctrl+C (Break)
 - **Ctrl+X** cut selection
 
-## Colors
+## COLORS
 - Custom color for readline input
 - Custom color for CUA selected text
 
-## Cleanup
-- Show custom key bindings in `show-rl-help`
-- Show friendly key names instead of xterm sequences in `show-rl-help`
-- Fix VK mappings for **Arrow Keys**, **Backspace**, etc
-- Ctrl+- isn't recognized; it comes through as Ctrl+_
+## CLEANUP
+- Why did it change from clink_dll_x64.dll to clink_x64.dll?  The old way was much simpler for debugging with PDB.
+- Why did it change to make a copy of the DLL instead of simply using the original copy?
 
-## Fancy
+## FANCY
 - Bind keys to lua scripts
 - Some persistent key binding mechanism (`clink_inputrc` allows this, but I would like the key bindings to use the same format the **Alt+H** reports)
 - Lua scripts able to implement scrolling behavior (e.g. to scroll to next/prev compiler error, or colored text, etc)
