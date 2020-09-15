@@ -12,15 +12,16 @@ ChrisAnt Plans
 - "\C-@" is supposed to work for **Ctrl+Space** but doesn't work for **Ctrl+Shift+2** nor for **Ctrl+Space**.
   - _UPDATE:  Although `bind_resolver` tracks m_key_count and generates `chord` correctly, both `bind` and `editor_module::input` assume a nul terminated string._
 
-## Commands
+## Commands and Features
 - Add line into history but clear editor without executing the line.
 - Delete current line from history (`unix-line-discard`).
+- Custom color for readline input.
 - Expand alias into the editing buffer.
 - A directory by itself as the input should simply change to the directory (this is the main behavior in CASH that wasn't self-contained within the input editor code).
 - Accept input raw character: e.g. `some-new-command` followed by **Ctrl+G** to input `^G` (BEL) character (issue #541).
 - Report the name of pressed key: e.g. `some-new-command` followed by **Key** to report `C-A-S-key` and/or the xterm sequence format readline uses.
 
-## LUA scripts
+## LUA Scripts
 - git completions.
 - git powerline prompt.
 - Examine other things from cmder's collection of lua scripts.
@@ -33,6 +34,7 @@ ChrisAnt Plans
 # SOON
 
 ## Problems
+- Fancy completion includes executables on PATH, but in c:\repos\clink\.build\vs2019\bin\debug it lists "clink" but not "clink.bat" as a completion, even though clink.bat is in the current directory.
 
 ## Key Bindings
 - Hook up stuff via commands instead of via hard-coded custom bindings, so that everything can be remapped and reported by `show-rl-help`.
@@ -43,6 +45,7 @@ ChrisAnt Plans
 
 ## Commands
 - **Alt+Home/End** scroll to top/bottom of buffer.
+- Expand environment variable.
 
 # EVENTUALLY
 
@@ -55,6 +58,7 @@ ChrisAnt Plans
 - Popup completion list.
 - Select all.
 - Marking mode.
+- Complete "%ENVVAR%\*" by internally expanding ENVVAR for collecting matches, but not expanding it in the editing line.
 
 ## Key Bindings
 - **https://invisible-island.net/xterm/modified-keys.html**
@@ -75,9 +79,6 @@ ChrisAnt Plans
 - **Shift+arrows** and etc do normal CUA style editing _[or maybe just let the new conhost handle that automagically?]_
 - **Ctrl+C** do copy when CUA selection exists (might need to just intercept input handling, similar to how **Alt+H** was being intercepted), otherwise do Ctrl+C (Break).
 - **Ctrl+X** cut selection.
-
-## COLORS
-- Custom color for readline input.
 - Custom color for CUA selected text.
 
 # FUTURE
