@@ -85,6 +85,15 @@ template <int SIZE> static bool translate_chord(const char* chord, char (&out)[S
     }
 
     out[i] = '\0';
+
+#ifdef CLINK_CHRISANT_MODS
+    // Translate any lone ESC to the bindable ESC sequence "\x1b[27;27~" so it
+    // matches *exactly* ESC being pressed.  Otherwise any input sequence that
+    // begins with ESC matches, and the rest of the sequence shows up as text.
+    if (out[0] == '\x1b' && out[1] == '\0')
+        return translate_chord("\x1b[27;27~", out);
+#endif
+
     return true;
 }
 

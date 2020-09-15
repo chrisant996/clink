@@ -12,14 +12,18 @@
 
 //------------------------------------------------------------------------------
 #ifdef CLINK_CHRISANT_MODS
-static setting_bool g_esc_bindable(
-    "terminal.esc_bindable",
-    "Toggle whether pressing Esc sends a bindable key press",
-    "When enabled, pressing Esc sends \\eO\\e as the key sequence.",
+static setting_bool g_modify_other_keys(
+    "terminal.modify_other_keys",
+    "Use XTerm modifyOtherKeys sequences",
+    "When enabled, pressing Space or Tab with modifier keys sends extended\n"
+    "XTerm key sequences so they can be bound separately.",
     true);
 #endif
 
 //------------------------------------------------------------------------------
+static const int CTRL_PRESSED = LEFT_CTRL_PRESSED|RIGHT_CTRL_PRESSED;
+static const int ALT_PRESSED = LEFT_ALT_PRESSED|RIGHT_ALT_PRESSED;
+
 #define CSI(x) "\x1b[" #x
 #define SS3(x) "\x1bO" #x
 namespace terminfo { //                       Shf        Alt        AtlShf     Ctl        CtlShf     CtlAlt     CtlAltShf
@@ -55,9 +59,24 @@ static const char* const kfx[]   = {
     CSI(15;6~), CSI(17;6~), CSI(18;6~), CSI(19;6~),
     CSI(20;6~), CSI(21;6~), CSI(23;6~), CSI(24;6~),
 };
+
 #ifdef CLINK_CHRISANT_MODS
-static const char* const bindableEsc = SS3(\x1b);
+#define MOK(x) "\x1b[27;" #x
+//                                            Shf     Alt   AtlShf   Ctl         CtlShf      CtlAlt      CtlAltShf
+static const char* const ktab[]  = { "\t",    CSI(Z), "",   "",      MOK(5;9~),  MOK(6;9~),  "",         ""         }; // TAB
+static const char* const kspc[]  = { " ",     " ",    "",   "",      MOK(5;32~), MOK(6;32~), MOK(7;32~), MOK(8;32~) }; // SPC
+static const char* const bindableEsc = MOK(27~);
 #endif
+
+static int xterm_modifier(int key_flags)
+{
+    // Calculate Xterm's modifier number.
+    int i = 0;
+    i |= !!(key_flags & SHIFT_PRESSED);
+    i |= !!(key_flags & ALT_PRESSED) << 1;
+    i |= !!(key_flags & CTRL_PRESSED) << 2;
+    return i;
+}
 } // namespace terminfo
 #undef SS3
 #undef CSI
@@ -247,9 +266,6 @@ void win_terminal_in::read_console()
 //------------------------------------------------------------------------------
 void win_terminal_in::process_input(KEY_EVENT_RECORD const& record)
 {
-    static const int CTRL_PRESSED = LEFT_CTRL_PRESSED|RIGHT_CTRL_PRESSED;
-    static const int ALT_PRESSED = LEFT_ALT_PRESSED|RIGHT_ALT_PRESSED;
-
     int key_char = record.uChar.UnicodeChar;
     int key_vk = record.wVirtualKeyCode;
     int key_sc = record.wVirtualScanCode;
@@ -269,11 +285,21 @@ void win_terminal_in::process_input(KEY_EVENT_RECORD const& record)
         return;
 
 #ifdef CLINK_CHRISANT_MODS
-    if (key_char == 0x1b && g_esc_bindable.get())
+    // Special treatment for escape.
+    if (key_char == 0x1b)
     {
         // BUGBUG: vi mode doesn't support this yet
         return push(terminfo::bindableEsc);
     }
+
+    // Special treatment for variations of tab and space.
+    if (key_vk == VK_TAB && !m_buffer_count && g_modify_other_keys.get())
+        return push(terminfo::ktab[terminfo::xterm_modifier(key_flags)]);
+    if (key_vk == VK_SPACE && !m_buffer_count && g_modify_other_keys.get())
+        return push(terminfo::kspc[terminfo::xterm_modifier(key_flags)]);
+#elif defined(CLINK_CHRISANT_FIXES)
+    if (key_vk == VK_SPACE && !m_buffer_count && terminfo::xterm_modifier(key_flags) == 5)
+        return push((unsigned int)0); // Ctrl+Space is NUL (C-@).
 #endif
 
     // If the input was formed using AltGr or LeftAlt-LeftCtrl then things get
@@ -351,18 +377,12 @@ void win_terminal_in::process_input(KEY_EVENT_RECORD const& record)
             { 'Q', terminfo::knp, },   // pgdn
         };
 
-        // Calculate Xterm's modifier number.
-        int i = 0;
-        i |= !!(key_flags & SHIFT_PRESSED);
-        i |= !!(key_flags & ALT_PRESSED) << 1;
-        i |= !!(key_flags & CTRL_PRESSED) << 2;
-
         for (const auto& iter : sc_map)
         {
             if (iter.code != key_sc)
                 continue;
 
-            push(iter.seqs[i]);
+            push(iter.seqs[terminfo::xterm_modifier(key_flags)]);
             break;
         }
 
