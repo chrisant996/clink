@@ -49,6 +49,15 @@ static setting_int g_column_pad(
     "Adjusts the amount of whitespace padding between columns of matches.",
     2);
 
+#ifdef CLINK_CHRISANT_MODS
+static setting_bool g_fancy_tab(
+    "match.fancy_tab",
+    "Use fancy tab completion",
+    "When true, Tab uses fancy completion. When false, Tab is processed\n"
+    "according to readline key bindings.",
+    true);
+#endif
+
 setting_int g_max_width(
     "match.max_width",
     "Maximum display width",
@@ -145,6 +154,14 @@ void tab_completer::on_matches_changed(const context& context)
 //------------------------------------------------------------------------------
 void tab_completer::on_input(const input& input, result& result, const context& context)
 {
+#ifdef CLINK_CHRISANT_MODS
+    if (input.id == state_none && !g_fancy_tab.get())
+    {
+        result.pass();
+        return;
+    }
+#endif
+
     auto& matches = context.matches;
     if (matches.get_match_count() == 0)
         return;
