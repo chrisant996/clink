@@ -136,10 +136,10 @@ rl_module::rl_module(const char* shell_name)
     _rl_output_meta_chars = 1;
 
     // Disable completion and match display.
-#ifndef CLINK_CHRISANT_FIXES // No: disabling completion breaks `menu-complete`.
+#ifndef CLINK_CHRISANT_FIXES // No: disabling completion breaks `complete` and `menu-complete`.
     rl_completion_entry_function = [](const char*, int) -> char* { return nullptr; };
-#endif
     rl_completion_display_matches_hook = [](char**, int, int) {};
+#endif
 
     // Bind extended keys so editing follows Windows' conventions.
     static const char* ext_key_binds[][2] = {
