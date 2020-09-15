@@ -3,6 +3,7 @@
 
 #include "pch.h"
 #include "tab_completer.h"
+#include "pager.h"
 #include "binder.h"
 #include "editor_module.h"
 #include "line_buffer.h"
@@ -30,6 +31,8 @@ void tab_completer_destroy(editor_module* completer)
 
 
 //------------------------------------------------------------------------------
+extern setting_colour g_colour_interact;
+
 static setting_int g_query_threshold(
     "match.query_threshold",
     "Ask if no. matches > threshold",
@@ -64,13 +67,6 @@ setting_int g_max_width(
     "The maximum number of terminal columns to use when displaying matches.",
     106);
 
-setting_colour g_colour_interact(
-    "colour.interact",
-    "For user-interaction prompts",
-    "Used when Clink displays text or prompts such as a pager's 'More?'. Naming\n"
-    "these settings is hard. Describing them even more so.",
-    setting_colour::value_light_magenta, setting_colour::value_bg_default);
-
 setting_colour g_colour_minor(
     "colour.minor",
     "Minor colour value",
@@ -99,9 +95,6 @@ enum {
     bind_id_prompt      = 20,
     bind_id_prompt_yes,
     bind_id_prompt_no,
-    bind_id_pager_page,
-    bind_id_pager_line,
-    bind_id_pager_stop,
 };
 
 
@@ -123,16 +116,6 @@ void tab_completer::bind_input(binder& binder)
     binder.bind(m_prompt_bind_group, "^C", bind_id_prompt_no); // ctrl-c
     binder.bind(m_prompt_bind_group, "^D", bind_id_prompt_no); // ctrl-d
     binder.bind(m_prompt_bind_group, "^[", bind_id_prompt_no); // esc
-
-    m_pager_bind_group = binder.create_group("tab_complete_pager");
-    binder.bind(m_pager_bind_group, " ", bind_id_pager_page);
-    binder.bind(m_pager_bind_group, "\t", bind_id_pager_page);
-    binder.bind(m_pager_bind_group, "\r", bind_id_pager_line);
-    binder.bind(m_pager_bind_group, "q", bind_id_pager_stop);
-    binder.bind(m_pager_bind_group, "Q", bind_id_pager_stop);
-    binder.bind(m_pager_bind_group, "^C", bind_id_pager_stop); // ctrl-c
-    binder.bind(m_pager_bind_group, "^D", bind_id_pager_stop); // ctrl-d
-    binder.bind(m_pager_bind_group, "^[", bind_id_pager_stop); // esc
 }
 
 //------------------------------------------------------------------------------
@@ -189,14 +172,20 @@ void tab_completer::on_input(const input& input, result& result, const context& 
     {
     case state_none:            next_state = begin_print(context);  break;
     case bind_id_prompt_no:     next_state = state_none;            break;
-    case bind_id_prompt_yes:    next_state = state_print_page;      break;
-    case bind_id_pager_page:    next_state = state_print_page;      break;
-    case bind_id_pager_line:    next_state = state_print_one;       break;
-    case bind_id_pager_stop:    next_state = state_none;            break;
+    case bind_id_prompt_yes:    next_state = state_print;           break;
     }
 
-    if (next_state > state_print)
-        next_state = print(context, next_state == state_print_one);
+    if (m_clear_line_before)
+    {
+        m_clear_line_before = false;
+        // \x1b[1G is needed because win_terminal_out doesn't handle \r, and I
+        // don't want to introduce the performance hit of intercepting \r except
+        // where it's really needed, like here.
+        context.printer.print("\x1b[1K\x1b[1G");
+    }
+
+    if (next_state == state_print)
+        next_state = print(context);
 
     // 'm_prev_group' is >= 0 if tab completer has set a bind group. As the bind
     // groups are one-shot we restore the original back each time.
@@ -210,10 +199,7 @@ void tab_completer::on_input(const input& input, result& result, const context& 
     {
     case state_query:
         m_prev_group = result.set_bind_group(m_prompt_bind_group);
-        return;
-
-    case state_pager:
-        m_prev_group = result.set_bind_group(m_pager_bind_group);
+        m_clear_line_before = true;
         return;
     }
 
@@ -238,6 +224,7 @@ tab_completer::state tab_completer::begin_print(const context& context)
         return state_none;
 
     context.printer.print("\n");
+    context.pager.start_pager(context);
 
     int query_threshold = g_query_threshold.get();
     if (query_threshold > 0 && query_threshold <= match_count)
@@ -249,11 +236,11 @@ tab_completer::state tab_completer::begin_print(const context& context)
         return state_query;
     }
 
-    return state_print_page;
+    return state_print;
 }
 
 //------------------------------------------------------------------------------
-tab_completer::state tab_completer::print(const context& context, bool single_row)
+tab_completer::state tab_completer::print(const context& context)
 {
     auto& printer = context.printer;
 
@@ -274,17 +261,23 @@ tab_completer::state tab_completer::print(const context& context, bool single_ro
     // Calculate the number of columns of matches per row.
     int column_pad = g_column_pad.get();
     int cell_columns = min<int>(g_max_width.get(), printer.get_columns());
-    int columns = max(1, (cell_columns + column_pad) / (m_longest + column_pad));
+    int columns_that_fit = (cell_columns + column_pad) / (m_longest + column_pad);
+    int columns = max(1, columns_that_fit);
     int total_rows = (match_count + columns - 1) / columns;
 
     bool vertical = g_vertical.get();
     int index_step = vertical ? total_rows : 1;
 
-    int max_rows = single_row ? 1 : (total_rows - m_row - 1);
-    max_rows = min<int>(printer.get_rows() - 2 - (m_row != 0), max_rows);
-    for (; max_rows >= 0; --max_rows, ++m_row)
+    for (; m_row < total_rows; ++m_row)
     {
         int index = vertical ? m_row : (m_row * columns);
+
+        // Ask pager what to do.
+        const int lines = 1 + (columns_that_fit ? 0 : int(strlen(matches.get_displayable(index)) / context.printer.get_columns()));
+        if (!context.pager.on_print_lines(context, lines))
+            return state_none;
+
+        // Print the row.
         for (int x = columns - 1; x >= 0; --x)
         {
             if (index >= match_count)
@@ -323,8 +316,7 @@ tab_completer::state tab_completer::print(const context& context, bool single_ro
     if (m_row == total_rows)
         return state_none;
 
-    printer.print(g_colour_interact.get(), "-- More --");
-    return state_pager;
+    return state_print;
 }
 
 //------------------------------------------------------------------------------

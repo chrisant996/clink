@@ -7,6 +7,7 @@ class line_buffer;
 class line_state;
 class matches;
 class printer;
+class pager;
 
 //------------------------------------------------------------------------------
 class editor_module
@@ -32,6 +33,7 @@ public:
     {
         const char*         prompt;
         printer&            printer;
+        pager&              pager;
         line_buffer&        buffer;
         const line_state&   line;
         const matches&      matches;

@@ -64,6 +64,7 @@ void ecma48_terminal_out::write_c1(const ecma48_code& code)
         switch (csi.final)
         {
         case '@': insert_chars(csi);        break;
+        case 'G': m_screen.move_cursor(-m_screen.get_columns(), 0); break;
         case 'H': set_cursor(csi);          break;
         case 'J': erase_in_display(csi);    break;
         case 'K': erase_in_line(csi);       break;

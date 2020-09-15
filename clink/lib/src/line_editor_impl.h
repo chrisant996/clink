@@ -6,6 +6,8 @@
 #include "bind_resolver.h"
 #include "binder.h"
 #include "editor_module.h"
+#include "input_dispatcher.h"
+#include "pager.h"
 #include "line_editor.h"
 #include "line_state.h"
 #include "matches_impl.h"
@@ -18,14 +20,20 @@
 //------------------------------------------------------------------------------
 class line_editor_impl
     : public line_editor
+    , public input_dispatcher
 {
 public:
                         line_editor_impl(const desc& desc);
+
+    // line_editor
     virtual bool        add_module(editor_module& module) override;
     virtual bool        add_generator(match_generator& generator) override;
     virtual bool        get_line(char* out, int out_size) override;
     virtual bool        edit(char* out, int out_size) override;
     virtual bool        update() override;
+
+    // input_dispatcher
+    virtual void        dispatch(int bind_group) override;
 
 private:
     typedef editor_module                       module;
@@ -65,6 +73,7 @@ private:
     words               m_words;
     matches_impl        m_matches;
     printer             m_printer;
+    pager               m_pager;
     unsigned int        m_prev_key;
     unsigned short      m_command_offset;
     unsigned char       m_keys_size;

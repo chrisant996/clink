@@ -39,9 +39,13 @@ void win_screen_buffer::write(const char* data, int length)
         int n = min<int>(sizeof_array(wbuf), length + 1);
         n = to_utf16(wbuf, n, iter);
 
+#ifdef DEBUG
+#ifdef CLINK_DEBUG
         for (int i = 0; i < n; ++i)
             if (wbuf[i] == '\r')
                 __debugbreak();
+#endif
+#endif
 
         DWORD written;
         WriteConsoleW(m_handle, wbuf, n, &written, nullptr);

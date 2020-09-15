@@ -3,12 +3,11 @@ ChrisAnt Plans
 # PRIORITY
 
 ## Problems
-- The "-- More --" and "Show _n_ matches? [Yn]" prompts during fancy completion need to clear themselves afterwards.
-- Why did pagination disappear from **Alt+H**?
-- Why can't tab_completer's pretty printing and pagination be inside a `rl_completion_matches_display_hook`?  Why does it need to hard-code a binding for **Tab**?
+- Why did pagination disappear from **Alt+H**?  _UPDATE:  Because it's another hard-coded key binding now, and pagination isn't implemented yet (could be implemented similar to `tab_completer`, but it really needs to be inside a readline command and push a nested input loop)._
+- Why can't tab_completer's pretty printing and pagination be inside a `rl_completion_matches_display_hook`?  Why does it need to hard-code a binding for **Tab**?  _UPDATE:  Because of the `on_input` state machine?  `input_dispatcher::dispatch` now allows nested input processing._
 
 ## Key Bindings
-- Unbound special keys (**Alt+Shift+UP**, etc) accidentally emit _part_ of the key name as text.  It seems like a non-match halts evaluation as soon as it exhausts potential chord prefixes, and the rest of the sequence ends up as literal input.
+- Unbound special keys (**Alt+Shift+UP**, etc) accidentally emit _part_ of the key name as text.  It seems like a non-match halts evaluation as soon as it exhausts potential chord prefixes, and the rest of the sequence ends up as literal input.  _Would an empty catchall binding solve that?_
 - "\C-@" is supposed to work for **Ctrl+Space** but doesn't work for **Ctrl+Shift+2** nor for **Ctrl+Space**.
   - _UPDATE:  Although `bind_resolver` tracks m_key_count and generates `chord` correctly, both `bind` and `editor_module::input` assume a nul terminated string._
 

@@ -2,10 +2,12 @@
 // License: http://opensource.org/licenses/MIT
 
 #include "pch.h"
+#include <assert.h>
 #include "line_editor_impl.h"
 #include "line_buffer.h"
 #include "match_generator.h"
 #include "match_pipeline.h"
+#include "pager.h"
 
 #include <core/base.h>
 #include <core/os.h>
@@ -49,11 +51,13 @@ line_editor_impl::line_editor_impl(const desc& desc)
 : m_module(desc.shell_name)
 , m_desc(desc)
 , m_printer(*desc.output)
+, m_pager(*this)
 {
     if (m_desc.quote_pair == nullptr)
         m_desc.quote_pair = "";
 
     add_module(m_module);
+    add_module(m_pager);
 }
 
 //------------------------------------------------------------------------------
@@ -187,6 +191,26 @@ bool line_editor_impl::update()
 
     update_internal();
     return true;
+}
+
+//------------------------------------------------------------------------------
+void line_editor_impl::dispatch(int bind_group)
+{
+    assert(check_flag(flag_init));
+    assert(check_flag(flag_editing));
+
+    // Handle one input.
+
+    const int prev_bind_group = m_bind_resolver.get_group();
+    m_bind_resolver.set_group(bind_group);
+
+    m_desc.input->select();
+
+    const bool result = update();
+    assert(result);
+    assert(check_flag(flag_editing));
+
+    m_bind_resolver.set_group(prev_bind_group);
 }
 
 //------------------------------------------------------------------------------
@@ -538,7 +562,8 @@ editor_module::context line_editor_impl::get_context(const line_state& line) con
 {
     auto& buffer = const_cast<rl_buffer&>(m_buffer);
     auto& pter = const_cast<printer&>(m_printer);
-    return { m_desc.prompt, pter, buffer, line, m_matches };
+    auto& pger = const_cast<pager&>(m_pager);
+    return { m_desc.prompt, pter, pger, buffer, line, m_matches };
 }
 
 //------------------------------------------------------------------------------
