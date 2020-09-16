@@ -36,11 +36,12 @@ static setting_enum g_ignore_case(
     "off,on,relaxed",
     2);
 
-static setting_bool g_add_history_cmd(
-    "history.add_history_cmd",
-    "Add 'history' commands",
-    "Toggles the adding of 'history' commands to the history.",
-    true);
+static setting_str g_exclude_from_history_cmds(
+    "history.dont_add_to_history_cmds",
+    "Commands not automatically added to the history",
+    "List of commands, space delimited, that aren't automatically added to the\n"
+    "history.  Default is \"exit history\", to exclude both of those commands.",
+    "exit");
 
 
 
@@ -154,15 +155,28 @@ bool host::edit_line(const char* prompt, str_base& out)
                 continue;
             }
 
-            // Should we skip adding lines begining with 'history'?
-            if (!g_add_history_cmd.get())
+            // Should we skip adding certain commands?
+            if (g_exclude_from_history_cmds.get() &&
+                *g_exclude_from_history_cmds.get())
             {
                 const char* c = out.c_str();
                 while (*c == ' ' || *c == '\t')
                     ++c;
 
-                if (_strnicmp(c, "history", 7) == 0)
-                    break;
+                str<> exclude(g_exclude_from_history_cmds.get());
+                char* next_token;
+                char* token = strtok_s(exclude.data(), " \t", &next_token);
+            again_token:
+                if (token)
+                {
+                    const size_t token_len = strlen(token);
+                    if (_strnicmp(c, token, token_len) == 0 &&
+                        !isalnum((unsigned char)c[token_len]) &&
+                        !path::is_separator(c[token_len]))
+                        break;
+                    token = strtok_s(nullptr, " \t", &next_token);
+                    goto again_token;
+                }
             }
 
             // Add the line to the history.
