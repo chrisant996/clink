@@ -1,7 +1,9 @@
 ChrisAnt Plans
 
 # PRIORITY
-- Add line into history but clear editor without executing the line.
+- Don't add `exit` to the history.
+  - Deleting from the readline history gets into a weird state.
+  - Deleting from the saved history doesn't work at all, and needs either a design change or a persistence format change (e.g. to include a unique id in order to delete a specific instance).
 - Delete current line from history.
 - Expand alias into the editing buffer.
 - A directory by itself as the input should simply change to the directory (this is the main behavior in CASH that wasn't self-contained within the input editor code).

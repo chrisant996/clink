@@ -44,6 +44,21 @@ static setting_bool g_add_history_cmd(
 
 
 
+//----------------------------------------------------------------------------
+static history_db* s_history_db = nullptr;
+void host_add_history(const char* line)
+{
+    if (s_history_db)
+        s_history_db->add(line);
+}
+#if 0
+void host_remove_history(int n)
+{
+    if (s_history_db)
+        s_history_db->remove(n);
+}
+#endif
+
 //------------------------------------------------------------------------------
 host::host(const char* name)
 : m_name(name)
@@ -125,6 +140,8 @@ bool host::edit_line(const char* prompt, str_base& out)
     m_history.initialise();
     m_history.load_rl_history();
 
+    s_history_db = &m_history;
+
     bool ret = false;
     while (1)
     {
@@ -153,6 +170,8 @@ bool host::edit_line(const char* prompt, str_base& out)
         }
         break;
     }
+
+    s_history_db = nullptr;
 
     line_editor_destroy(editor);
     tab_completer_destroy(completer);

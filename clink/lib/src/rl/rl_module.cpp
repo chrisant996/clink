@@ -3,6 +3,7 @@
 
 #include "pch.h"
 #include "rl_module.h"
+#include "rl_commands.h"
 #include "line_buffer.h"
 
 #include <core/base.h>
@@ -136,9 +137,16 @@ rl_module::rl_module(const char* shell_name)
     _rl_output_meta_chars = 1;
 
     // Disable completion and match display.
-#ifndef CLINK_CHRISANT_FIXES // No: disabling completion breaks `complete` and `menu-complete`.
+#ifndef CLINK_CHRISANT_FIXES
+    // No: disabling completion breaks `complete` and `menu-complete`.
     rl_completion_entry_function = [](const char*, int) -> char* { return nullptr; };
     rl_completion_display_matches_hook = [](char**, int, int) {};
+#endif
+
+    // Add commands.
+    rl_add_funmap_entry("add-line-to-history", add_line_to_history);
+#if 0
+    rl_add_funmap_entry("remove-line-from-history", remove_line_from_history);
 #endif
 
     // Bind extended keys so editing follows Windows' conventions.
