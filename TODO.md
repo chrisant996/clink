@@ -1,20 +1,21 @@
 ChrisAnt Plans
 
 # PRIORITY
+- Custom color for readline input.
+- Make filename modifier also work for backslashes.
 
 ## Problems
 - Why did pagination disappear from **Alt+H**?  _UPDATE:  Because it's another hard-coded key binding now, and pagination isn't implemented yet (could be implemented similar to `tab_completer`, but it really needs to be inside a readline command and push a nested input loop)._
 - Why can't tab_completer's pretty printing and pagination be inside a `rl_completion_matches_display_hook`?  Why does it need to hard-code a binding for **Tab**?  _UPDATE:  Because of the `on_input` state machine?  `input_dispatcher::dispatch` now allows nested input processing._
 
 ## Key Bindings
-- Unbound special keys (**Alt+Shift+UP**, etc) accidentally emit _part_ of the key name as text.  It seems like a non-match halts evaluation as soon as it exhausts potential chord prefixes, and the rest of the sequence ends up as literal input.  _Would an empty catchall binding solve that?_
+- Unbound special keys (**Alt+Shift+UP**, etc) accidentally emit _part_ of the key name as text.  It seems like a non-match halts evaluation as soon as it exhausts potential chord prefixes, and the rest of the sequence ends up as literal input.  _Sounds like `skip-csi-sequence` isn't set?_
 - "\C-@" is supposed to work for **Ctrl+Space** but doesn't work for **Ctrl+Shift+2** nor for **Ctrl+Space**.
   - _UPDATE:  Although `bind_resolver` tracks m_key_count and generates `chord` correctly, both `bind` and `editor_module::input` assume a nul terminated string._
 
 ## Commands and Features
 - Add line into history but clear editor without executing the line.
-- Delete current line from history (`unix-line-discard`).
-- Custom color for readline input.
+- Delete current line from history.
 - Expand alias into the editing buffer.
 - A directory by itself as the input should simply change to the directory (this is the main behavior in CASH that wasn't self-contained within the input editor code).
 - Accept input raw character: e.g. `some-new-command` followed by **Ctrl+G** to input `^G` (BEL) character (issue #541).
