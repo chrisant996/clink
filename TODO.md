@@ -1,23 +1,36 @@
 ChrisAnt Plans
 
 # PRIORITY
-- Custom color for readline input.
-- Make filename modifier also work for backslashes.
-
-## Problems
-- Why did pagination disappear from **Alt+H**?  _UPDATE:  Because it's another hard-coded key binding now, and pagination isn't implemented yet (could be implemented similar to `tab_completer`, but it really needs to be inside a readline command and push a nested input loop)._
-- Why can't tab_completer's pretty printing and pagination be inside a `rl_completion_matches_display_hook`?  Why does it need to hard-code a binding for **Tab**?  _UPDATE:  Because of the `on_input` state machine?  `input_dispatcher::dispatch` now allows nested input processing._
-
-## Key Bindings
-- Unbound special keys (**Alt+Shift+UP**, etc) accidentally emit _part_ of the key name as text.  It seems like a non-match halts evaluation as soon as it exhausts potential chord prefixes, and the rest of the sequence ends up as literal input.  _Sounds like `skip-csi-sequence` isn't set?_
-- "\C-@" is supposed to work for **Ctrl+Space** but doesn't work for **Ctrl+Shift+2** nor for **Ctrl+Space**.
-  - _UPDATE:  Although `bind_resolver` tracks m_key_count and generates `chord` correctly, both `bind` and `editor_module::input` assume a nul terminated string._
-
-## Commands and Features
 - Add line into history but clear editor without executing the line.
 - Delete current line from history.
 - Expand alias into the editing buffer.
 - A directory by itself as the input should simply change to the directory (this is the main behavior in CASH that wasn't self-contained within the input editor code).
+
+## Readline
+- Update to Readline 8.0.
+- Make filename modifier also work for backslashes.
+  - rl: `get_path_separator()` to return preferred path separator, with a setting on Windows to be `/` or `\`.
+  - `printable_part()`
+  - `print_filename()`
+  - `rl_display_match_list()`
+  - `append_to_match()`
+  - `rl_filename_completion_function()`
+  - `history_expand_internal()`
+  - `rl_unix_filename_rubout()`
+  - `tilde_find_suffix()`
+  - `isolate_tilde_prefix()`
+  - `tilde_expand_word()`
+- Custom color for readline input.  Might prefer to completely replace readline's line drawing, since it's trying to minimize updates over terminal emulators, and that makes it much harder to colorize the editing line (and arguments).
+
+## Problems
+- Why did pagination disappear from **Alt+H**?  _UPDATE:  Because it's another hard-coded key binding now, and pagination isn't implemented yet (could be implemented similar to `tab_completer`, but it really needs to be inside a readline command and push a nested input loop)._
+- Why can't tab_completer's pretty printing and pagination be inside a `rl_completion_matches_display_hook`?  Why does it need to hard-code a binding for **Tab**?  _UPDATE:  Because of the `on_input` state machine?  `input_dispatcher::dispatch` now allows nested input processing._
+- Is it feasible to make readline optionally use clink's filename match generator?
+
+## Key Bindings
+- Unbound special keys (**Alt+Shift+UP**, etc) accidentally emit _part_ of the key name as text.  It seems like a non-match halts evaluation as soon as it exhausts potential chord prefixes, and the rest of the sequence ends up as literal input.  _Sounds like `skip-csi-sequence` isn't set?_
+
+## Commands and Features
 - Accept input raw character: e.g. `some-new-command` followed by **Ctrl+G** to input `^G` (BEL) character (issue #541).
 - Report the name of pressed key: e.g. `some-new-command` followed by **Key** to report `C-A-S-key` and/or the xterm sequence format readline uses.
 
@@ -35,6 +48,7 @@ ChrisAnt Plans
 
 ## Problems
 - Fancy completion includes executables on PATH, but in c:\repos\clink\.build\vs2019\bin\debug it lists "clink" but not "clink.bat" as a completion, even though clink.bat is in the current directory.
+- `kill-whole-line` leaves old draw state:  type "echo ", **Alt+Shift+8**, **Esc** => clears the line, but "echo" remains!
 
 ## Key Bindings
 - Hook up stuff via commands instead of via hard-coded custom bindings, so that everything can be remapped and reported by `show-rl-help`.
@@ -68,7 +82,7 @@ ChrisAnt Plans
 
 ## Editing
 - _The new bindable **Esc** isn't yet compatible with vi mode!_
-- `kill-whole-line` leaves old draw state:  type "echo ", **Alt+Shift+8**, **Esc** => clears the line, but "echo" remains!
+- Colorize arguments recognized by lua argument parsers?
 
 ## Premake
 - Premake5 generates things incorrectly:

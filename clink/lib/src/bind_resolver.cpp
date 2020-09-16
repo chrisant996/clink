@@ -2,6 +2,7 @@
 // License: http://opensource.org/licenses/MIT
 
 #include "pch.h"
+#include <assert.h>
 #include "bind_resolver.h"
 #include "binder.h"
 
@@ -56,6 +57,8 @@ void bind_resolver::binding::get_chord(str_base& chord) const
 
     chord.clear();
     chord.concat(m_outer->m_keys + m_outer->m_tail, m_depth);
+
+    assert(memcmp(chord.c_str(), m_outer->m_keys, m_outer->m_tail + m_depth) == 0);
 }
 
 //------------------------------------------------------------------------------

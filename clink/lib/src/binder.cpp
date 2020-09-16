@@ -11,7 +11,7 @@
 #include <algorithm>
 
 //------------------------------------------------------------------------------
-template <int SIZE> static bool translate_chord(const char* chord, char (&out)[SIZE])
+template <int SIZE> static bool translate_chord(const char* chord, char (&out)[SIZE], int& len)
 {
     // '\M-x'           = alt-x
     // '\C-x' or '^x'   = ctrl-x
@@ -19,7 +19,7 @@ template <int SIZE> static bool translate_chord(const char* chord, char (&out)[S
     // 'abc'            = abc
 
     int i = 0;
-    for (; i < (SIZE - 1) && *chord; ++i, ++chord)
+    for (; i < (SIZE - 1) && len; ++i, ++chord, --len)
     {
         if (*chord != '\\' && *chord != '^')
         {
@@ -85,13 +85,14 @@ template <int SIZE> static bool translate_chord(const char* chord, char (&out)[S
     }
 
     out[i] = '\0';
+    len = i;
 
 #ifdef CLINK_CHRISANT_MODS
     // Translate any lone ESC to the bindable ESC sequence "\x1b[27;27~" so it
     // matches *exactly* ESC being pressed.  Otherwise any input sequence that
     // begins with ESC matches, and the rest of the sequence shows up as text.
     if (out[0] == '\x1b' && out[1] == '\0')
-        return translate_chord("\x1b[27;27~", out);
+        return translate_chord("\x1b[27;27~", out, len);
 #endif
 
     return true;
@@ -170,7 +171,8 @@ bool binder::bind(
 
     // Translate from ASCII representation to actual keys.
     char translated[64];
-    if (!translate_chord(chord, translated))
+    int len = 0;
+    if (!translate_chord(chord, translated, len))
         return false;
 
     chord = translated;
@@ -183,7 +185,7 @@ bool binder::bind(
     // Add the chord of keys into the node graph.
     int depth = 0;
     int head = group;
-    for (; *chord; ++chord, ++depth)
+    for (; len; ++chord, ++depth, --len)
         if (!(head = insert_child(head, *chord)))
             return false;
 

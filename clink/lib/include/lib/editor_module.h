@@ -26,6 +26,7 @@ public:
     struct input
     {
         const char*         keys;
+        unsigned int        len;    // Because '\0' is C-@ and is a valid input.
         unsigned char       id;
     };
 

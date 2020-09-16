@@ -278,7 +278,7 @@ void line_editor_impl::update_input()
 
         line_state line = get_linestate();
         editor_module::context context = get_context(line);
-        editor_module::input input = { chord.c_str(), id };
+        editor_module::input input = { chord.c_str(), chord.length(), id };
         module->on_input(input, result, context);
 
         m_bind_resolver.set_group(result.group);
