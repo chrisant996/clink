@@ -114,7 +114,7 @@ static void* open_file(const char* path)
 union line_id_impl
 {
     explicit            line_id_impl()                  { outer = 0; }
-    explicit            line_id_impl(unsigned int o)    { offset = o; active = 1; }
+    explicit            line_id_impl(unsigned int o)    { offset = o; bank_index = 0; active = 1; }
     explicit            operator bool () const          { return !!outer; }
     struct {
         unsigned int    offset : 29;
