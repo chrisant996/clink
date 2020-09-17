@@ -1,5 +1,17 @@
 ChrisAnt Plans
 
+# SELFHOST - Burn-Down List
+
+- [ ] When the command is a directory by itself, handle it internally as a chdir request and do not pass it to cmd.
+- [ ] Custom color for Readline input.
+- [ ] git prompt filter.
+- [ ] Configure key bindings.
+  - `quoted-insert`
+  - Up one directory.
+  - Similar parity with editing in my private shell.
+  - Other handy commands from Readline.
+- [ ] Allow conhost to handle **Shift+Left** and etc for CUA selection.
+
 # PRIORITY
 
 ## LUA
@@ -37,8 +49,8 @@ ChrisAnt Plans
 
 ## Commands and Features
 - Hook up `pager` with **Alt+H**.
-- A directory by itself as the input should simply change to the directory (this is the main behavior in CASH that wasn't self-contained within the input editor code).
-- Accept input raw character: e.g. `some-new-command` followed by **Ctrl+G** to input `^G` (BEL) character (issue #541).
+- Expand doskey alias.
+- Handle doskey aliases properly (refer to my two reference implementations).
 - Report the name of pressed key: e.g. `some-new-command` followed by **Key** to report `C-A-S-key` and/or the xterm sequence format readline uses.
 
 ## LUA Scripts
@@ -67,11 +79,27 @@ ChrisAnt Plans
 ## Commands
 - **Alt+Home/End** scroll to top/bottom of buffer.
 - Expand environment variable.
+- Lua scripts able to implement scrolling behavior (e.g. to scroll to next/prev compiler error, or colored text, etc).
+- Scrolling mode:
+  - Have commands for scrolling up/down by a page or line (or top/bottom of buffer).
+  - The commands should each activate scrolling mode, and those same keys (and only those keys) should scroll while scrolling mode is active.
+  - Because I don't want **Shift+PgUp/PgDn** hard-coded for scrolling.
+- Make `tab_completer` include doskey aliases, and use a configurable color for them.
 
 # EVENTUALLY
 
 ## Problems
 - Win10 console mode flag to support ANSI sequences and colors; seems to maybe be working already?
+
+## Editing
+- _The new bindable **Esc** isn't yet compatible with vi mode!_
+- Colorize arguments recognized by lua argument parsers!  Also colorize doskey macros.
+
+## Key Bindings
+- **https://invisible-island.net/xterm/modified-keys.html**
+- Add terminal sequences for **Ctrl+Shift+Letter** and **Ctrl+Punctuation** and etc.
+- Translate terminal sequences into "C-A-S-name" in `show-rl-help`.
+- Implement modes so it can be compatible with v0.4.9 key sequences?
 
 ## Commands
 - **F8** should behave like `history-search-backward` but wrap around.
@@ -80,16 +108,6 @@ ChrisAnt Plans
 - Select all.
 - Marking mode.
 - Complete "%ENVVAR%\*" by internally expanding ENVVAR for collecting matches, but not expanding it in the editing line.
-
-## Key Bindings
-- **https://invisible-island.net/xterm/modified-keys.html**
-- Add terminal sequences for **Ctrl+Shift+Letter** and **Ctrl+Punctuation** and etc.
-- Translate terminal sequences into "C-A-S-name" in `show-rl-help`.
-- Implement modes so it can be compatible with v0.4.9 key sequences?
-
-## Editing
-- _The new bindable **Esc** isn't yet compatible with vi mode!_
-- Colorize arguments recognized by lua argument parsers?
 
 ## Premake
 - Premake5 generates things incorrectly:
@@ -109,20 +127,13 @@ ChrisAnt Plans
 - Why did it change to make a copy of the DLL instead of simply using the original copy?
 
 ## Fancy
-- Bind keys to lua scripts.
-- Some persistent key binding mechanism (`clink_inputrc` allows this, but I would like the key bindings to use the same format the **Alt+H** reports).
-- Lua scripts able to implement scrolling behavior (e.g. to scroll to next/prev compiler error, or colored text, etc).
+- **Bind keys to lua scripts.**
 - Async command prompt updating as a way to solve the delay in git repos.
-- Let lua scripts specify color for argument parsers.
-- Scrolling mode:
-  - Have commands for scrolling up/down by a page or line (or top/bottom of buffer).
-  - The commands should each activate scrolling mode, and those same keys (and only those keys) should scroll while scrolling mode is active.
-  - Because I don't want **Shift+PgUp/PgDn** hard-coded for scrolling.
 
 ## Configuration
 
 # ISSUES OF INTEREST [clink/issues](https://github.com/mridgers/clink/issues)
-- [541](https://github.com/mridgers/clink/issues/541) input escaped characters
+- [x] [541](https://github.com/mridgers/clink/issues/541) input escaped characters _[use `quoted-insert`]_
 - [540](https://github.com/mridgers/clink/issues/540) v0.4.9 works but v1.0.0.a1 crashes in directory with too many files
 - [532](https://github.com/mridgers/clink/issues/532) paste newlines, run as separate lines _[copy from CASH]_
 - [531](https://github.com/mridgers/clink/issues/531) AV detects a trojan on download _[or on execution, for me]_
