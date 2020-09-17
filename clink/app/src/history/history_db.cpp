@@ -640,6 +640,7 @@ template <typename T> void history_db::for_each_bank(T&& callback) const
 void history_db::load_rl_history()
 {
     clear_history();
+    m_index_map.clear();
 
     char buffer[max_line_length + 1];
 
