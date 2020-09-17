@@ -1,7 +1,10 @@
 ChrisAnt Plans
 
 # PRIORITY
-- A directory by itself as the input should simply change to the directory (this is the main behavior in CASH that wasn't self-contained within the input editor code).
+- **3 new failed tests!**
+- Need to get lua support into a compatible state.
+  - Lua support seems to have changed significantly, and no existing scripts are compatible.
+  - Maybe try to revert all of the lua functional changes?  Ouch...
 
 ## Readline
 - Update to Readline 8.0.
@@ -31,6 +34,7 @@ ChrisAnt Plans
 - Holding down a bound key like **Ctrl+Up** lets conhost periodically intercept some of the keypresses!
 
 ## Commands and Features
+- A directory by itself as the input should simply change to the directory (this is the main behavior in CASH that wasn't self-contained within the input editor code).
 - Accept input raw character: e.g. `some-new-command` followed by **Ctrl+G** to input `^G` (BEL) character (issue #541).
 - Report the name of pressed key: e.g. `some-new-command` followed by **Key** to report `C-A-S-key` and/or the xterm sequence format readline uses.
 
