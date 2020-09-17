@@ -1,10 +1,13 @@
 ChrisAnt Plans
 
 # PRIORITY
-- **3 new failed tests!**
-- Need to get lua support into a compatible state.
-  - Lua support seems to have changed significantly, and no existing scripts are compatible.
-  - Maybe try to revert all of the lua functional changes?  Ouch...
+
+## LUA
+- Convert one of the git powerline scripts to work.  Note that git_prompt.lua appears to post-process the results from another upstream filter.
+- Lua support changed significantly.  Explore how to support backward compatability for existing scripts.
+  - Prompt filtering looks probably straightforward.
+  - `clink.` vs `os.` functions should be simple; just add the old ones back and have both.
+  - argmatcher looks potentially more complicated, but maybe I just don't understand the data structures well enough yet.
 
 ## Readline
 - Update to Readline 8.0.
@@ -23,9 +26,8 @@ ChrisAnt Plans
 - Custom color for readline input.  Might prefer to completely replace readline's line drawing, since it's trying to minimize updates over terminal emulators, and that makes it much harder to colorize the editing line (and arguments).
 
 ## Problems
-- Why did pagination disappear from **Alt+H**?  _UPDATE:  Because it's another hard-coded key binding now, and pagination isn't implemented yet (could be implemented similar to `tab_completer`, but it really needs to be inside a readline command and push a nested input loop)._
-- Why can't tab_completer's pretty printing and pagination be inside a `rl_completion_matches_display_hook`?  Why does it need to hard-code a binding for **Tab**?  _UPDATE:  Because of the `on_input` state machine?  `input_dispatcher::dispatch` now allows nested input processing._
-- Is it feasible to make readline optionally use clink's filename match generator?
+- `tab_completer` should either operate inside a Readline function, or should have settings to specify key bindings for normal vs menu completion.
+- Maybe the `PATH` searching should go inside Readline, so it works for `possible-completions` and etc?
 
 ## Key Bindings
 - Unbound special keys (**Alt+Shift+UP**, etc) accidentally emit _part_ of the key name as text.  It seems like a non-match halts evaluation as soon as it exhausts potential chord prefixes, and the rest of the sequence ends up as literal input.  _Sounds like `skip-csi-sequence` isn't set?_
@@ -34,6 +36,7 @@ ChrisAnt Plans
 - Holding down a bound key like **Ctrl+Up** lets conhost periodically intercept some of the keypresses!
 
 ## Commands and Features
+- Hook up `pager` with **Alt+H**.
 - A directory by itself as the input should simply change to the directory (this is the main behavior in CASH that wasn't self-contained within the input editor code).
 - Accept input raw character: e.g. `some-new-command` followed by **Ctrl+G** to input `^G` (BEL) character (issue #541).
 - Report the name of pressed key: e.g. `some-new-command` followed by **Key** to report `C-A-S-key` and/or the xterm sequence format readline uses.
