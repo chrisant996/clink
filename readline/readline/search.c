@@ -543,11 +543,16 @@ rl_history_search_reinit ()
 
 /* begin_clink_change */
 
-/* Get the history search position. */
+/* Get the history search position, or -1 if there's no search. */
 int
 rl_get_history_search_pos()
 {
-  return rl_history_search_pos;
+  if ((rl_last_func == rl_history_search_forward ||
+       rl_last_func == rl_history_search_backward ||
+       rl_last_func == rl_remove_history) &&
+      rl_history_search_len > 0)
+    return rl_history_search_pos;
+  return -1;
 }
 
 /* end_clink_change */

@@ -629,10 +629,8 @@ int
 rl_remove_history (count, key)
      int count, key;
 {
-  int searching = (rl_last_func == rl_history_search_forward ||
-		   rl_last_func == rl_remove_history ||
-		   rl_last_func == rl_history_search_backward);
-  int old_where = searching ? rl_get_history_search_pos() : where_history();
+  int search_pos = rl_get_history_search_pos();
+  int old_where = search_pos >= 0 ? search_pos : where_history();
 
   HIST_ENTRY *hist = history_list ()[old_where];
   if (!hist || strcmp (rl_line_buffer, hist->line))
@@ -641,7 +639,7 @@ rl_remove_history (count, key)
       return 0;
     }
 
-  if (searching)
+  if (search_pos >= 0)
     rl_history_search_backward (1, key);
   else
     rl_get_previous_history (1, key);
@@ -651,7 +649,7 @@ rl_remove_history (count, key)
     (*rl_remove_history_hook) (old_where, hist->line);
   free_history_entry (hist);
 
-  if (!searching)
+  if (search_pos < 0)
     rl_history_search_reinit ();
 
   return 0;
