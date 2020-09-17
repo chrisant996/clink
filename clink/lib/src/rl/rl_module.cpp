@@ -267,10 +267,16 @@ void rl_module::on_input(const input& input, result& result, const context& cont
 
     // Call Readline's until there's no characters left.
     int is_inc_searching = rl_readline_state & RL_STATE_ISEARCH;
+#ifdef CLINK_CHRISANT_FIXES
     unsigned int len = input.len;
     while (len && !m_done)
+#else
+    while (*term_in.data && !m_done)
+#endif
     {
+#ifdef CLINK_CHRISANT_FIXES
         --len;
+#endif
         rl_callback_read_char();
 
         // Internally Readline tries to resend escape characters but it doesn't
@@ -278,6 +284,9 @@ void rl_module::on_input(const input& input, result& result, const context& cont
         if (term_in.data[-1] == 0x1b && is_inc_searching)
         {
             --term_in.data;
+#ifdef CLINK_CHRISANT_FIXES
+            ++len;
+#endif
             is_inc_searching = 0;
         }
     }

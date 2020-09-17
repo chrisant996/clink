@@ -3,6 +3,8 @@
 
 #pragma once
 
+#include <core/base.h>
+
 class line_buffer;
 class line_state;
 class matches;
@@ -26,7 +28,9 @@ public:
     struct input
     {
         const char*         keys;
+#ifdef CLINK_CHRISANT_FIXES
         unsigned int        len;    // Because '\0' is C-@ and is a valid input.
+#endif
         unsigned char       id;
     };
 

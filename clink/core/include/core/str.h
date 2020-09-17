@@ -282,8 +282,20 @@ bool str_impl<TYPE>::concat(const TYPE* src, int n)
 
     if (remaining > 0)
     {
+#ifdef CLINK_CHRISANT_FIXES
+        // Don't use str_ncat, because it stops at nul.  str_impl<> is used for
+        // things that can contain nul characters (like translated chords).  Or
+        // if it were to use str_ncat then it mustn't increment m_length by
+        // remaining since it could result in an uninitialized region of the
+        // string buffer.
+        memcpy(m_data + len, src, remaining * sizeof(TYPE));
+#else
         str_ncat(m_data + len, src, remaining);
+#endif
         m_length += remaining;
+#ifdef CLINK_CHRISANT_FIXES
+        m_data[m_length] = '\0';
+#endif
     }
 
     return !truncated;

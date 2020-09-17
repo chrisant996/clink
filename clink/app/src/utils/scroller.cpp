@@ -4,6 +4,8 @@
 #include "pch.h"
 #include "scroller.h"
 
+#include <core/base.h>
+
 //------------------------------------------------------------------------------
 scroller::scroller()
 : m_handle(0)
