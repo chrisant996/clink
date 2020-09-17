@@ -444,7 +444,7 @@ read_line_iter::read_line_iter(const history_db& db, unsigned int this_size)
 //------------------------------------------------------------------------------
 bool read_line_iter::next_bank()
 {
-    while (m_bank_index < m_db.get_bank_count())
+    while (m_bank_index < _countof(m_db.m_bank_handles))
     {
         if (void* bank_handle = m_db.m_bank_handles[m_bank_index++])
         {
@@ -462,7 +462,7 @@ bool read_line_iter::next_bank()
 //------------------------------------------------------------------------------
 history_db::line_id read_line_iter::next(str_iter& out)
 {
-    if (m_bank_index > m_db.get_bank_count())
+    if (m_bank_index > _countof(m_db.m_bank_handles))
         return 0;
 
     do
@@ -521,7 +521,7 @@ history_db::~history_db()
     CloseHandle(m_alive_file);
 
     // Close all but the master bank. We're going to append to the master one.
-    for (int i = 1, n = get_bank_count(); i < n; ++i)
+    for (int i = 1; i < _countof(m_bank_handles); ++i)
         CloseHandle(m_bank_handles[i]);
 
     reap();
@@ -583,19 +583,15 @@ void history_db::initialise()
 }
 
 //------------------------------------------------------------------------------
-unsigned int history_db::get_bank_count() const
+unsigned int history_db::get_active_bank() const
 {
-    int count = 0;
-    for (void* handle : m_bank_handles)
-        count += (handle != nullptr);
-
-    return count;
+    return g_shared.get() ? bank_session : bank_master;
 }
 
 //------------------------------------------------------------------------------
 void* history_db::get_bank(unsigned int index) const
 {
-    if (index >= get_bank_count())
+    if (index >= _countof(m_bank_handles))
         return nullptr;
 
     return m_bank_handles[index];
@@ -604,7 +600,7 @@ void* history_db::get_bank(unsigned int index) const
 //------------------------------------------------------------------------------
 template <typename T> void history_db::for_each_bank(T&& callback)
 {
-    for (int i = 0, n = get_bank_count(); i < n; ++i)
+    for (int i = 0; i < _countof(m_bank_handles); ++i)
     {
         write_lock lock(get_bank(i));
         if (lock && !callback(i, lock))
@@ -615,7 +611,7 @@ template <typename T> void history_db::for_each_bank(T&& callback)
 //------------------------------------------------------------------------------
 template <typename T> void history_db::for_each_bank(T&& callback) const
 {
-    for (int i = 0, n = get_bank_count(); i < n; ++i)
+    for (int i = 0; i < _countof(m_bank_handles); ++i)
     {
         read_lock lock(get_bank(i));
         if (lock && !callback(i, lock))
@@ -631,7 +627,7 @@ void history_db::load_rl_history()
     char buffer[max_line_length + 1];
 
     const history_db& const_this = *this;
-    const_this.for_each_bank([&] (unsigned int, const read_lock& lock)
+    const_this.for_each_bank([&] (unsigned int bank_index, const read_lock& lock)
     {
         str_iter out;
         read_lock::line_iter iter(lock, buffer, sizeof_array(buffer) - 1);
@@ -680,7 +676,7 @@ bool history_db::add(const char* line)
     }
 
     // Add the line.
-    void* handle = get_bank(get_bank_count() - 1);
+    void* handle = get_bank(get_active_bank());
     write_lock lock(handle);
     if (!lock)
         return false;

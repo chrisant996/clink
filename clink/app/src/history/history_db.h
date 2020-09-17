@@ -59,7 +59,7 @@ private:
     void                        reap();
     template <typename T> void  for_each_bank(T&& callback);
     template <typename T> void  for_each_bank(T&& callback) const;
-    unsigned int                get_bank_count() const;
+    unsigned int                get_active_bank() const;
     void*                       get_bank(unsigned int index) const;
     void*                       m_alive_file;
     void*                       m_bank_handles[bank_count];
