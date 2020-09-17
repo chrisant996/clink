@@ -315,7 +315,15 @@ TEST_CASE("Executable match generation.")
 
         SECTION("Not if relative")
         {
+            // This examines the actual local file system, and I have local directories in the root
+            // that start with "p", so this test was failing because naturally it matched them.
+            // Probably no one will have a local directory in the root that starts with "pushd", so
+            // this should yield the proper test coverage without false negatives.
+#if 0
             tester.set_input("/p");
+#else
+            tester.set_input("/pushd");
+#endif
             tester.set_expected_matches();
             tester.run();
         }
