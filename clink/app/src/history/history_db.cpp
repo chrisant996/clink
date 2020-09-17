@@ -602,7 +602,7 @@ void history_db::initialise()
 //------------------------------------------------------------------------------
 unsigned int history_db::get_active_bank() const
 {
-    return g_shared.get() ? bank_session : bank_master;
+    return g_shared.get() ? bank_master : bank_session;
 }
 
 //------------------------------------------------------------------------------
