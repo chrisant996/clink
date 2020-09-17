@@ -319,6 +319,10 @@ extern int _rl_restore_tty_signals PARAMS((void));
 
 /* search.c */
 extern int _rl_nsearch_callback PARAMS((_rl_search_cxt *));
+/* begin_clink_change */
+extern int rl_get_history_search_pos PARAMS((void));
+extern void rl_history_search_reinit PARAMS((void));
+/* end_clink_change */
 
 /* signals.c */
 extern void _rl_signal_handler PARAMS((int));

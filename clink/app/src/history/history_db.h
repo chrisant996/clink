@@ -5,6 +5,8 @@
 
 #include <core/str_iter.h>
 
+#include <vector>
+
 //------------------------------------------------------------------------------
 class history_db
 {
@@ -41,6 +43,7 @@ public:
     bool                        add(const char* line);
     int                         remove(const char* line);
     bool                        remove(line_id id);
+    bool                        remove(int rl_history_index, const char* line);
     line_id                     find(const char* line) const;
     expand_result               expand(const char* line, str_base& out) const;
     template <int S> iter       read_lines(char (&buffer)[S]);
@@ -63,6 +66,8 @@ private:
     void*                       get_bank(unsigned int index) const;
     void*                       m_alive_file;
     void*                       m_bank_handles[bank_count];
+    std::vector<line_id>        m_index_map;
+    size_t                      m_master_len;
 };
 
 //------------------------------------------------------------------------------

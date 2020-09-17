@@ -47,18 +47,16 @@ static setting_str g_exclude_from_history_cmds(
 
 //----------------------------------------------------------------------------
 static history_db* s_history_db = nullptr;
-void host_add_history(const char* line)
+void host_add_history(int, const char* line)
 {
     if (s_history_db)
         s_history_db->add(line);
 }
-#if 0
-void host_remove_history(int n)
+void host_remove_history(int rl_history_index, const char* line)
 {
     if (s_history_db)
-        s_history_db->remove(n);
+        s_history_db->remove(rl_history_index, line);
 }
-#endif
 
 //------------------------------------------------------------------------------
 host::host(const char* name)

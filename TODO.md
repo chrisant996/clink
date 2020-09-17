@@ -1,10 +1,6 @@
 ChrisAnt Plans
 
 # PRIORITY
-- Delete current line from history.
-  - Deleting from the readline history gets into a weird state.
-  - Deleting from the saved history doesn't work at all, and needs either a design change or a persistence format change (e.g. to include a unique id in order to delete a specific instance).
-- Expand alias into the editing buffer.
 - A directory by itself as the input should simply change to the directory (this is the main behavior in CASH that wasn't self-contained within the input editor code).
 
 ## Readline
@@ -30,6 +26,9 @@ ChrisAnt Plans
 
 ## Key Bindings
 - Unbound special keys (**Alt+Shift+UP**, etc) accidentally emit _part_ of the key name as text.  It seems like a non-match halts evaluation as soon as it exhausts potential chord prefixes, and the rest of the sequence ends up as literal input.  _Sounds like `skip-csi-sequence` isn't set?_
+  - Try to make unbound keys like **Shift-Left** tell conhost that they haven't been handled, so conhost can do its fancy CUA marking.
+  - Especially don't handle **ALt+F4**.
+- Holding down a bound key like **Ctrl+Up** lets conhost periodically intercept some of the keypresses!
 
 ## Commands and Features
 - Accept input raw character: e.g. `some-new-command` followed by **Ctrl+G** to input `^G` (BEL) character (issue #541).

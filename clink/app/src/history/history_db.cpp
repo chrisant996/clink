@@ -186,6 +186,7 @@ public:
         char*               get_buffer() const          { return m_buffer; }
         unsigned int        get_buffer_size() const     { return m_buffer_size; }
         unsigned int        get_remaining() const       { return m_remaining; }
+        void                set_file_offset(unsigned int offset);
 
     private:
         char*               m_buffer;
@@ -202,6 +203,7 @@ public:
                             line_iter(const read_lock& lock, char* buffer, int buffer_size);
         template <int S>    line_iter(const read_lock& lock, char (&buffer)[S]);
         line_id_impl        next(str_iter& out);
+        void                set_file_offset(unsigned int offset);
 
     private:
         bool                provision();
@@ -269,11 +271,8 @@ read_lock::file_iter::file_iter(const read_lock& lock, char* buffer, int buffer_
 : m_handle(lock.m_handle)
 , m_buffer(buffer)
 , m_buffer_size(buffer_size)
-, m_buffer_offset(-buffer_size)
-, m_remaining(GetFileSize(lock.m_handle, nullptr))
 {
-    SetFilePointer(m_handle, 0, nullptr, FILE_BEGIN);
-    m_buffer[0] = '\0';
+    set_file_offset(0);
 }
 
 //------------------------------------------------------------------------------
@@ -297,6 +296,17 @@ unsigned int read_lock::file_iter::next(unsigned int rollback)
     m_remaining -= read;
     m_buffer_size = read + rollback;
     return m_buffer_size;
+}
+
+//------------------------------------------------------------------------------
+void read_lock::file_iter::set_file_offset(unsigned int offset)
+{
+    m_remaining = GetFileSize(m_handle, nullptr);
+    offset = clamp(offset, (unsigned int)0, m_remaining);
+    m_remaining -= offset;
+    m_buffer_offset = 0 - m_buffer_size;
+    SetFilePointer(m_handle, offset, nullptr, FILE_BEGIN);
+    m_buffer[0] = '\0';
 }
 
 
@@ -355,6 +365,12 @@ line_id_impl read_lock::line_iter::next(str_iter& out)
     }
 
     return line_id_impl();
+}
+
+//------------------------------------------------------------------------------
+void read_lock::line_iter::set_file_offset(unsigned int offset)
+{
+    m_file_iter.set_file_offset(offset);
 }
 
 
@@ -499,6 +515,7 @@ history_db::line_id history_db::iter::next(str_iter& out)
 history_db::history_db()
 {
     memset(m_bank_handles, 0, sizeof(m_bank_handles));
+    m_master_len = 0;
 
     // Create a self-deleting file to used to indicate this session's alive
     str<280> path;
@@ -631,12 +648,18 @@ void history_db::load_rl_history()
     {
         str_iter out;
         read_lock::line_iter iter(lock, buffer, sizeof_array(buffer) - 1);
-        while (iter.next(out))
+        line_id_impl id;
+        while (id = iter.next(out))
         {
             const char* line = out.get_pointer();
             int buffer_offset = int(line - buffer);
             buffer[buffer_offset + out.length()] = '\0';
             add_history(line);
+
+            id.bank_index = bank_index;
+            m_index_map.push_back(id.outer);
+            if (bank_index == bank_master)
+                m_master_len = m_index_map.size();
         }
 
         return true;
@@ -717,7 +740,61 @@ bool history_db::remove(line_id id)
         return false;
 
     lock.remove(id_impl);
+
+    if (id_impl.bank_index == bank_master)
+    {
+        auto last = m_index_map.begin() + m_master_len;
+        auto nth = std::lower_bound(m_index_map.begin(), last, id);
+        if (nth != last && id == *nth)
+        {
+            m_index_map.erase(nth);
+            --m_master_len;
+        }
+        else
+            assert(false);
+    }
+    else
+    {
+        auto first = m_index_map.begin() + m_master_len;
+        auto nth = std::lower_bound(first, m_index_map.end(), id);
+        if (nth != m_index_map.end() && id == *nth)
+            m_index_map.erase(nth);
+        else
+            assert(false);
+    }
+
     return true;
+}
+
+//------------------------------------------------------------------------------
+bool history_db::remove(int rl_history_index, const char* line)
+{
+    if (rl_history_index < 0 || rl_history_index >= m_index_map.size())
+        return false;
+
+#ifdef CLINK_DEBUG
+    // Verify the file content matches the expected state.
+    line_id_impl id_impl;
+    id_impl.outer = m_index_map[rl_history_index];
+    {
+        read_lock lock(get_bank(id_impl.bank_index));
+        assert(lock);
+
+        str_iter out;
+        char buffer[max_line_length + 1];
+        read_lock::line_iter iter(lock, buffer, sizeof_array(buffer) - 1);
+
+        iter.set_file_offset(id_impl.offset);
+        assert(iter.next(out));
+
+        assert(out.length());
+        assert(strlen(line) == out.length());
+        if (*out.get_pointer() != '|')
+            assert(memcmp(line, out.get_pointer(), out.length()) == 0);
+    }
+#endif
+
+    return remove(m_index_map[rl_history_index]);
 }
 
 //------------------------------------------------------------------------------

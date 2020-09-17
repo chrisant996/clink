@@ -69,6 +69,16 @@ _rl_arg_cxt _rl_argcxt;
    value of -1 means that point is at the end of the line. */
 int _rl_history_saved_point = -1;
 
+/* begin_clink_change */
+
+/* If non-null, called when rl_add_history adds a history line. */
+rl_history_hook_func_t *rl_add_history_hook = (rl_history_hook_func_t *)NULL;
+/* If non-null, called when rl_remove_history removes a history line. */
+rl_history_hook_func_t *rl_remove_history_hook = (rl_history_hook_func_t *)NULL;
+
+/* end_clink_change */
+
+
 /* **************************************************************** */
 /*								    */
 /*			Numeric Arguments			    */
@@ -596,6 +606,58 @@ rl_get_previous_history (count, key)
 
   return 0;
 }
+
+/* begin_clink_change */
+
+/* Add the current line to the history. */
+int
+rl_add_history (count, key)
+     int count, key;
+{
+  add_history (rl_line_buffer);
+  if (rl_add_history_hook)
+    (*rl_add_history_hook) (history_length - 1, rl_line_buffer);
+  using_history ();
+  rl_delete_text (0, rl_end);
+  rl_point = 0;
+  return 0;
+}
+
+/* Remove the current line from the history.  If the line is modified or
+   empty,just ding. */
+int
+rl_remove_history (count, key)
+     int count, key;
+{
+  int searching = (rl_last_func == rl_history_search_forward ||
+		   rl_last_func == rl_remove_history ||
+		   rl_last_func == rl_history_search_backward);
+  int old_where = searching ? rl_get_history_search_pos() : where_history();
+
+  HIST_ENTRY *hist = history_list ()[old_where];
+  if (!hist || strcmp (rl_line_buffer, hist->line))
+    {
+      rl_ding ();
+      return 0;
+    }
+
+  if (searching)
+    rl_history_search_backward (1, key);
+  else
+    rl_get_previous_history (1, key);
+
+  hist = remove_history (old_where);
+  if (rl_remove_history_hook)
+    (*rl_remove_history_hook) (old_where, hist->line);
+  free_history_entry (hist);
+
+  if (!searching)
+    rl_history_search_reinit ();
+
+  return 0;
+}
+
+/* end_clink_change */
 
 /* **************************************************************** */
 /*								    */

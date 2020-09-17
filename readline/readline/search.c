@@ -74,7 +74,11 @@ static int noninc_search_from_pos PARAMS((char *, int, int));
 static int noninc_dosearch PARAMS((char *, int));
 static int noninc_search PARAMS((int, int));
 static int rl_history_search_internal PARAMS((int, int));
+/* begin_clink_change */
+#if 0
 static void rl_history_search_reinit PARAMS((void));
+#endif
+/* end_clink_change */
 
 static _rl_search_cxt *_rl_nsearch_init PARAMS((int, int));
 static int _rl_nsearch_cleanup PARAMS((_rl_search_cxt *, int));
@@ -511,7 +515,13 @@ rl_history_search_internal (count, dir)
   return 0;
 }
 
+/* begin_clink_change */
+#if 0
 static void
+#else
+void
+#endif
+/* end_clink_change */
 rl_history_search_reinit ()
 {
   rl_history_search_pos = where_history ();
@@ -531,6 +541,17 @@ rl_history_search_reinit ()
   _rl_free_saved_history_line ();
 }
 
+/* begin_clink_change */
+
+/* Get the history search position. */
+int
+rl_get_history_search_pos()
+{
+  return rl_history_search_pos;
+}
+
+/* end_clink_change */
+
 /* Search forward in the history for the string of characters
    from the start of the line to rl_point.  This is a non-incremental
    search. */
@@ -542,6 +563,9 @@ rl_history_search_forward (count, ignore)
     return (0);
 
   if (rl_last_func != rl_history_search_forward &&
+/* begin_clink_change */
+      rl_last_func != rl_remove_history &&
+/* end_clink_change */
       rl_last_func != rl_history_search_backward)
     rl_history_search_reinit ();
 
@@ -561,6 +585,9 @@ rl_history_search_backward (count, ignore)
     return (0);
 
   if (rl_last_func != rl_history_search_forward &&
+/* begin_clink_change */
+      rl_last_func != rl_remove_history &&
+/* end_clink_change */
       rl_last_func != rl_history_search_backward)
     rl_history_search_reinit ();
 

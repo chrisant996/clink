@@ -42,6 +42,11 @@ extern int          _rl_last_v_pos;
 #endif
 } // extern "C"
 
+#ifdef CLINK_CHRISANT_MODS
+extern void host_add_history(int rl_history_index, const char* line);
+extern void host_remove_history(int rl_history_index, const char* line);
+#endif
+
 
 
 //------------------------------------------------------------------------------
@@ -144,9 +149,10 @@ rl_module::rl_module(const char* shell_name)
 #endif
 
     // Add commands.
-    rl_add_funmap_entry("add-line-to-history", add_line_to_history);
-#if 0
-    rl_add_funmap_entry("remove-line-from-history", remove_line_from_history);
+#ifdef CLINK_CHRISANT_MODS
+    rl_add_history_hook = host_add_history;
+    rl_remove_history_hook = host_remove_history;
+    rl_add_funmap_entry("reset-line", clink_reset_line);
 #endif
 
     // Bind extended keys so editing follows Windows' conventions.

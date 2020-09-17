@@ -60,6 +60,11 @@ typedef void rl_compdisp_func_t PARAMS((char **, int, int));
 /* Type for input and pre-read hook functions like rl_event_hook */
 typedef int rl_hook_func_t PARAMS((void));
 
+/* begin_clink_change */
+/* Type for add/remove history hook function */
+typedef void rl_history_hook_func_t PARAMS((int rl_history_index, const char* line));
+/* end_clink_change */
+
 /* Input function type */
 typedef int rl_getc_func_t PARAMS((FILE *));
 

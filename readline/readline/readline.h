@@ -125,10 +125,16 @@ extern int rl_char_search PARAMS((int, int));
 extern int rl_backward_char_search PARAMS((int, int));
 
 /* Bindable commands for readline's interface to the command history. */
+/* begin_clink_change */
+extern int rl_add_history PARAMS((int, int));
+/* end_clink_change */
 extern int rl_beginning_of_history PARAMS((int, int));
 extern int rl_end_of_history PARAMS((int, int));
 extern int rl_get_next_history PARAMS((int, int));
 extern int rl_get_previous_history PARAMS((int, int));
+/* begin_clink_change */
+extern int rl_remove_history PARAMS((int, int));
+/* end_clink_change */
 
 /* Bindable commands for managing the mark and region. */
 extern int rl_set_mark PARAMS((int, int));
@@ -559,6 +565,15 @@ extern rl_hook_func_t *rl_pre_input_hook;
 /* The address of a function to call periodically while Readline is
    awaiting character input, or NULL, for no event handling. */
 extern rl_hook_func_t *rl_event_hook;
+
+/* begin_clink_change */
+
+/* Called when rl_add_history adds a history line. */
+extern rl_history_hook_func_t *rl_add_history_hook;
+/* Called when rl_remove_history removes a history line. */
+extern rl_history_hook_func_t *rl_remove_history_hook;
+
+/* end_clink_change */
 
 /* The address of the function to call to fetch a character from the current
    Readline input stream */
