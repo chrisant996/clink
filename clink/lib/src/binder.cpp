@@ -19,7 +19,7 @@ template <int SIZE> static bool translate_chord(const char* chord, char (&out)[S
     // 'abc'            = abc
 
     int i = 0;
-    for (; i < (SIZE - 1) && len; ++i, ++chord, --len)
+    for (; i < (SIZE - 1) && *chord; ++i, ++chord)
     {
         if (*chord != '\\' && *chord != '^')
         {
