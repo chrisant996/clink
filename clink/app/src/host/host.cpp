@@ -39,9 +39,10 @@ static setting_enum g_ignore_case(
 static setting_str g_exclude_from_history_cmds(
     "history.dont_add_to_history_cmds",
     "Commands not automatically added to the history",
-    "List of commands, space delimited, that aren't automatically added to the\n"
-    "history.  Default is \"exit history\", to exclude both of those commands.",
-    "exit");
+    "List of commands that aren't automatically added to the history.\n"
+    "Commands are separated by spaces, commas, or semicolons.  Default is\n"
+    "\"exit history\", to exclude both of those commands.",
+    "exit history");
 
 
 
@@ -161,20 +162,23 @@ bool host::edit_line(const char* prompt, str_base& out)
                 while (*c == ' ' || *c == '\t')
                     ++c;
 
-                str<> exclude(g_exclude_from_history_cmds.get());
-                char* next_token;
-                char* token = strtok_s(exclude.data(), " \t", &next_token);
-            again_token:
-                if (token)
+                bool exclude = false;
+                str<> token;
+                str_tokeniser tokens(g_exclude_from_history_cmds.get(), " ,;");
+                while (tokens.next(token))
                 {
-                    const size_t token_len = strlen(token);
-                    if (_strnicmp(c, token, token_len) == 0 &&
-                        !isalnum((unsigned char)c[token_len]) &&
-                        !path::is_separator(c[token_len]))
+                    if (token.length() &&
+                        _strnicmp(c, token.c_str(), token.length()) == 0 &&
+                        !isalnum((unsigned char)c[token.length()]) &&
+                        !path::is_separator(c[token.length()]))
+                    {
+                        exclude = true;
                         break;
-                    token = strtok_s(nullptr, " \t", &next_token);
-                    goto again_token;
+                    }
                 }
+
+                if (exclude)
+                    break;
             }
 
             // Add the line to the history.
