@@ -178,3 +178,11 @@ void settings_lua_initialise(lua_state& lua)
 
     lua_setglobal(state, "settings");
 }
+
+//----------------------------------------------------------------------------
+#ifdef CLINK_049_API_COMPAT
+int get_clink_setting(lua_State* state)
+{
+    return get(state);
+}
+#endif

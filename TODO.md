@@ -2,17 +2,15 @@ ChrisAnt Plans
 
 # SELFHOST - Burn-Down List
 
+- [ ] **Esc** and **Up** and **Ctrl+N/P** and etc go haywire when there's a multiline prompt.
 - [ ] Custom color for Readline input.
-- [ ] git prompt filter.
 - [ ] Allow conhost to handle **Shift+Left** and etc for CUA selection.
 
 # PRIORITY
 
 ## LUA
-- Convert one of the git powerline scripts to work.  Note that git_prompt.lua appears to post-process the results from another upstream filter.
 - Lua support changed significantly.  Explore how to support backward compatability for existing scripts.
   - Prompt filtering looks probably straightforward.
-  - `clink.` vs `os.` functions should be simple; just add the old ones back and have both.
   - argmatcher looks potentially more complicated, but maybe I just don't understand the data structures well enough yet.
 
 ## Readline
@@ -43,6 +41,8 @@ ChrisAnt Plans
 - Holding down a bound key like **Ctrl+Up** lets conhost periodically intercept some of the keypresses!
 
 ## Commands and Features
+- Support `..\..` to change directory.
+- Support `...\` etc to change directory (go up `_N_-1` directory levels).
 - Hook up `pager` with **Alt+H**.
 - Expand doskey alias.
 - Handle doskey aliases properly (refer to my two reference implementations).
@@ -74,12 +74,12 @@ ChrisAnt Plans
 ## Commands
 - **Alt+Home/End** scroll to top/bottom of buffer.
 - Expand environment variable.
-- Lua scripts able to implement scrolling behavior (e.g. to scroll to next/prev compiler error, or colored text, etc).
 - Scrolling mode:
   - Have commands for scrolling up/down by a page or line (or top/bottom of buffer).
   - The commands should each activate scrolling mode, and those same keys (and only those keys) should scroll while scrolling mode is active.
   - Because I don't want **Shift+PgUp/PgDn** hard-coded for scrolling.
 - Make `tab_completer` include doskey aliases, and use a configurable color for them.
+- Make an option so `tab_completer` appends the preferred path separator to completed directories when they start in column 1, for convenience when entering just a directory for streamlined chdir.
 
 # EVENTUALLY
 
@@ -122,8 +122,9 @@ ChrisAnt Plans
 - Why did it change to make a copy of the DLL instead of simply using the original copy?
 
 ## Fancy
-- **Bind keys to lua scripts.**
-- Async command prompt updating as a way to solve the delay in git repos.
+- **Async command prompt updating as a way to solve the delay in git repos.**
+- **Bind keys to lua scripts?**
+- Lua scripts able to implement scrolling behavior (e.g. to scroll to next/prev compiler error, or colored text, etc).
 
 ## Configuration
 

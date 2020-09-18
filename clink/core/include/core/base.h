@@ -65,3 +65,7 @@ private:
 // Define this to enable ChrisAnt fixes that might interfere with expected behavior.
 #define CLINK_CHRISANT_FIXES
 
+#ifdef CLINK_CHRISANT_MODS
+#define CLINK_049_API_COMPAT
+#endif
+
