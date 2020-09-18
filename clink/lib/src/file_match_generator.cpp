@@ -26,6 +26,8 @@ setting_bool g_glob_system(
     false);
 
 // TODO: dream up a way around performance problems that UNC paths pose.
+// For example, maybe use a background thread to collect matches, and allow the
+// UI thread to somehow a long running operation (maybe with Ctrl+Break).
 setting_bool g_glob_unc(
     "files.unc_paths",
     "Enables UNC/network path matches",

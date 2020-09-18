@@ -2,7 +2,7 @@ ChrisAnt Plans
 
 # SELFHOST - Burn-Down List
 
-- [ ] **Esc** and **Up** and **Ctrl+N/P** and etc go haywire when there's a multiline prompt.
+- [ ] **Esc** and **Up** and **Ctrl+N/P** and etc go haywire when there's a multiline prompt, if the second line is very short (e.g. "> ").
 - [ ] Custom color for Readline input.
 - [ ] Allow conhost to handle **Shift+Left** and etc for CUA selection.
 
