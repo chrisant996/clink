@@ -4,11 +4,6 @@ ChrisAnt Plans
 
 - [ ] Custom color for Readline input.
 - [ ] git prompt filter.
-- [ ] Configure key bindings.
-  - `quoted-insert`
-  - Up one directory.
-  - Similar parity with editing in my private shell.
-  - Other handy commands from Readline.
 - [ ] Allow conhost to handle **Shift+Left** and etc for CUA selection.
 
 # PRIORITY
@@ -39,6 +34,7 @@ ChrisAnt Plans
 ## Problems
 - `tab_completer` should either operate inside a Readline function, or should have settings to specify key bindings for normal vs menu completion.
 - Maybe the `PATH` searching should go inside Readline, so it works for `possible-completions` and etc?
+- reverse-i-search and **Esc** needs to print a line feed.
 
 ## Key Bindings
 - Unbound special keys (**Alt+Shift+UP**, etc) accidentally emit _part_ of the key name as text.  It seems like a non-match halts evaluation as soon as it exhausts potential chord prefixes, and the rest of the sequence ends up as literal input.  _Sounds like `skip-csi-sequence` isn't set?_

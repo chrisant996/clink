@@ -315,6 +315,7 @@ void host_cmd::edit_line(const wchar_t* prompt, wchar_t* chars, int max_chars)
             bool ok = host::edit_line(utf8_prompt.c_str(), out);
             if (ok)
             {
+#ifdef CLINK_CHRISANT_MODS
                 // If the line is a directory, change to the directory and give
                 // the host a blank line.
                 if (intercept_directory(out.c_str()))
@@ -322,6 +323,7 @@ void host_cmd::edit_line(const wchar_t* prompt, wchar_t* chars, int max_chars)
                     out.clear();
                     write_line_feed();
                 }
+#endif
 
                 to_utf16(chars, max_chars, out.c_str());
                 break;
