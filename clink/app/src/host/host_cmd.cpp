@@ -10,6 +10,8 @@
 #include <core/base.h>
 #include <core/log.h>
 #include <core/settings.h>
+#include <core/os.h>
+#include <core/path.h>
 #include <lib/line_editor.h>
 #include <lua/lua_script_loader.h>
 #include <process/hook.h>
@@ -127,6 +129,49 @@ void tag_prompt()
     tagged_prompt prompt;
     prompt.tag(buffer[0] ? buffer : L"$p$g");
     SetEnvironmentVariableW(L"prompt", prompt.get());
+}
+
+//------------------------------------------------------------------------------
+static bool intercept_directory(const char* line)
+{
+    while (*line == ' ' || *line == '\t')
+        line++;
+
+    str<> tmp;
+    while (*line)
+    {
+        if (*line != '\"')
+            tmp.concat(line, 1);
+        line++;
+    }
+
+    while (tmp.length())
+    {
+        char ch = tmp.c_str()[tmp.length() - 1];
+        if (ch != ' ' && ch != '\t')
+            break;
+        tmp.truncate(tmp.length() - 1);
+    }
+
+    if (tmp.length() &&
+        os::get_path_type(tmp.c_str()) == os::path_type_dir &&
+        (tmp.equals(".") ||
+         tmp.equals("..") ||
+         path::is_separator(tmp.c_str()[tmp.length() - 1])))
+    {
+        os::set_current_dir(tmp.c_str());
+        return true;
+    }
+
+    return false;
+}
+
+//------------------------------------------------------------------------------
+static void write_line_feed()
+{
+    HANDLE handle = GetStdHandle(STD_OUTPUT_HANDLE);
+    DWORD written;
+    WriteConsole(handle, L"\n", 1, &written, nullptr);
 }
 
 
@@ -270,6 +315,14 @@ void host_cmd::edit_line(const wchar_t* prompt, wchar_t* chars, int max_chars)
             bool ok = host::edit_line(utf8_prompt.c_str(), out);
             if (ok)
             {
+                // If the line is a directory, change to the directory and give
+                // the host a blank line.
+                if (intercept_directory(out.c_str()))
+                {
+                    out.clear();
+                    write_line_feed();
+                }
+
                 to_utf16(chars, max_chars, out.c_str());
                 break;
             }
@@ -280,9 +333,7 @@ void host_cmd::edit_line(const wchar_t* prompt, wchar_t* chars, int max_chars)
                 break;
             }
 
-            HANDLE handle = GetStdHandle(STD_OUTPUT_HANDLE);
-            DWORD written;
-            WriteConsole(handle, L"\n", 1, &written, nullptr);
+            write_line_feed();
         }
     }
 

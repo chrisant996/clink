@@ -2,7 +2,6 @@ ChrisAnt Plans
 
 # SELFHOST - Burn-Down List
 
-- [ ] When the command is a directory by itself, handle it internally as a chdir request and do not pass it to cmd.
 - [ ] Custom color for Readline input.
 - [ ] git prompt filter.
 - [ ] Configure key bindings.
