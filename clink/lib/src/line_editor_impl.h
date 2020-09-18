@@ -28,8 +28,8 @@ public:
     // line_editor
     virtual bool        add_module(editor_module& module) override;
     virtual bool        add_generator(match_generator& generator) override;
-    virtual bool        get_line(char* out, int out_size) override;
-    virtual bool        edit(char* out, int out_size) override;
+    virtual bool        get_line(str_base& out) override;
+    virtual bool        edit(str_base& out) override;
     virtual bool        update() override;
 
     // input_dispatcher

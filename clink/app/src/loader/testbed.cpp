@@ -19,8 +19,8 @@ int testbed(int, char**)
     editor->add_module(*completer);
     editor->add_generator(file_match_generator());
 
-    char out[64];
-    while (editor->edit(out, sizeof_array(out)));
+    str<> out;
+    while (editor->edit(out));
 
     line_editor_destroy(editor);
     tab_completer_destroy(completer);

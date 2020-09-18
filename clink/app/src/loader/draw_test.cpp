@@ -55,8 +55,8 @@ void test_editor::start(const char* prompt)
 
     auto thread = [] (void* param) -> DWORD {
         auto* self = (test_editor*)param;
-        char c;
-        self->m_editor->edit(&c, sizeof(c));
+        str<> tmp;
+        self->m_editor->edit(tmp);
         return 0;
     };
 

@@ -145,7 +145,7 @@ bool host::edit_line(const char* prompt, str_base& out)
     bool ret = false;
     while (1)
     {
-        if (ret = editor->edit(out.data(), out.size()))
+        if (ret = editor->edit(out))
         {
             // Handle history event expansion.
             if (m_history.expand(out.c_str(), out) == history_db::expand_print)

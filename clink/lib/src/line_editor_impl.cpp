@@ -148,7 +148,7 @@ bool line_editor_impl::add_generator(match_generator& generator)
 }
 
 //------------------------------------------------------------------------------
-bool line_editor_impl::get_line(char* out, int out_size)
+bool line_editor_impl::get_line(str_base& out)
 {
     if (check_flag(flag_editing))
         end_line();
@@ -157,18 +157,18 @@ bool line_editor_impl::get_line(char* out, int out_size)
         return false;
 
     const char* line = m_buffer.get_buffer();
-    str_base(out, out_size).copy(line);
+    out.copy(line);
     return true;
 }
 
 //------------------------------------------------------------------------------
-bool line_editor_impl::edit(char* out, int out_size)
+bool line_editor_impl::edit(str_base& out)
 {
     // Update first so the init state goes through.
     while (update())
         m_desc.input->select();
 
-    return get_line(out, out_size);
+    return get_line(out);
 }
 
 //------------------------------------------------------------------------------

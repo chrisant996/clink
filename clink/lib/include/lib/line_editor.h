@@ -8,6 +8,7 @@ class line_buffer;
 class match_generator;
 class terminal_in;
 class terminal_out;
+class str_base;
 
 //------------------------------------------------------------------------------
 class line_editor
@@ -31,8 +32,8 @@ public:
     virtual             ~line_editor() = default;
     virtual bool        add_module(editor_module& module) = 0;
     virtual bool        add_generator(match_generator& generator) = 0;
-    virtual bool        get_line(char* out, int out_size) = 0;
-    virtual bool        edit(char* out, int out_size) = 0;
+    virtual bool        get_line(str_base& out) = 0;
+    virtual bool        edit(str_base& out) = 0;
     virtual bool        update() = 0;
 };
 

@@ -262,25 +262,28 @@ void host_cmd::edit_line(const wchar_t* prompt, wchar_t* chars, int max_chars)
     *write = '\0';
 
     // Call readline.
-    while (1)
     {
-        str<4096> out;
-        bool ok = host::edit_line(utf8_prompt.c_str(), out);
-        if (ok)
+        str<1024> out;
+        while (1)
         {
-            to_utf16(chars, max_chars, out.c_str());
-            break;
-        }
+            out.clear();
+            bool ok = host::edit_line(utf8_prompt.c_str(), out);
+            if (ok)
+            {
+                to_utf16(chars, max_chars, out.c_str());
+                break;
+            }
 
-        if (g_ctrld_exits.get())
-        {
-            wstr_base(chars, max_chars) = L"exit";
-            break;
-        }
+            if (g_ctrld_exits.get())
+            {
+                wstr_base(chars, max_chars) = L"exit";
+                break;
+            }
 
-        HANDLE handle = GetStdHandle(STD_OUTPUT_HANDLE);
-        DWORD written;
-        WriteConsole(handle, L"\n", 1, &written, nullptr);
+            HANDLE handle = GetStdHandle(STD_OUTPUT_HANDLE);
+            DWORD written;
+            WriteConsole(handle, L"\n", 1, &written, nullptr);
+        }
     }
 
     m_doskey.resolve(chars, m_doskey_alias);
