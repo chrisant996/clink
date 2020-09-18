@@ -51,5 +51,7 @@ function clink.promptfilter(priority)
 
     local ret = { _priority = priority }
     table.insert(prompt_filters, ret)
+
+    prompt_filters_unsorted = true
     return ret
 end
