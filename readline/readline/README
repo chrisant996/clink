@@ -1,7 +1,7 @@
 Introduction
 ============
 
-This is the Gnu Readline library, version 6.2.
+This is the Gnu Readline library, version 8.0.
 
 The Readline library provides a set of functions for use by applications
 that allow users to edit command lines as they are typed in.  Both
@@ -158,6 +158,15 @@ Unix-style manual page describing the facilities available in the
 Readline library.  The texinfo files include both user and
 programmer's manuals.  HTML versions of the manuals appear in the
 `doc' subdirectory as well. 
+
+Usage
+=====
+
+Our position on the use of Readline through a shared-library linking
+mechanism is that there is no legal difference between shared-library
+linking and static linking--either kind of linking combines various
+modules into a single larger work.  The conditions for using Readline
+in a larger work are stated in section 3 of the GNU GPL.
 
 Reporting Bugs
 ==============

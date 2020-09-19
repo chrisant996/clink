@@ -4,11 +4,11 @@
 .\"	Chet Ramey
 .\"	Information Network Services
 .\"	Case Western Reserve University
-.\"	chet@ins.CWRU.Edu
+.\"	chet.ramey@case.edu
 .\"
-.\"	Last Change: Thu Aug 12 22:24:41 EDT 2010
+.\"	Last Change: Sun Oct  8 11:43:43 EDT 2017
 .\"
-.TH HISTORY 3 "2010 August 12" "GNU History 6.2"
+.TH HISTORY 3 "2017 October 8" "GNU History 6.3"
 .\"
 .\" File Name macro.  This used to be `.PN', for Path Name,
 .\" but Sun doesn't seem to like that very much.
@@ -40,8 +40,8 @@
 .SH NAME
 history \- GNU History Library
 .SH COPYRIGHT
-.if t The GNU History Library is Copyright \(co 1989-2011 by the Free Software Foundation, Inc.
-.if n The GNU History Library is Copyright (C) 1989-2011 by the Free Software Foundation, Inc.
+.if t The GNU History Library is Copyright \(co 1989-2017 by the Free Software Foundation, Inc.
+.if n The GNU History Library is Copyright (C) 1989-2017 by the Free Software Foundation, Inc.
 .SH DESCRIPTION
 Many programs read input from the user a line at a time.  The GNU
 History library is able to keep track of those lines, associate arbitrary
@@ -112,7 +112,7 @@ starting with
 .TP
 .B !?\fIstring\fR\fB[?]\fR
 Refer to the most recent command
-preceding the current postition in the history list
+preceding the current position in the history list
 containing
 .IR string .
 The trailing \fB?\fP may be omitted if
@@ -134,7 +134,7 @@ The entire command line typed so far.
 .SS Word Designators
 .PP
 Word designators are used to select desired words from the event.
-A 
+A
 .B :
 separates the event specification from the word designator.
 It may be omitted if the word designator begins with a
@@ -161,7 +161,8 @@ The \fIn\fRth word.
 The first argument.  That is, word 1.
 .TP
 .B $
-The last argument.
+The last word.  This is usually the last argument, but will expand to the
+zeroth word if there is only one word in the line.
 .TP
 .B %
 The word matched by the most recent `?\fIstring\fR?' search.
@@ -355,6 +356,9 @@ parameters managing the list itself.
 .Fn1 void add_history "const char *string"
 Place \fIstring\fP at the end of the history list.  The associated data
 field (if any) is set to \fBNULL\fP.
+If the maximum number of history entries has been set using
+\fBstifle_history()\fP, and the new number of history entries would exceed
+that maximum, the oldest history entry is removed.
 
 .Fn1 void add_history_time "const char *string"
 Change the time stamp associated with the most recent history entry to
@@ -381,6 +385,7 @@ Clear the history list by deleting all the entries.
 
 .Fn1 void stifle_history "int max"
 Stifle the history list, remembering only the last \fImax\fP entries.
+The history list will contain only \fImax\fP entries at a time.
 
 .Fn1 int unstifle_history "void"
 Stop stifling the history.  This returns the previously-set
@@ -410,10 +415,11 @@ Return the history entry at the current position, as determined by
 pointer.
 
 .Fn1 "HIST_ENTRY *" history_get "int offset"
-Return the history entry at position \fIoffset\fP, starting from
-\fBhistory_base\fP.
-If there is no entry there, or if \fIoffset\fP
-is greater than the history length, return a \fBNULL\fP pointer.
+Return the history entry at position \fIoffset\fP.
+The range of valid values of \fIoffset\fP starts at \fBhistory_base\fP
+and ends at \fBhistory_length\fP \- 1.
+If there is no entry there, or if \fIoffset\fP is outside the valid
+range, return a \fBNULL\fP pointer.
 
 .Fn1 "time_t" history_get_time "HIST_ENTRY *"
 Return the time stamp associated with the history entry passed as the argument.
@@ -440,9 +446,11 @@ return a pointer to that entry.  If there is no previous entry, return
 a \fBNULL\fP pointer.
 
 .Fn1 "HIST_ENTRY *" next_history "void"
-Move the current history offset forward to the next history entry, and
-return the a pointer to that entry.  If there is no next entry, return
-a \fBNULL\fP pointer.
+If the current history offset refers to a valid history entry,
+increment the current history offset.
+If the possibly-incremented history offset refers to a valid history
+entry, return a pointer to that entry;
+otherwise, return a \fBNULL\fP pointer.
 
 .SS Searching the History List
 
@@ -612,8 +620,8 @@ string, in addition to space, tab, \fI:\fP and \fI?\fP in the case of
 a substring search.  The default is empty.
 
 .Vb int history_quotes_inhibit_expansion
-If non-zero, single-quoted words are not scanned for the history expansion
-character.  The default value is 0.
+If non-zero, double-quoted words are not scanned for the history expansion
+character or the history comment character.  The default value is 0.
 
 .Vb "rl_linebuf_func_t *" history_inhibit_expansion_function
 This should be set to the address of a function that takes two arguments:
@@ -649,7 +657,7 @@ bfox@gnu.org
 .PP
 Chet Ramey, Case Western Reserve University
 .br
-chet@ins.CWRU.Edu
+chet.ramey@case.edu
 .SH BUG REPORTS
 If you find a bug in the
 .B history
@@ -669,4 +677,4 @@ newsgroup
 .PP
 Comments and bug reports concerning
 this manual page should be directed to
-.IR chet@ins.CWRU.Edu .
+.IR chet.ramey@case.edu .

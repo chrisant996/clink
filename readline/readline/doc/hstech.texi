@@ -1,7 +1,7 @@
 @ignore
 This file documents the user interface to the GNU History library.
 
-Copyright (C) 1988-2011 Free Software Foundation, Inc.
+Copyright (C) 1988-2016 Free Software Foundation, Inc.
 Authored by Brian Fox and Chet Ramey.
 
 Permission is granted to make and distribute verbatim copies of this manual
@@ -166,6 +166,9 @@ parameters managing the list itself.
 @deftypefun void add_history (const char *string)
 Place @var{string} at the end of the history list.  The associated data
 field (if any) is set to @code{NULL}.
+If the maximum number of history entries has been set using
+@code{stifle_history()}, and the new number of history entries would exceed
+that maximum, the oldest history entry is removed.
 @end deftypefun
 
 @deftypefun void add_history_time (const char *string)
@@ -198,6 +201,7 @@ Clear the history list by deleting all the entries.
 
 @deftypefun void stifle_history (int max)
 Stifle the history list, remembering only the last @var{max} entries.
+The history list will contain only @var{max} entries at a time.
 @end deftypefun
 
 @deftypefun int unstifle_history (void)
@@ -234,14 +238,17 @@ pointer.
 @end deftypefun
 
 @deftypefun {HIST_ENTRY *} history_get (int offset)
-Return the history entry at position @var{offset}, starting from
-@code{history_base} (@pxref{History Variables}).
-If there is no entry there, or if @var{offset}
-is greater than the history length, return a @code{NULL} pointer.
+Return the history entry at position @var{offset}.
+The range of valid
+values of @var{offset} starts at @code{history_base} and ends at
+@var{history_length} - 1 (@pxref{History Variables}).
+If there is no entry there, or if @var{offset} is outside the valid
+range, return a @code{NULL} pointer.
 @end deftypefun
 
 @deftypefun time_t history_get_time (HIST_ENTRY *entry)
 Return the time stamp associated with the history entry @var{entry}.
+If the timestamp is missing or invalid, return 0.
 @end deftypefun
 
 @deftypefun int history_total_bytes (void)
@@ -270,9 +277,11 @@ a @code{NULL} pointer.
 @end deftypefun
 
 @deftypefun {HIST_ENTRY *} next_history (void)
-Move the current history offset forward to the next history entry, and
-return the a pointer to that entry.  If there is no next entry, return
-a @code{NULL} pointer.
+If the current history offset refers to a valid history entry,
+increment the current history offset.
+If the possibly-incremented history offset refers to a valid history
+entry, return a pointer to that entry;
+otherwise, return a @code{BNULL} pointer.
 @end deftypefun
 
 @node Searching the History List
@@ -377,7 +386,7 @@ if the returned line should be displayed, but not executed,
 as with the @code{:p} modifier (@pxref{Modifiers}).
 @end table
 
-If an error ocurred in expansion, then @var{output} contains a descriptive
+If an error occurred in expansion, then @var{output} contains a descriptive
 error message.
 @end deftypefun
 
@@ -394,7 +403,7 @@ to the ``normal'' terminating characters.
 Return an array of tokens parsed out of @var{string}, much as the
 shell might.  The tokens are split on the characters in the
 @var{history_word_delimiters} variable,
-and shell quoting conventions are obeyed.
+and shell quoting conventions are obeyed as described below.
 @end deftypefun
 
 @deftypefun {char *} history_arg_extract (int first, int last, const char *string)
@@ -467,8 +476,24 @@ carriage return, and @samp{=}.
 @end deftypevar
 
 @deftypevar int history_quotes_inhibit_expansion
-If non-zero, single-quoted words are not scanned for the history expansion
-character.  The default value is 0.
+If non-zero, the history expansion code implements shell-like quoting:
+single-quoted words are not scanned for the history expansion
+character or the history comment character, and double-quoted words may
+have history expansion performed, since single quotes are not special
+within double quotes.
+The default value is 0.
+@end deftypevar
+
+@deftypevar int history_quoting_state
+An application may set this variable to indicate that the current line
+being expanded is subject to existing quoting. If set to @samp{'}, the
+history expansion function will assume that the line is single-quoted and
+inhibit expansion until it reads an unquoted closing single quote; if set
+to @samp{"}, history expansion will assume the line is double quoted until
+it reads an unquoted closing double quote. If set to zero, the default,
+the history expansion function will assume the line is not quoted and
+treat quote characters within the line as described above.
+This is only effective if @var{history_quotes_inhibit_expansion} is set.
 @end deftypevar
 
 @deftypevar {rl_linebuf_func_t *} history_inhibit_expansion_function

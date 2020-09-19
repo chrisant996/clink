@@ -377,3 +377,7 @@
 #undef HAVE_SYS_STROPTS_H
 
 #undef HAVE_SYS_WAIT_H
+
+#undef HAVE_SGTTY_H
+
+#undef HAVE_SYS_SELECT_H

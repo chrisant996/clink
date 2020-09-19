@@ -1,6 +1,6 @@
 /* compat.c -- backwards compatibility functions. */
 
-/* Copyright (C) 2000-2009 Free Software Foundation, Inc.
+/* Copyright (C) 2000-2017 Free Software Foundation, Inc.
 
    This file is part of the GNU Readline Library (Readline), a library
    for reading lines of text with interactive input and history editing.
@@ -46,68 +46,61 @@ extern char *rl_filename_completion_function PARAMS((const char *, int));
 /* Provide backwards-compatible entry points for old function names. */
 
 void
-free_undo_list ()
+free_undo_list (void)
 {
   rl_free_undo_list ();
 }
 
 int
-maybe_replace_line ()
+maybe_replace_line (void)
 {
   return rl_maybe_replace_line ();
 }
 
 int
-maybe_save_line ()
+maybe_save_line (void)
 {
   return rl_maybe_save_line ();
 }
 
 int
-maybe_unsave_line ()
+maybe_unsave_line (void)
 {
   return rl_maybe_unsave_line ();
 }
 
 int
-ding ()
+ding (void)
 {
   return rl_ding ();
 }
 
 int
-crlf ()
+crlf (void)
 {
   return rl_crlf ();
 }
 
 int
-alphabetic (c)
-     int c;
+alphabetic (int c)
 {
   return rl_alphabetic (c);
 }
 
 char **
-completion_matches (s, f)
-     const char *s;
-     rl_compentry_func_t *f;
+completion_matches (const char *s, rl_compentry_func_t *f)
 {
   return rl_completion_matches (s, f);
 }
 
 char *
-username_completion_function (s, i)
-     const char *s;
-     int i;
+username_completion_function (const char *s, int i)
 {
   return rl_username_completion_function (s, i);
 }
 
 char *
-filename_completion_function (s, i)
-     const char *s;
-     int i;
+filename_completion_function (const char *s, int i)
 {
   return rl_filename_completion_function (s, i);
 }

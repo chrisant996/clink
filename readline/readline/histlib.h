@@ -51,9 +51,9 @@
 #endif
 
 #ifndef member
-#  ifndef strchr
+#  if !defined (strchr) && !defined (__STDC__)
 extern char *strchr ();
-#  endif
+#  endif /* !strchr && !__STDC__ */
 #define member(c, s) ((c) ? ((char *)strchr ((s), (c)) != (char *)NULL) : 0)
 #endif
 
@@ -69,14 +69,17 @@ extern char *strchr ();
 #define NO_PREV_SUBST	4
 
 /* Possible definitions for history starting point specification. */
-#define ANCHORED_SEARCH 1
-#define NON_ANCHORED_SEARCH 0
+#define NON_ANCHORED_SEARCH	0
+#define ANCHORED_SEARCH		0x01
+#define PATTERN_SEARCH		0x02
 
 /* Possible definitions for what style of writing the history file we want. */
 #define HISTORY_APPEND 0
 #define HISTORY_OVERWRITE 1
 
-/* Some variable definitions shared across history source files. */
-extern int history_offset;
+/* internal extern function declarations used by other parts of the library */
+
+/* histsearch.c */
+extern int _hs_history_patsearch PARAMS((const char *, int, int));
 
 #endif /* !_HISTLIB_H_ */

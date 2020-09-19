@@ -42,4 +42,16 @@
 #  endif
 #endif
 
+/* Moved from config.h.in because readline.h:rl_message depends on these
+   defines. */
+#if defined (__STDC__) && defined (HAVE_STDARG_H)
+#  define PREFER_STDARG
+#  define USE_VARARGS
+#else
+#  if defined (HAVE_VARARGS_H)
+#    define PREFER_VARARGS
+#    define USE_VARARGS
+#  endif
+#endif
+
 #endif /* !_RL_STDC_H_ */

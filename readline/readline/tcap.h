@@ -1,6 +1,6 @@
 /* tcap.h -- termcap library functions and variables. */
 
-/* Copyright (C) 1996-2009 Free Software Foundation, Inc.
+/* Copyright (C) 1996-2015 Free Software Foundation, Inc.
 
    This file is part of the GNU Readline Library (Readline), a library
    for reading lines of text with interactive input and history editing.      
@@ -31,6 +31,8 @@
 #    include "rltty.h"
 #  endif
 #  include <termcap.h>
+#elif defined (HAVE_NCURSES_TERMCAP_H)
+#  include <ncurses/termcap.h>
 #else
 
 /* On Solaris2, sys/types.h #includes sys/reg.h, which #defines PC.

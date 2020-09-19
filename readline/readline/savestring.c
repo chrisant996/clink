@@ -1,6 +1,6 @@
 /* savestring.c - function version of savestring for backwards compatibility */
 
-/* Copyright (C) 1998,2003 Free Software Foundation, Inc.
+/* Copyright (C) 1998,2003,2017 Free Software Foundation, Inc.
 
    This file is part of the GNU Readline Library (Readline), a library
    for reading lines of text with interactive input and history editing.      
@@ -30,8 +30,7 @@
 /* Backwards compatibility, now that savestring has been removed from
    all `public' readline header files. */
 char *
-savestring (s)
-     const char *s;
+savestring (const char *s)
 {
   char *ret;
 

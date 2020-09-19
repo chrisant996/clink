@@ -1,6 +1,6 @@
 /* nls.c -- skeletal internationalization code. */
 
-/* Copyright (C) 1996-2009 Free Software Foundation, Inc.
+/* Copyright (C) 1996-2017 Free Software Foundation, Inc.
 
    This file is part of the GNU Readline Library (Readline), a library
    for reading lines of text with interactive input and history editing.      
@@ -43,12 +43,18 @@
 #  include <locale.h>
 #endif
 
+#if defined (HAVE_LANGINFO_CODESET)
+#  include <langinfo.h>
+#endif
+
 #include <ctype.h>
 
 #include "rldefs.h"
 #include "readline.h"
 #include "rlshell.h"
 #include "rlprivate.h"
+
+static int utf8locale PARAMS((char *));
 
 #if !defined (HAVE_SETLOCALE)    
 /* A list of legal values for the LANG or LC_CTYPE environment variables.
@@ -68,18 +74,19 @@ static char *legal_lang_values[] =
  "iso88599",
  "iso885910",
  "koi8r",
+ "utf8",
   0
 };
 
 static char *normalize_codeset PARAMS((char *));
-static char *find_codeset PARAMS((char *, size_t *));
 #endif /* !HAVE_SETLOCALE */
+
+static char *find_codeset PARAMS((char *, size_t *));
 
 static char *_rl_get_locale_var PARAMS((const char *));
 
 static char *
-_rl_get_locale_var (v)
-     const char *v;
+_rl_get_locale_var (const char *v)
 {
   char *lspec;
 
@@ -91,17 +98,31 @@ _rl_get_locale_var (v)
 
   return lspec;
 }
-  
-/* Check for LC_ALL, LC_CTYPE, and LANG and use the first with a value
-   to decide the defaults for 8-bit character input and output.  Returns
-   1 if we set eight-bit mode. */
-int
-_rl_init_eightbit ()
+
+static int
+utf8locale (char *lspec)
 {
-/* If we have setlocale(3), just check the current LC_CTYPE category
-   value, and go into eight-bit mode if it's not C or POSIX. */
-#if defined (HAVE_SETLOCALE)
-  char *lspec, *t;
+  char *cp;
+  size_t len;
+
+#if HAVE_LANGINFO_CODESET
+  cp = nl_langinfo (CODESET);
+  return (STREQ (cp, "UTF-8") || STREQ (cp, "utf8"));
+#else
+  cp = find_codeset (lspec, &len);
+
+  if (cp == 0 || len < 4 || len > 5)
+    return 0;
+  return ((len == 5) ? strncmp (cp, "UTF-8", len) == 0 : strncmp (cp, "utf8", 4) == 0);
+#endif
+}
+
+/* Query the right environment variables and call setlocale() to initialize
+   the C library locale settings. */
+char *
+_rl_init_locale (void)
+{
+  char *ret, *lspec;
 
   /* Set the LC_CTYPE locale category from environment variables. */
   lspec = _rl_get_locale_var ("LC_CTYPE");
@@ -114,7 +135,25 @@ _rl_init_eightbit ()
     lspec = setlocale (LC_CTYPE, (char *)NULL);
   if (lspec == 0)
     lspec = "";
-  t = setlocale (LC_CTYPE, lspec);
+  ret = setlocale (LC_CTYPE, lspec);	/* ok, since it does not change locale */
+
+  _rl_utf8locale = (ret && *ret) ? utf8locale (ret) : 0;
+
+  return ret;
+}
+
+/* Check for LC_ALL, LC_CTYPE, and LANG and use the first with a value
+   to decide the defaults for 8-bit character input and output.  Returns
+   1 if we set eight-bit mode. */
+int
+_rl_init_eightbit (void)
+{
+/* If we have setlocale(3), just check the current LC_CTYPE category
+   value, and go into eight-bit mode if it's not C or POSIX. */
+#if defined (HAVE_SETLOCALE)
+  char *lspec, *t;
+
+  t = _rl_init_locale ();	/* returns static pointer */
 
   if (t && *t && (t[0] != 'C' || t[1]) && (STREQ (t, "POSIX") == 0))
     {
@@ -145,16 +184,17 @@ _rl_init_eightbit ()
 	_rl_output_meta_chars = 1;
 	break;
       }
+
+  _rl_utf8locale = *t ? STREQ (t, "utf8") : 0;
+
   xfree (t);
   return (legal_lang_values[i] ? 1 : 0);
-
 #endif /* !HAVE_SETLOCALE */
 }
 
 #if !defined (HAVE_SETLOCALE)
 static char *
-normalize_codeset (codeset)
-     char *codeset;
+normalize_codeset (char *codeset)
 {
   size_t namelen, i;
   int len, all_digits;
@@ -197,12 +237,11 @@ normalize_codeset (codeset)
 
   return retval;
 }
+#endif /* !HAVE_SETLOCALE */
 
 /* Isolate codeset portion of locale specification. */
 static char *
-find_codeset (name, lenp)
-     char *name;
-     size_t *lenp;
+find_codeset (char *name, size_t *lenp)
 {
   char *cp, *language, *result;
 
@@ -249,4 +288,3 @@ find_codeset (name, lenp)
 
   return result;
 }
-#endif /* !HAVE_SETLOCALE */

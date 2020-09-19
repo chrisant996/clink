@@ -1,13 +1,20 @@
 /* config.h.in.  Maintained by hand. */
 
+/* Template definitions for autoconf */
+#undef __EXTENSIONS__
+#undef _ALL_SOURCE
+#undef _GNU_SOURCE
+#undef _POSIX_SOURCE
+#undef _POSIX_1_SOURCE
+#undef _POSIX_PTHREAD_SEMANTICS
+#undef _TANDEM_SOURCE
+#undef _MINIX
+
 /* Define NO_MULTIBYTE_SUPPORT to not compile in support for multibyte
    characters, even if the OS supports them. */
 #undef NO_MULTIBYTE_SUPPORT
 
 #undef _FILE_OFFSET_BITS
-
-/* Define if on MINIX.  */
-#undef _MINIX
 
 /* Define as the return type of signal handlers (int or void).  */
 #undef RETSIGTYPE
@@ -26,14 +33,21 @@
 #undef volatile
 
 #undef PROTOTYPES
+#undef __PROTOTYPES
 
 #undef __CHAR_UNSIGNED__
 
 /* Define if the `S_IS*' macros in <sys/stat.h> do not work properly.  */
 #undef STAT_MACROS_BROKEN
 
+/* Define if you have the chown function. */
+#undef HAVE_CHOWN
+
 /* Define if you have the fcntl function. */
 #undef HAVE_FCNTL
+
+/* Define if you have the fnmatch function. */
+#undef HAVE_FNMATCH
 
 /* Define if you have the getpwent function. */
 #undef HAVE_GETPWENT
@@ -77,8 +91,14 @@
 /* Define if you have the memmove function. */
 #undef HAVE_MEMMOVE
 
+/* Define if you have the pselect function.  */
+#undef HAVE_PSELECT
+
 /* Define if you have the putenv function.  */
 #undef HAVE_PUTENV
+
+/* Define if you have the readlink function.  */
+#undef HAVE_READLINK
 
 /* Define if you have the select function.  */
 #undef HAVE_SELECT
@@ -124,6 +144,9 @@
 /* Define if you have the wcwidth function.  */
 #undef HAVE_WCWIDTH
 
+/* and whether it works */
+#undef WCWIDTH_BROKEN
+
 #undef STDC_HEADERS
 
 /* Define if you have the <dirent.h> header file.  */
@@ -134,6 +157,9 @@
 
 /* Define if you have the <langinfo.h> header file.  */
 #undef HAVE_LANGINFO_H
+
+/* Define if you have the <libaudit.h> header file.  */
+#undef HAVE_LIBAUDIT_H
 
 /* Define if you have the <limits.h> header file.  */
 #undef HAVE_LIMITS_H
@@ -147,11 +173,17 @@
 /* Define if you have the <ndir.h> header file.  */
 #undef HAVE_NDIR_H
 
+/* Define if you have the <ncurses/termcap.h> header file.  */
+#undef HAVE_NCURSES_TERMCAP_H
+
 /* Define if you have the <pwd.h> header file.  */
 #undef HAVE_PWD_H
 
 /* Define if you have the <stdarg.h> header file.  */
 #undef HAVE_STDARG_H
+
+/* Define if you have the <stdbool.h> header file.  */
+#undef HAVE_STDBOOL_H
 
 /* Define if you have the <stdlib.h> header file.  */
 #undef HAVE_STDLIB_H
@@ -167,6 +199,9 @@
 
 /* Define if you have the <sys/file.h> header file.  */
 #undef HAVE_SYS_FILE_H
+
+/* Define if you have the <sys/ioctl.h> header file.  */
+#undef HAVE_SYS_IOCTL_H
 
 /* Define if you have the <sys/ndir.h> header file.  */
 #undef HAVE_SYS_NDIR_H
@@ -218,6 +253,9 @@
 /* Define if you have <langinfo.h> and nl_langinfo(CODESET). */
 #undef HAVE_LANGINFO_CODESET
 
+/* Define if you have <linux/audit.h> and it defines AUDIT_USER_TTY */
+#undef HAVE_DECL_AUDIT_USER_TTY
+
 /* Definitions pulled in from aclocal.m4. */
 #undef VOID_SIGHANDLER
 
@@ -235,9 +273,11 @@
 
 #undef HAVE_GETPW_DECLS
 
-#undef STRUCT_DIRENT_HAS_D_INO
+#undef HAVE_STRUCT_DIRENT_D_INO
 
-#undef STRUCT_DIRENT_HAS_D_FILENO
+#undef HAVE_STRUCT_DIRENT_D_FILENO
+
+#undef HAVE_STRUCT_DIRENT_D_NAMLEN
 
 #undef HAVE_BSD_SIGNALS
 
@@ -259,12 +299,4 @@
 #  define TERMIOS_MISSING
 #endif
 
-#if defined (__STDC__) && defined (HAVE_STDARG_H)
-#  define PREFER_STDARG
-#  define USE_VARARGS
-#else
-#  if defined (HAVE_VARARGS_H)
-#    define PREFER_VARARGS
-#    define USE_VARARGS
-#  endif
-#endif
+/* VARARGS defines moved to rlstdc.h */

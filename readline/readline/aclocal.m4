@@ -1,4 +1,4 @@
-dnl
+nl
 dnl Bash specific tests
 dnl
 dnl Some derived from PDKSH 5.1.3 autoconf tests
@@ -962,7 +962,8 @@ AC_CACHE_VAL(bash_cv_termcap_lib,
     [AC_CHECK_LIB(tinfo, tgetent, bash_cv_termcap_lib=libtinfo,
         [AC_CHECK_LIB(curses, tgetent, bash_cv_termcap_lib=libcurses,
 	    [AC_CHECK_LIB(ncurses, tgetent, bash_cv_termcap_lib=libncurses,
-	        bash_cv_termcap_lib=gnutermcap)])])])])])
+                [AC_CHECK_LIB(ncursesw, tgetent, bash_cv_termcap_lib=libncursesw,
+	            bash_cv_termcap_lib=gnutermcap)])])])])])])
 if test "X$_bash_needmsg" = "Xyes"; then
 AC_MSG_CHECKING(which library has the termcap functions)
 fi
@@ -1307,7 +1308,7 @@ AC_CACHE_VAL(bash_cv_must_reinstall_sighandlers,
 
 typedef RETSIGTYPE sigfunc();
 
-int nsigint;
+volatile int nsigint;
 
 #ifdef HAVE_POSIX_SIGNALS
 sigfunc *
@@ -1357,7 +1358,7 @@ AC_DEFUN(BASH_SYS_JOB_CONTROL_MISSING,
 [AC_REQUIRE([BASH_SYS_SIGNAL_VINTAGE])
 AC_MSG_CHECKING(for presence of necessary job control definitions)
 AC_CACHE_VAL(bash_cv_job_control_missing,
-[AC_TRY_RUN([
+[AC_TRY_COMPILE([
 #include <sys/types.h>
 #ifdef HAVE_SYS_WAIT_H
 #include <sys/wait.h>
@@ -1367,42 +1368,38 @@ AC_CACHE_VAL(bash_cv_job_control_missing,
 #endif
 #include <signal.h>
 
-/* Add more tests in here as appropriate. */
-main()
-{
+/* add more tests in here as appropriate */
+
 /* signal type */
 #if !defined (HAVE_POSIX_SIGNALS) && !defined (HAVE_BSD_SIGNALS)
-exit(1);
+#error
 #endif
 
 /* signals and tty control. */
 #if !defined (SIGTSTP) || !defined (SIGSTOP) || !defined (SIGCONT)
-exit (1);
+#error
 #endif
 
 /* process control */
 #if !defined (WNOHANG) || !defined (WUNTRACED) 
-exit(1);
+#error
 #endif
 
 /* Posix systems have tcgetpgrp and waitpid. */
 #if defined (_POSIX_VERSION) && !defined (HAVE_TCGETPGRP)
-exit(1);
+#error
 #endif
 
 #if defined (_POSIX_VERSION) && !defined (HAVE_WAITPID)
-exit(1);
+#error
 #endif
 
 /* Other systems have TIOCSPGRP/TIOCGPRGP and wait3. */
 #if !defined (_POSIX_VERSION) && !defined (HAVE_WAIT3)
-exit(1);
+#error
 #endif
 
-exit(0);
-}], bash_cv_job_control_missing=present, bash_cv_job_control_missing=missing,
-    [AC_MSG_WARN(cannot check job control if cross-compiling -- defaulting to missing)
-     bash_cv_job_control_missing=missing]
+], , bash_cv_job_control_missing=present, bash_cv_job_control_missing=missing
 )])
 AC_MSG_RESULT($bash_cv_job_control_missing)
 if test $bash_cv_job_control_missing = missing; then
@@ -1585,9 +1582,7 @@ fi
 AC_DEFUN(BASH_CHECK_DEV_STDIN,
 [AC_MSG_CHECKING(whether /dev/stdin stdout stderr are available)
 AC_CACHE_VAL(bash_cv_dev_stdin,
-[if test -d /dev/fd && (exec test -r /dev/stdin < /dev/null) ; then
-   bash_cv_dev_stdin=present
- elif test -d /proc/self/fd && (exec test -r /dev/stdin < /dev/null) ; then
+[if (exec test -r /dev/stdin < /dev/null) ; then
    bash_cv_dev_stdin=present
  else
    bash_cv_dev_stdin=absent
@@ -1692,12 +1687,13 @@ AC_CHECK_HEADERS(wctype.h)
 AC_CHECK_HEADERS(wchar.h)
 AC_CHECK_HEADERS(langinfo.h)
 
+AC_CHECK_HEADERS(mbstr.h)
+
 AC_CHECK_FUNC(mbrlen, AC_DEFINE(HAVE_MBRLEN))
 AC_CHECK_FUNC(mbscasecmp, AC_DEFINE(HAVE_MBSCMP))
 AC_CHECK_FUNC(mbscmp, AC_DEFINE(HAVE_MBSCMP))
 AC_CHECK_FUNC(mbsnrtowcs, AC_DEFINE(HAVE_MBSNRTOWCS))
 AC_CHECK_FUNC(mbsrtowcs, AC_DEFINE(HAVE_MBSRTOWCS))
-
 
 AC_REPLACE_FUNCS(mbschr)
 
@@ -1763,12 +1759,41 @@ if test $bash_cv_type_wint_t = yes; then
         AC_DEFINE(HAVE_WINT_T, 1, [systems should define this type here])
 fi
 
+dnl check for broken wcwidth
+AC_CACHE_CHECK([for wcwidth broken with unicode combining characters],
+bash_cv_wcwidth_broken,
+[AC_TRY_RUN([
+#include <unistd.h>
+#include <stdlib.h>
+#include <stdio.h>
+
+#include <locale.h>
+#include <wchar.h>
+
+main(c, v)
+int     c;
+char    **v;
+{
+        int     w;
+
+        setlocale(LC_ALL, "en_US.UTF-8");
+        w = wcwidth (0x0301);
+        exit (w == 0);  /* exit 0 if wcwidth broken */
+}
+],
+bash_cv_wcwidth_broken=yes, bash_cv_wcwidth_broken=no, bash_cv_wcwidth_broken=no)])
+if test "$bash_cv_wcwidth_broken" = yes; then
+        AC_DEFINE(WCWIDTH_BROKEN, 1, [wcwidth is usually not broken])
+fi
+
 if test "$am_cv_func_iconv" = yes; then
 	OLDLIBS="$LIBS"
-	LIBS="$LIBS $LIBICONV"
+	LIBS="$LIBS $LIBINTL $LIBICONV"
 	AC_CHECK_FUNCS(locale_charset)
 	LIBS="$OLDLIBS"
 fi
+
+AC_CHECK_SIZEOF(wchar_t, 4)
 
 ])
 
@@ -1828,7 +1853,7 @@ main()
 ],
 ac_cv_rl_version=`cat conftest.rlv`,
 ac_cv_rl_version='0.0',
-ac_cv_rl_version='4.2')])
+ac_cv_rl_version='8.0')])
 
 CFLAGS="$_save_CFLAGS"
 LDFLAGS="$_save_LDFLAGS"
@@ -3098,7 +3123,7 @@ AC_DEFUN([AC_LIB_LINKFLAGS_BODY],
           found_so=
           found_a=
           if test $use_additional = yes; then
-            if test -n "$shlibext" && test -f "$additional_libdir/lib$name.$shlibext"; then
+            if test "X$prefer_shared" = "Xyes" && test -n "$shlibext" && test -f "$additional_libdir/lib$name.$shlibext"; then
               found_dir="$additional_libdir"
               found_so="$additional_libdir/lib$name.$shlibext"
               if test -f "$additional_libdir/lib$name.la"; then
@@ -3120,7 +3145,7 @@ AC_DEFUN([AC_LIB_LINKFLAGS_BODY],
               case "$x" in
                 -L*)
                   dir=`echo "X$x" | sed -e 's/^X-L//'`
-                  if test -n "$shlibext" && test -f "$dir/lib$name.$shlibext"; then
+                  if test "X$prefer_shared" = "Xyes" && test -n "$shlibext" && test -f "$dir/lib$name.$shlibext"; then
                     found_dir="$dir"
                     found_so="$dir/lib$name.$shlibext"
                     if test -f "$dir/lib$name.la"; then
@@ -4123,7 +4148,7 @@ main()
 AC_DEFUN(BASH_STRUCT_WEXITSTATUS_OFFSET,
 [AC_MSG_CHECKING(for offset of exit status in return status from wait)
 AC_CACHE_VAL(bash_cv_wexitstatus_offset,
-[AC_RUN_IFELSE([
+[AC_TRY_RUN([
 #include <stdlib.h>
 #include <unistd.h>
 
@@ -4166,4 +4191,72 @@ if test "$bash_cv_wexitstatus_offset" -gt 32 ; then
 fi
 AC_MSG_RESULT($bash_cv_wexitstatus_offset)
 AC_DEFINE_UNQUOTED([WEXITSTATUS_OFFSET], [$bash_cv_wexitstatus_offset], [Offset of exit status in wait status word])
+])
+
+AC_DEFUN([BASH_FUNC_SBRK],
+[
+  AC_CHECK_FUNCS_ONCE([sbrk])
+  if test X$ac_cv_func_sbrk = Xyes; then
+    AC_CACHE_CHECK([for working sbrk], [bash_cv_func_sbrk],
+      [AC_TRY_RUN([
+#include <stdlib.h>
+#include <unistd.h>
+
+int
+main(int c, char **v)
+{
+	void *x;
+
+	x = sbrk (4096);
+	exit ((x == (void *)-1) ? 1 : 0);
+}
+], bash_cv_func_sbrk=yes, bash_cv_func_snprintf=sbrk,
+   [AC_MSG_WARN([cannot check working sbrk if cross-compiling])
+    bash_cv_func_sbrk=yes]
+)])
+    if test $bash_cv_func_sbrk = no; then
+      ac_cv_func_sbrk=no
+    fi
+  fi
+  if test $ac_cv_func_sbrk = no; then
+    AC_DEFINE(HAVE_SBRK, 0,
+      [Define if you have a working sbrk function.])
+  fi
+])
+
+AC_DEFUN(BASH_FUNC_FNMATCH_EQUIV_FALLBACK,
+[AC_MSG_CHECKING(whether fnmatch can be used to check bracket equivalence classes)
+AC_CACHE_VAL(bash_cv_fnmatch_equiv_fallback,
+[AC_TRY_RUN([
+#include <stdlib.h>
+#include <unistd.h>
+#include <stdio.h>
+#include <fnmatch.h>
+#include <locale.h>
+
+char *pattern = "[[=a=]]";
+
+/* char *string = "ä"; */
+unsigned char string[4] = { '\xc3', '\xa4', '\0' };
+
+int
+main (int c, char **v)
+{
+  setlocale (LC_ALL, "de_DE.UTF-8");
+  if (fnmatch (pattern, (const char *)string, 0) != FNM_NOMATCH)
+    exit (0);
+  exit (1);
+}
+
+], bash_cv_fnmatch_equiv_fallback=yes, bash_cv_fnmatch_equiv_fallback=no,
+   [AC_MSG_WARN(cannot check fnmatch if cross compiling -- defaulting to no)
+    bash_cv_fnmatch_equiv_fallback=no]
+)])
+AC_MSG_RESULT($bash_cv_fnmatch_equiv_fallback)
+if test "$bash_cv_fnmatch_equiv_fallback" = "yes" ; then
+    bash_cv_fnmatch_equiv_value=1
+else
+    bash_cv_fnmatch_equiv_value=0
+fi
+AC_DEFINE_UNQUOTED([FNMATCH_EQUIV_FALLBACK], [$bash_cv_fnmatch_equiv_value], [Whether fnmatch can be used for bracket equivalence classes])
 ])

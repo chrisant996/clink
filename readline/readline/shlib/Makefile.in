@@ -30,7 +30,7 @@ RL_LIBRARY_NAME = readline
 datarootdir = @datarootdir@
 
 srcdir = @srcdir@
-VPATH = .:@top_srcdir@
+VPATH = @top_srcdir@
 topdir = @top_srcdir@
 BUILD_DIR = @BUILD_DIR@
 
@@ -107,7 +107,7 @@ SHLIB_MINOR=		.@SHLIB_MINOR@
 # For libraries which include headers from other libraries.
 INCLUDES = -I. -I.. -I$(topdir)
 
-CCFLAGS = $(DEFS) $(LOCAL_DEFS) $(CPPFLAGS) $(INCLUDES) $(LOCAL_CFLAGS) $(CFLAGS)
+CCFLAGS = $(DEFS) $(LOCAL_DEFS) $(INCLUDES) $(CPPFLAGS) $(LOCAL_CFLAGS) $(CFLAGS)
 
 .SUFFIXES:	.so
 
@@ -134,21 +134,29 @@ CSOURCES = $(topdir)/readline.c $(topdir)/funmap.c $(topdir)/keymaps.c \
 	   $(topdir)/histfile.c $(topdir)/nls.c $(topdir)/search.c \
 	   $(topdir)/shell.c $(topdir)/savestring.c $(topdir)/tilde.c \
 	   $(topdir)/text.c $(topdir)/misc.c $(topdir)/compat.c \
+	   $(topdir)/colors.c $(topdir)/parse-colors.c \
 	   $(topdir)/mbutil.c
 
 # The header files for this library.
-HSOURCES = readline.h rldefs.h chardefs.h keymaps.h history.h histlib.h \
-	   posixstat.h posixdir.h posixjmp.h tilde.h rlconf.h rltty.h \
-	   ansi_stdlib.h tcap.h xmalloc.h rlprivate.h rlshell.h rlmbutil.h
+HSOURCES = $(topdir)/readline.h $(topdir)/rldefs.h $(topdir)/chardefs.h \
+	   $(topdir)/keymaps.h $(topdir)/history.h $(topdir)/histlib.h \
+	   $(topdir)/posixstat.h $(topdir)/posixdir.h $(topdir)/posixjmp.h \
+	   $(topdir)/tilde.h $(topdir)/rlconf.h $(topdir)/rltty.h \
+	   $(topdir)/ansi_stdlib.h $(topdir)/tcap.h $(topdir)/rlstdc.h \
+	   $(topdir)/xmalloc.h $(topdir)/rlprivate.h $(topdir)/rlshell.h \
+	   $(topdir)/rltypedefs.h $(topdir)/rlmbutil.h \
+           $(topdir)/colors.h $(topdir)/parse-colors.h
 
 SHARED_HISTOBJ = history.so histexpand.so histfile.so histsearch.so shell.so \
 		 mbutil.so
 SHARED_TILDEOBJ = tilde.so
+SHARED_COLORSOBJ = colors.so parse-colors.so
 SHARED_OBJ = readline.so vi_mode.so funmap.so keymaps.so parens.so search.so \
 	  rltty.so complete.so bind.so isearch.so display.so signals.so \
 	  util.so kill.so undo.so macro.so input.so callback.so terminal.so \
-	  text.so nls.so misc.so xmalloc.so xfree.so $(SHARED_HISTOBJ) $(SHARED_TILDEOBJ) \
-	  compat.so
+	  text.so nls.so misc.so \
+	  $(SHARED_HISTOBJ) $(SHARED_TILDEOBJ) $(SHARED_COLORSOBJ) \
+	  xmalloc.so xfree.so compat.so
 
 ##########################################################################
 
@@ -183,15 +191,25 @@ installdirs: $(topdir)/support/mkdirs
 	-$(SHELL) $(topdir)/support/mkdirs $(DESTDIR)$(libdir)
 	-$(SHELL) $(topdir)/support/mkdirs $(DESTDIR)$(bindir)
 
-install: installdirs $(SHLIB_STATUS)
+install-supported: installdirs $(SHLIB_STATUS)
 	$(SHELL) $(topdir)/support/shlib-install -O $(host_os) -V $(host_vendor) -d $(DESTDIR)$(libdir) -b $(DESTDIR)$(bindir) -i "$(INSTALL_DATA)" $(SHARED_HISTORY)
 	$(SHELL) $(topdir)/support/shlib-install -O $(host_os) -V $(host_vendor) -d $(DESTDIR)$(libdir) -b $(DESTDIR)$(bindir) -i "$(INSTALL_DATA)" $(SHARED_READLINE)
 	@echo install: you may need to run ldconfig
 
-uninstall:
+install-unsupported:
+	@echo install: shared libraries not supported
+
+install: install-$(SHLIB_STATUS)
+
+uninstall-supported:
 	$(SHELL) $(topdir)/support/shlib-install -O $(host_os) -V $(host_vendor) -d $(DESTDIR)$(libdir) -b $(DESTDIR)$(bindir) -U $(SHARED_HISTORY)
 	$(SHELL) $(topdir)/support/shlib-install -O $(host_os) -V $(host_vendor) -d $(DESTDIR)$(libdir) -b $(DESTDIR)$(bindir) -U $(SHARED_READLINE)
 	@echo uninstall: you may need to run ldconfig
+
+uninstall-unsupported:
+	@echo uninstall: shared libraries not supported
+
+uninstall: uninstall-$(SHLIB_STATUS)
 
 clean mostlyclean:	force
 	$(RM) $(SHARED_OBJ) $(SHARED_LIBS)
@@ -211,13 +229,14 @@ bind.so: $(topdir)/rldefs.h ${BUILD_DIR}/config.h $(topdir)/rlconf.h
 bind.so: $(topdir)/readline.h $(topdir)/keymaps.h $(topdir)/chardefs.h
 bind.so: $(topdir)/rltypedefs.h
 bind.so: $(topdir)/tilde.h $(topdir)/history.h
-compat.so: $(topdir)/rlstdc.h
+compat.so: ${BUILD_DIR}/config.h
+compat.so: $(topdir)/rlstdc.h $(topdir)/rltypedefs.h
 callback.so: $(topdir)/rlconf.h
 callback.so: $(topdir)/rldefs.h ${BUILD_DIR}/config.h
 callback.so: $(topdir)/readline.h $(topdir)/keymaps.h $(topdir)/chardefs.h
 callback.so: $(topdir)/rltypedefs.h
 callback.so: $(topdir)/tilde.h
-complete.so: $(topdir)/ansi_stdlib.h posixdir.h $(topdir)/posixstat.h
+complete.so: $(topdir)/ansi_stdlib.h $(topdir)/posixdir.h $(topdir)/posixstat.h
 complete.so: $(topdir)/rldefs.h ${BUILD_DIR}/config.h $(topdir)/rlconf.h
 complete.so: $(topdir)/readline.h $(topdir)/keymaps.h $(topdir)/chardefs.h
 complete.so: $(topdir)/rltypedefs.h
@@ -253,7 +272,6 @@ isearch.so: $(topdir)/rldefs.h ${BUILD_DIR}/config.h $(topdir)/rlconf.h
 isearch.so: $(topdir)/readline.h $(topdir)/keymaps.h $(topdir)/chardefs.h
 isearch.so: $(topdir)/rltypedefs.h
 isearch.so: $(topdir)/ansi_stdlib.h $(topdir)/history.h $(topdir)/tilde.h
-keymaps.so: emacs_keymap.c vi_keymap.c
 keymaps.so: $(topdir)/keymaps.h $(topdir)/chardefs.h $(topdir)/rlconf.h
 keymaps.so: $(topdir)/readline.h $(topdir)/keymaps.h $(topdir)/chardefs.h
 keymaps.so: $(topdir)/rltypedefs.h
@@ -286,6 +304,7 @@ rltty.so: $(topdir)/rldefs.h ${BUILD_DIR}/config.h $(topdir)/rlconf.h
 rltty.so: $(topdir)/rltty.h $(topdir)/tilde.h
 rltty.so: $(topdir)/readline.h $(topdir)/keymaps.h $(topdir)/chardefs.h
 rltty.so: $(topdir)/rltypedefs.h
+savestring.so: ${BUILD_DIR}/config.h
 search.so: $(topdir)/rldefs.h ${BUILD_DIR}/config.h $(topdir)/rlconf.h
 search.so: $(topdir)/readline.h $(topdir)/keymaps.h $(topdir)/chardefs.h
 search.so: $(topdir)/ansi_stdlib.h $(topdir)/history.h $(topdir)/tilde.h
@@ -330,6 +349,16 @@ shell.so: $(topdir)/rlshell.h
 terminal.so: $(topdir)/rlshell.h
 histexpand.so: $(topdir)/rlshell.h
 
+colors.so: $(BUILD_DIR)/config.h $(topdir)/colors.h
+colors.so: $(topdir)/rlconf.h 
+colors.so: $(topdir)/readline.h $(topdir)/keymaps.h $(topdir)/rltypedefs.h
+colors.so: $(topdir)/chardefs.h $(topdir)/tilde.h $(topdir)/rlstdc.h
+colors.so: $(topdir)/ansi_stdlib.h $(topdir)/posixstat.h
+parse-colors.so: $(BUILD_DIR)/config.h $(topdir)/colors.h $(topdir)/parse-colors.h
+parse-colors.so: $(topdir)/rldefs.h $(topdir)/rlconf.h 
+parse-colors.so: $(topdir)/readline.h $(topdir)/keymaps.h $(topdir)/rltypedefs.h
+parse-colors.so: $(topdir)/chardefs.h $(topdir)/tilde.h $(topdir)/rlstdc.h
+
 bind.so: $(topdir)/rlprivate.h
 callback.so: $(topdir)/rlprivate.h
 complete.so: $(topdir)/rlprivate.h
@@ -351,8 +380,11 @@ text.so: $(topdir)/rlprivate.h
 undo.so: $(topdir)/rlprivate.h
 util.so: $(topdir)/rlprivate.h
 vi_mode.so: $(topdir)/rlprivate.h
+colors.so: $(topdir)/rlprivate.h
+parse-colors.so: $(topdir)/rlprivate.h
 
 bind.so: $(topdir)/xmalloc.h
+callback.so: $(topdir)/xmalloc.h
 complete.so: $(topdir)/xmalloc.h
 display.so: $(topdir)/xmalloc.h
 funmap.so: $(topdir)/xmalloc.h
@@ -378,18 +410,22 @@ util.so: $(topdir)/xmalloc.h
 vi_mode.so: $(topdir)/xmalloc.h
 xfree.so: $(topdir)/xmalloc.h
 xmalloc.so: $(topdir)/xmalloc.h
+colors.so: $(topdir)/xmalloc.h
+parse-colors.so: $(topdir)/xmalloc.h
 
-complete.o: $(topdir)/rlmbutil.h
-display.o: $(topdir)/rlmbutil.h
-histexpand.o: $(topdir)/rlmbutil.h
-input.o: $(topdir)/rlmbutil.h
-isearch.o: $(topdir)/rlmbutil.h
-mbutil.o: $(topdir)/rlmbutil.h
-misc.o: $(topdir)/rlmbutil.h
-readline.o: $(topdir)/rlmbutil.h
-search.o: $(topdir)/rlmbutil.h
-text.o: $(topdir)/rlmbutil.h
-vi_mode.o: $(topdir)/rlmbutil.h
+complete.so: $(topdir)/rlmbutil.h
+display.so: $(topdir)/rlmbutil.h
+histexpand.so: $(topdir)/rlmbutil.h
+input.so: $(topdir)/rlmbutil.h
+isearch.so: $(topdir)/rlmbutil.h
+mbutil.so: $(topdir)/rlmbutil.h
+misc.so: $(topdir)/rlmbutil.h
+readline.so: $(topdir)/rlmbutil.h
+search.so: $(topdir)/rlmbutil.h
+text.so: $(topdir)/rlmbutil.h
+vi_mode.so: $(topdir)/rlmbutil.h
+colors.so: $(topdir)/rlmbutil.h
+parse-colors.so: $(topdir)/rlmbutil.h
 
 bind.so: $(topdir)/bind.c
 callback.so: $(topdir)/callback.c
@@ -455,6 +491,9 @@ util.so: util.c
 vi_mode.so: vi_mode.c
 xfree.so: xfree.c
 xmalloc.so: xmalloc.c
+
+colors.so: colors.c
+parse-colors.so: parse-colors.c
 
 histexpand.so: histexpand.c
 histfile.so: histfile.c

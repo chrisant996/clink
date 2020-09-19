@@ -1,7 +1,7 @@
 /* shell.c -- readline utility functions that are normally provided by
 	      bash when readline is linked as part of the shell. */
 
-/* Copyright (C) 1997-2009 Free Software Foundation, Inc.
+/* Copyright (C) 1997-2009,2017 Free Software Foundation, Inc.
 
    This file is part of the GNU Readline Library (Readline), a library
    for reading lines of text with interactive input and history editing.      
@@ -59,6 +59,8 @@
 
 #include "rlstdc.h"
 #include "rlshell.h"
+#include "rldefs.h"
+
 #include "xmalloc.h"
 
 #if defined (HAVE_GETPWUID) && !defined (HAVE_GETPW_DECLS)
@@ -90,8 +92,7 @@ extern struct passwd *getpwuid PARAMS((uid_t));
 
 /* Does shell-like quoting using single quotes. */
 char *
-sh_single_quote (string)
-     char *string;
+sh_single_quote (char *string)
 {
   register int c;
   char *result, *r, *s;
@@ -120,54 +121,60 @@ sh_single_quote (string)
 
 /* Set the environment variables LINES and COLUMNS to lines and cols,
    respectively. */
+static char setenv_buf[INT_STRLEN_BOUND (int) + 1];
+static char putenv_buf1[INT_STRLEN_BOUND (int) + 6 + 1];	/* sizeof("LINES=") == 6 */
+static char putenv_buf2[INT_STRLEN_BOUND (int) + 8 + 1];	/* sizeof("COLUMNS=") == 8 */
+
 void
-sh_set_lines_and_columns (lines, cols)
-     int lines, cols;
+sh_set_lines_and_columns (int lines, int cols)
 {
-  char *b;
-
 #if defined (HAVE_SETENV)
-  b = (char *)xmalloc (INT_STRLEN_BOUND (int) + 1);
-  sprintf (b, "%d", lines);
-  setenv ("LINES", b, 1);
-  xfree (b);
+  sprintf (setenv_buf, "%d", lines);
+  setenv ("LINES", setenv_buf, 1);
 
-  b = (char *)xmalloc (INT_STRLEN_BOUND (int) + 1);
-  sprintf (b, "%d", cols);
-  setenv ("COLUMNS", b, 1);
-  xfree (b);
+  sprintf (setenv_buf, "%d", cols);
+  setenv ("COLUMNS", setenv_buf, 1);
 #else /* !HAVE_SETENV */
 #  if defined (HAVE_PUTENV)
-  b = (char *)xmalloc (INT_STRLEN_BOUND (int) + sizeof ("LINES=") + 1);
-  sprintf (b, "LINES=%d", lines);
-  putenv (b);
+  sprintf (putenv_buf1, "LINES=%d", lines);
+  putenv (putenv_buf1);
 
-  b = (char *)xmalloc (INT_STRLEN_BOUND (int) + sizeof ("COLUMNS=") + 1);
-  sprintf (b, "COLUMNS=%d", cols);
-  putenv (b);
+  sprintf (putenv_buf2, "COLUMNS=%d", cols);
+  putenv (putenv_buf2);
 #  endif /* HAVE_PUTENV */
 #endif /* !HAVE_SETENV */
 }
 
 char *
-sh_get_env_value (varname)
-     const char *varname;
+sh_get_env_value (const char *varname)
 {
   return ((char *)getenv (varname));
 }
 
 char *
-sh_get_home_dir ()
+sh_get_home_dir (void)
 {
-  char *home_dir;
+  static char *home_dir = (char *)NULL;
   struct passwd *entry;
+
+  if (home_dir)
+    return (home_dir);
 
   home_dir = (char *)NULL;
 #if defined (HAVE_GETPWUID)
+#  if defined (__TANDEM)
+  entry = getpwnam (getlogin ());
+#  else
   entry = getpwuid (getuid ());
+#  endif
   if (entry)
-    home_dir = entry->pw_dir;
+    home_dir = savestring (entry->pw_dir);
 #endif
+
+#if defined (HAVE_GETPWENT)
+  endpwent ();		/* some systems need this */
+#endif
+
   return (home_dir);
 }
 
@@ -178,8 +185,7 @@ sh_get_home_dir ()
 #endif
 
 int
-sh_unset_nodelay_mode (fd)
-     int fd;
+sh_unset_nodelay_mode (int fd)
 {
 #if defined (HAVE_FCNTL)
   int flags, bflags;

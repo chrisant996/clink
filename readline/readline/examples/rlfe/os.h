@@ -208,7 +208,9 @@ extern int errno;
 #   include <cytermio.h>
 #  endif
 # else /* TERMIO */
-#  include <sgtty.h>
+#  if defined (HAVE_SGTTY_H)
+#    include <sgtty.h>
+#  endif
 # endif /* TERMIO */
 #endif /* POSIX */
 
@@ -490,7 +492,7 @@ extern int errno;
  *    select stuff
  */
 
-#if defined(M_XENIX) || defined(M_UNIX) || defined(_SEQUENT_)
+#if defined(M_XENIX) || defined(M_UNIX) || defined(_SEQUENT_) || defined (__INTERIX)
 #include <sys/select.h>		/* for timeval + FD... */
 #endif
 

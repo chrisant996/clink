@@ -5,7 +5,7 @@ dnl report bugs to chet@po.cwru.edu
 dnl
 dnl Process this file with autoconf to produce a configure script.
 
-# Copyright (C) 1987-2009 Free Software Foundation, Inc.
+# Copyright (C) 1987-2018 Free Software Foundation, Inc.
 
 #   This program is free software: you can redistribute it and/or modify
 #   it under the terms of the GNU General Public License as published by
@@ -20,9 +20,9 @@ dnl Process this file with autoconf to produce a configure script.
 #   You should have received a copy of the GNU General Public License
 #   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-AC_REVISION([for Readline 6.2, version 2.67])
+AC_REVISION([for Readline 8.0, version 2.85])
 
-AC_INIT(readline, 6.2, bug-readline@gnu.org)
+AC_INIT(readline, 8.0, bug-readline@gnu.org)
 
 dnl make sure we are using a recent autoconf version
 AC_PREREQ(2.50)
@@ -32,36 +32,31 @@ AC_CONFIG_AUX_DIR(./support)
 AC_CONFIG_HEADERS(config.h)
 
 dnl update the value of RL_READLINE_VERSION in readline.h when this changes
-LIBVERSION=6.2
+LIBVERSION=8.0
 
 AC_CANONICAL_HOST
+AC_CANONICAL_BUILD
 
 dnl configure defaults
 opt_curses=no
-opt_purify=no
 
 dnl arguments to configure
 AC_ARG_WITH(curses, AC_HELP_STRING([--with-curses], [use the curses library instead of the termcap library]), opt_curses=$withval)
-AC_ARG_WITH(purify, AC_HELP_STRING([--with-purify], [configure to postprocess with purify]), opt_purify=$withval)
 
 if test "$opt_curses" = "yes"; then
 	prefer_curses=yes
-fi
-
-if test "$opt_purify" = yes; then
-	PURIFY="purify"
-else
-	PURIFY=
 fi
 
 dnl option parsing for optional features
 opt_multibyte=yes
 opt_static_libs=yes
 opt_shared_libs=yes
+opt_install_examples=yes
 
 AC_ARG_ENABLE(multibyte, AC_HELP_STRING([--enable-multibyte], [enable multibyte characters if OS supports them]), opt_multibyte=$enableval)
 AC_ARG_ENABLE(shared, AC_HELP_STRING([--enable-shared], [build shared libraries [[default=YES]]]), opt_shared_libs=$enableval)
 AC_ARG_ENABLE(static, AC_HELP_STRING([--enable-static], [build static libraries [[default=YES]]]), opt_static_libs=$enableval)
+AC_ARG_ENABLE(install-examples, AC_HELP_STRING([--disable-install-examples], [don't install examples [[default=install]]]), opt_install_examples=$enableval)
 
 if test $opt_multibyte = no; then
 AC_DEFINE(NO_MULTIBYTE_SUPPORT)
@@ -114,7 +109,7 @@ test -n "$GCC" && test -n "$auto_cflags" && CFLAGS="$CFLAGS -O"
 
 AC_PROG_GCC_TRADITIONAL
 AC_PROG_INSTALL
-AC_CHECK_PROG(AR, ar, , ar)
+AC_CHECK_TOOL(AR, ar)
 dnl Set default for ARFLAGS, since autoconf does not have a macro for it.
 dnl This allows people to set it when running configure or make
 test -n "$ARFLAGS" || ARFLAGS="cr"
@@ -138,17 +133,19 @@ AC_HEADER_STDC
 AC_HEADER_STAT
 AC_HEADER_DIRENT
 
-AC_CHECK_FUNCS(fcntl kill lstat)
-AC_CHECK_FUNCS(memmove putenv select setenv setlocale \
+AC_CHECK_FUNCS(fcntl kill lstat readlink)
+AC_CHECK_FUNCS(fnmatch memmove pselect putenv select setenv setlocale \
 		strcasecmp strpbrk tcgetattr vsnprintf)
 AC_CHECK_FUNCS(isascii isxdigit)
 AC_CHECK_FUNCS(getpwent getpwnam getpwuid)
 
+AC_FUNC_CHOWN
 AC_FUNC_STRCOLL
 
-AC_CHECK_HEADERS(fcntl.h unistd.h stdlib.h varargs.h stdarg.h string.h strings.h \
+AC_CHECK_HEADERS(fcntl.h unistd.h stdlib.h varargs.h stdarg.h stdbool.h \
+		string.h strings.h \
 		limits.h locale.h pwd.h memory.h termcap.h termios.h termio.h)
-AC_CHECK_HEADERS(sys/pte.h sys/stream.h sys/select.h sys/file.h)
+AC_CHECK_HEADERS(sys/ioctl.h sys/pte.h sys/stream.h sys/select.h sys/file.h)
 
 AC_CHECK_HEADERS(sys/ptem.h,,,
 [[
@@ -181,6 +178,9 @@ BASH_STRUCT_WINSIZE
 BASH_STRUCT_DIRENT_D_INO
 BASH_STRUCT_DIRENT_D_FILENO
 
+AC_CHECK_HEADERS(libaudit.h)
+AC_CHECK_DECLS([AUDIT_USER_TTY],,, [[#include <linux/audit.h>]])
+
 dnl yuck
 case "$host_os" in
 aix*)   prefer_curses=yes ;;
@@ -193,6 +193,18 @@ if test "$TERMCAP_LIB" = "./lib/termcap/libtermcap.a"; then
 		TERMCAP_LIB=-ltermcap	#default
 	fi
 fi
+# Windows ncurses installation
+if test "$TERMCAP_LIB" = "-lncurses"; then
+	AC_CHECK_HEADERS(ncurses/termcap.h)
+fi
+
+case "$TERMCAP_LIB" in
+-ltinfo)  TERMCAP_PKG_CONFIG_LIB=tinfo ;;
+-lcurses) TERMCAP_PKG_CONFIG_LIB=ncurses ;;
+-lncurses) TERMCAP_PKG_CONFIG_LIB=ncurses ;;
+-ltermcap) TERMCAP_PKG_CONFIG_LIB=termcap ;;
+*) TERMCAP_PKG_CONFIG_LIB=termcap ;;
+esac
 
 BASH_CHECK_MULTIBYTE
 
@@ -264,7 +276,12 @@ AC_SUBST(SHARED_TARGET)
 AC_SUBST(STATIC_INSTALL_TARGET)
 AC_SUBST(SHARED_INSTALL_TARGET)
 
-case "$host_os" in
+if test "$opt_install_examples" = "yes"; then
+	EXAMPLES_INSTALL_TARGET=install-examples
+fi
+AC_SUBST(EXAMPLES_INSTALL_TARGET)
+
+case "$build_os" in
 msdosdjgpp*)	BUILD_DIR=`pwd.exe` ;;	# to prevent //d/path/file
 *)		BUILD_DIR=`pwd` ;;
 esac
@@ -274,7 +291,6 @@ case "$BUILD_DIR" in
 *)	;;
 esac
 
-AC_SUBST(PURIFY)
 AC_SUBST(BUILD_DIR)
 
 AC_SUBST(CFLAGS)
@@ -291,8 +307,9 @@ AC_SUBST(host_os)
 AC_SUBST(LIBVERSION)
 
 AC_SUBST(TERMCAP_LIB)
+AC_SUBST(TERMCAP_PKG_CONFIG_LIB)
 
-AC_OUTPUT([Makefile doc/Makefile examples/Makefile shlib/Makefile],
+AC_OUTPUT([Makefile doc/Makefile examples/Makefile shlib/Makefile readline.pc],
 [
 # Makefile uses this timestamp file to record whether config.h is up to date.
 echo > stamp-h

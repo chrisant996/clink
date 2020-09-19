@@ -40,19 +40,24 @@ Copyright (C) 1999 Jeff Solomon
 #include <config.h>
 #endif
 
-#include <stdio.h>
 #include <sys/types.h>
 
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif
+#include <stdlib.h>
 
+#include <stdio.h>
 #include <termios.h>	/* xxx - should make this more general */
 
 #ifdef READLINE_LIBRARY
 #  include "readline.h"
 #else
 #  include <readline/readline.h>
+#endif
+
+#ifndef STDIN_FILENO
+#  define STDIN_FILENO 0
 #endif
 
 /* This little examples demonstrates the alternate interface to using readline.

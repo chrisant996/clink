@@ -1,6 +1,6 @@
 /* tilde.c -- Tilde expansion code (~/foo := $HOME/foo). */
 
-/* Copyright (C) 1988-2009 Free Software Foundation, Inc.
+/* Copyright (C) 1988-2017 Free Software Foundation, Inc.
 
    This file is part of the GNU Readline Library (Readline), a library
    for reading lines of text with interactive input and history editing.
@@ -125,9 +125,7 @@ static char *glue_prefix_and_suffix PARAMS((char *, const char *, int));
    the tilde which starts the expansion.  Place the length of the text
    which identified this tilde starter in LEN, excluding the tilde itself. */
 static int
-tilde_find_prefix (string, len)
-     const char *string;
-     int *len;
+tilde_find_prefix (const char *string, int *len)
 {
   register int i, j, string_len;
   register char **prefixes;
@@ -160,8 +158,7 @@ tilde_find_prefix (string, len)
 /* Find the end of a tilde expansion in STRING, and return the index of
    the character which ends the tilde definition.  */
 static int
-tilde_find_suffix (string)
-     const char *string;
+tilde_find_suffix (const char *string)
 {
   register int i, j, string_len;
   register char **suffixes;
@@ -189,8 +186,7 @@ tilde_find_suffix (string)
 
 /* Return a new string which is the result of tilde expanding STRING. */
 char *
-tilde_expand (string)
-     const char *string;
+tilde_expand (const char *string)
 {
   char *result;
   int result_size, result_index;
@@ -236,7 +232,11 @@ tilde_expand (string)
       string += end;
 
       expansion = tilde_expand_word (tilde_word);
-      xfree (tilde_word);
+
+      if (expansion == 0)
+	expansion = tilde_word;
+      else
+	xfree (tilde_word);	
 
       len = strlen (expansion);
 #ifdef __CYGWIN__
@@ -263,9 +263,7 @@ tilde_expand (string)
    non-null, the index of the end of the prefix into FNAME is returned in
    the location it points to. */
 static char *
-isolate_tilde_prefix (fname, lenp)
-     const char *fname;
-     int *lenp;
+isolate_tilde_prefix (const char *fname, int *lenp)
 {
   char *ret;
   int i;
@@ -289,9 +287,7 @@ isolate_tilde_prefix (fname, lenp)
    function.  Right now, it just calls tilde_find_suffix and allocates new
    memory, but it can be expanded to do different things later. */
 char *
-tilde_find_word (fname, flags, lenp)
-     const char *fname;
-     int flags, *lenp;
+tilde_find_word (const char *fname, int flags, int *lenp)
 {
   int x;
   char *r;
@@ -319,10 +315,7 @@ tilde_find_word (fname, flags, lenp)
 /* Return a string that is PREFIX concatenated with SUFFIX starting at
    SUFFIND. */
 static char *
-glue_prefix_and_suffix (prefix, suffix, suffind)
-     char *prefix;
-     const char *suffix;
-     int suffind;
+glue_prefix_and_suffix (char *prefix, const char *suffix, int suffind)
 {
   char *ret;
   int plen, slen;
@@ -340,8 +333,7 @@ glue_prefix_and_suffix (prefix, suffix, suffind)
    tilde.  If there is no expansion, call tilde_expansion_failure_hook.
    This always returns a newly-allocated string, never static storage. */
 char *
-tilde_expand_word (filename)
-     const char *filename;
+tilde_expand_word (const char *filename)
 {
   char *dirname, *expansion, *username;
   int user_len;
@@ -360,6 +352,10 @@ tilde_expand_word (filename)
     {
       /* Prefix $HOME to the rest of the string. */
       expansion = sh_get_env_value ("HOME");
+#if defined (_WIN32)
+      if (expansion == 0)
+	expansion = sh_get_env_value ("APPDATA");
+#endif
 
       /* If there is no HOME variable, look up the directory in
 	 the password database. */
@@ -426,9 +422,7 @@ tilde_expand_word (filename)
 #undef NULL
 #include <stdio.h>
 
-main (argc, argv)
-     int argc;
-     char **argv;
+main (int argc, char **argv)
 {
   char *result, line[512];
   int done = 0;
@@ -456,11 +450,10 @@ main (argc, argv)
   exit (0);
 }
 
-static void memory_error_and_abort ();
+static void memory_error_and_abort (void);
 
 static void *
-xmalloc (bytes)
-     size_t bytes;
+xmalloc (size_t bytes)
 {
   void *temp = (char *)malloc (bytes);
 
@@ -470,9 +463,7 @@ xmalloc (bytes)
 }
 
 static void *
-xrealloc (pointer, bytes)
-     void *pointer;
-     int bytes;
+xrealloc (void *pointer, int bytes)
 {
   void *temp;
 
@@ -488,7 +479,7 @@ xrealloc (pointer, bytes)
 }
 
 static void
-memory_error_and_abort ()
+memory_error_and_abort (void)
 {
   fprintf (stderr, "readline: out of virtual memory\n");
   abort ();

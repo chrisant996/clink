@@ -1,6 +1,6 @@
 /* xfree.c -- safe version of free that ignores attempts to free NUL */
 
-/* Copyright (C) 1991-2010 Free Software Foundation, Inc.
+/* Copyright (C) 1991-2010,2017 Free Software Foundation, Inc.
 
    This file is part of the GNU Readline Library (Readline), a library
    for reading lines of text with interactive input and history editing.      
@@ -42,8 +42,7 @@
 /* Use this as the function to call when adding unwind protects so we
    don't need to know what free() returns. */
 void
-xfree (string)
-     PTR_T string;
+xfree (PTR_T string)
 {
   if (string)
     free (string);

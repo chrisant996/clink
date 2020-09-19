@@ -1093,3 +1093,261 @@ xfree.c
 				   -----
 {examples,shlib}/Makefile.in
 	- Cygwin-based changes from Eric Blake <eblake@redhat.com>
+
+				 3/26/2011
+				 ---------
+Makefile.in
+	- don't ignore failures when building, installing, or cleaning in
+	  the shlib subdirectory.  Sample patch from Mike Frysinger
+	  <vapier@gentoo.org>
+
+shlib/Makefile.in
+	- split the install and uninstall targets into install-supported and
+	  install-unsupported targets that depend on the value of
+	  SHLIB_STATUS
+
+				    4/2
+				    ---
+{,shlib}/Makefile.in
+	- add dependency for callback.o/callback.so on xmalloc.h.  From
+	  Jan Kratochvil  <jan.kratochvil@redhat.com>
+
+{,doc,examples,shlib}/Makefile.in
+	- fix typo: htm target should be html.  From Jan Kratochvil
+	  <jan.kratochvil@redhat.com>
+	- remove `.' from VPATH.  From Jan Kratochvil
+	   <jan.kratochvil@redhat.com>
+
+examples/rlfe/configure.in
+	- quote AC_PROGRAM_SOURCE.  From Jan Kratochvil
+	   <jan.kratochvil@redhat.com>
+
+				   5/17
+				   ----
+config.h.in
+	- WCWIDTH_BROKEN: new define, picked up from bash, defined on systems
+	  where wcwidth returns 1 for Unicode combining characters
+
+				   11/28
+				   -----
+support/shlib-install
+	- make sure solaris2 systems make the installed shared library
+	  executable.  ldd warns about it otherwise.  Bug and fix from
+	  Tim Mooney <tim.mooney@ndsu.edu>
+
+examples/hist_erasedups.c
+	- new example program, shows how to erase duplicates from the history
+	  list
+
+examples/hist_purgecmd.c
+	- new example program, shows how to remove all entries matching a
+	  string or pattern from the history list
+
+				 1/12/2012
+				 ---------
+colors.[ch],parse-colors.[ch]}
+	- new files, part of color infrastructure support
+
+Makefile.in,shlib/Makefile.in
+	- arrange to have colors.o and parse-colors.o added to library
+	  (static and shared versions)
+
+{configure,config.h}.in
+	- check for stdbool.h, define HAVE_STDBOOL_H if found
+
+rldefs.h
+	- COLOR_SUPPORT: if defined, compile in colors.c and parse-colors.c
+	  for color support
+
+				   1/18
+				   ----
+
+{configure,config.h}.in
+        - new check: check for AUDIT_USER_TTY defined in <linux/audit.h>,
+          define HAVE_DECL_AUDIT_USER_TTY if both are found
+
+				    8/7
+				    ---
+configure.in
+	- AC_CANONICAL_BUILD: call to set the build_xxx variables
+	- use $build_os instead of $host_os to decide when DJGPP should run
+	  `pwd.exe' to figure out the build directory.  Report and fix from
+	  Yao Qi <yao@codesourcery.com>
+
+				   8/29
+				   ----
+configure.ac
+	- new name for configure.in
+
+MANIFEST,Makefile.in
+	- configure.in -> configure.ac
+
+				 1/5/2013
+				 --------
+configure.ac
+	- move version number up to 6.3
+
+				   1/31
+				   ----
+configure.ac
+	- use AC_CHECK_TOOL instead of AC_CHECK_PROG to check for ar, since it
+	  will find $host-prefixed versions of utilities.  Report and fix from
+	  Mike Frysinger <vapier@gentoo.org>
+
+				    3/4
+				    ---
+Makefile.in
+        - PACKAGE_TARNAME, docdir: new variables substituted by autoconf
+        - OTHER_DOCS,OTHER_INSTALLED_DOCS: new variables with auxiliary
+	  documentation files to be installed into $(docdir)
+        - install: add new rule to install $(OTHER_DOCS)
+        - uninstall: add new rule to uninstall $(docdir)/$(OTHER_INSTALLED_DOCS)
+
+				   4/29
+				   ----
+Makefile.in
+	- installdirs: make sure to create $(DESTDIR)$(docdir).  Report from
+	  <hiroo.hayashi@computer.org>
+
+				 1/27/2014
+				 ---------
+Makefile.in
+	- install-examples: should not depend on `shared', since the examples
+	  themselves are not built using shared libraries.  Report from
+	  <hiroo.hayashi@computer.org>
+
+support/shobj-conf
+	- [from bash] darwin: changed the install_name embedded into the
+	  shared library to contain only the major version number, not the
+	  minor one. The idea is that the minor versions should all be API/ABI
+	  compatible, and it is better to link automatically with the latest
+	  one.  Idea from Max Horn <max@quendi.de>
+
+				 2/26/2014
+				 ---------
+[readline-6.3 released]
+
+				   3/14
+				   ----
+shlib/Makefile.in
+	- fix typo in dependency list for vi_mode.so: it should not depend on
+	  just $(topdir). Report and fix from Natanael Copa
+	  <ncopa@alpinelinux.org>
+
+				   4/15
+				   ----
+{.,shlib,examples}/Makefile.in
+	- make sure $(INCLUDES) appears before $(CPPFLAGS) in the various
+	  CFLAGS assignments so readline looks in its own source and build
+	  directories (INCLUDES) before some directories specified by the
+	  user or builder (CPPFLAGS).  Report and fix from Max Horn
+	  <max@quendi.de>
+
+				    6/2
+				    ---
+config.h.in
+	- use correct symbols: HAVE_STRUCT_DIRENT_D_INO, HAVE_STRUCT_DIRENT_D_FILENO
+	  HAVE_STRUCT_DIRENT_D_NAMLEN.  They don't really matter, but they are
+	  what posixdir.h looks for.  Report from Ross Burton <ross.burton@intel.com>
+
+				   6/11
+				   ----
+readline.pc.in
+	- new file, config file for pkgconfig. Patch to add from Jirka Klimes
+	  <jklimes@redhat.com>
+
+{MANIFEST,configure.ac,Makefile.in}
+	- readline.pc: changes to create file for pkgconfig
+
+				   10/13
+				   -----
+doc/Makefile.in
+	- readline.pdf, history.pdf, rluserman.pdf: use texi2dvi --pdf to generate
+	  these.  Suggestion from Siep Kroonenberg <siepo@cybercomm.nl>
+
+				   11/29
+				   -----
+config.h.in
+        - HAVE_PSELECT: define if pselect(2) available
+
+configure.ac
+        - check for pselect(2), define HAVE_PSELECT if found
+
+				   12/29
+				   -----
+configure.ac
+	- bump version number up to 6.4
+
+				 1/6/2015
+				 --------
+configure.ac,config.h.in
+	- look for ncurses/termcap.h, define HAVE_NCURSES_TERMCAP_H
+
+				   4/20
+				   ----
+configure.ac
+	- add template definitions set by AC_USE_SYSTEM_EXTENSIONS from a report
+	  from Andreas Schwab <schwab@linux-m68k.org>
+
+				   4/24
+				   ----
+configure.ac,config.h.in
+	- add check for sys/ioctl.h to AC_CHECK_HEADERS, define HAVE_SYS_IOCTL_H
+	  if found
+
+				   5/29
+				   ----
+configure.ac
+	- bump library version to 7.0 because of addition of rl_callback_sigcleanup
+
+				   8/26
+				   ----
+configure.ac,Makefile.in,examples/Makefile.in
+	- remove references to purify
+
+				   11/21
+				   -----
+configure.ac,config.h.in
+	- fnmatch: check for libc function, define HAVE_FNMATCH if found. Now
+	  used by vi-mode history search functions
+
+				   7/12
+				   ----
+Makefile.in,examples/Makefile.in
+	- add support for building with address sanitizer, using new target
+	  `asan'
+
+				 4/23/2018
+				 ---------
+configure.ac
+	- TERMCAP_PKG_CONFIG_LIB: new variable, defined from TERMCAP_LIB,
+	  defaults to termcap
+
+readline.pc.in
+	- change Requires.private to use TERMCAP_PKG_CONFIG_LIB instead of
+	  hardcoded `tinfo'. Report and fix from Thomas Petazzoni
+	  <thomas.petazzoni@bootlin.com>
+
+				    5/4
+				    ---
+Makefile.in
+	- new targets to install and uninstall the `readline.pc' pkgconfig
+	  file
+	- install-{static,shared}: add install-pc to the list of prereqs
+	- uninstall{,-shared}: add uninstall-pc to list of prereqs. Change
+	  from Thomas Petazzoni <thomas.petazzoni@bootlin.com>
+
+configure.ac,Makefile.in
+	- add new configure option to optionally disable installing the
+	  source code examples. From Thomas Petazzoni <thomas.petazzoni@bootlin.com>
+
+				   5/23
+				   ----
+Makefile.in
+	- install-pc: make sure we install readline.pc into an existing
+	  pkgconfig directory. Report from ilove zfs <ilovezfs@icloud.com>
+
+				   5/24
+				   ----
+Makefile.in
+	- installdirs: create $(pkgconfigdir) if it doesn't exist

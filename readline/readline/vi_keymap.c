@@ -1,6 +1,6 @@
 /* vi_keymap.c -- the keymap for vi_mode in readline (). */
 
-/* Copyright (C) 1987-2009 Free Software Foundation, Inc.
+/* Copyright (C) 1987-2017 Free Software Foundation, Inc.
 
    This file is part of the GNU Readline Library (Readline), a library
    for reading lines of text with interactive input and history editing.      
@@ -55,7 +55,7 @@ KEYMAP_ENTRY_ARRAY vi_movement_keymap = {
   { ISFUNC, rl_transpose_chars },		/* Control-t */
   { ISFUNC, rl_unix_line_discard },		/* Control-u */
   { ISFUNC, rl_quoted_insert },			/* Control-v */
-  { ISFUNC, rl_unix_word_rubout },		/* Control-w */
+  { ISFUNC, rl_vi_unix_word_rubout },		/* Control-w */
   { ISFUNC, (rl_command_func_t *)0x0 },		/* Control-x */
   { ISFUNC, rl_yank },				/* Control-y */
   { ISFUNC, (rl_command_func_t *)0x0 },		/* Control-z */
@@ -309,7 +309,6 @@ KEYMAP_ENTRY_ARRAY vi_movement_keymap = {
 #endif /* KEYMAP_SIZE > 128 */
 };
 
-
 KEYMAP_ENTRY_ARRAY vi_insertion_keymap = {
   /* The regular control keys come first. */
   { ISFUNC, (rl_command_func_t *)0x0 },		/* Control-@ */
@@ -335,7 +334,7 @@ KEYMAP_ENTRY_ARRAY vi_insertion_keymap = {
   { ISFUNC, rl_transpose_chars },		/* Control-t */
   { ISFUNC, rl_unix_line_discard },		/* Control-u */
   { ISFUNC, rl_quoted_insert },			/* Control-v */
-  { ISFUNC, rl_unix_word_rubout },		/* Control-w */
+  { ISFUNC, rl_vi_unix_word_rubout },		/* Control-w */
   { ISFUNC, rl_insert },			/* Control-x */
   { ISFUNC, rl_yank },				/* Control-y */
   { ISFUNC, rl_insert },			/* Control-z */

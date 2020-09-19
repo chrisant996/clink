@@ -137,7 +137,7 @@ fcopy(fp)
       if (vflag && isascii ((unsigned char)c) && isprint((unsigned char)c) == 0)
 	{
 	  x = rl_untranslate_keyseq (c);
-	  if (fputs (x, stdout) != 0)
+	  if (fputs (x, stdout) == EOF)
 	    return 1;
 	}
       else if (putchar (c) == EOF)

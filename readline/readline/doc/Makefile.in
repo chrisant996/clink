@@ -16,14 +16,17 @@
 #   You should have received a copy of the GNU General Public License
 #   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+PACKAGE_TARNAME = @PACKAGE_TARNAME@
+
 topdir = @top_srcdir@
 srcdir = @srcdir@
-VPATH = .:@srcdir@
+VPATH = @srcdir@
 
 prefix = @prefix@
 
 datarootdir = @datarootdir@
 
+docdir = @docdir@
 infodir = @infodir@
 
 mandir = @mandir@
@@ -56,6 +59,8 @@ QUIETPS     = #set this to -q to shut up dvips
 PAPERSIZE   = letter
 PSDPI       = 600
 DVIPS       = dvips -D ${PSDPI} $(QUIETPS) -t ${PAPERSIZE} -o $@     # tricky
+# experimental; uses external texi2dvi for now; this needs pdftex to be present
+TEXI2PDF    = texi2dvi --pdf
 
 # These tools might not be available; they're not required
 DVIPDF      = dvipdfm -o $@ -p ${PAPERSIZE}
@@ -97,6 +102,10 @@ DIST_DOCS = $(DVIOBJ) $(PSOBJ) $(HTMLOBJ) $(INFOOBJ) $(TEXTOBJ) $(PDFOBJ)
 .dvi.pdf:
 	$(RM) $@
 	-${DVIPDF} $<
+
+#.texi.pdf:
+#	$(RM) $@
+#	-${TEXI2PDF} $<
 
 all: info dvi html ps text pdf
 nodvi: info html text
@@ -167,9 +176,15 @@ history_3.ps: $(srcdir)/history.3
 	${RM} $@
 	${GROFF} -man < $(srcdir)/history.3 > $@ 
 
-readline.pdf:	readline.dvi
-history.pdf:	history.dvi
-rluserman.pdf:	rluserman.dvi
+readline.pdf:	$(RLSRC)
+	TEXINPUTS=.:$(TEXINPUTDIR):$$TEXINPUTS $(TEXI2PDF) $(srcdir)/rlman.texi
+	mv rlman.pdf $@
+
+history.pdf:	$(HISTSRC)
+	TEXINPUTS=.:$(TEXINPUTDIR):$$TEXINPUTS $(TEXI2PDF) $(srcdir)/history.texi
+
+rluserman.pdf:	$(RLSRC)
+	TEXINPUTS=.:$(TEXINPUTDIR):$$TEXINPUTS $(TEXI2PDF) $(srcdir)/rluserman.texi
 
 clean:
 	$(RM) *.aux *.bak *.cp *.fn *.ky *.log *.pg *.toc *.tp *.vr *.cps \

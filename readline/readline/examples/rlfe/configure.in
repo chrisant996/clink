@@ -8,7 +8,7 @@ AC_SUBST(VERSION)
 dnl
 dnl Define some useful macros
 dnl
-AC_DEFUN(AC_PROGRAM_SOURCE,
+AC_DEFUN([AC_PROGRAM_SOURCE],
 [AC_REQUIRE([AC_PROG_CPP])AC_PROVIDE([$0])cat > conftest.c <<EOF
 #include "confdefs.h"
 [$1]
@@ -223,6 +223,7 @@ AC_TRY_LINK(,tgetent((char *)0, (char *)0);,,
 AC_MSG_ERROR(!!! no tgetent - no screen))))))
 
 AC_TRY_RUN([
+extern char *tgoto();
 main()
 {
  exit(strcmp(tgoto("%p1%d", 0, 1), "1") ? 0 : 1);
@@ -435,6 +436,7 @@ main()
 
 fi
 
-AC_CHECK_HEADERS(sys/stropts.h sys/wait.h)
+AC_CHECK_HEADERS(sys/stropts.h sys/wait.h sgtty.h sys/select.h)
+AC_CHECK_HEADERS(term.h)
 
 AC_OUTPUT(Makefile)

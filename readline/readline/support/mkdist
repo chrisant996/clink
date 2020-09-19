@@ -2,7 +2,7 @@
 #
 # mkdist - make a distribution directory from a master manifest file
 #
-# usage: mkdist [-m manifest] [-s srcdir] [-r rootname] [-v] version
+# usage: mkdist [-m manifest] [-s srcdir] [-r rootname] [-t] [-v] version
 #
 # SRCDIR defaults to src
 # MANIFEST defaults to $SRCDIR/MANIFEST
@@ -31,7 +31,7 @@ ROOTNAME=bash
 
 usage()
 {
-	echo usage: mkdist [-m manifest] [-s srcdir] [-r rootname] [-v] version 1>&2
+	echo usage: mkdist [-m manifest] [-s srcdir] [-r rootname] [-t] [-v] version 1>&2
 	exit 2
 }
 
@@ -42,12 +42,13 @@ vmsg()
 	fi
 }
 
-while getopts m:s:r:v name
+while getopts m:s:r:tv name
 do
 	case $name in
 	m)	MANIFEST=$OPTARG ;;
 	s)	SRCDIR=$OPTARG ;;
 	r)	ROOTNAME=$OPTARG ;;
+	t)	maketar=yes ;;
 	v)	verbose=yes ;;
 	?)	usage ;;
 	esac
@@ -65,6 +66,8 @@ fi
 
 version=$1
 newdir=${ROOTNAME}-$version
+
+tarfile=${newdir}.tar
 
 vmsg creating distribution for $ROOTNAME version $version in $newdir
 
@@ -116,5 +119,11 @@ done < $MANIFEST
 #echo ${plevel} > $newdir/.patchlevel
 
 vmsg $newdir created
+
+if [ -n "$maketar" ]; then
+	tar cf ${tarfile} $newdir
+	gzip $tarfile
+	vmsg ${tarfile}.gz created
+fi
 
 exit 0

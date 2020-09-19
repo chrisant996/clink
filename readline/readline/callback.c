@@ -1,6 +1,6 @@
 /* callback.c -- functions to use readline as an X `callback' mechanism. */
 
-/* Copyright (C) 1987-2009 Free Software Foundation, Inc.
+/* Copyright (C) 1987-2017 Free Software Foundation, Inc.
 
    This file is part of the GNU Readline Library (Readline), a library
    for reading lines of text with interactive input and history editing.
@@ -50,9 +50,17 @@
 _rl_callback_func_t *_rl_callback_func = 0;
 _rl_callback_generic_arg *_rl_callback_data = 0;
 
+/* Applications can set this to non-zero to have readline's signal handlers
+   installed during the entire duration of reading a complete line, as in
+   readline-6.2.  This should be used with care, because it can result in
+   readline receiving signals and not handling them until it's called again
+   via rl_callback_read_char, thereby stealing them from the application.
+   By default, signal handlers are only active while readline is active. */   
+int rl_persistent_signal_handlers = 0;
+
 /* **************************************************************** */
 /*								    */
-/*			Callback Readline Functions		 */
+/*			Callback Readline Functions		    */
 /*								    */
 /* **************************************************************** */
 
@@ -62,15 +70,17 @@ _rl_callback_generic_arg *_rl_callback_data = 0;
    whenever a complete line of input is ready.  The user must then
    call rl_callback_read_char() every time some input is available, and 
    rl_callback_read_char() will call the user's function with the complete
-   text read in at each end of line.  The terminal is kept prepped and
-   signals handled all the time, except during calls to the user's function. */
+   text read in at each end of line.  The terminal is kept prepped
+   all the time, except during calls to the user's function.  Signal
+   handlers are only installed when the application calls back into
+   readline, so readline doesn't `steal' signals from the application.  */
 
 rl_vcpfunc_t *rl_linefunc;		/* user callback function */
 static int in_handler;		/* terminal_prepped and signals set? */
 
 /* Make sure the terminal is set up, initialize readline, and prompt. */
 static void
-_rl_callback_newline ()
+_rl_callback_newline (void)
 {
   rl_initialize ();
 
@@ -82,7 +92,8 @@ _rl_callback_newline ()
 	(*rl_prep_term_function) (_rl_meta_flag);
 
 #if defined (HANDLE_SIGNALS)
-      rl_set_signals ();
+      if (rl_persistent_signal_handlers)
+	rl_set_signals ();
 #endif
     }
 
@@ -92,9 +103,7 @@ _rl_callback_newline ()
 
 /* Install a readline handler, set up the terminal, and issue the prompt. */
 void
-rl_callback_handler_install (prompt, linefunc)
-     const char *prompt;
-     rl_vcpfunc_t *linefunc;
+rl_callback_handler_install (const char *prompt, rl_vcpfunc_t *linefunc)
 {
   rl_set_prompt (prompt);
   RL_SETSTATE (RL_STATE_CALLBACK);
@@ -102,9 +111,20 @@ rl_callback_handler_install (prompt, linefunc)
   _rl_callback_newline ();
 }
 
+#if defined (HANDLE_SIGNALS)
+#define CALLBACK_READ_RETURN() \
+  do { \
+    if (rl_persistent_signal_handlers == 0) \
+      rl_clear_signals (); \
+    return; \
+  } while (0)
+#else
+#define CALLBACK_READ_RETURN() return
+#endif
+
 /* Read one character, and dispatch to the handler if it ends the line. */
 void
-rl_callback_read_char ()
+rl_callback_read_char (void)
 {
   char *line;
   int eof, jcode;
@@ -117,14 +137,24 @@ rl_callback_read_char ()
     }
 
   memcpy ((void *)olevel, (void *)_rl_top_level, sizeof (procenv_t));
+#if defined (HAVE_POSIX_SIGSETJMP)
+  jcode = sigsetjmp (_rl_top_level, 0);
+#else
   jcode = setjmp (_rl_top_level);
+#endif
   if (jcode)
     {
       (*rl_redisplay_function) ();
       _rl_want_redisplay = 0;
       memcpy ((void *)_rl_top_level, (void *)olevel, sizeof (procenv_t));
-      return;
+      CALLBACK_READ_RETURN ();
     }
+
+#if defined (HANDLE_SIGNALS)
+  /* Install signal handlers only when readline has control. */
+  if (rl_persistent_signal_handlers == 0)
+    rl_set_signals ();
+#endif
 
   do
     {
@@ -135,20 +165,54 @@ rl_callback_read_char ()
 	  if (eof == 0 && (RL_ISSTATE (RL_STATE_ISEARCH) == 0) && RL_ISSTATE (RL_STATE_INPUTPENDING))
 	    rl_callback_read_char ();
 
-	  return;
+	  CALLBACK_READ_RETURN ();
 	}
       else if  (RL_ISSTATE (RL_STATE_NSEARCH))
 	{
 	  eof = _rl_nsearch_callback (_rl_nscxt);
-	  return;
+
+	  CALLBACK_READ_RETURN ();
 	}
 #if defined (VI_MODE)
+      /* States that can occur while in state VIMOTION have to be checked
+	 before RL_STATE_VIMOTION */
+      else if (RL_ISSTATE (RL_STATE_CHARSEARCH))
+	{
+	  int k;
+
+	  k = _rl_callback_data->i2;
+
+	  eof = (*_rl_callback_func) (_rl_callback_data);
+	  /* If the function `deregisters' itself, make sure the data is
+	     cleaned up. */
+	  if (_rl_callback_func == 0)	/* XXX - just sanity check */
+	    {
+	      if (_rl_callback_data)
+		{
+		  _rl_callback_data_dispose (_rl_callback_data);
+		  _rl_callback_data = 0;
+		}
+	    }
+
+	  /* Messy case where vi motion command can be char search */
+	  if (RL_ISSTATE (RL_STATE_VIMOTION))
+	    {
+	      _rl_vi_domove_motion_cleanup (k, _rl_vimvcxt);
+	      _rl_internal_char_cleanup ();
+	      CALLBACK_READ_RETURN ();	      
+	    }
+
+	  _rl_internal_char_cleanup ();
+	}
       else if (RL_ISSTATE (RL_STATE_VIMOTION))
 	{
 	  eof = _rl_vi_domove_callback (_rl_vimvcxt);
 	  /* Should handle everything, including cleanup, numeric arguments,
 	     and turning off RL_STATE_VIMOTION */
-	  return;
+	  if (RL_ISSTATE (RL_STATE_NUMERICARG) == 0)
+	    _rl_internal_char_cleanup ();
+
+	  CALLBACK_READ_RETURN ();
 	}
 #endif
       else if (RL_ISSTATE (RL_STATE_NUMERICARG))
@@ -160,7 +224,7 @@ rl_callback_read_char ()
 	  else if (RL_ISSTATE (RL_STATE_NUMERICARG) == 0)
 	    _rl_internal_char_cleanup ();
 
-	  return;
+	  CALLBACK_READ_RETURN ();
 	}
       else if (RL_ISSTATE (RL_STATE_MULTIKEY))
 	{
@@ -177,7 +241,7 @@ rl_callback_read_char ()
 	{
 	  /* This allows functions that simply need to read an additional
 	     character (like quoted-insert) to register a function to be
-	     called when input is available.  _rl_callback_data is simply a
+	     called when input is available.  _rl_callback_data is a
 	     pointer to a struct that has the argument count originally
 	     passed to the registering function and space for any additional
 	     parameters.  */
@@ -227,11 +291,13 @@ rl_callback_read_char ()
 	}
     }
   while (rl_pending_input || _rl_pushed_input_available () || RL_ISSTATE (RL_STATE_MACROINPUT));
+
+  CALLBACK_READ_RETURN ();
 }
 
 /* Remove the handler, and make sure the terminal is in its normal state. */
 void
-rl_callback_handler_remove ()
+rl_callback_handler_remove (void)
 {
   rl_linefunc = NULL;
   RL_UNSETSTATE (RL_STATE_CALLBACK);
@@ -248,8 +314,7 @@ rl_callback_handler_remove ()
 }
 
 _rl_callback_generic_arg *
-_rl_callback_data_alloc (count)
-     int count;
+_rl_callback_data_alloc (int count)
 {
   _rl_callback_generic_arg *arg;
 
@@ -261,10 +326,35 @@ _rl_callback_data_alloc (count)
   return arg;
 }
 
-void _rl_callback_data_dispose (arg)
-     _rl_callback_generic_arg *arg;
+void
+_rl_callback_data_dispose (_rl_callback_generic_arg *arg)
 {
   xfree (arg);
 }
 
+/* Make sure that this agrees with cases in rl_callback_read_char */
+void
+rl_callback_sigcleanup (void)
+{
+  if (RL_ISSTATE (RL_STATE_CALLBACK) == 0)
+    return;
+
+  if (RL_ISSTATE (RL_STATE_ISEARCH))
+    _rl_isearch_cleanup (_rl_iscxt, 0);
+  else if (RL_ISSTATE (RL_STATE_NSEARCH))
+    _rl_nsearch_cleanup (_rl_nscxt, 0);
+  else if (RL_ISSTATE (RL_STATE_VIMOTION))
+    RL_UNSETSTATE (RL_STATE_VIMOTION);
+  else if (RL_ISSTATE (RL_STATE_NUMERICARG))
+    {
+      _rl_argcxt = 0;
+      RL_UNSETSTATE (RL_STATE_NUMERICARG);
+    }
+  else if (RL_ISSTATE (RL_STATE_MULTIKEY))
+    RL_UNSETSTATE (RL_STATE_MULTIKEY);
+  if (RL_ISSTATE (RL_STATE_CHARSEARCH))
+    RL_UNSETSTATE (RL_STATE_CHARSEARCH);
+
+  _rl_callback_func = 0;
+}
 #endif

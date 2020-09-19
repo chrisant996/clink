@@ -28,6 +28,13 @@
 #  include <config.h>
 #endif
 
+#ifdef HAVE_UNISTD_H
+#  include <unistd.h>
+#else
+extern int getopt();
+extern int sleep();
+#endif
+
 #include <stdio.h>
 #include <sys/types.h>
 

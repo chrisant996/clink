@@ -1,3 +1,469 @@
+This document details the changes between this version, readline-8.0, and the
+previous version, readline-7.0.
+
+1.  Changes to Readline
+
+a. Added a guard to prevent nested macros from causing an infinite expansion
+   loop.
+
+b. Instead of allocating enough history list entries to hold the maximum list
+   size, cap the number allocated initially.
+   
+c. Added a strategy to avoid allocating huge amounts of memory if a block of
+   history entries without timestamps occurs after a block with timestamps.
+
+d. Added support for keyboard timeouts when an ESC character is the last
+   character in a macro.
+
+e. There are several performance improvements when in a UTF-8 locale.
+
+f. Readline does a better job of preserving the original set of blocked
+   signals when using pselect() to wait for input.
+
+g. Fixed a bug that caused multibyte characters in macros to be mishandled.
+
+h. Fixed several bugs in the code that calculates line breaks when expanding
+   prompts that span several lines, contain multibyte characters, and contain
+   invisible character seqeuences.
+
+i. Fixed several bugs in cursor positioning when displaying lines with prompts
+   containing invisible characters and multibyte characters.
+
+j. When performing case-insensitive completion, Readline no longer sorts the
+   list of matches unless directed to do so.
+
+k. Fixed a problem with key sequences ending with a backslash.
+
+l. Fixed out-of-bounds and free memory read errors found via fuzzing.
+
+m. Fixed several cases where the mark was set to an invalid value.
+
+n. Fixed a problem with the case-changing operators in the case where the
+   lower and upper case versions of a character do not have the same number
+   of bytes.
+
+o. Handle incremental and non-incremental search character reads returning EOF.
+
+p. Handle the case where a failing readline command at the end of a multi-key
+   sequence could be misinterpreted.
+
+q. The history library now prints a meaningful error message if the history
+   file isn't a regular file.
+
+r. Fixed a problem with vi-mode redo (`.') on a command when trying to replace
+   a multibyte character.
+
+s. The key binding code now attempts to remove a keymap if a key unbinding
+   leaves it empty.
+
+t. Fixed a line-wrapping issue that caused problems for some terminal
+   emulators.
+
+u. If there is a key bound to the tty's VDISCARD special character, readline
+   disables VDISCARD while it is active.
+
+v. Fixed a problem with exiting bracketed paste mode on terminals that assume
+   the bracketed paste mode character sequence contains visible characters.
+
+w. Fixed a bug that could cause a key binding command to refer to an
+   uninitialized variable.
+
+x. Added more UTF-8-specific versions of multibyte functions, and optimized
+   existing functions if the current locale uses UTF-8 encoding.
+
+y. Fixed a problem with bracketed-paste inserting more than one character and
+   interacting with other readline functions.
+
+z. Fixed a bug that caused the history library to attempt to append a history
+   line to a non-existent history entry.
+
+aa. If using bracketed paste mode, output a newline after the \r that is the
+    last character of the mode disable string to avoid overwriting output.
+
+bb. Fixes to the vi-mode `b', `B', `w', `W', `e', and `E' commands to better
+    handle multibyte characters.
+
+cc. Fixed a redisplay problem that caused an extra newline to be generated on
+    accept-line when the line length is exactly the screenwidth.
+
+dd. Fixed a bug with adding multibyte characters to an incremental search
+    string.
+
+ee. Fixed a bug with redoing text insertions in vi mode.
+
+ff. Fixed a bug with pasting text into an incremental search string if bracketed
+    paste mode is enabled. ESC cannot be one of the incremental search
+    terminator characters for this to work.
+
+gg. Fixed a bug with anchored search patterns when performing searches in vi
+    mode.
+
+2.  New Features in Readline
+
+a. Non-incremental vi-mode search (`N', `n') can search for a shell pattern, as
+   Posix specifies (uses fnmatch(3) if available).
+
+b. There are new `next-screen-line' and `previous-screen-line' bindable
+   commands, which move the cursor to the same column in the next, or previous,
+   physical line, respectively.
+
+c. There are default key bindings for control-arrow-key key combinations.
+
+d. A negative argument (-N) to `quoted-insert' means to insert the next N
+   characters using quoted-insert.
+
+e. New public function: rl_check_signals(), which allows applications to
+   respond to signals that readline catches while waiting for input using
+   a custom read function.
+
+f. There is new support for conditionally testing the readline version in an
+   inputrc file, with a full set of arithmetic comparison operators available.
+
+g. There is a simple variable comparison facility available for use within an
+   inputrc file. Allowable operators are equality and inequality; string
+   variables may be compared to a value; boolean variables must be compared to
+   either `on' or `off'; variable names are separated from the operator by
+   whitespace.
+
+h. The history expansion library now understands command and process
+   substitution and extended globbing and allows them to appear anywhere in a
+   word.
+
+i. The history library has a new variable that allows applications to set the
+   initial quoting state, so quoting state can be inherited from a previous
+   line.
+
+j. Readline now allows application-defined keymap names; there is a new public
+   function, rl_set_keymap_name(), to do that.
+
+k. The "Insert" keypad key, if available, now puts readline into overwrite
+   mode.
+
+-------------------------------------------------------------------------------
+This document details the changes between this version, readline-7.0, and the
+previous version, readline-6.3.
+
+1.  Changes to Readline
+
+a.  A bug that caused vi-mode `.' to be unable to redo `c', `d', and `y'
+    commands with modifiers was fixed.
+
+b.  Fixed a bug that caused callback mode to dump core when reading a
+    multiple-key sequence (e.g., arrow keys).
+
+c.  Fixed a bug that caused the redisplay code to erase some of the line when
+    using horizontal scrolling with incremental search.
+
+d.  Readline's input handler now performs signal processing if read(2) is
+    interrupted by SIGALRM or SIGVTALRM.
+
+e.  Fixed a problem with revert-all-at-newline freeing freed memory.
+
+f.  Clarified the documentation for the history_quotes_inhibit_expansion
+    variable to note that it inhibits scanning for the history comment
+    character and that it only affects double-quoted strings.
+
+g.  Fixed an off-by-one error in the prompt printed when performing searches.
+
+h.  Use pselect(2), if available, to wait for input before calling read(2), so
+    a SIGWINCH can interrupt it, since it doesn't interrupt read(2).
+
+i.  Some memory leaks caused by signals interrupting filename completion have
+    been fixed.
+
+j.  Reading EOF twice on a non-empty line causes EOF to be returned, rather
+    than the partial line.  This can cause partial lines to be executed on
+    SIGHUP, for example.
+
+k.  Fixed a bug concerning deleting multibyte characters from the search
+    string while performing an incremental search.
+
+l.  Fixed a bug with tilde expanding directory names in filename completion.
+
+m.  Fixed a bug that did not allow binding sequences beginning with a `\'.
+
+n.  Fixed a redisplay bug involving incorrect line wrapping when the prompt
+    contains a multibyte character in the last screen column.
+
+o.  Fixed a bug that caused history expansion to disregard characters that are
+    documented to delimit a history event specifier without requiring `:'.
+
+p.  Fixed a bug that could cause reading past the end of a string when reading
+    the value when binding the set of isearch terminators.
+
+q.  Fixed a bug that caused readline commands that depend on knowing which  
+    key invoked them to misbehave when dispatching key sequences that are
+    prefixes of other key bindings. 
+
+r.  Paren matching now works in vi insert mode.
+
+s.  Colored completion prefixes are now displayed using a different color, less
+    likely to collide with files.
+
+t.  Fixed a bug that caused vi-mode character search to misbehave when
+    running in callback mode.
+
+u.  Fixed a bug that caused output to be delayed when input is coming from a
+    macro in vi-mode.
+
+v.  Fixed a bug that caused the vi-mode `.' command to misbehave when redoing
+    a multi-key key sequence via a macro.
+
+w.  Fixed a bug that caused problems with applications that supply their own
+    input function when performing completion.
+
+x.  When read returns -1/EIO when attempting to read a key, return an error
+    instead of line termination back to the caller.
+
+y.  Updated tty auditing feature based on patch from Red Hat.
+
+z.  Fixed a bug that could cause the history library to crash on overflows
+    introduced by malicious editing of timestamps in the history file.
+
+aa. The history file writing functions only attempt to create and use a backup
+    history file if the history file exists and is a regular file.
+
+bb. Fixed an out-of-bounds read in readline's internal tilde expansion interface.
+
+cc. Fixed several redisplay bugs with prompt strings containing multibyte
+    and non-visible characters whose physical length is longer than the screen
+    width.
+
+dd. Fixed a redisplay bug with prompt strings containing invisible characters
+    whose physical length exceeds the screen width and using incremental search.
+
+ee. Readline prints more descriptive error messages when it encounters errors
+    while reading an inputrc file.
+
+ff. Fixed a bug in the character insertion code that attempts to optimize
+    typeahead when it reads a character that is not bound to self-insert and
+    resets the key sequence state.
+
+gg.  When refreshing the line as the result of a key sequence, Readline attempts
+     to redraw only the last line of a multiline prompt.
+
+hh.  Fixed an issue that caused completion of git commands to display
+     incorrectly when using colored-completion-prefix.
+
+ii.  Fixed several redisplay bugs having to do with multibyte characters and
+     invisible characters in prompt strings.
+
+jj. Fixed a bug that caused mode strings to be displayed incorrectly if the
+    prompt was shorter than the mode string.
+
+2.  New Features in Readline
+
+a.  The history truncation code now uses the same error recovery mechansim as
+    the history writing code, and restores the old version of the history file
+    on error.  The error recovery mechanism handles symlinked history files.
+
+b.  There is a new bindable variable, `enable-bracketed-paste', which enables
+    support for a terminal's bracketed paste mode.
+
+c.  The editing mode indicators can now be strings and are user-settable
+    (new `emacs-mode-string', `vi-cmd-mode-string' and `vi-ins-mode-string'
+    variables).  Mode strings can contain invisible character sequences.
+    Setting mode strings to null strings restores the defaults.
+
+d.  Prompt expansion adds the mode string to the last line of a multi-line
+    prompt (one with embedded newlines).
+
+e.  There is a new bindable variable, `colored-completion-prefix', which, if
+    set, causes the common prefix of a set of possible completions to be
+    displayed in color.
+
+f.  There is a new bindable command `vi-yank-pop', a vi-mode version of emacs-
+    mode yank-pop.
+
+g.  The redisplay code underwent several efficiency improvements for multibyte
+    locales.
+
+h.  The insert-char function attempts to batch-insert all pending typeahead
+    that maps to self-insert, as long as it is coming from the terminal.
+
+i.  rl_callback_sigcleanup: a new application function that can clean up and
+    unset any state set by readline's callback mode.  Intended to be used
+    after a signal.
+
+j.  If an incremental search string has its last character removed with DEL, the
+    resulting empty search string no longer matches the previous line.
+
+k.  If readline reads a history file that begins with `#' (or the value of
+    the history comment character) and has enabled history timestamps, the history
+    entries are assumed to be delimited by timestamps.  This allows multi-line
+    history entries.
+
+l.  Readline now throws an error if it parses a key binding without a terminating
+    `:' or whitespace.
+
+m.  The default binding for ^W in vi mode now uses word boundaries specified
+    by Posix (vi-unix-word-rubout is bindable command name).
+
+n.  rl_clear_visible_line: new application-callable function; clears all
+    screen lines occupied by the current visible readline line.
+
+o.  rl_tty_set_echoing: application-callable function that controls whether
+    or not readline thinks it is echoing terminal output.
+
+p.  Handle >| and strings of digits preceding and following redirection
+    specifications as single tokens when tokenizing the line for history
+    expansion.
+
+q.  Fixed a bug with displaying completions when the prefix display length
+    is greater than the length of the completions to be displayed.
+
+r.  The :p history modifier now applies to the entire line, so any expansion
+    specifying :p causes the line to be printed instead of expanded.
+
+s.  New application-callable function: rl_pending_signal(): returns the signal
+    number of any signal readline has caught but not yet handled.
+    
+t.  New application-settable variable: rl_persistent_signal_handlers: if set
+    to a non-zero value, readline will enable the readline-6.2 signal handler
+    behavior in callback mode: handlers are installed when
+    rl_callback_handler_install is called and removed removed when a complete
+    line has been read.
+
+-------------------------------------------------------------------------------
+This document details the changes between this version, readline-6.3, and the
+previous version, readline-6.2.
+
+1.  Changes to Readline
+
+a.  Fixed a bug that did not allow the `dd', `cc', or `yy' vi editing mode
+    commands to work on the entire line.
+
+b.  Fixed a bug that caused redisplay problems with prompts longer than 128
+    characters and history searches.
+
+c.  Fixed a bug that caused readline to try and run code to modify its idea
+    of the screen size in a signal handler context upon receiving a SIGWINCH.
+
+d.  Fixed a bug that caused the `meta' key to be enabled beyond the duration
+    of an individual call top readline().
+    
+e.  Added a workaround for a wcwidth bug in Mac OS X that caused readline's
+    redisplay to mishandle zero-width combining characters.
+
+f.  Fixed a bug that caused readline to `forget' part of a key sequence when
+    a multiple-key sequence caused it to break out of an incremental search.
+
+g.  Fixed bugs that caused readline to execute code in a signal handler
+    context if interrupted while reading from the file system during completion.
+
+h.  Fixed a bug that caused readline to `forget' part of a key sequence when
+    reading an unbound multi-character key sequence.
+
+i.  Fixed a bug that caused Readline's signal handlers to be installed beyond
+    the bounds of a single call to readline().
+
+j.  Fixed a bug that caused the `.' command to not redo the most recent `R'
+    command in vi mode.
+
+k.  Fixed a bug that caused ignoring case in completion matches to result in
+    readline using the wrong match.
+
+l.  Paren matching now works in vi insert mode.
+
+m.  Fix menu-completion to make show-all-if-ambiguous and menu-complete-display-prefix
+    work together.
+
+n.  Fixed a bug that didn't allow the `cc', `dd', or `yy' commands to be redone
+    in vi editing mode.
+
+o.  Fixed a bug that caused the filename comparison code to not compare
+    multibyte characters correctly when using case-sensitive or case-mapping
+    comparisons.
+
+p.  Fixed the input reading loop to call the input hook function only when there
+    is no terminal input available.
+
+q.  Fixed a bug that caused binding a macro to a multi-character key sequence
+    where the sequence and macro value share a common prefix to not perform
+    the macro replacement.
+
+r.  Fixed several redisplay errors with multibyte characters and prompts
+    containing invisible characters when using horizontal scrolling.
+
+s.  Fixed a bug that caused redisplay errors when trying to overwrite
+    existing characters using multibyte characters.
+
+t.  Fixed a bug in vi mode that caused the arrow keys to set the saved last
+    vi-mode command to the wrong value.
+
+u.  Fixed a bug that caused double-quoted strings to be scanned incorrectly
+    when being used as the value of a readline variable assignment.
+
+v.  Fixed a bug with vi mode that prevented `.' from repeating a command
+    entered on a previous line (command).
+
+w.  Fixed a bug that could cause completion to core dump if it was interrupted
+    by a signal.
+
+x. Fixed a bug that could cause readline to crash and seg fault attempting to
+   expand an empty history entry.
+
+y. Fixed a bug that caused display problems with multi-line prompts containing
+   invisible characters on multiple lines.
+   
+z. Fixed a bug that caused effects made by undoing changes to a history line to
+   be discarded.
+
+2.  New Features in Readline
+
+a.  Readline is now more responsive to SIGHUP and other fatal signals when
+    reading input from the terminal or performing word completion but no
+    longer attempts to run any not-allowable functions from a signal handler
+    context.
+
+b.  There are new bindable commands to search the history for the string of
+    characters between the beginning of the line and the point
+    (history-substring-search-forward, history-substring-search-backward)
+
+c.  Readline allows quoted strings as the values of variables when setting
+    them with `set'.  As a side effect, trailing spaces and tabs are ignored
+    when setting a string variable's value.
+
+d.  The history library creates a backup of the history file when writing it
+    and restores the backup on a write error.
+
+e.  New application-settable variable: rl_filename_stat_hook: a function called
+    with a filename before using it in a call to stat(2).  Bash uses it to
+    expand shell variables so things like $HOME/Downloads have a slash
+    appended.
+
+f.  New bindable function `print-last-kbd-macro', prints the most-recently-
+    defined keyboard macro in a reusable format.
+
+g.  New user-settable variable `colored-stats', enables use of colored text
+    to denote file types when displaying possible completions (colored analog
+    of visible-stats).
+
+h.  New user-settable variable `keyseq-timout', acts as an inter-character
+    timeout when reading input or incremental search strings.
+
+i.  New application-callable function: rl_clear_history. Clears the history list
+    and frees all readline-associated private data.
+
+j.  New user-settable variable, show-mode-in-prompt, adds a characters to the
+    beginning of the prompt indicating the current editing mode.
+
+k.  New application-settable variable: rl_input_available_hook; function to be
+    called when readline needs to check whether there is data available on its
+    input source.  The default hook checks rl_instream.
+
+l.  Readline calls an application-set event hook (rl_signal_event_hook) after
+    it gets a signal while reading input (read returns -1/EINTR but readline    
+    does not handle the signal immediately) to allow the application to handle
+    or otherwise note it.  Not currently called for SIGHUP or SIGTERM.
+    
+m.  If the user-settable variable `history-size' is set to a value less than
+    0, the history list size is unlimited.
+
+n.  When creating shared libraries on Mac OS X, the pathname written into the
+    library (install_name) no longer includes the minor version number.
+
+-------------------------------------------------------------------------------
 This document details the changes between this version, readline-6.2,
 and the previous version, readline-6.1.
 

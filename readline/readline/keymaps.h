@@ -90,6 +90,9 @@ extern Keymap rl_get_keymap PARAMS((void));
 /* Set the current keymap to MAP. */
 extern void rl_set_keymap PARAMS((Keymap));
 
+/* Set the name of MAP to NAME */
+extern int rl_set_keymap_name PARAMS((const char *, Keymap));
+
 #ifdef __cplusplus
 }
 #endif

@@ -10,7 +10,7 @@
 # Chet Ramey
 # chet@po.cwru.edu
 
-#   Copyright (C) 1996-2009 Free Software Foundation, Inc.
+#   Copyright (C) 1996-2014 Free Software Foundation, Inc.
 #
 #   This file is part of GNU Bash, the Bourne Again SHell.
 #
@@ -65,6 +65,20 @@ while [ $# -gt 0 ]; do
 done
 
 case "${host_os}-${SHOBJ_CC}-${host_vendor}" in
+nsk-cc-tandem)
+	SHOBJ_CFLAGS=-Wglobalized
+	case `uname -m` in
+	NSR*)
+		SHOBJ_CFLAGS="${SHOBJ_CFLAGS} -Wcall_shared" # default on TNS/E, needed on TNS/R
+		SHOBJ_LD=/usr/bin/ld # for TNS/R
+		;;
+	NSE*|NEO*)
+		SHOBJ_LD=/usr/bin/eld
+		;;
+	esac
+	SHOBJ_LDFLAGS='-shared -bglobalized -unres_symbols ignore'
+	;;
+
 sunos4*-*gcc*)
 	SHOBJ_CFLAGS=-fpic
 	SHOBJ_LD=/usr/bin/ld
@@ -146,7 +160,7 @@ freebsd3*|freebsdaout*)
 	;;
 
 # FreeBSD-4.x and later have only ELF
-freebsd[4-9]*|freebsdelf*|dragonfly*)
+freebsd[4-9]*|freebsd1[0-9]*|freebsdelf*|dragonfly*)
 	SHOBJ_CFLAGS=-fPIC
 	SHOBJ_LD='${CC}'
 
@@ -157,27 +171,8 @@ freebsd[4-9]*|freebsdelf*|dragonfly*)
 	;;
 
 # Darwin/MacOS X
-darwin[89]*|darwin10*)
-	SHOBJ_STATUS=supported
-	SHLIB_STATUS=supported
-	
-	SHOBJ_CFLAGS='-fno-common'
-
-	SHOBJ_LD='MACOSX_DEPLOYMENT_TARGET=10.3 ${CC}'
-
-	SHLIB_LIBVERSION='$(SHLIB_MAJOR)$(SHLIB_MINOR).$(SHLIB_LIBSUFF)'
-	SHLIB_LIBSUFF='dylib'
-
-	SHOBJ_LDFLAGS='-dynamiclib -dynamic -undefined dynamic_lookup -arch_only `/usr/bin/arch`'
-	SHLIB_XLDFLAGS='-dynamiclib -arch_only `/usr/bin/arch` -install_name $(libdir)/$@ -current_version $(SHLIB_MAJOR)$(SHLIB_MINOR) -compatibility_version $(SHLIB_MAJOR) -v'
-
-	SHLIB_LIBS='-lncurses'	# see if -lcurses works on MacOS X 10.1 
-	;;
-
-darwin*|macosx*)
-	SHOBJ_STATUS=unsupported
-	SHLIB_STATUS=supported
-
+darwin*)
+	# Common definitions for all darwin/mac os x versions
 	SHOBJ_CFLAGS='-fno-common'
 
 	SHOBJ_LD='${CC}'
@@ -185,19 +180,39 @@ darwin*|macosx*)
 	SHLIB_LIBVERSION='$(SHLIB_MAJOR)$(SHLIB_MINOR).$(SHLIB_LIBSUFF)'
 	SHLIB_LIBSUFF='dylib'
 
+	# unused at this time
+	SHLIB_SONAME='$(libdir)/`echo $@ | sed "s:\\..*::"`.$(SHLIB_MAJOR).$(SHLIB_LIBSUFF)'
+
 	case "${host_os}" in
-	darwin[789]*|darwin10*)	SHOBJ_LDFLAGS=''
-			SHLIB_XLDFLAGS='-dynamiclib -arch_only `/usr/bin/arch` -install_name $(libdir)/$@ -current_version $(SHLIB_MAJOR)$(SHLIB_MINOR) -compatibility_version $(SHLIB_MAJOR) -v'
+	# Darwin versions 1, 5, 6, 7 correspond to Mac OS X 10.0, 10.1, 10.2,
+	# and 10.3, respectively.
+	darwin[1-7].*)
+		SHOBJ_STATUS=unsupported
+		SHOBJ_LDFLAGS='-dynamic'
+		SHLIB_XLDFLAGS='-arch_only `/usr/bin/arch` -install_name $(libdir)/`echo $@ | sed "s:\\..*::"`.$(SHLIB_MAJOR).$(SHLIB_LIBSUFF) -current_version $(SHLIB_MAJOR)$(SHLIB_MINOR) -compatibility_version $(SHLIB_MAJOR)$(SHLIB_MINOR) -v'
+		;;
+	# Darwin 8 == Mac OS X 10.4; Mac OS X 10.N == Darwin N+4
+	*)
+		case "${host_os}" in
+		darwin[89]*|darwin1[012]*)
+			SHOBJ_ARCHFLAGS='-arch_only `/usr/bin/arch`'
 			;;
-	*)		SHOBJ_LDFLAGS='-dynamic'
-			SHLIB_XLDFLAGS='-arch_only `/usr/bin/arch` -install_name $(libdir)/$@ -current_version $(SHLIB_MAJOR)$(SHLIB_MINOR) -compatibility_version $(SHLIB_MAJOR) -v'
+		 *) 	# Mac OS X 10.9 (Mavericks) and later
+			SHOBJ_ARCHFLAGS=
+			# for 32 and 64bit universal library
+			#SHOBJ_ARCHFLAGS='-arch i386 -arch x86_64'
+			#SHOBJ_CFLAGS=${SHOBJ_CFLAGS}' -arch i386 -arch x86_64'
 			;;
+		 esac
+		 SHOBJ_LDFLAGS="-dynamiclib -dynamic -undefined dynamic_lookup ${SHOBJ_ARCHFLAGS}"
+		 SHLIB_XLDFLAGS="-dynamiclib ${SHOBJ_ARCHFLAGS}"' -install_name $(libdir)/`echo $@ | sed "s:\\..*::"`.$(SHLIB_MAJOR).$(SHLIB_LIBSUFF) -current_version $(SHLIB_MAJOR)$(SHLIB_MINOR) -compatibility_version $(SHLIB_MAJOR)$(SHLIB_MINOR) -v'
+		;;
 	esac
 
 	SHLIB_LIBS='-lncurses'	# see if -lcurses works on MacOS X 10.1 
 	;;
 
-openbsd*|netbsd*)
+openbsd*|netbsd*|mirbsd*)
 	SHOBJ_CFLAGS=-fPIC
 	SHOBJ_LD='${CC}'
 	SHOBJ_LDFLAGS='-shared'

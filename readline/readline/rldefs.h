@@ -2,7 +2,7 @@
    for readline.  This should be included after any files that define
    system-specific constants like _POSIX_VERSION or USG. */
 
-/* Copyright (C) 1987-2009 Free Software Foundation, Inc.
+/* Copyright (C) 1987-2011 Free Software Foundation, Inc.
 
    This file is part of the GNU Readline Library (Readline), a library
    for reading lines of text with interactive input and history editing.      
@@ -83,8 +83,8 @@ extern char *strchr (), *strrchr ();
 #define _rl_stricmp strcasecmp
 #define _rl_strnicmp strncasecmp
 #else
-extern int _rl_stricmp PARAMS((char *, char *));
-extern int _rl_strnicmp PARAMS((char *, char *, int));
+extern int _rl_stricmp PARAMS((const char *, const char *));
+extern int _rl_strnicmp PARAMS((const char *, const char *, int));
 #endif
 
 #if defined (HAVE_STRPBRK) && !defined (HAVE_MULTIBYTE)
@@ -150,6 +150,10 @@ extern char *_rl_strpbrk PARAMS((const char *, const char *));
 #define STREQ(a, b)	(((a)[0] == (b)[0]) && (strcmp ((a), (b)) == 0))
 #define STREQN(a, b, n)	(((n) == 0) ? (1) \
 				    : ((a)[0] == (b)[0]) && (strncmp ((a), (b), (n)) == 0))
+#endif
+
+#if !defined (RL_STRLEN)
+#  define RL_STRLEN(s) (((s) && (s)[0]) ? ((s)[1] ? ((s)[2] ? strlen(s) : 2) : 1) : 0)
 #endif
 
 #if !defined (FREE)

@@ -1,6 +1,6 @@
 <HTML>
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
-<!-- Created on February, 8  2011 by texi2html 1.64 -->
+<!-- Created on December, 18  2018 by texi2html 1.64 -->
 <!-- 
 Written by: Lionel Cons <Lionel.Cons@cern.ch> (original author)
             Karl Berry  <karl@freefriends.org>
@@ -116,6 +116,16 @@ that Bash does, so that several words
 surrounded by quotes are considered one word.
 History expansions are introduced by the appearance of the
 history expansion character, which is <SAMP>`!'</SAMP> by default.
+</P><P>
+
+History expansion implements shell-like quoting conventions:
+a backslash can be used to remove the special handling for the next character;
+single quotes enclose verbatim sequences of characters, and can be used to
+inhibit history expansion;
+and characters enclosed within double quotes may be subject to history
+expansion, since backslash can escape the history expansion character,
+but single quotes may not, since they are not treated specially within
+double quotes.
 </P><P>
 
 <BLOCKQUOTE><TABLE BORDER=0 CELLSPACING=0> 
@@ -620,6 +630,9 @@ parameters managing the list itself.
 <DT><U>Function:</U> void <B>add_history</B> <I>(const char *string)</I>
 <DD>Place <VAR>string</VAR> at the end of the history list.  The associated data
 field (if any) is set to <CODE>NULL</CODE>.
+If the maximum number of history entries has been set using
+<CODE>stifle_history()</CODE>, and the new number of history entries would exceed
+that maximum, the oldest history entry is removed.
 </DL>
 </P><P>
 
@@ -670,6 +683,7 @@ of an invalid <VAR>which</VAR>, a <CODE>NULL</CODE> pointer is returned.
 <DL>
 <DT><U>Function:</U> void <B>stifle_history</B> <I>(int max)</I>
 <DD>Stifle the history list, remembering only the last <VAR>max</VAR> entries.
+The history list will contain only <VAR>max</VAR> entries at a time.
 </DL>
 </P><P>
 
@@ -740,10 +754,12 @@ pointer.
 <A NAME="IDX17"></A>
 <DL>
 <DT><U>Function:</U> HIST_ENTRY * <B>history_get</B> <I>(int offset)</I>
-<DD>Return the history entry at position <VAR>offset</VAR>, starting from
-<CODE>history_base</CODE> (see section <A HREF="history.html#SEC17">2.4 History Variables</A>).
-If there is no entry there, or if <VAR>offset</VAR>
-is greater than the history length, return a <CODE>NULL</CODE> pointer.
+<DD>Return the history entry at position <VAR>offset</VAR>.
+The range of valid
+values of <VAR>offset</VAR> starts at <CODE>history_base</CODE> and ends at
+<VAR>history_length</VAR> - 1 (see section <A HREF="history.html#SEC17">2.4 History Variables</A>).
+If there is no entry there, or if <VAR>offset</VAR> is outside the valid
+range, return a <CODE>NULL</CODE> pointer.
 </DL>
 </P><P>
 
@@ -751,6 +767,7 @@ is greater than the history length, return a <CODE>NULL</CODE> pointer.
 <DL>
 <DT><U>Function:</U> time_t <B>history_get_time</B> <I>(HIST_ENTRY *entry)</I>
 <DD>Return the time stamp associated with the history entry <VAR>entry</VAR>.
+If the timestamp is missing or invalid, return 0.
 </DL>
 </P><P>
 
@@ -807,9 +824,11 @@ a <CODE>NULL</CODE> pointer.
 <A NAME="IDX22"></A>
 <DL>
 <DT><U>Function:</U> HIST_ENTRY * <B>next_history</B> <I>(void)</I>
-<DD>Move the current history offset forward to the next history entry, and
-return the a pointer to that entry.  If there is no next entry, return
-a <CODE>NULL</CODE> pointer.
+<DD>If the current history offset refers to a valid history entry,
+increment the current history offset.
+If the possibly-incremented history offset refers to a valid history
+entry, return a pointer to that entry;
+otherwise, return a <CODE>BNULL</CODE> pointer.
 </DL>
 </P><P>
 
@@ -989,7 +1008,7 @@ as with the <CODE>:p</CODE> modifier (see section <A HREF="history.html#SEC5">1.
 </DL>
 <P>
 
-If an error ocurred in expansion, then <VAR>output</VAR> contains a descriptive
+If an error occurred in expansion, then <VAR>output</VAR> contains a descriptive
 error message.
 </DL>
 </P><P>
@@ -1012,7 +1031,7 @@ to the "normal" terminating characters.
 <DD>Return an array of tokens parsed out of <VAR>string</VAR>, much as the
 shell might.  The tokens are split on the characters in the
 <VAR>history_word_delimiters</VAR> variable,
-and shell quoting conventions are obeyed.
+and shell quoting conventions are obeyed as described below.
 </DL>
 </P><P>
 
@@ -1138,12 +1157,31 @@ carriage return, and <SAMP>`='</SAMP>.
 <A NAME="IDX46"></A>
 <DL>
 <DT><U>Variable:</U> int <B>history_quotes_inhibit_expansion</B>
-<DD>If non-zero, single-quoted words are not scanned for the history expansion
-character.  The default value is 0.
+<DD>If non-zero, the history expansion code implements shell-like quoting:
+single-quoted words are not scanned for the history expansion
+character or the history comment character, and double-quoted words may
+have history expansion performed, since single quotes are not special
+within double quotes.
+The default value is 0.
 </DL>
 </P><P>
 
 <A NAME="IDX47"></A>
+<DL>
+<DT><U>Variable:</U> int <B>history_quoting_state</B>
+<DD>An application may set this variable to indicate that the current line
+being expanded is subject to existing quoting. If set to <SAMP>`''</SAMP>, the
+history expansion function will assume that the line is single-quoted and
+inhibit expansion until it reads an unquoted closing single quote; if set
+to <SAMP>`"'</SAMP>, history expansion will assume the line is double quoted until
+it reads an unquoted closing double quote. If set to zero, the default,
+the history expansion function will assume the line is not quoted and
+treat quote characters within the line as described above.
+This is only effective if <VAR>history_quotes_inhibit_expansion</VAR> is set.
+</DL>
+</P><P>
+
+<A NAME="IDX48"></A>
 <DL>
 <DT><U>Variable:</U> rl_linebuf_func_t * <B>history_inhibit_expansion_function</B>
 <DD>This should be set to the address of a function that takes two arguments:
@@ -1968,13 +2006,14 @@ to permit their use in free software.
 <TR><TD></TD><TD valign=top><A HREF="history.html#IDX17"><CODE>history_get</CODE></A></TD><TD valign=top><A HREF="history.html#SEC12">2.3.3 Information About the History List</A></TD></TR>
 <TR><TD></TD><TD valign=top><A HREF="history.html#IDX3"><CODE>history_get_history_state</CODE></A></TD><TD valign=top><A HREF="history.html#SEC10">2.3.1 Initializing History and State Management</A></TD></TR>
 <TR><TD></TD><TD valign=top><A HREF="history.html#IDX18"><CODE>history_get_time</CODE></A></TD><TD valign=top><A HREF="history.html#SEC12">2.3.3 Information About the History List</A></TD></TR>
-<TR><TD></TD><TD valign=top><A HREF="history.html#IDX47"><CODE>history_inhibit_expansion_function</CODE></A></TD><TD valign=top><A HREF="history.html#SEC17">2.4 History Variables</A></TD></TR>
+<TR><TD></TD><TD valign=top><A HREF="history.html#IDX48"><CODE>history_inhibit_expansion_function</CODE></A></TD><TD valign=top><A HREF="history.html#SEC17">2.4 History Variables</A></TD></TR>
 <TR><TD></TD><TD valign=top><A HREF="history.html#IDX13"><CODE>history_is_stifled</CODE></A></TD><TD valign=top><A HREF="history.html#SEC11">2.3.2 History List Management</A></TD></TR>
 <TR><TD></TD><TD valign=top><A HREF="history.html#IDX37"><CODE>history_length</CODE></A></TD><TD valign=top><A HREF="history.html#SEC17">2.4 History Variables</A></TD></TR>
 <TR><TD></TD><TD valign=top><A HREF="history.html#IDX14"><CODE>history_list</CODE></A></TD><TD valign=top><A HREF="history.html#SEC12">2.3.3 Information About the History List</A></TD></TR>
 <TR><TD></TD><TD valign=top><A HREF="history.html#IDX38"><CODE>history_max_entries</CODE></A></TD><TD valign=top><A HREF="history.html#SEC17">2.4 History Variables</A></TD></TR>
 <TR><TD></TD><TD valign=top><A HREF="history.html#IDX45"><CODE>history_no_expand_chars</CODE></A></TD><TD valign=top><A HREF="history.html#SEC17">2.4 History Variables</A></TD></TR>
 <TR><TD></TD><TD valign=top><A HREF="history.html#IDX46"><CODE>history_quotes_inhibit_expansion</CODE></A></TD><TD valign=top><A HREF="history.html#SEC17">2.4 History Variables</A></TD></TR>
+<TR><TD></TD><TD valign=top><A HREF="history.html#IDX47"><CODE>history_quoting_state</CODE></A></TD><TD valign=top><A HREF="history.html#SEC17">2.4 History Variables</A></TD></TR>
 <TR><TD></TD><TD valign=top><A HREF="history.html#IDX24"><CODE>history_search</CODE></A></TD><TD valign=top><A HREF="history.html#SEC14">2.3.5 Searching the History List</A></TD></TR>
 <TR><TD></TD><TD valign=top><A HREF="history.html#IDX44"><CODE>history_search_delimiter_chars</CODE></A></TD><TD valign=top><A HREF="history.html#SEC17">2.4 History Variables</A></TD></TR>
 <TR><TD></TD><TD valign=top><A HREF="history.html#IDX26"><CODE>history_search_pos</CODE></A></TD><TD valign=top><A HREF="history.html#SEC14">2.3.5 Searching the History List</A></TD></TR>
@@ -2127,7 +2166,7 @@ to permit their use in free software.
 <TD VALIGN="MIDDLE" ALIGN="LEFT">[<A HREF="history.html#SEC_About"> ? </A>]</TD>
 </TR></TABLE>
 <H1>About this document</H1>
-This document was generated by <I>Chet Ramey</I> on <I>February, 8  2011</I>
+This document was generated by <I>chet</I> on <I>December, 18  2018</I>
 using <A HREF="http://www.mathematik.uni-kl.de/~obachman/Texi2html
 "><I>texi2html</I></A>
 <P></P>  
@@ -2289,7 +2328,7 @@ the following structure:
 <BR>  
 <FONT SIZE="-1">
 This document was generated
-by <I>Chet Ramey</I> on <I>February, 8  2011</I>
+by <I>chet</I> on <I>December, 18  2018</I>
 using <A HREF="http://www.mathematik.uni-kl.de/~obachman/Texi2html
 "><I>texi2html</I></A>
 
