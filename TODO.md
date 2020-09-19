@@ -3,17 +3,8 @@ ChrisAnt Plans
 # SELFHOST - Burn-Down List
 
 - [ ] **Esc** and **Up** and **Ctrl+N/P** and etc go haywire when there's a multiline prompt, if the second line is very short (e.g. "> ").
-- [ ] Custom color for Readline input.
-- [ ] Allow conhost to handle **Shift+Left** and etc for CUA selection.
 
 # PRIORITY
-
-## LUA
-- Lua support changed significantly.  Explore how to support backward compatability for existing scripts.
-  - Prompt filtering looks probably straightforward.
-  - argmatcher looks potentially more complicated, but maybe I just don't understand the data structures well enough yet.
-
-## Readline
 - Update to Readline 8.0.
 - Make filename modifier also work for backslashes.
   - rl: `get_path_separator()` to return preferred path separator, with a setting on Windows to be `/` or `\`.
@@ -28,6 +19,12 @@ ChrisAnt Plans
   - `isolate_tilde_prefix()`
   - `tilde_expand_word()`
 - Custom color for readline input.  Might prefer to completely replace readline's line drawing, since it's trying to minimize updates over terminal emulators, and that makes it much harder to colorize the editing line (and arguments).
+- Allow conhost to handle **Shift+Left** and etc for CUA selection.
+
+## LUA
+- Lua support changed significantly.  Explore how to support backward compatability for existing scripts.
+  - Prompt filtering looks probably straightforward.
+  - argmatcher looks potentially more complicated, but maybe I just don't understand the data structures well enough yet.
 
 ## Problems
 - `tab_completer` should either operate inside a Readline function, or should have settings to specify key bindings for normal vs menu completion.
@@ -63,6 +60,7 @@ ChrisAnt Plans
 ## Problems
 - Fancy completion includes executables on PATH, but in c:\repos\clink\.build\vs2019\bin\debug it lists "clink" but not "clink.bat" as a completion, even though clink.bat is in the current directory.
 - `kill-whole-line` leaves old draw state:  type "echo ", **Alt+Shift+8**, **Esc** => clears the line, but "echo" remains!
+- `clink*.exe set` spews lua errors because it doesn't initialize the prompt filter stuff.
 
 ## Key Bindings
 - Hook up stuff via commands instead of via hard-coded custom bindings, so that everything can be remapped and reported by `show-rl-help`.

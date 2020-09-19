@@ -47,5 +47,5 @@ private:
     bool                m_pending_input = false;
     unsigned char       m_tail = 0;
     unsigned char       m_key_count = 0;
-    char                m_keys[8];
+    char                m_keys[16];
 };
