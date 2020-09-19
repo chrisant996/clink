@@ -2,10 +2,9 @@ ChrisAnt Plans
 
 # SELFHOST - Burn-Down List
 
-- [ ] **Esc** and **Up** and **Ctrl+N/P** and etc go haywire when there's a multiline prompt, if the second line is very short (e.g. "> ").
+- [ ] **Esc** and **Up** and **Ctrl+N/P** and `menu-complete` and etc go haywire when there's a multiline prompt, if the last line of the prompt is shorter than the current text in readline.
 
 # PRIORITY
-- Update to Readline 8.0.
 - Make filename modifier also work for backslashes.
   - rl: `get_path_separator()` to return preferred path separator, with a setting on Windows to be `/` or `\`.
   - `printable_part()`

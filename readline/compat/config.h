@@ -70,6 +70,9 @@ int     wcwidth(int);
 #   define getpid           _getpid
 #   define snprintf         _snprintf
 
+typedef ptrdiff_t           ssize_t;
+typedef unsigned short      mode_t;
+
 #   define __STDC__         0
 #   define __MSDOS__
 /*

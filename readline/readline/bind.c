@@ -356,6 +356,9 @@ rl_generic_bind (int type, const char *keyseq, char *data, Keymap map)
   register int i;
   KEYMAP_ENTRY k;
   Keymap prevmap;  
+/* begin_clink_change */
+  int ic;
+/* end_clink_change */
 
   k.function = 0;
 
@@ -385,7 +388,11 @@ rl_generic_bind (int type, const char *keyseq, char *data, Keymap map)
   for (i = 0; i < keys_len; i++)
     {
       unsigned char uc = keys[i];
-      int ic;
+/* begin_clink_change
+ * Immediately following this, variable 'ic' is used without initialization.
+ */
+      //int ic;
+/* end_clink_change */
 
       if (i > 0)
 	prevkey = ic;

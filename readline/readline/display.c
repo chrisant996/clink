@@ -42,7 +42,9 @@
 #include <stdio.h>
 
 #ifdef __MSDOS__
-#  include <pc.h>
+/* begin_clink_change */
+//#  include <pc.h>
+/* end_clink_change */
 #endif
 
 /* System-specific feature definitions and include files. */

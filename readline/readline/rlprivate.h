@@ -357,7 +357,8 @@ extern int _rl_nsearch_callback PARAMS((_rl_search_cxt *));
 extern int _rl_nsearch_cleanup PARAMS((_rl_search_cxt *, int));
 /* begin_clink_change */
 extern int rl_get_history_search_pos PARAMS((void));
-extern void rl_history_search_reinit PARAMS((void));
+extern int rl_get_history_search_flags PARAMS((void));
+extern void rl_history_search_reinit PARAMS((int));
 /* end_clink_change */
 
 /* signals.c */

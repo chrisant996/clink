@@ -52,7 +52,7 @@
 #include "rldefs.h"
 
 #ifdef __MSDOS__
-#  include <pc.h>
+//#  include <pc.h>
 #endif
 
 #include "rltty.h"
@@ -95,10 +95,17 @@ int rl_change_environment = 1;
 /*								    */
 /* **************************************************************** */
 
-#ifndef __MSDOS__
+/* begin_clink_change
+ * term_string_buffer is referenced in two places outside without an
+ * __MSDOS__ check.
+ */
+//#ifndef __MSDOS__
+/* end_clink_change */
 static char *term_buffer = (char *)NULL;
 static char *term_string_buffer = (char *)NULL;
-#endif
+/* begin_clink_change */
+//#endif
+/* end_clink_change */
 
 static int tcap_initialized;
 

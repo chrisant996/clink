@@ -78,9 +78,7 @@ static int noninc_dosearch PARAMS((char *, int, int));
 static int noninc_search PARAMS((int, int));
 static int rl_history_search_internal PARAMS((int, int));
 /* begin_clink_change */
-#if 0
-static void rl_history_search_reinit PARAMS((int));
-#endif
+//static void rl_history_search_reinit PARAMS((int));
 /* end_clink_change */
 
 static _rl_search_cxt *_rl_nsearch_init PARAMS((int, int));
@@ -606,6 +604,13 @@ rl_get_history_search_pos()
       rl_history_search_len > 0)
     return rl_history_search_pos;
   return -1;
+}
+
+/* Get the history search flags. */
+int
+rl_get_history_search_flags()
+{
+  return rl_history_search_flags;
 }
 
 /* end_clink_change */

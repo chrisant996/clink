@@ -676,7 +676,7 @@ rl_remove_history (count, key)
   free_history_entry (hist);
 
   if (search_pos < 0)
-    rl_history_search_reinit ();
+    rl_history_search_reinit (rl_get_history_search_flags ());
 
   return 0;
 }

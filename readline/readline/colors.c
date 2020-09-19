@@ -175,8 +175,14 @@ _rl_print_color_indicator (const char *f)
 
   if (linkok == -1 && _rl_color_indicator[C_MISSING].string != NULL)
     colored_filetype = C_MISSING;
+/* begin_clink_change */
+#if defined (S_ISLNK)
+/* end_clink_change */
   else if (linkok == 0 && S_ISLNK(mode) && _rl_color_indicator[C_ORPHAN].string != NULL)
     colored_filetype = C_ORPHAN;	/* dangling symlink */
+/* begin_clink_change */
+#endif
+/* end_clink_change */
   else if(stat_ok != 0)
     {
       static enum indicator_no filetype_indicator[] = FILETYPE_INDICATORS;
@@ -202,8 +208,14 @@ _rl_print_color_indicator (const char *f)
             colored_filetype = C_CAP;
           else if ((mode & S_IXUGO) != 0 && is_colored (C_EXEC))
             colored_filetype = C_EXEC;
+/* begin_clink_change */
+#if 0
+/* end_clink_change */
           else if ((1 < astat.st_nlink) && is_colored (C_MULTIHARDLINK))
             colored_filetype = C_MULTIHARDLINK;
+/* begin_clink_change */
+#endif
+/* end_clink_change */
         }
       else if (S_ISDIR (mode))
         {
@@ -232,8 +244,14 @@ _rl_print_color_indicator (const char *f)
       else if (S_ISSOCK (mode))
         colored_filetype = C_SOCK;
 #endif
+/* begin_clink_change */
+#if defined (S_ISBLK)
+/* end_clink_change */
       else if (S_ISBLK (mode))
         colored_filetype = C_BLK;
+/* begin_clink_change */
+#endif
+/* end_clink_change */
       else if (S_ISCHR (mode))
         colored_filetype = C_CHR;
       else
