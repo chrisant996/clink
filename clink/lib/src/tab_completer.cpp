@@ -168,10 +168,7 @@ void tab_completer::on_input(const input& input, result& result, const context& 
     if (m_clear_line_before)
     {
         m_clear_line_before = false;
-        // \x1b[1G is needed because win_terminal_out doesn't handle \r, and I
-        // don't want to introduce the performance hit of intercepting \r except
-        // where it's really needed, like here.
-        context.printer.print("\x1b[1K\x1b[1G");
+        context.printer.print("\x1b[1K\r");
     }
 
     if (next_state == state_print)
