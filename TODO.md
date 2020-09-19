@@ -33,8 +33,6 @@ ChrisAnt Plans
 - Holding down a bound key like **Ctrl+Up** lets conhost periodically intercept some of the keypresses!
 
 ## Commands and Features
-- Support `..\..` to change directory.
-- Support `...\` etc to change directory (go up `_N_-1` directory levels).
 - Hook up `pager` with **Alt+H**.
 - Expand doskey alias.
 - Handle doskey aliases properly (refer to my two reference implementations).
