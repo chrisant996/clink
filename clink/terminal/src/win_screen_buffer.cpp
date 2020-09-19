@@ -39,12 +39,10 @@ void win_screen_buffer::write(const char* data, int length)
         int n = min<int>(sizeof_array(wbuf), length + 1);
         n = to_utf16(wbuf, n, iter);
 
-#ifdef DEBUG
 #ifdef CLINK_DEBUG
         for (int i = 0; i < n; ++i)
             if (wbuf[i] == '\r')
                 __debugbreak();
-#endif
 #endif
 
         DWORD written;
@@ -177,8 +175,8 @@ void win_screen_buffer::move_cursor(int dx, int dy)
     GetConsoleScreenBufferInfo(m_handle, &csbi);
 
     COORD xy = {
-        clamp(SHORT(csbi.dwCursorPosition.X + dx), SHORT(0), SHORT(csbi.dwSize.X - 1)),
-        clamp(SHORT(csbi.dwCursorPosition.Y + dy), SHORT(0), SHORT(csbi.dwSize.Y - 1)),
+        SHORT(clamp(csbi.dwCursorPosition.X + dx, 0, csbi.dwSize.X - 1)),
+        SHORT(clamp(csbi.dwCursorPosition.Y + dy, 0, csbi.dwSize.Y - 1)),
     };
     SetConsoleCursorPosition(m_handle, xy);
 }
