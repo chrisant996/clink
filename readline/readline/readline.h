@@ -483,6 +483,14 @@ extern char *rl_filename_completion_function PARAMS((const char *, int));
 
 extern int rl_completion_mode PARAMS((rl_command_func_t *));
 
+/* begin_clink_change */
+/* Path separator. */
+extern int rl_is_path_separator PARAMS((char c));
+/* Returns the last path separator character in string, or NULL if not found.
+   (It's like strrchr, but supports multiple path separator characters.) */
+extern char *rl_last_path_separator PARAMS((const char *string));
+/* end_clink_change */
+
 #if 0
 /* Backwards compatibility (compat.c).  These will go away sometime. */
 extern void free_undo_list PARAMS((void));
@@ -600,12 +608,15 @@ extern rl_hook_func_t *rl_signal_event_hook;
 extern rl_hook_func_t *rl_input_available_hook;
 
 /* begin_clink_change */
-
 /* Called when rl_add_history adds a history line. */
 extern rl_history_hook_func_t *rl_add_history_hook;
 /* Called when rl_remove_history removes a history line. */
 extern rl_history_hook_func_t *rl_remove_history_hook;
-
+/* Conditional support for backslash as a path separator.
+   This is used by rl_is_path_separator.*/
+extern int rl_backslash_path_sep;
+/* Preferred path separator, used by filename completion. */
+extern char rl_preferred_path_separator;
 /* end_clink_change */
 
 /* The address of the function to call to fetch a character from the current
@@ -690,6 +701,7 @@ extern rl_completion_func_t *rl_attempted_completion_function;
    completer routine.  The initial contents of this variable is what
    breaks words in the shell, i.e. "n\"\\'`@$>". */
 extern const char *rl_basic_word_break_characters;
+extern const char *rl_basic_word_break_characters_without_backslash;
 
 /* The list of characters that signal a break between words for
    rl_complete_internal.  The default list is the contents of

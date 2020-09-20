@@ -289,6 +289,7 @@ int _rl_page_completions = 1;
    completer routine.  The contents of this variable is what breaks words
    in the shell, i.e. " \t\n\"\\'`@$><=" */
 const char *rl_basic_word_break_characters = " \t\n\"\\'`@$><=;|&{("; /* }) */
+const char *rl_basic_word_break_characters_without_backslash = " \t\n\"'`@$><=;|&{("; /* }) */
 
 /* List of basic quoting characters. */
 const char *rl_basic_quote_characters = "\"'";
@@ -710,7 +711,7 @@ printable_part (char *pathname)
   if (rl_filename_completion_desired == 0)	/* don't need to do anything */
     return (pathname);
 
-  temp = strrchr (pathname, '/');
+  temp = rl_last_path_separator (pathname);
 #if defined (__MSDOS__) || defined (_WIN32)
   if (temp == 0 && ISALPHA ((unsigned char)pathname[0]) && pathname[1] == ':')
     temp = pathname + 1;
@@ -727,9 +728,9 @@ printable_part (char *pathname)
   else if (temp[1] == '\0')
     {
       for (x = temp - 1; x > pathname; x--)
-        if (*x == '/')
+        if (rl_is_path_separator (*x))
           break;
-      return ((*x == '/') ? x + 1 : pathname);
+      return (rl_is_path_separator (*x) ? x + 1 : pathname);
     }
   else
     return ++temp;
@@ -921,6 +922,7 @@ print_filename (char *to_print, char *full_pathname, int prefix_bytes)
 {
   int printed_len, extension_char, slen, tlen;
   char *s, c, *new_full_pathname, *dn;
+  char tmp_slash[3];
 
   extension_char = 0;
 #if defined (COLOR_SUPPORT)
@@ -953,13 +955,26 @@ print_filename (char *to_print, char *full_pathname, int prefix_bytes)
 	     bash directory completion hook, for example, it will expand it
 	     to the current directory.  We just want the `/'. */
 	  if (full_pathname == 0 || *full_pathname == 0)
-	    dn = "/";
-	  else if (full_pathname[0] != '/')
+	    {
+	      tmp_slash[0] = rl_preferred_path_separator;
+	      tmp_slash[1] = '\0';
+	      dn = tmp_slash;
+	    }
+	  else if (!rl_is_path_separator (full_pathname[0]))
 	    dn = full_pathname;
 	  else if (full_pathname[1] == 0)
-	    dn = "//";		/* restore trailing slash to `//' */
-	  else if (full_pathname[1] == '/' && full_pathname[2] == 0)
-	    dn = "/";		/* don't turn /// into // */
+	    {
+	      tmp_slash[0] = rl_preferred_path_separator;
+	      tmp_slash[1] = rl_preferred_path_separator;
+	      tmp_slash[2] = '\0';
+	      dn = tmp_slash;	/* restore trailing slash to `//' */
+	    }
+	  else if (rl_is_path_separator (full_pathname[1]) && full_pathname[2] == 0)
+	    {
+	      tmp_slash[0] = rl_preferred_path_separator;
+	      tmp_slash[1] = '\0';
+	      dn = tmp_slash;	/* don't turn /// into // */
+	    }
 	  else
 	    dn = full_pathname;
 	  s = tilde_expand (dn);
@@ -970,10 +985,10 @@ print_filename (char *to_print, char *full_pathname, int prefix_bytes)
 	  tlen = strlen (to_print);
 	  new_full_pathname = (char *)xmalloc (slen + tlen + 2);
 	  strcpy (new_full_pathname, s);
-	  if (s[slen - 1] == '/')
+	  if (rl_is_path_separator (s[slen - 1]))
 	    slen--;
 	  else
-	    new_full_pathname[slen] = '/';
+	    new_full_pathname[slen] = rl_preferred_path_separator;
 	  strcpy (new_full_pathname + slen + 1, to_print);
 
 #if defined (VISIBLE_STATS)
@@ -992,7 +1007,7 @@ print_filename (char *to_print, char *full_pathname, int prefix_bytes)
 		  new_full_pathname = dn;
 		}
 	      if (path_isdir (new_full_pathname))
-		extension_char = '/';
+		extension_char = rl_preferred_path_separator;
 	    }
 
 	  /* Move colored-stats code inside fnprint() */
@@ -1013,7 +1028,7 @@ print_filename (char *to_print, char *full_pathname, int prefix_bytes)
 	  else
 #endif
 	    if (_rl_complete_mark_directories && path_isdir (s))
-	      extension_char = '/';
+	      extension_char = rl_preferred_path_separator;
 
 	  /* Move colored-stats code inside fnprint() */
 #if defined (COLOR_SUPPORT)
@@ -1075,7 +1090,19 @@ _rl_find_completion_word (int *fp, int *dp)
   if (rl_completion_word_break_hook)
     brkchars = (*rl_completion_word_break_hook) ();
   if (brkchars == 0)
-    brkchars = rl_completer_word_break_characters;
+    {
+      if (rl_backslash_path_sep)
+	{
+	  if (rl_completer_word_break_characters == rl_basic_word_break_characters)
+	    rl_completer_word_break_characters = rl_basic_word_break_characters_without_backslash;
+	}
+      else
+	{
+	  if (rl_completer_word_break_characters == rl_basic_word_break_characters_without_backslash)
+	    rl_completer_word_break_characters = rl_basic_word_break_characters;
+	}
+      brkchars = rl_completer_word_break_characters;
+    }
 
   if (rl_completer_quote_characters)
     {
@@ -1559,7 +1586,7 @@ rl_display_match_list (char **matches, int len, int max)
     {
       t = printable_part (matches[0]);
       /* check again in case of /usr/src/ */
-      temp = rl_filename_completion_desired ? strrchr (t, '/') : 0;
+      temp = rl_filename_completion_desired ? rl_last_path_separator (t) : 0;
       common_length = temp ? fnwidth (temp) : fnwidth (t);
       sind = temp ? strlen (temp) : strlen (t);
       if (common_length > max || sind > max)
@@ -1574,7 +1601,7 @@ rl_display_match_list (char **matches, int len, int max)
   else if (_rl_colored_completion_prefix > 0)
     {
       t = printable_part (matches[0]);
-      temp = rl_filename_completion_desired ? strrchr (t, '/') : 0;
+      temp = rl_filename_completion_desired ? rl_last_path_separator (t) : 0;
       common_length = temp ? fnwidth (temp) : fnwidth (t);
       sind = temp ? RL_STRLEN (temp+1) : RL_STRLEN (t);		/* want portion after final slash */
       if (common_length > max || sind > max)
@@ -1908,10 +1935,13 @@ append_to_match (char *text, int delimiter, int quote_char, int nontrivial_match
 	      /* This is clumsy.  Avoid putting in a double slash if point
 		 is at the end of the line and the previous character is a
 		 slash. */
-	      if (rl_point && rl_line_buffer[rl_point] == '\0' && rl_line_buffer[rl_point - 1] == '/')
+	      if (rl_point && rl_line_buffer[rl_point] == '\0' && rl_is_path_separator (rl_line_buffer[rl_point - 1]))
 		;
-	      else if (rl_line_buffer[rl_point] != '/')
-		rl_insert_text ("/");
+	      else if (!rl_is_path_separator (rl_line_buffer[rl_point]))
+		{
+		  char tmp_slash[2] = { rl_preferred_path_separator };
+		  rl_insert_text (tmp_slash);
+		}
 	    }
 	}
 #ifdef S_ISLNK
@@ -2471,12 +2501,12 @@ rl_filename_completion_function (const char *text, int state)
 	text = ".";
       dirname = savestring (text);
 
-      temp = strrchr (dirname, '/');
+      temp = rl_last_path_separator (dirname);
 
 #if defined (__MSDOS__) || defined (_WIN32)
       /* special hack for //X/... */
-      if (dirname[0] == '/' && dirname[1] == '/' && ISALPHA ((unsigned char)dirname[2]) && dirname[3] == '/')
-        temp = strrchr (dirname + 3, '/');
+      if (rl_is_path_separator (dirname[0]) && rl_is_path_separator (dirname[1]) && ISALPHA ((unsigned char)dirname[2]) && rl_is_path_separator (dirname[3]))
+        temp = rl_last_path_separator (dirname + 3);
 #endif
 
       if (temp)
@@ -2630,9 +2660,9 @@ rl_filename_completion_function (const char *text, int state)
 	      strcpy (temp, dirname);
 	      /* Canonicalization cuts off any final slash present.  We
 		 may need to add it back. */
-	      if (dirname[dirlen - 1] != '/')
+	      if (!rl_is_path_separator (dirname[dirlen - 1]))
 	        {
-	          temp[dirlen++] = '/';
+	          temp[dirlen++] = rl_preferred_path_separator;
 	          temp[dirlen] = '\0';
 	        }
 	    }
@@ -2646,8 +2676,8 @@ rl_filename_completion_function (const char *text, int state)
  */
 #if 0
 	      /* Make sure that temp has a trailing slash here. */
-	      if (users_dirname[dirlen - 1] != '/')
-		temp[dirlen++] = '/';   
+	      if (!rl_is_path_separator (users_dirname[dirlen - 1]))
+		temp[dirlen++] = rl_preferred_path_separator;
 #endif
 /* end_clink_change */
 	    }

@@ -48,6 +48,7 @@
 #endif
 
 #include "tilde.h"
+#include "readline.h" // for rl_last_path_separator
 
 #if defined (TEST) || defined (STATIC_MALLOC)
 static void *xmalloc (), *xrealloc ();
@@ -168,11 +169,7 @@ tilde_find_suffix (const char *string)
 
   for (i = 0; i < string_len; i++)
     {
-#if defined (__MSDOS__)
-      if (string[i] == '/' || string[i] == '\\' /* || !string[i] */)
-#else
-      if (string[i] == '/' /* || !string[i] */)
-#endif
+      if (rl_is_path_separator (string[i]) /* || !string[i] */)
 	break;
 
       for (j = 0; suffixes && suffixes[j]; j++)
@@ -269,11 +266,7 @@ isolate_tilde_prefix (const char *fname, int *lenp)
   int i;
 
   ret = (char *)xmalloc (strlen (fname));
-#if defined (__MSDOS__)
-  for (i = 1; fname[i] && fname[i] != '/' && fname[i] != '\\'; i++)
-#else
-  for (i = 1; fname[i] && fname[i] != '/'; i++)
-#endif
+  for (i = 1; fname[i] && !rl_is_path_separator (fname[i]); i++)
     ret[i - 1] = fname[i];
   ret[i - 1] = '\0';
   if (lenp)
@@ -348,7 +341,7 @@ tilde_expand_word (const char *filename)
   /* A leading `~/' or a bare `~' is *always* translated to the value of
      $HOME or the home directory of the current user, regardless of any
      preexpansion hook. */
-  if (filename[1] == '\0' || filename[1] == '/')
+  if (filename[1] == '\0' || rl_is_path_separator (filename[1]))
     {
       /* Prefix $HOME to the rest of the string. */
       expansion = sh_get_env_value ("HOME");

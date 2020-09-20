@@ -351,13 +351,13 @@ rl_unix_filename_rubout (int count, int key)
       while (count--)
 	{
 	  c = rl_line_buffer[rl_point - 1];
-	  while (rl_point && (whitespace (c) || c == '/'))
+	  while (rl_point && (whitespace (c) || rl_is_path_separator (c)))
 	    {
 	      rl_point--;
 	      c = rl_line_buffer[rl_point - 1];
 	    }
 
-	  while (rl_point && (whitespace (c) == 0) && c != '/')
+	  while (rl_point && (whitespace (c) == 0) && !rl_is_path_separator (c))
 	    {
 	      rl_point--;	/* XXX - multibyte? */
 	      c = rl_line_buffer[rl_point - 1];

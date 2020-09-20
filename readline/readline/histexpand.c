@@ -45,6 +45,7 @@
 #include "history.h"
 #include "histlib.h"
 #include "chardefs.h"
+#include "readline.h" // for rl_last_path_separator
 
 #include "rlshell.h"
 #include "xmalloc.h"
@@ -629,7 +630,7 @@ history_expand_internal (char *string, int start, int qc, int *end_index_ptr, ch
 
 	  /* :t discards all but the last part of the pathname. */
 	case 't':
-	  tstr = strrchr (temp, '/');
+	  tstr = rl_last_path_separator (temp);
 	  if (tstr)
 	    {
 	      tstr++;
@@ -641,7 +642,7 @@ history_expand_internal (char *string, int start, int qc, int *end_index_ptr, ch
 
 	  /* :h discards the last part of a pathname. */
 	case 'h':
-	  tstr = strrchr (temp, '/');
+	  tstr = rl_last_path_separator (temp);
 	  if (tstr)
 	    *tstr = '\0';
 	  break;

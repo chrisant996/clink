@@ -141,6 +141,10 @@ rl_module::rl_module(const char* shell_name)
     _rl_convert_meta_chars_to_ascii = 0;
     _rl_output_meta_chars = 1;
 
+    // Recognize both / and \\ as path separators, and normalize to \\.
+    rl_backslash_path_sep = 1;
+    rl_preferred_path_separator = '\\';
+
     // Disable completion and match display.
 #ifndef CLINK_CHRISANT_FIXES
     // No: disabling completion breaks `complete` and `menu-complete`.

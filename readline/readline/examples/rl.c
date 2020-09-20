@@ -87,7 +87,7 @@ main (argc, argv)
   int opt, fd, nch;
   FILE *ifp;
 
-  progname = strrchr(argv[0], '/');
+  progname = rl_last_path_separator (argv[0]);
   if (progname == 0)
     progname = argv[0];
   else
