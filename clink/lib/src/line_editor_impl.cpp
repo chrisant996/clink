@@ -566,7 +566,7 @@ editor_module::context line_editor_impl::get_context(const line_state& line) con
 {
     auto& buffer = const_cast<rl_buffer&>(m_buffer);
     auto& pter = const_cast<printer&>(m_printer);
-    auto& pger = const_cast<pager&>(m_pager);
+    auto& pger = const_cast<pager&>(static_cast<const pager&>(m_pager));
     return { m_desc.prompt, pter, pger, buffer, line, m_matches };
 }
 

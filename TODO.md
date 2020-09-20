@@ -1,18 +1,10 @@
 ChrisAnt Plans
 
 # PRIORITY
-- Make filename modifier also work for backslashes.
-  - rl: `get_path_separator()` to return preferred path separator, with a setting on Windows to be `/` or `\`.
-  - `printable_part()`
-  - `print_filename()`
-  - `rl_display_match_list()`
-  - `append_to_match()`
-  - `rl_filename_completion_function()`
-  - `history_expand_internal()`
-  - `rl_unix_filename_rubout()`
-  - `tilde_find_suffix()`
-  - `isolate_tilde_prefix()`
-  - `tilde_expand_word()`
+- `dispatch_input` dispatches one key, but it needs to dispatch one _binding_.
+- Scrolling up through history starts overwriting the powerline prompt, and eventually seems to get confused about which history entry it's even on.
+
+## Next
 - Custom color for readline input.  Might prefer to completely replace readline's line drawing, since it's trying to minimize updates over terminal emulators, and that makes it much harder to colorize the editing line (and arguments).
 - Allow conhost to handle **Shift+Left** and etc for CUA selection.
 
@@ -54,6 +46,7 @@ ChrisAnt Plans
 - Fancy completion includes executables on PATH, but in c:\repos\clink\.build\vs2019\bin\debug it lists "clink" but not "clink.bat" as a completion, even though clink.bat is in the current directory.
 - `kill-whole-line` leaves old draw state:  type "echo ", **Alt+Shift+8**, **Esc** => clears the line, but "echo" remains!
 - `clink*.exe set` spews lua errors because it doesn't initialize the prompt filter stuff.
+- Pager has an unmitigated edge case:  it essentially assumes that the prompt is 1 line.  But the prompt can be multiple lines, and some of the fancy prompts are.  So if the final page is full, a couple lines can scroll out of view without having been read.
 
 ## Key Bindings
 - Hook up stuff via commands instead of via hard-coded custom bindings, so that everything can be remapped and reported by `show-rl-help`.

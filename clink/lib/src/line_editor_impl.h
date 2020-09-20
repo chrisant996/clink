@@ -7,7 +7,7 @@
 #include "binder.h"
 #include "editor_module.h"
 #include "input_dispatcher.h"
-#include "pager.h"
+#include "pager_impl.h"
 #include "line_editor.h"
 #include "line_state.h"
 #include "matches_impl.h"
@@ -73,7 +73,7 @@ private:
     words               m_words;
     matches_impl        m_matches;
     printer             m_printer;
-    pager               m_pager;
+    pager_impl          m_pager;
     unsigned int        m_prev_key;
     unsigned short      m_command_offset;
     unsigned char       m_keys_size;

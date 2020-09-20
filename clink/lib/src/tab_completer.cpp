@@ -211,7 +211,7 @@ tab_completer::state tab_completer::begin_print(const context& context)
         return state_none;
 
     context.printer.print("\n");
-    context.pager.start_pager(context);
+    context.pager.start_pager(context.printer);
 
     int query_threshold = g_query_threshold.get();
     if (query_threshold > 0 && query_threshold <= match_count)
@@ -261,7 +261,7 @@ tab_completer::state tab_completer::print(const context& context)
 
         // Ask pager what to do.
         const int lines = 1 + (columns_that_fit ? 0 : int(strlen(matches.get_displayable(index)) / context.printer.get_columns()));
-        if (!context.pager.on_print_lines(context, lines))
+        if (!context.pager.on_print_lines(context.printer, lines))
             return state_none;
 
         // Print the row.

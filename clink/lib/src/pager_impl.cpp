@@ -3,7 +3,7 @@
 
 #include "pch.h"
 #include <assert.h>
-#include "pager.h"
+#include "pager_impl.h"
 #include "binder.h"
 #include "editor_module.h"
 #include "line_buffer.h"
@@ -37,13 +37,13 @@ enum {
 
 
 //------------------------------------------------------------------------------
-pager::pager(input_dispatcher& dispatcher)
+pager_impl::pager_impl(input_dispatcher& dispatcher)
     : m_dispatcher(dispatcher)
 {
 }
 
 //------------------------------------------------------------------------------
-void pager::bind_input(binder& binder)
+void pager_impl::bind_input(binder& binder)
 {
     m_pager_bind_group = binder.create_group("pager");
     binder.bind(m_pager_bind_group, " ", bind_id_pager_page);
@@ -61,52 +61,45 @@ void pager::bind_input(binder& binder)
 }
 
 //------------------------------------------------------------------------------
-void pager::on_begin_line(const context& context)
+void pager_impl::on_begin_line(const context& context)
 {
 }
 
 //------------------------------------------------------------------------------
-void pager::on_end_line()
+void pager_impl::on_end_line()
 {
 }
 
 //------------------------------------------------------------------------------
-void pager::on_matches_changed(const context& context)
+void pager_impl::on_matches_changed(const context& context)
 {
 }
 
 //------------------------------------------------------------------------------
-void pager::on_input(const input& input, result& result, const context& context)
+void pager_impl::on_input(const input& input, result& result, const context& context)
 {
     switch (input.id)
     {
-    case bind_id_pager_page:        start_pager(context, page); break;
-    case bind_id_pager_halfpage:    start_pager(context, half_page); break;
-    case bind_id_pager_line:        start_pager(context, line); break;
+    case bind_id_pager_page:        set_limit(context.printer, page); break;
+    case bind_id_pager_halfpage:    set_limit(context.printer, half_page); break;
+    case bind_id_pager_line:        set_limit(context.printer, line); break;
     case bind_id_pager_stop:        m_max = -1; break;
     }
 }
 
 //------------------------------------------------------------------------------
-void pager::on_terminal_resize(int columns, int rows, const context& context)
+void pager_impl::on_terminal_resize(int columns, int rows, const context& context)
 {
 }
 
 //------------------------------------------------------------------------------
-void pager::start_pager(const context& context, pager_amount amount)
+void pager_impl::start_pager(printer& printer)
 {
-    switch (amount)
-    {
-    case unlimited:     m_max = 0; break;
-    case line:          m_max = 1; break;
-    case half_page:     m_max = max<int>(context.printer.get_rows() / 2, 0); break;
-    case page:          m_max = max<int>(context.printer.get_rows() - 2, 0); break;
-    case first_page:    m_max = max<int>(context.printer.get_rows() - 1, 0); break;
-    }
+    set_limit(printer, first_page);
 }
 
 //------------------------------------------------------------------------------
-bool pager::on_print_lines(const context& context, int lines)
+bool pager_impl::on_print_lines(printer& printer, int lines)
 {
     if (m_max < 0)
     {
@@ -122,9 +115,22 @@ bool pager::on_print_lines(const context& context, int lines)
         return true;
     m_max = 0;
 
-    context.printer.print(g_colour_interact.get(), "-- More --");
+    printer.print(g_colour_interact.get(), "-- More --");
     m_dispatcher.dispatch(m_pager_bind_group);
 
-    context.printer.print("\x1b[1K\r");
-    return true;
+    printer.print("\x1b[1K\r");
+    return m_max >= 0;
+}
+
+//------------------------------------------------------------------------------
+void pager_impl::set_limit(printer& printer, pager_amount amount)
+{
+    switch (amount)
+    {
+    case unlimited:     m_max = 0; break;
+    case line:          m_max = 1; break;
+    case half_page:     m_max = max<int>(printer.get_rows() / 2, 0); break;
+    case page:          m_max = max<int>(printer.get_rows() - 2, 0); break;
+    case first_page:    m_max = max<int>(printer.get_rows() - 1, 0); break;
+    }
 }

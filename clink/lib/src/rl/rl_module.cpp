@@ -18,9 +18,11 @@ extern "C" {
 #include <readline/xmalloc.h>
 }
 
+class pager;
+
 //------------------------------------------------------------------------------
 static FILE*        null_stream = (FILE*)1;
-void                show_rl_help(printer&);
+void                show_rl_help(printer&, pager&);
 extern "C" int      wcwidth(int);
 extern "C" char*    tgetstr(char*, char**);
 static const int    RL_MORE_INPUT_STATES = ~(
@@ -251,7 +253,7 @@ void rl_module::on_input(const input& input, result& result, const context& cont
 {
     if (input.id == bind_id_rl_help)
     {
-        show_rl_help(context.printer);
+        show_rl_help(context.printer, context.pager);
         result.redraw();
         return;
     }

@@ -6,6 +6,7 @@
 #include <core/base.h>
 #include <core/settings.h>
 #include <terminal/printer.h>
+#include "lib/pager.h"
 
 extern "C" {
 #include <readline/readline.h>
@@ -125,7 +126,7 @@ static char** collect_keymap(
 }
 
 //------------------------------------------------------------------------------
-void show_rl_help(printer& printer)
+void show_rl_help(printer& printer, pager& pager)
 {
     Keymap map = rl_get_keymap();
     int offset = 1;
@@ -162,12 +163,16 @@ void show_rl_help(printer& printer)
 
     // Display the matches.
     printer.print("\n");
+    pager.start_pager(printer);
 
     int max_width = min<int>(printer.get_columns() - 3, g_max_width.get());
     int columns = max(1, max_width / (longest + 1));
     bool need_lf = false;
     for (int i = 1, j = columns - 1; i < offset; ++i, --j)
     {
+	if (j == columns - 1 && !pager.on_print_lines(printer, 1))
+	    break;
+
         const char* match = collector[i];
 
         int length = int(strlen(match));
