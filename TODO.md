@@ -1,6 +1,7 @@
 ChrisAnt Plans
 
 # PRIORITY
+- Must go back to `clink_dll_*.dll` because multi-proc builds are failing intermittently due to both the DLL and the EXE projects writing to clink_x*.lib.
 - `dispatch_input` dispatches one key, but it needs to dispatch one _binding_.
 - Scrolling up through history starts overwriting the powerline prompt, and eventually seems to get confused about which history entry it's even on.
 
