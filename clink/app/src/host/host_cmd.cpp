@@ -501,13 +501,13 @@ bool host_cmd::initialise_system()
 
         str<560> buffer;
         buffer << "\"" << dll_path;
-        buffer << "/" CLINK_EXE "\" $*";
+        buffer << "\\" CLINK_EXE "\" $*";
         m_doskey.add_alias("clink", buffer.c_str());
 
         // Add an alias to operate on the command history.
         buffer.clear();
         buffer << "\"" << dll_path;
-        buffer << "/" CLINK_EXE "\" history $*";
+        buffer << "\\" CLINK_EXE "\" history $*";
         m_doskey.add_alias("history", buffer.c_str());
     }
 

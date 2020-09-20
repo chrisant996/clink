@@ -23,7 +23,7 @@ globber::globber(const char* pattern)
         char env_var[4] = { '=', pattern[0], ':', 0 };
         if (os::get_env(env_var, rooted))
         {
-            rooted << "/";
+            rooted << "\\";
             rooted << (pattern + 2);
             pattern = rooted.c_str();
         }

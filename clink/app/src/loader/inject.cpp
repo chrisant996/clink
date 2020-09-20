@@ -42,7 +42,7 @@ static void copy_dll(str_base& dll_path)
         return;
     }
 
-    target_path << "/" CLINK_DLL;
+    target_path << "\\" CLINK_DLL;
 
 #if !defined(CLINK_FINAL)
     // The DLL id only changes on a commit-premake cycle. During development this
