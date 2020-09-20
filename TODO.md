@@ -123,16 +123,17 @@ ChrisAnt Plans
 - [486](https://github.com/mridgers/clink/issues/486) **Ctrl+C** doesn't always work properly _[might be the auto-answer prompt setting]_
 - [456](https://github.com/mridgers/clink/issues/456) clear screen not working when prompt is 2 lines long
 - [453](https://github.com/mridgers/clink/issues/453) non-printable characters mess up rendering vs caret position
+  - Fixed?
 - [451](https://github.com/mridgers/clink/issues/451) doskey macros broken on Win10
-  - Fixed by [PR 464](https://github.com/mridgers/clink/pull/464)
+  - Fixed in head?
+  - Or possible fix available in [PR 464](https://github.com/mridgers/clink/pull/464)
 - [442](https://github.com/mridgers/clink/issues/442) paste is limited to 1024 characters
 - [434](https://github.com/mridgers/clink/issues/434) history stops working when `--quiet` is used
-- [422](https://github.com/mridgers/clink/issues/422) filename modifier only works with forward slashes; needs to support backslashes
+- [x] [422](https://github.com/mridgers/clink/issues/422) filename modifier only works with forward slashes; needs to support backslashes
 - _...need to examine the rest, still..._
 
 # UNIT TEST
-- 1 failure.
-- tens of thousands of assertions?!
+- Over 39 thousand assertions?!
 
 ---
 Chris Antos - sparrowhawk996@gmail.com
