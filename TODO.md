@@ -1,8 +1,14 @@
 ChrisAnt Plans
 
 # PRIORITY
-- `dispatch_input` dispatches one key, but it needs to dispatch one _binding_.
 - Scrolling up through history starts overwriting the powerline prompt, and eventually seems to get confused about which history entry it's even on.
+
+
+- `dispatch_input` dispatches one key, but it needs to dispatch one _keyboard sequence_.  It turns out this is tightly related to the "unbound keys accidentally emit part of the key sequence as text" issue.
+  - **The design problem:**&nbsp; Input is consumed until it matches a binding.  But if it matches a prefix of one or more bindings without matching any full bound chord, then the matched prefix is discarded and the binding recognizer resets and continues from that point in the input.
+  - **A solution option:**&nbsp; When the input matches a prefix of one or more bindings without matching any full bound chord, rewind and send the input through a separate table of "all possible keyboard key sequences":
+    - If it matches anything in that table, consume the match and do nothing with it.
+    - If it matches nothing in that table, then it's ok for the behavior to be undefined -- either do the current existing behavior, or treat each key as an unquoted literal.
 
 ## Next
 - Custom color for readline input.  Might prefer to completely replace readline's line drawing, since it's trying to minimize updates over terminal emulators, and that makes it much harder to colorize the editing line (and arguments).
