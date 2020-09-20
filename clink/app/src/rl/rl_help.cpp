@@ -165,12 +165,7 @@ void show_rl_help(printer& printer)
 
     int max_width = min<int>(printer.get_columns() - 3, g_max_width.get());
     int columns = max(1, max_width / (longest + 1));
-/* begin_clink_change
- * Fix missing line feed.
- */
-#ifdef CLINK_CHRISANT_FIXES
-    bool fNeedLF = false;
-#endif
+    bool need_lf = false;
     for (int i = 1, j = columns - 1; i < offset; ++i, --j)
     {
         const char* match = collector[i];
@@ -181,23 +176,19 @@ void show_rl_help(printer& printer)
         const char spaces[] = "                                         ";
         int space_count = max(longest - length, 0) + 1;
         printer.print(spaces, min<int>(sizeof(spaces) - 1, space_count));
-#ifdef CLINK_CHRISANT_FIXES
-        fNeedLF = true;
-#endif
+        need_lf = true;
 
         if (j)
             continue;
 
         j = columns;
         printer.print("\n");
-#ifdef CLINK_CHRISANT_FIXES
-        fNeedLF = false;
-#endif
+        need_lf = false;
     }
-#ifdef CLINK_CHRISANT_FIXES
-    if (fNeedLF)
+
+    if (need_lf)
         printer.print("\n");
-#endif
+    printer.print("\n");
 
     // Tidy up (N.B. the first match is a placeholder and shouldn't be freed).
     while (--offset)
