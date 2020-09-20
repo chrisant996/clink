@@ -109,7 +109,7 @@ Section "!Application files" app_files_id
     ;
     CreateDirectory $INSTDIR
     SetOutPath $INSTDIR
-    File ${CLINK_BUILD}\clink_x*.dll
+    File ${CLINK_BUILD}\clink_dll_x*.dll
     File ${CLINK_BUILD}\CHANGES
     File ${CLINK_BUILD}\LICENSE
     File ${CLINK_BUILD}\clink_x*.exe

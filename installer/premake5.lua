@@ -173,9 +173,11 @@ newaction {
             "clink.bat",
             "clink_x*.exe",
             "clink*.dll",
+            "clink*.pdb",
             "CHANGES",
             "LICENSE",
             "clink_x*.pdb",
+            "clink_dll_x*.pdb",
         }
 
         for _, mask in ipairs(manifest) do

@@ -1,7 +1,6 @@
 ChrisAnt Plans
 
 # PRIORITY
-- Must go back to `clink_dll_*.dll` because multi-proc builds are failing intermittently due to both the DLL and the EXE projects writing to clink_x*.lib.
 - `dispatch_input` dispatches one key, but it needs to dispatch one _binding_.
 - Scrolling up through history starts overwriting the powerline prompt, and eventually seems to get confused about which history entry it's even on.
 
@@ -103,7 +102,6 @@ ChrisAnt Plans
 # FUTURE
 
 ## Cleanup
-- Why did it change from clink_dll_x64.dll to clink_x64.dll?  The old way was much simpler for debugging with PDB.
 - Why did it change to make a copy of the DLL instead of simply using the original copy?
 
 ## Fancy

@@ -252,7 +252,7 @@ clink_lib("clink_app_common")
 
 --------------------------------------------------------------------------------
 clink_dll("clink_app_dll")
-    targetname("clink")
+    targetname("clink_dll")
     links("clink_app_common")
     links("clink_core")
     links("clink_lib")
