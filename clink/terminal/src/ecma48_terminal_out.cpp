@@ -123,12 +123,8 @@ void ecma48_terminal_out::write(const char* chars, int length)
             return;
         chars = m_buffer;
         length = m_pending;
-        reset_pending();
     }
-    else
-    {
-        reset_pending();
-    }
+    reset_pending();
 
     int need_next = (length == 1 || (chars[0] && !chars[1]));
     ecma48_iter iter(chars, m_state, length);

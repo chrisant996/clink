@@ -1,17 +1,18 @@
 ChrisAnt Plans
 
 # PRIORITY
+- Settings.
+  - A setting to disable prompt filtering.  Primarily for debugging purposes, but maybe useful in other scenarios as well.
+  - How to make **Alt+H** sort vertically?
 - Scrolling up through history starts overwriting the powerline prompt, and eventually seems to get confused about which history entry it's even on.
   - Issues:
-    - [x] #1: **Up** x4 => "0m" shows up after prompt!  But now the utf8 got translated correctly, at least!
-      - It's not strictly the input line length.  62-vs-63 characters is the transition point when cwd is c:\chrisant, but the transition point is lower when cwd is c:\chrisant\sdvdiff.
-      - The ecma48 terminal passes UTF8 to win_screen_buffer, where it gets converted to UTF16.  But inside the ecma48 terminal it misinterprets a UTF8 character sequence as a CSI code?  So probably readline update is exposing the issue due to how it scans for differences, attempting to be smart about how much it redraws?
-      - Ah:  `ecma48_terminal_out::write` always creates a new `ecma48_iter`.  But readline writes one `char` at a time.
-      - Ah:  `ecma48_terminal_out::write` tries to maintain internal state from the `ecma48_iter` across calls.  But `ecma48_iter::peek` doesn't yet support deferring the peek until more data is available.
-      - Ah:  `str_iter_impl<T>::next` considers a depleted string to be a final state.  Maybe it can keep track of whether UTF8 spec says there should be another character coming, and then `ecma48_terminal_out` could hang on to the partial character until a `flush` or a subsequent `write`?  The next `write` could start the parse over at the accumulated buffer?
-      - Fixed:  `ecma48_terminal_out::write(...,1)` now builds a utf8 sequence so that `str_iter_impl<char>::next` sees whole utf8 sequences.
-    - [ ] #2: **Up** x8 => prompt is overwritten and editing line is garbled!
-    - [ ] #3: **Up** until empty history entry => now history is confused about which entry it's on and further **Up**/**Down** don't traverse the history list correctly anymore.
+    - [ ] **Up** x8 => prompt is overwritten and editing line is garbled!
+      - Hahaha.  This is _rl_horizontal_scroll_mode, but it's behaving as though (partially?) active even when off!
+      - It doesn't clear stuff correctly, which is probably another issue in `ecma48_terminal_out`.
+      - It scrolls at weird transition spots, which may be related to the utf8 characters in the powerline prompt.
+      - Why is it treating the screen width as 77?  Is clink not communicating the screen width to readline correctly?
+    - [ ] **Up** until empty history entry => now history is confused about which entry it's on and further **Up**/**Down** don't traverse the history list correctly anymore.
+- **Up**, **Ctrl+D**, **Ctrl+D** => it's confused about which history line is active, and appears as if nothing happens!
 - Option to sort directories before files in the completion matches list.
 
 - `dispatch_input` dispatches one key, but it needs to dispatch one _keyboard sequence_.  It turns out this is tightly related to the "unbound keys accidentally emit part of the key sequence as text" issue.
@@ -19,6 +20,7 @@ ChrisAnt Plans
   - **A solution option:**&nbsp; When the input matches a prefix of one or more bindings without matching any full bound chord, rewind and send the input through a separate table of "all possible keyboard key sequences":
     - If it matches anything in that table, consume the match and do nothing with it.
     - If it matches nothing in that table, then it's ok for the behavior to be undefined -- either do the current existing behavior, or treat each key as an unquoted literal.
+- Ouch, readline's `new-complete` resets once there's only one match, so that the next **Tab** does a new completion based on the new content.  It's cool for `complete`, but for `menu-complete` it's problematic because there's no visual indicator at all when it's a directory, and even when it adds a space (only one filename match) it's a major departure from the CMD tab completion.  This just means that there really does need to be a `clink-menu-complete`.
 
 ## Next
 - Custom color for readline input.  Might prefer to completely replace readline's line drawing, since it's trying to minimize updates over terminal emulators, and that makes it much harder to colorize the editing line (and arguments).
