@@ -32,6 +32,12 @@ private:
     void                delete_chars(const ecma48_code::csi_base& csi);
     void                set_private_mode(const ecma48_code::csi_base& csi);
     void                reset_private_mode(const ecma48_code::csi_base& csi);
+    int                 build_pending(char c);
+    void                reset_pending();
     ecma48_state        m_state;
     screen_buffer&      m_screen;
+    int                 m_ax;
+    int                 m_encode_length;
+    int                 m_pending;
+    char                m_buffer[4];
 };

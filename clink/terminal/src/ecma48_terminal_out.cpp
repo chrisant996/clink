@@ -6,6 +6,8 @@
 #include "ecma48_iter.h"
 #include "screen_buffer.h"
 
+#include <assert.h>
+
 //------------------------------------------------------------------------------
 ecma48_terminal_out::ecma48_terminal_out(screen_buffer& screen)
 : m_screen(screen)
@@ -16,18 +18,21 @@ ecma48_terminal_out::ecma48_terminal_out(screen_buffer& screen)
 void ecma48_terminal_out::begin()
 {
     m_screen.begin();
+    reset_pending();
 }
 
 //------------------------------------------------------------------------------
 void ecma48_terminal_out::end()
 {
     m_screen.end();
+    reset_pending();
 }
 
 //------------------------------------------------------------------------------
 void ecma48_terminal_out::flush()
 {
     m_screen.flush();
+    reset_pending();
 }
 
 //------------------------------------------------------------------------------
@@ -109,6 +114,23 @@ void ecma48_terminal_out::write_c0(int c0)
 //------------------------------------------------------------------------------
 void ecma48_terminal_out::write(const char* chars, int length)
 {
+    if (length == 1 || (length < 0 && (chars[0] && !chars[1])))
+    {
+        // Readline sends one char at a time, but str_iter_impl doesn't support
+        // utf8 conversion split across multiple calls.  So for now we'll buffer
+        // a utf8 sequence here before letting ecma48_iter see it.
+        if (!build_pending(*chars))
+            return;
+        chars = m_buffer;
+        length = m_pending;
+        reset_pending();
+    }
+    else
+    {
+        reset_pending();
+    }
+
+    int need_next = (length == 1 || (chars[0] && !chars[1]));
     ecma48_iter iter(chars, m_state, length);
     while (const ecma48_code& code = iter.next())
     {
@@ -132,6 +154,8 @@ void ecma48_terminal_out::write(const char* chars, int length)
 //------------------------------------------------------------------------------
 void ecma48_terminal_out::set_attributes(const ecma48_code::csi_base& csi)
 {
+    reset_pending();
+
     // Empty parameters to 'CSI SGR' implies 0 (reset).
     if (csi.param_count == 0)
         return m_screen.set_attributes(attributes::defaults);
@@ -271,4 +295,39 @@ void ecma48_terminal_out::reset_private_mode(const ecma48_code::csi_base& csi)
         case 25: /* TODO */ break;
         }
     }
+}
+
+//------------------------------------------------------------------------------
+int ecma48_terminal_out::build_pending(char c)
+{
+    if (!m_pending)
+    {
+        m_ax = 0;
+        m_encode_length = 0;
+    }
+
+    assert(m_pending < sizeof(m_buffer));
+    m_buffer[m_pending++] = c;
+
+    m_ax = (m_ax << 6) | (c & 0x7f);
+    if (m_encode_length)
+    {
+        --m_encode_length;
+        return false;
+    }
+
+    if ((c & 0xc0) < 0xc0)
+        return true;
+
+    if (m_encode_length = !!(c & 0x20))
+        m_encode_length += !!(c & 0x10);
+
+    m_ax &= (0x1f >> m_encode_length);
+    return (m_pending == sizeof(m_buffer));
+}
+
+//------------------------------------------------------------------------------
+void ecma48_terminal_out::reset_pending()
+{
+    m_pending = 0;
 }

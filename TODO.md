@@ -2,7 +2,17 @@ ChrisAnt Plans
 
 # PRIORITY
 - Scrolling up through history starts overwriting the powerline prompt, and eventually seems to get confused about which history entry it's even on.
-
+  - Issues:
+    - [x] #1: **Up** x4 => "0m" shows up after prompt!  But now the utf8 got translated correctly, at least!
+      - It's not strictly the input line length.  62-vs-63 characters is the transition point when cwd is c:\chrisant, but the transition point is lower when cwd is c:\chrisant\sdvdiff.
+      - The ecma48 terminal passes UTF8 to win_screen_buffer, where it gets converted to UTF16.  But inside the ecma48 terminal it misinterprets a UTF8 character sequence as a CSI code?  So probably readline update is exposing the issue due to how it scans for differences, attempting to be smart about how much it redraws?
+      - Ah:  `ecma48_terminal_out::write` always creates a new `ecma48_iter`.  But readline writes one `char` at a time.
+      - Ah:  `ecma48_terminal_out::write` tries to maintain internal state from the `ecma48_iter` across calls.  But `ecma48_iter::peek` doesn't yet support deferring the peek until more data is available.
+      - Ah:  `str_iter_impl<T>::next` considers a depleted string to be a final state.  Maybe it can keep track of whether UTF8 spec says there should be another character coming, and then `ecma48_terminal_out` could hang on to the partial character until a `flush` or a subsequent `write`?  The next `write` could start the parse over at the accumulated buffer?
+      - Fixed:  `ecma48_terminal_out::write(...,1)` now builds a utf8 sequence so that `str_iter_impl<char>::next` sees whole utf8 sequences.
+    - [ ] #2: **Up** x8 => prompt is overwritten and editing line is garbled!
+    - [ ] #3: **Up** until empty history entry => now history is confused about which entry it's on and further **Up**/**Down** don't traverse the history list correctly anymore.
+- Option to sort directories before files in the completion matches list.
 
 - `dispatch_input` dispatches one key, but it needs to dispatch one _keyboard sequence_.  It turns out this is tightly related to the "unbound keys accidentally emit part of the key sequence as text" issue.
   - **The design problem:**&nbsp; Input is consumed until it matches a binding.  But if it matches a prefix of one or more bindings without matching any full bound chord, then the matched prefix is discarded and the binding recognizer resets and continues from that point in the input.
@@ -34,7 +44,6 @@ ChrisAnt Plans
 - Hook up `pager` with **Alt+H**.
 - Expand doskey alias.
 - Handle doskey aliases properly (refer to my two reference implementations).
-- Report the name of pressed key: e.g. `some-new-command` followed by **Key** to report `C-A-S-key` and/or the xterm sequence format readline uses.
 
 ## LUA Scripts
 - git completions.
