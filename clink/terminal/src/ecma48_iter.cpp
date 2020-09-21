@@ -41,7 +41,7 @@ static bool in_range(int value, int left, int right)
 
 
 //------------------------------------------------------------------------------
-enum
+enum ecma48_state_enum
 {
     ecma48_state_unknown = 0,
     ecma48_state_char,
@@ -52,6 +52,13 @@ enum
     ecma48_state_cmd_str,
     ecma48_state_char_str,
 };
+
+//------------------------------------------------------------------------------
+void ecma48_state::reset()
+{
+    state = ecma48_state_unknown;
+    count = 0;
+}
 
 
 

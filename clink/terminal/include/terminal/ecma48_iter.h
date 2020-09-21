@@ -7,6 +7,7 @@
 
 //------------------------------------------------------------------------------
 unsigned int cell_count(const char*);
+enum ecma48_state_enum;
 
 //------------------------------------------------------------------------------
 class ecma48_code
@@ -103,12 +104,12 @@ class ecma48_state
 {
 public:
                         ecma48_state()  { reset(); }
-    void                reset()         { state = count = 0; }
+    void                reset();
 
 private:
     friend class        ecma48_iter;
     ecma48_code         code;
-    int                 state;
+    ecma48_state_enum   state;
     int                 count;
     char                buffer[64];
 };
