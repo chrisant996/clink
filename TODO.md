@@ -1,8 +1,6 @@
 ChrisAnt Plans
 
 # PRIORITY
-- Settings.
-  - A setting to disable prompt filtering.  Primarily for debugging purposes, but maybe useful in other scenarios as well.
 - Scrolling up through history starts overwriting the powerline prompt, and eventually seems to get confused about which history entry it's even on.
   - Issues:
     - [ ] **Up** until empty history entry => now history is confused about which entry it's on and further **Up**/**Down** don't traverse the history list correctly anymore.
@@ -75,7 +73,8 @@ ChrisAnt Plans
   - Because I don't want **Shift+PgUp/PgDn** hard-coded for scrolling.
 - Make `tab_completer` include doskey aliases, and use a configurable color for them.
 - Make an option so `tab_completer` appends the preferred path separator to completed directories when they start in column 1, for convenience when entering just a directory for streamlined chdir.
-- Option to sort directories before files in the completion matches list.
+- A setting to sort directories before files in the completion matches list.
+- A setting to disable prompt filtering.  Primarily for debugging purposes, but maybe useful in other scenarios as well.
 
 # EVENTUALLY
 
