@@ -621,7 +621,11 @@ rl_get_previous_history (int count, int key)
 
   if (temp == 0)
     {
-      rl_maybe_unsave_line ();
+      /* begin_clink_change
+       * This seems broken: it starts mangling the history once it reaches the
+       * beginning. */
+      //rl_maybe_unsave_line ();
+      /* end_clink_change */
       rl_ding ();
     }
   else

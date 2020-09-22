@@ -1,9 +1,6 @@
 ChrisAnt Plans
 
 # PRIORITY
-- Scrolling up through history starts overwriting the powerline prompt, and eventually seems to get confused about which history entry it's even on.
-  - Issues:
-    - [ ] **Up** until empty history entry => now history is confused about which entry it's on and further **Up**/**Down** don't traverse the history list correctly anymore.
 - **Up**, **Ctrl+D**, **Ctrl+D** => it's confused about which history line is active, and appears as if nothing happens!
 
 - `dispatch_input` dispatches one key, but it needs to dispatch one _keyboard sequence_.  It turns out this is tightly related to the "unbound keys accidentally emit part of the key sequence as text" issue.
@@ -47,6 +44,7 @@ ChrisAnt Plans
 - What is `set-mark`?
 - How does `reverse-search-history` work?
 - How does `kill-line` work?
+- How is cmder-clink making the cursor briefly go solid?
 
 # SOON
 
