@@ -11,6 +11,7 @@
 #include <terminal/ecma48_iter.h>
 #include <terminal/printer.h>
 #include <terminal/terminal_in.h>
+#include <terminal/screen_buffer.h>
 
 extern "C" {
 #include <readline/readline.h>
@@ -115,7 +116,10 @@ static int terminal_read_thunk(FILE* stream)
 static void terminal_write_thunk(FILE* stream, const char* chars, int char_count)
 {
     if (stream == stderr || stream == null_stream)
+    {
+        // TODO: What gets lost in this black hole?
         return;
+    }
 
     printer* pter = (printer*)stream;
     pter->print(chars, char_count);
@@ -144,8 +148,10 @@ rl_module::rl_module(const char* shell_name)
     _rl_output_meta_chars = 1;
 
     // Recognize both / and \\ as path separators, and normalize to \\.
+#ifdef CLINK_CHRISANT_MODS
     rl_backslash_path_sep = 1;
     rl_preferred_path_separator = '\\';
+#endif
 
     // Disable completion and match display.
 #ifndef CLINK_CHRISANT_FIXES

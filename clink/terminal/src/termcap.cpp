@@ -58,6 +58,47 @@ static void cursor_style(int style)
     SetConsoleCursorInfo(handle, &ci);
 }
 
+//------------------------------------------------------------------------------
+static bool cursor_style(HANDLE handle, int style, bool visible)
+{
+    CONSOLE_CURSOR_INFO ci;
+    GetConsoleCursorInfo(handle, &ci);
+    bool was_visible = !!ci.bVisible;
+
+    // Assume first encounter of cursor size is the default size.
+    static int g_default_cursor_size = -1;
+    if (g_default_cursor_size < 0)
+        g_default_cursor_size = ci.dwSize;
+
+    if (g_default_cursor_size > 75)
+        style = !style;
+
+    ci.dwSize = style ? 100 : g_default_cursor_size;
+    ci.bVisible = visible;
+    SetConsoleCursorInfo(handle, &ci);
+
+    return was_visible;
+}
+
+//------------------------------------------------------------------------------
+void visible_bell()
+{
+    // TODO: support "ve" and "vs" cursor style CSI(?12l) etc.
+    static int g_enhanced_cursor = 0;
+
+    HANDLE handle = GetStdHandle(STD_OUTPUT_HANDLE);
+
+    bool was_visible = cursor_style(handle, !g_enhanced_cursor, true);
+
+    CONSOLE_SCREEN_BUFFER_INFO csbi;
+    GetConsoleScreenBufferInfo(handle, &csbi);
+    COORD xy = { csbi.dwCursorPosition.X, csbi.dwCursorPosition.Y };
+    SetConsoleCursorPosition(handle, xy);
+
+    Sleep(20);
+    cursor_style(handle, g_enhanced_cursor, was_visible);
+}
+
 
 
 #if defined(__cplusplus)
@@ -67,6 +108,12 @@ extern "C" {
 //------------------------------------------------------------------------------
 int tputs(const char* str, int count, int (*putc_func)(int))
 {
+    if (str == reinterpret_cast<const char*>('vb'))
+    {
+        visible_bell();
+        return 0;
+    }
+
     if (str != nullptr)
         while (*str)
             putc_func(*str++);
@@ -154,6 +201,11 @@ char* tgetstr(char* name, char** out)
     // Cursor style
     case 've': str = CSI(?12l) CSI(?25h); break;
     case 'vs': str = CSI(?12;25h);        break;
+
+    // Visible bell.
+#ifdef CLINK_CHRISANT_MODS
+    case 'vb': return reinterpret_cast<char*>('vb');
+#endif
     }
 
     if (str != nullptr && out != nullptr && *out != nullptr)

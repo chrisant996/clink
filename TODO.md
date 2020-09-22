@@ -1,6 +1,7 @@
 ChrisAnt Plans
 
 # PRIORITY
+- Still some kind of readline/ecma48_terminal_out problem when cycling through previous history (cycle very far back)?
 - **Up**, **Ctrl+D**, **Ctrl+D** => it's confused about which history line is active, and appears as if nothing happens!
 
 - `dispatch_input` dispatches one key, but it needs to dispatch one _keyboard sequence_.  It turns out this is tightly related to the "unbound keys accidentally emit part of the key sequence as text" issue.
