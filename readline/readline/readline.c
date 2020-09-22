@@ -133,6 +133,13 @@ int rl_dispatching;
 /* Non-zero if the previous command was a kill command. */
 int _rl_last_command_was_kill = 0;
 
+/* begin_clink_change */
+/* Value of rl_last_func before rl_remove_history was used.  So that the history
+   commands can tell which history search mode is effectively active even when
+   rl_remove_history is used. */
+rl_command_func_t *rl_remove_history_last_func = (rl_command_func_t *)NULL;
+/* end_clink_change */
+
 /* The current value of the numeric argument specified by the user. */
 int rl_numeric_arg = 1;
 

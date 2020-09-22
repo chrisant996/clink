@@ -48,6 +48,7 @@
 /* Some standard library routines. */
 #include "readline.h"
 #include "history.h"
+#include "histlib.h" // for ANCHORED_SEARCH
 
 #include "rlprivate.h"
 #include "rlshell.h"
@@ -662,6 +663,12 @@ rl_remove_history (count, key)
   int search_pos = rl_get_history_search_pos();
   int old_where = search_pos >= 0 ? search_pos : where_history();
 
+  // The history search commands use rl_last_func to identify the active history
+  // search mode.  rl_remove_history messes that up, so it gives them a way to
+  // know what rl_last_func was before rl_remove_history.
+  if (rl_last_func != rl_remove_history)
+    rl_remove_history_last_func = rl_last_func;
+
   HIST_ENTRY *hist = history_list ()[old_where];
   if (!hist || strcmp (rl_line_buffer, hist->line))
     {
@@ -670,7 +677,13 @@ rl_remove_history (count, key)
     }
 
   if (search_pos >= 0)
-    rl_history_search_backward (1, key);
+    {
+      int flags = rl_get_history_search_flags();
+      if (flags & ANCHORED_SEARCH)
+        rl_history_search_backward (1, key);
+      else
+        rl_history_substr_search_backward (1, key);
+    }
   else
     rl_get_previous_history (1, key);
 
@@ -678,9 +691,6 @@ rl_remove_history (count, key)
   if (rl_remove_history_hook)
     (*rl_remove_history_hook) (old_where, hist->line);
   free_history_entry (hist);
-
-  if (search_pos < 0)
-    rl_history_search_reinit (rl_get_history_search_flags ());
 
   return 0;
 }

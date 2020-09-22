@@ -518,6 +518,9 @@ extern Keymap _rl_keymap;
 extern FILE *_rl_in_stream;
 extern FILE *_rl_out_stream;
 extern int _rl_last_command_was_kill;
+/* begin_clink_change */
+extern rl_command_func_t *rl_remove_history_last_func;
+/* end_clink_change */
 extern int _rl_eof_char;
 extern int _rl_eof_found;
 extern procenv_t _rl_top_level;
