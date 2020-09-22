@@ -40,7 +40,7 @@ static setting_int g_query_threshold(
     "displaying them all.",
     100);
 
-static setting_bool g_vertical(
+setting_bool g_vertical(
     "match.vertical",
     "Display matches vertically",
     "Toggles the display of ordered matches between columns or rows.",

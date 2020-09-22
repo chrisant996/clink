@@ -14,6 +14,7 @@ extern "C" {
 
 //------------------------------------------------------------------------------
 extern setting_int g_max_width;
+extern setting_bool g_vertical;
 
 //------------------------------------------------------------------------------
 static const char* get_function_name(int (*func_addr)(int, int))
@@ -166,33 +167,44 @@ void show_rl_help(printer& printer, pager& pager)
     pager.start_pager(printer);
 
     int max_width = min<int>(printer.get_columns() - 3, g_max_width.get());
-    int columns = max(1, max_width / (longest + 1));
-    bool need_lf = false;
-    for (int i = 1, j = columns - 1; i < offset; ++i, --j)
+    int columns_that_fit = max_width / (longest + 1);
+    int columns = max(1, columns_that_fit);
+    int total_rows = (offset + columns - 1) / columns;
+
+    bool vertical = g_vertical.get();
+    int index_step = vertical ? total_rows : 1;
+
+    for (int i = 1; i < total_rows; ++i)
     {
-	if (j == columns - 1 && !pager.on_print_lines(printer, 1))
-	    break;
+        int index = vertical ? i : (i * columns);
 
-        const char* match = collector[i];
+        // Ask the pager what to do.
+        const int lines = 1 + (columns_that_fit ? 0 : int(strlen(collector[index]) / printer.get_columns()));
+        if (!pager.on_print_lines(printer, lines))
+            break;
 
-        int length = int(strlen(match));
-        printer.print(match, length);
+        // Print the row.
+        for (int j = columns - 1; j >= 0; --j)
+        {
+            if (index >= offset)
+                continue;
 
-        const char spaces[] = "                                         ";
-        int space_count = max(longest - length, 0) + 1;
-        printer.print(spaces, min<int>(sizeof(spaces) - 1, space_count));
-        need_lf = true;
+            // Print the key binding.
+            const char* match = collector[index];
 
-        if (j)
-            continue;
+            int length = int(strlen(match));
+            printer.print(match, length);
 
-        j = columns;
+            const char spaces[] = "                                         ";
+            int space_count = max(longest - length, 0) + 1;
+            printer.print(spaces, min<int>(sizeof(spaces) - 1, space_count));
+
+            index += index_step;
+        }
+
         printer.print("\n");
-        need_lf = false;
     }
 
-    if (need_lf)
-        printer.print("\n");
     printer.print("\n");
 
     // Tidy up (N.B. the first match is a placeholder and shouldn't be freed).
