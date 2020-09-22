@@ -48,11 +48,20 @@
 
 #include <stdio.h>
 
+/* begin_clink_change
+ * __MSDOS__ is used for both platform-specific file handling and terminal
+ * display, but Clink has a sufficient implementation of the Termcap library.
+ */
+#ifdef __MSDOS__
+#   undef __MSDOS__
+#endif
+/* end_clink_change */
+
 /* System-specific feature definitions and include files. */
 #include "rldefs.h"
 
 #ifdef __MSDOS__
-//#  include <pc.h>
+#  include <pc.h>
 #endif
 
 #include "rltty.h"
@@ -95,17 +104,10 @@ int rl_change_environment = 1;
 /*								    */
 /* **************************************************************** */
 
-/* begin_clink_change
- * term_string_buffer is referenced in two places outside without an
- * __MSDOS__ check.
- */
-//#ifndef __MSDOS__
-/* end_clink_change */
+#ifndef __MSDOS__
 static char *term_buffer = (char *)NULL;
 static char *term_string_buffer = (char *)NULL;
-/* begin_clink_change */
-//#endif
-/* end_clink_change */
+#endif
 
 static int tcap_initialized;
 

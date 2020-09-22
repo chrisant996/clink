@@ -3,26 +3,19 @@ ChrisAnt Plans
 # PRIORITY
 - Settings.
   - A setting to disable prompt filtering.  Primarily for debugging purposes, but maybe useful in other scenarios as well.
-  - How to make **Alt+H** sort vertically?
 - Scrolling up through history starts overwriting the powerline prompt, and eventually seems to get confused about which history entry it's even on.
   - Issues:
-    - [ ] **Up** x8 => prompt is overwritten and editing line is garbled!
-      - Hahaha.  This is _rl_horizontal_scroll_mode, but it's behaving as though (partially?) active even when off!
-      - It doesn't clear stuff correctly, which is probably another issue in `ecma48_terminal_out`.
-      - It scrolls at weird transition spots, which may be related to the utf8 characters in the powerline prompt.
-      - Why is it treating the screen width as 77?  Is clink not communicating the screen width to readline correctly?
     - [ ] **Up** until empty history entry => now history is confused about which entry it's on and further **Up**/**Down** don't traverse the history list correctly anymore.
 - **Up**, **Ctrl+D**, **Ctrl+D** => it's confused about which history line is active, and appears as if nothing happens!
-- Option to sort directories before files in the completion matches list.
 
 - `dispatch_input` dispatches one key, but it needs to dispatch one _keyboard sequence_.  It turns out this is tightly related to the "unbound keys accidentally emit part of the key sequence as text" issue.
   - **The design problem:**&nbsp; Input is consumed until it matches a binding.  But if it matches a prefix of one or more bindings without matching any full bound chord, then the matched prefix is discarded and the binding recognizer resets and continues from that point in the input.
   - **A solution option:**&nbsp; When the input matches a prefix of one or more bindings without matching any full bound chord, rewind and send the input through a separate table of "all possible keyboard key sequences":
     - If it matches anything in that table, consume the match and do nothing with it.
     - If it matches nothing in that table, then it's ok for the behavior to be undefined -- either do the current existing behavior, or treat each key as an unquoted literal.
-- Ouch, readline's `new-complete` resets once there's only one match, so that the next **Tab** does a new completion based on the new content.  It's cool for `complete`, but for `menu-complete` it's problematic because there's no visual indicator at all when it's a directory, and even when it adds a space (only one filename match) it's a major departure from the CMD tab completion.  This just means that there really does need to be a `clink-menu-complete`.
 
 ## Next
+- Ouch, readline's `new-complete` resets once there's only one match, so that the next **Tab** does a new completion based on the new content.  It's cool for `complete`, but for `menu-complete` it's problematic because there's no visual indicator at all when it's a directory, and even when it adds a space (only one filename match) it's a major departure from the CMD tab completion.  This just means that there really does need to be a `clink-menu-complete`.
 - Custom color for readline input.  Might prefer to completely replace readline's line drawing, since it's trying to minimize updates over terminal emulators, and that makes it much harder to colorize the editing line (and arguments).
 - Allow conhost to handle **Shift+Left** and etc for CUA selection.
 
@@ -64,6 +57,7 @@ ChrisAnt Plans
 - `kill-whole-line` leaves old draw state:  type "echo ", **Alt+Shift+8**, **Esc** => clears the line, but "echo" remains!
 - `clink*.exe set` spews lua errors because it doesn't initialize the prompt filter stuff.
 - Pager has an unmitigated edge case:  it essentially assumes that the prompt is 1 line.  But the prompt can be multiple lines, and some of the fancy prompts are.  So if the final page is full, a couple lines can scroll out of view without having been read.
+- Changing terminal width makes 0.4.8 slowly "walk up the screen".  Changing terminal width makes master go haywire.  Probably more ecma48 terminal issues.
 
 ## Key Bindings
 - Hook up stuff via commands instead of via hard-coded custom bindings, so that everything can be remapped and reported by `show-rl-help`.
@@ -81,6 +75,7 @@ ChrisAnt Plans
   - Because I don't want **Shift+PgUp/PgDn** hard-coded for scrolling.
 - Make `tab_completer` include doskey aliases, and use a configurable color for them.
 - Make an option so `tab_completer` appends the preferred path separator to completed directories when they start in column 1, for convenience when entering just a directory for streamlined chdir.
+- Option to sort directories before files in the completion matches list.
 
 # EVENTUALLY
 
