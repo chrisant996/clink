@@ -56,7 +56,6 @@ ChrisAnt Plans
 - Translate terminal sequences into "C-A-name" in `show-rl-help` (e.g. "C-A-Up", "Ctrl-Home", "End", etc).
 
 ## Commands
-- **Alt+Home/End** scroll to top/bottom of buffer.
 - Expand environment variable.
 - Scrolling mode:
   - Have commands for scrolling up/down by a page or line (or top/bottom of buffer).

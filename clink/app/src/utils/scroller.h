@@ -12,6 +12,8 @@ public:
                     scroller();
     void            begin();
     void            end();
+    void            top();
+    void            bottom();
     void            page_up();
     void            page_down();
     void            line_up();
@@ -39,8 +41,11 @@ private:
 
     enum
     {
+        bind_id_start_top,
         bind_id_start_pgup,
         bind_id_start_lineup,
+        bind_id_top,
+        bind_id_bottom,
         bind_id_pgup,
         bind_id_pgdown,
         bind_id_catchall,

@@ -34,6 +34,20 @@ void scroller::end()
 }
 
 //------------------------------------------------------------------------------
+void scroller::top()
+{
+    COORD pos = { 0, 0 };
+    SetConsoleCursorPosition(m_handle, pos);
+}
+
+//------------------------------------------------------------------------------
+void scroller::bottom()
+{
+    COORD pos = { 0, m_cursor_position.Y };
+    SetConsoleCursorPosition(m_handle, pos);
+}
+
+//------------------------------------------------------------------------------
 void scroller::page_up()
 {
     CONSOLE_SCREEN_BUFFER_INFO csbi;
@@ -105,21 +119,26 @@ void scroller_module::bind_input(binder& binder)
 
         // The `bind_id_start_*` start a mode where any key not in m_bind_group
         // cancels the scrolling mode.
-        binder.bind(default_group, "\\e[5;2~", bind_id_start_pgup);
-#ifdef CLINK_CHRISANT_MODS
-        binder.bind(default_group, "\\e[5;3~", bind_id_start_pgup);
-        binder.bind(default_group, "\\e[1;3A", bind_id_start_lineup);
-#endif
+        binder.bind(default_group, "\\e[1;2H", bind_id_start_top);      // shift-home (will conflict with CUA marking)
+        binder.bind(default_group, "\\e[5;2~", bind_id_start_pgup);     // shift-pgup
+        binder.bind(default_group, "\\e[1;2A", bind_id_start_lineup);   // shift-up
+        binder.bind(default_group, "\\e[1;3H", bind_id_start_top);      // alt-home
+        binder.bind(default_group, "\\e[5;3~", bind_id_start_pgup);     // alt-pgup
+        binder.bind(default_group, "\\e[1;3A", bind_id_start_lineup);   // alt-up
 
         // These are the keys recognized in the scrolling mode.
-        binder.bind(m_bind_group, "\\e[5;2~", bind_id_pgup);        // shift-pgup
-        binder.bind(m_bind_group, "\\e[6;2~", bind_id_pgdown);      // shift-pgdn
-#ifdef CLINK_CHRISANT_MODS
-        binder.bind(m_bind_group, "\\e[5;3~", bind_id_pgup);        // alt-pgup
-        binder.bind(m_bind_group, "\\e[6;3~", bind_id_pgdown);      // alt-pgdn
-        binder.bind(m_bind_group, "\\e[1;3A", bind_id_lineup);      // alt-up
-        binder.bind(m_bind_group, "\\e[1;3B", bind_id_linedown);    // alt-down
-#endif
+        binder.bind(m_bind_group, "\\e[1;2H", bind_id_top);             // shift-home
+        binder.bind(m_bind_group, "\\e[1;2F", bind_id_bottom);          // shift-end
+        binder.bind(m_bind_group, "\\e[5;2~", bind_id_pgup);            // shift-pgup
+        binder.bind(m_bind_group, "\\e[6;2~", bind_id_pgdown);          // shift-pgdn
+        binder.bind(m_bind_group, "\\e[1;2A", bind_id_lineup);          // shift-up
+        binder.bind(m_bind_group, "\\e[1;2B", bind_id_linedown);        // shift-down
+        binder.bind(m_bind_group, "\\e[1;3H", bind_id_top);             // alt-home
+        binder.bind(m_bind_group, "\\e[1;3F", bind_id_bottom);          // alt-end
+        binder.bind(m_bind_group, "\\e[5;3~", bind_id_pgup);            // alt-pgup
+        binder.bind(m_bind_group, "\\e[6;3~", bind_id_pgdown);          // alt-pgdn
+        binder.bind(m_bind_group, "\\e[1;3A", bind_id_lineup);          // alt-up
+        binder.bind(m_bind_group, "\\e[1;3B", bind_id_linedown);        // alt-down
         binder.bind(m_bind_group, "", bind_id_catchall);
     }
 }
@@ -147,6 +166,12 @@ void scroller_module::on_input(
 {
     switch (input.id)
     {
+    case bind_id_start_top:
+        m_scroller.begin();
+        m_scroller.top();
+        m_prev_group = result.set_bind_group(m_bind_group);
+        return;
+
     case bind_id_start_pgup:
         m_scroller.begin();
         m_scroller.page_up();
@@ -157,6 +182,14 @@ void scroller_module::on_input(
         m_scroller.begin();
         m_scroller.line_up();
         m_prev_group = result.set_bind_group(m_bind_group);
+        return;
+
+    case bind_id_top:
+        m_scroller.top();
+        return;
+
+    case bind_id_bottom:
+        m_scroller.bottom();
         return;
 
     case bind_id_pgup:
