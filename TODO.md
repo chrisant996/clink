@@ -2,6 +2,7 @@ ChrisAnt Plans
 
 # PRIORITY
 
+- 2 unit test failures after fixing doskey.  Maybe just a test issue due to the wchar_t/char change?
 - `dispatch_input` dispatches one key, but it needs to dispatch one _keyboard sequence_.  It turns out this is tightly related to the "unbound keys accidentally emit part of the key sequence as text" issue.
   - **The design problem:**&nbsp; Input is consumed until it matches a binding.  But if it matches a prefix of one or more bindings without matching any full bound chord, then the matched prefix is discarded and the binding recognizer resets and continues from that point in the input.
   - **A solution option:**&nbsp; When the input matches a prefix of one or more bindings without matching any full bound chord, rewind and send the input through a separate table of "all possible keyboard key sequences":
@@ -117,24 +118,17 @@ ChrisAnt Plans
 ## Configuration
 
 # ISSUES OF INTEREST [clink/issues](https://github.com/mridgers/clink/issues)
-- [x] [541](https://github.com/mridgers/clink/issues/541) input escaped characters _[use `quoted-insert`]_
 - [540](https://github.com/mridgers/clink/issues/540) v0.4.9 works but v1.0.0.a1 crashes in directory with too many files
 - [532](https://github.com/mridgers/clink/issues/532) paste newlines, run as separate lines _[copy from CASH]_
 - [531](https://github.com/mridgers/clink/issues/531) AV detects a trojan on download _[or on execution, for me]_
-- [x] [516](https://github.com/mridgers/clink/issues/516) $T not handled correctly in aliases
-- [x] [503](https://github.com/mridgers/clink/issues/503) some way to scroll up/down by one line
-- [x] [501](https://github.com/mridgers/clink/issues/501) **Backspace** vs **Ctrl+Backspace** vs **Del** don't work properly
 - [486](https://github.com/mridgers/clink/issues/486) **Ctrl+C** doesn't always work properly _[might be the auto-answer prompt setting]_
 - [456](https://github.com/mridgers/clink/issues/456) clear screen not working when prompt is 2 lines long
 - [453](https://github.com/mridgers/clink/issues/453) non-printable characters mess up rendering vs caret position
   - Fixed?
-- [451](https://github.com/mridgers/clink/issues/451) doskey macros broken on Win10
-  - Fixed in head?
-  - Or possible fix available in [PR 464](https://github.com/mridgers/clink/pull/464)
 - [442](https://github.com/mridgers/clink/issues/442) paste is limited to 1024 characters
 - [434](https://github.com/mridgers/clink/issues/434) history stops working when `--quiet` is used
 - [x] [422](https://github.com/mridgers/clink/issues/422) filename modifier only works with forward slashes; needs to support backslashes
-- _...need to examine the rest, still..._
+- _...need to examine the rest, from 421 downward..._
 
 # UNIT TEST
 - Over 39 thousand assertions?!
