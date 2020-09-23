@@ -1,7 +1,6 @@
 ChrisAnt Plans
 
 # PRIORITY
-- Still some kind of readline/ecma48_terminal_out problem when cycling through previous history (cycle very far back)?
 
 - `dispatch_input` dispatches one key, but it needs to dispatch one _keyboard sequence_.  It turns out this is tightly related to the "unbound keys accidentally emit part of the key sequence as text" issue.
   - **The design problem:**&nbsp; Input is consumed until it matches a binding.  But if it matches a prefix of one or more bindings without matching any full bound chord, then the matched prefix is discarded and the binding recognizer resets and continues from that point in the input.
@@ -10,18 +9,18 @@ ChrisAnt Plans
     - If it matches nothing in that table, then it's ok for the behavior to be undefined -- either do the current existing behavior, or treat each key as an unquoted literal.
 
 ## Next
-- Ouch, readline's `new-complete` resets once there's only one match, so that the next **Tab** does a new completion based on the new content.  It's cool for `complete`, but for `menu-complete` it's problematic because there's no visual indicator at all when it's a directory, and even when it adds a space (only one filename match) it's a major departure from the CMD tab completion.  This just means that there really does need to be a `clink-menu-complete`.
-- Custom color for readline input.  Might prefer to completely replace readline's line drawing, since it's trying to minimize updates over terminal emulators, and that makes it much harder to colorize the editing line (and arguments).
-- Allow conhost to handle **Shift+Left** and etc for CUA selection.
 
 ## LUA
-- Lua support changed significantly.  Explore how to support backward compatability for existing scripts.
+- Lua support changed significantly.  Explore how to support backward compatibility for existing scripts.
   - Prompt filtering looks probably straightforward.
   - argmatcher looks potentially more complicated, but maybe I just don't understand the data structures well enough yet.
 
 ## Problems
 - `tab_completer` should either operate inside a Readline function, or should have settings to specify key bindings for normal vs menu completion.
-- Maybe the `PATH` searching should go inside Readline, so it works for `possible-completions` and etc?
+- Still some kind of readline/ecma48_terminal_out problem when cycling through previous history (cycle very far back)?
+- Need a `clink-` version of `menu-complete`, `menu-complete-backward`, `possible-completions`, etc.
+  - Readline's `new-complete` resets once there's only one match, so that the next **Tab** does a new completion based on the new content.  It's cool for `complete`, but for `menu-complete` it's problematic because there's no visual indicator at all when it's a directory, and even when it adds a space (only one filename match) it's a major departure from the CMD tab completion.  Make sure the `clink-` variants solve that.
+- Allow conhost to handle **Shift+Left** and etc for CUA selection.
 - reverse-i-search and **Esc** needs to print a line feed.
 
 ## Key Bindings
@@ -31,9 +30,6 @@ ChrisAnt Plans
 - Holding down a bound key like **Ctrl+Up** lets conhost periodically intercept some of the keypresses!
 
 ## Commands and Features
-- Hook up `pager` with **Alt+H**.
-- Expand doskey alias.
-- Handle doskey aliases properly (refer to my two reference implementations).
 
 ## LUA Scripts
 - git completions.
@@ -44,7 +40,6 @@ ChrisAnt Plans
 - What is `set-mark`?
 - How does `reverse-search-history` work?
 - How does `kill-line` work?
-- How is cmder-clink making the cursor briefly go solid?
 
 # SOON
 
@@ -81,6 +76,7 @@ ChrisAnt Plans
 
 ## Editing
 - _The new bindable **Esc** isn't yet compatible with vi mode!_
+- Custom color for readline input.  Might prefer to completely replace readline's line drawing, since it's trying to minimize updates over terminal emulators, and that makes it much harder to colorize the editing line (and arguments).
 - Colorize arguments recognized by lua argument parsers!  Also colorize doskey macros.
 
 ## Key Bindings
@@ -125,7 +121,7 @@ ChrisAnt Plans
 - [540](https://github.com/mridgers/clink/issues/540) v0.4.9 works but v1.0.0.a1 crashes in directory with too many files
 - [532](https://github.com/mridgers/clink/issues/532) paste newlines, run as separate lines _[copy from CASH]_
 - [531](https://github.com/mridgers/clink/issues/531) AV detects a trojan on download _[or on execution, for me]_
-- [516](https://github.com/mridgers/clink/issues/516) $T not handled correctly in aliases
+- [x] [516](https://github.com/mridgers/clink/issues/516) $T not handled correctly in aliases
 - [x] [503](https://github.com/mridgers/clink/issues/503) some way to scroll up/down by one line
 - [x] [501](https://github.com/mridgers/clink/issues/501) **Backspace** vs **Ctrl+Backspace** vs **Del** don't work properly
 - [486](https://github.com/mridgers/clink/issues/486) **Ctrl+C** doesn't always work properly _[might be the auto-answer prompt setting]_

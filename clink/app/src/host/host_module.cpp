@@ -3,12 +3,17 @@
 
 #include "pch.h"
 #include "host_module.h"
+#include "doskey.h"
 
 #include <core/path.h>
 #include <core/settings.h>
 #include <core/str.h>
 #include <lib/line_buffer.h>
 #include <terminal/printer.h>
+
+extern "C" {
+#include <readline/readline.h>
+}
 
 //------------------------------------------------------------------------------
 static setting_enum g_paste_crlf(
@@ -56,6 +61,27 @@ static setting_str g_key_expand_env(
     "\\M-C-e");
 
 
+
+//------------------------------------------------------------------------------
+// Expands a doskey alias (but only the first line, if $T is present).
+int expand_doskey_alias(int count, int invoking_key)
+{
+    doskey_alias alias;
+    doskey doskey("cmd.exe");
+    doskey.resolve(rl_line_buffer, alias);
+
+    str<> expand;
+    alias.next(expand);
+
+    rl_begin_undo_group();
+    rl_delete_text(0, rl_end);
+    rl_point = 0;
+    if (!expand.empty())
+        rl_insert_text(expand.c_str());
+    rl_end_undo_group();
+
+    return 0;
+}
 
 //------------------------------------------------------------------------------
 static void ctrl_c(
@@ -256,6 +282,9 @@ enum
 host_module::host_module(const char* host_name)
 : m_host_name(host_name)
 {
+#ifdef CLINK_CHRISANT_MODS
+    rl_add_funmap_entry("expand-doskey-alias", expand_doskey_alias);
+#endif
 }
 
 //------------------------------------------------------------------------------

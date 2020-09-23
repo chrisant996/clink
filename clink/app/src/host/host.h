@@ -3,6 +3,7 @@
 
 #pragma once
 
+#include "doskey.h"
 #include "history/history_db.h"
 
 #include <lib/line_editor.h>
@@ -28,5 +29,7 @@ protected:
 private:
     void            filter_prompt(const char* in, str_base& out);
     const char*     m_name;
+    doskey          m_doskey;
+    doskey_alias    m_doskey_alias;
     history_db      m_history;
 };

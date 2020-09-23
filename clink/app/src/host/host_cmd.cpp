@@ -132,101 +132,11 @@ void tag_prompt()
 }
 
 //------------------------------------------------------------------------------
-static bool intercept_directory(const char* line)
-{
-    // Skip leading whitespace.
-    while (*line == ' ' || *line == '\t')
-        line++;
-
-    // Strip all quotes (it may be surprising, but this is what CMD.EXE does).
-    str<> tmp;
-    while (*line)
-    {
-        if (*line != '\"')
-            tmp.concat(line, 1);
-        line++;
-    }
-
-    // Truncate trailing whitespcae.
-    while (tmp.length())
-    {
-        char ch = tmp.c_str()[tmp.length() - 1];
-        if (ch != ' ' && ch != '\t')
-            break;
-        tmp.truncate(tmp.length() - 1);
-    }
-
-    if (!tmp.length() ||
-        os::get_path_type(tmp.c_str()) != os::path_type_dir)
-        return false;
-
-    if (!tmp.equals(".") &&
-        !tmp.equals(".."))
-    {
-        // If all dots, convert into valid path syntax moving N-1 levels.
-        // Examples:
-        //  - "..." becomes "..\..\"
-        //  - "...." becomes "..\..\..\"
-        int num_dots = 0;
-        for (const char* p = tmp.c_str(); *p; ++p, ++num_dots)
-        {
-            if (*p != '.')
-            {
-                num_dots = -1;
-                break;
-            }
-        }
-        if (num_dots >= 3)
-        {
-            tmp.clear();
-            while (num_dots > 1)
-            {
-                tmp.concat("..\\");
-                --num_dots;
-            }
-        }
-
-        // If the input doesn't end with a separator, don't handle it.
-        // Otherwise it would interfere with launching something found on the
-        // PATH but which happens to have the same name as a subdirectory of the
-        // current working directory.
-        if (!path::is_separator(tmp.c_str()[tmp.length() - 1]))
-        {
-            // But allow a special case for "..\.." and "..\..\..", etc.
-            const char* p = tmp.c_str();
-            while (true)
-            {
-                if (p[0] != '.' || p[1] != '.')
-                    return false;
-                if (p[2] == '\0')
-                    break;
-                if (!path::is_separator(p[2]))
-                    return false;
-                p += 3;
-            }
-        }
-
-        // Stop trimming trailing path separators once there's only 1 character,
-        // or when the preceding character is a colon.  Otherwise there's no way
-        // to change to the root directory.
-        while (tmp.length() > 1 && path::is_separator(tmp.c_str()[tmp.length() - 1]))
-        {
-            if (tmp.length() > 2 && tmp.c_str()[tmp.length() - 2] == ':')
-                break;
-            tmp.truncate(tmp.length() - 1);
-        }
-    }
-
-    os::set_current_dir(tmp.c_str());
-    return true;
-}
-
-//------------------------------------------------------------------------------
 static void write_line_feed()
 {
     HANDLE handle = GetStdHandle(STD_OUTPUT_HANDLE);
     DWORD written;
-    WriteConsole(handle, L"\n", 1, &written, nullptr);
+    WriteConsoleW(handle, L"\n", 1, &written, nullptr);
 }
 
 
@@ -342,12 +252,8 @@ bool host_cmd::is_interactive() const
 //------------------------------------------------------------------------------
 void host_cmd::edit_line(const wchar_t* prompt, wchar_t* chars, int max_chars)
 {
-    // Doskey is implemented on the server side of a ReadConsoleW() call (i.e.
-    // in conhost.exe). Commands separated by a "$T" are returned one command
-    // at a time through successive calls to ReadConsoleW().
-    wstr_base out(chars, max_chars);
-    if (m_doskey_alias.next(out))
-        return;
+    bool resolved = false;
+    wstr_base wout(chars, max_chars);
 
     // Convert the prompt to Utf8 and parse backspaces in the string.
     str<128> utf8_prompt(m_prompt.get());
@@ -367,19 +273,8 @@ void host_cmd::edit_line(const wchar_t* prompt, wchar_t* chars, int max_chars)
         while (1)
         {
             out.clear();
-            bool ok = host::edit_line(utf8_prompt.c_str(), out);
-            if (ok)
+            if (host::edit_line(utf8_prompt.c_str(), out))
             {
-#ifdef CLINK_CHRISANT_MODS
-                // If the line is a directory, change to the directory and give
-                // the host a blank line.
-                if (intercept_directory(out.c_str()))
-                {
-                    out.clear();
-                    write_line_feed();
-                }
-#endif
-
                 to_utf16(chars, max_chars, out.c_str());
                 break;
             }
@@ -393,9 +288,6 @@ void host_cmd::edit_line(const wchar_t* prompt, wchar_t* chars, int max_chars)
             write_line_feed();
         }
     }
-
-    m_doskey.resolve(chars, m_doskey_alias);
-    m_doskey_alias.next(out);
 }
 
 //------------------------------------------------------------------------------

@@ -22,10 +22,10 @@ static setting_bool g_enhanced_doskey(
 
 
 //------------------------------------------------------------------------------
-class wstr_stream
+class str_stream
 {
 public:
-    typedef wchar_t         TYPE;
+    typedef char            TYPE;
 
     struct range_desc
     {
@@ -33,7 +33,7 @@ public:
         unsigned int        count;
     };
 
-                            wstr_stream();
+                            str_stream();
     void                    operator << (TYPE c);
     void                    operator << (const range_desc desc);
     void                    collect(str_impl<TYPE>& out);
@@ -42,13 +42,13 @@ public:
 
 private:
     void                    grow(unsigned int hint=128);
-    wchar_t* __restrict     m_start;
-    wchar_t* __restrict     m_end;
-    wchar_t* __restrict     m_cursor;
+    char* __restrict        m_start;
+    char* __restrict        m_end;
+    char* __restrict        m_cursor;
 };
 
 //------------------------------------------------------------------------------
-wstr_stream::wstr_stream()
+str_stream::str_stream()
 : m_start(nullptr)
 , m_end(nullptr)
 , m_cursor(nullptr)
@@ -56,7 +56,7 @@ wstr_stream::wstr_stream()
 }
 
 //------------------------------------------------------------------------------
-void wstr_stream::operator << (TYPE c)
+void str_stream::operator << (TYPE c)
 {
     if (m_cursor >= m_end)
         grow();
@@ -65,7 +65,7 @@ void wstr_stream::operator << (TYPE c)
 }
 
 //------------------------------------------------------------------------------
-void wstr_stream::operator << (const range_desc desc)
+void str_stream::operator << (const range_desc desc)
 {
     if (m_cursor + desc.count >= m_end)
         grow(desc.count);
@@ -75,26 +75,26 @@ void wstr_stream::operator << (const range_desc desc)
 }
 
 //------------------------------------------------------------------------------
-wstr_stream::range_desc wstr_stream::range(const TYPE* ptr, unsigned int count)
+str_stream::range_desc str_stream::range(const TYPE* ptr, unsigned int count)
 {
     return { ptr, count };
 }
 
 //------------------------------------------------------------------------------
-wstr_stream::range_desc wstr_stream::range(const str_iter_impl<TYPE>& iter)
+str_stream::range_desc str_stream::range(const str_iter_impl<TYPE>& iter)
 {
     return { iter.get_pointer(), iter.length() };
 }
 
 //------------------------------------------------------------------------------
-void wstr_stream::collect(str_impl<TYPE>& out)
+void str_stream::collect(str_impl<TYPE>& out)
 {
     out.attach(m_start, int(m_cursor - m_start));
     m_start = m_end = m_cursor = nullptr;
 }
 
 //------------------------------------------------------------------------------
-void wstr_stream::grow(unsigned int hint)
+void str_stream::grow(unsigned int hint)
 {
     hint = (hint + 127) & ~127;
     unsigned int size = int(m_end - m_start) + hint;
@@ -120,7 +120,7 @@ void doskey_alias::reset()
 }
 
 //------------------------------------------------------------------------------
-bool doskey_alias::next(wstr_base& out)
+bool doskey_alias::next(str_base& out)
 {
     if (!*m_cursor)
         return false;
@@ -163,44 +163,46 @@ bool doskey::remove_alias(const char* alias)
 }
 
 //------------------------------------------------------------------------------
-bool doskey::resolve_impl(const wstr_iter& in, wstr_stream* out)
+bool doskey::resolve_impl(const str_iter& in, str_stream* out)
 {
+    // Early out if not output location was provided.
+    if (out == nullptr)
+        return true;
+
     // Find the alias for which to retrieve text for.
-    wstr_tokeniser tokens(in, " ");
-    wstr_iter token;
+    str_tokeniser tokens(in, " ");
+    str_iter token;
     if (!tokens.next(token))
         return false;
 
     // Legacy doskey doesn't allow macros that begin with whitespace so if the
     // token does it won't ever resolve as an alias.
-    const wchar_t* alias_ptr = token.get_pointer();
+    const char* alias_ptr = token.get_pointer();
     if (!g_enhanced_doskey.get() && alias_ptr != in.get_pointer())
         return false;
 
-    wstr<32> alias;
+    str<32> alias;
     alias.concat(alias_ptr, token.length());
+    wstr<32> walias(alias.c_str());
 
     // Find the alias' text. First check it exists.
     wchar_t unused;
     wstr<32> wshell(m_shell_name);
-    if (!GetConsoleAliasW(alias.data(), &unused, sizeof(unused), wshell.data()))
+    if (!GetConsoleAliasW(walias.data(), &unused, sizeof(unused), wshell.data()))
         if (GetLastError() != ERROR_INSUFFICIENT_BUFFER)
             return false;
 
     // It does. Allocate space and fetch it.
-    wstr<4> text;
-    text.reserve(512);
-    GetConsoleAliasW(alias.data(), text.data(), text.size(), wshell.data());
-
-    // Early out if not output location was provided.
-    if (out == nullptr)
-        return true;
+    wstr<4> wtext;
+    wtext.reserve(8192);
+    GetConsoleAliasW(walias.data(), wtext.data(), wtext.size(), wshell.data());
+    str<4> text(wtext.c_str());
 
     // Collect the remaining tokens.
     if (g_enhanced_doskey.get())
         tokens.add_quote_pair("\"");
 
-    struct arg_desc { const wchar_t* ptr; int length; };
+    struct arg_desc { const char* ptr; int length; };
     fixed_array<arg_desc, 10> args;
     arg_desc* desc;
     while (tokens.next(token) && (desc = args.push_back()))
@@ -210,8 +212,8 @@ bool doskey::resolve_impl(const wstr_iter& in, wstr_stream* out)
     }
 
     // Expand the alias' text into 'out'.
-    wstr_stream& stream = *out;
-    const wchar_t* read = text.c_str();
+    str_stream& stream = *out;
+    const char* read = text.c_str();
     for (int c = *read; c = *read; ++read)
     {
         if (c != '$')
@@ -251,14 +253,14 @@ bool doskey::resolve_impl(const wstr_iter& in, wstr_stream* out)
         // 'c' is now the arg index or -1 if it is all of them to be inserted.
         if (c < 0)
         {
-            const wchar_t* end = in.get_pointer() + in.length();
-            const wchar_t* start = args.front()->ptr;
-            stream << wstr_stream::range(start, int(end - start));
+            const char* end = in.get_pointer() + in.length();
+            const char* start = args.front()->ptr;
+            stream << str_stream::range(start, int(end - start));
         }
         else if (c < arg_count)
         {
             const arg_desc& desc = args.front()[c];
-            stream << wstr_stream::range(desc.ptr, desc.length);
+            stream << str_stream::range(desc.ptr, desc.length);
         }
     }
 
@@ -266,19 +268,19 @@ bool doskey::resolve_impl(const wstr_iter& in, wstr_stream* out)
 }
 
 //------------------------------------------------------------------------------
-void doskey::resolve(const wchar_t* chars, doskey_alias& out)
+void doskey::resolve(const char* chars, doskey_alias& out)
 {
     out.reset();
 
-    wstr_stream stream;
+    str_stream stream;
     if (g_enhanced_doskey.get())
     {
-        wstr_iter command;
+        str_iter command;
 
         // Coarse check to see if there's any aliases to resolve
         {
             bool resolves = false;
-            wstr_tokeniser commands(chars, "&|");
+            str_tokeniser commands(chars, "&|");
             commands.add_quote_pair("\"");
             while (commands.next(command))
                 if (resolves = resolve_impl(command, nullptr))
@@ -290,18 +292,18 @@ void doskey::resolve(const wchar_t* chars, doskey_alias& out)
 
         // This line will expand aliases so lets do that.
         {
-            const wchar_t* last = chars;
-            wstr_tokeniser commands(chars, "&|");
+            const char* last = chars;
+            str_tokeniser commands(chars, "&|");
             commands.add_quote_pair("\"");
             while (commands.next(command))
             {
                 // Copy delimiters into the output buffer verbatim.
                 if (int delim_length = int(command.get_pointer() - last))
-                    stream << wstr_stream::range(last, delim_length);
+                    stream << str_stream::range(last, delim_length);
                 last = command.get_pointer() + command.length();
 
                 if (!resolve_impl(command, &stream))
-                    stream << wstr_stream::range(command);
+                    stream << str_stream::range(command);
             }
 
             // Append any trailing delimiters too.
@@ -309,7 +311,7 @@ void doskey::resolve(const wchar_t* chars, doskey_alias& out)
                 stream << *last++;
         }
     }
-    else if (!resolve_impl(wstr_iter(chars), &stream))
+    else if (!resolve_impl(str_iter(chars), &stream))
         return;
 
     // Double null-terminated as aliases with $T become and array of commands.
