@@ -9,6 +9,62 @@
 #include <assert.h>
 
 //------------------------------------------------------------------------------
+static int g_enhanced_cursor = 0;
+
+//------------------------------------------------------------------------------
+static int cursor_style(HANDLE handle, int style, int visible)
+{
+    CONSOLE_CURSOR_INFO ci;
+    GetConsoleCursorInfo(handle, &ci);
+    int was_visible = !!ci.bVisible;
+
+    // Assume first encounter of cursor size is the default size.
+    static int g_default_cursor_size = -1;
+    if (g_default_cursor_size < 0)
+        g_default_cursor_size = ci.dwSize;
+
+    if (style >= 0)                     // -1 for no change to style
+    {
+        if (g_default_cursor_size > 75)
+            style = !style;
+        ci.dwSize = style ? 100 : g_default_cursor_size;
+    }
+
+    if (visible >= 0)                   // -1 for no change to visibility
+        ci.bVisible = !!visible;
+
+    SetConsoleCursorInfo(handle, &ci);
+
+    return was_visible;
+}
+
+//------------------------------------------------------------------------------
+static int cursor_style(int style, int visible)
+{
+    HANDLE handle = GetStdHandle(STD_OUTPUT_HANDLE);
+    return cursor_style(handle, style, visible);
+}
+
+//------------------------------------------------------------------------------
+void visible_bell()
+{
+    HANDLE handle = GetStdHandle(STD_OUTPUT_HANDLE);
+
+    int was_visible = cursor_style(handle, !g_enhanced_cursor, 1);
+
+    CONSOLE_SCREEN_BUFFER_INFO csbi;
+    GetConsoleScreenBufferInfo(handle, &csbi);
+    COORD xy = { csbi.dwCursorPosition.X, csbi.dwCursorPosition.Y };
+    SetConsoleCursorPosition(handle, xy);
+
+    Sleep(20);
+
+    cursor_style(handle, g_enhanced_cursor, was_visible);
+}
+
+
+
+//------------------------------------------------------------------------------
 ecma48_terminal_out::ecma48_terminal_out(screen_buffer& screen)
 : m_screen(screen)
 {
@@ -50,6 +106,17 @@ int ecma48_terminal_out::get_rows() const
 //------------------------------------------------------------------------------
 void ecma48_terminal_out::write_c1(const ecma48_code& code)
 {
+    if (code.get_code() == ecma48_code::c1_apc)
+    {
+        if (code.get_length() == 6 &&
+            code.get_pointer()[2] == 'v' &&
+            code.get_pointer()[3] == 'b')
+        {
+            visible_bell();
+        }
+        return;
+    }
+
     if (code.get_code() != ecma48_code::c1_csi)
         return;
 
@@ -270,8 +337,13 @@ void ecma48_terminal_out::set_private_mode(const ecma48_code::csi_base& csi)
     {
         switch (csi.params[i])
         {
-        case 12: /* TODO */ break;
-        case 25: /* TODO */ break;
+        case 12:
+            cursor_style(1, -1);
+            g_enhanced_cursor = 1;
+            break;
+        case 25:
+            cursor_style(-1, 1);
+            break;
         }
     }
 }
@@ -287,8 +359,14 @@ void ecma48_terminal_out::reset_private_mode(const ecma48_code::csi_base& csi)
     {
         switch (csi.params[i])
         {
-        case 12: /* TODO */ break;
-        case 25: /* TODO */ break;
+        case 12:
+            cursor_style(0, -1);
+            g_enhanced_cursor = 0;
+            break;
+        case 25:
+            // TODO: not sure it's a good idea to support hiding the cursor :)
+            // cursor_style(-1, 0);
+            break;
         }
     }
 }
