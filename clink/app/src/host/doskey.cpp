@@ -194,7 +194,7 @@ bool doskey::resolve_impl(const str_iter& in, str_stream* out)
 
     // It does. Allocate space and fetch it.
     wstr<4> wtext;
-    wtext.reserve(8192);
+    wtext.reserve(8192, true/*exact*/);
     GetConsoleAliasW(walias.data(), wtext.data(), wtext.size(), wshell.data());
     str<4> text(wtext.c_str());
 
