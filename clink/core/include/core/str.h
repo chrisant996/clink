@@ -39,7 +39,7 @@ public:
                         str_impl(const str_impl&&) = delete;
                         ~str_impl();
     void                attach(TYPE* data, unsigned int size);
-    bool                reserve(unsigned int size);
+    bool                reserve(unsigned int size, bool exact = false);
     TYPE*               data();
     const TYPE*         c_str() const;
     unsigned int        size() const;
@@ -122,15 +122,19 @@ void str_impl<TYPE>::set_growable(bool state)
 
 //------------------------------------------------------------------------------
 template <typename TYPE>
-bool str_impl<TYPE>::reserve(unsigned int new_size)
+bool str_impl<TYPE>::reserve(unsigned int new_size, bool exact)
 {
+    if (!exact)
+        new_size++;
+
     if (m_size >= new_size)
         return true;
 
     if (!is_growable())
         return false;
 
-    new_size = (new_size + 63) & ~63;
+    if (!exact)
+        new_size = (new_size + 63) & ~63;
 
     TYPE* new_data = (TYPE*)malloc(new_size * sizeof(TYPE));
     memcpy(new_data, c_str(), m_size * sizeof(TYPE));
@@ -272,7 +276,7 @@ bool str_impl<TYPE>::concat(const TYPE* src, int n)
         n = str_len(src);
 
     int len = length();
-    reserve(len + n + 1);
+    reserve(len + n);
 
     int remaining = m_size - len - 1;
 
@@ -282,20 +286,14 @@ bool str_impl<TYPE>::concat(const TYPE* src, int n)
 
     if (remaining > 0)
     {
-#ifdef CLINK_CHRISANT_FIXES
         // Don't use str_ncat, because it stops at nul.  str_impl<> is used for
         // things that can contain nul characters (like translated chords).  Or
         // if it were to use str_ncat then it mustn't increment m_length by
         // remaining since it could result in an uninitialized region of the
         // string buffer.
         memcpy(m_data + len, src, remaining * sizeof(TYPE));
-#else
-        str_ncat(m_data + len, src, remaining);
-#endif
         m_length += remaining;
-#ifdef CLINK_CHRISANT_FIXES
         m_data[m_length] = '\0';
-#endif
     }
 
     return !truncated;
