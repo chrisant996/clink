@@ -45,7 +45,6 @@ ChrisAnt Plans
 
 ## Problems
 - Fancy completion includes executables on PATH, but in c:\repos\clink\.build\vs2019\bin\debug it lists "clink" but not "clink.bat" as a completion, even though clink.bat is in the current directory.
-- `kill-whole-line` leaves old draw state:  type "echo ", **Alt+Shift+8**, **Esc** => clears the line, but "echo" remains!
 - `clink*.exe set` spews lua errors because it doesn't initialize the prompt filter stuff.
 - Pager has an unmitigated edge case:  it essentially assumes that the prompt is 1 line.  But the prompt can be multiple lines, and some of the fancy prompts are.  So if the final page is full, a couple lines can scroll out of view without having been read.
 - Changing terminal width makes 0.4.8 slowly "walk up the screen".  Changing terminal width makes master go haywire.  Probably more ecma48 terminal issues.
@@ -92,6 +91,7 @@ ChrisAnt Plans
 - Select all.
 - Marking mode.
 - Complete "%ENVVAR%\*" by internally expanding ENVVAR for collecting matches, but not expanding it in the editing line.
+- Add a `history.dupe_mode` that behaves like 4Dos/4NT/Take Command from JPSoft:  **Up**/**Down** then **Enter** remembers the history position so that **Enter**, **Down**, **Enter**, **Down**, **Enter**, etc can be used to replay a series of commands.
 
 ## Premake
 - Premake5 generates things incorrectly:
