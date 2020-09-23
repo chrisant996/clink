@@ -3,6 +3,7 @@
 
 #include "pch.h"
 #include "host/host_lua.h"
+#include "host/prompt.h"
 #include "utils/app_context.h"
 
 #include <core/base.h>
@@ -178,6 +179,7 @@ int set(int argc, char** argv)
 
     // Load all lua state too as there is settings declared in scripts.
     host_lua lua;
+    prompt_filter prompt_filter(lua);
     lua_load_script(lua, app, exec);
     lua.load_scripts();
 

@@ -45,7 +45,6 @@ ChrisAnt Plans
 
 ## Problems
 - Fancy completion includes executables on PATH, but in c:\repos\clink\.build\vs2019\bin\debug it lists "clink" but not "clink.bat" as a completion, even though clink.bat is in the current directory.
-- `clink*.exe set` spews lua errors because it doesn't initialize the prompt filter stuff.
 - Pager has an unmitigated edge case:  it essentially assumes that the prompt is 1 line.  But the prompt can be multiple lines, and some of the fancy prompts are.  So if the final page is full, a couple lines can scroll out of view without having been read.
 - Changing terminal width makes 0.4.8 slowly "walk up the screen".  Changing terminal width makes master go haywire.  Probably more ecma48 terminal issues.
 
