@@ -162,9 +162,14 @@ rl_module::rl_module(const char* shell_name)
 
     // Add commands.
 #ifdef CLINK_CHRISANT_MODS
-    rl_add_history_hook = host_add_history;
-    rl_remove_history_hook = host_remove_history;
-    rl_add_funmap_entry("reset-line", clink_reset_line);
+    static bool s_rl_initialized = false;
+    if (!s_rl_initialized)
+    {
+        s_rl_initialized = true;
+        rl_add_history_hook = host_add_history;
+        rl_remove_history_hook = host_remove_history;
+        rl_add_funmap_entry("reset-line", clink_reset_line);
+    }
 #endif
 
     // Bind extended keys so editing follows Windows' conventions.
