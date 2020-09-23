@@ -10,8 +10,8 @@ template <typename TYPE>
 struct builder
 {
                 builder(TYPE* data, int max_length);
-                ~builder()                            { *write = '\0'; }
-    bool        truncated() const                     { return (write >= end); }
+                ~builder()                            { if (start) *write = '\0'; }
+    bool        truncated() const                     { return (start && write >= end); }
     int         get_written() const                   { return int(write - start); }
     builder&    operator << (int value);
     TYPE*       write;
@@ -36,7 +36,9 @@ builder<wchar_t>& builder<wchar_t>::operator << (int value)
     if (value > 0xffff)
         return *this << ((value >> 10) + 0xd7c0) << ((value & 0x3ff) + 0xdc00);
 
-    if (write < end)
+    if (!start)
+        write++;
+    else if (write < end)
         *write++ = wchar_t(value);
 
     return *this;
@@ -46,7 +48,9 @@ builder<wchar_t>& builder<wchar_t>::operator << (int value)
 template <>
 builder<char>& builder<char>::operator << (int value)
 {
-    if (write < end)
+    if (!start)
+        write++;
+    else if (write < end)
         *write++ = char(value);
 
     return *this;
@@ -103,7 +107,11 @@ int to_utf8(str_base& out, str_iter_impl<wchar_t>& utf16)
     int length = out.length();
 
     if (out.is_growable())
-        out.reserve(length + utf16.length());
+    {
+        str_iter_impl<wchar_t> calc_needed(utf16.get_pointer(), utf16.length());
+        int needed = to_utf8(nullptr, 0, calc_needed);
+        out.reserve(length + needed);
+    }
 
     return to_utf8(out.data() + length, out.size() - length, utf16);
 }
@@ -142,7 +150,11 @@ int to_utf16(wstr_base& out, str_iter_impl<char>& utf8)
     int length = out.length();
 
     if (out.is_growable())
-        out.reserve(length + utf8.length());
+    {
+        str_iter_impl<char> calc_needed(utf8.get_pointer(), utf8.length());
+        int needed = to_utf16(nullptr, 0, calc_needed);
+        out.reserve(length + needed);
+    }
 
     return to_utf16(out.data() + length, out.size() - length, utf8);
 }
