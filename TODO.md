@@ -2,7 +2,6 @@ ChrisAnt Plans
 
 # PRIORITY
 
-- 2 unit test failures after fixing doskey.  Maybe just a test issue due to the wchar_t/char change?
 - `dispatch_input` dispatches one key, but it needs to dispatch one _keyboard sequence_.  It turns out this is tightly related to the "unbound keys accidentally emit part of the key sequence as text" issue.
   - **The design problem:**&nbsp; Input is consumed until it matches a binding.  But if it matches a prefix of one or more bindings without matching any full bound chord, then the matched prefix is discarded and the binding recognizer resets and continues from that point in the input.
   - **A solution option:**&nbsp; When the input matches a prefix of one or more bindings without matching any full bound chord, rewind and send the input through a separate table of "all possible keyboard key sequences":
