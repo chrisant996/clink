@@ -642,8 +642,7 @@ rl_get_previous_history (int count, int key)
 
 /* Add the current line to the history. */
 int
-rl_add_history (count, key)
-     int count, key;
+rl_add_history (int count, int key)
 {
   add_history (rl_line_buffer);
   if (rl_add_history_hook)
@@ -657,8 +656,7 @@ rl_add_history (count, key)
 /* Remove the current line from the history.  If the line is modified or
    empty,just ding. */
 int
-rl_remove_history (count, key)
-     int count, key;
+rl_remove_history (int count, int key)
 {
   int search_pos = rl_get_history_search_pos();
   int old_where = search_pos >= 0 ? search_pos : where_history();
@@ -691,6 +689,12 @@ rl_remove_history (count, key)
   if (rl_remove_history_hook)
     (*rl_remove_history_hook) (old_where, hist->line);
   free_history_entry (hist);
+
+  if (!history_length || rl_get_history_search_pos() == search_pos)
+    {
+      rl_replace_line ("", 1);
+      using_history ();
+    }
 
   return 0;
 }
