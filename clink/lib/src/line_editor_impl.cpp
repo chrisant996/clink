@@ -207,10 +207,13 @@ void line_editor_impl::dispatch(int bind_group)
     const int prev_bind_group = m_bind_resolver.get_group();
     m_bind_resolver.set_group(bind_group);
 
-    m_desc.input->select();
+// TODO: is this really a viable approach?
+    do
+    {
+        m_desc.input->select();
+    }
+    while (!update());
 
-    const bool result = update();
-    assert(result);
     assert(check_flag(flag_editing));
 
     m_bind_resolver.set_group(prev_bind_group);
@@ -222,6 +225,7 @@ bool line_editor_impl::is_bound(const char* seq, int len)
     if (!len)
         return false;
 
+// TODO: make sure the right bind group is used.
     bind_resolver bind_resolver(m_binder);
     for (int i = 0; i < len; ++i)
         if (bind_resolver.step(seq[i]))
@@ -231,6 +235,8 @@ bool line_editor_impl::is_bound(const char* seq, int len)
             break;
         }
 
+// TODO: don't check readline's keymap when for example a special bind group is
+// active that will block on_input from reaching readline.
     if (rl_function_of_keyseq_len(seq, len, nullptr, nullptr))
         return true;
 
@@ -238,7 +244,9 @@ bool line_editor_impl::is_bound(const char* seq, int len)
 }
 
 //------------------------------------------------------------------------------
-void line_editor_impl::update_input()
+// Returns false when a chord is in progress, otherwise returns true.  This is
+// to help dispatch() be able to dispatch an entire chord.
+bool line_editor_impl::update_input()
 {
     int key = m_desc.input->read();
 
@@ -256,14 +264,14 @@ void line_editor_impl::update_input()
     {
         m_buffer.reset();
         end_line();
-        return;
+        return true;
     }
 
     if (key < 0)
-        return;
+        return true;
 
     if (!m_bind_resolver.step(key))
-        return;
+        return false;
 
     struct result_impl : public editor_module::result
     {
@@ -287,6 +295,8 @@ void line_editor_impl::update_input()
         unsigned char   flags;  // = 0;   <! issues about C2905
     };
 
+// TODO: why is this a while loop?  how should this interact with
+// input_dispatcher::dispatch()?
     while (auto binding = m_bind_resolver.next())
     {
         // Binding found, dispatch it off to the module.
@@ -313,6 +323,7 @@ void line_editor_impl::update_input()
 
         // Process what result_impl has collected.
         if (result.flags & result_impl::flag_pass)
+// TODO: how should this interact with input_dispatcher::dispatch()?
             continue;
 
         binding.claim();
@@ -326,7 +337,7 @@ void line_editor_impl::update_input()
         }
 
         if (!check_flag(flag_editing))
-            return;
+            return true;
 
         if (result.flags & result_impl::flag_redraw)
             m_buffer.redraw();
@@ -338,6 +349,8 @@ void line_editor_impl::update_input()
     }
 
     m_buffer.draw();
+// TODO: reaching here means a key binding was found and processed, yes?
+    return true;
 }
 
 //------------------------------------------------------------------------------

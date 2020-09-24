@@ -60,7 +60,7 @@ private:
     void                find_command_bounds(const char*& start, int& length);
     void                collect_words();
     void                update_internal();
-    void                update_input();
+    bool                update_input();
     void                accept_match(unsigned int index);
     void                append_match_lcd();
     module::context     get_context(const line_state& line) const;

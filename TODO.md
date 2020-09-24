@@ -3,7 +3,7 @@ ChrisAnt Plans
 # PRIORITY
 
 ## Input
-- `dispatch_input` dispatches one key, but it needs to dispatch one _keyboard sequence_.  It turns out this is tightly related to the "unbound keys accidentally emit part of the key sequence as text" issue.
+- I think the last thing needed to solve the input woes is to just make sure `key_tester::is_bound()` doesn't ask readline when a binding group is active that blocks reading readline.  But a handful of TODO comments in `is_bound` and `update_input` need to be investigated before declaring victory.
 
 ## Next
 
