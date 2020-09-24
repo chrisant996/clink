@@ -2,11 +2,19 @@ ChrisAnt Plans
 
 # PRIORITY
 
+## Input
 - `dispatch_input` dispatches one key, but it needs to dispatch one _keyboard sequence_.  It turns out this is tightly related to the "unbound keys accidentally emit part of the key sequence as text" issue.
-  - **The design problem:**&nbsp; Input is consumed until it matches a binding.  But if it matches a prefix of one or more bindings without matching any full bound chord, then the matched prefix is discarded and the binding recognizer resets and continues from that point in the input.
-  - **A solution option:**&nbsp; When the input matches a prefix of one or more bindings without matching any full bound chord, rewind and send the input through a separate table of "all possible keyboard key sequences":
-    - If it matches anything in that table, consume the match and do nothing with it.
-    - If it matches nothing in that table, then it's ok for the behavior to be undefined -- either do the current existing behavior, or treat each key as an unquoted literal.
+  - Unbound special keys (**Alt+Shift+UP**, etc) accidentally emit _part_ of the key name as text.  It seems like a non-match halts evaluation as soon as it exhausts potential chord prefixes, and the rest of the sequence ends up as literal input.  _Sounds like `skip-csi-sequence` isn't set?_
+  - **The design problem:**&nbsp; Input is consumed until it matches a binding.  But if it matches a prefix of one or more bindings without matching any full bound chord, then the matched prefix is discarded and the binding recognizer resets and continues from that point in the input.  Ah, and clink has always had this problem, it's just that 0.4.8 used the same prefix for all extended keys, followed always by exactly one character "\e`_X_" as the key code sequence, thus any unbound extended key was the same length chord as all others, and was able to be fully discarded.
+  - _REJECTED:  A solution option:&nbsp; When the input matches a prefix of one or more bindings without matching any full bound chord, rewind and send the input through a separate table of "all possible keyboard key sequences":_
+    - _If it matches anything in that table, consume the match and do nothing with it._
+    - _If it matches nothing in that table, then it's ok for the behavior to be undefined -- either do the current existing behavior, or treat each key as an unquoted literal._
+  - **Favorite solution option:**&nbsp; When `win_terminal_in` generates an ANSI terminal key code sequence, it can check whether anything is bound to it.  If not, just no-op.
+    - `rl_function_of_keyseq_len` checks if a sequence is bound with Readline.
+    - Not sure yet how to check if a sequence is bound with clink's binding_resolver.
+- Try to make unbound keys like **Shift-Left** tell conhost that they haven't been handled, so conhost can do its fancy CUA marking.
+- Especially don't handle **ALt+F4**, unless maybe to bind it to a keyboard macro for the **Esc** input sequence plus "exit".
+- Holding down a bound key like **Ctrl+Up** lets conhost periodically intercept some of the keypresses!
 
 ## Next
 
@@ -21,14 +29,6 @@ ChrisAnt Plans
   - Readline's `new-complete` resets once there's only one match, so that the next **Tab** does a new completion based on the new content.  It's cool for `complete`, but for `menu-complete` it's problematic because there's no visual indicator at all when it's a directory, and even when it adds a space (only one filename match) it's a major departure from the CMD tab completion.  Make sure the `clink-` variants solve that.
 - Allow conhost to handle **Shift+Left** and etc for CUA selection.
 - reverse-i-search and **Esc** needs to print a line feed.
-
-## Key Bindings
-- Unbound special keys (**Alt+Shift+UP**, etc) accidentally emit _part_ of the key name as text.  It seems like a non-match halts evaluation as soon as it exhausts potential chord prefixes, and the rest of the sequence ends up as literal input.  _Sounds like `skip-csi-sequence` isn't set?_
-  - Try to make unbound keys like **Shift-Left** tell conhost that they haven't been handled, so conhost can do its fancy CUA marking.
-  - Especially don't handle **ALt+F4**.
-- Holding down a bound key like **Ctrl+Up** lets conhost periodically intercept some of the keypresses!
-
-## Commands and Features
 
 ## LUA Scripts
 - git completions.
