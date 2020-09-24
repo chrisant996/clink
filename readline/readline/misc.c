@@ -690,7 +690,9 @@ rl_remove_history (int count, int key)
     (*rl_remove_history_hook) (old_where, hist->line);
   free_history_entry (hist);
 
-  if (!history_length || rl_get_history_search_pos() == search_pos)
+  search_pos = rl_get_history_search_pos();
+  int new_where = search_pos >= 0 ? search_pos : where_history();
+  if (!history_length || rl_get_history_search_pos() == old_where)
     {
       rl_replace_line ("", 1);
       using_history ();
