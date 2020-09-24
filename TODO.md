@@ -12,7 +12,6 @@ ChrisAnt Plans
 
 ## LUA
 - Lua support changed significantly.  Explore how to support backward compatibility for existing scripts.
-  - Prompt filtering looks probably straightforward.
   - argmatcher looks potentially more complicated, but maybe I just don't understand the data structures well enough yet.
 
 ## Problems
