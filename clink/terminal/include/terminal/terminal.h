@@ -10,8 +10,10 @@ class terminal_out;
 //------------------------------------------------------------------------------
 struct terminal
 {
+    screen_buffer*  screen;
     terminal_in*    in;
     terminal_out*   out;
+    bool            screen_owned;
 };
 
 //------------------------------------------------------------------------------

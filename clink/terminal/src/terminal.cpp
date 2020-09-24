@@ -13,13 +13,12 @@
 terminal terminal_create(screen_buffer* screen)
 {
 #if defined(PLATFORM_WINDOWS)
-    if (screen == nullptr)
-        screen = new win_screen_buffer(); // TODO: this leaks.
-
-    return {
-        new win_terminal_in(),
-        new ecma48_terminal_out(*screen),
-    };
+    terminal term;
+    term.screen_owned = (screen == nullptr);
+    term.screen = screen ? screen : new win_screen_buffer();
+    term.in = new win_terminal_in();
+    term.out = new ecma48_terminal_out(*term.screen);
+    return term;
 #else
     return {};
 #endif
@@ -30,4 +29,6 @@ void terminal_destroy(const terminal& terminal)
 {
     delete terminal.out;
     delete terminal.in;
+    if (terminal.screen_owned)
+        delete terminal.screen;
 }
