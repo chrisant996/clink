@@ -3,12 +3,14 @@
 
 #include "pch.h"
 #include "win_terminal_in.h"
+#include "key_tester.h"
 
 #include <core/base.h>
 #include <core/str.h>
 #include <core/settings.h>
 
 #include <Windows.h>
+#include <assert.h>
 
 //------------------------------------------------------------------------------
 #ifdef CLINK_CHRISANT_MODS
@@ -183,6 +185,12 @@ int win_terminal_in::read()
 }
 
 //------------------------------------------------------------------------------
+void win_terminal_in::set_key_tester(key_tester* keys)
+{
+    m_keys = keys;
+}
+
+//------------------------------------------------------------------------------
 void win_terminal_in::read_console()
 {
     // Clear 'processed input' flag so key presses such as Ctrl-C and Ctrl-S
@@ -250,7 +258,42 @@ void win_terminal_in::read_console()
                 }
 
                 if (key_event.bKeyDown)
+                {
                     process_input(key_event);
+
+                    // If the processed input chord isn't bound, discard it.
+                    // Otherwise unbound keys can have the tail part of their
+                    // sequence show up as though it were typed input.  The
+                    // approach here assumes no more than one key sequence per
+                    // input record.
+                    if (m_keys)
+                    {
+                        // If there are unprocessed queued keys, then we don't
+                        // know what keymap will be active when this new input
+                        // gets processed, so we can't accurately tell whether
+                        // the key sequence is bound to anything.
+                        assert(buffer_count == 0);
+
+                        const int len = m_buffer_count - buffer_count;
+                        if (len > 0)
+                        {
+                            // m_buffer is circular, so copy the key sequence to
+                            // a separate sequential buffer.
+                            char chord[sizeof_array(m_buffer) + 1];
+                            static const unsigned int mask = sizeof_array(m_buffer) - 1;
+                            for (int i = 0; i < len; ++i)
+                                chord[i] = m_buffer[(m_buffer_head + i) & mask];
+
+                            // Readline has a bug in rl_function_of_keyseq_len
+                            // that looks for nul termination even though it's
+                            // supposed to use a length instead.
+                            chord[len] = '\0';
+
+                            if (!m_keys->is_bound(chord, len))
+                                m_buffer_count = buffer_count;
+                        }
+                    }
+                }
             }
             break;
 

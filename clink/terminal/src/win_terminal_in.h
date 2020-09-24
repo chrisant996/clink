@@ -5,6 +5,8 @@
 
 #include "terminal_in.h"
 
+class key_tester;
+
 //------------------------------------------------------------------------------
 class win_terminal_in
     : public terminal_in
@@ -14,6 +16,7 @@ public:
     virtual void    end() override;
     virtual void    select() override;
     virtual int     read() override;
+    virtual void    set_key_tester(key_tester* keys) override;
 
 private:
     void            read_console();
@@ -21,6 +24,7 @@ private:
     void            push(unsigned int value);
     void            push(const char* seq);
     unsigned char   pop();
+    key_tester*     m_keys;
     void*           m_stdin = nullptr;
     unsigned int    m_dimensions = 0;
     unsigned long   m_prev_mode = 0;

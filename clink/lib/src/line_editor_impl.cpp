@@ -16,6 +16,7 @@
 #include <core/str_tokeniser.h>
 #include <terminal/terminal_in.h>
 #include <terminal/terminal_out.h>
+#include <readline/readline.h>
 
 //------------------------------------------------------------------------------
 inline char get_closing_quote(const char* quote_pair)
@@ -58,6 +59,8 @@ line_editor_impl::line_editor_impl(const desc& desc)
 
     add_module(m_module);
     add_module(m_pager);
+
+    desc.input->set_key_tester(this);
 }
 
 //------------------------------------------------------------------------------
@@ -211,6 +214,27 @@ void line_editor_impl::dispatch(int bind_group)
     assert(check_flag(flag_editing));
 
     m_bind_resolver.set_group(prev_bind_group);
+}
+
+//------------------------------------------------------------------------------
+bool line_editor_impl::is_bound(const char* seq, int len)
+{
+    if (!len)
+        return false;
+
+    bind_resolver bind_resolver(m_binder);
+    for (int i = 0; i < len; ++i)
+        if (bind_resolver.step(seq[i]))
+        {
+            if (len - i == 1 && bind_resolver.next())
+                return true;
+            break;
+        }
+
+    if (rl_function_of_keyseq_len(seq, len, nullptr, nullptr))
+        return true;
+
+    return false;
 }
 
 //------------------------------------------------------------------------------

@@ -7,6 +7,7 @@
 #include "binder.h"
 #include "editor_module.h"
 #include "input_dispatcher.h"
+#include "terminal/key_tester.h"
 #include "pager_impl.h"
 #include "line_editor.h"
 #include "line_state.h"
@@ -21,6 +22,7 @@
 class line_editor_impl
     : public line_editor
     , public input_dispatcher
+    , public key_tester
 {
 public:
                         line_editor_impl(const desc& desc);
@@ -34,6 +36,9 @@ public:
 
     // input_dispatcher
     virtual void        dispatch(int bind_group) override;
+
+    // key_tester
+    virtual bool        is_bound(const char* seq, int len) override;
 
 private:
     typedef editor_module                       module;

@@ -276,6 +276,7 @@ void rl_module::on_input(const input& input, result& result, const context& cont
         virtual void end() override     {}
         virtual void select() override  {}
         virtual int  read() override    { return *(unsigned char*)(data++); }
+        virtual void set_key_tester(key_tester* keys) override {}
         const char*  data;
     } term_in;
 

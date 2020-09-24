@@ -24,6 +24,7 @@ public:
     virtual void            end() override {}
     virtual void            select() override {}
     virtual int             read() override { return *(unsigned char*)m_read++; }
+    virtual void            set_key_tester(key_tester*) override {}
 
 private:
     const char*             m_input = nullptr;
