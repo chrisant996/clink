@@ -34,5 +34,5 @@
 
 #include <core/base.h>
 
-#define CLINK_DLL       "clink_dll_x" AS_STR(ARCHITECTURE) ".dll"
-#define CLINK_EXE       "clink_x" AS_STR(ARCHITECTURE) ".exe"
+#define CLINK_DLL       "clink_dll_x" ## AS_STR(ARCHITECTURE) ## ".dll"
+#define CLINK_EXE       "clink_x" ## AS_STR(ARCHITECTURE) ## ".exe"
