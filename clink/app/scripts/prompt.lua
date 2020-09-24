@@ -55,3 +55,17 @@ function clink.promptfilter(priority)
     prompt_filters_unsorted = true
     return ret
 end
+
+--------------------------------------------------------------------------------
+-- Old API shim, for backward compatibility.
+clink.prompt = clink.prompt or {}
+function clink.prompt.register_filter(filter, priority)
+    if priority == nil then
+        priority = 999
+    end
+
+    local o = clink.promptfilter(priority)
+    function o:filter(the_prompt)
+        return filter(the_prompt)
+    end
+end
