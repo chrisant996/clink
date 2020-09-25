@@ -770,7 +770,7 @@ bool history_db::remove(line_id id)
 //------------------------------------------------------------------------------
 bool history_db::remove(int rl_history_index, const char* line)
 {
-    if (rl_history_index < 0 || rl_history_index >= m_index_map.size())
+    if (rl_history_index < 0 || size_t(rl_history_index) >= m_index_map.size())
         return false;
 
 #ifdef CLINK_DEBUG

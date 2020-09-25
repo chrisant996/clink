@@ -16,6 +16,9 @@ ChrisAnt Plans
   - argmatcher looks potentially more complicated, but maybe I just don't understand the data structures well enough yet.
 
 ## Features
+- **Ctrl+Backspace** needs to stop at path separators.
+- Remember previous directory, and `-` swaps back to it.
+  - Remember a stack of previous directories?
 
 ### Tab Complete
 - Need a `clink-` version of `menu-complete`, `menu-complete-backward`, `possible-completions`, etc (move `tab_completer` to be implemented as Readline commands).
@@ -44,7 +47,7 @@ ChrisAnt Plans
 - [x] [453](https://github.com/mridgers/clink/issues/453) non-printable characters mess up rendering vs caret position
   - _Double check that it's fixed by the Readline update, as advertised._
 - [x] [422](https://github.com/mridgers/clink/issues/422) filename modifier only works with forward slashes; needs to support backslashes
-  - Double what "filename modifier" means, to make sure I've interpreted the issue correctly.
+  - Working in chrisant996/clink.
 - _...need to examine the rest, from 415 downward..._
 
 # Phase 2
