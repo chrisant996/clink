@@ -6,7 +6,7 @@ settings.add("exec.enable", true, "Enable executable matching",
 "Only match executables when completing the first word of a line")
 
 settings.add("exec.path", true, "Match executables in PATH",
-[[Completes execuables found in the directories specified in the PATH
+[[Completes executables found in the directories specified in the PATH
 environment system variable.]])
 
 settings.add("exec.cwd", false, "Match executables in current directory",
