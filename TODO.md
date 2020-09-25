@@ -8,7 +8,6 @@ ChrisAnt Plans
 
 ## Problems
 - Still some kind of readline/ecma48_terminal_out problem when cycling through previous history (cycle very far back)?
-- Fancy completion includes executables on PATH, but in c:\repos\clink\.build\vs2019\bin\debug it lists "clink" but not "clink.bat" as a completion, even though clink.bat is in the current directory.
 
 ## Features
 
