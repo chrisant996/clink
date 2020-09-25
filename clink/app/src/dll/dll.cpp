@@ -18,9 +18,10 @@
 
 //------------------------------------------------------------------------------
 const char* g_clink_header =
-    "Clink v" CLINK_VERSION_STR " / "
+    "Clink v" CLINK_VERSION_STR "\n"
     "Copyright (c) 2012-2018 Martin Ridgers\n"
-    "http://mridgers.github.io/clink\n"
+    "Portions Copyright (c) 2020 Christopher Antos\n"
+    "http://github.com/chrisant996/clink\n"
     ;
 
 

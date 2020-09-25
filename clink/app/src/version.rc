@@ -6,7 +6,7 @@
 {
     BLOCK "StringFileInfo" {
         BLOCK "040904b0" {
-            VALUE "CompanyName",     "Martin Ridgers"
+            VALUE "CompanyName",     "Martin Ridgers, Christopher Antos"
             VALUE "ProductName",     "Clink"
             VALUE "FileDescription", "Clink"
             VALUE "ProductVersion",  CLINK_VERSION_STR
