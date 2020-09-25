@@ -7,7 +7,6 @@ ChrisAnt Plans
   - argmatcher looks potentially more complicated, but maybe I just don't understand the data structures well enough yet.
 
 ## Problems
-- When does `tab_completer` append a path separator to completed directories?  It's unclear, and I want consistency and I want to be able to **Tab**, **Tab**,  to change to a completed directory.  Maybe change the rules when the path starts in column 1?
 - Still some kind of readline/ecma48_terminal_out problem when cycling through previous history (cycle very far back)?
 - Fancy completion includes executables on PATH, but in c:\repos\clink\.build\vs2019\bin\debug it lists "clink" but not "clink.bat" as a completion, even though clink.bat is in the current directory.
 
@@ -25,7 +24,6 @@ ChrisAnt Plans
 
 ### Other
 - [532](https://github.com/mridgers/clink/issues/532) paste newlines, run as separate lines _[copy from CASH]_
-- A setting to sort directories before files in the completion matches list.
 - Allow conhost to handle **Shift+Left** and etc for CUA selection?
 
 ## Premake

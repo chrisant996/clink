@@ -10,9 +10,27 @@
 
 #include <core/array.h>
 #include <core/str_compare.h>
+#include <core/settings.h>
 #include <terminal/ecma48_iter.h>
 
 #include <algorithm>
+#include <assert.h>
+
+//------------------------------------------------------------------------------
+static setting_enum g_sort_dirs(
+    "match.sort_dirs",
+    "Where to sort matching directories",
+    "Matching directories can go before files, with files, or after files.",
+    "before,with,after",
+    1);
+
+
+
+//------------------------------------------------------------------------------
+inline bool is_path_separator(char c)
+{
+    return (c == '\\' || c == '/');
+}
 
 //------------------------------------------------------------------------------
 static unsigned int normal_selector(
@@ -36,9 +54,20 @@ static unsigned int normal_selector(
 //------------------------------------------------------------------------------
 static void alpha_sorter(const match_store& store, match_info* infos, int count)
 {
+    int order = g_sort_dirs.get();
+
     auto predicate = [&] (const match_info& lhs, const match_info& rhs) {
         const char* l = store.get(lhs.store_id);
         const char* r = store.get(rhs.store_id);
+        if (order != 1)
+        {
+            size_t l_len = strlen(l);
+            size_t r_len = strlen(r);
+            bool l_dir = (l_len && is_path_separator(l[l_len - 1]));
+            bool r_dir = (r_len && is_path_separator(r[r_len - 1]));
+            if (l_dir != r_dir)
+                return (order == 0) ? l_dir : r_dir;
+        }
         return (stricmp(l, r) < 0);
     };
 
