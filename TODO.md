@@ -12,20 +12,21 @@ ChrisAnt Plans
 - Fancy completion includes executables on PATH, but in c:\repos\clink\.build\vs2019\bin\debug it lists "clink" but not "clink.bat" as a completion, even though clink.bat is in the current directory.
 
 ## Features
-- Scrolling mode:
-  - Have commands for scrolling up/down by a page or line (or top/bottom of buffer).
-  - The commands should each activate scrolling mode, and those same keys (and only those keys) should scroll while scrolling mode is active.
-    - Might need a hook in readline to do things before a command is processed, e.g. to exit scrolling mode when any non-scrolling command is invoked.
-  - Because I don't want **Shift+PgUp/PgDn** hard-coded for scrolling.
+
+### Scrolling mode
+- Have commands for scrolling up/down by a page or line (or top/bottom of buffer).
+- The commands should each activate scrolling mode, and those same keys (and only those keys) should scroll while scrolling mode is active.
+  - Might need a hook in readline to do things before a command is processed, e.g. to exit scrolling mode when any non-scrolling command is invoked.
+- Because I don't want **Shift+PgUp/PgDn** hard-coded for scrolling.
+
+### Tab Complete
 - Need a `clink-` version of `menu-complete`, `menu-complete-backward`, `possible-completions`, etc (move `tab_completer` to be implemented as Readline commands).
   - Readline's `next-complete` resets once there's only one match, so that the next **Tab** does a new completion based on the new content.  It's cool for `complete`, but for `menu-complete` it's problematic because there's no visual indicator at all when it's a directory, and even when it adds a space (only one filename match) it's a major departure from the CMD tab completion.  Make sure the `clink-` variants solve that.
+
+### Other
 - [532](https://github.com/mridgers/clink/issues/532) paste newlines, run as separate lines _[copy from CASH]_
 - A setting to sort directories before files in the completion matches list.
 - Allow conhost to handle **Shift+Left** and etc for CUA selection?
-
-## LUA Scripts
-- git completions.
-- Examine other things from cmder's collection of lua scripts.
 
 ## Premake
 - Premake5 generates things incorrectly:
@@ -42,12 +43,8 @@ ChrisAnt Plans
 - [532](https://github.com/mridgers/clink/issues/532) paste newlines, run as separate lines _[copy from CASH]_
 - [531](https://github.com/mridgers/clink/issues/531) AV detects a trojan on download _[or on execution, for me]_
 - [486](https://github.com/mridgers/clink/issues/486) **Ctrl+C** doesn't always work properly _[might be the auto-answer prompt setting]_
-- [x] [456](https://github.com/mridgers/clink/issues/456) clear screen not working when prompt is 2 lines long
-  - Seems to work for me in chrisant996 head.
 - [x] [453](https://github.com/mridgers/clink/issues/453) non-printable characters mess up rendering vs caret position
   - _Double check that it's fixed by the Readline update, as advertised._
-- [x] [442](https://github.com/mridgers/clink/issues/442) paste is limited to 1024 characters
-  - Not limited in master.
 - [x] [422](https://github.com/mridgers/clink/issues/422) filename modifier only works with forward slashes; needs to support backslashes
   - Double what "filename modifier" means, to make sure I've interpreted the issue correctly.
 - _...need to examine the rest, from 415 downward..._
