@@ -2,14 +2,24 @@ ChrisAnt Plans
 
 # Phase 1
 
+## Premake
+- Premake5 generates things incorrectly:
+  - use ProgramDatabase instead of EditAndContinue
+  - disable OmitFramePointers
+  - enable GenerateDebugInformation
+  - clink_process
+    - set InlineFunctionExpansion to be AnySuitable
+    - disable SupportJustMyCode
+
 ## LUA
 - Lua support changed significantly.  Explore how to support backward compatibility for existing scripts.
   - argmatcher looks potentially more complicated, but maybe I just don't understand the data structures well enough yet.
 
-## Problems
-- Still some kind of readline/ecma48_terminal_out problem when cycling through previous history (cycle very far back)?
-
 ## Features
+
+### Tab Complete
+- Need a `clink-` version of `menu-complete`, `menu-complete-backward`, `possible-completions`, etc (move `tab_completer` to be implemented as Readline commands).
+  - Readline's `next-complete` resets once there's only one match, so that the next **Tab** does a new completion based on the new content.  It's cool for `complete`, but for `menu-complete` it's problematic because there's no visual indicator at all when it's a directory, and even when it adds a space (only one filename match) it's a major departure from the CMD tab completion.  Make sure the `clink-` variants solve that.
 
 ### Scrolling mode
 - Have commands for scrolling up/down by a page or line (or top/bottom of buffer).
@@ -17,18 +27,9 @@ ChrisAnt Plans
   - Might need a hook in readline to do things before a command is processed, e.g. to exit scrolling mode when any non-scrolling command is invoked.
 - Because I don't want **Shift+PgUp/PgDn** hard-coded for scrolling.
 
-### Tab Complete
-- Need a `clink-` version of `menu-complete`, `menu-complete-backward`, `possible-completions`, etc (move `tab_completer` to be implemented as Readline commands).
-  - Readline's `next-complete` resets once there's only one match, so that the next **Tab** does a new completion based on the new content.  It's cool for `complete`, but for `menu-complete` it's problematic because there's no visual indicator at all when it's a directory, and even when it adds a space (only one filename match) it's a major departure from the CMD tab completion.  Make sure the `clink-` variants solve that.
-
 ### Other
 - [532](https://github.com/mridgers/clink/issues/532) paste newlines, run as separate lines _[copy from CASH]_
 - Allow conhost to handle **Shift+Left** and etc for CUA selection?
-
-## Premake
-- Premake5 generates things incorrectly:
-  - clink_process.vcxproj has Debug Just My Code enabled, and the debug build has inline expansion disabled -- both of those cause the injected code to crash because it references other functions!
-  - Various other settings are strangely inconsistent between projects (PDB generation, for example).
 
 ## Questions
 - What is `set-mark`?
