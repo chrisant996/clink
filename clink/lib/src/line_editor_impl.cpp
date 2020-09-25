@@ -225,18 +225,14 @@ bool line_editor_impl::is_bound(const char* seq, int len)
     if (!len)
         return false;
 
-// TODO: make sure the right bind group is used.
-    bind_resolver bind_resolver(m_binder);
-    for (int i = 0; i < len; ++i)
-        if (bind_resolver.step(seq[i]))
-        {
-            if (len - i == 1 && bind_resolver.next())
-                return true;
-            break;
-        }
+    if (m_bind_resolver.is_bound(seq, len))
+        return true;
 
-// TODO: don't check readline's keymap when for example a special bind group is
-// active that will block on_input from reaching readline.
+    // Checking readline's keymap is incorrect when a special bind group is
+    // active that should block on_input from reaching readline.  But the way
+    // that blocking is achieved is by adding a "" binding that matches
+    // everything not explicitly bound in the keymap.  So it works out
+    // naturally, without additional effort.
     if (rl_function_of_keyseq_len(seq, len, nullptr, nullptr))
         return true;
 
@@ -295,7 +291,6 @@ bool line_editor_impl::update_input()
         unsigned char   flags;  // = 0;   <! issues about C2905
     };
 
-// TODO: why is this a while loop?  how should this interact with
 // input_dispatcher::dispatch()?
     while (auto binding = m_bind_resolver.next())
     {
@@ -323,7 +318,6 @@ bool line_editor_impl::update_input()
 
         // Process what result_impl has collected.
         if (result.flags & result_impl::flag_pass)
-// TODO: how should this interact with input_dispatcher::dispatch()?
             continue;
 
         binding.claim();
@@ -349,7 +343,6 @@ bool line_editor_impl::update_input()
     }
 
     m_buffer.draw();
-// TODO: reaching here means a key binding was found and processed, yes?
     return true;
 }
 

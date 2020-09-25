@@ -15,6 +15,7 @@ public:
     int                 get_group(const char* name=nullptr);
     int                 create_group(const char* name);
     bool                bind(unsigned int group, const char* chord, editor_module& module, unsigned char id);
+    bool                is_bound(unsigned int group, const char* seq, int len) const;
 
 private:
     static const int    link_bits = 9;

@@ -38,6 +38,8 @@ public:
     binding             next();
     void                reset();
 
+    bool                is_bound(const char* seq, int len) const;
+
 private:
     void                claim(binding& binding);
     bool                step_impl(unsigned char key);

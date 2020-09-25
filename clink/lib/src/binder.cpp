@@ -222,6 +222,24 @@ bool binder::bind(
 }
 
 //------------------------------------------------------------------------------
+bool binder::is_bound(unsigned int group, const char* seq, int len) const
+{
+    unsigned int node_index = group;
+
+    while (len--)
+    {
+        int next = find_child(node_index, *(seq++));
+        if (!next)
+            return false;
+        node_index = next;
+        if (!len)
+            return (get_node(next).child == 0);
+    }
+
+    return false;
+}
+
+//------------------------------------------------------------------------------
 int binder::insert_child(int parent, unsigned char key)
 {
     if (int child = find_child(parent, key))
