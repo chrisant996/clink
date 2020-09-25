@@ -88,23 +88,47 @@ process::arch process::get_arch() const
 }
 
 //------------------------------------------------------------------------------
+typedef LONG(NTAPI *NtSuspendProcessFunc)(IN HANDLE ProcessHandle);
+typedef LONG(NTAPI *NtResumeProcessFunc)(IN HANDLE ProcessHandle);
 void process::pause(bool suspend)
 {
-    handle th32 = CreateToolhelp32Snapshot(TH32CS_SNAPTHREAD, m_pid);
-    if (!th32)
-        return;
-
-    THREADENTRY32 te = { sizeof(te) };
-    BOOL ok = Thread32First(th32, &te);
-    while (ok != FALSE)
+    static int s_initialized = 0;
+    static NtSuspendProcessFunc ntSuspendProcess = nullptr;
+    static NtResumeProcessFunc ntResumeProcess = nullptr;
+    if (!s_initialized)
     {
-        if (te.th32OwnerProcessID == m_pid)
-        {
-            handle thread = OpenThread(THREAD_ALL_ACCESS, FALSE, te.th32ThreadID);
-            suspend ? SuspendThread(thread) : ResumeThread(thread);
-        }
+        HMODULE hdll = GetModuleHandle("ntdll.dll");
+        ntSuspendProcess = (NtSuspendProcessFunc)GetProcAddress(hdll, "NtSuspendProcess");
+        ntResumeProcess = (NtResumeProcessFunc)GetProcAddress(hdll, "NtResumeProcess");
+        s_initialized = (ntSuspendProcess && ntResumeProcess) ? 1 : -1;
+    }
 
-        ok = Thread32Next(th32, &te);
+    if (s_initialized > 0)
+    {
+        handle h = OpenProcess(PROCESS_SUSPEND_RESUME, FALSE, m_pid);
+        if (suspend)
+            ntSuspendProcess(h);
+        else
+            ntResumeProcess(h);
+    }
+    else
+    {
+        handle th32 = CreateToolhelp32Snapshot(TH32CS_SNAPTHREAD, m_pid);
+        if (!th32)
+            return;
+
+        THREADENTRY32 te = {sizeof(te)};
+        BOOL ok = Thread32First(th32, &te);
+        while (ok != FALSE)
+        {
+            if (te.th32OwnerProcessID == m_pid)
+            {
+                handle thread = OpenThread(THREAD_ALL_ACCESS, FALSE, te.th32ThreadID);
+                suspend ? SuspendThread(thread) : ResumeThread(thread);
+            }
+
+            ok = Thread32Next(th32, &te);
+        }
     }
 }
 
