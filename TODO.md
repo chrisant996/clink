@@ -18,9 +18,17 @@ ChrisAnt Plans
 ## Features
 - **Ctrl+Backspace** needs to stop at path separators.
 - Remember previous directory, and `-` swaps back to it.
+  - Maybe set a `CLINK_PREV_DIR` envvar, too?
   - Remember a stack of previous directories?
+- A way to disable/enable clink once injected.
+- A way to disable/enable prompt filtering once injected.
 
 ### Tab Complete
+- Needs to handle wildcards!  (e.g. `*.foo`)
+  - In `clink-menu-complete`?
+  - Or in a new command?
+  - Or behind an option?
+  - Only applies to menu-complete variations and popup menus.
 - Need a `clink-` version of `menu-complete`, `menu-complete-backward`, `possible-completions`, etc (move `tab_completer` to be implemented as Readline commands).
   - Readline's `next-complete` resets once there's only one match, so that the next **Tab** does a new completion based on the new content.  It's cool for `complete`, but for `menu-complete` it's problematic because there's no visual indicator at all when it's a directory, and even when it adds a space (only one filename match) it's a major departure from the CMD tab completion.  Make sure the `clink-` variants solve that.
 
