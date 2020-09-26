@@ -17,6 +17,12 @@ extern "C" {
 #include <readline/readline.h>
 #include <readline/rldefs.h>
 #include <readline/xmalloc.h>
+#include <compat/dirent.h>
+#include <readline/posixdir.h>
+extern int _rl_match_hidden_files;
+extern int rl_complete_with_tilde_expansion;
+// TODO: use the hidden attribute instead, or also?
+#define HIDDEN_FILE(fn) ((fn)[0] == '.')
 }
 
 class pager;
@@ -94,6 +100,245 @@ static void load_user_inputrc()
 
 
 //------------------------------------------------------------------------------
+static int complete_fncmp(const char *convfn, int convlen, const char *filename, int filename_len)
+{
+    // We let the OS handle wildcards, so not much to do here.  And we ignore
+    // _rl_completion_case_fold because (1) this is Windows and (2) the
+    // alternative is to write our own wildcard matching implementation.
+    return 1;
+}
+
+//------------------------------------------------------------------------------
+static char* filename_menu_completion_function(const char *text, int state)
+{
+    static DIR *directory = (DIR *)NULL;
+    static char *filename = (char *)NULL;
+    static char *dirname = (char *)NULL;
+    static char *users_dirname = (char *)NULL;
+    static int filename_len;
+    char *temp, *dentry, *convfn;
+    int dirlen, dentlen, convlen;
+    int tilde_dirname;
+    struct dirent *entry;
+
+    /* If we don't have any state, then do some initialization. */
+    if (state == 0)
+    {
+        /* If we were interrupted before closing the directory or reading
+           all of its contents, close it. */
+        if (directory)
+        {
+            closedir(directory);
+            directory = (DIR *)NULL;
+        }
+        FREE(dirname);
+        FREE(filename);
+        FREE(users_dirname);
+
+        filename = savestring(text);
+        if (*text == 0)
+            text = ".";
+        dirname = savestring(text);
+
+        temp = rl_last_path_separator(dirname);
+
+#if defined(__MSDOS__) || defined(_WIN32)
+        /* special hack for //X/... */
+        if (rl_is_path_separator(dirname[0]) && rl_is_path_separator(dirname[1]) && ISALPHA((unsigned char)dirname[2]) && rl_is_path_separator(dirname[3]))
+            temp = rl_last_path_separator(dirname + 3);
+#endif
+
+        if (temp)
+        {
+            strcpy(filename, ++temp);
+            *temp = '\0';
+        }
+#if defined(__MSDOS__) || (defined(_WIN32) && !defined(__CYGWIN__))
+        /* searches from current directory on the drive */
+        else if (ISALPHA((unsigned char)dirname[0]) && dirname[1] == ':')
+        {
+            strcpy(filename, dirname + 2);
+            dirname[2] = '\0';
+        }
+#endif
+        else
+        {
+            dirname[0] = '.';
+            dirname[1] = '\0';
+        }
+
+        /* We aren't done yet.  We also support the "~user" syntax. */
+
+        /* Save the version of the directory that the user typed, dequoting
+           it if necessary. */
+        if (rl_completion_found_quote && rl_filename_dequoting_function)
+            users_dirname = (*rl_filename_dequoting_function)(dirname, rl_completion_quote_character);
+        else
+            users_dirname = savestring(dirname);
+
+        tilde_dirname = 0;
+        if (*dirname == '~')
+        {
+            temp = tilde_expand(dirname);
+            xfree(dirname);
+            dirname = temp;
+            tilde_dirname = 1;
+        }
+
+        /* We have saved the possibly-dequoted version of the directory name
+           the user typed.  Now transform the directory name we're going to
+           pass to opendir(2).  The directory rewrite hook modifies only the
+           directory name; the directory completion hook modifies both the
+           directory name passed to opendir(2) and the version the user
+           typed.  Both the directory completion and rewrite hooks should perform
+           any necessary dequoting.  The hook functions return 1 if they modify
+           the directory name argument.  If either hook returns 0, it should
+           not modify the directory name pointer passed as an argument. */
+        if (rl_directory_rewrite_hook)
+            (*rl_directory_rewrite_hook)(&dirname);
+        else if (rl_directory_completion_hook && (*rl_directory_completion_hook)(&dirname))
+        {
+            xfree(users_dirname);
+            users_dirname = savestring(dirname);
+        }
+        else if (tilde_dirname == 0 && rl_completion_found_quote && rl_filename_dequoting_function)
+        {
+            /* delete single and double quotes */
+            xfree(dirname);
+            dirname = savestring(users_dirname);
+        }
+
+        str<> dn;
+        dn << dirname << "\\" << filename << "*";
+        directory = opendir(dn.c_str());
+
+        /* Now dequote a non-null filename.  FILENAME will not be NULL, but may
+           be empty. */
+        if (*filename && rl_completion_found_quote && rl_filename_dequoting_function)
+        {
+            /* delete single and double quotes */
+            temp = (*rl_filename_dequoting_function)(filename, rl_completion_quote_character);
+            xfree(filename);
+            filename = temp;
+        }
+        filename_len = strlen(filename);
+
+        rl_filename_completion_desired = 1;
+    }
+
+    /* At this point we should entertain the possibility of hacking wildcarded
+       filenames, like /usr/man/man<WILD>/te<TAB>.  If the directory name
+       contains globbing characters, then build an array of directories, and
+       then map over that list while completing. */
+    /* *** UNIMPLEMENTED *** */
+
+    /* Now that we have some state, we can read the directory. */
+
+    entry = (struct dirent *)NULL;
+    while (directory && (entry = readdir(directory)))
+    {
+        convfn = dentry = entry->d_name;
+        convlen = dentlen = D_NAMLEN(entry);
+
+        if (rl_filename_rewrite_hook)
+        {
+            convfn = (*rl_filename_rewrite_hook)(dentry, dentlen);
+            convlen = (convfn == dentry) ? dentlen : strlen(convfn);
+        }
+
+        /* Special case for no filename.  If the user has disabled the
+           `match-hidden-files' variable, skip filenames beginning with `.'.
+           All other entries except "." and ".." match. */
+        if (filename_len == 0)
+        {
+            if (_rl_match_hidden_files == 0 && HIDDEN_FILE(convfn))
+                continue;
+
+            if (convfn[0] != '.' ||
+                (convfn[1] && (convfn[1] != '.' || convfn[2])))
+                break;
+        }
+        else
+        {
+            if (complete_fncmp(convfn, convlen, filename, filename_len))
+                break;
+        }
+    }
+
+    if (entry == 0)
+    {
+        if (directory)
+        {
+            closedir(directory);
+            directory = (DIR *)NULL;
+        }
+        if (dirname)
+        {
+            xfree(dirname);
+            dirname = (char *)NULL;
+        }
+        if (filename)
+        {
+            xfree(filename);
+            filename = (char *)NULL;
+        }
+        if (users_dirname)
+        {
+            xfree(users_dirname);
+            users_dirname = (char *)NULL;
+        }
+
+        return (char *)NULL;
+    }
+    else
+    {
+        /* dirname && (strcmp (dirname, ".") != 0) */
+        if (dirname && (dirname[0] != '.' || dirname[1]))
+        {
+            if (rl_complete_with_tilde_expansion && *users_dirname == '~')
+            {
+                dirlen = strlen(dirname);
+                temp = (char *)xmalloc(2 + dirlen + D_NAMLEN(entry));
+                strcpy(temp, dirname);
+                /* Canonicalization cuts off any final slash present.  We
+                   may need to add it back. */
+                if (!rl_is_path_separator(dirname[dirlen - 1]))
+                {
+                    temp[dirlen++] = rl_preferred_path_separator;
+                    temp[dirlen] = '\0';
+                }
+            }
+            else
+            {
+                dirlen = strlen(users_dirname);
+                temp = (char *)xmalloc(2 + dirlen + D_NAMLEN(entry));
+                strcpy(temp, users_dirname);
+/* begin_clink_change
+ * Removed appending of a '/' to correctly support volume-relative paths.
+ */
+#if 0
+                /* Make sure that temp has a trailing slash here. */
+                if (!rl_is_path_separator (users_dirname[dirlen - 1]))
+                    temp[dirlen++] = rl_preferred_path_separator;
+#endif
+/* end_clink_change */
+            }
+
+            strcpy(temp + dirlen, convfn);
+        }
+        else
+            temp = savestring(convfn);
+
+        if (convfn != dentry)
+            xfree(convfn);
+
+        return (temp);
+    }
+}
+
+
+
+//------------------------------------------------------------------------------
 enum {
     bind_id_input,
     bind_id_more_input,
@@ -159,6 +404,7 @@ rl_module::rl_module(const char* shell_name)
     rl_completion_entry_function = [](const char*, int) -> char* { return nullptr; };
     rl_completion_display_matches_hook = [](char**, int, int) {};
 #endif
+    rl_menu_completion_entry_function = filename_menu_completion_function;
 
     // Add commands.
 #ifdef CLINK_CHRISANT_MODS

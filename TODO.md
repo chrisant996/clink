@@ -16,8 +16,9 @@ ChrisAnt Plans
   - argmatcher looks potentially more complicated, but maybe I just don't understand the data structures well enough yet.
 
 ## Features
-- **Ctrl+Backspace** needs to stop at path separators.
+- **Ctrl+Backspace** needs to stop at path separators -- probably just means use a better command than `unix-word-rubout`.
 - Setting to control persistent history.
+- Support coloring directories differently in the completion list.
 - Remember previous directory, and `-` swaps back to it.
   - Maybe set a `CLINK_PREV_DIR` envvar, too?
   - Remember a stack of previous directories?
@@ -25,13 +26,8 @@ ChrisAnt Plans
 - A way to disable/enable prompt filtering once injected.
 
 ### Tab Complete
-- Needs to handle wildcards!  (e.g. `*.foo`)
-  - Sounds like Readline may have some built in support for this; must hunt a bit...
-  - In `clink-menu-complete`?
-  - Or in a new command?
-  - Or behind an option?
-  - Only applies to menu-complete variations and popup menus.
 - Need a `clink-` version of `menu-complete`, `menu-complete-backward`, `possible-completions`, etc (move `tab_completer` to be implemented as Readline commands).
+  - Needs to support wildcards.
   - Readline's `next-complete` resets once there's only one match, so that the next **Tab** does a new completion based on the new content.  It's cool for `complete`, but for `menu-complete` it's problematic because there's no visual indicator at all when it's a directory, and even when it adds a space (only one filename match) it's a major departure from the CMD tab completion.  Make sure the `clink-` variants solve that.
 
 ### Scrolling mode
@@ -41,8 +37,8 @@ ChrisAnt Plans
 - Because I don't want **Shift+PgUp/PgDn** hard-coded for scrolling.
 
 ### Other
-- [532](https://github.com/mridgers/clink/issues/532) paste newlines, run as separate lines _[copy from CASH]_
 - Allow conhost to handle **Shift+Left** and etc for CUA selection?
+- Changing terminal width makes 0.4.8 slowly "walk up the screen".  Changing terminal width makes master go haywire.  Probably more ecma48 terminal issues.
 
 ## Questions
 - What is `set-mark`?
@@ -77,7 +73,6 @@ ChrisAnt Plans
 
 ## Problems
 - _The new bindable **Esc** isn't yet compatible with vi mode!_
-- Changing terminal width makes 0.4.8 slowly "walk up the screen".  Changing terminal width makes master go haywire.  Probably more ecma48 terminal issues.
 - Win10 console mode flag to support ANSI sequences and colors; seems to maybe be working already?
 - Investigate [XTerm 256 support](https://conemu.github.io/en/AnsiEscapeCodes.html) [#487](https://github.com/mridgers/clink/issues/487).
 
@@ -107,6 +102,7 @@ ChrisAnt Plans
 
 ## Editing
 - Custom color for readline input.  Might prefer to completely replace readline's line drawing, since it's trying to minimize updates over terminal emulators, and that makes it much harder to colorize the editing line (and arguments).
+- [532](https://github.com/mridgers/clink/issues/532) paste newlines, run as separate lines _[copy from CASH]_
 
 ## Key Bindings
 - **https://invisible-island.net/xterm/modified-keys.html**
