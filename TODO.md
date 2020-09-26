@@ -17,6 +17,7 @@ ChrisAnt Plans
 
 ## Features
 - **Ctrl+Backspace** needs to stop at path separators.
+- Setting to control persistent history.
 - Remember previous directory, and `-` swaps back to it.
   - Maybe set a `CLINK_PREV_DIR` envvar, too?
   - Remember a stack of previous directories?
@@ -25,6 +26,7 @@ ChrisAnt Plans
 
 ### Tab Complete
 - Needs to handle wildcards!  (e.g. `*.foo`)
+  - Sounds like Readline may have some built in support for this; must hunt a bit...
   - In `clink-menu-complete`?
   - Or in a new command?
   - Or behind an option?
@@ -48,15 +50,28 @@ ChrisAnt Plans
 - How does `kill-line` work?
 
 # Issues Backlog [clink/issues](https://github.com/mridgers/clink/issues)
-- [540](https://github.com/mridgers/clink/issues/540) v0.4.9 works but v1.0.0.a1 crashes in directory with too many files
-- [532](https://github.com/mridgers/clink/issues/532) paste newlines, run as separate lines _[copy from CASH]_
+- [544](https://github.com/mridgers/clink/issues/544) Clink v1.0.0.a1 doesn't support cyrillic characters keyboard input
+- [542](https://github.com/mridgers/clink/issues/542) VS Code not capturing std output
+- [x] [540](https://github.com/mridgers/clink/issues/540) v0.4.9 works but v1.0.0.a1 crashes in directory with too many files
+  - I can't reproduce this using ConEmu 200713.  Checking this off for now, pending further information.
+- [532](https://github.com/mridgers/clink/issues/532) paste newlines, run as separate lines
+  - It's pretty risky to just paste-and-go.
+  - Maybe add an option to convert newlines into "&" instead?
+  - Or maybe let readline do multiline editing and accept them all as a batch on **Enter**?
 - [531](https://github.com/mridgers/clink/issues/531) AV detects a trojan on download _[or on execution, for me]_
+- [519](https://github.com/mridgers/clink/issues/519) Clink v1.0.0.a1 - `-s|--scripts [path]` command line arg removed?
+- [502](https://github.com/mridgers/clink/issues/502) Error in folders containing [ ] characters
 - [486](https://github.com/mridgers/clink/issues/486) **Ctrl+C** doesn't always work properly _[might be the auto-answer prompt setting]_
+- [480](https://github.com/mridgers/clink/issues/480) Things don't work right when clink is in a path with spaces
 - [x] [453](https://github.com/mridgers/clink/issues/453) non-printable characters mess up rendering vs caret position
   - _Double check that it's fixed by the Readline update, as advertised._
 - [x] [422](https://github.com/mridgers/clink/issues/422) filename modifier only works with forward slashes; needs to support backslashes
   - Working in chrisant996/clink.
-- _...need to examine the rest, from 415 downward..._
+- [415](https://github.com/mridgers/clink/issues/415) Different encodings in different lua functions
+- [398](https://github.com/mridgers/clink/issues/398) Cmd gets unresponsive after "set /p" command.
+- [396](https://github.com/mridgers/clink/issues/396) Pasting unicode emoji in a clink-enabled console
+- [365](https://github.com/mridgers/clink/issues/365) history-search behavior _(put cursor at end of command line when searching forward/backward in the history)_
+- [30](https://github.com/mridgers/clink/issues/30) wildcards not expanded.
 
 # Phase 2
 
@@ -64,6 +79,7 @@ ChrisAnt Plans
 - _The new bindable **Esc** isn't yet compatible with vi mode!_
 - Changing terminal width makes 0.4.8 slowly "walk up the screen".  Changing terminal width makes master go haywire.  Probably more ecma48 terminal issues.
 - Win10 console mode flag to support ANSI sequences and colors; seems to maybe be working already?
+- Investigate [XTerm 256 support](https://conemu.github.io/en/AnsiEscapeCodes.html) [#487](https://github.com/mridgers/clink/issues/487).
 
 ## Key Bindings
 - Hook up stuff via commands instead of via hard-coded custom bindings, so that everything can be remapped and reported by `show-rl-help`.
@@ -77,7 +93,7 @@ ChrisAnt Plans
 
 ## Commands
 - Add a `history.dupe_mode` that behaves like 4Dos/4NT/Take Command from JPSoft:  **Up**/**Down** then **Enter** remembers the history position so that **Enter**, **Down**, **Enter**, **Down**, **Enter**, etc can be used to replay a series of commands.
-- A setting to disable prompt filtering.  Primarily for debugging purposes, but maybe useful in other scenarios as well.
+- Add a way to reset or trim the history, when there's only one (or zero) clink running [#499](https://github.com/mridgers/clink/issues/499).
 
 ## Unit Test
 - Over 39 thousand assertions?!
