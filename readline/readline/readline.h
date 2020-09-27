@@ -871,6 +871,12 @@ extern int rl_ignore_completion_duplicates;
    completion character will be inserted as any other. */
 extern int rl_inhibit_completion;
 
+/* begin_clink_change */
+/* This is a terminal sequence for the pager color.  The CSI and "m" are
+   automatically added when writing it to the terminal. */
+extern const char* _rl_pager_color;
+/* end_clink_change */
+
 /* Applications can set this to non-zero to have readline's signal handlers
    installed during the entire duration of reading a complete line, as in
    readline-6.2.  This should be used with care, because it can result in

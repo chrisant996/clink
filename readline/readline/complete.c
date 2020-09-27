@@ -397,6 +397,10 @@ int rl_completion_mark_symlink_dirs;
 /* If non-zero, inhibit completion (temporarily). */
 int rl_inhibit_completion;
 
+/* begin_clink_change */
+const char* _rl_pager_color = 0;
+/* end_clink_change */
+
 /* Set to the last key used to invoke one of the completion functions */
 int rl_completion_invoking_key;
 
@@ -581,8 +585,16 @@ _rl_internal_pager (int lines)
 {
   int i;
 
+/* begin_clink_change */
+  if (_rl_pager_color)
+    _rl_print_pager_color ();
+/* end_clink_change */
   fprintf (rl_outstream, "--More--");
   fflush (rl_outstream);
+/* begin_clink_change */
+  if (_rl_pager_color)
+    _rl_set_normal_color ();
+/* end_clink_change */
   i = get_y_or_n (1);
   _rl_erase_entire_line ();
   if (i == 0)
@@ -1804,7 +1816,15 @@ display_matches (char **matches)
   if (rl_completion_query_items > 0 && len >= rl_completion_query_items)
     {
       rl_crlf ();
+/* begin_clink_change */
+      if (_rl_pager_color)
+        _rl_print_pager_color();
+/* end_clink_change */
       fprintf (rl_outstream, "Display all %d possibilities? (y or n)", len);
+/* begin_clink_change */
+      if (_rl_pager_color)
+        _rl_set_normal_color();
+/* end_clink_change */
       fflush (rl_outstream);
       if ((completion_y_or_n = get_y_or_n (0)) == 0)
 	{

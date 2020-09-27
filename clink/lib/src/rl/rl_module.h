@@ -5,6 +5,7 @@
 
 #include "editor_module.h"
 
+#include <core/str.h>
 #include <core/singleton.h>
 
 class terminal_in;
@@ -31,4 +32,5 @@ private:
     int             m_catch_group;
     bool            m_done;
     bool            m_eof;
+    str<8>          m_pager_color;
 };

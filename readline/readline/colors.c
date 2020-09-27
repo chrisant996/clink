@@ -123,6 +123,24 @@ _rl_print_prefix_color (void)
     return 1;
 }
   
+bool
+_rl_print_pager_color (void)
+{
+  struct bin_str *s;
+
+  if (_rl_pager_color != NULL)
+    {
+      if (is_colored (C_NORM))
+	restore_default_color ();
+      _rl_put_indicator (&_rl_color_indicator[C_LEFT]);
+      fwrite (_rl_pager_color, strlen(_rl_pager_color), 1, rl_outstream);
+      _rl_put_indicator (&_rl_color_indicator[C_RIGHT]);
+      return 0;
+    }
+  else
+    return 1;
+}
+
 /* Returns whether any color sequence was printed. */
 bool
 _rl_print_color_indicator (const char *f)

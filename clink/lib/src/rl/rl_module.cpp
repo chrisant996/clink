@@ -9,12 +9,14 @@
 #include <core/base.h>
 #include <core/os.h>
 #include <core/path.h>
+#include <core/settings.h>
 #include <core/log.h>
 #include <terminal/ecma48_iter.h>
 #include <terminal/printer.h>
 #include <terminal/terminal_in.h>
 #include <terminal/key_tester.h>
 #include <terminal/screen_buffer.h>
+#include <terminal/setting_colour.h>
 
 extern "C" {
 #include <readline/readline.h>
@@ -61,6 +63,7 @@ extern int          _rl_last_v_pos;
 #ifdef CLINK_CHRISANT_MODS
 extern void host_add_history(int rl_history_index, const char* line);
 extern void host_remove_history(int rl_history_index, const char* line);
+extern setting_colour g_colour_interact;
 #endif
 
 
@@ -118,7 +121,45 @@ extern "C" const char* host_get_env(const char* name)
 }
 
 //------------------------------------------------------------------------------
+static bool build_color_sequence(const attributes& colour, str_base& out)
+{
+    static const char c_ansi_color_seq[] =
+    {
+        30, 34, 32, 36, 31, 35, 33, 37,
+        90, 94, 92, 96, 91, 95, 93, 97,
+    };
 
+    out.clear();
+
+    auto bg = colour.get_bg();
+    int value = bg.is_default ? -1 : c_ansi_color_seq[bg.value.value & 0xf];
+    if (value >= 0)
+        out.format("%u", value);
+
+    auto fg = colour.get_fg();
+    value = fg.is_default ? -1 : c_ansi_color_seq[fg.value.value & 0xf];
+    if (value >= 0)
+    {
+        if (out.length())
+            out << ";";
+        out.format("%u", value);
+    }
+
+    if (auto bold = colour.get_bold())
+    {
+        if (out.length())
+            out << ";";
+        out << (bold.value ? "1" : "22");
+    }
+    if (auto underline = colour.get_underline())
+    {
+        if (out.length())
+            out << ";";
+        out << (underline.value ? "4" : "24");
+    }
+
+    return !!out.length();
+}
 
 //------------------------------------------------------------------------------
 class rl_more_key_tester : public key_tester
@@ -555,6 +596,10 @@ void rl_module::on_begin_line(const context& context)
 
     if (_rl_colored_stats || _rl_colored_completion_prefix)
         _rl_parse_colors();
+
+    _rl_pager_color = nullptr;
+    if (build_color_sequence(g_colour_interact.get(), m_pager_color))
+        _rl_pager_color = m_pager_color.c_str();
 
     m_done = false;
     m_eof = false;
