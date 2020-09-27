@@ -467,9 +467,15 @@ static int terminal_read_thunk(FILE* stream)
 //------------------------------------------------------------------------------
 static void terminal_write_thunk(FILE* stream, const char* chars, int char_count)
 {
-    if (stream == stderr || stream == null_stream)
+    if (stream == null_stream)
+        return;
+
+    if (stream == stderr)
     {
-        // TODO: What gets lost in this black hole?
+        wstr<32> s;
+        to_utf16(s, str_iter(chars, char_count));
+        DWORD written;
+        WriteConsoleW(GetStdHandle(STD_ERROR_HANDLE), s.c_str(), s.length() * sizeof(*s.c_str()), &written, nullptr);
         return;
     }
 
