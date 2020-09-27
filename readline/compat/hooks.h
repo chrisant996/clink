@@ -5,6 +5,6 @@
 
 struct hooked_stat
 {
-    int st_size;
+    __int64 st_size;
     int st_mode;
 };

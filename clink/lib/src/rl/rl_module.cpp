@@ -21,8 +21,12 @@ extern "C" {
 #include <readline/posixdir.h>
 extern int _rl_match_hidden_files;
 extern int rl_complete_with_tilde_expansion;
-// TODO: use the hidden attribute instead, or also?
 #define HIDDEN_FILE(fn) ((fn)[0] == '.')
+#if defined (COLOR_SUPPORT)
+#include <readline/parse-colors.h>
+extern int _rl_colored_stats;
+extern int _rl_colored_completion_prefix;
+#endif
 }
 
 class pager;
@@ -495,6 +499,9 @@ void rl_module::on_begin_line(const context& context)
 
     auto handler = [] (char* line) { rl_module::get()->done(line); };
     rl_callback_handler_install(rl_prompt.c_str(), handler);
+
+    if (_rl_colored_stats || _rl_colored_completion_prefix)
+        _rl_parse_colors();
 
     m_done = false;
     m_eof = false;

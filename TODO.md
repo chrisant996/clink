@@ -18,7 +18,6 @@ ChrisAnt Plans
 ## Features
 - **Ctrl+Backspace** needs to stop at path separators -- probably just means use a better command than `unix-word-rubout`.
 - Setting to control persistent history.
-- Support coloring directories differently in the completion list.
 - Remember previous directory, and `-` swaps back to it.
   - Maybe set a `CLINK_PREV_DIR` envvar, too?
   - Remember a stack of previous directories?

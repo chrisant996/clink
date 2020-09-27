@@ -184,6 +184,7 @@ int hooked_stat(const char* path, struct hooked_stat* out)
     buf[characters] = L'\0';
 
     // Get properties.
+#if 0
     out->st_size = 0;
     out->st_mode = 0;
     if (GetFileAttributesExW(buf, GetFileExInfoStandard, &fad) != 0)
@@ -198,6 +199,12 @@ int hooked_stat(const char* path, struct hooked_stat* out)
     }
     else
         errno = ENOENT;
+#else
+    struct _stat64 s;
+    ret = _wstat64(buf, &s);
+    out->st_size = s.st_size;
+    out->st_mode = s.st_mode;
+#endif
 
     return ret;
 }
@@ -206,9 +213,9 @@ int hooked_stat(const char* path, struct hooked_stat* out)
 int hooked_fstat(int fid, struct hooked_stat* out)
 {
     int ret;
-    struct stat s;
+    struct _stat64 s;
 
-    ret = fstat(fid, &s);
+    ret = _fstat64(fid, &s);
     out->st_size = s.st_size;
     out->st_mode = s.st_mode;
 
