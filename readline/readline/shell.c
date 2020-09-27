@@ -63,6 +63,10 @@
 
 #include "xmalloc.h"
 
+/* begin_clink_change */
+extern const char* host_get_env(const char* name);
+/* end_clink_change */
+
 #if defined (HAVE_GETPWUID) && !defined (HAVE_GETPW_DECLS)
 extern struct passwd *getpwuid PARAMS((uid_t));
 #endif /* HAVE_GETPWUID && !HAVE_GETPW_DECLS */
@@ -148,7 +152,18 @@ sh_set_lines_and_columns (int lines, int cols)
 char *
 sh_get_env_value (const char *varname)
 {
+/* begin_clink_change
+ * getenv() doesn't seem to notice updates to the process environment unless
+ * they're made through putenv(), but we need the live environment state so
+ * changes made to the environment can take effect without restarting the
+ * console (change to LS_COLORS, for example).
+ */
+#if 0
   return ((char *)getenv (varname));
+#else
+  return ((char *)host_get_env (varname));
+#endif
+/* end_clink_change */
 }
 
 char *
