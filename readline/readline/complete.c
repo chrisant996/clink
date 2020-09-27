@@ -398,7 +398,8 @@ int rl_completion_mark_symlink_dirs;
 int rl_inhibit_completion;
 
 /* begin_clink_change */
-const char* _rl_pager_color = 0;
+const char *_rl_pager_color = 0;
+rl_read_key_hook_func_t *rl_read_key_hook = 0;
 /* end_clink_change */
 
 /* Set to the last key used to invoke one of the completion functions */
@@ -520,11 +521,6 @@ set_completion_defaults (int what_to_do)
 }
 
 /* The user must press "y" or "n". Non-zero return means "y" pressed. */
-/* begin_clink_change
- * Not a callback pointer yet; just prototyping this for now...
- */
-extern int rl_read_key_callback (void);
-/* end_clink_change */
 static int
 get_y_or_n (int for_pager)
 {
@@ -536,12 +532,18 @@ get_y_or_n (int for_pager)
 #if defined (READLINE_CALLBACKS)
   if (RL_ISSTATE (RL_STATE_CALLBACK))
 /* begin_clink_change */
-    //return 1;
+#if 0
+/* end_clink_change */
+    return 1;
+/* begin_clink_change */
+#else
     {
+      if (!rl_read_key_hook)
+	return 1;
       for (;;)
 	{
 	  RL_SETSTATE(RL_STATE_MOREINPUT);
-	  c = rl_read_key_callback ();
+	  c = rl_read_key_hook ();
 	  RL_UNSETSTATE(RL_STATE_MOREINPUT);
 
 	  if (c == 'y' || c == 'Y' || c == ' ')
@@ -557,6 +559,7 @@ get_y_or_n (int for_pager)
 	  rl_ding ();
 	}
     }
+#endif
 /* end_clink_change */
 #endif
 

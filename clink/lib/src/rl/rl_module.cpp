@@ -185,7 +185,7 @@ public:
                     }
 };
 static terminal_in* s_input = nullptr;
-extern "C" int rl_read_key_callback(void)
+extern "C" int read_key_hook(void)
 {
     assert(s_input);
     if (!s_input)
@@ -521,6 +521,7 @@ rl_module::rl_module(const char* shell_name, terminal_in* input)
     rl_completion_display_matches_hook = [](char**, int, int) {};
 #endif
     rl_menu_completion_entry_function = filename_menu_completion_function;
+    rl_read_key_hook = read_key_hook;
 
     // Add commands.
 #ifdef CLINK_CHRISANT_MODS

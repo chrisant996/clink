@@ -875,6 +875,9 @@ extern int rl_inhibit_completion;
 /* This is a terminal sequence for the pager color.  The CSI and "m" are
    automatically added when writing it to the terminal. */
 extern const char* _rl_pager_color;
+/* This callback allows an application to provide keyboard input to readline
+   even in modal input situations like the pager. */
+extern rl_read_key_hook_func_t *rl_read_key_hook;
 /* end_clink_change */
 
 /* Applications can set this to non-zero to have readline's signal handlers
