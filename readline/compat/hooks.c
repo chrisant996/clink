@@ -174,7 +174,6 @@ size_t hooked_mbrlen(const char* in, size_t size, mbstate_t* state)
 int hooked_stat(const char* path, struct hooked_stat* out)
 {
     int ret = -1;
-    WIN32_FILE_ATTRIBUTE_DATA fad;
     wchar_t buf[2048];
     size_t characters;
 
@@ -187,6 +186,7 @@ int hooked_stat(const char* path, struct hooked_stat* out)
 #if 0
     out->st_size = 0;
     out->st_mode = 0;
+    WIN32_FILE_ATTRIBUTE_DATA fad;
     if (GetFileAttributesExW(buf, GetFileExInfoStandard, &fad) != 0)
     {
         unsigned dir_bit;
