@@ -547,7 +547,7 @@ rl_module::rl_module(const char* shell_name, terminal_in* input)
         { "\\e[6~",   "history-search-forward" },  // pgdn
 #ifdef CLINK_CHRISANT_MODS
         { "\\e[3;5~", "kill-word" },               // ctrl+del
-        { "\\d",      "unix-word-rubout" },        // ctrl+backspace
+        { "\\d",      "backward-kill-word" },      // ctrl+backspace
 #endif
         { "\\C-z",    "undo" },
     };

@@ -16,7 +16,7 @@ ChrisAnt Plans
   - argmatcher looks potentially more complicated, but maybe I just don't understand the data structures well enough yet.
 
 ## Features
-- **Ctrl+Backspace** needs to stop at path separators -- probably just means use a better command than `unix-word-rubout`.
+- Move expand_env to a readline command.
 - Setting to control persistent history.
 - Remember previous directory, and `-` swaps back to it.
   - Maybe set a `CLINK_PREV_DIR` envvar, too?
