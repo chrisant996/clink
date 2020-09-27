@@ -271,7 +271,7 @@ void win_screen_buffer::set_attributes(const attributes attr)
     {
         int value = fg.is_default ? m_default_attr : swizzle(fg->value);
         value &= attr_mask_fg;
-        out_attr = (out_attr & attr_mask_bg) | value;
+        out_attr = (out_attr & ~attr_mask_fg) | value;
         bold |= (value > 7);
     }
     else
@@ -286,7 +286,7 @@ void win_screen_buffer::set_attributes(const attributes attr)
     if (auto bg = attr.get_bg())
     {
         int value = bg.is_default ? m_default_attr : (swizzle(bg->value) << 4);
-        out_attr = (out_attr & attr_mask_fg) | (value & attr_mask_bg);
+        out_attr = (out_attr & ~attr_mask_bg) | (value & attr_mask_bg);
     }
 
     // TODO: add rgb/xterm256 support back.
