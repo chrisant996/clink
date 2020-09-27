@@ -7,6 +7,8 @@
 #include "line_buffer.h"
 
 #include <core/base.h>
+#include <core/os.h>
+#include <core/path.h>
 #include <core/log.h>
 #include <terminal/ecma48_iter.h>
 #include <terminal/printer.h>
@@ -226,8 +228,11 @@ static char* filename_menu_completion_function(const char *text, int state)
             dirname = savestring(users_dirname);
         }
 
-        str<> dn;
-        dn << dirname << "\\" << filename << "*";
+        str<32> dn;
+        dn << dirname;
+        if (dn.length() && !path::is_separator(dn.c_str()[dn.length() - 1]))
+            dn << "\\";
+        dn << filename << "*";
         directory = opendir(dn.c_str());
 
         /* Now dequote a non-null filename.  FILENAME will not be NULL, but may
@@ -264,23 +269,23 @@ static char* filename_menu_completion_function(const char *text, int state)
             convlen = (convfn == dentry) ? dentlen : strlen(convfn);
         }
 
-        /* Special case for no filename.  If the user has disabled the
-           `match-hidden-files' variable, skip filenames beginning with `.'.
-           All other entries except "." and ".." match. */
-        if (filename_len == 0)
-        {
-            if (_rl_match_hidden_files == 0 && HIDDEN_FILE(convfn))
+        // Always skip "." and ".." no matter the filename pattern.
+        if (convfn[0] == '.' &&
+            (!convfn[1] || (convfn[1] == '.' && !convfn[2])))
+            continue;
+
+        // When the `match-hidden-files' variable is disabled and a filename was
+        // given, only include filenames beginning with '.' if the pattern
+        // started with '.' or with a wildcard.  This is reachable because
+        // Windows skips leading '.' when matching (the file ".foo" matches the
+        // pattern "foo").
+        if (_rl_match_hidden_files == 0 && HIDDEN_FILE(convfn))
+            if (filename[0] != '.')
                 continue;
 
-            if (convfn[0] != '.' ||
-                (convfn[1] && (convfn[1] != '.' || convfn[2])))
-                break;
-        }
-        else
-        {
-            if (complete_fncmp(convfn, convlen, filename, filename_len))
-                break;
-        }
+        if (filename_len == 0 ||
+            complete_fncmp(convfn, convlen, filename, filename_len))
+            break;
     }
 
     if (entry == 0)
