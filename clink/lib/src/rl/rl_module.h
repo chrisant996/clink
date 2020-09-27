@@ -7,13 +7,15 @@
 
 #include <core/singleton.h>
 
+class terminal_in;
+
 //------------------------------------------------------------------------------
 class rl_module
     : public editor_module
     , public singleton<rl_module>
 {
 public:
-                    rl_module(const char* shell_name);
+                    rl_module(const char* shell_name, terminal_in* input);
                     ~rl_module();
 
 private:

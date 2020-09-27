@@ -13,6 +13,7 @@
 #include <terminal/ecma48_iter.h>
 #include <terminal/printer.h>
 #include <terminal/terminal_in.h>
+#include <terminal/key_tester.h>
 #include <terminal/screen_buffer.h>
 
 extern "C" {
@@ -117,6 +118,48 @@ extern "C" const char* host_get_env(const char* name)
 }
 
 //------------------------------------------------------------------------------
+
+
+//------------------------------------------------------------------------------
+class rl_more_key_tester : public key_tester
+{
+public:
+    virtual bool    is_bound(const char* seq, int len)
+                    {
+                        if (len <= 1)
+                            return true;
+                        if (len == 8 && strcmp(seq, "\x1b[27;27~") == 0)
+                            return true;
+                        rl_ding();
+                        return false;
+                    }
+    virtual bool    translate(const char* seq, int len, str_base& out)
+                    {
+                        if (len == 8 && strcmp(seq, "\x1b[27;27~") == 0)
+                        {
+                            out = "\x1b";
+                            return true;
+                        }
+                        return false;
+                    }
+};
+static terminal_in* s_input = nullptr;
+extern "C" int rl_read_key_callback(void)
+{
+    assert(s_input);
+    if (!s_input)
+        return 0;
+
+    rl_more_key_tester tester;
+    key_tester* old = s_input->set_key_tester(&tester);
+
+    s_input->select();
+    int key = s_input->read();
+
+    s_input->set_key_tester(old);
+    return key;
+}
+
 
 
 //------------------------------------------------------------------------------
@@ -396,10 +439,13 @@ static void terminal_write_thunk(FILE* stream, const char* chars, int char_count
 
 
 //------------------------------------------------------------------------------
-rl_module::rl_module(const char* shell_name)
+rl_module::rl_module(const char* shell_name, terminal_in* input)
 : m_rl_buffer(nullptr)
 , m_prev_group(-1)
 {
+    assert(!s_input);
+    s_input = input;
+
     rl_getc_function = terminal_read_thunk;
     rl_fwrite_function = terminal_write_thunk;
     rl_fflush_function = [] (FILE*) {};
@@ -470,6 +516,8 @@ rl_module::~rl_module()
 {
     free(_rl_comment_begin);
     _rl_comment_begin = nullptr;
+
+    s_input = nullptr;
 }
 
 //------------------------------------------------------------------------------
@@ -548,7 +596,7 @@ void rl_module::on_input(const input& input, result& result, const context& cont
         virtual void end() override     {}
         virtual void select() override  {}
         virtual int  read() override    { return *(unsigned char*)(data++); }
-        virtual void set_key_tester(key_tester* keys) override {}
+        virtual key_tester* set_key_tester(key_tester* keys) override { return nullptr; }
         const char*  data;
     } term_in;
 

@@ -49,7 +49,7 @@ void line_editor_destroy(line_editor* editor)
 
 //------------------------------------------------------------------------------
 line_editor_impl::line_editor_impl(const desc& desc)
-: m_module(desc.shell_name)
+: m_module(desc.shell_name, desc.input)
 , m_desc(desc)
 , m_printer(*desc.output)
 , m_pager(*this)
@@ -222,20 +222,21 @@ void line_editor_impl::dispatch(int bind_group)
 //------------------------------------------------------------------------------
 bool line_editor_impl::is_bound(const char* seq, int len)
 {
-    if (!len)
-        return false;
+    if (len)
+    {
+        if (m_bind_resolver.is_bound(seq, len))
+            return true;
 
-    if (m_bind_resolver.is_bound(seq, len))
-        return true;
+        // Checking readline's keymap is incorrect when a special bind group is
+        // active that should block on_input from reaching readline.  But the way
+        // that blocking is achieved is by adding a "" binding that matches
+        // everything not explicitly bound in the keymap.  So it works out
+        // naturally, without additional effort.
+        if (rl_function_of_keyseq_len(seq, len, nullptr, nullptr))
+            return true;
+    }
 
-    // Checking readline's keymap is incorrect when a special bind group is
-    // active that should block on_input from reaching readline.  But the way
-    // that blocking is achieved is by adding a "" binding that matches
-    // everything not explicitly bound in the keymap.  So it works out
-    // naturally, without additional effort.
-    if (rl_function_of_keyseq_len(seq, len, nullptr, nullptr))
-        return true;
-
+    rl_ding();
     return false;
 }
 

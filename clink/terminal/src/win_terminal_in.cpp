@@ -185,9 +185,11 @@ int win_terminal_in::read()
 }
 
 //------------------------------------------------------------------------------
-void win_terminal_in::set_key_tester(key_tester* keys)
+key_tester* win_terminal_in::set_key_tester(key_tester* keys)
 {
+    key_tester* ret = m_keys;
     m_keys = keys;
+    return ret;
 }
 
 //------------------------------------------------------------------------------
@@ -289,8 +291,17 @@ void win_terminal_in::read_console()
                             // supposed to use a length instead.
                             chord[len] = '\0';
 
+                            str<32> new_chord;
                             if (!m_keys->is_bound(chord, len))
+                            {
                                 m_buffer_count = buffer_count;
+                            }
+                            else if (m_keys->translate(chord, len, new_chord))
+                            {
+                                m_buffer_count = buffer_count;
+                                for (unsigned int i = 0; i < new_chord.length(); ++i)
+                                    push((unsigned int)new_chord.c_str()[i]);
+                            }
                         }
                     }
                 }

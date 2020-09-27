@@ -16,7 +16,7 @@ public:
     virtual void    end() override;
     virtual void    select() override;
     virtual int     read() override;
-    virtual void    set_key_tester(key_tester* keys) override;
+    virtual key_tester* set_key_tester(key_tester* keys) override;
 
 private:
     void            read_console();
