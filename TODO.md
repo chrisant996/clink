@@ -3,13 +3,7 @@ ChrisAnt Plans
 # Phase 1
 
 ## Premake
-- Premake5 generates things incorrectly:
-  - use ProgramDatabase instead of EditAndContinue
-  - disable OmitFramePointers
-  - enable GenerateDebugInformation
-  - clink_process
-    - set InlineFunctionExpansion to be AnySuitable
-    - disable SupportJustMyCode
+- **Premake5:  must disable SupportJustMyCode in clink_process!**
 
 ## LUA
 - Lua support changed significantly.  Explore how to support backward compatibility for existing scripts.
