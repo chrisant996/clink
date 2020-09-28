@@ -16,18 +16,14 @@ ChrisAnt Plans
   - argmatcher looks potentially more complicated, but maybe I just don't understand the data structures well enough yet.
 
 ## Features
-- Move expand_env to a readline command.
-- Setting to control persistent history.
-- Remember previous directory, and `-` swaps back to it.
-  - Maybe set a `CLINK_PREV_DIR` envvar, too?
-  - Remember a stack of previous directories?
-- A way to disable/enable clink once injected.
-- A way to disable/enable prompt filtering once injected.
+- [#519](https://github.com/mridgers/clink/issues/519) Clink v1.0.0.a1 - `-s|--scripts [path]` command line arg removed?
 
 ### Tab Complete
-- Need a `clink-` version of `menu-complete`, `menu-complete-backward`, `possible-completions`, etc (move `tab_completer` to be implemented as Readline commands).
-  - Needs to support wildcards.
-  - Readline's `next-complete` resets once there's only one match, so that the next **Tab** does a new completion based on the new content.  It's cool for `complete`, but for `menu-complete` it's problematic because there's no visual indicator at all when it's a directory, and even when it adds a space (only one filename match) it's a major departure from the CMD tab completion.  Make sure the `clink-` variants solve that.
+With Readline 8.0, there's no longer a reason for `tab_completer` to exist: `complete` and `menu-complete` have sophisticated coloring, and it's possible to hook the completion function to support environment variables and argmatcher.
+- Add support for environment variables.
+- Add support for argmatcher.
+- Make sure it will be possible to show a popup list before completely removing `tab_completer`.
+- Add an option for `menu-complete` to not automatically accept the completion when there's only one possibility.  Because there's no reliable visual indicator it reset when it's a directory, and because it's a significant departure from CMD muscle memory.
 
 ### Scrolling mode
 - Have commands for scrolling up/down by a page or line (or top/bottom of buffer).
@@ -36,8 +32,11 @@ ChrisAnt Plans
 - Because I don't want **Shift+PgUp/PgDn** hard-coded for scrolling.
 
 ### Other
-- Allow conhost to handle **Shift+Left** and etc for CUA selection?
+- _The new bindable **Esc** isn't yet compatible with vi mode!_
+- Win10 console mode flag to support ANSI sequences and colors; seems to maybe be working already?
+- Investigate [XTerm 256 support](https://conemu.github.io/en/AnsiEscapeCodes.html) [#487](https://github.com/mridgers/clink/issues/487).
 - Changing terminal width makes 0.4.8 slowly "walk up the screen".  Changing terminal width makes master go haywire.  Probably more ecma48 terminal issues.
+- Allow conhost to handle **Shift+Left** and etc for CUA selection?
 
 ## Questions
 - What is `set-mark`?
@@ -45,35 +44,25 @@ ChrisAnt Plans
 - How does `kill-line` work?
 
 # Issues Backlog [clink/issues](https://github.com/mridgers/clink/issues)
-- [544](https://github.com/mridgers/clink/issues/544) Clink v1.0.0.a1 doesn't support cyrillic characters keyboard input
-- [542](https://github.com/mridgers/clink/issues/542) VS Code not capturing std output
-- [x] [540](https://github.com/mridgers/clink/issues/540) v0.4.9 works but v1.0.0.a1 crashes in directory with too many files
-  - I can't reproduce this using ConEmu 200713.  Checking this off for now, pending further information.
-- [532](https://github.com/mridgers/clink/issues/532) paste newlines, run as separate lines
-  - It's pretty risky to just paste-and-go.
-  - Maybe add an option to convert newlines into "&" instead?
-  - Or maybe let readline do multiline editing and accept them all as a batch on **Enter**?
-- [531](https://github.com/mridgers/clink/issues/531) AV detects a trojan on download _[or on execution, for me]_
-- [519](https://github.com/mridgers/clink/issues/519) Clink v1.0.0.a1 - `-s|--scripts [path]` command line arg removed?
-- [502](https://github.com/mridgers/clink/issues/502) Error in folders containing [ ] characters
-- [486](https://github.com/mridgers/clink/issues/486) **Ctrl+C** doesn't always work properly _[might be the auto-answer prompt setting]_
-- [480](https://github.com/mridgers/clink/issues/480) Things don't work right when clink is in a path with spaces
-- [x] [453](https://github.com/mridgers/clink/issues/453) non-printable characters mess up rendering vs caret position
+- [#544](https://github.com/mridgers/clink/issues/544) Clink v1.0.0.a1 doesn't support cyrillic characters keyboard input
+- [#542](https://github.com/mridgers/clink/issues/542) VS Code not capturing std output
+- [#531](https://github.com/mridgers/clink/issues/531) AV detects a trojan on download _[or on execution, for me]_
+- [#502](https://github.com/mridgers/clink/issues/502) Error in folders containing [ ] characters
+- [#486](https://github.com/mridgers/clink/issues/486) **Ctrl+C** doesn't always work properly _[might be the auto-answer prompt setting]_
+- [#480](https://github.com/mridgers/clink/issues/480) Things don't work right when clink is in a path with spaces
+- [x] [#453](https://github.com/mridgers/clink/issues/453) non-printable characters mess up rendering vs caret position
   - _Double check that it's fixed by the Readline update, as advertised._
-- [x] [422](https://github.com/mridgers/clink/issues/422) filename modifier only works with forward slashes; needs to support backslashes
-  - Working in chrisant996/clink.
-- [415](https://github.com/mridgers/clink/issues/415) Different encodings in different lua functions
-- [398](https://github.com/mridgers/clink/issues/398) Cmd gets unresponsive after "set /p" command.
-- [396](https://github.com/mridgers/clink/issues/396) Pasting unicode emoji in a clink-enabled console
-- [365](https://github.com/mridgers/clink/issues/365) history-search behavior _(put cursor at end of command line when searching forward/backward in the history)_
-- [30](https://github.com/mridgers/clink/issues/30) wildcards not expanded.
+- [#415](https://github.com/mridgers/clink/issues/415) Different encodings in different lua functions
+- [#398](https://github.com/mridgers/clink/issues/398) Cmd gets unresponsive after "set /p" command.
+- [#396](https://github.com/mridgers/clink/issues/396) Pasting unicode emoji in a clink-enabled console
+- [#365](https://github.com/mridgers/clink/issues/365) history-search behavior _(put cursor at end of command line when searching forward/backward in the history)_
+- [#30](https://github.com/mridgers/clink/issues/30) wildcards not expanded.
 
 # Phase 2
 
 ## Problems
-- _The new bindable **Esc** isn't yet compatible with vi mode!_
-- Win10 console mode flag to support ANSI sequences and colors; seems to maybe be working already?
-- Investigate [XTerm 256 support](https://conemu.github.io/en/AnsiEscapeCodes.html) [#487](https://github.com/mridgers/clink/issues/487).
+- Setting to control persistent history.  This involves rewriting the new history_db system, because it currently relies on manipulating files on disk.
+- Over 39 thousand assertions in the unit test?!
 
 ## Key Bindings
 - Hook up stuff via commands instead of via hard-coded custom bindings, so that everything can be remapped and reported by `show-rl-help`.
@@ -88,9 +77,11 @@ ChrisAnt Plans
 ## Commands
 - Add a `history.dupe_mode` that behaves like 4Dos/4NT/Take Command from JPSoft:  **Up**/**Down** then **Enter** remembers the history position so that **Enter**, **Down**, **Enter**, **Down**, **Enter**, etc can be used to replay a series of commands.
 - Add a way to reset or trim the history, when there's only one (or zero) clink running [#499](https://github.com/mridgers/clink/issues/499).
-
-## Unit Test
-- Over 39 thousand assertions?!
+- Remember previous directory, and `-` swaps back to it.
+  - Maybe set a `CLINK_PREV_DIR` envvar, too?
+  - Remember a stack of previous directories?
+- A way to disable/enable clink once injected.
+- A way to disable/enable prompt filtering once injected.
 
 # EVENTUALLY
 
@@ -101,7 +92,10 @@ ChrisAnt Plans
 
 ## Editing
 - Custom color for readline input.  Might prefer to completely replace readline's line drawing, since it's trying to minimize updates over terminal emulators, and that makes it much harder to colorize the editing line (and arguments).
-- [532](https://github.com/mridgers/clink/issues/532) paste newlines, run as separate lines _[copy from CASH]_
+- [#532](https://github.com/mridgers/clink/issues/532) paste newlines, run as separate lines
+  - It's pretty risky to just paste-and-go.
+  - Maybe add an option to convert newlines into "&" instead?
+  - Or maybe let readline do multiline editing and accept them all as a batch on **Enter**?
 
 ## Key Bindings
 - **https://invisible-island.net/xterm/modified-keys.html**
@@ -115,7 +109,7 @@ ChrisAnt Plans
 - Popup history list.
 - Expand environment variable.
 - Marking mode?  It's a kludge, but it copies with HTML formatting (and even uses the color scheme).
-- Make `tab_completer` include doskey aliases?
+- Doskey alias completion?  Seems like that should be done via a lua script?
 - **F8** should behave like `history-search-backward` but wrap around.
 - Complete "%ENVVAR%\*" by internally expanding ENVVAR for collecting matches, but not expanding it in the editing line.
 
@@ -139,7 +133,7 @@ ChrisAnt Plans
 # APPENDICES
 
 ## Mystery Issues
-- [540](https://github.com/mridgers/clink/issues/540) v0.4.9 works but v1.0.0.a1 crashes in directory with too many files _[NOT REPRO: tried with ConEmu and chrisant996/clink head, switching to c:\Windows\System32]_
+- [540](https://github.com/mridgers/clink/issues/540) v0.4.9 works but v1.0.0.a1 crashes in directory with too many files _[NOT REPRO: tried with ConEmu 200713 and chrisant996/clink head, switching to c:\Windows\System32]_
 
 ---
 Chris Antos - sparrowhawk996@gmail.com

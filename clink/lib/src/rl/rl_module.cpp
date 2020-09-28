@@ -64,6 +64,8 @@ extern void host_add_history(int rl_history_index, const char* line);
 extern void host_remove_history(int rl_history_index, const char* line);
 extern setting_colour g_colour_interact;
 
+line_buffer*        rl_buffer = nullptr;
+
 
 
 //------------------------------------------------------------------------------
@@ -538,10 +540,20 @@ rl_module::rl_module(const char* shell_name, terminal_in* input)
         { "\\e[3;5~",       "kill-word" },               // ctrl+del
         { "\\d",            "backward-kill-word" },      // ctrl+backspace
         { "\\C-z",          "undo" },
+        { "\\e[27;27~",     "reset-line" },              // esc
+        // These are host-specific and don't belong in rl_module.  However, the
+        // host_module is constructed after rl_module, and host_module isn't
+        // really connected to host_cmd, so there isn't a better place yet for
+        // these default key bindings.
+        { "\\M-\\C-e",      "expand-env-var" },          // alt+ctrl+e
+        { "\\M-\\C-f",      "expand-doskey-alias" },     // alt+ctrl+f
     };
 
+    int restore_convert = _rl_convert_meta_chars_to_ascii;
+    _rl_convert_meta_chars_to_ascii = 1;
     for (int i = 0; i < sizeof_array(ext_key_binds); ++i)
         rl_bind_keyseq(ext_key_binds[i][0], rl_named_function(ext_key_binds[i][1]));
+    _rl_convert_meta_chars_to_ascii = restore_convert;
 
     load_user_inputrc();
 }
@@ -570,6 +582,8 @@ void rl_module::bind_input(binder& binder)
 void rl_module::on_begin_line(const context& context)
 {
     rl_outstream = (FILE*)(terminal_out*)(&context.printer);
+
+    rl_buffer = &context.buffer;
 
     // Readline needs to be told about parts of the prompt that aren't visible
     // by enclosing them in a pair of 0x01/0x02 chars.
@@ -611,6 +625,8 @@ void rl_module::on_end_line()
 
     // This prevents any partial Readline state leaking from one line to the next
     rl_readline_state &= ~RL_MORE_INPUT_STATES;
+
+    rl_buffer = nullptr;
 }
 
 //------------------------------------------------------------------------------

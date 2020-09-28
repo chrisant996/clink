@@ -9,6 +9,9 @@
 #include <core/singleton.h>
 
 class terminal_in;
+class line_buffer;
+
+extern line_buffer& buffer;
 
 //------------------------------------------------------------------------------
 class rl_module

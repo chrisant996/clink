@@ -13,6 +13,7 @@
 
 extern "C" {
 #include <readline/readline.h>
+#include <readline/history.h>
 }
 
 //------------------------------------------------------------------------------
@@ -55,33 +56,7 @@ static setting_str g_key_dotdot(
     "Inserts ..\\",
     "\\M-a");
 
-static setting_str g_key_expand_env(
-    "keybind.expand_env",
-    "Expands %envvar% under cursor",
-    "\\M-C-e");
 
-
-
-//------------------------------------------------------------------------------
-// Expands a doskey alias (but only the first line, if $T is present).
-int expand_doskey_alias(int count, int invoking_key)
-{
-    doskey_alias alias;
-    doskey doskey("cmd.exe");
-    doskey.resolve(rl_line_buffer, alias);
-
-    str<> expand;
-    alias.next(expand);
-
-    rl_begin_undo_group();
-    rl_delete_text(0, rl_end);
-    rl_point = 0;
-    if (!expand.empty())
-        rl_insert_text(expand.c_str());
-    rl_end_undo_group();
-
-    return 0;
-}
 
 //------------------------------------------------------------------------------
 static void ctrl_c(
@@ -192,64 +167,6 @@ static void up_directory(editor_module::result& result, line_buffer& buffer)
 }
 
 //------------------------------------------------------------------------------
-static void get_word_bounds(const line_buffer& buffer, int* left, int* right)
-{
-    const char* str = buffer.get_buffer();
-    unsigned int cursor = buffer.get_cursor();
-
-    // Determine the word delimiter depending on whether the word's quoted.
-    int delim = 0;
-    for (unsigned int i = 0; i < cursor; ++i)
-    {
-        char c = str[i];
-        delim += (c == '\"');
-    }
-
-    // Search outwards from the cursor for the delimiter.
-    delim = (delim & 1) ? '\"' : ' ';
-    *left = 0;
-    for (int i = cursor - 1; i >= 0; --i)
-    {
-        char c = str[i];
-        if (c == delim)
-        {
-            *left = i + 1;
-            break;
-        }
-    }
-
-    const char* post = strchr(str + cursor, delim);
-    if (post != nullptr)
-        *right = int(post - str);
-    else
-        *right = int(strlen(str));
-}
-
-//------------------------------------------------------------------------------
-static void expand_env_vars(line_buffer& buffer)
-{
-    // Extract the word under the cursor.
-    int word_left, word_right;
-    get_word_bounds(buffer, &word_left, &word_right);
-
-    str<1024> in;
-    in << (buffer.get_buffer() + word_left);
-    in.truncate(word_right - word_left);
-
-    // Do the environment variable expansion.
-    str<1024> out;
-    if (!ExpandEnvironmentStrings(in.c_str(), out.data(), out.size()))
-        return;
-
-    // Update Readline with the resulting expansion.
-    buffer.begin_undo_group();
-    buffer.remove(word_left, word_right);
-    buffer.set_cursor(word_left);
-    buffer.insert(out.c_str());
-    buffer.end_undo_group();
-}
-
-//------------------------------------------------------------------------------
 static void insert_dot_dot(line_buffer& buffer)
 {
     if (unsigned int cursor = buffer.get_cursor())
@@ -272,7 +189,6 @@ enum
     bind_id_copy_line,
     bind_id_copy_cwd,
     bind_id_up_dir,
-    bind_id_expand_env,
     bind_id_dotdot,
 };
 
@@ -282,12 +198,6 @@ enum
 host_module::host_module(const char* host_name)
 : m_host_name(host_name)
 {
-    static bool s_rl_initialized = false;
-    if (!s_rl_initialized)
-    {
-        s_rl_initialized = true;
-        rl_add_funmap_entry("expand-doskey-alias", expand_doskey_alias);
-    }
 }
 
 //------------------------------------------------------------------------------
@@ -300,9 +210,6 @@ void host_module::bind_input(binder& binder)
     binder.bind(default_group, g_key_copy_cwd.get(), bind_id_copy_cwd);
     binder.bind(default_group, g_key_up_dir.get(), bind_id_up_dir);
     binder.bind(default_group, g_key_dotdot.get(), bind_id_dotdot);
-
-    if (stricmp(m_host_name, "cmd.exe") == 0)
-        binder.bind(default_group, g_key_expand_env.get(), bind_id_expand_env);
 }
 
 //------------------------------------------------------------------------------
@@ -330,7 +237,6 @@ void host_module::on_input(const input& input, result& result, const context& co
     case bind_id_copy_line:     copy_line(context.buffer);            break;
     case bind_id_copy_cwd:      copy_cwd(context.buffer);             break;
     case bind_id_up_dir:        up_directory(result, context.buffer); break;
-    case bind_id_expand_env:    expand_env_vars(context.buffer);      break;
     case bind_id_dotdot:        insert_dot_dot(context.buffer);       break;
     };
 }

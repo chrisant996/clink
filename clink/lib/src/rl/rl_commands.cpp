@@ -2,6 +2,7 @@
 // License: http://opensource.org/licenses/MIT
 
 #include "pch.h"
+#include "line_buffer.h"
 #include "rl_commands.h"
 
 #include <core/base.h>
@@ -17,10 +18,13 @@ extern "C" {
 
 
 //------------------------------------------------------------------------------
+extern line_buffer* rl_buffer;
+
+//------------------------------------------------------------------------------
 int clink_reset_line(int count, int invoking_key)
 {
     using_history();
-    rl_delete_text(0, rl_end);
+    rl_buffer->remove(0, rl_end);
     rl_point = 0;
 
     return 0;
