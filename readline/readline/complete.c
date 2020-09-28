@@ -596,7 +596,7 @@ _rl_internal_pager (int lines)
   fflush (rl_outstream);
 /* begin_clink_change */
   if (_rl_pager_color)
-    _rl_set_normal_color ();
+    fprintf (rl_outstream, "\x1b[m");
 /* end_clink_change */
   i = get_y_or_n (1);
   _rl_erase_entire_line ();
@@ -1821,12 +1821,12 @@ display_matches (char **matches)
       rl_crlf ();
 /* begin_clink_change */
       if (_rl_pager_color)
-        _rl_print_pager_color();
+	_rl_print_pager_color();
 /* end_clink_change */
       fprintf (rl_outstream, "Display all %d possibilities? (y or n)", len);
 /* begin_clink_change */
       if (_rl_pager_color)
-        _rl_set_normal_color();
+	fprintf (rl_outstream, "\x1b[m");
 /* end_clink_change */
       fflush (rl_outstream);
       if ((completion_y_or_n = get_y_or_n (0)) == 0)
