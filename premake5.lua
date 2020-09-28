@@ -87,7 +87,7 @@ workspace("clink")
 
     characterset("MBCS")
     flags("NoManifest")
-    flags("StaticRuntime")
+    staticruntime("on")
     rtti("off")
     symbols("on")
     exceptionhandling("off")
@@ -104,7 +104,7 @@ workspace("clink")
 
     configuration("final")
         optimize("full")
-        flags("NoFramePointer")
+        omitframepointer("on")
         flags("NoBufferSecurityCheck")
 
     configuration({"final", "vs*"})
@@ -228,6 +228,10 @@ clink_lib("clink_process")
     configuration("vs*")
         pchheader("pch.h")
         pchsource("clink/process/src/pch.cpp")
+        inlining("auto") -- required by the inject lambda in process::remote_call
+        editAndContinue("off") -- required by the inject lambda in process::remote_call
+        omitframepointer("off") -- required by the inject lambda in process::remote_call
+        -- <SupportJustMyCode>false</SupportJustMyCode> -- required by the inject lambda in process::remote_call
 
 --------------------------------------------------------------------------------
 clink_lib("clink_app_common")
@@ -272,7 +276,6 @@ clink_dll("clink_app_dll")
 --------------------------------------------------------------------------------
 clink_exe("clink_app_exe")
     flags("OmitDefaultLibrary")
-    symbols("off")
     targetname("clink")
     links("clink_app_dll")
     files("clink/app/src/loader/main.cpp")
