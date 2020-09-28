@@ -180,9 +180,8 @@ void settings_lua_initialise(lua_state& lua)
 }
 
 //----------------------------------------------------------------------------
-#ifdef CLINK_049_API_COMPAT
+// Clink 0.4.8 API compatibility!
 int get_clink_setting(lua_State* state)
 {
     return get(state);
 }
-#endif

@@ -9,9 +9,7 @@
 #include <core/path.h>
 #include <core/str.h>
 
-//------------------------------------------------------------------------------
-// Backward compatability...
-#ifdef CLINK_049_API_COMPAT
+// BEGIN -- Clink 0.4.8 API compatibility --------------------------------------
 
 extern "C" {
 #include "lua.h"
@@ -459,7 +457,7 @@ static int get_console_aliases(lua_State* state)
     return 1;
 }
 
-#endif // CLINK_049_API_COMPAT
+// END -- Clink 0.4.8 API compatibility ----------------------------------------
 
 
 
@@ -514,7 +512,8 @@ void clink_lua_initialise(lua_state& lua)
         const char* name;
         int         (*method)(lua_State*);
     } methods[] = {
-#ifdef CLINK_049_API_COMPAT
+        // Clink 0.4.8 API compatibility.  Clink 1.0.0a1 moved these APIs away
+        // from "clink.", but backward compatibility requires them here as well.
         { "chdir",                  &change_dir },
         { "execute",                &lua_execute },
         { "find_dirs",              &find_dirs },
@@ -537,10 +536,10 @@ void clink_lua_initialise(lua_state& lua)
 #endif
         { "suppress_char_append",   &suppress_char_append },
         { "suppress_quoting",       &suppress_quoting },
-#endif // CLINK_049_API_COMPAT
-// TODO : move this somewhere else.
+
+        // Clink 1.0.0a1 had only this API still under "clink.".
+        // TODO : move this somewhere else.
         { "getscreeninfo",  &get_screen_info },
-//
     };
 
     lua_State* state = lua.get_state();
