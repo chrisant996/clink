@@ -24,6 +24,7 @@ static setting_bool g_modify_other_keys(
 static const int CTRL_PRESSED = LEFT_CTRL_PRESSED|RIGHT_CTRL_PRESSED;
 static const int ALT_PRESSED = LEFT_ALT_PRESSED|RIGHT_ALT_PRESSED;
 
+// TODO: 0.4.8 keyboard compatibility mode
 #define CSI(x) "\x1b[" #x
 #define SS3(x) "\x1bO" #x
 namespace terminfo { //                       Shf        Alt        AtlShf     Ctl        CtlShf     CtlAlt     CtlAltShf
@@ -335,6 +336,7 @@ void win_terminal_in::process_input(KEY_EVENT_RECORD const& record)
         return;
 
     // Special treatment for escape.
+    // TODO: 0.4.8 keyboard compatibility mode
     if (key_char == 0x1b)
     {
         // BUGBUG: vi mode doesn't support this yet
