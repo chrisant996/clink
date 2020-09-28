@@ -523,7 +523,6 @@ rl_module::rl_module(const char* shell_name, terminal_in* input)
         rl_remove_history_hook = host_remove_history;
         rl_add_funmap_entry("reset-line", clink_reset_line);
     }
-#endif
 
     // Bind extended keys so editing follows Windows' conventions.
     static const char* ext_key_binds[][2] = {
