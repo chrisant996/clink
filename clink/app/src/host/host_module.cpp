@@ -282,14 +282,12 @@ enum
 host_module::host_module(const char* host_name)
 : m_host_name(host_name)
 {
-#ifdef CLINK_CHRISANT_MODS
     static bool s_rl_initialized = false;
     if (!s_rl_initialized)
     {
         s_rl_initialized = true;
         rl_add_funmap_entry("expand-doskey-alias", expand_doskey_alias);
     }
-#endif
 }
 
 //------------------------------------------------------------------------------

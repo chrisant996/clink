@@ -308,11 +308,7 @@ bool line_editor_impl::update_input()
 
         line_state line = get_linestate();
         editor_module::context context = get_context(line);
-#ifdef CLINK_CHRISANT_FIXES
         editor_module::input input = { chord.c_str(), chord.length(), id };
-#else
-        editor_module::input input = { chord.c_str(), id };
-#endif
         module->on_input(input, result, context);
 
         m_bind_resolver.set_group(result.group);

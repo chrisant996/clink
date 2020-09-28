@@ -60,11 +60,9 @@ extern int          _rl_last_v_pos;
 #endif
 } // extern "C"
 
-#ifdef CLINK_CHRISANT_MODS
 extern void host_add_history(int rl_history_index, const char* line);
 extern void host_remove_history(int rl_history_index, const char* line);
 extern setting_colour g_colour_interact;
-#endif
 
 
 
@@ -509,22 +507,14 @@ rl_module::rl_module(const char* shell_name, terminal_in* input)
     _rl_output_meta_chars = 1;
 
     // Recognize both / and \\ as path separators, and normalize to \\.
-#ifdef CLINK_CHRISANT_MODS
     rl_backslash_path_sep = 1;
     rl_preferred_path_separator = '\\';
-#endif
 
     // Disable completion and match display.
-#ifndef CLINK_CHRISANT_FIXES
-    // No: disabling completion breaks `complete` and `menu-complete`.
-    rl_completion_entry_function = [](const char*, int) -> char* { return nullptr; };
-    rl_completion_display_matches_hook = [](char**, int, int) {};
-#endif
     rl_menu_completion_entry_function = filename_menu_completion_function;
     rl_read_key_hook = read_key_hook;
 
     // Add commands.
-#ifdef CLINK_CHRISANT_MODS
     static bool s_rl_initialized = false;
     if (!s_rl_initialized)
     {
@@ -537,20 +527,18 @@ rl_module::rl_module(const char* shell_name, terminal_in* input)
 
     // Bind extended keys so editing follows Windows' conventions.
     static const char* ext_key_binds[][2] = {
-        { "\\e[1;5D", "backward-word" },           // ctrl-left
-        { "\\e[1;5C", "forward-word" },            // ctrl-right
-        { "\\e[F",    "end-of-line" },             // end
-        { "\\e[H",    "beginning-of-line" },       // home
-        { "\\e[3~",   "delete-char" },             // del
-        { "\\e[1;5F", "kill-line" },               // ctrl-end
-        { "\\e[1;5H", "backward-kill-line" },      // ctrl-home
-        { "\\e[5~",   "history-search-backward" }, // pgup
-        { "\\e[6~",   "history-search-forward" },  // pgdn
-#ifdef CLINK_CHRISANT_MODS
-        { "\\e[3;5~", "kill-word" },               // ctrl+del
-        { "\\d",      "backward-kill-word" },      // ctrl+backspace
-#endif
-        { "\\C-z",    "undo" },
+        { "\\e[1;5D",       "backward-word" },           // ctrl-left
+        { "\\e[1;5C",       "forward-word" },            // ctrl-right
+        { "\\e[F",          "end-of-line" },             // end
+        { "\\e[H",          "beginning-of-line" },       // home
+        { "\\e[3~",         "delete-char" },             // del
+        { "\\e[1;5F",       "kill-line" },               // ctrl-end
+        { "\\e[1;5H",       "backward-kill-line" },      // ctrl-home
+        { "\\e[5~",         "history-search-backward" }, // pgup
+        { "\\e[6~",         "history-search-forward" },  // pgdn
+        { "\\e[3;5~",       "kill-word" },               // ctrl+del
+        { "\\d",            "backward-kill-word" },      // ctrl+backspace
+        { "\\C-z",          "undo" },
     };
 
     for (int i = 0; i < sizeof_array(ext_key_binds); ++i)
@@ -657,16 +645,10 @@ void rl_module::on_input(const input& input, result& result, const context& cont
 
     // Call Readline's until there's no characters left.
     int is_inc_searching = rl_readline_state & RL_STATE_ISEARCH;
-#ifdef CLINK_CHRISANT_FIXES
     unsigned int len = input.len;
     while (len && !m_done)
-#else
-    while (*term_in.data && !m_done)
-#endif
     {
-#ifdef CLINK_CHRISANT_FIXES
         --len;
-#endif
         rl_callback_read_char();
 
         // Internally Readline tries to resend escape characters but it doesn't
@@ -674,9 +656,7 @@ void rl_module::on_input(const input& input, result& result, const context& cont
         if (term_in.data[-1] == 0x1b && is_inc_searching)
         {
             --term_in.data;
-#ifdef CLINK_CHRISANT_FIXES
             ++len;
-#endif
             is_inc_searching = 0;
         }
     }

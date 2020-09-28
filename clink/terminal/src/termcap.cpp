@@ -134,9 +134,7 @@ char* tgetstr(char* name, char** out)
     case 'vs': str = CSI(?12;25h);        break;
 
     // Visible bell.
-#ifdef CLINK_CHRISANT_MODS
     case 'vb': str = "\x1b_vb\x1b\\"; break;
-#endif
     }
 
     if (str != nullptr && out != nullptr && *out != nullptr)

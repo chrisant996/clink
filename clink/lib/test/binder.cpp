@@ -72,11 +72,7 @@ TEST_CASE("Binder")
             "^",        "^",
             "\\",       "\\",
             "\\t",      "\t",
-#ifdef CLINK_CHRISANT_MODS
             "\\e",      "\x1b[27;27~",
-#else
-            "\\e",      "\x1b",
-#endif
             "abc",      "abc",
             "ab",       "abd",
             "^a",       "\x01",

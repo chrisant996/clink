@@ -52,12 +52,10 @@ static setting_int g_column_pad(
     "Adjusts the amount of whitespace padding between columns of matches.",
     2);
 
-#ifdef CLINK_CHRISANT_MODS
 static setting_str g_key_complete(
     "keybind.complete",
     "Uses clink's enhanced completion",
     "\\t");
-#endif
 
 setting_int g_max_width(
     "match.max_width",
