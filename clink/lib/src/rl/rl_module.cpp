@@ -540,6 +540,7 @@ rl_module::rl_module(const char* shell_name, terminal_in* input)
         { "\\e[3;5~",       "kill-word" },               // ctrl+del
         { "\\d",            "backward-kill-word" },      // ctrl+backspace
         { "\\C-z",          "undo" },
+        { "\\e[2~",         "overwrite-mode" },          // ins
         { "\\e[27;27~",     "reset-line" },              // esc
         // These are host-specific and don't belong in rl_module.  However, the
         // host_module is constructed after rl_module, and host_module isn't

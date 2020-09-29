@@ -60,7 +60,7 @@
 #define READLINE_CALLBACKS
 
 /* Define this if you want the cursor to indicate insert or overwrite mode. */
-/* #define CURSOR_MODE */
+#define CURSOR_MODE
 
 /* Define this if you want to enable code that talks to the Linux kernel
    tty auditing system. */
