@@ -10,8 +10,6 @@ ChrisAnt Plans
   - argmatcher looks potentially more complicated, but maybe I just don't understand the data structures well enough yet.
 
 ## Features
-- `completion-display-width` 0 should use terminal width.
-- `completion-query-items` < 0 should use ( terminal height / 2 ) / terminal width.
 
 ### Tab Complete
 - `tab_completer` doesn't seem to work for \\server\c$\ leading path; one more reason to move away from it to the Readline commands.
@@ -28,9 +26,11 @@ With Readline 8.0, there's no longer a reason for `tab_completer` to exist: `com
 - Because I don't want **Shift+PgUp/PgDn** hard-coded for scrolling.
 
 ### Other
-- _The new bindable **Esc** isn't yet compatible with vi mode!_
 - Win10 console mode flag to support ANSI sequences and colors; seems to maybe be working already?
+- `completion-display-width` 0 should use terminal width.
+- `completion-query-items` < 0 should use ( terminal height / 2 ) / terminal width.
 - Investigate [XTerm 256 support](https://conemu.github.io/en/AnsiEscapeCodes.html) [#487](https://github.com/mridgers/clink/issues/487).
+- _The new bindable **Esc** isn't yet compatible with vi mode!_
 - Changing terminal width makes 0.4.8 slowly "walk up the screen".  Changing terminal width makes master go haywire.  Probably more ecma48 terminal issues.
 - Allow conhost to handle **Shift+Left** and etc for CUA selection?
 
@@ -51,7 +51,6 @@ With Readline 8.0, there's no longer a reason for `tab_completer` to exist: `com
 - [#415](https://github.com/mridgers/clink/issues/415) Different encodings in different lua functions
 - [#398](https://github.com/mridgers/clink/issues/398) Cmd gets unresponsive after "set /p" command.
 - [#396](https://github.com/mridgers/clink/issues/396) Pasting unicode emoji in a clink-enabled console
-- [#365](https://github.com/mridgers/clink/issues/365) history-search behavior _(put cursor at end of command line when searching forward/backward in the history)_
 - [#30](https://github.com/mridgers/clink/issues/30) wildcards not expanded.
 
 # Phase 2
@@ -68,15 +67,18 @@ With Readline 8.0, there's no longer a reason for `tab_completer` to exist: `com
   - Translate terminal sequences into "C-A-name" in `show-rl-help` (e.g. "C-A-Up", "Ctrl-Home", "End", etc)?  But that gets weird because those aren't parseable key names.
   - Maybe have two variants of `show-rl-help` -- one that shows human readable key names, and one that shows the actual binding strings?
   - Invent an alternative syntax?
+- Allow **Ctrl+M** to be discrete from **Enter**.
 
 ## Commands
 - Add a `history.dupe_mode` that behaves like 4Dos/4NT/Take Command from JPSoft:  **Up**/**Down** then **Enter** remembers the history position so that **Enter**, **Down**, **Enter**, **Down**, **Enter**, etc can be used to replay a series of commands.
 - Add a way to reset or trim the history, when there's only one (or zero) clink running [#499](https://github.com/mridgers/clink/issues/499).
-- Remember previous directory, and `-` swaps back to it.
+- Remember previous directory, and `-` swaps back to it [#372](https://github.com/mridgers/clink/issues/372).
   - Maybe set a `CLINK_PREV_DIR` envvar, too?
   - Remember a stack of previous directories?
 - A way to disable/enable clink once injected.
 - A way to disable/enable prompt filtering once injected.
+- Allow to search the console output (not command history) with a RegExp [#166](https://github.com/mridgers/clink/issues/166).
+  - Ideally enable lua to do searches and set scroll position, so it can be extensible -- e.g. bind a key to a lua script to search for next/prev line with red or yellow colored text, or to search for "error:", or etc.  Think of the possibilities!
 
 # EVENTUALLY
 
@@ -84,6 +86,7 @@ With Readline 8.0, there's no longer a reason for `tab_completer` to exist: `com
 - Try to make unbound keys like **Shift-Left** tell conhost that they haven't been handled, so conhost can do its fancy CUA marking.
 - Especially don't handle **ALt+F4**, unless maybe to bind it to a keyboard macro for the **Esc** input sequence plus "exit" plus **Enter**.
 - Holding down a bound key like **Ctrl+Up** lets conhost periodically intercept some of the keypresses!
+- The history does not record the 2nd+ lines of '^' escaped lines [#427](https://github.com/mridgers/clink/issues/427).
 
 ## Editing
 - Custom color for readline input.  Might prefer to completely replace readline's line drawing, since it's trying to minimize updates over terminal emulators, and that makes it much harder to colorize the editing line (and arguments).
