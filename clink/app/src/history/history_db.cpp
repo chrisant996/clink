@@ -814,7 +814,7 @@ history_db::line_id history_db::find(const char* line) const
 }
 
 //------------------------------------------------------------------------------
-history_db::expand_result history_db::expand(const char* line, str_base& out) const
+history_db::expand_result history_db::expand(const char* line, str_base& out)
 {
     using_history();
 

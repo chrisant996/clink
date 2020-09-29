@@ -38,6 +38,11 @@ static setting_enum g_ignore_case(
     "off,on,relaxed",
     2);
 
+static setting_bool g_save_history(
+    "history.save",
+    "Save history between sessions",
+    true);
+
 static setting_str g_exclude_from_history_cmds(
     "history.dont_add_to_history_cmds",
     "Commands not automatically added to the history",
@@ -171,6 +176,7 @@ host::host(const char* name)
 //------------------------------------------------------------------------------
 host::~host()
 {
+    delete m_history;
 }
 
 //------------------------------------------------------------------------------
@@ -242,10 +248,27 @@ bool host::edit_line(const char* prompt, str_base& out)
     editor->add_generator(lua);
     editor->add_generator(file_match_generator());
 
-    m_history.initialise();
-    m_history.load_rl_history();
+    if (g_save_history.get())
+    {
+        if (!m_history)
+            m_history = new history_db;
+    }
+    else
+    {
+        if (m_history)
+        {
+            delete m_history;
+            m_history = nullptr;
+        }
+    }
 
-    s_history_db = &m_history;
+    if (m_history)
+    {
+        m_history->initialise();
+        m_history->load_rl_history();
+    }
+
+    s_history_db = m_history;
 
     bool resolved = false;
     bool ret = false;
@@ -267,8 +290,9 @@ bool host::edit_line(const char* prompt, str_base& out)
         }
         else if (ret = editor->edit(out))
         {
-            // Handle history event expansion.
-            if (m_history.expand(out.c_str(), out) == history_db::expand_print)
+            // Handle history event expansion.  expand() is a static method,
+            // so can call it even when m_history is nullptr.
+            if (m_history->expand(out.c_str(), out) == history_db::expand_print)
             {
                 puts(out.c_str());
                 continue;
@@ -302,7 +326,8 @@ bool host::edit_line(const char* prompt, str_base& out)
             }
 
             // Add the line to the history.
-            m_history.add(out.c_str());
+            if (m_history)
+                m_history->add(out.c_str());
         }
 
         if (ret)

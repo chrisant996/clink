@@ -45,9 +45,10 @@ public:
     bool                        remove(line_id id);
     bool                        remove(int rl_history_index, const char* line);
     line_id                     find(const char* line) const;
-    expand_result               expand(const char* line, str_base& out) const;
     template <int S> iter       read_lines(char (&buffer)[S]);
     iter                        read_lines(char* buffer, unsigned int buffer_size);
+
+    static expand_result        expand(const char* line, str_base& out);
 
 private:
     enum : char

@@ -57,7 +57,6 @@ With Readline 8.0, there's no longer a reason for `tab_completer` to exist: `com
 # Phase 2
 
 ## Problems
-- Setting to control persistent history.  This involves rewriting the new history_db system, because it currently relies on manipulating files on disk.
 - Over 39 thousand assertions in the unit test?!
 
 ## Key Bindings

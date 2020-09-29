@@ -31,5 +31,5 @@ private:
     const char*     m_name;
     doskey          m_doskey;
     doskey_alias    m_doskey_alias;
-    history_db      m_history;
+    history_db*     m_history = nullptr;
 };
