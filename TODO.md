@@ -10,9 +10,12 @@ ChrisAnt Plans
   - argmatcher looks potentially more complicated, but maybe I just don't understand the data structures well enough yet.
 
 ## Features
+- `completion-display-width` 0 should use terminal width.
+- `completion-query-items` < 0 should use ( terminal height / 2 ) / terminal width.
 - [#519](https://github.com/mridgers/clink/issues/519) Clink v1.0.0.a1 - `-s|--scripts [path]` command line arg removed?
 
 ### Tab Complete
+- `tab_completer` doesn't seem to work for \\server\c$\ leading path; one more reason to move away from it to the Readline commands.
 With Readline 8.0, there's no longer a reason for `tab_completer` to exist: `complete` and `menu-complete` have sophisticated coloring, and it's possible to hook the completion function to support environment variables and argmatcher.
 - Add support for environment variables.
 - Add support for argmatcher.

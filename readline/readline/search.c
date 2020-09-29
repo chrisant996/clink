@@ -69,6 +69,10 @@ static int rl_history_search_len;
 static int rl_history_search_pos;
 static int rl_history_search_flags;
 
+/* begin_clink_change */
+int _rl_history_point_at_end_of_anchored_search = 0;
+/* end_clink_change */
+
 static char *history_search_string;
 static int history_string_size;
 
@@ -555,6 +559,15 @@ rl_history_search_internal (int count, int dir)
 #endif
     }
   rl_mark = rl_end;
+
+/* begin_clink_change */
+  if (_rl_history_point_at_end_of_anchored_search)
+    {
+      int tmp = rl_point;
+      rl_point = rl_mark;
+      rl_mark = tmp;
+    }
+/* end_clink_change */
 
   return 0;
 }

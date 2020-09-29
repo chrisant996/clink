@@ -531,6 +531,9 @@ extern int _rl_executing_keyseq_size;
 
 /* search.c */
 extern _rl_search_cxt *_rl_nscxt;
+/* begin_clink_change */
+extern int _rl_history_point_at_end_of_anchored_search;
+/* end_clink_change */
 
 /* signals.c */
 extern int _rl_interrupt_immediately;
