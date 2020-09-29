@@ -6,7 +6,7 @@ local nothing = clink.argmatcher()
 
 --------------------------------------------------------------------------------
 local inject = clink.argmatcher()
-:addflags("--help", "--pid", "--profile", "--quiet", "--nolog")
+:addflags("--help", "--pid", "--profile", "--quiet", "--nolog", "--scripts")
 
 --------------------------------------------------------------------------------
 local autorun_dashdash = clink.argmatcher()

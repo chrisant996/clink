@@ -253,6 +253,7 @@ void get_profile_path(const char* in, str_base& out)
 int inject(int argc, char** argv)
 {
     struct option options[] = {
+        { "scripts",     required_argument,  nullptr, 's' },
         { "profile",     required_argument,  nullptr, 'p' },
         { "quiet",       no_argument,        nullptr, 'q' },
         { "pid",         required_argument,  nullptr, 'd' },
@@ -263,6 +264,7 @@ int inject(int argc, char** argv)
     };
 
     const char* help[] = {
+        "-s, --scripts <path>", "Alternative path to load .lua scripts from.",
         "-p, --profile <path>", "Specifies and alternative path for profile data.",
         "-q, --quiet",          "Suppress copyright output.",
         "-d, --pid <pid>",      "Inject into the process specified by <pid>.",
@@ -277,10 +279,19 @@ int inject(int argc, char** argv)
     app_context::desc app_desc;
     int i;
     int ret = false;
-    while ((i = getopt_long(argc, argv, "nalqhp:d:", options, nullptr)) != -1)
+    while ((i = getopt_long(argc, argv, "nalqhp:s:d:", options, nullptr)) != -1)
     {
         switch (i)
         {
+        case 's':
+            {
+                str_base script_path(app_desc.script_path);
+                os::get_current_dir(script_path);
+                path::append(script_path, optarg);
+                path::normalise(script_path);
+            }
+            break;
+
         case 'p':
             {
                 str_base state_dir(app_desc.state_dir);

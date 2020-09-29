@@ -202,7 +202,9 @@ bool host::edit_line(const char* prompt, str_base& out)
     str_compare_scope compare(cmp_mode);
 
     // Set up Lua and load scripts into it.
-    host_lua lua;
+    str<288> script_path;
+    app_context::get()->get_script_path(script_path);
+    host_lua lua(script_path.c_str());
     prompt_filter prompt_filter(lua);
     initialise_lua(lua);
     lua.load_scripts();

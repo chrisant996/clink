@@ -15,12 +15,14 @@ int clink_info(int argc, char** argv)
     struct {
         const char* name;
         void        (app_context::*method)(str_base&) const;
+        bool        suppress_when_empty;
     } infos[] = {
         { "binaries",   &app_context::get_binaries_dir },
         { "state",      &app_context::get_state_dir },
         { "log",        &app_context::get_log_path },
         { "settings",   &app_context::get_settings_path },
         { "history",    &app_context::get_history_path },
+        { "scripts",    &app_context::get_script_path, true/*suppress_when_empty*/ },
     };
 
     const auto* context = app_context::get();
@@ -35,7 +37,8 @@ int clink_info(int argc, char** argv)
     {
         str<280> out;
         (context->*info.method)(out);
-        printf("%-*s : %s\n", spacing, info.name, out.c_str());
+        if (!info.suppress_when_empty || !out.empty())
+            printf("%-*s : %s\n", spacing, info.name, out.c_str());
     }
 
     // Inputrc environment variables.

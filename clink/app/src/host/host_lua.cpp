@@ -25,9 +25,11 @@ static setting_str g_clink_path(
     "");
 
 //------------------------------------------------------------------------------
-host_lua::host_lua()
+host_lua::host_lua(const char* script_path)
 : m_generator(m_state)
 {
+    m_script_path = script_path;
+
     str<280> bin_path;
     app_context::get()->get_binaries_dir(bin_path);
 
@@ -54,24 +56,38 @@ host_lua::operator match_generator& ()
 //------------------------------------------------------------------------------
 void host_lua::load_scripts()
 {
+    // The --scripts flag overrides anything else.
+    if (load_scripts(m_script_path.c_str()))
+        return;
+
+    // Use the clink.path setting and the clink_path envvar to get script paths.
     const char* setting_clink_path = g_clink_path.get();
-    load_scripts(setting_clink_path);
+    bool tried_path = load_scripts(setting_clink_path);
 
     str<256> env_clink_path;
     os::get_env("clink_path", env_clink_path);
-    load_scripts(env_clink_path.c_str());
+    tried_path |= load_scripts(env_clink_path.c_str());
+
+    // If neither are set, fall back to the dll's directory.
+    if (!tried_path)
+    {
+        str<280> bin_path;
+        app_context::get()->get_binaries_dir(bin_path);
+        load_scripts(bin_path.c_str());
+    }
 }
 
 //------------------------------------------------------------------------------
-void host_lua::load_scripts(const char* paths)
+bool host_lua::load_scripts(const char* paths)
 {
     if (paths == nullptr || paths[0] == '\0')
-        return;
+        return false;
 
     str<280> token;
     str_tokeniser tokens(paths, ";");
     while (tokens.next(token))
         load_script(token.c_str());
+    return true;
 }
 
 //------------------------------------------------------------------------------

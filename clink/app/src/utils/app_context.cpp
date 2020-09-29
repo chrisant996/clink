@@ -15,6 +15,7 @@
 app_context::desc::desc()
 {
     state_dir[0] = '\0';
+    script_path[0] = '\0';
 }
 
 
@@ -24,6 +25,7 @@ app_context::app_context(const desc& desc)
 : m_desc(desc)
 {
     str_base state_dir(m_desc.state_dir);
+    str_base script_path(m_desc.script_path);
 
     // The environment variable 'clink_profile' overrides all other state
     // path mechanisms.
@@ -47,14 +49,10 @@ app_context::app_context(const desc& desc)
             path::append(state_dir, "clink");
     }
 
-    {
-        str<280> cwd;
-        os::get_current_dir(cwd);
-        path::append(cwd, state_dir.c_str());
-        path::normalise(state_dir);
+    path::normalise(state_dir);
+    os::make_dir(state_dir.c_str());
 
-        os::make_dir(state_dir.c_str());
-    }
+    path::normalise(script_path);
 
     m_id = process().get_pid();
     if (desc.inherit_id)
@@ -146,6 +144,12 @@ void app_context::get_history_path(str_base& out) const
 {
     get_state_dir(out);
     path::append(out, "clink_history");
+}
+
+//------------------------------------------------------------------------------
+void app_context::get_script_path(str_base& out) const
+{
+    out.copy(m_desc.script_path);
 }
 
 //-----------------------------------------------------------------------------
