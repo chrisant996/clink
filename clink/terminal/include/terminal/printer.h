@@ -12,6 +12,7 @@ class printer
 {
 public:
                             printer(terminal_out& terminal);
+    void                    reset();
     void                    print(const char* data, int bytes);
     void                    print(const attributes attr, const char* data, int bytes);
     template <int S> void   print(const char (&data)[S]);

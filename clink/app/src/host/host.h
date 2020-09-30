@@ -5,6 +5,7 @@
 
 #include "doskey.h"
 #include "history/history_db.h"
+#include "terminal/terminal.h"
 
 #include <lib/line_editor.h>
 
@@ -31,5 +32,7 @@ private:
     const char*     m_name;
     doskey          m_doskey;
     doskey_alias    m_doskey_alias;
+    terminal        m_terminal;
+    printer*        m_printer;
     history_db*     m_history = nullptr;
 };

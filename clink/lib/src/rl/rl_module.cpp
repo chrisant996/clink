@@ -497,7 +497,6 @@ rl_module::rl_module(const char* shell_name, terminal_in* input)
     rl_fwrite_function = terminal_write_thunk;
     rl_fflush_function = [] (FILE*) {};
     rl_instream = null_stream;
-    rl_outstream = null_stream;
 
     rl_readline_name = shell_name;
     rl_catch_signals = 0;
@@ -582,6 +581,10 @@ void rl_module::bind_input(binder& binder)
 //------------------------------------------------------------------------------
 void rl_module::on_begin_line(const context& context)
 {
+    // Readline only uses rl_outstream once, during initialization.
+    assert(!rl_outstream ||
+           rl_outstream == null_stream ||
+           rl_outstream == (FILE*)(terminal_out*)(&context.printer));
     rl_outstream = (FILE*)(terminal_out*)(&context.printer);
 
     rl_buffer = &context.buffer;

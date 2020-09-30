@@ -10,9 +10,15 @@
 //------------------------------------------------------------------------------
 printer::printer(terminal_out& terminal)
 : m_terminal(terminal)
-, m_set_attr(attributes::defaults)
-, m_next_attr(attributes::defaults)
 {
+    reset();
+}
+
+//------------------------------------------------------------------------------
+void printer::reset()
+{
+    m_set_attr = attributes::defaults;
+    m_next_attr = attributes::defaults;
 }
 
 //------------------------------------------------------------------------------

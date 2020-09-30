@@ -29,11 +29,14 @@ inline char get_closing_quote(const char* quote_pair)
 //------------------------------------------------------------------------------
 line_editor* line_editor_create(const line_editor::desc& desc)
 {
-    // Check there's at least a terminal.
+    // Check there's at least a terminal and a printer.
     if (desc.input == nullptr)
         return nullptr;
 
     if (desc.output == nullptr)
+        return nullptr;
+
+    if (desc.printer == nullptr)
         return nullptr;
 
     return new line_editor_impl(desc);
@@ -51,7 +54,7 @@ void line_editor_destroy(line_editor* editor)
 line_editor_impl::line_editor_impl(const desc& desc)
 : m_module(desc.shell_name, desc.input)
 , m_desc(desc)
-, m_printer(*desc.output)
+, m_printer(*desc.printer)
 , m_pager(*this)
 {
     if (m_desc.quote_pair == nullptr)

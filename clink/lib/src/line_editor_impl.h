@@ -77,7 +77,7 @@ private:
     bind_resolver       m_bind_resolver = { m_binder };
     words               m_words;
     matches_impl        m_matches;
-    printer             m_printer;
+    printer&            m_printer;
     pager_impl          m_pager;
     unsigned int        m_prev_key;
     unsigned short      m_command_offset;

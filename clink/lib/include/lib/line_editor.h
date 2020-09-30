@@ -8,6 +8,7 @@ class line_buffer;
 class match_generator;
 class terminal_in;
 class terminal_out;
+class printer;
 class str_base;
 
 //------------------------------------------------------------------------------
@@ -19,6 +20,7 @@ public:
         // Required.
         terminal_in*    input = nullptr;
         terminal_out*   output = nullptr;
+        printer*        printer = nullptr;
 
         // Optional.
         const char*     shell_name = "clink";

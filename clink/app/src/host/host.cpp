@@ -7,7 +7,9 @@
 #include "host_module.h"
 #include "prompt.h"
 #include "doskey.h"
+#include "terminal/terminal.h"
 #include "terminal/terminal_out.h"
+#include "terminal/printer.h"
 #include "utils/app_context.h"
 #include "utils/scroller.h"
 
@@ -171,12 +173,16 @@ host::host(const char* name)
 : m_name(name)
 , m_doskey("cmd.exe")
 {
+    m_terminal = terminal_create();
+    m_printer = new printer(*m_terminal.out);
 }
 
 //------------------------------------------------------------------------------
 host::~host()
 {
     delete m_history;
+    delete m_printer;
+    terminal_destroy(m_terminal);
 }
 
 //------------------------------------------------------------------------------
@@ -229,9 +235,9 @@ bool host::edit_line(const char* prompt, str_base& out)
     desc.prompt = filtered_prompt.c_str();
 
     // Set the terminal that will handle all IO while editing.
-    terminal terminal = terminal_create();
-    desc.input = terminal.in;
-    desc.output = terminal.out;
+    desc.input = m_terminal.in;
+    desc.output = m_terminal.out;
+    desc.printer = m_printer;
 
     // Create the editor and add components to it.
     line_editor* editor = line_editor_create(desc);
@@ -280,10 +286,10 @@ bool host::edit_line(const char* prompt, str_base& out)
         resolved = false;
         if (m_doskey_alias.next(out))
         {
-            terminal.out->begin();
-            terminal.out->write(filtered_prompt.c_str(), filtered_prompt.length());
-            terminal.out->write(out.c_str(), out.length());
-            terminal.out->end();
+            m_terminal.out->begin();
+            m_terminal.out->write(filtered_prompt.c_str(), filtered_prompt.length());
+            m_terminal.out->write(out.c_str(), out.length());
+            m_terminal.out->end();
             write_line_feed();
             resolved = true;
             ret = true;
@@ -353,6 +359,5 @@ bool host::edit_line(const char* prompt, str_base& out)
 
     line_editor_destroy(editor);
     tab_completer_destroy(completer);
-    terminal_destroy(terminal);
     return ret;
 }
