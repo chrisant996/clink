@@ -13,11 +13,14 @@ With Readline 8.0, there's no longer a reason for `tab_completer` to exist: `com
 
 - Route the `line_editor_impl::m_matches` into Readline, and make the pipeline support wildcard expansion (and just accept that `*.foo`**complete** won't be able to do prefix matching -- it can still do `insert-completions`, etc).
   - `tab_completer` match pipeline doesn't seem to work for `\\server\c$\` leading path.
-- Use `path::normalise` to clean up what Readline inserts (e.g. the base path in `\wbin\\\cli`**Tab**).
 - Readline completion doesn't handle quotes correctly?!
   - Support completing `"\Program F`**Tab**.
   - Close off quotes like CMD and CASH do (`"\Program Files"\`).
   - Support continuing completion of `"\Program Files"\`**Tab**.
+
+<br>
+
+- Use `path::normalise` to clean up what Readline inserts (e.g. the base path in `\wbin\\\cli`**Tab**).
 - Add an option for `menu-complete` to not automatically accept the completion when there's only one possibility.  Because there's no reliable visual indicator it reset when it's a directory, and because it's a significant departure from CMD muscle memory.
 
 ### Scrolling mode
