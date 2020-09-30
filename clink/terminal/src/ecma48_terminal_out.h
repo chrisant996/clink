@@ -38,6 +38,6 @@ private:
     screen_buffer&      m_screen;
     int                 m_ax;
     int                 m_encode_length;
-    int                 m_pending;
+    int                 m_pending = 0;
     char                m_buffer[4];
 };
