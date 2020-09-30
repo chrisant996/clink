@@ -1,14 +1,14 @@
 ### Overview
 
-Clink combines the native Windows shell **cmd.exe** with the powerful command line editing features of the GNU Readline library, which provides rich completion, history, and line-editing capabilities. Readline is best known for its use in the well-known Unix shell Bash, the standard shell for Mac OS X and many Linux distributions.
+Clink combines the native Windows shell **cmd.exe** with the powerful command line editing features of the GNU Readline 8.0 library, which provides rich completion, history, and line-editing capabilities. Readline is best known for its use in the well-known Unix shell Bash, the standard shell for Mac OS X and many Linux distributions.
 
 ### Download
 
-Downloads for the latest release of Clink can be found [here](https://github.com/mridgers/clink/releases).
+Downloads for the latest release of Clink are not available.  _Stay tuned_.
 
 ### Features
 
-- The same line editing as Bash (from GNU's Readline library).
+- The same line editing as Bash (from GNU's Readline 8.0 library).
 - History persistence between sessions.
 - Context sensitive completion;
     - Executables (and aliases).
@@ -22,6 +22,7 @@ Downloads for the latest release of Clink can be found [here](https://github.com
     - Undo (**Ctrl-Z**).
     - Automatic "cd .." (**Ctrl-PgUp**).
     - Environment variable expansion (**Ctrl-Alt-E**).
+    - Doskey alias expansion (**Ctrl-Alt-F**).
     - (press **Alt-H** for many more...)
 - Scriptable completion with Lua.
 - Coloured and scriptable prompt.
@@ -37,14 +38,14 @@ There are a variety of ways to start Clink;
 
 ### Extending Clink
 
-Clink can be extended through its Lua API which allows easy creation context sensitive match generators, prompt filtering, and more. More details can be found in Clink's documentation which can be found [here](https://github.com/mridgers/clink/blob/master/docs/clink.md).
+Clink can be extended through its Lua API which allows easy creation context sensitive match generators, prompt filtering, and more. More details can be found in Clink's documentation ... _which is out of date and needs to be updated -- Stay tuned_.
 
 ### Building Clink
 
 Clink's uses [Premake](http://premake.github.io) to generate Visual Studio solutions or makefiles for MinGW. Note that Premake >= 5.0-alpha12 is required.
 
 1. Cd to your clone of Clink.
-2. Run "premake5.exe &lt;toolchain&gt;" (where "&lt;toolchain&gt;" is one of Premake's actions - see "premake5.exe --help")
+2. Run "premake5.exe _&lt;toolchain&gt;_" (where "_&lt;toolchain&gt;_" is one of Premake's actions - see "premake5.exe --help")
 3. Build scripts will be generated in ".build\\&lt;toolchain&gt;\". For example; .build\vs2013\clink.sln.
 4. Call your toolchain of choice (VS, mingw32-make.exe, msbuild.exe, etc). GNU makefiles (Premake's *gmake* target) have a **help** target for more info.
 
