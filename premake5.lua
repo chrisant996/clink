@@ -324,6 +324,17 @@ clink_exe("clink_test")
         pchsource("clink/test/src/pch.cpp")
 
 --------------------------------------------------------------------------------
+require "vstudio"
+premake.override(premake.vstudio.vc2010.elements, "clCompile",
+function(oldfn, cfg)
+    local calls = oldfn(cfg)
+    table.insert(calls, function(cfg)
+        premake.vstudio.vc2010.element("SupportJustMyCode", nil, "false")
+    end)
+    return calls
+end)
+
+--------------------------------------------------------------------------------
 dofile("docs/premake5.lua")
 dofile("installer/premake5.lua")
 dofile("embed.lua")
