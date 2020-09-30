@@ -511,6 +511,11 @@ rl_module::rl_module(const char* shell_name, terminal_in* input)
     rl_backslash_path_sep = 1;
     rl_preferred_path_separator = '\\';
 
+    // Quote spaces in completed filenames.
+    rl_filename_quoting_desired = 1;
+    rl_filename_quote_characters = "\"";
+    rl_filename_quote_characters = " ";
+
     // Disable completion and match display.
     rl_menu_completion_entry_function = filename_menu_completion_function;
     rl_read_key_hook = read_key_hook;
