@@ -7,6 +7,21 @@
 #include <core/base.h>
 #include <core/str.h>
 #include <core/str_compare.h>
+#include <sys/stat.h>
+#include <readline/readline.h> // for rl_last_path_separator
+
+//------------------------------------------------------------------------------
+match_type to_match_type(int mode)
+{
+    if (mode & _S_IFDIR)
+        return match_type::dir;
+#ifdef _S_IFLNK
+    else if (mode & _S_IFLNK)
+        return match_type::link;
+#endif
+    else
+        return match_type::file;
+}
 
 //------------------------------------------------------------------------------
 match_builder::match_builder(matches& matches)
@@ -15,9 +30,9 @@ match_builder::match_builder(matches& matches)
 }
 
 //------------------------------------------------------------------------------
-bool match_builder::add_match(const char* match)
+bool match_builder::add_match(const char* match, match_type type)
 {
-    match_desc desc = { match };
+    match_desc desc = { match, nullptr, nullptr, 0, type };
     return add_match(desc);
 }
 
@@ -184,6 +199,15 @@ char matches_impl::get_suffix(unsigned int index) const
 }
 
 //------------------------------------------------------------------------------
+match_type matches_impl::get_match_type(unsigned int index) const
+{
+    if (index >= get_match_count())
+        return match_type::none;
+
+    return m_infos[index].type;
+}
+
+//------------------------------------------------------------------------------
 unsigned int matches_impl::get_cell_count(unsigned int index) const
 {
     return (index < get_match_count()) ? m_infos[index].cell_count : 0;
@@ -253,9 +277,22 @@ void matches_impl::set_prefix_included(bool included)
 bool matches_impl::add_match(const match_desc& desc)
 {
     const char* match = desc.match;
+    match_type type = desc.type;
 
     if (m_coalesced || match == nullptr || !*match)
         return false;
+
+    str<64> tmp;
+    if (desc.type == match_type::none)
+    {
+        char* sep = rl_last_path_separator(match);
+        if (sep && !sep[1])
+        {
+            tmp.concat(match, int(sep - match));
+            match = tmp.c_str();
+            type = match_type::dir;
+        }
+    }
 
     int store_id = m_store.store_front(match);
     if (store_id < 0)
@@ -274,6 +311,7 @@ bool matches_impl::add_match(const match_desc& desc)
         (unsigned short)displayable_store_id,
         (unsigned short)aux_store_id,
         0,
+        type,
         max<unsigned char>(0, desc.suffix),
     });
     ++m_count;

@@ -94,7 +94,7 @@ bool match_builder_lua::add_match_impl(lua_State* state, int stack_index)
     if (lua_isstring(state, stack_index))
     {
         const char* match = lua_tostring(state, stack_index);
-        return m_builder.add_match(match);
+        return m_builder.add_match(match, match_type::none);
     }
     else if (lua_istable(state, stack_index))
     {
@@ -126,6 +126,8 @@ bool match_builder_lua::add_match_impl(lua_State* state, int stack_index)
         if (lua_isstring(state, -1))
             desc.suffix = lua_tostring(state, -1)[0];
         lua_pop(state, 1);
+
+        desc.type = match_type::none;
 
         if (desc.match != nullptr)
             return m_builder.add_match(desc);

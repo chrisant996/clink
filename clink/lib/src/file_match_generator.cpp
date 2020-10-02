@@ -55,7 +55,7 @@ static class : public match_generator
         globber.hidden(g_glob_hidden.get());
         globber.system(g_glob_system.get());
         while (globber.next(buffer, false))
-            builder.add_match(buffer.c_str());
+            builder.add_match(buffer.c_str(), match_type::none);
 
         return true;
     }
