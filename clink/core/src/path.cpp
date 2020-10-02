@@ -319,4 +319,40 @@ bool append(str_base& out, const char* rhs)
     return out.concat(rhs);
 }
 
+//------------------------------------------------------------------------------
+bool is_incomplete_unc(const char* path)
+{
+    // If it doesn't start with "\\" then it isn't a UNC path.
+    if (!is_separator(path[0]) || !is_separator(path[1]))
+        return false;
+    while (is_separator(*path))
+        path++;
+
+    // Server name.
+    if (isspace((unsigned char)*path))
+        return true;
+    while (*path && !is_separator(*path))
+        path++;
+
+    // Separator after server name.
+    if (!is_separator(*path))
+        return true;
+    while (is_separator(*path))
+        path++;
+
+    // Share name.
+    if (isspace((unsigned char)*path))
+        return true;
+    while (*path && !is_separator(*path))
+        path++;
+
+    // Separator after share name.
+    if (!is_separator(*path))
+        return true;
+
+    // The path is at least "\\x\y\", so it's a complete enough UNC path for
+    // file system APIs to succeed.
+    return false;
+}
+
 }; // namespace path

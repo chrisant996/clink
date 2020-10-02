@@ -243,6 +243,11 @@ static char* filename_menu_completion_function(const char *text, int state)
         FREE(filename);
         FREE(users_dirname);
 
+        /* Don't bother trying to complete a UNC path that doesn't have at least
+           both a server and share component. */
+        if (path::is_incomplete_unc(text))
+            return nullptr;
+
         filename = savestring(text);
         if (*text == 0)
             text = ".";
@@ -480,7 +485,7 @@ static char** alternative_matches(const char* text, int start, int end)
     if (end_prefix)
         end_prefix++;
 
-    // Deep copy of the generated matches.  Inefficient, but this is the how
+    // Deep copy of the generated matches.  Inefficient, but this is how
     // readline wants them.
     str<32> lcd;
     int past_flag = 1;

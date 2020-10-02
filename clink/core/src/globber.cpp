@@ -17,6 +17,14 @@ globber::globber(const char* pattern)
 , m_system(false)
 , m_dots(false)
 {
+    // Don't bother trying to complete a UNC path that doesn't have at least
+    // both a server and share component.
+    if (path::is_incomplete_unc(pattern))
+    {
+        m_handle = nullptr;
+        return;
+    }
+
     // Windows: Expand if the path to complete is drive relative (e.g. 'c:foobar')
     // Drive X's current path is stored in the environment variable "=X:"
     str<288> rooted;
