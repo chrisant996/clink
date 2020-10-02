@@ -8,7 +8,6 @@ ChrisAnt Plans
   - The argmatcher/generator syntax is different enough that it's not clear how to support both the old and new syntax concurrently.  I still hope to be able to support both, but it's probably simpler to just update existing scripts to the new API.
 
 ## Features
-- Completion list doesn't seem to respect `completion-ignore-case` and/or `completion-map-case`.
 - Add an option for `menu-complete` to not automatically accept the completion when there's only one possibility.  Because there's no reliable visual indicator it reset when it's a directory, and because it's a significant departure from CMD muscle memory.
 
 ### Quoting in completions
@@ -26,7 +25,6 @@ Readline completion doesn't handle quotes correctly?!
 
 ### Other
 - Win10 console mode flag to support ANSI sequences and colors; seems to maybe be working already?
-- `completion-display-width` 0 should use terminal width.
 - `completion-query-items` < 0 should use ( terminal height / 2 ) / terminal width.
 - Investigate [XTerm 256 support](https://conemu.github.io/en/AnsiEscapeCodes.html) [#487](https://github.com/mridgers/clink/issues/487).
 - _The new bindable **Esc** isn't yet compatible with vi mode!_

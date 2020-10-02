@@ -1427,11 +1427,11 @@ gen_completion_matches (char *text, int start, int end, rl_compentry_func_t *our
 /* Stupid comparison routine for qsort () ing strings, but skip the first
    character because it's a match type. */
 static int
-match_qsort_string_compare (char **s1, char **s2)
+match_type_qsort_string_compare (char **s1, char **s2)
 {
-#if defined (HAVE_STRCOLL)
-  return (strcoll (*s1 + 1, *s2 + 1));
-#else
+// #if defined (HAVE_STRCOLL)
+//   return (strcoll (*s1 + 1, *s2 + 1));
+// #else
   int result;
 
   result = (*s1)[1] - (*s2)[1];
@@ -1439,16 +1439,44 @@ match_qsort_string_compare (char **s1, char **s2)
     result = strcmp (*s1 + 1, *s2 + 1);
 
   return result;
-#endif
+// #endif
+}
+
+/* Stupid comparison routine for qsort () ing strings, but fold case and skip
+   the first character because it's a match type. */
+static int
+match_type_qsort_string_compare_casefold (char **s1, char **s2)
+{
+  // TODO: the strings are actually UTF8.
+  return strcasecmp (*s1 + 1, *s2 + 1);
+}
+
+/* Stupid comparison routine for qsort () ing strings, but fold case. */
+static int
+qsort_string_compare_casefold (char **s1, char **s2)
+{
+  // TODO: the strings are actually UTF8.
+  return strcasecmp (*s1, *s2);
 }
 
 /* Sort list of matches, with support for rl_completion_matches_include_type. */
 static void
 qsort_match_list (char** matches, int len)
 {
-  QSFUNC *qs_compare = (QSFUNC *)(rl_completion_matches_include_type ?
-				  match_qsort_string_compare :
-				  _rl_qsort_string_compare);
+  QSFUNC *qs_compare = (QSFUNC *)_rl_qsort_string_compare;
+
+  if (rl_completion_matches_include_type)
+    {
+      qs_compare = (QSFUNC *)(_rl_completion_case_fold ?
+                              match_type_qsort_string_compare_casefold :
+                              match_type_qsort_string_compare);
+    }
+  else
+    {
+      qs_compare = (QSFUNC *)(_rl_completion_case_fold ?
+                              qsort_string_compare_casefold :
+                              _rl_qsort_string_compare);
+    }
 
   qsort (matches, len, sizeof (char *), qs_compare);
 }
