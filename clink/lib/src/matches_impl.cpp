@@ -13,6 +13,12 @@
 //------------------------------------------------------------------------------
 match_type to_match_type(int mode)
 {
+    static_assert(int(match_type::none) == MATCH_TYPE_NONE, "match_type enum must match readline constants");
+    static_assert(int(match_type::word) == MATCH_TYPE_WORD, "match_type enum must match readline constants");
+    static_assert(int(match_type::file) == MATCH_TYPE_FILE, "match_type enum must match readline constants");
+    static_assert(int(match_type::dir) == MATCH_TYPE_DIR, "match_type enum must match readline constants");
+    static_assert(int(match_type::link) == MATCH_TYPE_LINK, "match_type enum must match readline constants");
+
     if (mode & _S_IFDIR)
         return match_type::dir;
 #ifdef _S_IFLNK

@@ -27,7 +27,10 @@ setting_bool g_glob_system(
 
 // TODO: dream up a way around performance problems that UNC paths pose.
 // For example, maybe use a background thread to collect matches, and allow the
-// UI thread to somehow a long running operation (maybe with Ctrl+Break).
+// UI thread to somehow stop a long running operation (maybe with Ctrl+Break).
+//
+// Or how about just don't run the match generator pipeline until a completion
+// command is invoked.
 setting_bool g_glob_unc(
     "files.unc_paths",
     "Enables UNC/network path matches",
@@ -51,11 +54,12 @@ static class : public match_generator
 
         buffer << "*";
 
+        int st_mode = 0;
         globber globber(buffer.c_str());
         globber.hidden(g_glob_hidden.get());
         globber.system(g_glob_system.get());
-        while (globber.next(buffer, false))
-            builder.add_match(buffer.c_str(), match_type::none);
+        while (globber.next(buffer, false, &st_mode))
+            builder.add_match(buffer.c_str(), to_match_type(st_mode));
 
         return true;
     }

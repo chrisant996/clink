@@ -6,6 +6,8 @@
 #include "os.h"
 #include "path.h"
 
+#include <sys/stat.h>
+
 //------------------------------------------------------------------------------
 globber::globber(const char* pattern)
 : m_files(true)
@@ -45,28 +47,36 @@ globber::~globber()
 }
 
 //------------------------------------------------------------------------------
-bool globber::next(str_base& out, bool rooted)
+bool globber::next(str_base& out, bool rooted, int* st_mode)
 {
     if (m_handle == nullptr)
         return false;
 
-    str<280> file_name(m_data.cFileName);
+    str<280> file_name;
+    int attr;
 
-    bool skip = false;
+    while (true)
+    {
+        file_name = m_data.cFileName;
+        attr = m_data.dwFileAttributes;
 
-    const wchar_t* c = m_data.cFileName;
-    skip |= (c[0] == '.' && (!c[1] || (c[1] == '.' && !c[2])) && !m_dots);
+        bool again = false;
 
-    int attr = m_data.dwFileAttributes;
-    skip |= (attr & FILE_ATTRIBUTE_SYSTEM) && !m_system;
-    skip |= (attr & FILE_ATTRIBUTE_HIDDEN) && !m_hidden;
-    skip |= (attr & FILE_ATTRIBUTE_DIRECTORY) && !m_directories;
-    skip |= !(attr & FILE_ATTRIBUTE_DIRECTORY) && !m_files;
+        const wchar_t* c = m_data.cFileName;
+        again |= (c[0] == '.' && (!c[1] || (c[1] == '.' && !c[2])) && !m_dots);
 
-    next_file();
+        again |= (attr & FILE_ATTRIBUTE_SYSTEM) && !m_system;
+        again |= (attr & FILE_ATTRIBUTE_HIDDEN) && !m_hidden;
+        again |= (attr & FILE_ATTRIBUTE_DIRECTORY) && !m_directories;
+        again |= !(attr & FILE_ATTRIBUTE_DIRECTORY) && !m_files;
 
-    if (skip)
-        return next(out, rooted);
+        next_file();
+
+        if (m_handle == nullptr)
+            return false;
+        if (!again)
+            break;
+    }
 
     out.clear();
     if (rooted)
@@ -74,8 +84,24 @@ bool globber::next(str_base& out, bool rooted)
 
     path::append(out, file_name.c_str());
 
-    if (attr & FILE_ATTRIBUTE_DIRECTORY && m_dir_suffix)
-        out << "\\";
+    if (st_mode)
+    {
+        int mode = 0;
+        if (attr & FILE_ATTRIBUTE_DIRECTORY)
+            mode |= _S_IFDIR;
+#ifdef S_ISLNK
+        if (attr & FILE_ATTRIBUTE_REPARSE_POINT)
+            mode |= _S_IFLNK;
+#endif
+        if (!mode)
+            mode |= _S_IFREG;
+        *st_mode = mode;
+    }
+    else
+    {
+        if (attr & FILE_ATTRIBUTE_DIRECTORY && m_dir_suffix)
+            out << "\\";
+    }
 
     return true;
 }
