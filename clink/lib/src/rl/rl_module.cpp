@@ -556,7 +556,7 @@ static void terminal_write_thunk(FILE* stream, const char* chars, int char_count
         wstr<32> s;
         to_utf16(s, str_iter(chars, char_count));
         DWORD written;
-        WriteConsoleW(GetStdHandle(STD_ERROR_HANDLE), s.c_str(), s.length() * sizeof(*s.c_str()), &written, nullptr);
+        WriteConsoleW(GetStdHandle(STD_ERROR_HANDLE), s.c_str(), s.length(), &written, nullptr);
         return;
     }
 
