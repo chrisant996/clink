@@ -107,7 +107,10 @@ rl_compdisp_func_t *rl_completion_display_matches_hook = (rl_compdisp_func_t *)N
 #endif
 
 #if defined (VISIBLE_STATS)
-static int stat_char PARAMS((char *));
+/* begin_clink_change */
+//static int stat_char PARAMS((char *));
+static int stat_char PARAMS((char *, char));
+/* end_clink_change */
 #endif
 
 #if defined (COLOR_SUPPORT)
@@ -400,6 +403,7 @@ int rl_inhibit_completion;
 /* begin_clink_change */
 const char *_rl_pager_color = 0;
 rl_read_key_hook_func_t *rl_read_key_hook = 0;
+int rl_completion_matches_include_type = 0;
 /* end_clink_change */
 
 /* Set to the last key used to invoke one of the completion functions */
@@ -616,6 +620,25 @@ path_isdir (const char *filename)
   return (stat (filename, &finfo) == 0 && S_ISDIR (finfo.st_mode));
 }
 
+/* begin_clink_change */
+static int
+stat_from_match_type (char match_type, struct stat* finfo)
+{
+  /* The match provider already knew the match type, and they can include the
+     match type to save us from wasting IO re-testing the match type. */
+  finfo->st_mode = 0;
+  if (match_type == MATCH_TYPE_DIR)
+    finfo->st_mode |= S_IFDIR;
+#ifdef S_ISLNK
+  if (match_type == MATCH_TYPE_LINK)
+    finfo->st_mode |= S_IFLNK;
+#endif
+  if (!finfo->st_mode)
+    finfo->st_mode |= S_IFREG;
+  return 0;
+}
+/* end_clink_change */
+
 #if defined (VISIBLE_STATS)
 /* Return the character which best describes FILENAME.
      `@' for symbolic links
@@ -626,7 +649,10 @@ path_isdir (const char *filename)
      `%' for character special devices
      `#' for block special devices */
 static int
-stat_char (char *filename)
+/* begin_clink_change */
+//stat_char (char *filename)
+stat_char (char *filename, char match_type)
+/* end_clink_change */
 {
   struct stat finfo;
   int character, r;
@@ -650,6 +676,11 @@ stat_char (char *filename)
   else
     fn = filename;
     
+/* begin_clink_change */
+  if (match_type >= MATCH_TYPE_NONE)
+    r = stat_from_match_type (match_type, &finfo);
+  else
+/* end_clink_change */
 #if defined (HAVE_LSTAT) && defined (S_ISLNK)
   r = lstat (fn, &finfo);
 #else
@@ -664,7 +695,10 @@ stat_char (char *filename)
 
   character = 0;
   if (S_ISDIR (finfo.st_mode))
-    character = '/';
+/* begin_clink_change */
+    //character = '/';
+    character = rl_preferred_path_separator;
+/* end_clink_change */
 #if defined (S_ISCHR)
   else if (S_ISCHR (finfo.st_mode))
     character = '%';
@@ -750,6 +784,15 @@ printable_part (char *pathname)
 {
   char *temp, *x;
 
+/* begin_clink_change */
+  if (rl_completion_matches_include_type)
+    {
+      if (pathname[0] == MATCH_TYPE_WORD)
+	return (pathname + 1);			/* don't need to do anything */
+      pathname++;
+    }
+  else
+/* end_clink_change */
   if (rl_filename_completion_desired == 0)	/* don't need to do anything */
     return (pathname);
 
@@ -966,6 +1009,12 @@ print_filename (char *to_print, char *full_pathname, int prefix_bytes)
   char *s, c, *new_full_pathname, *dn;
   char tmp_slash[3];
 
+/* begin_clink_change */
+  char match_type = (rl_completion_matches_include_type ? full_pathname[0] : -1);
+  if (rl_completion_matches_include_type)
+    full_pathname++;
+/* end_clink_change */
+
   extension_char = 0;
 #if defined (COLOR_SUPPORT)
   /* Defer printing if we want to prefix with a color indicator */
@@ -1035,7 +1084,10 @@ print_filename (char *to_print, char *full_pathname, int prefix_bytes)
 
 #if defined (VISIBLE_STATS)
 	  if (rl_visible_stats)
-	    extension_char = stat_char (new_full_pathname);
+/* begin_clink_change */
+	    //extension_char = stat_char (new_full_pathname);
+	    extension_char = stat_char (new_full_pathname, match_type);
+/* end_clink_change */
 	  else
 #endif
 	  if (_rl_complete_mark_directories)
@@ -1048,7 +1100,10 @@ print_filename (char *to_print, char *full_pathname, int prefix_bytes)
 		  xfree (new_full_pathname);
 		  new_full_pathname = dn;
 		}
-	      if (path_isdir (new_full_pathname))
+/* begin_clink_change */
+	      //if (path_isdir (new_full_pathname))
+	      if (match_type <= MATCH_TYPE_NONE ? path_isdir (new_full_pathname) : match_type == MATCH_TYPE_DIR)
+/* end_clink_change */
 		extension_char = rl_preferred_path_separator;
 	    }
 
@@ -1066,10 +1121,17 @@ print_filename (char *to_print, char *full_pathname, int prefix_bytes)
 	  s = tilde_expand (full_pathname);
 #if defined (VISIBLE_STATS)
 	  if (rl_visible_stats)
-	    extension_char = stat_char (s);
+/* begin_clink_change */
+	    //extension_char = stat_char (s);
+	    extension_char = stat_char (s, match_type);
+/* end_clink_change */
 	  else
 #endif
-	    if (_rl_complete_mark_directories && path_isdir (s))
+/* begin_clink_change */
+	    //if (_rl_complete_mark_directories && path_isdir (s))
+	    if (_rl_complete_mark_directories &&
+		(match_type <= MATCH_TYPE_NONE ? path_isdir (s) : match_type == MATCH_TYPE_DIR))
+/* end_clink_change */
 	      extension_char = rl_preferred_path_separator;
 
 	  /* Move colored-stats code inside fnprint() */
@@ -1080,10 +1142,37 @@ print_filename (char *to_print, char *full_pathname, int prefix_bytes)
 	}
 
       xfree (s);
+/* begin_clink_change
+ * Don't print a directory extension character if the filename already ended with one.
+ */
+      if (extension_char == rl_preferred_path_separator)
+	{
+	  char *sep = rl_last_path_separator (to_print);
+	  if (sep && !sep[1])
+	    extension_char = 0;
+	}
+/* end_clink_change */
       if (extension_char)
 	{
+/* begin_clink_change */
+#if defined (COLOR_SUPPORT)
+	  if (extension_char == rl_preferred_path_separator)
+	    {
+	      _rl_set_normal_color ();
+	      _rl_put_indicator (&_rl_color_indicator[C_LEFT]);
+	      _rl_put_indicator (&_rl_color_indicator[C_DIR]);
+	      _rl_put_indicator (&_rl_color_indicator[C_RIGHT]);
+	    }
+#endif
+/* end_clink_change */
 	  putc (extension_char, rl_outstream);
 	  printed_len++;
+/* begin_clink_change */
+#if defined (COLOR_SUPPORT)
+	  if (extension_char == rl_preferred_path_separator)
+	    colored_stat_end();
+#endif
+/* end_clink_change */
 	}
     }
 
@@ -1279,6 +1368,9 @@ gen_completion_matches (char *text, int start, int end, rl_compentry_func_t *our
 
   rl_completion_found_quote = found_quote;
   rl_completion_quote_character = quote_char;
+/* begin_clink_change */
+  rl_completion_matches_include_type = 0; /* rl_attempted_completion_function can set this */
+/* end_clink_change */
 
   /* If the user wants to TRY to complete, but then wants to give
      up and use the default completion function, they set the
@@ -1296,8 +1388,25 @@ gen_completion_matches (char *text, int start, int end, rl_compentry_func_t *our
       if (matches || rl_attempted_completion_over)
 	{
 	  rl_attempted_completion_over = 0;
+/* begin_clink_change */
+	  if (matches)
+	    {
+	      int len;
+	      for (len = 0; matches[len]; len++)
+		;
+	      char* t = matches[0];
+	      compute_lcd_of_matches(matches, len - 1, text);
+	      xfree (t);
+	    }
+/* end_clink_change */
 	  return (matches);
 	}
+
+/* begin_clink_change */
+      /* Clear the type flag in case rl_attempted_completion_function
+	 set it without returning matches. */
+      rl_completion_matches_include_type = 0;
+/* end_clink_change */
     }
 
   /* XXX -- filename dequoting moved into rl_filename_completion_function */
@@ -1314,6 +1423,37 @@ gen_completion_matches (char *text, int start, int end, rl_compentry_func_t *our
   return matches;  
 }
 
+/* begin_clink_change */
+/* Stupid comparison routine for qsort () ing strings, but skip the first
+   character because it's a match type. */
+static int
+match_qsort_string_compare (char **s1, char **s2)
+{
+#if defined (HAVE_STRCOLL)
+  return (strcoll (*s1 + 1, *s2 + 1));
+#else
+  int result;
+
+  result = (*s1)[1] - (*s2)[1];
+  if (result == 0)
+    result = strcmp (*s1 + 1, *s2 + 1);
+
+  return result;
+#endif
+}
+
+/* Sort list of matches, with support for rl_completion_matches_include_type. */
+static void
+qsort_match_list (char** matches, int len)
+{
+  QSFUNC *qs_compare = (QSFUNC *)(rl_completion_matches_include_type ?
+				  match_qsort_string_compare :
+				  _rl_qsort_string_compare);
+
+  qsort (matches, len, sizeof (char *), qs_compare);
+}
+/* end_clink_change */
+
 /* Filter out duplicates in MATCHES.  This frees up the strings in
    MATCHES. */
 static char **
@@ -1324,6 +1464,10 @@ remove_duplicate_matches (char **matches)
   char dead_slot;
   char **temp_array;
 
+/* begin_clink_change */
+  int past_flag = rl_completion_matches_include_type ? 1 : 0;
+/* end_clink_change */
+
   /* Sort the items. */
   for (i = 0; matches[i]; i++)
     ;
@@ -1331,14 +1475,20 @@ remove_duplicate_matches (char **matches)
   /* Sort the array without matches[0], since we need it to
      stay in place no matter what. */
   if (i && rl_sort_completion_matches)
-    qsort (matches+1, i-1, sizeof (char *), (QSFUNC *)_rl_qsort_string_compare);
+/* begin_clink_change */
+    //qsort (matches+1, i-1, sizeof (char *), (QSFUNC *)_rl_qsort_string_compare);
+    qsort_match_list (matches+1, i-1);
+/* end_clink_change */
 
   /* Remember the lowest common denominator for it may be unique. */
   lowest_common = savestring (matches[0]);
 
   for (i = newlen = 0; matches[i + 1]; i++)
     {
-      if (strcmp (matches[i], matches[i + 1]) == 0)
+/* begin_clink_change */
+      //if (strcmp (matches[i], matches[i + 1]) == 0)
+      if (strcmp (matches[i] + past_flag, matches[i + 1] + past_flag) == 0)
+/* end_clink_change */
 	{
 	  xfree (matches[i]);
 	  matches[i] = (char *)&dead_slot;
@@ -1366,7 +1516,10 @@ remove_duplicate_matches (char **matches)
   /* If there is one string left, and it is identical to the
      lowest common denominator, then the LCD is the string to
      insert. */
-  if (j == 2 && strcmp (temp_array[0], temp_array[1]) == 0)
+/* begin_clink_change */
+  //if (j == 2 && strcmp (temp_array[0], temp_array[1]) == 0)
+  if (j == 2 && strcmp (temp_array[0] + past_flag, temp_array[1] + past_flag) == 0)
+/* end_clink_change */
     {
       xfree (temp_array[1]);
       temp_array[1] = (char *)NULL;
@@ -1390,6 +1543,10 @@ compute_lcd_of_matches (char **match_list, int matches, const char *text)
   wchar_t wc1, wc2;
 #endif
 
+/* begin_clink_change */
+  int past_flag = rl_completion_matches_include_type ? 1 : 0;
+/* end_clink_change */
+
   /* If only one match, just use that.  Otherwise, compare each
      member of the list with the next, finding out where they
      stop matching. */
@@ -1411,7 +1568,10 @@ compute_lcd_of_matches (char **match_list, int matches, const char *text)
 #endif
       if (_rl_completion_case_fold)
 	{
-	  for (si = 0;
+/* begin_clink_change */
+	  //for (si = 0;
+	  for (si = past_flag;
+/* end_clink_change */
 	       (c1 = _rl_to_lower(match_list[i][si])) &&
 	       (c2 = _rl_to_lower(match_list[i + 1][si]));
 	       si++)
@@ -1440,7 +1600,10 @@ compute_lcd_of_matches (char **match_list, int matches, const char *text)
 	}
       else
 	{
-	  for (si = 0;
+/* begin_clink_change */
+	  //for (si = 0;
+	  for (si = past_flag;
+/* end_clink_change */
 	       (c1 = match_list[i][si]) &&
 	       (c2 = match_list[i + 1][si]);
 	       si++)
@@ -1504,16 +1667,25 @@ compute_lcd_of_matches (char **match_list, int matches, const char *text)
 
 	  /* sort the list to get consistent answers. */
 	  if (rl_sort_completion_matches)
-	    qsort (match_list+1, matches, sizeof(char *), (QSFUNC *)_rl_qsort_string_compare);
+/* begin_clink_change */
+	    //qsort (match_list+1, matches, sizeof(char *), (QSFUNC *)_rl_qsort_string_compare);
+	    qsort_match_list (match_list+1, matches);
+/* end_clink_change */
 
-	  si = strlen (text);
+/* begin_clink_change */
+	  //si = strlen (text);
+	  si = past_flag + strlen (text);
+/* end_clink_change */
 	  lx = (si <= low) ? si : low;	/* check shorter of text and matches */
 	  /* Try to preserve the case of what the user typed in the presence of
 	     multiple matches: check each match for something that matches
 	     what the user typed taking case into account; use it up to common
 	     length of matches if one is found.  If not, just use first match. */
 	  for (i = 1; i <= matches; i++)
-	    if (strncmp (match_list[i], text, lx) == 0)
+/* begin_clink_change */
+	    //if (strncmp (match_list[i], text, lx) == 0)
+	    if (strncmp (match_list[i] + past_flag, text, lx - past_flag) == 0)
+/* end_clink_change */
 	      {
 		strncpy (match_list[0], match_list[i], low);
 		break;
@@ -1676,7 +1848,10 @@ rl_display_match_list (char **matches, int len, int max)
 
   /* Sort the items if they are not already sorted. */
   if (rl_ignore_completion_duplicates == 0 && rl_sort_completion_matches)
-    qsort (matches + 1, len, sizeof (char *), (QSFUNC *)_rl_qsort_string_compare);
+/* begin_clink_change */
+    //qsort (matches + 1, len, sizeof (char *), (QSFUNC *)_rl_qsort_string_compare);
+    qsort_match_list (matches + 1, len);
+/* end_clink_change */
 
   rl_crlf ();
 
@@ -1776,6 +1951,9 @@ display_matches (char **matches)
 {
   int len, max, i;
   char *temp;
+/* begin_clink_change */
+  int vis_stat;
+/* end_clink_change */
 
   /* Move to the last visible line of a possibly-multiple-line command. */
   _rl_move_vert (_rl_vis_botlin);
@@ -1800,6 +1978,36 @@ display_matches (char **matches)
     {
       temp = printable_part (matches[i]);
       len = fnwidth (temp);
+
+/* begin_clink_change
+ * If present, use the match type to determine whether there will be a visible
+ * stat character, and include it in the max length calculation.
+ */
+      if (rl_completion_matches_include_type)
+	{
+	  vis_stat = -1;
+	  if (rl_filename_completion_desired &&
+	      rl_completion_matches_include_type &&
+	      matches[i][0] == MATCH_TYPE_DIR && (
+#if defined (VISIBLE_STATS)
+	      rl_visible_stats ||
+#endif
+#if defined (COLOR_SUPPORT)
+	      _rl_colored_stats ||
+#endif
+	      _rl_complete_mark_directories))
+	    {
+	      char *sep = rl_last_path_separator (matches[i]);
+	      vis_stat = (!sep || sep[1]);
+	    }
+#if defined (VISIBLE_STATS)
+	  else if (rl_visible_stats)
+	    vis_stat = stat_char (matches[i] + 1, matches[i][0]);
+#endif
+	  if (vis_stat > 0)
+	    len++;
+	}
+/* end_clink_change */
 
       if (len > max)
 	max = len;
@@ -1853,6 +2061,11 @@ make_quoted_replacement (char *match, int mtype, char *qc)
   int should_quote, do_replace;
   char *replacement;
 
+/* begin_clink_change */
+  if (rl_completion_matches_include_type)
+    match++;
+/* end_clink_change */
+
   /* If we are doing completion on quoted substrings, and any matches
      contain any of the completer_word_break_characters, then auto-
      matically prepend the substring with a quote character (just pick
@@ -1902,6 +2115,10 @@ insert_match (char *match, int start, int mtype, char *qc)
   /* Now insert the match. */
   if (replacement)
     {
+/* begin_clink_change */
+      if (rl_completion_matches_include_type)
+	match++;
+/* end_clink_change */
       rlen = strlen (replacement);
       /* Don't double an opening quote character. */
       if (qc && *qc && start && rl_line_buffer[start - 1] == *qc &&
@@ -1953,6 +2170,12 @@ append_to_match (char *text, int delimiter, int quote_char, int nontrivial_match
   int temp_string_index, s;
   struct stat finfo;
 
+/* begin_clink_change */
+  char match_type;
+  if (rl_completion_matches_include_type)
+    match_type = *(text++);
+/* end_clink_change */
+
   temp_string_index = 0;
   if (quote_char && rl_point && rl_completion_suppress_quote == 0 &&
       rl_line_buffer[rl_point - 1] != quote_char)
@@ -1975,6 +2198,13 @@ append_to_match (char *text, int delimiter, int quote_char, int nontrivial_match
 	  xfree (filename);
 	  filename = fn;
         }
+/* begin_clink_change
+ * Enable match providers to share the match type for efficiency.
+ */
+      if (rl_completion_matches_include_type && match_type > MATCH_TYPE_NONE)
+	s = stat_from_match_type (match_type, &finfo);
+      else
+/* end_clink_change */
       s = (nontrivial_match && rl_completion_mark_symlink_dirs == 0)
 		? LSTAT (filename, &finfo)
 		: stat (filename, &finfo);
@@ -2083,6 +2313,9 @@ rl_complete_internal (int what_to_do)
   char *text, *saved_line_buffer;
   char quote_char;
   int tlen, mlen;
+/* begin_clink_change */
+  int past_flag = rl_completion_matches_include_type ? 1 : 0;
+/* end_clink_change */
 
   RL_SETSTATE(RL_STATE_COMPLETING);
 
@@ -2109,7 +2342,10 @@ rl_complete_internal (int what_to_do)
   matches = gen_completion_matches (text, start, end, our_func, found_quote, quote_char);
   /* nontrivial_lcd is set if the common prefix adds something to the word
      being completed. */
-  nontrivial_lcd = matches && strcmp (text, matches[0]) != 0;
+/* begin_clink_change */
+  //nontrivial_lcd = matches && strcmp (text, matches[0]) != 0;
+  nontrivial_lcd = matches && strcmp (text, matches[0] + past_flag) != 0;
+/* end_clink_change */
   if (what_to_do == '!' || what_to_do == '@')
     tlen = strlen (text);
   xfree (text);
@@ -2155,7 +2391,10 @@ rl_complete_internal (int what_to_do)
 	insert_match (matches[0], start, matches[1] ? MULT_MATCH : SINGLE_MATCH, &quote_char);
       else if (*matches[0])	/* what_to_do != TAB && multiple matches */
 	{
-	  mlen = *matches[0] ? strlen (matches[0]) : 0;
+/* begin_clink_change */
+	  //mlen = *matches[0] ? strlen (matches[0]) : 0;
+	  mlen = *matches[0] ? strlen (matches[0] + past_flag) : 0;
+/* end_clink_change */
 	  if (mlen >= tlen)
 	    insert_match (matches[0], start, matches[1] ? MULT_MATCH : SINGLE_MATCH, &quote_char);
 	}
@@ -2889,6 +3128,9 @@ rl_menu_complete (int count, int ignore)
 {
   rl_compentry_func_t *our_func;
   int matching_filenames, found_quote;
+/* begin_clink_change */
+  int past_flag = rl_completion_matches_include_type ? 1 : 0;
+/* end_clink_change */
 
   static char *orig_text;
   static char **matches = (char **)0;
@@ -2942,7 +3184,10 @@ rl_menu_complete (int count, int ignore)
       matches = gen_completion_matches (orig_text, orig_start, orig_end,
 					our_func, found_quote, quote_char);
 
-      nontrivial_lcd = matches && strcmp (orig_text, matches[0]) != 0;
+/* begin_clink_change */
+      //nontrivial_lcd = matches && strcmp (orig_text, matches[0]) != 0;
+      nontrivial_lcd = matches && strcmp (orig_text, matches[0] + past_flag) != 0;
+/* end_clink_change */
 
       /* If we are matching filenames, the attempted completion function will
 	 have set rl_filename_completion_desired to a non-zero value.  The basic
@@ -2981,8 +3226,12 @@ rl_menu_complete (int count, int ignore)
       if (*matches[0])
 	{
 	  insert_match (matches[0], orig_start, matches[1] ? MULT_MATCH : SINGLE_MATCH, &quote_char);
-	  orig_end = orig_start + strlen (matches[0]);
-	  completion_changed_buffer = STREQ (orig_text, matches[0]) == 0;
+/* begin_clink_change */
+	  //orig_end = orig_start + strlen (matches[0]);
+	  //completion_changed_buffer = STREQ (orig_text, matches[0]) == 0;
+	  orig_end = orig_start + strlen (matches[0] + past_flag);
+	  completion_changed_buffer = STREQ (orig_text, matches[0] + past_flag) == 0;
+/* end_clink_change */
 	}
 
       if (match_list_size > 1 && _rl_complete_show_all)

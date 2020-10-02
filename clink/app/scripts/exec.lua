@@ -26,7 +26,8 @@ local function get_environment_paths()
 
     -- Append slashes.
     for i = 1, #paths, 1 do
-        paths[i] = paths[i].."/"
+        --paths[i] = paths[i].."/"
+        paths[i] = paths[i]
     end
 
     return paths

@@ -4,24 +4,27 @@ ChrisAnt Plans
 
 ## LUA
 - Lua support changed significantly.  Explore how to support backward compatibility for existing scripts.
-  - argmatcher looks potentially more complicated, but maybe I just don't understand the data structures well enough yet.
+  - The prompt filter now supports both 0.4.8 syntax and also the new 1.0.0 syntax.
+  - The argmatcher/generator syntax is different enough that it's not clear how to support both the old and new syntax concurrently.  I still hope to be able to support both, but it's probably simpler to just update existing scripts to the new API.
 
 ## Features
 
-### Tab Complete
-With Readline 8.0, there's no longer a reason for `tab_completer` to exist: `complete` and `menu-complete` have sophisticated coloring, and it's possible to hook the completion function to support environment variables and argmatcher.
+### Integrate match pipeline with `complete` and `menu-complete`
+- `g \wbin\.in`**Tab** goes crazy -- looks like when there's no matches, it flips out?
+- Don't normalise `\\localho`**complete** into `\localho`.
+- Don't attempt UNC completion until there is at least //X/X/, because anything shorter is guaranteed to fail, but will first go non-responsive for a bit.
+- Make `x:`**complete** work.
 
-- Route the `line_editor_impl::m_matches` into Readline, and make the pipeline support wildcard expansion (and just accept that `*.foo`**complete** won't be able to do prefix matching -- it can still do `insert-completions`, etc).
-  - `tab_completer` match pipeline doesn't seem to work for `\\server\c$\` leading path.
-- Readline completion doesn't handle quotes correctly?!
-  - Support completing `"\Program F`**Tab**.
-  - Close off quotes like CMD and CASH do (`"\Program Files"\`).
-  - Support continuing completion of `"\Program Files"\`**Tab**.
-
-<br>
-
-- Use `path::normalise` to clean up what Readline inserts (e.g. the base path in `\wbin\\\cli`**Tab**).
+### Eliminate `tab_completer`
+- Remove `tab_completer entirely`.
 - Add an option for `menu-complete` to not automatically accept the completion when there's only one possibility.  Because there's no reliable visual indicator it reset when it's a directory, and because it's a significant departure from CMD muscle memory.
+
+### Quoting in completions
+Readline completion doesn't handle quotes correctly?!
+- Support completing `"\Program F`**Tab**.
+- Close off quotes like CMD and CASH do (`"\Program Files"\`).
+- Support continuing completion of `"\Program Files"\`**Tab**.
+- Oops, Readline walks backward to figure out quoting.  That doesn't work; must walk forward from the beginning otherwise `"\Program Files"\` is treated as though the ending `"\` is starting a new filename.
 
 ### Scrolling mode
 - Have commands for scrolling up/down by a page or line (or top/bottom of buffer).
@@ -37,6 +40,7 @@ With Readline 8.0, there's no longer a reason for `tab_completer` to exist: `com
 - _The new bindable **Esc** isn't yet compatible with vi mode!_
 - Changing terminal width makes 0.4.8 slowly "walk up the screen".  Changing terminal width makes master go haywire.  Probably more ecma48 terminal issues.
 - Allow conhost to handle **Shift+Left** and etc for CUA selection?
+- `fnprint()` is still doing IO to figure out colors.  I think I've eliminated the rest of the stat calls, though.
 
 ## Questions
 - What is `set-mark`?
@@ -61,6 +65,7 @@ With Readline 8.0, there's no longer a reason for `tab_completer` to exist: `com
 
 ## Problems
 - Over 39 thousand assertions in the unit test?!
+- Use `path::normalise` to clean up input like "\wbin\\\\cli" when using `complete` and `menu-complete`.
 
 ## Key Bindings
 - Hook up stuff via commands instead of via hard-coded custom bindings, so that everything can be remapped and reported by `show-rl-help`.
@@ -83,6 +88,7 @@ With Readline 8.0, there's no longer a reason for `tab_completer` to exist: `com
 - A way to disable/enable prompt filtering once injected.
 - Allow to search the console output (not command history) with a RegExp [#166](https://github.com/mridgers/clink/issues/166).
   - Ideally enable lua to do searches and set scroll position, so it can be extensible -- e.g. bind a key to a lua script to search for next/prev line with red or yellow colored text, or to search for "error:", or etc.  Think of the possibilities!
+- Enable lua to indicate the match type (word, file, dir, link)?
 
 # EVENTUALLY
 
@@ -129,6 +135,11 @@ With Readline 8.0, there's no longer a reason for `tab_completer` to exist: `com
 - **Async command prompt updating as a way to solve the delay in git repos.**
 - **Bind keys to lua scripts?**
   - Lua scripts able to implement scrolling behavior (e.g. to scroll to next/prev compiler error, or colored text, etc).
+
+## Readline
+I've found some quirks, bugs, and performance issues in Readline.
+- Log and send the changes I've made to the Readline owner, to start a conversation about possible next steps.
+- Trailing added backslash when listing directory matches isn't counted as part of the column width.
 
 ## Configuration
 

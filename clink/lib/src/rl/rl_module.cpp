@@ -5,6 +5,7 @@
 #include "rl_module.h"
 #include "rl_commands.h"
 #include "line_buffer.h"
+#include "matches.h"
 
 #include <core/base.h>
 #include <core/os.h>
@@ -204,6 +205,9 @@ extern "C" int read_key_hook(void)
 
 
 //------------------------------------------------------------------------------
+static const matches* s_matches = nullptr;
+
+//------------------------------------------------------------------------------
 static int complete_fncmp(const char *convfn, int convlen, const char *filename, int filename_len)
 {
     // We let the OS handle wildcards, so not much to do here.  And we ignore
@@ -248,6 +252,9 @@ static char* filename_menu_completion_function(const char *text, int state)
 
 #if defined(__MSDOS__) || defined(_WIN32)
         /* special hack for //X/... */
+        // TODO: Don't attempt completion until there is at least //X/X/,
+        // because anything shorter is guaranteed to fail, but will first go
+        // non-responsiveness for a bit.
         if (rl_is_path_separator(dirname[0]) && rl_is_path_separator(dirname[1]) && ISALPHA((unsigned char)dirname[2]) && rl_is_path_separator(dirname[3]))
             temp = rl_last_path_separator(dirname + 3);
 #endif
@@ -443,6 +450,72 @@ static char* filename_menu_completion_function(const char *text, int state)
     }
 }
 
+//------------------------------------------------------------------------------
+static char** alternative_matches(const char* text, int start, int end)
+{
+// TODO: Use s_matches?  Or maybe generate matches at the moment of completion
+// so clink isn't doing arbitrary completion IO while you're typing?
+    if (!s_matches)
+        return nullptr;
+
+    int match_count = s_matches->get_match_count();
+    if (!match_count)
+    {
+        str<32> s;
+        s.concat(text + start, end - start);
+        path::normalise(s);
+        assert(rl_buffer);
+        assert(rl_point == end);
+        rl_buffer->begin_undo_group();
+        rl_buffer->remove(start, end);
+        rl_buffer->insert(s.c_str());
+        rl_point = start + s.length();
+        rl_buffer->end_undo_group();
+        return nullptr;
+    }
+
+    rl_filename_completion_desired = 1;
+
+    // Identify common prefix.
+    char* end_prefix = rl_last_path_separator(text);
+    if (end_prefix)
+        end_prefix++;
+
+    // Deep copy of the generated matches.  Inefficient, but this is the how
+    // readline wants them.
+    str<32> lcd;
+    int past_flag = 1;
+    char** matches = (char**)calloc(match_count + 2, sizeof(*matches));
+    matches[0] = (char*)malloc(past_flag + (end - start) + 1);
+    if (past_flag)
+        matches[0][0] = (char)match_type::none;
+    memcpy(matches[0] + past_flag, text + start, end - start);
+    matches[0][past_flag + (end - start)] = '\0';
+    for (int i = 0; i < match_count; ++i)
+    {
+        int len_prefix = end_prefix ? end_prefix - text : 0;
+        match_type type = past_flag ? (match_type)s_matches->get_match_type(i) : match_type::none;
+
+        const char* match = s_matches->get_match(i);
+        int match_size = past_flag + len_prefix + strlen(match) + 1;
+        matches[i + 1] = (char*)malloc(match_size);
+
+        if (past_flag)
+            matches[i + 1][0] = (char)s_matches->get_match_type(i);
+
+        str_base str(matches[i + 1] + past_flag, match_size - past_flag);
+        str.clear();
+        if (len_prefix)
+            str.concat(text, len_prefix);
+        str.concat(match);
+    }
+    matches[match_count + 1] = nullptr;
+
+    rl_completion_matches_include_type = past_flag;
+    rl_attempted_completion_over = 1;
+    return matches;
+}
+
 
 
 //------------------------------------------------------------------------------
@@ -513,10 +586,14 @@ rl_module::rl_module(const char* shell_name, terminal_in* input)
 
     // Quote spaces in completed filenames.
     rl_filename_quoting_desired = 1;
-    rl_filename_quote_characters = "\"";
-    rl_filename_quote_characters = " ";
+    rl_completer_quote_characters = "\"";
+    rl_basic_quote_characters = "\"";
+    rl_filename_quote_characters = " &^";
 
-    // Disable completion and match display.
+    // Completion and match display.
+    // TODO: postprocess_matches is for better quote handling.
+    //rl_ignore_some_completions_function = postprocess_matches;
+    rl_attempted_completion_function = alternative_matches;
     rl_menu_completion_entry_function = filename_menu_completion_function;
     rl_read_key_hook = read_key_hook;
 
@@ -673,7 +750,10 @@ void rl_module::on_input(const input& input, result& result, const context& cont
     while (len && !m_done)
     {
         --len;
+
+        s_matches = &context.matches;
         rl_callback_read_char();
+        s_matches = nullptr;
 
         // Internally Readline tries to resend escape characters but it doesn't
         // work with how Clink uses Readline. So we do it here instead.
