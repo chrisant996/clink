@@ -34,7 +34,7 @@ There are a variety of ways to start Clink;
 
 1. If you installed the auto-run, just start **cmd.exe**. Run **clink autorun --help** for more info.
 2. To manually start, run the Clink shortcut from the Start menu (or the clink.bat located in the install directory).
-3. To establish Clink to an existing cmd.exe process, use "&lt;install_dir&gt;\clink.exe inject"
+3. To establish Clink to an existing cmd.exe process, use "_&lt;install_dir&gt;_\clink.exe inject"
 
 ### Extending Clink
 
@@ -46,7 +46,7 @@ Clink's uses [Premake](http://premake.github.io) to generate Visual Studio solut
 
 1. Cd to your clone of Clink.
 2. Run "premake5.exe _&lt;toolchain&gt;_" (where "_&lt;toolchain&gt;_" is one of Premake's actions - see "premake5.exe --help")
-3. Build scripts will be generated in ".build\\&lt;toolchain&gt;\". For example; .build\vs2013\clink.sln.
+3. Build scripts will be generated in ".build\\_&lt;toolchain&gt;_\". For example; .build\vs2013\clink.sln.
 4. Call your toolchain of choice (VS, mingw32-make.exe, msbuild.exe, etc). GNU makefiles (Premake's *gmake* target) have a **help** target for more info.
 
 ### License
