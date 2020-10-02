@@ -91,6 +91,10 @@ void normalise(char* in_out, int sep)
     {
         *write++ = char(sep);
         piece_count = INT_MAX;
+
+        // UNC.
+        if (is_separator(*write))
+            *write++ = char(sep);
     }
 
     const char* __restrict start = write;
