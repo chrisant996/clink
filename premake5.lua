@@ -325,14 +325,20 @@ clink_exe("clink_test")
 
 --------------------------------------------------------------------------------
 require "vstudio"
-premake.override(premake.vstudio.vc2010.elements, "clCompile",
-function(oldfn, cfg)
-    local calls = oldfn(cfg)
-    table.insert(calls, function(cfg)
-        premake.vstudio.vc2010.element("SupportJustMyCode", nil, "false")
+local function add_tag(tag, value, project_name)
+    premake.override(premake.vstudio.vc2010.elements, "clCompile",
+    function(oldfn, cfg)
+        local calls = oldfn(cfg)
+        if project_name == nil or cfg.project.name == project_name then
+            table.insert(calls, function(cfg)
+                premake.vstudio.vc2010.element(tag, nil, value)
+            end)
+        end
+        return calls
     end)
-    return calls
-end)
+end
+
+add_tag("SupportJustMyCode", "false", "clink_process")
 
 --------------------------------------------------------------------------------
 dofile("docs/premake5.lua")
