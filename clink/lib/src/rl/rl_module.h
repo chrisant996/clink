@@ -36,4 +36,5 @@ private:
     bool            m_done;
     bool            m_eof;
     str<8>          m_pager_color;
+    str<8>          m_hidden_color;
 };

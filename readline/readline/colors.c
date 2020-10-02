@@ -285,6 +285,23 @@ _rl_print_color_indicator (const char *f)
         }
     }
 
+/* begin_clink_change */
+  if (colored_filetype == C_FILE || colored_filetype == C_DIR)
+    {
+      if (_rl_hidden_color && is_hidden (name))
+        {
+          free (filename);	/* NULL or savestring return value */
+          /* Need to reset so not dealing with attribute combinations */
+          if (is_colored (C_NORM))
+            restore_default_color ();
+          _rl_put_indicator (&_rl_color_indicator[C_LEFT]);
+          fwrite(_rl_hidden_color, strlen(_rl_hidden_color), 1, rl_outstream);
+          _rl_put_indicator (&_rl_color_indicator[C_RIGHT]);
+          return 0;
+        }
+    }
+/* end_clink_change */
+
   /* Check the file's suffix only if still classified as C_FILE.  */
   ext = NULL;
   if (colored_filetype == C_FILE)

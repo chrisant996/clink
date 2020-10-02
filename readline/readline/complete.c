@@ -402,6 +402,7 @@ int rl_inhibit_completion;
 
 /* begin_clink_change */
 const char *_rl_pager_color = 0;
+const char *_rl_hidden_color = 0;
 rl_read_key_hook_func_t *rl_read_key_hook = 0;
 int rl_completion_matches_include_type = 0;
 /* end_clink_change */
@@ -1157,12 +1158,11 @@ print_filename (char *to_print, char *full_pathname, int prefix_bytes)
 /* begin_clink_change */
 #if defined (COLOR_SUPPORT)
 	  if (extension_char == rl_preferred_path_separator)
-	    {
-	      _rl_set_normal_color ();
-	      _rl_put_indicator (&_rl_color_indicator[C_LEFT]);
-	      _rl_put_indicator (&_rl_color_indicator[C_DIR]);
-	      _rl_put_indicator (&_rl_color_indicator[C_RIGHT]);
-	    }
+      {
+	      s = tilde_expand (full_pathname);
+        colored_stat_start (s);
+        xfree (s);
+      }
 #endif
 /* end_clink_change */
 	  putc (extension_char, rl_outstream);

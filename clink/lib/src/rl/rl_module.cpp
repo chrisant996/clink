@@ -67,6 +67,13 @@ extern setting_colour g_colour_interact;
 
 line_buffer*        rl_buffer = nullptr;
 
+//------------------------------------------------------------------------------
+setting_colour g_colour_hidden(
+    "colour.hidden",
+    "Hidden file completions",
+    "Used when Clink displays file completions with the hidden attribute.",
+    setting_colour::value_light_red, setting_colour::value_bg_default);
+
 
 
 //------------------------------------------------------------------------------
@@ -702,6 +709,10 @@ void rl_module::on_begin_line(const context& context)
     _rl_pager_color = nullptr;
     if (build_color_sequence(g_colour_interact.get(), m_pager_color))
         _rl_pager_color = m_pager_color.c_str();
+
+    _rl_hidden_color = nullptr;
+    if (build_color_sequence(g_colour_hidden.get(), m_hidden_color))
+        _rl_hidden_color = m_hidden_color.c_str();
 
     m_done = false;
     m_eof = false;
