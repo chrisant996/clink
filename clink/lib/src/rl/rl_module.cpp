@@ -124,21 +124,19 @@ extern "C" const char* host_get_env(const char* name)
 //------------------------------------------------------------------------------
 static bool build_color_sequence(const attributes& colour, str_base& out)
 {
-    static const char c_ansi_color_seq[] =
-    {
-        30, 34, 32, 36, 31, 35, 33, 37,
-        90, 94, 92, 96, 91, 95, 93, 97,
-    };
-
     out.clear();
 
     auto bg = colour.get_bg();
-    int value = bg.is_default ? -1 : c_ansi_color_seq[bg.value.value & 0xf];
+    int value = (bg.is_default ? -1 :
+                 (bg.value.value & 0x0f) < 8 ? (bg.value.value & 0x0f) + 30 :
+                 (bg.value.value & 0x0f) - 8 + 90);
     if (value >= 0)
         out.format("%u", value);
 
     auto fg = colour.get_fg();
-    value = fg.is_default ? -1 : c_ansi_color_seq[fg.value.value & 0xf];
+    value = (fg.is_default ? -1 :
+             (fg.value.value & 0x0f) < 8 ? (fg.value.value & 0x0f) + 30 :
+             (fg.value.value & 0x0f) - 8 + 90);
     if (value >= 0)
     {
         if (out.length())
