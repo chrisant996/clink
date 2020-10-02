@@ -9,9 +9,6 @@ ChrisAnt Plans
 
 ## Features
 
-### Integrate match pipeline with `complete` and `menu-complete`
-- Make `x:`**complete** work.
-
 ### Eliminate `tab_completer`
 - Remove `tab_completer entirely`.
 - Add an option for `menu-complete` to not automatically accept the completion when there's only one possibility.  Because there's no reliable visual indicator it reset when it's a directory, and because it's a significant departure from CMD muscle memory.

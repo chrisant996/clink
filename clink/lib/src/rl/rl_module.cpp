@@ -484,6 +484,12 @@ static char** alternative_matches(const char* text, int start, int end)
     char* end_prefix = rl_last_path_separator(text);
     if (end_prefix)
         end_prefix++;
+    else if (text[0] && text[1] == ':')
+    {
+        char c = tolower(text[0]);
+        if (c >= 'a' && c <= 'z')
+            end_prefix = (char*)text + 2;
+    }
 
     // Deep copy of the generated matches.  Inefficient, but this is how
     // readline wants them.
