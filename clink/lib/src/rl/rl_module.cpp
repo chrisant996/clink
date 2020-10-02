@@ -461,8 +461,7 @@ static char** alternative_matches(const char* text, int start, int end)
     int match_count = s_matches->get_match_count();
     if (!match_count)
     {
-        str<32> s;
-        s.concat(text + start, end - start);
+        str<32> s(text);
         path::normalise(s);
         assert(rl_buffer);
         assert(rl_point == end);

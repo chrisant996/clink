@@ -10,7 +10,6 @@ ChrisAnt Plans
 ## Features
 
 ### Integrate match pipeline with `complete` and `menu-complete`
-- `g \wbin\.in`**Tab** goes crazy -- looks like when there's no matches, it flips out?
 - Don't normalise `\\localho`**complete** into `\localho`.
 - Don't attempt UNC completion until there is at least //X/X/, because anything shorter is guaranteed to fail, but will first go non-responsive for a bit.
 - Make `x:`**complete** work.
