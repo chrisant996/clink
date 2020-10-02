@@ -3025,6 +3025,9 @@ rl_old_menu_complete (int count, int invoking_key)
 {
   rl_compentry_func_t *our_func;
   int matching_filenames, found_quote;
+/* begin_clink_change */
+  int past_flag = rl_completion_matches_include_type ? 1 : 0;
+/* end_clink_change */
 
   static char *orig_text;
   static char **matches = (char **)0;
@@ -3036,7 +3039,10 @@ rl_old_menu_complete (int count, int invoking_key)
 
   /* The first time through, we generate the list of matches and set things
      up to insert them. */
-  if (rl_last_func != rl_old_menu_complete)
+/* begin_clink_change */
+  //if (rl_last_func != rl_old_menu_complete)
+  if (rl_last_func != rl_old_menu_complete && rl_last_func != rl_backward_old_menu_complete)
+/* end_clink_change */
     {
       /* Clean up from previous call, if any. */
       FREE (orig_text);
@@ -3140,6 +3146,14 @@ rl_old_menu_complete (int count, int invoking_key)
 
   completion_changed_buffer = 1;
   return (0);
+}
+
+int
+rl_backward_old_menu_complete (int count, int key)
+{
+  /* Positive arguments to backward-old-menu-complete translate into negative
+     arguments for old-menu-complete, and vice versa. */
+  return (rl_menu_complete (-count, key));
 }
 
 /* The current version of menu completion.

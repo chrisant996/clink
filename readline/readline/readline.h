@@ -161,6 +161,9 @@ extern int rl_complete PARAMS((int, int));
 extern int rl_possible_completions PARAMS((int, int));
 extern int rl_insert_completions PARAMS((int, int));
 extern int rl_old_menu_complete PARAMS((int, int));
+/* begin_clink_change */
+extern int rl_backward_old_menu_complete PARAMS((int, int));
+/* end_clink_change */
 extern int rl_menu_complete PARAMS((int, int));
 extern int rl_backward_menu_complete PARAMS((int, int));
 
