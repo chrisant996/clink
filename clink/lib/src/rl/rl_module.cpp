@@ -620,6 +620,7 @@ rl_module::rl_module(const char* shell_name, terminal_in* input)
         rl_add_history_hook = host_add_history;
         rl_remove_history_hook = host_remove_history;
         rl_add_funmap_entry("reset-line", clink_reset_line);
+        rl_add_funmap_entry("clink-exit", clink_exit);
     }
 
     // Bind extended keys so editing follows Windows' conventions.
@@ -638,6 +639,7 @@ rl_module::rl_module(const char* shell_name, terminal_in* input)
         { "\\C-z",          "undo" },
         { "\\e[2~",         "overwrite-mode" },          // ins
         { "\\e[27;27~",     "reset-line" },              // esc
+        { "\\e\\eOS",       "clink-exit" },              // alt-f4
         // These are host-specific and don't belong in rl_module.  However, the
         // host_module is constructed after rl_module, and host_module isn't
         // really connected to host_cmd, so there isn't a better place yet for

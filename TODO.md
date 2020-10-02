@@ -1,20 +1,57 @@
 ChrisAnt Plans
 
+# Proof Of Concept Release
+- Publish latest executables for download.
+
+# Alpha Release
+Some additional work is needed to get a credible alpha release ready.
+
+## Documentation
+- Describe the new argmatcher/etc syntax.
+- List supported key codes.
+- List commands.
+- List clink settings.
+- List readline settings.
+
+## Scripts
+- Convert some [clink-completions](https://github.com/vladimir-kotikov/clink-completions) scripts to the new syntax.
+- Supply sample inputrc file(s).
+
 # Phase 1
+The Phase 1 goal is to have a working version that for the most part meets or exceeds Clink 0.4.8 stability and functionality.
 
 ## LUA
-- Lua support changed significantly.  Explore how to support backward compatibility for existing scripts.
-  - The prompt filter now supports both 0.4.8 syntax and also the new 1.0.0 syntax.
-  - The argmatcher/generator syntax is different enough that it's not clear how to support both the old and new syntax concurrently.  I still hope to be able to support both, but it's probably simpler to just update existing scripts to the new API.
+Lua support changed significantly.  Explore how to support backward compatibility for existing scripts.
+- The prompt filter now supports both 0.4.8 syntax and also the new 1.0.0 syntax.
+- The argmatcher/generator syntax is different enough that it's not clear how to support both the old and new syntax concurrently.  I still hope to be able to support both, but it's probably simpler to just update existing scripts to the new API.
 
 ## Features
 
-### Quoting in completions
-Readline completion doesn't handle quotes correctly?!
-- Support completing `"\Program F`**Tab**.
-- Close off quotes like CMD and CASH do (`"\Program Files"\`).
-- Support continuing completion of `"\Program Files"\`**Tab**.
-- Oops, Readline walks backward to figure out quoting.  That doesn't work; must walk forward from the beginning otherwise `"\Program Files"\` is treated as though the ending `"\` is starting a new filename.
+### Other
+- _The new bindable **Esc** isn't yet compatible with vi mode!_
+
+## Issues Backlog [clink/issues](https://github.com/mridgers/clink/issues)
+- [#544](https://github.com/mridgers/clink/issues/544) Clink v1.0.0.a1 doesn't support cyrillic characters keyboard input
+- [#502](https://github.com/mridgers/clink/issues/502) Error in folders containing [ ] characters
+- [#480](https://github.com/mridgers/clink/issues/480) Things don't work right when clink is in a path with spaces
+- [#415](https://github.com/mridgers/clink/issues/415) Different encodings in different lua functions
+
+## Questions
+- What is `set-mark`?
+- How does `reverse-search-history` work?
+- How does `kill-line` work?
+
+# Phase 2
+The Phase 2 goal is to produce a viable Beta Release with broader compatibility in place, and some new features added.
+
+## Problems
+- `fnprint()` is still doing IO to figure out colors.  I think I've eliminated the rest of the stat calls, though.
+- Have a mode that passes all ANSI escape codes through to the console host (conhost, ConEmu, etc) to allow making use of things like extended terminal codes for 256 color and 24 bit color support, etc [#487](https://github.com/mridgers/clink/issues/487).
+- Changing terminal width makes 0.4.8 slowly "walk up the screen".  Changing terminal width makes master go haywire.  Probably more ecma48 terminal issues.
+- Over 39 thousand assertions in the unit test?!
+- Use `path::normalise` to clean up input like "\wbin\\\\cli" when using `complete` and `menu-complete`.
+
+## Features
 
 ### Scrolling mode
 - Have commands for scrolling up/down by a page or line (or top/bottom of buffer).
@@ -22,51 +59,7 @@ Readline completion doesn't handle quotes correctly?!
   - Might need a hook in readline to do things before a command is processed, e.g. to exit scrolling mode when any non-scrolling command is invoked.
 - Because I don't want **Shift+PgUp/PgDn** hard-coded for scrolling.
 
-### Other
-- Win10 console mode flag to support ANSI sequences and colors; seems to maybe be working already?
-- Investigate [XTerm 256 support](https://conemu.github.io/en/AnsiEscapeCodes.html) [#487](https://github.com/mridgers/clink/issues/487).
-- _The new bindable **Esc** isn't yet compatible with vi mode!_
-- Changing terminal width makes 0.4.8 slowly "walk up the screen".  Changing terminal width makes master go haywire.  Probably more ecma48 terminal issues.
-- Allow conhost to handle **Shift+Left** and etc for CUA selection?
-- `fnprint()` is still doing IO to figure out colors.  I think I've eliminated the rest of the stat calls, though.
-
-## Questions
-- What is `set-mark`?
-- How does `reverse-search-history` work?
-- How does `kill-line` work?
-
-# Issues Backlog [clink/issues](https://github.com/mridgers/clink/issues)
-- [#544](https://github.com/mridgers/clink/issues/544) Clink v1.0.0.a1 doesn't support cyrillic characters keyboard input
-- [#542](https://github.com/mridgers/clink/issues/542) VS Code not capturing std output
-- [#531](https://github.com/mridgers/clink/issues/531) AV detects a trojan on download _[or on execution, for me]_
-- [#502](https://github.com/mridgers/clink/issues/502) Error in folders containing [ ] characters
-- [#486](https://github.com/mridgers/clink/issues/486) **Ctrl+C** doesn't always work properly _[might be the auto-answer prompt setting]_
-- [#480](https://github.com/mridgers/clink/issues/480) Things don't work right when clink is in a path with spaces
-- [x] [#453](https://github.com/mridgers/clink/issues/453) non-printable characters mess up rendering vs caret position
-  - _Double check that it's fixed by the Readline update, as advertised._
-- [#415](https://github.com/mridgers/clink/issues/415) Different encodings in different lua functions
-- [#398](https://github.com/mridgers/clink/issues/398) Cmd gets unresponsive after "set /p" command.
-- [#396](https://github.com/mridgers/clink/issues/396) Pasting unicode emoji in a clink-enabled console
-- [#30](https://github.com/mridgers/clink/issues/30) wildcards not expanded.
-
-# Phase 2
-
-## Problems
-- Over 39 thousand assertions in the unit test?!
-- Use `path::normalise` to clean up input like "\wbin\\\\cli" when using `complete` and `menu-complete`.
-
-## Key Bindings
-- Hook up stuff via commands instead of via hard-coded custom bindings, so that everything can be remapped and reported by `show-rl-help`.
-  - I think clink has its own key binding manager because readline doesn't have a way to select a user-defined keymap, and because readline commands are global and aren't very OOP-friendly.
-  - Instead of having special hard-coded keys, use rl commands for all "top level" bindings -- only use clink bind and bind_resolver for modal keymaps while doing nested input inside some other command?
-  - For modal keymaps, go ahead and use the clink binder, but dynamically build/augment the modal keymap from rl bindings (so that binding **Ctrl+P** to `scroll-page-up` uses a modal keymap where **Ctrl+P** is the pageup key).
-- I want `show-rl-help` to be able to list enhanced keys like Up, Home, Ctrl-Shift-Space, etc.
-  - Translate terminal sequences into "C-A-name" in `show-rl-help` (e.g. "C-A-Up", "Ctrl-Home", "End", etc)?  But that gets weird because those aren't parseable key names.
-  - Maybe have two variants of `show-rl-help` -- one that shows human readable key names, and one that shows the actual binding strings?
-  - Invent an alternative syntax?
-- Allow **Ctrl+M** to be discrete from **Enter**.
-
-## Commands
+### Commands
 - Add a `history.dupe_mode` that behaves like 4Dos/4NT/Take Command from JPSoft:  **Up**/**Down** then **Enter** remembers the history position so that **Enter**, **Down**, **Enter**, **Down**, **Enter**, etc can be used to replay a series of commands.
 - Add a way to reset or trim the history, when there's only one (or zero) clink running [#499](https://github.com/mridgers/clink/issues/499).
 - Remember previous directory, and `-` swaps back to it [#372](https://github.com/mridgers/clink/issues/372).
@@ -78,20 +71,32 @@ Readline completion doesn't handle quotes correctly?!
   - Ideally enable lua to do searches and set scroll position, so it can be extensible -- e.g. bind a key to a lua script to search for next/prev line with red or yellow colored text, or to search for "error:", or etc.  Think of the possibilities!
 - Enable lua to indicate the match type (word, file, dir, link)?
 
+### Key Bindings
+- Hook up stuff via commands and/or keymaps (instead of via hard-coded custom bindings) so that everything can be remapped and reported by `show-rl-help`.
+  - It may be ok for commands to select a modal custom binding map.
+  - Dynamically build/augment modal binding maps based on rl bindings -- e.g. so binding **Ctrl+P** to `scroll-page-up` causes **Ctrl+P** to work in the modal binding map.
+- Make `show-rl-help` able to list enhanced keys like Up, Home, Ctrl-Shift-Space, etc.
+  - Translate terminal sequences into "C-A-name" in `show-rl-help` (e.g. "C-A-Up", "Ctrl-Home", "End", etc)?  But that gets weird because those aren't parseable key names.
+  - Maybe have two variants of `show-rl-help` -- one that shows human readable key names, and one that shows the actual binding strings?
+  - Invent an alternative syntax?
+- Allow **Ctrl+M** to be discrete from **Enter**?
+
+## Issues Backlog [clink/issues](https://github.com/mridgers/clink/issues)
+- [#542](https://github.com/mridgers/clink/issues/542) VS Code not capturing std output
+- [#486](https://github.com/mridgers/clink/issues/486) **Ctrl+C** doesn't always work properly _[might be the auto-answer prompt setting]_
+- [#398](https://github.com/mridgers/clink/issues/398) Cmd gets unresponsive after "set /p" command.
+
 # EVENTUALLY
+More ambitious things like CUA Selection, popup window lists for completion and history, and coloring arguments and flags while editing (according to lua argmatchers).
 
 ## Input
 - Try to make unbound keys like **Shift-Left** tell conhost that they haven't been handled, so conhost can do its fancy CUA marking.
-- Especially don't handle **ALt+F4**, unless maybe to bind it to a keyboard macro for the **Esc** input sequence plus "exit" plus **Enter**.
-- Holding down a bound key like **Ctrl+Up** lets conhost periodically intercept some of the keypresses!
-- The history does not record the 2nd+ lines of '^' escaped lines [#427](https://github.com/mridgers/clink/issues/427).
+  - Mysteriously, holding down a bound key like **Ctrl+Up** or **Ctrl+A** was sometimes letting conhost periodically intercept some of the keypresses!  That shouldn't be possible, but maybe there's a way to deterministically cause that behavior?
+  - **Ctrl+M** to activate marking mode.
+  - Shouldn't be possible, but at one point **Ctrl+A** was sometimes able to get interpreted as Select All, and **Shift+Up** was sometimes able to get interpreted as Select Line Up.  That had to have been a bug in how clink was managing SetConsoleMode, but maybe there's a way to exploit that for good?
 
 ## Editing
 - Custom color for readline input.  Might prefer to completely replace readline's line drawing, since it's trying to minimize updates over terminal emulators, and that makes it much harder to colorize the editing line (and arguments).
-- [#532](https://github.com/mridgers/clink/issues/532) paste newlines, run as separate lines
-  - It's pretty risky to just paste-and-go.
-  - Maybe add an option to convert newlines into "&" instead?
-  - Or maybe let readline do multiline editing and accept them all as a batch on **Enter**?
 
 ## Key Bindings
 - **https://invisible-island.net/xterm/modified-keys.html**
@@ -103,11 +108,13 @@ Readline completion doesn't handle quotes correctly?!
 - Need a way to do `menu-complete` without wrapping around.
 - Popup completion list.
 - Popup history list.
-- Expand environment variable.
-- Marking mode?  It's a kludge, but it copies with HTML formatting (and even uses the color scheme).
-- Doskey alias completion?  Seems like that should be done via a lua script?
+- Marking mode in-app?  It's a kludge, but it copies with HTML formatting (and even uses the color scheme).
 - **F8** should behave like `history-search-backward` but wrap around.
 - Complete "%ENVVAR%\*" by internally expanding ENVVAR for collecting matches, but not expanding it in the editing line.
+
+### Quoting in completions
+- Support continuing completion of `"\Program Files"\`**Tab**.
+- Oops, Readline walks backward to figure out quoting.  That doesn't work reliably; must walk forward from the beginning otherwise `"\Program Files"\` is treated as though the ending `"\` is starting a new filename.
 
 ## CUA EDITING
 - Select all.
@@ -115,6 +122,14 @@ Readline completion doesn't handle quotes correctly?!
 - **Ctrl+C** do copy when CUA selection exists (might need to just intercept input handling, similar to how **Alt+H** was being intercepted), otherwise do Ctrl+C (Break).
 - **Ctrl+X** cut selection.
 - Custom color for CUA selected text.
+
+## Issues Backlog [clink/issues](https://github.com/mridgers/clink/issues)
+- [#427](https://github.com/mridgers/clink/issues/427) The history does not record the 2nd+ lines of '^' escaped lines
+- [#532](https://github.com/mridgers/clink/issues/532) paste newlines, run as separate lines
+  - It's pretty risky to just paste-and-go.
+  - Maybe add an option to convert newlines into "&" instead?
+  - Or maybe let readline do multiline editing and accept them all as a batch on **Enter**?
+- [#396](https://github.com/mridgers/clink/issues/396) Pasting unicode emoji in a clink-enabled console
 
 # FUTURE
 
@@ -132,6 +147,9 @@ I've found some quirks, bugs, and performance issues in Readline.
 ## Configuration
 
 # APPENDICES
+
+## Known Issues
+- [#531](https://github.com/mridgers/clink/issues/531) AV detects a trojan on download _[This is likely because of the use of CreateRemoteThread and/or hooking OS APIs.  There might be a way to obfuscate the fact that clink uses those, but ultimately this is kind of an inherent problem.  Getting the binaries digitally signed might be the most effective solution, but that's financially expensive.]_
 
 ## Mystery Issues
 - [540](https://github.com/mridgers/clink/issues/540) v0.4.9 works but v1.0.0.a1 crashes in directory with too many files _[NOT REPRO: tried with ConEmu 200713 and chrisant996/clink head, switching to c:\Windows\System32]_

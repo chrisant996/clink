@@ -29,3 +29,13 @@ int clink_reset_line(int count, int invoking_key)
 
     return 0;
 }
+
+//------------------------------------------------------------------------------
+int clink_exit(int count, int invoking_key)
+{
+    clink_reset_line(1, 0);
+    rl_buffer->insert("exit");
+    rl_newline(1, invoking_key);
+
+    return 0;
+}
