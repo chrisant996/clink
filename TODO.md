@@ -24,7 +24,6 @@ Readline completion doesn't handle quotes correctly?!
 
 ### Other
 - Win10 console mode flag to support ANSI sequences and colors; seems to maybe be working already?
-- `completion-query-items` < 0 should use ( terminal height / 2 ) / terminal width.
 - Investigate [XTerm 256 support](https://conemu.github.io/en/AnsiEscapeCodes.html) [#487](https://github.com/mridgers/clink/issues/487).
 - _The new bindable **Esc** isn't yet compatible with vi mode!_
 - Changing terminal width makes 0.4.8 slowly "walk up the screen".  Changing terminal width makes master go haywire.  Probably more ecma48 terminal issues.

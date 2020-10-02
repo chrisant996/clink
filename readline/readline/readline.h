@@ -840,6 +840,12 @@ extern int rl_completion_invoking_key;
    is sure she wants to see them all.  The default value is 100. */
 extern int rl_completion_query_items;
 
+/* begin_clink_change */
+/* When set, overrides rl_completion_query_items for `complete`
+   based on the screen height and number of columns of matches. */
+extern int rl_completion_auto_query_items;
+/* end_clink_change */
+
 /* Character appended to completed words when at the end of the line.  The
    default is a space.  Nothing is added if this is '\0'. */
 extern int rl_completion_append_character;

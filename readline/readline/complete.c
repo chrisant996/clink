@@ -286,6 +286,12 @@ int rl_completion_type = 0;
    don't ask. */
 int rl_completion_query_items = 100;
 
+/* begin_clink_change */
+/* When set, overrides rl_completion_query_items for `complete`
+   based on the screen height and number of columns of matches. */
+int rl_completion_auto_query_items = 1;
+/* end_clink_change */
+
 int _rl_page_completions = 1;
 
 /* The basic list of characters that signal a break between words for the
@@ -1813,9 +1819,15 @@ complete_get_screenwidth (void)
 /* A convenience function for displaying a list of strings in
    columnar format on readline's output stream.  MATCHES is the list
    of strings, in argv format, LEN is the number of strings in MATCHES,
-   and MAX is the length of the longest string in MATCHES. */
-void
-rl_display_match_list (char **matches, int len, int max)
+   and MAX is the length of the longest string in MATCHES.
+   ONLY_MEASURE measures the number of lines that would be printed,
+   without printing them. */
+/* begin_clink_change */
+//void
+//rl_display_match_list (char **matches, int len, int max)
+static int
+rl_display_match_list_internal (char **matches, int len, int max, int only_measure)
+/* end_clink_change */
 {
   int count, limit, printed_len, lines, cols;
   int i, j, k, l, common_length, sind;
@@ -1870,6 +1882,11 @@ rl_display_match_list (char **matches, int len, int max)
   /* How many iterations of the printing loop? */
   count = (len + (limit - 1)) / limit;
 
+/* begin_clink_change */
+  if (only_measure)
+    return count;
+/* end_clink_change */
+
   /* Watch out for special case.  If LEN is less than LIMIT, then
      just do the inner printing loop.
 	   0 < len <= limit  implies  count = 1. */
@@ -1915,13 +1932,13 @@ rl_display_match_list (char **matches, int len, int max)
 #else
 	  if (RL_SIG_RECEIVED ())
 #endif
-	    return;
+	    return 0;
 	  lines++;
 	  if (_rl_page_completions && lines >= (_rl_screenheight - 1) && i < count)
 	    {
 	      lines = _rl_internal_pager (lines);
 	      if (lines < 0)
-		return;
+		return 0;
 	    }
 	}
     }
@@ -1938,7 +1955,7 @@ rl_display_match_list (char **matches, int len, int max)
 #else
 	  if (RL_SIG_RECEIVED ())
 #endif
-	    return;
+	    return 0;
 	  if (matches[i+1])
 	    {
 	      if (limit == 1 || (i && (limit > 1) && (i % limit) == 0))
@@ -1949,7 +1966,7 @@ rl_display_match_list (char **matches, int len, int max)
 		    {
 		      lines = _rl_internal_pager (lines);
 		      if (lines < 0)
-			return;
+			return 0;
 		    }
 		}
 	      else if (max <= printed_len)
@@ -1961,7 +1978,17 @@ rl_display_match_list (char **matches, int len, int max)
 	}
       rl_crlf ();
     }
+
+  return 0;
 }
+
+/* begin_clink_change */
+void
+rl_display_match_list (char **matches, int len, int max)
+{
+  rl_display_match_list_internal (matches, len, max, 0);
+}
+/* end_clink_change */
 
 /* Display MATCHES, a list of matching filenames in argv format.  This
    handles the simple case -- a single match -- first.  If there is more
@@ -2052,7 +2079,12 @@ display_matches (char **matches)
 	
   /* If there are many items, then ask the user if she really wants to
      see them all. */
-  if (rl_completion_query_items > 0 && len >= rl_completion_query_items)
+/* begin_clink_change */
+  //if (rl_completion_query_items > 0 && len >= rl_completion_query_items)
+  if (rl_completion_query_items ?
+      rl_display_match_list_internal (matches, len, max, 1) >= (_rl_screenheight - 1) :
+      rl_completion_query_items > 0 && len >= rl_completion_query_items)
+/* end_clink_change */
     {
       rl_crlf ();
 /* begin_clink_change */

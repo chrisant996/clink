@@ -1783,6 +1783,7 @@ static const struct {
   { "colored-completion-prefix",&_rl_colored_completion_prefix,	0 },
   { "colored-stats",		&_rl_colored_stats,		0 },
 #endif
+  { "completion-auto-query-items", &rl_completion_auto_query_items, 0 },
   { "completion-ignore-case",	&_rl_completion_case_fold,	0 },
   { "completion-map-case",	&_rl_completion_case_map,	0 },
   { "convert-meta",		&_rl_convert_meta_chars_to_ascii, 0 },
