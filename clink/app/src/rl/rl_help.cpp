@@ -13,8 +13,8 @@ extern "C" {
 }
 
 //------------------------------------------------------------------------------
-extern setting_int g_max_width;
-extern setting_bool g_vertical;
+extern "C" int _rl_print_completions_horizontally;
+extern "C" int _rl_completion_columns;
 
 //------------------------------------------------------------------------------
 static const char* get_function_name(int (*func_addr)(int, int))
@@ -166,12 +166,14 @@ void show_rl_help(printer& printer, pager& pager)
     printer.print("\n");
     pager.start_pager(printer);
 
-    int max_width = min<int>(printer.get_columns() - 3, g_max_width.get());
+    int max_width = printer.get_columns() - 3;
     int columns_that_fit = max_width / (longest + 1);
     int columns = max(1, columns_that_fit);
+    if (_rl_completion_columns > 0 && columns > _rl_completion_columns)
+        columns = _rl_completion_columns;
     int total_rows = (offset + columns - 1) / columns;
 
-    bool vertical = g_vertical.get();
+    bool vertical = !_rl_print_completions_horizontally;
     int index_step = vertical ? total_rows : 1;
 
     for (int i = 1; i < total_rows; ++i)

@@ -44,5 +44,3 @@ public:
 //------------------------------------------------------------------------------
 line_editor*            line_editor_create(const line_editor::desc& desc);
 void                    line_editor_destroy(line_editor* editor);
-editor_module*          tab_completer_create();
-void                    tab_completer_destroy(editor_module* completer);

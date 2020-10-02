@@ -242,9 +242,6 @@ bool host::edit_line(const char* prompt, str_base& out)
     // Create the editor and add components to it.
     line_editor* editor = line_editor_create(desc);
 
-    editor_module* completer = tab_completer_create();
-    editor->add_module(*completer);
-
     scroller_module scroller;
     editor->add_module(scroller);
 
@@ -358,6 +355,5 @@ bool host::edit_line(const char* prompt, str_base& out)
     s_history_db = nullptr;
 
     line_editor_destroy(editor);
-    tab_completer_destroy(completer);
     return ret;
 }

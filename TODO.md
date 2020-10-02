@@ -8,9 +8,7 @@ ChrisAnt Plans
   - The argmatcher/generator syntax is different enough that it's not clear how to support both the old and new syntax concurrently.  I still hope to be able to support both, but it's probably simpler to just update existing scripts to the new API.
 
 ## Features
-
-### Eliminate `tab_completer`
-- Remove `tab_completer entirely`.
+- Completion list doesn't seem to respect `completion-ignore-case` and/or `completion-map-case`.
 - Add an option for `menu-complete` to not automatically accept the completion when there's only one possibility.  Because there's no reliable visual indicator it reset when it's a directory, and because it's a significant departure from CMD muscle memory.
 
 ### Quoting in completions

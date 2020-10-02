@@ -12,17 +12,13 @@ int testbed(int, char**)
 {
     str_compare_scope _(str_compare_scope::relaxed);
 
-    editor_module* completer = tab_completer_create();
-
     line_editor::desc desc;
     line_editor* editor = line_editor_create(desc);
-    editor->add_module(*completer);
     editor->add_generator(file_match_generator());
 
     str<> out;
     while (editor->edit(out));
 
     line_editor_destroy(editor);
-    tab_completer_destroy(completer);
     return 0;
 }
