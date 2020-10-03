@@ -46,6 +46,8 @@ Lua support changed significantly.  Explore how to support backward compatibilit
 # Phase 2
 The Phase 2 goal is to produce a viable Beta Release with broader compatibility in place, and some new features added.
 
+> I really want CUA Selection support!  It seems either extremely invasive in Readline, or very invasive + uses a custom rendering routine.  Not sure yet the best way to proceed.
+
 ## Problems
 - `fnprint()` is still doing IO to figure out colors.  I think I've eliminated the rest of the stat calls, though.
   - Matches from env PATH don't get colored properly because they don't include a full path.
