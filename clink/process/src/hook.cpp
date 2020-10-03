@@ -154,12 +154,25 @@ static char* write_trampoline_out(void* const dest, void* const to_hook, funcptr
 
         if (offset > 125)
         {
-            LOG("No nop slide or int3 block detected nearby prior to hook target.");
+            LOG("No nop slide or int3 block detected nearby prior to hook target, checked %d prior bytes", offset-1);
             return nullptr;
         }
 
         unsigned char c = *patch;
-        if (c != 0x90 && c != 0xcc)
+        if (c == 0xc3){
+            // We've just hit a RET, which likely means that we're in another function.
+            // Good chance the proceeding bytes are garbage, so lets just patch before this.
+            if (offset > rel_jmp_size){
+                LOG("Hit RET, not enough contiguous 0xcc or 0x90 bytes before target, but patching anyway...");
+                offset--;
+                patch++;
+                break;
+            } else {
+                // No room!
+                LOG("No room to patch prior to hook target!");
+                return NULL;
+            }
+        } else if (c != 0x90 && c != 0xcc)
             viable_bytes = 0;
         else
             viable_bytes++;
