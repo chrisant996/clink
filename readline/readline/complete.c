@@ -637,10 +637,10 @@ stat_from_match_type (char match_type, struct stat* finfo)
   if (match_type == MATCH_TYPE_DIR)
     finfo->st_mode |= S_IFDIR;
 #ifdef S_ISLNK
-  if (match_type == MATCH_TYPE_LINK)
+  else if (match_type == MATCH_TYPE_LINK)
     finfo->st_mode |= S_IFLNK;
 #endif
-  if (!finfo->st_mode)
+  else if (match_type != MATCH_TYPE_WORD)
     finfo->st_mode |= S_IFREG;
   return 0;
 }
