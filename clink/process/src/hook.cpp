@@ -115,15 +115,15 @@ static int get_mask_size(unsigned mask)
 //------------------------------------------------------------------------------
 static char* write_rel_jmp(char* write, const void* dest)
 {
-    // jmp <displacement>
-    intptr_t disp = (intptr_t)dest;
-    disp -= (intptr_t)write;
-    disp -= 5;
-
     struct {
         char a;
         char b[4];
     } buffer;
+
+    // jmp <displacement>
+    intptr_t disp = (intptr_t)dest;
+    disp -= (intptr_t)write;
+    disp -= sizeof(buffer);
 
     buffer.a = (unsigned char)0xe9;
     *(int*)buffer.b = (int)disp;
@@ -134,30 +134,42 @@ static char* write_rel_jmp(char* write, const void* dest)
         return nullptr;
     }
 
-    return write + 5;
+    return write + sizeof(buffer);
 }
 
 //------------------------------------------------------------------------------
-static char* write_trampoline_out(void* dest, void* to_hook, funcptr_t hook)
+static char* write_trampoline_out(void* const dest, void* const to_hook, funcptr_t const hook)
 {
+    const int rel_jmp_size = 5;
+    int offset = 0;
     char* write = (char*)dest;
-    char* patch = (char*)to_hook - 5;
+    char* patch = (char*)to_hook;
 
-    // Check we've got a nop slide or int3 block to patch into.
-    for (int i = 0; i < 5; ++i)
+    // Scan backwards for a nop slide or int3 block to patch into.
+    int viable_bytes = 0;
+    while (viable_bytes < rel_jmp_size)
     {
-        unsigned char c = patch[i];
-        if (c != 0x90 && c != 0xcc)
+        patch--;
+        offset++;
+
+        if (offset > 125)
         {
-            LOG("No nop slide or int3 block detected prior to hook target.");
+            LOG("No nop slide or int3 block detected nearby prior to hook target.");
             return nullptr;
         }
+
+        unsigned char c = *patch;
+        if (c != 0x90 && c != 0xcc)
+            viable_bytes = 0;
+        else
+            viable_bytes++;
     }
 
     // Patch the API.
     patch = write_rel_jmp(patch, write);
-    short temp = (unsigned short)0xf9eb;
-    if (!vm().write(patch, &temp, sizeof(temp)))
+    unsigned char temp[2] = { 0xeb, 0xfe };
+    temp[1] -= offset;
+    if (!vm().write(to_hook, &temp, sizeof(temp)))
     {
         LOG("VM write to %p failed (err = %d)", patch, GetLastError());
         return nullptr;
