@@ -29,6 +29,8 @@ Lua support changed significantly.  Explore how to support backward compatibilit
 
 ### Other
 - _The new bindable **Esc** isn't yet compatible with vi mode!_
+- Custom color for editing line.
+- Symlink support (displaying matches, and whether to append a path separator).
 
 ## Issues Backlog [clink/issues](https://github.com/mridgers/clink/issues)
 - [#544](https://github.com/mridgers/clink/issues/544) Clink v1.0.0.a1 doesn't support cyrillic characters keyboard input
@@ -46,6 +48,7 @@ The Phase 2 goal is to produce a viable Beta Release with broader compatibility 
 
 ## Problems
 - `fnprint()` is still doing IO to figure out colors.  I think I've eliminated the rest of the stat calls, though.
+  - Matches from env PATH don't get colored properly because they don't include a full path.
 - Have a mode that passes all ANSI escape codes through to the console host (conhost, ConEmu, etc) to allow making use of things like extended terminal codes for 256 color and 24 bit color support, etc [#487](https://github.com/mridgers/clink/issues/487).
 - Changing terminal width makes 0.4.8 slowly "walk up the screen".  Changing terminal width makes master go haywire.  Probably more ecma48 terminal issues.
 - Over 39 thousand assertions in the unit test?!
