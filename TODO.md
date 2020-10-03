@@ -1,8 +1,5 @@
 ChrisAnt Plans
 
-# Proof Of Concept Release
-- Publish latest executables for download.
-
 # Alpha Release
 Some additional work is needed to get a credible alpha release ready.
 
@@ -33,10 +30,13 @@ Lua support changed significantly.  Explore how to support backward compatibilit
 - Symlink support (displaying matches, and whether to append a path separator).
 
 ## Issues Backlog [clink/issues](https://github.com/mridgers/clink/issues)
-- [#544](https://github.com/mridgers/clink/issues/544) Clink v1.0.0.a1 doesn't support cyrillic characters keyboard input
+- [#540](https://github.com/mridgers/clink/issues/540) v0.4.9 works but v1.0.0.a1 crashes in directory with too many files
+  - I can't reproduce it in a directory with 40K generated file names.
+  - But I do see the lua match pipeline collect 40K matches, and yet `g_file_generator` stops at 8192 matches.  Ah, `store_impl` is a zone heap, but it only supports one 64KB page.  Need to add support for additional pages.
 - [#502](https://github.com/mridgers/clink/issues/502) Error in folders containing [ ] characters
 - [#480](https://github.com/mridgers/clink/issues/480) Things don't work right when clink is in a path with spaces
 - [#415](https://github.com/mridgers/clink/issues/415) Different encodings in different lua functions
+- [#544](https://github.com/mridgers/clink/issues/544) Clink v1.0.0.a1 doesn't support cyrillic characters keyboard input
 
 ## Questions
 - What is `set-mark`?
@@ -155,9 +155,6 @@ I've found some quirks, bugs, and performance issues in Readline.
 
 ## Known Issues
 - [#531](https://github.com/mridgers/clink/issues/531) AV detects a trojan on download _[This is likely because of the use of CreateRemoteThread and/or hooking OS APIs.  There might be a way to obfuscate the fact that clink uses those, but ultimately this is kind of an inherent problem.  Getting the binaries digitally signed might be the most effective solution, but that's financially expensive.]_
-
-## Mystery Issues
-- [540](https://github.com/mridgers/clink/issues/540) v0.4.9 works but v1.0.0.a1 crashes in directory with too many files _[NOT REPRO: tried with ConEmu 200713 and chrisant996/clink head, switching to c:\Windows\System32]_
 
 ---
 Chris Antos - sparrowhawk996@gmail.com
