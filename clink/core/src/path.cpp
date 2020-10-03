@@ -79,9 +79,13 @@ void normalise(char* in_out, int sep)
     if (!sep)
         sep = PATH_SEP[0];
 
+    bool test_unc = true;
 #if defined(PLATFORM_WINDOWS)
     if (in_out[0] && in_out[1] == ':')
+    {
         in_out += 2;
+        test_unc = false;
+    }
 #endif
 
     unsigned int piece_count = 0;
@@ -93,7 +97,7 @@ void normalise(char* in_out, int sep)
         piece_count = INT_MAX;
 
         // UNC.
-        if (is_separator(*write))
+        if (test_unc && is_separator(*write))
             *write++ = char(sep);
     }
 
