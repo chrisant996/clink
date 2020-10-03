@@ -46,7 +46,7 @@ Clink's uses [Premake](http://premake.github.io) to generate Visual Studio solut
 
 1. Cd to your clone of Clink.
 2. Run `premake5.exe <toolchain>` (where `<toolchain>` is one of Premake's actions - see `premake5.exe --help`)
-3. Build scripts will be generated in `.build\\<toolchain>`. For example `.build\vs2013\clink.sln`.
+3. Build scripts will be generated in `.build\<toolchain>`. For example `.build\vs2013\clink.sln`.
 4. Call your toolchain of choice (VS, mingw32-make.exe, msbuild.exe, etc). GNU makefiles (Premake's *gmake* target) have a **help** target for more info.
 
 ### License
