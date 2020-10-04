@@ -25,9 +25,17 @@ Lua support changed significantly.  Explore how to support backward compatibilit
 ## Features
 
 ### Other
+- **Shift+Tab** is misbehaving:
+  - `\wbin\cli`**Tab**,**Tab**,**Shift+Tab** starts a new completion instead of going backward.
+  - `\wbin\cli`**Tab** until `wbin\cli` and things weird, but that entry is just wrong anyway.
+- `cd `**Tab** is misbehaving:
+  - Keep pressing **Tab**, when it cycles to the wierd [0] entry, things start going wrong, and get worse each time it wraps around to the [0] entry.
 - _The new bindable **Esc** isn't yet compatible with vi mode!_
 - Custom color for editing line.
 - Symlink support (displaying matches, and whether to append a path separator).
+- Dissatisfied with the match pipeline:  typing `exit` and hitting **Enter** triggers the match pipeline.
+  - It seems more efficient to not invoke it until `complete` or `menu-complete` (etc).
+  - But eventually in order to color arguments/etc the match pipeline will need to run while typing, so maybe leave it be.
 
 ## Issues Backlog [clink/issues](https://github.com/mridgers/clink/issues)
 - [#540](https://github.com/mridgers/clink/issues/540) v0.4.9 works but v1.0.0.a1 crashes in directory with too many files
