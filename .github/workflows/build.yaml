@@ -3,6 +3,9 @@ on: [push]
 jobs:
   build:
     runs-on: windows-latest
+    strategy:
+      matrix:
+        platform: ["Win32", "x64"]
     steps:
       - name: Set up Git repository
         uses: actions/checkout@v2
@@ -10,15 +13,16 @@ jobs:
         with:
           sdk: "8.1"
           toolset: "14.16"
-      - run: |
+      - name: premake
+        run: |
           $env:Path = "C:\msys64\usr\bin;$env:Path"
           wget https://github.com/premake/premake-core/releases/download/v5.0.0-alpha15/premake-5.0.0-alpha15-windows.zip
           unzip premake-5.0.0-alpha15-windows.zip
           ./premake5.exe vs2019
+      - name: Execute MSBuild
+        run: |
           cd .build/vs2019
-          MSBuild /nologo /property:Configuration=release clink.sln
-          dir bin
-          dir bin\release
+          MSBuild /nologo /property:Configuration=release /p:Platform=${{ matrix.platform }} clink.sln
       - uses: actions/upload-artifact@v2
         with:
           name: release
