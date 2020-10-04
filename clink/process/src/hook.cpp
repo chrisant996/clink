@@ -152,17 +152,47 @@ static char* write_trampoline_out(void* const dest, void* const to_hook, funcptr
         patch--;
         offset++;
 
-        if (offset > 125)
+        unsigned char c = *patch;
+        if (offset > 125 || c == 0xc3){
+            // if c is '0xc33, we've hit a RET, which likely means that we're in another function.
+            // Skip the rest.
+            if (c == 0xc3)
+                LOG("Hit RET");
+            LOG("No nop slide or int3 block detected nearby prior to hook target, checked %d prior bytes", offset-1);
+            LOG("Now checking bytes after hook target");
+            // reset for checking forwards
+            viable_bytes = 0;
+            offset = 0;
+            patch = (char*)to_hook;
+            break;
+        } else if (c != 0x90 && c != 0xcc)
+            viable_bytes = 0;
+        else
+            viable_bytes++;
+    }
+
+    while (viable_bytes < rel_jmp_size)
+    {
+        patch++;
+        offset--;
+
+        if (offset < -125)
         {
-            LOG("No nop slide or int3 block detected nearby prior to hook target.");
+            LOG("No nop slide or int3 block detected nearby after hook target, checked %d later bytes", (-1 * (offset+1)));
             return nullptr;
         }
-
         unsigned char c = *patch;
         if (c != 0x90 && c != 0xcc)
             viable_bytes = 0;
         else
             viable_bytes++;
+    }
+
+    // If we are patching after rather than before
+    if (offset < 0){
+        // Offset is currently on the fifth byte of our patch area, so back up
+        offset += 4;
+        patch -= 4;
     }
 
     // Patch the API.
