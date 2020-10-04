@@ -27,6 +27,7 @@ Lua support changed significantly.  Explore how to support backward compatibilit
 ### Other
 - `$if cmd.exe` seems to be evaluating to false in .inputrc?
 - Windows Insider build hook problem...
+  - Use [Microsoft Detours](https://github.com/microsoft/detours) instead of the current implementation in clink?
 - _The new bindable **Esc** isn't yet compatible with vi mode!_
 - Custom color for editing line.
 - Symlink support (displaying matches, and whether to append a path separator).
