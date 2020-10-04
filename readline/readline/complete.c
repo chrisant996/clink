@@ -411,6 +411,7 @@ const char *_rl_pager_color = 0;
 const char *_rl_hidden_color = 0;
 rl_read_key_hook_func_t *rl_read_key_hook = 0;
 int rl_completion_matches_include_type = 0;
+static no_compute_lcd = 0;
 /* end_clink_change */
 
 /* Set to the last key used to invoke one of the completion functions */
@@ -1395,7 +1396,7 @@ gen_completion_matches (char *text, int start, int end, rl_compentry_func_t *our
 	{
 	  rl_attempted_completion_over = 0;
 /* begin_clink_change */
-	  if (matches)
+	  if (matches && !no_compute_lcd)
 	    {
 	      int len;
 	      for (len = 0; matches[len]; len++)
@@ -1786,6 +1787,9 @@ postprocess_matches (char ***matchesp, int matching_filenames)
 	  /* If we removed some matches, recompute the common prefix. */
 	  for (i = 1; matches[i]; i++)
 	    ;
+/* begin_clink_change */
+	  if (!no_compute_lcd)
+/* end_clink_change */
 	  if (i > 1 && i < nmatch)
 	    {
 	      t = matches[0];
@@ -3110,6 +3114,10 @@ rl_old_menu_complete (int count, int invoking_key)
       orig_start = rl_point;
       rl_point = orig_end;
 
+/* begin_clink_change */
+      no_compute_lcd = 1;
+/* end_clink_change */
+
       orig_text = rl_copy_text (orig_start, orig_end);
       matches = gen_completion_matches (orig_text, orig_start, orig_end,
 					our_func, found_quote, quote_char);
@@ -3121,6 +3129,9 @@ rl_old_menu_complete (int count, int invoking_key)
 
       if (matches == 0 || postprocess_matches (&matches, matching_filenames) == 0)
 	{
+/* begin_clink_change */
+          no_compute_lcd = 0;
+/* end_clink_change */
 	  rl_ding ();
 	  FREE (matches);
 	  matches = (char **)0;
@@ -3130,6 +3141,20 @@ rl_old_menu_complete (int count, int invoking_key)
 	  RL_UNSETSTATE(RL_STATE_COMPLETING);
 	  return (0);
 	}
+/* begin_clink_change */
+      no_compute_lcd = 0;
+/* end_clink_change */
+
+/* begin_clink_change
+ * If there's only one match, then discard the original text.
+ */
+      if (matches && matches[0] && matches[1] && !matches[2])
+	{
+	  xfree (matches[0]);
+	  matches[0] = matches[1];
+	  matches[1] = NULL;
+	}
+/* end_clink_change */
 
       RL_UNSETSTATE(RL_STATE_COMPLETING);
 
