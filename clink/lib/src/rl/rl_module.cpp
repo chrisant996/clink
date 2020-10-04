@@ -262,16 +262,6 @@ static char* filename_menu_completion_function(const char *text, int state)
         dirname = savestring(text);
 
         temp = rl_last_path_separator(dirname);
-
-#if defined(__MSDOS__) || defined(_WIN32)
-        /* special hack for //X/... */
-        // TODO: Don't attempt completion until there is at least //X/X/,
-        // because anything shorter is guaranteed to fail, but will first go
-        // non-responsiveness for a bit.
-        if (rl_is_path_separator(dirname[0]) && rl_is_path_separator(dirname[1]) && ISALPHA((unsigned char)dirname[2]) && rl_is_path_separator(dirname[3]))
-            temp = rl_last_path_separator(dirname + 3);
-#endif
-
         if (temp)
         {
             strcpy(filename, ++temp);
@@ -492,12 +482,8 @@ static char** alternative_matches(const char* text, int start, int end)
     char* end_prefix = rl_last_path_separator(text);
     if (end_prefix)
         end_prefix++;
-    else if (text[0] && text[1] == ':')
-    {
-        char c = tolower(text[0]);
-        if (c >= 'a' && c <= 'z')
-            end_prefix = (char*)text + 2;
-    }
+    else if (ISALPHA((unsigned char)text[0]) && text[1] == ':')
+        end_prefix = (char*)text + 2;
 
     // Deep copy of the generated matches.  Inefficient, but this is how
     // readline wants them.
