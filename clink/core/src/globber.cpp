@@ -65,6 +65,9 @@ bool globber::next(str_base& out, bool rooted, int* st_mode)
 
     while (true)
     {
+        if (m_handle == nullptr)
+            return false;
+
         file_name = m_data.cFileName;
         attr = m_data.dwFileAttributes;
 
@@ -80,8 +83,6 @@ bool globber::next(str_base& out, bool rooted, int* st_mode)
 
         next_file();
 
-        if (m_handle == nullptr)
-            return false;
         if (!again)
             break;
     }
