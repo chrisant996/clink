@@ -22,8 +22,8 @@ jobs:
       - name: Execute MSBuild
         run: |
           cd .build/vs2019
-          MSBuild /nologo /property:Configuration=release /p:Platform=${{ matrix.platform }} clink.sln
+          MSBuild /nologo /property:Configuration=final /p:Platform=${{ matrix.platform }} clink.sln
       - uses: actions/upload-artifact@v2
         with:
-          name: release
-          path: .build/vs2019/bin/release
+          name: final
+          path: .build/vs2019/bin/final
