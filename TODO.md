@@ -26,8 +26,6 @@ Lua support changed significantly.  Explore how to support backward compatibilit
 
 ### Other
 - `$if cmd.exe` seems to be evaluating to false in .inputrc?
-- Windows Insider build hook problem...
-  - Use [Microsoft Detours](https://github.com/microsoft/detours) instead of the current implementation in clink?
 - _The new bindable **Esc** isn't yet compatible with vi mode!_
 - Custom color for editing line.
 - Symlink support (displaying matches, and whether to append a path separator).
@@ -61,6 +59,7 @@ The Phase 2 goal is to produce a viable Beta Release with broader compatibility 
 - Dissatisfied with the match pipeline:  typing `exit` and hitting **Enter** triggers the match pipeline.
   - It seems more efficient to not invoke it until `complete` or `menu-complete` (etc).
   - But eventually in order to color arguments/etc the match pipeline will need to run while typing, so maybe leave it be.
+- Use [Microsoft Detours](https://github.com/microsoft/detours) instead of the current implementation in clink?
 
 ## Features
 
