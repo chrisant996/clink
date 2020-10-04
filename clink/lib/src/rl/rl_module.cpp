@@ -41,7 +41,8 @@ class pager;
 static FILE*        null_stream = (FILE*)1;
 static FILE*        in_stream = (FILE*)2;
 static FILE*        out_stream = (FILE*)3;
-terminal_in*        s_input = nullptr;
+terminal_in*        s_direct_input = nullptr;       // for read_key_hook
+terminal_in*        s_processed_input = nullptr;    // for read thunk
 printer*            s_printer = nullptr;
 void                show_rl_help(printer&, pager&);
 extern "C" int      wcwidth(int);
@@ -196,17 +197,17 @@ public:
 };
 extern "C" int read_key_hook(void)
 {
-    assert(s_input);
-    if (!s_input)
+    assert(s_direct_input);
+    if (!s_direct_input)
         return 0;
 
     rl_more_key_tester tester;
-    key_tester* old = s_input->set_key_tester(&tester);
+    key_tester* old = s_direct_input->set_key_tester(&tester);
 
-    s_input->select();
-    int key = s_input->read();
+    s_direct_input->select();
+    int key = s_direct_input->read();
 
-    s_input->set_key_tester(old);
+    s_direct_input->set_key_tester(old);
     return key;
 }
 
@@ -542,8 +543,8 @@ static int terminal_read_thunk(FILE* stream)
 {
     if (stream == in_stream)
     {
-        assert(s_input);
-        return s_input->read();
+        assert(s_processed_input);
+        return s_processed_input->read();
     }
 
     if (stream == null_stream)
@@ -601,8 +602,8 @@ rl_module::rl_module(const char* shell_name, terminal_in* input)
 : m_rl_buffer(nullptr)
 , m_prev_group(-1)
 {
-    assert(!s_input);
-    s_input = input;
+    assert(!s_direct_input);
+    s_direct_input = input;
 
     rl_getc_function = terminal_read_thunk;
     rl_fwrite_function = terminal_write_thunk;
@@ -687,7 +688,7 @@ rl_module::~rl_module()
     free(_rl_comment_begin);
     _rl_comment_begin = nullptr;
 
-    s_input = nullptr;
+    s_direct_input = nullptr;
 }
 
 //------------------------------------------------------------------------------
@@ -784,21 +785,17 @@ void rl_module::on_input(const input& input, result& result, const context& cont
 
     term_in.data = input.keys;
 
+    terminal_in* old_input = s_processed_input;
+    s_processed_input = &term_in;
+    s_matches = &context.matches;
+
     // Call Readline's until there's no characters left.
     int is_inc_searching = rl_readline_state & RL_STATE_ISEARCH;
     unsigned int len = input.len;
     while (len && !m_done)
     {
         --len;
-
-        terminal_in* old_input = s_input;
-        s_input = &term_in;
-        s_matches = &context.matches;
-
         rl_callback_read_char();
-
-        s_matches = nullptr;
-        s_input = old_input;
 
         // Internally Readline tries to resend escape characters but it doesn't
         // work with how Clink uses Readline. So we do it here instead.
@@ -809,6 +806,9 @@ void rl_module::on_input(const input& input, result& result, const context& cont
             is_inc_searching = 0;
         }
     }
+
+    s_matches = nullptr;
+    s_processed_input = old_input;
 
     if (m_done)
     {
