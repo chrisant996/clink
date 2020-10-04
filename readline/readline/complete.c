@@ -3167,26 +3167,32 @@ rl_old_menu_complete (int count, int invoking_key)
   if (match_list_index == 0 && match_list_size > 1)
     {
       rl_ding ();
-      insert_match (orig_text, orig_start, MULT_MATCH, &quote_char);
+/* begin_clink_change */
+      insert_match (matches[0], orig_start, MULT_MATCH, &quote_char);
+/* end_clink_change */
     }
   else
     {
       insert_match (matches[match_list_index], orig_start, SINGLE_MATCH, &quote_char);
       append_to_match (matches[match_list_index], delimiter, quote_char,
-		       strcmp (orig_text, matches[match_list_index]));
+/* begin_clink_change */
+		       strcmp (orig_text, matches[match_list_index] + past_flag));
+/* end_clink_change */
     }
 
   completion_changed_buffer = 1;
   return (0);
 }
 
+/* begin_clink_change */
 int
 rl_backward_old_menu_complete (int count, int key)
 {
   /* Positive arguments to backward-old-menu-complete translate into negative
      arguments for old-menu-complete, and vice versa. */
-  return (rl_menu_complete (-count, key));
+  return (rl_old_menu_complete (-count, key));
 }
+/* end_clink_change */
 
 /* The current version of menu completion.
    The differences between this function and the original are:
