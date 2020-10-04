@@ -2163,6 +2163,12 @@ make_quoted_replacement (char *match, int mtype, char *qc)
       if (do_replace != NO_MATCH && rl_filename_quoting_function)
 	replacement = (*rl_filename_quoting_function) (match, do_replace, qc);
     }
+
+/* begin_clink_change */
+  if (qc && *qc && !should_quote)
+    *qc = '\0';
+/* end_clink_change */
+
   return (replacement);
 }
 
