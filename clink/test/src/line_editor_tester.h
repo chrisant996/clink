@@ -65,6 +65,7 @@ private:
     void                        expected_matches_impl(int dummy, ...);
     test_terminal_in            m_terminal_in;
     test_terminal_out           m_terminal_out;
+    printer*                    m_printer;
     std::vector<const char*>    m_expected_matches;
     const char*                 m_input = nullptr;
     const char*                 m_expected_output = nullptr;

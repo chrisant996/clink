@@ -3,6 +3,7 @@
 
 #include "pch.h"
 #include "line_editor_tester.h"
+#include "terminal/printer.h"
 
 #include <core/base.h>
 #include <core/str.h>
@@ -89,8 +90,12 @@ void line_editor_tester::create_line_editor(const line_editor::desc* desc)
     line_editor::desc inner_desc;
     if (desc != nullptr)
         inner_desc = *desc;
+
+    m_printer = new printer(m_terminal_out);
+
     inner_desc.input = &m_terminal_in;
     inner_desc.output = &m_terminal_out;
+    inner_desc.printer = m_printer;
 
     m_editor = line_editor_create(inner_desc);
     REQUIRE(m_editor != nullptr);
@@ -100,6 +105,7 @@ void line_editor_tester::create_line_editor(const line_editor::desc* desc)
 line_editor_tester::~line_editor_tester()
 {
     line_editor_destroy(m_editor);
+    delete m_printer;
 }
 
 //------------------------------------------------------------------------------

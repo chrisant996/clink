@@ -39,6 +39,10 @@ class pager;
 
 //------------------------------------------------------------------------------
 static FILE*        null_stream = (FILE*)1;
+static FILE*        in_stream = (FILE*)2;
+static FILE*        out_stream = (FILE*)3;
+terminal_in*        s_input = nullptr;
+printer*            s_printer = nullptr;
 void                show_rl_help(printer&, pager&);
 extern "C" int      wcwidth(int);
 extern "C" char*    tgetstr(char*, char**);
@@ -190,7 +194,6 @@ public:
                         return false;
                     }
 };
-static terminal_in* s_input = nullptr;
 extern "C" int read_key_hook(void)
 {
     assert(s_input);
@@ -551,30 +554,58 @@ enum {
 //------------------------------------------------------------------------------
 static int terminal_read_thunk(FILE* stream)
 {
+    if (stream == in_stream)
+    {
+        assert(s_input);
+        return s_input->read();
+    }
+
     if (stream == null_stream)
         return 0;
 
-    terminal_in* term = (terminal_in*)stream;
-    return term->read();
+    assert(false);
+    return fgetc(stream);
 }
 
 //------------------------------------------------------------------------------
 static void terminal_write_thunk(FILE* stream, const char* chars, int char_count)
 {
-    if (stream == null_stream)
-        return;
-
-    if (stream == stderr)
+    if (stream == out_stream)
     {
-        wstr<32> s;
-        to_utf16(s, str_iter(chars, char_count));
-        DWORD written;
-        WriteConsoleW(GetStdHandle(STD_ERROR_HANDLE), s.c_str(), s.length(), &written, nullptr);
+        assert(s_printer);
+        s_printer->print(chars, char_count);
         return;
     }
 
-    printer* pter = (printer*)stream;
-    pter->print(chars, char_count);
+    if (stream == null_stream)
+        return;
+
+    if (stream == stderr || stream == stdout)
+    {
+        DWORD dw;
+        HANDLE h = GetStdHandle(stream == stderr ? STD_ERROR_HANDLE : STD_OUTPUT_HANDLE);
+        if (GetConsoleMode(h, &dw))
+        {
+            wstr<32> s;
+            to_utf16(s, str_iter(chars, char_count));
+            WriteConsoleW(h, s.c_str(), s.length(), &dw, nullptr);
+        }
+        else
+        {
+            WriteFile(h, chars, char_count, &dw, nullptr);
+        }
+        return;
+    }
+
+    assert(false);
+    fwrite(chars, char_count, 1, stream);
+}
+
+//------------------------------------------------------------------------------
+static void terminal_fflush_thunk(FILE* stream)
+{
+    if (stream != out_stream && stream != null_stream)
+        fflush(stream);
 }
 
 
@@ -589,8 +620,9 @@ rl_module::rl_module(const char* shell_name, terminal_in* input)
 
     rl_getc_function = terminal_read_thunk;
     rl_fwrite_function = terminal_write_thunk;
-    rl_fflush_function = [] (FILE*) {};
-    rl_instream = null_stream;
+    rl_fflush_function = terminal_fflush_thunk;
+    rl_instream = in_stream;
+    rl_outstream = out_stream;
 
     rl_readline_name = shell_name;
     rl_catch_signals = 0;
@@ -686,12 +718,7 @@ void rl_module::bind_input(binder& binder)
 //------------------------------------------------------------------------------
 void rl_module::on_begin_line(const context& context)
 {
-    // Readline only uses rl_outstream once, during initialization.
-    assert(!rl_outstream ||
-           rl_outstream == null_stream ||
-           rl_outstream == (FILE*)(terminal_out*)(&context.printer));
-    rl_outstream = (FILE*)(terminal_out*)(&context.printer);
-
+    s_printer = &context.printer;
     rl_buffer = &context.buffer;
 
     // Readline needs to be told about parts of the prompt that aren't visible
@@ -740,6 +767,7 @@ void rl_module::on_end_line()
     rl_readline_state &= ~RL_MORE_INPUT_STATES;
 
     rl_buffer = nullptr;
+    s_printer = nullptr;
 }
 
 //------------------------------------------------------------------------------
@@ -769,7 +797,6 @@ void rl_module::on_input(const input& input, result& result, const context& cont
     } term_in;
 
     term_in.data = input.keys;
-    rl_instream = (FILE*)(&term_in);
 
     // Call Readline's until there's no characters left.
     int is_inc_searching = rl_readline_state & RL_STATE_ISEARCH;
@@ -778,9 +805,14 @@ void rl_module::on_input(const input& input, result& result, const context& cont
     {
         --len;
 
+        terminal_in* old_input = s_input;
+        s_input = &term_in;
         s_matches = &context.matches;
+
         rl_callback_read_char();
+
         s_matches = nullptr;
+        s_input = old_input;
 
         // Internally Readline tries to resend escape characters but it doesn't
         // work with how Clink uses Readline. So we do it here instead.
