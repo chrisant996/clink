@@ -25,6 +25,8 @@ Lua support changed significantly.  Explore how to support backward compatibilit
 ## Features
 
 ### Other
+- Quoted paths not working properly with (`old-`)`menu-complete`:  enter `wbin\`**Tab** until quoted paths start showing up => the ending quote is always present (except for directories), but the beginning quote is only present if quotes are actually needed.
+- `$if cmd.exe` seems to be evaluating to false in .inputrc?
 - Windows Insider build hook problem...
 - _The new bindable **Esc** isn't yet compatible with vi mode!_
 - Custom color for editing line.
