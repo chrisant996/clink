@@ -512,7 +512,8 @@ static char** alternative_matches(const char* text, int start, int end)
         match_type type = past_flag ? (match_type)s_matches->get_match_type(i) : match_type::none;
 
         const char* match = s_matches->get_match(i);
-        int match_size = past_flag + len_prefix + strlen(match) + 1;
+        int match_len = strlen(match);
+        int match_size = past_flag + len_prefix + match_len + 1;
         matches[i + 1] = (char*)malloc(match_size);
 
         if (past_flag)
@@ -522,7 +523,12 @@ static char** alternative_matches(const char* text, int start, int end)
         str.clear();
         if (len_prefix)
             str.concat(text, len_prefix);
-        str.concat(match);
+
+        if ((type == match_type::none || type == match_type::dir) &&
+            (path::is_separator(match[match_len - 1])))
+            match_len--;
+
+        str.concat(match, match_len);
     }
     matches[match_count + 1] = nullptr;
 

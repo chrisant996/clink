@@ -288,16 +288,11 @@ bool matches_impl::add_match(const match_desc& desc)
     if (m_coalesced || match == nullptr || !*match)
         return false;
 
-    str<64> tmp;
     if (desc.type == match_type::none)
     {
         char* sep = rl_last_path_separator(match);
         if (sep && !sep[1])
-        {
-            tmp.concat(match, int(sep - match));
-            match = tmp.c_str();
             type = match_type::dir;
-        }
     }
 
     int store_id = m_store.store_front(match);
