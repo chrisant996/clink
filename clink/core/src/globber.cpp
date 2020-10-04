@@ -93,6 +93,9 @@ bool globber::next(str_base& out, bool rooted, int* st_mode)
 
     path::append(out, file_name.c_str());
 
+    if (attr & FILE_ATTRIBUTE_DIRECTORY && m_dir_suffix)
+        out << "\\";
+
     if (st_mode)
     {
         int mode = 0;
@@ -105,11 +108,6 @@ bool globber::next(str_base& out, bool rooted, int* st_mode)
         if (!mode)
             mode |= _S_IFREG;
         *st_mode = mode;
-    }
-    else
-    {
-        if (attr & FILE_ATTRIBUTE_DIRECTORY && m_dir_suffix)
-            out << "\\";
     }
 
     return true;
