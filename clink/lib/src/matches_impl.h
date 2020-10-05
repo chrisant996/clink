@@ -10,9 +10,9 @@
 //------------------------------------------------------------------------------
 struct match_info
 {
-    unsigned short  store_id;
-    unsigned short  displayable_store_id;
-    unsigned short  aux_store_id;
+    const char*     match;
+    const char*     displayable;
+    const char*     aux;
     unsigned short  cell_count;
     match_type      type;
     unsigned char   suffix : 7; // TODO: suffix can be in store instead of info.
@@ -24,12 +24,7 @@ struct match_info
 //------------------------------------------------------------------------------
 class match_store
 {
-public:
-    const char*             get(unsigned int id) const;
-
 protected:
-    static const int        alignment_bits = 1;
-    static const int        alignment = 1 << alignment_bits;
     char*                   m_ptr;
     unsigned int            m_size;
 };
@@ -60,7 +55,6 @@ private:
     bool                    add_match(const match_desc& desc);
     unsigned int            get_info_count() const;
     match_info*             get_infos();
-    const match_store&      get_store() const;
     void                    reset();
     void                    coalesce(unsigned int count_hint);
 
@@ -72,11 +66,13 @@ private:
                             store_impl(unsigned int size);
                             ~store_impl();
         void                reset();
-        int                 store_front(const char* str);
-        int                 store_back(const char* str);
+        const char*         store_front(const char* str);
+        const char*         store_back(const char* str);
 
     private:
         unsigned int        get_size(const char* str) const;
+        bool                new_page();
+        void                free_chain(bool keep_one);
         unsigned int        m_front;
         unsigned int        m_back;
     };

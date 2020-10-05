@@ -33,7 +33,6 @@ Lua support changed significantly.  Explore how to support backward compatibilit
 ## Issues Backlog [clink/issues](https://github.com/mridgers/clink/issues)
 - [#540](https://github.com/mridgers/clink/issues/540) v0.4.9 works but v1.0.0.a1 crashes in directory with too many files
   - I can't reproduce it in a directory with 40K generated file names.
-  - But I do see the lua match pipeline collect 40K matches, and yet `g_file_generator` stops at 8192 matches.  Ah, `store_impl` is a zone heap, but it only supports one 64KB page.  Need to add support for additional pages.
 - [#502](https://github.com/mridgers/clink/issues/502) Error in folders containing [ ] characters
 - [#480](https://github.com/mridgers/clink/issues/480) Things don't work right when clink is in a path with spaces
 - [#415](https://github.com/mridgers/clink/issues/415) Different encodings in different lua functions

@@ -57,74 +57,103 @@ void match_builder::set_prefix_included(bool included)
 
 
 //------------------------------------------------------------------------------
-const char* match_store::get(unsigned int id) const
-{
-    id <<= alignment_bits;
-    return (id < m_size) ? (m_ptr + id) : nullptr;
-}
-
-
-
-//------------------------------------------------------------------------------
 matches_impl::store_impl::store_impl(unsigned int size)
-: m_front(0)
-, m_back(size)
 {
-    m_size = size;
-    m_ptr = (char*)malloc(size);
+    m_size = max((unsigned int)4096, size);
+    m_ptr = nullptr;
+    new_page();
 }
 
 //------------------------------------------------------------------------------
 matches_impl::store_impl::~store_impl()
 {
-    free(m_ptr);
+    free_chain(false/*keep_one*/);
 }
 
 //------------------------------------------------------------------------------
 void matches_impl::store_impl::reset()
 {
+    free_chain(true/*keep_one*/);
     m_back = m_size;
-    m_front = 0;
+    m_front = sizeof(m_ptr);
 }
 
 //------------------------------------------------------------------------------
-int matches_impl::store_impl::store_front(const char* str)
+const char* matches_impl::store_impl::store_front(const char* str)
 {
     unsigned int size = get_size(str);
     unsigned int next = m_front + size;
-    if (next > m_back)
-        return -1;
+    if (next > m_back && !new_page())
+        return nullptr;
 
     str_base(m_ptr + m_front, size).copy(str);
 
-    unsigned int ret = m_front;
+    const char* ret = m_ptr + m_front;
     m_front = next;
-    return ret >> alignment_bits;
+    return ret;
 }
 
 //------------------------------------------------------------------------------
-int matches_impl::store_impl::store_back(const char* str)
+const char* matches_impl::store_impl::store_back(const char* str)
 {
     unsigned int size = get_size(str);
     unsigned int next = m_back - size;
-    if (next < m_front)
-        return -1;
+    if (next < m_front && !new_page())
+        return nullptr;
 
     m_back = next;
     str_base(m_ptr + m_back, size).copy(str);
 
-    return m_back >> alignment_bits;
+    return m_ptr + m_back;
 }
 
 //------------------------------------------------------------------------------
 unsigned int matches_impl::store_impl::get_size(const char* str) const
 {
-    if (str == nullptr || str[0] == '\0')
-        return ~0u;
+    if (str == nullptr)
+        return 1;
 
-    int length = int(strlen(str) + 1);
-    length = (length + alignment - 1) & ~(alignment - 1);
-    return length;
+    return int(strlen(str) + 1);
+}
+
+//------------------------------------------------------------------------------
+bool matches_impl::store_impl::new_page()
+{
+    char* temp = (char*)malloc(m_size);
+    if (temp == nullptr)
+        return false;
+
+    *reinterpret_cast<char**>(temp) = m_ptr;
+    m_front = sizeof(m_ptr);
+    m_back = m_size;
+    m_ptr = temp;
+    return true;
+}
+
+//------------------------------------------------------------------------------
+void matches_impl::store_impl::free_chain(bool keep_one)
+{
+    char* ptr = m_ptr;
+
+    if (!keep_one)
+    {
+        m_ptr = nullptr;
+        m_front = sizeof(m_ptr);
+        m_back = m_size;
+    }
+
+    while (ptr)
+    {
+        char* tmp = ptr;
+        ptr = *reinterpret_cast<char**>(ptr);
+        if (keep_one)
+        {
+            keep_one = false;
+            *reinterpret_cast<char**>(tmp) = nullptr;
+        }
+        else
+            free(tmp);
+    }
 }
 
 
@@ -149,12 +178,6 @@ match_info* matches_impl::get_infos()
 }
 
 //------------------------------------------------------------------------------
-const match_store& matches_impl::get_store() const
-{
-    return m_store;
-}
-
-//------------------------------------------------------------------------------
 unsigned int matches_impl::get_match_count() const
 {
     return m_count;
@@ -166,8 +189,7 @@ const char* matches_impl::get_match(unsigned int index) const
     if (index >= get_match_count())
         return nullptr;
 
-    unsigned int store_id = m_infos[index].store_id;
-    return m_store.get(store_id);
+    return m_infos[index].match;
 }
 
 //------------------------------------------------------------------------------
@@ -176,11 +198,8 @@ const char* matches_impl::get_displayable(unsigned int index) const
     if (index >= get_match_count())
         return nullptr;
 
-    unsigned int store_id = m_infos[index].displayable_store_id;
-    if (!store_id)
-        store_id = m_infos[index].store_id;
-
-    return m_store.get(store_id);
+    const char* displayable = m_infos[index].displayable;
+    return displayable ? displayable : m_infos[index].match;
 }
 
 //------------------------------------------------------------------------------
@@ -189,10 +208,7 @@ const char* matches_impl::get_aux(unsigned int index) const
     if (index >= get_match_count())
         return nullptr;
 
-    if (unsigned int store_id = m_infos[index].aux_store_id)
-        return m_store.get(store_id);
-
-    return nullptr;
+    return m_infos[index].aux;
 }
 
 //------------------------------------------------------------------------------
@@ -295,22 +311,22 @@ bool matches_impl::add_match(const match_desc& desc)
             type = match_type::dir;
     }
 
-    int store_id = m_store.store_front(match);
-    if (store_id < 0)
+    const char* store_match = m_store.store_front(match);
+    if (!store_match)
         return false;
 
-    int displayable_store_id = 0;
+    const char* store_displayable = nullptr;
     if (desc.displayable != nullptr)
-        displayable_store_id = max(0, m_store.store_back(desc.displayable));
+        store_displayable = m_store.store_back(desc.displayable);
 
-    int aux_store_id = 0;
+    const char* store_aux = nullptr;
     if (m_has_aux = (desc.aux != nullptr))
-        aux_store_id = max(0, m_store.store_back(desc.aux));
+        store_aux = m_store.store_back(desc.aux);
 
     m_infos.push_back({
-        (unsigned short)store_id,
-        (unsigned short)displayable_store_id,
-        (unsigned short)aux_store_id,
+        store_match,
+        store_displayable,
+        store_aux,
         0,
         type,
         max<unsigned char>(0, desc.suffix),

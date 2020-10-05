@@ -35,14 +35,13 @@ inline bool is_path_separator(char c)
 //------------------------------------------------------------------------------
 static unsigned int normal_selector(
     const char* needle,
-    const match_store& store,
     match_info* infos,
     int count)
 {
     int select_count = 0;
     for (int i = 0; i < count; ++i)
     {
-        const char* name = store.get(infos[i].store_id);
+        const char* name = infos[i].match;
         int j = str_compare(needle, name);
         infos[i].select = (j < 0 || !needle[j]);
         ++select_count;
@@ -52,13 +51,13 @@ static unsigned int normal_selector(
 }
 
 //------------------------------------------------------------------------------
-static void alpha_sorter(const match_store& store, match_info* infos, int count)
+static void alpha_sorter(match_info* infos, int count)
 {
     int order = g_sort_dirs.get();
 
     auto predicate = [&] (const match_info& lhs, const match_info& rhs) {
-        const char* l = store.get(lhs.store_id);
-        const char* r = store.get(rhs.store_id);
+        const char* l = lhs.match;
+        const char* r = rhs.match;
         if (order != 1)
         {
             size_t l_len = strlen(l);
@@ -122,8 +121,7 @@ void match_pipeline::select(const char* needle) const
         return;
 
     unsigned int selected_count = 0;
-    selected_count = normal_selector(needle, m_matches.get_store(),
-        m_matches.get_infos(), count);
+    selected_count = normal_selector(needle, m_matches.get_infos(), count);
 
     m_matches.coalesce(selected_count);
 }
@@ -135,5 +133,5 @@ void match_pipeline::sort() const
     if (!count)
         return;
 
-    alpha_sorter(m_matches.get_store(), m_matches.get_infos(), count);
+    alpha_sorter(m_matches.get_infos(), count);
 }
