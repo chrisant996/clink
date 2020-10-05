@@ -33,7 +33,6 @@ Lua support changed significantly.  Explore how to support backward compatibilit
 
 ## Issues Backlog [clink/issues](https://github.com/mridgers/clink/issues)
 - [#502](https://github.com/mridgers/clink/issues/502) Error in folders containing [ ] characters
-- [#480](https://github.com/mridgers/clink/issues/480) Things don't work right when clink is in a path with spaces
 - [#415](https://github.com/mridgers/clink/issues/415) Different encodings in different lua functions
 - [#544](https://github.com/mridgers/clink/issues/544) Clink v1.0.0.a1 doesn't support cyrillic characters keyboard input
 
@@ -158,6 +157,9 @@ I've found some quirks, bugs, and performance issues in Readline.
 
 ## Known Issues
 - [#531](https://github.com/mridgers/clink/issues/531) AV detects a trojan on download _[This is likely because of the use of CreateRemoteThread and/or hooking OS APIs.  There might be a way to obfuscate the fact that clink uses those, but ultimately this is kind of an inherent problem.  Getting the binaries digitally signed might be the most effective solution, but that's financially expensive.]_
+
+## Mystery
+- [#480](https://github.com/mridgers/clink/issues/480) Things don't work right when clink is in a path with spaces _[I'm not able to reproduce the problem, so dropping it off the radar for now.]_
 
 ---
 Chris Antos - sparrowhawk996@gmail.com
