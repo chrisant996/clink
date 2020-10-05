@@ -9,6 +9,7 @@ Some additional work is needed to get a credible alpha release ready.
 - List commands.
 - List clink settings.
 - List readline settings.
+- inputrc `$if clink` shell name.
 
 ## Scripts
 - Convert some [clink-completions](https://github.com/vladimir-kotikov/clink-completions) scripts to the new syntax.
@@ -25,14 +26,12 @@ Lua support changed significantly.  Explore how to support backward compatibilit
 ## Features
 
 ### Other
-- `$if cmd.exe` seems to be evaluating to false in .inputrc?
+- I think `quoted-insert` got broken by the `key_tester` stuff.
 - _The new bindable **Esc** isn't yet compatible with vi mode!_
 - Custom color for editing line.
 - Symlink support (displaying matches, and whether to append a path separator).
 
 ## Issues Backlog [clink/issues](https://github.com/mridgers/clink/issues)
-- [#540](https://github.com/mridgers/clink/issues/540) v0.4.9 works but v1.0.0.a1 crashes in directory with too many files
-  - I can't reproduce it in a directory with 40K generated file names.
 - [#502](https://github.com/mridgers/clink/issues/502) Error in folders containing [ ] characters
 - [#480](https://github.com/mridgers/clink/issues/480) Things don't work right when clink is in a path with spaces
 - [#415](https://github.com/mridgers/clink/issues/415) Different encodings in different lua functions
