@@ -2385,6 +2385,7 @@ rl_complete_internal (int what_to_do)
   int tlen, mlen;
 /* begin_clink_change */
   int past_flag = rl_completion_matches_include_type ? 1 : 0;
+  int end_undo_group = 0;
 /* end_clink_change */
 
   RL_SETSTATE(RL_STATE_COMPLETING);
@@ -2454,11 +2455,23 @@ rl_complete_internal (int what_to_do)
       if (what_to_do == TAB)
         {
           if (*matches[0])
-	    insert_match (matches[0], start, matches[1] ? MULT_MATCH : SINGLE_MATCH, &quote_char);
+	    {
+/* begin_clink_change */
+	      end_undo_group = 1;
+	      rl_begin_undo_group();
+/* end_clink_change */
+	      insert_match (matches[0], start, matches[1] ? MULT_MATCH : SINGLE_MATCH, &quote_char);
+	    }
         }
       else if (*matches[0] && matches[1] == 0)
-	/* should we perform the check only if there are multiple matches? */
-	insert_match (matches[0], start, matches[1] ? MULT_MATCH : SINGLE_MATCH, &quote_char);
+	{
+/* begin_clink_change */
+	  end_undo_group = 1;
+	  rl_begin_undo_group();
+/* end_clink_change */
+	  /* should we perform the check only if there are multiple matches? */
+	  insert_match (matches[0], start, matches[1] ? MULT_MATCH : SINGLE_MATCH, &quote_char);
+	}
       else if (*matches[0])	/* what_to_do != TAB && multiple matches */
 	{
 /* begin_clink_change */
@@ -2466,7 +2479,13 @@ rl_complete_internal (int what_to_do)
 	  mlen = *matches[0] ? strlen (matches[0] + past_flag) : 0;
 /* end_clink_change */
 	  if (mlen >= tlen)
-	    insert_match (matches[0], start, matches[1] ? MULT_MATCH : SINGLE_MATCH, &quote_char);
+	    {
+/* begin_clink_change */
+	      end_undo_group = 1;
+	      rl_begin_undo_group();
+/* end_clink_change */
+	      insert_match (matches[0], start, matches[1] ? MULT_MATCH : SINGLE_MATCH, &quote_char);
+	    }
 	}
 
       /* If there are more matches, ring the bell to indicate.
@@ -2530,6 +2549,14 @@ rl_complete_internal (int what_to_do)
       _rl_reset_completion_state ();
       return 1;
     }
+
+/* begin_clink_change */
+  if (end_undo_group)
+    {
+      end_undo_group = 0;
+      rl_end_undo_group();
+    }
+/* end_clink_change */
 
   _rl_free_match_list (matches);
 
@@ -3199,15 +3226,21 @@ rl_old_menu_complete (int count, int invoking_key)
     {
       rl_ding ();
 /* begin_clink_change */
+      //insert_match (orig_text, orig_start, MULT_MATCH, &quote_char);
       insert_match (matches[0], orig_start, MULT_MATCH, &quote_char);
 /* end_clink_change */
     }
   else
     {
+/* begin_clink_change */
+      rl_begin_undo_group();
+/* end_clink_change */
       insert_match (matches[match_list_index], orig_start, SINGLE_MATCH, &quote_char);
       append_to_match (matches[match_list_index], delimiter, quote_char,
 /* begin_clink_change */
-		       strcmp (orig_text, matches[match_list_index] + past_flag));
+		       //strcmp (orig_text, matches[match_list_index] + past_flag));
+		       strcmp (orig_text, matches[match_list_index]));
+      rl_end_undo_group();
 /* end_clink_change */
     }
 
@@ -3407,9 +3440,15 @@ rl_menu_complete (int count, int ignore)
     }
   else
     {
+/* begin_clink_change */
+      rl_begin_undo_group();
+/* end_clink_change */
       insert_match (matches[match_list_index], orig_start, SINGLE_MATCH, &quote_char);
       append_to_match (matches[match_list_index], delimiter, quote_char,
 		       strcmp (orig_text, matches[match_list_index]));
+/* begin_clink_change */
+      rl_end_undo_group();
+/* end_clink_change */
     }
 
   completion_changed_buffer = 1;
