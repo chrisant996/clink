@@ -1,19 +1,29 @@
 ChrisAnt Plans
 
+<br>
+
 # Alpha Release
 Some additional work is needed to get a credible alpha release ready.
 
 ## Documentation
 - Describe the new argmatcher/etc syntax.
-- List supported key codes.
-- List commands.
-- List clink settings.
-- List readline settings.
-- inputrc `$if clink` shell name.
 
 ## Scripts
 - Convert some [clink-completions](https://github.com/vladimir-kotikov/clink-completions) scripts to the new syntax.
 - Supply sample inputrc file(s).
+
+## Commands
+- `c:\repos\clink> sdvdiff \chris`**complete**` readline\readline\bind.c` overwrites part of the text after the completion point!
+  - All completion commands exhibit the same problem.
+  - It happens as 2 undo group actions, but should happen as 1.
+- I think `quoted-insert` got broken by the `key_tester` stuff.
+- Looks like `_rl_history_point_at_end_of_anchored_search` isn't restricted to anchored searches.
+- Must convert all built-in Clink built-in keyboard-invoked functionality to instead be commands registered with the Readline library, so that they can be bound to any key and can be listed in the `show-rl-help` list.
+- Must have a way to list extended key bindings (but user-friendly key binding names can be deferred until Phase 2).
+- _The new bindable **Esc** isn't yet compatible with vi mode!_
+
+<br>
+<br>
 
 # Phase 1
 The Phase 1 goal is to have a working version that for the most part meets or exceeds Clink 0.4.8 stability and functionality.
@@ -26,10 +36,9 @@ Lua support changed significantly.  Explore how to support backward compatibilit
 ## Features
 
 ### Other
-- I think `quoted-insert` got broken by the `key_tester` stuff.
-- _The new bindable **Esc** isn't yet compatible with vi mode!_
 - Custom color for editing line.
 - Symlink support (displaying matches, and whether to append a path separator).
+- `match.ignore_case` can't be working correctly, and probably readline settings should determine it.
 
 ## Issues Backlog [clink/issues](https://github.com/mridgers/clink/issues)
 - [#502](https://github.com/mridgers/clink/issues/502) Error in folders containing [ ] characters
@@ -40,6 +49,9 @@ Lua support changed significantly.  Explore how to support backward compatibilit
 - What is `set-mark`?
 - How does `reverse-search-history` work?
 - How does `kill-line` work?
+
+<br>
+<br>
 
 # Phase 2
 The Phase 2 goal is to produce a viable Beta Release with broader compatibility in place, and some new features added.
@@ -93,6 +105,9 @@ The Phase 2 goal is to produce a viable Beta Release with broader compatibility 
 - [#486](https://github.com/mridgers/clink/issues/486) **Ctrl+C** doesn't always work properly _[might be the auto-answer prompt setting]_
 - [#398](https://github.com/mridgers/clink/issues/398) Cmd gets unresponsive after "set /p" command.
 
+<br>
+<br>
+
 # EVENTUALLY
 More ambitious things like CUA Selection, popup window lists for completion and history, and coloring arguments and flags while editing (according to lua argmatchers).
 
@@ -138,6 +153,9 @@ More ambitious things like CUA Selection, popup window lists for completion and 
   - Or maybe let readline do multiline editing and accept them all as a batch on **Enter**?
 - [#396](https://github.com/mridgers/clink/issues/396) Pasting unicode emoji in a clink-enabled console
 
+<br>
+<br>
+
 # FUTURE
 
 ## Fancy
@@ -152,6 +170,9 @@ I've found some quirks, bugs, and performance issues in Readline.
 - Trailing added backslash when listing directory matches isn't counted as part of the column width.
 
 ## Configuration
+
+<br>
+<br>
 
 # APPENDICES
 
