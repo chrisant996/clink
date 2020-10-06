@@ -13,9 +13,6 @@ Some additional work is needed to get a credible alpha release ready.
 - Supply sample inputrc file(s).
 
 ## Commands
-- `c:\repos\clink> sdvdiff \chris`**complete**` readline\readline\bind.c` overwrites part of the text after the completion point!
-  - All completion commands exhibit the same problem.
-  - It happens as 2 undo group actions, but should happen as 1.
 - I think `quoted-insert` got broken by the `key_tester` stuff.
 - Must convert all built-in Clink built-in keyboard-invoked functionality to instead be commands registered with the Readline library, so that they can be bound to any key and can be listed in the `show-rl-help` list.
 - Must have a way to list extended key bindings (but user-friendly key binding names can be deferred until Phase 2).

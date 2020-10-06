@@ -469,11 +469,15 @@ static char** alternative_matches(const char* text, int start, int end)
         path::normalise(s);
         assert(rl_buffer);
         assert(rl_point == end);
-        rl_buffer->begin_undo_group();
-        rl_buffer->remove(start, end);
-        rl_buffer->insert(s.c_str());
-        rl_point = start + s.length();
-        rl_buffer->end_undo_group();
+        if (!s.equals(text))
+        {
+            rl_buffer->begin_undo_group();
+            rl_buffer->remove(start, end);
+            rl_point = start;
+            rl_buffer->insert(s.c_str());
+            rl_point = start + s.length();
+            rl_buffer->end_undo_group();
+        }
         return nullptr;
     }
 
