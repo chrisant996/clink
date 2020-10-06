@@ -561,7 +561,8 @@ rl_history_search_internal (int count, int dir)
   rl_mark = rl_end;
 
 /* begin_clink_change */
-  if (_rl_history_point_at_end_of_anchored_search)
+  if ((rl_history_search_flags & ANCHORED_SEARCH) &&
+      _rl_history_point_at_end_of_anchored_search)
     {
       int tmp = rl_point;
       rl_point = rl_mark;
