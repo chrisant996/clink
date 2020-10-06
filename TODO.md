@@ -14,6 +14,7 @@ Some additional work is needed to get a credible alpha release ready.
 
 ## Commands
 - I think `quoted-insert` got broken by the `key_tester` stuff.
+- And similarly `non-incremental-forward-search-history` is broken because it accepts any bound chords; it needs to only accept printable self-insertions, no chords.
 - Must convert all built-in Clink built-in keyboard-invoked functionality to instead be commands registered with the Readline library, so that they can be bound to any key and can be listed in the `show-rl-help` list.
 - Must have a way to list extended key bindings (but user-friendly key binding names can be deferred until Phase 2).
 - _The new bindable **Esc** isn't yet compatible with vi mode!_
