@@ -10,6 +10,9 @@ Some additional work is needed to get a credible alpha release ready.
 
 ## Scripts
 - Convert some [clink-completions](https://github.com/vladimir-kotikov/clink-completions) scripts to the new syntax.
+  - `clink.is_match`
+  - `path.is_real_dir`
+  - `path.list_files`
 - Supply sample inputrc file(s).
 
 ## Bugs

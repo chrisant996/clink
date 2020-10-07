@@ -499,7 +499,7 @@ static char** alternative_matches(const char* text, int start, int end)
     matches[0] = (char*)malloc(past_flag + (end - start) + 1);
     if (past_flag)
         matches[0][0] = (char)match_type::none;
-    memcpy(matches[0] + past_flag, text + start, end - start);
+    memcpy(matches[0] + past_flag, text, end - start);
     matches[0][past_flag + (end - start)] = '\0';
     for (int i = 0; i < match_count; ++i)
     {
