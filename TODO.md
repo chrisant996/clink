@@ -19,7 +19,6 @@ Some additional work is needed to get a credible alpha release ready.
 ## Commands
 - Must convert all built-in Clink built-in keyboard-invoked functionality to instead be commands registered with the Readline library, so that they can be bound to any key and can be listed in the `show-rl-help` list.
 - Must have a way to list extended key bindings (but user-friendly key binding names can be deferred until Phase 2).
-- _The new bindable **Esc** isn't yet compatible with vi mode!_
 
 <br>
 <br>
@@ -35,8 +34,6 @@ Lua support changed significantly.  Explore how to support backward compatibilit
 ## Features
 
 ### Other
-- vi mode doesn't seem to support responding to M-C-letter or A-letter bindings, but interprets them as other things?
-- vi mode doesn't seem to support `\e[27;27~` but I don't yet understand why not.
 - `match.ignore_case` can't be working correctly, and probably readline settings should determine it.
 
 ## Issues Backlog [clink/issues](https://github.com/mridgers/clink/issues)
@@ -68,6 +65,8 @@ The Phase 2 goal is to produce a viable Beta Release with broader compatibility 
   - It seems more efficient to not invoke it until `complete` or `menu-complete` (etc).
   - But eventually in order to color arguments/etc the match pipeline will need to run while typing, so maybe leave it be.
 - Use [Microsoft Detours](https://github.com/microsoft/detours) instead of the current implementation in clink?
+- vi mode doesn't seem to support responding to M-C-letter or M-letter bindings, but interprets them as other things?
+- vi mode doesn't seem to support `\e[27;27~` even when explicitly bound, but I don't yet understand why not.
 - Toggling vi mode doesn't reload .inputrc until a new line, so $if conditional key bindings aren't active at first.
 - Symlink support (displaying matches, and whether to append a path separator).
 
