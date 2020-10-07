@@ -4,7 +4,6 @@
 #include "pch.h"
 #include "host.h"
 #include "host_lua.h"
-#include "host_module.h"
 #include "prompt.h"
 #include "doskey.h"
 #include "terminal/terminal.h"
@@ -244,9 +243,6 @@ bool host::edit_line(const char* prompt, str_base& out)
 
     scroller_module scroller;
     editor->add_module(scroller);
-
-    host_module host_module(m_name);
-    editor->add_module(host_module);
 
     editor->add_generator(lua);
     editor->add_generator(file_match_generator());

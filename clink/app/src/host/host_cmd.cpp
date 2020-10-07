@@ -286,8 +286,8 @@ bool host_cmd::initialise()
     auto* as_stdcall = static_cast<void* (__stdcall *)(unsigned)>(get_std_handle);
     hooks.add_iat(base, "GetStdHandle", as_stdcall);
 
-    rl_add_funmap_entry("expand-env-var", expand_env_var);
-    rl_add_funmap_entry("expand-doskey-alias", expand_doskey_alias);
+    rl_add_funmap_entry("clink-expand-env-var", expand_env_var);
+    rl_add_funmap_entry("clink-expand-doskey-alias", expand_doskey_alias);
 
     return (hooks.commit() == 3);
 }

@@ -657,8 +657,14 @@ rl_module::rl_module(const char* shell_name, terminal_in* input)
         s_rl_initialized = true;
         rl_add_history_hook = host_add_history;
         rl_remove_history_hook = host_remove_history;
-        rl_add_funmap_entry("reset-line", clink_reset_line);
+        rl_add_funmap_entry("clink-reset-line", clink_reset_line);
         rl_add_funmap_entry("clink-exit", clink_exit);
+        rl_add_funmap_entry("clink-ctrl-c", clink_ctrl_c);
+        rl_add_funmap_entry("clink-paste", clink_paste);
+        rl_add_funmap_entry("clink-copy-line", clink_copy_line);
+        rl_add_funmap_entry("clink-copy-cwd", clink_copy_cwd);
+        rl_add_funmap_entry("clink-up-directory", clink_up_directory);
+        rl_add_funmap_entry("clink-insert-dot-dot", clink_insert_dot_dot);
     }
 
     // Bind extended keys so editing follows Windows' conventions.
@@ -672,18 +678,22 @@ rl_module::rl_module(const char* shell_name, terminal_in* input)
         { "\\e[1;5H",       "backward-kill-line" },      // ctrl-home
         { "\\e[5~",         "history-search-backward" }, // pgup
         { "\\e[6~",         "history-search-forward" },  // pgdn
-        { "\\e[3;5~",       "kill-word" },               // ctrl+del
-        { "\\d",            "backward-kill-word" },      // ctrl+backspace
-        { "\\C-z",          "undo" },
+        { "\\e[3;5~",       "kill-word" },               // ctrl-del
+        { "\\d",            "backward-kill-word" },      // ctrl-backspace
         { "\\e[2~",         "overwrite-mode" },          // ins
-        { "\\e[27;27~",     "reset-line" },              // esc
+        { "\\e[27;27~",     "clink-reset-line" },        // esc
+
+        { "\\C-c",          "clink-ctrl-c" },            // ctrl-c
+        { "\\C-v",          "clink-paste" },             // ctrl-v
+        { "\\C-z",          "undo" },                    // ctrl-z
         { "\\e\\eOS",       "clink-exit" },              // alt-f4
-        // These are host-specific and don't belong in rl_module.  However, the
-        // host_module is constructed after rl_module, and host_module isn't
-        // really connected to host_cmd, so there isn't a better place yet for
-        // these default key bindings.
-        { "\\M-\\C-e",      "expand-env-var" },          // alt+ctrl+e
-        { "\\M-\\C-f",      "expand-doskey-alias" },     // alt+ctrl+f
+
+        { "\\M-a",          "clink-insert-dot-dot" },    // alt-a
+        { "\\M-c",          "clink-copy-cwd" },          // alt-c
+        { "\\M-\\C-c",      "clink-copy-line" },         // alt-ctrl-c
+        { "\\M-\\C-e",      "clink-expand-env-var" },    // alt-ctrl-e
+        { "\\M-\\C-f",      "clink-expand-doskey-alias" }, // alt-ctrl-f
+        { "\\e[5;5~",       "clink-up-directory" },      // ctrl-pgup
         {}
     };
 

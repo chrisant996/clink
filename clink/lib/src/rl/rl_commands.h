@@ -6,3 +6,9 @@
 //------------------------------------------------------------------------------
 int     clink_reset_line(int, int);
 int     clink_exit(int count, int invoking_key);
+int     clink_ctrl_c(int count, int invoking_key);
+int     clink_paste(int count, int invoking_key);
+int     clink_copy_line(int count, int invoking_key);
+int     clink_copy_cwd(int count, int invoking_key);
+int     clink_up_directory(int count, int invoking_key);
+int     clink_insert_dot_dot(int count, int invoking_key);
