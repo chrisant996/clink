@@ -12,9 +12,11 @@ Some additional work is needed to get a credible alpha release ready.
 - Convert some [clink-completions](https://github.com/vladimir-kotikov/clink-completions) scripts to the new syntax.
 - Supply sample inputrc file(s).
 
+## Bugs
+- `quoted-insert` doesn't work for M-C-letter combinations?
+- Why doesn't `\M-\C-j` do what it's bound to while in vi mode?
+
 ## Commands
-- I think `quoted-insert` got broken by the `key_tester` stuff.
-- And similarly `non-incremental-forward-search-history` is broken because it accepts any bound chords; it needs to only accept printable self-insertions, no chords.
 - Must convert all built-in Clink built-in keyboard-invoked functionality to instead be commands registered with the Readline library, so that they can be bound to any key and can be listed in the `show-rl-help` list.
 - Must have a way to list extended key bindings (but user-friendly key binding names can be deferred until Phase 2).
 - _The new bindable **Esc** isn't yet compatible with vi mode!_
@@ -33,8 +35,8 @@ Lua support changed significantly.  Explore how to support backward compatibilit
 ## Features
 
 ### Other
-- Custom color for editing line.
-- Symlink support (displaying matches, and whether to append a path separator).
+- vi mode doesn't seem to support responding to M-C-letter or A-letter bindings, but interprets them as other things?
+- vi mode doesn't seem to support `\e[27;27~` but I don't yet understand why not.
 - `match.ignore_case` can't be working correctly, and probably readline settings should determine it.
 
 ## Issues Backlog [clink/issues](https://github.com/mridgers/clink/issues)
@@ -56,9 +58,9 @@ The Phase 2 goal is to produce a viable Beta Release with broader compatibility 
 > I really want CUA Selection support!  It seems either extremely invasive in Readline, or very invasive + uses a custom rendering routine.  Not sure yet the best way to proceed.
 
 ## Problems
-- `fnprint()` is still doing IO to figure out colors.  I think I've eliminated the rest of the stat calls, though.
-  - Matches from env PATH don't get colored properly because they don't include a full path.
+- `fnprint()` is still doing IO to figure out colors.  I think I've eliminated the rest of the `stat()` calls, though.  Matches from env PATH don't get colored properly -- `stat()` doesn't work because they don't include a full path, but using `stat_from_match_type()` should solve both performance and coloring.
 - Have a mode that passes all ANSI escape codes through to the console host (conhost, ConEmu, etc) to allow making use of things like extended terminal codes for 256 color and 24 bit color support, etc [#487](https://github.com/mridgers/clink/issues/487).
+  - Use a callback function for visible bell, rather than an ANSI escape code (which doesn't really make sense).
 - Changing terminal width makes 0.4.8 slowly "walk up the screen".  Changing terminal width makes master go haywire.  Probably more ecma48 terminal issues.
 - Over 39 thousand assertions in the unit test?!
 - Use `path::normalise` to clean up input like "\wbin\\\\cli" when using `complete` and `menu-complete`.
@@ -66,6 +68,8 @@ The Phase 2 goal is to produce a viable Beta Release with broader compatibility 
   - It seems more efficient to not invoke it until `complete` or `menu-complete` (etc).
   - But eventually in order to color arguments/etc the match pipeline will need to run while typing, so maybe leave it be.
 - Use [Microsoft Detours](https://github.com/microsoft/detours) instead of the current implementation in clink?
+- Toggling vi mode doesn't reload .inputrc until a new line, so $if conditional key bindings aren't active at first.
+- Symlink support (displaying matches, and whether to append a path separator).
 
 ## Features
 

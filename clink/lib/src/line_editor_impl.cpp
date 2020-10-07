@@ -225,22 +225,43 @@ void line_editor_impl::dispatch(int bind_group)
 //------------------------------------------------------------------------------
 bool line_editor_impl::is_bound(const char* seq, int len)
 {
-    if (len)
+    if (!len)
     {
-        if (m_bind_resolver.is_bound(seq, len))
-            return true;
-
-        // Checking readline's keymap is incorrect when a special bind group is
-        // active that should block on_input from reaching readline.  But the way
-        // that blocking is achieved is by adding a "" binding that matches
-        // everything not explicitly bound in the keymap.  So it works out
-        // naturally, without additional effort.
-        if (rl_function_of_keyseq_len(seq, len, nullptr, nullptr))
-            return true;
+LNope:
+        rl_ding();
+        return false;
     }
 
-    rl_ding();
-    return false;
+    // `quoted-insert` must accept all input (that's its whole purpose).
+    if (rl_is_insert_next_callback_pending())
+        return true;
+
+    // Various states should only accept "simple" input, i.e. not CSI sequences,
+    // so that unrecognized portions of key sequences don't bleed in as textual
+    // input.
+    const int simple_input_states = (
+        RL_STATE_MOREINPUT|RL_STATE_ISEARCH|RL_STATE_NSEARCH|RL_STATE_SEARCH|
+        RL_STATE_NUMERICARG|RL_STATE_CHARSEARCH);
+    if (RL_ISSTATE(simple_input_states))
+    {
+        if (seq[0] == '\x1b' && strcmp(seq, "\x1b[27;27~") != 0)
+            goto LNope;
+        return true;
+    }
+
+    // Eventually this will go away, but for now check if clink has a binding.
+    if (m_bind_resolver.is_bound(seq, len))
+        return true;
+
+    // Checking readline's keymap is incorrect when a special bind group is
+    // active that should block on_input from reaching readline.  But the way
+    // that blocking is achieved is by adding a "" binding that matches
+    // everything not explicitly bound in the keymap.  So it works out
+    // naturally, without additional effort.
+    if (rl_function_of_keyseq_len(seq, len, nullptr, nullptr))
+        return true;
+
+    goto LNope;
 }
 
 //------------------------------------------------------------------------------

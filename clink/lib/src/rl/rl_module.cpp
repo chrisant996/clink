@@ -22,6 +22,7 @@
 extern "C" {
 #include <readline/readline.h>
 #include <readline/rldefs.h>
+#include <readline/keymaps.h>
 #include <readline/xmalloc.h>
 #include <compat/dirent.h>
 #include <readline/posixdir.h>
@@ -599,6 +600,14 @@ static void terminal_fflush_thunk(FILE* stream)
         fflush(stream);
 }
 
+//------------------------------------------------------------------------------
+typedef const char* two_strings[2];
+static void bind_keyseq_list(const two_strings* list, Keymap map)
+{
+    for (int i = 0; list[i][0]; ++i)
+        rl_bind_keyseq_in_map(list[i][0], rl_named_function(list[i][1]), map);
+}
+
 
 
 //------------------------------------------------------------------------------
@@ -675,12 +684,12 @@ rl_module::rl_module(const char* shell_name, terminal_in* input)
         // these default key bindings.
         { "\\M-\\C-e",      "expand-env-var" },          // alt+ctrl+e
         { "\\M-\\C-f",      "expand-doskey-alias" },     // alt+ctrl+f
+        {}
     };
 
     int restore_convert = _rl_convert_meta_chars_to_ascii;
     _rl_convert_meta_chars_to_ascii = 1;
-    for (int i = 0; i < sizeof_array(ext_key_binds); ++i)
-        rl_bind_keyseq(ext_key_binds[i][0], rl_named_function(ext_key_binds[i][1]));
+    bind_keyseq_list(ext_key_binds, emacs_standard_keymap);
     _rl_convert_meta_chars_to_ascii = restore_convert;
 
     load_user_inputrc();

@@ -315,6 +315,7 @@ void win_terminal_in::read_console()
 }
 
 //------------------------------------------------------------------------------
+extern "C" int rl_editing_mode;
 void win_terminal_in::process_input(KEY_EVENT_RECORD const& record)
 {
     int key_char = record.uChar.UnicodeChar;
@@ -337,11 +338,8 @@ void win_terminal_in::process_input(KEY_EVENT_RECORD const& record)
 
     // Special treatment for escape.
     // TODO: 0.4.8 keyboard compatibility mode
-    if (key_char == 0x1b)
-    {
-        // BUGBUG: vi mode doesn't support this yet
+    if (key_char == 0x1b && rl_editing_mode != 0/*vi_mode*/)
         return push(terminfo::bindableEsc);
-    }
 
     // Special treatment for variations of tab and space.
     if (key_vk == VK_TAB && !m_buffer_count && g_modify_other_keys.get())

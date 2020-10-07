@@ -1033,6 +1033,14 @@ _rl_insert_next_callback (_rl_callback_generic_arg *data)
 
   return _rl_insert_next (count);
 }
+
+/* begin_clink_change */
+int
+rl_is_insert_next_callback_pending (void)
+{
+  return _rl_callback_func == _rl_insert_next_callback;
+}
+/* end_clink_change */
 #endif
   
 int
