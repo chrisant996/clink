@@ -715,6 +715,14 @@ rl_module::~rl_module()
 }
 
 //------------------------------------------------------------------------------
+void rl_module::set_keyseq_len(int len)
+{
+    assert(m_insert_next_len == 0);
+    if (rl_is_insert_next_callback_pending())
+        m_insert_next_len = len;
+}
+
+//------------------------------------------------------------------------------
 void rl_module::bind_input(binder& binder)
 {
     int default_group = binder.get_group();
@@ -817,6 +825,8 @@ void rl_module::on_input(const input& input, result& result, const context& cont
     unsigned int len = input.len;
     while (len && !m_done)
     {
+        bool is_quoted_insert = rl_is_insert_next_callback_pending();
+
         --len;
         rl_callback_read_char();
 
@@ -824,9 +834,18 @@ void rl_module::on_input(const input& input, result& result, const context& cont
         // work with how Clink uses Readline. So we do it here instead.
         if (term_in.data[-1] == 0x1b && is_inc_searching)
         {
+            assert(!is_quoted_insert);
             --term_in.data;
             ++len;
             is_inc_searching = 0;
+        }
+
+        if (m_insert_next_len > 0)
+        {
+            if (is_quoted_insert && --m_insert_next_len)
+                rl_quoted_insert(1, 0);
+            else
+                m_insert_next_len = 0;
         }
     }
 

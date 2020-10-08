@@ -10,14 +10,9 @@ Some additional work is needed to get a credible alpha release ready.
 
 ## Scripts
 - Convert some [clink-completions](https://github.com/vladimir-kotikov/clink-completions) scripts to the new syntax.
-  - `clink.is_match`
-  - `path.is_real_dir`
-  - `path.list_files`
 - Supply sample inputrc file(s).
 
 ## Bugs
-- `quoted-insert` doesn't work for M-C-letter combinations?
-- Why doesn't `\M-\C-j` do what it's bound to while in vi mode?
 
 ## Commands
 - Must convert all built-in Clink built-in keyboard-invoked functionality to instead be commands registered with the Readline library, so that they can be bound to any key and can be listed in the `show-rl-help` list.

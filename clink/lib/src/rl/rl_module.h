@@ -22,6 +22,8 @@ public:
                     rl_module(const char* shell_name, terminal_in* input);
                     ~rl_module();
 
+    void            set_keyseq_len(int len);
+
 private:
     virtual void    bind_input(binder& binder) override;
     virtual void    on_begin_line(const context& context) override;
@@ -37,4 +39,5 @@ private:
     bool            m_eof;
     str<8>          m_pager_color;
     str<8>          m_hidden_color;
+    int             m_insert_next_len = 0;
 };

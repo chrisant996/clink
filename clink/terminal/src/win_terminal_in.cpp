@@ -226,7 +226,7 @@ void win_terminal_in::read_console()
     SetConsoleCursorPosition(stdout_handle, csbi.dwCursorPosition);
 
     // Read input records sent from the terminal (aka conhost) until some
-    // input has beeen buffered.
+    // input has been buffered.
     unsigned int buffer_count = m_buffer_count;
     while (buffer_count == m_buffer_count)
     {
@@ -299,6 +299,8 @@ void win_terminal_in::read_console()
                                 for (unsigned int i = 0; i < new_chord.length(); ++i)
                                     push((unsigned int)new_chord.c_str()[i]);
                             }
+
+                            m_keys->set_keyseq_len(m_buffer_count);
                         }
                     }
                 }

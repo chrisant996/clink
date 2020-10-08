@@ -39,6 +39,7 @@ public:
 
     // key_tester
     virtual bool        is_bound(const char* seq, int len) override;
+    virtual void        set_keyseq_len(int len) override;
 
 private:
     typedef editor_module                       module;
