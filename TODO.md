@@ -9,7 +9,6 @@ Some additional work is needed to get a credible alpha release ready.
 - Describe the new argmatcher/etc syntax.
 
 ## Scripts
-- Convert some [clink-completions](https://github.com/vladimir-kotikov/clink-completions) scripts to the new syntax.
 - Supply sample inputrc file(s).
 
 ## Commands
@@ -25,7 +24,8 @@ The Phase 1 goal is to have a working version that for the most part meets or ex
 Lua support changed significantly.  Explore how to support backward compatibility for existing scripts.
 - _Done: The prompt filter now supports both 0.4.8 syntax and also the new 1.0.0 syntax._
 - _Done: The argmatcher/parser syntax now has shims in place that should make it backward compatible with existing scripts (pending further testing)._
-- Generator syntax is still a problem.  See commit f9c647b965789e7f14a7de762bd0b0ece9156783 for what changed.
+- _Done: The generator syntax is backward compatible by making the first argument once again be the end word.  See commit f9c647b965 for the breaking syntax change, and commit 265ac265dc for the backward compatibility change._
+- There might still be further syntax incompatibilities...?
 
 ## Features
 
