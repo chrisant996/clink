@@ -57,7 +57,11 @@ function clink.promptfilter(priority)
 end
 
 --------------------------------------------------------------------------------
--- Old API shim, for backward compatibility.
+--- -name:  clink.prompt.register_filter
+--- -arg:   filter
+--- -arg:   [priority:integer]
+--- -ret:   table
+--- Old API shim, for backward compatibility.
 clink.prompt = clink.prompt or {}
 function clink.prompt.register_filter(filter, priority)
     if priority == nil then

@@ -87,8 +87,29 @@ end
 --- -name:  clink.is_match
 --- -arg:   needle
 --- -arg:   candidate
---- Deprecated.  Exists only for backward compatibility, to minimize the changes
---- necessary to get old scripts working with the new API.
+--- Deprecated.  Old API shim; rxists only for backward compatibility, to
+--- minimize the changes necessary to get old scripts working with the new API.
 function clink.is_match(needle, candidate)
     return true
+end
+
+--------------------------------------------------------------------------------
+--- -name:  clink.arg.new_parser
+--- -arg:   ...
+--- -ret:   table
+--- Deprecated.  Old API shim; exists only for backward compatibility, to
+--- minimize the changes necessary to get old scripts working with the new API.
+clink.arg = clink.arg or {}
+function clink.arg.new_parser(...)
+    return clink.argmatcher():addarg(...)
+end
+
+--------------------------------------------------------------------------------
+--- -name:  clink.arg.register_parser
+--- -arg:   cmd
+--- -arg:   parser
+--- Deprecated.  Old API shim; exists only for backward compatibility, to
+--- minimize the changes necessary to get old scripts working with the new API.
+function clink.arg.register_parser(cmd, parser)
+    clink.argmatcher(cmd):addarg(parser)
 end
