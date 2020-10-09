@@ -13,6 +13,11 @@
 #include <assert.h>
 
 //------------------------------------------------------------------------------
+extern bool is_scroll_mode();
+
+
+
+//------------------------------------------------------------------------------
 static setting_bool g_modify_other_keys(
     "terminal.modify_other_keys",
     "Use XTerm modifyOtherKeys sequences",
@@ -214,6 +219,7 @@ void win_terminal_in::read_console()
     // jump around as the screen's drawn.
     struct cursor_scope {
         cursor_scope()  { set_cursor_visibility(true); }
+// TODO: I think this is what broke cursor visibility in the lua debugger.
         ~cursor_scope() { set_cursor_visibility(false); }
     } _cs;
 
@@ -223,7 +229,8 @@ void win_terminal_in::read_console()
     HANDLE stdout_handle = GetStdHandle(STD_OUTPUT_HANDLE);
     CONSOLE_SCREEN_BUFFER_INFO csbi;
     GetConsoleScreenBufferInfo(stdout_handle, &csbi);
-    SetConsoleCursorPosition(stdout_handle, csbi.dwCursorPosition);
+    if (!is_scroll_mode())
+        SetConsoleCursorPosition(stdout_handle, csbi.dwCursorPosition);
 
     // Read input records sent from the terminal (aka conhost) until some
     // input has been buffered.

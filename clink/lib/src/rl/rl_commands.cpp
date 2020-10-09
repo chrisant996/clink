@@ -9,6 +9,7 @@
 #include <core/log.h>
 #include <core/path.h>
 #include <core/settings.h>
+#include <terminal/printer.h>
 
 extern "C" {
 #include <readline/readline.h>
@@ -199,4 +200,124 @@ int clink_insert_dot_dot(int count, int invoking_key)
     rl_buffer->insert(str.c_str());
 
     return 0;
+}
+
+
+
+//------------------------------------------------------------------------------
+enum SCRMODE
+{
+    SCR_BYLINE,
+    SCR_BYPAGE,
+    SCR_TOEND,
+};
+
+//------------------------------------------------------------------------------
+extern "C" int _rl_vis_botlin;
+extern "C" int _rl_last_v_pos;
+
+//------------------------------------------------------------------------------
+int ScrollConsoleRelative(HANDLE h, int direction, SCRMODE mode)
+{
+    // Get the current screen buffer window position.
+    CONSOLE_SCREEN_BUFFER_INFO csbiInfo;
+    if (!GetConsoleScreenBufferInfo(h, &csbiInfo))
+        return 0;
+
+    // Calculate the bottom line of the readline edit line.
+    SHORT bottom_Y = csbiInfo.dwCursorPosition.Y + (_rl_vis_botlin - _rl_last_v_pos);
+bottom_Y = csbiInfo.dwSize.Y - 1;
+
+    // Calculate the new window position.
+    SMALL_RECT srWindow = csbiInfo.srWindow;
+    SHORT cy = srWindow.Bottom - srWindow.Top;
+    if (mode == SCR_TOEND)
+    {
+        if (direction <= 0)
+            srWindow.Top = -1;
+        else
+            srWindow.Bottom = csbiInfo.dwSize.Y;
+    }
+    else
+    {
+        if (mode == SCR_BYPAGE)
+            direction *= csbiInfo.srWindow.Bottom - csbiInfo.srWindow.Top;
+        srWindow.Top += (SHORT)direction;
+        srWindow.Bottom += (SHORT)direction;
+    }
+
+    // Check whether the window is too close to the screen buffer top.
+    if (srWindow.Bottom >= bottom_Y)
+    {
+        srWindow.Bottom = bottom_Y;
+        srWindow.Top = srWindow.Bottom - cy;
+    }
+    if (srWindow.Top < 0)
+    {
+        srWindow.Top = 0;
+        srWindow.Bottom = srWindow.Top + cy;
+    }
+
+    // Set the new window position.
+    if (srWindow.Top == csbiInfo.srWindow.Top ||
+        !SetConsoleWindowInfo(h, TRUE/*fAbsolute*/,  &srWindow))
+        return 0;
+
+    // Tell printer so it can work around a problem with WriteConsoleW.
+    set_scrolled_screen_buffer();
+
+    return srWindow.Top - csbiInfo.srWindow.Top;
+}
+
+//------------------------------------------------------------------------------
+int clink_scroll_line_up(int count, int invoking_key)
+{
+    ScrollConsoleRelative(GetStdHandle(STD_OUTPUT_HANDLE), -1, SCR_BYLINE);
+    return 0;
+}
+
+//------------------------------------------------------------------------------
+int clink_scroll_line_down(int count, int invoking_key)
+{
+    ScrollConsoleRelative(GetStdHandle(STD_OUTPUT_HANDLE), 1, SCR_BYLINE);
+    return 0;
+}
+
+//------------------------------------------------------------------------------
+int clink_scroll_page_up(int count, int invoking_key)
+{
+    ScrollConsoleRelative(GetStdHandle(STD_OUTPUT_HANDLE), -1, SCR_BYPAGE);
+    return 0;
+}
+
+//------------------------------------------------------------------------------
+int clink_scroll_page_down(int count, int invoking_key)
+{
+    ScrollConsoleRelative(GetStdHandle(STD_OUTPUT_HANDLE), 1, SCR_BYPAGE);
+    return 0;
+}
+
+//------------------------------------------------------------------------------
+int clink_scroll_top(int count, int invoking_key)
+{
+    ScrollConsoleRelative(GetStdHandle(STD_OUTPUT_HANDLE), -1, SCR_TOEND);
+    return 0;
+}
+
+//------------------------------------------------------------------------------
+int clink_scroll_bottom(int count, int invoking_key)
+{
+    ScrollConsoleRelative(GetStdHandle(STD_OUTPUT_HANDLE), 1, SCR_TOEND);
+    return 0;
+}
+
+//------------------------------------------------------------------------------
+bool is_scroll_mode()
+{
+    return (rl_last_func == clink_scroll_line_up ||
+            rl_last_func == clink_scroll_line_down ||
+            rl_last_func == clink_scroll_page_up ||
+            rl_last_func == clink_scroll_page_down ||
+            rl_last_func == clink_scroll_top ||
+            rl_last_func == clink_scroll_bottom);
 }

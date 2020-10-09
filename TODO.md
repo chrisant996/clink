@@ -13,9 +13,11 @@ Some additional work is needed to get a credible alpha release ready.
 - Supply sample inputrc file(s).
 
 ## Bugs
+- Cursor is invisible in the lua debugger.
+- `{my work workspace}> o`**Ctrl+Space**x2 => lists various "out..." completions that seemingly should not be included -- maybe I'm not understanding one of the `exec.*` clink settings?
 
 ## Commands
-- Must convert all built-in Clink built-in keyboard-invoked functionality to instead be commands registered with the Readline library, so that they can be bound to any key and can be listed in the `show-rl-help` list.
+- Must convert all built-in Clink built-in keyboard-invoked functionality to instead be commands registered with the Readline library, so that they can be bound to any key and can be listed in the `show-rl-help` list.  Just `pager_impl` and `show_rl_help` remain...
 - Must have a way to list extended key bindings (but user-friendly key binding names can be deferred until Phase 2).
 
 <br>
@@ -26,8 +28,9 @@ The Phase 1 goal is to have a working version that for the most part meets or ex
 
 ## LUA
 Lua support changed significantly.  Explore how to support backward compatibility for existing scripts.
-- The prompt filter now supports both 0.4.8 syntax and also the new 1.0.0 syntax.
-- The argmatcher/generator syntax is different enough that it's not clear how to support both the old and new syntax concurrently.  I still hope to be able to support both, but it's probably simpler to just update existing scripts to the new API.
+- _Done: The prompt filter now supports both 0.4.8 syntax and also the new 1.0.0 syntax._
+- _Done: The argmatcher/parser syntax now has shims in place that should make it backward compatible with existing scripts (pending further testing)._
+- Generator syntax is still a problem.  See commit f9c647b965789e7f14a7de762bd0b0ece9156783 for what changed.
 
 ## Features
 
@@ -67,6 +70,7 @@ The Phase 2 goal is to produce a viable Beta Release with broader compatibility 
 - vi mode doesn't seem to support `\e[27;27~` even when explicitly bound, but I don't yet understand why not.
 - Toggling vi mode doesn't reload .inputrc until a new line, so $if conditional key bindings aren't active at first.
 - Symlink support (displaying matches, and whether to append a path separator).
+- Perturbed PROMPT envvar is visible in child processes (e.g. piped shell in various file editors).  There might be no way around that...
 
 ## Features
 

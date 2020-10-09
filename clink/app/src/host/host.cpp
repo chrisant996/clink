@@ -10,7 +10,6 @@
 #include "terminal/terminal_out.h"
 #include "terminal/printer.h"
 #include "utils/app_context.h"
-#include "utils/scroller.h"
 
 #include <core/globber.h>
 #include <core/os.h>
@@ -240,9 +239,6 @@ bool host::edit_line(const char* prompt, str_base& out)
 
     // Create the editor and add components to it.
     line_editor* editor = line_editor_create(desc);
-
-    scroller_module scroller;
-    editor->add_module(scroller);
 
     editor->add_generator(lua);
     editor->add_generator(file_match_generator());

@@ -8,6 +8,15 @@
 #include <core/str.h>
 
 //------------------------------------------------------------------------------
+static bool s_is_scrolled = false;
+void set_scrolled_screen_buffer()
+{
+    s_is_scrolled = true;
+}
+
+
+
+//------------------------------------------------------------------------------
 printer::printer(terminal_out& terminal)
 : m_terminal(terminal)
 {
@@ -29,6 +38,17 @@ void printer::print(const char* data, int bytes)
 
     if (m_next_attr != m_set_attr)
         flush_attributes();
+
+    // HACK: Work around a problem where WriteConsoleW(" ") after using
+    // ScrollConsoleRelative() to scroll the cursor line past the bottom of the
+    // screen window clears screen attributes from the prompt (but not if
+    // scrolled the other direction, and not if the scrollbar was used to scroll
+    // the screen buffer!?).
+    if (s_is_scrolled)
+    {
+        m_terminal.flush();
+        s_is_scrolled = false;
+    }
 
     m_terminal.write(data, bytes);
 }

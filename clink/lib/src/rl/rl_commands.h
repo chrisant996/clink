@@ -12,3 +12,11 @@ int     clink_copy_line(int count, int invoking_key);
 int     clink_copy_cwd(int count, int invoking_key);
 int     clink_up_directory(int count, int invoking_key);
 int     clink_insert_dot_dot(int count, int invoking_key);
+
+//------------------------------------------------------------------------------
+int     clink_scroll_line_up(int count, int invoking_key);
+int     clink_scroll_line_down(int count, int invoking_key);
+int     clink_scroll_page_up(int count, int invoking_key);
+int     clink_scroll_page_down(int count, int invoking_key);
+int     clink_scroll_top(int count, int invoking_key);
+int     clink_scroll_bottom(int count, int invoking_key);

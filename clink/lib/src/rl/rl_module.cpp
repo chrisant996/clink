@@ -665,6 +665,12 @@ rl_module::rl_module(const char* shell_name, terminal_in* input)
         rl_add_funmap_entry("clink-copy-cwd", clink_copy_cwd);
         rl_add_funmap_entry("clink-up-directory", clink_up_directory);
         rl_add_funmap_entry("clink-insert-dot-dot", clink_insert_dot_dot);
+        rl_add_funmap_entry("clink-scroll-line-up", clink_scroll_line_up);
+        rl_add_funmap_entry("clink-scroll-line-down", clink_scroll_line_down);
+        rl_add_funmap_entry("clink-scroll-page-up", clink_scroll_page_up);
+        rl_add_funmap_entry("clink-scroll-page-down", clink_scroll_page_down);
+        rl_add_funmap_entry("clink-scroll-top", clink_scroll_top);
+        rl_add_funmap_entry("clink-scroll-bottom", clink_scroll_bottom);
     }
 
     // Bind extended keys so editing follows Windows' conventions.
@@ -694,6 +700,14 @@ rl_module::rl_module(const char* shell_name, terminal_in* input)
         { "\\M-\\C-e",      "clink-expand-env-var" },    // alt-ctrl-e
         { "\\M-\\C-f",      "clink-expand-doskey-alias" }, // alt-ctrl-f
         { "\\e[5;5~",       "clink-up-directory" },      // ctrl-pgup
+
+        { "\\e[1;3H",       "clink-scroll-top" },        // alt-home
+        { "\\e[1;3F",       "clink-scroll-bottom" },     // alt-end
+        { "\\e[5;3~",       "clink-scroll-page-up" },    // alt-pgup
+        { "\\e[6;3~",       "clink-scroll-page-down" },  // alt-pgdn
+        { "\\e[1;3A",       "clink-scroll-line-up" },    // alt-up
+        { "\\e[1;3B",       "clink-scroll-line-down" },  // alt-down
+
         {}
     };
 
