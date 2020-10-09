@@ -25,7 +25,14 @@ Lua support changed significantly.  Explore how to support backward compatibilit
 - _Done: The prompt filter now supports both 0.4.8 syntax and also the new 1.0.0 syntax._
 - _Done: The argmatcher/parser syntax now has shims in place that should make it backward compatible with existing scripts (pending further testing)._
 - _Done: The generator syntax is backward compatible by making the first argument once again be the end word.  See commit f9c647b965 for the breaking syntax change, and commit 265ac265dc for the backward compatibility change._
-- There might still be further syntax incompatibilities...?
+- `dotnet.lua:38`: attempt to call method 'add_flags' (a nil value)
+- `net.lua:31`: attempt to call method 'flatten_argument' (a nil value)
+- `pip.lua:121`: attempt to call method 'add_flags' (a nil value)
+- `pipenv.lua:54`: attempt to call method 'add_flags' (a nil value)
+- `scoop.lua:296`: attempt to call method 'set_flags' (a nil value)
+- `vagrant.lua:137`: attempt to call method 'flatten_argument' (a nil value)
+- `git_prompt.lua:83`: attempt to index field 'clink.prompt.value' (a nil value)
+- There might still be other syntax incompatibilities...?
 
 ## Features
 
