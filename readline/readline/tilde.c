@@ -347,7 +347,7 @@ tilde_expand_word (const char *filename)
       expansion = sh_get_env_value ("HOME");
 #if defined (_WIN32)
       if (expansion == 0)
-	expansion = sh_get_env_value ("APPDATA");
+	expansion = sh_get_env_value ("USERPROFILE");
 #endif
 
       /* If there is no HOME variable, look up the directory in
