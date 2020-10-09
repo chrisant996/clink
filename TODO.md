@@ -12,9 +12,6 @@ Some additional work is needed to get a credible alpha release ready.
 - Convert some [clink-completions](https://github.com/vladimir-kotikov/clink-completions) scripts to the new syntax.
 - Supply sample inputrc file(s).
 
-## Bugs
-- Cursor is invisible in the lua debugger.
-
 ## Commands
 - Must have a way to list extended key bindings (but user-friendly key binding names can be deferred until Phase 2).
 

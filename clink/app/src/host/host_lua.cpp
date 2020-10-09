@@ -25,6 +25,24 @@ static setting_str g_clink_path(
     "");
 
 //------------------------------------------------------------------------------
+extern "C" int show_cursor(int visible)
+{
+    int was_visible = 0;
+
+    HANDLE handle = GetStdHandle(STD_OUTPUT_HANDLE);
+    CONSOLE_CURSOR_INFO info;
+    was_visible = (GetConsoleCursorInfo(handle, &info) && info.bVisible);
+
+    if (!was_visible != !visible)
+    {
+        info.bVisible = !!visible;
+        SetConsoleCursorInfo(handle, &info);
+    }
+
+    return was_visible;
+}
+
+//------------------------------------------------------------------------------
 host_lua::host_lua(const char* script_path)
 : m_generator(m_state)
 {
