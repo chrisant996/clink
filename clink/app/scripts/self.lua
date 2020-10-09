@@ -22,7 +22,7 @@ local autorun = clink.argmatcher()
 )
 
 --------------------------------------------------------------------------------
-local function set_handler(word_index, line_state)
+local function set_handler(match_word, word_index, line_state)
     local name = ""
     if word_index > 3 then
         name = line_state:getword(word_index - 1)

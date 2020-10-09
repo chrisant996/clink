@@ -269,7 +269,7 @@ function _argmatcher:_generate(line_state, match_builder)
 
         for _, i in ipairs(arg) do
             if type(i) == "function" then
-                local j = i(word_count, line_state, match_builder)
+                local j = i(line_state:getendword(), word_count, line_state, match_builder)
                 if type(j) ~= "table" then
                     return j or false
                 end
