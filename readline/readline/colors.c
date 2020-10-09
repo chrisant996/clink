@@ -62,6 +62,9 @@
 
 #include "xmalloc.h"
 #include "colors.h"
+/* begin_clink_change */
+#include "rlprivate.h"
+/* end_clink_change */
 
 static bool is_colored (enum indicator_no type);
 static void restore_default_color (void);
@@ -143,7 +146,10 @@ _rl_print_pager_color (void)
 
 /* Returns whether any color sequence was printed. */
 bool
-_rl_print_color_indicator (const char *f)
+/* begin_clink_change */
+//_rl_print_color_indicator (const char *f)
+_rl_print_color_indicator (const char *f, unsigned char match_type)
+/* end_clink_change */
 {
   enum indicator_no colored_filetype;
   COLOR_EXT_TYPE *ext;	/* Color extension */
@@ -167,6 +173,11 @@ _rl_print_color_indicator (const char *f)
       name = filename;
     }
 
+/* begin_clink_change */
+  if (match_type)
+    stat_ok = stat_from_match_type (match_type, name, &astat);
+  else
+/* end_clink_change */
 #if defined (HAVE_LSTAT)
   stat_ok = lstat(name, &astat);
 #else
@@ -286,19 +297,29 @@ _rl_print_color_indicator (const char *f)
     }
 
 /* begin_clink_change */
-  if (colored_filetype == C_FILE || colored_filetype == C_DIR)
+  if (match_type)
     {
-      if (_rl_hidden_color && is_hidden (name))
-        {
-          free (filename);	/* NULL or savestring return value */
-          /* Need to reset so not dealing with attribute combinations */
-          if (is_colored (C_NORM))
-            restore_default_color ();
-          _rl_put_indicator (&_rl_color_indicator[C_LEFT]);
-          fwrite(_rl_hidden_color, strlen(_rl_hidden_color), 1, rl_outstream);
-          _rl_put_indicator (&_rl_color_indicator[C_RIGHT]);
-          return 0;
-        }
+    const char* override_color = 0;
+    if (colored_filetype == C_FILE || colored_filetype == C_DIR)
+      {
+        if (_rl_hidden_color &&
+            IS_MATCH_TYPE_HIDDEN (match_type) &&
+            (IS_MATCH_TYPE_FILE (match_type) || IS_MATCH_TYPE_DIR (match_type)))
+          override_color = _rl_hidden_color;
+      }
+    else if (IS_MATCH_TYPE_ALIAS (match_type))
+      override_color = _rl_alias_color;
+    if (override_color)
+      {
+        free(filename); /* NULL or savestring return value */
+        /* Need to reset so not dealing with attribute combinations */
+        if (is_colored(C_NORM))
+          restore_default_color();
+        _rl_put_indicator(&_rl_color_indicator[C_LEFT]);
+        fwrite(override_color, strlen(override_color), 1, rl_outstream);
+        _rl_put_indicator(&_rl_color_indicator[C_RIGHT]);
+        return 0;
+      }
     }
 /* end_clink_change */
 

@@ -114,7 +114,10 @@ static int stat_char PARAMS((char *, char));
 #endif
 
 #if defined (COLOR_SUPPORT)
-static int colored_stat_start PARAMS((const char *));
+/* begin_clink_change */
+//static int colored_stat_start PARAMS((const char *));
+static int colored_stat_start PARAMS((const char *, unsigned char));
+/* end_clink_change */
 static void colored_stat_end PARAMS((void));
 static int colored_prefix_start PARAMS((void));
 static void colored_prefix_end PARAMS((void));
@@ -131,7 +134,10 @@ static int get_y_or_n PARAMS((int));
 static int _rl_internal_pager PARAMS((int));
 static char *printable_part PARAMS((char *));
 static int fnwidth PARAMS((const char *));
-static int fnprint PARAMS((const char *, int, const char *));
+/* begin_clink_change */
+//static int fnprint PARAMS((const char *, int, const char *));
+static int fnprint PARAMS((const char *, int, const char *, unsigned char));
+/* end_clink_change */
 static int print_filename PARAMS((char *, char *, int));
 
 static char **gen_completion_matches PARAMS((char *, int, int, rl_compentry_func_t *, int, int));
@@ -409,6 +415,7 @@ int rl_inhibit_completion;
 /* begin_clink_change */
 const char *_rl_pager_color = 0;
 const char *_rl_hidden_color = 0;
+const char *_rl_alias_color = 0;
 rl_read_key_hook_func_t *rl_read_key_hook = 0;
 int rl_completion_matches_include_type = 0;
 static no_compute_lcd = 0;
@@ -630,19 +637,36 @@ path_isdir (const char *filename)
 
 /* begin_clink_change */
 static int
-stat_from_match_type (char match_type, struct stat* finfo)
+is_exec (const char* fn)
+{
+  const char* ext = strrchr (fn, '.');
+  /* TODO: Look at PATHEXT? */
+  return (ext && (_rl_stricmp (ext, ".exe") == 0 ||
+                  _rl_stricmp (ext, ".cmd") == 0 ||
+                  _rl_stricmp (ext, ".bat") == 0 ||
+                  _rl_stricmp (ext, ".com") == 0));
+}
+
+int
+stat_from_match_type (unsigned char match_type, const char* fn, struct stat* finfo)
 {
   /* The match provider already knew the match type, and they can include the
      match type to save us from wasting IO re-testing the match type. */
   finfo->st_mode = 0;
-  if (match_type == MATCH_TYPE_DIR)
+
+  if (IS_MATCH_TYPE_DIR (match_type))
     finfo->st_mode |= S_IFDIR;
 #ifdef S_ISLNK
-  else if (match_type == MATCH_TYPE_LINK)
+  else if (IS_MATCH_TYPE_LINK (match_type))
     finfo->st_mode |= S_IFLNK;
 #endif
-  else if (match_type != MATCH_TYPE_WORD)
+  else if (!IS_MATCH_TYPE_WORD (match_type) &&
+           !IS_MATCH_TYPE_ALIAS (match_type))
     finfo->st_mode |= S_IFREG;
+
+  if (!S_ISDIR (finfo->st_mode) && is_exec (fn))
+    finfo->st_mode |= S_IEXEC;
+
   return 0;
 }
 /* end_clink_change */
@@ -686,7 +710,7 @@ stat_char (char *filename, char match_type)
     
 /* begin_clink_change */
   if (match_type >= MATCH_TYPE_NONE)
-    r = stat_from_match_type (match_type, &finfo);
+    r = stat_from_match_type (match_type, fn, &finfo);
   else
 /* end_clink_change */
 #if defined (HAVE_LSTAT) && defined (S_ISLNK)
@@ -733,11 +757,10 @@ stat_char (char *filename, char match_type)
       char *ext;
 
       /* Windows doesn't do access and X_OK; check file extension instead */
-      ext = strrchr (fn, '.');
-      if (ext && (_rl_stricmp (ext, ".exe") == 0 ||
-		  _rl_stricmp (ext, ".cmd") == 0 ||
-		  _rl_stricmp (ext, ".bat") == 0 ||
-		  _rl_stricmp (ext, ".com") == 0))
+/* begin_clink_change */
+      //(condition was written inline)
+      if (is_exec (fn))
+/* end_clink_change */
 	character = '*';
 #else
       if (access (filename, X_OK) == 0)
@@ -752,10 +775,16 @@ stat_char (char *filename, char match_type)
 
 #if defined (COLOR_SUPPORT)
 static int
-colored_stat_start (const char *filename)
+/* begin_clink_change */
+//colored_stat_start (const char *filename)
+colored_stat_start (const char *filename, unsigned char match_type)
+/* end_clink_change */
 {
   _rl_set_normal_color ();
-  return (_rl_print_color_indicator (filename));
+/* begin_clink_change */
+  //return (_rl_print_color_indicator (filename));
+  return (_rl_print_color_indicator (filename, match_type));
+/* end_clink_change */
 }
 
 static void
@@ -795,7 +824,7 @@ printable_part (char *pathname)
 /* begin_clink_change */
   if (rl_completion_matches_include_type)
     {
-      if (pathname[0] == MATCH_TYPE_WORD)
+      if (IS_MATCH_TYPE_WORD(pathname[0]))
 	return (pathname + 1);			/* don't need to do anything */
       pathname++;
     }
@@ -883,7 +912,10 @@ fnwidth (const char *string)
 #define ELLIPSIS_LEN	3
 
 static int
-fnprint (const char *to_print, int prefix_bytes, const char *real_pathname)
+/* begin_clink_change */
+//fnprint (const char *to_print, int prefix_bytes, const char *real_pathname)
+fnprint (const char *to_print, int prefix_bytes, const char *real_pathname, unsigned char match_type)
+/* end_clink_change */
 {
   int printed_len, w;
   const char *s;
@@ -913,7 +945,10 @@ fnprint (const char *to_print, int prefix_bytes, const char *real_pathname)
 
 #if defined (COLOR_SUPPORT)
   if (_rl_colored_stats && (prefix_bytes == 0 || _rl_colored_completion_prefix <= 0))
-    colored_stat_start (real_pathname);
+/* begin_clink_change */
+    //colored_stat_start (real_pathname);
+    colored_stat_start (real_pathname, match_type);
+/* end_clink_change */
 #endif
 
   if (prefix_bytes && _rl_completion_prefix_display_length > 0)
@@ -991,7 +1026,10 @@ fnprint (const char *to_print, int prefix_bytes, const char *real_pathname)
 	  /* printed bytes should never be > but check for paranoia's sake */
 	  colored_prefix_end ();
 	  if (_rl_colored_stats)
-	    colored_stat_start (real_pathname);		/* XXX - experiment */
+/* begin_clink_change */
+	    //colored_stat_start (real_pathname);		/* XXX - experiment */
+	    colored_stat_start (real_pathname, match_type);	/* XXX - experiment */
+/* end_clink_change */
 #endif
 	  common_prefix_len = 0;
 	}
@@ -1018,7 +1056,7 @@ print_filename (char *to_print, char *full_pathname, int prefix_bytes)
   char tmp_slash[3];
 
 /* begin_clink_change */
-  char match_type = (rl_completion_matches_include_type ? full_pathname[0] : -1);
+  unsigned char match_type = (rl_completion_matches_include_type ? full_pathname[0] : 0);
   if (rl_completion_matches_include_type)
     full_pathname++;
 /* end_clink_change */
@@ -1028,7 +1066,10 @@ print_filename (char *to_print, char *full_pathname, int prefix_bytes)
   /* Defer printing if we want to prefix with a color indicator */
   if (_rl_colored_stats == 0 || rl_filename_completion_desired == 0)
 #endif
-    printed_len = fnprint (to_print, prefix_bytes, to_print);
+/* begin_clink_change */
+    //printed_len = fnprint (to_print, prefix_bytes, to_print);
+    printed_len = fnprint (to_print, prefix_bytes, to_print, match_type);
+/* end_clink_change */
 
   if (rl_filename_completion_desired && (
 #if defined (VISIBLE_STATS)
@@ -1110,7 +1151,7 @@ print_filename (char *to_print, char *full_pathname, int prefix_bytes)
 		}
 /* begin_clink_change */
 	      //if (path_isdir (new_full_pathname))
-	      if (match_type <= MATCH_TYPE_NONE ? path_isdir (new_full_pathname) : match_type == MATCH_TYPE_DIR)
+	      if (match_type <= MATCH_TYPE_NONE ? path_isdir (new_full_pathname) : IS_MATCH_TYPE_DIR(match_type))
 /* end_clink_change */
 		extension_char = rl_preferred_path_separator;
 	    }
@@ -1118,7 +1159,10 @@ print_filename (char *to_print, char *full_pathname, int prefix_bytes)
 	  /* Move colored-stats code inside fnprint() */
 #if defined (COLOR_SUPPORT)
 	  if (_rl_colored_stats)
-	    printed_len = fnprint (to_print, prefix_bytes, new_full_pathname);
+/* begin_clink_change */
+	    //printed_len = fnprint (to_print, prefix_bytes, new_full_pathname);
+	    printed_len = fnprint (to_print, prefix_bytes, new_full_pathname, match_type);
+/* end_clink_change */
 #endif
 
 	  xfree (new_full_pathname);
@@ -1138,14 +1182,17 @@ print_filename (char *to_print, char *full_pathname, int prefix_bytes)
 /* begin_clink_change */
 	    //if (_rl_complete_mark_directories && path_isdir (s))
 	    if (_rl_complete_mark_directories &&
-		(match_type <= MATCH_TYPE_NONE ? path_isdir (s) : match_type == MATCH_TYPE_DIR))
+		((!match_type || IS_MATCH_TYPE_NONE(match_type)) ? path_isdir (s) : IS_MATCH_TYPE_DIR(match_type)))
 /* end_clink_change */
 	      extension_char = rl_preferred_path_separator;
 
 	  /* Move colored-stats code inside fnprint() */
 #if defined (COLOR_SUPPORT)
 	  if (_rl_colored_stats)
-	    printed_len = fnprint (to_print, prefix_bytes, s);
+/* begin_clink_change */
+	    //printed_len = fnprint (to_print, prefix_bytes, s);
+	    printed_len = fnprint (to_print, prefix_bytes, s, match_type);
+/* end_clink_change */
 #endif
 	}
 
@@ -1167,7 +1214,7 @@ print_filename (char *to_print, char *full_pathname, int prefix_bytes)
 	  if (extension_char == rl_preferred_path_separator)
       {
 	      s = tilde_expand (full_pathname);
-        colored_stat_start (s);
+        colored_stat_start (s, match_type);
         xfree (s);
       }
 #endif
@@ -2047,7 +2094,7 @@ display_matches (char **matches)
 	  vis_stat = -1;
 	  if (rl_filename_completion_desired &&
 	      rl_completion_matches_include_type &&
-	      matches[i][0] == MATCH_TYPE_DIR && (
+	      IS_MATCH_TYPE_DIR(matches[i][0]) && (
 #if defined (VISIBLE_STATS)
 	      rl_visible_stats ||
 #endif
@@ -2272,7 +2319,7 @@ append_to_match (char *text, int delimiter, int quote_char, int nontrivial_match
  * Enable match providers to share the match type for efficiency.
  */
       if (rl_completion_matches_include_type && match_type > MATCH_TYPE_NONE)
-	s = stat_from_match_type (match_type, &finfo);
+	s = stat_from_match_type (match_type, filename, &finfo);
       else
 /* end_clink_change */
       s = (nontrivial_match && rl_completion_mark_symlink_dirs == 0)

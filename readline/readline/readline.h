@@ -627,9 +627,19 @@ extern char rl_preferred_path_separator;
    match is bit flags about the match type. */
 #define MATCH_TYPE_NONE		1
 #define MATCH_TYPE_WORD		2
-#define MATCH_TYPE_FILE		3
-#define MATCH_TYPE_DIR		4
-#define MATCH_TYPE_LINK		5
+#define MATCH_TYPE_ALIAS		3
+#define MATCH_TYPE_FILE		4
+#define MATCH_TYPE_DIR		5
+#define MATCH_TYPE_LINK		6
+#define MATCH_TYPE_MASK		0x0f
+#define MATCH_TYPE_HIDDEN		0x80
+#define IS_MATCH_TYPE_NONE(x)	(((x) & MATCH_TYPE_MASK) == MATCH_TYPE_NONE)
+#define IS_MATCH_TYPE_WORD(x)	(((x) & MATCH_TYPE_MASK) == MATCH_TYPE_WORD)
+#define IS_MATCH_TYPE_ALIAS(x)	(((x) & MATCH_TYPE_MASK) == MATCH_TYPE_ALIAS)
+#define IS_MATCH_TYPE_FILE(x)	(((x) & MATCH_TYPE_MASK) == MATCH_TYPE_FILE)
+#define IS_MATCH_TYPE_DIR(x)	(((x) & MATCH_TYPE_MASK) == MATCH_TYPE_DIR)
+#define IS_MATCH_TYPE_LINK(x)	(((x) & MATCH_TYPE_MASK) == MATCH_TYPE_LINK)
+#define IS_MATCH_TYPE_HIDDEN(x)	(((x) & MATCH_TYPE_HIDDEN) == MATCH_TYPE_HIDDEN)
 extern int rl_completion_matches_include_type;
 /* end_clink_change */
 
@@ -898,6 +908,9 @@ extern const char* _rl_pager_color;
 /* This is a terminal sequence for the hidden file color.  The CSI and "m" are
    automatically added when writing it to the terminal. */
 extern const char* _rl_hidden_color;
+/* This is a terminal sequence for the alias color.  The CSI and "m" are
+   automatically added when writing it to the terminal. */
+extern const char* _rl_alias_color;
 /* This callback allows an application to provide keyboard input to readline
    even in modal input situations like the pager. */
 extern rl_read_key_hook_func_t *rl_read_key_hook;

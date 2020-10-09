@@ -17,6 +17,7 @@ enum {
 
 int     get_path_type(const char* path);
 int     get_file_size(const char* path);
+bool    is_hidden(const char* path);
 void    get_current_dir(str_base& out);
 bool    set_current_dir(const char* dir);
 bool    make_dir(const char* dir);

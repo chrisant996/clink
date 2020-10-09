@@ -55,11 +55,12 @@ static class : public match_generator
         buffer << "*";
 
         int st_mode = 0;
+        bool hidden = false;
         globber globber(buffer.c_str());
         globber.hidden(g_glob_hidden.get());
         globber.system(g_glob_system.get());
-        while (globber.next(buffer, false, &st_mode))
-            builder.add_match(buffer.c_str(), to_match_type(st_mode));
+        while (globber.next(buffer, false, &st_mode, &hidden))
+            builder.add_match(buffer.c_str(), to_match_type(st_mode, hidden));
 
         return true;
     }

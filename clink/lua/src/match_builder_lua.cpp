@@ -103,6 +103,7 @@ bool match_builder_lua::add_match_impl(lua_State* state, int stack_index)
             --stack_index;
 
         match_desc desc = {};
+        desc.type = match_type::none;
 
         lua_pushliteral(state, "match");
         lua_rawget(state, stack_index);
@@ -128,8 +129,11 @@ bool match_builder_lua::add_match_impl(lua_State* state, int stack_index)
             desc.suffix = lua_tostring(state, -1)[0];
         lua_pop(state, 1);
 
-        // TODO: supply actual match type.
-        desc.type = match_type::none;
+        lua_pushliteral(state, "type");
+        lua_rawget(state, stack_index);
+        if (lua_isstring(state, -1))
+            desc.set_type(lua_tostring(state, -1));
+        lua_pop(state, 1);
 
         if (desc.match != nullptr)
             return m_builder.add_match(desc);

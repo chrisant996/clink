@@ -55,7 +55,7 @@ globber::~globber()
 }
 
 //------------------------------------------------------------------------------
-bool globber::next(str_base& out, bool rooted, int* st_mode)
+bool globber::next(str_base& out, bool rooted, int* st_mode, bool* hidden)
 {
     if (m_handle == nullptr)
         return false;
@@ -109,6 +109,9 @@ bool globber::next(str_base& out, bool rooted, int* st_mode)
             mode |= _S_IFREG;
         *st_mode = mode;
     }
+
+    if (hidden)
+        *hidden = !!(attr & FILE_ATTRIBUTE_HIDDEN);
 
     return true;
 }

@@ -7,26 +7,65 @@
 #include <core/base.h>
 #include <core/str.h>
 #include <core/str_compare.h>
+#include <core/str_tokeniser.h>
 #include <sys/stat.h>
 #include <readline/readline.h> // for rl_last_path_separator
 
 //------------------------------------------------------------------------------
-match_type to_match_type(int mode)
+match_type to_match_type(int mode, bool hidden)
 {
     static_assert(int(match_type::none) == MATCH_TYPE_NONE, "match_type enum must match readline constants");
     static_assert(int(match_type::word) == MATCH_TYPE_WORD, "match_type enum must match readline constants");
+    static_assert(int(match_type::doskey) == MATCH_TYPE_ALIAS, "match_type enum must match readline constants");
     static_assert(int(match_type::file) == MATCH_TYPE_FILE, "match_type enum must match readline constants");
     static_assert(int(match_type::dir) == MATCH_TYPE_DIR, "match_type enum must match readline constants");
     static_assert(int(match_type::link) == MATCH_TYPE_LINK, "match_type enum must match readline constants");
+    static_assert(int(match_type::mask) == MATCH_TYPE_MASK, "match_type enum must match readline constants");
+    static_assert(int(match_type::hidden) == MATCH_TYPE_HIDDEN, "match_type enum must match readline constants");
+
+    match_type type;
 
     if (mode & _S_IFDIR)
-        return match_type::dir;
+        type = match_type::dir;
 #ifdef _S_IFLNK
     else if (mode & _S_IFLNK)
-        return match_type::link;
+        type = match_type::link;
 #endif
     else
-        return match_type::file;
+        type = match_type::file;
+
+    if (hidden)
+        type = (match_type)((int)type | (int)match_type::hidden);
+
+    return type;
+}
+
+//------------------------------------------------------------------------------
+void match_desc::set_type(const char* type_name)
+{
+    type = match_type::none;
+
+    str_tokeniser tokens(type_name, ",;+|./ ");
+    str_iter token;
+
+    while (tokens.next(token))
+    {
+        const char* t = token.get_pointer();
+        int l = token.length();
+        if (_strnicmp(t, "word", l) == 0)
+            type = (match_type)(((int)type & ~(int)match_type::mask) | (int)match_type::word);
+        else if (_strnicmp(t, "doskey", l) == 0)
+            type = (match_type)(((int)type & ~(int)match_type::mask) | (int)match_type::doskey);
+        else if (_strnicmp(t, "file", l) == 0)
+            type = (match_type)(((int)type & ~(int)match_type::mask) | (int)match_type::file);
+        else if (_strnicmp(t, "dir", l) == 0)
+            type = (match_type)(((int)type & ~(int)match_type::mask) | (int)match_type::dir);
+        else if (_strnicmp(t, "link", l) == 0 ||
+                 _strnicmp(t, "symlink", l) == 0)
+            type = (match_type)(((int)type & ~(int)match_type::mask) | (int)match_type::link);
+        else if (_strnicmp(t, "hidden", l) == 0)
+            type = (match_type)((int)type | (int)match_type::hidden);
+    }
 }
 
 //------------------------------------------------------------------------------

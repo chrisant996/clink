@@ -10,17 +10,53 @@ namespace os
 {
 
 //------------------------------------------------------------------------------
-int get_path_type(const char* path)
+DWORD get_file_attributes(const wchar_t* path)
+{
+    // Strip trailing path separators because FindFirstFile can't handle them.
+    wchar_t buf[MAX_PATH * 2];
+    if (*path && path::is_separator(path[wcslen(path) - 1]))
+    {
+        wstr_base str(buf, sizeof(buf));
+        str.copy(path);
+        while (str.length() && path::is_separator(str.c_str()[str.length() - 1]))
+            str.truncate(str.length() - 1);
+        path = buf;
+    }
+
+    WIN32_FIND_DATAW fd;
+    HANDLE h = FindFirstFileW(path, &fd);
+    if (h == INVALID_HANDLE_VALUE)
+        return INVALID_FILE_ATTRIBUTES;
+
+    FindClose(h);
+    return fd.dwFileAttributes;
+}
+
+//------------------------------------------------------------------------------
+DWORD get_file_attributes(const char* path)
 {
     wstr<280> wpath(path);
-    DWORD attr = GetFileAttributesW(wpath.c_str());
-    if (attr == ~0)
+    return get_file_attributes(wpath.c_str());
+}
+
+//------------------------------------------------------------------------------
+int get_path_type(const char* path)
+{
+    DWORD attr = get_file_attributes(path);
+    if (attr == INVALID_FILE_ATTRIBUTES)
         return path_type_invalid;
 
     if (attr & FILE_ATTRIBUTE_DIRECTORY)
         return path_type_dir;
 
     return path_type_file;
+}
+
+//------------------------------------------------------------------------------
+bool is_hidden(const char* path)
+{
+    DWORD attr = get_file_attributes(path);
+    return (attr != INVALID_FILE_ATTRIBUTES && (attr & FILE_ATTRIBUTE_HIDDEN));
 }
 
 //------------------------------------------------------------------------------

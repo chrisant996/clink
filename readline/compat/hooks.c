@@ -221,29 +221,3 @@ int hooked_fstat(int fid, struct hooked_stat* out)
 
     return ret;
 }
-
-//------------------------------------------------------------------------------
-int is_hidden(const char* path)
-{
-#if defined (__MSDOS__) || defined (_WIN32)
-    int ret = -1;
-    wchar_t buf[2048];
-    size_t characters;
-
-    // Utf8 to wchars.
-    characters = MultiByteToWideChar(CP_UTF8, 0, path, -1, buf, sizeof_array(buf));
-    characters = characters ? characters : sizeof_array(buf) - 1;
-    buf[characters] = L'\0';
-
-    // Get properties.
-    WIN32_FIND_DATAW fd;
-    HANDLE h = FindFirstFileW(buf, &fd);
-    if (h == INVALID_HANDLE_VALUE)
-        return 0;
-
-    FindClose(h);
-    return !!(fd.dwFileAttributes & FILE_ATTRIBUTE_HIDDEN);
-#else
-    return 0;
-#endif
-}

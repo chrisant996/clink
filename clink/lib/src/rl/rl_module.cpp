@@ -80,6 +80,12 @@ setting_colour g_colour_hidden(
     "Used when Clink displays file completions with the hidden attribute.",
     setting_colour::value_light_red, setting_colour::value_bg_default);
 
+setting_colour g_colour_doskey(
+    "colour.doskey",
+    "Doskey completions",
+    "Used when Clink displays doskey macro completions.",
+    setting_colour::value_light_cyan, setting_colour::value_bg_default);
+
 
 
 //------------------------------------------------------------------------------
@@ -780,6 +786,10 @@ void rl_module::on_begin_line(const context& context)
     _rl_hidden_color = nullptr;
     if (build_color_sequence(g_colour_hidden.get(), m_hidden_color))
         _rl_hidden_color = m_hidden_color.c_str();
+
+    _rl_alias_color = nullptr;
+    if (build_color_sequence(g_colour_doskey.get(), m_alias_color))
+        _rl_alias_color = m_alias_color.c_str();
 
     m_done = false;
     m_eof = false;

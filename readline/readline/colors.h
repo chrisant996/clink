@@ -122,8 +122,9 @@ extern void _rl_set_normal_color (void);
 extern bool _rl_print_prefix_color (void);
 /* begin_clink_change */
 extern bool _rl_print_pager_color (void);
+//extern bool _rl_print_color_indicator (const char *f);
+extern bool _rl_print_color_indicator (const char *f, unsigned char match_type);
 /* end_clink_change */
-extern bool _rl_print_color_indicator (const char *f);
 extern void _rl_prep_non_filename_text (void);
 
 #endif /* !_COLORS_H_ */

@@ -19,7 +19,7 @@ public:
     void                hidden(bool state)      { m_hidden = state; }
     void                system(bool state)      { m_system = state; }
     void                dots(bool state)        { m_dots = state; }
-    bool                next(str_base& out, bool rooted=true, int* st_mode=nullptr);
+    bool                next(str_base& out, bool rooted=true, int* st_mode=nullptr, bool* hidden=nullptr);
 
 private:
                         globber(const globber&) = delete;

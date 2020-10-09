@@ -111,6 +111,20 @@ static int is_file(lua_State* state)
 }
 
 //------------------------------------------------------------------------------
+/// -name:  os.ishidden
+/// -arg:   path:string
+/// -ret:   boolean
+static int is_hidden(lua_State* state)
+{
+    const char* path = get_string(state, 1);
+    if (path == nullptr)
+        return 0;
+
+    lua_pushboolean(state, os::is_hidden(path));
+    return 1;
+}
+
+//------------------------------------------------------------------------------
 /// -name:  os.unlink
 /// -arg:   path:string
 /// -ret:   boolean
@@ -360,6 +374,7 @@ void os_lua_initialise(lua_state& lua)
         { "rmdir",       &remove_dir },
         { "isdir",       &is_dir },
         { "isfile",      &is_file },
+        { "ishidden",    &is_hidden },
         { "unlink",      &unlink },
         { "move",        &move },
         { "copy",        &copy },

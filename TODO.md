@@ -14,7 +14,7 @@ Some additional work is needed to get a credible alpha release ready.
 
 ## Bugs
 - Cursor is invisible in the lua debugger.
-- `{my work workspace}> o`**Ctrl+Space**x2 => lists various "out..." completions that seemingly should not be included -- maybe I'm not understanding one of the `exec.*` clink settings?
+- `{my work workspace}> o`**Ctrl+Space**x2 => lists various "out..." completions that seemingly should not be included -- even with all `exec.*` clink settings disabled (except `exec.enabled`).
 
 ## Commands
 - Must convert all built-in Clink built-in keyboard-invoked functionality to instead be commands registered with the Readline library, so that they can be bound to any key and can be listed in the `show-rl-help` list.  Just `pager_impl` and `show_rl_help` remain...
@@ -56,7 +56,7 @@ The Phase 2 goal is to produce a viable Beta Release with broader compatibility 
 > I really want CUA Selection support!  It seems either extremely invasive in Readline, or very invasive + uses a custom rendering routine.  Not sure yet the best way to proceed.
 
 ## Problems
-- `fnprint()` is still doing IO to figure out colors.  I think I've eliminated the rest of the `stat()` calls, though.  Matches from env PATH don't get colored properly -- `stat()` doesn't work because they don't include a full path, but using `stat_from_match_type()` should solve both performance and coloring.
+- Lua `globfiles` and `globdirs` should return whether the files and dirs are hidden, to save _N_ additional calls to look up the hidden attributes.
 - Have a mode that passes all ANSI escape codes through to the console host (conhost, ConEmu, etc) to allow making use of things like extended terminal codes for 256 color and 24 bit color support, etc [#487](https://github.com/mridgers/clink/issues/487).
   - Use a callback function for visible bell, rather than an ANSI escape code (which doesn't really make sense).
 - Changing terminal width makes 0.4.8 slowly "walk up the screen".  Changing terminal width makes master go haywire.  Probably more ecma48 terminal issues.
@@ -74,12 +74,6 @@ The Phase 2 goal is to produce a viable Beta Release with broader compatibility 
 
 ## Features
 
-### Scrolling mode
-- Have commands for scrolling up/down by a page or line (or top/bottom of buffer).
-- The commands should each activate scrolling mode, and those same keys (and only those keys) should scroll while scrolling mode is active.
-  - Might need a hook in readline to do things before a command is processed, e.g. to exit scrolling mode when any non-scrolling command is invoked.
-- Because I don't want **Shift+PgUp/PgDn** hard-coded for scrolling.
-
 ### Commands
 - Add a `history.dupe_mode` that behaves like 4Dos/4NT/Take Command from JPSoft:  **Up**/**Down** then **Enter** remembers the history position so that **Enter**, **Down**, **Enter**, **Down**, **Enter**, etc can be used to replay a series of commands.
 - Add a way to reset or trim the history, when there's only one (or zero) clink running [#499](https://github.com/mridgers/clink/issues/499).
@@ -89,7 +83,7 @@ The Phase 2 goal is to produce a viable Beta Release with broader compatibility 
 - A way to disable/enable clink once injected.
 - A way to disable/enable prompt filtering once injected.
 - Allow to search the console output (not command history) with a RegExp [#166](https://github.com/mridgers/clink/issues/166).
-  - Ideally enable lua to do searches and set scroll position, so it can be extensible -- e.g. bind a key to a lua script to search for next/prev line with red or yellow colored text, or to search for "error:", or etc.  Think of the possibilities!
+  - Ideally enable lua to do searches, set scroll position, retrieve text from the screen buffer, and possibly even modify the editing line.  Imagine being able to bind a key to a lua script to search for next/prev line with red or yellow colored text, or to search for "error:", or etc.  Think of the possibilities!
 - Enable lua to indicate the match type (word, file, dir, link)?
 
 ### Key Bindings

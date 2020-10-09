@@ -79,7 +79,10 @@ function exec_generator:generate(line_state, match_builder)
     local text_dir = path.getdirectory(text) or ""
     if #text_dir == 0 then
         -- Add console aliases as matches.
-        local aliases = os.getaliases()
+        for _, alias in ipairs(os.getaliases()) do
+            match_builder:addmatch({ match = alias, type = "doskey" })
+        end
+
         match_builder:addmatches(aliases)
 
         -- Add environment's PATH variable as paths to search.
@@ -108,14 +111,28 @@ function exec_generator:generate(line_state, match_builder)
     for _, suffix in ipairs(suffices) do
         for _, dir in ipairs(paths) do
             for _, file in ipairs(os.globfiles(dir.."*"..suffix)) do
-                added = match_builder:addmatch(file) or added
+-- TODO: PERFORMANCE: globfiles should return whether each file is hidden since
+-- it already had that knowledge.
+                if os.ishidden(file) then
+                    added = match_builder:addmatch({ match = file, type = "file,hidden" }) or added
+                else
+                    added = match_builder:addmatch({ match = file, type = "file" }) or added
+                end
             end
         end
     end
 
     -- Lastly we may wish to consider directories too.
     if match_dirs or not added then
-        match_builder:addmatches(os.globdirs(text.."*"))
+        for _, dir in ipairs(os.globdirs(text.."*")) do
+-- TODO: PERFORMANCE: globdirs should return whether each dir is hidden since
+-- it already had that knowledge.
+            if os.ishidden(dir) then
+                match_builder:addmatch({ match = dir, type = "dir,hidden" })
+            else
+                match_builder:addmatch({ match = dir, type = "dir" })
+            end
+        end
     end
 
     return true
