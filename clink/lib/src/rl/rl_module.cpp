@@ -36,16 +36,10 @@ extern int _rl_colored_completion_prefix;
 #endif
 }
 
-class pager;
-
 //------------------------------------------------------------------------------
 static FILE*        null_stream = (FILE*)1;
 static FILE*        in_stream = (FILE*)2;
 static FILE*        out_stream = (FILE*)3;
-terminal_in*        s_direct_input = nullptr;       // for read_key_hook
-terminal_in*        s_processed_input = nullptr;    // for read thunk
-printer*            s_printer = nullptr;
-void                show_rl_help(printer&, pager&);
 extern "C" int      wcwidth(int);
 extern "C" char*    tgetstr(char*, char**);
 static const int    RL_MORE_INPUT_STATES = ~(
@@ -71,7 +65,12 @@ extern void host_add_history(int rl_history_index, const char* line);
 extern void host_remove_history(int rl_history_index, const char* line);
 extern setting_colour g_colour_interact;
 
+terminal_in*        s_direct_input = nullptr;       // for read_key_hook
+terminal_in*        s_processed_input = nullptr;    // for read thunk
+printer*            g_printer = nullptr;
 line_buffer*        rl_buffer = nullptr;
+pager*              g_pager = nullptr;
+editor_module::result* g_result = nullptr;
 
 //------------------------------------------------------------------------------
 setting_colour g_colour_hidden(
@@ -544,7 +543,6 @@ static char** alternative_matches(const char* text, int start, int end)
 enum {
     bind_id_input,
     bind_id_more_input,
-    bind_id_rl_help,
 };
 
 
@@ -570,8 +568,8 @@ static void terminal_write_thunk(FILE* stream, const char* chars, int char_count
 {
     if (stream == out_stream)
     {
-        assert(s_printer);
-        s_printer->print(chars, char_count);
+        assert(g_printer);
+        g_printer->print(chars, char_count);
         return;
     }
 
@@ -664,6 +662,7 @@ rl_module::rl_module(const char* shell_name, terminal_in* input)
         rl_add_history_hook = host_add_history;
         rl_remove_history_hook = host_remove_history;
         rl_add_funmap_entry("clink-reset-line", clink_reset_line);
+        rl_add_funmap_entry("clink-show-help", show_rl_help);
         rl_add_funmap_entry("clink-exit", clink_exit);
         rl_add_funmap_entry("clink-ctrl-c", clink_ctrl_c);
         rl_add_funmap_entry("clink-paste", clink_paste);
@@ -698,14 +697,20 @@ rl_module::rl_module(const char* shell_name, terminal_in* input)
         { "\\C-c",          "clink-ctrl-c" },            // ctrl-c
         { "\\C-v",          "clink-paste" },             // ctrl-v
         { "\\C-z",          "undo" },                    // ctrl-z
-        { "\\e\\eOS",       "clink-exit" },              // alt-f4
 
         { "\\M-a",          "clink-insert-dot-dot" },    // alt-a
         { "\\M-c",          "clink-copy-cwd" },          // alt-c
         { "\\M-\\C-c",      "clink-copy-line" },         // alt-ctrl-c
         { "\\M-\\C-e",      "clink-expand-env-var" },    // alt-ctrl-e
         { "\\M-\\C-f",      "clink-expand-doskey-alias" }, // alt-ctrl-f
+
+        {}
+    };
+
+    static const char* general_key_binds[][2] = {
+        { "\\M-h",          "clink-show-help" },         // alt-h
         { "\\e[5;5~",       "clink-up-directory" },      // ctrl-pgup
+        { "\\e\\eOS",       "clink-exit" },              // alt-f4
 
         { "\\e[1;3H",       "clink-scroll-top" },        // alt-home
         { "\\e[1;3F",       "clink-scroll-bottom" },     // alt-end
@@ -720,6 +725,9 @@ rl_module::rl_module(const char* shell_name, terminal_in* input)
     int restore_convert = _rl_convert_meta_chars_to_ascii;
     _rl_convert_meta_chars_to_ascii = 1;
     bind_keyseq_list(ext_key_binds, emacs_standard_keymap);
+    bind_keyseq_list(general_key_binds, emacs_standard_keymap);
+    bind_keyseq_list(general_key_binds, vi_insertion_keymap);
+    bind_keyseq_list(general_key_binds, vi_movement_keymap);
     _rl_convert_meta_chars_to_ascii = restore_convert;
 
     load_user_inputrc();
@@ -747,7 +755,6 @@ void rl_module::bind_input(binder& binder)
 {
     int default_group = binder.get_group();
     binder.bind(default_group, "", bind_id_input);
-    binder.bind(default_group, "\\M-h", bind_id_rl_help);
 
     m_catch_group = binder.create_group("readline");
     binder.bind(m_catch_group, "", bind_id_more_input);
@@ -756,7 +763,8 @@ void rl_module::bind_input(binder& binder)
 //------------------------------------------------------------------------------
 void rl_module::on_begin_line(const context& context)
 {
-    s_printer = &context.printer;
+    g_printer = &context.printer;
+    g_pager = &context.pager;
     rl_buffer = &context.buffer;
 
     // Readline needs to be told about parts of the prompt that aren't visible
@@ -809,7 +817,8 @@ void rl_module::on_end_line()
     rl_readline_state &= ~RL_MORE_INPUT_STATES;
 
     rl_buffer = nullptr;
-    s_printer = nullptr;
+    g_pager = nullptr;
+    g_printer = nullptr;
 }
 
 //------------------------------------------------------------------------------
@@ -820,12 +829,8 @@ void rl_module::on_matches_changed(const context& context)
 //------------------------------------------------------------------------------
 void rl_module::on_input(const input& input, result& result, const context& context)
 {
-    if (input.id == bind_id_rl_help)
-    {
-        show_rl_help(context.printer, context.pager);
-        result.redraw();
-        return;
-    }
+    assert(!g_result);
+    g_result = &result;
 
     // Setup the terminal.
     struct : public terminal_in
@@ -873,6 +878,7 @@ void rl_module::on_input(const input& input, result& result, const context& cont
         }
     }
 
+    g_result = nullptr;
     s_matches = nullptr;
     s_processed_input = old_input;
 
@@ -882,7 +888,7 @@ void rl_module::on_input(const input& input, result& result, const context& cont
         return;
     }
 
-    // Check if Readline want's more input or if we're done.
+    // Check if Readline wants more input or if we're done.
     if (rl_readline_state & RL_MORE_INPUT_STATES)
     {
         if (m_prev_group < 0)

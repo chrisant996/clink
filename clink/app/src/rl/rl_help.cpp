@@ -6,6 +6,7 @@
 #include <core/base.h>
 #include <core/settings.h>
 #include <terminal/printer.h>
+#include "lib/editor_module.h"
 #include "lib/pager.h"
 
 extern "C" {
@@ -15,6 +16,9 @@ extern "C" {
 //------------------------------------------------------------------------------
 extern "C" int _rl_print_completions_horizontally;
 extern "C" int _rl_completion_columns;
+extern printer* g_printer;
+extern pager* g_pager;
+extern editor_module::result* g_result;
 
 //------------------------------------------------------------------------------
 static const char* get_function_name(int (*func_addr)(int, int))
@@ -127,7 +131,7 @@ static char** collect_keymap(
 }
 
 //------------------------------------------------------------------------------
-void show_rl_help(printer& printer, pager& pager)
+int show_rl_help(int, int)
 {
     Keymap map = rl_get_keymap();
     int offset = 1;
@@ -163,10 +167,10 @@ void show_rl_help(printer& printer, pager& pager)
     }
 
     // Display the matches.
-    printer.print("\n");
-    pager.start_pager(printer);
+    g_printer->print("\n");
+    g_pager->start_pager(*g_printer);
 
-    int max_width = printer.get_columns() - 3;
+    int max_width = g_printer->get_columns() - 3;
     int columns_that_fit = max_width / (longest + 1);
     int columns = max(1, columns_that_fit);
     if (_rl_completion_columns > 0 && columns > _rl_completion_columns)
@@ -181,8 +185,8 @@ void show_rl_help(printer& printer, pager& pager)
         int index = vertical ? i : (i * columns);
 
         // Ask the pager what to do.
-        const int lines = 1 + (columns_that_fit ? 0 : int(strlen(collector[index]) / printer.get_columns()));
-        if (!pager.on_print_lines(printer, lines))
+        const int lines = 1 + (columns_that_fit ? 0 : int(strlen(collector[index]) / g_printer->get_columns()));
+        if (!g_pager->on_print_lines(*g_printer, lines))
             break;
 
         // Print the row.
@@ -195,22 +199,26 @@ void show_rl_help(printer& printer, pager& pager)
             const char* match = collector[index];
 
             int length = int(strlen(match));
-            printer.print(match, length);
+            g_printer->print(match, length);
 
             const char spaces[] = "                                         ";
             int space_count = max(longest - length, 0) + 1;
-            printer.print(spaces, min<int>(sizeof(spaces) - 1, space_count));
+            g_printer->print(spaces, min<int>(sizeof(spaces) - 1, space_count));
 
             index += index_step;
         }
 
-        printer.print("\n");
+        g_printer->print("\n");
     }
 
-    printer.print("\n");
+    g_printer->print("\n");
 
     // Tidy up (N.B. the first match is a placeholder and shouldn't be freed).
     while (--offset)
         free(collector[offset]);
     free(collector);
+
+    g_result->redraw();
+
+    return 0;
 }
