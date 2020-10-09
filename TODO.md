@@ -14,7 +14,6 @@ Some additional work is needed to get a credible alpha release ready.
 
 ## Bugs
 - Cursor is invisible in the lua debugger.
-- `{my work workspace}> o`**Ctrl+Space**x2 => lists various "out..." completions that seemingly should not be included -- even with all `exec.*` clink settings disabled (except `exec.enabled`).
 
 ## Commands
 - Must convert all built-in Clink built-in keyboard-invoked functionality to instead be commands registered with the Readline library, so that they can be bound to any key and can be listed in the `show-rl-help` list.  Just `pager_impl` and `show_rl_help` remain...
