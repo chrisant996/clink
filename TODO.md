@@ -41,6 +41,10 @@ Lua support changed significantly.  Explore how to support backward compatibilit
 ### Other
 - `match.ignore_case` can't be working correctly, and probably readline settings should determine it.
 - `_rl_completion_case_map` isn't supported properly in clink lua APIs, nor in general.  _(The 0.4.8 implementation simply converted `-` and `_` to `?` and accepted all matches!)_
+- The dll cache must go:
+  - It started wasting my time because I keep forgetting that it's not very smart about detecting when it needs to recopy them.
+  - It wastes space by letting obsolete folders stay around.
+  - Does it interfere with having multiple versions of clink installed in different places?  (e.g. standalone + Cmder)
 
 ## Questions
 - What is `set-mark`?
