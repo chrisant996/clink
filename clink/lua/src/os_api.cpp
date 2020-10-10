@@ -32,7 +32,7 @@ static const char* get_string(lua_State* state, int index)
 /// -name:  os.chdir
 /// -arg:   path:string
 /// -ret:   boolean
-static int set_current_dir(lua_State* state)
+int set_current_dir(lua_State* state)
 {
     bool ok = false;
     if (const char* dir = get_string(state, 1))
@@ -45,7 +45,7 @@ static int set_current_dir(lua_State* state)
 //------------------------------------------------------------------------------
 /// -name:  os.getcwd
 /// -ret:   string
-static int get_current_dir(lua_State* state)
+int get_current_dir(lua_State* state)
 {
     str<288> dir;
     os::get_current_dir(dir);
@@ -86,7 +86,7 @@ static int remove_dir(lua_State* state)
 /// -name:  os.isdir
 /// -arg:   path:string
 /// -ret:   boolean
-static int is_dir(lua_State* state)
+int is_dir(lua_State* state)
 {
     const char* path = get_string(state, 1);
     if (path == nullptr)
@@ -216,7 +216,7 @@ static int glob_impl(lua_State* state, bool dirs_only)
 /// -name:  os.globdirs
 /// -arg:   globpattern:string
 /// -ret:   table
-static int glob_dirs(lua_State* state)
+int glob_dirs(lua_State* state)
 {
     return glob_impl(state, true);
 }
@@ -225,7 +225,7 @@ static int glob_dirs(lua_State* state)
 /// -name:  os.globfiles
 /// -arg:   globpattern:string
 /// -ret:   table
-static int glob_files(lua_State* state)
+int glob_files(lua_State* state)
 {
     return glob_impl(state, false);
 }
@@ -234,7 +234,7 @@ static int glob_files(lua_State* state)
 /// -name:  os.getenv
 /// -arg:   path:string
 /// -ret:   string or nil
-static int get_env(lua_State* state)
+int get_env(lua_State* state)
 {
     const char* name = get_string(state, 1);
     if (name == nullptr)
@@ -253,7 +253,7 @@ static int get_env(lua_State* state)
 /// -arg:   name:string
 /// -arg:   value:string
 /// -ret:   boolean
-static int set_env(lua_State* state)
+int set_env(lua_State* state)
 {
     const char* name = get_string(state, 1);
     const char* value = get_string(state, 2);
@@ -268,39 +268,41 @@ static int set_env(lua_State* state)
 //------------------------------------------------------------------------------
 /// -name:  os.getenvnames
 /// -ret:   table
-static int get_env_names(lua_State* state)
+int get_env_names(lua_State* state)
 {
     lua_createtable(state, 0, 0);
 
-    char* root = GetEnvironmentStrings();
+    WCHAR* root = GetEnvironmentStringsW();
     if (root == nullptr)
         return 1;
 
-    char* strings = root;
+    str<128> var;
+    WCHAR* strings = root;
     int i = 1;
     while (*strings)
     {
         // Skip env vars that start with a '='. They're hidden ones.
         if (*strings == '=')
         {
-            strings += strlen(strings) + 1;
+            strings += wcslen(strings) + 1;
             continue;
         }
 
-        char* eq = strchr(strings, '=');
+        WCHAR* eq = wcschr(strings, '=');
         if (eq == nullptr)
             break;
 
         *eq = '\0';
+        var = strings;
 
-        lua_pushstring(state, strings);
+        lua_pushstring(state, var.c_str());
         lua_rawseti(state, -2, i++);
 
         ++eq;
-        strings = eq + strlen(eq) + 1;
+        strings = eq + wcslen(eq) + 1;
     }
 
-    FreeEnvironmentStrings(root);
+    FreeEnvironmentStringsW(root);
     return 1;
 }
 
@@ -320,7 +322,7 @@ static int get_host(lua_State* state)
 //------------------------------------------------------------------------------
 /// -name:  os.getaliases
 /// -ret:   string
-static int get_aliases(lua_State* state)
+int get_aliases(lua_State* state)
 {
     lua_createtable(state, 0, 0);
 
@@ -330,31 +332,36 @@ static int get_aliases(lua_State* state)
         return 1;
 
     // Not const because Windows' alias API won't accept it.
-    char* name = (char*)path::get_name(path.c_str());
+    wstr<> name;
+    name = (char*)path::get_name(path.c_str());
 
     // Get the aliases (aka. doskey macros).
-    int buffer_size = GetConsoleAliasesLength(name);
+    int buffer_size = GetConsoleAliasesLengthW(name.data());
     if (buffer_size == 0)
         return 1;
 
-    str<> buffer;
+    wstr<> buffer;
     buffer.reserve(buffer_size);
-    if (GetConsoleAliases(buffer.data(), buffer.size(), name) == 0)
+    if (GetConsoleAliasesW(buffer.data(), buffer.size(), name.data()) == 0)
         return 1;
 
     // Parse the result into a lua table.
-    const char* alias = buffer.c_str();
-    for (int i = 1; int(alias - buffer.c_str()) < buffer_size; ++i)
+    str<> out;
+    WCHAR* alias = buffer.data();
+    for (int i = 1; int(alias - buffer.data()) < buffer_size; ++i)
     {
-        const char* c = strchr(alias, '=');
+        WCHAR* c = wcschr(alias, '=');
         if (c == nullptr)
             break;
 
-        lua_pushlstring(state, alias, size_t(c - alias));
+        *c = '\0';
+        out = alias;
+
+        lua_pushlstring(state, out.c_str(), out.length());
         lua_rawseti(state, -2, i);
 
         ++c;
-        alias = c + strlen(c) + 1;
+        alias = c + wcslen(c) + 1;
     }
 
 #endif // __MINGW32__

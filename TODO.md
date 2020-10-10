@@ -39,16 +39,17 @@ Lua support changed significantly.  Explore how to support backward compatibilit
 
 ### Other
 - `match.ignore_case` can't be working correctly, and probably readline settings should determine it.
+- `_rl_completion_case_map` isn't supported properly in clink lua APIs, nor in general.  _(The 0.4.8 implementation simply converted `-` and `_` to `?` and accepted all matches!)_
 
 ## Issues Backlog [clink/issues](https://github.com/mridgers/clink/issues)
 - [#502](https://github.com/mridgers/clink/issues/502) Error in folders containing [ ] characters
-- [#415](https://github.com/mridgers/clink/issues/415) Different encodings in different lua functions
 - [#544](https://github.com/mridgers/clink/issues/544) Clink v1.0.0.a1 doesn't support cyrillic characters keyboard input
 
 ## Questions
 - What is `set-mark`?
 - How does `reverse-search-history` work?
 - How does `kill-line` work?
+- What to do about `MODE4` in the code base?
 
 <br>
 <br>
