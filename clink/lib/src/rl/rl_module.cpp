@@ -79,6 +79,12 @@ setting_colour g_colour_hidden(
     "Used when Clink displays file completions with the hidden attribute.",
     setting_colour::value_light_red, setting_colour::value_bg_default);
 
+setting_colour g_colour_readonly(
+    "colour.readonly",
+    "Readonly file completions",
+    "Used when Clink displays file completions with the readonly attribute.",
+    setting_colour::value_fg_default, setting_colour::value_bg_default);
+
 setting_colour g_colour_doskey(
     "colour.doskey",
     "Doskey completions",
@@ -794,6 +800,10 @@ void rl_module::on_begin_line(const context& context)
     _rl_hidden_color = nullptr;
     if (build_color_sequence(g_colour_hidden.get(), m_hidden_color))
         _rl_hidden_color = m_hidden_color.c_str();
+
+    _rl_readonly_color = nullptr;
+    if (build_color_sequence(g_colour_readonly.get(), m_readonly_color))
+        _rl_readonly_color = m_readonly_color.c_str();
 
     _rl_alias_color = nullptr;
     if (build_color_sequence(g_colour_doskey.get(), m_alias_color))

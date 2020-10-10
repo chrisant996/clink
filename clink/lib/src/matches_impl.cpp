@@ -12,7 +12,7 @@
 #include <readline/readline.h> // for rl_last_path_separator
 
 //------------------------------------------------------------------------------
-match_type to_match_type(int mode, bool hidden)
+match_type to_match_type(int mode, int attr)
 {
     static_assert(int(match_type::none) == MATCH_TYPE_NONE, "match_type enum must match readline constants");
     static_assert(int(match_type::word) == MATCH_TYPE_WORD, "match_type enum must match readline constants");
@@ -22,6 +22,7 @@ match_type to_match_type(int mode, bool hidden)
     static_assert(int(match_type::link) == MATCH_TYPE_LINK, "match_type enum must match readline constants");
     static_assert(int(match_type::mask) == MATCH_TYPE_MASK, "match_type enum must match readline constants");
     static_assert(int(match_type::hidden) == MATCH_TYPE_HIDDEN, "match_type enum must match readline constants");
+    static_assert(int(match_type::readonly) == MATCH_TYPE_READONLY, "match_type enum must match readline constants");
 
     match_type type;
 
@@ -30,12 +31,17 @@ match_type to_match_type(int mode, bool hidden)
 #ifdef _S_IFLNK
     else if (mode & _S_IFLNK)
         type = match_type::link;
+#else
+    else if (attr & FILE_ATTRIBUTE_REPARSE_POINT)
+        type = match_type::link;
 #endif
     else
         type = match_type::file;
 
-    if (hidden)
+    if (attr & FILE_ATTRIBUTE_HIDDEN)
         type = (match_type)((int)type | (int)match_type::hidden);
+    if (attr & FILE_ATTRIBUTE_READONLY)
+        type = (match_type)((int)type | (int)match_type::readonly);
 
     return type;
 }
@@ -52,6 +58,16 @@ void match_desc::set_type(const char* type_name)
     {
         const char* t = token.get_pointer();
         int l = token.length();
+
+        // Trim whitespace.
+        while (l && isspace((unsigned char)*t))
+            t++, l--;
+        while (l && isspace((unsigned char)t[l-1]))
+            l--;
+        if (!l)
+            continue;
+
+        // Translate type names into match_type values.
         if (_strnicmp(t, "word", l) == 0)
             type = (match_type)(((int)type & ~(int)match_type::mask) | (int)match_type::word);
         else if (_strnicmp(t, "doskey", l) == 0)
@@ -65,6 +81,8 @@ void match_desc::set_type(const char* type_name)
             type = (match_type)(((int)type & ~(int)match_type::mask) | (int)match_type::link);
         else if (_strnicmp(t, "hidden", l) == 0)
             type = (match_type)((int)type | (int)match_type::hidden);
+        else if (_strnicmp(t, "readonly", l) == 0)
+            type = (match_type)((int)type | (int)match_type::readonly);
     }
 }
 

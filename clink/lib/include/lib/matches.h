@@ -16,7 +16,8 @@ enum class match_type : unsigned char
     dir,
     link,
     mask = 0x0f,
-    hidden = 0x80,
+    hidden = 0x40,
+    readonly = 0x80,
 };
 
 //------------------------------------------------------------------------------
@@ -37,7 +38,7 @@ public:
 
 
 //------------------------------------------------------------------------------
-match_type to_match_type(int mode, bool hidden);
+match_type to_match_type(int mode, int attr);
 
 //------------------------------------------------------------------------------
 struct match_desc

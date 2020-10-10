@@ -632,7 +632,8 @@ extern char rl_preferred_path_separator;
 #define MATCH_TYPE_DIR		5
 #define MATCH_TYPE_LINK		6
 #define MATCH_TYPE_MASK		0x0f
-#define MATCH_TYPE_HIDDEN		0x80
+#define MATCH_TYPE_HIDDEN		0x40
+#define MATCH_TYPE_READONLY		0x80
 #define IS_MATCH_TYPE_NONE(x)	(((x) & MATCH_TYPE_MASK) == MATCH_TYPE_NONE)
 #define IS_MATCH_TYPE_WORD(x)	(((x) & MATCH_TYPE_MASK) == MATCH_TYPE_WORD)
 #define IS_MATCH_TYPE_ALIAS(x)	(((x) & MATCH_TYPE_MASK) == MATCH_TYPE_ALIAS)
@@ -640,6 +641,7 @@ extern char rl_preferred_path_separator;
 #define IS_MATCH_TYPE_DIR(x)	(((x) & MATCH_TYPE_MASK) == MATCH_TYPE_DIR)
 #define IS_MATCH_TYPE_LINK(x)	(((x) & MATCH_TYPE_MASK) == MATCH_TYPE_LINK)
 #define IS_MATCH_TYPE_HIDDEN(x)	(((x) & MATCH_TYPE_HIDDEN) == MATCH_TYPE_HIDDEN)
+#define IS_MATCH_TYPE_READONLY(x)	(((x) & MATCH_TYPE_READONLY) == MATCH_TYPE_READONLY)
 extern int rl_completion_matches_include_type;
 /* end_clink_change */
 
@@ -908,6 +910,9 @@ extern const char* _rl_pager_color;
 /* This is a terminal sequence for the hidden file color.  The CSI and "m" are
    automatically added when writing it to the terminal. */
 extern const char* _rl_hidden_color;
+/* This is a terminal sequence for the readonly file color.  The CSI and "m" are
+   automatically added when writing it to the terminal. */
+extern const char* _rl_readonly_color;
 /* This is a terminal sequence for the alias color.  The CSI and "m" are
    automatically added when writing it to the terminal. */
 extern const char* _rl_alias_color;
