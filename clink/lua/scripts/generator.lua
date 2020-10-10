@@ -101,7 +101,14 @@ end
 --- minimize the changes necessary to get old scripts working with the new API.
 clink.arg = clink.arg or {}
 function clink.arg.new_parser(...)
-    return clink.argmatcher():addarg(...)
+    local p = clink.argmatcher():addarg(...)
+
+    function p:add_flags(...)
+        -- TODO: they don't seem to get added as flags
+        return p:addflags(...)
+    end
+
+    return p
 end
 
 --------------------------------------------------------------------------------
@@ -111,5 +118,6 @@ end
 --- Deprecated.  Old API shim; exists only for backward compatibility, to
 --- minimize the changes necessary to get old scripts working with the new API.
 function clink.arg.register_parser(cmd, parser)
+    -- TODO: works if parser is a table; goes haywire if parser is a parser.
     clink.argmatcher(cmd):addarg(parser)
 end
