@@ -7,12 +7,13 @@ Some additional work is needed to get a credible alpha release ready.
 
 ## Documentation
 - Describe the new argmatcher/etc syntax.
-
-## Scripts
 - Supply sample inputrc file(s).
 
 ## Commands
 - Must have a way to list extended key bindings (but user-friendly key binding names can be deferred until Phase 2).
+
+## Issues Backlog [clink/issues](https://github.com/mridgers/clink/issues)
+- [#544](https://github.com/mridgers/clink/issues/544) Clink v1.0.0.a1 doesn't support cyrillic characters keyboard input
 
 <br>
 <br>
@@ -40,9 +41,6 @@ Lua support changed significantly.  Explore how to support backward compatibilit
 ### Other
 - `match.ignore_case` can't be working correctly, and probably readline settings should determine it.
 - `_rl_completion_case_map` isn't supported properly in clink lua APIs, nor in general.  _(The 0.4.8 implementation simply converted `-` and `_` to `?` and accepted all matches!)_
-
-## Issues Backlog [clink/issues](https://github.com/mridgers/clink/issues)
-- [#544](https://github.com/mridgers/clink/issues/544) Clink v1.0.0.a1 doesn't support cyrillic characters keyboard input
 
 ## Questions
 - What is `set-mark`?
