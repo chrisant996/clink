@@ -58,7 +58,7 @@ end
 
 --------------------------------------------------------------------------------
 --- -name:  clink.prompt.register_filter
---- -arg:   filter
+--- -arg:   filter_func
 --- -arg:   [priority:integer]
 --- -ret:   table
 --- Old API shim, for backward compatibility.
@@ -70,6 +70,8 @@ function clink.prompt.register_filter(filter, priority)
 
     local o = clink.promptfilter(priority)
     function o:filter(the_prompt)
-        return filter(the_prompt)
+        clink.prompt.value = the_prompt
+        local stop = filter(the_prompt)
+        return clink.prompt.value, not stop
     end
 end

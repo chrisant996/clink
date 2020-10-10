@@ -22,7 +22,7 @@ The Phase 1 goal is to have a working version that for the most part meets or ex
 
 ## LUA
 Lua support changed significantly.  Explore how to support backward compatibility for existing scripts.
-- _Done: The prompt filter now supports both 0.4.8 syntax and also the new 1.0.0 syntax._
+- _Done: The prompt filter now supports both 0.4.8 syntax and also the new 1.0.0 syntax. [UPDATE: fixed a couple bugs in the compatibility shim for prompt filtering]_
 - _Done: The argmatcher/parser syntax now has shims in place that should make it backward compatible with existing scripts (pending further testing)._
 - _Done: The generator syntax is backward compatible by making the first argument once again be the end word.  See commit f9c647b965 for the breaking syntax change, and commit 265ac265dc for the backward compatibility change._
 - `dotnet.lua:38`: attempt to call method 'add_flags' (a nil value)
@@ -31,7 +31,6 @@ Lua support changed significantly.  Explore how to support backward compatibilit
 - `pipenv.lua:54`: attempt to call method 'add_flags' (a nil value)
 - `scoop.lua:296`: attempt to call method 'set_flags' (a nil value)
 - `vagrant.lua:137`: attempt to call method 'flatten_argument' (a nil value)
-- `git_prompt.lua:83`: attempt to index field 'clink.prompt.value' (a nil value)
 - There might still be other syntax incompatibilities...?
 
 ## Features
@@ -86,17 +85,13 @@ The Phase 2 goal is to produce a viable Beta Release with broader compatibility 
 - A way to disable/enable prompt filtering once injected.
 - Allow to search the console output (not command history) with a RegExp [#166](https://github.com/mridgers/clink/issues/166).
   - Ideally enable lua to do searches, set scroll position, retrieve text from the screen buffer, and possibly even modify the editing line.  Imagine being able to bind a key to a lua script to search for next/prev line with red or yellow colored text, or to search for "error:", or etc.  Think of the possibilities!
-- Enable lua to indicate the match type (word, file, dir, link)?
 
 ### Key Bindings
-- Hook up stuff via commands and/or keymaps (instead of via hard-coded custom bindings) so that everything can be remapped and reported by `show-rl-help`.
-  - It may be ok for commands to select a modal custom binding map.
-  - Dynamically build/augment modal binding maps based on rl bindings -- e.g. so binding **Ctrl+P** to `scroll-page-up` causes **Ctrl+P** to work in the modal binding map.
 - Make `show-rl-help` able to list enhanced keys like Up, Home, Ctrl-Shift-Space, etc.
   - Translate terminal sequences into "C-A-name" in `show-rl-help` (e.g. "C-A-Up", "Ctrl-Home", "End", etc)?  But that gets weird because those aren't parseable key names.
   - Maybe have two variants of `show-rl-help` -- one that shows human readable key names, and one that shows the actual binding strings?
   - Invent an alternative syntax?
-- Allow **Ctrl+M** to be discrete from **Enter**?
+- Allow **Ctrl+M** to be discrete from **Enter**, etc?
 
 ## Issues Backlog [clink/issues](https://github.com/mridgers/clink/issues)
 - [#542](https://github.com/mridgers/clink/issues/542) VS Code not capturing std output
