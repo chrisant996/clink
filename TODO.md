@@ -42,7 +42,6 @@ Lua support changed significantly.  Explore how to support backward compatibilit
 - `_rl_completion_case_map` isn't supported properly in clink lua APIs, nor in general.  _(The 0.4.8 implementation simply converted `-` and `_` to `?` and accepted all matches!)_
 
 ## Issues Backlog [clink/issues](https://github.com/mridgers/clink/issues)
-- [#502](https://github.com/mridgers/clink/issues/502) Error in folders containing [ ] characters
 - [#544](https://github.com/mridgers/clink/issues/544) Clink v1.0.0.a1 doesn't support cyrillic characters keyboard input
 
 ## Questions
