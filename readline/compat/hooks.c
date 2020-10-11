@@ -82,6 +82,7 @@ int hooked_fileno(FILE* stream)
 }
 
 //------------------------------------------------------------------------------
+#if 0 // Clink had forgotten to setlocale(LC_ALL, ".utf8").
 size_t hooked_mbrtowc(wchar_t* out, const char* in, size_t size, mbstate_t* state)
 {
 #if 0
@@ -158,8 +159,10 @@ size_t hooked_mbrtowc(wchar_t* out, const char* in, size_t size, mbstate_t* stat
     return -2;
 #endif // 0
 }
+#endif
 
 //------------------------------------------------------------------------------
+#if 0 // Clink had forgotten to setlocale(LC_ALL, ".utf8").
 size_t hooked_mbrlen(const char* in, size_t size, mbstate_t* state)
 {
 #if 0
@@ -169,6 +172,7 @@ size_t hooked_mbrlen(const char* in, size_t size, mbstate_t* state)
     return hooked_mbrtowc(&t, in, size, state);
 #endif // 0
 }
+#endif
 
 //------------------------------------------------------------------------------
 int hooked_stat(const char* path, struct hooked_stat* out)

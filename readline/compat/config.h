@@ -22,8 +22,8 @@ void    hooked_fprintf(FILE*, const char*, ...);
 int     hooked_putc(int, FILE*);
 void    hooked_fflush(FILE*);
 int     hooked_fileno(FILE*);
-size_t  hooked_mbrtowc(wchar_t*, const char*, size_t, mbstate_t*);
-size_t  hooked_mbrlen(const char*, size_t, mbstate_t*);
+// size_t  hooked_mbrtowc(wchar_t*, const char*, size_t, mbstate_t*);
+// size_t  hooked_mbrlen(const char*, size_t, mbstate_t*);
 int     hooked_stat(const char*, struct hooked_stat*);
 int     hooked_fstat(int, struct hooked_stat*);
 int     wcwidth(int);
@@ -34,8 +34,8 @@ int     wcwidth(int);
 #   undef putc
 #   undef fflush
 #   undef fileno
-#   undef mbrtowc
-#   undef mbrlen
+// #   undef mbrtowc
+// #   undef mbrlen
 #   undef stat
 #   undef fstat
 #   define __MSDOS__
@@ -52,8 +52,8 @@ int     wcwidth(int);
 #   define putc             hooked_putc
 #   define fflush           hooked_fflush
 #   define fileno           hooked_fileno
-#   define mbrtowc          hooked_mbrtowc
-#   define mbrlen           hooked_mbrlen
+// #   define mbrtowc          hooked_mbrtowc
+// #   define mbrlen           hooked_mbrlen
 #   define stat             hooked_stat
 #   define fstat            hooked_fstat
 #endif // BUILD_READLINE

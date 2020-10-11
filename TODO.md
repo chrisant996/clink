@@ -9,11 +9,12 @@ Some additional work is needed to get a credible alpha release ready.
 - Describe the new argmatcher/etc syntax.
 - Supply sample inputrc file(s).
 
+## Bugs
+- **Alt+P** goes into a mode where everything (including extended keys) is accepted as raw input.
+- When convert-meta is off, then when binding `\M-h` (etc) the key name gets interpreted differently than Clink expects.
+
 ## Commands
 - Must have a way to list extended key bindings (but user-friendly key binding names can be deferred until Phase 2).
-
-## Issues Backlog [clink/issues](https://github.com/mridgers/clink/issues)
-- [#544](https://github.com/mridgers/clink/issues/544) Clink v1.0.0.a1 doesn't support cyrillic characters keyboard input
 
 <br>
 <br>

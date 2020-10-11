@@ -253,6 +253,11 @@ LNope:
     if (m_bind_resolver.is_bound(seq, len))
         return true;
 
+    // The intent here is to accept all UTF8 input (not sure why readline
+    // reports them as not bound, but this seems good enough for now).
+    if (len > 1 && (unsigned char)seq[0] >= ' ')
+        return true;
+
     // Checking readline's keymap is incorrect when a special bind group is
     // active that should block on_input from reaching readline.  But the way
     // that blocking is achieved is by adding a "" binding that matches
