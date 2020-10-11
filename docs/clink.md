@@ -370,7 +370,7 @@ Due to differences between Windows and Linux, escape codes for keys like PageUp/
 |Tab        |(special)  |`Z`        |(n/a)      |(n/a)      |`27;5;9~`  |`27;6;9~`   |(n/a)     |(n/a)           |
 |Space      |(special)  |(n/a)      |(n/a)      |(n/a)      |`27;5;32~` |`27;6;32~`  |`27;7;32~`|`27;8;32~`      |
 |Backspace  |(special)  |(n/a)      |(n/a)      |(n/a)      |(special)  |(n/a)       |(n/a)     |(n/a)           |
-|Escape     |`27;27~`   |(n/a)      |(n/a)      |(n/a)      |(n/a)      |(n/a)       |(n/a)     |(n/a)           |
+|Escape     |(special)  |(n/a)      |(n/a)      |(n/a)      |(n/a)      |(n/a)       |(n/a)     |(n/a)           |
 |F1         |(special)  |`1;2P`     |(n/a)      |(n/a)      |`1;5P`     |`1;6P`      |(n/a)     |(n/a)           |
 |F2         |(special)  |`1;2Q`     |(n/a)      |(n/a)      |`1;5Q`     |`1;6Q`      |(n/a)     |(n/a)           |
 |F3         |(special)  |`1;2R`     |(n/a)      |(n/a)      |`1;5R`     |`1;6R`      |(n/a)     |(n/a)           |
@@ -388,8 +388,9 @@ Due to differences between Windows and Linux, escape codes for keys like PageUp/
 
 These keys use other formats, so their full "special" sequences are listed in the following table.
 
-| Key               | Special Sequence    |
+| Key               | Special Sequence |
 |:-:                |:-:        |
+|Escape             |`\e\e`     |
 |Tab                |`\t`       |
 |Space              |(space)    |
 |Backspace          |`^h`       |

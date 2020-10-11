@@ -10,7 +10,6 @@ Some additional work is needed to get a credible alpha release ready.
 - Supply sample inputrc file(s).
 
 ## Bugs
-- **Alt+P** goes into a mode where everything (including extended keys) is accepted as raw input.
 - When convert-meta is off, then when binding `\M-h` (etc) the key name gets interpreted differently than Clink expects.
 
 ## Commands
@@ -73,7 +72,7 @@ The Phase 2 goal is to produce a viable Beta Release with broader compatibility 
   - But eventually in order to color arguments/etc the match pipeline will need to run while typing, so maybe leave it be.
 - Use [Microsoft Detours](https://github.com/microsoft/detours) instead of the current implementation in clink?
 - vi mode doesn't seem to support responding to M-C-letter or M-letter bindings, but interprets them as other things?
-- vi mode doesn't seem to support `\e[27;27~` even when explicitly bound, but I don't yet understand why not.
+- vi mode doesn't seem to support `\e[27;27~` even when explicitly bound, but I don't yet understand why not.  _[Update: does it support `\e\e`?]_
 - Toggling vi mode doesn't reload .inputrc until a new line, so $if conditional key bindings aren't active at first.
 - Symlink support (displaying matches, and whether to append a path separator).
 - Perturbed PROMPT envvar is visible in child processes (e.g. piped shell in various file editors).  There might be no way around that...

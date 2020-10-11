@@ -192,14 +192,14 @@ public:
                     {
                         if (len <= 1)
                             return true;
-                        if (len == 8 && strcmp(seq, "\x1b[27;27~") == 0)
-                            return true;
+                        // Unreachable; gets handled by translate.
+                        assert(strcmp(seq, bindableEsc) != 0);
                         rl_ding();
                         return false;
                     }
     virtual bool    translate(const char* seq, int len, str_base& out)
                     {
-                        if (len == 8 && strcmp(seq, "\x1b[27;27~") == 0)
+                        if (strcmp(seq, bindableEsc) == 0)
                         {
                             out = "\x1b";
                             return true;
@@ -702,7 +702,7 @@ rl_module::rl_module(const char* shell_name, terminal_in* input)
         { "\\e[3;5~",       "kill-word" },               // ctrl-del
         { "\\d",            "backward-kill-word" },      // ctrl-backspace
         { "\\e[2~",         "overwrite-mode" },          // ins
-        { "\\e[27;27~",     "clink-reset-line" },        // esc
+        { bindableEsc,      "clink-reset-line" },        // esc
 
         { "\\C-c",          "clink-ctrl-c" },            // ctrl-c
         { "\\C-v",          "clink-paste" },             // ctrl-v

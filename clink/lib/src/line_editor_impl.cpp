@@ -19,6 +19,13 @@
 #include <readline/readline.h>
 
 //------------------------------------------------------------------------------
+const int simple_input_states = (RL_STATE_MOREINPUT | RL_STATE_ISEARCH |
+                                 RL_STATE_NSEARCH | RL_STATE_SEARCH |
+                                 RL_STATE_NUMERICARG | RL_STATE_CHARSEARCH);
+
+
+
+//------------------------------------------------------------------------------
 inline char get_closing_quote(const char* quote_pair)
 {
     return quote_pair[1] ? quote_pair[1] : quote_pair[0];
@@ -239,12 +246,9 @@ LNope:
     // Various states should only accept "simple" input, i.e. not CSI sequences,
     // so that unrecognized portions of key sequences don't bleed in as textual
     // input.
-    const int simple_input_states = (
-        RL_STATE_MOREINPUT|RL_STATE_ISEARCH|RL_STATE_NSEARCH|RL_STATE_SEARCH|
-        RL_STATE_NUMERICARG|RL_STATE_CHARSEARCH);
     if (RL_ISSTATE(simple_input_states))
     {
-        if (seq[0] == '\x1b' && strcmp(seq, "\x1b[27;27~") != 0)
+        if (seq[0] == '\x1b')
             goto LNope;
         return true;
     }
@@ -267,6 +271,21 @@ LNope:
         return true;
 
     goto LNope;
+}
+
+//------------------------------------------------------------------------------
+bool line_editor_impl::translate(const char* seq, int len, str_base& out)
+{
+    if (RL_ISSTATE(simple_input_states))
+    {
+        if (strcmp(seq, bindableEsc) == 0)
+        {
+            out = "\x1b";
+            return true;
+        }
+    }
+
+    return false;
 }
 
 //------------------------------------------------------------------------------

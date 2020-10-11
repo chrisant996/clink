@@ -39,6 +39,7 @@ public:
 
     // key_tester
     virtual bool        is_bound(const char* seq, int len) override;
+    virtual bool        translate(const char* seq, int len, str_base& out) override;
     virtual void        set_keyseq_len(int len) override;
 
 private:

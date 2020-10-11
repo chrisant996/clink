@@ -70,7 +70,6 @@ static const char* const kfx[]   = {
 //                                            Shf     Alt   AtlShf   Ctl         CtlShf      CtlAlt      CtlAltShf
 static const char* const ktab[]  = { "\t",    CSI(Z), "",   "",      MOK(5;9~),  MOK(6;9~),  "",         ""         }; // TAB
 static const char* const kspc[]  = { " ",     " ",    "",   "",      MOK(5;32~), MOK(6;32~), MOK(7;32~), MOK(8;32~) }; // SPC
-static const char* const bindableEsc = MOK(27~);
 
 static int xterm_modifier(int key_flags)
 {
@@ -296,15 +295,15 @@ void win_terminal_in::read_console()
                             chord[len] = '\0';
 
                             str<32> new_chord;
-                            if (!m_keys->is_bound(chord, len))
-                            {
-                                m_buffer_count = buffer_count;
-                            }
-                            else if (m_keys->translate(chord, len, new_chord))
+                            if (m_keys->translate(chord, len, new_chord))
                             {
                                 m_buffer_count = buffer_count;
                                 for (unsigned int i = 0; i < new_chord.length(); ++i)
                                     push((unsigned int)new_chord.c_str()[i]);
+                            }
+                            else if (!m_keys->is_bound(chord, len))
+                            {
+                                m_buffer_count = buffer_count;
                             }
 
                             m_keys->set_keyseq_len(m_buffer_count);
@@ -348,7 +347,7 @@ void win_terminal_in::process_input(KEY_EVENT_RECORD const& record)
     // Special treatment for escape.
     // TODO: 0.4.8 keyboard compatibility mode
     if (key_char == 0x1b && rl_editing_mode != 0/*vi_mode*/)
-        return push(terminfo::bindableEsc);
+        return push(bindableEsc);
 
     // Special treatment for variations of tab and space.
     if (key_vk == VK_TAB && !m_buffer_count && g_modify_other_keys.get())

@@ -43,6 +43,9 @@ template <class A> A max(A a, A b) { return (a > b) ? a : b; }
 template <class A> A clamp(A v, A m, A M) { return min(max(v, m), M); }
 
 //------------------------------------------------------------------------------
+extern const char* const bindableEsc;
+
+//------------------------------------------------------------------------------
 struct no_copy
 {
             no_copy() = default;

@@ -9,6 +9,12 @@
 #include <Windows.h>
 
 //------------------------------------------------------------------------------
+// Can't use "\x1b\x1b" because Alt+FN gets prefixed with meta Esc and for
+// example Alt+F4 becomes "\x1b\x1bOS".  So because of meta-fication ESCESC is
+// not a unique sequence.
+const char* const bindableEsc = "\x1b[27;27~";
+
+//------------------------------------------------------------------------------
 threadlocal static char gt_termcap_buffer[64];
 
 //------------------------------------------------------------------------------
