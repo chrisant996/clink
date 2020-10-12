@@ -5,9 +5,21 @@
 #include "win_screen_buffer.h"
 
 #include <core/base.h>
+#include <core/settings.h>
 #include <core/str_iter.h>
 
 #include <Windows.h>
+
+//------------------------------------------------------------------------------
+static setting_enum g_terminal_emulate(
+    "terminal.emulate",
+    "Controls VT emulation",
+    "Clink can emulate Virtual Terminal processing if the console doesn't\n"
+    "natively. The default value is 2, which automatically checks for Windows\n"
+    "10 VT emulation. If the value is 1 Clink performs VT emulation, or if 0\n"
+    "Clink passes all output directly to the console.",
+    "off,on,auto",
+    2);
 
 //------------------------------------------------------------------------------
 void win_screen_buffer::begin()
@@ -19,6 +31,24 @@ void win_screen_buffer::begin()
     GetConsoleScreenBufferInfo(m_handle, &csbi);
     m_default_attr = csbi.wAttributes & attr_mask_all;
     m_bold = !!(m_default_attr & attr_mask_bold);
+
+    DWORD mode;
+    switch (g_terminal_emulate.get())
+    {
+    case 0:
+        m_vt = false;
+        break;
+    case 2:
+        if (GetConsoleMode(m_handle, &mode))
+        {
+            m_vt = !!(mode & ENABLE_VIRTUAL_TERMINAL_PROCESSING);
+            break;
+        }
+        // fall through
+    case 1:
+        m_vt = true;
+        break;
+    }
 }
 
 //------------------------------------------------------------------------------
@@ -79,6 +109,12 @@ int win_screen_buffer::get_rows() const
     CONSOLE_SCREEN_BUFFER_INFO csbi;
     GetConsoleScreenBufferInfo(m_handle, &csbi);
     return (csbi.srWindow.Bottom - csbi.srWindow.Top) + 1;
+}
+
+//------------------------------------------------------------------------------
+bool win_screen_buffer::has_vt_processing() const
+{
+    return m_vt;
 }
 
 //------------------------------------------------------------------------------

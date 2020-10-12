@@ -138,9 +138,6 @@ char* tgetstr(char* name, char** out)
     // Cursor style
     case 've': str = CSI(?12l) CSI(?25h); break;
     case 'vs': str = CSI(?12;25h);        break;
-
-    // Visible bell.
-    case 'vb': str = "\x1b_vb\x1b\\"; break;
     }
 
     if (str != nullptr && out != nullptr && *out != nullptr)

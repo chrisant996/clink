@@ -6,6 +6,7 @@
 #include "ecma48_iter.h"
 #include "screen_buffer.h"
 
+#include <terminal.h>
 #include <assert.h>
 
 //------------------------------------------------------------------------------
@@ -106,17 +107,6 @@ int ecma48_terminal_out::get_rows() const
 //------------------------------------------------------------------------------
 void ecma48_terminal_out::write_c1(const ecma48_code& code)
 {
-    if (code.get_code() == ecma48_code::c1_apc)
-    {
-        if (code.get_length() == 6 &&
-            code.get_pointer()[2] == 'v' &&
-            code.get_pointer()[3] == 'b')
-        {
-            visible_bell();
-        }
-        return;
-    }
-
     if (code.get_code() != ecma48_code::c1_csi)
         return;
 
@@ -192,6 +182,12 @@ void ecma48_terminal_out::write(const char* chars, int length)
         length = m_pending;
     }
     reset_pending();
+
+    if (m_screen.has_vt_processing())
+    {
+        m_screen.write(chars, length);
+        return;
+    }
 
     int need_next = (length == 1 || (chars[0] && !chars[1]));
     ecma48_iter iter(chars, m_state, length);

@@ -62,8 +62,6 @@ The Phase 2 goal is to produce a viable Beta Release with broader compatibility 
 
 ## Problems
 - Lua `globfiles` and `globdirs` should return whether the files and dirs are hidden, to save _N_ additional calls to look up the hidden attributes.
-- Have a mode that passes all ANSI escape codes through to the console host (conhost, ConEmu, etc) to allow making use of things like extended terminal codes for 256 color and 24 bit color support, etc [#487](https://github.com/mridgers/clink/issues/487).
-  - Use a callback function for visible bell, rather than an ANSI escape code (which doesn't really make sense).
 - Changing terminal width makes 0.4.8 slowly "walk up the screen".  Changing terminal width makes master go haywire.  Probably more ecma48 terminal issues.
 - Over 39 thousand assertions in the unit test?!
 - Use `path::normalise` to clean up input like "\wbin\\\\cli" when using `complete` and `menu-complete`.
@@ -71,7 +69,7 @@ The Phase 2 goal is to produce a viable Beta Release with broader compatibility 
   - It seems more efficient to not invoke it until `complete` or `menu-complete` (etc).
   - But eventually in order to color arguments/etc the match pipeline will need to run while typing, so maybe leave it be.
 - Use [Microsoft Detours](https://github.com/microsoft/detours) instead of the current implementation in clink?
-- vi mode doesn't seem to support responding to M-C-letter or M-letter bindings, but interprets them as other things?
+- vi mode doesn't seem to support responding to M-C-letter or M-letter bindings, but interprets them as other things?  _[Update: maybe because `\e` is bound by itself?]_
 - vi mode doesn't seem to support `\e[27;27~` even when explicitly bound, but I don't yet understand why not.  _[Update: does it support `\e\e`?]_
 - Toggling vi mode doesn't reload .inputrc until a new line, so $if conditional key bindings aren't active at first.
 - Symlink support (displaying matches, and whether to append a path separator).
