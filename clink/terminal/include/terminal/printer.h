@@ -42,11 +42,13 @@ private:
 //------------------------------------------------------------------------------
 template <int S> void printer::print(const char (&data)[S])
 {
-    print(data, S);
+    if (S > 0)
+        print(data, S - 1); // Don't include nul terminator.
 }
 
 //------------------------------------------------------------------------------
 template <int S> void printer::print(const attributes attr, const char (&data)[S])
 {
-    print(attr, data, S);
+    if (S > 0)
+        print(attr, data, S - 1); // Don't include nul terminator.
 }

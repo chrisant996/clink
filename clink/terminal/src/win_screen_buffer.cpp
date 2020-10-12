@@ -9,6 +9,7 @@
 #include <core/str_iter.h>
 
 #include <Windows.h>
+#include <assert.h>
 
 //------------------------------------------------------------------------------
 static setting_enum g_terminal_emulate(
@@ -68,6 +69,12 @@ void win_screen_buffer::write(const char* data, int length)
         wchar_t wbuf[384];
         int n = min<int>(sizeof_array(wbuf), length + 1);
         n = to_utf16(wbuf, n, iter);
+        if (!n && !*iter.get_pointer())
+        {
+            assert(false); // Very inefficient, and shouldn't be possible.
+            wbuf[0] = '\0';
+            n = 1;
+        }
 
 #ifdef CLINK_DEBUG
         for (int i = 0; i < n; ++i)
