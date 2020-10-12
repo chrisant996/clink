@@ -3,17 +3,14 @@ ChrisAnt Plans
 <br>
 
 # Alpha Release
-Some additional work is needed to get a credible alpha release ready.
+Here's what's left to do in order to have a reasonable alpha release.  The alpha release is unlikely to have full lua backward compatibility for v0.4.8 scripts.
 
 ## Documentation
 - Describe the new argmatcher/etc syntax.
 - Supply sample inputrc file(s).
 
 ## Bugs
-- When convert-meta is off, then when binding `\M-h` (etc) the key name gets interpreted differently than Clink expects.
-
-## Commands
-- Must have a way to list extended key bindings (but user-friendly key binding names can be deferred until Phase 2).
+- vi_mode is having problems with input key sequences that include ESC [#7](https://github.com/chrisant996/clink/issues/7).
 
 <br>
 <br>
@@ -22,7 +19,7 @@ Some additional work is needed to get a credible alpha release ready.
 The Phase 1 goal is to have a working version that for the most part meets or exceeds Clink 0.4.8 stability and functionality.
 
 ## LUA
-Lua support changed significantly.  Explore how to support backward compatibility for existing scripts.
+Lua support changed significantly.  Explore how to support backward compatibility for existing scripts [#6](https://github.com/chrisant996/clink/issues/6).
 - **Prompt filter:**  seems to be working now.
 - **Generator:**  generator syntax is backward compatible by making the first argument once again be the end word; see commit f9c647b965 for the breaking syntax change, and commit 265ac265dc for the backward compatibility change.
 - **Argmatcher:**  problems...
@@ -39,12 +36,14 @@ Lua support changed significantly.  Explore how to support backward compatibilit
 ## Features
 
 ### Other
+- Must have a way to list extended key bindings (but user-friendly key binding names can be deferred until Phase 2).
 - `match.ignore_case` can't be working correctly, and probably readline settings should determine it.
 - `_rl_completion_case_map` isn't supported properly in clink lua APIs, nor in general.  _(The 0.4.8 implementation simply converted `-` and `_` to `?` and accepted all matches!)_
 - The dll cache must go:
   - It started wasting my time because I keep forgetting that it's not very smart about detecting when it needs to recopy them.
   - It wastes space by letting obsolete folders stay around.
   - Does it interfere with having multiple versions of clink installed in different places?  (e.g. standalone + Cmder)
+- When convert-meta is off, then when binding `\M-h` (etc) the key name gets interpreted differently than Clink expects.
 
 ## Questions
 - What is `set-mark`?
