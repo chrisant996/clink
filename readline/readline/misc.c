@@ -667,7 +667,8 @@ rl_remove_history (int count, int key)
   if (rl_last_func != rl_remove_history)
     rl_remove_history_last_func = rl_last_func;
 
-  HIST_ENTRY *hist = history_list ()[old_where];
+  HIST_ENTRY **list = history_list ();
+  HIST_ENTRY *hist = list ? list[old_where] : 0;
   if (!hist || strcmp (rl_line_buffer, hist->line))
     {
       rl_ding ();
