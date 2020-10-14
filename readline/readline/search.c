@@ -485,6 +485,20 @@ _rl_nsearch_callback (_rl_search_cxt *cxt)
 }
 #endif
   
+/* begin_clink_change */
+static void
+rl_maybe_swap_point_and_mark (void)
+{
+  if ((rl_history_search_flags & ANCHORED_SEARCH) &&
+      _rl_history_point_at_end_of_anchored_search)
+    {
+      int tmp = rl_point;
+      rl_point = rl_mark;
+      rl_mark = tmp;
+    }
+}
+/* end_clink_change */
+
 static int
 rl_history_search_internal (int count, int dir)
 {
@@ -539,6 +553,9 @@ rl_history_search_internal (int count, int dir)
 #else
       rl_point = rl_history_search_len;	/* rl_maybe_unsave_line changes it */
       rl_mark = rl_end;
+/* begin_clink_change */
+      rl_maybe_swap_point_and_mark ();
+/* end_clink_change */
 #endif
       return 1;
     }
@@ -561,13 +578,7 @@ rl_history_search_internal (int count, int dir)
   rl_mark = rl_end;
 
 /* begin_clink_change */
-  if ((rl_history_search_flags & ANCHORED_SEARCH) &&
-      _rl_history_point_at_end_of_anchored_search)
-    {
-      int tmp = rl_point;
-      rl_point = rl_mark;
-      rl_mark = tmp;
-    }
+  rl_maybe_swap_point_and_mark ();
 /* end_clink_change */
 
   return 0;
