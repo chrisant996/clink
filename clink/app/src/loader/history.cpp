@@ -43,6 +43,13 @@ history_scope::history_scope()
 
 
 //------------------------------------------------------------------------------
+static bool is_console(HANDLE h)
+{
+    DWORD dw;
+    return !!GetConsoleMode(h, &dw);
+}
+
+//------------------------------------------------------------------------------
 static void print_history(unsigned int tail_count)
 {
     history_scope history;
@@ -63,8 +70,28 @@ static void print_history(unsigned int tail_count)
     int skip = count - tail_count;
     for (int i = 0; i < skip; ++i, ++index, iter.next(line));
 
+    str<> utf8;
+    wstr<> utf16;
+    HANDLE hout = GetStdHandle(STD_OUTPUT_HANDLE);
+    bool translate = is_console(hout);
+
     for (; iter.next(line); ++index)
-        printf("%5d  %.*s\n", index, line.length(), line.get_pointer());
+    {
+        utf8.clear();
+        utf8.format("%5d  %.*s", index, line.length(), line.get_pointer());
+        if (translate)
+        {
+            DWORD written;
+            utf16.clear();
+            to_utf16(utf16, utf8.c_str());
+            utf16.concat(L"\r\n", 2);
+            WriteConsoleW(hout, utf16.c_str(), utf16.length(), &written, nullptr);
+        }
+        else
+        {
+            puts(utf8.c_str());
+        }
+    }
 }
 
 //------------------------------------------------------------------------------
