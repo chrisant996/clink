@@ -76,7 +76,9 @@ int _rl_history_point_at_end_of_anchored_search = 0;
 static char *history_search_string;
 static int history_string_size;
 
-static void make_history_line_current PARAMS((HIST_ENTRY *));
+/* begin_clink_change */
+/*static*/ void make_history_line_current PARAMS((HIST_ENTRY *));
+/* end_clink_change */
 static int noninc_search_from_pos PARAMS((char *, int, int, int, int *));
 static int noninc_dosearch PARAMS((char *, int, int));
 static int noninc_search PARAMS((int, int));
@@ -92,7 +94,9 @@ static int _rl_nsearch_dispatch PARAMS((_rl_search_cxt *, int));
 /* Make the data from the history entry ENTRY be the contents of the
    current line.  This doesn't do anything with rl_point; the caller
    must set it. */
-static void
+/* begin_clink_change */
+/*static*/ void
+/* end_clink_change */
 make_history_line_current (HIST_ENTRY *entry)
 {
   _rl_replace_text (entry->line, 0, rl_end);

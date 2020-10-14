@@ -3510,3 +3510,106 @@ rl_backward_menu_complete (int count, int key)
      arguments for menu-complete, and vice versa. */
   return (rl_menu_complete (-count, key));
 }
+
+/* begin_clink_change */
+char**
+rl_get_completions (int* match_count, char** ot, int* os, int* oe, int* delim, char* qc)
+{
+  rl_compentry_func_t *our_func;
+  int matching_filenames, found_quote;
+  int past_flag = rl_completion_matches_include_type ? 1 : 0;
+
+  char *orig_text;
+  char **matches = (char **)0;
+  int match_list_index = 0;
+  int match_list_size = 0;
+  int nontrivial_lcd = 0;
+  int orig_start, orig_end;
+  char quote_char;
+  int delimiter;
+
+  RL_SETSTATE (RL_STATE_COMPLETING);
+
+  /* Only the completion entry function can change these. */
+  set_completion_defaults ('%');
+
+  our_func = rl_menu_completion_entry_function;
+  if (our_func == 0)
+    our_func = rl_completion_entry_function
+                   ? rl_completion_entry_function
+                   : rl_filename_completion_function;
+
+  /* We now look backwards for the start of a filename/variable word. */
+  orig_end = rl_point;
+  found_quote = delimiter = 0;
+  quote_char = '\0';
+
+  if (rl_point)
+    /* This (possibly) changes rl_point.  If it returns a non-zero char,
+       we know we have an open quote. */
+    quote_char = _rl_find_completion_word (&found_quote, &delimiter);
+
+  orig_start = rl_point;
+  rl_point = orig_end;
+
+  no_compute_lcd = 1;
+
+  orig_text = rl_copy_text(orig_start, orig_end);
+  matches = gen_completion_matches (orig_text, orig_start, orig_end,
+                                    our_func, found_quote, quote_char);
+
+  //nontrivial_lcd = matches && strcmp (orig_text, matches[0]) != 0;
+  nontrivial_lcd = matches && strcmp (orig_text, matches[0] + past_flag) != 0;
+
+  /* If we are matching filenames, the attempted completion function will
+     have set rl_filename_completion_desired to a non-zero value.  The basic
+     rl_filename_completion_function does this. */
+  matching_filenames = rl_filename_completion_desired;
+
+  if (matches == 0 || postprocess_matches (&matches, matching_filenames) == 0)
+    {
+      no_compute_lcd = 0;
+      rl_ding ();
+      FREE (matches);
+      matches = (char **)0;
+      FREE (orig_text);
+      orig_text = (char *)0;
+      RL_UNSETSTATE (RL_STATE_COMPLETING);
+      return (0);
+    }
+  no_compute_lcd = 0;
+
+  RL_UNSETSTATE (RL_STATE_COMPLETING);
+
+  for (match_list_size = 0; matches[match_list_size]; match_list_size++)
+    ;
+
+  if (match_list_size == 0)
+    {
+      rl_ding ();
+      FREE (matches);
+      matches = (char **)0;
+      return (0);
+    }
+
+  *match_count = match_list_size;
+  *ot = orig_text;
+  *os = orig_start;
+  *oe = orig_end;
+  *delim = delimiter;
+  *qc = quote_char;
+  return (matches);
+}
+
+void
+rl_insert_match (char* match, char* orig_text, int orig_start, int delimiter, char quote_char)
+{
+  int past_flag = rl_completion_matches_include_type ? 1 : 0;
+  int nontrivial_match = strcmp (orig_text, match + past_flag);
+
+  rl_begin_undo_group();
+  insert_match (match, orig_start, SINGLE_MATCH, &quote_char);
+  append_to_match (match, delimiter, quote_char, nontrivial_match);
+  rl_end_undo_group();
+}
+/* end_clink_change */

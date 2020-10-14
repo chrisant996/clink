@@ -45,6 +45,10 @@ Lua support changed significantly.  Explore how to support backward compatibilit
   - It wastes space by letting obsolete folders stay around.
   - Does it interfere with having multiple versions of clink installed in different places?  (e.g. standalone + Cmder)
 - When convert-meta is off, then when binding `\M-h` (etc) the key name gets interpreted differently than Clink expects.
+- Promote store_impl to be a template and public, so the popup list can use it?
+- What to do about completion colors in popup list?
+  - Make it owner draw and add text like "dir", "doskey", etc?
+  - Add stat chars when so configured?
 
 ## Questions
 - What is `set-mark`?
@@ -123,8 +127,6 @@ More ambitious things like CUA Selection, popup window lists for completion and 
 
 ## Commands
 - Need a way to do `menu-complete` without wrapping around.
-- Popup completion list.
-- Popup history list.
 - Marking mode in-app?  It's a kludge, but it copies with HTML formatting (and even uses the color scheme).
 - **F8** should behave like `history-search-backward` but wrap around.
 - Complete "%ENVVAR%\*" by internally expanding ENVVAR for collecting matches, but not expanding it in the editing line.

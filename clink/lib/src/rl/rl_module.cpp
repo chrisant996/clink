@@ -6,6 +6,7 @@
 #include "rl_commands.h"
 #include "line_buffer.h"
 #include "matches.h"
+#include "popup.h"
 
 #include <core/base.h>
 #include <core/os.h>
@@ -22,12 +23,19 @@
 extern "C" {
 #include <readline/readline.h>
 #include <readline/rldefs.h>
+#include <readline/histlib.h>
 #include <readline/keymaps.h>
 #include <readline/xmalloc.h>
 #include <compat/dirent.h>
 #include <readline/posixdir.h>
+#include <readline/history.h>
 extern int _rl_match_hidden_files;
+extern int _rl_history_point_at_end_of_anchored_search;
 extern int rl_complete_with_tilde_expansion;
+extern void _rl_reset_completion_state(void);
+extern void _rl_free_match_list(char** list);
+extern void rl_history_search_reinit(int flags);
+extern void make_history_line_current(HIST_ENTRY *);
 #define HIDDEN_FILE(fn) ((fn)[0] == '.')
 #if defined (COLOR_SUPPORT)
 #include <readline/parse-colors.h>
@@ -501,6 +509,7 @@ static char** alternative_matches(const char* text, int start, int end)
         end_prefix++;
     else if (ISALPHA((unsigned char)text[0]) && text[1] == ':')
         end_prefix = (char*)text + 2;
+    int len_prefix = end_prefix ? end_prefix - text : 0;
 
     // Deep copy of the generated matches.  Inefficient, but this is how
     // readline wants them.
@@ -514,7 +523,6 @@ static char** alternative_matches(const char* text, int start, int end)
     matches[0][past_flag + (end - start)] = '\0';
     for (int i = 0; i < match_count; ++i)
     {
-        int len_prefix = end_prefix ? end_prefix - text : 0;
         match_type type = past_flag ? (match_type)s_matches->get_match_type(i) : match_type::none;
 
         const char* match = s_matches->get_match(i);
@@ -541,6 +549,153 @@ static char** alternative_matches(const char* text, int start, int end)
     rl_completion_matches_include_type = past_flag;
     rl_attempted_completion_over = 1;
     return matches;
+}
+
+//------------------------------------------------------------------------------
+int clink_popup_complete(int count, int invoking_key)
+{
+    if (!s_matches)
+    {
+        rl_ding();
+        return 0;
+    }
+
+    rl_completion_invoking_key = invoking_key;
+
+    // Collect completions.
+    int match_count;
+    char* orig_text;
+    int orig_start;
+    int orig_end;
+    int delimiter;
+    char quote_char;
+    char** matches = rl_get_completions(&match_count, &orig_text, &orig_start, &orig_end, &delimiter, &quote_char);
+    if (!matches)
+        return 0;
+    int past_flag = rl_completion_matches_include_type ? 1 : 0;
+
+    // Identify common prefix.
+    char* end_prefix = rl_last_path_separator(orig_text);
+    if (end_prefix)
+        end_prefix++;
+    else if (ISALPHA((unsigned char)orig_text[0]) && orig_text[1] == ':')
+        end_prefix = (char*)orig_text + 2;
+    int len_prefix = end_prefix ? end_prefix - orig_text : 0;
+
+    // Popup list.
+    int current = 0;
+    str<32> choice;
+    switch (do_popup_list("Completions", (const char **)matches, match_count,
+                          len_prefix, past_flag, true/*completing*/,
+                          true/*auto_complete*/, current, choice))
+    {
+    case popup_list_result::cancel:
+        break;
+    case popup_list_result::error:
+        rl_ding();
+        break;
+    case popup_list_result::select:
+    case popup_list_result::use:
+        rl_insert_match(choice.data(), orig_text, orig_start, delimiter, quote_char);
+        break;
+    }
+
+    _rl_reset_completion_state();
+
+    free(orig_text);
+    _rl_free_match_list(matches);
+
+    return 0;
+}
+
+//------------------------------------------------------------------------------
+int clink_popup_history(int count, int invoking_key)
+{
+    HIST_ENTRY** list = history_list();
+    if (!list || !history_length)
+    {
+        rl_ding();
+        return 0;
+    }
+
+    rl_completion_invoking_key = invoking_key;
+    rl_completion_matches_include_type = 0;
+
+    int current = -1;
+    int orig_pos = where_history();
+    int search_len = rl_point;
+
+    // Copy the history list (just a shallow copy of the line pointers).
+    char** history = (char**)malloc(sizeof(*history) * history_length);
+    int* indices = (int*)malloc(sizeof(*indices) * history_length);
+    int total = 0;
+    for (int i = 0; i < history_length; i++)
+    {
+        if (!STREQN(rl_buffer->get_buffer(), list[i]->line, search_len))
+            continue;
+        history[total] = list[i]->line;
+        indices[total] = i;
+        if (i == orig_pos)
+            current = total;
+        total++;
+    }
+    if (!total)
+    {
+        rl_ding();
+        free(history);
+        free(indices);
+        return 0;
+    }
+    if (current < 0)
+        current = total - 1;
+
+    // Popup list.
+    str<> choice;
+    popup_list_result result = do_popup_list("History",
+        (const char **)history, total, 0, 0,
+        false/*completing*/, false/*auto_complete*/, current, choice);
+    switch (result)
+    {
+    case popup_list_result::cancel:
+        break;
+    case popup_list_result::error:
+        rl_ding();
+        break;
+    case popup_list_result::select:
+    case popup_list_result::use:
+        {
+            HIST_ENTRY *temp = nullptr;
+            int oldpos;
+
+            current = indices[current];
+
+            oldpos = where_history();
+            history_set_pos(current);
+            rl_history_search_reinit(ANCHORED_SEARCH);
+            temp = current_history();
+            history_set_pos(oldpos);
+
+            rl_maybe_save_line();
+
+            make_history_line_current(temp);
+
+            bool point_at_end = (!search_len || _rl_history_point_at_end_of_anchored_search);
+            rl_point = point_at_end ? rl_end : search_len;
+            rl_mark = point_at_end ? search_len : rl_end;
+
+            if (result == popup_list_result::use)
+            {
+                rl_redisplay();
+                rl_newline(1, invoking_key);
+            }
+        }
+        break;
+    }
+
+    free(history);
+    free(indices);
+
+    return 0;
 }
 
 
@@ -687,6 +842,8 @@ rl_module::rl_module(const char* shell_name, terminal_in* input)
         rl_add_funmap_entry("clink-scroll-page-down", clink_scroll_page_down);
         rl_add_funmap_entry("clink-scroll-top", clink_scroll_top);
         rl_add_funmap_entry("clink-scroll-bottom", clink_scroll_bottom);
+        rl_add_funmap_entry("clink-popup-complete", clink_popup_complete);
+        rl_add_funmap_entry("clink-popup-history", clink_popup_history);
     }
 
     // Bind extended keys so editing follows Windows' conventions.
