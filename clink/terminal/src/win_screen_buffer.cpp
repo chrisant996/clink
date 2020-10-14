@@ -77,9 +77,10 @@ void win_screen_buffer::write(const char* data, int length)
         }
 
 #ifdef CLINK_DEBUG
-        for (int i = 0; i < n; ++i)
-            if (wbuf[i] == '\r')
-                __debugbreak();
+        // Why was this forcing a break/crash on '\r'??
+        // for (int i = 0; i < n; ++i)
+        //     if (wbuf[i] == '\r')
+        //         __debugbreak();
 #endif
 
         DWORD written;
