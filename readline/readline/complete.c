@@ -3286,8 +3286,8 @@ rl_old_menu_complete (int count, int invoking_key)
       insert_match (matches[match_list_index], orig_start, SINGLE_MATCH, &quote_char);
       append_to_match (matches[match_list_index], delimiter, quote_char,
 /* begin_clink_change */
-		       //strcmp (orig_text, matches[match_list_index] + past_flag));
-		       strcmp (orig_text, matches[match_list_index]));
+		       //strcmp (orig_text, matches[match_list_index]));
+		       strcmp (orig_text, matches[match_list_index] + past_flag));
       rl_end_undo_group();
 /* end_clink_change */
     }
@@ -3493,7 +3493,7 @@ rl_menu_complete (int count, int ignore)
 /* end_clink_change */
       insert_match (matches[match_list_index], orig_start, SINGLE_MATCH, &quote_char);
       append_to_match (matches[match_list_index], delimiter, quote_char,
-		       strcmp (orig_text, matches[match_list_index]));
+		       strcmp (orig_text, matches[match_list_index] + past_flag));
 /* begin_clink_change */
       rl_end_undo_group();
 /* end_clink_change */
