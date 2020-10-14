@@ -7,6 +7,7 @@
 #include <core/str.h>
 
 #include <Windows.h>
+#include <assert.h>
 
 //------------------------------------------------------------------------------
 // Can't use "\x1b\x1b" because Alt+FN gets prefixed with meta Esc and for
@@ -49,8 +50,20 @@ extern "C" {
 #endif
 
 //------------------------------------------------------------------------------
-int tputs(const char* str, int count, int (*putc_func)(int))
+int _rl_output_character_function(int);
+
+//------------------------------------------------------------------------------
+int tputs(const char* str, int affcnt, int (*putc_func)(int))
 {
+    extern int hooked_fwrite(const void* data, int size, int count, FILE* stream);
+    extern FILE *_rl_out_stream;
+
+    if (putc_func == _rl_output_character_function)
+    {
+        hooked_fwrite(str, (int)strlen(str), 1, _rl_out_stream);
+        return 0;
+    }
+
     if (str != nullptr)
         while (*str)
             putc_func(*str++);

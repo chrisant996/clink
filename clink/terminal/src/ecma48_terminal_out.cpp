@@ -10,6 +10,9 @@
 #include <assert.h>
 
 //------------------------------------------------------------------------------
+extern "C" char *tgetstr(char* name, char** out);
+
+//------------------------------------------------------------------------------
 static int g_enhanced_cursor = 0;
 
 //------------------------------------------------------------------------------
@@ -185,8 +188,20 @@ void ecma48_terminal_out::write(const char* chars, int length)
 
     if (m_screen.has_vt_processing())
     {
-        m_screen.write(chars, length);
-        return;
+        static const char* int1 = tgetstr("vs", nullptr);
+        static const char* int2 = tgetstr("ve", nullptr);
+        static int len1 = (int)strlen(int1);
+        static int len2 = (int)strlen(int2);
+
+        bool intercept = ((length == len1 || length == len2) &&
+                          chars[0] == '\x1b' &&
+                          (strcmp(chars, int1) == 0 || strcmp(chars, int2) == 0));
+
+        if (!intercept)
+        {
+            m_screen.write(chars, length);
+            return;
+        }
     }
 
     int need_next = (length == 1 || (chars[0] && !chars[1]));
@@ -360,8 +375,7 @@ void ecma48_terminal_out::reset_private_mode(const ecma48_code::csi_base& csi)
             g_enhanced_cursor = 0;
             break;
         case 25:
-            // TODO: not sure it's a good idea to support hiding the cursor :)
-            // cursor_style(-1, 0);
+            cursor_style(-1, 0);
             break;
         }
     }
