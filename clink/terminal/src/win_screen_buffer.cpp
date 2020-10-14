@@ -37,7 +37,7 @@ void win_screen_buffer::begin()
     switch (g_terminal_emulate.get())
     {
     case 0:
-        m_vt = false;
+        m_vt = true;
         break;
     case 2:
         if (GetConsoleMode(m_handle, &mode))
@@ -47,7 +47,7 @@ void win_screen_buffer::begin()
         }
         // fall through
     case 1:
-        m_vt = true;
+        m_vt = false;
         break;
     }
 }
