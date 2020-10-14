@@ -10,6 +10,9 @@ Here's what's left to do in order to have a reasonable alpha release.  The alpha
 - Supply sample inputrc file(s).
 
 ## Bugs
+- `clink history` messes up UTF8 output (probably needs to use WriteConsoleW when stdout is a console handle).
+- `history-point-at-end-of-anchored-search` has edge cases where it lets `rl_point` revert to not be at the end.
+- De-duplication of matches is folding "clink" and "clink\" even though "clink" is a doskey alias and "clink\" is a directory.  The problem is that some directory completions include a path separator and some don't, depending on where they came from.
 - vi_mode is having problems with input key sequences that include ESC [#7](https://github.com/chrisant996/clink/issues/7).
 
 <br>
@@ -145,7 +148,7 @@ More ambitious things like CUA Selection, popup window lists for completion and 
   - It's pretty risky to just paste-and-go.
   - Maybe add an option to convert newlines into "&" instead?
   - Or maybe let readline do multiline editing and accept them all as a batch on **Enter**?
-- [#396](https://github.com/mridgers/clink/issues/396) Pasting unicode emoji in a clink-enabled console
+- [#396](https://github.com/mridgers/clink/issues/396) Pasting unicode emoji in a clink-enabled console _[Update:  How well does pasting emoji into bash work?  Readline might not have sufficient Unicode awareness to support emoji.]_
 
 <br>
 <br>
