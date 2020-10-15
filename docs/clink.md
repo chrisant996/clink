@@ -1,11 +1,3 @@
-> **TODO:**  Rewrite and update to reflect everything that's changed since 0.4.9!
-
-<br>
-
-_The old documentation follows:_
-
-<br>
-
 # What is Clink?
 
 Clink combines the native Windows shell cmd.exe with the powerful command line editing features of the GNU Readline library, which provides rich completion, history, and line-editing capabilities. Readline is best known for its use in the famous Unix shell Bash, the standard shell for Mac OS X and many Linux distributions.
@@ -57,19 +49,22 @@ When running Clink via the methods above, Clink checks the parent process is sup
 
 The easiest way to configure Clink is to use Clink's `set` command line option.  This can list, query, and set Clink's settings. Run `clink set --help` from a Clink-installed cmd.exe process to learn more both about how to use it and to get descriptions for Clink's various options.
 
-Settings that are loaded when Clink starts can be overridden by setting environment variables matching the setting name and prefixed with "clink.". For example, the command `set clink.prompt_colour=10` will turn the prompt green regardless of what is in the settings file. Overrides are not saved to disk.
+> **TODO:** The following text is out of date and needs to be updated:
+>
+> _Settings that are loaded when Clink starts can be overridden by setting environment variables matching the setting name and prefixed with "clink.". For example, the command `set clink.prompt_colour=10` will turn the prompt green regardless of what is in the settings file. Overrides are not saved to disk._
 
 The following table describes the available Clink settings;
 
-> **TODO:** Update the following list.  The `g_key_etc` settings are not yet listed, but they'll turn into readline commands so they can participate in normal key binding and displaying bound keys.
-
 Name                         | Description
 :--:                         | -----------
+`clink.paste_crlf`           | What to do with CR and LF characters on paste. Set this to `delete` to delete them, or to `space` to replace them with spaces.
 `clink.path`                 | A list of paths to load Lua scripts. Multiple paths can be delimited semicolons. _**TODO:** Describe the default behavior._
-`cmd.auto_answer`            | Automatically answers cmd.exe's "Terminate batch job (Y/N)?" prompts. 0 = disabled, 1 = answer Y, 2 = answer N.
+`cmd.auto_answer`            | Automatically answers cmd.exe's "Terminate batch job (Y/N)?" prompts. `off` = disabled, `answer_yes` = answer Y, `answer_no` = answer N.
 `cmd.ctrld_exits`            | Ctrl-D exits the process when it is pressed on an empty line.
+`colour.doskey`              | Used when Clink displays doskey alias completions.
 `colour.hidden`              | Used when Clink displays file completions with the "hidden" attribute.
 `colour.interact`            | Used when Clink displays text or prompts such as a pager's `--More?--` prompt.
+`colour.readonly`            | Used when Clink displays file completions with the "readonly" attribute.
 `doskey.enhanced`            | Enhanced Doskey adds the expansion of macros that follow `|` and `&` command separators and respects quotes around words when parsing `$1`..`$9` tags. Note that these features do not apply to Doskey use in Batch files.
 `exec.cwd`                   | When matching executables as the first word (`exec.enable`), include executables in the current directory. (This is implicit if the word being completed is a relative path).
 `exec.dirs`                  | When matching executables as the first word (`exec.enable`), also include directories relative to the current working directory as matches.
@@ -89,11 +84,11 @@ Name                         | Description
 `lua.path`                   | Value to append to `package.path`. Used to search for Lua scripts specified in `require()` statements.
 `match.ignore_case`          | Controls case sensitivity in string comparisons. 0 = case sensitive, 1 = case insensitive, 2 = case insensitive plus `-` and `_` are considered equal.
 `match.sort_dirs`            | Matching directories can go before files, with files, or after files. 0 = before, 1 = with, 2 = after.
+`terminal.emulate`           | Clink can either emulate a virtual terminal and handle ANSI escape codes itself, or let the console host natively handle ANSI escape codes. `off` = let the console host process ANSI escape codes, `on` = emulate a virtual terminal, `auto` = only emulate if the console host doesn't say it supports ANSI escape codes.
 `terminal.modify_other_keys` | When enabled, pressing Space or Tab with modifier keys sends extended XTerm key sequences so they can be bound separately.
 
 > Notes:
-> - **NYI:** Need to add back `ansi_code_support` and automatic pass-through to let the console host handle SGR ANSI escape codes.
-> - The `esc_clears_line` setting has been replaced by a `reset-line` command that can be bound to <kbd>Escape</kbd> (or any other key).
+> - The `esc_clears_line` setting has been replaced by a `clink-reset-line` command that can be bound to <kbd>Escape</kbd> (or any other key).
 > - The `history_file_lines` setting doesn't exist at the moment. _**NYI:** Some mechanism for trimming history will be added eventually._
 > - The `use_altgr_substitute` setting has been removed. _**NYI:** If AltGr or lack of AltGr causes a problem for you, please open an issue in the repo with details._
 
@@ -129,29 +124,50 @@ Name | Description
 `completion-auto-query-items`|Automatically prompts before displaying completions if they won't fit on one screen page.
 `history-point-at-end-of-anchored-search`|Puts the cursor at the end of the line when using `history-search-forward` or `history-search-backward`.
 
-> Compatibility note:  The `clink_inputrc_base` file from v0.4.8 no longer exists.
+> **Compatibility Note:**  The `clink_inputrc_base` file from v0.4.8 no longer exists.
 
 ## New commands
 
 Name | Description
 :-:|---
 `add-history`|Adds the current line to the history without executing it, and clears the editing line.
-`clink-exit`|Replaces the editing line with `exit` and executes it (exits the shell instance).
-`expand-doskey-alias`|Expand the doskey alias (if any) at the beginning of the line.
-`expand-env-vars`|Expand the environment variable (`%FOOBAR%`) at the cursor.
+`clink-copy-cwd`|Copy the current working directory to the clipboard.
+`clink-copy-line`|Copy the current line to the clipboard.
+`clink-ctrl-c`|Discards the current line and starts a new one (like Ctrl-C in CMD.EXE).
+`clink-exit`|Replaces the current line with `exit` and executes it (exits the shell instance).
+`clink-expand-doskey-alias`|Expand the doskey alias (if any) at the beginning of the line.
+`clink-expand-env-vars`|Expand the environment variable (`%FOOBAR%`) at the cursor.
+`clink-insert-dot-dot`|Inserts `..\` at the cursor.
+`clink-paste`|Paste the clipboard at the cursor.
+`clink-popup-complete`|Show a popup window that lists the available completions.
+`clink-popup-history`|Show a popup window that lists the command history (if any text precedes the cursor then it uses an anchored search to filter the list).
+`clink-reset-line`|Clears the current line.
+`clink-scroll-bottom`|Scroll the console window to the bottom (the current input line).
+`clink-scroll-line-down`|Scroll the console window down one line.
+`clink-scroll-line-up`|Scroll the console window up one line.
+`clink-scroll-page-down`|Scroll the console window down one page.
+`clink-scroll-page-up`|Scroll the console window up one page.
+`clink-scroll-top`|Scroll the console window to the top.
+`clink-show-help`|Lists the currently active key bindings.
+`clink-up-directory`|Changes to the parent directory.
 `old-menu-complete-backward`|Like `old-menu-complete`, but in reverse.
 `remove-history`|While searching history, removes the current line from the history.
-`reset-line`|Clears the editing line.
+
+## Popup window
+
+The `clink-popup-complete` and `clink-popup-history` commands show a popup window that lists the available completions or the command history.  Typing does an incremental search, and <kbd>F3</kbd> or <kbd>Ctrl</kbd>+<kbd>L</kbd> go to the next match (add <kbd>Shift</kbd> to go to the previous match).  <kbd>Enter</kbd> inserts the highlighted completion or executes the highlighted history entry.  <kbd>Shift</kbd>+<kbd>Enter</kbd> jumps to the highlighted history entry without executing it.
 
 <br>
 
 # Extending Clink
 
+> **WARNING:** This entire section is out of date and needs to be updated.
+
 The Readline library allows clients to offer an alternative path for creating completion matches. Clink uses this to hook Lua into the completion process making it possible to script the generation of matches with Lua scripts. The following sections describe this in more detail and shows some examples.
 
 ## The Location of Lua Scripts
 
-Clink looks for Lua scripts in the folders as described in the **Configuring Clink** section. By default <kbd>Ctrl</kbd>-<kbd>X</kbd>,<kbd>Ctr</kbd>-<kbd>R</kbd> is mapped to reload all Lua scripts which can be useful when developing and iterating on your own scripts.
+Clink looks for Lua scripts in the folders as described in the **Configuring Clink** section. By default <kbd>Ctrl</kbd>-<kbd>X</kbd>,<kbd>Ctrl</kbd>-<kbd>R</kbd> is mapped to reload all Lua scripts which can be useful when developing and iterating on your own scripts.
 
 ## Match Generators
 
@@ -321,7 +337,7 @@ The function's single argument `matches` is a table containing what Clink is goi
 
 > **TODO:** Describe the new prompt filter syntax.
 >
-> Note: Both the old syntax described below **and** the new syntax are compatible with v1.1.0 onward.
+> **Compatibility Note:** Both the old syntax described below **and** the new syntax are compatible with v1.1.0 onward.
 
 Before Clink displays the prompt it filters the prompt through Lua so that the prompt can be customised. This happens each and every time that the prompt is shown which allows for context sensitive customisations (such as showing the current branch of a git repository for example).
 
@@ -346,6 +362,10 @@ clink.prompt.register_filter(git_prompt_filter, 50)
 The filter function takes no arguments instead receiving and modifying the prompt through the `clink.prompt.value` variable. It returns true if the prompt filtering is finished, and false if it should continue on to the next registered filter.
 
 A filter function is registered into the filter chain by passing the function to `clink.prompt.register_filter()` along with a sort id which dictates the order in which filters are called. Lower sort ids are called first.
+
+## New Functions
+
+> **TODO:** Document the lua functions added by Clink.
 
 <br>
 
@@ -408,7 +428,7 @@ Here is an example line from a clink_inputrc file that binds Shift-End to the Re
 
 ## Powershell
 
-_Deprecated:  Clink v0.4.8 had some basic support for Powershell, but v1.0.0 removed Powershell support._
+> _**Deprecated:**  Clink v0.4.8 had some basic support for Powershell, but v1.0.0 removed Powershell support._
 
 <br>
 
