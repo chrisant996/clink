@@ -311,7 +311,7 @@ bool append(str_base& out, const char* rhs)
         add_seperator &= !is_separator(out[last]);
 
 #if defined(PLATFORM_WINDOWS)
-        add_seperator &= !(out[1] == ':' && out[2] == '\0');
+        add_seperator &= !(isalpha((unsigned char)out[0]) && out[1] == ':' && out[2] == '\0');
 #endif
     }
     else
@@ -321,6 +321,61 @@ bool append(str_base& out, const char* rhs)
         out << PATH_SEP;
 
     return out.concat(rhs);
+}
+
+//------------------------------------------------------------------------------
+// Strips a run of trailing separators.  Doesn't strip separator after drive
+// letter or UNC root, and doesn't strip an initial (root) separator.
+void maybe_strip_last_separator(str_base& out)
+{
+    unsigned int start = 0;
+
+    if (isalpha((unsigned char)out[0]) && out[1] == ':')
+        start += 2;
+    else if (out[0] == '\\' && out[1] == '\\')
+        start += 2;
+
+    if (is_separator(out[start]))
+        start++;
+
+    while (out.length() > start && is_separator(out[out.length() - 1]))
+        out.truncate(out.length() - 1);
+}
+
+//------------------------------------------------------------------------------
+// Strips the last path component, and optionally returns it in child.  Returns
+// non-zero if out changed, or zero if out didn't change.
+bool to_parent(str_base& out, str_base* child)
+{
+    unsigned int start = 0;
+    unsigned int end = out.length();
+    unsigned int orig_len = out.length();
+
+    if (isalpha((unsigned char)out[0]) && out[1] == ':')
+        start += 2;
+    else if (out[0] == '\\' && out[1] == '\\')
+        start += 2;
+
+    if (is_separator(out[start]))
+        start++;
+
+    while (end > start && is_separator(out[end - 1]))
+        end--;
+    int child_end = end;
+    while (end > start && !is_separator(out[end - 1]))
+        end--;
+
+    if (child)
+    {
+        child->clear();
+        child->concat(out.c_str() + end, child_end - end);
+    }
+
+    while (end > start && is_separator(out[end - 1]))
+        end--;
+
+    out.truncate(end);
+    return (out.length() != orig_len);
 }
 
 //------------------------------------------------------------------------------

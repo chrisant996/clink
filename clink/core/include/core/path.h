@@ -25,6 +25,8 @@ bool        is_rooted(const char* path);
 bool        is_root(const char* path);
 bool        join(const char* lhs, const char* rhs, str_base& out);
 bool        append(str_base& out, const char* rhs);
+void        maybe_strip_last_separator(str_base& out);
+bool        to_parent(str_base& out, str_base* child);
 bool        is_incomplete_unc(const char* path);
 
 }; // namespace path
