@@ -9,9 +9,6 @@ Here's what's left to do in order to have a reasonable alpha release.  The alpha
 - Describe the new argmatcher/etc syntax.
 - Supply sample inputrc file(s).
 
-## Bugs
-- vi_mode is having problems with input key sequences that include ESC [#7](https://github.com/chrisant996/clink/issues/7).
-
 <br>
 <br>
 
@@ -72,9 +69,6 @@ The Phase 2 goal is to produce a viable Beta Release with broader compatibility 
   - It seems more efficient to not invoke it until `complete` or `menu-complete` (etc).
   - But eventually in order to color arguments/etc the match pipeline will need to run while typing, so maybe leave it be.
 - Use [Microsoft Detours](https://github.com/microsoft/detours) instead of the current implementation in clink?
-- vi mode doesn't seem to support responding to M-C-letter or M-letter bindings, but interprets them as other things?  _[Update: maybe because `\e` is bound by itself?]_
-- vi mode doesn't seem to support `\e[27;27~` even when explicitly bound, but I don't yet understand why not.  _[Update: does it support `\e\e`?]_
-- Toggling vi mode doesn't reload .inputrc until a new line, so $if conditional key bindings aren't active at first.
 - Symlink support (displaying matches, and whether to append a path separator).
 - Perturbed PROMPT envvar is visible in child processes (e.g. piped shell in various file editors).  There might be no way around that...
 

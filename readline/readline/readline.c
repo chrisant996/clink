@@ -905,6 +905,13 @@ _rl_dispatch_subseq (register int key, Keymap map, int got_subseq)
     case ISKMAP:
       if (map[key].function != 0)
 	{
+/* begin_clink_change
+ * This is trying to work around the ambiguity of detecting when the ESC key by
+ * itself is pressed.  With the bindableEsc approach Clink uses, there's no need
+ * to work around that, and in fact trying to work around it creates problems.
+ */
+#if 0
+/* end_clink_change */
 #if defined (VI_MODE)
 	  /* The only way this test will be true is if a subsequence has been
 	     bound starting with ESC, generally the arrow keys.  What we do is
@@ -930,6 +937,9 @@ _rl_dispatch_subseq (register int key, Keymap map, int got_subseq)
 	      _rl_input_queued ((_rl_keyseq_timeout > 0) ? _rl_keyseq_timeout*1000 : 0) == 0)
 	    return (_rl_dispatch (ANYOTHERKEY, FUNCTION_TO_KEYMAP (map, key)));	      
 #endif
+/* begin_clink_change */
+#endif
+/* end_clink_change */
 
 	  RESIZE_KEYSEQ_BUFFER ();
 	  rl_executing_keyseq[rl_key_sequence_length++] = key;

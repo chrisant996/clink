@@ -346,7 +346,7 @@ void win_terminal_in::process_input(KEY_EVENT_RECORD const& record)
 
     // Special treatment for escape.
     // TODO: 0.4.8 keyboard compatibility mode
-    if (key_char == 0x1b && rl_editing_mode != 0/*vi_mode*/)
+    if (key_char == 0x1b)
         return push(bindableEsc);
 
     // Special treatment for variations of tab and space.
