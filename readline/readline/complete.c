@@ -1419,6 +1419,47 @@ _rl_find_completion_word (int *fp, int *dp)
   return (quote_char);
 }
 
+/* begin_clink_change */
+static int
+match_type_strcmp (const char *s1, const char *s2, int past_flag, int casefold, int dedupe)
+{
+  int cmp;
+
+  if (casefold)
+    cmp = strcasecmp (s1 + past_flag, s2 + past_flag);
+  else
+    cmp = strcmp (s1 + past_flag, s2 + past_flag);
+  if (cmp || !past_flag)
+    return cmp;
+
+  {
+    unsigned char t1 = ((unsigned char)*s1) & MATCH_TYPE_MASK;
+    unsigned char t2 = ((unsigned char)*s2) & MATCH_TYPE_MASK;
+
+    cmp = (t1 == MATCH_TYPE_ALIAS) - (t2 == MATCH_TYPE_ALIAS);
+    if (cmp)
+      return cmp;
+
+    cmp = (t1 == MATCH_TYPE_DIR) - (t2 == MATCH_TYPE_DIR);
+    if (cmp)
+      return cmp;
+
+    if (!dedupe)
+      {
+        cmp = (t1 == MATCH_TYPE_WORD) - (t2 == MATCH_TYPE_WORD);
+        if (cmp)
+          return cmp;
+
+        cmp = (t1 == MATCH_TYPE_FILE) - (t2 == MATCH_TYPE_FILE);
+        if (cmp)
+          return cmp;
+      }
+  }
+
+  return cmp;
+}
+/* end_clink_change */
+
 static char **
 gen_completion_matches (char *text, int start, int end, rl_compentry_func_t *our_func, int found_quote, int quote_char)
 {
@@ -1490,13 +1531,8 @@ match_type_qsort_string_compare (char **s1, char **s2)
 // #if defined (HAVE_STRCOLL)
 //   return (strcoll (*s1 + 1, *s2 + 1));
 // #else
-  int result;
-
-  result = (*s1)[1] - (*s2)[1];
-  if (result == 0)
-    result = strcmp (*s1 + 1, *s2 + 1);
-
-  return result;
+  // TODO: the strings are actually UTF8.
+  return match_type_strcmp (*s1, *s2, 1/*past_flag*/, 0/*casefold*/, 0/*dedupe*/);
 // #endif
 }
 
@@ -1506,7 +1542,7 @@ static int
 match_type_qsort_string_compare_casefold (char **s1, char **s2)
 {
   // TODO: the strings are actually UTF8.
-  return strcasecmp (*s1 + 1, *s2 + 1);
+  return match_type_strcmp (*s1, *s2, 1/*past_flag*/, 1/*casefold*/, 0/*dedupe*/);
 }
 
 /* Stupid comparison routine for qsort () ing strings, but fold case. */
@@ -1573,7 +1609,7 @@ remove_duplicate_matches (char **matches)
     {
 /* begin_clink_change */
       //if (strcmp (matches[i], matches[i + 1]) == 0)
-      if (strcmp (matches[i] + past_flag, matches[i + 1] + past_flag) == 0)
+      if (match_type_strcmp (matches[i], matches[i + 1], past_flag, 0/*casefold*/, 1/*dedupe*/) == 0)
 /* end_clink_change */
 	{
 	  xfree (matches[i]);
@@ -1604,7 +1640,7 @@ remove_duplicate_matches (char **matches)
      insert. */
 /* begin_clink_change */
   //if (j == 2 && strcmp (temp_array[0], temp_array[1]) == 0)
-  if (j == 2 && strcmp (temp_array[0] + past_flag, temp_array[1] + past_flag) == 0)
+  if (j == 2 && match_type_strcmp (temp_array[0], temp_array[1], past_flag, 0/*casefold*/, 1/*dedupe*/) == 0)
 /* end_clink_change */
     {
       xfree (temp_array[1]);
