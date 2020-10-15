@@ -144,7 +144,10 @@ static char **gen_completion_matches PARAMS((char *, int, int, rl_compentry_func
 
 static char **remove_duplicate_matches PARAMS((char **));
 static void insert_match PARAMS((char *, int, int, char *));
-static int append_to_match PARAMS((char *, int, int, int));
+/* begin_clink_change */
+//static int append_to_match PARAMS((char *, int, int, int));
+static int append_to_match PARAMS((char *, int, int, int, int));
+/* end_clink_change */
 static void insert_all_matches PARAMS((char **, int, char *));
 static int complete_fncmp PARAMS((const char *, int, const char *, int));
 static void display_matches PARAMS((char **));
@@ -2211,12 +2214,6 @@ make_quoted_replacement (char *match, int mtype, char *qc)
       if (do_replace != NO_MATCH && rl_filename_quoting_function)
 	replacement = (*rl_filename_quoting_function) (match, do_replace, qc);
     }
-
-/* begin_clink_change */
-  if (qc && *qc && !should_quote)
-    *qc = '\0';
-/* end_clink_change */
-
   return (replacement);
 }
 
@@ -2282,7 +2279,10 @@ insert_match (char *match, int start, int mtype, char *qc)
    value of _rl_complete_mark_symlink_dirs, but may be modified by an
    application's completion function). */
 static int
-append_to_match (char *text, int delimiter, int quote_char, int nontrivial_match)
+/* begin_clink_change */
+//append_to_match (char *text, int delimiter, int quote_char, int nontrivial_match)
+append_to_match (char *text, int orig_start, int delimiter, int quote_char, int nontrivial_match)
+/* end_clink_change */
 {
   char temp_string[4], *filename, *fn;
   int temp_string_index, s;
@@ -2298,6 +2298,13 @@ append_to_match (char *text, int delimiter, int quote_char, int nontrivial_match
   if (quote_char && rl_point && rl_completion_suppress_quote == 0 &&
       rl_line_buffer[rl_point - 1] != quote_char)
     temp_string[temp_string_index++] = quote_char;
+
+/* begin_clink_change
+ * Must not append closing quote_char if there's no opening quote.
+ */
+  if (temp_string_index && rl_line_buffer[orig_start] != quote_char)
+    temp_string_index--;
+/* end_clink_change */
 
   if (delimiter)
     temp_string[temp_string_index++] = delimiter;
@@ -2561,7 +2568,10 @@ rl_complete_internal (int what_to_do)
 	    rl_ding ();	/* There are other matches remaining. */
 	}
       else
-	append_to_match (matches[0], delimiter, quote_char, nontrivial_lcd);
+/* begin_clink_change */
+	//append_to_match (matches[0], delimiter, quote_char, nontrivial_lcd);
+	append_to_match (matches[0], start, delimiter, quote_char, nontrivial_lcd);
+/* end_clink_change */
 
       break;
 
@@ -3284,9 +3294,10 @@ rl_old_menu_complete (int count, int invoking_key)
       rl_begin_undo_group();
 /* end_clink_change */
       insert_match (matches[match_list_index], orig_start, SINGLE_MATCH, &quote_char);
-      append_to_match (matches[match_list_index], delimiter, quote_char,
 /* begin_clink_change */
-		       //strcmp (orig_text, matches[match_list_index]));
+      //append_to_match (matches[match_list_index], delimiter, quote_char,
+      //                 strcmp (orig_text, matches[match_list_index]));
+      append_to_match (matches[match_list_index], orig_start, delimiter, quote_char,
 		       strcmp (orig_text, matches[match_list_index] + past_flag));
       rl_end_undo_group();
 /* end_clink_change */
@@ -3448,7 +3459,10 @@ rl_menu_complete (int count, int ignore)
 	}
       else if (match_list_size <= 1)
 	{
-	  append_to_match (matches[0], delimiter, quote_char, nontrivial_lcd);
+/* begin_clink_change */
+	  //append_to_match (matches[0], delimiter, quote_char, nontrivial_lcd);
+	  append_to_match (matches[0], orig_start, delimiter, quote_char, nontrivial_lcd);
+/* end_clink_change */
 	  full_completion = 1;
 	  return (0);
 	}
@@ -3492,9 +3506,11 @@ rl_menu_complete (int count, int ignore)
       rl_begin_undo_group();
 /* end_clink_change */
       insert_match (matches[match_list_index], orig_start, SINGLE_MATCH, &quote_char);
-      append_to_match (matches[match_list_index], delimiter, quote_char,
-		       strcmp (orig_text, matches[match_list_index] + past_flag));
 /* begin_clink_change */
+      //append_to_match (matches[match_list_index], delimiter, quote_char,
+      //                 strcmp (orig_text, matches[match_list_index]));
+      append_to_match (matches[match_list_index], orig_start, delimiter, quote_char,
+		       strcmp (orig_text, matches[match_list_index] + past_flag));
       rl_end_undo_group();
 /* end_clink_change */
     }
@@ -3609,7 +3625,7 @@ rl_insert_match (char* match, char* orig_text, int orig_start, int delimiter, ch
 
   rl_begin_undo_group();
   insert_match (match, orig_start, SINGLE_MATCH, &quote_char);
-  append_to_match (match, delimiter, quote_char, nontrivial_match);
+  append_to_match (match, orig_start, delimiter, quote_char, nontrivial_match);
   rl_end_undo_group();
 }
 /* end_clink_change */
