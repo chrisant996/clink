@@ -63,7 +63,7 @@ bool is_hidden(const char* path)
 int get_file_size(const char* path)
 {
     wstr<280> wpath(path);
-    void* handle = CreateFile(path, 0, 0, nullptr, OPEN_EXISTING, 0, nullptr);
+    void* handle = CreateFileW(wpath.c_str(), 0, 0, nullptr, OPEN_EXISTING, 0, nullptr);
     if (handle == INVALID_HANDLE_VALUE)
         return -1;
 
