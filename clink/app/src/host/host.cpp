@@ -99,66 +99,53 @@ static bool intercept_directory(const char* line, str_base& dir)
         tmp.truncate(tmp.length() - 1);
     }
 
-    if (!tmp.length() ||
-        os::get_path_type(tmp.c_str()) != os::path_type_dir)
+    if (!tmp.length())
         return false;
 
-    if (!tmp.equals(".") &&
-        !tmp.equals(".."))
+    // If all dots, convert into valid path syntax moving N-1 levels.
+    // Examples:
+    //  - "..." becomes "..\..\"
+    //  - "...." becomes "..\..\..\"
+    int num_dots = 0;
+    for (const char* p = tmp.c_str(); *p; ++p, ++num_dots)
     {
-        // If all dots, convert into valid path syntax moving N-1 levels.
-        // Examples:
-        //  - "..." becomes "..\..\"
-        //  - "...." becomes "..\..\..\"
-        int num_dots = 0;
-        for (const char* p = tmp.c_str(); *p; ++p, ++num_dots)
+        if (*p != '.')
         {
-            if (*p != '.')
-            {
-                num_dots = -1;
-                break;
-            }
-        }
-        if (num_dots >= 3)
-        {
-            tmp.clear();
-            while (num_dots > 1)
-            {
-                tmp.concat("..\\");
-                --num_dots;
-            }
-        }
-
-        // If the input doesn't end with a separator, don't handle it.
-        // Otherwise it would interfere with launching something found on the
-        // PATH but which happens to have the same name as a subdirectory of the
-        // current working directory.
-        if (!path::is_separator(tmp.c_str()[tmp.length() - 1]))
-        {
-            // But allow a special case for "..\.." and "..\..\..", etc.
-            const char* p = tmp.c_str();
-            while (true)
-            {
-                if (p[0] != '.' || p[1] != '.')
-                    return false;
-                if (p[2] == '\0')
-                    break;
-                if (!path::is_separator(p[2]))
-                    return false;
-                p += 3;
-            }
-        }
-
-        // Stop trimming trailing path separators once there's only 1 character,
-        // or when the preceding character is a colon.  Otherwise there's no way
-        // to change to the root directory.
-        while (tmp.length() > 1 && path::is_separator(tmp.c_str()[tmp.length() - 1]))
-        {
-            if (tmp.length() > 2 && tmp.c_str()[tmp.length() - 2] == ':')
-                break;
-            tmp.truncate(tmp.length() - 1);
+            num_dots = -1;
+            break;
         }
     }
+    if (num_dots >= 3)
+    {
+        tmp.clear();
+        while (num_dots > 1)
+        {
+            tmp.concat("..\\");
+            --num_dots;
+        }
+    }
+
+    // If the input doesn't end with a separator, don't handle it.  Otherwise
+    // it would interfere with launching something found on the PATH but with
+    // the same name as a subdirectory of the current working directory.
+    if (!path::is_separator(tmp.c_str()[tmp.length() - 1]))
+    {
+        // But allow a special case for "..\.." and "..\..\..", etc.
+        const char* p = tmp.c_str();
+        while (true)
+        {
+            if (p[0] != '.' || p[1] != '.')
+                return false;
+            if (p[2] == '\0')
+                break;
+            if (!path::is_separator(p[2]))
+                return false;
+            p += 3;
+        }
+    }
+
+    if (os::get_path_type(tmp.c_str()) != os::path_type_dir)
+        return false;
 
     dir = tmp.c_str();
     return true;

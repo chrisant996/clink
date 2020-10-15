@@ -12,16 +12,12 @@ namespace os
 //------------------------------------------------------------------------------
 DWORD get_file_attributes(const wchar_t* path)
 {
-    // Strip trailing path separators because FindFirstFile can't handle them.
-    wchar_t buf[MAX_PATH * 2];
+    // FindFirstFileW can handle cases that GetFileAttributesW can't (e.g. files
+    // open exclusively, some hidden/system files in the system root directory).
+    // But it can't handle a root directory, so if the incoming path ends with a
+    // separator then use GetFileAttributesW instead.
     if (*path && path::is_separator(path[wcslen(path) - 1]))
-    {
-        wstr_base str(buf, sizeof(buf));
-        str.copy(path);
-        while (str.length() && path::is_separator(str.c_str()[str.length() - 1]))
-            str.truncate(str.length() - 1);
-        path = buf;
-    }
+        return GetFileAttributesW(path);
 
     WIN32_FIND_DATAW fd;
     HANDLE h = FindFirstFileW(path, &fd);

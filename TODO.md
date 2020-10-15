@@ -11,7 +11,6 @@ Here's what's left to do in order to have a reasonable alpha release.  The alpha
 
 ## Bugs
 - [#10](https://github.com/chrisant996/clink/issues/10) `cd "pro`**menu-complete** repeatedly => gets confused by the leading quote and starts mangling the line content.
-- `\` doesn't change to the root directory.
 - De-duplication of matches is folding "clink" and "clink\" even though "clink" is a doskey alias and "clink\" is a directory.  The problem is that some directory completions include a path separator and some don't, depending on where they came from.
 - vi_mode is having problems with input key sequences that include ESC [#7](https://github.com/chrisant996/clink/issues/7).
 
