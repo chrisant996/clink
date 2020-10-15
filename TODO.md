@@ -67,7 +67,6 @@ The Phase 2 goal is to produce a viable Beta Release with broader compatibility 
 ## Problems
 - Lua `globfiles` and `globdirs` should return whether the files and dirs are hidden, to save _N_ additional calls to look up the hidden attributes.
 - Changing terminal width makes 0.4.8 slowly "walk up the screen".  Changing terminal width makes master go haywire.  Probably more ecma48 terminal issues.
-- Over 39 thousand assertions in the unit test?!
 - Use `path::normalise` to clean up input like "\wbin\\\\cli" when using `complete` and `menu-complete`.
 - Dissatisfied with the match pipeline:  typing `exit` and hitting **Enter** triggers the match pipeline.
   - It seems more efficient to not invoke it until `complete` or `menu-complete` (etc).
