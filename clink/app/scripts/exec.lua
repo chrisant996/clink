@@ -2,8 +2,9 @@
 -- License: http://opensource.org/licenses/MIT
 
 --------------------------------------------------------------------------------
-settings.add("exec.enable", true, "Enable executable matching",
-"Only match executables when completing the first word of a line")
+settings.add("exec.enable", true, "Enable executable matching for 'complete'",
+[[When enabled, the completion commands only match executables and directories
+when completing the first word of a line.]])
 
 settings.add("exec.path", true, "Match executables in PATH",
 [[Completes executables found in the directories specified in the PATH
