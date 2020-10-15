@@ -379,7 +379,7 @@ public:
 class wstr_base : public str_impl<wchar_t>
 {
 public:
-    template <int I> wstr_base(char (&data)[I]) : str_impl<wchar_t>(data, I) {}
+    template <int I> wstr_base(wchar_t (&data)[I]) : str_impl<wchar_t>(data, I) {}
                      wstr_base(wchar_t* data, int size) : str_impl<wchar_t>(data, size) {}
                      wstr_base(const wstr_base&)        = delete;
                      wstr_base(const wstr_base&&)       = delete;
