@@ -108,7 +108,7 @@ The Phase 2 goal is to produce a viable Beta Release with broader compatibility 
 <br>
 
 # EVENTUALLY
-More ambitious things like CUA Selection, popup window lists for completion and history, and coloring arguments and flags while editing (according to lua argmatchers).
+More ambitious things like CUA Selection and coloring arguments and flags while editing (according to lua argmatchers).
 
 ## Input
 - Try to make unbound keys like **Shift-Left** tell conhost that they haven't been handled, so conhost can do its fancy CUA marking.
