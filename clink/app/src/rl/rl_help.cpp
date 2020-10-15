@@ -175,14 +175,15 @@ int show_rl_help(int, int)
     int columns = max(1, columns_that_fit);
     if (_rl_completion_columns > 0 && columns > _rl_completion_columns)
         columns = _rl_completion_columns;
-    int total_rows = (offset + columns - 1) / columns;
+    int total_rows = ((offset - 1) + (columns - 1)) / columns;
 
     bool vertical = !_rl_print_completions_horizontally;
     int index_step = vertical ? total_rows : 1;
 
-    for (int i = 1; i < total_rows; ++i)
+    for (int i = 0; i < total_rows; ++i)
     {
         int index = vertical ? i : (i * columns);
+        index++;
 
         // Ask the pager what to do.
         const int lines = 1 + (columns_that_fit ? 0 : int(strlen(collector[index]) / g_printer->get_columns()));
