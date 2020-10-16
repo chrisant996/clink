@@ -1,7 +1,8 @@
 body {
     padding-top: 3em;
-    width: 640px;
+    width: 90%;
     margin: 0 auto;
+    font-family: Calibri, Arial, Helvetica, sans-serif;
 }
 
 h3 {
@@ -13,6 +14,45 @@ h3 { font-size: 1.21em; }
 h4 { font-size: 1.14em; }
 h5 { font-size: 1.07em; }
 h6 { font-size: 1.00em; }
+
+blockquote {
+    display: block;
+    padding: 1px 20px 1px 20px;
+    margin: 0 0 20px;
+    box-shadow: 2px 2px 8px #ccc;
+    border-left-style: solid;
+    border-left-width: 8px;
+    border-left-color: darkred;
+    border-right-style: solid;
+    border-right-width: 2px;
+    border-right-color: darkred;
+}
+
+code {
+    display: inline;
+    padding: 1px 3px 1px 3px;
+    background-color: #eee;
+    border: 1px solid #ddd;
+    border-radius: 3px;
+}
+
+pre {
+    font-family: monospace;
+    margin: 0 10px 0 10px;
+}
+
+pre code {
+    border: none;
+    padding: 0 0 0 0;
+    border-radius: 0;
+}
+
+#content td:nth-child(1) code {
+    border: none;
+    padding: 0 0 0 0;
+    border-radius: 0;
+    background-color: transparent;
+}
 
 .section {
     margin-top: 2em;
@@ -49,7 +89,7 @@ h6 { font-size: 1.00em; }
 }
 
 #content td, #content th {
-    vertical-align: top;
+    vertical-align: text-top;
     padding: 0.2em;
 }
 

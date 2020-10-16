@@ -126,7 +126,7 @@ local function do_docs()
             local arg = table.concat(doc_tag.arg or {}, ", ")
             local ret = (doc_tag.ret or { "nil" })[1]
             local desc = table.concat(doc_tag.desc or {}, " ")
-            local show = table.concat(doc_tag.show or {}, "<br/>")
+            local show = table.concat(doc_tag.show or {}, "\n")
 
             api_html:write('<div class="header">')
                 api_html:write(' <div class="name">'..name..'</div>')
@@ -136,7 +136,7 @@ local function do_docs()
             api_html:write('<div class="body">')
                 api_html:write('<p class="desc">'..desc..'</p>')
                 if #show > 0 then
-                    api_html:write('<p class="show">'..show..'</p>')
+                    api_html:write('<pre class="language-lua"><code>'..show..'</code></pre>')
                 end
             api_html:write("</div>")
 

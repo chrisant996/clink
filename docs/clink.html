@@ -6,9 +6,11 @@
 <title>Clink v$(CLINK_VERSION)</title>
 <style>
     $(INCLUDE docs/clink.css)
+    $(INCLUDE docs/atom-one-light.css)
 </style>
 <script type="text/javascript">
     $(INCLUDE docs/marked.min.js)
+    $(INCLUDE docs/highlight.pack.js)
 
     function go()
     {
@@ -19,7 +21,7 @@
         {
             var md = mds[i];
             var div = document.createElement("div");
-            div.innerHTML = marked(md.innerHTML);
+            div.innerHTML = marked(md.innerText);
             div.id = md.getAttribute("_id");
             div.className = md.getAttribute("_class");
             content.insertBefore(div, md);
@@ -46,8 +48,9 @@
 
             toc.appendChild(div);
         }
+
+        hljs.initHighlighting();
     }
-    -->
 </script>
 </head>
 
