@@ -69,7 +69,7 @@ Name                         | Description
 `exec.cwd`                   | When matching executables as the first word (`exec.enable`), include executables in the current directory. (This is implicit if the word being completed is a relative path).
 `exec.dirs`                  | When matching executables as the first word (`exec.enable`), also include directories relative to the current working directory as matches.
 `exec.enable`                | Only match executables when completing the first word of a line.
-`exec.path`                  | When matching executables as the first word (`exec.enable`), include executables found in the directories specified in the `PATH` environment variable.
+`exec.path`                  | When matching executables as the first word (`exec.enable`), include executables found in the directories specified in the `%PATH%` environment variable.
 `exec.space_prefix`          | If the line begins with whitespace then Clink bypasses executable matching (`exec.path`) and will do normal files matching instead.
 `files.hidden`               | Includes or excludes files with the "hidden" attribute set when generating file lists.
 `files.system`               | Includes or excludes files with the "system" attribute set when generating file lists.
@@ -87,6 +87,8 @@ Name                         | Description
 `terminal.emulate`           | Clink can either emulate a virtual terminal and handle ANSI escape codes itself, or let the console host natively handle ANSI escape codes. `off` = let the console host process ANSI escape codes, `on` = emulate a virtual terminal, `auto` = only emulate if the console host doesn't say it supports ANSI escape codes.
 `terminal.modify_other_keys` | When enabled, pressing Space or Tab with modifier keys sends extended XTerm key sequences so they can be bound separately.
 
+<br>
+
 > Notes:
 > - The `esc_clears_line` setting has been replaced by a `clink-reset-line` command that can be bound to <kbd>Escape</kbd> (or any other key).
 > - The `history_file_lines` setting doesn't exist at the moment. _**NYI:** Some mechanism for trimming history will be added eventually._
@@ -96,12 +98,12 @@ Name                         | Description
 
 Settings and history are persisted to disk from session to session. The location of these files depends on which distribution of Clink was used. If you installed Clink using the .exe installer then Clink uses the current user's non-roaming application data directory. This user directory is usually found in one of the following locations;
 
-- `c:\Documents and Settings\<username>\Local Settings\Application Data` *(XP)*
-- `c:\Users\<username>\AppData\Local` *(Vista onwards)*
+- Windows XP: `c:\Documents and Settings\&lt;username&gt;\Local Settings\Application Data`
+- Windows Vista onwards: `c:\Users\&lt;username&gt;\AppData\Local`
 
 The .zip distribution of Clink creates and uses a directory called `profile` which is located in the same directory where Clink's core files are found.
 
-All of the above locations can be overridden using the `--profile <path>` command line option which is specified when injecting Clink into cmd.exe using `clink inject`.
+All of the above locations can be overridden using the `--profile &lt;path&gt;` command line option which is specified when injecting Clink into cmd.exe using `clink inject`.
 
 <br>
 
@@ -111,7 +113,7 @@ Readline itself can also be configured to add custom keybindings and macros by c
 
 > **TODO:** Update the description of how/where inputrc files are loaded.
 
-Clink will search in the directory as specified by the HOME environment variable for one or all of the following files; `clink_inputrc`, `_inputrc`, and `.inputrc`. If HOME is unset then Clink will use either of the standard Windows environment variables `%homedrive%\%homepath%` or `%userprofile%`.
+Clink will search in the directory as specified by the `%HOME%` environment variable for one or all of the following files; `clink_inputrc`, `_inputrc`, and `.inputrc`. If `%HOME%` is unset then Clink will use either of the standard Windows environment variables `%HOMEDRIVE%\%HOMEPATH%` or `%USERPROFILE%`.
 
 Other software that also uses Readline will also look for the `.inputrc` file (and possibly the `_inputrc` file too). To set macros and keybindings intended only for Clink one can use the Readline init file conditional construct like this; `$if clink [...] $endif`.
 
@@ -123,6 +125,8 @@ Name | Description
 :-:|---
 `completion-auto-query-items`|Automatically prompts before displaying completions if they won't fit on one screen page.
 `history-point-at-end-of-anchored-search`|Puts the cursor at the end of the line when using `history-search-forward` or `history-search-backward`.
+
+<br>
 
 > **Compatibility Note:**  The `clink_inputrc_base` file from v0.4.8 no longer exists.
 
@@ -193,7 +197,7 @@ clink.register_match_generator(my_match_generator, sort_id)
 
 The `sort_id` argument is used to sort the match generators such that generators with a lower sort ids are called first.
 
-Here is an simple example script that checks if `text` begins with a `%` character and then uses the remained of `text` to match the names of environment variables.
+Here is an simple example script that checks if `text` begins with a `%` character and then uses the remainder of `text` to match the names of environment variables.
 
 ```lua
 function env_vars_match_generator(text, first, last)
@@ -420,6 +424,8 @@ These keys use other formats, so their full "special" sequences are listed in th
 |F3                 |`\eOR`     |
 |F4                 |`\eOS`     |
 
+<br>
+
 Here is an example line from a clink_inputrc file that binds Shift-End to the Readline function `transpose-word` function;
 
 ```
@@ -429,25 +435,6 @@ Here is an example line from a clink_inputrc file that binds Shift-End to the Re
 ## Powershell
 
 > _**Deprecated:**  Clink v0.4.8 had some basic support for Powershell, but v1.0.0 removed Powershell support._
-
-<br>
-
-# Credits
-
-Clink was originally built by Martin Ridgers (https://github.com/mridgers/clink).<br>
-Copyright (c) 2012-2018 by Martin Ridgers.
-
-Clink has been forked and revived by Christopher Antos (https://github.com/chrisant996/clink).<br>
-Portions Copyright (c) 2020 by Christopher Antos.
-
-Clink uses the GNU Readline library version 8.0.
-> **TODO:** Include license and web site link.
-
-Clink uses Lua.
-> **TODO:** Include version, license, and web site link.
-
-Clink uses the getopt library.
-> **TODO:** Include cersion, license, and web site link.
 
 <!-- vim: wrap nolist ft=markdown
 -->

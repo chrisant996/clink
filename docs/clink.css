@@ -5,9 +5,9 @@ body {
     font-family: Calibri, Arial, Helvetica, sans-serif;
 }
 
-h3 {
+h1 {
     width: 100%;
-    border-bottom: 1px black solid;
+    border-bottom: 2px black solid;
 }
 
 h3 { font-size: 1.21em; }
@@ -45,6 +45,26 @@ pre code {
     border: none;
     padding: 0 0 0 0;
     border-radius: 0;
+}
+
+kbd {
+    padding:0.1em 0.3em;
+    border-collapse:separate;
+    border:1px solid #ccc;
+    font-size:75%;
+    font-family:Calibri,Arial,Helvetica,sans-serif;
+    background-color:#eee;
+    color:#333;
+    -moz-box-shadow:0 1px 0px rgba(0, 0, 0, 0.2),0 0 0 0px #ffffff inset;
+    -webkit-box-shadow:0 1px 0px rgba(0, 0, 0, 0.2),0 0 0 0px #ffffff inset;
+    box-shadow:0 1px 0px rgba(0, 0, 0, 0.2),0 0 0 0px #ffffff inset;
+    -moz-border-radius:4px;
+    -webkit-border-radius:4px;
+    border-radius:4px;
+    display:inline-block;
+    margin:0 0.1em;
+    vertical-align:0.1em;
+    white-space:nowrap;
 }
 
 #content td:nth-child(1) code {

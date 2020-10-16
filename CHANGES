@@ -1,15 +1,15 @@
 
-### Changes
+# Changes
 
-##### v1.0.0
+### v1.0.0
 
 - TODO
 
-##### v0.4.9
+### v0.4.9
 
 - Fixed broken Doskey on Win10 (#438, #451)
 
-##### v0.4.8
+### v0.4.8
 
 - Environment variable 'clink_profile' overrides Clink's profile path (#390).
 - Load a clink_inputrc file from Clink's profile directory (fixes #406).
@@ -17,13 +17,13 @@
     - Redraw issues when prompts end in OSC ANSI codes (#387, #384).
     - Fixed 'clink autorun --help' crash.
 
-##### v0.4.7
+### v0.4.7
 
 - Bug fixes;
     - Sometimes autorun tries to run clink.exe (#374).
     - Autorun would cause cmd.exe to return an error if it wasn't interactive (#373).
 
-##### v0.4.6
+### v0.4.6
 
 - HOME is only set if it is currently unset.
 - Readline can be initialised with .inputrc and _inputrc files too (#258).
@@ -42,7 +42,7 @@
     - Improved 'clink autorun' help (#348).
     - Fixed launching Clink when clink.bat is renamed (#357).
 
-##### v0.4.5
+### v0.4.5
 
 - Improved 'clink autorun'. It now defaults to the Current User registry hive.
 - 'clink set' gives more details for enumeration-type settings.
@@ -67,7 +67,7 @@
     - Fixed leaking exception filters.
     - Clearing the screen doesn't leave artefacts behind.
 
-##### v0.4.4
+### v0.4.4
 
 - Completing .. behaves more like Bash (#277).
 - Escape from yes/no question when Ctrl+C is pressed.
@@ -77,7 +77,7 @@
 - Fixed '!0' causing Clink to crash.
 - Save/restore cursor position in case Readline moves it.
 
-##### v0.4.3
+### v0.4.3
 
 - Localised Y/N when auto-answering 'terminate?' prompt.
 - $* would early out if there was no arguments.
@@ -96,7 +96,7 @@
 - Fixed missing WINCH signals if other processes resize the buffer.
 - Support Alt codes sent from Conhost.
 
-##### v0.4.2
+### v0.4.2
 
 - Prompt colouring no longer requires third party ANSI code utility.
 - Override settings with environment variables prefixed with 'clink'.
@@ -109,7 +109,7 @@
     - Windows XP works again.
     - Fixed race condition in lua_execute().
 
-##### v0.4.1
+### v0.4.1
 
 - Bug fixes;
     - Various Unicode fixes causing corrupt environment variables.
@@ -123,7 +123,7 @@
 - Added support for Windows' AltGr substitute Ctrl-Alt.
 - Support for Readline's 'menu' style completion (see docs).
 
-##### v0.4
+### v0.4
 
 - New features;
     - Better 'clink.arg' API. Easier, more intuitive, and more powerful.
@@ -154,7 +154,7 @@
     - Multiple locale fixes.
     - Use localised text for 'Terminate batch job?' prompt.
 
-##### v0.3
+### v0.3
 
 - Automatic answering of cmd.exe's 'Terminate batch script?' prompt.
 - Coloured prompts (requires ANSICON or ConEmu).
@@ -186,14 +186,14 @@
 - Start menu shortcut starts in USERPROFILE, like cmd.exe
 - Zip distribution is now portable.
 
-##### v0.2.1
+### v0.2.1
 
 - The .history file now merges multiple sessions together.
 - Fixed missing y/n, pause, and other prompts.
 - Fixed segfault in loader executable.
 - Better ConEmu compatibility.
 
-##### v0.2
+### v0.2
 
 - Basic argument completion for 'git', 'hg', 'svn', and 'p4'.
 - Traditional Bash clear screen ('Ctrl-L') and exit shortcuts ('Ctrl-D').
@@ -212,12 +212,16 @@
 - Improved hooking so Clink can be shared with other thirdparty utilities that
   also hook cmd.exe (ConEmu, ANSICon, etc.).
 
-##### v0.1.1
+### v0.1.1
 
 - Fixed AltGr+<key> on international keyboards.
 - Fixed broken completion when directories have a '-' in their name (Mark Hammond)
 - The check for single match scenarios now correctly handles case-insensitivity.
 
-##### v0.1
+### v0.1
 
 - Initial release.
+
+<!-- vim: wrap nolist ft=markdown
+-->
+
