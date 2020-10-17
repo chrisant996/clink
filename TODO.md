@@ -46,6 +46,7 @@ Lua support changed significantly.  Explore how to support backward compatibilit
 - What to do about completion colors in popup list?
   - Make it owner draw and add text like "dir", "doskey", etc?
   - Add stat chars when so configured?
+- Use `npm` to run `marked.min.js` at compile time to produce static documentation rather than dynamic scripted documentation with embedded copies of marked.min.js and highlight.js.
 
 ## Questions
 - What is `set-mark`?

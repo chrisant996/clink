@@ -9,21 +9,10 @@
     $(INCLUDE docs/atom-one-light.css)
 </style>
 <script type="text/javascript">
-    $(INCLUDE docs/marked.min.js)
     $(INCLUDE docs/highlight.pack.js)
 
     function go()
     {
-        // Convert markdown to HTML.
-        var content = document.getElementById("content");
-        var mds = document.getElementsByTagName("md");
-        for (var i = 0; i < mds.length; ++i)
-        {
-            var md = mds[i];
-            var div = document.getElementById(md.getAttribute("fill_id"));
-            div.innerHTML = marked(md.innerText);
-        }
-
         // Generate a table of contents from h* tags.
         var toc = document.getElementById("toc");
         toc.innerHTML = "";
@@ -70,23 +59,19 @@
     </div>
     <div id="toc"></div>
     <div id="content">
-        <div class="section" id="documentation"></div>
+        <div class="section" id="documentation">
+            $(MARKDOWN docs/clink.md)
+        </div>
         <h1 id="lua-api">Lua API Reference</h1>
         <div class="section" id="api">
             $(INCLUDE .build/docs/api_html)
         </div>
-        <div class="section" id="changes"></div>
-        <div class="section" id="credits"></div>
-        <!-- All md tags must come last, otherwise they interfere with each other -->
-        <md fill_id="credits" style="display: none;">
-            $(INCLUDE docs/credits.md)
-        </md>
-        <md fill_id="documentation" style="display: none;">
-            $(INCLUDE docs/clink.md)
-        </md>
-        <md fill_id="changes" style="display: none;">
-            $(INCLUDE CHANGES)
-        </md>
+        <div class="section" id="changes">
+            $(MARKDOWN CHANGES)
+        </div>
+        <div class="section" id="credits">
+            $(MARKDOWN docs/credits.md)
+        </div>
     </div>
 </body>
 

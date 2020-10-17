@@ -2,6 +2,19 @@
 -- License: http://opensource.org/licenses/MIT
 
 --------------------------------------------------------------------------------
+local function markdown_file(source_path, out)
+    print("  << " .. source_path)
+
+    local out_file = '.build\\docs\\'..source_path:match('([^/\\]+)$')..'.html'
+    os.execute('marked -o '..out_file..' < '..source_path)
+
+    local line_reader = io.lines(out_file)
+    for line in line_reader do
+        out:write(line .. "\n")
+    end
+end
+
+--------------------------------------------------------------------------------
 local function generate_file(source_path, out)
     print("  << " .. source_path)
     for line in io.open(source_path, "r"):lines() do
@@ -9,10 +22,15 @@ local function generate_file(source_path, out)
         if include then
             generate_file(include, out)
         else
-            line = line:gsub("%$%(CLINK_VERSION%)", clink_git_name:upper())
-            line = line:gsub("<(/?kbd)>", "&lt;%1&gt;")
-            line = line:gsub("<br>", "&lt;br&gt;")
-            out:write(line .. "\n")
+            local md = line:match("%$%(MARKDOWN +([^)]+)%)")
+            if md then
+                markdown_file(md, out)
+            else
+                line = line:gsub("%$%(CLINK_VERSION%)", clink_git_name:upper())
+                line = line:gsub("<(/?kbd)>", "&lt;%1&gt;")
+                line = line:gsub("<br>", "&lt;br&gt;")
+                out:write(line .. "\n")
+            end
         end
     end
 end
