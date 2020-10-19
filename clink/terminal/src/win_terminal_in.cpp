@@ -11,6 +11,7 @@
 
 #include <Windows.h>
 #include <assert.h>
+#include <map>
 
 //------------------------------------------------------------------------------
 extern bool is_scroll_mode();
@@ -32,17 +33,20 @@ static const int ALT_PRESSED = LEFT_ALT_PRESSED|RIGHT_ALT_PRESSED;
 // TODO: 0.4.8 keyboard compatibility mode
 #define CSI(x) "\x1b[" #x
 #define SS3(x) "\x1bO" #x
-namespace terminfo { //                       Shf        Alt        AtlShf     Ctl        CtlShf     CtlAlt     CtlAltShf
-static const char* const kcuu1[] = { CSI(A),  CSI(1;2A), CSI(1;3A), CSI(1;4A), CSI(1;5A), CSI(1;6A), CSI(1;7A), CSI(1;8A) }; // up
-static const char* const kcud1[] = { CSI(B),  CSI(1;2B), CSI(1;3B), CSI(1;4B), CSI(1;5B), CSI(1;6B), CSI(1;7B), CSI(1;8B) }; // down
-static const char* const kcub1[] = { CSI(D),  CSI(1;2D), CSI(1;3D), CSI(1;4D), CSI(1;5D), CSI(1;6D), CSI(1;7D), CSI(1;8D) }; // left
-static const char* const kcuf1[] = { CSI(C),  CSI(1;2C), CSI(1;3C), CSI(1;4C), CSI(1;5C), CSI(1;6C), CSI(1;7C), CSI(1;8C) }; // right
-static const char* const kich1[] = { CSI(2~), CSI(2;2~), CSI(2;3~), CSI(2;4~), CSI(2;5~), CSI(2;6~), CSI(2;7~), CSI(2;8~) }; // insert
-static const char* const kdch1[] = { CSI(3~), CSI(3;2~), CSI(3;3~), CSI(3;4~), CSI(3;5~), CSI(3;6~), CSI(3;7~), CSI(3;8~) }; // delete
-static const char* const khome[] = { CSI(H),  CSI(1;2H), CSI(1;3H), CSI(1;4H), CSI(1;5H), CSI(1;6H), CSI(1;7H), CSI(1;8H) }; // home
-static const char* const kend[]  = { CSI(F),  CSI(1;2F), CSI(1;3F), CSI(1;4F), CSI(1;5F), CSI(1;6F), CSI(1;7F), CSI(1;8F) }; // end
-static const char* const kpp[]   = { CSI(5~), CSI(5;2~), CSI(5;3~), CSI(5;4~), CSI(5;5~), CSI(5;6~), CSI(5;7~), CSI(5;8~) }; // pgup
-static const char* const knp[]   = { CSI(6~), CSI(6;2~), CSI(6;3~), CSI(6;4~), CSI(6;5~), CSI(6;6~), CSI(6;7~), CSI(6;8~) }; // pgdn
+#define ACSI(x) "\x1b\x1b[" #x
+#define ASS3(x) "\x1b\x1bO" #x
+namespace terminfo { //                       Shf        Ctl        CtlShf     Alt        AtlShf     AltCtl     AltCtlShf
+static const char* const kcuu1[] = { CSI(A),  CSI(1;2A), CSI(1;5A), CSI(1;6A), CSI(1;3A), CSI(1;4A), CSI(1;7A), CSI(1;8A) }; // up
+static const char* const kcud1[] = { CSI(B),  CSI(1;2B), CSI(1;5B), CSI(1;6B), CSI(1;3B), CSI(1;4B), CSI(1;7B), CSI(1;8B) }; // down
+static const char* const kcub1[] = { CSI(D),  CSI(1;2D), CSI(1;5D), CSI(1;6D), CSI(1;3D), CSI(1;4D), CSI(1;7D), CSI(1;8D) }; // left
+static const char* const kcuf1[] = { CSI(C),  CSI(1;2C), CSI(1;5C), CSI(1;6C), CSI(1;3C), CSI(1;4C), CSI(1;7C), CSI(1;8C) }; // right
+static const char* const kich1[] = { CSI(2~), CSI(2;2~), CSI(2;5~), CSI(2;6~), CSI(2;3~), CSI(2;4~), CSI(2;7~), CSI(2;8~) }; // insert
+static const char* const kdch1[] = { CSI(3~), CSI(3;2~), CSI(3;5~), CSI(3;6~), CSI(3;3~), CSI(3;4~), CSI(3;7~), CSI(3;8~) }; // delete
+static const char* const khome[] = { CSI(H),  CSI(1;2H), CSI(1;5H), CSI(1;6H), CSI(1;3H), CSI(1;4H), CSI(1;7H), CSI(1;8H) }; // home
+static const char* const kend[]  = { CSI(F),  CSI(1;2F), CSI(1;5F), CSI(1;6F), CSI(1;3F), CSI(1;4F), CSI(1;7F), CSI(1;8F) }; // end
+static const char* const kpp[]   = { CSI(5~), CSI(5;2~), CSI(5;5~), CSI(5;6~), CSI(5;3~), CSI(5;4~), CSI(5;7~), CSI(5;8~) }; // pgup
+static const char* const knp[]   = { CSI(6~), CSI(6;2~), CSI(6;5~), CSI(6;6~), CSI(6;3~), CSI(6;4~), CSI(6;7~), CSI(6;8~) }; // pgdn
+static const char* const kbks[]  = { "\b",    "",        "\x7f",    "",        "\x1b\b",  "",        "\x1b\x7f", ""       }; // bkspc
 static const char* const kcbt    = CSI(Z);
 static const char* const kfx[]   = {
     // kf1-12 : Fx unmodified
@@ -64,13 +68,34 @@ static const char* const kfx[]   = {
     CSI(1;6P),  CSI(1;6Q),  CSI(1;6R),  CSI(1;6S),
     CSI(15;6~), CSI(17;6~), CSI(18;6~), CSI(19;6~),
     CSI(20;6~), CSI(21;6~), CSI(23;6~), CSI(24;6~),
+
+    // kf1-12 : alt
+    ASS3(P),     ASS3(Q),     ASS3(R),     ASS3(S),
+    ACSI(15~),   ACSI(17~),   ACSI(18~),   ACSI(19~),
+    ACSI(20~),   ACSI(21~),   ACSI(23~),   ACSI(24~),
+
+    // kf13-24 : alt-shift
+    ACSI(1;2P),  ACSI(1;2Q),  ACSI(1;2R),  ACSI(1;2S),
+    ACSI(15;2~), ACSI(17;2~), ACSI(18;2~), ACSI(19;2~),
+    ACSI(20;2~), ACSI(21;2~), ACSI(23;2~), ACSI(24;2~),
+
+    // kf25-36 : alt-ctrl
+    ACSI(1;5P),  ACSI(1;5Q),  ACSI(1;5R),  ACSI(1;5S),
+    ACSI(15;5~), ACSI(17;5~), ACSI(18;5~), ACSI(19;5~),
+    ACSI(20;5~), ACSI(21;5~), ACSI(23;5~), ACSI(24;5~),
+
+    // kf37-48 : alt-ctrl-shift
+    ACSI(1;6P),  ACSI(1;6Q),  ACSI(1;6R),  ACSI(1;6S),
+    ACSI(15;6~), ACSI(17;6~), ACSI(18;6~), ACSI(19;6~),
+    ACSI(20;6~), ACSI(21;6~), ACSI(23;6~), ACSI(24;6~),
 };
 
 #define MOK(x) "\x1b[27;" #x
-//                                            Shf     Alt   AtlShf   Ctl         CtlShf      CtlAlt      CtlAltShf
-static const char* const ktab[]  = { "\t",    CSI(Z), "",   "",      MOK(5;9~),  MOK(6;9~),  "",         ""         }; // TAB
-static const char* const kspc[]  = { " ",     " ",    "",   "",      MOK(5;32~), MOK(6;32~), MOK(7;32~), MOK(8;32~) }; // SPC
+//                                            Shf     Ctl         CtlShf      Alt   AtlShf   AltCtl      AltCtlShf
+static const char* const ktab[]  = { "\t",    CSI(Z), MOK(5;9~),  MOK(6;9~),  "",   "",      "",         ""         }; // TAB
+static const char* const kspc[]  = { " ",     " ",    MOK(5;32~), MOK(6;32~), "",   "",      MOK(7;32~), MOK(8;32~) }; // SPC
 
+#if 0
 static int xterm_modifier(int key_flags)
 {
     // Calculate Xterm's modifier number.
@@ -80,9 +105,177 @@ static int xterm_modifier(int key_flags)
     i |= !!(key_flags & CTRL_PRESSED) << 2;
     return i;
 }
+#endif
+
+static int keymod_index(int key_flags)
+{
+    // Calculate key sequence table modifier index.
+    int i = 0;
+    i |= !!(key_flags & SHIFT_PRESSED);
+    i |= !!(key_flags & CTRL_PRESSED) << 1;
+    i |= !!(key_flags & ALT_PRESSED) << 2;
+    return i;
+}
 } // namespace terminfo
 #undef SS3
 #undef CSI
+
+
+
+//------------------------------------------------------------------------------
+struct auto_str : public no_copy
+{
+    auto_str(char* p) { s = p; }
+    auto_str(auto_str&& a) { s = a.s; a.s = nullptr; }
+    ~auto_str() { free(s); }
+    auto_str& operator=(auto_str&& a) { s = a.s; a.s = nullptr; }
+
+    char* s;
+};
+
+//------------------------------------------------------------------------------
+struct keyseq_key : public no_copy
+{
+    keyseq_key(const char* p, bool find = false) { this->s = p; this->find = find; }
+    keyseq_key(keyseq_key&& a) { s = a.s; find = a.find; a.s = nullptr; }
+    keyseq_key& operator=(keyseq_key&& a) { s = a.s; find = a.find; a.s = nullptr; }
+
+    const char* s;
+    bool find;
+};
+
+//------------------------------------------------------------------------------
+struct map_cmp_str
+{
+    bool operator()(keyseq_key const& a, keyseq_key const& b) const
+    {
+        if (a.find)
+        {
+            assert(!b.find);
+            const char* bs = b.s;
+            for (const char* as = a.s; *as; as++, bs++)
+            {
+                int cmp = int((unsigned char)*as) - int((unsigned char)*bs);
+                if (cmp)
+                    return cmp < 0;
+            }
+        }
+        else if (b.find)
+        {
+            assert(!a.find);
+            const char* as = a.s;
+            for (const char* bs = b.s; *bs; as++, bs++)
+            {
+                int cmp = int((unsigned char)*as) - int((unsigned char)*bs);
+                if (cmp)
+                    return cmp < 0;
+            }
+        }
+        else
+        {
+            const char* as = a.s;
+            const char* bs = b.s;
+            while (true)
+            {
+                int cmp = int((unsigned char)*as) - int((unsigned char)*bs);
+                if (cmp || !*as)
+                    return cmp < 0;
+                as++;
+                bs++;
+            }
+        }
+        return false;
+    }
+};
+static std::map<keyseq_key, auto_str, map_cmp_str> map_keyseq_to_name;
+
+//------------------------------------------------------------------------------
+static void add_keyseq_to_name(const char* keyseq, const char* name, str<32>& builder)
+{
+    if (!keyseq || !*keyseq)
+        return;
+
+    int old_len = builder.length();
+    builder.concat(name);
+
+    int alloc = builder.length() + 1;
+    auto_str second((char*)malloc(alloc));
+    if (second.s)
+    {
+        memcpy(second.s, builder.c_str(), alloc);
+        keyseq_key first(keyseq);
+        map_keyseq_to_name.emplace(std::move(first), std::move(second));
+    }
+
+    builder.truncate(old_len);
+}
+
+//------------------------------------------------------------------------------
+static void ensure_keyseqs_to_names()
+{
+    if (!map_keyseq_to_name.empty())
+        return;
+
+    static const char* const mods[] = { "", "S-", "C-", "C-S-", "A-", "A-S-", "A-C-", "A-C-S-" };
+    static_assert(sizeof_array(mods) == sizeof_array(terminfo::kcuu1), "modifier name count must match modified key array sizes");
+
+    str<32> builder;
+
+    add_keyseq_to_name(bindableEsc, "Esc", builder);
+
+    for (int i = 0; i < sizeof_array(terminfo::kcuu1); i++)
+    {
+        builder = mods[i];
+        add_keyseq_to_name(terminfo::kcuu1[i], "Up", builder);
+        add_keyseq_to_name(terminfo::kcud1[i], "Down", builder);
+        add_keyseq_to_name(terminfo::kcub1[i], "Left", builder);
+        add_keyseq_to_name(terminfo::kcuf1[i], "Right", builder);
+        add_keyseq_to_name(terminfo::khome[i], "Home", builder);
+        add_keyseq_to_name(terminfo::kend[i], "End", builder);
+        add_keyseq_to_name(terminfo::kpp[i], "PgUp", builder);
+        add_keyseq_to_name(terminfo::knp[i], "PgDn", builder);
+        add_keyseq_to_name(terminfo::kich1[i], "Ins", builder);
+        add_keyseq_to_name(terminfo::kdch1[i], "Del", builder);
+        add_keyseq_to_name(terminfo::ktab[i], "Tab", builder);
+        add_keyseq_to_name(terminfo::kspc[i], "Space", builder);
+        add_keyseq_to_name(terminfo::kbks[i], "Bkspc", builder);
+    }
+
+    str<32> fn;
+    for (int i = 0; i < sizeof_array(terminfo::kfx); )
+    {
+        builder = mods[i / 12];
+        for (int j = 0; j < 12; j++, i++)
+        {
+            fn.format("F%u", j + 1);
+            add_keyseq_to_name(terminfo::kfx[i], fn.c_str(), builder);
+        }
+    }
+
+    // TODO: Need to provide a hint so consumers can sort by equivalence class.
+    // - Normal
+    // - Shift
+    // - Ctrl
+    // - Ctrl+Shift
+    // - Alt
+    // - Alt+Shift
+    // - Alt+Ctrl+Shift
+    //
+    // And in each equivalence class, named keys first, then unnamed keys.
+}
+
+//------------------------------------------------------------------------------
+const char* find_key_name(const char* keyseq, int& len)
+{
+    ensure_keyseqs_to_names();
+    keyseq_key lookup(keyseq, true/*find*/);
+    auto const& iter = map_keyseq_to_name.find(lookup);
+    if (iter == map_keyseq_to_name.end())
+        return nullptr;
+
+    len = (int)strlen(iter->first.s);
+    return iter->second.s;
+}
 
 
 
@@ -351,9 +544,9 @@ void win_terminal_in::process_input(KEY_EVENT_RECORD const& record)
 
     // Special treatment for variations of tab and space.
     if (key_vk == VK_TAB && !m_buffer_count && g_modify_other_keys.get())
-        return push(terminfo::ktab[terminfo::xterm_modifier(key_flags)]);
+        return push(terminfo::ktab[terminfo::keymod_index(key_flags)]);
     if (key_vk == VK_SPACE && !m_buffer_count && g_modify_other_keys.get())
-        return push(terminfo::kspc[terminfo::xterm_modifier(key_flags)]);
+        return push(terminfo::kspc[terminfo::keymod_index(key_flags)]);
 
     // If the input was formed using AltGr or LeftAlt-LeftCtrl then things get
     // tricky. But there's always a Ctrl bit set, even if the user didn't press
@@ -376,13 +569,8 @@ void win_terminal_in::process_input(KEY_EVENT_RECORD const& record)
     unsigned key_func = key_vk - VK_F1;
     if (key_func <= (VK_F12 - VK_F1))
     {
-        if (key_flags & ALT_PRESSED)
-            push(0x1b);
-
-        int kfx_group = !!(key_flags & SHIFT_PRESSED);
-        kfx_group |= !!(key_flags & CTRL_PRESSED) << 1;
+        int kfx_group = terminfo::keymod_index(key_flags);
         push((terminfo::kfx + (12 * kfx_group) + key_func)[0]);
-
         return;
     }
 
@@ -399,7 +587,7 @@ void win_terminal_in::process_input(KEY_EVENT_RECORD const& record)
     // ENHANCED_KEY flag set so we'll infer it here.
     static const int enhanced_vks[] = {
         VK_UP, VK_DOWN, VK_LEFT, VK_RIGHT, VK_HOME, VK_END,
-        VK_INSERT, VK_DELETE, VK_PRIOR, VK_NEXT,
+        VK_INSERT, VK_DELETE, VK_PRIOR, VK_NEXT, VK_BACK,
     };
 
     for (int i = 0; i < sizeof_array(enhanced_vks); ++i)
@@ -428,6 +616,7 @@ void win_terminal_in::process_input(KEY_EVENT_RECORD const& record)
             { 'O', terminfo::kend, },  // end
             { 'I', terminfo::kpp, },   // pgup
             { 'Q', terminfo::knp, },   // pgdn
+            { '\x0e', terminfo::kbks, },// bkspc
         };
 
         for (const auto& iter : sc_map)
@@ -435,7 +624,7 @@ void win_terminal_in::process_input(KEY_EVENT_RECORD const& record)
             if (iter.code != key_sc)
                 continue;
 
-            push(iter.seqs[terminfo::xterm_modifier(key_flags)]);
+            push(iter.seqs[terminfo::keymod_index(key_flags)]);
             break;
         }
 

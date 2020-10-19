@@ -1310,12 +1310,21 @@ bind_arrow_keys_internal (Keymap map)
   rl_bind_keyseq_if_unbound ("\033[H", rl_beg_of_line);
   rl_bind_keyseq_if_unbound ("\033[F", rl_end_of_line);
 
+/* begin_clink_change
+ * Clink doesn't produce these as input, so it doesn't want them showing up in
+ * the list of bound key sequences.
+ */
+#if 0
+/* end_clink_change */
   rl_bind_keyseq_if_unbound ("\033OA", rl_get_previous_history);
   rl_bind_keyseq_if_unbound ("\033OB", rl_get_next_history);
   rl_bind_keyseq_if_unbound ("\033OC", rl_forward_char);
   rl_bind_keyseq_if_unbound ("\033OD", rl_backward_char);
   rl_bind_keyseq_if_unbound ("\033OH", rl_beg_of_line);
   rl_bind_keyseq_if_unbound ("\033OF", rl_end_of_line);
+/* begin_clink_change */
+#endif
+/* end_clink_change */
 
   /* Key bindings for control-arrow keys */
   rl_bind_keyseq_if_unbound ("\033[1;5C", rl_forward_word);

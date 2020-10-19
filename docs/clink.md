@@ -152,7 +152,8 @@ Name | Description
 `clink-scroll-page-down`|Scroll the console window down one page.
 `clink-scroll-page-up`|Scroll the console window up one page.
 `clink-scroll-top`|Scroll the console window to the top.
-`clink-show-help`|Lists the currently active key bindings.
+`clink-show-help`|Lists the currently active key bindings using friendly key names.
+`clink-show-help-raw`|Lists the currently active key bindings using raw key sequences.
 `clink-up-directory`|Changes to the parent directory.
 `old-menu-complete-backward`|Like `old-menu-complete`, but in reverse.
 `remove-history`|While searching history, removes the current line from the history.
@@ -379,34 +380,22 @@ A filter function is registered into the filter chain by passing the function to
 
 Due to differences between Windows and Linux, escape codes for keys like PageUp/Down and the arrow keys are different in Clink. Escape codes take the format `\e[?` where `?` is one of the characters from the following table, except for a few that are listed in a separate special table.
 
-|           |Normal     | Shift     | Alt       | Alt+Shift | Ctrl      | Ctrl+Shift | Ctrl+Alt | Ctrl+Alt+Shift |
-|:-:        |:-:        |:-:        |:-:        |:-:        |:-:        |:-:         |:-:       |:-:             |
-|Up         |`A`        |`1;2A`     |`1;3A`     |`1;4A`     |`1;5A`     |`1;6A`      |`1;7A`    |`1;8A`          |
-|Down       |`B`        |`1;2B`     |`1;3B`     |`1;4B`     |`1;5B`     |`1;6B`      |`1;7B`    |`1;8B`          |
-|Left       |`D`        |`1;2D`     |`1;3D`     |`1;4D`     |`1;5D`     |`1;6D`      |`1;7D`    |`1;8D`          |
-|Right      |`C`        |`1;2C`     |`1;3C`     |`1;4C`     |`1;5C`     |`1;6C`      |`1;7C`    |`1;8C`          |
-|Insert     |`2~`       |`2;2~`     |`2;3~`     |`2;4~`     |`2;5~`     |`2;6~`      |`2;7~`    |`2;8~`          |
-|Delete     |`3~`       |`3;2~`     |`3;3~`     |`3;4~`     |`3;5~`     |`3;6~`      |`3;7~`    |`3;8~`          |
-|Home       |`H`        |`1;2H`     |`1;3H`     |`1;4H`     |`1;5H`     |`1;6H`      |`1;7H`    |`1;8H`          |
-|End        |`F`        |`1;2F`     |`1;3F`     |`1;4F`     |`1;5F`     |`1;6F`      |`1;7F`    |`1;8F`          |
-|PgUp       |`5~`       |`5;2~`     |`5;3~`     |`5;4~`     |`5;5~`     |`5;6~`      |`5;7~`    |`5;8~`          |
-|PgDn       |`6~`       |`6;2~`     |`6;3~`     |`6;4~`     |`6;5~`     |`6;6~`      |`6;7~`    |`6;8~`          |
-|Tab        |(special)  |`Z`        |(n/a)      |(n/a)      |`27;5;9~`  |`27;6;9~`   |(n/a)     |(n/a)           |
-|Space      |(special)  |(n/a)      |(n/a)      |(n/a)      |`27;5;32~` |`27;6;32~`  |`27;7;32~`|`27;8;32~`      |
-|Backspace  |(special)  |(n/a)      |(n/a)      |(n/a)      |(special)  |(n/a)       |(n/a)     |(n/a)           |
-|Escape     |(special)  |(n/a)      |(n/a)      |(n/a)      |(n/a)      |(n/a)       |(n/a)     |(n/a)           |
-|F1         |(special)  |`1;2P`     |(n/a)      |(n/a)      |`1;5P`     |`1;6P`      |(n/a)     |(n/a)           |
-|F2         |(special)  |`1;2Q`     |(n/a)      |(n/a)      |`1;5Q`     |`1;6Q`      |(n/a)     |(n/a)           |
-|F3         |(special)  |`1;2R`     |(n/a)      |(n/a)      |`1;5R`     |`1;6R`      |(n/a)     |(n/a)           |
-|F4         |(special)  |`1;2S`     |(n/a)      |(n/a)      |`1;5S`     |`1;6S`      |(n/a)     |(n/a)           |
-|F5         |`15~`      |`15;2~`    |(n/a)      |(n/a)      |`15;5~`    |`15;6~`     |(n/a)     |(n/a)           |
-|F6         |`17~`      |`17;2~`    |(n/a)      |(n/a)      |`17;5~`    |`17;6~`     |(n/a)     |(n/a)           |
-|F7         |`18~`      |`18;2~`    |(n/a)      |(n/a)      |`18;5~`    |`18;6~`     |(n/a)     |(n/a)           |
-|F8         |`19~`      |`19;2~`    |(n/a)      |(n/a)      |`19;5~`    |`19;6~`     |(n/a)     |(n/a)           |
-|F9         |`20~`      |`20;2~`    |(n/a)      |(n/a)      |`20;5~`    |`20;6~`     |(n/a)     |(n/a)           |
-|F10        |`21~`      |`21;2~`    |(n/a)      |(n/a)      |`21;5~`    |`21;6~`     |(n/a)     |(n/a)           |
-|F11        |`23~`      |`23;2~`    |(n/a)      |(n/a)      |`23;5~`    |`23;6~`     |(n/a)     |(n/a)           |
-|F12        |`24~`      |`24;2~`    |(n/a)      |(n/a)      |`24;5~`    |`24;6~`     |(n/a)     |(n/a)           |
+|           |Normal     | Shift     | Ctrl      | Ctrl+Shift | Alt       | Alt+Shift | Ctrl+Alt | Ctrl+Alt+Shift |
+|:-:        |:-:        |:-:        |:-:        |:-:         |:-:        |:-:        |:-:       |:-:             |
+|Up         |`A`        |`1;2A`     |`1;5A`     |`1;6A`      |`1;3A`     |`1;4A`     |`1;7A`    |`1;8A`          |
+|Down       |`B`        |`1;2B`     |`1;5B`     |`1;6B`      |`1;3B`     |`1;4B`     |`1;7B`    |`1;8B`          |
+|Left       |`D`        |`1;2D`     |`1;5D`     |`1;6D`      |`1;3D`     |`1;4D`     |`1;7D`    |`1;8D`          |
+|Right      |`C`        |`1;2C`     |`1;5C`     |`1;6C`      |`1;3C`     |`1;4C`     |`1;7C`    |`1;8C`          |
+|Insert     |`2~`       |`2;2~`     |`2;5~`     |`2;6~`      |`2;3~`     |`2;4~`     |`2;7~`    |`2;8~`          |
+|Delete     |`3~`       |`3;2~`     |`3;5~`     |`3;6~`      |`3;3~`     |`3;4~`     |`3;7~`    |`3;8~`          |
+|Home       |`H`        |`1;2H`     |`1;5H`     |`1;6H`      |`1;3H`     |`1;4H`     |`1;7H`    |`1;8H`          |
+|End        |`F`        |`1;2F`     |`1;5F`     |`1;6F`      |`1;3F`     |`1;4F`     |`1;7F`    |`1;8F`          |
+|PgUp       |`5~`       |`5;2~`     |`5;5~`     |`5;6~`      |`5;3~`     |`5;4~`     |`5;7~`    |`5;8~`          |
+|PgDn       |`6~`       |`6;2~`     |`6;5~`     |`6;6~`      |`6;3~`     |`6;4~`     |`6;7~`    |`6;8~`          |
+|Tab        |(special)  |`Z`        |`27;5;9~`  |`27;6;9~`   |(n/a)      |(n/a)      |(n/a)     |(n/a)           |
+|Space      |(special)  |(n/a)      |`27;5;32~` |`27;6;32~`  |(n/a)      |(n/a)      |`27;7;32~`|`27;8;32~`      |
+|Backspace  |(special)  |(n/a)      |(special)  |(n/a)       |(special)  |(n/a)      |(n/a)     |(n/a)           |
+|Escape     |(special)  |(n/a)      |(n/a)      |(n/a)       |(n/a)      |(n/a)      |(special) |(n/a)           |
 
 <br>
 
@@ -419,17 +408,42 @@ These keys use other formats, so their full "special" sequences are listed in th
 |Space              |(space)    |
 |Backspace          |`^h`       |
 |Ctrl + Backspace   |`Rubout`   |
-|F1                 |`\eOP`     |
-|F2                 |`\eOQ`     |
-|F3                 |`\eOR`     |
-|F4                 |`\eOS`     |
+|Alt + Backspace    |`\e^h`     |
+|Ctrl + Alt + Backspace |`\eRubout` |
 
 <br>
 
-Here is an example line from a clink_inputrc file that binds Shift-End to the Readline function `transpose-word` function;
+Here is an example line from a clink_inputrc file that binds Shift-End to the Readline `transpose-word` function;
 
 ```
 "\e[1;2F": transpose-word
+```
+
+## Binding function keys
+
+For function keys the full escape sequences are listed.  The last four columns (Alt+) are the same as the first four columns prefixed with an extra `\e`.
+
+|           |Normal     |Shift      |Ctrl       |Ctrl+Shift  |Alt        |Alt+Shift    |Alt+Ctrl     |Alt+Ctrl+Shift  |
+|:-:        |:-:        |:-:        |:-:        |:-:         |:-:        |:-:          |:-:          |:-:             |
+|F1         |`\eOP`     |`\e[1;2P`  |`\e[1;5P`  |`\e[1;6P`   |`\e\eOP`   |`\e\e[1;2P`  |`\e\e[1;5P`  |`\e\e[1;6P`     |
+|F2         |`\eOQ`     |`\e[1;2Q`  |`\e[1;5Q`  |`\e[1;6Q`   |`\e\eOQ`   |`\e\e[1;2Q`  |`\e\e[1;5Q`  |`\e\e[1;6Q`     |
+|F3         |`\eOR`     |`\e[1;2R`  |`\e[1;5R`  |`\e[1;6R`   |`\e\eOR`   |`\e\e[1;2R`  |`\e\e[1;5R`  |`\e\e[1;6R`     |
+|F4         |`\eOS`     |`\e[1;2S`  |`\e[1;5S`  |`\e[1;6S`   |`\e\eOS`   |`\e\e[1;2S`  |`\e\e[1;5S`  |`\e\e[1;6S`     |
+|F5         |`\e[15~`   |`\e[15;2~` |`\e[15;5~` |`\e[15;6~`  |`\e\e[15~` |`\e\e[15;2~` |`\e\e[15;5~` |`\e\e[15;6~`    |
+|F6         |`\e[17~`   |`\e[17;2~` |`\e[17;5~` |`\e[17;6~`  |`\e\e[17~` |`\e\e[17;2~` |`\e\e[17;5~` |`\e\e[17;6~`    |
+|F7         |`\e[18~`   |`\e[18;2~` |`\e[18;5~` |`\e[18;6~`  |`\e\e[18~` |`\e\e[18;2~` |`\e\e[18;5~` |`\e\e[18;6~`    |
+|F8         |`\e[19~`   |`\e[19;2~` |`\e[19;5~` |`\e[19;6~`  |`\e\e[19~` |`\e\e[19;2~` |`\e\e[19;5~` |`\e\e[19;6~`    |
+|F9         |`\e[20~`   |`\e[20;2~` |`\e[20;5~` |`\e[20;6~`  |`\e\e[20~` |`\e\e[20;2~` |`\e\e[20;5~` |`\e\e[20;6~`    |
+|F10        |`\e[21~`   |`\e[21;2~` |`\e[21;5~` |`\e[21;6~`  |`\e\e[21~` |`\e\e[21;2~` |`\e\e[21;5~` |`\e\e[21;6~`    |
+|F11        |`\e[23~`   |`\e[23;2~` |`\e[23;5~` |`\e[23;6~`  |`\e\e[23~` |`\e\e[23;2~` |`\e\e[23;5~` |`\e\e[23;6~`    |
+|F12        |`\e[24~`   |`\e[24;2~` |`\e[24;5~` |`\e[24;6~`  |`\e\e[24~` |`\e\e[24;2~` |`\e\e[24;5~` |`\e\e[24;6~`    |
+
+<br>
+
+Here is an example line from a clink_inputrc file that binds Alt-Shift-F3 to the Readline `history-substring-search-backward` function;
+
+```
+"\e\e[1;2R": history-substring-search-backward
 ```
 
 ## Powershell

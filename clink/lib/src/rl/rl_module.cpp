@@ -874,6 +874,7 @@ rl_module::rl_module(const char* shell_name, terminal_in* input)
 
     static const char* general_key_binds[][2] = {
         { "\\M-h",          "clink-show-help" },         // alt-h
+        { "\\M-H",          "clink-show-help-raw" },     // alt-H
         { "\\e[5;5~",       "clink-up-directory" },      // ctrl-pgup
         { "\\e\\eOS",       "clink-exit" },              // alt-f4
         { "\\e[1;3H",       "clink-scroll-top" },        // alt-home
@@ -916,6 +917,7 @@ rl_module::rl_module(const char* shell_name, terminal_in* input)
     int restore_convert = _rl_convert_meta_chars_to_ascii;
     _rl_convert_meta_chars_to_ascii = 1;
 
+    rl_unbind_key_in_map(' ', emacs_meta_keymap);
     bind_keyseq_list(general_key_binds, emacs_standard_keymap);
     bind_keyseq_list(emacs_key_binds, emacs_standard_keymap);
 
