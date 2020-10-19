@@ -226,7 +226,6 @@ int ScrollConsoleRelative(HANDLE h, int direction, SCRMODE mode)
 
     // Calculate the bottom line of the readline edit line.
     SHORT bottom_Y = csbiInfo.dwCursorPosition.Y + (_rl_vis_botlin - _rl_last_v_pos);
-bottom_Y = csbiInfo.dwSize.Y - 1;
 
     // Calculate the new window position.
     SMALL_RECT srWindow = csbiInfo.srWindow;
