@@ -28,6 +28,7 @@ extern editor_module::result* g_result;
 //------------------------------------------------------------------------------
 struct Keyentry
 {
+    int sort;
     char* key_name;
     char* macro_text;
     const char* func_name;
@@ -60,12 +61,17 @@ static void concat_key_string(int i, str<32>& keyseq)
 }
 
 //------------------------------------------------------------------------------
-static bool translate_keyseq(const char* keyseq, unsigned int len, char** key_name, bool friendly)
+static bool translate_keyseq(const char* keyseq, unsigned int len, char** key_name, bool friendly, int& sort)
 {
     static const char ctrl_map[] = "@abcdefghijklmnopqrstuvwxyz[\\]^_";
 
     str<> tmp;
+    int order = 0;
+    sort = 0;
 
+    // TODO: Produce identical sort order for both friend names and raw names?
+
+    bool first_key = true;
     if (!friendly)
     {
         unsigned int comma_threshold = 0;
@@ -75,6 +81,16 @@ static bool translate_keyseq(const char* keyseq, unsigned int len, char** key_na
             {
                 comma_threshold++;
                 tmp.concat("M-");
+                if (first_key)
+                    sort |= 4;
+                continue;
+            }
+
+            if (keyseq[i] == 0x1b)
+            {
+                tmp.concat("\\e", 2);
+                if (first_key)
+                    sort |= 4;
                 continue;
             }
 
@@ -82,21 +98,26 @@ static bool translate_keyseq(const char* keyseq, unsigned int len, char** key_na
             {
                 tmp.concat("C-", 2);
                 tmp.concat(&ctrl_map[keyseq[i]], 1);
+                if (first_key)
+                    sort |= 2;
+                first_key = false;
                 continue;
             }
 
             if (keyseq[i] == 0x7f)
             {
                 tmp.concat("Rubout");
+                if (first_key)
+                    sort |= 2;
+                first_key = false;
                 continue;
             }
 
             tmp.concat(keyseq + i, 1);
+            first_key = false;
         }
-    }
-    else if (keyseq[0] == 13 && keyseq[1] == 0)
-    {
-        tmp = "Enter";
+
+        sort <<= 16;
     }
     else
     {
@@ -104,7 +125,8 @@ static bool translate_keyseq(const char* keyseq, unsigned int len, char** key_na
         while (*keyseq)
         {
             int keyseq_len;
-            const char* keyname = find_key_name(keyseq, keyseq_len);
+            int eqclass = 0;
+            const char* keyname = find_key_name(keyseq, keyseq_len, eqclass, order);
             if (keyname)
             {
                 if (need_comma > 0)
@@ -121,6 +143,7 @@ static bool translate_keyseq(const char* keyseq, unsigned int len, char** key_na
                         tmp.concat(",", 1);
                     need_comma = 0;
                     tmp.concat("A-");
+                    eqclass |= 4;
                     keyseq++;
                 }
                 if (*keyseq >= 0 && *keyseq < ' ')
@@ -129,6 +152,7 @@ static bool translate_keyseq(const char* keyseq, unsigned int len, char** key_na
                         tmp.concat(",", 1);
                     tmp.concat("C-", 2);
                     tmp.concat(&ctrl_map[(unsigned char)*keyseq], 1);
+                    eqclass |= 2;
                     need_comma = 1;
                     keyseq++;
                 }
@@ -139,11 +163,22 @@ static bool translate_keyseq(const char* keyseq, unsigned int len, char** key_na
                     need_comma = 0;
 
                     if ((unsigned char)*keyseq == 0x7f)
+                    {
                         tmp.concat("C-Bkspc");
+                        eqclass |= 2;
+                    }
                     else
+                    {
                         tmp.concat(keyseq, 1);
+                    }
                     keyseq++;
                 }
+            }
+
+            if (first_key)
+            {
+                sort = (eqclass << 16) + (order & 0xffff);
+                first_key = false;
             }
         }
     }
@@ -172,7 +207,6 @@ static Keyentry* collect_keymap(
     bool friendly)
 {
     int i;
-    bool need_sort = (collector == nullptr);
 
     for (i = 0; i < 256; ++i)
     {
@@ -235,8 +269,10 @@ static Keyentry* collect_keymap(
             collector = (Keyentry *)realloc(collector, sizeof(collector[0]) * *max);
         }
 
-        if (translate_keyseq(keyseq.c_str(), keyseq.length(), &collector[*offset].key_name, friendly))
+        int sort;
+        if (translate_keyseq(keyseq.c_str(), keyseq.length(), &collector[*offset].key_name, friendly, sort))
         {
+            collector[*offset].sort = sort;
             if (entry.type == ISMACR)
                 collector[*offset].macro_text = _rl_untranslate_macro_value((char *)entry.function, 0);
             else
@@ -249,12 +285,30 @@ static Keyentry* collect_keymap(
         keyseq.truncate(old_len);
     }
 
-    if (need_sort)
-    {
-        // TODO: sort using friendly order regardless of the flag
-    }
-
     return collector;
+}
+
+//------------------------------------------------------------------------------
+static int _cdecl cmp_sort_collector(const void* pv1, const void* pv2)
+{
+    const Keyentry* p1 = (const Keyentry*)pv1;
+    const Keyentry* p2 = (const Keyentry*)pv2;
+
+    // Sort first by modifier keys.
+    int cmp = (p1->sort >> 16) - (p2->sort >> 16);
+    if (cmp)
+        return cmp;
+
+    // Next by named key order.
+    cmp = (short int)p1->sort - (short int)p2->sort;
+    if (cmp)
+        return cmp;
+
+    // Finally sort by key name (folding case).
+    cmp = strcmpi(p1->key_name, p2->key_name);
+    if (cmp)
+        return cmp;
+    return strcmp(p1->key_name, p2->key_name);
 }
 
 //------------------------------------------------------------------------------
@@ -271,6 +325,9 @@ static void show_key_bindings(bool friendly)
     // Build string up the functions in the active keymap.
     str<32> keyseq;
     collector = collect_keymap(map, collector, &offset, &max_collect, keyseq, friendly);
+
+    // Sort the collected keymap.
+    qsort(collector + 1, offset - 1, sizeof(*collector), cmp_sort_collector);
 
     // Find the longest key name and function name.
     unsigned int longest_key = 0;

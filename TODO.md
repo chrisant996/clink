@@ -9,14 +9,6 @@ Here's what's left to do in order to have a reasonable alpha release.  The alpha
 - Describe the new argmatcher/etc syntax.
 - Supply sample inputrc file(s).
 
-## Bugs
-- **Alt+Shift+H** is bound, but looking up the binding for M-H instead finds the binding for M-h.
-
-## Other
-- Sort the key bindings by equivalence class in `clink-show-help`.
-  - First, named keys:  normal, C, S, C-S, A, A-C, A-C-S.
-  - Then, unnamed keys:  normal, C, S, C-S, A, A-C, A-C-S.
-
 <br>
 <br>
 

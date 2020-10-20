@@ -125,12 +125,14 @@ static int keymod_index(int key_flags)
 //------------------------------------------------------------------------------
 struct auto_str : public no_copy
 {
-    auto_str(char* p) { s = p; }
-    auto_str(auto_str&& a) { s = a.s; a.s = nullptr; }
+    auto_str(char* p, short int eqclass, short int order) { s = p; eq = eqclass; o = order; }
+    auto_str(auto_str&& a) { s = a.s; eq = a.eq; o = a.o; a.s = nullptr; }
     ~auto_str() { free(s); }
-    auto_str& operator=(auto_str&& a) { s = a.s; a.s = nullptr; }
+    auto_str& operator=(auto_str&& a) { s = a.s; eq = a.eq; o = a.o; a.s = nullptr; }
 
     char* s;
+    short int eq;
+    short int o;
 };
 
 //------------------------------------------------------------------------------
@@ -190,7 +192,7 @@ struct map_cmp_str
 static std::map<keyseq_key, auto_str, map_cmp_str> map_keyseq_to_name;
 
 //------------------------------------------------------------------------------
-static void add_keyseq_to_name(const char* keyseq, const char* name, str<32>& builder)
+static void add_keyseq_to_name(const char* keyseq, const char* name, str<32>& builder, short int modifier)
 {
     if (!keyseq || !*keyseq)
         return;
@@ -199,7 +201,7 @@ static void add_keyseq_to_name(const char* keyseq, const char* name, str<32>& bu
     builder.concat(name);
 
     int alloc = builder.length() + 1;
-    auto_str second((char*)malloc(alloc));
+    auto_str second((char*)malloc(alloc), modifier, (short int)map_keyseq_to_name.size());
     if (second.s)
     {
         memcpy(second.s, builder.c_str(), alloc);
@@ -221,51 +223,41 @@ static void ensure_keyseqs_to_names()
 
     str<32> builder;
 
-    add_keyseq_to_name(bindableEsc, "Esc", builder);
+    add_keyseq_to_name(bindableEsc, "Esc", builder, 0);
 
-    for (int i = 0; i < sizeof_array(terminfo::kcuu1); i++)
+    for (int m = 0; m < sizeof_array(terminfo::kcuu1); m++)
     {
-        builder = mods[i];
-        add_keyseq_to_name(terminfo::kcuu1[i], "Up", builder);
-        add_keyseq_to_name(terminfo::kcud1[i], "Down", builder);
-        add_keyseq_to_name(terminfo::kcub1[i], "Left", builder);
-        add_keyseq_to_name(terminfo::kcuf1[i], "Right", builder);
-        add_keyseq_to_name(terminfo::khome[i], "Home", builder);
-        add_keyseq_to_name(terminfo::kend[i], "End", builder);
-        add_keyseq_to_name(terminfo::kpp[i], "PgUp", builder);
-        add_keyseq_to_name(terminfo::knp[i], "PgDn", builder);
-        add_keyseq_to_name(terminfo::kich1[i], "Ins", builder);
-        add_keyseq_to_name(terminfo::kdch1[i], "Del", builder);
-        add_keyseq_to_name(terminfo::ktab[i], "Tab", builder);
-        add_keyseq_to_name(terminfo::kspc[i], "Space", builder);
-        add_keyseq_to_name(terminfo::kbks[i], "Bkspc", builder);
+        builder = mods[m];
+        add_keyseq_to_name(terminfo::kcuu1[m], "Up", builder, m);
+        add_keyseq_to_name(terminfo::kcud1[m], "Down", builder, m);
+        add_keyseq_to_name(terminfo::kcub1[m], "Left", builder, m);
+        add_keyseq_to_name(terminfo::kcuf1[m], "Right", builder, m);
+        add_keyseq_to_name(terminfo::khome[m], "Home", builder, m);
+        add_keyseq_to_name(terminfo::kend[m], "End", builder, m);
+        add_keyseq_to_name(terminfo::kpp[m], "PgUp", builder, m);
+        add_keyseq_to_name(terminfo::knp[m], "PgDn", builder, m);
+        add_keyseq_to_name(terminfo::kich1[m], "Ins", builder, m);
+        add_keyseq_to_name(terminfo::kdch1[m], "Del", builder, m);
+        add_keyseq_to_name(terminfo::ktab[m], "Tab", builder, m);
+        add_keyseq_to_name(terminfo::kspc[m], "Space", builder, m);
+        add_keyseq_to_name(terminfo::kbks[m], "Bkspc", builder, m);
     }
 
     str<32> fn;
     for (int i = 0; i < sizeof_array(terminfo::kfx); )
     {
-        builder = mods[i / 12];
+        int m = i / 12;
+        builder = mods[m];
         for (int j = 0; j < 12; j++, i++)
         {
             fn.format("F%u", j + 1);
-            add_keyseq_to_name(terminfo::kfx[i], fn.c_str(), builder);
+            add_keyseq_to_name(terminfo::kfx[i], fn.c_str(), builder, m);
         }
     }
-
-    // TODO: Need to provide a hint so consumers can sort by equivalence class.
-    // - Normal
-    // - Shift
-    // - Ctrl
-    // - Ctrl+Shift
-    // - Alt
-    // - Alt+Shift
-    // - Alt+Ctrl+Shift
-    //
-    // And in each equivalence class, named keys first, then unnamed keys.
 }
 
 //------------------------------------------------------------------------------
-const char* find_key_name(const char* keyseq, int& len)
+const char* find_key_name(const char* keyseq, int& len, int& eqclass, int& order)
 {
     ensure_keyseqs_to_names();
     keyseq_key lookup(keyseq, true/*find*/);
@@ -274,6 +266,8 @@ const char* find_key_name(const char* keyseq, int& len)
         return nullptr;
 
     len = (int)strlen(iter->first.s);
+    eqclass = iter->second.eq;
+    order = iter->second.o - (int)map_keyseq_to_name.size();
     return iter->second.s;
 }
 
