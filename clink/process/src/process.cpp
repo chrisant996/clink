@@ -173,12 +173,15 @@ void* process::remote_call(void* function, const void* param, int param_size)
 #   pragma warning(pop)
 #endif
 
-    const auto& thunk = [] (thunk_data& data) {
+    const auto& thunk = [] (thunk_data& data) -> DWORD {
         data.out = data.func(data.in);
     };
 
-    auto* stdcall_thunk = static_cast<void (__stdcall*)(thunk_data&)>(thunk);
+    auto* stdcall_thunk = static_cast<DWORD (__stdcall*)(thunk_data&)>(thunk);
     static int thunk_size;
+    // TODO: 0xc3 is incorrect for 32 bit.  Currently it's getting lucky that a
+    // 0xc3 occurs reasonably soon after the actual lambda code, but it ends up
+    // copying quite a few more bytes than it meant/needed to.
     if (!thunk_size)
         for (const auto* c = (unsigned char*)stdcall_thunk; ++thunk_size, *c++ != 0xc3;);
 
