@@ -9,10 +9,6 @@ Here's what's left to do in order to have a reasonable alpha release.  The alpha
 - Describe the new argmatcher/etc syntax.
 - Supply sample inputrc file(s).
 
-## Bugs
-- Fixed the 32 bit crash.
-- But 32 bit is failing to hook ReadConsoleW, so prompt output doesn't work and input doesn't work correctly.
-
 <br>
 <br>
 

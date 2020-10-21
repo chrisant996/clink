@@ -268,23 +268,24 @@ bool host_cmd::initialise()
     hooks.add_iat(base, "SetEnvironmentVariableW",  &host_cmd::set_env_var);
     hooks.add_iat(base, "WriteConsoleW",            &host_cmd::write_console);
 
-    // Set a trap to get a callback when cmd.exe fetches stdin handle.
-    auto get_std_handle = [] (unsigned int handle_id) -> void*
+    // Set a trap to get a callback when cmd.exe fetches PROMPT environment
+    // variable.  GetEnvironmentVariableW is always called before displaying the
+    // prompt string, so it's a reliable spot to hook regardless how injection
+    // is initiated (AutoRun, command line, etc).
+    auto get_environment_variable_w = [] (LPCWSTR lpName, LPWSTR lpBuffer, DWORD nSize) -> DWORD
     {
         seh_scope seh;
 
-        void* ret = GetStdHandle(handle_id);
-        if (handle_id != STD_INPUT_HANDLE)
-            return ret;
+        DWORD ret = GetEnvironmentVariableW(lpName, lpBuffer, nSize);
 
         void* base = GetModuleHandle(nullptr);
-        hook_iat(base, nullptr, "GetStdHandle", funcptr_t(GetStdHandle), 1);
+        hook_iat(base, nullptr, "GetEnvironmentVariableW", funcptr_t(GetEnvironmentVariableW), 1);
 
         host_cmd::get()->initialise_system();
         return ret;
     };
-    auto* as_stdcall = static_cast<void* (__stdcall *)(unsigned)>(get_std_handle);
-    hooks.add_iat(base, "GetStdHandle", as_stdcall);
+    auto* as_stdcall = static_cast<DWORD (__stdcall *)(LPCWSTR, LPWSTR, DWORD)>(get_environment_variable_w);
+    hooks.add_iat(base, "GetEnvironmentVariableW", as_stdcall);
 
     rl_add_funmap_entry("clink-expand-env-var", expand_env_var);
     rl_add_funmap_entry("clink-expand-doskey-alias", expand_doskey_alias);
@@ -482,8 +483,16 @@ BOOL WINAPI host_cmd::set_env_var(const wchar_t* name, const wchar_t* value)
 //------------------------------------------------------------------------------
 bool host_cmd::initialise_system()
 {
-    // Get the base address of module that exports ReadConsoleW.
-    void* kernel_module = vm().get_alloc_base(ReadConsoleW);
+    // Get the base address of module that exports ReadConsoleW.  (Can't use the
+    // address of ReadConsoleW directly, because that's our import library stub,
+    // not the actual API address.)
+    HMODULE hlib = LoadLibraryW(L"kernelbase.dll");
+    if (hlib == nullptr)
+        return false;
+    FARPROC proc = GetProcAddress(hlib, "ReadConsoleW");
+    if (proc == nullptr)
+        return false;
+    void* kernel_module = vm().get_alloc_base(proc);
     if (kernel_module == nullptr)
         return false;
 
@@ -505,7 +514,7 @@ bool host_cmd::initialise_system()
         m_doskey.add_alias("history", buffer.c_str());
     }
 
-    // Tag the prompt again just incase it got unset by by something like
+    // Tag the prompt again just incase it got unset by something like
     // setlocal/endlocal in a boot Batch script.
     tag_prompt();
 
