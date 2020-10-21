@@ -10,9 +10,6 @@ class win_screen_buffer
     : public screen_buffer
 {
 public:
-                    win_screen_buffer();
-                    ~win_screen_buffer();
-
     virtual void    begin() override;
     virtual void    end() override;
     virtual void    write(const char* data, int length) override;
@@ -43,8 +40,4 @@ private:
     unsigned short  m_default_attr = 0x07;
     bool            m_bold = false;
     bool            m_vt = false;
-
-    // For forcing ENABLE_VIRTUAL_TERMINAL_PROCESSING, when so configured.
-    void*           m_orig_handle;
-    unsigned long   m_orig_mode;
 };

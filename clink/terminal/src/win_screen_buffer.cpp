@@ -16,28 +16,11 @@ static setting_enum g_terminal_emulate(
     "terminal.emulate",
     "Controls VT emulation",
     "Clink can emulate Virtual Terminal processing if the console doesn't\n"
-    "natively. The default value is 'auto', which automatically checks for\n"
-    "Windows 10 VT emulation. When set to 'on' then Clink performs VT emulation.\n"
-    "Or when set to 'off' then Clink passes all output directly to the console\n"
-    "and requests for the console to activate VT support.",
-    "off,on,auto",
-    2);
-
-//------------------------------------------------------------------------------
-win_screen_buffer::win_screen_buffer()
-{
-    m_orig_handle = GetStdHandle(STD_OUTPUT_HANDLE);
-    GetConsoleMode(m_orig_handle, &m_orig_mode);
-
-    if (g_terminal_emulate.get() == 0 && !(m_orig_mode & ENABLE_VIRTUAL_TERMINAL_PROCESSING))
-        SetConsoleMode(m_orig_handle, m_orig_mode | ENABLE_VIRTUAL_TERMINAL_PROCESSING);
-}
-
-//------------------------------------------------------------------------------
-win_screen_buffer::~win_screen_buffer()
-{
-    SetConsoleMode(m_orig_handle, m_orig_mode);
-}
+    "natively. When set to 'on' then Clink performs VT emulation and handles\n"
+    "ANSI escape codes. Or when set to 'off' then Clink passes all output\n"
+    "directly to the console.",
+    "off,on",
+    1);
 
 //------------------------------------------------------------------------------
 void win_screen_buffer::begin()
@@ -50,22 +33,7 @@ void win_screen_buffer::begin()
     m_default_attr = csbi.wAttributes & attr_mask_all;
     m_bold = !!(m_default_attr & attr_mask_bold);
 
-    int emulate = g_terminal_emulate.get();
-    switch (emulate)
-    {
-    case 0: m_vt = true; break;
-    case 1: m_vt = false; break;
-    case 2: m_vt = !!(m_prev_mode & ENABLE_VIRTUAL_TERMINAL_PROCESSING); break;
-    }
-
-    unsigned long mode;
-    if (emulate == 0)
-        mode = (m_prev_mode | ENABLE_VIRTUAL_TERMINAL_PROCESSING);
-    else
-        mode = (m_prev_mode & ~ENABLE_VIRTUAL_TERMINAL_PROCESSING) |
-               (m_orig_mode & ENABLE_VIRTUAL_TERMINAL_PROCESSING);
-    if (mode != m_prev_mode)
-        SetConsoleMode(m_handle, mode);
+    m_vt = !g_terminal_emulate.get();
 }
 
 //------------------------------------------------------------------------------
