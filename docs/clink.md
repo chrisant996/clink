@@ -49,10 +49,6 @@ When running Clink via the methods above, Clink checks the parent process is sup
 
 The easiest way to configure Clink is to use Clink's `set` command line option.  This can list, query, and set Clink's settings. Run `clink set --help` from a Clink-installed cmd.exe process to learn more both about how to use it and to get descriptions for Clink's various options.
 
-> **TODO:** The following text is out of date and needs to be updated:
->
-> _Settings that are loaded when Clink starts can be overridden by setting environment variables matching the setting name and prefixed with "clink.". For example, the command `set clink.prompt_colour=10` will turn the prompt green regardless of what is in the settings file. Overrides are not saved to disk._
-
 The following table describes the available Clink settings;
 
 Name                         | Description
@@ -75,16 +71,16 @@ Name                         | Description
 `files.system`               | Includes or excludes files with the "system" attribute set when generating file lists.
 `files.unc_paths`            | UNC (network) paths can cause Clink to stutter when it tries to generate matches. Enable this if matching UNC paths is required. _**TODO:** This may become unnecessary if/when Clink can be made to only generate matches in response to completion commands._
 `history.dont_add_to_history_cmds` | List of commands that aren't automatically added to the history. Commands are separated by spaces, commas, or semicolons. Default is `exit history`, to exclude both of those commands.
-`history.dupe_mode`          | If a line is a duplicate of an existing history entry Clink will erase the duplicate when this is set 2. A value of 1 will not add duplicates to the history and a value of 0 will always add lines.
-`history.expand_mode`        | The `!` character in an entered line can be interpreted to introduce words from the history. This can be enabled and disable by setting this value to 1 or 0. Values or 2, 3 or 4 will skip any `!` character quoted in single, double, or both quotes respectively.
+`history.dupe_mode`          | If a line is a duplicate of an existing history entry Clink will erase the duplicate when this is set `erase_prev`. Setting it to `ignore` will not add duplicates to the history, and setting it to `add` will always add lines.
+`history.expand_mode`        | The `!` character in an entered line can be interpreted to introduce words from the history. This can be enabled and disable by setting this value to `on` or `off`. Values of `not_squoted`, `not_dquoted`, or `not_quoted` will skip any `!` character quoted in single, double, or both quotes respectively.
 `history.ignore_space`       | Ignore lines that begin with whitespace when adding lines in to the history.
 `history.save`               | Saves history between sessions.
 `history.shared`             | When history is shared, all instances of Clink update the master history list after each command and reload the master history list on each prompt.  When history is not shared, each instance updates the master history list on exit.
 `lua.debug`                  | Loads a simple embedded command line debugger when enabled. Breakpoints can be added by calling `pause()`.
 `lua.path`                   | Value to append to `package.path`. Used to search for Lua scripts specified in `require()` statements.
-`match.ignore_case`          | Controls case sensitivity in string comparisons. 0 = case sensitive, 1 = case insensitive, 2 = case insensitive plus `-` and `_` are considered equal.
-`match.sort_dirs`            | Matching directories can go before files, with files, or after files. 0 = before, 1 = with, 2 = after.
-`terminal.emulate`           | Clink can either emulate a virtual terminal and handle ANSI escape codes itself, or let the console host natively handle ANSI escape codes. `off` = let the console host process ANSI escape codes, `on` = emulate a virtual terminal, `auto` = only emulate if the console host doesn't say it supports ANSI escape codes.
+`match.ignore_case`          | Controls case sensitivity in string comparisons. `off` = case sensitive, `on` = case insensitive, `relaxed` = case insensitive plus `-` and `_` are considered equal.
+`match.sort_dirs`            | Matching directories can go before files, with files, or after files.
+`terminal.emulate`           | Clink can either emulate a virtual terminal and handle ANSI escape codes itself, or let the console host natively handle ANSI escape codes. `off` = request the console host process to handle ANSI escape codes, `on` = clink handles ANSI escape codes itself, `auto` = ask the console host process whether it supports ANSI escape codes.
 `terminal.modify_other_keys` | When enabled, pressing Space or Tab with modifier keys sends extended XTerm key sequences so they can be bound separately.
 
 <br>

@@ -1,14 +1,18 @@
 ### Overview
 
-Clink combines the native Windows shell `cmd.exe` with the powerful command line editing features of the GNU Readline 8.0 library, which provides rich completion, history, and line-editing capabilities. Readline is best known for its use in the well-known Unix shell Bash, the standard shell for Mac OS X and many Linux distributions.
+Clink combines the native Windows shell `cmd.exe` with the powerful command line editing features of the GNU Readline library, which provides rich completion, history, and line-editing capabilities. Readline is best known for its use in the well-known Unix shell Bash, the standard shell for Mac OS X and many Linux distributions.
 
 ### Download
 
-Downloads for the latest release of Clink are not available.  _Stay tuned_.
+Downloads are available from the [releases](https://github.com/chrisant996/clink/releases) page.
+
+> There are no production releases yet; currently only pre-release builds are available, for testing purposes.
+
+See the [issues](https://github.com/chrisant996/clink/issues) page for known issues or to file new issues.
 
 ### Features
 
-- The same line editing as Bash (from GNU's Readline 8.0 library).
+- The same line editing as Bash (from the [GNU Readline library](https://tiswww.case.edu/php/chet/readline/rltop.html) version 8.0).
 - History persistence between sessions.
 - Context sensitive completion;
     - Executables (and aliases).
