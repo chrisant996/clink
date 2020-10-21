@@ -175,6 +175,7 @@ void* process::remote_call(void* function, const void* param, int param_size)
 
     const auto& thunk = [] (thunk_data& data) -> DWORD {
         data.out = data.func(data.in);
+        return 0;
     };
 
     auto* stdcall_thunk = static_cast<DWORD (__stdcall*)(thunk_data&)>(thunk);
