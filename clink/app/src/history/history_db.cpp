@@ -35,9 +35,10 @@ static setting_bool g_ignore_space(
 static setting_enum g_dupe_mode(
     "history.dupe_mode",
     "Controls how duplicate entries are handled",
-    "If a line is a duplicate of an existing history entry Clink will\n"
-    "erase the duplicate when this is set 2. A value of 1 will not add\n"
-    "duplicates to the history and a value of 0 will always add lines.\n"
+    "If a line is a duplicate of an existing history entry Clink will erase\n"
+    "the duplicate when this is set to 'erase_prev'. A value of 'ignore' will\n"
+    "not add a line to the history if it already exists, and a value of 'add'\n"
+    "will always add lines.\n"
     "Note that history is not deduplicated when reading/writing to disk.",
     "add,ignore,erase_prev",
     2);
@@ -46,9 +47,10 @@ static setting_enum g_expand_mode(
     "history.expand_mode",
     "Sets how command history expansion is applied",
     "The '!' character in an entered line can be interpreted to introduce\n"
-    "words from the history. This can be enabled and disable by setting this\n"
-    "value to 1 or 0. Values or 2, 3 or 4 will skip any ! character quoted\n"
-    "in single, double, or both quotes respectively.",
+    "words from the history. That can be enabled and disable by setting this\n"
+    "value to 'on' or 'off'. Or set this to 'not_squoted', 'not_dquoted', or\n"
+    "'not_quoted' to skip any '!' character in single, double, or both quotes\n"
+    "respectively.",
     "off,on,not_squoted,not_dquoted,not_quoted",
     4);
 

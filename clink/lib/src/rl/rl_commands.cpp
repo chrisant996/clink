@@ -24,9 +24,9 @@ extern "C" {
 static setting_enum g_paste_crlf(
     "clink.paste_crlf",
     "Strips CR and LF chars on paste",
-    "Setting this to a value >0 will make Clink strip CR and LF characters\n"
-    "from text pasted into the current line. Set this to 'delete' to strip all\n"
-    "newline characters to replace them with a space.",
+    "Setting this to 'space' makes Clink strip CR and LF characters from text\n"
+    "pasted into the current line. Set this to 'delete' to strip all newline\n"
+    "characters to replace them with a space.",
     "delete,space",
     1);
 
