@@ -33,7 +33,6 @@ Lua support changed significantly.  Explore how to support backward compatibilit
 ## Features
 
 ### Other
-- [#8](https://github.com/chrisant996/clink/issues/8) Add a setting to force the `ENABLE_VIRTUAL_TERMINAL_PROCESSING` console flag.
 - Must have a way to list extended key bindings (but user-friendly key binding names can be deferred until Phase 2).
 - `match.ignore_case` can't be working correctly, and probably readline settings should determine it.
 - `_rl_completion_case_map` isn't supported properly in clink lua APIs, nor in general.  _(The 0.4.8 implementation simply converted `-` and `_` to `?` and accepted all matches!)_
