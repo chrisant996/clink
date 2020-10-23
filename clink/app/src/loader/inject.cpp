@@ -16,8 +16,41 @@
 #include <process/vm.h>
 
 //------------------------------------------------------------------------------
-bool    initialise_clink(const app_context::desc&);
-void    puts_help(const char**, int);
+INT_PTR WINAPI  initialise_clink(const app_context::desc&);
+void            puts_help(const char**, int);
+
+//------------------------------------------------------------------------------
+static bool get_file_info(const wchar_t* file, FILETIME& ft, ULONGLONG& size)
+{
+    WIN32_FIND_DATAW fd;
+    HANDLE h = FindFirstFileW(file, &fd);
+    if (h == INVALID_HANDLE_VALUE)
+        return false;
+    ft = fd.ftLastWriteTime;
+    size = (ULONGLONG(fd.nFileSizeHigh) << 32) | fd.nFileSizeLow;
+    FindClose(h);
+    return true;
+}
+
+//------------------------------------------------------------------------------
+static bool is_file_newer(const char* origin, const char* cached)
+{
+    FILETIME ftO;
+    FILETIME ftC;
+    ULONGLONG sizeO;
+    ULONGLONG sizeC;
+    wstr<> tmp;
+
+    tmp = origin;
+    if (!get_file_info(tmp.c_str(), ftO, sizeO))
+        return false;
+
+    tmp = cached;
+    if (!get_file_info(tmp.c_str(), ftC, sizeC))
+        return false;
+
+    return CompareFileTime(&ftO, &ftC) > 0 || sizeO != sizeC;
+}
 
 //------------------------------------------------------------------------------
 static void copy_dll(str_base& dll_path)
@@ -29,7 +62,7 @@ static void copy_dll(str_base& dll_path)
         return;
     }
 
-    target_path << "/clink/dll_cache/" CLINK_VERSION_STR;
+    target_path << "clink\\dll_cache\\" CLINK_VERSION_STR;
 
     str<12, false> path_salt;
     path_salt.format("_%08x", str_hash(dll_path.c_str()));
@@ -77,8 +110,12 @@ static void copy_dll(str_base& dll_path)
     target_path.truncate(target_length);
 
     // Copy the DLL.
-    if (always || os::get_path_type(target_path.c_str()) != os::path_type_file)
+    if (always ||
+        os::get_path_type(target_path.c_str()) != os::path_type_file ||
+        is_file_newer(dll_path.c_str(), target_path.c_str()))
+    {
         os::copy(dll_path.c_str(), target_path.c_str());
+    }
 
     if (os::get_path_type(target_path.c_str()) != os::path_type_file)
     {
