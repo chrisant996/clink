@@ -117,10 +117,11 @@ Clink also adds some new commands and configuration variables in addition to wha
 
 ## New configuration variables
 
-Name | Description
-:-:|---
-`completion-auto-query-items`|Automatically prompts before displaying completions if they won't fit on one screen page.
-`history-point-at-end-of-anchored-search`|Puts the cursor at the end of the line when using `history-search-forward` or `history-search-backward`.
+Name | Default | Description
+:-:|:-:|---
+`completion-auto-query-items`|on|Automatically prompts before displaying completions if they won't fit on one screen page.
+`history-point-at-end-of-anchored-search`|off|Puts the cursor at the end of the line when using `history-search-forward` or `history-search-backward`.
+`locale-sort`|on|Sorts completions with locale awareness (sort like Windows does).
 
 <br>
 
