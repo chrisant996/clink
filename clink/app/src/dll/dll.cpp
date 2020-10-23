@@ -78,7 +78,7 @@ static void shutdown_clink()
 }
 
 //------------------------------------------------------------------------------
-bool initialise_clink(const app_context::desc& app_desc)
+INT_PTR WINAPI initialise_clink(const app_context::desc& app_desc)
 {
     seh_scope seh;
 

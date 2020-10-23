@@ -279,7 +279,7 @@ bool host_cmd::initialise()
         DWORD ret = GetEnvironmentVariableW(lpName, lpBuffer, nSize);
 
         void* base = GetModuleHandle(nullptr);
-        hook_iat(base, nullptr, "GetEnvironmentVariableW", funcptr_t(GetEnvironmentVariableW), 1);
+        hook_iat(base, nullptr, "GetEnvironmentVariableW", hookptr_t(GetEnvironmentVariableW), 1);
 
         host_cmd::get()->initialise_system();
         return ret;
@@ -503,14 +503,12 @@ bool host_cmd::initialise_system()
         app_context::get()->get_binaries_dir(dll_path);
 
         str<560> buffer;
-        buffer << "\"" << dll_path;
-        buffer << "\\" CLINK_EXE "\" $*";
+        buffer << "\"" << dll_path << "\\" << CLINK_EXE << "\" $*";
         m_doskey.add_alias("clink", buffer.c_str());
 
         // Add an alias to operate on the command history.
         buffer.clear();
-        buffer << "\"" << dll_path;
-        buffer << "\\" CLINK_EXE "\" history $*";
+        buffer << "\"" << dll_path << "\\" << CLINK_EXE << "\" history $*";
         m_doskey.add_alias("history", buffer.c_str());
     }
 

@@ -44,7 +44,7 @@ hook_setter::hook_desc* hook_setter::add_desc(
     hook_type type,
     void* module,
     const char* name,
-    funcptr_t hook)
+    hookptr_t hook)
 {
     if (m_desc_count >= sizeof_array(m_descs))
         return nullptr;
@@ -62,7 +62,7 @@ hook_setter::hook_desc* hook_setter::add_desc(
 //------------------------------------------------------------------------------
 bool hook_setter::commit_iat(void* self, const hook_desc& desc)
 {
-    funcptr_t addr = hook_iat(desc.module, nullptr, desc.name, desc.hook, 1);
+    hookptr_t addr = hook_iat(desc.module, nullptr, desc.name, desc.hook, 1);
     if (addr == nullptr)
     {
         LOG("Unable to hook %s in IAT at base %p", desc.name, desc.module);

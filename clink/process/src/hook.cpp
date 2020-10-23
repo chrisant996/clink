@@ -10,7 +10,7 @@
 #include <core/log.h>
 
 //------------------------------------------------------------------------------
-static void write_addr(funcptr_t* where, funcptr_t to_write)
+static void write_addr(hookptr_t* where, hookptr_t to_write)
 {
     vm vm;
     vm::region region = { vm.get_page(where), 1 };
@@ -24,44 +24,44 @@ static void write_addr(funcptr_t* where, funcptr_t to_write)
 }
 
 //------------------------------------------------------------------------------
-static funcptr_t get_proc_addr(const char* dll, const char* func_name)
+static hookptr_t get_proc_addr(const char* dll, const char* func_name)
 {
     if (void* base = LoadLibraryA(dll))
-        return pe_info(base).get_export(func_name);
+        return (hookptr_t)pe_info(base).get_export(func_name);
 
     LOG("Failed to load library '%s'", dll);
     return nullptr;
 }
 
 //------------------------------------------------------------------------------
-funcptr_t hook_iat(
+hookptr_t hook_iat(
     void* base,
     const char* dll,
     const char* func_name,
-    funcptr_t hook,
+    hookptr_t hook,
     int find_by_name
 )
 {
     LOG("Attempting to hook IAT for module %p", base);
     LOG("Target is %s,%s (by_name=%d)", dll, func_name, find_by_name);
 
-    funcptr_t* import;
+    hookptr_t* import;
 
     // Find entry and replace it.
     pe_info pe(base);
     if (find_by_name)
-        import = pe.get_import_by_name(nullptr, func_name);
+        import = (hookptr_t*)pe.get_import_by_name(nullptr, func_name);
     else
     {
         // Get the address of the function we're going to hook.
-        funcptr_t func_addr = get_proc_addr(dll, func_name);
+        hookptr_t func_addr = get_proc_addr(dll, func_name);
         if (func_addr == nullptr)
         {
             LOG("Failed to find function '%s' in '%s'", func_name, dll);
             return nullptr;
         }
 
-        import = pe.get_import_by_addr(nullptr, func_addr);
+        import = (hookptr_t*)pe.get_import_by_addr(nullptr, (pe_info::funcptr_t)func_addr);
     }
 
     if (import == nullptr)
@@ -72,7 +72,7 @@ funcptr_t hook_iat(
 
     LOG("Found import at %p (value = %p)", import, *import);
 
-    funcptr_t prev_addr = *import;
+    hookptr_t prev_addr = *import;
     write_addr(import, hook);
 
     vm().flush_icache();
@@ -86,7 +86,7 @@ static char* alloc_trampoline(void* hint)
     size_t page_size = vm::get_page_size();
 
     vm vm;
-    funcptr_t trampoline = nullptr;
+    hookptr_t trampoline = nullptr;
     while (trampoline == nullptr)
     {
         void* vm_alloc_base = vm.get_alloc_base(hint);
@@ -94,7 +94,7 @@ static char* alloc_trampoline(void* hint)
 
         char* tramp_page = (char*)vm_alloc_base - alloc_granularity;
 
-        trampoline = funcptr_t(VirtualAlloc(tramp_page, page_size,
+        trampoline = hookptr_t(VirtualAlloc(tramp_page, page_size,
             MEM_COMMIT|MEM_RESERVE, PAGE_EXECUTE_READWRITE));
 
         hint = tramp_page;
@@ -138,7 +138,7 @@ static char* write_rel_jmp(char* write, const void* dest)
 }
 
 //------------------------------------------------------------------------------
-static char* write_trampoline_out(void* const dest, void* const to_hook, funcptr_t const hook)
+static char* write_trampoline_out(void* const dest, void* const to_hook, hookptr_t const hook)
 {
     const int rel_jmp_size = 5;
     int offset = 0;
@@ -209,7 +209,7 @@ static char* write_trampoline_out(void* const dest, void* const to_hook, funcptr
     struct {
         char a[2];
         char b[4];
-        char c[sizeof(funcptr_t)];
+        char c[sizeof(hookptr_t)];
     } inst;
 
     *(short*)inst.a = 0x25ff;
@@ -220,7 +220,7 @@ static char* write_trampoline_out(void* const dest, void* const to_hook, funcptr
 #endif
 
     *(int*)inst.b = rel_addr;
-    *(funcptr_t*)inst.c = hook;
+    *(hookptr_t*)inst.c = hook;
 
     if (!vm().write(write, &inst, sizeof(inst)))
     {
@@ -341,7 +341,7 @@ void* follow_jump(void* addr)
 }
 
 //------------------------------------------------------------------------------
-static funcptr_t hook_jmp_impl(funcptr_t to_hook, funcptr_t hook)
+static hookptr_t hook_jmp_impl(hookptr_t to_hook, hookptr_t hook)
 {
     LOG("Attempting to hook at %p with %p", to_hook, hook);
 
@@ -387,18 +387,18 @@ static funcptr_t hook_jmp_impl(funcptr_t to_hook, funcptr_t hook)
     }
 
     vm.set_access(target_region, prev_access);
-    return funcptr_t(trampoline);
+    return hookptr_t(trampoline);
 }
 
 //------------------------------------------------------------------------------
-funcptr_t hook_jmp(void* module, const char* func_name, funcptr_t hook)
+hookptr_t hook_jmp(void* module, const char* func_name, hookptr_t hook)
 {
     char module_name[96];
     module_name[0] = '\0';
     GetModuleFileName(HMODULE(module), module_name, sizeof_array(module_name));
 
     // Get the address of the function we're going to hook.
-    funcptr_t func_addr = pe_info(module).get_export(func_name);
+    hookptr_t func_addr = (hookptr_t)pe_info(module).get_export(func_name);
     if (func_addr == nullptr)
     {
         LOG("Failed to find function '%s' in '%s'", func_name, module_name);
@@ -409,7 +409,7 @@ funcptr_t hook_jmp(void* module, const char* func_name, funcptr_t hook)
     LOG("Target is %s, %s @ %p", module_name, func_name, func_addr);
 
     // Install the hook.
-    funcptr_t trampoline = hook_jmp_impl(func_addr, hook);
+    hookptr_t trampoline = hook_jmp_impl(func_addr, hook);
     if (trampoline == nullptr)
     {
         LOG("Jump hook failed.");

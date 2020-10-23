@@ -7,7 +7,7 @@
 class hook_setter
 {
 public:
-    typedef void (__stdcall *funcptr_t)();
+    typedef void (__stdcall *hookptr_t)();
 
                                 hook_setter();
     template <typename RET,
@@ -30,11 +30,11 @@ private:
     {
         void*                   module;
         const char*             name;
-        funcptr_t               hook;
+        hookptr_t               hook;
         hook_type               type;
     };
 
-    hook_desc*                  add_desc(hook_type type, void* module, const char* name, funcptr_t hook);
+    hook_desc*                  add_desc(hook_type type, void* module, const char* name, hookptr_t hook);
     bool                        commit_iat(void* self, const hook_desc& desc);
     bool                        commit_jmp(void* self, const hook_desc& desc);
     hook_desc                   m_descs[4];
@@ -45,12 +45,12 @@ private:
 template <typename RET, typename... ARGS>
 bool hook_setter::add_iat(void* module, const char* name, RET (__stdcall *hook)(ARGS...))
 {
-    return (add_desc(hook_type_iat_by_name, module, name, funcptr_t(hook)) != nullptr);
+    return (add_desc(hook_type_iat_by_name, module, name, hookptr_t(hook)) != nullptr);
 }
 
 //------------------------------------------------------------------------------
 template <typename RET, typename... ARGS>
 bool hook_setter::add_jmp(void* module, const char* name, RET (__stdcall *hook)(ARGS...))
 {
-    return (add_desc(hook_type_jmp, module, name, funcptr_t(hook)) != nullptr);
+    return (add_desc(hook_type_jmp, module, name, hookptr_t(hook)) != nullptr);
 }

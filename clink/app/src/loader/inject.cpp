@@ -384,7 +384,7 @@ int inject(int argc, char** argv)
     void* our_dll_base = vm().get_alloc_base("");
     uintptr_t init_func = uintptr_t(remote_dll_base);
     init_func += uintptr_t(initialise_clink) - uintptr_t(our_dll_base);
-    ret |= (process(target_pid).remote_call((void*)init_func, app_desc) != nullptr);
+    ret |= (process(target_pid).remote_call((process::funcptr_t)init_func, app_desc) != nullptr);
 
     return ret;
 }

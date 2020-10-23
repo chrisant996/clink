@@ -144,14 +144,36 @@ void* process::inject_module(const char* dll_path)
     // LoadLibraryW hooked then we'd get a potentially invalid address if we
     // were to just use &LoadLibraryW.
     pe_info kernel32(LoadLibrary("kernel32.dll"));
-    void* thread_proc = (void*)kernel32.get_export("LoadLibraryW");
+    pe_info::funcptr_t func = kernel32.get_export("LoadLibraryW");
 
     wstr<280> wpath(dll_path);
-    return remote_call(thread_proc, wpath.data(), wpath.length() * sizeof(wchar_t));
+    return remote_call(func, wpath.data(), wpath.length() * sizeof(wchar_t));
 }
 
 //------------------------------------------------------------------------------
-void* process::remote_call(void* function, const void* param, int param_size)
+#if defined(_MSC_VER)
+# pragma warning(push)
+# pragma warning(disable : 4200)
+#endif
+struct thunk_data
+{
+    void*   (WINAPI* func)(void*);
+    void*   out;
+    char    in[];
+};
+#if defined(_MSC_VER)
+# pragma warning(pop)
+#endif
+
+//------------------------------------------------------------------------------
+static DWORD WINAPI stdcall_thunk(thunk_data& data)
+{
+    data.out = data.func(data.in);
+    return 0;
+}
+
+//------------------------------------------------------------------------------
+void* process::remote_call(pe_info::funcptr_t function, const void* param, int param_size)
 {
     // Open the process so we can operate on it.
     handle process_handle = OpenProcess(PROCESS_QUERY_INFORMATION|PROCESS_CREATE_THREAD,
@@ -159,32 +181,11 @@ void* process::remote_call(void* function, const void* param, int param_size)
     if (!process_handle)
         return nullptr;
 
-#if defined(_MSC_VER)
-#   pragma warning(push)
-#   pragma warning(disable : 4200)
-#endif
-    struct thunk_data
-    {
-        void*   (*func)(void*);
-        void*   out;
-        char    in[];
-    };
-#if defined(_MSC_VER)
-#   pragma warning(pop)
-#endif
-
-    const auto& thunk = [] (thunk_data& data) -> DWORD {
-        data.out = data.func(data.in);
-        return 0;
-    };
-
-    auto* stdcall_thunk = static_cast<DWORD (__stdcall*)(thunk_data&)>(thunk);
+    // Scanning for 0xc3 works on 64 bit, but not on 32 bit.  I gave up and just
+    // imposed a max size of 64 bytes, since the emited code is around 40 bytes.
     static int thunk_size;
-    // TODO: 0xc3 is incorrect for 32 bit.  Currently it's getting lucky that a
-    // 0xc3 occurs reasonably soon after the actual lambda code, but it ends up
-    // copying quite a few more bytes than it meant/needed to.
     if (!thunk_size)
-        for (const auto* c = (unsigned char*)stdcall_thunk; ++thunk_size, *c++ != 0xc3;);
+        for (const auto* c = (unsigned char*)stdcall_thunk; thunk_size < 64 && ++thunk_size, *c++ != 0xc3;);
 
     vm vm(m_pid);
     vm::region region = vm.alloc(1, vm::access_write);
