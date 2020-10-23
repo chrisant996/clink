@@ -7,6 +7,7 @@
 #include <stdio.h>
 #include <sys/stat.h>
 #include <wchar.h>
+#include <assert.h>
 
 #include "hooks.h"
 
@@ -16,6 +17,75 @@
 static wchar_t  fwrite_buf[2048];
 void            (*rl_fwrite_function)(FILE*, const char*, int)  = NULL;
 void            (*rl_fflush_function)(FILE*)                    = NULL;
+
+//------------------------------------------------------------------------------
+static int mb_to_wide(const char* mb, wchar_t* fixed_wide, size_t fixed_size, wchar_t** out_wide, int* out_free)
+{
+    int needed = MultiByteToWideChar(CP_UTF8, 0, mb, -1, 0, 0);
+    if (!needed)
+        return 0;
+
+    wchar_t* wide;
+    int alloced;
+    if (needed <= fixed_size)
+    {
+        wide = fixed_wide;
+        alloced = 0;
+    }
+    else
+    {
+        wide = (wchar_t*)malloc(needed * sizeof(*wide));
+        if (!wide)
+            return 0;
+        alloced = !!wide;
+    }
+
+    int used = MultiByteToWideChar(CP_UTF8, 0, mb, -1, wide, needed);
+    if (used != needed)
+    {
+        if (alloced)
+            free(wide);
+        return 0;
+    }
+
+    *out_wide = wide;
+    *out_free = alloced;
+    return used;
+}
+
+//------------------------------------------------------------------------------
+int compare_string(const char* s1, const char* s2, int casefold)
+{
+    wchar_t tmp1[180];
+    wchar_t tmp2[180];
+    wchar_t* wide1;
+    wchar_t* wide2;
+    int free1 = 0;
+    int free2 = 0;
+
+    int cmp;
+    if (mb_to_wide(s1, tmp1, sizeof_array(tmp1), &wide1, &free1) &&
+        mb_to_wide(s2, tmp2, sizeof_array(tmp2), &wide2, &free2))
+    {
+        cmp = CompareStringW(LOCALE_USER_DEFAULT, SORT_DIGITSASNUMBERS, wide1, -1, wide2, -1);
+        cmp -= CSTR_EQUAL;
+    }
+    else
+    {
+        assert(0);
+        if (casefold)
+            cmp = _stricmp(s1, s2);
+        else
+            cmp = strcmp(s1, s2);
+    }
+
+    if (free1)
+        free(wide1);
+    if (free2)
+        free(wide2);
+
+    return cmp;
+}
 
 //------------------------------------------------------------------------------
 int hooked_fwrite(const void* data, int size, int count, FILE* stream)

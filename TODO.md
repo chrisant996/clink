@@ -33,15 +33,14 @@ Lua support changed significantly.  Explore how to support backward compatibilit
 ## Features
 
 ### Other
-- Must have a way to list extended key bindings (but user-friendly key binding names can be deferred until Phase 2).
-- `match.ignore_case` can't be working correctly, and probably readline settings should determine it.
+- `match.ignore_case` can't be working correctly, and probably readline settings should determine it.  _(Update: oh, it's obsolete now that tab_completer is gone.)_
 - `_rl_completion_case_map` isn't supported properly in clink lua APIs, nor in general.  _(The 0.4.8 implementation simply converted `-` and `_` to `?` and accepted all matches!)_
 - When convert-meta is off, then when binding `\M-h` (etc) the key name gets interpreted differently than Clink expects.
 - Promote store_impl to be a template and public, so the popup list can use it?
 - What to do about completion colors in popup list?
   - Make it owner draw and add text like "dir", "doskey", etc?
   - Add stat chars when so configured?
-- Use `npm` to run `marked.min.js` at compile time to produce static documentation rather than dynamic scripted documentation with embedded copies of marked.min.js and highlight.js.
+- Use `npm` to run `highlight.js` at compile time?
 
 ## Questions
 - What is `set-mark`?
@@ -81,13 +80,6 @@ The Phase 2 goal is to produce a viable Beta Release with broader compatibility 
 - Allow to search the console output (not command history) with a RegExp [#166](https://github.com/mridgers/clink/issues/166).
   - Ideally enable lua to do searches, set scroll position, retrieve text from the screen buffer, and possibly even modify the editing line.  Imagine being able to bind a key to a lua script to search for next/prev line with red or yellow colored text, or to search for "error:", or etc.  Think of the possibilities!
 
-### Key Bindings
-- Make `show-rl-help` able to list enhanced keys like Up, Home, Ctrl-Shift-Space, etc.
-  - Translate terminal sequences into "C-A-name" in `show-rl-help` (e.g. "C-A-Up", "Ctrl-Home", "End", etc)?  But that gets weird because those aren't parseable key names.
-  - Maybe have two variants of `show-rl-help` -- one that shows human readable key names, and one that shows the actual binding strings?
-  - Invent an alternative syntax?
-- Allow **Ctrl+M** to be discrete from **Enter**, etc?
-
 ## Issues Backlog [clink/issues](https://github.com/mridgers/clink/issues)
 - [#542](https://github.com/mridgers/clink/issues/542) VS Code not capturing std output
 - [#486](https://github.com/mridgers/clink/issues/486) **Ctrl+C** doesn't always work properly _[might be the auto-answer prompt setting]_
@@ -111,7 +103,6 @@ More ambitious things like CUA Selection and coloring arguments and flags while 
 ## Key Bindings
 - **https://invisible-island.net/xterm/modified-keys.html**
 - Add terminal sequences for **Ctrl+Shift+Letter** and **Ctrl+Punctuation** and etc.
-- Translate terminal sequences into "C-A-S-name" in `show-rl-help`.
 - Implement modes so it can be compatible with v0.4.9 key sequences?
 
 ## Commands

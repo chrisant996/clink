@@ -1801,6 +1801,9 @@ static const struct {
   { "history-preserve-point",	&_rl_history_preserve_point,	0 },
   { "horizontal-scroll-mode",	&_rl_horizontal_scroll_mode,	0 },
   { "input-meta",		&_rl_meta_flag,			0 },
+/* begin_clink_change */
+  { "locale-sort",		&_rl_locale_sort,		0 },
+/* end_clink_change */
   { "mark-directories",		&_rl_complete_mark_directories,	0 },
   { "mark-modified-lines",	&_rl_mark_modified_lines,	0 },
   { "mark-symlinked-directories", &_rl_complete_mark_symlink_dirs, 0 },

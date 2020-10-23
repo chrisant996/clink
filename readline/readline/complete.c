@@ -431,6 +431,10 @@ int rl_completion_invoking_key;
 /* If non-zero, sort the completion matches.  On by default. */
 int rl_sort_completion_matches = 1;
 
+/* begin_clink_change */
+int _rl_locale_sort = 1;
+/* end_clink_change */
+
 /* Variables local to this file. */
 
 /* Local variable states what happened during the last completion attempt. */
@@ -1425,7 +1429,9 @@ match_type_strcmp (const char *s1, const char *s2, int past_flag, int casefold, 
 {
   int cmp;
 
-  if (casefold)
+  if (_rl_locale_sort)
+    cmp = compare_string (s1 + past_flag, s2 + past_flag, casefold);
+  else if (casefold)
     cmp = strcasecmp (s1 + past_flag, s2 + past_flag);
   else
     cmp = strcmp (s1 + past_flag, s2 + past_flag);
@@ -1549,9 +1555,23 @@ match_type_qsort_string_compare_casefold (char **s1, char **s2)
 static int
 qsort_string_compare_casefold (char **s1, char **s2)
 {
-  // TODO: the strings are actually UTF8.
+/* begin_clink_change */
+  if (_rl_locale_sort)
+    return compare_string (*s1, *s2, 1/*casefold*/);
+/* end_clink_change */
   return strcasecmp (*s1, *s2);
 }
+
+/* begin_clink_change */
+/* Stupid comparison routine for qsort () ing strings. */
+static int
+qsort_string_compare (char **s1, char **s2)
+{
+  if (_rl_locale_sort)
+    return compare_string (*s1, *s2, 0/*casefold*/);
+  return strcmp (*s1, *s2);
+}
+/* end_clink_change */
 
 /* Sort list of matches, with support for rl_completion_matches_include_type. */
 static void
@@ -1569,7 +1589,10 @@ qsort_match_list (char** matches, int len)
     {
       qs_compare = (QSFUNC *)(_rl_completion_case_fold ?
                               qsort_string_compare_casefold :
-                              _rl_qsort_string_compare);
+/* begin_clink_change */
+                              //_rl_qsort_string_compare);
+                              qsort_string_compare);
+/* end_clink_change */
     }
 
   qsort (matches, len, sizeof (char *), qs_compare);

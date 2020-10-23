@@ -14,6 +14,8 @@
 
 #include "hooks.h"
 
+int     compare_string(const char* s1, const char* s2, int casefold);
+
 // here be dragons (for purposes of utf-8 and capturing stdio)
 //
 //
