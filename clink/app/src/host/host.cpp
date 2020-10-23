@@ -75,8 +75,10 @@ static void write_line_feed()
 }
 
 //------------------------------------------------------------------------------
-static bool intercept_directory(const char* line, str_base& dir)
+static bool intercept_directory(str_base& inout)
 {
+    const char* line = inout.c_str();
+
     // Skip leading whitespace.
     while (*line == ' ' || *line == '\t')
         line++;
@@ -147,7 +149,7 @@ static bool intercept_directory(const char* line, str_base& dir)
     if (os::get_path_type(tmp.c_str()) != os::path_type_dir)
         return false;
 
-    dir = tmp.c_str();
+    inout.format(" cd /d \"%s\"", tmp.c_str());
     return true;
 }
 
@@ -314,13 +316,9 @@ bool host::edit_line(const char* prompt, str_base& out)
 
         if (ret)
         {
-            // If the line is a directory, change to the directory and return a
-            // blank line.
-            if (intercept_directory(out.c_str(), cwd.m_path))
-            {
-                out.clear();
-                write_line_feed();
-            }
+            // If the line is a directory, rewrite the line to invoke the CD
+            // command to change to the directory.
+            intercept_directory(out);
         }
         break;
     }
