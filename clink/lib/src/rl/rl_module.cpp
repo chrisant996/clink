@@ -807,7 +807,7 @@ rl_module::rl_module(const char* shell_name, terminal_in* input)
     rl_filename_quoting_desired = 1;
     rl_completer_quote_characters = "\"";
     rl_basic_quote_characters = "\"";
-    rl_filename_quote_characters = " &^";
+    rl_filename_quote_characters = " &()[]{}^=;!%'+,`~"; // Same list CMD uses.
 
     // Completion and match display.
     // TODO: postprocess_matches is for better quote handling.
