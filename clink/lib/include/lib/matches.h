@@ -20,6 +20,17 @@ enum class match_type : unsigned char
     readonly = 0x80,
 };
 
+DEFINE_ENUM_FLAG_OPERATORS(match_type);
+
+//------------------------------------------------------------------------------
+inline bool is_pathish(match_type type)
+{
+    type &= match_type::mask;
+    return type == match_type::file || type == match_type::dir || type == match_type::link;
+}
+
+
+
 //------------------------------------------------------------------------------
 class matches
 {

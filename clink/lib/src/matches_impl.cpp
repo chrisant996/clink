@@ -39,9 +39,9 @@ match_type to_match_type(int mode, int attr)
         type = match_type::file;
 
     if (attr & FILE_ATTRIBUTE_HIDDEN)
-        type = (match_type)((int)type | (int)match_type::hidden);
+        type |= match_type::hidden;
     if (attr & FILE_ATTRIBUTE_READONLY)
-        type = (match_type)((int)type | (int)match_type::readonly);
+        type |= match_type::readonly;
 
     return type;
 }
@@ -69,20 +69,20 @@ void match_desc::set_type(const char* type_name)
 
         // Translate type names into match_type values.
         if (_strnicmp(t, "word", l) == 0)
-            type = (match_type)(((int)type & ~(int)match_type::mask) | (int)match_type::word);
+            type = (type & ~match_type::mask) | match_type::word;
         else if (_strnicmp(t, "doskey", l) == 0)
-            type = (match_type)(((int)type & ~(int)match_type::mask) | (int)match_type::doskey);
+            type = (type & ~match_type::mask) | match_type::doskey;
         else if (_strnicmp(t, "file", l) == 0)
-            type = (match_type)(((int)type & ~(int)match_type::mask) | (int)match_type::file);
+            type = (type & ~match_type::mask) | match_type::file;
         else if (_strnicmp(t, "dir", l) == 0)
-            type = (match_type)(((int)type & ~(int)match_type::mask) | (int)match_type::dir);
+            type = (type & ~match_type::mask) | match_type::dir;
         else if (_strnicmp(t, "link", l) == 0 ||
                  _strnicmp(t, "symlink", l) == 0)
-            type = (match_type)(((int)type & ~(int)match_type::mask) | (int)match_type::link);
+            type = (type & ~match_type::mask) | match_type::link;
         else if (_strnicmp(t, "hidden", l) == 0)
-            type = (match_type)((int)type | (int)match_type::hidden);
+            type |= match_type::hidden;
         else if (_strnicmp(t, "readonly", l) == 0)
-            type = (match_type)((int)type | (int)match_type::readonly);
+            type |= match_type::readonly;
     }
 }
 

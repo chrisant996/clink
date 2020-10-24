@@ -633,23 +633,25 @@ extern int rl_backslash_path_sep;
 extern char rl_preferred_path_separator;
 /* Completion functions can set this to signal that the first char of each
    match is bit flags about the match type. */
-#define MATCH_TYPE_NONE		1
-#define MATCH_TYPE_WORD		2
+#define MATCH_TYPE_NONE			1
+#define MATCH_TYPE_WORD			2
 #define MATCH_TYPE_ALIAS		3
-#define MATCH_TYPE_FILE		4
-#define MATCH_TYPE_DIR		5
-#define MATCH_TYPE_LINK		6
-#define MATCH_TYPE_MASK		0x0f
+#define MATCH_TYPE_FILE			4
+#define MATCH_TYPE_DIR			5
+#define MATCH_TYPE_LINK			6
+#define MATCH_TYPE_MASK			0x0f
 #define MATCH_TYPE_HIDDEN		0x40
 #define MATCH_TYPE_READONLY		0x80
-#define IS_MATCH_TYPE_NONE(x)	(((x) & MATCH_TYPE_MASK) == MATCH_TYPE_NONE)
-#define IS_MATCH_TYPE_WORD(x)	(((x) & MATCH_TYPE_MASK) == MATCH_TYPE_WORD)
-#define IS_MATCH_TYPE_ALIAS(x)	(((x) & MATCH_TYPE_MASK) == MATCH_TYPE_ALIAS)
-#define IS_MATCH_TYPE_FILE(x)	(((x) & MATCH_TYPE_MASK) == MATCH_TYPE_FILE)
-#define IS_MATCH_TYPE_DIR(x)	(((x) & MATCH_TYPE_MASK) == MATCH_TYPE_DIR)
-#define IS_MATCH_TYPE_LINK(x)	(((x) & MATCH_TYPE_MASK) == MATCH_TYPE_LINK)
-#define IS_MATCH_TYPE_HIDDEN(x)	(((x) & MATCH_TYPE_HIDDEN) == MATCH_TYPE_HIDDEN)
+#define IS_MATCH_TYPE_NONE(x)		(((x) & MATCH_TYPE_MASK) == MATCH_TYPE_NONE)
+#define IS_MATCH_TYPE_WORD(x)		(((x) & MATCH_TYPE_MASK) == MATCH_TYPE_WORD)
+#define IS_MATCH_TYPE_ALIAS(x)		(((x) & MATCH_TYPE_MASK) == MATCH_TYPE_ALIAS)
+#define IS_MATCH_TYPE_FILE(x)		(((x) & MATCH_TYPE_MASK) == MATCH_TYPE_FILE)
+#define IS_MATCH_TYPE_DIR(x)		(((x) & MATCH_TYPE_MASK) == MATCH_TYPE_DIR)
+#define IS_MATCH_TYPE_LINK(x)		(((x) & MATCH_TYPE_MASK) == MATCH_TYPE_LINK)
+#define IS_MATCH_TYPE_HIDDEN(x)		(((x) & MATCH_TYPE_HIDDEN) == MATCH_TYPE_HIDDEN)
 #define IS_MATCH_TYPE_READONLY(x)	(((x) & MATCH_TYPE_READONLY) == MATCH_TYPE_READONLY)
+#define IS_MATCH_TYPE_PATHISH(x)	(((x) & MATCH_TYPE_MASK) >= MATCH_TYPE_FILE && \
+					 ((x) & MATCH_TYPE_MASK) <= MATCH_TYPE_LINK)
 extern int rl_completion_matches_include_type;
 /* end_clink_change */
 
