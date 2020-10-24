@@ -346,7 +346,7 @@ static char* filename_menu_completion_function(const char *text, int state)
         str<32> dn;
         dn << dirname;
         if (dn.length() && !path::is_separator(dn.c_str()[dn.length() - 1]))
-            dn << "\\";
+            dn << PATH_SEP;
         dn << filename << "*";
         directory = opendir(dn.c_str());
 
@@ -801,7 +801,7 @@ rl_module::rl_module(const char* shell_name, terminal_in* input)
 
     // Recognize both / and \\ as path separators, and normalize to \\.
     rl_backslash_path_sep = 1;
-    rl_preferred_path_separator = '\\';
+    rl_preferred_path_separator = PATH_SEP[0];
 
     // Quote spaces in completed filenames.
     rl_filename_quoting_desired = 1;

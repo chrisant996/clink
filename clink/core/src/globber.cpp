@@ -33,7 +33,7 @@ globber::globber(const char* pattern)
         char env_var[4] = { '=', pattern[0], ':', 0 };
         if (os::get_env(env_var, rooted))
         {
-            rooted << "\\";
+            rooted << PATH_SEP;
             rooted << (pattern + 2);
             pattern = rooted.c_str();
         }
@@ -94,7 +94,7 @@ bool globber::next(str_base& out, bool rooted, int* st_mode, int* pattr)
     path::append(out, file_name.c_str());
 
     if (attr & FILE_ATTRIBUTE_DIRECTORY && m_dir_suffix)
-        out << "\\";
+        out << PATH_SEP;
 
     if (st_mode)
     {

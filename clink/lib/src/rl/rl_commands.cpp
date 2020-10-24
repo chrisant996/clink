@@ -161,9 +161,9 @@ int clink_copy_cwd(int count, int invoking_key)
     unsigned int length = GetCurrentDirectoryW(cwd.size(), cwd.data());
     if (length < cwd.size())
     {
-        cwd << L"\\";
         str<> tmp;
         to_utf8(tmp, cwd.c_str());
+        tmp << PATH_SEP;
         path::normalise(tmp);
         copy_impl(tmp.c_str(), tmp.length());
     }
@@ -192,10 +192,10 @@ int clink_insert_dot_dot(int count, int invoking_key)
     {
         char last_char = rl_buffer->get_buffer()[cursor - 1];
         if (last_char != ' ' && !path::is_separator(last_char))
-            str << "\\";
+            str << PATH_SEP;
     }
 
-    str << "..\\";
+    str << ".." << PATH_SEP;
 
     rl_buffer->insert(str.c_str());
 

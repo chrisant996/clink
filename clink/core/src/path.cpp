@@ -6,12 +6,6 @@
 #include "path.h"
 #include "str.h"
 
-#if defined(PLATFORM_WINDOWS)
-#   define PATH_SEP "\\"
-#else
-#   define PATH_SEP "/"
-#endif
-
 //------------------------------------------------------------------------------
 static const char* get_last_separator(const char* in)
 {

@@ -43,6 +43,13 @@ template <class A> A max(A a, A b) { return (a > b) ? a : b; }
 template <class A> A clamp(A v, A m, A M) { return min(max(v, m), M); }
 
 //------------------------------------------------------------------------------
+#if defined(PLATFORM_WINDOWS)
+#   define PATH_SEP "\\"
+#else
+#   define PATH_SEP "/"
+#endif
+
+//------------------------------------------------------------------------------
 extern const char* const bindableEsc;
 
 //------------------------------------------------------------------------------
