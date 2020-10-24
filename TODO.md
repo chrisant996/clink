@@ -9,12 +9,6 @@ Here's what's left to do in order to have a reasonable alpha release.  The alpha
 - Describe the new argmatcher/etc syntax.
 - Supply sample inputrc file(s).
 
-## Bugs
-- `xyzzy ` thinks the prefix range is 2 characters, but it should be 0.
-- `xyzzy foo` gets the printable part wrong for `bat` and `box`.
-- `xyzzy foo/` doesn't use prefix color for the correct range.
-- `xyzzy foo/b` doesn't use prefix color for the correct range.
-
 <br>
 <br>
 
@@ -40,7 +34,7 @@ Lua support changed significantly.  Explore how to support backward compatibilit
 
 ### Other
 - `match.ignore_case` can't be working correctly, and probably readline settings should determine it.  _(Update: oh, it's obsolete now that tab_completer is gone.)_
-- `_rl_completion_case_map` isn't supported properly in clink lua APIs, nor in general.  _(The 0.4.8 implementation simply converted `-` and `_` to `?` and accepted all matches!)_
+- `_rl_completion_case_map` isn't supported properly in clink lua APIs, nor in general.  _(The 0.4.8 implementation simply converted `-` and `_` to `?` and accepted all matches -- although maybe it filtered the results afterwards?)_
 - When convert-meta is off, then when binding `\M-h` (etc) the key name gets interpreted differently than Clink expects.
 - Promote store_impl to be a template and public, so the popup list can use it?
 - What to do about completion colors in popup list?

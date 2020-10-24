@@ -344,6 +344,13 @@ int rl_ignore_completion_duplicates = 1;
    within a completion entry finder function. */
 int rl_filename_completion_desired = 0;
 
+/* begin_clink_change */
+/* Similar to rl_filename_completion_desired, but only affects display.
+   This is ALWAYS zero on entry, and can only be changed within a
+   completion entry finder function. */
+int rl_filename_display_desired = 0;
+/* end_clink_change */
+
 /* Non-zero means that the results of the matches are to be quoted using
    double quotes (or an application-specific quoting mechanism) if the
    filename contains any characters in rl_filename_quote_chars.  This is
@@ -422,7 +429,7 @@ const char *_rl_readonly_color = 0;
 const char *_rl_alias_color = 0;
 rl_read_key_hook_func_t *rl_read_key_hook = 0;
 int rl_completion_matches_include_type = 0;
-static no_compute_lcd = 0;
+static int no_compute_lcd = 0;
 /* end_clink_change */
 
 /* Set to the last key used to invoke one of the completion functions */
@@ -535,6 +542,9 @@ set_completion_defaults (int what_to_do)
 {
   /* Only the completion entry function can change these. */
   rl_filename_completion_desired = 0;
+/* begin_clink_change */
+  rl_filename_display_desired = 0;
+/* end_clink_change */
   rl_filename_quoting_desired = 1;
   rl_completion_type = what_to_do;
   rl_completion_suppress_append = rl_completion_suppress_quote = 0;
@@ -816,6 +826,17 @@ colored_prefix_end (void)
 }
 #endif
 
+/* begin_clink_change */
+static int is_filename_completion_desired(const char* pathname)
+{
+  if (!rl_filename_completion_desired)
+    return 0;
+  if (!rl_completion_matches_include_type)
+    return 1;
+  return (IS_MATCH_TYPE_PATHISH (pathname[0]));
+}
+/* end_clink_change */
+
 /* Return the portion of PATHNAME that should be output when listing
    possible completions.  If we are hacking filename completion, we
    are only interested in the basename, the portion following the
@@ -832,13 +853,14 @@ printable_part (char *pathname)
 /* begin_clink_change */
   if (rl_completion_matches_include_type)
     {
-      if (!IS_MATCH_TYPE_PATHISH(pathname[0]))
+      if (rl_filename_display_desired == 0)
 	return (pathname + 1);			/* don't need to do anything */
       pathname++;
     }
   else
+  //if (rl_filename_completion_desired == 0)	/* don't need to do anything */
+  if (rl_filename_display_desired == 0)	/* don't need to do anything */
 /* end_clink_change */
-  if (rl_filename_completion_desired == 0)	/* don't need to do anything */
     return (pathname);
 
   temp = rl_last_path_separator (pathname);
@@ -1072,14 +1094,20 @@ print_filename (char *to_print, char *full_pathname, int prefix_bytes)
   extension_char = 0;
 #if defined (COLOR_SUPPORT)
   /* Defer printing if we want to prefix with a color indicator */
-  if (_rl_colored_stats == 0 || rl_filename_completion_desired == 0)
+/* begin_clink_change */
+  //if (_rl_colored_stats == 0 || rl_filename_completion_desired == 0)
+  if (_rl_colored_stats == 0 || rl_filename_display_desired == 0)
+/* end_clink_change */
 #endif
 /* begin_clink_change */
     //printed_len = fnprint (to_print, prefix_bytes, to_print);
     printed_len = fnprint (to_print, prefix_bytes, to_print, match_type);
 /* end_clink_change */
 
-  if (rl_filename_completion_desired && (
+/* begin_clink_change */
+  //if (rl_filename_completion_desired && (
+  if (rl_filename_display_desired && (
+/* end_clink_change */
 #if defined (VISIBLE_STATS)
      rl_visible_stats ||
 #endif
@@ -1159,7 +1187,7 @@ print_filename (char *to_print, char *full_pathname, int prefix_bytes)
 		}
 /* begin_clink_change */
 	      //if (path_isdir (new_full_pathname))
-	      if (match_type <= MATCH_TYPE_NONE ? path_isdir (new_full_pathname) : IS_MATCH_TYPE_DIR(match_type))
+	      if (match_type <= MATCH_TYPE_NONE ? path_isdir (new_full_pathname) : IS_MATCH_TYPE_DIR (match_type))
 /* end_clink_change */
 		extension_char = rl_preferred_path_separator;
 	    }
@@ -1190,7 +1218,7 @@ print_filename (char *to_print, char *full_pathname, int prefix_bytes)
 /* begin_clink_change */
 	    //if (_rl_complete_mark_directories && path_isdir (s))
 	    if (_rl_complete_mark_directories &&
-		((!match_type || IS_MATCH_TYPE_NONE(match_type)) ? path_isdir (s) : IS_MATCH_TYPE_DIR(match_type)))
+		((!match_type || IS_MATCH_TYPE_NONE (match_type)) ? path_isdir (s) : IS_MATCH_TYPE_DIR (match_type)))
 /* end_clink_change */
 	      extension_char = rl_preferred_path_separator;
 
@@ -1672,6 +1700,14 @@ remove_duplicate_matches (char **matches)
   return (temp_array);
 }
 
+/* begin_clink_change */
+static int
+pathfold (int c)
+{
+  return (rl_backslash_path_sep && c == '\\') ? '/' : c;
+}
+/* end_clink_change */
+
 /* Find the common prefix of the list of matches, and put it into
    matches[0]. */
 static int
@@ -1733,14 +1769,20 @@ compute_lcd_of_matches (char **match_list, int matches, const char *text)
 		  }
 		wc1 = towlower (wc1);
 		wc2 = towlower (wc2);
-		if (wc1 != wc2)
+/* begin_clink_change */
+		//if (wc1 != wc2)
+		if (pathfold (wc1) != pathfold (wc2))
+/* end_clink_change */
 		  break;
 		else if (v1 > 1)
 		  si += v1 - 1;
 	      }
 	    else
 #endif
-	    if (c1 != c2)
+/* begin_clink_change */
+	    //if (c1 != c2)
+	    if (pathfold (c1) != pathfold (c2))
+/* end_clink_change */
 	      break;
 	}
       else
@@ -1764,7 +1806,10 @@ compute_lcd_of_matches (char **match_list, int matches, const char *text)
 	      }
 	    else
 #endif
-	    if (c1 != c2)
+/* begin_clink_change */
+	    //if (c1 != c2)
+	    if (pathfold (c1) != pathfold (c2))
+/* end_clink_change */
 	      break;
 	}
 
@@ -1954,7 +1999,10 @@ rl_display_match_list_internal (char **matches, int len, int max, int only_measu
     {
       t = printable_part (matches[0]);
       /* check again in case of /usr/src/ */
-      temp = rl_filename_completion_desired ? rl_last_path_separator (t) : 0;
+/* begin_clink_change */
+      //temp = rl_filename_completion_desired ? rl_last_path_separator (t) : 0;
+      temp = rl_filename_display_desired ? rl_last_path_separator (t) : 0;
+/* end_clink_change */
       common_length = temp ? fnwidth (temp) : fnwidth (t);
       sind = temp ? strlen (temp) : strlen (t);
       if (common_length > max || sind > max)
@@ -1969,7 +2017,10 @@ rl_display_match_list_internal (char **matches, int len, int max, int only_measu
   else if (_rl_colored_completion_prefix > 0)
     {
       t = printable_part (matches[0]);
-      temp = rl_filename_completion_desired ? rl_last_path_separator (t) : 0;
+/* begin_clink_change */
+      //temp = rl_filename_completion_desired ? rl_last_path_separator (t) : 0;
+      temp = rl_filename_display_desired ? rl_last_path_separator (t) : 0;
+/* end_clink_change */
       common_length = temp ? fnwidth (temp) : fnwidth (t);
       sind = temp ? RL_STRLEN (temp+1) : RL_STRLEN (t);		/* want portion after final slash */
       if (common_length > max || sind > max)
@@ -2155,9 +2206,12 @@ display_matches (char **matches)
       if (rl_completion_matches_include_type)
 	{
 	  vis_stat = -1;
-	  if (rl_filename_completion_desired &&
+/* begin_clink_change */
+	  //if (rl_filename_completion_desired &&
+	  if (rl_filename_display_desired &&
+/* end_clink_change */
 	      rl_completion_matches_include_type &&
-	      IS_MATCH_TYPE_DIR(matches[i][0]) && (
+	      IS_MATCH_TYPE_DIR (matches[i][0]) && (
 #if defined (VISIBLE_STATS)
 	      rl_visible_stats ||
 #endif
@@ -2372,7 +2426,10 @@ append_to_match (char *text, int orig_start, int delimiter, int quote_char, int 
 
   temp_string[temp_string_index++] = '\0';
 
-  if (rl_filename_completion_desired)
+/* begin_clink_change */
+  //if (rl_filename_completion_desired)
+  if (is_filename_completion_desired (text))
+/* end_clink_change */
     {
       filename = tilde_expand (text);
       if (rl_filename_stat_hook)
@@ -2832,6 +2889,9 @@ rl_username_completion_function (const char *text, int state)
       strcpy (value + first_char_loc, entry->pw_name);
 
       if (first_char == '~')
+/* begin_clink_change */
+	rl_filename_display_desired =
+/* end_clink_change */
 	rl_filename_completion_desired = 1;
 
       return (value);
@@ -3084,6 +3144,9 @@ rl_filename_completion_function (const char *text, int state)
 	}
       filename_len = strlen (filename);
 
+/* begin_clink_change */
+      rl_filename_display_desired =
+/* end_clink_change */
       rl_filename_completion_desired = 1;
     }
 

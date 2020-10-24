@@ -362,6 +362,7 @@ static char* filename_menu_completion_function(const char *text, int state)
         filename_len = strlen(filename);
 
         rl_filename_completion_desired = 1;
+        rl_filename_display_desired = 1;
     }
 
     /* At this point we should entertain the possibility of hacking wildcarded
@@ -487,6 +488,8 @@ static char** alternative_matches(const char* text, int start, int end)
         return nullptr;
 
     rl_filename_completion_desired = 1;
+    rl_filename_display_desired = 1;
+    rl_completion_matches_include_type = 1;
 
     // Identify common prefix.
     char* end_prefix = rl_last_path_separator(text);
@@ -496,10 +499,19 @@ static char** alternative_matches(const char* text, int start, int end)
         end_prefix = (char*)text + 2;
     int len_prefix = end_prefix ? end_prefix - text : 0;
 
+    // If there are any matches with non-pathish types, then disable filename
+    // display so that prefix display works correctly.
+    for (int i = 0; i < match_count; ++i)
+        if (!is_pathish(s_matches->get_match_type(i)))
+        {
+            rl_filename_display_desired = 0;
+            break;
+        }
+
     // Deep copy of the generated matches.  Inefficient, but this is how
     // readline wants them.
     str<32> lcd;
-    int past_flag = 1;
+    int past_flag = rl_completion_matches_include_type;
     char** matches = (char**)calloc(match_count + 2, sizeof(*matches));
     matches[0] = (char*)malloc(past_flag + (end - start) + 1);
     if (past_flag)
@@ -508,13 +520,12 @@ static char** alternative_matches(const char* text, int start, int end)
     matches[0][past_flag + (end - start)] = '\0';
     for (int i = 0; i < match_count; ++i)
     {
-        match_type type = past_flag ? (match_type)s_matches->get_match_type(i) & match_type::mask : match_type::none;
-        bool concat = is_pathish(type);
+        match_type masked_type = past_flag ? s_matches->get_match_type(i) & match_type::mask : match_type::none;
 
         const char* match = s_matches->get_match(i);
         int match_len = strlen(match);
         int match_size = past_flag + match_len + 1;
-        if (concat)
+        if (rl_filename_display_desired)
             match_size += len_prefix;
         matches[i + 1] = (char*)malloc(match_size);
 
@@ -524,10 +535,10 @@ static char** alternative_matches(const char* text, int start, int end)
         str_base str(matches[i + 1] + past_flag, match_size - past_flag);
         str.clear();
 
-        if (concat && len_prefix)
+        if (rl_filename_display_desired && len_prefix)
             str.concat(text, len_prefix);
 
-        if ((type == match_type::none || type == match_type::dir) &&
+        if ((masked_type == match_type::none || masked_type == match_type::dir) &&
             match_len > past_flag &&
             (path::is_separator(match[match_len - 1])))
             match_len--;
@@ -536,7 +547,6 @@ static char** alternative_matches(const char* text, int start, int end)
     }
     matches[match_count + 1] = nullptr;
 
-    rl_completion_matches_include_type = past_flag;
     rl_attempted_completion_over = 1;
     return matches;
 }

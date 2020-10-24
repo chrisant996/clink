@@ -55,6 +55,9 @@ int str_compare_impl(str_iter_impl<T>& lhs, str_iter_impl<T>& rhs)
             d = (d == '-') ? '_' : d;
         }
 
+        if (c == '\\') c = '/';
+        if (d == '\\') d = '/';
+
         if (c != d)
             break;
 

@@ -825,6 +825,13 @@ extern rl_compdisp_func_t *rl_completion_display_matches_hook;
    within a completion entry finder function. */
 extern int rl_filename_completion_desired;
 
+/* begin_clink_change */
+/* Similar to rl_filename_completion_desired, but only affects display.
+   This is ALWAYS zero on entry, and can only be changed within a
+   completion entry finder function. */
+extern int rl_filename_display_desired;
+/* end_clink_change */
+
 /* Non-zero means that the results of the matches are to be quoted using
    double quotes (or an application-specific quoting mechanism) if the
    filename contains any characters in rl_word_break_chars.  This is
