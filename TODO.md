@@ -9,6 +9,12 @@ Here's what's left to do in order to have a reasonable alpha release.  The alpha
 - Describe the new argmatcher/etc syntax.
 - Supply sample inputrc file(s).
 
+## Bugs
+- `xyzzy ` thinks the prefix range is 2 characters, but it should be 0.
+- `xyzzy foo` gets the printable part wrong for `bat` and `box`.
+- `xyzzy foo/` doesn't use prefix color for the correct range.
+- `xyzzy foo/b` doesn't use prefix color for the correct range.
+
 <br>
 <br>
 

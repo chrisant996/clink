@@ -709,8 +709,7 @@ void line_editor_impl::update_internal()
     {
         str<64> needle;
         int needle_start = end_word.offset;
-        if (!m_matches.is_prefix_included())
-            needle_start += end_word.length;
+        unsigned int len_prefix = m_matches.is_prefix_included() ? 0 : end_word.length;
 
         const char* buf_ptr = m_buffer.get_buffer();
         needle.concat(buf_ptr + needle_start, next_key.cursor_pos - needle_start);
@@ -723,7 +722,7 @@ void line_editor_impl::update_internal()
         }
 
         match_pipeline pipeline(m_matches);
-        pipeline.select(needle.c_str());
+        pipeline.select(needle.c_str(), len_prefix);
         pipeline.sort();
 
         m_prev_key = next_key.value;

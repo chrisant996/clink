@@ -832,7 +832,7 @@ printable_part (char *pathname)
 /* begin_clink_change */
   if (rl_completion_matches_include_type)
     {
-      if (IS_MATCH_TYPE_WORD(pathname[0]))
+      if (!IS_MATCH_TYPE_PATHISH(pathname[0]))
 	return (pathname + 1);			/* don't need to do anything */
       pathname++;
     }

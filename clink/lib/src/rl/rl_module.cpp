@@ -484,22 +484,7 @@ static char** alternative_matches(const char* text, int start, int end)
 
     int match_count = s_matches->get_match_count();
     if (!match_count)
-    {
-        str<32> s(text);
-        path::normalise(s);
-        assert(rl_buffer);
-        assert(rl_point == end);
-        if (!s.equals(text))
-        {
-            rl_buffer->begin_undo_group();
-            rl_buffer->remove(start, end);
-            rl_point = start;
-            rl_buffer->insert(s.c_str());
-            rl_point = start + s.length();
-            rl_buffer->end_undo_group();
-        }
         return nullptr;
-    }
 
     rl_filename_completion_desired = 1;
 
@@ -523,11 +508,14 @@ static char** alternative_matches(const char* text, int start, int end)
     matches[0][past_flag + (end - start)] = '\0';
     for (int i = 0; i < match_count; ++i)
     {
-        match_type type = past_flag ? (match_type)s_matches->get_match_type(i) : match_type::none;
+        match_type type = past_flag ? (match_type)s_matches->get_match_type(i) & match_type::mask : match_type::none;
+        bool concat = is_pathish(type);
 
         const char* match = s_matches->get_match(i);
         int match_len = strlen(match);
-        int match_size = past_flag + len_prefix + match_len + 1;
+        int match_size = past_flag + match_len + 1;
+        if (concat)
+            match_size += len_prefix;
         matches[i + 1] = (char*)malloc(match_size);
 
         if (past_flag)
@@ -535,10 +523,12 @@ static char** alternative_matches(const char* text, int start, int end)
 
         str_base str(matches[i + 1] + past_flag, match_size - past_flag);
         str.clear();
-        if (len_prefix)
+
+        if (concat && len_prefix)
             str.concat(text, len_prefix);
 
         if ((type == match_type::none || type == match_type::dir) &&
+            match_len > past_flag &&
             (path::is_separator(match[match_len - 1])))
             match_len--;
 
