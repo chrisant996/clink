@@ -42,7 +42,7 @@ There are a variety of ways to start Clink;
 
 ### Extending Clink
 
-Clink can be extended through its Lua API which allows easy creation context sensitive match generators, prompt filtering, and more. More details can be found in Clink's documentation ... _which is out of date and needs to be updated -- Stay tuned_.
+Clink can be extended through its Lua API which allows easy creation of context sensitive match generators, prompt filtering, and more. More details can be found in Clink's documentation [here](https://chrisant996.github.io/clink/clink.html).
 
 ### Building Clink
 

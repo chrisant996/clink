@@ -14,18 +14,18 @@ Clink combines the native Windows shell cmd.exe with the powerful command line e
   - Environment variables
   - Thirdparty tools; Git, Mercurial, SVN, Go, and P4.
 - New keyboard shortcuts;
-  - Paste from clipboard (<kbd>Ctrl</kbd>-<kbd>V</kbd>).
-  - Incremental history search (<kbd>Ctrl</kbd>-<kbd>R</kbd> and <kbd>Ctrl</kbd>-<kbd>S</kbd>).
+  - Paste from clipboard (<kbd>Ctrl</kbd>+<kbd>V</kbd>).
+  - Incremental history search (<kbd>Ctrl</kbd>+<kbd>R</kbd> and <kbd>Ctrl</kbd>+<kbd>S</kbd>).
   - Powerful completion (<kbd>Tab</kbd>).
-  - Undo (<kbd>Ctrl</kbd>-<kbd>Z</kbd>).
-  - Automatic `cd ..` (<kbd>Ctrl</kbd>-<kbd>PgUp</kbd>).
-  - Environment variable expansion (<kbd>Ctrl</kbd>-<kbd>Alt</kbd>-<kbd>E</kbd>).
-  - (press <kbd>Alt</kbd>-<kbd>H</kbd> for many more...)
+  - Undo (<kbd>Ctrl</kbd>+<kbd>Z</kbd>).
+  - Automatic `cd ..` (<kbd>Ctrl</kbd>+<kbd>PgUp</kbd>).
+  - Environment variable expansion (<kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>E</kbd>).
+  - (press <kbd>Alt</kbd>+<kbd>H</kbd> for many more...)
 - Scriptable completion with Lua.
 - Coloured and scriptable prompt.
 - Auto-answering of the "Terminate batch job?" prompt.
 
-By default Clink binds <kbd>Alt</kbd>-<kbd>H</kbd> to display the current key bindings. More features can also be found in GNU's [Readline](https://tiswww.cwru.edu/php/chet/readline/readline.html) and [History](https://tiswww.cwru.edu/php/chet/readline/history.html) libraries' manuals.
+By default Clink binds <kbd>Alt</kbd>+<kbd>H</kbd> to display the current key bindings. More features can also be found in GNU's [Readline](https://tiswww.cwru.edu/php/chet/readline/readline.html) and [History](https://tiswww.cwru.edu/php/chet/readline/history.html) libraries' manuals.
 
 <br>
 
@@ -56,7 +56,7 @@ Name                         | Description
 `clink.paste_crlf`           | What to do with CR and LF characters on paste. Set this to `delete` to delete them, or to `space` to replace them with spaces.
 `clink.path`                 | A list of paths to load Lua scripts. Multiple paths can be delimited semicolons. _**TODO:** Describe the default behavior._
 `cmd.auto_answer`            | Automatically answers cmd.exe's "Terminate batch job (Y/N)?" prompts. `off` = disabled, `answer_yes` = answer Y, `answer_no` = answer N.
-`cmd.ctrld_exits`            | Ctrl-D exits the process when it is pressed on an empty line.
+`cmd.ctrld_exits`            | <kbd>Ctrl</kbd>+<kbd>D</kbd> exits the process when it is pressed on an empty line.
 `colour.doskey`              | Used when Clink displays doskey alias completions.
 `colour.hidden`              | Used when Clink displays file completions with the "hidden" attribute.
 `colour.interact`            | Used when Clink displays text or prompts such as a pager's `--More?--` prompt.
@@ -94,12 +94,12 @@ Name                         | Description
 
 Settings and history are persisted to disk from session to session. The location of these files depends on which distribution of Clink was used. If you installed Clink using the .exe installer then Clink uses the current user's non-roaming application data directory. This user directory is usually found in one of the following locations;
 
-- Windows XP: `c:\Documents and Settings\&lt;username&gt;\Local Settings\Application Data`
-- Windows Vista onwards: `c:\Users\&lt;username&gt;\AppData\Local`
+- Windows XP: `c:\Documents and Settings\<username>\Local Settings\Application Data`
+- Windows Vista onwards: `c:\Users\<username>\AppData\Local`
 
 The .zip distribution of Clink creates and uses a directory called `profile` which is located in the same directory where Clink's core files are found.
 
-All of the above locations can be overridden using the `--profile &lt;path&gt;` command line option which is specified when injecting Clink into cmd.exe using `clink inject`.
+All of the above locations can be overridden using the `--profile <path>` command line option which is specified when injecting Clink into cmd.exe using `clink inject`.
 
 <br>
 
@@ -113,9 +113,9 @@ $(BEGINDIM)
 Clink will search in the directory as specified by the `%HOME%` environment variable for one or all of the following files; `clink_inputrc`, `_inputrc`, and `.inputrc`. If `%HOME%` is unset then Clink will use either of the standard Windows environment variables `%HOMEDRIVE%\%HOMEPATH%` or `%USERPROFILE%`.
 
 Other software that also uses Readline will also look for the `.inputrc` file (and possibly the `_inputrc` file too). To set macros and keybindings intended only for Clink one can use the Readline init file conditional construct like this; `$if clink [...] $endif`.
+$(ENDDIM)
 
 Clink also adds some new commands and configuration variables in addition to what's covered in the Readline documentation.
-$(ENDDIM)
 
 ## New configuration variables
 
@@ -136,15 +136,15 @@ Name | Description
 `add-history`|Adds the current line to the history without executing it, and clears the editing line.
 `clink-copy-cwd`|Copy the current working directory to the clipboard.
 `clink-copy-line`|Copy the current line to the clipboard.
-`clink-ctrl-c`|Discards the current line and starts a new one (like Ctrl-C in CMD.EXE).
+`clink-ctrl-c`|Discards the current line and starts a new one (like <kbd>Ctrl</kbd>+<kbd>C</kbd> in CMD.EXE).
 `clink-exit`|Replaces the current line with `exit` and executes it (exits the shell instance).
 `clink-expand-doskey-alias`|Expand the doskey alias (if any) at the beginning of the line.
 `clink-expand-env-vars`|Expand the environment variable (`%FOOBAR%`) at the cursor.
 `clink-insert-dot-dot`|Inserts `..\` at the cursor.
 `clink-paste`|Paste the clipboard at the cursor.
 `clink-popup-complete`|Show a popup window that lists the available completions.
-`clink-popup-directories`|Show a popup window of recent current working directories.  In the popup, use Enter to `cd /d` to the directory, or use Shift-Enter or Ctrl-Enter to insert directory in the editing line.
-`clink-popup-history`|Show a popup window that lists the command history (if any text precedes the cursor then it uses an anchored search to filter the list).  In the popup, use Enter to execute the command, or use Shift-Enter or Ctrl-Enter to make it the current history entry.
+`clink-popup-directories`|Show a popup window of recent current working directories.  In the popup, use <kbd>Enter</kbd> to `cd /d` to the highlighted directory.  See below more about the popup window.
+`clink-popup-history`|Show a popup window that lists the command history (if any text precedes the cursor then it uses an anchored search to filter the list).  In the popup, use <kbd>Enter</kbd> to execute the highlighted command.  See below for more about the popup window.
 `clink-reset-line`|Clears the current line.
 `clink-scroll-bottom`|Scroll the console window to the bottom (the current input line).
 `clink-scroll-line-down`|Scroll the console window down one line.
@@ -160,7 +160,19 @@ Name | Description
 
 ## Popup window
 
-The `clink-popup-complete` and `clink-popup-history` commands show a popup window that lists the available completions or the command history.  Typing does an incremental search, and <kbd>F3</kbd> or <kbd>Ctrl</kbd>+<kbd>L</kbd> go to the next match (add <kbd>Shift</kbd> to go to the previous match).  <kbd>Enter</kbd> inserts the highlighted completion or executes the highlighted history entry.  <kbd>Shift</kbd>+<kbd>Enter</kbd> jumps to the highlighted history entry without executing it.
+The `clink-popup-complete`, `clink-popup-directories`, and `clink-popup-history` commands show a popup window that lists the available completions, directory history, or command history.  Here's how it works:
+
+Key | Description
+:-:|---
+<kbd>Escape</kbd>|Cancels the popup.
+<kbd>Enter</kbd>|Inserts the highlighted completion, changes to the highlighted directory, or executes the highlighted command.
+<kbd>Shift</kbd>+<kbd>Enter</kbd>|Inserts the highlighted completion, inserts the highlighted directory, or jumps to the highlighted command history entry without executing it.
+<kbd>Ctrl</kbd>+<kbd>Enter</kbd>|Same as <kbd>Shift</kbd>+<kbd>Enter</kbd>.
+Typing|Typing does an incremental search.
+<kbd>F3</kbd>|Go to the next match.
+<kbd>Ctrl</kbd>+<kbd>L</kbd>|Go to the next match.
+<kbd>Shift</kbd>+<kbd>F3</kbd>|Go to the previous match.
+<kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>L</kbd>|Go to the previous match.
 
 <br>
 
@@ -168,13 +180,13 @@ The `clink-popup-complete` and `clink-popup-history` commands show a popup windo
 
 > **WARNING:** Most of this section is out of date and needs to be updated.
 
-$(BEGINDIM)
 The Readline library allows clients to offer an alternative path for creating completion matches. Clink uses this to hook Lua into the completion process making it possible to script the generation of matches with Lua scripts. The following sections describe this in more detail and shows some examples.
 
 ## The Location of Lua Scripts
 
-Clink looks for Lua scripts in the folders as described in the **Configuring Clink** section. By default <kbd>Ctrl</kbd>-<kbd>X</kbd>,<kbd>Ctrl</kbd>-<kbd>R</kbd> is mapped to reload all Lua scripts which can be useful when developing and iterating on your own scripts.
+Clink looks for Lua scripts in the folders as described in the **Configuring Clink** section. By default <kbd>Ctrl</kbd>+<kbd>X</kbd>,<kbd>Ctrl</kbd>+<kbd>R</kbd> is mapped to reload all Lua scripts which can be useful when developing and iterating on your own scripts.
 
+$(BEGINDIM)
 ## Match Generators
 $(ENDDIM)
 
@@ -269,7 +281,7 @@ some_parser = clink.arg.new_parser(
 #### Linking Parsers
 $(ENDDIM)
 
-> **TODO:** Describe the new match syntax.  The old syntax described below isn't compatible with v1.0.0 onward.
+> **TODO:** Describe the new syntax.  The old syntax described below isn't compatible with v1.0.0 onward.
 
 $(BEGINDIM)
 There are often situations where the parsing of a command's arguments is dependent on the previous words (`git merge ...` compared to `git log ...` for example). For these scenarios Clink allows you to link parsers to arguments' words using Lua's concatenation operator. Parsers can also be concatenated with flags too.
@@ -318,7 +330,7 @@ The functions take a single argument which is a word from the command line being
 ## Filtering The Match Display
 $(ENDDIM)
 
-> **TODO:** Describe the new match syntax.  The old syntax described below isn't compatible with v1.0.0 onward.
+> **TODO:** Describe the new syntax.  The old syntax described below isn't compatible with v1.0.0 onward.
 
 $(BEGINDIM)
 In some instances it may be preferable to display potential matches in an alternative form than the generated matches passed to and used internally by Readline. This happens for example with Readline's standard file name matches, where the matches are the whole word being completed but only the last part of the path is shown (e.g. the match `foo/bar` is displayed as `bar`).
@@ -388,38 +400,24 @@ A filter function is registered into the filter chain by passing the function to
 
 ## Binding special keys
 
-Due to differences between Windows and Linux, escape codes for keys like PageUp/Down and the arrow keys are different in Clink. Escape codes take the format `\e[?` where `?` is one of the characters from the following table, except for a few that are listed in a separate special table.
+Due to differences between Windows and Linux, escape codes for keys like PageUp/Down and the arrow keys are different in Clink.
 
-|           |Normal     | Shift     | Ctrl      | Ctrl+Shift | Alt       | Alt+Shift | Ctrl+Alt | Ctrl+Alt+Shift |
-|:-:        |:-:        |:-:        |:-:        |:-:         |:-:        |:-:        |:-:       |:-:             |
-|Up         |`A`        |`1;2A`     |`1;5A`     |`1;6A`      |`1;3A`     |`1;4A`     |`1;7A`    |`1;8A`          |
-|Down       |`B`        |`1;2B`     |`1;5B`     |`1;6B`      |`1;3B`     |`1;4B`     |`1;7B`    |`1;8B`          |
-|Left       |`D`        |`1;2D`     |`1;5D`     |`1;6D`      |`1;3D`     |`1;4D`     |`1;7D`    |`1;8D`          |
-|Right      |`C`        |`1;2C`     |`1;5C`     |`1;6C`      |`1;3C`     |`1;4C`     |`1;7C`    |`1;8C`          |
-|Insert     |`2~`       |`2;2~`     |`2;5~`     |`2;6~`      |`2;3~`     |`2;4~`     |`2;7~`    |`2;8~`          |
-|Delete     |`3~`       |`3;2~`     |`3;5~`     |`3;6~`      |`3;3~`     |`3;4~`     |`3;7~`    |`3;8~`          |
-|Home       |`H`        |`1;2H`     |`1;5H`     |`1;6H`      |`1;3H`     |`1;4H`     |`1;7H`    |`1;8H`          |
-|End        |`F`        |`1;2F`     |`1;5F`     |`1;6F`      |`1;3F`     |`1;4F`     |`1;7F`    |`1;8F`          |
-|PgUp       |`5~`       |`5;2~`     |`5;5~`     |`5;6~`      |`5;3~`     |`5;4~`     |`5;7~`    |`5;8~`          |
-|PgDn       |`6~`       |`6;2~`     |`6;5~`     |`6;6~`      |`6;3~`     |`6;4~`     |`6;7~`    |`6;8~`          |
-|Tab        |(special)  |`Z`        |`27;5;9~`  |`27;6;9~`   |(n/a)      |(n/a)      |(n/a)     |(n/a)           |
-|Space      |(special)  |(n/a)      |`27;5;32~` |`27;6;32~`  |(n/a)      |(n/a)      |`27;7;32~`|`27;8;32~`      |
-|Backspace  |(special)  |(n/a)      |(special)  |(n/a)       |(special)  |(n/a)      |(n/a)     |(n/a)           |
-|Escape     |(special)  |(n/a)      |(n/a)      |(n/a)       |(n/a)      |(n/a)      |(special) |(n/a)           |
-
-<br>
-
-These keys use other formats, so their full "special" sequences are listed in the following table.
-
-| Key               | Special Sequence |
-|:-:                |:-:        |
-|Escape             |`\e\e`     |
-|Tab                |`\t`       |
-|Space              |(space)    |
-|Backspace          |`^h`       |
-|Ctrl + Backspace   |`Rubout`   |
-|Alt + Backspace    |`\e^h`     |
-|Ctrl + Alt + Backspace |`\eRubout` |
+|           |Normal     | Shift   | Ctrl        | Ctrl+Shift  | Alt     | Alt+Shift| Ctrl+Alt    | Ctrl+Alt+Shift|
+|:-:        |:-:        |:-:      |:-:          |:-:          |:-:      |:-:       |:-:          |:-:            |
+|Up         |`\e[A`     |`\e[1;2A`|`\e[1;5A`    |`\e[1;6A`    |`\e[1;3A`|`\e[1;4A` |`\e[1;7A`    |`\e[1;8A`      |
+|Down       |`\e[B`     |`\e[1;2B`|`\e[1;5B`    |`\e[1;6B`    |`\e[1;3B`|`\e[1;4B` |`\e[1;7B`    |`\e[1;8B`      |
+|Left       |`\e[D`     |`\e[1;2D`|`\e[1;5D`    |`\e[1;6D`    |`\e[1;3D`|`\e[1;4D` |`\e[1;7D`    |`\e[1;8D`      |
+|Right      |`\e[C`     |`\e[1;2C`|`\e[1;5C`    |`\e[1;6C`    |`\e[1;3C`|`\e[1;4C` |`\e[1;7C`    |`\e[1;8C`      |
+|Insert     |`\e[2~`    |`\e[2;2~`|`\e[2;5~`    |`\e[2;6~`    |`\e[2;3~`|`\e[2;4~` |`\e[2;7~`    |`\e[2;8~`      |
+|Delete     |`\e[3~`    |`\e[3;2~`|`\e[3;5~`    |`\e[3;6~`    |`\e[3;3~`|`\e[3;4~` |`\e[3;7~`    |`\e[3;8~`      |
+|Home       |`\e[H`     |`\e[1;2H`|`\e[1;5H`    |`\e[1;6H`    |`\e[1;3H`|`\e[1;4H` |`\e[1;7H`    |`\e[1;8H`      |
+|End        |`\e[F`     |`\e[1;2F`|`\e[1;5F`    |`\e[1;6F`    |`\e[1;3F`|`\e[1;4F` |`\e[1;7F`    |`\e[1;8F`      |
+|PgUp       |`\e[5~`    |`\e[5;2~`|`\e[5;5~`    |`\e[5;6~`    |`\e[5;3~`|`\e[5;4~` |`\e[5;7~`    |`\e[5;8~`      |
+|PgDn       |`\e[6~`    |`\e[6;2~`|`\e[6;5~`    |`\e[6;6~`    |`\e[6;3~`|`\e[6;4~` |`\e[6;7~`    |`\e[6;8~`      |
+|Tab        |`\t`       |`\e[Z`   |`\e[27;5;9~` |`\e[27;6;9~` | -       | -        | -           | -             |
+|Space      |`Space`    | -       |`\e[27;5;32~`|`\e[27;6;32~`| -       | -        |`\e[27;7;32~`|`\e[27;8;32~`  |
+|Backspace  |`^h`       | -       |`Rubout`     | -           |`\e^h`   | -        |`\eRubout`   | -             |
+|Escape     |`\e[27;27~`| -       | -           | -           | -       | -        | -           | -             |
 
 <br>
 
@@ -431,7 +429,7 @@ Here is an example line from a clink_inputrc file that binds Shift-End to the Re
 
 ## Binding function keys
 
-For function keys the full escape sequences are listed.  The last four columns (Alt+) are the same as the first four columns prefixed with an extra `\e`.
+For function keys the full escape sequences are listed.  The last four columns (<kbd>Alt</kbd>+) are the same as the first four columns prefixed with an extra `\e`.
 
 |           |Normal     |Shift      |Ctrl       |Ctrl+Shift  |Alt        |Alt+Shift    |Alt+Ctrl     |Alt+Ctrl+Shift  |
 |:-:        |:-:        |:-:        |:-:        |:-:         |:-:        |:-:          |:-:          |:-:             |
@@ -450,11 +448,15 @@ For function keys the full escape sequences are listed.  The last four columns (
 
 <br>
 
-Here is an example line from a clink_inputrc file that binds Alt-Shift-F3 to the Readline `history-substring-search-backward` function;
+Here is an example line from a clink_inputrc file that binds <kbd>Alt</kbd>+<kbd>Shift</kbd>+<kbd>F3</kbd> to the Readline `history-substring-search-backward` function;
 
 ```
 "\e\e[1;2R": history-substring-search-backward
 ```
+
+## Discovering Clink key sequences
+
+An easy way to find the key sequence for any key combination that Clink supports is to use Clink's `echo` command line option. Run `clink echo` and then press key combinations; the associated key binding sequence is printed to the console output.
 
 ## Powershell
 
