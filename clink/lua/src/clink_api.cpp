@@ -196,7 +196,7 @@ static int get_host_process(lua_State* state)
 /// -name:  clink.getscreeninfo
 /// -ret:   table
 /// Returns dimensions of the terminal's buffer (buf*) and visible window (win*).
-/// The returned table has the following scheme; { bufwidth:int, bufheight:int,
+/// The returned table has the following scheme: { bufwidth:int, bufheight:int,
 /// winwidth:int, winheight:int }.
 static int get_screen_info(lua_State* state)
 {
