@@ -1,7 +1,3 @@
-# Clink
-
-Powerful Bash-style command line editing for cmd.exe
-
 ### Overview
 
 Clink combines the native Windows shell `cmd.exe` with the powerful command line editing features of the GNU Readline library, which provides rich completion, history, and line-editing capabilities. Readline is best known for its use in the well-known Unix shell Bash, the standard shell for Mac OS X and many Linux distributions.
