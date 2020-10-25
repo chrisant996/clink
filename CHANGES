@@ -1,10 +1,9 @@
 
 # Changes
 
-### v1.0.0
+> **TODO:** Need to document the changes since v0.4.9 (wow, that's going to be a huge effort).
 
-- TODO
-
+$(BEGINDIM)
 ### v0.4.9
 
 - Fixed broken Doskey on Win10 (#438, #451)
@@ -221,6 +220,7 @@
 ### v0.1
 
 - Initial release.
+$(ENDDIM)
 
 <!-- vim: wrap nolist ft=markdown
 -->

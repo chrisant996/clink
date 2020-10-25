@@ -22,10 +22,11 @@ blockquote {
     box-shadow: 2px 2px 8px #ccc;
     border-left-style: solid;
     border-left-width: 8px;
-    border-left-color: darkred;
+    border-left-color: #990000;
     border-right-style: solid;
     border-right-width: 2px;
-    border-right-color: darkred;
+    border-right-color: #990000;
+    background: #ffffee;
 }
 
 code {
@@ -72,6 +73,7 @@ kbd {
     padding: 0 0 0 0;
     border-radius: 0;
     background-color: transparent;
+    white-space: nowrap;
 }
 
 .section {
@@ -92,10 +94,6 @@ kbd {
 
 #content {
     clear: both;
-}
-
-#content p {
-    text-align: justify;
 }
 
 #content table {

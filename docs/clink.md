@@ -25,7 +25,7 @@ Clink combines the native Windows shell cmd.exe with the powerful command line e
 - Coloured and scriptable prompt.
 - Auto-answering of the "Terminate batch job?" prompt.
 
-By default Clink binds <kbd>Alt</kbd>-<kbd>H</kbd> to display the current key bindings. More features can also be found in GNU's [Readline](http://tinyurl.com/oum26rp) and [History](http://tinyurl.com/p92oq5d) libraries' manuals.
+By default Clink binds <kbd>Alt</kbd>-<kbd>H</kbd> to display the current key bindings. More features can also be found in GNU's [Readline](https://tiswww.cwru.edu/php/chet/readline/readline.html) and [History](https://tiswww.cwru.edu/php/chet/readline/history.html) libraries' manuals.
 
 <br>
 
@@ -49,7 +49,7 @@ When running Clink via the methods above, Clink checks the parent process is sup
 
 The easiest way to configure Clink is to use Clink's `set` command line option.  This can list, query, and set Clink's settings. Run `clink set --help` from a Clink-installed cmd.exe process to learn more both about how to use it and to get descriptions for Clink's various options.
 
-The following table describes the available Clink settings;
+The following table describes the available Clink settings:
 
 Name                         | Description
 :--:                         | -----------
@@ -105,15 +105,17 @@ All of the above locations can be overridden using the `--profile &lt;path&gt;` 
 
 # Configuring Readline
 
-Readline itself can also be configured to add custom keybindings and macros by creating a Readline init file. There is excellent documentation for all the options available to configure Readline in Readline's [manual](http://tinyurl.com/oum26rp).
+Readline itself can also be configured to add custom keybindings and macros by creating a Readline init file. There is excellent documentation for all the options available to configure Readline in Readline's [manual](https://tiswww.cwru.edu/php/chet/readline/rltop.html#Documentation).
 
 > **TODO:** Update the description of how/where inputrc files are loaded.
 
+$(BEGINDIM)
 Clink will search in the directory as specified by the `%HOME%` environment variable for one or all of the following files; `clink_inputrc`, `_inputrc`, and `.inputrc`. If `%HOME%` is unset then Clink will use either of the standard Windows environment variables `%HOMEDRIVE%\%HOMEPATH%` or `%USERPROFILE%`.
 
 Other software that also uses Readline will also look for the `.inputrc` file (and possibly the `_inputrc` file too). To set macros and keybindings intended only for Clink one can use the Readline init file conditional construct like this; `$if clink [...] $endif`.
 
 Clink also adds some new commands and configuration variables in addition to what's covered in the Readline documentation.
+$(ENDDIM)
 
 ## New configuration variables
 
@@ -164,8 +166,9 @@ The `clink-popup-complete` and `clink-popup-history` commands show a popup windo
 
 # Extending Clink
 
-> **WARNING:** This entire section is out of date and needs to be updated.
+> **WARNING:** Most of this section is out of date and needs to be updated.
 
+$(BEGINDIM)
 The Readline library allows clients to offer an alternative path for creating completion matches. Clink uses this to hook Lua into the completion process making it possible to script the generation of matches with Lua scripts. The following sections describe this in more detail and shows some examples.
 
 ## The Location of Lua Scripts
@@ -173,9 +176,11 @@ The Readline library allows clients to offer an alternative path for creating co
 Clink looks for Lua scripts in the folders as described in the **Configuring Clink** section. By default <kbd>Ctrl</kbd>-<kbd>X</kbd>,<kbd>Ctrl</kbd>-<kbd>R</kbd> is mapped to reload all Lua scripts which can be useful when developing and iterating on your own scripts.
 
 ## Match Generators
+$(ENDDIM)
 
 > **TODO:** Describe the new match generator syntax.  The old syntax described below isn't compatible with v1.0.0 onward.
 
+$(BEGINDIM)
 These are Lua functions that are registered with Clink and are called as part of Readline's completion process. Match generator functions take the following form;
 
 ```lua
@@ -219,9 +224,11 @@ clink.register_match_generator(env_vars_match_generator, 10)
 ```
 
 ## Argument Completion
+$(ENDDIM)
 
 > **TODO:** Describe the new argument and flag syntax.  The old syntax described below isn't compatible with v1.0.0 onward.
 
+$(BEGINDIM)
 Clink provides a framework for writing complex argument match generators in Lua.  It works by creating a parser object that describes a command's arguments and flags and then registering the parser with Clink. When Clink detects the command is being entered on the current command line being edited, it uses the parser to generate matches.
 
 Here is an example of a simple parser for the command `foobar`;
@@ -260,9 +267,11 @@ some_parser = clink.arg.new_parser(
 ### More Advanced Stuff
 
 #### Linking Parsers
+$(ENDDIM)
 
 > **TODO:** Describe the new match syntax.  The old syntax described below isn't compatible with v1.0.0 onward.
 
+$(BEGINDIM)
 There are often situations where the parsing of a command's arguments is dependent on the previous words (`git merge ...` compared to `git log ...` for example). For these scenarios Clink allows you to link parsers to arguments' words using Lua's concatenation operator. Parsers can also be concatenated with flags too.
 
 ```lua
@@ -307,9 +316,11 @@ the_parser:set_arguments(
 The functions take a single argument which is a word from the command line being edited (or partial word if it is the one under the cursor). Functions should return a table of potential matches (or an empty table if it calls clink.add_match() directly itself).
 
 ## Filtering The Match Display
+$(ENDDIM)
 
 > **TODO:** Describe the new match syntax.  The old syntax described below isn't compatible with v1.0.0 onward.
 
+$(BEGINDIM)
 In some instances it may be preferable to display potential matches in an alternative form than the generated matches passed to and used internally by Readline. This happens for example with Readline's standard file name matches, where the matches are the whole word being completed but only the last part of the path is shown (e.g. the match `foo/bar` is displayed as `bar`).
 
 To facilitate custom match generators that may wish to do this there is the `clink.match_display_filter` variable. This can be set to a function that will then be called before matches are to be displayed.
@@ -335,6 +346,7 @@ end
 ```
 
 The function's single argument `matches` is a table containing what Clink is going to display. The return value is a table with the input matches filtered as required by the match generator. The value of `clink.match_display_filter` is reset every time match generation is invoked.
+$(ENDDIM)
 
 ## Customising The Prompt
 

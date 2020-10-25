@@ -15,10 +15,7 @@ Clink uses Lua.
 Clink uses the getopt library.
 > **TODO:** Include version, license, and web site link.
 
-Clink documentation uses the marked.min.js library.
-> **TODO:** Include version, license, and web site link.
-
-Clink documentation uses the highlight.js library.
+Clink documentation currently embeds the highlight.js library, but will likely stop embedding it soon.
 > **TODO:** Include version, license, and web site link.
 
 <!-- vim: wrap nolist ft=markdown

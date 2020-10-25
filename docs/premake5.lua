@@ -10,6 +10,8 @@ local function markdown_file(source_path, out)
 
     local line_reader = io.lines(out_file)
     for line in line_reader do
+        line = line:gsub("%$%(BEGINDIM%)", "<div style='opacity:0.5'>")
+        line = line:gsub("%$%(ENDDIM%)", "</div>")
         out:write(line .. "\n")
     end
 end
