@@ -866,17 +866,17 @@ rl_module::rl_module(const char* shell_name, terminal_in* input)
         { "\\C-c",          "clink-ctrl-c" },            // ctrl-c
         { "\\C-v",          "clink-paste" },             // ctrl-v
         { "\\C-z",          "undo" },                    // ctrl-z
-        { "\\M-a",          "clink-insert-dot-dot" },    // alt-a
-        { "\\M-c",          "clink-copy-cwd" },          // alt-c
-        { "\\M-\\C-c",      "clink-copy-line" },         // alt-ctrl-c
-        { "\\M-\\C-e",      "clink-expand-env-var" },    // alt-ctrl-e
-        { "\\M-\\C-f",      "clink-expand-doskey-alias" }, // alt-ctrl-f
         {}
     };
 
     static const char* general_key_binds[][2] = {
+        { "\\M-a",          "clink-insert-dot-dot" },    // alt-a
+        { "\\M-c",          "clink-copy-cwd" },          // alt-c
         { "\\M-h",          "clink-show-help" },         // alt-h
         { "\\M-H",          "clink-show-help-raw" },     // alt-H
+        { "\\M-\\C-c",      "clink-copy-line" },         // alt-ctrl-c
+        { "\\M-\\C-e",      "clink-expand-env-var" },    // alt-ctrl-e
+        { "\\M-\\C-f",      "clink-expand-doskey-alias" }, // alt-ctrl-f
         { "\\e[5;5~",       "clink-up-directory" },      // ctrl-pgup
         { "\\e\\eOS",       "clink-exit" },              // alt-f4
         { "\\e[1;3H",       "clink-scroll-top" },        // alt-home
