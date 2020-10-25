@@ -1,0 +1,1503 @@
+<html>
+<meta charset="utf-8"/>
+
+<!-- ----------------------------------------------------- -->
+<head>
+<title>Clink vMASTER</title>
+<style>
+body {
+    padding-top: 3em;
+    width: 90%;
+    margin: 0 auto;
+    font-family: Calibri, Arial, Helvetica, sans-serif;
+}
+
+h1 {
+    width: 100%;
+    border-bottom: 2px black solid;
+}
+
+h3 { font-size: 1.21em; }
+h4 { font-size: 1.14em; }
+h5 { font-size: 1.07em; }
+h6 { font-size: 1.00em; }
+
+blockquote {
+    display: block;
+    padding: 1px 20px 1px 20px;
+    margin: 0 0 20px;
+    box-shadow: 2px 2px 8px #ccc;
+    border-left-style: solid;
+    border-left-width: 8px;
+    border-left-color: #990000;
+    border-right-style: solid;
+    border-right-width: 2px;
+    border-right-color: #990000;
+    background: #ffffee;
+}
+
+code {
+    display: inline;
+    padding: 1px 3px 1px 3px;
+    background-color: #eee;
+    border: 1px solid #ddd;
+    border-radius: 3px;
+}
+
+pre {
+    font-family: monospace;
+    margin: 0 10px 0 10px;
+}
+
+pre code {
+    border: none;
+    padding: 0 0 0 0;
+    border-radius: 0;
+}
+
+kbd {
+    padding:0.1em 0.3em;
+    border-collapse:separate;
+    border:1px solid #ccc;
+    font-size:75%;
+    font-family:Calibri,Arial,Helvetica,sans-serif;
+    background-color:#eee;
+    color:#333;
+    -moz-box-shadow:0 1px 0px rgba(0, 0, 0, 0.2),0 0 0 0px #ffffff inset;
+    -webkit-box-shadow:0 1px 0px rgba(0, 0, 0, 0.2),0 0 0 0px #ffffff inset;
+    box-shadow:0 1px 0px rgba(0, 0, 0, 0.2),0 0 0 0px #ffffff inset;
+    -moz-border-radius:4px;
+    -webkit-border-radius:4px;
+    border-radius:4px;
+    display:inline-block;
+    margin:0 0.1em;
+    vertical-align:0.1em;
+    white-space:nowrap;
+}
+
+#content td:nth-child(1) code {
+    border: none;
+    padding: 0 0 0 0;
+    border-radius: 0;
+    background-color: transparent;
+    white-space: nowrap;
+}
+
+.section {
+    margin-top: 2em;
+    margin-bottom: 4em;
+}
+
+#header {
+    float: right;
+    text-align: right;
+}
+
+#header #title {
+    font-size: 2em;
+    font-weight: bold;
+    margin-bottom: 0.4em;
+}
+
+#content {
+    clear: both;
+}
+
+#content table {
+    margin: 0 auto;
+    width: 90%;
+}
+
+#content pre, #api .show {
+    padding: 0.2em;
+    background-color: #eee;
+}
+
+#content td, #content th {
+    vertical-align: text-top;
+    padding: 0.2em;
+}
+
+#content th {
+    background-color: #eee;
+}
+
+#content tr:nth-child(odd) {
+    background-color: #f8f8f8;
+}
+
+#content tr:nth-child(even) {
+    background-color: #fff;
+}
+
+#content hr {
+    width: 66%;
+}
+
+#content #api .show {
+    white-space: pre;
+    font-family: monospace;
+}
+
+#content #api .group {
+    margin-bottom: 1em;
+}
+
+#content #api .function {
+}
+
+#content #api .body {
+    margin-left: 1em;
+}
+
+#content #api .header .name {
+    font-weight: bold;
+    float: left;
+    width: 40%;
+}
+
+#content #api .header .signature {
+    text-align: right;
+}
+
+#content #api .group_name {
+    font-size: 1.1em;
+    font-weight: bold;
+}
+
+#content #api .function {
+    margin-left: 2em;
+    margin-bottom: 1.0em;
+}
+
+#content #api .show {
+    white-space: pre;
+    font-family: monospace;
+}
+/*
+
+Atom One Light by Daniel Gamage
+Original One Light Syntax theme from https://github.com/atom/one-light-syntax
+
+base:    #fafafa
+mono-1:  #383a42
+mono-2:  #686b77
+mono-3:  #a0a1a7
+hue-1:   #0184bb
+hue-2:   #4078f2
+hue-3:   #a626a4
+hue-4:   #50a14f
+hue-5:   #e45649
+hue-5-2: #c91243
+hue-6:   #986801
+hue-6-2: #c18401
+
+*/
+
+.hljs {
+  display: block;
+  overflow-x: auto;
+  padding: 0.5em;
+  color: #383a42;
+  background: #fafafa;
+}
+
+.hljs-comment,
+.hljs-quote {
+  color: #a0a1a7;
+  font-style: italic;
+}
+
+.hljs-doctag,
+.hljs-keyword,
+.hljs-formula {
+  color: #a626a4;
+}
+
+.hljs-section,
+.hljs-name,
+.hljs-selector-tag,
+.hljs-deletion,
+.hljs-subst {
+  color: #e45649;
+}
+
+.hljs-literal {
+  color: #0184bb;
+}
+
+.hljs-string,
+.hljs-regexp,
+.hljs-addition,
+.hljs-attribute,
+.hljs-meta-string {
+  color: #50a14f;
+}
+
+.hljs-built_in,
+.hljs-class .hljs-title {
+  color: #c18401;
+}
+
+.hljs-attr,
+.hljs-variable,
+.hljs-template-variable,
+.hljs-type,
+.hljs-selector-class,
+.hljs-selector-attr,
+.hljs-selector-pseudo,
+.hljs-number {
+  color: #986801;
+}
+
+.hljs-symbol,
+.hljs-bullet,
+.hljs-link,
+.hljs-meta,
+.hljs-selector-id,
+.hljs-title {
+  color: #4078f2;
+}
+
+.hljs-emphasis {
+  font-style: italic;
+}
+
+.hljs-strong {
+  font-weight: bold;
+}
+
+.hljs-link {
+  text-decoration: underline;
+}
+</style>
+<script type="text/javascript">
+/*
+  Highlight.js 10.2.1 (32fb9a1d)
+  License: BSD-3-Clause
+  Copyright (c) 2006-2020, Ivan Sagalaev
+*/
+var hljs=function(){"use strict";function e(n){Object.freeze(n);var t="function"==typeof n;return Object.getOwnPropertyNames(n).forEach((function(r){!Object.hasOwnProperty.call(n,r)||null===n[r]||"object"!=typeof n[r]&&"function"!=typeof n[r]||t&&("caller"===r||"callee"===r||"arguments"===r)||Object.isFrozen(n[r])||e(n[r])})),n}class n{constructor(e){void 0===e.data&&(e.data={}),this.data=e.data}ignoreMatch(){this.ignore=!0}}function t(e){return e.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&#x27;")}function r(e,...n){var t={};for(const n in e)t[n]=e[n];return n.forEach((function(e){for(const n in e)t[n]=e[n]})),t}function a(e){return e.nodeName.toLowerCase()}var i=Object.freeze({__proto__:null,escapeHTML:t,inherit:r,nodeStream:function(e){var n=[];return function e(t,r){for(var i=t.firstChild;i;i=i.nextSibling)3===i.nodeType?r+=i.nodeValue.length:1===i.nodeType&&(n.push({event:"start",offset:r,node:i}),r=e(i,r),a(i).match(/br|hr|img|input/)||n.push({event:"stop",offset:r,node:i}));return r}(e,0),n},mergeStreams:function(e,n,r){var i=0,s="",o=[];function l(){return e.length&&n.length?e[0].offset!==n[0].offset?e[0].offset<n[0].offset?e:n:"start"===n[0].event?e:n:e.length?e:n}function c(e){s+="<"+a(e)+[].map.call(e.attributes,(function(e){return" "+e.nodeName+'="'+t(e.value)+'"'})).join("")+">"}function u(e){s+="</"+a(e)+">"}function g(e){("start"===e.event?c:u)(e.node)}for(;e.length||n.length;){var d=l();if(s+=t(r.substring(i,d[0].offset)),i=d[0].offset,d===e){o.reverse().forEach(u);do{g(d.splice(0,1)[0]),d=l()}while(d===e&&d.length&&d[0].offset===i);o.reverse().forEach(c)}else"start"===d[0].event?o.push(d[0].node):o.pop(),g(d.splice(0,1)[0])}return s+t(r.substr(i))}});const s="</span>",o=e=>!!e.kind;class l{constructor(e,n){this.buffer="",this.classPrefix=n.classPrefix,e.walk(this)}addText(e){this.buffer+=t(e)}openNode(e){if(!o(e))return;let n=e.kind;e.sublanguage||(n=`${this.classPrefix}${n}`),this.span(n)}closeNode(e){o(e)&&(this.buffer+=s)}value(){return this.buffer}span(e){this.buffer+=`<span class="${e}">`}}class c{constructor(){this.rootNode={children:[]},this.stack=[this.rootNode]}get top(){return this.stack[this.stack.length-1]}get root(){return this.rootNode}add(e){this.top.children.push(e)}openNode(e){const n={kind:e,children:[]};this.add(n),this.stack.push(n)}closeNode(){if(this.stack.length>1)return this.stack.pop()}closeAllNodes(){for(;this.closeNode(););}toJSON(){return JSON.stringify(this.rootNode,null,4)}walk(e){return this.constructor._walk(e,this.rootNode)}static _walk(e,n){return"string"==typeof n?e.addText(n):n.children&&(e.openNode(n),n.children.forEach(n=>this._walk(e,n)),e.closeNode(n)),e}static _collapse(e){"string"!=typeof e&&e.children&&(e.children.every(e=>"string"==typeof e)?e.children=[e.children.join("")]:e.children.forEach(e=>{c._collapse(e)}))}}class u extends c{constructor(e){super(),this.options=e}addKeyword(e,n){""!==e&&(this.openNode(n),this.addText(e),this.closeNode())}addText(e){""!==e&&this.add(e)}addSublanguage(e,n){const t=e.root;t.kind=n,t.sublanguage=!0,this.add(t)}toHTML(){return new l(this,this.options).value()}finalize(){return!0}}function g(e){return e?"string"==typeof e?e:e.source:null}const d="(-?)(\\b0[xX][a-fA-F0-9]+|(\\b\\d+(\\.\\d*)?|\\.\\d+)([eE][-+]?\\d+)?)",h={begin:"\\\\[\\s\\S]",relevance:0},f={className:"string",begin:"'",end:"'",illegal:"\\n",contains:[h]},p={className:"string",begin:'"',end:'"',illegal:"\\n",contains:[h]},m={begin:/\b(a|an|the|are|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|they|like|more)\b/},b=function(e,n,t={}){var a=r({className:"comment",begin:e,end:n,contains:[]},t);return a.contains.push(m),a.contains.push({className:"doctag",begin:"(?:TODO|FIXME|NOTE|BUG|OPTIMIZE|HACK|XXX):",relevance:0}),a},v=b("//","$"),x=b("/\\*","\\*/"),E=b("#","$");var _=Object.freeze({__proto__:null,IDENT_RE:"[a-zA-Z]\\w*",UNDERSCORE_IDENT_RE:"[a-zA-Z_]\\w*",NUMBER_RE:"\\b\\d+(\\.\\d+)?",C_NUMBER_RE:d,BINARY_NUMBER_RE:"\\b(0b[01]+)",RE_STARTERS_RE:"!|!=|!==|%|%=|&|&&|&=|\\*|\\*=|\\+|\\+=|,|-|-=|/=|/|:|;|<<|<<=|<=|<|===|==|=|>>>=|>>=|>=|>>>|>>|>|\\?|\\[|\\{|\\(|\\^|\\^=|\\||\\|=|\\|\\||~",SHEBANG:(e={})=>{const n=/^#![ ]*\//;return e.binary&&(e.begin=function(...e){return e.map(e=>g(e)).join("")}(n,/.*\b/,e.binary,/\b.*/)),r({className:"meta",begin:n,end:/$/,relevance:0,"on:begin":(e,n)=>{0!==e.index&&n.ignoreMatch()}},e)},BACKSLASH_ESCAPE:h,APOS_STRING_MODE:f,QUOTE_STRING_MODE:p,PHRASAL_WORDS_MODE:m,COMMENT:b,C_LINE_COMMENT_MODE:v,C_BLOCK_COMMENT_MODE:x,HASH_COMMENT_MODE:E,NUMBER_MODE:{className:"number",begin:"\\b\\d+(\\.\\d+)?",relevance:0},C_NUMBER_MODE:{className:"number",begin:d,relevance:0},BINARY_NUMBER_MODE:{className:"number",begin:"\\b(0b[01]+)",relevance:0},CSS_NUMBER_MODE:{className:"number",begin:"\\b\\d+(\\.\\d+)?(%|em|ex|ch|rem|vw|vh|vmin|vmax|cm|mm|in|pt|pc|px|deg|grad|rad|turn|s|ms|Hz|kHz|dpi|dpcm|dppx)?",relevance:0},REGEXP_MODE:{begin:/(?=\/[^/\n]*\/)/,contains:[{className:"regexp",begin:/\//,end:/\/[gimuy]*/,illegal:/\n/,contains:[h,{begin:/\[/,end:/\]/,relevance:0,contains:[h]}]}]},TITLE_MODE:{className:"title",begin:"[a-zA-Z]\\w*",relevance:0},UNDERSCORE_TITLE_MODE:{className:"title",begin:"[a-zA-Z_]\\w*",relevance:0},METHOD_GUARD:{begin:"\\.\\s*[a-zA-Z_]\\w*",relevance:0},END_SAME_AS_BEGIN:function(e){return Object.assign(e,{"on:begin":(e,n)=>{n.data._beginMatch=e[1]},"on:end":(e,n)=>{n.data._beginMatch!==e[1]&&n.ignoreMatch()}})}}),w="of and for in not or if then".split(" ");function N(e,n){return n?+n:function(e){return w.includes(e.toLowerCase())}(e)?0:1}const y={props:["language","code","autodetect"],data:function(){return{detectedLanguage:"",unknownLanguage:!1}},computed:{className(){return this.unknownLanguage?"":"hljs "+this.detectedLanguage},highlighted(){if(!this.autoDetect&&!hljs.getLanguage(this.language))return console.warn(`The language "${this.language}" you specified could not be found.`),this.unknownLanguage=!0,t(this.code);let e;return this.autoDetect?(e=hljs.highlightAuto(this.code),this.detectedLanguage=e.language):(e=hljs.highlight(this.language,this.code,this.ignoreIllegals),this.detectectLanguage=this.language),e.value},autoDetect(){return!(this.language&&(e=this.autodetect,!e&&""!==e));var e},ignoreIllegals:()=>!0},render(e){return e("pre",{},[e("code",{class:this.className,domProps:{innerHTML:this.highlighted}})])}},R={install(e){e.component("highlightjs",y)}},k=t,M=r,{nodeStream:O,mergeStreams:L}=i,A=Symbol("nomatch");return function(t){var a=[],i=Object.create(null),s=Object.create(null),o=[],l=!0,c=/(^(<[^>]+>|\t|)+|\n)/gm,d="Could not find the language '{}', did you forget to load/include a language module?";const h={disableAutodetect:!0,name:"Plain text",contains:[]};var f={noHighlightRe:/^(no-?highlight)$/i,languageDetectRe:/\blang(?:uage)?-([\w-]+)\b/i,classPrefix:"hljs-",tabReplace:null,useBR:!1,languages:null,__emitter:u};function p(e){return f.noHighlightRe.test(e)}function m(e,n,t,r){var a={code:n,language:e};j("before:highlight",a);var i=a.result?a.result:b(a.language,a.code,t,r);return i.code=a.code,j("after:highlight",i),i}function b(e,t,a,s){var o=t;function c(e,n){var t=E.case_insensitive?n[0].toLowerCase():n[0];return Object.prototype.hasOwnProperty.call(e.keywords,t)&&e.keywords[t]}function u(){null!=R.subLanguage?function(){if(""!==L){var e=null;if("string"==typeof R.subLanguage){if(!i[R.subLanguage])return void O.addText(L);e=b(R.subLanguage,L,!0,M[R.subLanguage]),M[R.subLanguage]=e.top}else e=v(L,R.subLanguage.length?R.subLanguage:null);R.relevance>0&&(I+=e.relevance),O.addSublanguage(e.emitter,e.language)}}():function(){if(!R.keywords)return void O.addText(L);let e=0;R.keywordPatternRe.lastIndex=0;let n=R.keywordPatternRe.exec(L),t="";for(;n;){t+=L.substring(e,n.index);const r=c(R,n);if(r){const[e,a]=r;O.addText(t),t="",I+=a,O.addKeyword(n[0],e)}else t+=n[0];e=R.keywordPatternRe.lastIndex,n=R.keywordPatternRe.exec(L)}t+=L.substr(e),O.addText(t)}(),L=""}function h(e){return e.className&&O.openNode(e.className),R=Object.create(e,{parent:{value:R}})}function p(e){return 0===R.matcher.regexIndex?(L+=e[0],1):(S=!0,0)}var m={};function x(t,r){var i=r&&r[0];if(L+=t,null==i)return u(),0;if("begin"===m.type&&"end"===r.type&&m.index===r.index&&""===i){if(L+=o.slice(r.index,r.index+1),!l){const n=Error("0 width match regex");throw n.languageName=e,n.badRule=m.rule,n}return 1}if(m=r,"begin"===r.type)return function(e){var t=e[0],r=e.rule;const a=new n(r),i=[r.__beforeBegin,r["on:begin"]];for(const n of i)if(n&&(n(e,a),a.ignore))return p(t);return r&&r.endSameAsBegin&&(r.endRe=RegExp(t.replace(/[-/\\^$*+?.()|[\]{}]/g,"\\$&"),"m")),r.skip?L+=t:(r.excludeBegin&&(L+=t),u(),r.returnBegin||r.excludeBegin||(L=t)),h(r),r.returnBegin?0:t.length}(r);if("illegal"===r.type&&!a){const e=Error('Illegal lexeme "'+i+'" for mode "'+(R.className||"<unnamed>")+'"');throw e.mode=R,e}if("end"===r.type){var s=function(e){var t=e[0],r=o.substr(e.index),a=function e(t,r,a){let i=function(e,n){var t=e&&e.exec(n);return t&&0===t.index}(t.endRe,a);if(i){if(t["on:end"]){const e=new n(t);t["on:end"](r,e),e.ignore&&(i=!1)}if(i){for(;t.endsParent&&t.parent;)t=t.parent;return t}}if(t.endsWithParent)return e(t.parent,r,a)}(R,e,r);if(!a)return A;var i=R;i.skip?L+=t:(i.returnEnd||i.excludeEnd||(L+=t),u(),i.excludeEnd&&(L=t));do{R.className&&O.closeNode(),R.skip||R.subLanguage||(I+=R.relevance),R=R.parent}while(R!==a.parent);return a.starts&&(a.endSameAsBegin&&(a.starts.endRe=a.endRe),h(a.starts)),i.returnEnd?0:t.length}(r);if(s!==A)return s}if("illegal"===r.type&&""===i)return 1;if(j>1e5&&j>3*r.index)throw Error("potential infinite loop, way more iterations than matches");return L+=i,i.length}var E=y(e);if(!E)throw console.error(d.replace("{}",e)),Error('Unknown language: "'+e+'"');var _=function(e){function n(n,t){return RegExp(g(n),"m"+(e.case_insensitive?"i":"")+(t?"g":""))}class t{constructor(){this.matchIndexes={},this.regexes=[],this.matchAt=1,this.position=0}addRule(e,n){n.position=this.position++,this.matchIndexes[this.matchAt]=n,this.regexes.push([n,e]),this.matchAt+=function(e){return RegExp(e.toString()+"|").exec("").length-1}(e)+1}compile(){0===this.regexes.length&&(this.exec=()=>null);const e=this.regexes.map(e=>e[1]);this.matcherRe=n(function(e,n="|"){for(var t=/\[(?:[^\\\]]|\\.)*\]|\(\??|\\([1-9][0-9]*)|\\./,r=0,a="",i=0;i<e.length;i++){var s=r+=1,o=g(e[i]);for(i>0&&(a+=n),a+="(";o.length>0;){var l=t.exec(o);if(null==l){a+=o;break}a+=o.substring(0,l.index),o=o.substring(l.index+l[0].length),"\\"===l[0][0]&&l[1]?a+="\\"+(+l[1]+s):(a+=l[0],"("===l[0]&&r++)}a+=")"}return a}(e),!0),this.lastIndex=0}exec(e){this.matcherRe.lastIndex=this.lastIndex;const n=this.matcherRe.exec(e);if(!n)return null;const t=n.findIndex((e,n)=>n>0&&void 0!==e),r=this.matchIndexes[t];return n.splice(0,t),Object.assign(n,r)}}class a{constructor(){this.rules=[],this.multiRegexes=[],this.count=0,this.lastIndex=0,this.regexIndex=0}getMatcher(e){if(this.multiRegexes[e])return this.multiRegexes[e];const n=new t;return this.rules.slice(e).forEach(([e,t])=>n.addRule(e,t)),n.compile(),this.multiRegexes[e]=n,n}resumingScanAtSamePosition(){return 0!==this.regexIndex}considerAll(){this.regexIndex=0}addRule(e,n){this.rules.push([e,n]),"begin"===n.type&&this.count++}exec(e){const n=this.getMatcher(this.regexIndex);n.lastIndex=this.lastIndex;let t=n.exec(e);if(this.resumingScanAtSamePosition())if(t&&t.index===this.lastIndex);else{const n=this.getMatcher(0);n.lastIndex=this.lastIndex+1,t=n.exec(e)}return t&&(this.regexIndex+=t.position+1,this.regexIndex===this.count&&this.considerAll()),t}}function i(e,n){const t=e.input[e.index-1],r=e.input[e.index+e[0].length];"."!==t&&"."!==r||n.ignoreMatch()}if(e.contains&&e.contains.includes("self"))throw Error("ERR: contains `self` is not supported at the top-level of a language.  See documentation.");return function t(s,o){const l=s;if(s.compiled)return l;s.compiled=!0,s.__beforeBegin=null,s.keywords=s.keywords||s.beginKeywords;let c=null;if("object"==typeof s.keywords&&(c=s.keywords.$pattern,delete s.keywords.$pattern),s.keywords&&(s.keywords=function(e,n){var t={};return"string"==typeof e?r("keyword",e):Object.keys(e).forEach((function(n){r(n,e[n])})),t;function r(e,r){n&&(r=r.toLowerCase()),r.split(" ").forEach((function(n){var r=n.split("|");t[r[0]]=[e,N(r[0],r[1])]}))}}(s.keywords,e.case_insensitive)),s.lexemes&&c)throw Error("ERR: Prefer `keywords.$pattern` to `mode.lexemes`, BOTH are not allowed. (see mode reference) ");return l.keywordPatternRe=n(s.lexemes||c||/\w+/,!0),o&&(s.beginKeywords&&(s.begin="\\b("+s.beginKeywords.split(" ").join("|")+")(?=\\b|\\s)",s.__beforeBegin=i),s.begin||(s.begin=/\B|\b/),l.beginRe=n(s.begin),s.endSameAsBegin&&(s.end=s.begin),s.end||s.endsWithParent||(s.end=/\B|\b/),s.end&&(l.endRe=n(s.end)),l.terminator_end=g(s.end)||"",s.endsWithParent&&o.terminator_end&&(l.terminator_end+=(s.end?"|":"")+o.terminator_end)),s.illegal&&(l.illegalRe=n(s.illegal)),void 0===s.relevance&&(s.relevance=1),s.contains||(s.contains=[]),s.contains=[].concat(...s.contains.map((function(e){return function(e){return e.variants&&!e.cached_variants&&(e.cached_variants=e.variants.map((function(n){return r(e,{variants:null},n)}))),e.cached_variants?e.cached_variants:function e(n){return!!n&&(n.endsWithParent||e(n.starts))}(e)?r(e,{starts:e.starts?r(e.starts):null}):Object.isFrozen(e)?r(e):e}("self"===e?s:e)}))),s.contains.forEach((function(e){t(e,l)})),s.starts&&t(s.starts,o),l.matcher=function(e){const n=new a;return e.contains.forEach(e=>n.addRule(e.begin,{rule:e,type:"begin"})),e.terminator_end&&n.addRule(e.terminator_end,{type:"end"}),e.illegal&&n.addRule(e.illegal,{type:"illegal"}),n}(l),l}(e)}(E),w="",R=s||_,M={},O=new f.__emitter(f);!function(){for(var e=[],n=R;n!==E;n=n.parent)n.className&&e.unshift(n.className);e.forEach(e=>O.openNode(e))}();var L="",I=0,T=0,j=0,S=!1;try{for(R.matcher.considerAll();;){j++,S?S=!1:R.matcher.considerAll(),R.matcher.lastIndex=T;const e=R.matcher.exec(o);if(!e)break;const n=x(o.substring(T,e.index),e);T=e.index+n}return x(o.substr(T)),O.closeAllNodes(),O.finalize(),w=O.toHTML(),{relevance:I,value:w,language:e,illegal:!1,emitter:O,top:R}}catch(n){if(n.message&&n.message.includes("Illegal"))return{illegal:!0,illegalBy:{msg:n.message,context:o.slice(T-100,T+100),mode:n.mode},sofar:w,relevance:0,value:k(o),emitter:O};if(l)return{illegal:!1,relevance:0,value:k(o),emitter:O,language:e,top:R,errorRaised:n};throw n}}function v(e,n){n=n||f.languages||Object.keys(i);var t=function(e){const n={relevance:0,emitter:new f.__emitter(f),value:k(e),illegal:!1,top:h};return n.emitter.addText(e),n}(e),r=t;return n.filter(y).filter(T).forEach((function(n){var a=b(n,e,!1);a.language=n,a.relevance>r.relevance&&(r=a),a.relevance>t.relevance&&(r=t,t=a)})),r.language&&(t.second_best=r),t}function x(e){return f.tabReplace||f.useBR?e.replace(c,e=>"\n"===e?f.useBR?"&lt;br&gt;":e:f.tabReplace?e.replace(/\t/g,f.tabReplace):e):e}function E(e){let n=null;const t=function(e){var n=e.className+" ";n+=e.parentNode?e.parentNode.className:"";const t=f.languageDetectRe.exec(n);if(t){var r=y(t[1]);return r||(console.warn(d.replace("{}",t[1])),console.warn("Falling back to no-highlight mode for this block.",e)),r?t[1]:"no-highlight"}return n.split(/\s+/).find(e=>p(e)||y(e))}(e);if(p(t))return;j("before:highlightBlock",{block:e,language:t}),f.useBR?(n=document.createElement("div")).innerHTML=e.innerHTML.replace(/\n/g,"").replace(/<br[ /]*>/g,"\n"):n=e;const r=n.textContent,a=t?m(t,r,!0):v(r),i=O(n);if(i.length){const e=document.createElement("div");e.innerHTML=a.value,a.value=L(i,O(e),r)}a.value=x(a.value),j("after:highlightBlock",{block:e,result:a}),e.innerHTML=a.value,e.className=function(e,n,t){var r=n?s[n]:t,a=[e.trim()];return e.match(/\bhljs\b/)||a.push("hljs"),e.includes(r)||a.push(r),a.join(" ").trim()}(e.className,t,a.language),e.result={language:a.language,re:a.relevance,relavance:a.relevance},a.second_best&&(e.second_best={language:a.second_best.language,re:a.second_best.relevance,relavance:a.second_best.relevance})}const w=()=>{if(!w.called){w.called=!0;var e=document.querySelectorAll("pre code");a.forEach.call(e,E)}};function y(e){return e=(e||"").toLowerCase(),i[e]||i[s[e]]}function I(e,{languageName:n}){"string"==typeof e&&(e=[e]),e.forEach(e=>{s[e]=n})}function T(e){var n=y(e);return n&&!n.disableAutodetect}function j(e,n){var t=e;o.forEach((function(e){e[t]&&e[t](n)}))}Object.assign(t,{highlight:m,highlightAuto:v,fixMarkup:function(e){return console.warn("fixMarkup is deprecated and will be removed entirely in v11.0"),console.warn("Please see https://github.com/highlightjs/highlight.js/issues/2534"),x(e)},highlightBlock:E,configure:function(e){f=M(f,e)},initHighlighting:w,initHighlightingOnLoad:function(){window.addEventListener("DOMContentLoaded",w,!1)},registerLanguage:function(e,n){var r=null;try{r=n(t)}catch(n){if(console.error("Language definition for '{}' could not be registered.".replace("{}",e)),!l)throw n;console.error(n),r=h}r.name||(r.name=e),i[e]=r,r.rawDefinition=n.bind(null,t),r.aliases&&I(r.aliases,{languageName:e})},listLanguages:function(){return Object.keys(i)},getLanguage:y,registerAliases:I,requireLanguage:function(e){var n=y(e);if(n)return n;throw Error("The '{}' language is required, but not loaded.".replace("{}",e))},autoDetection:T,inherit:M,addPlugin:function(e){o.push(e)},vuePlugin:R}),t.debugMode=function(){l=!1},t.safeMode=function(){l=!0},t.versionString="10.2.1";for(const n in _)"object"==typeof _[n]&&e(_[n]);return Object.assign(t,_),t}({})}();"object"==typeof exports&&"undefined"!=typeof module&&(module.exports=hljs);hljs.registerLanguage("lua",function(){"use strict";return function(e){var t={begin:"\\[=*\\[",end:"\\]=*\\]",contains:["self"]},a=[e.COMMENT("--(?!\\[=*\\[)","$"),e.COMMENT("--\\[=*\\[","\\]=*\\]",{contains:[t],relevance:10})];return{name:"Lua",keywords:{$pattern:e.UNDERSCORE_IDENT_RE,literal:"true false nil",keyword:"and break do else elseif end for goto if in local not or repeat return then until while",built_in:"_G _ENV _VERSION __index __newindex __mode __call __metatable __tostring __len __gc __add __sub __mul __div __mod __pow __concat __unm __eq __lt __le assert collectgarbage dofile error getfenv getmetatable ipairs load loadfile loadstring module next pairs pcall print rawequal rawget rawset require select setfenv setmetatable tonumber tostring type unpack xpcall arg self coroutine resume yield status wrap create running debug getupvalue debug sethook getmetatable gethook setmetatable setlocal traceback setfenv getinfo setupvalue getlocal getregistry getfenv io lines write close flush open output type read stderr stdin input stdout popen tmpfile math log max acos huge ldexp pi cos tanh pow deg tan cosh sinh random randomseed frexp ceil floor rad abs sqrt modf asin min mod fmod log10 atan2 exp sin atan os exit setlocale date getenv difftime remove time clock tmpname rename execute package preload loadlib loaded loaders cpath config path seeall string sub upper len gfind rep find match char dump gmatch reverse byte format gsub lower table setn insert getn foreachi maxn foreach concat sort remove"},contains:a.concat([{className:"function",beginKeywords:"function",end:"\\)",contains:[e.inherit(e.TITLE_MODE,{begin:"([_a-zA-Z]\\w*\\.)*([_a-zA-Z]\\w*:)?[_a-zA-Z]\\w*"}),{className:"params",begin:"\\(",endsWithParent:!0,contains:a}].concat(a)},e.C_NUMBER_MODE,e.APOS_STRING_MODE,e.QUOTE_STRING_MODE,{className:"string",begin:"\\[=*\\[",end:"\\]=*\\]",contains:[t],relevance:5}])}}}());hljs.registerLanguage("plaintext",function(){"use strict";return function(t){return{name:"Plain text",aliases:["text","txt"],disableAutodetect:!0}}}());hljs.registerLanguage("bash",function(){"use strict";return function(e){const s={};Object.assign(s,{className:"variable",variants:[{begin:/\$[\w\d#@][\w\d_]*/},{begin:/\$\{/,end:/\}/,contains:[{begin:/:-/,contains:[s]}]}]});const t={className:"subst",begin:/\$\(/,end:/\)/,contains:[e.BACKSLASH_ESCAPE]},n={className:"string",begin:/"/,end:/"/,contains:[e.BACKSLASH_ESCAPE,s,t]};t.contains.push(n);const a={begin:/\$\(\(/,end:/\)\)/,contains:[{begin:/\d+#[0-9a-f]+/,className:"number"},e.NUMBER_MODE,s]},i=e.SHEBANG({binary:"(fish|bash|zsh|sh|csh|ksh|tcsh|dash|scsh)",relevance:10}),c={className:"function",begin:/\w[\w\d_]*\s*\(\s*\)\s*\{/,returnBegin:!0,contains:[e.inherit(e.TITLE_MODE,{begin:/\w[\w\d_]*/})],relevance:0};return{name:"Bash",aliases:["sh","zsh"],keywords:{$pattern:/\b-?[a-z\._-]+\b/,keyword:"if then else elif fi for while in do done case esac function",literal:"true false",built_in:"break cd continue eval exec exit export getopts hash pwd readonly return shift test times trap umask unset alias bind builtin caller command declare echo enable help let local logout mapfile printf read readarray source type typeset ulimit unalias set shopt autoload bg bindkey bye cap chdir clone comparguments compcall compctl compdescribe compfiles compgroups compquote comptags comptry compvalues dirs disable disown echotc echoti emulate fc fg float functions getcap getln history integer jobs kill limit log noglob popd print pushd pushln rehash sched setcap setopt stat suspend ttyctl unfunction unhash unlimit unsetopt vared wait whence where which zcompile zformat zftp zle zmodload zparseopts zprof zpty zregexparse zsocket zstyle ztcp",_:"-ne -eq -lt -gt -f -d -e -s -l -a"},contains:[i,e.SHEBANG(),c,a,e.HASH_COMMENT_MODE,n,{className:"",begin:/\\"/},{className:"string",begin:/'/,end:/'/},s]}}}());
+
+    function go()
+    {
+        // Generate a table of contents from h* tags.
+        var toc = document.getElementById("toc");
+        toc.innerHTML = "";
+        var headings = document.querySelectorAll("h1");
+        for (var i = 0; i < headings.length; ++i)
+        {
+            var h = headings[i];
+
+            var anchor = document.createElement("a");
+            anchor.name = h.id;
+            h.parentNode.insertBefore(anchor, h);
+
+            var a = document.createElement("a");
+            a.href = "#" + h.id;
+            a.innerHTML = h.innerHTML;
+
+            var div = document.createElement("div");
+            div.appendChild(a);
+            div.className = h.tagName;
+
+            toc.appendChild(div);
+        }
+
+        hljs.initHighlighting();
+    }
+</script>
+</head>
+
+<!-- ----------------------------------------------------- -->
+<body onload="go();">
+    <div id="header">
+        <div id="title">Clink vMASTER</div>
+        <div id="url">
+            <a href="http://github.com/chrisant996/clink">
+                http://github.com/chrisant996/clink
+            </a>
+        </div>
+        <div id="author">
+            <a href="mailto:sparrowhawk996@gmail.com">Christopher Antos</a> (renovater)
+        </div>
+        <div id="author">
+            <a href="http://twitter.com/choddlander">Martin Ridgers</a> (creator)
+        </div>
+    </div>
+    <div id="toc"></div>
+    <div id="content">
+        <div class="section" id="documentation">
+<h1 id="what-is-clink">What is Clink?</h1>
+<p>Clink combines the native Windows shell cmd.exe with the powerful command line editing features of the GNU Readline library, which provides rich completion, history, and line-editing capabilities. Readline is best known for its use in the famous Unix shell Bash, the standard shell for Mac OS X and many Linux distributions.</p>
+<br>
+
+<h1 id="features">Features</h1>
+<ul>
+<li>The same line editing as Bash (from GNU&#39;s Readline library).</li>
+<li>History persistence between sessions.</li>
+<li>Context sensitive completion;<ul>
+<li>Executables (and aliases).</li>
+<li>Directory commands.</li>
+<li>Environment variables</li>
+<li>Thirdparty tools; Git, Mercurial, SVN, Go, and P4.</li>
+</ul>
+</li>
+<li>New keyboard shortcuts;<ul>
+<li>Paste from clipboard (<kbd>Ctrl</kbd>-<kbd>V</kbd>).</li>
+<li>Incremental history search (<kbd>Ctrl</kbd>-<kbd>R</kbd> and <kbd>Ctrl</kbd>-<kbd>S</kbd>).</li>
+<li>Powerful completion (<kbd>Tab</kbd>).</li>
+<li>Undo (<kbd>Ctrl</kbd>-<kbd>Z</kbd>).</li>
+<li>Automatic <code>cd ..</code> (<kbd>Ctrl</kbd>-<kbd>PgUp</kbd>).</li>
+<li>Environment variable expansion (<kbd>Ctrl</kbd>-<kbd>Alt</kbd>-<kbd>E</kbd>).</li>
+<li>(press <kbd>Alt</kbd>-<kbd>H</kbd> for many more...)</li>
+</ul>
+</li>
+<li>Scriptable completion with Lua.</li>
+<li>Coloured and scriptable prompt.</li>
+<li>Auto-answering of the &quot;Terminate batch job?&quot; prompt.</li>
+</ul>
+<p>By default Clink binds <kbd>Alt</kbd>-<kbd>H</kbd> to display the current key bindings. More features can also be found in GNU&#39;s <a href="https://tiswww.cwru.edu/php/chet/readline/readline.html">Readline</a> and <a href="https://tiswww.cwru.edu/php/chet/readline/history.html">History</a> libraries&#39; manuals.</p>
+<br>
+
+<h1 id="usage">Usage</h1>
+<p>There are three ways to use Clink the first of which is to add Clink to cmd.exe&#39;s autorun registry entry. This can be selected when installing Clink using the installer and Clink also provides the ability to manage this autorun entry from the command line. Running <code>clink autorun --help</code> has more information.</p>
+<p>The second alternative is to manually run Clink using the command <code>clink inject</code> from within a command prompt session to run Clink in that session.</p>
+<p>The last option is to use the Clink shortcut that the installer adds to Windows&#39; start menu. This is in essence a shortcut to the command <code>cmd.exe /k clink inject</code>.</p>
+<br>
+
+<h1 id="how-clink-works">How Clink Works</h1>
+<p>When running Clink via the methods above, Clink checks the parent process is supported and injects a DLL into it. The DLL then hooks the WriteConsole() and ReadConsole() Windows functions. The former is so that Clink can capture the current prompt, and the latter hook allows Clink to provide it&#39;s own Readline-powered command line editing.</p>
+<br>
+
+<h1 id="configuring-clink">Configuring Clink</h1>
+<p>The easiest way to configure Clink is to use Clink&#39;s <code>set</code> command line option.  This can list, query, and set Clink&#39;s settings. Run <code>clink set --help</code> from a Clink-installed cmd.exe process to learn more both about how to use it and to get descriptions for Clink&#39;s various options.</p>
+<p>The following table describes the available Clink settings:</p>
+<table>
+<thead>
+<tr>
+<th align="center">Name</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="center"><code>clink.paste_crlf</code></td>
+<td>What to do with CR and LF characters on paste. Set this to <code>delete</code> to delete them, or to <code>space</code> to replace them with spaces.</td>
+</tr>
+<tr>
+<td align="center"><code>clink.path</code></td>
+<td>A list of paths to load Lua scripts. Multiple paths can be delimited semicolons. <em><strong>TODO:</strong> Describe the default behavior.</em></td>
+</tr>
+<tr>
+<td align="center"><code>cmd.auto_answer</code></td>
+<td>Automatically answers cmd.exe&#39;s &quot;Terminate batch job (Y/N)?&quot; prompts. <code>off</code> = disabled, <code>answer_yes</code> = answer Y, <code>answer_no</code> = answer N.</td>
+</tr>
+<tr>
+<td align="center"><code>cmd.ctrld_exits</code></td>
+<td>Ctrl-D exits the process when it is pressed on an empty line.</td>
+</tr>
+<tr>
+<td align="center"><code>colour.doskey</code></td>
+<td>Used when Clink displays doskey alias completions.</td>
+</tr>
+<tr>
+<td align="center"><code>colour.hidden</code></td>
+<td>Used when Clink displays file completions with the &quot;hidden&quot; attribute.</td>
+</tr>
+<tr>
+<td align="center"><code>colour.interact</code></td>
+<td>Used when Clink displays text or prompts such as a pager&#39;s <code>--More?--</code> prompt.</td>
+</tr>
+<tr>
+<td align="center"><code>colour.readonly</code></td>
+<td>Used when Clink displays file completions with the &quot;readonly&quot; attribute.</td>
+</tr>
+<tr>
+<td align="center"><code>doskey.enhanced</code></td>
+<td>Enhanced Doskey adds the expansion of macros that follow `</td>
+</tr>
+<tr>
+<td align="center"><code>exec.cwd</code></td>
+<td>When matching executables as the first word (<code>exec.enable</code>), include executables in the current directory. (This is implicit if the word being completed is a relative path).</td>
+</tr>
+<tr>
+<td align="center"><code>exec.dirs</code></td>
+<td>When matching executables as the first word (<code>exec.enable</code>), also include directories relative to the current working directory as matches.</td>
+</tr>
+<tr>
+<td align="center"><code>exec.enable</code></td>
+<td>Only match executables when completing the first word of a line.</td>
+</tr>
+<tr>
+<td align="center"><code>exec.path</code></td>
+<td>When matching executables as the first word (<code>exec.enable</code>), include executables found in the directories specified in the <code>%PATH%</code> environment variable.</td>
+</tr>
+<tr>
+<td align="center"><code>exec.space_prefix</code></td>
+<td>If the line begins with whitespace then Clink bypasses executable matching (<code>exec.path</code>) and will do normal files matching instead.</td>
+</tr>
+<tr>
+<td align="center"><code>files.hidden</code></td>
+<td>Includes or excludes files with the &quot;hidden&quot; attribute set when generating file lists.</td>
+</tr>
+<tr>
+<td align="center"><code>files.system</code></td>
+<td>Includes or excludes files with the &quot;system&quot; attribute set when generating file lists.</td>
+</tr>
+<tr>
+<td align="center"><code>files.unc_paths</code></td>
+<td>UNC (network) paths can cause Clink to stutter when it tries to generate matches. Enable this if matching UNC paths is required. <em><strong>TODO:</strong> This may become unnecessary if/when Clink can be made to only generate matches in response to completion commands.</em></td>
+</tr>
+<tr>
+<td align="center"><code>history.dont_add_to_history_cmds</code></td>
+<td>List of commands that aren&#39;t automatically added to the history. Commands are separated by spaces, commas, or semicolons. Default is <code>exit history</code>, to exclude both of those commands.</td>
+</tr>
+<tr>
+<td align="center"><code>history.dupe_mode</code></td>
+<td>If a line is a duplicate of an existing history entry Clink will erase the duplicate when this is set <code>erase_prev</code>. Setting it to <code>ignore</code> will not add duplicates to the history, and setting it to <code>add</code> will always add lines.</td>
+</tr>
+<tr>
+<td align="center"><code>history.expand_mode</code></td>
+<td>The <code>!</code> character in an entered line can be interpreted to introduce words from the history. This can be enabled and disable by setting this value to <code>on</code> or <code>off</code>. Values of <code>not_squoted</code>, <code>not_dquoted</code>, or <code>not_quoted</code> will skip any <code>!</code> character quoted in single, double, or both quotes respectively.</td>
+</tr>
+<tr>
+<td align="center"><code>history.ignore_space</code></td>
+<td>Ignore lines that begin with whitespace when adding lines in to the history.</td>
+</tr>
+<tr>
+<td align="center"><code>history.save</code></td>
+<td>Saves history between sessions.</td>
+</tr>
+<tr>
+<td align="center"><code>history.shared</code></td>
+<td>When history is shared, all instances of Clink update the master history list after each command and reload the master history list on each prompt.  When history is not shared, each instance updates the master history list on exit.</td>
+</tr>
+<tr>
+<td align="center"><code>lua.debug</code></td>
+<td>Loads a simple embedded command line debugger when enabled. Breakpoints can be added by calling <code>pause()</code>.</td>
+</tr>
+<tr>
+<td align="center"><code>lua.path</code></td>
+<td>Value to append to <code>package.path</code>. Used to search for Lua scripts specified in <code>require()</code> statements.</td>
+</tr>
+<tr>
+<td align="center"><code>match.ignore_case</code></td>
+<td>Controls case sensitivity in string comparisons. <code>off</code> = case sensitive, <code>on</code> = case insensitive, <code>relaxed</code> = case insensitive plus <code>-</code> and <code>_</code> are considered equal.</td>
+</tr>
+<tr>
+<td align="center"><code>match.sort_dirs</code></td>
+<td>Matching directories can go before files, with files, or after files.</td>
+</tr>
+<tr>
+<td align="center"><code>terminal.emulate</code></td>
+<td>Clink can either emulate a virtual terminal and handle ANSI escape codes itself, or let the console host natively handle ANSI escape codes. <code>off</code> = pass output directly to the console host process, <code>on</code> = clink handles ANSI escape codes itself.</td>
+</tr>
+<tr>
+<td align="center"><code>terminal.modify_other_keys</code></td>
+<td>When enabled, pressing Space or Tab with modifier keys sends extended XTerm key sequences so they can be bound separately.</td>
+</tr>
+</tbody></table>
+<br>
+
+<blockquote>
+<p>Notes:</p>
+<ul>
+<li>The <code>esc_clears_line</code> setting has been replaced by a <code>clink-reset-line</code> command that can be bound to <kbd>Escape</kbd> (or any other key).</li>
+<li>The <code>history_file_lines</code> setting doesn&#39;t exist at the moment. <em><strong>NYI:</strong> Some mechanism for trimming history will be added eventually.</em></li>
+<li>The <code>use_altgr_substitute</code> setting has been removed. <em><strong>NYI:</strong> If AltGr or lack of AltGr causes a problem for you, please open an issue in the repo with details.</em></li>
+</ul>
+</blockquote>
+<h2 id="file-locations">File Locations</h2>
+<p>Settings and history are persisted to disk from session to session. The location of these files depends on which distribution of Clink was used. If you installed Clink using the .exe installer then Clink uses the current user&#39;s non-roaming application data directory. This user directory is usually found in one of the following locations;</p>
+<ul>
+<li>Windows XP: <code>c:\Documents and Settings\&amp;lt;username&amp;gt;\Local Settings\Application Data</code></li>
+<li>Windows Vista onwards: <code>c:\Users\&amp;lt;username&amp;gt;\AppData\Local</code></li>
+</ul>
+<p>The .zip distribution of Clink creates and uses a directory called <code>profile</code> which is located in the same directory where Clink&#39;s core files are found.</p>
+<p>All of the above locations can be overridden using the <code>--profile &amp;lt;path&amp;gt;</code> command line option which is specified when injecting Clink into cmd.exe using <code>clink inject</code>.</p>
+<br>
+
+<h1 id="configuring-readline">Configuring Readline</h1>
+<p>Readline itself can also be configured to add custom keybindings and macros by creating a Readline init file. There is excellent documentation for all the options available to configure Readline in Readline&#39;s <a href="https://tiswww.cwru.edu/php/chet/readline/rltop.html#Documentation">manual</a>.</p>
+<blockquote>
+<p><strong>TODO:</strong> Update the description of how/where inputrc files are loaded.</p>
+</blockquote>
+<p><div style='opacity:0.5'>
+Clink will search in the directory as specified by the <code>%HOME%</code> environment variable for one or all of the following files; <code>clink_inputrc</code>, <code>_inputrc</code>, and <code>.inputrc</code>. If <code>%HOME%</code> is unset then Clink will use either of the standard Windows environment variables <code>%HOMEDRIVE%\%HOMEPATH%</code> or <code>%USERPROFILE%</code>.</p>
+<p>Other software that also uses Readline will also look for the <code>.inputrc</code> file (and possibly the <code>_inputrc</code> file too). To set macros and keybindings intended only for Clink one can use the Readline init file conditional construct like this; <code>$if clink [...] $endif</code>.</p>
+<p>Clink also adds some new commands and configuration variables in addition to what&#39;s covered in the Readline documentation.
+</div></p>
+<h2 id="new-configuration-variables">New configuration variables</h2>
+<table>
+<thead>
+<tr>
+<th align="center">Name</th>
+<th align="center">Default</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="center"><code>completion-auto-query-items</code></td>
+<td align="center">on</td>
+<td>Automatically prompts before displaying completions if they won&#39;t fit on one screen page.</td>
+</tr>
+<tr>
+<td align="center"><code>history-point-at-end-of-anchored-search</code></td>
+<td align="center">off</td>
+<td>Puts the cursor at the end of the line when using <code>history-search-forward</code> or <code>history-search-backward</code>.</td>
+</tr>
+<tr>
+<td align="center"><code>locale-sort</code></td>
+<td align="center">on</td>
+<td>Sorts completions with locale awareness (sort like Windows does).</td>
+</tr>
+</tbody></table>
+<br>
+
+<blockquote>
+<p><strong>Compatibility Note:</strong>  The <code>clink_inputrc_base</code> file from v0.4.8 no longer exists.</p>
+</blockquote>
+<h2 id="new-commands">New commands</h2>
+<table>
+<thead>
+<tr>
+<th align="center">Name</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="center"><code>add-history</code></td>
+<td>Adds the current line to the history without executing it, and clears the editing line.</td>
+</tr>
+<tr>
+<td align="center"><code>clink-copy-cwd</code></td>
+<td>Copy the current working directory to the clipboard.</td>
+</tr>
+<tr>
+<td align="center"><code>clink-copy-line</code></td>
+<td>Copy the current line to the clipboard.</td>
+</tr>
+<tr>
+<td align="center"><code>clink-ctrl-c</code></td>
+<td>Discards the current line and starts a new one (like Ctrl-C in CMD.EXE).</td>
+</tr>
+<tr>
+<td align="center"><code>clink-exit</code></td>
+<td>Replaces the current line with <code>exit</code> and executes it (exits the shell instance).</td>
+</tr>
+<tr>
+<td align="center"><code>clink-expand-doskey-alias</code></td>
+<td>Expand the doskey alias (if any) at the beginning of the line.</td>
+</tr>
+<tr>
+<td align="center"><code>clink-expand-env-vars</code></td>
+<td>Expand the environment variable (<code>%FOOBAR%</code>) at the cursor.</td>
+</tr>
+<tr>
+<td align="center"><code>clink-insert-dot-dot</code></td>
+<td>Inserts <code>..\</code> at the cursor.</td>
+</tr>
+<tr>
+<td align="center"><code>clink-paste</code></td>
+<td>Paste the clipboard at the cursor.</td>
+</tr>
+<tr>
+<td align="center"><code>clink-popup-complete</code></td>
+<td>Show a popup window that lists the available completions.</td>
+</tr>
+<tr>
+<td align="center"><code>clink-popup-directories</code></td>
+<td>Show a popup window of recent current working directories.  In the popup, use Enter to <code>cd /d</code> to the directory, or use Shift-Enter or Ctrl-Enter to insert directory in the editing line.</td>
+</tr>
+<tr>
+<td align="center"><code>clink-popup-history</code></td>
+<td>Show a popup window that lists the command history (if any text precedes the cursor then it uses an anchored search to filter the list).  In the popup, use Enter to execute the command, or use Shift-Enter or Ctrl-Enter to make it the current history entry.</td>
+</tr>
+<tr>
+<td align="center"><code>clink-reset-line</code></td>
+<td>Clears the current line.</td>
+</tr>
+<tr>
+<td align="center"><code>clink-scroll-bottom</code></td>
+<td>Scroll the console window to the bottom (the current input line).</td>
+</tr>
+<tr>
+<td align="center"><code>clink-scroll-line-down</code></td>
+<td>Scroll the console window down one line.</td>
+</tr>
+<tr>
+<td align="center"><code>clink-scroll-line-up</code></td>
+<td>Scroll the console window up one line.</td>
+</tr>
+<tr>
+<td align="center"><code>clink-scroll-page-down</code></td>
+<td>Scroll the console window down one page.</td>
+</tr>
+<tr>
+<td align="center"><code>clink-scroll-page-up</code></td>
+<td>Scroll the console window up one page.</td>
+</tr>
+<tr>
+<td align="center"><code>clink-scroll-top</code></td>
+<td>Scroll the console window to the top.</td>
+</tr>
+<tr>
+<td align="center"><code>clink-show-help</code></td>
+<td>Lists the currently active key bindings using friendly key names.</td>
+</tr>
+<tr>
+<td align="center"><code>clink-show-help-raw</code></td>
+<td>Lists the currently active key bindings using raw key sequences.</td>
+</tr>
+<tr>
+<td align="center"><code>clink-up-directory</code></td>
+<td>Changes to the parent directory.</td>
+</tr>
+<tr>
+<td align="center"><code>old-menu-complete-backward</code></td>
+<td>Like <code>old-menu-complete</code>, but in reverse.</td>
+</tr>
+<tr>
+<td align="center"><code>remove-history</code></td>
+<td>While searching history, removes the current line from the history.</td>
+</tr>
+</tbody></table>
+<h2 id="popup-window">Popup window</h2>
+<p>The <code>clink-popup-complete</code> and <code>clink-popup-history</code> commands show a popup window that lists the available completions or the command history.  Typing does an incremental search, and <kbd>F3</kbd> or <kbd>Ctrl</kbd>+<kbd>L</kbd> go to the next match (add <kbd>Shift</kbd> to go to the previous match).  <kbd>Enter</kbd> inserts the highlighted completion or executes the highlighted history entry.  <kbd>Shift</kbd>+<kbd>Enter</kbd> jumps to the highlighted history entry without executing it.</p>
+<br>
+
+<h1 id="extending-clink">Extending Clink</h1>
+<blockquote>
+<p><strong>WARNING:</strong> Most of this section is out of date and needs to be updated.</p>
+</blockquote>
+<p><div style='opacity:0.5'>
+The Readline library allows clients to offer an alternative path for creating completion matches. Clink uses this to hook Lua into the completion process making it possible to script the generation of matches with Lua scripts. The following sections describe this in more detail and shows some examples.</p>
+<h2 id="the-location-of-lua-scripts">The Location of Lua Scripts</h2>
+<p>Clink looks for Lua scripts in the folders as described in the <strong>Configuring Clink</strong> section. By default <kbd>Ctrl</kbd>-<kbd>X</kbd>,<kbd>Ctrl</kbd>-<kbd>R</kbd> is mapped to reload all Lua scripts which can be useful when developing and iterating on your own scripts.</p>
+<h2 id="match-generators">Match Generators</h2>
+<p></div></p>
+<blockquote>
+<p><strong>TODO:</strong> Describe the new match generator syntax.  The old syntax described below isn&#39;t compatible with v1.0.0 onward.</p>
+</blockquote>
+<p><div style='opacity:0.5'>
+These are Lua functions that are registered with Clink and are called as part of Readline&#39;s completion process. Match generator functions take the following form;</p>
+<pre><code class="language-lua">function my_match_generator(text, first, last)
+    -- Use text/rl_state.line_buffer to create matches,
+    -- Submit matches to Clink using clink.add_match()
+    -- Return true/false.
+end</code></pre>
+<p><code>Text</code> is the word that is being completed, <code>first</code> and <code>last</code> and the indices into the complete line buffer for <code>text</code> (the full line buffer can be accessed using the variable <code>rl_state.line_buffer</code>). If no further match generators need to be called then the function should return true.</p>
+<p>Registering the match generation function is done as follows;</p>
+<pre><code class="language-lua">clink.register_match_generator(my_match_generator, sort_id)</code></pre>
+<p>The <code>sort_id</code> argument is used to sort the match generators such that generators with a lower sort ids are called first.</p>
+<p>Here is an simple example script that checks if <code>text</code> begins with a <code>%</code> character and then uses the remainder of <code>text</code> to match the names of environment variables.</p>
+<pre><code class="language-lua">function env_vars_match_generator(text, first, last)
+    if not text:find(&quot;^%%&quot;) then
+        return false
+    end
+
+    text = clink.lower(text:sub(2))
+    local text_len = #text
+    for _, name in ipairs(clink.get_env_var_names()) do
+        if clink.lower(name:sub(1, text_len)) == text then
+            clink.add_match(&#39;%&#39;..name..&#39;%&#39;)
+        end
+    end
+
+    return true
+end
+
+clink.register_match_generator(env_vars_match_generator, 10)</code></pre>
+<h2 id="argument-completion">Argument Completion</h2>
+<p></div></p>
+<blockquote>
+<p><strong>TODO:</strong> Describe the new argument and flag syntax.  The old syntax described below isn&#39;t compatible with v1.0.0 onward.</p>
+</blockquote>
+<p><div style='opacity:0.5'>
+Clink provides a framework for writing complex argument match generators in Lua.  It works by creating a parser object that describes a command&#39;s arguments and flags and then registering the parser with Clink. When Clink detects the command is being entered on the current command line being edited, it uses the parser to generate matches.</p>
+<p>Here is an example of a simple parser for the command <code>foobar</code>;</p>
+<pre><code class="language-lua">my_parser = clink.arg.new_parser()
+my_parser:set_flags(&quot;-foo&quot;, &quot;-bar&quot;)
+my_parser:set_arguments(
+    { &quot;hello&quot;, &quot;hi&quot; },
+    { &quot;world&quot;, &quot;wombles&quot; }
+)
+
+clink.arg.register_parser(&quot;foobar&quot;, my_parser)</code></pre>
+<p>This parser describes a command that has two positional arguments each with two potential options. It also has two flags which the parser considers to be position independent meaning that provided the word being completed starts with a certain prefix the parser with attempt to match the from the set of flags.</p>
+<p>On the command line completion would look something like this;</p>
+<pre><code>C:\&gt;foobar hello -foo wo
+world   wombles
+C:\&gt;foobar hello -foo wo_</code></pre>
+<p>As an alternative to calling <code>clink.arg.set_arguments()</code> and <code>clink.arg.set_flags()</code> you can instead provide the parser&#39;s flags and positional arguments as arguments to <code>clink.arg.new_parser()</code> as follows;</p>
+<pre><code class="language-lua">some_parser = clink.arg.new_parser(
+    { &quot;arg1-1&quot;, &quot;arg1-2&quot; },
+    { &quot;arg2-1&quot;, &quot;arg2-2&quot; },
+    &quot;-flag1&quot;, &quot;-flag2&quot;
+)</code></pre>
+<h3 id="more-advanced-stuff">More Advanced Stuff</h3>
+<h4 id="linking-parsers">Linking Parsers</h4>
+<p></div></p>
+<blockquote>
+<p><strong>TODO:</strong> Describe the new match syntax.  The old syntax described below isn&#39;t compatible with v1.0.0 onward.</p>
+</blockquote>
+<p><div style='opacity:0.5'>
+There are often situations where the parsing of a command&#39;s arguments is dependent on the previous words (<code>git merge ...</code> compared to <code>git log ...</code> for example). For these scenarios Clink allows you to link parsers to arguments&#39; words using Lua&#39;s concatenation operator. Parsers can also be concatenated with flags too.</p>
+<pre><code class="language-lua">a_parser = clink.arg.new_parser():set_arguments({&quot;foo&quot;, &quot;bar&quot; })
+b_parser = clink.arg.new_parser():set_arguments({ &quot;abc&quot;, &quot;123&quot; })
+c_parser = clink.arg.new_parser()
+c_parser:set_arguments(
+    { &quot;foobar&quot; .. b_parser },
+    { c_parser }
+)</code></pre>
+<p>With syntax from preceding section this converts into:</p>
+<pre><code class="language-lua">parser = clink.arg.new_parser
+a_parser = parser({&quot;foo&quot;, &quot;bar&quot; })
+c_parser = parser(
+    { &quot;foobar&quot; .. parser({ &quot;abc&quot;, &quot;123&quot; }) },
+    { c_parser }
+)</code></pre>
+<p>As the example above shows, it is also possible to use a parser without concatenating it to a word. When Clink follows a link to a parser it is permanent and it will not return to the previous parser.</p>
+<h4 id="functions-as-argument-options">Functions As Argument Options</h4>
+<p>Argument options are not limited solely to strings. Clink also accepts functions too so more context aware argument options can be used.</p>
+<pre><code class="language-lua">function rainbow_function(word)
+    return { &quot;red&quot;, &quot;white&quot;, &quot;blue&quot; }
+end
+
+the_parser = clink.arg.new_parser()
+the_parser:set_arguments(
+    { &quot;zippy&quot;, &quot;bungle&quot;, &quot;george&quot; },
+    { rainbow_function, &quot;yellow&quot;, &quot;green&quot; }
+)</code></pre>
+<p>The functions take a single argument which is a word from the command line being edited (or partial word if it is the one under the cursor). Functions should return a table of potential matches (or an empty table if it calls clink.add_match() directly itself).</p>
+<h2 id="filtering-the-match-display">Filtering The Match Display</h2>
+<p></div></p>
+<blockquote>
+<p><strong>TODO:</strong> Describe the new match syntax.  The old syntax described below isn&#39;t compatible with v1.0.0 onward.</p>
+</blockquote>
+<p><div style='opacity:0.5'>
+In some instances it may be preferable to display potential matches in an alternative form than the generated matches passed to and used internally by Readline. This happens for example with Readline&#39;s standard file name matches, where the matches are the whole word being completed but only the last part of the path is shown (e.g. the match <code>foo/bar</code> is displayed as <code>bar</code>).</p>
+<p>To facilitate custom match generators that may wish to do this there is the <code>clink.match_display_filter</code> variable. This can be set to a function that will then be called before matches are to be displayed.</p>
+<pre><code class="language-lua">function my_display_filter(matches)
+    new_matches = {}
+
+    for _, m in ipairs(matches) do
+        local _, _, n = m:find(&quot;\\([^\\]+)$&quot;)
+        table.insert(new_matches, n)
+    end
+
+    return new_matches
+end
+
+function my_match_generator(text, first, last)
+    ...
+
+    clink.match_display_filter = my_display_filter
+    return true
+end</code></pre>
+<p>The function&#39;s single argument <code>matches</code> is a table containing what Clink is going to display. The return value is a table with the input matches filtered as required by the match generator. The value of <code>clink.match_display_filter</code> is reset every time match generation is invoked.
+</div></p>
+<h2 id="customising-the-prompt">Customising The Prompt</h2>
+<blockquote>
+<p><strong>TODO:</strong> Describe the new prompt filter syntax.</p>
+<p><strong>Compatibility Note:</strong> Both the old syntax described below <strong>and</strong> the new syntax are compatible with v1.1.0 onward.</p>
+</blockquote>
+<p>Before Clink displays the prompt it filters the prompt through Lua so that the prompt can be customised. This happens each and every time that the prompt is shown which allows for context sensitive customisations (such as showing the current branch of a git repository for example).</p>
+<p>Writing a prompt filter is straight forward and best illustrated with an example that displays the current git branch when the current directory is a git repository.</p>
+<pre><code class="language-lua">function git_prompt_filter()
+    for line in io.popen(&quot;git branch 2&gt;nul&quot;):lines() do
+        local m = line:match(&quot;%* (.+)$&quot;)
+        if m then
+            clink.prompt.value = &quot;[&quot;..m..&quot;] &quot;..clink.prompt.value
+            break
+        end
+    end
+
+    return false
+end
+
+clink.prompt.register_filter(git_prompt_filter, 50)</code></pre>
+<p>The filter function takes no arguments instead receiving and modifying the prompt through the <code>clink.prompt.value</code> variable. It returns true if the prompt filtering is finished, and false if it should continue on to the next registered filter.</p>
+<p>A filter function is registered into the filter chain by passing the function to <code>clink.prompt.register_filter()</code> along with a sort id which dictates the order in which filters are called. Lower sort ids are called first.</p>
+<h2 id="new-functions">New Functions</h2>
+<blockquote>
+<p><strong>TODO:</strong> Document the lua functions added by Clink.</p>
+</blockquote>
+<br>
+
+<h1 id="miscellaneous">Miscellaneous</h1>
+<h2 id="binding-special-keys">Binding special keys</h2>
+<p>Due to differences between Windows and Linux, escape codes for keys like PageUp/Down and the arrow keys are different in Clink. Escape codes take the format <code>\e[?</code> where <code>?</code> is one of the characters from the following table, except for a few that are listed in a separate special table.</p>
+<table>
+<thead>
+<tr>
+<th align="center"></th>
+<th align="center">Normal</th>
+<th align="center">Shift</th>
+<th align="center">Ctrl</th>
+<th align="center">Ctrl+Shift</th>
+<th align="center">Alt</th>
+<th align="center">Alt+Shift</th>
+<th align="center">Ctrl+Alt</th>
+<th align="center">Ctrl+Alt+Shift</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="center">Up</td>
+<td align="center"><code>A</code></td>
+<td align="center"><code>1;2A</code></td>
+<td align="center"><code>1;5A</code></td>
+<td align="center"><code>1;6A</code></td>
+<td align="center"><code>1;3A</code></td>
+<td align="center"><code>1;4A</code></td>
+<td align="center"><code>1;7A</code></td>
+<td align="center"><code>1;8A</code></td>
+</tr>
+<tr>
+<td align="center">Down</td>
+<td align="center"><code>B</code></td>
+<td align="center"><code>1;2B</code></td>
+<td align="center"><code>1;5B</code></td>
+<td align="center"><code>1;6B</code></td>
+<td align="center"><code>1;3B</code></td>
+<td align="center"><code>1;4B</code></td>
+<td align="center"><code>1;7B</code></td>
+<td align="center"><code>1;8B</code></td>
+</tr>
+<tr>
+<td align="center">Left</td>
+<td align="center"><code>D</code></td>
+<td align="center"><code>1;2D</code></td>
+<td align="center"><code>1;5D</code></td>
+<td align="center"><code>1;6D</code></td>
+<td align="center"><code>1;3D</code></td>
+<td align="center"><code>1;4D</code></td>
+<td align="center"><code>1;7D</code></td>
+<td align="center"><code>1;8D</code></td>
+</tr>
+<tr>
+<td align="center">Right</td>
+<td align="center"><code>C</code></td>
+<td align="center"><code>1;2C</code></td>
+<td align="center"><code>1;5C</code></td>
+<td align="center"><code>1;6C</code></td>
+<td align="center"><code>1;3C</code></td>
+<td align="center"><code>1;4C</code></td>
+<td align="center"><code>1;7C</code></td>
+<td align="center"><code>1;8C</code></td>
+</tr>
+<tr>
+<td align="center">Insert</td>
+<td align="center"><code>2~</code></td>
+<td align="center"><code>2;2~</code></td>
+<td align="center"><code>2;5~</code></td>
+<td align="center"><code>2;6~</code></td>
+<td align="center"><code>2;3~</code></td>
+<td align="center"><code>2;4~</code></td>
+<td align="center"><code>2;7~</code></td>
+<td align="center"><code>2;8~</code></td>
+</tr>
+<tr>
+<td align="center">Delete</td>
+<td align="center"><code>3~</code></td>
+<td align="center"><code>3;2~</code></td>
+<td align="center"><code>3;5~</code></td>
+<td align="center"><code>3;6~</code></td>
+<td align="center"><code>3;3~</code></td>
+<td align="center"><code>3;4~</code></td>
+<td align="center"><code>3;7~</code></td>
+<td align="center"><code>3;8~</code></td>
+</tr>
+<tr>
+<td align="center">Home</td>
+<td align="center"><code>H</code></td>
+<td align="center"><code>1;2H</code></td>
+<td align="center"><code>1;5H</code></td>
+<td align="center"><code>1;6H</code></td>
+<td align="center"><code>1;3H</code></td>
+<td align="center"><code>1;4H</code></td>
+<td align="center"><code>1;7H</code></td>
+<td align="center"><code>1;8H</code></td>
+</tr>
+<tr>
+<td align="center">End</td>
+<td align="center"><code>F</code></td>
+<td align="center"><code>1;2F</code></td>
+<td align="center"><code>1;5F</code></td>
+<td align="center"><code>1;6F</code></td>
+<td align="center"><code>1;3F</code></td>
+<td align="center"><code>1;4F</code></td>
+<td align="center"><code>1;7F</code></td>
+<td align="center"><code>1;8F</code></td>
+</tr>
+<tr>
+<td align="center">PgUp</td>
+<td align="center"><code>5~</code></td>
+<td align="center"><code>5;2~</code></td>
+<td align="center"><code>5;5~</code></td>
+<td align="center"><code>5;6~</code></td>
+<td align="center"><code>5;3~</code></td>
+<td align="center"><code>5;4~</code></td>
+<td align="center"><code>5;7~</code></td>
+<td align="center"><code>5;8~</code></td>
+</tr>
+<tr>
+<td align="center">PgDn</td>
+<td align="center"><code>6~</code></td>
+<td align="center"><code>6;2~</code></td>
+<td align="center"><code>6;5~</code></td>
+<td align="center"><code>6;6~</code></td>
+<td align="center"><code>6;3~</code></td>
+<td align="center"><code>6;4~</code></td>
+<td align="center"><code>6;7~</code></td>
+<td align="center"><code>6;8~</code></td>
+</tr>
+<tr>
+<td align="center">Tab</td>
+<td align="center">(special)</td>
+<td align="center"><code>Z</code></td>
+<td align="center"><code>27;5;9~</code></td>
+<td align="center"><code>27;6;9~</code></td>
+<td align="center">(n/a)</td>
+<td align="center">(n/a)</td>
+<td align="center">(n/a)</td>
+<td align="center">(n/a)</td>
+</tr>
+<tr>
+<td align="center">Space</td>
+<td align="center">(special)</td>
+<td align="center">(n/a)</td>
+<td align="center"><code>27;5;32~</code></td>
+<td align="center"><code>27;6;32~</code></td>
+<td align="center">(n/a)</td>
+<td align="center">(n/a)</td>
+<td align="center"><code>27;7;32~</code></td>
+<td align="center"><code>27;8;32~</code></td>
+</tr>
+<tr>
+<td align="center">Backspace</td>
+<td align="center">(special)</td>
+<td align="center">(n/a)</td>
+<td align="center">(special)</td>
+<td align="center">(n/a)</td>
+<td align="center">(special)</td>
+<td align="center">(n/a)</td>
+<td align="center">(n/a)</td>
+<td align="center">(n/a)</td>
+</tr>
+<tr>
+<td align="center">Escape</td>
+<td align="center">(special)</td>
+<td align="center">(n/a)</td>
+<td align="center">(n/a)</td>
+<td align="center">(n/a)</td>
+<td align="center">(n/a)</td>
+<td align="center">(n/a)</td>
+<td align="center">(special)</td>
+<td align="center">(n/a)</td>
+</tr>
+</tbody></table>
+<br>
+
+<p>These keys use other formats, so their full &quot;special&quot; sequences are listed in the following table.</p>
+<table>
+<thead>
+<tr>
+<th align="center">Key</th>
+<th align="center">Special Sequence</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="center">Escape</td>
+<td align="center"><code>\e\e</code></td>
+</tr>
+<tr>
+<td align="center">Tab</td>
+<td align="center"><code>\t</code></td>
+</tr>
+<tr>
+<td align="center">Space</td>
+<td align="center">(space)</td>
+</tr>
+<tr>
+<td align="center">Backspace</td>
+<td align="center"><code>^h</code></td>
+</tr>
+<tr>
+<td align="center">Ctrl + Backspace</td>
+<td align="center"><code>Rubout</code></td>
+</tr>
+<tr>
+<td align="center">Alt + Backspace</td>
+<td align="center"><code>\e^h</code></td>
+</tr>
+<tr>
+<td align="center">Ctrl + Alt + Backspace</td>
+<td align="center"><code>\eRubout</code></td>
+</tr>
+</tbody></table>
+<br>
+
+<p>Here is an example line from a clink_inputrc file that binds Shift-End to the Readline <code>transpose-word</code> function;</p>
+<pre><code>&quot;\e[1;2F&quot;: transpose-word</code></pre>
+<h2 id="binding-function-keys">Binding function keys</h2>
+<p>For function keys the full escape sequences are listed.  The last four columns (Alt+) are the same as the first four columns prefixed with an extra <code>\e</code>.</p>
+<table>
+<thead>
+<tr>
+<th align="center"></th>
+<th align="center">Normal</th>
+<th align="center">Shift</th>
+<th align="center">Ctrl</th>
+<th align="center">Ctrl+Shift</th>
+<th align="center">Alt</th>
+<th align="center">Alt+Shift</th>
+<th align="center">Alt+Ctrl</th>
+<th align="center">Alt+Ctrl+Shift</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="center">F1</td>
+<td align="center"><code>\eOP</code></td>
+<td align="center"><code>\e[1;2P</code></td>
+<td align="center"><code>\e[1;5P</code></td>
+<td align="center"><code>\e[1;6P</code></td>
+<td align="center"><code>\e\eOP</code></td>
+<td align="center"><code>\e\e[1;2P</code></td>
+<td align="center"><code>\e\e[1;5P</code></td>
+<td align="center"><code>\e\e[1;6P</code></td>
+</tr>
+<tr>
+<td align="center">F2</td>
+<td align="center"><code>\eOQ</code></td>
+<td align="center"><code>\e[1;2Q</code></td>
+<td align="center"><code>\e[1;5Q</code></td>
+<td align="center"><code>\e[1;6Q</code></td>
+<td align="center"><code>\e\eOQ</code></td>
+<td align="center"><code>\e\e[1;2Q</code></td>
+<td align="center"><code>\e\e[1;5Q</code></td>
+<td align="center"><code>\e\e[1;6Q</code></td>
+</tr>
+<tr>
+<td align="center">F3</td>
+<td align="center"><code>\eOR</code></td>
+<td align="center"><code>\e[1;2R</code></td>
+<td align="center"><code>\e[1;5R</code></td>
+<td align="center"><code>\e[1;6R</code></td>
+<td align="center"><code>\e\eOR</code></td>
+<td align="center"><code>\e\e[1;2R</code></td>
+<td align="center"><code>\e\e[1;5R</code></td>
+<td align="center"><code>\e\e[1;6R</code></td>
+</tr>
+<tr>
+<td align="center">F4</td>
+<td align="center"><code>\eOS</code></td>
+<td align="center"><code>\e[1;2S</code></td>
+<td align="center"><code>\e[1;5S</code></td>
+<td align="center"><code>\e[1;6S</code></td>
+<td align="center"><code>\e\eOS</code></td>
+<td align="center"><code>\e\e[1;2S</code></td>
+<td align="center"><code>\e\e[1;5S</code></td>
+<td align="center"><code>\e\e[1;6S</code></td>
+</tr>
+<tr>
+<td align="center">F5</td>
+<td align="center"><code>\e[15~</code></td>
+<td align="center"><code>\e[15;2~</code></td>
+<td align="center"><code>\e[15;5~</code></td>
+<td align="center"><code>\e[15;6~</code></td>
+<td align="center"><code>\e\e[15~</code></td>
+<td align="center"><code>\e\e[15;2~</code></td>
+<td align="center"><code>\e\e[15;5~</code></td>
+<td align="center"><code>\e\e[15;6~</code></td>
+</tr>
+<tr>
+<td align="center">F6</td>
+<td align="center"><code>\e[17~</code></td>
+<td align="center"><code>\e[17;2~</code></td>
+<td align="center"><code>\e[17;5~</code></td>
+<td align="center"><code>\e[17;6~</code></td>
+<td align="center"><code>\e\e[17~</code></td>
+<td align="center"><code>\e\e[17;2~</code></td>
+<td align="center"><code>\e\e[17;5~</code></td>
+<td align="center"><code>\e\e[17;6~</code></td>
+</tr>
+<tr>
+<td align="center">F7</td>
+<td align="center"><code>\e[18~</code></td>
+<td align="center"><code>\e[18;2~</code></td>
+<td align="center"><code>\e[18;5~</code></td>
+<td align="center"><code>\e[18;6~</code></td>
+<td align="center"><code>\e\e[18~</code></td>
+<td align="center"><code>\e\e[18;2~</code></td>
+<td align="center"><code>\e\e[18;5~</code></td>
+<td align="center"><code>\e\e[18;6~</code></td>
+</tr>
+<tr>
+<td align="center">F8</td>
+<td align="center"><code>\e[19~</code></td>
+<td align="center"><code>\e[19;2~</code></td>
+<td align="center"><code>\e[19;5~</code></td>
+<td align="center"><code>\e[19;6~</code></td>
+<td align="center"><code>\e\e[19~</code></td>
+<td align="center"><code>\e\e[19;2~</code></td>
+<td align="center"><code>\e\e[19;5~</code></td>
+<td align="center"><code>\e\e[19;6~</code></td>
+</tr>
+<tr>
+<td align="center">F9</td>
+<td align="center"><code>\e[20~</code></td>
+<td align="center"><code>\e[20;2~</code></td>
+<td align="center"><code>\e[20;5~</code></td>
+<td align="center"><code>\e[20;6~</code></td>
+<td align="center"><code>\e\e[20~</code></td>
+<td align="center"><code>\e\e[20;2~</code></td>
+<td align="center"><code>\e\e[20;5~</code></td>
+<td align="center"><code>\e\e[20;6~</code></td>
+</tr>
+<tr>
+<td align="center">F10</td>
+<td align="center"><code>\e[21~</code></td>
+<td align="center"><code>\e[21;2~</code></td>
+<td align="center"><code>\e[21;5~</code></td>
+<td align="center"><code>\e[21;6~</code></td>
+<td align="center"><code>\e\e[21~</code></td>
+<td align="center"><code>\e\e[21;2~</code></td>
+<td align="center"><code>\e\e[21;5~</code></td>
+<td align="center"><code>\e\e[21;6~</code></td>
+</tr>
+<tr>
+<td align="center">F11</td>
+<td align="center"><code>\e[23~</code></td>
+<td align="center"><code>\e[23;2~</code></td>
+<td align="center"><code>\e[23;5~</code></td>
+<td align="center"><code>\e[23;6~</code></td>
+<td align="center"><code>\e\e[23~</code></td>
+<td align="center"><code>\e\e[23;2~</code></td>
+<td align="center"><code>\e\e[23;5~</code></td>
+<td align="center"><code>\e\e[23;6~</code></td>
+</tr>
+<tr>
+<td align="center">F12</td>
+<td align="center"><code>\e[24~</code></td>
+<td align="center"><code>\e[24;2~</code></td>
+<td align="center"><code>\e[24;5~</code></td>
+<td align="center"><code>\e[24;6~</code></td>
+<td align="center"><code>\e\e[24~</code></td>
+<td align="center"><code>\e\e[24;2~</code></td>
+<td align="center"><code>\e\e[24;5~</code></td>
+<td align="center"><code>\e\e[24;6~</code></td>
+</tr>
+</tbody></table>
+<br>
+
+<p>Here is an example line from a clink_inputrc file that binds Alt-Shift-F3 to the Readline <code>history-substring-search-backward</code> function;</p>
+<pre><code>&quot;\e\e[1;2R&quot;: history-substring-search-backward</code></pre>
+<h2 id="powershell">Powershell</h2>
+<blockquote>
+<p><em><strong>Deprecated:</strong>  Clink v0.4.8 had some basic support for Powershell, but v1.0.0 removed Powershell support.</em></p>
+</blockquote>
+<!-- vim: wrap nolist ft=markdown
+-->
+        </div>
+        <h1 id="lua-api">Lua API Reference</h1>
+        <blockquote>
+            <b>TODO:</b> This section is incomplete, but what's present should be accurate.
+        </blockquote>
+        <div class="section" id="api">
+<div class="group"><h5 class="group_name">_argmatcher</h5><div class="function"><div class="header"> <div class="name">_argmatcher:addarg</div> <div class="signature">(choices...:string) : self</div></div><div class="body"><p class="desc"></p></div></div><hr/><div class="function"><div class="header"> <div class="name">_argmatcher:addflags</div> <div class="signature">(flags...:string) : self</div></div><div class="body"><p class="desc"></p></div></div><hr/><div class="function"><div class="header"> <div class="name">_argmatcher:loop</div> <div class="signature">([index:integer]) : self</div></div><div class="body"><p class="desc"></p></div></div><hr/><div class="function"><div class="header"> <div class="name">_argmatcher:nofiles</div> <div class="signature">() : self</div></div><div class="body"><p class="desc"></p></div></div><hr/><div class="function"><div class="header"> <div class="name">_argmatcher:setflagprefix</div> <div class="signature">([prefixes...:string]) : self</div></div><div class="body"><p class="desc"></p></div></div><hr/></div><div class="group"><h5 class="group_name">builder</h5><div class="function"><div class="header"> <div class="name">builder:addmatch</div> <div class="signature">(match:string|table) : boolean</div></div><div class="body"><p class="desc"></p></div></div><hr/><div class="function"><div class="header"> <div class="name">builder:addmatches</div> <div class="signature">(matches:table) : integer, boolean</div></div><div class="body"><p class="desc">This is the equivalent of calling builder:addmatch() in a for-loop. Returns the number of matches added and a boolean indicating if all matches were added successfully.</p></div></div><hr/><div class="function"><div class="header"> <div class="name">builder:setprefixincluded</div> <div class="signature">([state:boolean]) : nil</div></div><div class="body"><p class="desc"></p></div></div><hr/></div><div class="group"><h5 class="group_name">clink</h5><div class="function"><div class="header"> <div class="name">clink.argmatcher</div> <div class="signature">([priority:integer], commands...:string) : argmatcher</div></div><div class="body"><p class="desc"></p></div></div><hr/><div class="function"><div class="header"> <div class="name">clink.generator</div> <div class="signature">([priority:integer]) : table</div></div><div class="body"><p class="desc"></p></div></div><hr/><div class="function"><div class="header"> <div class="name">clink.getscreeninfo</div> <div class="signature">() : table</div></div><div class="body"><p class="desc">Returns dimensions of the terminal's buffer (buf*) and visible window (win*). The returned table has the following scheme; { bufwidth:int, bufheight:int, winwidth:int, winheight:int }.</p></div></div><hr/><div class="function"><div class="header"> <div class="name">clink.is_match</div> <div class="signature">(needle, candidate) : nil</div></div><div class="body"><p class="desc">Deprecated.  Old API shim; rxists only for backward compatibility, to minimize the changes necessary to get old scripts working with the new API.</p></div></div><hr/></div><div class="group"><h5 class="group_name">clink.arg</h5><div class="function"><div class="header"> <div class="name">clink.arg.new_parser</div> <div class="signature">(...) : table</div></div><div class="body"><p class="desc">Deprecated.  Old API shim; exists only for backward compatibility, to minimize the changes necessary to get old scripts working with the new API.</p></div></div><hr/><div class="function"><div class="header"> <div class="name">clink.arg.register_parser</div> <div class="signature">(cmd, parser) : nil</div></div><div class="body"><p class="desc">Deprecated.  Old API shim; exists only for backward compatibility, to minimize the changes necessary to get old scripts working with the new API.</p></div></div><hr/></div><div class="group"><h5 class="group_name">line</h5><div class="function"><div class="header"> <div class="name">line:getcommandoffset</div> <div class="signature">() : integer</div></div><div class="body"><p class="desc">Returns the offset to the start of the delimited command in the line that's being effectively edited. Note that this may not be the offset of the first command of the line unquoted as whitespace isn't considered for words.</p><pre class="language-lua"><code>-- Given the following line; abc& 123
+-- where commands are separated by & symbols.
+line:getcommandoffset() == 4</code></pre></div></div><hr/><div class="function"><div class="header"> <div class="name">line:getcursor</div> <div class="signature">() : integer</div></div><div class="body"><p class="desc">Returns the position of the cursor.</p></div></div><hr/><div class="function"><div class="header"> <div class="name">line:getendword</div> <div class="signature">() : string</div></div><div class="body"><p class="desc">Returns the last word of the line. This is the word that matches are being generated for.</p><pre class="language-lua"><code>line:getword(line:getwordcount()) == line:getendword()</code></pre></div></div><hr/><div class="function"><div class="header"> <div class="name">line:getline</div> <div class="signature">() : string</div></div><div class="body"><p class="desc">Returns the current line in its entirety.</p></div></div><hr/><div class="function"><div class="header"> <div class="name">line:getword</div> <div class="signature">(index:integer) : string</div></div><div class="body"><p class="desc">Returns the word of the line at 'index'.</p></div></div><hr/><div class="function"><div class="header"> <div class="name">line:getwordcount</div> <div class="signature">() : integer</div></div><div class="body"><p class="desc">Returns the number of words in the current line.</p></div></div><hr/><div class="function"><div class="header"> <div class="name">line:getwordinfo</div> <div class="signature">(index:integer) : table</div></div><div class="body"><p class="desc">Returns a table of informationa about the Nth word in the line. The table returned has the following schema; { offset:integer, length:integer, quoted:boolean, delim:boolean }.</p></div></div><hr/></div><div class="group"><h5 class="group_name">os</h5><div class="function"><div class="header"> <div class="name">os.chdir</div> <div class="signature">(path:string) : boolean</div></div><div class="body"><p class="desc"></p></div></div><hr/><div class="function"><div class="header"> <div class="name">os.copy</div> <div class="signature">(src:string, dest:string) : boolean</div></div><div class="body"><p class="desc"></p></div></div><hr/><div class="function"><div class="header"> <div class="name">os.getaliases</div> <div class="signature">() : string</div></div><div class="body"><p class="desc"></p></div></div><hr/><div class="function"><div class="header"> <div class="name">os.getcwd</div> <div class="signature">() : string</div></div><div class="body"><p class="desc"></p></div></div><hr/><div class="function"><div class="header"> <div class="name">os.getenv</div> <div class="signature">(path:string) : string or nil</div></div><div class="body"><p class="desc"></p></div></div><hr/><div class="function"><div class="header"> <div class="name">os.getenvnames</div> <div class="signature">() : table</div></div><div class="body"><p class="desc"></p></div></div><hr/><div class="function"><div class="header"> <div class="name">os.gethost</div> <div class="signature">() : string</div></div><div class="body"><p class="desc"></p></div></div><hr/><div class="function"><div class="header"> <div class="name">os.globdirs</div> <div class="signature">(globpattern:string) : table</div></div><div class="body"><p class="desc"></p></div></div><hr/><div class="function"><div class="header"> <div class="name">os.globfiles</div> <div class="signature">(globpattern:string) : table</div></div><div class="body"><p class="desc"></p></div></div><hr/><div class="function"><div class="header"> <div class="name">os.isdir</div> <div class="signature">(path:string) : boolean</div></div><div class="body"><p class="desc"></p></div></div><hr/><div class="function"><div class="header"> <div class="name">os.isfile</div> <div class="signature">(path:string) : boolean</div></div><div class="body"><p class="desc"></p></div></div><hr/><div class="function"><div class="header"> <div class="name">os.ishidden</div> <div class="signature">(path:string) : boolean</div></div><div class="body"><p class="desc"></p></div></div><hr/><div class="function"><div class="header"> <div class="name">os.mkdir</div> <div class="signature">(path:string) : boolean</div></div><div class="body"><p class="desc"></p></div></div><hr/><div class="function"><div class="header"> <div class="name">os.move</div> <div class="signature">(src:string, dest:string) : boolean</div></div><div class="body"><p class="desc"></p></div></div><hr/><div class="function"><div class="header"> <div class="name">os.rmdir</div> <div class="signature">(path:string) : boolean</div></div><div class="body"><p class="desc"></p></div></div><hr/><div class="function"><div class="header"> <div class="name">os.setenv</div> <div class="signature">(name:string, value:string) : boolean</div></div><div class="body"><p class="desc"></p></div></div><hr/><div class="function"><div class="header"> <div class="name">os.unlink</div> <div class="signature">(path:string) : boolean</div></div><div class="body"><p class="desc"></p></div></div><hr/></div><div class="group"><h5 class="group_name">path</h5><div class="function"><div class="header"> <div class="name">path.getbasename</div> <div class="signature">(path:string) : string</div></div><div class="body"><p class="desc"></p><pre class="language-lua"><code>path.getbasename("/foo/bar.ext") -- returns "bar"</code></pre></div></div><hr/><div class="function"><div class="header"> <div class="name">path.getdirectory</div> <div class="signature">(path:string) : nil or string</div></div><div class="body"><p class="desc"></p><pre class="language-lua"><code>path.getdirectory("/foo/bar") -- returns "/foo/"
+path.getdirectory("bar") -- returns nil</code></pre></div></div><hr/><div class="function"><div class="header"> <div class="name">path.getdrive</div> <div class="signature">(path:string) : nil or string</div></div><div class="body"><p class="desc"></p><pre class="language-lua"><code>path.getdrive("e:/foo/bar") -- returns "e:"
+path.getdrive("foo/bar") -- returns nil</code></pre></div></div><hr/><div class="function"><div class="header"> <div class="name">path.getextension</div> <div class="signature">(path:string) : string</div></div><div class="body"><p class="desc"></p><pre class="language-lua"><code>path.getextension("bar.ext") -- returns ".ext"
+path.getextension("bar") -- returns ""</code></pre></div></div><hr/><div class="function"><div class="header"> <div class="name">path.getname</div> <div class="signature">(path:string) : string</div></div><div class="body"><p class="desc"></p><pre class="language-lua"><code>path.getname("/foo/bar.ext") -- returns "bar.ext"</code></pre></div></div><hr/><div class="function"><div class="header"> <div class="name">path.join</div> <div class="signature">(left:string, right:string) : string</div></div><div class="body"><p class="desc"></p><pre class="language-lua"><code>path.join("/foo", "bar") -- returns "foo\bar"</code></pre></div></div><hr/><div class="function"><div class="header"> <div class="name">path.normalise</div> <div class="signature">(path:string, [separator:string]) : string</div></div><div class="body"><p class="desc">Cleans $path by normalising separators and removing ".[.]/" elements. If $separator is provided it is used to delimit path elements, otherwise a system-specific delimiter is used.</p><pre class="language-lua"><code>path.normalise("a////b/\\/c/") -- returns "a\b\c\"</code></pre></div></div><hr/></div><div class="group"><h5 class="group_name">settings</h5><div class="function"><div class="header"> <div class="name">settings.add</div> <div class="signature">(name:string, default:...) : boolean</div></div><div class="body"><p class="desc"></p></div></div><hr/><div class="function"><div class="header"> <div class="name">settings.get</div> <div class="signature">(name:string) : boolean or string or integer</div></div><div class="body"><p class="desc"></p></div></div><hr/><div class="function"><div class="header"> <div class="name">settings.set</div> <div class="signature">(name:string, value:string) : boolean</div></div><div class="body"><p class="desc"></p></div></div><hr/></div><div class="group"><h5 class="group_name">string</h5><div class="function"><div class="header"> <div class="name">string.explode</div> <div class="signature">(x) : x</div></div><div class="body"><p class="desc"></p></div></div><hr/><div class="function"><div class="header"> <div class="name">string.hash</div> <div class="signature">(x) : x</div></div><div class="body"><p class="desc"></p></div></div><hr/></div>
+        </div>
+        <div class="section" id="changes">
+<h1 id="changes">Changes</h1>
+<blockquote>
+<p><strong>TODO:</strong> Need to document the changes since v0.4.9 (wow, that&#39;s going to be a huge effort).</p>
+</blockquote>
+<p><div style='opacity:0.5'></p>
+<h3 id="v049">v0.4.9</h3>
+<ul>
+<li>Fixed broken Doskey on Win10 (#438, #451)</li>
+</ul>
+<h3 id="v048">v0.4.8</h3>
+<ul>
+<li>Environment variable &#39;clink_profile&#39; overrides Clink&#39;s profile path (#390).</li>
+<li>Load a clink_inputrc file from Clink&#39;s profile directory (fixes #406).</li>
+<li>Bug fixes;<ul>
+<li>Redraw issues when prompts end in OSC ANSI codes (#387, #384).</li>
+<li>Fixed &#39;clink autorun --help&#39; crash.</li>
+</ul>
+</li>
+</ul>
+<h3 id="v047">v0.4.7</h3>
+<ul>
+<li>Bug fixes;<ul>
+<li>Sometimes autorun tries to run clink.exe (#374).</li>
+<li>Autorun would cause cmd.exe to return an error if it wasn&#39;t interactive (#373).</li>
+</ul>
+</li>
+</ul>
+<h3 id="v046">v0.4.6</h3>
+<ul>
+<li>HOME is only set if it is currently unset.</li>
+<li>Readline can be initialised with .inputrc and _inputrc files too (#258).</li>
+<li>Bug fixes;<ul>
+<li>Executable completion;<ul>
+<li>Paths from PATH were checked twice.</li>
+<li>Incorrect results were returned for words ending in &#39;.&#39; or &#39;-&#39;.</li>
+<li>Directories . and .. were incorrectly displayed.</li>
+</ul>
+</li>
+<li>Fixed a crash if .bat script&#39;s stdout is redirected (#366).</li>
+<li>Occasional crash when injecting Clink (#351).</li>
+<li>Display errors;<ul>
+<li>When editing near the window&#39;s right-hand edge (#347).</li>
+<li>Double display of multi-line prompts when resizing the terminal (#352).</li>
+<li>Very rare wrap artefacts when making the terminal window larger.</li>
+</ul>
+</li>
+<li>Doskey emulation (#344).</li>
+<li>Improved &#39;clink autorun&#39; help (#348).</li>
+<li>Fixed launching Clink when clink.bat is renamed (#357).</li>
+</ul>
+</li>
+</ul>
+<h3 id="v045">v0.4.5</h3>
+<ul>
+<li>Improved &#39;clink autorun&#39;. It now defaults to the Current User registry hive.</li>
+<li>&#39;clink set&#39; gives more details for enumeration-type settings.</li>
+<li>Tab completion for p4vc.</li>
+<li>New settings &#39;history_expand_mode&#39; to control history expansion in quotes (#317).</li>
+<li>Bug fixes;<ul>
+<li>Use full width of the terminal (#337).</li>
+<li>Fixed MinGW compile error (#335).</li>
+<li>Autorun now defaults to the current user&#39;s hive (#332).</li>
+<li>Creating clink.html no longer needs Pandoc, plus it looks a bit better (#331).</li>
+<li>Added settings to control history expansion (#326).</li>
+<li>Correct fallback when &#39;use_altgr_substitute&#39; is off (#325).</li>
+<li>Load history prior to saving it on shutdown (#318).</li>
+<li>Added Shift-Tab documentation and menu completion example (#190).</li>
+<li>Added shim for backwards menu completion (#190).</li>
+<li>Input handling now outputs &#39;\e`Z&#39; for Shift-Tab (#190).</li>
+<li>Updated Readme with current Premake info (#310).</li>
+<li>Guard against there being no buffer to read from (#304).</li>
+<li>Fixed artefacts when resizing conhost&#39;s buffer (#139).</li>
+<li>Clear remaining characters if scroll window was too small (#301)</li>
+<li>Escape % characters when expanding aliases (#280).</li>
+<li>Fixed leaking exception filters.</li>
+<li>Clearing the screen doesn&#39;t leave artefacts behind.</li>
+</ul>
+</li>
+</ul>
+<h3 id="v044">v0.4.4</h3>
+<ul>
+<li>Completing .. behaves more like Bash (#277).</li>
+<li>Escape from yes/no question when Ctrl+C is pressed.</li>
+<li>Valid XP executables (#278, #289).</li>
+<li>Fixed n-th argument yank not working as expected (#254).</li>
+<li>Fixed prompt colours sometimes not working (#279, #286).</li>
+<li>Fixed &#39;!0&#39; causing Clink to crash.</li>
+<li>Save/restore cursor position in case Readline moves it.</li>
+</ul>
+<h3 id="v043">v0.4.3</h3>
+<ul>
+<li>Localised Y/N when auto-answering &#39;terminate?&#39; prompt.</li>
+<li>$* would early out if there was no arguments.</li>
+<li>Disable ANSI code support if third party provides it.</li>
+<li>Installer can now set %CLINK_DIR% to install location.</li>
+<li>Improved output from &#39;clink set&#39;.</li>
+<li>Support for Windows 10 Technical Preview.</li>
+<li>Ctrl-L now scrolls last line to the top of the window rather than clearing.</li>
+<li>New option to control how newline characters are pasted to the line.</li>
+<li>New options to control history;<ul>
+<li>&#39;history_file_lines&#39; - maximum lines saved to disk.</li>
+<li>&#39;history_ignore_space&#39; - ignore lines prefixed with whitespace.</li>
+<li>&#39;history_dupe_mode&#39; - how duplicate entries are handled.</li>
+<li>&#39;history_io&#39; - load/save history from disk every line.</li>
+</ul>
+</li>
+<li>Fixed nonfunctional numpad keys.</li>
+<li>Fixed missing WINCH signals if other processes resize the buffer.</li>
+<li>Support Alt codes sent from Conhost.</li>
+</ul>
+<h3 id="v042">v0.4.2</h3>
+<ul>
+<li>Prompt colouring no longer requires third party ANSI code utility.</li>
+<li>Override settings with environment variables prefixed with &#39;clink&#39;.</li>
+<li>Ctrl-PgUp goes up a directory.</li>
+<li>Updated Go completions (by matrixik).</li>
+<li>Arguments to clink.arg.new_parser() now initialise parser&#39;s flags/args (from vladimir-kotikov).</li>
+<li>New clink.arg.add_flags() and clink.arg.add_arguments() functions.</li>
+<li>Removed footer and Alt-H tip for more succinct stdout output.</li>
+<li>Bug fixes;<ul>
+<li>Windows XP works again.</li>
+<li>Fixed race condition in lua_execute().</li>
+</ul>
+</li>
+</ul>
+<h3 id="v041">v0.4.1</h3>
+<ul>
+<li>Bug fixes;<ul>
+<li>Various Unicode fixes causing corrupt environment variables.</li>
+<li>Fixed thread resume/suspend causing rare system-wide deadlock.</li>
+<li>Fixed incorrect translation of suffixed slash when completing flags.</li>
+</ul>
+</li>
+<li>Add --nolog argument to disable file logging. Fix #187 Fix #154</li>
+<li>Added missing escape sequences from doskey emulation.</li>
+<li>Reinstated unix-kill-line key binding.</li>
+<li>Mapped PgUp/Down to search history using line typed so far.</li>
+<li>Added documentation covering escape codes for special keys.</li>
+<li>Added support for Windows&#39; AltGr substitute Ctrl-Alt.</li>
+<li>Support for Readline&#39;s &#39;menu&#39; style completion (see docs).</li>
+</ul>
+<h3 id="v04">v0.4</h3>
+<ul>
+<li>New features;<ul>
+<li>Better &#39;clink.arg&#39; API. Easier, more intuitive, and more powerful.</li>
+<li>Whitespace prefix skips exec matching.</li>
+<li>Added a &#39;set&#39; verb to easily change settings from the command line.</li>
+<li>Basic support for a shells other than cmd.exe.</li>
+<li>Completion for Go (contributed by Dobroslaw Zybort).</li>
+<li>Setting &#39;exec_match_style&#39; to -1 disables it entirely.</li>
+<li>Make history persistence optional.</li>
+<li>Alias/doskey completion.</li>
+<li>Very basic support for Powershell.</li>
+<li>View cmd.exe&#39;s autorun entry without needing admin rights.</li>
+</ul>
+</li>
+<li>New key bindings;<ul>
+<li>Ctrl-Alt-C : Copy command line to the clipboard.</li>
+<li>Ctrl-Alt-E : Expand environment variable under cursor.</li>
+<li>Ctrl-Alt-U : &#39;up directory&#39; (formerly Shift-Up).</li>
+<li>Ctrl-U : Adds &#39;..&#39; to the command line.</li>
+<li>Alt-H : Shows active keymap&#39;s key bindings.</li>
+</ul>
+</li>
+<li>New Lua functions;<ul>
+<li>clink.execute().</li>
+<li>clink.get_host_process().</li>
+<li>clink.match_files().</li>
+<li>clink.match_words().</li>
+<li>clink.get_console_aliases().</li>
+</ul>
+</li>
+<li>Lots of bug fixes, including;<ul>
+<li>Better command extraction.</li>
+<li>Fixed cmd.exe command paging and Ctrl-C/Ctrl-Break handling.</li>
+<li>Multiple locale fixes.</li>
+<li>Use localised text for &#39;Terminate batch job?&#39; prompt.</li>
+</ul>
+</li>
+</ul>
+<h3 id="v03">v0.3</h3>
+<ul>
+<li>Automatic answering of cmd.exe&#39;s &#39;Terminate batch script?&#39; prompt.</li>
+<li>Coloured prompts (requires ANSICON or ConEmu).</li>
+<li>Added Shift-Up keyboard shortcut to automatically execute &#39;cd ..&#39;</li>
+<li>Mapped Ctrl-Z to undo, Microsoft style.</li>
+<li>Improved integration of Readline;<ul>
+<li>New input handling code (Ctrl-Alt combos now work).</li>
+<li>An implementation of the Termcap library.</li>
+<li>Fully functional Vi-mode support.</li>
+<li>Support for resizable consoles.</li>
+<li>Line wrapping now works correctly (issue 50).</li>
+</ul>
+</li>
+<li>Adjustable executable match style (issue 65).</li>
+<li>Improved environment variable completion.</li>
+<li>Added settings file to customise Clink.</li>
+<li>New Lua features and functions;<ul>
+<li>Matches can now be filtered in Lua before they are display.</li>
+<li>clink.quote_split().</li>
+<li>clink.arg.node_merge().</li>
+<li>clink.get_screen_info() (issue 71).</li>
+<li>clink.split() (for splitting strings).</li>
+<li>clink.chdir().</li>
+<li>clink.get_cwd().</li>
+<li>Functions to query Clink&#39;s settings.</li>
+</ul>
+</li>
+<li>New command line options;<ul>
+<li>&#39;--profile <dir>&#39; to override default profile directory.</li>
+<li>&#39;--nohostcheck&#39; disables verification that host is cmd.exe.</li>
+<li>&#39;--pid&#39; specifies the process to inject into.</li>
+</ul>
+</li>
+<li>Update Mercurial completion (issue 73).</li>
+<li>Start menu shortcut starts in USERPROFILE, like cmd.exe</li>
+<li>Zip distribution is now portable.</li>
+</ul>
+<h3 id="v021">v0.2.1</h3>
+<ul>
+<li>The .history file now merges multiple sessions together.</li>
+<li>Fixed missing y/n, pause, and other prompts.</li>
+<li>Fixed segfault in loader executable.</li>
+<li>Better ConEmu compatibility.</li>
+</ul>
+<h3 id="v02">v0.2</h3>
+<ul>
+<li>Basic argument completion for &#39;git&#39;, &#39;hg&#39;, &#39;svn&#39;, and &#39;p4&#39;.</li>
+<li>Traditional Bash clear screen (&#39;Ctrl-L&#39;) and exit shortcuts (&#39;Ctrl-D&#39;).</li>
+<li>Scrollable command window using &#39;PgUp&#39;/&#39;PgDown&#39; keys.</li>
+<li>Doskey support.</li>
+<li>Automatic quoting of file names with spaces.</li>
+<li>Scriptable custom prompts.</li>
+<li>New argument framework to ease writing context-sensitive match generators.</li>
+<li>History and log file is now saved per-user rather than globally.</li>
+<li>Improved Clink&#39;s command line interface (&#39;clink --help&#39;).</li>
+<li>More reliable handling of cmd.exe&#39;s autorun entry.</li>
+<li>General improvements to executable and directory-command completion.</li>
+<li>Symbolic link support.</li>
+<li>Documentation.</li>
+<li>Windows 8 support.</li>
+<li>Improved hooking so Clink can be shared with other thirdparty utilities that
+also hook cmd.exe (ConEmu, ANSICon, etc.).</li>
+</ul>
+<h3 id="v011">v0.1.1</h3>
+<ul>
+<li>Fixed AltGr+<key> on international keyboards.</li>
+<li>Fixed broken completion when directories have a &#39;-&#39; in their name (Mark Hammond)</li>
+<li>The check for single match scenarios now correctly handles case-insensitivity.</li>
+</ul>
+<h3 id="v01">v0.1</h3>
+<ul>
+<li>Initial release.
+</div></li>
+</ul>
+<!-- vim: wrap nolist ft=markdown
+-->
+
+        </div>
+        <div class="section" id="credits">
+<h1 id="credits">Credits</h1>
+<p>Clink was originally built by Martin Ridgers (<a href="https://github.com/mridgers/clink">https://github.com/mridgers/clink</a>).<br>
+Copyright (c) 2012-2018 by Martin Ridgers.</p>
+<p>Clink has been forked and revived by Christopher Antos (<a href="https://github.com/chrisant996/clink">https://github.com/chrisant996/clink</a>).<br>
+Portions Copyright (c) 2020 by Christopher Antos.</p>
+<p>Clink uses the GNU Readline library version 8.0.</p>
+<blockquote>
+<p><strong>TODO:</strong> Include license and web site link.</p>
+</blockquote>
+<p>Clink uses Lua.</p>
+<blockquote>
+<p><strong>TODO:</strong> Include version, license, and web site link.</p>
+</blockquote>
+<p>Clink uses the getopt library.</p>
+<blockquote>
+<p><strong>TODO:</strong> Include version, license, and web site link.</p>
+</blockquote>
+<p>Clink documentation currently embeds the highlight.js library, but will likely stop embedding it soon.</p>
+<blockquote>
+<p><strong>TODO:</strong> Include version, license, and web site link.</p>
+</blockquote>
+<!-- vim: wrap nolist ft=markdown
+-->
+        </div>
+    </div>
+</body>
+
+</html>
