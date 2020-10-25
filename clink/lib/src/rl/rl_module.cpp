@@ -845,6 +845,7 @@ rl_module::rl_module(const char* shell_name, terminal_in* input)
         rl_add_funmap_entry("clink-scroll-bottom", clink_scroll_bottom);
         rl_add_funmap_entry("clink-popup-complete", clink_popup_complete);
         rl_add_funmap_entry("clink-popup-history", clink_popup_history);
+        rl_add_funmap_entry("clink-popup-directories", clink_popup_directories);
     }
 
     // Bind extended keys so editing follows Windows' conventions.

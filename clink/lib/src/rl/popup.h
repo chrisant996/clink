@@ -3,6 +3,8 @@
 
 #pragma once
 
+#include <core/str.h>
+
 //------------------------------------------------------------------------------
 enum class popup_list_result
 {

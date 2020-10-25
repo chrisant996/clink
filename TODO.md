@@ -72,9 +72,6 @@ The Phase 2 goal is to produce a viable Beta Release with broader compatibility 
 ### Commands
 - Add a `history.dupe_mode` that behaves like 4Dos/4NT/Take Command from JPSoft:  **Up**/**Down** then **Enter** remembers the history position so that **Enter**, **Down**, **Enter**, **Down**, **Enter**, etc can be used to replay a series of commands.
 - Add a way to reset or trim the history, when there's only one (or zero) clink running [#499](https://github.com/mridgers/clink/issues/499).
-- Remember previous directory, and `-` swaps back to it [#372](https://github.com/mridgers/clink/issues/372).
-  - Maybe set a `CLINK_PREV_DIR` envvar, too?
-  - Remember a stack of previous directories?
 - A way to disable/enable clink once injected.
 - A way to disable/enable prompt filtering once injected.
 - Allow to search the console output (not command history) with a RegExp [#166](https://github.com/mridgers/clink/issues/166).

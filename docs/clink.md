@@ -141,7 +141,8 @@ Name | Description
 `clink-insert-dot-dot`|Inserts `..\` at the cursor.
 `clink-paste`|Paste the clipboard at the cursor.
 `clink-popup-complete`|Show a popup window that lists the available completions.
-`clink-popup-history`|Show a popup window that lists the command history (if any text precedes the cursor then it uses an anchored search to filter the list).
+`clink-popup-directories`|Show a popup window of recent current working directories.  In the popup, use Enter to `cd /d` to the directory, or use Shift-Enter or Ctrl-Enter to insert directory in the editing line.
+`clink-popup-history`|Show a popup window that lists the command history (if any text precedes the cursor then it uses an anchored search to filter the list).  In the popup, use Enter to execute the command, or use Shift-Enter or Ctrl-Enter to make it the current history entry.
 `clink-reset-line`|Clears the current line.
 `clink-scroll-bottom`|Scroll the console window to the bottom (the current input line).
 `clink-scroll-line-down`|Scroll the console window down one line.

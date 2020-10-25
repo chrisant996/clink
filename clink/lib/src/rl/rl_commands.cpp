@@ -3,6 +3,7 @@
 
 #include "pch.h"
 #include "line_buffer.h"
+#include "popup.h"
 #include "rl_commands.h"
 
 #include <core/base.h>
@@ -307,6 +308,63 @@ int clink_scroll_top(int count, int invoking_key)
 int clink_scroll_bottom(int count, int invoking_key)
 {
     ScrollConsoleRelative(GetStdHandle(STD_OUTPUT_HANDLE), 1, SCR_TOEND);
+    return 0;
+}
+
+//------------------------------------------------------------------------------
+extern const char** host_copy_dir_history(int* total);
+int clink_popup_directories(int count, int invoking_key)
+{
+    // Copy the directory list (just a shallow copy of the dir pointers).
+    int total = 0;
+    const char** history = host_copy_dir_history(&total);
+    if (!history || !total)
+    {
+        free(history);
+        rl_ding();
+        return 0;
+    }
+
+    // Popup list.
+    str<> choice;
+    int current = total - 1;
+    popup_list_result result = do_popup_list("Directories",
+        (const char **)history, total, 0, 0,
+        false/*completing*/, false/*auto_complete*/, current, choice);
+    switch (result)
+    {
+    case popup_list_result::cancel:
+        break;
+    case popup_list_result::error:
+        rl_ding();
+        break;
+    case popup_list_result::select:
+    case popup_list_result::use:
+        {
+            bool use = (result == popup_list_result::use);
+            rl_begin_undo_group();
+            if (use)
+            {
+                rl_replace_line(history[current], 0);
+                rl_point = rl_end;
+                if (!history[current][0] ||
+                    !path::is_separator(history[current][strlen(history[current]) - 1]))
+                    rl_insert_text(PATH_SEP);
+            }
+            else
+            {
+                rl_insert_text(history[current]);
+            }
+            rl_end_undo_group();
+            rl_redisplay();
+            if (use)
+                rl_newline(1, invoking_key);
+        }
+        break;
+    }
+
+    free(history);
+
     return 0;
 }
 

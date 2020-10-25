@@ -24,6 +24,9 @@
 #include <lua/lua_state.h>
 #include <lua/lua_match_generator.h>
 #include <terminal/terminal.h>
+#include <readline/readline.h>
+
+#include <list>
 
 extern "C" {
 #include <lua.h>
@@ -53,7 +56,80 @@ static setting_str g_exclude_from_history_cmds(
 
 
 
-//----------------------------------------------------------------------------
+//------------------------------------------------------------------------------
+class dir_history_entry : public no_copy
+{
+public:
+                    dir_history_entry(const char* s);
+                    dir_history_entry(dir_history_entry&& d) { dir = d.dir; d.dir = nullptr; }
+                    ~dir_history_entry() { free(dir); }
+
+    const char*     get() const { return dir; }
+
+private:
+    char* dir;
+};
+
+//------------------------------------------------------------------------------
+dir_history_entry::dir_history_entry(const char* s)
+{
+    size_t alloc = strlen(s) + 1;
+    dir = (char *)malloc(alloc);
+    memcpy(dir, s, alloc);
+}
+
+//------------------------------------------------------------------------------
+const int c_max_dir_history = 100;
+static std::list<dir_history_entry> s_dir_history;
+
+//------------------------------------------------------------------------------
+static void update_dir_history()
+{
+    str<> cwd;
+    os::get_current_dir(cwd);
+
+    // Add cwd to tail.
+    if (!s_dir_history.size() || _stricmp(s_dir_history.back().get(), cwd.c_str()) != 0)
+        s_dir_history.push_back(cwd.c_str());
+
+    // Trim overflow from head.
+    while (s_dir_history.size() > c_max_dir_history)
+        s_dir_history.pop_front();
+}
+
+//------------------------------------------------------------------------------
+static void prev_dir_history(str_base& inout)
+{
+    inout.clear();
+
+    if (s_dir_history.size() < 2)
+        return;
+
+    auto a = s_dir_history.rbegin();
+    a++;
+
+    inout.format(" cd /d \"%s\"", a->get());
+}
+
+//------------------------------------------------------------------------------
+const char** host_copy_dir_history(int* total)
+{
+    if (!s_dir_history.size())
+        return nullptr;
+
+    // Copy the directory list (just a shallow copy of the dir pointers).
+    const char** history = (const char**)malloc(sizeof(*history) * s_dir_history.size());
+    int i = 0;
+    for (auto const& it : s_dir_history)
+        history[i++] = it.get();
+
+    *total = i;
+    return history;
+}
+
+
+
+//------------------------------------------------------------------------------
 static history_db* s_history_db = nullptr;
 void host_add_history(int, const char* line)
 {
@@ -78,6 +154,15 @@ static void write_line_feed()
 static bool intercept_directory(str_base& inout)
 {
     const char* line = inout.c_str();
+
+    // Check for '-' (etc) to change to previous directory.
+    if (strcmp(line, "-") == 0 ||
+        _strcmpi(line, "cd -") == 0 ||
+        _strcmpi(line, "chdir -") == 0)
+    {
+        prev_dir_history(inout);
+        return true;
+    }
 
     // Skip leading whitespace.
     while (*line == ' ' || *line == '\t')
@@ -258,6 +343,9 @@ bool host::edit_line(const char* prompt, str_base& out)
     bool ret = false;
     while (1)
     {
+        // Give the directory history queue a crack at the current directory.
+        update_dir_history();
+
         // Doskey is implemented on the server side of a ReadConsoleW() call
         // (i.e. in conhost.exe). Commands separated by a "$T" are returned one
         // command at a time through successive calls to ReadConsoleW().
