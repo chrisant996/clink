@@ -1,0 +1,56 @@
+---
+---
+
+@import "{{ site.theme }}";
+
+.title-header {
+    @include large {
+        padding: 2rem 0rem;
+    }
+
+    @include medium {
+        padding: 1.5rem 0rem;
+    }
+
+    @include small {
+        padding: 1rem 0rem;
+    }
+}
+
+.title-container {
+    position: relative;
+    text-align: left;
+
+    @include large {
+        max-width: 64rem;
+        padding-left: 6rem;
+        padding-right: 6rem;
+        margin: 0 auto;
+    }
+
+    @include medium {
+        padding-left: 4rem;
+        padding-right: 4rem;
+    }
+
+    @include small {
+        padding-left: 1rem;
+        padding-right: 1rem;
+    }
+}
+
+.title-sidebar {
+    position: absolute;
+    top: 0px;
+    right: 0px;
+    height: 100%;
+    text-align: right;
+}
+
+.title-sidebar-inner {
+    position: relative;
+    top: 50%;
+    transform: translateY(-50%);
+}
+
+
