@@ -24,7 +24,7 @@
       <div class="title-container">
         <div style="position:relative">
           <div>
-            <h1 class="project-name" style="margin-bottom:0rem">{{ github.title | page.title | default: site.title | default: site.github.repository_name }}</h1>
+            <h1 class="project-name" style="margin-bottom:0rem">{{ site.title | default: site.github.repository_name | default: page.title }}</h1>
             <h2 class="project-tagline" style="margin-bottom:0rem">{{ page.description | default: site.description | default: site.github.project_tagline }}</h2>
           </div>
           <div class="title-sidebar">
