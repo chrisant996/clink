@@ -1,6 +1,4 @@
 theme: jekyll-theme-cayman
-page:
-  title: Clink
 github:
   version: v1.1.0-poc6
   download_url: https://github.com/chrisant996/clink/releases/tag/v1.1.0-poc6
