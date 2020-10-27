@@ -2,10 +2,7 @@ ChrisAnt Plans
 
 <br>
 
-# Alpha Release
-Here's what's left to do in order to have a reasonable alpha release.  The alpha release is unlikely to have full lua backward compatibility for v0.4.8 scripts.
-
-## Documentation
+# Documentation
 - Describe the new argmatcher/etc syntax.
 - Supply sample inputrc file(s).
 - Explain when history is saved and loaded (mridgers #512 has some info on that).
