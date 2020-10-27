@@ -37,9 +37,12 @@ Lua support changed significantly.  Explore how to support backward compatibilit
 - `_rl_completion_case_map` isn't supported properly in clink lua APIs, nor in general.  _(The 0.4.8 implementation simply converted `-` and `_` to `?` and accepted all matches -- although maybe it filtered the results afterwards?)_
 - When convert-meta is off, then when binding `\M-h` (etc) the key name gets interpreted differently than Clink expects.
 - Promote store_impl to be a template and public, so the popup list can use it?
-- What to do about completion colors in popup list?
+- Popup list:
+  - What to do about completion colors?
   - Make it owner draw and add text like "dir", "doskey", etc?
   - Add stat chars when so configured?
+  - Ability to delete, rearrange, and edit popup list items?
+  - Show the current incremental search string somewhere?
 - Use `npm` to run `highlight.js` at compile time?
 
 ## Questions
@@ -65,7 +68,6 @@ The Phase 2 goal is to produce a viable Beta Release with broader compatibility 
   - But eventually in order to color arguments/etc the match pipeline will need to run while typing, so maybe leave it be.
 - Use [Microsoft Detours](https://github.com/microsoft/detours) instead of the current implementation in clink?
 - Symlink support (displaying matches, and whether to append a path separator).
-- Perturbed PROMPT envvar is visible in child processes (e.g. piped shell in various file editors).  There might be no way around that...
 
 ## Features
 
@@ -93,6 +95,7 @@ More ambitious things like CUA Selection and coloring arguments and flags while 
   - Mysteriously, holding down a bound key like **Ctrl+Up** or **Ctrl+A** was sometimes letting conhost periodically intercept some of the keypresses!  That shouldn't be possible, but maybe there's a way to deterministically cause that behavior?
   - **Ctrl+M** to activate marking mode.
   - Shouldn't be possible, but at one point **Ctrl+A** was sometimes able to get interpreted as Select All, and **Shift+Up** was sometimes able to get interpreted as Select Line Up.  That had to have been a bug in how clink was managing SetConsoleMode, but maybe there's a way to exploit that for good?
+    - Maybe hook some API and call original ReadConsoleW, and feed it input somehow to trick the console host into doing its thing?
 
 ## Editing
 - Custom color for readline input.  Might prefer to completely replace readline's line drawing, since it's trying to minimize updates over terminal emulators, and that makes it much harder to colorize the editing line (and arguments).
@@ -141,7 +144,6 @@ More ambitious things like CUA Selection and coloring arguments and flags while 
 ## Readline
 I've found some quirks, bugs, and performance issues in Readline.
 - Log and send the changes I've made to the Readline owner, to start a conversation about possible next steps.
-- Trailing added backslash when listing directory matches isn't counted as part of the column width.
 
 ## Configuration
 
@@ -151,6 +153,7 @@ I've found some quirks, bugs, and performance issues in Readline.
 # APPENDICES
 
 ## Known Issues
+- Perturbed PROMPT envvar is visible in child processes (e.g. piped shell in various file editors).
 - [#531](https://github.com/mridgers/clink/issues/531) AV detects a trojan on download _[This is likely because of the use of CreateRemoteThread and/or hooking OS APIs.  There might be a way to obfuscate the fact that clink uses those, but ultimately this is kind of an inherent problem.  Getting the binaries digitally signed might be the most effective solution, but that's financially expensive.]_
 
 ## Mystery

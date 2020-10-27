@@ -2402,9 +2402,9 @@ append_to_match (char *text, int orig_start, int delimiter, int quote_char, int 
   struct stat finfo;
 
 /* begin_clink_change */
-  char match_type;
+  const char *orig_text = text;
   if (rl_completion_matches_include_type)
-    match_type = *(text++);
+    text++;
 /* end_clink_change */
 
   temp_string_index = 0;
@@ -2428,7 +2428,7 @@ append_to_match (char *text, int orig_start, int delimiter, int quote_char, int 
 
 /* begin_clink_change */
   //if (rl_filename_completion_desired)
-  if (is_filename_completion_desired (text))
+  if (is_filename_completion_desired (orig_text))
 /* end_clink_change */
     {
       filename = tilde_expand (text);
@@ -2442,8 +2442,8 @@ append_to_match (char *text, int orig_start, int delimiter, int quote_char, int 
 /* begin_clink_change
  * Enable match providers to share the match type for efficiency.
  */
-      if (rl_completion_matches_include_type && match_type > MATCH_TYPE_NONE)
-	s = stat_from_match_type (match_type, filename, &finfo);
+      if (rl_completion_matches_include_type && *orig_text > MATCH_TYPE_NONE)
+	s = stat_from_match_type (*orig_text, filename, &finfo);
       else
 /* end_clink_change */
       s = (nontrivial_match && rl_completion_mark_symlink_dirs == 0)
