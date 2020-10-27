@@ -51,22 +51,21 @@ pre code {
 }
 
 kbd {
-    padding:0.1em 0.4em;
+    padding:0.1em 0.3em;
     border-collapse:separate;
     border:1px solid #ccc;
-    font-size:75%;
-    font-family:monospace;
+    font:70% SFMono-Regular,Consolas,Liberation Mono,Menlo,monospace;
     background-color:#f8f8f8;
     color:#333;
     -moz-box-shadow:0 1px 0px rgba(0, 0, 0, 0.2),0 0 0 0px #ffffff inset;
     -webkit-box-shadow:0 1px 0px rgba(0, 0, 0, 0.2),0 0 0 0px #ffffff inset;
     box-shadow:0 1px 0px rgba(0, 0, 0, 0.2),0 0 0 0px #ffffff inset;
-    -moz-border-radius:6px;
-    -webkit-border-radius:6px;
-    border-radius:6px;
+    -moz-border-radius:0.45em;
+    -webkit-border-radius:0.45em;
+    border-radius:0.45em;
     display:inline-block;
     margin:0 0.1em;
-    vertical-align:0.1em;
+    vertical-align:middle;
     white-space:nowrap;
 }
 
