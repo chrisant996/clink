@@ -8,6 +8,8 @@ Here's what's left to do in order to have a reasonable alpha release.  The alpha
 ## Documentation
 - Describe the new argmatcher/etc syntax.
 - Supply sample inputrc file(s).
+- Explain when history is saved and loaded (mridgers #512 has some info on that).
+- Explain from where scripts are loaded (mridgers #519 has some info on that).
 
 <br>
 <br>
@@ -61,13 +63,14 @@ The Phase 2 goal is to produce a viable Beta Release with broader compatibility 
 
 ## Problems
 - Lua `globfiles` and `globdirs` should return whether the files and dirs are hidden, to save _N_ additional calls to look up the hidden attributes.
-- Changing terminal width makes 0.4.8 slowly "walk up the screen".  Changing terminal width makes master go haywire.  Probably more ecma48 terminal issues.
+- Changing terminal width makes 0.4.8 slowly "walk up the screen".  Changing terminal width makes master go haywire.  Probably more ecma48 terminal issues.  Probably related to commit 8aeaa14.
 - Use `path::normalise` to clean up input like "\wbin\\\\cli" when using `complete` and `menu-complete`.
 - Dissatisfied with the match pipeline:  typing `exit` and hitting **Enter** triggers the match pipeline.
   - It seems more efficient to not invoke it until `complete` or `menu-complete` (etc).
   - But eventually in order to color arguments/etc the match pipeline will need to run while typing, so maybe leave it be.
 - Use [Microsoft Detours](https://github.com/microsoft/detours) instead of the current implementation in clink?
 - Symlink support (displaying matches, and whether to append a path separator).
+- Check if there's a newer update to the `wcwidth` implementation.
 
 ## Features
 
