@@ -14,6 +14,10 @@ ChrisAnt Plans
 # Phase 1
 The Phase 1 goal is to have a working version that for the most part meets or exceeds Clink 0.4.8 stability and functionality.
 
+## Bugs
+- `tilde-expand` doesn't supported quoted words.
+- Maybe need to guard against stderr output after all?
+
 ## LUA
 Lua support changed significantly.  Explore how to support backward compatibility for existing scripts [#6](https://github.com/chrisant996/clink/issues/6).
 - **Prompt filter:**  seems to be working now.
@@ -43,6 +47,12 @@ Lua support changed significantly.  Explore how to support backward compatibilit
   - Ability to delete, rearrange, and edit popup list items?
   - Show the current incremental search string somewhere?
 - Use `npm` to run `highlight.js` at compile time?
+- Changing terminal width makes 0.4.8 slowly "walk up the screen".  Changing terminal width makes master go haywire.  Probably more ecma48 terminal issues.  Probably related to commit 8aeaa14.
+- Use `path::normalise` to clean up input like "\wbin\\\\cli" when using `complete` and `menu-complete`.
+- Symlink support (displaying matches, and whether to append a path separator).
+- Looks like suppress_char_append(), suppress_quoting(), and slash_translation() are all dead code?
+- `arefiles()` may be a better model for lua scripts to specify match type.
+- 32a672e is suspicious:  "Resend ESC when it gets dropped by incremental searching".
 
 ## Questions
 - What is `set-mark`?
@@ -60,13 +70,10 @@ The Phase 2 goal is to produce a viable Beta Release with broader compatibility 
 
 ## Problems
 - Lua `globfiles` and `globdirs` should return whether the files and dirs are hidden, to save _N_ additional calls to look up the hidden attributes.
-- Changing terminal width makes 0.4.8 slowly "walk up the screen".  Changing terminal width makes master go haywire.  Probably more ecma48 terminal issues.  Probably related to commit 8aeaa14.
-- Use `path::normalise` to clean up input like "\wbin\\\\cli" when using `complete` and `menu-complete`.
 - Dissatisfied with the match pipeline:  typing `exit` and hitting **Enter** triggers the match pipeline.
   - It seems more efficient to not invoke it until `complete` or `menu-complete` (etc).
   - But eventually in order to color arguments/etc the match pipeline will need to run while typing, so maybe leave it be.
 - Use [Microsoft Detours](https://github.com/microsoft/detours) instead of the current implementation in clink?
-- Symlink support (displaying matches, and whether to append a path separator).
 - Check if there's a newer update to the `wcwidth` implementation.
 
 ## Features

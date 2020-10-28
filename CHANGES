@@ -5,8 +5,8 @@
 
 ### v1.1.1-alpha
 
-- Exclusively use Readline's completion implementation.  This (with fixes and enhancements in Readline itself) makes the completion experience much nicer and more sophisticated.
-- Exclusively use Readline's key binding implementation.  This makes it possible to have a single consistent way to set key bindings (inputrc) and for `clink-show-help` to list all key bindings.
+- Exclusively use Readline's completion implementation.  This (with fixes and enhancements in Readline itself) makes the completion experience much nicer and more sophisticated, and removes a lot of code that was added in v1.0.0a0.
+- Exclusively use Readline's key binding implementation.  This makes it possible to have a single consistent way to set key bindings (inputrc) and for `clink-show-help` to list all key bindings, and removes a lot of code that was added in v1.0.0a0.
 - Converted all of clink's internal key behaviors to be implemented as commands that can be bound in the inputrc file.
 - Rewrote and refactored the pagination routine to be used in multiple places.
 - Fixed prompt filtering to correctly use the specified priority order.
@@ -108,6 +108,8 @@
 
 ### v1.0.0a1 _(alpha test release)_
 
+> **TODO:** Categorize and order the v1.0.0a1 changes...
+
 - Fixed use after free in Doskey emulation.
 - Use clink/terminal's wcwidth implementation.
 - screen_buffer::set_cursor() should be relative to the visible area.
@@ -122,10 +124,57 @@
 
 ### v1.0.0a0 _(alpha test release)_
 
-> **TODO:** Yikes, so much to document...
+> **TODO:** Categorize and order the v1.0.0a0 changes...
 
-- Extensive changes.
-- Extensive code reorganization.
+- Extensive code reorganization, refactoring, and rewriting -- multiple times -- almost everything was touched.
+- Removed Powershell support.
+- Make a cached copy of Clink's DLL when injecting so as to not lock the master.
+- Added a `--version` option to print Clink's version.
+- Fixed `clink_x??.exe` startup stall on Windows 10.
+- Prefer `userprofile` over other standard environment variables for where to look for lua scripts.
+- Added `clink info` to print information about Clink.
+- Include more metadata in the Clink's executables.
+- Optional matching from UNC paths.
+- Don't write out settings that are set to default.
+- Make sure Ctrl-C doesn't modify history.
+- Removed XP support. It doesn't load DLLs like Clink uses them.
+- Fixed Doskey macros on Win8, and on Win10.
+- Added `clink echo` command to echo input key sequences to stdout.
+- Replaced `wcwidth()` with a more complete and correct version.
+- New API for argument style completion scripts.
+- Added internal `--list` flag to `clink set` for match generation.
+- New 'clink history' command (fixes [mridgers #172](https://github.com/mridgers/clink/issues/172)).
+- Added 'history' as an alias for `clink history`.
+- Added a setting to skip adding lines that start with `history`.
+- Updated `clink autorun` command's help text.
+- Changed `--cfgdir` to `--profile`, it's no longer required, and added help about it.
+- Pasting CRLFs doesn't really make sense.
+- Removed built in completions scripts for git, go, hg, and p4. There's better ones.
+- Renamed many of clink's Lua functions.
+- Added `match.ignore_case` setting.
+- Disabled Readline's completion code, and only use the clink alternative code.
+- Added `clink_path` setting for where to look for lua scripts.
+- Changed match generator API to use a result object to collect matches.
+- Moved functions from `clink` to `os` in Lua.
+- Added some current dir functions in Lua.
+- Removed `clink.is_match()` in Lua; don't presume anything on anyone's behalf about matches.
+- Exposed path manipulation functions to Lua.
+- Removed control of Readline's suffix appending and disabled it.
+- Removed redundant slash translation and shims to make it happen.
+- Added some env/dir functions in Lua.
+- Removed '--scripts' argument (fixes [mridgers #206](https://github.com/mridgers/clink/issues/206)).
+- Embed the core Lua scripts instead of loading them from files.
+- Added a module to display and select completions without using Readline.
+- Refactored generating matches, and introduced new match generator API.
+- Search for multiple places for [.|_]inputrc (fixes [mridgers #258](https://github.com/mridgers/clink/issues/258)).
+- Refactored prompt filtering, and introduced new prompt filtering API.
+- Use VT220-style control codes for special keys.
+- If <kbd>Alt</kbd> is pressed send ESC in the input stream rather than setting meta bit.
+- Removed `esc_clears_line` setting.
+- Guard against Readline's writes to stderr.
+- Rewrote the terminal emulation module, and all Readline IO goes through it.
+- Added a module for scrolling the screen.
+- Remove `clink_inputrc_base` file and embed its content (fixes [mridgers #257](https://github.com/mridgers/clink/issues/257)).
 
 ### v0.4.9
 
