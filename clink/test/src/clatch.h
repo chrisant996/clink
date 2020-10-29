@@ -88,7 +88,7 @@ inline bool run(const char* prefix="")
     {
         // Cheap lower-case prefix test.
         const char* a = prefix, *b = test->m_name;
-        for (; (*a & ~0x20) == (*b & ~0x20); ++a, ++b);
+        for (; *a && (*a & ~0x20) == (*b & ~0x20); ++a, ++b);
         if (*a)
             continue;
 
