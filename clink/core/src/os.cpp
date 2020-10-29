@@ -5,6 +5,16 @@
 #include "os.h"
 #include "path.h"
 #include "str.h"
+#include <locale.h>
+
+// We use UTF8 everywhere, and we need to tell the CRT so that mbrtowc and etc
+// use UTF8 instead of the default CRT pseudo-locale.
+class auto_set_locale_utf8
+{
+public:
+    auto_set_locale_utf8() { setlocale(LC_ALL, ".utf8"); }
+};
+static auto_set_locale_utf8 s_auto_utf8;
 
 namespace os
 {

@@ -822,9 +822,6 @@ rl_module::rl_module(const char* shell_name, terminal_in* input)
     {
         s_rl_initialized = true;
 
-        // Readline needs to know it should use UTF8.
-        setlocale(LC_ALL, ".utf8");
-
         rl_add_history_hook = host_add_history;
         rl_remove_history_hook = host_remove_history;
         rl_add_funmap_entry("clink-reset-line", clink_reset_line);
