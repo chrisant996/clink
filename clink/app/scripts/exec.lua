@@ -80,11 +80,8 @@ function exec_generator:generate(line_state, match_builder)
     local text_dir = path.getdirectory(text) or ""
     if #text_dir == 0 then
         -- Add console aliases as matches.
-        for _, alias in ipairs(os.getaliases()) do
-            match_builder:addmatch({ match = alias, type = "doskey" })
-        end
-
-        match_builder:addmatches(aliases)
+        local aliases = os.getaliases()
+        match_builder:addmatches(aliases, "alias")
 
         -- Add environment's PATH variable as paths to search.
         if settings.get("exec.path") then

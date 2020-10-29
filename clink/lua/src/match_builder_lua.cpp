@@ -19,6 +19,17 @@ static match_builder_lua::method g_methods[] = {
 
 
 //------------------------------------------------------------------------------
+static const char* get_string(lua_State* state, int index)
+{
+    if (lua_gettop(state) < index || !lua_isstring(state, index))
+        return nullptr;
+
+    return lua_tostring(state, index);
+}
+
+
+
+//------------------------------------------------------------------------------
 match_builder_lua::match_builder_lua(match_builder& builder)
 : lua_bindable<match_builder_lua>("match_builder_lua", g_methods)
 , m_builder(builder)
@@ -33,12 +44,16 @@ match_builder_lua::~match_builder_lua()
 //------------------------------------------------------------------------------
 /// -name:  builder:addmatch
 /// -arg:   match:string|table
+/// -arg:   type:string|nil
 /// -ret:   boolean
 int match_builder_lua::add_match(lua_State* state)
 {
     int ret = 0;
     if (lua_gettop(state) > 0)
-        ret = !!add_match_impl(state, 1);
+    {
+        match_type type = to_match_type(get_string(state, 2));
+        ret = !!add_match_impl(state, 1, type);
+    }
 
     lua_pushboolean(state, ret);
     return 1;
@@ -61,6 +76,7 @@ int match_builder_lua::set_prefix_included(lua_State* state)
 //------------------------------------------------------------------------------
 /// -name:  builder:addmatches
 /// -arg:   matches:table
+/// -arg:   type:string|nil
 /// -ret:   integer, boolean
 /// This is the equivalent of calling builder:addmatch() in a for-loop. Returns
 /// the number of matches added and a boolean indicating if all matches were
@@ -74,12 +90,14 @@ int match_builder_lua::add_matches(lua_State* state)
         return 2;
     }
 
+    match_type type = to_match_type(get_string(state, 2));
+
     int count = 0;
     int total = int(lua_rawlen(state, 1));
     for (int i = 1; i <= total; ++i)
     {
         lua_rawgeti(state, 1, i);
-        count += !!add_match_impl(state, -1);
+        count += !!add_match_impl(state, -1, type);
         lua_pop(state, 1);
     }
 
@@ -89,13 +107,12 @@ int match_builder_lua::add_matches(lua_State* state)
 }
 
 //------------------------------------------------------------------------------
-bool match_builder_lua::add_match_impl(lua_State* state, int stack_index)
+bool match_builder_lua::add_match_impl(lua_State* state, int stack_index, match_type type)
 {
     if (lua_isstring(state, stack_index))
     {
         const char* match = lua_tostring(state, stack_index);
-        // TODO: supply actual match type.
-        return m_builder.add_match(match, match_type::none);
+        return m_builder.add_match(match, type);
     }
     else if (lua_istable(state, stack_index))
     {
@@ -103,7 +120,7 @@ bool match_builder_lua::add_match_impl(lua_State* state, int stack_index)
             --stack_index;
 
         match_desc desc = {};
-        desc.type = match_type::none;
+        desc.type = type;
 
         lua_pushliteral(state, "match");
         lua_rawget(state, stack_index);

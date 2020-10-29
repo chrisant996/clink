@@ -51,7 +51,7 @@ match_type to_match_type(const char* type_name)
 {
     match_type type = match_type::none;
 
-    str_tokeniser tokens(type_name, ",;+|./ ");
+    str_tokeniser tokens(type_name ? type_name : "", ",;+|./ ");
     str_iter token;
 
     while (tokens.next(token))

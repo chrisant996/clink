@@ -8,6 +8,7 @@ ChrisAnt Plans
 - Explain when history is saved and loaded (mridgers #512 has some info on that).
 - Explain from where scripts are loaded (mridgers #519 has some info on that).
 - Doc setprefixincluded, and the restrictions on mixed match types.
+- Doc match types.
 
 <br>
 <br>
@@ -16,7 +17,6 @@ ChrisAnt Plans
 The Phase 1 goal is to have a working version that for the most part meets or exceeds Clink 0.4.8 stability and functionality.
 
 ## Bugs
-- **FAILS:** `dbg .build\vs2019\bin\debug\clink_test_x64.exe "exec"`
 - `tilde-expand` doesn't supported quoted words.
 - **Alt+8** then **Esc** lands in a state where it thinks an ESC (`\x1b`) has been processed.
 - `update_internal()` seems like it's getting called once per char in a key sequence; probably only needs to happen after a key that finished a key binding.
@@ -56,7 +56,6 @@ Lua support changed significantly.  Explore how to support backward compatibilit
 - Use `path::normalise` to clean up input like "\wbin\\\\cli" when using `complete` and `menu-complete`.
 - Symlink support (displaying matches, and whether to append a path separator).
 - Looks like suppress_char_append(), suppress_quoting(), and slash_translation() are all dead code?
-- `arefiles()` may be a better model for lua scripts to specify match type.
 - 32a672e is suspicious:  "Resend ESC when it gets dropped by incremental searching".
 
 ## Questions

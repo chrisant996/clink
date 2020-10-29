@@ -7,6 +7,7 @@
 
 class match_builder;
 struct lua_State;
+enum class match_type : unsigned char;
 
 //------------------------------------------------------------------------------
 class match_builder_lua
@@ -20,6 +21,6 @@ public:
     int             set_prefix_included(lua_State* state);
 
 private:
-    bool            add_match_impl(lua_State* state, int stack_index);
+    bool            add_match_impl(lua_State* state, int stack_index, match_type type);
     match_builder&  m_builder;
 };
