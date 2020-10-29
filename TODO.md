@@ -47,7 +47,7 @@ Lua support changed significantly.  Explore how to support backward compatibilit
 - Promote store_impl to be a template and public, so the popup list can use it?
 - Popup list:
   - What to do about completion colors?
-  - Make it owner draw and add text like "dir", "doskey", etc?
+  - Make it owner draw and add text like "dir", "alias", etc?
   - Add stat chars when so configured?
   - Ability to delete, rearrange, and edit popup list items?
   - Show the current incremental search string somewhere?
