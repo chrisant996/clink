@@ -2508,7 +2508,10 @@ insert_all_matches (char **matches, int point, char *qc)
 	  rp = make_quoted_replacement (matches[i], SINGLE_MATCH, qc);
 	  rl_insert_text (rp);
 	  rl_insert_text (" ");
-	  if (rp != matches[i])
+/* begin_clink_change */
+	  //if (rp != matches[i])
+	  if (rp != matches[i] + !!rl_completion_matches_include_type)
+/* end_clink_change */
 	    xfree (rp);
 	}
     }
@@ -2517,7 +2520,10 @@ insert_all_matches (char **matches, int point, char *qc)
       rp = make_quoted_replacement (matches[0], SINGLE_MATCH, qc);
       rl_insert_text (rp);
       rl_insert_text (" ");
-      if (rp != matches[0])
+/* begin_clink_change */
+      //if (rp != matches[0])
+      if (rp != matches[0] + !!rl_completion_matches_include_type)
+/* end_clink_change */
 	xfree (rp);
     }
   rl_end_undo_group ();
