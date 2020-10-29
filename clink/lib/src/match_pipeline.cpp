@@ -34,8 +34,7 @@ inline bool is_path_separator(char c)
 
 //------------------------------------------------------------------------------
 static unsigned int normal_selector(
-    const char* orig_needle,
-    unsigned int len_prefix,
+    const char* needle,
     match_info* infos,
     int count)
 {
@@ -43,7 +42,6 @@ static unsigned int normal_selector(
     for (int i = 0; i < count; ++i)
     {
         const char* name = infos[i].match;
-        const char* needle = orig_needle + (is_pathish(infos[i].type) ? len_prefix : 0);
         int j = str_compare(needle, name);
         infos[i].select = (j < 0 || !needle[j]);
         ++select_count;
@@ -116,14 +114,14 @@ void match_pipeline::fill_info() const
 }
 
 //------------------------------------------------------------------------------
-void match_pipeline::select(const char* needle, unsigned int len_prefix) const
+void match_pipeline::select(const char* needle) const
 {
     int count = m_matches.get_info_count();
     if (!count)
         return;
 
     unsigned int selected_count = 0;
-    selected_count = normal_selector(needle, len_prefix, m_matches.get_infos(), count);
+    selected_count = normal_selector(needle, m_matches.get_infos(), count);
 
     m_matches.coalesce(selected_count);
 }

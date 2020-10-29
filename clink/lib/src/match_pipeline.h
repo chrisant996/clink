@@ -16,7 +16,7 @@ public:
     void                reset() const;
     void                generate(const line_state& state, const array<match_generator*>& generators) const;
     void                fill_info() const;
-    void                select(const char* needle, unsigned int len_prefix) const;
+    void                select(const char* needle) const;
     void                sort() const;
 
 private:
