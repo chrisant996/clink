@@ -132,7 +132,7 @@ bool match_builder_lua::add_match_impl(lua_State* state, int stack_index)
         lua_pushliteral(state, "type");
         lua_rawget(state, stack_index);
         if (lua_isstring(state, -1))
-            desc.set_type(lua_tostring(state, -1));
+            desc.type = to_match_type(lua_tostring(state, -1));
         lua_pop(state, 1);
 
         if (desc.match != nullptr)

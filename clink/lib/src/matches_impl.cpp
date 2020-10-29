@@ -16,7 +16,7 @@ match_type to_match_type(int mode, int attr)
 {
     static_assert(int(match_type::none) == MATCH_TYPE_NONE, "match_type enum must match readline constants");
     static_assert(int(match_type::word) == MATCH_TYPE_WORD, "match_type enum must match readline constants");
-    static_assert(int(match_type::doskey) == MATCH_TYPE_ALIAS, "match_type enum must match readline constants");
+    static_assert(int(match_type::alias) == MATCH_TYPE_ALIAS, "match_type enum must match readline constants");
     static_assert(int(match_type::file) == MATCH_TYPE_FILE, "match_type enum must match readline constants");
     static_assert(int(match_type::dir) == MATCH_TYPE_DIR, "match_type enum must match readline constants");
     static_assert(int(match_type::link) == MATCH_TYPE_LINK, "match_type enum must match readline constants");
@@ -47,9 +47,9 @@ match_type to_match_type(int mode, int attr)
 }
 
 //------------------------------------------------------------------------------
-void match_desc::set_type(const char* type_name)
+match_type to_match_type(const char* type_name)
 {
-    type = match_type::none;
+    match_type type = match_type::none;
 
     str_tokeniser tokens(type_name, ",;+|./ ");
     str_iter token;
@@ -70,8 +70,8 @@ void match_desc::set_type(const char* type_name)
         // Translate type names into match_type values.
         if (_strnicmp(t, "word", l) == 0)
             type = (type & ~match_type::mask) | match_type::word;
-        else if (_strnicmp(t, "doskey", l) == 0)
-            type = (type & ~match_type::mask) | match_type::doskey;
+        else if (_strnicmp(t, "alias", l) == 0)
+            type = (type & ~match_type::mask) | match_type::alias;
         else if (_strnicmp(t, "file", l) == 0)
             type = (type & ~match_type::mask) | match_type::file;
         else if (_strnicmp(t, "dir", l) == 0)
@@ -84,6 +84,8 @@ void match_desc::set_type(const char* type_name)
         else if (_strnicmp(t, "readonly", l) == 0)
             type |= match_type::readonly;
     }
+
+    return type;
 }
 
 //------------------------------------------------------------------------------

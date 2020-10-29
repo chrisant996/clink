@@ -11,7 +11,7 @@ enum class match_type : unsigned char
     do_not_use,     // complete.c relies on the type never being 0, so it can use savestring().
     none,
     word,
-    doskey,
+    alias,
     file,
     dir,
     link,
@@ -50,6 +50,7 @@ public:
 
 //------------------------------------------------------------------------------
 match_type to_match_type(int mode, int attr);
+match_type to_match_type(const char* type_name);
 
 //------------------------------------------------------------------------------
 struct match_desc
@@ -59,8 +60,6 @@ struct match_desc
     const char*             aux;
     char                    suffix;
     match_type              type;
-
-    void                    set_type(const char* type_name);
 };
 
 //------------------------------------------------------------------------------
