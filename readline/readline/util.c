@@ -233,6 +233,12 @@ rl_tilde_expand (int ignore, int key)
   else if (start < 0)
     start = 0;
 
+/* begin_clink_change */
+  /* Skip past quotes. */
+  while (start < rl_end && strchr (rl_completer_quote_characters, rl_line_buffer[start]))
+    start++;
+/* end_clink_change */
+
   end = start;
   do
     end++;
