@@ -500,13 +500,11 @@ static char** alternative_matches(const char* text, int start, int end)
     int len_prefix = end_prefix ? end_prefix - text : 0;
 
     // If there are any matches with non-pathish types, then disable filename
-    // display so that prefix display works correctly.
-    for (int i = 0; i < match_count; ++i)
-        if (!is_pathish(s_matches->get_match_type(i)))
-        {
-            rl_filename_display_desired = 0;
-            break;
-        }
+    // display so that prefix display works correctly.  But add_match_impl
+    // ensures all matches are pathish or all are non-pathish, so we can just
+    // test the first match.
+    if (!is_pathish(s_matches->get_match_type(0)))
+        rl_filename_display_desired = 0;
 
     // Deep copy of the generated matches.  Inefficient, but this is how
     // readline wants them.
