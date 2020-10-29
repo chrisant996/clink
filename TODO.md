@@ -7,6 +7,7 @@ ChrisAnt Plans
 - Supply sample inputrc file(s).
 - Explain when history is saved and loaded (mridgers #512 has some info on that).
 - Explain from where scripts are loaded (mridgers #519 has some info on that).
+- Doc setprefixincluded, and the restrictions on mixed match types.
 
 <br>
 <br>
@@ -15,7 +16,11 @@ ChrisAnt Plans
 The Phase 1 goal is to have a working version that for the most part meets or exceeds Clink 0.4.8 stability and functionality.
 
 ## Bugs
+- **FAILS:** `dbg .build\vs2019\bin\debug\clink_test_x64.exe "exec"`
 - `tilde-expand` doesn't supported quoted words.
+- **Alt+8** then **Esc** lands in a state where it thinks an ESC (`\x1b`) has been processed.
+- `update_internal()` seems like it's getting called once per char in a key sequence; probably only needs to happen after a key that finished a key binding.
+- Should only fold path separators in pathish matches.
 - Maybe need to guard against stderr output after all?
 
 ## LUA
