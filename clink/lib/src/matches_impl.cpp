@@ -361,10 +361,6 @@ bool matches_impl::add_match(const match_desc& desc)
     if (m_coalesced || match == nullptr || !*match)
         return false;
 
-    // Can't mix pathish and non-pathish matches.
-    if (m_infos.size() && is_pathish(m_infos[0].type) != is_pathish(type))
-        return false;
-
     if (desc.type == match_type::none)
     {
         char* sep = rl_last_path_separator(match);

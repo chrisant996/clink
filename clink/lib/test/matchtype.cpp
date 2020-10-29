@@ -98,28 +98,28 @@ TEST_CASE("Match type : simple")
     SECTION("pathish matches")
     {
         tester.set_input("plugh fo");
-        tester.set_expected_matches("food");
+        tester.set_expected_matches("foo/bar", "foo/bark", "foo/box", "food", "fool");
         tester.run();
     }
 
     SECTION("non-pathish matches")
     {
         tester.set_input("xyzzy fo");
-        tester.set_expected_matches("foo/bar", "foo/bark", "foo/box", "fool");
+        tester.set_expected_matches("foo/bar", "foo/bark", "foo/box", "food", "fool");
         tester.run();
     }
 
     SECTION("pathish readline")
     {
         tester.set_input("plugh fo\x1b*");
-        tester.set_expected_output("plugh food ");
+        tester.set_expected_output("plugh foo/bar foo/bark foo/box food fool ");
         tester.run();
     }
 
     SECTION("non-pathish readline")
     {
         tester.set_input("xyzzy fo\x1b*");
-        tester.set_expected_output("xyzzy foo/bar foo/bark foo/box fool ");
+        tester.set_expected_output("xyzzy foo/bar foo/bark foo/box food fool ");
         tester.run();
     }
 }
