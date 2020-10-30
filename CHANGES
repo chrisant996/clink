@@ -3,6 +3,15 @@
 
 ## Releases from [chrisant996/clink](https://github.com/chrisant996/clink) fork
 
+### unreleased
+
+- Revert the change to disallow mixing file/directory/symlink with other match types (it broke the tests and certain completion scenarios).
+- Fixed crash in `insert-completions` due to heap failure (introduced by the performance chnages for displaying matches).
+- Fixed `tilde-expand` for quoted text.
+- Fixed <kbd>Esc</kbd> in Readline's digit argument input mode (it doesn't try to cancel the mode, because that's not how Readline is documented to work).
+- `addmatch()` in Lua scripts takes an optional match type argument.
+- Set locale to UTF8 much earlier to avoid quirky behavior early in script processing.
+
 ### v1.1.1-alpha
 
 - Exclusively use Readline's completion implementation.  This (with fixes and enhancements in Readline itself) makes the completion experience much nicer and more sophisticated, and removes a lot of code that was added in v1.0.0a0.
@@ -70,6 +79,7 @@
     - Fixed to use the same list as CMD for characters that require quoting.
     - Fixed normalizing UNC paths.
     - Fixed volume relative completions (e.g. `x:foo`).
+    - Disallow mixing file/directory/symlink with other match types.  This was to avoid a confusing/malfunctioning case in match display and prefix highlighting.
 - Fixed UTF8 encoding in various lua functions.
 - Fixed printing stderr output from Readline, lua, and clink.
 - Fixed crashes and other failures when starting clink in 32 bit CMD.
@@ -108,73 +118,73 @@
 
 ### v1.0.0a1 _(alpha test release)_
 
-> **TODO:** Categorize and order the v1.0.0a1 changes...
-
-- Fixed use after free in Doskey emulation.
-- Use clink/terminal's wcwidth implementation.
-- screen_buffer::set_cursor() should be relative to the visible area.
-- Some internal lua functions needed the unquoted clink exe path.
-- Search ancestors for a compatible target process (for when cmd.exe starts another process that subsequently starts clink; especially useful during development).
-- The origin path now affects the hash in the dll cache, to guard against directory moves.
 - Improve terminal integration with the Readline library.
 - Internal improvements to the built-in ecma48 terminal emulator.
-- Try to adjust the cursor position better when resizing the terminal.
+- Fixed use after free in Doskey emulation.
 - Fixed dash-dash flag completion.
+- Search ancestors for a compatible target process (for when cmd.exe starts another process that subsequently starts clink; especially useful during development).
+- Use clink/terminal's wcwidth() implementation.
+- screen_buffer::set_cursor() should be relative to the visible area.
+- Try to adjust the cursor position better when resizing the terminal.
+- Some internal lua functions needed the unquoted clink exe path.
+- The origin path now affects the hash in the dll cache, to guard against directory moves.
 - More code reorganization.
 
 ### v1.0.0a0 _(alpha test release)_
 
-> **TODO:** Categorize and order the v1.0.0a0 changes...
-
 - Extensive code reorganization, refactoring, and rewriting -- multiple times -- almost everything was touched.
-- Removed Powershell support.
+- OS integration:
+    - Fixed Doskey macros on Win8, and on Win10.
+    - Fixed `clink_x??.exe` startup stall on Windows 10.
+    - Removed XP support. It doesn't load DLLs like Clink uses them.
+    - Removed Powershell support.
+- Readline integration:
+    - Search for multiple places for [.|_]inputrc (fixes [mridgers #258](https://github.com/mridgers/clink/issues/258)).
+    - Disabled Readline's completion code, and only use the clink alternative code.
+    - Removed redundant slash translation and shims to make it happen.
+    - Removed control of Readline's suffix appending and disabled it.
+- `clink` commands and flags:
+    - Changed `--cfgdir` to `--profile`, it's no longer required, and added help about it.
+    - Added a `--version` option to print Clink's version.
+    - Added `clink info` to print information about Clink.
+    - Added `clink echo` command to echo input key sequences to stdout.
+    - Added `clink history` command (fixes [mridgers #172](https://github.com/mridgers/clink/issues/172)).
+    - Added 'history' as an alias for `clink history`.
+    - Added internal `--list` flag to `clink set` for match generation.
+    - Removed '--scripts' argument (fixes [mridgers #206](https://github.com/mridgers/clink/issues/206)).
+    - Updated `clink autorun` command's help text.
+- Lua scripts:
+    - Prefer `userprofile` over other standard environment variables for where to look for lua scripts.
+    - New API for argument style completion scripts.
+    - Refactored prompt filtering, and introduced new prompt filtering API.
+    - Refactored generating matches, and introduced new match generator API.
+    - Removed built in completions scripts for git, go, hg, and p4. There's better ones.
+    - Renamed many of clink's Lua functions.
+    - Moved functions from `clink` to `os` in Lua.
+    - Removed `clink.is_match()` in Lua; don't presume anything on anyone's behalf about matches.
+    - Added some current dir functions in Lua.
+    - Added some env/dir functions in Lua.
+    - Exposed path manipulation functions to Lua.
+    - Embed the core Lua scripts instead of loading them from files.
+- Terminal IO:
+    - Added a module for scrolling the screen.
+    - Rewrote the terminal emulation module, and all Readline IO goes through it.
+    - Use VT220-style control codes for special keys.
+    - If <kbd>Alt</kbd> is pressed send ESC in the input stream rather than setting meta bit.
+    - Replaced wcwidth() with a more complete and correct version.
+- Settings:
+    - Added `clink_path` setting for where to look for lua scripts.
+    - Added `match.ignore_case` setting.
+    - Added `files.unc_paths` setting for optional matching from UNC paths.
+    - Added a setting to skip adding lines that start with `history`.
+    - Removed `esc_clears_line` setting.
+    - Pasting CRLFs doesn't really make sense.
+    - Don't write out settings that are set to default.
+- Make sure <kbd>Ctrl</kbd>-<kbd>C</kbd> doesn't modify history.
 - Make a cached copy of Clink's DLL when injecting so as to not lock the master.
-- Added a `--version` option to print Clink's version.
-- Fixed `clink_x??.exe` startup stall on Windows 10.
-- Prefer `userprofile` over other standard environment variables for where to look for lua scripts.
-- Added `clink info` to print information about Clink.
-- Include more metadata in the Clink's executables.
-- Optional matching from UNC paths.
-- Don't write out settings that are set to default.
-- Make sure Ctrl-C doesn't modify history.
-- Removed XP support. It doesn't load DLLs like Clink uses them.
-- Fixed Doskey macros on Win8, and on Win10.
-- Added `clink echo` command to echo input key sequences to stdout.
-- Replaced `wcwidth()` with a more complete and correct version.
-- New API for argument style completion scripts.
-- Added internal `--list` flag to `clink set` for match generation.
-- New 'clink history' command (fixes [mridgers #172](https://github.com/mridgers/clink/issues/172)).
-- Added 'history' as an alias for `clink history`.
-- Added a setting to skip adding lines that start with `history`.
-- Updated `clink autorun` command's help text.
-- Changed `--cfgdir` to `--profile`, it's no longer required, and added help about it.
-- Pasting CRLFs doesn't really make sense.
-- Removed built in completions scripts for git, go, hg, and p4. There's better ones.
-- Renamed many of clink's Lua functions.
-- Added `match.ignore_case` setting.
-- Disabled Readline's completion code, and only use the clink alternative code.
-- Added `clink_path` setting for where to look for lua scripts.
-- Changed match generator API to use a result object to collect matches.
-- Moved functions from `clink` to `os` in Lua.
-- Added some current dir functions in Lua.
-- Removed `clink.is_match()` in Lua; don't presume anything on anyone's behalf about matches.
-- Exposed path manipulation functions to Lua.
-- Removed control of Readline's suffix appending and disabled it.
-- Removed redundant slash translation and shims to make it happen.
-- Added some env/dir functions in Lua.
-- Removed '--scripts' argument (fixes [mridgers #206](https://github.com/mridgers/clink/issues/206)).
-- Embed the core Lua scripts instead of loading them from files.
-- Added a module to display and select completions without using Readline.
-- Refactored generating matches, and introduced new match generator API.
-- Search for multiple places for [.|_]inputrc (fixes [mridgers #258](https://github.com/mridgers/clink/issues/258)).
-- Refactored prompt filtering, and introduced new prompt filtering API.
-- Use VT220-style control codes for special keys.
-- If <kbd>Alt</kbd> is pressed send ESC in the input stream rather than setting meta bit.
-- Removed `esc_clears_line` setting.
 - Guard against Readline's writes to stderr.
-- Rewrote the terminal emulation module, and all Readline IO goes through it.
-- Added a module for scrolling the screen.
 - Remove `clink_inputrc_base` file and embed its content (fixes [mridgers #257](https://github.com/mridgers/clink/issues/257)).
+- Include more metadata in the Clink's executables.
 
 ### v0.4.9
 
