@@ -17,7 +17,6 @@ ChrisAnt Plans
 The Phase 1 goal is to have a working version that for the most part meets or exceeds Clink 0.4.8 stability and functionality.
 
 ## Bugs
-- **Alt+8** then **Esc** lands in a state where it thinks an ESC (`\x1b`) has been processed.
 - `update_internal()` seems like it's getting called once per char in a key sequence; probably only needs to happen after a key that finished a key binding.
 - Should only fold path separators in pathish matches.
 - Maybe need to guard against stderr output after all?

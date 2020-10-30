@@ -21,7 +21,7 @@
 //------------------------------------------------------------------------------
 const int simple_input_states = (RL_STATE_MOREINPUT | RL_STATE_ISEARCH |
                                  RL_STATE_NSEARCH | RL_STATE_SEARCH |
-                                 RL_STATE_NUMERICARG | RL_STATE_CHARSEARCH);
+                                 RL_STATE_CHARSEARCH);
 
 
 
