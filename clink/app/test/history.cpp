@@ -36,6 +36,11 @@ struct test_history_db
     {
         initialise();
     }
+
+    unsigned int get_master_tag_size() const
+    {
+        return m_master_ctag.size();
+    }
 };
 
 //------------------------------------------------------------------------------
@@ -140,14 +145,14 @@ TEST_CASE("history db")
                 }
             }
 
-            REQUIRE(os::get_file_size(master_path) == line_bytes);
+            REQUIRE(os::get_file_size(master_path) == line_bytes + history.get_master_tag_size());
         }
 
         // Clear the history.
         {
             test_history_db history;
             history.clear();
-            REQUIRE(os::get_file_size(master_path) == 0);
+            REQUIRE(os::get_file_size(master_path) == 0 + history.get_master_tag_size());
         }
 
         REQUIRE(count_files() == 1);
@@ -168,7 +173,9 @@ TEST_CASE("history db")
 
             REQUIRE(count_files() == 3);
             REQUIRE(os::get_file_size(session_path) == line_bytes);
-            REQUIRE(os::get_file_size(master_path) == 0);
+            REQUIRE(os::get_file_size(master_path) == 0 + history.get_master_tag_size());
+
+            line_bytes += history.get_master_tag_size(); // because reap()
         }
 
         REQUIRE(count_files() == 1);

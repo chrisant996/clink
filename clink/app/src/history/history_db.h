@@ -18,6 +18,8 @@ public:
     const char*     get() const { return m_tag.c_str(); }
     void            set(const char* tag);
 
+    unsigned int    size() const { return m_tag.length() + 1; }
+
 private:
     str<32>         m_tag;
 };
@@ -25,6 +27,8 @@ private:
 //------------------------------------------------------------------------------
 class history_db
 {
+    friend struct test_history_db;
+
 public:
     enum expand_result
     {
@@ -62,6 +66,7 @@ public:
     line_id                     find(const char* line) const;
     template <int S> iter       read_lines(char (&buffer)[S]);
     iter                        read_lines(char* buffer, unsigned int buffer_size);
+    unsigned int                get_file_start(unsigned int bank_index) const;
 
     static expand_result        expand(const char* line, str_base& out);
 

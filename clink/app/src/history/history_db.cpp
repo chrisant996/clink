@@ -537,12 +537,14 @@ bool read_line_iter::next_bank()
 {
     while (m_bank_index < sizeof_array(m_db.m_bank_handles))
     {
-        if (void* bank_handle = m_db.m_bank_handles[m_bank_index++])
+        unsigned int bank_index = m_bank_index++;
+        if (void* bank_handle = m_db.m_bank_handles[bank_index])
         {
             char* buffer = (char*)(this + 1);
             m_lock.~read_lock();
             new (&m_lock) read_lock(bank_handle);
             new (&m_line_iter) read_lock::line_iter(m_lock, buffer, m_buffer_size);
+            m_line_iter.set_file_offset(m_db.get_file_start(bank_index));
             return true;
         }
     }
@@ -589,17 +591,18 @@ history_db::line_id history_db::iter::next(str_iter& out)
 //------------------------------------------------------------------------------
 static bool extract_ctag(const read_lock& lock, concurrency_tag& tag)
 {
-    char buffer[256];
+    char buffer[128];
     read_lock::file_iter iter(lock, buffer);
 
     int bytes_read = iter.next();
-    if (bytes_read <= 1)
+    if (bytes_read <= 0)
     {
-        LOG("read %u bytes", bytes_read);
+        LOG("read %d bytes", bytes_read);
         return false;
     }
 
-    --bytes_read;
+    if (bytes_read >= sizeof(buffer))
+        bytes_read = sizeof(buffer) - 1;
     buffer[bytes_read] = 0;
 
     if (strncmp(buffer, "|CTAG_", 6) != 0)
@@ -889,17 +892,21 @@ void history_db::load_rl_history()
 //------------------------------------------------------------------------------
 void history_db::clear()
 {
-    for_each_bank([] (unsigned int bank_index, write_lock& lock)
+    for_each_bank([&] (unsigned int bank_index, write_lock& lock)
     {
         lock.clear();
         if (bank_index == bank_master)
         {
-            concurrency_tag tag;
-            tag.generate_new_tag();
-            lock.add(tag.get());
+            m_master_ctag.clear();
+            m_master_ctag.generate_new_tag();
+            lock.add(m_master_ctag.get());
         }
         return true;
     });
+
+    m_index_map.clear();
+    m_master_len = 0;
+    m_master_deleted_count = 0;
 }
 
 //------------------------------------------------------------------------------
@@ -1085,4 +1092,12 @@ history_db::iter history_db::read_lines(char* buffer, unsigned int size)
         ret.impl = uintptr_t(new (buffer) read_line_iter(*this, size));
 
     return ret;
+}
+
+//------------------------------------------------------------------------------
+unsigned int history_db::get_file_start(unsigned int bank_index) const
+{
+    if (bank_index == bank_master)
+        return m_master_ctag.size();
+    return 0;
 }
