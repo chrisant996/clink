@@ -5,8 +5,6 @@ ChrisAnt Plans
 # Documentation
 - Describe the new argmatcher/etc syntax.
 - Supply sample inputrc file(s).
-- Explain when history is saved and loaded (mridgers #512 has some info on that).
-- Explain how history is trimmed and compacted.
 - Explain from where scripts are loaded (mridgers #519 has some info on that).
 - Doc setprefixincluded, and the restrictions on mixed match types.
 - Doc match types.

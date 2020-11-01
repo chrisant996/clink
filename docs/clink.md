@@ -74,6 +74,7 @@ Name                         | Description
 `history.dupe_mode`          | If a line is a duplicate of an existing history entry Clink will erase the duplicate when this is set `erase_prev`. Setting it to `ignore` will not add duplicates to the history, and setting it to `add` will always add lines.
 `history.expand_mode`        | The `!` character in an entered line can be interpreted to introduce words from the history. This can be enabled and disable by setting this value to `on` or `off`. Values of `not_squoted`, `not_dquoted`, or `not_quoted` will skip any `!` character quoted in single, double, or both quotes respectively.
 `history.ignore_space`       | Ignore lines that begin with whitespace when adding lines in to the history.
+`history.max_lines`          | The number of history lines to save if `history.save` is enabled (1 to 50000).
 `history.save`               | Saves history between sessions.
 `history.shared`             | When history is shared, all instances of Clink update the master history list after each command and reload the master history list on each prompt.  When history is not shared, each instance updates the master history list on exit.
 `lua.debug`                  | Loads a simple embedded command line debugger when enabled. Breakpoints can be added by calling `pause()`.
@@ -398,7 +399,9 @@ A filter function is registered into the filter chain by passing the function to
 
 # Miscellaneous
 
-## Binding special keys
+## Key bindings
+
+### Binding special keys
 
 Due to differences between Windows and Linux, escape codes for keys like PageUp/Down and the arrow keys are different in Clink.
 
@@ -427,7 +430,7 @@ Here is an example line from a clink_inputrc file that binds Shift-End to the Re
 "\e[1;2F": transpose-word
 ```
 
-## Binding function keys
+### Binding function keys
 
 For function keys the full escape sequences are listed.  The last four columns (<kbd>Alt</kbd>+) are the same as the first four columns prefixed with an extra `\e`.
 
@@ -454,9 +457,21 @@ Here is an example line from a clink_inputrc file that binds <kbd>Alt</kbd>+<kbd
 "\e\e[1;2R": history-substring-search-backward
 ```
 
-## Discovering Clink key sequences
+### Discovering Clink key sequences
 
 An easy way to find the key sequence for any key combination that Clink supports is to use Clink's `echo` command line option. Run `clink echo` and then press key combinations; the associated key binding sequence is printed to the console output.
+
+## Saved command history
+
+Here's how the saved history works:
+
+When the `history.saved` setting is enabled, then the command history is loaded and saved as follows (or when the setting is disabled, then it isn't saved between sessions).
+
+Every time a new input line starts, Clink reloads the master history list and prunes it not to exceed the `history.max_lines` setting.
+
+For performance reasons, deleting a history line marks the line as deleted without rewriting the history file.  When the number of deleted lines gets too large (exceeding the max lines or 200, which is larger) then the history file is compacted:  the file is rewritten with the deleted lines removed.
+
+When the `history.shared` setting is enabled, then all instances of Clink update the master history file and reload it every time a new input line starts.  This gives the effect that all instances of Clink share the same history -- a command entered in one instance will appear in other instances' history the next time they start an input line.  When the setting is disabled, then each instance of Clink loads the master file but doesn't append its own history back to the master file until after it exits, giving the effect that once an instance starts its history is isolated from other instances' history.
 
 ## Powershell
 
