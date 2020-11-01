@@ -6,6 +6,8 @@
 #include "str.h"
 #include "str_tokeniser.h"
 
+#include <assert.h>
+
 //------------------------------------------------------------------------------
 static setting* g_setting_list = nullptr;
 
@@ -166,6 +168,8 @@ setting::setting(
 , m_long_desc(long_desc ? long_desc : "")
 , m_type(type)
 {
+    assert(strlen(short_desc) == m_short_desc.length());
+
     setting* insert_at = nullptr;
     for (auto* i = g_setting_list; i != nullptr; insert_at = i, i = i->next())
         if (stricmp(name, i->get_name()) < 0)
