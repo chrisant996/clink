@@ -21,7 +21,7 @@ public:
     unsigned int    size() const { return m_tag.length() + 1; }
 
 private:
-    str<32>         m_tag;
+    str<64,false>   m_tag;
 };
 
 //------------------------------------------------------------------------------
@@ -93,6 +93,8 @@ private:
     std::vector<line_id>        m_index_map;
     size_t                      m_master_len;
     size_t                      m_master_deleted_count;
+
+    size_t                      m_min_compact_threshold = 200;
 };
 
 //------------------------------------------------------------------------------

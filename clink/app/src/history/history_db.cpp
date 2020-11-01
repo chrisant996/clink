@@ -131,10 +131,14 @@ static void* open_file(const char* path)
 
 
 //------------------------------------------------------------------------------
+const int max_ctag_size = 6 + 10 + 1 + 10 + 1 + 10 + 1 + 10 + 1 + 1;
 void concurrency_tag::generate_new_tag()
 {
+    static unsigned int disambiguate = 0;
+
     assert(m_tag.empty());
-    m_tag.format("|CTAG_%lu_%u", time(nullptr), GetTickCount());
+    time_t now = time(nullptr);
+    m_tag.format("|CTAG_%u_%u_%u_%u", now, GetTickCount(), GetProcessId(GetCurrentProcess()), disambiguate++);
 }
 
 //------------------------------------------------------------------------------
@@ -602,7 +606,7 @@ history_db::line_id history_db::iter::next(str_iter& out)
 //------------------------------------------------------------------------------
 static bool extract_ctag(const read_lock& lock, concurrency_tag& tag)
 {
-    char buffer[128];
+    char buffer[max_ctag_size];
     read_lock::file_iter iter(lock, buffer);
 
     int bytes_read = iter.next();
@@ -890,7 +894,7 @@ void history_db::load_rl_history()
 
     // Since the ratio of deleted lines to active lines is already known here,
     // this is the most convenient/performant place to compact the master bank.
-    size_t threshold = limit ? max(limit, size_t(200)) : 2500;
+    size_t threshold = limit ? max(limit, m_min_compact_threshold) : 2500;
     if (m_master_deleted_count > threshold)
     {
         write_lock lock(m_bank_handles[bank_master]);

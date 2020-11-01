@@ -37,9 +37,29 @@ struct test_history_db
         initialise();
     }
 
+    unsigned int get_master_length() const
+    {
+        return (unsigned int)m_master_len;
+    }
+
+    unsigned int get_master_deleted_count() const
+    {
+        return (unsigned int)m_master_deleted_count;
+    }
+
+    const char* get_master_tag() const
+    {
+        return m_master_ctag.get();
+    }
+
     unsigned int get_master_tag_size() const
     {
         return m_master_ctag.size();
+    }
+
+    void set_min_compact_threshold(size_t threshold)
+    {
+        m_min_compact_threshold = threshold;
     }
 };
 
@@ -430,6 +450,125 @@ TEST_CASE("history rl")
         {
             REQUIRE(history.expand("cmdX !?extra?:*", out) == history_db::expand_ok);
             REQUIRE(out.equals("cmdX arg1 arg2 arg3 arg4 extra"));
+        }
+    }
+}
+
+//------------------------------------------------------------------------------
+TEST_CASE("history limit")
+{
+    const char* master_path = "clink_history";
+
+    // Start with an empty state dir.
+    const char* empty_fs[] = { nullptr };
+    fs_fixture fs(empty_fs);
+
+    // This sets the state id to something explicit.
+    static const char* env_desc[] = {
+        "=clink.id", "493",
+        nullptr
+    };
+    env_fixture env(env_desc);
+
+    app_context::desc context_desc;
+    context_desc.inherit_id = true;
+    str_base(context_desc.state_dir).copy(fs.get_root());
+    app_context context(context_desc);
+
+    // Set history to shared with limit of 3 lines, so it compacts after
+    // exceeding 3 deleted lines.
+    static const char max_lines[] = "3";
+    settings::find("history.shared")->set("true");
+    settings::find("history.max_lines")->set(max_lines);
+    settings::find("history.dupe_mode")->set("erase_prev");
+
+    // Fill the history. reload() call will fill Readline.
+    static const char* history_lines[] = {
+        "cmd1 arg1 arg2 arg3 arg4",
+        "cmd2 arg1 arg2 arg3 arg4 extra",
+        "cmd3 arg1 arg2 arg3 arg4",
+        "cmd4 arg1 arg2",
+        "cmd5",
+    };
+
+    test_history_db history;
+    history.set_min_compact_threshold(atoi(max_lines));
+
+    concurrency_tag ctag;
+    ctag.set( history.get_master_tag() );
+
+    for( const char* line : history_lines )
+        history.add( line );
+    history.load_rl_history();
+
+    SECTION("Stable ctag")
+    {
+        REQUIRE(strcmp(ctag.get(), history.get_master_tag()) == 0);
+    }
+
+    SECTION("Limited")
+    {
+        REQUIRE(history.get_master_length() == 3);
+        REQUIRE(history.get_master_deleted_count() == 2);
+
+        size_t line_bytes = (strlen(history_lines[1-1]) + 1 +
+                             strlen(history_lines[2-1]) + 1 +
+                             strlen(history_lines[3-1]) + 1 +
+                             strlen(history_lines[4-1]) + 1 +
+                             strlen(history_lines[5-1]) + 1);
+        REQUIRE(os::get_file_size(master_path) == line_bytes + history.get_master_tag_size());
+    }
+
+    SECTION("Not compacted")
+    {
+        history.add(history_lines[5-1]);
+        history.load_rl_history();
+
+        REQUIRE(history.get_master_length() == 3);
+        REQUIRE(history.get_master_deleted_count() == 3);
+        REQUIRE(strcmp(ctag.get(), history.get_master_tag()) == 0);
+
+        size_t line_bytes = (strlen(history_lines[1-1]) + 1 +
+                             strlen(history_lines[2-1]) + 1 +
+                             strlen(history_lines[3-1]) + 1 +
+                             strlen(history_lines[4-1]) + 1 +
+                             strlen(history_lines[5-1]) + 1 +
+                             strlen(history_lines[5-1]) + 1);
+        REQUIRE(os::get_file_size(master_path) == line_bytes + history.get_master_tag_size());
+    }
+
+    SECTION("Compacted")
+    {
+        history.add(history_lines[5-1]);
+        history.add(history_lines[5-1]);
+        history.load_rl_history();
+
+        REQUIRE(history.get_master_length() == 3);
+        REQUIRE(history.get_master_deleted_count() == 0);
+        REQUIRE(strcmp(ctag.get(), history.get_master_tag()) != 0);
+
+        size_t line_bytes = (strlen(history_lines[3-1]) + 1 +
+                             strlen(history_lines[4-1]) + 1 +
+                             strlen(history_lines[5-1]) + 1);
+        REQUIRE(os::get_file_size(master_path) == line_bytes + history.get_master_tag_size());
+
+        ctag.clear();
+        ctag.set( history.get_master_tag() );
+
+        SECTION( "Not compacted again" )
+        {
+            history.add( history_lines[2-1] );
+            history.load_rl_history();
+
+            REQUIRE( history.get_master_length() == 3 );
+            REQUIRE( history.get_master_deleted_count() == 1 );
+            REQUIRE( strcmp( ctag.get(), history.get_master_tag() ) == 0 );
+
+            size_t line_bytes = ( strlen( history_lines[3-1] ) + 1 +
+                                  strlen( history_lines[4-1] ) + 1 +
+                                  strlen( history_lines[5-1] ) + 1 +
+                                  strlen( history_lines[2-1] ) + 1 );
+            REQUIRE( os::get_file_size( master_path ) == line_bytes + history.get_master_tag_size() );
         }
     }
 }
