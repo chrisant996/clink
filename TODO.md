@@ -19,7 +19,6 @@ The Phase 1 goal is to have a working version that for the most part meets or ex
 ## Bugs
 - `update_internal()` seems like it's getting called once per char in a key sequence; probably only needs to happen after a key that finished a key binding.
 - Should only fold path separators in pathish matches.
-- Maybe need to guard against stderr output after all?
 
 ## LUA
 Lua support changed significantly.  Explore how to support backward compatibility for existing scripts [#6](https://github.com/chrisant996/clink/issues/6).

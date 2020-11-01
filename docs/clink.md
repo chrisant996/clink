@@ -81,6 +81,7 @@ Name                         | Description
 `lua.path`                   | Value to append to `package.path`. Used to search for Lua scripts specified in `require()` statements.
 `match.ignore_case`          | Controls case sensitivity in string comparisons. `off` = case sensitive, `on` = case insensitive, `relaxed` = case insensitive plus `-` and `_` are considered equal.
 `match.sort_dirs`            | Matching directories can go before files, with files, or after files.
+`readline.hide_stderr`       | Suppresses stderr from the Readline library.  Enable this if Readline error messages are getting in the way.
 `terminal.emulate`           | Clink can either emulate a virtual terminal and handle ANSI escape codes itself, or let the console host natively handle ANSI escape codes. `off` = pass output directly to the console host process, `on` = clink handles ANSI escape codes itself.
 `terminal.modify_other_keys` | When enabled, pressing Space or Tab with modifier keys sends extended XTerm key sequences so they can be bound separately.
 

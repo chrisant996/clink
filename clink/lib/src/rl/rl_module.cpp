@@ -99,6 +99,11 @@ setting_colour g_colour_doskey(
     "Used when Clink displays doskey macro completions.",
     setting_colour::value_light_cyan, setting_colour::value_bg_default);
 
+setting_bool g_rl_hide_stderr(
+    "readline.hide_stderr",
+    "Suppress stderr from the Readline library",
+    false);
+
 
 
 //------------------------------------------------------------------------------
@@ -739,6 +744,9 @@ static void terminal_write_thunk(FILE* stream, const char* chars, int char_count
 
     if (stream == stderr || stream == stdout)
     {
+        if (stream == stderr && g_rl_hide_stderr.get())
+            return;
+
         DWORD dw;
         HANDLE h = GetStdHandle(stream == stderr ? STD_ERROR_HANDLE : STD_OUTPUT_HANDLE);
         if (GetConsoleMode(h, &dw))
