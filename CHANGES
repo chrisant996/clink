@@ -5,7 +5,7 @@
 
 ### v1.1.2-alpha
 
-- Added `history.max_lines` setting that controls how many lines of command history to save.
+- Added `history.max_lines` setting that controls how many lines of command history to save (1 to 50000, default is 2500).
 - Revert the change to disallow mixing file/directory/symlink with other match types (it broke the tests and certain completion scenarios).
 - Fixed crash in `insert-completions` due to heap failure (introduced by the performance chnages for displaying matches).
 - Fixed `tilde-expand` for quoted text.
