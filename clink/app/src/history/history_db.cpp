@@ -11,6 +11,8 @@
 #include <core/settings.h>
 #include <core/str.h>
 #include <core/str_tokeniser.h>
+#include <core\log.h>
+#include <assert.h>
 
 #include <new>
 #include <Windows.h>
@@ -24,6 +26,11 @@ static setting_bool g_shared(
     "Share history between instances",
     "",
     false);
+
+static setting_int g_max_history(
+    "history.max_lines",
+    "The number of history lines to save, or 0 for unlimited",
+    2500);
 
 static setting_bool g_ignore_space(
     "history.ignore_space",
@@ -108,6 +115,62 @@ static void* open_file(const char* path)
         nullptr, OPEN_ALWAYS, FILE_FLAG_SEQUENTIAL_SCAN, nullptr);
 
     return (handle == INVALID_HANDLE_VALUE) ? nullptr : handle;
+}
+
+
+
+//------------------------------------------------------------------------------
+void concurrency_tag::generate_new_tag()
+{
+    assert(m_tag.empty());
+    m_tag.format("|CTAG_%lu_%u", time(nullptr), GetTickCount());
+}
+
+//------------------------------------------------------------------------------
+void concurrency_tag::set(const char* tag)
+{
+    assert(m_tag.empty());
+    m_tag = tag;
+}
+
+
+
+//------------------------------------------------------------------------------
+class auto_free_str
+{
+public:
+                        auto_free_str() = default;
+                        auto_free_str(const char* s, int len) { set(s, len); }
+                        auto_free_str(auto_free_str&& other) : m_ptr(other.m_ptr) { other.m_ptr = nullptr; }
+                        ~auto_free_str() { free(m_ptr); }
+
+    auto_free_str&      operator=(const char* s) { set(s); return *this; }
+    auto_free_str&      operator=(auto_free_str&& other) { m_ptr = other.m_ptr; other.m_ptr = nullptr; return *this; }
+    void                set(const char* s, int len = -1);
+    const char*         get() const { return m_ptr; }
+
+private:
+    char*               m_ptr = nullptr;
+};
+
+//------------------------------------------------------------------------------
+void auto_free_str::set(const char* s, int len)
+{
+    if (s == m_ptr)
+    {
+        if (len < strlen(m_ptr))
+            m_ptr[len] = '\0';
+    }
+    else
+    {
+        char* old = m_ptr;
+        if (len < 0)
+            len = int(strlen(s));
+        m_ptr = (char*)malloc(len + 1);
+        memcpy(m_ptr, s, len);
+        m_ptr[len] = '\0';
+        free(old);
+    }
 }
 
 
@@ -206,11 +269,14 @@ public:
         template <int S>    line_iter(const read_lock& lock, char (&buffer)[S]);
         line_id_impl        next(str_iter& out);
         void                set_file_offset(unsigned int offset);
+        unsigned int        get_deleted_count() const { return m_deleted; }
 
     private:
         bool                provision();
         file_iter           m_file_iter;
         unsigned int        m_remaining = 0;
+        unsigned int        m_deleted = 0;
+        bool                m_first_line = true;
     };
 
     explicit                read_lock() = default;
@@ -241,10 +307,10 @@ template <class T> void read_lock::find(const char* line, T&& callback) const
             continue;
 
         unsigned int file_ptr = SetFilePointer(m_handle, 0, nullptr, FILE_CURRENT);
-        bool abort = callback(id);
+        bool more = callback(id);
         SetFilePointer(m_handle, file_ptr, nullptr, FILE_BEGIN);
 
-        if (!abort)
+        if (!more)
             break;
     }
 }
@@ -357,8 +423,15 @@ line_id_impl read_lock::line_iter::next(str_iter& out)
         int bytes = int(end - start);
         m_remaining -= bytes;
 
+        bool was_first_line = m_first_line;
+        m_first_line = false;
+
         if (*start == '|')
+        {
+            if (!was_first_line || strncmp(start, "|CTAG_", 6) != 0)
+                ++m_deleted;
             continue;
+        }
 
         new (&out) str_iter(start, int(end - start));
 
@@ -514,10 +587,73 @@ history_db::line_id history_db::iter::next(str_iter& out)
 
 
 //------------------------------------------------------------------------------
+static bool extract_ctag(const read_lock& lock, concurrency_tag& tag)
+{
+    char buffer[256];
+    read_lock::file_iter iter(lock, buffer);
+
+    int bytes_read = iter.next();
+    if (bytes_read <= 1)
+    {
+        ERR("read %u bytes", bytes_read);
+        return false;
+    }
+
+    --bytes_read;
+    buffer[bytes_read] = 0;
+
+    if (strncmp(buffer, "|CTAG_", 6) != 0)
+    {
+        ERR("first line not a ctag");
+        return false;
+    }
+
+    char* eol = strpbrk(buffer, "\r\n");
+    if (!eol)
+    {
+        ERR("first line has no line ending");
+        return false;
+    }
+    *eol = '\0';
+
+    tag.set(buffer);
+    return true;
+}
+
+//------------------------------------------------------------------------------
+static void rewrite_master_bank(write_lock& lock, int max_line_length)
+{
+    max_line_length++;
+    char* buffer = (char*)malloc(max_line_length);
+
+    // Read lines to keep into vector.
+    str_iter out;
+    read_lock::line_iter iter(lock, buffer, max_line_length);
+    std::vector<auto_free_str> lines_to_keep;
+    while (iter.next(out))
+        lines_to_keep.push_back(std::move(auto_free_str(out.get_pointer(), out.length())));
+
+    // Clear and write new tag.
+    concurrency_tag tag;
+    tag.generate_new_tag();
+    lock.clear();
+    lock.add(tag.get());
+
+    // Write lines from vector.
+    for (auto const& line : lines_to_keep)
+        lock.add(line.get());
+
+    free(buffer);
+}
+
+
+
+//------------------------------------------------------------------------------
 history_db::history_db()
 {
     memset(m_bank_handles, 0, sizeof(m_bank_handles));
     m_master_len = 0;
+    m_master_deleted_count = 0;
 
     // Create a self-deleting file to used to indicate this session's alive
     str<280> path;
@@ -592,6 +728,25 @@ void history_db::initialise()
     get_file_path(path, false);
     m_bank_handles[bank_master] = open_file(path.c_str());
 
+    // Retrieve concurrency tag from start of master bank.
+    m_master_ctag.clear();
+    {
+        read_lock lock(m_bank_handles[bank_master], false);
+        extract_ctag(lock, m_master_ctag);
+    }
+
+    // No concurrency tag?  Inject one.
+    if (m_master_ctag.empty())
+    {
+        write_lock lock(m_bank_handles[bank_master]);
+        if (!extract_ctag(lock, m_master_ctag))
+        {
+            rewrite_master_bank(lock, max_line_length);
+            extract_ctag(lock, m_master_ctag);
+        }
+    }
+    LOG("master bank ctag: %s", m_master_ctag.get());
+
     if (g_shared.get())
         return;
 
@@ -639,16 +794,24 @@ template <typename T> void history_db::for_each_bank(T&& callback) const
 }
 
 //------------------------------------------------------------------------------
-void history_db::load_rl_history()
+void history_db::load_internal()
 {
     clear_history();
     m_index_map.clear();
+    m_master_len = 0;
+    m_master_deleted_count = 0;
 
     char buffer[max_line_length + 1];
 
     const history_db& const_this = *this;
     const_this.for_each_bank([&] (unsigned int bank_index, const read_lock& lock)
     {
+        if (bank_index == bank_master)
+        {
+            m_master_ctag.clear();
+            extract_ctag(lock, m_master_ctag);
+        }
+
         str_iter out;
         read_lock::line_iter iter(lock, buffer, sizeof_array(buffer) - 1);
         line_id_impl id;
@@ -662,19 +825,79 @@ void history_db::load_rl_history()
             id.bank_index = bank_index;
             m_index_map.push_back(id.outer);
             if (bank_index == bank_master)
+            {
+                //LOG("load:  bank %u, offset %u, active %u:  '%s', len %u", id.bank_index, id.offset, id.active, line, out.length());
                 m_master_len = m_index_map.size();
+            }
         }
+
+        if (bank_index == bank_master)
+            m_master_deleted_count = iter.get_deleted_count();
 
         return true;
     });
 }
 
 //------------------------------------------------------------------------------
+void history_db::load_rl_history()
+{
+    load_internal();
+
+    int limit = g_max_history.get();
+    if (limit > 0)
+    {
+        LOG("History:  %u active, %u deleted", m_master_len, m_master_deleted_count);
+
+        // Delete oldest history entries that exceed it.  This only marks them as
+        // deleted; compacting is a separate operation.
+        if (m_master_len > g_max_history.get())
+        {
+            int removed = 0;
+            while (m_master_len > g_max_history.get())
+            {
+                line_id_impl id;
+                id.outer = m_index_map[0];
+                if (id.bank_index != bank_master)
+                {
+                    ERR("tried to trim from non-master bank");
+                    break;
+                }
+                //LOG("remove bank %u, offset %u, active %u (master len was %u)", id.bank_index, id.offset, id.active, m_master_len);
+                if (!remove(m_index_map[0]))
+                {
+                    ERR("failed to remove");
+                    break;
+                }
+                removed++;
+            }
+            LOG("History:  removed %u", removed);
+        }
+    }
+
+    // Since the ratio of deleted lines to active lines is already known here,
+    // this is the most convenient/performant place to compact the master bank.
+    int threshold = limit ? max(limit, 200) : 2500;
+    if (m_master_deleted_count > threshold)
+    {
+        write_lock lock(m_bank_handles[bank_master]);
+        rewrite_master_bank(lock, max_line_length);
+        load_internal();
+        LOG("Compacted history:  %u active, %u deleted", m_master_len, m_master_deleted_count);
+    }
+}
+
+//------------------------------------------------------------------------------
 void history_db::clear()
 {
-    for_each_bank([] (unsigned int, write_lock& lock)
+    for_each_bank([] (unsigned int bank_index, write_lock& lock)
     {
         lock.clear();
+        if (bank_index == bank_master)
+        {
+            concurrency_tag tag;
+            tag.generate_new_tag();
+            lock.add(tag.get());
+        }
         return true;
     });
 }
@@ -718,7 +941,10 @@ int history_db::remove(const char* line)
     for_each_bank([line, &count] (unsigned int index, write_lock& lock)
     {
         lock.find(line, [&] (line_id_impl id) {
+            // The line id was retrieved inside this lock scope, so it's still
+            // valid; no need to guard the ctag.
             lock.remove(id);
+            count++;
             return true;
         });
 
@@ -729,10 +955,13 @@ int history_db::remove(const char* line)
 }
 
 //------------------------------------------------------------------------------
-bool history_db::remove(line_id id)
+bool history_db::remove_internal(line_id id, bool guard_ctag)
 {
     if (!id)
+    {
+        ERR("blank history id");
         return false;
+    }
 
     line_id_impl id_impl;
     id_impl.outer = id;
@@ -740,7 +969,25 @@ bool history_db::remove(line_id id)
     void* handle = get_bank(id_impl.bank_index);
     write_lock lock(handle);
     if (!lock)
+    {
+        ERR("couldn't lock");
         return false;
+    }
+
+    if (guard_ctag && id_impl.bank_index == bank_master)
+    {
+        concurrency_tag tag;
+        if (!extract_ctag(lock, tag))
+        {
+            ERR("no ctag");
+            return false;
+        }
+        if (strcmp(tag.get(), m_master_ctag.get()) != 0)
+        {
+            ERR("ctag '%s' doesn't match '%s' -- this is only expected if you tried to delete in instance B immediately after instance A compacted history", tag.get(), m_master_ctag.get());
+            return false;
+        }
+    }
 
     lock.remove(id_impl);
 
@@ -752,6 +999,7 @@ bool history_db::remove(line_id id)
         {
             m_index_map.erase(nth);
             --m_master_len;
+            ++m_master_deleted_count;
         }
         else
             assert(false);

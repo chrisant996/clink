@@ -8,6 +8,21 @@
 #include <vector>
 
 //------------------------------------------------------------------------------
+class concurrency_tag
+{
+public:
+    void            generate_new_tag();
+    void            clear() { m_tag.clear(); }
+
+    bool            empty() const { return m_tag.empty(); }
+    const char*     get() const { return m_tag.c_str(); }
+    void            set(const char* tag);
+
+private:
+    str<32>         m_tag;
+};
+
+//------------------------------------------------------------------------------
 class history_db
 {
 public:
@@ -42,7 +57,7 @@ public:
     void                        clear();
     bool                        add(const char* line);
     int                         remove(const char* line);
-    bool                        remove(line_id id);
+    bool                        remove(line_id id) { return remove_internal(id, true); }
     bool                        remove(int rl_history_index, const char* line);
     line_id                     find(const char* line) const;
     template <int S> iter       read_lines(char (&buffer)[S]);
@@ -60,15 +75,19 @@ private:
     };
 
     friend                      class read_line_iter;
+    void                        load_internal();
     void                        reap();
     template <typename T> void  for_each_bank(T&& callback);
     template <typename T> void  for_each_bank(T&& callback) const;
     unsigned int                get_active_bank() const;
     void*                       get_bank(unsigned int index) const;
+    bool                        remove_internal(line_id id, bool guard_ctag);
     void*                       m_alive_file;
     void*                       m_bank_handles[bank_count];
+    concurrency_tag             m_master_ctag;
     std::vector<line_id>        m_index_map;
     size_t                      m_master_len;
+    size_t                      m_master_deleted_count;
 };
 
 //------------------------------------------------------------------------------

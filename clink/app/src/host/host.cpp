@@ -44,6 +44,7 @@ static setting_enum g_ignore_case(
 static setting_bool g_save_history(
     "history.save",
     "Save history between sessions",
+    "Changing this setting only takes effect for new instances.",
     true);
 
 static setting_str g_exclude_from_history_cmds(

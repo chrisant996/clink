@@ -17,6 +17,7 @@ ChrisAnt Plans
 The Phase 1 goal is to have a working version that for the most part meets or exceeds Clink 0.4.8 stability and functionality.
 
 ## Bugs
+- Need unit test for history trimmer.
 - `update_internal()` seems like it's getting called once per char in a key sequence; probably only needs to happen after a key that finished a key binding.
 - Should only fold path separators in pathish matches.
 - Maybe need to guard against stderr output after all?
@@ -82,7 +83,6 @@ The Phase 2 goal is to produce a viable Beta Release with broader compatibility 
 
 ### Commands
 - Add a `history.dupe_mode` that behaves like 4Dos/4NT/Take Command from JPSoft:  **Up**/**Down** then **Enter** remembers the history position so that **Enter**, **Down**, **Enter**, **Down**, **Enter**, etc can be used to replay a series of commands.
-- Add a way to reset or trim the history, when there's only one (or zero) clink running [#499](https://github.com/mridgers/clink/issues/499).
 - A way to disable/enable clink once injected.
 - A way to disable/enable prompt filtering once injected.
 - Allow to search the console output (not command history) with a RegExp [#166](https://github.com/mridgers/clink/issues/166).
