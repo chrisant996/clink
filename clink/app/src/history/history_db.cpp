@@ -595,7 +595,7 @@ static bool extract_ctag(const read_lock& lock, concurrency_tag& tag)
     int bytes_read = iter.next();
     if (bytes_read <= 1)
     {
-        ERR("read %u bytes", bytes_read);
+        LOG("read %u bytes", bytes_read);
         return false;
     }
 
@@ -604,14 +604,14 @@ static bool extract_ctag(const read_lock& lock, concurrency_tag& tag)
 
     if (strncmp(buffer, "|CTAG_", 6) != 0)
     {
-        ERR("first line not a ctag");
+        LOG("first line not a ctag");
         return false;
     }
 
     char* eol = strpbrk(buffer, "\r\n");
     if (!eol)
     {
-        ERR("first line has no line ending");
+        LOG("first line has no line ending");
         return false;
     }
     *eol = '\0';
@@ -859,13 +859,13 @@ void history_db::load_rl_history()
                 id.outer = m_index_map[0];
                 if (id.bank_index != bank_master)
                 {
-                    ERR("tried to trim from non-master bank");
+                    LOG("tried to trim from non-master bank");
                     break;
                 }
                 //LOG("remove bank %u, offset %u, active %u (master len was %u)", id.bank_index, id.offset, id.active, m_master_len);
                 if (!remove(m_index_map[0]))
                 {
-                    ERR("failed to remove");
+                    LOG("failed to remove");
                     break;
                 }
                 removed++;
@@ -959,7 +959,7 @@ bool history_db::remove_internal(line_id id, bool guard_ctag)
 {
     if (!id)
     {
-        ERR("blank history id");
+        LOG("blank history id");
         return false;
     }
 
@@ -979,12 +979,12 @@ bool history_db::remove_internal(line_id id, bool guard_ctag)
         concurrency_tag tag;
         if (!extract_ctag(lock, tag))
         {
-            ERR("no ctag");
+            LOG("no ctag");
             return false;
         }
         if (strcmp(tag.get(), m_master_ctag.get()) != 0)
         {
-            ERR("ctag '%s' doesn't match '%s' -- this is only expected if you tried to delete in instance B immediately after instance A compacted history", tag.get(), m_master_ctag.get());
+            LOG("ctag '%s' doesn't match '%s'", tag.get(), m_master_ctag.get());
             return false;
         }
     }
