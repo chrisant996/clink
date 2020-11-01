@@ -27,10 +27,13 @@ static setting_bool g_shared(
     "",
     false);
 
+namespace use_get_max_history_instead {
 static setting_int g_max_history(
     "history.max_lines",
-    "The number of history lines to save, or 0 for unlimited",
+    "The number of history lines to save",
+    "The number of history lines to save if history.save is enabled (1 to 50000).",
     2500);
+};
 
 static setting_bool g_ignore_space(
     "history.ignore_space",
@@ -60,6 +63,14 @@ static setting_enum g_expand_mode(
     "respectively.",
     "off,on,not_squoted,not_dquoted,not_quoted",
     4);
+
+static size_t get_max_history()
+{
+    size_t limit = use_get_max_history_instead::g_max_history.get();
+    if (!limit || limit > 50000)
+        limit = 50000;
+    return limit;
+}
 
 
 
@@ -158,7 +169,7 @@ void auto_free_str::set(const char* s, int len)
 {
     if (s == m_ptr)
     {
-        if (len < strlen(m_ptr))
+        if (len < int(strlen(m_ptr)))
             m_ptr[len] = '\0';
     }
     else
@@ -846,17 +857,17 @@ void history_db::load_rl_history()
 {
     load_internal();
 
-    int limit = g_max_history.get();
+    size_t limit = get_max_history();
     if (limit > 0)
     {
         LOG("History:  %u active, %u deleted", m_master_len, m_master_deleted_count);
 
         // Delete oldest history entries that exceed it.  This only marks them as
         // deleted; compacting is a separate operation.
-        if (m_master_len > g_max_history.get())
+        if (m_master_len > limit)
         {
             int removed = 0;
-            while (m_master_len > g_max_history.get())
+            while (m_master_len > limit)
             {
                 line_id_impl id;
                 id.outer = m_index_map[0];
@@ -879,7 +890,7 @@ void history_db::load_rl_history()
 
     // Since the ratio of deleted lines to active lines is already known here,
     // this is the most convenient/performant place to compact the master bank.
-    int threshold = limit ? max(limit, 200) : 2500;
+    size_t threshold = limit ? max(limit, size_t(200)) : 2500;
     if (m_master_deleted_count > threshold)
     {
         write_lock lock(m_bank_handles[bank_master]);
