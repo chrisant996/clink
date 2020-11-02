@@ -117,9 +117,27 @@ bool match_builder::add_match(const match_desc& desc)
 }
 
 //------------------------------------------------------------------------------
+void match_builder::set_append_character(char append)
+{
+    return ((matches_impl&)m_matches).set_append_character(append);
+}
+
+//------------------------------------------------------------------------------
 void match_builder::set_prefix_included(bool included)
 {
     return ((matches_impl&)m_matches).set_prefix_included(included);
+}
+
+//------------------------------------------------------------------------------
+void match_builder::set_suppress_append(bool suppress)
+{
+    return ((matches_impl&)m_matches).set_suppress_append(suppress);
+}
+
+//------------------------------------------------------------------------------
+void match_builder::set_suppress_quoting(int suppress)
+{
+    return ((matches_impl&)m_matches).set_suppress_quoting(suppress);
 }
 
 
@@ -349,9 +367,27 @@ void matches_impl::get_match_lcd(str_base& out) const
 }
 
 //------------------------------------------------------------------------------
+bool matches_impl::is_suppress_append() const
+{
+    return m_suppress_append;
+}
+
+//------------------------------------------------------------------------------
 bool matches_impl::is_prefix_included() const
 {
     return m_prefix_included;
+}
+
+//------------------------------------------------------------------------------
+char matches_impl::get_append_character() const
+{
+    return m_append_character;
+}
+
+//------------------------------------------------------------------------------
+int matches_impl::get_suppress_quoting() const
+{
+    return m_suppress_quoting;
 }
 
 //------------------------------------------------------------------------------
@@ -365,12 +401,32 @@ void matches_impl::reset()
     m_has_aux = false;
 #endif
     m_prefix_included = false;
+    m_suppress_append = false;
+    m_suppress_quoting = 0;
+}
+
+//------------------------------------------------------------------------------
+void matches_impl::set_append_character(char append)
+{
+    m_append_character = append;
 }
 
 //------------------------------------------------------------------------------
 void matches_impl::set_prefix_included(bool included)
 {
     m_prefix_included = included;
+}
+
+//------------------------------------------------------------------------------
+void matches_impl::set_suppress_append(bool suppress)
+{
+    m_suppress_append = suppress;
+}
+
+//------------------------------------------------------------------------------
+void matches_impl::set_suppress_quoting(int suppress)
+{
+    m_suppress_quoting = suppress;
 }
 
 //------------------------------------------------------------------------------

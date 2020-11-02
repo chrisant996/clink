@@ -47,6 +47,10 @@ public:
     virtual unsigned int    get_cell_count(unsigned int index) const = 0;
     virtual bool            has_aux() const = 0;
 #endif
+    virtual bool            is_suppress_append() const = 0;
+    virtual bool            is_prefix_included() const = 0;
+    virtual char            get_append_character() const = 0;
+    virtual int             get_suppress_quoting() const = 0;
     virtual void            get_match_lcd(str_base& out) const = 0;
 };
 
@@ -75,7 +79,10 @@ public:
                             match_builder(matches& matches);
     bool                    add_match(const char* match, match_type type);
     bool                    add_match(const match_desc& desc);
+    void                    set_append_character(char append);
     void                    set_prefix_included(bool included=true);
+    void                    set_suppress_append(bool suppress=true);
+    void                    set_suppress_quoting(int suppress=1); //0=no, 1=yes, 2=suppress end quote
 
 private:
     matches&                m_matches;

@@ -25,6 +25,8 @@ function envvar_generator:generate(line_state, match_builder)
     add_matches(os.getenvnames())
     add_matches(special_env_vars)
     match_builder:setprefixincluded()
+    match_builder:setsuppressappend()
+    match_builder:setsuppressquoting()
     return true
 end
 

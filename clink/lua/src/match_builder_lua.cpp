@@ -12,7 +12,10 @@
 static match_builder_lua::method g_methods[] = {
     { "addmatch",           &match_builder_lua::add_match },
     { "addmatches",         &match_builder_lua::add_matches },
+    { "setappendcharacter", &match_builder_lua::set_append_character },
     { "setprefixincluded",  &match_builder_lua::set_prefix_included },
+    { "setsuppressappend",  &match_builder_lua::set_suppress_append },
+    { "setsuppressquoting", &match_builder_lua::set_suppress_quoting },
     {}
 };
 
@@ -80,6 +83,24 @@ int match_builder_lua::add_match(lua_State* state)
 }
 
 //------------------------------------------------------------------------------
+/// -name:  builder:setappendcharacter
+/// -arg:   [append:string]
+/// Sets character to append after matches.  For example the <code>set</code>
+/// match generator uses this to append "=" when completing matches, so that
+/// completing <code>set USER</code> becomes <code>set USERDOMAIN=</code>
+/// (rather than <code>set USERDOMAIN&nbsp;</code>).
+int match_builder_lua::set_append_character(lua_State* state)
+{
+    const char* append = nullptr;
+    if (lua_gettop(state) > 0)
+        append = lua_tostring(state, 1);
+
+    m_builder.set_append_character(append ? *append : 0);
+
+    return 0;
+}
+
+//------------------------------------------------------------------------------
 /// -name:  builder:setprefixincluded
 /// -arg:   [state:boolean]
 /// Sets whether the prefix from the match generator should be included as part
@@ -92,6 +113,44 @@ int match_builder_lua::set_prefix_included(lua_State* state)
         included = (lua_toboolean(state, 1) != 0);
 
     m_builder.set_prefix_included(included);
+
+    return 0;
+}
+
+//------------------------------------------------------------------------------
+/// -name:  builder:setsuppressappend
+/// -arg:   [state:boolean]
+/// Sets whether to suppress appending anything after the match except a
+/// possible closing quote.  For example the env var match generator uses this.
+int match_builder_lua::set_suppress_append(lua_State* state)
+{
+    bool suppress = true;
+    if (lua_gettop(state) > 0)
+        suppress = (lua_toboolean(state, 1) != 0);
+
+    m_builder.set_suppress_append(suppress);
+
+    return 0;
+}
+
+//------------------------------------------------------------------------------
+/// -name:  builder:setsuppressquoting
+/// -arg:   [state:integer]
+/// Sets whether to suppress quoting for the matches.  Set to 0 for normal
+/// quoting, or 1 to suppress quoting, or 2 to suppress end quotes.  For example
+/// the env var match generator sets this to 1 to overcome the quoting that
+/// would normally happen for "%" characters in filenames.
+int match_builder_lua::set_suppress_quoting(lua_State* state)
+{
+    int suppress = 1;
+    if (lua_gettop(state) > 0)
+    {
+        int i = int(lua_tointeger(state, 1));
+        if (i >= 0 && i <= 2)
+            suppress = i;
+    }
+
+    m_builder.set_suppress_quoting(suppress);
 
     return 0;
 }

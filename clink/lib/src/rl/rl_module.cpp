@@ -552,6 +552,16 @@ static char** alternative_matches(const char* text, int start, int end)
     }
     matches[match_count + 1] = nullptr;
 
+    switch (s_matches->get_suppress_quoting())
+    {
+    case 1: rl_filename_quoting_desired = 0; break;
+    case 2: rl_completion_suppress_quote = 1; break;
+    }
+
+    rl_completion_suppress_append = s_matches->is_suppress_append();
+    if (s_matches->get_append_character())
+        rl_completion_append_character = s_matches->get_append_character();
+
     rl_attempted_completion_over = 1;
     return matches;
 }
@@ -816,10 +826,8 @@ rl_module::rl_module(const char* shell_name, terminal_in* input)
     rl_completer_quote_characters = "\"";
     rl_basic_quote_characters = "\"";
 
-    // Same list CMD uses for quoting filenames, minus % so that env var
-    // completions don't get quoted.
-    // TODO: Include % here, but don't quote env vars.
-    rl_filename_quote_characters = " &()[]{}^=;!'+,`~";
+    // Same list CMD uses for quoting filenames.
+    rl_filename_quote_characters = " &()[]{}^=;!%'+,`~";
 
     // Completion and match display.
     // TODO: postprocess_matches is for better quote handling.

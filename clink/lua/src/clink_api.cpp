@@ -107,41 +107,6 @@ static int get_setting_int(lua_State* state)
 }
 
 //------------------------------------------------------------------------------
-static int suppress_char_append(lua_State* state)
-{
-#if MODE4
-    rl_completion_suppress_append = 1;
-#endif
-    return 0;
-}
-
-//------------------------------------------------------------------------------
-static int suppress_quoting(lua_State* state)
-{
-#if MODE4
-    rl_completion_suppress_quote = 1;
-#endif
-    return 0;
-}
-
-//------------------------------------------------------------------------------
-#if 0
-static int slash_translation(lua_State* state)
-{
-    if (lua_gettop(state) == 0)
-    {
-        g_slash_translation = 0;
-    }
-    else
-    {
-        g_slash_translation = (int)lua_tointeger(state, 1);
-    }
-
-    return 0;
-}
-#endif
-
-//------------------------------------------------------------------------------
 static int get_rl_variable(lua_State* state)
 {
     // Check we've got at least one string argument.
@@ -229,11 +194,6 @@ void clink_lua_initialise(lua_state& lua)
         { "is_rl_variable_true",    &is_rl_variable_true },
         { "lower",                  &to_lowercase },
         { "matches_are_files",      &matches_are_files },
-#if 0
-        { "slash_translation",      &slash_translation },
-#endif
-        { "suppress_char_append",   &suppress_char_append },
-        { "suppress_quoting",       &suppress_quoting },
     };
 
     lua_State* state = lua.get_state();

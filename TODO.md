@@ -2,12 +2,6 @@ ChrisAnt Plans
 
 <br>
 
-# Bugs
-- `%` doesn't get quoted in filenames, as a side effect of how quoting was avoided for env vars.
-- Suffix needs to be pushed into Readline somehow?
-  - Better way to complete `%USER`**complete** env vars?  Maybe % not part of match, don't append suffix, and don't erase prefix?
-  - `set USER`**menu-complete** becomes `set USERDOMAIN ` but should become `set USERDOMAIN=`.
-
 # Documentation
 - Describe the new argmatcher/etc syntax.
 - Supply sample inputrc file(s).
@@ -56,7 +50,6 @@ Lua support changed significantly.  Explore how to support backward compatibilit
 - Changing terminal width makes 0.4.8 slowly "walk up the screen".  Changing terminal width makes master go haywire.  Probably more ecma48 terminal issues.  Probably related to commit 8aeaa14.
 - Use `path::normalise` to clean up input like "\wbin\\\\cli" when using `complete` and `menu-complete`.
 - Symlink support (displaying matches, and whether to append a path separator).
-- Looks like suppress_char_append(), suppress_quoting(), and slash_translation() are all dead code?
 - 32a672e is suspicious:  "Resend ESC when it gets dropped by incremental searching".
 
 ## Questions
