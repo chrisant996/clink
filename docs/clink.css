@@ -30,8 +30,9 @@ blockquote {
 }
 
 code {
-    display: inline;
-    padding: 1px 3px 1px 3px;
+    display: inline-block;
+    padding: 1px 3px;
+    margin: auto 0px;
     background-color: #eee;
     border: 1px solid #ddd;
     border-radius: 3px;
@@ -40,7 +41,7 @@ code {
 
 pre {
     font-family: monospace;
-    margin: 0 10px 0 10px;
+    margin: 2px 10px;
 }
 
 pre code {
