@@ -815,7 +815,11 @@ rl_module::rl_module(const char* shell_name, terminal_in* input)
     rl_filename_quoting_desired = 1;
     rl_completer_quote_characters = "\"";
     rl_basic_quote_characters = "\"";
-    rl_filename_quote_characters = " &()[]{}^=;!%'+,`~"; // Same list CMD uses.
+
+    // Same list CMD uses for quoting filenames, minus % so that env var
+    // completions don't get quoted.
+    // TODO: Include % here, but don't quote env vars.
+    rl_filename_quote_characters = " &()[]{}^=;!'+,`~";
 
     // Completion and match display.
     // TODO: postprocess_matches is for better quote handling.

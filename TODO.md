@@ -3,7 +3,7 @@ ChrisAnt Plans
 <br>
 
 # Bugs
-- Completing environment variables is broken now.  Maybe prefix/suffix aren't incorporated into Readline properly?
+- `%` doesn't get quoted in filenames, as a side effect of how quoting was avoided for env vars.
 
 # Documentation
 - Describe the new argmatcher/etc syntax.

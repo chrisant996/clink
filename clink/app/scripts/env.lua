@@ -18,12 +18,13 @@ function envvar_generator:generate(line_state, match_builder)
 
     local add_matches = function(matches)
         for _, i in ipairs(matches) do
-            match_builder:addmatch({ match = i, suffix = "%" })
+            match_builder:addmatch("%"..i.."%", "word")
         end
     end
 
     add_matches(os.getenvnames())
     add_matches(special_env_vars)
+    match_builder:setprefixincluded()
     return true
 end
 
