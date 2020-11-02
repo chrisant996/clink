@@ -474,9 +474,5 @@ For performance reasons, deleting a history line marks the line as deleted witho
 
 When the `history.shared` setting is enabled, then all instances of Clink update the master history file and reload it every time a new input line starts.  This gives the effect that all instances of Clink share the same history -- a command entered in one instance will appear in other instances' history the next time they start an input line.  When the setting is disabled, then each instance of Clink loads the master file but doesn't append its own history back to the master file until after it exits, giving the effect that once an instance starts its history is isolated from other instances' history.
 
-## Powershell
-
-> _**Deprecated:**  Clink v0.4.8 had some basic support for Powershell, but v1.0.0 removed Powershell support._
-
 <!-- vim: wrap nolist ft=markdown
 -->
