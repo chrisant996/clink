@@ -2,6 +2,9 @@ ChrisAnt Plans
 
 <br>
 
+# Bugs
+- Completing environment variables is broken now.  Maybe prefix/suffix aren't incorporated into Readline properly?
+
 # Documentation
 - Describe the new argmatcher/etc syntax.
 - Supply sample inputrc file(s).
