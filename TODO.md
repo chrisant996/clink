@@ -4,6 +4,9 @@ ChrisAnt Plans
 
 # Bugs
 - `%` doesn't get quoted in filenames, as a side effect of how quoting was avoided for env vars.
+- Suffix needs to be pushed into Readline somehow?
+  - Better way to complete `%USER`**complete** env vars?  Maybe % not part of match, don't append suffix, and don't erase prefix?
+  - `set USER`**menu-complete** becomes `set USERDOMAIN ` but should become `set USERDOMAIN=`.
 
 # Documentation
 - Describe the new argmatcher/etc syntax.
