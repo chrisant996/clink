@@ -698,7 +698,9 @@ void line_editor_impl::update_internal()
         match_pipeline pipeline(m_matches);
         pipeline.reset();
         pipeline.generate(line, m_generators);
+#ifdef NYI_MATCHES
         pipeline.fill_info();
+#endif
     }
 
     next_key.cursor_pos = m_buffer.get_cursor();

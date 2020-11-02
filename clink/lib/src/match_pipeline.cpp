@@ -99,6 +99,7 @@ void match_pipeline::generate(
 }
 
 //------------------------------------------------------------------------------
+#ifdef NYI_MATCHES
 void match_pipeline::fill_info() const
 {
     int count = m_matches.get_info_count();
@@ -112,6 +113,7 @@ void match_pipeline::fill_info() const
         info->cell_count = cell_count(displayable);
     }
 }
+#endif
 
 //------------------------------------------------------------------------------
 void match_pipeline::select(const char* needle) const

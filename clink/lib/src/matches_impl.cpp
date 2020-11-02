@@ -97,7 +97,16 @@ match_builder::match_builder(matches& matches)
 //------------------------------------------------------------------------------
 bool match_builder::add_match(const char* match, match_type type)
 {
-    match_desc desc = { match, nullptr, nullptr, 0, type };
+    char suffix = 0;
+    match_desc desc = {
+        match,
+#ifdef NYI_MATCHES
+        nullptr,
+        nullptr,
+#endif
+        suffix,
+        type
+    };
     return add_match(desc);
 }
 
@@ -252,6 +261,7 @@ const char* matches_impl::get_match(unsigned int index) const
 }
 
 //------------------------------------------------------------------------------
+#ifdef NYI_MATCHES
 const char* matches_impl::get_displayable(unsigned int index) const
 {
     if (index >= get_match_count())
@@ -260,8 +270,10 @@ const char* matches_impl::get_displayable(unsigned int index) const
     const char* displayable = m_infos[index].displayable;
     return displayable ? displayable : m_infos[index].match;
 }
+#endif
 
 //------------------------------------------------------------------------------
+#ifdef NYI_MATCHES
 const char* matches_impl::get_aux(unsigned int index) const
 {
     if (index >= get_match_count())
@@ -269,6 +281,7 @@ const char* matches_impl::get_aux(unsigned int index) const
 
     return m_infos[index].aux;
 }
+#endif
 
 //------------------------------------------------------------------------------
 char matches_impl::get_suffix(unsigned int index) const
@@ -289,16 +302,20 @@ match_type matches_impl::get_match_type(unsigned int index) const
 }
 
 //------------------------------------------------------------------------------
+#ifdef NYI_MATCHES
 unsigned int matches_impl::get_cell_count(unsigned int index) const
 {
     return (index < get_match_count()) ? m_infos[index].cell_count : 0;
 }
+#endif
 
 //------------------------------------------------------------------------------
+#ifdef NYI_MATCHES
 bool matches_impl::has_aux() const
 {
     return m_has_aux;
 }
+#endif
 
 //------------------------------------------------------------------------------
 void matches_impl::get_match_lcd(str_base& out) const
@@ -344,7 +361,9 @@ void matches_impl::reset()
     m_infos.clear();
     m_coalesced = false;
     m_count = 0;
+#ifdef NYI_MATCHES
     m_has_aux = false;
+#endif
     m_prefix_included = false;
 }
 
@@ -374,6 +393,7 @@ bool matches_impl::add_match(const match_desc& desc)
     if (!store_match)
         return false;
 
+#ifdef NYI_MATCHES
     const char* store_displayable = nullptr;
     if (desc.displayable != nullptr)
         store_displayable = m_store.store_back(desc.displayable);
@@ -381,12 +401,15 @@ bool matches_impl::add_match(const match_desc& desc)
     const char* store_aux = nullptr;
     if (m_has_aux = (desc.aux != nullptr))
         store_aux = m_store.store_back(desc.aux);
+#endif
 
     m_infos.push_back({
         store_match,
+#ifdef NYI_MATCHES
         store_displayable,
         store_aux,
         0,
+#endif
         type,
         max<unsigned char>(0, desc.suffix),
     });
