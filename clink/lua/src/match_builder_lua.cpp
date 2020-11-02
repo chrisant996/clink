@@ -44,8 +44,28 @@ match_builder_lua::~match_builder_lua()
 //------------------------------------------------------------------------------
 /// -name:  builder:addmatch
 /// -arg:   match:string|table
-/// -arg:   type:string|nil
+/// -arg:   [type:string]
 /// -ret:   boolean
+/// -show:  builder:addmatch({ match="some_word", type="word" })
+/// -show:  builder:addmatch({ match="abbrev", type="alias" })
+/// -show:  builder:addmatch({ match="foo.cpp", type="file" })
+/// -show:  builder:addmatch({ match="bar", type="dir" })
+/// -show:  builder:addmatch({ match=".git", type="dir hidden" })
+/// Adds a match.  If <em>match</em> is a string, in which case it's added as a
+/// match and <em>type</em> (or "none") is the match type.  Or <em>match</em>
+/// can be a table with the following scheme: <em>{ match:string, [suffix:string],
+/// [type:string] }</em>.  If <em>suffix</em> is provided, the first character
+/// is used as a suffix when completing the match (for example "%" for env var
+/// matches).  If <em>type</em> is not provided then "none" is used, otherwise
+/// <em>type</em> can be "word", "alias" (doskey macro), "file", "dir", or
+/// "link" (symlink).<br/>
+/// <br/>
+/// The match type influences the color when listing possible matches, and files
+/// and dirs can also include "hidden" and/or "readonly" in the type string.
+/// The match type also affects how the match is displayed:  "word" matches show
+/// the whole word even if it contains slashes, "file" and "dir" matches only
+/// show the last path component (text after the last slash, if any), and "dir"
+/// matches show a trailing path separator.
 int match_builder_lua::add_match(lua_State* state)
 {
     int ret = 0;
@@ -62,6 +82,9 @@ int match_builder_lua::add_match(lua_State* state)
 //------------------------------------------------------------------------------
 /// -name:  builder:setprefixincluded
 /// -arg:   [state:boolean]
+/// Sets whether the prefix from the match generator should be included as part
+/// of the matches.  For example the env var match generator uses this to make
+/// "%" be part of the completed match.
 int match_builder_lua::set_prefix_included(lua_State* state)
 {
     bool included = true;
@@ -76,11 +99,23 @@ int match_builder_lua::set_prefix_included(lua_State* state)
 //------------------------------------------------------------------------------
 /// -name:  builder:addmatches
 /// -arg:   matches:table
-/// -arg:   type:string|nil
+/// -arg:   [type:string]
 /// -ret:   integer, boolean
-/// This is the equivalent of calling builder:addmatch() in a for-loop. Returns
-/// the number of matches added and a boolean indicating if all matches were
-/// added successfully.
+/// -show:  builder:addmatches({"abc", "def"}) -- Adds two matches of type "none"
+/// -show:  builder:addmatches({"abc", "def"}, "file") -- Adds two matches of type "file"
+/// -show:  builder:addmatches({
+/// -show:  &nbsp;&nbsp;-- Same table scheme per entry here as in builder:addmatch()
+/// -show:  &nbsp;&nbsp;{ match="remote/origin/master", type="word" },
+/// -show:  &nbsp;&nbsp;{ match="remote/origin/topic", type="word" }
+/// -show:  })
+/// This is the equivalent of calling <code>builder:addmatch()</code> in a
+/// for-loop. Returns the number of matches added and a boolean indicating if
+/// all matches were added successfully.<br/>
+/// <br/>
+/// <em>matches</em> can be a table of match strings, or a table of tables
+/// describing the matches.<br/>
+/// <em>type</em> is used as the type when a match doesn't explicitly include a
+/// type, and is "none" if omitted.
 int match_builder_lua::add_matches(lua_State* state)
 {
     if (lua_gettop(state) <= 0 || !lua_istable(state, 1))
@@ -128,6 +163,7 @@ bool match_builder_lua::add_match_impl(lua_State* state, int stack_index, match_
             desc.match = lua_tostring(state, -1);
         lua_pop(state, 1);
 
+#ifdef NYI_MATCHES
         lua_pushliteral(state, "displayable");
         lua_rawget(state, stack_index);
         if (lua_isstring(state, -1))
@@ -139,6 +175,7 @@ bool match_builder_lua::add_match_impl(lua_State* state, int stack_index, match_
         if (lua_isstring(state, -1))
             desc.aux = lua_tostring(state, -1);
         lua_pop(state, 1);
+#endif
 
         lua_pushliteral(state, "suffix");
         lua_rawget(state, stack_index);

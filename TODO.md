@@ -6,8 +6,7 @@ ChrisAnt Plans
 - Describe the new argmatcher/etc syntax.
 - Supply sample inputrc file(s).
 - Explain from where scripts are loaded (mridgers #519 has some info on that).
-- Doc setprefixincluded, and the restrictions on mixed match types.
-- Doc match types.
+- Document Readline color configuration -- LS_COLORS and also Clink settings such as `colour.readonly`.
 
 <br>
 <br>
