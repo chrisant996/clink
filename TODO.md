@@ -8,7 +8,6 @@ ChrisAnt Plans
 - Explain from where scripts are loaded (mridgers #519 has some info on that).
 - Doc setprefixincluded, and the restrictions on mixed match types.
 - Doc match types.
-- Doc setting short_desc limited to 47 chars.
 
 <br>
 <br>
