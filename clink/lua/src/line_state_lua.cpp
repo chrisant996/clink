@@ -78,8 +78,8 @@ int line_state_lua::get_word_count(lua_State* state)
 /// -arg:   index:integer
 /// -ret:   table
 /// Returns a table of informationa about the Nth word in the line. The table
-/// returned has the following schema; { offset:integer, length:integer,
-/// quoted:boolean, delim:boolean }.
+/// returned has the following scheme: <em>{ offset:integer, length:integer,
+/// quoted:boolean, delim:boolean }</em>.
 int line_state_lua::get_word_info(lua_State* state)
 {
     if (!lua_isnumber(state, 1))
@@ -118,7 +118,7 @@ int line_state_lua::get_word_info(lua_State* state)
 /// -name:  line:getword
 /// -arg:   index:integer
 /// -ret:   string
-/// Returns the word of the line at 'index'.
+/// Returns the word of the line at <em>index</em>.
 int line_state_lua::get_word(lua_State* state)
 {
     if (!lua_isnumber(state, 1))

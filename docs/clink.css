@@ -135,16 +135,12 @@ kbd {
     width: 80%;
 }
 
-#content #api .show {
-    white-space: pre;
+#content #api em {
     font-family: monospace;
 }
 
 #content #api .group {
     margin-bottom: 1em;
-}
-
-#content #api .function {
 }
 
 #content #api .body {

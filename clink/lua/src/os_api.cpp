@@ -32,6 +32,8 @@ static const char* get_string(lua_State* state, int index)
 /// -name:  os.chdir
 /// -arg:   path:string
 /// -ret:   boolean
+/// Changes the current directory to <em>path</em> and returns whether it
+/// was successful.
 int set_current_dir(lua_State* state)
 {
     bool ok = false;
@@ -45,6 +47,7 @@ int set_current_dir(lua_State* state)
 //------------------------------------------------------------------------------
 /// -name:  os.getcwd
 /// -ret:   string
+/// Returns the current directory.
 int get_current_dir(lua_State* state)
 {
     str<288> dir;
@@ -58,6 +61,7 @@ int get_current_dir(lua_State* state)
 /// -name:  os.mkdir
 /// -arg:   path:string
 /// -ret:   boolean
+/// Creates the directory <em>path</em> and returns whether it was successful.
 static int make_dir(lua_State* state)
 {
     bool ok = false;
@@ -72,6 +76,7 @@ static int make_dir(lua_State* state)
 /// -name:  os.rmdir
 /// -arg:   path:string
 /// -ret:   boolean
+/// Removes the directory <em>path</em> and returns whether it was successful.
 static int remove_dir(lua_State* state)
 {
     bool ok = false;
@@ -86,6 +91,7 @@ static int remove_dir(lua_State* state)
 /// -name:  os.isdir
 /// -arg:   path:string
 /// -ret:   boolean
+/// Returns whether <em>path</em> is a directory.
 int is_dir(lua_State* state)
 {
     const char* path = get_string(state, 1);
@@ -100,6 +106,7 @@ int is_dir(lua_State* state)
 /// -name:  os.isfile
 /// -arg:   path:string
 /// -ret:   boolean
+/// Returns whether <em>path</em> is a file.
 static int is_file(lua_State* state)
 {
     const char* path = get_string(state, 1);
@@ -114,6 +121,7 @@ static int is_file(lua_State* state)
 /// -name:  os.ishidden
 /// -arg:   path:string
 /// -ret:   boolean
+/// Returns whether <em>path</em> is has the hidden attribute set.
 static int is_hidden(lua_State* state)
 {
     const char* path = get_string(state, 1);
@@ -128,6 +136,7 @@ static int is_hidden(lua_State* state)
 /// -name:  os.unlink
 /// -arg:   path:string
 /// -ret:   boolean
+/// Deletes the file <em>path</em> and returns whether it was successful.
 static int unlink(lua_State* state)
 {
     const char* path = get_string(state, 1);
@@ -151,6 +160,7 @@ static int unlink(lua_State* state)
 /// -arg:   src:string
 /// -arg:   dest:string
 /// -ret:   boolean
+/// Moves the <em>src</em> file to the <em>dest</em> file.
 static int move(lua_State* state)
 {
     const char* src = get_string(state, 1);
@@ -172,6 +182,7 @@ static int move(lua_State* state)
 /// -arg:   src:string
 /// -arg:   dest:string
 /// -ret:   boolean
+/// Copies the <em>src</em> file to the <em>dest</em> file.
 static int copy(lua_State* state)
 {
     const char* src = get_string(state, 1);
@@ -216,6 +227,8 @@ static int glob_impl(lua_State* state, bool dirs_only)
 /// -name:  os.globdirs
 /// -arg:   globpattern:string
 /// -ret:   table
+/// Collects directories matching <em>globpattern</em> and returns them in a
+/// table of strings.
 int glob_dirs(lua_State* state)
 {
     return glob_impl(state, true);
@@ -225,6 +238,8 @@ int glob_dirs(lua_State* state)
 /// -name:  os.globfiles
 /// -arg:   globpattern:string
 /// -ret:   table
+/// Collects files matching <em>globpattern</em> and returns them in a table of
+/// strings.
 int glob_files(lua_State* state)
 {
     return glob_impl(state, false);
@@ -232,8 +247,10 @@ int glob_files(lua_State* state)
 
 //------------------------------------------------------------------------------
 /// -name:  os.getenv
-/// -arg:   path:string
+/// -arg:   name:string
 /// -ret:   string or nil
+/// Returns the value of the named environment variable, or <em>nil</em> if
+/// it doesn't exist.
 int get_env(lua_State* state)
 {
     const char* name = get_string(state, 1);
@@ -253,6 +270,8 @@ int get_env(lua_State* state)
 /// -arg:   name:string
 /// -arg:   value:string
 /// -ret:   boolean
+/// Sets the <em>name</em> environment variable to <em>value</em> and returns
+/// whether it was successful.
 int set_env(lua_State* state)
 {
     const char* name = get_string(state, 1);
@@ -268,6 +287,8 @@ int set_env(lua_State* state)
 //------------------------------------------------------------------------------
 /// -name:  os.getenvnames
 /// -ret:   table
+/// Returns all environment variables in a table with the following scheme:
+/// <em>{ { name:string, value:string }, ... }</em>.
 int get_env_names(lua_State* state)
 {
     lua_createtable(state, 0, 0);
@@ -309,11 +330,19 @@ int get_env_names(lua_State* state)
 //------------------------------------------------------------------------------
 /// -name:  os.gethost
 /// -ret:   string
+/// Returns the fully qualified file name of the host process.  Currently only
+/// CMD.EXE can host Clink.
 static int get_host(lua_State* state)
 {
-    str<280> host;
-    if (process().get_file_name(host))
+    WCHAR module[280];
+    DWORD len = GetModuleFileNameW(nullptr, module, sizeof_array(module));
+    if (!len)
         return 0;
+    if (len == sizeof_array(module) && GetLastError() == ERROR_INSUFFICIENT_BUFFER)
+        return 0;
+
+    str<280> host;
+    host = module;
 
     lua_pushstring(state, host.c_str());
     return 1;
@@ -321,7 +350,9 @@ static int get_host(lua_State* state)
 
 //------------------------------------------------------------------------------
 /// -name:  os.getaliases
-/// -ret:   string
+/// -ret:   table
+/// Returns doskey aliases in a table with the following scheme:
+/// <em>{ { name:string, command:string }, ... }</em>.
 int get_aliases(lua_State* state)
 {
     lua_createtable(state, 0, 0);

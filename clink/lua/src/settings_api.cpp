@@ -13,6 +13,7 @@
 /// -name:  settings.get
 /// -arg:   name:string
 /// -ret:   boolean or string or integer
+/// Returns the current value of the <em>name</em> Clink setting.
 static int get(lua_State* state)
 {
     if (lua_gettop(state) == 0 || !lua_isstring(state, 1))
@@ -57,6 +58,8 @@ static int get(lua_State* state)
 /// -arg:   name:string
 /// -arg:   value:string
 /// -ret:   boolean
+/// Sets the <em>name</em> Clink setting to <em>value</em> and returns whether
+/// it was successful.
 static int set(lua_State* state)
 {
     if (lua_gettop(state) < 2 || !lua_isstring(state, 1))
@@ -103,7 +106,23 @@ template <typename S, typename... V> void add_impl(lua_State* state, V... value)
 /// -name:  settings.add
 /// -arg:   name:string
 /// -arg:   default:...
+/// -arg:   [short_desc:string]
+/// -arg:   [long_desc:string]
 /// -ret:   boolean
+/// -show:  settings.add("myscript.myabc", true, "Boolean setting")
+/// -show:  settings.add("myscript.mydef", 100, "Number setting")
+/// -show:  settings.add("myscript.myghi", "abc", "String setting")
+/// -show:  settings.add("myscript.myjkl", {"x","y","z"}, "Enum setting")
+/// Adds a setting to the list of Clink settings and includes it in
+/// <code>clink set</code>.  The new setting is named <em>name</em> and has a
+/// default value <em>default</em> if not explicitly set.  The type of
+/// <em>default</em> determines what kind of setting is added:  boolean,
+/// integer, and string values add the corresponding setting type.  Or if the
+/// type is table, then an enum setting is added:  the table defines the
+/// accepted values, and the first value is the default value.
+/// <em>short_desc</em> is an optional quick summary description and can't
+/// bemore than 47 characters.
+/// <em>long_desc</em> is an optional long description.
 static int add(lua_State* state)
 {
     if (lua_gettop(state) < 2 || !lua_isstring(state, 1))

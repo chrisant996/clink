@@ -18,8 +18,9 @@ static const char* get_string(lua_State* state, int index)
 
 //------------------------------------------------------------------------------
 /// -name:  string.hash
-/// -arg:   x
-/// -ret:   x
+/// -arg:   text:string
+/// -ret:   integer
+/// Returns a hash of the input <em>text</em>.
 static int hash(lua_State* state)
 {
     const char* in = get_string(state, 1);
@@ -32,8 +33,12 @@ static int hash(lua_State* state)
 
 //------------------------------------------------------------------------------
 /// -name:  string.explode
-/// -arg:   x
-/// -ret:   x
+/// -arg:   text:string
+/// -arg:   [delims:string]
+/// -ret:   table
+/// Splits <em>text</em> delimited by <em>delims</em> (or by spaces if
+/// <em>delims</em> is not provided) and returns a table containing the
+/// substrings.
 static int explode(lua_State* state)
 {
     const char* in = get_string(state, 1);
