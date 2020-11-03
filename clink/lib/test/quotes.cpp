@@ -39,7 +39,7 @@ TEST_CASE("Quoting")
             tester.run();
         }
 
-        SECTION("Close exisiting")
+        SECTION("Close existing")
         {
             tester.set_input("\"singl" DO_COMPLETE);
             tester.set_expected_output("\"single space\" ");
@@ -75,7 +75,7 @@ TEST_CASE("Quoting")
             tester.run();
         }
 
-        SECTION("Dir (close exisiting)")
+        SECTION("Dir (close existing)")
         {
             tester.set_input("\"dir/sing" DO_COMPLETE);
             tester.set_expected_output("\"dir\\single space\" ");
@@ -113,7 +113,7 @@ TEST_CASE("Quoting")
             tester.run();
         }
 
-        SECTION("Close exisiting")
+        SECTION("Close existing")
         {
             tester.set_input("(singl" DO_COMPLETE);
             tester.set_expected_output("(single space) ");
@@ -158,7 +158,7 @@ TEST_CASE("Quoting")
             tester.run();
         }
 
-        SECTION("Close exisiting")
+        SECTION("Close existing")
         {
             tester.set_input("singl" DO_COMPLETE);
             tester.set_expected_output("single space ");
