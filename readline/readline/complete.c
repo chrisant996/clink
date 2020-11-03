@@ -2413,9 +2413,13 @@ append_to_match (char *text, int orig_start, int delimiter, int quote_char, int 
     temp_string[temp_string_index++] = quote_char;
 
 /* begin_clink_change
- * Must not append closing quote_char if there's no opening quote.
+ * Must not append closing quote_char if there's no opening quote.  If there was
+ * a typed quote it will be at orig_start-1, or if a quote was inserted it will
+ * be at orig_start.
  */
-  if (temp_string_index && rl_line_buffer[orig_start] != quote_char)
+  if (temp_string_index &&
+      rl_line_buffer[orig_start] != quote_char &&
+      (!orig_start || rl_line_buffer[orig_start-1] != quote_char))
     temp_string_index--;
 /* end_clink_change */
 
