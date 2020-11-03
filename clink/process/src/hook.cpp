@@ -153,7 +153,7 @@ static char* write_trampoline_out(void* const dest, void* const to_hook, hookptr
         offset++;
 
         unsigned char c = *patch;
-        if (offset > 135){
+        if (offset > 127){
             LOG("No nop slide or int3 block detected nearby prior to hook target, checked %d prior bytes", offset-1);
             LOG("Now checking bytes after hook target");
             // reset for checking forwards
@@ -172,7 +172,7 @@ static char* write_trampoline_out(void* const dest, void* const to_hook, hookptr
         patch++;
         offset--;
 
-        if (offset < -135)
+        if (offset < -131)
         {
             LOG("No nop slide or int3 block detected nearby after hook target, checked %d later bytes", (-1 * (offset+1)));
             return nullptr;
@@ -190,6 +190,7 @@ static char* write_trampoline_out(void* const dest, void* const to_hook, hookptr
         offset += 4;
         patch -= 4;
     }
+    LOG("Patching at offset %d", -1 * (offset));
 
     // Patch the API.
     patch = write_rel_jmp(patch, write);
