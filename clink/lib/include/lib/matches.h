@@ -40,6 +40,7 @@ public:
     virtual match_type      get_match_type(unsigned int index) const = 0;
     virtual bool            is_suppress_append() const = 0;
     virtual bool            is_prefix_included() const = 0;
+    virtual int             get_prefix_excluded() const = 0;
     virtual char            get_append_character() const = 0;
     virtual int             get_suppress_quoting() const = 0;
 };
@@ -66,6 +67,7 @@ public:
     bool                    add_match(const match_desc& desc);
     void                    set_append_character(char append);
     void                    set_prefix_included(bool included=true);
+    void                    set_prefix_included(int amount);
     void                    set_suppress_append(bool suppress=true);
     void                    set_suppress_quoting(int suppress=1); //0=no, 1=yes, 2=suppress end quote
 

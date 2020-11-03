@@ -563,6 +563,8 @@ void line_editor_impl::update_internal()
         int needle_start = end_word.offset;
         if (!m_matches.is_prefix_included())
             needle_start += end_word.length;
+        else
+            needle_start += m_matches.get_prefix_excluded();
 
         const char* buf_ptr = m_buffer.get_buffer();
         needle.concat(buf_ptr + needle_start, next_key.cursor_pos - needle_start);

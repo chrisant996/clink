@@ -37,7 +37,7 @@ TEST_CASE("Env. vars")
     SECTION("Basic")
     {
         tester.set_input("nullcmd %simp");
-        tester.set_expected_matches("simple");
+        tester.set_expected_matches("%simple%");
         tester.run();
     }
 
@@ -53,7 +53,7 @@ TEST_CASE("Env. vars")
         str_compare_scope _(str_compare_scope::relaxed);
 
         tester.set_input("nullcmd %case_m");
-        tester.set_expected_matches("case_map");
+        tester.set_expected_matches("%case_map%");
         tester.run();
     }
 
@@ -62,14 +62,14 @@ TEST_CASE("Env. vars")
         str_compare_scope _(str_compare_scope::relaxed);
 
         tester.set_input("nullcmd %dash-");
-        tester.set_expected_matches("dash-1", "dash_2");
+        tester.set_expected_matches("%dash-1%", "%dash_2%");
         tester.run();
     }
 
     SECTION("Mid-word 1")
     {
         tester.set_input("nullcmd One%Two%Three%dash");
-        tester.set_expected_matches("dash-1", "dash_2");
+        tester.set_expected_matches("%dash-1%", "%dash_2%");
         tester.run();
     }
 

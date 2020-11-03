@@ -2,6 +2,10 @@ ChrisAnt Plans
 
 <br>
 
+# Bugs
+- `nullcmd "abc %user`**complete** => mistakenly becomes `nullcmd "%USER` (loses the `"abc `).  Bash ignores everything inside quotes, but we want to handle env vars completions inside quotes.
+- `nullcmd "abc def"`**complete** => mistakenly becomes `nullcmd "abc def"abc def"`.  Bash mishandles this case; it becomes `nullcmd abc\ def`.
+
 # Documentation
 - Describe the new argmatcher/etc syntax.
 - Supply sample inputrc file(s).

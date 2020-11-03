@@ -829,6 +829,15 @@ rl_module::rl_module(const char* shell_name, terminal_in* input)
     // Same list CMD uses for quoting filenames.
     rl_filename_quote_characters = " &()[]{}^=;!%'+,`~";
 
+    // Word break characters -- equal to rl_basic_word_break_characters, with
+    // backslash removed (because rl_backslash_path_sep) and with '%' replacing
+    // '$' (because Windows not *nix).
+    rl_completer_word_break_characters = " \t\n\"'`@%><=;|&{("; /* }) */
+
+    // Env vars get special treatment so that "foo bar%user" can recognize
+    // "%user" as a viable word break for completion.
+    rl_special_prefixes = "%";
+
     // Completion and match display.
     // TODO: postprocess_matches is for better quote handling.
     //rl_ignore_some_completions_function = postprocess_matches;

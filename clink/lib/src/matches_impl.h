@@ -38,6 +38,7 @@ public:
     virtual match_type      get_match_type(unsigned int index) const override;
     virtual bool            is_suppress_append() const override;
     virtual bool            is_prefix_included() const override;
+    virtual int             get_prefix_excluded() const override;
     virtual char            get_append_character() const override;
     virtual int             get_suppress_quoting() const override;
 
@@ -46,6 +47,7 @@ private:
     friend class            match_builder;
     void                    set_append_character(char append);
     void                    set_prefix_included(bool included);
+    void                    set_prefix_included(int amount);
     void                    set_suppress_append(bool suppress);
     void                    set_suppress_quoting(int suppress);
     bool                    add_match(const match_desc& desc);
@@ -81,6 +83,7 @@ private:
     bool                    m_coalesced = false;
     char                    m_append_character = 0;
     bool                    m_prefix_included = false;
+    int                     m_prefix_excluded = 0;
     bool                    m_suppress_append = false;
     int                     m_suppress_quoting = 0;
 };

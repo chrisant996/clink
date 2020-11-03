@@ -24,7 +24,14 @@ function envvar_generator:generate(line_state, match_builder)
 
     add_matches(os.getenvnames())
     add_matches(special_env_vars)
-    match_builder:setprefixincluded()
+
+    local amount = string.len(line_state:getendword())
+    if amount > 1 then
+        amount = 1 - amount
+        match_builder:setprefixincluded(amount)
+    else
+        match_builder:setprefixincluded()
+    end
     match_builder:setsuppressappend()
     match_builder:setsuppressquoting()
     return true

@@ -8,7 +8,9 @@
 - Added `history.max_lines` setting that controls how many lines of command history to save (1 to 50000, default is 2500).
 - Added `readline.hide_stderr` setting that can suppress stderr output from the Readline library.
 - Revert the change to disallow mixing file/directory/symlink with other match types (it broke the tests and certain completion scenarios).
+- Removed `displayable`, `aux`, and `suffix` fields in matches.
 - Fixed crash in `insert-completions` due to heap failure (introduced by the performance chnages for displaying matches).
+- Fixed env var and `set` completions.
 - Fixed `tilde-expand` for quoted text.
 - Fixed <kbd>Esc</kbd> in Readline's digit argument input mode (it doesn't try to cancel the mode, because that's not how Readline is documented to work).
 - `addmatch()` in Lua scripts takes an optional match type argument.

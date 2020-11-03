@@ -102,18 +102,24 @@ int match_builder_lua::set_append_character(lua_State* state)
 
 //------------------------------------------------------------------------------
 /// -name:  builder:setprefixincluded
-/// -arg:   [state:boolean]
-/// Sets whether the prefix from the match generator should be included as part
-/// of the matches.  For example the env var match generator uses this to make
-/// "%" be part of the completed match.
+/// -arg:   [value:boolean|integer]
+/// -show:  builder:setprefixincluded()     -- the whole word "foobar" is included
+/// -show:  builder:setprefixincluded(-3)   -- from the word "foobar" only "bar" is included
+/// -show:  builder:setprefixincluded(-1)   -- from the word "x%user" only "%user" is included
+/// If <em>value</em> is boolean, this sets whether the prefix from the match
+/// generator should be included as part of the matches.  If <em>value</em> is a
+/// negative integer, the prefix from the match generator minus the first
+/// <em>value</em> characters is included as part of the matches.  For example
+/// the env var match generator uses this to only include from the "%" onward as
+/// part of the matches.
 int match_builder_lua::set_prefix_included(lua_State* state)
 {
-    bool included = true;
-    if (lua_gettop(state) > 0)
-        included = (lua_toboolean(state, 1) != 0);
-
-    m_builder.set_prefix_included(included);
-
+    if (lua_gettop(state) <= 0)
+        m_builder.set_prefix_included(true);
+    else if (lua_isboolean(state, 1))
+        m_builder.set_prefix_included(lua_toboolean(state, 1) != 0);
+    else
+        m_builder.set_prefix_included(int(lua_tointeger(state, 1)));
     return 0;
 }
 
