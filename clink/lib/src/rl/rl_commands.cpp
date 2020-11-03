@@ -234,7 +234,7 @@ int ScrollConsoleRelative(HANDLE h, int direction, SCRMODE mode)
     if (mode == SCR_TOEND)
     {
         if (direction <= 0)
-            srWindow.Top = -1;
+            srWindow.Top = srWindow.Bottom = -1;
         else
             srWindow.Bottom = csbiInfo.dwSize.Y;
     }

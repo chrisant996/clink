@@ -3,6 +3,12 @@ ChrisAnt Plans
 <br>
 
 # Bugs
+
+## ASAP
+- `clink history` needs to only limit/compact when explicitly told to.  Otherwise the act of launching it can alter the index numbers, thus the invoked operation may act on different lines that was intended.
+
+## Soon
+- Apparently final builds are linking with the debug CRT?!  Why are assertions showing up in final builds?  And do I want to keep that during alpha/beta testing?
 - `nullcmd "abc %user`**complete** => mistakenly becomes `nullcmd "%USER` (loses the `"abc `).  Bash ignores everything inside quotes, but we want to handle env vars completions inside quotes.
 - `nullcmd "abc def"`**complete** => mistakenly becomes `nullcmd "abc def"abc def"`.  Bash mishandles this case; it becomes `nullcmd abc\ def`.
 
@@ -38,6 +44,7 @@ Lua support changed significantly.  Explore how to support backward compatibilit
 - There might still be other syntax incompatibilities...?
 
 ## Features
+- Lua scripts need a way to detect what version of Clink they're running on, so they can choose to behave differently/appropriately.
 
 ### Other
 - `match.ignore_case` can't be working correctly, and probably readline settings should determine it.  _(Update: oh, it's obsolete now that tab_completer is gone.)_
