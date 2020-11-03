@@ -153,11 +153,7 @@ static char* write_trampoline_out(void* const dest, void* const to_hook, hookptr
         offset++;
 
         unsigned char c = *patch;
-        if (offset > 125 || c == 0xc3){
-            // if c is '0xc33, we've hit a RET, which likely means that we're in another function.
-            // Skip the rest.
-            if (c == 0xc3)
-                LOG("Hit RET");
+        if (offset > 135){
             LOG("No nop slide or int3 block detected nearby prior to hook target, checked %d prior bytes", offset-1);
             LOG("Now checking bytes after hook target");
             // reset for checking forwards
@@ -176,7 +172,7 @@ static char* write_trampoline_out(void* const dest, void* const to_hook, hookptr
         patch++;
         offset--;
 
-        if (offset < -125)
+        if (offset < -135)
         {
             LOG("No nop slide or int3 block detected nearby after hook target, checked %d later bytes", (-1 * (offset+1)));
             return nullptr;
