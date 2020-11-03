@@ -100,11 +100,6 @@ bool match_builder::add_match(const char* match, match_type type)
     char suffix = 0;
     match_desc desc = {
         match,
-#ifdef NYI_MATCHES
-        nullptr,
-        nullptr,
-#endif
-        suffix,
         type
     };
     return add_match(desc);
@@ -126,6 +121,12 @@ void match_builder::set_append_character(char append)
 void match_builder::set_prefix_included(bool included)
 {
     return ((matches_impl&)m_matches).set_prefix_included(included);
+}
+
+//------------------------------------------------------------------------------
+void match_builder::set_prefix_included(int amount)
+{
+    return ((matches_impl&)m_matches).set_prefix_included(amount);
 }
 
 //------------------------------------------------------------------------------
@@ -279,91 +280,12 @@ const char* matches_impl::get_match(unsigned int index) const
 }
 
 //------------------------------------------------------------------------------
-#ifdef NYI_MATCHES
-const char* matches_impl::get_displayable(unsigned int index) const
-{
-    if (index >= get_match_count())
-        return nullptr;
-
-    const char* displayable = m_infos[index].displayable;
-    return displayable ? displayable : m_infos[index].match;
-}
-#endif
-
-//------------------------------------------------------------------------------
-#ifdef NYI_MATCHES
-const char* matches_impl::get_aux(unsigned int index) const
-{
-    if (index >= get_match_count())
-        return nullptr;
-
-    return m_infos[index].aux;
-}
-#endif
-
-//------------------------------------------------------------------------------
-char matches_impl::get_suffix(unsigned int index) const
-{
-    if (index >= get_match_count())
-        return 0;
-
-    return m_infos[index].suffix;
-}
-
-//------------------------------------------------------------------------------
 match_type matches_impl::get_match_type(unsigned int index) const
 {
     if (index >= get_match_count())
         return match_type::none;
 
     return m_infos[index].type;
-}
-
-//------------------------------------------------------------------------------
-#ifdef NYI_MATCHES
-unsigned int matches_impl::get_cell_count(unsigned int index) const
-{
-    return (index < get_match_count()) ? m_infos[index].cell_count : 0;
-}
-#endif
-
-//------------------------------------------------------------------------------
-#ifdef NYI_MATCHES
-bool matches_impl::has_aux() const
-{
-    return m_has_aux;
-}
-#endif
-
-//------------------------------------------------------------------------------
-void matches_impl::get_match_lcd(str_base& out) const
-{
-    int match_count = get_match_count();
-
-    if (match_count <= 0)
-        return;
-
-    if (match_count == 1)
-    {
-        out = get_match(0);
-        return;
-    }
-
-    out = get_match(0);
-    int lcd_length = out.length();
-
-    int cmp_mode = str_compare_scope::current();
-    str_compare_scope _(min(cmp_mode, int(str_compare_scope::caseless)));
-
-    for (int i = 1, n = get_match_count(); i < n; ++i)
-    {
-        const char* match = get_match(i);
-        int d = str_compare(match, out.c_str());
-        if (d >= 0)
-            lcd_length = min(d, lcd_length);
-    }
-
-    out.truncate(lcd_length);
 }
 
 //------------------------------------------------------------------------------
@@ -376,6 +298,12 @@ bool matches_impl::is_suppress_append() const
 bool matches_impl::is_prefix_included() const
 {
     return m_prefix_included;
+}
+
+//------------------------------------------------------------------------------
+int matches_impl::get_prefix_excluded() const
+{
+    return m_prefix_excluded;
 }
 
 //------------------------------------------------------------------------------
@@ -397,10 +325,8 @@ void matches_impl::reset()
     m_infos.clear();
     m_coalesced = false;
     m_count = 0;
-#ifdef NYI_MATCHES
-    m_has_aux = false;
-#endif
     m_prefix_included = false;
+    m_prefix_excluded = 0;
     m_suppress_append = false;
     m_suppress_quoting = 0;
 }
@@ -415,6 +341,14 @@ void matches_impl::set_append_character(char append)
 void matches_impl::set_prefix_included(bool included)
 {
     m_prefix_included = included;
+    m_prefix_excluded = 0;
+}
+
+//------------------------------------------------------------------------------
+void matches_impl::set_prefix_included(int amount)
+{
+    m_prefix_included = amount < 0;
+    m_prefix_excluded = 0 - amount;
 }
 
 //------------------------------------------------------------------------------
@@ -449,26 +383,7 @@ bool matches_impl::add_match(const match_desc& desc)
     if (!store_match)
         return false;
 
-#ifdef NYI_MATCHES
-    const char* store_displayable = nullptr;
-    if (desc.displayable != nullptr)
-        store_displayable = m_store.store_back(desc.displayable);
-
-    const char* store_aux = nullptr;
-    if (m_has_aux = (desc.aux != nullptr))
-        store_aux = m_store.store_back(desc.aux);
-#endif
-
-    m_infos.push_back({
-        store_match,
-#ifdef NYI_MATCHES
-        store_displayable,
-        store_aux,
-        0,
-#endif
-        type,
-        max<unsigned char>(0, desc.suffix),
-    });
+    m_infos.push_back({ store_match, type });
     ++m_count;
     return true;
 }
