@@ -5,9 +5,14 @@ ChrisAnt Plans
 # Bugs
 
 ## ASAP
+- `clink history delete <n>` asserts and doesn't delete.
 - `clink history` needs to only limit/compact when explicitly told to.  Otherwise the act of launching it can alter the index numbers, thus the invoked operation may act on different lines that was intended.
+- `$T` at the beginning of an alias makes the alias not recognized.
+- `$T` inside an alias emits stuff differently than I meant for it to.
 
 ## Soon
+- Alt+digit then Alt+Ctrl+Y isn't working.
+- Arrow keys don't exit `reverse-search-history` like in bash (need to press Ctrl+J).
 - Apparently final builds are linking with the debug CRT?!  Why are assertions showing up in final builds?  And do I want to keep that during alpha/beta testing?
 - `nullcmd "abc %user`**complete** => mistakenly becomes `nullcmd "%USER` (loses the `"abc `).  Bash ignores everything inside quotes, but we want to handle env vars completions inside quotes.
 - `nullcmd "abc def"`**complete** => mistakenly becomes `nullcmd "abc def"abc def"`.  Bash mishandles this case; it becomes `nullcmd abc\ def`.
