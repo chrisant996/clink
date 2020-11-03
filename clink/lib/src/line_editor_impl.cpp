@@ -332,16 +332,12 @@ bool line_editor_impl::update_input()
             flag_done       = 1 << 1,
             flag_eof        = 1 << 2,
             flag_redraw     = 1 << 3,
-            flag_append_lcd = 1 << 4,
         };
 
         virtual void    pass() override                           { flags |= flag_pass; }
         virtual void    done(bool eof) override                   { flags |= flag_done|(eof ? flag_eof : 0); }
         virtual void    redraw() override                         { flags |= flag_redraw; }
-        virtual void    append_match_lcd() override               { flags |= flag_append_lcd; }
-        virtual void    accept_match(unsigned int index) override { match = index; }
         virtual int     set_bind_group(int id) override           { int t = group; group = id; return t; }
-        int             match;  // = -1;  <!
         unsigned short  group;  //        <! MSVC bugs; see connect
         unsigned char   flags;  // = 0;   <! issues about C2905
     };
@@ -351,7 +347,6 @@ bool line_editor_impl::update_input()
     {
         // Binding found, dispatch it off to the module.
         result_impl result;
-        result.match = -1;
         result.flags = 0;
         result.group = m_bind_resolver.get_group();
 
@@ -386,11 +381,6 @@ bool line_editor_impl::update_input()
 
         if (result.flags & result_impl::flag_redraw)
             m_buffer.redraw();
-
-        if (result.match >= 0)
-            accept_match(result.match);
-        else if (result.flags & result_impl::flag_append_lcd)
-            append_match_lcd();
     }
 
     m_buffer.draw();
@@ -495,143 +485,6 @@ void line_editor_impl::collect_words()
 }
 
 //------------------------------------------------------------------------------
-void line_editor_impl::accept_match(unsigned int index)
-{
-    if (index >= m_matches.get_match_count())
-        return;
-
-    const char* match = m_matches.get_match(index);
-    if (!*match)
-        return;
-
-    word end_word = *(m_words.back());
-    int word_start = end_word.offset;
-    int word_end = end_word.offset + end_word.length;
-
-    const char* buf_ptr = m_buffer.get_buffer();
-
-    str<288> to_insert;
-    if (!m_matches.is_prefix_included())
-        to_insert.concat(buf_ptr + word_start, end_word.length);
-    to_insert << match;
-
-    // TODO: This has not place here and should be done somewhere else.
-    // Clean the word if it is a valid file system path.
-    if (os::get_path_type(to_insert.c_str()) != os::path_type_invalid)
-        path::normalise(to_insert);
-
-    // Does the selected match need quoting?
-    bool needs_quote = end_word.quoted;
-    for (const char* c = match; *c && !needs_quote; ++c)
-        needs_quote = (strchr(m_desc.word_delims, *c) != nullptr);
-
-    // Clear the word.
-    m_buffer.remove(word_start, m_buffer.get_cursor());
-    m_buffer.set_cursor(word_start);
-
-    // Readd the word plus the match.
-    if (needs_quote && !end_word.quoted)
-    {
-        char quote[2] = { m_desc.quote_pair[0] };
-        m_buffer.insert(quote);
-    }
-    m_buffer.insert(to_insert.c_str());
-
-    // Use a suffix if one's associated with the match, otherwise derive it.
-    char match_suffix = m_matches.get_suffix(index);
-    char suffix = match_suffix;
-    if (!suffix)
-    {
-        unsigned int match_length = unsigned(strlen(match));
-
-        word match_word = { 0, match_length };
-        array<word> match_words(&match_word, 1);
-        line_state match_line = { match, match_length, 0, match_words };
-
-        int prefix_length = 0;
-        for (const auto* generator : m_generators)
-        {
-            int i = generator->get_prefix_length(match_line);
-            prefix_length = max(prefix_length, i);
-        }
-
-        if (prefix_length != match_length)
-            suffix = m_desc.word_delims[0];
-    }
-
-    // If this match doesn't make a new partial word, close it off
-    if (suffix)
-    {
-        // Add a closing quote on the end if required and only if the suffix
-        // did not come from the match.
-        if (needs_quote && !match_suffix)
-        {
-            char quote[2] = { get_closing_quote(m_desc.quote_pair) };
-            m_buffer.insert(quote);
-        }
-
-        char suffix_str[2] = { suffix };
-        m_buffer.insert(suffix_str);
-    }
-}
-
-//------------------------------------------------------------------------------
-void line_editor_impl::append_match_lcd()
-{
-    str<288> lcd;
-    m_matches.get_match_lcd(lcd);
-
-    unsigned int lcd_length = lcd.length();
-    if (!lcd_length)
-        return;
-
-    unsigned int cursor = m_buffer.get_cursor();
-
-    word end_word = *(m_words.back());
-    int word_end = end_word.offset;
-    if (!m_matches.is_prefix_included())
-        word_end += end_word.length;
-
-    int dx = lcd_length - (cursor - word_end);
-    if (dx < 0)
-    {
-        m_buffer.remove(cursor + dx, cursor);
-        m_buffer.set_cursor(cursor + dx);
-    }
-    else if (dx > 0)
-    {
-        int start = end_word.offset;
-        if (!m_matches.is_prefix_included())
-            start += end_word.length;
-
-        m_buffer.remove(start, cursor);
-        m_buffer.set_cursor(start);
-        m_buffer.insert(lcd.c_str());
-    }
-
-    // Prefix a quote if required.
-    bool needs_quote = false;
-    for (const char* c = lcd.c_str(); *c && !needs_quote; ++c)
-        needs_quote = (strchr(m_desc.word_delims, *c) != nullptr);
-
-    for (int i = 0, n = m_matches.get_match_count(); i < n && !needs_quote; ++i)
-    {
-        const char* match = m_matches.get_match(i) + lcd_length;
-        if (match[0])
-            needs_quote = (strchr(m_desc.word_delims, match[0]) != nullptr);
-    }
-
-    if (needs_quote && !end_word.quoted)
-    {
-        char quote[2] = { m_desc.quote_pair[0] };
-        int cursor = m_buffer.get_cursor();
-        m_buffer.set_cursor(end_word.offset);
-        m_buffer.insert(quote);
-        m_buffer.set_cursor(cursor + 1);
-    }
-}
-
-//------------------------------------------------------------------------------
 line_state line_editor_impl::get_linestate() const
 {
     return {
@@ -698,9 +551,6 @@ void line_editor_impl::update_internal()
         match_pipeline pipeline(m_matches);
         pipeline.reset();
         pipeline.generate(line, m_generators);
-#ifdef NYI_MATCHES
-        pipeline.fill_info();
-#endif
     }
 
     next_key.cursor_pos = m_buffer.get_cursor();

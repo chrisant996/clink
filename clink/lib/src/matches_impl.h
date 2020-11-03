@@ -11,14 +11,8 @@
 struct match_info
 {
     const char*     match;
-#ifdef NYI_MATCHES
-    const char*     displayable;
-    const char*     aux;
-    unsigned short  cell_count;
-#endif
     match_type      type;
-    unsigned char   suffix : 7; // TODO: suffix can be in store instead of info.
-    unsigned char   select : 1;
+    bool            select;
 };
 
 
@@ -41,21 +35,11 @@ public:
                             matches_impl(unsigned int store_size=0x10000);
     virtual unsigned int    get_match_count() const override;
     virtual const char*     get_match(unsigned int index) const override;
-#ifdef NYI_MATCHES
-    virtual const char*     get_displayable(unsigned int index) const override;
-    virtual const char*     get_aux(unsigned int index) const override;
-#endif
-    virtual char            get_suffix(unsigned int index) const override;
     virtual match_type      get_match_type(unsigned int index) const override;
-#ifdef NYI_MATCHES
-    virtual unsigned int    get_cell_count(unsigned int index) const override;
-    virtual bool            has_aux() const override;
-#endif
     virtual bool            is_suppress_append() const override;
     virtual bool            is_prefix_included() const override;
     virtual char            get_append_character() const override;
     virtual int             get_suppress_quoting() const override;
-    virtual void            get_match_lcd(str_base& out) const override;
 
 private:
     friend class            match_pipeline;
@@ -95,9 +79,6 @@ private:
     infos                   m_infos;
     unsigned short          m_count = 0;
     bool                    m_coalesced = false;
-#ifdef NYI_MATCHES
-    bool                    m_has_aux = false;
-#endif
     char                    m_append_character = 0;
     bool                    m_prefix_included = false;
     bool                    m_suppress_append = false;

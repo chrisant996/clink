@@ -15,9 +15,6 @@ public:
                         match_pipeline(matches_impl& matches);
     void                reset() const;
     void                generate(const line_state& state, const array<match_generator*>& generators) const;
-#ifdef NYI_MATCHES
-    void                fill_info() const;
-#endif
     void                select(const char* needle) const;
     void                sort() const;
 

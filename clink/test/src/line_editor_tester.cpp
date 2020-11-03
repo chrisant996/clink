@@ -9,6 +9,7 @@
 #include <core/str.h>
 #include <lib/editor_module.h>
 #include <lib/matches.h>
+#include <readline/readline.h>
 
 #include <stdio.h>
 
@@ -50,8 +51,7 @@ const matches* test_module::get_matches() const
 //------------------------------------------------------------------------------
 void test_module::bind_input(binder& binder)
 {
-    int default_group = binder.get_group();
-    binder.bind(default_group, DO_COMPLETE, 0);
+    rl_bind_keyseq("\t", rl_named_function("complete"));
 }
 
 //------------------------------------------------------------------------------
@@ -63,10 +63,6 @@ void test_module::on_matches_changed(const context& context)
 //------------------------------------------------------------------------------
 void test_module::on_input(const input&, result& result, const context& context)
 {
-    if (context.matches.get_match_count() == 1)
-        result.accept_match(0);
-    else
-        result.append_match_lcd();
 }
 
 

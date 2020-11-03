@@ -99,23 +99,6 @@ void match_pipeline::generate(
 }
 
 //------------------------------------------------------------------------------
-#ifdef NYI_MATCHES
-void match_pipeline::fill_info() const
-{
-    int count = m_matches.get_info_count();
-    if (!count)
-        return;
-
-    match_info* info = m_matches.get_infos();
-    for (int i = 0; i < count; ++i, ++info)
-    {
-        const char* displayable = m_matches.get_displayable(i);
-        info->cell_count = cell_count(displayable);
-    }
-}
-#endif
-
-//------------------------------------------------------------------------------
 void match_pipeline::select(const char* needle) const
 {
     int count = m_matches.get_info_count();
