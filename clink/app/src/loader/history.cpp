@@ -158,10 +158,20 @@ static int clear()
 }
 
 //------------------------------------------------------------------------------
+static int compact()
+{
+    history_scope history;
+    history->compact();
+
+    puts("History compacted.");
+    return 0;
+}
+
+//------------------------------------------------------------------------------
 static int print_expansion(const char* line)
 {
     history_scope history;
-    history->load_rl_history();
+    history->load_rl_history(false/*can_limit*/);
     str<> out;
     history->expand(line, out);
     puts(out.c_str());
@@ -175,7 +185,8 @@ static int print_help()
 
     const char* help[] = {
         "[n]",          "Print history items (only the last N items if specified).",
-        "clear",        "Completly clears the command history.",
+        "clear",        "Completely clears the command history.",
+        "compact",      "Compacts the history file.",
         "delete <n>",   "Delete Nth item (negative N indexes history backwards).",
         "add <...>",    "Join remaining arguments and appends to the history.",
         "expand <...>", "Print substitution result.",
@@ -187,7 +198,7 @@ static int print_help()
     puts("Verbs:");
     puts_help(help, sizeof_array(help));
 
-    puts("The 'history' command can also emulates Bash's builtin history command. The\n"
+    puts("The 'history' command can also emulate Bash's builtin history command. The\n"
         "arguments -c, -d <n>, -p <...> and -s <...> are supported.\n");
 
     return 1;
@@ -263,6 +274,10 @@ int history(int argc, char** argv)
         // 'clear' command
         if (_stricmp(verb, "clear") == 0)
             return clear();
+
+        // 'compact' command
+        if (_stricmp(verb, "compact") == 0)
+            return compact();
 
         // 'delete' command
         if (_stricmp(verb, "delete") == 0)
