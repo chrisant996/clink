@@ -101,17 +101,21 @@ workspace("clink")
 
     configuration("debug")
         optimize("off")
+        defines("DEBUG")
+        defines("_DEBUG")
 
     configuration("final")
         optimize("full")
         omitframepointer("on")
         flags("NoBufferSecurityCheck")
+        defines("NDEBUG")
 
     configuration({"final", "vs*"})
         flags("LinkTimeOptimization")
 
     configuration("release")
         optimize("full")
+        defines("NDEBUG")
 
     configuration("debug or release")
         defines("CLINK_BUILD_ROOT=\""..path.getabsolute(to).."\"")
