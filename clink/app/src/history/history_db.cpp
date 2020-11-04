@@ -559,7 +559,6 @@ bool read_line_iter::next_bank()
             m_lock.~read_lock();
             new (&m_lock) read_lock(bank_handle);
             new (&m_line_iter) read_lock::line_iter(m_lock, buffer, m_buffer_size);
-            m_line_iter.set_file_offset(m_db.get_file_start(bank_index));
             return true;
         }
     }
@@ -819,7 +818,7 @@ void history_db::load_internal()
     m_master_len = 0;
     m_master_deleted_count = 0;
 
-    char buffer[max_line_length + 1];
+    char buffer[max_line_length];
 
     const history_db& const_this = *this;
     const_this.for_each_bank([&] (unsigned int bank_index, const read_lock& lock)
@@ -831,7 +830,7 @@ void history_db::load_internal()
         }
 
         str_iter out;
-        read_lock::line_iter iter(lock, buffer, sizeof_array(buffer) - 1);
+        read_lock::line_iter iter(lock, buffer, sizeof_array(buffer));
         line_id_impl id;
         while (id = iter.next(out))
         {
@@ -857,10 +856,42 @@ void history_db::load_internal()
 }
 
 //------------------------------------------------------------------------------
-void history_db::load_rl_history()
+void history_db::load_rl_history(bool can_clean)
 {
     load_internal();
 
+    // The `clink history` command needs to be able to avoid cleaning the master
+    // history file.
+    if (can_clean)
+    {
+        compact();
+        load_internal();
+    }
+}
+
+//------------------------------------------------------------------------------
+void history_db::clear()
+{
+    for_each_bank([&] (unsigned int bank_index, write_lock& lock)
+    {
+        lock.clear();
+        if (bank_index == bank_master)
+        {
+            m_master_ctag.clear();
+            m_master_ctag.generate_new_tag();
+            lock.add(m_master_ctag.get());
+        }
+        return true;
+    });
+
+    m_index_map.clear();
+    m_master_len = 0;
+    m_master_deleted_count = 0;
+}
+
+//------------------------------------------------------------------------------
+void history_db::compact(bool force)
+{
     size_t limit = get_max_history();
     if (limit > 0)
     {
@@ -894,34 +925,15 @@ void history_db::load_rl_history()
 
     // Since the ratio of deleted lines to active lines is already known here,
     // this is the most convenient/performant place to compact the master bank.
-    size_t threshold = limit ? max(limit, m_min_compact_threshold) : 2500;
+    size_t threshold = (force ? 0 :
+                        limit ? max(limit, m_min_compact_threshold) :
+                        2500);
     if (m_master_deleted_count > threshold)
     {
         write_lock lock(m_bank_handles[bank_master]);
         rewrite_master_bank(lock, max_line_length);
-        load_internal();
         LOG("Compacted history:  %u active, %u deleted", m_master_len, m_master_deleted_count);
     }
-}
-
-//------------------------------------------------------------------------------
-void history_db::clear()
-{
-    for_each_bank([&] (unsigned int bank_index, write_lock& lock)
-    {
-        lock.clear();
-        if (bank_index == bank_master)
-        {
-            m_master_ctag.clear();
-            m_master_ctag.generate_new_tag();
-            lock.add(m_master_ctag.get());
-        }
-        return true;
-    });
-
-    m_index_map.clear();
-    m_master_len = 0;
-    m_master_deleted_count = 0;
 }
 
 //------------------------------------------------------------------------------
@@ -1024,7 +1036,7 @@ bool history_db::remove_internal(line_id id, bool guard_ctag)
             ++m_master_deleted_count;
         }
         else
-            assert(false);
+            assert(m_index_map.empty()); // Index map is empty when using `clink history delete`.
     }
     else
     {
@@ -1033,7 +1045,7 @@ bool history_db::remove_internal(line_id id, bool guard_ctag)
         if (nth != m_index_map.end() && id == *nth)
             m_index_map.erase(nth);
         else
-            assert(false);
+            assert(m_index_map.empty()); // Index map is empty when using `clink history delete`.
     }
 
     return true;
@@ -1054,8 +1066,8 @@ bool history_db::remove(int rl_history_index, const char* line)
         assert(lock);
 
         str_iter out;
-        char buffer[max_line_length + 1];
-        read_lock::line_iter iter(lock, buffer, sizeof_array(buffer) - 1);
+        char buffer[max_line_length];
+        read_lock::line_iter iter(lock, buffer, sizeof_array(buffer));
 
         iter.set_file_offset(id_impl.offset);
         assert(iter.next(out));
@@ -1107,12 +1119,4 @@ history_db::iter history_db::read_lines(char* buffer, unsigned int size)
         ret.impl = uintptr_t(new (buffer) read_line_iter(*this, size));
 
     return ret;
-}
-
-//------------------------------------------------------------------------------
-unsigned int history_db::get_file_start(unsigned int bank_index) const
-{
-    if (bank_index == bank_master)
-        return m_master_ctag.size();
-    return 0;
 }

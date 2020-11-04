@@ -57,8 +57,9 @@ public:
                                 history_db();
                                 ~history_db();
     void                        initialise();
-    void                        load_rl_history();
+    void                        load_rl_history(bool can_clean=true);
     void                        clear();
+    void                        compact(bool force=false);
     bool                        add(const char* line);
     int                         remove(const char* line);
     bool                        remove(line_id id) { return remove_internal(id, true); }
@@ -66,7 +67,6 @@ public:
     line_id                     find(const char* line) const;
     template <int S> iter       read_lines(char (&buffer)[S]);
     iter                        read_lines(char* buffer, unsigned int buffer_size);
-    unsigned int                get_file_start(unsigned int bank_index) const;
 
     static expand_result        expand(const char* line, str_base& out);
 

@@ -5,8 +5,6 @@ ChrisAnt Plans
 # Bugs
 
 ## ASAP
-- `clink history delete <n>` asserts and doesn't delete.
-- `clink history` needs to only limit/compact when explicitly told to.  Otherwise the act of launching it can alter the index numbers, thus the invoked operation may act on different lines that was intended.
 - `$T` at the beginning of an alias makes the alias not recognized.
 - `$T` inside an alias emits stuff differently than I meant for it to.
 
@@ -22,6 +20,7 @@ ChrisAnt Plans
 - Supply sample inputrc file(s).
 - Explain from where scripts are loaded (mridgers #519 has some info on that).
 - Document Readline color configuration -- LS_COLORS and also Clink settings such as `colour.readonly`.
+- Document the `clink` commands (autorun, inject, etc).
 
 <br>
 <br>
