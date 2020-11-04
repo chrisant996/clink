@@ -286,13 +286,19 @@ bool host::edit_line(const char* prompt, str_base& out)
     }
     str_compare_scope compare(cmp_mode);
 
+    bool init_scripts = !m_doskey_alias;
+    bool init_history = !m_doskey_alias;
+
     // Set up Lua and load scripts into it.
     str<288> script_path;
     app_context::get()->get_script_path(script_path);
     host_lua lua(script_path.c_str());
     prompt_filter prompt_filter(lua);
-    initialise_lua(lua);
-    lua.load_scripts();
+    if (init_scripts)
+    {
+        initialise_lua(lua);
+        lua.load_scripts();
+    }
 
     // Unfortunately we need to load settings again because some settings don't
     // exist until after Lua's up and running. But.. we can't load Lua scripts
@@ -302,10 +308,13 @@ bool host::edit_line(const char* prompt, str_base& out)
     line_editor::desc desc = {};
     initialise_editor_desc(desc);
 
-    // Filter the prompt.
+    // Filter the prompt.  Unless processing a multiline doskey macro.
     str<256> filtered_prompt;
-    prompt_filter.filter(prompt, filtered_prompt);
-    desc.prompt = filtered_prompt.c_str();
+    if (init_scripts)
+    {
+        prompt_filter.filter(prompt, filtered_prompt);
+        desc.prompt = filtered_prompt.c_str();
+    }
 
     // Set the terminal that will handle all IO while editing.
     desc.input = m_terminal.in;
@@ -315,27 +324,30 @@ bool host::edit_line(const char* prompt, str_base& out)
     // Create the editor and add components to it.
     line_editor* editor = line_editor_create(desc);
 
-    editor->add_generator(lua);
-    editor->add_generator(file_match_generator());
+    if (init_history)
+    {
+        editor->add_generator(lua);
+        editor->add_generator(file_match_generator());
 
-    if (g_save_history.get())
-    {
-        if (!m_history)
-            m_history = new history_db;
-    }
-    else
-    {
+        if (g_save_history.get())
+        {
+            if (!m_history)
+                m_history = new history_db;
+        }
+        else
+        {
+            if (m_history)
+            {
+                delete m_history;
+                m_history = nullptr;
+            }
+        }
+
         if (m_history)
         {
-            delete m_history;
-            m_history = nullptr;
+            m_history->initialise();
+            m_history->load_rl_history();
         }
-    }
-
-    if (m_history)
-    {
-        m_history->initialise();
-        m_history->load_rl_history();
     }
 
     s_history_db = m_history;
@@ -354,10 +366,7 @@ bool host::edit_line(const char* prompt, str_base& out)
         if (m_doskey_alias.next(out))
         {
             m_terminal.out->begin();
-            m_terminal.out->write(filtered_prompt.c_str(), filtered_prompt.length());
-            m_terminal.out->write(out.c_str(), out.length());
             m_terminal.out->end();
-            write_line_feed();
             resolved = true;
             ret = true;
         }
@@ -415,7 +424,8 @@ bool host::edit_line(const char* prompt, str_base& out)
     if (!resolved)
     {
         m_doskey.resolve(out.c_str(), m_doskey_alias);
-        m_doskey_alias.next(out);
+        if (m_doskey_alias)
+            out.clear();
     }
 
     s_history_db = nullptr;

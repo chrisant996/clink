@@ -125,9 +125,15 @@ bool doskey_alias::next(str_base& out)
     if (!*m_cursor)
         return false;
 
-    out.copy(m_cursor);
+    out.clear();
+    while (*m_cursor)
+    {
+        char c = *m_cursor++;
+        if (c == '\n')
+            break;
+        out.concat(&c, 1);
+    }
 
-    while (*m_cursor++);
     return true;
 }
 
@@ -233,7 +239,7 @@ bool doskey::resolve_impl(const str_iter& in, str_stream* out)
         case 'g': case 'G': stream << '>';  continue;
         case 'l': case 'L': stream << '<';  continue;
         case 'b': case 'B': stream << '|';  continue;
-        case 't': case 'T': stream << '\0'; continue;
+        case 't': case 'T': stream << '\n'; continue;
         }
 
         // Unknown tag? Perhaps it is a argument one?
@@ -314,8 +320,6 @@ void doskey::resolve(const char* chars, doskey_alias& out)
     else if (!resolve_impl(str_iter(chars), &stream))
         return;
 
-    // Double null-terminated as aliases with $T become and array of commands.
-    stream << '\0';
     stream << '\0';
 
     // Collect the resolve result
