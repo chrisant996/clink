@@ -44,7 +44,7 @@ static void close_key(HKEY key)
 }
 
 //------------------------------------------------------------------------------
-static int set_value(HKEY key, const char* name, const char* str)
+static bool set_value(HKEY key, const char* name, const char* str)
 {
     LONG ok;
     ok = RegSetValueEx(key, name, 0, REG_SZ, (const BYTE*)str, (DWORD)strlen(str) + 1);
@@ -69,7 +69,7 @@ static int get_value(HKEY key, const char* name, char** buffer)
 }
 
 //------------------------------------------------------------------------------
-static int delete_value(HKEY key, const char* name)
+static bool delete_value(HKEY key, const char* name)
 {
     LONG ok;
     ok = RegDeleteValue(key, name);
@@ -85,26 +85,26 @@ static HKEY open_cmd_proc_key(int all_users, int wow64, int writable)
 }
 
 //------------------------------------------------------------------------------
-static int check_registry_access()
+static bool check_registry_access()
 {
     HKEY key;
 
     key = open_cmd_proc_key(g_all_users, 0, 1);
     if (key == nullptr)
-        return 0;
+        return false;
 
     close_key(key);
 
     key = open_cmd_proc_key(g_all_users, 1, 1);
     if (key == nullptr)
-        return 0;
+        return false;
 
     close_key(key);
-    return 1;
+    return true;
 }
 
 //------------------------------------------------------------------------------
-static int find_clink_entry(const char* value, int* left, int* right)
+static bool find_clink_entry(const char* value, int* left, int* right)
 {
     int quoted;
     int i;
@@ -127,26 +127,18 @@ static int find_clink_entry(const char* value, int* left, int* right)
     {
         tag = strstr(value, needles[i]);
         if (tag != nullptr)
-        {
             break;
-        }
     }
 
     if (tag == nullptr)
-    {
-        return 0;
-    }
+        return false;
 
     // Find right most extents of clink's entry.
     c = strchr(tag, '&');
     if (c != nullptr)
-    {
         *right = (int)(c - value);
-    }
     else
-    {
         *right = (int)strlen(value);
-    }
 
     // Is clink's path quoted?
     c = strchr(tag, ' ');
@@ -174,7 +166,7 @@ static int find_clink_entry(const char* value, int* left, int* right)
     }
     *left = (int)(c - value);
 
-    return 1;
+    return true;
 }
 
 //------------------------------------------------------------------------------
@@ -200,13 +192,13 @@ static int uninstall_autorun(const char* clink_path, int wow64)
     if (cmd_proc_key == nullptr)
     {
         printf("ERROR: Failed to open registry key (%d)\n", GetLastError());
-        return 0;
+        return 1;
     }
 
     key_value = nullptr;
     get_value(cmd_proc_key, "AutoRun", &key_value);
 
-    ret = 1;
+    ret = 0;
     if (key_value && find_clink_entry(key_value, &left, &right))
     {
         const char* read;
@@ -231,12 +223,12 @@ static int uninstall_autorun(const char* clink_path, int wow64)
             // Empty key. We might as well delete it.
             if (!delete_value(cmd_proc_key, "AutoRun"))
             {
-                ret = 0;
+                ret = 1;
             }
         }
         else if (!set_value(cmd_proc_key, "AutoRun", read))
         {
-            ret = 0;
+            ret = 1;
         }
     }
 
@@ -264,7 +256,7 @@ static int install_autorun(const char* clink_path, int wow64)
     if (cmd_proc_key == nullptr)
     {
         printf("ERROR: Failed to open registry key (%d)\n", GetLastError());
-        return 0;
+        return 1;
     }
 
     key_value = nullptr;
@@ -285,9 +277,9 @@ static int install_autorun(const char* clink_path, int wow64)
 
     // Set it
     value = get_cmd_start(new_value.c_str());
-    i = 1;
+    i = 0;
     if (!set_value(cmd_proc_key, "AutoRun", value))
-        i = 0;
+        i = 1;
 
     // Tidy up.
     close_key(cmd_proc_key);
@@ -318,7 +310,7 @@ static int show_autorun()
             if (cmd_proc_key == nullptr)
             {
                 printf("ERROR: Failed to open registry key (%d)\n", GetLastError());
-                return 0;
+                return 1;
             }
 
             key_value = nullptr;
@@ -337,26 +329,24 @@ static int show_autorun()
     }
 
     puts("");
-    return 1;
+    return 0;
 }
 
 //------------------------------------------------------------------------------
 static int set_autorun_value(const char* value, int wow64)
 {
-    HKEY cmd_proc_key;
-    int ret;
-
-    cmd_proc_key = open_cmd_proc_key(g_all_users, wow64, 1);
+    HKEY cmd_proc_key = open_cmd_proc_key(g_all_users, wow64, 1);
     if (cmd_proc_key == nullptr)
     {
         printf("ERROR: Failed to open registry key (%d)\n", GetLastError());
-        return 0;
+        return 1;
     }
 
+    int ret;
     if (value == nullptr || *value == '\0')
-        ret = delete_value(cmd_proc_key, "AutoRun");
+        ret = !delete_value(cmd_proc_key, "AutoRun");
     else
-        ret = set_value(cmd_proc_key, "AutoRun", value);
+        ret = !set_value(cmd_proc_key, "AutoRun", value);
 
     close_key(cmd_proc_key);
     return ret;
@@ -458,7 +448,7 @@ int autorun(int argc, char** argv)
             return 0;
 
         default:
-            return 0;
+            return 1;
         }
     }
 
@@ -499,22 +489,22 @@ int autorun(int argc, char** argv)
     if (function == nullptr)
     {
         puts("ERROR: Invalid arguments. Run 'clink autorun --help' for info.");
-        return 0;
+        return 1;
     }
 
     // Do the magic.
     if (!check_registry_access())
     {
         puts("You must have administator rights to access cmd.exe's autorun");
-        return 0;
+        return 1;
     }
 
     const char* arg = clink_path.c_str();
     arg = *arg ? arg : g_clink_args.c_str();
-    ret = dispatch(function, arg);
+    ret = !dispatch(function, arg);
 
     // Provide the user with some feedback.
-    if (ret == 1)
+    if (ret == 0)
     {
         const char* msg = nullptr;
 

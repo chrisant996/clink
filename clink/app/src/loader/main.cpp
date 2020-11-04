@@ -14,7 +14,7 @@ int mainCRTStartup(uintptr_t param) // effectively a thread entry point.
 int main(int argc, char** argv)
 #endif
 {
-    int i = !loader_main_thunk();
+    int i = loader_main_thunk();
     ExitProcess(i); // without this Win10 will stall.
     return i;
 }

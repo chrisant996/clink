@@ -289,6 +289,10 @@ void get_profile_path(const char* in, str_base& out)
 //------------------------------------------------------------------------------
 int inject(int argc, char** argv)
 {
+    // Autorun injection must always return success otherwise it interferes with
+    // other scripts (e.g. VS postbuild steps, which causes CMake to be unable
+    // to build anything).  https://github.com/mridgers/clink/issues/373
+
     struct option options[] = {
         { "scripts",     required_argument,  nullptr, 's' },
         { "profile",     required_argument,  nullptr, 'p' },
@@ -315,8 +319,9 @@ int inject(int argc, char** argv)
     DWORD target_pid = 0;
     app_context::desc app_desc;
     int i;
-    int ret = false;
-    while ((i = getopt_long(argc, argv, "nalqhp:s:d:", options, nullptr)) != -1)
+    int ret = 1;
+    bool is_autorun = false;
+    while ((i = getopt_long(argc, argv, "lqhp:s:d:", options, nullptr)) != -1)
     {
         switch (i)
         {
@@ -338,7 +343,7 @@ int inject(int argc, char** argv)
 
         case 'q': app_desc.quiet = true;        break;
         case 'd': target_pid = atoi(optarg);    break;
-        case '_': ret = true;                   break;
+        case '_': ret = 0; is_autorun = true;   break;
 
         case 'l':
             app_desc.log = false;
@@ -348,6 +353,8 @@ int inject(int argc, char** argv)
             return ret;
 
         case 'h':
+            ret = 0;
+            // fall through
         default:
             puts(g_clink_header);
             puts_help(help, sizeof_array(help));
@@ -384,7 +391,7 @@ int inject(int argc, char** argv)
     void* our_dll_base = vm().get_alloc_base("");
     uintptr_t init_func = uintptr_t(remote_dll_base);
     init_func += uintptr_t(initialise_clink) - uintptr_t(our_dll_base);
-    ret |= (process(target_pid).remote_call((process::funcptr_t)init_func, app_desc) != nullptr);
+    ret = (process(target_pid).remote_call((process::funcptr_t)init_func, app_desc) == nullptr);
 
-    return ret;
+    return is_autorun ? 0 : ret;
 }
