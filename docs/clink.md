@@ -54,7 +54,7 @@ The following table describes the available Clink settings:
 Name                         | Description
 :--:                         | -----------
 `clink.paste_crlf`           | What to do with CR and LF characters on paste. Set this to `delete` to delete them, or to `space` to replace them with spaces.
-`clink.path`                 | A list of paths to load Lua scripts. Multiple paths can be delimited semicolons. _**TODO:** Describe the default behavior._
+`clink.path`                 | A list of paths to load Lua scripts. Multiple paths can be delimited semicolons.
 `cmd.auto_answer`            | Automatically answers cmd.exe's "Terminate batch job (Y/N)?" prompts. `off` = disabled, `answer_yes` = answer Y, `answer_no` = answer N.
 `cmd.ctrld_exits`            | <kbd>Ctrl</kbd>+<kbd>D</kbd> exits the process when it is pressed on an empty line.
 `colour.doskey`              | Used when Clink displays doskey alias completions.
@@ -114,15 +114,20 @@ List the <code>clink</code> command line options.
 
 Readline itself can also be configured to add custom keybindings and macros by creating a Readline init file. There is excellent documentation for all the options available to configure Readline in Readline's [manual](https://tiswww.cwru.edu/php/chet/readline/rltop.html#Documentation).
 
-<fieldset><legend>TODO</legend>
-Update the description of how/where inputrc files are loaded.
-</fieldset>
+Clink searches in the directories referenced by the following environment variables and loads any `.inputrc` or `_inputrc` files present, in the order listed here:
+- `%CLINK_INPUTRC%`
+- `%USERPROFILE%`
+- `%LOCALAPPDATA%`
+- `%APPDATA%`
+- `%HOME%`
 
-$(BEGINDIM)
-Clink will search in the directory as specified by the `%HOME%` environment variable for one or all of the following files; `clink_inputrc`, `_inputrc`, and `.inputrc`. If `%HOME%` is unset then Clink will use either of the standard Windows environment variables `%HOMEDRIVE%\%HOMEPATH%` or `%USERPROFILE%`.
+Configuration in files loaded earlier can be overridden by files loaded later.
 
 Other software that also uses Readline will also look for the `.inputrc` file (and possibly the `_inputrc` file too). To set macros and keybindings intended only for Clink one can use the Readline init file conditional construct like this; `$if clink [...] $endif`.
-$(ENDDIM)
+
+> **Compatibility Notes:**
+> - The `clink_inputrc_base` file from v0.4.8 is no longer used.
+> - For backward compatibility, `clink_inputrc` is also loaded from the above locations, but it has been deprecated and may be removed in the future.
 
 Clink also adds some new commands and configuration variables in addition to what's covered in the Readline documentation.
 
@@ -132,11 +137,9 @@ Name | Default | Description
 :-:|:-:|---
 `completion-auto-query-items`|on|Automatically prompts before displaying completions if they won't fit on one screen page.
 `history-point-at-end-of-anchored-search`|off|Puts the cursor at the end of the line when using `history-search-forward` or `history-search-backward`.
-`locale-sort`|on|Sorts completions with locale awareness (sort like Windows does).
+`locale-sort`|on|Sorts completions with locale awareness (like CMD does).
 
 <br>
-
-> **Compatibility Note:**  The `clink_inputrc_base` file from v0.4.8 no longer exists.
 
 ## New commands
 
@@ -148,7 +151,7 @@ Name | Description
 `clink-ctrl-c`|Discards the current line and starts a new one (like <kbd>Ctrl</kbd>+<kbd>C</kbd> in CMD.EXE).
 `clink-exit`|Replaces the current line with `exit` and executes it (exits the shell instance).
 `clink-expand-doskey-alias`|Expand the doskey alias (if any) at the beginning of the line.
-`clink-expand-env-vars`|Expand the environment variable (`%FOOBAR%`) at the cursor.
+`clink-expand-env-vars`|Expand the environment variable (e.g. `%FOOBAR%`) at the cursor.
 `clink-insert-dot-dot`|Inserts `..\` at the cursor.
 `clink-paste`|Paste the clipboard at the cursor.
 `clink-popup-complete`|Show a popup window that lists the available completions.
@@ -195,7 +198,13 @@ The Readline library allows clients to offer an alternative path for creating co
 
 ## The Location of Lua Scripts
 
-Clink looks for Lua scripts in the folders as described in the **Configuring Clink** section. By default <kbd>Ctrl</kbd>+<kbd>X</kbd>,<kbd>Ctrl</kbd>+<kbd>R</kbd> is mapped to reload all Lua scripts which can be useful when developing and iterating on your own scripts.
+Clink loads all Lua scripts it finds in these directories:
+- All directories listed in the `clink.path` setting, separated by semicolons.
+- All directories listed in the `%CLINK_PATH%` environment variable, separated by semicolons.
+
+If no Lua scripts can be found in any of those directories, then Clink will load any Lua scripts found in the directory that contains the Clink DLL (this is the default behavior from v0.4.8).
+
+By default <kbd>Ctrl</kbd>+<kbd>X</kbd>,<kbd>Ctrl</kbd>+<kbd>R</kbd> is mapped to reload all Lua scripts which can be useful when developing and iterating on your own scripts.
 
 $(BEGINDIM)
 ## Match Generators
@@ -489,7 +498,7 @@ Due to differences between Windows and Linux, escape codes for keys like PageUp/
 
 <br>
 
-Here is an example line from a clink_inputrc file that binds Shift-End to the Readline `transpose-word` function;
+Here is an example line from an inputrc file that binds Shift-End to the Readline `transpose-word` function;
 
 ```
 "\e[1;2F": transpose-word
@@ -516,7 +525,7 @@ For function keys the full escape sequences are listed.  The last four columns (
 
 <br>
 
-Here is an example line from a clink_inputrc file that binds <kbd>Alt</kbd>+<kbd>Shift</kbd>+<kbd>F3</kbd> to the Readline `history-substring-search-backward` function;
+Here is an example line from an inputrc file that binds <kbd>Alt</kbd>+<kbd>Shift</kbd>+<kbd>F3</kbd> to the Readline `history-substring-search-backward` function;
 
 ```
 "\e\e[1;2R": history-substring-search-backward
