@@ -54,12 +54,13 @@ code {
 pre {
     font-family: monospace;
     margin: 2px 10px;
+    padding: 0;
 }
 
 pre code {
     border: none;
-    padding: 0 0 0 0;
-    border-radius: 0;
+    padding: 0;
+    border-radius: inherit;
 }
 
 kbd {
@@ -118,7 +119,8 @@ kbd {
 }
 
 #content pre, #api .show {
-    padding: 0.2em;
+    border: 1px solid #ddd;
+    border-radius: 5px;
     background-color: #eee;
 }
 
