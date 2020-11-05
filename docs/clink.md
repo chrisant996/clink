@@ -45,6 +45,8 @@ When running Clink via the methods above, Clink checks the parent process is sup
 
 <br>
 
+<a name="configclink"/>
+
 # Configuring Clink
 
 The easiest way to configure Clink is to use Clink's `set` command line option.  This can list, query, and set Clink's settings. Run `clink set --help` from a Clink-installed cmd.exe process to learn more both about how to use it and to get descriptions for Clink's various options.
@@ -61,7 +63,7 @@ Name                         | Description
 `colour.hidden`              | Used when Clink displays file completions with the "hidden" attribute.
 `colour.interact`            | Used when Clink displays text or prompts such as a pager's `--More?--` prompt.
 `colour.readonly`            | Used when Clink displays file completions with the "readonly" attribute.
-`doskey.enhanced`            | Enhanced Doskey adds the expansion of macros that follow `|` and `&` command separators and respects quotes around words when parsing `$1`..`$9` tags. Note that these features do not apply to Doskey use in Batch files.
+`doskey.enhanced`            | Enhanced Doskey adds the expansion of macros that follow `\|` and `&` command separators and respects quotes around words when parsing `$1`..`$9` tags. Note that these features do not apply to Doskey use in Batch files.
 `exec.cwd`                   | When matching executables as the first word (`exec.enable`), include executables in the current directory. (This is implicit if the word being completed is a relative path).
 `exec.dirs`                  | When matching executables as the first word (`exec.enable`), also include directories relative to the current working directory as matches.
 `exec.enable`                | Only match executables when completing the first word of a line.
@@ -131,7 +133,7 @@ Other software that also uses Readline will also look for the `.inputrc` file (a
 
 Clink also adds some new commands and configuration variables in addition to what's covered in the Readline documentation.
 
-## New configuration variables
+## New Configuration Variables
 
 Name | Default | Description
 :-:|:-:|---
@@ -141,7 +143,7 @@ Name | Default | Description
 
 <br>
 
-## New commands
+## New Commands
 
 Name | Description
 :-:|---
@@ -170,6 +172,32 @@ Name | Description
 `old-menu-complete-backward`|Like `old-menu-complete`, but in reverse.
 `remove-history`|While searching history, removes the current line from the history.
 
+## Completion Colors
+
+When `colored-completion-prefix` is configured to `on`, then the "so" color from `%LS_COLORS%` is used to color the common prefix when displaying possible completions.  The default for "so" is magenta, but for example `set LS_COLORS=so=90` sets the color to bright black (which shows up as a dark gray).
+
+When `colored-stats` is configured to `on`, then the color definitions from `%LS_COLORS%` (using ANSI escape codes) are used to color file completions according to their file type or extension.  Each definition is a either a two character type id or a file extension, followed by an equals sign and then the [SGR parameters](https://en.wikipedia.org/wiki/ANSI_escape_code#SGR_parameters) for an ANSI escape code.  Multiple definitions are separated by colons.  Also, since `%LS_COLORS%` doesn't cover readonly files, hidden files, or doskey aliases the `colour.readonly`, `colour.hidden`, and `colour.doskey` [Clink settings](#configclink) exist to cover those.
+
+Here is an example where `%LS_COLORS%` defines colors for various types.
+
+- `so=` defines the color for the common prefix for possible completions.
+- `fi=` defines the color for normal files.
+- `di=` defines the color for directories.
+- `ex=` defines the color for executable files.
+
+```plaintext
+set LS_COLORS=so=90:fi=97:di=93:ex=92:*.pdf=30;105:*.md=4
+```
+
+Let's break that down:
+
+- `so=90` uses bright black (dark gray) for the common prefix for possible completions.
+- `fi=97` uses bright white for files.
+- `di=93` uses bright yellow for directories.
+- `ex=92` uses bright green for executable files.
+- `*.pdf=30;105` uses black on bright magenta for .pdf files.
+- `*.md=4` uses underline for .md files.
+
 ## Popup window
 
 The `clink-popup-complete`, `clink-popup-directories`, and `clink-popup-history` commands show a popup window that lists the available completions, directory history, or command history.  Here's how it works:
@@ -189,10 +217,6 @@ Typing|Typing does an incremental search.
 <br>
 
 # Extending Clink
-
-<fieldset><legend>WARNING</legend>
-Much of this section is out of date and needs to be updated.
-</fieldset>
 
 The Readline library allows clients to offer an alternative path for creating completion matches. Clink uses this to hook Lua into the completion process making it possible to script the generation of matches with Lua scripts. The following sections describe this in more detail and shows some examples.
 
@@ -352,40 +376,6 @@ the_parser:set_arguments(
 ```
 
 The functions take a single argument which is a word from the command line being edited (or partial word if it is the one under the cursor). Functions should return a table of potential matches (or an empty table if it calls clink.add_match() directly itself).
-
-## Filtering The Match Display
-$(ENDDIM)
-
-<fieldset><legend>TODO</legend>
-Describe the new syntax.  The old syntax described below isn't compatible with v1.0.0 onward.
-</fieldset>
-
-$(BEGINDIM)
-In some instances it may be preferable to display potential matches in an alternative form than the generated matches passed to and used internally by Readline. This happens for example with Readline's standard file name matches, where the matches are the whole word being completed but only the last part of the path is shown (e.g. the match `foo/bar` is displayed as `bar`).
-
-To facilitate custom match generators that may wish to do this there is the `clink.match_display_filter` variable. This can be set to a function that will then be called before matches are to be displayed.
-
-```lua
-function my_display_filter(matches)
-    new_matches = {}
-
-    for _, m in ipairs(matches) do
-        local _, _, n = m:find("\\([^\\]+)$")
-        table.insert(new_matches, n)
-    end
-
-    return new_matches
-end
-
-function my_match_generator(text, first, last)
-    ...
-
-    clink.match_display_filter = my_display_filter
-    return true
-end
-```
-
-The function's single argument `matches` is a table containing what Clink is going to display. The return value is a table with the input matches filtered as required by the match generator. The value of `clink.match_display_filter` is reset every time match generation is invoked.
 $(ENDDIM)
 
 ## Customising The Prompt

@@ -15,8 +15,6 @@ ChrisAnt Plans
 # Documentation
 - Describe the new argmatcher/etc syntax.
 - Supply sample inputrc file(s).
-- Explain from where scripts are loaded (mridgers #519 has some info on that).
-- Document Readline color configuration -- LS_COLORS and also Clink settings such as `colour.readonly`.
 - Document the `clink` commands (autorun, inject, etc).
 
 <br>
