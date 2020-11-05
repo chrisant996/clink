@@ -137,6 +137,10 @@ kbd {
     font-family: monospace;
 }
 
+#content ol li {
+    padding-left: 0.5em;
+}
+
 #content #api .group {
     margin-bottom: 1em;
 }

@@ -46,6 +46,15 @@ end
 --- -name:  clink.promptfilter
 --- -arg:   [priority:integer]
 --- -ret:   table
+--- Creates and returns a new promptfilter object that is applied in increasing
+--- <em>priority</em> order (low values to high values).  Define a
+--- <code>filter(prompt:string)</code> function on the object, which receives
+--- <em>prompt</em> containing the filtered prompt so far.<br/>
+--- <br/>
+--- The function can return <code>nil</code> to have no effect, or can return
+--- prompt:string [, continue:boolean].  If <em>continue</em> is
+--- <code>false</code> then no further prompt filtering is performed.
+
 function clink.promptfilter(priority)
     if priority == nil then priority = 999 end
 
@@ -61,7 +70,8 @@ end
 --- -arg:   filter_func
 --- -arg:   [priority:integer]
 --- -ret:   table
---- Old API shim, for backward compatibility.
+--- Deprecated.  Exists only for backward compatibility, to minimize the changes
+--- necessary to get old scripts working with the new API.
 clink.prompt = clink.prompt or {}
 function clink.prompt.register_filter(filter, priority)
     if priority == nil then

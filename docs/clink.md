@@ -89,7 +89,6 @@ Name                         | Description
 
 > Notes:
 > - The `esc_clears_line` setting has been replaced by a `clink-reset-line` command that can be bound to <kbd>Escape</kbd> (or any other key).
-> - The `history_file_lines` setting doesn't exist at the moment. _**NYI:** Some mechanism for trimming history will be added eventually._
 > - The `use_altgr_substitute` setting has been removed. _**NYI:** If AltGr or lack of AltGr causes a problem for you, please open an issue in the repo with details._
 
 ## File Locations
@@ -364,37 +363,84 @@ $(ENDDIM)
 
 ## Customising The Prompt
 
-> **TODO:** Describe the new prompt filter syntax.
->
-> **Compatibility Note:** Both the old syntax described below **and** the new syntax are compatible with v1.1.0 onward.
+Before Clink displays the prompt it filters the prompt through Lua so that the prompt can be customised. This happens each and every time that the prompt is shown which allows for context sensitive customisations (such as showing the current branch of a git repository).
 
-Before Clink displays the prompt it filters the prompt through Lua so that the prompt can be customised. This happens each and every time that the prompt is shown which allows for context sensitive customisations (such as showing the current branch of a git repository for example).
+Writing a prompt filter is straightforward:
+1. Create a new prompt filter by calling `clink.promptfilter()` along with a priority id which dictates the order in which filters are called. Lower priority ids are called first.
+2. Define a `filter()` function on the returned prompt filter.
 
-Writing a prompt filter is straight forward and best illustrated with an example that displays the current git branch when the current directory is a git repository.
+The filter function takes a string argument that contains the filtered prompt so far.  If the filter function returns nil, it has no effect.  If the filter function returns a string, that string is used as the new filtered prompt (and may be further modified by other prompt filters with higher priority ids).  If the filter function returns a string and a boolean, then if the boolean is false the prompt filtering is done and no further filter functions are called.
 
 ```lua
-function git_prompt_filter()
-    for line in io.popen("git branch 2>nul"):lines() do
-        local m = line:match("%* (.+)$")
-        if m then
-            clink.prompt.value = "["..m.."] "..clink.prompt.value
-            break
-        end
-    end
-
-    return false
+local p = clink.promptfilter(30)
+function p:filter(prompt)
+    return "new prefix "..prompt.." new suffix" -- Add ,false to stop filtering.
 end
-
-clink.prompt.register_filter(git_prompt_filter, 50)
 ```
 
-The filter function takes no arguments instead receiving and modifying the prompt through the `clink.prompt.value` variable. It returns true if the prompt filtering is finished, and false if it should continue on to the next registered filter.
+The following example illustrates setting the prompt, modifying the prompt, using ANSI escape code for colors, running a git command to find the current branch, and stopping any further processing.
 
-A filter function is registered into the filter chain by passing the function to `clink.prompt.register_filter()` along with a sort id which dictates the order in which filters are called. Lower sort ids are called first.
+```lua
+local green  = "\x1b[92m"
+local yellow = "\x1b[93m"
+local cyan   = "\x1b[36m"
+local normal = "\x1b[m"
 
-## New Functions
+-- A prompt filter that discards any prompt so far and sets the
+-- prompt to the current working directory.  An ANSI escape code
+-- colors it yellow.
+local cwd_prompt = clink.promptfilter(30)
+function cwd_prompt:filter(prompt)
+    return yellow..os.getcwd()..normal
+end
 
-> **TODO:** Document the lua functions added by Clink.
+-- A prompt filter that inserts the date at the beginning of the
+-- the prompt.  An ANSI escape code colors the date green.
+local date_prompt = clink.promptfilter(40)
+function date_prompt:filter(prompt)
+    return green..os.date("%a %H:%M")..normal.." "..prompt
+end
+
+-- A prompt filter that may stop further prompt filtering.
+-- This is a silly example, but on Wednesdays, it stops the
+-- filtering, which in this example prevents git branch
+-- detection and the line feed and angle bracket.
+local wednesday_silliness = clink.promptfilter(45)
+function wednesday_silliness:filter(prompt)
+    if os.date("%a") == "Wed" then
+        -- The ,false stops any further filtering.
+        return prompt.." HAPPY HUMP DAY! ", false
+    end
+end
+
+-- A prompt filter that appends the current git branch.
+local git_branch_prompt = clink.promptfilter(50)
+function git_branch_prompt:filter(prompt)
+    for line in io.popen("git branch 2>nul"):lines() do
+        local branch = line:match("%* (.+)$")
+        if branch then
+            return prompt.." "..cyan.."["..branch.."]"..normal
+        end
+    end
+end
+
+-- A prompt filter that adds a line feed and angle bracket.
+local bracket_prompt = clink.promptfilter(150)
+function bracket_prompt:filter(prompt)
+    return prompt.."\n> "
+end
+```
+
+The resulting prompt will look like this:
+
+<pre><code class="plaintext" style="background-color:black"><span style="color:#00ff00">Wed 12:54</span> <span style="color:#ffff00">c:\dir</span> <span style="color:#008080">[master]</span>
+<span style="color:#cccccc">&gt;&nbsp;_</span>
+</code></pre>
+
+...except on Wednesdays, when it will look like this:
+
+<pre><code class="plaintext" style="background-color:black"><span style="color:#00ff00">Wed 12:54</span> <span style="color:#ffff00">c:\dir</span> <span style="color:#cccccc">HAPPY HUMP DAY!&nbsp;_</span>
+</code></pre>
 
 <br>
 
