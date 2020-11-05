@@ -148,7 +148,7 @@ local function do_docs()
             local arg = table.concat(doc_tag.arg or {}, ", ")
             local ret = (doc_tag.ret or { "nil" })[1]
             local desc = table.concat(doc_tag.desc or {}, " ")
-            local show = table.concat(doc_tag.show or {}, "<br/>\n")
+            local show = table.concat(doc_tag.show or {}, "\n")
 
             api_html:write('<div class="header">')
                 api_html:write(' <div class="name">'..name..'</div>')
