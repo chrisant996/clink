@@ -503,12 +503,12 @@ bool host_cmd::initialise_system()
         app_context::get()->get_binaries_dir(dll_path);
 
         str<560> buffer;
-        buffer << "\"" << dll_path << "\\" << CLINK_EXE << "\" $*";
+        buffer << "\"" << dll_path << "\\" CLINK_EXE "\" " << "$*";
         m_doskey.add_alias("clink", buffer.c_str());
 
         // Add an alias to operate on the command history.
         buffer.clear();
-        buffer << "\"" << dll_path << "\\" << CLINK_EXE << "\" history $*";
+        buffer << "\"" << dll_path << "\\" CLINK_EXE "\" " << "history $*";
         m_doskey.add_alias("history", buffer.c_str());
     }
 

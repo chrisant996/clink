@@ -106,8 +106,9 @@ void app_context::get_binaries_dir(str_base& out) const
     {
         DWORD read;
         int size = GetFileSize(origin, nullptr);
-        out.reserve(size);
+        out.reserve(size + 1);
         ReadFile(origin, out.data(), size, &read, nullptr);
+        out.data()[size] = '\0';
         CloseHandle(origin);
     }
     else
