@@ -124,7 +124,7 @@ local function do_docs()
 
     -- Collect document tags from source and output them as HTML.
     local doc_tags = {}
-    parse_doc_tags(doc_tags, "clink/lua/**.lua")
+    parse_doc_tags(doc_tags, "clink/**.lua")
     parse_doc_tags(doc_tags, "clink/lua/**.cpp")
 
     local groups = {}
