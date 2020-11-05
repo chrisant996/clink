@@ -18,15 +18,28 @@ h6 { font-size: 1.00em; }
 blockquote {
     display: block;
     padding: 1px 20px 1px 20px;
+    margin: 0 0 20px 8px;
+    box-shadow: 2px 2px 8px #ccc;
+    border-left-width: 8px;
+    border-left-style: solid;
+    border-color: #336699;
+}
+
+fieldset {
+    display: block;
+    padding: 10px 10px 20px 20px;
     margin: 0 0 20px;
     box-shadow: 2px 2px 8px #ccc;
-    border-left-style: solid;
-    border-left-width: 8px;
-    border-left-color: #990000;
-    border-right-style: solid;
-    border-right-width: 2px;
-    border-right-color: #990000;
+    border-radius: 8px;
+    border-style: solid;
+    border-width: 2;
+    border-color: #990000;
     background: #ffffee;
+}
+
+legend {
+    font-weight: 600;
+    padding: 0 4px;
 }
 
 code {

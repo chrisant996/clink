@@ -102,13 +102,21 @@ The .zip distribution of Clink creates and uses a directory called `profile` whi
 
 All of the above locations can be overridden using the `--profile <path>` command line option which is specified when injecting Clink into cmd.exe using `clink inject`.
 
+## Command Line Options
+
+<fieldset><legend>TODO</legend>
+List the <code>clink</code> command line options.
+</fieldset>
+
 <br>
 
 # Configuring Readline
 
 Readline itself can also be configured to add custom keybindings and macros by creating a Readline init file. There is excellent documentation for all the options available to configure Readline in Readline's [manual](https://tiswww.cwru.edu/php/chet/readline/rltop.html#Documentation).
 
-> **TODO:** Update the description of how/where inputrc files are loaded.
+<fieldset><legend>TODO</legend>
+Update the description of how/where inputrc files are loaded.
+</fieldset>
 
 $(BEGINDIM)
 Clink will search in the directory as specified by the `%HOME%` environment variable for one or all of the following files; `clink_inputrc`, `_inputrc`, and `.inputrc`. If `%HOME%` is unset then Clink will use either of the standard Windows environment variables `%HOMEDRIVE%\%HOMEPATH%` or `%USERPROFILE%`.
@@ -179,7 +187,9 @@ Typing|Typing does an incremental search.
 
 # Extending Clink
 
-> **WARNING:** Most of this section is out of date and needs to be updated.
+<fieldset><legend>WARNING</legend>
+Much of this section is out of date and needs to be updated.
+</fieldset>
 
 The Readline library allows clients to offer an alternative path for creating completion matches. Clink uses this to hook Lua into the completion process making it possible to script the generation of matches with Lua scripts. The following sections describe this in more detail and shows some examples.
 
@@ -191,7 +201,9 @@ $(BEGINDIM)
 ## Match Generators
 $(ENDDIM)
 
-> **TODO:** Describe the new match generator syntax.  The old syntax described below isn't compatible with v1.0.0 onward.
+<fieldset><legend>TODO</legend>
+Describe the new match generator syntax.  The old syntax described below isn't compatible with v1.0.0 onward.
+</fieldset>
 
 $(BEGINDIM)
 These are Lua functions that are registered with Clink and are called as part of Readline's completion process. Match generator functions take the following form;
@@ -239,7 +251,9 @@ clink.register_match_generator(env_vars_match_generator, 10)
 ## Argument Completion
 $(ENDDIM)
 
-> **TODO:** Describe the new argument and flag syntax.  The old syntax described below isn't compatible with v1.0.0 onward.
+<fieldset><legend>TODO</legend>
+Describe the new argument and flag syntax.  The old syntax described below isn't compatible with v1.0.0 onward.
+</fieldset>
 
 $(BEGINDIM)
 Clink provides a framework for writing complex argument match generators in Lua.  It works by creating a parser object that describes a command's arguments and flags and then registering the parser with Clink. When Clink detects the command is being entered on the current command line being edited, it uses the parser to generate matches.
@@ -282,7 +296,9 @@ some_parser = clink.arg.new_parser(
 #### Linking Parsers
 $(ENDDIM)
 
-> **TODO:** Describe the new syntax.  The old syntax described below isn't compatible with v1.0.0 onward.
+<fieldset><legend>TODO</legend>
+Describe the new syntax.  The old syntax described below isn't compatible with v1.0.0 onward.
+</fieldset>
 
 $(BEGINDIM)
 There are often situations where the parsing of a command's arguments is dependent on the previous words (`git merge ...` compared to `git log ...` for example). For these scenarios Clink allows you to link parsers to arguments' words using Lua's concatenation operator. Parsers can also be concatenated with flags too.
@@ -331,7 +347,9 @@ The functions take a single argument which is a word from the command line being
 ## Filtering The Match Display
 $(ENDDIM)
 
-> **TODO:** Describe the new syntax.  The old syntax described below isn't compatible with v1.0.0 onward.
+<fieldset><legend>TODO</legend>
+Describe the new syntax.  The old syntax described below isn't compatible with v1.0.0 onward.
+</fieldset>
 
 $(BEGINDIM)
 In some instances it may be preferable to display potential matches in an alternative form than the generated matches passed to and used internally by Readline. This happens for example with Readline's standard file name matches, where the matches are the whole word being completed but only the last part of the path is shown (e.g. the match `foo/bar` is displayed as `bar`).
