@@ -112,12 +112,18 @@ static void load_user_inputrc()
 #if defined(PLATFORM_WINDOWS)
     // Remember to update clink_info() if anything changes in here.
 
-    const char* env_vars[] = {
+    static const char* const env_vars[] = {
         "clink_inputrc",
         "userprofile",
         "localappdata",
         "appdata",
         "home"
+    };
+
+    static const char* const file_names[] = {
+        ".inputrc",
+        "_inputrc",
+        "clink_inputrc",
     };
 
     for (const char* env_var : env_vars)
@@ -127,19 +133,19 @@ static void load_user_inputrc()
         if (!path_length || path_length > int(path.size()))
             continue;
 
-        path << "\\.inputrc";
+        path << "\\";
+        int base_len = path.length();
 
-        for (int j = 0; j < 2; ++j)
+        for (int j = 0; j < sizeof_array(file_names); ++j)
         {
+            path.truncate(base_len);
+            path::append(path, file_names[j]);
+
             if (!rl_read_init_file(path.c_str()))
             {
                 LOG("Found Readline inputrc at '%s'", path.c_str());
                 break;
             }
-
-            int dot = path.last_of('.');
-            if (dot >= 0)
-                path.data()[dot] = '_';
         }
     }
 #endif // PLATFORM_WINDOWS

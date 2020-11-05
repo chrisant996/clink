@@ -12,7 +12,7 @@
 //------------------------------------------------------------------------------
 int clink_info(int argc, char** argv)
 {
-    struct {
+    static const struct {
         const char* name;
         void        (app_context::*method)(str_base&) const;
         bool        suppress_when_empty;
@@ -42,12 +42,19 @@ int clink_info(int argc, char** argv)
     }
 
     // Inputrc environment variables.
-    const char* env_vars[] = {
+    static const char* const env_vars[] = {
         "clink_inputrc",
         "userprofile",
         "localappdata",
         "appdata",
         "home"
+    };
+
+    // Inputrc file names.
+    static const char *const file_names[] = {
+        ".inputrc",
+        "_inputrc",
+        "clink_inputrc",
     };
 
     bool labeled = false;
@@ -64,12 +71,17 @@ int clink_info(int argc, char** argv)
             continue;
         }
 
-        path::append(out, ".inputrc");
-        for (int i = 0; i < 2; ++i)
+        int base_len = out.length();
+
+        for (int i = 0; i < sizeof_array(file_names); ++i)
         {
-            printf("%-*s     %s\n", spacing, "", out.c_str());
-            int out_length = out.length();
-            out.data()[out_length - 8] = '_';
+            out.truncate(base_len);
+            path::append(out, file_names[i]);
+
+            bool exists = os::get_path_type(out.c_str()) == os::path_type_file;
+
+            if (exists || i < 2)
+                printf("%-*s     %s%s\n", spacing, "", out.c_str(), exists ? "   (exists)" : "");
         }
     }
 
