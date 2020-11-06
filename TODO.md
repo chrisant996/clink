@@ -5,6 +5,10 @@ ChrisAnt Plans
 # Bugs
 
 ## Soon
+- **Alt+P** then **Ctrl+G** internally resets the prompt, but `rl_redisplay()` gets confused into still drawing the cached `local_prompt`.
+- If the last line of the prompt is "too long" then `rl_message()` in **Alt+P** fails to draw the adjusted prompt correctly; the old prompt continues to be drawn.
+  - The cutoff is 136 characters -- less and the message shows up, or more and no message.
+  - And using **Ctrl+R** and then aborting redraws the prompt using the wrong screen buffer width / wrapping position!
 - [#15](https://github.com/chrisant996/clink/issues/15) Quoting breaks in edge cases.
   - Probably need a callback to override `_rl_find_completion_word()`.
   - `nullcmd "abc %user`**complete** => mistakenly becomes `nullcmd "%USER` (loses the `"abc `).  Bash ignores everything inside quotes, but we want to handle env vars completions inside quotes.
