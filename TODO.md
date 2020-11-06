@@ -5,8 +5,6 @@ ChrisAnt Plans
 # Bugs
 
 ## Soon
-- [#18](https://github.com/chrisant996/clink/issues/18) Alt+digit then Alt+Ctrl+Y isn't working.
-- [#17](https://github.com/chrisant996/clink/issues/17) Arrow keys don't exit `reverse-search-history` like in bash (need to press Ctrl+J).
 - [#15](https://github.com/chrisant996/clink/issues/15) Quoting breaks in edge cases.
   - Probably need a callback to override `_rl_find_completion_word()`.
   - `nullcmd "abc %user`**complete** => mistakenly becomes `nullcmd "%USER` (loses the `"abc `).  Bash ignores everything inside quotes, but we want to handle env vars completions inside quotes.

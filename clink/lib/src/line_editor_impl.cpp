@@ -16,11 +16,14 @@
 #include <core/str_tokeniser.h>
 #include <terminal/terminal_in.h>
 #include <terminal/terminal_out.h>
+extern "C" {
 #include <readline/readline.h>
+#include <readline/rldefs.h>
+}
 
 //------------------------------------------------------------------------------
-const int simple_input_states = (RL_STATE_MOREINPUT | RL_STATE_ISEARCH |
-                                 RL_STATE_NSEARCH | RL_STATE_SEARCH |
+const int simple_input_states = (RL_STATE_MOREINPUT |
+                                 RL_STATE_NSEARCH |
                                  RL_STATE_CHARSEARCH);
 
 
@@ -29,6 +32,50 @@ const int simple_input_states = (RL_STATE_MOREINPUT | RL_STATE_ISEARCH |
 inline char get_closing_quote(const char* quote_pair)
 {
     return quote_pair[1] ? quote_pair[1] : quote_pair[0];
+}
+
+//------------------------------------------------------------------------------
+static bool find_func_in_keymap(str_base& out, rl_command_func_t *func, Keymap map)
+{
+    for (int key = 0; key < KEYMAP_SIZE; key++)
+    {
+        switch (map[key].type)
+        {
+        case ISMACR:
+            break;
+        case ISFUNC:
+            if (map[key].function == func)
+            {
+                char ch = char((unsigned char)key);
+                out.concat(&ch, 1);
+                return true;
+            }
+            break;
+        case ISKMAP:
+            {
+                unsigned int old_len = out.length();
+                char ch = char((unsigned char)key);
+                out.concat(&ch, 1);
+                if (find_func_in_keymap(out, func, FUNCTION_TO_KEYMAP(map, key)))
+                    return true;
+                out.truncate(old_len);
+            }
+            break;
+        }
+    }
+
+    return false;
+}
+
+//------------------------------------------------------------------------------
+static bool find_abort_in_keymap(str_base& out)
+{
+    rl_command_func_t *func = rl_named_function("abort");
+    if (!func)
+        return false;
+
+    Keymap map = rl_get_keymap();
+    return find_func_in_keymap(out, func, map);
 }
 
 
@@ -276,7 +323,16 @@ LNope:
 //------------------------------------------------------------------------------
 bool line_editor_impl::translate(const char* seq, int len, str_base& out)
 {
-    if (RL_ISSTATE(simple_input_states))
+    if (RL_ISSTATE(RL_STATE_ISEARCH|RL_STATE_NSEARCH|RL_STATE_NUMERICARG))
+    {
+        if (strcmp(seq, bindableEsc) == 0)
+        {
+            // Let ESC terminate isearch mode by redirecting it to 'abort'.
+            if (find_abort_in_keymap(out))
+                return true;
+        }
+    }
+    else if (RL_ISSTATE(simple_input_states))
     {
         if (strcmp(seq, bindableEsc) == 0)
         {
