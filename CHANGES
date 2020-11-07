@@ -5,15 +5,28 @@
 
 ### v1.1.2-alpha
 
+- Documentation is mostly updated; just the argmatcher Lua API and clink command line options are left to be documented.
 - Added `history.max_lines` setting that controls how many lines of command history to save (1 to 50000, default is 2500).
 - Added `readline.hide_stderr` setting that can suppress stderr output from the Readline library.
-- Revert the change to disallow mixing file/directory/symlink with other match types (it broke the tests and certain completion scenarios).
-- Removed `displayable`, `aux`, and `suffix` fields in matches.
-- Fixed crash in `insert-completions` due to heap failure (introduced by the performance chnages for displaying matches).
-- Fixed env var and `set` completions.
-- Fixed `tilde-expand` for quoted text.
-- Fixed <kbd>Esc</kbd> in Readline's digit argument input mode (it doesn't try to cancel the mode, because that's not how Readline is documented to work).
-- `addmatch()` in Lua scripts takes an optional match type argument.
+- For backward compatibility with 0.4.8, `clink_inputrc` files are loaded as well.
+- Lua script API changes:
+    - `addmatch()` in Lua scripts takes an optional match type argument.
+    - Removed `displayable`, `aux`, and `suffix` fields in matches.
+    - Revert the change to disallow mixing file/directory/symlink with other match types (it broke the tests and certain completion scenarios).
+- Fixed issues:
+    - [#18](https://github.com/chrisant996/clink/issues/18) alt+digit then alt+ctrl+y isn't working.
+    - [#17](https://github.com/chrisant996/clink/issues/17) arrow keys don't exit `reverse-search-history` like in bash.
+    - [#16](https://github.com/chrisant996/clink/issues/16) problems with $T in doskey macros.
+    - [#13](https://github.com/chrisant996/clink/issues/13) `clink history delete <n>` returns a CRT error.
+- Other fixes:
+    - There should be no more problems running on Windows Insider builds because Clink now uses [Detours](https://github.com/microsoft/detours) for hooking APIs.
+    - Fixed crash in `insert-completions` due to heap failure (introduced by the performance changes for displaying matches).
+    - Fixed `clink` and `history` built-in aliases (solve glitchy path problem).
+    - Fixed scrolling to top of screen buffer.
+    - Fixed env var and `set` completions.
+    - Fixed `tilde-expand` for quoted text.
+    - Fixed <kbd>Esc</kbd> in Readline's digit argument input mode (it doesn't try to cancel the mode, because that's not how Readline is documented to work).
+    - Fixed exit code from some `clink` command line options.
 - Set locale to UTF8 much earlier to avoid quirky behavior early in script processing.
 
 ### v1.1.1-alpha
