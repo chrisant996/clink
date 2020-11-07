@@ -27,7 +27,7 @@ static int mb_to_wide(const char* mb, wchar_t* fixed_wide, size_t fixed_size, wc
 
     wchar_t* wide;
     int alloced;
-    if (needed <= fixed_size)
+    if ((size_t)needed <= fixed_size)
     {
         wide = fixed_wide;
         alloced = 0;

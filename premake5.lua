@@ -168,6 +168,12 @@ project("luac")
     files("lua/src/luac.c")
 
 --------------------------------------------------------------------------------
+project("detours")
+    kind("staticlib")
+    files("detours/*.cpp")
+    removefiles("detours/uimports.cpp")     -- is included by creatwth.cpp
+
+--------------------------------------------------------------------------------
 clink_lib("clink_lib")
     includedirs("clink/lib/include/lib")
     includedirs("clink/core/include")
@@ -246,6 +252,7 @@ clink_lib("clink_app_common")
     includedirs("clink/lua/include")
     includedirs("clink/process/include")
     includedirs("clink/terminal/include")
+    includedirs("detours")
     includedirs("getopt")
     includedirs("lua/src")
     includedirs("readline")
@@ -268,6 +275,7 @@ clink_dll("clink_app_dll")
     links("clink_lua")
     links("clink_process")
     links("clink_terminal")
+    links("detours")
     links("getopt")
     links("lua")
     links("readline")

@@ -3,54 +3,56 @@
 
 #pragma once
 
+struct repair_iat_node;
+
 //------------------------------------------------------------------------------
 class hook_setter
 {
-public:
-    typedef void (__stdcall *hookptr_t)();
+    typedef void (__stdcall* hookptr_t)();
 
-                                hook_setter();
-    template <typename RET,
-             typename... ARGS>
-    bool                        add_iat(void* module, const char* name, RET (__stdcall *hook)(ARGS...));
-    template <typename RET,
-             typename... ARGS>
-    bool                        add_jmp(void* module, const char* name, RET (__stdcall *hook)(ARGS...));
-    int                         commit();
-
-private:
-    enum hook_type
+    struct hook_iat_desc
     {
-        hook_type_iat_by_name,
-        //hook_type_iat_by_addr,
-        hook_type_jmp,
-    };
-
-    struct hook_desc
-    {
-        void*                   module;
+        void*                   base;
         const char*             name;
         hookptr_t               hook;
-        hook_type               type;
     };
 
-    hook_desc*                  add_desc(hook_type type, void* module, const char* name, hookptr_t hook);
-    bool                        commit_iat(void* self, const hook_desc& desc);
-    bool                        commit_jmp(void* self, const hook_desc& desc);
-    hook_desc                   m_descs[4];
-    int                         m_desc_count;
+public:
+                                hook_setter();
+                                ~hook_setter();
+
+    template <typename RET,
+              typename... ARGS>
+    bool                        add_iat(const char* module, const char* name, RET (__stdcall *hook)(ARGS...));
+    template <typename RET,
+              typename... ARGS>
+    bool                        add_jmp(const char* module, const char* name, RET (__stdcall *hook)(ARGS...));
+    bool                        commit();
+
+private:
+    bool                        add_desc(const char* module, const char* name, hookptr_t hook);
+    bool                        add_detour(const char* module, const char* name, hookptr_t hook);
+    bool                        commit_iat(void* self, const hook_iat_desc& desc);
+    void                        free_repair_list();
+
+private:
+    PVOID                       m_self = nullptr;
+    repair_iat_node*            m_repair_iat = nullptr;
+    hook_iat_desc               m_descs[4];
+    int                         m_desc_count = 0;
+    bool                        m_pending = false;
 };
 
 //------------------------------------------------------------------------------
 template <typename RET, typename... ARGS>
-bool hook_setter::add_iat(void* module, const char* name, RET (__stdcall *hook)(ARGS...))
+bool hook_setter::add_iat(const char* module, const char* name, RET (__stdcall *hook)(ARGS...))
 {
-    return (add_desc(hook_type_iat_by_name, module, name, hookptr_t(hook)) != nullptr);
+    return add_desc(module, name, hookptr_t(hook));
 }
 
 //------------------------------------------------------------------------------
 template <typename RET, typename... ARGS>
-bool hook_setter::add_jmp(void* module, const char* name, RET (__stdcall *hook)(ARGS...))
+bool hook_setter::add_jmp(const char* module, const char* name, RET (__stdcall *hook)(ARGS...))
 {
-    return (add_desc(hook_type_jmp, module, name, hookptr_t(hook)) != nullptr);
+    return add_detour(module, name, hookptr_t(hook));
 }

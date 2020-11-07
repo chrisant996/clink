@@ -259,14 +259,13 @@ bool host_cmd::validate()
 //------------------------------------------------------------------------------
 bool host_cmd::initialise()
 {
-    void* base = GetModuleHandle(nullptr);
     hook_setter hooks;
 
     // Hook the setting of the 'prompt' environment variable so we can tag
     // it and detect command entry via a write hook.
     tag_prompt();
-    hooks.add_iat(base, "SetEnvironmentVariableW",  &host_cmd::set_env_var);
-    hooks.add_iat(base, "WriteConsoleW",            &host_cmd::write_console);
+    hooks.add_iat(nullptr, "SetEnvironmentVariableW", &host_cmd::set_env_var);
+    hooks.add_iat(nullptr, "WriteConsoleW", &host_cmd::write_console);
 
     // Set a trap to get a callback when cmd.exe fetches PROMPT environment
     // variable.  GetEnvironmentVariableW is always called before displaying the
@@ -285,12 +284,12 @@ bool host_cmd::initialise()
         return ret;
     };
     auto* as_stdcall = static_cast<DWORD (__stdcall *)(LPCWSTR, LPWSTR, DWORD)>(get_environment_variable_w);
-    hooks.add_iat(base, "GetEnvironmentVariableW", as_stdcall);
+    hooks.add_iat(nullptr, "GetEnvironmentVariableW", as_stdcall);
 
     rl_add_funmap_entry("clink-expand-env-var", expand_env_var);
     rl_add_funmap_entry("clink-expand-doskey-alias", expand_doskey_alias);
 
-    return (hooks.commit() == 3);
+    return hooks.commit();
 }
 
 //------------------------------------------------------------------------------
@@ -483,17 +482,12 @@ BOOL WINAPI host_cmd::set_env_var(const wchar_t* name, const wchar_t* value)
 //------------------------------------------------------------------------------
 bool host_cmd::initialise_system()
 {
-    // Get the base address of module that exports ReadConsoleW.  (Can't use the
-    // address of ReadConsoleW directly, because that's our import library stub,
-    // not the actual API address.)
-    HMODULE hlib = LoadLibraryW(L"kernelbase.dll");
-    if (hlib == nullptr)
-        return false;
-    FARPROC proc = GetProcAddress(hlib, "ReadConsoleW");
-    if (proc == nullptr)
-        return false;
-    void* kernel_module = vm().get_alloc_base(proc);
-    if (kernel_module == nullptr)
+    // Must hook the one in kernelbase.dll.  CMD links with kernelbase.dll, but
+    // we link with kernel32.dll.  So hooking our ReadConsoleW pointer wouldn't
+    // affect CMD.
+    hook_setter hooks;
+    hooks.add_jmp("kernelbase.dll", "ReadConsoleW", &host_cmd::read_console);
+    if (!hooks.commit())
         return false;
 
     // Add an alias to Clink so it can be run from anywhere. Similar to adding
@@ -516,7 +510,5 @@ bool host_cmd::initialise_system()
     // setlocal/endlocal in a boot Batch script.
     tag_prompt();
 
-    hook_setter hooks;
-    hooks.add_jmp(kernel_module, "ReadConsoleW",    &host_cmd::read_console);
-    return (hooks.commit() == 1);
+    return true;
 }

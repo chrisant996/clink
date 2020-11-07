@@ -5,6 +5,7 @@ ChrisAnt Plans
 # Bugs
 
 ## Soon
+- `LOG()` certain important failure information inside Detours.
 - **Alt+P** then **Ctrl+G** internally resets the prompt, but `rl_redisplay()` gets confused into still drawing the cached `local_prompt`.
 - If the last line of the prompt is "too long" then `rl_message()` in **Alt+P** fails to draw the adjusted prompt correctly; the old prompt continues to be drawn.
   - The cutoff is 136 characters -- less and the message shows up, or more and no message.

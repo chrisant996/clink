@@ -10,6 +10,14 @@
 #include <core/log.h>
 
 //------------------------------------------------------------------------------
+struct repair_iat_node
+{
+    repair_iat_node* m_next;
+    hookptr_t* m_iat;
+    hookptr_t m_trampoline;
+};
+
+//------------------------------------------------------------------------------
 static void write_addr(hookptr_t* where, hookptr_t to_write)
 {
     vm vm;
@@ -419,4 +427,86 @@ hookptr_t hook_jmp(void* module, const char* func_name, hookptr_t hook)
     LOG("Success!");
     vm().flush_icache();
     return trampoline;
+}
+
+//------------------------------------------------------------------------------
+bool add_repair_iat_node(
+    repair_iat_node*& list,
+    void* base,
+    const char* dll,
+    const char* func_name,
+    hookptr_t trampoline,
+    bool find_by_name
+)
+{
+    LOG("Attempting to hook IAT for module %p.", base);
+
+    hookptr_t* import;
+
+    // Find entry and replace it.
+    pe_info pe(base);
+    if (find_by_name)
+    {
+        LOG("Target is %s (by name).", func_name);
+        import = (hookptr_t*)pe.get_import_by_name(nullptr, func_name);
+    }
+    else
+    {
+        LOG("Target is %s in %s (by address).", func_name, dll);
+
+        // Get the address of the function we're going to hook.
+        hookptr_t func_addr = get_proc_addr(dll, func_name);
+        if (func_addr == nullptr)
+        {
+            LOG("Failed to find %s in %s.", func_name, dll);
+            return false;
+        }
+
+        LOG("Looking up import by address %p.", func_addr);
+        import = (hookptr_t*)pe.get_import_by_addr(nullptr, (pe_info::funcptr_t)func_addr);
+    }
+
+    if (import == nullptr)
+    {
+        LOG("Unable to find import in IAT.");
+        return false;
+    }
+
+    LOG("Found import at %p (value is %p).", import, *import);
+
+    repair_iat_node* r = new repair_iat_node;
+    r->m_next = list;
+    r->m_iat = import;
+    r->m_trampoline = trampoline;
+    list = r;
+    return true;
+}
+
+void apply_repair_iat_list(repair_iat_node*& list)
+{
+    vm vm;
+
+    while (list)
+    {
+        repair_iat_node* r = list;
+        list = list->m_next;
+
+        // TODO: need to somehow preserve prev_addr in order for detach to work correctly.
+        hookptr_t prev_addr = *r->m_iat;
+        write_addr(r->m_iat, r->m_trampoline);
+
+        delete r;
+    }
+
+    vm.flush_icache();
+}
+
+void free_repair_iat_list(repair_iat_node*& list)
+{
+    while (list)
+    {
+        repair_iat_node* r = list;
+        list = list->m_next;
+        delete r;
+    }
 }
