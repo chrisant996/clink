@@ -43,21 +43,27 @@
 
 <!-- ----------------------------------------------------- -->
 <body onload="go();">
-    <div id="header">
-        <div id="title">Clink v$(CLINK_VERSION)</div>
-        <div id="url">
-            <a href="http://github.com/chrisant996/clink">
-                http://github.com/chrisant996/clink
-            </a>
-        </div>
-        <div id="author">
-            <a href="mailto:sparrowhawk996@gmail.com">Christopher Antos</a> (renovater)
-        </div>
-        <div id="author">
-            <a href="http://twitter.com/choddlander">Martin Ridgers</a> (creator)
-        </div>
-    </div>
-    <div id="toc"></div>
+    <table width="100%" style="border:none"><tr>
+        <td style="text-align:left">
+            <div id="toc"></div>
+        </td>
+        <td style="text-align:right">
+            <div id="header">
+                <div id="title">Clink v$(CLINK_VERSION)</div>
+                <div id="url">
+                    <a href="http://github.com/chrisant996/clink">
+                        http://github.com/chrisant996/clink
+                    </a>
+                </div>
+                <div id="author">
+                    <a href="mailto:sparrowhawk996@gmail.com">Christopher Antos</a> (renovater)
+                </div>
+                <div id="author">
+                    <a href="http://twitter.com/choddlander">Martin Ridgers</a> (creator)
+                </div>
+            </div>
+        </td>
+    </tr></table>
     <div id="content">
         <div class="section" id="documentation">
             $(MARKDOWN docs/clink.md)

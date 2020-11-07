@@ -1,58 +1,69 @@
+@import url('https://fonts.googleapis.com/css2?family=Rambla:wght@400;700&family=Roboto&display=swap');
+html {
+    font: 12pt Roboto,Calibri,Arial,Helvetica,sans-serif;
+    -ms-text-size-adjust: 100%;
+    -webkit-text-size-adjust: 100%;
+}
+
 body {
-    padding-top: 3em;
+    padding-top: 3rem;
     width: 90%;
     margin: 0 auto;
-    font-family: Calibri, Arial, Helvetica, sans-serif;
 }
+
+h1, h2, h3, h4, h5, h6 { font-family: Rambla,Roboto,Calibri,Arial,Helvetica,sans-serif }
 
 h1 {
     width: 100%;
-    border-bottom: 2px #3377cc solid;
+    border-bottom: 0.15rem #3377cc solid;
+    font-size: 2rem;
 }
 
-h3 { font-size: 1.21em; }
-h4 { font-size: 1.14em; }
-h5 { font-size: 1.07em; }
-h6 { font-size: 1.00em; }
+h2 { font-size: 1.60rem; }
+h3 { font-size: 1.40rem; }
+h4 { font-size: 1.20rem; }
+h5 { font-size: 1.10rem; }
+h6 { font-size: 1.00rem; }
 
 blockquote {
     display: block;
-    padding: 1px 20px 1px 20px;
-    margin: 0 0 20px 8px;
-    box-shadow: 2px 2px 8px #ccc;
-    border-left-width: 8px;
+    padding: 0.1rem 1rem 0.1rem 1rem;
+    margin: 0 0 1rem 0.4rem;
+    box-shadow: 0.1rem 0.1rem 0.4rem #ccc;
+    border-left-width: 0.4rem;
     border-left-style: solid;
     border-color: #3377cc;
 }
 
 fieldset {
     display: block;
-    padding: 10px 10px 20px 20px;
-    margin: 0 0 20px;
-    box-shadow: 2px 2px 8px #ccc;
-    border-radius: 8px;
+    padding: 0.5rem 0.5rem 1rem 1rem;
+    margin: 0 0 1rem;
+    box-shadow: 0.1rem 0.1rem 0.4rem #ccc;
+    border-radius: 0.4rem;
     border-style: solid;
-    border-width: 2;
+    border-width: 0.15rem;
     border-color: #990000;
     background: #ffffee;
 }
 
 legend {
     font-weight: 600;
-    padding: 0 4px;
+    padding: 0 0.3rem;
 }
 
 code {
     display: inline-block;
-    padding: 1px 3px;
+    font-size: 0.9rem;
+    padding: 0px 0.2rem;
     margin: auto 0px;
     background-color: #eee;
     border: 1px solid #ddd;
-    border-radius: 3px;
+    border-radius: 0.2rem;
 }
 
 pre {
-    margin: 2px 10px;
+    margin: 0.15rem 0.5rem;
     padding: 0;
 }
 
@@ -63,20 +74,20 @@ pre code {
 }
 
 kbd {
-    padding:0.1em 0.3em;
+    padding:1px 0.3rem;
     border-collapse:separate;
-    border:1px solid #ccc;
-    font:70% SFMono-Regular,Consolas,Liberation Mono,Menlo,monospace;
+    border:0.05rem solid #ccc;
+    font:0.8rem SFMono-Regular,Consolas,Liberation Mono,Menlo,monospace;
     background-color:#f8f8f8;
     color:#333;
-    -moz-box-shadow:0 1px 0px rgba(0, 0, 0, 0.2),0 0 0 0px #ffffff inset;
-    -webkit-box-shadow:0 1px 0px rgba(0, 0, 0, 0.2),0 0 0 0px #ffffff inset;
-    box-shadow:0 1px 0px rgba(0, 0, 0, 0.2),0 0 0 0px #ffffff inset;
-    -moz-border-radius:0.45em;
-    -webkit-border-radius:0.45em;
-    border-radius:0.45em;
+    -moz-box-shadow:0 0.05rem 0px rgba(0, 0, 0, 0.2),0 0 0 0px #ffffff inset;
+    -webkit-box-shadow:0 0.05rem 0px rgba(0, 0, 0, 0.2),0 0 0 0px #ffffff inset;
+    box-shadow:0 0.05rem 0px rgba(0, 0, 0, 0.2),0 0 0 0px #ffffff inset;
+    -moz-border-radius:0.3rem;
+    -webkit-border-radius:0.3rem;
+    border-radius:0.3rem;
     display:inline-block;
-    margin:0 0.1em;
+    margin:0 0.1rem;
     vertical-align:middle;
     transform:translateY(-5%);
     white-space:nowrap;
@@ -94,8 +105,8 @@ kbd {
 }
 
 .section {
-    margin-top: 2em;
-    margin-bottom: 4em;
+    margin-top: 2rem;
+    margin-bottom: 4rem;
 }
 
 #header {
@@ -104,9 +115,9 @@ kbd {
 }
 
 #header #title {
-    font-size: 2em;
+    font: 2.5rem Rambla,Roboto,Calibri,Arial,Helvetica,sans-serif;
     font-weight: bold;
-    margin-bottom: 0.4em;
+    margin-bottom: 0.4rem;
 }
 
 #content {
@@ -114,19 +125,20 @@ kbd {
 }
 
 #content table {
+    font-size: 1rem;
     margin: auto 5%;
     border-collapse: collapse;
 }
 
 #content pre, #api .show {
     border: 1px solid #ddd;
-    border-radius: 5px;
+    border-radius: 0.4rem;
     background-color: #eee;
 }
 
 #content td, #content th {
     vertical-align: text-top;
-    padding: 0.2em 0.5em;
+    padding: 0.2rem 0.5rem;
 }
 
 #content th {
@@ -154,18 +166,19 @@ kbd {
 
 #content #api em {
     font-family: monospace;
+    opacity: 60%;
 }
 
 #content ol li {
-    padding-left: 0.5em;
+    padding-left: 0.5rem;
 }
 
 #content #api .group {
-    margin-bottom: 1em;
+    margin-bottom: 1rem;
 }
 
 #content #api .body {
-    margin-left: 1em;
+    margin-left: 1rem;
 }
 
 #content #api .header .name {
@@ -179,13 +192,13 @@ kbd {
 }
 
 #content #api .group_name {
-    font-size: 1.1em;
+    font-size: 1.1rem;
     font-weight: bold;
 }
 
 #content #api .function {
-    margin-left: 2em;
-    margin-bottom: 1.0em;
+    margin-left: 2rem;
+    margin-bottom: 1.0rem;
 }
 
 #content #api .show {
