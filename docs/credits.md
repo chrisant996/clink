@@ -18,6 +18,10 @@ Clink uses Lua 5.2 (https://www.lua.org).
 Clink uses the getopt library.<br>
 Copyright (c) 1997 Gregory Pietsch, placed in the public domain.
 
+Clink uses the Detours library version 4.0.1 (https://github.com/microsoft/detours).<br>
+Copyright (c) Microsoft Corporation. All rights reserved.<br>
+Licensed under the [MIT](https://github.com/microsoft/Detours/blob/e5400b4ec59478cb0f435cf3b1338226bcbe28f6/LICENSE.txt) license.
+
 Clink documentation embeds the highlight.js library (https://highlightjs.org).<br>
 Highlight.js is released under the [BSD License](https://github.com/highlightjs/highlight.js/blob/master/LICENSE).
 
