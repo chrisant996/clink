@@ -47,6 +47,7 @@ local history = clink.argmatcher()
 :addarg(
     "add",
     "clear"     .. nothing,
+    "compact"   .. nothing,
     "delete"    .. nothing,
     "expand"
 )
