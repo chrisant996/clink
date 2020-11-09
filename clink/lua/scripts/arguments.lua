@@ -33,7 +33,7 @@ end
 
 --------------------------------------------------------------------------------
 function _argreader:update(word)
-    -- Check for flags and swtich matcher if the word is a flag.
+    -- Check for flags and switch matcher if the word is a flag.
     local matcher = self._matcher
     local is_flag = matcher:_is_flag(word)
     if is_flag then
@@ -232,8 +232,21 @@ function _argmatcher:_add(list, addee)
     -- Flatten out tables unless the table is a link
     local is_link = (getmetatable(addee) == _arglink)
     if type(addee) == "table" and not is_link and not addee.match then
-        for _, i in ipairs(addee) do
-            self:_add(list, i)
+        if getmetatable(addee) == _argmatcher then
+            for _, i in ipairs(addee._args) do
+                for _, j in ipairs(i) do
+                    table.insert(list, j)
+                end
+                if i._links then
+                    for k, m in pairs(i._links) do
+                        list._links[k] = m
+                    end
+                end
+            end
+        else
+            for _, i in ipairs(addee) do
+                self:_add(list, i)
+            end
         end
         return
     end
@@ -298,6 +311,60 @@ function _argmatcher:_generate(line_state, match_builder)
     -- No valid argument. Decide if we should match files or not.
     local no_files = matcher._no_file_generation or #matcher._args == 0
     return no_files
+end
+
+--------------------------------------------------------------------------------
+-- Deprecated.
+function _argmatcher:add_arguments(...)
+    self:addarg(...)
+    return self
+end
+
+--------------------------------------------------------------------------------
+-- Deprecated.
+function _argmatcher:add_flags(...)
+    self:addflags(...)
+    return self
+end
+
+--------------------------------------------------------------------------------
+-- Deprecated.  This was an undocumented function, but some scripts found it and
+-- used it anyway.  The compatibility shim tries to make them work essentially
+-- the same as in 0.4.8, but it may not be exactly accurate.
+function _argmatcher:flatten_argument(index)
+    local t = {}
+
+    if index > 0 and index <= #self._args then
+        local args = self._args[index]
+        for _, i in ipairs(args) do
+            if type(i) == "string" then
+                table.insert(t, i)
+            end
+        end
+        if args._links then
+            for k, _ in pairs(args._links) do
+                table.insert(t, k)
+            end
+        end
+    end
+
+    return t
+end
+
+--------------------------------------------------------------------------------
+-- Deprecated.
+function _argmatcher:set_arguments(...)
+    self._args = {}
+    self:addarg(...)
+    return self
+end
+
+--------------------------------------------------------------------------------
+-- Deprecated.
+function _argmatcher:set_flags(...)
+    self._flags = nil
+    self:addflags(...)
+    return self
 end
 
 
@@ -379,4 +446,33 @@ function argmatcher_generator:getprefixlength(line_state)
     end
 
     return 0
+end
+
+
+
+--------------------------------------------------------------------------------
+clink.arg = clink.arg or {}
+
+--------------------------------------------------------------------------------
+--- -name:  clink.arg.new_parser
+--- -arg:   ...
+--- -ret:   table
+--- Deprecated.  Exists only for backward compatibility, to minimize the changes
+--- necessary to get old scripts working with the new API.
+function clink.arg.new_parser(...)
+    local p = clink.argmatcher():addarg(...)
+    return p
+end
+
+--------------------------------------------------------------------------------
+--- -name:  clink.arg.register_parser
+--- -arg:   cmd:string
+--- -arg:   parser:table
+--- -ret:   table
+--- Deprecated.  Exists only for backward compatibility, to minimize the changes
+--- necessary to get old scripts working with the new API.
+function clink.arg.register_parser(cmd, parser)
+    local matcher = _argmatchers[cmd] or clink.argmatcher(cmd)
+    matcher:addarg(parser)
+    return matcher
 end
