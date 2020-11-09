@@ -18,18 +18,16 @@ ChrisAnt Plans
 
 ## Cmder, Powerline, Clink-Completions
 - Port popular scripts to v1.x.
-  - Argmatcher problems...
-    - `dotnet.lua:38`: attempt to call method 'add_flags' (a nil value)
-      - `register_parser(cmd, parser({...}))` => The extra `parser` layering goes haywire.
-      - `build_parser:add_flags(...)` => Not adding `...` as flags.
-    - `net.lua:31`: attempt to call method 'flatten_argument' (a nil value)
-    - `pip.lua:121`: attempt to call method 'add_flags' (a nil value)
-    - `pipenv.lua:54`: attempt to call method 'add_flags' (a nil value)
-    - `scoop.lua:296`: attempt to call method 'set_flags' (a nil value)
-    - `vagrant.lua:137`: attempt to call method 'flatten_argument' (a nil value)
+  - Test powerline scripts for back-compat...
+  - Handle adding argmatchers via `:addargs()` -- e.g. `net help` still isn't in the list of completions.
 - Port Cmder to v1.x -- will require help from Cmder team.
 
 ## Other
+- BACKCOMPAT:  `net help` isn't included in the completions; presumably `_argmatcher:_add()` still isn't adding matchers correctly?
+- `pause()` is sometimes showing the wrong stack frame in the debugger -- it shows itself, but should show who called it.
+- The `lua.break_on_error` setting isn't working yet.
+- Lua scripts need a way to detect what version of Clink they're running on, so they can choose to behave differently/appropriately.
+- Iteratively complete multiple directory levels by `b`**Tab**,**End**,**Tab**,**End**,**Tab** => after a few it completes the wrong thing!
 - _...Pull other things from the Release list...?_
 
 <br/>
@@ -42,7 +40,6 @@ ChrisAnt Plans
 ### Urgent
 
 ### Normal
-- Lua scripts need a way to detect what version of Clink they're running on, so they can choose to behave differently/appropriately.
 - [#398](https://github.com/mridgers/clink/issues/398) Cmd gets unresponsive after "set /p" command.
 - `match.ignore_case` can't be working correctly, and probably readline settings should determine it.  _[Is it still used by anything?]_
 - `_rl_completion_case_map` isn't supported properly in clink lua APIs, nor in general.  _(The 0.4.8 implementation simply converted `-` and `_` to `?` and accepted all matches -- although maybe it filtered the results afterwards?)_
