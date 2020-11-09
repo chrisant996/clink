@@ -238,7 +238,7 @@ from that function to the caller.
 ]],
 
 gotoo   = [[
-gotoo [line file]    -- step to line in file|
+gotoo [line file]   -- step to line in file|
 
 This is equivalent to 'setb line file', followed by 'run', followed
 by 'delb line file'.
@@ -850,7 +850,8 @@ local function report(ev, vars, file, line, idx_watch)
     if src:sub(1, 1) == "@" then
       src = src:sub(2)
     end
-    show(src, traceinfo[1].currentline, 2, 2)
+    local def_lines = 3
+    show(src, traceinfo[1].currentline, def_lines, def_lines)
   end
 
   local vars = vars or {}
@@ -873,7 +874,7 @@ local function report(ev, vars, file, line, idx_watch)
     io.write(prefix.."Error in application: "..file.." line "..line.."\n")
   end
   if ev ~= events.SET then
-    if pausemsg and pausemsg ~= '' then io.write('Message: '..pausemsg..'\n') end
+    if pausemsg and pausemsg ~= '' then io.write('\nMessage: '..pausemsg..'\n') end
     pausemsg = ''
   end
   return vars, file, line
@@ -1331,9 +1332,11 @@ local function debug_hook(event, line, level, thread)
     end
     tracestack(level)
     if not coro_debugger then
-      io.write("\nLua Debugger\n")
+      io.write("\nLua Debugger\n\nStacktrace:\n")
+      trace(vars.__VARSLEVEL__)
+      io.write("\n")
       vars, file, line = report(ev, vars, file, line, idx)
-      io.write("Type 'help' for commands\n")
+      io.write("\nType 'help' for commands\n")
       coro_debugger = true
     else
       vars, file, line = report(ev, vars, file, line, idx)
