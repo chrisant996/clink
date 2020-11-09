@@ -54,7 +54,7 @@ bool lua_match_generator::generate(const line_state& line, match_builder& builde
     match_builder_lua builder_lua(builder);
     builder_lua.push(state);
 
-    if (lua_pcall(state, 2, 1, 0) != 0)
+    if (m_state.pcall(state, 2, 1) != 0)
     {
         if (const char* error = lua_tostring(state, -1))
             print_error(error);
@@ -82,7 +82,7 @@ int lua_match_generator::get_prefix_length(const line_state& line) const
     line_state_lua line_lua(line);
     line_lua.push(state);
 
-    if (lua_pcall(state, 1, 1, 0) != 0)
+    if (m_state.pcall(state, 1, 1) != 0)
     {
         if (const char* error = lua_tostring(state, -1))
             print_error(error);

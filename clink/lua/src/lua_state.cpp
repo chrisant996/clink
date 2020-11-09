@@ -29,6 +29,11 @@ static setting_str g_lua_path(
     "in require() statements.",
     "");
 
+static setting_bool g_lua_traceback(
+    "lua.traceback",
+    "Prints stack trace on errors",
+    false);
+
 
 
 //------------------------------------------------------------------------------
@@ -114,11 +119,7 @@ bool lua_state::do_string(const char* string, int length)
 
     bool ok;
     if (ok = !luaL_loadbuffer(m_state, string, length, string))
-        ok = !lua_pcall(m_state, 0, LUA_MULTRET, 0);
-
-    if (!ok)
-        if (const char* error = lua_tostring(m_state, -1))
-            puts(error);
+        ok = !pcall(0, LUA_MULTRET);
 
     lua_settop(m_state, 0);
     return ok;
@@ -127,11 +128,64 @@ bool lua_state::do_string(const char* string, int length)
 //------------------------------------------------------------------------------
 bool lua_state::do_file(const char* path)
 {
-    bool failed;
-    if (failed = !!luaL_dofile(m_state, path))
-        if (const char* error = lua_tostring(m_state, -1))
-            puts(error);
+    bool ok;
+    if (ok = !luaL_loadfile(m_state, path))
+        ok = !pcall(0, LUA_MULTRET);
 
     lua_settop(m_state, 0);
-    return !failed;
+    return ok;
+}
+
+//------------------------------------------------------------------------------
+int lua_state::pcall(lua_State* L, int nargs, int nresults)
+{
+    // Add an errfunc.  The approach is from here:
+    // https://stackoverflow.com/questions/30021904/lua-set-default-error-handler
+
+    // Calculate stack position for message handler.
+    int hpos = lua_gettop(L) - nargs;
+
+    // Push our error message handler.
+    lua_pushcfunction(L, error_handler);
+
+    // Move it before function and arguments.
+    lua_insert(L, hpos);
+
+    // Call lua_pcall with custom handler.
+    int ret = lua_pcall(L, nargs, nresults, hpos);
+
+    // Remove custom error message handler from stack.
+    lua_remove(L, hpos);
+
+    return ret;
+}
+
+//------------------------------------------------------------------------------
+static int call_pause(lua_State* L)
+{
+    lua_getglobal(L, "pause");
+    if (lua_isfunction(L, -1))
+        lua_call(L, 0, 1);
+    lua_pop(L, 1);
+    return 1;
+}
+
+//------------------------------------------------------------------------------
+int lua_state::error_handler(lua_State* L)
+{
+    // Emit error message.
+    const char *error = lua_tostring(L, 1);
+    if (error)
+        puts(error);
+
+    if (g_lua_traceback.get())
+    {
+        luaL_traceback(L, L, nullptr, 1);
+        const char* traceback = lua_tostring(L, -1);
+        if (traceback)
+            puts(traceback);
+        lua_pop(L, 1);
+    }
+
+    return 1;
 }

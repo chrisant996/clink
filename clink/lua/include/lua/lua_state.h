@@ -17,8 +17,15 @@ public:
     bool            do_file(const char* path);
     lua_State*      get_state() const;
 
+    static int      pcall(lua_State* L, int nargs, int nresults);
+    int             pcall(int nargs, int nresults) { return pcall(m_state, nargs, nresults); }
+
+private:
+    static int      error_handler(lua_State* L);
+
 private:
     lua_State*      m_state;
+    int             m_errfunc;
 };
 
 //------------------------------------------------------------------------------

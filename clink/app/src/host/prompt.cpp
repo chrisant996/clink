@@ -165,7 +165,7 @@ void prompt_filter::filter(const char* in, str_base& out)
 
     lua_pushstring(state, in);
 
-    if (lua_pcall(state, 1, 1, 0) != 0)
+    if (m_lua.pcall(state, 1, 1) != 0)
     {
         puts(lua_tostring(state, -1));
         lua_pop(state, 2);
