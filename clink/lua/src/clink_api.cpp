@@ -2,13 +2,15 @@
 // License: http://opensource.org/licenses/MIT
 
 #include "pch.h"
-#include "core/base.h"
 #include "lua_state.h"
 
 #include <core/base.h>
+#include <core/log.h>
+#include <core/os.h>
 #include <core/path.h>
 #include <core/str.h>
-#include <core/os.h>
+
+#include <unordered_set>
 
 // BEGIN -- Clink 0.4.8 API compatibility --------------------------------------
 
@@ -19,9 +21,6 @@ extern const char*      rl_readline_name;
 }
 
 extern int              get_clink_setting(lua_State* state);
-#if 0
-extern int              g_slash_translation;
-#endif
 extern int              lua_execute(lua_State* state);
 
 //------------------------------------------------------------------------------
@@ -81,6 +80,7 @@ static int to_lowercase(lua_State* state)
 }
 
 //------------------------------------------------------------------------------
+#if 0
 static int matches_are_files(lua_State* state)
 {
     int i = 1;
@@ -93,6 +93,7 @@ static int matches_are_files(lua_State* state)
 #endif
     return 0;
 }
+#endif
 
 //------------------------------------------------------------------------------
 static int get_setting_str(lua_State* state)
@@ -153,6 +154,76 @@ static int get_host_process(lua_State* state)
     return 1;
 }
 
+//------------------------------------------------------------------------------
+/// -name:  clink.register_match_generator
+/// -arg:   func:function
+/// -arg:   priority:integer
+/// -show:  -- Deprecated form:
+/// -show:  local function match_generator_func(text, first, last, match_builder)
+/// -show:  &nbsp; -- `text` is the line text.
+/// -show:  &nbsp; -- `first` is the index of the beginning of the end word.
+/// -show:  &nbsp; -- `last` is the index of the end of the end word.
+/// -show:  &nbsp; -- `clink.add_match()` is used to add matches.
+/// -show:  &nbsp; -- return true if handled, or false to let another generator try.
+/// -show:  end
+/// -show:  clink.register_match_generator(match_generator_func, 10)<br/>
+/// -show:  -- Replace with new form:
+/// -show:  local g = clink.generator(10)
+/// -show:  function g:generate(line_state, match_builder)
+/// -show:  &nbsp; -- `line_state` is a <a href="#line">line</a> object.
+/// -show:  &nbsp; -- `match_builder:<a href="#builder:addmatch">addmatch</a>()` is used to add matches.
+/// -show:  &nbsp; -- return true if handled, or false to let another generator try.
+/// -show:  end
+/// -deprecated: clink.generator
+/// Registers a generator function for producing matches.  The Clink schema has
+/// changed significantly enough that match generators must be rewritten to use
+/// the new API.  Generators are called at a different time than before, and are
+/// given access to a different set of information than before.<br/>
+/// <strong>Calling this produces an error message and does not register the
+/// match generator.  Scripts must be updated to use the new match generator API
+/// instead.</strong>
+static int register_match_generator(lua_State* state)
+{
+    lua_Debug ar = {};
+    lua_getstack(state, 1, &ar);
+    lua_getinfo(state, "Sl", &ar);
+    const char* source = ar.source ? ar.source : "?";
+    int line = ar.currentline;
+
+    struct auto_str : public no_copy
+    {
+        auto_str(const char* p) { s = (char*)malloc(strlen(p) + 1); strcpy(s, p); }
+        auto_str(auto_str&& a) { s = a.s; a.s = nullptr; }
+        ~auto_str() { free(s); }
+        auto_str& operator=(auto_str&& a) { s = a.s; a.s = nullptr; }
+
+        char* s;
+    };
+    struct already_reported
+    {
+        already_reported(const char* s, int l) : source(s), line(l) {}
+        auto_str source;
+        int line;
+    };
+    static std::vector<already_reported> s_already;
+
+    for (auto const& it : s_already)
+    {
+        if (strcmp(it.source.s, source) == 0 && it.line == line)
+            return 1;
+    }
+
+    s_already.push_back(std::move(already_reported(source, line)));
+
+    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+    logger::error(source, line, "clink.register_match_generator() is obsolete; script must be updated to use clink.generator() instead.");
+
+    printf("Error: %s at line %u must be updated to use clink.generator() instead of clink.register_match_generator().\n", source, line);
+
+    return 1;
+}
+
+
 // END -- Clink 0.4.8 API compatibility ----------------------------------------
 
 
@@ -193,7 +264,10 @@ void clink_lua_initialise(lua_state& lua)
         { "is_dir",                 &is_dir },
         { "is_rl_variable_true",    &is_rl_variable_true },
         { "lower",                  &to_lowercase },
+#if 0
         { "matches_are_files",      &matches_are_files },
+#endif
+        { "register_match_generator", &register_match_generator },
     };
 
     lua_State* state = lua.get_state();
