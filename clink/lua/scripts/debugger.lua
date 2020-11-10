@@ -67,6 +67,7 @@ local trace_lines = false
 local ret_file, ret_line, ret_name
 local current_thread = 'main'
 local started = false
+local show_stack = false
 local pause_off = false
 local _g      = _G
 local cocreate, cowrap = coroutine.create, coroutine.wrap
@@ -1361,14 +1362,18 @@ local function debug_hook(event, line, level, thread)
     end
     tracestack(level)
     if not coro_debugger then
-      io.write("\nLua Debugger\n\nStacktrace:\n")
+      io.write("\nLua Debugger\n")
+    end
+    if not coro_debugger or show_stack then
+      io.write("\nStacktrace:\n")
       trace(vars.__VARSLEVEL__)
       io.write("\n")
-      vars, file, line = report(ev, vars, file, line, idx)
+      show_stack = false
+    end
+    vars, file, line = report(ev, vars, file, line, idx)
+    if not coro_debugger then
       io.write("\nType 'help' for commands\n")
       coro_debugger = true
-    else
-      vars, file, line = report(ev, vars, file, line, idx)
     end
     local last_next = 1
     local next = 'ask'
@@ -1480,6 +1485,7 @@ function pause(x,l,f)
   else
     lines = 2   --if in a script, stop when get out of pause()
   end
+  show_stack = true                          --make debugger_loop show stack trace
   if started then
     --we'll stop now 'cos the existing debug hook will grab us
     step_lines = lines + 1                   --plus 1 to break when we get out of pause(), rather than inside pause()
