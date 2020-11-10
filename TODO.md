@@ -20,7 +20,6 @@ ChrisAnt Plans
 ## Cmder, Powerline, Clink-Completions
 - Port popular scripts to v1.x.
   - Test powerline scripts for back-compat...
-  - Handle adding argmatchers via `:addargs()` -- e.g. `net help` still isn't in the list of completions.
 - Port Cmder to v1.x -- will require help from Cmder team.
 
 ## Other
