@@ -48,6 +48,7 @@ void os_lua_initialise(lua_state&);
 void path_lua_initialise(lua_state&);
 void settings_lua_initialise(lua_state&);
 void string_lua_initialise(lua_state&);
+void log_lua_initialise(lua_state&);
 
 
 
@@ -105,6 +106,7 @@ void lua_state::initialise()
     path_lua_initialise(self);
     settings_lua_initialise(self);
     string_lua_initialise(self);
+    log_lua_initialise(self);
 }
 
 //------------------------------------------------------------------------------
