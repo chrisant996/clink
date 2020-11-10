@@ -3,7 +3,7 @@
 
 #include "pch.h"
 #include "lua_state.h"
-#include "version.h"
+#include "../../app/src/version.h" // Ugh.
 
 #include <core/base.h>
 #include <core/log.h>
@@ -317,7 +317,7 @@ void clink_lua_initialise(lua_state& lua)
     lua_setfield(state, -2, "version_minor");
     lua_pushinteger(state, CLINK_VERSION_PATCH);
     lua_setfield(state, -2, "version_patch");
-    lua_pushstring(state, CLINK_COMMIT);
+    lua_pushstring(state, AS_STR(CLINK_COMMIT));
     lua_setfield(state, -2, "version_commit");
 
     lua_setglobal(state, "clink");
