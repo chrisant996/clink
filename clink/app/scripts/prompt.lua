@@ -51,10 +51,9 @@ end
 --- <code>filter(prompt:string)</code> function on the object, which receives
 --- <em>prompt</em> containing the filtered prompt so far.<br/>
 --- <br/>
---- The function can return <code>nil</code> to have no effect, or can return
---- prompt:string [, continue:boolean].  If <em>continue</em> is
---- <code>false</code> then no further prompt filtering is performed.
-
+--- The function can return nil to have no effect, or can return prompt:string
+--- [, continue:boolean].  If <em>continue</em> is false then no further prompt
+--- filtering is performed.
 function clink.promptfilter(priority)
     if priority == nil then priority = 999 end
 
@@ -70,8 +69,20 @@ end
 --- -arg:   filter_func
 --- -arg:   [priority:integer]
 --- -ret:   table
---- Deprecated.  Exists only for backward compatibility, to minimize the changes
---- necessary to get old scripts working with the new API.
+--- -show:  -- Deprecated form:
+--- -show:  function foo_prompt()
+--- -show:  &nbsp; clink.prompt.value = "FOO "..clink.prompt.value.." >>"
+--- -show:  &nbsp; --return true  -- Returning true stops further filtering.
+--- -show:  end
+--- -show:  clink.prompt.register_filter(foo_prompt, 10)<br/>
+--- -show:  -- Replace with new form:
+--- -show:  local foo_prompt = clink.promptfilter(10)
+--- -show:  function foo_prompt:filter(prompt)
+--- -show:  &nbsp; return "FOO "..prompt.." >>" --,false  -- Adding ,false stops further filtering.
+--- -show:  end
+--- -deprecated: clink.promptfilter
+--- Registers a prompt filter function.  The capabilities are the same as before
+--- but the syntax is changed.
 clink.prompt = clink.prompt or {}
 function clink.prompt.register_filter(filter, priority)
     if priority == nil then

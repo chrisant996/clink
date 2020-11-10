@@ -87,8 +87,9 @@ end
 --- -name:  clink.is_match
 --- -arg:   needle
 --- -arg:   candidate
---- Deprecated.  Exists only for backward compatibility, to minimize the changes
---- necessary to get old scripts working with the new API.
+--- -ret:   true
+--- -deprecated: clink.generator
+--- This is no longer needed, and simply returns true now.
 function clink.is_match(needle, candidate)
     return true
 end

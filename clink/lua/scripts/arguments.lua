@@ -457,8 +457,12 @@ clink.arg = clink.arg or {}
 --- -name:  clink.arg.new_parser
 --- -arg:   ...
 --- -ret:   table
---- Deprecated.  Exists only for backward compatibility, to minimize the changes
---- necessary to get old scripts working with the new API.
+--- -show:  -- Deprecated form:
+--- -show:  local parser = clink.arg.new_parser("abc", "def")<br/>
+--- -show:  -- Replace with form:
+--- -show:  local parser = clink.argmatcher():addarg("abc", "def")
+--- -deprecated: clink.argmatcher
+--- Creates a new parser and adds <em>...</em> to it.
 function clink.arg.new_parser(...)
     local p = clink.argmatcher():addarg(...)
     return p
@@ -469,8 +473,23 @@ end
 --- -arg:   cmd:string
 --- -arg:   parser:table
 --- -ret:   table
---- Deprecated.  Exists only for backward compatibility, to minimize the changes
---- necessary to get old scripts working with the new API.
+--- -show:  -- Deprecated form:
+--- -show:  local parser1 = clink.arg.new_parser("abc", "def")
+--- -show:  local parser2 = clink.arg.new_parser("ghi", "jkl")
+--- -show:  clink.arg.register_parser("foo", parser1)
+--- -show:  clink.arg.register_parser("foo", parser2)<br/>
+--- -show:  -- Replace with new form:
+--- -show:  clink.argmatcher("foo"):addarg(parser1, parser2)<br/>
+--- -show:  -- Warning:  Note that the following are NOT the same as above!
+--- -show:  -- This replaces parser1 with parser2:
+--- -show:  clink.argmatcher("foo"):addarg(parser1)
+--- -show:  clink.argmatcher("foo"):addarg(parser2)
+--- -show:  -- This uses only parser2 if/when parser1 finishes parsing args:
+--- -show:  clink.argmatcher("foo"):addarg(parser1):addarg(parser2)
+--- -deprecated: clink.argmatcher
+--- Adds <em>parser</em> to the first argmatcher for <em>cmd</em>.  This behaves
+--- similarly to v0.4.8, but not identically.  The Clink schema has changed
+--- significantly enough that there is no direct 1:1 translation possible.
 function clink.arg.register_parser(cmd, parser)
     local matcher = _argmatchers[cmd] or clink.argmatcher(cmd)
     local list = matcher._args[1] or { _links = {} }
