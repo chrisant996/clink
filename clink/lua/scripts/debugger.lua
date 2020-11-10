@@ -1482,7 +1482,7 @@ function pause(x,l,f)
   end
   if started then
     --we'll stop now 'cos the existing debug hook will grab us
-    step_lines = lines
+    step_lines = lines + 1                   --plus 1 to break when we get out of pause(), rather than inside pause()
     step_into  = true
     debug.sethook(debug_hook, "crl")         --reset it in case some external agent fiddled with it
   else
