@@ -3,6 +3,7 @@
 
 #include "pch.h"
 #include "lua_state.h"
+#include "version.h"
 
 #include <core/base.h>
 #include <core/log.h>
@@ -11,6 +12,34 @@
 #include <core/str.h>
 
 #include <unordered_set>
+
+
+
+//------------------------------------------------------------------------------
+/// -name:  clink.version_major
+/// -var:   integer
+/// The major part of the Clink version number.
+/// For v<strong>1</strong>.2.3.a0f14d the major version is 1.
+
+//------------------------------------------------------------------------------
+/// -name:  clink.version_minor
+/// -var:   integer
+/// The minor part of the Clink version number.
+/// For v1.<strong>2</strong>.3.a0f14d the minor version is 2.
+
+//------------------------------------------------------------------------------
+/// -name:  clink.version_patch
+/// -var:   integer
+/// The patch part of the Clink version number.
+/// For v1.2.<strong>3</strong>.a0f14d the patch version is 3.
+
+//------------------------------------------------------------------------------
+/// -name:  clink.version_commit
+/// -var:   string
+/// The commit part of the Clink version number.
+/// For v1.2.3.<strong>a0f14d</strong> the commit part is a0f14d.
+
+
 
 // BEGIN -- Clink 0.4.8 API compatibility --------------------------------------
 
@@ -179,6 +208,7 @@ static int get_host_process(lua_State* state)
 /// changed significantly enough that match generators must be rewritten to use
 /// the new API.  Generators are called at a different time than before, and are
 /// given access to a different set of information than before.<br/>
+/// <br/>
 /// <strong>Calling this produces an error message and does not register the
 /// match generator.  Scripts must be updated to use the new match generator API
 /// instead.</strong>
@@ -280,6 +310,15 @@ void clink_lua_initialise(lua_state& lua)
         lua_pushcfunction(state, method.method);
         lua_rawset(state, -3);
     }
+
+    lua_pushinteger(state, CLINK_VERSION_MAJOR);
+    lua_setfield(state, -2, "version_major");
+    lua_pushinteger(state, CLINK_VERSION_MINOR);
+    lua_setfield(state, -2, "version_minor");
+    lua_pushinteger(state, CLINK_VERSION_PATCH);
+    lua_setfield(state, -2, "version_patch");
+    lua_pushstring(state, CLINK_COMMIT);
+    lua_setfield(state, -2, "version_commit");
 
     lua_setglobal(state, "clink");
 }

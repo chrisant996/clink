@@ -377,7 +377,7 @@ local _argmatchers = {}
 --- -name:  clink.argmatcher
 --- -arg:   [priority:integer]
 --- -arg:   commands...:string
---- -ret:   argmatcher
+--- -ret:   <a href="#_argmatcher">_argmatcher</a>
 function clink.argmatcher(...)
     local matcher = _argmatcher()
 

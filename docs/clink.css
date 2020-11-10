@@ -170,7 +170,7 @@ kbd {
 
 #content #api em {
     font-family: monospace;
-    opacity: 60%;
+    opacity: 75%;
 }
 
 #content ol li {
@@ -186,6 +186,7 @@ kbd {
 }
 
 #content #api .header .name {
+    font-family: Rambla,Roboto,Calibri,Arial,Helvetica,sans-serif;
     font-weight: bold;
     float: left;
     width: 40%;

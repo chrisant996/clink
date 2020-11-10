@@ -147,6 +147,7 @@ local function do_docs()
             local name = doc_tag.name[1]
             local arg = table.concat(doc_tag.arg or {}, ", ")
             local ret = (doc_tag.ret or { "nil" })[1]
+            local var = (doc_tag.var or { nil })[1]
             local desc = table.concat(doc_tag.desc or {}, " ")
             local show = table.concat(doc_tag.show or {}, "\n")
             local deprecated = (doc_tag.deprecated or { nil })[1]
@@ -154,7 +155,11 @@ local function do_docs()
 
             api_html:write('<div class="header">')
                 api_html:write(' <div class="name"><a name="'..name..'">'..name..'</a></div>')
-                api_html:write(' <div class="signature">('..arg..') : '..ret..'</div>')
+                if var then
+                    api_html:write(' <div class="signature">'..var..' variable</div>')
+                else
+                    api_html:write(' <div class="signature">('..arg..') : '..ret..'</div>')
+                end
             api_html:write('</div>')
 
             api_html:write('<div class="body'..deprecated_class..'">')

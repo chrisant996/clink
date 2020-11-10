@@ -22,7 +22,6 @@ ChrisAnt Plans
 - Port Cmder to v1.x -- will require help from Cmder team.
 
 ## Other
-- Lua scripts need a way to detect what version of Clink they're running on, so they can choose to behave differently/appropriately.
 - Iteratively complete multiple directory levels by `b`**Tab**,**End**,**Tab**,**End**,**Tab** => after a few it completes the wrong thing!
 - _...Pull other things from the Release list...?_
 
