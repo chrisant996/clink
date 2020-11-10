@@ -139,7 +139,7 @@ local function do_docs()
         table.sort(group, function (a, b) return a.name[1] < b.name[1] end)
 
         api_html:write('<div class="group">')
-        api_html:write('<h5 class="group_name">'..group.name..'</h5>')
+        api_html:write('<h5 class="group_name"><a name="'..group.name..'">'..group.name..'</a></h5>')
 
         for _, doc_tag in ipairs(group) do
             api_html:write('<div class="function">')
@@ -149,13 +149,18 @@ local function do_docs()
             local ret = (doc_tag.ret or { "nil" })[1]
             local desc = table.concat(doc_tag.desc or {}, " ")
             local show = table.concat(doc_tag.show or {}, "\n")
+            local deprecated = (doc_tag.deprecated or { nil })[1]
+            local deprecated_class = (deprecated and " deprecated") or ""
 
             api_html:write('<div class="header">')
-                api_html:write(' <div class="name">'..name..'</div>')
+                api_html:write(' <div class="name"><a name="'..name..'">'..name..'</a></div>')
                 api_html:write(' <div class="signature">('..arg..') : '..ret..'</div>')
             api_html:write('</div>')
 
-            api_html:write('<div class="body">')
+            api_html:write('<div class="body'..deprecated_class..'">')
+                if deprecated then
+                    api_html:write('<p class="desc"><strong>Deprecated; don\'t use this.</strong>  See <a href="#'..deprecated..'">'..deprecated..'</a> for more information.</p>')
+                end
                 api_html:write('<p class="desc">'..desc..'</p>')
                 if #show > 0 then
                     api_html:write('<pre class="language-lua"><code>'..show..'</code></pre>')

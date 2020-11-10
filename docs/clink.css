@@ -109,6 +109,10 @@ kbd {
     margin-bottom: 4rem;
 }
 
+.deprecated {
+    opacity: 0.6;
+}
+
 #header {
     float: right;
     text-align: right;
