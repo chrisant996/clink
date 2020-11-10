@@ -16,6 +16,7 @@ extern "C" {
 #include <lua.h>
 #include <lauxlib.h>
 #include <lualib.h>
+#include <readline/readline.h>
 }
 
 //------------------------------------------------------------------------------
@@ -42,6 +43,23 @@ void lua_match_generator::print_error(const char* error) const
 bool lua_match_generator::generate(const line_state& line, match_builder& builder)
 {
     lua_State* state = m_state.get_state();
+
+    // Backward compatibility shim.
+    if (true)
+    {
+        // Expose some of the readline state to lua.
+        lua_createtable(state, 2, 0);
+
+        lua_pushliteral(state, "line_buffer");
+        lua_pushstring(state, rl_line_buffer);
+        lua_rawset(state, -3);
+
+        lua_pushliteral(state, "point");
+        lua_pushinteger(state, rl_point + 1);
+        lua_rawset(state, -3);
+
+        lua_setglobal(state, "rl_state");
+    }
 
     // Call to Lua to generate matches.
     lua_getglobal(state, "clink");

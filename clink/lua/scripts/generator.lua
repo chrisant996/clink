@@ -84,6 +84,23 @@ function clink.generator(priority)
 end
 
 --------------------------------------------------------------------------------
+-- Deprecated.
+local _current_builder = nil
+
+--------------------------------------------------------------------------------
+--- -name:  clink.add_match
+--- -arg:   match:string
+--- -ret:   nil
+--- -deprecated: builder:addmatch
+--- This is a shim that lets clink.register_match_generator continue to work
+--- for now, despite being obsolete.
+function clink.add_match(match)
+    if _current_builder then
+        _current_builder:addmatch(match)
+    end
+end
+
+--------------------------------------------------------------------------------
 --- -name:  clink.is_match
 --- -arg:   needle:string
 --- -arg:   candidate:string
@@ -92,4 +109,59 @@ end
 --- This is no longer needed, and simply returns true now.
 function clink.is_match(needle, candidate)
     return true
+end
+
+--------------------------------------------------------------------------------
+--- -name:  rl_state
+--- -var:   table
+--- -deprecated: line
+--- This is an obsolete global variable that was set while running match
+--- generators.  It has been superseded by the <em>line</em> type parameter
+--- passed into match generator functions when using the new
+--- <code>clink.generator</code> API.  Its table scheme is <em>{
+--- line_buffer:string, point:integer }</em>, which correspond to
+--- <em>line:getline()</em> and <em>line:getcursor()</em>.
+
+--------------------------------------------------------------------------------
+--- -name:  clink.register_match_generator
+--- -arg:   func:function
+--- -arg:   priority:integer
+--- -show:  -- Deprecated form:
+--- -show:  local function match_generator_func(text, first, last, match_builder)
+--- -show:  &nbsp; -- `text` is the line text.
+--- -show:  &nbsp; -- `first` is the index of the beginning of the end word.
+--- -show:  &nbsp; -- `last` is the index of the end of the end word.
+--- -show:  &nbsp; -- `clink.add_match()` is used to add matches.
+--- -show:  &nbsp; -- return true if handled, or false to let another generator try.
+--- -show:  end
+--- -show:  clink.register_match_generator(match_generator_func, 10)<br/>
+--- -show:  -- Replace with new form:
+--- -show:  local g = clink.generator(10)
+--- -show:  function g:generate(line_state, match_builder)
+--- -show:  &nbsp; -- `line_state` is a <a href="#line">line</a> object.
+--- -show:  &nbsp; -- `match_builder:<a href="#builder:addmatch">addmatch</a>()` is used to add matches.
+--- -show:  &nbsp; -- return true if handled, or false to let another generator try.
+--- -show:  end
+--- -deprecated: clink.generator
+--- Registers a generator function for producing matches.  This behaves
+--- similarly to v0.4.8, but not identically.  The Clink schema has changed
+--- significantly enough that there is no direct 1:1 translation; generators are
+--- called at a different time than before and have access to more information
+--- than before.
+function clink.register_match_generator(func, priority)
+    local g = clink.generator(priority)
+    function g:generate(line_state, match_builder)
+        _current_builder = match_builder
+
+        local text = line_state:getendword()
+        local info = line_state:getwordinfo(line_state:getwordcount())
+        local first = info.offset
+        local last = first + info.length - 1
+        -- // TODO: adjust_for_separator()?
+
+        local handled = func(text, first, last)
+
+        _current_builder = nil
+        return handled
+    end
 end

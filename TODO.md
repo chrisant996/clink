@@ -18,7 +18,6 @@ ChrisAnt Plans
 - Document the `clink` commands (autorun, inject, etc).
 
 ## Cmder, Powerline, Clink-Completions
-- Port popular scripts to v1.x.
 - Port Cmder to v1.x -- will require help from Cmder team.
 
 ## Other
