@@ -69,7 +69,7 @@ pre {
 
 pre code {
     border: none;
-    padding: 0;
+    padding: 8px;
     border-radius: inherit;
 }
 
@@ -111,6 +111,10 @@ kbd {
 
 .deprecated {
     opacity: 0.6;
+}
+
+.comment-web-link {
+    font-style: italic;
 }
 
 #header {

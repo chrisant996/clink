@@ -132,7 +132,21 @@ local function do_docs()
         group_table.name = group_name
         table.insert(groups, group_table)
     end
-    table.sort(groups, function (a, b) return a.name < b.name end)
+
+    local compare_groups = function (a, b)
+        local a_other = (a.name == "[other]" and true) or false
+        local b_other = (b.name == "[other]" and true) or false
+        if a_other or b_other then
+            if not a_other then
+                return true
+            else
+                return false
+            end
+        end
+        return a.name < b.name
+    end
+
+    table.sort(groups, compare_groups)
 
     local api_html = io.open(".build/docs/api_html", "w")
     for _, group in ipairs(groups) do

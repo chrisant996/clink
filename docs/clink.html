@@ -5,8 +5,8 @@
 <head>
 <title>Clink v$(CLINK_VERSION)</title>
 <style>
-    $(INCLUDE docs/clink.css)
     $(INCLUDE docs/atom-one-light.css)
+    $(INCLUDE docs/clink.css)
 </style>
 <script type="text/javascript">
     $(INCLUDE docs/highlight.pack.js)
@@ -36,7 +36,16 @@
             toc.appendChild(div);
         }
 
+        // Apply syntax highlighting.
         hljs.initHighlighting();
+
+        // Fix hyperlink styling inside highlighted comments.
+        var source_links = document.querySelectorAll("a > span");
+        for (var i = 0; i < source_links.length; ++i)
+        {
+            var e = source_links[i];
+            e.classList.replace("hljs-comment", "comment-web-link");
+        }
     }
 </script>
 </head>
