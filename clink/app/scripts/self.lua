@@ -39,7 +39,6 @@ end
 local set = clink.argmatcher()
 :addflags("--help")
 :addarg(set_handler)
-:addarg(set_handler)
 
 --------------------------------------------------------------------------------
 local history = clink.argmatcher()
