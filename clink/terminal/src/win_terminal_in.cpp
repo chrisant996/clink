@@ -123,12 +123,12 @@ static int keymod_index(int key_flags)
 
 
 //------------------------------------------------------------------------------
-struct auto_str : public no_copy
+struct keyseq_name : public no_copy
 {
-    auto_str(char* p, short int eqclass, short int order) { s = p; eq = eqclass; o = order; }
-    auto_str(auto_str&& a) { s = a.s; eq = a.eq; o = a.o; a.s = nullptr; }
-    ~auto_str() { free(s); }
-    auto_str& operator=(auto_str&& a) { s = a.s; eq = a.eq; o = a.o; a.s = nullptr; }
+    keyseq_name(char* p, short int eqclass, short int order) { s = p; eq = eqclass; o = order; }
+    keyseq_name(keyseq_name&& a) { s = a.s; eq = a.eq; o = a.o; a.s = nullptr; }
+    ~keyseq_name() { free(s); }
+    keyseq_name& operator=(keyseq_name&& a) { s = a.s; eq = a.eq; o = a.o; a.s = nullptr; }
 
     char* s;
     short int eq;
@@ -189,7 +189,7 @@ struct map_cmp_str
         return false;
     }
 };
-static std::map<keyseq_key, auto_str, map_cmp_str> map_keyseq_to_name;
+static std::map<keyseq_key, keyseq_name, map_cmp_str> map_keyseq_to_name;
 
 //------------------------------------------------------------------------------
 static void add_keyseq_to_name(const char* keyseq, const char* name, str<32>& builder, short int modifier)
@@ -201,7 +201,7 @@ static void add_keyseq_to_name(const char* keyseq, const char* name, str<32>& bu
     builder.concat(name);
 
     int alloc = builder.length() + 1;
-    auto_str second((char*)malloc(alloc), modifier, (short int)map_keyseq_to_name.size());
+    keyseq_name second((char*)malloc(alloc), modifier, (short int)map_keyseq_to_name.size());
     if (second.s)
     {
         memcpy(second.s, builder.c_str(), alloc);
