@@ -13,6 +13,7 @@ ChrisAnt Plans
 
 ## Documentation
 - Describe the new argmatcher/etc syntax.
+- Document that `:addarg()` is positional!  The first call applies to arg1, the second applies to arg2, etc.  Except if the arg1 matcher handles multiple arguments, then the arg2 matcher picks up after that, and so on.
 - Supply sample inputrc file(s).
 - Document the `clink` commands (autorun, inject, etc).
 
@@ -23,7 +24,6 @@ ChrisAnt Plans
 - Port Cmder to v1.x -- will require help from Cmder team.
 
 ## Other
-- BACKCOMPAT:  `net help` isn't included in the completions; presumably `_argmatcher:_add()` still isn't adding matchers correctly?
 - `pause()` is sometimes showing the wrong stack frame in the debugger -- it shows itself, but should show who called it.
 - The `lua.break_on_error` setting isn't working yet.
 - Lua scripts need a way to detect what version of Clink they're running on, so they can choose to behave differently/appropriately.
