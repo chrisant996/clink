@@ -489,7 +489,7 @@ end
 --- -deprecated: clink.argmatcher
 --- Adds <em>parser</em> to the first argmatcher for <em>cmd</em>.  This behaves
 --- similarly to v0.4.8, but not identically.  The Clink schema has changed
---- significantly enough that there is no direct 1:1 translation possible.
+--- significantly enough that there is no direct 1:1 translation.
 function clink.arg.register_parser(cmd, parser)
     local matcher = _argmatchers[cmd] or clink.argmatcher(cmd)
     local list = matcher._args[1] or { _links = {} }

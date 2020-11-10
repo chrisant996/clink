@@ -85,8 +85,8 @@ end
 
 --------------------------------------------------------------------------------
 --- -name:  clink.is_match
---- -arg:   needle
---- -arg:   candidate
+--- -arg:   needle:string
+--- -arg:   candidate:string
 --- -ret:   true
 --- -deprecated: clink.generator
 --- This is no longer needed, and simply returns true now.

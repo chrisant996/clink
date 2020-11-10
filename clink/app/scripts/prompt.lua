@@ -66,7 +66,7 @@ end
 
 --------------------------------------------------------------------------------
 --- -name:  clink.prompt.register_filter
---- -arg:   filter_func
+--- -arg:   filter_func:function
 --- -arg:   [priority:integer]
 --- -ret:   table
 --- -show:  -- Deprecated form:
@@ -85,10 +85,6 @@ end
 --- but the syntax is changed.
 clink.prompt = clink.prompt or {}
 function clink.prompt.register_filter(filter, priority)
-    if priority == nil then
-        priority = 999
-    end
-
     local o = clink.promptfilter(priority)
     function o:filter(the_prompt)
         clink.prompt.value = the_prompt
