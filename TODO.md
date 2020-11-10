@@ -23,8 +23,6 @@ ChrisAnt Plans
 - Port Cmder to v1.x -- will require help from Cmder team.
 
 ## Other
-- `pause()` is sometimes showing the wrong stack frame in the debugger -- it shows itself, but should show who called it.
-- The `lua.break_on_error` setting isn't working yet.
 - Lua scripts need a way to detect what version of Clink they're running on, so they can choose to behave differently/appropriately.
 - Iteratively complete multiple directory levels by `b`**Tab**,**End**,**Tab**,**End**,**Tab** => after a few it completes the wrong thing!
 - _...Pull other things from the Release list...?_
