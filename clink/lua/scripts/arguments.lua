@@ -354,7 +354,7 @@ end
 --------------------------------------------------------------------------------
 -- Deprecated.
 function _argmatcher:set_arguments(...)
-    self._args = {}
+    self._args = { _links = {} }
     self:addarg(...)
     return self
 end
@@ -473,6 +473,8 @@ end
 --- necessary to get old scripts working with the new API.
 function clink.arg.register_parser(cmd, parser)
     local matcher = _argmatchers[cmd] or clink.argmatcher(cmd)
-    matcher:addarg(parser)
+    local list = matcher._args[1] or { _links = {} }
+    matcher:_add(list, parser)
+    matcher._args[1] = list
     return matcher
 end
