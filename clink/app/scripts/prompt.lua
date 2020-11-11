@@ -46,14 +46,19 @@ end
 --- -name:  clink.promptfilter
 --- -arg:   [priority:integer]
 --- -ret:   table
+--- -show:  local foo_prompt = clink.promptfilter(80)
+--- -show:  function foo_prompt:filter(prompt)
+--- -show:  &nbsp; -- Insert the date at the beginning of the prompt.
+--- -show:  &nbsp; return os.date("%a %H:%M").." "..prompt
+--- -show:  end
 --- Creates and returns a new promptfilter object that is applied in increasing
---- <em>priority</em> order (low values to high values).  Define a
---- <code>filter(prompt:string)</code> function on the object, which receives
---- <em>prompt</em> containing the filtered prompt so far.<br/>
---- <br/>
---- The function can return nil to have no effect, or can return prompt:string
---- [, continue:boolean].  If <em>continue</em> is false then no further prompt
---- filtering is performed.
+--- <em>priority</em> order (low values to high values).  Define on the object a
+--- <code>filter()</code> function that takes a string argument which contains
+--- the filtered prompt so far.  The function can return nil to have no effect,
+--- or can return a new prompt string.  It can optionally stop further prompt
+--- filtering by also returning false.  See <a
+--- href="#customisingtheprompt">Customising The Prompt</a> for more
+--- information.
 function clink.promptfilter(priority)
     if priority == nil then priority = 999 end
 

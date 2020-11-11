@@ -378,6 +378,10 @@ local _argmatchers = {}
 --- -arg:   [priority:integer]
 --- -arg:   commands...:string
 --- -ret:   <a href="#_argmatcher">_argmatcher</a>
+--- Creates and returns a new argument matcher parser object.  Use <a
+--- href="#_argmatcher:addarg">:addarg()</a> and etc to add arguments, flags,
+--- other parsers, and more.  See <a href="#argumentcompletion">Argument
+--- Completion</a> for more information.
 function clink.argmatcher(...)
     local matcher = _argmatcher()
 

@@ -230,83 +230,118 @@ If no Lua scripts can be found in any of those directories, then Clink will load
 
 By default <kbd>Ctrl</kbd>+<kbd>X</kbd>,<kbd>Ctrl</kbd>+<kbd>R</kbd> is mapped to reload all Lua scripts which can be useful when developing and iterating on your own scripts.
 
-$(BEGINDIM)
+<a name="matchgenerators">
+
 ## Match Generators
-$(ENDDIM)
+</a>
 
-<fieldset><legend>TODO</legend>
-Describe the new match generator syntax.  The old syntax described below isn't compatible with v1.0.0 onward.
-</fieldset>
+These are Lua functions that are called as part of Readline's completion process.
 
-$(BEGINDIM)
-These are Lua functions that are registered with Clink and are called as part of Readline's completion process. Match generator functions take the following form;
+First create a match generator object:
 
 ```lua
-function my_match_generator(text, first, last)
-    -- Use text/rl_state.line_buffer to create matches,
-    -- Submit matches to Clink using clink.add_match()
-    -- Return true/false.
+local my_generator = clink.generator(priority)
+```
+
+The `priority` argument is a number that influences when the generator gets called, with lower numbers going before higher numbers.
+
+Next define a match generator function on the object, taking the following form:
+
+```lua
+function my_generator:generate(line_state, match_builder)
+    -- Use the line_state object to examine the current line and create matches.
+    -- Submit matches to Clink using the match_builder object.
+    -- Return true or false.
 end
 ```
 
-`Text` is the word that is being completed, `first` and `last` and the indices into the complete line buffer for `text` (the full line buffer can be accessed using the variable `rl_state.line_buffer`). If no further match generators need to be called then the function should return true.
+`line_state` is a <a href="#line">line</a> object that has information about the current line.
 
-Registering the match generation function is done as follows;
+`match_builder` is a <a href="#builder">builder</a> object to which you can add matches.
 
-```lua
-clink.register_match_generator(my_match_generator, sort_id)
-```
+If no further match generators need to be called then the function should return true.  Returning false or nil continues letting other match generators get called.
 
-The `sort_id` argument is used to sort the match generators such that generators with a lower sort ids are called first.
-
-Here is an simple example script that checks if `text` begins with a `%` character and then uses the remainder of `text` to match the names of environment variables.
+Here is an example script that supplies git branch names as matches for `git checkout`.  It's based on git_branch_autocomplete.lua from [collink.clink-git-extensions](https://github.com/collink/clink-git-extensions).  The version here is updated for the new Clink Lua API, and for illustration purposes it's been simplified to not support git aliases.
 
 ```lua
-function env_vars_match_generator(text, first, last)
-    if not text:find("^%%") then
-        return false
+local git_branch_autocomplete = clink.generator(1)
+
+local function string.starts(str, start)
+    return string.sub(str, 1, string.len(start)) == start
+end
+
+local function is_checkout_ac(text)
+    if string.starts(text, "git checkout") then
+        return true
     end
+    return false
+end
 
-    text = clink.lower(text:sub(2))
-    local text_len = #text
-    for _, name in ipairs(clink.get_env_var_names()) do
-        if clink.lower(name:sub(1, text_len)) == text then
-            clink.add_match('%'..name..'%')
+local function get_branches()
+    -- Run git command to get branches.
+    local handle = io.popen("git branch -a 2>&1")
+    local result = handle:read("*a")
+    handle:close()
+    -- Parse the branches from the output.
+    local branches = {}
+    if string.starts(result, "fatal") == false then
+        for branch in string.gmatch(result, "  %S+") do
+            branch = string.gsub(branch, "  ", "")
+            if branch ~= "HEAD" then
+                table.insert(branches, branch)
+            end
         end
     end
-
-    return true
+    return branches
 end
 
-clink.register_match_generator(env_vars_match_generator, 10)
+function git_branch_autocomplete:generate(line_state, match_builder)
+    -- Check if it's a checkout command.
+    if not is_checkout_ac(line_state:getline()) then
+        return false
+    end
+    -- Get branches and add them (does nothing if not in a git repo).
+    local matchCount = 0
+    for _, branch in ipairs(get_branches()) do
+        match_builder:addmatch(branch)
+        matchCount = matchCount + 1
+    end
+    if matchCount > 0 then
+        -- Branch names have slashes, so include the prefix to make sure they
+        -- don't accidentally get treated like path names.
+        match_builder:setprefixincluded(true)
+    end
+    return matchCount > 0 -- If we found branches, then stop other match generators.
+end
 ```
 
-## Argument Completion
-$(ENDDIM)
+<p/>
+
+> **Compatibility Note:**
+> The `clink.match_display_filter` callback function has been removed.  It had too many problematic or confusing edge conditions, and it isn't compatible with Readline's match display behavior.
 
 <fieldset><legend>TODO</legend>
-Describe the new argument and flag syntax.  The old syntax described below isn't compatible with v1.0.0 onward.
+    Need to document the generator:getprefixlength() function.
 </fieldset>
 
-$(BEGINDIM)
+## Argument Completion
+
 Clink provides a framework for writing complex argument match generators in Lua.  It works by creating a parser object that describes a command's arguments and flags and then registering the parser with Clink. When Clink detects the command is being entered on the current command line being edited, it uses the parser to generate matches.
 
 Here is an example of a simple parser for the command `foobar`;
 
 ```lua
-my_parser = clink.arg.new_parser()
-my_parser:set_flags("-foo", "-bar")
-my_parser:set_arguments(
+clink.argmatcher("foobar")
+:addflags("-foo", "-bar")
+:addarg(
     { "hello", "hi" },
     { "world", "wombles" }
 )
-
-clink.arg.register_parser("foobar", my_parser)
 ```
 
 This parser describes a command that has two positional arguments each with two potential options. It also has two flags which the parser considers to be position independent meaning that provided the word being completed starts with a certain prefix the parser with attempt to match the from the set of flags.
 
-On the command line completion would look something like this;
+On the command line completion would look something like this:
 
 ```
 C:\>foobar hello -foo wo
@@ -314,43 +349,35 @@ world   wombles
 C:\>foobar hello -foo wo_
 ```
 
-As an alternative to calling `clink.arg.set_arguments()` and `clink.arg.set_flags()` you can instead provide the parser's flags and positional arguments as arguments to `clink.arg.new_parser()` as follows;
+When displaying possible completions, flag matches are only shown if the flag character has been input (so `command ` and <kbd>Alt</kbd>+<kbd>=</kbd> would list only non-flag matches, or `command -` and <kbd>Alt</kbd>+<kbd>=</kbd> would list only flag matches).
 
-```lua
-some_parser = clink.arg.new_parser(
-    { "arg1-1", "arg1-2" },
-    { "arg2-1", "arg2-2" },
-    "-flag1", "-flag2"
-)
-```
+By default the flag character is `-` but you can use `:setflagprefix("/")` to make `/` be the flag character.
+
+<fieldset><legend>TODO</legend>
+Document <a href="#_argmatcher:loop">:loop()</a> and <a href="#_argmatcher:nofiles">:nofiles()</a>.
+</fieldset>
 
 ### More Advanced Stuff
 
 #### Linking Parsers
-$(ENDDIM)
 
-<fieldset><legend>TODO</legend>
-Describe the new syntax.  The old syntax described below isn't compatible with v1.0.0 onward.
-</fieldset>
-
-$(BEGINDIM)
 There are often situations where the parsing of a command's arguments is dependent on the previous words (`git merge ...` compared to `git log ...` for example). For these scenarios Clink allows you to link parsers to arguments' words using Lua's concatenation operator. Parsers can also be concatenated with flags too.
 
 ```lua
-a_parser = clink.arg.new_parser():set_arguments({"foo", "bar" })
-b_parser = clink.arg.new_parser():set_arguments({ "abc", "123" })
-c_parser = clink.arg.new_parser()
-c_parser:set_arguments(
+a_parser = clink.argmatcher():addarg({ "foo", "bar" })
+b_parser = clink.argmatcher():addarg({ "abc", "123" })
+c_parser = clink.argmatcher()
+c_parser:addarg(
     { "foobar" .. b_parser },
     { c_parser }
 )
 ```
 
-With syntax from preceding section this converts into:
+With syntax from the preceding section this converts into:
 
 ```lua
-parser = clink.arg.new_parser
-a_parser = parser({"foo", "bar" })
+parser = clink.argmatcher
+a_parser = parser({ "foo", "bar" })
 c_parser = parser(
     { "foobar" .. parser({ "abc", "123" }) },
     { c_parser }
@@ -375,10 +402,12 @@ the_parser:set_arguments(
 )
 ```
 
-The functions take a single argument which is a word from the command line being edited (or partial word if it is the one under the cursor). Functions should return a table of potential matches (or an empty table if it calls clink.add_match() directly itself).
-$(ENDDIM)
+The functions take a single argument which is a word from the command line being edited (or partial word if it is the one under the cursor). Functions should return a table of potential matches.
+
+<a name="customisingtheprompt">
 
 ## Customising The Prompt
+</a>
 
 Before Clink displays the prompt it filters the prompt through Lua so that the prompt can be customised. This happens each and every time that the prompt is shown which allows for context sensitive customisations (such as showing the current branch of a git repository).
 
