@@ -3,6 +3,8 @@
 
 #pragma once
 
+#include <core/base.h> // for #define ARCHITECTURE
+
 //------------------------------------------------------------------------------
 #if defined(CLINK_FINAL)
     #define CLINK_USE_EMBEDDED_SCRIPTS
