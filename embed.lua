@@ -8,6 +8,35 @@ local function exec(str)
 end
 
 --------------------------------------------------------------------------------
+local function spairs(t, order)
+    -- collect the keys
+    local keys = {}
+    for k in pairs(t) do keys[#keys+1] = k end
+
+    -- if order function given, sort by it by passing the table and keys a, b,
+    -- otherwise just sort the keys
+    if order then
+        table.sort(keys, function(a,b) return order(t, a, b) end)
+    else
+        table.sort(keys)
+    end
+
+    -- return the iterator function
+    local i = 0
+    return function()
+        i = i + 1
+        if keys[i] then
+            return keys[i], t[keys[i]]
+        end
+    end
+end
+
+--------------------------------------------------------------------------------
+local function compare_values(t, a, b)
+    return t[a] < t[b]
+end
+
+--------------------------------------------------------------------------------
 local function do_embed()
     -- Find the Lua compilers.
     local archs = {
@@ -15,7 +44,7 @@ local function do_embed()
         ["86"] = { luac = os.matchfiles(".build/*/bin/final/luac_x86.exe")[1] },
     }
 
-    for name, arch in pairs(archs) do
+    for name, arch in spairs(archs) do
         if not arch.luac then
             error("Unable to find Lua compiler binary (x"..name.." final).")
         end
@@ -24,7 +53,7 @@ local function do_embed()
     end
 
     local manifests = os.matchfiles("clink/**/_manifest.lua")
-    for _, manifest in ipairs(manifests) do
+    for _, manifest in spairs(manifests, compare_values) do
         local root = path.getdirectory(manifest)
 
         out = path.join(root, "lua_scripts.cpp")
@@ -37,7 +66,7 @@ local function do_embed()
         -- Write each sanitised script to 'out' as a global variable.
         local symbols = {}
         local manifest = dofile(manifest)
-        for _, file in ipairs(manifest.files) do
+        for _, file in spairs(manifest.files, compare_values) do
             local name = path.getname(file)
             local symbol = manifest.name .. "_" .. name:gsub("%.", "_") .. "_script"
             table.insert(symbols, symbol)
@@ -45,7 +74,7 @@ local function do_embed()
             file = path.join(root, file)
             print("   "..file)
 
-            for name, arch in pairs(archs) do
+            for name, arch in spairs(archs) do
                 out:write("#if ARCHITECTURE == "..name.."\n")
 
                 -- Compile the input Lua script to binary.
@@ -78,7 +107,7 @@ local function do_embed()
         -- Some debug stuff so loose files can be loaded in debug builds.
         symbols = {}
         out:write("#else\n")
-        for _, file in ipairs(manifest.files) do
+        for _, file in spairs(manifest.files, compare_values) do
             local symbol = path.getname(file):gsub("%.", "_")
             symbol = manifest.name .. "_" .. symbol .. "_file"
             table.insert(symbols, symbol)
