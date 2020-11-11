@@ -569,6 +569,19 @@ static char** alternative_matches(const char* text, int start, int end)
         rl_completion_append_character = s_matches->get_append_character();
 
     rl_attempted_completion_over = 1;
+
+#if 0
+    for (unsigned int i = 0; i < s_matches->get_match_count(); i++)
+        printf("%u: %s, %u\n", i, s_matches->get_match(i), s_matches->get_match_type(i));
+    printf("filename completion desired = %d\n", rl_filename_completion_desired);
+    printf("filename display desired = %d\n", rl_filename_display_desired);
+    printf("is suppress append = %d\n", s_matches->is_suppress_append());
+    printf("is prefix included = %d\n", s_matches->is_prefix_included());
+    printf("get prefix excluded = %d\n", s_matches->get_prefix_excluded());
+    printf("get append character = %u\n", (unsigned char)s_matches->get_append_character());
+    printf("get suppress quoting = %d\n", s_matches->get_suppress_quoting());
+#endif
+
     return matches;
 }
 

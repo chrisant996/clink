@@ -86,6 +86,8 @@ end
 --------------------------------------------------------------------------------
 -- Deprecated.
 local _current_builder = nil
+local _any_added = false
+local _any_pathish = false
 
 --------------------------------------------------------------------------------
 --- -name:  clink.add_match
@@ -97,6 +99,10 @@ local _current_builder = nil
 function clink.add_match(match)
     if _current_builder then
         _current_builder:addmatch(match)
+        _any_added = true
+        if match:find("\\") then
+            _any_pathish = true
+        end
     end
 end
 
@@ -159,7 +165,17 @@ function clink.register_match_generator(func, priority)
         local last = first + info.length - 1
         -- // TODO: adjust_for_separator()?
 
+        _any_added = false;
+        _any_pathish = false;
+
         local handled = func(text, first, last)
+
+        -- Ugh; git_autocomplete_branch.lua needs setprefixincluded(true) if
+        -- func added otherwise branch name completion gets stuck at path
+        -- separators.  This attempts to be as backwardly compatible as we can.
+        if _any_added and not _any_pathish then
+            match_builder:setprefixincluded(true)
+        end
 
         _current_builder = nil
         return handled
