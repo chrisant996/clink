@@ -19,10 +19,19 @@ ChrisAnt Plans
 
 ## Cmder, Powerline, Clink-Completions
 - Port Cmder to v1.x -- will require help from Cmder team.
+- [#12](https://github.com/chrisant996/clink/issues/12) Why is Cmder's Clink so slow to start?
 
 ## Other
+- **Alt+P** then **Ctrl+G** internally resets the prompt, but `rl_redisplay()` gets confused into still drawing the cached `local_prompt`.
+- If the last line of the prompt is "too long" then `rl_message()` in **Alt+P** fails to draw the adjusted prompt correctly; the old prompt continues to be drawn.
+  - The cutoff is 136 characters -- less and the message shows up, or more and no message.
+  - And using **Ctrl+R** and then aborting redraws the prompt using the wrong screen buffer width / wrapping position!
 - Iteratively complete multiple directory levels by `b`**Tab**,**End**,**Tab**,**End**,**Tab** => after a few it completes the wrong thing!
-- _...Pull other things from the Release list...?_
+- [#15](https://github.com/chrisant996/clink/issues/15) Quoting breaks in edge cases.
+  - Probably need a callback to override `_rl_find_completion_word()`.
+  - `nullcmd "abc %user`**complete** => mistakenly becomes `nullcmd "%USER` (loses the `"abc `).  Bash ignores everything inside quotes, but we want to handle env vars completions inside quotes.
+  - `nullcmd "abc def"`**complete** => mistakenly becomes `nullcmd "abc def"abc def"`.  Bash mishandles this case; it becomes `nullcmd abc\ def`.
+- [#398](https://github.com/mridgers/clink/issues/398) Cmd gets unresponsive after "set /p" command.
 
 <br/>
 <br/>
@@ -34,7 +43,6 @@ ChrisAnt Plans
 ### Urgent
 
 ### Normal
-- [#398](https://github.com/mridgers/clink/issues/398) Cmd gets unresponsive after "set /p" command.
 - `match.ignore_case` can't be working correctly, and probably readline settings should determine it.  _[Is it still used by anything?]_
 - `_rl_completion_case_map` isn't supported properly in clink lua APIs, nor in general.  _(The 0.4.8 implementation simply converted `-` and `_` to `?` and accepted all matches -- although maybe it filtered the results afterwards?)_
 - Is it a problem that `update_internal()` gets called once per char in a key sequence?  Maybe it should only happen after a key that finishes a key binding?
@@ -47,14 +55,6 @@ ChrisAnt Plans
 - Use `path::normalise` to clean up input like "\wbin\\\\cli" when using `complete` and `menu-complete`.
 - Symlink support (displaying matches, and whether to append a path separator).
 - The match pipeline should not fire on pressing **Enter** after `exit`.
-- **Alt+P** then **Ctrl+G** internally resets the prompt, but `rl_redisplay()` gets confused into still drawing the cached `local_prompt`.
-- If the last line of the prompt is "too long" then `rl_message()` in **Alt+P** fails to draw the adjusted prompt correctly; the old prompt continues to be drawn.
-  - The cutoff is 136 characters -- less and the message shows up, or more and no message.
-  - And using **Ctrl+R** and then aborting redraws the prompt using the wrong screen buffer width / wrapping position!
-- [#15](https://github.com/chrisant996/clink/issues/15) Quoting breaks in edge cases.
-  - Probably need a callback to override `_rl_find_completion_word()`.
-  - `nullcmd "abc %user`**complete** => mistakenly becomes `nullcmd "%USER` (loses the `"abc `).  Bash ignores everything inside quotes, but we want to handle env vars completions inside quotes.
-  - `nullcmd "abc def"`**complete** => mistakenly becomes `nullcmd "abc def"abc def"`.  Bash mishandles this case; it becomes `nullcmd abc\ def`.
 
 <br/>
 <br/>
