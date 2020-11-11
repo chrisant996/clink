@@ -18,11 +18,13 @@ ChrisAnt Plans
 - Document the `clink` commands (autorun, inject, etc).
 
 ## Cmder, Powerline, Clink-Completions
-- Port Cmder to v1.x -- will require help from Cmder team.
+- Update clink-completions to have better 0.4.9 implementations, and also to conditionally use the new API when available.
+- Update clink-git-extensions to have better 0.4.9 implementations, and also to conditionally use the new API when available.
+- Update cmder-powerline-prompt to work outside of cmder (don't crash when `%HOME%` isn't set), and also to conditionally use the new API when available.  Plus some other minor enhancements I made.
+- Port Cmder to v1.x -- will require help from Cmder and/or ConEmu teams.  There are a lot of hard-coded expectations about Clink (web site address, terminal input mode, DLL names, VirtualAlloc patterns, and many other things).
 - [#12](https://github.com/chrisant996/clink/issues/12) Why is Cmder's Clink so slow to start?
 
 ## Other
-- Embed.lua needs to sort the scripts and architectures so the order is stable in the files.
 - **Alt+P** then **Ctrl+G** internally resets the prompt, but `rl_redisplay()` gets confused into still drawing the cached `local_prompt`.
 - If the last line of the prompt is "too long" then `rl_message()` in **Alt+P** fails to draw the adjusted prompt correctly; the old prompt continues to be drawn.
   - The cutoff is 136 characters -- less and the message shows up, or more and no message.
@@ -32,7 +34,6 @@ ChrisAnt Plans
   - Probably need a callback to override `_rl_find_completion_word()`.
   - `nullcmd "abc %user`**complete** => mistakenly becomes `nullcmd "%USER` (loses the `"abc `).  Bash ignores everything inside quotes, but we want to handle env vars completions inside quotes.
   - `nullcmd "abc def"`**complete** => mistakenly becomes `nullcmd "abc def"abc def"`.  Bash mishandles this case; it becomes `nullcmd abc\ def`.
-- [#398](https://github.com/mridgers/clink/issues/398) Cmd gets unresponsive after "set /p" command.
 
 <br/>
 <br/>
@@ -44,7 +45,6 @@ ChrisAnt Plans
 ### Urgent
 
 ### Normal
-- Why is color output so slow, especially in Cmder?  Maybe Clink is making too many tiny output calls?
 - `match.ignore_case` can't be working correctly, and probably readline settings should determine it.  _[Is it still used by anything?]_
 - `_rl_completion_case_map` isn't supported properly in clink lua APIs, nor in general.  _(The 0.4.8 implementation simply converted `-` and `_` to `?` and accepted all matches -- although maybe it filtered the results afterwards?)_
 - Is it a problem that `update_internal()` gets called once per char in a key sequence?  Maybe it should only happen after a key that finishes a key binding?
@@ -57,6 +57,7 @@ ChrisAnt Plans
 - Use `path::normalise` to clean up input like "\wbin\\\\cli" when using `complete` and `menu-complete`.
 - Symlink support (displaying matches, and whether to append a path separator).
 - The match pipeline should not fire on pressing **Enter** after `exit`.
+- [#20](https://github.com/chrisant996/clink/issues/20) Cmd gets unresponsive after "set /p" command.  _[Seems to mostly work, though `set /p FOO=""` doesn't prompt for input.]_
 
 <br/>
 <br/>
@@ -95,6 +96,9 @@ ChrisAnt Plans
   - Only block consumers when they try to access results, if not yet complete.  Also have "try-" access that accesses if available but doesn't block (e.g. will be needed for coloring arguments while editing).
   - This will solve the UNC performance problem and also make associated pauses break-able.
   - Lua and Lua scripts will need multi-threading support.
+- **Fix Readline completion coloring performance.**
+  - Color output is slow because Readline writes everything one byte at a time, which incurs a huge amount of processing overhead across several layers.😭
+  - Consult with Chet about how he'd like the Readline code to be structured when fixing this?
 
 <br/>
 <br/>
