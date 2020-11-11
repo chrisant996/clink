@@ -3,9 +3,11 @@
 
 #pragma once
 
+#include <core/base.h>
+
 void lua_load_script_impl(class lua_state&, const char*, int);
 
-#if defined(CLINK_FINAL)
+#if defined(CLINK_USE_EMBEDDED_SCRIPTS)
     #define lua_load_script(state, module, name)                                \
         do {                                                                    \
             extern const unsigned char* module##_##name##_lua_script;           \
@@ -21,4 +23,4 @@ void lua_load_script_impl(class lua_state&, const char*, int);
             extern const char* module##_##name##_lua_file;                      \
             lua_load_script_impl(state, module##_##name##_lua_file, 0);         \
         } while(0)
-#endif // CLINK_FINAL
+#endif // CLINK_USE_EMBEDDED_SCRIPTS

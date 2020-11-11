@@ -22,6 +22,7 @@ ChrisAnt Plans
 - [#12](https://github.com/chrisant996/clink/issues/12) Why is Cmder's Clink so slow to start?
 
 ## Other
+- Embed.lua needs to sort the scripts and architectures so the order is stable in the files.
 - **Alt+P** then **Ctrl+G** internally resets the prompt, but `rl_redisplay()` gets confused into still drawing the cached `local_prompt`.
 - If the last line of the prompt is "too long" then `rl_message()` in **Alt+P** fails to draw the adjusted prompt correctly; the old prompt continues to be drawn.
   - The cutoff is 136 characters -- less and the message shows up, or more and no message.
@@ -43,6 +44,7 @@ ChrisAnt Plans
 ### Urgent
 
 ### Normal
+- Why is color output so slow, especially in Cmder?  Maybe Clink is making too many tiny output calls?
 - `match.ignore_case` can't be working correctly, and probably readline settings should determine it.  _[Is it still used by anything?]_
 - `_rl_completion_case_map` isn't supported properly in clink lua APIs, nor in general.  _(The 0.4.8 implementation simply converted `-` and `_` to `?` and accepted all matches -- although maybe it filtered the results afterwards?)_
 - Is it a problem that `update_internal()` gets called once per char in a key sequence?  Maybe it should only happen after a key that finishes a key binding?
