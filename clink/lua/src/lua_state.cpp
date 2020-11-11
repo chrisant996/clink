@@ -34,11 +34,14 @@ static setting_bool g_lua_traceback(
     "Prints stack trace on errors",
     false);
 
-// static setting_bool g_lua_breakonerror(
-//     "lua.break_on_error",
-//     "Breaks to the lua debugger on errors",
-//     "Breaks to the lua debugger on errors, if lua.debug is enabled.",
-//     false);
+//#define INCLUDE_BREAKONERROR
+#ifdef INCLUDE_BREAKONERROR
+static setting_bool g_lua_breakonerror(
+    "lua.break_on_error",
+    "Breaks to the lua debugger on errors",
+    "Breaks to the lua debugger on errors, if lua.debug is enabled.",
+    false);
+#endif
 
 
 
@@ -169,18 +172,16 @@ int lua_state::pcall(lua_State* L, int nargs, int nresults)
 }
 
 //------------------------------------------------------------------------------
-static int call_pause(lua_State* L)
+static void call_pause(lua_State* L)
 {
     lua_getglobal(L, "pause");
     if (!lua_isfunction(L, -1))
     {
         lua_pop(L, 1);
-        return 1;
+        return;
     }
 
     lua_call(L, 0, 1);
-    // TODO: does it need to pop?
-    return 1;
 }
 
 //------------------------------------------------------------------------------
@@ -201,8 +202,10 @@ int lua_state::error_handler(lua_State* L)
     }
 
     // TODO: figure out how to safely/correctly break into the debugger
-    // if (g_lua_breakonerror.get())
-    //     call_pause(L);
+#ifdef INCLUDE_BREAKONERROR
+    if (g_lua_breakonerror.get())
+        call_pause(L);
+#endif
 
-    return 1;
+    return 0;
 }

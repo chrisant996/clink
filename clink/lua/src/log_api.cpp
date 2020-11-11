@@ -34,7 +34,7 @@ int log_info(lua_State* state)
     if (const char* message = get_string(state, 1))
         logger::info(source, line, "%s", message);
 
-    return 1;
+    return 0;
 }
 
 //------------------------------------------------------------------------------
