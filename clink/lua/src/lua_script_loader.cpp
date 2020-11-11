@@ -3,7 +3,7 @@
 
 #include "pch.h"
 #include "lua_state.h"
-#include <core/base.h>
+#include <core/embedded_scripts.h>
 
 #if defined(CLINK_USE_EMBEDDED_SCRIPTS)
 

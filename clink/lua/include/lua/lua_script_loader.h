@@ -3,7 +3,7 @@
 
 #pragma once
 
-#include <core/base.h>
+#include <core/embedded_scripts.h>
 
 void lua_load_script_impl(class lua_state&, const char*, int);
 

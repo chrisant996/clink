@@ -50,13 +50,6 @@ template <class A> A clamp(A v, A m, A M) { return min(max(v, m), M); }
 #endif
 
 //------------------------------------------------------------------------------
-#if defined(CLINK_FINAL)
-    #define CLINK_USE_EMBEDDED_SCRIPTS
-#else
-    //#define CLINK_USE_EMBEDDED_SCRIPTS
-#endif
-
-//------------------------------------------------------------------------------
 extern const char* const bindableEsc;
 
 //------------------------------------------------------------------------------

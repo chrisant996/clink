@@ -31,8 +31,8 @@ local function do_embed()
         print("\n"..out)
         out = io.open(out, "w")
         out:write("#include \"pch.h\"\n")
-        out:write("#include <core/base.h>\n")
-        out:write("#if defined(CLINK_FINAL)\n")
+        out:write("#include <core/embedded_scripts.h>\n")
+        out:write("#if defined(CLINK_USE_EMBEDDED_SCRIPTS)\n")
 
         -- Write each sanitised script to 'out' as a global variable.
         local symbols = {}
