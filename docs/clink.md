@@ -324,7 +324,10 @@ end
     Need to document the generator:getprefixlength() function.
 </fieldset>
 
+<a name="argumentcompletion">
+
 ## Argument Completion
+</a>
 
 Clink provides a framework for writing complex argument match generators in Lua.  It works by creating a parser object that describes a command's arguments and flags and then registering the parser with Clink. When Clink detects the command is being entered on the current command line being edited, it uses the parser to generate matches.
 
@@ -350,12 +353,6 @@ C:\>foobar hello -foo wo_
 ```
 
 When displaying possible completions, flag matches are only shown if the flag character has been input (so `command ` and <kbd>Alt</kbd>+<kbd>=</kbd> would list only non-flag matches, or `command -` and <kbd>Alt</kbd>+<kbd>=</kbd> would list only flag matches).
-
-By default the flag character is `-` but you can use `:setflagprefix("/")` to make `/` be the flag character.
-
-<fieldset><legend>TODO</legend>
-Document <a href="#_argmatcher:loop">:loop()</a> and <a href="#_argmatcher:nofiles">:nofiles()</a>.
-</fieldset>
 
 ### More Advanced Stuff
 

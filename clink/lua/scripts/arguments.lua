@@ -111,8 +111,14 @@ end
 
 --------------------------------------------------------------------------------
 --- -name:  _argmatcher:addarg
---- -arg:   choices...:string
+--- -arg:   choices...:string|table
 --- -ret:   self
+--- -show:  local my_parser = clink.argmatcher("git")
+--- -show:  :addarg("add", "status", "commit", "checkout")
+--- This adds argument matches.  Arguments can be a string, a string linked to
+--- another parser by the concatenation operator, a table of arguments, or a
+--- function that returns a table of arguments.  See <a
+--- href="#argumentcompletion">Argument Completion</a> for more information.
 function _argmatcher:addarg(...)
     local list = { _links = {} }
     self:_add(list, {...})
@@ -124,10 +130,19 @@ end
 --- -name:  _argmatcher:addflags
 --- -arg:   flags...:string
 --- -ret:   self
+--- -show:  local my_parser = clink.argmatcher("git")
+--- -show:  :addarg({ "add", "status", "commit", "checkout" })
+--- -show:  :addflags("-a", "-g", "-p", "--help")
+--- This adds flag matches.  Flags are separate from arguments:  When listing
+--- possible completions for an empty word, only arguments are listed.  But when
+--- the word being completed starts with the first character of any of the
+--- flags, then only flags are listed.  See <a
+--- href="#argumentcompletion">Argument Completion</a> for more information.
 function _argmatcher:addflags(...)
     local flag_matcher = self._flags or _argmatcher()
     local list = flag_matcher._args[1] or { _links = {} }
-    flag_matcher:_add(list, {...})
+    local prefixes = self._flagprefix or {}
+    flag_matcher:_add(list, {...}, prefixes)
 
     flag_matcher._args[1] = list
     self._flags = flag_matcher
@@ -138,6 +153,14 @@ end
 --- -name:  _argmatcher:loop
 --- -arg:   [index:integer]
 --- -ret:   self
+--- -show:  clink.argmatcher("xyzzy")
+--- -show:  :addarg("zero", "cero")     -- first arg can be zero or cero
+--- -show:  :addarg("one", "uno")       -- second arg can be one or uno
+--- -show:  :addarg("two", "dos")       -- third arg can be two or dos
+--- -show:  :loop(2)    -- fourth arg loops back to position 2, for one or uno, and so on
+--- This makes the parser loop back to argument position <em>index</em> when it
+--- runs out of positional sets of arguments (if <em>index</em> is omitted it
+--- loops back to argument position 1).
 function _argmatcher:loop(index)
     self._loop = index or -1
     return self
@@ -147,6 +170,19 @@ end
 --- -name:  _argmatcher:setflagprefix
 --- -arg:   [prefixes...:string]
 --- -ret:   self
+--- -show:  local my_parser = clink.argmatcher()
+--- -show:  :setflagprefix("-", "/", "+")
+--- -show:  :addflags("--help", "/?", "+mode")
+--- -deprecated: _argmatcher:addflags
+--- This overrides the default flag prefix (`-`).  The flag prefixes are used to
+--- switch between matching arguments versus matching flags.  When listing
+--- possible completions for an empty word (e.g. `command _` where the cursor is
+--- at the `_`), only arguments are listed.  And only flags are listed when the
+--- word starts with one of the flag prefixes.  Each flag prefix must be a
+--- single character, but there can be multiple prefixes.<br/>
+--- <br/>
+--- This is no longer needed because <code>:addflags()</code> does it
+--- automatically.
 function _argmatcher:setflagprefix(...)
     for _, i in ipairs({...}) do
         if type(i) ~= "string" or #i ~= 1 then
@@ -161,6 +197,9 @@ end
 --------------------------------------------------------------------------------
 --- -name:  _argmatcher:nofiles
 --- -ret:   self
+--- This makes the parser prevent invoking <a href="#matchgenerators">match
+--- generators</a>.  You can use it to "dead end" a parser and suggest no
+--- completions.
 function _argmatcher:nofiles()
     self._no_file_generation = true
     return self
@@ -228,7 +267,17 @@ function _argmatcher:_is_flag(word)
 end
 
 --------------------------------------------------------------------------------
-function _argmatcher:_add(list, addee)
+local function add_prefix(prefixes, string)
+    if prefixes then
+        local prefix = string:sub(1, 1)
+        if prefix:len() > 0 then
+            prefixes[prefix] = (prefixes[prefix] or 0) + 1
+        end
+    end
+end
+
+--------------------------------------------------------------------------------
+function _argmatcher:_add(list, addee, prefixes)
     -- Flatten out tables unless the table is a link
     local is_link = (getmetatable(addee) == _arglink)
     if type(addee) == "table" and not is_link and not addee.match then
@@ -236,16 +285,19 @@ function _argmatcher:_add(list, addee)
             for _, i in ipairs(addee._args) do
                 for _, j in ipairs(i) do
                     table.insert(list, j)
+                    add_prefix(prefixes, j)
                 end
                 if i._links then
                     for k, m in pairs(i._links) do
                         list._links[k] = m
+                        add_prefix(prefixes, k)
                     end
                 end
             end
         else
             for _, i in ipairs(addee) do
                 self:_add(list, i)
+                add_prefix(prefixes, i)
             end
         end
         return
@@ -253,8 +305,10 @@ function _argmatcher:_add(list, addee)
 
     if is_link then
         list._links[addee._key] = addee._matcher
+        add_prefix(prefixes, addee._key)
     else
         table.insert(list, addee)
+        add_prefix(prefixes, addee)
     end
 end
 
