@@ -300,12 +300,15 @@ clink_exe("clink_app_exe")
         postbuild_copy("CHANGES", "final")
         postbuild_copy("LICENSE", "final")
         postbuild_copy("clink/app/src/loader/clink.bat", "final")
+        postbuild_copy("clink/app/src/loader/clink.lua", "final")
 
     configuration("release")
         postbuild_copy("clink/app/src/loader/clink.bat", "release")
+        postbuild_copy("clink/app/src/loader/clink.lua", "release")
 
     configuration("debug")
         postbuild_copy("clink/app/src/loader/clink.bat", "debug")
+        postbuild_copy("clink/app/src/loader/clink.lua", "debug")
 
 --------------------------------------------------------------------------------
 clink_exe("clink_test")
