@@ -11,7 +11,8 @@ ChrisAnt Plans
 
 # BETA
 
-- Document the `clink` commands (autorun, inject, etc).
+## Back-compat
+- \tmp\clink\modules\matchers.lua:55 - attempt to call field 'matches_are_files' (a nil value)
 
 ## Cmder, Powerline, Clink-Completions
 - Update clink-completions to have better 0.4.9 implementations, and also to conditionally use the new API when available.
