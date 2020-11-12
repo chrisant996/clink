@@ -2,7 +2,7 @@
 
 Clink combines the native Windows shell cmd.exe with the powerful command line editing features of the GNU Readline library, which provides rich completion, history, and line-editing capabilities. Readline is best known for its use in the famous Unix shell Bash, the standard shell for Mac OS X and many Linux distributions.
 
-<br>
+<br/>
 
 # Features
 
@@ -27,7 +27,7 @@ Clink combines the native Windows shell cmd.exe with the powerful command line e
 
 By default Clink binds <kbd>Alt</kbd>+<kbd>H</kbd> to display the current key bindings. More features can also be found in GNU's [Readline](https://tiswww.cwru.edu/php/chet/readline/readline.html) and [History](https://tiswww.cwru.edu/php/chet/readline/history.html) libraries' manuals.
 
-<br>
+<br/>
 
 # Usage
 
@@ -37,13 +37,13 @@ The second alternative is to manually run Clink using the command `clink inject`
 
 The last option is to use the Clink shortcut that the installer adds to Windows' start menu. This is in essence a shortcut to the command `cmd.exe /k clink inject`.
 
-<br>
+<br/>
 
 # How Clink Works
 
 When running Clink via the methods above, Clink checks the parent process is supported and injects a DLL into it. The DLL then hooks the WriteConsole() and ReadConsole() Windows functions. The former is so that Clink can capture the current prompt, and the latter hook allows Clink to provide it's own Readline-powered command line editing.
 
-<br>
+<br/>
 
 <a name="configclink"/>
 
@@ -71,7 +71,7 @@ Name                         | Description
 `exec.space_prefix`          | If the line begins with whitespace then Clink bypasses executable matching (`exec.path`) and will do normal files matching instead.
 `files.hidden`               | Includes or excludes files with the "hidden" attribute set when generating file lists.
 `files.system`               | Includes or excludes files with the "system" attribute set when generating file lists.
-`files.unc_paths`            | UNC (network) paths can cause Clink to stutter when it tries to generate matches. Enable this if matching UNC paths is required. _**TODO:** This may become unnecessary if/when Clink can be made to only generate matches in response to completion commands._
+`files.unc_paths`            | UNC (network) paths can cause Clink to stutter when it tries to generate matches. Enable this if matching UNC paths is required.
 `history.dont_add_to_history_cmds` | List of commands that aren't automatically added to the history. Commands are separated by spaces, commas, or semicolons. Default is `exit history`, to exclude both of those commands.
 `history.dupe_mode`          | If a line is a duplicate of an existing history entry Clink will erase the duplicate when this is set `erase_prev`. Setting it to `ignore` will not add duplicates to the history, and setting it to `add` will always add lines.
 `history.expand_mode`        | The `!` character in an entered line can be interpreted to introduce words from the history. This can be enabled and disable by setting this value to `on` or `off`. Values of `not_squoted`, `not_dquoted`, or `not_quoted` will skip any `!` character quoted in single, double, or both quotes respectively.
@@ -87,11 +87,11 @@ Name                         | Description
 `terminal.emulate`           | Clink can either emulate a virtual terminal and handle ANSI escape codes itself, or let the console host natively handle ANSI escape codes. `off` = pass output directly to the console host process, `on` = clink handles ANSI escape codes itself.
 `terminal.modify_other_keys` | When enabled, pressing Space or Tab with modifier keys sends extended XTerm key sequences so they can be bound separately.
 
-<br>
+<br/>
 
-> Notes:
+> **Compatibility Notes:**
 > - The `esc_clears_line` setting has been replaced by a `clink-reset-line` command that can be bound to <kbd>Escape</kbd> (or any other key).
-> - The `use_altgr_substitute` setting has been removed. _**NYI:** If AltGr or lack of AltGr causes a problem for you, please open an issue in the repo with details._
+> - The `use_altgr_substitute` setting has been removed.  (If AltGr or lack of AltGr causes a problem, please visit the <a href="https://github.com/chrisant996/clink/issues">repo</a> and open an issue with details about the problem.)
 
 ## File Locations
 
@@ -106,11 +106,57 @@ All of the above locations can be overridden using the `--profile <path>` comman
 
 ## Command Line Options
 
-<fieldset><legend>TODO</legend>
-List the <code>clink</code> command line options.
-</fieldset>
+<p>
+<dt>clink</dt>
+<dd>
+Shows command line usage help.</dd>
+</p>
 
-<br>
+<p>
+<dt>clink inject</dt>
+<dd>
+Injects Clink into a CMD.EXE process.<br/>
+See <code>clink inject --help</code> for more information.</dd>
+</p>
+
+<p>
+<dt>clink autorun</dt>
+<dd>
+Manages Clink's entry in CMD.EXE's autorun section, which can automatically inject Clink when starting CMD.EXE.<br/>
+See <code>clink autorun --help</code> for more information.</dd>
+</p>
+
+<p>
+<dt>clink set</dt>
+<dd>
+<code>clink set</code> by itself lists all settings and their values.<br/>
+<code>clink set <em>&lt;setting_name&gt;</em></code> describes the setting shows its current value.<br/>
+<code>clink set <em>&lt;setting_name&gt;</em> clear</code> resets the setting to its default value.<br/>
+<code>clink set <em>&lt;setting_name&gt;</em> <em>&lt;value&gt;</em></code> sets the setting to the specified value.</dd>
+</p>
+
+<p>
+<dt>clink history</dt>
+<dd>
+Lists the command history.<br/>
+See <code>clink history --help</code> for more information.<br/>
+Also, Clink automatically defines <code>history</code> as an alias for <code>clink history</code>.</dd>
+</p>
+
+<p>
+<dt>clink info</dt>
+<dd>
+Prints information about Clink, including the version and various configuration directories and files.<br/>
+Or <code>clink --version</code> shows just the version number.</dd>
+</p>
+
+<p>
+<dt>clink echo</dt>
+<dd>
+Echos key sequences to use in the inputrc files for binding keys to Clink commands.  Each key pressed prints the associated key sequence on a separate line, until <kbd>Ctrl</kbd>+<kbd>C</kbd> is pressed.</dd>
+</p>
+
+<br/>
 
 # Configuring Readline
 
@@ -141,7 +187,7 @@ Name | Default | Description
 `history-point-at-end-of-anchored-search`|off|Puts the cursor at the end of the line when using `history-search-forward` or `history-search-backward`.
 `locale-sort`|on|Sorts completions with locale awareness (like CMD does).
 
-<br>
+<br/>
 
 ## New Commands
 
@@ -214,11 +260,11 @@ Typing|Typing does an incremental search.
 <kbd>Shift</kbd>+<kbd>F3</kbd>|Go to the previous match.
 <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>L</kbd>|Go to the previous match.
 
-<br>
+<br/>
 
 # Extending Clink
 
-The Readline library allows clients to offer an alternative path for creating completion matches. Clink uses this to hook Lua into the completion process making it possible to script the generation of matches with Lua scripts. The following sections describe this in more detail and shows some examples.
+The Readline library allows clients to offer an alternative path for creating completion matches. Clink uses this to hook Lua into the completion process making it possible to script the generation of matches with <a href="https://www.lua.org/docs.html">Lua</a> scripts. The following sections describe this in more detail and shows some examples.
 
 ## The Location of Lua Scripts
 
@@ -244,6 +290,8 @@ local my_generator = clink.generator(priority)
 ```
 
 The `priority` argument is a number that influences when the generator gets called, with lower numbers going before higher numbers.
+
+### The :generate() Function
 
 Next define a match generator function on the object, taking the following form:
 
@@ -319,6 +367,67 @@ end
 
 > **Compatibility Note:**
 > The `clink.match_display_filter` callback function has been removed.  It had too many problematic or confusing edge conditions, and it isn't compatible with Readline's match display behavior.
+
+### The :getprefixlength() Function
+
+Some match generators may want to generate matches for only part of the word.  If a generator defines a `:getprefixlength()` function, it can control how much of the word
+
+For example, when the environment variable match generator sees the word being completed is `text%USER` it calls "text" a prefix and generates matches to be appended to the prefix, so that the final result can be `text%USERNAME%`.
+
+```lua
+local envvar_generator = clink.generator(10)
+
+function envvar_generator:generate(line_state, match_builder)
+    -- Does the word end with a percent sign?
+    local word = line_state:getendword()
+    if word:sub(-1) ~= "%" then
+        return false
+    end
+
+    -- Add env vars as matches.
+    for _, i in ipairs(os.getenvnames()) do
+        match_builder:addmatch("%"..i.."%", "word")
+    end
+
+    -- We want % to be the prefix, but the word might have text before it also.
+    local amount = string.len(line_state:getendword())
+    if amount > 1 then
+        -- The end word has text before the %, so set the prefix to a negative amount
+        -- to indicate how much of the word to NOT consider part of the prefix.
+        -- For "text%" we want a prefix included, but we want only "%" to be the
+        -- prefix.  That's the word minus the first 4 characters, so amount is -4.
+        amount = 1 - amount
+        match_builder:<a href="#builder:setprefixincluded">setprefixincluded</a>(amount)
+    else
+        -- The end word is just %, so call the whole thing the prefix to be included
+        -- with the match.
+        match_builder:setprefixincluded()
+    end
+
+    match_builder:setsuppressappend()   -- Don't append a space character.
+    return true
+end
+
+function envvar_generator:getprefixlength(line_state)
+    local word = line_state:getendword()
+    local in_out = false
+    local index
+
+    -- Environment variables are between two percent signs.
+    -- So complete abc%foo%def%USER but do not complete abc%foo%USER.
+    for i = 1, #word do
+        if word:sub(i, i) == "%" then
+            in_out = not in_out
+            index = i
+        end
+    end
+
+    -- If there's an unclosed percent sign, return its position as the prefix length.
+    if in_out then
+        return index
+    end
+end
+```
 
 <fieldset><legend>TODO</legend>
     Need to document the generator:getprefixlength() function.
@@ -485,7 +594,7 @@ The resulting prompt will look like this:
 <pre style="border-radius:initial;border:initial"><code class="plaintext" style="background-color:black"><span style="color:#00ff00">Wed 12:54</span> <span style="color:#ffff00">c:\dir</span> <span style="color:#cccccc">HAPPY HUMP DAY!&nbsp;_</span>
 </code></pre>
 
-<br>
+<br/>
 
 # Miscellaneous
 
@@ -512,7 +621,7 @@ Due to differences between Windows and Linux, escape codes for keys like PageUp/
 |Backspace  |`^h`       | -       |`Rubout`     | -           |`\e^h`   | -        |`\eRubout`   | -             |
 |Escape     |`\e[27;27~`| -       | -           | -           | -       | -        | -           | -             |
 
-<br>
+<br/>
 
 Here is an example line from an inputrc file that binds Shift-End to the Readline `transpose-word` function;
 
@@ -539,7 +648,7 @@ For function keys the full escape sequences are listed.  The last four columns (
 |F11        |`\e[23~`   |`\e[23;2~` |`\e[23;5~` |`\e[23;6~`  |`\e\e[23~` |`\e\e[23;2~` |`\e\e[23;5~` |`\e\e[23;6~`    |
 |F12        |`\e[24~`   |`\e[24;2~` |`\e[24;5~` |`\e[24;6~`  |`\e\e[24~` |`\e\e[24;2~` |`\e\e[24;5~` |`\e\e[24;6~`    |
 
-<br>
+<br/>
 
 Here is an example line from an inputrc file that binds <kbd>Alt</kbd>+<kbd>Shift</kbd>+<kbd>F3</kbd> to the Readline `history-substring-search-backward` function;
 

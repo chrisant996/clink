@@ -11,7 +11,7 @@ body {
     margin: 0 auto;
 }
 
-h1, h2, h3, h4, h5, h6 { font-family: Rambla,Roboto,Calibri,Arial,Helvetica,sans-serif }
+h1, h2, h3, h4, h5, h6, dt { font-family: Rambla,Roboto,Calibri,Arial,Helvetica,sans-serif }
 
 h1 {
     width: 100%;
@@ -24,6 +24,11 @@ h3 { font-size: 1.40rem; }
 h4 { font-size: 1.20rem; }
 h5 { font-size: 1.10rem; }
 h6 { font-size: 1.00rem; }
+
+dt {
+    font-weight: 700;
+    padding: 0 0 0.4rem 0;
+}
 
 blockquote {
     display: block;

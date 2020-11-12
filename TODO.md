@@ -11,10 +11,6 @@ ChrisAnt Plans
 
 # BETA
 
-## Documentation
-- Describe the new argmatcher/etc syntax.
-- Document that `:addarg()` is positional!  The first call applies to arg1, the second applies to arg2, etc.  Except if the arg1 matcher handles multiple arguments, then the arg2 matcher picks up after that, and so on.
-- Supply sample inputrc file(s).
 - Document the `clink` commands (autorun, inject, etc).
 
 ## Cmder, Powerline, Clink-Completions
