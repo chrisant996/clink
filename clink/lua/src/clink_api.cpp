@@ -10,6 +10,7 @@
 #include <core/os.h>
 #include <core/path.h>
 #include <core/str.h>
+#include <readline/readline.h>
 
 #include <unordered_set>
 
