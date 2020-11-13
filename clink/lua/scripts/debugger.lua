@@ -1520,11 +1520,20 @@ end
 
 local _traceback = debug.traceback       --note original function
 
+local function decipher_traceback_args(a, b, c)
+  local has_thread = type(a) == "thread"
+  local thread = has_thread and a or nil
+  local message = has_thread and b or a
+  local level = has_thread and c or b
+  return thread, message, level
+end
+
 --override standard function
 debug.traceback = function(...)
   local assertmsg = _traceback(...)      --do original function
   if settings.get("lua.break_on_traceback") then
-    pause(assertmsg)                     --let user have a look at stuff
+    local _, message, _ = decipher_traceback_args(...)
+    pause(message)                       --let user have a look at stuff
   end
   return assertmsg                       --carry on
 end
