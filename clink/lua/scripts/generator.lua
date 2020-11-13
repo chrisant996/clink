@@ -10,11 +10,11 @@ local _generators_unsorted = false
 
 --------------------------------------------------------------------------------
 local function pcall_dispatch(func, ...)
-    local ok, ret = pcall(func, ...)
+    local ok, ret = xpcall(func, _error_handler_ret, ...)
     if not ok then
         print("")
+        print("match generator failed:")
         print(ret)
-        print(debug.traceback())
         return
     end
 

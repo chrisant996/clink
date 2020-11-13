@@ -21,11 +21,7 @@ public:
     int             pcall(int nargs, int nresults) { return pcall(m_state, nargs, nresults); }
 
 private:
-    static int      error_handler(lua_State* L);
-
-private:
     lua_State*      m_state;
-    int             m_errfunc;
 };
 
 //------------------------------------------------------------------------------

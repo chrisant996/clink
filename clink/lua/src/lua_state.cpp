@@ -18,8 +18,11 @@ extern "C" {
 static setting_bool g_lua_debug(
     "lua.debug",
     "Enables Lua debugging",
-    "Loads an simple embedded command line debugger when enabled. Breakpoints\n"
-    "can added by calling pause().",
+    "Loads a simple embedded command line debugger when enabled.\n"
+    "The debugger can be activated by inserting a pause() call, which will act\n"
+    "as a breakpoint. Or the debugger can be activated by traceback() calls or\n"
+    "Lua errors by turning on the lua.break_on_traceback or lua.break_on_error\n"
+    "settings, respectively.",
     false);
 
 static setting_str g_lua_path(
@@ -29,19 +32,22 @@ static setting_str g_lua_path(
     "in require() statements.",
     "");
 
-static setting_bool g_lua_traceback(
-    "lua.traceback",
-    "Prints stack trace on errors",
+static setting_bool g_lua_tracebackonerror(
+    "lua.traceback_on_error",
+    "Prints stack trace on Lua errors",
     false);
 
-//#define INCLUDE_BREAKONERROR
-#ifdef INCLUDE_BREAKONERROR
+static setting_bool g_lua_breakontraceback(
+    "lua.break_on_traceback",
+    "Breaks into Lua debugger on traceback",
+    "Breaks into the Lua debugger on traceback() calls, if lua.debug is enabled.",
+    false);
+
 static setting_bool g_lua_breakonerror(
     "lua.break_on_error",
-    "Breaks to the lua debugger on errors",
-    "Breaks to the lua debugger on errors, if lua.debug is enabled.",
+    "Breaks into Lua debugger on Lua errors",
+    "Breaks into the Lua debugger on Lua errors, if lua.debug is enabled.",
     false);
-#endif
 
 
 
@@ -150,14 +156,11 @@ bool lua_state::do_file(const char* path)
 //------------------------------------------------------------------------------
 int lua_state::pcall(lua_State* L, int nargs, int nresults)
 {
-    // Add an errfunc.  The approach is from here:
-    // https://stackoverflow.com/questions/30021904/lua-set-default-error-handler
-
     // Calculate stack position for message handler.
     int hpos = lua_gettop(L) - nargs;
 
     // Push our error message handler.
-    lua_pushcfunction(L, error_handler);
+    lua_getglobal(L, "_error_handler");
 
     // Move it before function and arguments.
     lua_insert(L, hpos);
@@ -169,43 +172,4 @@ int lua_state::pcall(lua_State* L, int nargs, int nresults)
     lua_remove(L, hpos);
 
     return ret;
-}
-
-//------------------------------------------------------------------------------
-static void call_pause(lua_State* L)
-{
-    lua_getglobal(L, "pause");
-    if (!lua_isfunction(L, -1))
-    {
-        lua_pop(L, 1);
-        return;
-    }
-
-    lua_call(L, 0, 1);
-}
-
-//------------------------------------------------------------------------------
-int lua_state::error_handler(lua_State* L)
-{
-    // Emit error message.
-    const char *error = lua_tostring(L, 1);
-    if (error)
-        puts(error);
-
-    if (g_lua_traceback.get())
-    {
-        luaL_traceback(L, L, nullptr, 1);
-        const char* traceback = lua_tostring(L, -1);
-        if (traceback)
-            puts(traceback);
-        lua_pop(L, 1);
-    }
-
-    // TODO: figure out how to safely/correctly break into the debugger
-#ifdef INCLUDE_BREAKONERROR
-    if (g_lua_breakonerror.get())
-        call_pause(L);
-#endif
-
-    return 0;
 }

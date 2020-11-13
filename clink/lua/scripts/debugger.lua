@@ -1521,9 +1521,11 @@ end
 local _traceback = debug.traceback       --note original function
 
 --override standard function
-debug.traceback = function(x)
-  local assertmsg = _traceback(x)        --do original function
-  pause(x)                               --let user have a look at stuff
+debug.traceback = function(...)
+  local assertmsg = _traceback(...)      --do original function
+  if settings.get("lua.break_on_traceback") then
+    pause(assertmsg)                     --let user have a look at stuff
+  end
   return assertmsg                       --carry on
 end
 

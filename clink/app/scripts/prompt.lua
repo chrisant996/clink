@@ -31,11 +31,11 @@ function clink._filter_prompt(prompt)
         return prompt
     end
 
-    local ok, ret = pcall(impl, prompt)
+    local ok, ret = xpcall(impl, _error_handler_ret, prompt)
     if not ok then
         print("")
+        print("prompt filter failed:")
         print(ret)
-        print(debug.traceback())
         return false
     end
 
