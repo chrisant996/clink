@@ -465,16 +465,20 @@ local function _find_argmatcher(line_state)
 
     local first_word = line_state:getword(1)
 
-    -- Search for a valid argmatcher and return it.
-    local argmatcher_keys = {
-        path.getname(first_word):lower(),
-        path.getbasename(first_word):lower(),
-    }
+    -- Check for an exact match.
+    local argmatcher = _argmatchers[path.getname(first_word):lower()]
+    if argmatcher then
+        return argmatcher
+    end
 
-    for _, key in ipairs(argmatcher_keys) do
-        local argmatcher = _argmatchers[key]
-        if argmatcher then
-            return argmatcher
+    -- If the extension is in PATHEXT then try stripping the extension.
+    local ext = path.getextension(first_word):lower()
+    if ext and ext ~= "" then
+        if (";"..clink.get_env("pathext")..";"):lower():match(";"..ext..";", 1, true) then
+            argmatcher = _argmatchers[path.getbasename(first_word):lower()]
+            if argmatcher then
+                return argmatcher
+            end
         end
     end
 end
