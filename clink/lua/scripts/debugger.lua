@@ -1129,6 +1129,7 @@ local function debugger_loop(ev, vars, file, line, idx_watch)
       local level = args
       if level and level == '' then level = nil end
       if level then return level end
+      return vars.__VARSLEVEL__
       --}}}
 
     elseif command == "vars" then
