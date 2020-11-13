@@ -297,7 +297,6 @@ function _argmatcher:_add(list, addee, prefixes)
         else
             for _, i in ipairs(addee) do
                 self:_add(list, i)
-                add_prefix(prefixes, i)
             end
         end
         return
