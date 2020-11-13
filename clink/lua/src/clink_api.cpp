@@ -143,7 +143,6 @@ static int get_rl_variable(lua_State* state)
     if (lua_gettop(state) == 0 || !lua_isstring(state, 1))
         return 0;
 
-#if MODE4
     const char* string = lua_tostring(state, 1);
     const char* rl_cvar = rl_variable_value(string);
     if (rl_cvar == nullptr)
@@ -151,9 +150,6 @@ static int get_rl_variable(lua_State* state)
 
     lua_pushstring(state, rl_cvar);
     return 1;
-#else
-    return 0;
-#endif // MODE4
 }
 
 //------------------------------------------------------------------------------
