@@ -1,4 +1,8 @@
 @echo off
+setlocal
+set __DBG=
+
+:arg
 if x%1x == x?x goto :usage
 if x%1x == x/?x goto :usage
 if x%1x == x-?x goto :usage
@@ -7,16 +11,19 @@ if x%1x == x-hx goto :usage
 if x%1x == x/helpx goto :usage
 if x%1x == x--helpx goto :usage
 if x%1x == xhelpx goto :usage
+if x%1x == x/dbgx set __DBG=call devenv /debugexe & shift & goto :arg
 
-if x%1x == x/dbgx call devenv /debugexe %~dp0.build\vs2019\bin\debug\clink_test_x64.exe
-if not x%1x == x/dbgx %~dp0.build\vs2019\bin\debug\clink_test_x64.exe
+%__DBG% %~dp0.build\vs2019\bin\debug\clink_test_x64.exe %1 %2 %3
 goto :eof
 
 :usage
-echo Usage:  test [/? /dbg]
+echo Usage:  test [/? /dbg] [test name prefix]
 echo.
 echo   Run clink_test_x64.exe.
 echo.
 echo.  /?        Show usage info.
 echo   /dbg      Run test under the debugger.
+echo.
+echo If [test name prefix] is included, then it only runs tests whose name begins
+echo with the specified prefix.
 goto :eof
