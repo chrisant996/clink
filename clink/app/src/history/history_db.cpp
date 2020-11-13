@@ -292,6 +292,7 @@ public:
         unsigned int        m_remaining = 0;
         unsigned int        m_deleted = 0;
         bool                m_first_line = true;
+        bool                m_eating_ctag = false;
     };
 
     explicit                read_lock() = default;
@@ -420,14 +421,36 @@ line_id_impl read_lock::line_iter::next(str_iter& out)
         const char* last = m_file_iter.get_buffer() + m_file_iter.get_buffer_size();
         const char* start = last - m_remaining;
 
+        bool first_line = m_first_line || m_eating_ctag;
+        bool eating_ctag = m_eating_ctag;
+
         for (; start != last; ++start, --m_remaining)
             if (unsigned(*start) > 0x1f)
+            {
+                if (m_first_line)
+                {
+                    if (*start == '|')
+                    {
+                        // The <6 is a concession for the history tests.  They
+                        // can read with a buffer smaller than 6 characters, but
+                        // they don't really understand the CTAG and need the
+                        // CTAG line completely hidden from their view, even if
+                        // they're using pathologically small buffers.
+                        bool eat = (last - start < 6 || strncmp(start, "|CTAG_", 6) == 0);
+                        m_eating_ctag = eating_ctag = eat;
+                    }
+                    m_first_line = false;
+                }
                 break;
+            }
 
         const char* end = start;
         for (; end != last; ++end)
             if (unsigned(*end) <= 0x1f)
+            {
+                m_eating_ctag = false;
                 break;
+            }
 
         if (end == last && start != m_file_iter.get_buffer())
         {
@@ -441,9 +464,9 @@ line_id_impl read_lock::line_iter::next(str_iter& out)
         bool was_first_line = m_first_line;
         m_first_line = false;
 
-        if (*start == '|')
+        if (*start == '|' || eating_ctag)
         {
-            if (!was_first_line || strncmp(start, "|CTAG_", 6) != 0)
+            if (!eating_ctag)
                 ++m_deleted;
             continue;
         }
@@ -461,6 +484,7 @@ line_id_impl read_lock::line_iter::next(str_iter& out)
 void read_lock::line_iter::set_file_offset(unsigned int offset)
 {
     m_file_iter.set_file_offset(offset);
+    m_eating_ctag = false;
 }
 
 

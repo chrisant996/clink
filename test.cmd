@@ -1,6 +1,7 @@
 @echo off
 setlocal
 set __DBG=
+set __ME=%~dp0
 
 :arg
 if x%1x == x?x goto :usage
@@ -11,9 +12,10 @@ if x%1x == x-hx goto :usage
 if x%1x == x/helpx goto :usage
 if x%1x == x--helpx goto :usage
 if x%1x == xhelpx goto :usage
-if x%1x == x/dbgx set __DBG=call devenv /debugexe & shift & goto :arg
+if x%1x == x/dbgx set __DBG=call devenv /debugexe
+if x%1x == x/dbgx shift & goto :arg
 
-%__DBG% %~dp0.build\vs2019\bin\debug\clink_test_x64.exe %1 %2 %3
+%__DBG% %__ME%.build\vs2019\bin\debug\clink_test_x64.exe %1 %2 %3
 goto :eof
 
 :usage
