@@ -54,6 +54,16 @@ extern int              get_clink_setting(lua_State* state);
 extern int              lua_execute(lua_State* state);
 
 //------------------------------------------------------------------------------
+/// -name:  clink.match_display_filter
+/// -var:   function
+/// -deprecated: builder:addmatch
+/// -show:  clink.match_display_filter = function(matches)
+/// -show:  &nbsp; -- Transform matches.
+/// -show:  &nbsp; return matches
+/// -show:  end
+/// This is no longer used.
+
+//------------------------------------------------------------------------------
 static int to_lowercase(lua_State* state)
 {
     const char* string;

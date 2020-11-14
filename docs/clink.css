@@ -15,6 +15,7 @@ h1, h2, h3, h4, h5, h6, dt { font-family: Rambla,Roboto,Calibri,Arial,Helvetica,
 
 h1 {
     width: 100%;
+    padding: 2rem 0 0 0;
     border-bottom: 0.15rem #3377cc solid;
     font-size: 2rem;
 }
@@ -26,6 +27,7 @@ h5 { font-size: 1.10rem; }
 h6 { font-size: 1.00rem; }
 
 dt {
+    font-family: Rambla,Roboto,Calibri,Arial,Helvetica,sans-serif;
     font-weight: 700;
     padding: 0 0 0.4rem 0;
 }

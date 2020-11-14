@@ -514,18 +514,59 @@ end
 clink.arg = clink.arg or {}
 
 --------------------------------------------------------------------------------
+local function starts_with_flag_character(part)
+    if part == nil then
+        return false
+    end
+
+    local prefix = part:sub(1, 1)
+    return prefix == "-" or prefix == "/"
+end
+
+--------------------------------------------------------------------------------
+local function parser_initialise(parser, ...)
+    for _, word in ipairs({...}) do
+        local t = type(word)
+        if t == "string" then
+            parser:addflags(word)
+        elseif t == "table" then
+            if getmetatable(word) == _arglink and starts_with_flag_character(word.key) then
+                parser:addflags(word)
+            else
+                parser:addarg(word)
+            end
+        else
+            error("Additional arguments to new_parser() must be tables or strings", 2)
+        end
+    end
+end
+
+--------------------------------------------------------------------------------
 --- -name:  clink.arg.new_parser
 --- -arg:   ...
 --- -ret:   table
 --- -show:  -- Deprecated form:
---- -show:  local parser = clink.arg.new_parser("abc", "def")<br/>
+--- -show:  local parser = clink.arg.new_parser(
+--- -show:  &nbsp; { "abc", "def" },       -- arg position 1
+--- -show:  &nbsp; { "ghi", "jkl" },       -- arg position 2
+--- -show:  &nbsp; "--flag1", "--flag2"    -- flags
+--- -show:  )<br/>
 --- -show:  -- Replace with form:
---- -show:  local parser = clink.argmatcher():addarg("abc", "def")
+--- -show:  local parser = clink.argmatcher()
+--- -show:  :addarg("abc", "def")               -- arg position 1
+--- -show:  :addarg("ghi", "jkl")               -- arg position 2
+--- -show:  :addflags("--flag1", "--flag2")     -- flags
 --- -deprecated: clink.argmatcher
 --- Creates a new parser and adds <em>...</em> to it.
 function clink.arg.new_parser(...)
-    local p = clink.argmatcher():addarg(...)
-    return p
+    local parser = clink.argmatcher()
+    if ... then
+        local success, msg = xpcall(parser_initialise, _error_handler_ret, parser, ...)
+        if not success then
+            error(msg, 2)
+        end
+    end
+    return parser
 end
 
 --------------------------------------------------------------------------------

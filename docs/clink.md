@@ -2,8 +2,6 @@
 
 Clink combines the native Windows shell cmd.exe with the powerful command line editing features of the GNU Readline library, which provides rich completion, history, and line-editing capabilities. Readline is best known for its use in the famous Unix shell Bash, the standard shell for Mac OS X and many Linux distributions.
 
-<br/>
-
 # Features
 
 - The same line editing as Bash (from GNU's Readline library).
@@ -27,8 +25,6 @@ Clink combines the native Windows shell cmd.exe with the powerful command line e
 
 By default Clink binds <kbd>Alt</kbd>+<kbd>H</kbd> to display the current key bindings. More features can also be found in GNU's [Readline](https://tiswww.cwru.edu/php/chet/readline/readline.html) and [History](https://tiswww.cwru.edu/php/chet/readline/history.html) libraries' manuals.
 
-<br/>
-
 # Usage
 
 There are three ways to use Clink the first of which is to add Clink to cmd.exe's autorun registry entry. This can be selected when installing Clink using the installer and Clink also provides the ability to manage this autorun entry from the command line. Running `clink autorun --help` has more information.
@@ -37,13 +33,9 @@ The second alternative is to manually run Clink using the command `clink inject`
 
 The last option is to use the Clink shortcut that the installer adds to Windows' start menu. This is in essence a shortcut to the command `cmd.exe /k clink inject`.
 
-<br/>
-
 # How Clink Works
 
 When running Clink via the methods above, Clink checks the parent process is supported and injects a DLL into it. The DLL then hooks the WriteConsole() and ReadConsole() Windows functions. The former is so that Clink can capture the current prompt, and the latter hook allows Clink to provide it's own Readline-powered command line editing.
-
-<br/>
 
 <a name="configclink"/>
 
@@ -156,8 +148,6 @@ Or <code>clink --version</code> shows just the version number.</dd>
 Echos key sequences to use in the inputrc files for binding keys to Clink commands.  Each key pressed prints the associated key sequence on a separate line, until <kbd>Ctrl</kbd>+<kbd>C</kbd> is pressed.</dd>
 </p>
 
-<br/>
-
 # Configuring Readline
 
 Readline itself can also be configured to add custom keybindings and macros by creating a Readline init file. There is excellent documentation for all the options available to configure Readline in Readline's [manual](https://tiswww.cwru.edu/php/chet/readline/rltop.html#Documentation).
@@ -186,8 +176,6 @@ Name | Default | Description
 `completion-auto-query-items`|on|Automatically prompts before displaying completions if they won't fit on one screen page.
 `history-point-at-end-of-anchored-search`|off|Puts the cursor at the end of the line when using `history-search-forward` or `history-search-backward`.
 `locale-sort`|on|Sorts completions with locale awareness (like CMD does).
-
-<br/>
 
 ## New Commands
 
@@ -259,8 +247,6 @@ Typing|Typing does an incremental search.
 <kbd>Ctrl</kbd>+<kbd>L</kbd>|Go to the next match.
 <kbd>Shift</kbd>+<kbd>F3</kbd>|Go to the previous match.
 <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>L</kbd>|Go to the previous match.
-
-<br/>
 
 # Extending Clink
 
@@ -457,21 +443,8 @@ There are often situations where the parsing of a command's arguments is depende
 a_parser = clink.argmatcher():addarg({ "foo", "bar" })
 b_parser = clink.argmatcher():addarg({ "abc", "123" })
 c_parser = clink.argmatcher()
-c_parser:addarg(
-    { "foobar" .. b_parser },
-    { c_parser }
-)
-```
-
-With syntax from the preceding section this converts into:
-
-```lua
-parser = clink.argmatcher
-a_parser = parser({ "foo", "bar" })
-c_parser = parser(
-    { "foobar" .. parser({ "abc", "123" }) },
-    { c_parser }
-)
+c_parser:addarg({ "foobar" .. b_parser })
+c_parser:addarg({ c_parser })
 ```
 
 As the example above shows, it is also possible to use a parser without concatenating it to a word. When Clink follows a link to a parser it is permanent and it will not return to the previous parser.
@@ -485,11 +458,9 @@ function rainbow_function(word)
     return { "red", "white", "blue" }
 end
 
-the_parser = clink.arg.new_parser()
-the_parser:set_arguments(
-    { "zippy", "bungle", "george" },
-    { rainbow_function, "yellow", "green" }
-)
+the_parser = clink.argmatcher()
+the_parser:addarg({ "zippy", "bungle", "george" })
+the_parser:addarg({ rainbow_function, "yellow", "green" })
 ```
 
 The functions take a single argument which is a word from the command line being edited (or partial word if it is the one under the cursor). Functions should return a table of potential matches.
@@ -577,8 +548,6 @@ The resulting prompt will look like this:
 
 <pre style="border-radius:initial;border:initial"><code class="plaintext" style="background-color:black"><span style="color:#00ff00">Wed 12:54</span> <span style="color:#ffff00">c:\dir</span> <span style="color:#cccccc">HAPPY HUMP DAY!&nbsp;_</span>
 </code></pre>
-
-<br/>
 
 # Miscellaneous
 
