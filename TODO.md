@@ -35,8 +35,6 @@ ChrisAnt Plans
 ### Urgent
 
 ### Normal
-- `match.ignore_case` can't be working correctly, and probably readline settings should determine it.  _[Is it still used by anything?]_
-- `_rl_completion_case_map` isn't supported properly in clink lua APIs, nor in general.  _(The 0.4.8 implementation simply converted `-` and `_` to `?` and accepted all matches -- although maybe it filtered the results afterwards?)_
 - Is it a problem that `update_internal()` gets called once per char in a key sequence?  Maybe it should only happen after a key that finishes a key binding?
 - Should only fold path separators in pathish matches.
 - `LOG()` certain important failure information inside Detours.

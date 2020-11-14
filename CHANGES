@@ -3,6 +3,26 @@
 
 ## Releases from [chrisant996/clink](https://github.com/chrisant996/clink) fork
 
+### Unreleased
+
+- Fixed argmatcher lookup to be more strict, like in Clink 0.4.9 (match exact names, or name plus an extension from %PATHEXT%).
+- Backward compatibility:
+    - Most things should work now.
+    - Dropping the new Clink on top of the vendor\clink directory in Cmder seems to work -- _but make a backup before you try this at home!_
+- API changes:
+    - Added `log.info()` function.
+    - Added Clink version numbers in `clink.version_major`, etc.
+    - Added `_argmatcher:getwordbreakinfo()` callback; removed `_argmatcher:setprefixincluded()` (it was a mess, and it was new to v1.x, so there's no compatibility concern with removing it).
+    - Deprecated `_argmatcher:setflagprefix()`; now it happens automagically when using `_argmatcher:addflags()`.
+    - Introduced several deprecated functions to support backward compatibility.
+- Improvements to Lua debugger:
+    - Added `lua.traceback_on_error`, `lua.break_on_error`, and `lua.break_on_traceback` settings to make debugging script errors easier.
+    - Made `pause()` consistent about pausing in the caller (rather than sometimes inside the pause command itself).
+    - The debugger automatically shows the stack trace when entering debug mode, and on every pause.
+    - Show 3 lines of source context by default.
+    - The help list is sorted now.
+    - Fixed the `set` command in the debugger to behave as documented.
+
 ### v1.1.2-alpha
 
 - Documentation is mostly updated; just the argmatcher Lua API and clink command line options are left to be documented.
