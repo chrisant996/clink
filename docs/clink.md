@@ -79,7 +79,7 @@ Name                         | Description
 `terminal.emulate`           | Clink can either emulate a virtual terminal and handle ANSI escape codes itself, or let the console host natively handle ANSI escape codes. `off` = pass output directly to the console host process, `on` = clink handles ANSI escape codes itself.
 `terminal.modify_other_keys` | When enabled, pressing Space or Tab with modifier keys sends extended XTerm key sequences so they can be bound separately.
 
-<br/>
+<p/>
 
 > **Compatibility Notes:**
 > - The `esc_clears_line` setting has been replaced by a `clink-reset-line` command that can be bound to <kbd>Escape</kbd> (or any other key).
@@ -344,11 +344,6 @@ function git_branch_autocomplete:generate(line_state, match_builder)
 end
 ```
 
-<p/>
-
-> **Compatibility Note:**
-> The `clink.match_display_filter` callback function has been removed.  It had too many problematic or confusing edge conditions, and it isn't compatible with Readline's match display behavior.
-
 ### The :getwordbreakinfo() Function
 
 A generator can influence work breaking for the end word by defining a `:getwordbreakinfo()` function.  The function takes a `line_state` <a href="#line">line</a> object that has information about the current line.  If it returns nil or 0, the end word is truncated to 0 length.  This is the normal behavior, which allows Clink to collect and cache all matches and then filter them based on typing.  Or it can return two numbers:  word break length and an optional end word length.  The end word is split at the word break length:  one word contains the first word break length characters from the end word (if 0 length then it's discarded), and the next word contains the rest of the end word truncated to the optional word length (0 if omitted).
@@ -574,7 +569,7 @@ Due to differences between Windows and Linux, escape codes for keys like PageUp/
 |Backspace  |`^h`       | -       |`Rubout`     | -           |`\e^h`   | -        |`\eRubout`   | -             |
 |Escape     |`\e[27;27~`| -       | -           | -           | -       | -        | -           | -             |
 
-<br/>
+<p/>
 
 Here is an example line from an inputrc file that binds Shift-End to the Readline `transpose-word` function;
 
@@ -601,7 +596,7 @@ For function keys the full escape sequences are listed.  The last four columns (
 |F11        |`\e[23~`   |`\e[23;2~` |`\e[23;5~` |`\e[23;6~`  |`\e\e[23~` |`\e\e[23;2~` |`\e\e[23;5~` |`\e\e[23;6~`    |
 |F12        |`\e[24~`   |`\e[24;2~` |`\e[24;5~` |`\e[24;6~`  |`\e\e[24~` |`\e\e[24;2~` |`\e\e[24;5~` |`\e\e[24;6~`    |
 
-<br/>
+<p/>
 
 Here is an example line from an inputrc file that binds <kbd>Alt</kbd>+<kbd>Shift</kbd>+<kbd>F3</kbd> to the Readline `history-substring-search-backward` function;
 
@@ -624,6 +619,3 @@ Every time a new input line starts, Clink reloads the master history list and pr
 For performance reasons, deleting a history line marks the line as deleted without rewriting the history file.  When the number of deleted lines gets too large (exceeding the max lines or 200, which is larger) then the history file is compacted:  the file is rewritten with the deleted lines removed.
 
 When the `history.shared` setting is enabled, then all instances of Clink update the master history file and reload it every time a new input line starts.  This gives the effect that all instances of Clink share the same history -- a command entered in one instance will appear in other instances' history the next time they start an input line.  When the setting is disabled, then each instance of Clink loads the master file but doesn't append its own history back to the master file until after it exits, giving the effect that once an instance starts its history is isolated from other instances' history.
-
-<!-- vim: wrap nolist ft=markdown
--->

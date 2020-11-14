@@ -112,12 +112,10 @@ kbd {
 }
 
 .section {
-    margin-top: 2rem;
-    margin-bottom: 4rem;
 }
 
 .deprecated {
-    opacity: 0.6;
+    opacity: 0.5;
 }
 
 .comment-web-link {
