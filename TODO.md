@@ -23,7 +23,7 @@ ChrisAnt Plans
 - If the last line of the prompt is "too long" then `rl_message()` in **Alt+P** fails to draw the adjusted prompt correctly; the old prompt continues to be drawn.
   - The cutoff is 136 characters -- less and the message shows up, or more and no message.
   - And using **Ctrl+R** and then aborting redraws the prompt using the wrong screen buffer width / wrapping position!
-- Iteratively complete multiple directory levels by `b`**Tab**,**End**,**Tab**,**End**,**Tab** => after a few it completes the wrong thing!
+- Iteratively complete multiple directory levels by `b`**Tab**,**End**,**Tab**,**End**,**Tab** => after a few it completes the wrong thing!  Seems related to exec.lua.
 
 <br/>
 <br/>
