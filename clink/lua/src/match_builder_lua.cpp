@@ -13,9 +13,10 @@ static match_builder_lua::method g_methods[] = {
     { "addmatch",           &match_builder_lua::add_match },
     { "addmatches",         &match_builder_lua::add_matches },
     { "setappendcharacter", &match_builder_lua::set_append_character },
-    { "setprefixincluded",  &match_builder_lua::set_prefix_included },
     { "setsuppressappend",  &match_builder_lua::set_suppress_append },
     { "setsuppressquoting", &match_builder_lua::set_suppress_quoting },
+    // Only for backward compatibility:
+    { "setmatchesarefiles", &match_builder_lua::set_matches_are_files },
     {}
 };
 
@@ -99,29 +100,6 @@ int match_builder_lua::set_append_character(lua_State* state)
 }
 
 //------------------------------------------------------------------------------
-/// -name:  builder:setprefixincluded
-/// -arg:   [value:boolean|integer]
-/// -show:  builder:setprefixincluded()     -- the whole word "foobar" is included
-/// -show:  builder:setprefixincluded(-3)   -- from the word "foobar" only "bar" is included
-/// -show:  builder:setprefixincluded(-1)   -- from the word "x%user" only "%user" is included
-/// If <em>value</em> is boolean, this sets whether the prefix from the match
-/// generator should be included as part of the matches.  If <em>value</em> is a
-/// negative integer, the prefix from the match generator minus the first
-/// <em>value</em> characters is included as part of the matches.  For example
-/// the env var match generator uses this to only include from the "%" onward as
-/// part of the matches.
-int match_builder_lua::set_prefix_included(lua_State* state)
-{
-    if (lua_gettop(state) <= 0)
-        m_builder.set_prefix_included(true);
-    else if (lua_isboolean(state, 1))
-        m_builder.set_prefix_included(lua_toboolean(state, 1) != 0);
-    else
-        m_builder.set_prefix_included(int(lua_tointeger(state, 1)));
-    return 0;
-}
-
-//------------------------------------------------------------------------------
 /// -name:  builder:setsuppressappend
 /// -arg:   [state:boolean]
 /// Sets whether to suppress appending anything after the match except a
@@ -156,6 +134,20 @@ int match_builder_lua::set_suppress_quoting(lua_State* state)
 
     m_builder.set_suppress_quoting(suppress);
 
+    return 0;
+}
+
+//------------------------------------------------------------------------------
+// Undocumented because it exists only to enable the clink.matches_are_files
+// backward compatibility.
+int match_builder_lua::set_matches_are_files(lua_State* state)
+{
+    if (lua_gettop(state) <= 0)
+        m_builder.set_matches_are_files(true);
+    else if (lua_isboolean(state, 1))
+        m_builder.set_matches_are_files(lua_toboolean(state, 1) != 0);
+    else
+        m_builder.set_matches_are_files(int(lua_tointeger(state, 1)));
     return 0;
 }
 

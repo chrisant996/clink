@@ -110,22 +110,6 @@ static int to_lowercase(lua_State* state)
 }
 
 //------------------------------------------------------------------------------
-#if 0
-static int matches_are_files(lua_State* state)
-{
-    int i = 1;
-
-    if (lua_gettop(state) > 0)
-        i = (int)lua_tointeger(state, 1);
-
-#if MODE4
-    rl_filename_completion_desired = i;
-#endif
-    return 0;
-}
-#endif
-
-//------------------------------------------------------------------------------
 static int get_setting_str(lua_State* state)
 {
     return get_clink_setting(state);
@@ -222,9 +206,6 @@ void clink_lua_initialise(lua_state& lua)
         { "is_dir",                 &is_dir },
         { "is_rl_variable_true",    &is_rl_variable_true },
         { "lower",                  &to_lowercase },
-#if 0
-        { "matches_are_files",      &matches_are_files },
-#endif
     };
 
     lua_State* state = lua.get_state();

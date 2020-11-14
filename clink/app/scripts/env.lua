@@ -11,6 +11,7 @@ local special_env_vars = {
 local envvar_generator = clink.generator(10)
 
 function envvar_generator:generate(line_state, match_builder)
+    -- Does the word end with a percent sign?
     local word = line_state:getendword()
     if word:sub(-1) ~= "%" then
         return false
@@ -22,34 +23,37 @@ function envvar_generator:generate(line_state, match_builder)
         end
     end
 
+    -- Add env vars as matches.
     add_matches(os.getenvnames())
     add_matches(special_env_vars)
 
-    local amount = string.len(line_state:getendword())
-    if amount > 1 then
-        amount = 1 - amount
-        match_builder:setprefixincluded(amount)
-    else
-        match_builder:setprefixincluded()
-    end
-    match_builder:setsuppressappend()
-    match_builder:setsuppressquoting()
+    match_builder:setsuppressappend()   -- Don't append a space character.
+    match_builder:setsuppressquoting()  -- Don't quote envvars.
     return true
 end
 
 --------------------------------------------------------------------------------
-function envvar_generator:getprefixlength(line_state)
+function envvar_generator:getwordbreakinfo(line_state)
     local word = line_state:getendword()
     local in_out = false
-    local index
+    local index = nil
+
+    -- Paired percent signs denote already-completed environment variables.
+    -- So use envvar completion for abc%foo%def%USER but not for abc%foo%USER.
     for i = 1, #word do
         if word:sub(i, i) == "%" then
             in_out = not in_out
-            index = i
+            if in_out then
+                index = i - 1
+            else
+                index = i
+            end
         end
     end
 
-    if in_out then
-        return index
+    -- If there were any percent signs, return word break info to influence the
+    -- match generators.
+    if index then
+        return index, (in_out and 1) or 0
     end
 end

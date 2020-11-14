@@ -631,6 +631,8 @@ extern rl_history_hook_func_t *rl_remove_history_hook;
 extern int rl_backslash_path_sep;
 /* Preferred path separator, used by filename completion. */
 extern char rl_preferred_path_separator;
+/* Function to call for post-processing of _rl_find_completion_word. */
+extern rl_adjcmpwrd_func_t *rl_adjust_completion_word;
 /* Completion functions can set this to signal that the first char of each
    match is bit flags about the match type. */
 #define MATCH_TYPE_NONE			1

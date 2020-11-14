@@ -118,18 +118,6 @@ void match_builder::set_append_character(char append)
 }
 
 //------------------------------------------------------------------------------
-void match_builder::set_prefix_included(bool included)
-{
-    return ((matches_impl&)m_matches).set_prefix_included(included);
-}
-
-//------------------------------------------------------------------------------
-void match_builder::set_prefix_included(int amount)
-{
-    return ((matches_impl&)m_matches).set_prefix_included(amount);
-}
-
-//------------------------------------------------------------------------------
 void match_builder::set_suppress_append(bool suppress)
 {
     return ((matches_impl&)m_matches).set_suppress_append(suppress);
@@ -139,6 +127,12 @@ void match_builder::set_suppress_append(bool suppress)
 void match_builder::set_suppress_quoting(int suppress)
 {
     return ((matches_impl&)m_matches).set_suppress_quoting(suppress);
+}
+
+//------------------------------------------------------------------------------
+void match_builder::set_matches_are_files(bool files)
+{
+    return ((matches_impl&)m_matches).set_matches_are_files(files);
 }
 
 
@@ -248,6 +242,8 @@ void matches_impl::store_impl::free_chain(bool keep_one)
 //------------------------------------------------------------------------------
 matches_impl::matches_impl(unsigned int store_size)
 : m_store(min(store_size, 0x10000u))
+, m_filename_completion_desired(false)
+, m_filename_display_desired(false)
 {
     m_infos.reserve(1024);
 }
@@ -261,7 +257,7 @@ unsigned int matches_impl::get_info_count() const
 //------------------------------------------------------------------------------
 match_info* matches_impl::get_infos()
 {
-    return &(m_infos[0]);
+    return m_infos.size() ? &(m_infos[0]) : nullptr;
 }
 
 //------------------------------------------------------------------------------
@@ -295,15 +291,15 @@ bool matches_impl::is_suppress_append() const
 }
 
 //------------------------------------------------------------------------------
-bool matches_impl::is_prefix_included() const
+shadow_bool matches_impl::is_filename_completion_desired() const
 {
-    return m_prefix_included;
+    return m_filename_completion_desired;
 }
 
 //------------------------------------------------------------------------------
-int matches_impl::get_prefix_excluded() const
+bool matches_impl::is_filename_display_desired() const
 {
-    return m_prefix_excluded;
+    return m_filename_completion_desired || m_filename_display_desired;
 }
 
 //------------------------------------------------------------------------------
@@ -319,36 +315,29 @@ int matches_impl::get_suppress_quoting() const
 }
 
 //------------------------------------------------------------------------------
+int matches_impl::get_word_break_adjustment() const
+{
+    return m_word_break_adjustment;
+}
+
+//------------------------------------------------------------------------------
 void matches_impl::reset()
 {
     m_store.reset();
     m_infos.clear();
     m_coalesced = false;
     m_count = 0;
-    m_prefix_included = false;
-    m_prefix_excluded = 0;
     m_suppress_append = false;
     m_suppress_quoting = 0;
+    m_word_break_adjustment = 0;
+    m_filename_completion_desired.reset();
+    m_filename_display_desired.reset();
 }
 
 //------------------------------------------------------------------------------
 void matches_impl::set_append_character(char append)
 {
     m_append_character = append;
-}
-
-//------------------------------------------------------------------------------
-void matches_impl::set_prefix_included(bool included)
-{
-    m_prefix_included = included;
-    m_prefix_excluded = 0;
-}
-
-//------------------------------------------------------------------------------
-void matches_impl::set_prefix_included(int amount)
-{
-    m_prefix_included = amount < 0;
-    m_prefix_excluded = 0 - amount;
 }
 
 //------------------------------------------------------------------------------
@@ -361,6 +350,19 @@ void matches_impl::set_suppress_append(bool suppress)
 void matches_impl::set_suppress_quoting(int suppress)
 {
     m_suppress_quoting = suppress;
+}
+
+//------------------------------------------------------------------------------
+void matches_impl::set_word_break_adjustment(int adjustment)
+{
+    m_word_break_adjustment = adjustment;
+}
+
+//------------------------------------------------------------------------------
+void matches_impl::set_matches_are_files(bool files)
+{
+    m_filename_completion_desired.set_explicit(files);
+    m_filename_display_desired.set_explicit(files);
 }
 
 //------------------------------------------------------------------------------
@@ -391,13 +393,21 @@ bool matches_impl::add_match(const match_desc& desc)
 //------------------------------------------------------------------------------
 void matches_impl::coalesce(unsigned int count_hint)
 {
-    match_info* infos = &(m_infos[0]);
+    match_info* infos = get_infos();
+
+    bool any_pathish = false;
+    bool all_pathish = true;
 
     unsigned int j = 0;
     for (int i = 0, n = int(m_infos.size()); i < n && j < count_hint; ++i)
     {
         if (!infos[i].select)
             continue;
+
+        if (is_pathish(infos[i].type))
+            any_pathish = true;
+        else
+            all_pathish = false;
 
         if (i != j)
         {
@@ -407,6 +417,9 @@ void matches_impl::coalesce(unsigned int count_hint)
         }
         ++j;
     }
+
+    m_filename_completion_desired.set_implicit(any_pathish);
+    m_filename_display_desired.set_implicit(any_pathish && all_pathish);
 
     m_count = j;
     m_coalesced = true;

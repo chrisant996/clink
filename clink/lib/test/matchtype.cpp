@@ -27,8 +27,8 @@ static const char script[] =
 "}\n"
 "\n"
 "local available_dir = {\n"
-"    { match = 'bark', type = 'file' },\n"
-"    { match = 'boxy', type = 'file' },\n"
+"    { match = 'dir\\\\bark', type = 'file' },\n"
+"    { match = 'dir\\\\boxy', type = 'file' },\n"
 "}\n"
 "\n"
 "function string.starts(str, start)\n"
@@ -38,7 +38,6 @@ static const char script[] =
 "function my_generator:generate(line_state, match_builder)\n"
 "    local ret = false\n"
 "    local matches = nil\n"
-"    local prefixincluded = false\n"
 "\n"
 "    if line_state:getword(1) == 'plugh' then\n"
 "        if line_state:getwordcount() == 2 then\n"
@@ -52,7 +51,6 @@ static const char script[] =
 "            end\n"
 "        end\n"
 "    elseif line_state:getword(1) == 'xyzzy' then\n"
-"        prefixincluded = true\n"
 "        if line_state:getwordcount() == 2 then\n"
 "            -- First match non-pathish discards all pathish matches.\n"
 "            match_builder:addmatch('f', 'word')\n"
@@ -66,10 +64,6 @@ static const char script[] =
 "            --print(v.match..' ('..(v.type or 'none')..')')\n"
 "            match_builder:addmatch(v)\n"
 "            ret = true\n"
-"        end\n"
-"\n"
-"        if ret then\n"
-"            match_builder:setprefixincluded(prefixincluded)\n"
 "        end\n"
 "    end\n"
 "\n"
@@ -140,7 +134,7 @@ TEST_CASE("Match type : slash")
     SECTION("pathish matches")
     {
         tester.set_input("plugh dir\\");
-        tester.set_expected_matches("bark", "boxy");
+        tester.set_expected_matches("dir\\bark", "dir\\boxy");
         tester.run();
     }
 
@@ -154,7 +148,7 @@ TEST_CASE("Match type : slash")
     SECTION("pathish readline")
     {
         tester.set_input("plugh dir/\x1b*");
-        tester.set_expected_output("plugh dir/bark dir/boxy ");
+        tester.set_expected_output("plugh dir\\bark dir\\boxy ");
         tester.run();
     }
 
@@ -182,7 +176,7 @@ TEST_CASE("Match type : compound")
     SECTION("pathish matches")
     {
         tester.set_input("plugh dir/ba");
-        tester.set_expected_matches("bark");
+        tester.set_expected_matches("dir\\bark");
         tester.run();
     }
 

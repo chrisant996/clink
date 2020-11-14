@@ -297,21 +297,21 @@ bool append(str_base& out, const char* rhs)
     if (is_rooted(rhs))
         return out.copy(rhs);
 
-    bool add_seperator = true;
+    bool add_separator = true;
 
     int last = int(out.length() - 1);
     if (last >= 0)
     {
-        add_seperator &= !is_separator(out[last]);
+        add_separator &= !is_separator(out[last]);
 
 #if defined(PLATFORM_WINDOWS)
-        add_seperator &= !(isalpha((unsigned char)out[0]) && out[1] == ':' && out[2] == '\0');
+        add_separator &= !(isalpha((unsigned char)out[0]) && out[1] == ':' && out[2] == '\0');
 #endif
     }
     else
-        add_seperator = false;
+        add_separator = false;
 
-    if (add_seperator && !is_separator(rhs[0]))
+    if (add_separator && !is_separator(rhs[0]))
         out << PATH_SEP;
 
     return out.concat(rhs);

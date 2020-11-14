@@ -47,9 +47,7 @@ void test_editor::start(const char* prompt)
 {
     m_terminal = terminal_create();
 
-    line_editor::desc desc = {};
-    desc.input = m_terminal.in;
-    desc.output = m_terminal.out;
+    line_editor::desc desc(m_terminal.in, m_terminal.out, nullptr);
     desc.prompt = prompt;
     m_editor = line_editor_create(desc);
 

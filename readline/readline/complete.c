@@ -322,6 +322,12 @@ const char *rl_basic_quote_characters = "\"'";
    position-dependent word break characters. */
 rl_cpvfunc_t *rl_completion_word_break_hook = (rl_cpvfunc_t *)NULL;
 
+/* begin_clink_change */
+/* Hook function to allow an application to adjust the found completion
+   word before readline tries to complete it. */
+rl_adjcmpwrd_func_t *rl_adjust_completion_word = (rl_adjcmpwrd_func_t *)NULL;
+/* end_clink_change */
+
 /* List of characters which can be used to quote a substring of the line.
    Completion occurs on the entire substring, and within the substring
    rl_completer_word_break_characters are treated as any other character,
@@ -1087,6 +1093,7 @@ print_filename (char *to_print, char *full_pathname, int prefix_bytes)
 
 /* begin_clink_change */
   unsigned char match_type = (rl_completion_matches_include_type ? full_pathname[0] : 0);
+  int filename_display_desired = rl_filename_display_desired || IS_MATCH_TYPE_DIR (match_type);
   if (rl_completion_matches_include_type)
     full_pathname++;
 /* end_clink_change */
@@ -1096,7 +1103,7 @@ print_filename (char *to_print, char *full_pathname, int prefix_bytes)
   /* Defer printing if we want to prefix with a color indicator */
 /* begin_clink_change */
   //if (_rl_colored_stats == 0 || rl_filename_completion_desired == 0)
-  if (_rl_colored_stats == 0 || rl_filename_display_desired == 0)
+  if (_rl_colored_stats == 0 || filename_display_desired == 0)
 /* end_clink_change */
 #endif
 /* begin_clink_change */
@@ -1106,7 +1113,7 @@ print_filename (char *to_print, char *full_pathname, int prefix_bytes)
 
 /* begin_clink_change */
   //if (rl_filename_completion_desired && (
-  if (rl_filename_display_desired && (
+  if (filename_display_desired && (
 /* end_clink_change */
 #if defined (VISIBLE_STATS)
      rl_visible_stats ||
@@ -1248,11 +1255,11 @@ print_filename (char *to_print, char *full_pathname, int prefix_bytes)
 /* begin_clink_change */
 #if defined (COLOR_SUPPORT)
 	  if (extension_char == rl_preferred_path_separator)
-      {
+	    {
 	      s = tilde_expand (full_pathname);
-        colored_stat_start (s, match_type);
-        xfree (s);
-      }
+	      colored_stat_start (s, match_type);
+	      xfree (s);
+	    }
 #endif
 /* end_clink_change */
 	  putc (extension_char, rl_outstream);
@@ -1442,6 +1449,9 @@ _rl_find_completion_word (int *fp, int *dp)
 	    rl_point++;
 	}
     }
+
+  if (rl_adjust_completion_word)
+    quote_char = rl_adjust_completion_word(quote_char, &found_quote, &delimiter);
 
   if (fp)
     *fp = found_quote;
@@ -2206,12 +2216,7 @@ display_matches (char **matches)
       if (rl_completion_matches_include_type)
 	{
 	  vis_stat = -1;
-/* begin_clink_change */
-	  //if (rl_filename_completion_desired &&
-	  if (rl_filename_display_desired &&
-/* end_clink_change */
-	      rl_completion_matches_include_type &&
-	      IS_MATCH_TYPE_DIR (matches[i][0]) && (
+	  if (IS_MATCH_TYPE_DIR (matches[i][0]) && (
 #if defined (VISIBLE_STATS)
 	      rl_visible_stats ||
 #endif
@@ -2224,7 +2229,7 @@ display_matches (char **matches)
 	      vis_stat = (!sep || sep[1]);
 	    }
 #if defined (VISIBLE_STATS)
-	  else if (rl_visible_stats)
+	  else if (rl_visible_stats && rl_filename_display_desired)
 	    vis_stat = stat_char (matches[i] + 1, matches[i][0]);
 #endif
 	  if (vis_stat > 0)

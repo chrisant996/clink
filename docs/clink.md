@@ -354,11 +354,6 @@ function git_branch_autocomplete:generate(line_state, match_builder)
         match_builder:addmatch(branch)
         matchCount = matchCount + 1
     end
-    if matchCount > 0 then
-        -- Branch names have slashes, so include the prefix to make sure they
-        -- don't accidentally get treated like path names.
-        match_builder:setprefixincluded(true)
-    end
     return matchCount > 0 -- If we found branches, then stop other match generators.
 end
 ```
@@ -368,11 +363,13 @@ end
 > **Compatibility Note:**
 > The `clink.match_display_filter` callback function has been removed.  It had too many problematic or confusing edge conditions, and it isn't compatible with Readline's match display behavior.
 
-### The :getprefixlength() Function
+### The :getwordbreakinfo() Function
 
-Some match generators may want to generate matches for only part of the word.  If a generator defines a `:getprefixlength()` function, it can control how much of the word
+A generator can influence work breaking for the end word by defining a `:getwordbreakinfo()` function.  The function takes a `line_state` <a href="#line">line</a> object that has information about the current line.  If it returns nil or 0, the end word is truncated to 0 length.  This is the normal behavior, which allows Clink to collect and cache all matches and then filter them based on typing.  Or it can return two numbers:  word break length and an optional end word length.  The end word is split at the word break length:  one word contains the first word break length characters from the end word (if 0 length then it's discarded), and the next word contains the rest of the end word truncated to the optional word length (0 if omitted).
 
-For example, when the environment variable match generator sees the word being completed is `text%USER` it calls "text" a prefix and generates matches to be appended to the prefix, so that the final result can be `text%USERNAME%`.
+For example, when the environment variable match generator sees the end word is `abc%USER` it returns `3,1` so that the last two words become "abc" and "%" so that its generator knows it can do environment variable matching.  But when it sees `abc%FOO%def` it returns `8,0` so that the last two words become "abc%FOO%" and "" so that its generator won't do environment variable matching, and also so other generators can produce matches for what follows, since "%FOO%" is an already-completed environment variable and therefore should behave like a word break.  In other words, it breaks the end word differently depending on whether the number of percent signs is odd or even, to account for environent variable syntax rules.
+
+And when an argmatcher sees the end word begins with a flag character it returns `0,1` so the end word contains only the flag character in order to switch from argument matching to flag matching.
 
 ```lua
 local envvar_generator = clink.generator(10)
@@ -389,49 +386,36 @@ function envvar_generator:generate(line_state, match_builder)
         match_builder:addmatch("%"..i.."%", "word")
     end
 
-    -- We want % to be the prefix, but the word might have text before it also.
-    local amount = string.len(line_state:getendword())
-    if amount > 1 then
-        -- The end word has text before the %, so set the prefix to a negative amount
-        -- to indicate how much of the word to NOT consider part of the prefix.
-        -- For "text%" we want a prefix included, but we want only "%" to be the
-        -- prefix.  That's the word minus the first 4 characters, so amount is -4.
-        amount = 1 - amount
-        match_builder:<a href="#builder:setprefixincluded">setprefixincluded</a>(amount)
-    else
-        -- The end word is just %, so call the whole thing the prefix to be included
-        -- with the match.
-        match_builder:setprefixincluded()
-    end
-
     match_builder:setsuppressappend()   -- Don't append a space character.
+    match_builder:setsuppressquoting()  -- Don't quote envvars.
     return true
 end
 
-function envvar_generator:getprefixlength(line_state)
+function envvar_generator:getwordbreakinfo(line_state)
     local word = line_state:getendword()
     local in_out = false
-    local index
+    local index = nil
 
-    -- Environment variables are between two percent signs.
-    -- So complete abc%foo%def%USER but do not complete abc%foo%USER.
+    -- Paired percent signs denote already-completed environment variables.
+    -- So use envvar completion for abc%foo%def%USER but not for abc%foo%USER.
     for i = 1, #word do
         if word:sub(i, i) == "%" then
             in_out = not in_out
-            index = i
+            if in_out then
+                index = i - 1
+            else
+                index = i
+            end
         end
     end
 
-    -- If there's an unclosed percent sign, return its position as the prefix length.
-    if in_out then
-        return index
+    -- If there were any percent signs, return word break info to influence the
+    -- match generators.
+    if index then
+        return index, (in_out and 1) or 0
     end
 end
 ```
-
-<fieldset><legend>TODO</legend>
-    Need to document the generator:getprefixlength() function.
-</fieldset>
 
 <a name="argumentcompletion">
 

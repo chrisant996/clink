@@ -6,20 +6,11 @@ clink = clink or {}
 local _generators = {}
 local _generators_unsorted = false
 
-
-
 --------------------------------------------------------------------------------
-local function pcall_dispatch(func, ...)
-    local ok, ret = xpcall(func, _error_handler_ret, ...)
-    if not ok then
-        print("")
-        print("match generator failed:")
-        print(ret)
-        return
-    end
+-- Deprecated.
+local _current_builder = nil
 
-    return ret
-end
+
 
 --------------------------------------------------------------------------------
 local function prepare()
@@ -46,27 +37,51 @@ function clink._generate(line_state, match_builder)
     end
 
     prepare()
-    local ret = pcall_dispatch(impl)
+    _current_builder = match_builder
+
+    local ok, ret = xpcall(impl, _error_handler_ret)
+    if not ok then
+        print("")
+        print("match generator failed:")
+        print(ret)
+        return
+    end
+
+    _current_builder = nil
     return ret or false
 end
 
 --------------------------------------------------------------------------------
-function clink._get_prefix_length(line_state)
+function clink._get_word_break_info(line_state)
     local impl = function ()
-        local ret = 0
+        local truncate = 0
+        local keep = 0
         for _, generator in ipairs(_generators) do
-            if generator.getprefixlength then
-                local i = generator:getprefixlength(line_state) or 0
-                if i > ret then ret = i end
+            if generator.getwordbreakinfo then
+                local t, k = generator:getwordbreakinfo(line_state)
+                t = t or 0
+                k = k or 0
+                if (t > truncate) or (t == truncate and k > keep) then
+                    truncate = t
+                    keep = k
+                end
             end
         end
 
-        return ret
+        return truncate, keep
     end
 
     prepare()
-    local ret = pcall_dispatch(impl)
-    return ret or 0
+
+    local ok, ret1, ret2 = xpcall(impl, _error_handler_ret)
+    if not ok then
+        print("")
+        print("getting word break info failed:")
+        print(ret1)
+        return
+    end
+
+    return ret1, ret2
 end
 
 --------------------------------------------------------------------------------
@@ -89,12 +104,6 @@ function clink.generator(priority)
 end
 
 --------------------------------------------------------------------------------
--- Deprecated.
-local _current_builder = nil
-local _any_added = false
-local _any_pathish = false
-
---------------------------------------------------------------------------------
 --- -name:  clink.add_match
 --- -arg:   match:string
 --- -ret:   nil
@@ -104,10 +113,6 @@ local _any_pathish = false
 function clink.add_match(match)
     if _current_builder then
         _current_builder:addmatch(match)
-        _any_added = true
-        if match:find("\\") then
-            _any_pathish = true
-        end
     end
 end
 
@@ -120,6 +125,19 @@ end
 --- This is no longer needed, and simply returns true now.
 function clink.is_match(needle, candidate)
     return true
+end
+
+--------------------------------------------------------------------------------
+--- -name:  clink.matches_are_files
+--- -arg:   files:boolean
+--- -deprecated: builder:addmatch
+--- This is no longer needed, because now it's inferred from the match type when
+--- adding matches.
+function clink.matches_are_files(files)
+    if _current_builder then
+        if files == nil then files = true end
+        _current_builder:setmatchesarefiles((files and true) or false)
+    end
 end
 
 --------------------------------------------------------------------------------
@@ -162,27 +180,12 @@ end
 function clink.register_match_generator(func, priority)
     local g = clink.generator(priority)
     function g:generate(line_state, match_builder)
-        _current_builder = match_builder
-
         local text = line_state:getendword()
         local info = line_state:getwordinfo(line_state:getwordcount())
         local first = info.offset
         local last = first + info.length - 1
         -- // TODO: adjust_for_separator()?
 
-        _any_added = false;
-        _any_pathish = false;
-
-        local handled = func(text, first, last)
-
-        -- Ugh; git_autocomplete_branch.lua needs setprefixincluded(true) if
-        -- func added otherwise branch name completion gets stuck at path
-        -- separators.  This attempts to be as backwardly compatible as we can.
-        if _any_added and not _any_pathish then
-            match_builder:setprefixincluded(true)
-        end
-
-        _current_builder = nil
-        return handled
+        return func(text, first, last)
     end
 end

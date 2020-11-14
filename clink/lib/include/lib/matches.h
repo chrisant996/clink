@@ -32,6 +32,30 @@ inline bool is_pathish(match_type type)
 
 
 //------------------------------------------------------------------------------
+class shadow_bool
+{
+public:
+                            shadow_bool(bool default_value) : m_default(default_value) { reset(); }
+
+    operator                bool() const { return get(); }
+    bool                    operator=(bool) = delete;
+
+    void                    reset() { m_has_explicit = false; m_explicit = false; m_implicit = m_default; }
+    void                    set_explicit(bool value) { m_explicit = value; m_has_explicit = true; }
+    void                    set_implicit(bool value) { m_implicit = value; }
+    bool                    get() const { return m_has_explicit ? m_explicit : m_implicit; }
+    bool                    is_explicit() const { return m_has_explicit; }
+
+private:
+    bool                    m_has_explicit : 1;
+    bool                    m_explicit : 1;
+    bool                    m_implicit : 1;
+    bool                    m_default : 1;
+};
+
+
+
+//------------------------------------------------------------------------------
 class matches
 {
 public:
@@ -39,10 +63,11 @@ public:
     virtual const char*     get_match(unsigned int index) const = 0;
     virtual match_type      get_match_type(unsigned int index) const = 0;
     virtual bool            is_suppress_append() const = 0;
-    virtual bool            is_prefix_included() const = 0;
-    virtual int             get_prefix_excluded() const = 0;
+    virtual shadow_bool     is_filename_completion_desired() const = 0;
+    virtual bool            is_filename_display_desired() const = 0;
     virtual char            get_append_character() const = 0;
     virtual int             get_suppress_quoting() const = 0;
+    virtual int             get_word_break_adjustment() const = 0;
 };
 
 
@@ -66,10 +91,10 @@ public:
     bool                    add_match(const char* match, match_type type);
     bool                    add_match(const match_desc& desc);
     void                    set_append_character(char append);
-    void                    set_prefix_included(bool included=true);
-    void                    set_prefix_included(int amount);
     void                    set_suppress_append(bool suppress=true);
     void                    set_suppress_quoting(int suppress=1); //0=no, 1=yes, 2=suppress end quote
+
+    void                    set_matches_are_files(bool files=true);
 
 private:
     matches&                m_matches;

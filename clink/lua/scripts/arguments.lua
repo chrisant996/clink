@@ -268,7 +268,7 @@ end
 
 --------------------------------------------------------------------------------
 local function add_prefix(prefixes, string)
-    if prefixes then
+    if prefixes and string then
         local prefix = string:sub(1, 1)
         if prefix:len() > 0 then
             prefixes[prefix] = (prefixes[prefix] or 0) + 1
@@ -350,9 +350,8 @@ function _argmatcher:_generate(line_state, match_builder)
     end
 
     -- Select between adding flags or matches themselves. Works in conjunction
-    -- with getprefixlength()'s return.
+    -- with getwordbreakinfo()'s return.
     if matcher._flags and matcher:_is_flag(line_state:getendword()) then
-        match_builder:setprefixincluded()
         add_matches(matcher._flags._args[1])
     else
         local arg = matcher._args[arg_index]
@@ -499,11 +498,11 @@ function argmatcher_generator:generate(line_state, match_builder)
 end
 
 --------------------------------------------------------------------------------
-function argmatcher_generator:getprefixlength(line_state)
+function argmatcher_generator:getwordbreakinfo(line_state)
     local argmatcher = _find_argmatcher(line_state)
     local word = line_state:getendword()
     if argmatcher and argmatcher._flags and argmatcher:_is_flag(word) then
-        return 1
+        return 0, 1
     end
 
     return 0

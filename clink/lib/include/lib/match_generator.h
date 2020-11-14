@@ -7,11 +7,21 @@ class line_state;
 class match_builder;
 
 //------------------------------------------------------------------------------
+struct word_break_info
+{
+                    word_break_info() { clear(); }
+    void            clear() { truncate = 0; keep = 0; }
+
+    int             truncate : 16;
+    int             keep : 16;
+};
+
+//------------------------------------------------------------------------------
 class match_generator
 {
 public:
     virtual bool    generate(const line_state& line, match_builder& builder) = 0;
-    virtual int     get_prefix_length(const line_state& line) const = 0;
+    virtual void    get_word_break_info(const line_state& line, word_break_info& info) const = 0;
 
 private:
 };

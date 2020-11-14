@@ -111,9 +111,6 @@ line_editor_impl::line_editor_impl(const desc& desc)
 , m_printer(*desc.printer)
 , m_pager(*this)
 {
-    if (m_desc.quote_pair == nullptr)
-        m_desc.quote_pair = "";
-
     add_module(m_module);
     add_module(m_pager);
 
@@ -457,7 +454,7 @@ void line_editor_impl::find_command_bounds(const char*& start, int& length)
 
     str_iter token_iter(start, length);
     str_tokeniser tokens(token_iter, m_desc.command_delims);
-    tokens.add_quote_pair(m_desc.quote_pair);
+    tokens.add_quote_pair(m_desc.get_quote_pair());
     while (tokens.next(start, length));
 
     // We should expect to reach the cursor. If not then there's a trailing
@@ -485,7 +482,7 @@ void line_editor_impl::collect_words()
 
     str_iter token_iter(command_start, command_length);
     str_tokeniser tokens(token_iter, m_desc.word_delims);
-    tokens.add_quote_pair(m_desc.quote_pair);
+    tokens.add_quote_pair(m_desc.get_quote_pair());
     while (1)
     {
         int length = 0;
@@ -516,28 +513,53 @@ void line_editor_impl::collect_words()
 
         const char* start = line_buffer + word.offset;
 
-        int start_quoted = (start[0] == m_desc.quote_pair[0]);
+        int start_quoted = (start[0] == m_desc.get_quote_pair()[0]);
         int end_quoted = 0;
         if (word.length > 1)
-            end_quoted = (start[word.length - 1] == get_closing_quote(m_desc.quote_pair));
+            end_quoted = (start[word.length - 1] == get_closing_quote(m_desc.get_quote_pair()));
 
         word.offset += start_quoted;
         word.length -= start_quoted + end_quoted;
         word.quoted = !!start_quoted;
     }
 
-    // The last word is truncated to the longest length returned by the match
-    // generators. This is a little clunky but works well enough.
+    // The last word can be split by the match generators, to influence word
+    // breaks. This is a little clunky but works well enough.
     line_state line = get_linestate();
     end_word = m_words.back();
-    int prefix_length = 0;
-    const char* word_start = line_buffer + end_word->offset;
-    for (const auto* generator : m_generators)
+    if (end_word->length)
     {
-        int i = generator->get_prefix_length(line);
-        prefix_length = max(prefix_length, i);
+        word_break_info break_info = {};
+        const char *word_start = line_buffer + end_word->offset;
+        for (const auto *generator : m_generators)
+        {
+            word_break_info tmp;
+            generator->get_word_break_info(line, tmp);
+            if ((tmp.truncate > break_info.truncate) ||
+                (tmp.truncate == break_info.truncate && tmp.keep > break_info.keep))
+                break_info = tmp;
+        }
+        if (break_info.truncate)
+        {
+            int truncate = min<unsigned int>(break_info.truncate, end_word->length);
+
+            word split_word;
+            split_word.offset = end_word->offset + truncate;
+            split_word.length = end_word->length - truncate;
+            split_word.quoted = false;
+            split_word.delim = str_token::invalid_delim;
+
+            end_word->length = truncate;
+            end_word = m_words.push_back();
+            *end_word = split_word;
+        }
+
+        int keep = min<unsigned int>(break_info.keep, end_word->length);
+        end_word->length = keep;
+
+        // Need to coordinate with Readline when we redefine word breaks.
+        m_matches.set_word_break_adjustment(break_info.truncate);
     }
-    end_word->length = min<unsigned int>(prefix_length, end_word->length);
 }
 
 //------------------------------------------------------------------------------
@@ -607,6 +629,20 @@ void line_editor_impl::update_internal()
         match_pipeline pipeline(m_matches);
         pipeline.reset();
         pipeline.generate(line, m_generators);
+#if 0
+        printf("GENMATCHES, file_comp %u %s --%s",
+               m_matches.is_filename_completion_desired.get(),
+               m_matches.is_filename_completion_desired().is_explicit() ? "(exp)" : "(imp)",
+               m_matches.get_match_count() ? "" : " <none>");
+        for (int i = 0; i < min<unsigned int>(m_matches.get_match_count(), 21); i++)
+        {
+            if (i == 20)
+                printf(" ...");
+            else
+                printf(" %s", m_matches.get_match(i));
+        }
+        printf("\n");
+#endif
     }
 
     next_key.cursor_pos = m_buffer.get_cursor();
@@ -617,24 +653,27 @@ void line_editor_impl::update_internal()
     {
         str<64> needle;
         int needle_start = end_word.offset;
-        if (!m_matches.is_prefix_included())
-            needle_start += end_word.length;
-        else
-            needle_start += m_matches.get_prefix_excluded();
-
         const char* buf_ptr = m_buffer.get_buffer();
         needle.concat(buf_ptr + needle_start, next_key.cursor_pos - needle_start);
 
         if (!needle.empty() && end_word.quoted)
         {
             int i = needle.length();
-            if (needle[i - 1] == get_closing_quote(m_desc.quote_pair))
+            if (needle[i - 1] == get_closing_quote(m_desc.get_quote_pair()))
                 needle.truncate(i - 1);
         }
 
         match_pipeline pipeline(m_matches);
         pipeline.select(needle.c_str());
         pipeline.sort();
+#if 0
+        printf("COALESCED, file_comp %u %s -- needle '%s' selected %u of %u matches\n",
+               m_matches.is_filename_completion_desired().get(),
+               m_matches.is_filename_completion_desired().is_explicit() ? "(exp)" : "(imp)",
+               needle.c_str(),
+               m_matches.get_match_count(),
+               m_matches.get_info_count());
+#endif
 
         m_prev_key = next_key.value;
 

@@ -257,6 +257,48 @@ static int complete_fncmp(const char *convfn, int convlen, const char *filename,
 }
 
 //------------------------------------------------------------------------------
+static char adjust_completion_word(char quote_char, int *found_quote, int *delimiter)
+{
+    if (s_matches)
+    {
+        // When the point immediately follows a closed quoted substring, move to
+        // the beginning of the closed quoted substring.  Otherwise Readline
+        // completes `"abc def"#` to `"abc def"abc def" #`.
+        //
+        // This goes before handling get_word_break_adjustment() because Clink
+        // told the match generators the last word was this quoted substring, so
+        // this brings Readline and Clink into alignment.
+        if (*found_quote == RL_QF_DOUBLE_QUOTE && !*delimiter && !quote_char && rl_point > 0)
+        {
+            const char* pqc = strchr(rl_completer_quote_characters, rl_line_buffer[rl_point - 1]);
+            if (pqc)
+            {
+                quote_char = *pqc;
+                rl_point--;
+                while (--rl_point && rl_line_buffer[rl_point] != quote_char)
+                {}
+
+                *found_quote = true;
+            }
+        }
+
+        // Apply any word break adjustment from the match generators.
+        int adj = min(s_matches->get_word_break_adjustment(), rl_end - rl_point);
+        if (adj)
+        {
+            rl_point += adj;
+
+            // TODO: Is throwing away quote state correct?
+            quote_char = 0;
+            *found_quote = 0;
+            *delimiter = 0;
+        }
+    }
+
+    return quote_char;
+}
+
+//------------------------------------------------------------------------------
 static char* filename_menu_completion_function(const char *text, int state)
 {
     static DIR *directory = (DIR *)NULL;
@@ -496,10 +538,13 @@ static char** alternative_matches(const char* text, int start, int end)
 
     int match_count = s_matches->get_match_count();
     if (!match_count)
+    {
+        rl_attempted_completion_over = 1;
         return nullptr;
+    }
 
-    rl_filename_completion_desired = 1;
-    rl_filename_display_desired = 1;
+    rl_filename_completion_desired = s_matches->is_filename_completion_desired();
+    rl_filename_display_desired = s_matches->is_filename_display_desired();
     rl_completion_matches_include_type = 1;
 
     // Identify common prefix.
@@ -509,15 +554,6 @@ static char** alternative_matches(const char* text, int start, int end)
     else if (ISALPHA((unsigned char)text[0]) && text[1] == ':')
         end_prefix = (char*)text + 2;
     int len_prefix = end_prefix ? end_prefix - text : 0;
-
-    // If there are any matches with non-pathish types, then disable filename
-    // display so that prefix display works correctly.
-    for (int i = 0; i < match_count; ++i)
-        if (!is_pathish(s_matches->get_match_type(i)))
-        {
-            rl_filename_display_desired = 0;
-            break;
-        }
 
     // Deep copy of the generated matches.  Inefficient, but this is how
     // readline wants them.
@@ -536,8 +572,6 @@ static char** alternative_matches(const char* text, int start, int end)
         const char* match = s_matches->get_match(i);
         int match_len = strlen(match);
         int match_size = past_flag + match_len + 1;
-        if (rl_filename_display_desired)
-            match_size += len_prefix;
         matches[i + 1] = (char*)malloc(match_size);
 
         if (past_flag)
@@ -545,9 +579,6 @@ static char** alternative_matches(const char* text, int start, int end)
 
         str_base str(matches[i + 1] + past_flag, match_size - past_flag);
         str.clear();
-
-        if (rl_filename_display_desired && len_prefix)
-            str.concat(text, len_prefix);
 
         if ((masked_type == match_type::none || masked_type == match_type::dir) &&
             match_len > past_flag &&
@@ -571,13 +602,12 @@ static char** alternative_matches(const char* text, int start, int end)
     rl_attempted_completion_over = 1;
 
 #if 0
+    assert(match_count == s_matches->get_match_count());
     for (unsigned int i = 0; i < s_matches->get_match_count(); i++)
-        printf("%u: %s, %u\n", i, s_matches->get_match(i), s_matches->get_match_type(i));
+        printf("%u: %s, %u => %s\n", i, s_matches->get_match(i), s_matches->get_match_type(i), matches[i + 1] + past_flag);
     printf("filename completion desired = %d\n", rl_filename_completion_desired);
     printf("filename display desired = %d\n", rl_filename_display_desired);
     printf("is suppress append = %d\n", s_matches->is_suppress_append());
-    printf("is prefix included = %d\n", s_matches->is_prefix_included());
-    printf("get prefix excluded = %d\n", s_matches->get_prefix_excluded());
     printf("get append character = %u\n", (unsigned char)s_matches->get_append_character());
     printf("get suppress quoting = %d\n", s_matches->get_suppress_quoting());
 #endif
@@ -849,19 +879,17 @@ rl_module::rl_module(const char* shell_name, terminal_in* input)
     rl_filename_quote_characters = " &()[]{}^=;!%'+,`~";
 
     // Word break characters -- equal to rl_basic_word_break_characters, with
-    // backslash removed (because rl_backslash_path_sep) and with '%' replacing
-    // '$' (because Windows not *nix).
-    rl_completer_word_break_characters = " \t\n\"'`@%><=;|&{("; /* }) */
-
-    // Env vars get special treatment so that "foo bar%user" can recognize
-    // "%user" as a viable word break for completion.
-    rl_special_prefixes = "%";
+    // backslash removed (because rl_backslash_path_sep) and without '$' or '%'
+    // so we can let the match generators decide when '%' should start a word or
+    // end a word (see :getwordbreakinfo()).
+    rl_completer_word_break_characters = " \t\n\"'`@><=;|&{("; /* }) */
 
     // Completion and match display.
     // TODO: postprocess_matches is for better quote handling.
     //rl_ignore_some_completions_function = postprocess_matches;
     rl_attempted_completion_function = alternative_matches;
     rl_menu_completion_entry_function = filename_menu_completion_function;
+    rl_adjust_completion_word = adjust_completion_word;
     rl_read_key_hook = read_key_hook;
 
     // Add commands.

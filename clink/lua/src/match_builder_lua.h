@@ -19,9 +19,10 @@ public:
     int             add_match(lua_State* state);
     int             add_matches(lua_State* state);
     int             set_append_character(lua_State* state);
-    int             set_prefix_included(lua_State* state);
     int             set_suppress_append(lua_State* state);
     int             set_suppress_quoting(lua_State* state);
+
+    int             set_matches_are_files(lua_State* state);
 
 private:
     bool            add_match_impl(lua_State* state, int stack_index, match_type type);

@@ -83,7 +83,7 @@ line_editor_tester::line_editor_tester(const line_editor::desc& desc)
 void line_editor_tester::create_line_editor(const line_editor::desc* desc)
 {
     // Create a line editor.
-    line_editor::desc inner_desc;
+    line_editor::desc inner_desc(nullptr, nullptr, nullptr);
     if (desc != nullptr)
         inner_desc = *desc;
 
@@ -177,6 +177,10 @@ void line_editor_tester::run()
 
             REQUIRE(match_found, [&] () {
                 printf("match '%s' not found\n", expected);
+
+                puts("\ngot;");
+                for (int i = 0, n = matches->get_match_count(); i < n; ++i)
+                    printf("  %s\n", matches->get_match(i));
             });
         }
     }

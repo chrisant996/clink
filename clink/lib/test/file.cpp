@@ -43,16 +43,15 @@ TEST_CASE("File match generator")
     SECTION("Dir slash flip")
     {
         tester.set_input("dir1/" DO_COMPLETE);
-        tester.set_expected_matches("only", "file1", "file2");
-        //tester.set_expected_output("dir1\\"); // TODO: fails because flip happens on match accept
+        tester.set_expected_matches("dir1\\only", "dir1\\file1", "dir1\\file2");
+        tester.set_expected_output("dir1\\");
         tester.run();
     }
 
     SECTION("Path slash flip")
     {
         tester.set_input("dir1/on" DO_COMPLETE);
-        //tester.set_expected_output("dir1\\only "); // TODO: normalization isn't hooked up for Readline yet
-        tester.set_expected_output("dir1/only ");
+        tester.set_expected_output("dir1\\only ");
         tester.run();
     }
 
@@ -71,8 +70,7 @@ TEST_CASE("File match generator")
         REQUIRE(os::set_current_dir("dir1"));
 
         tester.set_input("../dir1/on" DO_COMPLETE);
-        //tester.set_expected_output("..\\dir1\\only "); // TODO: normalization isn't hooked up for Readline yet
-        tester.set_expected_output("../dir1/only ");
+        tester.set_expected_output("..\\dir1\\only ");
         tester.run();
 
         REQUIRE(os::set_current_dir(".."));
@@ -88,7 +86,7 @@ TEST_CASE("File match generator")
         env_fixture env(env_vars);
         tester.set_input("m:" DO_COMPLETE);
         tester.set_expected_output("m:");
-        tester.set_expected_matches("only", "file1", "file2");
+        tester.set_expected_matches("m:only", "m:file1", "m:file2");
         tester.run();
     }
 }

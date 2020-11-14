@@ -33,6 +33,7 @@ TEST_CASE("Directory match generation.")
 
     lua_state lua;
     lua_match_generator lua_generator(lua);
+    lua_load_script(lua, app, core);
     lua_load_script(lua, app, dir);
 
     line_editor_tester tester;
@@ -87,7 +88,7 @@ TEST_CASE("Directory match generation.")
             {
                 cmd << "nest_1\\..\\o";
                 tester.set_input(cmd.c_str());
-                tester.set_expected_matches("one_dir\\");
+                tester.set_expected_matches("nest_1\\..\\one_dir\\");
                 tester.run();
             }
 
@@ -103,7 +104,7 @@ TEST_CASE("Directory match generation.")
             {
                 cmd << "nest_1/ne";
                 tester.set_input(cmd.c_str());
-                tester.set_expected_matches("nest_2\\");
+                tester.set_expected_matches("nest_1\\nest_2\\");
                 tester.run();
             }
 
@@ -111,7 +112,7 @@ TEST_CASE("Directory match generation.")
             {
                 cmd << "nest_1/nest_2\\";
                 tester.set_input(cmd.c_str());
-                tester.set_expected_matches("nest_3a\\", "nest_3b\\");
+                tester.set_expected_matches("nest_1/nest_2\\nest_3a\\", "nest_1/nest_2\\nest_3b\\");
                 tester.run();
             }
         }

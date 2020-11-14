@@ -314,7 +314,7 @@ void host_cmd::initialise_lua(lua_state& lua)
 //------------------------------------------------------------------------------
 void host_cmd::initialise_editor_desc(line_editor::desc& desc)
 {
-    desc.quote_pair = "\"";
+    desc.reset_quote_pair();
     desc.command_delims = "&|";
     desc.word_delims = " \t<>=;";
     desc.auto_quote_chars = " %=;&^";

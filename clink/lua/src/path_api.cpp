@@ -137,7 +137,7 @@ static int get_name(lua_State* state)
 /// -arg:   left:string
 /// -arg:   right:string
 /// -ret:   string
-/// -show:  path.join("/foo", "bar") -- returns "foo\bar"
+/// -show:  path.join("/foo", "bar") -- returns "/foo\bar"
 static int join(lua_State* state)
 {
     const char* lhs = get_string(state, 1);

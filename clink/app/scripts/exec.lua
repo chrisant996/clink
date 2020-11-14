@@ -98,9 +98,23 @@ function exec_generator:generate(line_state, match_builder)
         paths = {}
     end
 
-    -- Should we also consider the path referenced by 'text'?
-    if match_cwd then
-        table.insert(paths, text)
+    local add_files = function(pattern, rooted)
+        local any_added = false
+        local root = nil
+        if rooted then
+            root = path.getdirectory(pattern) or ""
+        end
+        for _, f in ipairs(os.globfiles(pattern)) do
+-- TODO: PERFORMANCE: globfiles should return whether each file is hidden since
+-- it already had that knowledge.
+            local file = (root and path.join(root, f)) or f
+            if os.ishidden(file) then
+                any_added = match_builder:addmatch({ match = file, type = "file,hidden" }) or any_added
+            else
+                any_added = match_builder:addmatch({ match = file, type = "file" }) or any_added
+            end
+        end
+        return any_added
     end
 
     -- Search 'paths' for files ending in 'suffices' and look for matches
@@ -108,23 +122,23 @@ function exec_generator:generate(line_state, match_builder)
     local suffices = os.getenv("pathext"):explode(";")
     for _, suffix in ipairs(suffices) do
         for _, dir in ipairs(paths) do
-            for _, file in ipairs(os.globfiles(dir.."*"..suffix)) do
--- TODO: PERFORMANCE: globfiles should return whether each file is hidden since
--- it already had that knowledge.
-                if os.ishidden(file) then
-                    added = match_builder:addmatch({ match = file, type = "file,hidden" }) or added
-                else
-                    added = match_builder:addmatch({ match = file, type = "file" }) or added
-                end
-            end
+            added = add_files(dir.."*"..suffix) or added
+        end
+
+        -- Should we also consider the path referenced by 'text'?
+        if match_cwd then
+            -- Pass true because these need to include the base path.
+            added = add_files(text.."*"..suffix, true) or added
         end
     end
 
     -- Lastly we may wish to consider directories too.
     if match_dirs or not added then
-        for _, dir in ipairs(os.globdirs(text.."*")) do
+        local root = path.getdirectory(text) or ""
+        for _, d in ipairs(os.globdirs(text.."*")) do
 -- TODO: PERFORMANCE: globdirs should return whether each dir is hidden since
 -- it already had that knowledge.
+            local dir = path.join(root, d)
             if os.ishidden(dir) then
                 match_builder:addmatch({ match = dir, type = "dir,hidden" })
             else

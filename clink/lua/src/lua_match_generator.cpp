@@ -88,28 +88,29 @@ bool lua_match_generator::generate(const line_state& line, match_builder& builde
 }
 
 //------------------------------------------------------------------------------
-int lua_match_generator::get_prefix_length(const line_state& line) const
+void lua_match_generator::get_word_break_info(const line_state& line, word_break_info& info) const
 {
     lua_State* state = m_state.get_state();
 
     // Call to Lua to calculate prefix length.
     lua_getglobal(state, "clink");
-    lua_pushliteral(state, "_get_prefix_length");
+    lua_pushliteral(state, "_get_word_break_info");
     lua_rawget(state, -2);
 
     line_state_lua line_lua(line);
     line_lua.push(state);
 
-    if (m_state.pcall(state, 1, 1) != 0)
+    if (m_state.pcall(state, 1, 2) != 0)
     {
         if (const char* error = lua_tostring(state, -1))
             print_error(error);
 
         lua_settop(state, 0);
-        return 0;
+        info.clear();
+        return;
     }
 
-    int prefix = int(lua_tointeger(state, -1));
+    info.truncate = int(lua_tointeger(state, -2));
+    info.keep = int(lua_tointeger(state, -1));
     lua_settop(state, 0);
-    return prefix;
 }

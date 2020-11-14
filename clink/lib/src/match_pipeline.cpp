@@ -102,11 +102,10 @@ void match_pipeline::generate(
 void match_pipeline::select(const char* needle) const
 {
     int count = m_matches.get_info_count();
-    if (!count)
-        return;
-
     unsigned int selected_count = 0;
-    selected_count = normal_selector(needle, m_matches.get_infos(), count);
+
+    if (count)
+        selected_count = normal_selector(needle, m_matches.get_infos(), count);
 
     m_matches.coalesce(selected_count);
 }

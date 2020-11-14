@@ -45,27 +45,38 @@ static class : public match_generator
 {
     virtual bool generate(const line_state& line, match_builder& builder) override
     {
-        str<288> buffer;
-        line.get_end_word(buffer);
+        str<288> root;
+        line.get_end_word(root);
 
-        if (path::is_separator(buffer[0]) && path::is_separator(buffer[1]))
+        path::normalise(root);
+
+        if (path::is_separator(root[0]) && path::is_separator(root[1]))
             if (!g_glob_unc.get())
                 return true;
 
-        buffer << "*";
+        root << "*";
 
         int st_mode = 0;
         int attr = 0;
-        globber globber(buffer.c_str());
+        globber globber(root.c_str());
         globber.hidden(g_glob_hidden.get());
         globber.system(g_glob_system.get());
+
+        path::get_directory(root);
+        unsigned int root_len = root.length();
+
+        str<288> buffer;
         while (globber.next(buffer, false, &st_mode, &attr))
-            builder.add_match(buffer.c_str(), to_match_type(st_mode, attr));
+        {
+            root.truncate(root_len);
+            path::append(root, buffer.c_str());
+            builder.add_match(root.c_str(), to_match_type(st_mode, attr));
+        }
 
         return true;
     }
 
-    virtual int get_prefix_length(const line_state& line) const override
+    virtual void get_word_break_info(const line_state& line, word_break_info& info) const override
     {
         str_iter end_word = line.get_end_word();
         const char* start = end_word.get_pointer();
@@ -78,7 +89,8 @@ static class : public match_generator
         if (start[0] && start[1] == ':')
             c = max(start + 2, c);
 
-        return int(c - start);
+        info.truncate = 0;
+        info.keep = int(c - start);
     }
 } g_file_generator;
 

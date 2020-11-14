@@ -305,7 +305,7 @@ bool host::edit_line(const char* prompt, str_base& out)
     // without loading settings first. [TODO: find a better way]
     settings::load(settings_file.c_str());
 
-    line_editor::desc desc = {};
+    line_editor::desc desc(m_terminal.in, m_terminal.out, m_printer);
     initialise_editor_desc(desc);
 
     // Filter the prompt.  Unless processing a multiline doskey macro.
@@ -315,11 +315,6 @@ bool host::edit_line(const char* prompt, str_base& out)
         prompt_filter.filter(prompt, filtered_prompt);
         desc.prompt = filtered_prompt.c_str();
     }
-
-    // Set the terminal that will handle all IO while editing.
-    desc.input = m_terminal.in;
-    desc.output = m_terminal.out;
-    desc.printer = m_printer;
 
     // Create the editor and add components to it.
     line_editor* editor = line_editor_create(desc);

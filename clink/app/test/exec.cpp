@@ -50,9 +50,10 @@ TEST_CASE("Executable match generation.")
 
     lua_state lua;
     lua_match_generator lua_generator(lua);
+    lua_load_script(lua, app, core);
     lua_load_script(lua, app, exec);
 
-    line_editor::desc desc;
+    line_editor::desc desc(nullptr, nullptr, nullptr);
     desc.command_delims = "&|";
     line_editor_tester tester(desc);
     tester.get_editor()->add_generator(lua_generator);
@@ -95,8 +96,8 @@ TEST_CASE("Executable match generation.")
     {
         tester.set_input(".\\");
         tester.set_expected_matches(
-            "one_local.exe", "two_local.exe",
-            "one_dir\\", "foodir\\", "jumble\\"
+            ".\\one_local.exe", ".\\two_local.exe",
+            ".\\one_dir\\", ".\\foodir\\", ".\\jumble\\"
         );
         tester.run();
     }
@@ -104,14 +105,14 @@ TEST_CASE("Executable match generation.")
     SECTION("Relative path dir")
     {
         tester.set_input(".\\foodir\\");
-        tester.set_expected_matches("two_dir_local.exe");
+        tester.set_expected_matches(".\\foodir\\two_dir_local.exe");
         tester.run();
     }
 
     SECTION("Relative path dir (with '_')")
     {
         tester.set_input(".\\one_dir\\t");
-        tester.set_expected_matches("two_dir_local.exe");
+        tester.set_expected_matches(".\\one_dir\\two_dir_local.exe");
         tester.run();
     }
 
@@ -125,7 +126,7 @@ TEST_CASE("Executable match generation.")
     SECTION("Spaces (relative)")
     {
         tester.set_input(".\\one_dir\\spa");
-        tester.set_expected_matches("spa ce.exe");
+        tester.set_expected_matches(".\\one_dir\\spa ce.exe");
         tester.run();
     }
 
@@ -139,7 +140,7 @@ TEST_CASE("Executable match generation.")
     SECTION("Last char . 2")
     {
         tester.set_input("jumble\\three.");
-        tester.set_expected_matches("three.exe");
+        tester.set_expected_matches("jumble\\three.exe");
         tester.run();
     }
 
@@ -280,6 +281,7 @@ TEST_CASE("Executable match generation.")
 
     SECTION("cmd.exe commands")
     {
+        lua_load_script(lua, app, core);
         lua_load_script(lua, app, cmd);
 
         SECTION("Only")

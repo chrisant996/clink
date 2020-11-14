@@ -11,9 +11,6 @@ ChrisAnt Plans
 
 # BETA
 
-## Back-compat
-- \tmp\clink\modules\matchers.lua:55 - attempt to call field 'matches_are_files' (a nil value)
-
 ## Cmder, Powerline, Clink-Completions
 - Update clink-completions to have better 0.4.9 implementations, and also to conditionally use the new API when available.
 - Update clink-git-extensions to have better 0.4.9 implementations, and also to conditionally use the new API when available.
@@ -27,10 +24,6 @@ ChrisAnt Plans
   - The cutoff is 136 characters -- less and the message shows up, or more and no message.
   - And using **Ctrl+R** and then aborting redraws the prompt using the wrong screen buffer width / wrapping position!
 - Iteratively complete multiple directory levels by `b`**Tab**,**End**,**Tab**,**End**,**Tab** => after a few it completes the wrong thing!
-- [#15](https://github.com/chrisant996/clink/issues/15) Quoting breaks in edge cases.
-  - Probably need a callback to override `_rl_find_completion_word()`.
-  - `nullcmd "abc %user`**complete** => mistakenly becomes `nullcmd "%USER` (loses the `"abc `).  Bash ignores everything inside quotes, but we want to handle env vars completions inside quotes.
-  - `nullcmd "abc def"`**complete** => mistakenly becomes `nullcmd "abc def"abc def"`.  Bash mishandles this case; it becomes `nullcmd abc\ def`.
 
 <br/>
 <br/>

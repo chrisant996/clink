@@ -37,19 +37,21 @@ public:
     virtual const char*     get_match(unsigned int index) const override;
     virtual match_type      get_match_type(unsigned int index) const override;
     virtual bool            is_suppress_append() const override;
-    virtual bool            is_prefix_included() const override;
-    virtual int             get_prefix_excluded() const override;
+    virtual shadow_bool     is_filename_completion_desired() const override;
+    virtual bool            is_filename_display_desired() const override;
     virtual char            get_append_character() const override;
     virtual int             get_suppress_quoting() const override;
+    virtual int             get_word_break_adjustment() const override;
+
+    void                    set_word_break_adjustment(int adjustment);
 
 private:
     friend class            match_pipeline;
     friend class            match_builder;
     void                    set_append_character(char append);
-    void                    set_prefix_included(bool included);
-    void                    set_prefix_included(int amount);
     void                    set_suppress_append(bool suppress);
     void                    set_suppress_quoting(int suppress);
+    void                    set_matches_are_files(bool files);
     bool                    add_match(const match_desc& desc);
     unsigned int            get_info_count() const;
     match_info*             get_infos();
@@ -82,8 +84,9 @@ private:
     unsigned short          m_count = 0;
     bool                    m_coalesced = false;
     char                    m_append_character = 0;
-    bool                    m_prefix_included = false;
-    int                     m_prefix_excluded = 0;
     bool                    m_suppress_append = false;
     int                     m_suppress_quoting = 0;
+    int                     m_word_break_adjustment = 0;
+    shadow_bool             m_filename_completion_desired;
+    shadow_bool             m_filename_display_desired;
 };

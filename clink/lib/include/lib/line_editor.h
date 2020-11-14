@@ -17,6 +17,9 @@ class line_editor
 public:
     struct desc
     {
+                        desc(terminal_in* i, terminal_out* o, printer* p)
+                        : input(i), output(o), printer(p) {}
+
         // Required.
         terminal_in*    input = nullptr;
         terminal_out*   output = nullptr;
@@ -26,9 +29,18 @@ public:
         const char*     shell_name = "clink";
         const char*     prompt = "clink $ ";
         const char*     command_delims = nullptr;
-        const char*     quote_pair = "\"";
         const char*     word_delims = " \t";
         const char*     auto_quote_chars = " ";
+
+        const char*     get_quote_pair() const { return quote_pair ? quote_pair : ""; }
+        void            reset_quote_pair() { quote_pair = "\""; }
+
+        // Clink used to support arbitrary quote pairs, such as "()".  But
+        // Readline doesn't support heterogenous quote pairs.  So making this
+        // private lets the logic stay dormant while ensuring callers don't get
+        // themselves into trouble.
+    private:
+        const char*     quote_pair = "\"";
     };
 
     virtual             ~line_editor() = default;
