@@ -3,7 +3,7 @@
 
 ## Releases from [chrisant996/clink](https://github.com/chrisant996/clink) fork
 
-### Unreleased
+### v1.1.3-alpha
 
 - Fixed argmatcher lookup to be more strict, like in Clink 0.4.9 (match exact names, or name plus an extension from %PATHEXT%).
 - Backward compatibility:
