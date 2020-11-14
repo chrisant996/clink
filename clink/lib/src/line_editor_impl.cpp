@@ -629,9 +629,11 @@ void line_editor_impl::update_internal()
         match_pipeline pipeline(m_matches);
         pipeline.reset();
         pipeline.generate(line, m_generators);
-#if 0
-        printf("GENMATCHES, file_comp %u %s --%s",
-               m_matches.is_filename_completion_desired.get(),
+//#define DEBUG_MATCH_PIPELINE
+#ifdef DEBUG_MATCH_PIPELINE
+        printf("GENERATE, %u matches, file_comp %u %s --%s",
+               m_matches.get_match_count(),
+               m_matches.is_filename_completion_desired().get(),
                m_matches.is_filename_completion_desired().is_explicit() ? "(exp)" : "(imp)",
                m_matches.get_match_count() ? "" : " <none>");
         for (int i = 0; i < min<unsigned int>(m_matches.get_match_count(), 21); i++)
@@ -666,13 +668,12 @@ void line_editor_impl::update_internal()
         match_pipeline pipeline(m_matches);
         pipeline.select(needle.c_str());
         pipeline.sort();
-#if 0
-        printf("COALESCED, file_comp %u %s -- needle '%s' selected %u of %u matches\n",
+#ifdef DEBUG_MATCH_PIPELINE
+        printf("COALESCED, file_comp %u %s -- needle '%s' selected %u matches\n",
                m_matches.is_filename_completion_desired().get(),
                m_matches.is_filename_completion_desired().is_explicit() ? "(exp)" : "(imp)",
                needle.c_str(),
-               m_matches.get_match_count(),
-               m_matches.get_info_count());
+               m_matches.get_match_count());
 #endif
 
         m_prev_key = next_key.value;
