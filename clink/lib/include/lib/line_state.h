@@ -10,10 +10,10 @@ template <typename T> class array;
 //------------------------------------------------------------------------------
 struct word
 {
-    unsigned int        offset : 14;
-    unsigned int        length : 10;
-    unsigned int        quoted : 1;
-    unsigned int        delim  : 7;
+    unsigned int        offset : 16;
+    unsigned int        length : 16;
+    bool                quoted;
+    unsigned char       delim;
 };
 
 //------------------------------------------------------------------------------
