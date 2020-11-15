@@ -373,6 +373,7 @@ int get_aliases(lua_State* state)
 
     wstr<> buffer;
     buffer.reserve(buffer_size);
+    ZeroMemory(buffer.data(), buffer.size());   // Avoid race condition!
     if (GetConsoleAliasesW(buffer.data(), buffer.size(), name.data()) == 0)
         return 1;
 
