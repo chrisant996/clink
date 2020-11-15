@@ -16,11 +16,12 @@ static setting_enum g_terminal_emulate(
     "terminal.emulate",
     "Controls VT emulation",
     "Clink can emulate Virtual Terminal processing if the console doesn't\n"
-    "natively. When set to 'on' then Clink performs VT emulation and handles\n"
-    "ANSI escape codes. Or when set to 'off' then Clink passes all output\n"
-    "directly to the console.",
-    "off,on",
-    1);
+    "natively. When set to 'emulate' then Clink performs VT emulation and handles\n"
+    "ANSI escape codes. When 'native' then Clink passes all output directly to the\n"
+    "console. Or when 'auto' then Clink performs VT emulation except when running\n"
+    "in ConEmu.",
+    "native,emulate,auto",
+    2);
 
 //------------------------------------------------------------------------------
 void win_screen_buffer::begin()
@@ -33,7 +34,19 @@ void win_screen_buffer::begin()
     m_default_attr = csbi.wAttributes & attr_mask_all;
     m_bold = !!(m_default_attr & attr_mask_bold);
 
-    m_vt = !g_terminal_emulate.get();
+    switch (g_terminal_emulate.get())
+    {
+    case 0:
+        m_vt = false;
+        break;
+    case 1:
+        m_vt = true;
+        break;
+    case 2:
+        m_vt = !(GetModuleHandleA("conemuhk64.dll") ||
+                 GetModuleHandleA("conemuhk32.dll"));
+        break;
+    }
 }
 
 //------------------------------------------------------------------------------
