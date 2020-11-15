@@ -6,6 +6,7 @@
 class editor_module;
 class line_buffer;
 class match_generator;
+class word_classifier;
 class terminal_in;
 class terminal_out;
 class printer;
@@ -46,6 +47,7 @@ public:
     virtual             ~line_editor() = default;
     virtual bool        add_module(editor_module& module) = 0;
     virtual bool        add_generator(match_generator& generator) = 0;
+    virtual void        set_classifier(word_classifier* classifier) = 0;
     virtual bool        get_line(str_base& out) = 0;
     virtual bool        edit(str_base& out) = 0;
     virtual bool        update() = 0;

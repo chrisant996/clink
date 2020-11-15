@@ -323,6 +323,7 @@ bool host::edit_line(const char* prompt, str_base& out)
     {
         editor->add_generator(lua);
         editor->add_generator(file_match_generator());
+        editor->set_classifier(lua);
 
         if (g_save_history.get())
         {

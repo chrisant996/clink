@@ -349,6 +349,42 @@ static int get_host(lua_State* state)
 }
 
 //------------------------------------------------------------------------------
+/// -name:  os.getalias
+/// -arg:   name:string
+/// -ret:   string
+/// Returns command string for doskey alias <em>name</em>.
+int get_alias(lua_State* state)
+{
+#if !defined(__MINGW32__) && !defined(__MINGW64__)
+    const char* name = get_string(state, 1);
+    if (name == nullptr)
+        return 0;
+    wstr<> alias_name;
+    alias_name = name;
+
+    str<280> exe_path;
+    if (!process().get_file_name(exe_path))
+        return 0;
+
+    // Not const because Windows' alias API won't accept it.
+    wstr<> exe_name;
+    exe_name = (char*)path::get_name(exe_path.c_str());
+
+    // Get the alias (aka. doskey macro).
+    wstr<> buffer;
+    buffer.reserve(8192);
+    if (GetConsoleAliasW(alias_name.data(), buffer.data(), buffer.size(), exe_name.data()) == 0)
+        return 0;
+
+    // Parse the result into a lua table.
+    str<> out;
+    out = buffer.c_str();
+    lua_pushlstring(state, out.c_str(), out.length());
+#endif // __MINGW32__
+    return 1;
+}
+
+//------------------------------------------------------------------------------
 /// -name:  os.getaliases
 /// -ret:   table
 /// Returns doskey aliases in a table with the following scheme:
@@ -468,6 +504,7 @@ void os_lua_initialise(lua_state& lua)
         { "setenv",      &set_env },
         { "getenvnames", &get_env_names },
         { "gethost",     &get_host },
+        { "getalias",    &get_alias },
         { "getaliases",  &get_aliases },
         { "getscreeninfo", &get_screen_info },
     };

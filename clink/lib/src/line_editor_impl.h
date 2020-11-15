@@ -12,6 +12,7 @@
 #include "line_editor.h"
 #include "line_state.h"
 #include "matches_impl.h"
+#include "word_classifier.h"
 #include "rl/rl_module.h"
 #include "rl/rl_buffer.h"
 
@@ -30,6 +31,7 @@ public:
     // line_editor
     virtual bool        add_module(editor_module& module) override;
     virtual bool        add_generator(match_generator& generator) override;
+    virtual void        set_classifier(word_classifier* classifier) override;
     virtual bool        get_line(str_base& out) override;
     virtual bool        edit(str_base& out) override;
     virtual bool        update() override;
@@ -73,9 +75,11 @@ private:
     desc                m_desc;
     modules             m_modules;
     generators          m_generators;
+    word_classifier*    m_classifier;
     binder              m_binder;
     bind_resolver       m_bind_resolver = { m_binder };
     words               m_words;
+    word_classifications m_classifications;
     matches_impl        m_matches;
     printer&            m_printer;
     pager_impl          m_pager;

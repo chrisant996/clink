@@ -27,18 +27,22 @@ function _argreader._new(root)
         _matcher = root,
         _arg_index = 1,
         _stack = {},
+        _word_types = nil,
     }, _argreader)
     return reader
 end
 
 --------------------------------------------------------------------------------
 function _argreader:update(word)
+    local arg_match_type = "a" --arg
+
     -- Check for flags and switch matcher if the word is a flag.
     local matcher = self._matcher
     local is_flag = matcher:_is_flag(word)
     if is_flag then
         if matcher._flags then
             self:_push(matcher._flags)
+            arg_match_type = "f" --flag
         else
             return
         end
@@ -64,7 +68,24 @@ function _argreader:update(word)
 
     -- Some matchers have no args at all.
     if not arg then
+        self:_add_word_type("n") --none
         return
+    end
+
+    -- Parse the word type.
+    if self._word_types then
+        local t = "o" --other
+        if arg._links and arg._links[word] then
+            t = arg_match_type
+        else
+            for _, i in ipairs(arg) do
+                if type(i) == "string" and i == word then
+                    t = arg_match_type
+                    break
+                end
+            end
+        end
+        self:_add_word_type(t)
     end
 
     -- Does the word lead to another matcher?
@@ -91,6 +112,13 @@ function _argreader:_pop()
     end
 
     return false
+end
+
+--------------------------------------------------------------------------------
+function _argreader:_add_word_type(t)
+    if self._word_types then
+        table.insert(self._word_types, t)
+    end
 end
 
 
@@ -480,6 +508,41 @@ local function _find_argmatcher(line_state)
             end
         end
     end
+end
+
+
+
+------------------------------------------------------------------------------
+function clink._parse_word_types(line_state)
+    local parsed_word_types = {}
+
+    if line_state:getwordcount() > 1 or string.len(line_state:getword(1)) > 0 then
+        if string.len(os.getalias(line_state:getword(1)) or "") > 0 then
+            table.insert(parsed_word_types, "d"); --doskey
+        else
+            table.insert(parsed_word_types, "c"); --command
+        end
+    end
+
+    local argmatcher = _find_argmatcher(line_state)
+    if argmatcher then
+        local reader = _argreader(argmatcher)
+        reader._word_types = parsed_word_types
+
+        -- Consume words and use them to move through matchers' arguments.
+        local word_count = line_state:getwordcount()
+        for word_index = 2, (word_count - 1) do
+            local word = line_state:getword(word_index)
+            reader:update(word)
+        end
+    end
+
+    local s = ""
+    for _, t in ipairs(parsed_word_types) do
+        s = s..t
+    end
+
+    return s
 end
 
 

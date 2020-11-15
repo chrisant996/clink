@@ -5,6 +5,7 @@
 
 #include <core/str.h>
 #include <lua/lua_match_generator.h>
+#include <lua/lua_word_classifier.h>
 #include <lua/lua_state.h>
 
 //------------------------------------------------------------------------------
@@ -14,6 +15,7 @@ public:
                         host_lua(const char* script_path = nullptr);
                         operator lua_state& ();
                         operator match_generator& ();
+                        operator word_classifier* ();
     void                load_scripts();
 
 private:
@@ -21,5 +23,6 @@ private:
     void                load_script(const char* path);
     lua_state           m_state;
     lua_match_generator m_generator;
+    lua_word_classifier m_classifier;
     str<>               m_script_path;
 };

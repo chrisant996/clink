@@ -18,6 +18,11 @@ ChrisAnt Plans
 - Port Cmder to v1.x -- will require help from Cmder and/or ConEmu teams.  There are a lot of hard-coded expectations about Clink (web site address, terminal input mode, DLL names, VirtualAlloc patterns, and many other things).
 - [#12](https://github.com/chrisant996/clink/issues/12) Why is Cmder's Clink so slow to start?
 
+## Coloring arguments and flags while editing (according to Lua argmatchers)
+  - [x] Parser is done!
+  - [ ] Need a test for it.
+  - [ ] Then replace `rl_redisplay_function`, and call the parser inside before displaying the input line.
+
 ## Other
 - **Alt+P** then **Ctrl+G** internally resets the prompt, but `rl_redisplay()` gets confused into still drawing the cached `local_prompt`.
 - If the last line of the prompt is "too long" then `rl_message()` in **Alt+P** fails to draw the adjusted prompt correctly; the old prompt continues to be drawn.
@@ -53,8 +58,9 @@ ChrisAnt Plans
 
 ## High Priority
 - Allow binding keys to Lua scripts.
+  - The tricky part is how to register the Lua scripts as commands that Readline can invoke, since Readline expects unique non-parameterized function pointers.
   - Provide API for accessing the screen buffer, and for scrolling.
-  - Eventually provide API for interacting with the Readline buffer.
+  - Provide API for interacting with the Readline buffer.
 - Custom color for readline input.
   - Might prefer to completely replace readline's line drawing, since it's trying to minimize updates over terminal emulators, and that makes it much harder to colorize the editing line (and arguments).
 
@@ -77,15 +83,15 @@ ChrisAnt Plans
 # MAJOR WORK ITEMS
 
 - **CUA Selection.**
-- **Coloring arguments and flags while editing (according to Lua argmatchers).**
 - **Make the match pipeline async.**
   - Spin up completion at the same moment it currently does, but make it async.
   - Only block consumers when they try to access results, if not yet complete.  Also have "try-" access that accesses if available but doesn't block (e.g. will be needed for coloring arguments while editing).
   - This will solve the UNC performance problem and also make associated pauses break-able.
   - Lua and Lua scripts will need multi-threading support.
 - **Fix Readline completion coloring performance.**
-  - Color output is slow because Readline writes everything one byte at a time, which incurs a huge amount of processing overhead across several layers.😭
-  - Consult with Chet about how he'd like the Readline code to be structured when fixing this?
+  - Color output is slow because Readline writes everything one byte at a time, which incurs a huge amount of processing overhead across several layers.
+  - Probably the most appropriate solution is to take over the match display with a `rl_completion_display_matches_hook` function.
+  - That might even allow reverting the changes to feed Readline match type information, but I think it still needs that when inserting -- maybe I should just add a callback for inserting as well?
 
 <br/>
 <br/>

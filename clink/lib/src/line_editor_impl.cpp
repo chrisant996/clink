@@ -204,6 +204,11 @@ bool line_editor_impl::add_generator(match_generator& generator)
     return (slot != nullptr) ? *slot = &generator, true : false;
 }
 
+void line_editor_impl::set_classifier(word_classifier* classifier)
+{
+    m_classifier = classifier;
+}
+
 //------------------------------------------------------------------------------
 bool line_editor_impl::get_line(str_base& out)
 {
@@ -684,4 +689,20 @@ void line_editor_impl::update_internal()
         for (auto module : m_modules)
             module->on_matches_changed(context);
     }
+
+    // Parse word types for coloring the input line.
+#if 0
+    // TODO: this belongs inside the `rl_redisplay_function` replacement.
+    if (m_classifier && false)
+    {
+        m_classifier->classify(get_linestate(), m_classifications);
+#ifdef DEBUG_MATCH_PIPELINE
+        static const char* const word_class_name[] = { "other", "command", "doskey", "arg", "flag", "none" };
+        printf("CLASSIFIED --");
+        for (auto c : m_classifications)
+            printf(" %s", word_class_name[int(c)]);
+        printf("\n");
+#endif
+    }
+#endif
 }

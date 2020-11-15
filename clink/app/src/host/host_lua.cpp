@@ -45,6 +45,7 @@ extern "C" int show_cursor(int visible)
 //------------------------------------------------------------------------------
 host_lua::host_lua(const char* script_path)
 : m_generator(m_state)
+, m_classifier(m_state)
 {
     m_script_path = script_path;
 
@@ -69,6 +70,12 @@ host_lua::operator lua_state& ()
 host_lua::operator match_generator& ()
 {
     return m_generator;
+}
+
+//------------------------------------------------------------------------------
+host_lua::operator word_classifier* ()
+{
+    return &m_classifier;
 }
 
 //------------------------------------------------------------------------------
