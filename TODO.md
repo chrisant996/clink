@@ -18,16 +18,18 @@ ChrisAnt Plans
 - Port Cmder to v1.x -- will require help from Cmder and/or ConEmu teams.  There are a lot of hard-coded expectations about Clink (web site address, terminal input mode, DLL names, VirtualAlloc patterns, and many other things).
 - [#12](https://github.com/chrisant996/clink/issues/12) Why is Cmder's Clink so slow to start?
 
-## Coloring arguments and flags while editing (according to Lua argmatchers)
-  - [x] Parser is done!
-  - [ ] Need a test for it.
-  - [ ] Then replace `rl_redisplay_function`, and call the parser inside before displaying the input line.
+## Fix Readline completion coloring performance
+  - Color output is slow because Readline writes everything one byte at a time, which incurs a huge amount of processing overhead across several layers.
+  - Probably the most appropriate solution is to take over the match display with a `rl_completion_display_matches_hook` function.
+  - That could even allow reverting the changes to feed Readline match type information.  It's only used when displaying matches, and when inserting a match to decide whether to append a path separator.  Maybe just add a callback for inserting.
 
-## Other
-- **Alt+P** then **Ctrl+G** internally resets the prompt, but `rl_redisplay()` gets confused into still drawing the cached `local_prompt`.
-- If the last line of the prompt is "too long" then `rl_message()` in **Alt+P** fails to draw the adjusted prompt correctly; the old prompt continues to be drawn.
-  - The cutoff is 136 characters -- less and the message shows up, or more and no message.
-  - And using **Ctrl+R** and then aborting redraws the prompt using the wrong screen buffer width / wrapping position!
+## Coloring arguments and flags while editing (according to Lua argmatchers)
+  - Replace `rl_redisplay_function` and use the word classifications to apply colors.
+  - That should also fix these two issues:
+    - **Alt+P** then **Ctrl+G** internally resets the prompt, but `rl_redisplay()` gets confused into still drawing the cached `local_prompt`.
+    - If the last line of the prompt is "too long" then `rl_message()` in **Alt+P** fails to draw the adjusted prompt correctly; the old prompt continues to be drawn.
+      - The cutoff is 136 characters -- less and the message shows up, or more and no message.
+      - And using **Ctrl+R** and then aborting redraws the prompt using the wrong screen buffer width / wrapping position!
 
 <br/>
 <br/>
@@ -88,10 +90,6 @@ ChrisAnt Plans
   - Only block consumers when they try to access results, if not yet complete.  Also have "try-" access that accesses if available but doesn't block (e.g. will be needed for coloring arguments while editing).
   - This will solve the UNC performance problem and also make associated pauses break-able.
   - Lua and Lua scripts will need multi-threading support.
-- **Fix Readline completion coloring performance.**
-  - Color output is slow because Readline writes everything one byte at a time, which incurs a huge amount of processing overhead across several layers.
-  - Probably the most appropriate solution is to take over the match display with a `rl_completion_display_matches_hook` function.
-  - That might even allow reverting the changes to feed Readline match type information, but I think it still needs that when inserting -- maybe I should just add a callback for inserting as well?
 
 <br/>
 <br/>
