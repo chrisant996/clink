@@ -170,6 +170,8 @@ void line_editor_impl::begin_line()
     m_desc.input->begin();
     m_desc.output->begin();
     m_buffer.begin_line();
+    m_has_prev_buffer = false;
+    m_prev_buffer.clear();
 
     line_state line = get_linestate();
     editor_module::context context = get_context(line);
@@ -204,9 +206,9 @@ bool line_editor_impl::add_generator(match_generator& generator)
     return (slot != nullptr) ? *slot = &generator, true : false;
 }
 
-void line_editor_impl::set_classifier(word_classifier* classifier)
+void line_editor_impl::set_classifier(word_classifier& classifier)
 {
-    m_classifier = classifier;
+    m_classifier = &classifier;
 }
 
 //------------------------------------------------------------------------------
@@ -446,10 +448,10 @@ bool line_editor_impl::update_input()
 }
 
 //------------------------------------------------------------------------------
-void line_editor_impl::find_command_bounds(const char*& start, int& length)
+void line_editor_impl::find_command_bounds(const char*& start, int& length, bool stop_at_cursor)
 {
     const char* line_buffer = m_buffer.get_buffer();
-    unsigned int line_cursor = m_buffer.get_cursor();
+    unsigned int line_cursor = stop_at_cursor ? m_buffer.get_cursor() : m_buffer.get_length();
 
     start = line_buffer;
     length = line_cursor;
@@ -472,7 +474,7 @@ void line_editor_impl::find_command_bounds(const char*& start, int& length)
 }
 
 //------------------------------------------------------------------------------
-void line_editor_impl::collect_words()
+void line_editor_impl::collect_words(bool stop_at_cursor)
 {
     m_words.clear();
 
@@ -481,7 +483,7 @@ void line_editor_impl::collect_words()
 
     const char* command_start;
     int command_length;
-    find_command_bounds(command_start, command_length);
+    find_command_bounds(command_start, command_length, stop_at_cursor);
 
     m_command_offset = int(command_start - line_buffer);
 
@@ -504,7 +506,7 @@ void line_editor_impl::collect_words()
 
     // Add an empty word if the cursor is at the beginning of one.
     word* end_word = m_words.back();
-    if (!end_word || end_word->offset + end_word->length < line_cursor)
+    if (!end_word || (stop_at_cursor && end_word->offset + end_word->length < line_cursor))
     {
         m_words.push_back();
         *(m_words.back()) = { line_cursor };
@@ -532,7 +534,7 @@ void line_editor_impl::collect_words()
     // breaks. This is a little clunky but works well enough.
     line_state line = get_linestate();
     end_word = m_words.back();
-    if (end_word->length)
+    if (end_word->length && stop_at_cursor)
     {
         word_break_info break_info = {};
         const char *word_start = line_buffer + end_word->offset;
@@ -584,7 +586,7 @@ editor_module::context line_editor_impl::get_context(const line_state& line) con
     auto& buffer = const_cast<rl_buffer&>(m_buffer);
     auto& pter = const_cast<printer&>(m_printer);
     auto& pger = const_cast<pager&>(static_cast<const pager&>(m_pager));
-    return { m_desc.prompt, pter, pger, buffer, line, m_matches };
+    return { m_desc.prompt, pter, pger, buffer, line, m_matches, m_classifications };
 }
 
 //------------------------------------------------------------------------------
@@ -608,6 +610,35 @@ bool line_editor_impl::check_flag(unsigned char flag) const
 //------------------------------------------------------------------------------
 void line_editor_impl::update_internal()
 {
+    // Parse word types for coloring the input line.
+    // TODO: Would a better place would be inside the `rl_redisplay_function` replacement?
+    if (m_classifier && (!m_has_prev_buffer || !m_prev_buffer.equals(m_buffer.get_buffer())))
+    {
+        m_has_prev_buffer = true;
+        m_prev_buffer = m_buffer.get_buffer();
+
+        // Use the full line; don't stop at the cursor.
+        line_state line = get_linestate();
+        collect_words(false);
+
+        m_classifier->classify(get_linestate(), m_classifications);
+
+#ifdef DEBUG_CLASSIFY_WORDS
+        static const char* const word_class_name[] = { "other", "command", "doskey", "arg", "flag", "none" };
+        printf("CLASSIFIED '%s' --", m_buffer.get_buffer());
+        for (auto c : m_classifications)
+            printf(" %s", word_class_name[int(c)]);
+        printf("\n");
+#endif
+
+        // Tell all the modules that the classifications changed.
+        editor_module::context context = get_context(line);
+        assert(&context.classifications);
+        for (auto module : m_modules)
+            module->on_classifications_changed(context);
+    }
+
+    // Collect words, stopping at the cursor for match generator.
     collect_words();
 
     const word& end_word = *(m_words.back());
@@ -689,20 +720,4 @@ void line_editor_impl::update_internal()
         for (auto module : m_modules)
             module->on_matches_changed(context);
     }
-
-    // Parse word types for coloring the input line.
-#if 0
-    // TODO: this belongs inside the `rl_redisplay_function` replacement.
-    if (m_classifier && false)
-    {
-        m_classifier->classify(get_linestate(), m_classifications);
-#ifdef DEBUG_MATCH_PIPELINE
-        static const char* const word_class_name[] = { "other", "command", "doskey", "arg", "flag", "none" };
-        printf("CLASSIFIED --");
-        for (auto c : m_classifications)
-            printf(" %s", word_class_name[int(c)]);
-        printf("\n");
-#endif
-    }
-#endif
 }

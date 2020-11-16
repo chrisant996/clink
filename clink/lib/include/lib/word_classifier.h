@@ -20,7 +20,12 @@ enum class word_class : unsigned char
 };
 
 //------------------------------------------------------------------------------
-typedef fixed_array<word_class, 72> word_classifications;
+class word_classifications : public fixed_array<word_class, 72>
+{
+public:
+                    word_classifications() = default;
+                    ~word_classifications() = default;
+};
 
 //------------------------------------------------------------------------------
 class word_classifier

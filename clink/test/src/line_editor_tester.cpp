@@ -9,6 +9,7 @@
 #include <core/str.h>
 #include <lib/editor_module.h>
 #include <lib/matches.h>
+#include <lib/word_classifier.h>
 #include <readline/readline.h>
 
 #include <stdio.h>
@@ -22,6 +23,7 @@ public:
     virtual void    on_begin_line(const context& context) override {}
     virtual void    on_end_line() override {}
     virtual void    on_matches_changed(const context& context) override {}
+    virtual void    on_classifications_changed(const context& context) override {}
     virtual void    on_input(const input& input, result& result, const context& context) override {}
     virtual void    on_terminal_resize(int columns, int rows, const context& context) override {}
 };
@@ -34,18 +36,27 @@ class test_module
 {
 public:
     const matches*  get_matches() const;
+    const word_classifications* get_classifications() const;
 
 private:
     virtual void    bind_input(binder& binder) override;
     virtual void    on_matches_changed(const context& context) override;
+    virtual void    on_classifications_changed(const context& context) override;
     virtual void    on_input(const input& input, result& result, const context& context) override;
     const matches*  m_matches = nullptr;
+    const word_classifications* m_classifications = nullptr;
 };
 
 //------------------------------------------------------------------------------
 const matches* test_module::get_matches() const
 {
     return m_matches;
+}
+
+//------------------------------------------------------------------------------
+const word_classifications* test_module::get_classifications() const
+{
+    return m_classifications;
 }
 
 //------------------------------------------------------------------------------
@@ -58,6 +69,12 @@ void test_module::bind_input(binder& binder)
 void test_module::on_matches_changed(const context& context)
 {
     m_matches = &(context.matches);
+}
+
+//------------------------------------------------------------------------------
+void test_module::on_classifications_changed(const context& context)
+{
+    m_classifications = &(context.classifications);
 }
 
 //------------------------------------------------------------------------------
@@ -125,7 +142,7 @@ void line_editor_tester::set_expected_output(const char* expected)
 //------------------------------------------------------------------------------
 void line_editor_tester::run()
 {
-    bool has_expectations = m_has_matches || (m_expected_output != nullptr);
+    bool has_expectations = m_has_matches || m_has_classifications || (m_expected_output != nullptr);
     REQUIRE(has_expectations);
 
     REQUIRE(m_input != nullptr);
@@ -185,6 +202,40 @@ void line_editor_tester::run()
         }
     }
 
+    if (m_has_classifications)
+    {
+        const word_classifications* classifications = match_catch.get_classifications();
+        REQUIRE(classifications, [&]() {
+            printf(" input; %s\n", m_input);
+
+            puts("expected classifications but got none");
+        });
+
+        str<> c;
+        for (auto wc : *classifications)
+        {
+            switch (wc)
+            {
+            default:                    c.concat("o", 1); break;
+            case word_class::command:   c.concat("c", 1); break;
+            case word_class::doskey:    c.concat("d", 1); break;
+            case word_class::arg:       c.concat("a", 1); break;
+            case word_class::flag:      c.concat("f", 1); break;
+            case word_class::none:      c.concat("n", 1); break;
+            }
+        }
+
+        REQUIRE(m_expected_classifications.equals(c.c_str()), [&] () {
+            printf(" input; %s#\n", m_input);
+
+            puts("\nexpected classifications;");
+            printf("  %s\n", m_expected_classifications.c_str());
+
+            puts("\ngot;");
+            printf("  %s\n", c.c_str());
+        });
+    }
+
     // Check the output is as expected.
     if (m_expected_output != nullptr)
     {
@@ -200,6 +251,7 @@ void line_editor_tester::run()
     m_input = nullptr;
     m_expected_output = nullptr;
     m_expected_matches.clear();
+    m_expected_classifications.clear();
 
     str<> t;
     m_editor->get_line(t);
@@ -218,4 +270,11 @@ void line_editor_tester::expected_matches_impl(int dummy, ...)
 
     va_end(arg);
     m_has_matches = true;
+}
+
+//------------------------------------------------------------------------------
+void line_editor_tester::set_expected_classifications(const char* classifications)
+{
+    m_expected_classifications = classifications;
+    m_has_classifications = true;
 }

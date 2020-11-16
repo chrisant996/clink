@@ -33,7 +33,6 @@ TEST_CASE("Directory match generation.")
 
     lua_state lua;
     lua_match_generator lua_generator(lua);
-    lua_load_script(lua, app, core);
     lua_load_script(lua, app, dir);
 
     line_editor_tester tester;

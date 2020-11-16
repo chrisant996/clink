@@ -516,8 +516,10 @@ end
 function clink._parse_word_types(line_state)
     local parsed_word_types = {}
 
-    if line_state:getwordcount() > 1 or string.len(line_state:getword(1)) > 0 then
-        if string.len(os.getalias(line_state:getword(1)) or "") > 0 then
+    local word_count = line_state:getwordcount()
+    local first_word = line_state:getword(1) or ""
+    if word_count > 1 or string.len(first_word) > 0 then
+        if string.len(os.getalias(first_word) or "") > 0 then
             table.insert(parsed_word_types, "d"); --doskey
         else
             table.insert(parsed_word_types, "c"); --command
@@ -530,8 +532,7 @@ function clink._parse_word_types(line_state)
         reader._word_types = parsed_word_types
 
         -- Consume words and use them to move through matchers' arguments.
-        local word_count = line_state:getwordcount()
-        for word_index = 2, (word_count - 1) do
+        for word_index = 2, word_count do
             local word = line_state:getword(word_index)
             reader:update(word)
         end

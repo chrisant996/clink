@@ -31,7 +31,7 @@ public:
     // line_editor
     virtual bool        add_module(editor_module& module) override;
     virtual bool        add_generator(match_generator& generator) override;
-    virtual void        set_classifier(word_classifier* classifier) override;
+    virtual void        set_classifier(word_classifier& classifier) override;
     virtual bool        get_line(str_base& out) override;
     virtual bool        edit(str_base& out) override;
     virtual bool        update() override;
@@ -61,8 +61,8 @@ private:
     void                initialise();
     void                begin_line();
     void                end_line();
-    void                find_command_bounds(const char*& start, int& length);
-    void                collect_words();
+    void                find_command_bounds(const char*& start, int& length, bool stop_at_cursor=true);
+    void                collect_words(bool stop_at_cursor=true);
     void                update_internal();
     bool                update_input();
     module::context     get_context(const line_state& line) const;
@@ -72,10 +72,12 @@ private:
     bool                check_flag(unsigned char flag) const;
     rl_module           m_module;
     rl_buffer           m_buffer;
+    bool                m_has_prev_buffer = false;
+    str<>               m_prev_buffer;
     desc                m_desc;
     modules             m_modules;
     generators          m_generators;
-    word_classifier*    m_classifier;
+    word_classifier*    m_classifier = nullptr;
     binder              m_binder;
     bind_resolver       m_bind_resolver = { m_binder };
     words               m_words;

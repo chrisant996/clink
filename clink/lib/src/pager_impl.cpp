@@ -76,6 +76,11 @@ void pager_impl::on_matches_changed(const context& context)
 }
 
 //------------------------------------------------------------------------------
+void pager_impl::on_classifications_changed(const context& context)
+{
+}
+
+//------------------------------------------------------------------------------
 void pager_impl::on_input(const input& input, result& result, const context& context)
 {
     switch (input.id)

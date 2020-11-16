@@ -4,6 +4,7 @@
 return {
     name = "lib",
     files = {
+        "core.lua",
         "generator.lua",
         "arguments.lua",
         "debugger.lua",

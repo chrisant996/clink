@@ -25,6 +25,7 @@ echo   Run clink_test_x64.exe.
 echo.
 echo.  /?        Show usage info.
 echo   /dbg      Run test under the debugger.
+echo   -d        Load Lua debugger.
 echo.
 echo If [test name prefix] is included, then it only runs tests whose name begins
 echo with the specified prefix.

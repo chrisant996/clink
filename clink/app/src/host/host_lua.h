@@ -15,7 +15,7 @@ public:
                         host_lua(const char* script_path = nullptr);
                         operator lua_state& ();
                         operator match_generator& ();
-                        operator word_classifier* ();
+                        operator word_classifier& ();
     void                load_scripts();
 
 private:

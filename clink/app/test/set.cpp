@@ -27,7 +27,6 @@ TEST_CASE("Set command.")
 
     lua_state lua;
     lua_match_generator lua_generator(lua);
-    lua_load_script(lua, app, core);
     lua_load_script(lua, app, set);
 
     line_editor::desc desc(nullptr, nullptr, nullptr);

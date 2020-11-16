@@ -73,9 +73,9 @@ host_lua::operator match_generator& ()
 }
 
 //------------------------------------------------------------------------------
-host_lua::operator word_classifier* ()
+host_lua::operator word_classifier& ()
 {
-    return &m_classifier;
+    return m_classifier;
 }
 
 //------------------------------------------------------------------------------

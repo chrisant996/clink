@@ -50,7 +50,6 @@ TEST_CASE("Executable match generation.")
 
     lua_state lua;
     lua_match_generator lua_generator(lua);
-    lua_load_script(lua, app, core);
     lua_load_script(lua, app, exec);
 
     line_editor::desc desc(nullptr, nullptr, nullptr);
@@ -281,7 +280,6 @@ TEST_CASE("Executable match generation.")
 
     SECTION("cmd.exe commands")
     {
-        lua_load_script(lua, app, core);
         lua_load_script(lua, app, cmd);
 
         SECTION("Only")

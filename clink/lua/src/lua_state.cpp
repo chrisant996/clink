@@ -15,6 +15,9 @@ extern "C" {
 }
 
 //------------------------------------------------------------------------------
+bool g_force_load_debugger = false;
+
+//------------------------------------------------------------------------------
 static setting_bool g_lua_debug(
     "lua.debug",
     "Enables Lua debugging",
@@ -107,8 +110,10 @@ void lua_state::initialise()
 
     lua_state& self = *this;
 
-    if (g_lua_debug.get())
+    if (g_force_load_debugger || g_lua_debug.get())
         lua_load_script(self, lib, debugger);
+
+    lua_load_script(self, lib, core);
 
     clink_lua_initialise(self);
     os_lua_initialise(self);
