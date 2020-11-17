@@ -18,11 +18,6 @@ ChrisAnt Plans
 - Port Cmder to v1.x -- will require help from Cmder and/or ConEmu teams.  There are a lot of hard-coded expectations about Clink (web site address, terminal input mode, DLL names, VirtualAlloc patterns, and many other things).
 - [#12](https://github.com/chrisant996/clink/issues/12) Why is Cmder's Clink so slow to start?
 
-## Fix Readline completion coloring performance
-  - Color output is slow because Readline writes everything one byte at a time, which incurs a huge amount of processing overhead across several layers.
-  - Probably the most appropriate solution is to take over the match display with a `rl_completion_display_matches_hook` function.
-  - That could even allow reverting the changes to feed Readline match type information.  It's only used when displaying matches, and when inserting a match to decide whether to append a path separator.  Maybe just add a callback for inserting.
-
 ## Coloring arguments and flags while editing (according to Lua argmatchers)
   - Replace `rl_redisplay_function` and use the word classifications to apply colors.
   - That should also fix these two issues:
@@ -129,6 +124,12 @@ ChrisAnt Plans
 
 - Contact Readline owner, start conversation about possible next steps.
 - Check if there's a newer update to the `wcwidth` implementation.
+
+## Remove match type changes from Readline?
+- Displaying matches was slow because Readline writes everything one byte at a time, which incurs significant processing overhead across several layers.
+- Adding a new `rl_completion_display_matches_func` and `display_matches()` resolved the performance satisfactorily.
+- It's now potentially possible to revert the changes to feed Readline match type information.  It's only used when displaying matches, and when inserting a match to decide whether to append a path separator.  Maybe just add a callback for inserting.
+- But it's not straightforward since Readline sorts the matches, making it difficult to translate the sorted index to the unsorted list held by `matches_impl`.
 
 <br/>
 <br/>

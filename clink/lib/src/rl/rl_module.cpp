@@ -27,6 +27,7 @@ extern "C" {
 #include <readline/keymaps.h>
 #include <readline/xmalloc.h>
 #include <compat/dirent.h>
+#include <compat/display_matches.h>
 #include <readline/posixdir.h>
 #include <readline/history.h>
 extern int _rl_match_hidden_files;
@@ -207,7 +208,7 @@ static bool build_color_sequence(const attributes& colour, str_base& out)
 class rl_more_key_tester : public key_tester
 {
 public:
-    virtual bool    is_bound(const char* seq, int len)
+    virtual bool    is_bound(const char* seq, int len) override
                     {
                         if (len <= 1)
                             return true;
@@ -216,7 +217,7 @@ public:
                         rl_ding();
                         return false;
                     }
-    virtual bool    translate(const char* seq, int len, str_base& out)
+    virtual bool    translate(const char* seq, int len, str_base& out) override
                     {
                         if (strcmp(seq, bindableEsc) == 0)
                         {
@@ -890,6 +891,7 @@ rl_module::rl_module(const char* shell_name, terminal_in* input)
     rl_attempted_completion_function = alternative_matches;
     rl_menu_completion_entry_function = filename_menu_completion_function;
     rl_adjust_completion_word = adjust_completion_word;
+    rl_completion_display_matches_func = display_matches;
     rl_read_key_hook = read_key_hook;
 
     // Add commands.

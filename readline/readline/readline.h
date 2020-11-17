@@ -822,6 +822,15 @@ extern rl_dequote_func_t *rl_filename_rewrite_hook;
    longest string in that array. */
 extern rl_compdisp_func_t *rl_completion_display_matches_hook;
 
+/* begin_clink_change */
+/* If non-zero, then this is the address of a function to call that completely
+   replaces the display_matches behavior (rl_completion_display_matches_hook
+   only replaces listing multiple matches).
+   It takes one argument: (char** matches) where MATCHES is the array of
+   strings that matched. */
+extern rl_vcppfunc_t *rl_completion_display_matches_func;
+/* end_clink_change */
+
 /* Non-zero means that the results of the matches are to be treated
    as filenames.  This is ALWAYS zero on entry, and can only be changed
    within a completion entry finder function. */

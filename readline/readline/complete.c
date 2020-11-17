@@ -99,6 +99,15 @@ extern struct passwd *getpwent PARAMS((void));
    number of strings in that array, and MAX_LENGTH is the length of the
    longest string in that array. */
 rl_compdisp_func_t *rl_completion_display_matches_hook = (rl_compdisp_func_t *)NULL;
+/* begin_clink_change */
+/* If non-zero, then this is the address of a function to call that completely
+   replaces the display_matches behavior.  rl_completion_display_matches_hook
+   only replaces listing multiple matches, but still prints a single match and
+   still loops to measure the length of matches before the hook function is
+   called.  rl_completion_display_matches_func is called early enough that the
+   host application can override all of the behavior. */
+rl_vcppfunc_t *rl_completion_display_matches_func = (rl_vcppfunc_t *)NULL;
+/* end_clink_change */
 
 #if defined (VISIBLE_STATS) || defined (COLOR_SUPPORT)
 #  if !defined (X_OK)
@@ -109,7 +118,7 @@ rl_compdisp_func_t *rl_completion_display_matches_hook = (rl_compdisp_func_t *)N
 #if defined (VISIBLE_STATS)
 /* begin_clink_change */
 //static int stat_char PARAMS((char *));
-static int stat_char PARAMS((char *, char));
+int stat_char PARAMS((char *, char));
 /* end_clink_change */
 #endif
 
@@ -130,10 +139,12 @@ static char *rl_quote_filename PARAMS((char *, int, char *));
 static void _rl_complete_sigcleanup PARAMS((int, void *));
 
 static void set_completion_defaults PARAMS((int));
-static int get_y_or_n PARAMS((int));
-static int _rl_internal_pager PARAMS((int));
-static char *printable_part PARAMS((char *));
-static int fnwidth PARAMS((const char *));
+/* begin_clink_change */
+/*static*/ int get_y_or_n PARAMS((int));
+/*static*/ int _rl_internal_pager PARAMS((int));
+/*static*/ char *printable_part PARAMS((char *));
+/*static*/ int fnwidth PARAMS((const char *));
+/* end_clink_change */
 /* begin_clink_change */
 //static int fnprint PARAMS((const char *, int, const char *));
 static int fnprint PARAMS((const char *, int, const char *, unsigned char));
@@ -153,7 +164,9 @@ static int complete_fncmp PARAMS((const char *, int, const char *, int));
 static void display_matches PARAMS((char **));
 static int compute_lcd_of_matches PARAMS((char **, int, const char *));
 static int postprocess_matches PARAMS((char ***, int));
-static int complete_get_screenwidth PARAMS((void));
+/* begin_clink_change */
+/*static*/ int complete_get_screenwidth PARAMS((void));
+/* end_clink_change */
 
 static char *make_quoted_replacement PARAMS((char *, int, char *));
 
@@ -564,7 +577,10 @@ set_completion_defaults (int what_to_do)
 }
 
 /* The user must press "y" or "n". Non-zero return means "y" pressed. */
-static int
+/* begin_clink_change */
+//static int
+int
+/* end_clink_change */
 get_y_or_n (int for_pager)
 {
   int c;
@@ -626,7 +642,10 @@ get_y_or_n (int for_pager)
     }
 }
 
-static int
+/* begin_clink_change */
+//static int
+int
+/* end_clink_change */
 _rl_internal_pager (int lines)
 {
   int i;
@@ -704,9 +723,10 @@ stat_from_match_type (unsigned char match_type, const char* fn, struct stat* fin
      `|' for FIFOs
      `%' for character special devices
      `#' for block special devices */
-static int
 /* begin_clink_change */
+//static int
 //stat_char (char *filename)
+int
 stat_char (char *filename, char match_type)
 /* end_clink_change */
 {
@@ -851,7 +871,10 @@ static int is_filename_completion_desired(const char* pathname)
    filename completion, and the basename is the empty string, we look
    for the previous slash and return the portion following that.  If
    there's no previous slash, we just return what we were passed. */
-static char *
+/* begin_clink_change */
+//static char *
+char *
+/* end_clink_change */
 printable_part (char *pathname)
 {
   char *temp, *x;
@@ -895,7 +918,10 @@ printable_part (char *pathname)
 }
 
 /* Compute width of STRING when displayed on screen by print_filename */
-static int
+/* begin_clink_change */
+//static int
+int
+/* end_clink_change */
 fnwidth (const char *string)
 {
   int width, pos;
@@ -1968,7 +1994,10 @@ postprocess_matches (char ***matchesp, int matching_filenames)
   return (1);
 }
 
-static int
+/* begin_clink_change */
+//static int
+int
+/* end_clink_change */
 complete_get_screenwidth (void)
 {
   int cols;
@@ -2187,6 +2216,22 @@ display_matches (char **matches)
 
   /* Move to the last visible line of a possibly-multiple-line command. */
   _rl_move_vert (_rl_vis_botlin);
+
+/* begin_clink_change */
+  /* If the caller has defined a display function, then call that now. */
+  if (rl_completion_display_matches_func)
+    {
+      /* Sort the items if they are not already sorted. */
+      if (rl_ignore_completion_duplicates == 0 && rl_sort_completion_matches)
+        {
+          for (i = 0; matches[i]; i++)
+            ;
+          qsort_match_list (matches + 1, i - 1);
+        }
+      rl_completion_display_matches_func (matches);
+      return;
+    }
+/* end_clink_change */
 
   /* Handle simple case first.  What if there is only one answer? */
   if (matches[1] == 0)
