@@ -20,7 +20,7 @@ char *_rl_untranslate_macro_value(char *seq, int use_escapes);
 
 //------------------------------------------------------------------------------
 extern "C" int _rl_print_completions_horizontally;
-extern "C" int _rl_completion_columns;
+extern "C" int complete_get_screenwidth(void);
 extern printer* g_printer;
 extern pager* g_pager;
 extern editor_module::result* g_result;
@@ -348,11 +348,9 @@ static void show_key_bindings(bool friendly)
 
     // Calculate columns.
     unsigned int longest = longest_key + 3 + longest_func + 2;
-    int max_width = g_printer->get_columns();
+    int max_width = complete_get_screenwidth();
     int columns_that_fit = max_width / longest;
     int columns = max(1, columns_that_fit);
-    if (_rl_completion_columns > 0 && columns > _rl_completion_columns)
-        columns = _rl_completion_columns;
     int total_rows = ((offset - 1) + (columns - 1)) / columns;
 
     bool vertical = !_rl_print_completions_horizontally;
