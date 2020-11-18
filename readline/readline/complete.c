@@ -2300,7 +2300,7 @@ display_matches (char **matches)
 /* begin_clink_change */
   //if (rl_completion_query_items > 0 && len >= rl_completion_query_items)
   if (rl_completion_auto_query_items ?
-      rl_display_match_list_internal (matches, len, max, 1) >= (_rl_screenheight - 1) :
+      rl_display_match_list_internal (matches, len, max, 1) >= (_rl_screenheight / 2) :
       rl_completion_query_items > 0 && len >= rl_completion_query_items)
 /* end_clink_change */
     {
