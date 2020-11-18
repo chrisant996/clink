@@ -71,77 +71,363 @@ extern char* printable_part (char* pathname);
 extern int stat_char (char *filename, char match_type);
 extern int _rl_internal_pager (int lines);
 
+
+
+//------------------------------------------------------------------------------
+static char* tmpbuf_allocated = NULL;
+static char* tmpbuf_ptr = NULL;
+static int tmpbuf_length = 0;
+static int tmpbuf_capacity = 0;
+
+//------------------------------------------------------------------------------
+static void reset_tmpbuf (void)
+{
+    tmpbuf_ptr = tmpbuf_allocated;
+    tmpbuf_length = 0;
+}
+
+//------------------------------------------------------------------------------
+static void grow_tmpbuf (int needsize)
+{
+    int oldsize = tmpbuf_capacity;
+    int newsize;
+    char* newbuf;
+
+    if (!oldsize)
+        oldsize = 30;
+    newsize = oldsize;
+    while (newsize < needsize)
+        newsize *= 2;
+
+    tmpbuf_allocated = (char*)xrealloc(tmpbuf_allocated, newsize);
+    tmpbuf_ptr = tmpbuf_allocated + tmpbuf_length;
+}
+
+//------------------------------------------------------------------------------
+static void append_tmpbuf_char(char c)
+{
+    if (tmpbuf_length + 1 > tmpbuf_capacity)
+        grow_tmpbuf(tmpbuf_length + 1);
+
+    *tmpbuf_ptr = c;
+    tmpbuf_ptr++;
+    tmpbuf_length++;
+}
+
+//------------------------------------------------------------------------------
+static void append_tmpbuf_string(const char* s, int len)
+{
+    if (tmpbuf_length + len > tmpbuf_capacity)
+        grow_tmpbuf(tmpbuf_length + len);
+
+    memcpy(tmpbuf_ptr, s, len);
+    tmpbuf_ptr += len;
+    tmpbuf_length += len;
+}
+
+//------------------------------------------------------------------------------
+static void flush_tmpbuf(void)
+{
+    if (tmpbuf_length)
+    {
+        fwrite(tmpbuf_allocated, tmpbuf_length, 1, rl_outstream);
+        reset_tmpbuf();
+    }
+}
+
+
+
 //------------------------------------------------------------------------------
 #if defined (COLOR_SUPPORT)
-static int
-colored_stat_start (const char *filename, unsigned char match_type)
+static void append_color_indicator(enum indicator_no colored_filetype)
 {
-  _rl_set_normal_color ();
-  return (_rl_print_color_indicator (filename, match_type));
+    const struct bin_str *ind = &_rl_color_indicator[colored_filetype];
+    append_tmpbuf_string(ind->string, ind->len);
 }
 
-static void
-colored_stat_end (void)
+static bool is_colored(enum indicator_no colored_filetype)
 {
-  _rl_prep_non_filename_text ();
-  _rl_put_indicator (&_rl_color_indicator[C_CLR_TO_EOL]);
+  size_t len = _rl_color_indicator[colored_filetype].len;
+  char const *s = _rl_color_indicator[colored_filetype].string;
+  return ! (len == 0
+            || (len == 1 && strncmp (s, "0", 1) == 0)
+            || (len == 2 && strncmp (s, "00", 2) == 0));
 }
 
-static int
-colored_prefix_start (void)
+static void append_default_color(void)
 {
-  _rl_set_normal_color ();
-  return (_rl_print_prefix_color ());
+    append_color_indicator(C_LEFT);
+    append_color_indicator(C_RIGHT);
 }
 
-static void
-colored_prefix_end (void)
+static void append_normal_color(void)
 {
-  colored_stat_end ();
+    if (is_colored(C_NORM))
+    {
+        append_color_indicator(C_LEFT);
+        append_color_indicator(C_NORM);
+        append_color_indicator(C_RIGHT);
+    }
+}
+
+static void append_prefix_color(void)
+{
+    struct bin_str *s;
+
+    // What do we want to use for the prefix? Let's try cyan first, see colors.h.
+    s = &_rl_color_indicator[C_PREFIX];
+    if (s->string != NULL)
+    {
+        if (is_colored(C_NORM))
+            append_default_color();
+        append_color_indicator(C_LEFT);
+        append_tmpbuf_string(s->string, s->len);
+        append_color_indicator(C_RIGHT);
+    }
+}
+
+// Returns whether any color sequence was printed.
+static bool append_match_color_indicator(const char *f, unsigned char match_type)
+{
+    enum indicator_no colored_filetype;
+    COLOR_EXT_TYPE *ext; // Color extension.
+    size_t len;          // Length of name.
+
+    const char *name;
+    char *filename;
+    struct stat astat, linkstat;
+    mode_t mode;
+    int linkok; // 1 == ok, 0 == dangling symlink, -1 == missing.
+    int stat_ok;
+
+    name = f;
+
+    // This should already have undergone tilde expansion.
+    filename = 0;
+    if (rl_filename_stat_hook)
+    {
+        filename = savestring(f);
+        (*rl_filename_stat_hook)(&filename);
+        name = filename;
+    }
+
+    if (match_type)
+        stat_ok = stat_from_match_type(match_type, name, &astat);
+    else
+#if defined(HAVE_LSTAT)
+        stat_ok = lstat(name, &astat);
+#else
+        stat_ok = stat(name, &astat);
+#endif
+    if (stat_ok == 0)
+    {
+        mode = astat.st_mode;
+#if defined(HAVE_LSTAT)
+        if (S_ISLNK(mode))
+        {
+            linkok = stat(name, &linkstat) == 0;
+            if (linkok && strncmp(_rl_color_indicator[C_LINK].string, "target", 6) == 0)
+                mode = linkstat.st_mode;
+        }
+        else
+#endif
+            linkok = 1;
+    }
+    else
+        linkok = -1;
+
+    // Is this a nonexistent file?  If so, linkok == -1.
+
+    if (linkok == -1 && _rl_color_indicator[C_MISSING].string != NULL)
+        colored_filetype = C_MISSING;
+#if defined(S_ISLNK)
+    else if (linkok == 0 && S_ISLNK(mode) && _rl_color_indicator[C_ORPHAN].string != NULL)
+        colored_filetype = C_ORPHAN; // dangling symlink.
+#endif
+    else if (stat_ok != 0)
+    {
+        static enum indicator_no filetype_indicator[] = FILETYPE_INDICATORS;
+        colored_filetype = filetype_indicator[normal]; //f->filetype];
+    }
+    else
+    {
+        if (S_ISREG(mode))
+        {
+            colored_filetype = C_FILE;
+
+#if defined(S_ISUID)
+            if ((mode & S_ISUID) != 0 && is_colored(C_SETUID))
+                colored_filetype = C_SETUID;
+            else
+#endif
+#if defined(S_ISGID)
+                if ((mode & S_ISGID) != 0 && is_colored(C_SETGID))
+                colored_filetype = C_SETGID;
+            else
+#endif
+                if (is_colored(C_CAP) && 0) //f->has_capability)
+                colored_filetype = C_CAP;
+            else if ((mode & S_IXUGO) != 0 && is_colored(C_EXEC))
+                colored_filetype = C_EXEC;
+#if 0
+            else if ((1 < astat.st_nlink) && is_colored(C_MULTIHARDLINK))
+                colored_filetype = C_MULTIHARDLINK;
+#endif
+        }
+        else if (S_ISDIR(mode))
+        {
+            colored_filetype = C_DIR;
+
+#if defined (S_ISVTX)
+            if ((mode & S_ISVTX) && (mode & S_IWOTH)
+                && is_colored (C_STICKY_OTHER_WRITABLE))
+                colored_filetype = C_STICKY_OTHER_WRITABLE;
+            else
+#endif
+#if 0
+                if ((mode & S_IWOTH) != 0 && is_colored(C_OTHER_WRITABLE))
+                colored_filetype = C_OTHER_WRITABLE;
+#endif
+#if defined (S_ISVTX)
+                else if ((mode & S_ISVTX) != 0 && is_colored(C_STICKY))
+                    colored_filetype = C_STICKY;
+#endif
+        }
+#if defined(S_ISLNK)
+        else if (S_ISLNK(mode))
+            colored_filetype = C_LINK;
+#endif
+        else if (S_ISFIFO(mode))
+            colored_filetype = C_FIFO;
+#if defined(S_ISSOCK)
+        else if (S_ISSOCK(mode))
+            colored_filetype = C_SOCK;
+#endif
+#if defined (S_ISBLK)
+        else if (S_ISBLK(mode))
+            colored_filetype = C_BLK;
+#endif
+        else if (S_ISCHR(mode))
+            colored_filetype = C_CHR;
+        else
+        {
+            // Classify a file of some other type as C_ORPHAN.
+            colored_filetype = C_ORPHAN;
+        }
+    }
+
+    if (match_type)
+    {
+        const char *override_color = 0;
+        if (colored_filetype == C_FILE || colored_filetype == C_DIR)
+        {
+            if (_rl_hidden_color &&
+                IS_MATCH_TYPE_HIDDEN(match_type) &&
+                (IS_MATCH_TYPE_FILE(match_type) || IS_MATCH_TYPE_DIR(match_type)))
+                override_color = _rl_hidden_color;
+            else if (_rl_readonly_color &&
+                     IS_MATCH_TYPE_READONLY(match_type) &&
+                     (IS_MATCH_TYPE_FILE(match_type) /*|| IS_MATCH_TYPE_DIR (match_type)*/))
+                override_color = _rl_readonly_color;
+        }
+        else if (IS_MATCH_TYPE_ALIAS(match_type))
+            override_color = _rl_alias_color;
+        if (override_color)
+        {
+            free(filename); // NULL or savestring return value.
+            // Need to reset so not dealing with attribute combinations.
+            if (is_colored(C_NORM))
+                append_default_color();
+            append_color_indicator(C_LEFT);
+            append_tmpbuf_string(override_color, strlen(override_color));
+            append_color_indicator(C_RIGHT);
+            return 0;
+        }
+    }
+
+    // Check the file's suffix only if still classified as C_FILE.
+    ext = NULL;
+    if (colored_filetype == C_FILE)
+    {
+        // Test if NAME has a recognized suffix.
+        len = strlen(name);
+        name += len; // Pointer to final \0.
+        for (ext = _rl_color_ext_list; ext != NULL; ext = ext->next)
+        {
+            if (ext->ext.len <= len && strncmp(name - ext->ext.len, ext->ext.string,
+                                               ext->ext.len) == 0)
+                break;
+        }
+    }
+
+    free(filename); // NULL or savestring return value.
+
+    {
+        const struct bin_str *const s = ext ? &(ext->seq) : &_rl_color_indicator[colored_filetype];
+        if (s->string != NULL)
+        {
+            // Need to reset so not dealing with attribute combinations.
+            if (is_colored(C_NORM))
+                append_default_color();
+            append_color_indicator(C_LEFT);
+            append_tmpbuf_string(s->string, s->len);
+            append_color_indicator(C_RIGHT);
+            return 0;
+        }
+        else
+            return 1;
+    }
+}
+
+static void prep_non_filename_text(void)
+{
+    if (_rl_color_indicator[C_END].string != NULL)
+        append_color_indicator(C_END);
+    else
+    {
+        append_color_indicator(C_LEFT);
+        append_color_indicator(C_RESET);
+        append_color_indicator(C_RIGHT);
+    }
+}
+
+static void append_colored_stat_start(const char *filename, unsigned char match_type)
+{
+    append_normal_color();
+    append_match_color_indicator(filename, match_type);
+}
+
+static void append_colored_stat_end(void)
+{
+    prep_non_filename_text();
+}
+
+static void append_colored_prefix_start(void)
+{
+    append_normal_color();
+    append_prefix_color();
+}
+
+static void append_colored_prefix_end(void)
+{
+    append_colored_stat_end();
 }
 #endif
 
 //------------------------------------------------------------------------------
 static int
-path_isdir (const char *filename)
+path_isdir(const char *filename)
 {
   struct stat finfo;
 
   return (stat (filename, &finfo) == 0 && S_ISDIR (finfo.st_mode));
 }
 
-//------------------------------------------------------------------------------
-static char* grow_tmpbuf (char** tmpbuf, int* tmpsize, int needmore, int index)
-{
-    int oldsize = *tmpsize;
-    int needsize = oldsize + needmore;
-    int newsize;
-    char* newbuf;
 
-    if (!oldsize)
-        oldsize = 64;
-    newsize = oldsize;
-    while (newsize < needsize)
-        newsize *= 2;
-
-    newbuf = (char*)xrealloc(*tmpbuf, newsize);
-    *tmpbuf = newbuf;
-    *tmpsize = newsize;
-    return newbuf + index;
-}
-
-#define ADDCHAR(c)          do { if (i >= tmpsize) t = grow_tmpbuf(&tmpbuf, &tmpsize, 1, i); *t = (c); ++t; ++i; } while(0)
-#define ADDCHARS(s, num)    do { int n = (num); if (i + n > tmpsize) t = grow_tmpbuf(&tmpbuf, &tmpsize, n, i); memcpy(t, s, n); t += n; i += n; } while(0)
 
 //------------------------------------------------------------------------------
-static int fnprint (const char *to_print, int prefix_bytes, const char *real_pathname, unsigned char match_type)
+static int fnappend(const char *to_print, int prefix_bytes, const char *real_pathname, unsigned char match_type)
 {
-    static char *tmpbuf = NULL;
-    static int tmpsize = 0;
-
-    int i = 0;
-    char* t = tmpbuf;
-
     int printed_len, w;
     const char *s;
     int common_prefix_len, print_len;
@@ -164,31 +450,27 @@ static int fnprint (const char *to_print, int prefix_bytes, const char *real_pat
     // Don't print only the ellipsis if the common prefix is one of the
     // possible completions.  Only cut off prefix_bytes if we're going to be
     // printing the ellipsis, which takes precedence over coloring the
-    // completion prefix (see print_filename() below).
+    // completion prefix (see append_filename() below).
     if (_rl_completion_prefix_display_length > 0 && prefix_bytes >= print_len)
         prefix_bytes = 0;
 
 #if defined(COLOR_SUPPORT)
     if (_rl_colored_stats && (prefix_bytes == 0 || _rl_colored_completion_prefix <= 0))
-        colored_stat_start(real_pathname, match_type);
+        append_colored_stat_start(real_pathname, match_type);
 #endif
 
     if (prefix_bytes && _rl_completion_prefix_display_length > 0)
     {
-        char ellipsis[ELLIPSIS_LEN + 1];
-
-        ellipsis[0] = (to_print[prefix_bytes] == '.') ? '_' : '.';
-        for (w = 1; w < ELLIPSIS_LEN; w++)
-            ellipsis[w] = ellipsis[0];
-        ellipsis[ELLIPSIS_LEN] = '\0';
+        char ellipsis = (to_print[prefix_bytes] == '.') ? '_' : '.';
 #if defined(COLOR_SUPPORT)
-        colored_prefix_start();
+        append_colored_prefix_start();
 #endif
-        fwrite(ellipsis, ELLIPSIS_LEN, 1, rl_outstream);
+        for (int i = ELLIPSIS_LEN; i--;)
+            append_tmpbuf_char(ellipsis);
 #if defined(COLOR_SUPPORT)
-        colored_prefix_end();
+        append_colored_prefix_end();
         if (_rl_colored_stats)
-            colored_stat_start(real_pathname, match_type); // XXX - experiment
+            append_colored_stat_start(real_pathname, match_type); // XXX - experiment
 #endif
         printed_len = ELLIPSIS_LEN;
     }
@@ -198,7 +480,7 @@ static int fnprint (const char *to_print, int prefix_bytes, const char *real_pat
         common_prefix_len = prefix_bytes;
         prefix_bytes = 0;
         // Print color indicator start here.
-        colored_prefix_start();
+        append_colored_prefix_start();
     }
 #endif
 
@@ -207,8 +489,8 @@ static int fnprint (const char *to_print, int prefix_bytes, const char *real_pat
     {
         if (CTRL_CHAR(*s))
         {
-            ADDCHAR('^');
-            ADDCHAR(UNCTRL(*s));
+            append_tmpbuf_char('^');
+            append_tmpbuf_char(UNCTRL(*s));
             printed_len += 2;
             s++;
 #if defined(HANDLE_MULTIBYTE)
@@ -217,7 +499,7 @@ static int fnprint (const char *to_print, int prefix_bytes, const char *real_pat
         }
         else if (*s == RUBOUT)
         {
-            ADDCHARS("^?", 2);
+            append_tmpbuf_string("^?", 2);
             printed_len += 2;
             s++;
 #if defined(HANDLE_MULTIBYTE)
@@ -241,41 +523,35 @@ static int fnprint (const char *to_print, int prefix_bytes, const char *real_pat
                 w = WCWIDTH(wc);
                 width = (w >= 0) ? w : 1;
             }
-            ADDCHARS(s, tlen);
+            append_tmpbuf_string(s, tlen);
             s += tlen;
             printed_len += width;
 #else
-            ADDCHAR(*s);
+            append_tmpbuf_char(*s);
             s++;
             printed_len++;
 #endif
         }
         if (common_prefix_len > 0 && (s - to_print) >= common_prefix_len)
         {
-            if (i)
-            {
-                fwrite(tmpbuf, i, 1, rl_outstream);
-                i = 0;
-                t = tmpbuf;
-            }
+            flush_tmpbuf();
 #if defined(COLOR_SUPPORT)
             // printed bytes = s - to_print
             // printed bytes should never be > but check for paranoia's sake
-            colored_prefix_end();
+            append_colored_prefix_end();
             if (_rl_colored_stats)
-                colored_stat_start(real_pathname, match_type); // XXX - experiment
+                append_colored_stat_start(real_pathname, match_type); // XXX - experiment
 #endif
             common_prefix_len = 0;
         }
     }
 
-    if (i)
-        fwrite(tmpbuf, i, 1, rl_outstream);
+    flush_tmpbuf();
 
 #if defined (COLOR_SUPPORT)
     // XXX - unconditional for now.
     if (_rl_colored_stats)
-        colored_stat_end();
+        append_colored_stat_end();
 #endif
 
     return printed_len;
@@ -284,7 +560,7 @@ static int fnprint (const char *to_print, int prefix_bytes, const char *real_pat
 // Print filename.  If VISIBLE_STATS is defined and we are using it, check for
 // and output a single character for 'special' filenames.  Return the number of
 // characters we output.
-static int print_filename(char* to_print, char* full_pathname, int prefix_bytes)
+static int append_filename(char* to_print, char* full_pathname, int prefix_bytes)
 {
     int printed_len, extension_char, slen, tlen;
     char *s, c, *new_full_pathname, *dn;
@@ -300,7 +576,7 @@ static int print_filename(char* to_print, char* full_pathname, int prefix_bytes)
     // Defer printing if we want to prefix with a color indicator.
     if (_rl_colored_stats == 0 || filename_display_desired == 0)
 #endif
-        printed_len = fnprint(to_print, prefix_bytes, to_print, match_type);
+        printed_len = fnappend(to_print, prefix_bytes, to_print, match_type);
 
     if (filename_display_desired && (
 #if defined (VISIBLE_STATS)
@@ -381,10 +657,10 @@ static int print_filename(char* to_print, char* full_pathname, int prefix_bytes)
                     extension_char = rl_preferred_path_separator;
             }
 
-            // Move colored-stats code inside fnprint()
+            // Move colored-stats code inside fnappend()
 #if defined(COLOR_SUPPORT)
             if (_rl_colored_stats)
-                printed_len = fnprint(to_print, prefix_bytes, new_full_pathname, match_type);
+                printed_len = fnappend(to_print, prefix_bytes, new_full_pathname, match_type);
 #endif
 
             xfree(new_full_pathname);
@@ -402,10 +678,10 @@ static int print_filename(char* to_print, char* full_pathname, int prefix_bytes)
                 ((!match_type || IS_MATCH_TYPE_NONE(match_type)) ? path_isdir(s) : IS_MATCH_TYPE_DIR(match_type)))
                 extension_char = rl_preferred_path_separator;
 
-            // Move colored-stats code inside fnprint()
+            // Move colored-stats code inside fnappend()
 #if defined (COLOR_SUPPORT)
             if (_rl_colored_stats)
-                printed_len = fnprint(to_print, prefix_bytes, s, match_type);
+                printed_len = fnappend(to_print, prefix_bytes, s, match_type);
 #endif
         }
 
@@ -425,15 +701,15 @@ static int print_filename(char* to_print, char* full_pathname, int prefix_bytes)
             if (extension_char == rl_preferred_path_separator)
             {
                 s = tilde_expand(full_pathname);
-                colored_stat_start(s, match_type);
+                append_colored_stat_start(s, match_type);
                 xfree(s);
             }
 #endif
-            putc(extension_char, rl_outstream);
+            append_tmpbuf_char(extension_char);
             printed_len++;
 #if defined(COLOR_SUPPORT)
             if (extension_char == rl_preferred_path_separator)
-                colored_stat_end();
+                append_colored_stat_end();
 #endif
         }
     }
@@ -467,7 +743,7 @@ static void pad_filename(int len, int max_spaces)
     {
         static const char spaces[] = "                                                ";
         const int spaces_bytes = sizeof(spaces) - sizeof(spaces[0]);
-        fwrite(spaces, min(num_spaces, max_spaces), 1, rl_outstream);
+        append_tmpbuf_string(spaces, min(num_spaces, max_spaces));
         num_spaces -= max_spaces;
     }
 }
@@ -537,6 +813,7 @@ static int display_match_list_internal(char **matches, int len, int max, bool on
         // Print the sorted items, up-and-down alphabetically, like ls.
         for (i = 1; i <= count; i++)
         {
+            reset_tmpbuf();
             for (j = 0, l = i; j < limit; j++)
             {
                 if (l > len || matches[l] == 0)
@@ -544,13 +821,15 @@ static int display_match_list_internal(char **matches, int len, int max, bool on
                 else
                 {
                     temp = printable_part(matches[l]);
-                    printed_len = print_filename(temp, matches[l], sind);
+                    printed_len = append_filename(temp, matches[l], sind);
 
                     if (j + 1 < limit)
                         pad_filename(printed_len, max);
                 }
                 l += count;
             }
+            append_color_indicator(C_CLR_TO_EOL);
+            flush_tmpbuf();
             rl_crlf();
 #if defined(SIGWINCH)
             if (RL_SIG_RECEIVED() && RL_SIGWINCH_RECEIVED() == 0)
@@ -573,7 +852,7 @@ static int display_match_list_internal(char **matches, int len, int max, bool on
         for (i = 1; matches[i]; i++)
         {
             temp = printable_part(matches[i]);
-            printed_len = print_filename(temp, matches[i], sind);
+            printed_len = append_filename(temp, matches[i], sind);
             // Have we reached the end of this line?
 #if defined(SIGWINCH)
             if (RL_SIG_RECEIVED() && RL_SIGWINCH_RECEIVED() == 0)
@@ -616,7 +895,9 @@ void display_matches(char** matches)
     {
         temp = printable_part(matches[0]);
         rl_crlf();
-        print_filename(temp, matches[0], 0);
+        reset_tmpbuf();
+        append_filename(temp, matches[0], 0);
+        fwrite(tmpbuf_allocated, tmpbuf_length, 1, rl_outstream);
         rl_crlf();
 
         rl_forced_update_display();

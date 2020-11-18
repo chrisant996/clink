@@ -11,6 +11,8 @@ ChrisAnt Plans
 
 # BETA
 
+- Need a Readline variable for case insensitive history search (and etc).
+
 ## Cmder, Powerline, Clink-Completions
 - Update clink-completions to have better 0.4.9 implementations, and also to conditionally use the new API when available.
 - Update clink-git-extensions to have better 0.4.9 implementations, and also to conditionally use the new API when available.
@@ -58,6 +60,8 @@ ChrisAnt Plans
   - The tricky part is how to register the Lua scripts as commands that Readline can invoke, since Readline expects unique non-parameterized function pointers.
   - Provide API for accessing the screen buffer, and for scrolling.
   - Provide API for interacting with the Readline buffer.
+  - Provide API to show a popup list?  But make it fail if used from outside a Readline command.
+  - Provide API to show an input box?  But make it fail if used from outside a Readline command.
 - Custom color for readline input.
   - Might prefer to completely replace readline's line drawing, since it's trying to minimize updates over terminal emulators, and that makes it much harder to colorize the editing line (and arguments).
 
@@ -95,11 +99,12 @@ ChrisAnt Plans
 - Use `npm` to run `highlight.js` at compile time?
 
 **Popup Lists**
-- What to do about completion colors?
-- Make it owner draw and add text like "dir", "alias", etc?
-- Add stat chars when so configured?
 - Ability to delete, rearrange, and edit popup list items?
 - Show the current incremental search string somewhere?
+- Completions:
+  - What to do about completion colors?
+  - Make it owner draw and add text like "dir", "alias", etc?
+  - Add stat chars when so configured?
 
 **Key Binding**
 - Try to make unbound keys like **Shift-Left** tell conhost that they haven't been handled, so conhost can do its fancy CUA marking.
