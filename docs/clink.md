@@ -176,6 +176,7 @@ Name | Default | Description
 `completion-auto-query-items`|on|Automatically prompts before displaying completions if they won't fit on one screen page.
 `history-point-at-end-of-anchored-search`|off|Puts the cursor at the end of the line when using `history-search-forward` or `history-search-backward`.
 `locale-sort`|on|Sorts completions with locale awareness (like CMD does).
+`search-ignore-case`|off|Controls whether the history search commands ignore case.
 
 ## New Commands
 

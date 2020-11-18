@@ -77,6 +77,12 @@ static int last_isearch_string_len;
 
 static char * const default_isearch_terminators = "\033\012";
 
+/* begin_clink_change */
+extern int find_streqn (const char *a, const char *b, int n);
+#undef STREQN
+#define STREQN(a, b, n) (find_streqn(a, b, n))
+/* end_clink_change */
+
 _rl_search_cxt *
 _rl_scxt_alloc (int type, int flags)
 {

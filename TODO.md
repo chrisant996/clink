@@ -11,8 +11,6 @@ ChrisAnt Plans
 
 # BETA
 
-- Need a Readline variable for case insensitive history search (and etc).
-
 ## Cmder, Powerline, Clink-Completions
 - Update clink-completions to have better 0.4.9 implementations, and also to conditionally use the new API when available.
 - Update clink-git-extensions to have better 0.4.9 implementations, and also to conditionally use the new API when available.
@@ -21,12 +19,12 @@ ChrisAnt Plans
 - [#12](https://github.com/chrisant996/clink/issues/12) Why is Cmder's Clink so slow to start?
 
 ## Coloring arguments and flags while editing (according to Lua argmatchers)
-  - Replace `rl_redisplay_function` and use the word classifications to apply colors.
-  - That should also fix these two issues:
-    - **Alt+P** then **Ctrl+G** internally resets the prompt, but `rl_redisplay()` gets confused into still drawing the cached `local_prompt`.
-    - If the last line of the prompt is "too long" then `rl_message()` in **Alt+P** fails to draw the adjusted prompt correctly; the old prompt continues to be drawn.
-      - The cutoff is 136 characters -- less and the message shows up, or more and no message.
-      - And using **Ctrl+R** and then aborting redraws the prompt using the wrong screen buffer width / wrapping position!
+- Replace `rl_redisplay_function` and use the word classifications to apply colors.
+- That should also fix these two issues:
+  - **Alt+P** then **Ctrl+G** internally resets the prompt, but `rl_redisplay()` gets confused into still drawing the cached `local_prompt`.
+  - If the last line of the prompt is "too long" then `rl_message()` in **Alt+P** fails to draw the adjusted prompt correctly; the old prompt continues to be drawn.
+    - The cutoff is 136 characters -- less and the message shows up, or more and no message.
+    - And using **Ctrl+R** and then aborting redraws the prompt using the wrong screen buffer width / wrapping position!
 
 <br/>
 <br/>
@@ -37,13 +35,13 @@ ChrisAnt Plans
 
 ### Urgent
 
-### Normal
+### Normal Priority
 - Is it a problem that `update_internal()` gets called once per char in a key sequence?  Maybe it should only happen after a key that finishes a key binding?
 - Should only fold path separators in pathish matches.
 - `LOG()` certain important failure information inside Detours.
 - When `convert-meta` is off, then when binding `\M-h` (etc) the key name gets interpreted differently than Clink expects.  Does this affect the `inputrc` files at all, or is it only an issue inside Clink's native code?
 
-### Low
+### Low Priority
 - Changing terminal width makes 0.4.8 slowly "walk up the screen".  Changing terminal width makes master go haywire.  Probably more ecma48 terminal issues.  Probably related to commit 8aeaa14.
 - Use `path::normalise` to clean up input like "\wbin\\\\cli" when using `complete` and `menu-complete`.
 - Symlink support (displaying matches, and whether to append a path separator).

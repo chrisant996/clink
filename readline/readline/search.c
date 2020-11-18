@@ -71,6 +71,7 @@ static int rl_history_search_flags;
 
 /* begin_clink_change */
 int _rl_history_point_at_end_of_anchored_search = 0;
+int _rl_search_case_fold = 0;
 /* end_clink_change */
 
 static char *history_search_string;
@@ -114,6 +115,54 @@ make_history_line_current (HIST_ENTRY *entry)
     _rl_free_history_entry (_rl_saved_line_for_history);
   _rl_saved_line_for_history = (HIST_ENTRY *)NULL;
 }
+
+/* begin_clink_change */
+int
+find_streqn (const char *a, const char *b, int len)
+{
+  if (!len)
+    return 1;
+
+  if (!_rl_search_case_fold)
+    return STREQN (a, b, len);
+
+#if defined (HANDLE_MULTIBYTE)
+  if (MB_CUR_MAX > 1 && rl_byte_oriented == 0)
+    {
+      size_t v1, v2;
+      mbstate_t ps1, ps2;
+      wchar_t wc1, wc2;
+
+      do
+	{
+	  v1 = mbrtowc (&wc1, a, 1, &ps1);
+	  v2 = mbrtowc (&wc2, b, 1, &ps2);
+	  if (v1 == 0 && v2 == 0)
+	    return 1;
+	  else if (MB_INVALIDCH (v1) || MB_INVALIDCH (v2))
+	    {
+	      if (*a != *b)		/* do byte comparison */
+		return 0;
+	      a++; b++; len--;
+	      continue;
+	    }
+	  wc1 = towlower (wc1);
+	  wc2 = towlower (wc2);
+	  if (wc1 != wc2)
+	    return 0;
+	  a += v1;
+	  b += v1;
+	  len -= v1;
+	}
+      while (len != 0);
+      return 1;
+    }
+#endif
+
+  return (_rl_strnicmp (a, b, len) == 0);
+}
+
+/* end_clink_change */
 
 /* Search the history list for STRING starting at absolute history position
    POS.  If STRING begins with `^', the search must match STRING at the
