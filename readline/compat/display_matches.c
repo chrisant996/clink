@@ -828,7 +828,10 @@ static int display_match_list_internal(char **matches, int len, int max, bool on
                 }
                 l += count;
             }
-            append_color_indicator(C_CLR_TO_EOL);
+#if defined(COLOR_SUPPORT)
+            if (_rl_colored_stats)
+                append_color_indicator(C_CLR_TO_EOL);
+#endif
             flush_tmpbuf();
             rl_crlf();
 #if defined(SIGWINCH)
