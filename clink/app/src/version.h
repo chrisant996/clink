@@ -10,7 +10,7 @@
 
 #define CLINK_VERSION_MAJOR 1
 #define CLINK_VERSION_MINOR 1
-#define CLINK_VERSION_PATCH 3
+#define CLINK_VERSION_PATCH 4
 #define CLINK_VERSION_STR   AS_STR(CLINK_VERSION_MAJOR) ## "." ##\
                             AS_STR(CLINK_VERSION_MINOR) ## "." ##\
                             AS_STR(CLINK_VERSION_PATCH) ##\
