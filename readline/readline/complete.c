@@ -1280,7 +1280,7 @@ print_filename (char *to_print, char *full_pathname, int prefix_bytes)
 	{
 /* begin_clink_change */
 #if defined (COLOR_SUPPORT)
-	  if (extension_char == rl_preferred_path_separator)
+	  if (_rl_colored_stats && extension_char == rl_preferred_path_separator)
 	    {
 	      s = tilde_expand (full_pathname);
 	      colored_stat_start (s, match_type);
@@ -1292,7 +1292,7 @@ print_filename (char *to_print, char *full_pathname, int prefix_bytes)
 	  printed_len++;
 /* begin_clink_change */
 #if defined (COLOR_SUPPORT)
-	  if (extension_char == rl_preferred_path_separator)
+	  if (_rl_colored_stats && extension_char == rl_preferred_path_separator)
 	    colored_stat_end();
 #endif
 /* end_clink_change */

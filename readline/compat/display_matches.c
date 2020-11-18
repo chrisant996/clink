@@ -698,7 +698,7 @@ static int append_filename(char* to_print, char* full_pathname, int prefix_bytes
         if (extension_char)
         {
 #if defined(COLOR_SUPPORT)
-            if (extension_char == rl_preferred_path_separator)
+            if (_rl_colored_stats && extension_char == rl_preferred_path_separator)
             {
                 s = tilde_expand(full_pathname);
                 append_colored_stat_start(s, match_type);
@@ -708,7 +708,7 @@ static int append_filename(char* to_print, char* full_pathname, int prefix_bytes
             append_tmpbuf_char(extension_char);
             printed_len++;
 #if defined(COLOR_SUPPORT)
-            if (extension_char == rl_preferred_path_separator)
+            if (_rl_colored_stats && extension_char == rl_preferred_path_separator)
                 append_colored_stat_end();
 #endif
         }
