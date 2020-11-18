@@ -731,20 +731,20 @@ static char* visible_part(char *match)
 }
 
 //------------------------------------------------------------------------------
-static void pad_filename(int len, int max_spaces)
+static void pad_filename(int len, int pad_to_width)
 {
     int num_spaces = 0;
-    if (max_spaces <= len)
+    if (pad_to_width <= len)
         num_spaces = 1;
     else
-        num_spaces = max_spaces - len;
+        num_spaces = pad_to_width - len;
 
     while (num_spaces > 0)
     {
         static const char spaces[] = "                                                ";
         const int spaces_bytes = sizeof(spaces) - sizeof(spaces[0]);
-        append_tmpbuf_string(spaces, min(num_spaces, max_spaces));
-        num_spaces -= max_spaces;
+        append_tmpbuf_string(spaces, min(num_spaces, spaces_bytes));
+        num_spaces -= spaces_bytes;
     }
 }
 
