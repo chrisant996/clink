@@ -133,7 +133,7 @@ function _argmatcher._new()
     local matcher = setmetatable({
         _args = {},
     }, _argmatcher)
-    matcher:setflagprefix("-")
+    matcher._flagprefix = {}
     return matcher
 end
 
@@ -170,11 +170,15 @@ function _argmatcher:addflags(...)
     local flag_matcher = self._flags or _argmatcher()
     local list = flag_matcher._args[1] or { _links = {} }
     local prefixes = self._flagprefix or {}
+
     flag_matcher:_add(list, {...}, prefixes)
 
     flag_matcher._args[1] = list
     self._flags = flag_matcher
-    self._flagprefix = prefixes
+
+    if not self._deprecated then
+        self._flagprefix = prefixes
+    end
     return self
 end
 
@@ -213,13 +217,16 @@ end
 --- This is no longer needed because <code>:addflags()</code> does it
 --- automatically.
 function _argmatcher:setflagprefix(...)
-    for _, i in ipairs({...}) do
-        if type(i) ~= "string" or #i ~= 1 then
-            error("Flag prefixes must be single character strings", 2)
+    if self._deprecated then
+        local old = self._flagprefix
+        self._flagprefix = {}
+        for _, i in ipairs({...}) do
+            if type(i) ~= "string" or #i ~= 1 then
+                error("Flag prefixes must be single character strings", 2)
+            end
+            self._flagprefix[i] = old[i] or 0
         end
     end
-
-    self._flagprefix = {...}
     return self
 end
 
@@ -570,9 +577,25 @@ end
 --------------------------------------------------------------------------------
 function argmatcher_generator:getwordbreakinfo(line_state)
     local argmatcher = _find_argmatcher(line_state)
-    local word = line_state:getendword()
-    if argmatcher and argmatcher._flags and argmatcher:_is_flag(word) then
-        return 0, 1
+    if argmatcher then
+        local reader = _argreader(argmatcher)
+
+        -- Consume words and use them to move through matchers' arguments.
+        local word_count = line_state:getwordcount()
+        for word_index = 2, (word_count - 1) do
+            local word = line_state:getword(word_index)
+            reader:update(word)
+        end
+
+        -- There should always be a matcher left on the stack, but the arg_index
+        -- could be well out of range.
+        argmatcher = reader._matcher
+        if argmatcher and argmatcher._flags then
+            local word = line_state:getendword()
+            if argmatcher:_is_flag(word) then
+                return 0, 1
+            end
+        end
     end
 
     return 0
@@ -584,13 +607,13 @@ end
 clink.arg = clink.arg or {}
 
 --------------------------------------------------------------------------------
-local function starts_with_flag_character(part)
+local function starts_with_flag_character(parser, part)
     if part == nil then
         return false
     end
 
     local prefix = part:sub(1, 1)
-    return prefix == "-" or prefix == "/"
+    return parser._flagprefix[prefix] and true or false
 end
 
 --------------------------------------------------------------------------------
@@ -600,7 +623,7 @@ local function parser_initialise(parser, ...)
         if t == "string" then
             parser:addflags(word)
         elseif t == "table" then
-            if getmetatable(word) == _arglink and starts_with_flag_character(word.key) then
+            if getmetatable(word) == _arglink and starts_with_flag_character(parser, word._key) then
                 parser:addflags(word)
             else
                 parser:addarg(word)
@@ -630,6 +653,9 @@ end
 --- Creates a new parser and adds <em>...</em> to it.
 function clink.arg.new_parser(...)
     local parser = clink.argmatcher()
+    parser._deprecated = true
+    parser._flagprefix = {}
+    parser._flagprefix['-'] = 0
     if ... then
         local success, msg = xpcall(parser_initialise, _error_handler_ret, parser, ...)
         if not success then
@@ -660,11 +686,26 @@ end
 --- -deprecated: clink.argmatcher
 --- Adds <em>parser</em> to the first argmatcher for <em>cmd</em>.  This behaves
 --- similarly to v0.4.8, but not identically.  The Clink schema has changed
---- significantly enough that there is no direct 1:1 translation.
+--- significantly enough that there is no direct 1:1 translation.  Calling
+--- <code>clink.arg.register_parser</code> repeatedly with the same command to
+--- merge parsers is not supported anymore.
 function clink.arg.register_parser(cmd, parser)
-    local matcher = _argmatchers[cmd] or clink.argmatcher(cmd)
-    local list = matcher._args[1] or { _links = {} }
-    matcher:_add(list, parser)
-    matcher._args[1] = list
+    if _argmatchers[cmd:lower()] then
+        error("clink.arg.register_parser() is deprecated and can no longer merge parsers by repeatedly calling register_parser for the same command.")
+        return
+    end
+
+    if parser and getmetatable(parser) == _argmatcher then
+        if not parser._deprecated then
+            error("clink.arg.register_parser() is deprecated and can only be used with parsers created by clink.arg.new_parser().")
+            return
+        end
+
+        _argmatchers[cmd:lower()] = parser
+        return parser
+    end
+
+    local matcher = clink.arg.new_parser(parser)
+    _argmatchers[cmd:lower()] = matcher
     return matcher
 end
