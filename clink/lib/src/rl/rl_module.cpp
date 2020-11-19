@@ -617,6 +617,23 @@ static char** alternative_matches(const char* text, int start, int end)
 }
 
 //------------------------------------------------------------------------------
+// If the input text starts with a slash and doesn't have any other slashes or
+// path separators, then preserve the original slash in the lcd.  Otherwise it
+// converts "somecommand /" to "somecommand \" and we lose the ability to try
+// completing to test if an argmatcher has defined flags for "somecommand".
+static void postprocess_lcd(char* lcd, const char* text)
+{
+    if (*text != '/')
+        return;
+
+    while (*(++text))
+        if (*text == '/' || rl_is_path_separator(*text))
+            return;
+
+    lcd[!!rl_completion_matches_include_type] = '/';
+}
+
+//------------------------------------------------------------------------------
 int clink_popup_complete(int count, int invoking_key)
 {
     if (!s_matches)
@@ -892,6 +909,7 @@ rl_module::rl_module(const char* shell_name, terminal_in* input)
     rl_menu_completion_entry_function = filename_menu_completion_function;
     rl_adjust_completion_word = adjust_completion_word;
     rl_completion_display_matches_func = display_matches;
+    rl_postprocess_lcd_func = postprocess_lcd;
     rl_read_key_hook = read_key_hook;
 
     // Add commands.

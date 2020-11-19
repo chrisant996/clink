@@ -11,6 +11,12 @@ ChrisAnt Plans
 
 # BETA
 
+- Need to add a hook function for inserting matches.
+  - The insertion hook can avoid appending a space when inserting a flag that ends in `:` or `=`.
+  - The insertion hook can deal with path normalisation.
+  - And address the sorting problem, and then the match_type stuff can be removed from Readline.
+  - And THEN individual matches can have arbitrary values associated -- color, append char, or any per-match data that's desired.
+
 ## Cmder, Powerline, Clink-Completions
 - Update clink-completions to have better 0.4.9 implementations, and also to conditionally use the new API when available.
 - Update clink-git-extensions to have better 0.4.9 implementations, and also to conditionally use the new API when available.

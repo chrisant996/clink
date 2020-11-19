@@ -107,6 +107,9 @@ rl_compdisp_func_t *rl_completion_display_matches_hook = (rl_compdisp_func_t *)N
    called.  rl_completion_display_matches_func is called early enough that the
    host application can override all of the behavior. */
 rl_vcppfunc_t *rl_completion_display_matches_func = (rl_vcppfunc_t *)NULL;
+/* If non-zero, then this is the address of a function to call that
+   postprocesses the lcd. */
+rl_postprocess_lcd_func_t *rl_postprocess_lcd_func = (rl_postprocess_lcd_func_t *)NULL;
 /* end_clink_change */
 
 #if defined (VISIBLE_STATS) || defined (COLOR_SUPPORT)
@@ -1771,6 +1774,10 @@ compute_lcd_of_matches (char **match_list, int matches, const char *text)
     {
       match_list[0] = match_list[1];
       match_list[1] = (char *)NULL;
+/* begin_clink_change */
+      if (rl_postprocess_lcd_func)
+        rl_postprocess_lcd_func (match_list[0], text);
+/* end_clink_change */
       return 1;
     }
 
@@ -1928,6 +1935,10 @@ compute_lcd_of_matches (char **match_list, int matches, const char *text)
       match_list[0][low] = '\0';
     }
 
+/* begin_clink_change */
+  if (rl_postprocess_lcd_func)
+    rl_postprocess_lcd_func (match_list[0], text);
+/* end_clink_change */
   return matches;
 }
 

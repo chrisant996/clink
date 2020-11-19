@@ -74,6 +74,8 @@ typedef void rl_history_hook_func_t PARAMS((int rl_history_index, const char* li
 typedef int rl_read_key_hook_func_t PARAMS((void));
 /* Type for adjusting completion word hook function */
 typedef char rl_adjcmpwrd_func_t PARAMS((char qc, int *fp, int *dp));
+/* Type for postprocessing the lcd hook function */
+typedef void rl_postprocess_lcd_func_t PARAMS((char *, const char *));
 /* end_clink_change */
 
 /* Input function type */

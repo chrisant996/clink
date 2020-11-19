@@ -633,6 +633,8 @@ extern int rl_backslash_path_sep;
 extern char rl_preferred_path_separator;
 /* Function to call for post-processing of _rl_find_completion_word. */
 extern rl_adjcmpwrd_func_t *rl_adjust_completion_word;
+/* Function to call for post-processing of lcd. */
+extern rl_postprocess_lcd_func_t *rl_postprocess_lcd_func;
 /* Completion functions can set this to signal that the first char of each
    match is bit flags about the match type. */
 #define MATCH_TYPE_NONE			1
