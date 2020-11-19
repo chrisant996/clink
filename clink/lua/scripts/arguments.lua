@@ -280,7 +280,18 @@ function _argmatcher:__call(arg)
             x = x._key
         end
 
-        return self:_is_flag(tostring(x))
+        if self:_is_flag(tostring(x)) then
+            return true
+        end
+
+        if x then
+            local first_char = x:sub(1, 1)
+            if first_char and first_char:match("[-/]") then
+                return true
+            end
+        end
+
+        return false
     end
 
     if is_flag(arg[1]) then

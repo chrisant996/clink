@@ -408,15 +408,16 @@ TEST_CASE("Lua arg parsers.")
         const char* script = "\
             p = clink.argmatcher('argcmd_flags_s')\
             :addflags('/one', '/two', '/twenty')\
-            :setflagprefix('/')\
             \
             clink.argmatcher('argcmd_flags_d')\
             :addflags('-one', '-two', '-twenty')\
             \
+            local parser =\
             clink.argmatcher('argcmd_flags_x')\
-            :setflagprefix()\
             :addflags('-oa', '-ob', '-oc')\
             :addarg('-od', '-oe', '-of')\
+            parser._deprecated = true\
+            parser:setflagprefix()\
         ";
 
         REQUIRE(lua.do_string(script));

@@ -13,6 +13,7 @@
 - Fixed slow printing of possible matches.  Readline is inefficient about emitting output, so Clink supplies a custom implementation.
 - Fixed some bugs in auto detection of flag prefix characters.
 - Fixed backward compatibility for flags.
+- Fixed (and documented) shorthand form for defining an argmatcher.
 - Fixed length of colored match prefix after a path separator.
 - Fixed normalizing a slash by itself (`command /` mustn't become `command \` since that can interfere with completing flags).
 - Fixed the `completion-auto-query-items` inputrc variable.

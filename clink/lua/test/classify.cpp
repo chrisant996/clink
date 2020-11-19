@@ -146,7 +146,7 @@ TEST_CASE("Lua word classification.")
         SECTION("Flags nofiles")
         {
             tester.set_input("xyz --bee nf -a");
-            tester.set_expected_classifications("cfa");
+            tester.set_expected_classifications("cfan");
             tester.run();
         }
 
@@ -550,15 +550,14 @@ TEST_CASE("Lua word classification.")
         const char* script = "\
             p = clink.argmatcher('argcmd_flags_s')\
             :addflags('/one', '/two', '/twenty')\
-            :setflagprefix('/')\
             \
             clink.argmatcher('argcmd_flags_d')\
             :addflags('-one', '-two', '-twenty')\
             \
             clink.argmatcher('argcmd_flags_x')\
-            :setflagprefix()\
             :addflags('-oa', '-ob', '-oc')\
             :addarg('-od', '-oe', '-of')\
+            :setflagprefix()\
         ";
 
         REQUIRE(lua.do_string(script));

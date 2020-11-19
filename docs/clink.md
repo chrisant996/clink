@@ -461,6 +461,28 @@ the_parser:addarg({ rainbow_function, "yellow", "green" })
 
 The functions take a single argument which is a word from the command line being edited (or partial word if it is the one under the cursor). Functions should return a table of potential matches.
 
+#### Shorthand
+
+It is also possible to omit the `addarg` and `addflags` function calls and use a more declarative shorthand form:
+
+```lua
+-- Shorthand form; requires tables.
+clink.argmatcher()
+&nbsp; { "one", "won" }
+&nbsp; { "two", "too" }
+&nbsp; { "-a", "-b", "/?", "/h" }
+
+-- Normal form:
+clink.argmatcher()
+:addarg(
+    { "one", "won" }
+    { "two", "too" }
+)
+:addflags("-a", "-b", "/?", "/h")
+```
+
+With the shorthand form flags are implied rather than declared.  When a shorthand table's first value is a string starting with `-` or `/` then the table is interpreted as flags.  Note that it's still possible with shorthand form to mix flag prefixes, and even add additional flag prefixes, such as `{ '-a', '/b', '=c' }`.
+
 <a name="customisingtheprompt">
 
 ## Customising The Prompt
