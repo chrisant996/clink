@@ -70,6 +70,8 @@ match_type to_match_type(const char* type_name)
         // Translate type names into match_type values.
         if (_strnicmp(t, "word", l) == 0)
             type = (type & ~match_type::mask) | match_type::word;
+        else if (_strnicmp(t, "arg", l) == 0)
+            type = (type & ~match_type::mask) | match_type::arg;
         else if (_strnicmp(t, "alias", l) == 0)
             type = (type & ~match_type::mask) | match_type::alias;
         else if (_strnicmp(t, "file", l) == 0)

@@ -52,6 +52,7 @@ match_builder_lua::~match_builder_lua()
 /// -ret:   boolean
 /// -show:  builder:addmatch("hello") -- type is "none"
 /// -show:  builder:addmatch("some_word", "word")
+/// -show:  builder:addmatch("/flag", "arg")
 /// -show:  builder:addmatch("abbrev", "alias")
 /// -show:  builder:addmatch({ match="foo.cpp", type="file" })
 /// -show:  builder:addmatch({ match="bar", type="dir" })
@@ -60,13 +61,14 @@ match_builder_lua::~match_builder_lua()
 /// match and <em>type</em> (or "none") is the match type.  Or <em>match</em>
 /// can be a table with the following scheme: <em style="white-spae:nowrap">{
 /// match:string, [type:string] }</em>.  If <em>type</em> is not provided then
-/// "none" is used, otherwise <em>type</em> can be "word", "alias" (doskey
-/// macro), "file", "dir", or "link" (symlink).<br/>
+/// "none" is used, otherwise <em>type</em> can be "word", "arg", "alias"
+/// (doskey macro), "file", "dir", or "link" (symlink).<br/>
 /// <br/>
 /// The match type influences the color when listing possible matches, and files
 /// and dirs can also include "hidden" and/or "readonly" in the type string.
 /// The match type also affects how the match is displayed:  "word" matches show
-/// the whole word even if it contains slashes, "file" and "dir" matches only
+/// the whole word even if it contains slashes, "arg" avoids appending a space
+/// if the match ends with a colon or equal sign, "file" and "dir" matches only
 /// show the last path component (text after the last slash, if any), and "dir"
 /// matches show a trailing path separator.<br/>
 /// <br/>

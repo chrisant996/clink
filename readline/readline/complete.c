@@ -2473,13 +2473,11 @@ append_to_match (char *text, int orig_start, int delimiter, int quote_char, int 
       rl_line_buffer[rl_point - 1] != quote_char)
     temp_string[temp_string_index++] = quote_char;
 
-/* begin_clink_change
- * Must not append closing quote_char if there's no opening quote.  If there was
- * a typed quote it will be at orig_start-1, or if a quote was inserted it will
- * be at orig_start.
- */
-  if (temp_string_index &&
-      rl_line_buffer[orig_start] != quote_char &&
+/* begin_clink_change */
+  /* Must not append closing quote_char if there's no opening quote.  If there
+     was a typed quote it will be at orig_start-1, or if a quote was inserted
+     it will be at orig_start. */
+  if (temp_string_index && rl_line_buffer[orig_start] != quote_char &&
       (!orig_start || rl_line_buffer[orig_start-1] != quote_char))
     temp_string_index--;
 /* end_clink_change */
@@ -2488,6 +2486,21 @@ append_to_match (char *text, int orig_start, int delimiter, int quote_char, int 
     temp_string[temp_string_index++] = delimiter;
   else if (rl_completion_suppress_append == 0 && rl_completion_append_character)
     temp_string[temp_string_index++] = rl_completion_append_character;
+
+/* begin_clink_change */
+  /* Must not append a space after an arg type match that ends with a
+     colon or equal sign. */
+  if (temp_string_index > 0 &&
+      rl_completion_matches_include_type &&
+      IS_MATCH_TYPE_ARG (*orig_text) &&
+      !delimiter &&
+      rl_completion_suppress_append == 0 &&
+      rl_completion_append_character == ' ' &&
+      temp_string[temp_string_index - 1] == ' ' &&
+      rl_point > 0 &&
+      strchr (":=", rl_line_buffer[rl_point - 1]))
+    temp_string_index--;
+/* end_clink_change */
 
   temp_string[temp_string_index++] = '\0';
 

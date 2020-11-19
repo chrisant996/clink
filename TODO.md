@@ -11,12 +11,6 @@ ChrisAnt Plans
 
 # BETA
 
-- Need to add a hook function for inserting matches.
-  - The insertion hook can avoid appending a space when inserting a flag that ends in `:` or `=`.
-  - The insertion hook can deal with path normalisation.
-  - And address the sorting problem, and then the match_type stuff can be removed from Readline.
-  - And THEN individual matches can have arbitrary values associated -- color, append char, or any per-match data that's desired.
-
 ## Cmder, Powerline, Clink-Completions
 - Update clink-completions to have better 0.4.9 implementations, and also to conditionally use the new API when available.
 - Update clink-git-extensions to have better 0.4.9 implementations, and also to conditionally use the new API when available.
@@ -46,6 +40,11 @@ ChrisAnt Plans
 - Should only fold path separators in pathish matches.
 - `LOG()` certain important failure information inside Detours.
 - When `convert-meta` is off, then when binding `\M-h` (etc) the key name gets interpreted differently than Clink expects.  Does this affect the `inputrc` files at all, or is it only an issue inside Clink's native code?
+- Need to add a hook function for inserting matches.
+  - The insertion hook can avoid appending a space when inserting a flag/arg that ends in `:` or `=`.
+  - The insertion hook can deal with path normalisation.
+  - And address the sorting problem, and then the match_type stuff can be removed from Readline.
+  - And THEN individual matches can have arbitrary values associated -- color, append char, or any per-match data that's desired.
 
 ### Low Priority
 - Changing terminal width makes 0.4.8 slowly "walk up the screen".  Changing terminal width makes master go haywire.  Probably more ecma48 terminal issues.  Probably related to commit 8aeaa14.
