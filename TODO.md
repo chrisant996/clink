@@ -2,13 +2,6 @@ ChrisAnt Plans
 
 <br/>
 
-# Internal Work
-
-- Promote store_impl to be a template and public, so the popup list can use it?
-
-<br/>
-<br/>
-
 # BETA
 
 ## Cmder, Powerline, Clink-Completions
@@ -51,6 +44,7 @@ ChrisAnt Plans
 - Use `path::normalise` to clean up input like "\wbin\\\\cli" when using `complete` and `menu-complete`.
 - Symlink support (displaying matches, and whether to append a path separator).
 - The match pipeline should not fire on pressing **Enter** after `exit`.
+- Add a Lua function that prints through Clink's VT emulation pipeline, so that e.g. the debugger.lua script can use colors.
 - [#20](https://github.com/chrisant996/clink/issues/20) Cmd gets unresponsive after "set /p" command.  _[Seems to mostly work, though `set /p FOO=""` doesn't prompt for input.]_
 
 <br/>
