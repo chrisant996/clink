@@ -7,7 +7,13 @@
 
 - Automatically detect when running inside ConEmu and disable Clink's Virtual Terminal emulation.
 - Added `search-ignore-case` inputrc variable that makes the history search commands case insensitive.
+- Suppress adding a space after completing a flag match that ends with `:` or `=` (e.g. `msbuild -maxCpuCount:`).
+- Report any errors while loading Lua scripts.
+- Report an error if a Lua script tries to add a flag string that begins with a letter.
 - Fixed slow printing of possible matches.  Readline is inefficient about emitting output, so Clink supplies a custom implementation.
+- Fixed some bugs in auto detection of flag prefix characters.
+- Fixed length of colored match prefix after a path separator.
+- Fixed normalizing a slash by itself (`command /` mustn't become `command \` since that can interfere with completing flags).
 - Fixed the `completion-auto-query-items` inputrc variable.
 - Fixed the key binding list to correctly respect `completion-display-width`.
 - _No visible effect yet:  internal change that parses the input line to identify colors to use for each word (command, argument, flag, etc), but the colors aren't yet applied to the input line._
