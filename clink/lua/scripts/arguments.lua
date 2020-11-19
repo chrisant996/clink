@@ -174,6 +174,7 @@ function _argmatcher:addflags(...)
 
     flag_matcher._args[1] = list
     self._flags = flag_matcher
+    self._flagprefix = prefixes
     return self
 end
 
