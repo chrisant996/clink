@@ -50,8 +50,9 @@ match_builder_lua::~match_builder_lua()
 /// -arg:   match:string|table
 /// -arg:   [type:string]
 /// -ret:   boolean
-/// -show:  builder:addmatch({ match="some_word", type="word" })
-/// -show:  builder:addmatch({ match="abbrev", type="alias" })
+/// -show:  builder:addmatch("hello") -- type is "none"
+/// -show:  builder:addmatch("some_word", "word")
+/// -show:  builder:addmatch("abbrev", "alias")
 /// -show:  builder:addmatch({ match="foo.cpp", type="file" })
 /// -show:  builder:addmatch({ match="bar", type="dir" })
 /// -show:  builder:addmatch({ match=".git", type="dir hidden" })
@@ -67,7 +68,11 @@ match_builder_lua::~match_builder_lua()
 /// The match type also affects how the match is displayed:  "word" matches show
 /// the whole word even if it contains slashes, "file" and "dir" matches only
 /// show the last path component (text after the last slash, if any), and "dir"
-/// matches show a trailing path separator.
+/// matches show a trailing path separator.<br/>
+/// <br/>
+/// When the match type is "none" then for backward compatibility the match is
+/// treated like "file", unless it ends with a path separator in which case it's
+/// treated like "dir".
 int match_builder_lua::add_match(lua_State* state)
 {
     int ret = 0;
