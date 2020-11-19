@@ -358,7 +358,7 @@ function _argmatcher:_generate(line_state, match_builder)
     -- Are we left with a valid argument that can provide matches?
     local add_matches = function(arg)
         for key, _ in pairs(arg._links) do
-            match_builder:addmatch(key)
+            match_builder:addmatch(key, "word")
         end
 
         for _, i in ipairs(arg) do
@@ -368,9 +368,9 @@ function _argmatcher:_generate(line_state, match_builder)
                     return j or false
                 end
 
-                match_builder:addmatches(j)
+                match_builder:addmatches(j, "word")
             else
-                match_builder:addmatch(i)
+                match_builder:addmatch(i, "word")
             end
         end
 
