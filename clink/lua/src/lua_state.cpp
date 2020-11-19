@@ -139,9 +139,16 @@ bool lua_state::do_string(const char* string, int length)
     if (length < 0)
         length = int(strlen(string));
 
-    bool ok;
-    if (ok = !luaL_loadbuffer(m_state, string, length, string))
+    bool ok = !luaL_loadbuffer(m_state, string, length, string);
+    if (ok)
+    {
         ok = !pcall(0, LUA_MULTRET);
+    }
+    else
+    {
+        const char* message = lua_tostring(m_state, -1);
+        puts(message);
+    }
 
     lua_settop(m_state, 0);
     return ok;
@@ -150,9 +157,16 @@ bool lua_state::do_string(const char* string, int length)
 //------------------------------------------------------------------------------
 bool lua_state::do_file(const char* path)
 {
-    bool ok;
-    if (ok = !luaL_loadfile(m_state, path))
+    bool ok = !luaL_loadfile(m_state, path);
+    if (ok)
+    {
         ok = !pcall(0, LUA_MULTRET);
+    }
+    else
+    {
+        const char* message = lua_tostring(m_state, -1);
+        puts(message);
+    }
 
     lua_settop(m_state, 0);
     return ok;
