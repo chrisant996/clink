@@ -727,7 +727,7 @@ static char* visible_part(char *match)
     char* t2 = rl_last_path_separator(t1);
     if (!t2)
         return t1;
-    return t2;
+    return t2 + 1;
 }
 
 //------------------------------------------------------------------------------
