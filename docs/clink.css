@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Rambla:wght@400;700&family=Roboto&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Rambla:wght@400;700&family=Roboto&family=Fira+Mono&display=swap');
 html {
     font: 12pt Roboto,Calibri,Arial,Helvetica,sans-serif;
     -ms-text-size-adjust: 100%;
@@ -61,6 +61,7 @@ legend {
 
 code {
     display: inline-block;
+    font-family: "Fira Mono",monospace;
     font-size: 0.9rem;
     padding: 0px 0.2rem;
     margin: auto 0px;
@@ -178,7 +179,7 @@ kbd {
 }
 
 #content #api em {
-    font-family: monospace;
+    font-family: "Fira Mono",monospace;
     opacity: 75%;
 }
 
@@ -217,5 +218,9 @@ kbd {
 
 #content #api .show {
     white-space: pre;
-    font-family: monospace;
+    font-family: "Fira Mono",monospace;
+}
+
+[class^="hljs"] {
+    font-family: "Fira Mono",monospace;
 }
