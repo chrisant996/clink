@@ -285,7 +285,7 @@ end
 --------------------------------------------------------------------------------
 function _argmatcher:_is_flag(word)
     local first_char = word:sub(1, 1)
-    for _, i in ipairs(self._flagprefix) do
+    for i, _ in pairs(self._flagprefix) do
         if first_char == i then
             return true
         end
