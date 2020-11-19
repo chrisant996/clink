@@ -381,6 +381,7 @@ function _argmatcher:_generate(line_state, match_builder)
     -- with getwordbreakinfo()'s return.
     if matcher._flags and matcher:_is_flag(line_state:getendword()) then
         add_matches(matcher._flags._args[1])
+        return true
     else
         local arg = matcher._args[arg_index]
         if arg then
