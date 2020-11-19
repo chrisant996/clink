@@ -297,10 +297,14 @@ end
 
 --------------------------------------------------------------------------------
 local function add_prefix(prefixes, string)
-    if prefixes and string then
+    if string and type(string) == "string" then
         local prefix = string:sub(1, 1)
         if prefix:len() > 0 then
-            prefixes[prefix] = (prefixes[prefix] or 0) + 1
+            if prefix:match('[A-Za-z]') then
+                error("flag string '"..string.."' is invalid because it starts with a letter and would interfere with argument matching.")
+            else
+                prefixes[prefix] = (prefixes[prefix] or 0) + 1
+            end
         end
     end
 end
@@ -314,18 +318,18 @@ function _argmatcher:_add(list, addee, prefixes)
             for _, i in ipairs(addee._args) do
                 for _, j in ipairs(i) do
                     table.insert(list, j)
-                    add_prefix(prefixes, j)
+                    if prefixes then add_prefix(prefixes, j) end
                 end
                 if i._links then
                     for k, m in pairs(i._links) do
                         list._links[k] = m
-                        add_prefix(prefixes, k)
+                        if prefixes then add_prefix(prefixes, k) end
                     end
                 end
             end
         else
             for _, i in ipairs(addee) do
-                self:_add(list, i)
+                self:_add(list, i, prefixes)
             end
         end
         return
@@ -333,10 +337,10 @@ function _argmatcher:_add(list, addee, prefixes)
 
     if is_link then
         list._links[addee._key] = addee._matcher
-        add_prefix(prefixes, addee._key)
+        if prefixes then add_prefix(prefixes, addee._key) end
     else
         table.insert(list, addee)
-        add_prefix(prefixes, addee)
+        if prefixes then add_prefix(prefixes, addee) end
     end
 end
 
