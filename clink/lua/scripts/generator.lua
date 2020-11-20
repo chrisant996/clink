@@ -145,7 +145,7 @@ end
 --- -var:   table
 --- -deprecated: line
 --- This is an obsolete global variable that was set while running match
---- generators.  Its table scheme is <em style="white-space:nowrap">{
+--- generators.  Its table scheme is <em>{
 --- line_buffer:string, point:integer}</em>, but it has been superseded by the
 --- <a href="#line">line</a> type parameter passed into match generator
 --- functions when using the new <a href="#clink.generator">clink.generator</a>

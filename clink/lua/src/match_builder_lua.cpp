@@ -59,7 +59,7 @@ match_builder_lua::~match_builder_lua()
 /// -show:  builder:addmatch({ match=".git", type="dir hidden" })
 /// Adds a match.  If <em>match</em> is a string, in which case it's added as a
 /// match and <em>type</em> (or "none") is the match type.  Or <em>match</em>
-/// can be a table with the following scheme: <em style="white-spae:nowrap">{
+/// can be a table with the following scheme: <em>{
 /// match:string, [type:string] }</em>.  If <em>type</em> is not provided then
 /// "none" is used, otherwise <em>type</em> can be "word", "arg", "alias"
 /// (doskey macro), "file", "dir", or "link" (symlink).<br/>

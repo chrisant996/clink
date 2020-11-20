@@ -288,7 +288,7 @@ int set_env(lua_State* state)
 /// -name:  os.getenvnames
 /// -ret:   table
 /// Returns all environment variables in a table with the following scheme:
-/// <em style="white-space:nowrap">{ { name:string, value:string }, ... }</em>.
+/// <em>{ { name:string, value:string }, ... }</em>.
 int get_env_names(lua_State* state)
 {
     lua_createtable(state, 0, 0);
@@ -388,7 +388,7 @@ int get_alias(lua_State* state)
 /// -name:  os.getaliases
 /// -ret:   table
 /// Returns doskey aliases in a table with the following scheme:
-/// <em style="white-space:nowrap">{ { name:string, command:string }, ... }</em>.
+/// <em>{ { name:string, command:string }, ... }</em>.
 int get_aliases(lua_State* state)
 {
     lua_createtable(state, 0, 0);
@@ -441,7 +441,7 @@ int get_aliases(lua_State* state)
 /// -ret:   table
 /// Returns dimensions of the terminal's buffer (<em>buf</em>*) and visible
 /// window (<em>win</em>*). The returned table has the following scheme:
-/// <em style="white-space:nowrap">{ bufwidth:int, bufheight:int, winwidth:int,
+/// <em>{ bufwidth:int, bufheight:int, winwidth:int,
 /// winheight:int }.</em>
 int get_screen_info(lua_State* state)
 {

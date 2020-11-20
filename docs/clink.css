@@ -179,6 +179,13 @@ kbd {
 }
 
 #content #api em {
+    white-space: nowrap;
+    font-family: "Fira Mono",monospace;
+    opacity: 75%;
+}
+
+#content .mono {
+    white-space: nowrap;
     font-family: "Fira Mono",monospace;
     opacity: 75%;
 }

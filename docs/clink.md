@@ -290,9 +290,9 @@ function my_generator:generate(line_state, match_builder)
 end
 ```
 
-`line_state` is a <a href="#line">line</a> object that has information about the current line.
+<em class="mono">line_state</em> is a <a href="#line">line</a> object that has information about the current line.
 
-`match_builder` is a <a href="#builder">builder</a> object to which you can add matches.
+<em class="mono">match_builder</em> is a <a href="#builder">builder</a> object to which matches can be added.
 
 If no further match generators need to be called then the function should return true.  Returning false or nil continues letting other match generators get called.
 
@@ -347,7 +347,7 @@ end
 
 ### The :getwordbreakinfo() Function
 
-A generator can influence work breaking for the end word by defining a `:getwordbreakinfo()` function.  The function takes a `line_state` <a href="#line">line</a> object that has information about the current line.  If it returns nil or 0, the end word is truncated to 0 length.  This is the normal behavior, which allows Clink to collect and cache all matches and then filter them based on typing.  Or it can return two numbers:  word break length and an optional end word length.  The end word is split at the word break length:  one word contains the first word break length characters from the end word (if 0 length then it's discarded), and the next word contains the rest of the end word truncated to the optional word length (0 if omitted).
+A generator can influence word breaking for the end word by defining a `:getwordbreakinfo()` function.  The function takes a `line_state` <a href="#line">line</a> object that has information about the current line.  If it returns nil or 0, the end word is truncated to 0 length.  This is the normal behavior, which allows Clink to collect and cache all matches and then filter them based on typing.  Or it can return two numbers:  word break length and an optional end word length.  The end word is split at the word break length:  one word contains the first word break length characters from the end word (if 0 length then it's discarded), and the next word contains the rest of the end word truncated to the optional word length (0 if omitted).
 
 For example, when the environment variable match generator sees the end word is `abc%USER` it returns `3,1` so that the last two words become "abc" and "%" so that its generator knows it can do environment variable matching.  But when it sees `abc%FOO%def` it returns `8,0` so that the last two words become "abc%FOO%" and "" so that its generator won't do environment variable matching, and also so other generators can produce matches for what follows, since "%FOO%" is an already-completed environment variable and therefore should behave like a word break.  In other words, it breaks the end word differently depending on whether the number of percent signs is odd or even, to account for environent variable syntax rules.
 
