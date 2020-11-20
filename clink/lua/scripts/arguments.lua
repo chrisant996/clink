@@ -134,6 +134,7 @@ function _argmatcher._new()
         _args = {},
     }, _argmatcher)
     matcher._flagprefix = {}
+    matcher._nextargindex = 1
     return matcher
 end
 
@@ -148,9 +149,15 @@ end
 --- function that returns a table of arguments.  See <a
 --- href="#argumentcompletion">Argument Completion</a> for more information.
 function _argmatcher:addarg(...)
-    local list = { _links = {} }
+    local list = self._args[self._nextargindex]
+    if not list then
+        list = { _links = {} }
+        table.insert(self._args, list)
+        self._nextargindex = #self._args
+    end
+    self._nextargindex = self._nextargindex + 1
+
     self:_add(list, {...})
-    table.insert(self._args, list)
     return self
 end
 
@@ -340,6 +347,9 @@ function _argmatcher:_add(list, addee, prefixes)
                 end
                 if i._links then
                     for k, m in pairs(i._links) do
+                        if list._links[k] then
+                            print("warning: replacing arglink for '"..k.."'; merging is not supported yet.")
+                        end
                         list._links[k] = m
                         if prefixes then add_prefix(prefixes, k) end
                     end
@@ -354,6 +364,9 @@ function _argmatcher:_add(list, addee, prefixes)
     end
 
     if is_link then
+        if list._links[addee._key] then
+            print("warning: replacing arglink for '"..addee.key.."'; merging is not supported yet.")
+        end
         list._links[addee._key] = addee._matcher
         if prefixes then add_prefix(prefixes, addee._key) end
     else
@@ -485,21 +498,47 @@ local _argmatchers = {}
 --- Creates and returns a new argument matcher parser object.  Use <a
 --- href="#_argmatcher:addarg">:addarg()</a> and etc to add arguments, flags,
 --- other parsers, and more.  See <a href="#argumentcompletion">Argument
---- Completion</a> for more information.
+--- Completion</a> for more information.<br/>
+--- <br/>
+--- If one <em>command</em> is provided and an argument matcher parser object is
+--- already associated with the command, this returns the existing parser rather
+--- than creating a new parser.  Using :addarg() starts at arg position 1,
+--- making it possible to merge new args and etc into the existing parser.
 function clink.argmatcher(...)
-    local matcher = _argmatcher()
-
     -- Extract priority from the arguments.
-    matcher._priority = 999
+    local priority = 999
     local input = {...}
-    if #input > 0 and type(input[1]) == "number" then
-        matcher._priority = input[1]
+    if (#input > 0) and (type(input[1]) == "number") then
+        priority = input[1]
         table.remove(input, 1)
     end
 
-    -- Register the argmatcher
+    -- If multiple commands are listed, merging isn't supported.
+    local matcher = nil
     for _, i in ipairs(input) do
-        _argmatchers[i:lower()] = matcher
+        matcher = _argmatchers[i:lower()]
+        if #input <= 1 then
+            break
+        end
+        if matcher then
+            error("command '"..i.."' already has an argmatcher; clink.argmatcher() with multiple commands fails if any of the commands already has an argmatcher.")
+            return
+        end
+    end
+
+    if matcher then
+        -- Existing matcher; use the smaller of the old and new priorities.
+        if matcher._priority > priority then
+            matcher._priority = priority
+        end
+        matcher._nextargindex = 1 -- so the next :addarg() affects position 1
+    else
+        -- No existing matcher; create a new matcher and set the priority.
+        matcher = _argmatcher()
+        matcher._priority = priority
+        for _, i in ipairs(input) do
+            _argmatchers[i:lower()] = matcher
+        end
     end
 
     return matcher
@@ -629,6 +668,7 @@ end
 
 --------------------------------------------------------------------------------
 local function parser_initialise(parser, ...)
+    parser._nextargindex = 1
     for _, word in ipairs({...}) do
         local t = type(word)
         if t == "string" then
@@ -701,21 +741,17 @@ end
 --- <code>clink.arg.register_parser</code> repeatedly with the same command to
 --- merge parsers is not supported anymore.
 function clink.arg.register_parser(cmd, parser)
-    if _argmatchers[cmd:lower()] then
-        error("clink.arg.register_parser() is deprecated and can no longer merge parsers by repeatedly calling register_parser for the same command.")
-        return
-    end
-
-    if parser and getmetatable(parser) == _argmatcher then
-        if not parser._deprecated then
-            error("clink.arg.register_parser() is deprecated and can only be used with parsers created by clink.arg.new_parser().")
-            return
+    local matcher = _argmatchers[cmd:lower()]
+    if matcher then
+        -- Merge new parser (parser) into existing parser (matcher).
+        local success, msg = xpcall(parser_initialise, _error_handler_ret, matcher, parser)
+        if not success then
+            error(msg, 2)
         end
-
-        _argmatchers[cmd:lower()] = parser
-        return parser
+        return matcher
     end
 
+    -- Create a new parser and register it.
     local matcher = clink.arg.new_parser(parser)
     _argmatchers[cmd:lower()] = matcher
     return matcher
