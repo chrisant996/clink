@@ -207,10 +207,10 @@ end
 --- -show:  :setflagprefix("-", "/", "+")
 --- -show:  :addflags("--help", "/?", "+mode")
 --- -deprecated: _argmatcher:addflags
---- This overrides the default flag prefix (`-`).  The flag prefixes are used to
+--- This overrides the default flag prefix (<code>-</code>).  The flag prefixes are used to
 --- switch between matching arguments versus matching flags.  When listing
---- possible completions for an empty word (e.g. `command _` where the cursor is
---- at the `_`), only arguments are listed.  And only flags are listed when the
+--- possible completions for an empty word (e.g. <code>command _</code> where the cursor is
+--- at the <code>_</code>), only arguments are listed.  And only flags are listed when the
 --- word starts with one of the flag prefixes.  Each flag prefix must be a
 --- single character, but there can be multiple prefixes.<br/>
 --- <br/>
