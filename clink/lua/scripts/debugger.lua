@@ -1268,11 +1268,21 @@ local function debugger_loop(ev, vars, file, line, idx_watch)
     elseif command == "help" then
       --{{{  help
       local command = getargs('S')
+      if command ~= '' and aliases[command] then
+        command = aliases[command]
+      end
       if command ~= '' and hints[command] then
         local _, _, h, t = hints[command]:find("^(.*)|(.*)$")
         io.write('\n'..h..t..'\n')
       else
-        for _,v in spairs(hints) do
+        local t = {}
+        for k,v in pairs(hints) do
+            t[k] = v
+        end
+        for k,v in pairs(aliases) do
+            t[k] = k..string.rep(" ", 20 - k:len()).."-- alias for "..v.."|"
+        end
+        for _,v in spairs(t) do
           local _,_,h = string.find(v,"(.+)|")
           io.write(h..'\n')
         end
