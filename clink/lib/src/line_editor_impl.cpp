@@ -327,13 +327,25 @@ LNope:
 //------------------------------------------------------------------------------
 bool line_editor_impl::translate(const char* seq, int len, str_base& out)
 {
-    if (RL_ISSTATE(RL_STATE_ISEARCH|RL_STATE_NSEARCH|RL_STATE_NUMERICARG))
+    if (RL_ISSTATE(RL_STATE_NUMERICARG))
     {
         if (strcmp(seq, bindableEsc) == 0)
         {
-            // Let ESC terminate isearch mode by redirecting it to 'abort'.
+            // Let ESC terminate numeric arg mode (digit mode) by redirecting it
+            // to 'abort'.
             if (find_abort_in_keymap(out))
                 return true;
+        }
+    }
+    else if (RL_ISSTATE(RL_STATE_ISEARCH|RL_STATE_NSEARCH))
+    {
+        if (strcmp(seq, bindableEsc) == 0)
+        {
+            // These modes have hard-coded handlers that abort on Ctrl+G, so
+            // redirect ESC to Ctrl+G.
+            char tmp[2] = { ABORT_CHAR };
+            out = tmp;
+            return true;
         }
     }
     else if (RL_ISSTATE(simple_input_states))
