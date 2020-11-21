@@ -4,10 +4,6 @@ ChrisAnt Plans
 
 # BETA
 
-- If the last line of the prompt is "too long" then `rl_message()` in **Alt+P** fails to draw the adjusted prompt correctly; the old prompt continues to be drawn.
-  - The cutoff is 136 characters -- less and the message shows up, or more and no message.
-  - And using **Ctrl+R** and then aborting redraws the prompt using the wrong screen buffer width / wrapping position!
-
 ## Cmder, Powerline, Clink-Completions
 - Update clink-completions to have better 0.4.9 implementations, and also to conditionally use the new API when available.
 - Update clink-git-extensions to have better 0.4.9 implementations, and also to conditionally use the new API when available.

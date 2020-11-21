@@ -2649,6 +2649,9 @@ rl_message (va_alist)
 
 #if defined (HAVE_VSNPRINTF)
   bneed = vsnprintf (msg_buf, msg_bufsiz, format, args);
+/* begin_clink_change */
+  bneed++; /* Modern vsnprintf truncates with a null terminator. */
+/* end_clink_change */
   if (bneed >= msg_bufsiz - 1)
     {
       msg_bufsiz = bneed + 1;
