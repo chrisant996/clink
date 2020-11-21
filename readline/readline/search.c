@@ -312,10 +312,20 @@ static void
 _rl_nsearch_abort (_rl_search_cxt *cxt)
 {
   rl_maybe_unsave_line ();
+/* begin_clink_change
+ * Call rl_restore_prompt before rl_clear_message so that the prompt has been
+ * restored before the redisplay call inside rl_clear_message. */
+  rl_restore_prompt ();
+/* end_clink_change */
   rl_clear_message ();
   rl_point = cxt->save_point;
   rl_mark = cxt->save_mark;
-  rl_restore_prompt ();
+/* begin_clink_change
+ * This is too late to call rl_restore_prompt, because rl_clear_message isn't
+ * called again after the above call. Everyone else calls rl_restore_prompt
+ * before rl_clear_message. */
+  //rl_restore_prompt ();
+/* end_clink_change */
 
   RL_UNSETSTATE (RL_STATE_NSEARCH);
 }
