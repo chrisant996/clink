@@ -4,20 +4,17 @@ ChrisAnt Plans
 
 # BETA
 
+- **Alt+P** then **Ctrl+G** internally resets the prompt, but `rl_redisplay()` gets confused into still drawing the cached `local_prompt`.
+- If the last line of the prompt is "too long" then `rl_message()` in **Alt+P** fails to draw the adjusted prompt correctly; the old prompt continues to be drawn.
+  - The cutoff is 136 characters -- less and the message shows up, or more and no message.
+  - And using **Ctrl+R** and then aborting redraws the prompt using the wrong screen buffer width / wrapping position!
+
 ## Cmder, Powerline, Clink-Completions
 - Update clink-completions to have better 0.4.9 implementations, and also to conditionally use the new API when available.
 - Update clink-git-extensions to have better 0.4.9 implementations, and also to conditionally use the new API when available.
 - Update cmder-powerline-prompt to work outside of cmder (don't crash when `%HOME%` isn't set), and also to conditionally use the new API when available.  Plus some other minor enhancements I made.
 - Port Cmder to v1.x -- will require help from Cmder and/or ConEmu teams.  There are a lot of hard-coded expectations about Clink (web site address, terminal input mode, DLL names, VirtualAlloc patterns, and many other things).
 - [#12](https://github.com/chrisant996/clink/issues/12) Why is Cmder's Clink so slow to start?
-
-## Coloring arguments and flags while editing (according to Lua argmatchers)
-- Replace `rl_redisplay_function` and use the word classifications to apply colors.
-- That should also fix these two issues:
-  - **Alt+P** then **Ctrl+G** internally resets the prompt, but `rl_redisplay()` gets confused into still drawing the cached `local_prompt`.
-  - If the last line of the prompt is "too long" then `rl_message()` in **Alt+P** fails to draw the adjusted prompt correctly; the old prompt continues to be drawn.
-    - The cutoff is 136 characters -- less and the message shows up, or more and no message.
-    - And using **Ctrl+R** and then aborting redraws the prompt using the wrong screen buffer width / wrapping position!
 
 <br/>
 <br/>
@@ -80,6 +77,8 @@ ChrisAnt Plans
 
 # MAJOR WORK ITEMS
 
+- **Coloring arguments and flags while editing (according to Lua argmatchers)**
+  - Replace `rl_redisplay_function` and use the word classifications to apply colors.
 - **CUA Selection.**
 - **Make the match pipeline async.**
   - Spin up completion at the same moment it currently does, but make it async.
