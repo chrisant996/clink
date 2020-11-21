@@ -1,8 +1,8 @@
 /*
 
-    Display matches by printing substrings, rather than a single character
-    at a time.  This addresses a performance problem when printing a large
-    number of
+    Display matches by printing a line at a time, rather than a single
+    character at a time.  This addresses a performance problem when printing
+    a large number of matches.
 
 */
 
