@@ -177,14 +177,12 @@ int set(int argc, char** argv)
     app_context::get()->get_settings_path(settings_file);
     settings::load(settings_file.c_str());
 
-    // Load all lua state too as there is settings declared in scripts.
+    // Load all lua state too as there is settings declared in scripts.  The
+    // load function handles deferred load for settings declared in scripts.
     host_lua lua;
     prompt_filter prompt_filter(lua);
     lua_load_script(lua, app, exec);
     lua.load_scripts();
-
-    // Loading settings _again_ now Lua's initialised ... :(
-    settings::load(settings_file.c_str());
 
     // List or set Clink's settings.
     if (complete)

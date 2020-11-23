@@ -7,7 +7,7 @@ ChrisAnt Plans
 ## Cmder, Powerline, Clink-Completions
 - Update clink-completions to have better 0.4.9 implementations, and also to conditionally use the new API when available.
 - Update clink-git-extensions to have better 0.4.9 implementations, and also to conditionally use the new API when available.
-- Update cmder-powerline-prompt to work outside of cmder (don't crash when `%HOME%` isn't set), and also to conditionally use the new API when available.  Plus some other minor enhancements I made.
+- Submit a pull request for cmder-powerline-prompt.
 - Port Cmder to v1.x -- will require help from Cmder and/or ConEmu teams.  There are a lot of hard-coded expectations about Clink (web site address, terminal input mode, DLL names, VirtualAlloc patterns, and many other things).
 - [#12](https://github.com/chrisant996/clink/issues/12) Why is Cmder's Clink so slow to start?
 
@@ -74,6 +74,7 @@ ChrisAnt Plans
 
 - **Coloring arguments and flags while editing (according to Lua argmatchers)**
   - Replace `rl_redisplay_function` and use the word classifications to apply colors.
+  - OR maintain color-display buffers separate from the content-display buffers, and make update_line consult the color-display buffers to color the output.
 - **CUA Selection.**
 - **Make the match pipeline async.**
   - Spin up completion at the same moment it currently does, but make it async.

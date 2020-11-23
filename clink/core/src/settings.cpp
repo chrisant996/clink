@@ -7,9 +7,22 @@
 #include "str_tokeniser.h"
 
 #include <assert.h>
+#include <string>
+#include <map>
+
+//------------------------------------------------------------------------------
+struct loaded_setting
+{
+                    loaded_setting() : saved(false) {}
+
+    std::string     comment;
+    std::string     value;
+    bool            saved;
+};
 
 //------------------------------------------------------------------------------
 static setting* g_setting_list = nullptr;
+static std::map<std::string, loaded_setting> g_loaded_settings;
 
 
 
@@ -39,6 +52,8 @@ setting* find(const char* name)
 //------------------------------------------------------------------------------
 bool load(const char* file)
 {
+    g_loaded_settings.clear();
+
     // Open the file.
     FILE* in = fopen(file, "rb");
     if (in == nullptr)
@@ -68,11 +83,17 @@ bool load(const char* file)
         iter->set();
 
     // Split at new lines.
+    bool was_comment = false;
+    str<> comment;
     str<256> line;
     str_tokeniser lines(buffer.c_str(), "\n\r");
     while (lines.next(line))
     {
         char* line_data = line.data();
+
+        // Clear the comment accumulator after a non-comment line.
+        if (!was_comment)
+            comment.clear();
 
         // Skip line's leading whitespace.
         while (isspace(*line_data))
@@ -80,9 +101,15 @@ bool load(const char* file)
 
         // Comment?
         if (line_data[0] == '#')
+        {
+            was_comment = true;
+            comment.concat(line_data);
+            comment.concat("\n");
             continue;
+        }
 
         // 'key = value'?
+        was_comment = false;
         char* value = strchr(line_data, '=');
         if (value == nullptr)
             continue;
@@ -101,6 +128,13 @@ bool load(const char* file)
         // Find the setting and set its value.
         if (setting* s = settings::find(line_data))
             s->set(value);
+
+        // Remember the original text from the file, so that saving won't lose
+        // them in case the scripts that declared them aren't loaded.
+        loaded_setting loaded;
+        loaded.comment = comment.c_str();
+        loaded.value = value;
+        g_loaded_settings.emplace(line_data, std::move(loaded));
     }
 
     return true;
@@ -114,9 +148,17 @@ bool save(const char* file)
     if (out == nullptr)
         return false;
 
+    // Clear the saved flag so we can track which ones have been saved so far.
+    for (auto iter : g_loaded_settings)
+        iter.second.saved = false;
+
     // Iterate over each setting and write it out to the file.
     for (const auto* iter = settings::first(); iter != nullptr; iter = iter->next())
     {
+        auto loaded = g_loaded_settings.find(iter->get_name());
+        if (loaded != g_loaded_settings.end())
+            loaded->second.saved = true;
+
         // Don't write out settings that aren't modified from their defaults.
         if (iter->is_default())
             continue;
@@ -148,6 +190,21 @@ bool save(const char* file)
         iter->get(value);
         fprintf(out, "%s = %s\n\n", iter->get_name(), value.c_str());
     }
+
+    // Iterate over loaded settings and write out any that weren't saved yet.
+    // This prevents losing user settings when some scripts aren't loaded, e.g.
+    // by changing the script path.
+    bool first_extra = true;
+    for (const auto iter : g_loaded_settings)
+        if (!iter.second.saved)
+        {
+            if (first_extra)
+            {
+                first_extra = false;
+                fputs("\n\n", out);
+            }
+            fprintf(out, "%s%s = %s\n\n", iter.second.comment.c_str(), iter.first.c_str(), iter.second.value.c_str());
+        }
 
     fclose(out);
     return true;
@@ -232,6 +289,15 @@ const char* setting::get_short_desc() const
 const char* setting::get_long_desc() const
 {
     return m_long_desc.c_str();
+}
+
+//------------------------------------------------------------------------------
+const char* setting::get_loaded_value(const char* name)
+{
+    auto const loaded = g_loaded_settings.find(name);
+    if (loaded == g_loaded_settings.end())
+        return nullptr;
+    return loaded->second.value.c_str();
 }
 
 

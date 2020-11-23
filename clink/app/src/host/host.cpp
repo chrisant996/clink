@@ -271,7 +271,8 @@ bool host::edit_line(const char* prompt, str_base& out)
         str<288>        m_path;
     } cwd;
 
-    // Load Clink's settings.
+    // Load Clink's settings.  The load function handles deferred load for
+    // settings declared in scripts.
     str<288> settings_file;
     app_context::get()->get_settings_path(settings_file);
     settings::load(settings_file.c_str());
@@ -299,11 +300,6 @@ bool host::edit_line(const char* prompt, str_base& out)
         initialise_lua(lua);
         lua.load_scripts();
     }
-
-    // Unfortunately we need to load settings again because some settings don't
-    // exist until after Lua's up and running. But.. we can't load Lua scripts
-    // without loading settings first. [TODO: find a better way]
-    settings::load(settings_file.c_str());
 
     line_editor::desc desc(m_terminal.in, m_terminal.out, m_printer);
     initialise_editor_desc(desc);

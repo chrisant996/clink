@@ -87,6 +87,9 @@ template <typename S, typename... V> void add_impl(lua_State* state, V... value)
     void* addr = lua_newuserdata(state, sizeof(S));
     new (addr) S(name, short_desc, long_desc, value...);
 
+    // Apply the value read during load, if any had been saved.
+    ((S*)addr)->deferred_load();
+
     if (luaL_newmetatable(state, "settings_mt"))
     {
         lua_pushliteral(state, "__gc");
@@ -119,9 +122,11 @@ template <typename S, typename... V> void add_impl(lua_State* state, V... value)
 /// <em>default</em> determines what kind of setting is added:  boolean,
 /// integer, and string values add the corresponding setting type.  Or if the
 /// type is table, then an enum setting is added:  the table defines the
-/// accepted values, and the first value is the default value.
-/// <em>short_desc</em> is an optional quick summary description and can't
-/// bemore than 47 characters.
+/// accepted values, and the first value is the default value.<br/>
+/// <br/>
+/// <em>name</em> can't be more than 31 characters.<br/>
+/// <em>short_desc</em> is an optional quick summary description and can't be
+/// more than 47 characters.<br/>
 /// <em>long_desc</em> is an optional long description.
 static int add(lua_State* state)
 {

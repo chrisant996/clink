@@ -59,6 +59,8 @@ protected:
         bool        operator == (const store& rhs) const { return value == rhs.value; }
         T           value;
     };
+
+    static const char* get_loaded_value(const char* name);
 };
 
 //------------------------------------------------------------------------------
@@ -82,6 +84,8 @@ public:
     virtual void    set() override;
     virtual bool    set(const char* value) override;
     virtual void    get(str_base& out) const override;
+
+    void            deferred_load();
 
 protected:
     struct          type;
@@ -126,6 +130,14 @@ template <typename T> bool setting_impl<T>::is_default() const
 template <typename T> T setting_impl<T>::get() const
 {
     return T(m_store);
+}
+
+//------------------------------------------------------------------------------
+template <typename T> void setting_impl<T>::deferred_load()
+{
+    const char* value = get_loaded_value(m_name.c_str());
+    if (value)
+        set(value);
 }
 
 
