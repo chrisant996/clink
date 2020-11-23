@@ -4,11 +4,11 @@ ChrisAnt Plans
 
 # BETA
 
-- Add a Lua function that prints through Clink's VT emulation pipeline, so that e.g. the debugger.lua script can use colors.
-
 ## Cmder, Powerline, Clink-Completions
 - Update clink-completions to have better 0.4.9 implementations, and also to conditionally use the new API when available.
 - Update clink-git-extensions to have better 0.4.9 implementations, and also to conditionally use the new API when available.
+  - I emailed CollinK about license info, and he replied "You have my express permission to do whatever you want with them hahaha!"
+  - I'll look into merging the clink-git-extensions scripts into the clink-completions scripts.
 - Submit a pull request for cmder-powerline-prompt.
 - Port Cmder to v1.x -- will require help from Cmder and/or ConEmu teams.  There are a lot of hard-coded expectations about Clink (web site address, terminal input mode, DLL names, VirtualAlloc patterns, and many other things).
 - [#12](https://github.com/chrisant996/clink/issues/12) Why is Cmder's Clink so slow to start?
@@ -114,6 +114,7 @@ ChrisAnt Plans
 
 **Miscellaneous**
 - Allow to search the console output (not command history) with a RegExp [#166](https://github.com/mridgers/clink/issues/166).  _[Unclear how that would work.  Would it scroll the console?  How would it highlight matches, etc, since that's really something the console host would need to do?  I think this needs to be implemented by the console host, e.g. conhost or ConEmu or Terminal, etc.]_
+- Add a Lua function that prints through Clink's VT emulation pipeline, so that e.g. the debugger.lua script can use colors.
 
 <br/>
 <br/>
