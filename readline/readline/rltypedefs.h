@@ -102,6 +102,10 @@ typedef char *rl_cpifunc_t PARAMS((int));
 typedef char *rl_cpcpfunc_t PARAMS((char  *));
 typedef char *rl_cpcppfunc_t PARAMS((char  **));
 
+/* begin_clink_change */
+typedef int rl_iccpfunc_t PARAMS((const char*));
+/* end_clink_change */
+
 #endif /* _RL_FUNCTION_TYPEDEF */
 
 #ifdef __cplusplus

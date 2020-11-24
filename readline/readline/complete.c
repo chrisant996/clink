@@ -110,6 +110,9 @@ rl_vcppfunc_t *rl_completion_display_matches_func = (rl_vcppfunc_t *)NULL;
 /* If non-zero, then this is the address of a function to call that
    postprocesses the lcd. */
 rl_postprocess_lcd_func_t *rl_postprocess_lcd_func = (rl_postprocess_lcd_func_t *)NULL;
+/* If non-zero, then this is the address of a function to call that determines
+   whether a file extension is executable. */
+rl_iccpfunc_t *rl_is_exec_func = (rl_iccpfunc_t *)NULL;
 /* end_clink_change */
 
 #if defined (VISIBLE_STATS) || defined (COLOR_SUPPORT)
@@ -685,8 +688,10 @@ path_isdir (const char *filename)
 static int
 is_exec (const char* fn)
 {
+  if (rl_is_exec_func)
+    return rl_is_exec_func (fn);
+
   const char* ext = strrchr (fn, '.');
-  /* TODO: Look at PATHEXT? */
   return (ext && (_rl_stricmp (ext, ".exe") == 0 ||
                   _rl_stricmp (ext, ".cmd") == 0 ||
                   _rl_stricmp (ext, ".bat") == 0 ||

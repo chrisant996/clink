@@ -300,6 +300,12 @@ static char adjust_completion_word(char quote_char, int *found_quote, int *delim
 }
 
 //------------------------------------------------------------------------------
+static int is_exec_ext(const char* ext)
+{
+    return path::is_executable_extension(ext);
+}
+
+//------------------------------------------------------------------------------
 static char* filename_menu_completion_function(const char *text, int state)
 {
     static DIR *directory = (DIR *)NULL;
@@ -909,6 +915,7 @@ rl_module::rl_module(const char* shell_name, terminal_in* input)
     rl_menu_completion_entry_function = filename_menu_completion_function;
     rl_adjust_completion_word = adjust_completion_word;
     rl_completion_display_matches_func = display_matches;
+    rl_is_exec_func = is_exec_ext;
     rl_postprocess_lcd_func = postprocess_lcd;
     rl_read_key_hook = read_key_hook;
 
