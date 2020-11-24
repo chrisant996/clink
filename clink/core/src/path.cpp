@@ -246,6 +246,9 @@ bool get_drive(str_base& in_out)
 //------------------------------------------------------------------------------
 bool get_extension(const char* in, str_base& out)
 {
+    const char* ext = get_extension(in);
+    if (!ext)
+        return false;
     return out.concat(get_extension(in));
 }
 
@@ -274,7 +277,7 @@ const char* get_extension(const char* in)
     if (ext && ext[1] == '\0')
         ext = nullptr;
 
-    return ext ? ext : in;
+    return ext;
 }
 
 //------------------------------------------------------------------------------
