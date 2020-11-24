@@ -516,7 +516,7 @@ function clink.argmatcher(...)
     -- If multiple commands are listed, merging isn't supported.
     local matcher = nil
     for _, i in ipairs(input) do
-        matcher = _argmatchers[i:lower()]
+        matcher = _argmatchers[clink.lower(i)]
         if #input <= 1 then
             break
         end
@@ -537,7 +537,7 @@ function clink.argmatcher(...)
         matcher = _argmatcher()
         matcher._priority = priority
         for _, i in ipairs(input) do
-            _argmatchers[i:lower()] = matcher
+            _argmatchers[clink.lower(i)] = matcher
         end
     end
 
@@ -553,17 +553,17 @@ local function _find_argmatcher(line_state)
         return
     end
 
-    local first_word = line_state:getword(1)
+    local first_word = clink.lower(line_state:getword(1))
 
     -- Check for an exact match.
-    local argmatcher = _argmatchers[path.getname(first_word):lower()]
+    local argmatcher = _argmatchers[path.getname(first_word)]
     if argmatcher then
         return argmatcher
     end
 
     -- If the extension is in PATHEXT then try stripping the extension.
     if path.isexecext(first_word) then
-        argmatcher = _argmatchers[path.getbasename(first_word):lower()]
+        argmatcher = _argmatchers[path.getbasename(first_word)]
         if argmatcher then
             return argmatcher
         end
@@ -738,7 +738,9 @@ end
 --- <code>clink.arg.register_parser</code> repeatedly with the same command to
 --- merge parsers is not supported anymore.
 function clink.arg.register_parser(cmd, parser)
-    local matcher = _argmatchers[cmd:lower()]
+    cmd = clink.lower(cmd)
+
+    local matcher = _argmatchers[cmd]
     if matcher then
         -- Merge new parser (parser) into existing parser (matcher).
         local success, msg = xpcall(parser_initialise, _error_handler_ret, matcher, parser)
@@ -750,6 +752,6 @@ function clink.arg.register_parser(cmd, parser)
 
     -- Create a new parser and register it.
     local matcher = clink.arg.new_parser(parser)
-    _argmatchers[cmd:lower()] = matcher
+    _argmatchers[cmd] = matcher
     return matcher
 end

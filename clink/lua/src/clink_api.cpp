@@ -10,6 +10,7 @@
 #include <core/os.h>
 #include <core/path.h>
 #include <core/str.h>
+#include <core/str_iter.h>
 #include <readline/readline.h>
 
 #include <unordered_set>
@@ -64,59 +65,108 @@ extern int              lua_execute(lua_State* state);
 /// This is no longer used.
 
 //------------------------------------------------------------------------------
-static int to_lowercase(lua_State* state)
+static int map_string(lua_State* state, DWORD mapflags)
 {
     const char* string;
-    char* lowered;
     int length;
-    int i;
 
     // Check we've got at least one argument...
     if (lua_gettop(state) == 0)
-    {
         return 0;
-    }
 
     // ...and that the argument is a string.
     if (!lua_isstring(state, 1))
-    {
         return 0;
-    }
 
     string = lua_tostring(state, 1);
     length = (int)strlen(string);
 
-    lowered = (char*)malloc(length + 1);
+    wstr<> out;
+    if (length)
+    {
+        wstr<> in(string);
+
+        out.reserve(in.length() + max<int>(in.length() / 10, 10));
+        int cch = LCMapStringW(LOCALE_USER_DEFAULT, mapflags,
+                               in.c_str(), in.length(), out.data(), out.size());
+        if (!cch)
+        {
+            cch = LCMapStringW(LOCALE_USER_DEFAULT, mapflags,
+                               in.c_str(), in.length(), nullptr, 0);
+            out.reserve(cch + 1);
+            cch = LCMapStringW(LOCALE_USER_DEFAULT, mapflags,
+                               in.c_str(), in.length(), out.data(), out.size());
+            if (!cch)
+            {
+                out.clear();
+                bool title_char = true;
+                for (unsigned int i = 0; i < in.length(); ++i)
+                {
+                    WCHAR c = in[i];
+
+                    switch (mapflags)
+                    {
+                    case LCMAP_LOWERCASE:
+                        out.data()[i] = __ascii_towlower(c);
+                        break;
+                    case LCMAP_UPPERCASE:
+                        out.data()[i] = __ascii_towupper(c);
+                        break;
+                    case LCMAP_TITLECASE:
+                        out.data()[i] = title_char ? __ascii_towupper(c) : __ascii_towlower(c);
+                        break;
+                    }
+
+                    title_char = !!iswspace(c);
+                }
+
+                cch = in.length();
+            }
+        }
+
+        out.data()[cch] = '\0';
+    }
+
     if (_rl_completion_case_map)
     {
-        for (i = 0; i <= length; ++i)
+        for (unsigned int i = 0; i < out.length(); ++i)
         {
-            char c = string[i];
-            if (c == '-')
-            {
-                c = '_';
-            }
-            else
-            {
-                c = tolower(c);
-            }
-
-            lowered[i] = c;
-        }
-    }
-    else
-    {
-        for (i = 0; i <= length; ++i)
-        {
-            char c = string[i];
-            lowered[i] = tolower(c);
+            if (out[i] == '-' && (mapflags & LCMAP_LOWERCASE))
+                out.data()[i] = '_';
+            else if (out[i] == '_' && ((mapflags & (LCMAP_LOWERCASE|LCMAP_UPPERCASE)) == LCMAP_UPPERCASE))
+                out.data()[i] = '-';
         }
     }
 
-    lua_pushstring(state, lowered);
-    free(lowered);
+    str<> text(out.c_str());
+
+    lua_pushstring(state, text.c_str());
 
     return 1;
+}
+
+//------------------------------------------------------------------------------
+/// -name:  clink.lower
+/// -arg:   text:string
+/// -ret:   string
+/// -show:  clink.lower("Hello World") -- returns "hello world"
+/// This API correctly converts UTF8 strings to lowercase, with international
+/// linguistic awareness.
+static int to_lowercase(lua_State* state)
+{
+    return map_string(state, LCMAP_LOWERCASE);
+}
+
+//------------------------------------------------------------------------------
+/// -name:  clink.upper
+/// -arg:   text:string
+/// -ret:   string
+/// -show:  clink.upper("Hello World") -- returns "HELLO WORLD"
+/// This API correctly converts UTF8 strings to uppercase, with international
+/// linguistic awareness.
+static int to_uppercase(lua_State* state)
+{
+    return map_string(state, LCMAP_UPPERCASE);
 }
 
 //------------------------------------------------------------------------------
@@ -216,6 +266,7 @@ void clink_lua_initialise(lua_state& lua)
         { "is_dir",                 &is_dir },
         { "is_rl_variable_true",    &is_rl_variable_true },
         { "lower",                  &to_lowercase },
+        { "upper",                  &to_uppercase },
     };
 
     lua_State* state = lua.get_state();
