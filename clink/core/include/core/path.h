@@ -19,6 +19,7 @@ bool        get_directory(str_base& in_out);
 bool        get_drive(const char* in, str_base& out);
 bool        get_drive(str_base& in_out);
 bool        get_extension(const char* in, str_base& out);
+const char* get_extension(const char* in);
 bool        get_name(const char* in, str_base& out);
 const char* get_name(const char* in);
 bool        is_rooted(const char* path);

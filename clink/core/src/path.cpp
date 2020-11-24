@@ -215,18 +215,35 @@ bool get_drive(str_base& in_out)
 //------------------------------------------------------------------------------
 bool get_extension(const char* in, str_base& out)
 {
-    const char* dot = strrchr(in, '.');
-    if (dot == nullptr)
-        return false;
+    return out.concat(get_extension(in));
+}
 
-    if (dot[1] == '\0')
-        return false;
+//------------------------------------------------------------------------------
+const char* get_extension(const char* in)
+{
+    const char* ext = nullptr;
+    while (*in)
+    {
+        switch (*in)
+        {
+        case '.':
+            ext = in;
+            break;
+        case ' ':
+        case '/':
+        case '\\':
+        case ':':
+            ext = nullptr;
+            break;
+        }
 
-    int end = get_directory_end(in);
-    if (in + end > dot)
-        return false;
+        in++;
+    }
 
-    return out.concat(dot);
+    if (ext && ext[1] == '\0')
+        ext = nullptr;
+
+    return ext ? ext : in;
 }
 
 //------------------------------------------------------------------------------
