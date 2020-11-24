@@ -119,7 +119,7 @@ function exec_generator:generate(line_state, match_builder)
 
     -- Search 'paths' for files ending in 'suffices' and look for matches
     local added = false
-    local suffices = os.getenv("pathext"):explode(";")
+    local suffices = (os.getenv("pathext") or ""):explode(";")
     for _, suffix in ipairs(suffices) do
         for _, dir in ipairs(paths) do
             added = add_files(dir.."*"..suffix) or added
