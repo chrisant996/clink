@@ -10,7 +10,7 @@ settings.add("exec.path", true, "Match executables in PATH",
 [[Completes executables found in the directories specified in the PATH
 environment system variable.]])
 
-settings.add("exec.cwd", false, "Match executables in current directory",
+settings.add("exec.cwd", true, "Match executables in current directory",
 [[Include executables in the current directory. This is implicit if the word
 being completed is a relative path.]])
 
