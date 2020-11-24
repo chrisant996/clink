@@ -67,7 +67,10 @@ int compare_string(const char* s1, const char* s2, int casefold)
     if (mb_to_wide(s1, tmp1, sizeof_array(tmp1), &wide1, &free1) &&
         mb_to_wide(s2, tmp2, sizeof_array(tmp2), &wide2, &free2))
     {
-        cmp = CompareStringW(LOCALE_USER_DEFAULT, SORT_DIGITSASNUMBERS, wide1, -1, wide2, -1);
+        DWORD flags = SORT_DIGITSASNUMBERS|NORM_LINGUISTIC_CASING;
+        if (casefold)
+            flags |= LINGUISTIC_IGNORECASE;
+        cmp = CompareStringW(LOCALE_USER_DEFAULT, flags, wide1, -1, wide2, -1);
         cmp -= CSTR_EQUAL;
     }
     else
