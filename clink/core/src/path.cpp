@@ -4,7 +4,29 @@
 #include "pch.h"
 #include "base.h"
 #include "path.h"
+#include "os.h"
 #include "str.h"
+#include "str_compare.h"
+#include "str_tokeniser.h"
+
+#include <string>
+#include <map>
+
+//------------------------------------------------------------------------------
+struct ext_comparer
+{
+    bool operator()(const std::wstring& a, const std::wstring& b) const
+    {
+        return (CompareStringW(LOCALE_USER_DEFAULT,
+                               NORM_IGNORECASE|NORM_LINGUISTIC_CASING,
+                               a.c_str(), int(a.length()),
+                               b.c_str(), int(b.length())) == CSTR_LESS_THAN);
+    }
+};
+
+//------------------------------------------------------------------------------
+static bool s_have_pathexts = false;
+static std::map<std::wstring, bool, ext_comparer> s_pathexts;
 
 //------------------------------------------------------------------------------
 static const char* get_last_separator(const char* in)
@@ -60,6 +82,15 @@ static int get_directory_end(const char* path)
 
 namespace path
 {
+
+//------------------------------------------------------------------------------
+void refresh_pathext()
+{
+    s_have_pathexts = false;
+    s_pathexts.clear();
+}
+
+
 
 //------------------------------------------------------------------------------
 void normalise(str_base& in_out, int sep)
@@ -422,6 +453,43 @@ bool is_incomplete_unc(const char* path)
 
     // The path is at least "\\x\y\", so it's a complete enough UNC path for
     // file system APIs to succeed.
+    return false;
+}
+
+//------------------------------------------------------------------------------
+bool is_executable_extension(const char* in)
+{
+    const char* ext = get_extension(in);
+    if (!ext)
+        return false;
+
+    if (!s_have_pathexts)
+    {
+        str<> pathext;
+        if (!os::get_env("pathext", pathext))
+            return false;
+
+        str_tokeniser tokens(pathext.c_str(), ";");
+        const char *start;
+        int length;
+
+        wstr<> wtoken;
+        while (str_token token = tokens.next(start, length))
+        {
+            str_iter rhs(start, length);
+            wtoken.clear();
+            to_utf16(wtoken, rhs);
+
+            s_pathexts.emplace(wtoken.c_str(), true);
+        }
+
+        s_have_pathexts = true;
+    }
+
+    wstr<> wext(ext);
+    if (s_pathexts.find(wext.c_str()) != s_pathexts.end())
+        return true;
+
     return false;
 }
 

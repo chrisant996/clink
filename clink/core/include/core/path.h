@@ -9,6 +9,8 @@ class str_base;
 namespace path
 {
 
+void        refresh_pathext();
+
 void        normalise(str_base& in_out, int sep=0);
 void        normalise(char* in_out, int sep=0);
 bool        is_separator(int c);
@@ -29,5 +31,6 @@ bool        append(str_base& out, const char* rhs);
 void        maybe_strip_last_separator(str_base& out);
 bool        to_parent(str_base& out, str_base* child);
 bool        is_incomplete_unc(const char* path);
+bool        is_executable_extension(const char* in);
 
 }; // namespace path

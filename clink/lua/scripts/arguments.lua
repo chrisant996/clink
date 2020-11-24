@@ -562,13 +562,10 @@ local function _find_argmatcher(line_state)
     end
 
     -- If the extension is in PATHEXT then try stripping the extension.
-    local ext = path.getextension(first_word):lower()
-    if ext and ext ~= "" then
-        if (";"..clink.get_env("pathext")..";"):lower():match(";"..ext..";", 1, true) then
-            argmatcher = _argmatchers[path.getbasename(first_word):lower()]
-            if argmatcher then
-                return argmatcher
-            end
+    if path.isexecext(first_word) then
+        argmatcher = _argmatchers[path.getbasename(first_word):lower()]
+        if argmatcher then
+            return argmatcher
         end
     end
 end

@@ -263,6 +263,7 @@ bool host::edit_line(const char* prompt, str_base& out)
 {
     const app_context* app = app_context::get();
     app->update_env();
+    path::refresh_pathext();
 
     struct cwd_restorer
     {

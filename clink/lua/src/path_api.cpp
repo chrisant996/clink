@@ -155,6 +155,26 @@ static int join(lua_State* state)
 }
 
 //------------------------------------------------------------------------------
+/// -name:  path.isexecext
+/// -arg:   path:string
+/// -ret:   boolean
+/// -show:  path.isexecext("program.exe") -- returns true
+/// -show:  path.isexecext("file.doc") -- returns false
+/// Examines the extension of the path name.  Returns true if the extension is
+/// listed in %PATHEXT%.  This caches the extensions in a map so that it's more
+/// efficient than getting and parsing %PATHEXT% each time.
+static int is_exec_ext(lua_State* state)
+{
+    const char* path = get_string(state, 1);
+    if (path == nullptr)
+        return 0;
+
+    bool is_exec = path::is_executable_extension(path);
+    lua_pushboolean(state, is_exec != false);
+    return 1;
+}
+
+//------------------------------------------------------------------------------
 void path_lua_initialise(lua_state& lua)
 {
     struct {
@@ -168,6 +188,7 @@ void path_lua_initialise(lua_state& lua)
         { "getextension",  &get_extension },
         { "getname",       &get_name },
         { "join",          &join },
+        { "isexecext",     &is_exec_ext },
     };
 
     lua_State* state = lua.get_state();
