@@ -47,7 +47,7 @@ ChrisAnt Plans
 
 ## High Priority
 - Allow binding keys to Lua scripts.
-  - The tricky part is how to register the Lua scripts as commands that Readline can invoke, since Readline expects unique non-parameterized function pointers.
+  - Add a new `ISUSER` custom binding type to Readline, which calls a global callback and passes it the binding string (like for `ISMACR`).  The global callback can then look up the Lua function name and pass it a `line_state` from `collect_words(false/*stop_at_cursor*/)`
   - Provide API for accessing the screen buffer, and for scrolling.
   - Provide API for interacting with the Readline buffer.
   - Provide API to show a popup list?  But make it fail if used from outside a Readline command.
@@ -57,8 +57,6 @@ ChrisAnt Plans
 
 ## Medium Priority
 - Add a configuration setting for whether `menu-complete` wraps around.
-- Support continuing completion of `"\Program Files"\`**Tab**.
-  - Readline walks backward to figure out quoting.  That doesn't work reliably; must walk forward from the beginning otherwise `"\Program Files"\` is treated as though the ending `"\` is starting a new filename.
 - Complete "%ENVVAR%\*" by internally expanding ENVVAR for collecting matches, but not expanding it in the editing line.
 
 ## Low Priority
