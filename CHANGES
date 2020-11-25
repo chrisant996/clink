@@ -3,6 +3,16 @@
 
 ## Releases from [chrisant996/clink](https://github.com/chrisant996/clink) fork
 
+### Unreleased
+
+- Added `clink.upper()` Lua function, and both `clink.lower()` and `clink.upper()` are properly UTF8 aware now.
+- Improved executable file extension logic to consistently use %PATHEXT% (and efficiently).
+- Improved file extension logic (e.g. "file.foo bar" has no extension because of the space).
+- Updated arg matcher for `clink` itself (was missing some flags).
+- Fixed case sensitive sorting of matches.
+- Fixed script error when %PATHEXT% is empty.
+- Fixed the `exec.cwd` Clink setting to default to true, so that the default behavior is consistent with how v0.4.x behaved.
+
 ### v1.1.4
 
 - Automatically detect when running inside ConEmu and disable Clink's Virtual Terminal emulation.
