@@ -463,10 +463,10 @@ bool line_editor_impl::update_input()
 void line_editor_impl::find_command_bounds(const char*& start, int& length, bool stop_at_cursor)
 {
     const char* line_buffer = m_buffer.get_buffer();
-    unsigned int line_cursor = stop_at_cursor ? m_buffer.get_cursor() : m_buffer.get_length();
+    unsigned int line_stop = stop_at_cursor ? m_buffer.get_cursor() : m_buffer.get_length();
 
     start = line_buffer;
-    length = line_cursor;
+    length = line_stop;
 
     if (m_desc.command_delims == nullptr)
         return;
@@ -474,15 +474,18 @@ void line_editor_impl::find_command_bounds(const char*& start, int& length, bool
     str_iter token_iter(start, length);
     str_tokeniser tokens(token_iter, m_desc.command_delims);
     tokens.add_quote_pair(m_desc.get_quote_pair());
-    while (tokens.next(start, length));
+    while (tokens.next(start, length))
+    {
+        // Have we found the command containing the cursor?
+        if (m_buffer.get_cursor() >= (start) - line_buffer &&
+            m_buffer.get_cursor() <= (start + length) - line_buffer)
+            return;
+    }
 
     // We should expect to reach the cursor. If not then there's a trailing
     // separator and we'll just say the command starts at the cursor.
-    if (start + length != line_buffer + line_cursor)
-    {
-        start = line_buffer + line_cursor;
-        length = 0;
-    }
+    start = line_buffer + line_stop;
+    length = 0;
 }
 
 //------------------------------------------------------------------------------

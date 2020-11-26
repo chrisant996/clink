@@ -4,6 +4,8 @@ ChrisAnt Plans
 
 # BETA
 
+- Classifying arguments needs to classify all commands on the line, e.g. "cmd1 arg1 & cmd2 arg1 arg2 | cmd3" should yield "cacaac".
+
 ## Cmder, Powerline, Clink-Completions
 - Update clink-completions to have better 0.4.9 implementations, and also to conditionally use the new API when available.
 - Update clink-git-extensions to have better 0.4.9 implementations, and also to conditionally use the new API when available.
