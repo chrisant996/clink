@@ -180,223 +180,217 @@ TEST_CASE("Lua word classification.")
             tester.set_expected_classifications("cfaf");
             tester.run();
         }
-    }
 
-#if 0
-    SECTION("More")
-    {
         SECTION("Node matches 3 (.exe)")
         {
             tester.set_input("argcmd.exe t");
-            tester.set_expected_matches("two", "three");
+            tester.set_expected_classifications("co");
             tester.run();
         }
 
         SECTION("Node matches 4 (.bat)")
         {
             tester.set_input("argcmd.bat t");
-            tester.set_expected_matches("two", "three");
+            tester.set_expected_classifications("co");
             tester.run();
         }
 
         SECTION("Node matches quoted 1")
         {
             tester.set_input("argcmd \"t");
-            tester.set_expected_matches("two", "three");
+            tester.set_expected_classifications("co");
             tester.run();
         }
 
         SECTION("Node matches quoted executable")
         {
             tester.set_input("\"argcmd\" t");
-            tester.set_expected_matches("two", "three");
+            tester.set_expected_classifications("co");
             tester.run();
         }
 
         SECTION("Key as only match.")
         {
             tester.set_input("argcmd three ");
-            tester.set_expected_matches("four");
+            tester.set_expected_classifications("ca");
             tester.run();
         }
 
         SECTION("Simple traversal 1")
         {
             tester.set_input("argcmd three four ");
-            tester.set_expected_matches("five", "six");
+            tester.set_expected_classifications("caa");
             tester.run();
         }
 
         SECTION("Simple traversal 2")
         {
             tester.set_input("argcmd three f");
-            tester.set_expected_matches("four");
+            tester.set_expected_classifications("cao");
             tester.run();
         }
 
         SECTION("Simple traversal 3")
         {
             tester.set_input("argcmd one one one");
-            tester.set_expected_matches();
+            tester.set_expected_classifications("cann");
             tester.run();
         }
 
         SECTION("Simple traversal 4")
         {
             tester.set_input("argcmd one one ");
-            tester.set_expected_matches("file1", "file2", "case_map-1", "case_map_2",
-                "dir1\\", "dir2\\");
+            tester.set_expected_classifications("can");
             tester.run();
         }
 
         SECTION("Quoted traversal 1")
         {
             tester.set_input("argcmd \"three\" four ");
-            tester.set_expected_matches("five", "six");
+            tester.set_expected_classifications("caa");
             tester.run();
         }
 
         SECTION("Quoted traversal 2a")
         {
             tester.set_input("argcmd three four \"");
-            tester.set_expected_matches("five", "six");
+            tester.set_expected_classifications("caao");
             tester.run();
         }
 
         SECTION("Quoted traversal 2b")
         {
             tester.set_input("argcmd three four \"fi");
-            tester.set_expected_matches("five");
+            tester.set_expected_classifications("caao");
             tester.run();
         }
 
         SECTION("Quoted traversal 2c")
         {
             tester.set_input("argcmd three four \"five\" five five s");
-            tester.set_expected_matches("six");
+            tester.set_expected_classifications("caaaaao");
             tester.run();
         }
 
         SECTION("Quoted traversal 3")
         {
             tester.set_input("argcmd \"three\" ");
-            tester.set_expected_matches("four");
+            tester.set_expected_classifications("ca");
             tester.run();
         }
 
         SECTION("Quoted traversal 4")
         {
             tester.set_input("argcmd \"spa ce\" ");
-            tester.set_expected_matches("one", "two");
+            tester.set_expected_classifications("ca");
             tester.run();
         }
 
         SECTION("Quoted traversal 5")
         {
             tester.set_input("argcmd spa");
-            tester.set_expected_matches("spa ce");
+            tester.set_expected_classifications("co");
             tester.run();
         }
 
         SECTION("Looping: basic")
         {
             tester.set_input("argcmd three four six ");
-            tester.set_expected_matches("five", "six");
+            tester.set_expected_classifications("caaa");
             tester.run();
         }
 
         SECTION("Looping: miss")
         {
             tester.set_input("argcmd three four green four ");
-            tester.set_expected_matches("five", "six");
+            tester.set_expected_classifications("caaoo");
             tester.run();
         }
 
         SECTION("Separator && 1")
         {
             tester.set_input("nullcmd && argcmd t");
-            tester.set_expected_matches("two", "three");
+            tester.set_expected_classifications("co");
             tester.run();
         }
 
         SECTION("Separator && 1")
         {
             tester.set_input("nullcmd &&argcmd t");
-            tester.set_expected_matches("two", "three");
+            tester.set_expected_classifications("co");
             tester.run();
         }
 
         SECTION("Separator && 2")
         {
             tester.set_input("nullcmd \"&&\" && argcmd t");
-            tester.set_expected_matches("two", "three");
+            tester.set_expected_classifications("co");
             tester.run();
         }
 
         SECTION("Separator && 3")
         {
             tester.set_input("nullcmd \"&&\"&&argcmd t");
-            tester.set_expected_matches("two", "three");
+            tester.set_expected_classifications("co");
             tester.run();
         }
 
         SECTION("Separator &")
         {
             tester.set_input("nullcmd & argcmd t");
-            tester.set_expected_matches("two", "three");
+            tester.set_expected_classifications("co");
             tester.run();
         }
 
         SECTION("Separator | 1")
         {
             tester.set_input("nullcmd | argcmd t");
-            tester.set_expected_matches("two", "three");
+            tester.set_expected_classifications("co");
             tester.run();
         }
 
         SECTION("Separator | 2")
         {
             tester.set_input("nullcmd|argcmd t");
-            tester.set_expected_matches("two", "three");
+            tester.set_expected_classifications("co");
             tester.run();
         }
 
         SECTION("Separator multiple 1")
         {
             tester.set_input("nullcmd | nullcmd && argcmd t");
-            tester.set_expected_matches("two", "three");
+            tester.set_expected_classifications("co");
             tester.run();
         }
 
         SECTION("Separator multiple 2")
         {
             tester.set_input("nullcmd | nullcmd && argcmd |argcmd t");
-            tester.set_expected_matches("two", "three");
+            tester.set_expected_classifications("co");
             tester.run();
         }
 
         SECTION("No separator")
         {
             tester.set_input("argcmd three four \"  &&foobar\" f");
-            tester.set_expected_matches("five");
+            tester.set_expected_classifications("caaoo");
             tester.run();
         }
 
         SECTION("Path: relative")
         {
             tester.set_input(".\\foo\\bar\\argcmd t");
-            tester.set_expected_matches("two", "three");
+            tester.set_expected_classifications("co");
             tester.run();
         }
 
         SECTION("Path: absolute")
         {
             tester.set_input("c:\\foo\\bar\\argcmd t");
-            tester.set_expected_matches("two", "three");
+            tester.set_expected_classifications("co");
             tester.run();
         }
     }
-#endif
 
 #if 0
     SECTION("File matching control.")
