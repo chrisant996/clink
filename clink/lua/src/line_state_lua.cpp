@@ -78,8 +78,13 @@ int line_state_lua::get_word_count(lua_State* state)
 /// -arg:   index:integer
 /// -ret:   table
 /// Returns a table of information about the Nth word in the line. The table
-/// returned has the following scheme: <em>{
-/// offset:integer, length:integer, quoted:boolean, delim:boolean}</em>.
+/// returned has the following scheme:
+/// -show:  {
+/// -show:  &nbsp; offset,  -- [integer] offset where the word starts in the line:getline() string.
+/// -show:  &nbsp; length,  -- [integer] length of the word.
+/// -show:  &nbsp; quoted,  -- [boolean] indicates whether the word is quoted.
+/// -show:  &nbsp; delim,   -- [string] the delimiter character, or an empty string.
+/// -show:  }
 int line_state_lua::get_word_info(lua_State* state)
 {
     if (!lua_isnumber(state, 1))

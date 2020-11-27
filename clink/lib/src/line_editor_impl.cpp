@@ -558,7 +558,30 @@ void line_editor_impl::update_internal()
         line_state line = get_linestate();
         collect_words(false);
 
-        m_classifier->classify(get_linestate(), m_classifications);
+        m_classifications.clear();
+
+        int i = 0;
+        std::vector<word> words;
+        while (true)
+        {
+            if (!words.empty() && (i >= m_words.size() || m_words[i].command_word))
+            {
+                line_state linestate(
+                    m_buffer.get_buffer(),
+                    m_buffer.get_cursor(),
+                    words[0].offset,
+                    words
+                );
+                m_classifier->classify(linestate, m_classifications);
+                words.clear();
+            }
+
+            if (i >= m_words.size())
+                break;
+
+            words.push_back(m_words[i]);
+            i++;
+        }
 
 #ifdef DEBUG_CLASSIFY_WORDS
         static const char* const word_class_name[] = { "other", "command", "doskey", "arg", "flag", "none" };

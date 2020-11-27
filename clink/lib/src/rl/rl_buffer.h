@@ -9,6 +9,12 @@
 class rl_buffer
     : public line_buffer
 {
+    struct command
+    {
+        unsigned int        offset;
+        unsigned int        length;
+    };
+
 public:
                             rl_buffer(const char* command_delims = nullptr,
                                       const char* word_delims = " \t",
@@ -30,7 +36,7 @@ public:
     virtual void            collect_words(std::vector<word>& words, bool stop_at_cursor) const;
 
 private:
-    void                    find_command_bounds(const char*& start, int& length, bool stop_at_cursor) const;
+    void                    find_command_bounds(std::vector<command>& commands, bool stop_at_cursor) const;
     char                    get_closing_quote() const;
 
 private:

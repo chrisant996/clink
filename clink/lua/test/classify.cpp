@@ -90,7 +90,7 @@ TEST_CASE("Lua word classification.")
         SECTION("No matcher etc")
         {
             tester.set_input("asdflkj etc");
-            tester.set_expected_classifications("c");
+            tester.set_expected_classifications("c"); // No matcher, so stops after command.
             tester.run();
         }
 
@@ -310,63 +310,70 @@ TEST_CASE("Lua word classification.")
         SECTION("Separator && 1")
         {
             tester.set_input("nullcmd && argcmd t");
-            tester.set_expected_classifications("co");
+            tester.set_expected_classifications("cco");
             tester.run();
         }
 
         SECTION("Separator && 1")
         {
             tester.set_input("nullcmd &&argcmd t");
-            tester.set_expected_classifications("co");
+            tester.set_expected_classifications("cco");
             tester.run();
         }
 
         SECTION("Separator && 2")
         {
             tester.set_input("nullcmd \"&&\" && argcmd t");
-            tester.set_expected_classifications("co");
+            tester.set_expected_classifications("cco");
             tester.run();
         }
 
         SECTION("Separator && 3")
         {
             tester.set_input("nullcmd \"&&\"&&argcmd t");
-            tester.set_expected_classifications("co");
+            tester.set_expected_classifications("cco");
             tester.run();
         }
 
         SECTION("Separator &")
         {
             tester.set_input("nullcmd & argcmd t");
-            tester.set_expected_classifications("co");
+            tester.set_expected_classifications("cco");
             tester.run();
         }
 
         SECTION("Separator | 1")
         {
             tester.set_input("nullcmd | argcmd t");
-            tester.set_expected_classifications("co");
+            tester.set_expected_classifications("cco");
             tester.run();
         }
 
         SECTION("Separator | 2")
         {
             tester.set_input("nullcmd|argcmd t");
-            tester.set_expected_classifications("co");
+            tester.set_expected_classifications("cco");
             tester.run();
         }
 
         SECTION("Separator multiple 1")
         {
             tester.set_input("nullcmd | nullcmd && argcmd t");
-            tester.set_expected_classifications("co");
+            tester.set_expected_classifications("ccco");
             tester.run();
         }
 
         SECTION("Separator multiple 2")
         {
             tester.set_input("nullcmd | nullcmd && argcmd |argcmd t");
-            tester.set_expected_classifications("co");
+            tester.set_expected_classifications("cccco");
+            tester.run();
+        }
+
+        SECTION("Multiple commands with args")
+        {
+            tester.set_input("argcmd one green | asdfjkl etc | xyz -a def && argcmd t");
+            tester.set_expected_classifications("canccfaco");
             tester.run();
         }
 

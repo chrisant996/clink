@@ -110,32 +110,51 @@ void rl_buffer::end_undo_group()
 }
 
 //------------------------------------------------------------------------------
-void rl_buffer::find_command_bounds(const char*& start, int& length, bool stop_at_cursor) const
+void rl_buffer::find_command_bounds(std::vector<command>& commands, bool stop_at_cursor) const
 {
     const char* line_buffer = get_buffer();
     unsigned int line_stop = stop_at_cursor ? get_cursor() : get_length();
 
-    start = line_buffer;
-    length = line_stop;
+    commands.clear();
 
     if (m_command_delims == nullptr)
-        return;
-
-    str_iter token_iter(start, length);
-    str_tokeniser tokens(token_iter, m_command_delims);
-    tokens.add_quote_pair(m_quote_pair);
-    while (tokens.next(start, length))
     {
-        // Have we found the command containing the cursor?
-        if ((int)get_cursor() >= (start) - line_buffer &&
-            (int)get_cursor() <= (start + length) - line_buffer)
-            return;
+        commands.push_back({ 0, line_stop });
+        return;
     }
 
-    // We should expect to reach the cursor. If not then there's a trailing
-    // separator and we'll just say the command starts at the cursor.
-    start = line_buffer + line_stop;
-    length = 0;
+    str_iter token_iter(line_buffer, line_stop);
+    str_tokeniser tokens(token_iter, m_command_delims);
+    tokens.add_quote_pair(m_quote_pair);
+
+    const char* start;
+    int length;
+    while (tokens.next(start, length))
+    {
+        unsigned int offset = unsigned(start - line_buffer);
+        if (stop_at_cursor)
+        {
+            // Have we found the command containing the cursor?
+            if (get_cursor() >= offset &&
+                get_cursor() <= offset + length)
+            {
+                commands.push_back({ offset, unsigned(length) });
+                return;
+            }
+        }
+        else
+        {
+            commands.push_back({ offset, unsigned(length) });
+        }
+    }
+
+    if (stop_at_cursor)
+    {
+        // We should expect to reach the cursor. If not then there's a trailing
+        // separator and we'll just say the command starts at the cursor.
+        start = line_buffer + line_stop;
+        length = 0;
+    }
 }
 
 //------------------------------------------------------------------------------
@@ -146,31 +165,37 @@ void rl_buffer::collect_words(std::vector<word>& words, bool stop_at_cursor) con
     const char* line_buffer = get_buffer();
     unsigned int line_cursor = get_cursor();
 
-    const char* command_start;
-    int command_length;
-    find_command_bounds(command_start, command_length, stop_at_cursor);
+    std::vector<command> commands;
+    find_command_bounds(commands, stop_at_cursor);
 
-    str_iter token_iter(command_start, command_length);
-    str_tokeniser tokens(token_iter, m_word_delims);
-    tokens.add_quote_pair(m_quote_pair);
-    while (1)
+    for (auto& command : commands)
     {
-        int length = 0;
-        const char* start = nullptr;
-        str_token token = tokens.next(start, length);
-        if (!token)
-            break;
+        bool first = true;
+        str_iter token_iter(line_buffer + command.offset, command.length);
+        str_tokeniser tokens(token_iter, m_word_delims);
+        tokens.add_quote_pair(m_quote_pair);
+        while (1)
+        {
+            int length = 0;
+            const char *start = nullptr;
+            str_token token = tokens.next(start, length);
+            if (!token)
+                break;
 
-        // Add the word.
-        unsigned int offset = unsigned(start - line_buffer);
-        words.push_back({ offset, unsigned(length), true, 0, token.delim });
+            // Add the word.
+            unsigned int offset = unsigned(start - line_buffer);
+            words.push_back({offset, unsigned(length), first, 0, token.delim});
+
+            first = false;
+        }
     }
 
-    // Add an empty word if the cursor is at the beginning of one.
+    // Add an empty word if no words, or if stopping at the cursor and it's at
+    // the beginning of a word.
     word* end_word = words.empty() ? nullptr : &words.back();
     if (!end_word || (stop_at_cursor && end_word->offset + end_word->length < line_cursor))
     {
-        words.push_back({ line_cursor, 0, true, 0, 0 });
+        words.push_back({ line_cursor, 0, !end_word, 0, 0 });
     }
 
     // Adjust for quotes.

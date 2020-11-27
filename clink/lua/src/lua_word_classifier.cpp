@@ -30,8 +30,6 @@ void lua_word_classifier::print_error(const char* error) const
 //------------------------------------------------------------------------------
 void lua_word_classifier::classify(const line_state& line, word_classifications& classifications) const
 {
-    classifications.clear();
-
     lua_State* state = m_state.get_state();
 
     // Call to Lua to generate matches.

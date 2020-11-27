@@ -4,8 +4,6 @@ ChrisAnt Plans
 
 # BETA
 
-- Classifying arguments needs to classify all commands on the line, e.g. "cmd1 arg1 & cmd2 arg1 arg2 | cmd3" should yield "cacaac".
-- Need to test "argcmd & argcmd# one | nullcmd foo" in classify.cpp.
 - `bu`**menu-complete** should match ".build\" because this is Windows.
 
 ## Cmder, Powerline, Clink-Completions
