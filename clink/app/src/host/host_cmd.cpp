@@ -316,7 +316,7 @@ void host_cmd::initialise_editor_desc(line_editor::desc& desc)
     desc.reset_quote_pair();
     desc.command_delims = "&|";
     desc.word_delims = " \t<>=;";
-    desc.auto_quote_chars = " %=;&^";
+    // desc.auto_quote_chars = " %=;&^";
 }
 
 //------------------------------------------------------------------------------

@@ -31,7 +31,7 @@ public:
         const char*     prompt = "clink $ ";
         const char*     command_delims = nullptr;
         const char*     word_delims = " \t";
-        const char*     auto_quote_chars = " ";
+        // const char*     auto_quote_chars = " ";
 
         const char*     get_quote_pair() const { return quote_pair ? quote_pair : ""; }
         void            reset_quote_pair() { quote_pair = "\""; }
