@@ -182,6 +182,8 @@ kbd {
     white-space: nowrap;
     font-family: "Fira Mono",monospace;
     opacity: 75%;
+    padding-left: 0.125rem;
+    padding-right: 0.125rem;
 }
 
 #content .mono {
