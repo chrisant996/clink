@@ -25,5 +25,5 @@ public:
     virtual void            end_undo_group() = 0;
     virtual void            draw() = 0;
     virtual void            redraw() = 0;
-    virtual void            collect_words(std::vector<word>& words, bool stop_at_cursor) const = 0;
+    virtual unsigned int    collect_words(std::vector<word>& words, bool stop_at_cursor) const = 0;
 };

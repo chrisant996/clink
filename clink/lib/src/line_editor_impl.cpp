@@ -463,8 +463,7 @@ bool line_editor_impl::update_input()
 //------------------------------------------------------------------------------
 void line_editor_impl::collect_words(bool stop_at_cursor)
 {
-    m_buffer.collect_words(m_words, stop_at_cursor);
-    m_command_offset = m_words.empty() ? 0 : m_words[0].offset;
+    m_command_offset = m_buffer.collect_words(m_words, stop_at_cursor);
 
     // The last word can be split by the match generators, to influence word
     // breaks. This is a little clunky but works well enough.

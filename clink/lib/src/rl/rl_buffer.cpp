@@ -158,7 +158,7 @@ void rl_buffer::find_command_bounds(std::vector<command>& commands, bool stop_at
 }
 
 //------------------------------------------------------------------------------
-void rl_buffer::collect_words(std::vector<word>& words, bool stop_at_cursor) const
+unsigned int rl_buffer::collect_words(std::vector<word>& words, bool stop_at_cursor) const
 {
     words.clear();
 
@@ -168,9 +168,13 @@ void rl_buffer::collect_words(std::vector<word>& words, bool stop_at_cursor) con
     std::vector<command> commands;
     find_command_bounds(commands, stop_at_cursor);
 
+    unsigned int command_offset = 0;
+
     for (auto& command : commands)
     {
         bool first = true;
+        command_offset = command.offset;
+
         str_iter token_iter(line_buffer + command.offset, command.length);
         str_tokeniser tokens(token_iter, m_word_delims);
         tokens.add_quote_pair(m_quote_pair);
@@ -215,4 +219,6 @@ void rl_buffer::collect_words(std::vector<word>& words, bool stop_at_cursor) con
         word.length -= start_quoted + end_quoted;
         word.quoted = !!start_quoted;
     }
+
+    return command_offset;
 }
