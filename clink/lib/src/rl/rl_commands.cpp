@@ -3,6 +3,7 @@
 
 #include "pch.h"
 #include "line_buffer.h"
+#include "line_state.h"
 #include "popup.h"
 #include "rl_commands.h"
 
@@ -152,6 +153,31 @@ int clink_copy_line(int count, int invoking_key)
 {
     copy_impl(rl_buffer->get_buffer(), rl_buffer->get_length());
 
+    return 0;
+}
+
+//------------------------------------------------------------------------------
+int clink_copy_word(int count, int invoking_key)
+{
+    std::vector<word> words;
+    rl_buffer->collect_words(words, false);
+
+    if (!words.empty())
+    {
+        unsigned int line_cursor = rl_buffer->get_cursor();
+        for (auto const& word : words)
+        {
+            if (line_cursor >= word.offset &&
+                line_cursor <= word.offset + word.length)
+            {
+                copy_impl(rl_buffer->get_buffer() + word.offset, word.length);
+                return 0;
+            }
+        }
+
+    }
+
+    rl_ding();
     return 0;
 }
 

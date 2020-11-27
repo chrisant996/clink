@@ -108,6 +108,7 @@ void line_editor_destroy(line_editor* editor)
 line_editor_impl::line_editor_impl(const desc& desc)
 : m_module(desc.shell_name, desc.input)
 , m_desc(desc)
+, m_buffer(desc.command_delims, desc.word_delims, desc.get_quote_pair())
 , m_printer(*desc.printer)
 , m_pager(*this)
 {
@@ -460,99 +461,19 @@ bool line_editor_impl::update_input()
 }
 
 //------------------------------------------------------------------------------
-void line_editor_impl::find_command_bounds(const char*& start, int& length, bool stop_at_cursor)
-{
-    const char* line_buffer = m_buffer.get_buffer();
-    unsigned int line_stop = stop_at_cursor ? m_buffer.get_cursor() : m_buffer.get_length();
-
-    start = line_buffer;
-    length = line_stop;
-
-    if (m_desc.command_delims == nullptr)
-        return;
-
-    str_iter token_iter(start, length);
-    str_tokeniser tokens(token_iter, m_desc.command_delims);
-    tokens.add_quote_pair(m_desc.get_quote_pair());
-    while (tokens.next(start, length))
-    {
-        // Have we found the command containing the cursor?
-        if (m_buffer.get_cursor() >= (start) - line_buffer &&
-            m_buffer.get_cursor() <= (start + length) - line_buffer)
-            return;
-    }
-
-    // We should expect to reach the cursor. If not then there's a trailing
-    // separator and we'll just say the command starts at the cursor.
-    start = line_buffer + line_stop;
-    length = 0;
-}
-
-//------------------------------------------------------------------------------
 void line_editor_impl::collect_words(bool stop_at_cursor)
 {
-    m_words.clear();
-
-    const char* line_buffer = m_buffer.get_buffer();
-    unsigned int line_cursor = m_buffer.get_cursor();
-
-    const char* command_start;
-    int command_length;
-    find_command_bounds(command_start, command_length, stop_at_cursor);
-
-    m_command_offset = int(command_start - line_buffer);
-
-    str_iter token_iter(command_start, command_length);
-    str_tokeniser tokens(token_iter, m_desc.word_delims);
-    tokens.add_quote_pair(m_desc.get_quote_pair());
-    while (1)
-    {
-        int length = 0;
-        const char* start = nullptr;
-        str_token token = tokens.next(start, length);
-        if (!token)
-            break;
-
-        // Add the word.
-        unsigned int offset = unsigned(start - line_buffer);
-        m_words.push_back();
-        *(m_words.back()) = { offset, unsigned(length), 0, token.delim };
-    }
-
-    // Add an empty word if the cursor is at the beginning of one.
-    word* end_word = m_words.back();
-    if (!end_word || (stop_at_cursor && end_word->offset + end_word->length < line_cursor))
-    {
-        m_words.push_back();
-        *(m_words.back()) = { line_cursor };
-    }
-
-    // Adjust for quotes.
-    for (word& word : m_words)
-    {
-        if (word.length == 0)
-            continue;
-
-        const char* start = line_buffer + word.offset;
-
-        int start_quoted = (start[0] == m_desc.get_quote_pair()[0]);
-        int end_quoted = 0;
-        if (word.length > 1)
-            end_quoted = (start[word.length - 1] == get_closing_quote(m_desc.get_quote_pair()));
-
-        word.offset += start_quoted;
-        word.length -= start_quoted + end_quoted;
-        word.quoted = !!start_quoted;
-    }
+    m_buffer.collect_words(m_words, stop_at_cursor);
+    m_command_offset = m_words.empty() ? 0 : m_words[0].offset;
 
     // The last word can be split by the match generators, to influence word
     // breaks. This is a little clunky but works well enough.
     line_state line = get_linestate();
-    end_word = m_words.back();
+    word* end_word = &m_words.back();
     if (end_word->length && stop_at_cursor)
     {
         word_break_info break_info = {};
-        const char *word_start = line_buffer + end_word->offset;
+        const char *word_start = m_buffer.get_buffer() + end_word->offset;
         for (const auto *generator : m_generators)
         {
             word_break_info tmp;
@@ -568,12 +489,13 @@ void line_editor_impl::collect_words(bool stop_at_cursor)
             word split_word;
             split_word.offset = end_word->offset + truncate;
             split_word.length = end_word->length - truncate;
+            split_word.command_word = false;
             split_word.quoted = false;
             split_word.delim = str_token::invalid_delim;
 
             end_word->length = truncate;
-            end_word = m_words.push_back();
-            *end_word = split_word;
+            m_words.push_back(split_word);
+            end_word = &m_words.back();
         }
 
         int keep = min<unsigned int>(break_info.keep, end_word->length);
@@ -656,7 +578,7 @@ void line_editor_impl::update_internal()
     // Collect words, stopping at the cursor for match generator.
     collect_words();
 
-    const word& end_word = *(m_words.back());
+    const word& end_word = m_words.back();
 
     union key_t {
         struct {

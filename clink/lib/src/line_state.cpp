@@ -4,15 +4,16 @@
 #include "pch.h"
 #include "line_state.h"
 
-#include <core/array.h>
 #include <core/str.h>
+
+#include <vector>
 
 //------------------------------------------------------------------------------
 line_state::line_state(
     const char* line,
     unsigned int cursor,
     unsigned int command_offset,
-    const array<word>& words)
+    const std::vector<word>& words)
 : m_words(words)
 , m_line(line)
 , m_cursor(cursor)
@@ -39,7 +40,7 @@ unsigned int line_state::get_command_offset() const
 }
 
 //------------------------------------------------------------------------------
-const array<word>& line_state::get_words() const
+const std::vector<word>& line_state::get_words() const
 {
     return m_words;
 }
@@ -47,25 +48,28 @@ const array<word>& line_state::get_words() const
 //------------------------------------------------------------------------------
 unsigned int line_state::get_word_count() const
 {
-    return m_words.size();
+    return (unsigned int)m_words.size();
 }
 
 //------------------------------------------------------------------------------
 bool line_state::get_word(unsigned int index, str_base& out) const
 {
-    const word* word = m_words[index];
-    if (word == nullptr)
+    if (index >= m_words.size())
         return false;
 
-    out.concat(m_line + word->offset, word->length);
+    const word& word = m_words[index];
+    out.concat(m_line + word.offset, word.length);
     return true;
 }
 
 //------------------------------------------------------------------------------
 str_iter line_state::get_word(unsigned int index) const
 {
-    if (const word* word = m_words[index])
-        return str_iter(m_line + word->offset, word->length);
+    if (index < m_words.size())
+    {
+        const word& word = m_words[index];
+        return str_iter(m_line + word.offset, word.length);
+    }
 
     return str_iter();
 }

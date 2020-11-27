@@ -48,7 +48,7 @@ private:
     typedef editor_module                       module;
     typedef fixed_array<editor_module*, 16>     modules;
     typedef fixed_array<match_generator*, 32>   generators;
-    typedef fixed_array<word, 72>               words;
+    typedef std::vector<word>                   words;
 
     enum flags : unsigned char
     {
@@ -61,7 +61,6 @@ private:
     void                initialise();
     void                begin_line();
     void                end_line();
-    void                find_command_bounds(const char*& start, int& length, bool stop_at_cursor=true);
     void                collect_words(bool stop_at_cursor=true);
     void                update_internal();
     bool                update_input();

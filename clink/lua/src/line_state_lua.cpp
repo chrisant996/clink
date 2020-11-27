@@ -85,12 +85,12 @@ int line_state_lua::get_word_info(lua_State* state)
     if (!lua_isnumber(state, 1))
         return 0;
 
-    const array<word>& words = m_line.get_words();
+    const std::vector<word>& words = m_line.get_words();
     unsigned int index = int(lua_tointeger(state, 1)) - 1;
     if (index >= words.size())
         return 0;
 
-    word word = *(words[index]);
+    const word& word = words[index];
 
     lua_createtable(state, 0, 4);
 

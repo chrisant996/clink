@@ -934,6 +934,7 @@ rl_module::rl_module(const char* shell_name, terminal_in* input)
         rl_add_funmap_entry("clink-ctrl-c", clink_ctrl_c);
         rl_add_funmap_entry("clink-paste", clink_paste);
         rl_add_funmap_entry("clink-copy-line", clink_copy_line);
+        rl_add_funmap_entry("clink-copy-word", clink_copy_word);
         rl_add_funmap_entry("clink-copy-cwd", clink_copy_cwd);
         rl_add_funmap_entry("clink-up-directory", clink_up_directory);
         rl_add_funmap_entry("clink-insert-dot-dot", clink_insert_dot_dot);
@@ -977,6 +978,7 @@ rl_module::rl_module(const char* shell_name, terminal_in* input)
         { "\\M-\\C-c",      "clink-copy-line" },         // alt-ctrl-c
         { "\\M-\\C-e",      "clink-expand-env-var" },    // alt-ctrl-e
         { "\\M-\\C-f",      "clink-expand-doskey-alias" }, // alt-ctrl-f
+        { "\\M-\\C-w",      "clink-copy-word" },         // alt-ctrl-w
         { "\\e[5;5~",       "clink-up-directory" },      // ctrl-pgup
         { "\\e\\eOS",       "clink-exit" },              // alt-f4
         { "\\e[1;3H",       "clink-scroll-top" },        // alt-home
