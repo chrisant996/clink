@@ -185,6 +185,7 @@ Name | Description
 `add-history`|Adds the current line to the history without executing it, and clears the editing line.
 `clink-copy-cwd`|Copy the current working directory to the clipboard.
 `clink-copy-line`|Copy the current line to the clipboard.
+`clink-copy-word`|Copy the word at the cursor to the clipboard.
 `clink-ctrl-c`|Discards the current line and starts a new one (like <kbd>Ctrl</kbd>+<kbd>C</kbd> in CMD.EXE).
 `clink-exit`|Replaces the current line with `exit` and executes it (exits the shell instance).
 `clink-expand-doskey-alias`|Expand the doskey alias (if any) at the beginning of the line.
