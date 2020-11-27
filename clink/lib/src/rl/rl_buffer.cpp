@@ -127,8 +127,8 @@ void rl_buffer::find_command_bounds(const char*& start, int& length, bool stop_a
     while (tokens.next(start, length))
     {
         // Have we found the command containing the cursor?
-        if (get_cursor() >= (start) - line_buffer &&
-            get_cursor() <= (start + length) - line_buffer)
+        if ((int)get_cursor() >= (start) - line_buffer &&
+            (int)get_cursor() <= (start + length) - line_buffer)
             return;
     }
 
