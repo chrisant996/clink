@@ -58,7 +58,6 @@ ChrisAnt Plans
   - Might prefer to completely replace readline's line drawing, since it's trying to minimize updates over terminal emulators, and that makes it much harder to colorize the editing line (and arguments).
 
 ## Medium Priority
-- [#25](https://github.com/chrisant996/clink/issues/25) Unicode surrogate pairs (e.g. emoji) in a clink-enabled console.
 - Add a configuration setting for whether `menu-complete` wraps around.
 - Complete "%ENVVAR%\*" by internally expanding ENVVAR for collecting matches, but not expanding it in the editing line.
 

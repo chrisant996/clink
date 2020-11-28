@@ -30,5 +30,6 @@ private:
     unsigned long   m_prev_mode = 0;
     unsigned char   m_buffer_head = 0;
     unsigned char   m_buffer_count = 0;
+    wchar_t         m_lead_surrogate = 0;
     unsigned char   m_buffer[16]; // must be power of two.
 };

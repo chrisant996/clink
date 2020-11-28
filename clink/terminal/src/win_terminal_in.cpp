@@ -120,6 +120,11 @@ static int keymod_index(int key_flags)
 #undef SS3
 #undef CSI
 
+//------------------------------------------------------------------------------
+// Use unsigned; WCHAR and unsigned short can give wrong results.
+#define IN_RANGE(n1, b, n2)     ((unsigned)((b) - (n1)) <= unsigned((n2) - (n1)))
+inline bool is_lead_surrogate(unsigned int ch) { return IN_RANGE(0xD800, ch, 0xDBFF); }
+
 
 
 //------------------------------------------------------------------------------
@@ -329,6 +334,7 @@ static void adjust_cursor_on_resize(COORD prev_position)
 void win_terminal_in::begin()
 {
     m_buffer_count = 0;
+    m_lead_surrogate = 0;
     m_stdin = GetStdHandle(STD_INPUT_HANDLE);
     GetConsoleMode(m_stdin, &m_prev_mode);
     set_cursor_visibility(false);
@@ -650,12 +656,18 @@ void win_terminal_in::push(const char* seq)
 {
     static const unsigned int mask = sizeof_array(m_buffer) - 1;
 
-    if (m_buffer_count >= sizeof_array(m_buffer))
-        return;
+    assert(!m_lead_surrogate);
+    m_lead_surrogate = 0;
 
     int index = m_buffer_head + m_buffer_count;
     for (; m_buffer_count <= mask && *seq; ++m_buffer_count, ++index, ++seq)
-        m_buffer[index & mask] = *seq;
+    {
+        assert(m_buffer_count < sizeof_array(m_buffer));
+        if (m_buffer_count < sizeof_array(m_buffer))
+            m_buffer[index & mask] = *seq;
+        else
+            return;
+    }
 }
 
 //------------------------------------------------------------------------------
@@ -663,26 +675,49 @@ void win_terminal_in::push(unsigned int value)
 {
     static const unsigned int mask = sizeof_array(m_buffer) - 1;
 
-    if (m_buffer_count >= sizeof_array(m_buffer))
-        return;
-
     int index = m_buffer_head + m_buffer_count;
 
     if (value < 0x80)
     {
-        m_buffer[index & mask] = value;
-        ++m_buffer_count;
+        assert(!m_lead_surrogate);
+        m_lead_surrogate = 0;
+
+        assert(m_buffer_count < sizeof_array(m_buffer));
+        if (m_buffer_count < sizeof_array(m_buffer))
+        {
+            m_buffer[index & mask] = value;
+            ++m_buffer_count;
+        }
         return;
     }
 
-    wchar_t wc[2] = { (wchar_t)value, 0 };
+    if (is_lead_surrogate(value))
+    {
+        m_lead_surrogate = value;
+        return;
+    }
+
+    wchar_t wc[3];
+    unsigned int len = 0;
+    if (m_lead_surrogate)
+    {
+        wc[len++] = m_lead_surrogate;
+        m_lead_surrogate = 0;
+    }
+    wc[len++] = wchar_t(value);
+    wc[len] = 0;
+
     char utf8[mask + 1];
     unsigned int n = to_utf8(utf8, sizeof_array(utf8), wc);
-    if (n <= unsigned(mask - m_buffer_count))
-        for (unsigned int i = 0; i < n; ++i, ++index)
+    for (unsigned int i = 0; i < n; ++i, ++index)
+    {
+        assert(m_buffer_count < sizeof_array(m_buffer));
+        if (m_buffer_count < sizeof_array(m_buffer))
+        {
             m_buffer[index & mask] = utf8[i];
-
-    m_buffer_count += n;
+            m_buffer_count++;
+        }
+    }
 }
 
 //------------------------------------------------------------------------------
