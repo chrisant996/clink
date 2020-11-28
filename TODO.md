@@ -49,7 +49,8 @@ ChrisAnt Plans
 
 ## High Priority
 - Allow binding keys to Lua scripts.
-  - Add a new `ISUSER` custom binding type to Readline, which calls a global callback and passes it the binding string (like for `ISMACR`).  The global callback can then look up the Lua function name and pass it a `line_state` from `collect_words(false/*stop_at_cursor*/)`
+  - Add a new `ISUSER` custom binding type to Readline, which calls a global callback and passes it the binding string (like for `ISMACR`)?  The global callback can then look up the Lua function name and pass it a `line_state` from `collect_words(false/*stop_at_cursor*/)`.
+    - But then how to make the inputrc file continue to be compatible for sharing with other terminal implementations?
   - Provide API for accessing the screen buffer, and for scrolling.
   - Provide API for interacting with the Readline buffer.
   - Provide API to show a popup list?  But make it fail if used from outside a Readline command.
