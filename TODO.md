@@ -58,13 +58,13 @@ ChrisAnt Plans
   - Might prefer to completely replace readline's line drawing, since it's trying to minimize updates over terminal emulators, and that makes it much harder to colorize the editing line (and arguments).
 
 ## Medium Priority
+- [#25](https://github.com/chrisant996/clink/issues/25) Unicode surrogate pairs (e.g. emoji) in a clink-enabled console.
 - Add a configuration setting for whether `menu-complete` wraps around.
 - Complete "%ENVVAR%\*" by internally expanding ENVVAR for collecting matches, but not expanding it in the editing line.
 
 ## Low Priority
 - Add commands that behave like **F7** and **F8** from CMD (like `history-search-backward` without wrapping around?).
 - Lua `globfiles` and `globdirs` should return whether the files and dirs are hidden, to save _N_ additional calls to look up the hidden attributes.
-- [#396](https://github.com/mridgers/clink/issues/396) Pasting unicode emoji in a clink-enabled console (it works in git-bash).
 - Add terminal sequences for **Ctrl+Shift+Letter** and **Ctrl+Punctuation** and etc (see https://invisible-island.net/xterm/modified-keys.html).
 - Add a `history.dupe_mode` that behaves like 4Dos/4NT/Take Command from JPSoft:  **Up**/**Down** then **Enter** remembers the history position so that **Enter**, **Down**, **Enter**, **Down**, **Enter**, etc can be used to replay a series of commands.
 
