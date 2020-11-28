@@ -151,6 +151,7 @@ ChrisAnt Plans
 ## Known Issues
 - Perturbed PROMPT envvar is visible in child processes (e.g. piped shell in various file editors).
 - [#531](https://github.com/mridgers/clink/issues/531) AV detects a trojan on download _[This is likely because of the use of CreateRemoteThread and/or hooking OS APIs.  There might be a way to obfuscate the fact that clink uses those, but ultimately this is kind of an inherent problem.  Getting the binaries digitally signed might be the most effective solution, but that's financially expensive.]_
+- Readline's incremental display updates plus its reliance on ANSI escape codes for cursor positioning seem to make it not able to properly support editing within a line containing surrogate pairs.  I would say that it's a Readline issue, except that git-bash seems to be a bit better at it than Clink is, so maybe Clink isn't hosting Readline correctly.
 
 ## Mystery
 - [#480](https://github.com/mridgers/clink/issues/480) Things don't work right when clink is in a path with spaces _[I'm not able to reproduce the problem, so dropping it off the radar for now.]_
