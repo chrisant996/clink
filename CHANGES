@@ -13,6 +13,7 @@
 - Fixed case sensitive sorting of matches.
 - Fixed script error when %PATHEXT% is empty.
 - Fixed the `exec.cwd` Clink setting to default to true, so that the default behavior is consistent with how v0.4.x behaved.
+- Fixed [#25](https://github.com/chrisant996/clink/issues/25) Unicode surrogate pairs (and emoji) input isn't working -- Microsoft Terminal renders the text correctly, but ConEmu and the default conhost still don't (and that isn't a Clink issue).
 
 ### v1.1.4
 
