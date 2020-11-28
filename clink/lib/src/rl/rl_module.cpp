@@ -49,7 +49,7 @@ extern int _rl_colored_completion_prefix;
 static FILE*        null_stream = (FILE*)1;
 static FILE*        in_stream = (FILE*)2;
 static FILE*        out_stream = (FILE*)3;
-extern "C" int      wcwidth(int);
+extern "C" int      mk_wcwidth(char32_t);
 extern "C" char*    tgetstr(char*, char**);
 static const int    RL_MORE_INPUT_STATES = ~(
                         RL_STATE_CALLBACK|
@@ -69,6 +69,13 @@ extern int          _rl_last_c_pos;
 extern int          _rl_last_v_pos;
 #endif
 } // extern "C"
+
+inline int clink_wcwidth(char32_t c)
+{
+    if (c >= ' ' && c <= '~')
+        return 1;
+    return mk_wcwidth(c);
+}
 
 extern void host_add_history(int rl_history_index, const char* line);
 extern void host_remove_history(int rl_history_index, const char* line);
@@ -1250,7 +1257,7 @@ void rl_module::on_terminal_resize(int columns, int rows, const context& context
             case ecma48_code::type_chars:
                 for (str_iter i(code.get_pointer(), code.get_length()); i.more(); )
                 {
-                    int n = wcwidth(i.next());
+                    int n = clink_wcwidth(i.next());
                     remaining -= n;
                     if (remaining > 0)
                         continue;

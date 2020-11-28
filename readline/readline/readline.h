@@ -43,6 +43,13 @@ extern "C" {
 #define RL_VERSION_MAJOR	8
 #define RL_VERSION_MINOR	0
 
+/* begin_clink_change */
+#define VER_AS_STR(x)    #x
+#define MAKE_LIBRARY_VERSION(maj, min)    VER_AS_STR(maj) ## "." ## VER_AS_STR(min)
+#define RL_LIBRARY_VERSION    MAKE_LIBRARY_VERSION(RL_VERSION_MAJOR, RL_VERSION_MINOR)
+/* end_clink_change */
+
+
 /* Readline data structures. */
 
 /* Maintaining the state of undo.  We remember individual deletes and inserts

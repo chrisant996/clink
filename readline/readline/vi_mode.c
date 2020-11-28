@@ -949,7 +949,7 @@ rl_vi_arg_digit (int count, int c)
 static int
 _rl_vi_change_mbchar_case (int count)
 {
-  wchar_t wc;
+  WCHAR_T wc;
   char mb[MB_LEN_MAX+1];
   int mlen, p;
   size_t m;
@@ -960,9 +960,9 @@ _rl_vi_change_mbchar_case (int count)
     count--;
   while (count-- && rl_point < rl_end)
     {
-      m = mbrtowc (&wc, rl_line_buffer + rl_point, rl_end - rl_point, &ps);
+      m = MBRTOWC (&wc, rl_line_buffer + rl_point, rl_end - rl_point, &ps);
       if (MB_INVALIDCH (m))
-	wc = (wchar_t)rl_line_buffer[rl_point];
+	wc = (WCHAR_T)(unsigned char)rl_line_buffer[rl_point];
       else if (MB_NULLWCH (m))
 	wc = L'\0';
       if (iswupper (wc))
@@ -980,7 +980,7 @@ _rl_vi_change_mbchar_case (int count)
       if (wc)
 	{
 	  p = rl_point;
-	  mlen = wcrtomb (mb, wc, &ps);
+	  mlen = WCRTOMB (mb, wc, &ps);
 	  if (mlen >= 0)
 	    mb[mlen] = '\0';
 	  rl_begin_undo_group ();

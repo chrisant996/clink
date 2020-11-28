@@ -81,6 +81,22 @@
 /* end of multibyte capability checks for I18N  */
 /************************************************/
 
+/* begin_clink_change */
+#ifdef WCHAR_T_BROKEN
+#  define WCHAR_T char32_t
+#  define MBRTOWC mbrtoc32
+#  define WCRTOMB c32rtomb
+#else
+#  define WCHAR_T wchar_t
+#  define MBRTOWC mbrtowc
+#  define WCRTOMB wcrtomb
+#endif
+#undef mbrtowc
+#undef wcrtobc
+#define mbrtowc __use_MBRTOWC_instead__
+#define wcrtomb __use_WCRTOMB_instead__
+/* end_clink_change */
+
 /*
  * Flags for _rl_find_prev_mbchar and _rl_find_next_mbchar:
  *
@@ -105,8 +121,8 @@ extern int _rl_read_mbstring PARAMS((int, char *, int));
 
 extern int _rl_is_mbchar_matched PARAMS((char *, int, int, char *, int));
 
-extern wchar_t _rl_char_value PARAMS((char *, int));
-extern int _rl_walphabetic PARAMS((wchar_t));
+extern WCHAR_T _rl_char_value PARAMS((char *, int));
+extern int _rl_walphabetic PARAMS((WCHAR_T));
 
 #define _rl_to_wupper(wc)	(iswlower (wc) ? towupper (wc) : (wc))
 #define _rl_to_wlower(wc)	(iswupper (wc) ? towlower (wc) : (wc))
@@ -127,7 +143,7 @@ extern int _rl_walphabetic PARAMS((wchar_t));
    calls to a libc wcwidth() */
 static inline int
 _rl_wcwidth (wc)
-     wchar_t wc;
+     WCHAR_T wc;
 {
   switch (wc)
     {

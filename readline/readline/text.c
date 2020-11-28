@@ -723,7 +723,7 @@ _rl_insert_char (int count, int c)
     }
   else
     {
-      wchar_t wc;
+      WCHAR_T wc;
       size_t ret;
 
       if (stored_count <= 0)
@@ -733,7 +733,7 @@ _rl_insert_char (int count, int c)
 
       ps_back = ps;
       pending_bytes[pending_bytes_length++] = c;
-      ret = mbrtowc (&wc, pending_bytes, pending_bytes_length, &ps);
+      ret = MBRTOWC (&wc, pending_bytes, pending_bytes_length, &ps);
 
       if (ret == (size_t)-2)
 	{
@@ -971,7 +971,7 @@ rl_insert (int count, int c)
     {
       /* setting rl_pending_input inhibits setting rl_last_func so we do it
 	 ourselves here */
-      rl_last_func = rl_insert; 
+      rl_last_func = rl_insert;
       _rl_reset_argument ();
       rl_executing_keyseq[rl_key_sequence_length = 0] = '\0';
       r = rl_execute_next (n);
@@ -1001,7 +1001,7 @@ _rl_insert_next (int count)
     _rl_restore_tty_signals ();
 #endif
 
-  return (_rl_insert_char (count, c));  
+  return (_rl_insert_char (count, c));
 }
 
 #if defined (READLINE_CALLBACKS)
@@ -1396,9 +1396,9 @@ rl_change_case (int count, int op)
 {
   int start, next, end;
   int inword, nc, nop;
-  wchar_t c;
+  WCHAR_T c;
 #if defined (HANDLE_MULTIBYTE)
-  wchar_t wc, nwc;
+  WCHAR_T wc, nwc;
   char mb[MB_LEN_MAX+1];
   int mlen;
   size_t m;
@@ -1457,16 +1457,16 @@ rl_change_case (int count, int op)
 #if defined (HANDLE_MULTIBYTE)
       else
 	{
-	  m = mbrtowc (&wc, rl_line_buffer + start, end - start, &mps);
+	  m = MBRTOWC (&wc, rl_line_buffer + start, end - start, &mps);
 	  if (MB_INVALIDCH (m))
-	    wc = (wchar_t)rl_line_buffer[start];
+	    wc = (WCHAR_T)rl_line_buffer[start];
 	  else if (MB_NULLWCH (m))
 	    wc = L'\0';
 	  nwc = (nop == UpCase) ? _rl_to_wupper (wc) : _rl_to_wlower (wc);
 	  if  (nwc != wc)	/*  just skip unchanged characters */
 	    {
 	      char *s, *e;
-	      mlen = wcrtomb (mb, nwc, &mps);
+	      mlen = WCRTOMB (mb, nwc, &mps);
 	      if (mlen > 0)
 		mb[mlen] = '\0';
 	      /* what to do if m != mlen? adjust below */

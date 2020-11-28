@@ -114,7 +114,7 @@ rl_alphabetic (int c)
 
 #if defined (HANDLE_MULTIBYTE)
 int
-_rl_walphabetic (wchar_t wc)
+_rl_walphabetic (WCHAR_T wc)
 {
   int c;
 

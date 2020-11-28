@@ -436,7 +436,7 @@ static int fnappend(const char *to_print, int prefix_bytes, const char *real_pat
     const char *end;
     size_t tlen;
     int width;
-    wchar_t wc;
+    WCHAR_T wc;
 
     print_len = strlen(to_print);
     end = to_print + print_len + 1;
@@ -509,7 +509,7 @@ static int fnappend(const char *to_print, int prefix_bytes, const char *real_pat
         else
         {
 #if defined(HANDLE_MULTIBYTE)
-            tlen = mbrtowc(&wc, s, end - s, &ps);
+            tlen = MBRTOWC(&wc, s, end - s, &ps);
             if (MB_INVALIDCH(tlen))
             {
                 tlen = 1;

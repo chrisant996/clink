@@ -132,7 +132,7 @@ _rl_find_next_mbchar_internal (char *string, int seed, int count, int find_non_z
   size_t tmp, len;
   mbstate_t ps;
   int point;
-  wchar_t wc;
+  WCHAR_T wc;
 
   tmp = 0;
 
@@ -162,11 +162,11 @@ _rl_find_next_mbchar_internal (char *string, int seed, int count, int find_non_z
       if (_rl_utf8locale && UTF8_SINGLEBYTE(string[point]))
 	{
 	  tmp = 1;
-	  wc = (wchar_t) string[point];
+	  wc = (WCHAR_T) string[point];
 	  memset(&ps, 0, sizeof(mbstate_t));
 	}
       else
-	tmp = mbrtowc (&wc, string+point, len, &ps);
+	tmp = MBRTOWC (&wc, string+point, len, &ps);
       if (MB_INVALIDCH ((size_t)tmp))
 	{
 	  /* invalid bytes. assume a byte represents a character */
@@ -195,11 +195,11 @@ _rl_find_next_mbchar_internal (char *string, int seed, int count, int find_non_z
 
   if (find_non_zero)
     {
-      tmp = mbrtowc (&wc, string + point, strlen (string + point), &ps);
+      tmp = MBRTOWC (&wc, string + point, strlen (string + point), &ps);
       while (MB_NULLWCH (tmp) == 0 && MB_INVALIDCH (tmp) == 0 && WCWIDTH (wc) == 0)
 	{
 	  point += tmp;
-	  tmp = mbrtowc (&wc, string + point, strlen (string + point), &ps);
+	  tmp = MBRTOWC (&wc, string + point, strlen (string + point), &ps);
 	}
     }
 
@@ -212,7 +212,7 @@ _rl_find_prev_mbchar_internal (char *string, int seed, int find_non_zero)
   mbstate_t ps;
   int prev, non_zero_prev, point, length;
   size_t tmp;
-  wchar_t wc;
+  WCHAR_T wc;
 
   memset(&ps, 0, sizeof(mbstate_t));
   length = strlen(string);
@@ -228,11 +228,11 @@ _rl_find_prev_mbchar_internal (char *string, int seed, int find_non_zero)
       if (_rl_utf8locale && UTF8_SINGLEBYTE(string[point]))
 	{
 	  tmp = 1;
-	  wc = (wchar_t) string[point];
+	  wc = (WCHAR_T) string[point];
 	  memset(&ps, 0, sizeof(mbstate_t));
 	}
       else
-	tmp = mbrtowc (&wc, string + point, length - point, &ps);
+	tmp = MBRTOWC (&wc, string + point, length - point, &ps);
       if (MB_INVALIDCH ((size_t)tmp))
 	{
 	  /* in this case, bytes are invalid or too short to compose
@@ -386,27 +386,27 @@ _rl_is_mbchar_matched (char *string, int seed, int end, char *mbchar, int length
   return 1;
 }
 
-wchar_t
+WCHAR_T
 _rl_char_value (char *buf, int ind)
 {
   size_t tmp;
-  wchar_t wc;
+  WCHAR_T wc;
   mbstate_t ps;
   int l;
 
   if (MB_LEN_MAX == 1 || rl_byte_oriented)
-    return ((wchar_t) buf[ind]);
+    return ((WCHAR_T) buf[ind]);
   if (_rl_utf8locale && UTF8_SINGLEBYTE(buf[ind]))
-    return ((wchar_t) buf[ind]);
+    return ((WCHAR_T) buf[ind]);
   l = strlen (buf);
   if (ind >= l - 1)
-    return ((wchar_t) buf[ind]);
+    return ((WCHAR_T) buf[ind]);
   if (l < ind)			/* Sanity check */
     l = strlen (buf+ind);
   memset (&ps, 0, sizeof (mbstate_t));
-  tmp = mbrtowc (&wc, buf + ind, l - ind, &ps);
+  tmp = MBRTOWC (&wc, buf + ind, l - ind, &ps);
   if (MB_INVALIDCH (tmp) || MB_NULLWCH (tmp))  
-    return ((wchar_t) buf[ind]);
+    return ((WCHAR_T) buf[ind]);
   return wc;
 }
 #endif /* HANDLE_MULTIBYTE */

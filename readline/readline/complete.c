@@ -937,7 +937,7 @@ fnwidth (const char *string)
   mbstate_t ps;
   int left, w;
   size_t clen;
-  wchar_t wc;
+  WCHAR_T wc;
 
   left = strlen (string) + 1;
   memset (&ps, 0, sizeof (mbstate_t));
@@ -954,7 +954,7 @@ fnwidth (const char *string)
       else
 	{
 #if defined (HANDLE_MULTIBYTE)
-	  clen = mbrtowc (&wc, string + pos, left - pos, &ps);
+	  clen = MBRTOWC (&wc, string + pos, left - pos, &ps);
 	  if (MB_INVALIDCH (clen))
 	    {
 	      width++;
@@ -995,7 +995,7 @@ fnprint (const char *to_print, int prefix_bytes, const char *real_pathname, unsi
   const char *end;
   size_t tlen;
   int width;
-  wchar_t wc;
+  WCHAR_T wc;
 
   print_len = strlen (to_print);
   end = to_print + print_len + 1;
@@ -1066,7 +1066,7 @@ fnprint (const char *to_print, int prefix_bytes, const char *real_pathname, unsi
       else
 	{
 #if defined (HANDLE_MULTIBYTE)
-	  tlen = mbrtowc (&wc, s, end - s, &ps);
+	  tlen = MBRTOWC (&wc, s, end - s, &ps);
 	  if (MB_INVALIDCH (tlen))
 	    {
 	      tlen = 1;
@@ -1765,7 +1765,7 @@ compute_lcd_of_matches (char **match_list, int matches, const char *text)
   int v;
   size_t v1, v2;
   mbstate_t ps1, ps2;
-  wchar_t wc1, wc2;
+  WCHAR_T wc1, wc2;
 #endif
 
 /* begin_clink_change */
@@ -1807,8 +1807,8 @@ compute_lcd_of_matches (char **match_list, int matches, const char *text)
 #if defined (HANDLE_MULTIBYTE)
 	    if (MB_CUR_MAX > 1 && rl_byte_oriented == 0)
 	      {
-		v1 = mbrtowc(&wc1, match_list[i]+si, strlen (match_list[i]+si), &ps1);
-		v2 = mbrtowc (&wc2, match_list[i+1]+si, strlen (match_list[i+1]+si), &ps2);
+		v1 = MBRTOWC(&wc1, match_list[i]+si, strlen (match_list[i]+si), &ps1);
+		v2 = MBRTOWC (&wc2, match_list[i+1]+si, strlen (match_list[i+1]+si), &ps2);
 		if (MB_INVALIDCH (v1) || MB_INVALIDCH (v2))
 		  {
 		    if (c1 != c2)	/* do byte comparison */
@@ -3001,7 +3001,7 @@ complete_fncmp (const char *convfn, int convlen, const char *filename, int filen
 #if defined (HANDLE_MULTIBYTE)
   size_t v1, v2;
   mbstate_t ps1, ps2;
-  wchar_t wc1, wc2;
+  WCHAR_T wc1, wc2;
 #endif
 
 #if defined (HANDLE_MULTIBYTE)
@@ -3028,8 +3028,8 @@ complete_fncmp (const char *convfn, int convlen, const char *filename, int filen
 	{
 	  do
 	    {
-	      v1 = mbrtowc (&wc1, s1, convlen, &ps1);
-	      v2 = mbrtowc (&wc2, s2, filename_len, &ps2);
+	      v1 = MBRTOWC (&wc1, s1, convlen, &ps1);
+	      v2 = MBRTOWC (&wc2, s2, filename_len, &ps2);
 	      if (v1 == 0 && v2 == 0)
 		return 1;
 	      else if (MB_INVALIDCH (v1) || MB_INVALIDCH (v2))
@@ -3078,8 +3078,8 @@ complete_fncmp (const char *convfn, int convlen, const char *filename, int filen
 	{
 	  do
 	    {
-	      v1 = mbrtowc (&wc1, s1, convlen, &ps1);
-	      v2 = mbrtowc (&wc2, s2, filename_len, &ps2);
+	      v1 = MBRTOWC (&wc1, s1, convlen, &ps1);
+	      v2 = MBRTOWC (&wc2, s2, filename_len, &ps2);
 	      if (v1 == 0 && v2 == 0)
 		return 1;
 	      else if (MB_INVALIDCH (v1) || MB_INVALIDCH (v2))

@@ -131,12 +131,12 @@ find_streqn (const char *a, const char *b, int len)
     {
       size_t v1, v2;
       mbstate_t ps1, ps2;
-      wchar_t wc1, wc2;
+      WCHAR_T wc1, wc2;
 
       do
 	{
-	  v1 = mbrtowc (&wc1, a, 1, &ps1);
-	  v2 = mbrtowc (&wc2, b, 1, &ps2);
+	  v1 = MBRTOWC (&wc1, a, 1, &ps1);
+	  v2 = MBRTOWC (&wc2, b, 1, &ps2);
 	  if (v1 == 0 && v2 == 0)
 	    return 1;
 	  else if (MB_INVALIDCH (v1) || MB_INVALIDCH (v2))

@@ -631,7 +631,7 @@ _rl_read_mbchar (char *mbchar, int size)
 {
   int mb_len, c;
   size_t mbchar_bytes_length;
-  wchar_t wc;
+  WCHAR_T wc;
   mbstate_t ps, ps_back;
 
   memset(&ps, 0, sizeof (mbstate_t));
@@ -649,7 +649,7 @@ _rl_read_mbchar (char *mbchar, int size)
 
       mbchar[mb_len++] = c;
 
-      mbchar_bytes_length = mbrtowc (&wc, mbchar, mb_len, &ps);
+      mbchar_bytes_length = MBRTOWC (&wc, mbchar, mb_len, &ps);
       if (mbchar_bytes_length == (size_t)(-1))
 	break;		/* invalid byte sequence for the current locale */
       else if (mbchar_bytes_length == (size_t)(-2))
