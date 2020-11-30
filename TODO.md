@@ -122,7 +122,6 @@ ChrisAnt Plans
 # MAINTENANCE
 
 - Contact Readline owner, start conversation about possible next steps.
-- Check if there's a newer update to the `wcwidth` implementation.
 
 ## Remove match type changes from Readline?
 - Displaying matches was slow because Readline writes everything one byte at a time, which incurs significant processing overhead across several layers.
