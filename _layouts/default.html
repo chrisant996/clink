@@ -22,23 +22,19 @@
   <body>
     <header class="page-header title-header" role="banner">
       <div class="title-container">
-        <div style="position:relative">
-          <table width="100%">
-            <tr>
-              <td>
-                <div>
-                  <h1 class="project-name" style="margin-bottom:0rem">{{ site.title | default: site.github.repository_name | default: page.title }}</h1>
-                  <h2 class="project-tagline" style="margin-bottom:0rem">{{ page.description | default: site.description | default: site.github.project_tagline }}</h2>
-                </div>
-              </td>
-              <td class="title-sidebar">
-                <div class="title-sidebar-inner">
-                  <a href="{{ site.github.download_url }}" class="btn" style="display:block">Download {{ site.github.version }}<div style="display:block;font-size:75%;text-align:center"><strong>pre-release version</strong></div></a>
-                  <a href="{{ site.github.repository_url }}" style="display:block"><img src="http://img.shields.io/badge/repo-{{ site.github.repository_name }}-blue.svg?style=flat&logo=github" alt="{{ site.github.repository_name }} repository"></a>
-                </div>
-              </td>
-            </tr>
-          </table>
+        <div class="title-left-container">
+          <div style="display:inline-block">
+            <h1 class="project-name" style="margin-bottom:0rem">{{ site.title | default: site.github.repository_name | default: page.title }}</h1>
+            <h2 class="project-tagline" style="margin-bottom:0rem">{{ page.description | default: site.description | default: site.github.project_tagline }}</h2>
+          </div>
+        </div>
+        <div class="title-right-container">
+          <div class="title-sidebar" style="display:inline-block;text-align:right;padding-left:2rem">
+            <div class="title-sidebar-inner">
+              <a href="{{ site.github.download_url }}" class="btn" style="display:block;text-align:center">Download {{ site.github.version }}<div style="display:block;font-size:75%;text-align:center"><strong>pre-release version</strong></div></a>
+              <a href="{{ site.github.repository_url }}" style="display:block"><img src="http://img.shields.io/badge/repo-{{ site.github.repository_name }}-blue.svg?style=flat&logo=github" alt="{{ site.github.repository_name }} repository"></a>
+            </div>
+          </div>
         </div>
       </div>
     </header>
