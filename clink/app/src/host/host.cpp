@@ -41,6 +41,11 @@ static setting_enum g_ignore_case(
     "off,on,relaxed",
     2);
 
+static setting_bool g_filter_prompt(
+    "clink.promptfilter",
+    "Enable prompt filtering by Lua scripts",
+    true);
+
 static setting_bool g_save_history(
     "history.save",
     "Save history between sessions",
@@ -309,7 +314,10 @@ bool host::edit_line(const char* prompt, str_base& out)
     str<256> filtered_prompt;
     if (init_scripts)
     {
-        prompt_filter.filter(prompt, filtered_prompt);
+        if (g_filter_prompt.get())
+            prompt_filter.filter(prompt, filtered_prompt);
+        else
+            filtered_prompt = prompt;
         desc.prompt = filtered_prompt.c_str();
     }
 

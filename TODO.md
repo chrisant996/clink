@@ -138,7 +138,6 @@ ChrisAnt Plans
 - [#542](https://github.com/mridgers/clink/issues/542) VS Code not capturing std output
 - [#486](https://github.com/mridgers/clink/issues/486) **Ctrl+C** doesn't always work properly _[might be the auto-answer prompt setting]_
 - A way to disable/enable clink once injected.
-- A way to disable/enable prompt filtering once injected.
 - [#532](https://github.com/mridgers/clink/issues/532) paste newlines, run as separate lines
   - It's pretty risky to just paste-and-go.
   - Maybe add an option to convert newlines into "&" instead?
