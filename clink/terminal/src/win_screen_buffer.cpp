@@ -12,8 +12,8 @@
 #include <assert.h>
 
 //------------------------------------------------------------------------------
-static setting_enum g_terminal_emulate(
-    "terminal.emulate",
+static setting_enum g_terminal_emulation(
+    "terminal.emulation",
     "Controls VT emulation",
     "Clink can emulate Virtual Terminal processing if the console doesn't\n"
     "natively. When set to 'emulate' then Clink performs VT emulation and handles\n"
@@ -34,7 +34,7 @@ void win_screen_buffer::begin()
     m_default_attr = csbi.wAttributes & attr_mask_all;
     m_bold = !!(m_default_attr & attr_mask_bold);
 
-    switch (g_terminal_emulate.get())
+    switch (g_terminal_emulation.get())
     {
     case 0:
         m_native_vt = true;
