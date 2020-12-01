@@ -6,12 +6,6 @@ ChrisAnt Plans
 
 - `bu`**menu-complete** should match ".build\" because this is Windows.
 - Popup should expand wildcards.  Menu-complete should expand wildcards!
-- Readline's display code gets very confused about width of dispayed text.
-  - Certainly when ANSI escape codes are present; what about when no escape codes are present?
-  - The discrepancy doesn't seem to equate to the raw number of invisible characters, so what is going on?
-  - Sometimes it's off by a few characters.
-  - Sometimes it's off by MANY characters.
-  - Sometimes it overruns the end of the line, and sometimes it wraps BEFORE the end of the line.
 
 ## Cmder, Powerline, Clink-Completions
 - Update clink-completions to have better 0.4.9 implementations, and also to conditionally use the new API when available.
@@ -161,6 +155,7 @@ ChrisAnt Plans
 
 ## Mystery
 - [#480](https://github.com/mridgers/clink/issues/480) Things don't work right when clink is in a path with spaces _[I'm not able to reproduce the problem, so dropping it off the radar for now.]_
+- Windows 10.0.19042.630 seems to have problems when using WriteConsoleW with ANSI escape codes in a powerline prompt in a git repo.  But Windows 10.0.19041.630 doesn't.
 
 ---
 Chris Antos - sparrowhawk996@gmail.com
