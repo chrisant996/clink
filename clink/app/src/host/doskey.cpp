@@ -171,10 +171,6 @@ bool doskey::remove_alias(const char* alias)
 //------------------------------------------------------------------------------
 bool doskey::resolve_impl(const str_iter& in, str_stream* out)
 {
-    // Early out if not output location was provided.
-    if (out == nullptr)
-        return true;
-
     // Find the alias for which to retrieve text for.
     str_tokeniser tokens(in, " ");
     str_iter token;
@@ -203,6 +199,12 @@ bool doskey::resolve_impl(const str_iter& in, str_stream* out)
     wtext.reserve(8192, true/*exact*/);
     GetConsoleAliasW(walias.data(), wtext.data(), wtext.size(), wshell.data());
     str<4> text(wtext.c_str());
+
+    // Early out if no output location was provided:  return true because the
+    // command is an alias that needs to be expanded (this is unreachable if the
+    // GetConsoleAliasW call doesn't find an alias).
+    if (out == nullptr)
+        return true;
 
     // Collect the remaining tokens.
     if (g_enhanced_doskey.get())
