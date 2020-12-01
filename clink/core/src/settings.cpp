@@ -308,6 +308,12 @@ template <> bool setting_impl<bool>::set(const char* value)
     if (stricmp(value, "true") == 0)  { m_store.value = 1; return true; }
     if (stricmp(value, "false") == 0) { m_store.value = 0; return true; }
 
+    if (stricmp(value, "on") == 0)    { m_store.value = 1; return true; }
+    if (stricmp(value, "off") == 0)   { m_store.value = 0; return true; }
+
+    if (stricmp(value, "yes") == 0)   { m_store.value = 1; return true; }
+    if (stricmp(value, "no") == 0)    { m_store.value = 0; return true; }
+
     if (*value >= '0' && *value <= '9')
     {
         m_store.value = !!atoi(value);
