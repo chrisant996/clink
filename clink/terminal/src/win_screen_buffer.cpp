@@ -37,14 +37,14 @@ void win_screen_buffer::begin()
     switch (g_terminal_emulate.get())
     {
     case 0:
-        m_vt = false;
+        m_native_vt = true;
         break;
     case 1:
-        m_vt = true;
+        m_native_vt = false;
         break;
     case 2:
-        m_vt = !(GetModuleHandleA("conemuhk64.dll") ||
-                 GetModuleHandleA("conemuhk32.dll"));
+        m_native_vt = (GetModuleHandleA("conemuhk64.dll") ||
+                       GetModuleHandleA("conemuhk32.dll"));
         break;
     }
 }
@@ -117,9 +117,9 @@ int win_screen_buffer::get_rows() const
 }
 
 //------------------------------------------------------------------------------
-bool win_screen_buffer::has_vt_processing() const
+bool win_screen_buffer::has_native_vt_processing() const
 {
-    return m_vt;
+    return m_native_vt;
 }
 
 //------------------------------------------------------------------------------

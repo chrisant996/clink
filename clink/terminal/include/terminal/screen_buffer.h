@@ -23,7 +23,7 @@ public:
     virtual void    flush() = 0;
     virtual int     get_columns() const = 0;
     virtual int     get_rows() const = 0;
-    virtual bool    has_vt_processing() const = 0;
+    virtual bool    has_native_vt_processing() const = 0;
     virtual void    clear(clear_type type) = 0;
     virtual void    clear_line(clear_type type) = 0;
     virtual void    set_cursor(int column, int row) = 0;

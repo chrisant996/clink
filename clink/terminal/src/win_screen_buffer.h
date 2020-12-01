@@ -16,7 +16,7 @@ public:
     virtual void    flush() override;
     virtual int     get_columns() const override;
     virtual int     get_rows() const override;
-    virtual bool    has_vt_processing() const override;
+    virtual bool    has_native_vt_processing() const override;
     virtual void    clear(clear_type type) override;
     virtual void    clear_line(clear_type type) override;
     virtual void    set_cursor(int column, int row) override;
@@ -39,5 +39,5 @@ private:
     unsigned long   m_prev_mode = 0;
     unsigned short  m_default_attr = 0x07;
     bool            m_bold = false;
-    bool            m_vt = false;
+    bool            m_native_vt = false;
 };

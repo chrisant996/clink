@@ -186,7 +186,7 @@ void ecma48_terminal_out::write(const char* chars, int length)
     }
     reset_pending();
 
-    if (m_screen.has_vt_processing())
+    if (m_screen.has_native_vt_processing())
     {
         static const char* int1 = tgetstr("vs", nullptr);
         static const char* int2 = tgetstr("ve", nullptr);
