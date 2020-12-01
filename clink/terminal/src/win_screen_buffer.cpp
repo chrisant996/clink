@@ -47,6 +47,9 @@ void win_screen_buffer::begin()
                        GetModuleHandleA("conemuhk32.dll"));
         break;
     }
+
+    if (m_native_vt)
+        SetConsoleMode(m_handle, m_prev_mode | ENABLE_VIRTUAL_TERMINAL_PROCESSING);
 }
 
 //------------------------------------------------------------------------------
