@@ -5,6 +5,13 @@ ChrisAnt Plans
 # BETA
 
 - `bu`**menu-complete** should match ".build\" because this is Windows.
+- Popup should expand wildcards.  Menu-complete should expand wildcards!
+- Readline's display code gets very confused about width of dispayed text.
+  - Certainly when ANSI escape codes are present; what about when no escape codes are present?
+  - The discrepancy doesn't seem to equate to the raw number of invisible characters, so what is going on?
+  - Sometimes it's off by a few characters.
+  - Sometimes it's off by MANY characters.
+  - Sometimes it overruns the end of the line, and sometimes it wraps BEFORE the end of the line.
 
 ## Cmder, Powerline, Clink-Completions
 - Update clink-completions to have better 0.4.9 implementations, and also to conditionally use the new API when available.
