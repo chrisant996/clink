@@ -38,6 +38,7 @@ attributes::attributes(default_e)
     reset_bg();
     set_bold(false);
     set_underline(false);
+    m_flags.all = 0;
 }
 
 //------------------------------------------------------------------------------
