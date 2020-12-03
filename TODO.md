@@ -34,7 +34,7 @@ ChrisAnt Plans
   - And THEN individual matches can have arbitrary values associated -- color, append char, or any per-match data that's desired.
 
 ### Low Priority
-- Changing terminal width makes 0.4.8 slowly "walk up the screen".  Changing terminal width makes master go haywire.  Probably more ecma48 terminal issues.  Probably related to commit 8aeaa14.
+- Changing terminal width makes 0.4.8 slowly "walk up the screen".  Changing terminal width works in master, except when the cursor position itself is affected.
 - Use `path::normalise` to clean up input like "\wbin\\\\cli" when using `complete` and `menu-complete`.
 - Symlink support (displaying matches, and whether to append a path separator).
 - The match pipeline should not fire on pressing **Enter** after `exit`.
