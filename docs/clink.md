@@ -45,39 +45,44 @@ The easiest way to configure Clink is to use Clink's `set` command line option. 
 
 The following table describes the available Clink settings:
 
-Name                         | Description
-:--:                         | -----------
-`clink.paste_crlf`           | What to do with CR and LF characters on paste. Set this to `delete` to delete them, or to `space` to replace them with spaces.
-`clink.path`                 | A list of paths to load Lua scripts. Multiple paths can be delimited semicolons.
-`cmd.auto_answer`            | Automatically answers cmd.exe's "Terminate batch job (Y/N)?" prompts. `off` = disabled, `answer_yes` = answer Y, `answer_no` = answer N.
-`cmd.ctrld_exits`            | <kbd>Ctrl</kbd>+<kbd>D</kbd> exits the process when it is pressed on an empty line.
-`colour.doskey`              | Used when Clink displays doskey alias completions.
-`colour.hidden`              | Used when Clink displays file completions with the "hidden" attribute.
-`colour.interact`            | Used when Clink displays text or prompts such as a pager's `--More?--` prompt.
-`colour.readonly`            | Used when Clink displays file completions with the "readonly" attribute.
-`doskey.enhanced`            | Enhanced Doskey adds the expansion of macros that follow `\|` and `&` command separators and respects quotes around words when parsing `$1`..`$9` tags. Note that these features do not apply to Doskey use in Batch files.
-`exec.cwd`                   | When matching executables as the first word (`exec.enable`), include executables in the current directory. (This is implicit if the word being completed is a relative path).
-`exec.dirs`                  | When matching executables as the first word (`exec.enable`), also include directories relative to the current working directory as matches.
-`exec.enable`                | Only match executables when completing the first word of a line.
-`exec.path`                  | When matching executables as the first word (`exec.enable`), include executables found in the directories specified in the `%PATH%` environment variable.
-`exec.space_prefix`          | If the line begins with whitespace then Clink bypasses executable matching (`exec.path`) and will do normal files matching instead.
-`files.hidden`               | Includes or excludes files with the "hidden" attribute set when generating file lists.
-`files.system`               | Includes or excludes files with the "system" attribute set when generating file lists.
-`files.unc_paths`            | UNC (network) paths can cause Clink to stutter when it tries to generate matches. Enable this if matching UNC paths is required.
-`history.dont_add_to_history_cmds` | List of commands that aren't automatically added to the history. Commands are separated by spaces, commas, or semicolons. Default is `exit history`, to exclude both of those commands.
-`history.dupe_mode`          | If a line is a duplicate of an existing history entry Clink will erase the duplicate when this is set `erase_prev`. Setting it to `ignore` will not add duplicates to the history, and setting it to `add` will always add lines.
-`history.expand_mode`        | The `!` character in an entered line can be interpreted to introduce words from the history. This can be enabled and disable by setting this value to `on` or `off`. Values of `not_squoted`, `not_dquoted`, or `not_quoted` will skip any `!` character quoted in single, double, or both quotes respectively.
-`history.ignore_space`       | Ignore lines that begin with whitespace when adding lines in to the history.
-`history.max_lines`          | The number of history lines to save if `history.save` is enabled (1 to 50000).
-`history.save`               | Saves history between sessions.
-`history.shared`             | When history is shared, all instances of Clink update the master history list after each command and reload the master history list on each prompt.  When history is not shared, each instance updates the master history list on exit.
-`lua.debug`                  | Loads a simple embedded command line debugger when enabled. Breakpoints can be added by calling `pause()`.
-`lua.path`                   | Value to append to `package.path`. Used to search for Lua scripts specified in `require()` statements.
-`match.ignore_case`          | Controls case sensitivity in string comparisons. `off` = case sensitive, `on` = case insensitive, `relaxed` = case insensitive plus `-` and `_` are considered equal.
-`match.sort_dirs`            | Matching directories can go before files, with files, or after files.
-`readline.hide_stderr`       | Suppresses stderr from the Readline library.  Enable this if Readline error messages are getting in the way.
-`terminal.emulate`           | Clink can either emulate a virtual terminal and handle ANSI escape codes itself, or let the console host natively handle ANSI escape codes. `native` = pass output directly to the console host process, `emulate` = clink handles ANSI escape codes itself, `auto` = emulate except when running in ConEmu.
-`terminal.modify_other_keys` | When enabled, pressing Space or Tab with modifier keys sends extended XTerm key sequences so they can be bound separately.
+Name                         | Default | Description
+:--:                         | :-:     | -----------
+`clink.paste_crlf`           | `space` | What to do with CR and LF characters on paste. Set this to `delete` to delete them, or to `space` to replace them with spaces.
+`clink.path`                 |         | A list of paths to load Lua scripts. Multiple paths can be delimited semicolons.
+`clink.promptfilter`         | True    | Enable prompt filtering by Lua scripts.
+`cmd.auto_answer`            | `off`   | Automatically answers cmd.exe's "Terminate batch job (Y/N)?" prompts. `off` = disabled, `answer_yes` = answer Y, `answer_no` = answer N.
+`cmd.ctrld_exits`            | True    | <kbd>Ctrl</kbd>+<kbd>D</kbd> exits the process when it is pressed on an empty line.
+`colour.doskey`              | `light_cyan` | Used when Clink displays doskey alias completions.
+`colour.hidden`              |         | Used when Clink displays file completions with the "hidden" attribute.
+`colour.interact`            | `white` | Used when Clink displays text or prompts such as a pager's `--More?--` prompt.
+`colour.readonly`            |         | Used when Clink displays file completions with the "readonly" attribute.
+`doskey.enhanced`            | True    | Enhanced Doskey adds the expansion of macros that follow `\|` and `&` command separators and respects quotes around words when parsing `$1`..`$9` tags. Note that these features do not apply to Doskey use in Batch files.
+`exec.cwd`                   | True    | When matching executables as the first word (`exec.enable`), include executables in the current directory. (This is implicit if the word being completed is a relative path).
+`exec.dirs`                  | True    | When matching executables as the first word (`exec.enable`), also include directories relative to the current working directory as matches.
+`exec.enable`                | True    | Match executables when completing the first word of a line.
+`exec.path`                  | True    | When matching executables as the first word (`exec.enable`), include executables found in the directories specified in the `%PATH%` environment variable.
+`exec.space_prefix`          | True    | If the line begins with whitespace then Clink bypasses executable matching (`exec.path`) and will do normal files matching instead.
+`files.hidden`               | True    | Includes or excludes files with the "hidden" attribute set when generating file lists.
+`files.system`               | False   | Includes or excludes files with the "system" attribute set when generating file lists.
+`files.unc_paths`            | False   | UNC (network) paths can cause Clink to stutter when it tries to generate matches. Enable this if matching UNC paths is required.
+`history.dont_add_to_history_cmds` | `exit history` | List of commands that aren't automatically added to the history. Commands are separated by spaces, commas, or semicolons. Default is `exit history`, to exclude both of those commands.
+`history.dupe_mode`          | `erase_prev` | If a line is a duplicate of an existing history entry Clink will erase the duplicate when this is set `erase_prev`. Setting it to `ignore` will not add duplicates to the history, and setting it to `add` will always add lines.
+`history.expand_mode`        | `not_quoted` | The `!` character in an entered line can be interpreted to introduce words from the history. This can be enabled and disable by setting this value to `on` or `off`. Values of `not_squoted`, `not_dquoted`, or `not_quoted` will skip any `!` character quoted in single, double, or both quotes respectively.
+`history.ignore_space`       | True    | Ignore lines that begin with whitespace when adding lines in to the history.
+`history.max_lines`          | 2500    | The number of history lines to save if `history.save` is enabled (1 to 50000).
+`history.save`               | True    | Saves history between sessions.
+`history.shared`             | False   | When history is shared, all instances of Clink update the master history list after each command and reload the master history list on each prompt.  When history is not shared, each instance updates the master history list on exit.
+`lua.break_on_error`         | False   | Breaks into Lua debugger on Lua errors.
+`lua.break_on_traceback`     | False   | Breaks into Lua debugger on `traceback()`.
+`lua.debug`                  | False   | Loads a simple embedded command line debugger when enabled. Breakpoints can be added by calling `pause()`.
+`lua.path`                   |         | Value to append to `package.path`. Used to search for Lua scripts specified in `require()` statements.
+`lua.traceback_on_error`     | False   | Prints stack trace on Lua errors.
+`match.ignore_case`          | `relaxed` | Controls case sensitivity in string comparisons. `off` = case sensitive, `on` = case insensitive, `relaxed` = case insensitive plus `-` and `_` are considered equal.
+`match.sort_dirs`            | `with`  | How to sort matching directory names. `before` = before files, `with` = with files, `after` = after files.
+`match.wild`                 | True    | Matches `?` and `*` wildcards when using any of the `menu-complete` commands. Turn this off to behave how bash does.
+`readline.hide_stderr`       | False   | Suppresses stderr from the Readline library.  Enable this if Readline error messages are getting in the way.
+`terminal.emulation`         | `auto`  | Clink can either emulate a virtual terminal and handle ANSI escape codes itself, or let the console host natively handle ANSI escape codes. `native` = pass output directly to the console host process, `emulate` = clink handles ANSI escape codes itself, `auto` = emulate except when running in ConEmu.
+`terminal.modify_other_keys` | True    | When enabled, pressing <kbd>Space</kbd> or <kbd>Tab</kbd> with modifier keys sends extended XTerm key sequences so they can be bound separately.
 
 <p/>
 
