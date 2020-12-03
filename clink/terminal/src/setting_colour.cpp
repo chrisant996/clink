@@ -40,7 +40,7 @@ setting_colour::setting_colour(
 //------------------------------------------------------------------------------
 attributes setting_colour::get() const
 {
-    attributes out = attributes::defaults;
+    attributes out;
 
     int fg = m_fg->get();
     switch (fg)
