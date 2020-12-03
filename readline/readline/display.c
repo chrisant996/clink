@@ -165,6 +165,13 @@ static int _rl_col_width PARAMS((const char *, int, int, int));
 /* Application-specific redisplay function. */
 rl_voidfunc_t *rl_redisplay_function = rl_redisplay;
 
+/* begin_clink_change */
+const char *_rl_display_input_color = NULL;
+const char *_rl_display_modmark_color = NULL;
+static const char *_normal_color = "\x1b[m";
+static const int _normal_color_len = 3;
+/* end_clink_change */
+
 /* Global variables declared here. */
 /* What YOU turn on when you have handled all redisplay yourself. */
 int rl_display_fixed = 0;
@@ -727,7 +734,13 @@ rl_redisplay (void)
   if (rl_display_prompt == rl_prompt || local_prompt)
     {
       if (local_prompt_prefix && forced_display)
-	_rl_output_some_chars (local_prompt_prefix, strlen (local_prompt_prefix));
+	{
+	  /* begin_clink_change */
+	  if (_rl_display_input_color)
+	    _rl_output_some_chars (_normal_color, _normal_color_len);
+	  /* end_clink_change */
+	  _rl_output_some_chars (local_prompt_prefix, strlen (local_prompt_prefix));
+	}
 
       if (local_prompt_len > 0)
 	{
@@ -756,6 +769,10 @@ rl_redisplay (void)
 	  pmtlen = prompt_this_line - rl_display_prompt;	/* temp var */
 	  if (forced_display)
 	    {
+	      /* begin_clink_change */
+	      if (_rl_display_input_color)
+		_rl_output_some_chars (_normal_color, _normal_color_len);
+	      /* end_clink_change */
 	      _rl_output_some_chars (rl_display_prompt, pmtlen);
 	      /* Make sure we are at column zero even after a newline,
 		 regardless of the state of terminal output processing. */
@@ -1281,7 +1298,17 @@ rl_redisplay (void)
 		tputs (_rl_term_cr, 1, _rl_output_character_function);
 #endif
 	      if (modmark)
-		_rl_output_some_chars ("*", 1);
+		{
+		  /* begin_clink_change */
+		  if (_rl_display_input_color)
+		    {
+		      _rl_output_some_chars (_normal_color, _normal_color_len);
+		      if (_rl_display_modmark_color)
+			_rl_output_some_chars (_rl_display_modmark_color, strlen (_rl_display_modmark_color));
+		    }
+		  /* end_clink_change */
+		  _rl_output_some_chars ("*", 1);
+		}
 
 	      _rl_output_some_chars (local_prompt, nleft);
 	      if (mb_cur_max > 1 && rl_byte_oriented == 0)
@@ -1447,9 +1474,28 @@ rl_redisplay (void)
       visible_wrap_offset = wrap_offset;
   }
 
+  /* begin_clink_change */
+  if (_rl_display_input_color)
+    _rl_output_some_chars (_normal_color, _normal_color_len);
+  /* end_clink_change */
+
   RL_UNSETSTATE (RL_STATE_REDISPLAYING);
   _rl_release_sigint ();
 }
+
+/* begin_clink_change */
+static void output_beginning_line_color (int linenum, int modmark, const char *line, const char *output)
+{
+  if (linenum == 0 && modmark && line == output)
+    {
+    _rl_output_some_chars (_normal_color, strlen (_normal_color));
+    if (_rl_display_modmark_color)
+      _rl_output_some_chars (_rl_display_modmark_color, strlen (_rl_display_modmark_color));
+    }
+  else
+    _rl_output_some_chars (_rl_display_input_color, strlen (_rl_display_input_color));
+}
+/* end_clink_change */
 
 /* PWP: update_line() is based on finding the middle difference of each
    line on the screen; vis:
@@ -1605,6 +1651,10 @@ update_line (char *old, char *new, int current_line, int omax, int nmax, int inv
 	      int count, i, j;
 	      char *optr;
 
+	      /* begin_clink_change */
+	      if (_rl_display_input_color)
+		output_beginning_line_color (current_line, modmark, new, new);
+	      /* end_clink_change */
 	      _rl_output_some_chars (new, newbytes);
 	      _rl_last_c_pos = newwidth;
 	      _rl_last_v_pos++;
@@ -1636,6 +1686,10 @@ update_line (char *old, char *new, int current_line, int omax, int nmax, int inv
 	    }
 	  else
 	    {
+	      /* begin_clink_change */
+	      if (_rl_display_input_color)
+		_rl_output_some_chars (_normal_color, _normal_color_len);
+	      /* end_clink_change */
 	      putc (' ', rl_outstream);
 	      _rl_last_c_pos = 1;
 	      _rl_last_v_pos++;
@@ -1647,9 +1701,21 @@ update_line (char *old, char *new, int current_line, int omax, int nmax, int inv
 #endif
 	{
 	  if (new[0])
-	    putc (new[0], rl_outstream);
+	    {
+	      /* begin_clink_change */
+	      if (_rl_display_input_color)
+		output_beginning_line_color (current_line, modmark, new, new);
+	      /* end_clink_change */
+	      putc (new[0], rl_outstream);
+	    }
 	  else
-	    putc (' ', rl_outstream);
+	    {
+	      /* begin_clink_change */
+	      if (_rl_display_input_color)
+		_rl_output_some_chars (_normal_color, _normal_color_len);
+	      /* end_clink_change */
+	      putc (' ', rl_outstream);
+	    }
 	  _rl_last_c_pos = 1;
 	  _rl_last_v_pos++;
 	  if (old[0] && new[0])
@@ -1869,7 +1935,21 @@ update_line (char *old, char *new, int current_line, int omax, int nmax, int inv
       tputs (_rl_term_cr, 1, _rl_output_character_function);
 #endif
       if (modmark)
-	_rl_output_some_chars ("*", 1);
+	{
+	  /* begin_clink_change */
+	  if (_rl_display_input_color)
+	    {
+	      _rl_output_some_chars (_normal_color, _normal_color_len);
+	      if (_rl_display_modmark_color)
+		_rl_output_some_chars (_rl_display_modmark_color, strlen (_rl_display_modmark_color));
+	    }
+	  /* end_clink_change */
+	  _rl_output_some_chars ("*", 1);
+	}
+      /* begin_clink_change */
+      if (_rl_display_input_color)
+	_rl_output_some_chars (_rl_display_input_color, strlen (_rl_display_input_color));
+      /* end_clink_change */
       _rl_output_some_chars (local_prompt, lendiff);
       if (mb_cur_max > 1 && rl_byte_oriented == 0)
 	{
@@ -1907,6 +1987,10 @@ dumb_update:
 	  temp = ne - nfd;
 	  if (temp > 0)
 	    {
+	      /* begin_clink_change */
+	      if (_rl_display_input_color)
+		output_beginning_line_color (current_line, modmark, new, nfd);
+	      /* end_clink_change */
 	      _rl_output_some_chars (nfd, temp);
 	      if (mb_cur_max > 1 && rl_byte_oriented == 0)
 		{
@@ -2009,6 +2093,11 @@ dumb_update:
 	 only happen in a multibyte environment. */
       if (lendiff < 0)
 	{
+	  /* begin_clink_change */
+	  if (_rl_display_input_color)
+	    output_beginning_line_color (current_line, modmark, new, nfd);
+	  /* end_clink_change */
+
 	  _rl_output_some_chars (nfd, temp);
 	  _rl_last_c_pos += col_temp;	/* XXX - was _rl_col_width (nfd, 0, temp, 1); */
 	  /* If nfd begins before any invisible characters in the prompt,
@@ -2027,6 +2116,11 @@ dumb_update:
 	 around on auto-wrapping terminals. */
       else if (_rl_terminal_can_insert && ((2 * col_temp) >= col_lendiff || _rl_term_IC) && (!_rl_term_autowrap || !gl))
 	{
+	  /* begin_clink_change */
+	  if (_rl_display_input_color)
+	    output_beginning_line_color (current_line, modmark, new, nfd);
+	  /* end_clink_change */
+
 	  /* If lendiff > prompt_visible_length and _rl_last_c_pos == 0 and
 	     _rl_horizontal_scroll_mode == 1, inserting the characters with
 	     _rl_term_IC or _rl_term_ic will screw up the screen because of the
@@ -2089,6 +2183,11 @@ dumb_update:
 	}
       else
 	{
+	  /* begin_clink_change */
+	  if (_rl_display_input_color)
+	    output_beginning_line_color (current_line, modmark, new, nfd);
+	  /* end_clink_change */
+
 	  /* cannot insert chars, write to EOL */
 	  _rl_output_some_chars (nfd, temp);
 	  _rl_last_c_pos += col_temp;
@@ -2133,12 +2232,23 @@ dumb_update:
 	    col_lendiff = 0;
 
 	  if (col_lendiff)
-	    delete_chars (-col_lendiff); /* delete (diff) characters */
+	    {
+	      /* begin_clink_change */
+	      if (_rl_display_input_color)
+		_rl_output_some_chars (_normal_color, _normal_color_len);
+	      /* end_clink_change */
+	      delete_chars (-col_lendiff); /* delete (diff) characters */
+	    }
 
 	  /* Copy (new) chars to screen from first diff to last match,
 	     overwriting what is there. */
 	  if (bytes_to_insert > 0)
 	    {
+	      /* begin_clink_change */
+	      if (_rl_display_input_color)
+		output_beginning_line_color (current_line, modmark, new, nfd);
+	      /* end_clink_change */
+
 	      /* If nfd begins at the prompt, or before the invisible
 		 characters in the prompt, we need to adjust _rl_last_c_pos
 		 in a multibyte locale to account for the wrap offset and
@@ -2187,6 +2297,11 @@ dumb_update:
 	{
 	  if (temp > 0)
 	    {
+	      /* begin_clink_change */
+	      if (_rl_display_input_color)
+		output_beginning_line_color (current_line, modmark, new, nfd);
+	      /* end_clink_change */
+
 	      /* If nfd begins at the prompt, or before the invisible
 		 characters in the prompt, we need to adjust _rl_last_c_pos
 		 in a multibyte locale to account for the wrap offset and
@@ -2220,7 +2335,13 @@ clear_rest_of_line:
 	  if (col_lendiff && ((mb_cur_max == 1 || rl_byte_oriented) || (_rl_last_c_pos < _rl_screenwidth)))
 	    {	  
 	      if (_rl_term_autowrap && current_line < inv_botlin)
-		space_to_eol (col_lendiff);
+		{
+		  /* begin_clink_change */
+		  if (_rl_display_input_color)
+		    _rl_output_some_chars (_normal_color, _normal_color_len);
+		  /* end_clink_change */
+		  space_to_eol (col_lendiff);
+		}
 	      else
 		_rl_clear_to_eol (col_lendiff);
 	    }
@@ -2249,6 +2370,11 @@ int
 rl_clear_visible_line (void)
 {
   int curr_line;
+
+  /* begin_clink_change */
+  if (_rl_display_input_color)
+    _rl_output_some_chars (_normal_color, _normal_color_len);
+  /* end_clink_change */
 
   /* Make sure we move to column 0 so we clear the entire line */
 #if defined (__MSDOS__)
@@ -2313,7 +2439,13 @@ rl_on_new_line_with_prompt (void)
      whether the cursor is at the end of the last line, or already at the
      beginning of the next line. Output a newline just to be safe. */
   if (l > 0 && (l % real_screenwidth) == 0)
-    _rl_output_some_chars ("\n", 1);
+    {
+      /* begin_clink_change */
+      if (_rl_display_input_color)
+	_rl_output_some_chars (_normal_color, _normal_color_len);
+      /* end_clink_change */
+      _rl_output_some_chars ("\n", 1);
+    }
   last_lmargin = 0;
 
   newlines = 0; i = 0;
@@ -2535,6 +2667,11 @@ _rl_move_vert (int to)
 
   if ((delta = to - _rl_last_v_pos) > 0)
     {
+      /* begin_clink_change */
+      if (_rl_display_input_color)
+	_rl_output_some_chars (_normal_color, _normal_color_len);
+      /* end_clink_change */
+
       for (i = 0; i < delta; i++)
 	putc ('\n', rl_outstream);
 #if defined (__MSDOS__)
@@ -2847,6 +2984,11 @@ _rl_erase_at_end_of_line (int l)
 {
   register int i;
 
+  /* begin_clink_change */
+  if (_rl_display_input_color)
+    _rl_output_some_chars (_normal_color, _normal_color_len);
+  /* end_clink_change */
+
   _rl_backspace (l);
   for (i = 0; i < l; i++)
     putc (' ', rl_outstream);
@@ -2864,7 +3006,13 @@ _rl_clear_to_eol (int count)
 {
 #ifndef __MSDOS__
   if (_rl_term_clreol)
-    tputs (_rl_term_clreol, 1, _rl_output_character_function);
+    {
+      /* begin_clink_change */
+      if (_rl_display_input_color)
+	_rl_output_some_chars (_normal_color, _normal_color_len);
+      /* end_clink_change */
+      tputs (_rl_term_clreol, 1, _rl_output_character_function);
+    }
   else
 #endif
     if (count)
@@ -3053,6 +3201,11 @@ void
 _rl_redisplay_after_sigwinch (void)
 {
   char *t;
+
+  /* begin_clink_change */
+  if (_rl_display_input_color)
+    _rl_output_some_chars (_normal_color, _normal_color_len);
+  /* end_clink_change */
 
   /* Clear the last line (assuming that the screen size change will result in
      either more or fewer characters on that line only) and put the cursor at

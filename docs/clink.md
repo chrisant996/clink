@@ -54,7 +54,10 @@ Name                         | Default | Description
 `cmd.ctrld_exits`            | True    | <kbd>Ctrl</kbd>+<kbd>D</kbd> exits the process when it is pressed on an empty line.
 `colour.doskey`              | `light_cyan` | Used when Clink displays doskey alias completions.
 `colour.hidden`              |         | Used when Clink displays file completions with the "hidden" attribute.
+`colour.input`               |         | Used when Clink displays the input line text.
 `colour.interact`            | `white` | Used when Clink displays text or prompts such as a pager's `--More?--` prompt.
+`colour.modmark`             |         | Used when Clink displays the `*` mark on modified history lines when
+Readline's `mark-modified-lines` variable and Clink's `colour.input` setting are both set. Falls back to `colour.input` if not set.
 `colour.readonly`            |         | Used when Clink displays file completions with the "readonly" attribute.
 `doskey.enhanced`            | True    | Enhanced Doskey adds the expansion of macros that follow `\|` and `&` command separators and respects quotes around words when parsing `$1`..`$9` tags. Note that these features do not apply to Doskey use in Batch files.
 `exec.cwd`                   | True    | When matching executables as the first word (`exec.enable`), include executables in the current directory. (This is implicit if the word being completed is a relative path).

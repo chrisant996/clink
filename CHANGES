@@ -6,6 +6,7 @@
 ### Unreleased
 
 - The `menu-complete` family of commands now support matching `?` and `*` wildcards when the `match.wild` setting is enabled.
+- Added `colour.input` and `colour.modmark` settings for coloring Readline's input line.
 - Added `clink.upper()` Lua function, and both `clink.lower()` and `clink.upper()` are properly UTF8 aware now.
 - Added `clink-copy-word` command that copies the word at the cursor to the clipboard.
 - Added `clink.promptfilter` setting to control whether to filter the prompt with Lua scripts.

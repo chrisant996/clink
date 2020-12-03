@@ -53,8 +53,6 @@ ChrisAnt Plans
   - Provide API for interacting with the Readline buffer.
   - Provide API to show a popup list?  But make it fail if used from outside a Readline command.
   - Provide API to show an input box?  But make it fail if used from outside a Readline command.
-- Custom color for readline input.
-  - Might prefer to completely replace readline's line drawing, since it's trying to minimize updates over terminal emulators, and that makes it much harder to colorize the editing line (and arguments).
 
 ## Medium Priority
 - Add a configuration setting for whether `menu-complete` wraps around.

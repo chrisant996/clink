@@ -338,7 +338,32 @@ int
 rl_set_prompt (const char *prompt)
 {
   FREE (rl_prompt);
-  rl_prompt = prompt ? savestring (prompt) : (char *)NULL;
+  /* begin_clink_change */
+  /* Prefix the prompt with code to reset attributes, to ensure it always starts
+     from a consistent state. This issue was revealed when modmark and the input
+     line started having colors applied. */
+  if (_rl_display_input_color)
+    {
+      int prompt_len;
+      int input_color_len;
+      int needed;
+      char *copied;
+      if (!prompt)
+	prompt = "";
+      prompt_len = strlen (prompt);
+      input_color_len = strlen (_rl_display_input_color);
+      needed = 5 + prompt_len + 1 + input_color_len + 1 + 1;
+      rl_prompt = copied = (char *)xmalloc (needed);
+      strcpy (copied, "\x01\x1b[m\x02"); copied += 5;
+      strcpy (copied, prompt); copied += prompt_len;
+      *(copied++) = '\x01';
+      strcpy (copied, _rl_display_input_color); copied += input_color_len;
+      *(copied++) = '\x02';
+      *(copied++) = '\0';
+    }
+  else
+  /* end_clink_change */
+    rl_prompt = prompt ? savestring (prompt) : (char *)NULL;
   rl_display_prompt = rl_prompt ? rl_prompt : "";
 
   rl_visible_prompt_length = rl_expand_prompt (rl_prompt);

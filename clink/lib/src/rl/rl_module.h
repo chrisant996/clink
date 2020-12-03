@@ -38,6 +38,8 @@ private:
     int             m_catch_group;
     bool            m_done;
     bool            m_eof;
+    str<8>          m_input_color;
+    str<8>          m_modmark_color;
     str<8>          m_pager_color;
     str<8>          m_hidden_color;
     str<8>          m_readonly_color;

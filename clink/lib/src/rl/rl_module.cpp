@@ -89,6 +89,19 @@ pager*              g_pager = nullptr;
 editor_module::result* g_result = nullptr;
 
 //------------------------------------------------------------------------------
+setting_colour g_colour_input(
+    "colour.input",
+    "Input text colour",
+    "Used when Clink displays the input line text.",
+    setting_colour::value_fg_default, setting_colour::value_bg_default);
+
+setting_colour g_colour_modmark(
+    "colour.modmark",
+    "Modified history line mark colour",
+    "Used when Clink displays the * mark on modified history lines when\n"
+    "mark-modified-lines is set and colour.input is set.",
+    setting_colour::value_fg_default, setting_colour::value_bg_default);
+
 setting_colour g_colour_hidden(
     "colour.hidden",
     "Hidden file completions",
@@ -180,16 +193,27 @@ extern "C" const char* host_get_env(const char* name)
 }
 
 //------------------------------------------------------------------------------
-static bool build_color_sequence(const attributes& colour, str_base& out)
+static bool build_color_sequence(const attributes& colour, str_base& out, bool include_csi = false)
 {
     out.clear();
 
+    int overhead = 0;
+    if (include_csi)
+    {
+        out.concat("\x1b[");
+        overhead += 2;
+    }
+
     auto bg = colour.get_bg();
     int value = (bg.is_default ? -1 :
-                 (bg.value.value & 0x0f) < 8 ? (bg.value.value & 0x0f) + 30 :
-                 (bg.value.value & 0x0f) - 8 + 90);
+                 (bg.value.value & 0x0f) < 8 ? (bg.value.value & 0x0f) + 40 :
+                 (bg.value.value & 0x0f) - 8 + 100);
     if (value >= 0)
-        out.format("%u", value);
+    {
+        char buf[10];
+        itoa(value, buf, 10);
+        out << buf;
+    }
 
     auto fg = colour.get_fg();
     value = (fg.is_default ? -1 :
@@ -197,25 +221,33 @@ static bool build_color_sequence(const attributes& colour, str_base& out)
              (fg.value.value & 0x0f) - 8 + 90);
     if (value >= 0)
     {
-        if (out.length())
+        if (out.length() > overhead)
             out << ";";
-        out.format("%u", value);
+        char buf[10];
+        itoa(value, buf, 10);
+        out << buf;
     }
 
     if (auto bold = colour.get_bold())
     {
-        if (out.length())
+        if (out.length() > overhead)
             out << ";";
         out << (bold.value ? "1" : "22");
     }
     if (auto underline = colour.get_underline())
     {
-        if (out.length())
+        if (out.length() > overhead)
             out << ";";
         out << (underline.value ? "4" : "24");
     }
 
-    return !!out.length();
+    if (include_csi)
+    {
+        out.concat("m");
+        overhead++;
+    }
+
+    return out.length() > overhead;
 }
 
 //------------------------------------------------------------------------------
@@ -1142,6 +1174,15 @@ void rl_module::on_begin_line(const context& context)
         if (c1) rl_prompt.concat("\x01", 1);
                 rl_prompt.concat(code.get_pointer(), code.get_length());
         if (c1) rl_prompt.concat("\x02", 1);
+    }
+
+    _rl_display_input_color = nullptr;
+    _rl_display_modmark_color = nullptr;
+    if (build_color_sequence(g_colour_input.get(), m_input_color, true))
+    {
+        _rl_display_input_color = m_input_color.c_str();
+        if (build_color_sequence(g_colour_modmark.get(), m_modmark_color, true))
+            _rl_display_modmark_color = m_modmark_color.c_str();
     }
 
     auto handler = [] (char* line) { rl_module::get()->done(line); };
