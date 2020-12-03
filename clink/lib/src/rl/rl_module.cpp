@@ -93,7 +93,7 @@ setting_colour g_colour_hidden(
     "colour.hidden",
     "Hidden file completions",
     "Used when Clink displays file completions with the hidden attribute.",
-    setting_colour::value_light_red, setting_colour::value_bg_default);
+    setting_colour::value_fg_default, setting_colour::value_bg_default);
 
 setting_colour g_colour_readonly(
     "colour.readonly",
