@@ -180,24 +180,24 @@ void line_editor_tester::run()
                 printf("  %s\n", match);
 
             puts("\ngot;");
-            for (int i = 0, n = matches->get_match_count(); i < n; ++i)
-                printf("  %s\n", matches->get_match(i));
+            for (matches_iter iter = matches->get_iter(); iter.next();)
+                printf("  %s\n", iter.get_match());
         });
 
         for (const char* expected : m_expected_matches)
         {
             bool match_found = false;
 
-            for (unsigned int i = 0; i < match_count; ++i)
-                if (match_found = (strcmp(expected, matches->get_match(i)) == 0))
+            for (matches_iter iter = matches->get_iter(); iter.next();)
+                if (match_found = (strcmp(expected, iter.get_match()) == 0))
                     break;
 
             REQUIRE(match_found, [&] () {
                 printf("match '%s' not found\n", expected);
 
                 puts("\ngot;");
-                for (int i = 0, n = matches->get_match_count(); i < n; ++i)
-                    printf("  %s\n", matches->get_match(i));
+                for (matches_iter iter = matches->get_iter(); iter.next();)
+                    printf("  %s\n", iter.get_match());
             });
         }
     }

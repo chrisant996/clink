@@ -3,6 +3,8 @@
 
 #pragma once
 
+#include <core/str_iter.h>
+
 class str_base;
 
 //------------------------------------------------------------------------------
@@ -57,18 +59,45 @@ private:
 
 
 //------------------------------------------------------------------------------
+class matches;
+
+//------------------------------------------------------------------------------
+class matches_iter
+{
+public:
+                            matches_iter(const matches& matches, const char* pattern = nullptr);
+    bool                    next();
+    const char*             get_match() const;
+    match_type              get_match_type() const;
+
+private:
+    bool                    has_match() const { return m_index < m_next; }
+    const matches&          m_matches;
+    str_iter                m_pattern;
+    bool                    m_has_pattern = false;
+    unsigned int            m_index = 0;
+    unsigned int            m_next = 0;
+};
+
+//------------------------------------------------------------------------------
 class matches
 {
 public:
+    virtual matches_iter    get_iter(const char* pattern = nullptr) const = 0;
     virtual unsigned int    get_match_count() const = 0;
-    virtual const char*     get_match(unsigned int index) const = 0;
-    virtual match_type      get_match_type(unsigned int index) const = 0;
     virtual bool            is_suppress_append() const = 0;
     virtual shadow_bool     is_filename_completion_desired() const = 0;
     virtual bool            is_filename_display_desired() const = 0;
     virtual char            get_append_character() const = 0;
     virtual int             get_suppress_quoting() const = 0;
     virtual int             get_word_break_adjustment() const = 0;
+
+private:
+    friend class matches_iter;
+    virtual const char*     get_match(unsigned int index) const = 0;
+    virtual match_type      get_match_type(unsigned int index) const = 0;
+    virtual const char*     get_unfiltered_match(unsigned int index) const { return nullptr; }
+    virtual match_type      get_unfiltered_match_type(unsigned int index) const { return match_type::none; }
 };
 
 

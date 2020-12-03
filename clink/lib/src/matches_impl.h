@@ -33,9 +33,10 @@ class matches_impl
 {
 public:
                             matches_impl(unsigned int store_size=0x10000);
+    matches_iter            get_iter() const;
+    matches_iter            get_iter(const char* pattern) const;
+
     virtual unsigned int    get_match_count() const override;
-    virtual const char*     get_match(unsigned int index) const override;
-    virtual match_type      get_match_type(unsigned int index) const override;
     virtual bool            is_suppress_append() const override;
     virtual shadow_bool     is_filename_completion_desired() const override;
     virtual bool            is_filename_display_desired() const override;
@@ -46,14 +47,21 @@ public:
     void                    set_word_break_adjustment(int adjustment);
 
 private:
+    virtual const char*     get_match(unsigned int index) const override;
+    virtual match_type      get_match_type(unsigned int index) const override;
+    virtual const char*     get_unfiltered_match(unsigned int index) const override;
+    virtual match_type      get_unfiltered_match_type(unsigned int index) const override;
+
     friend class            match_pipeline;
     friend class            match_builder;
+    friend class            matches_iter;
     void                    set_append_character(char append);
     void                    set_suppress_append(bool suppress);
     void                    set_suppress_quoting(int suppress);
     void                    set_matches_are_files(bool files);
     bool                    add_match(const match_desc& desc);
     unsigned int            get_info_count() const;
+    const match_info*       get_infos() const;
     match_info*             get_infos();
     void                    reset();
     void                    coalesce(unsigned int count_hint);

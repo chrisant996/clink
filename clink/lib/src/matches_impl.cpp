@@ -8,6 +8,8 @@
 #include <core/str.h>
 #include <core/str_compare.h>
 #include <core/str_tokeniser.h>
+#include <core/match_wild.h>
+#include <core/path.h>
 #include <sys/stat.h>
 #include <readline/readline.h> // for rl_last_path_separator
 
@@ -140,6 +142,64 @@ void match_builder::set_matches_are_files(bool files)
 
 
 //------------------------------------------------------------------------------
+matches_iter::matches_iter(const matches& matches, const char* pattern)
+: m_matches(matches)
+, m_pattern(pattern, pattern ? -1 : 0)
+, m_has_pattern(pattern != nullptr)
+{
+}
+
+//------------------------------------------------------------------------------
+bool matches_iter::next()
+{
+    if (m_has_pattern)
+    {
+        while (true)
+        {
+            m_index = m_next;
+            m_next++;
+
+            const char* match = get_match();
+            if (!match)
+            {
+                m_next--;
+                return false;
+            }
+
+            int match_len = int(strlen(match));
+            while (match_len && path::is_separator((unsigned char)match[match_len - 1]))
+                match_len--;
+            if (path::match_wild(m_pattern, str_iter(match, match_len)))
+                return true;
+        }
+    }
+
+    m_index = m_next;
+    if (m_index >= m_matches.get_match_count())
+        return false;
+    m_next++;
+    return true;
+}
+
+//------------------------------------------------------------------------------
+const char* matches_iter::get_match() const
+{
+    if (m_has_pattern)
+        return has_match() ? m_matches.get_unfiltered_match(m_index) : nullptr;
+    return has_match() ? m_matches.get_match(m_index) : nullptr;
+}
+
+//------------------------------------------------------------------------------
+match_type matches_iter::get_match_type() const
+{
+    if (m_has_pattern)
+        return has_match() ? m_matches.get_unfiltered_match_type(m_index) : match_type::none;
+    return has_match() ? m_matches.get_match_type(m_index) : match_type::none;
+}
+
+
+
+//------------------------------------------------------------------------------
 matches_impl::store_impl::store_impl(unsigned int size)
 {
     m_size = max((unsigned int)4096, size);
@@ -251,9 +311,27 @@ matches_impl::matches_impl(unsigned int store_size)
 }
 
 //------------------------------------------------------------------------------
+matches_iter matches_impl::get_iter() const
+{
+    return matches_iter(*this);
+}
+
+//------------------------------------------------------------------------------
+matches_iter matches_impl::get_iter(const char* pattern) const
+{
+    return matches_iter(*this, pattern);
+}
+
+//------------------------------------------------------------------------------
 unsigned int matches_impl::get_info_count() const
 {
     return int(m_infos.size());
+}
+
+//------------------------------------------------------------------------------
+const match_info* matches_impl::get_infos() const
+{
+    return m_infos.size() ? &(m_infos[0]) : nullptr;
 }
 
 //------------------------------------------------------------------------------
@@ -281,6 +359,24 @@ const char* matches_impl::get_match(unsigned int index) const
 match_type matches_impl::get_match_type(unsigned int index) const
 {
     if (index >= get_match_count())
+        return match_type::none;
+
+    return m_infos[index].type;
+}
+
+//------------------------------------------------------------------------------
+const char* matches_impl::get_unfiltered_match(unsigned int index) const
+{
+    if (index >= get_info_count())
+        return nullptr;
+
+    return m_infos[index].match;
+}
+
+//------------------------------------------------------------------------------
+match_type matches_impl::get_unfiltered_match_type(unsigned int index) const
+{
+    if (index >= get_info_count())
         return match_type::none;
 
     return m_infos[index].type;

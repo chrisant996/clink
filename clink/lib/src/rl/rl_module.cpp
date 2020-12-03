@@ -107,6 +107,13 @@ setting_colour g_colour_doskey(
     "Used when Clink displays doskey macro completions.",
     setting_colour::value_light_cyan, setting_colour::value_bg_default);
 
+setting_bool g_match_wild(
+    "match.wild",
+    "menu-complete matches ? and * wildcards",
+    "Matches ? and * wildcards when using any of the menu-complete commands.\n"
+    "Turn this off to behave how bash does.",
+    true);
+
 setting_bool g_rl_hide_stderr(
     "readline.hide_stderr",
     "Suppress stderr from the Readline library",
@@ -543,6 +550,30 @@ static char* filename_menu_completion_function(const char *text, int state)
 }
 
 //------------------------------------------------------------------------------
+static bool ensure_matches_size(char**& matches, int count, int& reserved)
+{
+    count += 2;
+    if (count > reserved)
+    {
+        int new_reserve = 64;
+        while (new_reserve < count)
+        {
+            int prev = new_reserve;
+            new_reserve <<= 1;
+            if (new_reserve < prev)
+                return false;
+        }
+        char **new_matches = (char **)realloc(matches, new_reserve * sizeof(matches[0]));
+        if (!new_matches)
+            return false;
+
+        matches = new_matches;
+        reserved = new_reserve;
+    }
+    return true;
+}
+
+//------------------------------------------------------------------------------
 static char** alternative_matches(const char* text, int start, int end)
 {
 // TODO: Use s_matches?  Or maybe generate matches at the moment of completion
@@ -550,8 +581,17 @@ static char** alternative_matches(const char* text, int start, int end)
     if (!s_matches)
         return nullptr;
 
-    int match_count = s_matches->get_match_count();
-    if (!match_count)
+    str<> tmp;
+    const char* pattern = nullptr;
+    if (g_match_wild.get() && rl_completion_type == '%')
+    {
+        tmp = text;
+        tmp.concat("*");
+        pattern = tmp.c_str();
+    }
+    matches_iter iter = s_matches->get_iter(pattern);
+
+    if (!iter.next())
     {
         rl_attempted_completion_over = 1;
         return nullptr;
@@ -573,25 +613,37 @@ static char** alternative_matches(const char* text, int start, int end)
     // readline wants them.
     str<32> lcd;
     int past_flag = rl_completion_matches_include_type;
-    char** matches = (char**)calloc(match_count + 2, sizeof(*matches));
+    int count = 0;
+    int reserved = 0;
+    char** matches = nullptr;
+    if (!ensure_matches_size(matches, s_matches->get_match_count(), reserved))
+        return nullptr;
     matches[0] = (char*)malloc(past_flag + (end - start) + 1);
     if (past_flag)
         matches[0][0] = (char)match_type::none;
     memcpy(matches[0] + past_flag, text, end - start);
     matches[0][past_flag + (end - start)] = '\0';
-    for (int i = 0; i < match_count; ++i)
+    do
     {
-        match_type masked_type = past_flag ? s_matches->get_match_type(i) & match_type::mask : match_type::none;
+        match_type type = past_flag ? iter.get_match_type() : match_type::none;
+        match_type masked_type = type & match_type::mask;
 
-        const char* match = s_matches->get_match(i);
+        ++count;
+        if (!ensure_matches_size(matches, count, reserved))
+        {
+            --count;
+            break;
+        }
+
+        const char* match = iter.get_match();
         int match_len = strlen(match);
         int match_size = past_flag + match_len + 1;
-        matches[i + 1] = (char*)malloc(match_size);
+        matches[count] = (char*)malloc(match_size);
 
         if (past_flag)
-            matches[i + 1][0] = (char)s_matches->get_match_type(i);
+            matches[count][0] = (char)type;
 
-        str_base str(matches[i + 1] + past_flag, match_size - past_flag);
+        str_base str(matches[count] + past_flag, match_size - past_flag);
         str.clear();
 
         if ((masked_type == match_type::none || masked_type == match_type::dir) &&
@@ -601,7 +653,8 @@ static char** alternative_matches(const char* text, int start, int end)
 
         str.concat(match, match_len);
     }
-    matches[match_count + 1] = nullptr;
+    while (iter.next());
+    matches[count + 1] = nullptr;
 
     switch (s_matches->get_suppress_quoting())
     {
