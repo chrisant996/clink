@@ -3,7 +3,7 @@
 
 <!-- ----------------------------------------------------- -->
 <head>
-<title>Clink  v1.1.4</title>
+<title>Clink v1.1.5</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Rambla:wght@400;700&family=Roboto&family=Fira+Mono&display=swap');
 html {
@@ -189,6 +189,8 @@ kbd {
     white-space: nowrap;
     font-family: "Fira Mono",monospace;
     opacity: 75%;
+    padding-left: 0.125rem;
+    padding-right: 0.125rem;
 }
 
 #content .mono {
@@ -390,7 +392,7 @@ var hljs=function(){"use strict";function e(n){Object.freeze(n);var t="function"
         </td>
         <td style="text-align:right">
             <div id="header">
-                <div id="title">Clink  v1.1.4</div>
+                <div id="title">Clink v1.1.5</div>
                 <div id="url">
                     <a href="http://github.com/chrisant996/clink">
                         http://github.com/chrisant996/clink
@@ -450,132 +452,204 @@ var hljs=function(){"use strict";function e(n){Object.freeze(n);var t="function"
 <thead>
 <tr>
 <th align="center">Name</th>
+<th align="center">Default</th>
 <th>Description</th>
 </tr>
 </thead>
 <tbody><tr>
 <td align="center"><code>clink.paste_crlf</code></td>
+<td align="center"><code>space</code></td>
 <td>What to do with CR and LF characters on paste. Set this to <code>delete</code> to delete them, or to <code>space</code> to replace them with spaces.</td>
 </tr>
 <tr>
 <td align="center"><code>clink.path</code></td>
+<td align="center"></td>
 <td>A list of paths to load Lua scripts. Multiple paths can be delimited semicolons.</td>
 </tr>
 <tr>
+<td align="center"><code>clink.promptfilter</code></td>
+<td align="center">True</td>
+<td>Enable prompt filtering by Lua scripts.</td>
+</tr>
+<tr>
 <td align="center"><code>cmd.auto_answer</code></td>
+<td align="center"><code>off</code></td>
 <td>Automatically answers cmd.exe&#39;s &quot;Terminate batch job (Y/N)?&quot; prompts. <code>off</code> = disabled, <code>answer_yes</code> = answer Y, <code>answer_no</code> = answer N.</td>
 </tr>
 <tr>
 <td align="center"><code>cmd.ctrld_exits</code></td>
+<td align="center">True</td>
 <td><kbd>Ctrl</kbd>+<kbd>D</kbd> exits the process when it is pressed on an empty line.</td>
 </tr>
 <tr>
 <td align="center"><code>colour.doskey</code></td>
+<td align="center"><code>light_cyan</code></td>
 <td>Used when Clink displays doskey alias completions.</td>
 </tr>
 <tr>
 <td align="center"><code>colour.hidden</code></td>
+<td align="center"></td>
 <td>Used when Clink displays file completions with the &quot;hidden&quot; attribute.</td>
 </tr>
 <tr>
+<td align="center"><code>colour.input</code></td>
+<td align="center"></td>
+<td>Used when Clink displays the input line text.</td>
+</tr>
+<tr>
 <td align="center"><code>colour.interact</code></td>
+<td align="center"><code>white</code></td>
 <td>Used when Clink displays text or prompts such as a pager&#39;s <code>--More?--</code> prompt.</td>
 </tr>
 <tr>
+<td align="center"><code>colour.modmark</code></td>
+<td align="center"></td>
+<td>Used when Clink displays the <code>*</code> mark on modified history lines when</td>
+</tr>
+<tr>
+<td align="center">Readline&#39;s <code>mark-modified-lines</code> variable and Clink&#39;s <code>colour.input</code> setting are both set. Falls back to <code>colour.input</code> if not set.</td>
+<td align="center"></td>
+<td></td>
+</tr>
+<tr>
 <td align="center"><code>colour.readonly</code></td>
+<td align="center"></td>
 <td>Used when Clink displays file completions with the &quot;readonly&quot; attribute.</td>
 </tr>
 <tr>
 <td align="center"><code>doskey.enhanced</code></td>
+<td align="center">True</td>
 <td>Enhanced Doskey adds the expansion of macros that follow <code>|</code> and <code>&amp;</code> command separators and respects quotes around words when parsing <code>$1</code>..<code>$9</code> tags. Note that these features do not apply to Doskey use in Batch files.</td>
 </tr>
 <tr>
 <td align="center"><code>exec.cwd</code></td>
+<td align="center">True</td>
 <td>When matching executables as the first word (<code>exec.enable</code>), include executables in the current directory. (This is implicit if the word being completed is a relative path).</td>
 </tr>
 <tr>
 <td align="center"><code>exec.dirs</code></td>
+<td align="center">True</td>
 <td>When matching executables as the first word (<code>exec.enable</code>), also include directories relative to the current working directory as matches.</td>
 </tr>
 <tr>
 <td align="center"><code>exec.enable</code></td>
-<td>Only match executables when completing the first word of a line.</td>
+<td align="center">True</td>
+<td>Match executables when completing the first word of a line.</td>
 </tr>
 <tr>
 <td align="center"><code>exec.path</code></td>
+<td align="center">True</td>
 <td>When matching executables as the first word (<code>exec.enable</code>), include executables found in the directories specified in the <code>%PATH%</code> environment variable.</td>
 </tr>
 <tr>
 <td align="center"><code>exec.space_prefix</code></td>
+<td align="center">True</td>
 <td>If the line begins with whitespace then Clink bypasses executable matching (<code>exec.path</code>) and will do normal files matching instead.</td>
 </tr>
 <tr>
 <td align="center"><code>files.hidden</code></td>
+<td align="center">True</td>
 <td>Includes or excludes files with the &quot;hidden&quot; attribute set when generating file lists.</td>
 </tr>
 <tr>
 <td align="center"><code>files.system</code></td>
+<td align="center">False</td>
 <td>Includes or excludes files with the &quot;system&quot; attribute set when generating file lists.</td>
 </tr>
 <tr>
 <td align="center"><code>files.unc_paths</code></td>
+<td align="center">False</td>
 <td>UNC (network) paths can cause Clink to stutter when it tries to generate matches. Enable this if matching UNC paths is required.</td>
 </tr>
 <tr>
 <td align="center"><code>history.dont_add_to_history_cmds</code></td>
+<td align="center"><code>exit history</code></td>
 <td>List of commands that aren&#39;t automatically added to the history. Commands are separated by spaces, commas, or semicolons. Default is <code>exit history</code>, to exclude both of those commands.</td>
 </tr>
 <tr>
 <td align="center"><code>history.dupe_mode</code></td>
+<td align="center"><code>erase_prev</code></td>
 <td>If a line is a duplicate of an existing history entry Clink will erase the duplicate when this is set <code>erase_prev</code>. Setting it to <code>ignore</code> will not add duplicates to the history, and setting it to <code>add</code> will always add lines.</td>
 </tr>
 <tr>
 <td align="center"><code>history.expand_mode</code></td>
+<td align="center"><code>not_quoted</code></td>
 <td>The <code>!</code> character in an entered line can be interpreted to introduce words from the history. This can be enabled and disable by setting this value to <code>on</code> or <code>off</code>. Values of <code>not_squoted</code>, <code>not_dquoted</code>, or <code>not_quoted</code> will skip any <code>!</code> character quoted in single, double, or both quotes respectively.</td>
 </tr>
 <tr>
 <td align="center"><code>history.ignore_space</code></td>
+<td align="center">True</td>
 <td>Ignore lines that begin with whitespace when adding lines in to the history.</td>
 </tr>
 <tr>
 <td align="center"><code>history.max_lines</code></td>
+<td align="center">2500</td>
 <td>The number of history lines to save if <code>history.save</code> is enabled (1 to 50000).</td>
 </tr>
 <tr>
 <td align="center"><code>history.save</code></td>
+<td align="center">True</td>
 <td>Saves history between sessions.</td>
 </tr>
 <tr>
 <td align="center"><code>history.shared</code></td>
+<td align="center">False</td>
 <td>When history is shared, all instances of Clink update the master history list after each command and reload the master history list on each prompt.  When history is not shared, each instance updates the master history list on exit.</td>
 </tr>
 <tr>
+<td align="center"><code>lua.break_on_error</code></td>
+<td align="center">False</td>
+<td>Breaks into Lua debugger on Lua errors.</td>
+</tr>
+<tr>
+<td align="center"><code>lua.break_on_traceback</code></td>
+<td align="center">False</td>
+<td>Breaks into Lua debugger on <code>traceback()</code>.</td>
+</tr>
+<tr>
 <td align="center"><code>lua.debug</code></td>
+<td align="center">False</td>
 <td>Loads a simple embedded command line debugger when enabled. Breakpoints can be added by calling <code>pause()</code>.</td>
 </tr>
 <tr>
 <td align="center"><code>lua.path</code></td>
+<td align="center"></td>
 <td>Value to append to <code>package.path</code>. Used to search for Lua scripts specified in <code>require()</code> statements.</td>
 </tr>
 <tr>
+<td align="center"><code>lua.traceback_on_error</code></td>
+<td align="center">False</td>
+<td>Prints stack trace on Lua errors.</td>
+</tr>
+<tr>
 <td align="center"><code>match.ignore_case</code></td>
+<td align="center"><code>relaxed</code></td>
 <td>Controls case sensitivity in string comparisons. <code>off</code> = case sensitive, <code>on</code> = case insensitive, <code>relaxed</code> = case insensitive plus <code>-</code> and <code>_</code> are considered equal.</td>
 </tr>
 <tr>
 <td align="center"><code>match.sort_dirs</code></td>
-<td>Matching directories can go before files, with files, or after files.</td>
+<td align="center"><code>with</code></td>
+<td>How to sort matching directory names. <code>before</code> = before files, <code>with</code> = with files, <code>after</code> = after files.</td>
+</tr>
+<tr>
+<td align="center"><code>match.wild</code></td>
+<td align="center">True</td>
+<td>Matches <code>?</code> and <code>*</code> wildcards when using any of the <code>menu-complete</code> commands. Turn this off to behave how bash does.</td>
 </tr>
 <tr>
 <td align="center"><code>readline.hide_stderr</code></td>
+<td align="center">False</td>
 <td>Suppresses stderr from the Readline library.  Enable this if Readline error messages are getting in the way.</td>
 </tr>
 <tr>
-<td align="center"><code>terminal.emulate</code></td>
-<td>Clink can either emulate a virtual terminal and handle ANSI escape codes itself, or let the console host natively handle ANSI escape codes. <code>off</code> = pass output directly to the console host process, <code>on</code> = clink handles ANSI escape codes itself.</td>
+<td align="center"><code>terminal.emulation</code></td>
+<td align="center"><code>auto</code></td>
+<td>Clink can either emulate a virtual terminal and handle ANSI escape codes itself, or let the console host natively handle ANSI escape codes. <code>native</code> = pass output directly to the console host process, <code>emulate</code> = clink handles ANSI escape codes itself, <code>auto</code> = emulate except when running in ConEmu.</td>
 </tr>
 <tr>
 <td align="center"><code>terminal.modify_other_keys</code></td>
-<td>When enabled, pressing Space or Tab with modifier keys sends extended XTerm key sequences so they can be bound separately.</td>
+<td align="center">True</td>
+<td>When enabled, pressing <kbd>Space</kbd> or <kbd>Tab</kbd> with modifier keys sends extended XTerm key sequences so they can be bound separately.</td>
 </tr>
 </tbody></table>
 <p/>
@@ -715,6 +789,10 @@ Echos key sequences to use in the inputrc files for binding keys to Clink comman
 <tr>
 <td align="center"><code>clink-copy-line</code></td>
 <td>Copy the current line to the clipboard.</td>
+</tr>
+<tr>
+<td align="center"><code>clink-copy-word</code></td>
+<td>Copy the word at the cursor to the clipboard.</td>
 </tr>
 <tr>
 <td align="center"><code>clink-ctrl-c</code></td>
@@ -1480,7 +1558,7 @@ builder:addmatches({
 &nbsp;&nbsp;-- Same table scheme per entry here as in builder:addmatch()
 &nbsp;&nbsp;{ match="remote/origin/master", type="word" },
 &nbsp;&nbsp;{ match="remote/origin/topic", type="word" }
-})</code></pre></div></div><hr/><div class="function"><div class="header"> <div class="name"><a name="builder:setappendcharacter">builder:setappendcharacter</a></div> <div class="signature">([append:string]) : nil</div></div><div class="body"><p class="desc">Sets character to append after matches.  For example the <code>set</code> match generator uses this to append "=" when completing matches, so that completing <code>set USER</code> becomes <code>set USERDOMAIN=</code> (rather than <code>set USERDOMAIN&nbsp;</code>).</p></div></div><hr/><div class="function"><div class="header"> <div class="name"><a name="builder:setsuppressappend">builder:setsuppressappend</a></div> <div class="signature">([state:boolean]) : nil</div></div><div class="body"><p class="desc">Sets whether to suppress appending anything after the match except a possible closing quote.  For example the env var match generator uses this.</p></div></div><hr/><div class="function"><div class="header"> <div class="name"><a name="builder:setsuppressquoting">builder:setsuppressquoting</a></div> <div class="signature">([state:integer]) : nil</div></div><div class="body"><p class="desc">Sets whether to suppress quoting for the matches.  Set to 0 for normal quoting, or 1 to suppress quoting, or 2 to suppress end quotes.  For example the env var match generator sets this to 1 to overcome the quoting that would normally happen for "%" characters in filenames.</p></div></div><hr/></div><div class="group"><h5 class="group_name"><a name="clink">clink</a></h5><div class="function"><div class="header"> <div class="name"><a name="clink.add_match">clink.add_match</a></div> <div class="signature">(match:string) : nil</div></div><div class="body deprecated"><p class="desc"><strong>Deprecated; don't use this.</strong>  See <a href="#builder:addmatch">builder:addmatch</a> for more information.</p><p class="desc">This is a shim that lets clink.register_match_generator continue to work for now, despite being obsolete.</p></div></div><hr/><div class="function"><div class="header"> <div class="name"><a name="clink.argmatcher">clink.argmatcher</a></div> <div class="signature">([priority:integer], commands...:string) : <a href="#_argmatcher">_argmatcher</a></div></div><div class="body"><p class="desc">Creates and returns a new argument matcher parser object.  Use <a href="#_argmatcher:addarg">:addarg()</a> and etc to add arguments, flags, other parsers, and more.  See <a href="#argumentcompletion">Argument Completion</a> for more information.<br/> <br/> If one <em>command</em> is provided and an argument matcher parser object is already associated with the command, this returns the existing parser rather than creating a new parser.  Using :addarg() starts at arg position 1, making it possible to merge new args and etc into the existing parser.</p></div></div><hr/><div class="function"><div class="header"> <div class="name"><a name="clink.generator">clink.generator</a></div> <div class="signature">([priority:integer]) : table</div></div><div class="body"><p class="desc">Creates and returns a new match generator object.  Define on the object a <code>generate()</code> function which gets called in increasing <em>priority</em> order (low values to high values) when generating matches for completion.  See <a href="#matchgenerators">Match Generators</a> for more information.</p></div></div><hr/><div class="function"><div class="header"> <div class="name"><a name="clink.is_match">clink.is_match</a></div> <div class="signature">(needle:string, candidate:string) : true</div></div><div class="body deprecated"><p class="desc"><strong>Deprecated; don't use this.</strong>  See <a href="#clink.generator">clink.generator</a> for more information.</p><p class="desc">This is no longer needed, and simply returns true now.</p></div></div><hr/><div class="function"><div class="header"> <div class="name"><a name="clink.match_display_filter">clink.match_display_filter</a></div> <div class="signature">function variable</div></div><div class="body deprecated"><p class="desc"><strong>Deprecated; don't use this.</strong>  See <a href="#builder:addmatch">builder:addmatch</a> for more information.</p><p class="desc">This is no longer used.</p><pre class="language-lua"><code>clink.match_display_filter = function(matches)
+})</code></pre></div></div><hr/><div class="function"><div class="header"> <div class="name"><a name="builder:setappendcharacter">builder:setappendcharacter</a></div> <div class="signature">([append:string]) : nil</div></div><div class="body"><p class="desc">Sets character to append after matches.  For example the <code>set</code> match generator uses this to append "=" when completing matches, so that completing <code>set USER</code> becomes <code>set USERDOMAIN=</code> (rather than <code>set USERDOMAIN&nbsp;</code>).</p></div></div><hr/><div class="function"><div class="header"> <div class="name"><a name="builder:setsuppressappend">builder:setsuppressappend</a></div> <div class="signature">([state:boolean]) : nil</div></div><div class="body"><p class="desc">Sets whether to suppress appending anything after the match except a possible closing quote.  For example the env var match generator uses this.</p></div></div><hr/><div class="function"><div class="header"> <div class="name"><a name="builder:setsuppressquoting">builder:setsuppressquoting</a></div> <div class="signature">([state:integer]) : nil</div></div><div class="body"><p class="desc">Sets whether to suppress quoting for the matches.  Set to 0 for normal quoting, or 1 to suppress quoting, or 2 to suppress end quotes.  For example the env var match generator sets this to 1 to overcome the quoting that would normally happen for "%" characters in filenames.</p></div></div><hr/></div><div class="group"><h5 class="group_name"><a name="clink">clink</a></h5><div class="function"><div class="header"> <div class="name"><a name="clink.add_match">clink.add_match</a></div> <div class="signature">(match:string) : nil</div></div><div class="body deprecated"><p class="desc"><strong>Deprecated; don't use this.</strong>  See <a href="#builder:addmatch">builder:addmatch</a> for more information.</p><p class="desc">This is a shim that lets clink.register_match_generator continue to work for now, despite being obsolete.</p></div></div><hr/><div class="function"><div class="header"> <div class="name"><a name="clink.argmatcher">clink.argmatcher</a></div> <div class="signature">([priority:integer], commands...:string) : <a href="#_argmatcher">_argmatcher</a></div></div><div class="body"><p class="desc">Creates and returns a new argument matcher parser object.  Use <a href="#_argmatcher:addarg">:addarg()</a> and etc to add arguments, flags, other parsers, and more.  See <a href="#argumentcompletion">Argument Completion</a> for more information.<br/> <br/> If one <em>command</em> is provided and an argument matcher parser object is already associated with the command, this returns the existing parser rather than creating a new parser.  Using :addarg() starts at arg position 1, making it possible to merge new args and etc into the existing parser.</p></div></div><hr/><div class="function"><div class="header"> <div class="name"><a name="clink.generator">clink.generator</a></div> <div class="signature">([priority:integer]) : table</div></div><div class="body"><p class="desc">Creates and returns a new match generator object.  Define on the object a <code>generate()</code> function which gets called in increasing <em>priority</em> order (low values to high values) when generating matches for completion.  See <a href="#matchgenerators">Match Generators</a> for more information.</p></div></div><hr/><div class="function"><div class="header"> <div class="name"><a name="clink.is_match">clink.is_match</a></div> <div class="signature">(needle:string, candidate:string) : true</div></div><div class="body deprecated"><p class="desc"><strong>Deprecated; don't use this.</strong>  See <a href="#clink.generator">clink.generator</a> for more information.</p><p class="desc">This is no longer needed, and simply returns true now.</p></div></div><hr/><div class="function"><div class="header"> <div class="name"><a name="clink.lower">clink.lower</a></div> <div class="signature">(text:string) : string</div></div><div class="body"><p class="desc">This API correctly converts UTF8 strings to lowercase, with international linguistic awareness.</p><pre class="language-lua"><code>clink.lower("Hello World") -- returns "hello world"</code></pre></div></div><hr/><div class="function"><div class="header"> <div class="name"><a name="clink.match_display_filter">clink.match_display_filter</a></div> <div class="signature">function variable</div></div><div class="body deprecated"><p class="desc"><strong>Deprecated; don't use this.</strong>  See <a href="#builder:addmatch">builder:addmatch</a> for more information.</p><p class="desc">This is no longer used.</p><pre class="language-lua"><code>clink.match_display_filter = function(matches)
 &nbsp; -- Transform matches.
 &nbsp; return matches
 end</code></pre></div></div><hr/><div class="function"><div class="header"> <div class="name"><a name="clink.matches_are_files">clink.matches_are_files</a></div> <div class="signature">(files:boolean) : nil</div></div><div class="body deprecated"><p class="desc"><strong>Deprecated; don't use this.</strong>  See <a href="#builder:addmatch">builder:addmatch</a> for more information.</p><p class="desc">This is no longer needed, because now it's inferred from the match type when adding matches.</p></div></div><hr/><div class="function"><div class="header"> <div class="name"><a name="clink.promptfilter">clink.promptfilter</a></div> <div class="signature">([priority:integer]) : table</div></div><div class="body"><p class="desc">Creates and returns a new promptfilter object that is applied in increasing <em>priority</em> order (low values to high values).  Define on the object a <code>filter()</code> function that takes a string argument which contains the filtered prompt so far.  The function can return nil to have no effect, or can return a new prompt string.  It can optionally stop further prompt filtering by also returning false.  See <a href="#customisingtheprompt">Customising The Prompt</a> for more information.</p><pre class="language-lua"><code>local foo_prompt = clink.promptfilter(80)
@@ -1502,7 +1580,7 @@ function g:generate(line_state, match_builder)
 &nbsp; -- `line_state` is a <a href="#line">line</a> object.
 &nbsp; -- `match_builder:<a href="#builder:addmatch">addmatch</a>()` is used to add matches.
 &nbsp; -- return true if handled, or false to let another generator try.
-end</code></pre></div></div><hr/><div class="function"><div class="header"> <div class="name"><a name="clink.version_commit">clink.version_commit</a></div> <div class="signature">string variable</div></div><div class="body"><p class="desc">The commit part of the Clink version number. For v1.2.3.<strong>a0f14d</strong> the commit part is a0f14d.</p></div></div><hr/><div class="function"><div class="header"> <div class="name"><a name="clink.version_major">clink.version_major</a></div> <div class="signature">integer variable</div></div><div class="body"><p class="desc">The major part of the Clink version number. For v<strong>1</strong>.2.3.a0f14d the major version is 1.</p></div></div><hr/><div class="function"><div class="header"> <div class="name"><a name="clink.version_minor">clink.version_minor</a></div> <div class="signature">integer variable</div></div><div class="body"><p class="desc">The minor part of the Clink version number. For v1.<strong>2</strong>.3.a0f14d the minor version is 2.</p></div></div><hr/><div class="function"><div class="header"> <div class="name"><a name="clink.version_patch">clink.version_patch</a></div> <div class="signature">integer variable</div></div><div class="body"><p class="desc">The patch part of the Clink version number. For v1.2.<strong>3</strong>.a0f14d the patch version is 3.</p></div></div><hr/></div><div class="group"><h5 class="group_name"><a name="clink.arg">clink.arg</a></h5><div class="function"><div class="header"> <div class="name"><a name="clink.arg.new_parser">clink.arg.new_parser</a></div> <div class="signature">(...) : table</div></div><div class="body deprecated"><p class="desc"><strong>Deprecated; don't use this.</strong>  See <a href="#clink.argmatcher">clink.argmatcher</a> for more information.</p><p class="desc">Creates a new parser and adds <em>...</em> to it.</p><pre class="language-lua"><code>-- Deprecated form:
+end</code></pre></div></div><hr/><div class="function"><div class="header"> <div class="name"><a name="clink.upper">clink.upper</a></div> <div class="signature">(text:string) : string</div></div><div class="body"><p class="desc">This API correctly converts UTF8 strings to uppercase, with international linguistic awareness.</p><pre class="language-lua"><code>clink.upper("Hello World") -- returns "HELLO WORLD"</code></pre></div></div><hr/><div class="function"><div class="header"> <div class="name"><a name="clink.version_commit">clink.version_commit</a></div> <div class="signature">string variable</div></div><div class="body"><p class="desc">The commit part of the Clink version number. For v1.2.3.<strong>a0f14d</strong> the commit part is a0f14d.</p></div></div><hr/><div class="function"><div class="header"> <div class="name"><a name="clink.version_major">clink.version_major</a></div> <div class="signature">integer variable</div></div><div class="body"><p class="desc">The major part of the Clink version number. For v<strong>1</strong>.2.3.a0f14d the major version is 1.</p></div></div><hr/><div class="function"><div class="header"> <div class="name"><a name="clink.version_minor">clink.version_minor</a></div> <div class="signature">integer variable</div></div><div class="body"><p class="desc">The minor part of the Clink version number. For v1.<strong>2</strong>.3.a0f14d the minor version is 2.</p></div></div><hr/><div class="function"><div class="header"> <div class="name"><a name="clink.version_patch">clink.version_patch</a></div> <div class="signature">integer variable</div></div><div class="body"><p class="desc">The patch part of the Clink version number. For v1.2.<strong>3</strong>.a0f14d the patch version is 3.</p></div></div><hr/></div><div class="group"><h5 class="group_name"><a name="clink.arg">clink.arg</a></h5><div class="function"><div class="header"> <div class="name"><a name="clink.arg.new_parser">clink.arg.new_parser</a></div> <div class="signature">(...) : table</div></div><div class="body deprecated"><p class="desc"><strong>Deprecated; don't use this.</strong>  See <a href="#clink.argmatcher">clink.argmatcher</a> for more information.</p><p class="desc">Creates a new parser and adds <em>...</em> to it.</p><pre class="language-lua"><code>-- Deprecated form:
 local parser = clink.arg.new_parser(
 &nbsp; { "abc", "def" },       -- arg position 1
 &nbsp; { "ghi", "jkl" },       -- arg position 2
@@ -1536,10 +1614,16 @@ function foo_prompt:filter(prompt)
 &nbsp; return "FOO "..prompt.." >>" --,false  -- Adding ,false stops further filtering.
 end</code></pre></div></div><hr/></div><div class="group"><h5 class="group_name"><a name="line">line</a></h5><div class="function"><div class="header"> <div class="name"><a name="line:getcommandoffset">line:getcommandoffset</a></div> <div class="signature">() : integer</div></div><div class="body"><p class="desc">Returns the offset to the start of the delimited command in the line that's being effectively edited. Note that this may not be the offset of the first command of the line unquoted as whitespace isn't considered for words.</p><pre class="language-lua"><code>-- Given the following line; abc& 123
 -- where commands are separated by & symbols.
-line:getcommandoffset() == 4</code></pre></div></div><hr/><div class="function"><div class="header"> <div class="name"><a name="line:getcursor">line:getcursor</a></div> <div class="signature">() : integer</div></div><div class="body"><p class="desc">Returns the position of the cursor.</p></div></div><hr/><div class="function"><div class="header"> <div class="name"><a name="line:getendword">line:getendword</a></div> <div class="signature">() : string</div></div><div class="body"><p class="desc">Returns the last word of the line. This is the word that matches are being generated for.</p><pre class="language-lua"><code>line:getword(line:getwordcount()) == line:getendword()</code></pre></div></div><hr/><div class="function"><div class="header"> <div class="name"><a name="line:getline">line:getline</a></div> <div class="signature">() : string</div></div><div class="body"><p class="desc">Returns the current line in its entirety.</p></div></div><hr/><div class="function"><div class="header"> <div class="name"><a name="line:getword">line:getword</a></div> <div class="signature">(index:integer) : string</div></div><div class="body"><p class="desc">Returns the word of the line at <em>index</em>.</p></div></div><hr/><div class="function"><div class="header"> <div class="name"><a name="line:getwordcount">line:getwordcount</a></div> <div class="signature">() : integer</div></div><div class="body"><p class="desc">Returns the number of words in the current line.</p></div></div><hr/><div class="function"><div class="header"> <div class="name"><a name="line:getwordinfo">line:getwordinfo</a></div> <div class="signature">(index:integer) : table</div></div><div class="body"><p class="desc">Returns a table of information about the Nth word in the line. The table returned has the following scheme: <em>{ offset:integer, length:integer, quoted:boolean, delim:boolean}</em>.</p></div></div><hr/></div><div class="group"><h5 class="group_name"><a name="log">log</a></h5><div class="function"><div class="header"> <div class="name"><a name="log.info">log.info</a></div> <div class="signature">(message:string) : nil</div></div><div class="body"><p class="desc">Writes info <em>message</em> to the Clink log file.  Use this sparingly, or it could cause performance problems or disk space problems.</p></div></div><hr/></div><div class="group"><h5 class="group_name"><a name="os">os</a></h5><div class="function"><div class="header"> <div class="name"><a name="os.chdir">os.chdir</a></div> <div class="signature">(path:string) : boolean</div></div><div class="body"><p class="desc">Changes the current directory to <em>path</em> and returns whether it was successful.</p></div></div><hr/><div class="function"><div class="header"> <div class="name"><a name="os.copy">os.copy</a></div> <div class="signature">(src:string, dest:string) : boolean</div></div><div class="body"><p class="desc">Copies the <em>src</em> file to the <em>dest</em> file.</p></div></div><hr/><div class="function"><div class="header"> <div class="name"><a name="os.getalias">os.getalias</a></div> <div class="signature">(name:string) : string</div></div><div class="body"><p class="desc">Returns command string for doskey alias <em>name</em>.</p></div></div><hr/><div class="function"><div class="header"> <div class="name"><a name="os.getaliases">os.getaliases</a></div> <div class="signature">() : table</div></div><div class="body"><p class="desc">Returns doskey aliases in a table with the following scheme: <em>{ { name:string, command:string }, ... }</em>.</p></div></div><hr/><div class="function"><div class="header"> <div class="name"><a name="os.getcwd">os.getcwd</a></div> <div class="signature">() : string</div></div><div class="body"><p class="desc">Returns the current directory.</p></div></div><hr/><div class="function"><div class="header"> <div class="name"><a name="os.getenv">os.getenv</a></div> <div class="signature">(name:string) : string or nil</div></div><div class="body"><p class="desc">Returns the value of the named environment variable, or <em>nil</em> if it doesn't exist.</p></div></div><hr/><div class="function"><div class="header"> <div class="name"><a name="os.getenvnames">os.getenvnames</a></div> <div class="signature">() : table</div></div><div class="body"><p class="desc">Returns all environment variables in a table with the following scheme: <em>{ { name:string, value:string }, ... }</em>.</p></div></div><hr/><div class="function"><div class="header"> <div class="name"><a name="os.gethost">os.gethost</a></div> <div class="signature">() : string</div></div><div class="body"><p class="desc">Returns the fully qualified file name of the host process.  Currently only CMD.EXE can host Clink.</p></div></div><hr/><div class="function"><div class="header"> <div class="name"><a name="os.getscreeninfo">os.getscreeninfo</a></div> <div class="signature">() : table</div></div><div class="body"><p class="desc">Returns dimensions of the terminal's buffer (<em>buf</em>*) and visible window (<em>win</em>*). The returned table has the following scheme: <em>{ bufwidth:int, bufheight:int, winwidth:int, winheight:int }.</em></p></div></div><hr/><div class="function"><div class="header"> <div class="name"><a name="os.globdirs">os.globdirs</a></div> <div class="signature">(globpattern:string) : table</div></div><div class="body"><p class="desc">Collects directories matching <em>globpattern</em> and returns them in a table of strings.</p></div></div><hr/><div class="function"><div class="header"> <div class="name"><a name="os.globfiles">os.globfiles</a></div> <div class="signature">(globpattern:string) : table</div></div><div class="body"><p class="desc">Collects files matching <em>globpattern</em> and returns them in a table of strings.</p></div></div><hr/><div class="function"><div class="header"> <div class="name"><a name="os.isdir">os.isdir</a></div> <div class="signature">(path:string) : boolean</div></div><div class="body"><p class="desc">Returns whether <em>path</em> is a directory.</p></div></div><hr/><div class="function"><div class="header"> <div class="name"><a name="os.isfile">os.isfile</a></div> <div class="signature">(path:string) : boolean</div></div><div class="body"><p class="desc">Returns whether <em>path</em> is a file.</p></div></div><hr/><div class="function"><div class="header"> <div class="name"><a name="os.ishidden">os.ishidden</a></div> <div class="signature">(path:string) : boolean</div></div><div class="body"><p class="desc">Returns whether <em>path</em> is has the hidden attribute set.</p></div></div><hr/><div class="function"><div class="header"> <div class="name"><a name="os.mkdir">os.mkdir</a></div> <div class="signature">(path:string) : boolean</div></div><div class="body"><p class="desc">Creates the directory <em>path</em> and returns whether it was successful.</p></div></div><hr/><div class="function"><div class="header"> <div class="name"><a name="os.move">os.move</a></div> <div class="signature">(src:string, dest:string) : boolean</div></div><div class="body"><p class="desc">Moves the <em>src</em> file to the <em>dest</em> file.</p></div></div><hr/><div class="function"><div class="header"> <div class="name"><a name="os.rmdir">os.rmdir</a></div> <div class="signature">(path:string) : boolean</div></div><div class="body"><p class="desc">Removes the directory <em>path</em> and returns whether it was successful.</p></div></div><hr/><div class="function"><div class="header"> <div class="name"><a name="os.setenv">os.setenv</a></div> <div class="signature">(name:string, value:string) : boolean</div></div><div class="body"><p class="desc">Sets the <em>name</em> environment variable to <em>value</em> and returns whether it was successful.</p></div></div><hr/><div class="function"><div class="header"> <div class="name"><a name="os.unlink">os.unlink</a></div> <div class="signature">(path:string) : boolean</div></div><div class="body"><p class="desc">Deletes the file <em>path</em> and returns whether it was successful.</p></div></div><hr/></div><div class="group"><h5 class="group_name"><a name="path">path</a></h5><div class="function"><div class="header"> <div class="name"><a name="path.getbasename">path.getbasename</a></div> <div class="signature">(path:string) : string</div></div><div class="body"><p class="desc"></p><pre class="language-lua"><code>path.getbasename("/foo/bar.ext") -- returns "bar"</code></pre></div></div><hr/><div class="function"><div class="header"> <div class="name"><a name="path.getdirectory">path.getdirectory</a></div> <div class="signature">(path:string) : nil or string</div></div><div class="body"><p class="desc"></p><pre class="language-lua"><code>path.getdirectory("/foo/bar") -- returns "/foo/"
+line:getcommandoffset() == 4</code></pre></div></div><hr/><div class="function"><div class="header"> <div class="name"><a name="line:getcursor">line:getcursor</a></div> <div class="signature">() : integer</div></div><div class="body"><p class="desc">Returns the position of the cursor.</p></div></div><hr/><div class="function"><div class="header"> <div class="name"><a name="line:getendword">line:getendword</a></div> <div class="signature">() : string</div></div><div class="body"><p class="desc">Returns the last word of the line. This is the word that matches are being generated for.</p><pre class="language-lua"><code>line:getword(line:getwordcount()) == line:getendword()</code></pre></div></div><hr/><div class="function"><div class="header"> <div class="name"><a name="line:getline">line:getline</a></div> <div class="signature">() : string</div></div><div class="body"><p class="desc">Returns the current line in its entirety.</p></div></div><hr/><div class="function"><div class="header"> <div class="name"><a name="line:getword">line:getword</a></div> <div class="signature">(index:integer) : string</div></div><div class="body"><p class="desc">Returns the word of the line at <em>index</em>.</p></div></div><hr/><div class="function"><div class="header"> <div class="name"><a name="line:getwordcount">line:getwordcount</a></div> <div class="signature">() : integer</div></div><div class="body"><p class="desc">Returns the number of words in the current line.</p></div></div><hr/><div class="function"><div class="header"> <div class="name"><a name="line:getwordinfo">line:getwordinfo</a></div> <div class="signature">(index:integer) : table</div></div><div class="body"><p class="desc">Returns a table of information about the Nth word in the line. The table returned has the following scheme:</p><pre class="language-lua"><code>{
+&nbsp; offset,  -- [integer] offset where the word starts in the line:getline() string.
+&nbsp; length,  -- [integer] length of the word.
+&nbsp; quoted,  -- [boolean] indicates whether the word is quoted.
+&nbsp; delim,   -- [string] the delimiter character, or an empty string.
+}</code></pre></div></div><hr/></div><div class="group"><h5 class="group_name"><a name="log">log</a></h5><div class="function"><div class="header"> <div class="name"><a name="log.info">log.info</a></div> <div class="signature">(message:string) : nil</div></div><div class="body"><p class="desc">Writes info <em>message</em> to the Clink log file.  Use this sparingly, or it could cause performance problems or disk space problems.</p></div></div><hr/></div><div class="group"><h5 class="group_name"><a name="os">os</a></h5><div class="function"><div class="header"> <div class="name"><a name="os.chdir">os.chdir</a></div> <div class="signature">(path:string) : boolean</div></div><div class="body"><p class="desc">Changes the current directory to <em>path</em> and returns whether it was successful.</p></div></div><hr/><div class="function"><div class="header"> <div class="name"><a name="os.copy">os.copy</a></div> <div class="signature">(src:string, dest:string) : boolean</div></div><div class="body"><p class="desc">Copies the <em>src</em> file to the <em>dest</em> file.</p></div></div><hr/><div class="function"><div class="header"> <div class="name"><a name="os.getalias">os.getalias</a></div> <div class="signature">(name:string) : string</div></div><div class="body"><p class="desc">Returns command string for doskey alias <em>name</em>.</p></div></div><hr/><div class="function"><div class="header"> <div class="name"><a name="os.getaliases">os.getaliases</a></div> <div class="signature">() : table</div></div><div class="body"><p class="desc">Returns doskey aliases in a table with the following scheme: <em>{ { name:string, command:string }, ... }</em>.</p></div></div><hr/><div class="function"><div class="header"> <div class="name"><a name="os.getcwd">os.getcwd</a></div> <div class="signature">() : string</div></div><div class="body"><p class="desc">Returns the current directory.</p></div></div><hr/><div class="function"><div class="header"> <div class="name"><a name="os.getenv">os.getenv</a></div> <div class="signature">(name:string) : string or nil</div></div><div class="body"><p class="desc">Returns the value of the named environment variable, or <em>nil</em> if it doesn't exist.</p></div></div><hr/><div class="function"><div class="header"> <div class="name"><a name="os.getenvnames">os.getenvnames</a></div> <div class="signature">() : table</div></div><div class="body"><p class="desc">Returns all environment variables in a table with the following scheme: <em>{ { name:string, value:string }, ... }</em>.</p></div></div><hr/><div class="function"><div class="header"> <div class="name"><a name="os.gethost">os.gethost</a></div> <div class="signature">() : string</div></div><div class="body"><p class="desc">Returns the fully qualified file name of the host process.  Currently only CMD.EXE can host Clink.</p></div></div><hr/><div class="function"><div class="header"> <div class="name"><a name="os.getscreeninfo">os.getscreeninfo</a></div> <div class="signature">() : table</div></div><div class="body"><p class="desc">Returns dimensions of the terminal's buffer (<em>buf</em>*) and visible window (<em>win</em>*). The returned table has the following scheme: <em>{ bufwidth:int, bufheight:int, winwidth:int, winheight:int }.</em></p></div></div><hr/><div class="function"><div class="header"> <div class="name"><a name="os.globdirs">os.globdirs</a></div> <div class="signature">(globpattern:string) : table</div></div><div class="body"><p class="desc">Collects directories matching <em>globpattern</em> and returns them in a table of strings.</p></div></div><hr/><div class="function"><div class="header"> <div class="name"><a name="os.globfiles">os.globfiles</a></div> <div class="signature">(globpattern:string) : table</div></div><div class="body"><p class="desc">Collects files matching <em>globpattern</em> and returns them in a table of strings.</p></div></div><hr/><div class="function"><div class="header"> <div class="name"><a name="os.isdir">os.isdir</a></div> <div class="signature">(path:string) : boolean</div></div><div class="body"><p class="desc">Returns whether <em>path</em> is a directory.</p></div></div><hr/><div class="function"><div class="header"> <div class="name"><a name="os.isfile">os.isfile</a></div> <div class="signature">(path:string) : boolean</div></div><div class="body"><p class="desc">Returns whether <em>path</em> is a file.</p></div></div><hr/><div class="function"><div class="header"> <div class="name"><a name="os.ishidden">os.ishidden</a></div> <div class="signature">(path:string) : boolean</div></div><div class="body"><p class="desc">Returns whether <em>path</em> is has the hidden attribute set.</p></div></div><hr/><div class="function"><div class="header"> <div class="name"><a name="os.mkdir">os.mkdir</a></div> <div class="signature">(path:string) : boolean</div></div><div class="body"><p class="desc">Creates the directory <em>path</em> and returns whether it was successful.</p></div></div><hr/><div class="function"><div class="header"> <div class="name"><a name="os.move">os.move</a></div> <div class="signature">(src:string, dest:string) : boolean</div></div><div class="body"><p class="desc">Moves the <em>src</em> file to the <em>dest</em> file.</p></div></div><hr/><div class="function"><div class="header"> <div class="name"><a name="os.rmdir">os.rmdir</a></div> <div class="signature">(path:string) : boolean</div></div><div class="body"><p class="desc">Removes the directory <em>path</em> and returns whether it was successful.</p></div></div><hr/><div class="function"><div class="header"> <div class="name"><a name="os.setenv">os.setenv</a></div> <div class="signature">(name:string, value:string) : boolean</div></div><div class="body"><p class="desc">Sets the <em>name</em> environment variable to <em>value</em> and returns whether it was successful.</p></div></div><hr/><div class="function"><div class="header"> <div class="name"><a name="os.unlink">os.unlink</a></div> <div class="signature">(path:string) : boolean</div></div><div class="body"><p class="desc">Deletes the file <em>path</em> and returns whether it was successful.</p></div></div><hr/></div><div class="group"><h5 class="group_name"><a name="path">path</a></h5><div class="function"><div class="header"> <div class="name"><a name="path.getbasename">path.getbasename</a></div> <div class="signature">(path:string) : string</div></div><div class="body"><p class="desc"></p><pre class="language-lua"><code>path.getbasename("/foo/bar.ext") -- returns "bar"</code></pre></div></div><hr/><div class="function"><div class="header"> <div class="name"><a name="path.getdirectory">path.getdirectory</a></div> <div class="signature">(path:string) : nil or string</div></div><div class="body"><p class="desc"></p><pre class="language-lua"><code>path.getdirectory("/foo/bar") -- returns "/foo/"
 path.getdirectory("bar") -- returns nil</code></pre></div></div><hr/><div class="function"><div class="header"> <div class="name"><a name="path.getdrive">path.getdrive</a></div> <div class="signature">(path:string) : nil or string</div></div><div class="body"><p class="desc"></p><pre class="language-lua"><code>path.getdrive("e:/foo/bar") -- returns "e:"
 path.getdrive("foo/bar") -- returns nil</code></pre></div></div><hr/><div class="function"><div class="header"> <div class="name"><a name="path.getextension">path.getextension</a></div> <div class="signature">(path:string) : string</div></div><div class="body"><p class="desc"></p><pre class="language-lua"><code>path.getextension("bar.ext") -- returns ".ext"
-path.getextension("bar") -- returns ""</code></pre></div></div><hr/><div class="function"><div class="header"> <div class="name"><a name="path.getname">path.getname</a></div> <div class="signature">(path:string) : string</div></div><div class="body"><p class="desc"></p><pre class="language-lua"><code>path.getname("/foo/bar.ext") -- returns "bar.ext"</code></pre></div></div><hr/><div class="function"><div class="header"> <div class="name"><a name="path.join">path.join</a></div> <div class="signature">(left:string, right:string) : string</div></div><div class="body"><p class="desc"></p><pre class="language-lua"><code>path.join("/foo", "bar") -- returns "/foo\bar"</code></pre></div></div><hr/><div class="function"><div class="header"> <div class="name"><a name="path.normalise">path.normalise</a></div> <div class="signature">(path:string, [separator:string]) : string</div></div><div class="body"><p class="desc">Cleans <em>path</em> by normalising separators and removing ".[.]/" elements. If <em>separator</em> is provided it is used to delimit path elements, otherwise a system-specific delimiter is used.</p><pre class="language-lua"><code>path.normalise("a////b/\\/c/") -- returns "a\b\c\"</code></pre></div></div><hr/></div><div class="group"><h5 class="group_name"><a name="settings">settings</a></h5><div class="function"><div class="header"> <div class="name"><a name="settings.add">settings.add</a></div> <div class="signature">(name:string, default:..., [short_desc:string], [long_desc:string]) : boolean</div></div><div class="body"><p class="desc">Adds a setting to the list of Clink settings and includes it in <code>clink set</code>.  The new setting is named <em>name</em> and has a default value <em>default</em> if not explicitly set.  The type of <em>default</em> determines what kind of setting is added:  boolean, integer, and string values add the corresponding setting type.  Or if the type is table, then an enum setting is added:  the table defines the accepted values, and the first value is the default value.<br/> <br/> <em>name</em> can't be more than 31 characters.<br/> <em>short_desc</em> is an optional quick summary description and can't be more than 47 characters.<br/> <em>long_desc</em> is an optional long description.</p><pre class="language-lua"><code>settings.add("myscript.myabc", true, "Boolean setting")
+path.getextension("bar") -- returns ""</code></pre></div></div><hr/><div class="function"><div class="header"> <div class="name"><a name="path.getname">path.getname</a></div> <div class="signature">(path:string) : string</div></div><div class="body"><p class="desc"></p><pre class="language-lua"><code>path.getname("/foo/bar.ext") -- returns "bar.ext"</code></pre></div></div><hr/><div class="function"><div class="header"> <div class="name"><a name="path.isexecext">path.isexecext</a></div> <div class="signature">(path:string) : boolean</div></div><div class="body"><p class="desc">Examines the extension of the path name.  Returns true if the extension is listed in %PATHEXT%.  This caches the extensions in a map so that it's more efficient than getting and parsing %PATHEXT% each time.</p><pre class="language-lua"><code>path.isexecext("program.exe") -- returns true
+path.isexecext("file.doc") -- returns false</code></pre></div></div><hr/><div class="function"><div class="header"> <div class="name"><a name="path.join">path.join</a></div> <div class="signature">(left:string, right:string) : string</div></div><div class="body"><p class="desc"></p><pre class="language-lua"><code>path.join("/foo", "bar") -- returns "/foo\bar"</code></pre></div></div><hr/><div class="function"><div class="header"> <div class="name"><a name="path.normalise">path.normalise</a></div> <div class="signature">(path:string, [separator:string]) : string</div></div><div class="body"><p class="desc">Cleans <em>path</em> by normalising separators and removing ".[.]/" elements. If <em>separator</em> is provided it is used to delimit path elements, otherwise a system-specific delimiter is used.</p><pre class="language-lua"><code>path.normalise("a////b/\\/c/") -- returns "a\b\c\"</code></pre></div></div><hr/></div><div class="group"><h5 class="group_name"><a name="settings">settings</a></h5><div class="function"><div class="header"> <div class="name"><a name="settings.add">settings.add</a></div> <div class="signature">(name:string, default:..., [short_desc:string], [long_desc:string]) : boolean</div></div><div class="body"><p class="desc">Adds a setting to the list of Clink settings and includes it in <code>clink set</code>.  The new setting is named <em>name</em> and has a default value <em>default</em> if not explicitly set.  The type of <em>default</em> determines what kind of setting is added:  boolean, integer, and string values add the corresponding setting type.  Or if the type is table, then an enum setting is added:  the table defines the accepted values, and the first value is the default value.<br/> <br/> <em>name</em> can't be more than 31 characters.<br/> <em>short_desc</em> is an optional quick summary description and can't be more than 47 characters.<br/> <em>long_desc</em> is an optional long description.</p><pre class="language-lua"><code>settings.add("myscript.myabc", true, "Boolean setting")
 settings.add("myscript.mydef", 100, "Number setting")
 settings.add("myscript.myghi", "abc", "String setting")
 settings.add("myscript.myjkl", {"x","y","z"}, "Enum setting")</code></pre></div></div><hr/><div class="function"><div class="header"> <div class="name"><a name="settings.get">settings.get</a></div> <div class="signature">(name:string) : boolean or string or integer</div></div><div class="body"><p class="desc">Returns the current value of the <em>name</em> Clink setting.</p></div></div><hr/><div class="function"><div class="header"> <div class="name"><a name="settings.set">settings.set</a></div> <div class="signature">(name:string, value:string) : boolean</div></div><div class="body"><p class="desc">Sets the <em>name</em> Clink setting to <em>value</em> and returns whether it was successful.</p></div></div><hr/></div><div class="group"><h5 class="group_name"><a name="string">string</a></h5><div class="function"><div class="header"> <div class="name"><a name="string.explode">string.explode</a></div> <div class="signature">(text:string, [delims:string]) : table</div></div><div class="body"><p class="desc">Splits <em>text</em> delimited by <em>delims</em> (or by spaces if <em>delims</em> is not provided) and returns a table containing the substrings.</p></div></div><hr/><div class="function"><div class="header"> <div class="name"><a name="string.hash">string.hash</a></div> <div class="signature">(text:string) : integer</div></div><div class="body"><p class="desc">Returns a hash of the input <em>text</em>.</p></div></div><hr/></div><div class="group"><h5 class="group_name"><a name="[other]">[other]</a></h5><div class="function"><div class="header"> <div class="name"><a name="rl_state">rl_state</a></div> <div class="signature">table variable</div></div><div class="body deprecated"><p class="desc"><strong>Deprecated; don't use this.</strong>  See <a href="#line">line</a> for more information.</p><p class="desc">This is an obsolete global variable that was set while running match generators.  Its table scheme is <em>{ line_buffer:string, point:integer}</em>, but it has been superseded by the <a href="#line">line</a> type parameter passed into match generator functions when using the new <a href="#clink.generator">clink.generator</a> API.</p></div></div><hr/></div>
@@ -1547,6 +1631,28 @@ settings.add("myscript.myjkl", {"x","y","z"}, "Enum setting")</code></pre></div>
         <div class="section" id="changes">
 <h1 id="changes">Changes</h1>
 <h2 id="releases-from-chrisant996clink-fork">Releases from <a href="https://github.com/chrisant996/clink">chrisant996/clink</a> fork</h2>
+<h3 id="v115">v1.1.5</h3>
+<ul>
+<li>The <code>menu-complete</code> family of commands now support matching <code>?</code> and <code>*</code> wildcards when the <code>match.wild</code> setting is enabled.</li>
+<li>Added <code>colour.input</code> and <code>colour.modmark</code> settings for coloring Readline&#39;s input line.</li>
+<li>Added <code>clink.upper()</code> Lua function, and both <code>clink.lower()</code> and <code>clink.upper()</code> are properly UTF8 aware now.</li>
+<li>Added <code>clink-copy-word</code> command that copies the word at the cursor to the clipboard.</li>
+<li>Added <code>clink.promptfilter</code> setting to control whether to filter the prompt with Lua scripts.</li>
+<li>Renamed <code>terminal.emulate</code> setting to <code>terminal.emulation</code>.</li>
+<li>Improved executable file extension logic to consistently use %PATHEXT% (and efficiently).</li>
+<li>Improved file extension logic (e.g. &quot;file.foo bar&quot; has no extension because of the space).</li>
+<li>Updated arg matcher for <code>clink</code> itself (was missing some flags).</li>
+<li>Changed <code>colour.hidden</code> setting to not be set by default.</li>
+<li>Fixed <a href="https://github.com/chrisant996/clink/issues/28">#28</a> Tab completion for &quot;~&quot; does not work.</li>
+<li>Fixed <a href="https://github.com/chrisant996/clink/issues/25">#25</a> Unicode surrogate pairs (and emoji) input isn&#39;t working -- Microsoft Terminal renders the text correctly, but ConEmu and the default conhost still don&#39;t (and that isn&#39;t a Clink issue).</li>
+<li>Fixed screen size bug in Readline on Windows.</li>
+<li>Fixed the backwards values in the <code>terminal.emulation</code> setting.</li>
+<li>Fixed <code>....</code> so it works properly again.</li>
+<li>Fixed case sensitive sorting of matches.</li>
+<li>Fixed script error when %PATHEXT% is empty.</li>
+<li>Fixed the <code>exec.cwd</code> Clink setting to default to true, so that the default behavior is consistent with how v0.4.x behaved.</li>
+<li>Fixed the <code>cd</code>, <code>md</code>, <code>rd</code>, etc argmatchers to only match one argument to be consistent with the actual command syntax.</li>
+</ul>
 <h3 id="v114">v1.1.4</h3>
 <ul>
 <li>Automatically detect when running inside ConEmu and disable Clink&#39;s Virtual Terminal emulation.</li>
