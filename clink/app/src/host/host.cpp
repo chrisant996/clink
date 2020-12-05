@@ -63,6 +63,39 @@ static setting_str g_exclude_from_history_cmds(
 
 
 //------------------------------------------------------------------------------
+extern printer* g_printer;
+
+//------------------------------------------------------------------------------
+// Documented in clink_api.cpp.
+int clink_print(lua_State* state)
+{
+    // Check we've got one argument...
+    if (lua_gettop(state) != 1)
+        return 0;
+
+    // ...and that the argument is a string.
+    if (!lua_isstring(state, 1))
+        return 0;
+
+    const char* string = lua_tostring(state, 1);
+
+    if (g_printer)
+    {
+        str<> s;
+        s.format("%s\r\n", string);
+        g_printer->print(s.c_str(), s.length());
+    }
+    else
+    {
+        printf("%s\r\n", string);
+    }
+
+    return 0;
+}
+
+
+
+//------------------------------------------------------------------------------
 class dir_history_entry : public no_copy
 {
 public:

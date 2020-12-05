@@ -18,6 +18,15 @@
 
 
 //------------------------------------------------------------------------------
+// Implemented in host.cpp.
+// UNDOCUMENTED, because it's really only useful inside debugger.lua.
+//  / -name:  clink.print
+//  / -arg:   text:string
+//  / -show:  clink.print("\x1b[32mgreen\x1b[m \x1b[35mmagenta\x1b[m")
+//  / This is similar to <code>print()</code>, but this supports ANSI escape
+//  / codes.
+
+//------------------------------------------------------------------------------
 /// -name:  clink.version_major
 /// -var:   integer
 /// The major part of the Clink version number.
@@ -240,6 +249,7 @@ extern int get_env(lua_State* state);
 extern int get_env_names(lua_State* state);
 extern int get_screen_info(lua_State* state);
 extern int is_dir(lua_State* state);
+extern int clink_print(lua_State* state);
 
 //------------------------------------------------------------------------------
 void clink_lua_initialise(lua_state& lua)
@@ -266,6 +276,8 @@ void clink_lua_initialise(lua_state& lua)
         { "is_dir",                 &is_dir },
         { "is_rl_variable_true",    &is_rl_variable_true },
         { "lower",                  &to_lowercase },
+        // New APIs in the "clink." namespace.
+        { "print",                  &clink_print },
         { "upper",                  &to_uppercase },
     };
 
