@@ -178,8 +178,6 @@ TEST_CASE("Executable match generation.")
 
     SECTION("Space prefix")
     {
-        tester.get_editor()->add_generator(file_match_generator());
-
         settings::find("exec.space_prefix")->set("1");
 
         SECTION("None")
@@ -269,8 +267,6 @@ TEST_CASE("Executable match generation.")
 
             SECTION("False positive")
             {
-                tester.get_editor()->add_generator(file_match_generator());
-
                 tester.set_input("nullcmd \"&&\" o");
                 tester.set_expected_matches("one_local.exe", "one_local.txt", "one_dir\\");
                 tester.run();
