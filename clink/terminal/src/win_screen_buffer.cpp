@@ -5,6 +5,7 @@
 #include "win_screen_buffer.h"
 
 #include <core/base.h>
+#include <core/log.h>
 #include <core/settings.h>
 #include <core/str_iter.h>
 
@@ -18,8 +19,8 @@ static setting_enum g_terminal_emulation(
     "Clink can emulate Virtual Terminal processing if the console doesn't\n"
     "natively. When set to 'emulate' then Clink performs VT emulation and handles\n"
     "ANSI escape codes. When 'native' then Clink passes all output directly to the\n"
-    "console. Or when 'auto' then Clink performs VT emulation except when running\n"
-    "in ConEmu.",
+    "console. Or when 'auto' then Clink performs VT emulation unless a third party\n"
+    "tool is detected that also provides VT emulation (such as ConEmu).",
     "native,emulate,auto",
     2);
 
@@ -34,19 +35,51 @@ void win_screen_buffer::begin()
     m_default_attr = csbi.wAttributes & attr_mask_all;
     m_bold = !!(m_default_attr & attr_mask_bold);
 
+    bool native_vt = m_native_vt;
+    const char* found_dll = nullptr;
     switch (g_terminal_emulation.get())
     {
     case 0:
-        m_native_vt = true;
+        native_vt = true;
         break;
     case 1:
-        m_native_vt = false;
+        native_vt = false;
         break;
-    case 2:
-        m_native_vt = (GetModuleHandleA("conemuhk64.dll") ||
-                       GetModuleHandleA("conemuhk32.dll"));
-        break;
+    case 2: {
+        static const char* const dll_names[] =
+        {
+            "conemuhk.dll",
+            "conemuhk32.dll",
+            "conemuhk64.dll",
+            "ansi.dll",
+            "ansi32.dll",
+            "ansi64.dll",
+        };
+
+        native_vt = false;
+        for (auto dll_name : dll_names)
+        {
+            if (GetModuleHandle(dll_name) != NULL)
+            {
+                native_vt = true;
+                found_dll = dll_name;
+                break;
+            }
+        }
+        break; }
     }
+
+    if (m_native_vt != native_vt)
+    {
+        if (!native_vt)
+            LOG("Using emulated terminal support.");
+        else if (found_dll)
+            LOG("Using native terminal support; found '%s'.", found_dll);
+        else
+            LOG("Using native terminal support.");
+    }
+
+    m_native_vt = native_vt;
 
     if (m_native_vt)
         SetConsoleMode(m_handle, m_prev_mode | ENABLE_VIRTUAL_TERMINAL_PROCESSING);
