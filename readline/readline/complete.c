@@ -2383,9 +2383,13 @@ make_quoted_replacement (char *match, int mtype, char *qc)
       /* If there is a single match, see if we need to quote it.
          This also checks whether the common prefix of several
 	 matches needs to be quoted. */
+      /* begin_clink_change */
+      const char *quotable_match = match + (!rl_complete_with_tilde_expansion && match[0] == '~');
       should_quote = rl_filename_quote_characters
-			? (_rl_strpbrk (match, rl_filename_quote_characters) != 0)
+			//? (_rl_strpbrk (match, rl_filename_quote_characters) != 0)
+			? (_rl_strpbrk (quotable_match, rl_filename_quote_characters) != 0)
 			: 0;
+      /* end_clink_change */
 
       do_replace = should_quote ? mtype : NO_MATCH;
       /* Quote the replacement, since we found an embedded
