@@ -22,4 +22,4 @@ end
 --------------------------------------------------------------------------------
 clink.argmatcher("cd", "chdir", "pushd", "rd", "rmdir", "md", "mkdir"):addarg(
     clink.dir_matches
-)
+):nofiles()
