@@ -15,13 +15,15 @@
 - Improved file extension logic (e.g. "file.foo bar" has no extension because of the space).
 - Updated arg matcher for `clink` itself (was missing some flags).
 - Changed `colour.hidden` setting to not be set by default.
+- Fixed [#28](https://github.com/chrisant996/clink/issues/28) Tab completion for "~" does not work.
+- Fixed [#25](https://github.com/chrisant996/clink/issues/25) Unicode surrogate pairs (and emoji) input isn't working -- Microsoft Terminal renders the text correctly, but ConEmu and the default conhost still don't (and that isn't a Clink issue).
 - Fixed screen size bug in Readline on Windows.
 - Fixed the backwards values in the `terminal.emulation` setting.
 - Fixed `....` so it works properly again.
 - Fixed case sensitive sorting of matches.
 - Fixed script error when %PATHEXT% is empty.
 - Fixed the `exec.cwd` Clink setting to default to true, so that the default behavior is consistent with how v0.4.x behaved.
-- Fixed [#25](https://github.com/chrisant996/clink/issues/25) Unicode surrogate pairs (and emoji) input isn't working -- Microsoft Terminal renders the text correctly, but ConEmu and the default conhost still don't (and that isn't a Clink issue).
+- Fixed the `cd`, `md`, `rd`, etc argmatchers to only match one argument to be consistent with the actual command syntax.
 
 ### v1.1.4
 
