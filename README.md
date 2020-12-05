@@ -58,6 +58,23 @@ Clink uses [Premake](http://premake.github.io) to generate Visual Studio solutio
 1. Run `npm install marked` to install the [marked](https://marked.js.org) markdown library.
 2. Run `premake5.exe docs`.
 
+### Debugging Clink
+
+1. Start Clink using any of the normal ways.
+2. Launch a debugger such as Visual Studio.
+3. Attach the debugger to the CMD.exe process that Clink was injected into.
+   - If you break into the debugger now, it will be inside Clink code.
+4. Here are a couple breakpoints that might be useful:
+   - `host::edit_line` is the start of showing a prompt and accepting input.
+   - `rl_complete` or `rl_menu_complete` or `rl_old_menu_complete` are the Readline completion commands.
+
+### Debugging Lua Scripts
+
+1. Use `clink set lua.debug true` to enable using the Lua debugger.
+2. Use `clink set lua.break_on_error true` to automatically break into the Lua debugger on any Lua script error.
+3. Add a `pause()` line in a Lua script to break into the debugger at that spot, if the `lua.debug` setting is enabled.
+4. Use `help` in the Lua debugger to get help on using the Lua debugger.
+
 ### License
 
 Clink is distributed under the terms of the GNU General Public License v3.0.
