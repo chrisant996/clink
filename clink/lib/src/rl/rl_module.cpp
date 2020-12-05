@@ -30,6 +30,7 @@ extern "C" {
 #include <compat/display_matches.h>
 #include <readline/posixdir.h>
 #include <readline/history.h>
+extern int _rl_bell_preference;
 extern int _rl_match_hidden_files;
 extern int _rl_history_point_at_end_of_anchored_search;
 extern int rl_complete_with_tilde_expansion;
@@ -977,7 +978,6 @@ rl_module::rl_module(const char* shell_name, terminal_in* input)
 
     rl_readline_name = shell_name;
     rl_catch_signals = 0;
-    _rl_comment_begin = savestring("::"); // this will do...
 
     // Readline needs a tweak of it's handling of 'meta' (i.e. IO bytes >=0x80)
     // so that it handles UTF-8 correctly (convert=input, output=output)
@@ -989,7 +989,6 @@ rl_module::rl_module(const char* shell_name, terminal_in* input)
     rl_preferred_path_separator = PATH_SEP[0];
 
     // Quote spaces in completed filenames.
-    rl_filename_quoting_desired = 1;
     rl_completer_quote_characters = "\"";
     rl_basic_quote_characters = "\"";
 
@@ -1041,6 +1040,11 @@ rl_module::rl_module(const char* shell_name, terminal_in* input)
         rl_add_funmap_entry("clink-popup-complete", clink_popup_complete);
         rl_add_funmap_entry("clink-popup-history", clink_popup_history);
         rl_add_funmap_entry("clink-popup-directories", clink_popup_directories);
+
+        // Override some defaults.
+        _rl_bell_preference = VISIBLE_BELL;     // Because audible is annoying.
+        _rl_comment_begin = savestring("::");   // this will do...
+        rl_complete_with_tilde_expansion = 1;   // Since CMD doesn't understand tilde.
     }
 
     // Bind extended keys so editing follows Windows' conventions.
