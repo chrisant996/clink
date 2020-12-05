@@ -37,6 +37,7 @@ public:
     matches_iter            get_iter(const char* pattern) const;
 
     virtual unsigned int    get_match_count() const override;
+    virtual bool            is_completion_over() const override;
     virtual bool            is_suppress_append() const override;
     virtual shadow_bool     is_filename_completion_desired() const override;
     virtual bool            is_filename_display_desired() const override;
@@ -55,6 +56,7 @@ private:
     friend class            match_pipeline;
     friend class            match_builder;
     friend class            matches_iter;
+    void                    set_completion_over();
     void                    set_append_character(char append);
     void                    set_suppress_append(bool suppress);
     void                    set_suppress_quoting(int suppress);
@@ -92,6 +94,7 @@ private:
     unsigned short          m_count = 0;
     bool                    m_coalesced = false;
     char                    m_append_character = 0;
+    bool                    m_completion_over = false;
     bool                    m_suppress_append = false;
     int                     m_suppress_quoting = 0;
     int                     m_word_break_adjustment = 0;

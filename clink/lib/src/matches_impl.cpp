@@ -116,6 +116,12 @@ bool match_builder::add_match(const match_desc& desc)
 }
 
 //------------------------------------------------------------------------------
+void match_builder::set_completion_over()
+{
+    return ((matches_impl&)m_matches).set_completion_over();
+}
+
+//------------------------------------------------------------------------------
 void match_builder::set_append_character(char append)
 {
     return ((matches_impl&)m_matches).set_append_character(append);
@@ -383,6 +389,12 @@ match_type matches_impl::get_unfiltered_match_type(unsigned int index) const
 }
 
 //------------------------------------------------------------------------------
+bool matches_impl::is_completion_over() const
+{
+    return m_completion_over;
+}
+
+//------------------------------------------------------------------------------
 bool matches_impl::is_suppress_append() const
 {
     return m_suppress_append;
@@ -425,11 +437,18 @@ void matches_impl::reset()
     m_infos.clear();
     m_coalesced = false;
     m_count = 0;
+    m_completion_over = false;
     m_suppress_append = false;
     m_suppress_quoting = 0;
     m_word_break_adjustment = 0;
     m_filename_completion_desired.reset();
     m_filename_display_desired.reset();
+}
+
+//------------------------------------------------------------------------------
+void matches_impl::set_completion_over()
+{
+    m_completion_over = true;
 }
 
 //------------------------------------------------------------------------------

@@ -85,6 +85,7 @@ class matches
 public:
     virtual matches_iter    get_iter(const char* pattern = nullptr) const = 0;
     virtual unsigned int    get_match_count() const = 0;
+    virtual bool            is_completion_over() const = 0;
     virtual bool            is_suppress_append() const = 0;
     virtual shadow_bool     is_filename_completion_desired() const = 0;
     virtual bool            is_filename_display_desired() const = 0;
@@ -120,6 +121,7 @@ public:
                             match_builder(matches& matches);
     bool                    add_match(const char* match, match_type type);
     bool                    add_match(const match_desc& desc);
+    void                    set_completion_over();
     void                    set_append_character(char append);
     void                    set_suppress_append(bool suppress=true);
     void                    set_suppress_quoting(int suppress=1); //0=no, 1=yes, 2=suppress end quote

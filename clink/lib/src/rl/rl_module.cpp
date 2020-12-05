@@ -625,7 +625,9 @@ static char** alternative_matches(const char* text, int start, int end)
 
     if (!iter.next())
     {
-        rl_attempted_completion_over = 1;
+        // If completion is not over, it will fall back to
+        // filename_menu_completion_function which can handle tilde expansion.
+        rl_attempted_completion_over = s_matches->is_completion_over();
         return nullptr;
     }
 
