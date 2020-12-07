@@ -31,18 +31,18 @@ static const char* get_string(lua_State* state, int index)
 }
 
 //------------------------------------------------------------------------------
-/// -name:  path.collapsetilde
+/// -name:  rl.collapsetilde
 /// -arg:   path:string
 /// -arg:   [force:boolean]
 /// -ret:   string
-/// -show:  path.collapsetilde("C:\Users\yourusername\Documents")
-/// -show:
+/// -show:  rl.collapsetilde("C:\Users\yourusername\Documents")
+/// -show:  &nbsp;
 /// -show:  -- The return value depends on the expand-tilde configuration variable:
 /// -show:  -- When "on", the function returns "C:\Users\yourusername\Documents".
 /// -show:  -- When "off", the function returns "~\Documents".
-/// -show:
+/// -show:  &nbsp;
 /// -show:  -- Or when <em>force</em> is true, the function returns "~\Documents".
-/// Undoes Readline tilde expansion.  See <a href="#expandtilde">expandtilde</a>
+/// Undoes Readline tilde expansion.  See <a href="#rl.expandtilde">rl.expandtilde</a>
 /// for more information.
 static int collapse_tilde(lua_State* state)
 {
@@ -79,26 +79,28 @@ static int collapse_tilde(lua_State* state)
 }
 
 //------------------------------------------------------------------------------
-/// -name:  path.expandtilde
+/// -name:  rl.expandtilde
 /// -arg:   path:string
 /// -ret:   string, boolean
-/// -show:  path.expandtilde("~\Documents") -- returns "C:\Users\yourusername\Documents", true
-/// -show:
-/// -show:  -- This demonstrates efficient use of rl.expandtilde() and rl.collapsetilde()
-/// -show:  -- to generate directory matches from the file system.
+/// -show:  local result, expanded = rl.expandtilde("~\Documents")
+/// -show:  -- result is "C:\Users\yourusername\Documents"
+/// -show:  -- expanded is true
+/// -show:  &nbsp;
+/// -show:  -- This dir_matches function demonstrates efficient use of rl.expandtilde()
+/// -show:  -- and rl.collapsetilde() to generate directory matches from the file system.
 /// -show:  function dir_matches(match_word, word_index, line_state)
 /// -show:  &nbsp; -- Expand tilde before scanning file system.
 /// -show:  &nbsp; local word = line_state:getword(word_index)
 /// -show:  &nbsp; local expanded
 /// -show:  &nbsp; word, expanded = rl.expandtilde(word)
-/// -show:
+/// -show:  &nbsp;
 /// -show:  &nbsp; -- Get the directory from 'word', and collapse tilde before generating
 /// -show:  &nbsp; -- matches.  Notice that collapsetilde() only needs to be called once!
 /// -show:  &nbsp; local root = path.getdirectory(word) or ""
 /// -show:  &nbsp; if expanded then
 /// -show:  &nbsp; &nbsp; root = rl.collapsetilde(root)
 /// -show:  &nbsp; end
-/// -show:
+/// -show:  &nbsp;
 /// -show:  &nbsp; local matches = {}
 /// -show:  &nbsp; for _, d in ipairs(os.globdirs(word.."*")) do
 /// -show:  &nbsp;   -- Join the filename with the input directory (might have a tilde).
@@ -113,19 +115,16 @@ static int collapse_tilde(lua_State* state)
 /// -show:  end
 /// Performs Readline tilde expansion.<br/>
 /// <br/>
-/// When generating filename matches for a word, use the
-/// <code>rl.expandtilde()</code> and <code>rl.collapsetilde()</code> helpers to
-/// perform tilde expansion according to Readline rules/settings.<br/>
+/// When generating filename matches for a word, use the 
+/// <a href="#rl.expandtilde">rl.expandtilde</a> and
+/// <a href="#rl.collapsetilde">rl.collapsetilde</a> helper functions to perform
+/// tilde completion expansion according to Readline's configuration.<br/>
 /// <br/>
-/// Use <code>rl.expandtilde()</code> to do tilde expansion before using
-/// collecting file matches (e.g. via <code>os.<a href="#globfiles">globfiles()</a></code>).
-/// If expandetilde returns that it expanded the string, then use
-/// <code>rl.<a href="#collapsetilde">collapsetilde</a>(match)</code> to put
-/// back the tilde before returning the match.  You can use
-/// <code>rl.<a href="#isvariabletrue">isvariabletrue</a>("expand-tilde")</code>
-/// to test whether matches should include the expanded tilde, but
-/// <code>rl.collapsetilde()</code> automatically tests that config var unless
-/// <code>true</code> is passed to force collapsing.
+/// Use <a href="#rl.expandtilde">rl.expandtilde</a> to do tilde expansion 
+/// before collecting file matches (e.g. via <a 
+/// href="#os.globfiles">os.globfiles</a>).  If it indicates that it expanded 
+/// the string, then use <a href="#rl.collapsetilde">rl.collapsetilde</a> to put
+/// back the tilde before returning a match.
 static int expand_tilde(lua_State* state)
 {
     const char* path = get_string(state, 1);
@@ -141,7 +140,7 @@ static int expand_tilde(lua_State* state)
 }
 
 //------------------------------------------------------------------------------
-/// -name:  getvariable
+/// -name:  rl.getvariable
 /// -arg:   name:string
 /// -ret:   string|nil
 /// Returns the value of the named Readline configuration variable as a string,
@@ -162,7 +161,7 @@ static int get_rl_variable(lua_State* state)
 }
 
 //------------------------------------------------------------------------------
-/// -name:  isvariabletrue
+/// -name:  rl.isvariabletrue
 /// -arg:   name:string
 /// -ret:   boolean|nil
 /// Returns a boolean value indicating whether the named Readline configuration
