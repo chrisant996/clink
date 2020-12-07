@@ -91,7 +91,7 @@ static class : public match_generator
             builder.add_match(root.c_str(), to_match_type(st_mode, attr));
         }
 
-        return false;
+        return true;
     }
 
     virtual void get_word_break_info(const line_state& line, word_break_info& info) const override

@@ -103,10 +103,7 @@ void match_pipeline::generate(
     match_builder builder(m_matches);
     for (auto* generator : generators)
         if (generator->generate(state, builder))
-        {
-            builder.set_completion_over();
             break;
-        }
 }
 
 //------------------------------------------------------------------------------
