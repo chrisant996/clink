@@ -77,6 +77,8 @@ function exec_generator:generate(line_state, match_builder)
 
     local paths = nil
     local text = line_state:getword(1)
+    local expanded
+    text, expanded = rl.expandtilde(text)
     local text_dir = path.getdirectory(text) or ""
     if #text_dir == 0 then
         -- Add console aliases as matches.
@@ -103,6 +105,9 @@ function exec_generator:generate(line_state, match_builder)
         local root = nil
         if rooted then
             root = path.getdirectory(pattern) or ""
+            if expanded then
+                root = rl.collapsetilde(root)
+            end
         end
         for _, f in ipairs(os.globfiles(pattern)) do
 -- TODO: PERFORMANCE: globfiles should return whether each file is hidden since
@@ -135,6 +140,9 @@ function exec_generator:generate(line_state, match_builder)
     -- Lastly we may wish to consider directories too.
     if match_dirs or not added then
         local root = path.getdirectory(text) or ""
+        if expanded then
+            root = rl.collapsetilde(root)
+        end
         for _, d in ipairs(os.globdirs(text.."*")) do
 -- TODO: PERFORMANCE: globdirs should return whether each dir is hidden since
 -- it already had that knowledge.
