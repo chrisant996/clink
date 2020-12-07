@@ -3,6 +3,12 @@
 
 ## Releases from [chrisant996/clink](https://github.com/chrisant996/clink) fork
 
+### Unreleased
+
+- Hooked up tilde completion in the `cd`, `md`, and `rd` command argmatchers.
+- Hooked up tilde completion with the `exec.enable` setting ("~\pro" matches "C:\Users\myusername\program.exe").
+- When `terminal.emulation` is `auto`, now it also detects ANSI{32|64}.DLL just like Clink 0.4.8 did.
+
 ### v1.1.5
 
 - The `menu-complete` family of commands now support matching `?` and `*` wildcards when the `match.wild` setting is enabled.
