@@ -4,8 +4,6 @@ ChrisAnt Plans
 
 # BETA
 
-- Try using \1 and \2 to bracket the modmark color and put that directly in the line buffer, to simplify setting the modmark color.
-
 ## Cmder, Powerline, Clink-Completions
 - Update clink-completions to have better 0.4.9 implementations, and also to conditionally use the new API when available.
 - Update clink-git-extensions to have better 0.4.9 implementations, and also to conditionally use the new API when available.
