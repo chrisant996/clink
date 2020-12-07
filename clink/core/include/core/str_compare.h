@@ -31,6 +31,8 @@ private:
 
 
 //------------------------------------------------------------------------------
+// Returns how many characters match at the beginning of the strings, or -1 if
+// the entire strings match.
 template <class T, int MODE>
 int str_compare_impl(str_iter_impl<T>& lhs, str_iter_impl<T>& rhs)
 {
