@@ -11,7 +11,6 @@ ChrisAnt Plans
   - I'll look into merging the clink-git-extensions scripts into the clink-completions scripts.
 - Submit a pull request for cmder-powerline-prompt.
 - Port Cmder to v1.x -- will require help from Cmder and/or ConEmu teams.  There are a lot of hard-coded expectations about Clink (web site address, terminal input mode, DLL names, VirtualAlloc patterns, and many other things).
-- [#12](https://github.com/chrisant996/clink/issues/12) Why is Cmder's Clink so slow to start?
 
 <br/>
 <br/>
