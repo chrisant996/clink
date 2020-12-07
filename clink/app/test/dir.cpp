@@ -11,6 +11,7 @@
 #include <lua/lua_match_generator.h>
 #include <lua/lua_script_loader.h>
 #include <lua/lua_state.h>
+#include <readline/readline.h>
 
 //------------------------------------------------------------------------------
 TEST_CASE("Directory match generation.")
@@ -115,5 +116,42 @@ TEST_CASE("Directory match generation.")
                 tester.run();
             }
         }
+    }
+
+    SECTION("Tilde expansion off")
+    {
+        char set_var[] = "set expand-tilde off";
+        rl_parse_and_bind(set_var);
+
+        str<> s;
+
+        const char* home = getenv("HOME");
+        s.format("HOME=%s\\nest_1", fs.get_root());
+        putenv(s.c_str());
+
+        tester.set_input("cd ~\\");
+        tester.set_expected_matches("~\\nest_2\\");
+        tester.run();
+
+        putenv(home ? home : "HOME=");
+    }
+
+    SECTION("Tilde expansion on")
+    {
+        char set_var[] = "set expand-tilde on";
+        rl_parse_and_bind(set_var);
+
+        str<> s;
+
+        const char* home = getenv("HOME");
+        s.format("HOME=%s\\nest_1", fs.get_root());
+        putenv(s.c_str());
+
+        tester.set_input("cd ~\\");
+        s.format("%s\\nest_1\\nest_2\\", fs.get_root());
+        tester.set_expected_matches(s.c_str());
+        tester.run();
+
+        putenv(home ? home : "HOME=");
     }
 }

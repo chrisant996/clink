@@ -13,6 +13,10 @@
 #include <sys/stat.h>
 #include <readline/readline.h> // for rl_last_path_separator
 
+extern "C" {
+extern int rl_complete_with_tilde_expansion;
+};
+
 //------------------------------------------------------------------------------
 match_type to_match_type(int mode, int attr)
 {
@@ -150,9 +154,17 @@ void match_builder::set_matches_are_files(bool files)
 //------------------------------------------------------------------------------
 matches_iter::matches_iter(const matches& matches, const char* pattern)
 : m_matches(matches)
-, m_pattern(pattern, pattern ? -1 : 0)
+, m_expanded_pattern(pattern && rl_complete_with_tilde_expansion ? tilde_expand(pattern) : nullptr)
+, m_pattern((m_expanded_pattern ? m_expanded_pattern : pattern),
+            (m_expanded_pattern ? m_expanded_pattern : pattern) ? -1 : 0)
 , m_has_pattern(pattern != nullptr)
 {
+}
+
+//------------------------------------------------------------------------------
+matches_iter::~matches_iter()
+{
+    free(m_expanded_pattern);
 }
 
 //------------------------------------------------------------------------------

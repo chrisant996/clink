@@ -12,6 +12,7 @@
 #include <core/str_compare.h>
 #include <core/settings.h>
 #include <terminal/ecma48_iter.h>
+#include <readline/readline.h>
 
 #include <algorithm>
 #include <assert.h>
@@ -23,6 +24,13 @@ static setting_enum g_sort_dirs(
     "Matching directories can go before files, with files, or after files.",
     "before,with,after",
     1);
+
+
+
+//------------------------------------------------------------------------------
+extern "C" {
+extern int rl_complete_with_tilde_expansion;
+};
 
 
 
@@ -107,10 +115,20 @@ void match_pipeline::select(const char* needle) const
     int count = m_matches.get_info_count();
     unsigned int selected_count = 0;
 
+    char* expanded = nullptr;
+    if (rl_complete_with_tilde_expansion)
+    {
+        expanded = tilde_expand(needle);
+        if (expanded)
+            needle = expanded;
+    }
+
     if (count)
         selected_count = normal_selector(needle, m_matches.get_infos(), count);
 
     m_matches.coalesce(selected_count);
+
+    free(expanded);
 }
 
 //------------------------------------------------------------------------------

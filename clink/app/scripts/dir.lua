@@ -4,8 +4,15 @@
 --------------------------------------------------------------------------------
 function clink.dir_matches(match_word, word_index, line_state)
     local word = line_state:getword(word_index)
-    local matches = {}
+    local expanded
+    word, expanded = rl.expandtilde(word)
+
     local root = path.getdirectory(word) or ""
+    if expanded then
+        root = rl.collapsetilde(root)
+    end
+
+    local matches = {}
     for _, d in ipairs(os.globdirs(word.."*")) do
         local dir = path.join(root, d)
 -- TODO: PERFORMANCE: globdirs should return whether each file is hidden since

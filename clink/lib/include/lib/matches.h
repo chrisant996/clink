@@ -66,6 +66,7 @@ class matches_iter
 {
 public:
                             matches_iter(const matches& matches, const char* pattern = nullptr);
+                            ~matches_iter();
     bool                    next();
     const char*             get_match() const;
     match_type              get_match_type() const;
@@ -73,6 +74,7 @@ public:
 private:
     bool                    has_match() const { return m_index < m_next; }
     const matches&          m_matches;
+    char*                   m_expanded_pattern;
     str_iter                m_pattern;
     bool                    m_has_pattern = false;
     unsigned int            m_index = 0;

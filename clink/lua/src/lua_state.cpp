@@ -58,6 +58,7 @@ static setting_bool g_lua_breakonerror(
 void clink_lua_initialise(lua_state&);
 void os_lua_initialise(lua_state&);
 void path_lua_initialise(lua_state&);
+void rl_lua_initialise(lua_state&);
 void settings_lua_initialise(lua_state&);
 void string_lua_initialise(lua_state&);
 void log_lua_initialise(lua_state&);
@@ -118,6 +119,7 @@ void lua_state::initialise()
     clink_lua_initialise(self);
     os_lua_initialise(self);
     path_lua_initialise(self);
+    rl_lua_initialise(self);
     settings_lua_initialise(self);
     string_lua_initialise(self);
     log_lua_initialise(self);
