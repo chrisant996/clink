@@ -13,13 +13,38 @@
 #include <core/str_iter.h>
 #include <readline/readline.h>
 
-
-
 extern "C" {
 #include "lua.h"
 extern int              _rl_completion_case_map;
 extern const char*      rl_readline_name;
 }
+
+
+
+//------------------------------------------------------------------------------
+bool collapse_tilde(const char* in, str_base& out, bool force)
+{
+    const char* rl_cvar = rl_variable_value("expand-tilde");
+    bool expand_tilde = (rl_cvar && rl_cvar[0] == 'o' && rl_cvar[1] == 'n' && rl_cvar[2] == '\0');
+    if (expand_tilde && !force)
+        return false;
+
+    char *tilde = tilde_expand("~");
+    if (!tilde)
+        return false;
+
+    int tilde_len = int(strlen(tilde));
+    int j = str_compare(in, tilde);
+    free(tilde);
+
+    if (j >= 0 && j != tilde_len)
+        return true;
+
+    out.format("~%s", in + tilde_len);
+    return true;
+}
+
+
 
 //------------------------------------------------------------------------------
 static const char* get_string(lua_State* state, int index)
@@ -55,26 +80,11 @@ static int collapse_tilde(lua_State* state)
     const char* rl_cvar = rl_variable_value("expand-tilde");
     bool expand_tilde = (rl_cvar && rl_cvar[0] == 'o' && rl_cvar[1] == 'n' && rl_cvar[2] == '\0');
 
-    if (!expand_tilde || force)
-    {
-        char* tilde = tilde_expand("~");
-        if (tilde)
-        {
-            int tilde_len = int(strlen(tilde));
-            int j = str_compare(path, tilde);
-            free(tilde);
-
-            if (j < 0 || j == tilde_len)
-            {
-                str<> collapsed;
-                collapsed.format("~%s", path + tilde_len);
-                lua_pushstring(state, collapsed.c_str());
-                return 1;
-            }
-        }
-    }
-
-    lua_pushstring(state, path);
+    str<> collapsed;
+    if (collapse_tilde(path, collapsed, false))
+        lua_pushstring(state, collapsed.c_str());
+    else
+        lua_pushstring(state, path);
     return 1;
 }
 

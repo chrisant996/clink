@@ -10,6 +10,7 @@
 #include <core/globber.h>
 #include <core/path.h>
 #include <core/settings.h>
+#include <readline/readline.h>
 
 setting_bool g_glob_hidden(
     "files.hidden",
@@ -48,6 +49,15 @@ static class : public match_generator
         str<288> root;
         line.get_end_word(root);
 
+        bool expanded_tilde;
+        {
+            char* expanded_root = tilde_expand(root.c_str());
+            expanded_tilde = (expanded_root && strcmp(expanded_root, root.c_str()) != 0);
+            if (expanded_tilde)
+                root = expanded_root;
+            free(expanded_root);
+        }
+
         path::normalise(root);
 
         if (path::is_separator(root[0]) && path::is_separator(root[1]))
@@ -64,6 +74,14 @@ static class : public match_generator
 
         path::get_directory(root);
         unsigned int root_len = root.length();
+
+        if (expanded_tilde)
+        {
+            extern bool collapse_tilde(const char* in, str_base& out, bool force);
+            str<288> collapsed;
+            if (collapse_tilde(root.c_str(), collapsed, false))
+                root = collapsed.c_str();
+        }
 
         str<288> buffer;
         while (globber.next(buffer, false, &st_mode, &attr))
