@@ -387,8 +387,8 @@ static bool ensure_matches_size(char**& matches, int count, int& reserved)
 //------------------------------------------------------------------------------
 static char** alternative_matches(const char* text, int start, int end)
 {
-// TODO: Use s_matches?  Or maybe generate matches at the moment of completion
-// so clink isn't doing arbitrary completion IO while you're typing?
+    rl_attempted_completion_over = 1;
+
     if (!s_matches)
         return nullptr;
 
@@ -400,13 +400,10 @@ static char** alternative_matches(const char* text, int start, int end)
         tmp.concat("*");
         pattern = tmp.c_str();
     }
-    matches_iter iter = s_matches->get_iter(pattern);
 
+    matches_iter iter = s_matches->get_iter(pattern);
     if (!iter.next())
-    {
-        rl_attempted_completion_over = 1;
         return nullptr;
-    }
 
     rl_filename_completion_desired = s_matches->is_filename_completion_desired();
     rl_filename_display_desired = s_matches->is_filename_display_desired();
@@ -476,8 +473,6 @@ static char** alternative_matches(const char* text, int start, int end)
     rl_completion_suppress_append = s_matches->is_suppress_append();
     if (s_matches->get_append_character())
         rl_completion_append_character = s_matches->get_append_character();
-
-    rl_attempted_completion_over = 1;
 
 #if 0
     assert(match_count == s_matches->get_match_count());
