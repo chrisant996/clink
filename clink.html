@@ -3,7 +3,7 @@
 
 <!-- ----------------------------------------------------- -->
 <head>
-<title>Clink v1.1.5</title>
+<title>Clink v1.1.6</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Rambla:wght@400;700&family=Roboto&family=Fira+Mono&display=swap');
 html {
@@ -392,7 +392,7 @@ var hljs=function(){"use strict";function e(n){Object.freeze(n);var t="function"
         </td>
         <td style="text-align:right">
             <div id="header">
-                <div id="title">Clink v1.1.5</div>
+                <div id="title">Clink v1.1.6</div>
                 <div id="url">
                     <a href="http://github.com/chrisant996/clink">
                         http://github.com/chrisant996/clink
@@ -1623,7 +1623,43 @@ line:getcommandoffset() == 4</code></pre></div></div><hr/><div class="function">
 path.getdirectory("bar") -- returns nil</code></pre></div></div><hr/><div class="function"><div class="header"> <div class="name"><a name="path.getdrive">path.getdrive</a></div> <div class="signature">(path:string) : nil or string</div></div><div class="body"><p class="desc"></p><pre class="language-lua"><code>path.getdrive("e:/foo/bar") -- returns "e:"
 path.getdrive("foo/bar") -- returns nil</code></pre></div></div><hr/><div class="function"><div class="header"> <div class="name"><a name="path.getextension">path.getextension</a></div> <div class="signature">(path:string) : string</div></div><div class="body"><p class="desc"></p><pre class="language-lua"><code>path.getextension("bar.ext") -- returns ".ext"
 path.getextension("bar") -- returns ""</code></pre></div></div><hr/><div class="function"><div class="header"> <div class="name"><a name="path.getname">path.getname</a></div> <div class="signature">(path:string) : string</div></div><div class="body"><p class="desc"></p><pre class="language-lua"><code>path.getname("/foo/bar.ext") -- returns "bar.ext"</code></pre></div></div><hr/><div class="function"><div class="header"> <div class="name"><a name="path.isexecext">path.isexecext</a></div> <div class="signature">(path:string) : boolean</div></div><div class="body"><p class="desc">Examines the extension of the path name.  Returns true if the extension is listed in %PATHEXT%.  This caches the extensions in a map so that it's more efficient than getting and parsing %PATHEXT% each time.</p><pre class="language-lua"><code>path.isexecext("program.exe") -- returns true
-path.isexecext("file.doc") -- returns false</code></pre></div></div><hr/><div class="function"><div class="header"> <div class="name"><a name="path.join">path.join</a></div> <div class="signature">(left:string, right:string) : string</div></div><div class="body"><p class="desc"></p><pre class="language-lua"><code>path.join("/foo", "bar") -- returns "/foo\bar"</code></pre></div></div><hr/><div class="function"><div class="header"> <div class="name"><a name="path.normalise">path.normalise</a></div> <div class="signature">(path:string, [separator:string]) : string</div></div><div class="body"><p class="desc">Cleans <em>path</em> by normalising separators and removing ".[.]/" elements. If <em>separator</em> is provided it is used to delimit path elements, otherwise a system-specific delimiter is used.</p><pre class="language-lua"><code>path.normalise("a////b/\\/c/") -- returns "a\b\c\"</code></pre></div></div><hr/></div><div class="group"><h5 class="group_name"><a name="settings">settings</a></h5><div class="function"><div class="header"> <div class="name"><a name="settings.add">settings.add</a></div> <div class="signature">(name:string, default:..., [short_desc:string], [long_desc:string]) : boolean</div></div><div class="body"><p class="desc">Adds a setting to the list of Clink settings and includes it in <code>clink set</code>.  The new setting is named <em>name</em> and has a default value <em>default</em> if not explicitly set.  The type of <em>default</em> determines what kind of setting is added:  boolean, integer, and string values add the corresponding setting type.  Or if the type is table, then an enum setting is added:  the table defines the accepted values, and the first value is the default value.<br/> <br/> <em>name</em> can't be more than 31 characters.<br/> <em>short_desc</em> is an optional quick summary description and can't be more than 47 characters.<br/> <em>long_desc</em> is an optional long description.</p><pre class="language-lua"><code>settings.add("myscript.myabc", true, "Boolean setting")
+path.isexecext("file.doc") -- returns false</code></pre></div></div><hr/><div class="function"><div class="header"> <div class="name"><a name="path.join">path.join</a></div> <div class="signature">(left:string, right:string) : string</div></div><div class="body"><p class="desc"></p><pre class="language-lua"><code>path.join("/foo", "bar") -- returns "/foo\bar"</code></pre></div></div><hr/><div class="function"><div class="header"> <div class="name"><a name="path.normalise">path.normalise</a></div> <div class="signature">(path:string, [separator:string]) : string</div></div><div class="body"><p class="desc">Cleans <em>path</em> by normalising separators and removing ".[.]/" elements. If <em>separator</em> is provided it is used to delimit path elements, otherwise a system-specific delimiter is used.</p><pre class="language-lua"><code>path.normalise("a////b/\\/c/") -- returns "a\b\c\"</code></pre></div></div><hr/></div><div class="group"><h5 class="group_name"><a name="rl">rl</a></h5><div class="function"><div class="header"> <div class="name"><a name="rl.collapsetilde">rl.collapsetilde</a></div> <div class="signature">(path:string, [force:boolean]) : string</div></div><div class="body"><p class="desc">Undoes Readline tilde expansion.  See <a href="#rl.expandtilde">rl.expandtilde</a> for more information.</p><pre class="language-lua"><code>rl.collapsetilde("C:\Users\yourusername\Documents")
+&nbsp;
+-- The return value depends on the expand-tilde configuration variable:
+-- When "on", the function returns "C:\Users\yourusername\Documents".
+-- When "off", the function returns "~\Documents".
+&nbsp;
+-- Or when <em>force</em> is true, the function returns "~\Documents".</code></pre></div></div><hr/><div class="function"><div class="header"> <div class="name"><a name="rl.expandtilde">rl.expandtilde</a></div> <div class="signature">(path:string) : string, boolean</div></div><div class="body"><p class="desc">Performs Readline tilde expansion.<br/> <br/> When generating filename matches for a word, use the  <a href="#rl.expandtilde">rl.expandtilde</a> and <a href="#rl.collapsetilde">rl.collapsetilde</a> helper functions to perform tilde completion expansion according to Readline's configuration.<br/> <br/> Use <a href="#rl.expandtilde">rl.expandtilde</a> to do tilde expansion  before collecting file matches (e.g. via <a  href="#os.globfiles">os.globfiles</a>).  If it indicates that it expanded  the string, then use <a href="#rl.collapsetilde">rl.collapsetilde</a> to put back the tilde before returning a match.</p><pre class="language-lua"><code>local result, expanded = rl.expandtilde("~\Documents")
+-- result is "C:\Users\yourusername\Documents"
+-- expanded is true
+&nbsp;
+-- This dir_matches function demonstrates efficient use of rl.expandtilde()
+-- and rl.collapsetilde() to generate directory matches from the file system.
+function dir_matches(match_word, word_index, line_state)
+&nbsp; -- Expand tilde before scanning file system.
+&nbsp; local word = line_state:getword(word_index)
+&nbsp; local expanded
+&nbsp; word, expanded = rl.expandtilde(word)
+&nbsp;
+&nbsp; -- Get the directory from 'word', and collapse tilde before generating
+&nbsp; -- matches.  Notice that collapsetilde() only needs to be called once!
+&nbsp; local root = path.getdirectory(word) or ""
+&nbsp; if expanded then
+&nbsp; &nbsp; root = rl.collapsetilde(root)
+&nbsp; end
+&nbsp;
+&nbsp; local matches = {}
+&nbsp; for _, d in ipairs(os.globdirs(word.."*")) do
+&nbsp;   -- Join the filename with the input directory (might have a tilde).
+&nbsp;   local dir = path.join(root, d)
+&nbsp;   if os.ishidden(dir) then
+&nbsp;     table.insert(matches, { match = dir, type = "dir,hidden" })
+&nbsp;   else
+&nbsp;     table.insert(matches, { match = dir, type = "dir" })
+&nbsp;   end
+&nbsp; end
+&nbsp; return matches
+end</code></pre></div></div><hr/><div class="function"><div class="header"> <div class="name"><a name="rl.getvariable">rl.getvariable</a></div> <div class="signature">(name:string) : string|nil</div></div><div class="body"><p class="desc">Returns the value of the named Readline configuration variable as a string, or nil if the variable name is not recognized.</p></div></div><hr/><div class="function"><div class="header"> <div class="name"><a name="rl.isvariabletrue">rl.isvariabletrue</a></div> <div class="signature">(name:string) : boolean|nil</div></div><div class="body"><p class="desc">Returns a boolean value indicating whether the named Readline configuration variable is set to true (on), or nil if the variable name is not recognized.</p></div></div><hr/></div><div class="group"><h5 class="group_name"><a name="settings">settings</a></h5><div class="function"><div class="header"> <div class="name"><a name="settings.add">settings.add</a></div> <div class="signature">(name:string, default:..., [short_desc:string], [long_desc:string]) : boolean</div></div><div class="body"><p class="desc">Adds a setting to the list of Clink settings and includes it in <code>clink set</code>.  The new setting is named <em>name</em> and has a default value <em>default</em> if not explicitly set.  The type of <em>default</em> determines what kind of setting is added:  boolean, integer, and string values add the corresponding setting type.  Or if the type is table, then an enum setting is added:  the table defines the accepted values, and the first value is the default value.<br/> <br/> <em>name</em> can't be more than 31 characters.<br/> <em>short_desc</em> is an optional quick summary description and can't be more than 47 characters.<br/> <em>long_desc</em> is an optional long description.</p><pre class="language-lua"><code>settings.add("myscript.myabc", true, "Boolean setting")
 settings.add("myscript.mydef", 100, "Number setting")
 settings.add("myscript.myghi", "abc", "String setting")
 settings.add("myscript.myjkl", {"x","y","z"}, "Enum setting")</code></pre></div></div><hr/><div class="function"><div class="header"> <div class="name"><a name="settings.get">settings.get</a></div> <div class="signature">(name:string) : boolean or string or integer</div></div><div class="body"><p class="desc">Returns the current value of the <em>name</em> Clink setting.</p></div></div><hr/><div class="function"><div class="header"> <div class="name"><a name="settings.set">settings.set</a></div> <div class="signature">(name:string, value:string) : boolean</div></div><div class="body"><p class="desc">Sets the <em>name</em> Clink setting to <em>value</em> and returns whether it was successful.</p></div></div><hr/></div><div class="group"><h5 class="group_name"><a name="string">string</a></h5><div class="function"><div class="header"> <div class="name"><a name="string.explode">string.explode</a></div> <div class="signature">(text:string, [delims:string]) : table</div></div><div class="body"><p class="desc">Splits <em>text</em> delimited by <em>delims</em> (or by spaces if <em>delims</em> is not provided) and returns a table containing the substrings.</p></div></div><hr/><div class="function"><div class="header"> <div class="name"><a name="string.hash">string.hash</a></div> <div class="signature">(text:string) : integer</div></div><div class="body"><p class="desc">Returns a hash of the input <em>text</em>.</p></div></div><hr/></div><div class="group"><h5 class="group_name"><a name="[other]">[other]</a></h5><div class="function"><div class="header"> <div class="name"><a name="rl_state">rl_state</a></div> <div class="signature">table variable</div></div><div class="body deprecated"><p class="desc"><strong>Deprecated; don't use this.</strong>  See <a href="#line">line</a> for more information.</p><p class="desc">This is an obsolete global variable that was set while running match generators.  Its table scheme is <em>{ line_buffer:string, point:integer}</em>, but it has been superseded by the <a href="#line">line</a> type parameter passed into match generator functions when using the new <a href="#clink.generator">clink.generator</a> API.</p></div></div><hr/></div>
@@ -1631,6 +1667,12 @@ settings.add("myscript.myjkl", {"x","y","z"}, "Enum setting")</code></pre></div>
         <div class="section" id="changes">
 <h1 id="changes">Changes</h1>
 <h2 id="releases-from-chrisant996clink-fork">Releases from <a href="https://github.com/chrisant996/clink">chrisant996/clink</a> fork</h2>
+<h3 id="unreleased">Unreleased</h3>
+<ul>
+<li>Hooked up tilde completion in the <code>cd</code>, <code>md</code>, and <code>rd</code> command argmatchers.</li>
+<li>Hooked up tilde completion with the <code>exec.enable</code> setting (&quot;~\pro&quot; matches &quot;C:\Users\myusername\program.exe&quot;).</li>
+<li>When <code>terminal.emulation</code> is <code>auto</code>, now it also detects ANSI{32|64}.DLL just like Clink 0.4.8 did.</li>
+</ul>
 <h3 id="v115">v1.1.5</h3>
 <ul>
 <li>The <code>menu-complete</code> family of commands now support matching <code>?</code> and <code>*</code> wildcards when the <code>match.wild</code> setting is enabled.</li>
