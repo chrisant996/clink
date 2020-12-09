@@ -3,8 +3,8 @@ setlocal
 
 set EC=echo
 set CP=cp.exe /uy
-set ASC=(B
 set LINE=(0
+set ASC=(B
 set BOLD=[1m
 set UNDER=[4m
 set NEG=[7m%ASC%

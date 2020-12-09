@@ -2,8 +2,8 @@
 setlocal
 
 set EC=echo
-set ASC=(B
 set LINE=(0
+set ASC=(B
 set BOLD=[1m
 set UNDER=[4m
 set NEG=[7m
