@@ -57,8 +57,7 @@ Name                         | Default | Description
 `color.hidden`               |         | Used when Clink displays file completions with the "hidden" attribute.
 `color.input`                |         | Used when Clink displays the input line text.
 `color.interact`             | `bold`  | Used when Clink displays text or prompts such as a pager's `--More?--` prompt.
-`color.modmark`              |         | Used when Clink displays the `*` mark on modified history lines when
-Readline's `mark-modified-lines` variable and Clink's `color.input` setting are both set. Falls back to `color.input` if not set.
+`color.modmark`              |         | Used when Clink displays the `*` mark on modified history lines when Readline's `mark-modified-lines` variable and Clink's `color.input` setting are both set. Falls back to `color.input` if not set.
 `color.readonly`             |         | Used when Clink displays file completions with the "readonly" attribute.
 `doskey.enhanced`            | True    | Enhanced Doskey adds the expansion of macros that follow `\|` and `&` command separators and respects quotes around words when parsing `$1`..`$9` tags. Note that these features do not apply to Doskey use in Batch files.
 `exec.cwd`                   | True    | When matching executables as the first word (`exec.enable`), include executables in the current directory. (This is implicit if the word being completed is a relative path).
@@ -100,7 +99,7 @@ Readline's `mark-modified-lines` variable and Clink's `color.input` setting are 
 
 The Clink color settings use the following syntax:
 
-<code><em>[attributes] [foreground_color] [on [background_color]]</em></code>
+<code>[<em>attributes</em>] [<em>foreground_color</em>] [on [<em>background_color</em>]]</code>
 
 Optional attributes (can be abbreviated to 3 letters):
 - `bold` or `dim` adds or removes brightness (high intensity) to the default foreground color (if the default color is bright white, then `dim` uses normal white).
@@ -250,7 +249,7 @@ Name | Description
 
 When `colored-completion-prefix` is configured to `on`, then the "so" color from `%LS_COLORS%` is used to color the common prefix when displaying possible completions.  The default for "so" is magenta, but for example `set LS_COLORS=so=90` sets the color to bright black (which shows up as a dark gray).
 
-When `colored-stats` is configured to `on`, then the color definitions from `%LS_COLORS%` (using ANSI escape codes) are used to color file completions according to their file type or extension.  Each definition is a either a two character type id or a file extension, followed by an equals sign and then the [SGR parameters](https://en.wikipedia.org/wiki/ANSI_escape_code#SGR_parameters) for an ANSI escape code.  Multiple definitions are separated by colons.  Also, since `%LS_COLORS%` doesn't cover readonly files, hidden files, or doskey aliases the `color.readonly`, `color.hidden`, and `color.doskey` [Clink settings](#configclink) exist to cover those.
+When `colored-stats` is configured to `on`, then the color definitions from `%LS_COLORS%` (using ANSI escape codes) are used to color file completions according to their file type or extension.  Each definition is a either a two character type id or a file extension, followed by an equals sign and then the [SGR parameters](https://en.wikipedia.org/wiki/ANSI_escape_code#SGR_parameters) for an ANSI escape code.  Multiple definitions are separated by colons.  Also, since `%LS_COLORS%` doesn't cover readonly files, hidden files, doskey aliases, or shell commands the `color.readonly`, `color.hidden`, `color.doskey`, and `color.cmd` [Clink settings](#configclink) exist to cover those.
 
 Here is an example where `%LS_COLORS%` defines colors for various types.
 
