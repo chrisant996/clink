@@ -3,7 +3,7 @@
 
 ## Releases from [chrisant996/clink](https://github.com/chrisant996/clink) fork
 
-### Unreleased
+### v1.1.7
 
 - Performance improvement when displaying matches:  When enumerating files and dirs, the `os.globfiles` and `os.globdirs` functions have all the info about each file.  Now they can return that info in a table.  This frees the match display function from needing to do any further file system IO.  The performance boost is noticeable.
 - Rewrote the color settings:  the .fg and .bg sub-settings are gone, and the main setting now uses a more natural syntax (e.g. `clink set color.input bright yellow` or `clink set color.modmark bright cyan on blue`).
