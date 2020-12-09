@@ -43,9 +43,14 @@ local function color_handler(line_state)
     local include_underline = true
     local include_color = true
     local include_on = true
+    local include_sgr = true
 
     while i < line_state:getwordcount() do
         local word = line_state:getword(i)
+
+        if word ~= "" then
+            include_sgr = false
+        end
 
         if word == "on" then
             if not include_on then
@@ -72,6 +77,8 @@ local function color_handler(line_state)
             include_bright = false
             include_underline = false
             include_color = false
+        else
+            return {}
         end
 
         i = i + 1
@@ -103,6 +110,9 @@ local function color_handler(line_state)
         table.insert(list, "cyan")
         table.insert(list, "magenta")
         table.insert(list, "white")
+    end
+    if include_sgr then
+        table.insert(list, "sgr")
     end
     return list
 end
