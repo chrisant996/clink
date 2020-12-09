@@ -109,15 +109,9 @@ function exec_generator:generate(line_state, match_builder)
                 root = rl.collapsetilde(root)
             end
         end
-        for _, f in ipairs(os.globfiles(pattern)) do
--- TODO: PERFORMANCE: globfiles should return whether each file is hidden since
--- it already had that knowledge.
-            local file = (root and path.join(root, f)) or f
-            if os.ishidden(file) then
-                any_added = match_builder:addmatch({ match = file, type = "file,hidden" }) or any_added
-            else
-                any_added = match_builder:addmatch({ match = file, type = "file" }) or any_added
-            end
+        for _, f in ipairs(os.globfiles(pattern, true)) do
+            local file = (root and path.join(root, f.name)) or f.name
+            any_added = match_builder:addmatch({ match = file, type = f.type }) or any_added
         end
         return any_added
     end
@@ -143,15 +137,9 @@ function exec_generator:generate(line_state, match_builder)
         if expanded then
             root = rl.collapsetilde(root)
         end
-        for _, d in ipairs(os.globdirs(text.."*")) do
--- TODO: PERFORMANCE: globdirs should return whether each dir is hidden since
--- it already had that knowledge.
-            local dir = path.join(root, d)
-            if os.ishidden(dir) then
-                match_builder:addmatch({ match = dir, type = "dir,hidden" })
-            else
-                match_builder:addmatch({ match = dir, type = "dir" })
-            end
+        for _, d in ipairs(os.globdirs(text.."*", true)) do
+            local dir = path.join(root, d.name)
+            match_builder:addmatch({ match = dir, type = d.type })
         end
     end
 

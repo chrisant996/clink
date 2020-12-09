@@ -14,6 +14,7 @@ enum class match_type : unsigned char
     none,           // Behaves like dir if match ends with path sep, otherwise like file.
     word,           // Matches and displays the whole word even if it contains slashes.
     arg,            // Prevents appending a space if the match ends with a colon or equal sign.
+    cmd,            // Displays match using the cmd color.
     alias,          // Displays match using the alias color.
     file,           // Displays match using the file color and only displays the last path component.
     dir,            // Displays match using the directory color, only displays the last path component, and adds a trailing path separator.

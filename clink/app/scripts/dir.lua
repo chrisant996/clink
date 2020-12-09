@@ -13,15 +13,9 @@ function clink.dir_matches(match_word, word_index, line_state)
     end
 
     local matches = {}
-    for _, d in ipairs(os.globdirs(word.."*")) do
-        local dir = path.join(root, d)
--- TODO: PERFORMANCE: globdirs should return whether each file is hidden since
--- it already had that knowledge.
-        if os.ishidden(dir) then
-            table.insert(matches, { match = dir, type = "dir,hidden" })
-        else
-            table.insert(matches, { match = dir, type = "dir" })
-        end
+    for _, d in ipairs(os.globdirs(word.."*", true)) do
+        local dir = path.join(root, d.name)
+        table.insert(matches, { match = dir, type = d.type })
     end
     return matches
 end

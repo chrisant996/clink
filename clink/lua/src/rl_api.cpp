@@ -112,14 +112,10 @@ static int collapse_tilde(lua_State* state)
 /// -show:  &nbsp; end
 /// -show:  &nbsp;
 /// -show:  &nbsp; local matches = {}
-/// -show:  &nbsp; for _, d in ipairs(os.globdirs(word.."*")) do
+/// -show:  &nbsp; for _, d in ipairs(os.globdirs(word.."*", true)) do
 /// -show:  &nbsp;   -- Join the filename with the input directory (might have a tilde).
-/// -show:  &nbsp;   local dir = path.join(root, d)
-/// -show:  &nbsp;   if os.ishidden(dir) then
-/// -show:  &nbsp;     table.insert(matches, { match = dir, type = "dir,hidden" })
-/// -show:  &nbsp;   else
-/// -show:  &nbsp;     table.insert(matches, { match = dir, type = "dir" })
-/// -show:  &nbsp;   end
+/// -show:  &nbsp;   local dir = path.join(root, d.name)
+/// -show:  &nbsp;   table.insert(matches, { match = dir, type = d.type })
 /// -show:  &nbsp; end
 /// -show:  &nbsp; return matches
 /// -show:  end

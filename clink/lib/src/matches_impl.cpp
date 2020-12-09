@@ -22,6 +22,8 @@ match_type to_match_type(int mode, int attr)
 {
     static_assert(int(match_type::none) == MATCH_TYPE_NONE, "match_type enum must match readline constants");
     static_assert(int(match_type::word) == MATCH_TYPE_WORD, "match_type enum must match readline constants");
+    static_assert(int(match_type::arg) == MATCH_TYPE_ARG, "match_type enum must match readline constants");
+    static_assert(int(match_type::cmd) == MATCH_TYPE_COMMAND, "match_type enum must match readline constants");
     static_assert(int(match_type::alias) == MATCH_TYPE_ALIAS, "match_type enum must match readline constants");
     static_assert(int(match_type::file) == MATCH_TYPE_FILE, "match_type enum must match readline constants");
     static_assert(int(match_type::dir) == MATCH_TYPE_DIR, "match_type enum must match readline constants");
@@ -78,6 +80,8 @@ match_type to_match_type(const char* type_name)
             type = (type & ~match_type::mask) | match_type::word;
         else if (_strnicmp(t, "arg", l) == 0)
             type = (type & ~match_type::mask) | match_type::arg;
+        else if (_strnicmp(t, "cmd", l) == 0)
+            type = (type & ~match_type::mask) | match_type::cmd;
         else if (_strnicmp(t, "alias", l) == 0)
             type = (type & ~match_type::mask) | match_type::alias;
         else if (_strnicmp(t, "file", l) == 0)

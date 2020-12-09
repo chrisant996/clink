@@ -42,6 +42,6 @@ function cmd_generator:generate(line_state, match_builder)
         return false
     end
 
-    match_builder:addmatches(cmd_commands, "word")
+    match_builder:addmatches(cmd_commands, "cmd")
     return false
 end

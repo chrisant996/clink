@@ -195,11 +195,21 @@ static int copy(lua_State* state)
 }
 
 //------------------------------------------------------------------------------
+static void add_type_tag(str_base& out, const char* tag)
+{
+    if (out.length())
+        out << ",";
+    out << tag;
+}
+
+//------------------------------------------------------------------------------
 static int glob_impl(lua_State* state, bool dirs_only)
 {
     const char* mask = get_string(state, 1);
     if (mask == nullptr)
         return 0;
+
+    bool extrainfo = lua_toboolean(state, 2);
 
     lua_createtable(state, 0, 0);
 
@@ -214,9 +224,33 @@ static int glob_impl(lua_State* state, bool dirs_only)
 
     int i = 1;
     str<288> file;
-    while (globber.next(file, false))
+    str<16> type;
+    int attr;
+    while (globber.next(file, false, nullptr, &attr))
     {
-        lua_pushstring(state, file.c_str());
+        if (extrainfo)
+        {
+            lua_createtable(state, 0, 2);
+
+            lua_pushstring(state, "name");
+            lua_pushstring(state, file.c_str());
+            lua_rawset(state, -3);
+
+            type.clear();
+            add_type_tag(type, (attr & FILE_ATTRIBUTE_DIRECTORY) ? "dir" : "file");
+            if (attr & FILE_ATTRIBUTE_HIDDEN)
+                add_type_tag(type, "hidden");
+            if (attr & FILE_ATTRIBUTE_READONLY)
+                add_type_tag(type, "readonly");
+            lua_pushstring(state, "type");
+            lua_pushstring(state, type.c_str());
+            lua_rawset(state, -3);
+        }
+        else
+        {
+            lua_pushstring(state, file.c_str());
+        }
+
         lua_rawseti(state, -2, i++);
     }
 
@@ -226,9 +260,15 @@ static int glob_impl(lua_State* state, bool dirs_only)
 //------------------------------------------------------------------------------
 /// -name:  os.globdirs
 /// -arg:   globpattern:string
+/// -arg:   [extrainfo:boolean]
 /// -ret:   table
 /// Collects directories matching <em>globpattern</em> and returns them in a
-/// table of strings.
+/// table of strings.<br/>
+/// <br/>
+/// When <em>extrainfo</em> is true, then the returned table has the following
+/// scheme:  <em>{ { name:string, type:string }, ... }</em>.  The <em>type</em>
+/// string can be "file" or "dir", and may also contain ",hidden" and
+/// ",readonly" depending on the attributes (making it usable as a match type).
 int glob_dirs(lua_State* state)
 {
     return glob_impl(state, true);
@@ -237,9 +277,15 @@ int glob_dirs(lua_State* state)
 //------------------------------------------------------------------------------
 /// -name:  os.globfiles
 /// -arg:   globpattern:string
+/// -arg:   [extrainfo:boolean]
 /// -ret:   table
-/// Collects files matching <em>globpattern</em> and returns them in a table of
-/// strings.
+/// Collects files and/or directories matching <em>globpattern</em> and returns
+/// them in a table of strings.<br/>
+/// <br/>
+/// When <em>extrainfo</em> is true, then the returned table has the following
+/// scheme:  <em>{ { name:string, type:string }, ... }</em>.  The <em>type</em>
+/// string can be "file" or "dir", and may also contain ",hidden" and
+/// ",readonly" depending on the attributes (making it usable as a match type).
 int glob_files(lua_State* state)
 {
     return glob_impl(state, false);
