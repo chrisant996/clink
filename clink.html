@@ -3,7 +3,7 @@
 
 <!-- ----------------------------------------------------- -->
 <head>
-<title>Clink v1.1.6</title>
+<title>Clink v1.1.7</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Rambla:wght@400;700&family=Roboto&family=Fira+Mono&display=swap');
 html {
@@ -392,7 +392,7 @@ var hljs=function(){"use strict";function e(n){Object.freeze(n);var t="function"
         </td>
         <td style="text-align:right">
             <div id="header">
-                <div id="title">Clink v1.1.6</div>
+                <div id="title">Clink v1.1.7</div>
                 <div id="url">
                     <a href="http://github.com/chrisant996/clink">
                         http://github.com/chrisant996/clink
@@ -433,7 +433,7 @@ var hljs=function(){"use strict";function e(n){Object.freeze(n);var t="function"
 </ul>
 </li>
 <li>Scriptable completion with Lua.</li>
-<li>Coloured and scriptable prompt.</li>
+<li>Colored and scriptable prompt.</li>
 <li>Auto-answering of the &quot;Terminate batch job?&quot; prompt.</li>
 </ul>
 <p>By default Clink binds <kbd>Alt</kbd>+<kbd>H</kbd> to display the current key bindings. More features can also be found in GNU&#39;s <a href="https://tiswww.cwru.edu/php/chet/readline/readline.html">Readline</a> and <a href="https://tiswww.cwru.edu/php/chet/readline/history.html">History</a> libraries&#39; manuals.</p>
@@ -482,37 +482,37 @@ var hljs=function(){"use strict";function e(n){Object.freeze(n);var t="function"
 <td><kbd>Ctrl</kbd>+<kbd>D</kbd> exits the process when it is pressed on an empty line.</td>
 </tr>
 <tr>
-<td align="center"><code>colour.doskey</code></td>
-<td align="center"><code>light_cyan</code></td>
+<td align="center"><code>color.cmd</code></td>
+<td align="center"><code>bold</code></td>
+<td>Used when Clink displays shell (CMD.EXE) command completions.</td>
+</tr>
+<tr>
+<td align="center"><code>color.doskey</code></td>
+<td align="center"><code>bright cyan</code></td>
 <td>Used when Clink displays doskey alias completions.</td>
 </tr>
 <tr>
-<td align="center"><code>colour.hidden</code></td>
+<td align="center"><code>color.hidden</code></td>
 <td align="center"></td>
 <td>Used when Clink displays file completions with the &quot;hidden&quot; attribute.</td>
 </tr>
 <tr>
-<td align="center"><code>colour.input</code></td>
+<td align="center"><code>color.input</code></td>
 <td align="center"></td>
 <td>Used when Clink displays the input line text.</td>
 </tr>
 <tr>
-<td align="center"><code>colour.interact</code></td>
-<td align="center"><code>white</code></td>
+<td align="center"><code>color.interact</code></td>
+<td align="center"><code>bold</code></td>
 <td>Used when Clink displays text or prompts such as a pager&#39;s <code>--More?--</code> prompt.</td>
 </tr>
 <tr>
-<td align="center"><code>colour.modmark</code></td>
+<td align="center"><code>color.modmark</code></td>
 <td align="center"></td>
-<td>Used when Clink displays the <code>*</code> mark on modified history lines when</td>
+<td>Used when Clink displays the <code>*</code> mark on modified history lines when Readline&#39;s <code>mark-modified-lines</code> variable and Clink&#39;s <code>color.input</code> setting are both set. Falls back to <code>color.input</code> if not set.</td>
 </tr>
 <tr>
-<td align="center">Readline&#39;s <code>mark-modified-lines</code> variable and Clink&#39;s <code>colour.input</code> setting are both set. Falls back to <code>colour.input</code> if not set.</td>
-<td align="center"></td>
-<td></td>
-</tr>
-<tr>
-<td align="center"><code>colour.readonly</code></td>
+<td align="center"><code>color.readonly</code></td>
 <td align="center"></td>
 <td>Used when Clink displays file completions with the &quot;readonly&quot; attribute.</td>
 </tr>
@@ -661,6 +661,31 @@ var hljs=function(){"use strict";function e(n){Object.freeze(n);var t="function"
 <li>The <code>use_altgr_substitute</code> setting has been removed.  (If AltGr or lack of AltGr causes a problem, please visit the <a href="https://github.com/chrisant996/clink/issues">repo</a> and open an issue with details about the problem.)</li>
 </ul>
 </blockquote>
+<h2 id="color-settings">Color Settings</h2>
+<h3 id="friendly-color-names">Friendly Color Names</h3>
+<p>The Clink color settings use the following syntax:</p>
+<p><code>[<em>attributes</em>] [<em>foreground_color</em>] [on [<em>background_color</em>]]</code></p>
+<p>Optional attributes (can be abbreviated to 3 letters):</p>
+<ul>
+<li><code>bold</code> or <code>dim</code> adds or removes brightness (high intensity) to the default foreground color (if the default color is bright white, then <code>dim</code> uses normal white).</li>
+<li><code>underline</code> or <code>nounderline</code> adds or removes an underline.</li>
+</ul>
+<p>Optional colors (can be abbreviated to 3 letters) for the <em>foreground_color</em> or <em>background_color</em>:</p>
+<ul>
+<li><code>default</code> or <code>normal</code> uses the default color as defined by the current color theme in the console window.</li>
+<li><code>black</code>, <code>red</code>, <code>green</code>, <code>yellow</code>, <code>blue</code>, <code>cyan</code>, <code>magenta</code>, <code>white</code> are the basic colors names.</li>
+<li><code>bright</code> can be combined with any of the other color names to make them bright (high intensity).</li>
+</ul>
+<p>Examples (specific results may depend on the console host program):</p>
+<ul>
+<li><code>bri yel</code> for bright yellow foreground on default background color.</li>
+<li><code>bold</code> for bright default foreground on default background color.</li>
+<li><code>underline bright black on white</code> for dark gray (bright black) foreground on light gray (white) background.</li>
+<li><code>default on blue</code> for default foreground color on blue background.</li>
+</ul>
+<h3 id="alternative-sgr-syntax">Alternative SGR Syntax</h3>
+<p>It&#39;s also possible to set any ANSI SGR escape code using <code>sgr <a href="https://en.wikipedia.org/wiki/ANSI_escape_code#SGR"><em>SGR_parameters</em></a></code> (for example <code>sgr 7</code> is the code for reverse video, which swaps the foreground and background colors).</p>
+<p>Be careful, since some escape code sequences might behave strangely.</p>
 <h2 id="file-locations">File Locations</h2>
 <p>Settings and history are persisted to disk from session to session. The location of these files depends on which distribution of Clink was used. If you installed Clink using the .exe installer then Clink uses the current user&#39;s non-roaming application data directory. This user directory is usually found in one of the following locations;</p>
 <ul>
@@ -881,7 +906,7 @@ Echos key sequences to use in the inputrc files for binding keys to Clink comman
 </tbody></table>
 <h2 id="completion-colors">Completion Colors</h2>
 <p>When <code>colored-completion-prefix</code> is configured to <code>on</code>, then the &quot;so&quot; color from <code>%LS_COLORS%</code> is used to color the common prefix when displaying possible completions.  The default for &quot;so&quot; is magenta, but for example <code>set LS_COLORS=so=90</code> sets the color to bright black (which shows up as a dark gray).</p>
-<p>When <code>colored-stats</code> is configured to <code>on</code>, then the color definitions from <code>%LS_COLORS%</code> (using ANSI escape codes) are used to color file completions according to their file type or extension.  Each definition is a either a two character type id or a file extension, followed by an equals sign and then the <a href="https://en.wikipedia.org/wiki/ANSI_escape_code#SGR_parameters">SGR parameters</a> for an ANSI escape code.  Multiple definitions are separated by colons.  Also, since <code>%LS_COLORS%</code> doesn&#39;t cover readonly files, hidden files, or doskey aliases the <code>colour.readonly</code>, <code>colour.hidden</code>, and <code>colour.doskey</code> <a href="#configclink">Clink settings</a> exist to cover those.</p>
+<p>When <code>colored-stats</code> is configured to <code>on</code>, then the color definitions from <code>%LS_COLORS%</code> (using ANSI escape codes) are used to color file completions according to their file type or extension.  Each definition is a either a two character type id or a file extension, followed by an equals sign and then the <a href="https://en.wikipedia.org/wiki/ANSI_escape_code#SGR_parameters">SGR parameters</a> for an ANSI escape code.  Multiple definitions are separated by colons.  Also, since <code>%LS_COLORS%</code> doesn&#39;t cover readonly files, hidden files, doskey aliases, or shell commands the <code>color.readonly</code>, <code>color.hidden</code>, <code>color.doskey</code>, and <code>color.cmd</code> <a href="#configclink">Clink settings</a> exist to cover those.</p>
 <p>Here is an example where <code>%LS_COLORS%</code> defines colors for various types.</p>
 <ul>
 <li><code>so=</code> defines the color for the common prefix for possible completions.</li>
@@ -1619,7 +1644,7 @@ line:getcommandoffset() == 4</code></pre></div></div><hr/><div class="function">
 &nbsp; length,  -- [integer] length of the word.
 &nbsp; quoted,  -- [boolean] indicates whether the word is quoted.
 &nbsp; delim,   -- [string] the delimiter character, or an empty string.
-}</code></pre></div></div><hr/></div><div class="group"><h5 class="group_name"><a name="log">log</a></h5><div class="function"><div class="header"> <div class="name"><a name="log.info">log.info</a></div> <div class="signature">(message:string) : nil</div></div><div class="body"><p class="desc">Writes info <em>message</em> to the Clink log file.  Use this sparingly, or it could cause performance problems or disk space problems.</p></div></div><hr/></div><div class="group"><h5 class="group_name"><a name="os">os</a></h5><div class="function"><div class="header"> <div class="name"><a name="os.chdir">os.chdir</a></div> <div class="signature">(path:string) : boolean</div></div><div class="body"><p class="desc">Changes the current directory to <em>path</em> and returns whether it was successful.</p></div></div><hr/><div class="function"><div class="header"> <div class="name"><a name="os.copy">os.copy</a></div> <div class="signature">(src:string, dest:string) : boolean</div></div><div class="body"><p class="desc">Copies the <em>src</em> file to the <em>dest</em> file.</p></div></div><hr/><div class="function"><div class="header"> <div class="name"><a name="os.getalias">os.getalias</a></div> <div class="signature">(name:string) : string</div></div><div class="body"><p class="desc">Returns command string for doskey alias <em>name</em>.</p></div></div><hr/><div class="function"><div class="header"> <div class="name"><a name="os.getaliases">os.getaliases</a></div> <div class="signature">() : table</div></div><div class="body"><p class="desc">Returns doskey aliases in a table with the following scheme: <em>{ { name:string, command:string }, ... }</em>.</p></div></div><hr/><div class="function"><div class="header"> <div class="name"><a name="os.getcwd">os.getcwd</a></div> <div class="signature">() : string</div></div><div class="body"><p class="desc">Returns the current directory.</p></div></div><hr/><div class="function"><div class="header"> <div class="name"><a name="os.getenv">os.getenv</a></div> <div class="signature">(name:string) : string or nil</div></div><div class="body"><p class="desc">Returns the value of the named environment variable, or <em>nil</em> if it doesn't exist.</p></div></div><hr/><div class="function"><div class="header"> <div class="name"><a name="os.getenvnames">os.getenvnames</a></div> <div class="signature">() : table</div></div><div class="body"><p class="desc">Returns all environment variables in a table with the following scheme: <em>{ { name:string, value:string }, ... }</em>.</p></div></div><hr/><div class="function"><div class="header"> <div class="name"><a name="os.gethost">os.gethost</a></div> <div class="signature">() : string</div></div><div class="body"><p class="desc">Returns the fully qualified file name of the host process.  Currently only CMD.EXE can host Clink.</p></div></div><hr/><div class="function"><div class="header"> <div class="name"><a name="os.getscreeninfo">os.getscreeninfo</a></div> <div class="signature">() : table</div></div><div class="body"><p class="desc">Returns dimensions of the terminal's buffer (<em>buf</em>*) and visible window (<em>win</em>*). The returned table has the following scheme: <em>{ bufwidth:int, bufheight:int, winwidth:int, winheight:int }.</em></p></div></div><hr/><div class="function"><div class="header"> <div class="name"><a name="os.globdirs">os.globdirs</a></div> <div class="signature">(globpattern:string) : table</div></div><div class="body"><p class="desc">Collects directories matching <em>globpattern</em> and returns them in a table of strings.</p></div></div><hr/><div class="function"><div class="header"> <div class="name"><a name="os.globfiles">os.globfiles</a></div> <div class="signature">(globpattern:string) : table</div></div><div class="body"><p class="desc">Collects files matching <em>globpattern</em> and returns them in a table of strings.</p></div></div><hr/><div class="function"><div class="header"> <div class="name"><a name="os.isdir">os.isdir</a></div> <div class="signature">(path:string) : boolean</div></div><div class="body"><p class="desc">Returns whether <em>path</em> is a directory.</p></div></div><hr/><div class="function"><div class="header"> <div class="name"><a name="os.isfile">os.isfile</a></div> <div class="signature">(path:string) : boolean</div></div><div class="body"><p class="desc">Returns whether <em>path</em> is a file.</p></div></div><hr/><div class="function"><div class="header"> <div class="name"><a name="os.ishidden">os.ishidden</a></div> <div class="signature">(path:string) : boolean</div></div><div class="body"><p class="desc">Returns whether <em>path</em> is has the hidden attribute set.</p></div></div><hr/><div class="function"><div class="header"> <div class="name"><a name="os.mkdir">os.mkdir</a></div> <div class="signature">(path:string) : boolean</div></div><div class="body"><p class="desc">Creates the directory <em>path</em> and returns whether it was successful.</p></div></div><hr/><div class="function"><div class="header"> <div class="name"><a name="os.move">os.move</a></div> <div class="signature">(src:string, dest:string) : boolean</div></div><div class="body"><p class="desc">Moves the <em>src</em> file to the <em>dest</em> file.</p></div></div><hr/><div class="function"><div class="header"> <div class="name"><a name="os.rmdir">os.rmdir</a></div> <div class="signature">(path:string) : boolean</div></div><div class="body"><p class="desc">Removes the directory <em>path</em> and returns whether it was successful.</p></div></div><hr/><div class="function"><div class="header"> <div class="name"><a name="os.setenv">os.setenv</a></div> <div class="signature">(name:string, value:string) : boolean</div></div><div class="body"><p class="desc">Sets the <em>name</em> environment variable to <em>value</em> and returns whether it was successful.</p></div></div><hr/><div class="function"><div class="header"> <div class="name"><a name="os.unlink">os.unlink</a></div> <div class="signature">(path:string) : boolean</div></div><div class="body"><p class="desc">Deletes the file <em>path</em> and returns whether it was successful.</p></div></div><hr/></div><div class="group"><h5 class="group_name"><a name="path">path</a></h5><div class="function"><div class="header"> <div class="name"><a name="path.getbasename">path.getbasename</a></div> <div class="signature">(path:string) : string</div></div><div class="body"><p class="desc"></p><pre class="language-lua"><code>path.getbasename("/foo/bar.ext") -- returns "bar"</code></pre></div></div><hr/><div class="function"><div class="header"> <div class="name"><a name="path.getdirectory">path.getdirectory</a></div> <div class="signature">(path:string) : nil or string</div></div><div class="body"><p class="desc"></p><pre class="language-lua"><code>path.getdirectory("/foo/bar") -- returns "/foo/"
+}</code></pre></div></div><hr/></div><div class="group"><h5 class="group_name"><a name="log">log</a></h5><div class="function"><div class="header"> <div class="name"><a name="log.info">log.info</a></div> <div class="signature">(message:string) : nil</div></div><div class="body"><p class="desc">Writes info <em>message</em> to the Clink log file.  Use this sparingly, or it could cause performance problems or disk space problems.</p></div></div><hr/></div><div class="group"><h5 class="group_name"><a name="os">os</a></h5><div class="function"><div class="header"> <div class="name"><a name="os.chdir">os.chdir</a></div> <div class="signature">(path:string) : boolean</div></div><div class="body"><p class="desc">Changes the current directory to <em>path</em> and returns whether it was successful.</p></div></div><hr/><div class="function"><div class="header"> <div class="name"><a name="os.copy">os.copy</a></div> <div class="signature">(src:string, dest:string) : boolean</div></div><div class="body"><p class="desc">Copies the <em>src</em> file to the <em>dest</em> file.</p></div></div><hr/><div class="function"><div class="header"> <div class="name"><a name="os.getalias">os.getalias</a></div> <div class="signature">(name:string) : string</div></div><div class="body"><p class="desc">Returns command string for doskey alias <em>name</em>.</p></div></div><hr/><div class="function"><div class="header"> <div class="name"><a name="os.getaliases">os.getaliases</a></div> <div class="signature">() : table</div></div><div class="body"><p class="desc">Returns doskey aliases in a table with the following scheme: <em>{ { name:string, command:string }, ... }</em>.</p></div></div><hr/><div class="function"><div class="header"> <div class="name"><a name="os.getcwd">os.getcwd</a></div> <div class="signature">() : string</div></div><div class="body"><p class="desc">Returns the current directory.</p></div></div><hr/><div class="function"><div class="header"> <div class="name"><a name="os.getenv">os.getenv</a></div> <div class="signature">(name:string) : string or nil</div></div><div class="body"><p class="desc">Returns the value of the named environment variable, or <em>nil</em> if it doesn't exist.</p></div></div><hr/><div class="function"><div class="header"> <div class="name"><a name="os.getenvnames">os.getenvnames</a></div> <div class="signature">() : table</div></div><div class="body"><p class="desc">Returns all environment variables in a table with the following scheme: <em>{ { name:string, value:string }, ... }</em>.</p></div></div><hr/><div class="function"><div class="header"> <div class="name"><a name="os.gethost">os.gethost</a></div> <div class="signature">() : string</div></div><div class="body"><p class="desc">Returns the fully qualified file name of the host process.  Currently only CMD.EXE can host Clink.</p></div></div><hr/><div class="function"><div class="header"> <div class="name"><a name="os.getscreeninfo">os.getscreeninfo</a></div> <div class="signature">() : table</div></div><div class="body"><p class="desc">Returns dimensions of the terminal's buffer (<em>buf</em>*) and visible window (<em>win</em>*). The returned table has the following scheme: <em>{ bufwidth:int, bufheight:int, winwidth:int, winheight:int }.</em></p></div></div><hr/><div class="function"><div class="header"> <div class="name"><a name="os.globdirs">os.globdirs</a></div> <div class="signature">(globpattern:string, [extrainfo:boolean]) : table</div></div><div class="body"><p class="desc">Collects directories matching <em>globpattern</em> and returns them in a table of strings.<br/> <br/> When <em>extrainfo</em> is true, then the returned table has the following string can be "file" or "dir", and may also contain ",hidden" and ",readonly" depending on the attributes (making it usable as a match type).</p></div></div><hr/><div class="function"><div class="header"> <div class="name"><a name="os.globfiles">os.globfiles</a></div> <div class="signature">(globpattern:string, [extrainfo:boolean]) : table</div></div><div class="body"><p class="desc">Collects files and/or directories matching <em>globpattern</em> and returns them in a table of strings.<br/> <br/> When <em>extrainfo</em> is true, then the returned table has the following string can be "file" or "dir", and may also contain ",hidden" and ",readonly" depending on the attributes (making it usable as a match type).</p></div></div><hr/><div class="function"><div class="header"> <div class="name"><a name="os.isdir">os.isdir</a></div> <div class="signature">(path:string) : boolean</div></div><div class="body"><p class="desc">Returns whether <em>path</em> is a directory.</p></div></div><hr/><div class="function"><div class="header"> <div class="name"><a name="os.isfile">os.isfile</a></div> <div class="signature">(path:string) : boolean</div></div><div class="body"><p class="desc">Returns whether <em>path</em> is a file.</p></div></div><hr/><div class="function"><div class="header"> <div class="name"><a name="os.ishidden">os.ishidden</a></div> <div class="signature">(path:string) : boolean</div></div><div class="body"><p class="desc">Returns whether <em>path</em> is has the hidden attribute set.</p></div></div><hr/><div class="function"><div class="header"> <div class="name"><a name="os.mkdir">os.mkdir</a></div> <div class="signature">(path:string) : boolean</div></div><div class="body"><p class="desc">Creates the directory <em>path</em> and returns whether it was successful.</p></div></div><hr/><div class="function"><div class="header"> <div class="name"><a name="os.move">os.move</a></div> <div class="signature">(src:string, dest:string) : boolean</div></div><div class="body"><p class="desc">Moves the <em>src</em> file to the <em>dest</em> file.</p></div></div><hr/><div class="function"><div class="header"> <div class="name"><a name="os.rmdir">os.rmdir</a></div> <div class="signature">(path:string) : boolean</div></div><div class="body"><p class="desc">Removes the directory <em>path</em> and returns whether it was successful.</p></div></div><hr/><div class="function"><div class="header"> <div class="name"><a name="os.setenv">os.setenv</a></div> <div class="signature">(name:string, value:string) : boolean</div></div><div class="body"><p class="desc">Sets the <em>name</em> environment variable to <em>value</em> and returns whether it was successful.</p></div></div><hr/><div class="function"><div class="header"> <div class="name"><a name="os.unlink">os.unlink</a></div> <div class="signature">(path:string) : boolean</div></div><div class="body"><p class="desc">Deletes the file <em>path</em> and returns whether it was successful.</p></div></div><hr/></div><div class="group"><h5 class="group_name"><a name="path">path</a></h5><div class="function"><div class="header"> <div class="name"><a name="path.getbasename">path.getbasename</a></div> <div class="signature">(path:string) : string</div></div><div class="body"><p class="desc"></p><pre class="language-lua"><code>path.getbasename("/foo/bar.ext") -- returns "bar"</code></pre></div></div><hr/><div class="function"><div class="header"> <div class="name"><a name="path.getdirectory">path.getdirectory</a></div> <div class="signature">(path:string) : nil or string</div></div><div class="body"><p class="desc"></p><pre class="language-lua"><code>path.getdirectory("/foo/bar") -- returns "/foo/"
 path.getdirectory("bar") -- returns nil</code></pre></div></div><hr/><div class="function"><div class="header"> <div class="name"><a name="path.getdrive">path.getdrive</a></div> <div class="signature">(path:string) : nil or string</div></div><div class="body"><p class="desc"></p><pre class="language-lua"><code>path.getdrive("e:/foo/bar") -- returns "e:"
 path.getdrive("foo/bar") -- returns nil</code></pre></div></div><hr/><div class="function"><div class="header"> <div class="name"><a name="path.getextension">path.getextension</a></div> <div class="signature">(path:string) : string</div></div><div class="body"><p class="desc"></p><pre class="language-lua"><code>path.getextension("bar.ext") -- returns ".ext"
 path.getextension("bar") -- returns ""</code></pre></div></div><hr/><div class="function"><div class="header"> <div class="name"><a name="path.getname">path.getname</a></div> <div class="signature">(path:string) : string</div></div><div class="body"><p class="desc"></p><pre class="language-lua"><code>path.getname("/foo/bar.ext") -- returns "bar.ext"</code></pre></div></div><hr/><div class="function"><div class="header"> <div class="name"><a name="path.isexecext">path.isexecext</a></div> <div class="signature">(path:string) : boolean</div></div><div class="body"><p class="desc">Examines the extension of the path name.  Returns true if the extension is listed in %PATHEXT%.  This caches the extensions in a map so that it's more efficient than getting and parsing %PATHEXT% each time.</p><pre class="language-lua"><code>path.isexecext("program.exe") -- returns true
@@ -1649,14 +1674,10 @@ function dir_matches(match_word, word_index, line_state)
 &nbsp; end
 &nbsp;
 &nbsp; local matches = {}
-&nbsp; for _, d in ipairs(os.globdirs(word.."*")) do
+&nbsp; for _, d in ipairs(os.globdirs(word.."*", true)) do
 &nbsp;   -- Join the filename with the input directory (might have a tilde).
-&nbsp;   local dir = path.join(root, d)
-&nbsp;   if os.ishidden(dir) then
-&nbsp;     table.insert(matches, { match = dir, type = "dir,hidden" })
-&nbsp;   else
-&nbsp;     table.insert(matches, { match = dir, type = "dir" })
-&nbsp;   end
+&nbsp;   local dir = path.join(root, d.name)
+&nbsp;   table.insert(matches, { match = dir, type = d.type })
 &nbsp; end
 &nbsp; return matches
 end</code></pre></div></div><hr/><div class="function"><div class="header"> <div class="name"><a name="rl.getvariable">rl.getvariable</a></div> <div class="signature">(name:string) : string|nil</div></div><div class="body"><p class="desc">Returns the value of the named Readline configuration variable as a string, or nil if the variable name is not recognized.</p></div></div><hr/><div class="function"><div class="header"> <div class="name"><a name="rl.isvariabletrue">rl.isvariabletrue</a></div> <div class="signature">(name:string) : boolean|nil</div></div><div class="body"><p class="desc">Returns a boolean value indicating whether the named Readline configuration variable is set to true (on), or nil if the variable name is not recognized.</p></div></div><hr/></div><div class="group"><h5 class="group_name"><a name="settings">settings</a></h5><div class="function"><div class="header"> <div class="name"><a name="settings.add">settings.add</a></div> <div class="signature">(name:string, default:..., [short_desc:string], [long_desc:string]) : boolean</div></div><div class="body"><p class="desc">Adds a setting to the list of Clink settings and includes it in <code>clink set</code>.  The new setting is named <em>name</em> and has a default value <em>default</em> if not explicitly set.  The type of <em>default</em> determines what kind of setting is added:  boolean, integer, and string values add the corresponding setting type.  Or if the type is table, then an enum setting is added:  the table defines the accepted values, and the first value is the default value.<br/> <br/> <em>name</em> can't be more than 31 characters.<br/> <em>short_desc</em> is an optional quick summary description and can't be more than 47 characters.<br/> <em>long_desc</em> is an optional long description.</p><pre class="language-lua"><code>settings.add("myscript.myabc", true, "Boolean setting")
@@ -1667,7 +1688,16 @@ settings.add("myscript.myjkl", {"x","y","z"}, "Enum setting")</code></pre></div>
         <div class="section" id="changes">
 <h1 id="changes">Changes</h1>
 <h2 id="releases-from-chrisant996clink-fork">Releases from <a href="https://github.com/chrisant996/clink">chrisant996/clink</a> fork</h2>
-<h3 id="unreleased">Unreleased</h3>
+<h3 id="v117">v1.1.7</h3>
+<ul>
+<li>Performance improvement when displaying matches:  When enumerating files and dirs, the <code>os.globfiles</code> and <code>os.globdirs</code> functions have all the info about each file.  Now they can return that info in a table.  This frees the match display function from needing to do any further file system IO.  The performance boost is noticeable.</li>
+<li>Rewrote the color settings:  the .fg and .bg sub-settings are gone, and the main setting now uses a more natural syntax (e.g. <code>clink set color.input bright yellow</code> or <code>clink set color.modmark bright cyan on blue</code>).</li>
+<li>Added &quot;cmd&quot; match type for shell (CMD.EXE) command completions.</li>
+<li>Added VT emulation for the reverse video SGR parameters.</li>
+<li>Fixed tab completion for <code>clink set <em>&lt;setting&gt;</em></code>, and also handle the new color setting syntax.</li>
+<li>Fixed confusing behavior if multiple scripts try to add settings with the same name (now the first one succeeds and the rest report errors).</li>
+</ul>
+<h3 id="v116">v1.1.6</h3>
 <ul>
 <li>Hooked up tilde completion in the <code>cd</code>, <code>md</code>, and <code>rd</code> command argmatchers.</li>
 <li>Hooked up tilde completion with the <code>exec.enable</code> setting (&quot;~\pro&quot; matches &quot;C:\Users\myusername\program.exe&quot;).</li>
