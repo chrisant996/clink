@@ -273,6 +273,12 @@ void ecma48_terminal_out::set_attributes(const ecma48_code::csi_base& csi)
             continue;
         }
 
+        if ((param == 7) | (param == 27))
+        {
+            attr.set_reverse(param == 7);
+            continue;
+        }
+
         // TODO: Rgb/xterm256 support for terminals that support it.
     }
 

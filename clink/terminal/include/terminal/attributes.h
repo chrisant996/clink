@@ -78,10 +78,12 @@ public:
     void                        set_bg(unsigned char r, unsigned char g, unsigned char b);
     void                        set_bold(bool state=true);
     void                        set_underline(bool state=true);
+    void                        set_reverse(bool state=true);
     attribute<colour>           get_fg() const;
     attribute<colour>           get_bg() const;
     attribute<bool>             get_bold() const;
     attribute<bool>             get_underline() const;
+    attribute<bool>             get_reverse() const;
 
 private:
     union flags
@@ -92,6 +94,7 @@ private:
             unsigned char       bg : 1;
             unsigned char       bold : 1;
             unsigned char       underline : 1;
+            unsigned char       reverse : 1;
         };
         unsigned char           all;
     };
@@ -104,6 +107,7 @@ private:
             colour              m_bg;
             unsigned short      m_bold : 1;
             unsigned short      m_underline : 1;
+            unsigned short      m_reverse : 1;
             flags               m_flags;
             unsigned char       m_unused;
         };

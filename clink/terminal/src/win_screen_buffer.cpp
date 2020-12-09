@@ -366,6 +366,17 @@ void win_screen_buffer::set_attributes(const attributes attr)
         out_attr = (out_attr & ~attr_mask_bg) | (value & attr_mask_bg);
     }
 
+    // Reverse video
+    if (auto rev = attr.get_reverse())
+    {
+        if (rev.value)
+        {
+            int fg = (out_attr & ~attr_mask_bg);
+            int bg = (out_attr & attr_mask_bg);
+            out_attr = (fg << 4) | (bg >> 4);
+        }
+    }
+
     // TODO: add rgb/xterm256 support back.
 
     out_attr |= csbi.wAttributes & ~attr_mask_all;

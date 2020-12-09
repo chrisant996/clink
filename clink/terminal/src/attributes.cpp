@@ -62,6 +62,7 @@ attributes attributes::merge(const attributes first, const attributes second)
     mask.m_bg.value = second.m_flags.bg ? ~0 : 0;
     mask.m_bold = second.m_flags.bold;
     mask.m_underline = second.m_flags.underline;
+    mask.m_reverse = second.m_flags.reverse;
 
     attributes out;
     out.m_state = first.m_state & ~mask.m_state;
@@ -79,6 +80,7 @@ attributes attributes::diff(const attributes from, const attributes to)
     changed.bg = !(to.m_bg == from.m_bg);
     changed.bold = (to.m_bold != from.m_bold);
     changed.underline = (to.m_underline != from.m_underline);
+    changed.reverse = (to.m_reverse != from.m_reverse);
 
     attributes out = to;
     out.m_flags.all &= changed.all;
@@ -154,6 +156,13 @@ void attributes::set_underline(bool state)
 }
 
 //------------------------------------------------------------------------------
+void attributes::set_reverse(bool state)
+{
+    m_flags.reverse = 1;
+    m_reverse = !!state;
+}
+
+//------------------------------------------------------------------------------
 attributes::attribute<attributes::colour> attributes::get_fg() const
 {
     return { m_fg, m_flags.fg, (m_fg.value == default_code) };
@@ -175,4 +184,10 @@ attributes::attribute<bool> attributes::get_bold() const
 attributes::attribute<bool> attributes::get_underline() const
 {
     return { bool(m_underline), bool(m_flags.underline) };
+}
+
+//------------------------------------------------------------------------------
+attributes::attribute<bool> attributes::get_reverse() const
+{
+    return { bool(m_reverse), bool(m_flags.reverse) };
 }
