@@ -50,6 +50,7 @@ bool attributes::operator == (const attributes rhs)
     cmp &= CMP_IMPL(bg);
     cmp &= CMP_IMPL(bold);
     cmp &= CMP_IMPL(underline);
+    cmp &= CMP_IMPL(reverse);
     #undef CMP_IMPL
     return (cmp != 0);
 }

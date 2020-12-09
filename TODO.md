@@ -4,7 +4,6 @@ ChrisAnt Plans
 
 # BETA
 
-- Don't write out the settings file unless something in it has actually changed.
 - Ugh!  Need to support non-black background color, to respect different background colors for different console windows!
 
 ## Cmder, Powerline, Clink-Completions
