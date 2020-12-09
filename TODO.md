@@ -4,6 +4,9 @@ ChrisAnt Plans
 
 # BETA
 
+- Don't write out the settings file unless something in it has actually changed.
+- Ugh!  Need to support non-black background color, to respect different background colors for different console windows!
+
 ## Cmder, Powerline, Clink-Completions
 - Update clink-completions to have better 0.4.9 implementations, and also to conditionally use the new API when available.
 - Update clink-git-extensions to have better 0.4.9 implementations, and also to conditionally use the new API when available.

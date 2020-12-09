@@ -17,8 +17,10 @@ public:
                             printer(terminal_out& terminal);
     void                    reset();
     void                    print(const char* data, int bytes);
+    void                    print(const char* attr, const char* data, int bytes);
     void                    print(const attributes attr, const char* data, int bytes);
     template <int S> void   print(const char (&data)[S]);
+    template <int S> void   print(const char* attr, const char (&data)[S]);
     template <int S> void   print(const attributes attr, const char (&data)[S]);
     unsigned int            get_columns() const;
     unsigned int            get_rows() const;
@@ -37,6 +39,7 @@ private:
     terminal_out&           m_terminal;
     attributes              m_set_attr;
     attributes              m_next_attr;
+    bool                    m_nodiff;
 };
 
 //------------------------------------------------------------------------------
@@ -44,6 +47,13 @@ template <int S> void printer::print(const char (&data)[S])
 {
     if (S > 0)
         print(data, S - 1); // Don't include nul terminator.
+}
+
+//------------------------------------------------------------------------------
+template <int S> void printer::print(const char* attr, const char (&data)[S])
+{
+    if (S > 0)
+        print(attr, data, S - 1); // Don't include nul terminator.
 }
 
 //------------------------------------------------------------------------------

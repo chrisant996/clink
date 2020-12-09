@@ -342,7 +342,7 @@ void win_screen_buffer::set_attributes(const attributes attr)
             out_attr &= ~attr_mask_underline;
     }
 
-    // Foreground colour
+    // Foreground color
     bool bold = m_bold;
     if (auto fg = attr.get_fg())
     {
@@ -359,7 +359,7 @@ void win_screen_buffer::set_attributes(const attributes attr)
     else
         out_attr &= ~attr_mask_bold;
 
-    // Background colour
+    // Background color
     if (auto bg = attr.get_bg())
     {
         int value = bg.is_default ? m_default_attr : (swizzle(bg->value) << 4);

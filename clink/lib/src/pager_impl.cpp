@@ -13,13 +13,12 @@
 #include <core/settings.h>
 #include <core/str_iter.h>
 #include <terminal/printer.h>
-#include <terminal/setting_colour.h>
 
-setting_colour g_colour_interact(
-    "colour.interact",
+setting_color g_color_interact(
+    "color.interact",
     "For user-interaction prompts",
     "Used when Clink displays text or prompts such as a pager's 'More?'.",
-    setting_colour::value_light_magenta, setting_colour::value_bg_default);
+    "bold");
 
 
 
@@ -120,7 +119,7 @@ bool pager_impl::on_print_lines(printer& printer, int lines)
         return true;
     m_max = 0;
 
-    printer.print(g_colour_interact.get(), "-- More --");
+    printer.print(g_color_interact.get(), "-- More --");
     m_dispatcher.dispatch(m_pager_bind_group);
 
     printer.print("\x1b[1K\r");

@@ -150,3 +150,56 @@ TEST_CASE("settings : enum")
     REQUIRE(!test.set("abc"));  REQUIRE(test.get() == 2);
     REQUIRE(!test.set("0abc")); REQUIRE(test.get() == 2);
 }
+
+//------------------------------------------------------------------------------
+TEST_CASE("settings : color")
+{
+    setting_color test("clr1", "", "", "");
+    setting_color test2("clr2", "", "", "bri yel");
+
+    str<> tmp;
+
+    test.get_descriptive(tmp);
+    REQUIRE(tmp.equals(""));
+    test2.get_descriptive(tmp);
+    REQUIRE(tmp.equals("bright yellow"));
+
+    REQUIRE(test.set("default"));
+    test.get_descriptive(tmp);
+    REQUIRE(tmp.equals("default"));
+
+    REQUIRE(test.set("default on default"));
+    test.get_descriptive(tmp);
+    REQUIRE(tmp.equals("default"));
+
+    REQUIRE(test.set("bold"));
+    test.get_descriptive(tmp);
+    REQUIRE(tmp.equals("bold"));
+
+    REQUIRE(test.set("bold default on default"));
+    test.get_descriptive(tmp);
+    REQUIRE(tmp.equals("bold"));
+
+    REQUIRE(!test.set("bold green on bogus"));
+
+    REQUIRE(test.set("bold green on magenta"));
+    test.get_descriptive(tmp);
+    REQUIRE(tmp.equals("bright green on magenta"));
+
+    REQUIRE(!test.set("bold on green underline"));
+    REQUIRE(test.set("bold underline on green     "));
+    test.get_descriptive(tmp);
+    REQUIRE(tmp.equals("bold underline default on green"));
+
+    REQUIRE(test.set("blue on bla bri"));
+    test.get_descriptive(tmp);
+    REQUIRE(tmp.equals("blue on bright black"));
+
+    REQUIRE(test.set("default"));
+    test.get_descriptive(tmp);
+    REQUIRE(tmp.equals("default"));
+
+    REQUIRE(test.set("bri yel"));
+    test.get_descriptive(tmp);
+    REQUIRE(tmp.equals("bright yellow"));
+}

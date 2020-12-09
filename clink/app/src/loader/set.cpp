@@ -53,6 +53,22 @@ static void list_options(const char* key)
                 printf("%.*s\n", length, start);
         }
         break;
+
+    case setting::type_color:
+        {
+            static const char* const color_keywords[] =
+            {
+                "bold", "dim", "underline", "nounderline",
+                "bright", "default", "normal", "on",
+                "black", "red", "green", "yellow",
+                "blue", "cyan", "magenta", "white",
+                "sgr",
+            };
+
+            for (auto keyword : color_keywords)
+                puts(keyword);
+        }
+        break;
     }
 
     puts("clear");
@@ -68,7 +84,7 @@ static bool print_keys()
     for (auto iter = settings::first(); auto* next = iter.next();)
     {
         str<> value;
-        next->get(value);
+        next->get_descriptive(value);
         const char* name = next->get_name();
         printf("%-*s  %s\n", longest, name, value.c_str());
     }
@@ -92,9 +108,12 @@ static bool print_value(const char* key)
     // Output an enum-type setting's options.
     if (setting->get_type() == setting::type_enum)
         printf("     Options: %s\n", ((setting_enum*)setting)->get_options());
+    else if (setting->get_type() == setting::type_color)
+        printf("      Syntax: 'sgr SGR_params' or '[underline bright] color on [bright] color'\n");
+
 
     str<> value;
-    setting->get(value);
+    setting->get_descriptive(value);
     printf("       Value: %s\n", value.c_str());
 
     const char* long_desc = setting->get_long_desc();
@@ -105,7 +124,7 @@ static bool print_value(const char* key)
 }
 
 //------------------------------------------------------------------------------
-static bool set_value(const char* key, const char* value)
+static bool set_value(const char* key, char** argv=nullptr, int argc=0)
 {
     setting* setting = settings::find(key);
     if (setting == nullptr)
@@ -114,19 +133,31 @@ static bool set_value(const char* key, const char* value)
         return false;
     }
 
-    if (value == nullptr)
+    str<> value;
+    if (!argc)
     {
         setting->set();
     }
-    else if (!setting->set(value))
+    else
     {
-        printf("ERROR: Failed to set value '%s'.\n", key);
-        return false;
+        for (int c = argc; c--;)
+        {
+            if (value.length())
+                value << " ";
+            value << *argv;
+            argv++;
+        }
+
+        if (!setting->set(value.c_str()))
+        {
+            printf("ERROR: Failed to set value '%s'.\n", key);
+            return false;
+        }
     }
 
     str<> result;
-    setting->get(result);
-    printf("Setting '%s' %sset to '%s'\n", key, value ? "" : "re", result.c_str());
+    setting->get_descriptive(result);
+    printf("Setting '%s' %sset to '%s'\n", key, argc ? "" : "re", result.c_str());
     return true;
 }
 
@@ -205,10 +236,10 @@ int set(int argc, char** argv)
     default:
         if (_stricmp(argv[2], "clear") == 0)
         {
-            if (set_value(argv[1], nullptr))
+            if (set_value(argv[1]))
                 return settings::save(settings_file.c_str()), 0;
         }
-        else if (set_value(argv[1], argv[2]))
+        else if (set_value(argv[1], argv + 2, argc - 1))
             return settings::save(settings_file.c_str()), 0;
     }
 

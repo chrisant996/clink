@@ -199,6 +199,7 @@ bool save(const char* file)
         case setting::type_int:    type_name = "integer"; break;
         case setting::type_string: type_name = "string";  break;
         case setting::type_enum:   type_name = "enum";    break;
+        case setting::type_color:  type_name = "color";   break;
         }
 
         if (type_name != nullptr)
@@ -212,7 +213,7 @@ bool save(const char* file)
         }
 
         str<> value;
-        iter->get(value);
+        iter->get_descriptive(value);
         fprintf(out, "%s = %s\n\n", iter->get_name(), value.c_str());
     }
 
@@ -443,4 +444,298 @@ const char* setting_enum::next_option(const char* option)
             break;
 
     return option;
+}
+
+//------------------------------------------------------------------------------
+static bool imatch3(const str<16>& a, const char* b)
+{
+    return _strnicmp(a.c_str(), b, 3) == 0;
+}
+
+//------------------------------------------------------------------------------
+setting_color::setting_color(const char* name, const char* short_desc, const char* default_value)
+: setting_str(name, short_desc, default_value)
+{
+    m_type = type_color;
+    set();
+}
+
+//------------------------------------------------------------------------------
+setting_color::setting_color(const char* name, const char* short_desc, const char* long_desc, const char* default_value)
+: setting_str(name, short_desc, long_desc, default_value)
+{
+    m_type = type_color;
+    set();
+}
+
+//------------------------------------------------------------------------------
+void setting_color::set()
+{
+    set(static_cast<const char*>(m_default));
+}
+
+//------------------------------------------------------------------------------
+static const char* const color_names[] = { "black", "red", "green", "yellow", "blue", "magenta", "cyan", "white" };
+
+//------------------------------------------------------------------------------
+bool setting_color::set(const char* value)
+{
+    if (!value || !*value)
+        return setting_str::set("");
+
+    str<> code;
+    str<16> token;
+    int fg = -1;
+    int bg = -1;
+    int bold = -1;
+    int bright = -1;
+    int underline = -1;
+    int* pcolor = &fg;
+    bool saw_default = false;
+    bool first_part = true;
+
+    str_iter part;
+    str_tokeniser parts(value, " ");
+    while (parts.next(part))
+    {
+        token.clear();
+        token.concat(part.get_pointer(), part.length());
+
+        if (first_part && (strcmpi(token.c_str(), "ansi") == 0 ||
+                           strcmpi(token.c_str(), "sgr") == 0))
+        {
+            if (parts.next(part))
+                code.concat(part.get_pointer(), part.length());
+            if (parts.next(part)) // too many tokens
+                return false;
+            return setting_str::set(code.c_str());
+        }
+
+        first_part = false;
+
+        if (strcmpi(token.c_str(), "on") == 0)
+        {
+            if (pcolor == &bg) return false; // can't use "on" more than once
+            if (fg < 0)
+                bold = bright;
+            else if (bright > 0)
+                fg += 8;
+            pcolor = &bg;
+            bright = -1;
+            saw_default = false;
+            continue;
+        }
+
+        if (imatch3(token, "normal") || imatch3(token, "default"))
+        {
+            if (*pcolor >= 0) return false; // disallow combinations
+            if (saw_default) return false;
+            *pcolor = -1;
+            saw_default = true;
+            continue;
+        }
+
+        if (imatch3(token, "bold"))
+        {
+            if (pcolor == &bg) return false; // bold only applies to fg
+            if (bright >= 0) return false; // disallow combinations
+            bright = 1;
+            continue;
+        }
+
+        if (imatch3(token, "bright") || imatch3(token, "dim"))
+        {
+            if (bright >= 0) return false; // disallow combinations
+            bright = imatch3(token, "bright");
+            continue;
+        }
+
+        if (imatch3(token, "underline") || imatch3(token, "nounderline"))
+        {
+            if (pcolor == &bg) return false; // only applies to fg
+            if (underline >= 0) return false; // disallow combinations
+            underline = imatch3(token, "underline");
+            continue;
+        }
+
+        int i;
+        for (i = 0; i < sizeof_array(color_names); i++)
+            if (_strnicmp(token.c_str(), color_names[i], 3) == 0)
+            {
+                if (*pcolor >= 0) return false; // disallow combinations
+                *pcolor = i;
+                break;
+            }
+
+        if (i >= sizeof_array(color_names)) // unrecognized keyword
+            return false;
+    }
+
+    if (*pcolor >= 0 && bright > 0)
+        (*pcolor) += 8;
+
+    if (pcolor == &fg)
+        bold = bright;
+
+    code = "0";
+
+    if (fg < 0)
+    {
+        if (bold > 0)
+            code << ";1";
+        else if (bold == 0)
+            code << ";22";
+    }
+
+    if (underline > 0)
+        code << ";4";
+    else if (underline == 0)
+        code << ";24";
+
+    if (fg >= 0)
+    {
+        if (fg >= 8)
+            fg += 60 - 8;
+        fg += 30;
+        char buf[10];
+        itoa(fg, buf, 10);
+        code << ";" << buf;
+    }
+    else
+    {
+        code << ";39";
+    }
+
+    if (bg >= 0)
+    {
+        if (bg >= 8)
+            bg += 60 - 8;
+        bg += 40;
+        char buf[10];
+        itoa(bg, buf, 10);
+        code << ";" << buf;
+    }
+    else
+    {
+        code << ";49";
+    }
+
+    // +2 because the "0;" is just to avoid testing whether to insert ";".
+    return setting_str::set(code.c_str() + min<int>(2, code.length()));
+}
+
+//------------------------------------------------------------------------------
+static int int_from_str_iter(const str_iter& iter)
+{
+    int x = 0;
+    int c = iter.length();
+    for (const char* p = iter.get_pointer(); c--; p++)
+    {
+        if (*p < '0' || *p > '9')
+            return -1;
+        x *= 10;
+        x += *p - '0';
+    }
+    return x;
+}
+
+//------------------------------------------------------------------------------
+static bool strip_if_ends_with(str_base& s, const char* suffix, unsigned int len)
+{
+    if (s.length() > len && strcmp(s.c_str() + s.length() - len, suffix) == 0)
+    {
+        s.truncate(s.length() - len);
+        return true;
+    }
+    return false;
+}
+
+//------------------------------------------------------------------------------
+void setting_color::get_descriptive(str_base& out) const
+{
+    str<> tmp;
+    get(tmp);
+
+    out.clear();
+    if (tmp.empty())
+        return;
+
+    enum { bold_token, underline_token, fg_token, bg_token, nomore_tokens };
+    int expected = bold_token;
+    str_iter part;
+    str_tokeniser parts(tmp.c_str(), ";");
+
+    while (parts.next(part))
+    {
+        int x = int_from_str_iter(part);
+        if (x < 0)
+        {
+nope:
+            out.clear();
+            out << "sgr " << tmp.c_str();
+            return;
+        }
+
+        if (expected >= nomore_tokens)
+            goto nope;
+
+        if (x == 1 || x == 22)
+        {
+            if (expected > bold_token) goto nope;
+            expected = bold_token + 1;
+            out << ((x == 1) ? "bold " : "dim ");
+        }
+        else if (x == 4 || x == 24)
+        {
+            if (expected > underline_token) goto nope;
+            expected = underline_token + 1;
+            out << ((x == 4) ? "underline " : "nounderline ");
+        }
+        else if ((x >= 30 && x < 38) || (x >= 90 && x < 98))
+        {
+            if (expected > fg_token) goto nope;
+            expected = fg_token + 1;
+            if (x >= 90)
+            {
+                out << "bright ";
+                x -= 60;
+            }
+            out << color_names[x - 30] << " ";
+        }
+        else if (x == 39)
+        {
+            if (expected > fg_token) goto nope;
+            expected = fg_token + 1;
+            out << "default ";
+        }
+        else if ((x >= 40 && x < 48) || (x >= 100 && x < 108))
+        {
+            if (expected > bg_token) goto nope;
+            expected = bg_token + 1;
+            out << "on ";
+            x -= 10;
+            if (x >= 90)
+            {
+                out << "bright ";
+                x -= 60;
+            }
+            out << color_names[x - 30] << " ";
+        }
+        else if (x == 49)
+        {
+            if (expected > bg_token) goto nope;
+            expected = bg_token + 1;
+            out << "on default ";
+        }
+        else
+            goto nope;
+    }
+
+    if (out.empty() || out.equals("default on default "))
+        out = "default";
+    else if (!strip_if_ends_with(out, "default on default ", 19))
+        strip_if_ends_with(out, "on default ", 11);
+
+    while (out.length() && out.c_str()[out.length() - 1] == ' ')
+        out.truncate(out.length() - 1);
 }

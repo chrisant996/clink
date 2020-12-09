@@ -20,7 +20,7 @@ Clink combines the native Windows shell cmd.exe with the powerful command line e
   - Environment variable expansion (<kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>E</kbd>).
   - (press <kbd>Alt</kbd>+<kbd>H</kbd> for many more...)
 - Scriptable completion with Lua.
-- Coloured and scriptable prompt.
+- Colored and scriptable prompt.
 - Auto-answering of the "Terminate batch job?" prompt.
 
 By default Clink binds <kbd>Alt</kbd>+<kbd>H</kbd> to display the current key bindings. More features can also be found in GNU's [Readline](https://tiswww.cwru.edu/php/chet/readline/readline.html) and [History](https://tiswww.cwru.edu/php/chet/readline/history.html) libraries' manuals.
@@ -52,13 +52,14 @@ Name                         | Default | Description
 `clink.promptfilter`         | True    | Enable prompt filtering by Lua scripts.
 `cmd.auto_answer`            | `off`   | Automatically answers cmd.exe's "Terminate batch job (Y/N)?" prompts. `off` = disabled, `answer_yes` = answer Y, `answer_no` = answer N.
 `cmd.ctrld_exits`            | True    | <kbd>Ctrl</kbd>+<kbd>D</kbd> exits the process when it is pressed on an empty line.
-`colour.doskey`              | `light_cyan` | Used when Clink displays doskey alias completions.
-`colour.hidden`              |         | Used when Clink displays file completions with the "hidden" attribute.
-`colour.input`               |         | Used when Clink displays the input line text.
-`colour.interact`            | `white` | Used when Clink displays text or prompts such as a pager's `--More?--` prompt.
-`colour.modmark`             |         | Used when Clink displays the `*` mark on modified history lines when
-Readline's `mark-modified-lines` variable and Clink's `colour.input` setting are both set. Falls back to `colour.input` if not set.
-`colour.readonly`            |         | Used when Clink displays file completions with the "readonly" attribute.
+`color.cmd`                  | `bold`  | Used when Clink displays shell (CMD.EXE) command completions.
+`color.doskey`               | `bright cyan` | Used when Clink displays doskey alias completions.
+`color.hidden`               |         | Used when Clink displays file completions with the "hidden" attribute.
+`color.input`                |         | Used when Clink displays the input line text.
+`color.interact`             | `bold`  | Used when Clink displays text or prompts such as a pager's `--More?--` prompt.
+`color.modmark`              |         | Used when Clink displays the `*` mark on modified history lines when
+Readline's `mark-modified-lines` variable and Clink's `color.input` setting are both set. Falls back to `color.input` if not set.
+`color.readonly`             |         | Used when Clink displays file completions with the "readonly" attribute.
 `doskey.enhanced`            | True    | Enhanced Doskey adds the expansion of macros that follow `\|` and `&` command separators and respects quotes around words when parsing `$1`..`$9` tags. Note that these features do not apply to Doskey use in Batch files.
 `exec.cwd`                   | True    | When matching executables as the first word (`exec.enable`), include executables in the current directory. (This is implicit if the word being completed is a relative path).
 `exec.dirs`                  | True    | When matching executables as the first word (`exec.enable`), also include directories relative to the current working directory as matches.
@@ -92,6 +93,35 @@ Readline's `mark-modified-lines` variable and Clink's `colour.input` setting are
 > **Compatibility Notes:**
 > - The `esc_clears_line` setting has been replaced by a `clink-reset-line` command that can be bound to <kbd>Escape</kbd> (or any other key).
 > - The `use_altgr_substitute` setting has been removed.  (If AltGr or lack of AltGr causes a problem, please visit the <a href="https://github.com/chrisant996/clink/issues">repo</a> and open an issue with details about the problem.)
+
+## Color Settings
+
+### Friendly Color Names
+
+The Clink color settings use the following syntax:
+
+<code><em>[attributes] [foreground_color] [on [background_color]]</em></code>
+
+Optional attributes (can be abbreviated to 3 letters):
+- `bold` or `dim` adds or removes brightness (high intensity) to the default foreground color (if the default color is bright white, then `dim` uses normal white).
+- `underline` or `nounderline` adds or removes an underline.
+
+Optional colors (can be abbreviated to 3 letters) for the <em>foreground_color</em> or <em>background_color</em>:
+- `default` or `normal` uses the default color as defined by the current color theme in the console window.
+- `black`, `red`, `green`, `yellow`, `blue`, `cyan`, `magenta`, `white` are the basic colors names.
+- `bright` can be combined with any of the other color names to make them bright (high intensity).
+
+Examples (specific results may depend on the console host program):
+- `bri yel` for bright yellow foreground on default background color.
+- `bold` for bright default foreground on default background color.
+- `underline bright black on white` for dark gray (bright black) foreground on light gray (white) background.
+- `default on blue` for default foreground color on blue background.
+
+### Alternative SGR Syntax
+
+It's also possible to set any ANSI SGR escape code using <code>sgr <a href="https://en.wikipedia.org/wiki/ANSI_escape_code#SGR"><em>SGR_parameters</em></a></code> (for example `sgr 7` is the code for reverse video, which swaps the foreground and background colors).
+
+Be careful, since some escape code sequences might behave strangely.
 
 ## File Locations
 
@@ -220,7 +250,7 @@ Name | Description
 
 When `colored-completion-prefix` is configured to `on`, then the "so" color from `%LS_COLORS%` is used to color the common prefix when displaying possible completions.  The default for "so" is magenta, but for example `set LS_COLORS=so=90` sets the color to bright black (which shows up as a dark gray).
 
-When `colored-stats` is configured to `on`, then the color definitions from `%LS_COLORS%` (using ANSI escape codes) are used to color file completions according to their file type or extension.  Each definition is a either a two character type id or a file extension, followed by an equals sign and then the [SGR parameters](https://en.wikipedia.org/wiki/ANSI_escape_code#SGR_parameters) for an ANSI escape code.  Multiple definitions are separated by colons.  Also, since `%LS_COLORS%` doesn't cover readonly files, hidden files, or doskey aliases the `colour.readonly`, `colour.hidden`, and `colour.doskey` [Clink settings](#configclink) exist to cover those.
+When `colored-stats` is configured to `on`, then the color definitions from `%LS_COLORS%` (using ANSI escape codes) are used to color file completions according to their file type or extension.  Each definition is a either a two character type id or a file extension, followed by an equals sign and then the [SGR parameters](https://en.wikipedia.org/wiki/ANSI_escape_code#SGR_parameters) for an ANSI escape code.  Multiple definitions are separated by colons.  Also, since `%LS_COLORS%` doesn't cover readonly files, hidden files, or doskey aliases the `color.readonly`, `color.hidden`, and `color.doskey` [Clink settings](#configclink) exist to cover those.
 
 Here is an example where `%LS_COLORS%` defines colors for various types.
 

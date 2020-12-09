@@ -19,6 +19,7 @@ void set_scrolled_screen_buffer()
 //------------------------------------------------------------------------------
 printer::printer(terminal_out& terminal)
 : m_terminal(terminal)
+, m_nodiff(false)
 {
     reset();
 }
@@ -28,6 +29,7 @@ void printer::reset()
 {
     m_set_attr = attributes::defaults;
     m_next_attr = attributes::defaults;
+    m_nodiff = false;
 }
 
 //------------------------------------------------------------------------------
@@ -62,6 +64,19 @@ void printer::print(const attributes attr, const char* data, int bytes)
 }
 
 //------------------------------------------------------------------------------
+void printer::print(const char* attr, const char* data, int bytes)
+{
+    str<> tmp;
+    tmp.format("\x1b[%sm", attr);
+
+    attributes prev_attr = m_next_attr;
+    print(tmp.c_str(), tmp.length());
+    print(data, bytes);
+    set_attributes(prev_attr);
+    m_nodiff = true;
+}
+
+//------------------------------------------------------------------------------
 unsigned int printer::get_columns() const
 {
     return m_terminal.get_columns();
@@ -84,7 +99,7 @@ attributes printer::set_attributes(const attributes attr)
 //------------------------------------------------------------------------------
 void printer::flush_attributes()
 {
-    attributes diff = attributes::diff(m_set_attr, m_next_attr);
+    attributes diff = m_nodiff ? m_next_attr : attributes::diff(m_set_attr, m_next_attr);
 
     str<64, false> params;
     auto add_param = [&] (const char* x) {

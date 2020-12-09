@@ -9,13 +9,13 @@ static_assert(sizeof(attributes) == sizeof(long long), "sizeof(attr) != 64bits")
 //------------------------------------------------------------------------------
 enum
 {
-    default_code = 231, // because xterm256's 231 == old-school colour 15 (white)
+    default_code = 231, // because xterm256's 231 == old-school color 15 (white)
 };
 
 
 
 //------------------------------------------------------------------------------
-void attributes::colour::as_888(unsigned char (&out)[3]) const
+void attributes::color::as_888(unsigned char (&out)[3]) const
 {
     out[0] = (r << 3) | (r & 7);
     out[1] = (g << 3) | (g & 7);
@@ -163,13 +163,13 @@ void attributes::set_reverse(bool state)
 }
 
 //------------------------------------------------------------------------------
-attributes::attribute<attributes::colour> attributes::get_fg() const
+attributes::attribute<attributes::color> attributes::get_fg() const
 {
     return { m_fg, m_flags.fg, (m_fg.value == default_code) };
 }
 
 //------------------------------------------------------------------------------
-attributes::attribute<attributes::colour> attributes::get_bg() const
+attributes::attribute<attributes::color> attributes::get_bg() const
 {
     return { m_bg, m_flags.bg, (m_bg.value == default_code) };
 }

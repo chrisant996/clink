@@ -29,7 +29,7 @@ See the [issues](https://github.com/chrisant996/clink/issues) page for known iss
     - Doskey alias expansion (<kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>F</kbd>).
     - (press <kbd>Alt</kbd>+<kbd>H</kbd>) for many more...)
 - Scriptable completion with Lua.
-- Coloured and scriptable prompt.
+- Colored and scriptable prompt.
 - Auto-answering of the "Terminate batch job?" prompt.
 
 ### Usage

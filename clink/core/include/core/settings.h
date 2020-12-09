@@ -55,6 +55,7 @@ public:
         type_bool,
         type_string,
         type_enum,
+        type_color,
     };
 
     virtual         ~setting();
@@ -66,6 +67,7 @@ public:
     virtual void    set() = 0;
     virtual bool    set(const char* value) = 0;
     virtual void    get(str_base& out) const = 0;
+    virtual void    get_descriptive(str_base& out) const { get(out); }
 
 protected:
                     setting(const char* name, const char* short_desc, const char* long_desc, type_e type);
@@ -190,4 +192,16 @@ public:
 protected:
     static const char* next_option(const char* option);
     str<48>            m_options;
+};
+
+//------------------------------------------------------------------------------
+class setting_color
+    : public setting_str
+{
+public:
+                       setting_color(const char* name, const char* short_desc, const char* default_value);
+                       setting_color(const char* name, const char* short_desc, const char* long_desc, const char* default_value);
+    virtual void       set() override;
+    virtual bool       set(const char* value) override;
+    virtual void       get_descriptive(str_base& out) const override;
 };

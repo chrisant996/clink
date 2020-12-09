@@ -18,7 +18,6 @@
 #include <terminal/terminal_in.h>
 #include <terminal/key_tester.h>
 #include <terminal/screen_buffer.h>
-#include <terminal/setting_colour.h>
 
 extern "C" {
 #include <readline/readline.h>
@@ -80,7 +79,7 @@ inline int clink_wcwidth(char32_t c)
 
 extern void host_add_history(int rl_history_index, const char* line);
 extern void host_remove_history(int rl_history_index, const char* line);
-extern setting_colour g_colour_interact;
+extern setting_color g_color_interact;
 
 terminal_in*        s_direct_input = nullptr;       // for read_key_hook
 terminal_in*        s_processed_input = nullptr;    // for read thunk
@@ -90,42 +89,42 @@ pager*              g_pager = nullptr;
 editor_module::result* g_result = nullptr;
 
 //------------------------------------------------------------------------------
-setting_colour g_colour_input(
-    "colour.input",
-    "Input text colour",
+setting_color g_color_input(
+    "color.input",
+    "Input text color",
     "Used when Clink displays the input line text.",
-    setting_colour::value_fg_default, setting_colour::value_bg_default);
+    "");
 
-setting_colour g_colour_modmark(
-    "colour.modmark",
-    "Modified history line mark colour",
+setting_color g_color_modmark(
+    "color.modmark",
+    "Modified history line mark color",
     "Used when Clink displays the * mark on modified history lines when\n"
-    "mark-modified-lines is set and colour.input is set.",
-    setting_colour::value_fg_default, setting_colour::value_bg_default);
+    "mark-modified-lines is set and color.input is set.",
+    "");
 
-setting_colour g_colour_hidden(
-    "colour.hidden",
+setting_color g_color_hidden(
+    "color.hidden",
     "Hidden file completions",
     "Used when Clink displays file completions with the hidden attribute.",
-    setting_colour::value_fg_default, setting_colour::value_bg_default);
+    "");
 
-setting_colour g_colour_readonly(
-    "colour.readonly",
+setting_color g_color_readonly(
+    "color.readonly",
     "Readonly file completions",
     "Used when Clink displays file completions with the readonly attribute.",
-    setting_colour::value_fg_default, setting_colour::value_bg_default);
+    "");
 
-setting_colour g_colour_cmd(
-    "colour.cmd",
+setting_color g_color_cmd(
+    "color.cmd",
     "Shell command completions",
     "Used when Clink displays shell (CMD.EXE) command completions.",
-    setting_colour::value_fg_default, setting_colour::value_bg_default);
+    "bold");
 
-setting_colour g_colour_doskey(
-    "colour.doskey",
+setting_color g_color_doskey(
+    "color.doskey",
     "Doskey completions",
     "Used when Clink displays doskey macro completions.",
-    setting_colour::value_light_cyan, setting_colour::value_bg_default);
+    "bright cyan");
 
 setting_bool g_match_wild(
     "match.wild",
@@ -200,67 +199,22 @@ extern "C" const char* host_get_env(const char* name)
 }
 
 //------------------------------------------------------------------------------
-static bool build_color_sequence(const attributes& colour, str_base& out, bool include_csi = false)
+static bool build_color_sequence(const setting_color& setting, str_base& out, bool include_csi = false)
 {
-    out.clear();
-
-    int overhead = 0;
     if (include_csi)
     {
-        out.concat("\x1b[");
-        overhead += 2;
+        str<> tmp;
+        setting.get(tmp);
+        if (tmp.empty())
+            return false;
+        out.clear();
+        out << "\x1b[" << tmp.c_str() << "m"; // Can't use format() because it DOESN'T GROW!
     }
-
-    auto bg = colour.get_bg();
-    int value = -1;
-    if (bg.set && !bg.is_default)
+    else
     {
-        value = ((bg.value.value & 0x0f) < 8 ? (bg.value.value & 0x0f) + 40 :
-                 (bg.value.value & 0x0f) - 8 + 100);
+        setting.get(out);
     }
-    if (value >= 0)
-    {
-        char buf[10];
-        itoa(value, buf, 10);
-        out << buf;
-    }
-
-    auto fg = colour.get_fg();
-    value = -1;
-    if (fg.set && !fg.is_default)
-    {
-        value = ((fg.value.value & 0x0f) < 8 ? (fg.value.value & 0x0f) + 30 :
-                 (fg.value.value & 0x0f) - 8 + 90);
-    }
-    if (value >= 0)
-    {
-        if (out.length() > overhead)
-            out << ";";
-        char buf[10];
-        itoa(value, buf, 10);
-        out << buf;
-    }
-
-    if (auto bold = colour.get_bold())
-    {
-        if (out.length() > overhead)
-            out << ";";
-        out << (bold.value ? "1" : "22");
-    }
-    if (auto underline = colour.get_underline())
-    {
-        if (out.length() > overhead)
-            out << ";";
-        out << (underline.value ? "4" : "24");
-    }
-
-    if (include_csi)
-    {
-        out.concat("m");
-        overhead++;
-    }
-
-    return out.length() > overhead;
+    return !out.empty();
 }
 
 //------------------------------------------------------------------------------
@@ -967,10 +921,10 @@ void rl_module::on_begin_line(const context& context)
 
     _rl_display_input_color = nullptr;
     _rl_display_modmark_color = nullptr;
-    if (build_color_sequence(g_colour_input.get(), m_input_color, true))
+    if (build_color_sequence(g_color_input, m_input_color, true))
     {
         _rl_display_input_color = m_input_color.c_str();
-        if (build_color_sequence(g_colour_modmark.get(), m_modmark_color, true))
+        if (build_color_sequence(g_color_modmark, m_modmark_color, true))
             _rl_display_modmark_color = m_modmark_color.c_str();
     }
 
@@ -981,23 +935,23 @@ void rl_module::on_begin_line(const context& context)
         _rl_parse_colors();
 
     _rl_pager_color = nullptr;
-    if (build_color_sequence(g_colour_interact.get(), m_pager_color))
+    if (build_color_sequence(g_color_interact, m_pager_color))
         _rl_pager_color = m_pager_color.c_str();
 
     _rl_hidden_color = nullptr;
-    if (build_color_sequence(g_colour_hidden.get(), m_hidden_color))
+    if (build_color_sequence(g_color_hidden, m_hidden_color))
         _rl_hidden_color = m_hidden_color.c_str();
 
     _rl_readonly_color = nullptr;
-    if (build_color_sequence(g_colour_readonly.get(), m_readonly_color))
+    if (build_color_sequence(g_color_readonly, m_readonly_color))
         _rl_readonly_color = m_readonly_color.c_str();
 
     _rl_command_color = nullptr;
-    if (build_color_sequence(g_colour_cmd.get(), m_command_color))
+    if (build_color_sequence(g_color_cmd, m_command_color))
         _rl_command_color = m_command_color.c_str();
 
     _rl_alias_color = nullptr;
-    if (build_color_sequence(g_colour_doskey.get(), m_alias_color))
+    if (build_color_sequence(g_color_doskey, m_alias_color))
         _rl_alias_color = m_alias_color.c_str();
 
     m_done = false;

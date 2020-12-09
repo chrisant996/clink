@@ -4,37 +4,37 @@
 #pragma once
 
 //------------------------------------------------------------------------------
-#define COLOUR_XS\
-    COLOUR_X(black)\
-    COLOUR_X(red)\
-    COLOUR_X(green)\
-    COLOUR_X(yellow)\
-    COLOUR_X(blue)\
-    COLOUR_X(magenta)\
-    COLOUR_X(cyan)\
-    COLOUR_X(grey)\
-    COLOUR_X(dark_grey)\
-    COLOUR_X(light_red)\
-    COLOUR_X(light_green)\
-    COLOUR_X(light_yellow)\
-    COLOUR_X(light_blue)\
-    COLOUR_X(light_magenta)\
-    COLOUR_X(light_cyan)\
-    COLOUR_X(white)
+#define COLOR_XS\
+    COLOR_X(black)\
+    COLOR_X(red)\
+    COLOR_X(green)\
+    COLOR_X(yellow)\
+    COLOR_X(blue)\
+    COLOR_X(magenta)\
+    COLOR_X(cyan)\
+    COLOR_X(grey)\
+    COLOR_X(dark_grey)\
+    COLOR_X(light_red)\
+    COLOR_X(light_green)\
+    COLOR_X(light_yellow)\
+    COLOR_X(light_blue)\
+    COLOR_X(light_magenta)\
+    COLOR_X(light_cyan)\
+    COLOR_X(white)
 
-#define COLOUR_X(x) colour_##x,
+#define COLOR_X(x) color_##x,
 enum : unsigned char
 {
-    COLOUR_XS
-    colour_count,
+    COLOR_XS
+    color_count,
 };
-#undef COLOUR_X
+#undef COLOR_X
 
 //------------------------------------------------------------------------------
 class attributes
 {
 public:
-    struct colour
+    struct color
     {
         union
         {
@@ -48,7 +48,7 @@ public:
             unsigned short      value;
         };
 
-        bool                    operator == (const colour& rhs) const { return value == rhs.value; }
+        bool                    operator == (const color& rhs) const { return value == rhs.value; }
         void                    as_888(unsigned char (&out)[3]) const;
     };
 
@@ -79,8 +79,8 @@ public:
     void                        set_bold(bool state=true);
     void                        set_underline(bool state=true);
     void                        set_reverse(bool state=true);
-    attribute<colour>           get_fg() const;
-    attribute<colour>           get_bg() const;
+    attribute<color>            get_fg() const;
+    attribute<color>            get_bg() const;
     attribute<bool>             get_bold() const;
     attribute<bool>             get_underline() const;
     attribute<bool>             get_reverse() const;
@@ -103,8 +103,8 @@ private:
     {
         struct
         {
-            colour              m_fg;
-            colour              m_bg;
+            color               m_fg;
+            color               m_bg;
             unsigned short      m_bold : 1;
             unsigned short      m_underline : 1;
             unsigned short      m_reverse : 1;

@@ -258,7 +258,7 @@ void ecma48_terminal_out::set_attributes(const ecma48_code::csi_base& csi)
             continue;
         }
 
-        // Fore/background colours.
+        // Fore/background colors.
         if ((param - 30 < 8) | (param - 90 < 8))
         {
             param += (param >= 90) ? 14 : 2;
