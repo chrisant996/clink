@@ -6,8 +6,6 @@ Clink combines the native Windows shell `cmd.exe` with the powerful command line
 
 Downloads are available from the [releases](https://github.com/chrisant996/clink/releases) page.
 
-> There are no production releases yet; currently only pre-release builds are available, for testing purposes.
-
 See the [issues](https://github.com/chrisant996/clink/issues) page for known issues or to file new issues.
 
 ### Features
