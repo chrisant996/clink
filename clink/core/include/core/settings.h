@@ -5,13 +5,38 @@
 
 #include "str.h"
 
+#include <map>
+
 class setting;
+
+//------------------------------------------------------------------------------
+struct cmp_str
+{
+    bool operator()(const char* a, const char* b) const
+    {
+        return stricmp(a, b) < 0;
+    }
+};
+
+//------------------------------------------------------------------------------
+typedef std::map<const char*, setting*, cmp_str> setting_map;
+
+//------------------------------------------------------------------------------
+class setting_iter
+{
+public:
+                            setting_iter(setting_map& map);
+    setting*                next();
+private:
+    setting_map&            m_map;
+    setting_map::iterator   m_iter;
+};
 
 //------------------------------------------------------------------------------
 namespace settings
 {
 
-setting*            first();
+setting_iter        first();
 setting*            find(const char* name);
 bool                load(const char* file);
 bool                save(const char* file);
@@ -33,7 +58,6 @@ public:
     };
 
     virtual         ~setting();
-    setting*        next() const;
     type_e          get_type() const;
     const char*     get_name() const;
     const char*     get_short_desc() const;
@@ -48,8 +72,6 @@ protected:
     str<32, false>  m_name;
     str<48, false>  m_short_desc;
     str<128>        m_long_desc;
-    setting*        m_prev;
-    setting*        m_next;
     type_e          m_type;
 
     template <typename T>

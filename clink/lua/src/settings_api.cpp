@@ -136,6 +136,10 @@ static int add(lua_State* state)
         return 1;
     }
 
+    const char* name = lua_tostring(state, 1);
+    if (settings::find(name))
+        return luaL_error(state, "Setting '%s' already exists", name);
+
     switch (lua_type(state, 2))
     {
     case LUA_TNUMBER:

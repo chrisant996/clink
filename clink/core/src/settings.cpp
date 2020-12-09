@@ -21,8 +21,36 @@ struct loaded_setting
 };
 
 //------------------------------------------------------------------------------
-static setting* g_setting_list = nullptr;
+static setting_map* g_setting_map = nullptr;
 static std::map<std::string, loaded_setting> g_loaded_settings;
+
+//------------------------------------------------------------------------------
+static auto& get_map()
+{
+    if (!g_setting_map)
+        g_setting_map = new setting_map;
+    return *g_setting_map;
+}
+
+
+
+//------------------------------------------------------------------------------
+setting_iter::setting_iter(setting_map& map)
+: m_map(map)
+, m_iter(map.begin())
+{
+}
+
+//------------------------------------------------------------------------------
+setting* setting_iter::next()
+{
+    if (m_iter == m_map.end())
+        return nullptr;
+
+    auto* i = m_iter->second;
+    m_iter++;
+    return i;
+}
 
 
 
@@ -30,21 +58,17 @@ namespace settings
 {
 
 //------------------------------------------------------------------------------
-setting* first()
+setting_iter first()
 {
-    return g_setting_list;
+    return setting_iter(get_map());
 }
 
 //------------------------------------------------------------------------------
 setting* find(const char* name)
 {
-    setting* next = first();
-    do
-    {
-        if (stricmp(name, next->get_name()) == 0)
-            return next;
-    }
-    while (next = next->next());
+    auto i = get_map().find(name);
+    if (i != get_map().end())
+        return i->second;
 
     return nullptr;
 }
@@ -79,8 +103,8 @@ bool load(const char* file)
     data[size] = '\0';
 
     // Reset settings to default.
-    for (auto* iter = settings::first(); iter != nullptr; iter = iter->next())
-        iter->set();
+    for (auto iter = settings::first(); auto* next = iter.next();)
+        next->set();
 
     // Split at new lines.
     bool was_comment = false;
@@ -153,8 +177,9 @@ bool save(const char* file)
         iter.second.saved = false;
 
     // Iterate over each setting and write it out to the file.
-    for (const auto* iter = settings::first(); iter != nullptr; iter = iter->next())
+    for (auto i : get_map())
     {
+        setting* iter = i.second;
         auto loaded = g_loaded_settings.find(iter->get_name());
         if (loaded != g_loaded_settings.end())
             loaded->second.saved = true;
@@ -226,45 +251,18 @@ setting::setting(
 , m_type(type)
 {
     assert(strlen(short_desc) == m_short_desc.length());
+    assert(!settings::find(m_name.c_str()));
 
-    setting* insert_at = nullptr;
-    for (auto* i = g_setting_list; i != nullptr; insert_at = i, i = i->next())
-        if (stricmp(name, i->get_name()) < 0)
-            break;
-
-    if (insert_at == nullptr)
-    {
-        m_prev = nullptr;
-        m_next = g_setting_list;
-        g_setting_list = this;
-    }
-    else
-    {
-        m_next = insert_at->m_next;
-        m_prev = insert_at;
-        insert_at->m_next = this;
-    }
-
-    if (m_next != nullptr)
-        m_next->m_prev = this;
+    get_map()[m_name.c_str()] = this;
 }
 
 //------------------------------------------------------------------------------
 setting::~setting()
 {
-    if (m_prev != nullptr)
-        m_prev->m_next = m_next;
-    else
-        g_setting_list = m_next;
+    auto i = settings::find(m_name.c_str());
 
-    if (m_next != nullptr)
-        m_next->m_prev = m_prev;
-}
-
-//------------------------------------------------------------------------------
-setting* setting::next() const
-{
-    return m_next;
+    if (i && i == this)
+        get_map().erase(m_name.c_str());
 }
 
 //------------------------------------------------------------------------------

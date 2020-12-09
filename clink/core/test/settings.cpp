@@ -9,22 +9,22 @@
 //------------------------------------------------------------------------------
 TEST_CASE("settings : basic")
 {
-    auto* first = settings::first();
+    auto* first = settings::first().next();
     {
         setting_bool test("!one", "", "", false);
-        REQUIRE(settings::first() == &test);
+        REQUIRE(settings::first().next() == &test);
     }
-    REQUIRE(settings::first() == first);
+    REQUIRE(settings::first().next() == first);
 }
 
 //------------------------------------------------------------------------------
 TEST_CASE("settings : list")
 {
-    auto* first = settings::first();
+    auto* first = settings::first().next();
 
     auto count_settings = [] () {
         int count = 0;
-        for (auto* i = settings::first(); i != nullptr; i = i->next())
+        for (auto i = settings::first(); i.next();)
             ++count;
 
         return count;
@@ -35,7 +35,7 @@ TEST_CASE("settings : list")
     // Create a few settings.
     const char* names[] = {
         "sed", "do", "eiusmod", "tempor", "incididunt", "ut", "labore", "Et",
-        "Dolore", "Magna", "Aliqua", "Ut", "Enim", "Ad", "minim", "veniam",
+        "Dolore", "Magna", "Aliqua", "U_t", "Enim", "Ad", "minim", "veniam",
         "quis", "nostrud", "exercitation", "ullamco", "laboris"
     };
 
@@ -43,13 +43,14 @@ TEST_CASE("settings : list")
         new setting_int(names[i], "", nullptr, i);
 
     // Check they're in the order we expect.
-    setting* iter = settings::first();
-    const char* last_name = iter->get_name();
-    iter = iter->next();
-    for (; iter != nullptr; last_name = iter->get_name(), iter = iter->next())
+    setting_iter iter = settings::first();
+    auto* next = iter.next();
+    const char* last_name = next->get_name();
+    next = iter.next();
+    for (; next != nullptr; last_name = next->get_name(), next = iter.next())
     {
-        REQUIRE(stricmp(last_name, iter->get_name()) <= 0, [&] () {
-            printf("%s < %s\n", last_name, iter->get_name());
+        REQUIRE(stricmp(last_name, next->get_name()) <= 0, [&] () {
+            printf("%s < %s\n", last_name, next->get_name());
         });
     }
 
@@ -64,7 +65,7 @@ TEST_CASE("settings : list")
     }
 
     REQUIRE(count_settings() == initial_count);
-    REQUIRE(settings::first() == first);
+    REQUIRE(settings::first().next() == first);
 }
 
 //------------------------------------------------------------------------------

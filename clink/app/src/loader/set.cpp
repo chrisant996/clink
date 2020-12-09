@@ -21,7 +21,7 @@ void puts_help(const char**, int);
 //------------------------------------------------------------------------------
 static void list_keys()
 {
-    for (auto* next = settings::first(); next != nullptr; next = next->next())
+    for (auto iter = settings::first(); auto* next = iter.next();)
         puts(next->get_name());
 }
 
@@ -62,10 +62,10 @@ static void list_options(const char* key)
 static bool print_keys()
 {
     int longest = 0;
-    for (auto* next = settings::first(); next != nullptr; next = next->next())
+    for (auto iter = settings::first(); auto* next = iter.next();)
         longest = max(longest, int(strlen(next->get_name())));
 
-    for (auto* next = settings::first(); next != nullptr; next = next->next())
+    for (auto iter = settings::first(); auto* next = iter.next();)
     {
         str<> value;
         next->get(value);
