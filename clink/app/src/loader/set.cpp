@@ -239,7 +239,7 @@ int set(int argc, char** argv)
             if (set_value(argv[1]))
                 return settings::save(settings_file.c_str()), 0;
         }
-        else if (set_value(argv[1], argv + 2, argc - 1))
+        else if (set_value(argv[1], argv + 2, argc - 2))
             return settings::save(settings_file.c_str()), 0;
     }
 
