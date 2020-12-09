@@ -9,6 +9,7 @@
 - Rewrote the color settings:  the .fg and .bg sub-settings are gone, and the main setting now uses a more natural syntax (e.g. `clink set color.input bright yellow` or `clink set color.modmark bright cyan on blue`).
 - Added "cmd" match type for shell (CMD.EXE) command completions.
 - Added VT emulation for the reverse video SGR parameters.
+- Fixed tab completion for <code>clink set <em>&lt;setting&gt;</em></code>, and also handle the new color setting syntax.
 - Fixed confusing behavior if multiple scripts try to add settings with the same name (now the first one succeeds and the rest report errors).
 
 ### v1.1.6
