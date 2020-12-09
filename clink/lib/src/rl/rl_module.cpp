@@ -206,9 +206,12 @@ static bool build_color_sequence(const attributes& colour, str_base& out, bool i
     }
 
     auto bg = colour.get_bg();
-    int value = (bg.is_default ? -1 :
-                 (bg.value.value & 0x0f) < 8 ? (bg.value.value & 0x0f) + 40 :
+    int value = -1;
+    if (bg.set && !bg.is_default)
+    {
+        value = ((bg.value.value & 0x0f) < 8 ? (bg.value.value & 0x0f) + 40 :
                  (bg.value.value & 0x0f) - 8 + 100);
+    }
     if (value >= 0)
     {
         char buf[10];
@@ -217,9 +220,12 @@ static bool build_color_sequence(const attributes& colour, str_base& out, bool i
     }
 
     auto fg = colour.get_fg();
-    value = (fg.is_default ? -1 :
-             (fg.value.value & 0x0f) < 8 ? (fg.value.value & 0x0f) + 30 :
-             (fg.value.value & 0x0f) - 8 + 90);
+    value = -1;
+    if (fg.set && !fg.is_default)
+    {
+        value = ((fg.value.value & 0x0f) < 8 ? (fg.value.value & 0x0f) + 30 :
+                 (fg.value.value & 0x0f) - 8 + 90);
+    }
     if (value >= 0)
     {
         if (out.length() > overhead)
