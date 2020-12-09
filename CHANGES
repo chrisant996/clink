@@ -5,6 +5,14 @@
 
 ### Unreleased
 
+- Performance improvement when displaying matches:  When enumerating files and dirs, the `os.globfiles` and `os.globdirs` functions have all the info about each file.  Now they can return that info in a table.  This frees the match display function from needing to do any further file system IO.  The performance boost is noticeable.
+- Rewrote the color settings:  the .fg and .bg sub-settings are gone, and the main setting now uses a more natural syntax (e.g. `clink set color.input bright yellow` or `clink set color.modmark bright cyan on blue`).
+- Added "cmd" match type for shell (CMD.EXE) command completions.
+- Added VT emulation for the reverse video SGR parameters.
+- Fixed confusing behavior if multiple scripts try to add settings with the same name (now the first one succeeds and the rest report errors).
+
+### v1.1.6
+
 - Hooked up tilde completion in the `cd`, `md`, and `rd` command argmatchers.
 - Hooked up tilde completion with the `exec.enable` setting ("~\pro" matches "C:\Users\myusername\program.exe").
 - When `terminal.emulation` is `auto`, now it also detects ANSI{32|64}.DLL just like Clink 0.4.8 did.
