@@ -300,15 +300,11 @@ _rl_print_color_indicator (const char *f, unsigned char match_type)
   if (match_type)
     {
     const char* override_color = 0;
-    if (colored_filetype == C_FILE || colored_filetype == C_DIR)
+    if (IS_MATCH_TYPE_FILE(match_type) || IS_MATCH_TYPE_DIR(match_type))
       {
-        if (_rl_hidden_color &&
-            IS_MATCH_TYPE_HIDDEN (match_type) &&
-            (IS_MATCH_TYPE_FILE (match_type) || IS_MATCH_TYPE_DIR (match_type)))
+        if (_rl_hidden_color && IS_MATCH_TYPE_HIDDEN (match_type))
           override_color = _rl_hidden_color;
-        else if (_rl_readonly_color &&
-            IS_MATCH_TYPE_READONLY (match_type) &&
-            (IS_MATCH_TYPE_FILE (match_type) /*|| IS_MATCH_TYPE_DIR (match_type)*/))
+        else if (_rl_readonly_color && IS_MATCH_TYPE_READONLY (match_type))
           override_color = _rl_readonly_color;
       }
     else if (IS_MATCH_TYPE_COMMAND (match_type))
