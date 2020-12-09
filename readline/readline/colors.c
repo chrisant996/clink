@@ -311,6 +311,8 @@ _rl_print_color_indicator (const char *f, unsigned char match_type)
             (IS_MATCH_TYPE_FILE (match_type) /*|| IS_MATCH_TYPE_DIR (match_type)*/))
           override_color = _rl_readonly_color;
       }
+    else if (IS_MATCH_TYPE_COMMAND (match_type))
+      override_color = _rl_command_color;
     else if (IS_MATCH_TYPE_ALIAS (match_type))
       override_color = _rl_alias_color;
     if (override_color)

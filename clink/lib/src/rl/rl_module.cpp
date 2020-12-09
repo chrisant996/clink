@@ -115,6 +115,12 @@ setting_colour g_colour_readonly(
     "Used when Clink displays file completions with the readonly attribute.",
     setting_colour::value_fg_default, setting_colour::value_bg_default);
 
+setting_colour g_colour_cmd(
+    "colour.cmd",
+    "Shell command completions",
+    "Used when Clink displays shell (CMD.EXE) command completions.",
+    setting_colour::value_fg_default, setting_colour::value_bg_default);
+
 setting_colour g_colour_doskey(
     "colour.doskey",
     "Doskey completions",
@@ -985,6 +991,10 @@ void rl_module::on_begin_line(const context& context)
     _rl_readonly_color = nullptr;
     if (build_color_sequence(g_colour_readonly.get(), m_readonly_color))
         _rl_readonly_color = m_readonly_color.c_str();
+
+    _rl_command_color = nullptr;
+    if (build_color_sequence(g_colour_cmd.get(), m_command_color))
+        _rl_command_color = m_command_color.c_str();
 
     _rl_alias_color = nullptr;
     if (build_color_sequence(g_colour_doskey.get(), m_alias_color))

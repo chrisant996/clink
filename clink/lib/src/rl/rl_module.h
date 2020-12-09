@@ -43,6 +43,7 @@ private:
     str<8>          m_pager_color;
     str<8>          m_hidden_color;
     str<8>          m_readonly_color;
+    str<8>          m_command_color;
     str<8>          m_alias_color;
     int             m_insert_next_len = 0;
 };

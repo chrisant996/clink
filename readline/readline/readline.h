@@ -647,16 +647,18 @@ extern rl_postprocess_lcd_func_t *rl_postprocess_lcd_func;
 #define MATCH_TYPE_NONE			1
 #define MATCH_TYPE_WORD			2
 #define MATCH_TYPE_ARG			3
-#define MATCH_TYPE_ALIAS		4
-#define MATCH_TYPE_FILE			5
-#define MATCH_TYPE_DIR			6
-#define MATCH_TYPE_LINK			7
+#define MATCH_TYPE_COMMAND		4
+#define MATCH_TYPE_ALIAS		5
+#define MATCH_TYPE_FILE			6
+#define MATCH_TYPE_DIR			7
+#define MATCH_TYPE_LINK			8
 #define MATCH_TYPE_MASK			0x0f
 #define MATCH_TYPE_HIDDEN		0x40
 #define MATCH_TYPE_READONLY		0x80
 #define IS_MATCH_TYPE_NONE(x)		(((x) & MATCH_TYPE_MASK) == MATCH_TYPE_NONE)
 #define IS_MATCH_TYPE_WORD(x)		(((x) & MATCH_TYPE_MASK) == MATCH_TYPE_WORD)
 #define IS_MATCH_TYPE_ARG(x)		(((x) & MATCH_TYPE_MASK) == MATCH_TYPE_ARG)
+#define IS_MATCH_TYPE_COMMAND(x)	(((x) & MATCH_TYPE_MASK) == MATCH_TYPE_COMMAND)
 #define IS_MATCH_TYPE_ALIAS(x)		(((x) & MATCH_TYPE_MASK) == MATCH_TYPE_ALIAS)
 #define IS_MATCH_TYPE_FILE(x)		(((x) & MATCH_TYPE_MASK) == MATCH_TYPE_FILE)
 #define IS_MATCH_TYPE_DIR(x)		(((x) & MATCH_TYPE_MASK) == MATCH_TYPE_DIR)
@@ -960,6 +962,9 @@ extern const char* _rl_hidden_color;
 /* This is a terminal sequence for the readonly file color.  The CSI and "m" are
    automatically added when writing it to the terminal. */
 extern const char* _rl_readonly_color;
+/* This is a terminal sequence for the shell command color.  The CSI and "m" are
+   automatically added when writing it to the terminal. */
+extern const char* _rl_command_color;
 /* This is a terminal sequence for the alias color.  The CSI and "m" are
    automatically added when writing it to the terminal. */
 extern const char* _rl_alias_color;

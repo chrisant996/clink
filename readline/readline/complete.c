@@ -451,6 +451,7 @@ int rl_inhibit_completion;
 const char *_rl_pager_color = 0;
 const char *_rl_hidden_color = 0;
 const char *_rl_readonly_color = 0;
+const char *_rl_command_color = 0;
 const char *_rl_alias_color = 0;
 rl_read_key_hook_func_t *rl_read_key_hook = 0;
 int rl_completion_matches_include_type = 0;
