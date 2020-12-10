@@ -3,6 +3,10 @@
 
 ## Releases from [chrisant996/clink](https://github.com/chrisant996/clink) fork
 
+### Unreleased
+
+- Fixed file match completions when an argmatcher only generates flag matches.
+
 ### v1.1.7
 
 - Performance improvement when displaying matches:  When enumerating files and dirs, the `os.globfiles` and `os.globdirs` functions have all the info about each file.  Now they can return that info in a table.  This frees the match display function from needing to do any further file system IO.  The performance boost is noticeable.

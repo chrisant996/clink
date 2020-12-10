@@ -426,7 +426,19 @@ function _argmatcher:_generate(line_state, match_builder)
     end
 
     -- No valid argument. Decide if we should match files or not.
-    local no_files = matcher._no_file_generation or #matcher._args == 0
+    local no_files = false
+    if matcher._no_file_generation then
+        -- Don't match files if :nofiles() was explicitly used.
+        no_files = true
+    elseif #matcher._args == 0 and not matcher._flags then
+        -- A completely empty argmatcher is a synonym for :nofiles().  It's
+        -- empty if neither :addarg() nor :addflags() have been called on it
+        -- (this is not the same thing as having an empty arg list for an arg
+        -- index slot, nor as having an empty flags list).  This nuance is
+        -- important so that it's possible to generate flag matches without
+        -- losing the ability to generate file matches.
+        no_files = true
+    end
     return no_files
 end
 
