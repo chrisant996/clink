@@ -77,6 +77,67 @@ int old_glob_files(lua_State* state)
 }
 
 //------------------------------------------------------------------------------
+static int get_setting_str(lua_State* state)
+{
+    return get_clink_setting(state);
+}
+
+//------------------------------------------------------------------------------
+static int get_setting_int(lua_State* state)
+{
+    return get_clink_setting(state);
+}
+
+//------------------------------------------------------------------------------
+static int get_rl_variable(lua_State* state)
+{
+    // Check we've got at least one string argument.
+    if (lua_gettop(state) == 0 || !lua_isstring(state, 1))
+        return 0;
+
+    const char* string = lua_tostring(state, 1);
+    const char* rl_cvar = rl_variable_value(string);
+    if (rl_cvar == nullptr)
+        return 0;
+
+    lua_pushstring(state, rl_cvar);
+    return 1;
+}
+
+//------------------------------------------------------------------------------
+static int is_rl_variable_true(lua_State* state)
+{
+    int i;
+    const char* cvar_value;
+
+    i = get_rl_variable(state);
+    if (i == 0)
+    {
+        return 0;
+    }
+
+    cvar_value = lua_tostring(state, -1);
+    i = (_stricmp(cvar_value, "on") == 0) || (_stricmp(cvar_value, "1") == 0);
+    lua_pop(state, 1);
+    lua_pushboolean(state, i);
+
+    return 1;
+}
+
+//------------------------------------------------------------------------------
+static int get_host_process(lua_State* state)
+{
+    lua_pushstring(state, rl_readline_name);
+    return 1;
+}
+
+
+
+// END -- Clink 0.4.8 API compatibility ----------------------------------------
+
+
+
+//------------------------------------------------------------------------------
 /// -name:  clink.match_display_filter
 /// -var:   function
 /// -deprecated: builder:addmatch
@@ -191,65 +252,6 @@ static int to_uppercase(lua_State* state)
     return map_string(state, LCMAP_UPPERCASE);
 }
 
-//------------------------------------------------------------------------------
-static int get_setting_str(lua_State* state)
-{
-    return get_clink_setting(state);
-}
-
-//------------------------------------------------------------------------------
-static int get_setting_int(lua_State* state)
-{
-    return get_clink_setting(state);
-}
-
-//------------------------------------------------------------------------------
-static int get_rl_variable(lua_State* state)
-{
-    // Check we've got at least one string argument.
-    if (lua_gettop(state) == 0 || !lua_isstring(state, 1))
-        return 0;
-
-    const char* string = lua_tostring(state, 1);
-    const char* rl_cvar = rl_variable_value(string);
-    if (rl_cvar == nullptr)
-        return 0;
-
-    lua_pushstring(state, rl_cvar);
-    return 1;
-}
-
-//------------------------------------------------------------------------------
-static int is_rl_variable_true(lua_State* state)
-{
-    int i;
-    const char* cvar_value;
-
-    i = get_rl_variable(state);
-    if (i == 0)
-    {
-        return 0;
-    }
-
-    cvar_value = lua_tostring(state, -1);
-    i = (_stricmp(cvar_value, "on") == 0) || (_stricmp(cvar_value, "1") == 0);
-    lua_pop(state, 1);
-    lua_pushboolean(state, i);
-
-    return 1;
-}
-
-//------------------------------------------------------------------------------
-static int get_host_process(lua_State* state)
-{
-    lua_pushstring(state, rl_readline_name);
-    return 1;
-}
-
-
-
-// END -- Clink 0.4.8 API compatibility ----------------------------------------
-
 
 
 //------------------------------------------------------------------------------
@@ -269,8 +271,13 @@ void clink_lua_initialise(lua_state& lua)
         const char* name;
         int         (*method)(lua_State*);
     } methods[] = {
-        // Clink 0.4.8 API compatibility.  Clink 1.0.0a1 moved these APIs away
-        // from "clink.", but backward compatibility requires them here as well.
+        // APIs in the "clink." namespace.
+        { "lower",                  &to_lowercase },
+        { "print",                  &clink_print },
+        { "upper",                  &to_uppercase },
+        // Backward compatibility with the Clink 0.4.8 API.  Clink 1.0.0a1 had
+        // moved these APIs away from "clink.", but backward compatibility
+        // requires them here as well.
         { "chdir",                  &set_current_dir },
         { "execute",                &lua_execute },
         { "find_dirs",              &old_glob_dirs },
@@ -286,10 +293,6 @@ void clink_lua_initialise(lua_state& lua)
         { "get_setting_str",        &get_setting_str },
         { "is_dir",                 &is_dir },
         { "is_rl_variable_true",    &is_rl_variable_true },
-        { "lower",                  &to_lowercase },
-        // New APIs in the "clink." namespace.
-        { "print",                  &clink_print },
-        { "upper",                  &to_uppercase },
     };
 
     lua_State* state = lua.get_state();
