@@ -61,7 +61,20 @@ extern const char*      rl_readline_name;
 }
 
 extern int              get_clink_setting(lua_State* state);
+extern int              glob_impl(lua_State* state, bool dirs_only, bool allow_extra_info);
 extern int              lua_execute(lua_State* state);
+
+//------------------------------------------------------------------------------
+int old_glob_dirs(lua_State* state)
+{
+    return glob_impl(state, true, false/*allow_extrainfo*/);
+}
+
+//------------------------------------------------------------------------------
+int old_glob_files(lua_State* state)
+{
+    return glob_impl(state, false, false/*allow_extrainfo*/);
+}
 
 //------------------------------------------------------------------------------
 /// -name:  clink.match_display_filter
@@ -241,8 +254,6 @@ static int get_host_process(lua_State* state)
 
 //------------------------------------------------------------------------------
 extern int set_current_dir(lua_State* state);
-extern int glob_dirs(lua_State* state);
-extern int glob_files(lua_State* state);
 extern int get_aliases(lua_State* state);
 extern int get_current_dir(lua_State* state);
 extern int get_env(lua_State* state);
@@ -262,8 +273,8 @@ void clink_lua_initialise(lua_state& lua)
         // from "clink.", but backward compatibility requires them here as well.
         { "chdir",                  &set_current_dir },
         { "execute",                &lua_execute },
-        { "find_dirs",              &glob_dirs },
-        { "find_files",             &glob_files },
+        { "find_dirs",              &old_glob_dirs },
+        { "find_files",             &old_glob_files },
         { "get_console_aliases",    &get_aliases },
         { "get_cwd",                &get_current_dir },
         { "get_env",                &get_env },

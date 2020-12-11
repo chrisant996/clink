@@ -203,13 +203,13 @@ static void add_type_tag(str_base& out, const char* tag)
 }
 
 //------------------------------------------------------------------------------
-static int glob_impl(lua_State* state, bool dirs_only)
+int glob_impl(lua_State* state, bool dirs_only, bool allow_extra_info)
 {
     const char* mask = get_string(state, 1);
     if (mask == nullptr)
         return 0;
 
-    bool extrainfo = lua_toboolean(state, 2);
+    bool extrainfo = allow_extra_info && lua_toboolean(state, 2);
 
     lua_createtable(state, 0, 0);
 
@@ -271,7 +271,7 @@ static int glob_impl(lua_State* state, bool dirs_only)
 /// ",readonly" depending on the attributes (making it usable as a match type).
 int glob_dirs(lua_State* state)
 {
-    return glob_impl(state, true);
+    return glob_impl(state, true, true);
 }
 
 //------------------------------------------------------------------------------
@@ -288,7 +288,7 @@ int glob_dirs(lua_State* state)
 /// ",readonly" depending on the attributes (making it usable as a match type).
 int glob_files(lua_State* state)
 {
-    return glob_impl(state, false);
+    return glob_impl(state, false, true);
 }
 
 //------------------------------------------------------------------------------
