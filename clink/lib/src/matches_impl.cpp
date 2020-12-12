@@ -413,7 +413,11 @@ shadow_bool matches_impl::is_filename_completion_desired() const
 //------------------------------------------------------------------------------
 bool matches_impl::is_filename_display_desired() const
 {
-    return m_filename_completion_desired || m_filename_display_desired;
+    if (m_filename_display_desired)
+        return true;
+    if (m_filename_completion_desired && m_filename_completion_desired.is_explicit())
+        return true;
+    return false;
 }
 
 //------------------------------------------------------------------------------
