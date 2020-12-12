@@ -713,6 +713,7 @@ stat_from_match_type (unsigned char match_type, const char* fn, struct stat* fin
     finfo->st_mode |= S_IFLNK;
 #endif
   else if (!IS_MATCH_TYPE_WORD (match_type) &&
+           !IS_MATCH_TYPE_ARG (match_type) &&
            !IS_MATCH_TYPE_ALIAS (match_type))
     finfo->st_mode |= S_IFREG;
 
@@ -1526,6 +1527,10 @@ match_type_strcmp (const char *s1, const char *s2, int past_flag, int casefold, 
     if (!dedupe)
       {
         cmp = (t1 == MATCH_TYPE_WORD) - (t2 == MATCH_TYPE_WORD);
+        if (cmp)
+          return cmp;
+
+        cmp = (t1 == MATCH_TYPE_ARG) - (t2 == MATCH_TYPE_ARG);
         if (cmp)
           return cmp;
 
