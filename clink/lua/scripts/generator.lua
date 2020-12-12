@@ -129,14 +129,13 @@ end
 
 --------------------------------------------------------------------------------
 --- -name:  clink.matches_are_files
---- -arg:   files:boolean
+--- -arg:   [files:boolean]
 --- -deprecated: builder:addmatch
 --- This is no longer needed, because now it's inferred from the match type when
 --- adding matches.
 function clink.matches_are_files(files)
     if _current_builder then
-        if files == nil then files = true end
-        _current_builder:setmatchesarefiles((files and true) or false)
+        _current_builder:setmatchesarefiles(files)
     end
 end
 
