@@ -390,11 +390,12 @@ function _argmatcher:_generate(line_state, match_builder)
     -- could be well out of range.
     local matcher = reader._matcher
     local arg_index = reader._arg_index
+    local match_type = ((not matcher._deprecated) and "arg") or nil
 
     -- Are we left with a valid argument that can provide matches?
-    local add_matches = function(arg)
+    local add_matches = function(arg, match_type)
         for key, _ in pairs(arg._links) do
-            match_builder:addmatch(key, "arg")
+            match_builder:addmatch(key, match_type)
         end
 
         for _, i in ipairs(arg) do
@@ -404,9 +405,9 @@ function _argmatcher:_generate(line_state, match_builder)
                     return j or false
                 end
 
-                match_builder:addmatches(j, "arg")
+                match_builder:addmatches(j, match_type)
             else
-                match_builder:addmatch(i, "arg")
+                match_builder:addmatch(i, match_type)
             end
         end
 
@@ -416,12 +417,12 @@ function _argmatcher:_generate(line_state, match_builder)
     -- Select between adding flags or matches themselves. Works in conjunction
     -- with getwordbreakinfo()'s return.
     if matcher._flags and matcher:_is_flag(line_state:getendword()) then
-        add_matches(matcher._flags._args[1])
+        add_matches(matcher._flags._args[1], match_type)
         return true
     else
         local arg = matcher._args[arg_index]
         if arg then
-            return add_matches(arg) and true or false
+            return add_matches(arg, match_type) and true or false
         end
     end
 
@@ -554,6 +555,69 @@ function clink.argmatcher(...)
     end
 
     return matcher
+end
+
+--------------------------------------------------------------------------------
+--- -name:  clink.dirmatches
+--- -arg:   word:string
+--- -ret:   table
+--- -show:  -- Make "cd" generate directory matches (no files).
+--- -show:  clink.argmatcher("cd")
+--- -show:  :addflags("/d")
+--- -show:  :argarg(({ clink.dirmatches })
+--- You can use this function in an argmatcher to supply directory matches.
+--- This automatically handles Readline tilde completion.
+function clink.dirmatches(match_word)
+    local word = rl.expandtilde(match_word)
+
+    local root = path.getdirectory(word) or ""
+    if expanded then
+        root = rl.collapsetilde(root)
+    end
+
+    local matches = {}
+    for _, i in ipairs(os.globdirs(word.."*", true)) do
+        local m = path.join(root, i.name)
+        table.insert(matches, { match = m, type = i.type })
+    end
+    return matches
+end
+
+--------------------------------------------------------------------------------
+--- -name:  clink.filematches
+--- -arg:   word:string
+--- -ret:   table
+--- -show:  -- Make "foo --file" generate file matches, but other flags and args don't.
+--- -show:  -- And the third argument can be a file or $stdin or $stdout.
+--- -show:  clink.argmatcher("foo")
+--- -show:  :addflags(
+--- -show:  &nbsp; "--help",
+--- -show:  &nbsp; "--file"..clink.argmatcher():addarg({ clink.filematches })
+--- -show:  )
+--- -show:  :addarg({ "one", "won" })
+--- -show:  :addarg({ "two", "too" })
+--- -show:  :addarg({ clink.filematches, "$stdin", "$stdout" })
+--- You can use this function in an argmatcher to supply file matches.  This
+--- automatically handles Readline tilde completion.<br/>
+--- <br/>
+--- Argmatchers default to matching files, so it's unusual to need this
+--- function.  However, some exceptions are when a flag needs to accept file
+--- matches but other flags and arguments don't, or when matches need to include
+--- more than files.
+function clink.filematches(match_word)
+    local word = rl.expandtilde(match_word)
+
+    local root = path.getdirectory(word) or ""
+    if expanded then
+        root = rl.collapsetilde(root)
+    end
+
+    local matches = {}
+    for _, i in ipairs(os.globfiles(word.."*", true)) do
+        local m = path.join(root, i.name)
+        table.insert(matches, { match = m, type = i.type })
+    end
+    return matches
 end
 
 
