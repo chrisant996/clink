@@ -4,11 +4,16 @@ ChrisAnt Plans
 
 # BETA
 
+- CollinK's `git checkout` generator blocks the `git checkout` argmatcher from running.  It's a clever form of contextual filtering of the matches.
+  - There's no good way to accurately support backward compatibility for cases like that.
+  - But what about forward compatibility?
+    - Could have a flag saying to rerun the match pipeline.
+      - Would probably be confusing (and hard to explain).
+    - Could have a filter function that runs inside `.select()` after selecting but before coalescing.  It could accept a table of matches, and return the ones to actually display.  Because it's new, it can be required to understand match types.
+      - But how to register it without different generators/argmatchers stomping on each other?
+
 ## Cmder, Powerline, Clink-Completions
 - Update clink-completions to have better 0.4.9 implementations, and also to conditionally use the new API when available.
-- Update clink-git-extensions to have better 0.4.9 implementations, and also to conditionally use the new API when available.
-  - I emailed CollinK about license info, and he replied "You have my express permission to do whatever you want with them hahaha!"
-  - I'll look into merging the clink-git-extensions scripts into the clink-completions scripts.
 - Submit a pull request for cmder-powerline-prompt.
 - Port Cmder to v1.x -- will require help from Cmder and/or ConEmu teams.  There are a lot of hard-coded expectations about Clink (web site address, terminal input mode, DLL names, VirtualAlloc patterns, and many other things).
 
