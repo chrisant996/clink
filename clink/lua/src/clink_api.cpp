@@ -61,19 +61,19 @@ extern const char*      rl_readline_name;
 }
 
 extern int              get_clink_setting(lua_State* state);
-extern int              glob_impl(lua_State* state, bool dirs_only, bool allow_extra_info);
+extern int              glob_impl(lua_State* state, bool dirs_only, bool back_compat);
 extern int              lua_execute(lua_State* state);
 
 //------------------------------------------------------------------------------
 int old_glob_dirs(lua_State* state)
 {
-    return glob_impl(state, true, false/*allow_extrainfo*/);
+    return glob_impl(state, true, true/*back_compat*/);
 }
 
 //------------------------------------------------------------------------------
 int old_glob_files(lua_State* state)
 {
-    return glob_impl(state, false, false/*allow_extrainfo*/);
+    return glob_impl(state, false, true/*back_compat*/);
 }
 
 //------------------------------------------------------------------------------

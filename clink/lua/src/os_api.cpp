@@ -203,13 +203,13 @@ static void add_type_tag(str_base& out, const char* tag)
 }
 
 //------------------------------------------------------------------------------
-int glob_impl(lua_State* state, bool dirs_only, bool allow_extra_info)
+int glob_impl(lua_State* state, bool dirs_only, bool back_compat)
 {
     const char* mask = get_string(state, 1);
     if (mask == nullptr)
         return 0;
 
-    bool extrainfo = allow_extra_info && lua_toboolean(state, 2);
+    bool extrainfo = back_compat ? false : lua_toboolean(state, 2);
 
     lua_createtable(state, 0, 0);
 
@@ -221,6 +221,8 @@ int glob_impl(lua_State* state, bool dirs_only, bool allow_extra_info)
     globber.files(!dirs_only);
     globber.hidden(g_glob_hidden.get());
     globber.system(g_glob_system.get());
+    if (back_compat)
+        globber.suffix_dirs(false);
 
     int i = 1;
     str<288> file;
@@ -228,7 +230,11 @@ int glob_impl(lua_State* state, bool dirs_only, bool allow_extra_info)
     int attr;
     while (globber.next(file, false, nullptr, &attr))
     {
-        if (extrainfo)
+        if (back_compat)
+        {
+            lua_pushstring(state, file.c_str());
+        }
+        else
         {
             lua_createtable(state, 0, 2);
 
@@ -245,10 +251,6 @@ int glob_impl(lua_State* state, bool dirs_only, bool allow_extra_info)
             lua_pushstring(state, "type");
             lua_pushstring(state, type.c_str());
             lua_rawset(state, -3);
-        }
-        else
-        {
-            lua_pushstring(state, file.c_str());
         }
 
         lua_rawseti(state, -2, i++);
