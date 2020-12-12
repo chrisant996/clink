@@ -9,6 +9,7 @@
 #include "matches_impl.h"
 
 #include <core/array.h>
+#include <core/path.h>
 #include <core/str_compare.h>
 #include <core/settings.h>
 #include <terminal/ecma48_iter.h>
@@ -37,7 +38,7 @@ extern int rl_complete_with_tilde_expansion;
 //------------------------------------------------------------------------------
 inline bool is_path_separator(char c)
 {
-    return (c == '\\' || c == '/');
+    return path::is_separator((unsigned char)c);
 }
 
 //------------------------------------------------------------------------------
