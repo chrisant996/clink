@@ -3,9 +3,14 @@
 
 ## Releases from [chrisant996/clink](https://github.com/chrisant996/clink) fork
 
-### Unreleased
+### v1.1.8
 
 - Fixed file match completions when an argmatcher only generates flag matches.
+- Fixed automatic inferring whether Readline should use filename completion and/or display rules.
+- Fixed backward compatibility for `clink.find_files()` and `clink.find_dirs()`.
+    - Ignore extra arguments after the first one (the performance improvement in v1.1.7 revealed that some scripts call `clink.find_files()` with extra invalid arguments; e.g. clink-completions/modules/matchers.lua).
+    - Don't append a trailing path separator on directory names returned by these functions (the new `os.globfiles()` and `os.globdirs()` functions do, but the old `clink.find_files()` and `clink.find_dirs()` functions should not).
+- Fixed backward compatibility for coloring matches.
 
 ### v1.1.7
 
