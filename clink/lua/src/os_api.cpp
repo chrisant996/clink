@@ -203,7 +203,7 @@ static void add_type_tag(str_base& out, const char* tag)
 }
 
 //------------------------------------------------------------------------------
-int glob_impl(lua_State* state, bool dirs_only, bool back_compat)
+int glob_impl(lua_State* state, bool dirs_only, bool back_compat=false)
 {
     const char* mask = get_string(state, 1);
     if (mask == nullptr)
@@ -273,7 +273,7 @@ int glob_impl(lua_State* state, bool dirs_only, bool back_compat)
 /// ",readonly" depending on the attributes (making it usable as a match type).
 int glob_dirs(lua_State* state)
 {
-    return glob_impl(state, true, true);
+    return glob_impl(state, true);
 }
 
 //------------------------------------------------------------------------------
@@ -290,7 +290,7 @@ int glob_dirs(lua_State* state)
 /// ",readonly" depending on the attributes (making it usable as a match type).
 int glob_files(lua_State* state)
 {
-    return glob_impl(state, false, true);
+    return glob_impl(state, false);
 }
 
 //------------------------------------------------------------------------------
