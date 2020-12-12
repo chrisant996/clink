@@ -353,6 +353,8 @@ static bool ensure_matches_size(char**& matches, int count, int& reserved)
 //------------------------------------------------------------------------------
 static char** alternative_matches(const char* text, int start, int end)
 {
+//#define PRINT_MATCHES
+
     rl_attempted_completion_over = 1;
 
     if (!s_matches)
@@ -426,6 +428,10 @@ static char** alternative_matches(const char* text, int start, int end)
             match_len--;
 
         str.concat(match, match_len);
+
+#ifdef PRINT_MATCHES
+        printf("%u: %s, %02.2x => %s\n", count - 1, match, type, matches[count] + past_flag);
+#endif
     }
     while (iter.next());
     matches[count + 1] = nullptr;
@@ -440,11 +446,8 @@ static char** alternative_matches(const char* text, int start, int end)
     if (s_matches->get_append_character())
         rl_completion_append_character = s_matches->get_append_character();
 
-#if 0
-    assert(match_count == s_matches->get_match_count());
-    for (unsigned int i = 0; i < s_matches->get_match_count(); i++)
-        printf("%u: %s, %u => %s\n", i, s_matches->get_match(i), s_matches->get_match_type(i), matches[i + 1] + past_flag);
-    printf("filename completion desired = %d\n", rl_filename_completion_desired);
+#ifdef PRINT_MATCHES
+    printf("filename completion desired = %d (%s)\n", rl_filename_completion_desired, s_matches->is_filename_completion_desired().is_explicit() ? "explicit" : "implicit");
     printf("filename display desired = %d\n", rl_filename_display_desired);
     printf("is suppress append = %d\n", s_matches->is_suppress_append());
     printf("get append character = %u\n", (unsigned char)s_matches->get_append_character());
@@ -744,7 +747,7 @@ rl_module::rl_module(const char* shell_name, terminal_in* input)
     rl_attempted_completion_function = alternative_matches;
     rl_menu_completion_entry_function = filename_menu_completion_function;
     rl_adjust_completion_word = adjust_completion_word;
-    rl_completion_display_matches_func = display_matches;
+    // rl_completion_display_matches_func = display_matches;
     rl_is_exec_func = is_exec_ext;
     rl_postprocess_lcd_func = postprocess_lcd;
     rl_read_key_hook = read_key_hook;
