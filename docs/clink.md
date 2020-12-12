@@ -499,6 +499,13 @@ the_parser:addarg({ rainbow_function, "yellow", "green" })
 
 The functions take a single argument which is a word from the command line being edited (or partial word if it is the one under the cursor). Functions should return a table of potential matches.
 
+Some built-in matcher functions are available:
+
+Function | Description
+:-: | ---
+<a href="#clink.dirmatches">clink.dirmatches</a> | Generates directory matches.
+<a href="#clink.filematches">clink.filematches</a> | Generates file matches.
+
 #### Shorthand
 
 It is also possible to omit the `addarg` and `addflags` function calls and use a more declarative shorthand form:
