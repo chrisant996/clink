@@ -39,7 +39,7 @@ public:
     virtual unsigned int    get_match_count() const override;
     virtual bool            is_suppress_append() const override;
     virtual shadow_bool     is_filename_completion_desired() const override;
-    virtual bool            is_filename_display_desired() const override;
+    virtual shadow_bool     is_filename_display_desired() const override;
     virtual char            get_append_character() const override;
     virtual int             get_suppress_quoting() const override;
     virtual int             get_word_break_adjustment() const override;

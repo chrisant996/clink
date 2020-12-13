@@ -13,6 +13,8 @@
 #include <sys/stat.h>
 #include <readline/readline.h> // for rl_last_path_separator
 
+#include <assert.h>
+
 extern "C" {
 extern int rl_complete_with_tilde_expansion;
 };
@@ -156,6 +158,8 @@ matches_iter::matches_iter(const matches& matches, const char* pattern)
 , m_pattern((m_expanded_pattern ? m_expanded_pattern : pattern),
             (m_expanded_pattern ? m_expanded_pattern : pattern) ? -1 : 0)
 , m_has_pattern(pattern != nullptr)
+, m_filename_completion_desired(matches.is_filename_completion_desired())
+, m_filename_display_desired(matches.is_filename_display_desired())
 {
 }
 
@@ -186,7 +190,13 @@ bool matches_iter::next()
             while (match_len && path::is_separator((unsigned char)match[match_len - 1]))
                 match_len--;
             if (path::match_wild(m_pattern, str_iter(match, match_len)))
+            {
+                if (is_pathish(get_match_type()))
+                    m_any_pathish = true;
+                else
+                    m_all_pathish = false;
                 return true;
+            }
         }
     }
 
@@ -194,6 +204,7 @@ bool matches_iter::next()
     if (m_index >= m_matches.get_match_count())
         return false;
     m_next++;
+    assert(!m_has_pattern); // Must not exit through here (m_any_pathish, etc).
     return true;
 }
 
@@ -211,6 +222,22 @@ match_type matches_iter::get_match_type() const
     if (m_has_pattern)
         return has_match() ? m_matches.get_unfiltered_match_type(m_index) : match_type::none;
     return has_match() ? m_matches.get_match_type(m_index) : match_type::none;
+}
+
+//------------------------------------------------------------------------------
+shadow_bool matches_iter::is_filename_completion_desired() const
+{
+    m_filename_completion_desired.set_implicit(m_any_pathish);
+    return m_filename_completion_desired;
+}
+
+//------------------------------------------------------------------------------
+shadow_bool matches_iter::is_filename_display_desired() const
+{
+    m_filename_display_desired.set_implicit(m_any_pathish && m_all_pathish);
+    if (m_filename_completion_desired && m_filename_completion_desired.is_explicit())
+        m_filename_display_desired.set_implicit(true);
+    return m_filename_display_desired;
 }
 
 
@@ -411,13 +438,15 @@ shadow_bool matches_impl::is_filename_completion_desired() const
 }
 
 //------------------------------------------------------------------------------
-bool matches_impl::is_filename_display_desired() const
+shadow_bool matches_impl::is_filename_display_desired() const
 {
-    if (m_filename_display_desired)
-        return true;
+    if (m_filename_display_desired.is_explicit())
+        return m_filename_display_desired;
+
+    shadow_bool tmp(m_filename_display_desired);
     if (m_filename_completion_desired && m_filename_completion_desired.is_explicit())
-        return true;
-    return false;
+        tmp.set_implicit(true);
+    return tmp;
 }
 
 //------------------------------------------------------------------------------

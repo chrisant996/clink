@@ -40,6 +40,12 @@ class shadow_bool
 {
 public:
                             shadow_bool(bool default_value) : m_default(default_value) { reset(); }
+                            shadow_bool(const shadow_bool& o)
+                                : m_has_explicit(o.m_has_explicit)
+                                , m_explicit(o.m_explicit)
+                                , m_implicit(o.m_implicit)
+                                , m_default(o.m_default)
+                            {}
 
     operator                bool() const { return get(); }
     bool                    operator=(bool) = delete;
@@ -71,6 +77,8 @@ public:
     bool                    next();
     const char*             get_match() const;
     match_type              get_match_type() const;
+    shadow_bool             is_filename_completion_desired() const;
+    shadow_bool             is_filename_display_desired() const;
 
 private:
     bool                    has_match() const { return m_index < m_next; }
@@ -80,6 +88,11 @@ private:
     bool                    m_has_pattern = false;
     unsigned int            m_index = 0;
     unsigned int            m_next = 0;
+
+    mutable shadow_bool     m_filename_completion_desired;
+    mutable shadow_bool     m_filename_display_desired;
+    mutable bool            m_any_pathish = false;
+    mutable bool            m_all_pathish = true;
 };
 
 //------------------------------------------------------------------------------
@@ -90,7 +103,7 @@ public:
     virtual unsigned int    get_match_count() const = 0;
     virtual bool            is_suppress_append() const = 0;
     virtual shadow_bool     is_filename_completion_desired() const = 0;
-    virtual bool            is_filename_display_desired() const = 0;
+    virtual shadow_bool     is_filename_display_desired() const = 0;
     virtual char            get_append_character() const = 0;
     virtual int             get_suppress_quoting() const = 0;
     virtual int             get_word_break_adjustment() const = 0;
