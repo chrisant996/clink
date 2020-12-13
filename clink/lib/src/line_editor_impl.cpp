@@ -582,12 +582,15 @@ void line_editor_impl::update_internal()
             i++;
         }
 
-#ifdef DEBUG_CLASSIFY_WORDS
-        static const char* const word_class_name[] = { "other", "command", "doskey", "arg", "flag", "none" };
-        printf("CLASSIFIED '%s' --", m_buffer.get_buffer());
-        for (auto c : m_classifications)
-            printf(" %s", word_class_name[int(c)]);
-        printf("\n");
+#ifdef DEBUG
+        if (dbg_get_env_int("DEBUG_CLASSIFY"))
+        {
+            static const char *const word_class_name[] = {"other", "command", "doskey", "arg", "flag", "none"};
+            printf("CLASSIFIED '%s' --", m_buffer.get_buffer());
+            for (auto c : m_classifications)
+                printf(" %s", word_class_name[int(c)]);
+            printf("\n");
+        }
 #endif
 
         // Tell all the modules that the classifications changed.
@@ -624,21 +627,25 @@ void line_editor_impl::update_internal()
         match_pipeline pipeline(m_matches);
         pipeline.reset();
         pipeline.generate(line, m_generators);
-//#define DEBUG_MATCH_PIPELINE
-#ifdef DEBUG_MATCH_PIPELINE
-        printf("GENERATE, %u matches, file_comp %u %s --%s",
-               m_matches.get_match_count(),
-               m_matches.is_filename_completion_desired().get(),
-               m_matches.is_filename_completion_desired().is_explicit() ? "(exp)" : "(imp)",
-               m_matches.get_match_count() ? "" : " <none>");
-        for (int i = 0; i < min<unsigned int>(m_matches.get_match_count(), 21); i++)
+#ifdef DEBUG
+        if (dbg_get_env_int("DEBUG_PIPELINE"))
         {
-            if (i == 20)
-                printf(" ...");
-            else
-                printf(" %s", m_matches.get_match(i));
+            printf("GENERATE, %u matches, file_comp %u %s --%s",
+                   m_matches.get_match_count(),
+                   m_matches.is_filename_completion_desired().get(),
+                   m_matches.is_filename_completion_desired().is_explicit() ? "(exp)" : "(imp)",
+                   m_matches.get_match_count() ? "" : " <none>");
+
+            int i = 0;
+            for (matches_iter iter = m_matches.get_iter(); i < 21 && iter.next(); i++)
+            {
+                if (i == 20)
+                    printf(" ...");
+                else
+                    printf(" %s", iter.get_match());
+            }
+            printf("\n");
         }
-        printf("\n");
 #endif
     }
 
@@ -663,12 +670,15 @@ void line_editor_impl::update_internal()
         match_pipeline pipeline(m_matches);
         pipeline.select(needle.c_str());
         pipeline.sort();
-#ifdef DEBUG_MATCH_PIPELINE
-        printf("COALESCED, file_comp %u %s -- needle '%s' selected %u matches\n",
-               m_matches.is_filename_completion_desired().get(),
-               m_matches.is_filename_completion_desired().is_explicit() ? "(exp)" : "(imp)",
-               needle.c_str(),
-               m_matches.get_match_count());
+#ifdef DEBUG
+        if (dbg_get_env_int("DEBUG_PIPELINE"))
+        {
+            printf("COALESCED, file_comp %u %s -- needle '%s' selected %u matches\n",
+                   m_matches.is_filename_completion_desired().get(),
+                   m_matches.is_filename_completion_desired().is_explicit() ? "(exp)" : "(imp)",
+                   needle.c_str(),
+                   m_matches.get_match_count());
+        }
 #endif
 
         m_prev_key = next_key.value;

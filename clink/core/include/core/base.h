@@ -53,6 +53,11 @@ template <class A> A clamp(A v, A m, A M) { return min(max(v, m), M); }
 extern const char* const bindableEsc;
 
 //------------------------------------------------------------------------------
+#if defined(DEBUG)
+int dbg_get_env_int(const char* name);
+#endif
+
+//------------------------------------------------------------------------------
 struct no_copy
 {
             no_copy() = default;

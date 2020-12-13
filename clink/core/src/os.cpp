@@ -197,3 +197,14 @@ bool set_env(const char* name, const char* value)
 }
 
 }; // namespace os
+
+//------------------------------------------------------------------------------
+#if defined(DEBUG)
+int dbg_get_env_int(const char* name)
+{
+    char tmp[32];
+    int len = GetEnvironmentVariableA(name, tmp, sizeof(tmp));
+    int val = (len > 0 && len < sizeof(tmp)) ? atoi(tmp) : 0;
+    return val;
+}
+#endif

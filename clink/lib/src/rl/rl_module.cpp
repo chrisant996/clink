@@ -373,6 +373,10 @@ static char** alternative_matches(const char* text, int start, int end)
 
     rl_completion_matches_include_type = 1;
 
+#ifdef DEBUG
+    const int debug_matches = dbg_get_env_int("DEBUG_MATCHES");
+#endif
+
     // Identify common prefix.
     char* end_prefix = rl_last_path_separator(text);
     if (end_prefix)
@@ -419,9 +423,9 @@ static char** alternative_matches(const char* text, int start, int end)
         str.clear();
         str.concat(match, match_len);
 
-#define PRINT_MATCHES
-#ifdef PRINT_MATCHES
-        printf("%u: %s, %02.2x => %s\n", count - 1, match, type, matches[count] + past_flag);
+#ifdef DEBUG
+        if (debug_matches > 0 || (debug_matches < 0 && count - 1 < 0 - debug_matches))
+            printf("%u: %s, %02.2x => %s\n", count - 1, match, type, matches[count] + past_flag);
 #endif
     }
     while (iter.next());
@@ -440,12 +444,16 @@ static char** alternative_matches(const char* text, int start, int end)
     rl_filename_completion_desired = iter.is_filename_completion_desired();
     rl_filename_display_desired = iter.is_filename_display_desired();
 
-#ifdef PRINT_MATCHES
-    printf("filename completion desired = %d (%s)\n", rl_filename_completion_desired, iter.is_filename_completion_desired().is_explicit() ? "explicit" : "implicit");
-    printf("filename display desired = %d (%s)\n", rl_filename_display_desired, iter.is_filename_display_desired().is_explicit() ? "explicit" : "implicit");
-    printf("is suppress append = %d\n", s_matches->is_suppress_append());
-    printf("get append character = %u\n", (unsigned char)s_matches->get_append_character());
-    printf("get suppress quoting = %d\n", s_matches->get_suppress_quoting());
+#ifdef DEBUG
+    if (debug_matches)
+    {
+        printf("count = %d\n", count - 1);
+        printf("filename completion desired = %d (%s)\n", rl_filename_completion_desired, iter.is_filename_completion_desired().is_explicit() ? "explicit" : "implicit");
+        printf("filename display desired = %d (%s)\n", rl_filename_display_desired, iter.is_filename_display_desired().is_explicit() ? "explicit" : "implicit");
+        printf("is suppress append = %d\n", s_matches->is_suppress_append());
+        printf("get append character = %u\n", (unsigned char)s_matches->get_append_character());
+        printf("get suppress quoting = %d\n", s_matches->get_suppress_quoting());
+    }
 #endif
 
     return matches;
