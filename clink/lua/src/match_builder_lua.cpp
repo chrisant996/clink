@@ -57,24 +57,39 @@ match_builder_lua::~match_builder_lua()
 /// -show:  builder:addmatch({ match="foo.cpp", type="file" })
 /// -show:  builder:addmatch({ match="bar", type="dir" })
 /// -show:  builder:addmatch({ match=".git", type="dir hidden" })
-/// Adds a match.  If <em>match</em> is a string, in which case it's added as a
-/// match and <em>type</em> (or "none") is the match type.  Or <em>match</em>
-/// can be a table with the following scheme: <em>{
-/// match:string, [type:string] }</em>.  If <em>type</em> is not provided then
-/// "none" is used, otherwise <em>type</em> can be "word", "arg", "alias"
-/// (doskey macro), "file", "dir", or "link" (symlink).<br/>
-/// <br/>
-/// The match type influences the color when listing possible matches, and files
-/// and dirs can also include "hidden" and/or "readonly" in the type string.
-/// The match type also affects how the match is displayed:  "word" matches show
-/// the whole word even if it contains slashes, "arg" avoids appending a space
-/// if the match ends with a colon or equal sign, "file" and "dir" matches only
-/// show the last path component (text after the last slash, if any), and "dir"
-/// matches show a trailing path separator.<br/>
-/// <br/>
-/// When the match type is "none" then for backward compatibility the match is
-/// treated like "file", unless it ends with a path separator in which case it's
-/// treated like "dir".
+/// Adds a match.  If <span class="arg">match</span> is a string, it's added as
+/// a match and <span class="arg">type</span> is the optional match type.
+///
+/// Or <span class="arg">match</span> can be a table with the following scheme:
+/// <span class="tablescheme">{ match:string, [type:string] }</span>.  If a
+/// table element is missing the type field, then the
+/// <span class="arg">type</span> argument is used for that element.
+///
+/// If the <span class="arg">type</span> argument is omitted, "none" is assumed.
+///
+/// The match type can affect how the match is inserted, displayed, and colored:
+///
+/// <table>
+/// <tr><th>Type</th><th>Description</th></tr>
+/// <tr><td>"word"</td><td>Shows the whole word even if it contains slashes.</td></tr>
+/// <tr><td>"arg"</td><td>Avoids appending a space if the match ends with a colon or equal sign.</td></tr>
+/// <tr><td>"command"</td><td>Displays the match using <a href="#color_cmd">color.cmd</a>.</td></tr>
+/// <tr><td>"alias"</td><td>Displays the match using <a href="#color_doskey">color.doskey</a>.</td></tr>
+/// <tr><td>"file"</td><td>Shows only the last path component, with appropriate file coloring.</td></tr>
+/// <tr><td>"dir"</td><td>Shows only the last path component and adds a trailing path separator, with appropriate directory coloring.</td></tr>
+/// <tr><td>"link"</td><td>Shows only the last path component, with appropriate symlink coloring. <em>Not supported yet.</em></td></tr>
+/// <tr><td>"none"</td><td>For backward compatibility the match is treated like "file", unless it ends with a path separator in which case it's treated like "dir".</td></tr>
+/// </table>
+///
+/// <table>
+/// <tr><th>Modifier</th><th>Description</th></tr>
+/// <tr><td>"hidden"</td><td>This can be combined with "file" or "dir" to use <a href="#color_hidden">color.hidden</a> (e.g. "file,hidden").</td></tr>
+/// <tr><td>"readonly"</td><td>This can be combined with "file" or "dir" to use <a href="#color_readonly">color.readonly</a> (e.g. "file,readonly").</td></tr>
+/// </table>
+///
+/// See <a href="#completion-colors">Completion Coloring</a> and
+/// <a href="#colorsettings">Color Settings</a> for more information about
+/// colors.
 int match_builder_lua::add_match(lua_State* state)
 {
     int ret = 0;
@@ -170,14 +185,14 @@ int match_builder_lua::set_matches_are_files(lua_State* state)
 /// -show:  &nbsp;&nbsp;{ match="remote/origin/master", type="word" },
 /// -show:  &nbsp;&nbsp;{ match="remote/origin/topic", type="word" }
 /// -show:  })
-/// This is the equivalent of calling <code>builder:addmatch()</code> in a
-/// for-loop. Returns the number of matches added and a boolean indicating if
-/// all matches were added successfully.<br/>
-/// <br/>
-/// <em>matches</em> can be a table of match strings, or a table of tables
-/// describing the matches.<br/>
-/// <em>type</em> is used as the type when a match doesn't explicitly include a
-/// type, and is "none" if omitted.
+/// This is the equivalent of calling <a href="#builder:addmatch">builder:addmatch()</a>
+/// in a for-loop. Returns the number of matches added and a boolean indicating
+/// if all matches were added successfully.
+///
+/// <span class="arg">matches</span> can be a table of match strings, or a table
+/// of tables describing the matches.<br/>
+/// <span class="arg">type</span> is used as the type when a match doesn't
+/// explicitly include a type, and is "none" if omitted.
 int match_builder_lua::add_matches(lua_State* state)
 {
     if (lua_gettop(state) <= 0 || !lua_istable(state, 1))

@@ -13,7 +13,8 @@
 /// -name:  settings.get
 /// -arg:   name:string
 /// -ret:   boolean or string or integer
-/// Returns the current value of the <em>name</em> Clink setting.
+/// Returns the current value of the <span class="arg">name</span> Clink
+/// setting.
 static int get(lua_State* state)
 {
     if (lua_gettop(state) == 0 || !lua_isstring(state, 1))
@@ -58,8 +59,8 @@ static int get(lua_State* state)
 /// -arg:   name:string
 /// -arg:   value:string
 /// -ret:   boolean
-/// Sets the <em>name</em> Clink setting to <em>value</em> and returns whether
-/// it was successful.
+/// Sets the <span class="arg">name</span> Clink setting to
+/// <span class="arg">value</span> and returns whether it was successful.
 static int set(lua_State* state)
 {
     if (lua_gettop(state) < 2 || !lua_isstring(state, 1))
@@ -116,18 +117,23 @@ template <typename S, typename... V> void add_impl(lua_State* state, V... value)
 /// -show:  settings.add("myscript.mydef", 100, "Number setting")
 /// -show:  settings.add("myscript.myghi", "abc", "String setting")
 /// -show:  settings.add("myscript.myjkl", {"x","y","z"}, "Enum setting")
+/// -show:  settings.add("color.mymno", "bright magenta", "Color setting")
 /// Adds a setting to the list of Clink settings and includes it in
-/// <code>clink set</code>.  The new setting is named <em>name</em> and has a
-/// default value <em>default</em> if not explicitly set.  The type of
-/// <em>default</em> determines what kind of setting is added:  boolean,
-/// integer, and string values add the corresponding setting type.  Or if the
-/// type is table, then an enum setting is added:  the table defines the
-/// accepted values, and the first value is the default value.<br/>
-/// <br/>
-/// <em>name</em> can't be more than 31 characters.<br/>
-/// <em>short_desc</em> is an optional quick summary description and can't be
-/// more than 47 characters.<br/>
-/// <em>long_desc</em> is an optional long description.
+/// <code>clink set</code>.  The new setting is named
+/// <span class="arg">name</span> and has a default value
+/// <span class="arg">default</span> when the setting isn't explicitly set.
+///
+/// The type of <span class="arg">default</span> determines what kind of setting
+/// is added:  boolean, integer, and string values add the corresponding setting
+/// type.  Or if the type is table then an enum setting is added:  the table
+/// defines the accepted values, and the first value is the default value.  Or
+/// if it's a string type and the name starts with "color." then a color setting
+/// is added.
+///
+/// <span class="arg">name</span> can't be more than 31 characters.<br/>
+/// <span class="arg">short_desc</span> is an optional quick summary description
+/// and can't be more than 47 characters.<br/>
+/// <span class="arg">long_desc</span> is an optional long description.
 static int add(lua_State* state)
 {
     if (lua_gettop(state) < 2 || !lua_isstring(state, 1))

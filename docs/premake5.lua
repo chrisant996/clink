@@ -51,15 +51,27 @@ local function parse_doc_tags_impl(out, file)
             return line
         end
 
-        local left, right = line:find("^"..prefix.."%s+-*")
-        if not left then return nil end
+        local left, right = line:find("^"..prefix.."%s+")
+        if not left then
+            if line == prefix then
+                right = #line
+            else
+                return nil
+            end
+        end
 
         line = line:sub(right + 1)
-        local _, _, tag, value = line:find("^([a-z]+):%s+(.+)")
-        if not tag then
+        local _, right, tag, value = line:find("^-([a-z]+):")
+        if tag then
+            _, right, value = line:sub(right + 1):find("^%s*(.+)")
+            if value == nil then
+                value = ""
+            end
+        else
+            tag = "desc"
             _, _, value = line:find("^%s*(.+)")
-            if value then
-                tag = "desc"
+            if not value then
+                value = ""
             end
         end
 
@@ -96,7 +108,11 @@ local function parse_doc_tags_impl(out, file)
         if name then
             for tag, value in read_tagged do
                 local desc_tag = desc[tag] or {}
-                table.insert(desc_tag, value)
+                if value == "" and tag == "desc" then
+                    desc_tag[#desc_tag] = desc_tag[#desc_tag]..'</p><p class="desc">'
+                else
+                    table.insert(desc_tag, value)
+                end
                 desc[tag] = desc_tag
             end
 
@@ -187,7 +203,7 @@ local function do_docs()
             api_html:write("</div>")
 
             api_html:write("</div>")
-            api_html:write("<hr/>")
+            api_html:write("<hr/>\n")
         end
 
         api_html:write("</div>")

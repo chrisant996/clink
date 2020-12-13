@@ -32,8 +32,8 @@ static const char* get_string(lua_State* state, int index)
 /// -name:  os.chdir
 /// -arg:   path:string
 /// -ret:   boolean
-/// Changes the current directory to <em>path</em> and returns whether it
-/// was successful.
+/// Changes the current directory to <span class="arg">path</span> and returns
+/// whether it was successful.
 int set_current_dir(lua_State* state)
 {
     bool ok = false;
@@ -61,7 +61,8 @@ int get_current_dir(lua_State* state)
 /// -name:  os.mkdir
 /// -arg:   path:string
 /// -ret:   boolean
-/// Creates the directory <em>path</em> and returns whether it was successful.
+/// Creates the directory <span class="arg">path</span> and returns whether it
+/// was successful.
 static int make_dir(lua_State* state)
 {
     bool ok = false;
@@ -76,7 +77,8 @@ static int make_dir(lua_State* state)
 /// -name:  os.rmdir
 /// -arg:   path:string
 /// -ret:   boolean
-/// Removes the directory <em>path</em> and returns whether it was successful.
+/// Removes the directory <span class="arg">path</span> and returns whether it
+/// was successful.
 static int remove_dir(lua_State* state)
 {
     bool ok = false;
@@ -91,7 +93,7 @@ static int remove_dir(lua_State* state)
 /// -name:  os.isdir
 /// -arg:   path:string
 /// -ret:   boolean
-/// Returns whether <em>path</em> is a directory.
+/// Returns whether <span class="arg">path</span> is a directory.
 int is_dir(lua_State* state)
 {
     const char* path = get_string(state, 1);
@@ -106,7 +108,7 @@ int is_dir(lua_State* state)
 /// -name:  os.isfile
 /// -arg:   path:string
 /// -ret:   boolean
-/// Returns whether <em>path</em> is a file.
+/// Returns whether <span class="arg">path</span> is a file.
 static int is_file(lua_State* state)
 {
     const char* path = get_string(state, 1);
@@ -121,7 +123,7 @@ static int is_file(lua_State* state)
 /// -name:  os.ishidden
 /// -arg:   path:string
 /// -ret:   boolean
-/// Returns whether <em>path</em> is has the hidden attribute set.
+/// Returns whether <span class="arg">path</span> has the hidden attribute set.
 static int is_hidden(lua_State* state)
 {
     const char* path = get_string(state, 1);
@@ -136,7 +138,8 @@ static int is_hidden(lua_State* state)
 /// -name:  os.unlink
 /// -arg:   path:string
 /// -ret:   boolean
-/// Deletes the file <em>path</em> and returns whether it was successful.
+/// Deletes the file <span class="arg">path</span> and returns whether it was
+/// successful.
 static int unlink(lua_State* state)
 {
     const char* path = get_string(state, 1);
@@ -160,7 +163,8 @@ static int unlink(lua_State* state)
 /// -arg:   src:string
 /// -arg:   dest:string
 /// -ret:   boolean
-/// Moves the <em>src</em> file to the <em>dest</em> file.
+/// Moves the <span class="arg">src</span> file to the
+/// <span class="arg">dest</span> file.
 static int move(lua_State* state)
 {
     const char* src = get_string(state, 1);
@@ -182,7 +186,8 @@ static int move(lua_State* state)
 /// -arg:   src:string
 /// -arg:   dest:string
 /// -ret:   boolean
-/// Copies the <em>src</em> file to the <em>dest</em> file.
+/// Copies the <span class="arg">src</span> file to the
+/// <span class="arg">dest</span> file.
 static int copy(lua_State* state)
 {
     const char* src = get_string(state, 1);
@@ -264,13 +269,17 @@ int glob_impl(lua_State* state, bool dirs_only, bool back_compat=false)
 /// -arg:   globpattern:string
 /// -arg:   [extrainfo:boolean]
 /// -ret:   table
-/// Collects directories matching <em>globpattern</em> and returns them in a
-/// table of strings.<br/>
-/// <br/>
-/// When <em>extrainfo</em> is true, then the returned table has the following
-/// scheme:  <em>{ { name:string, type:string }, ... }</em>.  The <em>type</em>
-/// string can be "file" or "dir", and may also contain ",hidden" and
-/// ",readonly" depending on the attributes (making it usable as a match type).
+/// Collects directories matching <span class="arg">globpattern</span> and
+/// returns them in a table of strings.
+///
+/// When <span class="arg">extrainfo</span> is true, then the returned table has
+/// the following scheme:
+/// <span class="tablescheme">{ {name:string, type:string}, ... }</span>.
+///
+/// The <span class="tablescheme">type</span> string can be "file" or "dir", and
+/// may also contain ",hidden" and ",readonly" depending on the attributes
+/// (making it usable as a match type for
+/// <a href="#builder:addmatch">builder:addmatch()</a>).
 int glob_dirs(lua_State* state)
 {
     return glob_impl(state, true);
@@ -281,13 +290,17 @@ int glob_dirs(lua_State* state)
 /// -arg:   globpattern:string
 /// -arg:   [extrainfo:boolean]
 /// -ret:   table
-/// Collects files and/or directories matching <em>globpattern</em> and returns
-/// them in a table of strings.<br/>
-/// <br/>
-/// When <em>extrainfo</em> is true, then the returned table has the following
-/// scheme:  <em>{ { name:string, type:string }, ... }</em>.  The <em>type</em>
-/// string can be "file" or "dir", and may also contain ",hidden" and
-/// ",readonly" depending on the attributes (making it usable as a match type).
+/// Collects files and/or directories matching
+/// <span class="arg">globpattern</span> and returns them in a table of strings.
+///
+/// When <span class="arg">extrainfo</span> is true, then the returned table has
+/// the following scheme:
+/// <span class="tablescheme">{ {name:string, type:string}, ... }</span>.
+///
+/// The <span class="tablescheme">type</span> string can be "file" or "dir", and
+/// may also contain ",hidden" and ",readonly" depending on the attributes
+/// (making it usable as a match type for
+/// <a href="#builder:addmatch">builder:addmatch()</a>).
 int glob_files(lua_State* state)
 {
     return glob_impl(state, false);
@@ -296,9 +309,9 @@ int glob_files(lua_State* state)
 //------------------------------------------------------------------------------
 /// -name:  os.getenv
 /// -arg:   name:string
-/// -ret:   string or nil
-/// Returns the value of the named environment variable, or <em>nil</em> if
-/// it doesn't exist.
+/// -ret:   string|nil
+/// Returns the value of the named environment variable, or nil if it doesn't
+/// exist.
 int get_env(lua_State* state)
 {
     const char* name = get_string(state, 1);
@@ -318,8 +331,8 @@ int get_env(lua_State* state)
 /// -arg:   name:string
 /// -arg:   value:string
 /// -ret:   boolean
-/// Sets the <em>name</em> environment variable to <em>value</em> and returns
-/// whether it was successful.
+/// Sets the <span class="arg">name</span> environment variable to
+/// <span class="arg">value</span> and returns whether it was successful.
 int set_env(lua_State* state)
 {
     const char* name = get_string(state, 1);
@@ -336,7 +349,7 @@ int set_env(lua_State* state)
 /// -name:  os.getenvnames
 /// -ret:   table
 /// Returns all environment variables in a table with the following scheme:
-/// <em>{ { name:string, value:string }, ... }</em>.
+/// <span class="tablescheme">{ {name:string, value:string}, ... }</span>.
 int get_env_names(lua_State* state)
 {
     lua_createtable(state, 0, 0);
@@ -400,7 +413,7 @@ static int get_host(lua_State* state)
 /// -name:  os.getalias
 /// -arg:   name:string
 /// -ret:   string
-/// Returns command string for doskey alias <em>name</em>.
+/// Returns command string for doskey alias <span class="arg">name</span>.
 int get_alias(lua_State* state)
 {
 #if !defined(__MINGW32__) && !defined(__MINGW64__)
@@ -436,7 +449,7 @@ int get_alias(lua_State* state)
 /// -name:  os.getaliases
 /// -ret:   table
 /// Returns doskey aliases in a table with the following scheme:
-/// <em>{ { name:string, command:string }, ... }</em>.
+/// <span class="tablescheme">{ {name:string, command:string}, ... }</span>.
 int get_aliases(lua_State* state)
 {
     lua_createtable(state, 0, 0);
@@ -487,10 +500,14 @@ int get_aliases(lua_State* state)
 //------------------------------------------------------------------------------
 /// -name:  os.getscreeninfo
 /// -ret:   table
-/// Returns dimensions of the terminal's buffer (<em>buf</em>*) and visible
-/// window (<em>win</em>*). The returned table has the following scheme:
-/// <em>{ bufwidth:int, bufheight:int, winwidth:int,
-/// winheight:int }.</em>
+/// Returns dimensions of the terminal's buffer and visible window. The returned
+/// table has the following scheme:
+/// -show:  {
+/// -show:  &nbsp; bufwidth,     -- [integer] width of the screen buffer
+/// -show:  &nbsp; bufheight,    -- [integer] height of the screen buffer
+/// -show:  &nbsp; winwidth,     -- [integer] width of the visible window
+/// -show:  &nbsp; winheight,    -- [integer] height of the visible window
+/// -show:  }
 int get_screen_info(lua_State* state)
 {
     int i;

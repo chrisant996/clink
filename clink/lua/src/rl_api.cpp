@@ -66,7 +66,7 @@ static const char* get_string(lua_State* state, int index)
 /// -show:  -- When "on", the function returns "C:\Users\yourusername\Documents".
 /// -show:  -- When "off", the function returns "~\Documents".
 /// -show:  &nbsp;
-/// -show:  -- Or when <em>force</em> is true, the function returns "~\Documents".
+/// -show:  -- Or when <span class="arg">force</span> is true, the function returns "~\Documents".
 /// Undoes Readline tilde expansion.  See <a href="#rl.expandtilde">rl.expandtilde</a>
 /// for more information.
 static int collapse_tilde(lua_State* state)
@@ -119,16 +119,16 @@ static int collapse_tilde(lua_State* state)
 /// -show:  &nbsp; end
 /// -show:  &nbsp; return matches
 /// -show:  end
-/// Performs Readline tilde expansion.<br/>
-/// <br/>
+/// Performs Readline tilde expansion.
+///
 /// When generating filename matches for a word, use the 
 /// <a href="#rl.expandtilde">rl.expandtilde</a> and
 /// <a href="#rl.collapsetilde">rl.collapsetilde</a> helper functions to perform
-/// tilde completion expansion according to Readline's configuration.<br/>
-/// <br/>
+/// tilde completion expansion according to Readline's configuration.
+///
 /// Use <a href="#rl.expandtilde">rl.expandtilde</a> to do tilde expansion 
-/// before collecting file matches (e.g. via <a 
-/// href="#os.globfiles">os.globfiles</a>).  If it indicates that it expanded 
+/// before collecting file matches (e.g. via
+/// <a href="#os.globfiles">os.globfiles</a>).  If it indicates that it expanded
 /// the string, then use <a href="#rl.collapsetilde">rl.collapsetilde</a> to put
 /// back the tilde before returning a match.
 static int expand_tilde(lua_State* state)

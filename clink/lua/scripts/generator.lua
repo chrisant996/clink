@@ -90,9 +90,9 @@ end
 --- -ret:   table
 --- Creates and returns a new match generator object.  Define on the object a
 --- <code>generate()</code> function which gets called in increasing
---- <em>priority</em> order (low values to high values) when generating matches
---- for completion.  See <a
---- href="#matchgenerators">Match Generators</a> for more information.
+--- <span class="arg">priority</span> order (low values to high values) when
+--- generating matches for completion.  See
+--- <a href="#matchgenerators">Match Generators</a> for more information.
 function clink.generator(priority)
     if priority == nil then priority = 999 end
 
@@ -144,11 +144,9 @@ end
 --- -var:   table
 --- -deprecated: line
 --- This is an obsolete global variable that was set while running match
---- generators.  Its table scheme is <em>{
---- line_buffer:string, point:integer}</em>, but it has been superseded by the
---- <a href="#line">line</a> type parameter passed into match generator
---- functions when using the new <a href="#clink.generator">clink.generator</a>
---- API.
+--- generators.  It has been superseded by the <a href="#line">line</a> type
+--- parameter passed into match generator functions when using the new
+--- <a href="#clink.generator">clink.generator</a> API.
 
 --------------------------------------------------------------------------------
 --- -name:  clink.register_match_generator
@@ -162,7 +160,8 @@ end
 --- -show:  &nbsp; -- `clink.add_match()` is used to add matches.
 --- -show:  &nbsp; -- return true if handled, or false to let another generator try.
 --- -show:  end
---- -show:  clink.register_match_generator(match_generator_func, 10)<br/>
+--- -show:  clink.register_match_generator(match_generator_func, 10)
+--- -show:
 --- -show:  -- Replace with new form:
 --- -show:  local g = clink.generator(10)
 --- -show:  function g:generate(line_state, match_builder)

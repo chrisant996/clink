@@ -52,13 +52,13 @@ Name                         | Default | Description
 `clink.promptfilter`         | True    | Enable prompt filtering by Lua scripts.
 `cmd.auto_answer`            | `off`   | Automatically answers cmd.exe's "Terminate batch job (Y/N)?" prompts. `off` = disabled, `answer_yes` = answer Y, `answer_no` = answer N.
 `cmd.ctrld_exits`            | True    | <kbd>Ctrl</kbd>+<kbd>D</kbd> exits the process when it is pressed on an empty line.
-`color.cmd`                  | `bold`  | Used when Clink displays shell (CMD.EXE) command completions.
-`color.doskey`               | `bright cyan` | Used when Clink displays doskey alias completions.
-`color.hidden`               |         | Used when Clink displays file completions with the "hidden" attribute.
+<a name="color_cmd">`color.cmd` | `bold` | Used when Clink displays shell (CMD.EXE) command completions.
+<a name="color_doskey">`color.doskey` | `bright cyan` | Used when Clink displays doskey alias completions.
+<a name="color_hidden">`color.hidden` | | Used when Clink displays file completions with the "hidden" attribute.
 `color.input`                |         | Used when Clink displays the input line text.
 `color.interact`             | `bold`  | Used when Clink displays text or prompts such as a pager's `--More?--` prompt.
 `color.modmark`              |         | Used when Clink displays the `*` mark on modified history lines when Readline's `mark-modified-lines` variable and Clink's `color.input` setting are both set. Falls back to `color.input` if not set.
-`color.readonly`             |         | Used when Clink displays file completions with the "readonly" attribute.
+<a name="color_readonly">`color.readonly` | | Used when Clink displays file completions with the "readonly" attribute.
 `doskey.enhanced`            | True    | Enhanced Doskey adds the expansion of macros that follow `\|` and `&` command separators and respects quotes around words when parsing `$1`..`$9` tags. Note that these features do not apply to Doskey use in Batch files.
 `exec.cwd`                   | True    | When matching executables as the first word (`exec.enable`), include executables in the current directory. (This is implicit if the word being completed is a relative path).
 `exec.dirs`                  | True    | When matching executables as the first word (`exec.enable`), also include directories relative to the current working directory as matches.
@@ -93,19 +93,21 @@ Name                         | Default | Description
 > - The `esc_clears_line` setting has been replaced by a `clink-reset-line` command that can be bound to <kbd>Escape</kbd> (or any other key).
 > - The `use_altgr_substitute` setting has been removed.  (If AltGr or lack of AltGr causes a problem, please visit the <a href="https://github.com/chrisant996/clink/issues">repo</a> and open an issue with details about the problem.)
 
+<a name="colorsettings"/>
+
 ## Color Settings
 
 ### Friendly Color Names
 
 The Clink color settings use the following syntax:
 
-<code>[<em>attributes</em>] [<em>foreground_color</em>] [on [<em>background_color</em>]]</code>
+<code>[<span class="arg">attributes</span>] [<span class="arg">foreground_color</span>] [on [<span class="arg">background_color</span>]]</code>
 
 Optional attributes (can be abbreviated to 3 letters):
 - `bold` or `dim` adds or removes brightness (high intensity) to the default foreground color (if the default color is bright white, then `dim` uses normal white).
 - `underline` or `nounderline` adds or removes an underline.
 
-Optional colors (can be abbreviated to 3 letters) for the <em>foreground_color</em> or <em>background_color</em>:
+Optional colors for <span class="arg">foreground_color</span> and <span class="arg">background_color</span> (can be abbreviated to 3 letters):
 - `default` or `normal` uses the default color as defined by the current color theme in the console window.
 - `black`, `red`, `green`, `yellow`, `blue`, `cyan`, `magenta`, `white` are the basic colors names.
 - `bright` can be combined with any of the other color names to make them bright (high intensity).
@@ -159,9 +161,9 @@ See <code>clink autorun --help</code> for more information.</dd>
 <dt>clink set</dt>
 <dd>
 <code>clink set</code> by itself lists all settings and their values.<br/>
-<code>clink set <em>&lt;setting_name&gt;</em></code> describes the setting shows its current value.<br/>
-<code>clink set <em>&lt;setting_name&gt;</em> clear</code> resets the setting to its default value.<br/>
-<code>clink set <em>&lt;setting_name&gt;</em> <em>&lt;value&gt;</em></code> sets the setting to the specified value.</dd>
+<code>clink set <span class="arg">setting_name</span></code> describes the setting shows its current value.<br/>
+<code>clink set <span class="arg">setting_name</span> clear</code> resets the setting to its default value.<br/>
+<code>clink set <span class="arg">setting_name</span> <span class="arg">value</span></code> sets the setting to the specified value.</dd>
 </p>
 
 <p>
@@ -328,9 +330,9 @@ function my_generator:generate(line_state, match_builder)
 end
 ```
 
-<em class="mono">line_state</em> is a <a href="#line">line</a> object that has information about the current line.
+<span class="mono">line_state</span> is a <a href="#line">line</a> object that has information about the current line.
 
-<em class="mono">match_builder</em> is a <a href="#builder">builder</a> object to which matches can be added.
+<span class="mono">match_builder</span> is a <a href="#builder">builder</a> object to which matches can be added.
 
 If no further match generators need to be called then the function should return true.  Returning false or nil continues letting other match generators get called.
 

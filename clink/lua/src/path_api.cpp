@@ -24,9 +24,10 @@ static const char* get_string(lua_State* state, int index)
 /// -arg:   [separator:string]
 /// -ret:   string
 /// -show:  path.normalise("a////b/\\/c/") -- returns "a\b\c\"
-/// Cleans <em>path</em> by normalising separators and removing ".[.]/"
-/// elements. If <em>separator</em> is provided it is used to delimit path
-/// elements, otherwise a system-specific delimiter is used.
+/// Cleans <span class="arg">path</span> by normalising separators and removing
+/// "." and ".." elements.  If <span class="arg">separator</span> is provided it
+/// is used to delimit path elements, otherwise a system-specific delimiter is
+/// used.
 static int normalise(lua_State* state)
 {
     str<288> out(get_string(state, 1));

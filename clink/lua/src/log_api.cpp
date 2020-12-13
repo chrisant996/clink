@@ -20,8 +20,9 @@ static const char* get_string(lua_State* state, int index)
 //------------------------------------------------------------------------------
 /// -name:  log.info
 /// -arg:   message:string
-/// Writes info <em>message</em> to the Clink log file.  Use this sparingly, or
-/// it could cause performance problems or disk space problems.
+/// Writes info <span class="arg">message</span> to the Clink log file.  Use
+/// this sparingly, or it could cause performance problems or disk space
+/// problems.
 int log_info(lua_State* state)
 {
     lua_Debug ar = {};

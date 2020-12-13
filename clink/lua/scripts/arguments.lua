@@ -146,8 +146,8 @@ end
 --- -show:  :addarg("add", "status", "commit", "checkout")
 --- This adds argument matches.  Arguments can be a string, a string linked to
 --- another parser by the concatenation operator, a table of arguments, or a
---- function that returns a table of arguments.  See <a
---- href="#argumentcompletion">Argument Completion</a> for more information.
+--- function that returns a table of arguments.  See
+--- <a href="#argumentcompletion">Argument Completion</a> for more information.
 function _argmatcher:addarg(...)
     local list = self._args[self._nextargindex]
     if not list then
@@ -171,8 +171,8 @@ end
 --- This adds flag matches.  Flags are separate from arguments:  When listing
 --- possible completions for an empty word, only arguments are listed.  But when
 --- the word being completed starts with the first character of any of the
---- flags, then only flags are listed.  See <a
---- href="#argumentcompletion">Argument Completion</a> for more information.
+--- flags, then only flags are listed.  See
+--- <a href="#argumentcompletion">Argument Completion</a> for more information.
 function _argmatcher:addflags(...)
     local flag_matcher = self._flags or _argmatcher()
     local list = flag_matcher._args[1] or { _links = {} }
@@ -198,9 +198,10 @@ end
 --- -show:  :addarg("one", "uno")       -- second arg can be one or uno
 --- -show:  :addarg("two", "dos")       -- third arg can be two or dos
 --- -show:  :loop(2)    -- fourth arg loops back to position 2, for one or uno, and so on
---- This makes the parser loop back to argument position <em>index</em> when it
---- runs out of positional sets of arguments (if <em>index</em> is omitted it
---- loops back to argument position 1).
+--- This makes the parser loop back to argument position
+--- <span class="arg">index</span> when it runs out of positional sets of
+--- arguments (if <span class="arg">index</span> is omitted it loops back to
+--- argument position 1).
 function _argmatcher:loop(index)
     self._loop = index or -1
     return self
@@ -219,8 +220,8 @@ end
 --- possible completions for an empty word (e.g. <code>command _</code> where the cursor is
 --- at the <code>_</code>), only arguments are listed.  And only flags are listed when the
 --- word starts with one of the flag prefixes.  Each flag prefix must be a
---- single character, but there can be multiple prefixes.<br/>
---- <br/>
+--- single character, but there can be multiple prefixes.
+---
 --- This is no longer needed because <code>:addflags()</code> does it
 --- automatically.
 function _argmatcher:setflagprefix(...)
@@ -508,15 +509,16 @@ local _argmatchers = {}
 --- -arg:   [priority:integer]
 --- -arg:   commands...:string
 --- -ret:   <a href="#_argmatcher">_argmatcher</a>
---- Creates and returns a new argument matcher parser object.  Use <a
---- href="#_argmatcher:addarg">:addarg()</a> and etc to add arguments, flags,
+--- Creates and returns a new argument matcher parser object.  Use
+--- <a href="#_argmatcher:addarg">:addarg()</a> and etc to add arguments, flags,
 --- other parsers, and more.  See <a href="#argumentcompletion">Argument
---- Completion</a> for more information.<br/>
---- <br/>
---- If one <em>command</em> is provided and an argument matcher parser object is
---- already associated with the command, this returns the existing parser rather
---- than creating a new parser.  Using :addarg() starts at arg position 1,
---- making it possible to merge new args and etc into the existing parser.
+--- Completion</a> for more information.
+---
+--- If one <span class="arg">command</span> is provided and an argument matcher
+--- parser object is already associated with the command, this returns the
+--- existing parser rather than creating a new parser.  Using :addarg() starts
+--- at arg position 1, making it possible to merge new args and etc into the
+--- existing parser.
 function clink.argmatcher(...)
     -- Extract priority from the arguments.
     local priority = 999
@@ -598,8 +600,8 @@ end
 --- -show:  :addarg({ "two", "too" })
 --- -show:  :addarg({ clink.filematches, "$stdin", "$stdout" })
 --- You can use this function in an argmatcher to supply file matches.  This
---- automatically handles Readline tilde completion.<br/>
---- <br/>
+--- automatically handles Readline tilde completion.
+---
 --- Argmatchers default to matching files, so it's unusual to need this
 --- function.  However, some exceptions are when a flag needs to accept file
 --- matches but other flags and arguments don't, or when matches need to include
@@ -767,14 +769,15 @@ end
 --- -show:  &nbsp; { "abc", "def" },       -- arg position 1
 --- -show:  &nbsp; { "ghi", "jkl" },       -- arg position 2
 --- -show:  &nbsp; "--flag1", "--flag2"    -- flags
---- -show:  )<br/>
+--- -show:  )
+--- -show:
 --- -show:  -- Replace with form:
 --- -show:  local parser = clink.argmatcher()
 --- -show:  :addarg("abc", "def")               -- arg position 1
 --- -show:  :addarg("ghi", "jkl")               -- arg position 2
 --- -show:  :addflags("--flag1", "--flag2")     -- flags
 --- -deprecated: clink.argmatcher
---- Creates a new parser and adds <em>...</em> to it.
+--- Creates a new parser and adds <span class="arg">...</span> to it.
 function clink.arg.new_parser(...)
     local parser = clink.argmatcher()
     parser._deprecated = true
@@ -798,9 +801,11 @@ end
 --- -show:  local parser1 = clink.arg.new_parser("abc", "def")
 --- -show:  local parser2 = clink.arg.new_parser("ghi", "jkl")
 --- -show:  clink.arg.register_parser("foo", parser1)
---- -show:  clink.arg.register_parser("foo", parser2)<br/>
+--- -show:  clink.arg.register_parser("foo", parser2)
+--- -show:
 --- -show:  -- Replace with new form:
---- -show:  clink.argmatcher("foo"):addarg(parser1, parser2)<br/>
+--- -show:  clink.argmatcher("foo"):addarg(parser1, parser2)
+--- -show:
 --- -show:  -- Warning:  Note that the following are NOT the same as above!
 --- -show:  -- This replaces parser1 with parser2:
 --- -show:  clink.argmatcher("foo"):addarg(parser1)
@@ -808,9 +813,10 @@ end
 --- -show:  -- This uses only parser2 if/when parser1 finishes parsing args:
 --- -show:  clink.argmatcher("foo"):addarg(parser1):addarg(parser2)
 --- -deprecated: clink.argmatcher
---- Adds <em>parser</em> to the first argmatcher for <em>cmd</em>.  This behaves
---- similarly to v0.4.8, but not identically.  The Clink schema has changed
---- significantly enough that there is no direct 1:1 translation.  Calling
+--- Adds <span class="arg">parser</span> to the first argmatcher for
+--- <span class="arg">cmd</span>.  This behaves similarly to v0.4.8, but not
+--- identically.  The Clink schema has changed significantly enough that there
+--- is no direct 1:1 translation.  Calling
 --- <code>clink.arg.register_parser</code> repeatedly with the same command to
 --- merge parsers is not supported anymore.
 function clink.arg.register_parser(cmd, parser)

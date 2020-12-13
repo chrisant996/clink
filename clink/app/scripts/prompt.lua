@@ -52,12 +52,12 @@ end
 --- -show:  &nbsp; return os.date("%a %H:%M").." "..prompt
 --- -show:  end
 --- Creates and returns a new promptfilter object that is applied in increasing
---- <em>priority</em> order (low values to high values).  Define on the object a
---- <code>filter()</code> function that takes a string argument which contains
---- the filtered prompt so far.  The function can return nil to have no effect,
---- or can return a new prompt string.  It can optionally stop further prompt
---- filtering by also returning false.  See <a
---- href="#customisingtheprompt">Customising The Prompt</a> for more
+--- <span class="arg">priority</span> order (low values to high values).  Define
+--- on the object a <code>filter()</code> function that takes a string argument
+--- which contains the filtered prompt so far.  The function can return nil to
+--- have no effect, or can return a new prompt string.  It can optionally stop
+--- further prompt filtering by also returning false.  See
+--- <a href="#customisingtheprompt">Customising The Prompt</a> for more
 --- information.
 function clink.promptfilter(priority)
     if priority == nil then priority = 999 end
@@ -79,7 +79,8 @@ end
 --- -show:  &nbsp; clink.prompt.value = "FOO "..clink.prompt.value.." >>"
 --- -show:  &nbsp; --return true  -- Returning true stops further filtering.
 --- -show:  end
---- -show:  clink.prompt.register_filter(foo_prompt, 10)<br/>
+--- -show:  clink.prompt.register_filter(foo_prompt, 10)
+--- -show:
 --- -show:  -- Replace with new form:
 --- -show:  local foo_prompt = clink.promptfilter(10)
 --- -show:  function foo_prompt:filter(prompt)

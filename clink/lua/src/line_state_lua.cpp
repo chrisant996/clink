@@ -123,7 +123,7 @@ int line_state_lua::get_word_info(lua_State* state)
 /// -name:  line:getword
 /// -arg:   index:integer
 /// -ret:   string
-/// Returns the word of the line at <em>index</em>.
+/// Returns the word of the line at <span class="arg">index</span>.
 int line_state_lua::get_word(lua_State* state)
 {
     if (!lua_isnumber(state, 1))

@@ -178,18 +178,22 @@ kbd {
     width: 80%;
 }
 
-#content #api em {
+#content .arg {
     white-space: nowrap;
     font-family: "Fira Mono",monospace;
+    font-style: italic;
     opacity: 75%;
     padding-left: 0.125rem;
     padding-right: 0.125rem;
 }
 
-#content .mono {
+#content .tablescheme {
     white-space: nowrap;
     font-family: "Fira Mono",monospace;
+    font-style: italic;
     opacity: 75%;
+    padding-left: 0.125rem;
+    padding-right: 0.125rem;
 }
 
 #content ol li {
