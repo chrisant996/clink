@@ -151,7 +151,10 @@ static int add(lua_State* state)
         break;
 
     case LUA_TSTRING:
-        add_impl<setting_str>(state, (const char*)lua_tostring(state, 2));
+        if (_strnicmp(name, "color.", 6) == 0)
+            add_impl<setting_color>(state, (const char *)lua_tostring(state, 2));
+        else
+            add_impl<setting_str>(state, (const char *)lua_tostring(state, 2));
         break;
 
     case LUA_TTABLE:
