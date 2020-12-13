@@ -4,7 +4,7 @@ ChrisAnt Plans
 
 # BETA
 
-- `\repos\clink\bu`**menu-complete** omits the path separator (`\repos\clink\.bu`**menu-complete** includes the path separator).
+- The scroll commands stopped working.
 
 - CollinK's `git checkout` generator blocks the `git checkout` argmatcher from running.  It's a clever form of contextual filtering of the matches.
   - There's no good way to accurately support backward compatibility for cases like that.
