@@ -12,6 +12,7 @@ ChrisAnt Plans
     - Could have a filter function that runs inside `.select()` after selecting but before coalescing.  It could accept a table of matches, and return the ones to actually display.  Because it's new, it can be required to understand match types.
       - But how to register it without different generators/argmatchers stomping on each other?
       - Could have a table:  clear it at the start of each generate pass, generators can register filter functions which will get run in the same order they were registered, until one returns true to halt further filtering.
+    - Could have a separate kind of generator that runs when displaying matches.
 
 ## Cmder, Powerline, Clink-Completions
 - Update clink-completions to have better 0.4.9 implementations, and also to conditionally use the new API when available.
