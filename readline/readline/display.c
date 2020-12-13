@@ -681,6 +681,9 @@ rl_redisplay (void)
   mbstate_t ps;
   int _rl_wrapped_multicolumn = 0;
 #endif
+/* begin_clink_change */
+  int need_reset_color = 0;
+/* end_clink_change */
 
   if (_rl_echoing_p == 0)
     return;
@@ -737,7 +740,10 @@ rl_redisplay (void)
 	{
 	  /* begin_clink_change */
 	  if (_rl_display_input_color)
-	    _rl_output_some_chars (_normal_color, _normal_color_len);
+	    {
+	      need_reset_color = 1;
+	      _rl_output_some_chars (_normal_color, _normal_color_len);
+	    }
 	  /* end_clink_change */
 	  _rl_output_some_chars (local_prompt_prefix, strlen (local_prompt_prefix));
 	}
@@ -771,7 +777,10 @@ rl_redisplay (void)
 	    {
 	      /* begin_clink_change */
 	      if (_rl_display_input_color)
-		_rl_output_some_chars (_normal_color, _normal_color_len);
+		{
+		  need_reset_color = 1;
+		  _rl_output_some_chars (_normal_color, _normal_color_len);
+		}
 	      /* end_clink_change */
 	      _rl_output_some_chars (rl_display_prompt, pmtlen);
 	      /* Make sure we are at column zero even after a newline,
@@ -1302,6 +1311,7 @@ rl_redisplay (void)
 		  /* begin_clink_change */
 		  if (_rl_display_input_color)
 		    {
+		      need_reset_color = 1;
 		      _rl_output_some_chars (_normal_color, _normal_color_len);
 		      if (_rl_display_modmark_color)
 			_rl_output_some_chars (_rl_display_modmark_color, strlen (_rl_display_modmark_color));
@@ -1475,7 +1485,7 @@ rl_redisplay (void)
   }
 
   /* begin_clink_change */
-  if (_rl_display_input_color)
+  if (_rl_display_input_color && need_reset_color)
     _rl_output_some_chars (_normal_color, _normal_color_len);
   /* end_clink_change */
 
@@ -1488,9 +1498,9 @@ static void output_beginning_line_color (int linenum, int modmark, const char *l
 {
   if (linenum == 0 && modmark && line == output)
     {
-    _rl_output_some_chars (_normal_color, strlen (_normal_color));
-    if (_rl_display_modmark_color)
-      _rl_output_some_chars (_rl_display_modmark_color, strlen (_rl_display_modmark_color));
+      _rl_output_some_chars (_normal_color, strlen (_normal_color));
+      if (_rl_display_modmark_color)
+	_rl_output_some_chars (_rl_display_modmark_color, strlen (_rl_display_modmark_color));
     }
   else
     _rl_output_some_chars (_rl_display_input_color, strlen (_rl_display_input_color));
@@ -1526,6 +1536,9 @@ update_line (char *old, char *new, int current_line, int omax, int nmax, int inv
   mbstate_t ps_new, ps_old;
   int new_offset, old_offset;
 #endif
+/* begin_clink_change */
+  int need_reset_color = 0;
+/* end_clink_change */
 
   /* If we're at the right edge of a terminal that supports xn, we're
      ready to wrap around, so do so.  This fixes problems with knowing
@@ -1653,7 +1666,10 @@ update_line (char *old, char *new, int current_line, int omax, int nmax, int inv
 
 	      /* begin_clink_change */
 	      if (_rl_display_input_color)
-		output_beginning_line_color (current_line, modmark, new, new);
+		{
+		  need_reset_color = 1;
+		  output_beginning_line_color (current_line, modmark, new, new);
+		}
 	      /* end_clink_change */
 	      _rl_output_some_chars (new, newbytes);
 	      _rl_last_c_pos = newwidth;
@@ -1688,7 +1704,10 @@ update_line (char *old, char *new, int current_line, int omax, int nmax, int inv
 	    {
 	      /* begin_clink_change */
 	      if (_rl_display_input_color)
-		_rl_output_some_chars (_normal_color, _normal_color_len);
+		{
+		  need_reset_color = 1;
+		  _rl_output_some_chars (_normal_color, _normal_color_len);
+		}
 	      /* end_clink_change */
 	      putc (' ', rl_outstream);
 	      _rl_last_c_pos = 1;
@@ -1704,7 +1723,10 @@ update_line (char *old, char *new, int current_line, int omax, int nmax, int inv
 	    {
 	      /* begin_clink_change */
 	      if (_rl_display_input_color)
-		output_beginning_line_color (current_line, modmark, new, new);
+		{
+		  need_reset_color = 1;
+		  output_beginning_line_color (current_line, modmark, new, new);
+		}
 	      /* end_clink_change */
 	      putc (new[0], rl_outstream);
 	    }
@@ -1712,7 +1734,10 @@ update_line (char *old, char *new, int current_line, int omax, int nmax, int inv
 	    {
 	      /* begin_clink_change */
 	      if (_rl_display_input_color)
-		_rl_output_some_chars (_normal_color, _normal_color_len);
+		{
+		  need_reset_color = 1;
+		  _rl_output_some_chars (_normal_color, _normal_color_len);
+		}
 	      /* end_clink_change */
 	      putc (' ', rl_outstream);
 	    }
@@ -1939,6 +1964,7 @@ update_line (char *old, char *new, int current_line, int omax, int nmax, int inv
 	  /* begin_clink_change */
 	  if (_rl_display_input_color)
 	    {
+	      need_reset_color = 1;
 	      _rl_output_some_chars (_normal_color, _normal_color_len);
 	      if (_rl_display_modmark_color)
 		_rl_output_some_chars (_rl_display_modmark_color, strlen (_rl_display_modmark_color));
@@ -1948,7 +1974,10 @@ update_line (char *old, char *new, int current_line, int omax, int nmax, int inv
 	}
       /* begin_clink_change */
       if (_rl_display_input_color)
-	_rl_output_some_chars (_rl_display_input_color, strlen (_rl_display_input_color));
+	{
+	  need_reset_color = 1;
+	  _rl_output_some_chars (_rl_display_input_color, strlen (_rl_display_input_color));
+	}
       /* end_clink_change */
       _rl_output_some_chars (local_prompt, lendiff);
       if (mb_cur_max > 1 && rl_byte_oriented == 0)
@@ -1989,7 +2018,10 @@ dumb_update:
 	    {
 	      /* begin_clink_change */
 	      if (_rl_display_input_color)
-		output_beginning_line_color (current_line, modmark, new, nfd);
+		{
+		  need_reset_color = 1;
+		  output_beginning_line_color (current_line, modmark, new, nfd);
+		}
 	      /* end_clink_change */
 	      _rl_output_some_chars (nfd, temp);
 	      if (mb_cur_max > 1 && rl_byte_oriented == 0)
@@ -2095,7 +2127,10 @@ dumb_update:
 	{
 	  /* begin_clink_change */
 	  if (_rl_display_input_color)
-	    output_beginning_line_color (current_line, modmark, new, nfd);
+	    {
+	      need_reset_color = 1;
+	      output_beginning_line_color (current_line, modmark, new, nfd);
+	    }
 	  /* end_clink_change */
 
 	  _rl_output_some_chars (nfd, temp);
@@ -2118,7 +2153,10 @@ dumb_update:
 	{
 	  /* begin_clink_change */
 	  if (_rl_display_input_color)
-	    output_beginning_line_color (current_line, modmark, new, nfd);
+	    {
+	      need_reset_color = 1;
+	      output_beginning_line_color (current_line, modmark, new, nfd);
+	    }
 	  /* end_clink_change */
 
 	  /* If lendiff > prompt_visible_length and _rl_last_c_pos == 0 and
@@ -2185,7 +2223,10 @@ dumb_update:
 	{
 	  /* begin_clink_change */
 	  if (_rl_display_input_color)
-	    output_beginning_line_color (current_line, modmark, new, nfd);
+	    {
+	      need_reset_color = 1;
+	      output_beginning_line_color (current_line, modmark, new, nfd);
+	    }
 	  /* end_clink_change */
 
 	  /* cannot insert chars, write to EOL */
@@ -2235,7 +2276,10 @@ dumb_update:
 	    {
 	      /* begin_clink_change */
 	      if (_rl_display_input_color)
-		_rl_output_some_chars (_normal_color, _normal_color_len);
+		{
+		  need_reset_color = 1;
+		  _rl_output_some_chars (_normal_color, _normal_color_len);
+		}
 	      /* end_clink_change */
 	      delete_chars (-col_lendiff); /* delete (diff) characters */
 	    }
@@ -2246,7 +2290,10 @@ dumb_update:
 	    {
 	      /* begin_clink_change */
 	      if (_rl_display_input_color)
-		output_beginning_line_color (current_line, modmark, new, nfd);
+		{
+		  need_reset_color = 1;
+		  output_beginning_line_color (current_line, modmark, new, nfd);
+		}
 	      /* end_clink_change */
 
 	      /* If nfd begins at the prompt, or before the invisible
@@ -2299,7 +2346,10 @@ dumb_update:
 	    {
 	      /* begin_clink_change */
 	      if (_rl_display_input_color)
-		output_beginning_line_color (current_line, modmark, new, nfd);
+		{
+		  need_reset_color = 1;
+		  output_beginning_line_color (current_line, modmark, new, nfd);
+		}
 	      /* end_clink_change */
 
 	      /* If nfd begins at the prompt, or before the invisible
@@ -2338,7 +2388,10 @@ clear_rest_of_line:
 		{
 		  /* begin_clink_change */
 		  if (_rl_display_input_color)
-		    _rl_output_some_chars (_normal_color, _normal_color_len);
+		    {
+		      need_reset_color = 1;
+		      _rl_output_some_chars (_normal_color, _normal_color_len);
+		    }
 		  /* end_clink_change */
 		  space_to_eol (col_lendiff);
 		}
@@ -2347,6 +2400,9 @@ clear_rest_of_line:
 	    }
 	}
     }
+
+  if (_rl_display_input_color && need_reset_color)
+    _rl_output_some_chars (_normal_color, _normal_color_len);
 }
 
 /* Tell the update routines that we have moved onto a new (empty) line. */
