@@ -5,6 +5,7 @@
 
 ### Unreleased
 
+- `settings.add` adds a color setting when the type is string and the name starts with "color.".
 - Fixed potentially-missing trailing path separator when `menu-complete` completes a directory match.
 
 ### v1.1.8
