@@ -11,6 +11,7 @@ ChrisAnt Plans
       - Would probably be confusing (and hard to explain).
     - Could have a filter function that runs inside `.select()` after selecting but before coalescing.  It could accept a table of matches, and return the ones to actually display.  Because it's new, it can be required to understand match types.
       - But how to register it without different generators/argmatchers stomping on each other?
+      - Could have a table:  clear it at the start of each generate pass, generators can register filter functions which will get run in the same order they were registered, until one returns true to halt further filtering.
 
 ## Cmder, Powerline, Clink-Completions
 - Update clink-completions to have better 0.4.9 implementations, and also to conditionally use the new API when available.
@@ -53,7 +54,14 @@ ChrisAnt Plans
 - Allow binding keys to Lua scripts.
   - Add a new `ISUSER` custom binding type to Readline, which calls a global callback and passes it the binding string (like for `ISMACR`)?  The global callback can then look up the Lua function name and pass it a `line_state` from `collect_words(false/*stop_at_cursor*/)`.
     - But then how to make the inputrc file continue to be compatible for sharing with other terminal implementations?
-  - Provide API for accessing the screen buffer, and for scrolling.
+    - Or just define some special prefix for macro output text, and have a macro hook function to allow the host to intercept and handle macros.
+  - Provide API for scrolling.
+  - Provide API for accessing the screen buffer.
+    - Find text; return line, which can be used with the scrolling API?
+    - Find attributes; return line, which can be used with the scrolling API?
+    - Retrieve text and/or attributes?
+    - Maybe have a way to have floating windows mark corners of a selection region?
+    - Maybe have a way to generate HTML from text in a selection region?
   - Provide API for interacting with the Readline buffer.
   - Provide API to show a popup list?  But make it fail if used from outside a Readline command.
   - Provide API to show an input box?  But make it fail if used from outside a Readline command.
@@ -146,6 +154,11 @@ ChrisAnt Plans
 <br/>
 
 # APPENDICES
+
+## Manual Test Verifications
+- <kbd>Alt</kbd>+<kbd>Up</kbd> to scroll up a line.
+- `git add ` in Cmder.
+- `git checkout `<kbd>Alt</kbd>+<kbd>=</kbd> in Cmder.
 
 ## Known Issues
 - Perturbed PROMPT envvar is visible in child processes (e.g. piped shell in various file editors).
