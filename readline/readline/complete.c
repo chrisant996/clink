@@ -680,6 +680,14 @@ _rl_internal_pager (int lines)
 static int
 path_isdir (const char *filename)
 {
+/* begin_clink_change */
+  if (rl_completion_matches_include_type)
+    {
+      const char *sep = rl_last_path_separator (filename);
+      return sep && !sep[1];
+    }
+/* end_clink_change */
+
   struct stat finfo;
 
   return (stat (filename, &finfo) == 0 && S_ISDIR (finfo.st_mode));

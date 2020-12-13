@@ -416,9 +416,14 @@ static void append_colored_prefix_end(void)
 static int
 path_isdir(const char *filename)
 {
-  struct stat finfo;
+    if (rl_completion_matches_include_type)
+    {
+        const char *sep = rl_last_path_separator(filename);
+        return sep && !sep[1];
+    }
 
-  return (stat (filename, &finfo) == 0 && S_ISDIR (finfo.st_mode));
+    struct stat finfo;
+    return (stat(filename, &finfo) == 0 && S_ISDIR(finfo.st_mode));
 }
 
 
