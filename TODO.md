@@ -2,49 +2,32 @@ ChrisAnt Plans
 
 <br/>
 
-# BETA
-
-- CollinK's `git checkout` generator blocks the `git checkout` argmatcher from running.  It's a clever form of contextual filtering of the matches.
-  - There's no good way to accurately support backward compatibility for cases like that.
-  - But what about forward compatibility?
-    - Could have a flag saying to rerun the match pipeline.
-      - Would probably be confusing (and hard to explain).
-    - Could have a filter function that runs inside `.select()` after selecting but before coalescing.  It could accept a table of matches, and return the ones to actually display.  Because it's new, it can be required to understand match types.
-      - But how to register it without different generators/argmatchers stomping on each other?
-      - Could have a table:  clear it at the start of each generate pass, generators can register filter functions which will get run in the same order they were registered, until one returns true to halt further filtering.
-    - Could have a separate kind of generator that runs when displaying matches.
-
-## Cmder, Powerline, Clink-Completions
-- Update clink-completions to have better 0.4.9 implementations, and also to conditionally use the new API when available.
-- Submit a pull request for cmder-powerline-prompt.
-- Port Cmder to v1.x -- will require help from Cmder and/or ConEmu teams.  There are a lot of hard-coded expectations about Clink (web site address, terminal input mode, DLL names, VirtualAlloc patterns, and many other things).
-
-<br/>
-<br/>
-
 # RELEASE
 
+## Match Display Filter
+- Support match display filter (e.g. `git stash show` uses it to list stashes with their descriptions next to them).
+  - Dedupe to fix the bug (in clink-completions itself) where `git checkout ` lists `*gh-pages` multiple times.
+  - Add a "filter" match type with an associated color?
+  - Analyze the string for ANSI escape codes to find its visible length (just like prompt filtering does) for column alignment, so `stash{0}   [DIM]desc` is possible.
+  - Popup list needs a way to support column alignment.
+    - Use a monospace font?
+    - Tell the filter it's for a popup list so it can use `\t` instead, and the popup list can do special interpretation of `\t` to actually align columns?
+- Detect when a generator blocks an argmatcher (e.g. CollinK's `git checkout` generator).
+  - Detect when a generator stops the pipeline before argmatchers are reached.
+  - If so, scan to see if an argmatcher would have handled it.
+  - If so, then run the pipeline again on displaying matches (note that the end word should not be forced empty).
+  - _Thus performance impact is minimal unless actually applicable._
+  - _This solution is both backward and forward compatible._
+
 ## Issues
-
-### Urgent
-
-### Normal Priority
-- Is it a problem that `update_internal()` gets called once per char in a key sequence?  Maybe it should only happen after a key that finishes a key binding?
-- Should only fold path separators in pathish matches.
-- `LOG()` certain important failure information inside Detours.
-- When `convert-meta` is off, then when binding `\M-h` (etc) the key name gets interpreted differently than Clink expects.  Does this affect the `inputrc` files at all, or is it only an issue inside Clink's native code?
-- Need to add a hook function for inserting matches.
-  - The insertion hook can avoid appending a space when inserting a flag/arg that ends in `:` or `=`.
-  - The insertion hook can deal with path normalisation.
-  - And address the sorting problem, and then the match_type stuff can be removed from Readline.
-  - And THEN individual matches can have arbitrary values associated -- color, append char, or any per-match data that's desired.
-
-### Low Priority
-- Changing terminal width makes 0.4.8 slowly "walk up the screen".  Changing terminal width works in master, except when the cursor position itself is affected.
-- Use `path::normalise` to clean up input like "\wbin\\\\cli" when using `complete` and `menu-complete`.
-- Symlink support (displaying matches, and whether to append a path separator).
 - The match pipeline should not fire on pressing **Enter** after `exit`.
-- [#20](https://github.com/chrisant996/clink/issues/20) Cmd gets unresponsive after "set /p" command.  _[Seems to mostly work, though `set /p FOO=""` doesn't prompt for input.]_
+- Changing terminal width makes 0.4.8 slowly "walk up the screen".  Changing terminal width works in master, except when the cursor position itself is affected.
+- When `convert-meta` is off, then when binding `\M-h` (etc) the key name gets interpreted differently than Clink expects.  Does this affect the `inputrc` files at all, or is it only an issue inside Clink's native code?
+- `LOG()` certain important failure information inside Detours.
+
+## Cmder, Powerline
+- Submit a pull request for cmder-powerline-prompt.
+- Port Cmder to v1.x -- will require help from Cmder and/or ConEmu teams.  There are a lot of hard-coded expectations about Clink (web site address, terminal input mode, DLL names, VirtualAlloc patterns, and many other things).
 
 <br/>
 <br/>
@@ -68,6 +51,11 @@ ChrisAnt Plans
   - Provide API to show an input box?  But make it fail if used from outside a Readline command.
 
 ## Medium Priority
+- Add a hook function for inserting matches.
+  - The insertion hook can avoid appending a space when inserting a flag/arg that ends in `:` or `=`.
+  - The insertion hook can deal with path normalisation, e.g. to clean up input like "\wbin\\\\cli" when using `complete` and `menu-complete`.
+  - And address the sorting problem, and then the match_type stuff can be removed from Readline itself (though Chet may want its performance benefits).
+  - And THEN individual matches can have arbitrary values associated -- color, append char, or any per-match data that's desired.
 - Add a configuration setting for whether `menu-complete` wraps around.
 - Complete "%ENVVAR%\*" by internally expanding ENVVAR for collecting matches, but not expanding it in the editing line.
 
@@ -75,6 +63,10 @@ ChrisAnt Plans
 - Add commands that behave like **F7** and **F8** from CMD (like `history-search-backward` without wrapping around?).
 - Add terminal sequences for **Ctrl+Shift+Letter** and **Ctrl+Punctuation** and etc (see https://invisible-island.net/xterm/modified-keys.html).
 - Add a `history.dupe_mode` that behaves like 4Dos/4NT/Take Command from JPSoft:  **Up**/**Down** then **Enter** remembers the history position so that **Enter**, **Down**, **Enter**, **Down**, **Enter**, etc can be used to replay a series of commands.
+- Symlink support (displaying matches, and whether to append a path separator).
+
+## Clink-Completions
+- Update clink-completions to have better 0.4.9 implementations, and also to conditionally use the new API when available.
 
 <br/>
 <br/>
@@ -121,8 +113,10 @@ ChrisAnt Plans
 - Marking mode in-app similar to my other shell project?  It's a kludge, but it copies with HTML formatting (and even uses the color scheme).
 
 **Miscellaneous**
+- Is it a problem that `update_internal()` gets called once per char in a key sequence?  Maybe it should only happen after a key that finishes a key binding?
+- Should only fold path separators in pathish matches.
 - Allow to search the console output (not command history) with a RegExp [#166](https://github.com/mridgers/clink/issues/166).  _[Unclear how that would work.  Would it scroll the console?  How would it highlight matches, etc, since that's really something the console host would need to do?  I think this needs to be implemented by the console host, e.g. conhost or ConEmu or Terminal, etc.]_
-- Add a Lua function that prints through Clink's VT emulation pipeline, so that e.g. the debugger.lua script can use colors.
+- [#20](https://github.com/chrisant996/clink/issues/20) Cmd gets unresponsive after "set /p" command.  _[Seems to mostly work, though `set /p FOO=""` doesn't prompt for input.]_
 - Include `wildmatch()` and an `fnmatch()` wrapper for it.  But should first update it to support UTF8.
 
 <br/>
