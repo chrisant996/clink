@@ -870,6 +870,7 @@ static int display_match_list_internal(char **matches, int len, int max, bool on
             {
                 if (limit == 1 || (i && (limit > 1) && (i % limit) == 0))
                 {
+                    flush_tmpbuf();
                     rl_crlf();
                     lines++;
                     if (_rl_page_completions && lines >= _rl_screenheight - 1)
@@ -883,6 +884,7 @@ static int display_match_list_internal(char **matches, int len, int max, bool on
                     pad_filename(printed_len, max);
             }
         }
+        flush_tmpbuf();
         rl_crlf();
     }
 
