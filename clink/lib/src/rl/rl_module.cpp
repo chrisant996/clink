@@ -447,7 +447,7 @@ static char** alternative_matches(const char* text, int start, int end)
 #ifdef DEBUG
     if (debug_matches)
     {
-        printf("count = %d\n", count - 1);
+        printf("count = %d\n", count);
         printf("filename completion desired = %d (%s)\n", rl_filename_completion_desired, iter.is_filename_completion_desired().is_explicit() ? "explicit" : "implicit");
         printf("filename display desired = %d (%s)\n", rl_filename_display_desired, iter.is_filename_display_desired().is_explicit() ? "explicit" : "implicit");
         printf("is suppress append = %d\n", s_matches->is_suppress_append());
