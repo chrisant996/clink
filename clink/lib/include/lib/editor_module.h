@@ -5,12 +5,12 @@
 
 #include <core/base.h>
 
+class printer;
+class pager;
 class line_buffer;
 class line_state;
 class matches;
 class word_classifications;
-class printer;
-class pager;
 
 //------------------------------------------------------------------------------
 class editor_module
