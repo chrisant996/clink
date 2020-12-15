@@ -749,7 +749,7 @@ rl_module::rl_module(const char* shell_name, terminal_in* input)
     rl_attempted_completion_function = alternative_matches;
     rl_menu_completion_entry_function = filename_menu_completion_function;
     rl_adjust_completion_word = adjust_completion_word;
-    // rl_completion_display_matches_func = display_matches;
+    rl_completion_display_matches_func = display_matches;
     rl_is_exec_func = is_exec_ext;
     rl_postprocess_lcd_func = postprocess_lcd;
     rl_read_key_hook = read_key_hook;

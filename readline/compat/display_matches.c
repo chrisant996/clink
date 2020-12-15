@@ -537,7 +537,6 @@ static int fnappend(const char *to_print, int prefix_bytes, const char *real_pat
         }
         if (common_prefix_len > 0 && (s - to_print) >= common_prefix_len)
         {
-            flush_tmpbuf();
 #if defined(COLOR_SUPPORT)
             // printed bytes = s - to_print
             // printed bytes should never be > but check for paranoia's sake
@@ -548,8 +547,6 @@ static int fnappend(const char *to_print, int prefix_bytes, const char *real_pat
             common_prefix_len = 0;
         }
     }
-
-    flush_tmpbuf();
 
 #if defined (COLOR_SUPPORT)
     // XXX - unconditional for now.
