@@ -190,13 +190,7 @@ bool matches_iter::next()
             while (match_len && path::is_separator((unsigned char)match[match_len - 1]))
                 match_len--;
             if (path::match_wild(m_pattern, str_iter(match, match_len)))
-            {
-                if (is_pathish(get_match_type()))
-                    m_any_pathish = true;
-                else
-                    m_all_pathish = false;
-                return true;
-            }
+                goto found;
         }
     }
 
@@ -204,7 +198,12 @@ bool matches_iter::next()
     if (m_index >= m_matches.get_match_count())
         return false;
     m_next++;
-    assert(!m_has_pattern); // Must not exit through here (m_any_pathish, etc).
+
+found:
+    if (is_pathish(get_match_type()))
+        m_any_pathish = true;
+    else
+        m_all_pathish = false;
     return true;
 }
 
