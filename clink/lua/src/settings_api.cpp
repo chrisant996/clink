@@ -12,9 +12,12 @@
 //------------------------------------------------------------------------------
 /// -name:  settings.get
 /// -arg:   name:string
+/// -arg:   [descriptive:boolean]
 /// -ret:   boolean or string or integer
 /// Returns the current value of the <span class="arg">name</span> Clink
-/// setting.
+/// setting.  If it's a color setting and the optional
+/// <span class="arg">descriptive</span> parameter is true then the user
+/// friendly color name is returned.
 static int get(lua_State* state)
 {
     if (lua_gettop(state) == 0 || !lua_isstring(state, 1))
@@ -45,7 +48,10 @@ static int get(lua_State* state)
     default:
         {
             str<> value;
-            setting->get(value);
+            if (lua_isboolean(state, 2) && lua_toboolean(state, 2))
+                setting->get_descriptive(value);
+            else
+                setting->get(value);
             lua_pushstring(state, value.c_str());
         }
         break;
