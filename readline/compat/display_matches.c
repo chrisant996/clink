@@ -738,6 +738,13 @@ static void pad_filename(int len, int pad_to_width)
         num_spaces = 1;
     else
         num_spaces = pad_to_width - len;
+    if (num_spaces <= 0)
+        return;
+
+#if defined(COLOR_SUPPORT)
+    if (_rl_colored_stats)
+        append_default_color();
+#endif
 
     while (num_spaces > 0)
     {
@@ -753,6 +760,7 @@ static int display_match_list_internal(char **matches, int len, int max, bool on
 {
     int count, limit, printed_len, lines, cols;
     int i, j, k, l;
+    int major_stride, minor_stride;
     char *temp, *t;
 
     // Find the length of the prefix common to all items: length as displayed
@@ -807,85 +815,81 @@ static int display_match_list_internal(char **matches, int len, int max, bool on
 
     rl_crlf();
 
-    lines = 0;
     if (_rl_print_completions_horizontally == 0)
     {
         // Print the sorted items, up-and-down alphabetically, like ls.
-        for (i = 1; i <= count; i++)
-        {
-            reset_tmpbuf();
-            for (j = 0, l = i; j < limit; j++)
-            {
-                if (l > len || matches[l] == 0)
-                    break;
-                else
-                {
-                    temp = printable_part(matches[l]);
-                    printed_len = append_filename(temp, matches[l], sind);
-
-                    if (j + 1 < limit)
-                        pad_filename(printed_len, max);
-                }
-                l += count;
-            }
-#if defined(COLOR_SUPPORT)
-            if (_rl_colored_stats)
-                append_color_indicator(C_CLR_TO_EOL);
-#endif
-            flush_tmpbuf();
-            rl_crlf();
-#if defined(SIGWINCH)
-            if (RL_SIG_RECEIVED() && RL_SIGWINCH_RECEIVED() == 0)
-#else
-            if (RL_SIG_RECEIVED())
-#endif
-                return 0;
-            lines++;
-            if (_rl_page_completions && lines >= (_rl_screenheight - 1) && i < count)
-            {
-                lines = _rl_internal_pager(lines);
-                if (lines < 0)
-                    return 0;
-            }
-        }
+        major_stride = 1;
+        minor_stride = count;
     }
     else
     {
         // Print the sorted items, across alphabetically, like ls -x.
-        for (i = 1; matches[i]; i++)
+        major_stride = limit;
+        minor_stride = 1;
+    }
+
+    lines = 0;
+    for (i = 0; i < count; i++)
+    {
+        reset_tmpbuf();
+        for (j = 0, l = 1 + i * major_stride; j < limit; j++)
         {
-            temp = printable_part(matches[i]);
-            printed_len = append_filename(temp, matches[i], sind);
-            // Have we reached the end of this line?
-#if defined(SIGWINCH)
-            if (RL_SIG_RECEIVED() && RL_SIGWINCH_RECEIVED() == 0)
-#else
-            if (RL_SIG_RECEIVED())
-#endif
-                return 0;
-            if (matches[i + 1])
+            if (l > len || matches[l] == 0)
+                break;
+            else
             {
-                if (limit == 1 || (i && (limit > 1) && (i % limit) == 0))
-                {
-                    flush_tmpbuf();
-                    rl_crlf();
-                    lines++;
-                    if (_rl_page_completions && lines >= _rl_screenheight - 1)
-                    {
-                        lines = _rl_internal_pager(lines);
-                        if (lines < 0)
-                            return 0;
-                    }
-                }
-                else
+                temp = printable_part(matches[l]);
+                printed_len = append_filename(temp, matches[l], sind);
+
+                if (j + 1 < limit)
                     pad_filename(printed_len, max);
             }
+            l += minor_stride;
         }
+#if defined(COLOR_SUPPORT)
+        if (_rl_colored_stats)
+        {
+            append_default_color();
+            append_color_indicator(C_CLR_TO_EOL);
+        }
+#endif
         flush_tmpbuf();
         rl_crlf();
+#if defined(SIGWINCH)
+        if (RL_SIG_RECEIVED() && RL_SIGWINCH_RECEIVED() == 0)
+#else
+        if (RL_SIG_RECEIVED())
+#endif
+            return 0;
+        lines++;
+        if (_rl_page_completions && lines >= (_rl_screenheight - 1) && i < count)
+        {
+            lines = _rl_internal_pager(lines);
+            if (lines < 0)
+                return 0;
+        }
     }
 
     return 0;
+}
+
+//------------------------------------------------------------------------------
+static int prompt_display_matches(int len)
+{
+    rl_crlf();
+    if (_rl_pager_color)
+        _rl_print_pager_color();
+    fprintf(rl_outstream, "Display all %d possibilities? (y or n)", len);
+    if (_rl_pager_color)
+        fprintf(rl_outstream, "\x1b[m");
+    fflush(rl_outstream);
+    if (get_y_or_n(0) == 0)
+    {
+        rl_crlf();
+        return 0;
+    }
+
+    return 1;
 }
 
 //------------------------------------------------------------------------------
@@ -905,10 +909,7 @@ void display_matches(char** matches)
         fwrite(tmpbuf_allocated, tmpbuf_length, 1, rl_outstream);
         rl_crlf();
 
-        rl_forced_update_display();
-        rl_display_fixed = 1;
-
-        return;
+        goto done;
     }
 
     // There is more than one answer.  Find out how many there are,
@@ -955,26 +956,13 @@ void display_matches(char** matches)
         display_match_list_internal(matches, len, max, true) >= (_rl_screenheight - 1) :
         rl_completion_query_items > 0 && len >= rl_completion_query_items)
     {
-        rl_crlf();
-        if (_rl_pager_color)
-            _rl_print_pager_color();
-        fprintf(rl_outstream, "Display all %d possibilities? (y or n)", len);
-        if (_rl_pager_color)
-            fprintf(rl_outstream, "\x1b[m");
-        fflush(rl_outstream);
-        if (get_y_or_n(0) == 0)
-        {
-            rl_crlf();
-
-            rl_forced_update_display();
-            rl_display_fixed = 1;
-
-            return;
-        }
+        if (!prompt_display_matches(len))
+            goto done;
     }
 
     display_match_list_internal(matches, len, max, false);
 
+done:
     rl_forced_update_display();
     rl_display_fixed = 1;
 }
