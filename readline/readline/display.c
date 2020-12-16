@@ -1465,6 +1465,10 @@ rl_redisplay (void)
 	  last_lmargin = lmargin;
 	}
     }
+  /* begin_clink_change */
+  if (_rl_display_input_color && need_reset_color)
+    _rl_output_some_chars (_normal_color, _normal_color_len);
+  /* end_clink_change */
   fflush (rl_outstream);
 
   /* Swap visible and non-visible lines. */
@@ -1483,11 +1487,6 @@ rl_redisplay (void)
     else
       visible_wrap_offset = wrap_offset;
   }
-
-  /* begin_clink_change */
-  if (_rl_display_input_color && need_reset_color)
-    _rl_output_some_chars (_normal_color, _normal_color_len);
-  /* end_clink_change */
 
   RL_UNSETSTATE (RL_STATE_REDISPLAYING);
   _rl_release_sigint ();
@@ -1538,6 +1537,7 @@ update_line (char *old, char *new, int current_line, int omax, int nmax, int inv
 #endif
 /* begin_clink_change */
   int need_reset_color = 0;
+#define return goto done
 /* end_clink_change */
 
   /* If we're at the right edge of a terminal that supports xn, we're
@@ -2400,9 +2400,12 @@ clear_rest_of_line:
 	    }
 	}
     }
-
+/* begin_clink_change */
+done:
   if (_rl_display_input_color && need_reset_color)
     _rl_output_some_chars (_normal_color, _normal_color_len);
+#undef return
+/* end_clink_change */
 }
 
 /* Tell the update routines that we have moved onto a new (empty) line. */
