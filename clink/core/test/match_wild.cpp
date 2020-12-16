@@ -68,4 +68,10 @@ TEST_CASE("path::match_wild()")
         REQUIRE(!path::match_wild("abc/def/?i*", "abc/def/build"));
         REQUIRE(path::match_wild("abc/def/??i*", "abc/def/build"));
     }
+
+    SECTION("End star")
+    {
+        REQUIRE(!path::match_wild("ori*", "origin/master", false));
+        REQUIRE(path::match_wild("ori*", "origin/master", true));
+    }
 }

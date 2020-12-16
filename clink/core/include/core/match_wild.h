@@ -36,7 +36,7 @@ bool match_char_impl(int pc, int fc)
 
 //------------------------------------------------------------------------------
 template <class T, int MODE>
-bool match_wild_impl(const str_iter_impl<T>& _pattern, const str_iter_impl<T>& _file)
+bool match_wild_impl(const str_iter_impl<T>& _pattern, const str_iter_impl<T>& _file, bool end_star_matches_everything=false)
 {
     str_iter_impl<T> pattern(_pattern);
     str_iter_impl<T> file(_file);
@@ -81,6 +81,8 @@ bool match_wild_impl(const str_iter_impl<T>& _pattern, const str_iter_impl<T>& _
                 pattern.next();
                 c = pattern.peek();
             }
+            if (c == '\0' && end_star_matches_everything)
+                return true;
             if (c != '?' &&
                 c != '*')
             {
@@ -184,32 +186,32 @@ bool match_wild_impl(const str_iter_impl<T>& _pattern, const str_iter_impl<T>& _
 
 //------------------------------------------------------------------------------
 template <class T>
-bool match_wild(const str_iter_impl<T>& pattern, const str_iter_impl<T>& file)
+bool match_wild(const str_iter_impl<T>& pattern, const str_iter_impl<T>& file, bool end_star_matches_everything=false)
 {
     switch (str_compare_scope::current())
     {
-    case str_compare_scope::relaxed:  return match_wild_impl<T, 2>(pattern, file);
-    case str_compare_scope::caseless: return match_wild_impl<T, 1>(pattern, file);
-    default:                          return match_wild_impl<T, 0>(pattern, file);
+    case str_compare_scope::relaxed:  return match_wild_impl<T, 2>(pattern, file, end_star_matches_everything);
+    case str_compare_scope::caseless: return match_wild_impl<T, 1>(pattern, file, end_star_matches_everything);
+    default:                          return match_wild_impl<T, 0>(pattern, file, end_star_matches_everything);
     }
 }
 
 //------------------------------------------------------------------------------
 template <class T>
-bool match_wild(const T* pattern, const T* file)
+bool match_wild(const T* pattern, const T* file, bool end_star_matches_everything=false)
 {
     str_iter_impl<T> pattern_iter(pattern);
     str_iter_impl<T> file_iter(file);
-    return match_wild(pattern_iter, file_iter);
+    return match_wild(pattern_iter, file_iter, end_star_matches_everything);
 }
 
 //------------------------------------------------------------------------------
 template <class T>
-bool match_wild(const str_impl<T>& pattern, const str_impl<T>& file)
+bool match_wild(const str_impl<T>& pattern, const str_impl<T>& file, bool end_star_matches_everything=false)
 {
     str_iter_impl<T> pattern_iter(pattern);
     str_iter_impl<T> file_iter(file);
-    return match_wild(pattern_iter, file_iter);
+    return match_wild(pattern_iter, file_iter, end_star_matches_everything);
 }
 
 }; // namespace path

@@ -5,7 +5,6 @@ ChrisAnt Plans
 # RELEASE
 
 - Broke sort order for completions -- "clink" sorts after "clink.future" because they are actually "clink\" and "clink.future\" under the covers.
-- `menu-complete` is broken for `git checkout ori` because the wildcard matching stops at the slash -- so I guess a final star should instantly match no matter what follows?  Or maybe only when the match is not pathish?
 
 ## Match Display Filter
 - Popup list support for match display filter.

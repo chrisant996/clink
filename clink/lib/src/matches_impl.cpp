@@ -190,7 +190,7 @@ bool matches_iter::next()
             int match_len = int(strlen(match));
             while (match_len && path::is_separator((unsigned char)match[match_len - 1]))
                 match_len--;
-            if (path::match_wild(m_pattern, str_iter(match, match_len)))
+            if (path::match_wild(m_pattern, str_iter(match, match_len), !is_pathish(get_match_type())))
                 goto found;
         }
     }
