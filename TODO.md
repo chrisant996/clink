@@ -8,14 +8,9 @@ ChrisAnt Plans
 
 ## Match Display Filter
 - Popup list support for match display filter.
-  - Strip ANSI escape codes.
-  - Tell the filter it's for a popup list so it can use `\t` instead, and the popup list can do special interpretation of `\t` to actually align columns?
-- Detect when a generator blocks an argmatcher (e.g. CollinK's `git checkout` generator).
-  - Detect when a generator stops the pipeline before argmatchers are reached.
-  - If so, scan to see if an argmatcher would have handled it.
-  - If so, then run the pipeline again on displaying matches (note that the end word should not be forced empty).
-  - _Thus performance impact is minimal unless actually applicable._
-  - _This solution is both backward and forward compatible._
+  - Need to be able to return `{ match, display }`, and probably actually `{ match, display, description }`.
+- Must rerun generators when match display filtering is active.
+  - **This is mandatory** because of how generators interplay with match display filtering (see clink-completions/git.lua).
 
 ## Issues
 - The match pipeline should not fire on pressing **Enter** after `exit`.
