@@ -94,11 +94,11 @@ echo.
 echo.  /??           Show MSBuild help.
 echo.
 echo Aliases:
-echo   /x86             Or /win32.
-echo   /x64             Or /amd64.
-echo   /dbg             Or /debug.
-echo   /rel             Or /release.
-echo   /fin             Or /final.
+echo   /x86          Or /win32.
+echo   /x64          Or /amd64.
+echo   /dbg          Or /debug.
+echo   /rel          Or /release.
+echo   /fin          Or /final.
 goto :eof
 
 :msbuildusage
