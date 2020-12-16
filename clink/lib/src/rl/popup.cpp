@@ -413,14 +413,10 @@ popup_list_result do_popup_list(
     int& current,
     str_base& out)
 {
-    s_past_flag = past_flag;
+    if (!items)
+        return popup_list_result::error;
 
-    HWND hwndTop;
-    HWND hwndConsole;
-    bool quit = false;
-    HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
-    CONSOLE_SCREEN_BUFFER_INFO csbi;
-    MSG msg;
+    s_past_flag = past_flag;
 
     out.clear();
     s_result = popup_list_result::cancel;
@@ -444,13 +440,19 @@ popup_list_result do_popup_list(
         num_items--;
     }
 
+    // Can't show an empty popup list.
+    if (num_items <= 0)
+        return popup_list_result::error;
+
     // It must be a console in order to pop up a GUI window.
+    HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
+    CONSOLE_SCREEN_BUFFER_INFO csbi;
     if (!GetConsoleScreenBufferInfo(hConsole, &csbi))
         return popup_list_result::error;
 
     // HMODULE and HINSTANCE are interchangeable, so get the HMODULE and cast.
     s_hinst = (HINSTANCE)GetModuleHandle(NULL);
-    hwndConsole = GetConsoleWindow();
+    HWND hwndConsole = GetConsoleWindow();
 
     // Create popup list window.
     s_items = items;
@@ -464,7 +466,7 @@ popup_list_result do_popup_list(
         return popup_list_result::error;
 
     // Disable parent, for modality.
-    hwndTop = get_top_level_window(hwndConsole);
+    HWND hwndTop = get_top_level_window(hwndConsole);
     if (hwndTop && IsWindowEnabled(hwndTop) && hwndTop != s_hwnd_popup)
         EnableWindow(hwndTop, false);
     else
@@ -472,6 +474,8 @@ popup_list_result do_popup_list(
     EnableWindow(hwndConsole, false);
 
     // Pump messages until the modal state is done (or on WM_QUIT).
+    bool quit = false;
+    MSG msg;
     s_modal = true;
     while (s_modal)
     {
