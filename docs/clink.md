@@ -121,7 +121,7 @@ Examples (specific results may depend on the console host program):
 
 ### Alternative SGR Syntax
 
-It's also possible to set any ANSI SGR escape code using <code>sgr <a href="https://en.wikipedia.org/wiki/ANSI_escape_code#SGR"><em>SGR_parameters</em></a></code> (for example `sgr 7` is the code for reverse video, which swaps the foreground and background colors).
+It's also possible to set any ANSI <a href="https://en.wikipedia.org/wiki/ANSI_escape_code#SGR">SGR escape code</a> using <code>sgr <span class="arg">SGR_parameters</span></code> (for example `sgr 7` is the code for reverse video, which swaps the foreground and background colors).
 
 Be careful, since some escape code sequences might behave strangely.
 
@@ -129,12 +129,10 @@ Be careful, since some escape code sequences might behave strangely.
 
 Settings and history are persisted to disk from session to session. The location of these files depends on which distribution of Clink was used. If you installed Clink using the .exe installer then Clink uses the current user's non-roaming application data directory. This user directory is usually found in one of the following locations;
 
-- Windows XP: `c:\Documents and Settings\<username>\Local Settings\Application Data`
-- Windows Vista onwards: `c:\Users\<username>\AppData\Local`
+- Windows XP: `c:\Documents and Settings\<username>\Local Settings\Application Data\clink`
+- Windows Vista onwards: `c:\Users\<username>\AppData\Local\clink`
 
-The .zip distribution of Clink creates and uses a directory called `profile` which is located in the same directory where Clink's core files are found.
-
-All of the above locations can be overridden using the `--profile <path>` command line option which is specified when injecting Clink into cmd.exe using `clink inject`.
+All of the above locations can be overridden using the <code>--profile <span class="arg">path</span></code> command line option which is specified when injecting Clink into cmd.exe using `clink inject`.
 
 ## Command Line Options
 
@@ -297,12 +295,11 @@ The Readline library allows clients to offer an alternative path for creating co
 ## The Location of Lua Scripts
 
 Clink loads all Lua scripts it finds in these directories:
-- All directories listed in the `clink.path` setting, separated by semicolons.
-- All directories listed in the `%CLINK_PATH%` environment variable, separated by semicolons.
+1. All directories listed in the `clink.path` setting, separated by semicolons.
+2. If `clink.path` is not set, then the profile directory is used (`--profile` or `%USERPROFILE%\AppData\Local\clink`).
+3. All directories listed in the `%CLINK_PATH%` environment variable, separated by semicolons.
 
-If no Lua scripts can be found in any of those directories, then Clink will load any Lua scripts found in the directory that contains the Clink DLL (this is the default behavior from v0.4.8).
-
-By default <kbd>Ctrl</kbd>+<kbd>X</kbd>,<kbd>Ctrl</kbd>+<kbd>R</kbd> is mapped to reload all Lua scripts which can be useful when developing and iterating on your own scripts.
+Lua scripts are reloaded each time the edit prompt is activated.
 
 <a name="matchgenerators"/>
 
