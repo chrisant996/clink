@@ -5,6 +5,7 @@
 #include "rl_module.h"
 #include "rl_commands.h"
 #include "line_buffer.h"
+#include "line_state.h"
 #include "matches.h"
 #include "popup.h"
 
@@ -82,6 +83,7 @@ inline int clink_wcwidth(char32_t c)
 
 extern void host_add_history(int rl_history_index, const char* line);
 extern void host_remove_history(int rl_history_index, const char* line);
+extern matches* maybe_regenerate_matches(const char* needle);
 extern setting_color g_color_interact;
 
 terminal_in*        s_direct_input = nullptr;       // for read_key_hook
@@ -367,6 +369,9 @@ static char** alternative_matches(const char* text, int start, int end)
     if (!s_matches)
         return nullptr;
 
+    if (matches* regen = maybe_regenerate_matches(text))
+        s_matches = regen;
+
     str<> tmp;
     const char* pattern = nullptr;
     if (g_match_wild.get() && rl_completion_type == '%')
@@ -499,6 +504,10 @@ static match_display_filter_entry** match_display_filter(char** matches)
     // Remove duplicates.
     if (filtered_matches[0] && filtered_matches[1])
     {
+#ifdef DEBUG
+        const int debug_filter = dbg_get_env_int("DEBUG_FILTER");
+#endif
+
         std::unordered_set<const char*, match_hasher, match_comparator> seen;
         unsigned int tortoise = 1;
         unsigned int hare = 1;
@@ -506,10 +515,18 @@ static match_display_filter_entry** match_display_filter(char** matches)
         {
             if (seen.find(filtered_matches[hare]->match) != seen.end())
             {
+#ifdef DEBUG
+                if (debug_filter)
+                    printf("%u dupe: %s\n", hare, filtered_matches[hare]->match);
+#endif
                 free(filtered_matches[hare]);
             }
             else
             {
+#ifdef DEBUG
+                if (debug_filter)
+                    printf("%u->%u: %s\n", hare, tortoise, filtered_matches[hare]->match);
+#endif
                 seen.insert(filtered_matches[hare]->match);
                 if (hare > tortoise)
                     filtered_matches[tortoise] = filtered_matches[hare];

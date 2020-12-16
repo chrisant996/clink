@@ -158,7 +158,7 @@ void rl_buffer::find_command_bounds(std::vector<command>& commands, bool stop_at
 }
 
 //------------------------------------------------------------------------------
-unsigned int rl_buffer::collect_words(std::vector<word>& words, bool stop_at_cursor) const
+unsigned int rl_buffer::collect_words(std::vector<word>& words, collect_words_mode mode) const
 {
     words.clear();
 
@@ -166,6 +166,8 @@ unsigned int rl_buffer::collect_words(std::vector<word>& words, bool stop_at_cur
     unsigned int line_cursor = get_cursor();
 
     std::vector<command> commands;
+    bool stop_at_cursor = (mode == collect_words_mode::stop_at_cursor ||
+                           mode == collect_words_mode::display_filter);
     find_command_bounds(commands, stop_at_cursor);
 
     unsigned int command_offset = 0;
@@ -219,6 +221,19 @@ unsigned int rl_buffer::collect_words(std::vector<word>& words, bool stop_at_cur
         word.length -= start_quoted + end_quoted;
         word.quoted = !!start_quoted;
     }
+
+#ifdef DEBUG
+    if (dbg_get_env_int("DEBUG_COLLECTWORDS"))
+    {
+        for (word& word : words)
+        {
+            str<> tmp;
+            str_iter it(line_buffer + word.offset, word.length);
+            tmp.concat(it.get_pointer(), it.length());
+            printf("WORD '%s'\n", tmp.c_str());
+        }
+    }
+#endif
 
     return command_offset;
 }

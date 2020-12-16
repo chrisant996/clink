@@ -105,10 +105,14 @@ void line_editor_destroy(line_editor* editor)
 
 
 //------------------------------------------------------------------------------
+static line_editor_impl* s_editor = nullptr;
+
+//------------------------------------------------------------------------------
 line_editor_impl::line_editor_impl(const desc& desc)
 : m_module(desc.shell_name, desc.input)
 , m_desc(desc)
 , m_buffer(desc.command_delims, desc.word_delims, desc.get_quote_pair())
+, m_regen_matches(&m_generators)
 , m_matches(&m_generators)
 , m_printer(*desc.printer)
 , m_pager(*this)
@@ -166,6 +170,9 @@ void line_editor_impl::begin_line()
     m_keys_size = 0;
     m_prev_key = ~0u;
 
+    assert(!s_editor);
+    s_editor = this;
+
     match_pipeline pipeline(m_matches);
     pipeline.reset();
 
@@ -190,6 +197,8 @@ void line_editor_impl::end_line()
     m_buffer.end_line();
     m_desc.output->end();
     m_desc.input->end();
+
+    s_editor = nullptr;
 
     clear_flag(flag_editing);
 }
@@ -464,13 +473,20 @@ bool line_editor_impl::update_input()
 //------------------------------------------------------------------------------
 void line_editor_impl::collect_words(bool stop_at_cursor)
 {
-    m_command_offset = m_buffer.collect_words(m_words, stop_at_cursor);
+    collect_words_mode mode = stop_at_cursor ? collect_words_mode::stop_at_cursor : collect_words_mode::whole_command;
+    m_command_offset = collect_words(m_words, m_matches, mode);
+}
+
+//------------------------------------------------------------------------------
+unsigned int line_editor_impl::collect_words(words& words, matches_impl& matches, collect_words_mode mode)
+{
+    unsigned int command_offset = m_buffer.collect_words(words, mode);
 
     // The last word can be split by the match generators, to influence word
     // breaks. This is a little clunky but works well enough.
-    line_state line = get_linestate();
-    word* end_word = &m_words.back();
-    if (end_word->length && stop_at_cursor)
+    line_state line { m_buffer.get_buffer(), m_buffer.get_cursor(), command_offset, words };
+    word* end_word = &words.back();
+    if (end_word->length && mode == collect_words_mode::stop_at_cursor)
     {
         word_break_info break_info = {};
         const char *word_start = m_buffer.get_buffer() + end_word->offset;
@@ -494,16 +510,18 @@ void line_editor_impl::collect_words(bool stop_at_cursor)
             split_word.delim = str_token::invalid_delim;
 
             end_word->length = truncate;
-            m_words.push_back(split_word);
-            end_word = &m_words.back();
+            words.push_back(split_word);
+            end_word = &words.back();
         }
 
         int keep = min<unsigned int>(break_info.keep, end_word->length);
         end_word->length = keep;
 
         // Need to coordinate with Readline when we redefine word breaks.
-        m_matches.set_word_break_adjustment(break_info.truncate);
+        matches.set_word_break_adjustment(break_info.truncate);
     }
+
+    return command_offset;
 }
 
 //------------------------------------------------------------------------------
@@ -520,9 +538,9 @@ line_state line_editor_impl::get_linestate() const
 //------------------------------------------------------------------------------
 editor_module::context line_editor_impl::get_context(const line_state& line) const
 {
-    auto& buffer = const_cast<rl_buffer&>(m_buffer);
     auto& pter = const_cast<printer&>(m_printer);
     auto& pger = const_cast<pager&>(static_cast<const pager&>(m_pager));
+    auto& buffer = const_cast<rl_buffer&>(m_buffer);
     return { m_desc.prompt, pter, pger, buffer, line, m_matches, m_classifications };
 }
 
@@ -628,26 +646,6 @@ void line_editor_impl::update_internal()
         match_pipeline pipeline(m_matches);
         pipeline.reset();
         pipeline.generate(line, m_generators);
-#ifdef DEBUG
-        if (dbg_get_env_int("DEBUG_PIPELINE"))
-        {
-            printf("GENERATE, %u matches, file_comp %u %s --%s",
-                   m_matches.get_match_count(),
-                   m_matches.is_filename_completion_desired().get(),
-                   m_matches.is_filename_completion_desired().is_explicit() ? "(exp)" : "(imp)",
-                   m_matches.get_match_count() ? "" : " <none>");
-
-            int i = 0;
-            for (matches_iter iter = m_matches.get_iter(); i < 21 && iter.next(); i++)
-            {
-                if (i == 20)
-                    printf(" ...");
-                else
-                    printf(" %s", iter.get_match());
-            }
-            printf("\n");
-        }
-#endif
     }
 
     next_key.cursor_pos = m_buffer.get_cursor();
@@ -671,16 +669,6 @@ void line_editor_impl::update_internal()
         match_pipeline pipeline(m_matches);
         pipeline.select(needle.c_str());
         pipeline.sort();
-#ifdef DEBUG
-        if (dbg_get_env_int("DEBUG_PIPELINE"))
-        {
-            printf("COALESCED, file_comp %u %s -- needle '%s' selected %u matches\n",
-                   m_matches.is_filename_completion_desired().get(),
-                   m_matches.is_filename_completion_desired().is_explicit() ? "(exp)" : "(imp)",
-                   needle.c_str(),
-                   m_matches.get_match_count());
-        }
-#endif
 
         m_prev_key = next_key.value;
 
@@ -690,4 +678,58 @@ void line_editor_impl::update_internal()
         for (auto module : m_modules)
             module->on_matches_changed(context);
     }
+}
+
+matches* maybe_regenerate_matches(const char* needle)
+{
+    if (!s_editor)
+        return nullptr;
+
+    // Check if a match display filter is active.
+    matches_impl& regen = s_editor->m_regen_matches;
+    if (!regen.match_display_filter(nullptr, nullptr))
+        return nullptr;
+
+#ifdef DEBUG
+    int debug_filter = dbg_get_env_int("DEBUG_FILTER");
+    if (debug_filter) puts("REGENERATE_MATCHES");
+#endif
+
+    std::vector<word> words;
+    unsigned int command_offset = s_editor->collect_words(words, regen, collect_words_mode::display_filter);
+    line_state line
+    {
+        s_editor->m_buffer.get_buffer(),
+        s_editor->m_buffer.get_cursor(),
+        command_offset,
+        words,
+    };
+
+    match_pipeline pipeline(regen);
+    pipeline.reset();
+
+#ifdef DEBUG
+    if (debug_filter) puts("-- GENERATE");
+#endif
+
+    pipeline.generate(line, s_editor->m_generators);
+
+#ifdef DEBUG
+    if (debug_filter) puts("-- SELECT");
+#endif
+
+    pipeline.select(needle);
+    pipeline.sort();
+
+#ifdef DEBUG
+    if (debug_filter)
+    {
+        matches_iter iter = regen.get_iter();
+        while (iter.next())
+            printf("match '%s'\n", iter.get_match());
+        puts("-- DONE");
+    }
+#endif
+
+    return &regen;
 }

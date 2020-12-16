@@ -557,7 +557,12 @@ function my_match_generator(text, first, last)
 end
 ```
 
-The function's single argument <span class="arg">matches</a> is a table containing what Clink is going to display. The return value is a table with the input matches filtered as required by the match generator. The value of `clink.match_display_filter` is reset every time match generation is invoked.
+The function's single argument <span class="arg">matches</span> is a table containing what Clink is going to display. The return value is a table with the input matches filtered as required by the match generator. The value of `clink.match_display_filter` is reset every time match generation is invoked.
+
+> **Compatibility Note:**  When a match display filter has been set, then match generation changes how it behaves.
+> - Normally match generation only happens at the start of a new word.  The full set of potential matches is remembered and dynamically filtered based on what's typed.
+> - When a match display filter is set, then match generation is also re-run whenever matches are displayed.  This is necessary for backward compatibility with how generators and match display filters were able to influence each other.
+> - This means if a match generator made contextual decisions other than just filtering then it could potentially behave differently in Clink v1.x than it did in v0.x.
 
 <a name="customisingtheprompt"/>
 

@@ -130,11 +130,23 @@ end
 --- -name:  clink.is_match
 --- -arg:   needle:string
 --- -arg:   candidate:string
---- -ret:   true
+--- -ret:   boolean
 --- -deprecated: clink.generator
---- This is no longer needed, and simply returns true now.
+--- This returns true if <span class="arg">needle</span> is a prefix of
+--- <span class="arg">candidate</span> with a case insensitive comparison.
+---
+--- Normally in Clink v1.x and higher the <span class="arg">needle</span> will
+--- be an empty string because the generators are no longer responsible for
+--- filtering matches.  The match pipeline itself handles that internally now.
 function clink.is_match(needle, candidate)
-    return true
+    if needle == nil then
+        error("Nil needle value when calling clink.is_match()", 2)
+    end
+
+    if clink.lower(candidate:sub(1, #needle)) == clink.lower(needle) then
+        return true
+    end
+    return false
 end
 
 --------------------------------------------------------------------------------

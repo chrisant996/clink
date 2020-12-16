@@ -49,6 +49,7 @@ private:
     typedef fixed_array<editor_module*, 16>     modules;
     typedef fixed_array<match_generator*, 32>   generators;
     typedef std::vector<word>                   words;
+    friend matches* maybe_regenerate_matches(const char* needle);
 
     enum flags : unsigned char
     {
@@ -62,6 +63,7 @@ private:
     void                begin_line();
     void                end_line();
     void                collect_words(bool stop_at_cursor=true);
+    unsigned int        collect_words(words& words, matches_impl& matches, collect_words_mode mode);
     void                update_internal();
     bool                update_input();
     module::context     get_context(const line_state& line) const;
@@ -81,6 +83,7 @@ private:
     bind_resolver       m_bind_resolver = { m_binder };
     words               m_words;
     word_classifications m_classifications;
+    matches_impl        m_regen_matches;
     matches_impl        m_matches;
     printer&            m_printer;
     pager_impl          m_pager;

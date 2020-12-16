@@ -105,6 +105,27 @@ void match_pipeline::generate(
     for (auto* generator : generators)
         if (generator->generate(state, builder))
             break;
+
+#ifdef DEBUG
+    if (dbg_get_env_int("DEBUG_PIPELINE"))
+    {
+        printf("GENERATE, %u matches, file_comp %u %s --%s",
+               m_matches.get_match_count(),
+               m_matches.is_filename_completion_desired().get(),
+               m_matches.is_filename_completion_desired().is_explicit() ? "(exp)" : "(imp)",
+               m_matches.get_match_count() ? "" : " <none>");
+
+        int i = 0;
+        for (matches_iter iter = m_matches.get_iter(); i < 21 && iter.next(); i++)
+        {
+            if (i == 20)
+                printf(" ...");
+            else
+                printf(" %s", iter.get_match());
+        }
+        printf("\n");
+    }
+#endif
 }
 
 //------------------------------------------------------------------------------
@@ -127,6 +148,17 @@ void match_pipeline::select(const char* needle) const
     m_matches.coalesce(selected_count);
 
     free(expanded);
+
+#ifdef DEBUG
+    if (dbg_get_env_int("DEBUG_PIPELINE"))
+    {
+        printf("COALESCED, file_comp %u %s -- needle '%s' selected %u matches\n",
+               m_matches.is_filename_completion_desired().get(),
+               m_matches.is_filename_completion_desired().is_explicit() ? "(exp)" : "(imp)",
+               needle,
+               m_matches.get_match_count());
+    }
+#endif
 }
 
 //------------------------------------------------------------------------------

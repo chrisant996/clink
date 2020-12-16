@@ -5,12 +5,11 @@ ChrisAnt Plans
 # RELEASE
 
 - Broke sort order for completions -- "clink" sorts after "clink.future" because they are actually "clink\" and "clink.future\" under the covers.
+- Git stashes like `stash@{2}` stop completing once you type the `{`.  Might be related to `rl_completer_word_break_characters` in rl_module.cpp?
 
 ## Match Display Filter
 - Popup list support for match display filter.
   - Need to be able to return `{ match, display }`, and probably actually `{ match, display, description }`.
-- Must rerun generators when match display filtering is active.
-  - **This is mandatory** because of how generators interplay with match display filtering (see clink-completions/git.lua).
 
 ## Issues
 - The match pipeline should not fire on pressing **Enter** after `exit`.

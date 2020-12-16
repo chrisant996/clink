@@ -160,7 +160,7 @@ int clink_copy_line(int count, int invoking_key)
 int clink_copy_word(int count, int invoking_key)
 {
     std::vector<word> words;
-    rl_buffer->collect_words(words, false);
+    rl_buffer->collect_words(words, collect_words_mode::whole_command);
 
     if (!words.empty())
     {

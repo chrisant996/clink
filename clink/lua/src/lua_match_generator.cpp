@@ -138,6 +138,16 @@ bool lua_match_generator::match_display_filter(char** matches, match_display_fil
     if (lua_isnil(state, -1))
         goto done;
 
+    // If the caller just wants to know whether a display filter is active, then
+    // short circuit.
+    if (!matches || !filtered_matches)
+    {
+        if (filtered_matches)
+            *filtered_matches = nullptr;
+        ret = true;
+        goto done;
+    }
+
     // Count matches.
     int match_count = 0;
     for (i = 1; matches[i]; ++i, ++match_count);
@@ -170,11 +180,12 @@ bool lua_match_generator::match_display_filter(char** matches, match_display_fil
     // Convert table returned by the Lua filter function to C.
     int j = 1;
     bool force_one_column = false;
-    new_matches = (match_display_filter_entry**)calloc(1 + match_count + 1, sizeof(*new_matches));
+    int new_len = int(lua_rawlen(state, -1));
+    new_matches = (match_display_filter_entry**)calloc(1 + new_len + 1, sizeof(*new_matches));
     new_matches[0] = (match_display_filter_entry*)malloc(sizeof(match_display_filter_entry));
     new_matches[0]->visible_len = one_column ? -1 : 0;
     new_matches[0]->match[0] = '\0';
-    for (i = 1; i <= match_count; ++i)
+    for (i = 1; i <= new_len; ++i)
     {
         lua_rawgeti(state, -1, i);
         if (!lua_isnil(state, -1))

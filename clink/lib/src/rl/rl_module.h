@@ -4,6 +4,7 @@
 #pragma once
 
 #include "editor_module.h"
+#include "matches_impl.h"
 
 #include <core/str.h>
 #include <core/singleton.h>
