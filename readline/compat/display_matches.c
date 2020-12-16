@@ -53,6 +53,8 @@ extern int errno;
 #  include "readline/colors.h"
 #endif
 
+#include "display_matches.h"
+
 #ifdef HAVE_LSTAT
 #  define LSTAT lstat
 #else
@@ -70,6 +72,12 @@ extern int get_y_or_n (int for_pager);
 extern char* printable_part (char* pathname);
 extern int stat_char (char *filename, char match_type);
 extern int _rl_internal_pager (int lines);
+
+
+
+//------------------------------------------------------------------------------
+rl_match_display_filter_func_t *rl_match_display_filter_func = NULL;
+const char *_rl_filtered_color = NULL;
 
 
 
@@ -117,6 +125,9 @@ static void append_tmpbuf_char(char c)
 //------------------------------------------------------------------------------
 static void append_tmpbuf_string(const char* s, int len)
 {
+    if (len < 0)
+        len = strlen(s);
+
     if (tmpbuf_length + len > tmpbuf_capacity)
         grow_tmpbuf(tmpbuf_length + len);
 
@@ -337,7 +348,7 @@ static bool append_match_color_indicator(const char *f, unsigned char match_type
             if (is_colored(C_NORM))
                 append_default_color();
             append_color_indicator(C_LEFT);
-            append_tmpbuf_string(override_color, strlen(override_color));
+            append_tmpbuf_string(override_color, -1);
             append_color_indicator(C_RIGHT);
             return 0;
         }
@@ -874,6 +885,114 @@ static int display_match_list_internal(char **matches, int len, int max, bool on
 }
 
 //------------------------------------------------------------------------------
+static int display_filtered_match_list_internal(match_display_filter_entry **matches, int len, int max, bool only_measure)
+{
+    int count, limit, printed_len, lines, cols;
+    int i, j, l;
+    int major_stride, minor_stride;
+    const char* filtered_color = "\x1b[m";
+    int filtered_color_len = 3;
+
+    // How many items of MAX length can we fit in the screen window?
+    cols = complete_get_screenwidth();
+    max += 2;
+    limit = cols / max;
+    if (limit != 1 && (limit * max == cols))
+        limit--;
+
+    // Limit can end up -1 if cols == 0, or 0 if max > cols.  In that case,
+    // display 1 match per iteration.
+    if (limit <= 0)
+        limit = 1;
+
+    if (matches[0] && matches[0]->visible_len < 0)
+        limit = 1;
+
+    // How many iterations of the printing loop?
+    count = (len + (limit - 1)) / limit;
+
+    if (only_measure)
+        return count;
+
+    // Watch out for special case.  If LEN is less than LIMIT, then
+    // just do the inner printing loop.
+    //     0 < len <= limit  implies  count = 1.
+
+    rl_crlf();
+
+    if (_rl_print_completions_horizontally == 0)
+    {
+        // Print the sorted items, up-and-down alphabetically, like ls.
+        major_stride = 1;
+        minor_stride = count;
+    }
+    else
+    {
+        // Print the sorted items, across alphabetically, like ls -x.
+        major_stride = limit;
+        minor_stride = 1;
+    }
+
+    if (_rl_filtered_color)
+    {
+        filtered_color = _rl_filtered_color;
+        filtered_color_len = strlen(filtered_color);
+    }
+
+    lines = 0;
+    for (i = 0; i < count; i++)
+    {
+        reset_tmpbuf();
+        for (j = 0, l = 1 + i * major_stride; j < limit; j++)
+        {
+            if (l > len || matches[l] == 0)
+                break;
+            else
+            {
+                printed_len = matches[l]->visible_len;
+                append_default_color();
+                append_tmpbuf_string(filtered_color, filtered_color_len);
+                append_tmpbuf_string(matches[l]->match, -1);
+
+                if (j + 1 < limit)
+                    pad_filename(printed_len, max);
+            }
+            l += minor_stride;
+        }
+        append_default_color();
+        append_color_indicator(C_CLR_TO_EOL);
+        flush_tmpbuf();
+        rl_crlf();
+#if defined(SIGWINCH)
+        if (RL_SIG_RECEIVED() && RL_SIGWINCH_RECEIVED() == 0)
+#else
+        if (RL_SIG_RECEIVED())
+#endif
+            return 0;
+        lines++;
+        if (_rl_page_completions && lines >= (_rl_screenheight - 1) && i < count)
+        {
+            lines = _rl_internal_pager(lines);
+            if (lines < 0)
+                return 0;
+        }
+    }
+
+    return 1;
+}
+
+//------------------------------------------------------------------------------
+static void free_filtered_matches(match_display_filter_entry** filtered_matches)
+{
+    if (filtered_matches)
+    {
+        for (match_display_filter_entry** walk = filtered_matches; *walk; walk++)
+            free(*walk);
+        free(filtered_matches);
+    }
+}
+
+//------------------------------------------------------------------------------
 static int prompt_display_matches(int len)
 {
     rl_crlf();
@@ -898,6 +1017,49 @@ void display_matches(char** matches)
     int len, max, i;
     char *temp;
     int vis_stat;
+
+    // If there is a display filter, give it a chance to modify MATCHES.
+    if (rl_match_display_filter_func)
+    {
+        match_display_filter_entry** filtered_matches = rl_match_display_filter_func(matches);
+        if (filtered_matches)
+        {
+            if (!filtered_matches[0] || !filtered_matches[1])
+            {
+                rl_ding();
+                free_filtered_matches(filtered_matches);
+                return;
+            }
+
+            // Move to the last visible line of a possibly-multiple-line command.
+            _rl_move_vert(_rl_vis_botlin);
+
+            len = 0;
+            max = 0;
+            for (match_display_filter_entry** walk = filtered_matches + 1; *walk; len++, walk++)
+            {
+                if (max < (*walk)->visible_len)
+                    max = (*walk)->visible_len;
+            }
+
+            if (rl_completion_auto_query_items ?
+                display_filtered_match_list_internal(filtered_matches, len, max, true) >= (_rl_screenheight - 1) :
+                rl_completion_query_items > 0 && len >= rl_completion_query_items)
+            {
+                if (!prompt_display_matches(len))
+                    goto done_filtered;
+            }
+
+            display_filtered_match_list_internal(filtered_matches, len, max, false);
+
+done_filtered:
+            free_filtered_matches(filtered_matches);
+            goto done;
+        }
+    }
+
+    // Move to the last visible line of a possibly-multiple-line command.
+    _rl_move_vert(_rl_vis_botlin);
 
     // Handle simple case first.  What if there is only one answer?
     if (matches[1] == 0)

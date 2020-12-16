@@ -11,6 +11,7 @@
 #include <core/base.h>
 #include <core/os.h>
 #include <core/path.h>
+#include <core/str_hash.h>
 #include <core/settings.h>
 #include <core/log.h>
 #include <terminal/ecma48_iter.h>
@@ -18,6 +19,8 @@
 #include <terminal/terminal_in.h>
 #include <terminal/key_tester.h>
 #include <terminal/screen_buffer.h>
+
+#include <unordered_set>
 
 extern "C" {
 #include <readline/readline.h>
@@ -125,6 +128,12 @@ setting_color g_color_doskey(
     "Doskey completions",
     "Used when Clink displays doskey macro completions.",
     "bright cyan");
+
+setting_color g_color_filtered(
+    "color.filtered",
+    "Filtered completion color",
+    "The default color for filtered completions.",
+    "bold");
 
 setting_bool g_match_wild(
     "match.wild",
@@ -460,6 +469,61 @@ static char** alternative_matches(const char* text, int start, int end)
 }
 
 //------------------------------------------------------------------------------
+struct match_hasher
+{
+    size_t operator()(const char* match) const
+    {
+        return str_hash(match);
+    }
+};
+
+//------------------------------------------------------------------------------
+struct match_comparator
+{
+    bool operator()(const char* m1, const char* m2) const
+    {
+        return strcmp(m1, m2) == 0;
+    }
+};
+
+//------------------------------------------------------------------------------
+static match_display_filter_entry** match_display_filter(char** matches)
+{
+    if (!s_matches)
+        return nullptr;
+
+    match_display_filter_entry** filtered_matches = nullptr;
+    if (!s_matches->match_display_filter(matches, &filtered_matches))
+        return nullptr;
+
+    // Remove duplicates.
+    if (filtered_matches[0] && filtered_matches[1])
+    {
+        std::unordered_set<const char*, match_hasher, match_comparator> seen;
+        unsigned int tortoise = 1;
+        unsigned int hare = 1;
+        while (filtered_matches[hare])
+        {
+            if (seen.find(filtered_matches[hare]->match) != seen.end())
+            {
+                free(filtered_matches[hare]);
+            }
+            else
+            {
+                seen.insert(filtered_matches[hare]->match);
+                if (hare > tortoise)
+                    filtered_matches[tortoise] = filtered_matches[hare];
+                tortoise++;
+            }
+            hare++;
+        }
+        filtered_matches[tortoise] = nullptr;
+    }
+
+    return filtered_matches;
+}
+
+//------------------------------------------------------------------------------
 // If the input text starts with a slash and doesn't have any other slashes or
 // path separators, then preserve the original slash in the lcd.  Otherwise it
 // converts "somecommand /" to "somecommand \" and we lose the ability to try
@@ -750,6 +814,7 @@ rl_module::rl_module(const char* shell_name, terminal_in* input)
     rl_menu_completion_entry_function = filename_menu_completion_function;
     rl_adjust_completion_word = adjust_completion_word;
     rl_completion_display_matches_func = display_matches;
+    rl_match_display_filter_func = match_display_filter;
     rl_is_exec_func = is_exec_ext;
     rl_postprocess_lcd_func = postprocess_lcd;
     rl_read_key_hook = read_key_hook;
@@ -958,6 +1023,10 @@ void rl_module::on_begin_line(const context& context)
     _rl_alias_color = nullptr;
     if (build_color_sequence(g_color_doskey, m_alias_color))
         _rl_alias_color = m_alias_color.c_str();
+
+    _rl_filtered_color = nullptr;
+    if (build_color_sequence(g_color_filtered, m_filtered_color, true))
+        _rl_filtered_color = m_filtered_color.c_str();
 
     m_done = false;
     m_eof = false;

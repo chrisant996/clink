@@ -2244,9 +2244,6 @@ display_matches (char **matches)
   int vis_stat;
 /* end_clink_change */
 
-  /* Move to the last visible line of a possibly-multiple-line command. */
-  _rl_move_vert (_rl_vis_botlin);
-
 /* begin_clink_change */
   /* If the caller has defined a display function, then call that now. */
   if (rl_completion_display_matches_func)
@@ -2262,6 +2259,9 @@ display_matches (char **matches)
       return;
     }
 /* end_clink_change */
+
+  /* Move to the last visible line of a possibly-multiple-line command. */
+  _rl_move_vert (_rl_vis_botlin);
 
   /* Handle simple case first.  What if there is only one answer? */
   if (matches[1] == 0)

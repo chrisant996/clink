@@ -3,6 +3,7 @@
 
 #include "pch.h"
 #include "matches_impl.h"
+#include "match_generator.h"
 
 #include <core/base.h>
 #include <core/str.h>
@@ -344,8 +345,9 @@ void matches_impl::store_impl::free_chain(bool keep_one)
 
 
 //------------------------------------------------------------------------------
-matches_impl::matches_impl(unsigned int store_size)
+matches_impl::matches_impl(generators* generators, unsigned int store_size)
 : m_store(min(store_size, 0x10000u))
+, m_generators(generators)
 , m_filename_completion_desired(false)
 , m_filename_display_desired(false)
 {
@@ -464,6 +466,26 @@ int matches_impl::get_suppress_quoting() const
 int matches_impl::get_word_break_adjustment() const
 {
     return m_word_break_adjustment;
+}
+
+//------------------------------------------------------------------------------
+bool matches_impl::match_display_filter(char** matches, match_display_filter_entry*** filtered_matches) const
+{
+    // TODO:  This doesn't really belong here.  But it's a convenient point to
+    // cobble together Lua (via the generators) and the matches.  It's strange
+    // to pass 'matches' into matches_impl, but the caller already has it and
+    // this way we don't have to figure out how to reproduce 'matches'
+    // accurately (it might have been produced by a pattern iterator) in order
+    // to generate an array to pass to clink.match_display_filter.
+
+    if (!m_generators)
+        return false;
+
+    for (auto *generator : *m_generators)
+        if (generator->match_display_filter(matches, filtered_matches))
+            return true;
+
+    return false;
 }
 
 //------------------------------------------------------------------------------

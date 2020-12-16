@@ -45,5 +45,6 @@ private:
     str<16>         m_readonly_color;
     str<16>         m_command_color;
     str<16>         m_alias_color;
+    str<16>         m_filtered_color;
     int             m_insert_next_len = 0;
 };

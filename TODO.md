@@ -4,14 +4,12 @@ ChrisAnt Plans
 
 # RELEASE
 
+- Broke sort order for completions -- "clink" sorts after "clink.future" because they are actually "clink\" and "clink.future\" under the covers.
+
 ## Match Display Filter
-- Support match display filter (e.g. `git stash show` uses it to list stashes with their descriptions next to them).
-  - Dedupe to fix the bug (in clink-completions itself) where `git checkout ` lists `*gh-pages` multiple times.
-  - Add a "filter" match type with an associated color?
-  - Analyze the string for ANSI escape codes to find its visible length (just like prompt filtering does) for column alignment, so `stash{0}   [DIM]desc` is possible.
-  - Popup list needs a way to support column alignment.
-    - Use a monospace font?
-    - Tell the filter it's for a popup list so it can use `\t` instead, and the popup list can do special interpretation of `\t` to actually align columns?
+- Popup list support for match display filter.
+  - Strip ANSI escape codes.
+  - Tell the filter it's for a popup list so it can use `\t` instead, and the popup list can do special interpretation of `\t` to actually align columns?
 - Detect when a generator blocks an argmatcher (e.g. CollinK's `git checkout` generator).
   - Detect when a generator stops the pipeline before argmatchers are reached.
   - If so, scan to see if an argmatcher would have handled it.

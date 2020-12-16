@@ -7,6 +7,14 @@ local _generators = {}
 local _generators_unsorted = false
 
 --------------------------------------------------------------------------------
+--- -name:  clink.match_display_filter
+--- -var:   function
+--- This variable can be set to a filter function.  See
+--- <a href="#filteringthematchdisplay">Filtering the Match Display</a> for more
+--- information.
+clink.match_display_filter = nil
+
+--------------------------------------------------------------------------------
 -- Deprecated.
 local _current_builder = nil
 
@@ -35,6 +43,8 @@ function clink._generate(line_state, match_builder)
 
         return false
     end
+
+    clink.match_display_filter = nil
 
     prepare()
     _current_builder = match_builder

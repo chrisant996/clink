@@ -96,6 +96,9 @@ private:
 };
 
 //------------------------------------------------------------------------------
+struct match_display_filter_entry;
+
+//------------------------------------------------------------------------------
 class matches
 {
 public:
@@ -107,6 +110,7 @@ public:
     virtual char            get_append_character() const = 0;
     virtual int             get_suppress_quoting() const = 0;
     virtual int             get_word_break_adjustment() const = 0;
+    virtual bool            match_display_filter(char** matches, match_display_filter_entry*** filtered_matches) const = 0;
 
 private:
     friend class matches_iter;

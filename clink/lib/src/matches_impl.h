@@ -5,6 +5,7 @@
 
 #include "matches.h"
 
+#include "core/array.h"
 #include <vector>
 
 //------------------------------------------------------------------------------
@@ -28,11 +29,16 @@ protected:
 
 
 //------------------------------------------------------------------------------
+class match_generator;
+
+//------------------------------------------------------------------------------
 class matches_impl
     : public matches
 {
 public:
-                            matches_impl(unsigned int store_size=0x10000);
+    typedef fixed_array<match_generator*, 32> generators;
+
+                            matches_impl(generators* generators=nullptr, unsigned int store_size=0x10000);
     matches_iter            get_iter() const;
     matches_iter            get_iter(const char* pattern) const;
 
@@ -43,6 +49,7 @@ public:
     virtual char            get_append_character() const override;
     virtual int             get_suppress_quoting() const override;
     virtual int             get_word_break_adjustment() const override;
+    virtual bool            match_display_filter(char** matches, match_display_filter_entry*** filtered_matches) const override;
 
     void                    set_word_break_adjustment(int adjustment);
 
@@ -88,6 +95,7 @@ private:
     typedef std::vector<match_info> infos;
 
     store_impl              m_store;
+    generators*             m_generators;
     infos                   m_infos;
     unsigned short          m_count = 0;
     bool                    m_coalesced = false;

@@ -54,6 +54,7 @@ Name                         | Default | Description
 `cmd.ctrld_exits`            | True    | <kbd>Ctrl</kbd>+<kbd>D</kbd> exits the process when it is pressed on an empty line.
 <a name="color_cmd"/>`color.cmd` | `bold` | Used when Clink displays shell (CMD.EXE) command completions.
 <a name="color_doskey"/>`color.doskey` | `bright cyan` | Used when Clink displays doskey alias completions.
+`color.filtered`             | `bold`  | The default color for filtered completions (see <a href="#filteringthematchdisplay">Filtering the Match Display</a>).
 <a name="color_hidden"/>`color.hidden` | | Used when Clink displays file completions with the "hidden" attribute.
 `color.input`                |         | Used when Clink displays the input line text.
 `color.interact`             | `bold`  | Used when Clink displays text or prompts such as a pager's `--More?--` prompt.
@@ -528,10 +529,39 @@ clink.argmatcher()
 
 With the shorthand form flags are implied rather than declared.  When a shorthand table's first value is a string starting with `-` or `/` then the table is interpreted as flags.  Note that it's still possible with shorthand form to mix flag prefixes, and even add additional flag prefixes, such as <code>{ <span class="hljs-string">'-a'</span>, <span class="hljs-string">'/b'</span>, <span class="hljs-string">'=c'</span> }</code>.
 
-<a name="customisingtheprompt">
+<a name="filteringthematchdisplay"/>
+
+#### Filtering The Match Display
+
+In some instances it may be preferable to display potential matches in an alternative form than the generated matches passed to and used internally by Readline. For example, it might be desirable to display a `*` next to some matches, or to show additional information about each match. Filtering the match display only affects what is displayed; it doesn't affect completing matches.
+
+To facilitate custom match generators that may wish to do this there is the <a href="#clink.match_display_filter">clink.match_display_filter</a> variable. This can be set to a function that will then be called before matches are to be displayed.
+
+```lua
+function my_display_filter(matches)
+    new_matches = {}
+
+    for _, m in ipairs(matches) do
+        local _, _, n = m:find("\\([^\\]+)$")
+        table.insert(new_matches, n)
+    end
+
+    return new_matches
+end
+
+function my_match_generator(text, first, last)
+    ...
+
+    clink.match_display_filter = my_display_filter
+    return true
+end
+```
+
+The function's single argument <span class="arg">matches</a> is a table containing what Clink is going to display. The return value is a table with the input matches filtered as required by the match generator. The value of `clink.match_display_filter` is reset every time match generation is invoked.
+
+<a name="customisingtheprompt"/>
 
 ## Customising The Prompt
-</a>
 
 Before Clink displays the prompt it filters the prompt through Lua so that the prompt can be customised. This happens each and every time that the prompt is shown which allows for context sensitive customisations (such as showing the current branch of a git repository).
 
