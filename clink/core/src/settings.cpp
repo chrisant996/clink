@@ -620,8 +620,7 @@ bool setting_color::set(const char* value)
         code << ";49";
     }
 
-    // +2 because the "0;" is just to avoid testing whether to insert ";".
-    return setting_str::set(code.c_str() + min<int>(2, code.length()));
+    return setting_str::set(code.c_str());
 }
 
 //------------------------------------------------------------------------------
@@ -660,8 +659,8 @@ void setting_color::get_descriptive(str_base& out) const
     if (tmp.empty())
         return;
 
-    enum { bold_token, underline_token, fg_token, bg_token, nomore_tokens };
-    int expected = bold_token;
+    enum { reset_token, bold_token, underline_token, fg_token, bg_token, nomore_tokens };
+    int expected = reset_token;
     str_iter part;
     str_tokeniser parts(tmp.c_str(), ";");
 
@@ -678,8 +677,15 @@ nope:
 
         if (expected >= nomore_tokens)
             goto nope;
+        if (expected == reset_token && x != 0)
+            goto nope;
 
-        if (x == 1 || x == 22)
+        if (x == 0)
+        {
+            if (expected > reset_token) goto nope;
+            expected = reset_token + 1;
+        }
+        else if (x == 1 || x == 22)
         {
             if (expected > bold_token) goto nope;
             expected = bold_token + 1;
