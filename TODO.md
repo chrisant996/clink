@@ -5,7 +5,6 @@ ChrisAnt Plans
 # RELEASE
 
 - Broke sort order for completions -- "clink" sorts after "clink.future" because they are actually "clink\" and "clink.future\" under the covers.
-- Git stashes like `stash@{2}` stop completing once you type the `{`.  Might be related to `rl_completer_word_break_characters` in rl_module.cpp?
 
 ## Match Display Filter
 - Popup list support for match display filter.
@@ -107,6 +106,7 @@ ChrisAnt Plans
 **Miscellaneous**
 - Is it a problem that `update_internal()` gets called once per char in a key sequence?  Maybe it should only happen after a key that finishes a key binding?
 - Should only fold path separators in pathish matches.
+- Git stashes like `stash@{2}` stop completing once you type the `{`.
 - Allow to search the console output (not command history) with a RegExp [#166](https://github.com/mridgers/clink/issues/166).  _[Unclear how that would work.  Would it scroll the console?  How would it highlight matches, etc, since that's really something the console host would need to do?  I think this needs to be implemented by the console host, e.g. conhost or ConEmu or Terminal, etc.]_
 - [#20](https://github.com/chrisant996/clink/issues/20) Cmd gets unresponsive after "set /p" command.  _[Seems to mostly work, though `set /p FOO=""` doesn't prompt for input.]_
 - Include `wildmatch()` and an `fnmatch()` wrapper for it.  But should first update it to support UTF8.
