@@ -5,6 +5,7 @@ ChrisAnt Plans
 # RELEASE
 
 - Broke sort order for completions -- "clink" sorts after "clink.future" because they are actually "clink\" and "clink.future\" under the covers.
+- `menu-complete` is broken for `git checkout ori` because the wildcard matching stops at the slash -- so I guess a final star should instantly match no matter what follows?  Or maybe only when the match is not pathish?
 
 ## Match Display Filter
 - Popup list support for match display filter.
@@ -24,7 +25,7 @@ ChrisAnt Plans
 - `LOG()` certain important failure information inside Detours.
 
 ## Cmder, Powerline
-- Submit a pull request for cmder-powerline-prompt.
+- Merge my powerline changes with cmder and cmder-powerline-prompt.
 - Port Cmder to v1.x -- will require help from Cmder and/or ConEmu teams.  There are a lot of hard-coded expectations about Clink (web site address, terminal input mode, DLL names, VirtualAlloc patterns, and many other things).
 
 <br/>
