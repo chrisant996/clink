@@ -497,7 +497,7 @@ bool host_cmd::initialise_system()
         app_context::get()->get_binaries_dir(dll_path);
 
         str<560> buffer;
-        buffer << "\"" << dll_path << "\\" CLINK_EXE "\" " << "$*";
+        buffer << "\"" << dll_path << "\\" CLINK_EXE "\" $*";
         m_doskey.add_alias("clink", buffer.c_str());
 
         // Add an alias to operate on the command history.

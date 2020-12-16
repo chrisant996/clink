@@ -8,21 +8,12 @@
 #include <core/globber.h>
 #include <core/os.h>
 #include <core/path.h>
-#include <core/settings.h>
 #include <core/str.h>
 #include <core/str_tokeniser.h>
 
 extern "C" {
 #include <lua.h>
 }
-
-//------------------------------------------------------------------------------
-static setting_str g_clink_path(
-    "clink.path",
-    "Paths to load Lua completion scripts from",
-    "These paths will be searched for Lua scripts that provide custom\n"
-    "match generation. Multiple paths should be delimited by semicolons.",
-    "");
 
 //------------------------------------------------------------------------------
 extern "C" int show_cursor(int visible)
@@ -79,25 +70,9 @@ host_lua::operator word_classifier& ()
 //------------------------------------------------------------------------------
 void host_lua::load_scripts()
 {
-    // The --scripts flag happens before anything else.
     str<280> script_path;
     app_context::get()->get_script_path(script_path);
     load_scripts(script_path.c_str());
-
-    // Next load from the clink.path setting, otherwise from the profile
-    // directory.
-    const char* setting_clink_path = g_clink_path.get();
-    if (!load_scripts(setting_clink_path))
-    {
-        str<280> state_dir;
-        app_context::get()->get_state_dir(state_dir);
-        load_scripts(state_dir.c_str());
-    }
-
-    // Finally load from the clink_path envvar.
-    str<256> env_clink_path;
-    os::get_env("clink_path", env_clink_path);
-    load_scripts(env_clink_path.c_str());
 }
 
 //------------------------------------------------------------------------------

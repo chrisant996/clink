@@ -136,6 +136,7 @@ int loader(int argc, char** argv)
         {
         case 'p':
             str_base(app_desc.state_dir).copy(optarg);
+            str_base(app_desc.state_dir).trim();
             break;
 
         case 'v':

@@ -8,8 +8,19 @@
 #include <core/os.h>
 #include <core/path.h>
 #include <core/str.h>
+#include <core/settings.h>
 #include <process/process.h>
 #include <process/vm.h>
+
+//------------------------------------------------------------------------------
+static setting_str g_clink_path(
+    "clink.path",
+    "Paths to load Lua completion scripts from",
+    "These paths will be searched for Lua scripts that provide custom\n"
+    "match generation. Multiple paths should be delimited by semicolons.",
+    "");
+
+
 
 //------------------------------------------------------------------------------
 app_context::desc::desc()
@@ -35,6 +46,10 @@ app_context::app_context(const desc& desc)
     // Look for a state directory that's been inherited in our environment.
     if (state_dir.empty())
         os::get_env("=clink.profile", state_dir);
+
+    // Look for a script directory that's been inherited in our environment.
+    if (script_path.empty())
+        os::get_env("=clink.scripts", script_path);
 
     // Still no state directory set? Derive one.
     if (state_dir.empty())
@@ -150,7 +165,39 @@ void app_context::get_history_path(str_base& out) const
 //------------------------------------------------------------------------------
 void app_context::get_script_path(str_base& out) const
 {
-    out.copy(m_desc.script_path);
+    str<280> tmp;
+
+    // The --scripts flag happens before anything else.
+    out.clear();
+    out << m_desc.script_path;
+
+    // Next load from the clink.path setting, otherwise from the profile
+    // directory.
+    const char* setting_clink_path = g_clink_path.get();
+    if (setting_clink_path && *setting_clink_path)
+    {
+        if (out.length())
+            out << " ; ";
+        out << setting_clink_path;
+    }
+    else
+    {
+        app_context::get()->get_state_dir(tmp);
+        if (tmp.length())
+        {
+            if (out.length())
+                out << " ; ";
+            out << tmp.c_str();
+        }
+    }
+
+    // Finally load from the clink_path envvar.
+    if (os::get_env("clink_path", tmp) && tmp.length())
+    {
+        if (out.length())
+            out << " ; ";
+        out << tmp.c_str();
+    }
 }
 
 //-----------------------------------------------------------------------------
@@ -160,4 +207,5 @@ void app_context::update_env() const
     id_str.format("%d", m_id);
     os::set_env("=clink.id", id_str.c_str());
     os::set_env("=clink.profile", m_desc.state_dir);
+    os::set_env("=clink.scripts", m_desc.script_path);
 }
