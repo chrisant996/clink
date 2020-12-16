@@ -27,6 +27,24 @@
 //  / codes.
 
 //------------------------------------------------------------------------------
+/// -name:  clink.version_encoded
+/// -var:   integer
+/// -show:  -- Make sure the version is high enough to support the "color.filtered" setting.
+/// -show:  local color_filtered = ""
+/// -show:  if clink.version_encoded ~= nil and clink.version_encoded >= 10010009 then
+/// -show:  &nbsp; color_filtered = "\x1b["..settings.get("color.filtered").."m"
+/// -show:  end
+/// The Clink version number encoded as a single integer following the format
+/// <span class="arg">Mmmmpppp</span> where <span class="arg">M</span> is the
+/// major part, <span class="arg">m</span> is the minor part, and
+/// <span class="arg">p</span> is the patch part of the version number.
+///
+/// For example, Clink v95.6.723 would be <code>950060723</code>.
+///
+/// This format makes it easy to test for feature availability by encoding
+/// version numbers from the release notes.
+
+//------------------------------------------------------------------------------
 /// -name:  clink.version_major
 /// -var:   integer
 /// The major part of the Clink version number.
@@ -306,6 +324,10 @@ void clink_lua_initialise(lua_state& lua)
         lua_rawset(state, -3);
     }
 
+    lua_pushinteger(state, CLINK_VERSION_MAJOR * 10000000 +
+                           CLINK_VERSION_MINOR *    10000 +
+                           CLINK_VERSION_PATCH);
+    lua_setfield(state, -2, "version_encoded");
     lua_pushinteger(state, CLINK_VERSION_MAJOR);
     lua_setfield(state, -2, "version_major");
     lua_pushinteger(state, CLINK_VERSION_MINOR);
