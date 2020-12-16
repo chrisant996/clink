@@ -12,7 +12,7 @@
 class host_lua
 {
 public:
-                        host_lua(const char* script_path = nullptr);
+                        host_lua();
                         operator lua_state& ();
                         operator match_generator& ();
                         operator word_classifier& ();
@@ -24,5 +24,4 @@ private:
     lua_state           m_state;
     lua_match_generator m_generator;
     lua_word_classifier m_classifier;
-    str<>               m_script_path;
 };

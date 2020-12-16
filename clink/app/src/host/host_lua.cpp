@@ -43,12 +43,10 @@ extern "C" int show_cursor(int visible)
 }
 
 //------------------------------------------------------------------------------
-host_lua::host_lua(const char* script_path)
+host_lua::host_lua()
 : m_generator(m_state)
 , m_classifier(m_state)
 {
-    m_script_path = script_path;
-
     str<280> bin_path;
     app_context::get()->get_binaries_dir(bin_path);
 
@@ -81,25 +79,25 @@ host_lua::operator word_classifier& ()
 //------------------------------------------------------------------------------
 void host_lua::load_scripts()
 {
-    // The --scripts flag overrides anything else.
-    if (load_scripts(m_script_path.c_str()))
-        return;
+    // The --scripts flag happens before anything else.
+    str<280> script_path;
+    app_context::get()->get_script_path(script_path);
+    load_scripts(script_path.c_str());
 
-    // Use the clink.path setting and the clink_path envvar to get script paths.
+    // Next load from the clink.path setting, otherwise from the profile
+    // directory.
     const char* setting_clink_path = g_clink_path.get();
-    bool tried_path = load_scripts(setting_clink_path);
+    if (!load_scripts(setting_clink_path))
+    {
+        str<280> state_dir;
+        app_context::get()->get_state_dir(state_dir);
+        load_scripts(state_dir.c_str());
+    }
 
+    // Finally load from the clink_path envvar.
     str<256> env_clink_path;
     os::get_env("clink_path", env_clink_path);
-    tried_path |= load_scripts(env_clink_path.c_str());
-
-    // If neither are set, fall back to the dll's directory.
-    if (!tried_path)
-    {
-        str<280> bin_path;
-        app_context::get()->get_binaries_dir(bin_path);
-        load_scripts(bin_path.c_str());
-    }
+    load_scripts(env_clink_path.c_str());
 }
 
 //------------------------------------------------------------------------------
@@ -127,6 +125,3 @@ void host_lua::load_script(const char* path)
     while (lua_globs.next(buffer))
         m_state.do_file(buffer.c_str());
 }
-
-
-

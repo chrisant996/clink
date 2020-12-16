@@ -326,13 +326,13 @@ bool host::edit_line(const char* prompt, str_base& out)
     }
     str_compare_scope compare(cmp_mode);
 
+    // Improve performance while replaying doskey macros by not loading scripts
+    // or history, since they aren't used.
     bool init_scripts = !m_doskey_alias;
     bool init_history = !m_doskey_alias;
 
     // Set up Lua and load scripts into it.
-    str<288> script_path;
-    app_context::get()->get_script_path(script_path);
-    host_lua lua(script_path.c_str());
+    host_lua lua;
     prompt_filter prompt_filter(lua);
     if (init_scripts)
     {
