@@ -52,13 +52,13 @@ Name                         | Default | Description
 `clink.promptfilter`         | True    | Enable prompt filtering by Lua scripts.
 `cmd.auto_answer`            | `off`   | Automatically answers cmd.exe's "Terminate batch job (Y/N)?" prompts. `off` = disabled, `answer_yes` = answer Y, `answer_no` = answer N.
 `cmd.ctrld_exits`            | True    | <kbd>Ctrl</kbd>+<kbd>D</kbd> exits the process when it is pressed on an empty line.
-<a name="color_cmd">`color.cmd` | `bold` | Used when Clink displays shell (CMD.EXE) command completions.
-<a name="color_doskey">`color.doskey` | `bright cyan` | Used when Clink displays doskey alias completions.
-<a name="color_hidden">`color.hidden` | | Used when Clink displays file completions with the "hidden" attribute.
+<a name="color_cmd"/>`color.cmd` | `bold` | Used when Clink displays shell (CMD.EXE) command completions.
+<a name="color_doskey"/>`color.doskey` | `bright cyan` | Used when Clink displays doskey alias completions.
+<a name="color_hidden"/>`color.hidden` | | Used when Clink displays file completions with the "hidden" attribute.
 `color.input`                |         | Used when Clink displays the input line text.
 `color.interact`             | `bold`  | Used when Clink displays text or prompts such as a pager's `--More?--` prompt.
 `color.modmark`              |         | Used when Clink displays the `*` mark on modified history lines when Readline's `mark-modified-lines` variable and Clink's `color.input` setting are both set. Falls back to `color.input` if not set.
-<a name="color_readonly">`color.readonly` | | Used when Clink displays file completions with the "readonly" attribute.
+<a name="color_readonly"/>`color.readonly` | | Used when Clink displays file completions with the "readonly" attribute.
 `doskey.enhanced`            | True    | Enhanced Doskey adds the expansion of macros that follow `\|` and `&` command separators and respects quotes around words when parsing `$1`..`$9` tags. Note that these features do not apply to Doskey use in Batch files.
 `exec.cwd`                   | True    | When matching executables as the first word (`exec.enable`), include executables in the current directory. (This is implicit if the word being completed is a relative path).
 `exec.dirs`                  | True    | When matching executables as the first word (`exec.enable`), also include directories relative to the current working directory as matches.
@@ -303,10 +303,9 @@ If no Lua scripts can be found in any of those directories, then Clink will load
 
 By default <kbd>Ctrl</kbd>+<kbd>X</kbd>,<kbd>Ctrl</kbd>+<kbd>R</kbd> is mapped to reload all Lua scripts which can be useful when developing and iterating on your own scripts.
 
-<a name="matchgenerators">
+<a name="matchgenerators"/>
 
 ## Match Generators
-</a>
 
 These are Lua functions that are called as part of Readline's completion process.
 
@@ -439,10 +438,9 @@ function envvar_generator:getwordbreakinfo(line_state)
 end
 ```
 
-<a name="argumentcompletion">
+<a name="argumentcompletion"/>
 
 ## Argument Completion
-</a>
 
 Clink provides a framework for writing complex argument match generators in Lua.  It works by creating a parser object that describes a command's arguments and flags and then registering the parser with Clink. When Clink detects the command is being entered on the current command line being edited, it uses the parser to generate matches.
 
