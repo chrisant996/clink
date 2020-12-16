@@ -327,17 +327,21 @@ int inject(int argc, char** argv)
         {
         case 's':
             {
+                str<> arg(optarg);
+                arg.trim();
                 str_base script_path(app_desc.script_path);
                 os::get_current_dir(script_path);
-                path::append(script_path, optarg);
+                path::append(script_path, arg.c_str());
                 path::normalise(script_path);
             }
             break;
 
         case 'p':
             {
+                str<> arg(optarg);
+                arg.trim();
                 str_base state_dir(app_desc.state_dir);
-                get_profile_path(optarg, state_dir);
+                get_profile_path(arg.c_str(), state_dir);
             }
             break;
 

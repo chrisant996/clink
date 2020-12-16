@@ -109,7 +109,10 @@ bool host_lua::load_scripts(const char* paths)
     str<280> token;
     str_tokeniser tokens(paths, ";");
     while (tokens.next(token))
+    {
+        token.trim();
         load_script(token.c_str());
+    }
     return true;
 }
 

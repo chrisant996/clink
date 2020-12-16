@@ -49,6 +49,7 @@ public:
     void                clear();
     bool                empty() const;
     void                truncate(unsigned int length);
+    void                trim();
     int                 first_of(int c) const;
     int                 last_of(int c) const;
     bool                equals(const TYPE* rhs) const;
@@ -225,6 +226,40 @@ void str_impl<TYPE>::truncate(unsigned int pos)
 
     m_data[pos] = '\0';
     m_length = pos;
+}
+
+//------------------------------------------------------------------------------
+template <typename TYPE>
+void str_impl<TYPE>::trim()
+{
+    TYPE* pos = m_data;
+    TYPE* end = m_data + m_length;
+
+    while (end > pos)
+    {
+        if (end[-1] != ' ' && end[-1] != '\t')
+            break;
+        end--;
+    }
+
+    if (end < m_data + m_size)
+    {
+        *end = '\0';
+        m_length = end - pos;
+    }
+
+    while (pos < end)
+    {
+        if (pos[0] != ' ' && pos[0] != '\t')
+            break;
+        pos++;
+    }
+
+    if (pos > m_data)
+    {
+        m_length -= ushort(pos - m_data);
+        memmove(m_data, pos, (m_length + 1) * sizeof(m_data[0]));
+    }
 }
 
 //------------------------------------------------------------------------------
