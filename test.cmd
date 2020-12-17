@@ -26,6 +26,7 @@ echo.
 echo.  /?        Show usage info.
 echo   /dbg      Run test under the debugger.
 echo   -d        Load Lua debugger.
+echo   -t        Show execution time.
 echo.
 echo If [test name prefix] is included, then it only runs tests whose name begins
 echo with the specified prefix.
