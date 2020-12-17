@@ -3,7 +3,7 @@
 
 <!-- ----------------------------------------------------- -->
 <head>
-<title>Clink v1.1.9</title>
+<title>Clink v1.1.10</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Rambla:wght@400;700&family=Roboto&family=Fira+Mono&display=swap');
 html {
@@ -396,7 +396,7 @@ var hljs=function(){"use strict";function e(n){Object.freeze(n);var t="function"
         </td>
         <td style="text-align:right">
             <div id="header">
-                <div id="title">Clink v1.1.9</div>
+                <div id="title">Clink v1.1.10</div>
                 <div id="url">
                     <a href="http://github.com/chrisant996/clink">
                         http://github.com/chrisant996/clink
@@ -1840,6 +1840,10 @@ settings.add("color.mymno", "bright magenta", "Color setting")</code></pre></div
         <div class="section" id="changes">
 <h1 id="changes">Changes</h1>
 <h2 id="releases-from-chrisant996clink-fork">Releases from <a href="https://github.com/chrisant996/clink">chrisant996/clink</a> fork</h2>
+<h3 id="v1110">v1.1.10</h3>
+<ul>
+<li>Fixed <a href="https://github.com/chrisant996/clink/issues/32">#32</a> hooking <code>ReadConsoleW</code> on Windows 7.</li>
+</ul>
 <h3 id="v119">v1.1.9</h3>
 <ul>
 <li>Added backward compatibility for <code>clink.match_display_filter</code>.  The clink-completions/git.lua script uses it a lot, and that should all be working now.</li>
