@@ -15,7 +15,9 @@
 /// -arg:   [descriptive:boolean]
 /// -ret:   boolean or string or integer
 /// Returns the current value of the <span class="arg">name</span> Clink
-/// setting.  If it's a color setting and the optional
+/// setting.
+///
+/// If it's a color setting and the optional
 /// <span class="arg">descriptive</span> parameter is true then the user
 /// friendly color name is returned.
 static int get(lua_State* state)

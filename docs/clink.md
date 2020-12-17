@@ -289,7 +289,7 @@ Typing|Typing does an incremental search.
 
 # Extending Clink
 
-The Readline library allows clients to offer an alternative path for creating completion matches. Clink uses this to hook Lua into the completion process making it possible to script the generation of matches with <a href="https://www.lua.org/docs.html">Lua</a> scripts. The following sections describe this in more detail and shows some examples.
+The Readline library allows clients to offer an alternative path for creating completion matches. Clink uses this to hook Lua into the completion process making it possible to script the generation of matches with <a href="https://www.lua.org/docs.html">Lua</a> scripts. The following sections describe this in more detail and show some examples.
 
 ## The Location of Lua Scripts
 
@@ -555,8 +555,8 @@ end
 
 The function's single argument <span class="arg">matches</span> is a table containing what Clink is going to display. The return value is a table with the input matches filtered as required by the match generator. The value of `clink.match_display_filter` is reset every time match generation is invoked.
 
-> **Compatibility Note:**  When a match display filter has been set, then match generation changes how it behaves.
-> - Normally match generation only happens at the start of a new word.  The full set of potential matches is remembered and dynamically filtered based on what's typed.
+> **Compatibility Note:**  When a match display filter has been set, it changes how match generation behaves.
+> - Normally match generation only happens at the start of a new word.  The full set of potential matches is remembered and dynamically filtered based on further typing.
 > - When a match display filter is set, then match generation is also re-run whenever matches are displayed.  This is necessary for backward compatibility with how generators and match display filters were able to influence each other.
 > - This means if a match generator made contextual decisions other than just filtering then it could potentially behave differently in Clink v1.x than it did in v0.x.
 
