@@ -33,6 +33,14 @@ inline bool is_pathish(match_type type)
     return type == match_type::file || type == match_type::dir || type == match_type::link;
 }
 
+//------------------------------------------------------------------------------
+inline bool is_match_type(match_type type, match_type test)
+{
+    assert(!(test & match_type::mask));
+    type &= match_type::mask;
+    return type == test;
+}
+
 
 
 //------------------------------------------------------------------------------

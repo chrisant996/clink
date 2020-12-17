@@ -69,10 +69,10 @@ static void alpha_sorter(match_info* infos, int count)
         const char* r = rhs.match;
         if (order != 1)
         {
-            size_t l_len = strlen(l);
-            size_t r_len = strlen(r);
-            bool l_dir = (l_len && is_path_separator(l[l_len - 1]));
-            bool r_dir = (r_len && is_path_separator(r[r_len - 1]));
+            bool l_dir = (is_match_type(lhs.type, match_type::dir) ||
+                          (l[0] && is_match_type(lhs.type, match_type::none) && is_path_separator(l[strlen(l) - 1])));
+            bool r_dir = (is_match_type(rhs.type, match_type::dir) ||
+                          (r[0] && is_match_type(rhs.type, match_type::none) && is_path_separator(r[strlen(r) - 1])));
             if (l_dir != r_dir)
                 return (order == 0) ? l_dir : r_dir;
         }
