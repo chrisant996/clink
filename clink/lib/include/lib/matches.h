@@ -37,7 +37,7 @@ inline bool is_pathish(match_type type)
 //------------------------------------------------------------------------------
 inline bool is_match_type(match_type type, match_type test)
 {
-    assert(!int(test & match_type::mask));
+    assert((int(test) & ~int(match_type::mask)) == 0);
     type &= match_type::mask;
     return type == test;
 }
