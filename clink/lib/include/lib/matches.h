@@ -4,6 +4,7 @@
 #pragma once
 
 #include <core/str_iter.h>
+#include <assert.h>
 
 class str_base;
 
@@ -36,7 +37,7 @@ inline bool is_pathish(match_type type)
 //------------------------------------------------------------------------------
 inline bool is_match_type(match_type type, match_type test)
 {
-    assert(!(test & match_type::mask));
+    assert(!int(test & match_type::mask));
     type &= match_type::mask;
     return type == test;
 }
