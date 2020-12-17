@@ -10,7 +10,7 @@
 - `settings.get` now has an extra parameter to request the user friendly color name when getting a color setting.
 - Added `clink.version_encoded` variable with the Clink version number as _MMmmmpppp_ (e.g. v1.1.9 is `10010009`) to make it easy for scripts to check for feature availability.
 - The `clink info` command now shows Lua script paths as well.
-- Fixed backward compatibility for loading scripts from the profile directory (if `clink.path` isn't set, then load scripts from `--profile` or the default profile directory).
+- Fixed backward compatibility for loading scripts from the profile directory (if `clink.path` isn't set, then load scripts from the DLL directory and the profile directory).
 - Fixed some `color.input` bleed through to other things (introduced in v1.1.5).
 - Fixed scroll commands (regression introduced by input line color in v1.1.5).
 - Fixed horizontally sorted match display and re-enabled the performance fix from v1.1.4.
