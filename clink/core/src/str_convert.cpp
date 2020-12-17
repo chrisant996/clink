@@ -5,6 +5,10 @@
 #include "str.h"
 #include "str_iter.h"
 
+#ifdef USE_OS_UTF_CONVERSION
+#include <assert.h>
+#endif
+
 //------------------------------------------------------------------------------
 template <typename TYPE>
 struct builder
@@ -61,6 +65,36 @@ builder<char>& builder<char>::operator << (int value)
 //------------------------------------------------------------------------------
 int to_utf8(char* out, int max_count, wstr_iter& iter)
 {
+    // See to_utf16() for explanation about the disabled WideCharToMultiByte
+    // implementation below.
+#ifdef USE_OS_UTF_CONVERSION
+    // First try to use the OS function because it's fast.  Leave room to
+    // terminate the string.
+
+    int len = WideCharToMultiByte(CP_UTF8, 0, iter.get_pointer(), iter.length(), out, max<int>(max_count - 1, 0), nullptr, nullptr);
+    if (!out || !max_count)
+    {
+        iter.reset_pointer(iter.get_pointer() + iter.length());
+        return len;
+    }
+
+    if (len || !iter.length())
+    {
+        assert(len < max_count); // Should be guaranteed by max_count - 1 above.
+        out[len] = '\0';
+        iter.reset_pointer(iter.get_pointer() + iter.length());
+        return len;
+    }
+
+    // Some error occurred.  Use our own implementation because it can convert
+    // partial strings into a non-growable buffer.
+#endif
+
+    // BUGBUG:  Why is truncation desirable?  Truncating a display-only string
+    // might be ok, but truncating any other string can result in dangerously
+    // incorrect behavior.  But there is a test in test/str_convert.cpp, so
+    // fall back to this for now.
+
     builder<char> builder(out, max_count);
 
     int c;
@@ -128,6 +162,40 @@ int to_utf8(str_base& out, const wchar_t* utf16)
 //------------------------------------------------------------------------------
 int to_utf16(wchar_t* out, int max_count, str_iter& iter)
 {
+    // This function was making the test program very slow in debug builds.  But
+    // that was because the match pipeline was sorting during generation even
+    // though the order didn't matter until they're displayed.  Fixing that
+    // resolved the reason for changing this to use MultiByteToWideChar, and in
+    // optimized builds this function is nearly as fast as MultiByteToWideChar.
+    // So to reduce risk of regression this new code is disabled for now.
+#ifdef USE_OS_UTF_CONVERSION
+    // First try to use the OS function because it's faster.  Leave room to
+    // terminate the string.
+
+    int len = MultiByteToWideChar(CP_UTF8, 0, iter.get_pointer(), iter.length(), out, max<int>(max_count - 1, 0));
+    if (!out || !max_count)
+    {
+        iter.reset_pointer(iter.get_pointer() + iter.length());
+        return len;
+    }
+
+    if (len || !iter.length())
+    {
+        assert(len < max_count); // Should be guaranteed by max_count - 1 above.
+        out[len] = '\0';
+        iter.reset_pointer(iter.get_pointer() + iter.length());
+        return len;
+    }
+
+    // Some error occurred.  Use our own implementation because it can convert
+    // partial strings into a non-growable buffer.
+#endif
+
+    // BUGBUG:  Why is truncation desirable?  Truncating a display-only string
+    // might be ok, but truncating any other string can result in dangerously
+    // incorrect behavior.  But there is a test in test/str_convert.cpp, so fall
+    // back to this for now.
+
     builder<wchar_t> builder(out, max_count);
 
     int c;
