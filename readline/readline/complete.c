@@ -342,6 +342,10 @@ const char *rl_basic_quote_characters = "\"'";
 rl_cpvfunc_t *rl_completion_word_break_hook = (rl_cpvfunc_t *)NULL;
 
 /* begin_clink_change */
+/* If non-zero, then this is the address of a function to call to sort the
+   list of matches.  It can accommodate any special sorting behavior the host
+   may require, such as ignoring trailing path separators. */
+rl_qsort_match_list_func_t *rl_qsort_match_list_func = (rl_qsort_match_list_func_t *)NULL;
 /* Hook function to allow an application to adjust the found completion
    word before readline tries to complete it. */
 rl_adjcmpwrd_func_t *rl_adjust_completion_word = (rl_adjcmpwrd_func_t *)NULL;
@@ -463,10 +467,6 @@ int rl_completion_invoking_key;
 
 /* If non-zero, sort the completion matches.  On by default. */
 int rl_sort_completion_matches = 1;
-
-/* begin_clink_change */
-int _rl_locale_sort = 1;
-/* end_clink_change */
 
 /* Variables local to this file. */
 
@@ -1511,9 +1511,7 @@ match_type_strcmp (const char *s1, const char *s2, int past_flag, int casefold, 
 {
   int cmp;
 
-  if (_rl_locale_sort)
-    cmp = compare_string (s1 + past_flag, s2 + past_flag, casefold);
-  else if (casefold)
+  if (casefold)
     cmp = strcasecmp (s1 + past_flag, s2 + past_flag);
   else
     cmp = strcmp (s1 + past_flag, s2 + past_flag);
@@ -1524,11 +1522,11 @@ match_type_strcmp (const char *s1, const char *s2, int past_flag, int casefold, 
     unsigned char t1 = ((unsigned char)*s1) & MATCH_TYPE_MASK;
     unsigned char t2 = ((unsigned char)*s2) & MATCH_TYPE_MASK;
 
-    cmp = (t1 == MATCH_TYPE_ALIAS) - (t2 == MATCH_TYPE_ALIAS);
+    cmp = (t1 == MATCH_TYPE_DIR) - (t2 == MATCH_TYPE_DIR);
     if (cmp)
       return cmp;
 
-    cmp = (t1 == MATCH_TYPE_DIR) - (t2 == MATCH_TYPE_DIR);
+    cmp = (t1 == MATCH_TYPE_ALIAS) - (t2 == MATCH_TYPE_ALIAS);
     if (cmp)
       return cmp;
 
@@ -1623,63 +1621,26 @@ match_type_qsort_string_compare (char **s1, char **s2)
 // #if defined (HAVE_STRCOLL)
 //   return (strcoll (*s1 + 1, *s2 + 1));
 // #else
-  // TODO: the strings are actually UTF8.
   return match_type_strcmp (*s1, *s2, 1/*past_flag*/, 0/*casefold*/, 0/*dedupe*/);
 // #endif
 }
 
-/* Stupid comparison routine for qsort () ing strings, but fold case and skip
-   the first character because it's a match type. */
-static int
-match_type_qsort_string_compare_casefold (char **s1, char **s2)
-{
-  // TODO: the strings are actually UTF8.
-  return match_type_strcmp (*s1, *s2, 1/*past_flag*/, 1/*casefold*/, 0/*dedupe*/);
-}
-
-/* Stupid comparison routine for qsort () ing strings, but fold case. */
-static int
-qsort_string_compare_casefold (char **s1, char **s2)
-{
-/* begin_clink_change */
-  if (_rl_locale_sort)
-    return compare_string (*s1, *s2, 1/*casefold*/);
-/* end_clink_change */
-  return strcasecmp (*s1, *s2);
-}
-
-/* begin_clink_change */
-/* Stupid comparison routine for qsort () ing strings. */
-static int
-qsort_string_compare (char **s1, char **s2)
-{
-  if (_rl_locale_sort)
-    return compare_string (*s1, *s2, 0/*casefold*/);
-  return strcmp (*s1, *s2);
-}
-/* end_clink_change */
-
 /* Sort list of matches, with support for rl_completion_matches_include_type. */
-static void
+void
 qsort_match_list (char** matches, int len)
 {
-  QSFUNC *qs_compare = (QSFUNC *)_rl_qsort_string_compare;
+  if (rl_qsort_match_list_func)
+    {
+      rl_qsort_match_list_func (matches, len);
+      return;
+    }
+
+  QSFUNC *qs_compare;
 
   if (rl_completion_matches_include_type)
-    {
-      qs_compare = (QSFUNC *)(_rl_completion_case_fold ?
-                              match_type_qsort_string_compare_casefold :
-                              match_type_qsort_string_compare);
-    }
+    qs_compare = (QSFUNC *)match_type_qsort_string_compare;
   else
-    {
-      qs_compare = (QSFUNC *)(_rl_completion_case_fold ?
-                              qsort_string_compare_casefold :
-/* begin_clink_change */
-                              //_rl_qsort_string_compare);
-                              qsort_string_compare);
-/* end_clink_change */
-    }
+    qs_compare = (QSFUNC *)_rl_qsort_string_compare;
 
   qsort (matches, len, sizeof (char *), qs_compare);
 }
@@ -2248,13 +2209,6 @@ display_matches (char **matches)
   /* If the caller has defined a display function, then call that now. */
   if (rl_completion_display_matches_func)
     {
-      /* Sort the items if they are not already sorted. */
-      if (rl_ignore_completion_duplicates == 0 && rl_sort_completion_matches)
-        {
-          for (i = 0; matches[i]; i++)
-            ;
-          qsort_match_list (matches + 1, i - 1);
-        }
       rl_completion_display_matches_func (matches);
       return;
     }

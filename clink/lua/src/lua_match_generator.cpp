@@ -21,6 +21,8 @@ extern "C" {
 #include <compat/display_matches.h>
 }
 
+extern void sort_match_list(char** matches, int len);
+
 //------------------------------------------------------------------------------
 lua_match_generator::lua_match_generator(lua_state& state)
 : m_state(state)
@@ -151,6 +153,9 @@ bool lua_match_generator::match_display_filter(char** matches, match_display_fil
     // Count matches.
     int match_count = 0;
     for (i = 1; matches[i]; ++i, ++match_count);
+
+    // Sort the matches.
+    sort_match_list(matches + 1, match_count);
 
     // Convert matches to a Lua table.
     lua_createtable(state, match_count, 0);

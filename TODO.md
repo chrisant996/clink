@@ -4,7 +4,6 @@ ChrisAnt Plans
 
 # RELEASE
 
-- Broke sort order for completions -- "clink" sorts after "clink.future" because they are actually "clink\" and "clink.future\" under the covers.
 - Don't use `color.input` for the line message (e.g. **Alt+8** for digit arg).
 
 ## Match Display Filter

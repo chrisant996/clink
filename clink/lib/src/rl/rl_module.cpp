@@ -7,6 +7,7 @@
 #include "line_buffer.h"
 #include "line_state.h"
 #include "matches.h"
+#include "match_pipeline.h"
 #include "popup.h"
 
 #include <core/base.h>
@@ -83,6 +84,7 @@ inline int clink_wcwidth(char32_t c)
 
 extern void host_add_history(int rl_history_index, const char* line);
 extern void host_remove_history(int rl_history_index, const char* line);
+extern void sort_match_list(char** matches, int len);
 extern matches* maybe_regenerate_matches(const char* needle);
 extern setting_color g_color_interact;
 
@@ -831,6 +833,7 @@ rl_module::rl_module(const char* shell_name, terminal_in* input)
     rl_menu_completion_entry_function = filename_menu_completion_function;
     rl_adjust_completion_word = adjust_completion_word;
     rl_completion_display_matches_func = display_matches;
+    rl_qsort_match_list_func = sort_match_list;
     rl_match_display_filter_func = match_display_filter;
     rl_is_exec_func = is_exec_ext;
     rl_postprocess_lcd_func = postprocess_lcd;

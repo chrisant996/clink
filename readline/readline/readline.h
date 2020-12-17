@@ -847,6 +847,10 @@ extern rl_compdisp_func_t *rl_completion_display_matches_hook;
    It takes one argument: (char** matches) where MATCHES is the array of
    strings that matched. */
 extern rl_vcppfunc_t *rl_completion_display_matches_func;
+/* If non-zero, then this is the address of a function to call to sort the
+   list of matches.  It can accommodate any special sorting behavior the host
+   may require, such as ignoring trailing path separators. */
+extern rl_qsort_match_list_func_t *rl_qsort_match_list_func;
 /* If non-zero, then this is the address of a function to call that determines
    whether a file extension is executable. */
 extern rl_iccpfunc_t *rl_is_exec_func;

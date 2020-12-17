@@ -659,6 +659,14 @@ TEST_CASE("Lua arg parsers.")
 
         fs_fixture fs_sort(sort_fs);
 
+        SECTION("Compare")
+        {
+            REQUIRE(stricmp("clink", "clink.future") < 0);
+            REQUIRE(stricmp("clink\\", "clink.future\\") > 0);
+            REQUIRE(wcsicmp(L"clink", L"clink.future") < 0);
+            REQUIRE(wcsicmp(L"clink\\", L"clink.future\\") > 0);
+        }
+
         SECTION("Dir")
         {
             tester.set_input("echo \x1b*");

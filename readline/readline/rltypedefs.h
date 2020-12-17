@@ -72,6 +72,8 @@ typedef int rl_hook_func_t PARAMS((void));
 typedef void rl_history_hook_func_t PARAMS((int rl_history_index, const char* line));
 /* Type for readkey input in modal situations like the pager */
 typedef int rl_read_key_hook_func_t PARAMS((void));
+/* Type for sort match list function */
+typedef void rl_qsort_match_list_func_t PARAMS((char**, int len));
 /* Type for adjusting completion word hook function */
 typedef char rl_adjcmpwrd_func_t PARAMS((char qc, int *fp, int *dp));
 /* Type for postprocessing the lcd hook function */

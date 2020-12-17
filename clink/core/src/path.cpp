@@ -386,6 +386,21 @@ void maybe_strip_last_separator(str_base& out)
     while (out.length() > start && is_separator(out[out.length() - 1]))
         out.truncate(out.length() - 1);
 }
+void maybe_strip_last_separator(wstr_base& out)
+{
+    unsigned int start = 0;
+
+    if (iswalpha(out[0]) && out[1] == ':')
+        start += 2;
+    else if (out[0] == '\\' && out[1] == '\\')
+        start += 2;
+
+    if (is_separator(out[start]))
+        start++;
+
+    while (out.length() > start && is_separator(out[out.length() - 1]))
+        out.truncate(out.length() - 1);
+}
 
 //------------------------------------------------------------------------------
 // Strips the last path component, and optionally returns it in child.  Returns
