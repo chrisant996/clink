@@ -646,4 +646,24 @@ TEST_CASE("Lua arg parsers.")
             tester.run();
         }
     }
+
+    SECTION("Sort")
+    {
+        static const char* sort_fs[] = {
+            "clink/foo",
+            "clink.future/foo",
+            "aardvark",
+            "zebra",
+            nullptr,
+        };
+
+        fs_fixture fs_sort(sort_fs);
+
+        SECTION("Dir")
+        {
+            tester.set_input("echo \x1b*");
+            tester.set_expected_output("echo aardvark clink\\ clink.future\\ zebra ");
+            tester.run();
+        }
+    }
 }
