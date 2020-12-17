@@ -3,7 +3,7 @@
 
 ## Releases from [chrisant996/clink](https://github.com/chrisant996/clink) fork
 
-### Unreleased
+### v1.1.9
 
 - Added backward compatibility for `clink.match_display_filter`.  The clink-completions/git.lua script uses it a lot, and that should all be working now.
 - `settings.add` adds a color setting when the type is string and the name starts with "color.".
@@ -14,7 +14,8 @@
 - Fixed some `color.input` bleed through to other things (introduced in v1.1.5).
 - Fixed scroll commands (regression introduced by input line color in v1.1.5).
 - Fixed horizontally sorted match display and re-enabled the performance fix from v1.1.4.
-- Fixed wildcard evaluation with non-file and non-directory matches (e.g. a branch name `origin/master` accidentally didn't match `or` because of the `/`).
+- Fixed wildcard evaluation with non-file and non-directory matches (e.g. a branch name `origin/master` accidentally didn't match `or` or `*ma` because of the `/`).
+- Fixed sort order of `foo\` vs `foo.bar\` when displaying matches or using the `menu-complete` family of commands.
 - Fixed potentially-missing trailing path separator when `menu-complete` completes a directory match (regression introduced by wildcard matching in v1.1.5).
 - Other obscure minor fixes.
 
