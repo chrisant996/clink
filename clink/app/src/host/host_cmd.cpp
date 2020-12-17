@@ -482,13 +482,24 @@ BOOL WINAPI host_cmd::set_env_var(const wchar_t* name, const wchar_t* value)
 //------------------------------------------------------------------------------
 bool host_cmd::initialise_system()
 {
-    // Must hook the one in kernelbase.dll.  CMD links with kernelbase.dll, but
-    // we link with kernel32.dll.  So hooking our ReadConsoleW pointer wouldn't
-    // affect CMD.
-    hook_setter hooks;
-    hooks.add_jmp("kernelbase.dll", "ReadConsoleW", &host_cmd::read_console);
-    if (!hooks.commit())
-        return false;
+    // Must hook the one in kernelbase.dll if it's present because CMD links
+    // with kernelbase.dll on Windows 10.  And must hook the one in kernel32.dll
+    // because it doesn't exist in kernelbase.dll on Windows 7.
+    {
+        HMODULE hlib;
+        hlib = GetModuleHandleA("kernelbase.dll");
+        bool need_kernelbase = hlib && GetProcAddress(hlib, "ReadConsoleW");
+        hlib = GetModuleHandleA("kernel32.dll");
+        bool need_kernel32 = hlib && GetProcAddress(hlib, "ReadConsoleW");
+
+        hook_setter hooks;
+        if (need_kernelbase)
+            hooks.add_jmp("kernelbase.dll", "ReadConsoleW", &host_cmd::read_console);
+        if (need_kernel32)
+            hooks.add_jmp("kernel32.dll", "ReadConsoleW", &host_cmd::read_console);
+        if (!hooks.commit())
+            return false;
+    }
 
     // Add an alias to Clink so it can be run from anywhere. Similar to adding
     // it to the path but this way we can add the config path too.
