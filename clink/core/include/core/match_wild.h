@@ -36,7 +36,7 @@ bool match_char_impl(int pc, int fc)
 
 //------------------------------------------------------------------------------
 template <class T, int MODE>
-bool match_wild_impl(const str_iter_impl<T>& _pattern, const str_iter_impl<T>& _file, bool end_star_matches_everything=false)
+bool match_wild_impl(const str_iter_impl<T>& _pattern, const str_iter_impl<T>& _file, bool star_matches_everything=false)
 {
     str_iter_impl<T> pattern(_pattern);
     str_iter_impl<T> file(_file);
@@ -81,7 +81,7 @@ bool match_wild_impl(const str_iter_impl<T>& _pattern, const str_iter_impl<T>& _
                 pattern.next();
                 c = pattern.peek();
             }
-            if (c == '\0' && end_star_matches_everything)
+            if (c == '\0' && star_matches_everything)
                 return true;
             if (c != '?' &&
                 c != '*')
@@ -89,7 +89,7 @@ bool match_wild_impl(const str_iter_impl<T>& _pattern, const str_iter_impl<T>& _
                 // Iterate until file char matches pattern char after wildcard.
                 const T* push_scout = file.get_pointer();
                 while (d &&
-                       !path::is_separator(d) &&
+                       (star_matches_everything || !path::is_separator(d)) &&
                        !match_char_impl<T,MODE>(d, c))
                 {
                     file.next();
@@ -103,7 +103,7 @@ bool match_wild_impl(const str_iter_impl<T>& _pattern, const str_iter_impl<T>& _
                 file.next();
                 pattern.next();
             }
-            if (path::is_separator(d))
+            if (!star_matches_everything && path::is_separator(d))
             {
                 // Wildcards don't match past a path separator.
                 depth = 0;
@@ -186,32 +186,32 @@ bool match_wild_impl(const str_iter_impl<T>& _pattern, const str_iter_impl<T>& _
 
 //------------------------------------------------------------------------------
 template <class T>
-bool match_wild(const str_iter_impl<T>& pattern, const str_iter_impl<T>& file, bool end_star_matches_everything=false)
+bool match_wild(const str_iter_impl<T>& pattern, const str_iter_impl<T>& file, bool star_matches_everything=false)
 {
     switch (str_compare_scope::current())
     {
-    case str_compare_scope::relaxed:  return match_wild_impl<T, 2>(pattern, file, end_star_matches_everything);
-    case str_compare_scope::caseless: return match_wild_impl<T, 1>(pattern, file, end_star_matches_everything);
-    default:                          return match_wild_impl<T, 0>(pattern, file, end_star_matches_everything);
+    case str_compare_scope::relaxed:  return match_wild_impl<T, 2>(pattern, file, star_matches_everything);
+    case str_compare_scope::caseless: return match_wild_impl<T, 1>(pattern, file, star_matches_everything);
+    default:                          return match_wild_impl<T, 0>(pattern, file, star_matches_everything);
     }
 }
 
 //------------------------------------------------------------------------------
 template <class T>
-bool match_wild(const T* pattern, const T* file, bool end_star_matches_everything=false)
+bool match_wild(const T* pattern, const T* file, bool star_matches_everything=false)
 {
     str_iter_impl<T> pattern_iter(pattern);
     str_iter_impl<T> file_iter(file);
-    return match_wild(pattern_iter, file_iter, end_star_matches_everything);
+    return match_wild(pattern_iter, file_iter, star_matches_everything);
 }
 
 //------------------------------------------------------------------------------
 template <class T>
-bool match_wild(const str_impl<T>& pattern, const str_impl<T>& file, bool end_star_matches_everything=false)
+bool match_wild(const str_impl<T>& pattern, const str_impl<T>& file, bool star_matches_everything=false)
 {
     str_iter_impl<T> pattern_iter(pattern);
     str_iter_impl<T> file_iter(file);
-    return match_wild(pattern_iter, file_iter, end_star_matches_everything);
+    return match_wild(pattern_iter, file_iter, star_matches_everything);
 }
 
 }; // namespace path
