@@ -10,7 +10,7 @@ template <typename TYPE>
 struct builder
 {
                 builder(TYPE* data, int max_length);
-                ~builder()                            { if (start) *write = '\0'; }
+                ~builder()                            { if (start && start <= end) *write = '\0'; }
     bool        truncated() const                     { return (start && write >= end); }
     int         get_written() const                   { return int(write - start); }
     builder&    operator << (int value);
