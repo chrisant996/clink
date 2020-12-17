@@ -4,8 +4,6 @@ ChrisAnt Plans
 
 # RELEASE
 
-- Don't use `color.input` for the line message (e.g. **Alt+8** for digit arg).
-
 ## Match Display Filter
 - Popup list support for match display filter.
   - Need to be able to return `{ match, display }`, and probably actually `{ match, display, description }`.
@@ -14,7 +12,6 @@ ChrisAnt Plans
 - The match pipeline should not fire on pressing **Enter** after `exit`.
 - Changing terminal width makes 0.4.8 slowly "walk up the screen".  Changing terminal width works in master, except when the cursor position itself is affected.
 - When `convert-meta` is off, then when binding `\M-h` (etc) the key name gets interpreted differently than Clink expects.  Does this affect the `inputrc` files at all, or is it only an issue inside Clink's native code?
-- `LOG()` certain important failure information inside Detours.
 
 ## Cmder, Powerline
 - Merge my powerline changes with cmder and cmder-powerline-prompt.
@@ -110,6 +107,7 @@ ChrisAnt Plans
 - Allow to search the console output (not command history) with a RegExp [#166](https://github.com/mridgers/clink/issues/166).  _[Unclear how that would work.  Would it scroll the console?  How would it highlight matches, etc, since that's really something the console host would need to do?  I think this needs to be implemented by the console host, e.g. conhost or ConEmu or Terminal, etc.]_
 - [#20](https://github.com/chrisant996/clink/issues/20) Cmd gets unresponsive after "set /p" command.  _[Seems to mostly work, though `set /p FOO=""` doesn't prompt for input.]_
 - Include `wildmatch()` and an `fnmatch()` wrapper for it.  But should first update it to support UTF8.
+- `LOG()` certain important failure information inside Detours.
 
 <br/>
 <br/>

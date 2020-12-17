@@ -41,6 +41,7 @@ private:
     bool            m_eof;
     str<16>         m_input_color;
     str<16>         m_modmark_color;
+    str<16>         m_message_color;
     str<16>         m_pager_color;
     str<16>         m_hidden_color;
     str<16>         m_readonly_color;

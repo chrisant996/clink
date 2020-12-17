@@ -679,6 +679,7 @@ extern rl_voidfunc_t *rl_redisplay_function;
 /* begin_clink_change */
 extern const char *_rl_display_input_color;
 extern const char *_rl_display_modmark_color;
+extern const char *_rl_display_message_color;
 /* end_clink_change */
 
 extern rl_vintfunc_t *rl_prep_term_function;

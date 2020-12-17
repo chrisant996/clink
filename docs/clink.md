@@ -58,6 +58,7 @@ Name                         | Default | Description
 <a name="color_hidden"/>`color.hidden` | | Used when Clink displays file completions with the "hidden" attribute.
 `color.input`                |         | Used when Clink displays the input line text.
 `color.interact`             | `bold`  | Used when Clink displays text or prompts such as a pager's `--More?--` prompt.
+`color.message`              | `default` | The color for the message area (e.g. the search prompt message, digit argument prompt message, etc).
 `color.modmark`              |         | Used when Clink displays the `*` mark on modified history lines when Readline's `mark-modified-lines` variable and Clink's `color.input` setting are both set. Falls back to `color.input` if not set.
 <a name="color_readonly"/>`color.readonly` | | Used when Clink displays file completions with the "readonly" attribute.
 `doskey.enhanced`            | True    | Enhanced Doskey adds the expansion of macros that follow `\|` and `&` command separators and respects quotes around words when parsing `$1`..`$9` tags. Note that these features do not apply to Doskey use in Batch files.

@@ -109,6 +109,12 @@ setting_color g_color_modmark(
     "mark-modified-lines is set and color.input is set.",
     "");
 
+setting_color g_color_message(
+    "color.message",
+    "Message area color",
+    "The color for the Readline message area (e.g. search prompt, etc).",
+    "default");
+
 setting_color g_color_hidden(
     "color.hidden",
     "Hidden file completions",
@@ -212,14 +218,14 @@ extern "C" const char* host_get_env(const char* name)
 }
 
 //------------------------------------------------------------------------------
-static bool build_color_sequence(const setting_color& setting, str_base& out, bool include_csi = false)
+static const char* build_color_sequence(const setting_color& setting, str_base& out, bool include_csi = false)
 {
     if (include_csi)
     {
         str<> tmp;
         setting.get(tmp);
         if (tmp.empty())
-            return false;
+            return nullptr;
         out.clear();
         out << "\x1b[" << tmp.c_str() << "m"; // Can't use format() because it DOESN'T GROW!
     }
@@ -227,7 +233,9 @@ static bool build_color_sequence(const setting_color& setting, str_base& out, bo
     {
         setting.get(out);
     }
-    return !out.empty();
+    if (out.empty())
+        return nullptr;
+    return out.c_str();
 }
 
 //------------------------------------------------------------------------------
@@ -1009,44 +1017,24 @@ void rl_module::on_begin_line(const context& context)
         if (c1) rl_prompt.concat("\x02", 1);
     }
 
-    _rl_display_input_color = nullptr;
-    _rl_display_modmark_color = nullptr;
-    if (build_color_sequence(g_color_input, m_input_color, true))
-    {
-        _rl_display_input_color = m_input_color.c_str();
-        if (build_color_sequence(g_color_modmark, m_modmark_color, true))
-            _rl_display_modmark_color = m_modmark_color.c_str();
-    }
+    _rl_display_input_color = build_color_sequence(g_color_input, m_input_color, true);
+    _rl_display_modmark_color = _rl_display_input_color ? build_color_sequence(g_color_modmark, m_modmark_color, true) : nullptr;
+    _rl_display_message_color = build_color_sequence(g_color_message, m_message_color, true);
+    _rl_pager_color = build_color_sequence(g_color_interact, m_pager_color);
+    _rl_hidden_color = build_color_sequence(g_color_hidden, m_hidden_color);
+    _rl_readonly_color = build_color_sequence(g_color_readonly, m_readonly_color);
+    _rl_command_color = build_color_sequence(g_color_cmd, m_command_color);
+    _rl_alias_color = build_color_sequence(g_color_doskey, m_alias_color);
+    _rl_filtered_color = build_color_sequence(g_color_filtered, m_filtered_color, true);
+
+    if (!_rl_display_message_color)
+        _rl_display_message_color = "\x1b[m";
 
     auto handler = [] (char* line) { rl_module::get()->done(line); };
     rl_callback_handler_install(rl_prompt.c_str(), handler);
 
     if (_rl_colored_stats || _rl_colored_completion_prefix)
         _rl_parse_colors();
-
-    _rl_pager_color = nullptr;
-    if (build_color_sequence(g_color_interact, m_pager_color))
-        _rl_pager_color = m_pager_color.c_str();
-
-    _rl_hidden_color = nullptr;
-    if (build_color_sequence(g_color_hidden, m_hidden_color))
-        _rl_hidden_color = m_hidden_color.c_str();
-
-    _rl_readonly_color = nullptr;
-    if (build_color_sequence(g_color_readonly, m_readonly_color))
-        _rl_readonly_color = m_readonly_color.c_str();
-
-    _rl_command_color = nullptr;
-    if (build_color_sequence(g_color_cmd, m_command_color))
-        _rl_command_color = m_command_color.c_str();
-
-    _rl_alias_color = nullptr;
-    if (build_color_sequence(g_color_doskey, m_alias_color))
-        _rl_alias_color = m_alias_color.c_str();
-
-    _rl_filtered_color = nullptr;
-    if (build_color_sequence(g_color_filtered, m_filtered_color, true))
-        _rl_filtered_color = m_filtered_color.c_str();
 
     m_done = false;
     m_eof = false;
@@ -1061,6 +1049,16 @@ void rl_module::on_end_line()
         rl_line_buffer = m_rl_buffer;
         m_rl_buffer = nullptr;
     }
+
+    _rl_display_input_color = nullptr;
+    _rl_display_modmark_color = nullptr;
+    _rl_display_message_color = nullptr;
+    _rl_pager_color = nullptr;
+    _rl_hidden_color = nullptr;
+    _rl_readonly_color = nullptr;
+    _rl_command_color = nullptr;
+    _rl_alias_color = nullptr;
+    _rl_filtered_color = nullptr;
 
     // This prevents any partial Readline state leaking from one line to the next
     rl_readline_state &= ~RL_MORE_INPUT_STATES;

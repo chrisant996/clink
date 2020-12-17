@@ -168,6 +168,7 @@ rl_voidfunc_t *rl_redisplay_function = rl_redisplay;
 /* begin_clink_change */
 const char *_rl_display_input_color = NULL;
 const char *_rl_display_modmark_color = NULL;
+const char *_rl_display_message_color = NULL;
 static const char *_normal_color = "\x1b[m";
 static const int _normal_color_len = 3;
 /* end_clink_change */
@@ -2847,6 +2848,8 @@ rl_message (va_alist)
   bneed = vsnprintf (msg_buf, msg_bufsiz, format, args);
 /* begin_clink_change */
   bneed++; /* Modern vsnprintf truncates with a null terminator. */
+  if (_rl_display_message_color)
+    bneed += strlen(_rl_display_message_color) + _normal_color_len + 4;
 /* end_clink_change */
   if (bneed >= msg_bufsiz - 1)
     {
@@ -2867,6 +2870,16 @@ rl_message (va_alist)
   msg_buf[msg_bufsiz - 1] = '\0';	/* overflow? */
 #endif
   va_end (args);
+
+/* begin_clink_change */
+  if (_rl_display_message_color)
+    {
+      char* tmp_buf = xmalloc (msg_bufsiz);
+      snprintf (tmp_buf, msg_bufsiz, "\001%s\002%s\001%s\002", _rl_display_message_color, msg_buf, _normal_color);
+      strcpy (msg_buf, tmp_buf);
+      xfree (tmp_buf);
+    }
+/* end_clink_change */
 
   if (saved_local_prompt == 0)
     {
