@@ -171,8 +171,8 @@ void app_context::get_script_path(str_base& out) const
     out.clear();
     out << m_desc.script_path;
 
-    // Next load from the clink.path setting, otherwise from the profile
-    // directory.
+    // Next load from the clink.path setting, otherwise from the binary
+    // directory and the profile directory.
     const char* setting_clink_path = g_clink_path.get();
     if (setting_clink_path && *setting_clink_path)
     {
@@ -182,6 +182,14 @@ void app_context::get_script_path(str_base& out) const
     }
     else
     {
+        app_context::get()->get_binaries_dir(tmp);
+        if (tmp.length())
+        {
+            if (out.length())
+                out << " ; ";
+            out << tmp.c_str();
+        }
+
         app_context::get()->get_state_dir(tmp);
         if (tmp.length())
         {

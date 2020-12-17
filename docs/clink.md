@@ -125,6 +125,8 @@ It's also possible to set any ANSI <a href="https://en.wikipedia.org/wiki/ANSI_e
 
 Be careful, since some escape code sequences might behave strangely.
 
+<a name="filelocations"/>
+
 ## File Locations
 
 Settings and history are persisted to disk from session to session. The location of these files depends on which distribution of Clink was used. If you installed Clink using the .exe installer then Clink uses the current user's non-roaming application data directory. This user directory is usually found in one of the following locations;
@@ -295,7 +297,7 @@ The Readline library allows clients to offer an alternative path for creating co
 
 Clink loads all Lua scripts it finds in these directories:
 1. All directories listed in the `clink.path` setting, separated by semicolons.
-2. If `clink.path` is not set, then the profile directory is used (`--profile` or `%USERPROFILE%\AppData\Local\clink`).
+2. If `clink.path` is not set, then the DLL directory and the profile directory are used (see <a href="#filelocations">File Locations</a> for info about the profile directory).
 3. All directories listed in the `%CLINK_PATH%` environment variable, separated by semicolons.
 
 Lua scripts are reloaded each time the edit prompt is activated.
