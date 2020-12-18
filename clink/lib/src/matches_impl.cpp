@@ -495,6 +495,7 @@ void matches_impl::reset()
     m_infos.clear();
     m_coalesced = false;
     m_count = 0;
+    m_append_character = '\0';
     m_suppress_append = false;
     m_suppress_quoting = 0;
     m_word_break_adjustment = 0;

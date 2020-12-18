@@ -99,7 +99,7 @@ private:
     infos                   m_infos;
     unsigned short          m_count = 0;
     bool                    m_coalesced = false;
-    char                    m_append_character = 0;
+    char                    m_append_character = '\0';
     bool                    m_suppress_append = false;
     int                     m_suppress_quoting = 0;
     int                     m_word_break_adjustment = 0;
