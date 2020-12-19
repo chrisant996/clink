@@ -3,6 +3,8 @@
 
 #pragma once
 
+#include <functional>
+
 struct lua_State;
 
 //------------------------------------------------------------------------------
@@ -19,6 +21,8 @@ public:
 
     static int      pcall(lua_State* L, int nargs, int nresults);
     int             pcall(int nargs, int nresults) { return pcall(m_state, nargs, nresults); }
+
+    bool            send_event(const char* event_name, std::function<bool(lua_State*)>* push_args=nullptr);
 
 private:
     lua_State*      m_state;

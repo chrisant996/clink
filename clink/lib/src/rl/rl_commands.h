@@ -8,6 +8,7 @@ int     show_rl_help(int, int);
 int     show_rl_help_raw(int, int);
 
 //------------------------------------------------------------------------------
+int     clink_reload(int, int);
 int     clink_reset_line(int, int);
 int     clink_exit(int count, int invoking_key);
 int     clink_ctrl_c(int count, int invoking_key);

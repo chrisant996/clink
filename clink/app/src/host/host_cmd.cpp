@@ -23,6 +23,9 @@
 #include <Windows.h>
 
 //------------------------------------------------------------------------------
+extern bool s_force_reload_scripts;
+
+//------------------------------------------------------------------------------
 static setting_bool g_ctrld_exits(
     "cmd.ctrld_exits",
     "Pressing Ctrl-D exits session",
@@ -381,7 +384,10 @@ void host_cmd::edit_line(const wchar_t* prompt, wchar_t* chars, int max_chars)
                 break;
             }
 
-            if (g_ctrld_exits.get())
+            if (s_force_reload_scripts)
+            {
+            }
+            else if (g_ctrld_exits.get())
             {
                 wstr_base(chars, max_chars) = L"exit";
                 break;

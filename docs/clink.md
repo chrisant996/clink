@@ -81,6 +81,7 @@ Name                         | Default | Description
 `lua.break_on_traceback`     | False   | Breaks into Lua debugger on `traceback()`.
 `lua.debug`                  | False   | Loads a simple embedded command line debugger when enabled. Breakpoints can be added by calling `pause()`.
 `lua.path`                   |         | Value to append to `package.path`. Used to search for Lua scripts specified in `require()` statements.
+<a name="lua_reload_scripts"/>`lua.reload_scripts` | False | When false, Lua scripts are loaded once and are only reloaded if forced (see <a href="lua-scripts-location">The Location of Lua Scripts</a> for details).  When true, Lua scripts are loaded each time the edit prompt is activated.
 `lua.traceback_on_error`     | False   | Prints stack trace on Lua errors.
 `match.ignore_case`          | `relaxed` | Controls case sensitivity in string comparisons. `off` = case sensitive, `on` = case insensitive, `relaxed` = case insensitive plus `-` and `_` are considered equal.
 `match.sort_dirs`            | `with`  | How to sort matching directory names. `before` = before files, `with` = with files, `after` = after files.
@@ -235,6 +236,7 @@ Name | Description
 `clink-popup-complete`|Show a popup window that lists the available completions.
 `clink-popup-directories`|Show a popup window of recent current working directories.  In the popup, use <kbd>Enter</kbd> to `cd /d` to the highlighted directory.  See below more about the popup window.
 `clink-popup-history`|Show a popup window that lists the command history (if any text precedes the cursor then it uses an anchored search to filter the list).  In the popup, use <kbd>Enter</kbd> to execute the highlighted command.  See below for more about the popup window.
+`clink-reload`|Reloads the inputrc file and the Lua scripts.
 `clink-reset-line`|Clears the current line.
 `clink-scroll-bottom`|Scroll the console window to the bottom (the current input line).
 `clink-scroll-line-down`|Scroll the console window down one line.
@@ -294,6 +296,8 @@ Typing|Typing does an incremental search.
 
 The Readline library allows clients to offer an alternative path for creating completion matches. Clink uses this to hook Lua into the completion process making it possible to script the generation of matches with <a href="https://www.lua.org/docs.html">Lua</a> scripts. The following sections describe this in more detail and show some examples.
 
+<a name="lua-scripts-location"/>
+
 ## The Location of Lua Scripts
 
 Clink loads all Lua scripts it finds in these directories:
@@ -301,7 +305,7 @@ Clink loads all Lua scripts it finds in these directories:
 2. If `clink.path` is not set, then the DLL directory and the profile directory are used (see <a href="#filelocations">File Locations</a> for info about the profile directory).
 3. All directories listed in the `%CLINK_PATH%` environment variable, separated by semicolons.
 
-Lua scripts are reloaded each time the edit prompt is activated.
+Lua scripts are loaded once and are only reloaded if forced because the scripts locations change, the `clink-reload` command is invoked (<kbd>Ctrl</kbd>+<kbd>x</kbd>,<kbd>Ctrl</kbd>+<kbd>r</kbd>), or the `lua.reload_scripts` setting changes (or is True).
 
 <a name="matchgenerators"/>
 

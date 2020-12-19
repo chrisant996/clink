@@ -855,6 +855,7 @@ rl_module::rl_module(const char* shell_name, terminal_in* input)
 
         rl_add_history_hook = host_add_history;
         rl_remove_history_hook = host_remove_history;
+        rl_add_funmap_entry("clink-reload", clink_reload);
         rl_add_funmap_entry("clink-reset-line", clink_reset_line);
         rl_add_funmap_entry("clink-show-help", show_rl_help);
         rl_add_funmap_entry("clink-show-help-raw", show_rl_help_raw);
@@ -900,6 +901,7 @@ rl_module::rl_module(const char* shell_name, terminal_in* input)
         { "\\C-c",          "clink-ctrl-c" },            // ctrl-c
         { "\\C-v",          "clink-paste" },             // ctrl-v
         { "\\C-z",          "undo" },                    // ctrl-z
+        { "\\C-x\\C-r",     "clink-reload" },            // ctrl-x,ctrl-r
         {}
     };
 

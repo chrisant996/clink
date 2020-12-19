@@ -10,6 +10,10 @@ threadlocal int str_compare_scope::ts_mode = str_compare_scope::exact;
 str_compare_scope::str_compare_scope(int mode)
 {
     m_prev_mode = ts_mode;
+
+    if (mode < str_compare_scope::exact || mode >= str_compare_scope::num_scope_values)
+        mode = str_compare_scope::exact;
+
     ts_mode = mode;
 }
 

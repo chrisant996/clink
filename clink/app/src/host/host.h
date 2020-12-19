@@ -11,6 +11,8 @@
 
 class lua_state;
 class str_base;
+class host_lua;
+class prompt_filter;
 
 //------------------------------------------------------------------------------
 class host
@@ -35,4 +37,6 @@ private:
     terminal        m_terminal;
     printer*        m_printer;
     history_db*     m_history = nullptr;
+    host_lua*       m_lua = nullptr;
+    prompt_filter*  m_prompt_filter = nullptr;
 };

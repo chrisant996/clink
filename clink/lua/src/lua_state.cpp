@@ -111,11 +111,7 @@ void lua_state::initialise()
 
     lua_state& self = *this;
 
-    if (g_force_load_debugger || g_lua_debug.get())
-        lua_load_script(self, lib, debugger);
-
-    lua_load_script(self, lib, core);
-
+    // Initialize API namespaces.
     clink_lua_initialise(self);
     os_lua_initialise(self);
     path_lua_initialise(self);
@@ -123,6 +119,14 @@ void lua_state::initialise()
     settings_lua_initialise(self);
     string_lua_initialise(self);
     log_lua_initialise(self);
+
+    // Load the debugger.
+    if (g_force_load_debugger || g_lua_debug.get())
+        lua_load_script(self, lib, debugger);
+
+    // Load core scripts.
+    lua_load_script(self, lib, core);
+    lua_load_script(self, lib, events);
 }
 
 //------------------------------------------------------------------------------
@@ -192,5 +196,49 @@ int lua_state::pcall(lua_State* L, int nargs, int nresults)
     // Remove custom error message handler from stack.
     lua_remove(L, hpos);
 
+    return ret;
+}
+
+//------------------------------------------------------------------------------
+// Calls any event_name callbacks registered by scripts.  The optional push_args
+// function gives an opportunity to push event arguments on the stack.
+bool lua_state::send_event(const char* event_name, std::function<bool(lua_State*)>* push_args)
+{
+    bool ret = false;
+    lua_State* state = get_state();
+
+    int top = lua_gettop(state);
+
+    // Push the global _send_event function.
+    lua_getglobal(state, "clink");
+    lua_pushliteral(state, "_send_event");
+    lua_rawget(state, -2);
+    if (lua_isnil(state, -1))
+        goto done;
+
+    // Push the event name.
+    int first_arg = lua_gettop(state);
+    lua_pushstring(state, event_name);
+
+    // Push event args via provided callback function.
+    if (push_args && !(*push_args)(state))
+        goto done;
+
+    // Call the event callback.
+    if (pcall(lua_gettop(state) - first_arg, 0) != 0)
+    {
+        if (const char* error = lua_tostring(state, -1))
+        {
+            puts("");
+            puts(error);
+        }
+        goto done;
+    }
+
+    ret = true;
+
+done:
+    top = lua_gettop(state) - top;
+    lua_pop(state, top);
     return ret;
 }

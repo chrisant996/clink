@@ -7,6 +7,7 @@
 #include <lua/lua_match_generator.h>
 #include <lua/lua_word_classifier.h>
 #include <lua/lua_state.h>
+#include <functional>
 
 //------------------------------------------------------------------------------
 class host_lua
@@ -17,6 +18,8 @@ public:
                         operator match_generator& ();
                         operator word_classifier& ();
     void                load_scripts();
+    bool                send_event(const char* event_name, std::function<bool(lua_State*)>* push_args=nullptr);
+    bool                is_script_path_changed() const;
 
 private:
     bool                load_scripts(const char* paths);
@@ -24,4 +27,5 @@ private:
     lua_state           m_state;
     lua_match_generator m_generator;
     lua_word_classifier m_classifier;
+    str<>               m_prev_script_path;
 };

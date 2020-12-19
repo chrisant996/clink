@@ -27,6 +27,7 @@
 #include <readline/readline.h>
 
 #include <list>
+#include <memory>
 
 extern "C" {
 #include <lua.h>
@@ -59,6 +60,14 @@ static setting_str g_exclude_from_history_cmds(
     "Commands are separated by spaces, commas, or semicolons.  Default is\n"
     "\"exit history\", to exclude both of those commands.",
     "exit history");
+
+static setting_bool g_reload_scripts(
+    "lua.reload_scripts",
+    "Reload scripts on every prompt",
+    "When true, Lua scripts are reloaded on every prompt.  When false, Lua scripts\n"
+    "are loaded once.  This setting can be changed while Clink is running and takes\n"
+    "effect at the next prompt.",
+    false);
 
 
 
@@ -280,6 +289,16 @@ static bool intercept_directory(str_base& inout)
 
 
 //------------------------------------------------------------------------------
+struct cwd_restorer
+{
+    cwd_restorer() { os::get_current_dir(m_path); }
+    ~cwd_restorer() { os::set_current_dir(m_path.c_str()); }
+    str<288> m_path;
+};
+
+
+
+//------------------------------------------------------------------------------
 host::host(const char* name)
 : m_name(name)
 , m_doskey("cmd.exe")
@@ -291,6 +310,8 @@ host::host(const char* name)
 //------------------------------------------------------------------------------
 host::~host()
 {
+    delete m_prompt_filter;
+    delete m_lua;
     delete m_history;
     delete m_printer;
     terminal_destroy(m_terminal);
@@ -303,12 +324,7 @@ bool host::edit_line(const char* prompt, str_base& out)
     app->update_env();
     path::refresh_pathext();
 
-    struct cwd_restorer
-    {
-        cwd_restorer()  { os::get_current_dir(m_path); }
-        ~cwd_restorer() { os::set_current_dir(m_path.c_str()); }
-        str<288>        m_path;
-    } cwd;
+    cwd_restorer cwd;
 
     // Load Clink's settings.  The load function handles deferred load for
     // settings declared in scripts.
@@ -317,35 +333,64 @@ bool host::edit_line(const char* prompt, str_base& out)
     settings::load(settings_file.c_str());
 
     // Set up the string comparison mode.
-    int cmp_mode;
-    switch (g_ignore_case.get())
-    {
-    case 1:     cmp_mode = str_compare_scope::caseless; break;
-    case 2:     cmp_mode = str_compare_scope::relaxed;  break;
-    default:    cmp_mode = str_compare_scope::exact;    break;
-    }
-    str_compare_scope compare(cmp_mode);
+    static_assert(str_compare_scope::exact == 0, "g_ignore_case values must match str_compare_scope values");
+    static_assert(str_compare_scope::caseless == 1, "g_ignore_case values must match str_compare_scope values");
+    static_assert(str_compare_scope::relaxed == 2, "g_ignore_case values must match str_compare_scope values");
+    str_compare_scope compare(g_ignore_case.get());
 
     // Improve performance while replaying doskey macros by not loading scripts
     // or history, since they aren't used.
     bool init_scripts = !m_doskey_alias;
+    bool send_event = !m_doskey_alias;
+    bool init_prompt = !m_doskey_alias;
     bool init_history = !m_doskey_alias;
 
-    // Set up Lua and load scripts into it.
-    host_lua lua;
-    prompt_filter prompt_filter(lua);
+    // Set up Lua.
+    bool local_lua = g_reload_scripts.get();
+    bool reload_lua = local_lua || (m_lua && m_lua->is_script_path_changed());
+    std::unique_ptr<host_lua> tmp_lua;
+    std::unique_ptr<prompt_filter> tmp_prompt_filter;
+    if (reload_lua || local_lua)
+    {
+        delete m_prompt_filter;
+        delete m_lua;
+        m_prompt_filter = nullptr;
+        m_lua = nullptr;
+    }
+    if (local_lua)
+    {
+        tmp_lua = std::make_unique<host_lua>();
+        tmp_prompt_filter = std::make_unique<prompt_filter>(*tmp_lua);
+    }
+    else
+    {
+        init_scripts = !m_lua;
+        send_event |= init_scripts;
+        if (!m_lua)
+            m_lua = new host_lua;
+        if (!m_prompt_filter)
+            m_prompt_filter = new prompt_filter(*m_lua);
+    }
+    host_lua& lua = tmp_lua.get() ? *tmp_lua : *m_lua;
+    prompt_filter& prompt_filter = tmp_prompt_filter.get() ? *tmp_prompt_filter : *m_prompt_filter;
+
+    // Load scripts.
     if (init_scripts)
     {
         initialise_lua(lua);
         lua.load_scripts();
     }
 
+    // Send onbeginedit event.
+    if (send_event)
+        lua.send_event("onbeginedit");
+
     line_editor::desc desc(m_terminal.in, m_terminal.out, m_printer);
     initialise_editor_desc(desc);
 
     // Filter the prompt.  Unless processing a multiline doskey macro.
     str<256> filtered_prompt;
-    if (init_scripts)
+    if (init_prompt)
     {
         if (g_filter_prompt.get())
             prompt_filter.filter(prompt, filtered_prompt);

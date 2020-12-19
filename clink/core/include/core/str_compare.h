@@ -17,6 +17,7 @@ public:
         exact,
         caseless,
         relaxed,    // case insensitive with -/_ considered equivalent.
+        num_scope_values
     };
 
                 str_compare_scope(int mode);

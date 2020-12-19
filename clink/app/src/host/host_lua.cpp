@@ -16,6 +16,9 @@ extern "C" {
 }
 
 //------------------------------------------------------------------------------
+bool s_force_reload_scripts = false;
+
+//------------------------------------------------------------------------------
 extern "C" int show_cursor(int visible)
 {
     int was_visible = 0;
@@ -73,6 +76,8 @@ void host_lua::load_scripts()
     str<280> script_path;
     app_context::get()->get_script_path(script_path);
     load_scripts(script_path.c_str());
+    m_prev_script_path = script_path.c_str();
+    s_force_reload_scripts = false;
 }
 
 //------------------------------------------------------------------------------
@@ -102,4 +107,21 @@ void host_lua::load_script(const char* path)
 
     while (lua_globs.next(buffer))
         m_state.do_file(buffer.c_str());
+}
+
+//------------------------------------------------------------------------------
+bool host_lua::send_event(const char* event_name, std::function<bool(lua_State*)>* push_args)
+{
+    return m_state.send_event(event_name, push_args);
+}
+
+//------------------------------------------------------------------------------
+bool host_lua::is_script_path_changed() const
+{
+    if (s_force_reload_scripts)
+        return true;
+
+    str<280> script_path;
+    app_context::get()->get_script_path(script_path);
+    return !script_path.iequals(m_prev_script_path.c_str());
 }

@@ -5,6 +5,9 @@
 
 ### Unreleased
 
+- Changed to load Lua scripts only once per session, unless forced to reload them.  This enables backward compatibility for things like [z.lua](https://github.com/skywind3000/z.lua) which has certain features that rely on Clink only loading scripts once per session.
+- Added `clink.onbeginedit()` so scripts can register a callback function to be called each time the edit prompt is activated.
+- Added `lua.reload_scripts` setting to optionally force reloading Lua scripts each time the edit prompt is activated.
 - Added `color.message` setting for the Readline message area color (e.g. the search prompt message or digit argument prompt message, etc).
 
 ### v1.1.10
