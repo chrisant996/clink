@@ -3,7 +3,7 @@
 
 <!-- ----------------------------------------------------- -->
 <head>
-<title>Clink v1.1.10</title>
+<title>Clink v1.1.11</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Rambla:wght@400;700&family=Roboto&family=Fira+Mono&display=swap');
 html {
@@ -396,7 +396,7 @@ var hljs=function(){"use strict";function e(n){Object.freeze(n);var t="function"
         </td>
         <td style="text-align:right">
             <div id="header">
-                <div id="title">Clink v1.1.10</div>
+                <div id="title">Clink v1.1.11</div>
                 <div id="url">
                     <a href="http://github.com/chrisant996/clink">
                         http://github.com/chrisant996/clink
@@ -516,6 +516,11 @@ var hljs=function(){"use strict";function e(n){Object.freeze(n);var t="function"
 <td>Used when Clink displays text or prompts such as a pager&#39;s <code>--More?--</code> prompt.</td>
 </tr>
 <tr>
+<td align="center"><code>color.message</code></td>
+<td align="center"><code>default</code></td>
+<td>The color for the message area (e.g. the search prompt message, digit argument prompt message, etc).</td>
+</tr>
+<tr>
 <td align="center"><code>color.modmark</code></td>
 <td align="center"></td>
 <td>Used when Clink displays the <code>*</code> mark on modified history lines when Readline&#39;s <code>mark-modified-lines</code> variable and Clink&#39;s <code>color.input</code> setting are both set. Falls back to <code>color.input</code> if not set.</td>
@@ -624,6 +629,11 @@ var hljs=function(){"use strict";function e(n){Object.freeze(n);var t="function"
 <td align="center"><code>lua.path</code></td>
 <td align="center"></td>
 <td>Value to append to <code>package.path</code>. Used to search for Lua scripts specified in <code>require()</code> statements.</td>
+</tr>
+<tr>
+<td align="center"><a name="lua_reload_scripts"/><code>lua.reload_scripts</code></td>
+<td align="center">False</td>
+<td>When false, Lua scripts are loaded once and are only reloaded if forced (see <a href="lua-scripts-location">The Location of Lua Scripts</a> for details).  When true, Lua scripts are loaded each time the edit prompt is activated.</td>
 </tr>
 <tr>
 <td align="center"><code>lua.traceback_on_error</code></td>
@@ -863,6 +873,10 @@ Echos key sequences to use in the inputrc files for binding keys to Clink comman
 <td>Show a popup window that lists the command history (if any text precedes the cursor then it uses an anchored search to filter the list).  In the popup, use <kbd>Enter</kbd> to execute the highlighted command.  See below for more about the popup window.</td>
 </tr>
 <tr>
+<td align="center"><code>clink-reload</code></td>
+<td>Reloads the inputrc file and the Lua scripts.</td>
+</tr>
+<tr>
 <td align="center"><code>clink-reset-line</code></td>
 <td>Clears the current line.</td>
 </tr>
@@ -979,6 +993,8 @@ Echos key sequences to use in the inputrc files for binding keys to Clink comman
 </tbody></table>
 <h1 id="extending-clink">Extending Clink</h1>
 <p>The Readline library allows clients to offer an alternative path for creating completion matches. Clink uses this to hook Lua into the completion process making it possible to script the generation of matches with <a href="https://www.lua.org/docs.html">Lua</a> scripts. The following sections describe this in more detail and show some examples.</p>
+<a name="lua-scripts-location"/>
+
 <h2 id="the-location-of-lua-scripts">The Location of Lua Scripts</h2>
 <p>Clink loads all Lua scripts it finds in these directories:</p>
 <ol>
@@ -986,7 +1002,7 @@ Echos key sequences to use in the inputrc files for binding keys to Clink comman
 <li>If <code>clink.path</code> is not set, then the DLL directory and the profile directory are used (see <a href="#filelocations">File Locations</a> for info about the profile directory).</li>
 <li>All directories listed in the <code>%CLINK_PATH%</code> environment variable, separated by semicolons.</li>
 </ol>
-<p>Lua scripts are reloaded each time the edit prompt is activated.</p>
+<p>Lua scripts are loaded once and are only reloaded if forced because the scripts locations change, the <code>clink-reload</code> command is invoked (<kbd>Ctrl</kbd>+<kbd>x</kbd>,<kbd>Ctrl</kbd>+<kbd>r</kbd>), or the <code>lua.reload_scripts</code> setting changes (or is True).</p>
 <a name="matchgenerators"/>
 
 <h2 id="match-generators">Match Generators</h2>
@@ -1667,6 +1683,7 @@ clink.argmatcher("foo")
 end</code></pre></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="clink.match_display_filter">clink.match_display_filter</a></div> <div class="signature">function variable</div></div><div class="body"><p class="desc">This variable can be set to a filter function.  See <a href="#filteringthematchdisplay">Filtering the Match Display</a> for more information.</p></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="clink.matches_are_files">clink.matches_are_files</a></div> <div class="signature">([files:boolean]) : nil</div></div><div class="body deprecated"><p class="desc"><strong>Deprecated; don't use this.</strong>  See <a href="#builder:addmatch">builder:addmatch</a> for more information.</p><p class="desc">This is no longer needed, because now it's inferred from the match type when adding matches.</p></div></div><hr/>
+<div class="function"><div class="header"> <div class="name"><a name="clink.onbeginedit">clink.onbeginedit</a></div> <div class="signature">(func:function) : nil</div></div><div class="body"><p class="desc">Registers <span class="arg">func</span> to be called when Clink's edit prompt is activated.</p></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="clink.promptfilter">clink.promptfilter</a></div> <div class="signature">([priority:integer]) : table</div></div><div class="body"><p class="desc">Creates and returns a new promptfilter object that is applied in increasing <span class="arg">priority</span> order (low values to high values).  Define on the object a <code>filter()</code> function that takes a string argument which contains the filtered prompt so far.  The function can return nil to have no effect, or can return a new prompt string.  It can optionally stop further prompt filtering by also returning false.  See <a href="#customisingtheprompt">Customising The Prompt</a> for more information.</p><pre class="language-lua"><code>local foo_prompt = clink.promptfilter(80)
 function foo_prompt:filter(prompt)
 &nbsp; -- Insert the date at the beginning of the prompt.
@@ -1840,6 +1857,14 @@ settings.add("color.mymno", "bright magenta", "Color setting")</code></pre></div
         <div class="section" id="changes">
 <h1 id="changes">Changes</h1>
 <h2 id="releases-from-chrisant996clink-fork">Releases from <a href="https://github.com/chrisant996/clink">chrisant996/clink</a> fork</h2>
+<h3 id="v1111">v1.1.11</h3>
+<ul>
+<li>Changed to load Lua scripts only once per session, unless forced to reload them.  This enables backward compatibility for things like <a href="https://github.com/skywind3000/z.lua">z.lua</a> which has certain features that rely on Clink only loading scripts once per session.</li>
+<li>Added <code>clink.onbeginedit()</code> so scripts can register a callback function to be called each time the edit prompt is activated.</li>
+<li>Added <code>lua.reload_scripts</code> setting to optionally force reloading Lua scripts each time the edit prompt is activated.</li>
+<li>Added <code>color.message</code> setting for the Readline message area color (e.g. the search prompt message or digit argument prompt message, etc).</li>
+<li>Fixed stray sticky <code>=</code> appended to completions after typing <code>set </code> and then typing a different command.</li>
+</ul>
 <h3 id="v1110">v1.1.10</h3>
 <ul>
 <li>Fixed <a href="https://github.com/chrisant996/clink/issues/32">#32</a> hooking <code>ReadConsoleW</code> on Windows 7.</li>
@@ -2144,9 +2169,9 @@ settings.add("color.mymno", "bright magenta", "Color setting")</code></pre></div
 <li>Added <code>clink info</code> to print information about Clink.</li>
 <li>Added <code>clink echo</code> command to echo input key sequences to stdout.</li>
 <li>Added <code>clink history</code> command (fixes <a href="https://github.com/mridgers/clink/issues/172">mridgers #172</a>).</li>
-<li>Added &#39;history&#39; as an alias for <code>clink history</code>.</li>
+<li>Added <code>history</code> as an alias for <code>clink history</code>.</li>
 <li>Added internal <code>--list</code> flag to <code>clink set</code> for match generation.</li>
-<li>Removed &#39;--scripts&#39; argument (fixes <a href="https://github.com/mridgers/clink/issues/206">mridgers #206</a>).</li>
+<li>Removed <code>--scripts</code> argument (fixes <a href="https://github.com/mridgers/clink/issues/206">mridgers #206</a>).</li>
 <li>Updated <code>clink autorun</code> command&#39;s help text.</li>
 </ul>
 </li>
@@ -2195,11 +2220,11 @@ settings.add("color.mymno", "bright magenta", "Color setting")</code></pre></div
 </ul>
 <h3 id="v048">v0.4.8</h3>
 <ul>
-<li>Environment variable &#39;clink_profile&#39; overrides Clink&#39;s profile path (#390).</li>
+<li>Environment variable <code>clink_profile</code> overrides Clink&#39;s profile path (#390).</li>
 <li>Load a clink_inputrc file from Clink&#39;s profile directory (fixes #406).</li>
 <li>Bug fixes;<ul>
 <li>Redraw issues when prompts end in OSC ANSI codes (#387, #384).</li>
-<li>Fixed &#39;clink autorun --help&#39; crash.</li>
+<li>Fixed <code>clink autorun --help</code> crash.</li>
 </ul>
 </li>
 </ul>
@@ -2218,7 +2243,7 @@ settings.add("color.mymno", "bright magenta", "Color setting")</code></pre></div
 <li>Bug fixes;<ul>
 <li>Executable completion;<ul>
 <li>Paths from PATH were checked twice.</li>
-<li>Incorrect results were returned for words ending in &#39;.&#39; or &#39;-&#39;.</li>
+<li>Incorrect results were returned for words ending in <code>.</code> or <code>-</code>.</li>
 <li>Directories . and .. were incorrectly displayed.</li>
 </ul>
 </li>
@@ -2231,28 +2256,28 @@ settings.add("color.mymno", "bright magenta", "Color setting")</code></pre></div
 </ul>
 </li>
 <li>Doskey emulation (#344).</li>
-<li>Improved &#39;clink autorun&#39; help (#348).</li>
+<li>Improved <code>clink autorun</code> help (#348).</li>
 <li>Fixed launching Clink when clink.bat is renamed (#357).</li>
 </ul>
 </li>
 </ul>
 <h3 id="v045">v0.4.5</h3>
 <ul>
-<li>Improved &#39;clink autorun&#39;. It now defaults to the Current User registry hive.</li>
-<li>&#39;clink set&#39; gives more details for enumeration-type settings.</li>
+<li>Improved <code>clink autorun</code>. It now defaults to the Current User registry hive.</li>
+<li><code>clink set</code> gives more details for enumeration-type settings.</li>
 <li>Tab completion for p4vc.</li>
-<li>New settings &#39;history_expand_mode&#39; to control history expansion in quotes (#317).</li>
+<li>New settings <code>history_expand_mode</code> to control history expansion in quotes (#317).</li>
 <li>Bug fixes;<ul>
 <li>Use full width of the terminal (#337).</li>
 <li>Fixed MinGW compile error (#335).</li>
 <li>Autorun now defaults to the current user&#39;s hive (#332).</li>
 <li>Creating clink.html no longer needs Pandoc, plus it looks a bit better (#331).</li>
 <li>Added settings to control history expansion (#326).</li>
-<li>Correct fallback when &#39;use_altgr_substitute&#39; is off (#325).</li>
+<li>Correct fallback when <code>use_altgr_substitute</code> is off (#325).</li>
 <li>Load history prior to saving it on shutdown (#318).</li>
 <li>Added Shift-Tab documentation and menu completion example (#190).</li>
 <li>Added shim for backwards menu completion (#190).</li>
-<li>Input handling now outputs &#39;\e`Z&#39; for Shift-Tab (#190).</li>
+<li>Input handling now outputs <code>\e`Z</code> for <kbd>Shift</kbd>-<kbd>Tab</kbd> (#190).</li>
 <li>Updated Readme with current Premake info (#310).</li>
 <li>Guard against there being no buffer to read from (#304).</li>
 <li>Fixed artefacts when resizing conhost&#39;s buffer (#139).</li>
@@ -2266,33 +2291,33 @@ settings.add("color.mymno", "bright magenta", "Color setting")</code></pre></div
 <h3 id="v044">v0.4.4</h3>
 <ul>
 <li>Completing .. behaves more like Bash (#277).</li>
-<li>Escape from yes/no question when Ctrl+C is pressed.</li>
+<li>Escape from yes/no question when <kbd>Ctrl</kbd>+<kbd>C</kbd> is pressed.</li>
 <li>Valid XP executables (#278, #289).</li>
 <li>Fixed n-th argument yank not working as expected (#254).</li>
 <li>Fixed prompt colours sometimes not working (#279, #286).</li>
-<li>Fixed &#39;!0&#39; causing Clink to crash.</li>
+<li>Fixed <code>!0</code> causing Clink to crash.</li>
 <li>Save/restore cursor position in case Readline moves it.</li>
 </ul>
 <h3 id="v043">v0.4.3</h3>
 <ul>
-<li>Localised Y/N when auto-answering &#39;terminate?&#39; prompt.</li>
-<li>$* would early out if there was no arguments.</li>
+<li>Localised Y/N when auto-answering &quot;terminate?&quot; prompt.</li>
+<li><code>$*</code> would early out if there was no arguments.</li>
 <li>Disable ANSI code support if third party provides it.</li>
 <li>Installer can now set %CLINK_DIR% to install location.</li>
-<li>Improved output from &#39;clink set&#39;.</li>
+<li>Improved output from <code>clink set</code>.</li>
 <li>Support for Windows 10 Technical Preview.</li>
-<li>Ctrl-L now scrolls last line to the top of the window rather than clearing.</li>
+<li><kbd>Ctrl</kbd>-<kbd>L</kbd> now scrolls last line to the top of the window rather than clearing.</li>
 <li>New option to control how newline characters are pasted to the line.</li>
 <li>New options to control history;<ul>
-<li>&#39;history_file_lines&#39; - maximum lines saved to disk.</li>
-<li>&#39;history_ignore_space&#39; - ignore lines prefixed with whitespace.</li>
-<li>&#39;history_dupe_mode&#39; - how duplicate entries are handled.</li>
-<li>&#39;history_io&#39; - load/save history from disk every line.</li>
+<li><code>history_file_lines</code> - maximum lines saved to disk.</li>
+<li><code>history_ignore_space</code> - ignore lines prefixed with whitespace.</li>
+<li><code>history_dupe_mode</code> - how duplicate entries are handled.</li>
+<li><code>history_io</code> - load/save history from disk every line.</li>
 </ul>
 </li>
 <li>Fixed nonfunctional numpad keys.</li>
 <li>Fixed missing WINCH signals if other processes resize the buffer.</li>
-<li>Support Alt codes sent from Conhost.</li>
+<li>Support <kbd>Alt</kbd> codes sent from Conhost.</li>
 </ul>
 <h3 id="v042">v0.4.2</h3>
 <ul>
@@ -2302,7 +2327,7 @@ settings.add("color.mymno", "bright magenta", "Color setting")</code></pre></div
 <li>Updated Go completions (by matrixik).</li>
 <li>Arguments to clink.arg.new_parser() now initialise parser&#39;s flags/args (from vladimir-kotikov).</li>
 <li>New clink.arg.add_flags() and clink.arg.add_arguments() functions.</li>
-<li>Removed footer and Alt-H tip for more succinct stdout output.</li>
+<li>Removed footer and <kbd>Alt</kbd>-<kbd>H</kbd> tip for more succinct stdout output.</li>
 <li>Bug fixes;<ul>
 <li>Windows XP works again.</li>
 <li>Fixed race condition in lua_execute().</li>
@@ -2317,23 +2342,23 @@ settings.add("color.mymno", "bright magenta", "Color setting")</code></pre></div
 <li>Fixed incorrect translation of suffixed slash when completing flags.</li>
 </ul>
 </li>
-<li>Add --nolog argument to disable file logging. Fix #187 Fix #154</li>
+<li>Add <code>--nolog</code> argument to disable file logging. Fix #187 Fix #154</li>
 <li>Added missing escape sequences from doskey emulation.</li>
 <li>Reinstated unix-kill-line key binding.</li>
-<li>Mapped PgUp/Down to search history using line typed so far.</li>
+<li>Mapped <kbd>PgUp</kbd>/<kbd>Down</kbd> to search history using line typed so far.</li>
 <li>Added documentation covering escape codes for special keys.</li>
-<li>Added support for Windows&#39; AltGr substitute Ctrl-Alt.</li>
+<li>Added support for Windows&#39; <kbd>AltGr</kbd> substitute <kbd>Ctrl</kbd>-<kbd>Alt</kbd>.</li>
 <li>Support for Readline&#39;s &#39;menu&#39; style completion (see docs).</li>
 </ul>
 <h3 id="v04">v0.4</h3>
 <ul>
 <li>New features;<ul>
-<li>Better &#39;clink.arg&#39; API. Easier, more intuitive, and more powerful.</li>
+<li>Better <code>clink.arg</code> API. Easier, more intuitive, and more powerful.</li>
 <li>Whitespace prefix skips exec matching.</li>
-<li>Added a &#39;set&#39; verb to easily change settings from the command line.</li>
+<li>Added a <code>set</code> verb to easily change settings from the command line.</li>
 <li>Basic support for a shells other than cmd.exe.</li>
 <li>Completion for Go (contributed by Dobroslaw Zybort).</li>
-<li>Setting &#39;exec_match_style&#39; to -1 disables it entirely.</li>
+<li>Setting <code>exec_match_style</code> to -1 disables it entirely.</li>
 <li>Make history persistence optional.</li>
 <li>Alias/doskey completion.</li>
 <li>Very basic support for Powershell.</li>
@@ -2341,11 +2366,11 @@ settings.add("color.mymno", "bright magenta", "Color setting")</code></pre></div
 </ul>
 </li>
 <li>New key bindings;<ul>
-<li>Ctrl-Alt-C : Copy command line to the clipboard.</li>
-<li>Ctrl-Alt-E : Expand environment variable under cursor.</li>
-<li>Ctrl-Alt-U : &#39;up directory&#39; (formerly Shift-Up).</li>
-<li>Ctrl-U : Adds &#39;..&#39; to the command line.</li>
-<li>Alt-H : Shows active keymap&#39;s key bindings.</li>
+<li><kbd>Ctrl</kbd>-<kbd>Alt</kbd>-<kbd>C</kbd> : Copy command line to the clipboard.</li>
+<li><kbd>Ctrl</kbd>-<kbd>Alt</kbd>-<kbd>E</kbd> : Expand environment variable under cursor.</li>
+<li><kbd>Ctrl</kbd>-<kbd>Alt</kbd>-<kbd>U</kbd> : &quot;up directory&quot; (formerly <kbd>Shift</kbd>-<kbd>Up</kbd>).</li>
+<li><kbd>Ctrl</kbd>-<kbd>U</kbd> : Adds <code>..\</code> to the command line.</li>
+<li><kbd>Alt</kbd>-<kbd>H</kbd> : Shows active keymap&#39;s key bindings.</li>
 </ul>
 </li>
 <li>New Lua functions;<ul>
@@ -2358,20 +2383,20 @@ settings.add("color.mymno", "bright magenta", "Color setting")</code></pre></div
 </li>
 <li>Lots of bug fixes, including;<ul>
 <li>Better command extraction.</li>
-<li>Fixed cmd.exe command paging and Ctrl-C/Ctrl-Break handling.</li>
+<li>Fixed cmd.exe command paging and <kbd>Ctrl</kbd>-<kbd>C</kbd>/<kbd>Ctrl</kbd>-<kbd>Break</kbd> handling.</li>
 <li>Multiple locale fixes.</li>
-<li>Use localised text for &#39;Terminate batch job?&#39; prompt.</li>
+<li>Use localised text for &quot;Terminate batch job?&quot; prompt.</li>
 </ul>
 </li>
 </ul>
 <h3 id="v03">v0.3</h3>
 <ul>
-<li>Automatic answering of cmd.exe&#39;s &#39;Terminate batch script?&#39; prompt.</li>
+<li>Automatic answering of cmd.exe&#39;s &quot;Terminate batch script?&quot; prompt.</li>
 <li>Coloured prompts (requires ANSICON or ConEmu).</li>
-<li>Added Shift-Up keyboard shortcut to automatically execute &#39;cd ..&#39;</li>
-<li>Mapped Ctrl-Z to undo, Microsoft style.</li>
+<li>Added Shift-Up keyboard shortcut to automatically execute <code>cd ..</code></li>
+<li>Mapped <kbd>Ctrl</kbd>-<kbd>Z</kbd> to undo, Microsoft style.</li>
 <li>Improved integration of Readline;<ul>
-<li>New input handling code (Ctrl-Alt combos now work).</li>
+<li>New input handling code (<kbd>Ctrl</kbd>-<kbd>Alt</kbd> combos now work).</li>
 <li>An implementation of the Termcap library.</li>
 <li>Fully functional Vi-mode support.</li>
 <li>Support for resizable consoles.</li>
@@ -2393,9 +2418,9 @@ settings.add("color.mymno", "bright magenta", "Color setting")</code></pre></div
 </ul>
 </li>
 <li>New command line options;<ul>
-<li>&#39;--profile <dir>&#39; to override default profile directory.</li>
-<li>&#39;--nohostcheck&#39; disables verification that host is cmd.exe.</li>
-<li>&#39;--pid&#39; specifies the process to inject into.</li>
+<li><code>--profile <span class="arg">dir</span></code> to override default profile directory.</li>
+<li><code>--nohostcheck</code> disables verification that host is cmd.exe.</li>
+<li><code>--pid</code> specifies the process to inject into.</li>
 </ul>
 </li>
 <li>Update Mercurial completion (issue 73).</li>
@@ -2411,15 +2436,15 @@ settings.add("color.mymno", "bright magenta", "Color setting")</code></pre></div
 </ul>
 <h3 id="v02">v0.2</h3>
 <ul>
-<li>Basic argument completion for &#39;git&#39;, &#39;hg&#39;, &#39;svn&#39;, and &#39;p4&#39;.</li>
-<li>Traditional Bash clear screen (&#39;Ctrl-L&#39;) and exit shortcuts (&#39;Ctrl-D&#39;).</li>
-<li>Scrollable command window using &#39;PgUp&#39;/&#39;PgDown&#39; keys.</li>
+<li>Basic argument completion for <code>git</code>, <code>hg</code>, <code>svn</code>, and <code>p4</code>.</li>
+<li>Traditional Bash clear screen (<kbd>Ctrl</kbd>-<kbd>L</kbd>) and exit shortcuts (<kbd>Ctrl</kbd>-<kbd>D</kbd>).</li>
+<li>Scrollable command window using <kbd>PgUp</kbd>/<kbd>PgDown</kbd> keys.</li>
 <li>Doskey support.</li>
 <li>Automatic quoting of file names with spaces.</li>
 <li>Scriptable custom prompts.</li>
 <li>New argument framework to ease writing context-sensitive match generators.</li>
 <li>History and log file is now saved per-user rather than globally.</li>
-<li>Improved Clink&#39;s command line interface (&#39;clink --help&#39;).</li>
+<li>Improved Clink&#39;s command line interface (<code>clink --help</code>).</li>
 <li>More reliable handling of cmd.exe&#39;s autorun entry.</li>
 <li>General improvements to executable and directory-command completion.</li>
 <li>Symbolic link support.</li>
@@ -2430,8 +2455,8 @@ also hook cmd.exe (ConEmu, ANSICon, etc.).</li>
 </ul>
 <h3 id="v011">v0.1.1</h3>
 <ul>
-<li>Fixed AltGr+<key> on international keyboards.</li>
-<li>Fixed broken completion when directories have a &#39;-&#39; in their name (Mark Hammond)</li>
+<li>Fixed <kbd>AltGr</kbd>+<kbd>&lt;key&gt;</kbd> on international keyboards.</li>
+<li>Fixed broken completion when directories have a <code>-</code> in their name (Mark Hammond)</li>
 <li>The check for single match scenarios now correctly handles case-insensitivity.</li>
 </ul>
 <h3 id="v01">v0.1</h3>
