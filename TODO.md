@@ -7,6 +7,8 @@ ChrisAnt Plans
 ## Match Display Filter
 - Popup list support for match display filter.
   - Need to be able to return `{ match, display }`, and probably actually `{ match, display, description }`.
+  - Maybe extend matches to accept `{ match, type, append_character, display_prefix, display_suffix, display_description }` so that generators can describe all the details and then Clink can handle everything.  That would maintain and simplify custom display, but would lose the ability for filtering of which matches show up.
+  - Maybe make an `ondisplaymatches` event and pass into it some `builder` object?  But only certain generators should receive the event, so maybe clear the `ondisplaymatches` event registrations every time match generation happens.
 
 ## Issues
 - The match pipeline should not fire on pressing **Enter** after `exit`.
