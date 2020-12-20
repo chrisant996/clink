@@ -9,7 +9,7 @@ clink._event_callbacks = clink._event_callbacks or {}
 function clink._send_event(event, ...)
     local callbacks = clink._event_callbacks[event]
     if callbacks ~= nil then
-        for _, func in pairs(callbacks) do
+        for _, func in ipairs(callbacks) do
             func(...)
         end
     end
@@ -27,7 +27,10 @@ local function _add_event_callback(event, func)
         callbacks = clink._event_callbacks["onbeginedit"]
     end
 
-    callbacks[func] = func -- This prevents duplicates.
+    if callbacks[func] == nil then
+        callbacks[func] = true -- This prevents duplicates.
+        table.insert(callbacks, func)
+    end
 end
 
 --------------------------------------------------------------------------------
