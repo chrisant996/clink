@@ -18,7 +18,7 @@ end
 -- This is the error handler used by native code calls into Lua scripts.
 function _error_handler(message)
     if _can_pause and settings.get("lua.break_on_error") then
-        pause("break on error:")
+        pause("break on error: "..message)
     end
     if settings.get("lua.traceback_on_error") then
         print(debug.traceback(message, 2))
@@ -36,7 +36,7 @@ end
 -- suppress error messages than force error messages to show up twice.
 function _error_handler_ret(message)
     if _can_pause and settings.get("lua.break_on_error") then
-        pause("break on error:")
+        pause("break on error: "..message)
     end
     return debug.traceback(message, 2)
 end
