@@ -49,7 +49,7 @@ public:
     virtual char            get_append_character() const override;
     virtual int             get_suppress_quoting() const override;
     virtual int             get_word_break_adjustment() const override;
-    virtual bool            match_display_filter(char** matches, match_display_filter_entry*** filtered_matches) const override;
+    virtual bool            match_display_filter(char** matches, match_display_filter_entry*** filtered_matches, bool popup) const override;
 
     void                    set_word_break_adjustment(int adjustment);
 

@@ -24,5 +24,6 @@ popup_list_result do_popup_list(
     bool completing,
     bool auto_complete,
     int& current,
-    str_base& out);
+    str_base& out,
+    bool display_filter=false);
 

@@ -66,3 +66,51 @@ end
 function clink.onbeginedit(func)
     _add_event_callback("onbeginedit", func)
 end
+
+--------------------------------------------------------------------------------
+--- -name:  clink.ondisplaymatches
+--- -arg:   func:function
+--- -show:  local function my_filter(matches, popup)
+--- -show:  &nbsp; local new_matches = {}
+--- -show:  &nbsp; for _,m in ipairs(matches) do
+--- -show:  &nbsp;   if m.match:find("[0-9]") then
+--- -show:  &nbsp;     -- Ignore matches with one or more digits.
+--- -show:  &nbsp;   else
+--- -show:  &nbsp;     -- Keep the match, and also add * prefix to directory matches.
+--- -show:  &nbsp;     if m.type:find("^dir") then
+--- -show:  &nbsp;       m.display = "*"..m.match
+--- -show:  &nbsp;     end
+--- -show:  &nbsp;     table.insert(new_matches, m)
+--- -show:  &nbsp;   end
+--- -show:  &nbsp; end
+--- -show:  &nbsp; return new_matches
+--- -show:  end
+--- -show:
+--- -show:  function my_match_generator:generate(line_state, match_builder)
+--- -show:  &nbsp; ...
+--- -show:  &nbsp; clink.ondisplaymatches(my_filter)
+--- -show:  end
+--- Registers <span class="arg">func</span> to be called when Clink is about to
+--- display matches.  See <a href="filteringthematchdisplay">Filtering the Match
+--- Display</a> for more information.
+function clink.ondisplaymatches(func)
+    -- For now, only one handler at a time.  I wanted it to be a chain of
+    -- handlers, but that implies the output from one handler will be input to
+    -- the next.  It got messy trying to keep it simple and flexible without
+    -- creating stability loopholes.  That's why this not-really-an-event is
+    -- wedged in amongst the real events.
+    clink._event_callbacks["ondisplaymatches"] = {}
+    _add_event_callback("ondisplaymatches", func)
+end
+
+--------------------------------------------------------------------------------
+function clink._send_ondisplaymatches_event(matches, popup)
+    local callbacks = clink._event_callbacks["ondisplaymatches"]
+    if callbacks ~= nil then
+        local func = callbacks[1]
+        if func then
+            return func(matches, popup)
+        end
+    end
+    return matches
+end

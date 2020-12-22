@@ -87,6 +87,9 @@ static char* tmpbuf_allocated = NULL;
 static char* tmpbuf_ptr = NULL;
 static int tmpbuf_length = 0;
 static int tmpbuf_capacity = 0;
+static const char* const _normal_color = "\x1b[m";
+static const int _normal_color_len = 3;
+static const int desc_sep_padding = 4;
 
 //------------------------------------------------------------------------------
 static void reset_tmpbuf (void)
@@ -910,7 +913,7 @@ static int display_filtered_match_list_internal(match_display_filter_entry **mat
     if (limit <= 0)
         limit = 1;
 
-    if (matches[0] && matches[0]->visible_len < 0)
+    if (matches[0] && matches[0]->visible_display < 0)
         limit = 1;
 
     // How many iterations of the printing loop?
@@ -954,10 +957,20 @@ static int display_filtered_match_list_internal(match_display_filter_entry **mat
                 break;
             else
             {
-                printed_len = matches[l]->visible_len;
+                const match_display_filter_entry* entry = matches[l];
+
+                printed_len = entry->visible_display;
                 append_default_color();
                 append_tmpbuf_string(filtered_color, filtered_color_len);
-                append_tmpbuf_string(matches[l]->match, -1);
+                append_tmpbuf_string(entry->display, -1);
+
+                if (matches[l]->description)
+                {
+                    int fixed = abs(matches[0]->visible_display) + desc_sep_padding;
+                    pad_filename(printed_len, fixed);
+                    printed_len = fixed + entry->visible_description;
+                    append_tmpbuf_string(entry->description, -1);
+                }
 
                 if (j + 1 < limit)
                     pad_filename(printed_len, max);
@@ -987,7 +1000,7 @@ static int display_filtered_match_list_internal(match_display_filter_entry **mat
 }
 
 //------------------------------------------------------------------------------
-static void free_filtered_matches(match_display_filter_entry** filtered_matches)
+void free_filtered_matches(match_display_filter_entry** filtered_matches)
 {
     if (filtered_matches)
     {
@@ -1005,7 +1018,7 @@ static int prompt_display_matches(int len)
         _rl_print_pager_color();
     fprintf(rl_outstream, "Display all %d possibilities? (y or n)", len);
     if (_rl_pager_color)
-        fprintf(rl_outstream, "\x1b[m");
+        fprintf(rl_outstream, _normal_color);
     fflush(rl_outstream);
     if (get_y_or_n(0) == 0)
     {
@@ -1019,7 +1032,7 @@ static int prompt_display_matches(int len)
 //------------------------------------------------------------------------------
 void display_matches(char** matches)
 {
-    int len, max, i;
+    int len, max, max_display, max_description, i;
     char *temp;
     int vis_stat;
 
@@ -1040,12 +1053,19 @@ void display_matches(char** matches)
             _rl_move_vert(_rl_vis_botlin);
 
             len = 0;
-            max = 0;
+            max_display = 0;
+            max_description = 0;
             for (match_display_filter_entry** walk = filtered_matches + 1; *walk; len++, walk++)
             {
-                if (max < (*walk)->visible_len)
-                    max = (*walk)->visible_len;
+                if (max_display < (*walk)->visible_display)
+                    max_display = (*walk)->visible_display;
+                if (max_description < (*walk)->visible_description)
+                    max_description = (*walk)->visible_description;
             }
+
+            max = max_display;
+            if (max_description)
+                max += desc_sep_padding + max_description;
 
             if (rl_completion_auto_query_items ?
                 display_filtered_match_list_internal(filtered_matches, len, max, true) >= (_rl_screenheight - 1) :

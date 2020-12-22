@@ -4,12 +4,6 @@ ChrisAnt Plans
 
 # RELEASE
 
-## Match Display Filter
-- Popup list support for match display filter.
-  - Need to be able to return `{ match, display }`, and probably actually `{ match, display, description }`.
-  - Maybe extend matches to accept `{ match, type, append_character, display_prefix, display_suffix, display_description }` so that generators can describe all the details and then Clink can handle everything.  That would maintain and simplify custom display, but would lose the ability for filtering of which matches show up.
-  - Maybe make an `ondisplaymatches` event and pass into it some `builder` object?  But only certain generators should receive the event, so maybe clear the `ondisplaymatches` event registrations every time match generation happens.
-
 ## Issues
 - The match pipeline should not fire on pressing **Enter** after `exit`.
 - Changing terminal width makes 0.4.8 slowly "walk up the screen".  Changing terminal width works in master, except when the cursor position itself is affected.
@@ -106,6 +100,7 @@ ChrisAnt Plans
 - Is it a problem that `update_internal()` gets called once per char in a key sequence?  Maybe it should only happen after a key that finishes a key binding?
 - Should only fold path separators in pathish matches.
 - Git stashes like `stash@{2}` stop completing once you type the `{`.
+- How to reasonably support normal completion coloring with `ondisplaymatches` match display filtering?
 - Allow to search the console output (not command history) with a RegExp [#166](https://github.com/mridgers/clink/issues/166).  _[Unclear how that would work.  Would it scroll the console?  How would it highlight matches, etc, since that's really something the console host would need to do?  I think this needs to be implemented by the console host, e.g. conhost or ConEmu or Terminal, etc.]_
 - [#20](https://github.com/chrisant996/clink/issues/20) Cmd gets unresponsive after "set /p" command.  _[Seems to mostly work, though `set /p FOO=""` doesn't prompt for input.]_
 - Include `wildmatch()` and an `fnmatch()` wrapper for it.  But should first update it to support UTF8.

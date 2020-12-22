@@ -110,12 +110,6 @@ void host_lua::load_script(const char* path)
 }
 
 //------------------------------------------------------------------------------
-bool host_lua::send_event(const char* event_name, std::function<bool(lua_State*)>* push_args)
-{
-    return m_state.send_event(event_name, push_args);
-}
-
-//------------------------------------------------------------------------------
 bool host_lua::is_script_path_changed() const
 {
     if (s_force_reload_scripts)
@@ -124,4 +118,16 @@ bool host_lua::is_script_path_changed() const
     str<280> script_path;
     app_context::get()->get_script_path(script_path);
     return !script_path.iequals(m_prev_script_path.c_str());
+}
+
+//------------------------------------------------------------------------------
+bool host_lua::send_event(const char* event_name, int nargs)
+{
+    return m_state.send_event(event_name, nargs);
+}
+
+//------------------------------------------------------------------------------
+bool host_lua::send_event_cancelable(const char* event_name, int nargs)
+{
+    return m_state.send_event_cancelable(event_name, nargs);
 }

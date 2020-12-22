@@ -680,14 +680,14 @@ void line_editor_impl::update_internal()
     }
 }
 
-matches* maybe_regenerate_matches(const char* needle)
+matches* maybe_regenerate_matches(const char* needle, bool popup)
 {
     if (!s_editor)
         return nullptr;
 
     // Check if a match display filter is active.
     matches_impl& regen = s_editor->m_regen_matches;
-    if (!regen.match_display_filter(nullptr, nullptr))
+    if (!regen.match_display_filter(nullptr, nullptr, popup))
         return nullptr;
 
 #ifdef DEBUG

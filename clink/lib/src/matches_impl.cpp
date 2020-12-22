@@ -104,6 +104,33 @@ match_type to_match_type(const char* type_name)
 }
 
 //------------------------------------------------------------------------------
+void match_type_to_string(match_type type, str_base& out)
+{
+    match_type base = type & match_type::mask;
+
+    static const char* const type_names[] =
+    {
+        "invalid",
+        "none",
+        "word",
+        "arg",
+        "cmd",
+        "alias",
+        "file",
+        "dir",
+        "link",
+    };
+
+    out.clear();
+    out.concat(type_names[int(base)]);
+
+    if (int(type & match_type::hidden))
+        out.concat(",hidden");
+    if (int(type & match_type::readonly))
+        out.concat(",readonly");
+}
+
+//------------------------------------------------------------------------------
 match_builder::match_builder(matches& matches)
 : m_matches(matches)
 {
@@ -469,7 +496,7 @@ int matches_impl::get_word_break_adjustment() const
 }
 
 //------------------------------------------------------------------------------
-bool matches_impl::match_display_filter(char** matches, match_display_filter_entry*** filtered_matches) const
+bool matches_impl::match_display_filter(char** matches, match_display_filter_entry*** filtered_matches, bool popup) const
 {
     // TODO:  This doesn't really belong here.  But it's a convenient point to
     // cobble together Lua (via the generators) and the matches.  It's strange
@@ -482,7 +509,7 @@ bool matches_impl::match_display_filter(char** matches, match_display_filter_ent
         return false;
 
     for (auto *generator : *m_generators)
-        if (generator->match_display_filter(matches, filtered_matches))
+        if (generator->match_display_filter(matches, filtered_matches, popup))
             return true;
 
     return false;

@@ -119,7 +119,7 @@ public:
     virtual char            get_append_character() const = 0;
     virtual int             get_suppress_quoting() const = 0;
     virtual int             get_word_break_adjustment() const = 0;
-    virtual bool            match_display_filter(char** matches, match_display_filter_entry*** filtered_matches) const = 0;
+    virtual bool            match_display_filter(char** matches, match_display_filter_entry*** filtered_matches, bool popup) const = 0;
 
 private:
     friend class matches_iter;
@@ -134,6 +134,7 @@ private:
 //------------------------------------------------------------------------------
 match_type to_match_type(int mode, int attr);
 match_type to_match_type(const char* type_name);
+void match_type_to_string(match_type type, str_base& out);
 
 //------------------------------------------------------------------------------
 struct match_desc

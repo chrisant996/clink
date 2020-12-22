@@ -538,34 +538,37 @@ With the shorthand form flags are implied rather than declared.  When a shorthan
 
 In some instances it may be preferable to display potential matches in an alternative form than the generated matches passed to and used internally by Readline. For example, it might be desirable to display a `*` next to some matches, or to show additional information about each match. Filtering the match display only affects what is displayed; it doesn't affect completing matches.
 
-To facilitate custom match generators that may wish to do this there is the <a href="#clink.match_display_filter">clink.match_display_filter</a> variable. This can be set to a function that will then be called before matches are to be displayed.
+A match generator can use <a href="#clink.ondisplaymatches">clink.ondisplaymatches()</a> to register a function that will be called before matches are displayed (this is reset every time match generation is invoked).
+
+The function receives a table argument containing the matches to be displayed, and a boolean argument indicating whether they'll be displayed in a popup window. The table argument has a `match` string field and a `type` string field; these are the same as in <a href="builder:addmatch">builder:addmatch()</a>. The return value is a table with the input matches filtered as required by the match generator. The returned table can also optionally include a `display` string field and a `description` string field. When present, `display` will be displayed as the match instead of the `match` field, and `description` will be displayed next to the match. Putting the description in a separate field enables Clink to align the descriptions in a column.
 
 ```lua
-function my_display_filter(matches)
-    new_matches = {}
-
-    for _, m in ipairs(matches) do
-        local _, _, n = m:find("\\([^\\]+)$")
-        table.insert(new_matches, n)
+local function my_filter(matches, popup)
+    local new_matches = {}
+    for _,m in ipairs(matches) do
+        if m.match:find("[0-9]") then
+            -- Ignore matches with one or more digits.
+        else
+            -- Keep the match, and also add * prefix to directory matches.
+            if m.type:find("^dir") then
+                m.display = "*"..m.match
+            end
+            table.insert(new_matches, m)
+        end
     end
-
     return new_matches
 end
 
-function my_match_generator(text, first, last)
+function my_match_generator:generate(line_state, match_builder)
     ...
-
-    clink.match_display_filter = my_display_filter
-    return true
+    clink.ondisplaymatches(my_filter)
 end
 ```
 
-The function's single argument <span class="arg">matches</span> is a table containing what Clink is going to display. The return value is a table with the input matches filtered as required by the match generator. The value of `clink.match_display_filter` is reset every time match generation is invoked.
-
 > **Compatibility Note:**  When a match display filter has been set, it changes how match generation behaves.
+> - When a match display filter is set, then match generation is also re-run whenever matches are displayed.
 > - Normally match generation only happens at the start of a new word.  The full set of potential matches is remembered and dynamically filtered based on further typing.
-> - When a match display filter is set, then match generation is also re-run whenever matches are displayed.  This is necessary for backward compatibility with how generators and match display filters were able to influence each other.
-> - This means if a match generator made contextual decisions other than just filtering then it could potentially behave differently in Clink v1.x than it did in v0.x.
+> - So if a match generator made contextual decisions during match generation (other than filtering) then it could potentially behave differently in Clink v1.x than it did in v0.x.
 
 <a name="customisingtheprompt"/>
 

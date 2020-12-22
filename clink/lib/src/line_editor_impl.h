@@ -49,7 +49,7 @@ private:
     typedef fixed_array<editor_module*, 16>     modules;
     typedef fixed_array<match_generator*, 32>   generators;
     typedef std::vector<word>                   words;
-    friend matches* maybe_regenerate_matches(const char* needle);
+    friend matches* maybe_regenerate_matches(const char* needle, bool popup);
 
     enum flags : unsigned char
     {

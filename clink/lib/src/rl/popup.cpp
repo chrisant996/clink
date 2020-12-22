@@ -10,6 +10,7 @@
 #include <windows.h>
 #include <commctrl.h>
 #include <shlwapi.h>
+#include <VersionHelpers.h>
 #include <vector>
 
 #include <readline/readline.h>
@@ -45,6 +46,9 @@ static const char** s_items;
 static int s_num_completions;
 static int s_len_prefix;
 static int s_past_flag;
+static bool s_display_filter;
+static bool s_descriptions;
+static bool s_autosize;
 static wstr<32> s_find;
 static bool s_reset_find_on_next_char = false;
 
@@ -212,6 +216,22 @@ static int rotate_index = 0;
 static WCHAR rotate_strings[4][1024];
 
 //------------------------------------------------------------------------------
+inline BYTE AlphaBlend(BYTE a, BYTE b, BYTE a_alpha)
+{
+    return (WORD(a) * a_alpha / 255) + (WORD(b) * (255 - a_alpha) / 255);
+}
+
+//------------------------------------------------------------------------------
+static COLORREF AlphaBlend(HDC hdc, BYTE fg_alpha)
+{
+    COLORREF bg = GetBkColor(hdc);
+    COLORREF fg = GetTextColor(hdc);
+    return RGB(AlphaBlend(GetRValue(fg), GetRValue(bg), fg_alpha),
+               AlphaBlend(GetGValue(fg), GetGValue(bg), fg_alpha),
+               AlphaBlend(GetBValue(fg), GetBValue(bg), fg_alpha));
+}
+
+//------------------------------------------------------------------------------
 static LRESULT CALLBACK PopupWndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
     switch (uMsg)
@@ -224,6 +244,24 @@ static LRESULT CALLBACK PopupWndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM
 
             switch (pnm->code)
             {
+            case NM_CUSTOMDRAW:
+                {
+                    LPNMLVCUSTOMDRAW plvcd = (LPNMLVCUSTOMDRAW)lParam;
+                    switch (plvcd->nmcd.dwDrawStage)
+                    {
+                    case CDDS_PREPAINT:
+                        return CDRF_NOTIFYITEMDRAW;
+                    case CDDS_ITEMPREPAINT:
+                        return CDRF_NOTIFYSUBITEMDRAW;
+                    case CDDS_SUBITEM|CDDS_ITEMPREPAINT:
+                        if (plvcd->iSubItem == 0)
+                            return CDRF_DODEFAULT;
+                        plvcd->clrText = AlphaBlend(plvcd->nmcd.hdc, 0x99);
+                        return CDRF_NEWFONT;
+                    }
+                }
+                break;
+
             case LVN_ITEMACTIVATE:
                 {
                     LPNMITEMACTIVATE pia = (LPNMITEMACTIVATE)pnm;
@@ -245,14 +283,39 @@ static LRESULT CALLBACK PopupWndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM
                         rotate_index = (rotate_index + 1) % sizeof_array(rotate_strings);
 
                         out.clear();
-                        to_utf16(out, s_items[pdi->item.iItem] + s_past_flag + s_len_prefix);
-                        if (s_past_flag &&
-                            IS_MATCH_TYPE_DIR(s_items[pdi->item.iItem][0]) &&
-                            out.length() &&
-                            !path::is_separator(out.c_str()[out.length() - 1]))
+                        if (pdi->item.iSubItem == 0)
                         {
-                            WCHAR sep[2] = { (unsigned char)rl_preferred_path_separator };
-                            out.concat(sep);
+                            bool filtered = false;
+                            const char* display = s_items[pdi->item.iItem] + s_past_flag + s_len_prefix;
+                            if (s_display_filter)
+                            {
+                                const char* ptr = display + strlen(display) + 1;
+                                if (*ptr)
+                                {
+                                    display = ptr;
+                                    filtered = true;
+                                }
+                            }
+
+                            to_utf16(out, display);
+
+                            if (!filtered &&
+                                s_past_flag &&
+                                IS_MATCH_TYPE_DIR(s_items[pdi->item.iItem][0]) &&
+                                out.length() &&
+                                !path::is_separator(out.c_str()[out.length() - 1]))
+                            {
+                                WCHAR sep[2] = {(unsigned char)rl_preferred_path_separator};
+                                out.concat(sep);
+                            }
+                        }
+                        else if (pdi->item.iSubItem == 1 && s_display_filter)
+                        {
+                            const char* ptr = s_items[pdi->item.iItem];
+                            ptr += strlen(ptr) + 1;
+                            ptr += strlen(ptr) + 1;
+                            out.concat(L"    ");
+                            to_utf16(out, ptr);
                         }
 
                         pdi->item.pszText = out.data();
@@ -279,7 +342,19 @@ static LRESULT CALLBACK PopupWndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM
             RECT rcClient;
             GetClientRect(hwnd, &rcClient);
             SetWindowPos(s_hwnd_list, NULL, 0, 0, rcClient.right, rcClient.bottom, SWP_NOOWNERZORDER|SWP_NOZORDER|SWP_DRAWFRAME);
-            ListView_SetColumnWidth(s_hwnd_list, 0, rcClient.right - rcClient.left - GetSystemMetrics(SM_CXVSCROLL));
+
+            int cxFull = rcClient.right - rcClient.left - GetSystemMetrics(SM_CXVSCROLL);
+            if (s_descriptions)
+            {
+                int cx = s_autosize ? LVSCW_AUTOSIZE : cxFull / 3;
+                ListView_SetColumnWidth(s_hwnd_list, 0, cx);
+                cx = s_autosize ? LVSCW_AUTOSIZE_USEHEADER : cxFull - cx;
+                ListView_SetColumnWidth(s_hwnd_list, 1, cx);
+            }
+            else
+            {
+                ListView_SetColumnWidth(s_hwnd_list, 0, cxFull);
+            }
         }
         break;
 
@@ -300,6 +375,8 @@ static LRESULT CALLBACK PopupWndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM
         {
             RECT rcClient;
             GetClientRect(hwnd, &rcClient);
+            int cxFull = (rcClient.right - rcClient.left - GetSystemMetrics(SM_CXVSCROLL));
+
             s_hwnd_list = CreateWindowW(WC_LISTVIEWW, L"", WS_VISIBLE|WS_CHILD|LVS_SINGLESEL|LVS_NOCOLUMNHEADER|LVS_REPORT|LVS_OWNERDATA,
                                         0, 0, rcClient.right, rcClient.bottom, hwnd, (HMENU)IDC_LISTVIEW, s_hinst, NULL);
             if (!s_hwnd_list)
@@ -308,12 +385,22 @@ static LRESULT CALLBACK PopupWndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM
             reset_find();
             s_prev_listview_proc = (WNDPROC)SetWindowLongPtrW(s_hwnd_list, GWLP_WNDPROC, (LPARAM)(WNDPROC)SubclassListViewWndProc);
 
-            ListView_SetExtendedListViewStyle(s_hwnd_list, LVS_EX_FULLROWSELECT|LVS_EX_INFOTIP|LVS_EX_DOUBLEBUFFER);
+            ListView_SetExtendedListViewStyle(s_hwnd_list, LVS_EX_FULLROWSELECT|LVS_EX_INFOTIP|LVS_EX_DOUBLEBUFFER|LVS_EX_AUTOSIZECOLUMNS);
 
             LVCOLUMN col = {};
-            col.mask = LVCF_SUBITEM|LVCF_WIDTH;
-            col.cx = rcClient.right - rcClient.left - GetSystemMetrics(SM_CXVSCROLL);
-            ListView_InsertColumn(s_hwnd_list, 0, &col);
+            col.mask = LVCF_WIDTH;
+            if (s_descriptions)
+            {
+                col.cx = s_autosize ? LVSCW_AUTOSIZE : cxFull / 3;
+                ListView_InsertColumn(s_hwnd_list, 0, &col);
+                col.cx = s_autosize ? LVSCW_AUTOSIZE_USEHEADER : cxFull - col.cx;
+                ListView_InsertColumn(s_hwnd_list, 1, &col);
+            }
+            else
+            {
+                col.cx = s_autosize ? LVSCW_AUTOSIZE : cxFull;
+                ListView_InsertColumn(s_hwnd_list, 0, &col);
+            }
 
             ListView_SetItemCount(s_hwnd_list, s_num_completions);
 
@@ -411,12 +498,16 @@ popup_list_result do_popup_list(
     bool completing,
     bool auto_complete,
     int& current,
-    str_base& out)
+    str_base& out,
+    bool display_filter)
 {
     if (!items)
         return popup_list_result::error;
 
     s_past_flag = past_flag;
+    s_display_filter = display_filter;
+    s_descriptions = false;
+    s_autosize = IsWindowsVistaOrGreater();
 
     out.clear();
     s_result = popup_list_result::cancel;
@@ -438,6 +529,23 @@ popup_list_result do_popup_list(
 
         items++;
         num_items--;
+    }
+
+    if (s_display_filter)
+    {
+        for (int i = num_items; i--;)
+        {
+            const char* ptr = items[i];
+            size_t len_match = strlen(ptr);
+            ptr += len_match + 1;
+            size_t len_display = strlen(ptr);
+            ptr += len_display + 1;
+            if (*ptr)
+            {
+                s_descriptions = true;
+                break;
+            }
+        }
     }
 
     // Can't show an empty popup list.

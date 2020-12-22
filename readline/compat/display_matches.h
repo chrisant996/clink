@@ -2,8 +2,13 @@
 
 struct match_display_filter_entry
 {
-    int visible_len;    // Visible characters, not counting ANSI escape codes.
-    char match[1];      // Variable length string field, NUL terminated.
+    short visible_display;      // Visible characters, not counting ANSI escape codes.
+    short visible_description;  // Visible characters, not counting ANSI escape codes.
+    const char* match;          // Match string (pointer into buffer).
+    const char* display;        // Display string (pointer into buffer).
+    const char* description;    // Description string (pointer into buffer).
+    unsigned char type;
+    char buffer[1];             // Variable length buffer containing match, display, and description.
 };
 typedef struct match_display_filter_entry match_display_filter_entry;
 
@@ -17,4 +22,5 @@ extern rl_match_display_filter_func_t *rl_match_display_filter_func;
 
 extern const char *_rl_filtered_color;
 
+extern void free_filtered_matches(match_display_filter_entry** filtered_matches);
 extern void display_matches(char **matches);

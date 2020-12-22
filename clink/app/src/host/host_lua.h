@@ -18,8 +18,10 @@ public:
                         operator match_generator& ();
                         operator word_classifier& ();
     void                load_scripts();
-    bool                send_event(const char* event_name, std::function<bool(lua_State*)>* push_args=nullptr);
     bool                is_script_path_changed() const;
+
+    bool                send_event(const char* event_name, int nargs=0);
+    bool                send_event_cancelable(const char* event_name, int nargs=0);
 
 private:
     bool                load_scripts(const char* paths);

@@ -23,7 +23,7 @@ class match_generator
 public:
     virtual bool    generate(const line_state& line, match_builder& builder) = 0;
     virtual void    get_word_break_info(const line_state& line, word_break_info& info) const = 0;
-    virtual bool    match_display_filter(char** matches, match_display_filter_entry*** filtered_matches) { return false; }
+    virtual bool    match_display_filter(char** matches, match_display_filter_entry*** filtered_matches, bool popup) { return false; }
 
 private:
 };

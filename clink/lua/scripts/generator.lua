@@ -9,9 +9,15 @@ local _generators_unsorted = false
 --------------------------------------------------------------------------------
 --- -name:  clink.match_display_filter
 --- -var:   function
---- This variable can be set to a filter function.  See
---- <a href="#filteringthematchdisplay">Filtering the Match Display</a> for more
---- information.
+--- -deprecated: clink.ondisplaymatches
+--- A match generator can set this varible to a filter function that is called
+--- before displaying matches.  It is reset every time match generation is
+--- invoked.  The filter function receives table argument containing the matches
+--- that are going to be displayed, and it returns a table filtered as required
+--- by the match generator.
+---
+--- See <a href="#filteringthematchdisplay">Filtering the Match Display</a> for
+--- more information.
 clink.match_display_filter = nil
 
 --------------------------------------------------------------------------------
@@ -45,6 +51,7 @@ function clink._generate(line_state, match_builder)
     end
 
     clink.match_display_filter = nil
+    clink._event_callbacks["ondisplaymatches"] = nil
 
     prepare()
     _current_builder = match_builder

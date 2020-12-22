@@ -85,7 +85,7 @@ inline int clink_wcwidth(char32_t c)
 extern void host_add_history(int rl_history_index, const char* line);
 extern void host_remove_history(int rl_history_index, const char* line);
 extern void sort_match_list(char** matches, int len);
-extern matches* maybe_regenerate_matches(const char* needle);
+extern matches* maybe_regenerate_matches(const char* needle, bool popup);
 extern setting_color g_color_interact;
 
 terminal_in*        s_direct_input = nullptr;       // for read_key_hook
@@ -94,6 +94,8 @@ printer*            g_printer = nullptr;
 line_buffer*        rl_buffer = nullptr;
 pager*              g_pager = nullptr;
 editor_module::result* g_result = nullptr;
+
+static bool         s_is_popup = false;
 
 //------------------------------------------------------------------------------
 setting_color g_color_input(
@@ -379,7 +381,7 @@ static char** alternative_matches(const char* text, int start, int end)
     if (!s_matches)
         return nullptr;
 
-    if (matches* regen = maybe_regenerate_matches(text))
+    if (matches* regen = maybe_regenerate_matches(text, s_is_popup))
         s_matches = regen;
 
     str<> tmp;
@@ -502,13 +504,13 @@ struct match_comparator
 };
 
 //------------------------------------------------------------------------------
-static match_display_filter_entry** match_display_filter(char** matches)
+static match_display_filter_entry** match_display_filter(char** matches, bool popup)
 {
     if (!s_matches)
         return nullptr;
 
     match_display_filter_entry** filtered_matches = nullptr;
-    if (!s_matches->match_display_filter(matches, &filtered_matches))
+    if (!s_matches->match_display_filter(matches, &filtered_matches, popup))
         return nullptr;
 
     // Remove duplicates.
@@ -523,11 +525,14 @@ static match_display_filter_entry** match_display_filter(char** matches)
         unsigned int hare = 1;
         while (filtered_matches[hare])
         {
-            if (seen.find(filtered_matches[hare]->match) != seen.end())
+            const char* display = filtered_matches[hare]->display;
+            if (!display || !*display)
+                display = filtered_matches[hare]->match;
+            if (seen.find(display) != seen.end())
             {
 #ifdef DEBUG
                 if (debug_filter)
-                    printf("%u dupe: %s\n", hare, filtered_matches[hare]->match);
+                    printf("%u dupe: %s\n", hare, display);
 #endif
                 free(filtered_matches[hare]);
             }
@@ -535,9 +540,9 @@ static match_display_filter_entry** match_display_filter(char** matches)
             {
 #ifdef DEBUG
                 if (debug_filter)
-                    printf("%u->%u: %s\n", hare, tortoise, filtered_matches[hare]->match);
+                    printf("%u->%u: %s\n", hare, tortoise, display);
 #endif
-                seen.insert(filtered_matches[hare]->match);
+                seen.insert(display);
                 if (hare > tortoise)
                     filtered_matches[tortoise] = filtered_matches[hare];
                 tortoise++;
@@ -548,6 +553,12 @@ static match_display_filter_entry** match_display_filter(char** matches)
     }
 
     return filtered_matches;
+}
+
+//------------------------------------------------------------------------------
+static match_display_filter_entry** match_display_filter_callback(char** matches)
+{
+    return match_display_filter(matches, false/*popup*/);
 }
 
 //------------------------------------------------------------------------------
@@ -585,6 +596,9 @@ int clink_popup_complete(int count, int invoking_key)
     int orig_end;
     int delimiter;
     char quote_char;
+    bool completing = true;
+    bool free_match_strings = true;
+    rollback<bool> popup_scope(s_is_popup, true);
     char** matches = rl_get_completions(&match_count, &orig_text, &orig_start, &orig_end, &delimiter, &quote_char);
     if (!matches)
         return 0;
@@ -598,12 +612,43 @@ int clink_popup_complete(int count, int invoking_key)
         end_prefix = (char*)orig_text + 2;
     int len_prefix = end_prefix ? end_prefix - orig_text : 0;
 
+    // Match display filter.
+    bool any_descriptions = false;
+    match_display_filter_entry** filtered_matches = match_display_filter(matches, true/*popup*/);
+    if (filtered_matches && filtered_matches[0] && filtered_matches[1])
+    {
+        _rl_free_match_list(matches);
+        free_match_strings = false;
+        matches = nullptr;
+
+        completing = false;
+        past_flag = 0;
+
+        match_count = 0;
+        for (int i = 1; filtered_matches[i]; i++)
+        {
+            any_descriptions = any_descriptions || filtered_matches[i]->description;
+            match_count++;
+        }
+
+        if (match_count)
+        {
+            matches = (char**)calloc(match_count + 1, sizeof(*matches));
+            if (matches)
+            {
+                for (int i = 1; filtered_matches[i]; i++)
+                    matches[i - 1] = const_cast<char*>(filtered_matches[i]->buffer);
+                matches[match_count] = nullptr;
+            }
+        }
+    }
+
     // Popup list.
     int current = 0;
     str<32> choice;
     switch (do_popup_list("Completions", (const char **)matches, match_count,
-                          len_prefix, past_flag, true/*completing*/,
-                          true/*auto_complete*/, current, choice))
+                          len_prefix, past_flag, completing,
+                          true/*auto_complete*/, current, choice, any_descriptions))
     {
     case popup_list_result::cancel:
         break;
@@ -612,14 +657,21 @@ int clink_popup_complete(int count, int invoking_key)
         break;
     case popup_list_result::select:
     case popup_list_result::use:
-        rl_insert_match(choice.data(), orig_text, orig_start, delimiter, quote_char);
+        {
+            rollback<int> rb(rl_completion_matches_include_type, past_flag);
+            rl_insert_match(choice.data(), orig_text, orig_start, delimiter, quote_char);
+        }
         break;
     }
 
     _rl_reset_completion_state();
 
     free(orig_text);
-    _rl_free_match_list(matches);
+    if (free_match_strings)
+        _rl_free_match_list(matches);
+    else
+        free(matches);
+    free_filtered_matches(filtered_matches);
 
     return 0;
 }
@@ -842,7 +894,7 @@ rl_module::rl_module(const char* shell_name, terminal_in* input)
     rl_adjust_completion_word = adjust_completion_word;
     rl_completion_display_matches_func = display_matches;
     rl_qsort_match_list_func = sort_match_list;
-    rl_match_display_filter_func = match_display_filter;
+    rl_match_display_filter_func = match_display_filter_callback;
     rl_is_exec_func = is_exec_ext;
     rl_postprocess_lcd_func = postprocess_lcd;
     rl_read_key_hook = read_key_hook;
