@@ -6,7 +6,6 @@ ChrisAnt Plans
 
 ## Issues
 - The match pipeline should not fire on pressing **Enter** after `exit`.
-- Changing terminal width makes 0.4.8 slowly "walk up the screen".  Changing terminal width works in master, except when the cursor position itself is affected.
 - When `convert-meta` is off, then when binding `\M-h` (etc) the key name gets interpreted differently than Clink expects.  Does this affect the `inputrc` files at all, or is it only an issue inside Clink's native code?
 
 ## Cmder, Powerline
@@ -97,6 +96,7 @@ ChrisAnt Plans
 - Marking mode in-app similar to my other shell project?  It's a kludge, but it copies with HTML formatting (and even uses the color scheme).
 
 **Miscellaneous**
+- Changing terminal width makes 0.4.8 slowly "walk up the screen".  Changing terminal width works in master, except when the cursor position itself is affected.
 - Is it a problem that `update_internal()` gets called once per char in a key sequence?  Maybe it should only happen after a key that finishes a key binding?
 - Should only fold path separators in pathish matches.
 - Git stashes like `stash@{2}` stop completing once you type the `{`.
