@@ -8,6 +8,8 @@
 #include <core/settings.h>
 #include <core/os.h>
 
+#include <assert.h>
+
 extern "C" {
 #include <lua.h>
 #include <lauxlib.h>
@@ -200,32 +202,103 @@ int lua_state::pcall(lua_State* L, int nargs, int nresults)
 }
 
 //------------------------------------------------------------------------------
-// Calls any event_name callbacks registered by scripts.  The optional push_args
-// function gives an opportunity to push event arguments on the stack.
-bool lua_state::send_event(const char* event_name, std::function<bool(lua_State*)>* push_args)
+#ifdef DEBUG
+void dump_lua_stack(lua_State* state, int pos)
+{
+    static const char *const lua_type_names[] =
+    {
+        "LUA_TNONE",
+        "LUA_TNIL",
+        "LUA_TBOOLEAN",
+        "LUA_TLIGHTUSERDATA",
+        "LUA_TNUMBER",
+        "LUA_TSTRING",
+        "LUA_TTABLE",
+        "LUA_TFUNCTION",
+        "LUA_TUSERDATA",
+        "LUA_TTHREAD",
+    };
+
+    int top = lua_gettop(state);
+    if (pos >= 0)
+        pos -= top;
+
+    printf("LUA_STACK from %d to %d:\n", top + pos, top);
+    while (pos < 0)
+    {
+        int type = lua_type(state, pos);
+        const char* type_name = lua_type_names[type + 1];
+
+        printf("[%d] type %s ", pos, type_name);
+        switch (type)
+        {
+        case LUA_TNIL:
+            puts("nil");
+            break;
+        case LUA_TBOOLEAN:
+            puts(lua_toboolean(state, pos) ? "true" : "false");
+            break;
+        case LUA_TNUMBER:
+            {
+                LUA_NUMBER tmp = lua_tonumber(state, pos);
+                printf("%f", tmp);
+            }
+            break;
+        case LUA_TSTRING:
+            {
+                const char* tmp = lua_tostring(state, pos);
+                if (tmp)
+                    printf("\"%s\"\n", tmp);
+                else
+                    puts("nil");
+            }
+            break;
+        default:
+            puts("");
+            break;
+        }
+
+        pos++;
+    }
+}
+#endif
+
+//------------------------------------------------------------------------------
+// Calls any event_name callbacks registered by scripts.  Arguments can be
+// passed by passing nargs equal to the number of pushed arguments.  On success,
+// the stack is left with nret return values.  On error, the stack is popped to
+// the original level.
+bool lua_state::send_event_internal(const char* event_name, const char* event_mechanism, int nargs, int nret)
 {
     bool ret = false;
     lua_State* state = get_state();
 
     int top = lua_gettop(state);
+    int pos = top - nargs;
+    assert(pos >= 0);
 
     // Push the global _send_event function.
     lua_getglobal(state, "clink");
-    lua_pushliteral(state, "_send_event");
+    lua_pushstring(state, event_mechanism);
     lua_rawget(state, -2);
     if (lua_isnil(state, -1))
         goto done;
+    lua_insert(state, -2);
+    lua_pop(state, 1);
 
     // Push the event name.
-    int first_arg = lua_gettop(state);
     lua_pushstring(state, event_name);
 
-    // Push event args via provided callback function.
-    if (push_args && !(*push_args)(state))
-        goto done;
+    // Move event name and mechanism (e.g. "_send_event") before nargs.
+    if (pos < top)
+    {
+        int ins = pos - lua_gettop(state);
+        lua_insert(state, ins);
+        lua_insert(state, ins);
+    }
 
     // Call the event callback.
-    if (pcall(lua_gettop(state) - first_arg, 0) != 0)
+    if (pcall(1 + nargs, nret) != 0)
     {
         if (const char* error = lua_tostring(state, -1))
         {
@@ -238,7 +311,38 @@ bool lua_state::send_event(const char* event_name, std::function<bool(lua_State*
     ret = true;
 
 done:
-    top = lua_gettop(state) - top;
-    lua_pop(state, top);
+    if (ret)
+    {
+        int crem = lua_gettop(state) - pos - nret;
+        int irem = pos - lua_gettop(state);
+        while (crem-- > 0)
+            lua_remove(state, irem);
+    }
+    else
+    {
+        lua_settop(state, pos);
+    }
     return ret;
 }
+
+//------------------------------------------------------------------------------
+// Calls any event_name callbacks registered by scripts.
+bool lua_state::send_event(const char* event_name, int nargs)
+{
+    return send_event_internal(event_name, "_send_event", nargs);
+}
+
+//------------------------------------------------------------------------------
+// Calls any event_name callbacks registered by scripts.
+bool lua_state::send_event_cancelable(const char* event_name, int nargs)
+{
+    return send_event_internal(event_name, "_send_event_cancelable", nargs);
+}
+
+//------------------------------------------------------------------------------
+#ifdef DEBUG
+void lua_state::dump_stack(int pos)
+{
+    dump_lua_stack(get_state(), pos);
+}
+#endif
