@@ -70,3 +70,17 @@ private:
     void    operator = (const no_copy&&) = delete;
 };
 
+//------------------------------------------------------------------------------
+template <class T> class rollback : public no_copy
+{
+public:
+            rollback(T& var) : m_var(var), m_rollback(var) {}
+            rollback(T& var, const T value) : rollback(var) { m_var = value; }
+            ~rollback() { if (m_var != m_rollback) m_var = m_rollback; }
+
+    void    reset() { if (m_var != m_rollback) m_var = m_rollback; }
+
+private:
+    T&      m_var;
+    const T m_rollback;
+};
