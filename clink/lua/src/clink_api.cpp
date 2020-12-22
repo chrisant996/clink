@@ -29,11 +29,6 @@
 //------------------------------------------------------------------------------
 /// -name:  clink.version_encoded
 /// -var:   integer
-/// -show:  -- Make sure the version is high enough to support the "color.filtered" setting.
-/// -show:  local color_filtered = ""
-/// -show:  if clink.version_encoded ~= nil and clink.version_encoded >= 10010009 then
-/// -show:  &nbsp; color_filtered = "\x1b["..settings.get("color.filtered").."m"
-/// -show:  end
 /// The Clink version number encoded as a single integer following the format
 /// <span class="arg">Mmmmpppp</span> where <span class="arg">M</span> is the
 /// major part, <span class="arg">m</span> is the minor part, and
