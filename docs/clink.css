@@ -182,15 +182,21 @@ kbd {
     white-space: nowrap;
     font-family: "Fira Mono",monospace;
     font-style: italic;
+    font-size: 95%;
     opacity: 75%;
     padding-left: 0.125rem;
     padding-right: 0.125rem;
+}
+
+#content .arg_name {
+    font-weight: bold;
 }
 
 #content .tablescheme {
     white-space: nowrap;
     font-family: "Fira Mono",monospace;
     font-style: italic;
+    font-size: 95%;
     opacity: 75%;
     padding-left: 0.125rem;
     padding-right: 0.125rem;
@@ -209,7 +215,6 @@ kbd {
 }
 
 #content #api .header .name {
-    font-family: Rambla,Roboto,Calibri,Arial,Helvetica,sans-serif;
     font-weight: bold;
     float: left;
     width: 40%;

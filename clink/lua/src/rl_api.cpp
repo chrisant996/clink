@@ -148,7 +148,7 @@ static int expand_tilde(lua_State* state)
 //------------------------------------------------------------------------------
 /// -name:  rl.getvariable
 /// -arg:   name:string
-/// -ret:   string|nil
+/// -ret:   string | nil
 /// Returns the value of the named Readline configuration variable as a string,
 /// or nil if the variable name is not recognized.
 static int get_rl_variable(lua_State* state)
@@ -169,7 +169,7 @@ static int get_rl_variable(lua_State* state)
 //------------------------------------------------------------------------------
 /// -name:  rl.isvariabletrue
 /// -arg:   name:string
-/// -ret:   boolean|nil
+/// -ret:   boolean | nil
 /// Returns a boolean value indicating whether the named Readline configuration
 /// variable is set to true (on), or nil if the variable name is not recognized.
 static int is_rl_variable_true(lua_State* state)

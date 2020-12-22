@@ -81,7 +81,7 @@ Name                         | Default | Description
 `lua.break_on_traceback`     | False   | Breaks into Lua debugger on `traceback()`.
 `lua.debug`                  | False   | Loads a simple embedded command line debugger when enabled. Breakpoints can be added by calling `pause()`.
 `lua.path`                   |         | Value to append to `package.path`. Used to search for Lua scripts specified in `require()` statements.
-<a name="lua_reload_scripts"/>`lua.reload_scripts` | False | When false, Lua scripts are loaded once and are only reloaded if forced (see <a href="lua-scripts-location">The Location of Lua Scripts</a> for details).  When true, Lua scripts are loaded each time the edit prompt is activated.
+<a name="lua_reload_scripts"/>`lua.reload_scripts` | False | When false, Lua scripts are loaded once and are only reloaded if forced (see <a href="#lua-scripts-location">The Location of Lua Scripts</a> for details).  When true, Lua scripts are loaded each time the edit prompt is activated.
 `lua.traceback_on_error`     | False   | Prints stack trace on Lua errors.
 `match.ignore_case`          | `relaxed` | Controls case sensitivity in string comparisons. `off` = case sensitive, `on` = case insensitive, `relaxed` = case insensitive plus `-` and `_` are considered equal.
 `match.sort_dirs`            | `with`  | How to sort matching directory names. `before` = before files, `with` = with files, `after` = after files.
@@ -94,7 +94,7 @@ Name                         | Default | Description
 
 > **Compatibility Notes:**
 > - The `esc_clears_line` setting has been replaced by a `clink-reset-line` command that can be bound to <kbd>Escape</kbd> (or any other key).
-> - The `use_altgr_substitute` setting has been removed.  (If AltGr or lack of AltGr causes a problem, please visit the <a href="https://github.com/chrisant996/clink/issues">repo</a> and open an issue with details about the problem.)
+> - The `use_altgr_substitute` setting has been removed.  (If <kbd>AltGr</kbd> or lack of <kbd>AltGr</kbd> causes a problem, please visit the <a href="https://github.com/chrisant996/clink/issues">repo</a> and open an issue with details about the problem.)
 
 <a name="colorsettings"/>
 
@@ -305,7 +305,7 @@ Clink loads all Lua scripts it finds in these directories:
 2. If `clink.path` is not set, then the DLL directory and the profile directory are used (see <a href="#filelocations">File Locations</a> for info about the profile directory).
 3. All directories listed in the `%CLINK_PATH%` environment variable, separated by semicolons.
 
-Lua scripts are loaded once and are only reloaded if forced because the scripts locations change, the `clink-reload` command is invoked (<kbd>Ctrl</kbd>+<kbd>x</kbd>,<kbd>Ctrl</kbd>+<kbd>r</kbd>), or the `lua.reload_scripts` setting changes (or is True).
+Lua scripts are loaded once and are only reloaded if forced because the scripts locations change, the `clink-reload` command is invoked (<kbd>Ctrl</kbd>+<kbd>X</kbd>,<kbd>Ctrl</kbd>+<kbd>R</kbd>), or the `lua.reload_scripts` setting changes (or is True).
 
 <a name="matchgenerators"/>
 
@@ -319,7 +319,7 @@ First create a match generator object:
 local my_generator = clink.generator(priority)
 ```
 
-The `priority` argument is a number that influences when the generator gets called, with lower numbers going before higher numbers.
+The <span class="arg">priority</span> argument is a number that influences when the generator gets called, with lower numbers going before higher numbers.
 
 ### The :generate() Function
 
@@ -333,9 +333,9 @@ function my_generator:generate(line_state, match_builder)
 end
 ```
 
-<span class="mono">line_state</span> is a <a href="#line">line</a> object that has information about the current line.
+<span class="arg">line_state</span> is a <a href="#line">line</a> object that has information about the current line.
 
-<span class="mono">match_builder</span> is a <a href="#builder">builder</a> object to which matches can be added.
+<span class="arg">match_builder</span> is a <a href="#builder">builder</a> object to which matches can be added.
 
 If no further match generators need to be called then the function should return true.  Returning false or nil continues letting other match generators get called.
 
@@ -384,13 +384,14 @@ function git_branch_autocomplete:generate(line_state, match_builder)
         match_builder:addmatch(branch)
         matchCount = matchCount + 1
     end
-    return matchCount > 0 -- If we found branches, then stop other match generators.
+    -- If we found branches, then stop other match generators.
+    return matchCount > 0
 end
 ```
 
 ### The :getwordbreakinfo() Function
 
-A generator can influence word breaking for the end word by defining a `:getwordbreakinfo()` function.  The function takes a `line_state` <a href="#line">line</a> object that has information about the current line.  If it returns nil or 0, the end word is truncated to 0 length.  This is the normal behavior, which allows Clink to collect and cache all matches and then filter them based on typing.  Or it can return two numbers:  word break length and an optional end word length.  The end word is split at the word break length:  one word contains the first word break length characters from the end word (if 0 length then it's discarded), and the next word contains the rest of the end word truncated to the optional word length (0 if omitted).
+A generator can influence word breaking for the end word by defining a `:getwordbreakinfo()` function.  The function takes a <span class="arg">line_state</span> <a href="#line">line</a> object that has information about the current line.  If it returns nil or 0, the end word is truncated to 0 length.  This is the normal behavior, which allows Clink to collect and cache all matches and then filter them based on typing.  Or it can return two numbers:  word break length and an optional end word length.  The end word is split at the word break length:  one word contains the first word break length characters from the end word (if 0 length then it's discarded), and the next word contains the rest of the end word truncated to the optional word length (0 if omitted).
 
 For example, when the environment variable match generator sees the end word is `abc%USER` it returns `3,1` so that the last two words become "abc" and "%" so that its generator knows it can do environment variable matching.  But when it sees `abc%FOO%def` it returns `8,0` so that the last two words become "abc%FOO%" and "" so that its generator won't do environment variable matching, and also so other generators can produce matches for what follows, since "%FOO%" is an already-completed environment variable and therefore should behave like a word break.  In other words, it breaks the end word differently depending on whether the number of percent signs is odd or even, to account for environent variable syntax rules.
 
@@ -454,8 +455,8 @@ Here is an example of a simple parser for the command `foobar`;
 clink.argmatcher("foobar")
 :addflags("-foo", "-bar")
 :addarg(
-    { "hello", "hi" },
-    { "world", "wombles" }
+    { "hello", "hi" },      -- Completions for arg #1
+    { "world", "wombles" }  -- Completions for arg #2
 )
 ```
 
@@ -463,11 +464,10 @@ This parser describes a command that has two positional arguments each with two 
 
 On the command line completion would look something like this:
 
-```
-C:\>foobar hello -foo wo
-world   wombles
-C:\>foobar hello -foo wo_
-```
+<pre style="border-radius:initial;border:initial"><code class="plaintext" style="background-color:black;color:#cccccc">C:&gt;foobar hello -foo wo
+wombles  wonder   world
+C:&gt;foobar hello -foo wo<span style="color:#ffffff">_</span>
+</code></pre>
 
 When displaying possible completions, flag matches are only shown if the flag character has been input (so `command ` and <kbd>Alt</kbd>+<kbd>=</kbd> would list only non-flag matches, or `command -` and <kbd>Alt</kbd>+<kbd>=</kbd> would list only flag matches).
 
@@ -481,8 +481,8 @@ There are often situations where the parsing of a command's arguments is depende
 a_parser = clink.argmatcher():addarg({ "foo", "bar" })
 b_parser = clink.argmatcher():addarg({ "abc", "123" })
 c_parser = clink.argmatcher()
-c_parser:addarg({ "foobar" .. b_parser })
-c_parser:addarg({ c_parser })
+c_parser:addarg({ "foobar" .. a_parser })   -- Arg #1 is "foobar", which has args "foo" or "bar".
+c_parser:addarg({ b_parser })               -- Arg #2 is "abc" or "123".
 ```
 
 As the example above shows, it is also possible to use a parser without concatenating it to a word. When Clink follows a link to a parser it is permanent and it will not return to the previous parser.
@@ -517,17 +517,17 @@ It is also possible to omit the `addarg` and `addflags` function calls and use a
 ```lua
 -- Shorthand form; requires tables.
 clink.argmatcher()
-&nbsp; { "one", "won" }
-&nbsp; { "two", "too" }
-&nbsp; { "-a", "-b", "/?", "/h" }
+&nbsp; { "one", "won" }             -- Arg #1
+&nbsp; { "two", "too" }             -- Arg #2
+&nbsp; { "-a", "-b", "/?", "/h" }   -- Flags
 
 -- Normal form:
 clink.argmatcher()
 :addarg(
-    { "one", "won" }
-    { "two", "too" }
+    { "one", "won" }                -- Arg #1
+    { "two", "too" }                -- Arg #2
 )
-:addflags("-a", "-b", "/?", "/h")
+:addflags("-a", "-b", "/?", "/h")   -- Flags
 ```
 
 With the shorthand form flags are implied rather than declared.  When a shorthand table's first value is a string starting with `-` or `/` then the table is interpreted as flags.  Note that it's still possible with shorthand form to mix flag prefixes, and even add additional flag prefixes, such as <code>{ <span class="hljs-string">'-a'</span>, <span class="hljs-string">'/b'</span>, <span class="hljs-string">'=c'</span> }</code>.

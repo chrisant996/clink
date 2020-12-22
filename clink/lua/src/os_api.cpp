@@ -309,7 +309,7 @@ int glob_files(lua_State* state)
 //------------------------------------------------------------------------------
 /// -name:  os.getenv
 /// -arg:   name:string
-/// -ret:   string|nil
+/// -ret:   string | nil
 /// Returns the value of the named environment variable, or nil if it doesn't
 /// exist.
 int get_env(lua_State* state)

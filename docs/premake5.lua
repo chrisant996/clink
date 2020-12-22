@@ -133,6 +133,18 @@ local function parse_doc_tags(out, glob)
 end
 
 --------------------------------------------------------------------------------
+local function bold_name(args)
+    local result = {}
+    if args then
+        for i,v in pairs(args) do
+            v = v:gsub('^([[]*)([^:]*):', '%1<span class="arg_name">%2</span>:')
+            table.insert(result, v)
+        end
+    end
+    return result
+end
+
+--------------------------------------------------------------------------------
 local function do_docs()
     out_path = ".build/docs/clink.html"
 
@@ -175,7 +187,7 @@ local function do_docs()
             api_html:write('<div class="function">')
 
             local name = doc_tag.name[1]
-            local arg = table.concat(doc_tag.arg or {}, ", ")
+            local arg = table.concat(bold_name(doc_tag.arg), ", ")
             local ret = (doc_tag.ret or { "nil" })[1]
             local var = (doc_tag.var or { nil })[1]
             local desc = table.concat(doc_tag.desc or {}, " ")
@@ -188,6 +200,9 @@ local function do_docs()
                 if var then
                     api_html:write(' <div class="signature">'..var..' variable</div>')
                 else
+                    if #arg > 0 then
+                        arg = ' '..arg..' '
+                    end
                     api_html:write(' <div class="signature">('..arg..') : '..ret..'</div>')
                 end
             api_html:write('</div>')
