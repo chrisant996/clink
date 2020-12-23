@@ -489,19 +489,17 @@ BOOL WINAPI host_cmd::set_env_var(const wchar_t* name, const wchar_t* value)
 bool host_cmd::initialise_system()
 {
     // Must hook the one in kernelbase.dll if it's present because CMD links
-    // with kernelbase.dll on Windows 10.  And must hook the one in kernel32.dll
-    // because it doesn't exist in kernelbase.dll on Windows 7.
+    // with kernelbase.dll on Windows 10.  Otherwise hook the one in
+    // kernel32.dll because it doesn't exist in kernelbase.dll on Windows 7.
     {
         HMODULE hlib;
         hlib = GetModuleHandleA("kernelbase.dll");
         bool need_kernelbase = hlib && GetProcAddress(hlib, "ReadConsoleW");
-        hlib = GetModuleHandleA("kernel32.dll");
-        bool need_kernel32 = hlib && GetProcAddress(hlib, "ReadConsoleW");
 
         hook_setter hooks;
         if (need_kernelbase)
             hooks.add_jmp("kernelbase.dll", "ReadConsoleW", &host_cmd::read_console);
-        if (need_kernel32)
+        else
             hooks.add_jmp("kernel32.dll", "ReadConsoleW", &host_cmd::read_console);
         if (!hooks.commit())
             return false;
