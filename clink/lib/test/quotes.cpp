@@ -63,10 +63,7 @@ TEST_CASE("Quoting")
         SECTION("Prefix")
         {
             tester.set_input("pre_s" DO_COMPLETE);
-            // This test is from when Clink used to behave differently than
-            // Readline for this case.
-            //tester.set_expected_output("\"pre_space");
-            tester.set_expected_output("pre_space");
+            tester.set_expected_output("\"pre_space");
             tester.run();
         }
 
@@ -74,10 +71,7 @@ TEST_CASE("Quoting")
         {
             str_compare_scope _(str_compare_scope::relaxed);
             tester.set_input("pre-s" DO_COMPLETE);
-            // This test is from when Clink used to behave differently than
-            // Readline for this case.
-            //tester.set_expected_output("\"pre_space");
-            tester.set_expected_output("pre_space");
+            tester.set_expected_output("\"pre_space");
             tester.run();
         }
 
@@ -98,10 +92,7 @@ TEST_CASE("Quoting")
         SECTION("Dir (prefix)")
         {
             tester.set_input("dir\\spac" DO_COMPLETE);
-            // This test is from when Clink used to behave differently than
-            // Readline for this case.
-            //tester.set_expected_output("\"dir\\space");
-            tester.set_expected_output("dir\\space");
+            tester.set_expected_output("\"dir\\space");
             tester.run();
         }
     }

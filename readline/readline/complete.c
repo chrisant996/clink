@@ -460,6 +460,8 @@ const char *_rl_alias_color = 0;
 rl_read_key_hook_func_t *rl_read_key_hook = 0;
 int rl_completion_matches_include_type = 0;
 static int no_compute_lcd = 0;
+static int quote_lcd = 0;
+static int force_quoting = 0;
 /* end_clink_change */
 
 /* Set to the last key used to invoke one of the completion functions */
@@ -581,6 +583,10 @@ set_completion_defaults (int what_to_do)
 
   /* Reset private state. */
   _rl_complete_display_matches_interrupt = 0;
+/* begin_clink_change */
+  quote_lcd = 0;
+  force_quoting = 0;
+/* end_clink_change */
 }
 
 /* The user must press "y" or "n". Non-zero return means "y" pressed. */
@@ -1745,6 +1751,9 @@ compute_lcd_of_matches (char **match_list, int matches, const char *text)
 
 /* begin_clink_change */
   int past_flag = rl_completion_matches_include_type ? 1 : 0;
+  int test_for_quoting = rl_completer_quote_characters && rl_filename_quote_characters;
+  int any_need_quoting = 0;
+  quote_lcd = 0;
 /* end_clink_change */
 
   /* If only one match, just use that.  Otherwise, compare each
@@ -1760,6 +1769,15 @@ compute_lcd_of_matches (char **match_list, int matches, const char *text)
 /* end_clink_change */
       return 1;
     }
+
+/* begin_clink_change */
+  if (test_for_quoting && matches > 1)
+    {
+      any_need_quoting = _rl_strpbrk (match_list[1]+past_flag, rl_filename_quote_characters) != 0;
+      if (any_need_quoting)
+	test_for_quoting = 0;
+    }
+/* end_clink_change */
 
   for (i = 1, low = 100000; i < matches; i++)
     {
@@ -1836,6 +1854,15 @@ compute_lcd_of_matches (char **match_list, int matches, const char *text)
 	      break;
 	}
 
+/* begin_clink_change */
+      if (test_for_quoting)
+	{
+	  any_need_quoting = _rl_strpbrk (match_list[i+1]+past_flag, rl_filename_quote_characters) != 0;
+	  if (any_need_quoting)
+	    test_for_quoting = 0;
+	}
+/* end_clink_change */
+
       if (low > si)
 	low = si;
     }
@@ -1911,6 +1938,19 @@ compute_lcd_of_matches (char **match_list, int matches, const char *text)
 	}
       else
         strncpy (match_list[0], match_list[1], low);
+
+/* begin_clink_change */
+      if (any_need_quoting)
+	for (i = 1; i <= matches; i++)
+	  {
+	    char c1 = match_list[i][low]; /* low already includes past_flag */
+	    if (c1 && strchr (rl_filename_quote_characters, c1))
+	      {
+		quote_lcd = 1;
+		break;
+	      }
+	  }
+/* end_clink_change */
 
       match_list[0][low] = '\0';
     }
@@ -2357,6 +2397,7 @@ make_quoted_replacement (char *match, int mtype, char *qc)
 			//? (_rl_strpbrk (match, rl_filename_quote_characters) != 0)
 			? (_rl_strpbrk (quotable_match, rl_filename_quote_characters) != 0)
 			: 0;
+      should_quote |= force_quoting;
       /* end_clink_change */
 
       do_replace = should_quote ? mtype : NO_MATCH;
@@ -2618,6 +2659,7 @@ rl_complete_internal (int what_to_do)
 /* begin_clink_change */
   int past_flag = rl_completion_matches_include_type ? 1 : 0;
   int end_undo_group = 0;
+  force_quoting = 0;
 /* end_clink_change */
 
   RL_SETSTATE(RL_STATE_COMPLETING);
@@ -2691,6 +2733,9 @@ rl_complete_internal (int what_to_do)
 /* begin_clink_change */
 	      end_undo_group = 1;
 	      rl_begin_undo_group();
+	      force_quoting = quote_lcd;
+	      if (force_quoting && rl_completer_quote_characters)
+		quote_char = *rl_completer_quote_characters;
 /* end_clink_change */
 	      insert_match (matches[0], start, matches[1] ? MULT_MATCH : SINGLE_MATCH, &quote_char);
 	    }
