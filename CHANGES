@@ -3,7 +3,7 @@
 
 ## Releases from [chrisant996/clink](https://github.com/chrisant996/clink) fork
 
-### Unreleased
+### v1.1.13
 
 - Fixed `clink.arg.register_parser` backward compatibility.
 
