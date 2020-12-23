@@ -3,6 +3,10 @@
 
 ## Releases from [chrisant996/clink](https://github.com/chrisant996/clink) fork
 
+### Unreleased
+
+- Fixed `clink.arg.register_parser` backward compatibility.
+
 ### v1.1.12
 
 - Added `clink.ondisplaymatches()` as a replacement for the deprecated `clink.match_display_filter`.  The new API is able to support popup list windows as well.
