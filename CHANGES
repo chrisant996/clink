@@ -6,6 +6,8 @@
 ### v1.1.12
 
 - Added `clink.ondisplaymatches()` as a replacement for the deprecated `clink.match_display_filter`.  The new API is able to support popup list windows as well.
+- Speculative possible fix for [#35](https://github.com/chrisant996/clink/issues/35) Crash when clink on clink.bat.
+- Fixed [#33](https://github.com/chrisant996/clink/issues/33) Tab autocomplete, auto-quoting paths doesn't seem to work as in Clink 0.4.9.
 
 ### v1.1.11
 
