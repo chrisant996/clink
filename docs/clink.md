@@ -60,6 +60,7 @@ Name                         | Default | Description
 `color.interact`             | `bold`  | Used when Clink displays text or prompts such as a pager's `--More?--` prompt.
 `color.message`              | `default` | The color for the message area (e.g. the search prompt message, digit argument prompt message, etc).
 `color.modmark`              |         | Used when Clink displays the `*` mark on modified history lines when Readline's `mark-modified-lines` variable and Clink's `color.input` setting are both set. Falls back to `color.input` if not set.
+`color.prompt`               |         | When set, this is used as the default color for the prompt.  But it's overridden by any colors set by <a href="#customisingtheprompt">Customising The Prompt</a>.
 <a name="color_readonly"/>`color.readonly` | | Used when Clink displays file completions with the "readonly" attribute.
 `doskey.enhanced`            | True    | Enhanced Doskey adds the expansion of macros that follow `\|` and `&` command separators and respects quotes around words when parsing `$1`..`$9` tags. Note that these features do not apply to Doskey use in Batch files.
 `exec.cwd`                   | True    | When matching executables as the first word (`exec.enable`), include executables in the current directory. (This is implicit if the word being completed is a relative path).
@@ -93,8 +94,9 @@ Name                         | Default | Description
 <p/>
 
 > **Compatibility Notes:**
-> - The `esc_clears_line` setting has been replaced by a `clink-reset-line` command that can be bound to <kbd>Escape</kbd> (or any other key).
-> - The `use_altgr_substitute` setting has been removed.  (If <kbd>AltGr</kbd> or lack of <kbd>AltGr</kbd> causes a problem, please visit the <a href="https://github.com/chrisant996/clink/issues">repo</a> and open an issue with details about the problem.)
+> - The `esc_clears_line` setting has been replaced by a `clink-reset-line` command that is by default bound to the <kbd>Escape</kbd> key.  See [Key Bindings](#keybindings) and [Readline](https://tiswww.cwru.edu/php/chet/readline/readline.html) for more information.
+> - The `use_altgr_substitute` setting has been removed.  If <kbd>AltGr</kbd> or lack of <kbd>AltGr</kbd> causes a problem, please visit the <a href="https://github.com/chrisant996/clink/issues">repo</a> and open an issue with details describing the problem.
+> - The `match_colour` setting has been removed, and Clink now supports Readline 8.0 completion coloring.  See [Completion Colors](#completioncolors) for more information.
 
 <a name="colorsettings"/>
 
@@ -249,6 +251,8 @@ Name | Description
 `clink-up-directory`|Changes to the parent directory.
 `old-menu-complete-backward`|Like `old-menu-complete`, but in reverse.
 `remove-history`|While searching history, removes the current line from the history.
+
+<a name="completioncolors"/>
 
 ## Completion Colors
 
@@ -655,7 +659,13 @@ The resulting prompt will look like this:
 
 # Miscellaneous
 
+<a name="keybindings"/>
+
 ## Key bindings
+
+Key bindings are defined in the inputrc files.  See the [Readline](https://tiswww.cwru.edu/php/chet/readline/readline.html) manual for more information about the inputrc files (Readline Init File).
+
+Here are key binding strings for various special keys.
 
 ### Binding special keys
 

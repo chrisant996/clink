@@ -117,6 +117,13 @@ setting_color g_color_message(
     "The color for the Readline message area (e.g. search prompt, etc).",
     "default");
 
+setting_color g_color_prompt(
+    "color.prompt",
+    "Prompt color",
+    "When set, this is used as the default color for the prompt.  But it's\n"
+    "overridden by any colors set by prompt filter scripts.",
+    "");
+
 setting_color g_color_hidden(
     "color.hidden",
     "Hidden file completions",
@@ -1061,6 +1068,17 @@ void rl_module::on_begin_line(const context& context)
     // by enclosing them in a pair of 0x01/0x02 chars.
     str<128> rl_prompt;
 
+    bool force_prompt_color = false;
+    {
+        str<16> tmp;
+        const char* prompt_color = build_color_sequence(g_color_prompt, tmp, true);
+        if (prompt_color)
+        {
+            force_prompt_color = true;
+            rl_prompt.format("\x01%s\x02", prompt_color);
+        }
+    }
+
     ecma48_state state;
     ecma48_iter iter(context.prompt, state);
     while (const ecma48_code& code = iter.next())
@@ -1070,6 +1088,9 @@ void rl_module::on_begin_line(const context& context)
                 rl_prompt.concat(code.get_pointer(), code.get_length());
         if (c1) rl_prompt.concat("\x02", 1);
     }
+
+    if (force_prompt_color)
+        rl_prompt.concat("\x01\x1b[m\x02");
 
     _rl_display_input_color = build_color_sequence(g_color_input, m_input_color, true);
     _rl_display_modmark_color = _rl_display_input_color ? build_color_sequence(g_color_modmark, m_modmark_color, true) : nullptr;

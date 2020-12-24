@@ -11,7 +11,8 @@
 #include <core/settings.h>
 #include <core/str.h>
 #include <core/str_tokeniser.h>
-#include <core\log.h>
+#include <core/path.h>
+#include <core/log.h>
 #include <assert.h>
 
 #include <new>
@@ -687,6 +688,59 @@ static void rewrite_master_bank(write_lock& lock, int max_line_length)
     free(buffer);
 }
 
+//------------------------------------------------------------------------------
+static void migrate_history(const char* path)
+{
+    void* bank_handle = open_file(path);
+    if (!bank_handle)
+        return;
+
+    // First lock the history bank.
+    write_lock lock(bank_handle);
+
+    // Then test if it's empty -- only migrate if it's empty.
+    DWORD high = 0;
+    DWORD low = GetFileSize(bank_handle, &high);
+    if (!low && !high)
+    {
+        // Build the old history file name.
+        str<> old_file;
+        path::get_directory(path, old_file);
+        path::append(old_file, ".history");
+
+        // Open the old history file and try to migrate.
+        FILE* old = fopen(old_file.c_str(), "r");
+        if (old)
+        {
+            // Clear and write new tag.
+            concurrency_tag tag;
+            tag.generate_new_tag();
+            lock.clear();
+            lock.add(tag.get());
+
+            // Copy old history.
+            int buffer_size = 8192;
+            char* buffer = static_cast<char*>(malloc(buffer_size));
+            while (fgets(buffer, buffer_size, old))
+            {
+                size_t len = strlen(buffer);
+                while (len--)
+                {
+                    char c = buffer[len];
+                    if (c != '\n' && c != '\r')
+                        break;
+                    buffer[len] = '\0';
+                }
+                lock.add(buffer);
+            }
+
+            fclose(old);
+        }
+    }
+
+    CloseHandle(bank_handle);
+}
+
 
 
 //------------------------------------------------------------------------------
@@ -767,6 +821,12 @@ void history_db::initialise()
 
     str<280> path;
     get_file_path(path, false);
+
+    // Migrate existing history.
+    if (os::get_path_type(path.c_str()) == os::path_type_invalid)
+        migrate_history(path.c_str());
+
+    // Open the master bank file.
     m_bank_handles[bank_master] = open_file(path.c_str());
 
     // Retrieve concurrency tag from start of master bank.
