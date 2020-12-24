@@ -4,6 +4,8 @@ ChrisAnt Plans
 
 # RELEASE
 
+- Migrate settings and history.
+
 ## Issues
 - The match pipeline should not fire on pressing **Enter** after `exit`.
 - When `convert-meta` is off, then when binding `\M-h` (etc) the key name gets interpreted differently than Clink expects.  Does this affect the `inputrc` files at all, or is it only an issue inside Clink's native code?
