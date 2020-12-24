@@ -496,8 +496,9 @@ bool host::edit_line(const char* prompt, str_base& out)
         {
             // If the line is a directory, rewrite the line to invoke the CD
             // command to change to the directory.
-            if (intercept_directory(out))
-                resolved = true; // No need to test for a doskey alias.
+            if (!m_doskey.resolve(out.c_str(), m_doskey_alias))
+                if (intercept_directory(out))
+                    resolved = true; // No need to test for a doskey alias.
         }
         break;
     }
