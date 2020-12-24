@@ -966,9 +966,11 @@ rl_module::rl_module(const char* shell_name, terminal_in* input)
 
     static const char* general_key_binds[][2] = {
         { "\\M-a",          "clink-insert-dot-dot" },    // alt-a
+        { "\\M-d",          "remove-history" },          // alt-d
         { "\\M-c",          "clink-copy-cwd" },          // alt-c
         { "\\M-h",          "clink-show-help" },         // alt-h
         { "\\M-H",          "clink-show-help-raw" },     // alt-H
+        { "\\M-k",          "add-history" },             // alt-k
         { "\\M-\\C-c",      "clink-copy-line" },         // alt-ctrl-c
         { "\\M-\\C-e",      "clink-expand-env-var" },    // alt-ctrl-e
         { "\\M-\\C-f",      "clink-expand-doskey-alias" }, // alt-ctrl-f
