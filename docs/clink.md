@@ -33,9 +33,19 @@ The second alternative is to manually run Clink using the command `clink inject`
 
 The last option is to use the Clink shortcut that the installer adds to Windows' start menu. This is in essence a shortcut to the command `cmd.exe /k clink inject`.
 
+# Upgrading from Clink v0.4.9
+
+The new Clink tries to be as backward compatible with Clink v0.4.9 as possible.  However, in some cases upgrading may require a little bit of configuration work.
+
+- Some key binding sequences have changed; see [Key Bindings](#keybindings) for more information.
+- Match coloring is now done by Readline and is configured differently; see [Completion Colors](#completioncolors) for more information.
+- Settings and history should migrate automatically if the new `clink_settings` and `clink_history` files don't exist (deleting them will cause migration to happen again).  To find the directory that contains these files, run `clink info` and look for the "state" line.
+- Script compatibility should be very good, but some scripts may still encounter problems.  If you do encounter a compatibility problem you can look for an updated version of the script, update the script yourself, or visit the <a href="https://github.com/chrisant996/clink/issues">repo</a> and open an issue describing details about the compatibility problem.
+- Some settings have changed slightly, and there are many new settings.  See [Configuring Clink](#configclink) for more information.
+
 # How Clink Works
 
-When running Clink via the methods above, Clink checks the parent process is supported and injects a DLL into it. The DLL then hooks the WriteConsole() and ReadConsole() Windows functions. The former is so that Clink can capture the current prompt, and the latter hook allows Clink to provide it's own Readline-powered command line editing.
+When running Clink via the methods above, Clink checks the parent process is supported and injects a DLL into it. The DLL then hooks the WriteConsole() and ReadConsole() Windows functions. The former is so that Clink can capture the current prompt, and the latter hook allows Clink to provide its own Readline-powered command line editing.
 
 <a name="configclink"/>
 
