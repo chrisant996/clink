@@ -3,7 +3,7 @@
 
 <!-- ----------------------------------------------------- -->
 <head>
-<title>Clink v1.1.13</title>
+<title>Clink v1.1.14</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Rambla:wght@400;700&family=Roboto&family=Fira+Mono&display=swap');
 html {
@@ -401,7 +401,7 @@ var hljs=function(){"use strict";function e(n){Object.freeze(n);var t="function"
         </td>
         <td style="text-align:right">
             <div id="header">
-                <div id="title">Clink v1.1.13</div>
+                <div id="title">Clink v1.1.14</div>
                 <div id="url">
                     <a href="http://github.com/chrisant996/clink">
                         http://github.com/chrisant996/clink
@@ -450,8 +450,16 @@ var hljs=function(){"use strict";function e(n){Object.freeze(n);var t="function"
 <p>There are three ways to use Clink the first of which is to add Clink to cmd.exe&#39;s autorun registry entry. This can be selected when installing Clink using the installer and Clink also provides the ability to manage this autorun entry from the command line. Running <code>clink autorun --help</code> has more information.</p>
 <p>The second alternative is to manually run Clink using the command <code>clink inject</code> from within a command prompt session to run Clink in that session.</p>
 <p>The last option is to use the Clink shortcut that the installer adds to Windows&#39; start menu. This is in essence a shortcut to the command <code>cmd.exe /k clink inject</code>.</p>
+<h1 id="upgrading-from-clink-v049">Upgrading from Clink v0.4.9</h1>
+<p>The new Clink tries to be as backward compatible with Clink v0.4.9 as possible.  However, in some cases upgrading may require a little bit of configuration work.</p>
+<ul>
+<li>Some key binding sequences have changed; see <a href="#keybindings">Key Bindings</a> for more information.</li>
+<li>Match coloring is now done by Readline and is configured differently; see <a href="#completioncolors">Completion Colors</a> for more information.</li>
+<li>Settings and history should migrate automatically if the new <code>clink_settings</code> and <code>clink_history</code> files don&#39;t exist (deleting them will cause migration to happen again).</li>
+<li>Script compatibility should be very good, but some scripts may still encounter problems.  If you do encounter a compatibility problem you can look for an updated version of the script, update the script yourself, or visit the <a href="https://github.com/chrisant996/clink/issues">repo</a> and open an issue describing details about the compatibility problem.</li>
+</ul>
 <h1 id="how-clink-works">How Clink Works</h1>
-<p>When running Clink via the methods above, Clink checks the parent process is supported and injects a DLL into it. The DLL then hooks the WriteConsole() and ReadConsole() Windows functions. The former is so that Clink can capture the current prompt, and the latter hook allows Clink to provide it&#39;s own Readline-powered command line editing.</p>
+<p>When running Clink via the methods above, Clink checks the parent process is supported and injects a DLL into it. The DLL then hooks the WriteConsole() and ReadConsole() Windows functions. The former is so that Clink can capture the current prompt, and the latter hook allows Clink to provide its own Readline-powered command line editing.</p>
 <a name="configclink"/>
 
 <h1 id="configuring-clink">Configuring Clink</h1>
@@ -529,6 +537,11 @@ var hljs=function(){"use strict";function e(n){Object.freeze(n);var t="function"
 <td align="center"><code>color.modmark</code></td>
 <td align="center"></td>
 <td>Used when Clink displays the <code>*</code> mark on modified history lines when Readline&#39;s <code>mark-modified-lines</code> variable and Clink&#39;s <code>color.input</code> setting are both set. Falls back to <code>color.input</code> if not set.</td>
+</tr>
+<tr>
+<td align="center"><code>color.prompt</code></td>
+<td align="center"></td>
+<td>When set, this is used as the default color for the prompt.  But it&#39;s overridden by any colors set by <a href="#customisingtheprompt">Customising The Prompt</a>.</td>
 </tr>
 <tr>
 <td align="center"><a name="color_readonly"/><code>color.readonly</code></td>
@@ -681,8 +694,9 @@ var hljs=function(){"use strict";function e(n){Object.freeze(n);var t="function"
 <blockquote>
 <p><strong>Compatibility Notes:</strong></p>
 <ul>
-<li>The <code>esc_clears_line</code> setting has been replaced by a <code>clink-reset-line</code> command that can be bound to <kbd>Escape</kbd> (or any other key).</li>
-<li>The <code>use_altgr_substitute</code> setting has been removed.  (If <kbd>AltGr</kbd> or lack of <kbd>AltGr</kbd> causes a problem, please visit the <a href="https://github.com/chrisant996/clink/issues">repo</a> and open an issue with details about the problem.)</li>
+<li>The <code>esc_clears_line</code> setting has been replaced by a <code>clink-reset-line</code> command that is by default bound to the <kbd>Escape</kbd> key.  See <a href="#keybindings">Key Bindings</a> and <a href="https://tiswww.cwru.edu/php/chet/readline/readline.html">Readline</a> for more information.</li>
+<li>The <code>use_altgr_substitute</code> setting has been removed.  If <kbd>AltGr</kbd> or lack of <kbd>AltGr</kbd> causes a problem, please visit the <a href="https://github.com/chrisant996/clink/issues">repo</a> and open an issue with details describing the problem.</li>
+<li>The <code>match_colour</code> setting has been removed, and Clink now supports Readline 8.0 completion coloring.  See <a href="#completioncolors">Completion Colors</a> for more information.</li>
 </ul>
 </blockquote>
 <a name="colorsettings"/>
@@ -930,6 +944,8 @@ Echos key sequences to use in the inputrc files for binding keys to Clink comman
 <td>While searching history, removes the current line from the history.</td>
 </tr>
 </tbody></table>
+<a name="completioncolors"/>
+
 <h2 id="completion-colors">Completion Colors</h2>
 <p>When <code>colored-completion-prefix</code> is configured to <code>on</code>, then the &quot;so&quot; color from <code>%LS_COLORS%</code> is used to color the common prefix when displaying possible completions.  The default for &quot;so&quot; is magenta, but for example <code>set LS_COLORS=so=90</code> sets the color to bright black (which shows up as a dark gray).</p>
 <p>When <code>colored-stats</code> is configured to <code>on</code>, then the color definitions from <code>%LS_COLORS%</code> (using ANSI escape codes) are used to color file completions according to their file type or extension.  Each definition is a either a two character type id or a file extension, followed by an equals sign and then the <a href="https://en.wikipedia.org/wiki/ANSI_escape_code#SGR_parameters">SGR parameters</a> for an ANSI escape code.  Multiple definitions are separated by colons.  Also, since <code>%LS_COLORS%</code> doesn&#39;t cover readonly files, hidden files, doskey aliases, or shell commands the <code>color.readonly</code>, <code>color.hidden</code>, <code>color.doskey</code>, and <code>color.cmd</code> <a href="#configclink">Clink settings</a> exist to cover those.</p>
@@ -1296,7 +1312,11 @@ end</code></pre>
 </code></pre>
 
 <h1 id="miscellaneous">Miscellaneous</h1>
+<a name="keybindings"/>
+
 <h2 id="key-bindings">Key bindings</h2>
+<p>Key bindings are defined in the inputrc files.  See the <a href="https://tiswww.cwru.edu/php/chet/readline/readline.html">Readline</a> manual for more information about the inputrc files (Readline Init File).</p>
+<p>Here are key binding strings for various special keys.</p>
 <h3 id="binding-special-keys">Binding special keys</h3>
 <p>Due to differences between Windows and Linux, escape codes for keys like PageUp/Down and the arrow keys are different in Clink.</p>
 <table>
@@ -1652,7 +1672,7 @@ end</code></pre>
 <div class="function"><div class="header"> <div class="name"><a name="_argmatcher:setflagprefix">_argmatcher:setflagprefix</a></div> <div class="signature">( [<span class="arg_name">prefixes...</span>:string] ) : self</div></div><div class="body deprecated"><p class="desc"><strong>Deprecated; don't use this.</strong>  See <a href="#_argmatcher:addflags">_argmatcher:addflags</a> for more information.</p><p class="desc">This overrides the default flag prefix (<code>-</code>).  The flag prefixes are used to switch between matching arguments versus matching flags.  When listing possible completions for an empty word (e.g. <code>command _</code> where the cursor is at the <code>_</code>), only arguments are listed.  And only flags are listed when the word starts with one of the flag prefixes.  Each flag prefix must be a single character, but there can be multiple prefixes.</p><p class="desc"> This is no longer needed because <code>:addflags()</code> does it automatically.</p><pre class="language-lua"><code>local my_parser = clink.argmatcher()
 :setflagprefix("-", "/", "+")
 :addflags("--help", "/?", "+mode")</code></pre></div></div><hr/>
-</div><div class="group"><h5 class="group_name"><a name="builder">builder</a></h5><div class="function"><div class="header"> <div class="name"><a name="builder:addmatch">builder:addmatch</a></div> <div class="signature">( <span class="arg_name">match</span>:string|table, [<span class="arg_name">type</span>:string] ) : boolean</div></div><div class="body"><p class="desc">Adds a match.  If <span class="arg">match</span> is a string, it's added as a match and <span class="arg">type</span> is the optional match type.</p><p class="desc"> Or <span class="arg">match</span> can be a table with the following scheme: <span class="tablescheme">{ match:string, [type:string] }</span>.  If a table element is missing the type field, then the <span class="arg">type</span> argument is used for that element.</p><p class="desc"> If the <span class="arg">type</span> argument is omitted, "none" is assumed.</p><p class="desc"> The match type can affect how the match is inserted, displayed, and colored:</p><p class="desc"> <table> <tr><th>Type</th><th>Description</th></tr> <tr><td>"word"</td><td>Shows the whole word even if it contains slashes.</td></tr> <tr><td>"arg"</td><td>Avoids appending a space if the match ends with a colon or equal sign.</td></tr> <tr><td>"command"</td><td>Displays the match using <a href="#color_cmd">color.cmd</a>.</td></tr> <tr><td>"alias"</td><td>Displays the match using <a href="#color_doskey">color.doskey</a>.</td></tr> <tr><td>"file"</td><td>Shows only the last path component, with appropriate file coloring.</td></tr> <tr><td>"dir"</td><td>Shows only the last path component and adds a trailing path separator, with appropriate directory coloring.</td></tr> <tr><td>"link"</td><td>Shows only the last path component, with appropriate symlink coloring. <em>Not supported yet.</em></td></tr> <tr><td>"none"</td><td>For backward compatibility the match is treated like "file", unless it ends with a path separator in which case it's treated like "dir".</td></tr> </table></p><p class="desc"> <table> <tr><th>Modifier</th><th>Description</th></tr> <tr><td>"hidden"</td><td>This can be combined with "file" or "dir" to use <a href="#color_hidden">color.hidden</a> (e.g. "file,hidden").</td></tr> <tr><td>"readonly"</td><td>This can be combined with "file" or "dir" to use <a href="#color_readonly">color.readonly</a> (e.g. "file,readonly").</td></tr> </table></p><p class="desc"> See <a href="#completion-colors">Completion Coloring</a> and <a href="#colorsettings">Color Settings</a> for more information about colors.</p><pre class="language-lua"><code>builder:addmatch("hello") -- type is "none"
+</div><div class="group"><h5 class="group_name"><a name="builder">builder</a></h5><div class="function"><div class="header"> <div class="name"><a name="builder:addmatch">builder:addmatch</a></div> <div class="signature">( <span class="arg_name">match</span>:string|table, [<span class="arg_name">type</span>:string] ) : boolean</div></div><div class="body"><p class="desc">Adds a match.  If <span class="arg">match</span> is a string, it's added as a match and <span class="arg">type</span> is the optional match type.</p><p class="desc"> Or <span class="arg">match</span> can be a table with the following scheme: <span class="tablescheme">{ match:string, [type:string] }</span>.  If a table element is missing the type field, then the <span class="arg">type</span> argument is used for that element.</p><p class="desc"> If the <span class="arg">type</span> argument is omitted, "none" is assumed.</p><p class="desc"> The match type can affect how the match is inserted, displayed, and colored:</p><p class="desc"> <table> <tr><th>Type</th><th>Description</th></tr> <tr><td>"word"</td><td>Shows the whole word even if it contains slashes.</td></tr> <tr><td>"arg"</td><td>Avoids appending a space if the match ends with a colon or equal sign.</td></tr> <tr><td>"command"</td><td>Displays the match using <a href="#color_cmd">color.cmd</a>.</td></tr> <tr><td>"alias"</td><td>Displays the match using <a href="#color_doskey">color.doskey</a>.</td></tr> <tr><td>"file"</td><td>Shows only the last path component, with appropriate file coloring.</td></tr> <tr><td>"dir"</td><td>Shows only the last path component and adds a trailing path separator, with appropriate directory coloring.</td></tr> <tr><td>"link"</td><td>Shows only the last path component, with appropriate symlink coloring. <em>Not supported yet.</em></td></tr> <tr><td>"none"</td><td>For backward compatibility the match is treated like "file", unless it ends with a path separator in which case it's treated like "dir".</td></tr> </table></p><p class="desc"> <table> <tr><th>Modifier</th><th>Description</th></tr> <tr><td>"hidden"</td><td>This can be combined with "file" or "dir" to use <a href="#color_hidden">color.hidden</a> (e.g. "file,hidden").</td></tr> <tr><td>"readonly"</td><td>This can be combined with "file" or "dir" to use <a href="#color_readonly">color.readonly</a> (e.g. "file,readonly").</td></tr> </table></p><p class="desc"> See <a href="#completioncolors">Completion Colors</a> and <a href="#colorsettings">Color Settings</a> for more information about colors.</p><pre class="language-lua"><code>builder:addmatch("hello") -- type is "none"
 builder:addmatch("some_word", "word")
 builder:addmatch("/flag", "arg")
 builder:addmatch("abbrev", "alias")
@@ -1884,6 +1904,11 @@ settings.add("color.mymno", "bright magenta", "Color setting")</code></pre></div
         <div class="section" id="changes">
 <h1 id="changes">Changes</h1>
 <h2 id="releases-from-chrisant996clink-fork">Releases from <a href="https://github.com/chrisant996/clink">chrisant996/clink</a> fork</h2>
+<h3 id="v1114">v1.1.14</h3>
+<ul>
+<li>Migrate settings and history from an old version of Clink, if present.  This only happens if the new-version Clink settings or history files don&#39;t exist.  (Deleting an existing new-version Clink settings or history file will cause migration to happen again.)</li>
+<li>Added <code>color.prompt</code> setting for backward compatibility with Clink v0.4.x.</li>
+</ul>
 <h3 id="v1113">v1.1.13</h3>
 <ul>
 <li>Fixed <code>clink.arg.register_parser</code> backward compatibility.</li>
