@@ -589,6 +589,14 @@ setting_color::setting_color(const char* name, const char* short_desc, const cha
 }
 
 //------------------------------------------------------------------------------
+bool setting_color::is_default() const
+{
+    str<> value;
+    get_descriptive(value);
+    return value.equals(static_cast<const char*>(m_default));
+}
+
+//------------------------------------------------------------------------------
 void setting_color::set()
 {
     set(static_cast<const char*>(m_default));

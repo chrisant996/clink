@@ -201,6 +201,7 @@ class setting_color
 public:
                        setting_color(const char* name, const char* short_desc, const char* default_value);
                        setting_color(const char* name, const char* short_desc, const char* long_desc, const char* default_value);
+    virtual bool       is_default() const override;
     virtual void       set() override;
     virtual bool       set(const char* value) override;
     virtual void       get_descriptive(str_base& out) const override;
