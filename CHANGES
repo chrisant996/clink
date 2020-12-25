@@ -5,6 +5,7 @@
 
 ### v1.1.15
 
+- Migrating settings now immediately writes a new settings file, instead of waiting until a setting is changed.
 - Fixed saving color settings to behave like other settings: only write a setting's value to the setting file if it differs from the default value.
 
 ### v1.1.14
