@@ -172,7 +172,24 @@ bool get_env(const char* name, str_base& out)
 
     int len = GetEnvironmentVariableW(wname.c_str(), nullptr, 0);
     if (!len)
+    {
+        if (stricmp(name, "HOME") == 0)
+        {
+            str<> a;
+            str<> b;
+            if (get_env("HOMEDRIVE", a) && get_env("HOMEPATH", b))
+            {
+                out.clear();
+                out << a.c_str() << b.c_str();
+                return true;
+            }
+            else if (get_env("USERPROFILE", out))
+            {
+                return true;
+            }
+        }
         return false;
+    }
 
     wstr<> wvalue;
     wvalue.reserve(len);
