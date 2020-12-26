@@ -25,9 +25,24 @@ static setting_enum g_terminal_emulation(
     2);
 
 //------------------------------------------------------------------------------
+win_screen_buffer::~win_screen_buffer()
+{
+    close();
+}
+
+//------------------------------------------------------------------------------
+void win_screen_buffer::open()
+{
+    assert(!m_handle);
+    m_handle = GetStdHandle(STD_OUTPUT_HANDLE);
+}
+
+//------------------------------------------------------------------------------
 void win_screen_buffer::begin()
 {
-    m_handle = GetStdHandle(STD_OUTPUT_HANDLE);
+    if (!m_handle)
+        open();
+
     GetConsoleMode(m_handle, &m_prev_mode);
 
     CONSOLE_SCREEN_BUFFER_INFO csbi;
@@ -83,19 +98,32 @@ void win_screen_buffer::begin()
 
     if (m_native_vt)
         SetConsoleMode(m_handle, m_prev_mode | ENABLE_VIRTUAL_TERMINAL_PROCESSING);
+
+    m_ready = true;
 }
 
 //------------------------------------------------------------------------------
 void win_screen_buffer::end()
 {
-    SetConsoleTextAttribute(m_handle, m_default_attr);
-    SetConsoleMode(m_handle, m_prev_mode);
+    if (m_ready)
+    {
+        SetConsoleTextAttribute(m_handle, m_default_attr);
+        SetConsoleMode(m_handle, m_prev_mode);
+        m_ready = false;
+    }
+}
+
+//------------------------------------------------------------------------------
+void win_screen_buffer::close()
+{
     m_handle = nullptr;
 }
 
 //------------------------------------------------------------------------------
 void win_screen_buffer::write(const char* data, int length)
 {
+    assert(m_ready);
+
     str_iter iter(data, length);
     while (length > 0)
     {

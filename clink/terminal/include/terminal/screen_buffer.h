@@ -17,8 +17,10 @@ public:
     };
 
     virtual         ~screen_buffer() = default;
+    virtual void    open() = 0;
     virtual void    begin() = 0;
     virtual void    end() = 0;
+    virtual void    close() = 0;
     virtual void    write(const char* data, int length) = 0;
     virtual void    flush() = 0;
     virtual int     get_columns() const = 0;

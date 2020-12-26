@@ -75,6 +75,12 @@ ecma48_terminal_out::ecma48_terminal_out(screen_buffer& screen)
 }
 
 //------------------------------------------------------------------------------
+void ecma48_terminal_out::open()
+{
+    m_screen.open();
+}
+
+//------------------------------------------------------------------------------
 void ecma48_terminal_out::begin()
 {
     m_screen.begin();
@@ -86,6 +92,12 @@ void ecma48_terminal_out::end()
 {
     m_screen.end();
     reset_pending();
+}
+
+//------------------------------------------------------------------------------
+void ecma48_terminal_out::close()
+{
+    m_screen.close();
 }
 
 //------------------------------------------------------------------------------
