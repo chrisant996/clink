@@ -5,6 +5,7 @@
 #include "settings.h"
 #include "str.h"
 #include "str_tokeniser.h"
+#include "path.h"
 
 #include <assert.h>
 #include <string>
@@ -74,14 +75,129 @@ setting* find(const char* name)
 }
 
 //------------------------------------------------------------------------------
+static bool set_setting(const char* name, const char* value, const char* comment=nullptr)
+{
+    // Find the setting.
+    setting* s = settings::find(name);
+    if (!s)
+        return false;
+
+    // Remember the original text from the file, so that saving won't lose
+    // them in case the scripts that declared them aren't loaded.
+    loaded_setting loaded;
+    if (comment)
+        loaded.comment = comment;
+    loaded.value = value;
+    g_loaded_settings.emplace(name, std::move(loaded));
+
+    // Set its value.
+    return s->set(value);
+}
+
+//------------------------------------------------------------------------------
+static bool migrate_setting(const char* name, const char* value)
+{
+    // `esc_clears_line` is no longer a setting; bind `\e[27;27~` to whatever
+    // command is desired in the inputrc file (defaults to `clink-reset-line`).
+    //
+    // `match_colour` is no longer a setting; use `colored-stats` in the inputrc
+    // file and `set LS_COLORS` to set the colors.  Also certain `color.*` Clink
+    // settings.
+    //
+    // `use_altgr_substitute` is no longer a setting.
+
+    if (stricmp(name, "exec_match_style") == 0)
+    {
+        int x = atoi(value);
+        set_setting("exec.path", (x>=0) ? "1" : "0");
+        set_setting("exec.cwd",  (x>=1) ? "1" : "0");
+        set_setting("exec.dirs", (x>=2) ? "1" : "0");
+        return true;
+    }
+    else if (stricmp(name, "prompt_colour") == 0)
+    {
+        int attr = atoi(value);
+        if (attr < 0)
+            return false;
+        static const char* const dos_color_names[] = { "bla", "blu", "red", "cya", "gre", "mag", "yel", "whi" };
+        str<> tmp;
+        if (attr & 0x08)
+            tmp << "bri ";
+        tmp << dos_color_names[attr & 0x07];
+        return set_setting("color.prompt", tmp.c_str());
+    }
+    else if (stricmp(name, "strip_crlf_on_paste") == 0)
+    {
+        switch (atoi(value))
+        {
+        case 0: return false; // There is no equivalent at this time.
+        case 1: value = "delete"; break;
+        case 2: value = "space"; break;
+        }
+        name = "clink.paste_crlf";
+    }
+    else if (stricmp(name, "ansi_code_support") == 0)
+    {
+        name = "terminal.emulation";
+        value = atoi(value) ? "auto" : "native";
+    }
+    else
+    {
+        static constexpr struct {
+            const char* old_name;
+            const char* new_name;
+        } map_names[] =
+        {   // OLD NAME                      NEW NAME
+            { "ctrld_exits",                "cmd.ctrld_exits" },
+            { "space_prefix_match_files",   "exec.space_prefix" },
+            { "terminate_autoanswer",       "cmd.auto_answer" },
+            { "history_file_lines",         "history.max_lines" },
+            { "history_ignore_space",       "history.ignore_space" },
+            { "history_dupe_mode",          "history.dupe_mode" },
+            { "history_io",                 "history.save" },
+            { "history_expand_mode",        "history.expand_mode" },
+        };
+
+        const char* old_name = name;
+        name = nullptr;
+
+        for (auto map_name : map_names)
+            if (stricmp(old_name, map_name.old_name) == 0)
+            {
+                name = map_name.new_name;
+                break;
+            }
+
+        if (!name)
+            return false;
+    }
+
+    return set_setting(name, value);
+}
+
+//------------------------------------------------------------------------------
 bool load(const char* file)
 {
     g_loaded_settings.clear();
 
+    // Maybe migrate settings.
+    str<> old_file;
+    bool migrating = false;
+
     // Open the file.
     FILE* in = fopen(file, "rb");
     if (in == nullptr)
-        return false;
+    {
+        // If there's no (new name) settings file, try to migrate from the old
+        // name settings file.
+        path::get_directory(file, old_file);
+        path::append(old_file, "settings");
+        file = old_file.c_str();
+        in = fopen(file, "rb");
+        if (in == nullptr)
+            return false;
+        migrating = true;
+    }
 
     // Buffer the file.
     fseek(in, 0, SEEK_END);
@@ -149,16 +265,15 @@ bool load(const char* file)
         while (*value && isspace(*value))
             ++value;
 
-        // Find the setting and set its value.
-        if (setting* s = settings::find(line_data))
-            s->set(value);
+        // Migrate old setting.
+        if (migrating)
+        {
+            migrate_setting(line_data, value);
+            continue;
+        }
 
-        // Remember the original text from the file, so that saving won't lose
-        // them in case the scripts that declared them aren't loaded.
-        loaded_setting loaded;
-        loaded.comment = comment.c_str();
-        loaded.value = value;
-        g_loaded_settings.emplace(line_data, std::move(loaded));
+        // Find the setting and set its value.
+        set_setting(line_data, value, comment.c_str());
     }
 
     return true;
@@ -387,6 +502,8 @@ setting_enum::setting_enum(
 //------------------------------------------------------------------------------
 bool setting_enum::set(const char* value)
 {
+    int by_int = (*value >= '0' && *value <= '9') ? atoi(value) : -1;
+
     int i = 0;
     for (const char* option = m_options.c_str(); *option; ++i)
     {
@@ -396,11 +513,14 @@ bool setting_enum::set(const char* value)
         if (*next)
             --option_len;
 
-        if (_strnicmp(option, value, option_len) == 0)
+        if ((by_int == 0) ||
+            (by_int < 0 && _strnicmp(option, value, option_len) == 0))
         {
             m_store.value = i;
             return true;
         }
+
+        by_int--;
 
         option = next;
     }
