@@ -33,9 +33,19 @@ The second alternative is to manually run Clink using the command `clink inject`
 
 The last option is to use the Clink shortcut that the installer adds to Windows' start menu. This is in essence a shortcut to the command `cmd.exe /k clink inject`.
 
+# Upgrading from Clink v0.4.9
+
+The new Clink tries to be as backward compatible with Clink v0.4.9 as possible.  However, in some cases upgrading may require a little bit of configuration work.
+
+- Some key binding sequences have changed; see [Key Bindings](#keybindings) for more information.
+- Match coloring is now done by Readline and is configured differently; see [Completion Colors](#completioncolors) for more information.
+- Settings and history should migrate automatically if the new `clink_settings` and `clink_history` files don't exist (deleting them will cause migration to happen again).  To find the directory that contains these files, run `clink info` and look for the "state" line.
+- Script compatibility should be very good, but some scripts may still encounter problems.  If you do encounter a compatibility problem you can look for an updated version of the script, update the script yourself, or visit the <a href="https://github.com/chrisant996/clink/issues">repo</a> and open an issue describing details about the compatibility problem.
+- Some settings have changed slightly, and there are many new settings.  See [Configuring Clink](#configclink) for more information.
+
 # How Clink Works
 
-When running Clink via the methods above, Clink checks the parent process is supported and injects a DLL into it. The DLL then hooks the WriteConsole() and ReadConsole() Windows functions. The former is so that Clink can capture the current prompt, and the latter hook allows Clink to provide it's own Readline-powered command line editing.
+When running Clink via the methods above, Clink checks the parent process is supported and injects a DLL into it. The DLL then hooks the WriteConsole() and ReadConsole() Windows functions. The former is so that Clink can capture the current prompt, and the latter hook allows Clink to provide its own Readline-powered command line editing.
 
 <a name="configclink"/>
 
@@ -60,6 +70,7 @@ Name                         | Default | Description
 `color.interact`             | `bold`  | Used when Clink displays text or prompts such as a pager's `--More?--` prompt.
 `color.message`              | `default` | The color for the message area (e.g. the search prompt message, digit argument prompt message, etc).
 `color.modmark`              |         | Used when Clink displays the `*` mark on modified history lines when Readline's `mark-modified-lines` variable and Clink's `color.input` setting are both set. Falls back to `color.input` if not set.
+`color.prompt`               |         | When set, this is used as the default color for the prompt.  But it's overridden by any colors set by <a href="#customisingtheprompt">Customising The Prompt</a>.
 <a name="color_readonly"/>`color.readonly` | | Used when Clink displays file completions with the "readonly" attribute.
 `doskey.enhanced`            | True    | Enhanced Doskey adds the expansion of macros that follow `\|` and `&` command separators and respects quotes around words when parsing `$1`..`$9` tags. Note that these features do not apply to Doskey use in Batch files.
 `exec.cwd`                   | True    | When matching executables as the first word (`exec.enable`), include executables in the current directory. (This is implicit if the word being completed is a relative path).
@@ -93,8 +104,9 @@ Name                         | Default | Description
 <p/>
 
 > **Compatibility Notes:**
-> - The `esc_clears_line` setting has been replaced by a `clink-reset-line` command that can be bound to <kbd>Escape</kbd> (or any other key).
-> - The `use_altgr_substitute` setting has been removed.  (If <kbd>AltGr</kbd> or lack of <kbd>AltGr</kbd> causes a problem, please visit the <a href="https://github.com/chrisant996/clink/issues">repo</a> and open an issue with details about the problem.)
+> - The `esc_clears_line` setting has been replaced by a `clink-reset-line` command that is by default bound to the <kbd>Escape</kbd> key.  See [Key Bindings](#keybindings) and [Readline](https://tiswww.cwru.edu/php/chet/readline/readline.html) for more information.
+> - The `use_altgr_substitute` setting has been removed.  If <kbd>AltGr</kbd> or lack of <kbd>AltGr</kbd> causes a problem, please visit the <a href="https://github.com/chrisant996/clink/issues">repo</a> and open an issue with details describing the problem.
+> - The `match_colour` setting has been removed, and Clink now supports Readline 8.0 completion coloring.  See [Completion Colors](#completioncolors) for more information.
 
 <a name="colorsettings"/>
 
@@ -249,6 +261,8 @@ Name | Description
 `clink-up-directory`|Changes to the parent directory.
 `old-menu-complete-backward`|Like `old-menu-complete`, but in reverse.
 `remove-history`|While searching history, removes the current line from the history.
+
+<a name="completioncolors"/>
 
 ## Completion Colors
 
@@ -655,7 +669,13 @@ The resulting prompt will look like this:
 
 # Miscellaneous
 
+<a name="keybindings"/>
+
 ## Key bindings
+
+Key bindings are defined in the inputrc files.  See the [Readline](https://tiswww.cwru.edu/php/chet/readline/readline.html) manual for more information about the inputrc files (Readline Init File).
+
+Here are key binding strings for various special keys.
 
 ### Binding special keys
 

@@ -87,7 +87,7 @@ match_builder_lua::~match_builder_lua()
 /// <tr><td>"readonly"</td><td>This can be combined with "file" or "dir" to use <a href="#color_readonly">color.readonly</a> (e.g. "file,readonly").</td></tr>
 /// </table>
 ///
-/// See <a href="#completion-colors">Completion Coloring</a> and
+/// See <a href="#completioncolors">Completion Colors</a> and
 /// <a href="#colorsettings">Color Settings</a> for more information about
 /// colors.
 int match_builder_lua::add_match(lua_State* state)

@@ -832,8 +832,7 @@ function clink.arg.register_parser(cmd, parser)
         return matcher
     end
 
-    -- Create a new parser and register it.
-    local matcher = clink.arg.new_parser(parser)
-    _argmatchers[cmd] = matcher
+    -- Register the parser.
+    _argmatchers[cmd] = parser
     return matcher
 end
