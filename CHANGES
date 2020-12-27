@@ -6,7 +6,13 @@
 ### v1.1.15
 
 - Migrating settings now immediately writes a new settings file, instead of waiting until a setting is changed.
+- Added support to detect when running in Windows Terminal and use native terminal support (which enables things like Xterm 256 and 24-bit color support).
+- Added terminal emulation support for Xterm 256 and 24-bit color escape codes. Clink maps the specified color to the most similar color in the active 16 color palette (using the CIELAB color space). To get full support for 24-bit color, it's necessary to use ConEmu or Windows Terminal or a similar console host, or to set `terminal.emulation` to `native` (which isn't supported on some older Windows OS versions).
+- Allow doskey macros named `..` or `-`, and also now doskey macros that resolve to `..` or `-` or a directory name will work (just like if the macro text had been typed at the Clink prompt).
+- Fixed compatibility problem with various scripts getting the %HOME% environment variable. Now if it isn't set, then Clink synthesizes %HOME% from %HOMEDRIVE% and %HOMEPATH% or from %USERPROFILE%.
 - Fixed saving color settings to behave like other settings: only write a setting's value to the setting file if it differs from the default value.
+- Fixed the `clink.print()` Lua function so it also works during loading scripts and during prompt filtering.
+- Fixed the Readline input text display getting garbled if the filtered prompt includes Xterm's OSC window title code (`\x1b]0;text\x07`). Clink doesn't support that escape code, but at no longer garbles the input text if that escape code is present.
 
 ### v1.1.14
 
