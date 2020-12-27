@@ -7,6 +7,7 @@
 
 #include <core/base.h>
 #include <core/log.h>
+#include <core/os.h>
 #include <core/settings.h>
 #include <core/str_iter.h>
 
@@ -20,8 +21,9 @@ static setting_enum g_terminal_emulation(
     "Clink can emulate Virtual Terminal processing if the console doesn't\n"
     "natively. When set to 'emulate' then Clink performs VT emulation and handles\n"
     "ANSI escape codes. When 'native' then Clink passes all output directly to the\n"
-    "console. Or when 'auto' then Clink performs VT emulation unless a third party\n"
-    "tool is detected that also provides VT emulation (such as ConEmu).",
+    "console. Or when 'auto' then Clink performs VT emulation unless native\n"
+    "terminal support is detected (such as when hosted inside ConEmu or Windows\n"
+    "Terminal).",
     "native,emulate,auto",
     2);
 
@@ -52,7 +54,7 @@ void win_screen_buffer::begin()
     m_bold = !!(m_default_attr & attr_mask_bold);
 
     bool native_vt = m_native_vt;
-    const char* found_dll = nullptr;
+    const char* found_what = nullptr;
     switch (g_terminal_emulation.get())
     {
     case 0:
@@ -62,6 +64,14 @@ void win_screen_buffer::begin()
         native_vt = false;
         break;
     case 2: {
+        str<16> wt_session;
+        if (os::get_env("WT_SESSION", wt_session))
+        {
+            native_vt = true;
+            found_what = "WT_SESSION";
+            break;
+        }
+
         static const char* const dll_names[] =
         {
             "conemuhk.dll",
@@ -78,7 +88,7 @@ void win_screen_buffer::begin()
             if (GetModuleHandle(dll_name) != NULL)
             {
                 native_vt = true;
-                found_dll = dll_name;
+                found_what = dll_name;
                 break;
             }
         }
@@ -89,8 +99,8 @@ void win_screen_buffer::begin()
     {
         if (!native_vt)
             LOG("Using emulated terminal support.");
-        else if (found_dll)
-            LOG("Using native terminal support; found '%s'.", found_dll);
+        else if (found_what)
+            LOG("Using native terminal support; found '%s'.", found_what);
         else
             LOG("Using native terminal support.");
     }
