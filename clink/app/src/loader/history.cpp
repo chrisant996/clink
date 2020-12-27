@@ -199,7 +199,7 @@ static int print_help()
     puts_help(help, sizeof_array(help));
 
     puts("The 'history' command can also emulate Bash's builtin history command. The\n"
-        "arguments -c, -d <n>, -p <...> and -s <...> are supported.\n");
+        "arguments -c, -d <n>, -p <...> and -s <...> are supported.");
 
     return 1;
 }
