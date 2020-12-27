@@ -220,7 +220,7 @@ static void get_line(int start, int end, char** argv, str_base& out)
 static int history_bash(int argc, char** argv)
 {
     int i;
-    while ((i = getopt(argc, argv, "+cd:ps")) != -1)
+    while ((i = getopt(argc, argv, "+?cd:ps")) != -1)
     {
         switch (i)
         {

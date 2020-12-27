@@ -193,11 +193,12 @@ int set(int argc, char** argv)
 
     bool complete = false;
     int i;
-    while ((i = getopt_long(argc, argv, "+hl", options, nullptr)) != -1)
+    while ((i = getopt_long(argc, argv, "+?hl", options, nullptr)) != -1)
     {
         switch (i)
         {
         default:
+        case '?':
         case 'h': print_help();     return 0;
         case 'l': complete = true;  break;
         }
