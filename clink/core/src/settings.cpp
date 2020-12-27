@@ -518,7 +518,17 @@ setting_enum::setting_enum(
 //------------------------------------------------------------------------------
 bool setting_enum::set(const char* value)
 {
-    int by_int = (*value >= '0' && *value <= '9') ? atoi(value) : -1;
+    int by_int = -1;
+    if (*value >= '0' && *value <= '9')
+    {
+        by_int = atoi(value);
+        for (const char* walk = value; *walk; walk++)
+            if (*walk < '0' || *walk > '9')
+            {
+                by_int = -1;
+                break;
+            }
+    }
 
     int i = 0;
     for (const char* option = m_options.c_str(); *option; ++i)

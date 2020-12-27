@@ -149,6 +149,7 @@ TEST_CASE("settings : enum")
 
     REQUIRE(!test.set("abc"));  REQUIRE(test.get() == 2);
     REQUIRE(!test.set("0abc")); REQUIRE(test.get() == 2);
+    REQUIRE(test.set("1"));     REQUIRE(test.get() == 1);
 }
 
 //------------------------------------------------------------------------------
