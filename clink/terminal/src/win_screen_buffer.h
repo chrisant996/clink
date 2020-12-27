@@ -10,8 +10,11 @@ class win_screen_buffer
     : public screen_buffer
 {
 public:
+    virtual         ~win_screen_buffer() override;
+    virtual void    open() override;
     virtual void    begin() override;
     virtual void    end() override;
+    virtual void    close() override;
     virtual void    write(const char* data, int length) override;
     virtual void    flush() override;
     virtual int     get_columns() const override;
@@ -24,6 +27,7 @@ public:
     virtual void    insert_chars(int count) override;
     virtual void    delete_chars(int count) override;
     virtual void    set_attributes(const attributes attr) override;
+    virtual bool    get_nearest_color(attributes& attr) override;
 
 private:
     enum : unsigned short
@@ -38,6 +42,7 @@ private:
     void*           m_handle = nullptr;
     unsigned long   m_prev_mode = 0;
     unsigned short  m_default_attr = 0x07;
+    bool            m_ready = false;
     bool            m_bold = false;
     bool            m_native_vt = false;
 };

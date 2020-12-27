@@ -288,7 +288,7 @@ bool ecma48_iter::next_cmd_str(int c)
         m_state.state = ecma48_state_esc_st;
         return false;
     }
-    else if (c == 0x9c)
+    else if (c == 0x9c || c == 0x07) // Xterm supports OSC terminated by BEL.
     {
         m_iter.next();
         return true;

@@ -3,9 +3,11 @@
 
 #include "pch.h"
 #include "win_screen_buffer.h"
+#include "cielab.h"
 
 #include <core/base.h>
 #include <core/log.h>
+#include <core/os.h>
 #include <core/settings.h>
 #include <core/str_iter.h>
 
@@ -19,15 +21,31 @@ static setting_enum g_terminal_emulation(
     "Clink can emulate Virtual Terminal processing if the console doesn't\n"
     "natively. When set to 'emulate' then Clink performs VT emulation and handles\n"
     "ANSI escape codes. When 'native' then Clink passes all output directly to the\n"
-    "console. Or when 'auto' then Clink performs VT emulation unless a third party\n"
-    "tool is detected that also provides VT emulation (such as ConEmu).",
+    "console. Or when 'auto' then Clink performs VT emulation unless native\n"
+    "terminal support is detected (such as when hosted inside ConEmu or Windows\n"
+    "Terminal).",
     "native,emulate,auto",
     2);
 
 //------------------------------------------------------------------------------
+win_screen_buffer::~win_screen_buffer()
+{
+    close();
+}
+
+//------------------------------------------------------------------------------
+void win_screen_buffer::open()
+{
+    assert(!m_handle);
+    m_handle = GetStdHandle(STD_OUTPUT_HANDLE);
+}
+
+//------------------------------------------------------------------------------
 void win_screen_buffer::begin()
 {
-    m_handle = GetStdHandle(STD_OUTPUT_HANDLE);
+    if (!m_handle)
+        open();
+
     GetConsoleMode(m_handle, &m_prev_mode);
 
     CONSOLE_SCREEN_BUFFER_INFO csbi;
@@ -36,7 +54,7 @@ void win_screen_buffer::begin()
     m_bold = !!(m_default_attr & attr_mask_bold);
 
     bool native_vt = m_native_vt;
-    const char* found_dll = nullptr;
+    const char* found_what = nullptr;
     switch (g_terminal_emulation.get())
     {
     case 0:
@@ -46,6 +64,14 @@ void win_screen_buffer::begin()
         native_vt = false;
         break;
     case 2: {
+        str<16> wt_session;
+        if (os::get_env("WT_SESSION", wt_session))
+        {
+            native_vt = true;
+            found_what = "WT_SESSION";
+            break;
+        }
+
         static const char* const dll_names[] =
         {
             "conemuhk.dll",
@@ -62,7 +88,7 @@ void win_screen_buffer::begin()
             if (GetModuleHandle(dll_name) != NULL)
             {
                 native_vt = true;
-                found_dll = dll_name;
+                found_what = dll_name;
                 break;
             }
         }
@@ -73,8 +99,8 @@ void win_screen_buffer::begin()
     {
         if (!native_vt)
             LOG("Using emulated terminal support.");
-        else if (found_dll)
-            LOG("Using native terminal support; found '%s'.", found_dll);
+        else if (found_what)
+            LOG("Using native terminal support; found '%s'.", found_what);
         else
             LOG("Using native terminal support.");
     }
@@ -83,19 +109,32 @@ void win_screen_buffer::begin()
 
     if (m_native_vt)
         SetConsoleMode(m_handle, m_prev_mode | ENABLE_VIRTUAL_TERMINAL_PROCESSING);
+
+    m_ready = true;
 }
 
 //------------------------------------------------------------------------------
 void win_screen_buffer::end()
 {
-    SetConsoleTextAttribute(m_handle, m_default_attr);
-    SetConsoleMode(m_handle, m_prev_mode);
+    if (m_ready)
+    {
+        SetConsoleTextAttribute(m_handle, m_default_attr);
+        SetConsoleMode(m_handle, m_prev_mode);
+        m_ready = false;
+    }
+}
+
+//------------------------------------------------------------------------------
+void win_screen_buffer::close()
+{
     m_handle = nullptr;
 }
 
 //------------------------------------------------------------------------------
 void win_screen_buffer::write(const char* data, int length)
 {
+    assert(m_ready);
+
     str_iter iter(data, length);
     while (length > 0)
     {
@@ -316,7 +355,7 @@ void win_screen_buffer::delete_chars(int count)
 }
 
 //------------------------------------------------------------------------------
-void win_screen_buffer::set_attributes(const attributes attr)
+void win_screen_buffer::set_attributes(attributes attr)
 {
     CONSOLE_SCREEN_BUFFER_INFO csbi;
     GetConsoleScreenBufferInfo(m_handle, &csbi);
@@ -328,6 +367,10 @@ void win_screen_buffer::set_attributes(const attributes attr)
         int b_r_ = ((rgbi & 0x01) << 2) | !!(rgbi & 0x04);
         return (rgbi & 0x0a) | b_r_;
     };
+
+    // Map RGB/XTerm256 colors
+    if (!get_nearest_color(attr))
+        return;
 
     // Bold
     if (auto bold_attr = attr.get_bold())
@@ -377,8 +420,69 @@ void win_screen_buffer::set_attributes(const attributes attr)
         }
     }
 
-    // TODO: add rgb/xterm256 support back.
-
     out_attr |= csbi.wAttributes & ~attr_mask_all;
     SetConsoleTextAttribute(m_handle, short(out_attr));
+}
+
+//------------------------------------------------------------------------------
+static bool get_nearest_color(void* handle, const unsigned char (&rgb)[3], unsigned char& attr)
+{
+    static HMODULE hmod = GetModuleHandle("kernel32.dll");
+    static FARPROC proc = GetProcAddress(hmod, "GetConsoleScreenBufferInfoEx");
+    typedef BOOL (WINAPI* GCSBIEx)(HANDLE, PCONSOLE_SCREEN_BUFFER_INFOEX);
+
+    if (!proc)
+        return false;
+
+    CONSOLE_SCREEN_BUFFER_INFOEX infoex = { sizeof(infoex) };
+    if (!GCSBIEx(proc)(handle, &infoex))
+        return false;
+
+    cie::lab target(RGB(rgb[0], rgb[1], rgb[2]));
+    float best_deltaE = 0;
+    int best_idx = -1;
+
+    for (int i = sizeof_array(infoex.ColorTable); i--;)
+    {
+        cie::lab candidate(infoex.ColorTable[i]);
+        float deltaE = cie::deltaE(target, candidate);
+        if (best_idx < 0 || best_deltaE > deltaE)
+        {
+            best_deltaE = deltaE;
+            best_idx = i;
+        }
+    }
+
+    if (best_idx < 0)
+        return false;
+
+    static const int dos_to_ansi_order[] = { 0, 4, 2, 6, 1, 5, 3, 7 };
+    attr = (best_idx & 0x08) + dos_to_ansi_order[best_idx & 0x07];
+    return true;
+}
+
+//------------------------------------------------------------------------------
+bool win_screen_buffer::get_nearest_color(attributes& attr)
+{
+    const attributes::color fg = attr.get_fg().value;
+    const attributes::color bg = attr.get_bg().value;
+    if (fg.is_rgb)
+    {
+        unsigned char val;
+        unsigned char rgb[3];
+        fg.as_888(rgb);
+        if (!::get_nearest_color(m_handle, rgb, val))
+            return false;
+        attr.set_fg(val);
+    }
+    if (bg.is_rgb)
+    {
+        unsigned char val;
+        unsigned char rgb[3];
+        bg.as_888(rgb);
+        if (!::get_nearest_color(m_handle, rgb, val))
+            return false;
+        attr.set_bg(val);
+    }
+    return true;
 }

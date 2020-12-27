@@ -312,6 +312,10 @@ int glob_files(lua_State* state)
 /// -ret:   string | nil
 /// Returns the value of the named environment variable, or nil if it doesn't
 /// exist.
+///
+/// Note that <code>os.getenv("HOME")</code> receives special treatment: if
+/// %HOME% is not set then it is synthesized from %HOMEDRIVE% and %HOMEPATH%, or
+/// from %USERPROFILE%.
 int get_env(lua_State* state)
 {
     const char* name = get_string(state, 1);

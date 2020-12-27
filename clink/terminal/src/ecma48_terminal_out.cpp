@@ -75,6 +75,12 @@ ecma48_terminal_out::ecma48_terminal_out(screen_buffer& screen)
 }
 
 //------------------------------------------------------------------------------
+void ecma48_terminal_out::open()
+{
+    m_screen.open();
+}
+
+//------------------------------------------------------------------------------
 void ecma48_terminal_out::begin()
 {
     m_screen.begin();
@@ -86,6 +92,12 @@ void ecma48_terminal_out::end()
 {
     m_screen.end();
     reset_pending();
+}
+
+//------------------------------------------------------------------------------
+void ecma48_terminal_out::close()
+{
+    m_screen.close();
 }
 
 //------------------------------------------------------------------------------
@@ -236,7 +248,7 @@ void ecma48_terminal_out::set_attributes(const ecma48_code::csi_base& csi)
 
     // Process each code that is supported.
     attributes attr;
-    for (int i = 0; i < csi.param_count; ++i)
+    for (int i = 0, n = csi.param_count; i < csi.param_count; ++i, --n)
     {
         unsigned int param = csi.params[i];
 
@@ -279,7 +291,65 @@ void ecma48_terminal_out::set_attributes(const ecma48_code::csi_base& csi)
             continue;
         }
 
-        // TODO: Rgb/xterm256 support for terminals that support it.
+        if (((param == 38) | (param == 48)) && n > 1)
+        {
+            i++;
+            n--;
+            bool is_fg = (param == 38);
+            unsigned int type = csi.params[i];
+            if (type == 2)
+            {
+                // RGB 24-bit color
+                if (n > 3)
+                {
+                    if (is_fg)
+                        attr.set_fg(csi.params[i + 1], csi.params[i + 2], csi.params[i + 3]);
+                    else
+                        attr.set_bg(csi.params[i + 1], csi.params[i + 2], csi.params[i + 3]);
+                }
+                i += 3;
+                n -= 3;
+            }
+            else if (type == 5)
+            {
+                // XTerm256 color
+                if (n > 1)
+                {
+                    unsigned char idx = csi.params[i + 1];
+                    if (idx < 16)
+                    {
+                        if (is_fg)
+                            attr.set_fg(idx);
+                        else
+                            attr.set_bg(idx);
+                    }
+                    else if (idx >= 232)
+                    {
+                        unsigned char gray = (int(idx) - 232) * 255 / 23;
+                        if (is_fg)
+                            attr.set_fg(gray, gray, gray);
+                        else
+                            attr.set_bg(gray, gray, gray);
+                    }
+                    else
+                    {
+                        idx -= 16;
+                        unsigned char b = idx % 6;
+                        idx /= 6;
+                        unsigned char g = idx % 6;
+                        idx /= 6;
+                        unsigned char r = idx;
+                        if (is_fg)
+                            attr.set_fg(r << 3, g << 3, b << 3);
+                        else
+                            attr.set_bg(r << 3, g << 3, b << 3);
+                    }
+                }
+                i++;
+                n--;
+            }
+            continue;
+        }
     }
 
     m_screen.set_attributes(attr);

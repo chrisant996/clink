@@ -72,7 +72,7 @@ static setting_bool g_reload_scripts(
 
 
 //------------------------------------------------------------------------------
-extern printer* g_printer;
+static printer* s_printer = nullptr;
 
 //------------------------------------------------------------------------------
 // Documented in clink_api.cpp.
@@ -88,11 +88,14 @@ int clink_print(lua_State* state)
 
     const char* string = lua_tostring(state, 1);
 
-    if (g_printer)
+    if (s_printer)
     {
         str<> s;
-        s.format("%s\r\n", string);
-        g_printer->print(s.c_str(), s.length());
+        int len = int(strlen(string));
+        s.reserve(len + 2);
+        s.concat(string, len);
+        s.concat("\r\n");
+        s_printer->print(s.c_str(), s.length());
     }
     else
     {
@@ -296,6 +299,30 @@ struct cwd_restorer
     str<288> m_path;
 };
 
+//------------------------------------------------------------------------------
+class printer_context
+{
+public:
+    printer_context(terminal& terminal, printer* printer)
+    : m_terminal(terminal)
+    , m_rb_printer(s_printer, printer)
+    {
+        m_terminal.out->open();
+        m_terminal.out->begin();
+        s_printer = printer;
+    }
+
+    ~printer_context()
+    {
+        m_terminal.out->end();
+        m_terminal.out->close();
+    }
+
+private:
+    const terminal& m_terminal;
+    rollback<printer*> m_rb_printer;
+};
+
 
 
 //------------------------------------------------------------------------------
@@ -325,6 +352,7 @@ bool host::edit_line(const char* prompt, str_base& out)
     path::refresh_pathext();
 
     cwd_restorer cwd;
+    printer_context prt(m_terminal, m_printer);
 
     // Load Clink's settings.  The load function handles deferred load for
     // settings declared in scripts.
@@ -491,18 +519,6 @@ bool host::edit_line(const char* prompt, str_base& out)
             if (m_history)
                 m_history->add(out.c_str());
         }
-
-        if (ret)
-        {
-            // If the line is a directory, rewrite the line to invoke the CD
-            // command to change to the directory.
-            m_doskey.resolve(out.c_str(), m_doskey_alias);
-            if (!m_doskey_alias)
-            {
-                if (intercept_directory(out))
-                    resolved = true; // No need to test for a doskey alias.
-            }
-        }
         break;
     }
 
@@ -511,6 +527,13 @@ bool host::edit_line(const char* prompt, str_base& out)
         m_doskey.resolve(out.c_str(), m_doskey_alias);
         if (m_doskey_alias)
             out.clear();
+    }
+
+    if (ret)
+    {
+        // If the line is a directory, rewrite the line to invoke the CD command
+        // to change to the directory.
+        intercept_directory(out);
     }
 
     s_history_db = nullptr;

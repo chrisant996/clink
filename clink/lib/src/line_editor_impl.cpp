@@ -359,7 +359,7 @@ bool line_editor_impl::translate(const char* seq, int len, str_base& out)
             return true;
         }
     }
-    else if (RL_ISSTATE(simple_input_states))
+    else if (RL_ISSTATE(simple_input_states) || rl_is_insert_next_callback_pending())
     {
         if (strcmp(seq, bindableEsc) == 0)
         {

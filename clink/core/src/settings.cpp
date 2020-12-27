@@ -176,6 +176,9 @@ static bool migrate_setting(const char* name, const char* value)
 }
 
 //------------------------------------------------------------------------------
+static bool save_internal(const char* file, bool migrating);
+
+//------------------------------------------------------------------------------
 bool load(const char* file)
 {
     g_loaded_settings.clear();
@@ -192,8 +195,7 @@ bool load(const char* file)
         // name settings file.
         path::get_directory(file, old_file);
         path::append(old_file, "settings");
-        file = old_file.c_str();
-        in = fopen(file, "rb");
+        in = fopen(old_file.c_str(), "rb");
         if (in == nullptr)
             return false;
         migrating = true;
@@ -276,14 +278,22 @@ bool load(const char* file)
         set_setting(line_data, value, comment.c_str());
     }
 
+    // When migrating, ensure the new settings file is created so that the old
+    // settings file can be deleted.  Some users or distributions may naturally
+    // clean up the old settings file, so don't rely on it staying around.
+    if (migrating)
+        save_internal(file, migrating);
+
     return true;
 }
 
 //------------------------------------------------------------------------------
-bool save(const char* file)
+static bool save_internal(const char* file, bool migrating)
 {
-    // Open settings file.
-    FILE* out = fopen(file, "wt");
+    // Open settings file.  When migrating, fail if the file already exists, so
+    // that if multiple concurrent migrations occur only one of them writes the
+    // new settings file.
+    FILE* out = fopen(file, migrating ? "wtx" : "wt");
     if (out == nullptr)
         return false;
 
@@ -349,6 +359,12 @@ bool save(const char* file)
 
     fclose(out);
     return true;
+}
+
+//------------------------------------------------------------------------------
+bool save(const char* file)
+{
+    return save_internal(file, false/*migrating*/);
 }
 
 } // namespace settings
@@ -502,7 +518,17 @@ setting_enum::setting_enum(
 //------------------------------------------------------------------------------
 bool setting_enum::set(const char* value)
 {
-    int by_int = (*value >= '0' && *value <= '9') ? atoi(value) : -1;
+    int by_int = -1;
+    if (*value >= '0' && *value <= '9')
+    {
+        by_int = atoi(value);
+        for (const char* walk = value; *walk; walk++)
+            if (*walk < '0' || *walk > '9')
+            {
+                by_int = -1;
+                break;
+            }
+    }
 
     int i = 0;
     for (const char* option = m_options.c_str(); *option; ++i)
@@ -586,6 +612,14 @@ setting_color::setting_color(const char* name, const char* short_desc, const cha
 {
     m_type = type_color;
     set();
+}
+
+//------------------------------------------------------------------------------
+bool setting_color::is_default() const
+{
+    str<> value;
+    get_descriptive(value);
+    return value.equals(static_cast<const char*>(m_default));
 }
 
 //------------------------------------------------------------------------------

@@ -178,7 +178,7 @@ static void print_help()
 
     puts("If 'settings_name' is omitted then all settings are listed. Omit 'value'\n"
         "for more detailed info about a setting and use a value of 'clear' to reset\n"
-        "the setting to its default value.\n");
+        "the setting to its default value.");
 }
 
 //------------------------------------------------------------------------------
@@ -193,11 +193,12 @@ int set(int argc, char** argv)
 
     bool complete = false;
     int i;
-    while ((i = getopt_long(argc, argv, "+hl", options, nullptr)) != -1)
+    while ((i = getopt_long(argc, argv, "+?hl", options, nullptr)) != -1)
     {
         switch (i)
         {
         default:
+        case '?':
         case 'h': print_help();     return 0;
         case 'l': complete = true;  break;
         }

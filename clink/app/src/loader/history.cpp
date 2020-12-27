@@ -83,7 +83,22 @@ static void print_history(unsigned int tail_count)
         {
             DWORD written;
             utf16.clear();
-            to_utf16(utf16, utf8.c_str());
+
+            // Translate to UTF16, and also translate control characters.
+            for (const char* walk = utf8.c_str(); *walk;)
+            {
+                const char* begin = walk;
+                while (*walk >= 0x20 || *walk == 0x09)
+                    walk++;
+                if (walk > begin)
+                    to_utf16(utf16, str_iter(begin, int(walk - begin)));
+                if (!*walk)
+                    break;
+                wchar_t ctrl[3] = { '^', wchar_t(*walk + 'A' - 1) };
+                utf16.concat(ctrl, 2);
+                walk++;
+            }
+
             utf16.concat(L"\r\n", 2);
             WriteConsoleW(hout, utf16.c_str(), utf16.length(), &written, nullptr);
         }
@@ -199,7 +214,7 @@ static int print_help()
     puts_help(help, sizeof_array(help));
 
     puts("The 'history' command can also emulate Bash's builtin history command. The\n"
-        "arguments -c, -d <n>, -p <...> and -s <...> are supported.\n");
+        "arguments -c, -d <n>, -p <...> and -s <...> are supported.");
 
     return 1;
 }
@@ -220,7 +235,7 @@ static void get_line(int start, int end, char** argv, str_base& out)
 static int history_bash(int argc, char** argv)
 {
     int i;
-    while ((i = getopt(argc, argv, "+cd:ps")) != -1)
+    while ((i = getopt(argc, argv, "+?cd:ps")) != -1)
     {
         switch (i)
         {

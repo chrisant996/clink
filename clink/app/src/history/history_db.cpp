@@ -415,6 +415,12 @@ bool read_lock::line_iter::provision()
 }
 
 //------------------------------------------------------------------------------
+inline bool is_line_breaker(unsigned char c)
+{
+    return c == 0x00 || c == 0x0a || c == 0x0d;
+}
+
+//------------------------------------------------------------------------------
 line_id_impl read_lock::line_iter::next(str_iter& out)
 {
     while (m_remaining || provision())
@@ -426,7 +432,7 @@ line_id_impl read_lock::line_iter::next(str_iter& out)
         bool eating_ctag = m_eating_ctag;
 
         for (; start != last; ++start, --m_remaining)
-            if (unsigned(*start) > 0x1a)
+            if (!is_line_breaker(*start))
             {
                 if (m_first_line)
                 {
@@ -447,7 +453,7 @@ line_id_impl read_lock::line_iter::next(str_iter& out)
 
         const char* end = start;
         for (; end != last; ++end)
-            if (unsigned(*end) <= 0x1a)
+            if (is_line_breaker(*end))
             {
                 m_eating_ctag = false;
                 break;

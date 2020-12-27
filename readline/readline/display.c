@@ -1511,12 +1511,12 @@ static void output_beginning_line_color (int linenum, int modmark, const char *l
    line on the screen; vis:
 
 			     /old first difference
-	/beginning of line   |	      /old last same       /old EOL
-	v		     v	      v		    v
+	/beginning of line   |		    /old last same	 /old EOL
+	v		     v		    v			 v
 old:	eddie> Oh, my little gruntle-buggy is to me, as lurgid as
 new:	eddie> Oh, my little buggy says to me, as lurgid as
-	^		     ^	^			   ^
-	\beginning of line   |	\new last same	   \new end of line
+	^		     ^	      ^			   ^
+	\beginning of line   |	      \new last same	   \new end of line
 			     \new first difference
 
    All are character pointers for the sake of speed.  Special cases for
