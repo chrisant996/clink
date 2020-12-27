@@ -519,14 +519,6 @@ bool host::edit_line(const char* prompt, str_base& out)
             if (m_history)
                 m_history->add(out.c_str());
         }
-
-        if (ret)
-        {
-            // If the line is a directory, rewrite the line to invoke the CD
-            // command to change to the directory.
-            if (intercept_directory(out))
-                resolved = true; // No need to test for a doskey alias.
-        }
         break;
     }
 
@@ -535,6 +527,13 @@ bool host::edit_line(const char* prompt, str_base& out)
         m_doskey.resolve(out.c_str(), m_doskey_alias);
         if (m_doskey_alias)
             out.clear();
+    }
+
+    if (ret)
+    {
+        // If the line is a directory, rewrite the line to invoke the CD command
+        // to change to the directory.
+        intercept_directory(out);
     }
 
     s_history_db = nullptr;
