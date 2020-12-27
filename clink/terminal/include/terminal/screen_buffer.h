@@ -33,6 +33,7 @@ public:
     virtual void    insert_chars(int count) = 0;
     virtual void    delete_chars(int count) = 0;
     virtual void    set_attributes(const attributes attr) = 0;
+    virtual bool    get_nearest_color(attributes& attr) = 0;
 };
 
 //------------------------------------------------------------------------------

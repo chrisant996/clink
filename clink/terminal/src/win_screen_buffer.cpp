@@ -3,6 +3,7 @@
 
 #include "pch.h"
 #include "win_screen_buffer.h"
+#include "cielab.h"
 
 #include <core/base.h>
 #include <core/log.h>
@@ -344,7 +345,7 @@ void win_screen_buffer::delete_chars(int count)
 }
 
 //------------------------------------------------------------------------------
-void win_screen_buffer::set_attributes(const attributes attr)
+void win_screen_buffer::set_attributes(attributes attr)
 {
     CONSOLE_SCREEN_BUFFER_INFO csbi;
     GetConsoleScreenBufferInfo(m_handle, &csbi);
@@ -356,6 +357,10 @@ void win_screen_buffer::set_attributes(const attributes attr)
         int b_r_ = ((rgbi & 0x01) << 2) | !!(rgbi & 0x04);
         return (rgbi & 0x0a) | b_r_;
     };
+
+    // Map RGB/XTerm256 colors
+    if (!get_nearest_color(attr))
+        return;
 
     // Bold
     if (auto bold_attr = attr.get_bold())
@@ -405,8 +410,69 @@ void win_screen_buffer::set_attributes(const attributes attr)
         }
     }
 
-    // TODO: add rgb/xterm256 support back.
-
     out_attr |= csbi.wAttributes & ~attr_mask_all;
     SetConsoleTextAttribute(m_handle, short(out_attr));
+}
+
+//------------------------------------------------------------------------------
+static bool get_nearest_color(void* handle, const unsigned char (&rgb)[3], unsigned char& attr)
+{
+    static HMODULE hmod = GetModuleHandle("kernel32.dll");
+    static FARPROC proc = GetProcAddress(hmod, "GetConsoleScreenBufferInfoEx");
+    typedef BOOL (WINAPI* GCSBIEx)(HANDLE, PCONSOLE_SCREEN_BUFFER_INFOEX);
+
+    if (!proc)
+        return false;
+
+    CONSOLE_SCREEN_BUFFER_INFOEX infoex = { sizeof(infoex) };
+    if (!GCSBIEx(proc)(handle, &infoex))
+        return false;
+
+    cie::lab target(RGB(rgb[0], rgb[1], rgb[2]));
+    float best_deltaE = 0;
+    int best_idx = -1;
+
+    for (int i = sizeof_array(infoex.ColorTable); i--;)
+    {
+        cie::lab candidate(infoex.ColorTable[i]);
+        float deltaE = cie::deltaE(target, candidate);
+        if (best_idx < 0 || best_deltaE > deltaE)
+        {
+            best_deltaE = deltaE;
+            best_idx = i;
+        }
+    }
+
+    if (best_idx < 0)
+        return false;
+
+    static const int dos_to_ansi_order[] = { 0, 4, 2, 6, 1, 5, 3, 7 };
+    attr = (best_idx & 0x08) + dos_to_ansi_order[best_idx & 0x07];
+    return true;
+}
+
+//------------------------------------------------------------------------------
+bool win_screen_buffer::get_nearest_color(attributes& attr)
+{
+    const attributes::color fg = attr.get_fg().value;
+    const attributes::color bg = attr.get_bg().value;
+    if (fg.is_rgb)
+    {
+        unsigned char val;
+        unsigned char rgb[3];
+        fg.as_888(rgb);
+        if (!::get_nearest_color(m_handle, rgb, val))
+            return false;
+        attr.set_fg(val);
+    }
+    if (bg.is_rgb)
+    {
+        unsigned char val;
+        unsigned char rgb[3];
+        bg.as_888(rgb);
+        if (!::get_nearest_color(m_handle, rgb, val))
+            return false;
+        attr.set_bg(val);
+    }
+    return true;
 }

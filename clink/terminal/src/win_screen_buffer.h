@@ -27,6 +27,7 @@ public:
     virtual void    insert_chars(int count) override;
     virtual void    delete_chars(int count) override;
     virtual void    set_attributes(const attributes attr) override;
+    virtual bool    get_nearest_color(attributes& attr) override;
 
 private:
     enum : unsigned short
