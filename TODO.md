@@ -4,8 +4,6 @@ ChrisAnt Plans
 
 # RELEASE
 
-- Investigate all usage of `putenv` since it doesn't write back to the process's environment block.  Consider updating `getenv` to `os::get_env`, and `putenv` to `os::set_env`.
-
 ## Issues
 - The match pipeline should not fire on pressing **Enter** after `exit`.
 - When `convert-meta` is off, then when binding `\M-h` (etc) the key name gets interpreted differently than Clink expects.  Does this affect the `inputrc` files at all, or is it only an issue inside Clink's native code?
