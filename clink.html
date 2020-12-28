@@ -3,7 +3,7 @@
 
 <!-- ----------------------------------------------------- -->
 <head>
-<title>Clink v1.1.14</title>
+<title>Clink v1.1.16</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Rambla:wght@400;700&family=Roboto&family=Fira+Mono&display=swap');
 html {
@@ -401,7 +401,7 @@ var hljs=function(){"use strict";function e(n){Object.freeze(n);var t="function"
         </td>
         <td style="text-align:right">
             <div id="header">
-                <div id="title">Clink v1.1.14</div>
+                <div id="title">Clink v1.1.16</div>
                 <div id="url">
                     <a href="http://github.com/chrisant996/clink">
                         http://github.com/chrisant996/clink
@@ -427,8 +427,7 @@ var hljs=function(){"use strict";function e(n){Object.freeze(n);var t="function"
 <li>Context sensitive completion;<ul>
 <li>Executables (and aliases).</li>
 <li>Directory commands.</li>
-<li>Environment variables</li>
-<li>Thirdparty tools; Git, Mercurial, SVN, Go, and P4.</li>
+<li>Environment variables.</li>
 </ul>
 </li>
 <li>New keyboard shortcuts;<ul>
@@ -438,7 +437,14 @@ var hljs=function(){"use strict";function e(n){Object.freeze(n);var t="function"
 <li>Undo (<kbd>Ctrl</kbd>+<kbd>Z</kbd>).</li>
 <li>Automatic <code>cd ..</code> (<kbd>Ctrl</kbd>+<kbd>PgUp</kbd>).</li>
 <li>Environment variable expansion (<kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>E</kbd>).</li>
+<li>Scroll the screen buffer (<kbd>Alt</kbd>+<kbd>Up</kbd>, etc).</li>
 <li>(press <kbd>Alt</kbd>+<kbd>H</kbd> for many more...)</li>
+</ul>
+</li>
+<li>Directory shortcuts;<ul>
+<li>Typing a directory name followed by a path separator is a shortcut for <code>cd /d</code> to that directory.</li>
+<li>Typing <code>..</code> or <code>...</code> is a shortcut for <code>cd ..</code> or <code>cd ..\..</code> (each additional <code>.</code> adds another <code>\..</code>).</li>
+<li>Typing <code>-</code> or <code>cd -</code> changes to the previous current working directory.</li>
 </ul>
 </li>
 <li>Scriptable completion with Lua.</li>
@@ -455,8 +461,9 @@ var hljs=function(){"use strict";function e(n){Object.freeze(n);var t="function"
 <ul>
 <li>Some key binding sequences have changed; see <a href="#keybindings">Key Bindings</a> for more information.</li>
 <li>Match coloring is now done by Readline and is configured differently; see <a href="#completioncolors">Completion Colors</a> for more information.</li>
-<li>Settings and history should migrate automatically if the new <code>clink_settings</code> and <code>clink_history</code> files don&#39;t exist (deleting them will cause migration to happen again).</li>
+<li>Settings and history should migrate automatically if the new <code>clink_settings</code> and <code>clink_history</code> files don&#39;t exist (deleting them will cause migration to happen again).  To find the directory that contains these files, run <code>clink info</code> and look for the &quot;state&quot; line.</li>
 <li>Script compatibility should be very good, but some scripts may still encounter problems.  If you do encounter a compatibility problem you can look for an updated version of the script, update the script yourself, or visit the <a href="https://github.com/chrisant996/clink/issues">repo</a> and open an issue describing details about the compatibility problem.</li>
+<li>Some settings have changed slightly, and there are many new settings.  See <a href="#configclink">Configuring Clink</a> for more information.</li>
 </ul>
 <h1 id="how-clink-works">How Clink Works</h1>
 <p>When running Clink via the methods above, Clink checks the parent process is supported and injects a DLL into it. The DLL then hooks the WriteConsole() and ReadConsole() Windows functions. The former is so that Clink can capture the current prompt, and the latter hook allows Clink to provide its own Readline-powered command line editing.</p>
@@ -661,7 +668,12 @@ var hljs=function(){"use strict";function e(n){Object.freeze(n);var t="function"
 <tr>
 <td align="center"><code>match.ignore_case</code></td>
 <td align="center"><code>relaxed</code></td>
-<td>Controls case sensitivity in string comparisons. <code>off</code> = case sensitive, <code>on</code> = case insensitive, <code>relaxed</code> = case insensitive plus <code>-</code> and <code>_</code> are considered equal.</td>
+<td>Controls case sensitivity when completing matches. <code>off</code> = case sensitive, <code>on</code> = case insensitive, <code>relaxed</code> = case insensitive plus <code>-</code> and <code>_</code> are considered equal.</td>
+</tr>
+<tr>
+<td align="center"><code>match.ignore_accent</code></td>
+<td align="center">True</td>
+<td>Controls accent sensitivity when completing matches. For example, <code>ä</code> and <code>a</code> are considered equivalent with this enabled.</td>
 </tr>
 <tr>
 <td align="center"><code>match.sort_dirs</code></td>
@@ -1822,7 +1834,7 @@ line:getcommandoffset() == 4</code></pre></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="os.getalias">os.getalias</a></div> <div class="signature">( <span class="arg_name">name</span>:string ) : string</div></div><div class="body"><p class="desc">Returns command string for doskey alias <span class="arg">name</span>.</p></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="os.getaliases">os.getaliases</a></div> <div class="signature">() : table</div></div><div class="body"><p class="desc">Returns doskey aliases in a table with the following scheme: <span class="tablescheme">{ {name:string, command:string}, ... }</span>.</p></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="os.getcwd">os.getcwd</a></div> <div class="signature">() : string</div></div><div class="body"><p class="desc">Returns the current directory.</p></div></div><hr/>
-<div class="function"><div class="header"> <div class="name"><a name="os.getenv">os.getenv</a></div> <div class="signature">( <span class="arg_name">name</span>:string ) : string | nil</div></div><div class="body"><p class="desc">Returns the value of the named environment variable, or nil if it doesn't exist.</p></div></div><hr/>
+<div class="function"><div class="header"> <div class="name"><a name="os.getenv">os.getenv</a></div> <div class="signature">( <span class="arg_name">name</span>:string ) : string | nil</div></div><div class="body"><p class="desc">Returns the value of the named environment variable, or nil if it doesn't exist.</p><p class="desc"> Note that <code>os.getenv("HOME")</code> receives special treatment: if %HOME% is not set then it is synthesized from %HOMEDRIVE% and %HOMEPATH%, or from %USERPROFILE%.</p></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="os.getenvnames">os.getenvnames</a></div> <div class="signature">() : table</div></div><div class="body"><p class="desc">Returns all environment variables in a table with the following scheme: <span class="tablescheme">{ {name:string, value:string}, ... }</span>.</p></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="os.gethost">os.gethost</a></div> <div class="signature">() : string</div></div><div class="body"><p class="desc">Returns the fully qualified file name of the host process.  Currently only CMD.EXE can host Clink.</p></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="os.getscreeninfo">os.getscreeninfo</a></div> <div class="signature">() : table</div></div><div class="body"><p class="desc">Returns dimensions of the terminal's buffer and visible window. The returned table has the following scheme:</p><pre class="language-lua"><code>{
@@ -1904,6 +1916,25 @@ settings.add("color.mymno", "bright magenta", "Color setting")</code></pre></div
         <div class="section" id="changes">
 <h1 id="changes">Changes</h1>
 <h2 id="releases-from-chrisant996clink-fork">Releases from <a href="https://github.com/chrisant996/clink">chrisant996/clink</a> fork</h2>
+<h3 id="v1116">v1.1.16</h3>
+<ul>
+<li>Added <code>match.ignore_accent</code> setting (enabled by default) that ignores Latin alphabet diacriticals when completing matches (e.g. <code>ä</code> matches <code>a</code>, <code>ı</code> matches <code>i</code>, <code>ł</code> matches <code>l</code>, etc).</li>
+<li>Fixed <a href="https://github.com/chrisant996/clink/issues/42">#42</a> history lines are split on special characters.</li>
+<li>Fixed <a href="https://github.com/chrisant996/clink/issues/41">#41</a> Enable custom doskey handling of <code>..</code> and <code>-</code>.</li>
+<li>Fixed Readline bug inserting dir matches; <code>\win_  foo</code> (cursor at <code>_</code>) would become <code>\Windows\\_  foo</code>.</li>
+<li>Fixed the <code>quoted-insert</code> command to insert just <code>\x1b</code> when <kbd>ESC</kbd> is pressed.</li>
+</ul>
+<h3 id="v1115">v1.1.15</h3>
+<ul>
+<li>Migrating settings now immediately writes a new settings file, instead of waiting until a setting is changed.</li>
+<li>Added support to detect when running in Windows Terminal and use native terminal support (which enables things like Xterm 256 and 24-bit color support).</li>
+<li>Added terminal emulation support for Xterm 256 and 24-bit color escape codes. Clink maps the specified color to the most similar color in the active 16 color palette (using the CIELAB color space). To get full support for 24-bit color, it&#39;s necessary to use ConEmu or Windows Terminal or a similar console host, or to set <code>terminal.emulation</code> to <code>native</code> (which isn&#39;t supported on some older Windows OS versions).</li>
+<li>Allow doskey macros named <code>..</code> or <code>-</code>, and also now doskey macros that resolve to <code>..</code> or <code>-</code> or a directory name will work (just like if the macro text had been typed at the Clink prompt).</li>
+<li>Fixed compatibility problem with various scripts getting the %HOME% environment variable. Now if it isn&#39;t set, then Clink synthesizes %HOME% from %HOMEDRIVE% and %HOMEPATH% or from %USERPROFILE%.</li>
+<li>Fixed saving color settings to behave like other settings: only write a setting&#39;s value to the setting file if it differs from the default value.</li>
+<li>Fixed the <code>clink.print()</code> Lua function so it also works during loading scripts and during prompt filtering.</li>
+<li>Fixed the Readline input text display getting garbled if the filtered prompt includes Xterm&#39;s OSC window title code (<code>\x1b]0;text\x07</code>). Clink doesn&#39;t support that escape code, but at no longer garbles the input text if that escape code is present.</li>
+</ul>
 <h3 id="v1114">v1.1.14</h3>
 <ul>
 <li>Migrate settings and history from an old version of Clink, if present.  This only happens if the new-version Clink settings or history files don&#39;t exist.  (Deleting an existing new-version Clink settings or history file will cause migration to happen again.)</li>
