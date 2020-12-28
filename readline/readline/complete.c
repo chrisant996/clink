@@ -2549,10 +2549,18 @@ append_to_match (char *text, int orig_start, int delimiter, int quote_char, int 
 	{
 	  if (_rl_complete_mark_directories /* && rl_completion_suppress_append == 0 */)
 	    {
+/* begin_clink_change */
+#if 0
 	      /* This is clumsy.  Avoid putting in a double slash if point
 		 is at the end of the line and the previous character is a
 		 slash. */
 	      if (rl_point && rl_line_buffer[rl_point] == '\0' && rl_is_path_separator (rl_line_buffer[rl_point - 1]))
+#else
+	      /* This is clumsy.  Avoid putting in a double slash if the
+		 previous character is a slash. */
+	      if (rl_point && rl_is_path_separator (rl_line_buffer[rl_point - 1]))
+#endif
+/* end_clink_change */
 		;
 	      else if (!rl_is_path_separator (rl_line_buffer[rl_point]))
 		{
