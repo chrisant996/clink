@@ -1,10 +1,10 @@
 # What is Clink?
 
-Clink combines the native Windows shell cmd.exe with the powerful command line editing features of the GNU Readline library, which provides rich completion, history, and line-editing capabilities. Readline is best known for its use in the famous Unix shell Bash, the standard shell for Mac OS X and many Linux distributions.
+Clink combines the native Windows shell cmd.exe with the powerful command line editing features of the GNU Readline library, which provides rich completion, history, and line-editing capabilities. Readline is best known for its use in the well-known Unix shell Bash, the standard shell for Mac OS X and many Linux distributions.
 
 # Features
 
-- The same line editing as Bash (from GNU's Readline library).
+- The same line editing as Bash (from the [GNU Readline library](https://tiswww.case.edu/php/chet/readline/rltop.html) version 8.0).
 - History persistence between sessions.
 - Context sensitive completion;
   - Executables (and aliases).
@@ -17,6 +17,7 @@ Clink combines the native Windows shell cmd.exe with the powerful command line e
   - Undo (<kbd>Ctrl</kbd>+<kbd>Z</kbd>).
   - Automatic `cd ..` (<kbd>Ctrl</kbd>+<kbd>PgUp</kbd>).
   - Environment variable expansion (<kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>E</kbd>).
+  - Doskey alias expansion (<kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>F</kbd>).
   - Scroll the screen buffer (<kbd>Alt</kbd>+<kbd>Up</kbd>, etc).
   - (press <kbd>Alt</kbd>+<kbd>H</kbd> for many more...)
 - Directory shortcuts;
@@ -39,7 +40,7 @@ The last option is to use the Clink shortcut that the installer adds to Windows'
 
 # Upgrading from Clink v0.4.9
 
-The new Clink tries to be as backward compatible with Clink v0.4.9 as possible.  However, in some cases upgrading may require a little bit of configuration work.
+The new Clink tries to be as backward compatible with Clink v0.4.9 as possible. However, in some cases upgrading may require a little bit of configuration work.
 
 - Some key binding sequences have changed; see [Key Bindings](#keybindings) for more information.
 - Match coloring is now done by Readline and is configured differently; see [Completion Colors](#completioncolors) for more information.
