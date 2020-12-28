@@ -72,7 +72,7 @@ Clink uses [Premake](http://premake.github.io) to generate Visual Studio solutio
 2. Launch a debugger such as Visual Studio.
 3. Attach the debugger to the CMD.exe process that Clink was injected into.
    - If you break into the debugger now, it will be inside Clink code, waiting for keyboard input.
-4. Here are a couple breakpoints that might be useful:
+4. Here are some breakpoints that might be useful:
    - `host::edit_line` is the start of showing a prompt and accepting input.
    - `line_editor_impl::update_internal` is where the match pipeline uses `.generate()` to collect matches and `.select()` to filter the matches.
    - `rl_module::on_input` and `readline_internal_char` (and the `_rl_dispatch` inside it) is where keys are translated through Readline's keymap to invoke commands.
