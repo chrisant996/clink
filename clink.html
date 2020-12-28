@@ -419,10 +419,10 @@ var hljs=function(){"use strict";function e(n){Object.freeze(n);var t="function"
     <div id="content">
         <div class="section" id="documentation">
 <h1 id="what-is-clink">What is Clink?</h1>
-<p>Clink combines the native Windows shell cmd.exe with the powerful command line editing features of the GNU Readline library, which provides rich completion, history, and line-editing capabilities. Readline is best known for its use in the famous Unix shell Bash, the standard shell for Mac OS X and many Linux distributions.</p>
+<p>Clink combines the native Windows shell cmd.exe with the powerful command line editing features of the GNU Readline library, which provides rich completion, history, and line-editing capabilities. Readline is best known for its use in the well-known Unix shell Bash, the standard shell for Mac OS X and many Linux distributions.</p>
 <h1 id="features">Features</h1>
 <ul>
-<li>The same line editing as Bash (from GNU&#39;s Readline library).</li>
+<li>The same line editing as Bash (from the <a href="https://tiswww.case.edu/php/chet/readline/rltop.html">GNU Readline library</a> version 8.0).</li>
 <li>History persistence between sessions.</li>
 <li>Context sensitive completion;<ul>
 <li>Executables (and aliases).</li>
@@ -437,6 +437,7 @@ var hljs=function(){"use strict";function e(n){Object.freeze(n);var t="function"
 <li>Undo (<kbd>Ctrl</kbd>+<kbd>Z</kbd>).</li>
 <li>Automatic <code>cd ..</code> (<kbd>Ctrl</kbd>+<kbd>PgUp</kbd>).</li>
 <li>Environment variable expansion (<kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>E</kbd>).</li>
+<li>Doskey alias expansion (<kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>F</kbd>).</li>
 <li>Scroll the screen buffer (<kbd>Alt</kbd>+<kbd>Up</kbd>, etc).</li>
 <li>(press <kbd>Alt</kbd>+<kbd>H</kbd> for many more...)</li>
 </ul>
@@ -453,11 +454,14 @@ var hljs=function(){"use strict";function e(n){Object.freeze(n);var t="function"
 </ul>
 <p>By default Clink binds <kbd>Alt</kbd>+<kbd>H</kbd> to display the current key bindings. More features can also be found in GNU&#39;s <a href="https://tiswww.cwru.edu/php/chet/readline/readline.html">Readline</a> and <a href="https://tiswww.cwru.edu/php/chet/readline/history.html">History</a> libraries&#39; manuals.</p>
 <h1 id="usage">Usage</h1>
-<p>There are three ways to use Clink the first of which is to add Clink to cmd.exe&#39;s autorun registry entry. This can be selected when installing Clink using the installer and Clink also provides the ability to manage this autorun entry from the command line. Running <code>clink autorun --help</code> has more information.</p>
-<p>The second alternative is to manually run Clink using the command <code>clink inject</code> from within a command prompt session to run Clink in that session.</p>
-<p>The last option is to use the Clink shortcut that the installer adds to Windows&#39; start menu. This is in essence a shortcut to the command <code>cmd.exe /k clink inject</code>.</p>
+<p>There are several ways to start Clink.</p>
+<ol>
+<li>If you installed the auto-run, just start <code>cmd.exe</code>. Run <code>clink autorun --help</code> for more info.</li>
+<li>To manually start, run the Clink shortcut from the Start menu (or the clink.bat located in the install directory).</li>
+<li>To establish Clink to an existing <code>cmd.exe</code> process, use <code>&lt;install_dir&gt;\clink.exe inject</code>.</li>
+</ol>
 <h1 id="upgrading-from-clink-v049">Upgrading from Clink v0.4.9</h1>
-<p>The new Clink tries to be as backward compatible with Clink v0.4.9 as possible.  However, in some cases upgrading may require a little bit of configuration work.</p>
+<p>The new Clink tries to be as backward compatible with Clink v0.4.9 as possible. However, in some cases upgrading may require a little bit of configuration work.</p>
 <ul>
 <li>Some key binding sequences have changed; see <a href="#keybindings">Key Bindings</a> for more information.</li>
 <li>Match coloring is now done by Readline and is configured differently; see <a href="#completioncolors">Completion Colors</a> for more information.</li>
