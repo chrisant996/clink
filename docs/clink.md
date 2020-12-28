@@ -9,8 +9,7 @@ Clink combines the native Windows shell cmd.exe with the powerful command line e
 - Context sensitive completion;
   - Executables (and aliases).
   - Directory commands.
-  - Environment variables
-  - Thirdparty tools; Git, Mercurial, SVN, Go, and P4.
+  - Environment variables.
 - New keyboard shortcuts;
   - Paste from clipboard (<kbd>Ctrl</kbd>+<kbd>V</kbd>).
   - Incremental history search (<kbd>Ctrl</kbd>+<kbd>R</kbd> and <kbd>Ctrl</kbd>+<kbd>S</kbd>).
@@ -18,7 +17,12 @@ Clink combines the native Windows shell cmd.exe with the powerful command line e
   - Undo (<kbd>Ctrl</kbd>+<kbd>Z</kbd>).
   - Automatic `cd ..` (<kbd>Ctrl</kbd>+<kbd>PgUp</kbd>).
   - Environment variable expansion (<kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>E</kbd>).
+  - Scroll the screen buffer (<kbd>Alt</kbd>+<kbd>Up</kbd>, etc).
   - (press <kbd>Alt</kbd>+<kbd>H</kbd> for many more...)
+- Directory shortcuts;
+  - Typing a directory name followed by a path separator is a shortcut for `cd /d` to that directory.
+  - Typing `..` or `...` is a shortcut for `cd ..` or `cd ..\..` (each additional `.` adds another `\..`).
+  - Typing `-` or `cd -` changes to the previous current working directory.
 - Scriptable completion with Lua.
 - Colored and scriptable prompt.
 - Auto-answering of the "Terminate batch job?" prompt.
