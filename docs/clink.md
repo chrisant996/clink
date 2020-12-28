@@ -32,11 +32,11 @@ By default Clink binds <kbd>Alt</kbd>+<kbd>H</kbd> to display the current key bi
 
 # Usage
 
-There are three ways to use Clink the first of which is to add Clink to cmd.exe's autorun registry entry. This can be selected when installing Clink using the installer and Clink also provides the ability to manage this autorun entry from the command line. Running `clink autorun --help` has more information.
+There are several ways to start Clink.
 
-The second alternative is to manually run Clink using the command `clink inject` from within a command prompt session to run Clink in that session.
-
-The last option is to use the Clink shortcut that the installer adds to Windows' start menu. This is in essence a shortcut to the command `cmd.exe /k clink inject`.
+1. If you installed the auto-run, just start `cmd.exe`. Run `clink autorun --help` for more info.
+2. To manually start, run the Clink shortcut from the Start menu (or the clink.bat located in the install directory).
+3. To establish Clink to an existing `cmd.exe` process, use `<install_dir>\clink.exe inject`.
 
 # Upgrading from Clink v0.4.9
 
