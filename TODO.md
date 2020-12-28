@@ -4,6 +4,8 @@ ChrisAnt Plans
 
 # RELEASE
 
+- `echo \tmp\te_     abc` (cursor at `_`) inserts double path separators to become `echo \tmp\Temp\\     abc`!
+- Completion doesn't match `E` with `É`, but I feel that if possible then it should (at least conditionally with a setting).
 - Investigate all usage of `putenv` since it doesn't write back to the process's environment block.  Consider updating `getenv` to `os::get_env`, and `putenv` to `os::set_env`.
 
 ## Issues
@@ -12,6 +14,7 @@ ChrisAnt Plans
 
 ## Cmder, Powerline
 - Merge my powerline changes with cmder and cmder-powerline-prompt.
+  - Add easier config without needing to modify the scripts (which makes updating very painful); e.g. people patch the scripts to change icons.
 - Port Cmder to v1.x -- will require help from Cmder and/or ConEmu teams.  There are a lot of hard-coded expectations about Clink (web site address, terminal input mode, DLL names, VirtualAlloc patterns, and many other things).
 
 <br/>
