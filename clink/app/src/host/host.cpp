@@ -42,6 +42,12 @@ static setting_enum g_ignore_case(
     "off,on,relaxed",
     2);
 
+static setting_bool g_fuzzy_accent(
+    "match.ignore_accent",
+    "Accent insensitive matching",
+    "Toggles whether accents on characters are ignored when selecting matches.",
+    true);
+
 static setting_bool g_filter_prompt(
     "clink.promptfilter",
     "Enable prompt filtering by Lua scripts",
@@ -364,7 +370,7 @@ bool host::edit_line(const char* prompt, str_base& out)
     static_assert(str_compare_scope::exact == 0, "g_ignore_case values must match str_compare_scope values");
     static_assert(str_compare_scope::caseless == 1, "g_ignore_case values must match str_compare_scope values");
     static_assert(str_compare_scope::relaxed == 2, "g_ignore_case values must match str_compare_scope values");
-    str_compare_scope compare(g_ignore_case.get());
+    str_compare_scope compare(g_ignore_case.get(), g_fuzzy_accent.get());
 
     // Improve performance while replaying doskey macros by not loading scripts
     // or history, since they aren't used.

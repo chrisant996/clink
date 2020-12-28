@@ -94,7 +94,8 @@ Name                         | Default | Description
 `lua.path`                   |         | Value to append to `package.path`. Used to search for Lua scripts specified in `require()` statements.
 <a name="lua_reload_scripts"/>`lua.reload_scripts` | False | When false, Lua scripts are loaded once and are only reloaded if forced (see <a href="#lua-scripts-location">The Location of Lua Scripts</a> for details).  When true, Lua scripts are loaded each time the edit prompt is activated.
 `lua.traceback_on_error`     | False   | Prints stack trace on Lua errors.
-`match.ignore_case`          | `relaxed` | Controls case sensitivity in string comparisons. `off` = case sensitive, `on` = case insensitive, `relaxed` = case insensitive plus `-` and `_` are considered equal.
+`match.ignore_case`          | `relaxed` | Controls case sensitivity when completing matches. `off` = case sensitive, `on` = case insensitive, `relaxed` = case insensitive plus `-` and `_` are considered equal.
+`match.ignore_accent`        | True    | Controls accent sensitivity when completing matches. For example, `ä` and `a` are considered equivalent with this enabled.
 `match.sort_dirs`            | `with`  | How to sort matching directory names. `before` = before files, `with` = with files, `after` = after files.
 `match.wild`                 | True    | Matches `?` and `*` wildcards when using any of the `menu-complete` commands. Turn this off to behave how bash does.
 `readline.hide_stderr`       | False   | Suppresses stderr from the Readline library.  Enable this if Readline error messages are getting in the way.

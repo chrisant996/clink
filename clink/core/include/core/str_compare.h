@@ -7,6 +7,9 @@
 #include "str_iter.h"
 
 #include <Windows.h>
+#include <assert.h>
+
+#include <map>
 
 //------------------------------------------------------------------------------
 class str_compare_scope
@@ -20,21 +23,27 @@ public:
         num_scope_values
     };
 
-                str_compare_scope(int mode);
+                str_compare_scope(int mode, bool fuzzy_accent=false);
                 ~str_compare_scope();
     static int  current();
+    static bool current_fuzzy_accents();
 
 private:
     int         m_prev_mode;
+    bool        m_prev_fuzzy_accents;
     threadlocal static int ts_mode;
+    threadlocal static bool ts_fuzzy_accents;
 };
 
 
 
 //------------------------------------------------------------------------------
+int normalize_accent(int c);
+
+//------------------------------------------------------------------------------
 // Returns how many characters match at the beginning of the strings, or -1 if
 // the entire strings match.
-template <class T, int MODE>
+template <class T, int MODE, bool fuzzy_accents>
 int str_compare_impl(str_iter_impl<T>& lhs, str_iter_impl<T>& rhs)
 {
     const T* start = lhs.get_pointer();
@@ -62,7 +71,14 @@ int str_compare_impl(str_iter_impl<T>& lhs, str_iter_impl<T>& rhs)
         if (d == '\\') d = '/';
 
         if (c != d)
-            break;
+        {
+            if (!fuzzy_accents)
+                break;
+            c = normalize_accent(c);
+            d = normalize_accent(d);
+            if (c != d)
+                break;
+        }
 
         lhs.next();
         rhs.next();
@@ -78,11 +94,18 @@ int str_compare_impl(str_iter_impl<T>& lhs, str_iter_impl<T>& rhs)
 template <class T>
 int str_compare(str_iter_impl<T>& lhs, str_iter_impl<T>& rhs)
 {
+    bool fuzzy_accents = str_compare_scope::current_fuzzy_accents();
     switch (str_compare_scope::current())
     {
-    case str_compare_scope::relaxed:  return str_compare_impl<T, 2>(lhs, rhs);
-    case str_compare_scope::caseless: return str_compare_impl<T, 1>(lhs, rhs);
-    default:                          return str_compare_impl<T, 0>(lhs, rhs);
+    case str_compare_scope::relaxed:
+        if (fuzzy_accents)  return str_compare_impl<T, 2, true>(lhs, rhs);
+        else                return str_compare_impl<T, 2, false>(lhs, rhs);
+    case str_compare_scope::caseless:
+        if (fuzzy_accents)  return str_compare_impl<T, 1, true>(lhs, rhs);
+        else                return str_compare_impl<T, 1, false>(lhs, rhs);
+    default:
+        if (fuzzy_accents)  return str_compare_impl<T, 0, true>(lhs, rhs);
+        else                return str_compare_impl<T, 0, false>(lhs, rhs);
     }
 }
 

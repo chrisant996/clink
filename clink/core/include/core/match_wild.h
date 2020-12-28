@@ -13,7 +13,7 @@ namespace path
 {
 
 //------------------------------------------------------------------------------
-template <class T, int MODE>
+template <class T, int MODE, bool fuzzy_accents>
 bool match_char_impl(int pc, int fc)
 {
     if (MODE > 0)
@@ -31,11 +31,21 @@ bool match_char_impl(int pc, int fc)
     if (pc == '\\') pc = '/';
     if (fc == '\\') fc = '/';
 
-    return (pc == fc);
+    if (pc != fc)
+    {
+        if (!fuzzy_accents)
+            return false;
+        pc = normalize_accent(pc);
+        fc = normalize_accent(fc);
+        if (pc != fc)
+            return false;
+    }
+
+    return true;
 }
 
 //------------------------------------------------------------------------------
-template <class T, int MODE>
+template <class T, int MODE, bool fuzzy_accents>
 bool match_wild_impl(const str_iter_impl<T>& _pattern, const str_iter_impl<T>& _file, bool star_matches_everything=false)
 {
     str_iter_impl<T> pattern(_pattern);
@@ -90,12 +100,12 @@ bool match_wild_impl(const str_iter_impl<T>& _pattern, const str_iter_impl<T>& _
                 const T* push_scout = file.get_pointer();
                 while (d &&
                        (star_matches_everything || !path::is_separator(d)) &&
-                       !match_char_impl<T,MODE>(d, c))
+                       !match_char_impl<T,MODE,fuzzy_accents>(d, c))
                 {
                     file.next();
                     d = file.peek();
                 }
-                if (!match_char_impl<T,MODE>(d, c))
+                if (!match_char_impl<T,MODE,fuzzy_accents>(d, c))
                 {
                     file.reset_pointer(push_scout);
                     break; // Next character has no possible match ahead.
@@ -160,7 +170,7 @@ bool match_wild_impl(const str_iter_impl<T>& _pattern, const str_iter_impl<T>& _
                     }
                 }
             }
-            if (!match_char_impl<T,MODE>(d, c))
+            if (!match_char_impl<T,MODE,fuzzy_accents>(d, c))
                 break;
             pattern.next();
             file.next();
@@ -188,11 +198,18 @@ bool match_wild_impl(const str_iter_impl<T>& _pattern, const str_iter_impl<T>& _
 template <class T>
 bool match_wild(const str_iter_impl<T>& pattern, const str_iter_impl<T>& file, bool star_matches_everything=false)
 {
+    bool fuzzy_accents = str_compare_scope::current_fuzzy_accents();
     switch (str_compare_scope::current())
     {
-    case str_compare_scope::relaxed:  return match_wild_impl<T, 2>(pattern, file, star_matches_everything);
-    case str_compare_scope::caseless: return match_wild_impl<T, 1>(pattern, file, star_matches_everything);
-    default:                          return match_wild_impl<T, 0>(pattern, file, star_matches_everything);
+    case str_compare_scope::relaxed:
+        if (fuzzy_accents)  return match_wild_impl<T, 2, true>(pattern, file, star_matches_everything);
+        else                return match_wild_impl<T, 2, false>(pattern, file, star_matches_everything);
+    case str_compare_scope::caseless:
+        if (fuzzy_accents)  return match_wild_impl<T, 1, true>(pattern, file, star_matches_everything);
+        else                return match_wild_impl<T, 1, false>(pattern, file, star_matches_everything);
+    default:
+        if (fuzzy_accents)  return match_wild_impl<T, 0, true>(pattern, file, star_matches_everything);
+        else                return match_wild_impl<T, 0, false>(pattern, file, star_matches_everything);
     }
 }
 

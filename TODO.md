@@ -5,7 +5,6 @@ ChrisAnt Plans
 # RELEASE
 
 - `echo \tmp\te_     abc` (cursor at `_`) inserts double path separators to become `echo \tmp\Temp\\     abc`!
-- Completion doesn't match `E` with `É`, but I feel that if possible then it should (at least conditionally with a setting).
 - Investigate all usage of `putenv` since it doesn't write back to the process's environment block.  Consider updating `getenv` to `os::get_env`, and `putenv` to `os::set_env`.
 
 ## Issues
