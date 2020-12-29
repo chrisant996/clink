@@ -64,7 +64,8 @@ static int get_base_name(lua_State* state)
 /// -name:  path.getdirectory
 /// -arg:   path:string
 /// -ret:   nil or string
-/// -show:  path.getdirectory("/foo/bar") -- returns "/foo/"
+/// -show:  path.getdirectory("e:/foo/bar") -- returns "e:/foo"
+/// -show:  path.getdirectory("/foo/bar") -- returns "/foo"
 /// -show:  path.getdirectory("bar") -- returns nil
 static int get_directory(lua_State* state)
 {
