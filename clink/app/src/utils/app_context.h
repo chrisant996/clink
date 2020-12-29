@@ -33,9 +33,11 @@ public:
     void        get_settings_path(str_base& out) const;
     void        get_history_path(str_base& out) const;
     void        get_script_path(str_base& out) const;
+    void        get_script_path_readable(str_base& out) const;
     void        update_env() const;
 
 private:
+    void        get_script_path(str_base& out, bool readable) const;
     desc        m_desc;
     int         m_id;
 };

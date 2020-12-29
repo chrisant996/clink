@@ -22,7 +22,7 @@ int clink_info(int argc, char** argv)
         { "log",        &app_context::get_log_path },
         { "settings",   &app_context::get_settings_path },
         { "history",    &app_context::get_history_path },
-        { "scripts",    &app_context::get_script_path, true/*suppress_when_empty*/ },
+        { "scripts",    &app_context::get_script_path_readable, true/*suppress_when_empty*/ },
     };
 
     const auto* context = app_context::get();

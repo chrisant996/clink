@@ -163,7 +163,7 @@ void app_context::get_history_path(str_base& out) const
 }
 
 //------------------------------------------------------------------------------
-void app_context::get_script_path(str_base& out) const
+void app_context::get_script_path(str_base& out, bool readable) const
 {
     str<280> tmp;
 
@@ -177,7 +177,7 @@ void app_context::get_script_path(str_base& out) const
     if (setting_clink_path && *setting_clink_path)
     {
         if (out.length())
-            out << " ; ";
+            out << (readable ? " ; " : ";");
         out << setting_clink_path;
     }
     else
@@ -186,7 +186,7 @@ void app_context::get_script_path(str_base& out) const
         if (tmp.length())
         {
             if (out.length())
-                out << " ; ";
+                out << (readable ? " ; " : ";");
             out << tmp.c_str();
         }
 
@@ -194,7 +194,7 @@ void app_context::get_script_path(str_base& out) const
         if (tmp.length())
         {
             if (out.length())
-                out << " ; ";
+                out << (readable ? " ; " : ";");
             out << tmp.c_str();
         }
     }
@@ -203,9 +203,21 @@ void app_context::get_script_path(str_base& out) const
     if (os::get_env("clink_path", tmp) && tmp.length())
     {
         if (out.length())
-            out << " ; ";
+            out << (readable ? " ; " : ";");
         out << tmp.c_str();
     }
+}
+
+//------------------------------------------------------------------------------
+void app_context::get_script_path(str_base& out) const
+{
+    return get_script_path(out, false);
+}
+
+//------------------------------------------------------------------------------
+void app_context::get_script_path_readable(str_base& out) const
+{
+    return get_script_path(out, true);
 }
 
 //-----------------------------------------------------------------------------
