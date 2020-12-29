@@ -7,6 +7,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <utility>
 
 //------------------------------------------------------------------------------
 inline int  str_len(const char* s)                                   { return int(strlen(s)); }
@@ -36,7 +37,6 @@ public:
 
                         str_impl(TYPE* data, unsigned int size);
                         str_impl(const str_impl&) = delete;
-                        str_impl(const str_impl&&) = delete;
                         ~str_impl();
     void                attach(TYPE* data, unsigned int size);
     bool                reserve(unsigned int size, bool exact = false);
@@ -65,7 +65,10 @@ public:
     void                operator = (const str_impl&) = delete;
 
 protected:
+                        str_impl(str_impl&&);
     void                set_growable(bool state=true);
+    str_impl&           operator = (str_impl&&);
+    void                reset_data(TYPE* data, unsigned int size);
 
 private:
     typedef unsigned short ushort;
@@ -94,6 +97,13 @@ template <typename TYPE>
 str_impl<TYPE>::~str_impl()
 {
     free_data();
+}
+
+//------------------------------------------------------------------------------
+template <typename TYPE>
+str_impl<TYPE>::str_impl(str_impl&& s)
+{
+    *this = std::move(s);
 }
 
 //------------------------------------------------------------------------------
@@ -380,6 +390,31 @@ str_impl<TYPE>& str_impl<TYPE>::operator << (const str_impl& rhs)
     return *this;
 }
 
+//------------------------------------------------------------------------------
+template <typename TYPE>
+str_impl<TYPE>& str_impl<TYPE>::operator = (str_impl&& s)
+{
+    memcpy(this, &s, sizeof(*this));
+
+    // This leaves s in a non-reusable state!
+    s.m_data = nullptr;
+    s.m_size = 0;
+    s.m_length = 0;
+    s.m_owns_ptr = false;
+
+    return *this;
+}
+
+//------------------------------------------------------------------------------
+template <typename TYPE>
+void str_impl<TYPE>::reset_data(TYPE* data, unsigned int size)
+{
+    // reset_data() can be used to repair this back into a reusable state after
+    // invoking operator=(str_impl&&).
+    m_data = data;
+    m_size = size;
+}
+
 
 
 //------------------------------------------------------------------------------
@@ -404,11 +439,14 @@ public:
     template <int I> str_base(char (&data)[I]) : str_impl<char>(data, I) {}
                      str_base(char* data, int size) : str_impl<char>(data, size) {}
                      str_base(const str_base&)         = delete;
-                     str_base(const str_base&&)        = delete;
     int              from_utf16(const wchar_t* utf16)  { clear(); return to_utf8(*this, utf16); }
     void             operator = (const char* value)    { copy(value); }
     void             operator = (const wchar_t* value) { from_utf16(value); }
     void             operator = (const str_base& rhs)  = delete;
+    str_base&        operator = (str_base&& rhs)       { str_impl<char>::operator=(std::move(rhs)); return *this; }
+
+protected:
+                     str_base(str_base&&)              = default;
 };
 
 class wstr_base : public str_impl<wchar_t>
@@ -417,11 +455,15 @@ public:
     template <int I> wstr_base(wchar_t (&data)[I]) : str_impl<wchar_t>(data, I) {}
                      wstr_base(wchar_t* data, int size) : str_impl<wchar_t>(data, size) {}
                      wstr_base(const wstr_base&)        = delete;
-                     wstr_base(const wstr_base&&)       = delete;
     int              from_utf8(const char* utf8)        { clear(); return to_utf16(*this, utf8); }
+    using            str_impl<wchar_t>::operator =;
     void             operator = (const wchar_t* value)  { copy(value); }
     void             operator = (const char* value)     { from_utf8(value); }
     void             operator = (const wstr_base&)      = delete;
+    wstr_base&       operator = (wstr_base&& rhs)       { str_impl<wchar_t>::operator=(std::move(rhs)); return *this; }
+
+protected:
+                     wstr_base(wstr_base&&)             = default;
 };
 
 
@@ -435,7 +477,7 @@ public:
     explicit    str(const char* value) : str()      { copy(value); }
     explicit    str(const wchar_t* value) : str()   { from_utf16(value); }
                 str(const str&) = delete;
-                str(const str&&) = delete;
+                str(str&&) = delete;
     using       str_base::operator =;
 
 private:
@@ -450,12 +492,66 @@ public:
     explicit    wstr(const wchar_t* value) : wstr() { copy(value); }
     explicit    wstr(const char* value) : wstr()    { from_utf8(value); }
                 wstr(const wstr&) = delete;
-                wstr(const wstr&&) = delete;
+                wstr(wstr&&) = delete;
     using       wstr_base::operator =;
 
 private:
     wchar_t     m_data[COUNT];
 };
+
+
+
+//------------------------------------------------------------------------------
+// Ugh!  I'll accept the size inefficiency of having a non-static m_empty member
+// to retain the general case runtime performance efficiency of str_impl being
+// able to assume m_data is always a writable buffer.  Ideally there would be a
+// way to have a single global const empty string shared by all class instances,
+// without adding a vtbl.
+class str_moveable : public str_base
+{
+public:
+                str_moveable() : str_base(m_empty, 1)               { clear(); set_growable(); }
+    explicit    str_moveable(const char* value) : str_moveable()    { copy(value); }
+    explicit    str_moveable(const wchar_t* value) : str_moveable() { from_utf16(value); }
+                str_moveable(const str_moveable&) = delete;
+                str_moveable(str_moveable&& s) : str_moveable()     { *this = std::move(s); }
+    using       str_base::operator =;
+    str_moveable& operator = (str_moveable&&);
+
+private:
+    char        m_empty[1];
+};
+
+class wstr_moveable : public wstr_base
+{
+public:
+                wstr_moveable() : wstr_base(m_empty, 1)             { clear(); set_growable(); }
+    explicit    wstr_moveable(const wchar_t* value) : wstr_moveable() { copy(value); }
+    explicit    wstr_moveable(const char* value) : wstr_moveable()  { from_utf8(value); }
+                wstr_moveable(const wstr_moveable&) = delete;
+                wstr_moveable(wstr_moveable&& s) : wstr_moveable()  { *this = std::move(s); }
+    using       wstr_base::operator =;
+    wstr_moveable& operator = (wstr_moveable&&);
+
+protected:
+    wchar_t     m_empty[1];
+};
+
+//------------------------------------------------------------------------------
+inline str_moveable& str_moveable::operator = (str_moveable&& s)
+{
+    str_base::operator=(std::move(s));
+    s.reset_data(s.m_empty, _countof(s.m_empty));
+    return *this;
+}
+
+//------------------------------------------------------------------------------
+inline wstr_moveable& wstr_moveable::operator = (wstr_moveable&& s)
+{
+    wstr_base::operator=(std::move(s));
+    s.reset_data(s.m_empty, _countof(s.m_empty));
+    return *this;
+}
 
 
 

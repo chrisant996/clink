@@ -11,6 +11,8 @@
 #include <core/str.h>
 #include <core/str_tokeniser.h>
 
+#include <vector>
+
 extern "C" {
 #include <lua.h>
 }
@@ -99,14 +101,42 @@ bool host_lua::load_scripts(const char* paths)
 //------------------------------------------------------------------------------
 void host_lua::load_script(const char* path)
 {
-    str<280> buffer;
+    str_moveable buffer;
     path::join(path, "*.lua", buffer);
 
     globber lua_globs(buffer.c_str());
     lua_globs.directories(false);
 
+    // Engineering compromise:  The cmder-powerline-prompt scripts use a config
+    // script named "_powerline_config.lua".  In the file system, that sorts
+    // AFTER the rest of the "powerline_foo.lua" files, making it impossible for
+    // the configuration script to influence the other scripts until the prompt
+    // is filtered.
+    //
+    // Ideally a better config file name would have been chosen; it's too late
+    // to change its name without introducing compatibility problems.  Since
+    // it's a fairly natural assumption or wish that '.' and '_' might go first,
+    // Clink will actually enforce that here by deferring loading other scripts
+    // until a second pass.
+    //
+    // This required introducing str_moveable in order to avoid copying from str
+    // to std::string, since str doesn't have a move constructor (and can't
+    // without causing performance problems; it has a fixed-size buffer intended
+    // to boost performance by generally avoiding allocating a buffer, and
+    // a move constructor would need to copy that buffer).
+
+    std::vector<str_moveable> pass2;
     while (lua_globs.next(buffer))
-        m_state.do_file(buffer.c_str());
+    {
+        const char* s = path::get_name(buffer.c_str());
+        if (s && (*s == '.' || *s == '_'))
+            m_state.do_file(buffer.c_str());
+        else
+            pass2.push_back(std::move(buffer));
+    }
+
+    for (auto const& file : pass2)
+        m_state.do_file(file.c_str());
 }
 
 //------------------------------------------------------------------------------
