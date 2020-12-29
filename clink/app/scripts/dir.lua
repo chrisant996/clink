@@ -21,6 +21,18 @@ function clink.dir_matches(match_word, word_index, line_state)
 end
 
 --------------------------------------------------------------------------------
-clink.argmatcher("cd", "chdir", "pushd", "rd", "rmdir", "md", "mkdir"):addarg(
-    clink.dir_matches
-):nofiles()
+clink.argmatcher("cd", "chdir")
+:addflags("/d")
+:addarg(clink.dir_matches)
+:nofiles()
+
+--------------------------------------------------------------------------------
+clink.argmatcher("pushd", "md", "mkdir")
+:addarg(clink.dir_matches)
+:nofiles()
+
+--------------------------------------------------------------------------------
+clink.argmatcher("rd", "rmdir")
+:addflags("/s", "/q")
+:addarg(clink.dir_matches)
+:nofiles()
