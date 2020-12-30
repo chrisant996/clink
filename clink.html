@@ -3,7 +3,7 @@
 
 <!-- ----------------------------------------------------- -->
 <head>
-<title>Clink v1.1.16</title>
+<title>Clink v1.1.17</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Rambla:wght@400;700&family=Roboto&family=Fira+Mono&display=swap');
 html {
@@ -401,7 +401,7 @@ var hljs=function(){"use strict";function e(n){Object.freeze(n);var t="function"
         </td>
         <td style="text-align:right">
             <div id="header">
-                <div id="title">Clink v1.1.16</div>
+                <div id="title">Clink v1.1.17</div>
                 <div id="url">
                     <a href="http://github.com/chrisant996/clink">
                         http://github.com/chrisant996/clink
@@ -1837,6 +1837,7 @@ line:getcommandoffset() == 4</code></pre></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="os.copy">os.copy</a></div> <div class="signature">( <span class="arg_name">src</span>:string, <span class="arg_name">dest</span>:string ) : boolean</div></div><div class="body"><p class="desc">Copies the <span class="arg">src</span> file to the <span class="arg">dest</span> file.</p></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="os.getalias">os.getalias</a></div> <div class="signature">( <span class="arg_name">name</span>:string ) : string</div></div><div class="body"><p class="desc">Returns command string for doskey alias <span class="arg">name</span>.</p></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="os.getaliases">os.getaliases</a></div> <div class="signature">() : table</div></div><div class="body"><p class="desc">Returns doskey aliases in a table with the following scheme: <span class="tablescheme">{ {name:string, command:string}, ... }</span>.</p></div></div><hr/>
+<div class="function"><div class="header"> <div class="name"><a name="os.getbatterystatus">os.getbatterystatus</a></div> <div class="signature">() : level:integer, acpower:boolean, charging:boolean, batterysaver:boolean</div></div><div class="body"><p class="desc">Returns the battery status for the device, or nil if an error occurs.</p><p class="desc"> <span class="arg">level</span> is an integer from 0 to 100 representing the battery life percentage, or -1 if it couldn't be retrieved (an error occurred, or there is no battery).<br/> <span class="arg">acpower</span> indicates whether the device is connected to AC power.<br/> <span class="arg">charging</span> indicates whether the battery is charging (being plugged in doesn't necessarily imply it's charging).<br/> <span class="arg">batterysaver</span> indicates whether Battery Saver mode is active.</p><pre class="language-lua"><code>local level,acpower,charging,batterysaver = os.getbatterystatus()</code></pre></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="os.getcwd">os.getcwd</a></div> <div class="signature">() : string</div></div><div class="body"><p class="desc">Returns the current directory.</p></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="os.getenv">os.getenv</a></div> <div class="signature">( <span class="arg_name">name</span>:string ) : string | nil</div></div><div class="body"><p class="desc">Returns the value of the named environment variable, or nil if it doesn't exist.</p><p class="desc"> Note that <code>os.getenv("HOME")</code> receives special treatment: if %HOME% is not set then it is synthesized from %HOMEDRIVE% and %HOMEPATH%, or from %USERPROFILE%.</p></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="os.getenvnames">os.getenvnames</a></div> <div class="signature">() : table</div></div><div class="body"><p class="desc">Returns all environment variables in a table with the following scheme: <span class="tablescheme">{ {name:string, value:string}, ... }</span>.</p></div></div><hr/>
@@ -1858,7 +1859,8 @@ line:getcommandoffset() == 4</code></pre></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="os.setenv">os.setenv</a></div> <div class="signature">( <span class="arg_name">name</span>:string, <span class="arg_name">value</span>:string ) : boolean</div></div><div class="body"><p class="desc">Sets the <span class="arg">name</span> environment variable to <span class="arg">value</span> and returns whether it was successful.</p></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="os.unlink">os.unlink</a></div> <div class="signature">( <span class="arg_name">path</span>:string ) : boolean</div></div><div class="body"><p class="desc">Deletes the file <span class="arg">path</span> and returns whether it was successful.</p></div></div><hr/>
 </div><div class="group"><h5 class="group_name"><a name="path">path</a></h5><div class="function"><div class="header"> <div class="name"><a name="path.getbasename">path.getbasename</a></div> <div class="signature">( <span class="arg_name">path</span>:string ) : string</div></div><div class="body"><p class="desc"></p><pre class="language-lua"><code>path.getbasename("/foo/bar.ext") -- returns "bar"</code></pre></div></div><hr/>
-<div class="function"><div class="header"> <div class="name"><a name="path.getdirectory">path.getdirectory</a></div> <div class="signature">( <span class="arg_name">path</span>:string ) : nil or string</div></div><div class="body"><p class="desc"></p><pre class="language-lua"><code>path.getdirectory("/foo/bar") -- returns "/foo/"
+<div class="function"><div class="header"> <div class="name"><a name="path.getdirectory">path.getdirectory</a></div> <div class="signature">( <span class="arg_name">path</span>:string ) : nil or string</div></div><div class="body"><p class="desc"></p><pre class="language-lua"><code>path.getdirectory("e:/foo/bar") -- returns "e:/foo"
+path.getdirectory("/foo/bar") -- returns "/foo"
 path.getdirectory("bar") -- returns nil</code></pre></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="path.getdrive">path.getdrive</a></div> <div class="signature">( <span class="arg_name">path</span>:string ) : nil or string</div></div><div class="body"><p class="desc"></p><pre class="language-lua"><code>path.getdrive("e:/foo/bar") -- returns "e:"
 path.getdrive("foo/bar") -- returns nil</code></pre></div></div><hr/>
@@ -1920,6 +1922,11 @@ settings.add("color.mymno", "bright magenta", "Color setting")</code></pre></div
         <div class="section" id="changes">
 <h1 id="changes">Changes</h1>
 <h2 id="releases-from-chrisant996clink-fork">Releases from <a href="https://github.com/chrisant996/clink">chrisant996/clink</a> fork</h2>
+<h3 id="v1117">v1.1.17</h3>
+<ul>
+<li>Added <code>os.getbatterystatus()</code> function that gets battery status information much faster than launching <code>wmic</code>.</li>
+<li>Fixed <a href="https://github.com/chrisant996/clink/issues/44">#44</a> Path completion doesn&#39;t work with <code>cd /d</code>.</li>
+</ul>
 <h3 id="v1116">v1.1.16</h3>
 <ul>
 <li>Added <code>match.ignore_accent</code> setting (enabled by default) that ignores Latin alphabet diacriticals when completing matches (e.g. <code>ä</code> matches <code>a</code>, <code>ı</code> matches <code>i</code>, <code>ł</code> matches <code>l</code>, etc).</li>
