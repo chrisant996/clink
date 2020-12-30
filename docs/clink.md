@@ -92,7 +92,7 @@ Name                         | Default | Description
 `history.ignore_space`       | True    | Ignore lines that begin with whitespace when adding lines in to the history.
 `history.max_lines`          | 2500    | The number of history lines to save if `history.save` is enabled (1 to 50000).
 `history.save`               | True    | Saves history between sessions.
-`history.shared`             | False   | When history is shared, all instances of Clink update the master history list after each command and reload the master history list on each prompt.  When history is not shared, each instance updates the master history list on exit.
+`history.shared`             | True    | When history is shared, all instances of Clink update the master history list after each command and reload the master history list on each prompt.  When history is not shared, each instance updates the master history list on exit.
 `lua.break_on_error`         | False   | Breaks into Lua debugger on Lua errors.
 `lua.break_on_traceback`     | False   | Breaks into Lua debugger on `traceback()`.
 `lua.debug`                  | False   | Loads a simple embedded command line debugger when enabled. Breakpoints can be added by calling `pause()`.
