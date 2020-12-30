@@ -4,6 +4,11 @@ ChrisAnt Plans
 
 # RELEASE
 
+- `history.shared` misbehaving?
+  - I think I have one instance running with it on, and one with it off.
+  - Typed a command in the one with it off.
+  - The command is listed by `history` but isn't present in the history in the instance where I typed it.
+
 ## Issues
 - [#45](https://github.com/chrisant996/clink/issues/45) Interaction between erase_prev and history.shared=false
 - The match pipeline should not fire on pressing **Enter** after `exit`.
