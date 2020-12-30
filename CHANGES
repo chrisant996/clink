@@ -5,7 +5,7 @@
 
 ### v1.1.17
 
-- Changed script load order to compensate for a subtle long standing bug in [cmder-powerline-prompt](https://github.com/chrisant996/cmder-powerline-prompt). Its config file was named such that it loaded _after_ the scripts it was meant to configure. Clink now tries to help scripts out; in each script directory, Clink first loads scripts whose name begins with `.` or `_` and then loads the other scripts from the directory.
+- Added `os.getbatterystatus()` function that gets battery status information much faster than launching `wmic`.
 - Fixed [#44](https://github.com/chrisant996/clink/issues/44) Path completion doesn't work with `cd /d`.
 
 ### v1.1.16
