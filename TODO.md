@@ -5,12 +5,11 @@ ChrisAnt Plans
 # RELEASE
 
 ## Issues
+- [#45](https://github.com/chrisant996/clink/issues/45) Interaction between erase_prev and history.shared=false
 - The match pipeline should not fire on pressing **Enter** after `exit`.
 - When `convert-meta` is off, then when binding `\M-h` (etc) the key name gets interpreted differently than Clink expects.  Does this affect the `inputrc` files at all, or is it only an issue inside Clink's native code?
 
-## Cmder, Powerline
-- Merge my powerline changes with cmder and cmder-powerline-prompt.
-  - Add easier config without needing to modify the scripts (which makes updating very painful); e.g. people patch the scripts to change icons.
+## Cmder
 - Port Cmder to v1.x -- will require help from Cmder and/or ConEmu teams.  There are a lot of hard-coded expectations about Clink (web site address, terminal input mode, DLL names, VirtualAlloc patterns, and many other things).
 
 <br/>
