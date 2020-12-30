@@ -6,7 +6,6 @@
 ### v1.1.17
 
 - Added `os.getbatterystatus()` function that gets battery status information much faster than launching `wmic`.
-- Changed `history.shared` to default to True (mitigates [#45](https://github.com/chrisant996/clink/issues/45) for now).
 - Fixed [#44](https://github.com/chrisant996/clink/issues/44) Path completion doesn't work with `cd /d`.
 
 ### v1.1.16
