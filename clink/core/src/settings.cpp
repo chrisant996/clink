@@ -154,7 +154,7 @@ static bool migrate_setting(const char* name, const char* value)
             { "history_file_lines",         "history.max_lines" },
             { "history_ignore_space",       "history.ignore_space" },
             { "history_dupe_mode",          "history.dupe_mode" },
-            { "history_io",                 "history.save" },
+            { "history_io",                 "history.shared" },
             { "history_expand_mode",        "history.expand_mode" },
         };
 
