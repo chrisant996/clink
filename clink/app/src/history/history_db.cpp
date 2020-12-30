@@ -26,7 +26,7 @@ static setting_bool g_shared(
     "history.shared",
     "Share history between instances",
     "",
-    false);
+    true);
 
 namespace use_get_max_history_instead {
 static setting_int g_max_history(
