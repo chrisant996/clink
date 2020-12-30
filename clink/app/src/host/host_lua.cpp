@@ -107,6 +107,16 @@ void host_lua::load_script(const char* path)
     globber lua_globs(buffer.c_str());
     lua_globs.directories(false);
 
+#if 1
+    while (lua_globs.next(buffer))
+    {
+        const char* s = path::get_name(buffer.c_str());
+        if (stricmp(s, "clink.lua") != 0)
+            m_state.do_file(buffer.c_str());
+    }
+#else
+    // This feels dangerous...
+
     // Engineering compromise:  The cmder-powerline-prompt scripts use a config
     // script named "_powerline_config.lua".  In the file system, that sorts
     // AFTER the rest of the "powerline_foo.lua" files, making it impossible for
@@ -124,19 +134,19 @@ void host_lua::load_script(const char* path)
     // without causing performance problems; it has a fixed-size buffer intended
     // to boost performance by generally avoiding allocating a buffer, and
     // a move constructor would need to copy that buffer).
-
     std::vector<str_moveable> pass2;
     while (lua_globs.next(buffer))
     {
         const char* s = path::get_name(buffer.c_str());
         if (s && (*s == '.' || *s == '_'))
             m_state.do_file(buffer.c_str());
-        else
+        else if (stricmp(s, "clink.lua") != 0)
             pass2.push_back(std::move(buffer));
     }
 
     for (auto const& file : pass2)
         m_state.do_file(file.c_str());
+#endif
 }
 
 //------------------------------------------------------------------------------
