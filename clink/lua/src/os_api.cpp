@@ -551,6 +551,40 @@ int get_screen_info(lua_State* state)
 }
 
 //------------------------------------------------------------------------------
+/// -name:  os.getbatterystatus
+/// -ret:   level:integer, acpower:boolean, charging:boolean, batterysaver:boolean
+/// Returns the battery status for the device, or nil if an error occurs.
+///
+/// <span class="arg">level</span> is an integer from 0 to 100 representing the
+/// battery life percentage, or -1 if it couldn't be retrieved (an error
+/// occurred, or there is no battery).<br/>
+/// <span class="arg">acpower</span> indicates whether the device is connected
+/// to AC power.<br/>
+/// <span class="arg">charging</span> indicates whether the battery is charging
+/// (being plugged in doesn't necessarily imply it's charging).<br/>
+/// <span class="arg">batterysaver</span> indicates whether Battery Saver mode
+/// is active.
+/// -show:  local level,acpower,charging,batterysaver = os.getbatterystatus()
+int get_battery_status(lua_State* state)
+{
+    SYSTEM_POWER_STATUS status;
+    if (!GetSystemPowerStatus(&status))
+        return 0;
+
+    int level = -1;
+    if (status.BatteryLifePercent <= 100)
+        level = status.BatteryLifePercent;
+    if (status.BatteryFlag & 128)
+        level = -1;
+
+    lua_pushinteger(state, level);
+    lua_pushboolean(state, (status.ACLineStatus == 1));
+    lua_pushboolean(state, ((status.BatteryFlag & 0x88) == 0x08));
+    lua_pushboolean(state, ((status.SystemStatusFlag & 1) == 1));
+    return 4;
+}
+
+//------------------------------------------------------------------------------
 void os_lua_initialise(lua_state& lua)
 {
     struct {
@@ -576,6 +610,7 @@ void os_lua_initialise(lua_state& lua)
         { "getalias",    &get_alias },
         { "getaliases",  &get_aliases },
         { "getscreeninfo", &get_screen_info },
+        { "getbatterystatus", &get_battery_status },
     };
 
     lua_State* state = lua.get_state();
