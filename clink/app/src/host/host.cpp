@@ -259,7 +259,7 @@ static bool intercept_directory(str_base& inout)
             break;
         }
     }
-    if (num_dots >= 3)
+    if (num_dots >= 2)
     {
         tmp.clear();
         while (num_dots > 1)
@@ -281,7 +281,10 @@ static bool intercept_directory(str_base& inout)
             if (p[0] != '.' || p[1] != '.')
                 return false;
             if (p[2] == '\0')
+            {
+                tmp.concat("\\");
                 break;
+            }
             if (!path::is_separator(p[2]))
                 return false;
             p += 3;
