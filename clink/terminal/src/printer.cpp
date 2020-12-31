@@ -61,6 +61,7 @@ void printer::print(const attributes attr, const char* data, int bytes)
     attributes prev_attr = set_attributes(attr);
     print(data, bytes);
     set_attributes(prev_attr);
+    flush_attributes();
 }
 
 //------------------------------------------------------------------------------
@@ -73,6 +74,7 @@ void printer::print(const char* attr, const char* data, int bytes)
     print(tmp.c_str(), tmp.length());
     print(data, bytes);
     set_attributes(prev_attr);
+    flush_attributes();
     m_nodiff = true;
 }
 
