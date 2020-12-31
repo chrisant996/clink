@@ -162,7 +162,7 @@ void ecma48_terminal_out::write_c0(int c0)
     switch (c0)
     {
     case ecma48_code::c0_bel:
-        // TODO: audible bell.
+        MessageBeep(0xffffffff);
         break;
 
     case ecma48_code::c0_bs:
