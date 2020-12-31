@@ -6,9 +6,9 @@
 .\"	Case Western Reserve University
 .\"	chet.ramey@case.edu
 .\"
-.\"	Last Change: Sun Oct  8 11:43:43 EDT 2017
+.\"	Last Change: Fri Jul 17 09:43:01 EDT 2020
 .\"
-.TH HISTORY 3 "2017 October 8" "GNU History 6.3"
+.TH HISTORY 3 "2020 July 17" "GNU History 8.1"
 .\"
 .\" File Name macro.  This used to be `.PN', for Path Name,
 .\" but Sun doesn't seem to like that very much.
@@ -40,8 +40,8 @@
 .SH NAME
 history \- GNU History Library
 .SH COPYRIGHT
-.if t The GNU History Library is Copyright \(co 1989-2017 by the Free Software Foundation, Inc.
-.if n The GNU History Library is Copyright (C) 1989-2017 by the Free Software Foundation, Inc.
+.if t The GNU History Library is Copyright \(co 1989-2020 by the Free Software Foundation, Inc.
+.if n The GNU History Library is Copyright (C) 1989-2020 by the Free Software Foundation, Inc.
 .SH DESCRIPTION
 Many programs read input from the user a line at a time.  The GNU
 History library is able to keep track of those lines, associate arbitrary
@@ -49,7 +49,6 @@ data with each line, and utilize information from previous lines in
 composing new ones. 
 .PP
 .SH "HISTORY EXPANSION"
-.PP
 The history library supports a history expansion feature that
 is identical to the history expansion in
 .BR bash.
@@ -80,7 +79,6 @@ history expansion character, which is \^\fB!\fP\^ by default.
 Only backslash (\^\fB\e\fP\^) and single quotes can quote
 the history expansion character.
 .SS Event Designators
-.PP
 An event designator is a reference to a command line entry in the
 history list.
 Unless the reference is absolute, events are relative to the current
@@ -118,6 +116,8 @@ containing
 The trailing \fB?\fP may be omitted if
 .I string
 is followed immediately by a newline.
+If \fIstring\fP is missing, the string from the most recent search is used;
+it is an error if there is no previous search string.
 .TP
 .B \d\s+2^\s-2\u\fIstring1\fP\d\s+2^\s-2\u\fIstring2\fP\d\s+2^\s-2\u
 Quick substitution.  Repeat the last command, replacing
@@ -125,14 +125,13 @@ Quick substitution.  Repeat the last command, replacing
 with
 .IR string2 .
 Equivalent to
-``!!:s/\fIstring1\fP/\fIstring2\fP/''
+``!!:s\d\s+2^\s-2\u\fIstring1\fP\d\s+2^\s-2\u\fIstring2\fP\d\s+2^\s-2\u''
 (see \fBModifiers\fP below).
 .TP
 .B !#
 The entire command line typed so far.
 .PD
 .SS Word Designators
-.PP
 Word designators are used to select desired words from the event.
 A
 .B :
@@ -165,7 +164,8 @@ The last word.  This is usually the last argument, but will expand to the
 zeroth word if there is only one word in the line.
 .TP
 .B %
-The word matched by the most recent `?\fIstring\fR?' search.
+The first word matched by the most recent `?\fIstring\fR?' search,
+if the search string begins with a character that is part of a word.
 .TP
 .I x\fB\-\fPy
 A range of words; `\-\fIy\fR' abbreviates `0\-\fIy\fR'.
@@ -182,14 +182,15 @@ Abbreviates \fIx\-$\fP.
 .TP
 .B x\-
 Abbreviates \fIx\-$\fP like \fBx*\fP, but omits the last word.
+If \fBx\fP is missing, it defaults to 0.
 .PD
 .PP
 If a word designator is supplied without an event specification, the
 previous command is used as the event.
 .SS Modifiers
-.PP
 After the optional word designator, there may appear a sequence of
 one or more of the following modifiers, each preceded by a `:'.
+These modify, or edit, the word or words selected from the history event.
 .PP
 .PD 0
 .PP
@@ -219,15 +220,19 @@ Quote the substituted words as with
 but break into words at
 .B blanks
 and newlines.
+The \fBq\fP and \fBx\fP modifiers are mutually exclusive; the last one
+supplied is used.
 .TP
 .B s/\fIold\fP/\fInew\fP/
 Substitute
 .I new
 for the first occurrence of
 .I old
-in the event line.  Any delimiter can be used in place of /.  The
-final delimiter is optional if it is the last character of the
-event line.  The delimiter may be quoted in
+in the event line.
+Any character may be used as the delimiter in place of /.
+The final delimiter is optional if it is the last character of the
+event line.
+The delimiter may be quoted in
 .I old
 and
 .I new
@@ -235,7 +240,8 @@ with a single backslash.  If & appears in
 .IR new ,
 it is replaced by
 .IR old .
-A single backslash will quote the &.  If
+A single backslash will quote the &.
+If
 .I old
 is null, it is set to the last
 .I old
@@ -245,6 +251,11 @@ the last
 in a
 .B !?\fIstring\fR\fB[?]\fR
 search.
+If
+.I new
+is null, each matching
+.I old
+is deleted.
 .TP
 .B &
 Repeat the previous substitution.
@@ -259,13 +270,13 @@ if it is the last character of the event line.
 An \fBa\fP may be used as a synonym for \fBg\fP.
 .TP
 .B G
-Apply the following `\fBs\fP' modifier once to each word in the event line.
+Apply the following `\fBs\fP' or `\fB&\fP' modifier once to each word
+in the event line.
 .PD
 .SH "PROGRAMMING WITH HISTORY FUNCTIONS"
 This section describes how to use the History library in other programs.
 .SS Introduction to History
-.PP
-The programmer using the History library has available functions
+A programmer using the History library has available functions
 for remembering lines on a history list, associating arbitrary data
 with a line, removing lines from the list, searching through the list
 for a line containing an arbitrary text string, and referencing any line
@@ -280,7 +291,7 @@ in new commands.  The basic history manipulation commands are
 identical to
 the history substitution provided by \fBbash\fP.
 .PP
-If the programmer desires, he can use the Readline library, which
+The programmer can also use the Readline library, which
 includes some history manipulation by default, and has the added
 advantage of command line editing.
 .PP
@@ -292,9 +303,7 @@ in any file that uses the
 History library's features.  It supplies extern declarations for all
 of the library's public functions and variables, and declares all of
 the public data structures.
-
 .SS History Storage
-.PP
 The history list is an array of history entries.  A history entry is
 declared as follows:
 .PP
@@ -330,7 +339,6 @@ typedef struct _hist_state {
 If the flags member includes \fBHS_STIFLED\fP, the history has been
 stifled.
 .SH "History Functions"
-.PP
 This section describes the calling sequence for the various functions
 exported by the GNU History library.
 .SS Initializing History and State Management
@@ -349,7 +357,6 @@ Return a structure describing the current state of the input history.
 Set the state of the history list according to \fIstate\fP.
 
 .SS History List Management
-
 These functions manage individual entries on the history list, or set
 parameters managing the list itself.
 
@@ -545,7 +552,7 @@ if the returned line should be displayed, but not executed,
 as with the \fB:p\fP modifier.
 .PD
 .RE
-If an error ocurred in expansion, then \fIoutput\fP contains a descriptive
+If an error occurred in expansion, then \fIoutput\fP contains a descriptive
 error message.
 
 .Fn3 "char *" get_history_event "const char *string" "int *cindex" "int qchar"
@@ -583,7 +590,7 @@ The number of entries currently stored in the history list.
 The maximum number of history entries.  This must be changed using
 \fBstifle_history()\fP.
 
-.Vb int history_wite_timestamps
+.Vb int history_write_timestamps
 If non-zero, timestamps are written to the history file, so they can be
 preserved between sessions.  The default value is 0, meaning that
 timestamps are not saved.

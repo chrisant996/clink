@@ -7,4 +7,6 @@ struct hooked_stat
 {
     __int64 st_size;
     int st_mode;
+    short st_uid;
+    short st_gid;
 };

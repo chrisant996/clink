@@ -1,3 +1,44 @@
+This is a terse description of the new features added to readline-8.1 since
+the release of readline-8.0.
+
+New Features in Readline
+
+a. If a second consecutive completion attempt produces matches where the first
+   did not, treat it as a new completion attempt and insert a match as
+   appropriate.
+
+b. Bracketed paste mode works in more places: incremental search strings, vi
+   overstrike mode, character search, and reading numeric arguments.
+
+c. Readline automatically switches to horizontal scrolling if the terminal has
+   only one line.
+
+d. Unbinding all key sequences bound to a particular readline function now
+   descends into keymaps for multi-key sequences.
+
+e. rl-clear-display: new bindable command that clears the screen and, if
+   possible, the scrollback buffer (bound to emacs mode M-C-l by default).
+
+f. New active mark and face feature: when enabled, it will highlight the text
+   inserted by a bracketed paste (the `active region') and the text found by
+   incremental and non-incremental history searches. This is tied to bracketed
+   paste and can be disabled by turning off bracketed paste.
+
+g. Readline sets the mark in several additional commands.
+
+h. Bracketed paste mode is enabled by default. There is a configure-time
+   option (--enable-bracketed-paste-default) to set the default to on or off.
+
+i. Readline tries to take advantage of the more regular structure of UTF-8
+   characters to identify the beginning and end of characters when moving
+   through the line buffer.
+
+j. The bindable operate-and-get-next command (and its default bindings) are
+   now part of readline instead of a bash-specific addition.
+
+k. The signal cleanup code now blocks SIGINT while processing after a SIGINT.  
+
+-------------------------------------------------------------------------------
 This is a terse description of the new features added to readline-8.0 since
 the release of readline-7.0.
 
@@ -177,6 +218,27 @@ m.  If the user-settable variable `history-size' is set to a value less than
 n.  New application-settable variable: rl_signal_event_hook; function that is
     called when readline is reading terminal input and read(2) is interrupted
     by a signal.  Currently not called for SIGHUP or SIGTERM.
+
+-------------------------------------------------------------------------------
+This is a terse description of the new features added to readline-6.2 since
+the release of readline-6.1.
+
+a.  The history library does not try to write the history filename in the
+    current directory if $HOME is unset.  This closes a potential security
+    problem if the application does not specify a history filename.
+
+b.  New bindable variable `completion-display-width' to set the number of
+    columns used when displaying completions.
+
+c.  New bindable variable `completion-case-map' to cause case-insensitive
+    completion to treat `-' and `_' as identical.
+
+d.  There are new bindable vi-mode command names to avoid readline's case-
+    insensitive matching not allowing them to be bound separately.
+
+e.  New bindable variable `menu-complete-display-prefix' causes the menu
+    completion code to display the common prefix of the possible completions
+    before cycling through the list, instead of after.
 
 -------------------------------------------------------------------------------
 This is a terse description of the new features added to readline-6.1 since

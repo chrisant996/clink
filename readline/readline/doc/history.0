@@ -6,7 +6,7 @@ HISTORY(3)                 Library Functions Manual                 HISTORY(3)
        history - GNU History Library
 
 [1mCOPYRIGHT[0m
-       The GNU History Library is Copyright (C) 1989-2017 by the Free Software
+       The GNU History Library is Copyright (C) 1989-2020 by the Free Software
        Foundation, Inc.
 
 [1mDESCRIPTION[0m
@@ -55,10 +55,12 @@ HISTORY(3)                 Library Functions Manual                 HISTORY(3)
        [1m!?[4m[22mstring[24m[1m[?][0m
               Refer to the most recent command preceding the current  position
               in  the  history  list containing [4mstring[24m.  The trailing [1m? [22mmay be
-              omitted if [4mstring[24m is followed immediately by a newline.
+              omitted if [4mstring[24m is followed  immediately  by  a  newline.   If
+              [4mstring[24m  is  missing,  the  string from the most recent search is
+              used; it is an error if there is no previous search string.
        [1m^[4m[22mstring1[24m[1m^[4m[22mstring2[24m[1m^[0m
               Quick substitution.  Repeat the last command, replacing  [4mstring1[0m
-              with [4mstring2[24m.  Equivalent to ``!!:s/[4mstring1[24m/[4mstring2[24m/'' (see [1mMod-[0m
+              with [4mstring2[24m.  Equivalent to ``!!:s^[4mstring1[24m^[4mstring2[24m^'' (see [1mMod-[0m
               [1mifiers [22mbelow).
        [1m!#     [22mThe entire command line typed so far.
 
@@ -74,22 +76,26 @@ HISTORY(3)                 Library Functions Manual                 HISTORY(3)
               The zeroth word.  For the shell, this is the command word.
        [4mn[24m      The [4mn[24mth word.
        [1m^      [22mThe first argument.  That is, word 1.
-       [1m$      [22mThe  last  word.   This  is  usually the last argument, but will
-              expand to the zeroth word if there is only one word in the line.
-       [1m%      [22mThe word matched by the most recent `?[4mstring[24m?' search.
+       [1m$      [22mThe  last word.  This is usually the last argument, but will ex-
+              pand to the zeroth word if there is only one word in the line.
+       [1m%      [22mThe first word matched by the most recent `?[4mstring[24m?' search,  if
+              the  search  string  begins  with  a character that is part of a
+              word.
        [4mx[24m[1m-[4m[22my[24m    A range of words; `-[4my[24m' abbreviates `0-[4my[24m'.
        [1m*      [22mAll of the words but the zeroth.  This is a synonym  for  `[4m1-$[24m'.
               It  is  not  an  error to use [1m* [22mif there is just one word in the
               event; the empty string is returned in that case.
        [1mx*     [22mAbbreviates [4mx-$[24m.
-       [1mx-     [22mAbbreviates [4mx-$[24m like [1mx*[22m, but omits the last word.
+       [1mx-     [22mAbbreviates [4mx-$[24m like [1mx*[22m, but omits the last word.  If [1mx [22mis miss-
+              ing, it defaults to 0.
 
-       If a word designator is supplied without an  event  specification,  the
+       If  a  word  designator is supplied without an event specification, the
        previous command is used as the event.
 
    [1mModifiers[0m
-       After  the optional word designator, there may appear a sequence of one
-       or more of the following modifiers, each preceded by a `:'.
+       After the optional word designator, there may appear a sequence of  one
+       or more of the following modifiers, each preceded by a `:'.  These mod-
+       ify, or edit, the word or words selected from the history event.
 
        [1mh      [22mRemove a trailing file name component, leaving only the head.
        [1mt      [22mRemove all leading file name components, leaving the tail.
@@ -98,32 +104,34 @@ HISTORY(3)                 Library Functions Manual                 HISTORY(3)
        [1mp      [22mPrint the new command but do not execute it.
        [1mq      [22mQuote the substituted words, escaping further substitutions.
        [1mx      [22mQuote the substituted words as with [1mq[22m, but break into  words  at
-              [1mblanks [22mand newlines.
+              [1mblanks  [22mand newlines.  The [1mq [22mand [1mx [22mmodifiers are mutually exclu-
+              sive; the last one supplied is used.
        [1ms/[4m[22mold[24m[1m/[4m[22mnew[24m[1m/[0m
-              Substitute  [4mnew[24m  for  the  first  occurrence of [4mold[24m in the event
-              line.  Any delimiter can be used  in  place  of  /.   The  final
-              delimiter  is  optional if it is the last character of the event
-              line.  The delimiter may be quoted in [4mold[24m and [4mnew[24m with a  single
-              backslash.   If & appears in [4mnew[24m, it is replaced by [4mold[24m.  A sin-
-              gle backslash will quote the &.  If [4mold[24m is null, it  is  set  to
-              the  last  [4mold[24m substituted, or, if no previous history substitu-
-              tions took place, the last [4mstring[24m in a [1m!?[4m[22mstring[24m[1m[?]  [22msearch.
+              Substitute [4mnew[24m for the first occurrence  of  [4mold[24m  in  the  event
+              line.  Any character may be used as the delimiter in place of /.
+              The final delimiter is optional if it is the last  character  of
+              the event line.  The delimiter may be quoted in [4mold[24m and [4mnew[24m with
+              a single backslash.  If & appears in [4mnew[24m, it is replaced by [4mold[24m.
+              A  single backslash will quote the &.  If [4mold[24m is null, it is set
+              to the last [4mold[24m substituted, or, if no previous history  substi-
+              tutions  took  place,  the last [4mstring[24m in a [1m!?[4m[22mstring[24m[1m[?]  [22msearch.
+              If [4mnew[24m is null, each matching [4mold[24m is deleted.
        [1m&      [22mRepeat the previous substitution.
        [1mg      [22mCause changes to be applied over the entire event line.  This is
               used  in  conjunction  with `[1m:s[22m' (e.g., `[1m:gs/[4m[22mold[24m[1m/[4m[22mnew[24m[1m/[22m') or `[1m:&[22m'.
               If used with `[1m:s[22m', any delimiter can be used in place of /,  and
               the  final  delimiter is optional if it is the last character of
               the event line.  An [1ma [22mmay be used as a synonym for [1mg[22m.
-       [1mG      [22mApply the following `[1ms[22m' modifier once to each word in the  event
-              line.
+       [1mG      [22mApply the following `[1ms[22m' or `[1m&[22m' modifier once to each word in the
+              event line.
 
 [1mPROGRAMMING WITH HISTORY FUNCTIONS[0m
        This  section  describes  how  to use the History library in other pro-
        grams.
 
    [1mIntroduction to History[0m
-       The programmer using the History library has  available  functions  for
-       remembering  lines on a history list, associating arbitrary data with a
+       A programmer using the History library has available functions for  re-
+       membering  lines  on  a history list, associating arbitrary data with a
        line, removing lines from the list, searching through the  list  for  a
        line  containing  an arbitrary text string, and referencing any line in
        the list directly.  In addition, a history [4mexpansion[24m function is avail-
@@ -136,17 +144,16 @@ HISTORY(3)                 Library Functions Manual                 HISTORY(3)
        commands.  The basic history manipulation commands are identical to the
        history substitution provided by [1mbash[22m.
 
-       If the programmer desires, he  can  use  the  Readline  library,  which
-       includes some history manipulation by default, and has the added advan-
-       tage of command line editing.
+       The programmer can also use the Readline library, which  includes  some
+       history manipulation by default, and has the added advantage of command
+       line editing.
 
-       Before declaring any functions  using  any  functionality  the  History
-       library  provides  in  other code, an application writer should include
-       the file  [4m<readline/history.h>[24m  in  any  file  that  uses  the  History
-       library's  features.   It  supplies  extern declarations for all of the
-       library's public functions and variables, and declares all of the  pub-
-       lic data structures.
-
+       Before declaring any functions using any functionality the History  li-
+       brary  provides in other code, an application writer should include the
+       file [4m<readline/history.h>[24m in any file that uses the  History  library's
+       features.   It  supplies  extern  declarations for all of the library's
+       public functions and variables, and declares all  of  the  public  data
+       structures.
 
    [1mHistory Storage[0m
        The  history  list  is an array of history entries.  A history entry is
@@ -215,21 +222,21 @@ HISTORY(3)                 Library Functions Manual                 HISTORY(3)
        [4mstring[24m.
 
        [4mHIST_ENTRY[24m [4m*[24m [1mremove_history [22m([4mint[24m [4mwhich[24m)
-       Remove history entry at offset [4mwhich[24m from  the  history.   The  removed
-       element  is  returned  so  you  can free the line, data, and containing
-       structure.
+       Remove history entry at offset [4mwhich[24m from the history.  The removed el-
+       ement is returned so you can free the line, data, and containing struc-
+       ture.
 
        [4mhistdata_t[24m [1mfree_history_entry [22m([4mHIST_ENTRY[24m [4m*histent[24m)
-       Free the history entry [4mhistent[24m and any  history  library  private  data
-       associated with it.  Returns the application-specific data so the call-
-       er can dispose of it.
+       Free the history entry [4mhistent[24m and any history library private data as-
+       sociated  with it.  Returns the application-specific data so the caller
+       can dispose of it.
 
        [4mHIST_ENTRY[24m [4m*[24m [1mreplace_history_entry [22m([4mint[24m [4mwhich,[24m [4mconst[24m [4mchar[24m [4m*line,[24m  [4mhist-[0m
        [4mdata_t[24m [4mdata[24m)
-       Make  the  history  entry  at  offset  [4mwhich[24m  have [4mline[24m and [4mdata[24m.  This
-       returns the old entry so the caller can dispose of any application-spe-
-       cific  data.   In  the  case  of  an  invalid  [4mwhich[24m, a [1mNULL [22mpointer is
-       returned.
+       Make  the  history  entry at offset [4mwhich[24m have [4mline[24m and [4mdata[24m.  This re-
+       turns the old entry so the caller can dispose of  any  application-spe-
+       cific  data.   In  the  case of an invalid [4mwhich[24m, a [1mNULL [22mpointer is re-
+       turned.
 
        [4mvoid[24m [1mclear_history [22m([4mvoid[24m)
        Clear the history list by deleting all the entries.
@@ -249,12 +256,12 @@ HISTORY(3)                 Library Functions Manual                 HISTORY(3)
 
 
    [1mInformation About the History List[0m
-       These functions return information about the  entire  history  list  or
-       individual list entries.
+       These functions return information about the entire history list or in-
+       dividual list entries.
 
        [4mHIST_ENTRY[24m [4m**[24m [1mhistory_list [22m([4mvoid[24m)
-       Return  a  [1mNULL  [22mterminated  array of [4mHIST_ENTRY[24m [4m*[24m which is the current
-       input history.  Element 0 of this list is the beginning  of  time.   If
+       Return a [1mNULL [22mterminated array of [4mHIST_ENTRY[24m [4m*[24m which is the current in-
+       put history.  Element 0 of this list is  the  beginning  of  time.   If
        there is no history, return [1mNULL[22m.
 
        [4mint[24m [1mwhere_history [22m([4mvoid[24m)
@@ -267,8 +274,8 @@ HISTORY(3)                 Library Functions Manual                 HISTORY(3)
        [4mHIST_ENTRY[24m [4m*[24m [1mhistory_get [22m([4mint[24m [4moffset[24m)
        Return the history entry at position [4moffset[24m.  The range of valid values
        of  [4moffset[24m  starts  at [1mhistory_base [22mand ends at [1mhistory_length [22m- 1.  If
-       there is no entry there, or if  [4moffset[24m  is  outside  the  valid  range,
-       return a [1mNULL [22mpointer.
+       there is no entry there, or if [4moffset[24m is outside the valid  range,  re-
+       turn a [1mNULL [22mpointer.
 
        [4mtime_t[24m [1mhistory_get_time [22m([4mHIST_ENTRY[24m [4m*[24m)
        Return  the  time stamp associated with the history entry passed as the
@@ -304,31 +311,31 @@ HISTORY(3)                 Library Functions Manual                 HISTORY(3)
    [1mSearching the History List[0m
        These functions allow searching of the history list  for  entries  con-
        taining a specific string.  Searching may be performed both forward and
-       backward  from  the  current  history  position.   The  search  may  be
-       [4manchored[24m,  meaning  that  the string must match at the beginning of the
-       history entry.
+       backward from the current history position.   The  search  may  be  [4man-[0m
+       [4mchored[24m, meaning that the string must match at the beginning of the his-
+       tory entry.
 
        [4mint[24m [1mhistory_search [22m([4mconst[24m [4mchar[24m [4m*string,[24m [4mint[24m [4mdirection[24m)
        Search the history for [4mstring[24m, starting at the current history  offset.
-       If  [4mdirection[24m  is  less  than  0,  then  the search is through previous
-       entries, otherwise through subsequent entries.   If  [4mstring[24m  is  found,
-       then  the  current  history index is set to that history entry, and the
-       value returned is the offset in the line of the entry where [4mstring[24m  was
-       found.  Otherwise, nothing is changed, and a -1 is returned.
+       If  [4mdirection[24m  is  less than 0, then the search is through previous en-
+       tries, otherwise through subsequent entries.  If [4mstring[24m is found,  then
+       the  current  history index is set to that history entry, and the value
+       returned is the offset in the line of the entry where [4mstring[24m was found.
+       Otherwise, nothing is changed, and a -1 is returned.
 
        [4mint[24m [1mhistory_search_prefix [22m([4mconst[24m [4mchar[24m [4m*string,[24m [4mint[24m [4mdirection[24m)
        Search  the history for [4mstring[24m, starting at the current history offset.
-       The search is anchored: matching lines  must  begin  with  [4mstring[24m.   If
-       [4mdirection[24m  is less than 0, then the search is through previous entries,
+       The search is anchored: matching lines must begin with [4mstring[24m.  If  [4mdi-[0m
+       [4mrection[24m  is  less  than 0, then the search is through previous entries,
        otherwise through subsequent entries.  If [4mstring[24m  is  found,  then  the
        current  history index is set to that entry, and the return value is 0.
        Otherwise, nothing is changed, and a -1 is returned.
 
        [4mint[24m [1mhistory_search_pos [22m([4mconst[24m [4mchar[24m [4m*string,[24m [4mint[24m [4mdirection,[24m [4mint[24m [4mpos[24m)
-       Search for [4mstring[24m in the history list, starting  at  [4mpos[24m,  an  absolute
-       index  into  the  list.   If [4mdirection[24m is negative, the search proceeds
-       backward from [4mpos[24m, otherwise forward.  Returns the  absolute  index  of
-       the history element where [4mstring[24m was found, or -1 otherwise.
+       Search for [4mstring[24m in the history list, starting at [4mpos[24m, an absolute in-
+       dex into the list.  If [4mdirection[24m is negative, the search proceeds back-
+       ward from [4mpos[24m, otherwise forward.  Returns the absolute  index  of  the
+       history element where [4mstring[24m was found, or -1 otherwise.
 
 
    [1mManaging the History File[0m
@@ -377,7 +384,7 @@ HISTORY(3)                 Library Functions Manual                 HISTORY(3)
               -1     if there was an error in expansion;
               2      if  the  returned  line should be displayed, but not exe-
                      cuted, as with the [1m:p [22mmodifier.
-       If an error ocurred in expansion, then [4moutput[24m  contains  a  descriptive
+       If an error occurred in expansion, then [4moutput[24m contains  a  descriptive
        error message.
 
        [4mchar[24m [4m*[24m [1mget_history_event [22m([4mconst[24m [4mchar[24m [4m*string,[24m [4mint[24m [4m*cindex,[24m [4mint[24m [4mqchar[24m)
@@ -390,9 +397,8 @@ HISTORY(3)                 Library Functions Manual                 HISTORY(3)
 
        [4mchar[24m [4m**[24m [1mhistory_tokenize [22m([4mconst[24m [4mchar[24m [4m*string[24m)
        Return an array of tokens parsed out  of  [4mstring[24m,  much  as  the  shell
-       might.    The   tokens   are  split  on  the  characters  in  the  [1mhis-[0m
-       [1mtory_word_delimiters  [22mvariable,  and  shell  quoting  conventions   are
-       obeyed.
+       might.   The tokens are split on the characters in the [1mhistory_word_de-[0m
+       [1mlimiters [22mvariable, and shell quoting conventions are obeyed.
 
        [4mchar[24m [4m*[24m [1mhistory_arg_extract [22m([4mint[24m [4mfirst,[24m [4mint[24m [4mlast,[24m [4mconst[24m [4mchar[24m [4m*string[24m)
        Extract a string segment consisting of the [4mfirst[24m through [4mlast[24m arguments
@@ -413,12 +419,12 @@ HISTORY(3)                 Library Functions Manual                 HISTORY(3)
        The maximum number of history entries.  This must be changed using [1msti-[0m
        [1mfle_history()[22m.
 
-       [4mint[24m [1mhistory_wite_timestamps[0m
+       [4mint[24m [1mhistory_write_timestamps[0m
        If non-zero, timestamps are written to the history file, so they can be
        preserved between sessions.  The default value is 0, meaning that time-
-       stamps are not saved.  The current timestamp format uses the  value  of
-       [4mhistory_comment_char[24m  to delimit timestamp entries in the history file.
-       If that variable does not have a value (the default),  timestamps  will
+       stamps  are  not saved.  The current timestamp format uses the value of
+       [4mhistory_comment_char[24m to delimit timestamp entries in the history  file.
+       If  that  variable does not have a value (the default), timestamps will
        not be written.
 
        [4mchar[24m [1mhistory_expansion_char[0m
@@ -430,37 +436,37 @@ HISTORY(3)                 Library Functions Manual                 HISTORY(3)
        line.  The default is [1m^[22m.
 
        [4mchar[24m [1mhistory_comment_char[0m
-       During  tokenization,  if this character is seen as the first character
-       of a word, then it and all subsequent characters up to  a  newline  are
-       ignored,  suppressing  history expansion for the remainder of the line.
+       During tokenization, if this character is seen as the  first  character
+       of  a  word,  then it and all subsequent characters up to a newline are
+       ignored, suppressing history expansion for the remainder of  the  line.
        This is disabled by default.
 
        [4mchar[24m [4m*[24m [1mhistory_word_delimiters[0m
-       The  characters  that  separate  tokens  for  [1mhistory_tokenize()[22m.   The
-       default value is [1m" \t\n()<>;&|"[22m.
+       The  characters  that  separate tokens for [1mhistory_tokenize()[22m.  The de-
+       fault value is [1m" \t\n()<>;&|"[22m.
 
        [4mchar[24m [4m*[24m [1mhistory_no_expand_chars[0m
        The list of characters which inhibit history expansion if found immedi-
-       ately following [1mhistory_expansion_char[22m.  The  default  is  space,  tab,
+       ately  following  [1mhistory_expansion_char[22m.   The  default is space, tab,
        newline, [1m\r[22m, and [1m=[22m.
 
        [4mchar[24m [4m*[24m [1mhistory_search_delimiter_chars[0m
-       The  list  of  additional characters which can delimit a history search
-       string, in addition to space, tab, [4m:[24m and [4m?[24m in the case of  a  substring
+       The list of additional characters which can delimit  a  history  search
+       string,  in  addition to space, tab, [4m:[24m and [4m?[24m in the case of a substring
        search.  The default is empty.
 
        [4mint[24m [1mhistory_quotes_inhibit_expansion[0m
        If non-zero, double-quoted words are not scanned for the history expan-
-       sion character or the history comment character.  The default value  is
+       sion  character or the history comment character.  The default value is
        0.
 
        [4mrl_linebuf_func_t[24m [4m*[24m [1mhistory_inhibit_expansion_function[0m
-       This  should  be  set to the address of a function that takes two argu-
-       ments: a [1mchar * [22m([4mstring[24m) and an [1mint [22mindex into  that  string  ([4mi[24m).   It
-       should  return  a  non-zero  value if the history expansion starting at
-       [4mstring[i][24m should not be performed; zero  if  the  expansion  should  be
-       done.   It  is  intended for use by applications like [1mbash [22mthat use the
-       history expansion character for additional purposes.  By default,  this
+       This should be set to the address of a function that  takes  two  argu-
+       ments:  a  [1mchar  *  [22m([4mstring[24m) and an [1mint [22mindex into that string ([4mi[24m).  It
+       should return a non-zero value if the  history  expansion  starting  at
+       [4mstring[i][24m  should  not  be  performed;  zero if the expansion should be
+       done.  It is intended for use by applications like [1mbash  [22mthat  use  the
+       history  expansion character for additional purposes.  By default, this
        variable is set to [1mNULL[22m.
 
 [1mFILES[0m
@@ -481,14 +487,14 @@ HISTORY(3)                 Library Functions Manual                 HISTORY(3)
        chet.ramey@case.edu
 
 [1mBUG REPORTS[0m
-       If  you  find  a bug in the [1mhistory [22mlibrary, you should report it.  But
-       first, you should make sure that it  really  is  a  bug,  and  that  it
-       appears in the latest version of the [1mhistory [22mlibrary that you have.
+       If you find a bug in the [1mhistory [22mlibrary, you should  report  it.   But
+       first,  you  should  make sure that it really is a bug, and that it ap-
+       pears in the latest version of the [1mhistory [22mlibrary that you have.
 
-       Once  you have determined that a bug actually exists, mail a bug report
-       to [4mbug-readline[24m@[4mgnu.org[24m.  If you have a fix, you are  welcome  to  mail
-       that  as  well!   Suggestions  and  `philosophical'  bug reports may be
-       mailed to  [4mbug-readline[24m@[4mgnu.org[24m  or  posted  to  the  Usenet  newsgroup
+       Once you have determined that a bug actually exists, mail a bug  report
+       to  [4mbug-readline[24m@[4mgnu.org[24m.   If  you have a fix, you are welcome to mail
+       that as well!  Suggestions  and  `philosophical'  bug  reports  may  be
+       mailed  to  [4mbug-readline[24m@[4mgnu.org[24m  or  posted  to  the  Usenet newsgroup
        [1mgnu.bash.bug[22m.
 
        Comments and bug reports concerning this manual page should be directed
@@ -496,4 +502,4 @@ HISTORY(3)                 Library Functions Manual                 HISTORY(3)
 
 
 
-GNU History 6.3                 2017 October 8                      HISTORY(3)
+GNU History 8.1                  2020 July 17                       HISTORY(3)

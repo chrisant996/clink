@@ -1,4 +1,4 @@
-[Readline-specific changelog.  Descriptions of changes to the source are
+\[Readline-specific changelog.  Descriptions of changes to the source are
  found in the bash changelog.]
 
 				    6/9
@@ -1351,3 +1351,55 @@ Makefile.in
 				   ----
 Makefile.in
 	- installdirs: create $(pkgconfigdir) if it doesn't exist
+
+
+				 4/8/2019
+				 --------
+readline.pc.in
+	- change CFLAGS to include ${includedir} instead of ${includedir}/readline,
+	  to support the recommended `#include <readline/readline.h>'. Report
+	  and fix from Andrea Bolognani <abologna@redhat.com>
+
+				   5/13
+				   ----
+configure.ac
+	- hpux: add -DTGETENT_BROKEN to LOCAL_CFLAGS
+
+				   8/28
+				   ----
+configure.ac
+	- hpux: add -DTGETFLAG_BROKEN to LOCAL_CFLAGS
+
+				    9/6
+				    ---
+examples/autoconf/RL_LIB_READLINE_VERSION
+	- include <stdlib.h> in the AC_TRY_RUN block to accommodate compilers
+	  that treat functions without an existing prototype as fatal errors.
+	  Report and fix from Florian Weimer <fweimer@redhat.com>
+
+				   12/13
+				   -----
+support/shlib-install
+	- remove old code for FreeBSD and Dragonfly; they are ELF-only now and
+	  can use the same code as Linux. Fix from
+	  Baptiste Daroussin <bapt@FreeBSD.org>
+
+				 5/20/2020
+				 ---------
+configure.ac
+	- bumped version number up to 8.1
+
+				   6/15
+				   ----
+configure.ac
+	- add -Wno-parentheses -Wno-format-security to CFLAGS if gcc (or clang)
+	  is the compiler
+
+				   10/29
+				   -----
+configure.ac
+	- --enable-bracketed-paste-default: new invocation option, toggles the
+	  default value of enable-bracketed-paste (on by default)
+
+INSTALL
+	- document new --enable-bracketed-paste-default configure option

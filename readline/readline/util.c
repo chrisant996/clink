@@ -135,10 +135,11 @@ _rl_abort_internal (void)
   rl_clear_message ();
   _rl_reset_argument ();
   rl_clear_pending_input ();
+  rl_deactivate_mark ();
 
-  RL_UNSETSTATE (RL_STATE_MACRODEF);
   while (rl_executing_macro)
     _rl_pop_executing_macro ();
+  _rl_kill_kbd_macro ();
 
   RL_UNSETSTATE (RL_STATE_MULTIKEY);	/* XXX */
 

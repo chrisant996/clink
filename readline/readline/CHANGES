@@ -1,3 +1,126 @@
+This document details the changes between this version, readline-8.1, and
+the previous version, readline-8.0.
+
+1. Changes to Readline
+
+a. There are a number of fixes that were found as the result of fuzzing with
+   random input.
+
+b. Changed the revert-all-at-newline behavior to make sure to start at the end
+   of the history list when doing it, instead of the line where the user hit
+   return.
+
+c. When parsing `set' commands from the inputrc file or an application, readline
+   now allows trailing whitespace.
+
+d. Fixed a bug that left a file descriptor open to the history file if the
+   file size was 0.
+
+e. Fixed a problem with binding key sequences containing meta characters.
+
+f. Fixed a bug that caused the wrong line to be displayed if the user tried to
+   move back beyond the beginning of the history list, or forward past the end
+   of the history list.
+
+g. If readline catches SIGTSTP, it now sets a hook that allows the calling
+   application to handle it if it desires.
+
+h. Fixed a redisplay problem with a prompt string containing embedded newlines.
+
+i. Fixed a problem with completing filenames containing invalid multibyte
+   sequences when case-insensitive comparisons are enabled.
+
+j. Fixed a redisplay problem with prompt strings containing invisible multibyte
+   characters.
+
+k. Fixed a problem with multibyte characters mapped to editing commands that
+   modify the search string in incremental search.
+
+l. Fixed a bug with maintaining the key sequence while resolving a bound
+   command in the presence of ambiguous sequences (sequences with a common
+   prefix), in most cases while attempting to unbind it.
+
+m. Fixed several buffer overflows found as the result of fuzzing.
+
+n. Reworked backslash handling when translating key sequences for key binding
+   to be more uniform and consistent, which introduces a slight backwards
+   incompatibility.
+
+o. Fixed a bug with saving the history that resulted in errors not being
+   propagated to the calling application when the history file is not writable.
+
+p. Readline only calls chown(2) on a newly-written history file if it really
+   needs to, instead of having it be a no-op.
+
+q. Readline now behaves better when operate-and-get-next is used when the
+   history list is `full': when there are already $HISTSIZE entries.
+
+r. Fixed a bug that could cause vi redo (`.') of a replace command not to work
+   correctly in the C or POSIX locale.
+
+s. Fixed a bug with vi-mode digit arguments that caused the last command to be
+   set incorrectly. This prevents yank-last-arg from working as intended, for
+   example.
+
+t. Make sure that all undo groups are closed when leaving vi insertion mode.  
+
+u. Make sure that the vi-mode `C' and `c' commands enter insert mode even if
+   the motion command doesn't have any effect.
+
+v. Fixed several potential memory leaks in the callback mode context handling.
+
+w. If readline is handling a SIGTTOU, make sure SIGTTOU is blocked while
+   executing the terminal cleanup code, since it's no longer run in a signal
+   handling context.
+
+x. Fixed a bug that could cause an application with an application-specific 
+   redisplay function to crash if the line data structures had not been
+   initialized.
+
+y. Terminals that are named "dumb" or unknown do not enable bracketed paste
+   by default.
+
+z. Ensure that disabling bracketed paste turns off highlighting the incremental
+   search string when the search is successful.
+
+2. New Features in Readline
+
+a. If a second consecutive completion attempt produces matches where the first
+   did not, treat it as a new completion attempt and insert a match as
+   appropriate.
+
+b. Bracketed paste mode works in more places: incremental search strings, vi
+   overstrike mode, character search, and reading numeric arguments.
+
+c. Readline automatically switches to horizontal scrolling if the terminal has
+   only one line.
+
+d. Unbinding all key sequences bound to a particular readline function now
+   descends into keymaps for multi-key sequences.
+
+e. rl-clear-display: new bindable command that clears the screen and, if
+   possible, the scrollback buffer (bound to emacs mode M-C-l by default).
+
+f. New active mark and face feature: when enabled, it will highlight the text
+   inserted by a bracketed paste (the `active region') and the text found by
+   incremental and non-incremental history searches. This is tied to bracketed
+   paste and can be disabled by turning off bracketed paste.
+
+g. Readline sets the mark in several additional commands.
+
+h. Bracketed paste mode is enabled by default. There is a configure-time
+   option (--enable-bracketed-paste-default) to set the default to on or off.
+
+i. Readline tries to take advantage of the more regular structure of UTF-8
+   characters to identify the beginning and end of characters when moving
+   through the line buffer.
+
+j. The bindable operate-and-get-next command (and its default bindings) are
+   now part of readline instead of a bash-specific addition.
+
+k. The signal cleanup code now blocks SIGINT while processing after a SIGINT.  
+
+-------------------------------------------------------------------------------
 This document details the changes between this version, readline-8.0, and the
 previous version, readline-7.0.
 

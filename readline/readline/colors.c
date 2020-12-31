@@ -2,7 +2,7 @@
 
    Modified by Chet Ramey for Readline.
 
-   Copyright (C) 1985, 1988, 1990-1991, 1995-2010, 2012, 2015, 2017
+   Copyright (C) 1985, 1988, 1990-1991, 1995-2010, 2012, 2015, 2017, 2019
    Free Software Foundation, Inc.
 
    This program is free software: you can redistribute it and/or modify
@@ -31,6 +31,13 @@
 #endif
 
 #include "rlconf.h"
+
+#if defined __TANDEM
+#  define _XOPEN_SOURCE_EXTENDED 1
+#  define _TANDEM_SOURCE 1
+#  include <sys/types.h>
+#  include <sys/stat.h>
+#endif
 
 #include <stdio.h>
 
@@ -204,14 +211,8 @@ _rl_print_color_indicator (const char *f, unsigned char match_type)
 
   if (linkok == -1 && _rl_color_indicator[C_MISSING].string != NULL)
     colored_filetype = C_MISSING;
-/* begin_clink_change */
-#if defined (S_ISLNK)
-/* end_clink_change */
-  else if (linkok == 0 && S_ISLNK(mode) && _rl_color_indicator[C_ORPHAN].string != NULL)
+  else if (linkok == 0 && _rl_color_indicator[C_ORPHAN].string != NULL)
     colored_filetype = C_ORPHAN;	/* dangling symlink */
-/* begin_clink_change */
-#endif
-/* end_clink_change */
   else if(stat_ok != 0)
     {
       static enum indicator_no filetype_indicator[] = FILETYPE_INDICATORS;

@@ -1,7 +1,7 @@
 @ignore
 This file documents the user interface to the GNU History library.
 
-Copyright (C) 1988--2018 Free Software Foundation, Inc.
+Copyright (C) 1988--2020 Free Software Foundation, Inc.
 Authored by Brian Fox and Chet Ramey.
 
 Permission is granted to make and distribute verbatim copies of this manual
@@ -149,7 +149,14 @@ Both @var{first} and
 @var{last} may be specified as a string (to locate the most recent
 command beginning with that string) or as a number (an index into the
 history list, where a negative number is used as an offset from the
-current command number).  If @var{last} is not specified, it is set to
+current command number).
+
+When listing, a @var{first} or @var{last} of 0 is equivalent to -1
+and -0 is equivalent to the current command (usually the @code{fc}
+command);
+otherwise 0 is equivalent to -1 and -0 is invalid.
+
+If @var{last} is not specified, it is set to
 @var{first}.  If @var{first} is not specified, it is set to the previous
 command for editing and @minus{}16 for listing.  If the @option{-l} flag is
 given, the commands are listed on standard output.  The @option{-n} flag
@@ -164,7 +171,7 @@ When editing is complete, the edited commands are echoed and executed.
 
 In the second form, @var{command} is re-executed after each instance
 of @var{pat} in the selected command is replaced by @var{rep}.
-@var{command} is intepreted the same as @var{first} above.
+@var{command} is interpreted the same as @var{first} above.
 
 A useful alias to use with the @code{fc} command is @code{r='fc -s'}, so
 that typing @samp{r cc} runs the last command beginning with @code{cc}
@@ -370,11 +377,13 @@ containing @var{string}.
 The trailing
 @samp{?} may be omitted if the @var{string} is followed immediately by
 a newline.
+If @var{string} is missing, the string from the most recent search is used;
+it is an error if there is no previous search string.
 
 @item @code{^@var{string1}^@var{string2}^}
 Quick Substitution.  Repeat the last command, replacing @var{string1}
 with @var{string2}.  Equivalent to
-@code{!!:s/@var{string1}/@var{string2}/}.
+@code{!!:s^@var{string1}^@var{string2}^}.
 
 @item @code{!#}
 The entire command line typed so far.
@@ -426,7 +435,8 @@ The first argument; that is, word 1.
 The last argument.
 
 @item %
-The word matched by the most recent @samp{?@var{string}?} search.
+The first word matched by the most recent @samp{?@var{string}?} search,
+if the search string begins with a character that is part of a word.
 
 @item @var{x}-@var{y}
 A range of words; @samp{-@var{y}} abbreviates @samp{0-@var{y}}.
@@ -441,6 +451,7 @@ Abbreviates @samp{@var{x}-$}
 
 @item @var{x}-
 Abbreviates @samp{@var{x}-$} like @samp{@var{x}*}, but omits the last word.
+If @samp{x} is missing, it defaults to 0.
 
 @end table
 
@@ -452,6 +463,7 @@ previous command is used as the event.
 
 After the optional word designator, you can add a sequence of one or more
 of the following modifiers, each preceded by a @samp{:}.
+These modify, or edit, the word or words selected from the history event.
 
 @table @code
 
@@ -478,15 +490,25 @@ Quote the substituted words, escaping further substitutions.
 @item x
 Quote the substituted words as with @samp{q},
 but break into words at spaces, tabs, and newlines.
+The @samp{q} and @samp{x} modifiers are mutually exclusive; the last one
+supplied is used.
 @end ifset
 
 @item s/@var{old}/@var{new}/
 Substitute @var{new} for the first occurrence of @var{old} in the
-event line.  Any delimiter may be used in place of @samp{/}.
+event line.
+Any character may be used as the delimiter in place of @samp{/}.
 The delimiter may be quoted in @var{old} and @var{new}
 with a single backslash.  If @samp{&} appears in @var{new},
 it is replaced by @var{old}.  A single backslash will quote
-the @samp{&}.  The final delimiter is optional if it is the last
+the @samp{&}.
+If @var{old} is null, it is set to the last @var{old}
+substituted, or, if no previous history substitutions took place,
+the last @var{string}
+in a !?@var{string}@code{[?]}
+search.
+If @var{new} is is null, each matching @var{old} is deleted.
+The final delimiter is optional if it is the last
 character on the input line.
 
 @item &
@@ -499,6 +521,7 @@ conjunction with @samp{s}, as in @code{gs/@var{old}/@var{new}/},
 or with @samp{&}.
 
 @item G
-Apply the following @samp{s} modifier once to each word in the event.
+Apply the following @samp{s} or @samp{&} modifier once to each word
+in the event.
 
 @end table

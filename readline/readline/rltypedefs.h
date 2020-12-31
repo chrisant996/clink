@@ -78,6 +78,10 @@ typedef void rl_qsort_match_list_func_t PARAMS((char**, int len));
 typedef char rl_adjcmpwrd_func_t PARAMS((char qc, int *fp, int *dp));
 /* Type for postprocessing the lcd hook function */
 typedef void rl_postprocess_lcd_func_t PARAMS((char *, const char *));
+/* Type for function to get face for char in input buffer */
+typedef char rl_get_face_func_t PARAMS((int in, int active_begin, int active_end));
+/* Type for function to print string with face */
+typedef void rl_puts_face_func_t PARAMS((const char* s, const char* face, int n));
 /* end_clink_change */
 
 /* Input function type */

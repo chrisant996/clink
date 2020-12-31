@@ -1,6 +1,6 @@
 <HTML>
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
-<!-- Created on December, 18  2018 by texi2html 1.64 -->
+<!-- Created on October, 30  2020 by texi2html 1.64 -->
 <!-- 
 Written by: Lionel Cons <Lionel.Cons@cern.ch> (original author)
             Karl Berry  <karl@freefriends.org>
@@ -662,9 +662,9 @@ replaced with an ellipsis when displaying possible completions.
 <DD><A NAME="IDX15"></A>
 The number of possible completions that determines when the user is
 asked whether the list of possibilities should be displayed.
-If the number of possible completions is greater than this value,
-Readline will ask the user whether or not he wishes to view
-them; otherwise, they are simply listed.
+If the number of possible completions is greater than or equal to this value,
+Readline will ask whether or not the user wishes to view them;
+otherwise, they are simply listed.
 This variable must be set to an integer value greater than or equal to 0.
 A negative value means Readline should never ask.
 The default limit is <CODE>100</CODE>.
@@ -721,7 +721,7 @@ When set to <SAMP>`On'</SAMP>, Readline will configure the terminal in a way
 that will enable it to insert each paste into the editing buffer as a
 single string of characters, instead of treating each character as if
 it had been read from the keyboard.  This can prevent pasted characters
-from being interpreted as editing commands.  The default is <SAMP>`off'</SAMP>.
+from being interpreted as editing commands.  The default is <SAMP>`On'</SAMP>.
 <P>
 
 <DT><CODE>enable-keypad</CODE>
@@ -769,8 +769,9 @@ the maximum number of history entries will be set to 500.
 This variable can be set to either <SAMP>`on'</SAMP> or <SAMP>`off'</SAMP>.  Setting it
 to <SAMP>`on'</SAMP> means that the text of the lines being edited will scroll
 horizontally on a single screen line when they are longer than the width
-of the screen, instead of wrapping onto a new screen line.  By default,
-this variable is set to <SAMP>`off'</SAMP>.
+of the screen, instead of wrapping onto a new screen line.
+This variable is automatically set to <SAMP>`on'</SAMP> for terminals of height 1.
+By default, this variable is set to <SAMP>`off'</SAMP>.
 <P>
 
 <DT><CODE>input-meta</CODE>
@@ -1352,8 +1353,8 @@ set convert-meta off
 # rather than as meta-prefixed characters
 set output-meta on
 
-# if there are more than 150 possible completions for
-# a word, ask the user if he wants to see all of them
+# if there are 150 or more possible completions for a word,
+# ask whether or not the user wants to see all of them
 set completion-query-items 150
 
 # For FTP
@@ -1480,15 +1481,24 @@ plus the screen width.
 <P>
 
 <A NAME="IDX61"></A>
-<DT><CODE>clear-screen (C-l)</CODE>
+<DT><CODE>clear-display (M-C-l)</CODE>
 <DD><A NAME="IDX62"></A>
-Clear the screen and redraw the current line,
+Clear the screen and, if possible, the terminal's scrollback buffer,
+then redraw the current line,
 leaving the current line at the top of the screen.
 <P>
 
 <A NAME="IDX63"></A>
-<DT><CODE>redraw-current-line ()</CODE>
+<DT><CODE>clear-screen (C-l)</CODE>
 <DD><A NAME="IDX64"></A>
+Clear the screen,
+then redraw the current line,
+leaving the current line at the top of the screen.
+<P>
+
+<A NAME="IDX65"></A>
+<DT><CODE>redraw-current-line ()</CODE>
+<DD><A NAME="IDX66"></A>
 Refresh the current line.  By default, this is unbound.
 <P>
 
@@ -1514,9 +1524,9 @@ Refresh the current line.  By default, this is unbound.
 <P>
 
 <DL COMPACT>
-<A NAME="IDX65"></A>
+<A NAME="IDX67"></A>
 <DT><CODE>accept-line (Newline or Return)</CODE>
-<DD><A NAME="IDX66"></A>
+<DD><A NAME="IDX68"></A>
 Accept the line regardless of where the cursor is.
 If this line is
 non-empty, it may be added to the history list for future recall with
@@ -1525,77 +1535,69 @@ If this line is a modified history line, the history line is restored
 to its original state.
 <P>
 
-<A NAME="IDX67"></A>
+<A NAME="IDX69"></A>
 <DT><CODE>previous-history (C-p)</CODE>
-<DD><A NAME="IDX68"></A>
+<DD><A NAME="IDX70"></A>
 Move `back' through the history list, fetching the previous command.
 <P>
 
-<A NAME="IDX69"></A>
+<A NAME="IDX71"></A>
 <DT><CODE>next-history (C-n)</CODE>
-<DD><A NAME="IDX70"></A>
+<DD><A NAME="IDX72"></A>
 Move `forward' through the history list, fetching the next command.
 <P>
 
-<A NAME="IDX71"></A>
+<A NAME="IDX73"></A>
 <DT><CODE>beginning-of-history (M-&#60;)</CODE>
-<DD><A NAME="IDX72"></A>
+<DD><A NAME="IDX74"></A>
 Move to the first line in the history.
 <P>
 
-<A NAME="IDX73"></A>
+<A NAME="IDX75"></A>
 <DT><CODE>end-of-history (M-&#62;)</CODE>
-<DD><A NAME="IDX74"></A>
+<DD><A NAME="IDX76"></A>
 Move to the end of the input history, i.e., the line currently
 being entered.
 <P>
 
-<A NAME="IDX75"></A>
+<A NAME="IDX77"></A>
 <DT><CODE>reverse-search-history (C-r)</CODE>
-<DD><A NAME="IDX76"></A>
+<DD><A NAME="IDX78"></A>
 Search backward starting at the current line and moving `up' through
 the history as necessary.  This is an incremental search.
-<P>
-
-<A NAME="IDX77"></A>
-<DT><CODE>forward-search-history (C-s)</CODE>
-<DD><A NAME="IDX78"></A>
-Search forward starting at the current line and moving `down' through
-the history as necessary.  This is an incremental search.
+This command sets the region to the matched text and activates the mark.
 <P>
 
 <A NAME="IDX79"></A>
-<DT><CODE>non-incremental-reverse-search-history (M-p)</CODE>
+<DT><CODE>forward-search-history (C-s)</CODE>
 <DD><A NAME="IDX80"></A>
+Search forward starting at the current line and moving `down' through
+the history as necessary.  This is an incremental search.
+This command sets the region to the matched text and activates the mark.
+<P>
+
+<A NAME="IDX81"></A>
+<DT><CODE>non-incremental-reverse-search-history (M-p)</CODE>
+<DD><A NAME="IDX82"></A>
 Search backward starting at the current line and moving `up'
 through the history as necessary using a non-incremental search
 for a string supplied by the user.
 The search string may match anywhere in a history line.
 <P>
 
-<A NAME="IDX81"></A>
+<A NAME="IDX83"></A>
 <DT><CODE>non-incremental-forward-search-history (M-n)</CODE>
-<DD><A NAME="IDX82"></A>
+<DD><A NAME="IDX84"></A>
 Search forward starting at the current line and moving `down'
 through the history as necessary using a non-incremental search
 for a string supplied by the user.
 The search string may match anywhere in a history line.
 <P>
 
-<A NAME="IDX83"></A>
-<DT><CODE>history-search-forward ()</CODE>
-<DD><A NAME="IDX84"></A>
-Search forward through the history for the string of characters
-between the start of the current line and the point.
-The search string must match at the beginning of a history line.
-This is a non-incremental search.
-By default, this command is unbound.
-<P>
-
 <A NAME="IDX85"></A>
-<DT><CODE>history-search-backward ()</CODE>
+<DT><CODE>history-search-forward ()</CODE>
 <DD><A NAME="IDX86"></A>
-Search backward through the history for the string of characters
+Search forward through the history for the string of characters
 between the start of the current line and the point.
 The search string must match at the beginning of a history line.
 This is a non-incremental search.
@@ -1603,8 +1605,18 @@ By default, this command is unbound.
 <P>
 
 <A NAME="IDX87"></A>
-<DT><CODE>history-substring-search-forward ()</CODE>
+<DT><CODE>history-search-backward ()</CODE>
 <DD><A NAME="IDX88"></A>
+Search backward through the history for the string of characters
+between the start of the current line and the point.
+The search string must match at the beginning of a history line.
+This is a non-incremental search.
+By default, this command is unbound.
+<P>
+
+<A NAME="IDX89"></A>
+<DT><CODE>history-substring-search-forward ()</CODE>
+<DD><A NAME="IDX90"></A>
 Search forward through the history for the string of characters
 between the start of the current line and the point.
 The search string may match anywhere in a history line.
@@ -1612,9 +1624,9 @@ This is a non-incremental search.
 By default, this command is unbound.
 <P>
 
-<A NAME="IDX89"></A>
+<A NAME="IDX91"></A>
 <DT><CODE>history-substring-search-backward ()</CODE>
-<DD><A NAME="IDX90"></A>
+<DD><A NAME="IDX92"></A>
 Search backward through the history for the string of characters
 between the start of the current line and the point.
 The search string may match anywhere in a history line.
@@ -1622,9 +1634,9 @@ This is a non-incremental search.
 By default, this command is unbound.
 <P>
 
-<A NAME="IDX91"></A>
+<A NAME="IDX93"></A>
 <DT><CODE>yank-nth-arg (M-C-y)</CODE>
-<DD><A NAME="IDX92"></A>
+<DD><A NAME="IDX94"></A>
 Insert the first argument to the previous command (usually
 the second word on the previous line) at point.
 With an argument <VAR>n</VAR>,
@@ -1635,9 +1647,9 @@ Once the argument <VAR>n</VAR> is computed, the argument is extracted
 as if the <SAMP>`!<VAR>n</VAR>'</SAMP> history expansion had been specified.
 <P>
 
-<A NAME="IDX93"></A>
+<A NAME="IDX95"></A>
 <DT><CODE>yank-last-arg (M-. or M-_)</CODE>
-<DD><A NAME="IDX94"></A>
+<DD><A NAME="IDX96"></A>
 Insert last argument to the previous command (the last word of the
 previous history entry).
 With a numeric argument, behave exactly like <CODE>yank-nth-arg</CODE>.
@@ -1649,6 +1661,17 @@ the direction to move through the history.  A negative argument switches
 the direction through the history (back or forward).
 The history expansion facilities are used to extract the last argument,
 as if the <SAMP>`!$'</SAMP> history expansion had been specified.
+<P>
+
+<A NAME="IDX97"></A>
+<DT><CODE>operate-and-get-next (C-o)</CODE>
+<DD><A NAME="IDX98"></A>
+Accept the current line for return to the calling application as if a
+newline had been entered,
+and fetch the next line relative to the current line from the history
+for editing.
+A numeric argument, if supplied, specifies the history entry to use instead
+of the current line.
 <P>
 
 </DL>
@@ -1674,60 +1697,60 @@ as if the <SAMP>`!$'</SAMP> history expansion had been specified.
 
 <DL COMPACT>
 
-<A NAME="IDX95"></A>
+<A NAME="IDX99"></A>
 <DT><CODE><I>end-of-file</I> (usually C-d)</CODE>
-<DD><A NAME="IDX96"></A>
+<DD><A NAME="IDX100"></A>
 The character indicating end-of-file as set, for example, by
 <CODE>stty</CODE>.  If this character is read when there are no characters
 on the line, and point is at the beginning of the line, Readline
 interprets it as the end of input and returns EOF.
 <P>
 
-<A NAME="IDX97"></A>
+<A NAME="IDX101"></A>
 <DT><CODE>delete-char (C-d)</CODE>
-<DD><A NAME="IDX98"></A>
+<DD><A NAME="IDX102"></A>
 Delete the character at point.  If this function is bound to the
 same character as the tty EOF character, as <KBD>C-d</KBD>
 commonly is, see above for the effects.
 <P>
 
-<A NAME="IDX99"></A>
+<A NAME="IDX103"></A>
 <DT><CODE>backward-delete-char (Rubout)</CODE>
-<DD><A NAME="IDX100"></A>
+<DD><A NAME="IDX104"></A>
 Delete the character behind the cursor.  A numeric argument means
 to kill the characters instead of deleting them.
 <P>
 
-<A NAME="IDX101"></A>
+<A NAME="IDX105"></A>
 <DT><CODE>forward-backward-delete-char ()</CODE>
-<DD><A NAME="IDX102"></A>
+<DD><A NAME="IDX106"></A>
 Delete the character under the cursor, unless the cursor is at the
 end of the line, in which case the character behind the cursor is
 deleted.  By default, this is not bound to a key.
 <P>
 
-<A NAME="IDX103"></A>
+<A NAME="IDX107"></A>
 <DT><CODE>quoted-insert (C-q or C-v)</CODE>
-<DD><A NAME="IDX104"></A>
+<DD><A NAME="IDX108"></A>
 Add the next character typed to the line verbatim.  This is
 how to insert key sequences like <KBD>C-q</KBD>, for example.
 <P>
 
-<A NAME="IDX105"></A>
+<A NAME="IDX109"></A>
 <DT><CODE>tab-insert (M-<KBD>TAB</KBD>)</CODE>
-<DD><A NAME="IDX106"></A>
+<DD><A NAME="IDX110"></A>
 Insert a tab character.
 <P>
 
-<A NAME="IDX107"></A>
+<A NAME="IDX111"></A>
 <DT><CODE>self-insert (a, b, A, 1, !, <small>...</small>)</CODE>
-<DD><A NAME="IDX108"></A>
+<DD><A NAME="IDX112"></A>
 Insert yourself.
 <P>
 
-<A NAME="IDX109"></A>
+<A NAME="IDX113"></A>
 <DT><CODE>bracketed-paste-begin ()</CODE>
-<DD><A NAME="IDX110"></A>
+<DD><A NAME="IDX114"></A>
 This function is intended to be bound to the "bracketed paste" escape
 sequence sent by some terminals, and such a binding is assigned by default.
 It allows Readline to insert the pasted text as a single unit without treating
@@ -1736,9 +1759,15 @@ are inserted as if each one was bound to <CODE>self-insert</CODE> instead of
 executing any editing commands.
 <P>
 
-<A NAME="IDX111"></A>
+Bracketed paste sets the region (the characters between point and the mark)
+to the inserted text. It uses the concept of an <EM>active mark</EM>: when the
+mark is active, Readline redisplay uses the terminal's standout mode to
+denote the region.
+</P><P>
+
+<A NAME="IDX115"></A>
 <DT><CODE>transpose-chars (C-t)</CODE>
-<DD><A NAME="IDX112"></A>
+<DD><A NAME="IDX116"></A>
 Drag the character before the cursor forward over
 the character at the cursor, moving the
 cursor forward as well.  If the insertion point
@@ -1747,39 +1776,39 @@ transposes the last two characters of the line.
 Negative arguments have no effect.
 <P>
 
-<A NAME="IDX113"></A>
+<A NAME="IDX117"></A>
 <DT><CODE>transpose-words (M-t)</CODE>
-<DD><A NAME="IDX114"></A>
+<DD><A NAME="IDX118"></A>
 Drag the word before point past the word after point,
 moving point past that word as well.
 If the insertion point is at the end of the line, this transposes
 the last two words on the line.
 <P>
 
-<A NAME="IDX115"></A>
+<A NAME="IDX119"></A>
 <DT><CODE>upcase-word (M-u)</CODE>
-<DD><A NAME="IDX116"></A>
+<DD><A NAME="IDX120"></A>
 Uppercase the current (or following) word.  With a negative argument,
 uppercase the previous word, but do not move the cursor.
 <P>
 
-<A NAME="IDX117"></A>
+<A NAME="IDX121"></A>
 <DT><CODE>downcase-word (M-l)</CODE>
-<DD><A NAME="IDX118"></A>
+<DD><A NAME="IDX122"></A>
 Lowercase the current (or following) word.  With a negative argument,
 lowercase the previous word, but do not move the cursor.
 <P>
 
-<A NAME="IDX119"></A>
+<A NAME="IDX123"></A>
 <DT><CODE>capitalize-word (M-c)</CODE>
-<DD><A NAME="IDX120"></A>
+<DD><A NAME="IDX124"></A>
 Capitalize the current (or following) word.  With a negative argument,
 capitalize the previous word, but do not move the cursor.
 <P>
 
-<A NAME="IDX121"></A>
+<A NAME="IDX125"></A>
 <DT><CODE>overwrite-mode ()</CODE>
-<DD><A NAME="IDX122"></A>
+<DD><A NAME="IDX126"></A>
 Toggle overwrite mode.  With an explicit positive numeric argument,
 switches to overwrite mode.  With an explicit non-positive numeric
 argument, switches to insert mode.  This command affects only
@@ -1819,106 +1848,121 @@ By default, this command is unbound.
 
 <DL COMPACT>
 
-<A NAME="IDX123"></A>
-<DT><CODE>kill-line (C-k)</CODE>
-<DD><A NAME="IDX124"></A>
-Kill the text from point to the end of the line.
-<P>
-
-<A NAME="IDX125"></A>
-<DT><CODE>backward-kill-line (C-x Rubout)</CODE>
-<DD><A NAME="IDX126"></A>
-Kill backward from the cursor to the beginning of the current line.
-<P>
-
 <A NAME="IDX127"></A>
-<DT><CODE>unix-line-discard (C-u)</CODE>
+<DT><CODE>kill-line (C-k)</CODE>
 <DD><A NAME="IDX128"></A>
-Kill backward from the cursor to the beginning of the current line.
+Kill the text from point to the end of the line.
+With a negative numeric argument, kill backward from the cursor to the
+beginning of the current line.
 <P>
 
 <A NAME="IDX129"></A>
-<DT><CODE>kill-whole-line ()</CODE>
+<DT><CODE>backward-kill-line (C-x Rubout)</CODE>
 <DD><A NAME="IDX130"></A>
+Kill backward from the cursor to the beginning of the current line.
+With a negative numeric argument, kill forward from the cursor to the
+end of the current line.
+<P>
+
+<A NAME="IDX131"></A>
+<DT><CODE>unix-line-discard (C-u)</CODE>
+<DD><A NAME="IDX132"></A>
+Kill backward from the cursor to the beginning of the current line.
+<P>
+
+<A NAME="IDX133"></A>
+<DT><CODE>kill-whole-line ()</CODE>
+<DD><A NAME="IDX134"></A>
 Kill all characters on the current line, no matter where point is.
 By default, this is unbound.
 <P>
 
-<A NAME="IDX131"></A>
+<A NAME="IDX135"></A>
 <DT><CODE>kill-word (M-d)</CODE>
-<DD><A NAME="IDX132"></A>
+<DD><A NAME="IDX136"></A>
 Kill from point to the end of the current word, or if between
 words, to the end of the next word.
 Word boundaries are the same as <CODE>forward-word</CODE>.
 <P>
 
-<A NAME="IDX133"></A>
+<A NAME="IDX137"></A>
 <DT><CODE>backward-kill-word (M-<KBD>DEL</KBD>)</CODE>
-<DD><A NAME="IDX134"></A>
+<DD><A NAME="IDX138"></A>
 Kill the word behind point.
 Word boundaries are the same as <CODE>backward-word</CODE>.
 <P>
 
-<A NAME="IDX135"></A>
+<A NAME="IDX139"></A>
+<DT><CODE>shell-transpose-words (M-C-t)</CODE>
+<DD><A NAME="IDX140"></A>
+Drag the word before point past the word after point,
+moving point past that word as well.
+If the insertion point is at the end of the line, this transposes
+the last two words on the line.
+Word boundaries are the same as <CODE>shell-forward-word</CODE> and
+<CODE>shell-backward-word</CODE>.
+<P>
+
+<A NAME="IDX141"></A>
 <DT><CODE>unix-word-rubout (C-w)</CODE>
-<DD><A NAME="IDX136"></A>
+<DD><A NAME="IDX142"></A>
 Kill the word behind point, using white space as a word boundary.
 The killed text is saved on the kill-ring.
 <P>
 
-<A NAME="IDX137"></A>
+<A NAME="IDX143"></A>
 <DT><CODE>unix-filename-rubout ()</CODE>
-<DD><A NAME="IDX138"></A>
+<DD><A NAME="IDX144"></A>
 Kill the word behind point, using white space and the slash character
 as the word boundaries.
 The killed text is saved on the kill-ring.
 <P>
 
-<A NAME="IDX139"></A>
+<A NAME="IDX145"></A>
 <DT><CODE>delete-horizontal-space ()</CODE>
-<DD><A NAME="IDX140"></A>
+<DD><A NAME="IDX146"></A>
 Delete all spaces and tabs around point.  By default, this is unbound.
 <P>
 
-<A NAME="IDX141"></A>
+<A NAME="IDX147"></A>
 <DT><CODE>kill-region ()</CODE>
-<DD><A NAME="IDX142"></A>
+<DD><A NAME="IDX148"></A>
 Kill the text in the current region.
 By default, this command is unbound.
 <P>
 
-<A NAME="IDX143"></A>
+<A NAME="IDX149"></A>
 <DT><CODE>copy-region-as-kill ()</CODE>
-<DD><A NAME="IDX144"></A>
+<DD><A NAME="IDX150"></A>
 Copy the text in the region to the kill buffer, so it can be yanked
 right away.  By default, this command is unbound.
 <P>
 
-<A NAME="IDX145"></A>
+<A NAME="IDX151"></A>
 <DT><CODE>copy-backward-word ()</CODE>
-<DD><A NAME="IDX146"></A>
+<DD><A NAME="IDX152"></A>
 Copy the word before point to the kill buffer.
 The word boundaries are the same as <CODE>backward-word</CODE>.
 By default, this command is unbound.
 <P>
 
-<A NAME="IDX147"></A>
+<A NAME="IDX153"></A>
 <DT><CODE>copy-forward-word ()</CODE>
-<DD><A NAME="IDX148"></A>
+<DD><A NAME="IDX154"></A>
 Copy the word following point to the kill buffer.
 The word boundaries are the same as <CODE>forward-word</CODE>.
 By default, this command is unbound.
 <P>
 
-<A NAME="IDX149"></A>
+<A NAME="IDX155"></A>
 <DT><CODE>yank (C-y)</CODE>
-<DD><A NAME="IDX150"></A>
+<DD><A NAME="IDX156"></A>
 Yank the top of the kill ring into the buffer at point.
 <P>
 
-<A NAME="IDX151"></A>
+<A NAME="IDX157"></A>
 <DT><CODE>yank-pop (M-y)</CODE>
-<DD><A NAME="IDX152"></A>
+<DD><A NAME="IDX158"></A>
 Rotate the kill-ring, and yank the new top.  You can only do this if
 the prior command is <CODE>yank</CODE> or <CODE>yank-pop</CODE>.
 </DL>
@@ -1942,16 +1986,16 @@ the prior command is <CODE>yank</CODE> or <CODE>yank-pop</CODE>.
 <!--docid::SEC18::-->
 <DL COMPACT>
 
-<A NAME="IDX153"></A>
+<A NAME="IDX159"></A>
 <DT><CODE>digit-argument (<KBD>M-0</KBD>, <KBD>M-1</KBD>, <small>...</small> <KBD>M--</KBD>)</CODE>
-<DD><A NAME="IDX154"></A>
+<DD><A NAME="IDX160"></A>
 Add this digit to the argument already accumulating, or start a new
 argument.  <KBD>M--</KBD> starts a negative argument.
 <P>
 
-<A NAME="IDX155"></A>
+<A NAME="IDX161"></A>
 <DT><CODE>universal-argument ()</CODE>
-<DD><A NAME="IDX156"></A>
+<DD><A NAME="IDX162"></A>
 This is another way to specify an argument.
 If this command is followed by one or more digits, optionally with a
 leading minus sign, those digits define the argument.
@@ -1986,33 +2030,33 @@ By default, this is not bound to a key.
 <P>
 
 <DL COMPACT>
-<A NAME="IDX157"></A>
+<A NAME="IDX163"></A>
 <DT><CODE>complete (<KBD>TAB</KBD>)</CODE>
-<DD><A NAME="IDX158"></A>
+<DD><A NAME="IDX164"></A>
 Attempt to perform completion on the text before point.
 The actual completion performed is application-specific.
 The default is filename completion.
 <P>
 
-<A NAME="IDX159"></A>
+<A NAME="IDX165"></A>
 <DT><CODE>possible-completions (M-?)</CODE>
-<DD><A NAME="IDX160"></A>
+<DD><A NAME="IDX166"></A>
 List the possible completions of the text before point.
 When displaying completions, Readline sets the number of columns used
 for display to the value of <CODE>completion-display-width</CODE>, the value of
 the environment variable <CODE>COLUMNS</CODE>, or the screen width, in that order.
 <P>
 
-<A NAME="IDX161"></A>
+<A NAME="IDX167"></A>
 <DT><CODE>insert-completions (M-*)</CODE>
-<DD><A NAME="IDX162"></A>
+<DD><A NAME="IDX168"></A>
 Insert all completions of the text before point that would have
 been generated by <CODE>possible-completions</CODE>.
 <P>
 
-<A NAME="IDX163"></A>
+<A NAME="IDX169"></A>
 <DT><CODE>menu-complete ()</CODE>
-<DD><A NAME="IDX164"></A>
+<DD><A NAME="IDX170"></A>
 Similar to <CODE>complete</CODE>, but replaces the word to be completed
 with a single match from the list of possible completions.
 Repeated execution of <CODE>menu-complete</CODE> steps through the list
@@ -2027,17 +2071,17 @@ This command is intended to be bound to <KBD>TAB</KBD>, but is unbound
 by default.
 <P>
 
-<A NAME="IDX165"></A>
+<A NAME="IDX171"></A>
 <DT><CODE>menu-complete-backward ()</CODE>
-<DD><A NAME="IDX166"></A>
+<DD><A NAME="IDX172"></A>
 Identical to <CODE>menu-complete</CODE>, but moves backward through the list
 of possible completions, as if <CODE>menu-complete</CODE> had been given a
 negative argument.
 <P>
 
-<A NAME="IDX167"></A>
+<A NAME="IDX173"></A>
 <DT><CODE>delete-char-or-list ()</CODE>
-<DD><A NAME="IDX168"></A>
+<DD><A NAME="IDX174"></A>
 Deletes the character under the cursor if not at the beginning or
 end of the line (like <CODE>delete-char</CODE>).
 If at the end of the line, behaves identically to
@@ -2066,29 +2110,29 @@ This command is unbound by default.
 <!--docid::SEC20::-->
 <DL COMPACT>
 
-<A NAME="IDX169"></A>
+<A NAME="IDX175"></A>
 <DT><CODE>start-kbd-macro (C-x ()</CODE>
-<DD><A NAME="IDX170"></A>
+<DD><A NAME="IDX176"></A>
 Begin saving the characters typed into the current keyboard macro.
 <P>
 
-<A NAME="IDX171"></A>
+<A NAME="IDX177"></A>
 <DT><CODE>end-kbd-macro (C-x ))</CODE>
-<DD><A NAME="IDX172"></A>
+<DD><A NAME="IDX178"></A>
 Stop saving the characters typed into the current keyboard macro
 and save the definition.
 <P>
 
-<A NAME="IDX173"></A>
+<A NAME="IDX179"></A>
 <DT><CODE>call-last-kbd-macro (C-x e)</CODE>
-<DD><A NAME="IDX174"></A>
+<DD><A NAME="IDX180"></A>
 Re-execute the last keyboard macro defined, by making the characters
 in the macro appear as if typed at the keyboard.
 <P>
 
-<A NAME="IDX175"></A>
+<A NAME="IDX181"></A>
 <DT><CODE>print-last-kbd-macro ()</CODE>
-<DD><A NAME="IDX176"></A>
+<DD><A NAME="IDX182"></A>
 Print the last keboard macro defined in a format suitable for the
 <VAR>inputrc</VAR> file.
 <P>
@@ -2114,88 +2158,88 @@ Print the last keboard macro defined in a format suitable for the
 <!--docid::SEC21::-->
 <DL COMPACT>
 
-<A NAME="IDX177"></A>
+<A NAME="IDX183"></A>
 <DT><CODE>re-read-init-file (C-x C-r)</CODE>
-<DD><A NAME="IDX178"></A>
+<DD><A NAME="IDX184"></A>
 Read in the contents of the <VAR>inputrc</VAR> file, and incorporate
 any bindings or variable assignments found there.
 <P>
 
-<A NAME="IDX179"></A>
+<A NAME="IDX185"></A>
 <DT><CODE>abort (C-g)</CODE>
-<DD><A NAME="IDX180"></A>
+<DD><A NAME="IDX186"></A>
 Abort the current editing command and
 ring the terminal's bell (subject to the setting of
 <CODE>bell-style</CODE>).
 <P>
 
-<A NAME="IDX181"></A>
+<A NAME="IDX187"></A>
 <DT><CODE>do-lowercase-version (M-A, M-B, M-<VAR>x</VAR>, <small>...</small>)</CODE>
-<DD><A NAME="IDX182"></A>
+<DD><A NAME="IDX188"></A>
 If the metafied character <VAR>x</VAR> is upper case, run the command
 that is bound to the corresponding metafied lower case character.
 The behavior is undefined if <VAR>x</VAR> is already lower case.
 <P>
 
-<A NAME="IDX183"></A>
+<A NAME="IDX189"></A>
 <DT><CODE>prefix-meta (<KBD>ESC</KBD>)</CODE>
-<DD><A NAME="IDX184"></A>
+<DD><A NAME="IDX190"></A>
 Metafy the next character typed.  This is for keyboards
 without a meta key.  Typing <SAMP>`<KBD>ESC</KBD> f'</SAMP> is equivalent to typing
 <KBD>M-f</KBD>.
 <P>
 
-<A NAME="IDX185"></A>
+<A NAME="IDX191"></A>
 <DT><CODE>undo (C-_ or C-x C-u)</CODE>
-<DD><A NAME="IDX186"></A>
+<DD><A NAME="IDX192"></A>
 Incremental undo, separately remembered for each line.
 <P>
 
-<A NAME="IDX187"></A>
+<A NAME="IDX193"></A>
 <DT><CODE>revert-line (M-r)</CODE>
-<DD><A NAME="IDX188"></A>
+<DD><A NAME="IDX194"></A>
 Undo all changes made to this line.  This is like executing the <CODE>undo</CODE>
 command enough times to get back to the beginning.
 <P>
 
-<A NAME="IDX189"></A>
+<A NAME="IDX195"></A>
 <DT><CODE>tilde-expand (M-~)</CODE>
-<DD><A NAME="IDX190"></A>
+<DD><A NAME="IDX196"></A>
 Perform tilde expansion on the current word.
 <P>
 
-<A NAME="IDX191"></A>
+<A NAME="IDX197"></A>
 <DT><CODE>set-mark (C-@)</CODE>
-<DD><A NAME="IDX192"></A>
+<DD><A NAME="IDX198"></A>
 Set the mark to the point.  If a
 numeric argument is supplied, the mark is set to that position.
 <P>
 
-<A NAME="IDX193"></A>
+<A NAME="IDX199"></A>
 <DT><CODE>exchange-point-and-mark (C-x C-x)</CODE>
-<DD><A NAME="IDX194"></A>
+<DD><A NAME="IDX200"></A>
 Swap the point with the mark.  The current cursor position is set to
 the saved position, and the old cursor position is saved as the mark.
 <P>
 
-<A NAME="IDX195"></A>
+<A NAME="IDX201"></A>
 <DT><CODE>character-search (C-])</CODE>
-<DD><A NAME="IDX196"></A>
+<DD><A NAME="IDX202"></A>
 A character is read and point is moved to the next occurrence of that
 character.  A negative count searches for previous occurrences.
 <P>
 
-<A NAME="IDX197"></A>
+<A NAME="IDX203"></A>
 <DT><CODE>character-search-backward (M-C-])</CODE>
-<DD><A NAME="IDX198"></A>
+<DD><A NAME="IDX204"></A>
 A character is read and point is moved to the previous occurrence
 of that character.  A negative count searches for subsequent
 occurrences.
 <P>
 
-<A NAME="IDX199"></A>
+<A NAME="IDX205"></A>
 <DT><CODE>skip-csi-sequence ()</CODE>
-<DD><A NAME="IDX200"></A>
+<DD><A NAME="IDX206"></A>
 Read enough characters to consume a multi-key sequence such as those
 defined for keys like Home and End.  Such sequences begin with a
 Control Sequence Indicator (CSI), usually ESC-[.  If this sequence is
@@ -2205,9 +2249,9 @@ stray characters into the editing buffer.  This is unbound by default,
 but usually bound to ESC-[.
 <P>
 
-<A NAME="IDX201"></A>
+<A NAME="IDX207"></A>
 <DT><CODE>insert-comment (M-#)</CODE>
-<DD><A NAME="IDX202"></A>
+<DD><A NAME="IDX208"></A>
 Without a numeric argument, the value of the <CODE>comment-begin</CODE>
 variable is inserted at the beginning of the current line.
 If a numeric argument is supplied, this command acts as a toggle:  if
@@ -2218,43 +2262,43 @@ the line.
 In either case, the line is accepted as if a newline had been typed.
 <P>
 
-<A NAME="IDX203"></A>
+<A NAME="IDX209"></A>
 <DT><CODE>dump-functions ()</CODE>
-<DD><A NAME="IDX204"></A>
+<DD><A NAME="IDX210"></A>
 Print all of the functions and their key bindings to the
 Readline output stream.  If a numeric argument is supplied,
 the output is formatted in such a way that it can be made part
 of an <VAR>inputrc</VAR> file.  This command is unbound by default.
 <P>
 
-<A NAME="IDX205"></A>
+<A NAME="IDX211"></A>
 <DT><CODE>dump-variables ()</CODE>
-<DD><A NAME="IDX206"></A>
+<DD><A NAME="IDX212"></A>
 Print all of the settable variables and their values to the
 Readline output stream.  If a numeric argument is supplied,
 the output is formatted in such a way that it can be made part
 of an <VAR>inputrc</VAR> file.  This command is unbound by default.
 <P>
 
-<A NAME="IDX207"></A>
+<A NAME="IDX213"></A>
 <DT><CODE>dump-macros ()</CODE>
-<DD><A NAME="IDX208"></A>
+<DD><A NAME="IDX214"></A>
 Print all of the Readline key sequences bound to macros and the
 strings they output.  If a numeric argument is supplied,
 the output is formatted in such a way that it can be made part
 of an <VAR>inputrc</VAR> file.  This command is unbound by default.
 <P>
 
-<A NAME="IDX209"></A>
+<A NAME="IDX215"></A>
 <DT><CODE>emacs-editing-mode (C-e)</CODE>
-<DD><A NAME="IDX210"></A>
+<DD><A NAME="IDX216"></A>
 When in <CODE>vi</CODE> command mode, this causes a switch to <CODE>emacs</CODE>
 editing mode.
 <P>
 
-<A NAME="IDX211"></A>
+<A NAME="IDX217"></A>
 <DT><CODE>vi-editing-mode (M-C-j)</CODE>
-<DD><A NAME="IDX212"></A>
+<DD><A NAME="IDX218"></A>
 When in <CODE>emacs</CODE> editing mode, this causes a switch to <CODE>vi</CODE>
 editing mode.
 <P>
@@ -2981,7 +3025,7 @@ to permit their use in free software.
 <TD VALIGN="MIDDLE" ALIGN="LEFT">[<A HREF="rluserman.html#SEC_About"> ? </A>]</TD>
 </TR></TABLE>
 <H1>About this document</H1>
-This document was generated by <I>chet</I> on <I>December, 18  2018</I>
+This document was generated by <I>Chet Ramey</I> on <I>October, 30  2020</I>
 using <A HREF="http://www.mathematik.uni-kl.de/~obachman/Texi2html
 "><I>texi2html</I></A>
 <P></P>  
@@ -3143,7 +3187,7 @@ the following structure:
 <BR>  
 <FONT SIZE="-1">
 This document was generated
-by <I>chet</I> on <I>December, 18  2018</I>
+by <I>Chet Ramey</I> on <I>October, 30  2020</I>
 using <A HREF="http://www.mathematik.uni-kl.de/~obachman/Texi2html
 "><I>texi2html</I></A>
 

@@ -7,7 +7,7 @@ This document describes the GNU Readline Library, a utility for aiding
 in the consistency of user interface across discrete programs that need
 to provide a command line interface.
 
-Copyright (C) 1988--2016 Free Software Foundation, Inc.
+Copyright (C) 1988--2020 Free Software Foundation, Inc.
 
 Permission is granted to make and distribute verbatim copies of
 this manual provided the copyright notice and this permission notice
@@ -1342,6 +1342,29 @@ This differs from @code{clear_history} because it frees private data
 Readline saves in the history list.
 @end deftypefun
 
+@deftypefun {void} rl_activate_mark (void)
+Enable an @emph{active} mark.
+When this is enabled, the text between point and mark (the @var{region}) is
+displayed in the terminal's standout mode (a @var{face}).
+This is called by various readline functions that set the mark and insert
+text, and is available for applications to call.
+@end deftypefun
+
+@deftypefun {void} rl_deactivate_mark (void)
+Turn off the active mark.
+@end deftypefun
+
+@deftypefun {void} rl_keep_mark_active (void)
+Indicate that the mark should remain active when the current readline function
+completes and after redisplay occurs.
+In most cases, the mark remains active for only the duration of a single
+bindable readline function.
+@end deftypefun
+
+@deftypefun {int} rl_mark_active_p (void)
+Return a non-zero value if the mark is currently active; zero otherwise.
+@end deftypefun
+
 @node Alternate Interface
 @subsection Alternate Interface
 
@@ -1733,8 +1756,8 @@ to determine whether or not there are any pending signals.
 
 If an application does not wish Readline to catch @code{SIGWINCH}, it may
 call @code{rl_resize_terminal()} or @code{rl_set_screen_size()} to force
-Readline to update its idea of the terminal size when a @code{SIGWINCH}
-is received.
+Readline to update its idea of the terminal size when it receives
+a @code{SIGWINCH}.
 
 @deftypefun void rl_echo_signal_char (int sig)
 If an application wishes to install its own signal handlers, but still
@@ -1751,11 +1774,14 @@ Update Readline's internal screen size by reading values from the kernel.
 Set Readline's idea of the terminal size to @var{rows} rows and
 @var{cols} columns.  If either @var{rows} or @var{columns} is less than
 or equal to 0, Readline's idea of that terminal dimension is unchanged.
+This is intended to tell Readline the physical dimensions of the terminal,
+and is used internally to calculate the maximum number of characters that
+may appear on a single line and on the screen.
 @end deftypefun
 
 If an application does not want to install a @code{SIGWINCH} handler, but
-is still interested in the screen dimensions, Readline's idea of the screen
-size may be queried.
+is still interested in the screen dimensions, it may query Readline's idea
+of the screen size.
 
 @deftypefun void rl_get_screen_size (int *rows, int *cols)
 Return Readline's idea of the terminal's size in the
@@ -2039,7 +2065,7 @@ remove any quote characters from the directory name, because its result will
 be passed directly to @code{opendir()}.
 
 The directory rewrite hook returns an integer that should be non-zero if
-the function modfies its directory argument.
+the function modifies its directory argument.
 The function should not modify the directory argument if it returns 0.
 @end deftypevar
 
@@ -2051,7 +2077,7 @@ is passed to @code{stat()} to determine the file's type and characteristics.
 This function does not need to remove quote characters from the filename.
 
 The stat hook returns an integer that should be non-zero if
-the function modfies its directory argument.
+the function modifies its directory argument.
 The function should not modify the directory argument if it returns 0.
 @end deftypevar
 
@@ -2645,7 +2671,7 @@ com_help (arg)
 
   if (!printed)
     @{
-      printf ("No commands match `%s'.  Possibilties are:\n", arg);
+      printf ("No commands match `%s'.  Possibilities are:\n", arg);
 
       for (i = 0; commands[i].name; i++)
         @{

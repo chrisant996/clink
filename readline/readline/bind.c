@@ -1,6 +1,6 @@
 /* bind.c -- key binding and startup file support for the readline library. */
 
-/* Copyright (C) 1987-2017 Free Software Foundation, Inc.
+/* Copyright (C) 1987-2020 Free Software Foundation, Inc.
 
    This file is part of the GNU Readline Library (Readline), a library
    for reading lines of text with interactive input and history editing.
@@ -135,12 +135,13 @@ rl_add_defun (const char *name, rl_command_func_t *function, int key)
 int
 rl_bind_key (int key, rl_command_func_t *function)
 {
-  char keyseq[3];
+  char keyseq[4];
   int l;
 
-  if (key < 0)
+  if (key < 0 || key > largest_char)
     return (key);
 
+  /* Want to make this a multi-character key sequence with an ESC prefix */
   if (META_CHAR (key) && _rl_convert_meta_chars_to_ascii)
     {
       if (_rl_keymap[ESC].type == ISKMAP)
@@ -153,24 +154,43 @@ rl_bind_key (int key, rl_command_func_t *function)
 	  escmap[key].function = function;
 	  return (0);
 	}
-      return (key);
+
+      /* Otherwise, let's just let rl_generic_bind handle the key sequence.
+	 We start it off with ESC here and let the code below add the rest
+	 of the sequence. */
+      keyseq[0] = ESC;
+      l = 1;
+      key = UNMETA(key);
+      goto bind_keyseq;
     }
 
   /* If it's bound to a function or macro, just overwrite.  Otherwise we have
      to treat it as a key sequence so rl_generic_bind handles shadow keymaps
-     for us.  If we are binding '\' make sure to escape it so it makes it
-     through the call to rl_translate_keyseq. */
+     for us.  If we are binding '\' or \C-@ (NUL) make sure to escape it so
+     it makes it through the call to rl_translate_keyseq. */
   if (_rl_keymap[key].type != ISKMAP)
     {
+      if (_rl_keymap[key].type == ISMACR)
+	xfree ((char *)_rl_keymap[key].function);
       _rl_keymap[key].type = ISFUNC;
       _rl_keymap[key].function = function;
     }
   else
     {
       l = 0;
+bind_keyseq:
       if (key == '\\')
-	keyseq[l++] = '\\';
-      keyseq[l++] = key;
+	{
+	  keyseq[l++] = '\\';
+	  keyseq[l++] = '\\';
+	}
+      else if (key == '\0')	  
+	{
+	  keyseq[l++] = '\\';
+	  keyseq[l++] = '0';
+	}
+      else
+	keyseq[l++] = key;
       keyseq[l] = '\0';
       rl_bind_keyseq (keyseq, function);
     }
@@ -241,6 +261,13 @@ rl_unbind_function_in_map (rl_command_func_t *func, Keymap map)
 	{
 	  map[i].function = (rl_command_func_t *)NULL;
 	  rval = 1;
+	}
+      else if (map[i].type == ISKMAP)		/* TAG:readline-8.1 */
+	{
+	  int r;
+	  r = rl_unbind_function_in_map (func, FUNCTION_TO_KEYMAP (map, i));
+	  if (r == 1)
+	    rval = 1;
 	}
     }
   return rval;
@@ -352,13 +379,10 @@ int
 rl_generic_bind (int type, const char *keyseq, char *data, Keymap map)
 {
   char *keys;
-  int keys_len, prevkey;
+  int keys_len, prevkey, ic;
   register int i;
   KEYMAP_ENTRY k;
   Keymap prevmap;  
-/* begin_clink_change */
-  int ic;
-/* end_clink_change */
 
   k.function = 0;
 
@@ -388,11 +412,6 @@ rl_generic_bind (int type, const char *keyseq, char *data, Keymap map)
   for (i = 0; i < keys_len; i++)
     {
       unsigned char uc = keys[i];
-/* begin_clink_change
- * Immediately following this, variable 'ic' is used without initialization.
- */
-      //int ic;
-/* end_clink_change */
 
       if (i > 0)
 	prevkey = ic;
@@ -404,6 +423,9 @@ rl_generic_bind (int type, const char *keyseq, char *data, Keymap map)
 	  return -1;
         }
 
+      /* We now rely on rl_translate_keyseq to do this conversion, so this
+	 check is superfluous. */
+#if 0
       if (META_CHAR (ic) && _rl_convert_meta_chars_to_ascii)
 	{
 	  ic = UNMETA (ic);
@@ -413,6 +435,7 @@ rl_generic_bind (int type, const char *keyseq, char *data, Keymap map)
 	      map = FUNCTION_TO_KEYMAP (map, ESC);
 	    }
 	}
+#endif
 
       if ((i + 1) < keys_len)
 	{
@@ -446,9 +469,7 @@ rl_generic_bind (int type, const char *keyseq, char *data, Keymap map)
 	}
       else
 	{
-	  if (map[ic].type == ISMACR)
-	    xfree ((char *)map[ic].function);
-	  else if (map[ic].type == ISKMAP)
+	  if (map[ic].type == ISKMAP)
 	    {
 	      prevmap = map;
 	      map = FUNCTION_TO_KEYMAP (map, ic);
@@ -461,6 +482,8 @@ rl_generic_bind (int type, const char *keyseq, char *data, Keymap map)
 	      if (type == ISFUNC && data == 0)
 		data = (char *)_rl_null_function;
 	    }
+	  if (map[ic].type == ISMACR)
+	    xfree ((char *)map[ic].function);
 
 	  map[ic].function = KEYMAP_TO_FUNCTION (data);
 	  map[ic].type = type;
@@ -499,59 +522,38 @@ rl_generic_bind (int type, const char *keyseq, char *data, Keymap map)
 int
 rl_translate_keyseq (const char *seq, char *array, int *len)
 {
-  register int i, c, l, temp;
+  register int i, l, temp;
+  int has_control, has_meta;
+  unsigned char c;
 
-  for (i = l = 0; c = seq[i]; i++)
+  has_control = 0;
+  has_meta = 0;
+
+  /* When there are incomplete prefixes \C- or \M- (has_control || has_meta)
+     without base character at the end of SEQ, they are processed as the
+     prefixes for '\0'.
+  */
+  for (i = l = 0; (c = seq[i]) || has_control || has_meta; i++)
     {
-      if (c == '\\')
+      /* Only backslashes followed by a non-null character are handled
+	 specially.  Trailing backslash (backslash followed by '\0') is
+	 processed as a normal character.
+      */
+      if (c == '\\' && seq[i + 1] != '\0')
 	{
 	  c = seq[++i];
 
-	  if (c == 0)
-	    {
-	      array[l++] = '\\';	/* preserve trailing backslash */
-	      break;
-	    }
-
 	  /* Handle \C- and \M- prefixes. */
-	  if ((c == 'C' || c == 'M') && seq[i + 1] == '-')
+	  if (c == 'C' && seq[i + 1] == '-')
 	    {
-	      /* Handle special case of backwards define. */
-	      if (strncmp (&seq[i], "C-\\M-", 5) == 0)
-		{
-		  array[l++] = ESC;	/* ESC is meta-prefix */
-		  i += 5;
-		  array[l++] = CTRL (_rl_to_upper (seq[i]));
-		}
-	      else if (c == 'M')
-		{
-		  i++;		/* seq[i] == '-' */
-		  /* XXX - obey convert-meta setting */
-		  if (_rl_convert_meta_chars_to_ascii && _rl_keymap[ESC].type == ISKMAP)
-		    array[l++] = ESC;	/* ESC is meta-prefix */
-		  else if (seq[i+1] == '\\' && seq[i+2] == 'C' && seq[i+3] == '-')
-		    {
-		      i += 4;
-		      temp = (seq[i] == '?') ? RUBOUT : CTRL (_rl_to_upper (seq[i]));
-		      array[l++] = META (temp);
-		    }
-		  else
-		    {
-		      /* This doesn't yet handle things like \M-\a, which may
-			 or may not have any reasonable meaning.  You're
-			 probably better off using straight octal or hex. */
-		      i++;
-		      array[l++] = META (seq[i]);
-		    }
-		}
-	      else if (c == 'C')
-		{
-		  i += 2;
-		  /* Special hack for C-?... */
-		  array[l++] = (seq[i] == '?') ? RUBOUT : CTRL (_rl_to_upper (seq[i]));
-		}
-	      if (seq[i] == '\0')
-		break;
+	      i++;
+	      has_control = 1;
+	      continue;
+	    }
+	  else if (c == 'M' && seq[i + 1] == '-')
+	    {
+	      i++;
+	      has_meta = 1;
 	      continue;
 	    }	      
 
@@ -562,34 +564,34 @@ rl_translate_keyseq (const char *seq, char *array, int *len)
 	  switch (c)
 	    {
 	    case 'a':
-	      array[l++] = '\007';
+	      c = '\007';
 	      break;
 	    case 'b':
-	      array[l++] = '\b';
+	      c = '\b';
 	      break;
 	    case 'd':
-	      array[l++] = RUBOUT;	/* readline-specific */
+	      c = RUBOUT;	/* readline-specific */
 	      break;
 	    case 'e':
-	      array[l++] = ESC;
+	      c = ESC;
 	      break;
 	    case 'f':
-	      array[l++] = '\f';
+	      c = '\f';
 	      break;
 	    case 'n':
-	      array[l++] = NEWLINE;
+	      c = NEWLINE;
 	      break;
 	    case 'r':
-	      array[l++] = RETURN;
+	      c = RETURN;
 	      break;
 	    case 't':
-	      array[l++] = TAB;
+	      c = TAB;
 	      break;
 	    case 'v':
-	      array[l++] = 0x0B;
+	      c = 0x0B;
 	      break;
 	    case '\\':
-	      array[l++] = '\\';
+	      c = '\\';
 	      break;
 	    case '0': case '1': case '2': case '3':
 	    case '4': case '5': case '6': case '7':
@@ -597,7 +599,7 @@ rl_translate_keyseq (const char *seq, char *array, int *len)
 	      for (temp = 2, c -= '0'; ISOCTAL ((unsigned char)seq[i]) && temp--; i++)
 	        c = (c * 8) + OCTVALUE (seq[i]);
 	      i--;	/* auto-increment in for loop */
-	      array[l++] = c & largest_char;
+	      c &= largest_char;
 	      break;
 	    case 'x':
 	      i++;
@@ -606,16 +608,40 @@ rl_translate_keyseq (const char *seq, char *array, int *len)
 	      if (temp == 2)
 	        c = 'x';
 	      i--;	/* auto-increment in for loop */
-	      array[l++] = c & largest_char;
+	      c &= largest_char;
 	      break;
 	    default:	/* backslashes before non-special chars just add the char */
-	      array[l++] = c;
+	      c &= largest_char;
 	      break;	/* the backslash is stripped */
 	    }
-	  continue;
 	}
 
-      array[l++] = c;
+      /* Process \C- and \M- flags */
+      if (has_control)
+	{
+	  /* Special treatment for C-? */
+	  c = (c == '?') ? RUBOUT : CTRL (_rl_to_upper (c));
+	  has_control = 0;
+	}
+      if (has_meta)
+	{
+	  c = META (c);
+	  has_meta = 0;
+	}
+
+      /* If convert-meta is turned on, convert a meta char to a key sequence  */
+      if (META_CHAR (c) && _rl_convert_meta_chars_to_ascii)
+	{
+	  array[l++] = ESC;	/* ESC is meta-prefix */
+	  array[l++] = UNMETA (c);
+	}
+      else
+	array[l++] = (c);
+
+      /* Null characters may be processed for incomplete prefixes at the end of
+	 sequence */
+      if (seq[i] == '\0')
+	break;
     }
 
   *len = l;
@@ -763,7 +789,7 @@ _rl_untranslate_macro_value (char *seq, int use_escapes)
 
 /* Return a pointer to the function that STRING represents.
    If STRING doesn't have a matching function, then a NULL pointer
-   is returned. */
+   is returned. The string match is case-insensitive. */
 rl_command_func_t *
 rl_named_function (const char *string)
 {
@@ -816,7 +842,7 @@ _rl_function_of_keyseq_internal (const char *keyseq, size_t len, Keymap map, int
 	{
 	  /* If this is the last key in the key sequence, return the
 	     map. */
-	  if (keyseq[i + 1] == '\0')
+	  if (i + 1 == len)
 	    {
 	      if (type)
 		*type = ISKMAP;
@@ -829,9 +855,9 @@ _rl_function_of_keyseq_internal (const char *keyseq, size_t len, Keymap map, int
       /* If we're not at the end of the key sequence, and the current key
 	 is bound to something other than a keymap, then the entire key
 	 sequence is not bound. */
-      else if (map[ic].type != ISKMAP && keyseq[i+1])
+      else if (map[ic].type != ISKMAP && i+1 < len)
 	return ((rl_command_func_t *)NULL);
-      else	/* map[ic].type != ISKMAP && keyseq[i+1] == 0 */
+      else	/* map[ic].type != ISKMAP && i+1 == len */
 	{
 	  if (type)
 	    *type = map[ic].type;
@@ -1589,15 +1615,11 @@ rl_parse_and_bind (char *string)
       /* Strip trailing whitespace from values of boolean variables. */
       if (find_boolean_var (var) >= 0)
 	{
-	  /* remove trailing whitespace */
-remove_trailing:
-	  e = value + strlen (value) - 1;
-	  while (e >= value && whitespace (*e))
-	    e--;
-	  e++;		/* skip back to whitespace or EOS */
-	  
-	  if (*e && e >= value)
-	    *e = '\0';
+	  /* just read a whitespace-delimited word or empty string */
+	  for (e = value; *e && whitespace (*e) == 0; e++)
+	    ;
+	  if (e > value)
+	    *e = '\0';		/* cut off everything trailing */
 	}
       else if ((i = find_string_var (var)) >= 0)
 	{
@@ -1609,9 +1631,24 @@ remove_trailing:
 	      value++;	/* skip past the quote */
 	    }
 	  else
-	    goto remove_trailing;
+	    {
+	      /* remove trailing whitespace */
+	      e = value + strlen (value) - 1;
+	      while (e >= value && whitespace (*e))
+		e--;
+	      e++;		/* skip back to whitespace or EOS */
+	  
+	      if (*e && e >= value)
+		*e = '\0';
+	    }
 	}
-	
+      else
+	{
+	  /* avoid calling rl_variable_bind just to find this out */
+	  _rl_init_file_error ("%s: unknown variable name", var);
+	  return 1;
+	}
+
       rl_variable_bind (var, value);
       return 0;
     }
@@ -1791,7 +1828,7 @@ static const struct {
   { "convert-meta",		&_rl_convert_meta_chars_to_ascii, 0 },
   { "disable-completion",	&rl_inhibit_completion,		0 },
   { "echo-control-characters",	&_rl_echo_control_chars,	0 },
-  { "enable-bracketed-paste",	&_rl_enable_bracketed_paste,	0 },
+  { "enable-bracketed-paste",	&_rl_enable_bracketed_paste,	V_SPECIAL },
   { "enable-keypad",		&_rl_enable_keypad,		0 },
   { "enable-meta-key",		&_rl_enable_meta,		0 },
   { "expand-tilde",		&rl_complete_with_tilde_expansion, 0 },
@@ -1863,6 +1900,8 @@ hack_special_boolean_var (int i)
     }
   else if (_rl_stricmp (name, "show-mode-in-prompt") == 0)
     _rl_reset_prompt ();
+  else if (_rl_stricmp (name, "enable-bracketed-paste") == 0)
+    _rl_enable_active_region = _rl_enable_bracketed_paste;
 }
 
 typedef int _rl_sv_func_t PARAMS((const char *));
@@ -1932,7 +1971,7 @@ string_varname (int i)
 }  
 
 /* A boolean value that can appear in a `set variable' command is true if
-   the value is null or empty, `on' (case-insensitive), or "1".  Any other
+   the value is null or empty, `on' (case-insensitive), or "1".  All other
    values result in 0 (false). */
 static int
 bool_to_int (const char *value)
@@ -1957,7 +1996,7 @@ rl_variable_value (const char *name)
     return (_rl_get_string_variable_value (string_varlist[i].name));
 
   /* Unknown variable names return NULL. */
-  return 0;
+  return (char *)NULL;
 }
 
 int
@@ -1988,6 +2027,8 @@ rl_variable_bind (const char *name, const char *value)
     }
 
   v = (*string_varlist[i].set_func) (value);
+  if (v != 0)
+    _rl_init_file_error ("%s: could not set value to `%s'", name, value);
   return v;
 }
 
@@ -2610,20 +2651,22 @@ rl_invoking_keyseqs_in_map (rl_command_func_t *function, Keymap map)
 		    else
 		      sprintf (keyname, "\\e");
 		  }
-		else if (CTRL_CHAR (key))
-		  sprintf (keyname, "\\C-%c", _rl_to_lower (UNCTRL (key)));
-		else if (key == RUBOUT)
-		  sprintf (keyname, "\\C-?");
-		else if (key == '\\' || key == '"')
-		  {
-		    keyname[0] = '\\';
-		    keyname[1] = (char) key;
-		    keyname[2] = '\0';
-		  }
 		else
 		  {
-		    keyname[0] = (char) key;
-		    keyname[1] = '\0';
+		    int c = key, l = 0;
+		    if (CTRL_CHAR (c) || c == RUBOUT)
+		      {
+			keyname[l++] = '\\';
+			keyname[l++] = 'C';
+			keyname[l++] = '-';
+			c = (c == RUBOUT) ? '?' : _rl_to_lower (UNCTRL (c));
+		      }
+
+		    if (c == '\\' || c == '"')
+		      keyname[l++] = '\\';
+
+		    keyname[l++] = (char) c;
+		    keyname[l++] = '\0';
 		  }
 		
 		strcat (keyname, seqs[i]);

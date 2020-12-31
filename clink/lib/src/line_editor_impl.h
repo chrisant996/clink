@@ -64,6 +64,7 @@ private:
     void                end_line();
     void                collect_words(bool stop_at_cursor=true);
     unsigned int        collect_words(words& words, matches_impl& matches, collect_words_mode mode);
+    bool                classify();
     void                update_internal();
     bool                update_input();
     module::context     get_context(const line_state& line) const;

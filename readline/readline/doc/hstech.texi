@@ -1,7 +1,7 @@
 @ignore
 This file documents the user interface to the GNU History library.
 
-Copyright (C) 1988-2016 Free Software Foundation, Inc.
+Copyright (C) 1988-2020 Free Software Foundation, Inc.
 Authored by Brian Fox and Chet Ramey.
 
 Permission is granted to make and distribute verbatim copies of this manual
@@ -48,7 +48,7 @@ History library is able to keep track of those lines, associate arbitrary
 data with each line, and utilize information from previous lines in
 composing new ones. 
 
-The programmer using the History library has available functions
+A programmer using the History library has available functions
 for remembering lines on a history list, associating arbitrary data
 with a line, removing lines from the list, searching through the list
 for a line containing an arbitrary text string, and referencing any line
@@ -62,7 +62,7 @@ commands for manipulating the text of previous lines and using that text
 in new commands.  The basic history manipulation commands are similar to
 the history substitution provided by @code{csh}.
 
-If the programmer desires, he can use the Readline library, which
+The programmer can also use the Readline library, which
 includes some history manipulation by default, and has the added
 advantage of command line editing.
 

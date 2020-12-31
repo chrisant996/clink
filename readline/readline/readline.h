@@ -1,6 +1,6 @@
 /* Readline.h -- the names of functions callable from within readline. */
 
-/* Copyright (C) 1987-2016 Free Software Foundation, Inc.
+/* Copyright (C) 1987-2020 Free Software Foundation, Inc.
 
    This file is part of the GNU Readline Library (Readline), a library
    for reading lines of text with interactive input and history editing.      
@@ -39,9 +39,9 @@ extern "C" {
 #endif
 
 /* Hex-encoded Readline version number. */
-#define RL_READLINE_VERSION	0x0800		/* Readline 8.0 */
+#define RL_READLINE_VERSION	0x0801		/* Readline 8.0 */
 #define RL_VERSION_MAJOR	8
-#define RL_VERSION_MINOR	0
+#define RL_VERSION_MINOR	1
 
 /* begin_clink_change */
 #define VER_AS_STR(x)    #x
@@ -102,6 +102,7 @@ extern int rl_forward_word PARAMS((int, int));
 extern int rl_backward_word PARAMS((int, int));
 extern int rl_refresh_line PARAMS((int, int));
 extern int rl_clear_screen PARAMS((int, int));
+extern int rl_clear_display PARAMS((int, int));
 extern int rl_skip_csi_sequence PARAMS((int, int));
 extern int rl_arrow_keys PARAMS((int, int));
 
@@ -142,6 +143,7 @@ extern int rl_beginning_of_history PARAMS((int, int));
 extern int rl_end_of_history PARAMS((int, int));
 extern int rl_get_next_history PARAMS((int, int));
 extern int rl_get_previous_history PARAMS((int, int));
+extern int rl_operate_and_get_next PARAMS((int, int));
 /* begin_clink_change */
 extern int rl_remove_history PARAMS((int, int));
 /* end_clink_change */
@@ -415,6 +417,14 @@ extern int rl_clear_message PARAMS((void));
 extern int rl_reset_line_state PARAMS((void));
 extern int rl_crlf PARAMS((void));
 
+/* Functions to manage the mark and region, especially the notion of an
+   active mark and an active region. */
+extern void rl_keep_mark_active PARAMS((void));
+
+extern void rl_activate_mark PARAMS((void));
+extern void rl_deactivate_mark PARAMS((void));
+extern int rl_mark_active_p PARAMS((void));
+
 #if defined (USE_VARARGS) && defined (PREFER_STDARG)
 extern int rl_message (const char *, ...)  __attribute__((__format__ (printf, 1, 2)));
 #else
@@ -677,9 +687,13 @@ extern rl_getc_func_t *rl_getc_function;
 extern rl_voidfunc_t *rl_redisplay_function;
 
 /* begin_clink_change */
-extern const char *_rl_display_input_color;
 extern const char *_rl_display_modmark_color;
+extern const char *_rl_display_horizscroll_color;
 extern const char *_rl_display_message_color;
+extern char _rl_face_modmark;
+extern char _rl_face_horizscroll;
+extern rl_get_face_func_t *rl_get_face_func;
+extern rl_puts_face_func_t *rl_puts_face_func;
 /* end_clink_change */
 
 extern rl_vintfunc_t *rl_prep_term_function;

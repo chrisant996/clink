@@ -1,6 +1,6 @@
 /* tilde.c -- Tilde expansion code (~/foo := $HOME/foo). */
 
-/* Copyright (C) 1988-2017 Free Software Foundation, Inc.
+/* Copyright (C) 1988-2020 Free Software Foundation, Inc.
 
    This file is part of the GNU Readline Library (Readline), a library
    for reading lines of text with interactive input and history editing.
@@ -58,10 +58,10 @@ static void *xmalloc (), *xrealloc ();
 
 #if !defined (HAVE_GETPW_DECLS)
 #  if defined (HAVE_GETPWUID)
-extern struct passwd *getpwuid PARAMS((uid_t));
+extern struct passwd *getpwuid (uid_t);
 #  endif
 #  if defined (HAVE_GETPWNAM)
-extern struct passwd *getpwnam PARAMS((const char *));
+extern struct passwd *getpwnam (const char *);
 #  endif
 #endif /* !HAVE_GETPW_DECLS */
 
@@ -80,8 +80,8 @@ extern struct passwd *getpwnam PARAMS((const char *));
 /* If being compiled as part of bash, these will be satisfied from
    variables.o.  If being compiled as part of readline, they will
    be satisfied from shell.o. */
-extern char *sh_get_home_dir PARAMS((void));
-extern char *sh_get_env_value PARAMS((const char *));
+extern char *sh_get_home_dir (void);
+extern char *sh_get_env_value (const char *);
 
 /* The default value of tilde_additional_prefixes.  This is set to
    whitespace preceding a tilde so that simple programs which do not
@@ -117,10 +117,10 @@ char **tilde_additional_prefixes = (char **)default_prefixes;
    `:' and `=~'. */
 char **tilde_additional_suffixes = (char **)default_suffixes;
 
-static int tilde_find_prefix PARAMS((const char *, int *));
-static int tilde_find_suffix PARAMS((const char *));
-static char *isolate_tilde_prefix PARAMS((const char *, int *));
-static char *glue_prefix_and_suffix PARAMS((char *, const char *, int));
+static int tilde_find_prefix (const char *, int *);
+static int tilde_find_suffix (const char *);
+static char *isolate_tilde_prefix (const char *, int *);
+static char *glue_prefix_and_suffix (char *, const char *, int);
 
 /* Find the start of a tilde expansion in STRING, and return the index of
    the tilde which starts the expansion.  Place the length of the text

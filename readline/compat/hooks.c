@@ -188,6 +188,8 @@ int hooked_stat(const char* path, struct hooked_stat* out)
     ret = _wstat64(buf, &s);
     out->st_size = s.st_size;
     out->st_mode = s.st_mode;
+    out->st_uid = s.st_uid;
+    out->st_gid = s.st_gid;
 #endif
 
     return ret;
@@ -202,6 +204,8 @@ int hooked_fstat(int fid, struct hooked_stat* out)
     ret = _fstat64(fid, &s);
     out->st_size = s.st_size;
     out->st_mode = s.st_mode;
+    out->st_uid = s.st_uid;
+    out->st_gid = s.st_gid;
 
     return ret;
 }

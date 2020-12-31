@@ -10,7 +10,7 @@
 # Chet Ramey
 # chet@po.cwru.edu
 
-#   Copyright (C) 1996-2014 Free Software Foundation, Inc.
+#   Copyright (C) 1996-2019 Free Software Foundation, Inc.
 #
 #   This file is part of GNU Bash, the Bourne Again SHell.
 #
@@ -65,7 +65,7 @@ while [ $# -gt 0 ]; do
 done
 
 case "${host_os}-${SHOBJ_CC}-${host_vendor}" in
-nsk-cc-tandem)
+nsk-cc-tandem|nsk-c99-tandem)
 	SHOBJ_CFLAGS=-Wglobalized
 	case `uname -m` in
 	NSR*)
@@ -123,51 +123,13 @@ sunos5*|solaris2*)
 	;;
 
 # All versions of Linux (including Gentoo/FreeBSD) or the semi-mythical GNU Hurd.
-linux*-*|gnu*-*|k*bsd*-gnu-*|freebsd*-gentoo)
+linux*-*|gnu*-*|k*bsd*-gnu-*|freebsd*|dragonfly*)
 	SHOBJ_CFLAGS=-fPIC
 	SHOBJ_LD='${CC}'
 	SHOBJ_LDFLAGS='-shared -Wl,-soname,$@'
 
 	SHLIB_XLDFLAGS='-Wl,-rpath,$(libdir) -Wl,-soname,`basename $@ $(SHLIB_MINOR)`'
 	SHLIB_LIBVERSION='$(SHLIB_LIBSUFF).$(SHLIB_MAJOR)$(SHLIB_MINOR)'
-	;;
-
-freebsd2*)
-	SHOBJ_CFLAGS=-fpic
-	SHOBJ_LD=ld
-	SHOBJ_LDFLAGS='-x -Bshareable'
-
-	SHLIB_XLDFLAGS='-R$(libdir)'
-	SHLIB_LIBVERSION='$(SHLIB_LIBSUFF).$(SHLIB_MAJOR)$(SHLIB_MINOR)'
-	;;
-
-# FreeBSD-3.x ELF
-freebsd3*|freebsdaout*)
-	SHOBJ_CFLAGS=-fPIC
-	SHOBJ_LD='${CC}'
-
-	if [ -x /usr/bin/objformat ] && [ "`/usr/bin/objformat`" = "elf" ]; then
-		SHOBJ_LDFLAGS='-shared -Wl,-soname,$@'
-
-		SHLIB_XLDFLAGS='-Wl,-rpath,$(libdir)'
-		SHLIB_LIBVERSION='$(SHLIB_LIBSUFF).$(SHLIB_MAJOR)'
-	else
-		SHOBJ_LDFLAGS='-shared'
-
-		SHLIB_XLDFLAGS='-R$(libdir)'
-		SHLIB_LIBVERSION='$(SHLIB_LIBSUFF).$(SHLIB_MAJOR)$(SHLIB_MINOR)'
-	fi
-	;;
-
-# FreeBSD-4.x and later have only ELF
-freebsd[4-9]*|freebsd1[0-9]*|freebsdelf*|dragonfly*)
-	SHOBJ_CFLAGS=-fPIC
-	SHOBJ_LD='${CC}'
-
-	SHOBJ_LDFLAGS='-shared -Wl,-soname,$@'
-	SHLIB_XLDFLAGS='-Wl,-rpath,$(libdir)'
-
-	SHLIB_LIBVERSION='$(SHLIB_LIBSUFF).$(SHLIB_MAJOR)'
 	;;
 
 # Darwin/MacOS X
@@ -402,18 +364,15 @@ hpux11*)
 	SHLIB_STATUS=unsupported
 
 	# If you are using the HP ANSI C compiler, you can uncomment and use
-	# this code (I have not tested it)
-#	SHOBJ_STATUS=supported
-#	SHLIB_STATUS=supported
-#
+	# this code from michael.osipov@siemens.com (I have not tested it)
 #	SHOBJ_CFLAGS='+z'
-#	SHOBJ_LD='ld'
-#	SHOBJ_LDFLAGS='-b +s +h $@'
+#	SHOBJ_LD='$(CC)'
+#	SHOBJ_LDFLAGS='-b -Wl,+s -Wl,+h,$@'
 #
-#	SHLIB_XLDFLAGS='+b $(libdir)'
-#	SHLIB_LIBSUFF='sl'
+#	SHLIB_XLDFLAGS='-Wl,+b,$(libdir)'
+#	SHLIB_LIBSUFF='so'
 #	SHLIB_LIBVERSION='$(SHLIB_LIBSUFF).$(SHLIB_MAJOR)'	
-
+#	SHLIB_LIBS='$(TERMCAP_LIB)'
 	;;
 
 sysv4*-*gcc*)

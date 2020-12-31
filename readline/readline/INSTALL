@@ -1,7 +1,7 @@
 Basic Installation
 ==================
 
-These are installation instructions for Readline-8.0.
+These are installation instructions for Readline-8.1.
 
 The simplest way to compile readline is:
 
@@ -183,6 +183,11 @@ The readline `configure' recognizes a single `--with-PACKAGE' option:
 
 `--enable-static'
     Build the static libraries by default.  The default is `yes'.
+
+`--enable-bracketed-paste-default'
+    Enable bracketed paste by default, so the initial value of the
+    `enable-bracketed-paste' Readline variable is `on'. The default
+    is `yes'.
  
 Shared Libraries
 ================

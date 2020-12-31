@@ -1,11 +1,11 @@
-This is history.info, produced by makeinfo version 6.5 from
+This is history.info, produced by makeinfo version 6.7 from
 history.texi.
 
-This document describes the GNU History library (version 8.0, 30
-November 2018), a programming tool that provides a consistent user
-interface for recalling lines of previously typed input.
+This document describes the GNU History library (version 8.1, 29 October
+2020), a programming tool that provides a consistent user interface for
+recalling lines of previously typed input.
 
-   Copyright (C) 1988-2016 Free Software Foundation, Inc.
+   Copyright (C) 1988-2020 Free Software Foundation, Inc.
 
      Permission is granted to copy, distribute and/or modify this
      document under the terms of the GNU Free Documentation License,
@@ -123,11 +123,13 @@ the current position in the history list.
 '!?STRING[?]'
      Refer to the most recent command preceding the current position in
      the history list containing STRING.  The trailing '?' may be
-     omitted if the STRING is followed immediately by a newline.
+     omitted if the STRING is followed immediately by a newline.  If
+     STRING is missing, the string from the most recent search is used;
+     it is an error if there is no previous search string.
 
 '^STRING1^STRING2^'
      Quick Substitution.  Repeat the last command, replacing STRING1
-     with STRING2.  Equivalent to '!!:s/STRING1/STRING2/'.
+     with STRING2.  Equivalent to '!!:s^STRING1^STRING2^'.
 
 '!#'
      The entire command line typed so far.
@@ -174,7 +176,8 @@ separated by single spaces.
      The last argument.
 
 '%'
-     The word matched by the most recent '?STRING?' search.
+     The first word matched by the most recent '?STRING?' search, if the
+     search string begins with a character that is part of a word.
 
 'X-Y'
      A range of words; '-Y' abbreviates '0-Y'.
@@ -188,7 +191,8 @@ separated by single spaces.
      Abbreviates 'X-$'
 
 'X-'
-     Abbreviates 'X-$' like 'X*', but omits the last word.
+     Abbreviates 'X-$' like 'X*', but omits the last word.  If 'x' is
+     missing, it defaults to 0.
 
    If a word designator is supplied without an event specification, the
 previous command is used as the event.
@@ -200,7 +204,8 @@ File: history.info,  Node: Modifiers,  Prev: Word Designators,  Up: History Inte
 ---------------
 
 After the optional word designator, you can add a sequence of one or
-more of the following modifiers, each preceded by a ':'.
+more of the following modifiers, each preceded by a ':'.  These modify,
+or edit, the word or words selected from the history event.
 
 'h'
      Remove a trailing pathname component, leaving only the head.
@@ -220,11 +225,14 @@ more of the following modifiers, each preceded by a ':'.
 
 's/OLD/NEW/'
      Substitute NEW for the first occurrence of OLD in the event line.
-     Any delimiter may be used in place of '/'.  The delimiter may be
-     quoted in OLD and NEW with a single backslash.  If '&' appears in
-     NEW, it is replaced by OLD.  A single backslash will quote the '&'.
-     The final delimiter is optional if it is the last character on the
-     input line.
+     Any character may be used as the delimiter in place of '/'.  The
+     delimiter may be quoted in OLD and NEW with a single backslash.  If
+     '&' appears in NEW, it is replaced by OLD.  A single backslash will
+     quote the '&'.  If OLD is null, it is set to the last OLD
+     substituted, or, if no previous history substitutions took place,
+     the last STRING in a !?STRING'[?]' search.  If NEW is is null, each
+     matching OLD is deleted.  The final delimiter is optional if it is
+     the last character on the input line.
 
 '&'
      Repeat the previous substitution.
@@ -235,7 +243,8 @@ more of the following modifiers, each preceded by a ':'.
      conjunction with 's', as in 'gs/OLD/NEW/', or with '&'.
 
 'G'
-     Apply the following 's' modifier once to each word in the event.
+     Apply the following 's' or '&' modifier once to each word in the
+     event.
 
 
 File: history.info,  Node: Programming with GNU History,  Next: GNU Free Documentation License,  Prev: Using History Interactively,  Up: Top
@@ -267,7 +276,7 @@ History library is able to keep track of those lines, associate
 arbitrary data with each line, and utilize information from previous
 lines in composing new ones.
 
-   The programmer using the History library has available functions for
+   A programmer using the History library has available functions for
 remembering lines on a history list, associating arbitrary data with a
 line, removing lines from the list, searching through the list for a
 line containing an arbitrary text string, and referencing any line in
@@ -281,9 +290,9 @@ for manipulating the text of previous lines and using that text in new
 commands.  The basic history manipulation commands are similar to the
 history substitution provided by 'csh'.
 
-   If the programmer desires, he can use the Readline library, which
-includes some history manipulation by default, and has the added
-advantage of command line editing.
+   The programmer can also use the Readline library, which includes some
+history manipulation by default, and has the added advantage of command
+line editing.
 
    Before declaring any functions using any functionality the History
 library provides in other code, an application writer should include the
@@ -1386,27 +1395,32 @@ Appendix C Function and Variable Index
 
 
 Tag Table:
-Node: Top849
-Node: Using History Interactively1494
-Node: History Interaction2002
-Node: Event Designators3900
-Node: Word Designators5039
-Node: Modifiers6676
-Node: Programming with GNU History7899
-Node: Introduction to History8643
-Node: History Storage10333
-Node: History Functions11468
-Node: Initializing History and State Management12457
-Node: History List Management13269
-Node: Information About the History List15563
-Node: Moving Around the History List17177
-Node: Searching the History List18270
-Node: Managing the History File20195
-Node: History Expansion22015
-Node: History Variables23944
-Node: History Programming Example27924
-Node: GNU Free Documentation License30601
-Node: Concept Index55773
-Node: Function and Variable Index56478
+Node: Top848
+Node: Using History Interactively1493
+Node: History Interaction2001
+Node: Event Designators3899
+Node: Word Designators5173
+Node: Modifiers6933
+Node: Programming with GNU History8478
+Node: Introduction to History9222
+Node: History Storage10900
+Node: History Functions12035
+Node: Initializing History and State Management13024
+Node: History List Management13836
+Node: Information About the History List16130
+Node: Moving Around the History List17744
+Node: Searching the History List18837
+Node: Managing the History File20762
+Node: History Expansion22582
+Node: History Variables24511
+Node: History Programming Example28491
+Node: GNU Free Documentation License31168
+Node: Concept Index56340
+Node: Function and Variable Index57045
 
 End Tag Table
+
+
+Local Variables:
+coding: utf-8
+End:

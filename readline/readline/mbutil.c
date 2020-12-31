@@ -1,6 +1,6 @@
 /* mbutil.c -- readline multibyte character utility functions */
 
-/* Copyright (C) 2001-2017 Free Software Foundation, Inc.
+/* Copyright (C) 2001-2020 Free Software Foundation, Inc.
 
    This file is part of the GNU Readline Library (Readline), a library
    for reading lines of text with interactive input and history editing.      
@@ -86,7 +86,7 @@ int _rl_utf8locale = 0;
 static int
 _rl_utf8_mblen (const char *s, size_t n)
 {
-  unsigned char c, c1;
+  unsigned char c, c1, c2, c3;
 
   if (s == 0)
     return (0);	/* no shift states */
@@ -101,25 +101,46 @@ _rl_utf8_mblen (const char *s, size_t n)
       c1 = (unsigned char)s[1];
       if (c < 0xe0)
 	{
-	  if (n >= 2 && (s[1] ^ 0x80) < 0x40)
+	  if (n == 1)
+	    return -2;
+	  if (n >= 2 && (c1 ^ 0x80) < 0x40)
 	    return 2;
 	}
       else if (c < 0xf0)
 	{
-	  if (n >= 3
-		&& (s[1] ^ 0x80) < 0x40 && (s[2] ^ 0x80) < 0x40
+	  if (n == 1)
+	    return -2;
+	  if ((c1 ^ 0x80) < 0x40
 		&& (c >= 0xe1 || c1 >= 0xa0)
 		&& (c != 0xed || c1 < 0xa0))
-	    return 3;
+	    {
+	      if (n == 2)
+		return -2;
+	      c2 = (unsigned char)s[2];
+	      if ((c2 ^ 0x80) < 0x40)
+		return 3;
+	    }
 	}
-      else if (c < 0xf8)
+      else if (c < 0xf4)
 	{
-	  if (n >= 4
-		&& (s[1] ^ 0x80) < 0x40 && (s[2] ^ 0x80) < 0x40
-	 	&& (s[3] ^ 0x80) < 0x40
+	  if (n == 1)
+	    return -2;
+	  if (((c1 ^ 0x80) < 0x40)
 		&& (c >= 0xf1 || c1 >= 0x90)
 		&& (c < 0xf4 || (c == 0xf4 && c1 < 0x90)))
-	    return 4;
+	    {
+	      if (n == 2)
+		return -2;
+	      c2 = (unsigned char)s[2];
+	      if ((c2 ^ 0x80) < 0x40)
+		{
+		  if (n == 3)
+		    return -2;
+		  c3 = (unsigned char)s[3];
+		  if ((c3 ^ 0x80) < 0x40)
+		    return 4;
+		}
+	    }
 	}
     }
   /* invalid or incomplete multibyte character */
@@ -206,6 +227,66 @@ _rl_find_next_mbchar_internal (char *string, int seed, int count, int find_non_z
   return point;
 }
 
+static inline int
+_rl_test_nonzero (char *string, int ind, int len)
+{
+  size_t tmp;
+  WCHAR_T wc;
+  mbstate_t ps;
+
+  memset (&ps, 0, sizeof (mbstate_t));
+  tmp = MBRTOWC (&wc, string + ind, len - ind, &ps);
+  /* treat invalid multibyte sequences as non-zero-width */
+  return (MB_INVALIDCH (tmp) || MB_NULLWCH (tmp) || WCWIDTH (wc) > 0);
+}
+
+/* experimental -- needs to handle zero-width characters better */
+static int
+_rl_find_prev_utf8char (char *string, int seed, int find_non_zero)
+{
+  char *s;
+  unsigned char b;
+  int save, prev;
+  size_t len;
+
+  if (find_non_zero)
+    len = RL_STRLEN (string);
+
+  prev = seed - 1;
+  while (prev >= 0)
+   {
+      b = (unsigned char)string[prev];
+      if (UTF8_SINGLEBYTE (b))
+	return (prev);
+
+      save = prev;
+
+      /* Move back until we're not in the middle of a multibyte char */
+      if (UTF8_MBCHAR (b))
+	{
+	  while (prev > 0 && (b = (unsigned char)string[--prev]) && UTF8_MBCHAR (b))
+	    ;
+	}
+
+      if (UTF8_MBFIRSTCHAR (b))
+	{
+	  if (find_non_zero)
+	    {
+	      if (_rl_test_nonzero (string, prev, len))
+		return (prev);
+	      else		/* valid but WCWIDTH (wc) == 0 */
+		prev = prev - 1;
+	    }
+	  else
+	    return (prev);
+	}
+      else
+	return (save);			/* invalid utf-8 multibyte sequence */
+    }
+
+  return ((prev < 0) ? 0 : prev);
+}  
+
 /*static*/ int
 _rl_find_prev_mbchar_internal (char *string, int seed, int find_non_zero)
 {
@@ -213,6 +294,9 @@ _rl_find_prev_mbchar_internal (char *string, int seed, int find_non_zero)
   int prev, non_zero_prev, point, length;
   size_t tmp;
   WCHAR_T wc;
+
+  if (_rl_utf8locale)
+    return (_rl_find_prev_utf8char (string, seed, find_non_zero));
 
   memset(&ps, 0, sizeof(mbstate_t));
   length = strlen(string);

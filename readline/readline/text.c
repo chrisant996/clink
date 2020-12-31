@@ -1,6 +1,6 @@
 /* text.c -- text handling commands for readline. */
 
-/* Copyright (C) 1987-2017 Free Software Foundation, Inc.
+/* Copyright (C) 1987-2020 Free Software Foundation, Inc.
 
    This file is part of the GNU Readline Library (Readline), a library
    for reading lines of text with interactive input and history editing.      
@@ -154,6 +154,7 @@ rl_delete_text (int from, int to)
 
   rl_end -= diff;
   rl_line_buffer[rl_end] = '\0';
+  _rl_fix_mark ();
   return (diff);
 }
 
@@ -175,6 +176,12 @@ _rl_fix_point (int fix_mark_too)
   _RL_FIX_POINT (rl_point);
   if (fix_mark_too)
     _RL_FIX_POINT (rl_mark);
+}
+
+void
+_rl_fix_mark (void)
+{
+  _RL_FIX_POINT (rl_mark);
 }
 #undef _RL_FIX_POINT
 
@@ -479,6 +486,8 @@ rl_forward_word (int count, int key)
 
   while (count)
     {
+      if (rl_point > rl_end)
+	rl_point = rl_end;
       if (rl_point == rl_end)
 	return 0;
 
@@ -498,6 +507,8 @@ rl_forward_word (int count, int key)
 	    }
 	}
 
+      if (rl_point > rl_end)
+	rl_point = rl_end;
       if (rl_point == rl_end)
 	return 0;
 
@@ -569,18 +580,8 @@ rl_backward_word (int count, int key)
 int
 rl_refresh_line (int ignore1, int ignore2)
 {
-  int curr_line;
-
-  curr_line = _rl_current_display_line ();
-
-  _rl_move_vert (curr_line);
-  _rl_move_cursor_relative (0, rl_line_buffer);   /* XXX is this right */
-
-  _rl_clear_to_eol (0);		/* arg of 0 means to not use spaces */
-
-  rl_redraw_prompt_last_line ();
+  _rl_refresh_line ();
   rl_display_fixed = 1;
-
   return 0;
 }
 
@@ -596,7 +597,18 @@ rl_clear_screen (int count, int key)
       return 0;
     }
 
-  _rl_clear_screen ();		/* calls termcap function to clear screen */
+  _rl_clear_screen (0);		/* calls termcap function to clear screen */
+  rl_keep_mark_active ();
+  rl_forced_update_display ();
+  rl_display_fixed = 1;
+
+  return 0;
+}
+
+int
+rl_clear_display (int count, int key)
+{
+  _rl_clear_screen (1);		/* calls termcap function to clear screen and scrollback buffer */
   rl_forced_update_display ();
   rl_display_fixed = 1;
 
@@ -1088,6 +1100,13 @@ rl_tab_insert (int count, int key)
 int
 rl_newline (int count, int key)
 {
+  if (rl_mark_active_p ())
+    {
+      rl_deactivate_mark ();
+      (*rl_redisplay_function) ();
+      _rl_want_redisplay = 0;
+    }
+
   rl_done = 1;
 
   if (_rl_history_preserve_point)
@@ -1466,7 +1485,18 @@ rl_change_case (int count, int op)
 	  if  (nwc != wc)	/*  just skip unchanged characters */
 	    {
 	      char *s, *e;
-	      mlen = WCRTOMB (mb, nwc, &mps);
+	      mbstate_t ts;
+
+	      memset (&ts, 0, sizeof (mbstate_t));
+	      mlen = WCRTOMB (mb, nwc, &ts);
+	      if (mlen < 0)
+		{
+		  nwc = wc;
+		  memset (&ts, 0, sizeof (mbstate_t));
+		  mlen = WCRTOMB (mb, nwc, &ts);
+		  if (mlen < 0)		/* should not happen */
+		    strncpy (mb, rl_line_buffer + start, mlen = m);
+		}
 	      if (mlen > 0)
 		mb[mlen] = '\0';
 	      /* what to do if m != mlen? adjust below */
@@ -1486,7 +1516,9 @@ rl_change_case (int count, int op)
 		}
 	      else if (m < mlen)
 		{
-		  rl_extend_line_buffer (mlen - m + 1);
+		  rl_extend_line_buffer (rl_end + mlen + (e - s) - m + 2);
+		  s = rl_line_buffer + start;	/* have to redo this */
+		  e = rl_line_buffer + rl_end;
 		  memmove (s + mlen, s + m, (e - s) - m);
 		  memcpy (s, mb, mlen);
 		  next += mlen - m;	/* next char changes */
@@ -1725,10 +1757,7 @@ _rl_char_search (int count, int fdir, int bdir)
 {
   int c;
 
-  RL_SETSTATE(RL_STATE_MOREINPUT);
-  c = rl_read_key ();
-  RL_UNSETSTATE(RL_STATE_MOREINPUT);
-
+  c = _rl_bracketed_read_key ();
   if (c < 0)
     return 1;
 
@@ -1823,7 +1852,43 @@ rl_exchange_point_and_mark (int count, int key)
       return 1;
     }
   else
-    SWAP (rl_point, rl_mark);
+    {
+      SWAP (rl_point, rl_mark);
+      rl_activate_mark ();
+    }
 
   return 0;
+}
+
+/* Active mark support */
+
+/* Is the region active? */
+static int mark_active = 0;
+
+/* Does the current command want the mark to remain active when it completes? */
+int _rl_keep_mark_active;
+
+void
+rl_keep_mark_active (void)
+{
+  _rl_keep_mark_active++;
+}
+
+void
+rl_activate_mark (void)
+{
+  mark_active = 1;
+  rl_keep_mark_active ();
+}
+
+void
+rl_deactivate_mark (void)
+{
+  mark_active = 0;
+}
+
+int
+rl_mark_active_p (void)
+{
+  return (mark_active);
 }

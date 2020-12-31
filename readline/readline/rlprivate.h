@@ -1,7 +1,7 @@
 /* rlprivate.h -- functions and variables global to the readline library,
 		  but not intended for use by applications. */
 
-/* Copyright (C) 1999-2015 Free Software Foundation, Inc.
+/* Copyright (C) 1999-2020 Free Software Foundation, Inc.
 
    This file is part of the GNU Readline Library (Readline), a library
    for reading lines of text with interactive input and history editing.      
@@ -65,7 +65,8 @@
 #define SF_FOUND		0x02
 #define SF_FAILED		0x04
 #define SF_CHGKMAP		0x08
-#define SF_PATTERN		0x10		/* unused so far */
+#define SF_PATTERN		0x10
+#define SF_NOCASE		0x20		/* unused so far */
 
 typedef struct  __rl_search_context
 {
@@ -108,6 +109,15 @@ typedef struct  __rl_search_context
 
   char  *search_terminators;
 } _rl_search_cxt;
+
+struct _rl_cmd {
+  Keymap map;
+  int count;
+  int key;
+  rl_command_func_t *func;
+};
+extern struct _rl_cmd _rl_pending_command;
+extern struct _rl_cmd *_rl_command_to_execute;
 
 /* Callback data for reading numeric arguments */
 #define NUM_SAWMINUS	0x01
@@ -270,23 +280,25 @@ extern int stat_from_match_type PARAMS((unsigned char, const char*, struct stat*
 /* display.c */
 extern char *_rl_strip_prompt PARAMS((char *));
 extern void _rl_reset_prompt PARAMS((void));
-extern void _rl_move_cursor_relative PARAMS((int, const char *));
 extern void _rl_move_vert PARAMS((int));
 extern void _rl_save_prompt PARAMS((void));
 extern void _rl_restore_prompt PARAMS((void));
 extern char *_rl_make_prompt_for_search PARAMS((int));
 extern void _rl_erase_at_end_of_line PARAMS((int));
 extern void _rl_clear_to_eol PARAMS((int));
-extern void _rl_clear_screen PARAMS((void));
+extern void _rl_clear_screen PARAMS((int));
 extern void _rl_update_final PARAMS((void));
+extern void _rl_optimize_redisplay PARAMS((void));
 extern void _rl_redisplay_after_sigwinch PARAMS((void));
 extern void _rl_clean_up_for_exit PARAMS((void));
 extern void _rl_erase_entire_line PARAMS((void));
 extern int _rl_current_display_line PARAMS((void));
+extern void _rl_refresh_line PARAMS((void));
 
 /* input.c */
 extern int _rl_any_typein PARAMS((void));
 extern int _rl_input_available PARAMS((void));
+extern int _rl_nchars_available PARAMS((void));
 extern int _rl_input_queued PARAMS((int));
 extern void _rl_insert_typein PARAMS((int));
 extern int _rl_unget_char PARAMS((int));
@@ -303,6 +315,10 @@ extern int _rl_isearch_cleanup PARAMS((_rl_search_cxt *, int));
 extern int _rl_search_getchar PARAMS((_rl_search_cxt *));
 
 /* kill.c */
+#ifndef BRACKETED_PASTE_DEFAULT
+#  define BRACKETED_PASTE_DEFAULT	1	/* XXX - for now */
+#endif
+
 #define BRACK_PASTE_PREF	"\033[200~"
 #define BRACK_PASTE_SUFF	"\033[201~"
 
@@ -312,7 +328,10 @@ extern int _rl_search_getchar PARAMS((_rl_search_cxt *));
 #define BRACK_PASTE_INIT	"\033[?2004h"
 #define BRACK_PASTE_FINI	"\033[?2004l\r"
 
+extern int _rl_read_bracketed_paste_prefix PARAMS((int));
 extern char *_rl_bracketed_text PARAMS((size_t *));
+extern int _rl_bracketed_read_key PARAMS((void));
+extern int _rl_bracketed_read_mbstring PARAMS((char *, int));
 
 /* macro.c */
 extern void _rl_with_macro_input PARAMS((char *));
@@ -335,6 +354,7 @@ extern void _rl_start_using_history PARAMS((void));
 extern int _rl_free_saved_history_line PARAMS((void));
 extern void _rl_set_insert_mode PARAMS((int, int));
 
+extern void _rl_revert_previous_lines PARAMS((void));
 extern void _rl_revert_all_lines PARAMS((void));
 
 /* nls.c */
@@ -350,6 +370,11 @@ extern void _rl_set_the_line PARAMS((void));
 extern int _rl_dispatch PARAMS((int, Keymap));
 extern int _rl_dispatch_subseq PARAMS((int, Keymap, int));
 extern void _rl_internal_char_cleanup PARAMS((void));
+
+extern void _rl_init_executing_keyseq PARAMS((void));
+extern void _rl_term_executing_keyseq PARAMS((void));
+extern void _rl_end_executing_keyseq PARAMS((void));
+extern void _rl_add_executing_keyseq PARAMS((int)); 
 
 /* rltty.c */
 extern int _rl_disable_tty_signals PARAMS((void));
@@ -381,15 +406,19 @@ extern void _rl_output_character_function PARAMS((int));
 #else
 extern int _rl_output_character_function PARAMS((int));
 #endif
+extern void _rl_cr PARAMS((void));
 extern void _rl_output_some_chars PARAMS((const char *, int));
 extern int _rl_backspace PARAMS((int));
 extern void _rl_enable_meta_key PARAMS((void));
 extern void _rl_disable_meta_key PARAMS((void));
 extern void _rl_control_keypad PARAMS((int));
 extern void _rl_set_cursor PARAMS((int, int));
+extern void _rl_standout_on PARAMS((void));
+extern void _rl_standout_off PARAMS((void));
 
 /* text.c */
 extern void _rl_fix_point PARAMS((int));
+extern void _rl_fix_mark PARAMS((void));
 extern int _rl_replace_text PARAMS((const char *, int, int));
 extern int _rl_forward_char_internal PARAMS((int));
 extern int _rl_backward_char_internal PARAMS((int));
@@ -515,6 +544,7 @@ extern int _rl_revert_all_at_newline;
 extern int _rl_echo_control_chars;
 extern int _rl_show_mode_in_prompt;
 extern int _rl_enable_bracketed_paste;
+extern int _rl_enable_active_region;
 extern char *_rl_comment_begin;
 extern unsigned char _rl_parsing_conditionalized_out;
 extern Keymap _rl_keymap;
@@ -532,6 +562,8 @@ extern int _rl_keyseq_timeout;
 
 extern int _rl_executing_keyseq_size;
 
+extern rl_hook_func_t *_rl_internal_startup_hook;
+
 /* search.c */
 extern _rl_search_cxt *_rl_nscxt;
 /* begin_clink_change */
@@ -540,7 +572,6 @@ extern int _rl_search_case_fold;
 /* end_clink_change */
 
 /* signals.c */
-extern int _rl_interrupt_immediately;
 extern int volatile _rl_caught_signal;
 
 extern _rl_sigcleanup_func_t *_rl_sigcleanup;
@@ -575,6 +606,7 @@ extern int _rl_term_autowrap;
 
 /* text.c */
 extern int _rl_optimize_typeahead;
+extern int _rl_keep_mark_active;
 
 /* undo.c */
 extern int _rl_doing_an_undo;

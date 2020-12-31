@@ -41,6 +41,7 @@ private:
     bool            m_eof;
     str<16>         m_input_color;
     str<16>         m_modmark_color;
+    str<16>         m_horizscroll_color;
     str<16>         m_message_color;
     str<16>         m_pager_color;
     str<16>         m_hidden_color;
@@ -48,5 +49,8 @@ private:
     str<16>         m_command_color;
     str<16>         m_alias_color;
     str<16>         m_filtered_color;
+    str<16>         m_arg_color;
+    str<16>         m_flag_color;
+    str<16>         m_none_color;
     int             m_insert_next_len = 0;
 };

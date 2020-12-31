@@ -8,6 +8,7 @@
 #include "line_state.h"
 #include "matches.h"
 #include "match_pipeline.h"
+#include "word_classifier.h"
 #include "popup.h"
 
 #include <core/base.h>
@@ -98,72 +99,104 @@ editor_module::result* g_result = nullptr;
 static bool         s_is_popup = false;
 
 //------------------------------------------------------------------------------
-setting_color g_color_input(
+static setting_color g_color_input(
     "color.input",
     "Input text color",
     "Used when Clink displays the input line text.",
     "");
 
-setting_color g_color_modmark(
+static setting_color g_color_modmark(
     "color.modmark",
     "Modified history line mark color",
     "Used when Clink displays the * mark on modified history lines when\n"
     "mark-modified-lines is set and color.input is set.",
     "");
 
-setting_color g_color_message(
+static setting_color g_color_horizscroll(
+    "color.horizscroll",
+    "Horizontal scroll marker color",
+    "Used when Clink displays < or > to indicate the input line can scroll\n"
+    "horizontally when horizontal-scroll-mode is set.",
+    "");
+
+static setting_color g_color_message(
     "color.message",
     "Message area color",
     "The color for the Readline message area (e.g. search prompt, etc).",
     "default");
 
-setting_color g_color_prompt(
+static setting_color g_color_prompt(
     "color.prompt",
     "Prompt color",
     "When set, this is used as the default color for the prompt.  But it's\n"
     "overridden by any colors set by prompt filter scripts.",
     "");
 
-setting_color g_color_hidden(
+static setting_color g_color_hidden(
     "color.hidden",
     "Hidden file completions",
     "Used when Clink displays file completions with the hidden attribute.",
     "");
 
-setting_color g_color_readonly(
+static setting_color g_color_readonly(
     "color.readonly",
     "Readonly file completions",
     "Used when Clink displays file completions with the readonly attribute.",
     "");
 
-setting_color g_color_cmd(
+static setting_color g_color_cmd(
     "color.cmd",
     "Shell command completions",
     "Used when Clink displays shell (CMD.EXE) command completions.",
     "bold");
 
-setting_color g_color_doskey(
+static setting_color g_color_doskey(
     "color.doskey",
     "Doskey completions",
     "Used when Clink displays doskey macro completions.",
     "bright cyan");
 
-setting_color g_color_filtered(
+static setting_color g_color_filtered(
     "color.filtered",
     "Filtered completion color",
     "The default color for filtered completions.",
     "bold");
 
-setting_bool g_match_wild(
+static setting_color g_color_arg(
+    "color.arg",
+    "Argument color",
+    "The color for arguments in the input line.",
+    "magenta");
+
+static setting_color g_color_flag(
+    "color.flag",
+    "Flag color",
+    "The color for flags in the input line.",
+    "cyan");
+
+static setting_color g_color_unexpected(
+    "color.unexpected",
+    "Unexpected argument color",
+    "The color for arguments that aren't expected by an argument matcher.",
+    "red");
+
+static setting_bool g_match_wild(
     "match.wild",
     "menu-complete matches ? and * wildcards",
     "Matches ? and * wildcards when using any of the menu-complete commands.\n"
     "Turn this off to behave how bash does.",
     true);
 
-setting_bool g_rl_hide_stderr(
+static setting_bool g_rl_hide_stderr(
     "readline.hide_stderr",
     "Suppress stderr from the Readline library",
+    false);
+
+setting_bool g_classify_words(
+    "clink.colorize_input",
+    "Colorize the input text",
+    "When enabled, this colors the words in the input line based on the argmatcher\n"
+    "Lua scripts.",
     false);
 
 
@@ -284,6 +317,118 @@ extern "C" int read_key_hook(void)
 
     s_direct_input->set_key_tester(old);
     return key;
+}
+
+
+
+//------------------------------------------------------------------------------
+static const word_classifications* s_classifications = nullptr;
+static const char* s_input_color = nullptr;
+static const char* s_arg_color = nullptr;
+static const char* s_flag_color = nullptr;
+static const char* s_none_color = nullptr;
+
+//------------------------------------------------------------------------------
+static char get_face_func(int in, int active_begin, int active_end)
+{
+    if (in >= active_begin && in < active_end)
+        return '1';
+
+    if (s_classifications)
+    {
+        static const char c_faces[] =
+        {
+            'o',    // other
+            'c',    // command
+            'd',    // doskey
+            'a',    // arg
+            'f',    // flag
+            'n',    // none
+        };
+        static_assert(_countof(c_faces) == int(word_class::max), "c_faces and word_class don't agree!");
+
+        static int num_infos = 0;
+        static const word_class_info* cur_info = nullptr;
+
+        if (!in)
+        {
+            num_infos = s_classifications->size();
+            cur_info = num_infos ? s_classifications->front() : nullptr;
+        }
+
+        if (cur_info && in >= cur_info->start)
+        {
+            while (num_infos && in >= cur_info->end)
+            {
+                num_infos--;
+                cur_info++;
+            }
+
+            if (num_infos)
+            {
+                if (in < cur_info->start)
+                    return s_input_color ? '2' : '0';
+                if (in < cur_info->end)
+                    return c_faces[int(cur_info->word_class)];
+            }
+        }
+    }
+
+    return s_input_color ? '2' : '0';
+}
+
+//------------------------------------------------------------------------------
+static void puts_face_func(const char* s, const char* face, int n)
+{
+    static const char c_normal[] = "\x1b[m";
+
+    str<280> out;
+    char cur_face = '0';
+
+    while (n)
+    {
+        // Append face string if face changed.
+        if (cur_face != *face)
+        {
+            cur_face = *face;
+            switch (cur_face)
+            {
+            default:
+            case '0':   out.concat(c_normal); break;
+            case '1':   out.concat("\x1b[1m", 4); break;
+
+            case '2':   out.concat(s_input_color ? s_input_color : c_normal); break;
+            case '*':   out.concat(_rl_display_modmark_color); break;
+            case '<':   out.concat(_rl_display_message_color); break;
+
+            case 'o':   out.concat(s_input_color ? s_input_color : c_normal); break;
+            case 'c':   out << "\x1b[" << _rl_command_color << "m"; break;
+            case 'd':   out << "\x1b[" << _rl_alias_color << "m"; break;
+            case 'a':   out.concat(s_arg_color); break;
+            case 'f':   out.concat(s_flag_color); break;
+            case 'n':   out.concat(s_none_color); break;
+            }
+        }
+
+        // Get run of characters with the same face.
+        const char* s_concat = s;
+        const char* face_concat = face;
+        while (n && cur_face == *face)
+        {
+            s++;
+            face++;
+            n--;
+        }
+
+        // Append the characters.
+        int len = int(s - s_concat);
+        out.concat(s_concat, len);
+    }
+
+    if (cur_face != '0')
+        out.concat(c_normal);
+
+    g_printer->print(out.c_str(), out.length());
 }
 
 
@@ -905,6 +1050,8 @@ rl_module::rl_module(const char* shell_name, terminal_in* input)
     rl_is_exec_func = is_exec_ext;
     rl_postprocess_lcd_func = postprocess_lcd;
     rl_read_key_hook = read_key_hook;
+    rl_get_face_func = get_face_func;
+    rl_puts_face_func = puts_face_func;
 
     // Add commands.
     static bool s_rl_initialized = false;
@@ -1065,6 +1212,8 @@ void rl_module::on_begin_line(const context& context)
     g_printer = &context.printer;
     g_pager = &context.pager;
     rl_buffer = &context.buffer;
+    if (g_classify_words.get())
+        s_classifications = &context.classifications;
 
     // Readline needs to be told about parts of the prompt that aren't visible
     // by enclosing them in a pair of 0x01/0x02 chars.
@@ -1091,11 +1240,16 @@ void rl_module::on_begin_line(const context& context)
         if (c1) rl_prompt.concat("\x02", 1);
     }
 
-    if (force_prompt_color)
-        rl_prompt.concat("\x01\x1b[m\x02");
+    rl_prompt.concat("\x01\x1b[m\x02");
 
-    _rl_display_input_color = build_color_sequence(g_color_input, m_input_color, true);
-    _rl_display_modmark_color = _rl_display_input_color ? build_color_sequence(g_color_modmark, m_modmark_color, true) : nullptr;
+    _rl_face_modmark = '*';
+    _rl_face_horizscroll = '<';
+    s_input_color = build_color_sequence(g_color_input, m_input_color, true);
+    s_arg_color = build_color_sequence(g_color_arg, m_arg_color, true);
+    s_flag_color = build_color_sequence(g_color_flag, m_flag_color, true);
+    s_none_color = build_color_sequence(g_color_unexpected, m_none_color, true);
+    _rl_display_modmark_color = build_color_sequence(g_color_modmark, m_modmark_color, true);
+    _rl_display_horizscroll_color = build_color_sequence(g_color_horizscroll, m_horizscroll_color, true);
     _rl_display_message_color = build_color_sequence(g_color_message, m_message_color, true);
     _rl_pager_color = build_color_sequence(g_color_interact, m_pager_color);
     _rl_hidden_color = build_color_sequence(g_color_hidden, m_hidden_color);
@@ -1127,8 +1281,13 @@ void rl_module::on_end_line()
         m_rl_buffer = nullptr;
     }
 
-    _rl_display_input_color = nullptr;
+    s_classifications = nullptr;
+    s_input_color = nullptr;
+    s_arg_color = nullptr;
+    s_flag_color = nullptr;
+    s_none_color = nullptr;
     _rl_display_modmark_color = nullptr;
+    _rl_display_horizscroll_color = nullptr;
     _rl_display_message_color = nullptr;
     _rl_pager_color = nullptr;
     _rl_hidden_color = nullptr;

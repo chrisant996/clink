@@ -20,7 +20,15 @@ enum class word_class : unsigned char
 };
 
 //------------------------------------------------------------------------------
-class word_classifications : public fixed_array<word_class, 72>
+struct word_class_info
+{
+    unsigned int    start : 16;
+    unsigned int    end : 16;
+    word_class      word_class;
+};
+
+//------------------------------------------------------------------------------
+class word_classifications : public fixed_array<word_class_info, 72>
 {
 public:
                     word_classifications() = default;

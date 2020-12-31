@@ -165,6 +165,10 @@ static int term_has_meta;
 static char *_rl_term_mm;
 static char *_rl_term_mo;
 
+/* The sequences to enter and exit standout mode. */
+static char *_rl_term_so;
+static char *_rl_term_se;
+
 /* The key sequences output by the arrow keys, if this terminal has any. */
 static char *_rl_term_ku;
 static char *_rl_term_kd;
@@ -189,6 +193,19 @@ static char *_rl_term_kI;
 /* Cursor control */
 static char *_rl_term_vs;	/* very visible */
 static char *_rl_term_ve;	/* normal */
+
+/* It's not clear how HPUX is so broken here. */
+#ifdef TGETENT_BROKEN
+#  define TGETENT_SUCCESS 0
+#else
+#  define TGETENT_SUCCESS 1
+#endif
+#ifdef TGETFLAG_BROKEN
+#  define TGETFLAG_SUCCESS 0
+#else
+#  define TGETFLAG_SUCCESS 1
+#endif
+#define TGETFLAG(cap)	(tgetflag (cap) == TGETFLAG_SUCCESS)
 
 static void bind_termcap_arrow_keys PARAMS((Keymap));
 
@@ -423,6 +440,8 @@ static const struct _tc_string tc_strings[] =
   { "mo", &_rl_term_mo },
   { "nd", &_rl_term_forward_char },
   { "pc", &_rl_term_pc },
+  { "se", &_rl_term_se },
+  { "so", &_rl_term_so },
   { "up", &_rl_term_up },
   { "vb", &_rl_visible_bell },
   { "vs", &_rl_term_vs },
@@ -450,7 +469,7 @@ _rl_init_terminal_io (const char *terminal_name)
 {
   const char *term;
   char *buffer;
-  int tty, tgetent_ret;
+  int tty, tgetent_ret, dumbterm;
 
   term = terminal_name ? terminal_name : sh_get_env_value ("TERM");
   _rl_term_clrpag = _rl_term_cr = _rl_term_clreol = _rl_term_clrscroll = (char *)NULL;
@@ -458,6 +477,8 @@ _rl_init_terminal_io (const char *terminal_name)
 
   if (term == 0)
     term = "dumb";
+
+  dumbterm = STREQ (term, "dumb");
 
 #ifdef __MSDOS__
   _rl_term_im = _rl_term_ei = _rl_term_ic = _rl_term_IC = (char *)NULL;
@@ -470,6 +491,7 @@ _rl_init_terminal_io (const char *terminal_name)
   _rl_term_goto = _rl_term_pc = _rl_term_ip = (char *)NULL;
   _rl_term_ks = _rl_term_ke =_rl_term_vs = _rl_term_ve = (char *)NULL;
   _rl_term_kh = _rl_term_kH = _rl_term_at7 = _rl_term_kI = (char *)NULL;
+  _rl_term_so = _rl_term_se = (char *)NULL;
 #if defined(HACK_TERMCAP_MOTION)
   _rl_term_forward_char = (char *)NULL;
 #endif
@@ -496,7 +518,7 @@ _rl_init_terminal_io (const char *terminal_name)
       tgetent_ret = tgetent (term_buffer, term);
     }
 
-  if (tgetent_ret <= 0)
+  if (tgetent_ret != TGETENT_SUCCESS)
     {
       FREE (term_string_buffer);
       FREE (term_buffer);
@@ -534,7 +556,12 @@ _rl_init_terminal_io (const char *terminal_name)
       _rl_term_mm = _rl_term_mo = (char *)NULL;
       _rl_term_ve = _rl_term_vs = (char *)NULL;
       _rl_term_forward_char = (char *)NULL;
+      _rl_term_so = _rl_term_se = (char *)NULL;
       _rl_terminal_can_insert = term_has_meta = 0;
+
+      /* Assume generic unknown terminal can't handle the enable/disable
+	 escape sequences */
+      _rl_enable_bracketed_paste = 0;
 
       /* Reasonable defaults for tgoto().  Readline currently only uses
          tgoto if _rl_term_IC or _rl_term_DC is defined, but just in case we
@@ -554,10 +581,10 @@ _rl_init_terminal_io (const char *terminal_name)
   BC = _rl_term_backspace;
   UP = _rl_term_up;
 
-  if (!_rl_term_cr)
+  if (_rl_term_cr == 0)
     _rl_term_cr = "\r";
 
-  _rl_term_autowrap = tgetflag ("am") && tgetflag ("xn");
+  _rl_term_autowrap = TGETFLAG ("am") && TGETFLAG ("xn");
 
   /* Allow calling application to set default height and width, using
      rl_set_screen_size */
@@ -572,7 +599,7 @@ _rl_init_terminal_io (const char *terminal_name)
 
   /* Check to see if this terminal has a meta key and clear the capability
      variables if there is none. */
-  term_has_meta = tgetflag ("km") != 0;
+  term_has_meta = TGETFLAG ("km");
   if (term_has_meta == 0)
     _rl_term_mm = _rl_term_mo = (char *)NULL;
 #endif /* !__MSDOS__ */
@@ -587,6 +614,11 @@ _rl_init_terminal_io (const char *terminal_name)
   bind_termcap_arrow_keys (vi_insertion_keymap);
 #endif /* VI_MODE */
 
+  /* There's no way to determine whether or not a given terminal supports
+     bracketed paste mode, so we assume a terminal named "dumb" does not. */
+  if (dumbterm)
+    _rl_enable_bracketed_paste = 0;
+    
   return 0;
 }
 
@@ -689,6 +721,16 @@ rl_crlf (void)
   return 0;
 }
 
+void
+_rl_cr (void)
+{
+#if defined (__MSDOS__)
+  putc ('\r', rl_outstream);
+#else
+  tputs (_rl_term_cr, 1, _rl_output_character_function);
+#endif
+}
+
 /* Ring the terminal bell. */
 int
 rl_ding (void)
@@ -726,6 +768,30 @@ rl_ding (void)
       return (0);
     }
   return (-1);
+}
+
+/* **************************************************************** */
+/*								    */
+/*		Entering and leaving terminal standout mode	    */
+/*								    */
+/* **************************************************************** */
+
+void
+_rl_standout_on (void)
+{
+#ifndef __MSDOS__
+  if (_rl_term_so && _rl_term_se)
+    tputs (_rl_term_so, 1, _rl_output_character_function);
+#endif
+}
+
+void
+_rl_standout_off (void)
+{
+#ifndef __MSDOS__
+  if (_rl_term_so && _rl_term_se)
+    tputs (_rl_term_se, 1, _rl_output_character_function);
+#endif
 }
 
 /* **************************************************************** */

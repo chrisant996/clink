@@ -1,6 +1,6 @@
 /* search.c - code for non-incremental searching in emacs and vi modes. */
 
-/* Copyright (C) 1992-2017 Free Software Foundation, Inc.
+/* Copyright (C) 1992-2020 Free Software Foundation, Inc.
 
    This file is part of the GNU Readline Library (Readline), a library
    for reading lines of text with interactive input and history editing.      
@@ -218,7 +218,7 @@ noninc_search_from_pos (char *string, int pos, int dir, int flags, int *ncp)
 static int
 noninc_dosearch (char *string, int dir, int flags)
 {
-  int oldpos, pos;
+  int oldpos, pos, ind;
   HIST_ENTRY *entry;
 
   if (string == 0 || *string == '\0' || noninc_history_pos < 0)
@@ -227,7 +227,7 @@ noninc_dosearch (char *string, int dir, int flags)
       return 0;
     }
 
-  pos = noninc_search_from_pos (string, noninc_history_pos + dir, dir, flags, (int *)0);
+  pos = noninc_search_from_pos (string, noninc_history_pos + dir, dir, flags, &ind);
   if (pos == -1)
     {
       /* Search failed, current history position unchanged. */
@@ -251,8 +251,19 @@ noninc_dosearch (char *string, int dir, int flags)
 
   make_history_line_current (entry);
 
-  rl_point = 0;
-  rl_mark = rl_end;
+  if (_rl_enable_active_region && ((flags & SF_PATTERN) == 0) && ind > 0 && ind < rl_end)
+    {
+      rl_point = ind;
+      rl_mark = ind + strlen (string);
+      if (rl_mark > rl_end)
+	rl_mark = rl_end;	/* can't happen? */
+      rl_activate_mark ();
+    }
+  else
+    {  
+      rl_point = 0;
+      rl_mark = rl_end;
+    }
 
   rl_clear_message ();
   return 1;
@@ -320,6 +331,7 @@ _rl_nsearch_abort (_rl_search_cxt *cxt)
   rl_clear_message ();
   rl_point = cxt->save_point;
   rl_mark = cxt->save_mark;
+  _rl_fix_point (1);
 /* begin_clink_change
  * This is too late to call rl_restore_prompt, because rl_clear_message isn't
  * called again after the above call. Everyone else calls rl_restore_prompt
@@ -336,6 +348,8 @@ _rl_nsearch_abort (_rl_search_cxt *cxt)
 static int
 _rl_nsearch_dispatch (_rl_search_cxt *cxt, int c)
 {
+  int n;
+
   if (c < 0)
     c = CTRL ('C');  
 
@@ -369,6 +383,28 @@ _rl_nsearch_dispatch (_rl_search_cxt *cxt, int c)
       _rl_nsearch_abort (cxt);
       return -1;
 
+    case ESC:
+      /* XXX - experimental code to allow users to bracketed-paste into the
+	 search string. Similar code is in isearch.c:_rl_isearch_dispatch().
+	 The difference here is that the bracketed paste sometimes doesn't
+	 paste everything, so checking for the prefix and the suffix in the
+	 input queue doesn't work well. We just have to check to see if the
+	 number of chars in the input queue is enough for the bracketed paste
+	 prefix and hope for the best. */
+      if (_rl_enable_bracketed_paste && ((n = _rl_nchars_available ()) >= (BRACK_PASTE_SLEN-1)))
+	{
+	  if (_rl_read_bracketed_paste_prefix (c) == 1)
+	    rl_bracketed_paste_begin (1, c);
+	  else
+	    {
+	      c = rl_read_key ();	/* get the ESC that got pushed back */
+	      _rl_insert_char (1, c);
+	    }
+        }
+      else
+        _rl_insert_char (1, c);
+      break;
+
     default:
 #if defined (HANDLE_MULTIBYTE)
       if (MB_CUR_MAX > 1 && rl_byte_oriented == 0)
@@ -380,6 +416,7 @@ _rl_nsearch_dispatch (_rl_search_cxt *cxt, int c)
     }
 
   (*rl_redisplay_function) ();
+  rl_deactivate_mark ();
   return 1;
 }
 

@@ -90,7 +90,7 @@ char history_expansion_char = '!';
 char history_subst_char = '^';
 
 /* During tokenization, if this character is seen as the first character
-   of a word, then it, and all subsequent characters upto a newline are
+   of a word, then it, and all subsequent characters up to a newline are
    ignored.  For a Bourne shell, this should be '#'.  Bash special cases
    the interactive comment character to not be a comment delimiter. */
 char history_comment_char = '\0';
@@ -181,7 +181,7 @@ get_history_event (const char *string, int *caller_index, int delimiting_quote)
     }
 
   /* Hack case of numeric line specification. */
-  if (string[i] == '-')
+  if (string[i] == '-' && _rl_digit_p (string[i+1]))
     {
       sign = -1;
       i++;
@@ -231,10 +231,12 @@ get_history_event (const char *string, int *caller_index, int delimiting_quote)
         }
 
 #endif /* HANDLE_MULTIBYTE */
-      if ((!substring_okay && (whitespace (c) || c == ':' ||
-          (history_event_delimiter_chars && member (c, history_event_delimiter_chars)) ||
-	  (history_search_delimiter_chars && member (c, history_search_delimiter_chars)) ||
-	  string[i] == delimiting_quote)) ||
+      if ((!substring_okay &&
+	    (whitespace (c) || c == ':' ||
+	    (i > local_index && history_event_delimiter_chars && c == '-') ||
+	    (c != '-' && history_event_delimiter_chars && member (c, history_event_delimiter_chars)) ||
+	    (history_search_delimiter_chars && member (c, history_search_delimiter_chars)) ||
+	    string[i] == delimiting_quote)) ||
 	  string[i] == '\n' ||
 	  (substring_okay && string[i] == '?'))
 	break;
@@ -410,7 +412,10 @@ hist_error(char *s, int start, int current, int errtype)
     }
 
   temp = (char *)xmalloc (ll + elen + 3);
-  strncpy (temp, s + start, ll);
+  if (s[start])
+    strncpy (temp, s + start, ll);
+  else
+    ll = 0;
   temp[ll] = ':';
   temp[ll + 1] = ' ';
   strcpy (temp + ll + 2, emsg);
@@ -625,7 +630,7 @@ history_expand_internal (char *string, int start, int qc, int *end_index_ptr, ch
 	     return an error state after adding this line to the
 	     history. */
 	case 'p':
-	  print_only++;
+	  print_only = 1;
 	  break;
 
 	  /* :t discards all but the last part of the pathname. */
@@ -1356,6 +1361,11 @@ get_history_word_specifier (char *spec, char *from, int *caller_index)
 	{
 	  i++;
 	  last = '$';
+	}
+      else if (spec[i] == '^')
+	{
+	  i++;
+	  last = 1;
 	}
 #if 0
       else if (!spec[i] || spec[i] == ':')

@@ -4,10 +4,10 @@ ChrisAnt Plans
 
 # RELEASE
 
-- `history.shared` misbehaving?
-  - I think I have one instance running with it on, and one with it off.
-  - Typed a command in the one with it off.
-  - The command is listed by `history` but isn't present in the history in the instance where I typed it.
+- RL8.1: return true from line_editor_impl::classify only if the classifications actually changed!
+- RL8.1: finish hooking up input line colors.
+- RL8.1: bracketed paste and active region?
+- RL8.1: What is the _rl_fix_point and _rl_fix_mark stuff about?
 
 ## Issues
 - [#45](https://github.com/chrisant996/clink/issues/45) Interaction between erase_prev and history.shared=false
@@ -39,15 +39,16 @@ ChrisAnt Plans
   - Provide API to show an input box?  But make it fail if used from outside a Readline command.
 
 ## Medium Priority
+- Interactive completion, similar to Ctrl+Space in Powershell.
 - Add a hook function for inserting matches.
   - The insertion hook can avoid appending a space when inserting a flag/arg that ends in `:` or `=`.
   - The insertion hook can deal with path normalisation, e.g. to clean up input like "\wbin\\\\cli" when using `complete` and `menu-complete`.
   - And address the sorting problem, and then the match_type stuff can be removed from Readline itself (though Chet may want its performance benefits).
   - And THEN individual matches can have arbitrary values associated -- color, append char, or any per-match data that's desired.
-- Add a configuration setting for whether `menu-complete` wraps around.
 - Complete "%ENVVAR%\*" by internally expanding ENVVAR for collecting matches, but not expanding it in the editing line.
 
 ## Low Priority
+- Add a configuration setting for whether `menu-complete` wraps around.
 - Add commands that behave like **F7** and **F8** from CMD (like `history-search-backward` without wrapping around?).
 - Add terminal sequences for **Ctrl+Shift+Letter** and **Ctrl+Punctuation** and etc (see https://invisible-island.net/xterm/modified-keys.html).
 - Add a `history.dupe_mode` that behaves like 4Dos/4NT/Take Command from JPSoft:  **Up**/**Down** then **Enter** remembers the history position so that **Enter**, **Down**, **Enter**, **Down**, **Enter**, etc can be used to replay a series of commands.

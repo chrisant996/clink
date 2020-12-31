@@ -214,7 +214,7 @@ void line_editor_tester::run()
         str<> c;
         for (auto wc : *classifications)
         {
-            switch (wc)
+            switch (wc.word_class)
             {
             default:                    c.concat("o", 1); break;
             case word_class::command:   c.concat("c", 1); break;

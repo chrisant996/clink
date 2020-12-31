@@ -52,17 +52,20 @@ void lua_word_classifier::classify(const line_state& line, word_classifications&
     const char* ret = lua_tostring(state, -1);
     lua_settop(state, 0);
 
+    const std::vector<word>& words(line.get_words());
     for (unsigned int i = 0; i < strlen(ret); i++)
     {
-        word_class* c = classifications.push_back();
+        word_class_info* info = classifications.push_back();
+        info->start = words[i].offset;
+        info->end = info->start + words[i].length;
         switch (ret[i])
         {
-        default:    *c = word_class::other; break;
-        case 'c':   *c = word_class::command; break;
-        case 'd':   *c = word_class::doskey; break;
-        case 'a':   *c = word_class::arg; break;
-        case 'f':   *c = word_class::flag; break;
-        case 'n':   *c = word_class::none; break;
+        default:    info->word_class = word_class::other; break;
+        case 'c':   info->word_class = word_class::command; break;
+        case 'd':   info->word_class = word_class::doskey; break;
+        case 'a':   info->word_class = word_class::arg; break;
+        case 'f':   info->word_class = word_class::flag; break;
+        case 'n':   info->word_class = word_class::none; break;
         }
     }
 }

@@ -1,6 +1,6 @@
 /* misc.c -- miscellaneous bindable readline functions. */
 
-/* Copyright (C) 1987-2017 Free Software Foundation, Inc.
+/* Copyright (C) 1987-2019 Free Software Foundation, Inc.
 
    This file is part of the GNU Readline Library (Readline), a library
    for reading lines of text with interactive input and history editing.      
@@ -149,9 +149,7 @@ _rl_arg_dispatch (_rl_arg_cxt cxt, int c)
         }
       else
 	{
-	  RL_SETSTATE(RL_STATE_MOREINPUT);
-	  key = rl_read_key ();
-	  RL_UNSETSTATE(RL_STATE_MOREINPUT);
+	  key = _rl_bracketed_read_key ();
 	  rl_restore_prompt ();
 	  rl_clear_message ();
 	  RL_UNSETSTATE(RL_STATE_NUMERICARG);
@@ -446,7 +444,7 @@ rl_replace_from_history (HIST_ENTRY *entry, int flags)
    intended to be called while actively editing, and the current line is
    not assumed to have been added to the history list. */
 void
-_rl_revert_all_lines (void)
+_rl_revert_previous_lines (void)
 {
   int hpos;
   HIST_ENTRY *entry;
@@ -489,6 +487,19 @@ _rl_revert_all_lines (void)
   /* and clean up */
   xfree (lbuf);
 }  
+
+/* Revert all lines in the history by making sure we are at the end of the
+   history before calling _rl_revert_previous_lines() */
+void
+_rl_revert_all_lines (void)
+{
+  int pos;
+
+  pos = where_history ();
+  using_history ();
+  _rl_revert_previous_lines ();
+  history_set_pos (pos);
+}
 
 /* Free the history list, including private readline data and take care
    of pointer aliases to history data.  Resets rl_undo_list if it points
@@ -587,6 +598,7 @@ int
 rl_get_previous_history (int count, int key)
 {
   HIST_ENTRY *old_temp, *temp;
+  int had_saved_line;
 
   if (count < 0)
     return (rl_get_next_history (-count, key));
@@ -599,6 +611,7 @@ rl_get_previous_history (int count, int key)
     _rl_history_saved_point = (rl_point == rl_end) ? -1 : rl_point;
 
   /* If we don't have a line saved, then save this one. */
+  had_saved_line = _rl_saved_line_for_history != 0;
   rl_maybe_save_line ();
 
   /* If the current line has changed, save the changes. */
@@ -622,11 +635,8 @@ rl_get_previous_history (int count, int key)
 
   if (temp == 0)
     {
-      /* begin_clink_change
-       * This seems broken: it starts mangling the history once it reaches the
-       * beginning. */
-      //rl_maybe_unsave_line ();
-      /* end_clink_change */
+      if (had_saved_line == 0)
+        _rl_free_saved_history_line ();
       rl_ding ();
     }
   else
@@ -634,6 +644,48 @@ rl_get_previous_history (int count, int key)
       rl_replace_from_history (temp, 0);
       _rl_history_set_point ();
     }
+
+  return 0;
+}
+
+/* The equivalent of the Korn shell C-o operate-and-get-next-history-line
+   editing command. */
+
+/* This could stand to be global to the readline library */
+static rl_hook_func_t *_rl_saved_internal_startup_hook = 0;
+static int saved_history_logical_offset = -1;
+
+#define HISTORY_FULL() (history_is_stifled () && history_length >= history_max_entries)
+
+static int
+set_saved_history (void)
+{
+  int absolute_offset, count;
+
+  if (saved_history_logical_offset >= 0)
+    {
+      absolute_offset = saved_history_logical_offset - history_base;
+      count = where_history () - absolute_offset;
+      rl_get_previous_history (count, 0);
+    }
+  saved_history_logical_offset = -1;
+  _rl_internal_startup_hook = _rl_saved_internal_startup_hook;
+
+  return (0);
+}
+
+int
+rl_operate_and_get_next (count, c)
+     int count, c;
+{
+  /* Accept the current line. */
+  rl_newline (1, c);
+
+  saved_history_logical_offset = rl_explicit_arg ? count : where_history () + history_base + 1;
+
+
+  _rl_saved_internal_startup_hook = _rl_internal_startup_hook;
+  _rl_internal_startup_hook = set_saved_history;
 
   return 0;
 }

@@ -9,4 +9,4 @@ URL: http://tiswww.cwru.edu/php/chet/readline/rltop.html
 Version: @LIBVERSION@
 Requires.private: @TERMCAP_PKG_CONFIG_LIB@
 Libs: -L${libdir} -lreadline
-Cflags: -I${includedir}/readline
+Cflags: -I${includedir}

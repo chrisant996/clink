@@ -14,6 +14,7 @@
 #include <core/path.h>
 #include <core/str_iter.h>
 #include <core/str_tokeniser.h>
+#include <core/settings.h>
 #include <terminal/terminal_in.h>
 #include <terminal/terminal_out.h>
 extern "C" {
@@ -25,6 +26,8 @@ extern "C" {
 const int simple_input_states = (RL_STATE_MOREINPUT |
                                  RL_STATE_NSEARCH |
                                  RL_STATE_CHARSEARCH);
+
+extern setting_bool g_classify_words;
 
 
 
@@ -449,6 +452,11 @@ bool line_editor_impl::update_input()
         if (result.flags & result_impl::flag_pass)
             continue;
 
+        // Classify words in the input line (if configured).
+        if (g_classify_words.get() && classify())
+// TODO: this isn't the right way to mark it as needing to be redrawn!
+            m_buffer.begin_line();
+
         binding.claim();
 
         if (result.flags & result_impl::flag_done)
@@ -525,48 +533,9 @@ unsigned int line_editor_impl::collect_words(words& words, matches_impl& matches
 }
 
 //------------------------------------------------------------------------------
-line_state line_editor_impl::get_linestate() const
-{
-    return {
-        m_buffer.get_buffer(),
-        m_buffer.get_cursor(),
-        m_command_offset,
-        m_words,
-    };
-}
-
-//------------------------------------------------------------------------------
-editor_module::context line_editor_impl::get_context(const line_state& line) const
-{
-    auto& pter = const_cast<printer&>(m_printer);
-    auto& pger = const_cast<pager&>(static_cast<const pager&>(m_pager));
-    auto& buffer = const_cast<rl_buffer&>(m_buffer);
-    return { m_desc.prompt, pter, pger, buffer, line, m_matches, m_classifications };
-}
-
-//------------------------------------------------------------------------------
-void line_editor_impl::set_flag(unsigned char flag)
-{
-    m_flags |= flag;
-}
-
-//------------------------------------------------------------------------------
-void line_editor_impl::clear_flag(unsigned char flag)
-{
-    m_flags &= ~flag;
-}
-
-//------------------------------------------------------------------------------
-bool line_editor_impl::check_flag(unsigned char flag) const
-{
-    return ((m_flags & flag) != 0);
-}
-
-//------------------------------------------------------------------------------
-void line_editor_impl::update_internal()
+bool line_editor_impl::classify()
 {
     // Parse word types for coloring the input line.
-    // TODO: Would a better place would be inside the `rl_redisplay_function` replacement?
     if (m_classifier && (!m_has_prev_buffer || !m_prev_buffer.equals(m_buffer.get_buffer())))
     {
         m_has_prev_buffer = true;
@@ -607,7 +576,7 @@ void line_editor_impl::update_internal()
             static const char *const word_class_name[] = {"other", "command", "doskey", "arg", "flag", "none"};
             printf("CLASSIFIED '%s' --", m_buffer.get_buffer());
             for (auto c : m_classifications)
-                printf(" %s", word_class_name[int(c)]);
+                printf(" %s", word_class_name[int(c.word_class)]);
             printf("\n");
         }
 #endif
@@ -619,6 +588,51 @@ void line_editor_impl::update_internal()
             module->on_classifications_changed(context);
     }
 
+// TODO: return true only if the classifications actually changed!
+    return true;
+}
+
+//------------------------------------------------------------------------------
+line_state line_editor_impl::get_linestate() const
+{
+    return {
+        m_buffer.get_buffer(),
+        m_buffer.get_cursor(),
+        m_command_offset,
+        m_words,
+    };
+}
+
+//------------------------------------------------------------------------------
+editor_module::context line_editor_impl::get_context(const line_state& line) const
+{
+    auto& pter = const_cast<printer&>(m_printer);
+    auto& pger = const_cast<pager&>(static_cast<const pager&>(m_pager));
+    auto& buffer = const_cast<rl_buffer&>(m_buffer);
+    return { m_desc.prompt, pter, pger, buffer, line, m_matches, m_classifications };
+}
+
+//------------------------------------------------------------------------------
+void line_editor_impl::set_flag(unsigned char flag)
+{
+    m_flags |= flag;
+}
+
+//------------------------------------------------------------------------------
+void line_editor_impl::clear_flag(unsigned char flag)
+{
+    m_flags &= ~flag;
+}
+
+//------------------------------------------------------------------------------
+bool line_editor_impl::check_flag(unsigned char flag) const
+{
+    return ((m_flags & flag) != 0);
+}
+
+//------------------------------------------------------------------------------
+void line_editor_impl::update_internal()
+{
     // Collect words, stopping at the cursor for match generator.
     collect_words();
 

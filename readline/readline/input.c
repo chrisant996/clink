@@ -22,6 +22,8 @@
 #define READLINE_LIBRARY
 
 #if defined (__TANDEM)
+#  define _XOPEN_SOURCE_EXTENDED 1
+#  define _TANDEM_SOURCE 1
 #  include <floss.h>
 #endif
 
@@ -352,8 +354,7 @@ _rl_input_available (void)
   FD_ZERO (&exceptfds);
   FD_SET (tty, &readfds);
   FD_SET (tty, &exceptfds);
-  timeout.tv_sec = 0;
-  timeout.tv_usec = _keyboard_input_timeout;
+  USEC_TO_TIMEVAL (_keyboard_input_timeout, timeout);
   return (select (tty + 1, &readfds, (fd_set *)NULL, &exceptfds, &timeout) > 0);
 #else
 
@@ -370,6 +371,24 @@ _rl_input_available (void)
 #endif
 
   return 0;
+}
+
+int
+_rl_nchars_available ()
+{
+  int chars_avail, fd, result;
+  
+  chars_avail = 0;
+     
+#if defined (FIONREAD)
+  fd = fileno (rl_instream);
+  errno = 0;    
+  result = ioctl (fd, FIONREAD, &chars_avail);    
+  if (result == -1 && errno == EIO)    
+    return -1;    
+#endif
+
+  return chars_avail;
 }
 
 int
@@ -498,7 +517,7 @@ rl_read_key (void)
 	{
 	  if (rl_get_char (&c) == 0)
 	    c = (*rl_getc_function) (rl_instream);
-/* fprintf(stderr, "rl_read_key: calling RL_CHECK_SIGNALS: _rl_caught_signal = %d", _rl_caught_signal); */
+/* fprintf(stderr, "rl_read_key: calling RL_CHECK_SIGNALS: _rl_caught_signal = %d\r\n", _rl_caught_signal); */
 	  RL_CHECK_SIGNALS ();
 	}
     }
@@ -605,6 +624,10 @@ rl_getc (FILE *stream)
       else if (_rl_caught_signal == SIGINT)
 #endif
         RL_CHECK_SIGNALS ();
+#if defined (SIGTSTP)
+      else if (_rl_caught_signal == SIGTSTP)
+	RL_CHECK_SIGNALS ();
+#endif
       /* non-keyboard-generated signals of interest */
 #if defined (SIGWINCH)
       else if (_rl_caught_signal == SIGWINCH)
@@ -640,9 +663,7 @@ _rl_read_mbchar (char *mbchar, int size)
   mb_len = 0;  
   while (mb_len < size)
     {
-      RL_SETSTATE(RL_STATE_MOREINPUT);
-      c = rl_read_key ();
-      RL_UNSETSTATE(RL_STATE_MOREINPUT);
+      c = (mb_len == 0) ? _rl_bracketed_read_key () : rl_read_key ();
 
       if (c < 0)
 	break;

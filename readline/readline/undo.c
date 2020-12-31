@@ -196,6 +196,7 @@ rl_do_undo (void)
 	/* Undoing deletes means inserting some text. */
 	case UNDO_DELETE:
 	  rl_point = start;
+	  _rl_fix_point (1);
 	  rl_insert_text (rl_undo_list->text);
 	  xfree (rl_undo_list->text);
 	  break;
@@ -204,6 +205,7 @@ rl_do_undo (void)
 	case UNDO_INSERT:
 	  rl_delete_text (start, end);
 	  rl_point = start;
+	  _rl_fix_point (1);
 	  break;
 
 	/* Undoing an END means undoing everything 'til we get to a BEGIN. */

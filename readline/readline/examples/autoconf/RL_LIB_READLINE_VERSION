@@ -35,6 +35,7 @@ AC_CACHE_VAL(ac_cv_rl_version,
 [AC_TRY_RUN([
 #include <stdio.h>
 #include <readline/readline.h>
+#include <stdlib.h>
 
 extern int rl_gnu_readline_p;
 
