@@ -725,15 +725,34 @@ union key_t {
 static bool is_key_same(const key_t& prev_key, const char* prev_line, int prev_length,
                         const key_t& next_key, const char* next_line, int next_length)
 {
-    if (prev_key.value != next_key.value)
+    // If the key lengths are different, the keys are different.
+    if (prev_key.word_length != next_key.word_length)
         return false;
 
+    // If one offset is 0 and the other is non-zero, the keys are different.
+    // This is required for `exec.enable` to work.
+    if ((prev_key.word_offset == 0) != (next_key.word_offset == 0))
+        return false;
+
+    // If either key has a cursor position and the cursor positions are
+    // different (relative to the start of each key), the keys are different.
+    // Allowing them to match when the relative cursor positions match enables
+    // a performance optimization of not re-generating when `xx   _foo` becomes
+    // `xx _foo` (cursor position at the `_`).
+    if (prev_key.cursor_pos != next_key.cursor_pos)
+    {
+        if (prev_key.cursor_pos - prev_key.word_offset != next_key.cursor_pos - next_key.word_offset)
+            return false;
+    }
+
+    // If the key contents are different, the keys are different.
     str_iter prev(prev_line + prev_key.word_offset, min(int(prev_key.word_length), max(0, int(prev_length - prev_key.word_offset))));
     str_iter next(next_line + next_key.word_offset, min(int(next_key.word_length), max(0, int(next_length - next_key.word_offset))));
     for (int i = prev.length(); i--;)
         if (prev.get_pointer()[i] != next.get_pointer()[i])
             return false;
 
+    // The keys are the same.
     return true;
 }
 
