@@ -56,6 +56,7 @@ public:
         type_string,
         type_enum,
         type_color,
+        type_max
     };
 
     virtual         ~setting();

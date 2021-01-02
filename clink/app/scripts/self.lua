@@ -119,34 +119,35 @@ end
 
 --------------------------------------------------------------------------------
 local function set_handler(match_word, word_index, line_state)
+    return settings.list()
+end
+
+--------------------------------------------------------------------------------
+local function value_handler(match_word, word_index, line_state, builder, classify)
     local name = ""
     local color = false
     if word_index > 3 then
-        name = line_state:getword(3)
+        -- Use relative positioning to get the word, in case flags were used.
+        -- This isn't completely accurate, but it's good enough.
+        name = line_state:getword(word_index - 1)
         if name:sub(1, 6) == "color." then
             color = true
-        elseif word_index > 4 then
-            return {}
         end
     end
 
-    local ret = {}
-    for line in io.popen('"'..CLINK_EXE..'" set --list '..name, "r"):lines() do
-        table.insert(ret, line)
-    end
-
-    -- If it's a recognized color setting, then go through a custom handler to
-    -- account for the "attr color on color" syntax state machine.
-    if color and #ret > 0 then
+    if color then
         return color_handler(line_state)
     end
 
-    return ret
+    local info = settings.list(name)
+    return info and info.values or nil
 end
 
+--------------------------------------------------------------------------------
 local set = clink.argmatcher()
 :addflags("--help")
-:addarg(set_handler):loop()
+:addarg(set_handler)
+:addarg(value_handler)
 
 --------------------------------------------------------------------------------
 local history = clink.argmatcher()

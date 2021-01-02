@@ -6,6 +6,7 @@
 
 #include <core/base.h>
 #include <core/settings.h>
+#include <core/str_tokeniser.h>
 
 #include <new.h>
 
@@ -199,6 +200,122 @@ static int add(lua_State* state)
 }
 
 //------------------------------------------------------------------------------
+static void table_add_string(lua_State* state, const char* s, int& count)
+{
+    lua_pushstring(state, s);
+    lua_rawseti(state, -2, ++count);
+}
+
+//------------------------------------------------------------------------------
+static void push_setting_values_table(lua_State* state, const setting* setting, bool classify)
+{
+    lua_createtable(state, 0, 1);
+
+    int count = 0;
+    switch (setting->get_type())
+    {
+    case setting::type_int:
+    case setting::type_string:
+        break;
+
+    case setting::type_bool:
+        table_add_string(state, "true", count);
+        table_add_string(state, "false", count);
+        if (classify)
+        {
+            table_add_string(state, "1", count);
+            table_add_string(state, "0", count);
+            table_add_string(state, "yes", count);
+            table_add_string(state, "no", count);
+            table_add_string(state, "on", count);
+            table_add_string(state, "off", count);
+        }
+        break;
+
+    case setting::type_enum:
+        {
+            const char* options = ((const setting_enum*)setting)->get_options();
+            str_tokeniser tokens(options, ",");
+            const char* start;
+            int length;
+            str<> tmp;
+            while (tokens.next(start, length))
+            {
+                tmp.clear();
+                tmp.concat(start, length);
+                table_add_string(state, tmp.c_str(), count);
+            }
+        }
+        break;
+
+    case setting::type_color:
+        {
+            static const char* const color_keywords[] =
+            {
+                "bold", "dim", "underline", "nounderline",
+                "bright", "default", "normal", "on",
+                "black", "red", "green", "yellow",
+                "blue", "cyan", "magenta", "white",
+                "sgr",
+            };
+
+            for (auto keyword : color_keywords)
+                table_add_string(state, keyword, count);
+        }
+        break;
+    }
+
+    table_add_string(state, "clear", count);
+}
+
+//------------------------------------------------------------------------------
+// Undocumented, because it's only needed internally.
+static int list(lua_State* state)
+{
+    if (lua_gettop(state) < 1)
+    {
+        lua_createtable(state, 0, 1);
+
+        int count = 0;
+        for (setting_iter iter = settings::first(); const setting* setting = iter.next();)
+            table_add_string(state, setting->get_name(), count);
+
+        return 1;
+    }
+
+    if (lua_isstring(state, 1))
+    {
+        static const char* const type_names[] = { "unknown", "int", "boolean", "string", "enum", "color" };
+        static_assert(sizeof_array(type_names) == int(setting::type_e::type_max), "type_names and setting::type_e::type_max disagree");
+
+        const char *name = lua_tostring(state, 1);
+        bool classify = lua_isboolean(state, 2) && lua_toboolean(state, 2);
+
+        const setting* setting = settings::find(name);
+        if (setting == nullptr)
+            return 0;
+
+        lua_createtable(state, 0, 3);
+
+        lua_pushliteral(state, "name");
+        lua_pushstring(state, name);
+        lua_rawset(state, -3);
+
+        lua_pushliteral(state, "type");
+        lua_pushstring(state, type_names[int(setting->get_type())]);
+        lua_rawset(state, -3);
+
+        lua_pushliteral(state, "values");
+        push_setting_values_table(state, setting, classify);
+        lua_rawset(state, -3);
+
+        return 1;
+    }
+
+    return 0;
+}
+
+//------------------------------------------------------------------------------
 void settings_lua_initialise(lua_state& lua)
 {
     struct {
@@ -208,6 +325,7 @@ void settings_lua_initialise(lua_state& lua)
         { "get",    &get },
         { "set",    &set },
         { "add",    &add },
+        { "list",   &list },
     };
 
     lua_State* state = lua.get_state();
