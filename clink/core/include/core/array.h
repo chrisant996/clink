@@ -49,6 +49,7 @@ public:
     T*              push_back()      { return full() ? nullptr : (m_ptr + m_size++); }
     void            clear();
     T const*        operator [] (unsigned int index) const;
+    T*              operator [] (unsigned int index);
 
 protected:
     T*              m_ptr;
@@ -68,6 +69,13 @@ array<T>::array(T* ptr, unsigned int size, unsigned int capacity)
 //------------------------------------------------------------------------------
 template <typename T>
 T const* array<T>::operator [] (unsigned int index) const
+{
+    return (index >= capacity()) ? nullptr : (m_ptr + index);
+}
+
+//------------------------------------------------------------------------------
+template <typename T>
+T* array<T>::operator [] (unsigned int index)
 {
     return (index >= capacity()) ? nullptr : (m_ptr + index);
 }
