@@ -77,9 +77,15 @@ function _argreader:update(word, word_index)
         self._arg_index = next_arg_index
     end
 
-    -- Some matchers have no args at all.
-    if not arg or arg_index > #matcher._args then
-        self:_add_word_type("n") --none
+    -- Some matchers have no args at all.  Or ran out of args.
+    if not arg then
+        local t
+        if matcher._no_file_generation then
+            t = "n" --none
+        else
+            t = "o" --other
+        end
+        self:_add_word_type(t)
         return
     end
 
