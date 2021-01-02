@@ -17,6 +17,18 @@ end
 
 
 --------------------------------------------------------------------------------
+local function make_dummy_builder()
+    local dummy = {}
+    function dummy:addmatch() end
+    function dummy:addmatches() end
+    function dummy:setappendcharacter() end
+    function dummy:setsuppressappend() end
+    function dummy:setsuppressquoting() end
+    function dummy:setmatchesarefiles() end
+    return dummy
+end
+
+--------------------------------------------------------------------------------
 local _argreader = {}
 _argreader.__index = _argreader
 setmetatable(_argreader, { __call = function (x, ...) return x._new(...) end })
@@ -33,7 +45,7 @@ function _argreader._new(root)
 end
 
 --------------------------------------------------------------------------------
-function _argreader:update(word)
+function _argreader:update(word, word_index)
     local arg_match_type = "a" --arg
 
     -- Check for flags and switch matcher if the word is a flag.
@@ -51,41 +63,50 @@ function _argreader:update(word)
     matcher = self._matcher
     local arg_index = self._arg_index
     local arg = matcher._args[arg_index]
-
-    arg_index = arg_index + 1
+    local next_arg_index = arg_index + 1
 
     -- If arg_index is out of bounds we should loop if set or return to the
     -- previous matcher if possible.
-    if arg_index > #matcher._args then
+    if next_arg_index > #matcher._args then
         if matcher._loop then
             self._arg_index = math.min(math.max(matcher._loop, 1), #matcher._args)
         elseif not self:_pop() then
-            self._arg_index = arg_index
+            self._arg_index = next_arg_index
         end
     else
-        self._arg_index = arg_index
+        self._arg_index = next_arg_index
     end
 
     -- Some matchers have no args at all.
-    if not arg then
+    if not arg or arg_index > #matcher._args then
         self:_add_word_type("n") --none
         return
     end
 
     -- Parse the word type.
     if self._word_types then
-        local t = "o" --other
-        if arg._links and arg._links[word] then
-            t = arg_match_type
+        if matcher._classify and matcher._classify(arg_index, word, word_index, self._line_state, self._word_classifier) then
+            -- The classifier function says it handled the word.
         else
-            for _, i in ipairs(arg) do
-                if type(i) == "string" and i == word then
-                    t = arg_match_type
-                    break
+            -- Use the argmatcher's data to classify the word.
+            local t = "o" --other
+            if arg._links and arg._links[word] then
+                t = arg_match_type
+            else
+                for _, i in ipairs(arg) do
+                    if type(i) == "function" then
+                        -- For performance reasons, don't run argmatcher functions
+                        -- during classify.  If that's needed, a script can provide
+                        -- a :classify function to complement a :generate function.
+                        t = 'o' --other (placeholder; superseded by :classifyword).
+                    elseif i == word then
+                        t = arg_match_type
+                        break
+                    end
                 end
             end
+            self:_add_word_type(t)
         end
-        self:_add_word_type(t)
     end
 
     -- Does the word lead to another matcher?
@@ -250,6 +271,18 @@ function _argmatcher:nofiles()
 end
 
 --------------------------------------------------------------------------------
+--- -name:  _argmatcher:setclassifier
+--- -arg:   func:function
+--- -ret:   self
+--- This registers a function that gets called for each word the argmatcher
+--- handles, to classify the word as part of coloring the input text.  See
+--- <a href="#classifywords">Coloring The Input Text</a> for more information.
+function _argmatcher:setclassifier(func)
+    self._classify = func
+    return self
+end
+
+--------------------------------------------------------------------------------
 function _argmatcher.__concat(lhs, rhs)
     if getmetatable(rhs) ~= _argmatcher then
         error("Right-hand side must be an argmatcher object", 2)
@@ -384,7 +417,7 @@ function _argmatcher:_generate(line_state, match_builder)
     local word_count = line_state:getwordcount()
     for word_index = 2, (word_count - 1) do
         local word = line_state:getword(word_index)
-        reader:update(word)
+        reader:update(word, word_index)
     end
 
     -- There should always be a matcher left on the stack, but the arg_index
@@ -401,7 +434,7 @@ function _argmatcher:_generate(line_state, match_builder)
 
         for _, i in ipairs(arg) do
             if type(i) == "function" then
-                local j = i(line_state:getendword(), word_count, line_state, match_builder)
+                local j = i(line_state:getendword(), word_count, line_state, match_builder, nil)
                 if type(j) ~= "table" then
                     return j or false
                 end
@@ -651,7 +684,10 @@ end
 
 
 ------------------------------------------------------------------------------
-function clink._parse_word_types(line_state)
+-- This returns a string with classifications produced automatically by the
+-- argmatcher.  word_classifier is also filled in with explicit classifications
+-- that supersede the implicit classifications.
+function clink._parse_word_types(line_state, word_classifier)
     local parsed_word_types = {}
 
     local word_count = line_state:getwordcount()
@@ -667,12 +703,14 @@ function clink._parse_word_types(line_state)
     local argmatcher = _find_argmatcher(line_state)
     if argmatcher then
         local reader = _argreader(argmatcher)
+        reader._line_state = line_state
+        reader._word_classifier = word_classifier
         reader._word_types = parsed_word_types
 
         -- Consume words and use them to move through matchers' arguments.
         for word_index = 2, word_count do
             local word = line_state:getword(word_index)
-            reader:update(word)
+            reader:update(word, word_index)
         end
     end
 
@@ -709,7 +747,7 @@ function argmatcher_generator:getwordbreakinfo(line_state)
         local word_count = line_state:getwordcount()
         for word_index = 2, (word_count - 1) do
             local word = line_state:getword(word_index)
-            reader:update(word)
+            reader:update(word, word_index)
         end
 
         -- There should always be a matcher left on the stack, but the arg_index

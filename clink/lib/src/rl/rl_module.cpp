@@ -378,6 +378,12 @@ static char get_face_func(int in, int active_begin, int active_end)
 }
 
 //------------------------------------------------------------------------------
+inline const char* fallback_color(const char* preferred, const char* fallback)
+{
+    return preferred ? preferred : fallback;
+}
+
+//------------------------------------------------------------------------------
 static void puts_face_func(const char* s, const char* face, int n)
 {
     static const char c_normal[] = "\x1b[m";
@@ -395,18 +401,28 @@ static void puts_face_func(const char* s, const char* face, int n)
             {
             default:
             case '0':   out.concat(c_normal); break;
-            case '1':   out.concat("\x1b[1m", 4); break;
+            case '1':   out.concat("\x1b[7m", 4); break;
 
-            case '2':   out.concat(s_input_color ? s_input_color : c_normal); break;
-            case '*':   out.concat(_rl_display_modmark_color); break;
-            case '<':   out.concat(_rl_display_message_color); break;
+            case '2':   out.concat(fallback_color(s_input_color, c_normal)); break;
+            case '*':   out.concat(fallback_color(_rl_display_modmark_color, c_normal)); break;
+            case '<':   out.concat(fallback_color(_rl_display_message_color, c_normal)); break;
 
-            case 'o':   out.concat(s_input_color ? s_input_color : c_normal); break;
-            case 'c':   out << "\x1b[" << _rl_command_color << "m"; break;
-            case 'd':   out << "\x1b[" << _rl_alias_color << "m"; break;
-            case 'a':   out.concat(s_arg_color); break;
-            case 'f':   out.concat(s_flag_color); break;
-            case 'n':   out.concat(s_none_color); break;
+            case 'o':   out.concat(fallback_color(s_input_color, c_normal)); break;
+            case 'c':
+                if (_rl_command_color)
+                    out << "\x1b[" << _rl_command_color << "m";
+                else
+                    out << c_normal;
+                break;
+            case 'd':
+                if (_rl_alias_color)
+                    out << "\x1b[" << _rl_alias_color << "m";
+                else
+                    out << c_normal;
+                break;
+            case 'a':   out.concat(fallback_color(s_arg_color, fallback_color(s_input_color, c_normal))); break;
+            case 'f':   out.concat(fallback_color(s_flag_color, c_normal)); break;
+            case 'n':   out.concat(fallback_color(s_none_color, c_normal)); break;
             }
         }
 

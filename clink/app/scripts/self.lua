@@ -37,16 +37,36 @@ local echo = clink.argmatcher()
 :nofiles()
 
 --------------------------------------------------------------------------------
-local function color_handler(line_state)
-    local i = 4
+local function is_prefix3(s, ...)
+    for _,i in ipairs({ ... }) do
+        if #i < 3 or #s < 3 then
+            if i == s then
+                return true
+            end
+        else
+            if i:sub(1, #s) == s then
+                return true
+            end
+        end
+    end
+    return false
+end
+
+--------------------------------------------------------------------------------
+local function color_handler(line_state, classify, word_index)
+    local i = word_index or 4
+    local include_clear = true
     local include_bright = true
     local include_underline = true
     local include_color = true
     local include_on = true
     local include_sgr = true
+    local invalid = false
 
-    while i < line_state:getwordcount() do
+    while i <= line_state:getwordcount() do
         local word = line_state:getword(i)
+
+        include_clear = false
 
         if word ~= "" then
             include_sgr = false
@@ -54,34 +74,63 @@ local function color_handler(line_state)
 
         if word == "on" then
             if not include_on then
-                return {}
+                invalid = true
+                break
             end
             include_bright = true
             include_underline = false
             include_color = true
             include_on = false
-        elseif word == "bold" or word == "dim" or word == "bright" then
+        elseif is_prefix3(word, "bold", "dim", "bright") then
             if not include_bright then
-                return {}
+                invalid = true
+                break
             end
             include_bright = false
-        elseif word == "underline" or word == "nounderline" then
+        elseif is_prefix3(word, "underline", "nounderline") then
             if not include_underline then
-                return {}
+                invalid = true
+                break
             end
             include_underline = false
-        elseif word == "black" or word == "red" or word == "green" or word == "yellow" or word == "blue" or word == "cyan" or word == "magenta" or word == "white" then
+        elseif is_prefix3(word, "black", "red", "green", "yellow", "blue", "cyan", "magenta", "white") then
             if not include_color then
-                return {}
+                invalid = true
+                break
             end
             include_bright = false
             include_underline = false
             include_color = false
-        else
+        elseif word == "sgr" then
+            if not include_sgr then
+                invalid = true
+                break
+            end
+            if classify then
+                while i <= line_state:getwordcount() do
+                    classify:classifyword(i, "a") --arg
+                    i = i + 1
+                end
+                return true -- classify has been handled
+            end
             return {}
+        elseif word ~= "" then
+            invalid = true
+            break
+        end
+
+        if classify then
+            classify:classifyword(i, "a") --arg
         end
 
         i = i + 1
+    end
+
+    if classify and invalid then
+        classify:classifyword(i, "n") --none
+        return nil
+    elseif classify or invalid then
+        return nil
     end
 
     local list = {}
@@ -114,6 +163,12 @@ local function color_handler(line_state)
     if include_sgr then
         table.insert(list, "sgr")
     end
+    if include_clear then
+        table.insert(list, "clear")
+    end
+    if #list == 0 then
+        return nil
+    end
     return list
 end
 
@@ -144,10 +199,60 @@ local function value_handler(match_word, word_index, line_state, builder, classi
 end
 
 --------------------------------------------------------------------------------
+local function classify_handler(arg_index, word, word_index, line_state, classify)
+    if arg_index == 1 then
+        -- Classify the setting name.
+        local info = settings.list(word, true)
+        if info then
+            classify:classifyword(word_index, "a") --arg
+        else
+            classify:classifyword(word_index, "o") --other
+            return true
+        end
+
+        -- Classify the setting value.
+        local idx = word_index + 1
+        if info.type == "color" then
+            color_handler(line_state, classify, idx)
+            return true
+        elseif info.type == "string" then
+            -- If there are no matches listed, then it's a string field.  In
+            -- that case classify the rest of the line as "other" words so they
+            -- show up in a uniform color.
+            while idx <= line_state:getwordcount() do
+                classify:classifyword(idx, "o") --other
+                idx = idx + 1
+            end
+            return true
+        elseif info.type == "integer" then
+            classify:classifyword(idx, "o") --other
+        else
+            local t = "n" --none
+            local value = line_state:getword(idx)
+            for _,i in ipairs(info.values) do
+                if clink.lower(i) == clink.lower(value) then
+                    t = "a" --arg
+                    break
+                end
+            end
+            classify:classifyword(idx, t)
+        end
+
+        -- Anything further is unrecognized.
+        while idx < line_state:getwordcount() do
+            idx = idx + 1
+            classify:classifyword(idx, "n") --none
+        end
+    end
+    return true
+end
+
+--------------------------------------------------------------------------------
 local set = clink.argmatcher()
 :addflags("--help")
 :addarg(set_handler)
 :addarg(value_handler)
+:setclassifier(classify_handler)
 
 --------------------------------------------------------------------------------
 local history = clink.argmatcher()

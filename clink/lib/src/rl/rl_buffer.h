@@ -35,6 +35,8 @@ public:
     virtual void            end_undo_group() override;
     virtual unsigned int    collect_words(std::vector<word>& words, collect_words_mode mode) const;
 
+    void                    set_need_draw() { m_need_draw = true; }
+
 private:
     void                    find_command_bounds(std::vector<command>& commands, bool stop_at_cursor) const;
     char                    get_closing_quote() const;

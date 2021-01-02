@@ -20,6 +20,9 @@ enum class word_class : unsigned char
 };
 
 //------------------------------------------------------------------------------
+word_class to_word_class(char wc);
+
+//------------------------------------------------------------------------------
 struct word_class_info
 {
     unsigned int    start : 16;
@@ -39,5 +42,5 @@ public:
 class word_classifier
 {
 public:
-    virtual void    classify(const line_state& line, word_classifications& classifications) const = 0;
+    virtual void    classify(const line_state& line, word_classifications& classifications, const char* already_classified=nullptr) = 0;
 };

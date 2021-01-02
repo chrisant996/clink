@@ -4,10 +4,18 @@ ChrisAnt Plans
 
 # RELEASE
 
-- RL8.1: return true from line_editor_impl::classify only if the classifications actually changed!
-- RL8.1: finish hooking up input line colors.
-- RL8.1: bracketed paste and active region?
-- RL8.1: What is the _rl_fix_point and _rl_fix_mark stuff about?
+- Completion gets stuck:  `cp clin`**Tab**`lu`**Tab**`s`**Tab** => nothing happens, but **Left**,**Right** makes it complete as expected.  Might be a Readline 8.1 regression?
+- `myapp -ld file` colors the file as `none` type by mistake.
+- Coloring The Input Text
+  - Clear the default colors again.
+  - Color completions are only generated for the first word in the value.
+  - Documentation for :classify.
+  - Performance and redundant classifications.
+- Readline 8.1
+  - RL8.1: bracketed paste and active region?
+  - RL8.1: What is the _rl_fix_point and _rl_fix_mark stuff about?
+  - nit: RL8.1 has slight bug in `update_line`; type `c` then `l`, and it now identifies **2** chars (`cl`) as needing to be displayed; seems like the diff routine has a bug with respect to the new faces capability; it used to only identify `l` as needing to be displayed.
+- Escape in a chord still doesn't work right (inserts part of the bindableEsc string).
 
 ## Issues
 - [#45](https://github.com/chrisant996/clink/issues/45) Interaction between erase_prev and history.shared=false

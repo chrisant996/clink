@@ -3,6 +3,7 @@
 
 #pragma once
 
+#include "core/str.h"
 #include "lib/word_classifier.h"
 
 class lua_state;
@@ -13,7 +14,7 @@ class lua_word_classifier
 {
 public:
                     lua_word_classifier(lua_state& state);
-    virtual void    classify(const line_state& line, word_classifications& classifications) const override;
+    virtual void    classify(const line_state& line, word_classifications& classifications, const char* already_classified=nullptr) override;
 
 private:
     void            print_error(const char* error) const;

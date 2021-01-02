@@ -20,6 +20,20 @@
 #include <terminal/printer.h>
 
 //------------------------------------------------------------------------------
+class prev_buffer
+{
+public:
+                    ~prev_buffer() { free(m_ptr); }
+    const char*     get() const { return m_ptr; }
+    void            set(const char* s, int len);
+    bool            equals(const char* s, int len) const;
+    void            clear() { free(m_ptr); m_ptr = nullptr; }
+
+private:
+    char*           m_ptr = nullptr;
+};
+
+//------------------------------------------------------------------------------
 class line_editor_impl
     : public line_editor
     , public input_dispatcher
@@ -64,7 +78,7 @@ private:
     void                end_line();
     void                collect_words(bool stop_at_cursor=true);
     unsigned int        collect_words(words& words, matches_impl& matches, collect_words_mode mode);
-    bool                classify();
+    void                classify();
     void                update_internal();
     bool                update_input();
     module::context     get_context(const line_state& line) const;
@@ -74,8 +88,8 @@ private:
     bool                check_flag(unsigned char flag) const;
     rl_module           m_module;
     rl_buffer           m_buffer;
-    bool                m_has_prev_buffer = false;
-    str<>               m_prev_buffer;
+    prev_buffer         m_prev_classify;
+    prev_buffer         m_prev_generate;
     desc                m_desc;
     modules             m_modules;
     generators          m_generators;

@@ -3,15 +3,33 @@
 
 #include "pch.h"
 #include "lua_word_classifier.h"
+#include "lua_word_classifications.h"
 #include "lua_state.h"
 #include "line_state_lua.h"
 
+#include <core/base.h>
 #include <lib/line_state.h>
+
+#include <assert.h>
 
 extern "C" {
 #include <lua.h>
 #include <lauxlib.h>
 #include <lualib.h>
+}
+
+//------------------------------------------------------------------------------
+word_class to_word_class(char wc)
+{
+    switch (wc)
+    {
+    default:    return word_class::other;
+    case 'c':   return word_class::command;
+    case 'd':   return word_class::doskey;
+    case 'a':   return word_class::arg;
+    case 'f':   return word_class::flag;
+    case 'n':   return word_class::none;
+    }
 }
 
 //------------------------------------------------------------------------------
@@ -28,7 +46,7 @@ void lua_word_classifier::print_error(const char* error) const
 }
 
 //------------------------------------------------------------------------------
-void lua_word_classifier::classify(const line_state& line, word_classifications& classifications) const
+void lua_word_classifier::classify(const line_state& line, word_classifications& classifications, const char* already_classified)
 {
     lua_State* state = m_state.get_state();
 
@@ -40,7 +58,10 @@ void lua_word_classifier::classify(const line_state& line, word_classifications&
     line_state_lua line_lua(line);
     line_lua.push(state);
 
-    if (m_state.pcall(state, 1, 1) != 0)
+    lua_word_classifications classifications_lua(already_classified);
+    classifications_lua.push(state);
+
+    if (m_state.pcall(state, 2, 1) != 0)
     {
         if (const char* error = lua_tostring(state, -1))
             print_error(error);
@@ -58,14 +79,22 @@ void lua_word_classifier::classify(const line_state& line, word_classifications&
         word_class_info* info = classifications.push_back();
         info->start = words[i].offset;
         info->end = info->start + words[i].length;
-        switch (ret[i])
-        {
-        default:    info->word_class = word_class::other; break;
-        case 'c':   info->word_class = word_class::command; break;
-        case 'd':   info->word_class = word_class::doskey; break;
-        case 'a':   info->word_class = word_class::arg; break;
-        case 'f':   info->word_class = word_class::flag; break;
-        case 'n':   info->word_class = word_class::none; break;
-        }
+        info->word_class = to_word_class(ret[i]);
+    }
+
+    unsigned int target_count = min<unsigned int>(classifications_lua.size(), line.get_word_count());
+    for (unsigned int i = classifications.size(); i < target_count; i++)
+    {
+        word_class_info* info = classifications.push_back();
+        info->start = words[i].offset;
+        info->end = info->start + words[i].length;
+        info->word_class = word_class::none;
+    }
+
+    for (unsigned int i = 0; i < classifications_lua.size(); i++)
+    {
+        word_class wc;
+        if (classifications_lua.get_word_class(i, wc))
+            classifications[i]->word_class = wc;
     }
 }

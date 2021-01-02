@@ -108,6 +108,24 @@ void line_editor_destroy(line_editor* editor)
 
 
 //------------------------------------------------------------------------------
+void prev_buffer::set(const char* s, int len)
+{
+    free(m_ptr);
+
+    m_ptr = (char*)malloc(len + 1);
+    memcpy(m_ptr, s, len);
+    m_ptr[len] = '\0';
+}
+
+//------------------------------------------------------------------------------
+bool prev_buffer::equals(const char* s, int len) const
+{
+    return m_ptr && memcmp(s, m_ptr, len) == 0 && !m_ptr[len];
+}
+
+
+
+//------------------------------------------------------------------------------
 static line_editor_impl* s_editor = nullptr;
 
 //------------------------------------------------------------------------------
@@ -182,8 +200,8 @@ void line_editor_impl::begin_line()
     m_desc.input->begin();
     m_desc.output->begin();
     m_buffer.begin_line();
-    m_has_prev_buffer = false;
-    m_prev_buffer.clear();
+    m_prev_generate.clear();
+    m_prev_classify.clear();
 
     line_state line = get_linestate();
     editor_module::context context = get_context(line);
@@ -453,9 +471,8 @@ bool line_editor_impl::update_input()
             continue;
 
         // Classify words in the input line (if configured).
-        if (g_classify_words.get() && classify())
-// TODO: this isn't the right way to mark it as needing to be redrawn!
-            m_buffer.begin_line();
+        if (g_classify_words.get())
+            classify();
 
         binding.claim();
 
@@ -533,53 +550,120 @@ unsigned int line_editor_impl::collect_words(words& words, matches_impl& matches
 }
 
 //------------------------------------------------------------------------------
-bool line_editor_impl::classify()
+void line_editor_impl::classify()
 {
-    // Parse word types for coloring the input line.
-    if (m_classifier && (!m_has_prev_buffer || !m_prev_buffer.equals(m_buffer.get_buffer())))
+    if (!m_classifier)
+        return;
+
+    // Skip parsing if the line buffer hasn't changed.
+    if (m_prev_classify.equals(m_buffer.get_buffer(), m_buffer.get_length()))
+        return;
+
+    // Use the full line; don't stop at the cursor.
+    line_state line = get_linestate();
+    collect_words(false);
+
+    // Copy the old classifications so it's possible to identify whether they've
+    // changed.  Keep track of how many words
+    word_classifications old_classifications;
     {
-        m_has_prev_buffer = true;
-        m_prev_buffer = m_buffer.get_buffer();
+        const word_class_info* info = m_classifications.front();
+        for (int n = m_classifications.size(); n--; info++)
+            *old_classifications.push_back() = *info;
+    }
+    m_classifications.clear();
 
-        // Use the full line; don't stop at the cursor.
-        line_state line = get_linestate();
-        collect_words(false);
-
-        m_classifications.clear();
-
-        int i = 0;
-        std::vector<word> words;
-        while (true)
+    // Parse word types for coloring the input line.
+    int i = 0;
+    int command_offset = 0;
+    std::vector<word> words;
+    while (true)
+    {
+        if (!words.empty() && (i >= m_words.size() || m_words[i].command_word))
         {
-            if (!words.empty() && (i >= m_words.size() || m_words[i].command_word))
+            line_state linestate(
+                m_buffer.get_buffer(),
+                m_buffer.get_cursor(),
+                words[0].offset,
+                words
+            );
+
+            str<16> already_classified;
             {
-                line_state linestate(
-                    m_buffer.get_buffer(),
-                    m_buffer.get_cursor(),
-                    words[0].offset,
-                    words
-                );
-                m_classifier->classify(linestate, m_classifications);
-                words.clear();
+                for (int j = 0; j < words.size(); j++)
+                {
+                    if (already_classified.length() == j &&
+                        command_offset + j < old_classifications.size() &&
+                        old_classifications[command_offset + j]->start == m_words[j].offset &&
+                        old_classifications[command_offset + j]->end == m_words[j].offset + m_words[j].length)
+                    {
+                        static const char word_class_chars[] = "ocdafn";
+                        static_assert(_countof(word_class_chars) - 1 == int(word_class::max), "word_class_chars and word_class don't agree!");
+                        already_classified.concat(&word_class_chars[int(old_classifications[command_offset + j]->word_class)], 1);
+                    }
+                }
+
+                if (already_classified.length() > 0)
+                {
+                    assert(command_offset < old_classifications.size()); // Must be true because of preceding loop.
+                    if (!m_prev_classify.get() ||
+                        memcmp(m_prev_classify.get(),
+                               line.get_line() + words[0].offset,
+                               old_classifications[command_offset + already_classified.length() - 1]->end - old_classifications[command_offset]->start) != 0)
+                        already_classified.clear();
+                }
             }
 
-            if (i >= m_words.size())
-                break;
+#ifdef DEBUG
+            if (dbg_get_env_int("DEBUG_CLASSIFY"))
+                printf("already classified '%s'\n", already_classified.c_str());
+#endif
 
-            words.push_back(m_words[i]);
-            i++;
+            m_classifier->classify(linestate, m_classifications, already_classified.c_str());
+
+            words.clear();
+            command_offset = i;
         }
+
+        if (i >= m_words.size())
+            break;
+
+        words.push_back(m_words[i]);
+        i++;
+    }
 
 #ifdef DEBUG
-        if (dbg_get_env_int("DEBUG_CLASSIFY"))
-        {
-            static const char *const word_class_name[] = {"other", "command", "doskey", "arg", "flag", "none"};
-            printf("CLASSIFIED '%s' --", m_buffer.get_buffer());
-            for (auto c : m_classifications)
-                printf(" %s", word_class_name[int(c.word_class)]);
-            printf("\n");
-        }
+    if (dbg_get_env_int("DEBUG_CLASSIFY"))
+    {
+        static const char *const word_class_name[] = {"other", "command", "doskey", "arg", "flag", "none"};
+        printf("CLASSIFIED '%s' -- ", m_buffer.get_buffer());
+        for (auto c : m_classifications)
+            printf(" %s", word_class_name[int(c.word_class)]);
+        printf("\n");
+    }
 #endif
+
+    m_prev_classify.set(m_buffer.get_buffer(), m_buffer.get_length());
+
+    bool changed = (old_classifications.size() != m_classifications.size());
+    if (!changed)
+    {
+        int n = old_classifications.size();
+        for (const word_class_info *oldc = old_classifications.front(), *newc = m_classifications.front(); n--; oldc++, newc++)
+        {
+            if (oldc->start != newc->start ||
+                oldc->end != newc->end ||
+                oldc->word_class != newc->word_class)
+            {
+                changed = true;
+                break;
+            }
+        }
+    }
+
+    if (changed)
+    {
+        m_buffer.set_need_draw();
 
         // Tell all the modules that the classifications changed.
         editor_module::context context = get_context(line);
@@ -587,9 +671,6 @@ bool line_editor_impl::classify()
         for (auto module : m_modules)
             module->on_classifications_changed(context);
     }
-
-// TODO: return true only if the classifications actually changed!
-    return true;
 }
 
 //------------------------------------------------------------------------------
@@ -657,9 +738,15 @@ void line_editor_impl::update_internal()
     if (next_key.value != prev_key.value)
     {
         line_state line = get_linestate();
-        match_pipeline pipeline(m_matches);
-        pipeline.reset();
-        pipeline.generate(line, m_generators);
+        str_iter end_word = line.get_end_word();
+        int len = int(end_word.get_pointer() + end_word.length() - line.get_line());
+        if (!m_prev_generate.equals(line.get_line(), len))
+        {
+            match_pipeline pipeline(m_matches);
+            pipeline.reset();
+            pipeline.generate(line, m_generators);
+            m_prev_generate.set(line.get_line(), len);
+        }
     }
 
     next_key.cursor_pos = m_buffer.get_cursor();
