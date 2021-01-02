@@ -24,13 +24,15 @@ class prev_buffer
 {
 public:
                     ~prev_buffer() { free(m_ptr); }
-    const char*     get() const { return m_ptr; }
-    void            set(const char* s, int len);
+    void            clear() { free(m_ptr); m_ptr = nullptr; m_len = 0; }
     bool            equals(const char* s, int len) const;
-    void            clear() { free(m_ptr); m_ptr = nullptr; }
+    void            set(const char* s, int len);
+    const char*     get() const { return m_ptr; }
+    unsigned int    length() const { return m_len; }
 
 private:
     char*           m_ptr = nullptr;
+    unsigned int    m_len = 0;
 };
 
 //------------------------------------------------------------------------------

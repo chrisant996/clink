@@ -4,10 +4,9 @@ ChrisAnt Plans
 
 # RELEASE
 
-- Completion gets stuck:  `cp clin`**Tab**`lu`**Tab**`s`**Tab** => nothing happens, but **Left**,**Right** makes it complete as expected.
 - Coloring The Input Text
   - Clear the default colors again.
-  - Color completions are only generated for the first word in the value.
+  - Completions are only generated for the first word in a `clink set` color value.
   - Documentation for :classify.
   - Performance and redundant classifications.
 - Readline 8.1

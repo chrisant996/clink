@@ -113,6 +113,7 @@ void prev_buffer::set(const char* s, int len)
     free(m_ptr);
 
     m_ptr = (char*)malloc(len + 1);
+    m_len = len;
     memcpy(m_ptr, s, len);
     m_ptr[len] = '\0';
 }
@@ -120,7 +121,7 @@ void prev_buffer::set(const char* s, int len)
 //------------------------------------------------------------------------------
 bool prev_buffer::equals(const char* s, int len) const
 {
-    return m_ptr && memcmp(s, m_ptr, len) == 0 && !m_ptr[len];
+    return m_ptr && m_len == len && memcmp(s, m_ptr, len) == 0 && !m_ptr[len];
 }
 
 
@@ -712,21 +713,37 @@ bool line_editor_impl::check_flag(unsigned char flag) const
 }
 
 //------------------------------------------------------------------------------
+union key_t {
+    struct {
+        unsigned int word_offset : 11;
+        unsigned int word_length : 10;
+        unsigned int cursor_pos  : 11;
+    };
+    unsigned int value;
+};
+
+static bool is_key_same(const key_t& prev_key, const char* prev_line, int prev_length,
+                        const key_t& next_key, const char* next_line, int next_length)
+{
+    if (prev_key.value != next_key.value)
+        return false;
+
+    str_iter prev(prev_line + prev_key.word_offset, min(int(prev_key.word_length), max(0, int(prev_length - prev_key.word_offset))));
+    str_iter next(next_line + next_key.word_offset, min(int(next_key.word_length), max(0, int(next_length - next_key.word_offset))));
+    for (int i = prev.length(); i--;)
+        if (prev.get_pointer()[i] != next.get_pointer()[i])
+            return false;
+
+    return true;
+}
+
+//------------------------------------------------------------------------------
 void line_editor_impl::update_internal()
 {
     // Collect words, stopping at the cursor for match generator.
     collect_words();
 
     const word& end_word = m_words.back();
-
-    union key_t {
-        struct {
-            unsigned int word_offset : 11;
-            unsigned int word_length : 10;
-            unsigned int cursor_pos  : 11;
-        };
-        unsigned int value;
-    };
 
     key_t next_key = { end_word.offset, end_word.length };
 
@@ -735,7 +752,9 @@ void line_editor_impl::update_internal()
     prev_key.cursor_pos = 0;
 
     // Should we generate new matches?
-    if (next_key.value != prev_key.value)
+    int update_prev_generate = -1;
+    if (!is_key_same(prev_key, m_prev_generate.get(), m_prev_generate.length(),
+                     next_key, m_buffer.get_buffer(), m_buffer.get_length()))
     {
         line_state line = get_linestate();
         str_iter end_word = line.get_end_word();
@@ -745,7 +764,7 @@ void line_editor_impl::update_internal()
             match_pipeline pipeline(m_matches);
             pipeline.reset();
             pipeline.generate(line, m_generators);
-            m_prev_generate.set(line.get_line(), len);
+            update_prev_generate = len;
         }
     }
 
@@ -753,7 +772,8 @@ void line_editor_impl::update_internal()
     prev_key.value = m_prev_key;
 
     // Should we sort and select matches?
-    if (next_key.value != prev_key.value)
+    if (!is_key_same(prev_key, m_prev_generate.get(), m_prev_generate.length(),
+                     next_key, m_buffer.get_buffer(), m_buffer.get_length()))
     {
         str<64> needle;
         int needle_start = end_word.offset;
@@ -779,6 +799,11 @@ void line_editor_impl::update_internal()
         for (auto module : m_modules)
             module->on_matches_changed(context);
     }
+
+    // Must defer updating m_prev_generate since the old value is still needed
+    // for deciding whether to sort/select, after deciding whether to generate.
+    if (update_prev_generate >= 0)
+        m_prev_generate.set(m_buffer.get_buffer(), update_prev_generate);
 }
 
 matches* maybe_regenerate_matches(const char* needle, bool popup)
