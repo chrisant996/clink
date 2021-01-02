@@ -411,7 +411,6 @@ void win_terminal_in::read_console()
     // jump around as the screen's drawn.
     struct cursor_scope {
         cursor_scope()  { set_cursor_visibility(true); }
-// TODO: I think this is what broke cursor visibility in the lua debugger.
         ~cursor_scope() { set_cursor_visibility(false); }
     } _cs;
 
