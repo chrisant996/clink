@@ -5,7 +5,6 @@ ChrisAnt Plans
 # RELEASE
 
 - Coloring The Input Text
-  - Clear the default colors again.
   - Completions are only generated for the first word in a `clink set` color value.
   - Documentation for :classify.
   - Performance and redundant classifications.
@@ -13,7 +12,7 @@ ChrisAnt Plans
   - RL8.1: bracketed paste and active region?
   - RL8.1: What is the _rl_fix_point and _rl_fix_mark stuff about?
   - nit: RL8.1 has slight bug in `update_line`; type `c` then `l`, and it now identifies **2** chars (`cl`) as needing to be displayed; seems like the diff routine has a bug with respect to the new faces capability; it used to only identify `l` as needing to be displayed.
-- Escape in a chord still doesn't work right (inserts part of the bindableEsc string).
+- An unbound Escape in a chord inserts part of the bindableEsc string.  It should abort the chord.
 
 ## Issues
 - [#45](https://github.com/chrisant996/clink/issues/45) Interaction between erase_prev and history.shared=false

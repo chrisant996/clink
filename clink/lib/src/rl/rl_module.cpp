@@ -165,20 +165,22 @@ static setting_color g_color_filtered(
 static setting_color g_color_arg(
     "color.arg",
     "Argument color",
-    "The color for arguments in the input line.",
-    "magenta");
+    "The color for arguments in the input line when clink.colorize_input is set.",
+    "bold");
 
 static setting_color g_color_flag(
     "color.flag",
     "Flag color",
-    "The color for flags in the input line.",
-    "cyan");
+    "The color for flags in the input line when clink.colorize_input is set.",
+    "default");
 
 static setting_color g_color_unexpected(
     "color.unexpected",
     "Unexpected argument color",
-    "The color for arguments that aren't expected by an argument matcher.",
-    "red");
+    "The color for unexpected arguments in the input line when clink.colorize_input\n"
+    "is set.  An argument is unexpected if an argument matcher expected there to be\n"
+    "no more arguments in the input line.",
+    "default");
 
 static setting_bool g_match_wild(
     "match.wild",
