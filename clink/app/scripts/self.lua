@@ -228,9 +228,9 @@ local function classify_handler(arg_index, word, word_index, line_state, classif
             classify:classifyword(idx, "o") --other
         else
             local t = "n" --none
-            local value = line_state:getword(idx)
+            local value = clink.lower(line_state:getword(idx))
             for _,i in ipairs(info.values) do
-                if clink.lower(i) == clink.lower(value) then
+                if clink.lower(i) == value then
                     t = "a" --arg
                     break
                 end
