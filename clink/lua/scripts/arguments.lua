@@ -93,7 +93,7 @@ function _argreader:update(word, word_index)
 
     -- Parse the word type.
     if self._word_types then
-        if matcher._classify and matcher._classify(arg_index, word, word_index, self._line_state, self._word_classifier) then
+        if matcher._classify_func and matcher._classify_func(arg_index, word, word_index, self._line_state, self._word_classifier) then
             -- The classifier function says it handled the word.
         else
             -- Use the argmatcher's data to classify the word.
@@ -286,7 +286,7 @@ end
 --- handles, to classify the word as part of coloring the input text.  See
 --- <a href="#classifywords">Coloring The Input Text</a> for more information.
 function _argmatcher:setclassifier(func)
-    self._classify = func
+    self._classify_func = func
     return self
 end
 
@@ -442,7 +442,7 @@ function _argmatcher:_generate(line_state, match_builder)
 
         for _, i in ipairs(arg) do
             if type(i) == "function" then
-                local j = i(line_state:getendword(), word_count, line_state, match_builder, nil)
+                local j = i(line_state:getendword(), word_count, line_state, match_builder)
                 if type(j) ~= "table" then
                     return j or false
                 end
@@ -735,7 +735,8 @@ end
 
 
 --------------------------------------------------------------------------------
-local argmatcher_generator = clink.generator(24)
+clink.argmatcher_generator_priority = 24
+local argmatcher_generator = clink.generator(clink.argmatcher_generator_priority)
 
 --------------------------------------------------------------------------------
 function argmatcher_generator:generate(line_state, match_builder)

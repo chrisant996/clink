@@ -53,8 +53,8 @@ local function is_prefix3(s, ...)
 end
 
 --------------------------------------------------------------------------------
-local function color_handler(line_state, classify, word_index)
-    local i = word_index or 4
+local function color_handler(word_index, line_state, classify)
+    local i = word_index
     local include_clear = true
     local include_bright = true
     local include_underline = true
@@ -93,7 +93,7 @@ local function color_handler(line_state, classify, word_index)
                 break
             end
             include_underline = false
-        elseif is_prefix3(word, "black", "red", "green", "yellow", "blue", "cyan", "magenta", "white") then
+        elseif is_prefix3(word, "default", "normal", "black", "red", "green", "yellow", "blue", "cyan", "magenta", "white") then
             if not include_color then
                 invalid = true
                 break
@@ -128,9 +128,9 @@ local function color_handler(line_state, classify, word_index)
 
     if classify and invalid then
         classify:classifyword(i, "n") --none
-        return nil
-    elseif classify or invalid then
-        return nil
+    end
+    if classify or invalid then
+        return {}
     end
 
     local list = {}
@@ -180,22 +180,30 @@ end
 --------------------------------------------------------------------------------
 local function value_handler(match_word, word_index, line_state, builder, classify)
     local name = ""
-    local color = false
-    if word_index > 3 then
-        -- Use relative positioning to get the word, in case flags were used.
-        -- This isn't completely accurate, but it's good enough.
-        name = line_state:getword(word_index - 1)
-        if name:sub(1, 6) == "color." then
-            color = true
-        end
+    if word_index <= 3 then
+        return
     end
 
-    if color then
-        return color_handler(line_state)
-    end
-
+    -- Use relative positioning to get the word, in case flags were used.
+    name = line_state:getword(word_index - 1)
     local info = settings.list(name)
-    return info and info.values or nil
+    if not info then
+        return
+    end
+
+    if info.type == "color" then
+        return color_handler(word_index, line_state)
+    else
+        return info.values
+    end
+end
+
+--------------------------------------------------------------------------------
+local function classify_to_end(idx, line_state, classify, wc)
+    while idx <= line_state:getwordcount() do
+        classify:classifyword(idx, wc)
+        idx = idx + 1
+    end
 end
 
 --------------------------------------------------------------------------------
@@ -206,23 +214,20 @@ local function classify_handler(arg_index, word, word_index, line_state, classif
         if info then
             classify:classifyword(word_index, "a") --arg
         else
-            classify:classifyword(word_index, "o") --other
+            classify_to_end(word_index, line_state, classify, "n") --none
             return true
         end
 
         -- Classify the setting value.
         local idx = word_index + 1
         if info.type == "color" then
-            color_handler(line_state, classify, idx)
+            color_handler(idx, line_state, classify)
             return true
         elseif info.type == "string" then
             -- If there are no matches listed, then it's a string field.  In
             -- that case classify the rest of the line as "other" words so they
             -- show up in a uniform color.
-            while idx <= line_state:getwordcount() do
-                classify:classifyword(idx, "o") --other
-                idx = idx + 1
-            end
+            classify_to_end(idx, line_state, classify, "o") --other
             return true
         elseif info.type == "integer" then
             classify:classifyword(idx, "o") --other
@@ -239,10 +244,7 @@ local function classify_handler(arg_index, word, word_index, line_state, classif
         end
 
         -- Anything further is unrecognized.
-        while idx < line_state:getwordcount() do
-            idx = idx + 1
-            classify:classifyword(idx, "n") --none
-        end
+        classify_to_end(idx + 1, line_state, classify, "n") --none
     end
     return true
 end
@@ -280,3 +282,46 @@ clink.argmatcher(
     "--help",
     "--profile"..dir_matcher,
     "--version")
+
+--------------------------------------------------------------------------------
+local set_generator = clink.generator(clink.argmatcher_generator_priority - 1)
+
+function set_generator:generate(line_state, match_builder)
+    local first_word = clink.lower(path.getname(line_state:getword(1)))
+    if path.getbasename(first_word) ~= "clink" and first_word ~= "clink_x64.exe" and first_word ~= "clink_x86.exe" then
+        return
+    end
+
+    local index = 2
+    while index < line_state:getwordcount() do
+        local word = line_state:getword(index)
+        if word == "--help" then
+        elseif word == "--version" then
+        elseif word == "--profile" then
+            index = index + 1
+        else
+            break
+        end
+        index = index + 1
+    end
+
+    if line_state:getword(index) ~= "set" then
+        return
+    end
+
+    index = index + 1
+    if line_state:getword(index) == "--help" then
+        index = index + 1
+    end
+
+    if index == line_state:getwordcount() then
+        return
+    end
+
+    index = index + 1
+    local matches = value_handler(line_state:getword(index), index, line_state)
+    if matches then
+        match_builder:addmatches(matches, "arg")
+    end
+    return true
+end

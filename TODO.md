@@ -5,11 +5,9 @@ ChrisAnt Plans
 # RELEASE
 
 - Coloring The Input Text
-  - Completions are only generated for the first word in a `clink set` color value.
   - Documentation for :classify.
   - Performance and redundant classifications.
 - An unbound Escape in a chord inserts part of the bindableEsc string.  It should abort the chord.
-- nit: RL8.1 has slight bug in `update_line`; type `c` then `l`, and it now identifies **2** chars (`cl`) as needing to be displayed; seems like the diff routine has a bug with respect to the new faces capability; it used to only identify `l` as needing to be displayed.
 
 ## Issues
 - [#45](https://github.com/chrisant996/clink/issues/45) Interaction between erase_prev and history.shared=false
@@ -102,6 +100,9 @@ ChrisAnt Plans
 
 **Marking**
 - Marking mode in-app similar to my other shell project?  It's a kludge, but it copies with HTML formatting (and even uses the color scheme).
+
+**Readline**
+- Readline 8.1 has slight bug in `update_line`; type `c` then `l`, and it now identifies **2** chars (`cl`) as needing to be displayed; seems like the diff routine has a bug with respect to the new faces capability; it used to only identify `l` as needing to be displayed.
 
 **Miscellaneous**
 - Changing terminal width makes 0.4.8 slowly "walk up the screen".  Changing terminal width works in master, except when the cursor position itself is affected.
