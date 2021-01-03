@@ -442,7 +442,6 @@ function _argmatcher:_generate(line_state, match_builder)
 
         for _, i in ipairs(arg) do
             if type(i) == "function" then
-print("calling func('"..line_state:getendword().."', "..word_count..")")
                 local j = i(line_state:getendword(), word_count, line_state, match_builder, nil)
                 if type(j) ~= "table" then
                     return j or false
