@@ -3,7 +3,7 @@
 
 <!-- ----------------------------------------------------- -->
 <head>
-<title>Clink v1.1.17</title>
+<title>Clink v1.1.18</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Rambla:wght@400;700&family=Roboto&family=Fira+Mono&display=swap');
 html {
@@ -401,7 +401,7 @@ var hljs=function(){"use strict";function e(n){Object.freeze(n);var t="function"
         </td>
         <td style="text-align:right">
             <div id="header">
-                <div id="title">Clink v1.1.17</div>
+                <div id="title">Clink v1.1.18</div>
                 <div id="url">
                     <a href="http://github.com/chrisant996/clink">
                         http://github.com/chrisant996/clink
@@ -422,7 +422,7 @@ var hljs=function(){"use strict";function e(n){Object.freeze(n);var t="function"
 <p>Clink combines the native Windows shell cmd.exe with the powerful command line editing features of the GNU Readline library, which provides rich completion, history, and line-editing capabilities. Readline is best known for its use in the well-known Unix shell Bash, the standard shell for Mac OS X and many Linux distributions.</p>
 <h1 id="features">Features</h1>
 <ul>
-<li>The same line editing as Bash (from the <a href="https://tiswww.case.edu/php/chet/readline/rltop.html">GNU Readline library</a> version 8.0).</li>
+<li>The same line editing as Bash (from the <a href="https://tiswww.case.edu/php/chet/readline/rltop.html">GNU Readline library</a> version 8.1).</li>
 <li>History persistence between sessions.</li>
 <li>Context sensitive completion;<ul>
 <li>Executables (and aliases).</li>
@@ -430,6 +430,7 @@ var hljs=function(){"use strict";function e(n){Object.freeze(n);var t="function"
 <li>Environment variables.</li>
 </ul>
 </li>
+<li>Context sensitive colored input text.</li>
 <li>New keyboard shortcuts;<ul>
 <li>Paste from clipboard (<kbd>Ctrl</kbd>+<kbd>V</kbd>).</li>
 <li>Incremental history search (<kbd>Ctrl</kbd>+<kbd>R</kbd> and <kbd>Ctrl</kbd>+<kbd>S</kbd>).</li>
@@ -485,6 +486,11 @@ var hljs=function(){"use strict";function e(n){Object.freeze(n);var t="function"
 </tr>
 </thead>
 <tbody><tr>
+<td align="center"><code>clink.colorize_input</code></td>
+<td align="center">True</td>
+<td>Enables context sensitive coloring for the input text (see <a href="#classifywords">Coloring The Input Text</a>).</td>
+</tr>
+<tr>
 <td align="center"><code>clink.paste_crlf</code></td>
 <td align="center"><code>space</code></td>
 <td>What to do with CR and LF characters on paste. Set this to <code>delete</code> to delete them, or to <code>space</code> to replace them with spaces.</td>
@@ -510,14 +516,19 @@ var hljs=function(){"use strict";function e(n){Object.freeze(n);var t="function"
 <td><kbd>Ctrl</kbd>+<kbd>D</kbd> exits the process when it is pressed on an empty line.</td>
 </tr>
 <tr>
+<td align="center"><code>color.arg</code></td>
+<td align="center"></td>
+<td>The color for arguments in the input line when <code>clink.colorize_input</code> is enabled.</td>
+</tr>
+<tr>
 <td align="center"><a name="color_cmd"/><code>color.cmd</code></td>
 <td align="center"><code>bold</code></td>
-<td>Used when Clink displays shell (CMD.EXE) command completions.</td>
+<td>Used when Clink displays shell (CMD.EXE) command completions, and in the input line when <code>clink.colorize_input</code> is enabled.</td>
 </tr>
 <tr>
 <td align="center"><a name="color_doskey"/><code>color.doskey</code></td>
 <td align="center"><code>bright cyan</code></td>
-<td>Used when Clink displays doskey alias completions.</td>
+<td>Used when Clink displays doskey alias completions, and in the input line when <code>clink.colorize_input</code> is enabled.</td>
 </tr>
 <tr>
 <td align="center"><code>color.filtered</code></td>
@@ -525,14 +536,24 @@ var hljs=function(){"use strict";function e(n){Object.freeze(n);var t="function"
 <td>The default color for filtered completions (see <a href="#filteringthematchdisplay">Filtering the Match Display</a>).</td>
 </tr>
 <tr>
+<td align="center"><code>color.flag</code></td>
+<td align="center"><code>default</code></td>
+<td>The color for flags in the input line when <code>clink.colorize_input</code> is enabled.</td>
+</tr>
+<tr>
 <td align="center"><a name="color_hidden"/><code>color.hidden</code></td>
 <td align="center"></td>
 <td>Used when Clink displays file completions with the &quot;hidden&quot; attribute.</td>
 </tr>
 <tr>
+<td align="center"><code>color.horizscroll</code></td>
+<td align="center"></td>
+<td>Used when Clink displays the <code>&lt;</code> or <code>&gt;</code> horizontal scroll indicators when Readline&#39;s <code>horizontal-scroll-mode</code> variable is set.</td>
+</tr>
+<tr>
 <td align="center"><code>color.input</code></td>
 <td align="center"></td>
-<td>Used when Clink displays the input line text.</td>
+<td>Used when Clink displays the input line text. Note that when <code>clink.colorize_input</code> is disabled, the entire input line is displayed using <code>color.input</code>.</td>
 </tr>
 <tr>
 <td align="center"><code>color.interact</code></td>
@@ -558,6 +579,11 @@ var hljs=function(){"use strict";function e(n){Object.freeze(n);var t="function"
 <td align="center"><a name="color_readonly"/><code>color.readonly</code></td>
 <td align="center"></td>
 <td>Used when Clink displays file completions with the &quot;readonly&quot; attribute.</td>
+</tr>
+<tr>
+<td align="center"><code>color.unexpected</code></td>
+<td align="center"><code>default</code></td>
+<td>The color for unexpected arguments in the input line when <code>clink.colorize_input</code> is enabled.</td>
 </tr>
 <tr>
 <td align="center"><code>doskey.enhanced</code></td>
@@ -670,14 +696,14 @@ var hljs=function(){"use strict";function e(n){Object.freeze(n);var t="function"
 <td>Prints stack trace on Lua errors.</td>
 </tr>
 <tr>
-<td align="center"><code>match.ignore_case</code></td>
-<td align="center"><code>relaxed</code></td>
-<td>Controls case sensitivity when completing matches. <code>off</code> = case sensitive, <code>on</code> = case insensitive, <code>relaxed</code> = case insensitive plus <code>-</code> and <code>_</code> are considered equal.</td>
-</tr>
-<tr>
 <td align="center"><code>match.ignore_accent</code></td>
 <td align="center">True</td>
 <td>Controls accent sensitivity when completing matches. For example, <code>ä</code> and <code>a</code> are considered equivalent with this enabled.</td>
+</tr>
+<tr>
+<td align="center"><code>match.ignore_case</code></td>
+<td align="center"><code>relaxed</code></td>
+<td>Controls case sensitivity when completing matches. <code>off</code> = case sensitive, <code>on</code> = case insensitive, <code>relaxed</code> = case insensitive plus <code>-</code> and <code>_</code> are considered equal.</td>
 </tr>
 <tr>
 <td align="center"><code>match.sort_dirs</code></td>
@@ -712,7 +738,7 @@ var hljs=function(){"use strict";function e(n){Object.freeze(n);var t="function"
 <ul>
 <li>The <code>esc_clears_line</code> setting has been replaced by a <code>clink-reset-line</code> command that is by default bound to the <kbd>Escape</kbd> key.  See <a href="#keybindings">Key Bindings</a> and <a href="https://tiswww.cwru.edu/php/chet/readline/readline.html">Readline</a> for more information.</li>
 <li>The <code>use_altgr_substitute</code> setting has been removed.  If <kbd>AltGr</kbd> or lack of <kbd>AltGr</kbd> causes a problem, please visit the <a href="https://github.com/chrisant996/clink/issues">repo</a> and open an issue with details describing the problem.</li>
-<li>The <code>match_colour</code> setting has been removed, and Clink now supports Readline 8.0 completion coloring.  See <a href="#completioncolors">Completion Colors</a> for more information.</li>
+<li>The <code>match_colour</code> setting has been removed, and Clink now supports Readline&#39;s completion coloring.  See <a href="#completioncolors">Completion Colors</a> for more information.</li>
 </ul>
 </blockquote>
 <a name="colorsettings"/>
@@ -1221,6 +1247,87 @@ clink.argmatcher()
 )
 :addflags(&quot;-a&quot;, &quot;-b&quot;, &quot;/?&quot;, &quot;/h&quot;)   -- Flags</code></pre>
 <p>With the shorthand form flags are implied rather than declared.  When a shorthand table&#39;s first value is a string starting with <code>-</code> or <code>/</code> then the table is interpreted as flags.  Note that it&#39;s still possible with shorthand form to mix flag prefixes, and even add additional flag prefixes, such as <code>{ <span class="hljs-string">'-a'</span>, <span class="hljs-string">'/b'</span>, <span class="hljs-string">'=c'</span> }</code>.</p>
+<a name="classifywords"/>
+
+<h4 id="coloring-the-input-text">Coloring The Input Text</h4>
+<p>When the <code>clink.colorize_input</code> setting is enabled, argmatchers apply colors to the input text by parsing it.</p>
+<p>In cases where an argmatcher isn&#39;t able to color the input text in the desired manner, it&#39;s also possible to supply a classifier function that can override how the argmatcher would color the input text.  An argmatcher&#39;s classifier function is called once for each word the argmatcher parses, but it can classify any words (not just the word it was called for).  Each argmatcher can have its own function, so when there are linked argmatchers more than one function may be invoked.</p>
+<p>Words are colored by classifying the words, and each classification has an associated color.</p>
+<table>
+<thead>
+<tr>
+<th>Code</th>
+<th>Classification</th>
+<th>Color</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>&quot;a&quot;</code></td>
+<td>Argument; used for words that match a list of preset argument matches.</td>
+<td><code>color.arg</code> or <code>color.input</code></td>
+</tr>
+<tr>
+<td><code>&quot;c&quot;</code></td>
+<td>Shell command; used for CMD command names.</td>
+<td><code>color.cmd</code></td>
+</tr>
+<tr>
+<td><code>&quot;d&quot;</code></td>
+<td>Doskey alias.</td>
+<td><code>color.doskey</code></td>
+</tr>
+<tr>
+<td><code>&quot;f&quot;</code></td>
+<td>Flag; used for flags that match a list of preset flag matches.</td>
+<td><code>color.flag</code></td>
+</tr>
+<tr>
+<td><code>&quot;o&quot;</code></td>
+<td>Other; used for file names and words that don&#39;t fit any of the other classifications.</td>
+<td><code>color.input</code></td>
+</tr>
+<tr>
+<td><code>&quot;n&quot;</code></td>
+<td>None; used for words that aren&#39;t recognized as part of the expected input syntax</td>
+<td><code>color.unexpected</code></td>
+</tr>
+</tbody></table>
+<p>The <code>clink set</code> command has different syntax depending on the setting type, so the argmatcher for <code>clink</code> needs help in order to get everything right.  A custom generator function parses the input text to provide appropriate matches, and a custom classifier function classifies the words.</p>
+<pre><code class="language-lua">-- In this example, the argmatcher matches a directory as the first argument and
+-- a file as the second argument.  It uses a word classifier function to classify
+-- directories (words that end with a path separator) as &quot;unexpected&quot; in the
+-- second argument position.
+
+local function classify_handler(arg_index, word, word_index, line_state, classify)
+    -- `arg_index` is the argument position in the argmatcher.
+    -- In this example only position 2 needs special treatent.
+    if arg_index ~= 2 then
+        return
+    end
+
+    -- `arg_index` is the argument position in the argmatcher.
+    -- `word_index` is the word position in the `line_state`.
+    -- Ex1: in `samp dir file` for the word `dir` the argument index is 1 and
+    -- the word index is 2.
+    -- Ex2: in `samp --help dir file` for the word `dir` the argument index is
+    -- still 1, but the word index is 3.
+
+    -- `word` is the word the classifier function was called for and `word_index`
+    -- is its position in the line.  Because `line_state` is also provided, the
+    -- function can examine any words in the input line.
+    if word:sub(-1) == &quot;\\&quot; then
+        -- The word appears to be a directory, but this example expects only
+        -- files are expected in argument position 2.  Here the word gets
+        -- classified as &quot;n&quot; (unexpected) so it gets colored differently.
+        classify:classifyword(&quot;n&quot;)
+    end
+end
+
+local matcher = clink.argmatcher(&quot;samp&quot;)
+:addflags(&quot;--help&quot;)
+:addarg({ clink.dirmatches })
+:addarg({ clink.filematches })
+:setclassifier(classify_handler)</code></pre>
 <a name="filteringthematchdisplay"/>
 
 <h4 id="filtering-the-match-display">Filtering The Match Display</h4>
@@ -1685,6 +1792,7 @@ end</code></pre>
 :addarg("two", "dos")       -- third arg can be two or dos
 :loop(2)    -- fourth arg loops back to position 2, for one or uno, and so on</code></pre></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="_argmatcher:nofiles">_argmatcher:nofiles</a></div> <div class="signature">() : self</div></div><div class="body"><p class="desc">This makes the parser prevent invoking <a href="#matchgenerators">match generators</a>.  You can use it to "dead end" a parser and suggest no completions.</p></div></div><hr/>
+<div class="function"><div class="header"> <div class="name"><a name="_argmatcher:setclassifier">_argmatcher:setclassifier</a></div> <div class="signature">( <span class="arg_name">func</span>:function ) : self</div></div><div class="body"><p class="desc">This registers a function that gets called for each word the argmatcher handles, to classify the word as part of coloring the input text.  See <a href="#classifywords">Coloring The Input Text</a> for more information.</p></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="_argmatcher:setflagprefix">_argmatcher:setflagprefix</a></div> <div class="signature">( [<span class="arg_name">prefixes...</span>:string] ) : self</div></div><div class="body deprecated"><p class="desc"><strong>Deprecated; don't use this.</strong>  See <a href="#_argmatcher:addflags">_argmatcher:addflags</a> for more information.</p><p class="desc">This overrides the default flag prefix (<code>-</code>).  The flag prefixes are used to switch between matching arguments versus matching flags.  When listing possible completions for an empty word (e.g. <code>command _</code> where the cursor is at the <code>_</code>), only arguments are listed.  And only flags are listed when the word starts with one of the flag prefixes.  Each flag prefix must be a single character, but there can be multiple prefixes.</p><p class="desc"> This is no longer needed because <code>:addflags()</code> does it automatically.</p><pre class="language-lua"><code>local my_parser = clink.argmatcher()
 :setflagprefix("-", "/", "+")
 :addflags("--help", "/?", "+mode")</code></pre></div></div><hr/>
@@ -1710,7 +1818,7 @@ builder:addmatches({
 <div class="function"><div class="header"> <div class="name"><a name="clink.dirmatches">clink.dirmatches</a></div> <div class="signature">( <span class="arg_name">word</span>:string ) : table</div></div><div class="body"><p class="desc">You can use this function in an argmatcher to supply directory matches. This automatically handles Readline tilde completion.</p><pre class="language-lua"><code>-- Make "cd" generate directory matches (no files).
 clink.argmatcher("cd")
 :addflags("/d")
-:argarg(({ clink.dirmatches })</code></pre></div></div><hr/>
+:addarg({ clink.dirmatches })</code></pre></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="clink.filematches">clink.filematches</a></div> <div class="signature">( <span class="arg_name">word</span>:string ) : table</div></div><div class="body"><p class="desc">You can use this function in an argmatcher to supply file matches.  This automatically handles Readline tilde completion.</p><p class="desc"> Argmatchers default to matching files, so it's unusual to need this function.  However, some exceptions are when a flag needs to accept file matches but other flags and arguments don't, or when matches need to include more than files.</p><pre class="language-lua"><code>-- Make "foo --file" generate file matches, but other flags and args don't.
 -- And the third argument can be a file or $stdin or $stdout.
 clink.argmatcher("foo")
@@ -1916,12 +2024,25 @@ settings.add("color.mymno", "bright magenta", "Color setting")</code></pre></div
 <div class="function"><div class="header"> <div class="name"><a name="settings.set">settings.set</a></div> <div class="signature">( <span class="arg_name">name</span>:string, <span class="arg_name">value</span>:string ) : boolean</div></div><div class="body"><p class="desc">Sets the <span class="arg">name</span> Clink setting to <span class="arg">value</span> and returns whether it was successful.</p></div></div><hr/>
 </div><div class="group"><h5 class="group_name"><a name="string">string</a></h5><div class="function"><div class="header"> <div class="name"><a name="string.explode">string.explode</a></div> <div class="signature">( <span class="arg_name">text</span>:string, [<span class="arg_name">delims</span>:string] ) : table</div></div><div class="body"><p class="desc">Splits <span class="arg">text</span> delimited by <span class="arg">delims</span> (or by spaces if not provided) and returns a table containing the substrings.</p></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="string.hash">string.hash</a></div> <div class="signature">( <span class="arg_name">text</span>:string ) : integer</div></div><div class="body"><p class="desc">Returns a hash of the input <span class="arg">text</span>.</p></div></div><hr/>
+</div><div class="group"><h5 class="group_name"><a name="word_classifications">word_classifications</a></h5><div class="function"><div class="header"> <div class="name"><a name="word_classifications:classify_word">word_classifications:classify_word</a></div> <div class="signature">( <span class="arg_name">word_index</span>:integer, <span class="arg_name">word_class</span>:string ) : nil</div></div><div class="body"><p class="desc">This classifies the indicated word so that it can be colored appropriately. See <a href="#classifywords">Coloring The Input Text</a> for more information, including the available <span class="arg">word_class</a> codes.</p></div></div><hr/>
+<div class="function"><div class="header"> <div class="name"><a name="word_classifications:iswordclassified">word_classifications:iswordclassified</a></div> <div class="signature">( <span class="arg_name">word_index</span>:integer ) : boolean</div></div><div class="body"><p class="desc">This returns whether the indicated word is already classified.  The classifier functions get called A LOT, so they need to be fast.  If a particular word can be slow to analyze then checking whether it's already been classified can help speed up the classifier.</p></div></div><hr/>
 </div><div class="group"><h5 class="group_name"><a name="[other]">[other]</a></h5><div class="function"><div class="header"> <div class="name"><a name="rl_state">rl_state</a></div> <div class="signature">table variable</div></div><div class="body deprecated"><p class="desc"><strong>Deprecated; don't use this.</strong>  See <a href="#line">line</a> for more information.</p><p class="desc">This is an obsolete global variable that was set while running match generators.  It has been superseded by the <a href="#line">line</a> type parameter passed into match generator functions when using the new <a href="#clink.generator">clink.generator</a> API.</p></div></div><hr/>
 </div>
         </div>
         <div class="section" id="changes">
 <h1 id="changes">Changes</h1>
 <h2 id="releases-from-chrisant996clink-fork">Releases from <a href="https://github.com/chrisant996/clink">chrisant996/clink</a> fork</h2>
+<h3 id="v1118">v1.1.18</h3>
+<ul>
+<li>The input text now has context sensitive coloring based on the argmatchers. It&#39;s on by default and can be turned off with <code>clink set clink.colorize_input false</code>.</li>
+<li>Updated the Readline library to 8.1.</li>
+<li>Terminal emulation now supports the audible bell character.</li>
+<li>Fixed <a href="https://github.com/chrisant996/clink/issues/48">#48</a> <code>menu-complete</code> gets stuck.</li>
+<li>Fixed <a href="https://github.com/chrisant996/clink/issues/47">#47</a> <kbd>Alt</kbd>+<kbd>D</kbd> erases history instead of word.</li>
+<li>Fixed <a href="https://github.com/chrisant996/clink/issues/46">#46</a> typing <code>..</code> in subdirectory of root doesn&#39;t work.</li>
+<li>Fixed restoring color after pager when showing help.</li>
+<li>Fixed <code>clink set</code> match completions for color settings.</li>
+</ul>
 <h3 id="v1117">v1.1.17</h3>
 <ul>
 <li>Added <code>os.getbatterystatus()</code> function that gets battery status information much faster than launching <code>wmic</code>.</li>
@@ -2579,9 +2700,9 @@ also hook cmd.exe (ConEmu, ANSICon, etc.).</li>
 <p>Clink was originally built by Martin Ridgers (<a href="https://github.com/mridgers/clink">https://github.com/mridgers/clink</a>).<br/>
 Copyright (c) 2012-2018 by Martin Ridgers.</p>
 <p>Clink has been forked and renovated by Christopher Antos (<a href="https://github.com/chrisant996/clink">https://github.com/chrisant996/clink</a>).<br/>
-Portions Copyright (c) 2020 by Christopher Antos.</p>
+Portions Copyright (c) 2020-2021 by Christopher Antos.</p>
 <h3 id="libraries">Libraries</h3>
-<p>GNU Readline library version 8.0 (<a href="https://tiswww.case.edu/php/chet/readline/rltop.html">https://tiswww.case.edu/php/chet/readline/rltop.html</a>).<br/>
+<p>GNU Readline library version 8.1 (<a href="https://tiswww.case.edu/php/chet/readline/rltop.html">https://tiswww.case.edu/php/chet/readline/rltop.html</a>).<br/>
 GNU Readline is distributed under the terms of the <a href="http://www.gnu.org/licenses/gpl.html">GNU General Public License, version 3</a>.</p>
 <p>Lua 5.2 (<a href="https://www.lua.org">https://www.lua.org</a>).</p>
 <p>getopt library.<br/>
