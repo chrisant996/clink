@@ -607,7 +607,7 @@ end
 --- -show:  -- Make "cd" generate directory matches (no files).
 --- -show:  clink.argmatcher("cd")
 --- -show:  :addflags("/d")
---- -show:  :argarg(({ clink.dirmatches })
+--- -show:  :addarg({ clink.dirmatches })
 --- You can use this function in an argmatcher to supply directory matches.
 --- This automatically handles Readline tilde completion.
 function clink.dirmatches(match_word)
