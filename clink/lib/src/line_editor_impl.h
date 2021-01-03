@@ -75,6 +75,15 @@ private:
         flag_eof        = 1 << 3,
     };
 
+    struct key_t
+    {
+        void            reset() { memset(this, 0xff, sizeof(*this)); }
+        unsigned int    word_index : 16;
+        unsigned int    word_offset : 16;
+        unsigned int    word_length : 16;
+        unsigned int    cursor_pos : 16;
+    };
+
     void                initialise();
     void                begin_line();
     void                end_line();
@@ -88,6 +97,10 @@ private:
     void                set_flag(unsigned char flag);
     void                clear_flag(unsigned char flag);
     bool                check_flag(unsigned char flag) const;
+
+    static bool         is_key_same(const key_t& prev_key, const char* prev_line, int prev_length,
+                                    const key_t& next_key, const char* next_line, int next_length);
+
     rl_module           m_module;
     rl_buffer           m_buffer;
     prev_buffer         m_prev_classify;
@@ -104,7 +117,7 @@ private:
     matches_impl        m_matches;
     printer&            m_printer;
     pager_impl          m_pager;
-    unsigned int        m_prev_key;
+    key_t               m_prev_key;
     unsigned short      m_command_offset;
     unsigned char       m_keys_size;
     unsigned char       m_flags = 0;

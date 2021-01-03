@@ -190,7 +190,7 @@ void line_editor_impl::begin_line()
     m_bind_resolver.reset();
     m_command_offset = 0;
     m_keys_size = 0;
-    m_prev_key = ~0u;
+    m_prev_key.reset();
 
     assert(!s_editor);
     s_editor = this;
@@ -713,39 +713,33 @@ bool line_editor_impl::check_flag(unsigned char flag) const
 }
 
 //------------------------------------------------------------------------------
-union key_t {
-    struct {
-        unsigned int word_offset : 11;
-        unsigned int word_length : 10;
-        unsigned int cursor_pos  : 11;
-    };
-    unsigned int value;
-};
-
-static bool is_key_same(const key_t& prev_key, const char* prev_line, int prev_length,
-                        const key_t& next_key, const char* next_line, int next_length)
+bool line_editor_impl::is_key_same(const key_t& prev_key, const char* prev_line, int prev_length,
+                                   const key_t& next_key, const char* next_line, int next_length)
 {
-    // If the key lengths are different, the keys are different.
+    // If the word indices are different, the keys are different.  Argmatchers
+    // and generators may treat the same word differently based on its position.
+    if (prev_key.word_index != next_key.word_index)
+        return false;
+
+    // If the key lengths are different, the keys are different.  Their content
+    // can't be the same if their lengths aren't the same.
     if (prev_key.word_length != next_key.word_length)
         return false;
 
-    // If one offset is 0 and the other is non-zero, the keys are different.
-    // This is required for `exec.enable` to work.
-    if ((prev_key.word_offset == 0) != (next_key.word_offset == 0))
+    // If the key offsets are different, the keys are different.  Different
+    // offsets means the preceding input line content is different, which means
+    // argmatchers and generators may need to parse the input line differently.
+    if (prev_key.word_offset != next_key.word_offset)
         return false;
 
-    // If either key has a cursor position and the cursor positions are
-    // different (relative to the start of each key), the keys are different.
-    // Allowing them to match when the relative cursor positions match enables
-    // a performance optimization of not re-generating when `xx   _foo` becomes
-    // `xx _foo` (cursor position at the `_`).
+    // If the cursor positions are different, the keys are different.  Again,
+    // argmatchers and generators may need to parse the input line differently.
     if (prev_key.cursor_pos != next_key.cursor_pos)
-    {
-        if (prev_key.cursor_pos - prev_key.word_offset != next_key.cursor_pos - next_key.word_offset)
-            return false;
-    }
+        return false;
 
-    // If the key contents are different, the keys are different.
+    // If the key contents are different, the keys are different.  This can
+    // occur in various situations.  For example when `menu-complete` replaces
+    // `dir\sub1\` with `dir\sub2\`.
     str_iter prev(prev_line + prev_key.word_offset, min(int(prev_key.word_length), max(0, int(prev_length - prev_key.word_offset))));
     str_iter next(next_line + next_key.word_offset, min(int(next_key.word_length), max(0, int(next_length - next_key.word_offset))));
     for (int i = prev.length(); i--;)
@@ -753,6 +747,14 @@ static bool is_key_same(const key_t& prev_key, const char* prev_line, int prev_l
             return false;
 
     // The keys are the same.
+#ifdef DEBUG
+    if (dbg_get_env_int("DEBUG_KEYSAME"))
+    {
+        printf("SAME: prev '%.*s' %d,%d,%d,%d vs next '%.*s' %d,%d,%d,%d\n",
+               prev.length(), prev.get_pointer(), prev_key.word_index, prev_key.word_offset, prev_key.word_length, prev_key.cursor_pos,
+               next.length(), next.get_pointer(), next_key.word_index, next_key.word_offset, next_key.word_length, next_key.cursor_pos);
+    }
+#endif
     return true;
 }
 
@@ -762,12 +764,11 @@ void line_editor_impl::update_internal()
     // Collect words, stopping at the cursor for match generator.
     collect_words();
 
+    assert(m_words.size() > 0);
     const word& end_word = m_words.back();
 
-    key_t next_key = { end_word.offset, end_word.length };
-
-    key_t prev_key;
-    prev_key.value = m_prev_key;
+    key_t next_key = { (unsigned int)m_words.size() - 1, end_word.offset, end_word.length };
+    key_t prev_key = m_prev_key;
     prev_key.cursor_pos = 0;
 
     // Should we generate new matches?
@@ -788,7 +789,7 @@ void line_editor_impl::update_internal()
     }
 
     next_key.cursor_pos = m_buffer.get_cursor();
-    prev_key.value = m_prev_key;
+    prev_key = m_prev_key;
 
     // Should we sort and select matches?
     if (!is_key_same(prev_key, m_prev_generate.get(), m_prev_generate.length(),
@@ -810,7 +811,7 @@ void line_editor_impl::update_internal()
         pipeline.select(needle.c_str());
         pipeline.sort();
 
-        m_prev_key = next_key.value;
+        m_prev_key = next_key;
 
         // Tell all the modules that the matches changed.
         line_state line = get_linestate();
