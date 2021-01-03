@@ -14,6 +14,17 @@ local cmd_commands = {
 }
 
 --------------------------------------------------------------------------------
+function clink.is_cmd_command(word)
+    local lower_word = clink.lower(word)
+    for _,i in ipairs(cmd_commands) do
+        if lower_word == i then
+            return true
+        end
+    end
+    return false
+end
+
+--------------------------------------------------------------------------------
 function cmd_generator:generate(line_state, match_builder)
     -- Cmd commands only apply for the first word of a line.
     if line_state:getwordcount() > 1 then

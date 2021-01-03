@@ -701,8 +701,10 @@ function clink._parse_word_types(line_state, word_classifier)
     if word_count > 1 or string.len(first_word) > 0 then
         if string.len(os.getalias(first_word) or "") > 0 then
             table.insert(parsed_word_types, "d"); --doskey
-        else
+        elseif clink.is_cmd_command(first_word) then
             table.insert(parsed_word_types, "c"); --command
+        else
+            table.insert(parsed_word_types, "o"); --other
         end
     end
 
