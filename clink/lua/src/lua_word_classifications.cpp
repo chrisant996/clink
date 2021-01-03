@@ -57,12 +57,12 @@ int lua_word_classifications::is_word_classified(lua_State* state)
 }
 
 //------------------------------------------------------------------------------
-/// -name:  word_classifications:classify_word
+/// -name:  word_classifications:classifyword
 /// -arg:   word_index:integer
 /// -arg:   word_class:string
 /// This classifies the indicated word so that it can be colored appropriately.
 /// See <a href="#classifywords">Coloring The Input Text</a> for more
-/// information, including the available <span class="arg">word_class</a> codes.
+/// information, including the available <span class="arg">word_class</span> codes.
 int lua_word_classifications::classify_word(lua_State* state)
 {
     if (!lua_isnumber(state, 1) || !lua_isstring(state, 2))
