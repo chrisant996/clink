@@ -79,13 +79,15 @@ function _argreader:update(word, word_index)
 
     -- Some matchers have no args at all.  Or ran out of args.
     if not arg then
-        local t
-        if matcher._no_file_generation then
-            t = "n" --none
-        else
-            t = "o" --other
+        if self._word_types then
+            local t
+            if matcher._no_file_generation then
+                t = "n" --none
+            else
+                t = "o" --other
+            end
+            self:_add_word_type(t)
         end
-        self:_add_word_type(t)
         return
     end
 
@@ -440,6 +442,7 @@ function _argmatcher:_generate(line_state, match_builder)
 
         for _, i in ipairs(arg) do
             if type(i) == "function" then
+print("calling func('"..line_state:getendword().."', "..word_count..")")
                 local j = i(line_state:getendword(), word_count, line_state, match_builder, nil)
                 if type(j) ~= "table" then
                     return j or false
