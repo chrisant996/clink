@@ -199,7 +199,7 @@ setting_bool g_classify_words(
     "Colorize the input text",
     "When enabled, this colors the words in the input line based on the argmatcher\n"
     "Lua scripts.",
-    false);
+    true);
 
 
 
