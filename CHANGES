@@ -5,7 +5,7 @@
 
 ### v1.1.18
 
-- The input text now has context sensitive coloring based on the argmatchers. It's only by default and can be turned off with `clink set clink.colorize_input false`.
+- The input text now has context sensitive coloring based on the argmatchers. It's on by default and can be turned off with `clink set clink.colorize_input false`.
 - Updated the Readline library to 8.1.
 - Terminal emulation now supports the audible bell character.
 - Fixed [#48](https://github.com/chrisant996/clink/issues/48) `menu-complete` gets stuck.
