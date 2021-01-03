@@ -3,6 +3,17 @@
 
 ## Releases from [chrisant996/clink](https://github.com/chrisant996/clink) fork
 
+### v1.1.18
+
+- The input text now has context sensitive coloring based on the argmatchers. It's only by default and can be turned off with `clink set clink.colorize_input false`.
+- Updated the Readline library to 8.1.
+- Terminal emulation now supports the audible bell character.
+- Fixed [#48](https://github.com/chrisant996/clink/issues/48) `menu-complete` gets stuck.
+- Fixed [#47](https://github.com/chrisant996/clink/issues/47) <kbd>Alt</kbd>+<kbd>D</kbd> erases history instead of word.
+- Fixed [#46](https://github.com/chrisant996/clink/issues/46) typing `..` in subdirectory of root doesn't work.
+- Fixed restoring color after pager when showing help.
+- Fixed `clink set` match completions for color settings.
+
 ### v1.1.17
 
 - Added `os.getbatterystatus()` function that gets battery status information much faster than launching `wmic`.

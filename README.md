@@ -10,12 +10,13 @@ See the [issues](https://github.com/chrisant996/clink/issues) page for known iss
 
 ### Features
 
-- The same line editing as Bash (from the [GNU Readline library](https://tiswww.case.edu/php/chet/readline/rltop.html) version 8.0).
+- The same line editing as Bash (from the [GNU Readline library](https://tiswww.case.edu/php/chet/readline/rltop.html) version 8.1).
 - History persistence between sessions.
 - Context sensitive completion;
   - Executables (and aliases).
   - Directory commands.
   - Environment variables.
+- Context sensitive colored input text.
 - New keyboard shortcuts;
   - Paste from clipboard (<kbd>Ctrl</kbd>+<kbd>V</kbd>).
   - Incremental history search (<kbd>Ctrl</kbd>+<kbd>R</kbd> and <kbd>Ctrl</kbd>+<kbd>S</kbd>).

@@ -4,7 +4,7 @@ Clink combines the native Windows shell cmd.exe with the powerful command line e
 
 # Features
 
-- The same line editing as Bash (from the [GNU Readline library](https://tiswww.case.edu/php/chet/readline/rltop.html) version 8.0).
+- The same line editing as Bash (from the [GNU Readline library](https://tiswww.case.edu/php/chet/readline/rltop.html) version 8.1).
 - History persistence between sessions.
 - Context sensitive completion;
   - Executables (and aliases).
@@ -118,7 +118,7 @@ Name                         | Default | Description
 > **Compatibility Notes:**
 > - The `esc_clears_line` setting has been replaced by a `clink-reset-line` command that is by default bound to the <kbd>Escape</kbd> key.  See [Key Bindings](#keybindings) and [Readline](https://tiswww.cwru.edu/php/chet/readline/readline.html) for more information.
 > - The `use_altgr_substitute` setting has been removed.  If <kbd>AltGr</kbd> or lack of <kbd>AltGr</kbd> causes a problem, please visit the <a href="https://github.com/chrisant996/clink/issues">repo</a> and open an issue with details describing the problem.
-> - The `match_colour` setting has been removed, and Clink now supports Readline 8.0 completion coloring.  See [Completion Colors](#completioncolors) for more information.
+> - The `match_colour` setting has been removed, and Clink now supports Readline's completion coloring.  See [Completion Colors](#completioncolors) for more information.
 
 <a name="colorsettings"/>
 
