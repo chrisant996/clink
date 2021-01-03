@@ -10,6 +10,7 @@ Clink combines the native Windows shell cmd.exe with the powerful command line e
   - Executables (and aliases).
   - Directory commands.
   - Environment variables.
+- Context sensitive colored input text.
 - New keyboard shortcuts;
   - Paste from clipboard (<kbd>Ctrl</kbd>+<kbd>V</kbd>).
   - Incremental history search (<kbd>Ctrl</kbd>+<kbd>R</kbd> and <kbd>Ctrl</kbd>+<kbd>S</kbd>).
@@ -62,21 +63,26 @@ The following table describes the available Clink settings:
 
 Name                         | Default | Description
 :--:                         | :-:     | -----------
+`clink.colorize_input`       | True    | Enables context sensitive coloring for the input text (see <a href="#classifywords">Coloring The Input Text</a>).
 `clink.paste_crlf`           | `space` | What to do with CR and LF characters on paste. Set this to `delete` to delete them, or to `space` to replace them with spaces.
 `clink.path`                 |         | A list of paths to load Lua scripts. Multiple paths can be delimited semicolons.
 `clink.promptfilter`         | True    | Enable prompt filtering by Lua scripts.
 `cmd.auto_answer`            | `off`   | Automatically answers cmd.exe's "Terminate batch job (Y/N)?" prompts. `off` = disabled, `answer_yes` = answer Y, `answer_no` = answer N.
 `cmd.ctrld_exits`            | True    | <kbd>Ctrl</kbd>+<kbd>D</kbd> exits the process when it is pressed on an empty line.
-<a name="color_cmd"/>`color.cmd` | `bold` | Used when Clink displays shell (CMD.EXE) command completions.
-<a name="color_doskey"/>`color.doskey` | `bright cyan` | Used when Clink displays doskey alias completions.
+`color.arg`                  |         | The color for arguments in the input line when `clink.colorize_input` is enabled.
+<a name="color_cmd"/>`color.cmd` | `bold` | Used when Clink displays shell (CMD.EXE) command completions, and in the input line when `clink.colorize_input` is enabled.
+<a name="color_doskey"/>`color.doskey` | `bright cyan` | Used when Clink displays doskey alias completions, and in the input line when `clink.colorize_input` is enabled.
 `color.filtered`             | `bold`  | The default color for filtered completions (see <a href="#filteringthematchdisplay">Filtering the Match Display</a>).
+`color.flag`                 | `default` | The color for flags in the input line when `clink.colorize_input` is enabled.
 <a name="color_hidden"/>`color.hidden` | | Used when Clink displays file completions with the "hidden" attribute.
-`color.input`                |         | Used when Clink displays the input line text.
+`color.horizscroll`          |         | Used when Clink displays the `<` or `>` horizontal scroll indicators when Readline's `horizontal-scroll-mode` variable is set.
+`color.input`                |         | Used when Clink displays the input line text. Note that when `clink.colorize_input` is disabled, the entire input line is displayed using `color.input`.
 `color.interact`             | `bold`  | Used when Clink displays text or prompts such as a pager's `--More?--` prompt.
 `color.message`              | `default` | The color for the message area (e.g. the search prompt message, digit argument prompt message, etc).
 `color.modmark`              |         | Used when Clink displays the `*` mark on modified history lines when Readline's `mark-modified-lines` variable and Clink's `color.input` setting are both set. Falls back to `color.input` if not set.
 `color.prompt`               |         | When set, this is used as the default color for the prompt.  But it's overridden by any colors set by <a href="#customisingtheprompt">Customising The Prompt</a>.
 <a name="color_readonly"/>`color.readonly` | | Used when Clink displays file completions with the "readonly" attribute.
+`color.unexpected`           | `default` | The color for unexpected arguments in the input line when `clink.colorize_input` is enabled.
 `doskey.enhanced`            | True    | Enhanced Doskey adds the expansion of macros that follow `\|` and `&` command separators and respects quotes around words when parsing `$1`..`$9` tags. Note that these features do not apply to Doskey use in Batch files.
 `exec.cwd`                   | True    | When matching executables as the first word (`exec.enable`), include executables in the current directory. (This is implicit if the word being completed is a relative path).
 `exec.dirs`                  | True    | When matching executables as the first word (`exec.enable`), also include directories relative to the current working directory as matches.
@@ -99,8 +105,8 @@ Name                         | Default | Description
 `lua.path`                   |         | Value to append to `package.path`. Used to search for Lua scripts specified in `require()` statements.
 <a name="lua_reload_scripts"/>`lua.reload_scripts` | False | When false, Lua scripts are loaded once and are only reloaded if forced (see <a href="#lua-scripts-location">The Location of Lua Scripts</a> for details).  When true, Lua scripts are loaded each time the edit prompt is activated.
 `lua.traceback_on_error`     | False   | Prints stack trace on Lua errors.
-`match.ignore_case`          | `relaxed` | Controls case sensitivity when completing matches. `off` = case sensitive, `on` = case insensitive, `relaxed` = case insensitive plus `-` and `_` are considered equal.
 `match.ignore_accent`        | True    | Controls accent sensitivity when completing matches. For example, `ä` and `a` are considered equivalent with this enabled.
+`match.ignore_case`          | `relaxed` | Controls case sensitivity when completing matches. `off` = case sensitive, `on` = case insensitive, `relaxed` = case insensitive plus `-` and `_` are considered equal.
 `match.sort_dirs`            | `with`  | How to sort matching directory names. `before` = before files, `with` = with files, `after` = after files.
 `match.wild`                 | True    | Matches `?` and `*` wildcards when using any of the `menu-complete` commands. Turn this off to behave how bash does.
 `readline.hide_stderr`       | False   | Suppresses stderr from the Readline library.  Enable this if Readline error messages are getting in the way.
@@ -551,6 +557,65 @@ clink.argmatcher()
 ```
 
 With the shorthand form flags are implied rather than declared.  When a shorthand table's first value is a string starting with `-` or `/` then the table is interpreted as flags.  Note that it's still possible with shorthand form to mix flag prefixes, and even add additional flag prefixes, such as <code>{ <span class="hljs-string">'-a'</span>, <span class="hljs-string">'/b'</span>, <span class="hljs-string">'=c'</span> }</code>.
+
+<a name="classifywords"/>
+
+#### Coloring The Input Text
+
+When the `clink.colorize_input` setting is enabled, argmatchers apply colors to the input text by parsing it.
+
+In cases where an argmatcher isn't able to color the input text in the desired manner, it's also possible to supply a classifier function that can override how the argmatcher would color the input text.  An argmatcher's classifier function is called once for each word the argmatcher parses, but it can classify any words (not just the word it was called for).  Each argmatcher can have its own function, so when there are linked argmatchers more than one function may be invoked.
+
+Words are colored by classifying the words, and each classification has an associated color.
+
+Code | Classification | Color
+---|---|---
+`"a"`|Argument; used for words that match a list of preset argument matches.|`color.arg` or `color.input`
+`"c"`|Shell command; used for CMD command names.|`color.cmd`
+`"d"`|Doskey alias.|`color.doskey`
+`"f"`|Flag; used for flags that match a list of preset flag matches.|`color.flag`
+`"o"`|Other; used for file names and words that don't fit any of the other classifications.|`color.input`
+`"n"`|None; used for words that aren't recognized as part of the expected input syntax|`color.unexpected`
+
+The `clink set` command has different syntax depending on the setting type, so the argmatcher for `clink` needs help in order to get everything right.  A custom generator function parses the input text to provide appropriate matches, and a custom classifier function classifies the words.
+
+```lua
+-- In this example, the argmatcher matches a directory as the first argument and
+-- a file as the second argument.  It uses a word classifier function to classify
+-- directories (words that end with a path separator) as "unexpected" in the
+-- second argument position.
+
+local function classify_handler(arg_index, word, word_index, line_state, classify)
+    -- `arg_index` is the argument position in the argmatcher.
+    -- In this example only position 2 needs special treatent.
+    if arg_index ~= 2 then
+        return
+    end
+
+    -- `arg_index` is the argument position in the argmatcher.
+    -- `word_index` is the word position in the `line_state`.
+    -- Ex1: in `samp dir file` for the word `dir` the argument index is 1 and
+    -- the word index is 2.
+    -- Ex2: in `samp --help dir file` for the word `dir` the argument index is
+    -- still 1, but the word index is 3.
+
+    -- `word` is the word the classifier function was called for and `word_index`
+    -- is its position in the line.  Because `line_state` is also provided, the
+    -- function can examine any words in the input line.
+    if word:sub(-1) == "\\" then
+        -- The word appears to be a directory, but this example expects only
+        -- files are expected in argument position 2.  Here the word gets
+        -- classified as "n" (unexpected) so it gets colored differently.
+        classify:classifyword("n")
+    end
+end
+
+local matcher = clink.argmatcher("samp")
+:addflags("--help")
+:addarg({ clink.dirmatches })
+:addarg({ clink.filematches })
+:setclassifier(classify_handler)
+```
 
 <a name="filteringthematchdisplay"/>
 

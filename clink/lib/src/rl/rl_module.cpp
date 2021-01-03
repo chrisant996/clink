@@ -179,7 +179,8 @@ static setting_color g_color_unexpected(
     "Unexpected argument color",
     "The color for unexpected arguments in the input line when clink.colorize_input\n"
     "is set.  An argument is unexpected if an argument matcher expected there to be\n"
-    "no more arguments in the input line.",
+    "no more arguments in the input line or if the word doesn't match any expected\n"
+    "values.",
     "default");
 
 static setting_bool g_match_wild(

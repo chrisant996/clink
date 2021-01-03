@@ -4,9 +4,6 @@ ChrisAnt Plans
 
 # RELEASE
 
-- Coloring The Input Text
-  - Documentation for :classify.
-  - Performance and redundant classifications.
 - An unbound Escape in a chord inserts part of the bindableEsc string.  It should abort the chord.
 
 ## Issues
@@ -62,9 +59,6 @@ ChrisAnt Plans
 
 # MAJOR WORK ITEMS
 
-- **Coloring arguments and flags while editing (according to Lua argmatchers)**
-  - Replace `rl_redisplay_function` and use the word classifications to apply colors.
-  - OR maintain color-display buffers separate from the content-display buffers, and make update_line consult the color-display buffers to color the output.
 - **CUA Selection.**
 - **Make the match pipeline async.**
   - Spin up completion at the same moment it currently does, but make it async.
