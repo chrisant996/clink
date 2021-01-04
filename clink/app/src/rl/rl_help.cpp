@@ -16,6 +16,7 @@ extern "C" {
 char *_rl_untranslate_macro_value(char *seq, int use_escapes);
 }
 
+#include <vector>
 #include <assert.h>
 
 //------------------------------------------------------------------------------
@@ -32,6 +33,7 @@ struct Keyentry
     char* key_name;
     char* macro_text;
     const char* func_name;
+    bool warning;
 };
 
 //------------------------------------------------------------------------------
@@ -204,7 +206,8 @@ static Keyentry* collect_keymap(
     int* offset,
     int* max,
     str<32>& keyseq,
-    bool friendly)
+    bool friendly,
+    std::vector<str_moveable>* warnings)
 {
     int i;
 
@@ -219,7 +222,7 @@ static Keyentry* collect_keymap(
         {
             unsigned int old_len = keyseq.length();
             concat_key_string(i, keyseq);
-            collector = collect_keymap((Keymap)entry.function, collector, offset, max, keyseq, friendly);
+            collector = collect_keymap((Keymap)entry.function, collector, offset, max, keyseq, friendly, warnings);
             keyseq.truncate(old_len);
             continue;
         }
@@ -277,6 +280,27 @@ static Keyentry* collect_keymap(
                 collector[*offset].macro_text = _rl_untranslate_macro_value((char *)entry.function, 0);
             else
                 collector[*offset].macro_text = nullptr;
+            collector[*offset].warning = false;
+
+            if (warnings && keyseq.length() > 2)
+            {
+                const char* k = keyseq.c_str();
+                if ((k[0] == 'M' || k[0] == 'C') && (k[1] == '-'))
+                {
+                    str_moveable s;
+                    char tmp1[4] = { k[0], k[1] };
+                    char tmp2[4] = { k[2], k[3] };
+                    s << "\x1b[1mwarning:\x1b[m key \x1b[7m" << collector[*offset].key_name << "\x1b[m looks like a typo; did you mean \"\\" << tmp1;
+                    if ((k[2] == 'M' || k[2] == 'C') && (k[3] == '-'))
+                        s << "\\" << tmp2;
+                    s << "\" instead of \"" << tmp1;
+                    if ((k[2] == 'M' || k[2] == 'C') && (k[3] == '-'))
+                        s << tmp2;
+                    s << "\"?";
+                    warnings->push_back(std::move(s));
+                    collector[*offset].warning = true;
+                }
+            }
 
             collector[*offset].func_name = name;
             ++(*offset);
@@ -312,6 +336,18 @@ static int _cdecl cmp_sort_collector(const void* pv1, const void* pv2)
 }
 
 //------------------------------------------------------------------------------
+static void pad_with_spaces(str_base& str, unsigned int pad_to)
+{
+    while (str.length() < pad_to)
+    {
+        const char spaces[] = "                                ";
+        const unsigned int available_spaces = sizeof_array(spaces) - 1;
+        int space_count = min(pad_to - str.length(), available_spaces);
+        str.concat(spaces, space_count);
+    }
+}
+
+//------------------------------------------------------------------------------
 static void show_key_bindings(bool friendly)
 {
     Keymap map = rl_get_keymap();
@@ -324,7 +360,8 @@ static void show_key_bindings(bool friendly)
 
     // Build string up the functions in the active keymap.
     str<32> keyseq;
-    collector = collect_keymap(map, collector, &offset, &max_collect, keyseq, friendly);
+    std::vector<str_moveable> warnings;
+    collector = collect_keymap(map, collector, &offset, &max_collect, keyseq, friendly, (map == emacs_standard_keymap) ? &warnings : nullptr);
 
     // Sort the collected keymap.
     qsort(collector + 1, offset - 1, sizeof(*collector), cmp_sort_collector);
@@ -360,6 +397,38 @@ static void show_key_bindings(bool friendly)
     str<> str;
     g_printer->print("\n");
     g_pager->start_pager(*g_printer);
+    if (warnings.size() > 0)
+    {
+        bool stop = false;
+
+        if (!g_pager->on_print_lines(*g_printer, 1))
+            stop = true;
+        else
+            g_printer->print("\n");
+
+        int num_warnings = stop ? 0 : int(warnings.size());
+        for (int i = 0; i < num_warnings; ++i)
+        {
+            str_moveable& s = warnings[i];
+
+            // Ask the pager what to do.
+            int lines = ((s.length() - 14 + max_width - 1) / max_width); // -14 for escape codes.
+            if (!g_pager->on_print_lines(*g_printer, lines))
+            {
+                stop = true;
+                break;
+            }
+
+            // Print the warning.
+            g_printer->print(s.c_str(), s.length());
+            g_printer->print("\n");
+        }
+
+        if (stop || !g_pager->on_print_lines(*g_printer, 1))
+            total_rows = 0;
+        else
+            g_printer->print("\n");
+    }
     for (int i = 0; i < total_rows; ++i)
     {
         int index = vertical ? i : (i * columns);
@@ -388,10 +457,17 @@ static void show_key_bindings(bool friendly)
 
             // Format the key binding.
             const Keyentry& entry = collector[index];
+            int escape_code_len = (entry.warning ? 7 : 0);
             str.clear();
-            str.format("%-*s : ", longest_key, entry.key_name);
+            if (entry.warning)
+                str << "\x1b[7m";
+            str << entry.key_name;
+            if (entry.warning)
+                str << "\x1b[m";
+            pad_with_spaces(str, longest_key + escape_code_len);
+            str << " : ";
             if (entry.func_name)
-                str.concat(entry.func_name);
+                str << entry.func_name;
             if (entry.macro_text)
             {
                 str.concat("\"", 1);
@@ -410,15 +486,7 @@ static void show_key_bindings(bool friendly)
 
             // Pad column with spaces.
             if (j)
-            {
-                while (str.length() < longest)
-                {
-                    const char spaces[] = "                                ";
-                    const unsigned int available_spaces = sizeof_array(spaces) - 1;
-                    int space_count = min(longest - str.length(), available_spaces);
-                    str.concat(spaces, space_count);
-                }
-            }
+                pad_with_spaces(str, longest + escape_code_len);
 
             // Print the key binding.
             g_printer->print(str.c_str(), str.length());
