@@ -233,9 +233,20 @@ Other software that also uses Readline will also look for the `.inputrc` file (a
 > - The `clink_inputrc_base` file from v0.4.8 is no longer used.
 > - For backward compatibility, `clink_inputrc` is also loaded from the above locations, but it has been deprecated and may be removed in the future.
 
-Clink also adds some new commands and configuration variables in addition to what's covered in the Readline documentation.
+## Basic Format
+
+The quick version is that mostly you'll use these kinds of lines:
+- <code><em>keyname</em>: <em>command</em></code>
+- <code><em>keyname</em>: "<em>literal text</em>"</code>
+- <code>set <em>varname</em> <em>value</em></code>
+
+Refer to the Readline [manual](https://tiswww.cwru.edu/php/chet/readline/rltop.html#Documentation) for a more thorough explanation of the inputrc file format, list of available commands, and list of configuration variables and their values.
+
+See [Key Bindings](#keybindings) for more information about binding keys in Clink.
 
 ## New Configuration Variables
+
+Clink adds some new configuration variables to Readline, beyond what's described in the Readline manual:
 
 Name | Default | Description
 :-:|:-:|---
@@ -244,6 +255,8 @@ Name | Default | Description
 `search-ignore-case`|off|Controls whether the history search commands ignore case.
 
 ## New Commands
+
+Clink adds some new commands to Readline, beyond what's described in the Readline manual:
 
 Name | Description
 :-:|---
@@ -650,6 +663,8 @@ function my_match_generator:generate(line_state, match_builder)
 end
 ```
 
+<p/>
+
 > **Compatibility Note:**  When a match display filter has been set, it changes how match generation behaves.
 > - When a match display filter is set, then match generation is also re-run whenever matches are displayed.
 > - Normally match generation only happens at the start of a new word.  The full set of potential matches is remembered and dynamically filtered based on further typing.
@@ -744,69 +759,99 @@ The resulting prompt will look like this:
 
 ## Key bindings
 
-Key bindings are defined in the inputrc files.  See the [Readline](https://tiswww.cwru.edu/php/chet/readline/readline.html) manual for more information about the inputrc files (Readline Init File).
+Key bindings are defined in the inputrc files.  See the [Readline](https://tiswww.cwru.edu/php/chet/readline/readline.html) manual for more information about the inputrc files (look for "Readline Init File").
 
-Here are key binding strings for various special keys.
+Here is the quick version:
 
-### Binding special keys
+- A key binding is <code><em>name</em>: <em>function</em></code> or <code><em>name</em>: "<em>literal text</em>"</code>.
+- Key names are like this:
+  - `C-a` and `"\C-a"` are both <kbd>Ctrl</kbd>+<kbd>a</kbd>.
+  - `M-a` and `"\M-a"` are both <kbd>Alt</kbd>+<kbd>a</kbd>.
+  - `M-C-a` and `"\M-\C-a"` are both <kbd>Alt</kbd>+<kbd>Ctrl</kbd>+<kbd>a</kbd>.
+  - `hello` is just <kbd>h</kbd>; the `ello` is a syntax error and is silently discarded by Readline.
+  - `"hello"` is the series of keys <kbd>h</kbd>,<kbd>e</kbd>,<kbd>l</kbd>,<kbd>l</kbd>,<kbd>o</kbd>.
+  - Special keys like <kbd>Up</kbd> are represented by VT220 escape codes such as`"\e[A"` (see table below for more info).
+- Key bindings can be either functions or macros (literal text):
+  - `blah-blah` binds to a function named "blah-blah".
+  - `"blah-blah"` inserts the literal text "blah-blah".
 
-Due to differences between Windows and Linux, escape codes for keys like PageUp/Down and the arrow keys are different in Clink.
+Here is an example `.inputrc` file with the key bindings that I use myself:
 
-|           |Normal     | Shift   | Ctrl        | Ctrl+Shift  | Alt     | Alt+Shift| Ctrl+Alt    | Ctrl+Alt+Shift|
-|:-:        |:-:        |:-:      |:-:          |:-:          |:-:      |:-:       |:-:          |:-:            |
-|Up         |`\e[A`     |`\e[1;2A`|`\e[1;5A`    |`\e[1;6A`    |`\e[1;3A`|`\e[1;4A` |`\e[1;7A`    |`\e[1;8A`      |
-|Down       |`\e[B`     |`\e[1;2B`|`\e[1;5B`    |`\e[1;6B`    |`\e[1;3B`|`\e[1;4B` |`\e[1;7B`    |`\e[1;8B`      |
-|Left       |`\e[D`     |`\e[1;2D`|`\e[1;5D`    |`\e[1;6D`    |`\e[1;3D`|`\e[1;4D` |`\e[1;7D`    |`\e[1;8D`      |
-|Right      |`\e[C`     |`\e[1;2C`|`\e[1;5C`    |`\e[1;6C`    |`\e[1;3C`|`\e[1;4C` |`\e[1;7C`    |`\e[1;8C`      |
-|Insert     |`\e[2~`    |`\e[2;2~`|`\e[2;5~`    |`\e[2;6~`    |`\e[2;3~`|`\e[2;4~` |`\e[2;7~`    |`\e[2;8~`      |
-|Delete     |`\e[3~`    |`\e[3;2~`|`\e[3;5~`    |`\e[3;6~`    |`\e[3;3~`|`\e[3;4~` |`\e[3;7~`    |`\e[3;8~`      |
-|Home       |`\e[H`     |`\e[1;2H`|`\e[1;5H`    |`\e[1;6H`    |`\e[1;3H`|`\e[1;4H` |`\e[1;7H`    |`\e[1;8H`      |
-|End        |`\e[F`     |`\e[1;2F`|`\e[1;5F`    |`\e[1;6F`    |`\e[1;3F`|`\e[1;4F` |`\e[1;7F`    |`\e[1;8F`      |
-|PgUp       |`\e[5~`    |`\e[5;2~`|`\e[5;5~`    |`\e[5;6~`    |`\e[5;3~`|`\e[5;4~` |`\e[5;7~`    |`\e[5;8~`      |
-|PgDn       |`\e[6~`    |`\e[6;2~`|`\e[6;5~`    |`\e[6;6~`    |`\e[6;3~`|`\e[6;4~` |`\e[6;7~`    |`\e[6;8~`      |
-|Tab        |`\t`       |`\e[Z`   |`\e[27;5;9~` |`\e[27;6;9~` | -       | -        | -           | -             |
-|Space      |`Space`    | -       |`\e[27;5;32~`|`\e[27;6;32~`| -       | -        |`\e[27;7;32~`|`\e[27;8;32~`  |
-|Backspace  |`^h`       | -       |`Rubout`     | -           |`\e^h`   | -        |`\eRubout`   | -             |
-|Escape     |`\e[27;27~`| -       | -           | -           | -       | -        | -           | -             |
+<pre><code class="plaintext"><span class="hljs-meta">$if clink</span>           <span class="hljs-comment"># begin clink-only section</span>
+
+<span class="hljs-comment"># The following key bindings are for emacs mode.</span>
+<span class="hljs-meta">set keymap emacs</span>
+
+<span class="hljs-comment"># Completion key bindings.</span>
+<span class="hljs-string">"\t"</span>:               old-menu-complete               <span class="hljs-comment"># Tab</span>
+<span class="hljs-string">"\e[Z"</span>:             old-menu-complete-backward      <span class="hljs-comment"># Shift+Tab</span>
+<span class="hljs-string">"\e[27;5;9~"</span>:       clink-popup-complete            <span class="hljs-comment"># Ctrl+Tab (requires additional ConEmu configuration)</span>
+<span class="hljs-string">"\x1b[27;5;32~"</span>:    complete                        <span class="hljs-comment"># Ctrl+Space</span>
+
+<span class="hljs-comment"># Some key bindings I got used to from 4Dos/4NT/Take Command.</span>
+C-b:                                                <span class="hljs-comment"># Ctrl+B (cleared because I redefined Ctrl+F)</span>
+C-d:                remove-history                  <span class="hljs-comment"># Ctrl+D (replaces `delete-char`)</span>
+C-f:                clink-expand-doskey-alias       <span class="hljs-comment"># Ctrl+F (replaces `forward-char`)</span>
+C-k:                add-history                     <span class="hljs-comment"># Ctrl+K (replaces `kill-line`)</span>
+<span class="hljs-string">"\e[A"</span>:             history-search-backward         <span class="hljs-comment"># Up (replaces `previous-history`)</span>
+<span class="hljs-string">"\e[B"</span>:             history-search-forward          <span class="hljs-comment"># Down (replaces `next-history`)</span>
+<span class="hljs-string">"\e[5~"</span>:            clink-popup-history             <span class="hljs-comment"># PgUp (replaces `history-search-backward`)</span>
+<span class="hljs-string">"\e[6~"</span>:                                            <span class="hljs-comment"># PgDn (cleared because I redefined PgUp)</span>
+<span class="hljs-string">"\e[1;5F"</span>:          end-of-line                     <span class="hljs-comment"># Ctrl+End (replaces `kill-line`)</span>
+<span class="hljs-string">"\e[1;5H"</span>:          beginning-of-line               <span class="hljs-comment"># Ctrl+Home (replaces `backward-kill-line`)</span>
+
+<span class="hljs-comment"># Some key bindings for interrogating the Readline configuration.</span>
+<span class="hljs-string">"\C-x\C-f"</span>:         dump-functions                  <span class="hljs-comment"># Ctrl+X, Ctrl+F</span>
+<span class="hljs-string">"\C-x\C-m"</span>:         dump-macros                     <span class="hljs-comment"># Ctrl+X, Ctrl+M</span>
+<span class="hljs-string">"\C-x\C-v"</span>:         dump-variables                  <span class="hljs-comment"># Ctrl+X, Ctrl+V</span>
+
+<span class="hljs-comment"># Misc other key bindings.</span>
+<span class="hljs-string">"\e[5;6~"</span>:          clink-popup-directories         <span class="hljs-comment"># Ctrl+Shift+PgUp</span>
+C-_:                kill-line                       <span class="hljs-comment"># Ctrl+- (replaces `undo`)</span>
+
+<span class="hljs-meta">$endif</span>              <span class="hljs-comment"># end clink-only section</span>
+</code></pre>
 
 <p/>
 
-Here is an example line from an inputrc file that binds Shift-End to the Readline `transpose-word` function;
-
-```
-"\e[1;2F": transpose-word
-```
-
-### Binding function keys
-
-For function keys the full escape sequences are listed.  The last four columns (<kbd>Alt</kbd>+) are the same as the first four columns prefixed with an extra `\e`.
-
-|           |Normal     |Shift      |Ctrl       |Ctrl+Shift  |Alt        |Alt+Shift    |Alt+Ctrl     |Alt+Ctrl+Shift  |
-|:-:        |:-:        |:-:        |:-:        |:-:         |:-:        |:-:          |:-:          |:-:             |
-|F1         |`\eOP`     |`\e[1;2P`  |`\e[1;5P`  |`\e[1;6P`   |`\e\eOP`   |`\e\e[1;2P`  |`\e\e[1;5P`  |`\e\e[1;6P`     |
-|F2         |`\eOQ`     |`\e[1;2Q`  |`\e[1;5Q`  |`\e[1;6Q`   |`\e\eOQ`   |`\e\e[1;2Q`  |`\e\e[1;5Q`  |`\e\e[1;6Q`     |
-|F3         |`\eOR`     |`\e[1;2R`  |`\e[1;5R`  |`\e[1;6R`   |`\e\eOR`   |`\e\e[1;2R`  |`\e\e[1;5R`  |`\e\e[1;6R`     |
-|F4         |`\eOS`     |`\e[1;2S`  |`\e[1;5S`  |`\e[1;6S`   |`\e\eOS`   |`\e\e[1;2S`  |`\e\e[1;5S`  |`\e\e[1;6S`     |
-|F5         |`\e[15~`   |`\e[15;2~` |`\e[15;5~` |`\e[15;6~`  |`\e\e[15~` |`\e\e[15;2~` |`\e\e[15;5~` |`\e\e[15;6~`    |
-|F6         |`\e[17~`   |`\e[17;2~` |`\e[17;5~` |`\e[17;6~`  |`\e\e[17~` |`\e\e[17;2~` |`\e\e[17;5~` |`\e\e[17;6~`    |
-|F7         |`\e[18~`   |`\e[18;2~` |`\e[18;5~` |`\e[18;6~`  |`\e\e[18~` |`\e\e[18;2~` |`\e\e[18;5~` |`\e\e[18;6~`    |
-|F8         |`\e[19~`   |`\e[19;2~` |`\e[19;5~` |`\e[19;6~`  |`\e\e[19~` |`\e\e[19;2~` |`\e\e[19;5~` |`\e\e[19;6~`    |
-|F9         |`\e[20~`   |`\e[20;2~` |`\e[20;5~` |`\e[20;6~`  |`\e\e[20~` |`\e\e[20;2~` |`\e\e[20;5~` |`\e\e[20;6~`    |
-|F10        |`\e[21~`   |`\e[21;2~` |`\e[21;5~` |`\e[21;6~`  |`\e\e[21~` |`\e\e[21;2~` |`\e\e[21;5~` |`\e\e[21;6~`    |
-|F11        |`\e[23~`   |`\e[23;2~` |`\e[23;5~` |`\e[23;6~`  |`\e\e[23~` |`\e\e[23;2~` |`\e\e[23;5~` |`\e\e[23;6~`    |
-|F12        |`\e[24~`   |`\e[24;2~` |`\e[24;5~` |`\e[24;6~`  |`\e\e[24~` |`\e\e[24;2~` |`\e\e[24;5~` |`\e\e[24;6~`    |
-
-<p/>
-
-Here is an example line from an inputrc file that binds <kbd>Alt</kbd>+<kbd>Shift</kbd>+<kbd>F3</kbd> to the Readline `history-substring-search-backward` function;
-
-```
-"\e\e[1;2R": history-substring-search-backward
-```
+> **Note:** Third party console hosts such as ConEmu may have their own key bindings that supersede Clink.  They usually have documentation for how to change or disable their key bindings to allow console programs to receive the keys.
 
 ### Discovering Clink key sequences
 
 An easy way to find the key sequence for any key combination that Clink supports is to use Clink's `echo` command line option. Run `clink echo` and then press key combinations; the associated key binding sequence is printed to the console output.
+
+### Binding special keys
+
+Here is a table of the key binding sequences for the special keys.  Clink primarily uses VT220 emulation for keyboard input, but also uses some Xterm extended key sequences.
+
+|           |Normal     |Shift      |Ctrl         |Ctrl+Shift   |Alt       |Alt+Shift   |Alt+Ctrl     |Alt+Ctrl+Shift|
+|:-:        |:-:        |:-:        |:-:          |:-:          |:-:       |:-:         |:-:          |:-:           |
+|Up         |`\e[A`     |`\e[1;2A`  |`\e[1;5A`    |`\e[1;6A`    |`\e[1;3A` |`\e[1;4A`   |`\e[1;7A`    |`\e[1;8A`     |
+|Down       |`\e[B`     |`\e[1;2B`  |`\e[1;5B`    |`\e[1;6B`    |`\e[1;3B` |`\e[1;4B`   |`\e[1;7B`    |`\e[1;8B`     |
+|Left       |`\e[D`     |`\e[1;2D`  |`\e[1;5D`    |`\e[1;6D`    |`\e[1;3D` |`\e[1;4D`   |`\e[1;7D`    |`\e[1;8D`     |
+|Right      |`\e[C`     |`\e[1;2C`  |`\e[1;5C`    |`\e[1;6C`    |`\e[1;3C` |`\e[1;4C`   |`\e[1;7C`    |`\e[1;8C`     |
+|Insert     |`\e[2~`    |`\e[2;2~`  |`\e[2;5~`    |`\e[2;6~`    |`\e[2;3~` |`\e[2;4~`   |`\e[2;7~`    |`\e[2;8~`     |
+|Delete     |`\e[3~`    |`\e[3;2~`  |`\e[3;5~`    |`\e[3;6~`    |`\e[3;3~` |`\e[3;4~`   |`\e[3;7~`    |`\e[3;8~`     |
+|Home       |`\e[H`     |`\e[1;2H`  |`\e[1;5H`    |`\e[1;6H`    |`\e[1;3H` |`\e[1;4H`   |`\e[1;7H`    |`\e[1;8H`     |
+|End        |`\e[F`     |`\e[1;2F`  |`\e[1;5F`    |`\e[1;6F`    |`\e[1;3F` |`\e[1;4F`   |`\e[1;7F`    |`\e[1;8F`     |
+|PgUp       |`\e[5~`    |`\e[5;2~`  |`\e[5;5~`    |`\e[5;6~`    |`\e[5;3~` |`\e[5;4~`   |`\e[5;7~`    |`\e[5;8~`     |
+|PgDn       |`\e[6~`    |`\e[6;2~`  |`\e[6;5~`    |`\e[6;6~`    |`\e[6;3~` |`\e[6;4~`   |`\e[6;7~`    |`\e[6;8~`     |
+|Tab        |`\t`       |`\e[Z`     |`\e[27;5;9~` |`\e[27;6;9~` | -        | -          | -           | -            |
+|Space      |`Space`    | -         |`\e[27;5;32~`|`\e[27;6;32~`| -        | -          |`\e[27;7;32~`|`\e[27;8;32~` |
+|Backspace  |`^h`       | -         |`Rubout`     | -           |`\e^h`    | -          |`\eRubout`   | -            |
+|Escape     |`\e[27;27~`| -         | -           | -           | -        | -          | -           | -            |
+|F1         |`\eOP`     |`\e[1;2P`  |`\e[1;5P`    |`\e[1;6P`    |`\e\eOP`  |`\e\e[1;2P` |`\e\e[1;5P`  |`\e\e[1;6P`   |
+|F2         |`\eOQ`     |`\e[1;2Q`  |`\e[1;5Q`    |`\e[1;6Q`    |`\e\eOQ`  |`\e\e[1;2Q` |`\e\e[1;5Q`  |`\e\e[1;6Q`   |
+|F3         |`\eOR`     |`\e[1;2R`  |`\e[1;5R`    |`\e[1;6R`    |`\e\eOR`  |`\e\e[1;2R` |`\e\e[1;5R`  |`\e\e[1;6R`   |
+|F4         |`\eOS`     |`\e[1;2S`  |`\e[1;5S`    |`\e[1;6S`    |`\e\eOS`  |`\e\e[1;2S` |`\e\e[1;5S`  |`\e\e[1;6S`   |
+|F5         |`\e[15~`   |`\e[15;2~` |`\e[15;5~`   |`\e[15;6~`   |`\e\e[15~`|`\e\e[15;2~`|`\e\e[15;5~` |`\e\e[15;6~`  |
+|F6         |`\e[17~`   |`\e[17;2~` |`\e[17;5~`   |`\e[17;6~`   |`\e\e[17~`|`\e\e[17;2~`|`\e\e[17;5~` |`\e\e[17;6~`  |
+|F7         |`\e[18~`   |`\e[18;2~` |`\e[18;5~`   |`\e[18;6~`   |`\e\e[18~`|`\e\e[18;2~`|`\e\e[18;5~` |`\e\e[18;6~`  |
+|F8         |`\e[19~`   |`\e[19;2~` |`\e[19;5~`   |`\e[19;6~`   |`\e\e[19~`|`\e\e[19;2~`|`\e\e[19;5~` |`\e\e[19;6~`  |
+|F9         |`\e[20~`   |`\e[20;2~` |`\e[20;5~`   |`\e[20;6~`   |`\e\e[20~`|`\e\e[20;2~`|`\e\e[20;5~` |`\e\e[20;6~`  |
+|F10        |`\e[21~`   |`\e[21;2~` |`\e[21;5~`   |`\e[21;6~`   |`\e\e[21~`|`\e\e[21;2~`|`\e\e[21;5~` |`\e\e[21;6~`  |
+|F11        |`\e[23~`   |`\e[23;2~` |`\e[23;5~`   |`\e[23;6~`   |`\e\e[23~`|`\e\e[23;2~`|`\e\e[23;5~` |`\e\e[23;6~`  |
+|F12        |`\e[24~`   |`\e[24;2~` |`\e[24;5~`   |`\e[24;6~`   |`\e\e[24~`|`\e\e[24;2~`|`\e\e[24;5~` |`\e\e[24;6~`  |
 
 ## Saved command history
 
