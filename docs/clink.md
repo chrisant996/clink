@@ -812,13 +812,13 @@ C-_:                kill-line                       <span class="hljs-comment">#
 <span class="hljs-meta">$endif</span>              <span class="hljs-comment"># end clink-only section</span>
 </code></pre>
 
-<p/>
+The `clink-show-help` command is bound to <kbd>Alt</kbd>+<kbd>H</kbd> and lists all currently active key bindings.  The list displays "friendly" key names, and these names are generally not suitable for use in inputrc files.  For example "Up" is the friendly name for `"\e[A"`, and "A-C-F2" is the friendly name for `"\e\e[1;5Q"`.  To see key sequence strings suitable for use an inputrc files use `clink echo` or <kbd>Alt</kbd>+<kbd>Shift</kbd>+<kbd>H</kbd>.
 
-> **Note:** Third party console hosts such as ConEmu may have their own key bindings that supersede Clink.  They usually have documentation for how to change or disable their key bindings to allow console programs to receive the keys.
+> **Note:** Third party console hosts such as ConEmu may have their own key bindings that supersede Clink.  They usually have documentation for how to change or disable their key bindings to allow console programs to handle the keys instead.
 
 ### Discovering Clink key sequences
 
-An easy way to find the key sequence for any key combination that Clink supports is to use Clink's `echo` command line option. Run `clink echo` and then press key combinations; the associated key binding sequence is printed to the console output.
+Clink provides an easy way to find the key sequence for any key combination that Clink supports. Run `clink echo` and then press key combinations; the associated key binding sequence is printed to the console output.
 
 ### Binding special keys
 
