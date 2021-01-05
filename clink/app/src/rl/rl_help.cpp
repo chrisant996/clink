@@ -76,48 +76,56 @@ static bool translate_keyseq(const char* keyseq, unsigned int len, char** key_na
     bool first_key = true;
     if (!friendly)
     {
+        tmp << "\"";
+
         unsigned int comma_threshold = 0;
         for (unsigned int i = 0; i < len; i++)
         {
-            if (!i && len == 2 && keyseq[0] == '\x1b')
+            if (!i && len == 2 && keyseq[0] == 0x1b)
             {
                 comma_threshold++;
-                tmp.concat("M-");
+                tmp << "\\M-";
                 if (first_key)
                     sort |= 4;
                 continue;
             }
 
-            if (keyseq[i] == 0x1b)
+            char key = keyseq[i];
+
+            if (key == 0x1b)
             {
-                tmp.concat("\\e", 2);
+                tmp << "\\e";
                 if (first_key)
                     sort |= 4;
                 continue;
             }
 
-            if (keyseq[i] >= 0 && keyseq[i] < ' ')
+            if (key >= 0 && keyseq[i] < ' ')
             {
-                tmp.concat("C-", 2);
-                tmp.concat(&ctrl_map[keyseq[i]], 1);
+                tmp << "\\C-";
+                tmp.concat(&ctrl_map[key], 1);
                 if (first_key)
                     sort |= 2;
                 first_key = false;
                 continue;
             }
 
-            if (keyseq[i] == 0x7f)
+            if (key == RUBOUT)
             {
-                tmp.concat("Rubout");
+                tmp << "\\C-?";
                 if (first_key)
                     sort |= 2;
                 first_key = false;
                 continue;
             }
 
-            tmp.concat(keyseq + i, 1);
+            if (key == '\\' || key == '"')
+                tmp << "\\";
+            tmp.concat(&key, 1);
             first_key = false;
         }
+
+        tmp << "\"";
 
         sort <<= 16;
     }
@@ -282,20 +290,23 @@ static Keyentry* collect_keymap(
                 collector[*offset].macro_text = nullptr;
             collector[*offset].warning = false;
 
-            if (warnings && keyseq.length() > 2)
+            if (friendly && warnings && keyseq.length() > 2)
             {
                 const char* k = keyseq.c_str();
-                if ((k[0] == 'M' || k[0] == 'C') && (k[1] == '-'))
+                if ((k[0] == 'A' || k[0] == 'M' || k[0] == 'C') && (k[1] == '-'))
                 {
                     str_moveable s;
-                    char tmp1[4] = { k[0], k[1] };
-                    char tmp2[4] = { k[2], k[3] };
-                    s << "\x1b[1mwarning:\x1b[m key \x1b[7m" << collector[*offset].key_name << "\x1b[m looks like a typo; did you mean \"\\" << tmp1;
-                    if ((k[2] == 'M' || k[2] == 'C') && (k[3] == '-'))
-                        s << "\\" << tmp2;
-                    s << "\" instead of \"" << tmp1;
-                    if ((k[2] == 'M' || k[2] == 'C') && (k[3] == '-'))
-                        s << tmp2;
+                    bool second = (k[2] == 'A' || k[2] == 'M' || k[2] == 'C') && (k[3] == '-');
+                    char actual1[4] = { k[0], k[1] };
+                    char actual2[4] = { k[2], k[3] };
+                    char intent1[4] = { '\\', k[0] == 'A' ? 'M' : k[0], k[1] };
+                    char intent2[4] = { '\\', k[2] == 'A' ? 'M' : k[2], k[3] };
+                    s << "\x1b[1mwarning:\x1b[m key \x1b[7m" << collector[*offset].key_name << "\x1b[m looks like a typo; did you mean \"" << intent1;
+                    if (second)
+                        s << intent2;
+                    s << "\" instead of \"" << actual1;
+                    if (second)
+                        s << actual2;
                     s << "\"?";
                     warnings->push_back(std::move(s));
                     collector[*offset].warning = true;
