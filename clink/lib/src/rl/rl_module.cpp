@@ -1180,8 +1180,12 @@ rl_module::rl_module(const char* shell_name, terminal_in* input)
         {}
     };
 
-    int restore_convert = _rl_convert_meta_chars_to_ascii;
-    _rl_convert_meta_chars_to_ascii = 1;
+    // Convert meta to ASCII when binding keys (and reading inputrc files), but
+    // go back to not converting meta afterwards so that UTF8 input can work.
+    // The terminal input code always converts meta to ASCII regardless of the
+    // Readline setting, so having the Readline setting disabled allows binding
+    // UTF8 bytes with the high bit set.
+    rollback<int> rb_convert_meta(_rl_convert_meta_chars_to_ascii, 1);
 
     rl_unbind_key_in_map(' ', emacs_meta_keymap);
     bind_keyseq_list(general_key_binds, emacs_standard_keymap);
@@ -1194,8 +1198,6 @@ rl_module::rl_module(const char* shell_name, terminal_in* input)
     bind_keyseq_list(vi_movement_key_binds, vi_movement_keymap);
 
     load_user_inputrc();
-
-    _rl_convert_meta_chars_to_ascii = restore_convert;
 }
 
 //------------------------------------------------------------------------------
