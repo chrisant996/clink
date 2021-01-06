@@ -3,7 +3,7 @@ ChrisAnt Plans
 <br/>
 
 # RELEASE
-
+- Is autorun compatible with ConEmu?  If not, can it be made compatible?
 - An unbound Escape in a chord inserts part of the bindableEsc string.  It should abort the chord.
 
 ## Issues
