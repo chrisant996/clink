@@ -27,6 +27,20 @@ local _current_builder = nil
 
 
 --------------------------------------------------------------------------------
+-- This global variable tracks which generator function, if any, stopped the
+-- most recent generate pass.  It's useful for diagnostic purposes; the file and
+-- number can be retrieved by:
+--      local info = debug.getinfo(clink.generator_stopped, 'S')
+--      print("file: "..info.short_src)
+--      print("line: "..info.linedefined)
+clink.generator_stopped = nil
+local function generator_onbeginedit()
+    clink.generator_stopped = nil
+end
+clink.onbeginedit(generator_onbeginedit)
+
+
+--------------------------------------------------------------------------------
 local function prepare()
     -- Sort generators by priority if required.
     if _generators_unsorted then
@@ -40,9 +54,13 @@ end
 --------------------------------------------------------------------------------
 function clink._generate(line_state, match_builder)
     local impl = function ()
+        clink.generator_stopped = nil
+
         for _, generator in ipairs(_generators) do
             local ret = generator:generate(line_state, match_builder)
             if ret == true then
+                -- Remember the generator function that stopped.
+                clink.generator_stopped = generator.generate
                 return true
             end
         end
