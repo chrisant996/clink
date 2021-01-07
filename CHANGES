@@ -2,7 +2,13 @@
 
 ## Releases from [chrisant996/clink](https://github.com/chrisant996/clink) fork
 
-### Unreleased
+### v1.1.20
+
+- Added `string.equalsi()` function that performs a case insensitive UTF8 comparison of two strings.
+- Added `string.matchlen()` function that compares two UTF8 strings and returns how many characters match at the beginning, or -1 if the entire strings match. It respects the `match.ignore_case` and `match.ignore_accents` settings.
+- Changed `os.getbatterystatus()` to return a table with the battery status details, rather than four separate return values.
+
+### v1.1.19
 
 - Improved responsiveness while typing:  matches are collected only on demand, instead of always while typing.  This makes it possible to always support match completion for UNC paths.
 - Fixed [#50](https://github.com/chrisant996/clink/issues/50) <kbd>Alt</kbd>+<kbd>H</kbd> could warn about likely mistakes in key bindings.
