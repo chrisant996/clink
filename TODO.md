@@ -3,12 +3,17 @@ ChrisAnt Plans
 <br/>
 
 # RELEASE
+- It's a mistake to run generators proactively before the user requests matches.
+  - Issue: The match pipeline should not fire on pressing **Enter** after `exit`.
+  - Issue: UNC paths cause delays while typing.
+  - Issue: Performance penalty is incurred 100% of the time regardless whether the user requests completions, and nothing uses the matches until completions are requested (not even the word classifiers).
+  - It should cache matches, yes, but it shouldn't generate them until the user requests completions.
+  - Rewrite so it's an on-demand system with caching.  Only generate and select+sort in `alternative_matches`.  It's tempting to clear the cache in `update_internal`, but it has to be done without calling generators for `getworkbreakinfo`...
 - Is autorun compatible with ConEmu?  If not, can it be made compatible?
 - An unbound Escape in a chord inserts part of the bindableEsc string.  It should abort the chord.
 
 ## Issues
 - [#45](https://github.com/chrisant996/clink/issues/45) Interaction between erase_prev and history.shared=false
-- The match pipeline should not fire on pressing **Enter** after `exit`.
 - When `convert-meta` is off, then when binding `\M-h` (etc) the key name gets interpreted differently than Clink expects.  Does this affect the `inputrc` files at all, or is it only an issue inside Clink's native code?
 
 ## Cmder

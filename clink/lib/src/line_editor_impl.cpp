@@ -714,7 +714,8 @@ bool line_editor_impl::check_flag(unsigned char flag) const
 
 //------------------------------------------------------------------------------
 bool line_editor_impl::is_key_same(const key_t& prev_key, const char* prev_line, int prev_length,
-                                   const key_t& next_key, const char* next_line, int next_length)
+                                   const key_t& next_key, const char* next_line, int next_length,
+                                   bool compare_cursor)
 {
     // If the word indices are different, the keys are different.  Argmatchers
     // and generators may treat the same word differently based on its position.
@@ -734,7 +735,7 @@ bool line_editor_impl::is_key_same(const key_t& prev_key, const char* prev_line,
 
     // If the cursor positions are different, the keys are different.  Again,
     // argmatchers and generators may need to parse the input line differently.
-    if (prev_key.cursor_pos != next_key.cursor_pos)
+    if (compare_cursor && prev_key.cursor_pos != next_key.cursor_pos)
         return false;
 
     // If the key contents are different, the keys are different.  This can
@@ -751,8 +752,8 @@ bool line_editor_impl::is_key_same(const key_t& prev_key, const char* prev_line,
     if (dbg_get_env_int("DEBUG_KEYSAME"))
     {
         printf("SAME: prev '%.*s' %d,%d,%d,%d vs next '%.*s' %d,%d,%d,%d\n",
-               prev.length(), prev.get_pointer(), prev_key.word_index, prev_key.word_offset, prev_key.word_length, prev_key.cursor_pos,
-               next.length(), next.get_pointer(), next_key.word_index, next_key.word_offset, next_key.word_length, next_key.cursor_pos);
+               prev.length(), prev.get_pointer(), prev_key.word_index, prev_key.word_offset, prev_key.word_length, compare_cursor ? prev_key.cursor_pos : 0,
+               next.length(), next.get_pointer(), next_key.word_index, next_key.word_offset, next_key.word_length, compare_cursor ? next_key.cursor_pos : 0);
     }
 #endif
     return true;
@@ -761,20 +762,30 @@ bool line_editor_impl::is_key_same(const key_t& prev_key, const char* prev_line,
 //------------------------------------------------------------------------------
 void line_editor_impl::update_internal()
 {
-    // Collect words, stopping at the cursor for match generator.
+    // This is responsible for updating the matches for the word under the
+    // cursor.  It tries to call match generators only once for the current
+    // word, and then repeatedly filter the results as the word is edited.
+
+    // Collect words.  To keep things simple for match generators, only text to
+    // to the cursor word is relevant, so that the "end word" is the word at the
+    // cursor.  To separate the generate phase and select+sort phase, the end
+    // word is always returned as empty.
     collect_words();
 
     assert(m_words.size() > 0);
     const word& end_word = m_words.back();
 
-    key_t next_key = { (unsigned int)m_words.size() - 1, end_word.offset, end_word.length };
-    key_t prev_key = m_prev_key;
-    prev_key.cursor_pos = 0;
+    const key_t next_key = { (unsigned int)m_words.size() - 1, end_word.offset, end_word.length, m_buffer.get_cursor() };
+    const key_t prev_key = m_prev_key;
 
-    // Should we generate new matches?
+    // Should we generate new matches?  Matches are generated for the end word
+    // position.  If the end word hasn't changed, then don't generate matches.
+    // Since the end word is empty, don't compare the cursor position, so the
+    // matches are only collected once for the word position.
     int update_prev_generate = -1;
     if (!is_key_same(prev_key, m_prev_generate.get(), m_prev_generate.length(),
-                     next_key, m_buffer.get_buffer(), m_buffer.get_length()))
+                     next_key, m_buffer.get_buffer(), m_buffer.get_length(),
+                     false/*compare_cursor*/))
     {
         line_state line = get_linestate();
         str_iter end_word = line.get_end_word();
@@ -788,12 +799,11 @@ void line_editor_impl::update_internal()
         }
     }
 
-    next_key.cursor_pos = m_buffer.get_cursor();
-    prev_key = m_prev_key;
-
-    // Should we sort and select matches?
+    // Should we select and sort matches?  Matches are filtered and sorted for
+    // the portion of the end word up to the cursor.
     if (!is_key_same(prev_key, m_prev_generate.get(), m_prev_generate.length(),
-                     next_key, m_buffer.get_buffer(), m_buffer.get_length()))
+                     next_key, m_buffer.get_buffer(), m_buffer.get_length(),
+                     true/*compare_cursor*/))
     {
         str<64> needle;
         int needle_start = end_word.offset;
