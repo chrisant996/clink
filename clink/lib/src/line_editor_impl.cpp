@@ -277,7 +277,7 @@ bool line_editor_impl::update()
     if (!check_flag(flag_editing))
     {
         begin_line();
-        update_internal();
+        // FUTURE: start async match generation.
         return true;
     }
 
@@ -286,7 +286,7 @@ bool line_editor_impl::update()
     if (!check_flag(flag_editing))
         return false;
 
-    update_internal();
+    // FUTURE: start async match generation.
     return true;
 }
 
@@ -834,6 +834,14 @@ void line_editor_impl::update_internal()
     // for deciding whether to sort/select, after deciding whether to generate.
     if (update_prev_generate >= 0)
         m_prev_generate.set(m_buffer.get_buffer(), update_prev_generate);
+}
+
+void update_matches()
+{
+    if (!s_editor)
+        return;
+
+    s_editor->update_internal();
 }
 
 matches* maybe_regenerate_matches(const char* needle, bool popup)

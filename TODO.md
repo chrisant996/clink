@@ -3,12 +3,6 @@ ChrisAnt Plans
 <br/>
 
 # RELEASE
-- It's a mistake to run generators proactively before the user requests matches.
-  - Issue: The match pipeline should not fire on pressing **Enter** after `exit`.
-  - Issue: UNC paths cause delays while typing.
-  - Issue: Performance penalty is incurred 100% of the time regardless whether the user requests completions, and nothing uses the matches until completions are requested (not even the word classifiers).
-  - It should cache matches, yes, but it shouldn't generate them until the user requests completions.
-  - Rewrite so it's an on-demand system with caching.  Only generate and select+sort in `alternative_matches`.  It's tempting to clear the cache in `update_internal`, but it has to be done without calling generators for `getworkbreakinfo`...
 - Is autorun compatible with ConEmu?  If not, can it be made compatible?
 - An unbound Escape in a chord inserts part of the bindableEsc string.  It should abort the chord.
 
@@ -67,9 +61,8 @@ ChrisAnt Plans
 
 - **CUA Selection.**
 - **Make the match pipeline async.**
-  - Spin up completion at the same moment it currently does, but make it async.
+  - Spin up async completion inside `line_editor_impl::update_internal`.
   - Only block consumers when they try to access results, if not yet complete.  Also have "try-" access that accesses if available but doesn't block (e.g. will be needed for coloring arguments while editing).
-  - This will solve the UNC performance problem and also make associated pauses break-able.
   - Lua and Lua scripts will need multi-threading support.
 
 <br/>

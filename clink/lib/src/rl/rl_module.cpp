@@ -86,6 +86,7 @@ inline int clink_wcwidth(char32_t c)
 extern void host_add_history(int rl_history_index, const char* line);
 extern void host_remove_history(int rl_history_index, const char* line);
 extern void sort_match_list(char** matches, int len);
+extern void update_matches();
 extern matches* maybe_regenerate_matches(const char* needle, bool popup);
 extern setting_color g_color_interact;
 
@@ -554,6 +555,8 @@ static char** alternative_matches(const char* text, int start, int end)
 
     if (matches* regen = maybe_regenerate_matches(text, s_is_popup))
         s_matches = regen;
+    else
+        update_matches();
 
     str<> tmp;
     const char* pattern = nullptr;

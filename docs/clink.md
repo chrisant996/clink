@@ -91,7 +91,6 @@ Name                         | Default | Description
 `exec.space_prefix`          | True    | If the line begins with whitespace then Clink bypasses executable matching (`exec.path`) and will do normal files matching instead.
 `files.hidden`               | True    | Includes or excludes files with the "hidden" attribute set when generating file lists.
 `files.system`               | False   | Includes or excludes files with the "system" attribute set when generating file lists.
-`files.unc_paths`            | False   | UNC (network) paths can cause Clink to stutter when it tries to generate matches. Enable this if matching UNC paths is required.
 `history.dont_add_to_history_cmds` | `exit history` | List of commands that aren't automatically added to the history. Commands are separated by spaces, commas, or semicolons. Default is `exit history`, to exclude both of those commands.
 `history.dupe_mode`          | `erase_prev` | If a line is a duplicate of an existing history entry Clink will erase the duplicate when this is set `erase_prev`. Setting it to `ignore` will not add duplicates to the history, and setting it to `add` will always add lines.
 `history.expand_mode`        | `not_quoted` | The `!` character in an entered line can be interpreted to introduce words from the history. This can be enabled and disable by setting this value to `on` or `off`. Values of `not_squoted`, `not_dquoted`, or `not_quoted` will skip any `!` character quoted in single, double, or both quotes respectively.

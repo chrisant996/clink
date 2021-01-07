@@ -26,19 +26,6 @@ setting_bool g_glob_system(
     "file lists.",
     false);
 
-// TODO: dream up a way around performance problems that UNC paths pose.
-// For example, maybe use a background thread to collect matches, and allow the
-// UI thread to somehow stop a long running operation (maybe with Ctrl+Break).
-//
-// Or how about just don't run the match generator pipeline until a completion
-// command is invoked.
-setting_bool g_glob_unc(
-    "files.unc_paths",
-    "Enables UNC/network path matches",
-    "UNC (network) paths can cause Clink to stutter slightly when it tries to\n"
-    "generate matches. Enable this if matching UNC paths is required.",
-    false);
-
 
 
 //------------------------------------------------------------------------------
@@ -59,10 +46,6 @@ static class : public match_generator
         }
 
         path::normalise(root);
-
-        if (path::is_separator(root[0]) && path::is_separator(root[1]))
-            if (!g_glob_unc.get())
-                return true;
 
         root << "*";
 
