@@ -435,6 +435,8 @@ For example, when the environment variable match generator sees the end word is 
 
 And when an argmatcher sees the end word begins with a flag character it returns `0,1` so the end word contains only the flag character in order to switch from argument matching to flag matching.
 
+> **Note:** The `:getwordbreakinfo()` function is called very often, so it needs to be very fast or it can cause responsiveness problems while typing.
+
 ```lua
 local envvar_generator = clink.generator(10)
 
@@ -555,9 +557,9 @@ It is also possible to omit the `addarg` and `addflags` function calls and use a
 ```lua
 -- Shorthand form; requires tables.
 clink.argmatcher()
-&nbsp; { "one", "won" }             -- Arg #1
-&nbsp; { "two", "too" }             -- Arg #2
-&nbsp; { "-a", "-b", "/?", "/h" }   -- Flags
+    { "one", "won" }                -- Arg #1
+    { "two", "too" }                -- Arg #2
+    { "-a", "-b", "/?", "/h" }      -- Flags
 
 -- Normal form:
 clink.argmatcher()
