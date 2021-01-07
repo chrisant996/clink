@@ -547,19 +547,16 @@ int get_screen_info(lua_State* state)
 
 //------------------------------------------------------------------------------
 /// -name:  os.getbatterystatus
-/// -ret:   level:integer, acpower:boolean, charging:boolean, batterysaver:boolean
-/// Returns the battery status for the device, or nil if an error occurs.
-///
-/// <span class="arg">level</span> is an integer from 0 to 100 representing the
-/// battery life percentage, or -1 if it couldn't be retrieved (an error
-/// occurred, or there is no battery).<br/>
-/// <span class="arg">acpower</span> indicates whether the device is connected
-/// to AC power.<br/>
-/// <span class="arg">charging</span> indicates whether the battery is charging
-/// (being plugged in doesn't necessarily imply it's charging).<br/>
-/// <span class="arg">batterysaver</span> indicates whether Battery Saver mode
-/// is active.
-/// -show:  local level,acpower,charging,batterysaver = os.getbatterystatus()
+/// -ret:   table
+/// Returns a table containing the battery status for the device, or nil if an
+/// error occurs.  The returned table has the following scheme:
+/// -show:  {
+/// -show:  &nbsp; level,         -- [integer] the battery life from 0 to 100, or -1 if an
+/// -show:  &nbsp;                --            error occurred or there is no battery.
+/// -show:  &nbsp; acpower,       -- [boolean] whether the device is connected to AC power.
+/// -show:  &nbsp; charging,      -- [boolean] whether the battery is charging.
+/// -show:  &nbsp; batterysaver,  -- [boolean] whether Battery Saver mode is active.
+/// -show:  }
 int get_battery_status(lua_State* state)
 {
     SYSTEM_POWER_STATUS status;
@@ -572,11 +569,25 @@ int get_battery_status(lua_State* state)
     if (status.BatteryFlag & 128)
         level = -1;
 
+    lua_createtable(state, 0, 4);
+
+    lua_pushliteral(state, "level");
     lua_pushinteger(state, level);
+    lua_rawset(state, -3);
+
+    lua_pushliteral(state, "acpower");
     lua_pushboolean(state, (status.ACLineStatus == 1));
+    lua_rawset(state, -3);
+
+    lua_pushliteral(state, "charging");
     lua_pushboolean(state, ((status.BatteryFlag & 0x88) == 0x08));
+    lua_rawset(state, -3);
+
+    lua_pushliteral(state, "batterysaver");
     lua_pushboolean(state, ((status.SystemStatusFlag & 1) == 1));
-    return 4;
+    lua_rawset(state, -3);
+
+    return 1;
 }
 
 //------------------------------------------------------------------------------
