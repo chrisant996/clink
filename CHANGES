@@ -4,6 +4,7 @@
 
 ### Unreleased
 
+- Improved responsiveness while typing:  matches are collected only on demand, instead of always while typing.  This makes it possible to always support match completion for UNC paths.
 - Fixed [#50](https://github.com/chrisant996/clink/issues/50) <kbd>Alt</kbd>+<kbd>H</kbd> could warn about likely mistakes in key bindings.
 
 ### v1.1.18
