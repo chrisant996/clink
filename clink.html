@@ -3,7 +3,7 @@
 
 <!-- ----------------------------------------------------- -->
 <head>
-<title>Clink v1.1.18</title>
+<title>Clink v1.1.19</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Rambla:wght@400;700&family=Roboto&family=Fira+Mono&display=swap');
 html {
@@ -401,7 +401,7 @@ var hljs=function(){"use strict";function e(n){Object.freeze(n);var t="function"
         </td>
         <td style="text-align:right">
             <div id="header">
-                <div id="title">Clink v1.1.18</div>
+                <div id="title">Clink v1.1.19</div>
                 <div id="url">
                     <a href="http://github.com/chrisant996/clink">
                         http://github.com/chrisant996/clink
@@ -626,11 +626,6 @@ var hljs=function(){"use strict";function e(n){Object.freeze(n);var t="function"
 <td>Includes or excludes files with the &quot;system&quot; attribute set when generating file lists.</td>
 </tr>
 <tr>
-<td align="center"><code>files.unc_paths</code></td>
-<td align="center">False</td>
-<td>UNC (network) paths can cause Clink to stutter when it tries to generate matches. Enable this if matching UNC paths is required.</td>
-</tr>
-<tr>
 <td align="center"><code>history.dont_add_to_history_cmds</code></td>
 <td align="center"><code>exit history</code></td>
 <td>List of commands that aren&#39;t automatically added to the history. Commands are separated by spaces, commas, or semicolons. Default is <code>exit history</code>, to exclude both of those commands.</td>
@@ -847,8 +842,17 @@ Echos key sequences to use in the inputrc files for binding keys to Clink comman
 <li>For backward compatibility, <code>clink_inputrc</code> is also loaded from the above locations, but it has been deprecated and may be removed in the future.</li>
 </ul>
 </blockquote>
-<p>Clink also adds some new commands and configuration variables in addition to what&#39;s covered in the Readline documentation.</p>
+<h2 id="basic-format">Basic Format</h2>
+<p>The quick version is that mostly you&#39;ll use these kinds of lines:</p>
+<ul>
+<li><code><em>keyname</em>: <em>command</em></code></li>
+<li><code><em>keyname</em>: "<em>literal text</em>"</code></li>
+<li><code>set <em>varname</em> <em>value</em></code></li>
+</ul>
+<p>Refer to the Readline <a href="https://tiswww.cwru.edu/php/chet/readline/rltop.html#Documentation">manual</a> for a more thorough explanation of the inputrc file format, list of available commands, and list of configuration variables and their values.</p>
+<p>See <a href="#keybindings">Key Bindings</a> for more information about binding keys in Clink.</p>
 <h2 id="new-configuration-variables">New Configuration Variables</h2>
+<p>Clink adds some new configuration variables to Readline, beyond what&#39;s described in the Readline manual:</p>
 <table>
 <thead>
 <tr>
@@ -874,6 +878,7 @@ Echos key sequences to use in the inputrc files for binding keys to Clink comman
 </tr>
 </tbody></table>
 <h2 id="new-commands">New Commands</h2>
+<p>Clink adds some new commands to Readline, beyond what&#39;s described in the Readline manual:</p>
 <table>
 <thead>
 <tr>
@@ -1354,6 +1359,8 @@ function my_match_generator:generate(line_state, match_builder)
     ...
     clink.ondisplaymatches(my_filter)
 end</code></pre>
+<p/>
+
 <blockquote>
 <p><strong>Compatibility Note:</strong>  When a match display filter has been set, it changes how match generation behaves.</p>
 <ul>
@@ -1438,10 +1445,69 @@ end</code></pre>
 <a name="keybindings"/>
 
 <h2 id="key-bindings">Key bindings</h2>
-<p>Key bindings are defined in the inputrc files.  See the <a href="https://tiswww.cwru.edu/php/chet/readline/readline.html">Readline</a> manual for more information about the inputrc files (Readline Init File).</p>
-<p>Here are key binding strings for various special keys.</p>
+<p>Key bindings are defined in the inputrc files.  See the <a href="https://tiswww.cwru.edu/php/chet/readline/readline.html">Readline</a> manual for more information about the inputrc files (look for &quot;Readline Init File&quot;).</p>
+<p>Here is the quick version:</p>
+<ul>
+<li>A key binding is <code><em>name</em>: <em>function</em></code> or <code><em>name</em>: "<em>literal text</em>"</code>.</li>
+<li>Key names are like this:<ul>
+<li><code>C-a</code> and <code>&quot;\C-a&quot;</code> are both <kbd>Ctrl</kbd>+<kbd>a</kbd>.</li>
+<li><code>M-a</code> and <code>&quot;\M-a&quot;</code> are both <kbd>Alt</kbd>+<kbd>a</kbd>.</li>
+<li><code>M-C-a</code> and <code>&quot;\M-\C-a&quot;</code> are both <kbd>Alt</kbd>+<kbd>Ctrl</kbd>+<kbd>a</kbd>.</li>
+<li><code>hello</code> is just <kbd>h</kbd>; the <code>ello</code> is a syntax error and is silently discarded by Readline.</li>
+<li><code>&quot;hello&quot;</code> is the series of keys <kbd>h</kbd>,<kbd>e</kbd>,<kbd>l</kbd>,<kbd>l</kbd>,<kbd>o</kbd>.</li>
+<li>Special keys like <kbd>Up</kbd> are represented by VT220 escape codes such as<code>&quot;\e[A&quot;</code> (see table below for more info).</li>
+</ul>
+</li>
+<li>Key bindings can be either functions or macros (literal text):<ul>
+<li><code>blah-blah</code> binds to a function named &quot;blah-blah&quot;.</li>
+<li><code>&quot;blah-blah&quot;</code> inserts the literal text &quot;blah-blah&quot;.</li>
+</ul>
+</li>
+</ul>
+<p>Here is an example <code>.inputrc</code> file with the key bindings that I use myself:</p>
+<pre><code class="plaintext"><span class="hljs-meta">$if clink</span>           <span class="hljs-comment"># begin clink-only section</span>
+
+<span class="hljs-comment"># The following key bindings are for emacs mode.</span>
+<span class="hljs-meta">set keymap emacs</span>
+
+<span class="hljs-comment"># Completion key bindings.</span>
+<span class="hljs-string">"\t"</span>:               old-menu-complete               <span class="hljs-comment"># Tab</span>
+<span class="hljs-string">"\e[Z"</span>:             old-menu-complete-backward      <span class="hljs-comment"># Shift+Tab</span>
+<span class="hljs-string">"\e[27;5;9~"</span>:       clink-popup-complete            <span class="hljs-comment"># Ctrl+Tab (requires additional ConEmu configuration)</span>
+<span class="hljs-string">"\x1b[27;5;32~"</span>:    complete                        <span class="hljs-comment"># Ctrl+Space</span>
+
+<span class="hljs-comment"># Some key bindings I got used to from 4Dos/4NT/Take Command.</span>
+C-b:                                                <span class="hljs-comment"># Ctrl+B (cleared because I redefined Ctrl+F)</span>
+C-d:                remove-history                  <span class="hljs-comment"># Ctrl+D (replaces `delete-char`)</span>
+C-f:                clink-expand-doskey-alias       <span class="hljs-comment"># Ctrl+F (replaces `forward-char`)</span>
+C-k:                add-history                     <span class="hljs-comment"># Ctrl+K (replaces `kill-line`)</span>
+<span class="hljs-string">"\e[A"</span>:             history-search-backward         <span class="hljs-comment"># Up (replaces `previous-history`)</span>
+<span class="hljs-string">"\e[B"</span>:             history-search-forward          <span class="hljs-comment"># Down (replaces `next-history`)</span>
+<span class="hljs-string">"\e[5~"</span>:            clink-popup-history             <span class="hljs-comment"># PgUp (replaces `history-search-backward`)</span>
+<span class="hljs-string">"\e[6~"</span>:                                            <span class="hljs-comment"># PgDn (cleared because I redefined PgUp)</span>
+<span class="hljs-string">"\e[1;5F"</span>:          end-of-line                     <span class="hljs-comment"># Ctrl+End (replaces `kill-line`)</span>
+<span class="hljs-string">"\e[1;5H"</span>:          beginning-of-line               <span class="hljs-comment"># Ctrl+Home (replaces `backward-kill-line`)</span>
+
+<span class="hljs-comment"># Some key bindings for interrogating the Readline configuration.</span>
+<span class="hljs-string">"\C-x\C-f"</span>:         dump-functions                  <span class="hljs-comment"># Ctrl+X, Ctrl+F</span>
+<span class="hljs-string">"\C-x\C-m"</span>:         dump-macros                     <span class="hljs-comment"># Ctrl+X, Ctrl+M</span>
+<span class="hljs-string">"\C-x\C-v"</span>:         dump-variables                  <span class="hljs-comment"># Ctrl+X, Ctrl+V</span>
+
+<span class="hljs-comment"># Misc other key bindings.</span>
+<span class="hljs-string">"\e[5;6~"</span>:          clink-popup-directories         <span class="hljs-comment"># Ctrl+Shift+PgUp</span>
+C-_:                kill-line                       <span class="hljs-comment"># Ctrl+- (replaces `undo`)</span>
+
+<span class="hljs-meta">$endif</span>              <span class="hljs-comment"># end clink-only section</span>
+</code></pre>
+
+<p>The <code>clink-show-help</code> command is bound to <kbd>Alt</kbd>+<kbd>H</kbd> and lists all currently active key bindings.  The list displays &quot;friendly&quot; key names, and these names are generally not suitable for use in inputrc files.  For example &quot;Up&quot; is the friendly name for <code>&quot;\e[A&quot;</code>, and &quot;A-C-F2&quot; is the friendly name for <code>&quot;\e\e[1;5Q&quot;</code>.  To see key sequence strings suitable for use an inputrc files use <code>clink echo</code> or <kbd>Alt</kbd>+<kbd>Shift</kbd>+<kbd>H</kbd>.</p>
+<blockquote>
+<p><strong>Note:</strong> Third party console hosts such as ConEmu may have their own key bindings that supersede Clink.  They usually have documentation for how to change or disable their key bindings to allow console programs to handle the keys instead.</p>
+</blockquote>
+<h3 id="discovering-clink-key-sequences">Discovering Clink key sequences</h3>
+<p>Clink provides an easy way to find the key sequence for any key combination that Clink supports. Run <code>clink echo</code> and then press key combinations; the associated key binding sequence is printed to the console output.</p>
 <h3 id="binding-special-keys">Binding special keys</h3>
-<p>Due to differences between Windows and Linux, escape codes for keys like PageUp/Down and the arrow keys are different in Clink.</p>
+<p>Here is a table of the key binding sequences for the special keys.  Clink primarily uses VT220 emulation for keyboard input, but also uses some Xterm extended key sequences.</p>
 <table>
 <thead>
 <tr>
@@ -1452,8 +1518,8 @@ end</code></pre>
 <th align="center">Ctrl+Shift</th>
 <th align="center">Alt</th>
 <th align="center">Alt+Shift</th>
-<th align="center">Ctrl+Alt</th>
-<th align="center">Ctrl+Alt+Shift</th>
+<th align="center">Alt+Ctrl</th>
+<th align="center">Alt+Ctrl+Shift</th>
 </tr>
 </thead>
 <tbody><tr>
@@ -1610,28 +1676,7 @@ end</code></pre>
 <td align="center">-</td>
 <td align="center">-</td>
 </tr>
-</tbody></table>
-<p/>
-
-<p>Here is an example line from an inputrc file that binds Shift-End to the Readline <code>transpose-word</code> function;</p>
-<pre><code>&quot;\e[1;2F&quot;: transpose-word</code></pre>
-<h3 id="binding-function-keys">Binding function keys</h3>
-<p>For function keys the full escape sequences are listed.  The last four columns (<kbd>Alt</kbd>+) are the same as the first four columns prefixed with an extra <code>\e</code>.</p>
-<table>
-<thead>
 <tr>
-<th align="center"></th>
-<th align="center">Normal</th>
-<th align="center">Shift</th>
-<th align="center">Ctrl</th>
-<th align="center">Ctrl+Shift</th>
-<th align="center">Alt</th>
-<th align="center">Alt+Shift</th>
-<th align="center">Alt+Ctrl</th>
-<th align="center">Alt+Ctrl+Shift</th>
-</tr>
-</thead>
-<tbody><tr>
 <td align="center">F1</td>
 <td align="center"><code>\eOP</code></td>
 <td align="center"><code>\e[1;2P</code></td>
@@ -1764,12 +1809,6 @@ end</code></pre>
 <td align="center"><code>\e\e[24;6~</code></td>
 </tr>
 </tbody></table>
-<p/>
-
-<p>Here is an example line from an inputrc file that binds <kbd>Alt</kbd>+<kbd>Shift</kbd>+<kbd>F3</kbd> to the Readline <code>history-substring-search-backward</code> function;</p>
-<pre><code>&quot;\e\e[1;2R&quot;: history-substring-search-backward</code></pre>
-<h3 id="discovering-clink-key-sequences">Discovering Clink key sequences</h3>
-<p>An easy way to find the key sequence for any key combination that Clink supports is to use Clink&#39;s <code>echo</code> command line option. Run <code>clink echo</code> and then press key combinations; the associated key binding sequence is printed to the console output.</p>
 <h2 id="saved-command-history">Saved command history</h2>
 <p>Here&#39;s how the saved history works:</p>
 <p>When the <code>history.saved</code> setting is enabled, then the command history is loaded and saved as follows (or when the setting is disabled, then it isn&#39;t saved between sessions).</p>
@@ -2032,6 +2071,11 @@ settings.add("color.mymno", "bright magenta", "Color setting")</code></pre></div
         <div class="section" id="changes">
 <h1 id="changes">Changes</h1>
 <h2 id="releases-from-chrisant996clink-fork">Releases from <a href="https://github.com/chrisant996/clink">chrisant996/clink</a> fork</h2>
+<h3 id="unreleased">Unreleased</h3>
+<ul>
+<li>Improved responsiveness while typing:  matches are collected only on demand, instead of always while typing.  This makes it possible to always support match completion for UNC paths.</li>
+<li>Fixed <a href="https://github.com/chrisant996/clink/issues/50">#50</a> <kbd>Alt</kbd>+<kbd>H</kbd> could warn about likely mistakes in key bindings.</li>
+</ul>
 <h3 id="v1118">v1.1.18</h3>
 <ul>
 <li>The input text now has context sensitive coloring based on the argmatchers. It&#39;s on by default and can be turned off with <code>clink set clink.colorize_input false</code>.</li>
