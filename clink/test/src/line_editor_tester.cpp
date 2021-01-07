@@ -162,6 +162,8 @@ void line_editor_tester::run()
     }
     while (m_terminal_in.has_input());
 
+    m_editor->update_matches();
+
     if (m_has_matches)
     {
         const matches* matches = match_catch.get_matches();

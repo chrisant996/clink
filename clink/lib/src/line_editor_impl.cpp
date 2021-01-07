@@ -291,6 +291,12 @@ bool line_editor_impl::update()
 }
 
 //------------------------------------------------------------------------------
+void line_editor_impl::update_matches()
+{
+    update_internal();
+}
+
+//------------------------------------------------------------------------------
 void line_editor_impl::dispatch(int bind_group)
 {
     assert(check_flag(flag_init));

@@ -51,6 +51,7 @@ public:
     virtual bool        get_line(str_base& out) override;
     virtual bool        edit(str_base& out) override;
     virtual bool        update() override;
+    virtual void        update_matches() override;
 
     // input_dispatcher
     virtual void        dispatch(int bind_group) override;
