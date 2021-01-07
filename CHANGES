@@ -7,6 +7,7 @@
 - Added `string.equalsi()` function that performs a case insensitive UTF8 comparison of two strings.
 - Added `string.matchlen()` function that compares two UTF8 strings and returns how many characters match at the beginning, or -1 if the entire strings match. It respects the `match.ignore_case` and `match.ignore_accents` settings.
 - Changed `os.getbatterystatus()` to return a table with the battery status details, rather than four separate return values.
+- Fixed environment variable completion (regression introduced in v1.1.19).
 
 ### v1.1.19
 

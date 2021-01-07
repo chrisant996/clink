@@ -3,6 +3,7 @@ ChrisAnt Plans
 <br/>
 
 # RELEASE
+- Verify (again?) that popup windows show up in the right location with ConEmu and Windows Terminal.
 - Is autorun compatible with ConEmu?  If not, can it be made compatible?
 - An unbound Escape in a chord inserts part of the bindableEsc string.  It should abort the chord.
 
@@ -20,19 +21,11 @@ ChrisAnt Plans
 
 ## High Priority
 - Allow binding keys to Lua scripts.
-  - Add a new `ISUSER` custom binding type to Readline, which calls a global callback and passes it the binding string (like for `ISMACR`)?  The global callback can then look up the Lua function name and pass it a `line_state` from `collect_words(false/*stop_at_cursor*/)`.
-    - But then how to make the inputrc file continue to be compatible for sharing with other terminal implementations?
-    - Or just define some special prefix for macro output text, and have a macro hook function to allow the host to intercept and handle macros.
+  - Define some special prefix for macro output text, and have a macro hook function to allow the host to intercept and handle macros.
   - Provide API for scrolling.
-  - Provide API for accessing the screen buffer.
-    - Find text; return line, which can be used with the scrolling API?
-    - Find attributes; return line, which can be used with the scrolling API?
-    - Retrieve text and/or attributes?
-    - Maybe have a way to have floating windows mark corners of a selection region?
-    - Maybe have a way to generate HTML from text in a selection region?
+  - Provide API to retrieve text and/or attributes for a line.
   - Provide API for interacting with the Readline buffer.
-  - Provide API to show a popup list?  But make it fail if used from outside a Readline command.
-  - Provide API to show an input box?  But make it fail if used from outside a Readline command.
+  - Provide API to get previous buffer string.  So that e.g. "insert 3rd argument from previous command" can be implemented.
 
 ## Medium Priority
 - Interactive completion, similar to Ctrl+Space in Powershell.
@@ -93,6 +86,16 @@ ChrisAnt Plans
 
 **Marking**
 - Marking mode in-app similar to my other shell project?  It's a kludge, but it copies with HTML formatting (and even uses the color scheme).
+
+**Lua**
+- Provide API for accessing the screen buffer.
+  - Find text; return line, which can be used with the scrolling API?
+  - Find attributes; return line, which can be used with the scrolling API?
+  - Retrieve text and/or attributes?
+  - Maybe have a way to have floating windows mark corners of a selection region?
+  - Maybe have a way to generate HTML from text in a selection region?
+- Provide API to show a popup list?  But make it fail if used from outside a Readline command.
+- Provide API to show an input box?  But make it fail if used from outside a Readline command.
 
 **Readline**
 - Readline 8.1 has slight bug in `update_line`; type `c` then `l`, and it now identifies **2** chars (`cl`) as needing to be displayed; seems like the diff routine has a bug with respect to the new faces capability; it used to only identify `l` as needing to be displayed.
