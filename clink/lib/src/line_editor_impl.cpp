@@ -278,6 +278,7 @@ bool line_editor_impl::update()
     {
         begin_line();
         // FUTURE: start async match generation.
+        collect_words(); // Required here so adjust_completion_word() works.
         return true;
     }
 
@@ -287,6 +288,7 @@ bool line_editor_impl::update()
         return false;
 
     // FUTURE: start async match generation.
+    collect_words(); // Required here so adjust_completion_word() works.
     return true;
 }
 
