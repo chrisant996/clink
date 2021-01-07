@@ -6,6 +6,7 @@
 
 #include <core/str_hash.h>
 #include <core/str_tokeniser.h>
+#include <core/str_compare.h>
 
 //------------------------------------------------------------------------------
 static const char* get_string(lua_State* state, int index)
@@ -17,17 +18,24 @@ static const char* get_string(lua_State* state, int index)
 }
 
 //------------------------------------------------------------------------------
-/// -name:  string.hash
-/// -arg:   text:string
-/// -ret:   integer
-/// Returns a hash of the input <span class="arg">text</span>.
-static int hash(lua_State* state)
+/// -name:  string.equalsi
+/// -arg:   a:string
+/// -arg:   b:string
+/// -ret:   boolean
+/// Performs a case insensitive comparison of the strings with international
+/// linguistic awareness.  This is more efficient than converting both strings
+/// to lowercase and comparing the results.
+static int equalsi(lua_State* state)
 {
-    const char* in = get_string(state, 1);
-    if (in == nullptr)
+    const char* a = get_string(state, 1);
+    const char* b = get_string(state, 2);
+    if (!a || !b)
         return 0;
 
-    lua_pushinteger(state, str_hash(in));
+    str_compare_scope _(str_compare_scope::caseless);
+    int result = str_compare(a, b);
+
+    lua_pushboolean(state, result == -1);
     return 1;
 }
 
@@ -69,14 +77,51 @@ static int explode(lua_State* state)
 }
 
 //------------------------------------------------------------------------------
+/// -name:  string.hash
+/// -arg:   text:string
+/// -ret:   integer
+/// Returns a hash of the input <span class="arg">text</span>.
+static int hash(lua_State* state)
+{
+    const char* in = get_string(state, 1);
+    if (in == nullptr)
+        return 0;
+
+    lua_pushinteger(state, str_hash(in));
+    return 1;
+}
+
+//------------------------------------------------------------------------------
+/// -name:  string.matchlen
+/// -arg:   a:string
+/// -arg:   b:string
+/// -ret:   integer
+/// Returns how many characters match at the beginning of the strings, or -1 if
+/// the entire strings match.  This respects the <code>match.ignore_case</code>
+/// and <code>match.ignore_accents</code> Clink settings.
+static int match_len(lua_State* state)
+{
+    const char* a = get_string(state, 1);
+    const char* b = get_string(state, 2);
+    if (!a || !b)
+        return 0;
+
+    int result = str_compare(a, b);
+    lua_pushinteger(state, result);
+    return 1;
+}
+
+//------------------------------------------------------------------------------
 void string_lua_initialise(lua_state& lua)
 {
     struct {
         const char* name;
         int         (*method)(lua_State*);
     } methods[] = {
-        { "hash",       &hash },
+        { "equalsi",    &equalsi },
         { "explode",    &explode },
+        { "hash",       &hash },
+        { "matchlen",   &match_len },
     };
 
     lua_State* state = lua.get_state();
