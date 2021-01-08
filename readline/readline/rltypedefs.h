@@ -82,6 +82,8 @@ typedef void rl_postprocess_lcd_func_t PARAMS((char *, const char *));
 typedef char rl_get_face_func_t PARAMS((int in, int active_begin, int active_end));
 /* Type for function to print string with face */
 typedef void rl_puts_face_func_t PARAMS((const char* s, const char* face, int n));
+/* Type for function to process macros */
+typedef int rl_macro_hook_func_t PARAMS((const char* macro));
 /* end_clink_change */
 
 /* Input function type */

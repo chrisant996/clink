@@ -94,6 +94,9 @@ _rl_with_macro_input (char *string)
 {
   if (macro_level > MAX_MACRO_LEVEL)
     {
+/* begin_clink_change */
+/* TODO: This leaks STRING. */
+/* end_clink_change */
       _rl_errmsg ("maximum macro execution nesting level exceeded");
       _rl_abort_internal ();
       return;

@@ -86,6 +86,7 @@ inline int clink_wcwidth(char32_t c)
 extern void host_add_history(int rl_history_index, const char* line);
 extern void host_remove_history(int rl_history_index, const char* line);
 extern void sort_match_list(char** matches, int len);
+extern int macro_hook_func(const char* macro);
 extern void update_matches();
 extern matches* maybe_regenerate_matches(const char* needle, bool popup);
 extern setting_color g_color_interact;
@@ -1074,6 +1075,7 @@ rl_module::rl_module(const char* shell_name, terminal_in* input)
     rl_read_key_hook = read_key_hook;
     rl_get_face_func = get_face_func;
     rl_puts_face_func = puts_face_func;
+    rl_macro_hook_func = macro_hook_func;
 
     // Add commands.
     static bool s_rl_initialized = false;

@@ -707,6 +707,10 @@ extern int rl_executing_key;
 extern char *rl_executing_keyseq;
 extern int rl_key_sequence_length;
 
+/* begin_clink_change */
+extern rl_macro_hook_func_t *rl_macro_hook_func;
+/* end_clink_change */
+
 /* Display variables. */
 /* If non-zero, readline will erase the entire line, including any prompt,
    if the only thing typed on an otherwise-blank line is something bound to

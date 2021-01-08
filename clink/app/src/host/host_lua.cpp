@@ -171,3 +171,27 @@ bool host_lua::send_event_cancelable(const char* event_name, int nargs)
 {
     return m_state.send_event_cancelable(event_name, nargs);
 }
+
+//------------------------------------------------------------------------------
+bool host_lua::call_lua_rl_global_function(const char* func_name)
+{
+    lua_State* state = m_state.get_state();
+
+    lua_getglobal(state, func_name);
+    if (!lua_isfunction(state, -1))
+        return false;
+
+    // TODO: push rl buffer
+
+    if (m_state.pcall(0, 0) != LUA_OK)
+    {
+        if (const char* error = lua_tostring(state, -1))
+        {
+            printf("\nerror executing function '%s':\n", func_name);
+            puts(error);
+        }
+        return false;
+    }
+
+    return true;
+}

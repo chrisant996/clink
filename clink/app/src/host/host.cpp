@@ -81,6 +81,9 @@ extern setting_bool g_classify_words;
 
 //------------------------------------------------------------------------------
 static printer* s_printer = nullptr;
+static host_lua* s_host_lua = nullptr;
+
+
 
 //------------------------------------------------------------------------------
 // Documented in clink_api.cpp.
@@ -111,6 +114,30 @@ int clink_print(lua_State* state)
     }
 
     return 0;
+}
+
+
+
+//------------------------------------------------------------------------------
+int macro_hook_func(const char* macro)
+{
+    if (!macro || strnicmp(macro, "luafunc:", 8) != 0)
+        return 0;
+
+    if (!s_host_lua)
+    {
+        rl_ding();
+        return 1;
+    }
+
+    str<> func_name;
+    func_name = macro + 8;
+    func_name.trim();
+
+    if (!s_host_lua->call_lua_rl_global_function(func_name.c_str()))
+        rl_ding();
+
+    return 1;
 }
 
 
@@ -412,6 +439,8 @@ bool host::edit_line(const char* prompt, str_base& out)
     }
     host_lua& lua = tmp_lua.get() ? *tmp_lua : *m_lua;
     prompt_filter& prompt_filter = tmp_prompt_filter.get() ? *tmp_prompt_filter : *m_prompt_filter;
+
+    rollback<host_lua*> rb_lua(s_host_lua, &lua);
 
     // Load scripts.
     if (init_scripts)
