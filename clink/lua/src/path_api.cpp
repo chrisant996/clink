@@ -64,9 +64,22 @@ static int get_base_name(lua_State* state)
 /// -name:  path.getdirectory
 /// -arg:   path:string
 /// -ret:   nil or string
-/// -show:  path.getdirectory("e:/foo/bar") -- returns "e:/foo"
-/// -show:  path.getdirectory("/foo/bar") -- returns "/foo"
-/// -show:  path.getdirectory("bar") -- returns nil
+/// This is similar to <a href="#path.toparent">path.toparent()</a> but can
+/// behave differently when the input path ends with a path separator.  This is
+/// the recommended API for parsing a path into its component pieces, but is not
+/// recommended for walking up through parent directories.
+/// -show:  path.getdirectory("foo")             -- returns nil
+/// -show:  path.getdirectory("\foo")            -- returns "\"
+/// -show:  path.getdirectory("c:foo")           -- returns "c:"
+/// -show:  path.getdirectory([[c:\]])           -- returns "c:\"
+/// -show:  path.getdirectory("c:\foo")          -- returns "c:\"
+/// -show:  path.getdirectory("c:\foo\bar")      -- returns "c:\foo"
+/// -show:  path.getdirectory("\\foo\bar")       -- returns "\\foo\bar"
+/// -show:  path.getdirectory("\\foo\bar\dir")   -- returns "\\foo\bar"
+/// -show:
+/// -show:  -- These split the path components differently than path.toparent().
+/// -show:  path.getdirectory([[c:\foo\bar\]])   -- returns "c:\foo\bar"
+/// -show:  path.getdirectory([[\\foo\bar\dir\]])-- returns "\\foo\bar\dir"
 static int get_directory(lua_State* state)
 {
     str<288> out(get_string(state, 1));
@@ -177,6 +190,45 @@ static int is_exec_ext(lua_State* state)
 }
 
 //------------------------------------------------------------------------------
+/// -name:  path.toparent
+/// -arg:   path:string
+/// -ret:   parent:string, child:string
+/// Splits the last path component from <span class="arg">path</span>, if
+/// possible. Returns the result and the component that was split, if any.
+///
+/// This is similar to <a href="#path.getdirectory">path.getdirectory()</a> but
+/// can behave differently when the input path ends with a path separator.  This
+/// is the recommended API for walking up through parent directories.
+/// -show:  local parent,child
+/// -show:  parent,child = path.toparent("foo")             -- returns "", "foo"
+/// -show:  parent,child = path.toparent("\foo")            -- returns "\", "foo"
+/// -show:  parent,child = path.toparent("c:foo")           -- returns "c:", "foo"
+/// -show:  parent,child = path.toparent([[c:\]])           -- returns "c:\", ""
+/// -show:  parent,child = path.toparent("c:\foo")          -- returns "c:\", "foo"
+/// -show:  parent,child = path.toparent("c:\foo\bar")      -- returns "c:\foo", "bar"
+/// -show:  parent,child = path.toparent("\\foo\bar")       -- returns "\\foo\bar", ""
+/// -show:  parent,child = path.toparent("\\foo\bar\dir")   -- returns "\\foo\bar", "dir"
+/// -show:
+/// -show:  -- These split the path components differently than path.getdirectory().
+/// -show:  parent,child = path.toparent([[c:\foo\bar\]])   -- returns "c:\foo", "bar"
+/// -show:  parent,child = path.toparent([[\\foo\bar\dir\]])-- returns "\\foo\bar", "dir"
+static int to_parent(lua_State* state)
+{
+    const char* path = get_string(state, 1);
+    if (path == nullptr)
+        return 0;
+
+    str<> parent;
+    str<> child;
+    parent = path;
+    path::to_parent(parent, &child);
+
+    lua_pushlstring(state, parent.c_str(), parent.length());
+    lua_pushlstring(state, child.c_str(), child.length());
+    return 2;
+}
+
+//------------------------------------------------------------------------------
 void path_lua_initialise(lua_state& lua)
 {
     struct {
@@ -191,6 +243,7 @@ void path_lua_initialise(lua_state& lua)
         { "getname",       &get_name },
         { "join",          &join },
         { "isexecext",     &is_exec_ext },
+        { "toparent",      &to_parent },
     };
 
     lua_State* state = lua.get_state();

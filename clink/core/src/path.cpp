@@ -29,6 +29,19 @@ static bool s_have_pathexts = false;
 static std::map<std::wstring, bool, ext_comparer> s_pathexts;
 
 //------------------------------------------------------------------------------
+template<typename TYPE> static unsigned int past_unc(const TYPE* path)
+{
+    unsigned int start = 2;
+    while (path[start] && !path::is_separator(path[start]))
+        start++;
+    while (path[start] && path::is_separator(path[start]))
+        start++;
+    while (path[start] && !path::is_separator(path[start]))
+        start++;
+    return start;
+}
+
+//------------------------------------------------------------------------------
 static const char* get_last_separator(const char* in)
 {
     for (int i = int(strlen(in)) - 1; i >= 0; --i)
@@ -62,9 +75,11 @@ static int get_directory_end(const char* path)
             ++slash;
 
 #if defined(PLATFORM_WINDOWS)
-        // Same for Windows and it's drive prefixes.
+        // Same for Windows and its drive prefixes and UNC paths.
         if (path[0] && path[1] == ':' && slash == path + 2)
             ++slash;
+        else if (path::is_separator(path[0]) && path::is_separator(path[1]))
+            slash = max(slash, path + past_unc(path));
 #endif
 
         return int(slash - path);
@@ -338,7 +353,8 @@ bool is_root(const char* path)
 //------------------------------------------------------------------------------
 bool join(const char* lhs, const char* rhs, str_base& out)
 {
-    out << lhs;
+    if (out.c_str() != lhs)
+        out = lhs;
     return append(out, rhs);
 }
 
@@ -390,13 +406,15 @@ void maybe_strip_last_separator(wstr_base& out)
 {
     unsigned int start = 0;
 
-    if (iswalpha(out[0]) && out[1] == ':')
-        start += 2;
-    else if (out[0] == '\\' && out[1] == '\\')
-        start += 2;
-
-    if (is_separator(out[start]))
-        start++;
+    if (is_separator(out[0]) && is_separator(out[1]))
+        start = past_unc(out.c_str());
+    else
+    {
+        if (iswalpha(out[0]) && out[1] == ':')
+            start += 2;
+        if (is_separator(out[start]))
+            start++;
+    }
 
     while (out.length() > start && is_separator(out[out.length() - 1]))
         out.truncate(out.length() - 1);
@@ -411,19 +429,24 @@ bool to_parent(str_base& out, str_base* child)
     unsigned int end = out.length();
     unsigned int orig_len = out.length();
 
-    if (isalpha((unsigned char)out[0]) && out[1] == ':')
-        start += 2;
-    else if (out[0] == '\\' && out[1] == '\\')
-        start += 2;
+    if (is_separator(out[0]) && is_separator(out[1]))
+        start = past_unc(out.c_str());
+    else
+    {
+        if (isalpha((unsigned char)out[0]) && out[1] == ':')
+            start += 2;
+        if (is_separator(out[start]))
+            start++;
+    }
 
-    if (is_separator(out[start]))
-        start++;
-
-    while (end > start && is_separator(out[end - 1]))
+    while (end > 0 && is_separator(out[end - 1]))
         end--;
     int child_end = end;
-    while (end > start && !is_separator(out[end - 1]))
+    while (end > 0 && !is_separator(out[end - 1]))
         end--;
+
+    if (end < start)
+        end = start;
 
     if (child)
     {

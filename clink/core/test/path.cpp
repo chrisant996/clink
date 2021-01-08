@@ -141,6 +141,26 @@ TEST_CASE("path::get_directory()")
         path::get_directory("e:one", s);
         REQUIRE(s.equals("e:"));
     }
+
+    SECTION("UNC")
+    {
+        str<> s;
+
+        path::get_directory("\\\\foo\\bar\\abc", s);
+        REQUIRE(s.equals("\\\\foo\\bar"));
+
+        s.clear();
+        path::get_directory("\\\\foo\\bar\\", s);
+        REQUIRE(s.equals("\\\\foo\\bar"));
+
+        s.clear();
+        path::get_directory("\\\\foo\\bar", s);
+        REQUIRE(s.equals("\\\\foo\\bar"));
+
+        s.clear();
+        path::get_directory("\\\\foo", s);
+        REQUIRE(s.equals("\\\\foo"));
+    }
 }
 
 //------------------------------------------------------------------------------
@@ -397,6 +417,129 @@ TEST_CASE("path::join(get_dir(), get_name())")
     path::normalise(join, '/');
 
     REQUIRE(join.equals(out));
+}
+
+//------------------------------------------------------------------------------
+TEST_CASE("path::to_parent()")
+{
+    const char* in;
+    const char* out;
+    const char* kid;
+    const char* rejoined;
+
+    SECTION("Normal")
+    {
+        in = "c:/one/two";
+        out = "c:/one";
+        kid = "two";
+        rejoined = "c:/one/two";
+    }
+
+    SECTION("Normal end")
+    {
+        in = "c:/one/two/";
+        out = "c:/one";
+        kid = "two";
+        rejoined = "c:/one/two";
+    }
+
+    SECTION("Normal root")
+    {
+        in = "c:/one";
+        out = "c:/";
+        kid = "one";
+        rejoined = "c:/one";
+    }
+
+    SECTION("Normal can't")
+    {
+        in = "c:/";
+        out = "c:/";
+        kid = "";
+        rejoined = "c:/";
+    }
+
+    SECTION("Drive")
+    {
+        in = "c:";
+        out = "c:";
+        kid = "";
+        rejoined = "c:";
+    }
+
+    SECTION("UNC")
+    {
+        in = "//foo/bar/abc/def";
+        out = "//foo/bar/abc";
+        kid = "def";
+        rejoined = "//foo/bar/abc/def";
+    }
+
+    SECTION("UNC end")
+    {
+        in = "//foo/bar/abc/def/";
+        out = "//foo/bar/abc";
+        kid = "def";
+        rejoined = "//foo/bar/abc/def";
+    }
+
+    SECTION("UNC root")
+    {
+        in = "//foo/bar/abc";
+        out = "//foo/bar";
+        kid = "abc";
+        rejoined = "//foo/bar/abc";
+    }
+
+    SECTION("UNC can't")
+    {
+        in = "//foo/bar";
+        out = "//foo/bar";
+        kid = "";
+        rejoined = "//foo/bar/";
+    }
+
+    SECTION("UNC can't end")
+    {
+        in = "//foo/bar/";
+        out = "//foo/bar";
+        kid = "";
+        rejoined = "//foo/bar/";
+    }
+
+    SECTION("No seps")
+    {
+        in = "foo";
+        out = "";
+        kid = "foo";
+        rejoined = "foo";
+    }
+
+    str<> parent, child;
+    str<> orig, verify;
+
+    parent = in;
+    orig = in;
+    verify = out;
+
+    path::to_parent(parent, &child);
+    REQUIRE(parent.equals(verify.c_str()));
+    REQUIRE(child.equals(kid));
+    path::append(parent, child.c_str());
+
+    parent = in;
+    path::normalise(parent, '\\');
+    path::normalise(orig, '\\');
+    path::normalise(verify, '\\');
+
+    path::to_parent(parent, &child);
+    REQUIRE(parent.equals(verify.c_str()));
+    REQUIRE(child.equals(kid));
+
+    verify = rejoined;
+    path::normalise(verify, '\\');
+    path::append(parent, child.c_str());
+    REQUIRE(parent.equals(verify.c_str()));
 }
 
 //------------------------------------------------------------------------------
