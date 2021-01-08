@@ -39,13 +39,6 @@ lua_word_classifier::lua_word_classifier(lua_state& state)
 }
 
 //------------------------------------------------------------------------------
-void lua_word_classifier::print_error(const char* error) const
-{
-    puts("");
-    puts(error);
-}
-
-//------------------------------------------------------------------------------
 void lua_word_classifier::classify(const line_state& line, word_classifications& classifications, const char* already_classified)
 {
     lua_State* state = m_state.get_state();
@@ -64,7 +57,7 @@ void lua_word_classifier::classify(const line_state& line, word_classifications&
     if (m_state.pcall(state, 2, 1) != 0)
     {
         if (const char* error = lua_tostring(state, -1))
-            print_error(error);
+            m_state.print_error(error);
 
         lua_settop(state, 0);
         return;

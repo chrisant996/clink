@@ -25,6 +25,8 @@ public:
     bool            send_event(const char* event_name, int nargs=0);
     bool            send_event_cancelable(const char* event_name, int nargs=0);
 
+    void            print_error(const char* error);
+
 #ifdef DEBUG
     void            dump_stack(int pos);
 #endif

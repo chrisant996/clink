@@ -149,14 +149,9 @@ bool lua_state::do_string(const char* string, int length)
 
     bool ok = !luaL_loadbuffer(m_state, string, length, string);
     if (ok)
-    {
         ok = !pcall(0, LUA_MULTRET);
-    }
-    else
-    {
-        const char* message = lua_tostring(m_state, -1);
-        puts(message);
-    }
+    else if (const char* error = lua_tostring(m_state, -1))
+        print_error(error);
 
     lua_settop(m_state, 0);
     return ok;
@@ -167,14 +162,9 @@ bool lua_state::do_file(const char* path)
 {
     bool ok = !luaL_loadfile(m_state, path);
     if (ok)
-    {
         ok = !pcall(0, LUA_MULTRET);
-    }
-    else
-    {
-        const char* message = lua_tostring(m_state, -1);
-        puts(message);
-    }
+    else if (const char* error = lua_tostring(m_state, -1))
+        print_error(error);
 
     lua_settop(m_state, 0);
     return ok;
@@ -301,10 +291,7 @@ bool lua_state::send_event_internal(const char* event_name, const char* event_me
     if (pcall(1 + nargs, nret) != 0)
     {
         if (const char* error = lua_tostring(state, -1))
-        {
-            puts("");
-            puts(error);
-        }
+            print_error(error);
         goto done;
     }
 
@@ -337,6 +324,13 @@ bool lua_state::send_event(const char* event_name, int nargs)
 bool lua_state::send_event_cancelable(const char* event_name, int nargs)
 {
     return send_event_internal(event_name, "_send_event_cancelable", nargs);
+}
+
+//------------------------------------------------------------------------------
+void lua_state::print_error(const char* error)
+{
+    puts("");
+    puts(error);
 }
 
 //------------------------------------------------------------------------------

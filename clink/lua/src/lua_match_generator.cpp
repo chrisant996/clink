@@ -37,13 +37,6 @@ lua_match_generator::~lua_match_generator()
 }
 
 //------------------------------------------------------------------------------
-void lua_match_generator::print_error(const char* error) const
-{
-    puts("");
-    puts(error);
-}
-
-//------------------------------------------------------------------------------
 bool lua_match_generator::generate(const line_state& line, match_builder& builder)
 {
     lua_State* state = m_state.get_state();
@@ -79,7 +72,7 @@ bool lua_match_generator::generate(const line_state& line, match_builder& builde
     if (m_state.pcall(state, 2, 1) != 0)
     {
         if (const char* error = lua_tostring(state, -1))
-            print_error(error);
+            m_state.print_error(error);
 
         lua_settop(state, 0);
         return false;
@@ -107,7 +100,7 @@ void lua_match_generator::get_word_break_info(const line_state& line, word_break
     if (m_state.pcall(state, 1, 2) != 0)
     {
         if (const char* error = lua_tostring(state, -1))
-            print_error(error);
+            m_state.print_error(error);
 
         lua_settop(state, 0);
         info.clear();
@@ -191,7 +184,7 @@ bool lua_match_generator::match_display_filter(char** matches, match_display_fil
         if (m_state.pcall(1, 1) != 0)
         {
             if (const char *error = lua_tostring(state, -1))
-                print_error(error);
+                m_state.print_error(error);
             goto done;
         }
 
@@ -286,7 +279,7 @@ bool lua_match_generator::match_display_filter(char** matches, match_display_fil
     if (m_state.pcall(ondisplaymatches ? 2 : 1, 1) != 0)
     {
         if (const char *error = lua_tostring(state, -1))
-            print_error(error);
+            m_state.print_error(error);
         goto done;
     }
 

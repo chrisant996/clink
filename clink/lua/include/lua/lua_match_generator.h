@@ -19,6 +19,5 @@ private:
     virtual bool    generate(const line_state& line, match_builder& builder) override;
     virtual void    get_word_break_info(const line_state& line, word_break_info& info) const override;
     virtual bool    match_display_filter(char** matches, match_display_filter_entry*** filtered_matches, bool popup) override;
-    void            print_error(const char* error) const;
     lua_state&      m_state;
 };

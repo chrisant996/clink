@@ -17,6 +17,5 @@ public:
     virtual void    classify(const line_state& line, word_classifications& classifications, const char* already_classified=nullptr) override;
 
 private:
-    void            print_error(const char* error) const;
     lua_state&      m_state;
 };
