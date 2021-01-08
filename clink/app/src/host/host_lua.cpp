@@ -50,7 +50,7 @@ host_lua::host_lua()
     exe_path << bin_path << "\\" CLINK_EXE;
 
     lua_State* state = m_state.get_state();
-    lua_pushstring(state, exe_path.c_str());
+    lua_pushlstring(state, exe_path.c_str(), exe_path.length());
     lua_setglobal(state, "CLINK_EXE");
 }
 

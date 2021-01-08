@@ -106,8 +106,8 @@ void lua_state::initialise()
     if (!path.empty())
     {
         lua_getglobal(m_state, "package");
-        lua_pushstring(m_state, "path");
-        lua_pushstring(m_state, path.c_str());
+        lua_pushliteral(m_state, "path");
+        lua_pushlstring(m_state, path.c_str(), path.length());
         lua_rawset(m_state, -3);
     }
 

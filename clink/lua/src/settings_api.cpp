@@ -55,7 +55,7 @@ static int get(lua_State* state)
                 setting->get_descriptive(value);
             else
                 setting->get(value);
-            lua_pushstring(state, value.c_str());
+            lua_pushlstring(state, value.c_str(), value.length());
         }
         break;
     }

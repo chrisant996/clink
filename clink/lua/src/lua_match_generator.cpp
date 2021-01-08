@@ -209,7 +209,10 @@ bool lua_match_generator::match_display_filter(char** matches, match_display_fil
         // comfortable saying that if this loophole is a problem in practice
         // then the affected script should be updated to use the new API.
         lua_getglobal(state, "clink");
-        lua_pushstring(state, ondisplaymatches ? "_send_ondisplaymatches_event" : "match_display_filter");
+        if (ondisplaymatches)
+            lua_pushliteral(state, "_send_ondisplaymatches_event");
+        else
+            lua_pushliteral(state, "match_display_filter");
         lua_rawget(state, -2);
 
         if (lua_isnil(state, -1))
@@ -258,7 +261,7 @@ bool lua_match_generator::match_display_filter(char** matches, match_display_fil
 
             lua_pushliteral(state, "type");
             match_type_to_string(type, tmp);
-            lua_pushstring(state, tmp.c_str());
+            lua_pushlstring(state, tmp.c_str(), tmp.length());
             lua_rawset(state, -3);
 
             lua_rawseti(state, -2, i);

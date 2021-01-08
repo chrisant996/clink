@@ -236,7 +236,7 @@ static int map_string(lua_State* state, DWORD mapflags)
 
     str<> text(out.c_str());
 
-    lua_pushstring(state, text.c_str());
+    lua_pushlstring(state, text.c_str(), text.length());
 
     return 1;
 }

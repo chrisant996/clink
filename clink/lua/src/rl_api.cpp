@@ -82,7 +82,7 @@ static int collapse_tilde(lua_State* state)
 
     str<> collapsed;
     if (collapse_tilde(path, collapsed, false))
-        lua_pushstring(state, collapsed.c_str());
+        lua_pushlstring(state, collapsed.c_str(), collapsed.length());
     else
         lua_pushstring(state, path);
     return 1;

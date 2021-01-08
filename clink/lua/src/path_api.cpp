@@ -39,7 +39,7 @@ static int normalise(lua_State* state)
         separator = sep_str[0];
 
     path::normalise(out, separator);
-    lua_pushstring(state, out.c_str());
+    lua_pushlstring(state, out.c_str(), out.length());
     return 1;
 }
 
@@ -56,7 +56,7 @@ static int get_base_name(lua_State* state)
 
     str<288> out;
     path::get_base_name(path, out);
-    lua_pushstring(state, out.c_str());
+    lua_pushlstring(state, out.c_str(), out.length());
     return 1;
 }
 
@@ -76,7 +76,7 @@ static int get_directory(lua_State* state)
     if (!path::get_directory(out))
         return 0;
 
-    lua_pushstring(state, out.c_str());
+    lua_pushlstring(state, out.c_str(), out.length());
     return 1;
 }
 
@@ -95,7 +95,7 @@ static int get_drive(lua_State* state)
     if (!path::get_drive(out))
         return 0;
 
-    lua_pushstring(state, out.c_str());
+    lua_pushlstring(state, out.c_str(), out.length());
     return 1;
 }
 
@@ -113,7 +113,7 @@ static int get_extension(lua_State* state)
 
     str<32> ext;
     path::get_extension(path, ext);
-    lua_pushstring(state, ext.c_str());
+    lua_pushlstring(state, ext.c_str(), ext.length());
     return 1;
 }
 
@@ -130,7 +130,7 @@ static int get_name(lua_State* state)
 
     str<> name;
     path::get_name(path, name);
-    lua_pushstring(state, name.c_str());
+    lua_pushlstring(state, name.c_str(), name.length());
     return 1;
 }
 
@@ -152,7 +152,7 @@ static int join(lua_State* state)
 
     str<288> out;
     path::join(lhs, rhs, out);
-    lua_pushstring(state, out.c_str());
+    lua_pushlstring(state, out.c_str(), out.length());
     return 1;
 }
 

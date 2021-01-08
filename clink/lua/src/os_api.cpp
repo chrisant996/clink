@@ -52,7 +52,7 @@ int get_current_dir(lua_State* state)
     str<288> dir;
     os::get_current_dir(dir);
 
-    lua_pushstring(state, dir.c_str());
+    lua_pushlstring(state, dir.c_str(), dir.length());
     return 1;
 }
 
@@ -152,7 +152,7 @@ static int unlink(lua_State* state)
     }
 
     lua_pushnil(state);
-    lua_pushstring(state, "error");
+    lua_pushliteral(state, "error");
     lua_pushinteger(state, 1);
     return 3;
 }
@@ -175,7 +175,7 @@ static int move(lua_State* state)
     }
 
     lua_pushnil(state);
-    lua_pushstring(state, "error");
+    lua_pushliteral(state, "error");
     lua_pushinteger(state, 1);
     return 3;
 }
@@ -232,14 +232,14 @@ int glob_impl(lua_State* state, bool dirs_only, bool back_compat=false)
     {
         if (back_compat)
         {
-            lua_pushstring(state, file.c_str());
+            lua_pushlstring(state, file.c_str(), file.length());
         }
         else
         {
             lua_createtable(state, 0, 2);
 
-            lua_pushstring(state, "name");
-            lua_pushstring(state, file.c_str());
+            lua_pushliteral(state, "name");
+            lua_pushlstring(state, file.c_str(), file.length());
             lua_rawset(state, -3);
 
             type.clear();
@@ -248,8 +248,8 @@ int glob_impl(lua_State* state, bool dirs_only, bool back_compat=false)
                 add_type_tag(type, "hidden");
             if (attr & FILE_ATTRIBUTE_READONLY)
                 add_type_tag(type, "readonly");
-            lua_pushstring(state, "type");
-            lua_pushstring(state, type.c_str());
+            lua_pushliteral(state, "type");
+            lua_pushlstring(state, type.c_str(), type.length());
             lua_rawset(state, -3);
         }
 
@@ -321,7 +321,7 @@ int get_env(lua_State* state)
     if (!os::get_env(name, value))
         return 0;
 
-    lua_pushstring(state, value.c_str());
+    lua_pushlstring(state, value.c_str(), value.length());
     return 1;
 }
 
@@ -376,7 +376,7 @@ int get_env_names(lua_State* state)
         *eq = '\0';
         var = strings;
 
-        lua_pushstring(state, var.c_str());
+        lua_pushlstring(state, var.c_str(), var.length());
         lua_rawseti(state, -2, i++);
 
         ++eq;
@@ -404,7 +404,7 @@ static int get_host(lua_State* state)
     str<280> host;
     host = module;
 
-    lua_pushstring(state, host.c_str());
+    lua_pushlstring(state, host.c_str(), host.length());
     return 1;
 }
 

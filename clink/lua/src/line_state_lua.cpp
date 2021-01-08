@@ -99,20 +99,20 @@ int line_state_lua::get_word_info(lua_State* state)
 
     lua_createtable(state, 0, 4);
 
-    lua_pushstring(state, "offset");
+    lua_pushliteral(state, "offset");
     lua_pushinteger(state, word.offset + 1);
     lua_rawset(state, -3);
 
-    lua_pushstring(state, "length");
+    lua_pushliteral(state, "length");
     lua_pushinteger(state, word.length);
     lua_rawset(state, -3);
 
-    lua_pushstring(state, "quoted");
+    lua_pushliteral(state, "quoted");
     lua_pushboolean(state, word.quoted);
     lua_rawset(state, -3);
 
     char delim[2] = { char(word.delim) };
-    lua_pushstring(state, "delim");
+    lua_pushliteral(state, "delim");
     lua_pushstring(state, delim);
     lua_rawset(state, -3);
 
