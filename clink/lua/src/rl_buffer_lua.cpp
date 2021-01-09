@@ -10,6 +10,7 @@ extern "C" {
 #include <lua.h>
 #include <lauxlib.h>
 #include <lualib.h>
+extern void _rl_update_final(void);
 }
 
 #include <assert.h>
@@ -45,6 +46,9 @@ rl_buffer_lua::~rl_buffer_lua()
         m_rl_buffer.end_undo_group();
         m_num_undo--;
     }
+
+    if (m_began_output)
+        m_rl_buffer.redraw();
 }
 
 //------------------------------------------------------------------------------
@@ -171,7 +175,10 @@ int rl_buffer_lua::end_undo_group(lua_State* state)
 /// so that subsequent output doesn't overwrite the input buffer display.
 int rl_buffer_lua::begin_output(lua_State* state)
 {
-    // TODO: advance output cursor.
-    // TODO: set flag to force full redraw after key binding finishes execution.
+    if (!m_began_output)
+    {
+        _rl_update_final();
+        m_began_output = true;
+    }
     return 0;
 }

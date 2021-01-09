@@ -31,4 +31,5 @@ public:
 private:
     line_buffer&            m_rl_buffer;
     int                     m_num_undo = 0;
+    bool                    m_began_output = false;
 };
