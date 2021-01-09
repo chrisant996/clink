@@ -8,7 +8,6 @@ ChrisAnt Plans
 - Provide Lua API to get `line` object for previous line.  So that e.g. "insert 3rd argument from previous command" can be implemented.
 - `clink-show-help` doesn't advance cursor past the input buffer correctly (e.g. on line 1 of multiline buffer).
   - `luafunc:` macros need a way to advance cursor past the input buffer, and doing so should automatically trigger a full redraw afterwards (`g_result->redraw()`).
-- `str<>::format` needs to grow when growable.
 - **Esc** at `clink-show-help` pager prompt ends up clearing the input buffer.
 - Verify (again?) that popup windows show up in the right location with ConEmu and Windows Terminal.
 - Is autorun compatible with ConEmu?  If not, can it be made compatible?

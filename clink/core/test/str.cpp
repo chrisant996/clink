@@ -145,9 +145,20 @@ TEST_CASE("Strings" NAME_SUFFIX)
         REQUIRE(s.iequals(STR("abc")) == true);
     }
 
-    SECTION("Format")
+    SECTION("Format growable")
     {
         str<6> s;
+
+        REQUIRE(s.format(STR("%d"), 123) == true);
+        REQUIRE(s.equals(STR("123")));
+
+        REQUIRE(s.format(STR("%d"), 1234567) == true);
+        REQUIRE(s.equals(STR("1234567")));
+    }
+
+    SECTION("Format fixed")
+    {
+        str<6, false> s;
 
         REQUIRE(s.format(STR("%d"), 123) == true);
         REQUIRE(s.equals(STR("123")));

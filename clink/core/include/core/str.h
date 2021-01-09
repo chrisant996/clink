@@ -345,18 +345,43 @@ bool str_impl<TYPE>::concat(const TYPE* src, int n)
 }
 
 //------------------------------------------------------------------------------
-template <typename TYPE>
-bool str_impl<TYPE>::format(const TYPE* format, ...)
+inline bool str_impl<char>::format(const char* format, ...)
 {
     va_list args;
     va_start(args, format);
-    unsigned int ret = vsnprint(m_data, m_size, format, args);
+
+    int len = vsnprint(m_data, m_size, format, args);
+    if (len >= int(m_size) && reserve(len))
+        len = vsnprint(m_data, m_size, format, args);
     va_end(args);
 
     m_data[m_size - 1] = '\0';
     m_length = 0;
 
-    return (ret <= m_size);
+    return ((unsigned int)len <= m_size);
+}
+
+//------------------------------------------------------------------------------
+inline bool str_impl<wchar_t>::format(const wchar_t* format, ...)
+{
+    va_list args;
+    va_start(args, format);
+
+    int len = vsnprint(m_data, m_size - 1, format, args);
+    if (len < 0 && is_growable())
+    {
+        // _vsnwprintf works differently and only indicates how much space is
+        // needed if explicitly asked.
+        len = vsnprint(nullptr, 0, format, args);
+        if (len >= 0 && reserve(len))
+            len = vsnprint(m_data, m_size - 1, format, args);
+    }
+    va_end(args);
+
+    m_data[m_size - 1] = '\0';
+    m_length = 0;
+
+    return ((unsigned int)len <= m_size);
 }
 
 //------------------------------------------------------------------------------
