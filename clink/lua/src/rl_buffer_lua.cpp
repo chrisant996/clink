@@ -10,7 +10,8 @@ extern "C" {
 #include <lua.h>
 #include <lauxlib.h>
 #include <lualib.h>
-extern void _rl_update_final(void);
+extern void _rl_move_vert(int);
+extern int _rl_vis_botlin;
 }
 
 #include <assert.h>
@@ -177,7 +178,8 @@ int rl_buffer_lua::begin_output(lua_State* state)
 {
     if (!m_began_output)
     {
-        _rl_update_final();
+        _rl_move_vert(_rl_vis_botlin);
+        puts("");
         m_began_output = true;
     }
     return 0;

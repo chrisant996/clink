@@ -13,7 +13,9 @@
 
 extern "C" {
 #include <readline/readline.h>
-char *_rl_untranslate_macro_value(char *seq, int use_escapes);
+extern char *_rl_untranslate_macro_value(char *seq, int use_escapes);
+extern void _rl_move_vert(int);
+extern int _rl_vis_botlin;
 }
 
 #include <vector>
@@ -403,6 +405,9 @@ static void show_key_bindings(bool friendly)
 
     bool vertical = !_rl_print_completions_horizontally;
     int index_step = vertical ? total_rows : 1;
+
+    // Move cursor past the input line.
+    _rl_move_vert(_rl_vis_botlin);
 
     // Display the matches.
     str<> str;
