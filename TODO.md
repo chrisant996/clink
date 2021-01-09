@@ -3,6 +3,7 @@ ChrisAnt Plans
 <br/>
 
 # RELEASE
+- Document the `luafunc:` thing!
 - Provide Lua API for scrolling.
 - Provide Lua API to retrieve text and/or attributes for a line from the screen buffer.
 - Provide Lua API to get `line` object for previous line.  So that e.g. "insert 3rd argument from previous command" can be implemented.
