@@ -94,7 +94,7 @@ extern setting_color g_color_interact;
 terminal_in*        s_direct_input = nullptr;       // for read_key_hook
 terminal_in*        s_processed_input = nullptr;    // for read thunk
 printer*            g_printer = nullptr;
-line_buffer*        rl_buffer = nullptr;
+line_buffer*        g_rl_buffer = nullptr;
 pager*              g_pager = nullptr;
 editor_module::result* g_result = nullptr;
 
@@ -874,7 +874,7 @@ int clink_popup_history(int count, int invoking_key)
     int total = 0;
     for (int i = 0; i < history_length; i++)
     {
-        if (!STREQN(rl_buffer->get_buffer(), list[i]->line, search_len))
+        if (!STREQN(g_rl_buffer->get_buffer(), list[i]->line, search_len))
             continue;
         history[total] = list[i]->line;
         indices[total] = i;
@@ -1237,7 +1237,7 @@ void rl_module::on_begin_line(const context& context)
 {
     g_printer = &context.printer;
     g_pager = &context.pager;
-    rl_buffer = &context.buffer;
+    g_rl_buffer = &context.buffer;
     if (g_classify_words.get())
         s_classifications = &context.classifications;
 
@@ -1325,7 +1325,7 @@ void rl_module::on_end_line()
     // This prevents any partial Readline state leaking from one line to the next
     rl_readline_state &= ~RL_MORE_INPUT_STATES;
 
-    rl_buffer = nullptr;
+    g_rl_buffer = nullptr;
     g_pager = nullptr;
     g_printer = nullptr;
 }

@@ -4,6 +4,7 @@
 #include "pch.h"
 #include "lua_state.h"
 #include "lua_script_loader.h"
+#include "rl_buffer_lua.h"
 
 #include <core/settings.h>
 #include <core/os.h>
@@ -15,6 +16,9 @@ extern "C" {
 #include <lauxlib.h>
 #include <lualib.h>
 }
+
+class line_buffer;
+extern line_buffer* g_rl_buffer;
 
 //------------------------------------------------------------------------------
 bool g_force_load_debugger = false;
@@ -324,6 +328,31 @@ bool lua_state::send_event(const char* event_name, int nargs)
 bool lua_state::send_event_cancelable(const char* event_name, int nargs)
 {
     return send_event_internal(event_name, "_send_event_cancelable", nargs);
+}
+
+//------------------------------------------------------------------------------
+bool lua_state::call_lua_rl_global_function(const char* func_name)
+{
+    lua_State* state = get_state();
+
+    lua_getglobal(state, func_name);
+    if (!lua_isfunction(state, -1))
+        return false;
+
+    rl_buffer_lua buffer(*g_rl_buffer);
+    buffer.push(state);
+
+    if (pcall(1, 0) != LUA_OK)
+    {
+        if (const char* error = lua_tostring(state, -1))
+        {
+            printf("\nerror executing function '%s':\n", func_name);
+            puts(error);
+        }
+        return false;
+    }
+
+    return true;
 }
 
 //------------------------------------------------------------------------------

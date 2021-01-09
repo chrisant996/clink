@@ -24,6 +24,7 @@ public:
 
     bool            send_event(const char* event_name, int nargs=0);
     bool            send_event_cancelable(const char* event_name, int nargs=0);
+    bool            call_lua_rl_global_function(const char* func_name);
 
     void            print_error(const char* error);
 

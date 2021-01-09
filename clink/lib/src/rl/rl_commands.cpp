@@ -36,7 +36,7 @@ static setting_enum g_paste_crlf(
 
 
 //------------------------------------------------------------------------------
-extern line_buffer* rl_buffer;
+extern line_buffer* g_rl_buffer;
 extern bool s_force_reload_scripts;
 extern editor_module::result* g_result;
 
@@ -94,7 +94,7 @@ int clink_reload(int count, int invoking_key)
 int clink_reset_line(int count, int invoking_key)
 {
     using_history();
-    rl_buffer->remove(0, rl_end);
+    g_rl_buffer->remove(0, rl_end);
     rl_point = 0;
 
     return 0;
@@ -104,7 +104,7 @@ int clink_reset_line(int count, int invoking_key)
 int clink_exit(int count, int invoking_key)
 {
     clink_reset_line(1, 0);
-    rl_buffer->insert("exit");
+    g_rl_buffer->insert("exit");
     rl_newline(1, invoking_key);
 
     return 0;
@@ -133,7 +133,7 @@ int clink_paste(int count, int invoking_key)
         to_utf8(utf8, (wchar_t*)clip_data);
 
         strip_crlf(utf8.data());
-        rl_buffer->insert(utf8.c_str());
+        g_rl_buffer->insert(utf8.c_str());
     }
 
     CloseClipboard();
@@ -164,7 +164,7 @@ static void copy_impl(const char* value, int length)
 //------------------------------------------------------------------------------
 int clink_copy_line(int count, int invoking_key)
 {
-    copy_impl(rl_buffer->get_buffer(), rl_buffer->get_length());
+    copy_impl(g_rl_buffer->get_buffer(), g_rl_buffer->get_length());
 
     return 0;
 }
@@ -173,17 +173,17 @@ int clink_copy_line(int count, int invoking_key)
 int clink_copy_word(int count, int invoking_key)
 {
     std::vector<word> words;
-    rl_buffer->collect_words(words, collect_words_mode::whole_command);
+    g_rl_buffer->collect_words(words, collect_words_mode::whole_command);
 
     if (!words.empty())
     {
-        unsigned int line_cursor = rl_buffer->get_cursor();
+        unsigned int line_cursor = g_rl_buffer->get_cursor();
         for (auto const& word : words)
         {
             if (line_cursor >= word.offset &&
                 line_cursor <= word.offset + word.length)
             {
-                copy_impl(rl_buffer->get_buffer() + word.offset, word.length);
+                copy_impl(g_rl_buffer->get_buffer() + word.offset, word.length);
                 return 0;
             }
         }
@@ -214,10 +214,10 @@ int clink_copy_cwd(int count, int invoking_key)
 //------------------------------------------------------------------------------
 int clink_up_directory(int count, int invoking_key)
 {
-    rl_buffer->begin_undo_group();
-    rl_buffer->remove(0, ~0u);
-    rl_buffer->insert(" cd ..");
-    rl_buffer->end_undo_group();
+    g_rl_buffer->begin_undo_group();
+    g_rl_buffer->remove(0, ~0u);
+    g_rl_buffer->insert(" cd ..");
+    g_rl_buffer->end_undo_group();
     rl_newline(1, invoking_key);
 
     return 0;
@@ -228,16 +228,16 @@ int clink_insert_dot_dot(int count, int invoking_key)
 {
     str<> str;
 
-    if (unsigned int cursor = rl_buffer->get_cursor())
+    if (unsigned int cursor = g_rl_buffer->get_cursor())
     {
-        char last_char = rl_buffer->get_buffer()[cursor - 1];
+        char last_char = g_rl_buffer->get_buffer()[cursor - 1];
         if (last_char != ' ' && !path::is_separator(last_char))
             str << PATH_SEP;
     }
 
     str << ".." << PATH_SEP;
 
-    rl_buffer->insert(str.c_str());
+    g_rl_buffer->insert(str.c_str());
 
     return 0;
 }

@@ -148,7 +148,7 @@ static void write_line_feed()
 
 
 //------------------------------------------------------------------------------
-extern line_buffer* rl_buffer;
+extern line_buffer* g_rl_buffer;
 
 //------------------------------------------------------------------------------
 static void get_word_bounds(const line_buffer& buffer, int* left, int* right)
@@ -189,10 +189,10 @@ int expand_env_var(int count, int invoking_key)
 {
     // Extract the word under the cursor.
     int word_left, word_right;
-    get_word_bounds(*rl_buffer, &word_left, &word_right);
+    get_word_bounds(*g_rl_buffer, &word_left, &word_right);
 
     str<1024> in;
-    in.concat(rl_buffer->get_buffer() + word_left, word_right - word_left);
+    in.concat(g_rl_buffer->get_buffer() + word_left, word_right - word_left);
 
     wstr<> win;
     to_utf16(win, in.c_str());
@@ -211,11 +211,11 @@ int expand_env_var(int count, int invoking_key)
     to_utf8(out, wout.c_str());
 
     // Update Readline with the resulting expansion.
-    rl_buffer->begin_undo_group();
-    rl_buffer->remove(word_left, word_right);
-    rl_buffer->set_cursor(word_left);
-    rl_buffer->insert(out.c_str());
-    rl_buffer->end_undo_group();
+    g_rl_buffer->begin_undo_group();
+    g_rl_buffer->remove(word_left, word_right);
+    g_rl_buffer->set_cursor(word_left);
+    g_rl_buffer->insert(out.c_str());
+    g_rl_buffer->end_undo_group();
 
     return 0;
 }
@@ -226,17 +226,17 @@ int expand_doskey_alias(int count, int invoking_key)
 {
     doskey_alias alias;
     doskey doskey("cmd.exe");
-    doskey.resolve(rl_buffer->get_buffer(), alias);
+    doskey.resolve(g_rl_buffer->get_buffer(), alias);
 
     str<> expand;
     alias.next(expand);
 
-    rl_buffer->begin_undo_group();
-    rl_buffer->remove(0, rl_end);
+    g_rl_buffer->begin_undo_group();
+    g_rl_buffer->remove(0, rl_end);
     rl_point = 0;
     if (!expand.empty())
-        rl_buffer->insert(expand.c_str());
-    rl_buffer->end_undo_group();
+        g_rl_buffer->insert(expand.c_str());
+    g_rl_buffer->end_undo_group();
 
     return 0;
 }
