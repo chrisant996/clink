@@ -196,6 +196,15 @@ int lua_state::pcall(lua_State* L, int nargs, int nresults)
 }
 
 //------------------------------------------------------------------------------
+const char* lua_state::get_string(int index) const
+{
+    if (lua_gettop(m_state) < index || !lua_isstring(m_state, index))
+        return nullptr;
+
+    return lua_tostring(m_state, index);
+}
+
+//------------------------------------------------------------------------------
 #ifdef DEBUG
 void dump_lua_stack(lua_State* state, int pos)
 {
@@ -328,6 +337,25 @@ bool lua_state::send_event(const char* event_name, int nargs)
 bool lua_state::send_event_cancelable(const char* event_name, int nargs)
 {
     return send_event_internal(event_name, "_send_event_cancelable", nargs);
+}
+
+//------------------------------------------------------------------------------
+// Calls any event_name callbacks registered by scripts.
+bool lua_state::send_event_cancelable_string_inout(const char* event_name, const char* string, str_base& out)
+{
+    if (!string)
+        string = "";
+
+    lua_pushstring(m_state, string);
+
+    if (!send_event_internal(event_name, "_send_event_cancelable_string_inout", 1, 1))
+        return false;
+
+    const char* result = get_string(-1);
+    if (result)
+        out = result;
+
+    return true;
 }
 
 //------------------------------------------------------------------------------

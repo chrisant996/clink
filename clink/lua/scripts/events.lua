@@ -33,6 +33,28 @@ function clink._send_event_cancelable(event, ...)
 end
 
 --------------------------------------------------------------------------------
+-- Sends a named event to all registered callback handlers for it and pass the
+-- provided string argument.  The first return value replaces string, unless
+-- nil.  If any handler returns false as the second return value then stop
+-- (returning nil does not stop).
+function clink._send_event_cancelable_string_inout(event, string)
+    local callbacks = clink._event_callbacks[event]
+    if callbacks ~= nil then
+        local _, func
+        for _, func in ipairs(callbacks) do
+            local s,continue = func(string)
+            if s then
+                string = s
+            end
+            if continue == false then
+                break
+            end
+        end
+        return string;
+    end
+end
+
+--------------------------------------------------------------------------------
 function clink._has_event_callbacks(event)
     local callbacks = clink._event_callbacks[event];
     if callbacks ~= nil then
@@ -62,9 +84,27 @@ end
 --- -name:  clink.onbeginedit
 --- -arg:   func:function
 --- Registers <span class="arg">func</span> to be called when Clink's edit
---- prompt is activated.
+--- prompt is activated.  The function receives no arguments and has no return
+--- values.
 function clink.onbeginedit(func)
     _add_event_callback("onbeginedit", func)
+end
+
+--------------------------------------------------------------------------------
+--- -name:  clink.onendedit
+--- -arg:   func:function
+--- Registers <span class="arg">func</span> to be called when Clink's edit
+--- prompt ends.  The function receives a string argument containing the input
+--- text from the edit prompt.  The function returns up to two values.  If the
+--- first is not nil then it's a string that replaces the edit prompt text.  If
+--- the second is not nil and is false then it stops further onendedit handlers
+--- from running.
+---
+--- <strong>Note:</strong>  Be very careful if you replace the text; this has
+--- the potential to interfere with or even ruin the user's ability to enter
+--- command lines for CMD to process.
+function clink.onendedit(func)
+    _add_event_callback("onendedit", func)
 end
 
 --------------------------------------------------------------------------------

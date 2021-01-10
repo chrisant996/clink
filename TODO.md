@@ -8,7 +8,6 @@ ChrisAnt Plans
   - Document the `luafunc:` thing!
   - Provide Lua API for scrolling.
   - Provide Lua API to retrieve text and/or attributes for a line from the screen buffer.
-  - Provide Lua API to get `line` object for previous line.  So that e.g. "insert 3rd argument from previous command" can be implemented.
 - Investigate:
   - Verify (again?) that popup windows show up in the right location with ConEmu and Windows Terminal.
   - Is autorun compatible with ConEmu?  If not, can it be made compatible?

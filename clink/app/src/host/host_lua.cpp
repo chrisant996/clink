@@ -189,6 +189,12 @@ bool host_lua::send_event_cancelable(const char* event_name, int nargs)
 }
 
 //------------------------------------------------------------------------------
+bool host_lua::send_event_cancelable_string_inout(const char* event_name, const char* string, str_base& out)
+{
+    return m_state.send_event_cancelable_string_inout(event_name, string, out);
+}
+
+//------------------------------------------------------------------------------
 bool host_lua::call_lua_rl_global_function(const char* func_name)
 {
     return m_state.call_lua_rl_global_function(func_name);

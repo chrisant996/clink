@@ -562,6 +562,9 @@ bool host::edit_line(const char* prompt, str_base& out)
         break;
     }
 
+    if (!resolved && send_event)
+        lua.send_event_cancelable_string_inout("onendedit", out.c_str(), out);
+
     if (!resolved)
     {
         m_doskey.resolve(out.c_str(), m_doskey_alias);
