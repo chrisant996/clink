@@ -3,14 +3,18 @@ ChrisAnt Plans
 <br/>
 
 # RELEASE
-- Document the `luafunc:` thing!
-- Provide Lua API for scrolling.
-- Provide Lua API to retrieve text and/or attributes for a line from the screen buffer.
-- Provide Lua API to get `line` object for previous line.  So that e.g. "insert 3rd argument from previous command" can be implemented.
-- **Esc** at `clink-show-help` pager prompt ends up clearing the input buffer.
-- Verify (again?) that popup windows show up in the right location with ConEmu and Windows Terminal.
-- Is autorun compatible with ConEmu?  If not, can it be made compatible?
-- An unbound Escape in a chord inserts part of the bindableEsc string.  It should abort the chord.
+- `";"` gets colored as a doskey alias, but `;` doesn't (there's a `;` doskey alias because of an issue in Cmder's default configurations).
+- Key binding for Lua functions:
+  - Document the `luafunc:` thing!
+  - Provide Lua API for scrolling.
+  - Provide Lua API to retrieve text and/or attributes for a line from the screen buffer.
+  - Provide Lua API to get `line` object for previous line.  So that e.g. "insert 3rd argument from previous command" can be implemented.
+- Investigate:
+  - Verify (again?) that popup windows show up in the right location with ConEmu and Windows Terminal.
+  - Is autorun compatible with ConEmu?  If not, can it be made compatible?
+- Escape key:
+  - **Esc** at `clink-show-help` pager prompt ends up clearing the input buffer.
+  - An unbound Escape in a chord inserts part of the bindableEsc string.  It should abort the chord.
 
 ## Issues
 - [#45](https://github.com/chrisant996/clink/issues/45) Interaction between erase_prev and history.shared=false

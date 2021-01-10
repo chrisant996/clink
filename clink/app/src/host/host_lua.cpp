@@ -88,11 +88,27 @@ bool host_lua::load_scripts(const char* paths)
     if (paths == nullptr || paths[0] == '\0')
         return false;
 
+    bool first = true;
+
     str<280> token;
     str_tokeniser tokens(paths, ";");
     while (tokens.next(token))
     {
         token.trim();
+
+        if (first)
+        {
+            // Cmder relies on being able to replace the v0.4.9 clink.lua file.
+            // Clink no longer uses that file, but to accommodate Cmder Clink
+            // will continue to load clink.lua from the first script path, if
+            // such a file exists.
+            first = false;
+            str<280> clink;
+            if (path::join(token.c_str(), "clink.lua", clink) &&
+                os::get_path_type(clink.c_str()) == os::path_type_file)
+                m_state.do_file(clink.c_str());
+        }
+
         load_script(token.c_str());
     }
     return true;
