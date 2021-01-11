@@ -13,7 +13,7 @@
 - Changed `os.getbatterystatus()` to return a table with the battery status details, rather than four separate return values.
 - Fixed the `doskey.enhanced` setting to not expand doskey aliases when preceded by a space.  However, a doskey alias after a `&` or `|` command separator needs to be preceded by two spaces to avoid expanding it.  That's so `alias & alias` expands both, and ` alias &  alias` expands neither; while the rules are more complicated to explain, they make more sense visually.
 - Fixed environment variable completion (regression introduced in v1.1.19).
-- Fixed Cmder startup (regression introduced in v1.1.17).  Cmder expects to be able to replace Clink v0.4.9's clink.lua file, but there is no such thing anymore in newer versions of Clink.  To be properly backwardly compatible with Clink v0.4.9 requires to load clink.lua (if it exists) from the first script directory listed by `clink info`, and to ignore clink.lua files in all other script directories.
+- Fixed Cmder startup (regression introduced in v1.1.17).  Cmder expects to be able to replace Clink v0.4.9's clink.lua file, but there is no such thing anymore in newer versions of Clink.  To be properly backwardly compatible with Clink v0.4.9 requires loading clink.lua (if it exists) from the first script directory listed by `clink info`, and ignoring clink.lua files in all other script directories.
 
 ### v1.1.19
 
