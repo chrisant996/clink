@@ -4,10 +4,16 @@
 
 ### v1.1.20
 
+- Now you can bind Lua functions to keys!  Added new `rl_buffer` type that gets passed to the Lua function.
+- Added a group of `console` Lua APIs intended mainly for use by Lua function key bindings (e.g. `console.scroll()`).
 - Added `string.equalsi()` function that performs a case insensitive UTF8 comparison of two strings.
 - Added `string.matchlen()` function that compares two UTF8 strings and returns how many characters match at the beginning, or -1 if the entire strings match. It respects the `match.ignore_case` and `match.ignore_accents` settings.
+- Added `path.toparent()` function that adjust the input string by moving up one directory level.
+- Added `clink.onendedit()` so scripts can register a callback function to run when editing finishes (e.g. <kbd>Enter</kbd> is pressed).  If desired, the function can even change the input text.  This is very powerful, and should be used carefully.
 - Changed `os.getbatterystatus()` to return a table with the battery status details, rather than four separate return values.
+- Fixed the `doskey.enhanced` setting to not expand doskey aliases when preceded by a space.  However, a doskey alias after a `&` or `|` command separator needs to be preceded by two spaces to avoid expanding it.  That's so `alias & alias` expands both, and ` alias &  alias` expands neither; while the rules are more complicated to explain, they make more sense visually.
 - Fixed environment variable completion (regression introduced in v1.1.19).
+- Fixed Cmder startup (regression introduced in v1.1.17).  Cmder expects to be able to replace Clink v0.4.9's clink.lua file, but there is no such thing anymore in newer versions of Clink.  To be properly backwardly compatible with Clink v0.4.9 requires to load clink.lua (if it exists) from the first script directory listed by `clink info`, and to ignore clink.lua files in all other script directories.
 
 ### v1.1.19
 
@@ -29,6 +35,7 @@
 
 - Added `os.getbatterystatus()` function that gets battery status information much faster than launching `wmic`.
 - Fixed [#44](https://github.com/chrisant996/clink/issues/44) Path completion doesn't work with `cd /d`.
+- Fixed loading scripts to ignore loading clink.lua, so that loading scripts behaves like Clink v0.4.9.
 
 ### v1.1.16
 
@@ -67,7 +74,7 @@
 ### v1.1.11
 
 - Changed to load Lua scripts only once per session, unless forced to reload them.  This enables backward compatibility for things like [z.lua](https://github.com/skywind3000/z.lua) which has certain features that rely on Clink only loading scripts once per session.
-- Added `clink.onbeginedit()` so scripts can register a callback function to be called each time the edit prompt is activated.
+- Added `clink.onbeginedit()` so scripts can register a callback function to run each time the edit prompt is activated.
 - Added `lua.reload_scripts` setting to optionally force reloading Lua scripts each time the edit prompt is activated.
 - Added `color.message` setting for the Readline message area color (e.g. the search prompt message or digit argument prompt message, etc).
 - Fixed stray sticky `=` appended to completions after typing `set ` and then typing a different command.
