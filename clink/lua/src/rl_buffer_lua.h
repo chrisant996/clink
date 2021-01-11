@@ -27,6 +27,7 @@ public:
     int                     begin_undo_group(lua_State* state);
     int                     end_undo_group(lua_State* state);
     int                     begin_output(lua_State* state);
+    int                     ding(lua_State* state);
 
 private:
     line_buffer&            m_rl_buffer;

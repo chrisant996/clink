@@ -6,6 +6,7 @@
 #include "attributes.h"
 
 class terminal_out;
+class str_base;
 
 //------------------------------------------------------------------------------
 void set_scrolled_screen_buffer();
@@ -24,6 +25,8 @@ public:
     template <int S> void   print(const attributes attr, const char (&data)[S]);
     unsigned int            get_columns() const;
     unsigned int            get_rows() const;
+    bool                    get_line_text(int line, str_base& out) const;
+    int                     is_line_default_color(int line) const;
     attributes              set_attributes(const attributes attr);
     attributes              get_attributes() const;
 

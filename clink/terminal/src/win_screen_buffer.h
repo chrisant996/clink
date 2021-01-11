@@ -5,6 +5,8 @@
 
 #include "screen_buffer.h"
 
+class str_base;
+
 //------------------------------------------------------------------------------
 class win_screen_buffer
     : public screen_buffer
@@ -19,6 +21,7 @@ public:
     virtual void    flush() override;
     virtual int     get_columns() const override;
     virtual int     get_rows() const override;
+    virtual bool    get_line_text(int line, str_base& out) const override;
     virtual bool    has_native_vt_processing() const override;
     virtual void    clear(clear_type type) override;
     virtual void    clear_line(clear_type type) override;
@@ -27,7 +30,8 @@ public:
     virtual void    insert_chars(int count) override;
     virtual void    delete_chars(int count) override;
     virtual void    set_attributes(const attributes attr) override;
-    virtual bool    get_nearest_color(attributes& attr) override;
+    virtual bool    get_nearest_color(attributes& attr) const override;
+    virtual int     is_line_default_color(int line) const override;
 
 private:
     enum : unsigned short
@@ -45,4 +49,10 @@ private:
     bool            m_ready = false;
     bool            m_bold = false;
     bool            m_native_vt = false;
+
+    mutable WORD*   m_attrs = nullptr;
+    mutable SHORT   m_attrs_capacity = 0;
+
+    mutable WCHAR*  m_chars = nullptr;
+    mutable SHORT   m_chars_capacity = 0;
 };

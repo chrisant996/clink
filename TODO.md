@@ -5,10 +5,6 @@ ChrisAnt Plans
 # RELEASE
 - `console.scroll()` needs to prevent `win_terminal_in::read_console()` from unscrolling.  Be cafeful, though...!
 - `";"` gets colored as a doskey alias, but `;` doesn't (there's a `;` doskey alias because of an issue in Cmder's default configurations).
-- Key binding for Lua functions:
-  - Document the `luafunc:` thing!
-  - Provide Lua API for scrolling.
-  - Provide Lua API to retrieve text and/or attributes for a line from the screen buffer.
 - Investigate:
   - Verify (again?) that popup windows show up in the right location with ConEmu and Windows Terminal.
   - Is autorun compatible with ConEmu?  If not, can it be made compatible?

@@ -45,6 +45,8 @@ public:
     virtual void            flush() override {}
     virtual int             get_columns() const override { return 80; }
     virtual int             get_rows() const override { return 25; }
+    virtual bool            get_line_text(int line, str_base& out) const { return false; }
+    virtual int             is_line_default_color(int line) const { return true; }
     virtual void            set_attributes(const attributes attr) {}
 };
 

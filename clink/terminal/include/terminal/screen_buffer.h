@@ -5,6 +5,8 @@
 
 #include "attributes.h"
 
+class str_base;
+
 //------------------------------------------------------------------------------
 class screen_buffer
 {
@@ -25,6 +27,7 @@ public:
     virtual void    flush() = 0;
     virtual int     get_columns() const = 0;
     virtual int     get_rows() const = 0;
+    virtual bool    get_line_text(int line, str_base& out) const = 0;
     virtual bool    has_native_vt_processing() const = 0;
     virtual void    clear(clear_type type) = 0;
     virtual void    clear_line(clear_type type) = 0;
@@ -33,7 +36,8 @@ public:
     virtual void    insert_chars(int count) = 0;
     virtual void    delete_chars(int count) = 0;
     virtual void    set_attributes(const attributes attr) = 0;
-    virtual bool    get_nearest_color(attributes& attr) = 0;
+    virtual bool    get_nearest_color(attributes& attr) const = 0;
+    virtual int     is_line_default_color(int line) const = 0;
 };
 
 //------------------------------------------------------------------------------

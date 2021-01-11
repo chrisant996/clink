@@ -10,6 +10,7 @@ extern "C" {
 #include <lua.h>
 #include <lauxlib.h>
 #include <lualib.h>
+#include <readline/readline.h>
 extern void _rl_move_vert(int);
 extern int _rl_vis_botlin;
 }
@@ -27,6 +28,7 @@ static rl_buffer_lua::method g_methods[] = {
     { "beginundogroup", &rl_buffer_lua::begin_undo_group },
     { "endundogroup",   &rl_buffer_lua::end_undo_group },
     { "beginoutput",    &rl_buffer_lua::begin_output },
+    { "ding",           &rl_buffer_lua::ding },
     {}
 };
 
@@ -182,5 +184,15 @@ int rl_buffer_lua::begin_output(lua_State* state)
         puts("");
         m_began_output = true;
     }
+    return 0;
+}
+
+//------------------------------------------------------------------------------
+/// -name:  rl_buffer:ding
+/// Dings the bell.  If the <code>bell-style</code> Readline variable is
+/// <code>visible</code> then it flashes the cursor instead
+int rl_buffer_lua::ding(lua_State* state)
+{
+    rl_ding();
     return 0;
 }

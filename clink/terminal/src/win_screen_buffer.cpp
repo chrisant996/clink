@@ -31,6 +31,8 @@ static setting_enum g_terminal_emulation(
 win_screen_buffer::~win_screen_buffer()
 {
     close();
+    free(m_attrs);
+    free(m_chars);
 }
 
 //------------------------------------------------------------------------------
@@ -189,6 +191,36 @@ int win_screen_buffer::get_rows() const
     CONSOLE_SCREEN_BUFFER_INFO csbi;
     GetConsoleScreenBufferInfo(m_handle, &csbi);
     return (csbi.srWindow.Bottom - csbi.srWindow.Top) + 1;
+}
+
+//------------------------------------------------------------------------------
+bool win_screen_buffer::get_line_text(int line, str_base& out) const
+{
+    CONSOLE_SCREEN_BUFFER_INFO csbi;
+    if (!GetConsoleScreenBufferInfo(m_handle, &csbi))
+        return false;
+
+    if (csbi.dwSize.X > m_chars_capacity)
+    {
+        m_chars = static_cast<WCHAR*>(malloc(csbi.dwSize.X * sizeof(*m_chars)));
+        if (!m_chars)
+            return false;
+        m_chars_capacity = csbi.dwSize.X;
+    }
+
+    COORD coord = { 0, SHORT(line) };
+    DWORD len = 0;
+    if (!ReadConsoleOutputCharacterW(m_handle, m_chars, csbi.dwSize.X, coord, &len))
+        return false;
+    if (len != csbi.dwSize.X)
+        return false;
+
+    while (len > 0 && iswspace(m_chars[len - 1]))
+        len--;
+
+    out.clear();
+    to_utf8(out, wstr_iter(m_chars, len));
+    return true;
 }
 
 //------------------------------------------------------------------------------
@@ -462,7 +494,7 @@ static bool get_nearest_color(void* handle, const unsigned char (&rgb)[3], unsig
 }
 
 //------------------------------------------------------------------------------
-bool win_screen_buffer::get_nearest_color(attributes& attr)
+bool win_screen_buffer::get_nearest_color(attributes& attr) const
 {
     const attributes::color fg = attr.get_fg().value;
     const attributes::color bg = attr.get_bg().value;
@@ -484,5 +516,35 @@ bool win_screen_buffer::get_nearest_color(attributes& attr)
             return false;
         attr.set_bg(val);
     }
+    return true;
+}
+
+//------------------------------------------------------------------------------
+int win_screen_buffer::is_line_default_color(int line) const
+{
+    CONSOLE_SCREEN_BUFFER_INFO csbi;
+    if (!GetConsoleScreenBufferInfo(m_handle, &csbi))
+        return -1;
+
+    if (csbi.dwSize.X > m_attrs_capacity)
+    {
+        m_attrs = static_cast<WORD*>(malloc(csbi.dwSize.X * sizeof(*m_attrs)));
+        if (!m_attrs)
+            return -1;
+        m_attrs_capacity = csbi.dwSize.X;
+    }
+
+    int ret = true;
+    COORD coord = { 0, SHORT(line) };
+    DWORD len = 0;
+    if (!ReadConsoleOutputAttribute(m_handle, m_attrs, csbi.dwSize.X, coord, &len))
+        return -1;
+    if (len != csbi.dwSize.X)
+        return -1;
+
+    for (const WORD* attr = m_attrs; len--; attr++)
+        if (*attr != m_default_attr)
+            return false;
+
     return true;
 }

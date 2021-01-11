@@ -26,6 +26,7 @@ Clink combines the native Windows shell cmd.exe with the powerful command line e
   - Typing `..` or `...` is a shortcut for `cd ..` or `cd ..\..` (each additional `.` adds another `\..`).
   - Typing `-` or `cd -` changes to the previous current working directory.
 - Scriptable completion with Lua.
+- Scriptable key bindings with Lua.
 - Colored and scriptable prompt.
 - Auto-answering of the "Terminate batch job?" prompt.
 
@@ -235,9 +236,12 @@ Other software that also uses Readline will also look for the `.inputrc` file (a
 ## Basic Format
 
 The quick version is that mostly you'll use these kinds of lines:
-- <code><em>keyname</em>: <em>command</em></code>
-- <code><em>keyname</em>: "<em>literal text</em>"</code>
-- <code>set <em>varname</em> <em>value</em></code>
+- <code><span class="arg">keyname</span>: <span class="arg">command</span></code>
+- <code><span class="arg">keyname</span>: "<span class="arg">literal text</span>"</code>
+- <code><span class="arg">keyname</span>: "luafunc:<span class="arg">lua_function_name</span>"</code>
+- <code>set <span class="arg">varname</span> <span class="arg">value</span></code>
+
+If a Readline macro begins with "luafunc:" then Clink interprets it as a Lua key binding and will invoke the named Lua function.  Function names can include periods (such as `foo.bar`) but cannot include any other punctuation.  See <a href="#luakeybindings">Lua Key Bindings</a> for more information.
 
 Refer to the Readline [manual](https://tiswww.cwru.edu/php/chet/readline/rltop.html#Documentation) for a more thorough explanation of the inputrc file format, list of available commands, and list of configuration variables and their values.
 
@@ -853,6 +857,35 @@ Here is a table of the key binding sequences for the special keys.  Clink primar
 |F10        |`\e[21~`   |`\e[21;2~` |`\e[21;5~`   |`\e[21;6~`   |`\e\e[21~`|`\e\e[21;2~`|`\e\e[21;5~` |`\e\e[21;6~`  |
 |F11        |`\e[23~`   |`\e[23;2~` |`\e[23;5~`   |`\e[23;6~`   |`\e\e[23~`|`\e\e[23;2~`|`\e\e[23;5~` |`\e\e[23;6~`  |
 |F12        |`\e[24~`   |`\e[24;2~` |`\e[24;5~`   |`\e[24;6~`   |`\e\e[24~`|`\e\e[24;2~`|`\e\e[24;5~` |`\e\e[24;6~`  |
+
+<a name="luakeybindings"/>
+
+### Lua Key Bindings
+
+You can bind a key to a Lua function by binding it to a macro that begins with "luafunc:".  Clink will invoke the named Lua function when the key binding is input.  Function names can include periods (such as `foo.bar`) but cannot include any other punctuation.
+
+The Lua function receives a <a href="#rl_buffer">rl_buffer</a> argument that gives it access to the input buffer.
+
+Lua functions can print output, but should first call <a href="#rl_buffer:beginoutput">rl_buffer:beginoutput</a> so that the output doesn't overwrite the displayed input line.
+
+Example of a Lua function key binding in an inputrc file:
+
+<pre><code class="plaintext"><span class="hljs-string">M-C-y</span>:      <span class="hljs-string">"luafunc:insert_date"</span>
+<span class="hljs-string">M-C-z</span>:      <span class="hljs-string">"luafunc:print_date"</span>
+</code></pre>
+
+Example functions to go with that:
+
+```lua
+function insert_date(rl_buffer)
+    rl_buffer:insert(os.date("%x %X"))
+end
+
+function print_date(rl_buffer)
+    rl_buffer:beginoutput()
+    print(os.date("%A %B %d, %Y   %I:%M %p"))
+end
+```
 
 ## Saved command history
 

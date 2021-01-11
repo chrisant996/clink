@@ -5,6 +5,8 @@
 
 #include "attributes.h"
 
+class str_base;
+
 //------------------------------------------------------------------------------
 class terminal_out
 {
@@ -16,9 +18,11 @@ public:
     virtual void            close() = 0;    // Should be not strictly required.
     virtual void            write(const char* chars, int length) = 0;
     template <int S> void   write(const char (&chars)[S]);
+    virtual bool            get_line_text(int line, str_base& out) const = 0;
     virtual void            flush() = 0;
     virtual int             get_columns() const = 0;
     virtual int             get_rows() const = 0;
+    virtual int             is_line_default_color(int line) const = 0;
 };
 
 //------------------------------------------------------------------------------

@@ -120,6 +120,18 @@ int ecma48_terminal_out::get_rows() const
 }
 
 //------------------------------------------------------------------------------
+bool ecma48_terminal_out::get_line_text(int line, str_base& out) const
+{
+    return m_screen.get_line_text(line, out);
+}
+
+//------------------------------------------------------------------------------
+int ecma48_terminal_out::is_line_default_color(int line) const
+{
+    return m_screen.is_line_default_color(line);
+}
+
+//------------------------------------------------------------------------------
 void ecma48_terminal_out::write_c1(const ecma48_code& code)
 {
     if (code.get_code() != ecma48_code::c1_csi)

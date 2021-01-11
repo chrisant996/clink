@@ -7,6 +7,7 @@
 #include "terminal_out.h"
 
 class screen_buffer;
+class str_base;
 
 //------------------------------------------------------------------------------
 class ecma48_terminal_out
@@ -22,6 +23,8 @@ public:
     virtual void        flush() override;
     virtual int         get_columns() const override;
     virtual int         get_rows() const override;
+    virtual bool        get_line_text(int line, str_base& out) const override;
+    virtual int         is_line_default_color(int line) const override;
 
 private:
     void                write_c1(const ecma48_code& code);

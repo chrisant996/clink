@@ -91,6 +91,18 @@ unsigned int printer::get_rows() const
 }
 
 //------------------------------------------------------------------------------
+bool printer::get_line_text(int line, str_base& out) const
+{
+    return m_terminal.get_line_text(line, out);
+}
+
+//------------------------------------------------------------------------------
+int printer::is_line_default_color(int line) const
+{
+    return m_terminal.is_line_default_color(line);
+}
+
+//------------------------------------------------------------------------------
 attributes printer::set_attributes(const attributes attr)
 {
     attributes prev_attr = m_next_attr;
