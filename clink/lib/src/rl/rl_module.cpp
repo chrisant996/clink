@@ -22,6 +22,7 @@
 #include <terminal/terminal_in.h>
 #include <terminal/key_tester.h>
 #include <terminal/screen_buffer.h>
+#include <terminal/scroll.h>
 
 #include <unordered_set>
 
@@ -1369,6 +1370,11 @@ void rl_module::on_input(const input& input, result& result, const context& cont
     while (len && !m_done)
     {
         bool is_quoted_insert = rl_is_insert_next_callback_pending();
+
+        // Reset the scroll mode right before handling input so that "scroll
+        // mode" can be deduced based on whether the most recently invoked
+        // command called `console.scroll()` or `ScrollConsoleRelative()`.
+        reset_scroll_mode();
 
         --len;
         rl_callback_read_char();

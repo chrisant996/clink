@@ -3,6 +3,7 @@
 
 #include "pch.h"
 #include "win_terminal_in.h"
+#include "scroll.h"
 #include "key_tester.h"
 
 #include <core/base.h>
@@ -12,11 +13,6 @@
 #include <Windows.h>
 #include <assert.h>
 #include <map>
-
-//------------------------------------------------------------------------------
-extern bool is_scroll_mode();
-
-
 
 //------------------------------------------------------------------------------
 static setting_bool g_modify_other_keys(

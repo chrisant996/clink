@@ -9,6 +9,21 @@ extern "C" int _rl_vis_botlin;
 extern "C" int _rl_last_v_pos;
 
 //------------------------------------------------------------------------------
+static bool s_scroll_mode = false;
+
+//------------------------------------------------------------------------------
+bool is_scroll_mode()
+{
+    return s_scroll_mode;
+}
+
+//------------------------------------------------------------------------------
+void reset_scroll_mode()
+{
+    s_scroll_mode = false;
+}
+
+//------------------------------------------------------------------------------
 int ScrollConsoleRelative(HANDLE h, int direction, SCRMODE mode)
 {
     // Get the current screen buffer window position.
@@ -58,6 +73,7 @@ int ScrollConsoleRelative(HANDLE h, int direction, SCRMODE mode)
     }
 
     // Set the new window position.
+    s_scroll_mode = true;
     if (srWindow.Top == csbiInfo.srWindow.Top ||
         !SetConsoleWindowInfo(h, TRUE/*fAbsolute*/,  &srWindow))
         return 0;

@@ -343,14 +343,3 @@ int clink_popup_directories(int count, int invoking_key)
 
     return 0;
 }
-
-//------------------------------------------------------------------------------
-bool is_scroll_mode()
-{
-    return (rl_last_func == clink_scroll_line_up ||
-            rl_last_func == clink_scroll_line_down ||
-            rl_last_func == clink_scroll_page_up ||
-            rl_last_func == clink_scroll_page_down ||
-            rl_last_func == clink_scroll_top ||
-            rl_last_func == clink_scroll_bottom);
-}
