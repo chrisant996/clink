@@ -32,6 +32,7 @@ See the [issues](https://github.com/chrisant996/clink/issues) page for known iss
   - Typing `..` or `...` is a shortcut for `cd ..` or `cd ..\..` (each additional `.` adds another `\..`).
   - Typing `-` or `cd -` changes to the previous current working directory.
 - Scriptable completion with Lua.
+- Scriptable key bindings with Lua.
 - Colored and scriptable prompt.
 - Auto-answering of the "Terminate batch job?" prompt.
 

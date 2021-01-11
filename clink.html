@@ -3,7 +3,7 @@
 
 <!-- ----------------------------------------------------- -->
 <head>
-<title>Clink v1.1.19</title>
+<title>Clink v1.1.20</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Rambla:wght@400;700&family=Roboto&family=Fira+Mono&display=swap');
 html {
@@ -401,7 +401,7 @@ var hljs=function(){"use strict";function e(n){Object.freeze(n);var t="function"
         </td>
         <td style="text-align:right">
             <div id="header">
-                <div id="title">Clink v1.1.19</div>
+                <div id="title">Clink v1.1.20</div>
                 <div id="url">
                     <a href="http://github.com/chrisant996/clink">
                         http://github.com/chrisant996/clink
@@ -450,6 +450,7 @@ var hljs=function(){"use strict";function e(n){Object.freeze(n);var t="function"
 </ul>
 </li>
 <li>Scriptable completion with Lua.</li>
+<li>Scriptable key bindings with Lua.</li>
 <li>Colored and scriptable prompt.</li>
 <li>Auto-answering of the &quot;Terminate batch job?&quot; prompt.</li>
 </ul>
@@ -845,10 +846,12 @@ Echos key sequences to use in the inputrc files for binding keys to Clink comman
 <h2 id="basic-format">Basic Format</h2>
 <p>The quick version is that mostly you&#39;ll use these kinds of lines:</p>
 <ul>
-<li><code><em>keyname</em>: <em>command</em></code></li>
-<li><code><em>keyname</em>: "<em>literal text</em>"</code></li>
-<li><code>set <em>varname</em> <em>value</em></code></li>
+<li><code><span class="arg">keyname</span>: <span class="arg">command</span></code></li>
+<li><code><span class="arg">keyname</span>: "<span class="arg">literal text</span>"</code></li>
+<li><code><span class="arg">keyname</span>: "luafunc:<span class="arg">lua_function_name</span>"</code></li>
+<li><code>set <span class="arg">varname</span> <span class="arg">value</span></code></li>
 </ul>
+<p>If a Readline macro begins with &quot;luafunc:&quot; then Clink interprets it as a Lua key binding and will invoke the named Lua function.  Function names can include periods (such as <code>foo.bar</code>) but cannot include any other punctuation.  See <a href="#luakeybindings">Lua Key Bindings</a> for more information.</p>
 <p>Refer to the Readline <a href="https://tiswww.cwru.edu/php/chet/readline/rltop.html#Documentation">manual</a> for a more thorough explanation of the inputrc file format, list of available commands, and list of configuration variables and their values.</p>
 <p>See <a href="#keybindings">Key Bindings</a> for more information about binding keys in Clink.</p>
 <h2 id="new-configuration-variables">New Configuration Variables</h2>
@@ -1138,6 +1141,9 @@ end</code></pre>
 <p>A generator can influence word breaking for the end word by defining a <code>:getwordbreakinfo()</code> function.  The function takes a <span class="arg">line_state</span> <a href="#line">line</a> object that has information about the current line.  If it returns nil or 0, the end word is truncated to 0 length.  This is the normal behavior, which allows Clink to collect and cache all matches and then filter them based on typing.  Or it can return two numbers:  word break length and an optional end word length.  The end word is split at the word break length:  one word contains the first word break length characters from the end word (if 0 length then it&#39;s discarded), and the next word contains the rest of the end word truncated to the optional word length (0 if omitted).</p>
 <p>For example, when the environment variable match generator sees the end word is <code>abc%USER</code> it returns <code>3,1</code> so that the last two words become &quot;abc&quot; and &quot;%&quot; so that its generator knows it can do environment variable matching.  But when it sees <code>abc%FOO%def</code> it returns <code>8,0</code> so that the last two words become &quot;abc%FOO%&quot; and &quot;&quot; so that its generator won&#39;t do environment variable matching, and also so other generators can produce matches for what follows, since &quot;%FOO%&quot; is an already-completed environment variable and therefore should behave like a word break.  In other words, it breaks the end word differently depending on whether the number of percent signs is odd or even, to account for environent variable syntax rules.</p>
 <p>And when an argmatcher sees the end word begins with a flag character it returns <code>0,1</code> so the end word contains only the flag character in order to switch from argument matching to flag matching.</p>
+<blockquote>
+<p><strong>Note:</strong> The <code>:getwordbreakinfo()</code> function is called very often, so it needs to be very fast or it can cause responsiveness problems while typing.</p>
+</blockquote>
 <pre><code class="language-lua">local envvar_generator = clink.generator(10)
 
 function envvar_generator:generate(line_state, match_builder)
@@ -1240,9 +1246,9 @@ the_parser:addarg({ rainbow_function, &quot;yellow&quot;, &quot;green&quot; })</
 <p>It is also possible to omit the <code>addarg</code> and <code>addflags</code> function calls and use a more declarative shorthand form:</p>
 <pre><code class="language-lua">-- Shorthand form; requires tables.
 clink.argmatcher()
-&amp;nbsp; { &quot;one&quot;, &quot;won&quot; }             -- Arg #1
-&amp;nbsp; { &quot;two&quot;, &quot;too&quot; }             -- Arg #2
-&amp;nbsp; { &quot;-a&quot;, &quot;-b&quot;, &quot;/?&quot;, &quot;/h&quot; }   -- Flags
+    { &quot;one&quot;, &quot;won&quot; }                -- Arg #1
+    { &quot;two&quot;, &quot;too&quot; }                -- Arg #2
+    { &quot;-a&quot;, &quot;-b&quot;, &quot;/?&quot;, &quot;/h&quot; }      -- Flags
 
 -- Normal form:
 clink.argmatcher()
@@ -1809,6 +1815,26 @@ C-_:                kill-line                       <span class="hljs-comment">#
 <td align="center"><code>\e\e[24;6~</code></td>
 </tr>
 </tbody></table>
+<a name="luakeybindings"/>
+
+<h3 id="lua-key-bindings">Lua Key Bindings</h3>
+<p>You can bind a key to a Lua function by binding it to a macro that begins with &quot;luafunc:&quot;.  Clink will invoke the named Lua function when the key binding is input.  Function names can include periods (such as <code>foo.bar</code>) but cannot include any other punctuation.</p>
+<p>The Lua function receives a <a href="#rl_buffer">rl_buffer</a> argument that gives it access to the input buffer.</p>
+<p>Lua functions can print output, but should first call <a href="#rl_buffer:beginoutput">rl_buffer:beginoutput</a> so that the output doesn&#39;t overwrite the displayed input line.</p>
+<p>Example of a Lua function key binding in an inputrc file:</p>
+<pre><code class="plaintext"><span class="hljs-string">M-C-y</span>:      <span class="hljs-string">"luafunc:insert_date"</span>
+<span class="hljs-string">M-C-z</span>:      <span class="hljs-string">"luafunc:print_date"</span>
+</code></pre>
+
+<p>Example functions to go with that:</p>
+<pre><code class="language-lua">function insert_date(rl_buffer)
+    rl_buffer:insert(os.date(&quot;%x %X&quot;))
+end
+
+function print_date(rl_buffer)
+    rl_buffer:beginoutput()
+    print(os.date(&quot;%A %B %d, %Y   %I:%M %p&quot;))
+end</code></pre>
 <h2 id="saved-command-history">Saved command history</h2>
 <p>Here&#39;s how the saved history works:</p>
 <p>When the <code>history.saved</code> setting is enabled, then the command history is loaded and saved as follows (or when the setting is disabled, then it isn&#39;t saved between sessions).</p>
@@ -1871,13 +1897,13 @@ clink.argmatcher("foo")
 <div class="function"><div class="header"> <div class="name"><a name="clink.generator">clink.generator</a></div> <div class="signature">( [<span class="arg_name">priority</span>:integer] ) : table</div></div><div class="body"><p class="desc">Creates and returns a new match generator object.  Define on the object a <code>generate()</code> function which gets called in increasing <span class="arg">priority</span> order (low values to high values) when generating matches for completion.  See <a href="#matchgenerators">Match Generators</a> for more information.</p></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="clink.is_match">clink.is_match</a></div> <div class="signature">( <span class="arg_name">needle</span>:string, <span class="arg_name">candidate</span>:string ) : boolean</div></div><div class="body deprecated"><p class="desc"><strong>Deprecated; don't use this.</strong>  See <a href="#clink.generator">clink.generator</a> for more information.</p><p class="desc">This returns true if <span class="arg">needle</span> is a prefix of <span class="arg">candidate</span> with a case insensitive comparison.</p><p class="desc"> Normally in Clink v1.x and higher the <span class="arg">needle</span> will be an empty string because the generators are no longer responsible for filtering matches.  The match pipeline itself handles that internally now.</p></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="clink.lower">clink.lower</a></div> <div class="signature">( <span class="arg_name">text</span>:string ) : string</div></div><div class="body"><p class="desc">This API correctly converts UTF8 strings to lowercase, with international linguistic awareness.</p><pre class="language-lua"><code>clink.lower("Hello World") -- returns "hello world"</code></pre></div></div><hr/>
+<div class="function"><div class="header"> <div class="name"><a name="clink.match_display_filter">clink.match_display_filter</a></div> <div class="signature">function variable</div></div><div class="body deprecated"><p class="desc"><strong>Deprecated; don't use this.</strong>  See <a href="#clink.ondisplaymatches">clink.ondisplaymatches</a> for more information.</p><p class="desc">A match generator can set this varible to a filter function that is called before displaying matches.  It is reset every time match generation is invoked.  The filter function receives table argument containing the matches that are going to be displayed, and it returns a table filtered as required by the match generator.</p><p class="desc"> See <a href="#filteringthematchdisplay">Filtering the Match Display</a> for more information.</p></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="clink.match_display_filter">clink.match_display_filter</a></div> <div class="signature">function variable</div></div><div class="body deprecated"><p class="desc"><strong>Deprecated; don't use this.</strong>  See <a href="#builder:addmatch">builder:addmatch</a> for more information.</p><p class="desc">This is no longer used.</p><pre class="language-lua"><code>clink.match_display_filter = function(matches)
 &nbsp; -- Transform matches.
 &nbsp; return matches
 end</code></pre></div></div><hr/>
-<div class="function"><div class="header"> <div class="name"><a name="clink.match_display_filter">clink.match_display_filter</a></div> <div class="signature">function variable</div></div><div class="body deprecated"><p class="desc"><strong>Deprecated; don't use this.</strong>  See <a href="#clink.ondisplaymatches">clink.ondisplaymatches</a> for more information.</p><p class="desc">A match generator can set this varible to a filter function that is called before displaying matches.  It is reset every time match generation is invoked.  The filter function receives table argument containing the matches that are going to be displayed, and it returns a table filtered as required by the match generator.</p><p class="desc"> See <a href="#filteringthematchdisplay">Filtering the Match Display</a> for more information.</p></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="clink.matches_are_files">clink.matches_are_files</a></div> <div class="signature">( [<span class="arg_name">files</span>:boolean] ) : nil</div></div><div class="body deprecated"><p class="desc"><strong>Deprecated; don't use this.</strong>  See <a href="#builder:addmatch">builder:addmatch</a> for more information.</p><p class="desc">This is no longer needed, because now it's inferred from the match type when adding matches.</p></div></div><hr/>
-<div class="function"><div class="header"> <div class="name"><a name="clink.onbeginedit">clink.onbeginedit</a></div> <div class="signature">( <span class="arg_name">func</span>:function ) : nil</div></div><div class="body"><p class="desc">Registers <span class="arg">func</span> to be called when Clink's edit prompt is activated.</p></div></div><hr/>
+<div class="function"><div class="header"> <div class="name"><a name="clink.onbeginedit">clink.onbeginedit</a></div> <div class="signature">( <span class="arg_name">func</span>:function ) : nil</div></div><div class="body"><p class="desc">Registers <span class="arg">func</span> to be called when Clink's edit prompt is activated.  The function receives no arguments and has no return values.</p></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="clink.ondisplaymatches">clink.ondisplaymatches</a></div> <div class="signature">( <span class="arg_name">func</span>:function ) : nil</div></div><div class="body"><p class="desc">Registers <span class="arg">func</span> to be called when Clink is about to display matches.  See <a href="#filteringthematchdisplay">Filtering the Match Display</a> for more information.</p><pre class="language-lua"><code>local function my_filter(matches, popup)
 &nbsp; local new_matches = {}
 &nbsp; for _,m in ipairs(matches) do
@@ -1898,6 +1924,7 @@ function my_match_generator:generate(line_state, match_builder)
 &nbsp; ...
 &nbsp; clink.ondisplaymatches(my_filter)
 end</code></pre></div></div><hr/>
+<div class="function"><div class="header"> <div class="name"><a name="clink.onendedit">clink.onendedit</a></div> <div class="signature">( <span class="arg_name">func</span>:function ) : nil</div></div><div class="body"><p class="desc">Registers <span class="arg">func</span> to be called when Clink's edit prompt ends.  The function receives a string argument containing the input text from the edit prompt.  The function returns up to two values.  If the first is not nil then it's a string that replaces the edit prompt text.  If the second is not nil and is false then it stops further onendedit handlers from running.</p><p class="desc"> <strong>Note:</strong>  Be very careful if you replace the text; this has the potential to interfere with or even ruin the user's ability to enter command lines for CMD to process.</p></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="clink.promptfilter">clink.promptfilter</a></div> <div class="signature">( [<span class="arg_name">priority</span>:integer] ) : table</div></div><div class="body"><p class="desc">Creates and returns a new promptfilter object that is applied in increasing <span class="arg">priority</span> order (low values to high values).  Define on the object a <code>filter()</code> function that takes a string argument which contains the filtered prompt so far.  The function can return nil to have no effect, or can return a new prompt string.  It can optionally stop further prompt filtering by also returning false.  See <a href="#customisingtheprompt">Customising The Prompt</a> for more information.</p><pre class="language-lua"><code>local foo_prompt = clink.promptfilter(80)
 function foo_prompt:filter(prompt)
 &nbsp; -- Insert the date at the beginning of the prompt.
@@ -1965,6 +1992,13 @@ local foo_prompt = clink.promptfilter(10)
 function foo_prompt:filter(prompt)
 &nbsp; return "FOO "..prompt.." >>" --,false  -- Adding ,false stops further filtering.
 end</code></pre></div></div><hr/>
+</div><div class="group"><h5 class="group_name"><a name="console">console</a></h5><div class="function"><div class="header"> <div class="name"><a name="console.getheight">console.getheight</a></div> <div class="signature">() : integer</div></div><div class="body"><p class="desc">Returns the number of visible lines of the console screen buffer.</p></div></div><hr/>
+<div class="function"><div class="header"> <div class="name"><a name="console.getlinetext">console.getlinetext</a></div> <div class="signature">( <span class="arg_name">line</span>:integer ) : string</div></div><div class="body"><p class="desc">Returns the text from line number <span class="arg">line</span>, from 1 to <a href="#console.getnumlines">console.getnumlines</a>.</p></div></div><hr/>
+<div class="function"><div class="header"> <div class="name"><a name="console.getnumlines">console.getnumlines</a></div> <div class="signature">() : integer</div></div><div class="body"><p class="desc">Returns the total number of lines in the console screen buffer.</p></div></div><hr/>
+<div class="function"><div class="header"> <div class="name"><a name="console.gettop">console.gettop</a></div> <div class="signature">() : integer</div></div><div class="body"><p class="desc">Returns the current top line (scroll position) in the console screen buffer.</p></div></div><hr/>
+<div class="function"><div class="header"> <div class="name"><a name="console.getwidth">console.getwidth</a></div> <div class="signature">() : integer</div></div><div class="body"><p class="desc">Returns the width of the console screen buffer in characters.</p></div></div><hr/>
+<div class="function"><div class="header"> <div class="name"><a name="console.islinedefaultcolor">console.islinedefaultcolor</a></div> <div class="signature">( <span class="arg_name">line</span>:integer ) : boolean</div></div><div class="body"><p class="desc">Returns whether line number <span class="arg">line</span> uses only the default text color.</p></div></div><hr/>
+<div class="function"><div class="header"> <div class="name"><a name="console.scroll">console.scroll</a></div> <div class="signature">( <span class="arg_name">mode</span>:string, <span class="arg_name">amount</span>:integer ) : integer</div></div><div class="body"><p class="desc">Scrolls the console screen buffer and returns the number of lines scrolled up (negative) or down (positive).</p><p class="desc"> The <span class="arg">mode</span> specifies how to scroll: <table> <tr><th>Mode</th><th>Description</th></tr> <tr><td>"line"</td><td>Scrolls by <span class="arg">amount</span> lines; negative is up and positive is down. <tr><td>"page"</td><td>Scrolls by <span class="arg">amount</span> pages; negative is up and positive is down. <tr><td>"end"</td><td>Scrolls to the top if <span class="arg">amount</span> is negative, or to the bottom if positive. <tr><td>"absolute"</td><td>Scrolls to line <span class="arg">amount</span>, from 1 to <a href="#console.getnumlines">console.getnumlines()</a>. </table></p></div></div><hr/>
 </div><div class="group"><h5 class="group_name"><a name="line">line</a></h5><div class="function"><div class="header"> <div class="name"><a name="line:getcommandoffset">line:getcommandoffset</a></div> <div class="signature">() : integer</div></div><div class="body"><p class="desc">Returns the offset to the start of the delimited command in the line that's being effectively edited. Note that this may not be the offset of the first command of the line unquoted as whitespace isn't considered for words.</p><pre class="language-lua"><code>-- Given the following line; abc& 123
 -- where commands are separated by & symbols.
 line:getcommandoffset() == 4</code></pre></div></div><hr/>
@@ -1984,7 +2018,13 @@ line:getcommandoffset() == 4</code></pre></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="os.copy">os.copy</a></div> <div class="signature">( <span class="arg_name">src</span>:string, <span class="arg_name">dest</span>:string ) : boolean</div></div><div class="body"><p class="desc">Copies the <span class="arg">src</span> file to the <span class="arg">dest</span> file.</p></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="os.getalias">os.getalias</a></div> <div class="signature">( <span class="arg_name">name</span>:string ) : string</div></div><div class="body"><p class="desc">Returns command string for doskey alias <span class="arg">name</span>.</p></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="os.getaliases">os.getaliases</a></div> <div class="signature">() : table</div></div><div class="body"><p class="desc">Returns doskey aliases in a table with the following scheme: <span class="tablescheme">{ {name:string, command:string}, ... }</span>.</p></div></div><hr/>
-<div class="function"><div class="header"> <div class="name"><a name="os.getbatterystatus">os.getbatterystatus</a></div> <div class="signature">() : level:integer, acpower:boolean, charging:boolean, batterysaver:boolean</div></div><div class="body"><p class="desc">Returns the battery status for the device, or nil if an error occurs.</p><p class="desc"> <span class="arg">level</span> is an integer from 0 to 100 representing the battery life percentage, or -1 if it couldn't be retrieved (an error occurred, or there is no battery).<br/> <span class="arg">acpower</span> indicates whether the device is connected to AC power.<br/> <span class="arg">charging</span> indicates whether the battery is charging (being plugged in doesn't necessarily imply it's charging).<br/> <span class="arg">batterysaver</span> indicates whether Battery Saver mode is active.</p><pre class="language-lua"><code>local level,acpower,charging,batterysaver = os.getbatterystatus()</code></pre></div></div><hr/>
+<div class="function"><div class="header"> <div class="name"><a name="os.getbatterystatus">os.getbatterystatus</a></div> <div class="signature">() : table</div></div><div class="body"><p class="desc">Returns a table containing the battery status for the device, or nil if an error occurs.  The returned table has the following scheme:</p><pre class="language-lua"><code>{
+&nbsp; level,         -- [integer] the battery life from 0 to 100, or -1 if an
+&nbsp;                --            error occurred or there is no battery.
+&nbsp; acpower,       -- [boolean] whether the device is connected to AC power.
+&nbsp; charging,      -- [boolean] whether the battery is charging.
+&nbsp; batterysaver,  -- [boolean] whether Battery Saver mode is active.
+}</code></pre></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="os.getcwd">os.getcwd</a></div> <div class="signature">() : string</div></div><div class="body"><p class="desc">Returns the current directory.</p></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="os.getenv">os.getenv</a></div> <div class="signature">( <span class="arg_name">name</span>:string ) : string | nil</div></div><div class="body"><p class="desc">Returns the value of the named environment variable, or nil if it doesn't exist.</p><p class="desc"> Note that <code>os.getenv("HOME")</code> receives special treatment: if %HOME% is not set then it is synthesized from %HOMEDRIVE% and %HOMEPATH%, or from %USERPROFILE%.</p></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="os.getenvnames">os.getenvnames</a></div> <div class="signature">() : table</div></div><div class="body"><p class="desc">Returns all environment variables in a table with the following scheme: <span class="tablescheme">{ {name:string, value:string}, ... }</span>.</p></div></div><hr/>
@@ -2006,9 +2046,18 @@ line:getcommandoffset() == 4</code></pre></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="os.setenv">os.setenv</a></div> <div class="signature">( <span class="arg_name">name</span>:string, <span class="arg_name">value</span>:string ) : boolean</div></div><div class="body"><p class="desc">Sets the <span class="arg">name</span> environment variable to <span class="arg">value</span> and returns whether it was successful.</p></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="os.unlink">os.unlink</a></div> <div class="signature">( <span class="arg_name">path</span>:string ) : boolean</div></div><div class="body"><p class="desc">Deletes the file <span class="arg">path</span> and returns whether it was successful.</p></div></div><hr/>
 </div><div class="group"><h5 class="group_name"><a name="path">path</a></h5><div class="function"><div class="header"> <div class="name"><a name="path.getbasename">path.getbasename</a></div> <div class="signature">( <span class="arg_name">path</span>:string ) : string</div></div><div class="body"><p class="desc"></p><pre class="language-lua"><code>path.getbasename("/foo/bar.ext") -- returns "bar"</code></pre></div></div><hr/>
-<div class="function"><div class="header"> <div class="name"><a name="path.getdirectory">path.getdirectory</a></div> <div class="signature">( <span class="arg_name">path</span>:string ) : nil or string</div></div><div class="body"><p class="desc"></p><pre class="language-lua"><code>path.getdirectory("e:/foo/bar") -- returns "e:/foo"
-path.getdirectory("/foo/bar") -- returns "/foo"
-path.getdirectory("bar") -- returns nil</code></pre></div></div><hr/>
+<div class="function"><div class="header"> <div class="name"><a name="path.getdirectory">path.getdirectory</a></div> <div class="signature">( <span class="arg_name">path</span>:string ) : nil or string</div></div><div class="body"><p class="desc">This is similar to <a href="#path.toparent">path.toparent()</a> but can behave differently when the input path ends with a path separator.  This is the recommended API for parsing a path into its component pieces, but is not recommended for walking up through parent directories.</p><pre class="language-lua"><code>path.getdirectory("foo")             -- returns nil
+path.getdirectory("\foo")            -- returns "\"
+path.getdirectory("c:foo")           -- returns "c:"
+path.getdirectory([[c:\]])           -- returns "c:\"
+path.getdirectory("c:\foo")          -- returns "c:\"
+path.getdirectory("c:\foo\bar")      -- returns "c:\foo"
+path.getdirectory("\\foo\bar")       -- returns "\\foo\bar"
+path.getdirectory("\\foo\bar\dir")   -- returns "\\foo\bar"
+
+-- These split the path components differently than path.toparent().
+path.getdirectory([[c:\foo\bar\]])   -- returns "c:\foo\bar"
+path.getdirectory([[\\foo\bar\dir\]])-- returns "\\foo\bar\dir"</code></pre></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="path.getdrive">path.getdrive</a></div> <div class="signature">( <span class="arg_name">path</span>:string ) : nil or string</div></div><div class="body"><p class="desc"></p><pre class="language-lua"><code>path.getdrive("e:/foo/bar") -- returns "e:"
 path.getdrive("foo/bar") -- returns nil</code></pre></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="path.getextension">path.getextension</a></div> <div class="signature">( <span class="arg_name">path</span>:string ) : string</div></div><div class="body"><p class="desc"></p><pre class="language-lua"><code>path.getextension("bar.ext") -- returns ".ext"
@@ -2018,6 +2067,19 @@ path.getextension("bar") -- returns ""</code></pre></div></div><hr/>
 path.isexecext("file.doc") -- returns false</code></pre></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="path.join">path.join</a></div> <div class="signature">( <span class="arg_name">left</span>:string, <span class="arg_name">right</span>:string ) : string</div></div><div class="body"><p class="desc"></p><pre class="language-lua"><code>path.join("/foo", "bar") -- returns "/foo\bar"</code></pre></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="path.normalise">path.normalise</a></div> <div class="signature">( <span class="arg_name">path</span>:string, [<span class="arg_name">separator</span>:string] ) : string</div></div><div class="body"><p class="desc">Cleans <span class="arg">path</span> by normalising separators and removing "." and ".." elements.  If <span class="arg">separator</span> is provided it is used to delimit path elements, otherwise a system-specific delimiter is used.</p><pre class="language-lua"><code>path.normalise("a////b/\\/c/") -- returns "a\b\c\"</code></pre></div></div><hr/>
+<div class="function"><div class="header"> <div class="name"><a name="path.toparent">path.toparent</a></div> <div class="signature">( <span class="arg_name">path</span>:string ) : parent:string, child:string</div></div><div class="body"><p class="desc">Splits the last path component from <span class="arg">path</span>, if possible. Returns the result and the component that was split, if any.</p><p class="desc"> This is similar to <a href="#path.getdirectory">path.getdirectory()</a> but can behave differently when the input path ends with a path separator.  This is the recommended API for walking up through parent directories.</p><pre class="language-lua"><code>local parent,child
+parent,child = path.toparent("foo")             -- returns "", "foo"
+parent,child = path.toparent("\foo")            -- returns "\", "foo"
+parent,child = path.toparent("c:foo")           -- returns "c:", "foo"
+parent,child = path.toparent([[c:\]])           -- returns "c:\", ""
+parent,child = path.toparent("c:\foo")          -- returns "c:\", "foo"
+parent,child = path.toparent("c:\foo\bar")      -- returns "c:\foo", "bar"
+parent,child = path.toparent("\\foo\bar")       -- returns "\\foo\bar", ""
+parent,child = path.toparent("\\foo\bar\dir")   -- returns "\\foo\bar", "dir"
+
+-- These split the path components differently than path.getdirectory().
+parent,child = path.toparent([[c:\foo\bar\]])   -- returns "c:\foo", "bar"
+parent,child = path.toparent([[\\foo\bar\dir\]])-- returns "\\foo\bar", "dir"</code></pre></div></div><hr/>
 </div><div class="group"><h5 class="group_name"><a name="rl">rl</a></h5><div class="function"><div class="header"> <div class="name"><a name="rl.collapsetilde">rl.collapsetilde</a></div> <div class="signature">( <span class="arg_name">path</span>:string, [<span class="arg_name">force</span>:boolean] ) : string</div></div><div class="body"><p class="desc">Undoes Readline tilde expansion.  See <a href="#rl.expandtilde">rl.expandtilde</a> for more information.</p><pre class="language-lua"><code>rl.collapsetilde("C:\Users\yourusername\Documents")
 &nbsp;
 -- The return value depends on the expand-tilde configuration variable:
@@ -2054,6 +2116,16 @@ function dir_matches(match_word, word_index, line_state)
 end</code></pre></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="rl.getvariable">rl.getvariable</a></div> <div class="signature">( <span class="arg_name">name</span>:string ) : string | nil</div></div><div class="body"><p class="desc">Returns the value of the named Readline configuration variable as a string, or nil if the variable name is not recognized.</p></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="rl.isvariabletrue">rl.isvariabletrue</a></div> <div class="signature">( <span class="arg_name">name</span>:string ) : boolean | nil</div></div><div class="body"><p class="desc">Returns a boolean value indicating whether the named Readline configuration variable is set to true (on), or nil if the variable name is not recognized.</p></div></div><hr/>
+</div><div class="group"><h5 class="group_name"><a name="rl_buffer">rl_buffer</a></h5><div class="function"><div class="header"> <div class="name"><a name="rl_buffer:beginoutput">rl_buffer:beginoutput</a></div> <div class="signature">() : nil</div></div><div class="body"><p class="desc">Advances the output cursor to the next line after the Readline input buffer so that subsequent output doesn't overwrite the input buffer display.</p></div></div><hr/>
+<div class="function"><div class="header"> <div class="name"><a name="rl_buffer:beginundogroup">rl_buffer:beginundogroup</a></div> <div class="signature">() : nil</div></div><div class="body"><p class="desc">Starts a new undo group.  This is useful for grouping together multiple editing actions into a single undo operation.</p></div></div><hr/>
+<div class="function"><div class="header"> <div class="name"><a name="rl_buffer:ding">rl_buffer:ding</a></div> <div class="signature">() : nil</div></div><div class="body"><p class="desc">Dings the bell.  If the <code>bell-style</code> Readline variable is <code>visible</code> then it flashes the cursor instead</p></div></div><hr/>
+<div class="function"><div class="header"> <div class="name"><a name="rl_buffer:endundogroup">rl_buffer:endundogroup</a></div> <div class="signature">() : nil</div></div><div class="body"><p class="desc">Ends an undo group.  This is useful for grouping together multiple editing actions into a single undo operation.</p><p class="desc"> Note:  all undo groups are automatically ended when a key binding finishes execution, so this function is only needed if a key binding needs to create more than one undo group.</p></div></div><hr/>
+<div class="function"><div class="header"> <div class="name"><a name="rl_buffer:getbuffer">rl_buffer:getbuffer</a></div> <div class="signature">() : string</div></div><div class="body"><p class="desc">Returns the current input line.</p></div></div><hr/>
+<div class="function"><div class="header"> <div class="name"><a name="rl_buffer:getcursor">rl_buffer:getcursor</a></div> <div class="signature">() : integer</div></div><div class="body"><p class="desc">Returns the cursor position in the input line.</p></div></div><hr/>
+<div class="function"><div class="header"> <div class="name"><a name="rl_buffer:getlength">rl_buffer:getlength</a></div> <div class="signature">() : integer</div></div><div class="body"><p class="desc">Returns the length of the input line.</p></div></div><hr/>
+<div class="function"><div class="header"> <div class="name"><a name="rl_buffer:insert">rl_buffer:insert</a></div> <div class="signature">( <span class="arg_name">text</span>:string ) : nil</div></div><div class="body"><p class="desc">Inserts <span class="arg">text</span> at the cursor position in the input line.</p></div></div><hr/>
+<div class="function"><div class="header"> <div class="name"><a name="rl_buffer:remove">rl_buffer:remove</a></div> <div class="signature">( <span class="arg_name">from</span>:integer, <span class="arg_name">to</span>:integer ) : nil</div></div><div class="body"><p class="desc">Removes text from the input line starting at cursor position <span class="arg">from</span> through <span class="arg">to</span>.</p><p class="desc"> Note:  the input line is UTF8, and removing only part of a multi-byte Unicode character may have undesirable results.</p></div></div><hr/>
+<div class="function"><div class="header"> <div class="name"><a name="rl_buffer:setcursor">rl_buffer:setcursor</a></div> <div class="signature">( <span class="arg_name">cursor</span>:integer ) : integer</div></div><div class="body"><p class="desc">Sets the cursor position in the input line and returns the previous cursor position.  <span class="arg">cursor</span> can be from 1 to rl_buffer:getlength().</p><p class="desc"> Note:  the input line is UTF8, and setting the cursor position inside a multi-byte Unicode character may have undesirable results.</p></div></div><hr/>
 </div><div class="group"><h5 class="group_name"><a name="settings">settings</a></h5><div class="function"><div class="header"> <div class="name"><a name="settings.add">settings.add</a></div> <div class="signature">( <span class="arg_name">name</span>:string, <span class="arg_name">default</span>:..., [<span class="arg_name">short_desc</span>:string], [<span class="arg_name">long_desc</span>:string] ) : boolean</div></div><div class="body"><p class="desc">Adds a setting to the list of Clink settings and includes it in <code>clink set</code>.  The new setting is named <span class="arg">name</span> and has a default value <span class="arg">default</span> when the setting isn't explicitly set.</p><p class="desc"> The type of <span class="arg">default</span> determines what kind of setting is added:  boolean, integer, and string values add the corresponding setting type.  Or if the type is table then an enum setting is added:  the table defines the accepted values, and the first value is the default value.  Or if it's a string type and the name starts with "color." then a color setting is added.</p><p class="desc"> <span class="arg">name</span> can't be more than 31 characters.<br/> <span class="arg">short_desc</span> is an optional quick summary description and can't be more than 47 characters.<br/> <span class="arg">long_desc</span> is an optional long description.</p><pre class="language-lua"><code>settings.add("myscript.myabc", true, "Boolean setting")
 settings.add("myscript.mydef", 100, "Number setting")
 settings.add("myscript.myghi", "abc", "String setting")
@@ -2061,8 +2133,10 @@ settings.add("myscript.myjkl", {"x","y","z"}, "Enum setting")
 settings.add("color.mymno", "bright magenta", "Color setting")</code></pre></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="settings.get">settings.get</a></div> <div class="signature">( <span class="arg_name">name</span>:string, [<span class="arg_name">descriptive</span>:boolean] ) : boolean or string or integer</div></div><div class="body"><p class="desc">Returns the current value of the <span class="arg">name</span> Clink setting.</p><p class="desc"> If it's a color setting and the optional <span class="arg">descriptive</span> parameter is true then the user friendly color name is returned.</p></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="settings.set">settings.set</a></div> <div class="signature">( <span class="arg_name">name</span>:string, <span class="arg_name">value</span>:string ) : boolean</div></div><div class="body"><p class="desc">Sets the <span class="arg">name</span> Clink setting to <span class="arg">value</span> and returns whether it was successful.</p></div></div><hr/>
-</div><div class="group"><h5 class="group_name"><a name="string">string</a></h5><div class="function"><div class="header"> <div class="name"><a name="string.explode">string.explode</a></div> <div class="signature">( <span class="arg_name">text</span>:string, [<span class="arg_name">delims</span>:string] ) : table</div></div><div class="body"><p class="desc">Splits <span class="arg">text</span> delimited by <span class="arg">delims</span> (or by spaces if not provided) and returns a table containing the substrings.</p></div></div><hr/>
+</div><div class="group"><h5 class="group_name"><a name="string">string</a></h5><div class="function"><div class="header"> <div class="name"><a name="string.equalsi">string.equalsi</a></div> <div class="signature">( <span class="arg_name">a</span>:string, <span class="arg_name">b</span>:string ) : boolean</div></div><div class="body"><p class="desc">Performs a case insensitive comparison of the strings with international linguistic awareness.  This is more efficient than converting both strings to lowercase and comparing the results.</p></div></div><hr/>
+<div class="function"><div class="header"> <div class="name"><a name="string.explode">string.explode</a></div> <div class="signature">( <span class="arg_name">text</span>:string, [<span class="arg_name">delims</span>:string] ) : table</div></div><div class="body"><p class="desc">Splits <span class="arg">text</span> delimited by <span class="arg">delims</span> (or by spaces if not provided) and returns a table containing the substrings.</p></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="string.hash">string.hash</a></div> <div class="signature">( <span class="arg_name">text</span>:string ) : integer</div></div><div class="body"><p class="desc">Returns a hash of the input <span class="arg">text</span>.</p></div></div><hr/>
+<div class="function"><div class="header"> <div class="name"><a name="string.matchlen">string.matchlen</a></div> <div class="signature">( <span class="arg_name">a</span>:string, <span class="arg_name">b</span>:string ) : integer</div></div><div class="body"><p class="desc">Returns how many characters match at the beginning of the strings, or -1 if the entire strings match.  This respects the <code>match.ignore_case</code> and <code>match.ignore_accents</code> Clink settings.</p></div></div><hr/>
 </div><div class="group"><h5 class="group_name"><a name="word_classifications">word_classifications</a></h5><div class="function"><div class="header"> <div class="name"><a name="word_classifications:classifyword">word_classifications:classifyword</a></div> <div class="signature">( <span class="arg_name">word_index</span>:integer, <span class="arg_name">word_class</span>:string ) : nil</div></div><div class="body"><p class="desc">This classifies the indicated word so that it can be colored appropriately. See <a href="#classifywords">Coloring The Input Text</a> for more information, including the available <span class="arg">word_class</span> codes.</p></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="word_classifications:iswordclassified">word_classifications:iswordclassified</a></div> <div class="signature">( <span class="arg_name">word_index</span>:integer ) : boolean</div></div><div class="body"><p class="desc">This returns whether the indicated word is already classified.  The classifier functions get called A LOT, so they need to be fast.  If a particular word can be slow to analyze then checking whether it's already been classified can help speed up the classifier.</p></div></div><hr/>
 </div><div class="group"><h5 class="group_name"><a name="[other]">[other]</a></h5><div class="function"><div class="header"> <div class="name"><a name="rl_state">rl_state</a></div> <div class="signature">table variable</div></div><div class="body deprecated"><p class="desc"><strong>Deprecated; don't use this.</strong>  See <a href="#line">line</a> for more information.</p><p class="desc">This is an obsolete global variable that was set while running match generators.  It has been superseded by the <a href="#line">line</a> type parameter passed into match generator functions when using the new <a href="#clink.generator">clink.generator</a> API.</p></div></div><hr/>
@@ -2071,6 +2145,19 @@ settings.add("color.mymno", "bright magenta", "Color setting")</code></pre></div
         <div class="section" id="changes">
 <h1 id="changes">Changes</h1>
 <h2 id="releases-from-chrisant996clink-fork">Releases from <a href="https://github.com/chrisant996/clink">chrisant996/clink</a> fork</h2>
+<h3 id="v1120">v1.1.20</h3>
+<ul>
+<li>Now you can bind Lua functions to keys!  Added new <code>rl_buffer</code> type that gets passed to the Lua function.</li>
+<li>Added a group of <code>console</code> Lua APIs intended mainly for use by Lua function key bindings (e.g. <code>console.scroll()</code>).</li>
+<li>Added <code>string.equalsi()</code> function that performs a case insensitive UTF8 comparison of two strings.</li>
+<li>Added <code>string.matchlen()</code> function that compares two UTF8 strings and returns how many characters match at the beginning, or -1 if the entire strings match. It respects the <code>match.ignore_case</code> and <code>match.ignore_accents</code> settings.</li>
+<li>Added <code>path.toparent()</code> function that adjust the input string by moving up one directory level.</li>
+<li>Added <code>clink.onendedit()</code> so scripts can register a callback function to run when editing finishes (e.g. <kbd>Enter</kbd> is pressed).  If desired, the function can even change the input text.  This is very powerful, and should be used carefully.</li>
+<li>Changed <code>os.getbatterystatus()</code> to return a table with the battery status details, rather than four separate return values.</li>
+<li>Fixed the <code>doskey.enhanced</code> setting to not expand doskey aliases when preceded by a space.  However, a doskey alias after a <code>&amp;</code> or <code>|</code> command separator needs to be preceded by two spaces to avoid expanding it.  That&#39;s so <code>alias &amp; alias</code> expands both, and <code> alias &amp;  alias</code> expands neither; while the rules are more complicated to explain, they make more sense visually.</li>
+<li>Fixed environment variable completion (regression introduced in v1.1.19).</li>
+<li>Fixed Cmder startup (regression introduced in v1.1.17).  Cmder expects to be able to replace Clink v0.4.9&#39;s clink.lua file, but there is no such thing anymore in newer versions of Clink.  To be properly backwardly compatible with Clink v0.4.9 requires loading clink.lua (if it exists) from the first script directory listed by <code>clink info</code>, and ignoring clink.lua files in all other script directories.</li>
+</ul>
 <h3 id="v1119">v1.1.19</h3>
 <ul>
 <li>Improved responsiveness while typing:  matches are collected only on demand, instead of always while typing.  This makes it possible to always support match completion for UNC paths.</li>
@@ -2091,6 +2178,7 @@ settings.add("color.mymno", "bright magenta", "Color setting")</code></pre></div
 <ul>
 <li>Added <code>os.getbatterystatus()</code> function that gets battery status information much faster than launching <code>wmic</code>.</li>
 <li>Fixed <a href="https://github.com/chrisant996/clink/issues/44">#44</a> Path completion doesn&#39;t work with <code>cd /d</code>.</li>
+<li>Fixed loading scripts to ignore loading clink.lua, so that loading scripts behaves like Clink v0.4.9.</li>
 </ul>
 <h3 id="v1116">v1.1.16</h3>
 <ul>
@@ -2129,7 +2217,7 @@ settings.add("color.mymno", "bright magenta", "Color setting")</code></pre></div
 <h3 id="v1111">v1.1.11</h3>
 <ul>
 <li>Changed to load Lua scripts only once per session, unless forced to reload them.  This enables backward compatibility for things like <a href="https://github.com/skywind3000/z.lua">z.lua</a> which has certain features that rely on Clink only loading scripts once per session.</li>
-<li>Added <code>clink.onbeginedit()</code> so scripts can register a callback function to be called each time the edit prompt is activated.</li>
+<li>Added <code>clink.onbeginedit()</code> so scripts can register a callback function to run each time the edit prompt is activated.</li>
 <li>Added <code>lua.reload_scripts</code> setting to optionally force reloading Lua scripts each time the edit prompt is activated.</li>
 <li>Added <code>color.message</code> setting for the Readline message area color (e.g. the search prompt message or digit argument prompt message, etc).</li>
 <li>Fixed stray sticky <code>=</code> appended to completions after typing <code>set </code> and then typing a different command.</li>
