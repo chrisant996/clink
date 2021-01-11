@@ -7,6 +7,8 @@
 #include "rl_buffer_lua.h"
 
 #include <core/settings.h>
+#include <core/str.h>
+#include <core/str_tokeniser.h>
 #include <core/os.h>
 
 #include <assert.h>
@@ -365,7 +367,25 @@ bool lua_state::call_lua_rl_global_function(const char* func_name)
 {
     lua_State* state = get_state();
 
-    lua_getglobal(state, func_name);
+    bool first = true;
+    str_iter part;
+    str_tokeniser name_parts(func_name, ".");
+    while (name_parts.next(part))
+    {
+        if (first)
+        {
+            str<16> global;
+            global.concat(part.get_pointer(), part.length());
+            lua_getglobal(state, global.c_str());
+            first = false;
+        }
+        else
+        {
+            lua_pushlstring(state, part.get_pointer(), part.length());
+            lua_rawget(state, -2);
+        }
+    }
+
     if (!lua_isfunction(state, -1))
         return false;
 
