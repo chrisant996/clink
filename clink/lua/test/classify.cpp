@@ -413,6 +413,23 @@ TEST_CASE("Lua word classification.")
         }
     }
 
+    SECTION("Doskey")
+    {
+        SECTION("No space")
+        {
+            tester.set_input("dkalias");
+            tester.set_expected_classifications("d");
+            tester.run();
+        }
+
+        SECTION("Space")
+        {
+            tester.set_input(" dkalias");
+            tester.set_expected_classifications("o");
+            tester.run();
+        }
+    }
+
 #if 0
     SECTION("File matching control.")
     {

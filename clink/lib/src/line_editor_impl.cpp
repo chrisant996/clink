@@ -584,16 +584,27 @@ void line_editor_impl::classify()
 
     // Parse word types for coloring the input line.
     int i = 0;
-    int command_offset = 0;
+    int command_word_offset = 0;
     std::vector<word> words;
     while (true)
     {
         if (!words.empty() && (i >= m_words.size() || m_words[i].command_word))
         {
+            // Make sure classifiers can tell whether the word has a space
+            // before it, so that ` doskeyalias` gets classified as NOT a doskey
+            // alias, since doskey::resolve() won't expand it as a doskey alias.
+            int command_char_offset = words[0].offset;
+            if (command_char_offset == 1 && m_buffer.get_buffer()[0] == ' ')
+                command_char_offset--;
+            else if (command_char_offset >= 2 &&
+                     m_buffer.get_buffer()[command_char_offset - 1] == ' ' &&
+                     m_buffer.get_buffer()[command_char_offset - 2] == ' ')
+                command_char_offset--;
+
             line_state linestate(
                 m_buffer.get_buffer(),
                 m_buffer.get_cursor(),
-                words[0].offset,
+                command_char_offset,
                 words
             );
 
@@ -602,23 +613,23 @@ void line_editor_impl::classify()
                 for (int j = 0; j < words.size(); j++)
                 {
                     if (already_classified.length() == j &&
-                        command_offset + j < old_classifications.size() &&
-                        old_classifications[command_offset + j]->start == m_words[j].offset &&
-                        old_classifications[command_offset + j]->end == m_words[j].offset + m_words[j].length)
+                        command_word_offset + j < old_classifications.size() &&
+                        old_classifications[command_word_offset + j]->start == m_words[j].offset &&
+                        old_classifications[command_word_offset + j]->end == m_words[j].offset + m_words[j].length)
                     {
                         static const char word_class_chars[] = "ocdafn";
                         static_assert(_countof(word_class_chars) - 1 == int(word_class::max), "word_class_chars and word_class don't agree!");
-                        already_classified.concat(&word_class_chars[int(old_classifications[command_offset + j]->word_class)], 1);
+                        already_classified.concat(&word_class_chars[int(old_classifications[command_word_offset + j]->word_class)], 1);
                     }
                 }
 
                 if (already_classified.length() > 0)
                 {
-                    assert(command_offset < old_classifications.size()); // Must be true because of preceding loop.
+                    assert(command_word_offset < old_classifications.size()); // Must be true because of preceding loop.
                     if (!m_prev_classify.get() ||
                         memcmp(m_prev_classify.get(),
                                line.get_line() + words[0].offset,
-                               old_classifications[command_offset + already_classified.length() - 1]->end - old_classifications[command_offset]->start) != 0)
+                               old_classifications[command_word_offset + already_classified.length() - 1]->end - old_classifications[command_word_offset]->start) != 0)
                         already_classified.clear();
                 }
             }
@@ -631,7 +642,7 @@ void line_editor_impl::classify()
             m_classifier->classify(linestate, m_classifications, already_classified.c_str());
 
             words.clear();
-            command_offset = i;
+            command_word_offset = i;
         }
 
         if (i >= m_words.size())

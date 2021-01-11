@@ -3,6 +3,7 @@ ChrisAnt Plans
 <br/>
 
 # RELEASE
+- `console.scroll()` needs to prevent `win_terminal_in::read_console()` from unscrolling.  Be cafeful, though...!
 - `";"` gets colored as a doskey alias, but `;` doesn't (there's a `;` doskey alias because of an issue in Cmder's default configurations).
 - Key binding for Lua functions:
   - Document the `luafunc:` thing!

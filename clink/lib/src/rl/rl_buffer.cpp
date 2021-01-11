@@ -131,6 +131,10 @@ void rl_buffer::find_command_bounds(std::vector<command>& commands, bool stop_at
     int length;
     while (tokens.next(start, length))
     {
+        // Match the doskey-disabler space in doskey::resolve().
+        if (start > line_buffer && length && start[0] == ' ')
+            start++, length--;
+
         unsigned int offset = unsigned(start - line_buffer);
         if (stop_at_cursor)
         {

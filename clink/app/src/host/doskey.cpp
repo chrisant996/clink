@@ -180,7 +180,7 @@ bool doskey::resolve_impl(const str_iter& in, str_stream* out)
     // Legacy doskey doesn't allow macros that begin with whitespace so if the
     // token does it won't ever resolve as an alias.
     const char* alias_ptr = token.get_pointer();
-    if (!g_enhanced_doskey.get() && alias_ptr != in.get_pointer())
+    if (alias_ptr != in.get_pointer())
         return false;
 
     str<32> alias;
@@ -287,12 +287,22 @@ void doskey::resolve(const char* chars, doskey_alias& out)
 
         // Coarse check to see if there's any aliases to resolve
         {
+            bool first = true;
             bool resolves = false;
             str_tokeniser commands(chars, "&|");
             commands.add_quote_pair("\"");
             while (commands.next(command))
+            {
+                // Ignore 1 space after command separator.  For symmetry.  See
+                // loop below for details.
+                if (first)
+                    first = false;
+                else if (command.length() && command.get_pointer()[0] == ' ')
+                    command.next();
+
                 if (resolves = resolve_impl(command, nullptr))
                     break;
+            }
 
             if (!resolves)
                 return;
@@ -300,6 +310,7 @@ void doskey::resolve(const char* chars, doskey_alias& out)
 
         // This line will expand aliases so lets do that.
         {
+            bool first = true;
             const char* last = chars;
             str_tokeniser commands(chars, "&|");
             commands.add_quote_pair("\"");
@@ -309,6 +320,18 @@ void doskey::resolve(const char* chars, doskey_alias& out)
                 if (int delim_length = int(command.get_pointer() - last))
                     stream << str_stream::range(last, delim_length);
                 last = command.get_pointer() + command.length();
+
+                // Ignore 1 space after command separator.  So that resolve_impl
+                // can avoid expanding a doskey alias if the command starts with
+                // a space.  For the first command a single space avoids doskey
+                // alias expansion; for subsequent commands it takes two spaces
+                // to avoid doskey alias expansion.  This is so `aa & bb & cc`
+                // is possible for reability, and ` aa &  bb &  cc` will avoid
+                // doskey alias expansion.
+                if (first)
+                    first = false;
+                else if (command.length() && command.get_pointer()[0] == ' ')
+                    command.next();
 
                 if (!resolve_impl(command, &stream))
                     stream << str_stream::range(command);
