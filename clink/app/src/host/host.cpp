@@ -449,6 +449,14 @@ bool host::edit_line(const char* prompt, str_base& out)
         lua.load_scripts();
     }
 
+    // Send oninject event; one time only.
+    static bool s_injected = false;
+    if (!s_injected)
+    {
+        s_injected = true;
+        lua.send_event("oninject");
+    }
+
     // Send onbeginedit event.
     if (send_event)
         lua.send_event("onbeginedit");

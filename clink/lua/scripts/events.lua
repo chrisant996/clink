@@ -81,6 +81,15 @@ local function _add_event_callback(event, func)
 end
 
 --------------------------------------------------------------------------------
+--- -name:  clink.oninject
+--- -arg:   func:function
+--- Registers <span class="arg">func</span> to be called when Clink is injected
+--- into a CMD process.  The function is called only once per session.
+function clink.oninject(func)
+    _add_event_callback("oninject", func)
+end
+
+--------------------------------------------------------------------------------
 --- -name:  clink.onbeginedit
 --- -arg:   func:function
 --- Registers <span class="arg">func</span> to be called when Clink's edit
