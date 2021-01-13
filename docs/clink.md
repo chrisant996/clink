@@ -790,7 +790,7 @@ Here is an example `.inputrc` file with the key bindings that I use myself:
 <span class="hljs-comment"># Completion key bindings.</span>
 <span class="hljs-string">"\t"</span>:               old-menu-complete               <span class="hljs-comment"># Tab</span>
 <span class="hljs-string">"\e[Z"</span>:             old-menu-complete-backward      <span class="hljs-comment"># Shift+Tab</span>
-<span class="hljs-string">"\e[27;5;9~"</span>:       clink-popup-complete            <span class="hljs-comment"># Ctrl+Tab (requires additional ConEmu configuration)</span>
+<span class="hljs-string">"\e[27;5;9~"</span>:       clink-popup-complete            <span class="hljs-comment"># Ctrl+Tab (ConEmu needs additional configuration to allow Ctrl+Tab)</span>
 <span class="hljs-string">"\x1b[27;5;32~"</span>:    complete                        <span class="hljs-comment"># Ctrl+Space</span>
 
 <span class="hljs-comment"># Some key bindings I got used to from 4Dos/4NT/Take Command.</span>
@@ -898,3 +898,34 @@ Every time a new input line starts, Clink reloads the master history list and pr
 For performance reasons, deleting a history line marks the line as deleted without rewriting the history file.  When the number of deleted lines gets too large (exceeding the max lines or 200, which is larger) then the history file is compacted:  the file is rewritten with the deleted lines removed.
 
 When the `history.shared` setting is enabled, then all instances of Clink update the master history file and reload it every time a new input line starts.  This gives the effect that all instances of Clink share the same history -- a command entered in one instance will appear in other instances' history the next time they start an input line.  When the setting is disabled, then each instance of Clink loads the master file but doesn't append its own history back to the master file until after it exits, giving the effect that once an instance starts its history is isolated from other instances' history.
+
+# Sample Scripts
+
+Here are a few samples of what can be done with Clink.
+
+### clink-completions
+
+The [clink-completions](https://github.com/vladimir-kotikov/clink-completions) collection of scripts has a bunch of argument matchers and completion generators for things like git, mercurial, npm, and more.
+
+### cmder-powerline-prompt
+
+The [cmder-powerline-prompt](https://github.com/chrisant996/cmder-powerline-prompt) collection of scripts provides a Powerline-like prompt for Clink.  It's extensible so you can add your own segments, and some configuration of built-in segments is also available.
+
+### oh-my-posh
+
+The [oh-my-posh](https://github.com/JanDeDobbeleer/oh-my-posh3) program can generate fancy prompts.  Refer to its documentation for how to configure it.
+
+Integrating oh-my-posh with Clink is easy:  just save the following text to an `oh-my-posh.lua` file in your Clink scripts directory (run `clink info` to find that), and make sure the oh-my-posh.exe program is in a directory listed in the %PATH% environment variable.  (Or edit the script below to provide a fully qualified path to the oh-my-posh.exe program.)
+
+```lua
+-- oh-my-posh.lua
+local ohmyposh_prompt = clink.promptfilter(1)
+function ohmyposh_prompt:filter(prompt)
+    prompt = io.popen("oh-my-posh.exe"):read("*a")
+    return prompt, false
+end
+```
+
+### z.lua
+
+The [z.lua](https://github.com/skywind3000/z.lua) tool is a faster way to navigate directories, and it integrates with Clink.
