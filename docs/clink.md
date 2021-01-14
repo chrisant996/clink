@@ -162,6 +162,8 @@ Settings and history are persisted to disk from session to session. The location
 
 All of the above locations can be overridden using the <code>--profile <span class="arg">path</span></code> command line option which is specified when injecting Clink into cmd.exe using `clink inject`.
 
+You can use `clink info` to find the directories and configuration files for the current Clink session.
+
 ## Command Line Options
 
 <p>
@@ -228,6 +230,8 @@ Clink searches in the directories referenced by the following environment variab
 Configuration in files loaded earlier can be overridden by files loaded later.
 
 Other software that also uses Readline will also look for the `.inputrc` file (and possibly the `_inputrc` file too). To set macros and keybindings intended only for Clink one can use the Readline init file conditional construct like this; `$if clink [...] $endif`.
+
+You can use `clink info` to find the directories and configuration files for the current Clink session.
 
 > **Compatibility Notes:**
 > - The `clink_inputrc_base` file from v0.4.8 is no longer used.
@@ -898,6 +902,18 @@ Every time a new input line starts, Clink reloads the master history list and pr
 For performance reasons, deleting a history line marks the line as deleted without rewriting the history file.  When the number of deleted lines gets too large (exceeding the max lines or 200, which is larger) then the history file is compacted:  the file is rewritten with the deleted lines removed.
 
 When the `history.shared` setting is enabled, then all instances of Clink update the master history file and reload it every time a new input line starts.  This gives the effect that all instances of Clink share the same history -- a command entered in one instance will appear in other instances' history the next time they start an input line.  When the setting is disabled, then each instance of Clink loads the master file but doesn't append its own history back to the master file until after it exits, giving the effect that once an instance starts its history is isolated from other instances' history.
+
+A line won't be added to history if either of the following are true:
+- The first word in the line matches one of the words in the `history.dont_add_to_history_cmds` setting.
+- The line begins with a space character.
+
+To prevent doskey alias expansion while still adding the line to history, you can start the line with a semicolon.
+
+Line|Description
+---|---
+`somecmd`|Expands doskey alias and adds to history.
+<code>&nbsp;somecmd</code>|Doesn't expand doskey alias and doesn't add to history.
+`;somecmd`|Doesn't expand doskey alias but does add to history.
 
 # Sample Scripts
 

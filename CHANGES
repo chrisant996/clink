@@ -2,6 +2,12 @@
 
 ## Releases from [chrisant996/clink](https://github.com/chrisant996/clink) fork
 
+### v1.1.21
+
+- Added `clink.oninject()` so scripts can register a callback function to run when Clink is injected into CMD.
+- Added `console.linehascolor()` function that returns whether the specified line contains any of the specified colors.
+- Fixed doskey alias parsing for match generators and input line coloring (Clink had been using slightly different parsing rules than CMD does).
+
 ### v1.1.20
 
 - Now you can bind Lua functions to keys!  Added new `rl_buffer` type that gets passed to the Lua function.

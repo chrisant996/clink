@@ -132,6 +132,12 @@ int ecma48_terminal_out::is_line_default_color(int line) const
 }
 
 //------------------------------------------------------------------------------
+int ecma48_terminal_out::line_has_color(int line, const BYTE* attrs, int num_attrs, BYTE mask) const
+{
+    return m_screen.line_has_color(line, attrs, num_attrs, mask);
+}
+
+//------------------------------------------------------------------------------
 void ecma48_terminal_out::write_c1(const ecma48_code& code)
 {
     if (code.get_code() != ecma48_code::c1_csi)

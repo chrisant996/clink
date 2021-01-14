@@ -103,6 +103,12 @@ int printer::is_line_default_color(int line) const
 }
 
 //------------------------------------------------------------------------------
+int printer::line_has_color(int line, const BYTE* attrs, int num_attrs, BYTE mask) const
+{
+    return m_terminal.line_has_color(line, attrs, num_attrs, mask);
+}
+
+//------------------------------------------------------------------------------
 attributes printer::set_attributes(const attributes attr)
 {
     attributes prev_attr = m_next_attr;

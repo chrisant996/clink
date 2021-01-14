@@ -32,6 +32,7 @@ public:
     virtual void    set_attributes(const attributes attr) override;
     virtual bool    get_nearest_color(attributes& attr) const override;
     virtual int     is_line_default_color(int line) const override;
+    virtual int     line_has_color(int line, const BYTE* attrs, int num_attrs, BYTE mask=0xff) const override;
 
 private:
     enum : unsigned short

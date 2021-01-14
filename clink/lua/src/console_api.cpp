@@ -194,6 +194,113 @@ static int is_line_default_color(lua_State* state)
 }
 
 //------------------------------------------------------------------------------
+/// -name:  console.linehascolor
+/// -arg:   line:integer
+/// -arg:   [attr:integer]
+/// -arg:   [attrs:table of integers]
+/// -arg:   [mask:string]
+/// -ret:   boolean
+/// Returns whether line number <span class="arg">line</span> contains the DOS
+/// color code <span class="arg">attr</span>, or any of the DOS color codes in
+/// <span class="arg">attrs</span> (either an integer or a table of integers
+/// must be provided, but not both).  <span class="arg">mask</span> is optional
+/// and can be "fore" or "back" to only match foreground or background colors,
+/// respectively.
+///
+/// The low 4 bits of the color code are the foreground color, and the high 4
+/// bits of the color code are the background color.  This refers to the default
+/// 16 color palette used by console windows.  When 256 color or 24-bit color
+/// ANSI escape codes have been used, the closest of the 16 colors is used.
+///
+/// To build a color code, add the corresponding Foreground color and the
+/// Background color values from this table:
+///
+/// <table><tr><th align="center">Foreground</th><th align="center">Background</th><th>Color</th></tr>
+/// <tr><td align="center">0</td><td align="center">0</td><td><div class="colorsample" style="background-color:#000000">&nbsp;</div> Black</td></tr>
+/// <tr><td align="center">1</td><td align="center">16</td><td><div class="colorsample" style="background-color:#000080">&nbsp;</div> Dark Blue</td></tr>
+/// <tr><td align="center">2</td><td align="center">32</td><td><div class="colorsample" style="background-color:#008000">&nbsp;</div> Dark Green</td></tr>
+/// <tr><td align="center">3</td><td align="center">48</td><td><div class="colorsample" style="background-color:#008080">&nbsp;</div> Dark Cyan</td></tr>
+/// <tr><td align="center">4</td><td align="center">64</td><td><div class="colorsample" style="background-color:#800000">&nbsp;</div> Dark Red</td></tr>
+/// <tr><td align="center">5</td><td align="center">80</td><td><div class="colorsample" style="background-color:#800080">&nbsp;</div> Dark Magenta</td></tr>
+/// <tr><td align="center">6</td><td align="center">96</td><td><div class="colorsample" style="background-color:#808000">&nbsp;</div> Dark Yellow</td></tr>
+/// <tr><td align="center">7</td><td align="center">112</td><td><div class="colorsample" style="background-color:#c0c0c0">&nbsp;</div> Gray</td></tr>
+/// <tr><td align="center">8</td><td align="center">128</td><td><div class="colorsample" style="background-color:#808080">&nbsp;</div> Dark Gray</td></tr>
+/// <tr><td align="center">9</td><td align="center">144</td><td><div class="colorsample" style="background-color:#0000ff">&nbsp;</div> Bright Blue</td></tr>
+/// <tr><td align="center">10</td><td align="center">160</td><td><div class="colorsample" style="background-color:#00ff00">&nbsp;</div> Bright Green</td></tr>
+/// <tr><td align="center">11</td><td align="center">176</td><td><div class="colorsample" style="background-color:#00ffff">&nbsp;</div> Bright Cyan</td></tr>
+/// <tr><td align="center">12</td><td align="center">192</td><td><div class="colorsample" style="background-color:#ff0000">&nbsp;</div> Bright Red</td></tr>
+/// <tr><td align="center">13</td><td align="center">208</td><td><div class="colorsample" style="background-color:#ff00ff">&nbsp;</div> Bright Magenta</td></tr>
+/// <tr><td align="center">14</td><td align="center">224</td><td><div class="colorsample" style="background-color:#ffff00">&nbsp;</div> Bright Yellow</td></tr>
+/// <tr><td align="center">15</td><td align="center">240</td><td><div class="colorsample" style="background-color:#ffffff">&nbsp;</div> White</td></tr>
+/// </table>
+static int line_has_color(lua_State* state)
+{
+    if (!g_printer)
+        return 0;
+
+    if (!lua_isnumber(state, 1))
+        return 0;
+    if (!lua_isnumber(state, 2) && !lua_istable(state, 2))
+        return 0;
+    if (!lua_isnil(state, 3) && !lua_isstring(state, 3))
+        return 0;
+
+    CONSOLE_SCREEN_BUFFER_INFO csbi;
+    HANDLE h = GetStdHandle(STD_OUTPUT_HANDLE);
+    if (!GetConsoleScreenBufferInfo(h, &csbi))
+        return 0;
+
+    SHORT line = int(lua_tointeger(state, 1)) - 1;
+    line = min<int>(line, GetConsoleNumLines(csbi));
+    line = max<int>(line, 0);
+
+    BYTE mask = 0xff;
+    {
+        const char* mask_name = lua_tostring(state, 3);
+        if (mask_name)
+        {
+            if (strcmp(mask_name, "fore") == 0)         mask = 0x0f;
+            else if (strcmp(mask_name, "back") == 0)    mask = 0xf0;
+            else if (strcmp(mask_name, "both") == 0)    mask = 0xff;
+        }
+    }
+
+    int result;
+
+    if (lua_isnumber(state, 2))
+    {
+        BYTE attr = BYTE(lua_tointeger(state, 2));
+        result = g_printer->line_has_color(line, &attr, 1, mask);
+    }
+    else
+    {
+        BYTE attrs[32];
+        int num_attrs = 0;
+
+        for (int i = 1; num_attrs <= sizeof_array(attrs); i++)
+        {
+            lua_rawgeti(state, 2, i);
+            if (lua_isnil(state, -1))
+            {
+                lua_pop(state, 1);
+                break;
+            }
+
+            attrs[num_attrs++] = BYTE(lua_tointeger(state, -1));
+
+            lua_pop(state, 1);
+        }
+        result = g_printer->line_has_color(line, attrs, num_attrs, mask);
+    }
+
+    if (result < 0)
+        return 0;
+
+    lua_pushboolean(state, result > 0);
+    return 1;
+}
+
+//------------------------------------------------------------------------------
 void console_lua_initialise(lua_state& lua)
 {
     struct {
@@ -207,6 +314,8 @@ void console_lua_initialise(lua_state& lua)
         { "gettop",                 &get_top },
         { "getlinetext",            &get_line_text },
         { "islinedefaultcolor",     &is_line_default_color },
+        { "linehascolor",           &line_has_color },
+//        { "findline",               &find_line },
     };
 
     lua_State* state = lua.get_state();

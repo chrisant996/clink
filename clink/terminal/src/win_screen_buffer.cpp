@@ -548,3 +548,37 @@ int win_screen_buffer::is_line_default_color(int line) const
 
     return true;
 }
+
+//------------------------------------------------------------------------------
+int win_screen_buffer::line_has_color(int line, const BYTE* attrs, int num_attrs, BYTE mask) const
+{
+    CONSOLE_SCREEN_BUFFER_INFO csbi;
+    if (!GetConsoleScreenBufferInfo(m_handle, &csbi))
+        return -1;
+
+    if (csbi.dwSize.X > m_attrs_capacity)
+    {
+        m_attrs = static_cast<WORD*>(malloc(csbi.dwSize.X * sizeof(*m_attrs)));
+        if (!m_attrs)
+            return -1;
+        m_attrs_capacity = csbi.dwSize.X;
+    }
+
+    int ret = true;
+    COORD coord = { 0, SHORT(line) };
+    DWORD len = 0;
+    if (!ReadConsoleOutputAttribute(m_handle, m_attrs, csbi.dwSize.X, coord, &len))
+        return -1;
+    if (len != csbi.dwSize.X)
+        return -1;
+
+    const BYTE* end_attrs = attrs + num_attrs;
+    for (const WORD* attr = m_attrs; len--; attr++)
+    {
+        for (const BYTE* find_attr = attrs; find_attr < end_attrs; find_attr++)
+            if ((BYTE(*attr) & mask) == (*find_attr & mask))
+                return true;
+    }
+
+    return false;
+}

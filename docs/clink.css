@@ -123,6 +123,14 @@ kbd {
     font-style: italic;
 }
 
+.colorsample {
+    display:inline-block;
+    border:1px solid lightgray;
+    width:0.8rem;
+    height:0.8rem;
+    vertical-align:middle;
+}
+
 #header {
     float: right;
     text-align: right;

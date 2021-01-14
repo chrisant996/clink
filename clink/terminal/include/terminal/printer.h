@@ -27,6 +27,7 @@ public:
     unsigned int            get_rows() const;
     bool                    get_line_text(int line, str_base& out) const;
     int                     is_line_default_color(int line) const;
+    int                     line_has_color(int line, const BYTE* attrs, int num_attrs, BYTE mask=0xff) const;
     attributes              set_attributes(const attributes attr);
     attributes              get_attributes() const;
 

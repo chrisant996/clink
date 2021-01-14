@@ -38,6 +38,7 @@ public:
     virtual void    set_attributes(const attributes attr) = 0;
     virtual bool    get_nearest_color(attributes& attr) const = 0;
     virtual int     is_line_default_color(int line) const = 0;
+    virtual int     line_has_color(int line, const BYTE* attrs, int num_attrs, BYTE mask=0xff) const = 0;
 };
 
 //------------------------------------------------------------------------------
