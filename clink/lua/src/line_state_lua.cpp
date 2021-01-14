@@ -84,6 +84,7 @@ int line_state_lua::get_word_count(lua_State* state)
 /// -show:  &nbsp; length,  -- [integer] length of the word.
 /// -show:  &nbsp; quoted,  -- [boolean] indicates whether the word is quoted.
 /// -show:  &nbsp; delim,   -- [string] the delimiter character, or an empty string.
+/// -show:  &nbsp; alias,   -- [boolean | nil] true if the word is a doskey alias, otherwise nil.
 /// -show:  }
 int line_state_lua::get_word_info(lua_State* state)
 {
@@ -115,6 +116,13 @@ int line_state_lua::get_word_info(lua_State* state)
     lua_pushliteral(state, "delim");
     lua_pushstring(state, delim);
     lua_rawset(state, -3);
+
+    if (word.is_alias)
+    {
+        lua_pushliteral(state, "alias");
+        lua_pushboolean(state, true);
+        lua_rawset(state, -3);
+    }
 
     return 1;
 }

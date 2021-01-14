@@ -228,6 +228,12 @@ int expand_doskey_alias(int count, int invoking_key)
     doskey doskey("cmd.exe");
     doskey.resolve(g_rl_buffer->get_buffer(), alias);
 
+    if (!alias)
+    {
+        rl_ding();
+        return 0;
+    }
+
     str<> expand;
     alias.next(expand);
 

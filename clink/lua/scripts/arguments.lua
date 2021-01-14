@@ -703,7 +703,7 @@ function clink._parse_word_types(line_state, word_classifier)
     if word_count > 1 or string.len(first_word) > 0 then
         local word_info = line_state:getwordinfo(1)
         local command_offset = line_state:getcommandoffset()
-        if word_info and command_offset == word_info.offset and string.len(os.getalias(first_word) or "") > 0 then
+        if word_info.alias then
             table.insert(parsed_word_types, "d"); --doskey
         elseif clink.is_cmd_command(first_word) then
             table.insert(parsed_word_types, "c"); --command

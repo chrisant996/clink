@@ -3,8 +3,10 @@ ChrisAnt Plans
 <br/>
 
 # RELEASE
-- `";"` gets colored as a doskey alias, but `;` doesn't (there's a `;` doskey alias because of an issue in Cmder's default configurations).
+- API to find a line containing a color (or one of multiple colors).
+- API to find a line containing text (maybe supporting Lua find expression, maybe supporting ECMAScript regex).
 - Investigate:
+  - Holding Ctrl+F eventually pops up the Find dialog!  How and why?  Can it be controlled, leveraged, and prevented?
   - Verify (again?) that popup windows show up in the right location with ConEmu and Windows Terminal.
   - Is autorun compatible with ConEmu?  If not, can it be made compatible?
 - Escape key:

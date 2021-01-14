@@ -12,7 +12,8 @@ struct word
 {
     unsigned int        offset : 16;
     unsigned int        length : 16;
-    bool                command_word;
+    bool                command_word : 1;
+    bool                is_alias : 1;
     bool                quoted;
     unsigned char       delim;
 };

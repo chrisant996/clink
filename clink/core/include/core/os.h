@@ -28,5 +28,6 @@ bool    copy(const char* src_path, const char* dest_path);
 bool    get_temp_dir(str_base& out);
 bool    get_env(const char* name, str_base& out);
 bool    set_env(const char* name, const char* value);
+bool    get_alias(const char* name, str_base& out);
 
 }; // namespace os

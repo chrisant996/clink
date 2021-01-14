@@ -52,6 +52,16 @@ static const char* get_last_separator(const char* in)
 }
 
 //------------------------------------------------------------------------------
+static const wchar_t* get_last_separator(const wchar_t* in)
+{
+    for (int i = int(wcslen(in)) - 1; i >= 0; --i)
+        if (path::is_separator(in[i]))
+            return in + i;
+
+    return nullptr;
+}
+
+//------------------------------------------------------------------------------
 static int get_directory_end(const char* path)
 {
     if (const char* slash = get_last_separator(path))
@@ -302,9 +312,29 @@ bool get_name(const char* in, str_base& out)
 }
 
 //------------------------------------------------------------------------------
+bool get_name(const wchar_t* in, wstr_base& out)
+{
+    return out.concat(get_name(in));
+}
+
+//------------------------------------------------------------------------------
 const char* get_name(const char* in)
 {
     if (const char* slash = get_last_separator(in))
+        return slash + 1;
+
+#if defined(PLATFORM_WINDOWS)
+    if (in[0] && in[1] == ':')
+        in += 2;
+#endif
+
+    return in;
+}
+
+//------------------------------------------------------------------------------
+const wchar_t* get_name(const wchar_t* in)
+{
+    if (const wchar_t* slash = get_last_separator(in))
         return slash + 1;
 
 #if defined(PLATFORM_WINDOWS)

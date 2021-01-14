@@ -6,7 +6,8 @@
 #include "line_state.h"
 
 #include <core/base.h>
-#include <core/str_iter.h>
+#include <core/os.h>
+#include <core/path.h>
 #include <core/str_tokeniser.h>
 
 extern "C" {
@@ -179,9 +180,32 @@ unsigned int rl_buffer::collect_words(std::vector<word>& words, collect_words_mo
     for (auto& command : commands)
     {
         bool first = true;
+        unsigned int doskey_len = 0;
         command_offset = command.offset;
 
-        str_iter token_iter(line_buffer + command.offset, command.length);
+        {
+            unsigned int first_word_len = 0;
+            while (first_word_len < command.length &&
+                    line_buffer[command_offset + first_word_len] != ' ' &&
+                    line_buffer[command_offset + first_word_len] != '\t')
+                first_word_len++;
+
+            if (first_word_len > 0)
+            {
+                str<32> lookup;
+                str<32> alias;
+                lookup.concat(line_buffer + command_offset, first_word_len);
+                if (os::get_alias(lookup.c_str(), alias))
+                {
+                    unsigned char delim = (doskey_len < command.length) ? line_buffer[command_offset + doskey_len] : 0;
+                    doskey_len = first_word_len;
+                    words.push_back({command_offset, doskey_len, first, true/*is_alias*/, 0, delim});
+                    first = false;
+                }
+            }
+        }
+
+        str_iter token_iter(line_buffer + command.offset + doskey_len, command.length - doskey_len);
         str_tokeniser tokens(token_iter, m_word_delims);
         tokens.add_quote_pair(m_quote_pair);
         while (1)
@@ -194,7 +218,7 @@ unsigned int rl_buffer::collect_words(std::vector<word>& words, collect_words_mo
 
             // Add the word.
             unsigned int offset = unsigned(start - line_buffer);
-            words.push_back({offset, unsigned(length), first, 0, token.delim});
+            words.push_back({offset, unsigned(length), first, false/*is_alias*/, 0, token.delim});
 
             first = false;
         }
@@ -211,7 +235,7 @@ unsigned int rl_buffer::collect_words(std::vector<word>& words, collect_words_mo
     // Adjust for quotes.
     for (word& word : words)
     {
-        if (word.length == 0)
+        if (word.length == 0 || word.is_alias)
             continue;
 
         const char* start = line_buffer + word.offset;
