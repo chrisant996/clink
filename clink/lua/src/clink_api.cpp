@@ -11,6 +11,7 @@
 #include <core/path.h>
 #include <core/str.h>
 #include <core/str_iter.h>
+#include <core/str_transform.h>
 #include <readline/readline.h>
 
 #include <unordered_set>
@@ -161,7 +162,7 @@ static int get_host_process(lua_State* state)
 /// This is no longer used.
 
 //------------------------------------------------------------------------------
-static int map_string(lua_State* state, DWORD mapflags)
+static int map_string(lua_State* state, transform_mode mode)
 {
     const char* string;
     int length;
@@ -181,55 +182,16 @@ static int map_string(lua_State* state, DWORD mapflags)
     if (length)
     {
         wstr<> in(string);
-
-        out.reserve(in.length() + max<int>(in.length() / 10, 10));
-        int cch = LCMapStringW(LOCALE_USER_DEFAULT, mapflags,
-                               in.c_str(), in.length(), out.data(), out.size());
-        if (!cch)
-        {
-            cch = LCMapStringW(LOCALE_USER_DEFAULT, mapflags,
-                               in.c_str(), in.length(), nullptr, 0);
-            out.reserve(cch + 1);
-            cch = LCMapStringW(LOCALE_USER_DEFAULT, mapflags,
-                               in.c_str(), in.length(), out.data(), out.size());
-            if (!cch)
-            {
-                out.clear();
-                bool title_char = true;
-                for (unsigned int i = 0; i < in.length(); ++i)
-                {
-                    WCHAR c = in[i];
-
-                    switch (mapflags)
-                    {
-                    case LCMAP_LOWERCASE:
-                        out.data()[i] = __ascii_towlower(c);
-                        break;
-                    case LCMAP_UPPERCASE:
-                        out.data()[i] = __ascii_towupper(c);
-                        break;
-                    case LCMAP_TITLECASE:
-                        out.data()[i] = title_char ? __ascii_towupper(c) : __ascii_towlower(c);
-                        break;
-                    }
-
-                    title_char = !!iswspace(c);
-                }
-
-                cch = in.length();
-            }
-        }
-
-        out.data()[cch] = '\0';
+        str_transform(in.c_str(), in.length(), out, mode);
     }
 
     if (_rl_completion_case_map)
     {
         for (unsigned int i = 0; i < out.length(); ++i)
         {
-            if (out[i] == '-' && (mapflags & LCMAP_LOWERCASE))
+            if (out[i] == '-' && (mode != transform_mode::upper))
                 out.data()[i] = '_';
-            else if (out[i] == '_' && ((mapflags & (LCMAP_LOWERCASE|LCMAP_UPPERCASE)) == LCMAP_UPPERCASE))
+            else if (out[i] == '_' && (mode == transform_mode::upper))
                 out.data()[i] = '-';
         }
     }
@@ -250,7 +212,7 @@ static int map_string(lua_State* state, DWORD mapflags)
 /// linguistic awareness.
 static int to_lowercase(lua_State* state)
 {
-    return map_string(state, LCMAP_LOWERCASE);
+    return map_string(state, transform_mode::lower);
 }
 
 //------------------------------------------------------------------------------
@@ -262,7 +224,7 @@ static int to_lowercase(lua_State* state)
 /// linguistic awareness.
 static int to_uppercase(lua_State* state)
 {
-    return map_string(state, LCMAP_UPPERCASE);
+    return map_string(state, transform_mode::upper);
 }
 
 
