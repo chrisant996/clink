@@ -419,6 +419,8 @@ str_impl<TYPE>& str_impl<TYPE>::operator << (const str_impl& rhs)
 template <typename TYPE>
 str_impl<TYPE>& str_impl<TYPE>::operator = (str_impl&& s)
 {
+    free_data();
+
     memcpy(this, &s, sizeof(*this));
 
     // This leaves s in a non-reusable state!
