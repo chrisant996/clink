@@ -67,12 +67,29 @@ TEST_CASE("Doskey expand : leading")
 
         doskey_alias alias;
         doskey.resolve(line.c_str(), alias);
-        REQUIRE(bool(alias) == (i == 1));
-
-        doskey.add_alias("\"alias", "text\"");
+        REQUIRE(bool(alias) == false);
 
         REQUIRE(doskey.remove_alias("alias") == true);
-        REQUIRE(doskey.remove_alias("\"alias") == true);
+    }
+}
+
+//------------------------------------------------------------------------------
+TEST_CASE("Doskey expand : punctuation")
+{
+    for (int i = 0; i < 2; ++i)
+    {
+        const char* name = (i == 0) ? "alias" : "\"alias";
+
+        doskey doskey("shell");
+        doskey.add_alias(name, "text");
+
+        str<> line("\"alias");
+
+        doskey_alias alias;
+        doskey.resolve(line.c_str(), alias);
+        REQUIRE(bool(alias) == (i == 1));
+
+        REQUIRE(doskey.remove_alias(name) == true);
     }
 }
 

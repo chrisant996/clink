@@ -226,7 +226,7 @@ TEST_CASE("Executable match generation.")
             {
                 settings::find("exec.space_prefix")->set("1");
 
-                tester.set_input("nullcmd | one_p");
+                tester.set_input("nullcmd |  one_p");
                 tester.set_expected_matches();
                 tester.run();
             }
