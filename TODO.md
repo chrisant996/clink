@@ -3,8 +3,6 @@ ChrisAnt Plans
 <br/>
 
 # RELEASE
-- API to find a line containing a color (or one of multiple colors).
-- API to find a line containing text (maybe supporting Lua find expression, maybe supporting ECMAScript regex).
 - Investigate:
   - Holding Ctrl+F eventually pops up the Find dialog!  How and why?  Can it be controlled, leveraged, and prevented?
   - Verify (again?) that popup windows show up in the right location with ConEmu and Windows Terminal.
@@ -15,7 +13,6 @@ ChrisAnt Plans
 
 ## Issues
 - [#45](https://github.com/chrisant996/clink/issues/45) Interaction between erase_prev and history.shared=false
-- When `convert-meta` is off, then when binding `\M-h` (etc) the key name gets interpreted differently than Clink expects.  Does this affect the `inputrc` files at all, or is it only an issue inside Clink's native code?
 
 ## Cmder
 - Port Cmder to v1.x -- will require help from Cmder and/or ConEmu teams.  There are a lot of hard-coded expectations about Clink (web site address, terminal input mode, DLL names, VirtualAlloc patterns, and many other things).
