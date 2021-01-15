@@ -213,8 +213,10 @@ Or <code>clink --version</code> shows just the version number.</dd>
 <p>
 <dt>clink echo</dt>
 <dd>
-Echos key sequences to use in the inputrc files for binding keys to Clink commands.  Each key pressed prints the associated key sequence on a separate line, until <kbd>Ctrl</kbd>+<kbd>C</kbd> is pressed.</dd>
+Echos key sequences to use in the .inputrc files for binding keys to Clink commands.  Each key pressed prints the associated key sequence on a separate line, until <kbd>Ctrl</kbd>+<kbd>C</kbd> is pressed.</dd>
 </p>
+
+<a name="configreadline"/>
 
 # Configuring Readline
 
@@ -247,7 +249,7 @@ The quick version is that mostly you'll use these kinds of lines:
 
 If a Readline macro begins with "luafunc:" then Clink interprets it as a Lua key binding and will invoke the named Lua function.  Function names can include periods (such as `foo.bar`) but cannot include any other punctuation.  See <a href="#luakeybindings">Lua Key Bindings</a> for more information.
 
-Refer to the Readline [manual](https://tiswww.cwru.edu/php/chet/readline/rltop.html#Documentation) for a more thorough explanation of the inputrc file format, list of available commands, and list of configuration variables and their values.
+Refer to the Readline [manual](https://tiswww.cwru.edu/php/chet/readline/rltop.html#Documentation) for a more thorough explanation of the .inputrc file format, list of available commands, and list of configuration variables and their values.
 
 See [Key Bindings](#keybindings) for more information about binding keys in Clink.
 
@@ -280,7 +282,7 @@ Name | Description
 `clink-popup-complete`|Show a popup window that lists the available completions.
 `clink-popup-directories`|Show a popup window of recent current working directories.  In the popup, use <kbd>Enter</kbd> to `cd /d` to the highlighted directory.  See below more about the popup window.
 `clink-popup-history`|Show a popup window that lists the command history (if any text precedes the cursor then it uses an anchored search to filter the list).  In the popup, use <kbd>Enter</kbd> to execute the highlighted command.  See below for more about the popup window.
-`clink-reload`|Reloads the inputrc file and the Lua scripts.
+`clink-reload`|Reloads the .inputrc file and the Lua scripts.
 `clink-reset-line`|Clears the current line.
 `clink-scroll-bottom`|Scroll the console window to the bottom (the current input line).
 `clink-scroll-line-down`|Scroll the console window down one line.
@@ -352,6 +354,8 @@ Clink loads all Lua scripts it finds in these directories:
 3. All directories listed in the `%CLINK_PATH%` environment variable, separated by semicolons.
 
 Lua scripts are loaded once and are only reloaded if forced because the scripts locations change, the `clink-reload` command is invoked (<kbd>Ctrl</kbd>+<kbd>X</kbd>,<kbd>Ctrl</kbd>+<kbd>R</kbd>), or the `lua.reload_scripts` setting changes (or is True).
+
+Run `clink info` to see the script paths for the current session.
 
 <a name="matchgenerators"/>
 
@@ -768,7 +772,7 @@ The resulting prompt will look like this:
 
 ## Key bindings
 
-Key bindings are defined in the inputrc files.  See the [Readline](https://tiswww.cwru.edu/php/chet/readline/readline.html) manual for more information about the inputrc files (look for "Readline Init File").
+Key bindings are defined in .inputrc files.  See the [Configuring Readline](#configreadline) section for more information.
 
 Here is the quick version:
 
@@ -783,6 +787,8 @@ Here is the quick version:
 - Key bindings can be either functions or macros (literal text):
   - `blah-blah` binds to a function named "blah-blah".
   - `"blah-blah"` inserts the literal text "blah-blah".
+
+You can use `clink info` to find the directories and configuration files for the current Clink session.
 
 Here is an example `.inputrc` file with the key bindings that I use myself:
 
@@ -821,7 +827,7 @@ C-_:                kill-line                       <span class="hljs-comment">#
 <span class="hljs-meta">$endif</span>              <span class="hljs-comment"># end clink-only section</span>
 </code></pre>
 
-The `clink-show-help` command is bound to <kbd>Alt</kbd>+<kbd>H</kbd> and lists all currently active key bindings.  The list displays "friendly" key names, and these names are generally not suitable for use in inputrc files.  For example "Up" is the friendly name for `"\e[A"`, and "A-C-F2" is the friendly name for `"\e\e[1;5Q"`.  To see key sequence strings suitable for use an inputrc files use `clink echo` or <kbd>Alt</kbd>+<kbd>Shift</kbd>+<kbd>H</kbd>.
+The `clink-show-help` command is bound to <kbd>Alt</kbd>+<kbd>H</kbd> and lists all currently active key bindings.  The list displays "friendly" key names, and these names are generally not suitable for use in .inputrc files.  For example "Up" is the friendly name for `"\e[A"`, and "A-C-F2" is the friendly name for `"\e\e[1;5Q"`.  To see key sequence strings suitable for use in .inputrc files use `clink echo` or <kbd>Alt</kbd>+<kbd>Shift</kbd>+<kbd>H</kbd>.
 
 > **Note:** Third party console hosts such as ConEmu may have their own key bindings that supersede Clink.  They usually have documentation for how to change or disable their key bindings to allow console programs to handle the keys instead.
 
@@ -872,7 +878,7 @@ The Lua function receives a <a href="#rl_buffer">rl_buffer</a> argument that giv
 
 Lua functions can print output, but should first call <a href="#rl_buffer:beginoutput">rl_buffer:beginoutput</a> so that the output doesn't overwrite the displayed input line.
 
-Example of a Lua function key binding in an inputrc file:
+Example of a Lua function key binding in a .inputrc file:
 
 <pre><code class="plaintext"><span class="hljs-string">M-C-y</span>:      <span class="hljs-string">"luafunc:insert_date"</span>
 <span class="hljs-string">M-C-z</span>:      <span class="hljs-string">"luafunc:print_date"</span>
