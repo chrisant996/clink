@@ -138,6 +138,8 @@ static int get_top(lua_State* state)
 /// -ret:   string
 /// Returns the text from line number <span class="arg">line</span>, from 1 to
 /// <a href="#console.getnumlines">console.getnumlines</a>.
+///
+/// Any trailing whitespace is stripped before returning the text.
 static int get_line_text(lua_State* state)
 {
     if (!g_printer)
@@ -410,7 +412,7 @@ static int find_line(lua_State* state, int direction)
 /// -arg:   [attrs:table of integers]
 /// -arg:   [mask:string]
 /// -ret:   integer
-/// Searches upwards (backwards) for a line containg the specified text and
+/// Searches upwards (backwards) for a line containing the specified text and/or
 /// attributes, starting at line <span class="arg">starting_line</span>.  The
 /// matching line number is returned, or 0 if no matching line is found, or -1
 /// if an invalid regular expression is provided.
@@ -430,11 +432,99 @@ static int find_line(lua_State* state, int direction)
 /// comma.  The regular expression syntax is the ECMAScript syntax described
 /// <a href="https://docs.microsoft.com/en-us/cpp/standard-library/regular-expressions-cpp">here</a>.
 ///
+/// Any trailing whitespace is ignored when searching.  This especially affects
+/// the <code>$</code> (end of line) regex operator.
+///
 /// <span class="arg">mask</span> is optional and can be "fore" or "back" to
 /// only match foreground or background colors, respectively.
 ///
 /// Note that although most of the arguments are optional, the order of provided
 /// arguments is important.
+///
+/// The following example provides a pair of <code>find_prev_colored_line</code>
+/// and <code>find_next_colored_line</code> functions.  The functions can be
+/// bound to keys via the <code>luafunc:</code> macro syntax in a .inputrc file.
+/// They scroll the screen buffer to the previous or next line that contains
+/// "warn" or "error" colored red or yellow.
+/// -show:  local was_top
+/// -show:  local found_index
+/// -show:
+/// -show:  local function reset_found()
+/// -show:  &nbsp; was_top = nil
+/// -show:  &nbsp; found_index = nil
+/// -show:  end
+/// -show:
+/// -show:  -- Register for the onbeginedit event, to reset the found
+/// -show:  -- line number each time a new editing prompt begins.
+/// -show:  clink.onbeginedit(reset_found)
+/// -show:
+/// -show:  -- Searches upwards for a line containing "warn" or "error"
+/// -show:  -- colored red or yellow.
+/// -show:  function find_prev_colored_line(rl_buffer)
+/// -show:  &nbsp; local height = console.getheight()
+/// -show:  &nbsp; local cur_top = console.gettop()
+/// -show:  &nbsp; local offset = math.modf((height - 1) / 2) -- For vertically centering the found line.
+/// -show:
+/// -show:  &nbsp; local start
+/// -show:  &nbsp; if found_index == nil or cur_top ~= was_top then
+/// -show:  &nbsp;   start = cur_top
+/// -show:  &nbsp;   was_top = start
+/// -show:  &nbsp; else
+/// -show:  &nbsp;   start = found_index
+/// -show:  &nbsp; end
+/// -show:
+/// -show:  &nbsp; -- Only search if there's still room to scroll up.
+/// -show:  &nbsp; if start - offset > 1 then
+/// -show:  &nbsp;   local match = console.findprevline(start - 1, "warn|error", "regex", {4,12,14}, "fore")
+/// -show:  &nbsp;   if match ~= nil and match > 0 then
+/// -show:  &nbsp;     found_index = match
+/// -show:  &nbsp;   end
+/// -show:  &nbsp; end
+/// -show:
+/// -show:  &nbsp; if found_index ~= nil then
+/// -show:  &nbsp;   console.scroll("absolute", found_index - offset)
+/// -show:  &nbsp;   was_top = console.gettop()
+/// -show:  &nbsp; else
+/// -show:  &nbsp;   rl_buffer:ding()
+/// -show:  &nbsp; end
+/// -show:  end
+/// -show:
+/// -show:  -- Searches downwards for a line containing "warn" or "error"
+/// -show:  -- colored red or yellow.
+/// -show:  function find_next_colored_line(rl_buffer)
+/// -show:  &nbsp; if found_index == nil then
+/// -show:  &nbsp;   rl_buffer:ding()
+/// -show:  &nbsp;   return
+/// -show:  &nbsp; end
+/// -show:
+/// -show:  &nbsp; local height = console.getheight()
+/// -show:  &nbsp; local cur_top = console.gettop()
+/// -show:  &nbsp; local offset = math.modf((height - 1) / 2)
+/// -show:
+/// -show:  &nbsp; local start
+/// -show:  &nbsp; if cur_top ~= was_top then
+/// -show:  &nbsp;     start = cur_top + height - 1
+/// -show:  &nbsp;     was_top = cur_top
+/// -show:  &nbsp; else
+/// -show:  &nbsp;     start = found_index
+/// -show:  &nbsp; end
+/// -show:
+/// -show:  &nbsp; -- Only search if there's still room to scroll down.
+/// -show:  &nbsp; local bottom = console.getnumlines()
+/// -show:  &nbsp; if start - offset + height - 1 < bottom then
+/// -show:  &nbsp;   local match = console.findnextline(start + 1, "warn|error", "regex", {4,12,14}, "fore")
+/// -show:  &nbsp;   if match ~= nil and match > 0 then
+/// -show:  &nbsp;     found_index = match
+/// -show:  &nbsp;   end
+/// -show:  &nbsp; end
+/// -show:
+/// -show:  &nbsp; if found_index ~= nil then
+/// -show:  &nbsp;   console.scroll("absolute", found_index - offset)
+/// -show:  &nbsp;   was_top = console.gettop()
+/// -show:  &nbsp; else
+/// -show:  &nbsp;   rl_buffer:ding()
+/// -show:  &nbsp; end
+/// -show:  end
 static int find_prev_line(lua_State* state)
 {
     return find_line(state, -1);
@@ -449,9 +539,9 @@ static int find_prev_line(lua_State* state)
 /// -arg:   [attrs:table of integers]
 /// -arg:   [mask:string]
 /// -ret:   integer
-/// Searches downwards (forwards) for a line containg the specified text and
-/// attributes, starting at line <span class="arg">starting_line</span>.  The
-/// matching line number is returned, or 0 if no matching line is found.
+/// Searches downwards (forwards) for a line containing the specified text
+/// and/or attributes, starting at line <span class="arg">starting_line</span>.
+/// The matching line number is returned, or 0 if no matching line is found.
 ///
 /// This behaves the same as
 /// <a href="#console.findprevline">console.findprevline()</a> except that it
