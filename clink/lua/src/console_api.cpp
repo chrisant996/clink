@@ -5,9 +5,11 @@
 #include "lua_state.h"
 #include "terminal/scroll.h"
 #include "terminal/printer.h"
+#include "terminal/find_line.h"
 
 #include <core/base.h>
 #include <core/str.h>
+#include <core/str_tokeniser.h>
 
 //------------------------------------------------------------------------------
 extern "C" int _rl_vis_botlin;
@@ -300,6 +302,165 @@ static int line_has_color(lua_State* state)
     return 1;
 }
 
+static int find_line(lua_State* state, int direction)
+{
+    if (!g_printer)
+        return 0;
+
+    int arg = 1;
+
+    // Starting line number is required.
+    if (!lua_isnumber(state, arg))
+        return 0;
+
+    CONSOLE_SCREEN_BUFFER_INFO csbi;
+    HANDLE h = GetStdHandle(STD_OUTPUT_HANDLE);
+    if (!GetConsoleScreenBufferInfo(h, &csbi))
+        return 0;
+
+    SHORT num_lines = GetConsoleNumLines(csbi);
+
+    SHORT starting_line = int(lua_tointeger(state, arg)) - 1;
+    starting_line = min<int>(starting_line, num_lines);
+    starting_line = max<int>(starting_line, 0);
+    arg++;
+
+    int distance;
+    if (direction > 0)
+        distance = num_lines - starting_line + 1;
+    else
+        distance = 0 - starting_line - 1;
+
+    // Text? Mode?
+    const char* text = nullptr;
+    find_line_mode mode = find_line_mode::none;
+    if (lua_isstring(state, arg))
+    {
+        text = lua_tostring(state, arg);
+        arg++;
+
+        if (lua_isstring(state, arg))
+        {
+            const char* mode_string = lua_tostring(state, arg);
+            arg++;
+
+            str<32> token;
+            str_tokeniser modes(mode_string, " ,;");
+            while (modes.next(token))
+            if (token.equals("regex"))
+                mode |= find_line_mode::use_regex;
+            else if (token.equals("icase"))
+                mode |= find_line_mode::ignore_case;
+        }
+    }
+
+    // Attr? Attrs?
+    BYTE attrs[32];
+    int num_attrs = 0;
+    if (lua_isnumber(state, arg))
+    {
+        attrs[0] = BYTE(lua_tointeger(state, arg));
+        num_attrs = 1;
+        arg++;
+    }
+    else
+    {
+        for (int i = 1; num_attrs <= sizeof_array(attrs); i++)
+        {
+            lua_rawgeti(state, arg, i);
+            if (lua_isnil(state, -1))
+            {
+                lua_pop(state, 1);
+                break;
+            }
+
+            attrs[num_attrs++] = BYTE(lua_tointeger(state, -1));
+
+            lua_pop(state, 1);
+        }
+        arg++;
+    }
+
+    BYTE mask = 0xff;
+    if (num_attrs && lua_isstring(state, arg))
+    {
+        const char* mask_name = lua_tostring(state, arg);
+        arg++;
+
+        if (mask_name)
+        {
+            if (strcmp(mask_name, "fore") == 0)         mask = 0x0f;
+            else if (strcmp(mask_name, "back") == 0)    mask = 0xf0;
+            else if (strcmp(mask_name, "both") == 0)    mask = 0xff;
+        }
+    }
+
+    int line_found = g_printer->find_line(starting_line, distance, text, mode, attrs, num_attrs, mask);
+
+    lua_pushinteger(state, line_found + 1);
+    return 1;
+}
+
+//------------------------------------------------------------------------------
+/// -name:  console.findprevline
+/// -arg:   starting_line:integer
+/// -arg:   [text:string]
+/// -arg:   [mode:string]
+/// -arg:   [attr:integer]
+/// -arg:   [attrs:table of integers]
+/// -arg:   [mask:string]
+/// -ret:   integer
+/// Searches upwards (backwards) for a line containg the specified text and
+/// attributes, starting at line <span class="arg">starting_line</span>.  The
+/// matching line number is returned, or 0 if no matching line is found, or -1
+/// if an invalid regular expression is provided.
+///
+/// You can search for text, attributes, or both.  Include the
+/// <span class="arg">text</span> argument to search for text, and include
+/// either the <span class="arg">attr</span> or <span class="arg">attrs</span>
+/// argument to search for attributes.  If both text and attribute(s) are
+/// passed, then the attribute(s) must be found within the found text.  If only
+/// attribute(s) are passed, then they must be found anywhere in the line.  See
+/// <a href="#console.linehascolor">console.linehascolor()</a> for more
+/// information about the color codes.
+///
+/// The <span class="arg">mode</span> argument selects how the search behaves.
+/// To use a regular expression, pass "regex".  To use a case insensitive
+/// search, pass "icase".  These can be combined by separating them with a
+/// comma.  The regular expression syntax is the ECMAScript syntax described
+/// <a href="https://docs.microsoft.com/en-us/cpp/standard-library/regular-expressions-cpp">here</a>.
+///
+/// <span class="arg">mask</span> is optional and can be "fore" or "back" to
+/// only match foreground or background colors, respectively.
+///
+/// Note that although most of the arguments are optional, the order of provided
+/// arguments is important.
+static int find_prev_line(lua_State* state)
+{
+    return find_line(state, -1);
+}
+
+//------------------------------------------------------------------------------
+/// -name:  console.findnextline
+/// -arg:   starting_line:integer
+/// -arg:   [text:string]
+/// -arg:   [mode:string]
+/// -arg:   [attr:integer]
+/// -arg:   [attrs:table of integers]
+/// -arg:   [mask:string]
+/// -ret:   integer
+/// Searches downwards (forwards) for a line containg the specified text and
+/// attributes, starting at line <span class="arg">starting_line</span>.  The
+/// matching line number is returned, or 0 if no matching line is found.
+///
+/// This behaves the same as
+/// <a href="#console.findprevline">console.findprevline()</a> except that it
+/// searches in the opposite direction.
+static int find_next_line(lua_State* state)
+{
+    return find_line(state, +1);
+}
+
 //------------------------------------------------------------------------------
 void console_lua_initialise(lua_state& lua)
 {
@@ -315,7 +476,8 @@ void console_lua_initialise(lua_state& lua)
         { "getlinetext",            &get_line_text },
         { "islinedefaultcolor",     &is_line_default_color },
         { "linehascolor",           &line_has_color },
-//        { "findline",               &find_line },
+        { "findprevline",           &find_prev_line },
+        { "findnextline",           &find_next_line },
     };
 
     lua_State* state = lua.get_state();

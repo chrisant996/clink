@@ -90,7 +90,7 @@ workspace("clink")
     staticruntime("on")
     rtti("off")
     symbols("on")
-    exceptionhandling("off")
+    exceptionhandling("on")     -- for std::wregex
     defines("HAVE_CONFIG_H")
     defines("HANDLE_MULTIBYTE")
     defines("CLINK_COMMIT="..clink_git_commit)

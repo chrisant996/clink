@@ -7,6 +7,7 @@
 
 class terminal_out;
 class str_base;
+enum find_line_mode : int;
 
 //------------------------------------------------------------------------------
 void set_scrolled_screen_buffer();
@@ -28,6 +29,7 @@ public:
     bool                    get_line_text(int line, str_base& out) const;
     int                     is_line_default_color(int line) const;
     int                     line_has_color(int line, const BYTE* attrs, int num_attrs, BYTE mask=0xff) const;
+    int                     find_line(int starting_line, int distance, const char* text, find_line_mode mode, const BYTE* attrs=nullptr, int num_attrs=0, BYTE mask=0xff) const;
     attributes              set_attributes(const attributes attr);
     attributes              get_attributes() const;
 

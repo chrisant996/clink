@@ -6,6 +6,7 @@
 #include "attributes.h"
 
 class str_base;
+enum find_line_mode : int;
 
 //------------------------------------------------------------------------------
 class screen_buffer
@@ -39,6 +40,7 @@ public:
     virtual bool    get_nearest_color(attributes& attr) const = 0;
     virtual int     is_line_default_color(int line) const = 0;
     virtual int     line_has_color(int line, const BYTE* attrs, int num_attrs, BYTE mask=0xff) const = 0;
+    virtual int     find_line(int starting_line, int distance, const char* text, find_line_mode mode, const BYTE* attrs=nullptr, int num_attrs=0, BYTE mask=0xff) const = 0;
 };
 
 //------------------------------------------------------------------------------

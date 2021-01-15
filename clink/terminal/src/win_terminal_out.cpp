@@ -3,6 +3,7 @@
 
 #include "pch.h"
 #include "win_terminal_out.h"
+#include "find_line.h"
 
 #include <core/base.h>
 #include <core/str_iter.h>
@@ -88,13 +89,8 @@ bool win_terminal_out::get_line_text(int line, str_base& out) const
     if (!GetConsoleScreenBufferInfo(m_stdout, &csbi))
         return false;
 
-    if (csbi.dwSize.X > m_chars_capacity)
-    {
-        m_chars = static_cast<WCHAR*>(malloc(csbi.dwSize.X * sizeof(*m_chars)));
-        if (!m_chars)
-            return false;
-        m_chars_capacity = csbi.dwSize.X;
-    }
+    if (!ensure_chars_buffer(csbi.dwSize.X))
+        return false;
 
     COORD coord = { 0, SHORT(line) };
     DWORD len = 0;
@@ -118,13 +114,8 @@ int win_terminal_out::is_line_default_color(int line) const
     if (!GetConsoleScreenBufferInfo(m_stdout, &csbi))
         return -1;
 
-    if (csbi.dwSize.X > m_attrs_capacity)
-    {
-        m_attrs = static_cast<WORD*>(malloc(csbi.dwSize.X * sizeof(*m_attrs)));
-        if (!m_attrs)
-            return -1;
-        m_attrs_capacity = csbi.dwSize.X;
-    }
+    if (!ensure_attrs_buffer(csbi.dwSize.X))
+        return -1;
 
     COORD coord = { 0, SHORT(line) };
     DWORD len = 0;
@@ -147,13 +138,8 @@ int win_terminal_out::line_has_color(int line, const BYTE* attrs, int num_attrs,
     if (!GetConsoleScreenBufferInfo(m_stdout, &csbi))
         return -1;
 
-    if (csbi.dwSize.X > m_attrs_capacity)
-    {
-        m_attrs = static_cast<WORD*>(malloc(csbi.dwSize.X * sizeof(*m_attrs)));
-        if (!m_attrs)
-            return -1;
-        m_attrs_capacity = csbi.dwSize.X;
-    }
+    if (!ensure_attrs_buffer(csbi.dwSize.X))
+        return -1;
 
     COORD coord = { 0, SHORT(line) };
     DWORD len = 0;
@@ -171,4 +157,50 @@ int win_terminal_out::line_has_color(int line, const BYTE* attrs, int num_attrs,
     }
 
     return false;
+}
+
+//------------------------------------------------------------------------------
+int win_terminal_out::find_line(int starting_line, int distance, const char* text, find_line_mode mode, const BYTE* attrs, int num_attrs, BYTE mask) const
+{
+    CONSOLE_SCREEN_BUFFER_INFO csbi;
+    if (!GetConsoleScreenBufferInfo(m_stdout, &csbi))
+        return -2;
+
+    if (text && !ensure_chars_buffer(csbi.dwSize.X))
+        return -2;
+    if (attrs && num_attrs > 0 && !ensure_attrs_buffer(csbi.dwSize.X))
+        return -2;
+
+    return ::find_line(m_stdout, csbi,
+                       m_chars, m_chars_capacity,
+                       m_attrs, m_attrs_capacity,
+                       starting_line, distance,
+                       text, mode,
+                       attrs, num_attrs, mask);
+}
+
+//------------------------------------------------------------------------------
+bool win_terminal_out::ensure_chars_buffer(int width) const
+{
+    if (width > m_chars_capacity)
+    {
+        m_chars = static_cast<WCHAR*>(malloc((width + 1) * sizeof(*m_chars)));
+        if (!m_chars)
+            return false;
+        m_chars_capacity = width;
+    }
+    return true;
+}
+
+//------------------------------------------------------------------------------
+bool win_terminal_out::ensure_attrs_buffer(int width) const
+{
+    if (width > m_attrs_capacity)
+    {
+        m_attrs = static_cast<WORD*>(malloc((width + 1) * sizeof(*m_attrs)));
+        if (!m_attrs)
+            return false;
+        m_attrs_capacity = width;
+    }
+    return true;
 }

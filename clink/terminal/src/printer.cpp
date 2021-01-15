@@ -109,6 +109,12 @@ int printer::line_has_color(int line, const BYTE* attrs, int num_attrs, BYTE mas
 }
 
 //------------------------------------------------------------------------------
+int printer::find_line(int starting_line, int distance, const char* text, find_line_mode mode, const BYTE* attrs, int num_attrs, BYTE mask) const
+{
+    return m_terminal.find_line(starting_line, distance, text, mode, attrs, num_attrs, mask);
+}
+
+//------------------------------------------------------------------------------
 attributes printer::set_attributes(const attributes attr)
 {
     attributes prev_attr = m_next_attr;

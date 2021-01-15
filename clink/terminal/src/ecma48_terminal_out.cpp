@@ -138,6 +138,12 @@ int ecma48_terminal_out::line_has_color(int line, const BYTE* attrs, int num_att
 }
 
 //------------------------------------------------------------------------------
+int ecma48_terminal_out::find_line(int starting_line, int distance, const char* text, find_line_mode mode, const BYTE* attrs, int num_attrs, BYTE mask) const
+{
+    return m_screen.find_line(starting_line, distance, text, mode, attrs, num_attrs, mask);
+}
+
+//------------------------------------------------------------------------------
 void ecma48_terminal_out::write_c1(const ecma48_code& code)
 {
     if (code.get_code() != ecma48_code::c1_csi)
