@@ -6,6 +6,7 @@
 
 - Added `clink.oninject()` so scripts can register a callback function to run when Clink is injected into CMD.
 - Added `console.linehascolor()` function that returns whether the specified line contains any of the specified colors.
+- Added `console.findprevline()` and `console.findnextline()` functions that can search backwards or forwards for text and/or colors in the screen buffer.  Regular expressions may be used.
 - Fixed doskey alias parsing for match generators and input line coloring (Clink had been using slightly different parsing rules than CMD does).
 
 ### v1.1.20
