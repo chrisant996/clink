@@ -3,11 +3,11 @@ ChrisAnt Plans
 <br/>
 
 # RELEASE
+- An unbound multi-char key sequence is fully ignored if it's the first key sequence in a chord.  But if a chord is already being resolved, then an unbound multi-char key sequence (such as Right Arrow or Escape or etc) inserts whatever part of the key sequence failed to resolve.  It should discard the full key sequence, just like when there's no chord being resolved yet.
 - Investigate:
   - Holding Ctrl+F eventually pops up the Find dialog!  How and why?  Can it be controlled, leveraged, and prevented?
   - Verify (again?) that popup windows show up in the right location with ConEmu and Windows Terminal.
   - Is autorun compatible with ConEmu?  If not, can it be made compatible?
-- An unbound Escape in a chord inserts part of the bindableEsc string.  It should abort the chord.
 
 ## Issues
 - [#45](https://github.com/chrisant996/clink/issues/45) Interaction between erase_prev and history.shared=false
