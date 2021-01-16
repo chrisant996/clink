@@ -124,4 +124,7 @@ private:
     unsigned short      m_command_offset;
     unsigned char       m_keys_size;
     unsigned char       m_flags = 0;
+    unsigned char       m_dispatching = 0;
+    bool                m_invalid_dispatch;
+    bind_resolver::binding* m_pending_binding = nullptr;
 };

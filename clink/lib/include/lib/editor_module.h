@@ -18,9 +18,10 @@ class editor_module
 public:
     struct result
     {
-        virtual void        pass() = 0;
-        virtual void        redraw() = 0;
-        virtual void        done(bool eof=false) = 0;
+        virtual void        pass() = 0;                 // Re-dispatch the input.
+        virtual void        invalid() = 0;              // Don't exit from dispatch().
+        virtual void        redraw() = 0;               // Redraw the line.
+        virtual void        done(bool eof=false) = 0;   // Done editing the line.
         virtual int         set_bind_group(int bind_group) = 0;
     };
 

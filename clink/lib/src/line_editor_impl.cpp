@@ -304,17 +304,26 @@ void line_editor_impl::dispatch(int bind_group)
     assert(check_flag(flag_init));
     assert(check_flag(flag_editing));
 
+    // Claim any pending binding, otherwise we'll try to dispatch it again.
+
+    if (m_pending_binding)
+        m_pending_binding->claim();
+
     // Handle one input.
 
     const int prev_bind_group = m_bind_resolver.get_group();
     m_bind_resolver.set_group(bind_group);
 
-// TODO: is this really a viable approach?
+    m_dispatching++;
+
     do
     {
         m_desc.input->select();
+        m_invalid_dispatch = false;
     }
-    while (!update());
+    while (!update_input() || m_invalid_dispatch);
+
+    m_dispatching--;
 
     assert(check_flag(flag_editing));
 
@@ -442,12 +451,14 @@ bool line_editor_impl::update_input()
         enum
         {
             flag_pass       = 1 << 0,
-            flag_done       = 1 << 1,
-            flag_eof        = 1 << 2,
-            flag_redraw     = 1 << 3,
+            flag_invalid    = 1 << 1,
+            flag_done       = 1 << 2,
+            flag_eof        = 1 << 3,
+            flag_redraw     = 1 << 4,
         };
 
         virtual void    pass() override                           { flags |= flag_pass; }
+        virtual void    invalid() override                        { flags |= flag_invalid; }
         virtual void    done(bool eof) override                   { flags |= flag_done|(eof ? flag_eof : 0); }
         virtual void    redraw() override                         { flags |= flag_redraw; }
         virtual int     set_bind_group(int id) override           { int t = group; group = id; return t; }
@@ -455,7 +466,6 @@ bool line_editor_impl::update_input()
         unsigned char   flags;  // = 0;   <! issues about C2905
     };
 
-// input_dispatcher::dispatch()?
     while (auto binding = m_bind_resolver.next())
     {
         // Binding found, dispatch it off to the module.
@@ -468,33 +478,48 @@ bool line_editor_impl::update_input()
         unsigned char id = binding.get_id();
         binding.get_chord(chord);
 
-        line_state line = get_linestate();
-        editor_module::context context = get_context(line);
-        editor_module::input input = { chord.c_str(), chord.length(), id };
-        module->on_input(input, result, context);
+        {
+            rollback<bind_resolver::binding*> _(m_pending_binding, &binding);
+
+            line_state line = get_linestate();
+            editor_module::context context = get_context(line);
+            editor_module::input input = { chord.c_str(), chord.length(), id };
+            module->on_input(input, result, context);
+        }
 
         m_bind_resolver.set_group(result.group);
 
         // Process what result_impl has collected.
-        if (result.flags & result_impl::flag_pass)
-            continue;
 
-        // Classify words in the input line (if configured).
-        if (g_classify_words.get())
-            classify();
-
-        binding.claim();
-
-        if (result.flags & result_impl::flag_done)
+        if (binding) // May have been claimed already by dispatch() inside on_input().
         {
-            end_line();
-
-            if (result.flags & result_impl::flag_eof)
-                set_flag(flag_eof);
+            if (result.flags & result_impl::flag_pass)
+                continue;
+            binding.claim();
         }
 
-        if (!check_flag(flag_editing))
-            return true;
+        if (m_dispatching)
+        {
+            if (result.flags & result_impl::flag_invalid)
+                m_invalid_dispatch = true;
+        }
+        else
+        {
+            // Classify words in the input line (if configured).
+            if (g_classify_words.get())
+                classify();
+
+            if (result.flags & result_impl::flag_done)
+            {
+                end_line();
+
+                if (result.flags & result_impl::flag_eof)
+                    set_flag(flag_eof);
+            }
+
+            if (!check_flag(flag_editing))
+                return true;
+        }
 
         if (result.flags & result_impl::flag_redraw)
             m_buffer.redraw();

@@ -181,7 +181,12 @@ bool bind_resolver::is_bound(const char* seq, int len) const
 //------------------------------------------------------------------------------
 void bind_resolver::claim(binding& binding)
 {
-    m_tail += binding.m_depth;
-    m_node_index = m_group;
-    m_pending_input = true;
+    if (binding)
+    {
+        m_tail += binding.m_depth;
+        m_node_index = m_group;
+        m_pending_input = true;
+
+        binding.m_outer = nullptr;
+    }
 }

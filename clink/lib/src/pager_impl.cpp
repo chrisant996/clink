@@ -88,6 +88,7 @@ void pager_impl::on_input(const input& input, result& result, const context& con
     case bind_id_pager_halfpage:    set_limit(context.printer, half_page); break;
     case bind_id_pager_line:        set_limit(context.printer, line); break;
     case bind_id_pager_stop:        m_max = -1; break;
+    case bind_id_catchall:          result.invalid(); break;
     }
 }
 

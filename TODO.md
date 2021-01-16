@@ -7,9 +7,7 @@ ChrisAnt Plans
   - Holding Ctrl+F eventually pops up the Find dialog!  How and why?  Can it be controlled, leveraged, and prevented?
   - Verify (again?) that popup windows show up in the right location with ConEmu and Windows Terminal.
   - Is autorun compatible with ConEmu?  If not, can it be made compatible?
-- Escape key:
-  - **Esc** at `clink-show-help` pager prompt ends up clearing the input buffer.
-  - An unbound Escape in a chord inserts part of the bindableEsc string.  It should abort the chord.
+- An unbound Escape in a chord inserts part of the bindableEsc string.  It should abort the chord.
 
 ## Issues
 - [#45](https://github.com/chrisant996/clink/issues/45) Interaction between erase_prev and history.shared=false
