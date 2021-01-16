@@ -3,7 +3,7 @@
 
 <!-- ----------------------------------------------------- -->
 <head>
-<title>Clink v1.1.20</title>
+<title>Clink v1.1.21</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Rambla:wght@400;700&family=Roboto&family=Fira+Mono&display=swap');
 html {
@@ -128,6 +128,14 @@ kbd {
 
 .comment-web-link {
     font-style: italic;
+}
+
+.colorsample {
+    display:inline-block;
+    border:1px solid lightgray;
+    width:0.8rem;
+    height:0.8rem;
+    vertical-align:middle;
 }
 
 #header {
@@ -401,7 +409,7 @@ var hljs=function(){"use strict";function e(n){Object.freeze(n);var t="function"
         </td>
         <td style="text-align:right">
             <div id="header">
-                <div id="title">Clink v1.1.20</div>
+                <div id="title">Clink v1.1.21</div>
                 <div id="url">
                     <a href="http://github.com/chrisant996/clink">
                         http://github.com/chrisant996/clink
@@ -773,6 +781,7 @@ var hljs=function(){"use strict";function e(n){Object.freeze(n);var t="function"
 <li>Windows Vista onwards: <code>c:\Users\&lt;username&gt;\AppData\Local\clink</code></li>
 </ul>
 <p>All of the above locations can be overridden using the <code>--profile <span class="arg">path</span></code> command line option which is specified when injecting Clink into cmd.exe using <code>clink inject</code>.</p>
+<p>You can use <code>clink info</code> to find the directories and configuration files for the current Clink session.</p>
 <h2 id="command-line-options">Command Line Options</h2>
 <p>
 <dt>clink</dt>
@@ -821,8 +830,10 @@ Or <code>clink --version</code> shows just the version number.</dd>
 <p>
 <dt>clink echo</dt>
 <dd>
-Echos key sequences to use in the inputrc files for binding keys to Clink commands.  Each key pressed prints the associated key sequence on a separate line, until <kbd>Ctrl</kbd>+<kbd>C</kbd> is pressed.</dd>
+Echos key sequences to use in the .inputrc files for binding keys to Clink commands.  Each key pressed prints the associated key sequence on a separate line, until <kbd>Ctrl</kbd>+<kbd>C</kbd> is pressed.</dd>
 </p>
+
+<a name="configreadline"/>
 
 <h1 id="configuring-readline">Configuring Readline</h1>
 <p>Readline itself can also be configured to add custom keybindings and macros by creating a Readline init file. There is excellent documentation for all the options available to configure Readline in Readline&#39;s <a href="https://tiswww.cwru.edu/php/chet/readline/rltop.html#Documentation">manual</a>.</p>
@@ -836,6 +847,7 @@ Echos key sequences to use in the inputrc files for binding keys to Clink comman
 </ul>
 <p>Configuration in files loaded earlier can be overridden by files loaded later.</p>
 <p>Other software that also uses Readline will also look for the <code>.inputrc</code> file (and possibly the <code>_inputrc</code> file too). To set macros and keybindings intended only for Clink one can use the Readline init file conditional construct like this; <code>$if clink [...] $endif</code>.</p>
+<p>You can use <code>clink info</code> to find the directories and configuration files for the current Clink session.</p>
 <blockquote>
 <p><strong>Compatibility Notes:</strong></p>
 <ul>
@@ -852,7 +864,7 @@ Echos key sequences to use in the inputrc files for binding keys to Clink comman
 <li><code>set <span class="arg">varname</span> <span class="arg">value</span></code></li>
 </ul>
 <p>If a Readline macro begins with &quot;luafunc:&quot; then Clink interprets it as a Lua key binding and will invoke the named Lua function.  Function names can include periods (such as <code>foo.bar</code>) but cannot include any other punctuation.  See <a href="#luakeybindings">Lua Key Bindings</a> for more information.</p>
-<p>Refer to the Readline <a href="https://tiswww.cwru.edu/php/chet/readline/rltop.html#Documentation">manual</a> for a more thorough explanation of the inputrc file format, list of available commands, and list of configuration variables and their values.</p>
+<p>Refer to the Readline <a href="https://tiswww.cwru.edu/php/chet/readline/rltop.html#Documentation">manual</a> for a more thorough explanation of the .inputrc file format, list of available commands, and list of configuration variables and their values.</p>
 <p>See <a href="#keybindings">Key Bindings</a> for more information about binding keys in Clink.</p>
 <h2 id="new-configuration-variables">New Configuration Variables</h2>
 <p>Clink adds some new configuration variables to Readline, beyond what&#39;s described in the Readline manual:</p>
@@ -943,7 +955,7 @@ Echos key sequences to use in the inputrc files for binding keys to Clink comman
 </tr>
 <tr>
 <td align="center"><code>clink-reload</code></td>
-<td>Reloads the inputrc file and the Lua scripts.</td>
+<td>Reloads the .inputrc file and the Lua scripts.</td>
 </tr>
 <tr>
 <td align="center"><code>clink-reset-line</code></td>
@@ -1074,6 +1086,7 @@ Echos key sequences to use in the inputrc files for binding keys to Clink comman
 <li>All directories listed in the <code>%CLINK_PATH%</code> environment variable, separated by semicolons.</li>
 </ol>
 <p>Lua scripts are loaded once and are only reloaded if forced because the scripts locations change, the <code>clink-reload</code> command is invoked (<kbd>Ctrl</kbd>+<kbd>X</kbd>,<kbd>Ctrl</kbd>+<kbd>R</kbd>), or the <code>lua.reload_scripts</code> setting changes (or is True).</p>
+<p>Run <code>clink info</code> to see the script paths for the current session.</p>
 <a name="matchgenerators"/>
 
 <h2 id="match-generators">Match Generators</h2>
@@ -1451,7 +1464,7 @@ end</code></pre>
 <a name="keybindings"/>
 
 <h2 id="key-bindings">Key bindings</h2>
-<p>Key bindings are defined in the inputrc files.  See the <a href="https://tiswww.cwru.edu/php/chet/readline/readline.html">Readline</a> manual for more information about the inputrc files (look for &quot;Readline Init File&quot;).</p>
+<p>Key bindings are defined in .inputrc files.  See the <a href="#configreadline">Configuring Readline</a> section for more information.</p>
 <p>Here is the quick version:</p>
 <ul>
 <li>A key binding is <code><em>name</em>: <em>function</em></code> or <code><em>name</em>: "<em>literal text</em>"</code>.</li>
@@ -1470,6 +1483,7 @@ end</code></pre>
 </ul>
 </li>
 </ul>
+<p>You can use <code>clink info</code> to find the directories and configuration files for the current Clink session.</p>
 <p>Here is an example <code>.inputrc</code> file with the key bindings that I use myself:</p>
 <pre><code class="plaintext"><span class="hljs-meta">$if clink</span>           <span class="hljs-comment"># begin clink-only section</span>
 
@@ -1479,7 +1493,7 @@ end</code></pre>
 <span class="hljs-comment"># Completion key bindings.</span>
 <span class="hljs-string">"\t"</span>:               old-menu-complete               <span class="hljs-comment"># Tab</span>
 <span class="hljs-string">"\e[Z"</span>:             old-menu-complete-backward      <span class="hljs-comment"># Shift+Tab</span>
-<span class="hljs-string">"\e[27;5;9~"</span>:       clink-popup-complete            <span class="hljs-comment"># Ctrl+Tab (requires additional ConEmu configuration)</span>
+<span class="hljs-string">"\e[27;5;9~"</span>:       clink-popup-complete            <span class="hljs-comment"># Ctrl+Tab (ConEmu needs additional configuration to allow Ctrl+Tab)</span>
 <span class="hljs-string">"\x1b[27;5;32~"</span>:    complete                        <span class="hljs-comment"># Ctrl+Space</span>
 
 <span class="hljs-comment"># Some key bindings I got used to from 4Dos/4NT/Take Command.</span>
@@ -1506,7 +1520,7 @@ C-_:                kill-line                       <span class="hljs-comment">#
 <span class="hljs-meta">$endif</span>              <span class="hljs-comment"># end clink-only section</span>
 </code></pre>
 
-<p>The <code>clink-show-help</code> command is bound to <kbd>Alt</kbd>+<kbd>H</kbd> and lists all currently active key bindings.  The list displays &quot;friendly&quot; key names, and these names are generally not suitable for use in inputrc files.  For example &quot;Up&quot; is the friendly name for <code>&quot;\e[A&quot;</code>, and &quot;A-C-F2&quot; is the friendly name for <code>&quot;\e\e[1;5Q&quot;</code>.  To see key sequence strings suitable for use an inputrc files use <code>clink echo</code> or <kbd>Alt</kbd>+<kbd>Shift</kbd>+<kbd>H</kbd>.</p>
+<p>The <code>clink-show-help</code> command is bound to <kbd>Alt</kbd>+<kbd>H</kbd> and lists all currently active key bindings.  The list displays &quot;friendly&quot; key names, and these names are generally not suitable for use in .inputrc files.  For example &quot;Up&quot; is the friendly name for <code>&quot;\e[A&quot;</code>, and &quot;A-C-F2&quot; is the friendly name for <code>&quot;\e\e[1;5Q&quot;</code>.  To see key sequence strings suitable for use in .inputrc files use <code>clink echo</code> or <kbd>Alt</kbd>+<kbd>Shift</kbd>+<kbd>H</kbd>.</p>
 <blockquote>
 <p><strong>Note:</strong> Third party console hosts such as ConEmu may have their own key bindings that supersede Clink.  They usually have documentation for how to change or disable their key bindings to allow console programs to handle the keys instead.</p>
 </blockquote>
@@ -1821,7 +1835,7 @@ C-_:                kill-line                       <span class="hljs-comment">#
 <p>You can bind a key to a Lua function by binding it to a macro that begins with &quot;luafunc:&quot;.  Clink will invoke the named Lua function when the key binding is input.  Function names can include periods (such as <code>foo.bar</code>) but cannot include any other punctuation.</p>
 <p>The Lua function receives a <a href="#rl_buffer">rl_buffer</a> argument that gives it access to the input buffer.</p>
 <p>Lua functions can print output, but should first call <a href="#rl_buffer:beginoutput">rl_buffer:beginoutput</a> so that the output doesn&#39;t overwrite the displayed input line.</p>
-<p>Example of a Lua function key binding in an inputrc file:</p>
+<p>Example of a Lua function key binding in a .inputrc file:</p>
 <pre><code class="plaintext"><span class="hljs-string">M-C-y</span>:      <span class="hljs-string">"luafunc:insert_date"</span>
 <span class="hljs-string">M-C-z</span>:      <span class="hljs-string">"luafunc:print_date"</span>
 </code></pre>
@@ -1841,6 +1855,49 @@ end</code></pre>
 <p>Every time a new input line starts, Clink reloads the master history list and prunes it not to exceed the <code>history.max_lines</code> setting.</p>
 <p>For performance reasons, deleting a history line marks the line as deleted without rewriting the history file.  When the number of deleted lines gets too large (exceeding the max lines or 200, which is larger) then the history file is compacted:  the file is rewritten with the deleted lines removed.</p>
 <p>When the <code>history.shared</code> setting is enabled, then all instances of Clink update the master history file and reload it every time a new input line starts.  This gives the effect that all instances of Clink share the same history -- a command entered in one instance will appear in other instances&#39; history the next time they start an input line.  When the setting is disabled, then each instance of Clink loads the master file but doesn&#39;t append its own history back to the master file until after it exits, giving the effect that once an instance starts its history is isolated from other instances&#39; history.</p>
+<p>A line won&#39;t be added to history if either of the following are true:</p>
+<ul>
+<li>The first word in the line matches one of the words in the <code>history.dont_add_to_history_cmds</code> setting.</li>
+<li>The line begins with a space character.</li>
+</ul>
+<p>To prevent doskey alias expansion while still adding the line to history, you can start the line with a semicolon.</p>
+<table>
+<thead>
+<tr>
+<th>Line</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>somecmd</code></td>
+<td>Expands doskey alias and adds to history.</td>
+</tr>
+<tr>
+<td><code>&nbsp;somecmd</code></td>
+<td>Doesn&#39;t expand doskey alias and doesn&#39;t add to history.</td>
+</tr>
+<tr>
+<td><code>;somecmd</code></td>
+<td>Doesn&#39;t expand doskey alias but does add to history.</td>
+</tr>
+</tbody></table>
+<h1 id="sample-scripts">Sample Scripts</h1>
+<p>Here are a few samples of what can be done with Clink.</p>
+<h3 id="clink-completions">clink-completions</h3>
+<p>The <a href="https://github.com/vladimir-kotikov/clink-completions">clink-completions</a> collection of scripts has a bunch of argument matchers and completion generators for things like git, mercurial, npm, and more.</p>
+<h3 id="cmder-powerline-prompt">cmder-powerline-prompt</h3>
+<p>The <a href="https://github.com/chrisant996/cmder-powerline-prompt">cmder-powerline-prompt</a> collection of scripts provides a Powerline-like prompt for Clink.  It&#39;s extensible so you can add your own segments, and some configuration of built-in segments is also available.</p>
+<h3 id="oh-my-posh">oh-my-posh</h3>
+<p>The <a href="https://github.com/JanDeDobbeleer/oh-my-posh3">oh-my-posh</a> program can generate fancy prompts.  Refer to its documentation for how to configure it.</p>
+<p>Integrating oh-my-posh with Clink is easy:  just save the following text to an <code>oh-my-posh.lua</code> file in your Clink scripts directory (run <code>clink info</code> to find that), and make sure the oh-my-posh.exe program is in a directory listed in the %PATH% environment variable.  (Or edit the script below to provide a fully qualified path to the oh-my-posh.exe program.)</p>
+<pre><code class="language-lua">-- oh-my-posh.lua
+local ohmyposh_prompt = clink.promptfilter(1)
+function ohmyposh_prompt:filter(prompt)
+    prompt = io.popen(&quot;oh-my-posh.exe&quot;):read(&quot;*a&quot;)
+    return prompt, false
+end</code></pre>
+<h3 id="zlua">z.lua</h3>
+<p>The <a href="https://github.com/skywind3000/z.lua">z.lua</a> tool is a faster way to navigate directories, and it integrates with Clink.</p>
         </div>
         <h1 id="lua-api">Lua API Reference</h1>
         This section describes the Clink Lua API extensions.
@@ -1925,6 +1982,7 @@ function my_match_generator:generate(line_state, match_builder)
 &nbsp; clink.ondisplaymatches(my_filter)
 end</code></pre></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="clink.onendedit">clink.onendedit</a></div> <div class="signature">( <span class="arg_name">func</span>:function ) : nil</div></div><div class="body"><p class="desc">Registers <span class="arg">func</span> to be called when Clink's edit prompt ends.  The function receives a string argument containing the input text from the edit prompt.  The function returns up to two values.  If the first is not nil then it's a string that replaces the edit prompt text.  If the second is not nil and is false then it stops further onendedit handlers from running.</p><p class="desc"> <strong>Note:</strong>  Be very careful if you replace the text; this has the potential to interfere with or even ruin the user's ability to enter command lines for CMD to process.</p></div></div><hr/>
+<div class="function"><div class="header"> <div class="name"><a name="clink.oninject">clink.oninject</a></div> <div class="signature">( <span class="arg_name">func</span>:function ) : nil</div></div><div class="body"><p class="desc">Registers <span class="arg">func</span> to be called when Clink is injected into a CMD process.  The function is called only once per session.</p></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="clink.promptfilter">clink.promptfilter</a></div> <div class="signature">( [<span class="arg_name">priority</span>:integer] ) : table</div></div><div class="body"><p class="desc">Creates and returns a new promptfilter object that is applied in increasing <span class="arg">priority</span> order (low values to high values).  Define on the object a <code>filter()</code> function that takes a string argument which contains the filtered prompt so far.  The function can return nil to have no effect, or can return a new prompt string.  It can optionally stop further prompt filtering by also returning false.  See <a href="#customisingtheprompt">Customising The Prompt</a> for more information.</p><pre class="language-lua"><code>local foo_prompt = clink.promptfilter(80)
 function foo_prompt:filter(prompt)
 &nbsp; -- Insert the date at the beginning of the prompt.
@@ -1992,12 +2050,93 @@ local foo_prompt = clink.promptfilter(10)
 function foo_prompt:filter(prompt)
 &nbsp; return "FOO "..prompt.." >>" --,false  -- Adding ,false stops further filtering.
 end</code></pre></div></div><hr/>
-</div><div class="group"><h5 class="group_name"><a name="console">console</a></h5><div class="function"><div class="header"> <div class="name"><a name="console.getheight">console.getheight</a></div> <div class="signature">() : integer</div></div><div class="body"><p class="desc">Returns the number of visible lines of the console screen buffer.</p></div></div><hr/>
-<div class="function"><div class="header"> <div class="name"><a name="console.getlinetext">console.getlinetext</a></div> <div class="signature">( <span class="arg_name">line</span>:integer ) : string</div></div><div class="body"><p class="desc">Returns the text from line number <span class="arg">line</span>, from 1 to <a href="#console.getnumlines">console.getnumlines</a>.</p></div></div><hr/>
+</div><div class="group"><h5 class="group_name"><a name="console">console</a></h5><div class="function"><div class="header"> <div class="name"><a name="console.findnextline">console.findnextline</a></div> <div class="signature">( <span class="arg_name">starting_line</span>:integer, [<span class="arg_name">text</span>:string], [<span class="arg_name">mode</span>:string], [<span class="arg_name">attr</span>:integer], [<span class="arg_name">attrs</span>:table of integers], [<span class="arg_name">mask</span>:string] ) : integer</div></div><div class="body"><p class="desc">Searches downwards (forwards) for a line containing the specified text and/or attributes, starting at line <span class="arg">starting_line</span>. The matching line number is returned, or 0 if no matching line is found.</p><p class="desc"> This behaves the same as <a href="#console.findprevline">console.findprevline()</a> except that it searches in the opposite direction.</p></div></div><hr/>
+<div class="function"><div class="header"> <div class="name"><a name="console.findprevline">console.findprevline</a></div> <div class="signature">( <span class="arg_name">starting_line</span>:integer, [<span class="arg_name">text</span>:string], [<span class="arg_name">mode</span>:string], [<span class="arg_name">attr</span>:integer], [<span class="arg_name">attrs</span>:table of integers], [<span class="arg_name">mask</span>:string] ) : integer</div></div><div class="body"><p class="desc">Searches upwards (backwards) for a line containing the specified text and/or attributes, starting at line <span class="arg">starting_line</span>.  The matching line number is returned, or 0 if no matching line is found, or -1 if an invalid regular expression is provided.</p><p class="desc"> You can search for text, attributes, or both.  Include the <span class="arg">text</span> argument to search for text, and include either the <span class="arg">attr</span> or <span class="arg">attrs</span> argument to search for attributes.  If both text and attribute(s) are passed, then the attribute(s) must be found within the found text.  If only attribute(s) are passed, then they must be found anywhere in the line.  See <a href="#console.linehascolor">console.linehascolor()</a> for more information about the color codes.</p><p class="desc"> The <span class="arg">mode</span> argument selects how the search behaves. To use a regular expression, pass "regex".  To use a case insensitive search, pass "icase".  These can be combined by separating them with a comma.  The regular expression syntax is the ECMAScript syntax described <a href="https://docs.microsoft.com/en-us/cpp/standard-library/regular-expressions-cpp">here</a>.</p><p class="desc"> Any trailing whitespace is ignored when searching.  This especially affects the <code>$</code> (end of line) regex operator.</p><p class="desc"> <span class="arg">mask</span> is optional and can be "fore" or "back" to only match foreground or background colors, respectively.</p><p class="desc"> Note that although most of the arguments are optional, the order of provided arguments is important.</p><p class="desc"> The following example provides a pair of <code>find_prev_colored_line</code> and <code>find_next_colored_line</code> functions.  The functions can be bound to keys via the <code>luafunc:</code> macro syntax in a .inputrc file. They scroll the screen buffer to the previous or next line that contains "warn" or "error" colored red or yellow.</p><pre class="language-lua"><code>local was_top
+local found_index
+
+local function reset_found()
+&nbsp; was_top = nil
+&nbsp; found_index = nil
+end
+
+-- Register for the onbeginedit event, to reset the found
+-- line number each time a new editing prompt begins.
+clink.onbeginedit(reset_found)
+
+-- Searches upwards for a line containing "warn" or "error"
+-- colored red or yellow.
+function find_prev_colored_line(rl_buffer)
+&nbsp; local height = console.getheight()
+&nbsp; local cur_top = console.gettop()
+&nbsp; local offset = math.modf((height - 1) / 2) -- For vertically centering the found line.
+
+&nbsp; local start
+&nbsp; if found_index == nil or cur_top ~= was_top then
+&nbsp;   start = cur_top
+&nbsp;   was_top = start
+&nbsp; else
+&nbsp;   start = found_index
+&nbsp; end
+
+&nbsp; -- Only search if there's still room to scroll up.
+&nbsp; if start - offset > 1 then
+&nbsp;   local match = console.findprevline(start - 1, "warn|error", "regex", {4,12,14}, "fore")
+&nbsp;   if match ~= nil and match > 0 then
+&nbsp;     found_index = match
+&nbsp;   end
+&nbsp; end
+
+&nbsp; if found_index ~= nil then
+&nbsp;   console.scroll("absolute", found_index - offset)
+&nbsp;   was_top = console.gettop()
+&nbsp; else
+&nbsp;   rl_buffer:ding()
+&nbsp; end
+end
+
+-- Searches downwards for a line containing "warn" or "error"
+-- colored red or yellow.
+function find_next_colored_line(rl_buffer)
+&nbsp; if found_index == nil then
+&nbsp;   rl_buffer:ding()
+&nbsp;   return
+&nbsp; end
+
+&nbsp; local height = console.getheight()
+&nbsp; local cur_top = console.gettop()
+&nbsp; local offset = math.modf((height - 1) / 2)
+
+&nbsp; local start
+&nbsp; if cur_top ~= was_top then
+&nbsp;     start = cur_top + height - 1
+&nbsp;     was_top = cur_top
+&nbsp; else
+&nbsp;     start = found_index
+&nbsp; end
+
+&nbsp; -- Only search if there's still room to scroll down.
+&nbsp; local bottom = console.getnumlines()
+&nbsp; if start - offset + height - 1 < bottom then
+&nbsp;   local match = console.findnextline(start + 1, "warn|error", "regex", {4,12,14}, "fore")
+&nbsp;   if match ~= nil and match > 0 then
+&nbsp;     found_index = match
+&nbsp;   end
+&nbsp; end
+
+&nbsp; if found_index ~= nil then
+&nbsp;   console.scroll("absolute", found_index - offset)
+&nbsp;   was_top = console.gettop()
+&nbsp; else
+&nbsp;   rl_buffer:ding()
+&nbsp; end
+end</code></pre></div></div><hr/>
+<div class="function"><div class="header"> <div class="name"><a name="console.getheight">console.getheight</a></div> <div class="signature">() : integer</div></div><div class="body"><p class="desc">Returns the number of visible lines of the console screen buffer.</p></div></div><hr/>
+<div class="function"><div class="header"> <div class="name"><a name="console.getlinetext">console.getlinetext</a></div> <div class="signature">( <span class="arg_name">line</span>:integer ) : string</div></div><div class="body"><p class="desc">Returns the text from line number <span class="arg">line</span>, from 1 to <a href="#console.getnumlines">console.getnumlines</a>.</p><p class="desc"> Any trailing whitespace is stripped before returning the text.</p></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="console.getnumlines">console.getnumlines</a></div> <div class="signature">() : integer</div></div><div class="body"><p class="desc">Returns the total number of lines in the console screen buffer.</p></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="console.gettop">console.gettop</a></div> <div class="signature">() : integer</div></div><div class="body"><p class="desc">Returns the current top line (scroll position) in the console screen buffer.</p></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="console.getwidth">console.getwidth</a></div> <div class="signature">() : integer</div></div><div class="body"><p class="desc">Returns the width of the console screen buffer in characters.</p></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="console.islinedefaultcolor">console.islinedefaultcolor</a></div> <div class="signature">( <span class="arg_name">line</span>:integer ) : boolean</div></div><div class="body"><p class="desc">Returns whether line number <span class="arg">line</span> uses only the default text color.</p></div></div><hr/>
+<div class="function"><div class="header"> <div class="name"><a name="console.linehascolor">console.linehascolor</a></div> <div class="signature">( <span class="arg_name">line</span>:integer, [<span class="arg_name">attr</span>:integer], [<span class="arg_name">attrs</span>:table of integers], [<span class="arg_name">mask</span>:string] ) : boolean</div></div><div class="body"><p class="desc">Returns whether line number <span class="arg">line</span> contains the DOS color code <span class="arg">attr</span>, or any of the DOS color codes in <span class="arg">attrs</span> (either an integer or a table of integers must be provided, but not both).  <span class="arg">mask</span> is optional and can be "fore" or "back" to only match foreground or background colors, respectively.</p><p class="desc"> The low 4 bits of the color code are the foreground color, and the high 4 bits of the color code are the background color.  This refers to the default 16 color palette used by console windows.  When 256 color or 24-bit color ANSI escape codes have been used, the closest of the 16 colors is used.</p><p class="desc"> To build a color code, add the corresponding Foreground color and the Background color values from this table:</p><p class="desc"> <table><tr><th align="center">Foreground</th><th align="center">Background</th><th>Color</th></tr> <tr><td align="center">0</td><td align="center">0</td><td><div class="colorsample" style="background-color:#000000">&nbsp;</div> Black</td></tr> <tr><td align="center">1</td><td align="center">16</td><td><div class="colorsample" style="background-color:#000080">&nbsp;</div> Dark Blue</td></tr> <tr><td align="center">2</td><td align="center">32</td><td><div class="colorsample" style="background-color:#008000">&nbsp;</div> Dark Green</td></tr> <tr><td align="center">3</td><td align="center">48</td><td><div class="colorsample" style="background-color:#008080">&nbsp;</div> Dark Cyan</td></tr> <tr><td align="center">4</td><td align="center">64</td><td><div class="colorsample" style="background-color:#800000">&nbsp;</div> Dark Red</td></tr> <tr><td align="center">5</td><td align="center">80</td><td><div class="colorsample" style="background-color:#800080">&nbsp;</div> Dark Magenta</td></tr> <tr><td align="center">6</td><td align="center">96</td><td><div class="colorsample" style="background-color:#808000">&nbsp;</div> Dark Yellow</td></tr> <tr><td align="center">7</td><td align="center">112</td><td><div class="colorsample" style="background-color:#c0c0c0">&nbsp;</div> Gray</td></tr> <tr><td align="center">8</td><td align="center">128</td><td><div class="colorsample" style="background-color:#808080">&nbsp;</div> Dark Gray</td></tr> <tr><td align="center">9</td><td align="center">144</td><td><div class="colorsample" style="background-color:#0000ff">&nbsp;</div> Bright Blue</td></tr> <tr><td align="center">10</td><td align="center">160</td><td><div class="colorsample" style="background-color:#00ff00">&nbsp;</div> Bright Green</td></tr> <tr><td align="center">11</td><td align="center">176</td><td><div class="colorsample" style="background-color:#00ffff">&nbsp;</div> Bright Cyan</td></tr> <tr><td align="center">12</td><td align="center">192</td><td><div class="colorsample" style="background-color:#ff0000">&nbsp;</div> Bright Red</td></tr> <tr><td align="center">13</td><td align="center">208</td><td><div class="colorsample" style="background-color:#ff00ff">&nbsp;</div> Bright Magenta</td></tr> <tr><td align="center">14</td><td align="center">224</td><td><div class="colorsample" style="background-color:#ffff00">&nbsp;</div> Bright Yellow</td></tr> <tr><td align="center">15</td><td align="center">240</td><td><div class="colorsample" style="background-color:#ffffff">&nbsp;</div> White</td></tr> </table></p></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="console.scroll">console.scroll</a></div> <div class="signature">( <span class="arg_name">mode</span>:string, <span class="arg_name">amount</span>:integer ) : integer</div></div><div class="body"><p class="desc">Scrolls the console screen buffer and returns the number of lines scrolled up (negative) or down (positive).</p><p class="desc"> The <span class="arg">mode</span> specifies how to scroll: <table> <tr><th>Mode</th><th>Description</th></tr> <tr><td>"line"</td><td>Scrolls by <span class="arg">amount</span> lines; negative is up and positive is down. <tr><td>"page"</td><td>Scrolls by <span class="arg">amount</span> pages; negative is up and positive is down. <tr><td>"end"</td><td>Scrolls to the top if <span class="arg">amount</span> is negative, or to the bottom if positive. <tr><td>"absolute"</td><td>Scrolls to line <span class="arg">amount</span>, from 1 to <a href="#console.getnumlines">console.getnumlines()</a>. </table></p></div></div><hr/>
 </div><div class="group"><h5 class="group_name"><a name="line">line</a></h5><div class="function"><div class="header"> <div class="name"><a name="line:getcommandoffset">line:getcommandoffset</a></div> <div class="signature">() : integer</div></div><div class="body"><p class="desc">Returns the offset to the start of the delimited command in the line that's being effectively edited. Note that this may not be the offset of the first command of the line unquoted as whitespace isn't considered for words.</p><pre class="language-lua"><code>-- Given the following line; abc& 123
 -- where commands are separated by & symbols.
@@ -2012,6 +2151,7 @@ line:getcommandoffset() == 4</code></pre></div></div><hr/>
 &nbsp; length,  -- [integer] length of the word.
 &nbsp; quoted,  -- [boolean] indicates whether the word is quoted.
 &nbsp; delim,   -- [string] the delimiter character, or an empty string.
+&nbsp; alias,   -- [boolean | nil] true if the word is a doskey alias, otherwise nil.
 }</code></pre></div></div><hr/>
 </div><div class="group"><h5 class="group_name"><a name="log">log</a></h5><div class="function"><div class="header"> <div class="name"><a name="log.info">log.info</a></div> <div class="signature">( <span class="arg_name">message</span>:string ) : nil</div></div><div class="body"><p class="desc">Writes info <span class="arg">message</span> to the Clink log file.  Use this sparingly, or it could cause performance problems or disk space problems.</p></div></div><hr/>
 </div><div class="group"><h5 class="group_name"><a name="os">os</a></h5><div class="function"><div class="header"> <div class="name"><a name="os.chdir">os.chdir</a></div> <div class="signature">( <span class="arg_name">path</span>:string ) : boolean</div></div><div class="body"><p class="desc">Changes the current directory to <span class="arg">path</span> and returns whether it was successful.</p></div></div><hr/>
@@ -2118,7 +2258,7 @@ end</code></pre></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="rl.isvariabletrue">rl.isvariabletrue</a></div> <div class="signature">( <span class="arg_name">name</span>:string ) : boolean | nil</div></div><div class="body"><p class="desc">Returns a boolean value indicating whether the named Readline configuration variable is set to true (on), or nil if the variable name is not recognized.</p></div></div><hr/>
 </div><div class="group"><h5 class="group_name"><a name="rl_buffer">rl_buffer</a></h5><div class="function"><div class="header"> <div class="name"><a name="rl_buffer:beginoutput">rl_buffer:beginoutput</a></div> <div class="signature">() : nil</div></div><div class="body"><p class="desc">Advances the output cursor to the next line after the Readline input buffer so that subsequent output doesn't overwrite the input buffer display.</p></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="rl_buffer:beginundogroup">rl_buffer:beginundogroup</a></div> <div class="signature">() : nil</div></div><div class="body"><p class="desc">Starts a new undo group.  This is useful for grouping together multiple editing actions into a single undo operation.</p></div></div><hr/>
-<div class="function"><div class="header"> <div class="name"><a name="rl_buffer:ding">rl_buffer:ding</a></div> <div class="signature">() : nil</div></div><div class="body"><p class="desc">Dings the bell.  If the <code>bell-style</code> Readline variable is <code>visible</code> then it flashes the cursor instead</p></div></div><hr/>
+<div class="function"><div class="header"> <div class="name"><a name="rl_buffer:ding">rl_buffer:ding</a></div> <div class="signature">() : nil</div></div><div class="body"><p class="desc">Dings the bell.  If the <code>bell-style</code> Readline variable is <code>visible</code> then it flashes the cursor instead.</p></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="rl_buffer:endundogroup">rl_buffer:endundogroup</a></div> <div class="signature">() : nil</div></div><div class="body"><p class="desc">Ends an undo group.  This is useful for grouping together multiple editing actions into a single undo operation.</p><p class="desc"> Note:  all undo groups are automatically ended when a key binding finishes execution, so this function is only needed if a key binding needs to create more than one undo group.</p></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="rl_buffer:getbuffer">rl_buffer:getbuffer</a></div> <div class="signature">() : string</div></div><div class="body"><p class="desc">Returns the current input line.</p></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="rl_buffer:getcursor">rl_buffer:getcursor</a></div> <div class="signature">() : integer</div></div><div class="body"><p class="desc">Returns the cursor position in the input line.</p></div></div><hr/>
@@ -2145,6 +2285,14 @@ settings.add("color.mymno", "bright magenta", "Color setting")</code></pre></div
         <div class="section" id="changes">
 <h1 id="changes">Changes</h1>
 <h2 id="releases-from-chrisant996clink-fork">Releases from <a href="https://github.com/chrisant996/clink">chrisant996/clink</a> fork</h2>
+<h3 id="v1121">v1.1.21</h3>
+<ul>
+<li>Added <code>clink.oninject()</code> so scripts can register a callback function to run when Clink is injected into CMD.</li>
+<li>Added <code>console.linehascolor()</code> function that returns whether the specified line contains any of the specified colors.</li>
+<li>Added <code>console.findprevline()</code> and <code>console.findnextline()</code> functions that can search backwards or forwards for text and/or colors in the screen buffer.  Regular expressions may be used.</li>
+<li>Fixed doskey alias parsing for match generators and input line coloring (Clink had been using slightly different parsing rules than CMD does).</li>
+<li>Fixed the &quot;-- More --&quot; prompt while listing key bindings; <kbd>Esc</kbd> didn&#39;t quit, and unexpected keys weren&#39;t ignored.</li>
+</ul>
 <h3 id="v1120">v1.1.20</h3>
 <ul>
 <li>Now you can bind Lua functions to keys!  Added new <code>rl_buffer</code> type that gets passed to the Lua function.</li>
