@@ -4,9 +4,11 @@ ChrisAnt Plans
 
 # RELEASE
 - An unbound multi-char key sequence is fully ignored if it's the first key sequence in a chord.  But if a chord is already being resolved, then an unbound multi-char key sequence (such as Right Arrow or Escape or etc) inserts whatever part of the key sequence failed to resolve.  It should discard the full key sequence, just like when there's no chord being resolved yet.
+- Popup windows need to show up in the right location:
+  - ConEmu:  popups seem to work fine.
+  - Windows Terminal:  popups are the wrong width and in the wrong location.
 - Investigate:
   - Holding Ctrl+F eventually pops up the Find dialog!  How and why?  Can it be controlled, leveraged, and prevented?
-  - Verify (again?) that popup windows show up in the right location with ConEmu and Windows Terminal.
   - Is autorun compatible with ConEmu?  If not, can it be made compatible?
 
 ## Issues
