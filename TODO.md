@@ -3,6 +3,7 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 <br/>
 
 # RELEASE
+- BROKEN: `b`**Tab**, backspace, `c`**Tab** => replaces `c` with `b`!  Yikes!
 - An unbound multi-char key sequence is fully ignored if it's the first key sequence in a chord.  But if a chord is already being resolved, then an unbound multi-char key sequence (such as Right Arrow or Escape or etc) inserts whatever part of the key sequence failed to resolve.  It should discard the full key sequence, just like when there's no chord being resolved yet.
 - Popup windows need to show up in the right location:
   - ConEmu:  popups seem to work fine.
