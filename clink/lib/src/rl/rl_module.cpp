@@ -406,14 +406,14 @@ static void puts_face_func(const char* s, const char* face, int n)
             switch (cur_face)
             {
             default:
-            case '0':   out.concat(c_normal); break;
-            case '1':   out.concat("\x1b[7m", 4); break;
+            case '0':   out << c_normal; break;
+            case '1':   out << "\x1b[0;7m"; break;
 
-            case '2':   out.concat(fallback_color(s_input_color, c_normal)); break;
-            case '*':   out.concat(fallback_color(_rl_display_modmark_color, c_normal)); break;
-            case '<':   out.concat(fallback_color(_rl_display_message_color, c_normal)); break;
+            case '2':   out << fallback_color(s_input_color, c_normal); break;
+            case '*':   out << fallback_color(_rl_display_modmark_color, c_normal); break;
+            case '<':   out << fallback_color(_rl_display_message_color, c_normal); break;
 
-            case 'o':   out.concat(fallback_color(s_input_color, c_normal)); break;
+            case 'o':   out << fallback_color(s_input_color, c_normal); break;
             case 'c':
                 if (_rl_command_color)
                     out << "\x1b[" << _rl_command_color << "m";
@@ -426,9 +426,9 @@ static void puts_face_func(const char* s, const char* face, int n)
                 else
                     out << c_normal;
                 break;
-            case 'a':   out.concat(fallback_color(s_arg_color, fallback_color(s_input_color, c_normal))); break;
-            case 'f':   out.concat(fallback_color(s_flag_color, c_normal)); break;
-            case 'n':   out.concat(fallback_color(s_none_color, c_normal)); break;
+            case 'a':   out << fallback_color(s_arg_color, fallback_color(s_input_color, c_normal)); break;
+            case 'f':   out << fallback_color(s_flag_color, c_normal); break;
+            case 'n':   out << fallback_color(s_none_color, c_normal); break;
             }
         }
 
