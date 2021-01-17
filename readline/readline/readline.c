@@ -522,6 +522,13 @@ readline_internal_teardown (int eof)
 void
 _rl_internal_char_cleanup (void)
 {
+/* begin_clink_change */
+  if (_rl_keep_mark_active)
+    _rl_keep_mark_active = 0;
+  else if (rl_mark_active_p ())
+    rl_deactivate_mark ();
+/* end_clink_change */
+
 #if defined (VI_MODE)
   /* In vi mode, when you exit insert mode, the cursor moves back
      over the previous character.  We explicitly check for that here. */
@@ -679,10 +686,15 @@ readline_internal_charloop (void)
       if (rl_pending_input == 0 && lk == _rl_last_command_was_kill)
 	_rl_last_command_was_kill = 0;
 
-      if (_rl_keep_mark_active)
-        _rl_keep_mark_active = 0;
-      else if (rl_mark_active_p ())
-        rl_deactivate_mark ();
+/* begin_clink_change
+   Having this here malfunctions in callback mode.  All key handling goes
+   through _rl_internal_char_cleanup, but only SOME key handling goes
+   through readline_internal_char. */
+      //if (_rl_keep_mark_active)
+      //  _rl_keep_mark_active = 0;
+      //else if (rl_mark_active_p ())
+      //  rl_deactivate_mark ();
+/* end_clink_change */
 
       _rl_internal_char_cleanup ();
 
