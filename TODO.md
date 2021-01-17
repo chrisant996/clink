@@ -1,8 +1,11 @@
-ChrisAnt Plans
+_This todo list describes ChrisAnt996's current intended roadmap for Clink's future.  It is a living document and does not convey any guarantee about when or whether any item may be implemented._
 
 <br/>
 
 # RELEASE
+- Completion wrap around:
+  - Add a configuration setting for whether `menu-complete` wraps around.
+  - Add commands that behave like **F7** and **F8** from CMD (like `history-search-backward` without wrapping around?).
 - An unbound multi-char key sequence is fully ignored if it's the first key sequence in a chord.  But if a chord is already being resolved, then an unbound multi-char key sequence (such as Right Arrow or Escape or etc) inserts whatever part of the key sequence failed to resolve.  It should discard the full key sequence, just like when there's no chord being resolved yet.
 - Popup windows need to show up in the right location:
   - ConEmu:  popups seem to work fine.
@@ -34,8 +37,6 @@ ChrisAnt Plans
 - Complete "%ENVVAR%\*" by internally expanding ENVVAR for collecting matches, but not expanding it in the editing line.
 
 ## Low Priority
-- Add a configuration setting for whether `menu-complete` wraps around.
-- Add commands that behave like **F7** and **F8** from CMD (like `history-search-backward` without wrapping around?).
 - Add terminal sequences for **Ctrl+Shift+Letter** and **Ctrl+Punctuation** and etc (see https://invisible-island.net/xterm/modified-keys.html).
 - Add a `history.dupe_mode` that behaves like 4Dos/4NT/Take Command from JPSoft:  **Up**/**Down** then **Enter** remembers the history position so that **Enter**, **Down**, **Enter**, **Down**, **Enter**, etc can be used to replay a series of commands.
 - Symlink support (displaying matches, and whether to append a path separator).
