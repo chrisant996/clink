@@ -257,6 +257,12 @@ int _rl_skip_completed_text = 0;
    cycle of possible completions instead of the last. */
 int _rl_menu_complete_prefix_first = 0;
 
+/* begin_clink_change */
+/* Non-zero means the menu-complete family of commands wraps around when
+   it reaches the end. */
+int _rl_menu_complete_wraparound = 1;
+/* end_clink_change */
+
 /* Global variables available to applications using readline. */
 
 #if defined (VISIBLE_STATS)
@@ -3400,6 +3406,40 @@ rl_filename_completion_function (const char *text, int state)
     }
 }
 
+/* begin_clink_change */
+static int
+advance_match_list_index (int *index, int size, int count)
+{
+  if (!_rl_menu_complete_wraparound)
+    {
+      if (count < 0 && *index + count < 0)
+	{
+	  if (*index == 0)
+	    return (0);
+	  *index = 0;
+	  return (1);
+	}
+      else if (count > 0 && *index + count >= size)
+	{
+	  if (*index + 1 == size)
+	    return (0);
+	  *index = size - 1;
+	  return (1);
+	}
+    }
+
+  *index += count;
+  if (*index < 0)
+    {
+      while (*index < 0)
+	*index += size;
+    }
+  else
+    *index %= size;
+  return (1);
+}
+/* end_clink_change */
+
 /* An initial implementation of a menu completion function a la tcsh.  The
    first time (if the last readline command was not rl_old_menu_complete), we
    generate the list of matches.  This code is very similar to the code in
@@ -3533,14 +3573,21 @@ rl_old_menu_complete (int count, int invoking_key)
       return (0);
     }
 
-  match_list_index += count;
-  if (match_list_index < 0)
+/* begin_clink_change */
+  //match_list_index += count;
+  //if (match_list_index < 0)
+  //  {
+  //    while (match_list_index < 0)
+  //      match_list_index += match_list_size;
+  //  }
+  //else
+  //  match_list_index %= match_list_size;
+  if (!advance_match_list_index (&match_list_index, match_list_size, count))
     {
-      while (match_list_index < 0)
-	match_list_index += match_list_size;
+      rl_ding ();
+      return (0);
     }
-  else
-    match_list_index %= match_list_size;
+/* end_clink_change */
 
   if (match_list_index == 0 && match_list_size > 1)
     {
@@ -3748,14 +3795,21 @@ rl_menu_complete (int count, int ignore)
       return (0);
     }
 
-  match_list_index += count;
-  if (match_list_index < 0)
+/* begin_clink_change */
+  //match_list_index += count;
+  //if (match_list_index < 0)
+  //  {
+  //    while (match_list_index < 0)
+  //      match_list_index += match_list_size;
+  //  }
+  //else
+  //  match_list_index %= match_list_size;
+  if (!advance_match_list_index (&match_list_index, match_list_size, count))
     {
-      while (match_list_index < 0)
-	match_list_index += match_list_size;
+      rl_ding ();
+      return (0);
     }
-  else
-    match_list_index %= match_list_size;
+/* end_clink_change */
 
   if (match_list_index == 0 && match_list_size > 1)
     {

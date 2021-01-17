@@ -3,9 +3,6 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 <br/>
 
 # RELEASE
-- Completion wrap around:
-  - Add a configuration setting for whether `menu-complete` wraps around.
-  - Add commands that behave like **F7** and **F8** from CMD (like `history-search-backward` without wrapping around?).
 - An unbound multi-char key sequence is fully ignored if it's the first key sequence in a chord.  But if a chord is already being resolved, then an unbound multi-char key sequence (such as Right Arrow or Escape or etc) inserts whatever part of the key sequence failed to resolve.  It should discard the full key sequence, just like when there's no chord being resolved yet.
 - Popup windows need to show up in the right location:
   - ConEmu:  popups seem to work fine.

@@ -13,7 +13,11 @@
 #include <VersionHelpers.h>
 #include <vector>
 
+extern "C" {
 #include <readline/readline.h>
+extern int _rl_menu_complete_wraparound;
+};
+
 #include "popup.h"
 
 //------------------------------------------------------------------------------
@@ -139,8 +143,28 @@ static LRESULT CALLBACK SubclassListViewWndProc(HWND hwnd, UINT uMsg, WPARAM wPa
                 return 0;
             }
             break;
+
         case VK_UP:
+            s_reset_find_on_next_char = true;
+            if (_rl_menu_complete_wraparound && ListView_GetCurSel(hwnd) <= 0)
+            {
+                ListView_SetCurSel(hwnd, ListView_GetItemCount(hwnd) - 1);
+                return 0;
+            }
+            break;
         case VK_DOWN:
+            s_reset_find_on_next_char = true;
+            if (_rl_menu_complete_wraparound)
+            {
+                int cursel = ListView_GetCurSel(hwnd);
+                if (cursel < 0 || cursel == ListView_GetItemCount(hwnd) - 1)
+                {
+                    ListView_SetCurSel(hwnd, 0);
+                    return 0;
+                }
+            }
+            break;
+
         case VK_LEFT:
         case VK_RIGHT:
         case VK_PRIOR:
@@ -150,6 +174,7 @@ static LRESULT CALLBACK SubclassListViewWndProc(HWND hwnd, UINT uMsg, WPARAM wPa
         case VK_ESCAPE:
             s_reset_find_on_next_char = true;
             break;
+
         case VK_BACK:
             // lParam is repeat count.
             for (lParam = (WORD)lParam; s_find.length() > 0 && lParam--; )

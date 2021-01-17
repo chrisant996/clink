@@ -500,6 +500,10 @@ extern int _rl_match_hidden_files;
 extern int _rl_page_completions;
 extern int _rl_skip_completed_text;
 extern int _rl_menu_complete_prefix_first;
+/* begin_clink_change */
+extern int _rl_menu_complete_wraparound;
+/* end_clink_change */
+
 
 /* display.c */
 extern int _rl_vis_botlin;

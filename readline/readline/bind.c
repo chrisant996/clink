@@ -1843,6 +1843,7 @@ static const struct {
   { "mark-symlinked-directories", &_rl_complete_mark_symlink_dirs, 0 },
   { "match-hidden-files",	&_rl_match_hidden_files,	0 },
   { "menu-complete-display-prefix", &_rl_menu_complete_prefix_first, 0 },
+  { "menu-complete-wraparound",	&_rl_menu_complete_wraparound, 0 },
   { "meta-flag",		&_rl_meta_flag,			0 },
   { "output-meta",		&_rl_output_meta_chars,		0 },
   { "page-completions",		&_rl_page_completions,		0 },
