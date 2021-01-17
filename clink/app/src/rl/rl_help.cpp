@@ -134,7 +134,8 @@ static bool translate_keyseq(const char* keyseq, unsigned int len, char** key_na
     else
     {
         int need_comma = 0;
-        while (*keyseq)
+        const char* keyseq_end = keyseq + len;
+        while (keyseq < keyseq_end)
         {
             int keyseq_len;
             int eqclass = 0;

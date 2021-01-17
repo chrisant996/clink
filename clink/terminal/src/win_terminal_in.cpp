@@ -260,6 +260,11 @@ static void ensure_keyseqs_to_names()
 //------------------------------------------------------------------------------
 const char* find_key_name(const char* keyseq, int& len, int& eqclass, int& order)
 {
+    // '\x00' (Ctrl-@) isn't in the map, so rejecting a seemingly empty string
+    // avoids needing to receive the keyseq length.
+    if (!keyseq || !*keyseq)
+        return nullptr;
+
     ensure_keyseqs_to_names();
     keyseq_key lookup(keyseq, true/*find*/);
     auto const& iter = map_keyseq_to_name.find(lookup);
