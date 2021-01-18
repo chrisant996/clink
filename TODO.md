@@ -48,10 +48,6 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 # MAJOR WORK ITEMS
 
 - **CUA Selection.**
-- **Make the match pipeline async.**
-  - Spin up async completion inside `line_editor_impl::update_internal`.
-  - Only block consumers when they try to access results, if not yet complete.  Also have "try-" access that accesses if available but doesn't block (e.g. will be needed for coloring arguments while editing).
-  - Lua and Lua scripts will need multi-threading support.
 
 <br/>
 <br/>
