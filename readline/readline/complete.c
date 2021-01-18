@@ -3408,7 +3408,7 @@ rl_filename_completion_function (const char *text, int state)
 
 /* begin_clink_change */
 static int
-advance_match_list_index (int *index, int size, int count)
+advance_match_list_index (int *index, int size, int count, char** matches, int orig_start)
 {
   if (!_rl_menu_complete_wraparound)
     {
@@ -3421,6 +3421,15 @@ advance_match_list_index (int *index, int size, int count)
 	}
       else if (count > 0 && *index + count >= size)
 	{
+	  if (size == 1 && *index == 0)
+	    {
+	      /* If there's only one match and it hasn't been inserted yet,
+		 then let it be inserted. */
+	      char *cur_text = rl_copy_text (orig_start, rl_point);
+	      int cmp = strcmp (cur_text, matches[0] + (rl_completion_matches_include_type ? 1 : 0));
+	      xfree (cur_text);
+	      return (cmp != 0);
+	    }
 	  if (*index + 1 == size)
 	    return (0);
 	  *index = size - 1;
@@ -3582,7 +3591,7 @@ rl_old_menu_complete (int count, int invoking_key)
   //  }
   //else
   //  match_list_index %= match_list_size;
-  if (!advance_match_list_index (&match_list_index, match_list_size, count))
+  if (!advance_match_list_index (&match_list_index, match_list_size, count, matches, orig_start))
     {
       rl_ding ();
       return (0);
@@ -3804,7 +3813,7 @@ rl_menu_complete (int count, int ignore)
   //  }
   //else
   //  match_list_index %= match_list_size;
-  if (!advance_match_list_index (&match_list_index, match_list_size, count))
+  if (!advance_match_list_index (&match_list_index, match_list_size, count, matches, orig_start))
     {
       rl_ding ();
       return (0);
