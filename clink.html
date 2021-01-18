@@ -3,7 +3,7 @@
 
 <!-- ----------------------------------------------------- -->
 <head>
-<title>Clink v1.1.21</title>
+<title>Clink v1.1.22</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Rambla:wght@400;700&family=Roboto&family=Fira+Mono&display=swap');
 html {
@@ -409,7 +409,7 @@ var hljs=function(){"use strict";function e(n){Object.freeze(n);var t="function"
         </td>
         <td style="text-align:right">
             <div id="header">
-                <div id="title">Clink v1.1.21</div>
+                <div id="title">Clink v1.1.22</div>
                 <div id="url">
                     <a href="http://github.com/chrisant996/clink">
                         http://github.com/chrisant996/clink
@@ -2285,6 +2285,14 @@ settings.add("color.mymno", "bright magenta", "Color setting")</code></pre></div
         <div class="section" id="changes">
 <h1 id="changes">Changes</h1>
 <h2 id="releases-from-chrisant996clink-fork">Releases from <a href="https://github.com/chrisant996/clink">chrisant996/clink</a> fork</h2>
+<h3 id="v1122">v1.1.22</h3>
+<ul>
+<li>Added <code>menu-complete-wraparound</code> (on by default) that controls whether completion commands wrap around when cycling past an end (affects popup windows as well).</li>
+<li>Fixed match completion getting stuck (regression introduced in v1.1.19).</li>
+<li>Fixed active mark region so it gets deactivated appropriately (it wasn&#39;t hooked up fully for Readline&#39;s callback mode, which is how Clink uses it).</li>
+<li>Fixed <code>clink-show-help</code> (<kbd>Alt</kbd>+<kbd>H</kbd>) so it&#39;s able to list <code>C-@</code> bindings.</li>
+<li>Fixed inconsistent mark color.</li>
+</ul>
 <h3 id="v1121">v1.1.21</h3>
 <ul>
 <li>Added <code>clink.oninject()</code> so scripts can register a callback function to run when Clink is injected into CMD.</li>
