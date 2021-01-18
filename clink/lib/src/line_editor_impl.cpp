@@ -277,8 +277,7 @@ bool line_editor_impl::update()
     if (!check_flag(flag_editing))
     {
         begin_line();
-        // FUTURE: start async match generation.
-        collect_words(); // Required here so adjust_completion_word() works.
+        update_internal();
         return true;
     }
 
@@ -287,15 +286,29 @@ bool line_editor_impl::update()
     if (!check_flag(flag_editing))
         return false;
 
-    // FUTURE: start async match generation.
-    collect_words(); // Required here so adjust_completion_word() works.
+    update_internal();
     return true;
 }
 
 //------------------------------------------------------------------------------
 void line_editor_impl::update_matches()
 {
-    update_internal();
+    if (check_flag(flag_generate))
+    {
+        line_state line = get_linestate();
+        match_pipeline pipeline(m_matches);
+        pipeline.reset();
+        pipeline.generate(line, m_generators);
+        clear_flag(flag_generate);
+    }
+
+    if (check_flag(flag_select))
+    {
+        match_pipeline pipeline(m_matches);
+        pipeline.select(m_needle.c_str());
+        pipeline.sort();
+        clear_flag(flag_select);
+    }
 }
 
 //------------------------------------------------------------------------------
@@ -708,15 +721,7 @@ void line_editor_impl::classify()
     }
 
     if (changed)
-    {
         m_buffer.set_need_draw();
-
-        // Tell all the modules that the classifications changed.
-        editor_module::context context = get_context(line);
-        assert(&context.classifications);
-        for (auto module : m_modules)
-            module->on_classifications_changed(context);
-    }
 }
 
 //------------------------------------------------------------------------------
@@ -839,7 +844,7 @@ void line_editor_impl::update_internal()
         {
             match_pipeline pipeline(m_matches);
             pipeline.reset();
-            pipeline.generate(line, m_generators);
+            set_flag(flag_generate);    // Defer generating until update_matches().
             update_prev_generate = len;
         }
     }
@@ -850,29 +855,22 @@ void line_editor_impl::update_internal()
                      next_key, m_buffer.get_buffer(), m_buffer.get_length(),
                      true/*compare_cursor*/))
     {
-        str<64> needle;
         int needle_start = end_word.offset;
         const char* buf_ptr = m_buffer.get_buffer();
-        needle.concat(buf_ptr + needle_start, next_key.cursor_pos - needle_start);
 
-        if (!needle.empty() && end_word.quoted)
+        m_needle.clear();
+        m_needle.concat(buf_ptr + needle_start, next_key.cursor_pos - needle_start);
+
+        if (!m_needle.empty() && end_word.quoted)
         {
-            int i = needle.length();
-            if (needle[i - 1] == get_closing_quote(m_desc.get_quote_pair()))
-                needle.truncate(i - 1);
+            int i = m_needle.length();
+            if (m_needle[i - 1] == get_closing_quote(m_desc.get_quote_pair()))
+                m_needle.truncate(i - 1);
         }
 
-        match_pipeline pipeline(m_matches);
-        pipeline.select(needle.c_str());
-        pipeline.sort();
+        set_flag(flag_select);          // Defer selecting until update_matches().
 
         m_prev_key = next_key;
-
-        // Tell all the modules that the matches changed.
-        line_state line = get_linestate();
-        editor_module::context context = get_context(line);
-        for (auto module : m_modules)
-            module->on_matches_changed(context);
     }
 
     // Must defer updating m_prev_generate since the old value is still needed
@@ -886,7 +884,7 @@ void update_matches()
     if (!s_editor)
         return;
 
-    s_editor->update_internal();
+    s_editor->update_matches();
 }
 
 matches* maybe_regenerate_matches(const char* needle, bool popup)

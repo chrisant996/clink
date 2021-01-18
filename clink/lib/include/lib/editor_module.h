@@ -54,8 +54,6 @@ public:
     virtual void            bind_input(binder& binder) = 0;
     virtual void            on_begin_line(const context& context) = 0;
     virtual void            on_end_line() = 0;
-    virtual void            on_matches_changed(const context& context) = 0;
-    virtual void            on_classifications_changed(const context& context) = 0;
     virtual void            on_input(const input& input, result& result, const context& context) = 0;
     virtual void            on_terminal_resize(int columns, int rows, const context& context) = 0;
 };

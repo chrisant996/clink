@@ -17,6 +17,7 @@
 #include "rl/rl_buffer.h"
 
 #include <core/array.h>
+#include <core/str.h>
 #include <terminal/printer.h>
 
 //------------------------------------------------------------------------------
@@ -73,8 +74,10 @@ private:
     {
         flag_init       = 1 << 0,
         flag_editing    = 1 << 1,
-        flag_done       = 1 << 2,
-        flag_eof        = 1 << 3,
+        flag_generate   = 1 << 2,
+        flag_select     = 1 << 3,
+        flag_done       = 1 << 4,
+        flag_eof        = 1 << 5,
     };
 
     struct key_t
@@ -124,6 +127,9 @@ private:
     unsigned short      m_command_offset;
     unsigned char       m_keys_size;
     unsigned char       m_flags = 0;
+    str<64>             m_needle;
+
+    // State for dispatch().
     unsigned char       m_dispatching = 0;
     bool                m_invalid_dispatch;
     bind_resolver::binding* m_pending_binding = nullptr;

@@ -1332,16 +1332,6 @@ void rl_module::on_end_line()
 }
 
 //------------------------------------------------------------------------------
-void rl_module::on_matches_changed(const context& context)
-{
-}
-
-//------------------------------------------------------------------------------
-void rl_module::on_classifications_changed(const context& context)
-{
-}
-
-//------------------------------------------------------------------------------
 void rl_module::on_input(const input& input, result& result, const context& context)
 {
     assert(!g_result);

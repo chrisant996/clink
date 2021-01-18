@@ -22,8 +22,6 @@ public:
     virtual void    bind_input(binder& binder) override {}
     virtual void    on_begin_line(const context& context) override {}
     virtual void    on_end_line() override {}
-    virtual void    on_matches_changed(const context& context) override {}
-    virtual void    on_classifications_changed(const context& context) override {}
     virtual void    on_input(const input& input, result& result, const context& context) override {}
     virtual void    on_terminal_resize(int columns, int rows, const context& context) override {}
 };
@@ -40,8 +38,7 @@ public:
 
 private:
     virtual void    bind_input(binder& binder) override;
-    virtual void    on_matches_changed(const context& context) override;
-    virtual void    on_classifications_changed(const context& context) override;
+    virtual void    on_begin_line(const context& context) override;
     virtual void    on_input(const input& input, result& result, const context& context) override;
     const matches*  m_matches = nullptr;
     const word_classifications* m_classifications = nullptr;
@@ -66,14 +63,9 @@ void test_module::bind_input(binder& binder)
 }
 
 //------------------------------------------------------------------------------
-void test_module::on_matches_changed(const context& context)
+void test_module::on_begin_line(const context& context)
 {
     m_matches = &(context.matches);
-}
-
-//------------------------------------------------------------------------------
-void test_module::on_classifications_changed(const context& context)
-{
     m_classifications = &(context.classifications);
 }
 
