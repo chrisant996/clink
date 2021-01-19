@@ -4,10 +4,6 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 
 # RELEASE
 
-## Features
-- **CUA Selection.**  A mode where rl_mark to rl_point is "selected", similar to the active mark mode.  If the cursor moves or the text changes then the selection automatically gets deactivated.  Modifying the line generally needs to delete the selected text before performing whatever editing operation was invoked.  The key design challenge here is to integrate into Readline with minimal changes that won't require ongoing maintenance.
-- Interactive completion, similar to Ctrl+Space in Powershell.
-
 ## Issues
 - [#45](https://github.com/chrisant996/clink/issues/45) Interaction between erase_prev and history.shared=false
 - An unbound multi-char key sequence is fully ignored if it's the first key sequence in a chord.  But if a chord is already being resolved, then an unbound multi-char key sequence (such as Right Arrow or Escape or etc) inserts whatever part of the key sequence failed to resolve.  It should discard the full key sequence, just like when there's no chord being resolved yet.
@@ -26,6 +22,8 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 # IMPROVEMENTS
 
 ## High Priority
+- **CUA Selection.**  A mode where rl_mark to rl_point is "selected", similar to the active mark mode.  If the cursor moves or the text changes then the selection automatically gets deactivated.  Modifying the line generally needs to delete the selected text before performing whatever editing operation was invoked.  The key design challenge here is to integrate into Readline with minimal changes that won't require ongoing maintenance.
+- **Interactive completion.**  Similar to <kbd>Ctrl</kbd>+<kbd>Space</kbd> in Powershell and `menu-select` in zsh, etc.
 
 ## Medium Priority
 - Add a hook function for inserting matches.
