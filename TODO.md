@@ -3,16 +3,19 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 <br/>
 
 # RELEASE
-- An unbound multi-char key sequence is fully ignored if it's the first key sequence in a chord.  But if a chord is already being resolved, then an unbound multi-char key sequence (such as Right Arrow or Escape or etc) inserts whatever part of the key sequence failed to resolve.  It should discard the full key sequence, just like when there's no chord being resolved yet.
-- Popup windows need to show up in the right location:
-  - ConEmu:  popups seem to work fine.
-  - Windows Terminal:  popups are the wrong width and in the wrong location.
-- Investigate:
-  - Holding Ctrl+F eventually pops up the Find dialog!  How and why?  Can it be controlled, leveraged, and prevented?
-  - Is autorun compatible with ConEmu?  If not, can it be made compatible?
+
+## Features
+- **CUA Selection.**  A mode where rl_mark to rl_point is "selected", similar to the active mark mode.  If the cursor moves or the text changes then the selection automatically gets deactivated.  Modifying the line generally needs to delete the selected text before performing whatever editing operation was invoked.  The key design challenge here is to integrate into Readline with minimal changes that won't require ongoing maintenance.
+- Interactive completion, similar to Ctrl+Space in Powershell.
 
 ## Issues
 - [#45](https://github.com/chrisant996/clink/issues/45) Interaction between erase_prev and history.shared=false
+- An unbound multi-char key sequence is fully ignored if it's the first key sequence in a chord.  But if a chord is already being resolved, then an unbound multi-char key sequence (such as Right Arrow or Escape or etc) inserts whatever part of the key sequence failed to resolve.  It should discard the full key sequence, just like when there's no chord being resolved yet.
+- Popup windows in Windows Terminal are the wrong width and in the wrong location.
+
+## Investigate
+- Holding Ctrl+F eventually pops up the Find dialog!  How and why?  Can it be controlled, leveraged, and prevented?
+- Is autorun compatible with ConEmu?  If not, can it be made compatible?
 
 ## Cmder
 - Port Cmder to v1.x -- will require help from Cmder and/or ConEmu teams.  There are a lot of hard-coded expectations about Clink (web site address, terminal input mode, DLL names, VirtualAlloc patterns, and many other things).
@@ -25,7 +28,6 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 ## High Priority
 
 ## Medium Priority
-- Interactive completion, similar to Ctrl+Space in Powershell.
 - Add a hook function for inserting matches.
   - The insertion hook can avoid appending a space when inserting a flag/arg that ends in `:` or `=`.
   - The insertion hook can deal with path normalisation, e.g. to clean up input like "\wbin\\\\cli" when using `complete` and `menu-complete`.
@@ -41,13 +43,6 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 
 ## Clink-Completions
 - Update clink-completions to have better 0.4.9 implementations, and also to conditionally use the new API when available.
-
-<br/>
-<br/>
-
-# MAJOR WORK ITEMS
-
-- **CUA Selection.**
 
 <br/>
 <br/>
