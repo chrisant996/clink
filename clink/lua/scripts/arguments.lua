@@ -611,9 +611,8 @@ end
 --- You can use this function in an argmatcher to supply directory matches.
 --- This automatically handles Readline tilde completion.
 function clink.dirmatches(match_word)
-    local word = rl.expandtilde(match_word)
-
-    local root = path.getdirectory(word) or ""
+    local word, expanded = rl.expandtilde(match_word)
+    local root = path.normalise(path.getdirectory(word) or "")
     if expanded then
         root = rl.collapsetilde(root)
     end
@@ -650,7 +649,7 @@ end
 function clink.filematches(match_word)
     local word = rl.expandtilde(match_word)
 
-    local root = path.getdirectory(word) or ""
+    local root = path.normalise(path.getdirectory(word) or "")
     if expanded then
         root = rl.collapsetilde(root)
     end
