@@ -25,6 +25,15 @@ private:
 };
 
 //------------------------------------------------------------------------------
+struct bank_handles
+{
+    void            close();
+    explicit        operator bool () const;
+    void*           m_handle_lines;
+    void*           m_handle_removals;
+};
+
+//------------------------------------------------------------------------------
 class history_db
 {
     friend struct test_history_db;
@@ -85,10 +94,10 @@ private:
     template <typename T> void  for_each_bank(T&& callback);
     template <typename T> void  for_each_bank(T&& callback) const;
     unsigned int                get_active_bank() const;
-    void*                       get_bank(unsigned int index) const;
+    const bank_handles*         get_bank(unsigned int index) const;
     bool                        remove_internal(line_id id, bool guard_ctag);
     void*                       m_alive_file;
-    void*                       m_bank_handles[bank_count];
+    bank_handles                m_bank_handles[bank_count];
     concurrency_tag             m_master_ctag;
     std::vector<line_id>        m_index_map;
     size_t                      m_master_len;

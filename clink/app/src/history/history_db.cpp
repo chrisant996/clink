@@ -208,6 +208,23 @@ union line_id_impl
 
 
 //------------------------------------------------------------------------------
+bank_handles::operator bool () const
+{
+    return (m_handle_lines != nullptr);
+}
+
+//------------------------------------------------------------------------------
+void bank_handles::close()
+{
+    if (m_handle_removals)
+        CloseHandle(m_handle_removals);
+    if (m_handle_lines)
+        CloseHandle(m_handle_lines);
+}
+
+
+
+//------------------------------------------------------------------------------
 class bank_lock
     : public no_copy
 {
@@ -216,37 +233,50 @@ public:
 
 protected:
                     bank_lock() = default;
-                    bank_lock(void* handle, bool exclusive);
+                    bank_lock(void* handle_lines, void* handle_removals, bool exclusive);
+                    bank_lock(const bank_handles* handles, bool exclusive);
                     ~bank_lock();
-    void*           m_handle = nullptr;
+    void*           m_handle_lines = nullptr;
+    void*           m_handle_removals = nullptr;
 };
 
 //------------------------------------------------------------------------------
-bank_lock::bank_lock(void* handle, bool exclusive)
-: m_handle(handle)
+bank_lock::bank_lock(void* handle_lines, void* handle_removals, bool exclusive)
+: m_handle_lines(handle_lines)
+, m_handle_removals(handle_removals)
 {
-    if (m_handle == nullptr)
+    if (m_handle_lines == nullptr)
         return;
 
     OVERLAPPED overlapped = {};
     int flags = exclusive ? LOCKFILE_EXCLUSIVE_LOCK : 0;
-    LockFileEx(m_handle, flags, 0, ~0u, ~0u, &overlapped);
+    LockFileEx(m_handle_lines, flags, 0, ~0u, ~0u, &overlapped);
+    if (m_handle_removals)
+        LockFileEx(m_handle_removals, flags, 0, ~0u, ~0u, &overlapped);
+}
+
+//------------------------------------------------------------------------------
+bank_lock::bank_lock(const bank_handles* handles, bool exclusive)
+: bank_lock(handles ? handles->m_handle_lines : nullptr, handles ? handles->m_handle_removals : nullptr, exclusive)
+{
 }
 
 //------------------------------------------------------------------------------
 bank_lock::~bank_lock()
 {
-    if (m_handle != nullptr)
+    if (m_handle_lines != nullptr)
     {
         OVERLAPPED overlapped = {};
-        UnlockFileEx(m_handle, 0, ~0u, ~0u, &overlapped);
+        if (m_handle_removals)
+            UnlockFileEx(m_handle_removals, 0, ~0u, ~0u, &overlapped);
+        UnlockFileEx(m_handle_lines, 0, ~0u, ~0u, &overlapped);
     }
 }
 
 //------------------------------------------------------------------------------
 bank_lock::operator bool () const
 {
-    return (m_handle != nullptr);
+    return (m_handle_lines != nullptr);
 }
 
 
@@ -271,7 +301,8 @@ public:
 
     private:
         char*               m_buffer;
-        void*               m_handle;
+        void*               m_handle_lines;
+        void*               m_handle_removals;
         unsigned int        m_buffer_size;
         unsigned int        m_buffer_offset;
         unsigned int        m_remaining;
@@ -294,17 +325,25 @@ public:
         unsigned int        m_deleted = 0;
         bool                m_first_line = true;
         bool                m_eating_ctag = false;
+// TODO: Load and cache removals in memory.
     };
 
     explicit                read_lock() = default;
-    explicit                read_lock(void* handle, bool exclusive=false);
+    explicit                read_lock(void* handle_lines, void* handle_removals, bool exclusive=false);
+    explicit                read_lock(const bank_handles* handles, bool exclusive=false);
     line_id_impl            find(const char* line) const;
     template <class T> void find(const char* line, T&& callback) const;
 };
 
 //------------------------------------------------------------------------------
-read_lock::read_lock(void* handle, bool exclusive)
-: bank_lock(handle, exclusive)
+read_lock::read_lock(void* handle_lines, void* handle_removals, bool exclusive)
+: bank_lock(handle_lines, handle_removals, exclusive)
+{
+}
+
+//------------------------------------------------------------------------------
+read_lock::read_lock(const bank_handles* handles, bool exclusive)
+: bank_lock(handles, exclusive)
 {
 }
 
@@ -323,9 +362,9 @@ template <class T> void read_lock::find(const char* line, T&& callback) const
         if (line[read.length()] != '\0')
             continue;
 
-        unsigned int file_ptr = SetFilePointer(m_handle, 0, nullptr, FILE_CURRENT);
+        unsigned int file_ptr = SetFilePointer(m_handle_lines, 0, nullptr, FILE_CURRENT);
         bool more = callback(id);
-        SetFilePointer(m_handle, file_ptr, nullptr, FILE_BEGIN);
+        SetFilePointer(m_handle_lines, file_ptr, nullptr, FILE_BEGIN);
 
         if (!more)
             break;
@@ -353,7 +392,8 @@ template <int S> read_lock::file_iter::file_iter(const read_lock& lock, char (&b
 
 //------------------------------------------------------------------------------
 read_lock::file_iter::file_iter(const read_lock& lock, char* buffer, int buffer_size)
-: m_handle(lock.m_handle)
+: m_handle_lines(lock.m_handle_lines)
+, m_handle_removals(lock.m_handle_removals)
 , m_buffer(buffer)
 , m_buffer_size(buffer_size)
 {
@@ -376,7 +416,7 @@ unsigned int read_lock::file_iter::next(unsigned int rollback)
     int needed = min(m_remaining, m_buffer_size - rollback);
 
     DWORD read = 0;
-    ReadFile(m_handle, target, needed, &read, nullptr);
+    ReadFile(m_handle_lines, target, needed, &read, nullptr);
 
     m_remaining -= read;
     m_buffer_size = read + rollback;
@@ -386,11 +426,11 @@ unsigned int read_lock::file_iter::next(unsigned int rollback)
 //------------------------------------------------------------------------------
 void read_lock::file_iter::set_file_offset(unsigned int offset)
 {
-    m_remaining = GetFileSize(m_handle, nullptr);
+    m_remaining = GetFileSize(m_handle_lines, nullptr);
     offset = clamp(offset, (unsigned int)0, m_remaining);
     m_remaining -= offset;
     m_buffer_offset = 0 - m_buffer_size;
-    SetFilePointer(m_handle, offset, nullptr, FILE_BEGIN);
+    SetFilePointer(m_handle_lines, offset, nullptr, FILE_BEGIN);
     m_buffer[0] = '\0';
 }
 
@@ -502,7 +542,8 @@ class write_lock
 {
 public:
                     write_lock() = default;
-    explicit        write_lock(void* handle);
+    explicit        write_lock(void* handle_lines, void* handle_removals);
+    explicit        write_lock(const bank_handles* handles);
     void            clear();
     void            add(const char* line);
     void            remove(line_id_impl id);
@@ -510,33 +551,53 @@ public:
 };
 
 //------------------------------------------------------------------------------
-write_lock::write_lock(void* handle)
-: read_lock(handle, true)
+write_lock::write_lock(void* handle_lines, void* handle_removals)
+: read_lock(handle_lines, handle_removals, true)
+{
+}
+
+//------------------------------------------------------------------------------
+write_lock::write_lock(const bank_handles* handles)
+: read_lock(handles, true)
 {
 }
 
 //------------------------------------------------------------------------------
 void write_lock::clear()
 {
-    SetFilePointer(m_handle, 0, nullptr, FILE_BEGIN);
-    SetEndOfFile(m_handle);
+    SetFilePointer(m_handle_lines, 0, nullptr, FILE_BEGIN);
+    SetFilePointer(m_handle_removals, 0, nullptr, FILE_BEGIN);
+    SetEndOfFile(m_handle_lines);
+    SetEndOfFile(m_handle_removals);
 }
 
 //------------------------------------------------------------------------------
 void write_lock::add(const char* line)
 {
     DWORD written;
-    SetFilePointer(m_handle, 0, nullptr, FILE_END);
-    WriteFile(m_handle, line, int(strlen(line)), &written, nullptr);
-    WriteFile(m_handle, "\n", 1, &written, nullptr);
+    SetFilePointer(m_handle_lines, 0, nullptr, FILE_END);
+    WriteFile(m_handle_lines, line, int(strlen(line)), &written, nullptr);
+    WriteFile(m_handle_lines, "\n", 1, &written, nullptr);
 }
 
 //------------------------------------------------------------------------------
 void write_lock::remove(line_id_impl id)
 {
-    DWORD written;
-    SetFilePointer(m_handle, id.offset, nullptr, FILE_BEGIN);
-    WriteFile(m_handle, "|", 1, &written, nullptr);
+    if (m_handle_removals)
+    {
+        str<> s;
+        s.format("%d\n", id.offset);
+
+        DWORD written;
+        SetFilePointer(m_handle_removals, 0, nullptr, FILE_END);
+        WriteFile(m_handle_removals, s.c_str(), s.length(), &written, nullptr);
+    }
+    else
+    {
+        DWORD written;
+        SetFilePointer(m_handle_lines, id.offset, nullptr, FILE_BEGIN);
+        WriteFile(m_handle_lines, "|", 1, &written, nullptr);
+    }
 }
 
 //------------------------------------------------------------------------------
@@ -544,12 +605,14 @@ void write_lock::append(const read_lock& src)
 {
     DWORD written;
 
-    SetFilePointer(m_handle, 0, nullptr, FILE_END);
+    SetFilePointer(m_handle_lines, 0, nullptr, FILE_END);
 
     char buffer[history_db::max_line_length];
     read_lock::file_iter src_iter(src, buffer);
     while (int bytes_read = src_iter.next())
-        WriteFile(m_handle, buffer, bytes_read, &written, nullptr);
+        WriteFile(m_handle_lines, buffer, bytes_read, &written, nullptr);
+
+// TODO: Apply removals.
 }
 
 
@@ -584,11 +647,13 @@ bool read_line_iter::next_bank()
     while (m_bank_index < sizeof_array(m_db.m_bank_handles))
     {
         unsigned int bank_index = m_bank_index++;
-        if (void* bank_handle = m_db.m_bank_handles[bank_index])
+        void* bank_handle_lines = m_db.m_bank_handles[bank_index].m_handle_lines;
+        void* bank_handle_removals = m_db.m_bank_handles[bank_index].m_handle_removals;
+        if (bank_handle_lines && bank_handle_removals)
         {
             char* buffer = (char*)(this + 1);
             m_lock.~read_lock();
-            new (&m_lock) read_lock(bank_handle);
+            new (&m_lock) read_lock(bank_handle_lines, bank_handle_removals);
             new (&m_line_iter) read_lock::line_iter(m_lock, buffer, m_buffer_size);
             return true;
         }
@@ -697,16 +762,21 @@ static void rewrite_master_bank(write_lock& lock, int max_line_length)
 //------------------------------------------------------------------------------
 static void migrate_history(const char* path)
 {
-    void* bank_handle = open_file(path);
-    if (!bank_handle)
+    str<280> removals;
+    removals = path;
+    removals << ".removals";
+
+    void* bank_handle_lines = open_file(path);
+    void* bank_handle_removals = open_file(removals.c_str());
+    if (!bank_handle_lines || !bank_handle_removals)
         return;
 
     // First lock the history bank.
-    write_lock lock(bank_handle);
+    write_lock lock(bank_handle_lines, bank_handle_removals);
 
     // Then test if it's empty -- only migrate if it's empty.
     DWORD high = 0;
-    DWORD low = GetFileSize(bank_handle, &high);
+    DWORD low = GetFileSize(bank_handle_lines, &high);
     if (!low && !high)
     {
         // Build the old history file name.
@@ -744,7 +814,8 @@ static void migrate_history(const char* path)
         }
     }
 
-    CloseHandle(bank_handle);
+    CloseHandle(bank_handle_lines);
+    CloseHandle(bank_handle_removals);
 }
 
 
@@ -778,11 +849,11 @@ history_db::~history_db()
 
     // Close all but the master bank. We're going to append to the master one.
     for (int i = 1; i < sizeof_array(m_bank_handles); ++i)
-        CloseHandle(m_bank_handles[i]);
+        m_bank_handles[i].close();
 
     reap();
 
-    CloseHandle(m_bank_handles[bank_master]);
+    m_bank_handles[bank_master].close();
 }
 
 //------------------------------------------------------------------------------
@@ -793,6 +864,7 @@ void history_db::reap()
     get_file_path(path, false);
     path << "_*";
 
+    str<280> removals;
     for (globber i(path.c_str()); i.next(path);)
     {
         path << "~";
@@ -802,19 +874,25 @@ void history_db::reap()
 
         path.truncate(path.length() - 1);
 
+        removals = path.c_str();
+        removals << ".removals";
+
         int file_size = os::get_file_size(path.c_str());
         if (file_size > 0)
         {
-            void* src_handle = open_file(path.c_str());
+            void* src_handle_lines = open_file(path.c_str());
+            void* src_handle_removals = open_file(removals.c_str());
             {
-                read_lock src(src_handle);
-                write_lock dest(m_bank_handles[bank_master]);
+                read_lock src(src_handle_lines, src_handle_removals);
+                write_lock dest(&m_bank_handles[bank_master]);
                 if (src && dest)
                     dest.append(src);
             }
-            CloseHandle(src_handle);
+            CloseHandle(src_handle_removals);
+            CloseHandle(src_handle_lines);
         }
 
+        os::unlink(removals.c_str());
         os::unlink(path.c_str());
     }
 }
@@ -822,7 +900,7 @@ void history_db::reap()
 //------------------------------------------------------------------------------
 void history_db::initialise()
 {
-    if (m_bank_handles[bank_master] != nullptr)
+    if (m_bank_handles[bank_master])
         return;
 
     str<280> path;
@@ -833,19 +911,20 @@ void history_db::initialise()
         migrate_history(path.c_str());
 
     // Open the master bank file.
-    m_bank_handles[bank_master] = open_file(path.c_str());
+    m_bank_handles[bank_master].m_handle_lines = open_file(path.c_str());
+    m_bank_handles[bank_master].m_handle_removals = nullptr;
 
     // Retrieve concurrency tag from start of master bank.
     m_master_ctag.clear();
     {
-        read_lock lock(m_bank_handles[bank_master], false);
+        read_lock lock(&m_bank_handles[bank_master], false);
         extract_ctag(lock, m_master_ctag);
     }
 
     // No concurrency tag?  Inject one.
     if (m_master_ctag.empty())
     {
-        write_lock lock(m_bank_handles[bank_master]);
+        write_lock lock(&m_bank_handles[bank_master]);
         if (!extract_ctag(lock, m_master_ctag))
         {
             rewrite_master_bank(lock, max_line_length);
@@ -857,8 +936,11 @@ void history_db::initialise()
     if (g_shared.get())
         return;
 
+    str<280> removals;
     get_file_path(path, true);
-    m_bank_handles[bank_session] = open_file(path.c_str());
+    removals << path << ".removals";
+    m_bank_handles[bank_session].m_handle_lines = open_file(path.c_str());
+    m_bank_handles[bank_session].m_handle_removals = open_file(removals.c_str());
 
     reap(); // collects orphaned history files.
 }
@@ -870,12 +952,12 @@ unsigned int history_db::get_active_bank() const
 }
 
 //------------------------------------------------------------------------------
-void* history_db::get_bank(unsigned int index) const
+const bank_handles* history_db::get_bank(unsigned int index) const
 {
     if (index >= sizeof_array(m_bank_handles))
         return nullptr;
 
-    return m_bank_handles[index];
+    return &m_bank_handles[index];
 }
 
 //------------------------------------------------------------------------------
@@ -1020,7 +1102,7 @@ void history_db::compact(bool force)
                         2500);
     if (m_master_deleted_count > threshold)
     {
-        write_lock lock(m_bank_handles[bank_master]);
+        write_lock lock(&m_bank_handles[bank_master]);
         rewrite_master_bank(lock, max_line_length);
         LOG("Compacted history:  %u active, %u deleted", m_master_len, m_master_deleted_count);
     }
@@ -1049,8 +1131,8 @@ bool history_db::add(const char* line)
     }
 
     // Add the line.
-    void* handle = get_bank(get_active_bank());
-    write_lock lock(handle);
+    const bank_handles* handles = get_bank(get_active_bank());
+    write_lock lock(handles);
     if (!lock)
         return false;
 
@@ -1090,8 +1172,8 @@ bool history_db::remove_internal(line_id id, bool guard_ctag)
     line_id_impl id_impl;
     id_impl.outer = id;
 
-    void* handle = get_bank(id_impl.bank_index);
-    write_lock lock(handle);
+    const bank_handles* handles = get_bank(id_impl.bank_index);
+    write_lock lock(handles);
     if (!lock)
     {
         ERR("couldn't lock");
