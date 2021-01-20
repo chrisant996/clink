@@ -25,6 +25,15 @@ private:
 };
 
 //------------------------------------------------------------------------------
+enum : char
+{
+    bank_none       = -1,
+    bank_master,
+    bank_session,
+    bank_count,
+};
+
+//------------------------------------------------------------------------------
 struct bank_handles
 {
     void            close();
@@ -80,14 +89,6 @@ public:
     static expand_result        expand(const char* line, str_base& out);
 
 private:
-    enum : char
-    {
-        bank_none               = -1,
-        bank_master,
-        bank_session,
-        bank_count,
-    };
-
     friend                      class read_line_iter;
     void                        load_internal();
     void                        reap();

@@ -583,7 +583,7 @@ void write_lock::add(const char* line)
 //------------------------------------------------------------------------------
 void write_lock::remove(line_id_impl id)
 {
-    if (m_handle_removals)
+    if (m_handle_removals && id.bank_index == bank_master)
     {
         str<> s;
         s.format("%d\n", id.offset);
