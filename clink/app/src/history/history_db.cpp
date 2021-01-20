@@ -120,11 +120,11 @@ static void get_file_path(str_base& out, bool session)
 }
 
 //------------------------------------------------------------------------------
-static void* open_file(const char* path)
+static void* open_file(const char* path, bool if_exists=false)
 {
     DWORD share_flags = FILE_SHARE_READ|FILE_SHARE_WRITE;
     void* handle = CreateFile(path, GENERIC_READ|GENERIC_WRITE, share_flags,
-        nullptr, OPEN_ALWAYS, FILE_FLAG_SEQUENTIAL_SCAN, nullptr);
+        nullptr, if_exists ? OPEN_EXISTING : OPEN_ALWAYS, FILE_FLAG_SEQUENTIAL_SCAN, nullptr);
 
     return (handle == INVALID_HANDLE_VALUE) ? nullptr : handle;
 }
@@ -766,17 +766,16 @@ static void migrate_history(const char* path)
     removals = path;
     removals << ".removals";
 
-    void* bank_handle_lines = open_file(path);
-    void* bank_handle_removals = open_file(removals.c_str());
-    if (!bank_handle_lines || !bank_handle_removals)
+    void* bank_handle = open_file(path);
+    if (!bank_handle)
         return;
 
     // First lock the history bank.
-    write_lock lock(bank_handle_lines, bank_handle_removals);
+    write_lock lock(bank_handle, nullptr);
 
     // Then test if it's empty -- only migrate if it's empty.
     DWORD high = 0;
-    DWORD low = GetFileSize(bank_handle_lines, &high);
+    DWORD low = GetFileSize(bank_handle, &high);
     if (!low && !high)
     {
         // Build the old history file name.
@@ -814,8 +813,7 @@ static void migrate_history(const char* path)
         }
     }
 
-    CloseHandle(bank_handle_lines);
-    CloseHandle(bank_handle_removals);
+    CloseHandle(bank_handle);
 }
 
 
@@ -881,14 +879,15 @@ void history_db::reap()
         if (file_size > 0)
         {
             void* src_handle_lines = open_file(path.c_str());
-            void* src_handle_removals = open_file(removals.c_str());
+            void* src_handle_removals = open_file(removals.c_str(), true/*if_exists*/);
             {
                 read_lock src(src_handle_lines, src_handle_removals);
                 write_lock dest(&m_bank_handles[bank_master]);
                 if (src && dest)
                     dest.append(src);
             }
-            CloseHandle(src_handle_removals);
+            if (src_handle_removals)
+                CloseHandle(src_handle_removals);
             CloseHandle(src_handle_lines);
         }
 
@@ -940,7 +939,7 @@ void history_db::initialise()
     get_file_path(path, true);
     removals << path << ".removals";
     m_bank_handles[bank_session].m_handle_lines = open_file(path.c_str());
-    m_bank_handles[bank_session].m_handle_removals = open_file(removals.c_str());
+    m_bank_handles[bank_session].m_handle_removals = !g_shared.get() ? open_file(removals.c_str()) : nullptr;
 
     reap(); // collects orphaned history files.
 }
