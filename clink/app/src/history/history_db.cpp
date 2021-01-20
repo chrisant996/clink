@@ -446,6 +446,8 @@ template <int S> read_lock::line_iter::line_iter(const read_lock& lock, char (&b
 read_lock::line_iter::line_iter(const read_lock& lock, char* buffer, int buffer_size)
 : m_file_iter(lock, buffer, buffer_size)
 {
+// TODO: load the removals into an unordered set.
+// TODO: but MASTER needs to load SESSION removals!
 }
 
 //------------------------------------------------------------------------------
@@ -511,6 +513,7 @@ line_id_impl read_lock::line_iter::next(str_iter& out)
         bool was_first_line = m_first_line;
         m_first_line = false;
 
+// TODO: cross reference offset with removals list.
         if (*start == '|' || eating_ctag)
         {
             if (!eating_ctag)
@@ -554,6 +557,8 @@ public:
 write_lock::write_lock(void* handle_lines, void* handle_removals)
 : read_lock(handle_lines, handle_removals, true)
 {
+// TODO: read_lock needs the OTHER removals file (master needs session removals; session needs no removals file).
+// TODO: write_lock needs OUR removals file (session needs session removals; master doesn't write to removals file).
 }
 
 //------------------------------------------------------------------------------
@@ -566,9 +571,12 @@ write_lock::write_lock(const bank_handles* handles)
 void write_lock::clear()
 {
     SetFilePointer(m_handle_lines, 0, nullptr, FILE_BEGIN);
-    SetFilePointer(m_handle_removals, 0, nullptr, FILE_BEGIN);
     SetEndOfFile(m_handle_lines);
-    SetEndOfFile(m_handle_removals);
+    if (m_handle_removals)
+    {
+        SetFilePointer(m_handle_removals, 0, nullptr, FILE_BEGIN);
+        SetEndOfFile(m_handle_removals);
+    }
 }
 
 //------------------------------------------------------------------------------
@@ -644,6 +652,7 @@ read_line_iter::read_line_iter(const history_db& db, unsigned int this_size)
 //------------------------------------------------------------------------------
 bool read_line_iter::next_bank()
 {
+// TODO: reading MASTER bank needs to cross reference with SESSION removals.
     while (m_bank_index < sizeof_array(m_db.m_bank_handles))
     {
         unsigned int bank_index = m_bank_index++;
