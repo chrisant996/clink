@@ -36,10 +36,11 @@ enum : char
 //------------------------------------------------------------------------------
 struct bank_handles
 {
+                    bank_handles() = default;
     void            close();
     explicit        operator bool () const;
-    void*           m_handle_lines;
-    void*           m_handle_removals;
+    void*           m_handle_lines = nullptr;
+    void*           m_handle_removals = nullptr;
 };
 
 //------------------------------------------------------------------------------
@@ -95,7 +96,7 @@ private:
     template <typename T> void  for_each_bank(T&& callback);
     template <typename T> void  for_each_bank(T&& callback) const;
     unsigned int                get_active_bank() const;
-    const bank_handles*         get_bank(unsigned int index) const;
+    bank_handles                get_bank(unsigned int index) const;
     bool                        remove_internal(line_id id, bool guard_ctag);
     void*                       m_alive_file;
     bank_handles                m_bank_handles[bank_count];
