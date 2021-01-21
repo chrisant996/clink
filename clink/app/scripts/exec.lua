@@ -79,7 +79,7 @@ function exec_generator:generate(line_state, match_builder)
     local text = line_state:getword(1)
     local expanded
     text, expanded = rl.expandtilde(text)
-    local text_dir = path.normalise(path.getdirectory(text) or "")
+    local text_dir = (path.getdirectory(text) or ""):gsub("/", "\\")
     if #text_dir == 0 then
         -- Add console aliases as matches.
         local aliases = os.getaliases()
@@ -104,7 +104,7 @@ function exec_generator:generate(line_state, match_builder)
         local any_added = false
         local root = nil
         if rooted then
-            root = path.normalise(path.getdirectory(pattern) or "")
+            root = (path.getdirectory(pattern) or ""):gsub("/", "\\")
             if expanded then
                 root = rl.collapsetilde(root)
             end
@@ -133,7 +133,7 @@ function exec_generator:generate(line_state, match_builder)
 
     -- Lastly we may wish to consider directories too.
     if match_dirs or not added then
-        local root = path.normalise(path.getdirectory(text) or "")
+        local root = (path.getdirectory(text) or ""):gsub("/", "\\")
         if expanded then
             root = rl.collapsetilde(root)
         end
