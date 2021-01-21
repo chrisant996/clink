@@ -339,7 +339,7 @@ public:
                             line_iter(void* handle, char* buffer, int buffer_size);
         template <int S>    line_iter(const read_lock& lock, char (&buffer)[S]);
         template <int S>    line_iter(void* handle, char (&buffer)[S]);
-                            ~line_iter();
+                            ~line_iter() = default;
         line_id_impl        next(str_iter& out);
         void                set_file_offset(unsigned int offset);
         unsigned int        get_deleted_count() const { return m_deleted; }
