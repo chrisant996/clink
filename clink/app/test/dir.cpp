@@ -112,7 +112,7 @@ TEST_CASE("Directory match generation.")
             {
                 cmd << "nest_1/nest_2\\";
                 tester.set_input(cmd.c_str());
-                tester.set_expected_matches("nest_1/nest_2\\nest_3a\\", "nest_1/nest_2\\nest_3b\\");
+                tester.set_expected_matches("nest_1\\nest_2\\nest_3a\\", "nest_1\\nest_2\\nest_3b\\");
                 tester.run();
             }
         }
