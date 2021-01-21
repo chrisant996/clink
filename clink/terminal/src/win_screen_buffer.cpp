@@ -25,8 +25,8 @@ static setting_enum g_terminal_emulation(
     "natively. When set to 'emulate' then Clink performs VT emulation and handles\n"
     "ANSI escape codes. When 'native' then Clink passes all output directly to the\n"
     "console. Or when 'auto' then Clink performs VT emulation unless native\n"
-    "terminal support is detected (such as when hosted inside ConEmu or Windows\n"
-    "Terminal).",
+    "terminal support is detected (such as when hosted inside ConEmu, Windows\n"
+    "Terminal, or Windows 10 new console).",
     "native,emulate,auto",
     2);
 
@@ -69,6 +69,27 @@ void win_screen_buffer::begin()
         native_vt = false;
         break;
     case 2: {
+#pragma warning(push)
+#pragma warning(disable:4996)
+        OSVERSIONINFO ver = { sizeof(ver) };
+        if (GetVersionEx(&ver) && ver.dwBuildNumber >= 15063)
+        {
+            DWORD type;
+            DWORD data;
+            DWORD size;
+            LSTATUS status = RegGetValue(HKEY_CURRENT_USER, "Console", "ForceV2", RRF_RT_REG_DWORD, &type, &data, &size);
+            if (status != ERROR_SUCCESS ||
+                type != REG_DWORD ||
+                size != sizeof(data) ||
+                data != 0)
+            {
+                native_vt = true;
+                found_what = "Windows build >= 15063, console V2";
+                break;
+            }
+        }
+#pragma warning(pop)
+
         str<16> wt_session;
         if (os::get_env("WT_SESSION", wt_session))
         {
