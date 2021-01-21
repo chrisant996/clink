@@ -612,7 +612,8 @@ end
 --- This automatically handles Readline tilde completion.
 function clink.dirmatches(match_word)
     local word, expanded = rl.expandtilde(match_word)
-    local root = path.normalise(path.getdirectory(word) or "")
+
+    local root = (path.getdirectory(word) or ""):gsub("/", "\\")
     if expanded then
         root = rl.collapsetilde(root)
     end
@@ -647,9 +648,9 @@ end
 --- matches but other flags and arguments don't, or when matches need to include
 --- more than files.
 function clink.filematches(match_word)
-    local word = rl.expandtilde(match_word)
+    local word, expanded = rl.expandtilde(match_word)
 
-    local root = path.normalise(path.getdirectory(word) or "")
+    local root = (path.getdirectory(word) or ""):gsub("/", "\\")
     if expanded then
         root = rl.collapsetilde(root)
     end
