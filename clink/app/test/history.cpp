@@ -106,6 +106,7 @@ TEST_CASE("history db")
 
     const char* master_path = "clink_history";
     const char* session_path = "clink_history_493";
+    const char* removals_path = "clink_history_493.removals";
     const char* alive_path = "clink_history_493~";
 
     // Start with an empty state dir.
@@ -139,7 +140,7 @@ TEST_CASE("history db")
         settings::find("history.shared")->set("false");
         {
             test_history_db history;
-            expect_files({master_path, session_path, alive_path});
+            expect_files({master_path, session_path, removals_path, alive_path});
         }
         expect_files({master_path});
     }
@@ -186,12 +187,12 @@ TEST_CASE("history db")
         int line_bytes = 0;
         {
             test_history_db history;
-            REQUIRE(count_files() == 3);
+            REQUIRE(count_files() == 4);
 
             REQUIRE(history.add(line_set0[0]));
             line_bytes += int(strlen(line_set0[0])) + 1;
 
-            REQUIRE(count_files() == 3);
+            REQUIRE(count_files() == 4);
             REQUIRE(os::get_file_size(session_path) == line_bytes);
             REQUIRE(os::get_file_size(master_path) == 0 + history.get_master_tag_size());
 
@@ -200,6 +201,52 @@ TEST_CASE("history db")
 
         REQUIRE(count_files() == 1);
         REQUIRE(os::get_file_size(master_path) == line_bytes);
+    }
+
+    SECTION("Sessioned erase_prev")
+    {
+        settings::find("history.shared")->set("false");
+        settings::find("history.dupe_mode")->set("erase_prev");
+
+        int line_bytes = 0;
+        {
+            test_history_db history;
+            REQUIRE(count_files() == 4);
+
+            REQUIRE(history.add(line_set0[0]));
+            line_bytes += int(strlen(line_set0[0])) + 1;
+
+            REQUIRE(count_files() == 4);
+            REQUIRE(os::get_file_size(session_path) == line_bytes);
+            REQUIRE(os::get_file_size(removals_path) == 0);
+            REQUIRE(os::get_file_size(master_path) == 0 + history.get_master_tag_size());
+
+            line_bytes += history.get_master_tag_size(); // because reap()
+        }
+
+        REQUIRE(count_files() == 1);
+        REQUIRE(os::get_file_size(master_path) == line_bytes);
+
+        {
+            int session_bytes = 0;
+
+            test_history_db history;
+            REQUIRE(count_files() == 4);
+
+            REQUIRE(history.add(line_set0[0]));
+            session_bytes += int(strlen(line_set0[0])) + 1;
+
+            REQUIRE(count_files() == 4);
+            REQUIRE(os::get_file_size(session_path) == session_bytes);
+            REQUIRE(os::get_file_size(removals_path) == 3);
+            REQUIRE(os::get_file_size(master_path) == line_bytes);
+
+            line_bytes += session_bytes; // because reap()
+        }
+
+        REQUIRE(count_files() == 1);
+        REQUIRE(os::get_file_size(master_path) == line_bytes);
+
     }
 
     SECTION("line iter")
