@@ -234,6 +234,10 @@ void match_pipeline::select(const char* needle) const
             needle = expanded;
     }
 
+#ifdef DEBUG
+    str<32> debug_needle(needle); // needle goes out of scope before DEBUG_PIPELINE.
+#endif
+
     if (count)
         selected_count = normal_selector(needle, m_matches.get_infos(), count);
 
@@ -247,7 +251,7 @@ void match_pipeline::select(const char* needle) const
         printf("COALESCED, file_comp %u %s -- needle '%s' selected %u matches\n",
                m_matches.is_filename_completion_desired().get(),
                m_matches.is_filename_completion_desired().is_explicit() ? "(exp)" : "(imp)",
-               needle,
+               debug_needle.c_str(),
                m_matches.get_match_count());
     }
 #endif
