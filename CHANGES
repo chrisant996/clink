@@ -4,6 +4,8 @@
 
 ### v1.1.23
 
+- Fixed [#57](https://github.com/chrisant996/clink/issues/57); slashes not normalized in some cases.
+- Fixed [#45](https://github.com/chrisant996/clink/issues/45); interaction between `history.dupe_mode`=`erase_prev` and `history.shared`=`false`.
 - Fixed `menu-complete-wraparound` when off and there's only 1 match.
 
 ### v1.1.22
@@ -38,30 +40,30 @@
 ### v1.1.19
 
 - Improved responsiveness while typing:  matches are collected only on demand, instead of always while typing.  This makes it possible to always support match completion for UNC paths.
-- Fixed [#50](https://github.com/chrisant996/clink/issues/50) <kbd>Alt</kbd>+<kbd>H</kbd> could warn about likely mistakes in key bindings.
+- Fixed [#50](https://github.com/chrisant996/clink/issues/50); <kbd>Alt</kbd>+<kbd>H</kbd> could warn about likely mistakes in key bindings.
 
 ### v1.1.18
 
 - The input text now has context sensitive coloring based on the argmatchers. It's on by default and can be turned off with `clink set clink.colorize_input false`.
 - Updated the Readline library to 8.1.
 - Terminal emulation now supports the audible bell character.
-- Fixed [#48](https://github.com/chrisant996/clink/issues/48) `menu-complete` gets stuck.
-- Fixed [#47](https://github.com/chrisant996/clink/issues/47) <kbd>Alt</kbd>+<kbd>D</kbd> erases history instead of word.
-- Fixed [#46](https://github.com/chrisant996/clink/issues/46) typing `..` in subdirectory of root doesn't work.
+- Fixed [#48](https://github.com/chrisant996/clink/issues/48); `menu-complete` gets stuck.
+- Fixed [#47](https://github.com/chrisant996/clink/issues/47); <kbd>Alt</kbd>+<kbd>D</kbd> erases history instead of word.
+- Fixed [#46](https://github.com/chrisant996/clink/issues/46); typing `..` in subdirectory of root doesn't work.
 - Fixed restoring color after pager when showing help.
 - Fixed `clink set` match completions for color settings.
 
 ### v1.1.17
 
 - Added `os.getbatterystatus()` function that gets battery status information much faster than launching `wmic`.
-- Fixed [#44](https://github.com/chrisant996/clink/issues/44) Path completion doesn't work with `cd /d`.
+- Fixed [#44](https://github.com/chrisant996/clink/issues/44); Path completion doesn't work with `cd /d`.
 - Fixed loading scripts to ignore loading clink.lua, so that loading scripts behaves like Clink v0.4.9.
 
 ### v1.1.16
 
 - Added `match.ignore_accent` setting (enabled by default) that ignores Latin alphabet diacriticals when completing matches (e.g. `ä` matches `a`, `ı` matches `i`, `ł` matches `l`, etc).
-- Fixed [#42](https://github.com/chrisant996/clink/issues/42) history lines are split on special characters.
-- Fixed [#41](https://github.com/chrisant996/clink/issues/41) Enable custom doskey handling of `..` and `-`.
+- Fixed [#42](https://github.com/chrisant996/clink/issues/42); history lines are split on special characters.
+- Fixed [#41](https://github.com/chrisant996/clink/issues/41); Enable custom doskey handling of `..` and `-`.
 - Fixed Readline bug inserting dir matches; `\win_  foo` (cursor at `_`) would become `\Windows\\_  foo`.
 - Fixed the `quoted-insert` command to insert just `\x1b` when <kbd>ESC</kbd> is pressed.
 
@@ -89,7 +91,7 @@
 
 - Added `clink.ondisplaymatches()` as a replacement for the deprecated `clink.match_display_filter`.  The new API is able to support popup list windows as well.
 - Speculative possible fix for [#35](https://github.com/chrisant996/clink/issues/35) Crash when clink on clink.bat.
-- Fixed [#33](https://github.com/chrisant996/clink/issues/33) Tab autocomplete, auto-quoting paths doesn't seem to work as in Clink 0.4.9.
+- Fixed [#33](https://github.com/chrisant996/clink/issues/33); Tab autocomplete, auto-quoting paths doesn't seem to work as in Clink 0.4.9.
 
 ### v1.1.11
 
@@ -101,7 +103,7 @@
 
 ### v1.1.10
 
-- Fixed [#32](https://github.com/chrisant996/clink/issues/32) hooking `ReadConsoleW` on Windows 7.
+- Fixed [#32](https://github.com/chrisant996/clink/issues/32); hooking `ReadConsoleW` on Windows 7.
 
 ### v1.1.9
 
@@ -155,8 +157,8 @@
 - Improved file extension logic (e.g. "file.foo bar" has no extension because of the space).
 - Updated arg matcher for `clink` itself (was missing some flags).
 - Changed `colour.hidden` setting to not be set by default.
-- Fixed [#28](https://github.com/chrisant996/clink/issues/28) Tab completion for "~" does not work.
-- Fixed [#25](https://github.com/chrisant996/clink/issues/25) Unicode surrogate pairs (and emoji) input isn't working -- Microsoft Terminal renders the text correctly, but ConEmu and the default conhost still don't (and that isn't a Clink issue).
+- Fixed [#28](https://github.com/chrisant996/clink/issues/28); Tab completion for "~" does not work.
+- Fixed [#25](https://github.com/chrisant996/clink/issues/25); Unicode surrogate pairs (and emoji) input isn't working -- Microsoft Terminal renders the text correctly, but ConEmu and the default conhost still don't (and that isn't a Clink issue).
 - Fixed screen size bug in Readline on Windows.
 - Fixed the backwards values in the `terminal.emulation` setting.
 - Fixed `....` so it works properly again.
