@@ -964,6 +964,12 @@ void history_db::reap()
     str<280> removals;
     for (globber i(path.c_str()); i.next(path);)
     {
+        // History files have no extension.  Don't reap supplement files such as
+        // *.removals files.
+        const char* ext = path::get_extension(path.c_str());
+        if (ext)
+            continue;
+
         path << "~";
         if (os::get_path_type(path.c_str()) == os::path_type_file)
             if (!os::unlink(path.c_str())) // abandoned alive files will unlink
