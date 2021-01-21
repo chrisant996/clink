@@ -64,6 +64,7 @@ public:
     class iter
     {
     public:
+                                iter(iter&& other);
                                 ~iter();
         line_id                 next(str_iter& out);
 

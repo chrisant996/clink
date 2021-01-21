@@ -339,6 +339,7 @@ public:
                             line_iter(void* handle, char* buffer, int buffer_size);
         template <int S>    line_iter(const read_lock& lock, char (&buffer)[S]);
         template <int S>    line_iter(void* handle, char (&buffer)[S]);
+                            ~line_iter();
         line_id_impl        next(str_iter& out);
         void                set_file_offset(unsigned int offset);
         unsigned int        get_deleted_count() const { return m_deleted; }
@@ -742,6 +743,7 @@ bool read_line_iter::next_bank()
         {
             char* buffer = (char*)(this + 1);
             m_lock.~read_lock();
+            m_line_iter.~line_iter();
             new (&m_lock) read_lock(handles);
             new (&m_line_iter) read_lock::line_iter(m_lock, buffer, m_buffer_size);
             return true;
@@ -771,6 +773,13 @@ history_db::line_id read_line_iter::next(str_iter& out)
 }
 
 
+
+//------------------------------------------------------------------------------
+history_db::iter::iter(iter&& other)
+{
+    impl = other.impl;
+    other.impl = 0;
+}
 
 //------------------------------------------------------------------------------
 history_db::iter::~iter()
