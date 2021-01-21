@@ -1021,7 +1021,6 @@ void history_db::initialise()
 
     // Open the master bank file.
     m_bank_handles[bank_master].m_handle_lines = open_file(path.c_str());
-    m_bank_handles[bank_master].m_handle_removals = nullptr;
 
     // Retrieve concurrency tag from start of master bank.
     m_master_ctag.clear();
@@ -1045,11 +1044,14 @@ void history_db::initialise()
     if (g_shared.get())
         return;
 
-    str<280> removals;
     get_file_path(path, true);
-    removals << path << ".removals";
     m_bank_handles[bank_session].m_handle_lines = open_file(path.c_str());
-    m_bank_handles[bank_session].m_handle_removals = !g_shared.get() ? open_file(removals.c_str()) : nullptr;
+    if (g_dupe_mode.get() == 2) // 'erase_prev'
+    {
+        str<280> removals;
+        removals << path << ".removals";
+        m_bank_handles[bank_session].m_handle_removals = open_file(removals.c_str());
+    }
 
     reap(); // collects orphaned history files.
 }

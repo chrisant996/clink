@@ -187,12 +187,12 @@ TEST_CASE("history db")
         int line_bytes = 0;
         {
             test_history_db history;
-            REQUIRE(count_files() == 4);
+            REQUIRE(count_files() == 3);
 
             REQUIRE(history.add(line_set0[0]));
             line_bytes += int(strlen(line_set0[0])) + 1;
 
-            REQUIRE(count_files() == 4);
+            REQUIRE(count_files() == 3);
             REQUIRE(os::get_file_size(session_path) == line_bytes);
             REQUIRE(os::get_file_size(master_path) == 0 + history.get_master_tag_size());
 
