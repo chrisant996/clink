@@ -364,9 +364,9 @@ void ecma48_terminal_out::set_attributes(const ecma48_code::csi_base& csi)
                         idx /= 6;
                         unsigned char r = idx;
                         if (is_fg)
-                            attr.set_fg(r << 3, g << 3, b << 3);
+                            attr.set_fg(r * 51, g * 51, b * 51);
                         else
-                            attr.set_bg(r << 3, g << 3, b << 3);
+                            attr.set_bg(r * 51, g * 51, b * 51);
                     }
                 }
                 i++;
