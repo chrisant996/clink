@@ -175,6 +175,15 @@ bool match_wild_impl(const str_iter_impl<T>& _pattern, const str_iter_impl<T>& _
             pattern.next();
             file.next();
             symbol_matched = true;
+            // Advance past path separators (consider "\\\\" and "\" equal).
+            assert(path::is_separator(c) == path::is_separator(d));
+            if (path::is_separator(c))
+            {
+                while (path::is_separator(pattern.peek()))
+                    pattern.next();
+                while (path::is_separator(file.peek()))
+                    file.next();
+            }
             break; }
         }
 

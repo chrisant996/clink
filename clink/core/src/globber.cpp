@@ -45,7 +45,7 @@ globber::globber(const char* pattern)
         m_handle = nullptr;
 
     path::get_directory(pattern, m_root);
-    path::normalise(m_root.data());
+    path::normalise_separators(m_root.data());
 }
 
 //------------------------------------------------------------------------------

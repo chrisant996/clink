@@ -4,6 +4,7 @@
 #pragma once
 
 #include "base.h"
+#include "path.h"
 #include "str_iter.h"
 
 #include <Windows.h>
@@ -82,6 +83,16 @@ int str_compare_impl(str_iter_impl<T>& lhs, str_iter_impl<T>& rhs)
 
         lhs.next();
         rhs.next();
+
+        // Advance past path separators (consider "\\\\" and "\" equal).
+        assert((c == '/') == (d == '/'));
+        if (c == '/')
+        {
+            while (path::is_separator(lhs.peek()))
+                lhs.next();
+            while (path::is_separator(rhs.peek()))
+                rhs.next();
+        }
     }
 
     if (lhs.more() || rhs.more())

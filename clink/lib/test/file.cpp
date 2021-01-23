@@ -89,4 +89,17 @@ TEST_CASE("File match generator")
         tester.set_expected_matches("m:only", "m:file1", "m:file2");
         tester.run();
     }
+
+    SECTION("redundant separators")
+    {
+        tester.set_input("dir1\\\\\\" DO_COMPLETE);
+        tester.set_expected_matches("dir1\\only", "dir1\\file1", "dir1\\file2");
+        tester.set_expected_output("dir1\\");
+        tester.run();
+
+        tester.set_input("dir1\\\\\\f" DO_COMPLETE);
+        tester.set_expected_matches("dir1\\file1", "dir1\\file2");
+        tester.set_expected_output("dir1\\file");
+        tester.run();
+    }
 }

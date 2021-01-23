@@ -45,7 +45,7 @@ static class : public match_generator
             free(expanded_root);
         }
 
-        path::normalise(root);
+        path::normalise_separators(root);
 
         root << "*";
 

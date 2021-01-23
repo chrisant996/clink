@@ -193,6 +193,23 @@ void normalise(char* in_out, int sep)
 }
 
 //------------------------------------------------------------------------------
+void normalise_separators(str_base& in_out, int sep)
+{
+    normalise_separators(in_out.data(), sep);
+}
+
+//------------------------------------------------------------------------------
+void normalise_separators(char* in_out, int sep)
+{
+    if (!sep)
+        sep = PATH_SEP[0];
+
+    for (char* next = in_out; *next; next++)
+        if (is_separator(*next) && *next != sep)
+            *next = sep;
+}
+
+//------------------------------------------------------------------------------
 bool is_separator(int c)
 {
 #if defined(PLATFORM_WINDOWS)
