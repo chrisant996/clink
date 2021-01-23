@@ -5,6 +5,7 @@
 ### v1.1.24
 
 - `auto` for `terminal.emulation` now uses native VT support on Windows 10 build 15063 and higher, unless the HKCU\Console\ForceV2 regkey is 0.
+- Fixed [#60](https://github.com/chrisant996/clink/issues/60); completion fails with multiple slashes.
 - Fixed 256 color ANSI codes.
 
 ### v1.1.23
