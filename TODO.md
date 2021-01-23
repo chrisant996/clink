@@ -5,6 +5,7 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 # RELEASE
 
 ## Issues
+- `foo --flag:"file" arg1` should color `--flag:` with the Flag color, `arg1` with the Arg color, and `"file"` with the Other color.  If there's a linked argmatcher then it should treat `--flag:` and `"file"` as two separate words so that `"file"` is interpreted as arg1 by the linked argmatcher (and classifier).  If there's NOT a linked argmatcher then argmatchers should consider `--flag:"file"` a single word, but should color it as a Flag followed by an Other.  That's pretty nuanced and hard to describe in documentation...
 - An unbound multi-char key sequence is fully ignored if it's the first key sequence in a chord.  But if a chord is already being resolved, then an unbound multi-char key sequence (such as Right Arrow or Escape or etc) inserts whatever part of the key sequence failed to resolve.  It should discard the full key sequence, just like when there's no chord being resolved yet.
 - Popup windows in Windows Terminal are the wrong width and in the wrong location.
 
