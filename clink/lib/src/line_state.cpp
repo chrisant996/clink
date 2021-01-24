@@ -40,6 +40,14 @@ unsigned int line_state::get_command_offset() const
 }
 
 //------------------------------------------------------------------------------
+unsigned int line_state::get_end_word_offset() const
+{
+    if (m_words.size() > 0)
+        return m_words[m_words.size() - 1].offset;
+    return 0;
+}
+
+//------------------------------------------------------------------------------
 const std::vector<word>& line_state::get_words() const
 {
     return m_words;

@@ -193,6 +193,8 @@ void match_pipeline::generate(
     const line_state& state,
     const array<match_generator*>& generators) const
 {
+    m_matches.set_word_break_position(state.get_end_word_offset());
+
     match_builder builder(m_matches);
     for (auto* generator : generators)
         if (generator->generate(state, builder))

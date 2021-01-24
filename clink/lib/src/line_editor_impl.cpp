@@ -562,6 +562,26 @@ unsigned int line_editor_impl::collect_words(words& words, matches_impl& matches
     {
         word_break_info break_info = {};
         const char *word_start = m_buffer.get_buffer() + end_word->offset;
+
+        // First try to accommodate `-flag:text` and `-flag=text` (with or
+        // without quotes) so that matching can happen for the `text` portion.
+        if (strchr("-/", *word_start))
+        {
+            for (const char* walk = word_start; *walk && !isspace((unsigned char)*walk); walk++)
+            {
+                if (*walk == ':' || *walk == '=')
+                {
+                    if (walk[1] &&
+                        (rl_completer_quote_characters && strchr(rl_completer_quote_characters, walk[1])) ||
+                        (rl_basic_quote_characters && strchr(rl_basic_quote_characters, walk[1])))
+                        walk++;
+                    break_info.truncate = walk + 1 - word_start;
+                    break_info.keep = end_word->length - break_info.truncate;
+                    break;
+                }
+            }
+        }
+
         for (const auto *generator : m_generators)
         {
             word_break_info tmp;
@@ -570,6 +590,7 @@ unsigned int line_editor_impl::collect_words(words& words, matches_impl& matches
                 (tmp.truncate == break_info.truncate && tmp.keep > break_info.keep))
                 break_info = tmp;
         }
+
         if (break_info.truncate)
         {
             int truncate = min<unsigned int>(break_info.truncate, end_word->length);
@@ -591,7 +612,7 @@ unsigned int line_editor_impl::collect_words(words& words, matches_impl& matches
         end_word->length = keep;
 
         // Need to coordinate with Readline when we redefine word breaks.
-        matches.set_word_break_adjustment(break_info.truncate);
+        matches.set_word_break_position(end_word->offset);
     }
 
     return command_offset;
@@ -844,7 +865,11 @@ void line_editor_impl::update_internal()
         {
             match_pipeline pipeline(m_matches);
             pipeline.reset();
-            set_flag(flag_generate);    // Defer generating until update_matches().
+            // Defer generating until update_matches().  Must set word break
+            // position in the meantime because adjust_completion_word() gets
+            // called before the deferred generate().
+            set_flag(flag_generate);
+            m_matches.set_word_break_position(line.get_end_word_offset());
             update_prev_generate = len;
         }
     }

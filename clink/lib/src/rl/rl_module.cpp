@@ -472,36 +472,34 @@ static char adjust_completion_word(char quote_char, int *found_quote, int *delim
 {
     if (s_matches)
     {
-        // When the point immediately follows a closed quoted substring, move to
-        // the beginning of the closed quoted substring.  Otherwise Readline
-        // completes `"abc def"#` to `"abc def"abc def" #`.
-        //
-        // This goes before handling get_word_break_adjustment() because Clink
-        // told the match generators the last word was this quoted substring, so
-        // this brings Readline and Clink into alignment.
-        if (*found_quote == RL_QF_DOUBLE_QUOTE && !*delimiter && !quote_char && rl_point > 0)
+        // Override Readline's word break position.  Often it's the same as
+        // what Clink chose (possibly with help from generators), but Clink must
+        // override it otherwise things go wrong in edge cases such as issue #59
+        // (https://github.com/chrisant996/clink/issues/59).
+        assert(s_matches->get_word_break_position() >= 0);
+        if (s_matches->get_word_break_position() >= 0)
         {
-            const char* pqc = strchr(rl_completer_quote_characters, rl_line_buffer[rl_point - 1]);
-            if (pqc)
+            rl_point = min(s_matches->get_word_break_position(), rl_end);
+
+            const char* pqc = nullptr;
+            if (rl_point > 0)
+                pqc = strchr(rl_completer_quote_characters, rl_line_buffer[rl_point - 1]);
+            if (pqc && *pqc)
             {
                 quote_char = *pqc;
-                rl_point--;
-                while (--rl_point && rl_line_buffer[rl_point] != quote_char)
-                {}
-
-                *found_quote = true;
+                switch (quote_char)
+                {
+                case '\'':  *found_quote = RL_QF_SINGLE_QUOTE; break;
+                case '\"':  *found_quote = RL_QF_DOUBLE_QUOTE; break;
+                default:    *found_quote = RL_QF_OTHER_QUOTE; break;
+                }
             }
-        }
+            else
+            {
+                quote_char = 0;
+                *found_quote = 0;
+            }
 
-        // Apply any word break adjustment from the match generators.
-        int adj = min(s_matches->get_word_break_adjustment(), rl_end - rl_point);
-        if (adj)
-        {
-            rl_point += adj;
-
-            // TODO: Is throwing away quote state correct?
-            quote_char = 0;
-            *found_quote = 0;
             *delimiter = 0;
         }
     }

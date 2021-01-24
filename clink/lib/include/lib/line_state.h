@@ -26,6 +26,7 @@ public:
     const char*         get_line() const;
     unsigned int        get_cursor() const;
     unsigned int        get_command_offset() const;
+    unsigned int        get_end_word_offset() const;
     const std::vector<word>& get_words() const;
     unsigned int        get_word_count() const;
     bool                get_word(unsigned int index, str_base& out) const;

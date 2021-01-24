@@ -1411,8 +1411,8 @@ _rl_find_completion_word (int *fp, int *dp)
 	{
 /* begin_clink_change
  * The following assumes we want to use backslashes to escape the next
- * character. This doesn't apply on Windows as a \ is the part separator. Removing
- * this code stops strings like the following getting misunderstood by readline;
+ * character.  This doesn't apply on Windows where \ is the path separator.
+ * Disabling this code stops misinterpreting strings like the following;
  *
  * c:\>foobar.bat "c:\Program Files\"
  */

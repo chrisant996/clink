@@ -490,9 +490,9 @@ int matches_impl::get_suppress_quoting() const
 }
 
 //------------------------------------------------------------------------------
-int matches_impl::get_word_break_adjustment() const
+int matches_impl::get_word_break_position() const
 {
-    return m_word_break_adjustment;
+    return m_word_break_position;
 }
 
 //------------------------------------------------------------------------------
@@ -525,7 +525,7 @@ void matches_impl::reset()
     m_append_character = '\0';
     m_suppress_append = false;
     m_suppress_quoting = 0;
-    m_word_break_adjustment = 0;
+    m_word_break_position = -1;
     m_filename_completion_desired.reset();
     m_filename_display_desired.reset();
 }
@@ -549,9 +549,9 @@ void matches_impl::set_suppress_quoting(int suppress)
 }
 
 //------------------------------------------------------------------------------
-void matches_impl::set_word_break_adjustment(int adjustment)
+void matches_impl::set_word_break_position(int position)
 {
-    m_word_break_adjustment = adjustment;
+    m_word_break_position = position;
 }
 
 //------------------------------------------------------------------------------

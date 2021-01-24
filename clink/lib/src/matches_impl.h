@@ -48,10 +48,10 @@ public:
     virtual shadow_bool     is_filename_display_desired() const override;
     virtual char            get_append_character() const override;
     virtual int             get_suppress_quoting() const override;
-    virtual int             get_word_break_adjustment() const override;
+    virtual int             get_word_break_position() const override;
     virtual bool            match_display_filter(char** matches, match_display_filter_entry*** filtered_matches, bool popup) const override;
 
-    void                    set_word_break_adjustment(int adjustment);
+    void                    set_word_break_position(int position);
 
 private:
     virtual const char*     get_match(unsigned int index) const override;
@@ -102,7 +102,7 @@ private:
     char                    m_append_character = '\0';
     bool                    m_suppress_append = false;
     int                     m_suppress_quoting = 0;
-    int                     m_word_break_adjustment = 0;
+    int                     m_word_break_position = -1;
     shadow_bool             m_filename_completion_desired;
     shadow_bool             m_filename_display_desired;
 };
