@@ -5,13 +5,16 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 # RELEASE
 
 ## Issues
-- `foo --flag:"file" arg1` should color `--flag:` with the Flag color, `arg1` with the Arg color, and `"file"` with the Other color.  If there's a linked argmatcher then it should treat `--flag:` and `"file"` as two separate words so that `"file"` is interpreted as arg1 by the linked argmatcher (and classifier).  If there's NOT a linked argmatcher then argmatchers should consider `--flag:"file"` a single word, but should color it as a Flag followed by an Other.  That's pretty nuanced and hard to describe in documentation...
+- When generating matches, strip all quotes from the needle.  So that `"foo"\ba` can complete to `"foo\bar"`.  (Stripping all quotes might be surprising, but it's what CMD does.)
+- Argmatcher should have a new mechanism for generating matches for `-foo:right_here` so that it doesn't treat it like an argument position.  Maybe `"-foo:"+function_name`, and by default it uses `file_match_generator()`.
+- Argmatcher should color `-foo:` as a Flag and `right_here` as Other.
+- Provide a way for a custom classifier to apply a classification anywhere (not just to a pre-parsed word), and to apply any arbitrary CSI SGR code to a word or to anywhere.
 - An unbound multi-char key sequence is fully ignored if it's the first key sequence in a chord.  But if a chord is already being resolved, then an unbound multi-char key sequence (such as Right Arrow or Escape or etc) inserts whatever part of the key sequence failed to resolve.  It should discard the full key sequence, just like when there's no chord being resolved yet.
-- Popup windows in Windows Terminal are the wrong width and in the wrong location.
 
 ## Investigate
 - Holding Ctrl+F eventually pops up the Find dialog!  How and why?  Can it be controlled, leveraged, and prevented?
 - Is autorun compatible with ConEmu?  If not, can it be made compatible?
+- Popup windows in Windows Terminal are the wrong width and in the wrong location.  Would be nice to fix, but is an acceptable limitation if not.
 
 ## Cmder
 - Port Cmder to v1.x -- will require help from Cmder and/or ConEmu teams.  There are a lot of hard-coded expectations about Clink (web site address, terminal input mode, DLL names, VirtualAlloc patterns, and many other things).
@@ -23,7 +26,7 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 
 ## High Priority
 - **CUA Selection.**  A mode where rl_mark to rl_point is "selected", similar to the active mark mode.  If the cursor moves or the text changes then the selection automatically gets deactivated.  Modifying the line generally needs to delete the selected text before performing whatever editing operation was invoked.  The key design challenge here is to integrate into Readline with minimal changes that won't require ongoing maintenance.
-- **Interactive completion.**  Similar to <kbd>Ctrl</kbd>+<kbd>Space</kbd> in Powershell and `menu-select` in zsh, etc.
+- **Interactive completion.**  Similar to <kbd>Ctrl</kbd>+<kbd>Space</kbd> in Powershell and `menu-select` in zsh, etc.  The edge cases can get weird...
 
 ## Medium Priority
 - Add a hook function for inserting matches.
@@ -35,7 +38,7 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 
 ## Low Priority
 - Add terminal sequences for **Ctrl+Shift+Letter** and **Ctrl+Punctuation** and etc (see https://invisible-island.net/xterm/modified-keys.html).
-- Add a `history.dupe_mode` that behaves like 4Dos/4NT/Take Command from JPSoft:  **Up**/**Down** then **Enter** remembers the history position so that **Enter**, **Down**, **Enter**, **Down**, **Enter**, etc can be used to replay a series of commands.
+- Add a `history.dupe_mode` that behaves like 4Dos/4NT/Take Command from JPSoft:  **Up**/**Down** then **Enter** remembers the history position so that **Enter**, **Down**, **Enter**, **Down**, **Enter**, etc can be used to replay a series of commands.  It looks like `operate-and-get-next` might have a similar effect.
 - Symlink support (displaying matches, and whether to append a path separator).
 - Make scrolling key bindings work at the pager prompt.  Note that it would need to revise how the scroll routines identify the bottom line (currently they use Readline's bottom line, but the pager displays output past that point).
 
