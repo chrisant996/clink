@@ -62,17 +62,23 @@ unsigned int line_state::get_word_count() const
 //------------------------------------------------------------------------------
 bool line_state::get_word(unsigned int index, str_base& out) const
 {
-    if (index >= m_words.size())
-        return false;
+    // STRIPS quotes.
+    if (index < m_words.size())
+    {
+        // Strip quotes so `"foo\"ba` can complete to `"foo\bar"`.  Stripping
+        // quotes may seem surprising, but it's what CMD does and it works well.
+        const word& word = m_words[index];
+        concat_strip_quotes(out, m_line + word.offset, word.length);
+        return true;
+    }
 
-    const word& word = m_words[index];
-    out.concat(m_line + word.offset, word.length);
-    return true;
+    return false;
 }
 
 //------------------------------------------------------------------------------
 str_iter line_state::get_word(unsigned int index) const
 {
+    // INCLUDES quotes.
     if (index < m_words.size())
     {
         const word& word = m_words[index];
@@ -85,6 +91,7 @@ str_iter line_state::get_word(unsigned int index) const
 //------------------------------------------------------------------------------
 bool line_state::get_end_word(str_base& out) const
 {
+    // STRIPS quotes.
     int n = get_word_count();
     return (n ? get_word(n - 1, out) : false);
 }
@@ -92,6 +99,7 @@ bool line_state::get_end_word(str_base& out) const
 //------------------------------------------------------------------------------
 str_iter line_state::get_end_word() const
 {
+    // INCLUDES quotes.
     int n = get_word_count();
     return (n ? get_word(n - 1) : str_iter());
 }

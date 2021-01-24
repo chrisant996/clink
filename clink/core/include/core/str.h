@@ -583,6 +583,36 @@ inline wstr_moveable& wstr_moveable::operator = (wstr_moveable&& s)
 
 
 //------------------------------------------------------------------------------
+template <typename T> void concat_strip_quotes(str_impl<T>& out, const T* in, unsigned int len=-1)
+{
+    if (len == -1)
+        len = static_cast<unsigned int>(strlen(in));
+
+    // Strip quotes while concatenating.  This may seem surprising, but it's a
+    // technique lifted from CMD, and it works well.
+    out.reserve(out.length() + len);
+    while (len)
+    {
+        const T* append = in;
+        while (len)
+        {
+            if (*in == '"')
+                break;
+            in++;
+            len--;
+        }
+
+        out.concat(append, static_cast<unsigned int>(in - append));
+
+        while (len && *in == '"')
+        {
+            in++;
+            len--;
+        }
+    }
+}
+
+//------------------------------------------------------------------------------
 inline unsigned int char_count(const char* ptr)
 {
     unsigned int count = 0;

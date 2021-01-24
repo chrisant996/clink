@@ -77,11 +77,18 @@ int line_state_lua::get_word_count(lua_State* state)
 /// -name:  line:getwordinfo
 /// -arg:   index:integer
 /// -ret:   table
-/// Returns a table of information about the Nth word in the line. The table
-/// returned has the following scheme:
+/// Returns a table of information about the Nth word in the line.
+///
+/// Note:  The length refers to the substring in the line; it omits leading and
+/// trailing quotes, but <em><strong>includes</strong></em> embedded quotes.
+/// <a href="#line:getword">line:getword()</a> conveniently strips embedded
+/// quotes to help generators naturally complete <code>"foo\"ba</code> to
+/// <code>"foo\bar"</code>.
+///
+/// The table returned has the following scheme:
 /// -show:  {
 /// -show:  &nbsp; offset,  -- [integer] offset where the word starts in the line:getline() string.
-/// -show:  &nbsp; length,  -- [integer] length of the word.
+/// -show:  &nbsp; length,  -- [integer] length of the word (includes embedded quotes).
 /// -show:  &nbsp; quoted,  -- [boolean] indicates whether the word is quoted.
 /// -show:  &nbsp; delim,   -- [string] the delimiter character, or an empty string.
 /// -show:  &nbsp; alias,   -- [boolean | nil] true if the word is a doskey alias, otherwise nil.
@@ -132,14 +139,22 @@ int line_state_lua::get_word_info(lua_State* state)
 /// -arg:   index:integer
 /// -ret:   string
 /// Returns the word of the line at <span class="arg">index</span>.
+///
+/// Note:  The returned word omits any quotes.  This helps generators naturally
+/// complete <code>"foo\"ba</code> to <code>"foo\bar"</code>.  The raw word
+/// including quotes can be obtained using the <code>offset</code> and
+/// <code>length</code> fields from
+/// <a href="#line:getwordinfo">line:getwordinfo()</a> to extract a substring
+/// from the line returned by <a href="#line:getline">line:getline()</a>.
 int line_state_lua::get_word(lua_State* state)
 {
     if (!lua_isnumber(state, 1))
         return 0;
 
+    str<32> word;
     unsigned int index = int(lua_tointeger(state, 1)) - 1;
-    str_iter word = m_line.get_word(index);
-    lua_pushlstring(state, word.get_pointer(), word.length());
+    m_line.get_word(index, word);
+    lua_pushlstring(state, word.c_str(), word.length());
     return 1;
 }
 
@@ -149,9 +164,17 @@ int line_state_lua::get_word(lua_State* state)
 /// -show:  line:getword(line:getwordcount()) == line:getendword()
 /// Returns the last word of the line. This is the word that matches are being
 /// generated for.
+///
+/// Note:  The returned word omits any quotes.  This helps generators naturally
+/// complete <code>"foo\"ba</code> to <code>"foo\bar"</code>.  The raw word
+/// including quotes can be obtained using the <code>offset</code> and
+/// <code>length</code> fields from
+/// <a href="#line:getwordinfo">line:getwordinfo()</a> to extract a substring
+/// from the line returned by <a href="#line:getline">line:getline()</a>.
 int line_state_lua::get_end_word(lua_State* state)
 {
-    str_iter word = m_line.get_end_word();
-    lua_pushlstring(state, word.get_pointer(), word.length());
+    str<32> word;
+    m_line.get_end_word(word);
+    lua_pushlstring(state, word.c_str(), word.length());
     return 1;
 }

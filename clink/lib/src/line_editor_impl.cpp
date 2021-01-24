@@ -883,8 +883,10 @@ void line_editor_impl::update_internal()
         int needle_start = end_word.offset;
         const char* buf_ptr = m_buffer.get_buffer();
 
+        // Strip quotes so `"foo\"ba` can complete to `"foo\bar"`.  Stripping
+        // quotes may seem surprising, but it's what CMD does and it works well.
         m_needle.clear();
-        m_needle.concat(buf_ptr + needle_start, next_key.cursor_pos - needle_start);
+        concat_strip_quotes(m_needle, buf_ptr + needle_start, next_key.cursor_pos - needle_start);
 
         if (!m_needle.empty() && end_word.quoted)
         {

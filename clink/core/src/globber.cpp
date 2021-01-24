@@ -5,6 +5,7 @@
 #include "globber.h"
 #include "os.h"
 #include "path.h"
+#include "str.h"
 
 #include <sys/stat.h>
 
@@ -17,6 +18,10 @@ globber::globber(const char* pattern)
 , m_system(false)
 , m_dots(false)
 {
+    str<32> strip_quotes;
+    concat_strip_quotes(strip_quotes, pattern);
+    pattern = strip_quotes.c_str();
+
     // Don't bother trying to complete a UNC path that doesn't have at least
     // both a server and share component.
     if (path::is_incomplete_unc(pattern))

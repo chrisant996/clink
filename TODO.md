@@ -5,7 +5,6 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 # RELEASE
 
 ## Issues
-- When generating matches, strip all quotes from the needle.  So that `"foo"\ba` can complete to `"foo\bar"`.  (Stripping all quotes might be surprising, but it's what CMD does.)
 - Argmatcher should have a new mechanism for generating matches for `-foo:right_here` so that it doesn't treat it like an argument position.  Maybe `"-foo:"+function_name`, and by default it uses `file_match_generator()`.
 - Argmatcher should color `-foo:` as a Flag and `right_here` as Other.
 - Provide a way for a custom classifier to apply a classification anywhere (not just to a pre-parsed word), and to apply any arbitrary CSI SGR code to a word or to anywhere.

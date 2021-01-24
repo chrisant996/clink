@@ -562,7 +562,9 @@ static char** alternative_matches(const char* text, int start, int end)
     const char* pattern = nullptr;
     if (g_match_wild.get() && rl_completion_type == '%')
     {
-        tmp = text;
+        // Strip quotes so `"foo\"ba` can complete to `"foo\bar"`.  Stripping
+        // quotes may seem surprising, but it's what CMD does and it works well.
+        concat_strip_quotes(tmp, text);
         tmp.concat("*");
         pattern = tmp.c_str();
     }
