@@ -1262,9 +1262,36 @@ void rl_module::on_begin_line(const context& context)
     while (const ecma48_code& code = iter.next())
     {
         bool c1 = (code.get_type() == ecma48_code::type_c1);
-        if (c1) rl_prompt.concat("\x01", 1);
-                rl_prompt.concat(code.get_pointer(), code.get_length());
-        if (c1) rl_prompt.concat("\x02", 1);
+        if (c1)
+        {
+            rl_prompt.concat("\x01", 1);
+            rl_prompt.concat(code.get_pointer(), code.get_length());
+            rl_prompt.concat("\x02", 1);
+        }
+        else
+        {
+            int index = 0;
+            const char* seq = code.get_pointer();
+            const char* end = seq + code.get_length();
+            do
+            {
+                const char* walk = seq;
+                while (walk < end && *walk != '\007')
+                    walk++;
+
+                if (walk > seq)
+                {
+                    rl_prompt.concat(seq, static_cast<unsigned int>(walk - seq));
+                    seq = walk;
+                }
+                if (walk < end && *walk == '\007')
+                {
+                    rl_prompt << "\001\007\002";
+                    seq++;
+                }
+            }
+            while (seq < end);
+        }
     }
 
     rl_prompt.concat("\x01\x1b[m\x02");

@@ -766,6 +766,10 @@ The resulting prompt will look like this:
 <pre style="border-radius:initial;border:initial"><code class="plaintext" style="background-color:black"><span style="color:#00ff00">Wed 12:54</span> <span style="color:#ffff00">c:\dir</span> <span style="color:#cccccc">HAPPY HUMP DAY!&nbsp;_</span>
 </code></pre>
 
+<p/>
+
+> **Note:**  Readline needs to be told which characters in the prompt are unprintable or invisible.  Clink automatically detects most ANSI escape codes and the BEL character (^G, audible bell) and surrounds them with `\001` (^A) and `\002` (^B) characters.  For any other unprintable characters, the `\001` and `\002` characters need to be added manually.  Otherwise Readline misinterprets the length of the prompt and can display the prompt and input line incorrectly in some cases (especially if the input line wraps onto a second line).
+
 # Miscellaneous
 
 <a name="keybindings"/>

@@ -438,8 +438,8 @@ static int find_line(lua_State* state, int direction)
 /// <span class="arg">mask</span> is optional and can be "fore" or "back" to
 /// only match foreground or background colors, respectively.
 ///
-/// Note that although most of the arguments are optional, the order of provided
-/// arguments is important.
+/// <strong>Note:</strong> Although most of the arguments are optional, the
+/// order of provided arguments is important.
 ///
 /// The following example provides a pair of <code>find_prev_colored_line</code>
 /// and <code>find_next_colored_line</code> functions.  The functions can be
