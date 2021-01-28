@@ -20,8 +20,15 @@ set __MULTICPU=-m:4
 set __STOPONERROR=
 set __INSTALL=
 set __INSTALLDIR=c:\wbin\clink
-set __MSBUILD="c:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\MSBuild\Current\Bin\MSBuild.exe"
-rem if /i "%PROCESSOR_ARCHITECTURE%" == "AMD64" set __MSBUILD="c:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\MSBuild\Current\Bin\amd64\MSBuild.exe"
+set __SLN=
+set __MSBUILD=MSBuild.exe
+if exist .build\vs2019\clink.sln (
+	set __SLN=".build\vs2019\clink.sln"
+	set __MSBUILD="c:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\MSBuild\Current\Bin\MSBuild.exe"
+) else if exist .build\vs2017\clink.sln (
+	set __SLN=".build\vs2017\clink.sln"
+	set __MSBUILD="c:\Program Files (x86)\Microsoft Visual Studio\2017\Enterprise\MSBuild\Current\Bin\MSBuild.exe"
+)
 
 set CP=cp.exe /uy
 set XCOPY=xcopy.exe /cdfiky
@@ -70,16 +77,24 @@ rem	echo   -q               Quit immediately on any error.
 	echo   /dbg             Or /debug.
 	echo   /rel             Or /release.
 	echo   /fin             Or /final.
+	echo.
+	if x%__SLN% == x echo warning: Unable to find VS2019 (or VS2017) clink.sln file.
+	if not x%__SLN% == x echo Using SLN file:  %__SLN%
+	if not exist %__MSBUILD% echo warning: Unable to find VS2019 (or VS2017) Enterprise installation.
+	if exist %__MSBUILD% echo Using MSBuild:   %__MSBUILD%
 	goto :eof
 )
 
 if "%__X86%" == "" ( if "%__AMD64%" == "" (set __X86=1&set __AMD64=1) )
 if "%__DEBUG%" == "" ( if "%__RELEASE%" == "" ( if "%__FINAL%" == "" (set __DEBUG=1) ) )
 
+if x%__SLN% == x echo error: Unable to find VS2019 (or VS2017) clink.sln file.&goto :eof
+if not exist %__MSBUILD% echo error: Unable to find VS2019 (or VS2017) Enterprise installation.&goto :eof
+
 if not "%__X86%" == "" ( if not "%__DEBUG%" == "" (
 	echo.
 	%EC% %BOLD%%NEG% BUILDING x86 DEBUG %POS%%NORM%
-	%__MSBUILD% -nologo -v:minimal %__MULTICPU% -p:Configuration=Debug;Platform=Win32 ".build\vs2019\clink.sln"
+	%__MSBUILD% -nologo -v:minimal %__MULTICPU% -p:Configuration=Debug;Platform=Win32 %__SLN%
 	if "%__AMD64%" == "" (
 		if errorlevel 1 goto :eof
 	)
@@ -88,14 +103,14 @@ if not "%__X86%" == "" ( if not "%__DEBUG%" == "" (
 if not "%__AMD64%" == "" ( if not "%__DEBUG%" == "" (
 	echo.
 	%EC% %BOLD%%NEG% BUILDING amd64 DEBUG %POS%%NORM%
-	%__MSBUILD% -nologo -v:minimal %__MULTICPU% -p:Configuration=Debug;Platform=x64 ".build\vs2019\clink.sln"
+	%__MSBUILD% -nologo -v:minimal %__MULTICPU% -p:Configuration=Debug;Platform=x64 %__SLN%
 	if errorlevel 1 goto :eof
 ) )
 
 if not "%__X86%" == "" ( if not "%__RELEASE%" == "" (
 	echo.
 	%EC% %BOLD%%NEG% BUILDING x86 RELEASE %POS%%NORM%
-	%__MSBUILD% -nologo -v:minimal %__MULTICPU% -p:Configuration=Release;Platform=Win32 ".build\vs2019\clink.sln"
+	%__MSBUILD% -nologo -v:minimal %__MULTICPU% -p:Configuration=Release;Platform=Win32 %__SLN%
 	if "%__AMD64%" == "" (
 		if errorlevel 1 goto :eof
 	)
@@ -104,14 +119,14 @@ if not "%__X86%" == "" ( if not "%__RELEASE%" == "" (
 if not "%__AMD64%" == "" ( if not "%__RELEASE%" == "" (
 	echo.
 	%EC% %BOLD%%NEG% BUILDING amd64 RELEASE %POS%%NORM%
-	%__MSBUILD% -nologo -v:minimal %__MULTICPU% -p:Configuration=Release;Platform=x64 ".build\vs2019\clink.sln"
+	%__MSBUILD% -nologo -v:minimal %__MULTICPU% -p:Configuration=Release;Platform=x64 %__SLN%
 	if errorlevel 1 goto :eof
 ) )
 
 if not "%__X86%" == "" ( if not "%__FINAL%" == "" (
 	echo.
 	%EC% %BOLD%%NEG% BUILDING x86 FINAL %POS%%NORM%
-	%__MSBUILD% -nologo -v:minimal %__MULTICPU% -p:Configuration=Final;Platform=Win32 ".build\vs2019\clink.sln"
+	%__MSBUILD% -nologo -v:minimal %__MULTICPU% -p:Configuration=Final;Platform=Win32 %__SLN%
 	if "%__AMD64%" == "" (
 		if errorlevel 1 goto :eof
 	)
@@ -120,7 +135,7 @@ if not "%__X86%" == "" ( if not "%__FINAL%" == "" (
 if not "%__AMD64%" == "" ( if not "%__FINAL%" == "" (
 	echo.
 	%EC% %BOLD%%NEG% BUILDING amd64 FINAL %POS%%NORM%
-	%__MSBUILD% -nologo -v:minimal %__MULTICPU% -p:Configuration=Final;Platform=x64 ".build\vs2019\clink.sln"
+	%__MSBUILD% -nologo -v:minimal %__MULTICPU% -p:Configuration=Final;Platform=x64 %__SLN%
 	if errorlevel 1 goto :eof
 ) )
 
