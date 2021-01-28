@@ -17,6 +17,13 @@
 
 #include <regex>
 
+// For compatibility with Windows 8.1 SDK.
+#if !defined( ENABLE_VIRTUAL_TERMINAL_PROCESSING )
+# define ENABLE_VIRTUAL_TERMINAL_PROCESSING  0x0004
+#elif ENABLE_VIRTUAL_TERMINAL_PROCESSING != 0x0004
+# error ENABLE_VIRTUAL_TERMINAL_PROCESSING must be 0x0004
+#endif
+
 //------------------------------------------------------------------------------
 static setting_enum g_terminal_emulation(
     "terminal.emulation",
