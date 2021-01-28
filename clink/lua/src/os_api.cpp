@@ -569,7 +569,11 @@ int get_battery_status(lua_State* state)
     lua_rawset(state, -3);
 
     lua_pushliteral(state, "batterysaver");
+#if defined( VER_PRODUCTMAJORVERSION ) && VER_PRODUCTMAJORVERSION >= 10
     lua_pushboolean(state, ((status.SystemStatusFlag & 1) == 1));
+#else
+    lua_pushboolean(state, ((status.Reserved1 & 1) == 1));
+#endif
     lua_rawset(state, -3);
 
     return 1;
