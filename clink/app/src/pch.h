@@ -18,18 +18,18 @@
 
 #include <Windows.h>
 #include <Shellapi.h>
-#include <Shlobj.h>
 #include <TlHelp32.h>
 // Some code
+#ifdef _MSC_VER
+#   pragma warning(push)
+#   pragma warning(disable : 4091)
+#endif
+#include <Shlobj.h>
 #ifndef __MINGW32__
-#   ifdef _MSC_VER
-#       pragma warning(push)
-#       pragma warning(disable : 4091)
-#   endif
 #   include <DbgHelp.h>
-#   ifdef _MSC_VER
-#       pragma warning(pop)
-#   endif
+#endif
+#ifdef _MSC_VER
+#   pragma warning(pop)
 #endif
 
 #include <core/base.h>
