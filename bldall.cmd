@@ -78,9 +78,9 @@ rem	echo   -q               Quit immediately on any error.
 	echo   /rel             Or /release.
 	echo   /fin             Or /final.
 	echo.
-	if x%__SLN% == x echo warning: Unable to find VS2019 (or VS2017) clink.sln file.
+	if x%__SLN% == x echo warning: Unable to find VS2019 ^(or VS2017^) clink.sln file.
 	if not x%__SLN% == x echo Using SLN file:  %__SLN%
-	if not exist %__MSBUILD% echo warning: Unable to find VS2019 (or VS2017) Enterprise installation.
+	if not exist %__MSBUILD% echo warning: Unable to find VS2019 ^(or VS2017^) Enterprise installation.
 	if exist %__MSBUILD% echo Using MSBuild:   %__MSBUILD%
 	goto :eof
 )
@@ -88,8 +88,8 @@ rem	echo   -q               Quit immediately on any error.
 if "%__X86%" == "" ( if "%__AMD64%" == "" (set __X86=1&set __AMD64=1) )
 if "%__DEBUG%" == "" ( if "%__RELEASE%" == "" ( if "%__FINAL%" == "" (set __DEBUG=1) ) )
 
-if x%__SLN% == x echo error: Unable to find VS2019 (or VS2017) clink.sln file.&goto :eof
-if not exist %__MSBUILD% echo error: Unable to find VS2019 (or VS2017) Enterprise installation.&goto :eof
+if x%__SLN% == x echo error: Unable to find VS2019 ^(or VS2017^) clink.sln file.&goto :eof
+if not exist %__MSBUILD% echo error: Unable to find VS2019 ^(or VS2017^) Enterprise installation.&goto :eof
 
 if not "%__X86%" == "" ( if not "%__DEBUG%" == "" (
 	echo.

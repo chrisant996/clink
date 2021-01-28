@@ -75,8 +75,8 @@ set __ARGS=
 :appendarg
 if not "%1" == "" set __ARGS=%__ARGS% %1&shift&goto appendarg
 
-if x%__SLN% == x echo error: Unable to find VS2019 (or VS2017) clink.sln file.&goto :eof
-if not exist %__MSBUILD% echo error: Unable to find VS2019 (or VS2017) Enterprise installation.&goto :eof
+if x%__SLN% == x echo error: Unable to find VS2019 ^(or VS2017^) clink.sln file.&goto :eof
+if not exist %__MSBUILD% echo error: Unable to find VS2019 ^(or VS2017^) Enterprise installation.&goto :eof
 
 echo.
 %EC% %BOLD%%NEG% BUILDING %__PLATFORM% %__CONFIG% %POS%%NORM%
@@ -110,9 +110,9 @@ echo   /dbg          Or /debug.
 echo   /rel          Or /release.
 echo   /fin          Or /final.
 echo.
-if x%__SLN% == x echo warning: Unable to find VS2019 (or VS2017) clink.sln file.
+if x%__SLN% == x echo warning: Unable to find VS2019 ^(or VS2017^) clink.sln file.
 if not x%__SLN% == x echo Using SLN file:  %__SLN%
-if not exist %__MSBUILD% echo warning: Unable to find VS2019 (or VS2017) Enterprise installation.
+if not exist %__MSBUILD% echo warning: Unable to find VS2019 ^(or VS2017^) Enterprise installation.
 if exist %__MSBUILD% echo Using MSBuild:   %__MSBUILD%
 goto :eof
 
