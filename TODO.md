@@ -5,8 +5,6 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 # RELEASE
 
 ## Issues
-- Argmatcher should have a new mechanism for generating matches for `-foo:right_here` so that it doesn't treat it like an argument position.  Maybe `"-foo:"+function_name`, and by default it uses `file_match_generator()`.
-- Argmatcher should color `-foo:` as a Flag and `right_here` as Other.
 - Provide a way for a custom classifier to apply a classification anywhere (not just to a pre-parsed word), and to apply any arbitrary CSI SGR code to a word or to anywhere.
 - An unbound multi-char key sequence is fully ignored if it's the first key sequence in a chord.  But if a chord is already being resolved, then an unbound multi-char key sequence (such as Right Arrow or Escape or etc) inserts whatever part of the key sequence failed to resolve.  It should discard the full key sequence, just like when there's no chord being resolved yet.
 

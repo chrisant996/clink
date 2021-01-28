@@ -101,15 +101,36 @@ function _argreader:update(word, word_index)
             if arg._links and arg._links[word] then
                 t = arg_match_type
             else
-                for _, i in ipairs(arg) do
-                    if type(i) == "function" then
-                        -- For performance reasons, don't run argmatcher functions
-                        -- during classify.  If that's needed, a script can provide
-                        -- a :classify function to complement a :generate function.
-                        t = 'o' --other (placeholder; superseded by :classifyword).
-                    elseif i == word then
-                        t = arg_match_type
-                        break
+                -- For performance reasons, don't run argmatcher functions
+                -- during classify.  If that's needed, a script can provide a
+                -- :classify function to complement a :generate function.
+                --
+                -- Also, when the word is a flag and contains : or = then check
+                -- if the portion up to and including the : or = is a known
+                -- flag.  When so, color the whole thing as a flag.
+                --
+                local matched = false
+                if arg_match_type == "f" then
+                    local attached_pos = word:find("[:=]")
+                    if attached_pos then
+                        local prefix = word:sub(1, attached_pos)
+                        for _, i in ipairs(arg) do
+                            if type(i) ~= "function" and i == prefix then
+                                t = arg_match_type
+                                matched = true
+                                break
+                            end
+                        end
+                    end
+                end
+                if not matched then
+                    for _, i in ipairs(arg) do
+                        if type(i) == "function" then
+                            t = 'o' --other (placeholder; superseded by :classifyword).
+                        elseif i == word then
+                            t = arg_match_type
+                            break
+                        end
                     end
                 end
             end
@@ -462,6 +483,21 @@ function _argmatcher:_generate(line_state, match_builder)
         add_matches(matcher._flags._args[1], match_type)
         return true
     else
+        -- When endword is adjacent the previous word and the previous word ends
+        -- with : or = then this is a flag-attached arg, not an arg position.
+        if line_state:getwordcount() > 1 then
+            local prevwordinfo = line_state:getwordinfo(line_state:getwordcount() - 1)
+            local endwordinfo = line_state:getwordinfo(line_state:getwordcount())
+            if prevwordinfo.offset + prevwordinfo.length == endwordinfo.offset and
+                    matcher:_is_flag(line_state:getword(line_state:getwordcount() - 1)) and
+                    line_state:getline():sub(endwordinfo.offset - 1, endwordinfo.offset - 1):find("[:=]") then
+                -- FUTURE:  Could have a new argmatcher syntax to generate
+                -- matches for "-x:" flags, but it's such a niche scenario that
+                -- it seems reasonable to require a custom :generate() function.
+                match_builder:addmatches(clink.filematches(line_state:getendword()))
+                return true
+            end
+        end
         local arg = matcher._args[arg_index]
         if arg then
             return add_matches(arg, match_type) and true or false
@@ -769,6 +805,12 @@ function argmatcher_generator:getwordbreakinfo(line_state)
         if argmatcher and argmatcher._flags then
             local word = line_state:getendword()
             if argmatcher:_is_flag(word) then
+                -- Accommodate `-flag:text` and `-flag=text` (with or without
+                -- quotes) so that matching can happen for the `text` portion.
+                local attached_arg,attach_pos = word:find("^[^:=][^:=]+[:=]")
+                if attached_arg then
+                    return attach_pos, 0
+                end
                 return 0, 1
             end
         end

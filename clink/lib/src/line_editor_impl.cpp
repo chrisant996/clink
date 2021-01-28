@@ -569,7 +569,7 @@ unsigned int line_editor_impl::collect_words(words& words, matches_impl& matches
         {
             for (const char* walk = word_start; *walk && !isspace((unsigned char)*walk); walk++)
             {
-                if (*walk == ':' || *walk == '=')
+                if (strchr(":=", *walk))
                 {
                     if (walk[1] &&
                         (rl_completer_quote_characters && strchr(rl_completer_quote_characters, walk[1])) ||
