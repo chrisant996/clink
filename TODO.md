@@ -5,7 +5,6 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 # RELEASE
 
 ## Issues
-- Provide a way for a custom classifier to apply a classification anywhere (not just to a pre-parsed word), and to apply any arbitrary CSI SGR code to a word or to anywhere.
 - An unbound multi-char key sequence is fully ignored if it's the first key sequence in a chord.  But if a chord is already being resolved, then an unbound multi-char key sequence (such as Right Arrow or Escape or etc) inserts whatever part of the key sequence failed to resolve.  It should discard the full key sequence, just like when there's no chord being resolved yet.
 
 ## Investigate
@@ -37,6 +36,7 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 - Add terminal sequences for **Ctrl+Shift+Letter** and **Ctrl+Punctuation** and etc (see https://invisible-island.net/xterm/modified-keys.html).
 - Add a `history.dupe_mode` that behaves like 4Dos/4NT/Take Command from JPSoft:  **Up**/**Down** then **Enter** remembers the history position so that **Enter**, **Down**, **Enter**, **Down**, **Enter**, etc can be used to replay a series of commands.  It looks like `operate-and-get-next` might have a similar effect.
 - Symlink support (displaying matches, and whether to append a path separator).
+- Provide a way for a custom classifier to apply a classification anywhere (not just to a pre-parsed word), and to apply any arbitrary CSI SGR code to a word or to anywhere.
 - Make scrolling key bindings work at the pager prompt.  Note that it would need to revise how the scroll routines identify the bottom line (currently they use Readline's bottom line, but the pager displays output past that point).
 
 ## Clink-Completions
