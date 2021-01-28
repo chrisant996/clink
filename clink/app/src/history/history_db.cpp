@@ -21,6 +21,7 @@ extern "C" {
 #include <readline/history.h>
 }
 
+#include <algorithm>
 #include <unordered_set>
 
 //------------------------------------------------------------------------------
