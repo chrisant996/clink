@@ -11,6 +11,7 @@
 #include <core/settings.h>
 #include <core/str.h>
 #include <process/process.h>
+#include <ntverp.h> // for VER_PRODUCTMAJORVERSION to deduce SDK version
 
 //------------------------------------------------------------------------------
 extern setting_bool g_glob_hidden;
