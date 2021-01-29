@@ -8,7 +8,6 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 - An unbound multi-char key sequence is fully ignored if it's the first key sequence in a chord.  But if a chord is already being resolved, then an unbound multi-char key sequence (such as Right Arrow or Escape or etc) inserts whatever part of the key sequence failed to resolve.  It should discard the full key sequence, just like when there's no chord being resolved yet.
 
 ## Investigate
-- Holding Ctrl+F eventually pops up the Find dialog!  How and why?  Can it be controlled, leveraged, and prevented?
 - Is autorun compatible with ConEmu?  If not, can it be made compatible?
 - Popup windows in Windows Terminal are the wrong width and in the wrong location.  Would be nice to fix, but is an acceptable limitation if not.
 
@@ -27,7 +26,6 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 ## Medium Priority
 - Add a hook function for inserting matches.
   - The insertion hook can avoid appending a space when inserting a flag/arg that ends in `:` or `=`.
-  - The insertion hook can deal with path normalisation, e.g. to clean up input like "\wbin\\\\cli" when using `complete` and `menu-complete`.
   - And address the sorting problem, and then the match_type stuff can be removed from Readline itself (though Chet may want its performance benefits).
   - And THEN individual matches can have arbitrary values associated -- color, append char, or any per-match data that's desired.
 - Complete "%ENVVAR%\*" by internally expanding ENVVAR for collecting matches, but not expanding it in the editing line.
@@ -57,13 +55,6 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
   - What to do about completion colors?
   - Make it owner draw and add text like "dir", "alias", etc?
   - Add stat chars when so configured?
-
-**Key Binding**
-- Try to make unbound keys like **Shift-Left** tell conhost that they haven't been handled, so conhost can do its fancy CUA marking.
-  - Mysteriously, holding down a bound key like **Ctrl+Up** or **Ctrl+A** was sometimes letting conhost periodically intercept some of the keypresses!  That shouldn't be possible, but maybe there's a way to deterministically cause that behavior?
-  - **Ctrl+M** to activate marking mode.
-  - Shouldn't be possible, but at one point **Ctrl+A** was sometimes able to get interpreted as Select All, and **Shift+Up** was sometimes able to get interpreted as Select Line Up.  That had to have been a bug in how clink was managing SetConsoleMode, but maybe there's a way to exploit that for good?
-    - Maybe hook some API and call original ReadConsoleW, and feed it input somehow to trick the console host into doing its thing?
 
 **Prompt Filtering**
 - Async command prompt updating as a way to solve the delay in git repos.

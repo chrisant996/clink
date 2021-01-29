@@ -278,6 +278,7 @@ Name | Description
 `clink-expand-doskey-alias`|Expand the doskey alias (if any) at the beginning of the line.
 `clink-expand-env-vars`|Expand the environment variable (e.g. `%FOOBAR%`) at the cursor.
 `clink-insert-dot-dot`|Inserts `..\` at the cursor.
+`clink-mark-conhost`|Activates the "Mark" mode when running in a standard console window (hosted by the OS conhost).  This is equivalent to picking "Mark" from the console window's system menu.
 `clink-paste`|Paste the clipboard at the cursor.
 `clink-popup-complete`|Show a popup window that lists the available completions.
 `clink-popup-directories`|Show a popup window of recent current working directories.  In the popup, use <kbd>Enter</kbd> to `cd /d` to the highlighted directory.  See below more about the popup window.

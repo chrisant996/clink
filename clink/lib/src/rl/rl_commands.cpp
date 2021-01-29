@@ -25,6 +25,20 @@ extern "C" {
 
 
 //------------------------------------------------------------------------------
+// Internal ConHost system menu command IDs.
+#define ID_CONSOLE_COPY         0xFFF0
+#define ID_CONSOLE_PASTE        0xFFF1
+#define ID_CONSOLE_MARK         0xFFF2
+#define ID_CONSOLE_SCROLL       0xFFF3
+#define ID_CONSOLE_FIND         0xFFF4
+#define ID_CONSOLE_SELECTALL    0xFFF5
+#define ID_CONSOLE_EDIT         0xFFF6
+#define ID_CONSOLE_CONTROL      0xFFF7
+#define ID_CONSOLE_DEFAULTS     0xFFF8
+
+
+
+//------------------------------------------------------------------------------
 static setting_enum g_paste_crlf(
     "clink.paste_crlf",
     "Strips CR and LF chars on paste",
@@ -284,6 +298,31 @@ int clink_scroll_top(int count, int invoking_key)
 int clink_scroll_bottom(int count, int invoking_key)
 {
     ScrollConsoleRelative(GetStdHandle(STD_OUTPUT_HANDLE), 1, SCR_TOEND);
+    return 0;
+}
+
+//------------------------------------------------------------------------------
+int clink_mark_conhost(int count, int invoking_key)
+{
+    HWND hwndConsole = GetConsoleWindow();
+    if (!hwndConsole)
+    {
+        rl_ding();
+        return 0;
+    }
+
+    // Conhost's Mark command is asynchronous and saves/restores the cursor info
+    // and position.  So we need to trick the cursor into being visible, so that
+    // it gets restored as visible since that's the state Readline will be in
+    // after the Mark command finishes.
+    HANDLE handle = GetStdHandle(STD_OUTPUT_HANDLE);
+    CONSOLE_CURSOR_INFO info;
+    GetConsoleCursorInfo(handle, &info);
+    info.bVisible = true;
+    SetConsoleCursorInfo(handle, &info);
+
+    // Invoke conhost's Mark command via the system menu.
+    SendMessage(hwndConsole, WM_SYSCOMMAND, ID_CONSOLE_MARK, 0);
     return 0;
 }
 

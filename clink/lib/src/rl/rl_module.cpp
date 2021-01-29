@@ -1120,6 +1120,7 @@ rl_module::rl_module(const char* shell_name, terminal_in* input)
         rl_add_funmap_entry("clink-popup-complete", clink_popup_complete);
         rl_add_funmap_entry("clink-popup-history", clink_popup_history);
         rl_add_funmap_entry("clink-popup-directories", clink_popup_directories);
+        rl_add_funmap_entry("clink-mark-conhost", clink_mark_conhost);
 
         // Override some defaults.
         _rl_bell_preference = VISIBLE_BELL;     // Because audible is annoying.
