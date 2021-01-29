@@ -479,11 +479,24 @@ static char adjust_completion_word(char quote_char, int *found_quote, int *delim
         assert(s_matches->get_word_break_position() >= 0);
         if (s_matches->get_word_break_position() >= 0)
         {
+            int old_point = rl_point;
             rl_point = min(s_matches->get_word_break_position(), rl_end);
 
             const char* pqc = nullptr;
             if (rl_point > 0)
+            {
+                // Check if the preceding character is a quote.
                 pqc = strchr(rl_completer_quote_characters, rl_line_buffer[rl_point - 1]);
+                if (rl_point < old_point && !(pqc && *pqc))
+                {
+                    // If the preceding character is not a quote, but rl_point
+                    // got moved and it points at a quote, then advance rl_point
+                    // so that lua scripts don't have to do quote handling.
+                    pqc = strchr(rl_completer_quote_characters, rl_line_buffer[rl_point]);
+                    if (pqc && *pqc)
+                        rl_point++;
+                }
+            }
             if (pqc && *pqc)
             {
                 quote_char = *pqc;
