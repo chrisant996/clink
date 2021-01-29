@@ -38,8 +38,8 @@ goto testarg
 :nextarg
 shift
 :testarg
-if "%1" == "/x86" ( set __X86=1%&goto :nextarg )
-if "%1" == "/win32" ( set __X86=1%&goto :nextarg )
+if "%1" == "/x86" ( set __X86=1&goto :nextarg )
+if "%1" == "/win32" ( set __X86=1&goto :nextarg )
 if "%1" == "/x64" ( set __AMD64=1&goto :nextarg )
 if "%1" == "/amd64" ( set __AMD64=1&goto :nextarg )
 if "%1" == "/dbg" ( set __DEBUG=1&goto :nextarg )
