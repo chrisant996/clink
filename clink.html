@@ -3,7 +3,7 @@
 
 <!-- ----------------------------------------------------- -->
 <head>
-<title>Clink v1.1.22</title>
+<title>Clink v1.1.24</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Rambla:wght@400;700&family=Roboto&family=Fira+Mono&display=swap');
 html {
@@ -409,7 +409,7 @@ var hljs=function(){"use strict";function e(n){Object.freeze(n);var t="function"
         </td>
         <td style="text-align:right">
             <div id="header">
-                <div id="title">Clink v1.1.22</div>
+                <div id="title">Clink v1.1.24</div>
                 <div id="url">
                     <a href="http://github.com/chrisant996/clink">
                         http://github.com/chrisant996/clink
@@ -727,7 +727,7 @@ var hljs=function(){"use strict";function e(n){Object.freeze(n);var t="function"
 <tr>
 <td align="center"><code>terminal.emulation</code></td>
 <td align="center"><code>auto</code></td>
-<td>Clink can either emulate a virtual terminal and handle ANSI escape codes itself, or let the console host natively handle ANSI escape codes. <code>native</code> = pass output directly to the console host process, <code>emulate</code> = clink handles ANSI escape codes itself, <code>auto</code> = emulate except when running in ConEmu.</td>
+<td>Clink can either emulate a virtual terminal and handle ANSI escape codes itself, or let the console host natively handle ANSI escape codes. <code>native</code> = pass output directly to the console host process, <code>emulate</code> = clink handles ANSI escape codes itself, <code>auto</code> = emulate except when running in ConEmu, Windows Terminal, or Windows 10 new console.</td>
 </tr>
 <tr>
 <td align="center"><code>terminal.modify_other_keys</code></td>
@@ -1460,6 +1460,11 @@ end</code></pre>
 <pre style="border-radius:initial;border:initial"><code class="plaintext" style="background-color:black"><span style="color:#00ff00">Wed 12:54</span> <span style="color:#ffff00">c:\dir</span> <span style="color:#cccccc">HAPPY HUMP DAY!&nbsp;_</span>
 </code></pre>
 
+<p/>
+
+<blockquote>
+<p><strong>Note:</strong>  Readline needs to be told which characters in the prompt are unprintable or invisible.  Clink automatically detects most ANSI escape codes and the BEL character (^G, audible bell) and surrounds them with <code>\001</code> (^A) and <code>\002</code> (^B) characters.  For any other unprintable characters, the <code>\001</code> and <code>\002</code> characters need to be added manually.  Otherwise Readline misinterprets the length of the prompt and can display the prompt and input line incorrectly in some cases (especially if the input line wraps onto a second line).</p>
+</blockquote>
 <h1 id="miscellaneous">Miscellaneous</h1>
 <a name="keybindings"/>
 
@@ -2051,7 +2056,7 @@ function foo_prompt:filter(prompt)
 &nbsp; return "FOO "..prompt.." >>" --,false  -- Adding ,false stops further filtering.
 end</code></pre></div></div><hr/>
 </div><div class="group"><h5 class="group_name"><a name="console">console</a></h5><div class="function"><div class="header"> <div class="name"><a name="console.findnextline">console.findnextline</a></div> <div class="signature">( <span class="arg_name">starting_line</span>:integer, [<span class="arg_name">text</span>:string], [<span class="arg_name">mode</span>:string], [<span class="arg_name">attr</span>:integer], [<span class="arg_name">attrs</span>:table of integers], [<span class="arg_name">mask</span>:string] ) : integer</div></div><div class="body"><p class="desc">Searches downwards (forwards) for a line containing the specified text and/or attributes, starting at line <span class="arg">starting_line</span>. The matching line number is returned, or 0 if no matching line is found.</p><p class="desc"> This behaves the same as <a href="#console.findprevline">console.findprevline()</a> except that it searches in the opposite direction.</p></div></div><hr/>
-<div class="function"><div class="header"> <div class="name"><a name="console.findprevline">console.findprevline</a></div> <div class="signature">( <span class="arg_name">starting_line</span>:integer, [<span class="arg_name">text</span>:string], [<span class="arg_name">mode</span>:string], [<span class="arg_name">attr</span>:integer], [<span class="arg_name">attrs</span>:table of integers], [<span class="arg_name">mask</span>:string] ) : integer</div></div><div class="body"><p class="desc">Searches upwards (backwards) for a line containing the specified text and/or attributes, starting at line <span class="arg">starting_line</span>.  The matching line number is returned, or 0 if no matching line is found, or -1 if an invalid regular expression is provided.</p><p class="desc"> You can search for text, attributes, or both.  Include the <span class="arg">text</span> argument to search for text, and include either the <span class="arg">attr</span> or <span class="arg">attrs</span> argument to search for attributes.  If both text and attribute(s) are passed, then the attribute(s) must be found within the found text.  If only attribute(s) are passed, then they must be found anywhere in the line.  See <a href="#console.linehascolor">console.linehascolor()</a> for more information about the color codes.</p><p class="desc"> The <span class="arg">mode</span> argument selects how the search behaves. To use a regular expression, pass "regex".  To use a case insensitive search, pass "icase".  These can be combined by separating them with a comma.  The regular expression syntax is the ECMAScript syntax described <a href="https://docs.microsoft.com/en-us/cpp/standard-library/regular-expressions-cpp">here</a>.</p><p class="desc"> Any trailing whitespace is ignored when searching.  This especially affects the <code>$</code> (end of line) regex operator.</p><p class="desc"> <span class="arg">mask</span> is optional and can be "fore" or "back" to only match foreground or background colors, respectively.</p><p class="desc"> Note that although most of the arguments are optional, the order of provided arguments is important.</p><p class="desc"> The following example provides a pair of <code>find_prev_colored_line</code> and <code>find_next_colored_line</code> functions.  The functions can be bound to keys via the <code>luafunc:</code> macro syntax in a .inputrc file. They scroll the screen buffer to the previous or next line that contains "warn" or "error" colored red or yellow.</p><pre class="language-lua"><code>local was_top
+<div class="function"><div class="header"> <div class="name"><a name="console.findprevline">console.findprevline</a></div> <div class="signature">( <span class="arg_name">starting_line</span>:integer, [<span class="arg_name">text</span>:string], [<span class="arg_name">mode</span>:string], [<span class="arg_name">attr</span>:integer], [<span class="arg_name">attrs</span>:table of integers], [<span class="arg_name">mask</span>:string] ) : integer</div></div><div class="body"><p class="desc">Searches upwards (backwards) for a line containing the specified text and/or attributes, starting at line <span class="arg">starting_line</span>.  The matching line number is returned, or 0 if no matching line is found, or -1 if an invalid regular expression is provided.</p><p class="desc"> You can search for text, attributes, or both.  Include the <span class="arg">text</span> argument to search for text, and include either the <span class="arg">attr</span> or <span class="arg">attrs</span> argument to search for attributes.  If both text and attribute(s) are passed, then the attribute(s) must be found within the found text.  If only attribute(s) are passed, then they must be found anywhere in the line.  See <a href="#console.linehascolor">console.linehascolor()</a> for more information about the color codes.</p><p class="desc"> The <span class="arg">mode</span> argument selects how the search behaves. To use a regular expression, pass "regex".  To use a case insensitive search, pass "icase".  These can be combined by separating them with a comma.  The regular expression syntax is the ECMAScript syntax described <a href="https://docs.microsoft.com/en-us/cpp/standard-library/regular-expressions-cpp">here</a>.</p><p class="desc"> Any trailing whitespace is ignored when searching.  This especially affects the <code>$</code> (end of line) regex operator.</p><p class="desc"> <span class="arg">mask</span> is optional and can be "fore" or "back" to only match foreground or background colors, respectively.</p><p class="desc"> <strong>Note:</strong> Although most of the arguments are optional, the order of provided arguments is important.</p><p class="desc"> The following example provides a pair of <code>find_prev_colored_line</code> and <code>find_next_colored_line</code> functions.  The functions can be bound to keys via the <code>luafunc:</code> macro syntax in a .inputrc file. They scroll the screen buffer to the previous or next line that contains "warn" or "error" colored red or yellow.</p><pre class="language-lua"><code>local was_top
 local found_index
 
 local function reset_found()
@@ -2142,13 +2147,13 @@ end</code></pre></div></div><hr/>
 -- where commands are separated by & symbols.
 line:getcommandoffset() == 4</code></pre></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="line:getcursor">line:getcursor</a></div> <div class="signature">() : integer</div></div><div class="body"><p class="desc">Returns the position of the cursor.</p></div></div><hr/>
-<div class="function"><div class="header"> <div class="name"><a name="line:getendword">line:getendword</a></div> <div class="signature">() : string</div></div><div class="body"><p class="desc">Returns the last word of the line. This is the word that matches are being generated for.</p><pre class="language-lua"><code>line:getword(line:getwordcount()) == line:getendword()</code></pre></div></div><hr/>
+<div class="function"><div class="header"> <div class="name"><a name="line:getendword">line:getendword</a></div> <div class="signature">() : string</div></div><div class="body"><p class="desc">Returns the last word of the line. This is the word that matches are being generated for.</p><p class="desc"> Note:  The returned word omits any quotes.  This helps generators naturally complete <code>"foo\"ba</code> to <code>"foo\bar"</code>.  The raw word including quotes can be obtained using the <code>offset</code> and <code>length</code> fields from <a href="#line:getwordinfo">line:getwordinfo()</a> to extract a substring from the line returned by <a href="#line:getline">line:getline()</a>.</p><pre class="language-lua"><code>line:getword(line:getwordcount()) == line:getendword()</code></pre></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="line:getline">line:getline</a></div> <div class="signature">() : string</div></div><div class="body"><p class="desc">Returns the current line in its entirety.</p></div></div><hr/>
-<div class="function"><div class="header"> <div class="name"><a name="line:getword">line:getword</a></div> <div class="signature">( <span class="arg_name">index</span>:integer ) : string</div></div><div class="body"><p class="desc">Returns the word of the line at <span class="arg">index</span>.</p></div></div><hr/>
+<div class="function"><div class="header"> <div class="name"><a name="line:getword">line:getword</a></div> <div class="signature">( <span class="arg_name">index</span>:integer ) : string</div></div><div class="body"><p class="desc">Returns the word of the line at <span class="arg">index</span>.</p><p class="desc"> Note:  The returned word omits any quotes.  This helps generators naturally complete <code>"foo\"ba</code> to <code>"foo\bar"</code>.  The raw word including quotes can be obtained using the <code>offset</code> and <code>length</code> fields from <a href="#line:getwordinfo">line:getwordinfo()</a> to extract a substring from the line returned by <a href="#line:getline">line:getline()</a>.</p></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="line:getwordcount">line:getwordcount</a></div> <div class="signature">() : integer</div></div><div class="body"><p class="desc">Returns the number of words in the current line.</p></div></div><hr/>
-<div class="function"><div class="header"> <div class="name"><a name="line:getwordinfo">line:getwordinfo</a></div> <div class="signature">( <span class="arg_name">index</span>:integer ) : table</div></div><div class="body"><p class="desc">Returns a table of information about the Nth word in the line. The table returned has the following scheme:</p><pre class="language-lua"><code>{
+<div class="function"><div class="header"> <div class="name"><a name="line:getwordinfo">line:getwordinfo</a></div> <div class="signature">( <span class="arg_name">index</span>:integer ) : table</div></div><div class="body"><p class="desc">Returns a table of information about the Nth word in the line.</p><p class="desc"> Note:  The length refers to the substring in the line; it omits leading and trailing quotes, but <em><strong>includes</strong></em> embedded quotes. <a href="#line:getword">line:getword()</a> conveniently strips embedded quotes to help generators naturally complete <code>"foo\"ba</code> to <code>"foo\bar"</code>.</p><p class="desc"> The table returned has the following scheme:</p><pre class="language-lua"><code>{
 &nbsp; offset,  -- [integer] offset where the word starts in the line:getline() string.
-&nbsp; length,  -- [integer] length of the word.
+&nbsp; length,  -- [integer] length of the word (includes embedded quotes).
 &nbsp; quoted,  -- [boolean] indicates whether the word is quoted.
 &nbsp; delim,   -- [string] the delimiter character, or an empty string.
 &nbsp; alias,   -- [boolean | nil] true if the word is a doskey alias, otherwise nil.
@@ -2185,28 +2190,46 @@ line:getcommandoffset() == 4</code></pre></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="os.rmdir">os.rmdir</a></div> <div class="signature">( <span class="arg_name">path</span>:string ) : boolean</div></div><div class="body"><p class="desc">Removes the directory <span class="arg">path</span> and returns whether it was successful.</p></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="os.setenv">os.setenv</a></div> <div class="signature">( <span class="arg_name">name</span>:string, <span class="arg_name">value</span>:string ) : boolean</div></div><div class="body"><p class="desc">Sets the <span class="arg">name</span> environment variable to <span class="arg">value</span> and returns whether it was successful.</p></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="os.unlink">os.unlink</a></div> <div class="signature">( <span class="arg_name">path</span>:string ) : boolean</div></div><div class="body"><p class="desc">Deletes the file <span class="arg">path</span> and returns whether it was successful.</p></div></div><hr/>
-</div><div class="group"><h5 class="group_name"><a name="path">path</a></h5><div class="function"><div class="header"> <div class="name"><a name="path.getbasename">path.getbasename</a></div> <div class="signature">( <span class="arg_name">path</span>:string ) : string</div></div><div class="body"><p class="desc"></p><pre class="language-lua"><code>path.getbasename("/foo/bar.ext") -- returns "bar"</code></pre></div></div><hr/>
-<div class="function"><div class="header"> <div class="name"><a name="path.getdirectory">path.getdirectory</a></div> <div class="signature">( <span class="arg_name">path</span>:string ) : nil or string</div></div><div class="body"><p class="desc">This is similar to <a href="#path.toparent">path.toparent()</a> but can behave differently when the input path ends with a path separator.  This is the recommended API for parsing a path into its component pieces, but is not recommended for walking up through parent directories.</p><pre class="language-lua"><code>path.getdirectory("foo")             -- returns nil
-path.getdirectory("\foo")            -- returns "\"
-path.getdirectory("c:foo")           -- returns "c:"
-path.getdirectory([[c:\]])           -- returns "c:\"
-path.getdirectory("c:\foo")          -- returns "c:\"
-path.getdirectory("c:\foo\bar")      -- returns "c:\foo"
-path.getdirectory("\\foo\bar")       -- returns "\\foo\bar"
-path.getdirectory("\\foo\bar\dir")   -- returns "\\foo\bar"
+</div><div class="group"><h5 class="group_name"><a name="path">path</a></h5><div class="function"><div class="header"> <div class="name"><a name="path.getbasename">path.getbasename</a></div> <div class="signature">( <span class="arg_name">path</span>:string ) : string</div></div><div class="body"><p class="desc"></p><pre class="language-lua"><code>path.getbasename("/foo/bar.ext")    -- returns "bar"
+path.getbasename("")                -- returns ""
+path.getbasename(nil)               -- returns nil</code></pre></div></div><hr/>
+<div class="function"><div class="header"> <div class="name"><a name="path.getdirectory">path.getdirectory</a></div> <div class="signature">( <span class="arg_name">path</span>:string ) : nil or string</div></div><div class="body"><p class="desc">This is similar to <a href="#path.toparent">path.toparent()</a> but can behave differently when the input path ends with a path separator.  This is the recommended API for parsing a path into its component pieces, but is not recommended for walking up through parent directories.</p><pre class="language-lua"><code>path.getdirectory("foo")                -- returns nil
+path.getdirectory("\foo")               -- returns "\"
+path.getdirectory("c:foo")              -- returns "c:"
+path.getdirectory([[c:\]])              -- returns "c:\"
+path.getdirectory("c:\foo")             -- returns "c:\"
+path.getdirectory("c:\foo\bar")         -- returns "c:\foo"
+path.getdirectory("\\foo\bar")          -- returns "\\foo\bar"
+path.getdirectory("\\foo\bar\dir")      -- returns "\\foo\bar"
+path.getdirectory("")                   -- returns nil
+path.getdirectory(nil)                  -- returns nil
 
 -- These split the path components differently than path.toparent().
-path.getdirectory([[c:\foo\bar\]])   -- returns "c:\foo\bar"
-path.getdirectory([[\\foo\bar\dir\]])-- returns "\\foo\bar\dir"</code></pre></div></div><hr/>
-<div class="function"><div class="header"> <div class="name"><a name="path.getdrive">path.getdrive</a></div> <div class="signature">( <span class="arg_name">path</span>:string ) : nil or string</div></div><div class="body"><p class="desc"></p><pre class="language-lua"><code>path.getdrive("e:/foo/bar") -- returns "e:"
-path.getdrive("foo/bar") -- returns nil</code></pre></div></div><hr/>
-<div class="function"><div class="header"> <div class="name"><a name="path.getextension">path.getextension</a></div> <div class="signature">( <span class="arg_name">path</span>:string ) : string</div></div><div class="body"><p class="desc"></p><pre class="language-lua"><code>path.getextension("bar.ext") -- returns ".ext"
-path.getextension("bar") -- returns ""</code></pre></div></div><hr/>
-<div class="function"><div class="header"> <div class="name"><a name="path.getname">path.getname</a></div> <div class="signature">( <span class="arg_name">path</span>:string ) : string</div></div><div class="body"><p class="desc"></p><pre class="language-lua"><code>path.getname("/foo/bar.ext") -- returns "bar.ext"</code></pre></div></div><hr/>
-<div class="function"><div class="header"> <div class="name"><a name="path.isexecext">path.isexecext</a></div> <div class="signature">( <span class="arg_name">path</span>:string ) : boolean</div></div><div class="body"><p class="desc">Examines the extension of the path name.  Returns true if the extension is listed in %PATHEXT%.  This caches the extensions in a map so that it's more efficient than getting and parsing %PATHEXT% each time.</p><pre class="language-lua"><code>path.isexecext("program.exe") -- returns true
-path.isexecext("file.doc") -- returns false</code></pre></div></div><hr/>
-<div class="function"><div class="header"> <div class="name"><a name="path.join">path.join</a></div> <div class="signature">( <span class="arg_name">left</span>:string, <span class="arg_name">right</span>:string ) : string</div></div><div class="body"><p class="desc"></p><pre class="language-lua"><code>path.join("/foo", "bar") -- returns "/foo\bar"</code></pre></div></div><hr/>
-<div class="function"><div class="header"> <div class="name"><a name="path.normalise">path.normalise</a></div> <div class="signature">( <span class="arg_name">path</span>:string, [<span class="arg_name">separator</span>:string] ) : string</div></div><div class="body"><p class="desc">Cleans <span class="arg">path</span> by normalising separators and removing "." and ".." elements.  If <span class="arg">separator</span> is provided it is used to delimit path elements, otherwise a system-specific delimiter is used.</p><pre class="language-lua"><code>path.normalise("a////b/\\/c/") -- returns "a\b\c\"</code></pre></div></div><hr/>
+path.getdirectory([[c:\foo\bar\]])      -- returns "c:\foo\bar"
+path.getdirectory([[\\foo\bar\dir\]])   -- returns "\\foo\bar\dir"</code></pre></div></div><hr/>
+<div class="function"><div class="header"> <div class="name"><a name="path.getdrive">path.getdrive</a></div> <div class="signature">( <span class="arg_name">path</span>:string ) : nil or string</div></div><div class="body"><p class="desc"></p><pre class="language-lua"><code>path.getdrive("e:/foo/bar")     -- returns "e:"
+path.getdrive("foo/bar")        -- returns nil
+path.getdrive("")               -- returns nil
+path.getdrive(nil)              -- returns nil</code></pre></div></div><hr/>
+<div class="function"><div class="header"> <div class="name"><a name="path.getextension">path.getextension</a></div> <div class="signature">( <span class="arg_name">path</span>:string ) : string</div></div><div class="body"><p class="desc"></p><pre class="language-lua"><code>path.getextension("bar.ext")    -- returns ".ext"
+path.getextension("bar")        -- returns ""
+path.getextension("")           -- returns ""
+path.getextension(nil)          -- returns nil</code></pre></div></div><hr/>
+<div class="function"><div class="header"> <div class="name"><a name="path.getname">path.getname</a></div> <div class="signature">( <span class="arg_name">path</span>:string ) : string</div></div><div class="body"><p class="desc"></p><pre class="language-lua"><code>path.getname("/foo/bar.ext")    -- returns "bar.ext"
+path.getname("")                -- returns ""
+path.getname(nil)               -- returns nil</code></pre></div></div><hr/>
+<div class="function"><div class="header"> <div class="name"><a name="path.isexecext">path.isexecext</a></div> <div class="signature">( <span class="arg_name">path</span>:string ) : boolean</div></div><div class="body"><p class="desc">Examines the extension of the path name.  Returns true if the extension is listed in %PATHEXT%.  This caches the extensions in a map so that it's more efficient than getting and parsing %PATHEXT% each time.</p><pre class="language-lua"><code>path.isexecext("program.exe")   -- returns true
+path.isexecext("file.doc")      -- returns false
+path.isexecext("")              -- returns false
+path.isexecext(nil)             -- returns nil</code></pre></div></div><hr/>
+<div class="function"><div class="header"> <div class="name"><a name="path.join">path.join</a></div> <div class="signature">( <span class="arg_name">left</span>:string, <span class="arg_name">right</span>:string ) : string</div></div><div class="body"><p class="desc"></p><pre class="language-lua"><code>path.join("/foo", "bar")    -- returns "/foo\bar"
+path.join("", "bar")        -- returns "bar"
+path.join("/foo", "")       -- returns "/foo"
+path.join(nil, "bar")       -- returns nil
+path.join("/foo", nil)      -- returns nil</code></pre></div></div><hr/>
+<div class="function"><div class="header"> <div class="name"><a name="path.normalise">path.normalise</a></div> <div class="signature">( <span class="arg_name">path</span>:string, [<span class="arg_name">separator</span>:string] ) : string</div></div><div class="body"><p class="desc">Cleans <span class="arg">path</span> by normalising separators and removing "." and ".." elements.  If <span class="arg">separator</span> is provided it is used to delimit path elements, otherwise a system-specific delimiter is used.</p><pre class="language-lua"><code>path.normalise("a////b/\\/c/")  -- returns "a\b\c\"
+path.normalise("")              -- returns ""
+path.normalise(nil)             -- returns nil</code></pre></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="path.toparent">path.toparent</a></div> <div class="signature">( <span class="arg_name">path</span>:string ) : parent:string, child:string</div></div><div class="body"><p class="desc">Splits the last path component from <span class="arg">path</span>, if possible. Returns the result and the component that was split, if any.</p><p class="desc"> This is similar to <a href="#path.getdirectory">path.getdirectory()</a> but can behave differently when the input path ends with a path separator.  This is the recommended API for walking up through parent directories.</p><pre class="language-lua"><code>local parent,child
 parent,child = path.toparent("foo")             -- returns "", "foo"
 parent,child = path.toparent("\foo")            -- returns "\", "foo"
@@ -2216,6 +2239,8 @@ parent,child = path.toparent("c:\foo")          -- returns "c:\", "foo"
 parent,child = path.toparent("c:\foo\bar")      -- returns "c:\foo", "bar"
 parent,child = path.toparent("\\foo\bar")       -- returns "\\foo\bar", ""
 parent,child = path.toparent("\\foo\bar\dir")   -- returns "\\foo\bar", "dir"
+parent,child = path.toparent("")                -- returns "", ""
+parent,child = path.toparent(nil)               -- returns nil
 
 -- These split the path components differently than path.getdirectory().
 parent,child = path.toparent([[c:\foo\bar\]])   -- returns "c:\foo", "bar"
@@ -2285,11 +2310,31 @@ settings.add("color.mymno", "bright magenta", "Color setting")</code></pre></div
         <div class="section" id="changes">
 <h1 id="changes">Changes</h1>
 <h2 id="releases-from-chrisant996clink-fork">Releases from <a href="https://github.com/chrisant996/clink">chrisant996/clink</a> fork</h2>
+<h3 id="v1124">v1.1.24</h3>
+<ul>
+<li><code>auto</code> for <code>terminal.emulation</code> now uses native VT support on Windows 10 build 15063 and higher, unless the HKCU\Console\ForceV2 regkey is 0.</li>
+<li>Special quote handling now enables <code>&quot;dir\&quot;fi</code> to complete to <code>&quot;dir\file&quot;</code>.  CMD simply strips quotes during completion, and now Clink behaves similarly.</li>
+<li><strong>Breaking Change:</strong> <code>line:getword()</code> and <code>line:getendword()</code> now strip quotes from the word.  This should generally automagically make existing match generators work even with embedded quotes, but there&#39;s a chance that some match generator might need to be updated.  This seems like a reasonable compromise, given the general benefit purchased by this breaking change.</li>
+<li><code>os:globdirs()</code> and <code>os:globfile()</code> strip quotes from the <span class="arg">globpattern</span> in order to behave more like CMD.  Embedded quotes are nonsensical and the intended interpretation is clear, so the APIs now help out with that.</li>
+<li>Fixed <a href="https://github.com/chrisant996/clink/issues/66">#66</a>; crash when injecting into 32 bit cmd.</li>
+<li>Fixed <a href="https://github.com/chrisant996/clink/issues/64">#64</a>; wrong cursor position when PROMPT contains BEL character.</li>
+<li>Fixed <a href="https://github.com/chrisant996/clink/issues/62">#62</a>; argmatchers should color <code>-x:&quot;foo&quot;</code> as a flag if <code>-x:</code> is a flag.</li>
+<li>Fixed <a href="https://github.com/chrisant996/clink/issues/61">#61</a>; argmatchers should not handle completion for text immediately following <code>-flag:</code>.  Instead it always uses file completion.  A custom generator can be used to override that behavior.</li>
+<li>Fixed <a href="https://github.com/chrisant996/clink/issues/60">#60</a>; completion fails with multiple slashes.</li>
+<li>Fixed completion in some circumstances.  Readline and Clink didn&#39;t always agree on where the word breaks were; now Clink always tells Readline where the word breaks are (so that completion, input colorization, and lua scripts can all work properly and consistently).</li>
+<li>Fixed 256 color ANSI codes.</li>
+</ul>
+<h3 id="v1123">v1.1.23</h3>
+<ul>
+<li>Fixed <a href="https://github.com/chrisant996/clink/issues/57">#57</a>; slashes not normalized in some cases.</li>
+<li>Fixed <a href="https://github.com/chrisant996/clink/issues/45">#45</a>; interaction between <code>history.dupe_mode</code>=<code>erase_prev</code> and <code>history.shared</code>=<code>false</code>.</li>
+<li>Fixed <code>menu-complete-wraparound</code> when off and there&#39;s only 1 match.</li>
+</ul>
 <h3 id="v1122">v1.1.22</h3>
 <ul>
 <li>Added <code>menu-complete-wraparound</code> (on by default) that controls whether completion commands wrap around when cycling past an end (affects popup windows as well).</li>
 <li>Fixed match completion getting stuck (regression introduced in v1.1.19).</li>
-<li>Fixed active mark region so it gets deactivated appropriately (it wasn&#39;t hooked up fully for Readline&#39;s callback mode, which is how Clink uses it).</li>
+<li>Fixed active mark region so it gets deactivated appropriately (it wasn&#39;t hooked up fully for Readline&#39;s callback mode, which is the mode Clink uses).</li>
 <li>Fixed <code>clink-show-help</code> (<kbd>Alt</kbd>+<kbd>H</kbd>) so it&#39;s able to list <code>C-@</code> bindings.</li>
 <li>Fixed inconsistent mark color.</li>
 </ul>
@@ -2317,30 +2362,30 @@ settings.add("color.mymno", "bright magenta", "Color setting")</code></pre></div
 <h3 id="v1119">v1.1.19</h3>
 <ul>
 <li>Improved responsiveness while typing:  matches are collected only on demand, instead of always while typing.  This makes it possible to always support match completion for UNC paths.</li>
-<li>Fixed <a href="https://github.com/chrisant996/clink/issues/50">#50</a> <kbd>Alt</kbd>+<kbd>H</kbd> could warn about likely mistakes in key bindings.</li>
+<li>Fixed <a href="https://github.com/chrisant996/clink/issues/50">#50</a>; <kbd>Alt</kbd>+<kbd>H</kbd> could warn about likely mistakes in key bindings.</li>
 </ul>
 <h3 id="v1118">v1.1.18</h3>
 <ul>
 <li>The input text now has context sensitive coloring based on the argmatchers. It&#39;s on by default and can be turned off with <code>clink set clink.colorize_input false</code>.</li>
 <li>Updated the Readline library to 8.1.</li>
 <li>Terminal emulation now supports the audible bell character.</li>
-<li>Fixed <a href="https://github.com/chrisant996/clink/issues/48">#48</a> <code>menu-complete</code> gets stuck.</li>
-<li>Fixed <a href="https://github.com/chrisant996/clink/issues/47">#47</a> <kbd>Alt</kbd>+<kbd>D</kbd> erases history instead of word.</li>
-<li>Fixed <a href="https://github.com/chrisant996/clink/issues/46">#46</a> typing <code>..</code> in subdirectory of root doesn&#39;t work.</li>
+<li>Fixed <a href="https://github.com/chrisant996/clink/issues/48">#48</a>; <code>menu-complete</code> gets stuck.</li>
+<li>Fixed <a href="https://github.com/chrisant996/clink/issues/47">#47</a>; <kbd>Alt</kbd>+<kbd>D</kbd> erases history instead of word.</li>
+<li>Fixed <a href="https://github.com/chrisant996/clink/issues/46">#46</a>; typing <code>..</code> in subdirectory of root doesn&#39;t work.</li>
 <li>Fixed restoring color after pager when showing help.</li>
 <li>Fixed <code>clink set</code> match completions for color settings.</li>
 </ul>
 <h3 id="v1117">v1.1.17</h3>
 <ul>
 <li>Added <code>os.getbatterystatus()</code> function that gets battery status information much faster than launching <code>wmic</code>.</li>
-<li>Fixed <a href="https://github.com/chrisant996/clink/issues/44">#44</a> Path completion doesn&#39;t work with <code>cd /d</code>.</li>
+<li>Fixed <a href="https://github.com/chrisant996/clink/issues/44">#44</a>; Path completion doesn&#39;t work with <code>cd /d</code>.</li>
 <li>Fixed loading scripts to ignore loading clink.lua, so that loading scripts behaves like Clink v0.4.9.</li>
 </ul>
 <h3 id="v1116">v1.1.16</h3>
 <ul>
 <li>Added <code>match.ignore_accent</code> setting (enabled by default) that ignores Latin alphabet diacriticals when completing matches (e.g. <code>ä</code> matches <code>a</code>, <code>ı</code> matches <code>i</code>, <code>ł</code> matches <code>l</code>, etc).</li>
-<li>Fixed <a href="https://github.com/chrisant996/clink/issues/42">#42</a> history lines are split on special characters.</li>
-<li>Fixed <a href="https://github.com/chrisant996/clink/issues/41">#41</a> Enable custom doskey handling of <code>..</code> and <code>-</code>.</li>
+<li>Fixed <a href="https://github.com/chrisant996/clink/issues/42">#42</a>; history lines are split on special characters.</li>
+<li>Fixed <a href="https://github.com/chrisant996/clink/issues/41">#41</a>; Enable custom doskey handling of <code>..</code> and <code>-</code>.</li>
 <li>Fixed Readline bug inserting dir matches; <code>\win_  foo</code> (cursor at <code>_</code>) would become <code>\Windows\\_  foo</code>.</li>
 <li>Fixed the <code>quoted-insert</code> command to insert just <code>\x1b</code> when <kbd>ESC</kbd> is pressed.</li>
 </ul>
@@ -2368,7 +2413,7 @@ settings.add("color.mymno", "bright magenta", "Color setting")</code></pre></div
 <ul>
 <li>Added <code>clink.ondisplaymatches()</code> as a replacement for the deprecated <code>clink.match_display_filter</code>.  The new API is able to support popup list windows as well.</li>
 <li>Speculative possible fix for <a href="https://github.com/chrisant996/clink/issues/35">#35</a> Crash when clink on clink.bat.</li>
-<li>Fixed <a href="https://github.com/chrisant996/clink/issues/33">#33</a> Tab autocomplete, auto-quoting paths doesn&#39;t seem to work as in Clink 0.4.9.</li>
+<li>Fixed <a href="https://github.com/chrisant996/clink/issues/33">#33</a>; Tab autocomplete, auto-quoting paths doesn&#39;t seem to work as in Clink 0.4.9.</li>
 </ul>
 <h3 id="v1111">v1.1.11</h3>
 <ul>
@@ -2380,7 +2425,7 @@ settings.add("color.mymno", "bright magenta", "Color setting")</code></pre></div
 </ul>
 <h3 id="v1110">v1.1.10</h3>
 <ul>
-<li>Fixed <a href="https://github.com/chrisant996/clink/issues/32">#32</a> hooking <code>ReadConsoleW</code> on Windows 7.</li>
+<li>Fixed <a href="https://github.com/chrisant996/clink/issues/32">#32</a>; hooking <code>ReadConsoleW</code> on Windows 7.</li>
 </ul>
 <h3 id="v119">v1.1.9</h3>
 <ul>
@@ -2436,8 +2481,8 @@ settings.add("color.mymno", "bright magenta", "Color setting")</code></pre></div
 <li>Improved file extension logic (e.g. &quot;file.foo bar&quot; has no extension because of the space).</li>
 <li>Updated arg matcher for <code>clink</code> itself (was missing some flags).</li>
 <li>Changed <code>colour.hidden</code> setting to not be set by default.</li>
-<li>Fixed <a href="https://github.com/chrisant996/clink/issues/28">#28</a> Tab completion for &quot;~&quot; does not work.</li>
-<li>Fixed <a href="https://github.com/chrisant996/clink/issues/25">#25</a> Unicode surrogate pairs (and emoji) input isn&#39;t working -- Microsoft Terminal renders the text correctly, but ConEmu and the default conhost still don&#39;t (and that isn&#39;t a Clink issue).</li>
+<li>Fixed <a href="https://github.com/chrisant996/clink/issues/28">#28</a>; Tab completion for &quot;~&quot; does not work.</li>
+<li>Fixed <a href="https://github.com/chrisant996/clink/issues/25">#25</a>; Unicode surrogate pairs (and emoji) input isn&#39;t working -- Microsoft Terminal renders the text correctly, but ConEmu and the default conhost still don&#39;t (and that isn&#39;t a Clink issue).</li>
 <li>Fixed screen size bug in Readline on Windows.</li>
 <li>Fixed the backwards values in the <code>terminal.emulation</code> setting.</li>
 <li>Fixed <code>....</code> so it works properly again.</li>
