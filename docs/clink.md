@@ -277,6 +277,7 @@ Name | Description
 `clink-exit`|Replaces the current line with `exit` and executes it (exits the shell instance).
 `clink-expand-doskey-alias`|Expand the doskey alias (if any) at the beginning of the line.
 `clink-expand-env-vars`|Expand the environment variable (e.g. `%FOOBAR%`) at the cursor.
+`clink-find-conhost`|Activates the "Find" dialog when running in a standard console window (hosted by the OS conhost).  This is equivalent to picking "Find..." from the console window's system menu.
 `clink-insert-dot-dot`|Inserts `..\` at the cursor.
 `clink-mark-conhost`|Activates the "Mark" mode when running in a standard console window (hosted by the OS conhost).  This is equivalent to picking "Mark" from the console window's system menu.
 `clink-paste`|Paste the clipboard at the cursor.

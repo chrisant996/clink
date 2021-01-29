@@ -28,6 +28,7 @@ int     clink_scroll_top(int count, int invoking_key);
 int     clink_scroll_bottom(int count, int invoking_key);
 
 //------------------------------------------------------------------------------
+int     clink_find_conhost(int count, int invoking_key);
 int     clink_mark_conhost(int count, int invoking_key);
 
 //------------------------------------------------------------------------------

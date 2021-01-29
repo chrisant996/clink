@@ -302,6 +302,21 @@ int clink_scroll_bottom(int count, int invoking_key)
 }
 
 //------------------------------------------------------------------------------
+int clink_find_conhost(int count, int invoking_key)
+{
+    HWND hwndConsole = GetConsoleWindow();
+    if (!hwndConsole)
+    {
+        rl_ding();
+        return 0;
+    }
+
+    // Invoke conhost's Find command via the system menu.
+    SendMessage(hwndConsole, WM_SYSCOMMAND, ID_CONSOLE_FIND, 0);
+    return 0;
+}
+
+//------------------------------------------------------------------------------
 int clink_mark_conhost(int count, int invoking_key)
 {
     HWND hwndConsole = GetConsoleWindow();
