@@ -8,8 +8,12 @@
 - Special quote handling now enables `"dir\"fi` to complete to `"dir\file"`.  CMD simply strips quotes during completion, and now Clink behaves similarly.
 - <strong>Breaking Change:</strong> `line:getword()` and `line:getendword()` now strip quotes from the word.  This should generally automagically make existing match generators work even with embedded quotes, but there's a chance that some match generator might need to be updated.  This seems like a reasonable compromise, given the general benefit purchased by this breaking change.
 - `os:globdirs()` and `os:globfile()` strip quotes from the <span class="arg">globpattern</span> in order to behave more like CMD.  Embedded quotes are nonsensical and the intended interpretation is clear, so the APIs now help out with that.
+- Fixed [#66](https://github.com/chrisant996/clink/issues/66); crash when injecting into 32 bit cmd.
+- Fixed [#64](https://github.com/chrisant996/clink/issues/64); wrong cursor position when PROMPT contains BEL character.
+- Fixed [#62](https://github.com/chrisant996/clink/issues/62); argmatchers should color `-x:"foo"` as a flag if `-x:` is a flag.
+- Fixed [#61](https://github.com/chrisant996/clink/issues/61); argmatchers should not handle completion for text immediately following `-flag:`.  Instead it always uses file completion.  A custom generator can be used to override that behavior.
 - Fixed [#60](https://github.com/chrisant996/clink/issues/60); completion fails with multiple slashes.
-- Fixed completion in some circumstances.  Readline and Clink didn't always agree on where the word breaks were; now Clink always tell Readline where the word breaks are (which is important so that completion, input colorization, and lua scripts can all work properly and consistently).
+- Fixed completion in some circumstances.  Readline and Clink didn't always agree on where the word breaks were; now Clink always tells Readline where the word breaks are (so that completion, input colorization, and lua scripts can all work properly and consistently).
 - Fixed 256 color ANSI codes.
 
 ### v1.1.23

@@ -90,7 +90,7 @@ workspace("clink")
     staticruntime("on")
     rtti("off")
     symbols("on")
-    exceptionhandling("on")     -- for std::wregex
+    exceptionhandling("off")
     defines("HAVE_CONFIG_H")
     defines("HANDLE_MULTIBYTE")
     defines("CLINK_COMMIT="..clink_git_commit)
@@ -226,6 +226,7 @@ clink_lib("clink_terminal")
 
     includedirs("clink/terminal/src")
     configuration("vs*")
+        exceptionhandling("on")     -- for std::wregex
         pchheader("pch.h")
         pchsource("clink/terminal/src/pch.cpp")
 
@@ -244,6 +245,7 @@ clink_lib("clink_process")
         inlining("auto") -- required by the inject lambda in process::remote_call
         editAndContinue("off") -- required by the inject lambda in process::remote_call
         omitframepointer("off") -- required by the inject lambda in process::remote_call
+        exceptionhandling("off") -- required by the inject lambda in process::remote_call
         -- <SupportJustMyCode>false</SupportJustMyCode> -- required by the inject lambda in process::remote_call
 
 --------------------------------------------------------------------------------
