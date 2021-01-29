@@ -429,7 +429,30 @@ BOOL WINAPI host_cmd::read_console(
     if (prompt == nullptr || *prompt == L'\0')
         return ReadConsoleW(input, chars, max_chars, read_in, control);
 
-    host_cmd::get()->edit_line(prompt, chars, max_chars);
+    {
+        // Clear 'processed input' flag so key presses such as Ctrl-C and Ctrl-S
+        // aren't swallowed. We also want events about window size changes.
+        // Surround the entire edit_line() scope, otherwise any time Clink
+        // doesn't read input fast enough the OS can handle processed input
+        // while it's enabled between ReadConsoleInputW calls.
+        struct mode_scope {
+            HANDLE  handle;
+            DWORD   prev_mode;
+
+            mode_scope(HANDLE handle) : handle(handle)
+            {
+                GetConsoleMode(handle, &prev_mode);
+                SetConsoleMode(handle, ENABLE_WINDOW_INPUT);
+            }
+
+            ~mode_scope()
+            {
+                SetConsoleMode(handle, prev_mode);
+            }
+        } _ms(input);
+
+        host_cmd::get()->edit_line(prompt, chars, max_chars);
+    }
 
     // ReadConsole will also include the CRLF of the line that was input.
     size_t len = max_chars - wcslen(chars);

@@ -390,24 +390,6 @@ key_tester* win_terminal_in::set_key_tester(key_tester* keys)
 //------------------------------------------------------------------------------
 void win_terminal_in::read_console()
 {
-    // Clear 'processed input' flag so key presses such as Ctrl-C and Ctrl-S
-    // aren't swallowed. We also want events about window size changes.
-    struct mode_scope {
-        HANDLE  handle;
-        DWORD   prev_mode;
-
-        mode_scope(HANDLE handle) : handle(handle)
-        {
-            GetConsoleMode(handle, &prev_mode);
-            SetConsoleMode(handle, ENABLE_WINDOW_INPUT);
-        }
-
-        ~mode_scope()
-        {
-            SetConsoleMode(handle, prev_mode);
-        }
-    } _ms(m_stdin);
-
     // Hide the cursor unless we're accepting input so we don't have to see it
     // jump around as the screen's drawn.
     struct cursor_scope {
