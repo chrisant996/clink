@@ -6,7 +6,9 @@
 
 - Added `clink-find-conhost` command that, when in a standard console window, is equivalent to picking "Find..." from the system menu.
 - Added `clink-mark-conhost` command that, when in a standard console window, is equivalent to picking "Mark" from the system menu.
+- Fixed match display filtering to not exceed the screen width (regression introduced in v1.1.12).
 - Fixed stray input processing by conhost (holding <kbd>Ctrl</kbd+<kbd>A</kbd> or <kbd>Ctrl</kbd>+<kbd>F</kbd> or etc could accidentally trigger conhost's shortcut keys).
+- Fixed popup window location and size when using Windows Terminal.
 
 ### v1.1.24
 
@@ -14,7 +16,7 @@
 - Special quote handling now enables `"dir\"fi` to complete to `"dir\file"`.  CMD simply strips quotes during completion, and now Clink behaves similarly.
 - <strong>Breaking Change:</strong> `line:getword()` and `line:getendword()` now strip quotes from the word.  This should generally automagically make existing match generators work even with embedded quotes, but there's a chance that some match generator might need to be updated.  This seems like a reasonable compromise, given the general benefit purchased by this breaking change.
 - `os:globdirs()` and `os:globfile()` strip quotes from the <span class="arg">globpattern</span> in order to behave more like CMD.  Embedded quotes are nonsensical and the intended interpretation is clear, so the APIs now help out with that.
-- Fixed [#66](https://github.com/chrisant996/clink/issues/66); crash when injecting into 32 bit cmd.
+- Fixed [#66](https://github.com/chrisant996/clink/issues/66); crash when injecting into 32 bit cmd (regression introduced in v1.1.21).
 - Fixed [#64](https://github.com/chrisant996/clink/issues/64); wrong cursor position when PROMPT contains BEL character.
 - Fixed [#62](https://github.com/chrisant996/clink/issues/62); argmatchers should color `-x:"foo"` as a flag if `-x:` is a flag.
 - Fixed [#61](https://github.com/chrisant996/clink/issues/61); argmatchers should not handle completion for text immediately following `-flag:`.  Instead it always uses file completion.  A custom generator can be used to override that behavior.

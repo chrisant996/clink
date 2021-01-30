@@ -9,7 +9,6 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 
 ## Investigate
 - Is autorun compatible with ConEmu?  If not, can it be made compatible?
-- Popup windows in Windows Terminal are the wrong width and in the wrong location.  Would be nice to fix, but is an acceptable limitation if not.
 
 ## Cmder
 - Port Cmder to v1.x -- will require help from Cmder and/or ConEmu teams.  There are a lot of hard-coded expectations about Clink (web site address, terminal input mode, DLL names, VirtualAlloc patterns, and many other things).

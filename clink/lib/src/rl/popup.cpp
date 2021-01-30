@@ -8,6 +8,7 @@
 #include <core/str_iter.h>
 #include <core/path.h>
 #include <windows.h>
+#include <rpc.h> // for UuidCreateSequential
 #include <commctrl.h>
 #include <shlwapi.h>
 #include <VersionHelpers.h>
@@ -441,6 +442,51 @@ LDefault:
 }
 
 //------------------------------------------------------------------------------
+struct enum_console_child_windows_info
+{
+    LONG cyTitle;
+    LONG cChildren;
+};
+
+//------------------------------------------------------------------------------
+static BOOL CALLBACK enum_console_child_windows(HWND hwnd, LPARAM lParam)
+{
+    enum_console_child_windows_info* info = (enum_console_child_windows_info*)lParam;
+    WCHAR title[32];
+    if (GetClassNameW(hwnd, title, sizeof_array(title)))
+    {
+        if (wcscmp(title, L"DRAG_BAR_WINDOW_CLASS") == 0)
+        {
+            RECT rc;
+            GetWindowRect(hwnd, &rc);
+            info->cyTitle = rc.bottom - rc.top;
+            return false;
+        }
+    }
+    return (++info->cChildren < 8);
+}
+
+//------------------------------------------------------------------------------
+static LONG get_console_cell_height(HWND hwndConsole, RECT* prc, const CONSOLE_SCREEN_BUFFER_INFO* pcsbi)
+{
+    // Windows Terminal uses XAML, and its client window rect includes the title
+    // bar.  So try to compensate by looking for DRAG_BAR_WINDOW_CLASS.
+    enum_console_child_windows_info info = {};
+    EnumChildWindows(hwndConsole, enum_console_child_windows, LPARAM(&info));
+    prc->top += info.cyTitle;
+
+    // Calculate the cell height from the window surface height and the number
+    // of lines in the visible console display window.
+    LONG cLines = pcsbi->srWindow.Bottom + 1 - pcsbi->srWindow.Top;
+    LONG cyCell = (prc->bottom - prc->top) / cLines;
+
+    // Inset the window coordinates if there seems to be a margin.
+    LONG margin = ((prc->bottom - prc->top) - (cLines * cyCell)) / 2;
+    InflateRect(prc, -margin, -margin);
+    return cyCell;
+}
+
+//------------------------------------------------------------------------------
 static HWND create_popup_window(HWND hwndConsole, LPCSTR title, const CONSOLE_SCREEN_BUFFER_INFO* pcsbi)
 {
     // Register the window class if it hasn't been yet.
@@ -460,12 +506,18 @@ static HWND create_popup_window(HWND hwndConsole, LPCSTR title, const CONSOLE_SC
 
     // Compute position and size for the window.
     RECT rcPopup;
-    LONG cyCell;
     GetClientRect(hwndConsole, &rcPopup);
-    cyCell = (rcPopup.bottom - rcPopup.top) / (pcsbi->srWindow.Bottom - pcsbi->srWindow.Top);
     MapWindowPoints(hwndConsole, NULL, (LPPOINT)&rcPopup, 2);
-    rcPopup.top = rcPopup.bottom;
-    rcPopup.top -= cyCell * (pcsbi->srWindow.Bottom - pcsbi->dwCursorPosition.Y);
+    LONG cyCell = get_console_cell_height(hwndConsole, &rcPopup, pcsbi);
+    rcPopup.top += cyCell * (pcsbi->dwCursorPosition.Y + 1 - pcsbi->srWindow.Top);
+    if (rcPopup.top > rcPopup.bottom)
+    {
+        // Console APIs aren't rich enough to accurately identify the cell
+        // height (or the pixel coordinates of the console rendering surface).
+        // So in case the cell height math is inaccurate, clip the top so it
+        // doesn't go past the window bounds.
+        rcPopup.top = rcPopup.bottom;
+    }
     rcPopup.bottom = rcPopup.top + 200;
 
     // Create the window.
@@ -511,6 +563,75 @@ static HWND get_top_level_window(HWND hwnd)
     }
 
     return hwndTop;
+}
+
+//------------------------------------------------------------------------------
+static HWND get_console_window()
+{
+    // Use a multi-pass strategy.  If any pass acquires a non-zero window handle
+    // that is visible, then return it.  Otherwise continue to the next pass.
+    for (int pass = 1; true; pass++)
+    {
+        HWND hwndConsole = 0;
+        switch (pass)
+        {
+        case 1:
+            {
+                // The first pass uses GetConsoleWindow.
+                hwndConsole = GetConsoleWindow();
+            }
+            break;
+        case 2:
+            {
+                // Try the old FindWindow method.  Windows Terminal returns the
+                // ConPTY (pseudo console) window, which is a hidden window, so
+                // it isn't usable for our purposes.
+
+                // Save the console title.
+                WCHAR title[1024];
+                if (!GetConsoleTitleW(title, sizeof_array(title)))
+                    break;
+
+                // Set the console title to something unique.
+                static const WCHAR hex_digit[] = L"0123456789ABCDEF";
+                UUID uuid = {};
+                if (FAILED(UuidCreateSequential(&uuid)))
+                    break;
+                wstr<> unique;
+                const BYTE* uuid_bytes = LPBYTE(&uuid);
+                for (size_t index = 0; index < sizeof(uuid); index++)
+                {
+                    WCHAR byte[2];
+                    byte[0] = hex_digit[(uuid_bytes[index] & 0xf0) >> 4];
+                    byte[1] = hex_digit[(uuid_bytes[index] & 0x0f) >> 0];
+                    unique.concat(byte, 2);
+                }
+                unique.concat(L"_clink_findwindow");
+                if (!SetConsoleTitleW(unique.c_str()))
+                    break;
+
+                // Make sure the title was updated (yikes).
+                Sleep(50);
+
+                // Find the unique title.
+                hwndConsole = FindWindowW(nullptr, unique.c_str());
+
+                // Restore the saved console title.
+                SetConsoleTitleW(title);
+            }
+            break;
+        default:
+            // Give up.
+            return 0;
+        }
+
+        if (hwndConsole)
+        {
+            DWORD style = GetWindowLong(hwndConsole, GWL_STYLE);
+            if (style & WS_VISIBLE)
+                return hwndConsole;
+        }
+    }
 }
 
 //------------------------------------------------------------------------------
@@ -584,8 +705,13 @@ popup_list_result do_popup_list(
         return popup_list_result::error;
 
     // HMODULE and HINSTANCE are interchangeable, so get the HMODULE and cast.
+    // This is needed by create_popup_window().
     s_hinst = (HINSTANCE)GetModuleHandle(NULL);
-    HWND hwndConsole = GetConsoleWindow();
+
+    // Get the console window handle.
+    HWND hwndConsole = get_console_window();
+    if (!hwndConsole)
+        return popup_list_result::error;
 
     // Create popup list window.
     s_items = items;
