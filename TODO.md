@@ -7,9 +7,6 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 ## Issues
 - An unbound multi-char key sequence is fully ignored if it's the first key sequence in a chord.  But if a chord is already being resolved, then an unbound multi-char key sequence (such as Right Arrow or Escape or etc) inserts whatever part of the key sequence failed to resolve.  It should discard the full key sequence, just like when there's no chord being resolved yet.
 
-## Investigate
-- Is autorun compatible with ConEmu?  If not, can it be made compatible?
-
 ## Cmder
 - Port Cmder to v1.x -- will require help from Cmder and/or ConEmu teams.  There are a lot of hard-coded expectations about Clink (web site address, terminal input mode, DLL names, VirtualAlloc patterns, and many other things).
 
@@ -117,6 +114,7 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 - `git checkout `<kbd>Alt</kbd>+<kbd>=</kbd> in Cmder.
 
 ## Known Issues
+- ConEmu is not compatible with Clink being set up for AutoRun (`clink autorun`).
 - Perturbed PROMPT envvar is visible in child processes (e.g. piped shell in various file editors).
 - [#531](https://github.com/mridgers/clink/issues/531) AV detects a trojan on download _[This is likely because of the use of CreateRemoteThread and/or hooking OS APIs.  There might be a way to obfuscate the fact that clink uses those, but ultimately this is kind of an inherent problem.  Getting the binaries digitally signed might be the most effective solution, but that's financially expensive.]_
 - [FIXED] Readline's incremental display updates plus its reliance on ANSI escape codes for cursor positioning seem to make it not able to properly support editing within a line containing surrogate pairs.  I would say that it's a Readline issue, except that git-bash seems to be a bit better at it than Clink is, so maybe Clink isn't hosting Readline correctly.  FIXED: Readline relies on wchar_t being 32 bits, so some shimming was needed to accomplish that when compiling with Visual Studio.

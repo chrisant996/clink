@@ -276,6 +276,9 @@ int glob_impl(lua_State* state, bool dirs_only, bool back_compat=false)
 /// may also contain ",hidden" and ",readonly" depending on the attributes
 /// (making it usable as a match type for
 /// <a href="#builder:addmatch">builder:addmatch()</a>).
+///
+/// Note: any quotation marks (<code>"</code>) in
+/// <span class="arg">globpattern</span> are stripped.
 int glob_dirs(lua_State* state)
 {
     return glob_impl(state, true);
@@ -297,6 +300,9 @@ int glob_dirs(lua_State* state)
 /// may also contain ",hidden" and ",readonly" depending on the attributes
 /// (making it usable as a match type for
 /// <a href="#builder:addmatch">builder:addmatch()</a>).
+///
+/// Note: any quotation marks (<code>"</code>) in
+/// <span class="arg">globpattern</span> are stripped.
 int glob_files(lua_State* state)
 {
     return glob_impl(state, false);
@@ -309,8 +315,8 @@ int glob_files(lua_State* state)
 /// Returns the value of the named environment variable, or nil if it doesn't
 /// exist.
 ///
-/// Note that <code>os.getenv("HOME")</code> receives special treatment: if
-/// %HOME% is not set then it is synthesized from %HOMEDRIVE% and %HOMEPATH%, or
+/// Note: <code>os.getenv("HOME")</code> receives special treatment: if %HOME%
+/// is not set then it is synthesized from %HOMEDRIVE% and %HOMEPATH%, or
 /// from %USERPROFILE%.
 int get_env(lua_State* state)
 {
