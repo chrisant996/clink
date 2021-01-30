@@ -370,10 +370,10 @@ discard:
                 if (new_match->visible_display <= 0)
                     goto discard;
 
-                new_match->description = append_string_into_buffer(buffer, description);
                 if (description)
                 {
                     one_column = true;
+                    new_match->description = append_string_into_buffer(buffer, description);
                     new_match->visible_description = plainify(new_match->description, popup);
                 }
 
