@@ -763,6 +763,7 @@ static void pad_filename(int len, int pad_to_width)
 
     while (num_spaces > 0)
     {
+        //static const char spaces[] = "................................................";
         static const char spaces[] = "                                                ";
         const int spaces_bytes = sizeof(spaces) - sizeof(spaces[0]);
         append_tmpbuf_string(spaces, min(num_spaces, spaces_bytes));
@@ -855,15 +856,13 @@ static int display_match_list_internal(char **matches, int len, int max, bool on
         {
             if (l > len || matches[l] == 0)
                 break;
-            else
-            {
-                temp = printable_part(matches[l]);
-                printed_len = append_filename(temp, matches[l], sind);
 
-                if (j + 1 < limit)
-                    pad_filename(printed_len, max);
-            }
+            temp = printable_part(matches[l]);
+            printed_len = append_filename(temp, matches[l], sind);
             l += minor_stride;
+
+            if (j + 1 < limit && l <= len && matches[l])
+                pad_filename(printed_len, max);
         }
 #if defined(COLOR_SUPPORT)
         if (_rl_colored_stats)
@@ -900,6 +899,7 @@ static int display_filtered_match_list_internal(match_display_filter_entry **mat
     int major_stride, minor_stride;
     const char* filtered_color = "\x1b[m";
     int filtered_color_len = 3;
+    int show_descriptions = 0;
 
     // How many items of MAX length can we fit in the screen window?
     cols = complete_get_screenwidth();
@@ -914,7 +914,10 @@ static int display_filtered_match_list_internal(match_display_filter_entry **mat
         limit = 1;
 
     if (matches[0] && matches[0]->visible_display < 0)
+    {
         limit = 1;
+        show_descriptions = 1;
+    }
 
     // How many iterations of the printing loop?
     count = (len + (limit - 1)) / limit;
@@ -955,27 +958,26 @@ static int display_filtered_match_list_internal(match_display_filter_entry **mat
         {
             if (l > len || matches[l] == 0)
                 break;
-            else
+
+            const match_display_filter_entry* entry = matches[l];
+
+            printed_len = entry->visible_display;
+            append_default_color();
+            append_tmpbuf_string(filtered_color, filtered_color_len);
+            append_tmpbuf_string(entry->display, -1);
+
+            if (show_descriptions && matches[l]->description)
             {
-                const match_display_filter_entry* entry = matches[l];
-
-                printed_len = entry->visible_display;
-                append_default_color();
-                append_tmpbuf_string(filtered_color, filtered_color_len);
-                append_tmpbuf_string(entry->display, -1);
-
-                if (matches[l]->description)
-                {
-                    int fixed = abs(matches[0]->visible_display) + desc_sep_padding;
-                    pad_filename(printed_len, fixed);
-                    printed_len = fixed + entry->visible_description;
-                    append_tmpbuf_string(entry->description, -1);
-                }
-
-                if (j + 1 < limit)
-                    pad_filename(printed_len, max);
+                int fixed = abs(matches[0]->visible_display) + desc_sep_padding;
+                pad_filename(printed_len, fixed);
+                printed_len = fixed + entry->visible_description;
+                append_tmpbuf_string(entry->description, -1);
             }
+
             l += minor_stride;
+
+            if (j + 1 < limit && l <= len && matches[l])
+                pad_filename(printed_len, max);
         }
         append_default_color();
         append_color_indicator(C_CLR_TO_EOL);
