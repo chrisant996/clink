@@ -7,6 +7,7 @@
 - Added `clink-find-conhost` command that, when in a standard console window, is equivalent to picking "Find..." from the system menu.
 - Added `clink-mark-conhost` command that, when in a standard console window, is equivalent to picking "Mark" from the system menu.
 - Fixed match display filtering to not exceed the screen width (regression introduced in v1.1.12).
+- Fixed multi-key sequences; in some cases it could get confused about whether an input key is part of a multi-key binding sequence (regression introduced in v1.1.1-alpha).
 - Fixed stray input processing by conhost (holding <kbd>Ctrl</kbd+<kbd>A</kbd> or <kbd>Ctrl</kbd>+<kbd>F</kbd> or etc could accidentally trigger conhost's shortcut keys).
 - Fixed popup window location and size when using Windows Terminal.
 
