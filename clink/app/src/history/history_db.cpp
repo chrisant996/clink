@@ -18,6 +18,7 @@
 #include <new>
 #include <Windows.h>
 extern "C" {
+#include <readline/readline.h>
 #include <readline/history.h>
 }
 
@@ -1236,7 +1237,13 @@ bool history_db::add(const char* line)
     if (!line[0] || (g_ignore_space.get() && (line[0] == ' ' || line[0] == '\t')))
         return false;
 
+    // Ignore when operate-and-get-next was used, so that we don't rearrange history while it's
+    // trying to set the history context.
+    if (rl_has_saved_history())
+        return false;
+
     // Handle duplicates.
+    int mode = g_dupe_mode.get();
     switch (g_dupe_mode.get())
     {
     case 1:

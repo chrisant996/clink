@@ -5,6 +5,7 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 # RELEASE
 
 ## Issues
+- The way history_db integrates with Readline currently breaks `operate-and-get-next` because it completely throws out and rebuilds the history each time the edit prompt starts, thus losing any previously active history offset.  Ideally this needs to just carry over the existing history_db state when `operate-and-get-next` was used.  Maybe it could remember the saved offset and reuse that, but the demarcation point between master and session history makes it weird and requires extra compensating logic (any head-relative offset gets messed up as it offsets into session history, and any tail-relative offset gets messed up as it offsets into master history).
 
 ## Cmder
 - Port Cmder to v1.x -- will require help from Cmder and/or ConEmu teams.  There are a lot of hard-coded expectations about Clink (web site address, terminal input mode, DLL names, VirtualAlloc patterns, and many other things).

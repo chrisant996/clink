@@ -692,6 +692,12 @@ rl_operate_and_get_next (count, c)
 
 /* begin_clink_change */
 
+int
+rl_has_saved_history (void)
+{
+  return saved_history_logical_offset >= 0;
+}
+
 /* Add the current line to the history. */
 int
 rl_add_history (int count, int key)
