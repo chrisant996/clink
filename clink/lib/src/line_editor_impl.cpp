@@ -20,6 +20,8 @@
 extern "C" {
 #include <readline/readline.h>
 #include <readline/rldefs.h>
+extern Keymap _rl_dispatching_keymap;
+extern void _rl_keyseq_chain_dispose(void);
 }
 
 //------------------------------------------------------------------------------
@@ -344,11 +346,34 @@ void line_editor_impl::dispatch(int bind_group)
 }
 
 //------------------------------------------------------------------------------
+// Readline is designed for raw terminal input, and Windows is capable of richer
+// input analysis where we can avoid generating terminal input if there's no
+// binding that can handle it.
+//
+// WARNING:  Violates abstraction and encapsulation; neither rl_ding nor
+// _rl_keyseq_chain_dispose make sense in an "is bound" method.  But really this
+// is more like "accept_input_key" with the ability to reject an input key, and
+// rl_ding or _rl_keyseq_chain_dispose only happen on rejection.  So it's
+// functionally reasonable.  Really rl_module should be making the accept/reject
+// decision, not line_editor_impl.  But line_editor_impl always has an
+// rl_module, and rl_module is the only module that needs to accept/reject keys,
+// so it's just wasteful routing the question through other modules.
+//
+// The trouble is, Readline doesn't natively have a way to reset the dispatching
+// state other than rl_abort() or actually dispatching an invalid key sequence.
+// So we have to reverse engineer how Readline responds when a key sequence is
+// terminated by invalid input, and that seems to consist of clearing the
+// RL_STATE_MULTIKEY state and disposing of the key sequence chain.
 bool line_editor_impl::is_bound(const char* seq, int len)
 {
     if (!len)
     {
 LNope:
+        if (RL_ISSTATE (RL_STATE_MULTIKEY))
+        {
+            RL_UNSETSTATE(RL_STATE_MULTIKEY);
+            _rl_keyseq_chain_dispose();
+        }
         rl_ding();
         return false;
     }
@@ -376,12 +401,18 @@ LNope:
     if (len > 1 && (unsigned char)seq[0] >= ' ')
         return true;
 
-    // Checking readline's keymap is incorrect when a special bind group is
-    // active that should block on_input from reaching readline.  But the way
+    // NOTE:  Checking readline's keymap is incorrect when a special bind group
+    // is active that should block on_input from reaching readline.  But the way
     // that blocking is achieved is by adding a "" binding that matches
     // everything not explicitly bound in the keymap.  So it works out
-    // naturally, without additional effort.
-    if (rl_function_of_keyseq_len(seq, len, nullptr, nullptr))
+    // naturally, without additional effort.  But it would probably be cleaner
+    // for this to be implemented on rl_module rather than line_editor_impl.
+
+    // Using nullptr for the keymap starts from the root of the current keymap,
+    // but in a multi key sequence this needs to use the current dispatching
+    // node of the current keymap.
+    Keymap keymap = RL_ISSTATE (RL_STATE_MULTIKEY) ? _rl_dispatching_keymap : nullptr;
+    if (rl_function_of_keyseq_len(seq, len, keymap, nullptr))
         return true;
 
     goto LNope;
