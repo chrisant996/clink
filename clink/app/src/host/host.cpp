@@ -409,7 +409,8 @@ bool host::edit_line(const char* prompt, str_base& out)
     bool init_scripts = !m_doskey_alias;
     bool send_event = !m_doskey_alias;
     bool init_prompt = !m_doskey_alias;
-    bool init_history = !m_doskey_alias;
+    bool init_editor = !m_doskey_alias;
+    bool init_history = !m_doskey_alias && !rl_has_saved_history();
 
     // Set up Lua.
     bool local_lua = g_reload_scripts.get();
@@ -478,13 +479,16 @@ bool host::edit_line(const char* prompt, str_base& out)
     // Create the editor and add components to it.
     line_editor* editor = line_editor_create(desc);
 
-    if (init_history)
+    if (init_editor)
     {
         editor->add_generator(lua);
         editor->add_generator(file_match_generator());
         if (g_classify_words.get())
             editor->set_classifier(lua);
+    }
 
+    if (init_history)
+    {
         if (g_save_history.get())
         {
             if (!m_history)
