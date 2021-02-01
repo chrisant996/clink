@@ -3,7 +3,7 @@
 
 <!-- ----------------------------------------------------- -->
 <head>
-<title>Clink v1.1.24</title>
+<title>Clink v1.1.25</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Rambla:wght@400;700&family=Roboto&family=Fira+Mono&display=swap');
 html {
@@ -409,7 +409,7 @@ var hljs=function(){"use strict";function e(n){Object.freeze(n);var t="function"
         </td>
         <td style="text-align:right">
             <div id="header">
-                <div id="title">Clink v1.1.24</div>
+                <div id="title">Clink v1.1.25</div>
                 <div id="url">
                     <a href="http://github.com/chrisant996/clink">
                         http://github.com/chrisant996/clink
@@ -463,6 +463,23 @@ var hljs=function(){"use strict";function e(n){Object.freeze(n);var t="function"
 <li>Auto-answering of the &quot;Terminate batch job?&quot; prompt.</li>
 </ul>
 <p>By default Clink binds <kbd>Alt</kbd>+<kbd>H</kbd> to display the current key bindings. More features can also be found in GNU&#39;s <a href="https://tiswww.cwru.edu/php/chet/readline/readline.html">Readline</a> and <a href="https://tiswww.cwru.edu/php/chet/readline/history.html">History</a> libraries&#39; manuals.</p>
+<blockquote>
+<p>
+<strong>Want some quick but powerful tips to get started?</strong>
+</p>
+<p>
+<table>
+<tr><td><kbd>Ctrl</kbd>+<kbd>O</kbd></td><td>This is <code>operate-and-get-next</code>, which accepts the current input line and gets the next history line.  You can search history for a command, then press <kbd>Ctrl</kbd>+<kbd>O</kbd> to run that command and queue up the next command after it.  Repeat it to conveniently rerun a series of commands from the history.</td></tr>
+<tr><td><kbd>Alt</kbd>+<kbd>.</kbd></td><td>This is <code>yank-last-arg</code>, which inserts the last argument from the previous line.  You can use it repeatedly to cycle backwards through the history, inserting the last argument from each line.  Learn more by reading up on the "yank" features in the Readline manual.</td></tr>
+<tr><td><kbd>Ctrl</kbd>+<kbd>R</kbd></td><td>This is <code>reverse-search-history</code>, which incrementally searches the history.  Press it, then type, and it does a reverse incremental search while you type.  Press <kbd>Ctrl</kbd>+<kbd>R</kbd> again (and again, etc) to search for other matches of the search text.  Learn more by reading up on the "search" and "history" features in the Readline manual.</td></tr>
+<tr><td><kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>D</kbd></td><td>This is <code>remove-history</code>, which deletes the currently selected history line after using any of the history search or navigation commands.</td></tr>
+<tr><td><kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>K</kbd></td><td>This is <code>add-history</code>, which adds the current line to the history without executing it, and then clears the input line.</td></tr>
+<tr><td><kbd>Alt</kbd>+<kbd>0</kbd> to <kbd>Alt</kbd>+<kbd>9</kbd></td><td>These are <code>digit-argument</code>, which let you enter a numeric value used by many commands.  For example <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>W</kbd> copies the current word to the clipboard, but if you first type <kbd>Alt</kbd>+<kbd>2</kbd> followed by <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>W</kbd> then it copies the 3rd word to the clipboard (the first word is 0, the second is 1, etc).  Learn more by reading up on "Readline Arguments" in the Readline manual.</td></tr>
+<tr><td><kbd>Alt</kbd>+<kbd>H</kbd></td><td>This is <code>clink-show-help</code>, which lists the key bindings and commands.  Learn more by visiting <a href="#keybindings">Key Bindings</a>.</td></tr>
+</table>
+</p>
+</blockquote>
+
 <h1 id="usage">Usage</h1>
 <p>There are several ways to start Clink.</p>
 <ol>
@@ -803,6 +820,9 @@ Manages Clink's entry in CMD.EXE's autorun section, which can automatically inje
 See <code>clink autorun --help</code> for more information.</dd>
 </p>
 
+<blockquote>
+<p><strong>Compatibility Note:</strong> When Clink is installed for autorun, some Cmder functionality will not work.  See known issue <a href="https://github.com/chrisant996/clink/issues/67">#67</a>.</p>
+</blockquote>
 <p>
 <dt>clink set</dt>
 <dd>
@@ -915,7 +935,7 @@ Echos key sequences to use in the .inputrc files for binding keys to Clink comma
 </tr>
 <tr>
 <td align="center"><code>clink-copy-word</code></td>
-<td>Copy the word at the cursor to the clipboard.</td>
+<td>Copy the word at the cursor to the clipboard, or copies the nth word if a numeric argument is provided via the <code>digit-argument</code> keys.</td>
 </tr>
 <tr>
 <td align="center"><code>clink-ctrl-c</code></td>
@@ -934,8 +954,16 @@ Echos key sequences to use in the .inputrc files for binding keys to Clink comma
 <td>Expand the environment variable (e.g. <code>%FOOBAR%</code>) at the cursor.</td>
 </tr>
 <tr>
+<td align="center"><code>clink-find-conhost</code></td>
+<td>Activates the &quot;Find&quot; dialog when running in a standard console window (hosted by the OS conhost).  This is equivalent to picking &quot;Find...&quot; from the console window&#39;s system menu.</td>
+</tr>
+<tr>
 <td align="center"><code>clink-insert-dot-dot</code></td>
 <td>Inserts <code>..\</code> at the cursor.</td>
+</tr>
+<tr>
+<td align="center"><code>clink-mark-conhost</code></td>
+<td>Activates the &quot;Mark&quot; mode when running in a standard console window (hosted by the OS conhost).  This is equivalent to picking &quot;Mark&quot; from the console window&#39;s system menu.</td>
 </tr>
 <tr>
 <td align="center"><code>clink-paste</code></td>
@@ -1512,6 +1540,11 @@ C-k:                add-history                     <span class="hljs-comment">#
 <span class="hljs-string">"\e[6~"</span>:                                            <span class="hljs-comment"># PgDn (cleared because I redefined PgUp)</span>
 <span class="hljs-string">"\e[1;5F"</span>:          end-of-line                     <span class="hljs-comment"># Ctrl+End (replaces `kill-line`)</span>
 <span class="hljs-string">"\e[1;5H"</span>:          beginning-of-line               <span class="hljs-comment"># Ctrl+Home (replaces `backward-kill-line`)</span>
+
+<span class="hljs-comment"># Some key bindings handy in default (conhost) console windows.</span>
+M-b:                                                <span class="hljs-comment"># Alt+B (cleared because I redefined Alt+F)</span>
+M-f:                clink-find-conhost              <span class="hljs-comment"># Alt+F for "Find..." from the console's system menu</span>
+M-m:                clink-mark-conhost              <span class="hljs-comment"># Alt+M for "Mark" from the console's system menu</span>
 
 <span class="hljs-comment"># Some key bindings for interrogating the Readline configuration.</span>
 <span class="hljs-string">"\C-x\C-f"</span>:         dump-functions                  <span class="hljs-comment"># Ctrl+X, Ctrl+F</span>
@@ -2171,7 +2204,7 @@ line:getcommandoffset() == 4</code></pre></div></div><hr/>
 &nbsp; batterysaver,  -- [boolean] whether Battery Saver mode is active.
 }</code></pre></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="os.getcwd">os.getcwd</a></div> <div class="signature">() : string</div></div><div class="body"><p class="desc">Returns the current directory.</p></div></div><hr/>
-<div class="function"><div class="header"> <div class="name"><a name="os.getenv">os.getenv</a></div> <div class="signature">( <span class="arg_name">name</span>:string ) : string | nil</div></div><div class="body"><p class="desc">Returns the value of the named environment variable, or nil if it doesn't exist.</p><p class="desc"> Note that <code>os.getenv("HOME")</code> receives special treatment: if %HOME% is not set then it is synthesized from %HOMEDRIVE% and %HOMEPATH%, or from %USERPROFILE%.</p></div></div><hr/>
+<div class="function"><div class="header"> <div class="name"><a name="os.getenv">os.getenv</a></div> <div class="signature">( <span class="arg_name">name</span>:string ) : string | nil</div></div><div class="body"><p class="desc">Returns the value of the named environment variable, or nil if it doesn't exist.</p><p class="desc"> Note: <code>os.getenv("HOME")</code> receives special treatment: if %HOME% is not set then it is synthesized from %HOMEDRIVE% and %HOMEPATH%, or from %USERPROFILE%.</p></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="os.getenvnames">os.getenvnames</a></div> <div class="signature">() : table</div></div><div class="body"><p class="desc">Returns all environment variables in a table with the following scheme: <span class="tablescheme">{ {name:string, value:string}, ... }</span>.</p></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="os.gethost">os.gethost</a></div> <div class="signature">() : string</div></div><div class="body"><p class="desc">Returns the fully qualified file name of the host process.  Currently only CMD.EXE can host Clink.</p></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="os.getscreeninfo">os.getscreeninfo</a></div> <div class="signature">() : table</div></div><div class="body"><p class="desc">Returns dimensions of the terminal's buffer and visible window. The returned table has the following scheme:</p><pre class="language-lua"><code>{
@@ -2180,8 +2213,8 @@ line:getcommandoffset() == 4</code></pre></div></div><hr/>
 &nbsp; winwidth,     -- [integer] width of the visible window
 &nbsp; winheight,    -- [integer] height of the visible window
 }</code></pre></div></div><hr/>
-<div class="function"><div class="header"> <div class="name"><a name="os.globdirs">os.globdirs</a></div> <div class="signature">( <span class="arg_name">globpattern</span>:string, [<span class="arg_name">extrainfo</span>:boolean] ) : table</div></div><div class="body"><p class="desc">Collects directories matching <span class="arg">globpattern</span> and returns them in a table of strings.</p><p class="desc"> When <span class="arg">extrainfo</span> is true, then the returned table has the following scheme: <span class="tablescheme">{ {name:string, type:string}, ... }</span>.</p><p class="desc"> The <span class="tablescheme">type</span> string can be "file" or "dir", and may also contain ",hidden" and ",readonly" depending on the attributes (making it usable as a match type for <a href="#builder:addmatch">builder:addmatch()</a>).</p></div></div><hr/>
-<div class="function"><div class="header"> <div class="name"><a name="os.globfiles">os.globfiles</a></div> <div class="signature">( <span class="arg_name">globpattern</span>:string, [<span class="arg_name">extrainfo</span>:boolean] ) : table</div></div><div class="body"><p class="desc">Collects files and/or directories matching <span class="arg">globpattern</span> and returns them in a table of strings.</p><p class="desc"> When <span class="arg">extrainfo</span> is true, then the returned table has the following scheme: <span class="tablescheme">{ {name:string, type:string}, ... }</span>.</p><p class="desc"> The <span class="tablescheme">type</span> string can be "file" or "dir", and may also contain ",hidden" and ",readonly" depending on the attributes (making it usable as a match type for <a href="#builder:addmatch">builder:addmatch()</a>).</p></div></div><hr/>
+<div class="function"><div class="header"> <div class="name"><a name="os.globdirs">os.globdirs</a></div> <div class="signature">( <span class="arg_name">globpattern</span>:string, [<span class="arg_name">extrainfo</span>:boolean] ) : table</div></div><div class="body"><p class="desc">Collects directories matching <span class="arg">globpattern</span> and returns them in a table of strings.</p><p class="desc"> When <span class="arg">extrainfo</span> is true, then the returned table has the following scheme: <span class="tablescheme">{ {name:string, type:string}, ... }</span>.</p><p class="desc"> The <span class="tablescheme">type</span> string can be "file" or "dir", and may also contain ",hidden" and ",readonly" depending on the attributes (making it usable as a match type for <a href="#builder:addmatch">builder:addmatch()</a>).</p><p class="desc"> Note: any quotation marks (<code>"</code>) in <span class="arg">globpattern</span> are stripped.</p></div></div><hr/>
+<div class="function"><div class="header"> <div class="name"><a name="os.globfiles">os.globfiles</a></div> <div class="signature">( <span class="arg_name">globpattern</span>:string, [<span class="arg_name">extrainfo</span>:boolean] ) : table</div></div><div class="body"><p class="desc">Collects files and/or directories matching <span class="arg">globpattern</span> and returns them in a table of strings.</p><p class="desc"> When <span class="arg">extrainfo</span> is true, then the returned table has the following scheme: <span class="tablescheme">{ {name:string, type:string}, ... }</span>.</p><p class="desc"> The <span class="tablescheme">type</span> string can be "file" or "dir", and may also contain ",hidden" and ",readonly" depending on the attributes (making it usable as a match type for <a href="#builder:addmatch">builder:addmatch()</a>).</p><p class="desc"> Note: any quotation marks (<code>"</code>) in <span class="arg">globpattern</span> are stripped.</p></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="os.isdir">os.isdir</a></div> <div class="signature">( <span class="arg_name">path</span>:string ) : boolean</div></div><div class="body"><p class="desc">Returns whether <span class="arg">path</span> is a directory.</p></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="os.isfile">os.isfile</a></div> <div class="signature">( <span class="arg_name">path</span>:string ) : boolean</div></div><div class="body"><p class="desc">Returns whether <span class="arg">path</span> is a file.</p></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="os.ishidden">os.ishidden</a></div> <div class="signature">( <span class="arg_name">path</span>:string ) : boolean</div></div><div class="body"><p class="desc">Returns whether <span class="arg">path</span> has the hidden attribute set.</p></div></div><hr/>
@@ -2310,13 +2343,24 @@ settings.add("color.mymno", "bright magenta", "Color setting")</code></pre></div
         <div class="section" id="changes">
 <h1 id="changes">Changes</h1>
 <h2 id="releases-from-chrisant996clink-fork">Releases from <a href="https://github.com/chrisant996/clink">chrisant996/clink</a> fork</h2>
+<h3 id="v1125">v1.1.25</h3>
+<ul>
+<li>Added <code>clink-find-conhost</code> command that, when in a default (conhost) console window, is equivalent to picking &quot;Find...&quot; from the system menu.</li>
+<li>Added <code>clink-mark-conhost</code> command that, when in a default (conhost) console window, is equivalent to picking &quot;Mark&quot; from the system menu.</li>
+<li><code>clink-copy-word</code> now copies the current word by default, but copies the nth word if a numeric argument is entered (see &quot;Readline Arguments&quot; in the Readline manual).</li>
+<li>Fixed match display filtering to not exceed the screen width (regression introduced in v1.1.12).</li>
+<li>Fixed multi-key sequences; in some cases it could get confused about whether an input key is part of a multi-key binding sequence (regression introduced in v1.1.1-alpha).</li>
+<li>Fixed stray input processing by conhost (holding <kbd>Ctrl</kbd>+<kbd>A</kbd> or <kbd>Ctrl</kbd>+<kbd>F</kbd> or etc could accidentally trigger conhost&#39;s shortcut keys).</li>
+<li>Fixed popup window location and size when using Windows Terminal.</li>
+<li>Fixed input coloring after <code>operate-and-get-next</code>; also fixes brief flicker of incorrect coloring whenever the input line is modified.</li>
+</ul>
 <h3 id="v1124">v1.1.24</h3>
 <ul>
 <li><code>auto</code> for <code>terminal.emulation</code> now uses native VT support on Windows 10 build 15063 and higher, unless the HKCU\Console\ForceV2 regkey is 0.</li>
 <li>Special quote handling now enables <code>&quot;dir\&quot;fi</code> to complete to <code>&quot;dir\file&quot;</code>.  CMD simply strips quotes during completion, and now Clink behaves similarly.</li>
 <li><strong>Breaking Change:</strong> <code>line:getword()</code> and <code>line:getendword()</code> now strip quotes from the word.  This should generally automagically make existing match generators work even with embedded quotes, but there&#39;s a chance that some match generator might need to be updated.  This seems like a reasonable compromise, given the general benefit purchased by this breaking change.</li>
 <li><code>os:globdirs()</code> and <code>os:globfile()</code> strip quotes from the <span class="arg">globpattern</span> in order to behave more like CMD.  Embedded quotes are nonsensical and the intended interpretation is clear, so the APIs now help out with that.</li>
-<li>Fixed <a href="https://github.com/chrisant996/clink/issues/66">#66</a>; crash when injecting into 32 bit cmd.</li>
+<li>Fixed <a href="https://github.com/chrisant996/clink/issues/66">#66</a>; crash when injecting into 32 bit cmd (regression introduced in v1.1.21).</li>
 <li>Fixed <a href="https://github.com/chrisant996/clink/issues/64">#64</a>; wrong cursor position when PROMPT contains BEL character.</li>
 <li>Fixed <a href="https://github.com/chrisant996/clink/issues/62">#62</a>; argmatchers should color <code>-x:&quot;foo&quot;</code> as a flag if <code>-x:</code> is a flag.</li>
 <li>Fixed <a href="https://github.com/chrisant996/clink/issues/61">#61</a>; argmatchers should not handle completion for text immediately following <code>-flag:</code>.  Instead it always uses file completion.  A custom generator can be used to override that behavior.</li>
