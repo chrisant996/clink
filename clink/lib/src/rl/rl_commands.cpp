@@ -187,10 +187,20 @@ int clink_copy_line(int count, int invoking_key)
 //------------------------------------------------------------------------------
 int clink_copy_word(int count, int invoking_key)
 {
+    if (count < 0)
+    {
+Nope:
+        rl_ding();
+        return 0;
+    }
+
     std::vector<word> words;
     g_rl_buffer->collect_words(words, collect_words_mode::whole_command);
 
-    if (!words.empty())
+    if (words.empty())
+        goto Nope;
+
+    if (!rl_explicit_arg)
     {
         unsigned int line_cursor = g_rl_buffer->get_cursor();
         for (auto const& word : words)
@@ -202,11 +212,20 @@ int clink_copy_word(int count, int invoking_key)
                 return 0;
             }
         }
-
+    }
+    else
+    {
+        for (auto const& word : words)
+        {
+            if (count-- == 0)
+            {
+                copy_impl(g_rl_buffer->get_buffer() + word.offset, word.length);
+                return 0;
+            }
+        }
     }
 
-    rl_ding();
-    return 0;
+    goto Nope;
 }
 
 //------------------------------------------------------------------------------
