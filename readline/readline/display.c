@@ -180,6 +180,12 @@ static int _rl_col_width PARAMS((const char *, int, int, int));
 rl_voidfunc_t *rl_redisplay_function = rl_redisplay;
 
 /* begin_clink_change */
+/* Application-specific function to be called before displaying the
+   input line. */
+rl_voidfunc_t *rl_before_display_function = (rl_voidfunc_t *)NULL;
+/* end_clink_change */
+
+/* begin_clink_change */
 const char *_rl_display_modmark_color = NULL;
 const char *_rl_display_horizscroll_color = NULL;
 const char *_rl_display_message_color = NULL;
@@ -994,6 +1000,13 @@ rl_redisplay (void)
     }
 
   prompt_last_screen_line = newlines;
+
+/* begin_clink_change */
+  /* Let the application have a chance to do processing; for example to parse
+     the input line and update font faces for the line. */
+  if (rl_before_display_function)
+    rl_before_display_function ();
+/* end_clink_change */
 
   /* Draw the rest of the line (after the prompt) into invisible_line, keeping
      track of where the cursor is (cpos_buffer_position), the number of the

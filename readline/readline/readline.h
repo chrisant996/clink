@@ -693,6 +693,11 @@ extern rl_getc_func_t *rl_getc_function;
 extern rl_voidfunc_t *rl_redisplay_function;
 
 /* begin_clink_change */
+/* The address of a function to call before displaying the input line. */
+extern rl_voidfunc_t *rl_before_display_function;
+/* end_clink_change */
+
+/* begin_clink_change */
 extern const char *_rl_display_modmark_color;
 extern const char *_rl_display_horizscroll_color;
 extern const char *_rl_display_message_color;

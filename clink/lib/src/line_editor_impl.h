@@ -106,6 +106,7 @@ private:
     static bool         is_key_same(const key_t& prev_key, const char* prev_line, int prev_length,
                                     const key_t& next_key, const char* next_line, int next_length,
                                     bool compare_cursor);
+    static void         before_display();
 
     rl_module           m_module;
     rl_buffer           m_buffer;

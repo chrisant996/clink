@@ -206,6 +206,8 @@ void line_editor_impl::begin_line()
     m_prev_generate.clear();
     m_prev_classify.clear();
 
+    rl_before_display_function = before_display;
+
     line_state line = get_linestate();
     editor_module::context context = get_context(line);
     for (auto module : m_modules)
@@ -217,6 +219,8 @@ void line_editor_impl::end_line()
 {
     for (auto i = m_modules.rbegin(), n = m_modules.rend(); i != n; ++i)
         i->on_end_line();
+
+    rl_before_display_function = nullptr;
 
     m_buffer.end_line();
     m_desc.output->end();
@@ -935,6 +939,13 @@ void line_editor_impl::update_internal()
     // for deciding whether to sort/select, after deciding whether to generate.
     if (update_prev_generate >= 0)
         m_prev_generate.set(m_buffer.get_buffer(), update_prev_generate);
+}
+
+void line_editor_impl::before_display()
+{
+    assert(s_editor);
+    if (s_editor)
+        s_editor->classify();
 }
 
 void update_matches()

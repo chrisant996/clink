@@ -10,6 +10,7 @@
 - Fixed multi-key sequences; in some cases it could get confused about whether an input key is part of a multi-key binding sequence (regression introduced in v1.1.1-alpha).
 - Fixed stray input processing by conhost (holding <kbd>Ctrl</kbd+<kbd>A</kbd> or <kbd>Ctrl</kbd>+<kbd>F</kbd> or etc could accidentally trigger conhost's shortcut keys).
 - Fixed popup window location and size when using Windows Terminal.
+- Fixed input coloring after `operate-and-get-next`; also fixes brief flicker of incorrect coloring whenever the input line is modified.
 
 ### v1.1.24
 
