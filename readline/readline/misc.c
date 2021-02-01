@@ -681,8 +681,15 @@ rl_operate_and_get_next (count, c)
   /* Accept the current line. */
   rl_newline (1, c);
 
-  saved_history_logical_offset = rl_explicit_arg ? count : where_history () + history_base + 1;
-
+/* begin_clink_change */
+  //saved_history_logical_offset = rl_explicit_arg ? count : where_history () + history_base + 1;
+  {
+    int where = rl_get_history_search_pos ();
+    if (where < 0)
+      where = where_history ();
+    saved_history_logical_offset = rl_explicit_arg ? count : where + history_base + 1;
+  }
+/* end_clink_change */
 
   _rl_saved_internal_startup_hook = _rl_internal_startup_hook;
   _rl_internal_startup_hook = set_saved_history;
