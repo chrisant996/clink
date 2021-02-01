@@ -32,6 +32,23 @@ Clink combines the native Windows shell cmd.exe with the powerful command line e
 
 By default Clink binds <kbd>Alt</kbd>+<kbd>H</kbd> to display the current key bindings. More features can also be found in GNU's [Readline](https://tiswww.cwru.edu/php/chet/readline/readline.html) and [History](https://tiswww.cwru.edu/php/chet/readline/history.html) libraries' manuals.
 
+<blockquote>
+<p>
+<strong>Want some quick but powerful tips to get started?</strong>
+</p>
+<p>
+<table>
+<tr><td><kbd>Ctrl</kbd>+<kbd>O</kbd></td><td>This is <code>operate-and-get-next</code>, which accepts the current input line and gets the next history line.  You can search history for a command, then press <kbd>Ctrl</kbd>+<kbd>O</kbd> to run that command and queue up the next command after it.  Repeat it to conveniently rerun a series of commands from the history.</td></tr>
+<tr><td><kbd>Alt</kbd>+<kbd>.</kbd></td><td>This is <code>yank-last-arg</code>, which inserts the last argument from the previous line.  You can use it repeatedly to cycle backwards through the history, inserting the last argument from each line.  Learn more by reading up on the "yank" features in the Readline manual.</td></tr>
+<tr><td><kbd>Ctrl</kbd>+<kbd>R</kbd></td><td>This is <code>reverse-search-history</code>, which incrementally searches the history.  Press it, then type, and it does a reverse incremental search while you type.  Press <kbd>Ctrl</kbd>+<kbd>R</kbd> again (and again, etc) to search for other matches of the search text.  Learn more by reading up on the "search" and "history" features in the Readline manual.</td></tr>
+<tr><td><kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>D</kbd></td><td>This is <code>remove-history</code>, which deletes the currently selected history line after using any of the history search or navigation commands.</td></tr>
+<tr><td><kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>K</kbd></td><td>This is <code>add-history</code>, which adds the current line to the history without executing it, and then clears the input line.</td></tr>
+<tr><td><kbd>Alt</kbd>+<kbd>0</kbd> to <kbd>Alt</kbd>+<kbd>9</kbd></td><td>These are <code>digit-argument</code>, which let you enter a numeric value used by many commands.  For example <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>W</kbd> copies the current word to the clipboard, but if you first type <kbd>Alt</kbd>+<kbd>2</kbd> followed by <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>W</kbd> then it copies the 3rd word to the clipboard (the first word is 0, the second is 1, etc).  Learn more by reading up on "Readline Arguments" in the Readline manual.</td></tr>
+<tr><td><kbd>Alt</kbd>+<kbd>H</kbd></td><td>This is <code>clink-show-help</code>, which lists the key bindings and commands.  Learn more by visiting <a href="#keybindings">Key Bindings</a>.</td></tr>
+</table>
+</p>
+</blockquote>
+
 # Usage
 
 There are several ways to start Clink.
@@ -274,7 +291,7 @@ Name | Description
 `add-history`|Adds the current line to the history without executing it, and clears the editing line.
 `clink-copy-cwd`|Copy the current working directory to the clipboard.
 `clink-copy-line`|Copy the current line to the clipboard.
-`clink-copy-word`|Copy the word at the cursor to the clipboard.
+`clink-copy-word`|Copy the word at the cursor to the clipboard, or copies the nth word if a numeric argument is provided via the `digit-argument` keys.
 `clink-ctrl-c`|Discards the current line and starts a new one (like <kbd>Ctrl</kbd>+<kbd>C</kbd> in CMD.EXE).
 `clink-exit`|Replaces the current line with `exit` and executes it (exits the shell instance).
 `clink-expand-doskey-alias`|Expand the doskey alias (if any) at the beginning of the line.
@@ -822,6 +839,11 @@ C-k:                add-history                     <span class="hljs-comment">#
 <span class="hljs-string">"\e[6~"</span>:                                            <span class="hljs-comment"># PgDn (cleared because I redefined PgUp)</span>
 <span class="hljs-string">"\e[1;5F"</span>:          end-of-line                     <span class="hljs-comment"># Ctrl+End (replaces `kill-line`)</span>
 <span class="hljs-string">"\e[1;5H"</span>:          beginning-of-line               <span class="hljs-comment"># Ctrl+Home (replaces `backward-kill-line`)</span>
+
+<span class="hljs-comment"># Some key bindings handy in default (conhost) console windows.</span>
+M-b:                                                <span class="hljs-comment"># Alt+B (cleared because I redefined Alt+F)</span>
+M-f:                clink-find-conhost              <span class="hljs-comment"># Alt+F for "Find..." from the console's system menu</span>
+M-m:                clink-mark-conhost              <span class="hljs-comment"># Alt+M for "Mark" from the console's system menu</span>
 
 <span class="hljs-comment"># Some key bindings for interrogating the Readline configuration.</span>
 <span class="hljs-string">"\C-x\C-f"</span>:         dump-functions                  <span class="hljs-comment"># Ctrl+X, Ctrl+F</span>
