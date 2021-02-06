@@ -366,37 +366,69 @@ bool lua_state::send_event_cancelable_string_inout(const char* event_name, const
 bool lua_state::call_lua_rl_global_function(const char* func_name)
 {
     lua_State* state = get_state();
+    rl_buffer_lua buffer(*g_rl_buffer);
 
     bool first = true;
     str_iter part;
     str_tokeniser name_parts(func_name, ".");
+    str<> global;
+    const char* error = nullptr;
     while (name_parts.next(part))
     {
         if (first)
         {
-            str<16> global;
             global.concat(part.get_pointer(), part.length());
             lua_getglobal(state, global.c_str());
             first = false;
         }
         else
         {
+            if (lua_isnil(state, -1))
+            {
+                error = "'%s' is nil";
+report_error:
+                str<> msg;
+                str<> msg2;
+                msg.format("can't execute '%s'", func_name);
+                if (error)
+                {
+                    msg2.format(error, global.c_str());
+                    msg << "; " << msg2;
+                }
+                msg << "\n";
+                buffer.begin_output(state);
+                puts(msg.c_str());
+                return false;
+            }
+            else if (!lua_istable(state, -1))
+            {
+                error = "'%s' is not a table";
+                goto report_error;
+            }
+
             lua_pushlstring(state, part.get_pointer(), part.length());
             lua_rawget(state, -2);
+
+            global.clear();
+            global.concat(func_name, int(part.get_pointer() - func_name + part.length()));
         }
     }
 
     if (!lua_isfunction(state, -1))
-        return false;
+    {
+        error = "not a function";
+        goto report_error;
+    }
 
-    rl_buffer_lua buffer(*g_rl_buffer);
     buffer.push(state);
 
+    rollback<bool> rb(s_in_luafunc, true);
     if (pcall(1, 0) != LUA_OK)
     {
         if (const char* error = lua_tostring(state, -1))
         {
-            printf("\nerror executing function '%s':\n", func_name);
+            buffer.begin_output(state);
+            printf("error executing function '%s':\n", func_name);
             puts(error);
         }
         return false;
