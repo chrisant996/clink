@@ -866,6 +866,38 @@ bool line_editor_impl::is_key_same(const key_t& prev_key, const char* prev_line,
 }
 
 //------------------------------------------------------------------------------
+matches* line_editor_impl::get_mutable_matches(bool nosort)
+{
+    collect_words();
+
+    assert(m_words.size() > 0);
+    const word& end_word = m_words.back();
+    const key_t next_key = { (unsigned int)m_words.size() - 1, end_word.offset, end_word.length, m_buffer.get_cursor() };
+
+    m_prev_key = next_key;
+    m_prev_generate.set(m_buffer.get_buffer(), end_word.offset + end_word.length);
+
+    match_pipeline pipeline(m_matches);
+    pipeline.reset();
+    pipeline.set_nosort(nosort);
+
+    m_matches.set_word_break_position(end_word.offset);
+
+    clear_flag(flag_generate);
+    set_flag(flag_select);
+
+    return &m_matches;
+}
+
+matches* get_mutable_matches(bool nosort=false)
+{
+    if (!s_editor)
+        return nullptr;
+
+    return s_editor->get_mutable_matches(nosort);
+}
+
+//------------------------------------------------------------------------------
 void line_editor_impl::update_internal()
 {
     // This is responsible for updating the matches for the word under the

@@ -68,6 +68,7 @@ private:
     typedef fixed_array<match_generator*, 32>   generators;
     typedef std::vector<word>                   words;
     friend void update_matches();
+    friend matches* get_mutable_matches(bool nosort);
     friend matches* maybe_regenerate_matches(const char* needle, bool popup);
 
     enum flags : unsigned char
@@ -95,6 +96,7 @@ private:
     void                collect_words(bool stop_at_cursor=true);
     unsigned int        collect_words(words& words, matches_impl& matches, collect_words_mode mode);
     void                classify();
+    matches*            get_mutable_matches(bool nosort=false);
     void                update_internal();
     bool                update_input();
     module::context     get_context(const line_state& line) const;

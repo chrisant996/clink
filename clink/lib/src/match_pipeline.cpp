@@ -36,6 +36,8 @@ extern int _rl_locale_sort;
 int compare_string(const char* s1, const char* s2, int casefold);
 };
 
+static bool s_nosort = false;
+
 
 
 //------------------------------------------------------------------------------
@@ -146,7 +148,7 @@ static int _cdecl qsort_match_compare(const void* pv1, const void* pv2)
 //------------------------------------------------------------------------------
 void sort_match_list(char** matches, int len)
 {
-    if (len <= 0)
+    if (s_nosort || len <= 0)
         return;
 
     if (!rl_completion_matches_include_type)
@@ -186,6 +188,13 @@ match_pipeline::match_pipeline(matches_impl& matches)
 void match_pipeline::reset() const
 {
     m_matches.reset();
+    s_nosort = false;
+}
+
+//------------------------------------------------------------------------------
+void match_pipeline::set_nosort(bool nosort)
+{
+    s_nosort = nosort;
 }
 
 //------------------------------------------------------------------------------

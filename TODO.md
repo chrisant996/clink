@@ -4,7 +4,11 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 
 # RELEASE
 
-- Script and API support to enable temporarily overloading completion.  For example so that `luafunc:blah` can scrape (bug, commit, etc) numbers from the screen and perform completion using them.  So some key binding can temporary force those completion candidates to be used for all of the various Readline completion commands (maybe commands in general), and also so lua function key bindings can chain to Readline completion commands (so that `blah()` can collect candidates and then invoke `old-menu-complete` to insert and start cycling through matches).
+- Script and API support to enable temporarily overloading completion.
+  - [x] rl.setmatches
+  - [x] rl.invokecommand
+  - [x] how to optionally disable sorting?
+  - [ ] how should match display filter work (or be disabled)?
 
 ## Issues
 

@@ -96,6 +96,9 @@ static int hash(lua_State* state)
 /// -arg:   a:string
 /// -arg:   b:string
 /// -ret:   integer
+/// -show:  string.matchlen("abx", "a")         -- returns 1
+/// -show:  string.matchlen("abx", "aby")       -- returns 2
+/// -show:  string.matchlen("abx", "abx")       -- returns -1
 /// Returns how many characters match at the beginning of the strings, or -1 if
 /// the entire strings match.  This respects the <code>match.ignore_case</code>
 /// and <code>match.ignore_accents</code> Clink settings.

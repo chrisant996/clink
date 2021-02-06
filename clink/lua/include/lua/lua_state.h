@@ -5,6 +5,11 @@
 
 #include <functional>
 
+extern "C" {
+#include <readline/readline.h>
+#include <readline/rltypedefs.h>
+}
+
 struct lua_State;
 class str_base;
 
@@ -35,9 +40,13 @@ public:
     void            dump_stack(int pos);
 #endif
 
+    static bool     is_in_luafunc() { return s_in_luafunc; }
+
 private:
     bool            send_event_internal(const char* event_name, const char* event_mechanism, int nargs=0, int nret=0);
     lua_State*      m_state;
+
+    static bool     s_in_luafunc;
 };
 
 //------------------------------------------------------------------------------

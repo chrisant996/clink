@@ -12,12 +12,17 @@
 #include <core/str_compare.h>
 #include <core/str_iter.h>
 #include <readline/readline.h>
+#include "lib/matches.h"
+#include "match_builder_lua.h"
 
 extern "C" {
 #include "lua.h"
 extern int              _rl_completion_case_map;
 extern const char*      rl_readline_name;
 }
+
+extern matches* get_mutable_matches(bool nosort=false);
+extern void override_rl_last_func(rl_command_func_t* func);
 
 
 
@@ -121,12 +126,12 @@ static int collapse_tilde(lua_State* state)
 /// -show:  end
 /// Performs Readline tilde expansion.
 ///
-/// When generating filename matches for a word, use the 
+/// When generating filename matches for a word, use the
 /// <a href="#rl.expandtilde">rl.expandtilde</a> and
 /// <a href="#rl.collapsetilde">rl.collapsetilde</a> helper functions to perform
 /// tilde completion expansion according to Readline's configuration.
 ///
-/// Use <a href="#rl.expandtilde">rl.expandtilde</a> to do tilde expansion 
+/// Use <a href="#rl.expandtilde">rl.expandtilde</a> to do tilde expansion
 /// before collecting file matches (e.g. via
 /// <a href="#os.globfiles">os.globfiles</a>).  If it indicates that it expanded
 /// the string, then use <a href="#rl.collapsetilde">rl.collapsetilde</a> to put
@@ -191,6 +196,126 @@ static int is_rl_variable_true(lua_State* state)
     return 1;
 }
 
+//------------------------------------------------------------------------------
+/// -name:  rl.invokecommand
+/// -arg:   command:string
+/// -arg:   [count:integer]
+/// -ret:   boolean | nil
+/// Invokes a Readline command named <span class="arg">command</span>.  May only
+/// be used within a <code>luafunc:</code> key binding.
+///
+/// <span class="arg">count</span> is optional and defaults to 1 if omitted.
+///
+/// Returns true if the named command succeeds, false if the named command
+/// fails, or nil if the named command doesn't exist.
+///
+/// Warning:  Invoking more than one Readline command in a <code>luafunc:</code>
+/// key binding could have unexpected results, depending on which commands are
+/// invoked.
+static int invoke_command(lua_State* state)
+{
+    if (!lua_state::is_in_luafunc())
+        return luaL_error(state, "rl.invokecommand may only be used in a 'luafunc:' key binding");
+
+    // Check we've got at least one string argument.
+    if (lua_gettop(state) == 0 || !lua_isstring(state, 1))
+        return 0;
+
+    const char* command = lua_tostring(state, 1);
+    rl_command_func_t *func = rl_named_function(command);
+    if (func == nullptr)
+        return 0;
+
+    int isnum;
+    int count = int(lua_tointegerx(state, 2, &isnum));
+    int err = func(isnum ? count : 1, 0/*invoking_key*/);
+
+    override_rl_last_func(func);
+
+    lua_pushinteger(state, err);
+    return 1;
+}
+
+//------------------------------------------------------------------------------
+/// -name:  rl.setmatches
+/// -arg:   matches:table
+/// -arg:   [type:string]
+/// -ret:   integer, boolean
+/// Provides an alternative set of matches for the current word.  This discards
+/// any matches that may have already been collected and uses
+/// <span class="arg">matches</span> for subsequent Readline completion commands
+/// until any action that normally resets the matches (such as moving the cursor
+/// or editing the input line).
+///
+/// May only be used within a <code>luafunc:</code> key binding.
+///
+/// The syntax is the same as for
+/// <a href="#builder:addmatches()">builder:addmatches()</a> with one addition:
+/// You can add a <code>"nosort"</code> key to the
+/// <span class="arg">matches</span> table to disable sorting the matches.
+///
+/// <pre><code class="lua">local matches = {}<br/>
+/// matches["nosort"] = true
+/// rl.setmatches(matches)</code></pre>
+///
+/// This function can be used by a <code>luafunc:</code> key binding to provide
+/// matches based on some special criteria.  For example, a key binding could
+/// collect numbers from the current screen buffer (such as issue numbers,
+/// commit hashes, line numbers, etc) and provide them to Readline as matches,
+/// making it convenient to grab a number from the screen and insert it as a
+/// command line argument.
+///
+/// <em>Example .inputrc key binding:</em>
+/// <pre><code class="plaintext">M-n:            <span class="hljs-string">"luafunc:complete_numbers"</span>      <span class="hljs-comment"># Alt+N</span></code></pre>
+///
+/// <em>Example Lua function:</em>
+/// -show:  function completenumbers()
+/// -show:  &nbsp; local matches = {}
+/// -show:
+/// -show:  &nbsp; local _end = console.gettop()
+/// -show:  &nbsp; local _start = _end + console.getheight() - 1
+/// -show:  &nbsp; for i = _start,_end,-1 do
+/// -show:  &nbsp;   local line = console.getlinetext(i)
+/// -show:  &nbsp;   local words = {}
+/// -show:
+/// -show:  &nbsp;   -- Collect numbers from the line (minimum of three characters).
+/// -show:  &nbsp;   for word in line:gmatch("[^%w]*(%w%w[%w]+)") do
+/// -show:  &nbsp;     if word:match("^%x+$") then
+/// -show:  &nbsp;       table.insert(words, word)
+/// -show:  &nbsp;     end
+/// -show:  &nbsp;   end
+/// -show:
+/// -show:  &nbsp;   -- Add the words in reverse order so they're in proximity order.
+/// -show:  &nbsp;   for j = #words,1,-1 do
+/// -show:  &nbsp;     table.insert(matches, words[j])
+/// -show:  &nbsp;   end
+/// -show:  &nbsp; end
+/// -show:
+/// -show:  &nbsp; matches["nosort"] = true
+/// -show:
+/// -show:  &nbsp; rl.setmatches(matches)
+/// -show:  &nbsp; rl.invokecommand("old-menu-complete")
+/// -show:  end
+static int set_matches(lua_State* state)
+{
+    bool nosort = false;
+    if (lua_istable(state, -1))
+    {
+        lua_getfield(state, -1, "nosort");
+        nosort = !lua_isnil(state, -1);
+        lua_pop(state, 1);
+    }
+
+    matches* matches = get_mutable_matches(nosort);
+    if (!matches)
+        return 0;
+
+    match_builder builder(*matches);
+    match_builder_lua builder_lua(builder);
+
+    return builder_lua.add_matches(state);
+}
+
 
 
 //------------------------------------------------------------------------------
@@ -204,6 +329,8 @@ void rl_lua_initialise(lua_state& lua)
         { "expandtilde",            &expand_tilde },
         { "getvariable",            &get_rl_variable },
         { "isvariabletrue",         &is_rl_variable_true },
+        { "invokecommand",          &invoke_command },
+        { "setmatches",             &set_matches },
     };
 
     lua_State* state = lua.get_state();

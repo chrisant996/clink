@@ -137,7 +137,7 @@ static int get_top(lua_State* state)
 /// -arg:   line:integer
 /// -ret:   string
 /// Returns the text from line number <span class="arg">line</span>, from 1 to
-/// <a href="#console.getnumlines">console.getnumlines</a>.
+/// <a href="#console.getnumlines">console.getnumlines()</a>.
 ///
 /// Any trailing whitespace is stripped before returning the text.
 static int get_line_text(lua_State* state)

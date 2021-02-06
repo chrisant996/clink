@@ -100,6 +100,7 @@ pager*              g_pager = nullptr;
 editor_module::result* g_result = nullptr;
 
 static bool         s_is_popup = false;
+static rl_command_func_t* s_override_rl_last_func = nullptr;
 
 //------------------------------------------------------------------------------
 static setting_color g_color_input(
@@ -204,6 +205,14 @@ setting_bool g_classify_words(
     "When enabled, this colors the words in the input line based on the argmatcher\n"
     "Lua scripts.",
     true);
+
+
+
+//------------------------------------------------------------------------------
+void override_rl_last_func(rl_command_func_t* func)
+{
+    s_override_rl_last_func = func;
+}
 
 
 
@@ -1408,8 +1417,18 @@ void rl_module::on_input(const input& input, result& result, const context& cont
         // command called `console.scroll()` or `ScrollConsoleRelative()`.
         reset_scroll_mode();
 
+        s_override_rl_last_func = nullptr;
+
         --len;
         rl_callback_read_char();
+
+        // Using `rl.invokecommand()` inside a "luafunc:" key binding should
+        // set rl_last_func to reflect the last function that was invoked.
+        // However, since Readline doesn't set rl_last_func until AFTER the
+        // invoked function returns, rl_last_func can't be set until after
+        // rl_callback_read_char() returns.
+        if (s_override_rl_last_func)
+            rl_last_func = s_override_rl_last_func;
 
         // Internally Readline tries to resend escape characters but it doesn't
         // work with how Clink uses Readline. So we do it here instead.
