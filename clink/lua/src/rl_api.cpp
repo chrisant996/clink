@@ -254,9 +254,7 @@ static int invoke_command(lua_State* state)
 /// You can add a <code>"nosort"</code> key to the
 /// <span class="arg">matches</span> table to disable sorting the matches.
 ///
-/// <pre><code class="lua">local matches = {}<br/>
-/// matches["nosort"] = true
-/// rl.setmatches(matches)</code></pre>
+/// <pre><code class="lua">local matches = {}<br/>matches["nosort"] = true<br/>rl.setmatches(matches)</code></pre>
 ///
 /// This function can be used by a <code>luafunc:</code> key binding to provide
 /// matches based on some special criteria.  For example, a key binding could
@@ -270,7 +268,7 @@ static int invoke_command(lua_State* state)
 /// the matches.
 ///
 /// <em>Example .inputrc key binding:</em>
-/// <pre><code class="plaintext">M-n:            <span class="hljs-string">"luafunc:complete_numbers"</span>      <span class="hljs-comment"># Alt+N</span></code></pre>
+/// <pre><code class="plaintext">M-n:            <span class="hljs-string">"luafunc:completenumbers"</span>       <span class="hljs-comment"># Alt+N</span></code></pre>
 ///
 /// <em>Example Lua function:</em>
 /// -show:  function completenumbers()
