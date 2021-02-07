@@ -6,6 +6,7 @@
 
 - Added `rl.invokecommand()` which can invoke a Readline command from inside a "luafunc:" key binding.
 - Added `rl.setmatches()` which can override match completions from inside a "luafunc:" key binding.
+- Worked around UTF8 key binding problem with Readline which had been causing some meta key bindings (M-x, M-C-x, etc) to sometimes produce garbled key bindings and garbled entries in `clink-show-help` (<kbd>Alt</kbd>+<kbd>H</kbd>).
 - Fixed crash if "luafunc:" key binding macro refers to a symbol that doesn't exist.
 
 ### v1.1.25
