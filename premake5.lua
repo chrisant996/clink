@@ -9,12 +9,12 @@ local to = ".build/"..(_ACTION or "nullaction")
 local function get_git_info()
     local git_cmd = "git branch --verbose --no-color 2>nul"
     for line in io.popen(git_cmd):lines() do
-        local _, _, name, commit = line:find("^%*.+%s+([^ )]+)%)%s+([a-f0-9]+)")
+        local _, _, name, commit = line:find("^%*.+%s+([^ )]+)%)%s+([a-f0-9]+)%s")
         if name and commit then
             return name, commit:sub(1, 6)
         end
 
-        local _, _, name, commit = line:find("^%*%s+([^ ]+)%s+([a-f0-9]+)")
+        local _, _, name, commit = line:find("^%*%s+([^ ]+)%s+([a-f0-9]+)%s")
         if name and commit then
             return name, commit:sub(1, 6)
         end
