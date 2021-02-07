@@ -2,6 +2,12 @@
 
 ## Releases from [chrisant996/clink](https://github.com/chrisant996/clink) fork
 
+### v1.1.26
+
+- Added `rl.invokecommand()` which can invoke a Readline command from inside a "luafunc:" key binding.
+- Added `rl.setmatches()` which can override match completions from inside a "luafunc:" key binding.
+- Fixed crash if "luafunc:" key binding macro refers to a symbol that doesn't exist.
+
 ### v1.1.25
 
 - Added `clink-find-conhost` command that, when in a default (conhost) console window, is equivalent to picking "Find..." from the system menu.
@@ -51,7 +57,7 @@
 
 ### v1.1.20
 
-- Now you can bind Lua functions to keys!  Added new `rl_buffer` type that gets passed to the Lua function.
+- Now you can bind Lua functions to keys via "luafunc:" macros!  Added new `rl_buffer` type that gets passed to the Lua function.
 - Added a group of `console` Lua APIs intended mainly for use by Lua function key bindings (e.g. `console.scroll()`).
 - Added `string.equalsi()` function that performs a case insensitive UTF8 comparison of two strings.
 - Added `string.matchlen()` function that compares two UTF8 strings and returns how many characters match at the beginning, or -1 if the entire strings match. It respects the `match.ignore_case` and `match.ignore_accents` settings.
