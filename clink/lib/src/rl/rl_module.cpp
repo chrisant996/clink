@@ -77,13 +77,6 @@ extern int          _rl_last_v_pos;
 #endif
 } // extern "C"
 
-inline int clink_wcwidth(char32_t c)
-{
-    if (c >= ' ' && c <= '~')
-        return 1;
-    return mk_wcwidth(c);
-}
-
 extern void host_add_history(int rl_history_index, const char* line);
 extern void host_remove_history(int rl_history_index, const char* line);
 extern void sort_match_list(char** matches, int len);
@@ -1062,7 +1055,7 @@ rl_module::rl_module(const char* shell_name, terminal_in* input)
     rl_readline_name = shell_name;
     rl_catch_signals = 0;
 
-    // Readline needs a tweak of it's handling of 'meta' (i.e. IO bytes >=0x80)
+    // Readline needs a tweak of its handling of 'meta' (i.e. IO bytes >=0x80)
     // so that it handles UTF-8 correctly (convert=input, output=output)
     _rl_convert_meta_chars_to_ascii = 0;
     _rl_output_meta_chars = 1;
@@ -1209,13 +1202,6 @@ rl_module::rl_module(const char* shell_name, terminal_in* input)
         { "\\M-\\C-m",      "emacs-editing-mode" },      // alt-ctrl-m
         {}
     };
-
-    // Convert meta to ASCII when binding keys (and reading inputrc files), but
-    // go back to not converting meta afterwards so that UTF8 input can work.
-    // The terminal input code always converts meta to ASCII regardless of the
-    // Readline setting, so having the Readline setting disabled allows binding
-    // UTF8 bytes with the high bit set.
-    rollback<int> rb_convert_meta(_rl_convert_meta_chars_to_ascii, 1);
 
     rl_unbind_key_in_map(' ', emacs_meta_keymap);
     bind_keyseq_list(general_key_binds, emacs_standard_keymap);

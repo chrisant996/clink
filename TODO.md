@@ -4,8 +4,6 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 
 # RELEASE
 
-- Alt+H double lists certain key bindings, and one of the listings has a gibberish key name!
-
 ## Issues
 
 ## Cmder

@@ -10,17 +10,6 @@
 #include <assert.h>
 
 //------------------------------------------------------------------------------
-extern "C" int mk_wcwidth(char32_t);
-inline int clink_wcwidth(char32_t c)
-{
-    if (c >= ' ' && c <= '~')
-        return 1;
-    return mk_wcwidth(c);
-}
-
-
-
-//------------------------------------------------------------------------------
 unsigned int cell_count(const char* in)
 {
     unsigned int count = 0;
@@ -34,12 +23,7 @@ unsigned int cell_count(const char* in)
 
         str_iter inner_iter(code.get_pointer(), code.get_length());
         while (int c = inner_iter.next())
-        {
-            int w = clink_wcwidth(c);
-            assert(w >= 0); // TODO: Negative isn't handled correctly yet.
-            if (w >= 0)
-                count += w;
-        }
+            count += clink_wcwidth(c);
     }
 
     return count;

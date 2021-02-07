@@ -8,6 +8,7 @@
 #include <core/str.h>
 #include <terminal/printer.h>
 #include <terminal/terminal.h>
+#include <terminal/ecma48_iter.h>
 #include "lib/editor_module.h"
 #include "lib/pager.h"
 
@@ -352,12 +353,44 @@ static int _cdecl cmp_sort_collector(const void* pv1, const void* pv2)
 //------------------------------------------------------------------------------
 static void pad_with_spaces(str_base& str, unsigned int pad_to)
 {
-    while (str.length() < pad_to)
+    unsigned int len = cell_count(str.c_str());
+    while (len < pad_to)
     {
         const char spaces[] = "                                ";
         const unsigned int available_spaces = sizeof_array(spaces) - 1;
-        int space_count = min(pad_to - str.length(), available_spaces);
+        int space_count = min(pad_to - len, available_spaces);
         str.concat(spaces, space_count);
+        len += space_count;
+    }
+}
+
+//------------------------------------------------------------------------------
+static void append_key_macro(str_base& s, const char* macro)
+{
+    const int limit = 30;
+    const int limit_ellipsis = limit - 3;
+    int ellipsis = 0;
+    unsigned int count = 0;
+
+    str_iter iter(macro);
+    const char* p = iter.get_pointer();
+    while (int c = iter.next())
+    {
+        const char* n = iter.get_pointer();
+        int w = clink_wcwidth(c);
+        if (count <= limit_ellipsis)
+            ellipsis = s.length();
+        if (count > limit)
+            break;
+        s.concat(p, int (n - p));
+        count += w;
+        p = n;
+    }
+
+    if (count > limit)
+    {
+        s.truncate(ellipsis);
+        s << "...";
     }
 }
 
@@ -474,36 +507,26 @@ static void show_key_bindings(bool friendly)
 
             // Format the key binding.
             const Keyentry& entry = collector[index];
-            int escape_code_len = (entry.warning ? 7 : 0);
             str.clear();
             if (entry.warning)
                 str << "\x1b[7m";
             str << entry.key_name;
             if (entry.warning)
                 str << "\x1b[m";
-            pad_with_spaces(str, longest_key + escape_code_len);
+            pad_with_spaces(str, longest_key);
             str << " : ";
             if (entry.func_name)
                 str << entry.func_name;
             if (entry.macro_text)
             {
-                str.concat("\"", 1);
-                bool ellipsis = false;
-                unsigned int macro_len = (unsigned int)strlen(entry.macro_text);
-                if (macro_len > 30)
-                {
-                    macro_len = 27;
-                    ellipsis = true;
-                }
-                str.concat(entry.macro_text, macro_len);
-                if (ellipsis)
-                    str.concat("...");
-                str.concat("\"", 1);
+                str << "\"";
+                append_key_macro(str, entry.macro_text);
+                str << "\"";
             }
 
             // Pad column with spaces.
             if (j)
-                pad_with_spaces(str, longest + escape_code_len);
+                pad_with_spaces(str, longest);
 
             // Print the key binding.
             g_printer->print(str.c_str(), str.length());

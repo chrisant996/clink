@@ -625,7 +625,14 @@ rl_translate_keyseq (const char *seq, char *array, int *len)
 	}
       if (has_meta)
 	{
-	  c = META (c);
+/* begin_clink_change
+ * In order for both Alt+X and UTF8 input to work,
+ * _rl_convert_meta_chars_to_ascii must be 0 and M-x must always be converted
+ * to ESC,UNMETA(x). */
+	  //c = META (c);
+	  array[l++] = ESC;	/* ESC is meta-prefix */
+	  c = UNMETA (c);
+/* end_clink_change */
 	  has_meta = 0;
 	}
 
@@ -1538,6 +1545,11 @@ rl_parse_and_bind (char *string)
   char *funname, *kname;
   register int c, i;
   int key, equivalency, foundmod, foundsep;
+/* begin_clink_change */
+  int has_meta;
+  int keyseq_len;
+  char keyseq[3];
+/* end_clink_change */
 
   while (string && whitespace (*string))
     string++;
@@ -1761,9 +1773,16 @@ rl_parse_and_bind (char *string)
       foundmod = 1;
     }
 
+/* begin_clink_change */
+  has_meta = 0;
+/* end_clink_change */
   if (substring_member_of_array (string, _rl_possible_meta_prefixes))
     {
-      key = META (key);
+/* begin_clink_change */
+      //key = META (key);
+      key = UNMETA (key);
+      has_meta = 1;
+/* end_clink_change */
       foundmod = 1;
     }
 
@@ -1773,13 +1792,26 @@ rl_parse_and_bind (char *string)
       return 1;
     }
 
+/* begin_clink_change */
+  keyseq_len = 0;
+  if (has_meta)
+    keyseq[keyseq_len++] = ESC;
+  keyseq[keyseq_len++] = key;
+  keyseq[keyseq_len++] = '\0';
+/* end_clink_change */
+
   /* Temporary.  Handle old-style keyname with macro-binding. */
   if (*funname == '\'' || *funname == '"')
     {
-      char useq[2];
+/* begin_clink_change */
+      //char useq[2];
+      char* useq = keyseq;
+/* end_clink_change */
       int fl = strlen (funname);
 
-      useq[0] = key; useq[1] = '\0';
+/* begin_clink_change */
+      //useq[0] = key; useq[1] = '\0';
+/* end_clink_change */
       if (fl && funname[fl - 1] == *funname)
 	funname[fl - 1] = '\0';
 
@@ -1789,15 +1821,21 @@ rl_parse_and_bind (char *string)
   /* Ugly, but working hack to keep prefix-meta around. */
   else if (_rl_stricmp (funname, "prefix-meta") == 0)
     {
-      char seq[2];
+/* begin_clink_change */
+      //char seq[2];
 
-      seq[0] = key;
-      seq[1] = '\0';
+      //seq[0] = key;
+      //seq[1] = '\0';
+      char* seq = keyseq;
+/* end_clink_change */
       rl_generic_bind (ISKMAP, seq, (char *)emacs_meta_keymap, _rl_keymap);
     }
 #endif /* PREFIX_META_HACK */
   else
-    rl_bind_key (key, rl_named_function (funname));
+/* begin_clink_change */
+    //rl_bind_key (key, rl_named_function (funname));
+    rl_bind_keyseq (keyseq, rl_named_function (funname));
+/* end_clink_change */
 
   return 0;
 }
@@ -1903,6 +1941,15 @@ hack_special_boolean_var (int i)
     _rl_reset_prompt ();
   else if (_rl_stricmp (name, "enable-bracketed-paste") == 0)
     _rl_enable_active_region = _rl_enable_bracketed_paste;
+/* begin_clink_change */
+  else if (_rl_stricmp (name, "convert-meta") == 0)
+    {
+      /* Do nothing; Clink needs this always off in order for UTF8 input to
+         work, and rl_translate_keyseq has a corresponding change to always
+         convert M-x to ESC,UNMETA(x) so that actual META input (Alt+key)
+         works. */
+    }
+/* end_clink_change */
 }
 
 typedef int _rl_sv_func_t PARAMS((const char *));

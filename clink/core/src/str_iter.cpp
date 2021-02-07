@@ -13,7 +13,7 @@ int str_iter_impl<char>::next()
 
     int ax = 0;
     int encode_length = 0;
-    while (int c = *m_ptr++)
+    while (int c = (unsigned char)*m_ptr++)
     {
         ax = (ax << 6) | (c & 0x7f);
         if (encode_length)

@@ -6,6 +6,16 @@
 #include <core/str_iter.h>
 
 //------------------------------------------------------------------------------
+extern "C" int mk_wcwidth(char32_t);
+inline int clink_wcwidth(char32_t c)
+{
+    if (c >= ' ' && c <= '~')
+        return 1;
+    int w = mk_wcwidth(c);
+    return (w >= 0) ? w : 1;
+}
+
+//------------------------------------------------------------------------------
 unsigned int cell_count(const char*);
 enum ecma48_state_enum;
 
