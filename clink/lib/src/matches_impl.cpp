@@ -523,6 +523,7 @@ void matches_impl::reset()
     m_coalesced = false;
     m_count = 0;
     m_append_character = '\0';
+    m_regen_blocked = false;
     m_suppress_append = false;
     m_suppress_quoting = 0;
     m_word_break_position = -1;
@@ -552,6 +553,12 @@ void matches_impl::set_suppress_quoting(int suppress)
 void matches_impl::set_word_break_position(int position)
 {
     m_word_break_position = position;
+}
+
+//------------------------------------------------------------------------------
+void matches_impl::set_regen_blocked()
+{
+    m_regen_blocked = true;
 }
 
 //------------------------------------------------------------------------------

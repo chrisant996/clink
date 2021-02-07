@@ -265,6 +265,10 @@ static int invoke_command(lua_State* state)
 /// making it convenient to grab a number from the screen and insert it as a
 /// command line argument.
 ///
+/// Match display filtering is also possible by using
+/// <a href="#clink.ondisplaymatches">clink.ondisplaymatches()</a> after setting
+/// the matches.
+///
 /// <em>Example .inputrc key binding:</em>
 /// <pre><code class="plaintext">M-n:            <span class="hljs-string">"luafunc:complete_numbers"</span>      <span class="hljs-comment"># Alt+N</span></code></pre>
 ///
@@ -276,18 +280,20 @@ static int invoke_command(lua_State* state)
 /// -show:  &nbsp; local _start = _end + console.getheight() - 1
 /// -show:  &nbsp; for i = _start,_end,-1 do
 /// -show:  &nbsp;   local line = console.getlinetext(i)
-/// -show:  &nbsp;   local words = {}
+/// -show:  &nbsp;   if line then
+/// -show:  &nbsp;     local words = {}
 /// -show:
-/// -show:  &nbsp;   -- Collect numbers from the line (minimum of three characters).
-/// -show:  &nbsp;   for word in line:gmatch("[^%w]*(%w%w[%w]+)") do
-/// -show:  &nbsp;     if word:match("^%x+$") then
-/// -show:  &nbsp;       table.insert(words, word)
+/// -show:  &nbsp;     -- Collect numbers from the line (minimum of three characters).
+/// -show:  &nbsp;     for word in line:gmatch("[^%w]*(%w%w[%w]+)") do
+/// -show:  &nbsp;       if word:match("^%x+$") then
+/// -show:  &nbsp;         table.insert(words, word)
+/// -show:  &nbsp;       end
 /// -show:  &nbsp;     end
-/// -show:  &nbsp;   end
 /// -show:
-/// -show:  &nbsp;   -- Add the words in reverse order so they're in proximity order.
-/// -show:  &nbsp;   for j = #words,1,-1 do
-/// -show:  &nbsp;     table.insert(matches, words[j])
+/// -show:  &nbsp;     -- Add the words in reverse order so they're in proximity order.
+/// -show:  &nbsp;     for j = #words,1,-1 do
+/// -show:  &nbsp;       table.insert(matches, words[j])
+/// -show:  &nbsp;     end
 /// -show:  &nbsp;   end
 /// -show:  &nbsp; end
 /// -show:
@@ -309,6 +315,16 @@ static int set_matches(lua_State* state)
     matches* matches = get_mutable_matches(nosort);
     if (!matches)
         return 0;
+
+    lua_getglobal(state, "clink");
+    lua_pushliteral(state, "_reset_display_filter");
+    lua_rawget(state, -2);
+    if (lua_state::pcall(state, 0, 0) != 0)
+    {
+        puts(lua_tostring(state, -1));
+        lua_pop(state, 2);
+        return 0;
+    }
 
     match_builder builder(*matches);
     match_builder_lua builder_lua(builder);

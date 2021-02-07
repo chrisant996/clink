@@ -52,6 +52,12 @@ local function prepare()
 end
 
 --------------------------------------------------------------------------------
+function clink._reset_display_filter()
+    clink.match_display_filter = nil
+    clink._event_callbacks["ondisplaymatches"] = nil
+end
+
+--------------------------------------------------------------------------------
 function clink._generate(line_state, match_builder)
     local impl = function ()
         clink.generator_stopped = nil
@@ -68,8 +74,7 @@ function clink._generate(line_state, match_builder)
         return false
     end
 
-    clink.match_display_filter = nil
-    clink._event_callbacks["ondisplaymatches"] = nil
+    clink._reset_display_filter()
 
     prepare()
     _current_builder = match_builder

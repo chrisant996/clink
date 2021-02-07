@@ -882,6 +882,7 @@ matches* line_editor_impl::get_mutable_matches(bool nosort)
     pipeline.set_nosort(nosort);
 
     m_matches.set_word_break_position(end_word.offset);
+    m_matches.set_regen_blocked();
 
     clear_flag(flag_generate);
     set_flag(flag_select);
@@ -990,7 +991,7 @@ void update_matches()
 
 matches* maybe_regenerate_matches(const char* needle, bool popup)
 {
-    if (!s_editor)
+    if (!s_editor || s_editor->m_matches.is_regen_blocked())
         return nullptr;
 
     // Check if a match display filter is active.

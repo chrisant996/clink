@@ -4,11 +4,7 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 
 # RELEASE
 
-- Script and API support to enable temporarily overloading completion.
-  - [x] rl.setmatches
-  - [x] rl.invokecommand
-  - [x] how to optionally disable sorting?
-  - [ ] how should match display filter work (or be disabled)?
+- Alt+H double lists certain key bindings, and one of the listings has a gibberish key name!
 
 ## Issues
 

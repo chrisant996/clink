@@ -52,6 +52,8 @@ public:
     virtual bool            match_display_filter(char** matches, match_display_filter_entry*** filtered_matches, bool popup) const override;
 
     void                    set_word_break_position(int position);
+    void                    set_regen_blocked();
+    bool                    is_regen_blocked() const { return m_regen_blocked; }
 
 private:
     virtual const char*     get_match(unsigned int index) const override;
@@ -101,6 +103,7 @@ private:
     bool                    m_coalesced = false;
     char                    m_append_character = '\0';
     bool                    m_suppress_append = false;
+    bool                    m_regen_blocked = false;
     int                     m_suppress_quoting = 0;
     int                     m_word_break_position = -1;
     shadow_bool             m_filename_completion_desired;
