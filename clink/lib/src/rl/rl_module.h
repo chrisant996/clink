@@ -48,6 +48,7 @@ private:
     str<16>         m_alias_color;
     str<16>         m_filtered_color;
     str<16>         m_arg_color;
+    str<16>         m_argmatcher_color;
     str<16>         m_flag_color;
     str<16>         m_none_color;
     int             m_insert_next_len = 0;

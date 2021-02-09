@@ -66,6 +66,10 @@ void lua_word_classifier::classify(const line_state& line, word_classifications&
     const char* ret = lua_tostring(state, -1);
     lua_settop(state, 0);
 
+    bool has_argmatcher = (ret[0] == 'm');
+    if (has_argmatcher)
+        ret++;
+
     const std::vector<word>& words(line.get_words());
     for (unsigned int i = 0; i < strlen(ret); i++)
     {
@@ -73,6 +77,7 @@ void lua_word_classifier::classify(const line_state& line, word_classifications&
         info->start = words[i].offset;
         info->end = info->start + words[i].length;
         info->word_class = to_word_class(ret[i]);
+        info->argmatcher = (i == 0 && has_argmatcher);
     }
 
     unsigned int target_count = min<unsigned int>(classifications_lua.size(), line.get_word_count());
@@ -82,6 +87,7 @@ void lua_word_classifier::classify(const line_state& line, word_classifications&
         info->start = words[i].offset;
         info->end = info->start + words[i].length;
         info->word_class = word_class::none;
+        info->argmatcher = false;
     }
 
     for (unsigned int i = 0; i < classifications_lua.size(); i++)

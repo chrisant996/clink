@@ -28,6 +28,7 @@ struct word_class_info
     unsigned int    start : 16;
     unsigned int    end : 16;
     word_class      word_class;
+    bool            argmatcher;
 };
 
 //------------------------------------------------------------------------------

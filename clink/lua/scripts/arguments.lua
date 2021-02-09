@@ -702,10 +702,13 @@ end
 
 
 --------------------------------------------------------------------------------
-local function _find_argmatcher(line_state)
+local function _find_argmatcher(line_state, check_existence)
     -- Running an argmatcher only makes sense if there's two or more words.
-    if line_state:getwordcount() < 2 then
+    if line_state:getwordcount() < (check_existence and 1 or 2) then
         return
+    end
+    if line_state:getwordcount() > 1 then
+        check_existence = nil
     end
 
     local first_word = clink.lower(line_state:getword(1))
@@ -713,14 +716,20 @@ local function _find_argmatcher(line_state)
     -- Check for an exact match.
     local argmatcher = _argmatchers[path.getname(first_word)]
     if argmatcher then
-        return argmatcher
+        if check_existence then
+            argmatcher = nil
+        end
+        return argmatcher, true
     end
 
     -- If the extension is in PATHEXT then try stripping the extension.
     if path.isexecext(first_word) then
         argmatcher = _argmatchers[path.getbasename(first_word)]
         if argmatcher then
-            return argmatcher
+            if check_existence then
+                argmatcher = nil
+            end
+            return argmatcher, true
         end
     end
 end
@@ -734,11 +743,16 @@ end
 function clink._parse_word_types(line_state, word_classifier)
     local parsed_word_types = {}
 
+    local argmatcher, has_argmatcher = _find_argmatcher(line_state, true)
+
     local word_count = line_state:getwordcount()
     local first_word = line_state:getword(1) or ""
     if word_count > 1 or string.len(first_word) > 0 then
         local word_info = line_state:getwordinfo(1)
         local command_offset = line_state:getcommandoffset()
+        if has_argmatcher then
+            table.insert(parsed_word_types, "m"); --argmatcher found
+        end
         if word_info.alias then
             table.insert(parsed_word_types, "d"); --doskey
         elseif clink.is_cmd_command(first_word) then
@@ -748,7 +762,6 @@ function clink._parse_word_types(line_state, word_classifier)
         end
     end
 
-    local argmatcher = _find_argmatcher(line_state)
     if argmatcher then
         local reader = _argreader(argmatcher)
         reader._line_state = line_state

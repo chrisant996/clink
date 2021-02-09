@@ -159,24 +159,36 @@ static setting_color g_color_filtered(
     "The default color for filtered completions.",
     "bold");
 
+static setting_color g_color_argmatcher(
+    "color.argmatcher",
+    "Argmatcher color",
+    "The color for a command name that has an argmatcher.  Only used when\n"
+    "clink.colorize_input is set.  If a command name has an argmatcher available,\n"
+    "then this color will be used for the command name, otherwise the doskey, cmd,\n"
+    "or input color will be used.",
+    "");
+
 static setting_color g_color_arg(
     "color.arg",
     "Argument color",
-    "The color for arguments in the input line when clink.colorize_input is set.",
+    "The color for arguments in the input line.  Only used when\n"
+    "clink.colorize_input is set.",
     "bold");
 
 static setting_color g_color_flag(
     "color.flag",
     "Flag color",
-    "The color for flags in the input line when clink.colorize_input is set.",
+    "The color for flags in the input line.  Only used when clink.colorize_input is\n"
+    "set.",
     "default");
 
 static setting_color g_color_unexpected(
     "color.unexpected",
     "Unexpected argument color",
-    "The color for unexpected arguments in the input line when clink.colorize_input\n"
-    "is set.  An argument is unexpected if an argument matcher expected there to be\n"
-    "no more arguments in the input line or if the word doesn't match any expected\n"
+    "The color for unexpected arguments in the input line.  Only used when\n"
+    "clink.colorize_input is set.  An argument is unexpected if an argument matcher\n"
+    "expected there to be no more arguments in the input line or if the word\n"
+    "doesn't match any expected\n"
     "values.",
     "default");
 
@@ -332,6 +344,7 @@ extern "C" int read_key_hook(void)
 //------------------------------------------------------------------------------
 static const word_classifications* s_classifications = nullptr;
 static const char* s_input_color = nullptr;
+static const char* s_argmatcher_color = nullptr;
 static const char* s_arg_color = nullptr;
 static const char* s_flag_color = nullptr;
 static const char* s_none_color = nullptr;
@@ -377,7 +390,11 @@ static char get_face_func(int in, int active_begin, int active_end)
                 if (in < cur_info->start)
                     return s_input_color ? '2' : '0';
                 if (in < cur_info->end)
+                {
+                    if (cur_info->argmatcher && s_argmatcher_color)
+                        return 'm';
                     return c_faces[int(cur_info->word_class)];
+                }
             }
         }
     }
@@ -427,6 +444,11 @@ static void puts_face_func(const char* s, const char* face, int n)
                     out << "\x1b[" << _rl_alias_color << "m";
                 else
                     out << c_normal;
+                break;
+            case 'm':
+                assert(s_argmatcher_color); // Shouldn't reach here otherwise.
+                if (s_argmatcher_color) // But avoid crashing, just in case.
+                    out << s_argmatcher_color;
                 break;
             case 'a':   out << fallback_color(s_arg_color, fallback_color(s_input_color, c_normal)); break;
             case 'f':   out << fallback_color(s_flag_color, c_normal); break;
@@ -1312,6 +1334,7 @@ void rl_module::on_begin_line(const context& context)
     s_arg_color = build_color_sequence(g_color_arg, m_arg_color, true);
     s_flag_color = build_color_sequence(g_color_flag, m_flag_color, true);
     s_none_color = build_color_sequence(g_color_unexpected, m_none_color, true);
+    s_argmatcher_color = build_color_sequence(g_color_argmatcher, m_argmatcher_color, true);
     _rl_display_modmark_color = build_color_sequence(g_color_modmark, m_modmark_color, true);
     _rl_display_horizscroll_color = build_color_sequence(g_color_horizscroll, m_horizscroll_color, true);
     _rl_display_message_color = build_color_sequence(g_color_message, m_message_color, true);
@@ -1348,6 +1371,7 @@ void rl_module::on_end_line()
     s_classifications = nullptr;
     s_input_color = nullptr;
     s_arg_color = nullptr;
+    s_argmatcher_color = nullptr;
     s_flag_color = nullptr;
     s_none_color = nullptr;
     _rl_display_modmark_color = nullptr;
