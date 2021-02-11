@@ -97,7 +97,34 @@ INT_PTR WINAPI initialise_clink(const app_context::desc& app_desc)
     if (!get_host_name(host_name))
         return false;
 
+    SYSTEMTIME now;
+    GetLocalTime(&now);
+    LOG("---- %04u/%02u/%02u %02u:%02u:%02u.%03u -------------------------------------------------",
+        now.wYear, now.wMonth, now.wDay,
+        now.wHour, now.wMinute, now.wSecond, now.wMilliseconds);
     LOG("Host process is '%s'", host_name.c_str());
+
+    {
+#pragma warning(push)
+#pragma warning(disable:4996)
+        OSVERSIONINFO ver = { sizeof(ver) };
+        if (GetVersionEx(&ver))
+        {
+            SYSTEM_INFO system_info;
+            GetNativeSystemInfo(&system_info);
+            LOG("Windows version %u.%u.%u (%s)",
+                ver.dwMajorVersion,
+                ver.dwMinorVersion,
+                ver.dwBuildNumber,
+                (system_info.wProcessorArchitecture == PROCESSOR_ARCHITECTURE_AMD64) ? "x64" : "x86");
+        }
+#ifdef _WIN64
+        LOG("Clink version %s (x64)", CLINK_VERSION_STR);
+#else
+        LOG("Clink version %s (x86)", CLINK_VERSION_STR);
+#endif
+#pragma warning(pop)
+    }
 
     // Search for a supported host.
     struct {
