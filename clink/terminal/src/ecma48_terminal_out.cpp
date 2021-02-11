@@ -224,14 +224,21 @@ void ecma48_terminal_out::write(const char* chars, int length)
 
     if (m_screen.has_native_vt_processing())
     {
-        static const char* int1 = tgetstr("vs", nullptr);
-        static const char* int2 = tgetstr("ve", nullptr);
-        static int len1 = (int)strlen(int1);
-        static int len2 = (int)strlen(int2);
+        struct intercept_string
+        {
+            intercept_string(const char* s) : str(s), len(int(strlen(s))) {}
+            const char* const str;
+            const int len;
+        };
+        static const intercept_string c_strs[] =
+        {
+            tgetstr("vs", nullptr),
+            tgetstr("ve", nullptr),
+        };
 
-        bool intercept = ((length == len1 || length == len2) &&
+        bool intercept = ((length == c_strs[0].len || length == c_strs[1].len) &&
                           chars[0] == '\x1b' &&
-                          (strcmp(chars, int1) == 0 || strcmp(chars, int2) == 0));
+                          (strcmp(chars, c_strs[0].str) == 0 || strcmp(chars, c_strs[1].str) == 0));
 
         if (!intercept)
         {
