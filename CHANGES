@@ -5,6 +5,7 @@
 ### v1.1.27
 
 - Added `color.argmatcher` setting which, when set, is used to color a command name if it has an associated argmatcher (this supersedes `color.cmd`, `color.doskey`, and `color.input`).  By default it's not set.
+- Added `log.rl_terminal` setting which logs all terminal input and output for Readline (this setting may be renamed or removed in the future).
 
 ### v1.1.26
 

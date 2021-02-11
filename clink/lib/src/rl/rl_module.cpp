@@ -211,6 +211,30 @@ setting_bool g_classify_words(
     "Lua scripts.",
     true);
 
+#define CAN_LOG_RL_TERMINAL
+#ifdef CAN_LOG_RL_TERMINAL
+static setting_bool g_log_rl_terminal(
+    "log.rl_terminal",
+    "Log Readline terminal input and output",
+    "WARNING:  Only turn this on for diagnostic purposes, and only temporarily!\n"
+    "Having this on significantly increases the amount of information written to\n"
+    "the log file.",
+    false);
+#endif
+
+
+
+//------------------------------------------------------------------------------
+#ifdef CAN_LOG_RL_TERMINAL
+static void LOGCURSORPOS()
+{
+    CONSOLE_SCREEN_BUFFER_INFO csbi;
+    HANDLE h = GetStdHandle(STD_OUTPUT_HANDLE);
+    if (GetConsoleScreenBufferInfo(h, &csbi))
+        LOG("CURSORPOS %d,%d", csbi.dwCursorPosition.X, csbi.dwCursorPosition.Y);
+}
+#endif
+
 
 
 //------------------------------------------------------------------------------
@@ -474,6 +498,13 @@ static void puts_face_func(const char* s, const char* face, int n)
     if (cur_face != '0')
         out.concat(c_normal);
 
+#ifdef CAN_LOG_RL_TERMINAL
+    if (g_log_rl_terminal.get())
+    {
+        LOGCURSORPOS();
+        LOG("PUTSFACE \"%*s\", %d", out.length(), out.c_str(), out.length());
+    }
+#endif
     g_printer->print(out.c_str(), out.length());
 }
 
@@ -1043,6 +1074,52 @@ static void terminal_write_thunk(FILE* stream, const char* chars, int char_count
 }
 
 //------------------------------------------------------------------------------
+#ifdef CAN_LOG_RL_TERMINAL
+static void terminal_log_write(FILE* stream, const char* chars, int char_count)
+{
+    if (stream == out_stream)
+    {
+        assert(g_printer);
+        LOGCURSORPOS();
+        LOG("RL_OUTSTREAM \"%*s\", %d", char_count, chars, char_count);
+        g_printer->print(chars, char_count);
+        return;
+    }
+
+    if (stream == null_stream)
+        return;
+
+    if (stream == stderr || stream == stdout)
+    {
+        if (stream == stderr && g_rl_hide_stderr.get())
+            return;
+
+        DWORD dw;
+        HANDLE h = GetStdHandle(stream == stderr ? STD_ERROR_HANDLE : STD_OUTPUT_HANDLE);
+        if (GetConsoleMode(h, &dw))
+        {
+            LOGCURSORPOS();
+            LOG("%s \"%*s\", %d", (stream == stderr) ? "CONERR" : "CONOUT", char_count, chars, char_count);
+            wstr<32> s;
+            to_utf16(s, str_iter(chars, char_count));
+            WriteConsoleW(h, s.c_str(), s.length(), &dw, nullptr);
+        }
+        else
+        {
+            LOG("%s \"%*s\", %d", (stream == stderr) ? "FILEERR" : "FILEOUT", char_count, chars, char_count);
+            WriteFile(h, chars, char_count, &dw, nullptr);
+        }
+        return;
+    }
+
+    assert(false);
+    LOGCURSORPOS();
+    LOG("FWRITE \"%*s\", %d", char_count, chars, char_count);
+    fwrite(chars, char_count, 1, stream);
+}
+#endif
+
+//------------------------------------------------------------------------------
 static void terminal_fflush_thunk(FILE* stream)
 {
     if (stream != out_stream && stream != null_stream)
@@ -1069,6 +1146,10 @@ rl_module::rl_module(const char* shell_name, terminal_in* input)
 
     rl_getc_function = terminal_read_thunk;
     rl_fwrite_function = terminal_write_thunk;
+#ifdef CAN_LOG_RL_TERMINAL
+    if (g_log_rl_terminal.get())
+        rl_fwrite_function = terminal_log_write;
+#endif
     rl_fflush_function = terminal_fflush_thunk;
     rl_instream = in_stream;
     rl_outstream = out_stream;
@@ -1268,6 +1349,27 @@ void rl_module::bind_input(binder& binder)
 //------------------------------------------------------------------------------
 void rl_module::on_begin_line(const context& context)
 {
+#ifdef CAN_LOG_RL_TERMINAL
+    {
+        bool log = g_log_rl_terminal.get();
+
+        // Remind if logging is on.
+        static bool s_remind = true;
+        if (s_remind)
+        {
+            s_remind = false;
+            if (log)
+                context.printer.print(
+                    "\x1b[93mreminder: Clink is logging terminal input and output.\x1b[m\n"
+                    "\x1b[93mYou can use `clink set log.rl_terminal off` to turn it off.\x1b[m\n"
+                    "\n");
+        }
+
+        // Reset the fwrite function so logging changes can take effect immediately.
+        rl_fwrite_function = log ? terminal_log_write : terminal_write_thunk;
+    }
+#endif
+
     g_printer = &context.printer;
     g_pager = &context.pager;
     g_rl_buffer = &context.buffer;
@@ -1397,6 +1499,11 @@ void rl_module::on_input(const input& input, result& result, const context& cont
 {
     assert(!g_result);
     g_result = &result;
+
+#ifdef CAN_LOG_RL_TERMINAL
+    if (g_log_rl_terminal.get())
+        LOG("INPUT \"%*s\", %d", input.len, input.keys, input.len);
+#endif
 
     // Setup the terminal.
     struct : public terminal_in
