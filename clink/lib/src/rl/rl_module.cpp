@@ -213,8 +213,8 @@ setting_bool g_classify_words(
 
 #define CAN_LOG_RL_TERMINAL
 #ifdef CAN_LOG_RL_TERMINAL
-static setting_bool g_log_rl_terminal(
-    "log.rl_terminal",
+static setting_bool g_debug_log_terminal(
+    "debug.log_terminal",
     "Log Readline terminal input and output",
     "WARNING:  Only turn this on for diagnostic purposes, and only temporarily!\n"
     "Having this on significantly increases the amount of information written to\n"
@@ -499,7 +499,7 @@ static void puts_face_func(const char* s, const char* face, int n)
         out.concat(c_normal);
 
 #ifdef CAN_LOG_RL_TERMINAL
-    if (g_log_rl_terminal.get())
+    if (g_debug_log_terminal.get())
     {
         LOGCURSORPOS();
         LOG("PUTSFACE \"%*s\", %d", out.length(), out.c_str(), out.length());
@@ -1147,7 +1147,7 @@ rl_module::rl_module(const char* shell_name, terminal_in* input)
     rl_getc_function = terminal_read_thunk;
     rl_fwrite_function = terminal_write_thunk;
 #ifdef CAN_LOG_RL_TERMINAL
-    if (g_log_rl_terminal.get())
+    if (g_debug_log_terminal.get())
         rl_fwrite_function = terminal_log_write;
 #endif
     rl_fflush_function = terminal_fflush_thunk;
@@ -1351,7 +1351,7 @@ void rl_module::on_begin_line(const context& context)
 {
 #ifdef CAN_LOG_RL_TERMINAL
     {
-        bool log = g_log_rl_terminal.get();
+        bool log = g_debug_log_terminal.get();
 
         // Remind if logging is on.
         static bool s_remind = true;
@@ -1501,7 +1501,7 @@ void rl_module::on_input(const input& input, result& result, const context& cont
     g_result = &result;
 
 #ifdef CAN_LOG_RL_TERMINAL
-    if (g_log_rl_terminal.get())
+    if (g_debug_log_terminal.get())
         LOG("INPUT \"%*s\", %d", input.len, input.keys, input.len);
 #endif
 
