@@ -411,6 +411,12 @@ void win_terminal_in::read_console()
     unsigned int buffer_count = m_buffer_count;
     while (buffer_count == m_buffer_count)
     {
+#ifdef DEBUG
+        DWORD modeIn;
+        GetConsoleMode(GetStdHandle(STD_INPUT_HANDLE), &modeIn);
+        assert(!(modeIn & ENABLE_PROCESSED_INPUT));
+#endif
+
         DWORD count;
         INPUT_RECORD record;
         if (!ReadConsoleInputW(m_stdin, &record, 1, &count))

@@ -184,6 +184,15 @@ bool lua_state::do_file(const char* path)
 //------------------------------------------------------------------------------
 int lua_state::pcall(lua_State* L, int nargs, int nresults)
 {
+    // Lua scripts can have a side effect of changing the console mode (e.g. if
+    // they spawn another process, such as in a prompt filter), so always
+    // save/restore the console mode around Lua pcalls.
+    DWORD modeIn, modeOut;
+    HANDLE hIn = GetStdHandle(STD_INPUT_HANDLE);
+    HANDLE hOut = GetStdHandle(STD_OUTPUT_HANDLE);
+    GetConsoleMode(hIn, &modeIn);
+    GetConsoleMode(hOut, &modeOut);
+
     // Calculate stack position for message handler.
     int hpos = lua_gettop(L) - nargs;
 
@@ -199,6 +208,9 @@ int lua_state::pcall(lua_State* L, int nargs, int nresults)
     // Remove custom error message handler from stack.
     lua_remove(L, hpos);
 
+    // Restore the console mode.
+    SetConsoleMode(hIn, modeIn);
+    SetConsoleMode(hOut, modeOut);
     return ret;
 }
 
