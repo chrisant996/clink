@@ -3,7 +3,7 @@
 
 <!-- ----------------------------------------------------- -->
 <head>
-<title>Clink v1.1.26</title>
+<title>Clink v1.1.28</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Rambla:wght@400;700&family=Roboto&family=Fira+Mono&display=swap');
 html {
@@ -409,7 +409,7 @@ var hljs=function(){"use strict";function e(n){Object.freeze(n);var t="function"
         </td>
         <td style="text-align:right">
             <div id="header">
-                <div id="title">Clink v1.1.26</div>
+                <div id="title">Clink v1.1.28</div>
                 <div id="url">
                     <a href="http://github.com/chrisant996/clink">
                         http://github.com/chrisant996/clink
@@ -547,6 +547,11 @@ var hljs=function(){"use strict";function e(n){Object.freeze(n);var t="function"
 <td>The color for arguments in the input line when <code>clink.colorize_input</code> is enabled.</td>
 </tr>
 <tr>
+<td align="center"><code>color.argmatcher</code></td>
+<td align="center"></td>
+<td>The color for the command name in the input line when <code>clink.colorize_input</code> is enabled, if the command name has an argmatcher available.</td>
+</tr>
+<tr>
 <td align="center"><a name="color_cmd"/><code>color.cmd</code></td>
 <td align="center"><code>bold</code></td>
 <td>Used when Clink displays shell (CMD.EXE) command completions, and in the input line when <code>clink.colorize_input</code> is enabled.</td>
@@ -610,6 +615,11 @@ var hljs=function(){"use strict";function e(n){Object.freeze(n);var t="function"
 <td align="center"><code>color.unexpected</code></td>
 <td align="center"><code>default</code></td>
 <td>The color for unexpected arguments in the input line when <code>clink.colorize_input</code> is enabled.</td>
+</tr>
+<tr>
+<td align="center"><code>debug.log_terminal</code></td>
+<td align="center">False</td>
+<td>Logs all terminal input and output to the clink.log file.  This is intended for diagnostic purposes only, and can make the log file grow significantly.</td>
 </tr>
 <tr>
 <td align="center"><code>doskey.enhanced</code></td>
@@ -2375,6 +2385,16 @@ string.matchlen("abx", "abx")       -- returns -1</code></pre></div></div><hr/>
         <div class="section" id="changes">
 <h1 id="changes">Changes</h1>
 <h2 id="releases-from-chrisant996clink-fork">Releases from <a href="https://github.com/chrisant996/clink">chrisant996/clink</a> fork</h2>
+<h3 id="v1128">v1.1.28</h3>
+<ul>
+<li>Renamed the <code>log.rl_terminal</code> setting to <code>debug.log_terminal</code>; it has already been repeatedly very useful in multiple was since it was added, so it stays.</li>
+<li>Fixed <a href="https://github.com/chrisant996/clink/issues/70">#70</a>; ctrl+c not working (regression introduced in v1.1.25).</li>
+</ul>
+<h3 id="v1127">v1.1.27</h3>
+<ul>
+<li>Added <code>color.argmatcher</code> setting which, when set, is used to color a command name if it has an associated argmatcher (this supersedes <code>color.cmd</code>, <code>color.doskey</code>, and <code>color.input</code>).  By default it&#39;s not set.</li>
+<li>Added <code>log.rl_terminal</code> setting which logs all terminal input and output for Readline (this setting may be renamed or removed in the future).</li>
+</ul>
 <h3 id="v1126">v1.1.26</h3>
 <ul>
 <li>Added <code>rl.invokecommand()</code> which can invoke a Readline command from inside a &quot;luafunc:&quot; key binding.</li>
