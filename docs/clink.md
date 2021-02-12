@@ -88,6 +88,7 @@ Name                         | Default | Description
 `cmd.auto_answer`            | `off`   | Automatically answers cmd.exe's "Terminate batch job (Y/N)?" prompts. `off` = disabled, `answer_yes` = answer Y, `answer_no` = answer N.
 `cmd.ctrld_exits`            | True    | <kbd>Ctrl</kbd>+<kbd>D</kbd> exits the process when it is pressed on an empty line.
 `color.arg`                  |         | The color for arguments in the input line when `clink.colorize_input` is enabled.
+`color.argmatcher`           |         | The color for the command name in the input line when `clink.colorize_input` is enabled, if the command name has an argmatcher available.
 <a name="color_cmd"/>`color.cmd` | `bold` | Used when Clink displays shell (CMD.EXE) command completions, and in the input line when `clink.colorize_input` is enabled.
 <a name="color_doskey"/>`color.doskey` | `bright cyan` | Used when Clink displays doskey alias completions, and in the input line when `clink.colorize_input` is enabled.
 `color.filtered`             | `bold`  | The default color for filtered completions (see <a href="#filteringthematchdisplay">Filtering the Match Display</a>).
@@ -101,6 +102,7 @@ Name                         | Default | Description
 `color.prompt`               |         | When set, this is used as the default color for the prompt.  But it's overridden by any colors set by <a href="#customisingtheprompt">Customising The Prompt</a>.
 <a name="color_readonly"/>`color.readonly` | | Used when Clink displays file completions with the "readonly" attribute.
 `color.unexpected`           | `default` | The color for unexpected arguments in the input line when `clink.colorize_input` is enabled.
+`debug.log_terminal`         | False   | Logs all terminal input and output to the clink.log file.  This is intended for diagnostic purposes only, and can make the log file grow significantly.
 `doskey.enhanced`            | True    | Enhanced Doskey adds the expansion of macros that follow `\|` and `&` command separators and respects quotes around words when parsing `$1`..`$9` tags. Note that these features do not apply to Doskey use in Batch files.
 `exec.cwd`                   | True    | When matching executables as the first word (`exec.enable`), include executables in the current directory. (This is implicit if the word being completed is a relative path).
 `exec.dirs`                  | True    | When matching executables as the first word (`exec.enable`), also include directories relative to the current working directory as matches.
