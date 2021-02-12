@@ -50,6 +50,17 @@ template <class A> A clamp(A v, A m, A M) { return min(max(v, m), M); }
 #endif
 
 //------------------------------------------------------------------------------
+#define FILE_LINE __FILE__ "(" AS_STR(__LINE__) "): "
+#ifdef HIDE_TODO
+#define TODO(s)
+#define WARNING(s)
+#else
+#define TODO(s) __pragma(message (FILE_LINE /*"warning: "*/ "TODO: " s))
+#define WARNING(s) __pragma(message (FILE_LINE /*"warning: "*/ "WARN: " s))
+#endif
+//#define PRAGMA_ERROR(s) __pragma(message (FILE_LINE "error: " s))
+
+//------------------------------------------------------------------------------
 extern const char* const bindableEsc;
 
 //------------------------------------------------------------------------------
