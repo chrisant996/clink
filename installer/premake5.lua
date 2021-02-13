@@ -60,8 +60,23 @@ local function copy(src, dest)
 end
 
 --------------------------------------------------------------------------------
-local function have_required_tool(name)
-    return exec("where " .. name, true)
+local function have_required_tool(name, fallback)
+    local tool = exec("where " .. name, true)
+    if not tool and fallback then
+        local t
+        if type(fallback) == "table" then
+            t = fallback
+        else
+            t = { fallback }
+        end
+        for _,dir in ipairs(t) do
+            tool = exec('where /r "'..dir..'" '..name, true)
+            if tool then
+                break
+            end
+        end
+    end
+    return tool
 end
 
 --------------------------------------------------------------------------------
@@ -75,10 +90,10 @@ newaction {
         -- Check we have the tools we need.
         local have_msbuild = have_required_tool("msbuild")
         local have_mingw = have_required_tool("mingw32-make")
-        local have_nsis = have_required_tool("makensis")
-        local have_7z = have_required_tool("7z")
+        local have_nsis = have_required_tool("makensis", "c:\Program Files (x86)\NSIS")
+        local have_7z = have_required_tool("7z", { "c:\Program Files\7-Zip", "c:\Program Files (x86)\7-Zip" })
 
-        -- Clone repro in release folder and checkout the specified version
+        -- Clone repo in release folder and checkout the specified version
         local code_dir = root_dir.."~working/"
         rmdir(code_dir)
         mkdir(code_dir)
@@ -97,7 +112,7 @@ newaction {
             if have_msbuild then
                 target = target or "build"
 
-                toolchain = _OPTIONS["vsver"] or "vs2013"
+                toolchain = _OPTIONS["vsver"] or "vs2019"
                 exec(premake .. " " .. toolchain)
                 os.chdir(".build/" .. toolchain)
 
