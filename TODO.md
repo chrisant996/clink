@@ -3,7 +3,6 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 <br/>
 
 # RELEASE
-- Type `git checkout clink.vp`<kbd>Tab</kbd>, then <kbd>Alt</kbd>+<kbd>=</kbd>, then <kbd>Backspace</kbd>, then <kbd>Tab</kbd> => shows unfiltered matches!  But <kbd>Tab</kbd> _again_ filters the matches.
 
 ## Issues
 

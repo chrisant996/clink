@@ -621,10 +621,13 @@ static char** alternative_matches(const char* text, int start, int end)
     if (!s_matches)
         return nullptr;
 
+    update_matches();
     if (matches* regen = maybe_regenerate_matches(text, s_is_popup))
+    {
+        // It's ok to redirect s_matches here because s_matches is reset in
+        // every rl_module::on_input() call.
         s_matches = regen;
-    else
-        update_matches();
+    }
 
     str<> tmp;
     const char* pattern = nullptr;
