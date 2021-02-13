@@ -90,8 +90,8 @@ newaction {
         -- Check we have the tools we need.
         local have_msbuild = have_required_tool("msbuild")
         local have_mingw = have_required_tool("mingw32-make")
-        local have_nsis = have_required_tool("makensis", "c:\Program Files (x86)\NSIS")
-        local have_7z = have_required_tool("7z", { "c:\Program Files\7-Zip", "c:\Program Files (x86)\7-Zip" })
+        local have_nsis = have_required_tool("makensis", "c:\\Program Files (x86)\\NSIS")
+        local have_7z = have_required_tool("7z", { "c:\\Program Files\\7-Zip", "c:\\Program Files (x86)\\7-Zip" })
 
         -- Clone repo in release folder and checkout the specified version
         local code_dir = root_dir.."~working/"
