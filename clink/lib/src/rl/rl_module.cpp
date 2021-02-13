@@ -151,7 +151,7 @@ static setting_color g_color_doskey(
     "color.doskey",
     "Doskey completions",
     "Used when Clink displays doskey macro completions.",
-    "bright cyan");
+    "bold cyan");
 
 static setting_color g_color_filtered(
     "color.filtered",

@@ -53,9 +53,18 @@ local function is_prefix3(s, ...)
 end
 
 --------------------------------------------------------------------------------
+local function classify_to_end(idx, line_state, classify, wc)
+    while idx <= line_state:getwordcount() do
+        classify:classifyword(idx, wc)
+        idx = idx + 1
+    end
+end
+
+--------------------------------------------------------------------------------
 local function color_handler(word_index, line_state, classify)
     local i = word_index
     local include_clear = true
+    local include_bold = true
     local include_bright = true
     local include_underline = true
     local include_color = true
@@ -68,7 +77,7 @@ local function color_handler(word_index, line_state, classify)
 
         include_clear = false
 
-        if word ~= "" then
+        if word ~= "" and word ~= "sgr" then
             include_sgr = false
         end
 
@@ -77,11 +86,18 @@ local function color_handler(word_index, line_state, classify)
                 invalid = true
                 break
             end
+            include_bold = false
             include_bright = true
             include_underline = false
             include_color = true
             include_on = false
-        elseif is_prefix3(word, "bold", "dim", "bright") then
+        elseif is_prefix3(word, "bold", "nobold", "dim") then
+            if not include_bold then
+                invalid = true
+                break
+            end
+            include_bold = false
+        elseif is_prefix3(word, "bright") then
             if not include_bright then
                 invalid = true
                 break
@@ -98,6 +114,7 @@ local function color_handler(word_index, line_state, classify)
                 invalid = true
                 break
             end
+            include_bold = false
             include_bright = false
             include_underline = false
             include_color = false
@@ -127,7 +144,7 @@ local function color_handler(word_index, line_state, classify)
     end
 
     if classify and invalid then
-        classify:classifyword(i, "n") --none
+        classify_to_end(i, line_state, classify, "n") --none
     end
     if classify or invalid then
         return {}
@@ -136,13 +153,13 @@ local function color_handler(word_index, line_state, classify)
     local list = {}
     if include_on then
         table.insert(list, "on")
-        if include_bright then
-            table.insert(list, "bold")
-        end
+    end
+    if include_bold then
+        table.insert(list, "bold")
+        table.insert(list, "nobold")
     end
     if include_bright then
         table.insert(list, "bright")
-        table.insert(list, "dim")
     end
     if include_underline then
         table.insert(list, "underline")
@@ -195,14 +212,6 @@ local function value_handler(match_word, word_index, line_state, builder, classi
         return color_handler(word_index, line_state)
     else
         return info.values
-    end
-end
-
---------------------------------------------------------------------------------
-local function classify_to_end(idx, line_state, classify, wc)
-    while idx <= line_state:getwordcount() do
-        classify:classifyword(idx, wc)
-        idx = idx + 1
     end
 end
 

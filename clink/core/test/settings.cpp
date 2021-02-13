@@ -185,7 +185,7 @@ TEST_CASE("settings : color")
 
     REQUIRE(test.set("bold green on magenta"));
     test.get_descriptive(tmp);
-    REQUIRE(tmp.equals("bright green on magenta"));
+    REQUIRE(tmp.equals("bold green on magenta"));
 
     REQUIRE(!test.set("bold on green underline"));
     REQUIRE(test.set("bold underline on green     "));

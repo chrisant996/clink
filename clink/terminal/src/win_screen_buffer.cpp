@@ -431,8 +431,12 @@ void win_screen_buffer::set_attributes(attributes attr)
         return;
 
     // Bold
+    bool apply_bold = false;
     if (auto bold_attr = attr.get_bold())
+    {
         m_bold = !!(bold_attr.value);
+        apply_bold = true;
+    }
 
     // Underline
     if (auto underline = attr.get_underline())
@@ -455,10 +459,28 @@ void win_screen_buffer::set_attributes(attributes attr)
     else
         bold |= (out_attr & attr_mask_bold) != 0;
 
-    if (bold)
-        out_attr |= attr_mask_bold;
-    else
-        out_attr &= ~attr_mask_bold;
+    // Adjust intensity per bold.  Bold can add intensity.  Nobold can remove
+    // intensity added by bold, but cannot remove intensity built into the
+    // color number.
+    //
+    // In other words:
+    //  - If the color is 36 (cyan) then bold can make it bright cyan.
+    //  - If the color is 36 (cyan) then nobold has no visible effect.
+    //  - If the color is 1;36 (bold cyan) then nobold can make it cyan.
+    //  - If the color is 96 (bright cyan) then bold has no visible effect (but
+    //    some terminal implementations apply a bold font with bright cyan as
+    //    the color).
+    //  - If the color is 96 (bright cyan) then nobold has no visible effect.
+    //  - If the color is 1;96 (bold bright cyan) then nobold has no visible
+    //    effect (but some terminal implementations apply a non-bold font with
+    //    bright cyan as the color).
+    if (apply_bold)
+    {
+        if (bold)
+            out_attr |= attr_mask_bold;
+        else
+            out_attr &= ~attr_mask_bold;
+    }
 
     // Background color
     if (auto bg = attr.get_bg())

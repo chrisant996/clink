@@ -670,9 +670,7 @@ bool setting_color::set(const char* value)
         if (strcmpi(token.c_str(), "on") == 0)
         {
             if (pcolor == &bg) return false; // can't use "on" more than once
-            if (fg < 0)
-                bold = bright;
-            else if (bright > 0)
+            if (bright > 0)
                 fg += 8;
             pcolor = &bg;
             bright = -1;
@@ -689,15 +687,15 @@ bool setting_color::set(const char* value)
             continue;
         }
 
-        if (imatch3(token, "bold"))
+        if (imatch3(token, "bold") || imatch3(token, "nobold") || imatch3(token, "dim"))
         {
             if (pcolor == &bg) return false; // bold only applies to fg
-            if (bright >= 0) return false; // disallow combinations
-            bright = 1;
+            if (bold >= 0) return false; // disallow combinations
+            bold = imatch3(token, "bold");
             continue;
         }
 
-        if (imatch3(token, "bright") || imatch3(token, "dim"))
+        if (imatch3(token, "bright"))
         {
             if (bright >= 0) return false; // disallow combinations
             bright = imatch3(token, "bright");
@@ -728,18 +726,12 @@ bool setting_color::set(const char* value)
     if (*pcolor >= 0 && bright > 0)
         (*pcolor) += 8;
 
-    if (pcolor == &fg)
-        bold = bright;
-
     code = "0";
 
-    if (fg < 0)
-    {
-        if (bold > 0)
-            code << ";1";
-        else if (bold == 0)
-            code << ";22";
-    }
+    if (bold > 0)
+        code << ";1";
+    else if (bold == 0)
+        code << ";22";
 
     if (underline > 0)
         code << ";4";
@@ -843,7 +835,7 @@ nope:
         {
             if (expected > bold_token) goto nope;
             expected = bold_token + 1;
-            out << ((x == 1) ? "bold " : "dim ");
+            out << ((x == 1) ? "bold " : "nobold ");
         }
         else if (x == 4 || x == 24)
         {

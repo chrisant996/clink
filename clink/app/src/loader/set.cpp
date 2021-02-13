@@ -58,7 +58,7 @@ static void list_options(const char* key)
         {
             static const char* const color_keywords[] =
             {
-                "bold", "dim", "underline", "nounderline",
+                "bold", "nobold", "underline", "nounderline",
                 "bright", "default", "normal", "on",
                 "black", "red", "green", "yellow",
                 "blue", "cyan", "magenta", "white",

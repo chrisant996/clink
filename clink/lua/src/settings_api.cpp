@@ -252,7 +252,7 @@ static void push_setting_values_table(lua_State* state, const setting* setting, 
         {
             static const char* const color_keywords[] =
             {
-                "bold", "dim", "underline", "nounderline",
+                "bold", "nobold", "underline", "nounderline",
                 "bright", "default", "normal", "on",
                 "black", "red", "green", "yellow",
                 "blue", "cyan", "magenta", "white",

@@ -8,7 +8,6 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
   - `premake5 --dc=clean` colors the `clean` as Arg, and the `--dc=` as Other -- that's very, very wrong.
   - `premake5 --dc=`<kbd>Alt</kbd>+<kbd>=</kbd> gets confused about arg position and tries to complete normal words.
 - Type `git checkout clink.vp`<kbd>Tab</kbd>, then <kbd>Alt</kbd>+<kbd>=</kbd>, then <kbd>Backspace</kbd>, then <kbd>Tab</kbd> => shows unfiltered matches!  But <kbd>Tab</kbd> _again_ filters the matches.
-- `bold` and `bright` are not quite the same thing; allow specifying both in a color definition (VSCode handles them different, and other terminals may, too).
 
 ## Issues
 
