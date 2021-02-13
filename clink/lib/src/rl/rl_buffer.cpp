@@ -216,8 +216,29 @@ unsigned int rl_buffer::collect_words(std::vector<word>& words, collect_words_mo
             if (!token)
                 break;
 
-            // Add the word.
             unsigned int offset = unsigned(start - line_buffer);
+
+            // Mercy.  We need to know later on if a flag word ends with = but
+            // that's never part of a word because it's a word delimiter.  We
+            // can't really know what is a flag word without running argmatchers
+            // because the argmatchers define the flag character(s) (and linked
+            // argmatchers can define different flag characters).  But we can't
+            // run argmatchers without having already parsed the words.  The
+            // abstraction between collecting words and running argmatchers
+            // breaks down here.
+            //
+            // Rather that redesign the system or dream up a complex solution,
+            // we'll use a simple(ish) mitigation that works the vast majority
+            // of the time because / and - are the only flag characters in
+            // widespread use.  If the word starts with / or - and the next
+            // character in the line is = then add it to the word.
+            while (offset + length < command.offset + command.length &&
+                line_buffer[offset + length] == '=')
+            {
+                length++;
+            }
+
+            // Add the word.
             words.push_back({offset, unsigned(length), first, false/*is_alias*/, 0, token.delim});
 
             first = false;

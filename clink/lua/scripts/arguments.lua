@@ -104,13 +104,11 @@ function _argreader:update(word, word_index)
                 -- For performance reasons, don't run argmatcher functions
                 -- during classify.  If that's needed, a script can provide a
                 -- :classify function to complement a :generate function.
-                --
-                -- Also, when the word is a flag and contains : or = then check
-                -- if the portion up to and including the : or = is a known
-                -- flag.  When so, color the whole thing as a flag.
-                --
                 local matched = false
                 if arg_match_type == "f" then
+                    -- When the word is a flag and contains : or = then check if
+                    -- the portion up to and including the : or = is a known
+                    -- flag.  When so, color the whole thing as a flag.
                     local attached_pos = word:find("[:=]")
                     if attached_pos then
                         local prefix = word:sub(1, attached_pos)

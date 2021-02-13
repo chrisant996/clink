@@ -3,10 +3,6 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 <br/>
 
 # RELEASE
-- Why is `-flag:` working, but `-flag=` is not?
-  - `premake5 --dc=` does not seem to apply correct word classification.
-  - `premake5 --dc=clean` colors the `clean` as Arg, and the `--dc=` as Other -- that's very, very wrong.
-  - `premake5 --dc=`<kbd>Alt</kbd>+<kbd>=</kbd> gets confused about arg position and tries to complete normal words.
 - Type `git checkout clink.vp`<kbd>Tab</kbd>, then <kbd>Alt</kbd>+<kbd>=</kbd>, then <kbd>Backspace</kbd>, then <kbd>Tab</kbd> => shows unfiltered matches!  But <kbd>Tab</kbd> _again_ filters the matches.
 
 ## Issues
