@@ -19,11 +19,12 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 - **Interactive completion.**  Similar to <kbd>Ctrl</kbd>+<kbd>Space</kbd> in Powershell and `menu-select` in zsh, etc.  The edge cases can get weird...
 
 ## Medium Priority
+- Some way for Clink to find and use scripts installed by package managers such as scoop, without requiring manual action from users or dangerous actions by installation scripts (such as trying to automate parsing and altering `clink set clink.path`).
 - Add a hook function for inserting matches.
   - The insertion hook can avoid appending a space when inserting a flag/arg that ends in `:` or `=`.
   - And address the sorting problem, and then the match_type stuff can be removed from Readline itself (though Chet may want its performance benefits).
   - And THEN individual matches can have arbitrary values associated -- color, append char, or any per-match data that's desired.
-- Complete "%ENVVAR%\*" by internally expanding ENVVAR for collecting matches, but not expanding it in the editing line.
+  - But the hard part is handling duplicates (especially with different match types).  Could maybe pass the index in the matches array, but that requires tighter interdependence between Readline and its host.
 
 ## Low Priority
 - Add terminal sequences for **Ctrl+Shift+Letter** and **Ctrl+Punctuation** and etc (see https://invisible-island.net/xterm/modified-keys.html).
@@ -121,6 +122,9 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 ## Mystery
 - [#480](https://github.com/mridgers/clink/issues/480) Things don't work right when clink is in a path with spaces _[I'm not able to reproduce the problem, so dropping it off the radar for now.]_
 - Windows 10.0.19042.630 seems to have problems when using WriteConsoleW with ANSI escape codes in a powerline prompt in a git repo.  But Windows 10.0.19041.630 doesn't.
+
+## Punt
+- Would be nice to complete "%ENVVAR%\*" by internally expanding ENVVAR for collecting matches, but not expanding it in the editing line.  However, it's difficult to make that work reasonably in conjunction with path normalization.
 
 ---
 Chris Antos - sparrowhawk996@gmail.com
