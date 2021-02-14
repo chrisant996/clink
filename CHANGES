@@ -4,12 +4,15 @@
 
 ### v1.1.29
 
+- Added `clink installscripts` and `clink uninstallscripts` to make it easy for package managers like Scoop to install/uninstall script packages for use with Clink.  The installed script paths are stored in the registry for the current user.
 - Fixed `bold` vs `bright` colors to more accurately follow generally accepted ANSI escape code conventions:
     - Renamed `dim` to `nobold` for clarity (though `dim` is still recognized for backward compatibility).
     - `bold` adds intensity to a non-intense color (e.g. `cyan` which is 36).
     - `nobold` removes intensity added by `bold` (e.g. `1;36` becomes `36`), but does not remove intensity from an explicit intense color (such as `bright cyan` which is `96`).
 - Fixed support for `--file=` flags in argmatchers.
 - Fixed match display filtering on the first try for a word (regression introduced in v1.1.19).
+- Fixed the `clink --profile` flag (regression introduced in v1.1.10).
+- Fixed `clink info` to accurately report the script dirs (it didn't account for the `clink.path` setting correctly).
 
 ### v1.1.28
 
