@@ -217,6 +217,21 @@ See <code>clink autorun --help</code> for more information.</dd>
 </p>
 
 <p>
+<dt>clink installscripts</dt>
+<dd>
+Adds a path to search for Lua scripts.<br/>
+The path is stored in the registry and applies to all installations of Clink, regardless where their config paths are, etc.  This is intended to make it easy for package managers like Scoop to be able to install (and uninstall) scripts for use with Clink.</br>
+See <code>clink installscripts --help</code> for more information.</dd>
+</p>
+
+<p>
+<dt>clink uninstallscripts</dt>
+<dd>
+Removes a path added by `clink installscripts`.</br>
+See <code>clink uninstallscripts --help</code> for more information.</dd>
+</p>
+
+<p>
 <dt>clink history</dt>
 <dd>
 Lists the command history.<br/>
@@ -375,6 +390,7 @@ Clink loads all Lua scripts it finds in these directories:
 1. All directories listed in the `clink.path` setting, separated by semicolons.
 2. If `clink.path` is not set, then the DLL directory and the profile directory are used (see <a href="#filelocations">File Locations</a> for info about the profile directory).
 3. All directories listed in the `%CLINK_PATH%` environment variable, separated by semicolons.
+4. All directories registered by the `clink installscripts` command.
 
 Lua scripts are loaded once and are only reloaded if forced because the scripts locations change, the `clink-reload` command is invoked (<kbd>Ctrl</kbd>+<kbd>X</kbd>,<kbd>Ctrl</kbd>+<kbd>R</kbd>), or the `lua.reload_scripts` setting changes (or is True).
 

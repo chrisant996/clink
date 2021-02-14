@@ -21,6 +21,8 @@ int history(int, char**);
 int inject(int, char**);
 int input_echo(int, char**);
 int set(int, char**);
+int installscripts(int, char**);
+int uninstallscripts(int, char**);
 int testbed(int, char**);
 
 //------------------------------------------------------------------------------
@@ -51,6 +53,8 @@ static void show_usage()
         "inject",          "Injects Clink into a process",
         "autorun",         "Manage Clink's entry in cmd.exe's autorun",
         "set",             "Adjust Clink's settings",
+        "installscripts",  "Add a path to search for scripts",
+        "uninstallscripts","Remove a path to search for scripts",
         "history",         "List and operate on the command history",
         "info",            "Prints information about Clink",
         "echo",            "Echo key sequences",
@@ -74,14 +78,16 @@ static int dispatch_verb(const char* verb, int argc, char** argv)
         const char* verb;
         int (*handler)(int, char**);
     } handlers[] = {
-        "autorun",   autorun,
-        "drawtest",  draw_test,
-        "echo",      input_echo,
-        "history",   history,
-        "info",      clink_info,
-        "inject",    inject,
-        "set",       set,
-        "testbed",   testbed,
+        "autorun",              autorun,
+        "drawtest",             draw_test,
+        "echo",                 input_echo,
+        "history",              history,
+        "info",                 clink_info,
+        "inject",               inject,
+        "set",                  set,
+        "installscripts",       installscripts,
+        "uninstallscripts",     uninstallscripts,
+        "testbed",              testbed,
     };
 
     for (int i = 0; i < sizeof_array(handlers); ++i)

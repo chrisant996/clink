@@ -19,7 +19,6 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 - **Interactive completion.**  Similar to <kbd>Ctrl</kbd>+<kbd>Space</kbd> in Powershell and `menu-select` in zsh, etc.  The edge cases can get weird...
 
 ## Medium Priority
-- Some way for Clink to find and use scripts installed by package managers such as scoop, without requiring manual action from users or dangerous actions by installation scripts (such as trying to automate parsing and altering `clink set clink.path`).
 - Add a hook function for inserting matches.
   - The insertion hook can avoid appending a space when inserting a flag/arg that ends in `:` or `=`.
   - And address the sorting problem, and then the match_type stuff can be removed from Readline itself (though Chet may want its performance benefits).

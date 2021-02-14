@@ -15,10 +15,55 @@
 //------------------------------------------------------------------------------
 static setting_str g_clink_path(
     "clink.path",
-    "Paths to load Lua completion scripts from",
+    "Paths to load Lua scripts from",
     "These paths will be searched for Lua scripts that provide custom\n"
-    "match generation. Multiple paths should be delimited by semicolons.",
+    "match generation, prompt filtering, and etc. Multiple paths should be\n"
+    "delimited by semicolons. Setting this loads scripts from here INSTEAD of\n"
+    "from the Clink binaries directory and config directory.",
     "");
+
+
+
+//------------------------------------------------------------------------------
+void get_installed_scripts(str_base& out)
+{
+    out.clear();
+
+    DWORD type;
+    DWORD size;
+    LSTATUS status = RegGetValueW(HKEY_CURRENT_USER, L"Software\\Clink", L"InstalledScripts", RRF_RT_REG_SZ, &type, nullptr, &size);
+    if (status == ERROR_SUCCESS && type == REG_SZ)
+    {
+        WCHAR* buffer = static_cast<WCHAR*>(malloc(size + sizeof(*buffer)));
+        if (buffer)
+        {
+            status = RegGetValueW(HKEY_CURRENT_USER, L"Software\\Clink", L"InstalledScripts", RRF_RT_REG_SZ, &type, buffer, &size);
+            if (status == ERROR_SUCCESS && type == REG_SZ)
+                to_utf8(out, buffer);
+            free(buffer);
+        }
+    }
+}
+
+//------------------------------------------------------------------------------
+bool set_installed_scripts(const char* in)
+{
+    wstr<> out;
+    to_utf16(out, in);
+
+    HKEY hkey;
+    DWORD dwDisposition;
+    LSTATUS status = RegCreateKeyExW(HKEY_CURRENT_USER, L"Software\\Clink", 0, nullptr, REG_OPTION_NON_VOLATILE, KEY_CREATE_SUB_KEY|KEY_SET_VALUE, nullptr, &hkey, &dwDisposition);
+    if (status != ERROR_SUCCESS)
+        return false;
+
+    status = RegSetValueExW(hkey, L"InstalledScripts", 0, REG_SZ, reinterpret_cast<const BYTE*>(out.c_str()), out.length() * sizeof(*out.c_str()));
+    RegCloseKey(hkey);
+    if (status != ERROR_SUCCESS)
+        return false;
+
+    return true;
+}
 
 
 
@@ -199,12 +244,22 @@ void app_context::get_script_path(str_base& out, bool readable) const
         }
     }
 
-    // Finally load from the clink_path envvar.
+    // Next load from the clink_path envvar.
     if (os::get_env("clink_path", tmp) && tmp.length())
     {
         if (out.length())
             out << (readable ? " ; " : ";");
         out << tmp.c_str();
+    }
+
+    // Finally load from installed script paths.
+    str<> installed_scripts;
+    get_installed_scripts(installed_scripts);
+    if (installed_scripts.length())
+    {
+        if (out.length())
+            out << (readable ? " ; " : ";");
+        out << installed_scripts;
     }
 }
 
