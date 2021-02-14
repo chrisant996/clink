@@ -232,10 +232,13 @@ unsigned int rl_buffer::collect_words(std::vector<word>& words, collect_words_mo
             // of the time because / and - are the only flag characters in
             // widespread use.  If the word starts with / or - and the next
             // character in the line is = then add it to the word.
-            while (offset + length < command.offset + command.length &&
-                line_buffer[offset + length] == '=')
+            if (length > 1 && strchr("-/", line_buffer[offset]))
             {
-                length++;
+                while (offset + length < command.offset + command.length &&
+                    line_buffer[offset + length] == '=')
+                {
+                    length++;
+                }
             }
 
             // Add the word.
