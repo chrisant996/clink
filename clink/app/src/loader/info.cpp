@@ -6,6 +6,7 @@
 #include "version.h"
 
 #include <core/str.h>
+#include <core/settings.h>
 #include <core/os.h>
 #include <core/path.h>
 
@@ -31,6 +32,11 @@ int clink_info(int argc, char** argv)
     // Version information
     printf("%-*s : %s\n", spacing, "version", CLINK_VERSION_STR);
     printf("%-*s : %d\n", spacing, "session", context->get_id());
+
+    // Load the settings from disk, since script paths are affected by settings.
+    str<280> settings_file;
+    app_context::get()->get_settings_path(settings_file);
+    settings::load(settings_file.c_str());
 
     // Paths
     for (const auto& info : infos)
