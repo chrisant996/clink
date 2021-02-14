@@ -243,7 +243,7 @@ template <typename TYPE>
 void str_impl<TYPE>::trim()
 {
     TYPE* pos = m_data;
-    TYPE* end = m_data + m_length;
+    TYPE* end = m_data + length();
 
     while (end > pos)
     {
