@@ -245,19 +245,13 @@ newaction {
         os.chdir(target_dir)
         rmdir(src_dir_name)
 
-        -- Move PDBs out of the way and zip them up.
+        -- Package the release and the pdbs separately.
         os.chdir(dest)
-        if have_msbuild then
-            exec("move *.pdb  .. ")
-            if have_7z then
-                exec(have_7z .. " a -r  ../"..clink_suffix .. "_pdb.zip  ../*.pdb")
-                unlink("../*.pdb")
-            end
-        end
-
-        -- Package the release in an archive.
         if have_7z then
-            exec(have_7z .. " a -r  ../"..clink_suffix .. ".zip .")
+            if have_msbuild then
+                exec(have_7z .. " a -r  ../"..clink_suffix .. "_pdb.zip  *.pdb")
+            end
+            exec(have_7z .. " a -x!*.pdb -r  ../"..clink_suffix .. ".zip  *")
         end
 
         -- Report some facts about what just happened.
