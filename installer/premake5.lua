@@ -236,12 +236,13 @@ newaction {
         -- Zip up the source code.
         os.chdir("..")
         local src_dir_name = target_dir..clink_suffix.."_src"
-        exec("move ~working "..src_dir_name)
+        exec("move ~working " .. src_dir_name)
 
-        os.chdir(target_dir)
         if have_7z then
-            exec(have_7z .. " a -r " .. target_dir .. clink_suffix .. "_src.zip " .. src_dir_name)
+            os.chdir(src_dir_name)
+            exec(have_7z .. " a -r  " .. target_dir..clink_suffix .. "_src.zip .")
         end
+        os.chdir(target_dir)
         rmdir(src_dir_name)
 
         -- Move PDBs out of the way and zip them up.
@@ -256,7 +257,7 @@ newaction {
 
         -- Package the release in an archive.
         if have_7z then
-            exec(have_7z .. " a -r  ../"..clink_suffix .. ".zip  ../"..clink_suffix)
+            exec(have_7z .. " a -r  ../"..clink_suffix .. ".zip .")
         end
 
         -- Report some facts about what just happened.
