@@ -8,12 +8,12 @@ end
 
 --------------------------------------------------------------------------------
 local function exec(cmd, silent)
-    print("\n\n## EXEC: " .. cmd)
+    print("\n## EXEC: " .. cmd)
 
     if silent then
         cmd = "1>nul 2>nul "..cmd
     else
-        cmd = "1>nul "..cmd
+        -- cmd = "1>nul "..cmd
     end
 
     -- Premake replaces os.execute() with a version that runs path.normalize()
@@ -60,9 +60,22 @@ local function copy(src, dest)
 end
 
 --------------------------------------------------------------------------------
+local function file_exists(name)
+    local f = io.open(name, "r")
+    if f ~= nil then
+        io.close(f)
+        return true
+    end
+    return false
+end
+
+--------------------------------------------------------------------------------
 local function have_required_tool(name, fallback)
-    local tool = exec("where " .. name, true)
-    if not tool and fallback then
+    if exec("where " .. name, true) then
+        return name
+    end
+
+    if fallback then
         local t
         if type(fallback) == "table" then
             t = fallback
@@ -70,13 +83,14 @@ local function have_required_tool(name, fallback)
             t = { fallback }
         end
         for _,dir in ipairs(t) do
-            tool = exec('where /r "'..dir..'" '..name, true)
-            if tool then
-                break
+            local file = dir.."\\"..name..".exe"
+            if file_exists(file) then
+                return '"'..file..'"'
             end
         end
     end
-    return tool
+
+    return nil
 end
 
 --------------------------------------------------------------------------------
@@ -88,7 +102,7 @@ newaction {
         local root_dir = path.getabsolute(".build/release").."/"
 
         -- Check we have the tools we need.
-        local have_msbuild = have_required_tool("msbuild")
+        local have_msbuild = have_required_tool("msbuild", { "c:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\Enterprise\\MSBuild\\Current\\Bin", "c:\\Program Files (x86)\\Microsoft Visual Studio\\2017\\Enterprise\\MSBuild\\Current\\Bin" })
         local have_mingw = have_required_tool("mingw32-make")
         local have_nsis = have_required_tool("makensis", "c:\\Program Files (x86)\\NSIS")
         local have_7z = have_required_tool("7z", { "c:\\Program Files\\7-Zip", "c:\\Program Files (x86)\\7-Zip" })
@@ -116,8 +130,8 @@ newaction {
                 exec(premake .. " " .. toolchain)
                 os.chdir(".build/" .. toolchain)
 
-                x86_ok = exec("msbuild /m /v:q /p:configuration=final /p:platform=win32 clink.sln /t:" .. target)
-                x64_ok = exec("msbuild /m /v:q /p:configuration=final /p:platform=x64 clink.sln /t:" .. target)
+                x86_ok = exec(have_msbuild .. " /m /v:q /p:configuration=final /p:platform=win32 clink.sln /t:" .. target)
+                x64_ok = exec(have_msbuild .. " /m /v:q /p:configuration=final /p:platform=x64 clink.sln /t:" .. target)
 
                 os.chdir("../..")
             elseif have_mingw then
@@ -127,8 +141,8 @@ newaction {
                 exec(premake .. " " .. toolchain)
                 os.chdir(".build/" .. toolchain)
 
-                x86_ok = exec("mingw32-make CC=gcc config=final_x32 -j%number_of_processors% " .. target)
-                x64_ok = exec("mingw32-make CC=gcc config=final_x64 -j%number_of_processors% " .. target)
+                x86_ok = exec(have_mingw .. " CC=gcc config=final_x32 -j%number_of_processors% " .. target)
+                x64_ok = exec(have_mingw .. " CC=gcc config=final_x64 -j%number_of_processors% " .. target)
 
                 os.chdir("../..")
             else
@@ -207,7 +221,7 @@ newaction {
         -- Build the installer.
         local nsis_ok = false
         if have_nsis then
-            local nsis_cmd = "makensis"
+            local nsis_cmd = have_nsis
             nsis_cmd = nsis_cmd .. " /DCLINK_BUILD=" .. path.getabsolute(dest)
             nsis_cmd = nsis_cmd .. " /DCLINK_VERSION=" .. version
             nsis_cmd = nsis_cmd .. " /DCLINK_SOURCE=" .. code_dir
@@ -227,7 +241,7 @@ newaction {
 
         os.chdir(target_dir)
         if have_7z then
-            exec("7z a -r " .. target_dir .. clink_suffix .. "_src.zip " .. src_dir_name)
+            exec(have_7z .. " a -r " .. target_dir .. clink_suffix .. "_src.zip " .. src_dir_name)
         end
         rmdir(src_dir_name)
 
@@ -236,14 +250,14 @@ newaction {
         if have_msbuild then
             exec("move *.pdb  .. ")
             if have_7z then
-                exec("7z a -r  ../"..clink_suffix .. "_pdb.zip  ../*.pdb")
+                exec(have_7z .. " a -r  ../"..clink_suffix .. "_pdb.zip  ../*.pdb")
                 unlink("../*.pdb")
             end
         end
 
         -- Package the release in an archive.
         if have_7z then
-            exec("7z a -r  ../"..clink_suffix .. ".zip  ../"..clink_suffix)
+            exec(have_7z .. " a -r  ../"..clink_suffix .. ".zip  ../"..clink_suffix)
         end
 
         -- Report some facts about what just happened.
