@@ -194,7 +194,7 @@ newaction {
         rmdir(target_dir)
         mkdir(target_dir)
 
-        local clink_suffix = "clink-"..version
+        local clink_suffix = "clink."..version
         local dest = target_dir..clink_suffix.."/"
         mkdir(dest)
 
