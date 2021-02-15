@@ -33,7 +33,7 @@ LicenseBkColor          /windows
 LicenseData             ${CLINK_SOURCE}\installer\license.rtf
 LicenseForceSelection   off
 RequestExecutionLevel   admin
-;XPStyle                 on
+XPStyle                 on
 
 ;-------------------------------------------------------------------------------
 Page license
