@@ -19,6 +19,7 @@ end
 --------------------------------------------------------------------------------
 local function generate_file(source_path, out)
     print("  << " .. source_path)
+    local docver = _OPTIONS["docver"] or clink_git_name:upper()
     for line in io.open(source_path, "r"):lines() do
         local include = line:match("%$%(INCLUDE +([^)]+)%)")
         if include then
@@ -28,7 +29,7 @@ local function generate_file(source_path, out)
             if md then
                 markdown_file(md, out)
             else
-                line = line:gsub("%$%(CLINK_VERSION%)", clink_git_name:upper())
+                line = line:gsub("%$%(CLINK_VERSION%)", docver)
                 line = line:gsub("<(/?kbd)>", "&lt;%1&gt;")
                 line = line:gsub("<br>", "&lt;br&gt;")
                 out:write(line .. "\n")
@@ -237,6 +238,6 @@ end
 --------------------------------------------------------------------------------
 newaction {
     trigger = "docs",
-    description = "Generates Clink's documentation.",
+    description = "Generate Clink's documentation.",
     execute = do_docs,
 }

@@ -214,7 +214,7 @@ newaction {
         end
 
         -- Generate documentation.
-        exec(premake .. " docs")
+        exec(premake .. " docs --docver="..version)
         copy(".build/docs/clink.html", dest)
 
         -- Build the installer.
@@ -269,6 +269,13 @@ newoption {
    trigger     = "vsver",
    value       = "VER",
    description = "Version of Visual Studio to build release with"
+}
+
+--------------------------------------------------------------------------------
+newoption {
+   trigger     = "docver",
+   value       = "DOCVER",
+   description = "Clink version to inject in documentation"
 }
 
 --------------------------------------------------------------------------------
