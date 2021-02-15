@@ -187,6 +187,7 @@ newaction {
         if not version then
             error("Failed to extract version from build executables")
         end
+        local docversion = version:match("%d+%.%d+%.%d+")
 
         -- Now we know the version we can create our output directory.
         local target_dir = root_dir..os.date("%Y%m%d_%H%M%S").."_"..version.."/"
@@ -214,7 +215,7 @@ newaction {
         end
 
         -- Generate documentation.
-        exec(premake .. " docs --docver="..version)
+        exec(premake .. " docs --docver="..docversion)
         copy(".build/docs/clink.html", dest)
 
         -- Build the installer.
