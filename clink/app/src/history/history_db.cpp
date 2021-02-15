@@ -143,7 +143,8 @@ void concurrency_tag::generate_new_tag()
 
     assert(m_tag.empty());
     time_t now = time(nullptr);
-    m_tag.format("|CTAG_%u_%u_%u_%u", now, GetTickCount(), GetProcessId(GetCurrentProcess()), disambiguate++);
+    unsigned now32 = unsigned(now);
+    m_tag.format("|CTAG_%u_%u_%u_%u", now32, GetTickCount(), GetProcessId(GetCurrentProcess()), disambiguate++);
 }
 
 //------------------------------------------------------------------------------
