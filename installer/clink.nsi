@@ -1,5 +1,6 @@
 ;
 ; Copyright (c) 2014 Martin Ridgers
+; Portions Copyright (c) 2021 Christopher Antos
 ;
 ; Permission is hereby granted, free of charge, to any person obtaining a copy
 ; of this software and associated documentation files (the "Software"), to deal
@@ -134,10 +135,10 @@ Section "!Application files" app_files_id
     StrCpy $0 "Software\Microsoft\Windows\CurrentVersion\Uninstall\clink_${CLINK_VERSION}"
     WriteRegStr HKLM $0 "DisplayName"       "Clink v${CLINK_VERSION}"
     WriteRegStr HKLM $0 "UninstallString"   "$INSTDIR\$1"
-    WriteRegStr HKLM $0 "Publisher"         "Martin Ridgers"
+    WriteRegStr HKLM $0 "Publisher"         "Christopher Antos"
     WriteRegStr HKLM $0 "DisplayIcon"       "$SYSDIR\cmd.exe,0"
-    WriteRegStr HKLM $0 "URLInfoAbout"      "http://mridgers.github.io/clink"
-    WriteRegStr HKLM $0 "HelpLink"          "http://mridgers.github.io/clink"
+    WriteRegStr HKLM $0 "URLInfoAbout"      "http://chrisant996.github.io/clink"
+    WriteRegStr HKLM $0 "HelpLink"          "http://chrisant996.github.io/clink"
     WriteRegStr HKLM $0 "InstallLocation"   "$INSTDIR"
     WriteRegStr HKLM $0 "DisplayVersion"    "${CLINK_VERSION}"
 
