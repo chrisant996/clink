@@ -203,7 +203,6 @@ newaction {
             "clink.lua",
             "clink_x*.exe",
             "clink*.dll",
-            "clink*.pdb",
             "CHANGES",
             "LICENSE",
             "clink_x*.pdb",
