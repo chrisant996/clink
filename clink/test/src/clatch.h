@@ -8,6 +8,15 @@
 namespace clatch {
 
 //------------------------------------------------------------------------------
+struct colors
+{
+    static bool* get_colored() { static bool s_colored = false; return &s_colored; }
+    static const char* get_ok() { return *get_colored() ? "\x1b[92m" : ""; }
+    static const char* get_error() { return *get_colored() ? "\x1b[91m" : ""; }
+    static const char* get_normal() { return *get_colored() ? "\x1b[m" : ""; }
+};
+
+//------------------------------------------------------------------------------
 struct section
 {
     void add_child(section* child) {
@@ -123,10 +132,15 @@ inline bool run(const char* prefix="")
         }
 
         assert_count += root.m_assert_count;
-        puts("\rok ");
+        printf("\r%sok%s \n", colors::get_ok(), colors::get_normal());
     }
 
-    printf("\n tests:%d  failed:%d  asserts:%d\n", test_count, fail_count, assert_count);
+    const char* tests_color = fail_count ?  colors::get_normal() : colors::get_ok();
+    const char* failed_color = fail_count ? colors::get_error() : colors::get_normal();
+    printf("\n %stests:%d%s  %sfailed:%d%s  asserts:%d\n",
+           tests_color, test_count, colors::get_normal(),
+           failed_color, fail_count, colors::get_normal(),
+           assert_count);
 
     return (fail_count == 0);
 }
@@ -137,11 +151,13 @@ inline void fail(const char* expr, const char* file, int line)
     section* failed_section = clatch::section::get_outer_store();
 
     puts("\n");
+    printf(colors::get_error());
     printf(" expr; %s\n", expr);
     printf("where; %s(%d)\n", file, line);
     printf("trace; ");
     for (; failed_section != nullptr; failed_section = failed_section->m_parent)
         printf("%s\n       ", failed_section->m_name);
+    printf(colors::get_normal());
     puts("");
 
     throw std::exception();
@@ -152,7 +168,9 @@ template <typename CALLBACK>
 void fail(const char* expr, const char* file, int line, CALLBACK&& cb)
 {
     puts("\n");
+    printf(colors::get_error());
     cb();
+    printf(colors::get_normal());
     fail(expr, file, line);
 }
 
