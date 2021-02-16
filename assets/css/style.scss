@@ -3,6 +3,19 @@
 
 @import "{{ site.theme }}";
 
+.btnex {
+    display: inline-block;
+    margin: 0rem 0.5rem 1rem;
+    padding: 0.5rem 1rem;
+    color: rgba(255,255,255,0.7);
+    background-color: rgba(255,255,255,0.08);
+    border-color: rgba(255,255,255,0.2);
+    border-style: solid;
+    border-width: 1px;
+    border-radius: 0.3rem;
+    transition: color 0.2s, background-color 0.2s, border-color 0.2s;
+}
+
 .title-header {
     padding: 0rem 0rem;
 }
@@ -14,7 +27,7 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
 
     @include large {
         max-width: 64rem;
@@ -32,12 +45,15 @@
         padding-left: 1rem;
         padding-right: 1rem;
     }
+
+    min-width: 26rem;
 }
 
 .title-left-container {
     display: flex;
     flex-grow: 1;
     justify-content: flex-start;
+    flex-direction: column;
 
     @include large {
         padding: 2rem 0rem;
@@ -54,8 +70,8 @@
 
 .title-right-container {
     display: flex;
-    flex-grow: 1;
-    justify-content: flex-end;
+    flex-direction: column;
+    text-align: right;
 
     @include large {
         padding: 2rem 0rem;
@@ -68,15 +84,16 @@
     @include small {
         padding: 1rem 0rem;
     }
-}
 
-.title-sidebar {
-    height: 100%;
-    text-align: right;
+    margin-left: 2rem;
 }
 
 .title-sidebar-inner {
-    white-space: nowrap;
+    display: flex;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    margin-left: -0.5rem;
+    margin-right: -0.5rem;
 }
 
 kbd {
