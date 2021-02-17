@@ -10,6 +10,19 @@
 #include <assert.h>
 
 //------------------------------------------------------------------------------
+static bool s_conemu_osc = false;
+
+//------------------------------------------------------------------------------
+bool enable_conemu_escape_codes(bool enable)
+{
+    bool was = s_conemu_osc;
+    s_conemu_osc = enable;
+    return was;
+}
+
+
+
+//------------------------------------------------------------------------------
 unsigned int cell_count(const char* in)
 {
     unsigned int count = 0;
@@ -147,6 +160,7 @@ ecma48_iter::ecma48_iter(const char* s, ecma48_state& state, int len)
 : m_iter(s, len)
 , m_code(state.code)
 , m_state(state)
+, m_nested_cmd_str(0)
 {
 }
 
@@ -170,6 +184,8 @@ const ecma48_code& ecma48_iter::next()
 
             break;
         }
+
+        assert(m_nested_cmd_str == 0 || m_state.state == ecma48_state_cmd_str);
 
         switch (m_state.state)
         {
@@ -205,6 +221,9 @@ const ecma48_code& ecma48_iter::next()
         m_code.m_length = int(m_iter.get_pointer() - m_code.get_pointer());
 
     m_state.reset();
+
+    assert(m_nested_cmd_str == 0);
+    m_nested_cmd_str = 0;
 
     return m_code;
 }
@@ -269,12 +288,31 @@ bool ecma48_iter::next_cmd_str(int c)
     if (c == 0x1b)
     {
         m_iter.next();
+        if (s_conemu_osc)
+        {
+            int d = m_iter.peek();
+            if (d == 0x5d)
+            {
+                m_nested_cmd_str++;
+                return false;
+            }
+            else if (d == 0x5c && m_nested_cmd_str > 0)
+            {
+                m_nested_cmd_str--;
+                return false;
+            }
+        }
         m_state.state = ecma48_state_esc_st;
         return false;
     }
     else if (c == 0x9c || c == 0x07) // Xterm supports OSC terminated by BEL.
     {
         m_iter.next();
+        if (s_conemu_osc && c == 0x07 && m_nested_cmd_str > 0)
+        {
+            m_nested_cmd_str--;
+            return false;
+        }
         return true;
     }
     else if (in_range(c, 0x08, 0x0d) || in_range(c, 0x20, 0x7e))
@@ -352,12 +390,14 @@ bool ecma48_iter::next_esc_st(int c)
     if (c == 0x5c)
     {
         m_iter.next();
+        assert(m_nested_cmd_str == 0);
         return true;
     }
 
     m_code.m_str = m_iter.get_pointer();
     m_code.m_length = 0;
     m_state.reset();
+    m_nested_cmd_str = 0;
     return false;
 }
 

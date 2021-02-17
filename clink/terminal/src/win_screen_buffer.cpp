@@ -24,6 +24,39 @@
 # error ENABLE_VIRTUAL_TERMINAL_PROCESSING must be 0x0004
 #endif
 
+extern bool enable_conemu_escape_codes(bool enable);
+
+//------------------------------------------------------------------------------
+static const char* const conemu_dll_names[] =
+{
+    "conemuhk.dll",
+    "conemuhk32.dll",
+    "conemuhk64.dll",
+    nullptr
+};
+static const char* const ansi_dll_names[] =
+{
+    "ansi.dll",
+    "ansi32.dll",
+    "ansi64.dll",
+    nullptr
+};
+
+//------------------------------------------------------------------------------
+static const char* is_dll_loaded(const char* const* dll_names)
+{
+    while (*dll_names)
+    {
+        if (GetModuleHandle(*dll_names) != NULL)
+            return *dll_names;
+        dll_names++;
+    }
+
+    return nullptr;
+}
+
+
+
 //------------------------------------------------------------------------------
 static setting_enum g_terminal_emulation(
     "terminal.emulation",
@@ -65,67 +98,73 @@ void win_screen_buffer::begin()
     m_default_attr = csbi.wAttributes & attr_mask_all;
     m_bold = !!(m_default_attr & attr_mask_bold);
 
+    bool is_conemu = false;
     bool native_vt = m_native_vt;
     const char* found_what = nullptr;
     switch (g_terminal_emulation.get())
     {
     case 0:
         native_vt = true;
+        is_conemu = !!is_dll_loaded(conemu_dll_names);
         break;
+
     case 1:
         native_vt = false;
         break;
-    case 2: {
+
+    case 2:
+        do
+        {
+            // Check for ConEmu.
+            found_what = is_dll_loaded(conemu_dll_names);
+            if (found_what)
+            {
+                native_vt = true;
+                is_conemu = true;
+                break;
+            }
+
+            // Check for Windows Terminal.
+            str<16> wt_session;
+            if (os::get_env("WT_SESSION", wt_session))
+            {
+                native_vt = true;
+                found_what = "WT_SESSION";
+                break;
+            }
+
+            // Check for native virtual terminal support in Windows.
 #pragma warning(push)
 #pragma warning(disable:4996)
-        OSVERSIONINFO ver = { sizeof(ver) };
-        if (GetVersionEx(&ver) && ver.dwBuildNumber >= 15063)
-        {
-            DWORD type;
-            DWORD data;
-            DWORD size;
-            LSTATUS status = RegGetValue(HKEY_CURRENT_USER, "Console", "ForceV2", RRF_RT_REG_DWORD, &type, &data, &size);
-            if (status != ERROR_SUCCESS ||
-                type != REG_DWORD ||
-                size != sizeof(data) ||
-                data != 0)
+            OSVERSIONINFO ver = { sizeof(ver) };
+            if (GetVersionEx(&ver) && ver.dwBuildNumber >= 15063)
             {
-                native_vt = true;
-                found_what = "Windows build >= 15063, console V2";
-                break;
+                DWORD type;
+                DWORD data;
+                DWORD size;
+                LSTATUS status = RegGetValue(HKEY_CURRENT_USER, "Console", "ForceV2", RRF_RT_REG_DWORD, &type, &data, &size);
+                if (status != ERROR_SUCCESS ||
+                    type != REG_DWORD ||
+                    size != sizeof(data) ||
+                    data != 0)
+                {
+                    native_vt = true;
+                    found_what = "Windows build >= 15063, console V2";
+                    break;
+                }
             }
-        }
 #pragma warning(pop)
 
-        str<16> wt_session;
-        if (os::get_env("WT_SESSION", wt_session))
-        {
-            native_vt = true;
-            found_what = "WT_SESSION";
-            break;
-        }
-
-        static const char* const dll_names[] =
-        {
-            "conemuhk.dll",
-            "conemuhk32.dll",
-            "conemuhk64.dll",
-            "ansi.dll",
-            "ansi32.dll",
-            "ansi64.dll",
-        };
-
-        native_vt = false;
-        for (auto dll_name : dll_names)
-        {
-            if (GetModuleHandle(dll_name) != NULL)
+            // Check for Ansi dlls loaded.
+            found_what = is_dll_loaded(ansi_dll_names);
+            if (found_what)
             {
                 native_vt = true;
-                found_what = dll_name;
                 break;
             }
         }
-        break; }
+        while (false);
+        break;
     }
 
     if (m_native_vt != native_vt)
@@ -142,6 +181,8 @@ void win_screen_buffer::begin()
 
     if (m_native_vt)
         SetConsoleMode(m_handle, m_prev_mode | ENABLE_VIRTUAL_TERMINAL_PROCESSING);
+
+    enable_conemu_escape_codes(is_conemu);
 
     m_ready = true;
 }

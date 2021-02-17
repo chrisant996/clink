@@ -10,6 +10,8 @@
 
 static ecma48_state g_state;
 
+extern bool enable_conemu_escape_codes(bool enable);
+
 //------------------------------------------------------------------------------
 TEST_CASE("ecma48 chars")
 {
@@ -363,4 +365,40 @@ TEST_CASE("ecma48 utf8")
     REQUIRE(code->decode_csi(csi));
     REQUIRE(csi.param_count == 0);
     REQUIRE(csi.final == 'z');
+}
+
+//------------------------------------------------------------------------------
+struct restore_escape_codes_state
+{
+    restore_escape_codes_state() { m_was = enable_conemu_escape_codes(true); }
+    ~restore_escape_codes_state() { enable_conemu_escape_codes(m_was); }
+private:
+    bool m_was;
+};
+
+TEST_CASE("ecma48 conemu")
+{
+    restore_escape_codes_state _;
+
+    static const char nested[] = "abc \x1b]0;\x1b]9;8;\"USERNAME\"\x1b\\@\x1b]9;8;\"COMPUTERNAME\"\x1b\\ /CMD 10.0/\x1b\\ xyz";
+
+    const ecma48_code* code;
+
+    ecma48_iter iter(nested, g_state);
+
+    code = &iter.next();
+    REQUIRE(*code);
+    REQUIRE(code->get_type() == ecma48_code::type_chars);
+    REQUIRE(code->get_length() == 4);
+
+    code = &iter.next();
+    REQUIRE(*code);
+    REQUIRE(code->get_type() == ecma48_code::type_c1);
+    REQUIRE(code->get_code() == 0x5d);
+    REQUIRE(code->get_length() == 58);
+
+    code = &iter.next();
+    REQUIRE(*code);
+    REQUIRE(code->get_type() == ecma48_code::type_chars);
+    REQUIRE(code->get_length() == 4);
 }

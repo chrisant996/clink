@@ -146,4 +146,5 @@ private:
     str_iter            m_iter;
     ecma48_code&        m_code;
     ecma48_state&       m_state;
+    int                 m_nested_cmd_str;
 };
