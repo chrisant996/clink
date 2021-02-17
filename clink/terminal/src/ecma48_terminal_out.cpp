@@ -283,103 +283,120 @@ void ecma48_terminal_out::set_attributes(const ecma48_code::csi_base& csi)
     {
         unsigned int param = csi.params[i];
 
-        // Resets
-        if (param == 0)  { attr = attributes::defaults; continue; }
-        if (param == 49) { attr.reset_bg();             continue; }
-        if (param == 39) { attr.reset_fg();             continue; }
-
-        // Bold/Underline
-        if ((param == 1) | (param == 2) | (param == 22))
+        switch (param)
         {
+        // Resets.
+        case 0:     attr = attributes::defaults; break;
+        case 49:    attr.reset_bg(); break;
+        case 39:    attr.reset_fg(); break;
+
+        // Bold.
+        case 1:
+        case 2:
+        case 22:
             attr.set_bold(param == 1);
-            continue;
-        }
+            break;
 
-        if ((param == 4) | (param == 24))
-        {
+        // Underline.
+        case 4:
+        case 24:
             attr.set_underline(param == 4);
-            continue;
-        }
+            break;
 
-        // Fore/background colors.
-        if ((param - 30 < 8) | (param - 90 < 8))
-        {
+        // Foreground colors.
+        case 30:    case 90:
+        case 31:    case 91:
+        case 32:    case 92:
+        case 33:    case 93:
+        case 34:    case 94:
+        case 35:    case 95:
+        case 36:    case 96:
+        case 37:    case 97:
             param += (param >= 90) ? 14 : 2;
             attr.set_fg(param & 0x0f);
-            continue;
-        }
+            break;
 
-        if ((param - 40 < 8) | (param - 100 < 8))
-        {
+        // Background colors.
+        case 40:    case 100:
+        case 41:    case 101:
+        case 42:    case 102:
+        case 43:    case 103:
+        case 44:    case 104:
+        case 45:    case 105:
+        case 46:    case 106:
+        case 47:    case 107:
             param += (param >= 100) ? 4 : 8;
             attr.set_bg(param & 0x0f);
-            continue;
-        }
+            break;
 
-        if ((param == 7) | (param == 27))
-        {
+        // Reverse.
+        case 7:
+        case 27:
             attr.set_reverse(param == 7);
-            continue;
-        }
+            break;
 
-        if (((param == 38) | (param == 48)) && n > 1)
-        {
-            i++;
-            n--;
-            bool is_fg = (param == 38);
-            unsigned int type = csi.params[i];
-            if (type == 2)
+        // Xterm extended color support.
+        case 38:
+        case 48:
+            if (n > 1)
             {
-                // RGB 24-bit color
-                if (n > 3)
-                {
-                    if (is_fg)
-                        attr.set_fg(csi.params[i + 1], csi.params[i + 2], csi.params[i + 3]);
-                    else
-                        attr.set_bg(csi.params[i + 1], csi.params[i + 2], csi.params[i + 3]);
-                }
-                i += 3;
-                n -= 3;
-            }
-            else if (type == 5)
-            {
-                // XTerm256 color
-                if (n > 1)
-                {
-                    unsigned char idx = csi.params[i + 1];
-                    if (idx < 16)
-                    {
-                        if (is_fg)
-                            attr.set_fg(idx);
-                        else
-                            attr.set_bg(idx);
-                    }
-                    else if (idx >= 232)
-                    {
-                        unsigned char gray = (int(idx) - 232) * 255 / 23;
-                        if (is_fg)
-                            attr.set_fg(gray, gray, gray);
-                        else
-                            attr.set_bg(gray, gray, gray);
-                    }
-                    else
-                    {
-                        idx -= 16;
-                        unsigned char b = idx % 6;
-                        idx /= 6;
-                        unsigned char g = idx % 6;
-                        idx /= 6;
-                        unsigned char r = idx;
-                        if (is_fg)
-                            attr.set_fg(r * 51, g * 51, b * 51);
-                        else
-                            attr.set_bg(r * 51, g * 51, b * 51);
-                    }
-                }
                 i++;
                 n--;
+                bool is_fg = (param == 38);
+                unsigned int type = csi.params[i];
+                if (type == 2)
+                {
+                    // RGB 24-bit color
+                    if (n > 3)
+                    {
+                        if (is_fg)
+                            attr.set_fg(csi.params[i + 1], csi.params[i + 2], csi.params[i + 3]);
+                        else
+                            attr.set_bg(csi.params[i + 1], csi.params[i + 2], csi.params[i + 3]);
+                    }
+                    i += 3;
+                    n -= 3;
+                }
+                else if (type == 5)
+                {
+                    // XTerm256 color
+                    if (n > 1)
+                    {
+                        unsigned char idx = csi.params[i + 1];
+                        if (idx < 16)
+                        {
+                            if (is_fg)
+                                attr.set_fg(idx);
+                            else
+                                attr.set_bg(idx);
+                        }
+                        else if (idx >= 232)
+                        {
+                            unsigned char gray = (int(idx) - 232) * 255 / 23;
+                            if (is_fg)
+                                attr.set_fg(gray, gray, gray);
+                            else
+                                attr.set_bg(gray, gray, gray);
+                        }
+                        else
+                        {
+                            idx -= 16;
+                            unsigned char b = idx % 6;
+                            idx /= 6;
+                            unsigned char g = idx % 6;
+                            idx /= 6;
+                            unsigned char r = idx;
+                            if (is_fg)
+                                attr.set_fg(r * 51, g * 51, b * 51);
+                            else
+                                attr.set_bg(r * 51, g * 51, b * 51);
+                        }
+                    }
+                    i++;
+                    n--;
+                }
             }
-            continue;
+            break;
         }
     }
 
