@@ -79,8 +79,6 @@ static bool set_setting(const char* name, const char* value, const char* comment
 {
     // Find the setting.
     setting* s = settings::find(name);
-    if (!s)
-        return false;
 
     // Remember the original text from the file, so that saving won't lose
     // them in case the scripts that declared them aren't loaded.
@@ -91,7 +89,7 @@ static bool set_setting(const char* name, const char* value, const char* comment
     g_loaded_settings.emplace(name, std::move(loaded));
 
     // Set its value.
-    return s->set(value);
+    return s && s->set(value);
 }
 
 //------------------------------------------------------------------------------
