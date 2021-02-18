@@ -150,7 +150,7 @@ The Clink color settings use the following syntax:
 <code>[<span class="arg">attributes</span>] [<span class="arg">foreground_color</span>] [on [<span class="arg">background_color</span>]]</code>
 
 Optional attributes (can be abbreviated to 3 letters):
-- `bold` or `dim` adds or removes brightness (high intensity) to the default foreground color (if the default color is bright white, then `dim` uses normal white).
+- `bold` or `nobold` adds or removes boldface (usually represented by forcing the color to use high intensity if it doesn't already).
 - `underline` or `nounderline` adds or removes an underline.
 
 Optional colors for <span class="arg">foreground_color</span> and <span class="arg">background_color</span> (can be abbreviated to 3 letters):
@@ -807,7 +807,11 @@ The resulting prompt will look like this:
 
 <p/>
 
-> **Note:**  Readline needs to be told which characters in the prompt are unprintable or invisible.  Clink automatically detects most ANSI escape codes and the BEL character (^G, audible bell) and surrounds them with `\001` (^A) and `\002` (^B) characters.  For any other unprintable characters, the `\001` and `\002` characters need to be added manually.  Otherwise Readline misinterprets the length of the prompt and can display the prompt and input line incorrectly in some cases (especially if the input line wraps onto a second line).
+<a name="escapecodes"/>
+
+### ANSI escape codes in the prompt string
+
+Readline needs to be told which characters in the prompt are unprintable or invisible.  To help with that, Clink automatically detects most standard ANSI escape codes (and most of ConEmu's non-standard escape codes) and the BEL character (^G, audible bell) and surrounds them with `\001` (^A) and `\002` (^B) characters.  For any other unprintable characters, the `\001` and `\002` characters need to be added manually.  Otherwise Readline misinterprets the length of the prompt and can display the prompt and input line incorrectly in some cases (especially if the input line wraps onto a second line).
 
 # Miscellaneous
 
