@@ -3,7 +3,7 @@
 
 <!-- ----------------------------------------------------- -->
 <head>
-<title>Clink v1.1.28</title>
+<title>Clink v1.1.31</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Rambla:wght@400;700&family=Roboto&family=Fira+Mono&display=swap');
 html {
@@ -409,7 +409,7 @@ var hljs=function(){"use strict";function e(n){Object.freeze(n);var t="function"
         </td>
         <td style="text-align:right">
             <div id="header">
-                <div id="title">Clink v1.1.28</div>
+                <div id="title">Clink v1.1.31</div>
                 <div id="url">
                     <a href="http://github.com/chrisant996/clink">
                         http://github.com/chrisant996/clink
@@ -780,7 +780,7 @@ var hljs=function(){"use strict";function e(n){Object.freeze(n);var t="function"
 <p><code>[<span class="arg">attributes</span>] [<span class="arg">foreground_color</span>] [on [<span class="arg">background_color</span>]]</code></p>
 <p>Optional attributes (can be abbreviated to 3 letters):</p>
 <ul>
-<li><code>bold</code> or <code>dim</code> adds or removes brightness (high intensity) to the default foreground color (if the default color is bright white, then <code>dim</code> uses normal white).</li>
+<li><code>bold</code> or <code>nobold</code> adds or removes boldface (usually represented by forcing the color to use high intensity if it doesn&#39;t already).</li>
 <li><code>underline</code> or <code>nounderline</code> adds or removes an underline.</li>
 </ul>
 <p>Optional colors for <span class="arg">foreground_color</span> and <span class="arg">background_color</span> (can be abbreviated to 3 letters):</p>
@@ -840,6 +840,21 @@ See <code>clink autorun --help</code> for more information.</dd>
 <code>clink set <span class="arg">setting_name</span></code> describes the setting shows its current value.<br/>
 <code>clink set <span class="arg">setting_name</span> clear</code> resets the setting to its default value.<br/>
 <code>clink set <span class="arg">setting_name</span> <span class="arg">value</span></code> sets the setting to the specified value.</dd>
+</p>
+
+<p>
+<dt>clink installscripts</dt>
+<dd>
+Adds a path to search for Lua scripts.<br/>
+The path is stored in the registry and applies to all installations of Clink, regardless where their config paths are, etc.  This is intended to make it easy for package managers like Scoop to be able to install (and uninstall) scripts for use with Clink.</br>
+See <code>clink installscripts --help</code> for more information.</dd>
+</p>
+
+<p>
+<dt>clink uninstallscripts</dt>
+<dd>
+Removes a path added by `clink installscripts`.</br>
+See <code>clink uninstallscripts --help</code> for more information.</dd>
 </p>
 
 <p>
@@ -1122,6 +1137,7 @@ Echos key sequences to use in the .inputrc files for binding keys to Clink comma
 <li>All directories listed in the <code>clink.path</code> setting, separated by semicolons.</li>
 <li>If <code>clink.path</code> is not set, then the DLL directory and the profile directory are used (see <a href="#filelocations">File Locations</a> for info about the profile directory).</li>
 <li>All directories listed in the <code>%CLINK_PATH%</code> environment variable, separated by semicolons.</li>
+<li>All directories registered by the <code>clink installscripts</code> command.</li>
 </ol>
 <p>Lua scripts are loaded once and are only reloaded if forced because the scripts locations change, the <code>clink-reload</code> command is invoked (<kbd>Ctrl</kbd>+<kbd>X</kbd>,<kbd>Ctrl</kbd>+<kbd>R</kbd>), or the <code>lua.reload_scripts</code> setting changes (or is True).</p>
 <p>Run <code>clink info</code> to see the script paths for the current session.</p>
@@ -1500,9 +1516,10 @@ end</code></pre>
 
 <p/>
 
-<blockquote>
-<p><strong>Note:</strong>  Readline needs to be told which characters in the prompt are unprintable or invisible.  Clink automatically detects most ANSI escape codes and the BEL character (^G, audible bell) and surrounds them with <code>\001</code> (^A) and <code>\002</code> (^B) characters.  For any other unprintable characters, the <code>\001</code> and <code>\002</code> characters need to be added manually.  Otherwise Readline misinterprets the length of the prompt and can display the prompt and input line incorrectly in some cases (especially if the input line wraps onto a second line).</p>
-</blockquote>
+<a name="escapecodes"/>
+
+<h3 id="ansi-escape-codes-in-the-prompt-string">ANSI escape codes in the prompt string</h3>
+<p>Readline needs to be told which characters in the prompt are unprintable or invisible.  To help with that, Clink automatically detects most standard ANSI escape codes (and most of ConEmu&#39;s non-standard escape codes) and the BEL character (^G, audible bell) and surrounds them with <code>\001</code> (^A) and <code>\002</code> (^B) characters.  For any other unprintable characters, the <code>\001</code> and <code>\002</code> characters need to be added manually.  Otherwise Readline misinterprets the length of the prompt and can display the prompt and input line incorrectly in some cases (especially if the input line wraps onto a second line).</p>
 <h1 id="miscellaneous">Miscellaneous</h1>
 <a name="keybindings"/>
 
@@ -2385,6 +2402,29 @@ string.matchlen("abx", "abx")       -- returns -1</code></pre></div></div><hr/>
         <div class="section" id="changes">
 <h1 id="changes">Changes</h1>
 <h2 id="releases-from-chrisant996clink-fork">Releases from <a href="https://github.com/chrisant996/clink">chrisant996/clink</a> fork</h2>
+<h3 id="v1131">v1.1.31</h3>
+<ul>
+<li>Fixed <a href="https://github.com/chrisant996/clink/issues/74">#74</a>; clink gets confused by non-standard ConEmu escape codes.</li>
+<li>Fixed <a href="https://github.com/chrisant996/clink/issues/73">#73</a>; <code>exec.space_prefix</code> and other settings defined in Lua scripts don&#39;t take effect until second input line (regression introduced in v1.1.4).</li>
+</ul>
+<h3 id="v1130">v1.1.30</h3>
+<ul>
+<li>Fixed history compacting on x86 (regression introduced in v1.1.2-alpha).</li>
+</ul>
+<h3 id="v1129">v1.1.29</h3>
+<ul>
+<li>Added <code>clink installscripts</code> and <code>clink uninstallscripts</code> to make it easy for package managers like Scoop to install/uninstall script packages for use with Clink.  The installed script paths are stored in the registry for the current user.</li>
+<li>Fixed <code>bold</code> vs <code>bright</code> colors to more accurately follow generally accepted ANSI escape code conventions:<ul>
+<li>Renamed <code>dim</code> to <code>nobold</code> for clarity (though <code>dim</code> is still recognized for backward compatibility).</li>
+<li><code>bold</code> adds intensity to a non-intense color (e.g. <code>cyan</code> which is 36).</li>
+<li><code>nobold</code> removes intensity added by <code>bold</code> (e.g. <code>1;36</code> becomes <code>36</code>), but does not remove intensity from an explicit intense color (such as <code>bright cyan</code> which is <code>96</code>).</li>
+</ul>
+</li>
+<li>Fixed support for <code>--file=</code> flags in argmatchers.</li>
+<li>Fixed match display filtering on the first try for a word (regression introduced in v1.1.19).</li>
+<li>Fixed the <code>clink --profile</code> flag (regression introduced in v1.1.10).</li>
+<li>Fixed <code>clink info</code> to accurately report the script dirs (it didn&#39;t account for the <code>clink.path</code> setting correctly).</li>
+</ul>
 <h3 id="v1128">v1.1.28</h3>
 <ul>
 <li>Renamed the <code>log.rl_terminal</code> setting to <code>debug.log_terminal</code>; it has already been repeatedly very useful in multiple was since it was added, so it stays.</li>
