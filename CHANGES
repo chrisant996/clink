@@ -2,6 +2,11 @@
 
 ## Releases from [chrisant996/clink](https://github.com/chrisant996/clink) fork
 
+### v1.1.31
+
+- Fixed [#74](https://github.com/chrisant996/clink/issues/74); clink gets confused by non-standard ConEmu escape codes.
+- Fixed [#73](https://github.com/chrisant996/clink/issues/73); `exec.space_prefix` and other settings defined in Lua scripts don't take effect until second input line (regression introduced in v1.1.4).
+
 ### v1.1.30
 
 - Fixed history compacting on x86 (regression introduced in v1.1.2-alpha).
