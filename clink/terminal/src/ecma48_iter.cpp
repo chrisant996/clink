@@ -10,19 +10,6 @@
 #include <assert.h>
 
 //------------------------------------------------------------------------------
-static bool s_conemu_osc = false;
-
-//------------------------------------------------------------------------------
-bool enable_conemu_escape_codes(bool enable)
-{
-    bool was = s_conemu_osc;
-    s_conemu_osc = enable;
-    return was;
-}
-
-
-
-//------------------------------------------------------------------------------
 unsigned int cell_count(const char* in)
 {
     unsigned int count = 0;
@@ -46,6 +33,31 @@ unsigned int cell_count(const char* in)
 static bool in_range(int value, int left, int right)
 {
     return (unsigned(right - value) <= unsigned(right - left));
+}
+
+//------------------------------------------------------------------------------
+static void strip_code_terminator(const char*& ptr, int& len)
+{
+    if (len <= 0)
+        return;
+
+    if (ptr[len - 1] == 0x07)
+        len--;
+    else if (len > 1 && ptr[len - 1] == 0x5c && ptr[len - 2] == 0x1b)
+        len -= 2;
+}
+
+//------------------------------------------------------------------------------
+static void strip_code_quotes(const char*& ptr, int& len)
+{
+    if (len < 2)
+        return;
+
+    if (ptr[0] == '"' && ptr[len - 1] == '"')
+    {
+        ptr++;
+        len -= 2;
+    }
 }
 
 
@@ -122,6 +134,97 @@ bool ecma48_code::decode_csi(csi_base& base, int* params, unsigned int max_param
             params[count++] = param;
 
     base.param_count = char(count);
+    return true;
+}
+
+//------------------------------------------------------------------------------
+bool ecma48_code::decode_osc(osc& out) const
+{
+    if (get_type() != type_c1 || get_code() != c1_osc)
+        return false;
+
+    str_iter iter(get_pointer(), get_length());
+
+    // Skip CSI OSC
+    if (iter.next() == 0x1b)
+        iter.next();
+
+    // Extract command.
+    out.visible = false;
+    out.command = iter.next();
+    out.subcommand = 0;
+    switch (out.command)
+    {
+    case '0':
+    case '1':
+    case '2':
+        if (iter.next() == ';')
+        {
+            // Strip the terminator and optional quotes.
+            const char* ptr = iter.get_pointer();
+            int len = iter.length();
+            strip_code_terminator(ptr, len);
+            strip_code_quotes(ptr, len);
+
+            ecma48_state state;
+            ecma48_iter inner_iter(ptr, state, len);
+            while (const ecma48_code& code = inner_iter.next())
+            {
+                if (code.get_type() == ecma48_code::type_c1 &&
+                    code.get_code() == ecma48_code::c1_osc)
+                {
+                    // For OSC codes, only include output text.
+                    ecma48_code::osc osc;
+                    if (code.decode_osc(osc))
+                        out.param.concat(osc.output.c_str(), osc.output.length());
+                }
+                else
+                {
+                    // Otherwise include the text verbatim.
+                    out.param.concat(code.get_pointer(), code.get_length());
+                }
+            }
+        }
+        break;
+
+    case '9':
+        out.subcommand = (iter.next() == ';') ? iter.next() : 0;
+        switch (out.subcommand)
+        {
+        case '8': /* get envvar */
+            out.visible = true;
+            out.output.clear();
+            if (iter.next() == ';')
+            {
+                const char* ptr = iter.get_pointer();
+                while (true)
+                {
+                    const char* end = iter.get_pointer();
+                    int c = iter.next();
+                    if (!c || c == 0x07 || (c == 0x1b && iter.peek() == 0x5c))
+                    {
+                        int len = int(end - ptr);
+                        strip_code_quotes(ptr, len);
+
+                        wstr<> name;
+                        wstr<> value;
+
+                        to_utf16(name, str_iter(ptr, len));
+                        DWORD needed = GetEnvironmentVariableW(name.c_str(), 0, 0);
+                        value.reserve(needed);
+                        needed = GetEnvironmentVariableW(name.c_str(), value.data(), value.size());
+
+                        if (needed < value.size())
+                            to_utf8(out.output, wstr_iter(value.c_str(), needed));
+                        break;
+                    }
+                }
+            }
+            break;
+        }
+        break;
+    }
+
     return true;
 }
 
@@ -288,27 +391,19 @@ bool ecma48_iter::next_cmd_str(int c)
     if (c == 0x1b)
     {
         m_iter.next();
-        if (s_conemu_osc)
-        {
-            int d = m_iter.peek();
-            if (d == 0x5d)
-            {
-                m_nested_cmd_str++;
-                return false;
-            }
-            else if (d == 0x5c && m_nested_cmd_str > 0)
-            {
-                m_nested_cmd_str--;
-                return false;
-            }
-        }
-        m_state.state = ecma48_state_esc_st;
+        int d = m_iter.peek();
+        if (d == 0x5d)
+            m_nested_cmd_str++;
+        else if (d == 0x5c && m_nested_cmd_str > 0)
+            m_nested_cmd_str--;
+        else
+            m_state.state = ecma48_state_esc_st;
         return false;
     }
     else if (c == 0x9c || c == 0x07) // Xterm supports OSC terminated by BEL.
     {
         m_iter.next();
-        if (s_conemu_osc && c == 0x07 && m_nested_cmd_str > 0)
+        if (c == 0x07 && m_nested_cmd_str > 0)
         {
             m_nested_cmd_str--;
             return false;

@@ -4,6 +4,7 @@
 #include "pch.h"
 #include "lua_state.h"
 #include "terminal/scroll.h"
+#include "terminal/screen_buffer.h" // for set_console_title
 #include "terminal/printer.h"
 #include "terminal/find_line.h"
 
@@ -163,6 +164,42 @@ static int get_line_text(lua_State* state)
 
     lua_pushlstring(state, out.c_str(), out.length());
     return 1;
+}
+
+//------------------------------------------------------------------------------
+/// -name:  console.gettitle
+/// -ret:   string
+/// Returns the console title text.
+static int get_title(lua_State* state)
+{
+    wstr<16> title;
+    title.reserve(4096);
+
+    DWORD len = GetConsoleTitleW(title.data(), title.size());
+    if (len || GetLastError() == ERROR_SUCCESS)
+    {
+        str<> out;
+        to_utf8(out, title.c_str());
+
+        lua_pushstring(state, out.c_str());
+        return 1;
+    }
+
+    return 0;
+}
+
+//------------------------------------------------------------------------------
+/// -name:  console.settitle
+/// -arg:   title:string
+/// Sets the console title text.
+static int set_title(lua_State* state)
+{
+    if (!lua_isstring(state, 1))
+        return 0;
+
+    const char* title = lua_tostring(state, 1);
+    set_console_title(title);
+    return 0;
 }
 
 //------------------------------------------------------------------------------
@@ -564,6 +601,8 @@ void console_lua_initialise(lua_state& lua)
         { "getnumlines",            &get_num_lines },
         { "gettop",                 &get_top },
         { "getlinetext",            &get_line_text },
+        { "gettitle",               &get_title },
+        { "settitle",               &set_title },
         { "islinedefaultcolor",     &is_line_default_color },
         { "linehascolor",           &line_has_color },
         { "findprevline",           &find_prev_line },

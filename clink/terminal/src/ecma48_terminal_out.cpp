@@ -66,6 +66,14 @@ void visible_bell()
     cursor_style(handle, g_enhanced_cursor, was_visible);
 }
 
+//------------------------------------------------------------------------------
+void set_console_title(const char* title)
+{
+    wstr<> out;
+    to_utf16(out, title);
+    SetConsoleTitleW(out.c_str());
+}
+
 
 
 //------------------------------------------------------------------------------
@@ -146,36 +154,55 @@ int ecma48_terminal_out::find_line(int starting_line, int distance, const char* 
 //------------------------------------------------------------------------------
 void ecma48_terminal_out::write_c1(const ecma48_code& code)
 {
-    if (code.get_code() != ecma48_code::c1_csi)
-        return;
-
-    ecma48_code::csi<32> csi;
-    code.decode_csi(csi);
-
-    if (csi.private_use)
+    if (code.get_code() == ecma48_code::c1_csi)
     {
-        switch (csi.final)
+        ecma48_code::csi<32> csi;
+        code.decode_csi(csi);
+
+        if (csi.private_use)
         {
-        case 'h': set_private_mode(csi);    break;
-        case 'l': reset_private_mode(csi);  break;
+            switch (csi.final)
+            {
+            case 'h': set_private_mode(csi);    break;
+            case 'l': reset_private_mode(csi);  break;
+            }
+        }
+        else
+        {
+            switch (csi.final)
+            {
+            case '@': insert_chars(csi);        break;
+            case 'G': m_screen.move_cursor(-m_screen.get_columns(), 0); break;
+            case 'H': set_cursor(csi);          break;
+            case 'J': erase_in_display(csi);    break;
+            case 'K': erase_in_line(csi);       break;
+            case 'P': delete_chars(csi);        break;
+            case 'm': set_attributes(csi);      break;
+
+            case 'A': m_screen.move_cursor(0, -csi.get_param(0, 1)); break;
+            case 'B': m_screen.move_cursor(0,  csi.get_param(0, 1)); break;
+            case 'C': m_screen.move_cursor( csi.get_param(0, 1), 0); break;
+            case 'D': m_screen.move_cursor(-csi.get_param(0, 1), 0); break;
+            }
         }
     }
-    else
+    else if (code.get_code() == ecma48_code::c1_osc)
     {
-        switch (csi.final)
-        {
-        case '@': insert_chars(csi);        break;
-        case 'G': m_screen.move_cursor(-m_screen.get_columns(), 0); break;
-        case 'H': set_cursor(csi);          break;
-        case 'J': erase_in_display(csi);    break;
-        case 'K': erase_in_line(csi);       break;
-        case 'P': delete_chars(csi);        break;
-        case 'm': set_attributes(csi);      break;
+        ecma48_code::osc osc;
+        code.decode_osc(osc);
 
-        case 'A': m_screen.move_cursor(0, -csi.get_param(0, 1)); break;
-        case 'B': m_screen.move_cursor(0,  csi.get_param(0, 1)); break;
-        case 'C': m_screen.move_cursor( csi.get_param(0, 1), 0); break;
-        case 'D': m_screen.move_cursor(-csi.get_param(0, 1), 0); break;
+        switch (osc.command)
+        {
+        case '0':
+        case '1':
+        case '2':
+            set_console_title(osc.param.c_str());
+            break;
+
+        case '9':
+            if (osc.output.length())
+                write(osc.output.c_str(), osc.output.length());
+            break;
         }
     }
 }

@@ -69,12 +69,22 @@ public:
         int                 buffer[PARAM_N - 1];
     };
 
+    struct osc
+    {
+        char                command;
+        char                subcommand;
+        bool                visible;
+        str<>               param;
+        str<>               output;
+    };
+
     explicit                operator bool () const { return !!get_length(); }
     const char*             get_pointer() const    { return m_str; }
     unsigned int            get_length() const     { return m_length; }
     type                    get_type() const       { return m_type; }
     unsigned int            get_code() const       { return m_code; }
     template <int S> bool   decode_csi(csi<S>& out) const;
+    bool                    decode_osc(osc& out) const;
     bool                    get_c1_str(str_base& out) const;
 
 private:

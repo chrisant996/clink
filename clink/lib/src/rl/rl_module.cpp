@@ -77,6 +77,7 @@ extern int          _rl_last_v_pos;
 #endif
 } // extern "C"
 
+extern bool is_conemu();
 extern void host_add_history(int rl_history_index, const char* line);
 extern void host_remove_history(int rl_history_index, const char* line);
 extern void sort_match_list(char** matches, int len);
@@ -1401,9 +1402,30 @@ void rl_module::on_begin_line(const context& context)
         bool c1 = (code.get_type() == ecma48_code::type_c1);
         if (c1)
         {
-            rl_prompt.concat("\x01", 1);
-            rl_prompt.concat(code.get_pointer(), code.get_length());
-            rl_prompt.concat("\x02", 1);
+            if (code.get_code() == ecma48_code::c1_osc)
+            {
+                // For OSC codes, use visible output text if present.  Readline
+                // expects escape codes to be invisible, but `ESC]9;8;"var"ST`
+                // outputs the value of the named env var.
+                ecma48_code::osc osc;
+                if (!code.decode_osc(osc))
+                    goto concat_verbatim;
+                if (osc.visible)
+                    rl_prompt.concat(osc.output.c_str(), osc.output.length());
+                else if (is_conemu())
+                    goto concat_verbatim;
+                else if (osc.command >= '0' && osc.command <= '2')
+                    set_console_title(osc.param.c_str());
+                else
+                    goto concat_verbatim;
+            }
+            else
+            {
+concat_verbatim:
+                rl_prompt.concat("\x01", 1);
+                rl_prompt.concat(code.get_pointer(), code.get_length());
+                rl_prompt.concat("\x02", 1);
+            }
         }
         else
         {

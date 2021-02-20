@@ -10,8 +10,6 @@
 
 static ecma48_state g_state;
 
-extern bool enable_conemu_escape_codes(bool enable);
-
 //------------------------------------------------------------------------------
 TEST_CASE("ecma48 chars")
 {
@@ -368,18 +366,8 @@ TEST_CASE("ecma48 utf8")
 }
 
 //------------------------------------------------------------------------------
-struct restore_escape_codes_state
-{
-    restore_escape_codes_state() { m_was = enable_conemu_escape_codes(true); }
-    ~restore_escape_codes_state() { enable_conemu_escape_codes(m_was); }
-private:
-    bool m_was;
-};
-
 TEST_CASE("ecma48 conemu")
 {
-    restore_escape_codes_state _;
-
     static const char nested[] = "abc \x1b]0;\x1b]9;8;\"USERNAME\"\x1b\\@\x1b]9;8;\"COMPUTERNAME\"\x1b\\ /CMD 10.0/\x1b\\ xyz";
 
     const ecma48_code* code;
@@ -394,11 +382,67 @@ TEST_CASE("ecma48 conemu")
     code = &iter.next();
     REQUIRE(*code);
     REQUIRE(code->get_type() == ecma48_code::type_c1);
-    REQUIRE(code->get_code() == 0x5d);
+    REQUIRE(code->get_code() == ecma48_code::c1_osc);
     REQUIRE(code->get_length() == 58);
+
+    ecma48_code::osc osc;
+    REQUIRE(code->decode_osc(osc));
+    REQUIRE(osc.command == '0');
+    REQUIRE(osc.subcommand == 0);
+    REQUIRE(osc.visible == false);
+
+    str<> result;
+    const char* uname = getenv("USERNAME");
+    const char* cname = getenv("COMPUTERNAME");
+    result.format("%s@%s /CMD 10.0/", uname ? uname : "", cname ? cname : "");
+    REQUIRE(result.equals(osc.param.c_str()));
 
     code = &iter.next();
     REQUIRE(*code);
     REQUIRE(code->get_type() == ecma48_code::type_chars);
     REQUIRE(code->get_length() == 4);
+}
+
+//------------------------------------------------------------------------------
+TEST_CASE("ecma48 osc envvar")
+{
+    static const char* const c_strings[] =
+    {
+        "ab\x1b]9;8;\"COMPUTERNAME\"\x07xy",
+        "ab\x1b]9;8;COMPUTERNAME\x07xy",
+        "ab\x1b]9;8;\"COMPUTERNAME\"\x1b\\xy",
+        "ab\x1b]9;8;COMPUTERNAME\x1b\\xy",
+    };
+
+    for (const char* s : c_strings)
+    {
+        const ecma48_code* code;
+
+        ecma48_iter iter(s, g_state);
+
+        code = &iter.next();
+        REQUIRE(*code);
+        REQUIRE(code->get_type() == ecma48_code::type_chars);
+        REQUIRE(code->get_length() == 2);
+
+        code = &iter.next();
+        REQUIRE(*code);
+        REQUIRE(code->get_type() == ecma48_code::type_c1);
+        REQUIRE(code->get_code() == ecma48_code::c1_osc);
+
+        ecma48_code::osc osc;
+        REQUIRE(code->decode_osc(osc));
+        REQUIRE(osc.command == '9');
+        REQUIRE(osc.subcommand == '8');
+        REQUIRE(osc.visible == true);
+
+        const char* compname = getenv("COMPUTERNAME");
+        REQUIRE(compname);
+        REQUIRE(osc.output.equals(compname));
+
+        code = &iter.next();
+        REQUIRE(*code);
+        REQUIRE(code->get_type() == ecma48_code::type_chars);
+        REQUIRE(code->get_length() == 2);
+    }
 }

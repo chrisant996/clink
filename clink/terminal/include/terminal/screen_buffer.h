@@ -45,3 +45,4 @@ public:
 
 //------------------------------------------------------------------------------
 void visible_bell();
+void set_console_title(const char* title);

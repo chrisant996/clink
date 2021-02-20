@@ -24,7 +24,12 @@
 # error ENABLE_VIRTUAL_TERMINAL_PROCESSING must be 0x0004
 #endif
 
-extern bool enable_conemu_escape_codes(bool enable);
+//------------------------------------------------------------------------------
+static const char* s_conemu_dll = nullptr;
+bool is_conemu()
+{
+    return !!s_conemu_dll;
+}
 
 //------------------------------------------------------------------------------
 static const char* const conemu_dll_names[] =
@@ -91,6 +96,13 @@ void win_screen_buffer::begin()
     if (!m_handle)
         open();
 
+    static bool detect_conemu = true;
+    if (detect_conemu)
+    {
+        detect_conemu = false;
+        s_conemu_dll = is_dll_loaded(conemu_dll_names);
+    }
+
     GetConsoleMode(m_handle, &m_prev_mode);
 
     CONSOLE_SCREEN_BUFFER_INFO csbi;
@@ -98,14 +110,12 @@ void win_screen_buffer::begin()
     m_default_attr = csbi.wAttributes & attr_mask_all;
     m_bold = !!(m_default_attr & attr_mask_bold);
 
-    bool is_conemu = false;
     bool native_vt = m_native_vt;
     const char* found_what = nullptr;
     switch (g_terminal_emulation.get())
     {
     case 0:
         native_vt = true;
-        is_conemu = !!is_dll_loaded(conemu_dll_names);
         break;
 
     case 1:
@@ -116,11 +126,10 @@ void win_screen_buffer::begin()
         do
         {
             // Check for ConEmu.
-            found_what = is_dll_loaded(conemu_dll_names);
+            found_what = s_conemu_dll;
             if (found_what)
             {
                 native_vt = true;
-                is_conemu = true;
                 break;
             }
 
@@ -181,8 +190,6 @@ void win_screen_buffer::begin()
 
     if (m_native_vt)
         SetConsoleMode(m_handle, m_prev_mode | ENABLE_VIRTUAL_TERMINAL_PROCESSING);
-
-    enable_conemu_escape_codes(is_conemu);
 
     m_ready = true;
 }
