@@ -367,6 +367,9 @@ void host_cmd::edit_line(const wchar_t* prompt, wchar_t* chars, int max_chars)
     wstr_base wout(chars, max_chars);
 
     // Convert the prompt to Utf8 and parse backspaces in the string.
+    // BUGBUG: This mishandles multi-byte characters!
+    // BUGBUG: This mishandles surrogate pairs and combining characters!
+    // BUGBUG: This mishandles backspaces inside envvars expanded by OSC codes!
     str<128> utf8_prompt(m_prompt.get());
 
     char* write = utf8_prompt.data();
