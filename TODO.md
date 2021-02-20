@@ -19,21 +19,18 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 - **Interactive completion.**  Similar to <kbd>Ctrl</kbd>+<kbd>Space</kbd> in Powershell and `menu-select` in zsh, etc.  The edge cases can get weird...
 
 ## Medium Priority
+- Add terminal sequences for **Ctrl+Shift+Letter** and **Ctrl+Punctuation** and etc (see https://invisible-island.net/xterm/modified-keys.html).
+- Add a `history.dupe_mode` that behaves like 4Dos/4NT/Take Command from JPSoft:  **Up**/**Down** then **Enter** remembers the history position so that **Enter**, **Down**, **Enter**, **Down**, **Enter**, etc can be used to replay a series of commands.  In the meantime, `operate-and-get-next` achieves the same result albeit with a slightly different (and more efficient) workflow.
+- Symlink support (displaying matches, and whether to append a path separator).
+- Provide a way for a custom classifier to apply a classification anywhere (not just to a pre-parsed word), and to apply any arbitrary CSI SGR code to a word or to anywhere.
+
+## Low Priority
+- Make scrolling key bindings work at the pager prompt.  Note that it would need to revise how the scroll routines identify the bottom line (currently they use Readline's bottom line, but the pager displays output past that point).
 - Add a hook function for inserting matches.
   - The insertion hook can avoid appending a space when inserting a flag/arg that ends in `:` or `=`.
   - And address the sorting problem, and then the match_type stuff can be removed from Readline itself (though Chet may want its performance benefits).
   - And THEN individual matches can have arbitrary values associated -- color, append char, or any per-match data that's desired.
   - But the hard part is handling duplicates (especially with different match types).  Could maybe pass the index in the matches array, but that requires tighter interdependence between Readline and its host.
-
-## Low Priority
-- Add terminal sequences for **Ctrl+Shift+Letter** and **Ctrl+Punctuation** and etc (see https://invisible-island.net/xterm/modified-keys.html).
-- Add a `history.dupe_mode` that behaves like 4Dos/4NT/Take Command from JPSoft:  **Up**/**Down** then **Enter** remembers the history position so that **Enter**, **Down**, **Enter**, **Down**, **Enter**, etc can be used to replay a series of commands.  In the meantime, `operate-and-get-next` achieves the same result albeit with a slightly different (and more efficient) workflow.
-- Symlink support (displaying matches, and whether to append a path separator).
-- Provide a way for a custom classifier to apply a classification anywhere (not just to a pre-parsed word), and to apply any arbitrary CSI SGR code to a word or to anywhere.
-- Make scrolling key bindings work at the pager prompt.  Note that it would need to revise how the scroll routines identify the bottom line (currently they use Readline's bottom line, but the pager displays output past that point).
-
-## Clink-Completions
-- Update clink-completions to have better 0.4.9 implementations, and also to conditionally use the new API when available.
 
 <br/>
 <br/>
@@ -71,7 +68,6 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 - Changing terminal width makes 0.4.8 slowly "walk up the screen".  Changing terminal width works in master, except when the cursor position itself is affected.
 - Is it a problem that `update_internal()` gets called once per char in a key sequence?  Maybe it should only happen after a key that finishes a key binding?
 - Should only fold path separators in pathish matches.
-- Git stashes like `stash@{2}` stop completing once you type the `{`.
 - How to reasonably support normal completion coloring with `ondisplaymatches` match display filtering?
 - Include `wildmatch()` and an `fnmatch()` wrapper for it.  But should first update it to support UTF8.
 - `LOG()` certain important failure information inside Detours.
