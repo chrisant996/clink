@@ -12,7 +12,7 @@
 typedef int     (dispatch_func_t)(const char*, int);
 str<>           g_clink_args;
 int             g_all_users  = 0;
-void            puts_help(const char**, int);
+void            puts_help(const char* const*, int);
 
 
 
@@ -376,14 +376,14 @@ static int dispatch(dispatch_func_t* function, const char* clink_path)
 //------------------------------------------------------------------------------
 static void print_help()
 {
-    const char* help_verbs[] = {
+    static const char* const help_verbs[] = {
         "install <args...>", "Installs a command to cmd.exe's autorun to start Clink",
         "uninstall",         "Does the opposite of 'install'",
         "show",              "Displays the values of cmd.exe's autorun variables",
         "set <string...>",   "Explicitly sets cmd.exe's autorun to <string>",
     };
 
-    const char* help_args[] = {
+    static const char* const help_args[] = {
         "-a, --allusers",       "Modifies autorun for all users (requires admin rights).",
         "-h, --help",           "Shows this help text.",
     };

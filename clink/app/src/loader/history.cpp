@@ -15,7 +15,7 @@
 #include <stdlib.h>
 
 //------------------------------------------------------------------------------
-void puts_help(const char**, int);
+void puts_help(const char* const*, int);
 
 //------------------------------------------------------------------------------
 class history_scope
@@ -198,7 +198,7 @@ static int print_help()
 {
     extern const char* g_clink_header;
 
-    const char* help[] = {
+    static const char* const help[] = {
         "[n]",          "Print history items (only the last N items if specified).",
         "clear",        "Completely clears the command history.",
         "compact",      "Compacts the history file.",

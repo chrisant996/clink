@@ -17,7 +17,7 @@
 
 //------------------------------------------------------------------------------
 INT_PTR WINAPI  initialise_clink(const app_context::desc&);
-void            puts_help(const char**, int);
+void            puts_help(const char* const*, int);
 
 //------------------------------------------------------------------------------
 static bool get_file_info(const wchar_t* file, FILETIME& ft, ULONGLONG& size)
@@ -293,7 +293,7 @@ int inject(int argc, char** argv)
     // other scripts (e.g. VS postbuild steps, which causes CMake to be unable
     // to build anything).  https://github.com/mridgers/clink/issues/373
 
-    struct option options[] = {
+    static const struct option options[] = {
         { "scripts",     required_argument,  nullptr, 's' },
         { "profile",     required_argument,  nullptr, 'p' },
         { "quiet",       no_argument,        nullptr, 'q' },
@@ -304,7 +304,7 @@ int inject(int argc, char** argv)
         { nullptr, 0, nullptr, 0 }
     };
 
-    const char* help[] = {
+    static const char* const help[] = {
         "-s, --scripts <path>", "Alternative path to load .lua scripts from.",
         "-p, --profile <path>", "Specifies and alternative path for profile data.",
         "-q, --quiet",          "Suppress copyright output.",

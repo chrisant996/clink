@@ -16,7 +16,7 @@
 #include <getopt.h>
 
 //------------------------------------------------------------------------------
-void puts_help(const char**, int);
+void puts_help(const char* const*, int);
 
 //------------------------------------------------------------------------------
 static void list_keys()
@@ -166,7 +166,7 @@ static void print_help()
 {
     extern const char* g_clink_header;
 
-    const char* help[] = {
+    static const char* const help[] = {
         "setting_name", "Name of the setting who's value is to be set.",
         "value",        "Value to set the setting to."
     };

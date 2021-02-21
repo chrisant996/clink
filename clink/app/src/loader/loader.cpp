@@ -26,7 +26,7 @@ int uninstallscripts(int, char**);
 int testbed(int, char**);
 
 //------------------------------------------------------------------------------
-void puts_help(const char** help_pairs, int count)
+void puts_help(const char* const* help_pairs, int count)
 {
     count &= ~1;
 
@@ -47,8 +47,8 @@ void puts_help(const char** help_pairs, int count)
 //------------------------------------------------------------------------------
 static void show_usage()
 {
-    const char* help_usage = "Usage: [options] <verb> [verb_options]\n";
-    const char* help_verbs[] = {
+    static const char* help_usage = "Usage: [options] <verb> [verb_options]\n";
+    static const char* help_verbs[] = {
         "Verbs:",          "",
         "inject",          "Injects Clink into a process",
         "autorun",         "Manage Clink's entry in cmd.exe's autorun",
