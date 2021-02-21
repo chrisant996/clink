@@ -3,7 +3,7 @@
 
 <!-- ----------------------------------------------------- -->
 <head>
-<title>Clink v1.1.31</title>
+<title>Clink v1.1.32</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Rambla:wght@400;700&family=Roboto&family=Fira+Mono&display=swap');
 html {
@@ -409,7 +409,7 @@ var hljs=function(){"use strict";function e(n){Object.freeze(n);var t="function"
         </td>
         <td style="text-align:right">
             <div id="header">
-                <div id="title">Clink v1.1.31</div>
+                <div id="title">Clink v1.1.32</div>
                 <div id="url">
                     <a href="http://github.com/chrisant996/clink">
                         http://github.com/chrisant996/clink
@@ -830,9 +830,6 @@ Manages Clink's entry in CMD.EXE's autorun section, which can automatically inje
 See <code>clink autorun --help</code> for more information.</dd>
 </p>
 
-<blockquote>
-<p><strong>Compatibility Note:</strong> When Clink is installed for autorun, some Cmder functionality will not work.  See known issue <a href="https://github.com/chrisant996/clink/issues/67">#67</a>.</p>
-</blockquote>
 <p>
 <dt>clink set</dt>
 <dd>
@@ -2198,11 +2195,13 @@ end</code></pre></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="console.getheight">console.getheight</a></div> <div class="signature">() : integer</div></div><div class="body"><p class="desc">Returns the number of visible lines of the console screen buffer.</p></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="console.getlinetext">console.getlinetext</a></div> <div class="signature">( <span class="arg_name">line</span>:integer ) : string</div></div><div class="body"><p class="desc">Returns the text from line number <span class="arg">line</span>, from 1 to <a href="#console.getnumlines">console.getnumlines()</a>.</p><p class="desc"> Any trailing whitespace is stripped before returning the text.</p></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="console.getnumlines">console.getnumlines</a></div> <div class="signature">() : integer</div></div><div class="body"><p class="desc">Returns the total number of lines in the console screen buffer.</p></div></div><hr/>
+<div class="function"><div class="header"> <div class="name"><a name="console.gettitle">console.gettitle</a></div> <div class="signature">() : string</div></div><div class="body"><p class="desc">Returns the console title text.</p></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="console.gettop">console.gettop</a></div> <div class="signature">() : integer</div></div><div class="body"><p class="desc">Returns the current top line (scroll position) in the console screen buffer.</p></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="console.getwidth">console.getwidth</a></div> <div class="signature">() : integer</div></div><div class="body"><p class="desc">Returns the width of the console screen buffer in characters.</p></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="console.islinedefaultcolor">console.islinedefaultcolor</a></div> <div class="signature">( <span class="arg_name">line</span>:integer ) : boolean</div></div><div class="body"><p class="desc">Returns whether line number <span class="arg">line</span> uses only the default text color.</p></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="console.linehascolor">console.linehascolor</a></div> <div class="signature">( <span class="arg_name">line</span>:integer, [<span class="arg_name">attr</span>:integer], [<span class="arg_name">attrs</span>:table of integers], [<span class="arg_name">mask</span>:string] ) : boolean</div></div><div class="body"><p class="desc">Returns whether line number <span class="arg">line</span> contains the DOS color code <span class="arg">attr</span>, or any of the DOS color codes in <span class="arg">attrs</span> (either an integer or a table of integers must be provided, but not both).  <span class="arg">mask</span> is optional and can be "fore" or "back" to only match foreground or background colors, respectively.</p><p class="desc"> The low 4 bits of the color code are the foreground color, and the high 4 bits of the color code are the background color.  This refers to the default 16 color palette used by console windows.  When 256 color or 24-bit color ANSI escape codes have been used, the closest of the 16 colors is used.</p><p class="desc"> To build a color code, add the corresponding Foreground color and the Background color values from this table:</p><p class="desc"> <table><tr><th align="center">Foreground</th><th align="center">Background</th><th>Color</th></tr> <tr><td align="center">0</td><td align="center">0</td><td><div class="colorsample" style="background-color:#000000">&nbsp;</div> Black</td></tr> <tr><td align="center">1</td><td align="center">16</td><td><div class="colorsample" style="background-color:#000080">&nbsp;</div> Dark Blue</td></tr> <tr><td align="center">2</td><td align="center">32</td><td><div class="colorsample" style="background-color:#008000">&nbsp;</div> Dark Green</td></tr> <tr><td align="center">3</td><td align="center">48</td><td><div class="colorsample" style="background-color:#008080">&nbsp;</div> Dark Cyan</td></tr> <tr><td align="center">4</td><td align="center">64</td><td><div class="colorsample" style="background-color:#800000">&nbsp;</div> Dark Red</td></tr> <tr><td align="center">5</td><td align="center">80</td><td><div class="colorsample" style="background-color:#800080">&nbsp;</div> Dark Magenta</td></tr> <tr><td align="center">6</td><td align="center">96</td><td><div class="colorsample" style="background-color:#808000">&nbsp;</div> Dark Yellow</td></tr> <tr><td align="center">7</td><td align="center">112</td><td><div class="colorsample" style="background-color:#c0c0c0">&nbsp;</div> Gray</td></tr> <tr><td align="center">8</td><td align="center">128</td><td><div class="colorsample" style="background-color:#808080">&nbsp;</div> Dark Gray</td></tr> <tr><td align="center">9</td><td align="center">144</td><td><div class="colorsample" style="background-color:#0000ff">&nbsp;</div> Bright Blue</td></tr> <tr><td align="center">10</td><td align="center">160</td><td><div class="colorsample" style="background-color:#00ff00">&nbsp;</div> Bright Green</td></tr> <tr><td align="center">11</td><td align="center">176</td><td><div class="colorsample" style="background-color:#00ffff">&nbsp;</div> Bright Cyan</td></tr> <tr><td align="center">12</td><td align="center">192</td><td><div class="colorsample" style="background-color:#ff0000">&nbsp;</div> Bright Red</td></tr> <tr><td align="center">13</td><td align="center">208</td><td><div class="colorsample" style="background-color:#ff00ff">&nbsp;</div> Bright Magenta</td></tr> <tr><td align="center">14</td><td align="center">224</td><td><div class="colorsample" style="background-color:#ffff00">&nbsp;</div> Bright Yellow</td></tr> <tr><td align="center">15</td><td align="center">240</td><td><div class="colorsample" style="background-color:#ffffff">&nbsp;</div> White</td></tr> </table></p></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="console.scroll">console.scroll</a></div> <div class="signature">( <span class="arg_name">mode</span>:string, <span class="arg_name">amount</span>:integer ) : integer</div></div><div class="body"><p class="desc">Scrolls the console screen buffer and returns the number of lines scrolled up (negative) or down (positive).</p><p class="desc"> The <span class="arg">mode</span> specifies how to scroll: <table> <tr><th>Mode</th><th>Description</th></tr> <tr><td>"line"</td><td>Scrolls by <span class="arg">amount</span> lines; negative is up and positive is down. <tr><td>"page"</td><td>Scrolls by <span class="arg">amount</span> pages; negative is up and positive is down. <tr><td>"end"</td><td>Scrolls to the top if <span class="arg">amount</span> is negative, or to the bottom if positive. <tr><td>"absolute"</td><td>Scrolls to line <span class="arg">amount</span>, from 1 to <a href="#console.getnumlines">console.getnumlines()</a>. </table></p></div></div><hr/>
+<div class="function"><div class="header"> <div class="name"><a name="console.settitle">console.settitle</a></div> <div class="signature">( <span class="arg_name">title</span>:string ) : nil</div></div><div class="body"><p class="desc">Sets the console title text.</p></div></div><hr/>
 </div><div class="group"><h5 class="group_name"><a name="line">line</a></h5><div class="function"><div class="header"> <div class="name"><a name="line:getcommandoffset">line:getcommandoffset</a></div> <div class="signature">() : integer</div></div><div class="body"><p class="desc">Returns the offset to the start of the delimited command in the line that's being effectively edited. Note that this may not be the offset of the first command of the line unquoted as whitespace isn't considered for words.</p><pre class="language-lua"><code>-- Given the following line; abc& 123
 -- where commands are separated by & symbols.
 line:getcommandoffset() == 4</code></pre></div></div><hr/>
@@ -2402,6 +2401,11 @@ string.matchlen("abx", "abx")       -- returns -1</code></pre></div></div><hr/>
         <div class="section" id="changes">
 <h1 id="changes">Changes</h1>
 <h2 id="releases-from-chrisant996clink-fork">Releases from <a href="https://github.com/chrisant996/clink">chrisant996/clink</a> fork</h2>
+<h3 id="v1132">v1.1.32</h3>
+<ul>
+<li>Added support for non-standard escape codes to set the window title or print environment variables.  Depending on the <code>terminal.emulation</code> setting, the behavior is slightly different.  When <code>emulate</code> Clink processes the escape codes.  When <code>native</code> with ConEmu (and Clink) the escape codes are passed to ConEmu, except that Clink processes the environment variable codes in prompt strings.  When <code>native</code> with other terminals, Clink preprocesses the title and environment variable escape codes in prompt strings, but passes the escape codes to the terminal outside of prompt strings.</li>
+<li>Fixed <a href="https://github.com/chrisant996/clink/issues/67">#67</a>; AutoRun interferes with Cmder.</li>
+</ul>
 <h3 id="v1131">v1.1.31</h3>
 <ul>
 <li>Fixed <a href="https://github.com/chrisant996/clink/issues/74">#74</a>; clink gets confused by non-standard ConEmu escape codes.</li>
