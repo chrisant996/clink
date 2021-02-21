@@ -205,8 +205,6 @@ Manages Clink's entry in CMD.EXE's autorun section, which can automatically inje
 See <code>clink autorun --help</code> for more information.</dd>
 </p>
 
-> **Compatibility Note:** When Clink is installed for autorun, some Cmder functionality will not work.  See known issue [#67](https://github.com/chrisant996/clink/issues/67).
-
 <p>
 <dt>clink set</dt>
 <dd>
