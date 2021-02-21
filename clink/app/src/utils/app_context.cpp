@@ -212,6 +212,18 @@ void app_context::get_script_path(str_base& out, bool readable) const
 {
     str<280> tmp;
 
+    // Check if a new scripts path has been injected.  This is so Cmder can be
+    // compatible with Clink auto-run by updating the scripts path via a second
+    // `clink inject` even though Clink is already injected.
+    os::get_env("=clink.scripts.inject", tmp);
+    if (!tmp.empty())
+    {
+        str_base script_path(const_cast<char*>(m_desc.script_path), sizeof_array(m_desc.script_path));
+        script_path.copy(tmp.c_str());
+        os::set_env("=clink.scripts", tmp.c_str());
+        os::set_env("=clink.scripts.inject", nullptr);
+    }
+
     // The --scripts flag happens before anything else.
     out.clear();
     out << m_desc.script_path;

@@ -14,6 +14,7 @@
 #include <getopt.h>
 #include <process/process.h>
 #include <process/vm.h>
+#include <process/pe.h>
 
 //------------------------------------------------------------------------------
 INT_PTR WINAPI  initialise_clink(const app_context::desc&);
@@ -384,7 +385,29 @@ int inject(int argc, char** argv)
 
     // Check to see if clink is already installed.
     if (is_clink_present(target_pid))
+    {
+        if (app_desc.script_path[0])
+        {
+            // Get the address to SetEnvironmentVariableW directly from
+            // kernel32.dll's export table.  If our import table has had
+            // SetEnvironmentVariableW hooked then we'd get a potentially
+            // invalid address if we were to just use &SetEnvironmentVariableW.
+            pe_info kernel32(LoadLibrary("kernel32.dll"));
+            pe_info::funcptr_t func = kernel32.get_export("SetEnvironmentVariableW");
+
+            struct string_struct
+            {
+                wchar_t s[sizeof_array(app_desc.script_path)];
+            };
+
+            string_struct value = {};
+            wstr_base script_path(value.s);
+            to_utf16(script_path, app_desc.script_path);
+
+            process(target_pid).remote_call(func, L"=clink.scripts.inject", value);
+        }
         return ret;
+    }
 
     // Inject Clink's DLL
     void* remote_dll_base = inject_dll(target_pid);

@@ -147,7 +147,7 @@ void* process::inject_module(const char* dll_path)
     pe_info::funcptr_t func = kernel32.get_export("LoadLibraryW");
 
     wstr<280> wpath(dll_path);
-    return remote_call(func, wpath.data(), wpath.length() * sizeof(wchar_t));
+    return remote_call_internal(func, wpath.data(), wpath.length() * sizeof(wchar_t));
 }
 
 //------------------------------------------------------------------------------
@@ -173,7 +173,7 @@ static DWORD WINAPI stdcall_thunk(thunk_data& data)
 }
 
 //------------------------------------------------------------------------------
-void* process::remote_call(pe_info::funcptr_t function, const void* param, int param_size)
+void* process::remote_call_internal(pe_info::funcptr_t function, const void* param, int param_size)
 {
     // Open the process so we can operate on it.
     handle process_handle = OpenProcess(PROCESS_QUERY_INFORMATION|PROCESS_CREATE_THREAD,
@@ -227,6 +227,101 @@ void* process::remote_call(pe_info::funcptr_t function, const void* param, int p
 
     void* call_ret = nullptr;
     vm.read(&call_ret, remote_thunk_data + offsetof(thunk_data, out), sizeof(call_ret));
+    vm.free(region);
+
+    return call_ret;
+}
+
+
+
+//------------------------------------------------------------------------------
+#if defined(_MSC_VER)
+# pragma warning(push)
+# pragma warning(disable : 4200)
+#endif
+struct thunk2_data
+{
+    void*   (WINAPI* func)(void*, void*);
+    void*   out;
+    void*   in1;
+    void*   in2;
+    char    buffer[];
+};
+#if defined(_MSC_VER)
+# pragma warning(pop)
+#endif
+
+//------------------------------------------------------------------------------
+static DWORD WINAPI stdcall_thunk2(thunk2_data& data)
+{
+    data.out = data.func(data.in1, data.in2);
+    return 0;
+}
+
+//------------------------------------------------------------------------------
+void* process::remote_call_internal(pe_info::funcptr_t function, const void* param1, int param1_size, const void* param2, int param2_size)
+{
+    // Open the process so we can operate on it.
+    handle process_handle = OpenProcess(PROCESS_QUERY_INFORMATION|PROCESS_CREATE_THREAD,
+        FALSE, m_pid);
+    if (!process_handle)
+        return nullptr;
+
+    // Scanning for 0xc3 works on 64 bit, but not on 32 bit.  I gave up and just
+    // imposed a max size of 64 bytes, since the emited code is around 40 bytes.
+    static int thunk_size;
+    if (!thunk_size)
+        for (const auto* c = (unsigned char*)stdcall_thunk2; thunk_size < 64 && ++thunk_size, *c++ != 0xc3;);
+
+    vm vm(m_pid);
+    vm::region region = vm.alloc(1, vm::access_write);
+    if (region.base == nullptr)
+        return nullptr;
+
+    int write_offset = 0;
+    const auto& vm_write = [&] (const void* data, int size) {
+        void* addr = (char*)region.base + write_offset;
+        vm.write(addr, data, size);
+        write_offset = (write_offset + size + 7) & ~7;
+        return addr;
+    };
+
+    vm_write((void*)stdcall_thunk2, thunk_size);
+
+    int offset_ptrs = write_offset;
+    void* thunk_ptrs[4] = { function }; // func, out, in1, in2
+    char* remote_thunk_data = (char*)vm_write(thunk_ptrs, sizeof(thunk_ptrs));
+
+    void* addr_param1 = vm_write(param1, param1_size);
+    void* addr_param2 = vm_write(param2, param2_size);
+
+    write_offset = offset_ptrs + sizeof(void*) * 2; // in1
+    vm_write(&addr_param1, sizeof(addr_param1));
+    vm_write(&addr_param2, sizeof(addr_param2));
+
+    vm.set_access(region, vm::access_rwx); // writeable so thunk() can write output.
+
+    static_assert(sizeof(thunk_ptrs) == sizeof(thunk2_data), "");
+    static_assert((offsetof(thunk2_data, buffer) & 7) == 0, "");
+
+    pause();
+
+    // The 'remote call' is actually a thread that's created in the process and
+    // then waited on for completion.
+    DWORD thread_id;
+    handle remote_thread = CreateRemoteThread(process_handle, nullptr, 0,
+        (LPTHREAD_START_ROUTINE)region.base, remote_thunk_data, 0, &thread_id);
+    if (!remote_thread)
+    {
+        unpause();
+        return 0;
+    }
+
+    WaitForSingleObject(remote_thread, INFINITE);
+    unpause();
+
+    void* call_ret = nullptr;
+    vm.read(&call_ret, remote_thunk_data + offsetof(thunk2_data, out), sizeof(call_ret));
     vm.free(region);
 
     return call_ret;
