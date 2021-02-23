@@ -5,6 +5,7 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 # RELEASE
 
 ## Issues
+- Maybe `"-foo="..parser("a", "b", "c")` could actually be detected somehow?  Maybe it could adjust the parsed word list in response to the existence of the arglink?
 
 <br/>
 <br/>
