@@ -17,6 +17,17 @@ end
 
 
 --------------------------------------------------------------------------------
+local function _get_maybe_fileline()
+    local file, line = _get_top_frame()
+    if file and line then
+        return " in "..file..":"..line
+    end
+    return ""
+end
+
+
+
+--------------------------------------------------------------------------------
 local function make_dummy_builder()
     local dummy = {}
     function dummy:addmatch() end
@@ -409,7 +420,10 @@ function _argmatcher:_add(list, addee, prefixes)
                 if i._links then
                     for k, m in pairs(i._links) do
                         if list._links[k] then
-                            print("warning: replacing arglink for '"..k.."'; merging is not supported yet.")
+                            local msg = "warning: replacing arglink for '"..k.."'"
+                            local where = _get_maybe_fileline()
+                            log.info(debug.traceback(msg..where.." -- merging linked argmatchers is not supported yet"))
+                            print(msg..where.." (see log file for details).")
                         end
                         list._links[k] = m
                         if prefixes then add_prefix(prefixes, k) end
@@ -426,7 +440,10 @@ function _argmatcher:_add(list, addee, prefixes)
 
     if is_link then
         if list._links[addee._key] then
-            print("warning: replacing arglink for '"..addee.key.."'; merging is not supported yet.")
+            local msg = "warning: replacing arglink for '"..addee._key.."'"
+            local where = _get_maybe_fileline()
+            log.info(debug.traceback(msg..where.." -- merging linked argmatchers is not supported yet"))
+            print(msg..where.." (see log file for details).")
         end
         list._links[addee._key] = addee._matcher
         if prefixes then add_prefix(prefixes, addee._key) end

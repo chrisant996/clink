@@ -40,3 +40,26 @@ function _error_handler_ret(message)
     end
     return debug.traceback(message, 2)
 end
+
+--------------------------------------------------------------------------------
+-- This returns the file and line for the top stack frame.
+function _get_top_frame(max)
+    if not max or type(max) ~= "number" or max < 1 then
+        max = 26
+    else
+        max = max + 1
+    end
+
+    local file, line
+    for f = 1, max, 1 do
+        t = debug.getinfo(f, "Sl")
+        if not t then
+            if file and line then
+                return file, line
+            end
+            return
+        end
+        file = t.short_src
+        line = t.currentline
+    end
+end
