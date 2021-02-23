@@ -237,6 +237,89 @@ static void write_line_feed()
 }
 
 //------------------------------------------------------------------------------
+static bool parse_line_token(str_base& out, const char* line)
+{
+    out.clear();
+
+    // Skip leading whitespace.
+    while (*line == ' ' || *line == '\t')
+        line++;
+
+    // Parse the line text.
+    bool first_component = true;
+    for (bool quoted = false; true; line++)
+    {
+        // Spaces are acceptable when quoted, otherwise it's the end of the
+        // token and any subsequent text defeats the directory shortcut feature.
+        if (*line == ' ' || *line == '\t')
+        {
+            if (!quoted)
+            {
+                // Skip trailing whitespace.
+                while (*line == ' ' || *line == '\t')
+                    line++;
+                // Parse fails if input is more than a single token.
+                if (*line)
+                    return false;
+            }
+        }
+
+        // Parse succeeds if input is one token.
+        if (!*line)
+            return out.length();
+
+        switch (*line)
+        {
+            // These characters defeat the directory shortcut feature.
+        case '^':
+        case '<':
+        case '|':
+        case '>':
+        case '%':
+            return false;
+
+            // These characters are acceptable when quoted.
+        case '@':
+        case '(':
+        case ')':
+        case '&':
+        case '+':
+        case '=':
+        case ';':
+        case ',':
+            if (!quoted)
+                return false;
+            break;
+
+            // Quotes toggle quote mode.
+        case '"':
+            first_component = false;
+            quoted = !quoted;
+            continue;
+
+            // These characters end a component.
+        case '.':
+        case '/':
+        case '\\':
+            if (first_component)
+            {
+                // Some commands are special and defeat the directory shortcut
+                // feature even if they're legitimately part of an actual path,
+                // unless they are quoted.
+                static const char* const c_commands[] = { "call", "cd", "chdir", "dir", "echo", "md", "mkdir", "popd", "pushd" };
+                for (const char* name : c_commands)
+                    if (out.iequals(name))
+                        return false;
+                first_component = false;
+            }
+            break;
+        }
+
+        out.concat(line, 1);
+    }
+}
+
+//------------------------------------------------------------------------------
 static bool intercept_directory(str_base& inout)
 {
     const char* line = inout.c_str();
@@ -250,29 +333,9 @@ static bool intercept_directory(str_base& inout)
         return true;
     }
 
-    // Skip leading whitespace.
-    while (*line == ' ' || *line == '\t')
-        line++;
-
-    // Strip all quotes (it may be surprising, but this is what CMD.EXE does).
+    // Parse the input for a single token.
     str<> tmp;
-    while (*line)
-    {
-        if (*line != '\"')
-            tmp.concat(line, 1);
-        line++;
-    }
-
-    // Truncate trailing whitespcae.
-    while (tmp.length())
-    {
-        char ch = tmp.c_str()[tmp.length() - 1];
-        if (ch != ' ' && ch != '\t')
-            break;
-        tmp.truncate(tmp.length() - 1);
-    }
-
-    if (!tmp.length())
+    if (!parse_line_token(tmp, line))
         return false;
 
     // If all dots, convert into valid path syntax moving N-1 levels.
