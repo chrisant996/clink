@@ -25,16 +25,59 @@ set __CONFIG=%__debug_config%
 set __PLATFORM=%__x64_platform%
 set __TARGETS=
 set __SLN=
-set __MSBUILD=MSBuild.exe
-if exist .build\vs2019\clink.sln (
-	set __SLN=".build\vs2019\clink.sln"
-	set __MSBUILD="c:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\MSBuild\Current\Bin\MSBuild.exe"
-) else if exist .build\vs2017\clink.sln (
-	set __SLN=".build\vs2017\clink.sln"
-	set __MSBUILD="c:\Program Files (x86)\Microsoft Visual Studio\2017\Enterprise\MSBuild\15.0\Bin\MSBuild.exe"
+set __MSBUILD=
+
+set __DEFAULTCONFIG=%__CONFIG%
+set __DEFAULTPLATFORM=%__PLATFORM%
+
+rem -- Try to find MSBuild.
+
+for /f %%a in ('where msbuild.exe 2^>nul') do (
+	set __MSBUILD="%%a"
+	goto :gotmsbuild
 )
 
+set __MSBUILD="%ProgramFiles(x86)%\Microsoft Visual Studio\2019\Enterprise\MSBuild\Current\Bin\MSBuild.exe"
+if exist __MSBUILD goto gotmsbuild
+set __MSBUILD="%ProgramFiles(x86)%\Microsoft Visual Studio\2017\Enterprise\MSBuild\15.0\Bin\MSBuild.exe"
+if exist __MSBUILD goto gotmsbuild
+set __MSBUILD="%ProgramFiles(x86)%\Microsoft Visual Studio\2019\BuildTools\MSBuild\15.0\Bin\MSBuild.exe"
+if exist __MSBUILD goto gotmsbuild
+set __MSBUILD="%ProgramFiles(x86)%\MSBuild\Current\Bin\MSBuild.exe"
+if exist __MSBUILD goto gotmsbuild
+set __MSBUILD="%ProgramFiles(x86)%\MSBuild\15.0\Bin\MSBuild.exe"
+if exist __MSBUILD goto gotmsbuild
+set __MSBUILD="%ProgramFiles(x86)%\MSBuild\12.0\Bin\MSBuild.exe"
+if exist __MSBUILD goto gotmsbuild
+set __MSBUILD=
+
+:gotmsbuild
+
+rem -- Try to find solution file.
+
+if exist *.sln (
+	for %%a in (*.sln) do (
+		set __SLN="%%a"
+		goto :gotsln
+	)
+) else if exist .build\vs2019\*.sln (
+	for %%a in (.build\vs2019\*.sln) do (
+		set __SLN="%%a"
+		set __MSBUILD="%ProgramFiles(x86)%\Microsoft Visual Studio\2019\Enterprise\MSBuild\Current\Bin\MSBuild.exe"
+		goto :gotsln
+	)
+) else if exist .build\vs2017\*.sln (
+	for %%a in (.build\vs2017\*.sln) do (
+		set __SLN="%%a"
+		set __MSBUILD="%ProgramFiles(x86)%\Microsoft Visual Studio\2017\Enterprise\MSBuild\15.0\Bin\MSBuild.exe"
+		goto :gotsln
+	)
+)
+
+:gotsln
 goto :doarg
+
+rem -- Get next arg.
 
 :nextarg
 shift
@@ -61,6 +104,8 @@ if "%1" == "/fin" ( set __CONFIG=%__final_config%&goto :nextarg )
 if "%1" == "/final" ( set __CONFIG=%__final_config%&goto :nextarg )
 if "%1" == "/rel" ( set __CONFIG=%__release_config%&goto :nextarg )
 if "%1" == "/release" ( set __CONFIG=%__release_config%&goto :nextarg )
+if "%1" == "/shp" ( set __CONFIG=%__release_config%&goto :nextarg )
+if "%1" == "/ship" ( set __CONFIG=%__release_config%&goto :nextarg )
 if "%1" == "/single" ( set __MULTICPU=&goto :nextarg )
 if "%1" == "--single" ( set __MULTICPU=&goto :nextarg )
 if "%1" == "/multi" ( set __MULTICPU=-m:6&goto :nextarg )
@@ -75,26 +120,46 @@ set __ARGS=
 :appendarg
 if not "%1" == "" set __ARGS=%__ARGS% %1&shift&goto appendarg
 
-if x%__SLN% == x echo error: Unable to find VS2019 ^(or VS2017^) clink.sln file.&goto :eof
-if not exist %__MSBUILD% echo error: Unable to find VS2019 ^(or VS2017^) Enterprise installation.&goto :eof
+rem -- Try to run MSBuild with the solution file.
+
+if x%__SLN% == x echo error: Unable to find .sln file.&goto :eof
+if x%__MSBUILD% == x echo error: Unable to find MSBuild.&goto :eof
+
+set __SLNNAME=%__SLN%
+call :setslnname %__SLN%
 
 echo.
-%EC% %BOLD%%NEG% BUILDING %__PLATFORM% %__CONFIG% %POS%%NORM%
+%EC% %BOLD%%NEG% Building %__SLNNAME% %__PLATFORM% %__CONFIG% %POS%%NORM%
 %__MSBUILD% -nologo -v:minimal %__MULTICPU% -p:Configuration=%__CONFIG% -p:Platform=%__PLATFORM% %__TARGETS% %__ARGS% %__SLN%
 if errorlevel 1 goto :eof
 
 goto :eof
 
+rem -- Print usage info.
+
 :usage
+
+set __ISX86DEFAULT=
+set __ISX64DEFAULT=
+set __ISDEBUGDEFAULT=
+set __ISRELEASEDEFAULT=
+set __ISFINALDEFAULT=
+set __DEFAULTMARKER= %CYAN%(default)%NORM%
+if %__DEFAULTPLATFORM% == %__x86_platform% set __ISX86DEFAULT=%__DEFAULTMARKER%
+if %__DEFAULTPLATFORM% == %__x64_platform% set __ISX64DEFAULT=%__DEFAULTMARKER%
+if %__DEFAULTCONFIG% == %__debug_config% set __ISDEBUGDEFAULT=%__DEFAULTMARKER%
+if %__DEFAULTCONFIG% == %__release_config% set __ISRELEASEDEFAULT=%__DEFAULTMARKER%
+if %__DEFAULTCONFIG% == %__final_config% set __ISFINALDEFAULT=%__DEFAULTMARKER%
+
 %EC% %BOLD%Usage:%NORM%  BLD [/dbg /rel /fin /x86 /x64 /multi /single] [msbuild_options]
 echo.
-echo Builds DEBUG x64 by default.
+echo Builds %__DEFAULTCONFIG% %__DEFAULTPLATFORM% by default.
 echo.
-echo   /x86          Builds x86.
-echo   /x64          Builds x64 %CYAN%(default)%NORM%.
-echo   /dbg          Builds DEBUG %CYAN%(default)%NORM%.
-echo   /rel          Builds RELEASE.
-echo   /fin          Builds FINAL.
+echo   /x86          Builds x86%__ISX86DEFAULT%.
+echo   /x64          Builds x64%__ISX64DEFAULT%.
+echo   /dbg          Builds DEBUG%__ISDEBUGDEFAULT%.
+echo   /rel          Builds RELEASE%__ISRELEASEDEFAULT%.
+echo   /fin          Builds FINAL%__ISFINALDEFAULT%.
 echo.
 echo   /multi        Multi processor build %CYAN%(default)%NORM%.
 echo   /single       Single processor build.
@@ -107,16 +172,20 @@ echo Aliases:
 echo   /x86          Or /win32.
 echo   /x64          Or /amd64.
 echo   /dbg          Or /debug.
-echo   /rel          Or /release.
+echo   /rel          Or /release or /shp or /ship.
 echo   /fin          Or /final.
 echo.
-if x%__SLN% == x echo warning: Unable to find VS2019 ^(or VS2017^) clink.sln file.
+if x%__SLN% == x echo warning: Unable to find .sln file.
 if not x%__SLN% == x echo Using SLN file:  %__SLN%
-if not exist %__MSBUILD% echo warning: Unable to find VS2019 ^(or VS2017^) Enterprise installation.
+if not exist %__MSBUILD% echo warning: Unable to find MSBuild.
 if exist %__MSBUILD% echo Using MSBuild:   %__MSBUILD%
 goto :eof
 
 :msbuildusage
 %__MSBUILD% -help
+goto :eof
+
+:setslnname
+if not "%~n1" == "" set __SLNNAME=%~n1
 goto :eof
 
