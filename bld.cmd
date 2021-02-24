@@ -38,17 +38,17 @@ for /f %%a in ('where msbuild.exe 2^>nul') do (
 )
 
 set __MSBUILD="%ProgramFiles(x86)%\Microsoft Visual Studio\2019\Enterprise\MSBuild\Current\Bin\MSBuild.exe"
-if exist __MSBUILD goto gotmsbuild
+if exist %__MSBUILD% goto gotmsbuild
 set __MSBUILD="%ProgramFiles(x86)%\Microsoft Visual Studio\2017\Enterprise\MSBuild\15.0\Bin\MSBuild.exe"
-if exist __MSBUILD goto gotmsbuild
+if exist %__MSBUILD% goto gotmsbuild
 set __MSBUILD="%ProgramFiles(x86)%\Microsoft Visual Studio\2019\BuildTools\MSBuild\15.0\Bin\MSBuild.exe"
-if exist __MSBUILD goto gotmsbuild
+if exist %__MSBUILD% goto gotmsbuild
 set __MSBUILD="%ProgramFiles(x86)%\MSBuild\Current\Bin\MSBuild.exe"
-if exist __MSBUILD goto gotmsbuild
+if exist %__MSBUILD% goto gotmsbuild
 set __MSBUILD="%ProgramFiles(x86)%\MSBuild\15.0\Bin\MSBuild.exe"
-if exist __MSBUILD goto gotmsbuild
+if exist %__MSBUILD% goto gotmsbuild
 set __MSBUILD="%ProgramFiles(x86)%\MSBuild\12.0\Bin\MSBuild.exe"
-if exist __MSBUILD goto gotmsbuild
+if exist %__MSBUILD% goto gotmsbuild
 set __MSBUILD=
 
 :gotmsbuild
