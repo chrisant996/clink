@@ -5,7 +5,6 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 # RELEASE
 
 ## Issues
-- Maybe `"-foo="..parser("a", "b", "c")` could actually be detected somehow?  Maybe it could adjust the parsed word list in response to the existence of the arglink?
 
 <br/>
 <br/>
@@ -23,6 +22,7 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 - Provide a way for a custom classifier to apply a classification anywhere (not just to a pre-parsed word), and to apply any arbitrary CSI SGR code to a word or to anywhere.
 
 ## Low Priority
+- Maybe `"-foo="..parser("a", "b", "c")` could actually be detected somehow?  Maybe it could adjust the parsed word list in response to the existence of the arglink?
 - Make scrolling key bindings work at the pager prompt.  Note that it would need to revise how the scroll routines identify the bottom line (currently they use Readline's bottom line, but the pager displays output past that point).
 - Add a hook function for inserting matches.
   - The insertion hook can avoid appending a space when inserting a flag/arg that ends in `:` or `=`.
