@@ -2,6 +2,10 @@
 
 ## Releases from [chrisant996/clink](https://github.com/chrisant996/clink) fork
 
+### v1.1.34
+
+- Fixed copying to clipboard (CF_UNICODETEXT was put on the clipboard correctly, but CF_TEXT was empty and should have been omitted to let Windows automatically convert it from the Unicode text).
+
 ### v1.1.33
 
 - Make the "replacing arglink" warning message a little more informative, and write a lua traceback to the Clink log file.
