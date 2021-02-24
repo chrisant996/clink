@@ -35,7 +35,11 @@ static host* g_host = nullptr;
 static void success()
 {
     if (!app_context::get()->is_quiet())
-        puts(g_clink_header);
+    {
+        // Using printf instead of puts ensures there's only one blank line
+        // between the header and the subsequent prompt.
+        printf("%s", g_clink_header);
+    }
 }
 
 //------------------------------------------------------------------------------
