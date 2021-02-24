@@ -3,7 +3,7 @@
 
 <!-- ----------------------------------------------------- -->
 <head>
-<title>Clink v1.1.32</title>
+<title>Clink v1.1.33</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Rambla:wght@400;700&family=Roboto&family=Fira+Mono&display=swap');
 html {
@@ -409,7 +409,7 @@ var hljs=function(){"use strict";function e(n){Object.freeze(n);var t="function"
         </td>
         <td style="text-align:right">
             <div id="header">
-                <div id="title">Clink v1.1.32</div>
+                <div id="title">Clink v1.1.33</div>
                 <div id="url">
                     <a href="http://github.com/chrisant996/clink">
                         http://github.com/chrisant996/clink
@@ -2401,6 +2401,12 @@ string.matchlen("abx", "abx")       -- returns -1</code></pre></div></div><hr/>
         <div class="section" id="changes">
 <h1 id="changes">Changes</h1>
 <h2 id="releases-from-chrisant996clink-fork">Releases from <a href="https://github.com/chrisant996/clink">chrisant996/clink</a> fork</h2>
+<h3 id="v1133">v1.1.33</h3>
+<ul>
+<li>Make the &quot;replacing arglink&quot; warning message a little more informative, and write a lua traceback to the Clink log file.</li>
+<li>Fixed <a href="https://github.com/chrisant996/clink/issues/77">#77</a>; with ConsoleZ scrolling does not always work.</li>
+<li>Fixed <a href="https://github.com/chrisant996/clink/issues/76">#76</a>; cannot <code>cd</code> up multiple directories normally.</li>
+</ul>
 <h3 id="v1132">v1.1.32</h3>
 <ul>
 <li>Added support for non-standard escape codes to set the window title or print environment variables.  Depending on the <code>terminal.emulation</code> setting, the behavior is slightly different.  When <code>emulate</code> Clink processes the escape codes.  When <code>native</code> with ConEmu (and Clink) the escape codes are passed to ConEmu, except that Clink processes the environment variable codes in prompt strings.  When <code>native</code> with other terminals, Clink preprocesses the title and environment variable escape codes in prompt strings, but passes the escape codes to the terminal outside of prompt strings.</li>
