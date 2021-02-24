@@ -2,6 +2,12 @@
 
 ## Releases from [chrisant996/clink](https://github.com/chrisant996/clink) fork
 
+### v1.1.33
+
+- Make the "replacing arglink" warning message a little more informative, and write a lua traceback to the Clink log file.
+- Fixed [#77](https://github.com/chrisant996/clink/issues/77); with ConsoleZ scrolling does not always work.
+- Fixed [#76](https://github.com/chrisant996/clink/issues/76); cannot `cd` up multiple directories normally.
+
 ### v1.1.32
 
 - Added support for non-standard escape codes to set the window title or print environment variables.  Depending on the `terminal.emulation` setting, the behavior is slightly different.  When `emulate` Clink processes the escape codes.  When `native` with ConEmu (and Clink) the escape codes are passed to ConEmu, except that Clink processes the environment variable codes in prompt strings.  When `native` with other terminals, Clink preprocesses the title and environment variable escape codes in prompt strings, but passes the escape codes to the terminal outside of prompt strings.
