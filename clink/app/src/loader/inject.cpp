@@ -125,7 +125,6 @@ static void copy_dll(str_base& dll_path)
     }
 
     // Copy the PDB to make debugging easier.
-#ifdef CLINK_DEBUG
     if (dll_path.length() > 4)
     {
         str<280> pdb_path;
@@ -139,7 +138,6 @@ static void copy_dll(str_base& dll_path)
         if (always || os::get_path_type(pdb_target_path.c_str()) != os::path_type_file)
             os::copy(pdb_path.c_str(), pdb_target_path.c_str());
     }
-#endif
 
     dll_path = target_path.c_str();
 }
