@@ -171,8 +171,7 @@ static void copy_impl(const char* value, int length)
     if (OpenClipboard(nullptr) == FALSE)
         return;
 
-    SetClipboardData(CF_TEXT, nullptr);
-    SetClipboardData(CF_UNICODETEXT, mem);
+    SetClipboardData(CF_UNICODETEXT, mem); // Windows automatically dynamically converts to CF_TEXT as needed.
     CloseClipboard();
 }
 
