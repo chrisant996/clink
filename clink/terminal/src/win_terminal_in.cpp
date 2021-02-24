@@ -310,7 +310,7 @@ static void set_cursor_visibility(bool state)
 }
 
 //------------------------------------------------------------------------------
-static void adjust_cursor_on_resize(COORD prev_position)
+static bool adjust_cursor_on_resize(COORD prev_position)
 {
     // Windows will move the cursor onto a new line when it gets clipped on
     // buffer resize. Other terminals clamp along the X axis.
@@ -320,13 +320,14 @@ static void adjust_cursor_on_resize(COORD prev_position)
     CONSOLE_SCREEN_BUFFER_INFO csbi;
     GetConsoleScreenBufferInfo(handle , &csbi);
     if (prev_position.X < csbi.dwSize.X)
-        return;
+        return false;
 
     COORD fix_position = {
         short(csbi.dwSize.X - 1),
         short(csbi.dwCursorPosition.Y - 1)
     };
     SetConsoleCursorPosition(handle, fix_position);
+    return true;
 }
 
 
@@ -497,8 +498,9 @@ void win_terminal_in::read_console()
         case WINDOW_BUFFER_SIZE_EVENT:
             // Windows will move the cursor onto a new line when it gets clipped
             // on buffer resize. Other terminals
-            adjust_cursor_on_resize(csbi.dwCursorPosition);
-            return;
+            if (adjust_cursor_on_resize(csbi.dwCursorPosition))
+                return;
+            break;
         }
     }
 }
