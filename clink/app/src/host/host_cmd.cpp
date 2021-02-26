@@ -444,7 +444,9 @@ BOOL WINAPI host_cmd::read_console(
 
             mode_scope(HANDLE handle) : handle(handle)
             {
+                extern void save_host_input_mode(DWORD);
                 GetConsoleMode(handle, &prev_mode);
+                save_host_input_mode(prev_mode);
                 SetConsoleMode(handle, ENABLE_WINDOW_INPUT);
             }
 

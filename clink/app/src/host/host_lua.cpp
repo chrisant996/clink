@@ -18,9 +18,6 @@ extern "C" {
 }
 
 //------------------------------------------------------------------------------
-bool s_force_reload_scripts = false;
-
-//------------------------------------------------------------------------------
 extern "C" int show_cursor(int visible)
 {
     int was_visible = 0;
@@ -37,6 +34,51 @@ extern "C" int show_cursor(int visible)
 
     return was_visible;
 }
+
+//------------------------------------------------------------------------------
+static DWORD s_host_input_mode = -1;
+static DWORD s_clink_input_mode = -1;
+
+//------------------------------------------------------------------------------
+void save_host_input_mode(DWORD mode)
+{
+    s_host_input_mode = mode;
+}
+
+//------------------------------------------------------------------------------
+extern "C" void use_host_input_mode()
+{
+    HANDLE h = GetStdHandle(STD_INPUT_HANDLE);
+    if (h && h != INVALID_HANDLE_VALUE)
+    {
+        DWORD mode;
+        if (GetConsoleMode(h, &mode))
+            s_clink_input_mode = mode;
+
+        if (s_host_input_mode != -1)
+            SetConsoleMode(h, s_host_input_mode);
+    }
+}
+
+//------------------------------------------------------------------------------
+extern "C" void use_clink_input_mode()
+{
+    HANDLE h = GetStdHandle(STD_INPUT_HANDLE);
+    if (h && h != INVALID_HANDLE_VALUE)
+    {
+        DWORD mode;
+        if (s_host_input_mode == -1 && GetConsoleMode(h, &mode))
+            s_host_input_mode = mode;
+
+        if (s_clink_input_mode != -1)
+            SetConsoleMode(h, s_clink_input_mode);
+    }
+}
+
+
+
+//------------------------------------------------------------------------------
+bool s_force_reload_scripts = false;
 
 //------------------------------------------------------------------------------
 host_lua::host_lua()

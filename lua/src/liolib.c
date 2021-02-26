@@ -413,15 +413,22 @@ static int read_chars (lua_State *L, FILE *f, size_t n) {
 
 
 static int g_read (lua_State *L, FILE *f, int first) {
-/* begin_clink_change */
-#if defined(_WIN32)
-  extern int show_cursor (int visible);
-  int was_visible = (f == stdin) && show_cursor (1);
-#endif
-/* end_clink_change */
   int nargs = lua_gettop(L) - 1;
   int success;
   int n;
+/* begin_clink_change */
+#if defined(_WIN32)
+  extern int show_cursor (int visible);
+  extern void use_host_input_mode ();
+  extern void use_clink_input_mode ();
+  int was_visible = 0;
+  if (f == stdin)
+  {
+    use_host_input_mode();
+    was_visible = show_cursor (1);
+  }
+#endif
+/* end_clink_change */
   clearerr(f);
   if (nargs == 0) {  /* no arguments? */
     success = read_line(L, f, 1);
@@ -454,7 +461,11 @@ static int g_read (lua_State *L, FILE *f, int first) {
             break;
           default:
 /* begin_clink_change */
-            show_cursor(was_visible);
+            if (f == stdin)
+            {
+              show_cursor(was_visible);
+              use_clink_input_mode();
+            }
 /* end_clink_change */
             return luaL_argerror(L, n, "invalid format");
         }
@@ -462,7 +473,11 @@ static int g_read (lua_State *L, FILE *f, int first) {
     }
   }
 /* begin_clink_change */
-  show_cursor(was_visible);
+  if (f == stdin)
+  {
+    show_cursor(was_visible);
+    use_clink_input_mode();
+  }
 /* end_clink_change */
   if (ferror(f))
     return luaL_fileresult(L, 0, NULL);
