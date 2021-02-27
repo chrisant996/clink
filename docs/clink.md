@@ -71,6 +71,12 @@ The new Clink tries to be as backward compatible with Clink v0.4.9 as possible. 
 
 When running Clink via the methods above, Clink checks the parent process is supported and injects a DLL into it. The DLL then hooks the WriteConsole() and ReadConsole() Windows functions. The former is so that Clink can capture the current prompt, and the latter hook allows Clink to provide its own Readline-powered command line editing.
 
+<a name="privacy"/>
+
+## Privacy
+
+Clink does not collect user data.  Clink writes diagnostic information to its local log file, and does not transmit the log file off the local computer.  For the location of the log file, refer to [File Locations](#filelocations) or run `clink info`.
+
 <a name="configclink"/>
 
 # Configuring Clink
