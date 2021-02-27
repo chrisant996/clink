@@ -2455,6 +2455,7 @@ insert_match (char *match, int start, int mtype, char *qc)
 /* begin_clink_change */
       if (!_rl_complete_mark_directories)
 	{
+	  start = end + 1;
 	  end = rl_point;
 	  while (rl_point > start && rl_is_path_separator (rl_line_buffer[rl_point - 1]))
 	    rl_point--;
