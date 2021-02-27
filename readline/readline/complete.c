@@ -2452,6 +2452,16 @@ insert_match (char *match, int start, int mtype, char *qc)
 	_rl_replace_text (replacement, start, end);
       if (replacement != match)
         xfree (replacement);
+/* begin_clink_change */
+      if (!_rl_complete_mark_directories)
+	{
+	  end = rl_point;
+	  while (rl_point > start && rl_is_path_separator (rl_line_buffer[rl_point - 1]))
+	    rl_point--;
+	  if (rl_point < end)
+	    rl_delete_text (rl_point, end);
+	}
+/* end_clink_change */
     }
 }
 

@@ -5,7 +5,6 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 # RELEASE
 
 ## Issues
-- Option for `menu-complete` to _not_ append path separator when inserting a directory completion.
 
 <br/>
 <br/>
