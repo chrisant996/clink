@@ -498,6 +498,10 @@ var hljs=function(){"use strict";function e(n){Object.freeze(n);var t="function"
 </ul>
 <h1 id="how-clink-works">How Clink Works</h1>
 <p>When running Clink via the methods above, Clink checks the parent process is supported and injects a DLL into it. The DLL then hooks the WriteConsole() and ReadConsole() Windows functions. The former is so that Clink can capture the current prompt, and the latter hook allows Clink to provide its own Readline-powered command line editing.</p>
+<a name="privacy"/>
+
+<h2 id="privacy">Privacy</h2>
+<p>Clink does not collect user data.  Clink writes diagnostic information to its local log file (run <code>clink info</code> to find the log file), and does not transmit the log file off the local computer.</p>
 <a name="configclink"/>
 
 <h1 id="configuring-clink">Configuring Clink</h1>
