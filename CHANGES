@@ -6,6 +6,7 @@
 
 - Fixed when the `mark-directories` inputrc variable is `off` (regression introduced in v1.1.1-alpha).
 - Fixed Lua reading from stdin, especially in the Lua debugger (regression introduced in v1.1.25).
+- Fixed exponential cost performance bug in Readline when removing duplicate matches.
 
 ### v1.1.34
 
