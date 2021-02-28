@@ -31,8 +31,6 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
   - But the hard part is handling duplicates (especially with different match types).  Could maybe pass the index in the matches array, but that requires tighter interdependence between Readline and its host.
 
 ## Tests
-- The tests use the current user's .inputrc file, but they should use preset values instead.
-- Add tests for `mark-directories` off vs on to make sure both work correctly (for both `complete` and `menu-complete`).
 
 <br/>
 <br/>
