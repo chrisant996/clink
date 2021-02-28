@@ -477,6 +477,7 @@ static int no_compute_lcd = 0;
 static int quote_lcd = 0;
 static int force_quoting = 0;
 static char *orig_text_for_completion = 0;
+static int orig_text_len_for_completion = 0;
 /* end_clink_change */
 
 /* Set to the last key used to invoke one of the completion functions */
@@ -607,10 +608,9 @@ set_completion_defaults (int what_to_do)
   quote_lcd = 0;
   force_quoting = 0;
   if (orig_text_for_completion)
-    {
-      xfree (orig_text_for_completion);
-      orig_text_for_completion = 0;
-    }
+    xfree (orig_text_for_completion);
+  orig_text_for_completion = 0;
+  orig_text_len_for_completion = 0;
 /* end_clink_change */
 }
 
@@ -618,14 +618,97 @@ set_completion_defaults (int what_to_do)
 static void
 remember_orig_text (int start, int end)
 {
-  /* Unlike ORIG_TEXT, this saves the original text minus quotes.
-     And saves it in a global variable even in rl_complete_internal. */
+  /* Unlike the rl_copy_text calls in rl_menu_complete,
+     rl_old_menu_complete, and rl_complete_internal this saves the
+     original text minus quotes.  And saves it in a global variable. */
   while (start < end && strchr (rl_completer_quote_characters, rl_line_buffer[start])) start++;
   while (end > start && strchr (rl_completer_quote_characters, rl_line_buffer[end - 1])) end--;
 
   if (orig_text_for_completion)
     xfree (orig_text_for_completion);
   orig_text_for_completion = rl_copy_text (start, end);
+  orig_text_len_for_completion = (end - start);
+}
+
+static int
+pathfold (int c)
+{
+  return (rl_backslash_path_sep && c == '\\') ? '/' : c;
+}
+
+static int
+are_paths_equivalent (const char *a, int alen, const char *b, int blen)
+{
+  /* Returns true if paths match, modulo case folding and path
+     separator folding. */
+  for (; alen > 0 && blen > 0; a++, b++, alen--, blen--)
+    {
+      int c1 = (unsigned char)*a;
+      int c2 = (unsigned char)*b;
+      if (_rl_completion_case_fold)
+	{
+	  c1 = _rl_to_lower (c1);
+	  c2 = _rl_to_lower (c2);
+	}
+
+#if defined (HANDLE_MULTIBYTE)
+      if (MB_CUR_MAX > 1 && rl_byte_oriented == 0)
+	{
+	  WCHAR_T wc1, wc2;
+	  mbstate_t ps1, ps2;
+	  size_t v1 = MBRTOWC(&wc1, a, alen, &ps1);
+	  size_t v2 = MBRTOWC (&wc2, b, blen, &ps2);
+	  if (MB_INVALIDCH (v1) || MB_INVALIDCH (v2))
+	    {
+	      if (c1 != c2)	/* do byte comparison */
+		break;
+	      continue;
+	    }
+
+	  if (_rl_completion_case_fold)
+	    {
+	      wc1 = towlower (wc1);
+	      wc2 = towlower (wc2);
+	    }
+
+	  if (pathfold (wc1) != pathfold (wc2))
+	    break;
+
+	  if (v1 > 1)
+	    {
+	      int adv1 = v1 - 1;
+	      a += adv1;
+	      alen -= adv1;
+	    }
+	  if (v2 > 1)
+	    {
+	      int adv2 = v2 - 1;
+	      b += adv2;
+	      blen -= adv2;
+	    }
+	}
+      else
+#endif
+	if (pathfold (c1) != pathfold (c2))
+	  break;
+
+      /* Skip all adjacent path separators. */
+      if (rl_is_path_separator (c1))
+	{
+	  while (alen > 1 && rl_is_path_separator (a[1]))
+	    {
+	      a++;
+	      alen--;
+	    }
+	  while (blen > 1 && rl_is_path_separator (b[1]))
+	    {
+	      b++;
+	      blen--;
+	    }
+	}
+    }
+
+  return alen <= 0 && blen <= 0;
 }
 
 static int
@@ -635,16 +718,8 @@ is_orig_or_unchanged (const char *orig, int origlen, const char *repl, int repll
      no change) or matches the original-most text (i.e. reverting
      to the original line buffer text from before the completion
      operation began). */
-  if (_rl_completion_case_fold)
-    {
-      return (_rl_strnicmp (orig, repl, max (origlen, repllen)) == 0 ||
-	      _rl_strnicmp (orig_text_for_completion, repl, max (strlen (orig_text_for_completion), repllen)) == 0);
-    }
-  else
-    {
-      return (strncmp (orig, repl, max (origlen, repllen)) == 0 ||
-	      strncmp (orig_text_for_completion, repl, max (strlen (orig_text_for_completion), repllen)) == 0);
-    }
+  return (are_paths_equivalent (orig, origlen, repl, repllen) ||
+	  are_paths_equivalent (orig_text_for_completion, orig_text_len_for_completion, repl, repllen));
 }
 /* end_clink_change */
 
@@ -1784,14 +1859,6 @@ remove_duplicate_matches (char **matches)
   return (temp_array);
 }
 
-/* begin_clink_change */
-static int
-pathfold (int c)
-{
-  return (rl_backslash_path_sep && c == '\\') ? '/' : c;
-}
-/* end_clink_change */
-
 /* Find the common prefix of the list of matches, and put it into
    matches[0]. */
 static int
@@ -1860,6 +1927,7 @@ compute_lcd_of_matches (char **match_list, int matches, const char *text)
 #if defined (HANDLE_MULTIBYTE)
 	    if (MB_CUR_MAX > 1 && rl_byte_oriented == 0)
 	      {
+//$ TODO: strlen here is O(N*N)!!
 		v1 = MBRTOWC(&wc1, match_list[i]+si, strlen (match_list[i]+si), &ps1);
 		v2 = MBRTOWC (&wc2, match_list[i+1]+si, strlen (match_list[i+1]+si), &ps2);
 		if (MB_INVALIDCH (v1) || MB_INVALIDCH (v2))
