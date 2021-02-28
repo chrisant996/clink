@@ -738,11 +738,7 @@ get_y_or_n (int for_pager)
 #if defined (READLINE_CALLBACKS)
   if (RL_ISSTATE (RL_STATE_CALLBACK))
 /* begin_clink_change */
-#if 0
-/* end_clink_change */
-    return 1;
-/* begin_clink_change */
-#else
+    //return 1;
     {
       if (!rl_read_key_hook)
 	return 1;
@@ -765,7 +761,6 @@ get_y_or_n (int for_pager)
 	  rl_ding ();
 	}
     }
-#endif
 /* end_clink_change */
 #endif
 
