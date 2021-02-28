@@ -476,6 +476,7 @@ int rl_completion_matches_include_type = 0;
 static int no_compute_lcd = 0;
 static int quote_lcd = 0;
 static int force_quoting = 0;
+static char *orig_text_for_completion = 0;
 /* end_clink_change */
 
 /* Set to the last key used to invoke one of the completion functions */
@@ -605,8 +606,47 @@ set_completion_defaults (int what_to_do)
 /* begin_clink_change */
   quote_lcd = 0;
   force_quoting = 0;
+  if (orig_text_for_completion)
+    {
+      xfree (orig_text_for_completion);
+      orig_text_for_completion = 0;
+    }
 /* end_clink_change */
 }
+
+/* begin_clink_change */
+static void
+remember_orig_text (int start, int end)
+{
+  /* Unlike ORIG_TEXT, this saves the original text minus quotes.
+     And saves it in a global variable even in rl_complete_internal. */
+  while (start < end && strchr (rl_completer_quote_characters, rl_line_buffer[start])) start++;
+  while (end > start && strchr (rl_completer_quote_characters, rl_line_buffer[end - 1])) end--;
+
+  if (orig_text_for_completion)
+    xfree (orig_text_for_completion);
+  orig_text_for_completion = rl_copy_text (start, end);
+}
+
+static int
+is_orig_or_unchanged (const char *orig, int origlen, const char *repl, int repllen)
+{
+  /* Returns true if REPL matches ORIG (the existing text, i.e.
+     no change) or matches the original-most text (i.e. reverting
+     to the original line buffer text from before the completion
+     operation began). */
+  if (_rl_completion_case_fold)
+    {
+      return (_rl_strnicmp (orig, repl, max (origlen, repllen)) == 0 ||
+	      _rl_strnicmp (orig_text_for_completion, repl, max (strlen (orig_text_for_completion), repllen)) == 0);
+    }
+  else
+    {
+      return (strncmp (orig, repl, max (origlen, repllen)) == 0 ||
+	      strncmp (orig_text_for_completion, repl, max (strlen (orig_text_for_completion), repllen)) == 0);
+    }
+}
+/* end_clink_change */
 
 /* The user must press "y" or "n". Non-zero return means "y" pressed. */
 /* begin_clink_change */
@@ -2419,6 +2459,7 @@ insert_match (char *match, int start, int mtype, char *qc)
   if (replacement)
     {
 /* begin_clink_change */
+      int remove_dir_mark = 0;
       if (rl_completion_matches_include_type)
 	match++;
 /* end_clink_change */
@@ -2433,6 +2474,50 @@ insert_match (char *match, int start, int mtype, char *qc)
 	    replacement[0] != oqc)
 	start--;
       end = rl_point - 1;
+/* begin_clink_change */
+      if (!_rl_complete_mark_directories)
+	{
+	  /* This logic is needed because Clink always provides dir
+	     matches with trailing directory marks.  Which is done for
+	     consistency and to optimize away file system calls to test
+	     whether matches are directories. */
+	  const char *orig = rl_line_buffer + start;
+	  const char *repl = replacement;
+	  int origlen = (end + 1) - start;
+	  int repllen = rlen;
+	  /* Shrink orig to omit quotes. */
+	  while (origlen > 0 && strchr (rl_completer_quote_characters, *orig)) orig++;
+	  while (origlen > 0 && strchr (rl_completer_quote_characters, orig[origlen - 1])) origlen--;
+	  /* Shrink replacement to omit quotes. */
+	  while (repllen > 0 && strchr (rl_completer_quote_characters, *repl)) repl++;
+	  while (repllen > 0 && strchr (rl_completer_quote_characters, repl[repllen - 1])) repllen--;
+	  /* Determine whether to remove directory mark. */
+	  if (origlen <= 0)
+	    {
+	      /* If the text being replaced is empty, there clearly
+	         wasn't a dir mark to preserve. */
+	      remove_dir_mark = 1;
+	    }
+	  else if (repllen <= 0)
+	    {
+	      /* If the replacement text is empty, there clearly
+	         isn't a dir mark to remove. */
+	      remove_dir_mark = 0;
+	    }
+	  else if (is_orig_or_unchanged (orig, origlen, repl, repllen))
+	    {
+	      /* If replacement is the same as what's already present,
+		 and orig ends with a dir mark, don't remove dir mark. */
+	      remove_dir_mark = 0;
+	    }
+	  else
+	    {
+	      /* The replacement is new and different, so remove any
+	         dir mark after replacing the text. */
+	      remove_dir_mark = 1;
+	    }
+	}
+/* end_clink_change */
       /* Don't double a closing quote character */
       if (qc && *qc && end && rl_line_buffer[rl_point] == *qc && replacement[rlen - 1] == *qc)
         end++;
@@ -2453,11 +2538,11 @@ insert_match (char *match, int start, int mtype, char *qc)
       if (replacement != match)
         xfree (replacement);
 /* begin_clink_change */
-      if (!_rl_complete_mark_directories)
+      if (remove_dir_mark)
 	{
 	  start = end + 1;
 	  end = rl_point;
-	  while (rl_point > start && rl_is_path_separator (rl_line_buffer[rl_point - 1]))
+	  while (rl_point > 0 && rl_is_path_separator (rl_line_buffer[rl_point - 1]))
 	    rl_point--;
 	  if (rl_point < end)
 	    rl_delete_text (rl_point, end);
@@ -2719,6 +2804,10 @@ rl_complete_internal (int what_to_do)
 
   start = rl_point;
   rl_point = end;
+
+/* begin_clink_change */
+  remember_orig_text (start, end);
+/* end_clink_change */
 
   text = rl_copy_text (start, end);
   matches = gen_completion_matches (text, start, end, our_func, found_quote, quote_char);
@@ -3529,6 +3618,7 @@ rl_old_menu_complete (int count, int invoking_key)
 
 /* begin_clink_change */
       no_compute_lcd = 1;
+      remember_orig_text (orig_start, orig_end);
 /* end_clink_change */
 
       orig_text = rl_copy_text (orig_start, orig_end);
@@ -3711,6 +3801,10 @@ rl_menu_complete (int count, int ignore)
 
       orig_start = rl_point;
       rl_point = orig_end;
+
+/* begin_clink_change */
+      remember_orig_text (orig_start, orig_end);
+/* end_clink_change */
 
       orig_text = rl_copy_text (orig_start, orig_end);
       matches = gen_completion_matches (orig_text, orig_start, orig_end,
