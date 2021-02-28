@@ -5,7 +5,6 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 # RELEASE
 
 ## Issues
-- Readline bug:  `compute_lcd_of_matches` has O(M * N^2) performance due to unnecessary `strlen` in inner loop.
 - Does `match_type_strcmp` correctly support UTF8?  Does `_stricmp` support UTF8 when the C runtime locale is UTF8?
 
 <br/>

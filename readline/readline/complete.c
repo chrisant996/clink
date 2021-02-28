@@ -1902,6 +1902,10 @@ compute_lcd_of_matches (char **match_list, int matches, const char *text)
 
   for (i = 1, low = 100000; i < matches; i++)
     {
+/* begin_clink_change */
+    int mi0_len = strlen (match_list[i]);
+    int mi1_len = strlen (match_list[i + 1]);
+/* end_clink_change */
 #if defined (HANDLE_MULTIBYTE)
       if (MB_CUR_MAX > 1 && rl_byte_oriented == 0)
 	{
@@ -1922,9 +1926,12 @@ compute_lcd_of_matches (char **match_list, int matches, const char *text)
 #if defined (HANDLE_MULTIBYTE)
 	    if (MB_CUR_MAX > 1 && rl_byte_oriented == 0)
 	      {
-//$ TODO: strlen here is O(N*N)!!
-		v1 = MBRTOWC(&wc1, match_list[i]+si, strlen (match_list[i]+si), &ps1);
-		v2 = MBRTOWC (&wc2, match_list[i+1]+si, strlen (match_list[i+1]+si), &ps2);
+/* begin_clink_change */
+		//v1 = MBRTOWC(&wc1, match_list[i]+si, strlen (match_list[i]+si), &ps1);
+		//v2 = MBRTOWC (&wc2, match_list[i+1]+si, strlen (match_list[i+1]+si), &ps2);
+		v1 = MBRTOWC (&wc1, match_list[i]+si, mi0_len-si, &ps1);
+		v2 = MBRTOWC (&wc2, match_list[i+1]+si, mi1_len-si, &ps2);
+/* end_clink_change */
 		if (MB_INVALIDCH (v1) || MB_INVALIDCH (v2))
 		  {
 		    if (c1 != c2)	/* do byte comparison */
