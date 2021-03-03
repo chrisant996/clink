@@ -44,6 +44,44 @@ struct bank_handles
 };
 
 //------------------------------------------------------------------------------
+class history_read_buffer
+{
+    // CMD input buffer size is 8192 UTF16 WCHARs.
+    // ReadConsole disallows more input than fits in the input buffer.
+    //
+    // However, Readline allows infinite input of UTF8 chars.
+    // So with Clink/Readline longer input can be silently truncated on
+    // returning from ReadConsole, but still gets into the history as the full
+    // length.
+    //
+    // BUGBUG:  Long term, ideally Clink should resolve the truncation problem.
+    // However, even CMD silently fails to run an inputted command longer than
+    // 8100 characters, despite allowing 8191 characters to be input.
+    //
+    // Short term, Clink will use a large internal buffer so that valid length
+    // lines should never be split in the history (I'm comfortable ignoring the
+    // pathological case where the UTF16 string expands to the maximum possible
+    // UTF8 string size due to repeating the same max-byte-encoding characters
+    // over and over).
+    //
+    // The buffer size is intentionally smaller than 65536 to ensure the buffer
+    // fits in one Natural Page regardless of the underlying memory allocator's
+    // internal design (control structures embedded as prologue/epiloque in the
+    // memory block, or control structures stored separately in memory).
+    static const unsigned int buffer_size = 64000;
+
+public:
+    history_read_buffer() : m_buffer((char*)malloc(buffer_size)) {}
+    ~history_read_buffer() { free(m_buffer); }
+
+    char*           data() { return m_buffer; }
+    unsigned int    size() const { return buffer_size; }
+
+private:
+    char*           m_buffer;
+};
+
+//------------------------------------------------------------------------------
 class history_db
 {
     friend struct test_history_db;
@@ -58,7 +96,6 @@ public:
         expand_print            = 2,
     };
 
-    static const unsigned int   max_line_length = 8192;
     typedef unsigned int        line_id;
 
     class iter

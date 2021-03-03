@@ -120,6 +120,13 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 ## Punt
 - Would be nice to complete "%ENVVAR%\*" by internally expanding ENVVAR for collecting matches, but not expanding it in the editing line.  However, it's difficult to make that work reasonably in conjunction with path normalization.
 - [ConsoleZ](https://github.com/cbucher/console) sometimes draws the prompt in the wrong color:  scroll up, then type => the prompt is drawn in the input color instead of in the default color.  It doesn't happen in conhost or ConEmu or Windows Terminal.  Debugging indicates Clink is _not_ redrawing the prompt, so it's entirely an internal issue inside ConsoleZ.
+- Max input line length:
+  - CMD has a max input buffer size of 8192 WCHARs including the NUL terminator.
+  - ReadConsole does not allow more input than can fit in the input buffer size.
+  - Readline allows infinite input size, and has no way to limit it.
+  - There is a truncation problem here that does not exist without Clink.
+  - However, even CMD itself silently fails to run an inputted command over 8100 characters, despite allowing 8191 characters to be input.
+  - So I'm comfortable punting this for now.
 
 ---
 Chris Antos - sparrowhawk996@gmail.com

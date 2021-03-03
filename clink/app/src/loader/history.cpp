@@ -55,17 +55,17 @@ static void print_history(unsigned int tail_count)
     history_scope history;
 
     str_iter line;
-    char buffer[history_db::max_line_length];
+    history_read_buffer buffer;
 
     int count = 0;
     {
-        history_db::iter iter = history->read_lines(buffer);
+        history_db::iter iter = history->read_lines(buffer.data(), buffer.size());
         while (iter.next(line))
             ++count;
     }
 
     int index = 1;
-    history_db::iter iter = history->read_lines(buffer);
+    history_db::iter iter = history->read_lines(buffer.data(), buffer.size());
 
     int skip = count - tail_count;
     for (int i = 0; i < skip; ++i, ++index, iter.next(line));
@@ -145,11 +145,11 @@ static int remove(int index)
     if (index <= 0)
         return 1;
 
-    char buffer[history_db::max_line_length];
+    history_read_buffer buffer;
     history_db::line_id line_id = 0;
     {
         str_iter line;
-        history_db::iter iter = history->read_lines(buffer);
+        history_db::iter iter = history->read_lines(buffer.data(), buffer.size());
         for (int i = index - 1; i > 0 && iter.next(line); --i);
 
         line_id = iter.next(line);

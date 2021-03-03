@@ -4,7 +4,8 @@
 
 ### v1.1.36
 
-- Fixed [#79](https://github.com/chrisant996/clink/issues/79); Issue with United States - international keyboard layout.
+- Fixed [#79](https://github.com/chrisant996/clink/issues/79); Issue with United States - international keyboard layout (regression introduced in v1.1.0).
+- Fixed [#78](https://github.com/chrisant996/clink/issues/78); crash when history file contains a line longer than 8192 characters (regression introduced in v1.1.2-alpha).
 
 ### v1.1.35
 

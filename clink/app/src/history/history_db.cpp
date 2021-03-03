@@ -391,8 +391,8 @@ read_lock::read_lock(const bank_handles& handles, bool exclusive)
 //------------------------------------------------------------------------------
 template <class T> void read_lock::find(const char* line, T&& callback) const
 {
-    char buffer[history_db::max_line_length];
-    line_iter iter(*this, buffer);
+    history_read_buffer buffer;
+    line_iter iter(*this, buffer.data(), buffer.size());
 
     line_id_impl id;
     for (str_iter read; id = iter.next(read);)
@@ -703,10 +703,10 @@ void write_lock::append(const read_lock& src)
 
     SetFilePointer(m_handle_lines, 0, nullptr, FILE_END);
 
-    char buffer[history_db::max_line_length];
-    read_lock::file_iter src_iter(src, buffer);
+    history_read_buffer buffer;
+    read_lock::file_iter src_iter(src, buffer.data(), buffer.size());
     while (int bytes_read = src_iter.next())
-        WriteFile(m_handle_lines, buffer, bytes_read, &written, nullptr);
+        WriteFile(m_handle_lines, buffer.data(), bytes_read, &written, nullptr);
 }
 
 
@@ -835,14 +835,13 @@ static bool extract_ctag(const read_lock& lock, concurrency_tag& tag)
 }
 
 //------------------------------------------------------------------------------
-static void rewrite_master_bank(write_lock& lock, int max_line_length)
+static void rewrite_master_bank(write_lock& lock)
 {
-    max_line_length++;
-    char* buffer = (char*)malloc(max_line_length);
+    history_read_buffer buffer;
 
     // Read lines to keep into vector.
     str_iter out;
-    read_lock::line_iter iter(lock, buffer, max_line_length);
+    read_lock::line_iter iter(lock, buffer.data(), buffer.size());
     std::vector<auto_free_str> lines_to_keep;
     while (iter.next(out))
         lines_to_keep.push_back(std::move(auto_free_str(out.get_pointer(), out.length())));
@@ -856,8 +855,6 @@ static void rewrite_master_bank(write_lock& lock, int max_line_length)
     // Write lines from vector.
     for (auto const& line : lines_to_keep)
         lock.add(line.get());
-
-    free(buffer);
 }
 
 //------------------------------------------------------------------------------
@@ -1038,7 +1035,7 @@ void history_db::initialise()
         write_lock lock(get_bank(bank_master));
         if (!extract_ctag(lock, m_master_ctag))
         {
-            rewrite_master_bank(lock, max_line_length);
+            rewrite_master_bank(lock);
             extract_ctag(lock, m_master_ctag);
         }
     }
@@ -1113,7 +1110,7 @@ void history_db::load_internal()
     m_master_len = 0;
     m_master_deleted_count = 0;
 
-    char buffer[max_line_length];
+    history_read_buffer buffer;
 
     const history_db& const_this = *this;
     const_this.for_each_bank([&] (unsigned int bank_index, const read_lock& lock)
@@ -1124,14 +1121,17 @@ void history_db::load_internal()
             extract_ctag(lock, m_master_ctag);
         }
 
+        // Subtract 1 from the size to accommodate the forced NUL termination
+        // prior to calling add_history.
+        read_lock::line_iter iter(lock, buffer.data(), buffer.size() - 1);
+
         str_iter out;
-        read_lock::line_iter iter(lock, buffer, sizeof_array(buffer));
         line_id_impl id;
         while (id = iter.next(out))
         {
             const char* line = out.get_pointer();
-            int buffer_offset = int(line - buffer);
-            buffer[buffer_offset + out.length()] = '\0';
+            int buffer_offset = int(line - buffer.data());
+            buffer.data()[buffer_offset + out.length()] = '\0';
             add_history(line);
 
             id.bank_index = bank_index;
@@ -1226,7 +1226,7 @@ void history_db::compact(bool force)
     if (m_master_deleted_count > threshold)
     {
         write_lock lock(get_bank(bank_master));
-        rewrite_master_bank(lock, max_line_length);
+        rewrite_master_bank(lock);
         LOG("Compacted history:  %u active, %u deleted", m_master_len, m_master_deleted_count);
     }
 }
@@ -1365,8 +1365,8 @@ bool history_db::remove(int rl_history_index, const char* line)
         assert(lock);
 
         str_iter out;
-        char buffer[max_line_length];
-        read_lock::line_iter iter(lock, buffer, sizeof_array(buffer));
+        history_read_buffer buffer;
+        read_lock::line_iter iter(lock, buffer.data(), buffer.size());
 
         iter.set_file_offset(id_impl.offset);
         assert(iter.next(out));
