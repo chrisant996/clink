@@ -533,9 +533,9 @@ void win_terminal_in::process_input(KEY_EVENT_RECORD const& record)
         return push(bindableEsc);
 
     // Special treatment for variations of tab and space.
-    if (key_vk == VK_TAB && !m_buffer_count && g_modify_other_keys.get())
+    if (key_vk == VK_TAB && (key_char == 0x09 || !key_char) && !m_buffer_count && g_modify_other_keys.get())
         return push(terminfo::ktab[terminfo::keymod_index(key_flags)]);
-    if (key_vk == VK_SPACE && !m_buffer_count && g_modify_other_keys.get())
+    if (key_vk == VK_SPACE && (key_char == 0x20 || !key_char) && !m_buffer_count && g_modify_other_keys.get())
         return push(terminfo::kspc[terminfo::keymod_index(key_flags)]);
 
     // If the input was formed using AltGr or LeftAlt-LeftCtrl then things get
