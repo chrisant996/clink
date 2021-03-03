@@ -2,6 +2,10 @@
 
 ## Releases from [chrisant996/clink](https://github.com/chrisant996/clink) fork
 
+### v1.1.36
+
+- Fixed [#79](https://github.com/chrisant996/clink/issues/79); Issue with United States - international keyboard layout.
+
 ### v1.1.35
 
 - Fixed when the `mark-directories` inputrc variable is `off` (regression introduced in v1.1.1-alpha).
