@@ -69,7 +69,9 @@ bool match_wild_impl(const str_iter_impl<T>& _pattern, const str_iter_impl<T>& _
         if (!c)
         {
             // Consumed pattern, so it's a match iff file was consumed.
-            return !d;
+            if (!d)
+                return true;
+            goto back_track;
         }
 
         bool symbol_matched = false;
@@ -123,7 +125,7 @@ bool match_wild_impl(const str_iter_impl<T>& _pattern, const str_iter_impl<T>& _
                 if (depth == _countof(pattern_stack))
                     return false; // Stack overflow.
                 pattern_stack[depth] = push_pattern;
-                file_stack[depth] = file.get_next_pointer();
+                file_stack[depth] = file.get_pointer();
                 path_component_stack[depth] = start_of_path_component;
                 depth++;
             }
@@ -189,6 +191,7 @@ bool match_wild_impl(const str_iter_impl<T>& _pattern, const str_iter_impl<T>& _
 
         if (!symbol_matched)
         {
+back_track:
             if (depth)
             {
                 // Backtrack.

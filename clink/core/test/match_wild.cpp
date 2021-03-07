@@ -26,6 +26,8 @@ TEST_CASE("path::match_wild()")
         REQUIRE(path::match_wild("build*.log", "build.foo.bar.log"));
         REQUIRE(!path::match_wild("build*.log", "wmbuild.foo.bar.log"));
         REQUIRE(path::match_wild("wmbuild*.log", "wmbuild.foo.bar.log"));
+
+        REQUIRE(path::match_wild("*r*p", "error.cpp"));
     }
 
     SECTION("Period")
