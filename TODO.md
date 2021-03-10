@@ -5,6 +5,8 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 # RELEASE
 
 ## Issues
+- `clink.paste_crlf` mode that replaces line breaks with `&`.
+- `clink.paste_crlf` mode that handles line breaks by queuing the rest of the pasted text for insertion on subsequent input requests, and returning the command line entered so far.  I.e. behave like conhost.exe currently does in Windows 10.
 
 <br/>
 <br/>
