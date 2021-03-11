@@ -23,6 +23,9 @@ static setting_bool g_modify_other_keys(
     true);
 
 //------------------------------------------------------------------------------
+extern "C" void reset_wcwidths();
+
+//------------------------------------------------------------------------------
 static const int CTRL_PRESSED = LEFT_CTRL_PRESSED|RIGHT_CTRL_PRESSED;
 static const int ALT_PRESSED = LEFT_ALT_PRESSED|RIGHT_ALT_PRESSED;
 
@@ -497,7 +500,8 @@ void win_terminal_in::read_console()
 
         case WINDOW_BUFFER_SIZE_EVENT:
             // Windows will move the cursor onto a new line when it gets clipped
-            // on buffer resize. Other terminals
+            // on buffer resize.
+            reset_wcwidths();
             if (adjust_cursor_on_resize(csbi.dwCursorPosition))
                 return;
             break;

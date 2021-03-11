@@ -62,6 +62,29 @@
 #include <pch.h>
 #include <wchar.h>
 
+#include <map>
+
+static HDC s_hdc = NULL;
+static HFONT s_hfont = NULL;
+static std::map<char32_t, int> s_map_ambiguous;
+static int s_cell = 0;
+
+static int get_wcwidth_from_font(char32_t ucs)
+{
+  if (s_hdc && s_hfont && s_cell)
+  {
+    ABC abc;
+    if (GetCharABCWidths(s_hdc, ucs, ucs, &abc))
+      return abc.abcB / s_cell;
+
+    INT width;
+    if (GetCharWidth32(s_hdc, ucs, ucs, &width))
+      return width / s_cell;
+  }
+
+  return -1;
+}
+
 #if defined(__cplusplus)
 extern "C" {
 #endif
@@ -294,7 +317,17 @@ int mk_wcwidth_cjk(char32_t ucs)
   /* binary search in table of non-spacing characters */
   if (bisearch(ucs, ambiguous,
 	       sizeof(ambiguous) / sizeof(struct interval) - 1))
+  {
+    auto i = s_map_ambiguous.find(ucs);
+    if (i != s_map_ambiguous.end())
+	return i->second;
+
+    int width = get_wcwidth_from_font(ucs);
+    if (width < 0)
+      width = 2;
+    s_map_ambiguous[ucs] = width;
     return 2;
+  }
 
   return mk_wcwidth(ucs);
 }
@@ -314,15 +347,68 @@ int mk_wcswidth_cjk(const char32_t *pwcs, size_t n)
 }
 
 
+static UINT s_cp = 0;
 
-int wcwidth(char32_t c)
+typedef int wcwidth_t (char32_t);
+typedef int wcswidth_t (const char32_t*, size_t);
+
+wcwidth_t *wcwidth = mk_wcwidth;
+wcswidth_t *wcswidth = mk_wcswidth;
+
+static void reset_cached_font()
 {
-  return mk_wcwidth(c);
+  if (s_hdc)
+  {
+    RestoreDC(s_hdc, -1);
+    DeleteDC(s_hdc);
+    s_hdc = NULL;
+  }
+  if (s_hfont)
+  {
+    DeleteObject(s_hfont);
+    s_hfont = NULL;
+  }
+  s_cell = 0;
 }
 
-int wcswidth(const char32_t* ptr, size_t size)
+static void init_cached_font()
 {
-  return mk_wcswidth(ptr, size);
+  CONSOLE_FONT_INFOEX info = { sizeof(info) };
+  if (GetCurrentConsoleFontEx(GetStdHandle(STD_OUTPUT_HANDLE), false, &info))
+  {
+    s_hdc = CreateCompatibleDC(NULL);
+    s_cell = info.dwFontSize.X;
+
+    LOGFONTW lf = {};
+    wcscpy(lf.lfFaceName, info.FaceName);
+    lf.lfPitchAndFamily = info.FontFamily;
+    lf.lfWeight = info.FontWeight;
+    s_hfont = CreateFontIndirectW(&lf);
+  }
+}
+
+void reset_wcwidths()
+{
+  s_map_ambiguous.clear();
+  reset_cached_font();
+
+  s_cp = GetConsoleOutputCP();
+
+  switch (s_cp)
+  {
+  case 932:
+  case 936:
+  case 949:
+  case 950:
+    wcwidth = mk_wcwidth_cjk;
+    wcswidth = mk_wcswidth_cjk;
+    init_cached_font();
+    break;
+  default:
+    wcwidth = mk_wcwidth;
+    wcswidth = mk_wcswidth;
+    break;
+  }
 }
 
 #if defined(__cplusplus)

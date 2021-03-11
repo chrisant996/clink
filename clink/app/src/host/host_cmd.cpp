@@ -24,6 +24,7 @@
 
 //------------------------------------------------------------------------------
 extern bool s_force_reload_scripts;
+extern "C" void reset_wcwidths();
 
 //------------------------------------------------------------------------------
 static setting_bool g_ctrld_exits(
@@ -473,6 +474,7 @@ BOOL WINAPI host_cmd::read_console(
         // doesn't read input fast enough the OS can handle processed input
         // while it's enabled between ReadConsoleInputW calls.
         console_config cc(input);
+        reset_wcwidths();
         host_cmd::get()->edit_line(prompt, chars, max_chars);
     }
 
