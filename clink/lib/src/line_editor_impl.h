@@ -132,6 +132,8 @@ private:
     unsigned char       m_flags = 0;
     str<64>             m_needle;
 
+    const char*         m_insert_on_begin = nullptr;
+
     // State for dispatch().
     unsigned char       m_dispatching = 0;
     bool                m_invalid_dispatch;

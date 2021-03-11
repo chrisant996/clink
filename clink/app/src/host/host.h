@@ -9,6 +9,8 @@
 
 #include <lib/line_editor.h>
 
+#include <list>
+
 class lua_state;
 class str_base;
 class host_lua;
@@ -23,6 +25,8 @@ public:
     virtual bool    validate() = 0;
     virtual bool    initialise() = 0;
     virtual void    shutdown() = 0;
+
+    void            enqueue_lines(std::list<str_moveable>& lines);
 
 protected:
     bool            edit_line(const char* prompt, str_base& out);
@@ -39,4 +43,5 @@ private:
     history_db*     m_history = nullptr;
     host_lua*       m_lua = nullptr;
     prompt_filter*  m_prompt_filter = nullptr;
+    std::list<str_moveable> m_queued_lines;
 };

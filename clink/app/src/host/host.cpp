@@ -76,12 +76,14 @@ static setting_bool g_reload_scripts(
     false);
 
 extern setting_bool g_classify_words;
+extern setting_color g_color_prompt;
 
 
 
 //------------------------------------------------------------------------------
 static printer* s_printer = nullptr;
 static host_lua* s_host_lua = nullptr;
+extern str<> g_last_prompt;
 
 
 
@@ -446,6 +448,13 @@ host::~host()
 }
 
 //------------------------------------------------------------------------------
+void host::enqueue_lines(std::list<str_moveable>& lines)
+{
+    for (auto& line : lines)
+        m_queued_lines.emplace_back(std::move(line));
+}
+
+//------------------------------------------------------------------------------
 bool host::edit_line(const char* prompt, str_base& out)
 {
     const app_context* app = app_context::get();
@@ -469,11 +478,15 @@ bool host::edit_line(const char* prompt, str_base& out)
 
     // Improve performance while replaying doskey macros by not loading scripts
     // or history, since they aren't used.
-    bool init_scripts = !m_doskey_alias;
-    bool send_event = !m_doskey_alias;
-    bool init_prompt = !m_doskey_alias;
-    bool init_editor = !m_doskey_alias;
-    bool init_history = !m_doskey_alias && !rl_has_saved_history();
+    bool interactive = !m_doskey_alias && ((m_queued_lines.size() == 0) ||
+                                           (m_queued_lines.size() == 1 &&
+                                            (m_queued_lines.front().length() == 0 ||
+                                             m_queued_lines.front().c_str()[m_queued_lines.front().length() - 1] != '\n')));
+    bool init_scripts = interactive;
+    bool send_event = interactive;
+    bool init_prompt = interactive;
+    bool init_editor = interactive;
+    bool init_history = interactive && !rl_has_saved_history();
 
     // Set up Lua.
     bool local_lua = g_reload_scripts.get();
@@ -593,8 +606,49 @@ bool host::edit_line(const char* prompt, str_base& out)
             resolved = true;
             ret = true;
         }
-        else if (ret = editor->edit(out))
+        else
         {
+            bool edit = true;
+            if (!m_queued_lines.empty())
+            {
+                out.concat(m_queued_lines.front().c_str());
+                m_queued_lines.pop_front();
+
+                unsigned int len = out.length();
+                while (len && out.c_str()[len - 1] == '\n')
+                {
+                    out.truncate(--len);
+                    edit = false;
+                }
+            }
+
+            if (!edit)
+            {
+                char const* read = g_last_prompt.c_str();
+                char* write = g_last_prompt.data();
+                while (*read)
+                {
+                    if (*read != 0x01 && *read != 0x02)
+                    {
+                        *write = *read;
+                        ++write;
+                    }
+                    ++read;
+                }
+                *write = '\0';
+
+                m_printer->print(g_last_prompt.c_str(), g_last_prompt.length());
+                m_printer->print(out.c_str(), out.length());
+                m_printer->print("\n");
+                ret = true;
+            }
+            else
+            {
+                ret = editor->edit(out);
+                if (!ret)
+                    break;
+            }
+
             // Handle history event expansion.  expand() is a static method,
             // so can call it even when m_history is nullptr.
             if (m_history->expand(out.c_str(), out) == history_db::expand_print)

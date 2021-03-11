@@ -22,6 +22,8 @@ extern "C" {
 #include <readline/xmalloc.h>
 }
 
+#include <list>
+
 
 
 //------------------------------------------------------------------------------
@@ -44,9 +46,11 @@ static setting_enum g_paste_crlf(
     "Strips CR and LF chars on paste",
     "Setting this to 'space' makes Clink strip CR and LF characters from text\n"
     "pasted into the current line. Set this to 'delete' to strip all newline\n"
-    "characters to replace them with a space.",
-    "delete,space",
-    1);
+    "characters to replace them with a space. Set this to 'ampersand' to replace\n"
+    "all newline characters with an ampersand. Or set this to 'crlf' to paste all\n"
+    "newline characters as-is (executing commands that end with newline).",
+    "delete,space,ampersand,crlf",
+    3);
 
 
 
@@ -54,6 +58,7 @@ static setting_enum g_paste_crlf(
 extern line_buffer* g_rl_buffer;
 extern bool s_force_reload_scripts;
 extern editor_module::result* g_result;
+extern void host_cmd_enqueue_lines(std::list<str_moveable>& lines);
 
 //------------------------------------------------------------------------------
 static void write_line_feed()
@@ -64,10 +69,11 @@ static void write_line_feed()
 }
 
 //------------------------------------------------------------------------------
-static void strip_crlf(char* line)
+static void strip_crlf(char* line, std::list<str_moveable>& overflow, bool& done)
 {
     int setting = g_paste_crlf.get();
 
+    bool has_overflow = false;
     int prev_was_crlf = 0;
     char* write = line;
     const char* read = line;
@@ -80,17 +86,77 @@ static void strip_crlf(char* line)
             *write = c;
             ++write;
         }
-        else if (setting > 0 && !prev_was_crlf)
+        else if (!prev_was_crlf)
         {
-            prev_was_crlf = 1;
-            *write = ' ';
-            ++write;
+            switch (setting)
+            {
+            default:
+                assert(false);
+                // fall through
+            case 0: // delete
+                break;
+            case 1: // space
+                prev_was_crlf = 1;
+                *write = ' ';
+                ++write;
+                break;
+            case 2: // ampersand
+                prev_was_crlf = 1;
+                *write = '&';
+                ++write;
+                break;
+            case 3: // crlf
+                has_overflow = true;
+                if (c == '\n')
+                {
+                    *write = '\n';
+                    ++write;
+                }
+                break;
+            }
         }
 
         ++read;
     }
 
     *write = '\0';
+
+    if (has_overflow)
+    {
+        bool first = true;
+        char* start = line;
+        while (*start)
+        {
+            char* end = start;
+            while (*end)
+            {
+                char c = *end;
+                ++end;
+                if (c == '\n')
+                {
+                    done = true;
+                    if (first)
+                        *(end - 1) = '\0';
+                    break;
+                }
+            }
+
+            if (first)
+            {
+                first = false;
+            }
+            else
+            {
+                unsigned int len = (unsigned int)(end - start);
+                overflow.emplace_back();
+                str_moveable& back = overflow.back();
+                back.reserve(len);
+                back.concat(start, len);
+            }
+
+            start = end;
+        }
+    }
 }
 
 
@@ -141,17 +207,23 @@ int clink_paste(int count, int invoking_key)
     if (OpenClipboard(nullptr) == FALSE)
         return 0;
 
+    str<1024> utf8;
     HANDLE clip_data = GetClipboardData(CF_UNICODETEXT);
     if (clip_data != nullptr)
-    {
-        str<1024> utf8;
         to_utf8(utf8, (wchar_t*)clip_data);
 
-        strip_crlf(utf8.data());
-        g_rl_buffer->insert(utf8.c_str());
-    }
-
     CloseClipboard();
+
+    bool done = false;
+    std::list<str_moveable> overflow;
+    strip_crlf(utf8.data(), overflow, done);
+    g_rl_buffer->insert(utf8.c_str());
+    host_cmd_enqueue_lines(overflow);
+    if (done)
+    {
+        rl_redisplay();
+        rl_newline(1, invoking_key);
+    }
 
     return 0;
 }

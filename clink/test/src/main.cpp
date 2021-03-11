@@ -3,8 +3,19 @@
 
 #include "pch.h"
 
+#include "core/str.h"
+
+#include <list>
+#include <assert.h>
+
 //------------------------------------------------------------------------------
 extern bool g_force_load_debugger;
+
+//------------------------------------------------------------------------------
+void host_cmd_enqueue_lines(std::list<str_moveable>& lines)
+{
+    assert(false);
+}
 
 //------------------------------------------------------------------------------
 int main(int argc, char** argv)

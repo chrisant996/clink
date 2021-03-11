@@ -128,7 +128,7 @@ static bool migrate_setting(const char* name, const char* value)
     {
         switch (atoi(value))
         {
-        case 0: return false; // There is no equivalent at this time.
+        case 0: value = "crlf"; break;
         case 1: value = "delete"; break;
         case 2: value = "space"; break;
         }

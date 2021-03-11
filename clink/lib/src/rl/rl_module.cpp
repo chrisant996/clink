@@ -92,6 +92,7 @@ printer*            g_printer = nullptr;
 line_buffer*        g_rl_buffer = nullptr;
 pager*              g_pager = nullptr;
 editor_module::result* g_result = nullptr;
+str<>               g_last_prompt;
 
 static bool         s_is_popup = false;
 static rl_command_func_t* s_override_rl_last_func = nullptr;
@@ -123,7 +124,7 @@ static setting_color g_color_message(
     "The color for the Readline message area (e.g. search prompt, etc).",
     "default");
 
-static setting_color g_color_prompt(
+setting_color g_color_prompt(
     "color.prompt",
     "Prompt color",
     "When set, this is used as the default color for the prompt.  But it's\n"
@@ -1454,6 +1455,8 @@ concat_verbatim:
     }
 
     rl_prompt.concat("\x01\x1b[m\x02");
+    g_last_prompt.clear();
+    g_last_prompt.concat(rl_prompt.c_str(), rl_prompt.length());
 
     _rl_face_modmark = '*';
     _rl_face_horizscroll = '<';

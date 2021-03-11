@@ -267,6 +267,9 @@ bool line_editor_impl::get_line(str_base& out)
 //------------------------------------------------------------------------------
 bool line_editor_impl::edit(str_base& out)
 {
+    if (!check_flag(flag_editing))
+        m_insert_on_begin = out.c_str();
+
     // Update first so the init state goes through.
     while (update())
         m_desc.input->select();
@@ -283,6 +286,12 @@ bool line_editor_impl::update()
     if (!check_flag(flag_editing))
     {
         begin_line();
+        if (m_insert_on_begin)
+        {
+            m_buffer.insert(m_insert_on_begin);
+            m_buffer.draw();
+            m_insert_on_begin = nullptr;
+        }
         update_internal();
         return true;
     }
