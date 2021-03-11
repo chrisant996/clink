@@ -2,6 +2,10 @@
 
 ## Releases from [chrisant996/clink](https://github.com/chrisant996/clink) fork
 
+### v1.1.38
+
+- Fixed [#84](https://github.com/chrisant996/clink/issues/84); added `terminal.use_altgr_substitute` setting.
+
 ### v1.1.37
 
 - Fixed copy to clipboard (it never cleared the clipboard!).

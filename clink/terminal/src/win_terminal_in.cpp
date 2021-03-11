@@ -22,6 +22,14 @@ static setting_bool g_modify_other_keys(
     "XTerm key sequences so they can be bound separately.",
     true);
 
+static setting_bool g_use_altgr_substitute(
+    "terminal.use_altgr_substitute",
+    "Support Windows' Ctrl-Alt substitute for AltGr",
+    "Windows provides Ctrl-Alt as a substitute for AltGr, historically to\n"
+    "support keyboards with no AltGr key.  This may collide with some of\n"
+    "Readline's bindings.",
+    true);
+
 //------------------------------------------------------------------------------
 extern "C" void reset_wcwidths();
 
@@ -536,11 +544,37 @@ void win_terminal_in::process_input(KEY_EVENT_RECORD const& record)
     if (key_char == 0x1b)
         return push(bindableEsc);
 
-    // Special treatment for variations of tab and space.
-    if (key_vk == VK_TAB && (key_char == 0x09 || !key_char) && !m_buffer_count && g_modify_other_keys.get())
-        return push(terminfo::ktab[terminfo::keymod_index(key_flags)]);
-    if (key_vk == VK_SPACE && (key_char == 0x20 || !key_char) && !m_buffer_count && g_modify_other_keys.get())
-        return push(terminfo::kspc[terminfo::keymod_index(key_flags)]);
+#if 0
+    str<> tmp;
+    tmp.format("key event:  %c%c %c%c  flags=0x%08.8x  char=0x%04.4x  vk=0x%04.4x\n",
+               (key_flags & LEFT_CTRL_PRESSED) ? 'C' : '_',
+               (key_flags & LEFT_ALT_PRESSED) ? 'A' : '_',
+               (key_flags & RIGHT_ALT_PRESSED) ? 'A' : '_',
+               (key_flags & RIGHT_CTRL_PRESSED) ? 'C' : '_',
+               key_flags,
+               key_char,
+               key_vk);
+    OutputDebugStringA(tmp.c_str());
+#endif
+
+    // Windows supports an AltGr substitute which we check for here. As it
+    // collides with Readline mappings Clink's support can be disabled.
+    {
+        bool altgr_sub = !!(key_flags & LEFT_ALT_PRESSED);
+        altgr_sub &= !!(key_flags & (LEFT_CTRL_PRESSED | RIGHT_CTRL_PRESSED));
+        altgr_sub &= !!key_char;
+
+        if (altgr_sub && !g_use_altgr_substitute.get())
+        {
+            altgr_sub = 0;
+            key_char = 0;
+        }
+
+        if (!altgr_sub)
+            key_flags &= ~(RIGHT_ALT_PRESSED);
+        else
+            key_flags &= ~(LEFT_ALT_PRESSED|RIGHT_ALT_PRESSED);
+    }
 
     // If the input was formed using AltGr or LeftAlt-LeftCtrl then things get
     // tricky. But there's always a Ctrl bit set, even if the user didn't press
@@ -554,6 +588,12 @@ void win_terminal_in::process_input(KEY_EVENT_RECORD const& record)
         else
             key_flags &= ~LEFT_ALT_PRESSED;
     }
+
+    // Special treatment for variations of tab and space.
+    if (key_vk == VK_TAB && (key_char == 0x09 || !key_char) && !m_buffer_count && g_modify_other_keys.get())
+        return push(terminfo::ktab[terminfo::keymod_index(key_flags)]);
+    if (key_vk == VK_SPACE && (key_char == 0x20 || !key_char) && !m_buffer_count && g_modify_other_keys.get())
+        return push(terminfo::kspc[terminfo::keymod_index(key_flags)]);
 
     // Special case for shift-tab (aka. back-tab or kcbt).
     if (key_char == '\t' && !m_buffer_count && (key_flags & SHIFT_PRESSED))

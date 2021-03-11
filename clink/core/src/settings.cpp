@@ -101,8 +101,6 @@ static bool migrate_setting(const char* name, const char* value)
     // `match_colour` is no longer a setting; use `colored-stats` in the inputrc
     // file and `set LS_COLORS` to set the colors.  Also certain `color.*` Clink
     // settings.
-    //
-    // `use_altgr_substitute` is no longer a setting.
 
     if (stricmp(name, "exec_match_style") == 0)
     {
@@ -154,6 +152,7 @@ static bool migrate_setting(const char* name, const char* value)
             { "history_dupe_mode",          "history.dupe_mode" },
             { "history_io",                 "history.shared" },
             { "history_expand_mode",        "history.expand_mode" },
+            { "use_altgr_substitute",       "terminal.use_altgr_substitute" },
         };
 
         const char* old_name = name;
