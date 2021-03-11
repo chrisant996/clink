@@ -55,28 +55,7 @@ int main(int argc, char** argv)
 
     DWORD start = GetTickCount();
 
-#pragma warning(push)
-#pragma warning(disable:4996)
-    {
-        DWORD type;
-        DWORD data;
-        DWORD size;
-        LSTATUS status = RegGetValue(HKEY_CURRENT_USER, "Console", "ForceV2", RRF_RT_REG_DWORD, &type, &data, &size);
-        if (status != ERROR_SUCCESS ||
-            type != REG_DWORD ||
-            size != sizeof(data) ||
-            data != 0)
-        {
-            DWORD mode;
-            HANDLE h = GetStdHandle(STD_OUTPUT_HANDLE);
-            if (GetConsoleMode(h, &mode))
-            {
-                SetConsoleMode(h, mode | ENABLE_VIRTUAL_TERMINAL_PROCESSING);
-                *clatch::colors::get_colored() = true;
-            }
-        }
-    }
-#pragma warning(pop)
+    clatch::colors::initialize();
 
     const char* prefix = (argc > 0) ? argv[0] : "";
     int result = (clatch::run(prefix) != true);

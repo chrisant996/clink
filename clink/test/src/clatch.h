@@ -10,10 +10,14 @@ namespace clatch {
 //------------------------------------------------------------------------------
 struct colors
 {
-    static bool* get_colored() { static bool s_colored = false; return &s_colored; }
-    static const char* get_ok() { return *get_colored() ? "\x1b[92m" : ""; }
-    static const char* get_error() { return *get_colored() ? "\x1b[91m" : ""; }
-    static const char* get_normal() { return *get_colored() ? "\x1b[m" : ""; }
+    static void initialize();
+    static bool get_colored() { return *get_colored_storage(); }
+    static const char* get_ok() { return get_colored() ? "\x1b[92m" : ""; }
+    static const char* get_error() { return get_colored() ? "\x1b[91m" : ""; }
+    static const char* get_normal() { return get_colored() ? "\x1b[m" : ""; }
+
+private:
+    static bool* get_colored_storage() { static bool s_colored = false; return &s_colored; }
 };
 
 //------------------------------------------------------------------------------
