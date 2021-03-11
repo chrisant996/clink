@@ -5,6 +5,7 @@
 ### v1.1.38
 
 - Fixed [#84](https://github.com/chrisant996/clink/issues/84); added `terminal.use_altgr_substitute` setting.
+- Fixed [#80](https://github.com/chrisant996/clink/issues/80); clink.log is not deleted when Cmder injects Clink.
 
 ### v1.1.37
 
