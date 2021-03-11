@@ -93,6 +93,7 @@ INT_PTR WINAPI initialise_clink(const app_context::desc& app_desc)
     {
         str<256> log_path;
         app_ctx->get_log_path(log_path);
+        unlink(log_path.c_str()); // Restart the log file on every inject.
         new file_logger(log_path.c_str());
     }
 

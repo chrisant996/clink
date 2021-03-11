@@ -305,7 +305,7 @@ int inject(int argc, char** argv)
 
     static const char* const help[] = {
         "-s, --scripts <path>", "Alternative path to load .lua scripts from.",
-        "-p, --profile <path>", "Specifies and alternative path for profile data.",
+        "-p, --profile <path>", "Specifies an alternative path for profile data.",
         "-q, --quiet",          "Suppress copyright output.",
         "-d, --pid <pid>",      "Inject into the process specified by <pid>.",
         "-l, --nolog",          "Disable file logging.",
@@ -364,11 +364,6 @@ int inject(int argc, char** argv)
             return ret;
         }
     }
-
-    // Restart the log file on every inject.
-    str<256> log_path;
-    app_context::get()->get_log_path(log_path);
-    unlink(log_path.c_str());
 
     // Unless a target pid was specified on the command line search for a
     // compatible parent process.
