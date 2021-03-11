@@ -88,7 +88,7 @@ The following table describes the available Clink settings:
 Name                         | Default | Description
 :--:                         | :-:     | -----------
 `clink.colorize_input`       | True    | Enables context sensitive coloring for the input text (see <a href="#classifywords">Coloring The Input Text</a>).
-`clink.paste_crlf`           | `space` | What to do with CR and LF characters on paste. Set this to `delete` to delete them, or to `space` to replace them with spaces.
+`clink.paste_crlf`           | `crlf`  | What to do with CR and LF characters on paste. Setting this to `delete` deletes them, `space` replaces them with spaces, `ampersand` replaces them with ampersands, and `crlf` pastes them as-is (executing commands that end with a newline).
 `clink.path`                 |         | A list of paths to load Lua scripts. Multiple paths can be delimited semicolons.
 `clink.promptfilter`         | True    | Enable prompt filtering by Lua scripts.
 `cmd.auto_answer`            | `off`   | Automatically answers cmd.exe's "Terminate batch job (Y/N)?" prompts. `off` = disabled, `answer_yes` = answer Y, `answer_no` = answer N.
