@@ -4,6 +4,7 @@
 
 ### v1.1.37
 
+- Fixed copy to clipboard (it never cleared the clipboard!).
 - Fixed [#82](https://github.com/chrisant996/clink/issues/82); added two new `clink.paste_crlf` modes: `ampersand` replaces newlines with ampersands, and `crlf` pastes newlines as-is and executes any commands ending in a newline.
 - Fixed [#69](https://github.com/chrisant996/clink/issues/69); space in the prompt disappears after enter echo: added support for CJK codepages.
 
