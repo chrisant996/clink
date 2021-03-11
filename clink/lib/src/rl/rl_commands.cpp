@@ -231,18 +231,30 @@ int clink_paste(int count, int invoking_key)
 //------------------------------------------------------------------------------
 static void copy_impl(const char* value, int length)
 {
-    int size = (length + 4) * sizeof(wchar_t);
-    HGLOBAL mem = GlobalAlloc(GMEM_MOVEABLE, size);
+    int size = 0;
+    if (length)
+    {
+        size = MultiByteToWideChar(CP_UTF8, 0, value, length, nullptr, 0) * sizeof(wchar_t);
+        if (!size)
+            return;
+    }
+    size += sizeof(wchar_t);
+
+    HGLOBAL mem = GlobalAlloc(GMEM_MOVEABLE|GMEM_ZEROINIT, size);
     if (mem == nullptr)
         return;
 
-    wchar_t* data = (wchar_t*)GlobalLock(mem);
-    length = to_utf16((wchar_t*)data, length + 1, value);
-    GlobalUnlock(mem);
+    if (length)
+    {
+        wchar_t* data = (wchar_t*)GlobalLock(mem);
+        MultiByteToWideChar(CP_UTF8, 0, value, length, data, size);
+        GlobalUnlock(mem);
+    }
 
     if (OpenClipboard(nullptr) == FALSE)
         return;
 
+    EmptyClipboard();
     SetClipboardData(CF_UNICODETEXT, mem); // Windows automatically dynamically converts to CF_TEXT as needed.
     CloseClipboard();
 }
