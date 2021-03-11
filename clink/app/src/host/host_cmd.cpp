@@ -250,6 +250,34 @@ int expand_doskey_alias(int count, int invoking_key)
 
 
 //------------------------------------------------------------------------------
+// Scoped configuration of console mode.
+//
+// Clear 'processed input' flag so key presses such as Ctrl-C and Ctrl-S aren't
+// swallowed.  We also want events about window size changes.
+class console_config
+{
+public:
+    console_config(HANDLE handle) : m_handle(handle)
+    {
+        extern void save_host_input_mode(DWORD);
+        GetConsoleMode(m_handle, &m_prev_mode);
+        save_host_input_mode(m_prev_mode);
+        SetConsoleMode(m_handle, ENABLE_WINDOW_INPUT);
+    }
+
+    ~console_config()
+    {
+        SetConsoleMode(m_handle, m_prev_mode);
+    }
+
+private:
+    const HANDLE    m_handle;
+    DWORD           m_prev_mode;
+};
+
+
+
+//------------------------------------------------------------------------------
 host_cmd::host_cmd()
 : host("cmd.exe")
 , m_doskey("cmd.exe")
@@ -433,29 +461,10 @@ BOOL WINAPI host_cmd::read_console(
         return ReadConsoleW(input, chars, max_chars, read_in, control);
 
     {
-        // Clear 'processed input' flag so key presses such as Ctrl-C and Ctrl-S
-        // aren't swallowed. We also want events about window size changes.
         // Surround the entire edit_line() scope, otherwise any time Clink
         // doesn't read input fast enough the OS can handle processed input
         // while it's enabled between ReadConsoleInputW calls.
-        struct mode_scope {
-            HANDLE  handle;
-            DWORD   prev_mode;
-
-            mode_scope(HANDLE handle) : handle(handle)
-            {
-                extern void save_host_input_mode(DWORD);
-                GetConsoleMode(handle, &prev_mode);
-                save_host_input_mode(prev_mode);
-                SetConsoleMode(handle, ENABLE_WINDOW_INPUT);
-            }
-
-            ~mode_scope()
-            {
-                SetConsoleMode(handle, prev_mode);
-            }
-        } _ms(input);
-
+        console_config cc(input);
         host_cmd::get()->edit_line(prompt, chars, max_chars);
     }
 
