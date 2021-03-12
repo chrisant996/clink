@@ -250,7 +250,7 @@ newaction {
         os.chdir(dest)
         if have_7z then
             if have_msbuild then
-                exec(have_7z .. " a -r  ../"..clink_suffix .. "_pdb.zip  *.pdb")
+                exec(have_7z .. " a -r  ../"..clink_suffix .. "_symbols.zip  *.pdb")
             end
             exec(have_7z .. " a -x!*.pdb -r  ../"..clink_suffix .. ".zip  *")
         end
