@@ -6,6 +6,7 @@
 #include <core/str.h>
 #include <terminal/terminal.h>
 #include <terminal/terminal_in.h>
+#include <terminal/config.h>
 
 //------------------------------------------------------------------------------
 int input_echo(int argc, char** argv)
@@ -22,6 +23,8 @@ int input_echo(int argc, char** argv)
             return 0;
         }
     }
+
+    console_config cc;
 
     terminal terminal = terminal_create();
     terminal_in& input = *terminal.in;
