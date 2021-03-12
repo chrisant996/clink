@@ -3,7 +3,7 @@
 
 <!-- ----------------------------------------------------- -->
 <head>
-<title>Clink v1.1.36</title>
+<title>Clink v1.1.38</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Rambla:wght@400;700&family=Roboto&family=Fira+Mono&display=swap');
 html {
@@ -409,7 +409,7 @@ var hljs=function(){"use strict";function e(n){Object.freeze(n);var t="function"
         </td>
         <td style="text-align:right">
             <div id="header">
-                <div id="title">Clink v1.1.36</div>
+                <div id="title">Clink v1.1.38</div>
                 <div id="url">
                     <a href="http://github.com/chrisant996/clink">
                         http://github.com/chrisant996/clink
@@ -522,8 +522,8 @@ var hljs=function(){"use strict";function e(n){Object.freeze(n);var t="function"
 </tr>
 <tr>
 <td align="center"><code>clink.paste_crlf</code></td>
-<td align="center"><code>space</code></td>
-<td>What to do with CR and LF characters on paste. Set this to <code>delete</code> to delete them, or to <code>space</code> to replace them with spaces.</td>
+<td align="center"><code>crlf</code></td>
+<td>What to do with CR and LF characters on paste. Setting this to <code>delete</code> deletes them, <code>space</code> replaces them with spaces, <code>ampersand</code> replaces them with ampersands, and <code>crlf</code> pastes them as-is (executing commands that end with a newline).</td>
 </tr>
 <tr>
 <td align="center"><code>clink.path</code></td>
@@ -765,6 +765,11 @@ var hljs=function(){"use strict";function e(n){Object.freeze(n);var t="function"
 <td align="center">True</td>
 <td>When enabled, pressing <kbd>Space</kbd> or <kbd>Tab</kbd> with modifier keys sends extended XTerm key sequences so they can be bound separately.</td>
 </tr>
+<tr>
+<td align="center"><code>terminal.use_altgr_substitute</code></td>
+<td align="center">True</td>
+<td>Support Windows&#39; <kbd>Ctrl</kbd>-<kbd>Alt</kbd> substitute for <kbd>AltGr</kbd>. Turning this off may resolve collisions with Readline&#39;s key bindings.</td>
+</tr>
 </tbody></table>
 <p/>
 
@@ -772,7 +777,6 @@ var hljs=function(){"use strict";function e(n){Object.freeze(n);var t="function"
 <p><strong>Compatibility Notes:</strong></p>
 <ul>
 <li>The <code>esc_clears_line</code> setting has been replaced by a <code>clink-reset-line</code> command that is by default bound to the <kbd>Escape</kbd> key.  See <a href="#keybindings">Key Bindings</a> and <a href="https://tiswww.cwru.edu/php/chet/readline/readline.html">Readline</a> for more information.</li>
-<li>The <code>use_altgr_substitute</code> setting has been removed.  If <kbd>AltGr</kbd> or lack of <kbd>AltGr</kbd> causes a problem, please visit the <a href="https://github.com/chrisant996/clink/issues">repo</a> and open an issue with details describing the problem.</li>
 <li>The <code>match_colour</code> setting has been removed, and Clink now supports Readline&#39;s completion coloring.  See <a href="#completioncolors">Completion Colors</a> for more information.</li>
 </ul>
 </blockquote>
@@ -1072,7 +1076,8 @@ Echos key sequences to use in the .inputrc files for binding keys to Clink comma
 <li><code>di=</code> defines the color for directories.</li>
 <li><code>ex=</code> defines the color for executable files.</li>
 </ul>
-<pre><code class="language-plaintext">set LS_COLORS=so=90:fi=97:di=93:ex=92:*.pdf=30;105:*.md=4</code></pre>
+<pre><code class="language-plaintext">set LS_COLORS=so=90:fi=97:di=93:ex=92:*.pdf=30;105:*.md=4
+</code></pre>
 <p>Let&#39;s break that down:</p>
 <ul>
 <li><code>so=90</code> uses bright black (dark gray) for the common prefix for possible completions.</li>
@@ -1147,7 +1152,8 @@ Echos key sequences to use in the .inputrc files for binding keys to Clink comma
 <h2 id="match-generators">Match Generators</h2>
 <p>These are Lua functions that are called as part of Readline&#39;s completion process.</p>
 <p>First create a match generator object:</p>
-<pre><code class="language-lua">local my_generator = clink.generator(priority)</code></pre>
+<pre><code class="language-lua">local my_generator = clink.generator(priority)
+</code></pre>
 <p>The <span class="arg">priority</span> argument is a number that influences when the generator gets called, with lower numbers going before higher numbers.</p>
 <h3 id="the-generate-function">The :generate() Function</h3>
 <p>Next define a match generator function on the object, taking the following form:</p>
@@ -1155,7 +1161,8 @@ Echos key sequences to use in the .inputrc files for binding keys to Clink comma
     -- Use the line_state object to examine the current line and create matches.
     -- Submit matches to Clink using the match_builder object.
     -- Return true or false.
-end</code></pre>
+end
+</code></pre>
 <p><span class="arg">line_state</span> is a <a href="#line">line</a> object that has information about the current line.</p>
 <p><span class="arg">match_builder</span> is a <a href="#builder">builder</a> object to which matches can be added.</p>
 <p>If no further match generators need to be called then the function should return true.  Returning false or nil continues letting other match generators get called.</p>
@@ -1204,7 +1211,8 @@ function git_branch_autocomplete:generate(line_state, match_builder)
     end
     -- If we found branches, then stop other match generators.
     return matchCount &gt; 0
-end</code></pre>
+end
+</code></pre>
 <h3 id="the-getwordbreakinfo-function">The :getwordbreakinfo() Function</h3>
 <p>A generator can influence word breaking for the end word by defining a <code>:getwordbreakinfo()</code> function.  The function takes a <span class="arg">line_state</span> <a href="#line">line</a> object that has information about the current line.  If it returns nil or 0, the end word is truncated to 0 length.  This is the normal behavior, which allows Clink to collect and cache all matches and then filter them based on typing.  Or it can return two numbers:  word break length and an optional end word length.  The end word is split at the word break length:  one word contains the first word break length characters from the end word (if 0 length then it&#39;s discarded), and the next word contains the rest of the end word truncated to the optional word length (0 if omitted).</p>
 <p>For example, when the environment variable match generator sees the end word is <code>abc%USER</code> it returns <code>3,1</code> so that the last two words become &quot;abc&quot; and &quot;%&quot; so that its generator knows it can do environment variable matching.  But when it sees <code>abc%FOO%def</code> it returns <code>8,0</code> so that the last two words become &quot;abc%FOO%&quot; and &quot;&quot; so that its generator won&#39;t do environment variable matching, and also so other generators can produce matches for what follows, since &quot;%FOO%&quot; is an already-completed environment variable and therefore should behave like a word break.  In other words, it breaks the end word differently depending on whether the number of percent signs is odd or even, to account for environent variable syntax rules.</p>
@@ -1254,7 +1262,8 @@ function envvar_generator:getwordbreakinfo(line_state)
     if index then
         return index, (in_out and 1) or 0
     end
-end</code></pre>
+end
+</code></pre>
 <a name="argumentcompletion"/>
 
 <h2 id="argument-completion">Argument Completion</h2>
@@ -1265,7 +1274,8 @@ end</code></pre>
 :addarg(
     { &quot;hello&quot;, &quot;hi&quot; },      -- Completions for arg #1
     { &quot;world&quot;, &quot;wombles&quot; }  -- Completions for arg #2
-)</code></pre>
+)
+</code></pre>
 <p>This parser describes a command that has two positional arguments each with two potential options. It also has two flags which the parser considers to be position independent meaning that provided the word being completed starts with a certain prefix the parser with attempt to match the from the set of flags.</p>
 <p>On the command line completion would look something like this:</p>
 <pre style="border-radius:initial;border:initial"><code class="plaintext" style="background-color:black;color:#cccccc">C:&gt;foobar hello -foo wo
@@ -1281,7 +1291,8 @@ C:&gt;foobar hello -foo wo<span style="color:#ffffff">_</span>
 b_parser = clink.argmatcher():addarg({ &quot;abc&quot;, &quot;123&quot; })
 c_parser = clink.argmatcher()
 c_parser:addarg({ &quot;foobar&quot; .. a_parser })   -- Arg #1 is &quot;foobar&quot;, which has args &quot;foo&quot; or &quot;bar&quot;.
-c_parser:addarg({ b_parser })               -- Arg #2 is &quot;abc&quot; or &quot;123&quot;.</code></pre>
+c_parser:addarg({ b_parser })               -- Arg #2 is &quot;abc&quot; or &quot;123&quot;.
+</code></pre>
 <p>As the example above shows, it is also possible to use a parser without concatenating it to a word. When Clink follows a link to a parser it is permanent and it will not return to the previous parser.</p>
 <h4 id="functions-as-argument-options">Functions As Argument Options</h4>
 <p>Argument options are not limited solely to strings. Clink also accepts functions too so more context aware argument options can be used.</p>
@@ -1291,7 +1302,8 @@ end
 
 the_parser = clink.argmatcher()
 the_parser:addarg({ &quot;zippy&quot;, &quot;bungle&quot;, &quot;george&quot; })
-the_parser:addarg({ rainbow_function, &quot;yellow&quot;, &quot;green&quot; })</code></pre>
+the_parser:addarg({ rainbow_function, &quot;yellow&quot;, &quot;green&quot; })
+</code></pre>
 <p>The functions take a single argument which is a word from the command line being edited (or partial word if it is the one under the cursor). Functions should return a table of potential matches.</p>
 <p>Some built-in matcher functions are available:</p>
 <table>
@@ -1324,7 +1336,8 @@ clink.argmatcher()
     { &quot;one&quot;, &quot;won&quot; }                -- Arg #1
     { &quot;two&quot;, &quot;too&quot; }                -- Arg #2
 )
-:addflags(&quot;-a&quot;, &quot;-b&quot;, &quot;/?&quot;, &quot;/h&quot;)   -- Flags</code></pre>
+:addflags(&quot;-a&quot;, &quot;-b&quot;, &quot;/?&quot;, &quot;/h&quot;)   -- Flags
+</code></pre>
 <p>With the shorthand form flags are implied rather than declared.  When a shorthand table&#39;s first value is a string starting with <code>-</code> or <code>/</code> then the table is interpreted as flags.  Note that it&#39;s still possible with shorthand form to mix flag prefixes, and even add additional flag prefixes, such as <code>{ <span class="hljs-string">'-a'</span>, <span class="hljs-string">'/b'</span>, <span class="hljs-string">'=c'</span> }</code>.</p>
 <a name="classifywords"/>
 
@@ -1406,7 +1419,8 @@ local matcher = clink.argmatcher(&quot;samp&quot;)
 :addflags(&quot;--help&quot;)
 :addarg({ clink.dirmatches })
 :addarg({ clink.filematches })
-:setclassifier(classify_handler)</code></pre>
+:setclassifier(classify_handler)
+</code></pre>
 <a name="filteringthematchdisplay"/>
 
 <h4 id="filtering-the-match-display">Filtering The Match Display</h4>
@@ -1432,7 +1446,8 @@ end
 function my_match_generator:generate(line_state, match_builder)
     ...
     clink.ondisplaymatches(my_filter)
-end</code></pre>
+end
+</code></pre>
 <p/>
 
 <blockquote>
@@ -1456,7 +1471,8 @@ end</code></pre>
 <pre><code class="language-lua">local p = clink.promptfilter(30)
 function p:filter(prompt)
     return &quot;new prefix &quot;..prompt..&quot; new suffix&quot; -- Add ,false to stop filtering.
-end</code></pre>
+end
+</code></pre>
 <p>The following example illustrates setting the prompt, modifying the prompt, using ANSI escape code for colors, running a git command to find the current branch, and stopping any further processing.</p>
 <pre><code class="language-lua">local green  = &quot;\x1b[92m&quot;
 local yellow = &quot;\x1b[93m&quot;
@@ -1505,7 +1521,8 @@ end
 local bracket_prompt = clink.promptfilter(150)
 function bracket_prompt:filter(prompt)
     return prompt..&quot;\n&gt; &quot;
-end</code></pre>
+end
+</code></pre>
 <p>The resulting prompt will look like this:</p>
 <pre style="border-radius:initial;border:initial"><code class="plaintext" style="background-color:black"><span style="color:#00ff00">Wed 12:54</span> <span style="color:#ffff00">c:\dir</span> <span style="color:#008080">[master]</span>
 <span style="color:#cccccc">&gt;&nbsp;_</span>
@@ -1914,7 +1931,8 @@ end
 function print_date(rl_buffer)
     rl_buffer:beginoutput()
     print(os.date(&quot;%A %B %d, %Y   %I:%M %p&quot;))
-end</code></pre>
+end
+</code></pre>
 <h2 id="saved-command-history">Saved command history</h2>
 <p>Here&#39;s how the saved history works:</p>
 <p>When the <code>history.saved</code> setting is enabled, then the command history is loaded and saved as follows (or when the setting is disabled, then it isn&#39;t saved between sessions).</p>
@@ -1961,7 +1979,8 @@ local ohmyposh_prompt = clink.promptfilter(1)
 function ohmyposh_prompt:filter(prompt)
     prompt = io.popen(&quot;oh-my-posh.exe&quot;):read(&quot;*a&quot;)
     return prompt, false
-end</code></pre>
+end
+</code></pre>
 <h3 id="zlua">z.lua</h3>
 <p>The <a href="https://github.com/skywind3000/z.lua">z.lua</a> tool is a faster way to navigate directories, and it integrates with Clink.</p>
         </div>
@@ -2405,6 +2424,17 @@ string.matchlen("abx", "abx")       -- returns -1</code></pre></div></div><hr/>
         <div class="section" id="changes">
 <h1 id="changes">Changes</h1>
 <h2 id="releases-from-chrisant996clink-fork">Releases from <a href="https://github.com/chrisant996/clink">chrisant996/clink</a> fork</h2>
+<h3 id="v1138">v1.1.38</h3>
+<ul>
+<li>Fixed <a href="https://github.com/chrisant996/clink/issues/84">#84</a>; added <code>terminal.use_altgr_substitute</code> setting.</li>
+<li>Fixed <a href="https://github.com/chrisant996/clink/issues/80">#80</a>; clink.log is not deleted when Cmder injects Clink.</li>
+</ul>
+<h3 id="v1137">v1.1.37</h3>
+<ul>
+<li>Fixed copy to clipboard (it never cleared the clipboard!).</li>
+<li>Fixed <a href="https://github.com/chrisant996/clink/issues/82">#82</a>; added two new <code>clink.paste_crlf</code> modes: <code>ampersand</code> replaces newlines with ampersands, and <code>crlf</code> pastes newlines as-is and executes any commands ending in a newline.</li>
+<li>Fixed <a href="https://github.com/chrisant996/clink/issues/69">#69</a>; space in the prompt disappears after enter echo: added support for CJK codepages.</li>
+</ul>
 <h3 id="v1136">v1.1.36</h3>
 <ul>
 <li>Fixed <a href="https://github.com/chrisant996/clink/issues/79">#79</a>; Issue with United States - international keyboard layout (regression introduced in v1.1.0).</li>
