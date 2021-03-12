@@ -2,6 +2,11 @@
 
 ## Releases from [chrisant996/clink](https://github.com/chrisant996/clink) fork
 
+### v1.1.39
+
+- Fixed `terminal.use_altgr_substitute` to only affect <kbd>AltGr</kbd> substitute key combinations (it had always broken the <kbd>RightAlt</kbd> key in general on other keyboard layouts).
+- Fixed a benign issue with the console input mode in `clink echo`.
+
 ### v1.1.38
 
 - Fixed [#84](https://github.com/chrisant996/clink/issues/84); added `terminal.use_altgr_substitute` setting.
