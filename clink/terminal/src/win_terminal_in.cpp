@@ -559,14 +559,14 @@ void win_terminal_in::process_input(KEY_EVENT_RECORD const& record)
 
     // Windows supports an AltGr substitute which we check for here. As it
     // collides with Readline mappings Clink's support can be disabled.
+    if (key_flags & LEFT_ALT_PRESSED)
     {
-        bool altgr_sub = !!(key_flags & LEFT_ALT_PRESSED);
-        altgr_sub &= !!(key_flags & (LEFT_CTRL_PRESSED | RIGHT_CTRL_PRESSED));
+        bool altgr_sub = !!(key_flags & (LEFT_CTRL_PRESSED | RIGHT_CTRL_PRESSED));
         altgr_sub &= !!key_char;
 
         if (altgr_sub && !g_use_altgr_substitute.get())
         {
-            altgr_sub = 0;
+            altgr_sub = false;
             key_char = 0;
         }
 
