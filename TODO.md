@@ -5,6 +5,8 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 # RELEASE
 
 ## Issues
+- I thought my <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>N</kbd> `luafunc:` macro was working with all the completion functions, e.g. so the popup completion window worked after using it.  But now that's not working ... why not?
+- Also, build in a `complete-numbers` command so screen-grabbing numbers can be included in the default configuration.
 
 <br/>
 <br/>
