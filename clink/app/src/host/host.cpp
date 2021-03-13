@@ -78,6 +78,8 @@ static setting_bool g_reload_scripts(
 extern setting_bool g_classify_words;
 extern setting_color g_color_prompt;
 
+extern void reset_keyseq_to_name_map();
+
 
 
 //------------------------------------------------------------------------------
@@ -469,6 +471,7 @@ bool host::edit_line(const char* prompt, str_base& out)
     str<288> settings_file;
     app_context::get()->get_settings_path(settings_file);
     settings::load(settings_file.c_str());
+    reset_keyseq_to_name_map();
 
     // Set up the string comparison mode.
     static_assert(str_compare_scope::exact == 0, "g_ignore_case values must match str_compare_scope values");

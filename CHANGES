@@ -4,6 +4,11 @@
 
 ### v1.1.39
 
+- Added support for many more key bindings, such as <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+Letter keys.
+- Added `terminal.differentiate_keys` setting that when enabled allows binding <kbd>Ctrl</kbd> + <kbd>H</kbd> or <kbd>I</kbd> or <kbd>M</kbd> or <kbd>[</kbd> separately from <kbd>Backspace</kbd>, <kbd>Tab</kbd>, <kbd>Return</kbd>, or <kbd>Escape</kbd>.
+- Removed `terminal.modify_other_keys` setting and made it always enabled.
+- Changed `terminal.use_altgr_substitute` to be disabled by default so that <kbd>Ctrl</kbd>+<kbd>Alt</kbd> key bindings can work by default on keyboards with <kbd>AltGr</kbd>.
+- Changed output from `clink echo` so it's directly usable in the inputrc files.
 - Fixed `terminal.use_altgr_substitute` to only affect <kbd>AltGr</kbd> substitute key combinations (it had always broken the <kbd>RightAlt</kbd> key in general on other keyboard layouts).
 - Fixed a benign issue with the console input mode in `clink echo`.
 

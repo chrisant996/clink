@@ -8,6 +8,7 @@
 
 #include <core/base.h>
 #include <core/str.h>
+#include <core/str_iter.h>
 #include <core/settings.h>
 
 #include <Windows.h>
@@ -15,6 +16,14 @@
 #include <map>
 
 //------------------------------------------------------------------------------
+static setting_bool g_differentiate_keys(
+    "terminal.differentiate_keys",
+    "Use special sequences for Ctrl-H, -I, -M, -[",
+    "When enabled, pressing Ctrl-H or Ctrl-I or Ctrl-M or Ctrl-[ generate special\n"
+    "key sequences to enable binding them separately from Backspace or Tab or\n"
+    "Enter or Escape.",
+    false);
+
 static setting_bool g_use_altgr_substitute(
     "terminal.use_altgr_substitute",
     "Support Windows' Ctrl-Alt substitute for AltGr",
@@ -35,6 +44,7 @@ static const int ALT_PRESSED = LEFT_ALT_PRESSED|RIGHT_ALT_PRESSED;
 #define SS3(x) "\x1bO" #x
 #define ACSI(x) "\x1b\x1b[" #x
 #define ASS3(x) "\x1b\x1bO" #x
+#define MOK(x) "\x1b[27;" #x
 namespace terminfo { //                       Shf        Ctl        CtlShf     Alt        AtlShf     AltCtl     AltCtlShf
 static const char* const kcuu1[] = { CSI(A),  CSI(1;2A), CSI(1;5A), CSI(1;6A), CSI(1;3A), CSI(1;4A), CSI(1;7A), CSI(1;8A) }; // up
 static const char* const kcud1[] = { CSI(B),  CSI(1;2B), CSI(1;5B), CSI(1;6B), CSI(1;3B), CSI(1;4B), CSI(1;7B), CSI(1;8B) }; // down
@@ -46,7 +56,7 @@ static const char* const khome[] = { CSI(H),  CSI(1;2H), CSI(1;5H), CSI(1;6H), C
 static const char* const kend[]  = { CSI(F),  CSI(1;2F), CSI(1;5F), CSI(1;6F), CSI(1;3F), CSI(1;4F), CSI(1;7F), CSI(1;8F) }; // end
 static const char* const kpp[]   = { CSI(5~), CSI(5;2~), CSI(5;5~), CSI(5;6~), CSI(5;3~), CSI(5;4~), CSI(5;7~), CSI(5;8~) }; // pgup
 static const char* const knp[]   = { CSI(6~), CSI(6;2~), CSI(6;5~), CSI(6;6~), CSI(6;3~), CSI(6;4~), CSI(6;7~), CSI(6;8~) }; // pgdn
-static const char* const kbks[]  = { "\b",    "",        "\x7f",    "",        "\x1b\b",  "",        "\x1b\x7f", ""       }; // bkspc
+static const char* const kbks[]  = { "\b",    MOK(2;8~), "\x7f",    MOK(6;8~), "\x1b\b",  MOK(4;8~), "\x1b\x7f",MOK(8;8~) }; // bkspc
 static const char* const kcbt    = CSI(Z);
 static const char* const kfx[]   = {
     // kf1-12 : Fx unmodified
@@ -90,12 +100,10 @@ static const char* const kfx[]   = {
     ACSI(20;6~), ACSI(21;6~), ACSI(23;6~), ACSI(24;6~),
 };
 
-#define MOK(x) "\x1b[27;" #x
 //                                            Shf     Ctl         CtlShf      Alt   AtlShf   AltCtl      AltCtlShf
 static const char* const ktab[]  = { "\t",    CSI(Z), MOK(5;9~),  MOK(6;9~),  "",   "",      "",         ""         }; // TAB
 static const char* const kspc[]  = { " ",     " ",    MOK(5;32~), MOK(6;32~), "",   "",      MOK(7;32~), MOK(8;32~) }; // SPC
 
-#if 0
 static int xterm_modifier(int key_flags)
 {
     // Calculate Xterm's modifier number.
@@ -103,9 +111,8 @@ static int xterm_modifier(int key_flags)
     i |= !!(key_flags & SHIFT_PRESSED);
     i |= !!(key_flags & ALT_PRESSED) << 1;
     i |= !!(key_flags & CTRL_PRESSED) << 2;
-    return i;
+    return i + 1;
 }
-#endif
 
 static int keymod_index(int key_flags)
 {
@@ -116,6 +123,40 @@ static int keymod_index(int key_flags)
     i |= !!(key_flags & ALT_PRESSED) << 2;
     return i;
 }
+
+static bool is_vk_recognized(int key_vk)
+{
+    switch (key_vk)
+    {
+    case 'A':   case 'B':   case 'C':   case 'D':
+    case 'E':   case 'F':   case 'G':   case 'H':
+    case 'I':   case 'J':   case 'K':   case 'L':
+    case 'M':   case 'N':   case 'O':   case 'P':
+    case 'Q':   case 'R':   case 'S':   case 'T':
+    case 'U':   case 'V':   case 'W':   case 'X':
+    case 'Y':   case 'Z':
+        return true;
+    case '0':   case '1':   case '2':   case '3':
+    case '4':   case '5':   case '6':   case '7':
+    case '8':   case '9':
+        return true;
+    case VK_OEM_1:              // ';:' for US
+    case VK_OEM_PLUS:           // '+' for any country
+    case VK_OEM_COMMA:          // ',' for any country
+    case VK_OEM_MINUS:          // '-' for any country
+    case VK_OEM_PERIOD:         // '.' for any country
+    case VK_OEM_2:              // '/?' for US
+    case VK_OEM_3:              // '`~' for US
+    case VK_OEM_4:              // '[{' for US
+    case VK_OEM_5:              // '\|' for US
+    case VK_OEM_6:              // ']}' for US
+    case VK_OEM_7:              // ''"' for US
+        return true;
+    default:
+        return false;
+    }
+}
+
 } // namespace terminfo
 #undef SS3
 #undef CSI
@@ -124,6 +165,15 @@ static int keymod_index(int key_flags)
 // Use unsigned; WCHAR and unsigned short can give wrong results.
 #define IN_RANGE(n1, b, n2)     ((unsigned)((b) - (n1)) <= unsigned((n2) - (n1)))
 inline bool is_lead_surrogate(unsigned int ch) { return IN_RANGE(0xD800, ch, 0xDBFF); }
+
+
+
+//------------------------------------------------------------------------------
+static bool s_verbose_input = false;
+void set_verbose_input(bool verbose)
+{
+    s_verbose_input = verbose;
+}
 
 
 
@@ -262,6 +312,32 @@ static void ensure_keyseqs_to_names()
 }
 
 //------------------------------------------------------------------------------
+void reset_keyseq_to_name_map()
+{
+    // Settings can affect key sequence processing, so being able to reset the
+    // map enables show_rl_help to show accurate key names.
+    map_keyseq_to_name.clear();
+}
+
+//------------------------------------------------------------------------------
+static bool key_name_from_vk(int key_vk, str_base& out)
+{
+    UINT key_scan = MapVirtualKeyW(key_vk, MAPVK_VK_TO_VSC);
+    if (key_scan)
+    {
+        LONG l = (key_scan & 0x01ff) << 16;
+        wchar_t name[16];
+        if (GetKeyNameTextW(l, name, sizeof_array(name)))
+        {
+            to_utf8(out, name);
+            return true;
+        }
+    }
+
+    return false;
+}
+
+//------------------------------------------------------------------------------
 const char* find_key_name(const char* keyseq, int& len, int& eqclass, int& order)
 {
     // '\x00' (Ctrl-@) isn't in the map, so rejecting a seemingly empty string
@@ -269,16 +345,61 @@ const char* find_key_name(const char* keyseq, int& len, int& eqclass, int& order
     if (!keyseq || !*keyseq)
         return nullptr;
 
+    // Look up the sequence in the special key names map.
     ensure_keyseqs_to_names();
     keyseq_key lookup(keyseq, true/*find*/);
     auto const& iter = map_keyseq_to_name.find(lookup);
-    if (iter == map_keyseq_to_name.end())
-        return nullptr;
+    if (iter != map_keyseq_to_name.end())
+    {
+        len = (int)strlen(iter->first.s);
+        eqclass = iter->second.eq;
+        order = iter->second.o - (int)map_keyseq_to_name.size();
+        return iter->second.s;
+    }
 
-    len = (int)strlen(iter->first.s);
-    eqclass = iter->second.eq;
-    order = iter->second.o - (int)map_keyseq_to_name.size();
-    return iter->second.s;
+    // Try to deduce the name if it's an extended XTerm key sequence.
+    if (keyseq[0] == 0x1b && keyseq[1] == '[' &&
+        keyseq[2] == '2' && keyseq[3] == '7' && keyseq[4] == ';')
+    {
+        static char static_buffer[256];
+
+        str_base out(static_buffer);
+        out.clear();
+
+        int i = 5;
+        int mod = 0;
+        if (keyseq[i] >= '2' && keyseq[i] <= '8' && keyseq[i+1] == ';')
+        {
+            mod = keyseq[i] - '0';
+            i += 2;
+
+            static const char* const c_mod_names[] =
+            { "", "", "S-", "A-", "A-S-", "C-", "C-S-", "A-C-", "A-C-S-" };
+
+            out << c_mod_names[mod];
+        }
+
+        int key_vk = 0;
+        if (keyseq[i] >= '1' && keyseq[i] <= '9') // Leading '0' not allowed.
+        {
+            key_vk = keyseq[i++] - '0';
+            while (keyseq[i] >= '0' && keyseq[i] <= '9')
+            {
+                key_vk *= 10;
+                key_vk += keyseq[i++] - '0';
+            }
+
+            if (keyseq[i] == '~' && terminfo::is_vk_recognized(key_vk))
+            {
+                i++;
+                len = i;
+                if (key_name_from_vk(key_vk, out))
+                    return out.c_str();
+            }
+        }
+    }
+
+    return nullptr;
 }
 
 
@@ -532,23 +653,26 @@ void win_terminal_in::process_input(KEY_EVENT_RECORD const& record)
     if (key_vk == VK_CONTROL || key_vk == VK_SHIFT)
         return;
 
-    // Special treatment for escape.
-    // TODO: 0.4.8 keyboard compatibility mode
-    if (key_char == 0x1b)
-        return push(bindableEsc);
+    if (s_verbose_input)
+    {
+        char buf[32];
+        buf[0] = 0;
+        const char* key_name = key_name_from_vk(key_vk, str_base(buf)) ? buf : "UNKNOWN";
+        printf("key event:  %c%c%c %c%c  flags=0x%08.8x  char=0x%04.4x  vk=0x%04.4x  \"%s\"\n",
+                (key_flags & SHIFT_PRESSED) ? 'S' : '_',
+                (key_flags & LEFT_CTRL_PRESSED) ? 'C' : '_',
+                (key_flags & LEFT_ALT_PRESSED) ? 'A' : '_',
+                (key_flags & RIGHT_ALT_PRESSED) ? 'A' : '_',
+                (key_flags & RIGHT_CTRL_PRESSED) ? 'C' : '_',
+                key_flags,
+                key_char,
+                key_vk,
+                key_name);
+    }
 
-#if 0
-    str<> tmp;
-    tmp.format("key event:  %c%c %c%c  flags=0x%08.8x  char=0x%04.4x  vk=0x%04.4x\n",
-               (key_flags & LEFT_CTRL_PRESSED) ? 'C' : '_',
-               (key_flags & LEFT_ALT_PRESSED) ? 'A' : '_',
-               (key_flags & RIGHT_ALT_PRESSED) ? 'A' : '_',
-               (key_flags & RIGHT_CTRL_PRESSED) ? 'C' : '_',
-               key_flags,
-               key_char,
-               key_vk);
-    OutputDebugStringA(tmp.c_str());
-#endif
+    // Special treatment for escape.
+    if (key_char == 0x1b && (key_vk == VK_ESCAPE || !g_differentiate_keys.get()))
+        return push(bindableEsc);
 
     // Windows supports an AltGr substitute which we check for here. As it
     // collides with Readline mappings Clink's support can be disabled.
@@ -589,7 +713,7 @@ void win_terminal_in::process_input(KEY_EVENT_RECORD const& record)
         return push(terminfo::kspc[terminfo::keymod_index(key_flags)]);
 
     // Special case for shift-tab (aka. back-tab or kcbt).
-    if (key_char == '\t' && !m_buffer_count && (key_flags & SHIFT_PRESSED))
+    if (key_char == '\t' && !m_buffer_count && (key_flags & SHIFT_PRESSED) && !g_differentiate_keys.get())
         return push(terminfo::kcbt);
 
     // Function keys (kf1-kf48 from xterm+pcf2)
@@ -604,27 +728,48 @@ void win_terminal_in::process_input(KEY_EVENT_RECORD const& record)
     // Include an ESC character in the input stream if Alt is pressed.
     if (key_char)
     {
-        if (key_flags & ALT_PRESSED)
-            push(0x1b);
+        bool simple_char;
 
-        return push(key_char);
+        assert(key_vk != VK_TAB);
+        if (key_vk == 'H' || key_vk == 'I')
+            simple_char = !(key_flags & CTRL_PRESSED) || !g_differentiate_keys.get();
+        else if (key_vk == 'M')
+            simple_char = !((key_flags & CTRL_PRESSED)) || !g_differentiate_keys.get();
+        else if (key_char == 0x1b && key_vk != VK_ESCAPE)
+            simple_char = terminfo::keymod_index(key_flags) < 2; // Modifiers were resulting in incomplete escape codes.
+        else if (key_vk == VK_RETURN || key_vk == VK_BACK)
+            simple_char = !(key_flags & (CTRL_PRESSED|SHIFT_PRESSED));
+        else if (key_char >= ' ')
+            simple_char = !(key_flags & CTRL_PRESSED);
+        else
+            simple_char = !(key_flags & SHIFT_PRESSED);
+
+        if (simple_char)
+        {
+            if (key_flags & ALT_PRESSED)
+                push(0x1b);
+            return push(key_char);
+        }
     }
 
     // The numpad keys such as PgUp, End, etc. don't come through with the
     // ENHANCED_KEY flag set so we'll infer it here.
-    static const int enhanced_vks[] = {
-        VK_UP, VK_DOWN, VK_LEFT, VK_RIGHT, VK_HOME, VK_END,
-        VK_INSERT, VK_DELETE, VK_PRIOR, VK_NEXT, VK_BACK,
-    };
-
-    for (int i = 0; i < sizeof_array(enhanced_vks); ++i)
+    switch (key_vk)
     {
-        if (key_vk == enhanced_vks[i])
-        {
-            key_flags |= ENHANCED_KEY;
-            break;
-        }
-    }
+    case VK_UP:
+    case VK_DOWN:
+    case VK_LEFT:
+    case VK_RIGHT:
+    case VK_HOME:
+    case VK_END:
+    case VK_INSERT:
+    case VK_DELETE:
+    case VK_PRIOR:
+    case VK_NEXT:
+    case VK_BACK:
+        key_flags |= ENHANCED_KEY;
+        break;
+    };
 
     // Convert enhanced keys to normal mode xterm compatible escape sequences.
     if (key_flags & ENHANCED_KEY)
@@ -660,21 +805,69 @@ void win_terminal_in::process_input(KEY_EVENT_RECORD const& record)
 
     // This builds Ctrl-<key> c0 codes. Some of these actually come though in
     // key_char and some don't.
+    bool differentiate = false;
     if (key_flags & CTRL_PRESSED)
     {
-        #define CONTAINS(l, r) (unsigned)(key_vk - l) <= (r - l)
-             if (CONTAINS('A', 'Z'))    key_vk -= 'A' - 1;
-        else if (CONTAINS(0xdb, 0xdd))  key_vk -= 0xdb - 0x1b;
-        else if (key_vk == 0x32)        key_vk = 0;
-        else if (key_vk == 0x36)        key_vk = 0x1e;
-        else if (key_vk == 0xbd)        key_vk = 0x1f;
-        else                            return;
-        #undef CONTAINS
+        bool ctrl_code = true;
 
-        if (key_flags & ALT_PRESSED)
-            push(0x1b);
+        switch (key_vk)
+        {
+        case 'A':   case 'B':   case 'C':   case 'D':
+        case 'E':   case 'F':   case 'G':   case 'H':
+        case 'I':   case 'J':   case 'K':   case 'L':
+        case 'M':   case 'N':   case 'O':   case 'P':
+        case 'Q':   case 'R':   case 'S':   case 'T':
+        case 'U':   case 'V':   case 'W':   case 'X':
+        case 'Y':   case 'Z':
+            if (key_vk == 'H' || key_vk == 'I' || key_vk == 'M')
+                differentiate = g_differentiate_keys.get();
+            if (differentiate)
+                ctrl_code = false;
+            else
+            {
+                key_vk -= 'A' - 1;
+                ctrl_code = true;
+            }
+            break;
+        case '2':       key_vk = 0;         break;
+        case '6':       key_vk = 0x1e;      break;
+        case 0xbd:      key_vk = 0x1f;      break;
+        case 0xdb:
+            if (g_differentiate_keys.get())
+            {
+                ctrl_code = false;
+                break;
+            }
+            // fall through
+        case 0xdc:
+        case 0xdd:
+            key_vk -= 0xdb - 0x1b;
+            break;
+        default:        ctrl_code = false;  break;
+        }
 
-        push(key_vk);
+        if (ctrl_code)
+        {
+            if (key_flags & ALT_PRESSED)
+                push(0x1b);
+
+            push(key_vk);
+            return;
+        }
+    }
+
+    // Ok, it's a key that doesn't have a "normal" terminal representation.  Can
+    // we produce an extended XTerm input sequence for the input?
+    if (terminfo::is_vk_recognized(key_vk))
+    {
+        str<> key_seq;
+        int mod = terminfo::xterm_modifier(key_flags);
+        if (mod >= 2)
+            key_seq.format("\x1b[27;%u;%u~", mod, key_vk);
+        else
+            key_seq.format("\x1b[27;%u~", key_vk);
+        push(key_seq.c_str());
+        return;
     }
 }
 

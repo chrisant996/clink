@@ -5,8 +5,6 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 # RELEASE
 
 ## Issues
-- I thought my <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>N</kbd> `luafunc:` macro was working with all the completion functions, e.g. so the popup completion window worked after using it.  But now that's not working ... why not?
-- Also, build in a `complete-numbers` command so screen-grabbing numbers can be included in the default configuration.
 
 <br/>
 <br/>
@@ -18,7 +16,7 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 - **Interactive completion.**  Similar to <kbd>Ctrl</kbd>+<kbd>Space</kbd> in Powershell and `menu-select` in zsh, etc.  The edge cases can get weird...
 
 ## Medium Priority
-- Add terminal sequences for **Ctrl+Shift+Letter** and **Ctrl+Punctuation** and etc (see https://invisible-island.net/xterm/modified-keys.html).
+- Build in a `complete-numbers` command so screen-grabbing numbers can be included in the default configuration.
 - Add a `history.dupe_mode` that behaves like 4Dos/4NT/Take Command from JPSoft:  **Up**/**Down** then **Enter** remembers the history position so that **Enter**, **Down**, **Enter**, **Down**, **Enter**, etc can be used to replay a series of commands.  In the meantime, `operate-and-get-next` achieves the same result albeit with a slightly different (and more efficient) workflow.
 - Symlink support (displaying matches, and whether to append a path separator).
 - Provide a way for a custom classifier to apply a classification anywhere (not just to a pre-parsed word), and to apply any arbitrary CSI SGR code to a word or to anywhere.

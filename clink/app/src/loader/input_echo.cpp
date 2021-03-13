@@ -13,6 +13,8 @@
 //------------------------------------------------------------------------------
 int input_echo(int argc, char** argv)
 {
+    bool verbose_input = false;
+
     for (int i = 1; i < argc; ++i)
     {
         const char* arg = argv[i];
@@ -24,7 +26,12 @@ int input_echo(int argc, char** argv)
             puts("Echos the sequence of characters for each key pressed.\n");
             return 0;
         }
+        if (_stricmp(arg, "--verbose") == 0 || _stricmp(arg, "-v") == 0)
+            verbose_input = true;
     }
+
+    extern void set_verbose_input(bool verbose);
+    set_verbose_input(verbose_input);
 
     // Load the settings from disk, since terminal input is affected by settings.
     str<280> settings_file;
