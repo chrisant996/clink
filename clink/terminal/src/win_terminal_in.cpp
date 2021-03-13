@@ -15,13 +15,6 @@
 #include <map>
 
 //------------------------------------------------------------------------------
-static setting_bool g_modify_other_keys(
-    "terminal.modify_other_keys",
-    "Use XTerm modifyOtherKeys sequences",
-    "When enabled, pressing Space or Tab with modifier keys sends extended\n"
-    "XTerm key sequences so they can be bound separately.",
-    true);
-
 static setting_bool g_use_altgr_substitute(
     "terminal.use_altgr_substitute",
     "Support Windows' Ctrl-Alt substitute for AltGr",
@@ -590,9 +583,9 @@ void win_terminal_in::process_input(KEY_EVENT_RECORD const& record)
     }
 
     // Special treatment for variations of tab and space.
-    if (key_vk == VK_TAB && (key_char == 0x09 || !key_char) && !m_buffer_count && g_modify_other_keys.get())
+    if (key_vk == VK_TAB && (key_char == 0x09 || !key_char) && !m_buffer_count)
         return push(terminfo::ktab[terminfo::keymod_index(key_flags)]);
-    if (key_vk == VK_SPACE && (key_char == 0x20 || !key_char) && !m_buffer_count && g_modify_other_keys.get())
+    if (key_vk == VK_SPACE && (key_char == 0x20 || !key_char) && !m_buffer_count)
         return push(terminfo::kspc[terminfo::keymod_index(key_flags)]);
 
     // Special case for shift-tab (aka. back-tab or kcbt).
