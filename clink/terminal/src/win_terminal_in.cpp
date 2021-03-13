@@ -21,7 +21,7 @@ static setting_bool g_use_altgr_substitute(
     "Windows provides Ctrl-Alt as a substitute for AltGr, historically to\n"
     "support keyboards with no AltGr key.  This may collide with some of\n"
     "Readline's bindings.",
-    true);
+    false);
 
 //------------------------------------------------------------------------------
 extern "C" void reset_wcwidths();
