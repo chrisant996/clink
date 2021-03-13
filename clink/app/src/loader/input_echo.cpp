@@ -41,22 +41,35 @@ int input_echo(int argc, char** argv)
     while (!quit)
     {
         input.select();
+
+        bool need_quote = true;
         while (1)
         {
             int c = input.read();
             if (c < 0)
                 break;
 
+            if (need_quote)
+            {
+                need_quote = false;
+                printf("\"");
+            }
+
             if (c > 0x7f)
                 printf("\\x%02x", unsigned(c));
+            else if (c == 0x1b)
+                printf("\\e");
             else if (c < 0x20)
-                printf("^%c", c|0x40);
+                printf("\\C-%c", c|0x40);
             else
                 printf("%c", c);
 
             if (quit = (c == ('C' & 0x1f))) // Ctrl-c
                 break;
         }
+
+        if (!need_quote)
+            printf("\"");
 
         puts("");
     }
