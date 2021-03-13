@@ -5,6 +5,7 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 # RELEASE
 
 ## Issues
+- Sort deduced Xterm extended key names with normal deduced key names, instead of with the special named keys.
 
 <br/>
 <br/>
