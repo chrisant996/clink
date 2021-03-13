@@ -4,9 +4,11 @@
 #include "pch.h"
 
 #include <core/str.h>
+#include <core/settings.h>
 #include <terminal/terminal.h>
 #include <terminal/terminal_in.h>
 #include <terminal/config.h>
+#include <utils/app_context.h>
 
 //------------------------------------------------------------------------------
 int input_echo(int argc, char** argv)
@@ -23,6 +25,11 @@ int input_echo(int argc, char** argv)
             return 0;
         }
     }
+
+    // Load the settings from disk, since terminal input is affected by settings.
+    str<280> settings_file;
+    app_context::get()->get_settings_path(settings_file);
+    settings::load(settings_file.c_str());
 
     console_config cc;
 
