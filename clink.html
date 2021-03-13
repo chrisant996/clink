@@ -3,7 +3,7 @@
 
 <!-- ----------------------------------------------------- -->
 <head>
-<title>Clink v1.1.38</title>
+<title>Clink v1.1.39</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Rambla:wght@400;700&family=Roboto&family=Fira+Mono&display=swap');
 html {
@@ -409,7 +409,7 @@ var hljs=function(){"use strict";function e(n){Object.freeze(n);var t="function"
         </td>
         <td style="text-align:right">
             <div id="header">
-                <div id="title">Clink v1.1.38</div>
+                <div id="title">Clink v1.1.39</div>
                 <div id="url">
                     <a href="http://github.com/chrisant996/clink">
                         http://github.com/chrisant996/clink
@@ -756,18 +756,18 @@ var hljs=function(){"use strict";function e(n){Object.freeze(n);var t="function"
 <td>Suppresses stderr from the Readline library.  Enable this if Readline error messages are getting in the way.</td>
 </tr>
 <tr>
+<td align="center"><code>terminal.differentiate_keys</code></td>
+<td align="center">False</td>
+<td>When enabled, pressing <kbd>Ctrl</kbd> + <kbd>H</kbd> or <kbd>I</kbd> or <kbd>M</kbd> or <kbd>[</kbd> generate special key sequences to enable binding them separately from <kbd>Backspace</kbd> or <kbd>Tab</kbd> or <kbd>Enter</kbd> or <kbd>Esc</kbd>.</td>
+</tr>
+<tr>
 <td align="center"><code>terminal.emulation</code></td>
 <td align="center"><code>auto</code></td>
 <td>Clink can either emulate a virtual terminal and handle ANSI escape codes itself, or let the console host natively handle ANSI escape codes. <code>native</code> = pass output directly to the console host process, <code>emulate</code> = clink handles ANSI escape codes itself, <code>auto</code> = emulate except when running in ConEmu, Windows Terminal, or Windows 10 new console.</td>
 </tr>
 <tr>
-<td align="center"><code>terminal.modify_other_keys</code></td>
-<td align="center">True</td>
-<td>When enabled, pressing <kbd>Space</kbd> or <kbd>Tab</kbd> with modifier keys sends extended XTerm key sequences so they can be bound separately.</td>
-</tr>
-<tr>
 <td align="center"><code>terminal.use_altgr_substitute</code></td>
-<td align="center">True</td>
+<td align="center">False</td>
 <td>Support Windows&#39; <kbd>Ctrl</kbd>-<kbd>Alt</kbd> substitute for <kbd>AltGr</kbd>. Turning this off may resolve collisions with Readline&#39;s key bindings.</td>
 </tr>
 </tbody></table>
@@ -1608,7 +1608,8 @@ C-_:                kill-line                       <span class="hljs-comment">#
 <p><strong>Note:</strong> Third party console hosts such as ConEmu may have their own key bindings that supersede Clink.  They usually have documentation for how to change or disable their key bindings to allow console programs to handle the keys instead.</p>
 </blockquote>
 <h3 id="discovering-clink-key-sequences">Discovering Clink key sequences</h3>
-<p>Clink provides an easy way to find the key sequence for any key combination that Clink supports. Run <code>clink echo</code> and then press key combinations; the associated key binding sequence is printed to the console output.</p>
+<p>Clink provides an easy way to find the key sequence for any key combination that Clink supports. Run <code>clink echo</code> and then press key combinations; the associated key binding sequence is printed to the console output and can be used for a key binding in the inputrc file.</p>
+<p>A chord can be formed by concatenating multiple key binding sequences. For example, <code>&quot;\C-X&quot;</code> and <code>&quot;\e[H&quot;</code> can be concatenated to form <code>&quot;\C-X\e[H&quot;</code> representing the chord <kbd>Ctrl</kbd>+<kbd>X</kbd>,<kbd>Home</kbd>.</p>
 <h3 id="binding-special-keys">Binding special keys</h3>
 <p>Here is a table of the key binding sequences for the special keys.  Clink primarily uses VT220 emulation for keyboard input, but also uses some Xterm extended key sequences.</p>
 <table>
@@ -1760,13 +1761,13 @@ C-_:                kill-line                       <span class="hljs-comment">#
 <tr>
 <td align="center">Backspace</td>
 <td align="center"><code>^h</code></td>
-<td align="center">-</td>
+<td align="center"><code>\e[27;2;8~</code></td>
 <td align="center"><code>Rubout</code></td>
-<td align="center">-</td>
+<td align="center"><code>\e[27;6;8~</code></td>
 <td align="center"><code>\e^h</code></td>
-<td align="center">-</td>
+<td align="center"><code>\e[27;4;8~</code></td>
 <td align="center"><code>\eRubout</code></td>
-<td align="center">-</td>
+<td align="center"><code>\e[27;8;8~</code></td>
 </tr>
 <tr>
 <td align="center">Escape</td>
@@ -1910,6 +1911,56 @@ C-_:                kill-line                       <span class="hljs-comment">#
 <td align="center"><code>\e\e[24;2~</code></td>
 <td align="center"><code>\e\e[24;5~</code></td>
 <td align="center"><code>\e\e[24;6~</code></td>
+</tr>
+</tbody></table>
+<p>When the <code>terminal.differentiate_keys</code> setting is enabled then the following key bindings are also available:</p>
+<table>
+<thead>
+<tr>
+<th align="center"></th>
+<th align="center">Ctrl</th>
+<th align="center">Ctrl+Shift</th>
+<th align="center">Alt</th>
+<th align="center">Alt+Shift</th>
+<th align="center">Alt+Ctrl</th>
+<th align="center">Alt+Ctrl+Shift</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="center">H</td>
+<td align="center"><code>\e[27;5;72~</code></td>
+<td align="center"><code>\e[27;6;72~</code></td>
+<td align="center"><code>\eh</code></td>
+<td align="center"><code>\eH</code></td>
+<td align="center"><code>\e[27;7;72~</code></td>
+<td align="center"><code>\e[27;8;72~</code></td>
+</tr>
+<tr>
+<td align="center">I</td>
+<td align="center"><code>\e[27;5;73~</code></td>
+<td align="center"><code>\e[27;6;73~</code></td>
+<td align="center"><code>\ei</code></td>
+<td align="center"><code>\eI</code></td>
+<td align="center"><code>\e[27;7;73~</code></td>
+<td align="center"><code>\e[27;8;73~</code></td>
+</tr>
+<tr>
+<td align="center">M</td>
+<td align="center"><code>\e[27;5;77~</code></td>
+<td align="center"><code>\e[27;6;77~</code></td>
+<td align="center"><code>\em</code></td>
+<td align="center"><code>\eM</code></td>
+<td align="center"><code>\e[27;7;77~</code></td>
+<td align="center"><code>\e[27;8;77~</code></td>
+</tr>
+<tr>
+<td align="center">[</td>
+<td align="center"><code>\e[27;5;219~</code></td>
+<td align="center"><code>\e[27;6;219~</code></td>
+<td align="center"><code>\e[27;3;219~</code></td>
+<td align="center"><code>\e[27;4;219~</code></td>
+<td align="center"><code>\e[27;7;219~</code></td>
+<td align="center"><code>\e[27;8;219~</code></td>
 </tr>
 </tbody></table>
 <a name="luakeybindings"/>
@@ -2424,6 +2475,16 @@ string.matchlen("abx", "abx")       -- returns -1</code></pre></div></div><hr/>
         <div class="section" id="changes">
 <h1 id="changes">Changes</h1>
 <h2 id="releases-from-chrisant996clink-fork">Releases from <a href="https://github.com/chrisant996/clink">chrisant996/clink</a> fork</h2>
+<h3 id="v1139">v1.1.39</h3>
+<ul>
+<li>Added support for many more key bindings, such as <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+Letter keys.</li>
+<li>Added <code>terminal.differentiate_keys</code> setting that when enabled allows binding <kbd>Ctrl</kbd> + <kbd>H</kbd> or <kbd>I</kbd> or <kbd>M</kbd> or <kbd>[</kbd> separately from <kbd>Backspace</kbd>, <kbd>Tab</kbd>, <kbd>Return</kbd>, or <kbd>Escape</kbd>.</li>
+<li>Removed <code>terminal.modify_other_keys</code> setting and made it always enabled.</li>
+<li>Changed <code>terminal.use_altgr_substitute</code> to be disabled by default so that <kbd>Ctrl</kbd>+<kbd>Alt</kbd> key bindings can work by default on keyboards with <kbd>AltGr</kbd>.</li>
+<li>Changed output from <code>clink echo</code> so it&#39;s directly usable in the inputrc files.</li>
+<li>Fixed <code>terminal.use_altgr_substitute</code> to only affect <kbd>AltGr</kbd> substitute key combinations (it had always broken the <kbd>RightAlt</kbd> key in general on other keyboard layouts).</li>
+<li>Fixed a benign issue with the console input mode in <code>clink echo</code>.</li>
+</ul>
 <h3 id="v1138">v1.1.38</h3>
 <ul>
 <li>Fixed <a href="https://github.com/chrisant996/clink/issues/84">#84</a>; added <code>terminal.use_altgr_substitute</code> setting.</li>
