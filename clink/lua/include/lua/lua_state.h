@@ -25,6 +25,8 @@ public:
     bool            do_file(const char* path);
     lua_State*      get_state() const;
 
+    static bool     push_named_function(lua_State* L, const char* func_name, str_base* error=nullptr);
+
     static int      pcall(lua_State* L, int nargs, int nresults);
     int             pcall(int nargs, int nresults) { return pcall(m_state, nargs, nresults); }
     const char*     get_string(int index) const;

@@ -182,6 +182,67 @@ bool lua_state::do_file(const char* path)
 }
 
 //------------------------------------------------------------------------------
+bool lua_state::push_named_function(lua_State* state, const char* func_name, str_base* e)
+{
+    bool first = true;
+    str_iter part;
+    str_tokeniser name_parts(func_name, ".");
+    str<> global;
+    const char* error = nullptr;
+    while (name_parts.next(part))
+    {
+        if (first)
+        {
+            global.concat(part.get_pointer(), part.length());
+            lua_getglobal(state, global.c_str());
+            first = false;
+        }
+        else
+        {
+            if (lua_isnil(state, -1))
+            {
+                error = "'%s' is nil";
+report_error:
+                if (e)
+                {
+                    e->format("can't execute '%s'", func_name);
+                    if (error)
+                    {
+                        str<> tmp;
+                        tmp.format(error, global.c_str());
+                        (*e) << "; " << tmp;
+                    }
+                    (*e) << "\n";
+                }
+                return false;
+            }
+            else if (!lua_istable(state, -1))
+            {
+                error = "'%s' is not a table";
+                goto report_error;
+            }
+
+            lua_pushlstring(state, part.get_pointer(), part.length());
+            lua_rawget(state, -2);
+
+            global.clear();
+            global.concat(func_name, int(part.get_pointer() - func_name + part.length()));
+        }
+    }
+
+    if (first || !lua_isfunction(state, -1))
+    {
+        lua_pop(state, 1);
+        error = "not a function";
+        goto report_error;
+    }
+
+    if (e)
+        e->clear();
+    return true;
+}
+
+//------------------------------------------------------------------------------
 int lua_state::pcall(lua_State* L, int nargs, int nresults)
 {
     // Lua scripts can have a side effect of changing the console mode (e.g. if
@@ -383,56 +444,12 @@ bool lua_state::call_lua_rl_global_function(const char* func_name)
     lua_State* state = get_state();
     rl_buffer_lua buffer(*g_rl_buffer);
 
-    bool first = true;
-    str_iter part;
-    str_tokeniser name_parts(func_name, ".");
-    str<> global;
-    const char* error = nullptr;
-    while (name_parts.next(part))
+    str<> msg;
+    if (!push_named_function(state, func_name, &msg))
     {
-        if (first)
-        {
-            global.concat(part.get_pointer(), part.length());
-            lua_getglobal(state, global.c_str());
-            first = false;
-        }
-        else
-        {
-            if (lua_isnil(state, -1))
-            {
-                error = "'%s' is nil";
-report_error:
-                str<> msg;
-                str<> msg2;
-                msg.format("can't execute '%s'", func_name);
-                if (error)
-                {
-                    msg2.format(error, global.c_str());
-                    msg << "; " << msg2;
-                }
-                msg << "\n";
-                buffer.begin_output(state);
-                puts(msg.c_str());
-                return false;
-            }
-            else if (!lua_istable(state, -1))
-            {
-                error = "'%s' is not a table";
-                goto report_error;
-            }
-
-            lua_pushlstring(state, part.get_pointer(), part.length());
-            lua_rawget(state, -2);
-
-            global.clear();
-            global.concat(func_name, int(part.get_pointer() - func_name + part.length()));
-        }
-    }
-
-    if (!lua_isfunction(state, -1))
-    {
-        error = "not a function";
-        goto report_error;
+        buffer.begin_output(state);
+        puts(msg.c_str());
+        return false;
     }
 
     buffer.push(state);
