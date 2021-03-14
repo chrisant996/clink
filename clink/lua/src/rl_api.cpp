@@ -27,6 +27,15 @@ extern void override_rl_last_func(rl_command_func_t* func);
 
 
 //------------------------------------------------------------------------------
+static str<32> s_last_luafunc;
+void set_last_luafunc(const char* macro)
+{
+    s_last_luafunc.copy(macro);
+}
+
+
+
+//------------------------------------------------------------------------------
 bool collapse_tilde(const char* in, str_base& out, bool force)
 {
     const char* rl_cvar = rl_variable_value("expand-tilde");

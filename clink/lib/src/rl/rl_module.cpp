@@ -1562,6 +1562,8 @@ void rl_module::on_input(const input& input, result& result, const context& cont
         // command called `console.scroll()` or `ScrollConsoleRelative()`.
         reset_scroll_mode();
 
+        extern void set_last_luafunc(const char*);
+        set_last_luafunc("");
         s_override_rl_last_func = nullptr;
 
         --len;
