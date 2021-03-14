@@ -697,6 +697,13 @@ void win_terminal_in::process_input(KEY_EVENT_RECORD const& record)
             key_flags &= ~(LEFT_ALT_PRESSED|RIGHT_ALT_PRESSED);
     }
 
+    // Special treatment for variations of tab and space. Do this before
+    // clearing AltGr flags, otherwise ctrl-space gets converted into space.
+    if (key_vk == VK_TAB && (key_char == 0x09 || !key_char) && !m_buffer_count)
+        return push(terminfo::ktab[terminfo::keymod_index(key_flags)]);
+    if (key_vk == VK_SPACE && (key_char == 0x20 || !key_char) && !m_buffer_count)
+        return push(terminfo::kspc[terminfo::keymod_index(key_flags)]);
+
     // If the input was formed using AltGr or LeftAlt-LeftCtrl then things get
     // tricky. But there's always a Ctrl bit set, even if the user didn't press
     // a ctrl key. We can use this and the knowledge that Ctrl-modified keys
@@ -710,13 +717,7 @@ void win_terminal_in::process_input(KEY_EVENT_RECORD const& record)
             key_flags &= ~LEFT_ALT_PRESSED;
     }
 
-    // Special treatment for variations of tab and space.
-    if (key_vk == VK_TAB && (key_char == 0x09 || !key_char) && !m_buffer_count)
-        return push(terminfo::ktab[terminfo::keymod_index(key_flags)]);
-    if (key_vk == VK_SPACE && (key_char == 0x20 || !key_char) && !m_buffer_count)
-        return push(terminfo::kspc[terminfo::keymod_index(key_flags)]);
-
-    // Special case for shift-tab (aka. back-tab or kcbt).
+    // Special case for ctrl-shift-I (to behave like shift-tab aka. back-tab).
     if (key_char == '\t' && !m_buffer_count && (key_flags & SHIFT_PRESSED) && !g_differentiate_keys.get())
         return push(terminfo::kcbt);
 
