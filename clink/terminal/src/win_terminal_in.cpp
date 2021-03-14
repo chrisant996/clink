@@ -370,11 +370,15 @@ const char* find_key_name(const char* keyseq, int& len, int& eqclass, int& order
         int mod = 0;
         if (keyseq[i] >= '2' && keyseq[i] <= '8' && keyseq[i+1] == ';')
         {
-            mod = keyseq[i] - '0';
+            mod = keyseq[i] - '0' - 1;
             i += 2;
 
             static const char* const c_mod_names[] =
-            { "", "", "S-", "A-", "A-S-", "C-", "C-S-", "A-C-", "A-C-S-" };
+            { "", "S-", "A-", "A-S-", "C-", "C-S-", "A-C-", "A-C-S-" };
+
+            eqclass = ((!!(mod & 1) << 0) |
+                       (!!(mod & 4) << 1) |
+                       (!!(mod & 2) << 2));
 
             out << c_mod_names[mod];
         }
