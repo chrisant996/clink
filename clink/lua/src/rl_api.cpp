@@ -311,6 +311,8 @@ static int invoke_command(lua_State* state)
 /// -show:  end
 static int set_matches(lua_State* state)
 {
+    save_stack_top ss(state);
+
     bool nosort = false;
     if (lua_istable(state, -1))
     {
@@ -329,7 +331,6 @@ static int set_matches(lua_State* state)
     if (lua_state::pcall(state, 0, 0) != 0)
     {
         puts(lua_tostring(state, -1));
-        lua_pop(state, 2);
         return 0;
     }
 

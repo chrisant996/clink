@@ -42,6 +42,7 @@ lua_word_classifier::lua_word_classifier(lua_state& state)
 void lua_word_classifier::classify(const line_state& line, word_classifications& classifications, const char* already_classified)
 {
     lua_State* state = m_state.get_state();
+    save_stack_top ss(state);
 
     // Call to Lua to generate matches.
     lua_getglobal(state, "clink");
@@ -58,14 +59,10 @@ void lua_word_classifier::classify(const line_state& line, word_classifications&
     {
         if (const char* error = lua_tostring(state, -1))
             m_state.print_error(error);
-
-        lua_settop(state, 0);
         return;
     }
 
     const char* ret = lua_tostring(state, -1);
-    lua_settop(state, 0);
-
     bool has_argmatcher = (ret[0] == 'm');
     if (has_argmatcher)
         ret++;

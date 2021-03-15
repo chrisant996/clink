@@ -155,6 +155,8 @@ void lua_state::shutdown()
 //------------------------------------------------------------------------------
 bool lua_state::do_string(const char* string, int length)
 {
+    save_stack_top ss(m_state);
+
     if (length < 0)
         length = int(strlen(string));
 
@@ -164,20 +166,20 @@ bool lua_state::do_string(const char* string, int length)
     else if (const char* error = lua_tostring(m_state, -1))
         print_error(error);
 
-    lua_settop(m_state, 0);
     return ok;
 }
 
 //------------------------------------------------------------------------------
 bool lua_state::do_file(const char* path)
 {
+    save_stack_top ss(m_state);
+
     bool ok = !luaL_loadfile(m_state, path);
     if (ok)
         ok = !pcall(0, LUA_MULTRET);
     else if (const char* error = lua_tostring(m_state, -1))
         print_error(error);
 
-    lua_settop(m_state, 0);
     return ok;
 }
 
@@ -483,3 +485,19 @@ void lua_state::dump_stack(int pos)
     dump_lua_stack(get_state(), pos);
 }
 #endif
+
+
+
+//------------------------------------------------------------------------------
+save_stack_top::save_stack_top(lua_State* L)
+: m_state(L)
+, m_top(lua_gettop(L))
+{
+}
+
+//------------------------------------------------------------------------------
+save_stack_top::~save_stack_top()
+{
+    assert(lua_gettop(m_state) >= m_top);
+    lua_settop(m_state, m_top);
+}

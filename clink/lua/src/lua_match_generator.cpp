@@ -40,6 +40,7 @@ lua_match_generator::~lua_match_generator()
 bool lua_match_generator::generate(const line_state& line, match_builder& builder)
 {
     lua_State* state = m_state.get_state();
+    save_stack_top ss(state);
 
     // Backward compatibility shim.
     if (true)
@@ -74,13 +75,10 @@ bool lua_match_generator::generate(const line_state& line, match_builder& builde
         if (const char* error = lua_tostring(state, -1))
             m_state.print_error(error);
 
-        lua_settop(state, 0);
         return false;
     }
 
     int use_matches = lua_toboolean(state, -1);
-    lua_settop(state, 0);
-
     return !!use_matches;
 }
 
@@ -88,6 +86,7 @@ bool lua_match_generator::generate(const line_state& line, match_builder& builde
 void lua_match_generator::get_word_break_info(const line_state& line, word_break_info& info) const
 {
     lua_State* state = m_state.get_state();
+    save_stack_top ss(state);
 
     // Call to Lua to calculate prefix length.
     lua_getglobal(state, "clink");
@@ -102,14 +101,12 @@ void lua_match_generator::get_word_break_info(const line_state& line, word_break
         if (const char* error = lua_tostring(state, -1))
             m_state.print_error(error);
 
-        lua_settop(state, 0);
         info.clear();
         return;
     }
 
     info.truncate = int(lua_tointeger(state, -2));
     info.keep = int(lua_tointeger(state, -1));
-    lua_settop(state, 0);
 }
 
 //------------------------------------------------------------------------------

@@ -58,6 +58,17 @@ inline lua_State* lua_state::get_state() const
 }
 
 //------------------------------------------------------------------------------
+class save_stack_top
+{
+public:
+    save_stack_top(lua_State* L);
+    ~save_stack_top();
+private:
+    lua_State* const m_state;
+    int const m_top;
+};
+
+//------------------------------------------------------------------------------
 // Dumps from pos to top of stack (use negative pos for relative position, use
 // positive pos for absolute position, or use 0 for entire stack).
 #ifdef DEBUG
