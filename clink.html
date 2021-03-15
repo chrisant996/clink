@@ -3,7 +3,7 @@
 
 <!-- ----------------------------------------------------- -->
 <head>
-<title>Clink v1.1.39</title>
+<title>Clink v1.1.40</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Rambla:wght@400;700&family=Roboto&family=Fira+Mono&display=swap');
 html {
@@ -409,7 +409,7 @@ var hljs=function(){"use strict";function e(n){Object.freeze(n);var t="function"
         </td>
         <td style="text-align:right">
             <div id="header">
-                <div id="title">Clink v1.1.39</div>
+                <div id="title">Clink v1.1.40</div>
                 <div id="url">
                     <a href="http://github.com/chrisant996/clink">
                         http://github.com/chrisant996/clink
@@ -474,6 +474,7 @@ var hljs=function(){"use strict";function e(n){Object.freeze(n);var t="function"
 <tr><td><kbd>Ctrl</kbd>+<kbd>R</kbd></td><td>This is <code>reverse-search-history</code>, which incrementally searches the history.  Press it, then type, and it does a reverse incremental search while you type.  Press <kbd>Ctrl</kbd>+<kbd>R</kbd> again (and again, etc) to search for other matches of the search text.  Learn more by reading up on the "search" and "history" features in the Readline manual.</td></tr>
 <tr><td><kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>D</kbd></td><td>This is <code>remove-history</code>, which deletes the currently selected history line after using any of the history search or navigation commands.</td></tr>
 <tr><td><kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>K</kbd></td><td>This is <code>add-history</code>, which adds the current line to the history without executing it, and then clears the input line.</td></tr>
+<tr><td><kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>N</kbd></td><td>This is <code>clink-menu-complete-numbers</code>, which grabs numbers with 3 or more digits from the current console screen and cycles through inserting them as completions (binary, octal, decimal, hexadecimal).  Super handy for quickly inserting a commit hash that was printed as output from a preceding command.</td></tr>
 <tr><td><kbd>Alt</kbd>+<kbd>0</kbd> to <kbd>Alt</kbd>+<kbd>9</kbd></td><td>These are <code>digit-argument</code>, which let you enter a numeric value used by many commands.  For example <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>W</kbd> copies the current word to the clipboard, but if you first type <kbd>Alt</kbd>+<kbd>2</kbd> followed by <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>W</kbd> then it copies the 3rd word to the clipboard (the first word is 0, the second is 1, etc).  Learn more by reading up on "Readline Arguments" in the Readline manual.</td></tr>
 <tr><td><kbd>Alt</kbd>+<kbd>H</kbd></td><td>This is <code>clink-show-help</code>, which lists the key bindings and commands.  Learn more by visiting <a href="#keybindings">Key Bindings</a>.</td></tr>
 </table>
@@ -956,6 +957,10 @@ Echos key sequences to use in the .inputrc files for binding keys to Clink comma
 <td>Adds the current line to the history without executing it, and clears the editing line.</td>
 </tr>
 <tr>
+<td align="center"><code>clink-complete-numbers</code></td>
+<td>Like <code>complete</code>, but for numbers from the console screen (3 digits or more, up to hexadecimal).</td>
+</tr>
+<tr>
 <td align="center"><code>clink-copy-cwd</code></td>
 <td>Copy the current working directory to the clipboard.</td>
 </tr>
@@ -996,12 +1001,32 @@ Echos key sequences to use in the .inputrc files for binding keys to Clink comma
 <td>Activates the &quot;Mark&quot; mode when running in a standard console window (hosted by the OS conhost).  This is equivalent to picking &quot;Mark&quot; from the console window&#39;s system menu.</td>
 </tr>
 <tr>
+<td align="center"><code>clink-menu-complete-numbers</code></td>
+<td>Like <code>menu-complete</code>, but for numbers from the console screen (3 digits or more, up to hexadecimal).</td>
+</tr>
+<tr>
+<td align="center"><code>clink-menu-complete-numbers-backward</code></td>
+<td>Like <code>menu-complete-backward</code>, but for numbers from the console screen (3 digits or more, up to hexadecimal).</td>
+</tr>
+<tr>
+<td align="center"><code>clink-old-menu-complete-numbers</code></td>
+<td>Like <code>old-menu-complete</code>, but for numbers from the console screen (3 digits or more, up to hexadecimal).</td>
+</tr>
+<tr>
+<td align="center"><code>clink-old-menu-complete-numbers-backward</code></td>
+<td>Like <code>old-menu-complete-backward</code>, but for numbers from the console screen (3 digits or more, up to hexadecimal).</td>
+</tr>
+<tr>
 <td align="center"><code>clink-paste</code></td>
 <td>Paste the clipboard at the cursor.</td>
 </tr>
 <tr>
 <td align="center"><code>clink-popup-complete</code></td>
 <td>Show a popup window that lists the available completions.</td>
+</tr>
+<tr>
+<td align="center"><code>clink-popup-complete-numbers</code></td>
+<td>Like <code>clink-popup-complete</code>, but for numbers from the console screen (3 digits or more, up to hexadecimal).</td>
 </tr>
 <tr>
 <td align="center"><code>clink-popup-directories</code></td>
@@ -2412,6 +2437,7 @@ function dir_matches(match_word, word_index, line_state)
 &nbsp; end
 &nbsp; return matches
 end</code></pre></div></div><hr/>
+<div class="function"><div class="header"> <div class="name"><a name="rl.getlastcommand">rl.getlastcommand</a></div> <div class="signature">() : string, function</div></div><div class="body"><p class="desc">Returns two values: <ul> <li>The name of the last Readline command invoked by a key binding. <li>The name of the last Lua function invoked by a key binding. </ul></p><p class="desc"> If the last key binding invoked a Lua function, then the first return value is an empty string unless the Lua function used <a href="#rl.invokecommand">rl.invokecommand()</a> to also internally invoke a Readline command. If the last key binding did not invoke a Lua function, then the second return value is an empty string.</p><pre class="language-lua"><code>local last_rl_func, last_lua_func = rl.getlastcommand()</code></pre></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="rl.getvariable">rl.getvariable</a></div> <div class="signature">( <span class="arg_name">name</span>:string ) : string | nil</div></div><div class="body"><p class="desc">Returns the value of the named Readline configuration variable as a string, or nil if the variable name is not recognized.</p></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="rl.invokecommand">rl.invokecommand</a></div> <div class="signature">( <span class="arg_name">command</span>:string, [<span class="arg_name">count</span>:integer] ) : boolean | nil</div></div><div class="body"><p class="desc">Invokes a Readline command named <span class="arg">command</span>.  May only be used within a <code>luafunc:</code> key binding.</p><p class="desc"> <span class="arg">count</span> is optional and defaults to 1 if omitted.</p><p class="desc"> Returns true if the named command succeeds, false if the named command fails, or nil if the named command doesn't exist.</p><p class="desc"> Warning:  Invoking more than one Readline command in a <code>luafunc:</code> key binding could have unexpected results, depending on which commands are invoked.</p></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="rl.isvariabletrue">rl.isvariabletrue</a></div> <div class="signature">( <span class="arg_name">name</span>:string ) : boolean | nil</div></div><div class="body"><p class="desc">Returns a boolean value indicating whether the named Readline configuration variable is set to true (on), or nil if the variable name is not recognized.</p></div></div><hr/>
@@ -2475,6 +2501,15 @@ string.matchlen("abx", "abx")       -- returns -1</code></pre></div></div><hr/>
         <div class="section" id="changes">
 <h1 id="changes">Changes</h1>
 <h2 id="releases-from-chrisant996clink-fork">Releases from <a href="https://github.com/chrisant996/clink">chrisant996/clink</a> fork</h2>
+<h3 id="v1140">v1.1.40</h3>
+<ul>
+<li>Added a group of <code>clink-complete-numbers</code> commands that do completion for numbers from the console screen, bound to <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>N</kbd> by default.</li>
+<li>Added <code>rl.getlastcommand()</code> function that returns the name of the last command invoked by key bindings.</li>
+<li>Fixed sort order in <kbd>Alt</kbd>+<kbd>H</kbd> for the newly supported key bindings (that were added in v1.1.39).</li>
+<li>Fixed <kbd>Ctrl</kbd>+<kbd>Space</kbd> (regression introduced in v1.1.39).</li>
+<li>Fixed various <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>whatever</kbd> combinations (regression introduced in v1.1.39).</li>
+<li>Fixed <code>rl.setmatches()</code> when the input line is not empty and <code>clink.colorize_input</code> is enabled.</li>
+</ul>
 <h3 id="v1139">v1.1.39</h3>
 <ul>
 <li>Added support for many more key bindings, such as <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+Letter keys.</li>
