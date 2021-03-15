@@ -507,43 +507,52 @@ int clink_popup_directories(int count, int invoking_key)
 
 
 //----------------------------------------------------------------------------
+extern bool call_lua_rl_global_function(const char* func_name);
+
+//----------------------------------------------------------------------------
 int clink_complete_numbers(int count, int invoking_key)
 {
-    //...
+    if (!call_lua_rl_global_function("clink._complete_numbers"))
+        rl_ding();
     return 0;
 }
 
 //----------------------------------------------------------------------------
 int clink_menu_complete_numbers(int count, int invoking_key)
 {
-    //...
+    if (!call_lua_rl_global_function("clink._menu_complete_numbers"))
+        rl_ding();
     return 0;
 }
 
 //----------------------------------------------------------------------------
 int clink_menu_complete_numbers_backward(int count, int invoking_key)
 {
-    //...
+    if (!call_lua_rl_global_function("clink._menu_complete_numbers_backward"))
+        rl_ding();
     return 0;
 }
 
 //----------------------------------------------------------------------------
 int clink_old_menu_complete_numbers(int count, int invoking_key)
 {
-    //...
+    if (!call_lua_rl_global_function("clink._old_menu_complete_numbers"))
+        rl_ding();
     return 0;
 }
 
 //----------------------------------------------------------------------------
 int clink_old_menu_complete_numbers_backward(int count, int invoking_key)
 {
-    //...
+    if (!call_lua_rl_global_function("clink._old_menu_complete_numbers_backward"))
+        rl_ding();
     return 0;
 }
 
 //----------------------------------------------------------------------------
 int clink_popup_complete_numbers(int count, int invoking_key)
 {
-    //...
+    if (!call_lua_rl_global_function("clink._popup_complete_numbers"))
+        rl_ding();
     return 0;
 }

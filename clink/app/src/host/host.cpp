@@ -123,22 +123,22 @@ int clink_print(lua_State* state)
 
 
 //------------------------------------------------------------------------------
+bool call_lua_rl_global_function(const char* func_name)
+{
+    return s_host_lua && s_host_lua->call_lua_rl_global_function(func_name);
+}
+
+//------------------------------------------------------------------------------
 int macro_hook_func(const char* macro)
 {
     if (!macro || strnicmp(macro, "luafunc:", 8) != 0)
         return 0;
 
-    if (!s_host_lua)
-    {
-        rl_ding();
-        return 1;
-    }
-
     str<> func_name;
     func_name = macro + 8;
     func_name.trim();
 
-    if (!s_host_lua->call_lua_rl_global_function(func_name.c_str()))
+    if (!call_lua_rl_global_function(func_name.c_str()))
         rl_ding();
 
     return 1;

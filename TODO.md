@@ -5,9 +5,8 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 # RELEASE
 
 ## Issues
-- Ctrl+Alt+x and Ctrl+Alt+Shift+x produce the same input but should not.
 - CapsLock affects Alt+x but should not.
-- Build in a `complete-numbers` command so screen-grabbing numbers can be included in the default configuration.
+- Maybe redefine the extended key sequences so that Readline can merge `x` and `X` if one isn't defined, in case people were relying on that before?
 
 <br/>
 <br/>

@@ -1302,6 +1302,8 @@ rl_module::rl_module(const char* shell_name, terminal_in* input)
         { "\\M-\\C-e",      "clink-expand-env-var" },    // alt-ctrl-e
         { "\\M-\\C-f",      "clink-expand-doskey-alias" }, // alt-ctrl-f
         { "\\M-\\C-k",      "add-history" },             // alt-ctrl-k
+        { "\\M-\\C-n",      "clink-old-menu-complete-numbers"},// alt-ctrl-n
+        { "\\e[27;8;78~",   "clink-popup-complete-numbers"},// alt-ctrl-N
         { "\\M-\\C-w",      "clink-copy-word" },         // alt-ctrl-w
         { "\\e[5;5~",       "clink-up-directory" },      // ctrl-pgup
         { "\\e\\eOS",       "clink-exit" },              // alt-f4
@@ -1319,8 +1321,6 @@ rl_module::rl_module(const char* shell_name, terminal_in* input)
         { "\\M-\\C-j",      "emacs-editing-mode" },      // alt-ctrl-j
         { "\\M-\\C-k",      "kill-line" },               // alt-ctrl-k
         { "\\M-\\C-m",      "emacs-editing-mode" },      // alt-ctrl-m
-        { "\\M-\\C-n",      "clink-old-menu-complete-numbers"},// alt-ctrl-n
-        { "\\M-\\C-N",      "clink-popup-complete-numbers"},// alt-ctrl-N
         { bindableEsc,      "vi-movement-mode" },        // esc
         { "\\C-_",          "vi-undo-mode" },            // ctrl--
         { "\\M-0",          "vi-arg-digit" },            // alt-0
