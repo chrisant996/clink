@@ -5,7 +5,6 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 # RELEASE
 
 ## Issues
-- CapsLock affects Alt+x but should not.
 - Maybe redefine the extended key sequences so that Readline can merge `x` and `X` if one isn't defined, in case people were relying on that before?
 
 <br/>
