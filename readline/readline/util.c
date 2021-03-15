@@ -144,6 +144,10 @@ _rl_abort_internal (void)
   RL_UNSETSTATE (RL_STATE_MULTIKEY);	/* XXX */
 
   rl_last_func = (rl_command_func_t *)NULL;
+/* begin_clink_change */
+  if (rl_last_func_hook_func)
+    rl_last_func_hook_func ();
+/* end_clink_change */
 
   _rl_longjmp (_rl_top_level, 1);
   return (0);

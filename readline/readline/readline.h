@@ -720,6 +720,7 @@ extern int rl_key_sequence_length;
 
 /* begin_clink_change */
 extern rl_macro_hook_func_t *rl_macro_hook_func;
+extern rl_voidfunc_t *rl_last_func_hook_func;
 /* end_clink_change */
 
 /* Display variables. */

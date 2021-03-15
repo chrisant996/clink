@@ -454,10 +454,18 @@ bool lua_state::call_lua_rl_global_function(const char* func_name)
         return false;
     }
 
+    extern void override_rl_last_func(rl_command_func_t*);
+    override_rl_last_func(nullptr);
+
     buffer.push(state);
 
     rollback<bool> rb(s_in_luafunc, true);
-    if (pcall(1, 0) != LUA_OK)
+    bool success = (pcall(1, 0) == LUA_OK);
+
+    extern void set_pending_luafunc(const char *);
+    set_pending_luafunc(func_name);
+
+    if (!success)
     {
         if (const char* error = lua_tostring(state, -1))
         {

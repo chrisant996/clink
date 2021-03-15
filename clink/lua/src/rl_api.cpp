@@ -22,16 +22,8 @@ extern const char*      rl_readline_name;
 }
 
 extern matches* get_mutable_matches(bool nosort=false);
+extern const char* get_last_luafunc();
 extern void override_rl_last_func(rl_command_func_t* func);
-
-
-
-//------------------------------------------------------------------------------
-static str<32> s_last_luafunc;
-void set_last_luafunc(const char* macro)
-{
-    s_last_luafunc.copy(macro);
-}
 
 
 
@@ -246,6 +238,42 @@ static int invoke_command(lua_State* state)
 }
 
 //------------------------------------------------------------------------------
+/// -name:  rl.getlastcommand
+/// -ret:   string, function
+/// -show:  local last_rl_func, last_lua_func = rl.getlastcommand()
+/// Returns two values:
+/// <ul>
+/// <li>The name of the last Readline command invoked by a key binding.
+/// <li>The name of the last Lua function invoked by a key binding.
+/// </ul>
+///
+/// If the last key binding invoked a Lua function, then the first return value
+/// is an empty string unless the Lua function used
+/// <a href="#rl.invokecommand">rl.invokecommand()</a> to also internally invoke
+/// a Readline command.
+/// If the last key binding did not invoke a Lua function, then the second
+/// return value is an empty string.
+static int get_last_command(lua_State* state)
+{
+    const char* last_rl_func_name = "";
+    if (rl_last_func)
+    {
+        for (const FUNMAP* const* walk = funmap; *walk; ++walk)
+        {
+            if ((*walk)->function == rl_last_func)
+            {
+                last_rl_func_name = (*walk)->name;
+                break;
+            }
+        }
+    }
+
+    lua_pushstring(state, last_rl_func_name);
+    lua_pushstring(state, get_last_luafunc());
+    return 2;
+}
+
+//------------------------------------------------------------------------------
 /// -name:  rl.setmatches
 /// -arg:   matches:table
 /// -arg:   [type:string]
@@ -334,6 +362,8 @@ static int set_matches(lua_State* state)
         return 0;
     }
 
+    rl_last_func = nullptr;
+
     match_builder builder(*matches);
     match_builder_lua builder_lua(builder);
 
@@ -354,6 +384,7 @@ void rl_lua_initialise(lua_state& lua)
         { "getvariable",            &get_rl_variable },
         { "isvariabletrue",         &is_rl_variable_true },
         { "invokecommand",          &invoke_command },
+        { "getlastcommand",         &get_last_command },
         { "setmatches",             &set_matches },
     };
 

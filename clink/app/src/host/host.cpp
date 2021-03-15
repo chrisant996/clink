@@ -134,9 +134,6 @@ int macro_hook_func(const char* macro)
         return 1;
     }
 
-    extern void set_last_luafunc(const char*);
-    set_last_luafunc(macro);
-
     str<> func_name;
     func_name = macro + 8;
     func_name.trim();

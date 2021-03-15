@@ -95,6 +95,10 @@ editor_module::result* g_result = nullptr;
 str<>               g_last_prompt;
 
 static bool         s_is_popup = false;
+static str_moveable s_last_luafunc;
+static str_moveable s_pending_luafunc;
+static bool         s_has_pending_luafunc = false;
+static bool         s_has_override_rl_last_func = false;
 static rl_command_func_t* s_override_rl_last_func = nullptr;
 
 //------------------------------------------------------------------------------
@@ -240,8 +244,28 @@ static void LOGCURSORPOS()
 
 
 //------------------------------------------------------------------------------
+void set_pending_luafunc(const char* macro)
+{
+    s_has_pending_luafunc = true;
+    s_pending_luafunc.copy(macro);
+}
+
+//------------------------------------------------------------------------------
+const char* get_last_luafunc()
+{
+    return s_last_luafunc.c_str();
+}
+
+//------------------------------------------------------------------------------
+static void last_func_hook_func()
+{
+    s_last_luafunc.clear();
+}
+
+//------------------------------------------------------------------------------
 void override_rl_last_func(rl_command_func_t* func)
 {
+    s_has_override_rl_last_func = true;
     s_override_rl_last_func = func;
 }
 
@@ -1200,6 +1224,7 @@ rl_module::rl_module(const char* shell_name, terminal_in* input)
     rl_get_face_func = get_face_func;
     rl_puts_face_func = puts_face_func;
     rl_macro_hook_func = macro_hook_func;
+    rl_last_func_hook_func = last_func_hook_func;
 
     // Add commands.
     static bool s_rl_initialized = false;
@@ -1562,8 +1587,8 @@ void rl_module::on_input(const input& input, result& result, const context& cont
         // command called `console.scroll()` or `ScrollConsoleRelative()`.
         reset_scroll_mode();
 
-        extern void set_last_luafunc(const char*);
-        set_last_luafunc("");
+        s_pending_luafunc.clear();
+        s_has_override_rl_last_func = false;
         s_override_rl_last_func = nullptr;
 
         --len;
@@ -1574,8 +1599,16 @@ void rl_module::on_input(const input& input, result& result, const context& cont
         // However, since Readline doesn't set rl_last_func until AFTER the
         // invoked function returns, rl_last_func can't be set until after
         // rl_callback_read_char() returns.
-        if (s_override_rl_last_func)
+        if (s_has_override_rl_last_func)
+        {
             rl_last_func = s_override_rl_last_func;
+            s_has_override_rl_last_func = false;
+        }
+        if (s_has_pending_luafunc)
+        {
+            s_last_luafunc = std::move(s_pending_luafunc);
+            s_has_pending_luafunc = false;
+        }
 
         // Internally Readline tries to resend escape characters but it doesn't
         // work with how Clink uses Readline. So we do it here instead.
