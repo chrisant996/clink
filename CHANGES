@@ -4,6 +4,7 @@
 
 ### v1.1.40
 
+- Added a group of `clink-complete-numbers` commands that do completion for numbers from the console screen, bound to <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>N</kbd> by default.
 - Added `rl.getlastcommand()` function that returns the name of the last command invoked by key bindings.
 - Fixed sort order in <kbd>Alt</kbd>+<kbd>H</kbd> for the newly supported key bindings (that were added in v1.1.39).
 - Fixed <kbd>Ctrl</kbd>+<kbd>Space</kbd> (regression introduced in v1.1.39).
