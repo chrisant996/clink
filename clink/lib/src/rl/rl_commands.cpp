@@ -403,6 +403,8 @@ int clink_scroll_bottom(int count, int invoking_key)
     return 0;
 }
 
+
+
 //------------------------------------------------------------------------------
 int clink_find_conhost(int count, int invoking_key)
 {
@@ -442,6 +444,8 @@ int clink_mark_conhost(int count, int invoking_key)
     SendMessage(hwndConsole, WM_SYSCOMMAND, ID_CONSOLE_MARK, 0);
     return 0;
 }
+
+
 
 //------------------------------------------------------------------------------
 extern const char** host_copy_dir_history(int* total);
@@ -499,3 +503,65 @@ int clink_popup_directories(int count, int invoking_key)
 
     return 0;
 }
+
+
+
+#if 0
+//----------------------------------------------------------------------------
+static void collect_numbers()
+{
+    /*
+	local matches = {}
+
+	local _end = console.gettop()
+	local _start = _end + console.getheight() - 1
+	for i = _start,_end,-1 do
+		local line = console.getlinetext(i)
+		if line then
+			-- Collect numbers from the line (minimum of three characters).
+			local words = {}
+			for word in line:gmatch("[^%w]*(%w%w[%w]+)") do
+				if word:match("^%x+$") then
+					table.insert(words, word)
+				end
+			end
+
+			-- Add the words in reverse order so they're in proximity order.
+			for j = #words,1,-1 do
+				table.insert(matches, words[j])
+			end
+		end
+	end
+
+	matches["nosort"] = true
+
+	rl.setmatches(matches)
+
+	rl.invokecommand("old-menu-complete")
+    */
+}
+
+//----------------------------------------------------------------------------
+int clink_complete_numbers(int count, int invoking_key)
+{
+    ...
+}
+
+//----------------------------------------------------------------------------
+int clink_menu_complete_numbers(int count, int invoking_key)
+{
+    ...
+}
+
+//----------------------------------------------------------------------------
+int clink_backward_menu_complete_numbers(int count, int invoking_key)
+{
+    ...
+}
+
+//----------------------------------------------------------------------------
+int clink_popup_complete_numbers(int count, int invoking_key)
+{
+    ...
+}
+#endif
