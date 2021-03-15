@@ -7,6 +7,7 @@
 - Added `rl.getlastcommand()` function that returns the name of the last command invoked by key bindings.
 - Fixed sort order in <kbd>Alt</kbd>+<kbd>H</kbd> for the newly supported key bindings (that were added in v1.1.39).
 - Fixed <kbd>Ctrl</kbd>+<kbd>Space</kbd> (regression introduced in v1.1.39).
+- Fixed various <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>whatever</kbd> combinations (regression introduced in v1.1.39).
 - Fixed `rl.setmatches()` when the input line is not empty and `clink.colorize_input` is enabled.
 
 ### v1.1.39
