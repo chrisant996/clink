@@ -2,6 +2,7 @@ return {
     name = "app",
     files = {
         "cmd.lua",
+        "commands.lua",
         "dir.lua",
         "env.lua",
         "exec.lua",

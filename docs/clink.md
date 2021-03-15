@@ -43,6 +43,7 @@ By default Clink binds <kbd>Alt</kbd>+<kbd>H</kbd> to display the current key bi
 <tr><td><kbd>Ctrl</kbd>+<kbd>R</kbd></td><td>This is <code>reverse-search-history</code>, which incrementally searches the history.  Press it, then type, and it does a reverse incremental search while you type.  Press <kbd>Ctrl</kbd>+<kbd>R</kbd> again (and again, etc) to search for other matches of the search text.  Learn more by reading up on the "search" and "history" features in the Readline manual.</td></tr>
 <tr><td><kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>D</kbd></td><td>This is <code>remove-history</code>, which deletes the currently selected history line after using any of the history search or navigation commands.</td></tr>
 <tr><td><kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>K</kbd></td><td>This is <code>add-history</code>, which adds the current line to the history without executing it, and then clears the input line.</td></tr>
+<tr><td><kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>N</kbd></td><td>This is <code>clink-menu-complete-numbers</code>, which grabs numbers with 3 or more digits from the current console screen and cycles through inserting them as completions (binary, octal, decimal, hexadecimal).  Super handy for quickly inserting a commit hash that was printed as output from a preceding command.</td></tr>
 <tr><td><kbd>Alt</kbd>+<kbd>0</kbd> to <kbd>Alt</kbd>+<kbd>9</kbd></td><td>These are <code>digit-argument</code>, which let you enter a numeric value used by many commands.  For example <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>W</kbd> copies the current word to the clipboard, but if you first type <kbd>Alt</kbd>+<kbd>2</kbd> followed by <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>W</kbd> then it copies the 3rd word to the clipboard (the first word is 0, the second is 1, etc).  Learn more by reading up on "Readline Arguments" in the Readline manual.</td></tr>
 <tr><td><kbd>Alt</kbd>+<kbd>H</kbd></td><td>This is <code>clink-show-help</code>, which lists the key bindings and commands.  Learn more by visiting <a href="#keybindings">Key Bindings</a>.</td></tr>
 </table>
@@ -310,6 +311,7 @@ Clink adds some new commands to Readline, beyond what's described in the Readlin
 Name | Description
 :-:|---
 `add-history`|Adds the current line to the history without executing it, and clears the editing line.
+`clink-complete-numbers`|Like `complete`, but for numbers from the console screen (3 digits or more, up to hexadecimal).
 `clink-copy-cwd`|Copy the current working directory to the clipboard.
 `clink-copy-line`|Copy the current line to the clipboard.
 `clink-copy-word`|Copy the word at the cursor to the clipboard, or copies the nth word if a numeric argument is provided via the `digit-argument` keys.
@@ -320,8 +322,13 @@ Name | Description
 `clink-find-conhost`|Activates the "Find" dialog when running in a standard console window (hosted by the OS conhost).  This is equivalent to picking "Find..." from the console window's system menu.
 `clink-insert-dot-dot`|Inserts `..\` at the cursor.
 `clink-mark-conhost`|Activates the "Mark" mode when running in a standard console window (hosted by the OS conhost).  This is equivalent to picking "Mark" from the console window's system menu.
+`clink-menu-complete-numbers`|Like `menu-complete`, but for numbers from the console screen (3 digits or more, up to hexadecimal).
+`clink-menu-complete-numbers-backward`|Like `menu-complete-backward`, but for numbers from the console screen (3 digits or more, up to hexadecimal).
+`clink-old-menu-complete-numbers`|Like `old-menu-complete`, but for numbers from the console screen (3 digits or more, up to hexadecimal).
+`clink-old-menu-complete-numbers-backward`|Like `old-menu-complete-backward`, but for numbers from the console screen (3 digits or more, up to hexadecimal).
 `clink-paste`|Paste the clipboard at the cursor.
 `clink-popup-complete`|Show a popup window that lists the available completions.
+`clink-popup-complete-numbers`|Like `clink-popup-complete`, but for numbers from the console screen (3 digits or more, up to hexadecimal).
 `clink-popup-directories`|Show a popup window of recent current working directories.  In the popup, use <kbd>Enter</kbd> to `cd /d` to the highlighted directory.  See below more about the popup window.
 `clink-popup-history`|Show a popup window that lists the command history (if any text precedes the cursor then it uses an anchored search to filter the list).  In the popup, use <kbd>Enter</kbd> to execute the highlighted command.  See below for more about the popup window.
 `clink-reload`|Reloads the .inputrc file and the Lua scripts.

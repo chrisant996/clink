@@ -6,6 +6,7 @@ return {
     files = {
         "core.lua",
         "events.lua",
+        "console.lua",
         "generator.lua",
         "arguments.lua",
         "debugger.lua",

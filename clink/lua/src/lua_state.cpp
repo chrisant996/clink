@@ -140,6 +140,7 @@ void lua_state::initialise()
     // Load core scripts.
     lua_load_script(self, lib, core);
     lua_load_script(self, lib, events);
+    lua_load_script(self, lib, console);
 }
 
 //------------------------------------------------------------------------------

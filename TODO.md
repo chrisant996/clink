@@ -5,6 +5,8 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 # RELEASE
 
 ## Issues
+- Ctrl+Alt+x and Ctrl+Alt+Shift+x produce the same input but should not.
+- CapsLock affects Alt+x but should not.
 - Build in a `complete-numbers` command so screen-grabbing numbers can be included in the default configuration.
 
 <br/>

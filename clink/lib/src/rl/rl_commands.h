@@ -37,5 +37,7 @@ int     clink_popup_directories(int count, int invoking_key);
 //------------------------------------------------------------------------------
 int     clink_complete_numbers(int count, int invoking_key);
 int     clink_menu_complete_numbers(int count, int invoking_key);
-int     clink_backward_menu_complete_numbers(int count, int invoking_key);
+int     clink_menu_complete_numbers_backward(int count, int invoking_key);
+int     clink_old_menu_complete_numbers(int count, int invoking_key);
+int     clink_old_menu_complete_numbers_backward(int count, int invoking_key);
 int     clink_popup_complete_numbers(int count, int invoking_key);

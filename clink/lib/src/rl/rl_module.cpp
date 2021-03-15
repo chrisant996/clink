@@ -1257,12 +1257,12 @@ rl_module::rl_module(const char* shell_name, terminal_in* input)
         rl_add_funmap_entry("clink-popup-directories", clink_popup_directories);
         rl_add_funmap_entry("clink-find-conhost", clink_find_conhost);
         rl_add_funmap_entry("clink-mark-conhost", clink_mark_conhost);
-#if 0
         rl_add_funmap_entry("clink-complete-numbers", clink_complete_numbers);
         rl_add_funmap_entry("clink-menu-complete-numbers", clink_menu_complete_numbers);
-        rl_add_funmap_entry("clink-backward-menu-complete-numbers", clink_backward_menu_complete_numbers);
+        rl_add_funmap_entry("clink-menu-complete-numbers-backward", clink_menu_complete_numbers_backward);
+        rl_add_funmap_entry("clink-old-menu-complete-numbers", clink_old_menu_complete_numbers);
+        rl_add_funmap_entry("clink-old-menu-complete-numbers-backward", clink_old_menu_complete_numbers_backward);
         rl_add_funmap_entry("clink-popup-complete-numbers", clink_popup_complete_numbers);
-#endif
 
         // Override some defaults.
         _rl_bell_preference = VISIBLE_BELL;     // Because audible is annoying.
@@ -1319,10 +1319,8 @@ rl_module::rl_module(const char* shell_name, terminal_in* input)
         { "\\M-\\C-j",      "emacs-editing-mode" },      // alt-ctrl-j
         { "\\M-\\C-k",      "kill-line" },               // alt-ctrl-k
         { "\\M-\\C-m",      "emacs-editing-mode" },      // alt-ctrl-m
-#if 0
-        { "\\M-\\C-n",    "clink-menu-complete-numbers"},// alt-ctrl-n
-        { "\\M-\\C-N",   "clink-popup-complete-numbers"},// alt-ctrl-N
-#endif
+        { "\\M-\\C-n",      "clink-old-menu-complete-numbers"},// alt-ctrl-n
+        { "\\M-\\C-N",      "clink-popup-complete-numbers"},// alt-ctrl-N
         { bindableEsc,      "vi-movement-mode" },        // esc
         { "\\C-_",          "vi-undo-mode" },            // ctrl--
         { "\\M-0",          "vi-arg-digit" },            // alt-0
