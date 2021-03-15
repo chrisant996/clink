@@ -339,12 +339,10 @@ static int get_last_command(lua_State* state)
 /// -show:  end
 static int set_matches(lua_State* state)
 {
-    save_stack_top ss(state);
-
     bool nosort = false;
-    if (lua_istable(state, -1))
+    if (lua_istable(state, 1))
     {
-        lua_getfield(state, -1, "nosort");
+        lua_getfield(state, 1, "nosort");
         nosort = !lua_isnil(state, -1);
         lua_pop(state, 1);
     }
