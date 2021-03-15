@@ -744,10 +744,8 @@ void win_terminal_in::process_input(KEY_EVENT_RECORD const& record)
             simple_char = terminfo::keymod_index(key_flags) < 2; // Modifiers were resulting in incomplete escape codes.
         else if (key_vk == VK_RETURN || key_vk == VK_BACK)
             simple_char = !(key_flags & (CTRL_PRESSED|SHIFT_PRESSED));
-        else if (key_char >= ' ')
-            simple_char = !(key_flags & CTRL_PRESSED);
         else
-            simple_char = !(key_flags & SHIFT_PRESSED);
+            simple_char = !(key_flags & CTRL_PRESSED) || !(key_flags & SHIFT_PRESSED);
 
         if (simple_char)
         {
@@ -811,7 +809,7 @@ void win_terminal_in::process_input(KEY_EVENT_RECORD const& record)
     // This builds Ctrl-<key> c0 codes. Some of these actually come though in
     // key_char and some don't.
     bool differentiate = false;
-    if (key_flags & CTRL_PRESSED)
+    if ((key_flags & CTRL_PRESSED) && !(key_flags & SHIFT_PRESSED))
     {
         bool ctrl_code = true;
 
