@@ -5,7 +5,6 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 # RELEASE
 
 ## Issues
-- Maybe redefine the extended key sequences so that Readline can merge `x` and `X` if one isn't defined, in case people were relying on that before?
 
 <br/>
 <br/>
