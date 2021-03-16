@@ -309,32 +309,16 @@ static int get_last_command(lua_State* state)
 ///
 /// <em>Example Lua function:</em>
 /// -show:  function completenumbers()
-/// -show:  &nbsp; local matches = {}
-/// -show:
-/// -show:  &nbsp; local _end = console.gettop()
-/// -show:  &nbsp; local _start = _end + console.getheight() - 1
-/// -show:  &nbsp; for i = _start,_end,-1 do
-/// -show:  &nbsp;   local line = console.getlinetext(i)
-/// -show:  &nbsp;   if line then
-/// -show:  &nbsp;     local words = {}
-/// -show:
-/// -show:  &nbsp;     -- Collect numbers from the line (minimum of three characters).
-/// -show:  &nbsp;     for word in line:gmatch("[^%w]*(%w%w[%w]+)") do
-/// -show:  &nbsp;       if word:match("^%x+$") then
-/// -show:  &nbsp;         table.insert(words, word)
-/// -show:  &nbsp;       end
-/// -show:  &nbsp;     end
-/// -show:
-/// -show:  &nbsp;     -- Add the words in reverse order so they're in proximity order.
-/// -show:  &nbsp;     for j = #words,1,-1 do
-/// -show:  &nbsp;       table.insert(matches, words[j])
-/// -show:  &nbsp;     end
-/// -show:  &nbsp;   end
+/// -show:  &nbsp; local _,last_luafunc = rl.getlastcommand()
+/// -show:  &nbsp; if last_luafunc ~= "completenumbers" then
+/// -show:  &nbsp;   -- Collect numbers from the screen (minimum of three digits).
+/// -show:  &nbsp;   -- The numbers can be any base up to hexadecimal (decimal, octal, etc).
+/// -show:  &nbsp;   local matches = console.screengrab("[^%w]*(%w%w[%w]+)", "^%x+$")
+/// -show:  &nbsp;   -- They're already sorted by distance from the input line.
+/// -show:  &nbsp;   matches["nosort"] = true
+/// -show:  &nbsp;   rl.setmatches(matches)
 /// -show:  &nbsp; end
 /// -show:
-/// -show:  &nbsp; matches["nosort"] = true
-/// -show:
-/// -show:  &nbsp; rl.setmatches(matches)
 /// -show:  &nbsp; rl.invokecommand("old-menu-complete")
 /// -show:  end
 static int set_matches(lua_State* state)
