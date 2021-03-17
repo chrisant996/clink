@@ -32,6 +32,8 @@ static setting_bool g_use_altgr_substitute(
     "Readline's bindings.",
     false);
 
+extern setting_bool g_adjust_cursor_style;
+
 //------------------------------------------------------------------------------
 extern "C" void reset_wcwidths();
 
@@ -431,6 +433,9 @@ static unsigned int get_dimensions()
 //------------------------------------------------------------------------------
 static void set_cursor_visibility(bool state)
 {
+    if (!g_adjust_cursor_style.get())
+        return;
+
     HANDLE handle = GetStdHandle(STD_OUTPUT_HANDLE);
     CONSOLE_CURSOR_INFO info;
     GetConsoleCursorInfo(handle, &info);

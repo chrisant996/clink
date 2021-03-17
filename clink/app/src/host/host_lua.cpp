@@ -10,12 +10,16 @@
 #include <core/path.h>
 #include <core/str.h>
 #include <core/str_tokeniser.h>
+#include <core/settings.h>
 
 #include <vector>
 
 extern "C" {
 #include <lua.h>
 }
+
+//------------------------------------------------------------------------------
+extern setting_bool g_adjust_cursor_style;
 
 //------------------------------------------------------------------------------
 extern "C" int show_cursor(int visible)
@@ -25,6 +29,9 @@ extern "C" int show_cursor(int visible)
     HANDLE handle = GetStdHandle(STD_OUTPUT_HANDLE);
     CONSOLE_CURSOR_INFO info;
     was_visible = (GetConsoleCursorInfo(handle, &info) && info.bVisible);
+
+    if (!g_adjust_cursor_style.get())
+        return was_visible;
 
     if (!was_visible != !visible)
     {

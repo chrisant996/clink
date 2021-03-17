@@ -6,8 +6,22 @@
 #include "ecma48_iter.h"
 #include "screen_buffer.h"
 
+#include "core/settings.h"
+
 #include <terminal.h>
 #include <assert.h>
+
+//------------------------------------------------------------------------------
+setting_bool g_adjust_cursor_style(
+    "terminal.adjust_cursor_style",
+    "Adjusts the cursor visibility and shape",
+    "Normally Clink adjusts the cursor visibility and shape, but that will override\n"
+    "the Cursor Shape settings for the default Windows console. Disabling this lets\n"
+    "the Cursor Shape settings work, but then Clink can't show Insert Mode via the\n"
+    "cursor shape, the 'visible bell' setting doesn't work, Clink can't support the\n"
+    "ANSI escape codes for cursor shape, and the cursor may flicker or flash\n"
+    "strangely while typing.",
+    true);
 
 //------------------------------------------------------------------------------
 extern "C" char *tgetstr(char* name, char** out);
@@ -21,6 +35,9 @@ static int cursor_style(HANDLE handle, int style, int visible)
     CONSOLE_CURSOR_INFO ci;
     GetConsoleCursorInfo(handle, &ci);
     int was_visible = !!ci.bVisible;
+
+    if (!g_adjust_cursor_style.get())
+        return was_visible;
 
     // Assume first encounter of cursor size is the default size.
     static int g_default_cursor_size = -1;
@@ -52,6 +69,9 @@ static int cursor_style(int style, int visible)
 //------------------------------------------------------------------------------
 void visible_bell()
 {
+    if (!g_adjust_cursor_style.get())
+        return;
+
     HANDLE handle = GetStdHandle(STD_OUTPUT_HANDLE);
 
     int was_visible = cursor_style(handle, !g_enhanced_cursor, 1);

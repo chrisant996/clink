@@ -52,6 +52,8 @@ static setting_enum g_paste_crlf(
     "delete,space,ampersand,crlf",
     3);
 
+extern setting_bool g_adjust_cursor_style;
+
 
 
 //------------------------------------------------------------------------------
@@ -434,11 +436,14 @@ int clink_mark_conhost(int count, int invoking_key)
     // and position.  So we need to trick the cursor into being visible, so that
     // it gets restored as visible since that's the state Readline will be in
     // after the Mark command finishes.
-    HANDLE handle = GetStdHandle(STD_OUTPUT_HANDLE);
-    CONSOLE_CURSOR_INFO info;
-    GetConsoleCursorInfo(handle, &info);
-    info.bVisible = true;
-    SetConsoleCursorInfo(handle, &info);
+    if (g_adjust_cursor_style.get())
+    {
+        HANDLE handle = GetStdHandle(STD_OUTPUT_HANDLE);
+        CONSOLE_CURSOR_INFO info;
+        GetConsoleCursorInfo(handle, &info);
+        info.bVisible = true;
+        SetConsoleCursorInfo(handle, &info);
+    }
 
     // Invoke conhost's Mark command via the system menu.
     SendMessage(hwndConsole, WM_SYSCOMMAND, ID_CONSOLE_MARK, 0);
