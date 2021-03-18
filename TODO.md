@@ -5,6 +5,9 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 # RELEASE
 
 ## Issues
+- Need to reset matches after `luafunc:` that uses `onfiltermatches`.
+- Fill in docs for `onfiltermatches`.
+- Update docs for `clink history`.
 - Windows Terminal crashes on exit after `clink inject`!
 
 <br/>
