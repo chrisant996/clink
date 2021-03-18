@@ -28,6 +28,7 @@ static rl_buffer_lua::method g_methods[] = {
     { "beginundogroup", &rl_buffer_lua::begin_undo_group },
     { "endundogroup",   &rl_buffer_lua::end_undo_group },
     { "beginoutput",    &rl_buffer_lua::begin_output },
+    { "refreshline",    &rl_buffer_lua::refresh_line },
     { "ding",           &rl_buffer_lua::ding },
     {}
 };
@@ -184,6 +185,15 @@ int rl_buffer_lua::begin_output(lua_State* state)
         puts("");
         m_began_output = true;
     }
+    return 0;
+}
+
+//------------------------------------------------------------------------------
+/// -name:  rl_buffer:refreshline
+/// Redraws the input line.
+int rl_buffer_lua::refresh_line(lua_State* state)
+{
+    rl_refresh_line(0, 0);
     return 0;
 }
 
