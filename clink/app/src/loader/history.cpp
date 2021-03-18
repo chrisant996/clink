@@ -50,7 +50,7 @@ static bool is_console(HANDLE h)
 }
 
 //------------------------------------------------------------------------------
-static void print_history(unsigned int tail_count)
+static void print_history(unsigned int tail_count, bool bare)
 {
     history_scope history;
 
@@ -78,7 +78,10 @@ static void print_history(unsigned int tail_count)
     for (; iter.next(line); ++index)
     {
         utf8.clear();
-        utf8.format("%5d  %.*s", index, line.length(), line.get_pointer());
+        if (bare)
+            utf8.format("%.*s", line.length(), line.get_pointer());
+        else
+            utf8.format("%5d  %.*s", index, line.length(), line.get_pointer());
         if (translate)
         {
             DWORD written;
@@ -110,11 +113,11 @@ static void print_history(unsigned int tail_count)
 }
 
 //------------------------------------------------------------------------------
-static bool print_history(const char* arg)
+static bool print_history(const char* arg, bool bare)
 {
     if (arg == nullptr)
     {
-        print_history(INT_MIN);
+        print_history(INT_MIN, bare);
         return true;
     }
 
@@ -123,7 +126,7 @@ static bool print_history(const char* arg)
         if (unsigned(*c - '0') > 10)
             return false;
 
-    print_history(atoi(arg));
+    print_history(atoi(arg), bare);
     return true;
 }
 
@@ -200,6 +203,7 @@ static int print_help()
 
     static const char* const help[] = {
         "[n]",          "Print history items (only the last N items if specified).",
+        "--bare [n]",   "Print history items, but without the item numbers.",
         "clear",        "Completely clears the command history.",
         "compact",      "Compacts the history file.",
         "delete <n>",   "Delete Nth item (negative N indexes history backwards).",
@@ -272,9 +276,20 @@ static int history_bash(int argc, char** argv)
 int history(int argc, char** argv)
 {
     // Check to see if the user asked from some help!
+    bool bare = false;
     for (int i = 1; i < argc; ++i)
-        if (_stricmp(argv[1], "--help") == 0 || _stricmp(argv[1], "-h") == 0)
+    {
+        if (_stricmp(argv[i], "--help") == 0 || _stricmp(argv[i], "-h") == 0)
             return print_help();
+        if (_stricmp(argv[i], "--bare") == 0)
+        {
+            bare = true;
+            for (int j = i; j < argc; ++j)
+                argv[j] = argv[j + 1];
+            argc--;
+            i--;
+        }
+    }
 
     // Try Bash-style arguments first...
     int bash_ret = history_bash(argc, argv);
@@ -328,7 +343,7 @@ int history(int argc, char** argv)
         return print_help();
 
     const char* arg = (argc > 1) ? argv[1] : nullptr;
-    if (!print_history(arg))
+    if (!print_history(arg, bare))
         return print_help();
 
     return 0;
