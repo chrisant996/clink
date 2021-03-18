@@ -31,11 +31,10 @@ public:
     virtual bool            remove(unsigned int from, unsigned int to) override;
     virtual void            draw() override;
     virtual void            redraw() override;
+    virtual void            set_need_draw() override;
     virtual void            begin_undo_group() override;
     virtual void            end_undo_group() override;
     virtual unsigned int    collect_words(std::vector<word>& words, collect_words_mode mode) const;
-
-    void                    set_need_draw() { m_need_draw = true; }
 
 private:
     void                    find_command_bounds(std::vector<command>& commands, bool stop_at_cursor) const;

@@ -99,6 +99,12 @@ void rl_buffer::redraw()
 }
 
 //------------------------------------------------------------------------------
+void rl_buffer::set_need_draw()
+{
+    m_need_draw = true;
+}
+
+//------------------------------------------------------------------------------
 void rl_buffer::begin_undo_group()
 {
     rl_begin_undo_group();

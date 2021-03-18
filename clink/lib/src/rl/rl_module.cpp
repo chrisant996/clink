@@ -82,6 +82,7 @@ extern void host_add_history(int rl_history_index, const char* line);
 extern void host_remove_history(int rl_history_index, const char* line);
 extern void sort_match_list(char** matches, int len);
 extern int macro_hook_func(const char* macro);
+extern int filter_matches(char** matches);
 extern void update_matches();
 extern matches* maybe_regenerate_matches(const char* needle, bool popup);
 extern setting_color g_color_interact;
@@ -872,7 +873,7 @@ int clink_popup_complete(int count, int invoking_key)
     bool completing = true;
     bool free_match_strings = true;
     rollback<bool> popup_scope(s_is_popup, true);
-    char** matches = rl_get_completions(&match_count, &orig_text, &orig_start, &orig_end, &delimiter, &quote_char);
+    char** matches = rl_get_completions('?', &match_count, &orig_text, &orig_start, &orig_end, &delimiter, &quote_char);
     if (!matches)
         return 0;
     int past_flag = rl_completion_matches_include_type ? 1 : 0;
@@ -1210,8 +1211,7 @@ rl_module::rl_module(const char* shell_name, terminal_in* input)
     rl_completer_word_break_characters = " \t\n\"'`@><=;|&{("; /* }) */
 
     // Completion and match display.
-    // TODO: postprocess_matches is for better quote handling.
-    //rl_ignore_some_completions_function = postprocess_matches;
+    rl_ignore_some_completions_function = filter_matches;
     rl_attempted_completion_function = alternative_matches;
     rl_menu_completion_entry_function = filename_menu_completion_function;
     rl_adjust_completion_word = adjust_completion_word;

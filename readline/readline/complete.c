@@ -497,6 +497,18 @@ static int completion_y_or_n;
 
 static int _rl_complete_display_matches_interrupt = 0;
 
+/* begin_clink_change */
+static int
+contains_match_text (char* match)
+{
+  if (!match[0])
+    return false;
+  if (rl_completion_matches_include_type && !match[1])
+    return false;
+  return true;
+}
+/* end_clink_change */
+
 /*************************************/
 /*				     */
 /*    Bindable completion functions  */
@@ -2918,7 +2930,10 @@ rl_complete_internal (int what_to_do)
       return (0);
     }
 
-  if (matches && matches[0] && *matches[0])
+/* begin_clink_change */
+  //if (matches && matches[0] && *matches[0])
+  if (matches && matches[0] && contains_match_text (matches[0]))
+/* end_clink_change */
     last_completion_failed = 0;
 
   switch (what_to_do)
@@ -2929,7 +2944,10 @@ rl_complete_internal (int what_to_do)
       /* Insert the first match with proper quoting. */
       if (what_to_do == TAB)
         {
-          if (*matches[0])
+/* begin_clink_change */
+          //if (*matches[0])
+          if (contains_match_text (matches[0]))
+/* end_clink_change */
 	    {
 /* begin_clink_change */
 	      end_undo_group = 1;
@@ -2941,7 +2959,10 @@ rl_complete_internal (int what_to_do)
 	      insert_match (matches[0], start, matches[1] ? MULT_MATCH : SINGLE_MATCH, &quote_char);
 	    }
         }
-      else if (*matches[0] && matches[1] == 0)
+/* begin_clink_change */
+      //else if (*matches[0] && matches[1] == 0)
+      else if (contains_match_text (matches[0]) && matches[1] == 0)
+/* end_clink_change */
 	{
 /* begin_clink_change */
 	  end_undo_group = 1;
@@ -2950,11 +2971,14 @@ rl_complete_internal (int what_to_do)
 	  /* should we perform the check only if there are multiple matches? */
 	  insert_match (matches[0], start, matches[1] ? MULT_MATCH : SINGLE_MATCH, &quote_char);
 	}
-      else if (*matches[0])	/* what_to_do != TAB && multiple matches */
+/* begin_clink_change */
+      //else if (*matches[0])	/* what_to_do != TAB && multiple matches */
+      else if (contains_match_text (matches[0]))	/* what_to_do != TAB && multiple matches */
+/* end_clink_change */
 	{
 /* begin_clink_change */
 	  //mlen = *matches[0] ? strlen (matches[0]) : 0;
-	  mlen = *matches[0] ? strlen (matches[0] + past_flag) : 0;
+	  mlen = contains_match_text (matches[0]) ? strlen (matches[0] + past_flag) : 0;
 /* end_clink_change */
 	  if (mlen >= tlen)
 	    {
@@ -3005,7 +3029,10 @@ rl_complete_internal (int what_to_do)
     case '?':
       /* Let's try to insert a single match here if the last completion failed
 	 but this attempt returned a single match. */
-      if (saved_last_completion_failed && matches[0] && *matches[0] && matches[1] == 0)
+/* begin_clink_change */
+      //if (saved_last_completion_failed && matches[0] && *matches[0] && matches[1] == 0)
+      if (saved_last_completion_failed && matches[0] && contains_match_text (matches[0]) && matches[1] == 0)
+/* end_clink_change */
 	{
 	  insert_match (matches[0], start, matches[1] ? MULT_MATCH : SINGLE_MATCH, &quote_char);
 	  append_to_match (matches[0], start, delimiter, quote_char, nontrivial_lcd);
@@ -3919,7 +3946,10 @@ rl_menu_complete (int count, int ignore)
 
       /* matches[0] is lcd if match_list_size > 1, but the circular buffer
 	 code below should take care of it. */
-      if (*matches[0])
+/* begin_clink_change */
+      //if (*matches[0])
+      if (contains_match_text (matches[0]))
+/* end_clink_change */
 	{
 	  insert_match (matches[0], orig_start, matches[1] ? MULT_MATCH : SINGLE_MATCH, &quote_char);
 /* begin_clink_change */
@@ -4029,7 +4059,7 @@ rl_backward_menu_complete (int count, int key)
 
 /* begin_clink_change */
 char**
-rl_get_completions (int* match_count, char** ot, int* os, int* oe, int* delim, char* qc)
+rl_get_completions (int what_to_do, int* match_count, char** ot, int* os, int* oe, int* delim, char* qc)
 {
   rl_compentry_func_t *our_func;
   int matching_filenames, found_quote;
@@ -4047,7 +4077,7 @@ rl_get_completions (int* match_count, char** ot, int* os, int* oe, int* delim, c
   RL_SETSTATE (RL_STATE_COMPLETING);
 
   /* Only the completion entry function can change these. */
-  set_completion_defaults ('%');
+  set_completion_defaults (what_to_do);
 
   our_func = rl_menu_completion_entry_function;
   if (our_func == 0)

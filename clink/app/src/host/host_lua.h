@@ -25,6 +25,7 @@ public:
     bool                send_event_cancelable_string_inout(const char* event_name, const char* string, str_base& out);
 
     bool                call_lua_rl_global_function(const char* func_name);
+    void                call_lua_filter_matches(char** matches, int completion_type, int filename_completion_desired);
 
 private:
     bool                load_scripts(const char* paths);

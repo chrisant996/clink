@@ -5,7 +5,7 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 # RELEASE
 
 ## Issues
-- A way to let Lua filter the generated matches, but not for the `menu-complete` style of completion.
+- Windows Terminal crashes on exit after `clink inject`!
 
 <br/>
 <br/>

@@ -9,6 +9,7 @@
 #include "line_state_lua.h"
 #include "match_builder_lua.h"
 
+#include <core/str_hash.h>
 #include <lib/line_state.h>
 #include <lib/matches.h>
 #include <terminal/ecma48_iter.h>
@@ -21,7 +22,29 @@ extern "C" {
 #include <compat/display_matches.h>
 }
 
+#include <unordered_set>
+
 extern void sort_match_list(char** matches, int len);
+
+//------------------------------------------------------------------------------
+struct match_hasher
+{
+    size_t operator()(const char* match) const
+    {
+        return str_hash(match);
+    }
+};
+
+//------------------------------------------------------------------------------
+struct match_comparator
+{
+    bool operator()(const char* m1, const char* m2) const
+    {
+        return strcmp(m1, m2) == 0;
+    }
+};
+
+
 
 //------------------------------------------------------------------------------
 lua_match_generator::lua_match_generator(lua_state& state)
@@ -399,4 +422,158 @@ done:
     top = lua_gettop(state) - top;
     lua_pop(state, top);
     return ret;
+}
+
+//------------------------------------------------------------------------------
+void lua_match_generator::filter_matches(char** matches, char completion_type, bool filename_completion_desired)
+{
+    lua_State* state = m_state.get_state();
+    save_stack_top ss(state);
+
+    // Check there's a match filter set.
+
+    lua_getglobal(state, "clink");
+    lua_pushliteral(state, "_has_event_callbacks");
+    lua_rawget(state, -2);
+
+    lua_pushliteral(state, "onfiltermatches");
+
+    if (m_state.pcall(1, 1) != 0)
+    {
+        if (const char *error = lua_tostring(state, -1))
+            m_state.print_error(error);
+        return;
+    }
+
+    bool onfiltermatches = (!lua_isnil(state, -1) && lua_toboolean(state, -1) != false);
+    if (!onfiltermatches)
+        return;
+
+    // Count matches; bail if 0.
+    int match_count = 0;
+    for (int i = 1; matches[i]; ++i, ++match_count);
+    if (match_count <= 0)
+        return;
+
+    // Get ready to call the filter function.
+    lua_getglobal(state, "clink");
+    lua_pushliteral(state, "_send_onfiltermatches_event");
+    lua_rawget(state, -2);
+    if (lua_isnil(state, -1))
+        return;
+
+    // Convert matches to a Lua table (arg 1).
+    str<> tmp;
+    lua_createtable(state, match_count, 0);
+    for (int i = 1; i < match_count; ++i)
+    {
+        const char* match = matches[i];
+        match_type type = match_type::none;
+        if (rl_completion_matches_include_type)
+        {
+            type = match_type(*match);
+            match++;
+        }
+
+        lua_createtable(state, 2, 0);
+
+        lua_pushliteral(state, "match");
+        lua_pushstring(state, match);
+        lua_rawset(state, -3);
+
+        lua_pushliteral(state, "type");
+        match_type_to_string(type, tmp);
+        lua_pushlstring(state, tmp.c_str(), tmp.length());
+        lua_rawset(state, -3);
+
+        lua_rawseti(state, -2, i);
+    }
+
+    // Push completion type (arg 2).
+    char completion_type_str[2] = { completion_type };
+    lua_pushstring(state, completion_type_str);
+
+    // Push filename_completion_desired (arg 3).
+    lua_pushboolean(state, filename_completion_desired);
+
+    // Call the filter.
+    if (m_state.pcall(3, 1) != 0)
+    {
+        if (const char *error = lua_tostring(state, -1))
+            m_state.print_error(error);
+        return;
+    }
+
+    // If nil is returned then no filtering occurred.
+    if (lua_isnil(state, -1))
+        return;
+
+    // Hash the filtered matches to be kept.
+    std::unordered_set<const char*, match_hasher, match_comparator> keep_typeless;
+    int num_matches = int(lua_rawlen(state, -1));
+    for (int i = 1; i <= num_matches; ++i)
+    {
+        save_stack_top ss(state);
+
+        lua_rawgeti(state, -1, i);
+        if (!lua_isnil(state, -1))
+        {
+            const char* match = nullptr;
+            match_type type = match_type::none;
+
+            if (lua_istable(state, -1))
+            {
+                lua_pushliteral(state, "match");
+                lua_rawget(state, -2);
+                if (lua_isstring(state, -1))
+                    match = lua_tostring(state, -1);
+                lua_pop(state, 1);
+
+#if 0
+                lua_pushliteral(state, "type");
+                lua_rawget(state, -2);
+                if (lua_isstring(state, -1))
+                    type = to_match_type(lua_tostring(state, -1));
+                lua_pop(state, 1);
+#endif
+            }
+            else
+            {
+                match = lua_tostring(state, -1);
+            }
+
+            if (match)
+                keep_typeless.insert(match);
+        }
+    }
+
+    // Discard other matches.
+    char** read = &matches[1];
+    char** write = &matches[1];
+    while (*read)
+    {
+        const char* match = *read;
+        if (rl_completion_matches_include_type)
+            ++match;
+
+        if (keep_typeless.find(match) == keep_typeless.end())
+        {
+            free(*read);
+        }
+        else
+        {
+            if (write != read)
+                *write = *read;
+            ++write;
+        }
+        ++read;
+    }
+    *write = nullptr;
+
+    // If no matches, free the lcd as well.
+    if (!matches[1])
+    {
+        free(matches[0]);
+        matches[0] = nullptr;
+    }
 }

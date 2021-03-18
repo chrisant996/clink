@@ -28,5 +28,6 @@ public:
     virtual void            end_undo_group() = 0;
     virtual void            draw() = 0;
     virtual void            redraw() = 0;
+    virtual void            set_need_draw() = 0;
     virtual unsigned int    collect_words(std::vector<word>& words, collect_words_mode mode) const = 0;
 };

@@ -54,6 +54,7 @@ end
 --------------------------------------------------------------------------------
 function clink._reset_display_filter()
     clink.match_display_filter = nil
+    clink._event_callbacks["onfiltermatches"] = nil
     clink._event_callbacks["ondisplaymatches"] = nil
 end
 

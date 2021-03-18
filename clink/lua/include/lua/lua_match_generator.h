@@ -15,6 +15,8 @@ public:
                     lua_match_generator(lua_state& state);
     virtual         ~lua_match_generator();
 
+    void            filter_matches(char** matches, char completion_type, bool filename_completion_desired);
+
 private:
     virtual bool    generate(const line_state& line, match_builder& builder) override;
     virtual void    get_word_break_info(const line_state& line, word_break_info& info) const override;

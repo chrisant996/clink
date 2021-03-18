@@ -163,3 +163,31 @@ function clink._send_ondisplaymatches_event(matches, popup)
     end
     return matches
 end
+
+--------------------------------------------------------------------------------
+--- -name:  clink.onfiltermatches
+--- -arg:   func:function
+--- -show:  -- TBD
+--- Registers <span class="arg">func</span> to be called after Clink generates
+--- matches for completion.  See <a href="#filteringmatchcompletions">
+--- Filtering Match Completions</a> for more information.
+function clink.onfiltermatches(func)
+    _add_event_callback("onfiltermatches", func)
+end
+
+--------------------------------------------------------------------------------
+function clink._send_onfiltermatches_event(matches, completion_type, filename_completion_desired)
+    local ret = nil
+    local callbacks = clink._event_callbacks["onfiltermatches"]
+    if callbacks ~= nil then
+        local _, func
+        for _, func in ipairs(callbacks) do
+            local m = func(matches, completion_type, filename_completion_desired)
+            if m ~= nil then
+                matches = m
+                ret = matches
+            end
+        end
+    end
+    return ret
+end

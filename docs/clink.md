@@ -693,6 +693,14 @@ local matcher = clink.argmatcher("samp")
 :setclassifier(classify_handler)
 ```
 
+<a name="filteringmatchcompletions"/>
+
+#### Filtering Match Completions
+
+<fieldset><legend>TODO</legend>
+FILL IN HOW TO USE <code>clink.onfiltermatches()</code>.
+</fieldset>
+
 <a name="filteringthematchdisplay"/>
 
 #### Filtering The Match Display

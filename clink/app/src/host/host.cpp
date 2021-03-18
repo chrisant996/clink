@@ -144,6 +144,14 @@ int macro_hook_func(const char* macro)
     return 1;
 }
 
+//------------------------------------------------------------------------------
+int filter_matches(char** matches)
+{
+    if (s_host_lua)
+        s_host_lua->call_lua_filter_matches(matches, rl_completion_type, rl_filename_completion_desired);
+    return 0;
+}
+
 
 
 //------------------------------------------------------------------------------
