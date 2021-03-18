@@ -587,6 +587,18 @@ int get_battery_status(lua_State* state)
 }
 
 //------------------------------------------------------------------------------
+/// -name:  os.getpid
+/// -ret:   integer
+/// Returns the CMD.EXE process ID. This is mainly intended to help with salting
+/// unique resource names (for example named pipes).
+int get_pid(lua_State* state)
+{
+    DWORD pid = GetCurrentProcessId();
+    lua_pushinteger(state, pid);
+    return 1;
+}
+
+//------------------------------------------------------------------------------
 void os_lua_initialise(lua_state& lua)
 {
     struct {
@@ -613,6 +625,7 @@ void os_lua_initialise(lua_state& lua)
         { "getaliases",  &get_aliases },
         { "getscreeninfo", &get_screen_info },
         { "getbatterystatus", &get_battery_status },
+        { "getpid",      &get_pid },
     };
 
     lua_State* state = lua.get_state();
