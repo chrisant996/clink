@@ -2,6 +2,13 @@
 
 ## Releases from [chrisant996/clink](https://github.com/chrisant996/clink) fork
 
+### v1.1.41
+
+- Added `terminal.adjust_cursor_style` setting as a workaround to avoid interfering with the Windows 10 Cursor Shape console setting.  There are several trade-offs, though.
+- Added `rl_buffer:refreshline()` function to redraw the input line, e.g. in case something has written over it.
+- Added `os.getpid()` function to get the process ID, intended mainly to help salt unique resource names.
+- Added `clink.onfiltermatches()` so scripts can register a callback function to run after Clink generates matches and before it displays them.
+
 ### v1.1.40
 
 - Added a group of `clink-complete-numbers` commands that do completion for numbers from the console screen, bound to <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>N</kbd> by default.
