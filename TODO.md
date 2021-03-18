@@ -18,6 +18,7 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 ## High Priority
 - **CUA Selection.**  A mode where rl_mark to rl_point is "selected", similar to the active mark mode.  If the cursor moves or the text changes then the selection automatically gets deactivated.  Modifying the line generally needs to delete the selected text before performing whatever editing operation was invoked.  The key design challenge here is to integrate into Readline with minimal changes that won't require ongoing maintenance.
 - **Interactive completion.**  Similar to <kbd>Ctrl</kbd>+<kbd>Space</kbd> in Powershell and `menu-select` in zsh, etc.  The edge cases can get weird...
+  - Oh but the new `clink.onfiltermatches()` might be even better since it enables integration with custom completion filters (e.g. `fzf`).
 
 ## Medium Priority
 - Add a `history.dupe_mode` that behaves like 4Dos/4NT/Take Command from JPSoft:  **Up**/**Down** then **Enter** remembers the history position so that **Enter**, **Down**, **Enter**, **Down**, **Enter**, etc can be used to replay a series of commands.  In the meantime, `operate-and-get-next` achieves the same result albeit with a slightly different (and more efficient) workflow.
