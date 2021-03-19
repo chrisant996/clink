@@ -7,7 +7,6 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 ## Issues
 - Need to reset matches after `luafunc:` that uses `onfiltermatches`.
 - Add a way to more efficiently create a guaranteed unique and unused temporary file, get its name, and optionally make it auto-delete.
-- Allow filename completion in `clink set any.string.setting {right_here}`.
 - Sometimes session history does not show up in `clink history`, at least not inside `io.popen()`.
 - Fill in docs for `onfiltermatches`.
 - Windows Terminal crashes on exit after `clink inject`!
