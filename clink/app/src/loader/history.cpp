@@ -50,7 +50,39 @@ static bool is_console(HANDLE h)
 }
 
 //------------------------------------------------------------------------------
-static void print_history(unsigned int tail_count, bool bare)
+static void print_history_item(HANDLE hout, const char* utf8, wstr_base* utf16)
+{
+    if (utf16)
+    {
+        DWORD written;
+        utf16->clear();
+
+        // Translate to UTF16, and also translate control characters.
+        for (const char* walk = utf8; *walk;)
+        {
+            const char* begin = walk;
+            while (*walk >= 0x20 || *walk == 0x09)
+                walk++;
+            if (walk > begin)
+                to_utf16(*utf16, str_iter(begin, int(walk - begin)));
+            if (!*walk)
+                break;
+            wchar_t ctrl[3] = { '^', wchar_t(*walk + 'A' - 1) };
+            utf16->concat(ctrl, 2);
+            walk++;
+        }
+
+        utf16->concat(L"\r\n", 2);
+        WriteConsoleW(hout, utf16->c_str(), utf16->length(), &written, nullptr);
+    }
+    else
+    {
+        puts(utf8);
+    }
+}
+
+//------------------------------------------------------------------------------
+static void print_history(unsigned int tail_count, bool bare, bool reverse)
 {
     history_scope history;
 
@@ -75,6 +107,7 @@ static void print_history(unsigned int tail_count, bool bare)
     HANDLE hout = GetStdHandle(STD_OUTPUT_HANDLE);
     bool translate = is_console(hout);
 
+    std::vector<str_moveable> lines;
     for (; iter.next(line); ++index)
     {
         utf8.clear();
@@ -82,42 +115,26 @@ static void print_history(unsigned int tail_count, bool bare)
             utf8.format("%.*s", line.length(), line.get_pointer());
         else
             utf8.format("%5d  %.*s", index, line.length(), line.get_pointer());
-        if (translate)
-        {
-            DWORD written;
-            utf16.clear();
 
-            // Translate to UTF16, and also translate control characters.
-            for (const char* walk = utf8.c_str(); *walk;)
-            {
-                const char* begin = walk;
-                while (*walk >= 0x20 || *walk == 0x09)
-                    walk++;
-                if (walk > begin)
-                    to_utf16(utf16, str_iter(begin, int(walk - begin)));
-                if (!*walk)
-                    break;
-                wchar_t ctrl[3] = { '^', wchar_t(*walk + 'A' - 1) };
-                utf16.concat(ctrl, 2);
-                walk++;
-            }
-
-            utf16.concat(L"\r\n", 2);
-            WriteConsoleW(hout, utf16.c_str(), utf16.length(), &written, nullptr);
-        }
+        if (reverse)
+            lines.emplace_back(utf8.c_str());
         else
-        {
-            puts(utf8.c_str());
-        }
+            print_history_item(hout, utf8.c_str(), translate ? &utf16 : nullptr);
+    }
+
+    if (reverse)
+    {
+        for (size_t i = lines.size(); --i > 0;)
+            print_history_item(hout, lines[i].c_str(), translate ? &utf16 : nullptr);
     }
 }
 
 //------------------------------------------------------------------------------
-static bool print_history(const char* arg, bool bare)
+static bool print_history(const char* arg, bool bare, bool reverse)
 {
     if (arg == nullptr)
     {
-        print_history(INT_MIN, bare);
+        print_history(INT_MIN, bare, reverse);
         return true;
     }
 
@@ -126,7 +143,7 @@ static bool print_history(const char* arg, bool bare)
         if (unsigned(*c - '0') > 10)
             return false;
 
-    print_history(atoi(arg), bare);
+    print_history(atoi(arg), bare, reverse);
     return true;
 }
 
@@ -203,12 +220,15 @@ static int print_help()
 
     static const char* const help[] = {
         "[n]",          "Print history items (only the last N items if specified).",
-        "--bare [n]",   "Print history items, but without the item numbers.",
         "clear",        "Completely clears the command history.",
         "compact",      "Compacts the history file.",
         "delete <n>",   "Delete Nth item (negative N indexes history backwards).",
         "add <...>",    "Join remaining arguments and appends to the history.",
         "expand <...>", "Print substitution result.",
+        "",             "",
+        "Options:",     "",
+        "--bare",       "Omit item numbers when printing history.",
+        "--reverse",    "Use reverse order (newest first) when printing history.",
     };
 
     puts(g_clink_header);
@@ -277,13 +297,22 @@ int history(int argc, char** argv)
 {
     // Check to see if the user asked from some help!
     bool bare = false;
+    bool reverse = false;
     for (int i = 1; i < argc; ++i)
     {
         if (_stricmp(argv[i], "--help") == 0 || _stricmp(argv[i], "-h") == 0)
             return print_help();
+
+        bool remove = true;
         if (_stricmp(argv[i], "--bare") == 0)
-        {
             bare = true;
+        else if (_stricmp(argv[i], "--reverse") == 0)
+            reverse = true;
+        else
+            remove = false;
+
+        if (remove)
+        {
             for (int j = i; j < argc; ++j)
                 argv[j] = argv[j + 1];
             argc--;
@@ -343,7 +372,7 @@ int history(int argc, char** argv)
         return print_help();
 
     const char* arg = (argc > 1) ? argv[1] : nullptr;
-    if (!print_history(arg, bare))
+    if (!print_history(arg, bare, reverse))
         return print_help();
 
     return 0;
