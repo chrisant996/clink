@@ -10,7 +10,6 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 - Allow filename completion in `clink set any.string.setting {right_here}`.
 - Sometimes session history does not show up in `clink history`, at least not inside `io.popen()`.
 - Fill in docs for `onfiltermatches`.
-- Update docs for `clink history`.
 - Windows Terminal crashes on exit after `clink inject`!
 
 <br/>
