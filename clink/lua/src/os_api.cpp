@@ -418,8 +418,9 @@ static int get_host(lua_State* state)
 //------------------------------------------------------------------------------
 /// -name:  os.getalias
 /// -arg:   name:string
-/// -ret:   string
-/// Returns command string for doskey alias <span class="arg">name</span>.
+/// -ret:   string | nil
+/// Returns command string for doskey alias <span class="arg">name</span>, or
+/// nil if the named alias does not exist.
 int get_alias(lua_State* state)
 {
 #if !defined(__MINGW32__) && !defined(__MINGW64__)
