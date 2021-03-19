@@ -196,7 +196,7 @@ static int clear()
 static int compact()
 {
     history_scope history;
-    history->compact();
+    history->compact(true/*force*/);
 
     puts("History compacted.");
     return 0;
