@@ -20,6 +20,16 @@ extern setting_bool g_glob_system;
 
 
 //------------------------------------------------------------------------------
+static int close_file(lua_State *state)
+{
+    luaL_Stream* p = ((luaL_Stream*)luaL_checkudata(state, 1, LUA_FILEHANDLE));
+    int res = fclose(p->f);
+    return luaL_fileresult(state, (res == 0), NULL);
+}
+
+
+
+//------------------------------------------------------------------------------
 /// -name:  os.chdir
 /// -arg:   path:string
 /// -ret:   boolean
@@ -591,6 +601,54 @@ int get_pid(lua_State* state)
 }
 
 //------------------------------------------------------------------------------
+/// -name:  os.createtmpfile
+/// -ret:   file, string
+/// -arg:   [prefix:string]
+/// -arg:   [ext:string]
+/// -arg:   [path:string]
+/// -arg:   [mode:string]
+/// TBD
+///
+/// prefix defaults to "tmp"
+///
+/// ext defaults to ""
+///
+/// path defaults to `os.gettmpdir()`
+///
+/// binary_mode defaults to false (text mode)
+///
+/// Returns the file, and its pathname.
+static int create_tmp_file(lua_State *state)
+{
+    const char* prefix = get_string(state, 1);
+    const char* ext = get_string(state, 2);
+    const char* path = get_string(state, 3);
+    const char* mode = luaL_optstring(state, 4, "t");
+
+    if (mode && ((mode[0] != 'b' && mode[1] != 't') || mode[1]))
+        return luaL_error(state, "invalid mode " LUA_QS
+                         " (should match " LUA_QL("t")
+                         ", " LUA_QL("b") " or nil)", mode);
+
+    bool binary_mode = (mode[0] == 'b');
+
+    str<> name;
+    os::temp_file_mode tmode = binary_mode ? os::binary : os::normal;
+    FILE* f = os::create_temp_file(&name, prefix, ext, tmode, path);
+
+    if (!f)
+        return luaL_fileresult(state, 0, 0);
+
+    luaL_Stream* p = (luaL_Stream*)lua_newuserdata(state, sizeof(luaL_Stream));
+    luaL_setmetatable(state, LUA_FILEHANDLE);
+    p->f = f;
+    p->closef = &close_file;
+
+    lua_pushstring(state, name.c_str());
+    return 2;
+}
+
+//------------------------------------------------------------------------------
 void os_lua_initialise(lua_state& lua)
 {
     struct {
@@ -618,6 +676,7 @@ void os_lua_initialise(lua_state& lua)
         { "getscreeninfo", &get_screen_info },
         { "getbatterystatus", &get_battery_status },
         { "getpid",      &get_pid },
+        { "createtmpfile", &create_tmp_file },
     };
 
     lua_State* state = lua.get_state();
