@@ -3,6 +3,7 @@
 
 #include "pch.h"
 #include "match_builder_lua.h"
+#include "lua_state.h"
 
 #include <core/base.h>
 #include <core/str.h>
@@ -19,17 +20,6 @@ static match_builder_lua::method g_methods[] = {
     { "setmatchesarefiles", &match_builder_lua::set_matches_are_files },
     {}
 };
-
-
-
-//------------------------------------------------------------------------------
-static const char* get_string(lua_State* state, int index)
-{
-    if (lua_gettop(state) < index || !lua_isstring(state, index))
-        return nullptr;
-
-    return lua_tostring(state, index);
-}
 
 
 

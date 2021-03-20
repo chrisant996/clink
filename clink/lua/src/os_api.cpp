@@ -20,15 +20,6 @@ extern setting_bool g_glob_system;
 
 
 //------------------------------------------------------------------------------
-static const char* get_string(lua_State* state, int index)
-{
-    if (lua_gettop(state) < index || !lua_isstring(state, index))
-        return nullptr;
-
-    return lua_tostring(state, index);
-}
-
-//------------------------------------------------------------------------------
 /// -name:  os.chdir
 /// -arg:   path:string
 /// -ret:   boolean

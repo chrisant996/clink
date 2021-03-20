@@ -14,6 +14,9 @@ struct lua_State;
 class str_base;
 
 //------------------------------------------------------------------------------
+const char* get_string(lua_State* state, int index);
+
+//------------------------------------------------------------------------------
 class lua_state
 {
 public:

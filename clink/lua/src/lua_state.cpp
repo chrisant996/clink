@@ -75,6 +75,17 @@ void log_lua_initialise(lua_state&);
 
 
 //------------------------------------------------------------------------------
+const char* get_string(lua_State* state, int index)
+{
+    if (lua_gettop(state) < index || !lua_isstring(state, index))
+        return nullptr;
+
+    return lua_tostring(state, index);
+}
+
+
+
+//------------------------------------------------------------------------------
 bool lua_state::s_in_luafunc = false;
 
 //------------------------------------------------------------------------------
@@ -281,10 +292,7 @@ int lua_state::pcall(lua_State* L, int nargs, int nresults)
 //------------------------------------------------------------------------------
 const char* lua_state::get_string(int index) const
 {
-    if (lua_gettop(m_state) < index || !lua_isstring(m_state, index))
-        return nullptr;
-
-    return lua_tostring(m_state, index);
+    return ::get_string(m_state, index);
 }
 
 //------------------------------------------------------------------------------

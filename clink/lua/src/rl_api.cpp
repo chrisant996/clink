@@ -53,15 +53,6 @@ bool collapse_tilde(const char* in, str_base& out, bool force)
 
 
 //------------------------------------------------------------------------------
-static const char* get_string(lua_State* state, int index)
-{
-    if (lua_gettop(state) < index || !lua_isstring(state, index))
-        return nullptr;
-
-    return lua_tostring(state, index);
-}
-
-//------------------------------------------------------------------------------
 /// -name:  rl.collapsetilde
 /// -arg:   path:string
 /// -arg:   [force:boolean]
