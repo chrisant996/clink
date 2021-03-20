@@ -5,7 +5,12 @@
 #include "os.h"
 #include "path.h"
 #include "str.h"
+#include "str_iter.h"
 #include <locale.h>
+#include <io.h>
+#include <fcntl.h>
+#include <sys/stat.h>
+#include <assert.h>
 
 // We use UTF8 everywhere, and we need to tell the CRT so that mbrtowc and etc
 // use UTF8 instead of the default CRT pseudo-locale.
@@ -163,6 +168,71 @@ bool get_temp_dir(str_base& out)
 
     out = wout.c_str();
     return true;
+}
+
+//------------------------------------------------------------------------------
+FILE* create_temp_file(str_base* out, const char* _prefix, const char* _ext, temp_file_mode _mode, const char* _path)
+{
+    if (out)
+        out->clear();
+
+    // Start with base path.
+    str<> path(_path);
+    if (!path.length() && !get_temp_dir(path))
+        return nullptr;
+
+    // Append up to 8 UTF32 characters from prefix.
+    str<> prefix(_prefix);
+    str_iter iter(prefix);
+    for (int i = 8; i--; iter.next());
+    prefix.truncate(static_cast<unsigned int>(iter.get_pointer() - prefix.c_str()));
+    if (!prefix.length())
+        prefix.copy("tmp");
+    path::append(path, prefix.c_str());
+
+    // Append process ID.
+    prefix.format("_%X_", GetCurrentProcessId());
+    path.concat(prefix.c_str());
+
+    // Remember the base path and prefix length.
+    wstr<> wpath(path.c_str());
+    unsigned int base_len = wpath.length();
+
+    // Open mode.
+    wstr<16> mode(L"w+xT");
+    if (_mode & os::binary) mode << L"b";
+#if 0
+    if (_mode & os::delete_on_close) mode << L"D";
+#endif
+
+    // Create unique temp file, iterating if necessary.
+    FILE* f = nullptr;
+    errno_t err = EINVAL;
+    wstr<> wunique;
+    wstr<> wext(_ext);
+    srand(GetTickCount());
+    unsigned unique = (rand() & 0xff) + ((rand() & 0xff) << 8);
+    for (unsigned attempts = 0xffff + 1; attempts--;)
+    {
+        wunique.format(L"%04.4X", unique);
+        wpath << wunique;
+        wpath << wext;
+
+        f = _wfsopen(wpath.c_str(), mode.c_str(), _SH_DENYNO);
+        if (f)
+            break;
+        _get_errno(&err);
+        if (err == EINVAL || err == EMFILE)
+            break;
+
+        unique++;
+        wpath.truncate(base_len);
+    }
+
+    if (out)
+        to_utf8(*out, wstr_iter(wpath.c_str(), wpath.length()));
+
+    return f;
 }
 
 //------------------------------------------------------------------------------
