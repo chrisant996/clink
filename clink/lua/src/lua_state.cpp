@@ -65,6 +65,7 @@ static setting_bool g_lua_breakonerror(
 //------------------------------------------------------------------------------
 void clink_lua_initialise(lua_state&);
 void os_lua_initialise(lua_state&);
+void io_lua_initialise(lua_state&);
 void console_lua_initialise(lua_state&);
 void path_lua_initialise(lua_state&);
 void rl_lua_initialise(lua_state&);
@@ -137,6 +138,7 @@ void lua_state::initialise()
     // Initialize API namespaces.
     clink_lua_initialise(self);
     os_lua_initialise(self);
+    io_lua_initialise(self);
     console_lua_initialise(self);
     path_lua_initialise(self);
     rl_lua_initialise(self);
