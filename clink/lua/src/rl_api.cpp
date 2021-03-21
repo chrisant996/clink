@@ -224,7 +224,7 @@ static int invoke_command(lua_State* state)
 
     override_rl_last_func(func);
 
-    lua_pushinteger(state, err);
+    lua_pushinteger(state, !err);
     return 1;
 }
 
