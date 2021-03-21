@@ -82,7 +82,7 @@ static void print_history_item(HANDLE hout, const char* utf8, wstr_base* utf16)
 }
 
 //------------------------------------------------------------------------------
-static void print_history(unsigned int tail_count, bool bare, bool reverse)
+static void print_history(unsigned int tail_count, bool bare)
 {
     history_scope history;
 
@@ -107,7 +107,6 @@ static void print_history(unsigned int tail_count, bool bare, bool reverse)
     HANDLE hout = GetStdHandle(STD_OUTPUT_HANDLE);
     bool translate = is_console(hout);
 
-    std::vector<str_moveable> lines;
     for (; iter.next(line); ++index)
     {
         utf8.clear();
@@ -116,25 +115,16 @@ static void print_history(unsigned int tail_count, bool bare, bool reverse)
         else
             utf8.format("%5d  %.*s", index, line.length(), line.get_pointer());
 
-        if (reverse)
-            lines.emplace_back(utf8.c_str());
-        else
-            print_history_item(hout, utf8.c_str(), translate ? &utf16 : nullptr);
-    }
-
-    if (reverse)
-    {
-        for (size_t i = lines.size(); --i > 0;)
-            print_history_item(hout, lines[i].c_str(), translate ? &utf16 : nullptr);
+        print_history_item(hout, utf8.c_str(), translate ? &utf16 : nullptr);
     }
 }
 
 //------------------------------------------------------------------------------
-static bool print_history(const char* arg, bool bare, bool reverse)
+static bool print_history(const char* arg, bool bare)
 {
     if (arg == nullptr)
     {
-        print_history(INT_MIN, bare, reverse);
+        print_history(INT_MIN, bare);
         return true;
     }
 
@@ -143,7 +133,7 @@ static bool print_history(const char* arg, bool bare, bool reverse)
         if (unsigned(*c - '0') > 10)
             return false;
 
-    print_history(atoi(arg), bare, reverse);
+    print_history(atoi(arg), bare);
     return true;
 }
 
@@ -228,7 +218,6 @@ static int print_help()
         "",             "",
         "Options:",     "",
         "--bare",       "Omit item numbers when printing history.",
-        "--reverse",    "Use reverse order (newest first) when printing history.",
     };
 
     puts(g_clink_header);
@@ -297,7 +286,6 @@ int history(int argc, char** argv)
 {
     // Check to see if the user asked from some help!
     bool bare = false;
-    bool reverse = false;
     for (int i = 1; i < argc; ++i)
     {
         if (_stricmp(argv[i], "--help") == 0 || _stricmp(argv[i], "-h") == 0)
@@ -306,8 +294,6 @@ int history(int argc, char** argv)
         bool remove = true;
         if (_stricmp(argv[i], "--bare") == 0)
             bare = true;
-        else if (_stricmp(argv[i], "--reverse") == 0)
-            reverse = true;
         else
             remove = false;
 
@@ -372,7 +358,7 @@ int history(int argc, char** argv)
         return print_help();
 
     const char* arg = (argc > 1) ? argv[1] : nullptr;
-    if (!print_history(arg, bare, reverse))
+    if (!print_history(arg, bare))
         return print_help();
 
     return 0;
