@@ -208,15 +208,16 @@ static int print_help()
 {
     extern const char* g_clink_header;
 
-    static const char* const help[] = {
+    static const char* const help_verbs[] = {
         "[n]",          "Print history items (only the last N items if specified).",
         "clear",        "Completely clears the command history.",
         "compact",      "Compacts the history file.",
         "delete <n>",   "Delete Nth item (negative N indexes history backwards).",
         "add <...>",    "Join remaining arguments and appends to the history.",
         "expand <...>", "Print substitution result.",
-        "",             "",
-        "Options:",     "",
+    };
+
+    static const char* const help_options[] = {
         "--bare",       "Omit item numbers when printing history.",
     };
 
@@ -224,7 +225,10 @@ static int print_help()
     puts("Usage: history <verb> [option]\n");
 
     puts("Verbs:");
-    puts_help(help, sizeof_array(help));
+    puts_help(help_verbs, sizeof_array(help_verbs));
+
+    puts("Options:");
+    puts_help(help_options, sizeof_array(help_options));
 
     puts("The 'history' command can also emulate Bash's builtin history command. The\n"
         "arguments -c, -d <n>, -p <...> and -s <...> are supported.");

@@ -49,7 +49,6 @@ static void show_usage()
 {
     static const char* help_usage = "Usage: [options] <verb> [verb_options]\n";
     static const char* help_verbs[] = {
-        "Verbs:",          "",
         "inject",          "Injects Clink into a process",
         "autorun",         "Manage Clink's entry in cmd.exe's autorun",
         "set",             "Adjust Clink's settings",
@@ -59,7 +58,8 @@ static void show_usage()
         "info",            "Prints information about Clink",
         "echo",            "Echo key sequences",
         "",                "('<verb> --help' for more details)",
-        "Options:",        "",
+    };
+    static const char* help_options[] = {
         "--profile <dir>", "Use <dir> as Clink's profile directory",
         "--version",       "Print Clink's version and exit",
     };
@@ -68,7 +68,12 @@ static void show_usage()
 
     puts(g_clink_header);
     puts(help_usage);
+
+    puts("Verbs:");
     puts_help(help_verbs, sizeof_array(help_verbs));
+
+    puts("Options:");
+    puts_help(help_options, sizeof_array(help_options));
 }
 
 //------------------------------------------------------------------------------
@@ -150,8 +155,6 @@ int loader(int argc, char** argv)
             return 0;
 
         case '?':
-            return 0;
-
         default:
             show_usage();
             return 0;

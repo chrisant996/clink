@@ -292,6 +292,8 @@ int inject(int argc, char** argv)
     // other scripts (e.g. VS postbuild steps, which causes CMake to be unable
     // to build anything).  https://github.com/mridgers/clink/issues/373
 
+    static const char* help_usage = "Usage: inject [options]\n";
+
     static const struct option options[] = {
         { "scripts",     required_argument,  nullptr, 's' },
         { "profile",     required_argument,  nullptr, 'p' },
@@ -353,13 +355,13 @@ int inject(int argc, char** argv)
             break;
 
         case '?':
-            return ret;
-
         case 'h':
             ret = 0;
             // fall through
         default:
             puts(g_clink_header);
+            puts(help_usage);
+            puts("Options:");
             puts_help(help, sizeof_array(help));
             return ret;
         }
