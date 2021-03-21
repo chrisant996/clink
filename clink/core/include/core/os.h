@@ -42,5 +42,8 @@ FILE*   create_temp_file(str_base* out=nullptr, const char* prefix=nullptr, cons
 bool    get_env(const char* name, str_base& out);
 bool    set_env(const char* name, const char* value);
 bool    get_alias(const char* name, str_base& out);
+bool    get_short_path_name(const char* path, str_base& out);
+bool    get_long_path_name(const char* path, str_base& out);
+bool    get_full_path_name(const char* path, str_base& out);
 
 }; // namespace os

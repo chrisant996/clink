@@ -378,6 +378,84 @@ error:
     return true;
 }
 
+//------------------------------------------------------------------------------
+bool get_short_path_name(const char* path, str_base& out)
+{
+    wstr<> wpath(path);
+
+    out.clear();
+
+    unsigned int len = GetShortPathNameW(wpath.c_str(), nullptr, 0);
+    if (len)
+    {
+        wstr<> wout;
+        wout.reserve(len);
+        len = GetShortPathNameW(wpath.c_str(), wout.data(), wout.size() - 1);
+        if (len)
+            to_utf8(out, wstr_iter(wout.c_str(), wout.length()));
+    }
+
+    if (!len)
+    {
+        map_errno();
+        return false;
+    }
+
+    return true;
+}
+
+//------------------------------------------------------------------------------
+bool get_long_path_name(const char* path, str_base& out)
+{
+    wstr<> wpath(path);
+
+    out.clear();
+
+    unsigned int len = GetLongPathNameW(wpath.c_str(), nullptr, 0);
+    if (len)
+    {
+        wstr<> wout;
+        wout.reserve(len);
+        len = GetLongPathNameW(wpath.c_str(), wout.data(), wout.size() - 1);
+        if (len)
+            to_utf8(out, wstr_iter(wout.c_str(), wout.length()));
+    }
+
+    if (!len)
+    {
+        map_errno();
+        return false;
+    }
+
+    return true;
+}
+
+//------------------------------------------------------------------------------
+bool get_full_path_name(const char* path, str_base& out)
+{
+    wstr<> wpath(path);
+
+    out.clear();
+
+    unsigned int len = GetFullPathNameW(wpath.c_str(), 0, nullptr, nullptr);
+    if (len)
+    {
+        wstr<> wout;
+        wout.reserve(len);
+        len = GetFullPathNameW(wpath.c_str(), wout.size() - 1, wout.data(), nullptr);
+        if (len)
+            to_utf8(out, wstr_iter(wout.c_str(), wout.length()));
+    }
+
+    if (!len)
+    {
+        map_errno();
+        return false;
+    }
+
+    return true;
+}
+
 }; // namespace os
 
 //------------------------------------------------------------------------------
