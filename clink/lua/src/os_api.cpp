@@ -24,7 +24,7 @@ static void map_errno() { __acrt_errno_map_os_error(GetLastError()); }
 static void map_errno(unsigned long const oserrno) { __acrt_errno_map_os_error(oserrno); }
 
 //------------------------------------------------------------------------------
-static int lua_osresult(lua_State *state, bool stat, const char *tag=nullptr)
+static int lua_osboolresult(lua_State *state, bool stat, const char *tag=nullptr)
 {
     int en = errno;  /* calls to Lua API may change this value */
 
@@ -33,6 +33,26 @@ static int lua_osresult(lua_State *state, bool stat, const char *tag=nullptr)
     if (stat)
         return 1;
 
+    if (tag)
+        lua_pushfstring(state, "%s: %s", tag, strerror(en));
+    else
+        lua_pushfstring(state, "%s", strerror(en));
+    lua_pushinteger(state, en);
+    return 3;
+}
+
+//------------------------------------------------------------------------------
+static int lua_osstringresult(lua_State *state, const char* result, bool stat, const char *tag=nullptr)
+{
+    int en = errno;  /* calls to Lua API may change this value */
+
+    if (stat)
+    {
+        lua_pushstring(state, result);
+        return 1;
+    }
+
+    lua_pushnil(state);
     if (tag)
         lua_pushfstring(state, "%s: %s", tag, strerror(en));
     else
@@ -70,7 +90,7 @@ int set_current_dir(lua_State* state)
         return 0;
 
     bool ok = os::set_current_dir(dir);
-    return lua_osresult(state, ok, dir);
+    return lua_osboolresult(state, ok, dir);
 }
 
 //------------------------------------------------------------------------------
@@ -99,7 +119,7 @@ static int make_dir(lua_State* state)
         return 0;
 
     bool ok = os::make_dir(dir);
-    return lua_osresult(state, ok, dir);
+    return lua_osboolresult(state, ok, dir);
 }
 
 //------------------------------------------------------------------------------
@@ -115,7 +135,7 @@ static int remove_dir(lua_State* state)
         return 0;
 
     bool ok = os::remove_dir(dir);
-    return lua_osresult(state, ok, dir);
+    return lua_osboolresult(state, ok, dir);
 }
 
 //------------------------------------------------------------------------------
@@ -176,7 +196,7 @@ static int unlink(lua_State* state)
         return 0;
 
     bool ok = os::unlink(path);
-    return lua_osresult(state, ok, path);
+    return lua_osboolresult(state, ok, path);
 }
 
 //------------------------------------------------------------------------------
@@ -194,7 +214,7 @@ static int move(lua_State* state)
         return 0;
 
     bool ok = os::move(src, dest);
-    return lua_osresult(state, ok);
+    return lua_osboolresult(state, ok);
 }
 
 //------------------------------------------------------------------------------
@@ -212,7 +232,7 @@ static int copy(lua_State* state)
         return 0;
 
     bool ok = os::copy(src, dest);
-    return lua_osresult(state, ok);
+    return lua_osboolresult(state, ok);
 }
 
 //------------------------------------------------------------------------------
@@ -368,7 +388,7 @@ int set_env(lua_State* state)
         value = nullptr;
 
     bool ok = os::set_env(name, value);
-    return lua_osresult(state, ok);
+    return lua_osboolresult(state, ok);
 }
 
 //------------------------------------------------------------------------------
@@ -690,6 +710,55 @@ static int create_tmp_file(lua_State *state)
 }
 
 //------------------------------------------------------------------------------
+/// -name:  os.getshortpathname
+/// -arg:   path:string
+/// -ret:   string
+/// Returns the 8.3 short path name for <span class="arg">path</span>.  This may
+/// return the input path if an 8.3 short path name is not available.
+static int get_short_path_name(lua_State *state)
+{
+    const char* path = checkstring(state, 1);
+    if (!path)
+        return 0;
+
+    str<> out;
+    bool ok = os::get_short_path_name(path, out);
+    return lua_osstringresult(state, out.c_str(), ok, path);
+}
+
+//------------------------------------------------------------------------------
+/// -name:  os.getlongpathname
+/// -arg:   path:string
+/// -ret:   string
+/// Returns the long path name for <span class="arg">path</span>.
+static int get_long_path_name(lua_State *state)
+{
+    const char* path = checkstring(state, 1);
+    if (!path)
+        return 0;
+
+    str<> out;
+    bool ok = os::get_long_path_name(path, out);
+    return lua_osstringresult(state, out.c_str(), ok, path);
+}
+
+//------------------------------------------------------------------------------
+/// -name:  os.getfullpathname
+/// -arg:   path:string
+/// -ret:   string
+/// Returns the full path name for <span class="arg">path</span>.
+static int get_full_path_name(lua_State *state)
+{
+    const char* path = checkstring(state, 1);
+    if (!path)
+        return 0;
+
+    str<> out;
+    bool ok = os::get_full_path_name(path, out);
+    return lua_osstringresult(state, out.c_str(), ok, path);
+}
+
+//------------------------------------------------------------------------------
 void os_lua_initialise(lua_state& lua)
 {
     struct {
@@ -718,6 +787,9 @@ void os_lua_initialise(lua_state& lua)
         { "getbatterystatus", &get_battery_status },
         { "getpid",      &get_pid },
         { "createtmpfile", &create_tmp_file },
+        { "getshortpathname", &get_short_path_name },
+        { "getlongpathname", &get_long_path_name },
+        { "getfullpathname", &get_full_path_name },
     };
 
     lua_State* state = lua.get_state();
