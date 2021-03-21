@@ -167,7 +167,6 @@ end
 --------------------------------------------------------------------------------
 --- -name:  clink.onfiltermatches
 --- -arg:   func:function
---- -show:  -- TBD
 --- Registers <span class="arg">func</span> to be called after Clink generates
 --- matches for completion.  See <a href="#filteringmatchcompletions">
 --- Filtering Match Completions</a> for more information.

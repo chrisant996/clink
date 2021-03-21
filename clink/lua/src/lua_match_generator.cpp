@@ -548,6 +548,7 @@ void lua_match_generator::filter_matches(char** matches, char completion_type, b
     }
 
     // Discard other matches.
+    bool discarded = false;
     char** read = &matches[1];
     char** write = &matches[1];
     while (*read)
@@ -558,6 +559,7 @@ void lua_match_generator::filter_matches(char** matches, char completion_type, b
 
         if (keep_typeless.find(match) == keep_typeless.end())
         {
+            discarded = true;
             free(*read);
         }
         else
@@ -569,6 +571,12 @@ void lua_match_generator::filter_matches(char** matches, char completion_type, b
         ++read;
     }
     *write = nullptr;
+
+    if (!discarded)
+        return;
+
+    extern void reset_generate_matches();
+    reset_generate_matches();
 
     // If no matches, free the lcd as well.
     if (!matches[1])

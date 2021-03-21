@@ -62,6 +62,8 @@ public:
     virtual bool        translate(const char* seq, int len, str_base& out) override;
     virtual void        set_keyseq_len(int len) override;
 
+    void                reset_generate_matches();
+
 private:
     typedef editor_module                       module;
     typedef fixed_array<editor_module*, 16>     modules;

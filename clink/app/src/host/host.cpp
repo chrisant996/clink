@@ -138,6 +138,11 @@ int macro_hook_func(const char* macro)
     func_name = macro + 8;
     func_name.trim();
 
+    // TODO: Ideally optimize this so that it only resets match generation if
+    // the Lua function triggers completion.
+    extern void reset_generate_matches();
+    reset_generate_matches();
+
     if (!call_lua_rl_global_function(func_name.c_str()))
         rl_ding();
 

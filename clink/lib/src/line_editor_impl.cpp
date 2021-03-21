@@ -306,6 +306,13 @@ bool line_editor_impl::update()
 }
 
 //------------------------------------------------------------------------------
+void line_editor_impl::reset_generate_matches()
+{
+    set_flag(flag_generate);
+    set_flag(flag_select);
+}
+
+//------------------------------------------------------------------------------
 void line_editor_impl::update_matches()
 {
     if (check_flag(flag_generate))
@@ -988,6 +995,14 @@ void line_editor_impl::before_display()
     assert(s_editor);
     if (s_editor)
         s_editor->classify();
+}
+
+void reset_generate_matches()
+{
+    if (!s_editor)
+        return;
+
+    s_editor->reset_generate_matches();
 }
 
 void update_matches()
