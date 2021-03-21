@@ -143,8 +143,17 @@ int macro_hook_func(const char* macro)
     extern void reset_generate_matches();
     reset_generate_matches();
 
+    HANDLE std_handles[2] = { GetStdHandle(STD_INPUT_HANDLE), GetStdHandle(STD_OUTPUT_HANDLE) };
+    DWORD prev_mode[2];
+    static_assert(_countof(std_handles) == _countof(prev_mode), "array sizes much match");
+    for (size_t i = 0; i < _countof(std_handles); ++i)
+        GetConsoleMode(std_handles[i], &prev_mode[i]);
+
     if (!call_lua_rl_global_function(func_name.c_str()))
         rl_ding();
+
+    for (size_t i = 0; i < _countof(std_handles); ++i)
+        SetConsoleMode(std_handles[i], prev_mode[i]);
 
     return 1;
 }

@@ -5,7 +5,6 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 # RELEASE
 
 ## Issues
-- Need to fix ENABLE_PROCESSED_INPUT when a script neglects to close the read stream from `io.popen()` etc.
 - Sometimes session history does not show up in `clink history`, at least not inside `io.popen()`.
 - Windows Terminal crashes on exit after `clink inject`!
 
