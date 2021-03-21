@@ -607,28 +607,45 @@ int get_pid(lua_State* state)
 /// -arg:   [ext:string]
 /// -arg:   [path:string]
 /// -arg:   [mode:string]
-/// TBD
+/// Creates a uniquely named file, intended for use as a temporary file.  The
+/// name pattern is "<em>location</em> <code>\</code> <em>prefix</em>
+/// <code>_</code> <em>processId</em> <code>_</code> <em>uniqueNum</em>
+/// <em>extension</em>".
 ///
-/// prefix defaults to "tmp"
+/// <span class="arg">prefix</span> optionally specifies a prefix for the file
+/// name and defaults to "tmp".
 ///
-/// ext defaults to ""
+/// <span class="arg">ext</span> optionally specifies a suffix for the file name
+/// and defaults to "" (if <span class="arg">ext</span> starts with a period "."
+/// then it is a filename extension).
 ///
-/// path defaults to `os.gettmpdir()`
+/// <span class="arg">path</span> optionally specifies a path location in which
+/// to create the file.  The default is the system TEMP directory.
 ///
-/// binary_mode defaults to false (text mode)
+/// <span class="arg">mode</span> optionally specifies "t" for text mode (line
+/// endings are translated) or "b" for binary mode (untranslated IO).  The
+/// default is "t".
 ///
-/// Returns the file, and its pathname.
+/// When successful, the function returns a file handle and the file name.
+///
+/// <strong>Note:</strong> Be sure to delete the file when finished, or it will
+/// be leaked.
+///
+/// If the function is unable to create a file it returns nil, an error message,
+/// and an error number.  For example if the directory is inaccessible, or if
+/// there are already too many files, or invalid file name characters are used,
+/// or etc.
 static int create_tmp_file(lua_State *state)
 {
-    const char* prefix = get_string(state, 1);
-    const char* ext = get_string(state, 2);
-    const char* path = get_string(state, 3);
+    const char* prefix = luaL_optstring(state, 1, "");
+    const char* ext = luaL_optstring(state, 2, "");
+    const char* path = luaL_optstring(state, 3, "");
     const char* mode = luaL_optstring(state, 4, "t");
-
-    if (mode && ((mode[0] != 'b' && mode[1] != 't') || mode[1]))
+    if (!prefix || !ext || !path || !mode)
+        return 0;
+    if ((mode[0] != 'b' && mode[1] != 't') || mode[1])
         return luaL_error(state, "invalid mode " LUA_QS
-                         " (should match " LUA_QL("t")
-                         ", " LUA_QL("b") " or nil)", mode);
+                          " (use " LUA_QL("t") ", " LUA_QL("b") ", or nil)", mode);
 
     bool binary_mode = (mode[0] == 'b');
 

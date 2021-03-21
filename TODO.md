@@ -6,7 +6,6 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 
 ## Issues
 - Fill in docs for `clink.onfiltermatches()` (etc).
-- Fill in docs for `os.createtmpfile()`.
 - Need to reset matches after `luafunc:` that uses `onfiltermatches`.
 - Sometimes session history does not show up in `clink history`, at least not inside `io.popen()`.
 - Windows Terminal crashes on exit after `clink inject`!
