@@ -12,6 +12,12 @@
 #include <sys/stat.h>
 #include <assert.h>
 
+//------------------------------------------------------------------------------
+extern "C" void __cdecl __acrt_errno_map_os_error(unsigned long const oserrno);
+static void map_errno() { __acrt_errno_map_os_error(GetLastError()); }
+static void map_errno(unsigned long const oserrno) { __acrt_errno_map_os_error(oserrno); }
+
+//------------------------------------------------------------------------------
 // We use UTF8 everywhere, and we need to tell the CRT so that mbrtowc and etc
 // use UTF8 instead of the default CRT pseudo-locale.
 class auto_set_locale_utf8
@@ -20,6 +26,8 @@ public:
     auto_set_locale_utf8() { setlocale(LC_ALL, ".utf8"); }
 };
 static auto_set_locale_utf8 s_auto_utf8;
+
+
 
 namespace os
 {
@@ -32,12 +40,21 @@ DWORD get_file_attributes(const wchar_t* path)
     // But it can't handle a root directory, so if the incoming path ends with a
     // separator then use GetFileAttributesW instead.
     if (*path && path::is_separator(path[wcslen(path) - 1]))
-        return GetFileAttributesW(path);
+    {
+        DWORD attr = GetFileAttributesW(path);
+        if (attr == INVALID_FILE_ATTRIBUTES)
+        {
+error:
+            map_errno();
+            return INVALID_FILE_ATTRIBUTES;
+        }
+        return attr;
+    }
 
     WIN32_FIND_DATAW fd;
     HANDLE h = FindFirstFileW(path, &fd);
     if (h == INVALID_HANDLE_VALUE)
-        return INVALID_FILE_ATTRIBUTES;
+        goto error;
 
     FindClose(h);
     return fd.dwFileAttributes;
@@ -76,9 +93,14 @@ int get_file_size(const char* path)
     wstr<280> wpath(path);
     void* handle = CreateFileW(wpath.c_str(), 0, 0, nullptr, OPEN_EXISTING, 0, nullptr);
     if (handle == INVALID_HANDLE_VALUE)
+    {
+        map_errno();
         return -1;
+    }
 
     int ret = GetFileSize(handle, nullptr); // 2Gb max I suppose...
+    if (ret == INVALID_FILE_SIZE)
+        map_errno();
     CloseHandle(handle);
     return ret;
 }
@@ -95,7 +117,11 @@ void get_current_dir(str_base& out)
 bool set_current_dir(const char* dir)
 {
     wstr<280> wdir(dir);
-    return (SetCurrentDirectoryW(wdir.c_str()) == TRUE);
+    if (SetCurrentDirectoryW(wdir.c_str()))
+        return true;
+
+    map_errno();
+    return false;
 }
 
 //------------------------------------------------------------------------------
@@ -115,7 +141,10 @@ bool make_dir(const char* dir)
     if (*dir)
     {
         wstr<280> wdir(dir);
-        return (CreateDirectoryW(wdir.c_str(), nullptr) == TRUE);
+        if (CreateDirectoryW(wdir.c_str(), nullptr))
+            return true;
+        map_errno();
+        return false;
     }
 
     return true;
@@ -125,14 +154,22 @@ bool make_dir(const char* dir)
 bool remove_dir(const char* dir)
 {
     wstr<280> wdir(dir);
-    return (RemoveDirectoryW(wdir.c_str()) == TRUE);
+    if (RemoveDirectoryW(wdir.c_str()))
+        return true;
+
+    map_errno();
+    return false;
 }
 
 //------------------------------------------------------------------------------
 bool unlink(const char* path)
 {
     wstr<280> wpath(path);
-    return (DeleteFileW(wpath.c_str()) == TRUE);
+    if (DeleteFileW(wpath.c_str()))
+        return true;
+
+    map_errno();
+    return false;
 }
 
 //------------------------------------------------------------------------------
@@ -140,7 +177,11 @@ bool move(const char* src_path, const char* dest_path)
 {
     wstr<280> wsrc_path(src_path);
     wstr<280> wdest_path(dest_path);
-    return (MoveFileW(wsrc_path.c_str(), wdest_path.c_str()) == TRUE);
+    if (MoveFileW(wsrc_path.c_str(), wdest_path.c_str()))
+        return true;
+
+    map_errno();
+    return false;
 }
 
 //------------------------------------------------------------------------------
@@ -148,7 +189,11 @@ bool copy(const char* src_path, const char* dest_path)
 {
     wstr<280> wsrc_path(src_path);
     wstr<280> wdest_path(dest_path);
-    return (CopyFileW(wsrc_path.c_str(), wdest_path.c_str(), FALSE) == TRUE);
+    if (CopyFileW(wsrc_path.c_str(), wdest_path.c_str(), FALSE))
+        return true;
+
+    map_errno();
+    return false;
 }
 
 //------------------------------------------------------------------------------
@@ -157,13 +202,17 @@ bool get_temp_dir(str_base& out)
     wstr<280> wout;
     unsigned int size = GetTempPathW(wout.size(), wout.data());
     if (!size)
+    {
+error:
+        map_errno();
         return false;
+    }
 
     if (size >= wout.size())
     {
         wout.reserve(size);
         if (!GetTempPathW(wout.size(), wout.data()))
-            return false;
+            goto error;
     }
 
     out = wout.c_str();
@@ -232,6 +281,9 @@ FILE* create_temp_file(str_base* out, const char* _prefix, const char* _ext, tem
     if (out)
         to_utf8(*out, wstr_iter(wpath.c_str(), wpath.length()));
 
+    if (!f)
+        map_errno(ERROR_NO_MORE_FILES);
+
     return f;
 }
 
@@ -258,6 +310,7 @@ bool get_env(const char* name, str_base& out)
                 return true;
             }
         }
+        map_errno();
         return false;
     }
 
@@ -285,7 +338,11 @@ bool set_env(const char* name, const char* value)
     // child processes...?  If so then none of the other environment variable
     // changes in the CMD.EXE host process will show up either...
     //_wputenv_s(wname.c_str(), wvalue.c_str());
-    return (SetEnvironmentVariableW(wname.c_str(), value_arg) != 0);
+    if (SetEnvironmentVariableW(wname.c_str(), value_arg) != 0)
+        return true;
+
+    map_errno();
+    return false;
 }
 
 //------------------------------------------------------------------------------
@@ -296,7 +353,11 @@ bool get_alias(const char* name, str_base& out)
 
     wchar_t exe_path[280];
     if (GetModuleFileNameW(NULL, exe_path, sizeof_array(exe_path)) == 0)
+    {
+error:
+        map_errno();
         return false;
+    }
 
     wstr<32> exe_name;
     exe_name = path::get_name(exe_path);
@@ -305,10 +366,13 @@ bool get_alias(const char* name, str_base& out)
     wstr<32> buffer;
     buffer.reserve(8191);
     if (GetConsoleAliasW(alias_name.data(), buffer.data(), buffer.size(), exe_name.data()) == 0)
-        return false;
+        goto error;
 
     if (!buffer.length())
+    {
+        errno = 0;
         return false;
+    }
 
     out = buffer.c_str();
     return true;

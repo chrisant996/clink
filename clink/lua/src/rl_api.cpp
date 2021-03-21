@@ -68,8 +68,8 @@ bool collapse_tilde(const char* in, str_base& out, bool force)
 /// for more information.
 static int collapse_tilde(lua_State* state)
 {
-    const char* path = get_string(state, 1);
-    if (path == nullptr)
+    const char* path = checkstring(state, 1);
+    if (!path)
         return 0;
 
     int force = lua_toboolean(state, 2);
@@ -130,8 +130,8 @@ static int collapse_tilde(lua_State* state)
 /// back the tilde before returning a match.
 static int expand_tilde(lua_State* state)
 {
-    const char* path = get_string(state, 1);
-    if (path == nullptr)
+    const char* path = checkstring(state, 1);
+    if (!path)
         return 0;
 
     char* expanded_path = tilde_expand(path);
@@ -150,11 +150,10 @@ static int expand_tilde(lua_State* state)
 /// or nil if the variable name is not recognized.
 static int get_rl_variable(lua_State* state)
 {
-    // Check we've got at least one string argument.
-    if (lua_gettop(state) == 0 || !lua_isstring(state, 1))
+    const char* string = checkstring(state, 1);
+    if (!string)
         return 0;
 
-    const char* string = lua_tostring(state, 1);
     const char* rl_cvar = rl_variable_value(string);
     if (rl_cvar == nullptr)
         return 0;
@@ -171,20 +170,15 @@ static int get_rl_variable(lua_State* state)
 /// variable is set to true (on), or nil if the variable name is not recognized.
 static int is_rl_variable_true(lua_State* state)
 {
-    int i;
-    const char* cvar_value;
-
-    i = get_rl_variable(state);
-    if (i == 0)
-    {
+    if (!get_rl_variable(state))
         return 0;
-    }
 
-    cvar_value = lua_tostring(state, -1);
-    i = (_stricmp(cvar_value, "on") == 0) || (_stricmp(cvar_value, "1") == 0);
-    lua_pop(state, 1);
-    lua_pushboolean(state, i);
+    const char* cvar_value = checkstring(state, -1);
+    if (!cvar_value)
+        return 0;
 
+    bool on = (_stricmp(cvar_value, "on") == 0) || (_stricmp(cvar_value, "1") == 0);
+    lua_pushboolean(state, on);
     return 1;
 }
 
@@ -207,13 +201,12 @@ static int is_rl_variable_true(lua_State* state)
 static int invoke_command(lua_State* state)
 {
     if (!lua_state::is_in_luafunc())
-        return luaL_error(state, "rl.invokecommand may only be used in a 'luafunc:' key binding");
+        return luaL_error(state, "rl.invokecommand may only be used in a " LUA_QL("luafunc:") " key binding");
 
-    // Check we've got at least one string argument.
-    if (lua_gettop(state) == 0 || !lua_isstring(state, 1))
+    const char* command = checkstring(state, 1);
+    if (!command)
         return 0;
 
-    const char* command = lua_tostring(state, 1);
     rl_command_func_t *func = rl_named_function(command);
     if (func == nullptr)
         return 0;

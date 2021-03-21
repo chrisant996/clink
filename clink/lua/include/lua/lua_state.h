@@ -14,7 +14,10 @@ struct lua_State;
 class str_base;
 
 //------------------------------------------------------------------------------
-const char* get_string(lua_State* state, int index);
+int checkinteger(lua_State* state, int index, bool* isnum=nullptr);
+int optinteger(lua_State* state, int index, int default, bool* isnum=nullptr);
+const char* checkstring(lua_State* state, int index);
+const char* optstring(lua_State* state, int index, const char* default);
 
 //------------------------------------------------------------------------------
 class lua_state
@@ -32,7 +35,6 @@ public:
 
     static int      pcall(lua_State* L, int nargs, int nresults);
     int             pcall(int nargs, int nresults) { return pcall(m_state, nargs, nresults); }
-    const char*     get_string(int index) const;
 
     bool            send_event(const char* event_name, int nargs=0);
     bool            send_event_cancelable(const char* event_name, int nargs=0);

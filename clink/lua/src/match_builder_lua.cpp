@@ -85,7 +85,11 @@ int match_builder_lua::add_match(lua_State* state)
     int ret = 0;
     if (lua_gettop(state) > 0)
     {
-        match_type type = to_match_type(get_string(state, 2));
+        const char* type_str = optstring(state, 2, "");
+        if (!type_str)
+            return 0;
+
+        match_type type = to_match_type(type_str);
         ret = !!add_match_impl(state, 1, type);
     }
 
@@ -102,11 +106,11 @@ int match_builder_lua::add_match(lua_State* state)
 /// (rather than <code>set USERDOMAIN&nbsp;</code>).
 int match_builder_lua::set_append_character(lua_State* state)
 {
-    const char* append = nullptr;
-    if (lua_gettop(state) > 0)
-        append = lua_tostring(state, 1);
+    const char* append = optstring(state, 1, "");
+    if (!append)
+        return 0;
 
-    m_builder.set_append_character(append ? *append : 0);
+    m_builder.set_append_character(*append);
 
     return 0;
 }
@@ -192,7 +196,11 @@ int match_builder_lua::add_matches(lua_State* state)
         return 2;
     }
 
-    match_type type = to_match_type(get_string(state, 2));
+    const char* type_str = optstring(state, 2, "");
+    if (!type_str)
+        return 0;
+
+    match_type type = to_match_type(type_str);
 
     int count = 0;
     int total = int(lua_rawlen(state, 1));

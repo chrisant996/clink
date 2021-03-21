@@ -11,6 +11,11 @@
 #include <new.h>
 
 //------------------------------------------------------------------------------
+extern setting_bool g_lua_strict;
+
+
+
+//------------------------------------------------------------------------------
 /// -name:  settings.get
 /// -arg:   name:string
 /// -arg:   [descriptive:boolean]
@@ -23,10 +28,10 @@
 /// friendly color name is returned.
 static int get(lua_State* state)
 {
-    if (lua_gettop(state) == 0 || !lua_isstring(state, 1))
+    const char* key = checkstring(state, 1);
+    if (!key)
         return 0;
 
-    const char* key = lua_tostring(state, 1);
     const setting* setting = settings::find(key);
     if (setting == nullptr)
         return 0;
@@ -72,10 +77,10 @@ static int get(lua_State* state)
 /// <span class="arg">value</span> and returns whether it was successful.
 static int set(lua_State* state)
 {
-    if (lua_gettop(state) < 2 || !lua_isstring(state, 1))
+    const char* key = checkstring(state, 1);
+    if (!key)
         return 0;
 
-    const char* key = lua_tostring(state, 1);
     setting* setting = settings::find(key);
     if (setting == nullptr)
         return 0;
@@ -90,9 +95,9 @@ static int set(lua_State* state)
 //------------------------------------------------------------------------------
 template <typename S, typename... V> void add_impl(lua_State* state, V... value)
 {
-    const char* name = lua_tostring(state, 1);
-    const char* short_desc = (lua_gettop(state) > 2) ? lua_tostring(state, 3) : "";
-    const char* long_desc = (lua_gettop(state) > 3) ? lua_tostring(state, 4) : "";
+    const char* name = checkstring(state, 1);
+    const char* short_desc = (lua_gettop(state) > 2) ? checkstring(state, 3) : "";
+    const char* long_desc = (lua_gettop(state) > 3) ? checkstring(state, 4) : "";
 
     void* addr = lua_newuserdata(state, sizeof(S));
     new (addr) S(name, short_desc, long_desc, value...);
@@ -145,15 +150,12 @@ template <typename S, typename... V> void add_impl(lua_State* state, V... value)
 /// <span class="arg">long_desc</span> is an optional long description.
 static int add(lua_State* state)
 {
-    if (lua_gettop(state) < 2 || !lua_isstring(state, 1))
-    {
-        lua_pushboolean(state, 0);
-        return 1;
-    }
+    const char* name = checkstring(state, 1);
+    if (!name)
+        return 0;
 
-    const char* name = lua_tostring(state, 1);
     if (settings::find(name))
-        return luaL_error(state, "Setting '%s' already exists", name);
+        return luaL_error(state, "Setting " LUA_QS " already exists", name);
 
     switch (lua_type(state, 2))
     {
@@ -191,7 +193,10 @@ static int add(lua_State* state)
         break;
 
     default:
-        lua_pushboolean(state, 0);
+        if (g_lua_strict.get())
+            luaL_argerror(state, 2, "must be number, boolean, string, or table of strings");
+        else
+            lua_pushboolean(state, 0);
         return 1;
     }
 

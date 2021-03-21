@@ -123,8 +123,11 @@ static int pclosewait(intptr_t process_handle)
 static int pclosefile(lua_State *state)
 {
     luaL_Stream* p = ((luaL_Stream*)luaL_checkudata(state, 1, LUA_FILEHANDLE));
-    popenrw_info* info = popenrw_info::find(p->f);
+    assert(p);
+    if (!p)
+        return 0;
 
+    popenrw_info* info = popenrw_info::find(p->f);
     assert(info);
     if (!info)
         return luaL_fileresult(state, false, NULL);
@@ -346,6 +349,8 @@ struct pipe_pair
 /// <span class="arg">mode</span> can be <code>"t"</code> for text mode (the
 /// default if omitted) or <code>"b"</code> for binary mode.
 ///
+/// If the function fails it returns nil, an error message, and an error number.
+///
 /// <fieldset><legend>Warning</legend>
 /// This can result in deadlocks unless the command fully reads all of its input
 /// before writing any output.  This is because Lua uses blocking IO to read and
@@ -358,33 +363,32 @@ struct pipe_pair
 /// </fieldset>
 static int io_popenrw(lua_State* state)
 {
-    bool failed = false;
-
-    const char* command = luaL_checkstring(state, 1);
-    const char* mode = luaL_optstring(state, 2, "t");
-    failed = !command || !mode || ((mode[0] != 't' && mode[0] != 'b') || mode[1]);
+    const char* command = checkstring(state, 1);
+    const char* mode = optstring(state, 2, "t");
+    if (!command || !mode)
+        return 0;
+    if ((mode[0] != 'b' && mode[0] != 't') || mode[1])
+        return luaL_error(state, "invalid mode " LUA_QS
+                          " (use " LUA_QL("t") ", " LUA_QL("b") ", or nil)", mode);
 
     luaL_Stream* pr = nullptr;
     luaL_Stream* pw = nullptr;
     pipe_pair pipe_stdin;
     pipe_pair pipe_stdout;
 
-    if (!failed)
-    {
-        pr = (luaL_Stream*)lua_newuserdata(state, sizeof(luaL_Stream));
-        luaL_setmetatable(state, LUA_FILEHANDLE);
-        pr->f = nullptr;
-        pr->closef = nullptr;
+    pr = (luaL_Stream*)lua_newuserdata(state, sizeof(luaL_Stream));
+    luaL_setmetatable(state, LUA_FILEHANDLE);
+    pr->f = nullptr;
+    pr->closef = nullptr;
 
-        pw = (luaL_Stream*)lua_newuserdata(state, sizeof(luaL_Stream));
-        luaL_setmetatable(state, LUA_FILEHANDLE);
-        pw->f = nullptr;
-        pw->closef = nullptr;
+    pw = (luaL_Stream*)lua_newuserdata(state, sizeof(luaL_Stream));
+    luaL_setmetatable(state, LUA_FILEHANDLE);
+    pw->f = nullptr;
+    pw->closef = nullptr;
 
-        bool binary = (mode[0] == 'b');
-        failed = (!pipe_stdin.init(true/*write*/, binary) ||
-                  !pipe_stdout.init(false/*write*/, binary));
-    }
+    bool binary = (mode[0] == 'b');
+    bool failed = (!pipe_stdin.init(true/*write*/, binary) ||
+                   !pipe_stdout.init(false/*write*/, binary));
 
     if (!failed)
     {

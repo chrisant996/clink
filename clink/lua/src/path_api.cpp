@@ -23,13 +23,15 @@
 /// used.
 static int normalise(lua_State* state)
 {
-    const char* path = get_string(state, 1);
-    if (path == nullptr)
+    const char* path = checkstring(state, 1);
+    if (!path)
         return 0;
 
     int separator = 0;
-    if (const char* sep_str = get_string(state, 2))
+    if (const char* sep_str = optstring(state, 2, ""))
         separator = sep_str[0];
+    else
+        return 0;
 
     str<288> out(path);
     path::normalise(out, separator);
@@ -46,8 +48,8 @@ static int normalise(lua_State* state)
 /// -show:  path.getbasename(nil)               -- returns nil
 static int get_base_name(lua_State* state)
 {
-    const char* path = get_string(state, 1);
-    if (path == nullptr)
+    const char* path = checkstring(state, 1);
+    if (!path)
         return 0;
 
     str<288> out;
@@ -80,7 +82,11 @@ static int get_base_name(lua_State* state)
 /// -show:  path.getdirectory([[\\foo\bar\dir\]])   -- returns "\\foo\bar\dir"
 static int get_directory(lua_State* state)
 {
-    str<288> out(get_string(state, 1));
+    const char* path = checkstring(state, 1);
+    if (!path)
+        return 0;
+
+    str<288> out(path);
     if (out.length() == 0)
         return 0;
 
@@ -101,7 +107,11 @@ static int get_directory(lua_State* state)
 /// -show:  path.getdrive(nil)              -- returns nil
 static int get_drive(lua_State* state)
 {
-    str<8> out(get_string(state, 1));
+    const char* path = checkstring(state, 1);
+    if (!path)
+        return 0;
+
+    str<8> out(path);
     if (out.length() == 0)
         return 0;
 
@@ -122,8 +132,8 @@ static int get_drive(lua_State* state)
 /// -show:  path.getextension(nil)          -- returns nil
 static int get_extension(lua_State* state)
 {
-    const char* path = get_string(state, 1);
-    if (path == nullptr)
+    const char* path = checkstring(state, 1);
+    if (!path)
         return 0;
 
     str<32> ext;
@@ -141,8 +151,8 @@ static int get_extension(lua_State* state)
 /// -show:  path.getname(nil)               -- returns nil
 static int get_name(lua_State* state)
 {
-    const char* path = get_string(state, 1);
-    if (path == nullptr)
+    const char* path = checkstring(state, 1);
+    if (!path)
         return 0;
 
     str<> name;
@@ -163,12 +173,9 @@ static int get_name(lua_State* state)
 /// -show:  path.join("/foo", nil)      -- returns nil
 static int join(lua_State* state)
 {
-    const char* lhs = get_string(state, 1);
-    if (lhs == nullptr)
-        return 0;
-
-    const char* rhs = get_string(state, 2);
-    if (rhs == nullptr)
+    const char* lhs = checkstring(state, 1);
+    const char* rhs = checkstring(state, 2);
+    if (!lhs || !rhs)
         return 0;
 
     str<288> out;
@@ -190,8 +197,8 @@ static int join(lua_State* state)
 /// efficient than getting and parsing %PATHEXT% each time.
 static int is_exec_ext(lua_State* state)
 {
-    const char* path = get_string(state, 1);
-    if (path == nullptr)
+    const char* path = checkstring(state, 1);
+    if (!path)
         return 0;
 
     bool is_exec = path::is_executable_extension(path);
@@ -226,8 +233,8 @@ static int is_exec_ext(lua_State* state)
 /// -show:  parent,child = path.toparent([[\\foo\bar\dir\]])-- returns "\\foo\bar", "dir"
 static int to_parent(lua_State* state)
 {
-    const char* path = get_string(state, 1);
-    if (path == nullptr)
+    const char* path = checkstring(state, 1);
+    if (!path)
         return 0;
 
     str<> parent;

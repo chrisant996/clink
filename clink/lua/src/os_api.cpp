@@ -12,10 +12,34 @@
 #include <core/str.h>
 #include <process/process.h>
 #include <ntverp.h> // for VER_PRODUCTMAJORVERSION to deduce SDK version
+#include <assert.h>
 
 //------------------------------------------------------------------------------
 extern setting_bool g_glob_hidden;
 extern setting_bool g_glob_system;
+
+//------------------------------------------------------------------------------
+extern "C" void __cdecl __acrt_errno_map_os_error(unsigned long const oserrno);
+static void map_errno() { __acrt_errno_map_os_error(GetLastError()); }
+static void map_errno(unsigned long const oserrno) { __acrt_errno_map_os_error(oserrno); }
+
+//------------------------------------------------------------------------------
+static int lua_osresult(lua_State *state, bool stat, const char *tag=nullptr)
+{
+    int en = errno;  /* calls to Lua API may change this value */
+
+    lua_pushboolean(state, stat);
+
+    if (stat)
+        return 1;
+
+    if (tag)
+        lua_pushfstring(state, "%s: %s", tag, strerror(en));
+    else
+        lua_pushfstring(state, "%s", strerror(en));
+    lua_pushinteger(state, en);
+    return 3;
+}
 
 
 
@@ -23,6 +47,10 @@ extern setting_bool g_glob_system;
 static int close_file(lua_State *state)
 {
     luaL_Stream* p = ((luaL_Stream*)luaL_checkudata(state, 1, LUA_FILEHANDLE));
+    assert(p);
+    if (!p)
+        return 0;
+
     int res = fclose(p->f);
     return luaL_fileresult(state, (res == 0), NULL);
 }
@@ -37,12 +65,12 @@ static int close_file(lua_State *state)
 /// whether it was successful.
 int set_current_dir(lua_State* state)
 {
-    bool ok = false;
-    if (const char* dir = get_string(state, 1))
-        ok = os::set_current_dir(dir);
+    const char* dir = checkstring(state, 1);
+    if (!dir)
+        return 0;
 
-    lua_pushboolean(state, (ok == true));
-    return 1;
+    bool ok = os::set_current_dir(dir);
+    return lua_osresult(state, ok, dir);
 }
 
 //------------------------------------------------------------------------------
@@ -66,12 +94,12 @@ int get_current_dir(lua_State* state)
 /// was successful.
 static int make_dir(lua_State* state)
 {
-    bool ok = false;
-    if (const char* dir = get_string(state, 1))
-        ok = os::make_dir(dir);
+    const char* dir = checkstring(state, 1);
+    if (!dir)
+        return 0;
 
-    lua_pushboolean(state, (ok == true));
-    return 1;
+    bool ok = os::make_dir(dir);
+    return lua_osresult(state, ok, dir);
 }
 
 //------------------------------------------------------------------------------
@@ -82,12 +110,12 @@ static int make_dir(lua_State* state)
 /// was successful.
 static int remove_dir(lua_State* state)
 {
-    bool ok = false;
-    if (const char* dir = get_string(state, 1))
-        ok = os::remove_dir(dir);
+    const char* dir = checkstring(state, 1);
+    if (!dir)
+        return 0;
 
-    lua_pushboolean(state, (ok == true));
-    return 1;
+    bool ok = os::remove_dir(dir);
+    return lua_osresult(state, ok, dir);
 }
 
 //------------------------------------------------------------------------------
@@ -97,8 +125,8 @@ static int remove_dir(lua_State* state)
 /// Returns whether <span class="arg">path</span> is a directory.
 int is_dir(lua_State* state)
 {
-    const char* path = get_string(state, 1);
-    if (path == nullptr)
+    const char* path = checkstring(state, 1);
+    if (!path)
         return 0;
 
     lua_pushboolean(state, (os::get_path_type(path) == os::path_type_dir));
@@ -112,8 +140,8 @@ int is_dir(lua_State* state)
 /// Returns whether <span class="arg">path</span> is a file.
 static int is_file(lua_State* state)
 {
-    const char* path = get_string(state, 1);
-    if (path == nullptr)
+    const char* path = checkstring(state, 1);
+    if (!path)
         return 0;
 
     lua_pushboolean(state, (os::get_path_type(path) == os::path_type_file));
@@ -127,8 +155,8 @@ static int is_file(lua_State* state)
 /// Returns whether <span class="arg">path</span> has the hidden attribute set.
 static int is_hidden(lua_State* state)
 {
-    const char* path = get_string(state, 1);
-    if (path == nullptr)
+    const char* path = checkstring(state, 1);
+    if (!path)
         return 0;
 
     lua_pushboolean(state, os::is_hidden(path));
@@ -143,20 +171,12 @@ static int is_hidden(lua_State* state)
 /// successful.
 static int unlink(lua_State* state)
 {
-    const char* path = get_string(state, 1);
-    if (path == nullptr)
+    const char* path = checkstring(state, 1);
+    if (!path)
         return 0;
 
-    if (os::unlink(path))
-    {
-        lua_pushboolean(state, 1);
-        return 1;
-    }
-
-    lua_pushnil(state);
-    lua_pushliteral(state, "error");
-    lua_pushinteger(state, 1);
-    return 3;
+    bool ok = os::unlink(path);
+    return lua_osresult(state, ok, path);
 }
 
 //------------------------------------------------------------------------------
@@ -168,18 +188,13 @@ static int unlink(lua_State* state)
 /// <span class="arg">dest</span> file.
 static int move(lua_State* state)
 {
-    const char* src = get_string(state, 1);
-    const char* dest = get_string(state, 2);
-    if (src != nullptr && dest != nullptr && os::move(src, dest))
-    {
-        lua_pushboolean(state, 1);
-        return 1;
-    }
+    const char* src = checkstring(state, 1);
+    const char* dest = checkstring(state, 2);
+    if (!src || !dest)
+        return 0;
 
-    lua_pushnil(state);
-    lua_pushliteral(state, "error");
-    lua_pushinteger(state, 1);
-    return 3;
+    bool ok = os::move(src, dest);
+    return lua_osresult(state, ok);
 }
 
 //------------------------------------------------------------------------------
@@ -191,13 +206,13 @@ static int move(lua_State* state)
 /// <span class="arg">dest</span> file.
 static int copy(lua_State* state)
 {
-    const char* src = get_string(state, 1);
-    const char* dest = get_string(state, 2);
-    if (src == nullptr || dest == nullptr)
+    const char* src = checkstring(state, 1);
+    const char* dest = checkstring(state, 2);
+    if (!src || !dest)
         return 0;
 
-    lua_pushboolean(state, (os::copy(src, dest) == true));
-    return 1;
+    bool ok = os::copy(src, dest);
+    return lua_osresult(state, ok);
 }
 
 //------------------------------------------------------------------------------
@@ -211,8 +226,8 @@ static void add_type_tag(str_base& out, const char* tag)
 //------------------------------------------------------------------------------
 int glob_impl(lua_State* state, bool dirs_only, bool back_compat=false)
 {
-    const char* mask = get_string(state, 1);
-    if (mask == nullptr)
+    const char* mask = checkstring(state, 1);
+    if (!mask)
         return 0;
 
     bool extrainfo = back_compat ? false : lua_toboolean(state, 2);
@@ -321,8 +336,10 @@ int glob_files(lua_State* state)
 /// from %USERPROFILE%.
 int get_env(lua_State* state)
 {
-    const char* name = get_string(state, 1);
-    if (name == nullptr)
+    // Some cmder-powerline-prompt scripts pass nil.  Allow nil for backward
+    // compatibility.
+    const char* name = optstring(state, 1, "");
+    if (!name || !*name)
         return 0;
 
     str<128> value;
@@ -342,14 +359,16 @@ int get_env(lua_State* state)
 /// <span class="arg">value</span> and returns whether it was successful.
 int set_env(lua_State* state)
 {
-    const char* name = get_string(state, 1);
-    const char* value = get_string(state, 2);
-    if (name == nullptr)
+    const char* name = checkstring(state, 1);
+    const char* value = optstring(state, 2, reinterpret_cast<const char*>(-1));
+    if (!name || !value)
         return 0;
 
+    if (value == reinterpret_cast<const char*>(-1))
+        value = nullptr;
+
     bool ok = os::set_env(name, value);
-    lua_pushboolean(state, (ok == true));
-    return 1;
+    return lua_osresult(state, ok);
 }
 
 //------------------------------------------------------------------------------
@@ -425,17 +444,19 @@ static int get_host(lua_State* state)
 int get_alias(lua_State* state)
 {
 #if !defined(__MINGW32__) && !defined(__MINGW64__)
-    const char* name = get_string(state, 1);
-    if (name == nullptr)
+    const char* name = checkstring(state, 1);
+    if (!name)
         return 0;
 
     str<> out;
     if (!os::get_alias(name, out))
-        return 0;
+        return luaL_fileresult(state, false, name);
 
     lua_pushlstring(state, out.c_str(), out.length());
-#endif // __MINGW32__
     return 1;
+#else
+    return 0;
+#endif // __MINGW32__
 }
 
 //------------------------------------------------------------------------------
@@ -555,7 +576,10 @@ int get_battery_status(lua_State* state)
 {
     SYSTEM_POWER_STATUS status;
     if (!GetSystemPowerStatus(&status))
-        return 0;
+    {
+        map_errno();
+        return luaL_fileresult(state, false, nullptr);
+    }
 
     int level = -1;
     if (status.BatteryLifePercent <= 100)
@@ -637,13 +661,13 @@ int get_pid(lua_State* state)
 /// or etc.
 static int create_tmp_file(lua_State *state)
 {
-    const char* prefix = luaL_optstring(state, 1, "");
-    const char* ext = luaL_optstring(state, 2, "");
-    const char* path = luaL_optstring(state, 3, "");
-    const char* mode = luaL_optstring(state, 4, "t");
+    const char* prefix = optstring(state, 1, "");
+    const char* ext = optstring(state, 2, "");
+    const char* path = optstring(state, 3, "");
+    const char* mode = optstring(state, 4, "t");
     if (!prefix || !ext || !path || !mode)
         return 0;
-    if ((mode[0] != 'b' && mode[1] != 't') || mode[1])
+    if ((mode[0] != 'b' && mode[0] != 't') || mode[1])
         return luaL_error(state, "invalid mode " LUA_QS
                           " (use " LUA_QL("t") ", " LUA_QL("b") ", or nil)", mode);
 

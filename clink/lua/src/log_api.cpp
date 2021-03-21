@@ -22,8 +22,8 @@ int log_info(lua_State* state)
     const char* source = ar.source ? ar.source : "?";
     int line = ar.currentline;
 
-    bool ok = false;
-    if (const char* message = get_string(state, 1))
+    const char* message = checkstring(state, 1);
+    if (message)
         logger::info(source, line, "%s", message);
 
     return 0;

@@ -53,11 +53,11 @@ static SHORT GetConsoleNumLines(const CONSOLE_SCREEN_BUFFER_INFO& csbi)
 /// </table>
 static int scroll(lua_State* state)
 {
-    if (!lua_isstring(state, 1)) return 0;
-    if (!lua_isnumber(state, 2)) return 0;
-
-    const char* mode = lua_tostring(state, 1);
-    int amount = int(lua_tointeger(state, 2));
+    bool isnum;
+    const char* mode = checkstring(state, 1);
+    int amount = checkinteger(state, 2, &isnum);
+    if (!mode || !isnum)
+        return 0;
 
     SCRMODE scrmode = SCR_BYLINE;
     if (stricmp(mode, "page") == 0)
@@ -146,7 +146,9 @@ static int get_line_text(lua_State* state)
     if (!g_printer)
         return 0;
 
-    if (!lua_isnumber(state, 1))
+    bool isnum;
+    SHORT line = checkinteger(state, 1, &isnum) - 1;
+    if (!isnum)
         return 0;
 
     CONSOLE_SCREEN_BUFFER_INFO csbi;
@@ -154,7 +156,6 @@ static int get_line_text(lua_State* state)
     if (!GetConsoleScreenBufferInfo(h, &csbi))
         return 0;
 
-    SHORT line = int(lua_tointeger(state, 1)) - 1;
     line = min<int>(line, GetConsoleNumLines(csbi));
     line = max<int>(line, 0);
 
@@ -194,10 +195,10 @@ static int get_title(lua_State* state)
 /// Sets the console title text.
 static int set_title(lua_State* state)
 {
-    if (!lua_isstring(state, 1))
+    const char* title = checkstring(state, 1);
+    if (!title)
         return 0;
 
-    const char* title = lua_tostring(state, 1);
     set_console_title(title);
     return 0;
 }
@@ -213,7 +214,9 @@ static int is_line_default_color(lua_State* state)
     if (!g_printer)
         return 0;
 
-    if (!lua_isnumber(state, 1))
+    bool isnum;
+    SHORT line = checkinteger(state, 1, &isnum) - 1;
+    if (!isnum)
         return 0;
 
     CONSOLE_SCREEN_BUFFER_INFO csbi;
@@ -221,7 +224,6 @@ static int is_line_default_color(lua_State* state)
     if (!GetConsoleScreenBufferInfo(h, &csbi))
         return 0;
 
-    SHORT line = int(lua_tointeger(state, 1)) - 1;
     line = min<int>(line, GetConsoleNumLines(csbi));
     line = max<int>(line, 0);
 
@@ -279,11 +281,13 @@ static int line_has_color(lua_State* state)
     if (!g_printer)
         return 0;
 
-    if (!lua_isnumber(state, 1))
-        return 0;
-    if (!lua_isnumber(state, 2) && !lua_istable(state, 2))
-        return 0;
-    if (!lua_isnil(state, 3) && !lua_isstring(state, 3))
+    bool isnum;
+    SHORT line = checkinteger(state, 1, &isnum) - 1;
+    bool has_attrs = lua_isnumber(state, 2) || lua_istable(state, 2);
+    if (!has_attrs)
+        luaL_argerror(state, 2, "must be number or table of numbers");
+    const char* mask_name = optstring(state, 3, "");
+    if (!isnum || !has_attrs || !mask_name)
         return 0;
 
     CONSOLE_SCREEN_BUFFER_INFO csbi;
@@ -291,19 +295,15 @@ static int line_has_color(lua_State* state)
     if (!GetConsoleScreenBufferInfo(h, &csbi))
         return 0;
 
-    SHORT line = int(lua_tointeger(state, 1)) - 1;
     line = min<int>(line, GetConsoleNumLines(csbi));
     line = max<int>(line, 0);
 
     BYTE mask = 0xff;
+    if (mask_name && *mask_name)
     {
-        const char* mask_name = lua_tostring(state, 3);
-        if (mask_name)
-        {
-            if (strcmp(mask_name, "fore") == 0)         mask = 0x0f;
-            else if (strcmp(mask_name, "back") == 0)    mask = 0xf0;
-            else if (strcmp(mask_name, "both") == 0)    mask = 0xff;
-        }
+        if (strcmp(mask_name, "fore") == 0)         mask = 0x0f;
+        else if (strcmp(mask_name, "back") == 0)    mask = 0xf0;
+        else if (strcmp(mask_name, "both") == 0)    mask = 0xff;
     }
 
     int result;
@@ -349,7 +349,9 @@ static int find_line(lua_State* state, int direction)
     int arg = 1;
 
     // Starting line number is required.
-    if (!lua_isnumber(state, arg))
+    bool isnum;
+    SHORT starting_line = checkinteger(state, arg, &isnum) - 1;
+    if (!isnum)
         return 0;
 
     CONSOLE_SCREEN_BUFFER_INFO csbi;
@@ -359,7 +361,6 @@ static int find_line(lua_State* state, int direction)
 
     SHORT num_lines = GetConsoleNumLines(csbi);
 
-    SHORT starting_line = int(lua_tointeger(state, arg)) - 1;
     starting_line = min<int>(starting_line, num_lines);
     starting_line = max<int>(starting_line, 0);
     arg++;
@@ -426,7 +427,7 @@ static int find_line(lua_State* state, int direction)
         const char* mask_name = lua_tostring(state, arg);
         arg++;
 
-        if (mask_name)
+        if (mask_name && *mask_name)
         {
             if (strcmp(mask_name, "fore") == 0)         mask = 0x0f;
             else if (strcmp(mask_name, "back") == 0)    mask = 0xf0;

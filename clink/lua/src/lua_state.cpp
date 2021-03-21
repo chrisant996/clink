@@ -60,6 +60,15 @@ static setting_bool g_lua_breakonerror(
     "Breaks into the Lua debugger on Lua errors, if lua.debug is enabled.",
     false);
 
+setting_bool g_lua_strict(
+    "lua.strict",
+    "Fail on argument errors",
+    "When enabled, argument errors cause Lua scripts to fail.  This may expose\n"
+    "bugs in some older scripts, causing them to fail where they used to succeed.\n"
+    "In that case you can try turning this off, but please alert the script owner\n"
+    "about the issue so they can fix the script.",
+    true);
+
 
 
 //------------------------------------------------------------------------------
@@ -76,10 +85,54 @@ void log_lua_initialise(lua_state&);
 
 
 //------------------------------------------------------------------------------
-const char* get_string(lua_State* state, int index)
+int checkinteger(lua_State* state, int index, bool* pisnum)
 {
+    int isnum;
+    lua_Integer d = lua_tointegerx(state, index, &isnum);
+    if (pisnum)
+        *pisnum = !!isnum;
+    if (isnum)
+        return int(d);
+
+    if (g_lua_strict.get())
+        return int(luaL_checkinteger(state, index));
+
+    return 0;
+}
+
+//------------------------------------------------------------------------------
+int optinteger(lua_State* state, int index, int default, bool* pisnum)
+{
+    if (lua_isnoneornil(state, index))
+    {
+        if (pisnum)
+            *pisnum = true;
+        return default;
+    }
+
+    return checkinteger(state, index, pisnum);
+}
+
+//------------------------------------------------------------------------------
+const char* checkstring(lua_State* state, int index)
+{
+    if (g_lua_strict.get())
+        return luaL_checkstring(state, index);
+
     if (lua_gettop(state) < index || !lua_isstring(state, index))
         return nullptr;
+
+    return lua_tostring(state, index);
+}
+
+//------------------------------------------------------------------------------
+const char* optstring(lua_State* state, int index, const char* default)
+{
+    if (g_lua_strict.get())
+        return luaL_optstring(state, index, default);
+
+    if (lua_gettop(state) < index || !lua_isstring(state, index))
+        return default;
 
     return lua_tostring(state, index);
 }
@@ -292,12 +345,6 @@ int lua_state::pcall(lua_State* L, int nargs, int nresults)
 }
 
 //------------------------------------------------------------------------------
-const char* lua_state::get_string(int index) const
-{
-    return ::get_string(m_state, index);
-}
-
-//------------------------------------------------------------------------------
 #ifdef DEBUG
 void dump_lua_stack(lua_State* state, int pos)
 {
@@ -444,7 +491,7 @@ bool lua_state::send_event_cancelable_string_inout(const char* event_name, const
     if (!send_event_internal(event_name, "_send_event_cancelable_string_inout", 1, 1))
         return false;
 
-    const char* result = get_string(-1);
+    const char* result = lua_isstring(m_state, -1) ? lua_tostring(m_state, -1) : nullptr;
     if (result)
         out = result;
 

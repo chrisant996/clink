@@ -18,8 +18,8 @@
 /// to lowercase and comparing the results.
 static int equalsi(lua_State* state)
 {
-    const char* a = get_string(state, 1);
-    const char* b = get_string(state, 2);
+    const char* a = checkstring(state, 1);
+    const char* b = checkstring(state, 2);
     if (!a || !b)
         return 0;
 
@@ -34,24 +34,25 @@ static int equalsi(lua_State* state)
 /// -name:  string.explode
 /// -arg:   text:string
 /// -arg:   [delims:string]
+/// -arg:   [quote_pair:string]
 /// -ret:   table
 /// Splits <span class="arg">text</span> delimited by
 /// <span class="arg">delims</span> (or by spaces if not provided) and returns a
 /// table containing the substrings.
+///
+/// The optional <span class="arg">quote_pair</span> can provide a beginning
+/// quote character and an ending quote character.  If only one character is
+/// provided it is used as both a beginning and ending quote character.
 static int explode(lua_State* state)
 {
-    const char* in = get_string(state, 1);
-    if (in == nullptr)
+    const char* in = checkstring(state, 1);
+    const char* delims = optstring(state, 2, " ");
+    const char* quote_pair = optstring(state, 3, "");
+    if (!in || !delims || !quote_pair)
         return 0;
 
-    const char* delims = get_string(state, 2);
-    if (delims == nullptr)
-        delims = " ";
-
     str_tokeniser tokens(in, delims);
-
-    if (const char* quote_pair = get_string(state, 3))
-        tokens.add_quote_pair(quote_pair);
+    tokens.add_quote_pair(quote_pair);
 
     lua_createtable(state, 16, 0);
 
@@ -74,8 +75,8 @@ static int explode(lua_State* state)
 /// Returns a hash of the input <span class="arg">text</span>.
 static int hash(lua_State* state)
 {
-    const char* in = get_string(state, 1);
-    if (in == nullptr)
+    const char* in = checkstring(state, 1);
+    if (!in)
         return 0;
 
     lua_pushinteger(state, str_hash(in));
@@ -95,8 +96,8 @@ static int hash(lua_State* state)
 /// and <code>match.ignore_accents</code> Clink settings.
 static int match_len(lua_State* state)
 {
-    const char* a = get_string(state, 1);
-    const char* b = get_string(state, 2);
+    const char* a = checkstring(state, 1);
+    const char* b = checkstring(state, 2);
     if (!a || !b)
         return 0;
 
