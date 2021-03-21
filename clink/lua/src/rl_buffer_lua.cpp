@@ -97,11 +97,12 @@ int rl_buffer_lua::get_cursor(lua_State* state)
 /// multi-byte Unicode character may have undesirable results.
 int rl_buffer_lua::set_cursor(lua_State* state)
 {
-    if (!lua_isnumber(state, 1))
+    bool isnum;
+    unsigned int old = m_rl_buffer.get_cursor();
+    unsigned int set = checkinteger(state, 1, &isnum) - 1;
+    if (!isnum)
         return 0;
 
-    unsigned int old = m_rl_buffer.get_cursor();
-    unsigned int set = int(lua_tointeger(state, 1)) - 1;
     m_rl_buffer.set_cursor(set);
 
     lua_pushinteger(state, old);
@@ -115,10 +116,11 @@ int rl_buffer_lua::set_cursor(lua_State* state)
 /// line.
 int rl_buffer_lua::insert(lua_State* state)
 {
-    if (!lua_isstring(state, 1))
+    const char* text = checkstring(state, 1);
+    if (!text)
         return 0;
 
-    m_rl_buffer.insert(lua_tostring(state, 1));
+    m_rl_buffer.insert(text);
     return 0;
 }
 
@@ -133,12 +135,11 @@ int rl_buffer_lua::insert(lua_State* state)
 /// Unicode character may have undesirable results.
 int rl_buffer_lua::remove(lua_State* state)
 {
-    if (!lua_isnumber(state, 1) ||
-        !lua_isnumber(state, 2))
+    bool isnum1, isnum2;
+    unsigned int from = checkinteger(state, 1, &isnum1) - 1;
+    unsigned int to = checkinteger(state, 2, &isnum2) - 1;
+    if (!isnum1 || !isnum2)
         return 0;
-
-    unsigned int from = int(lua_tointeger(state, 1)) - 1;
-    unsigned int to = int(lua_tointeger(state, 2)) - 1;
 
     m_rl_buffer.remove(from, to);
     return 0;
