@@ -2,6 +2,22 @@
 
 ## Releases from [chrisant996/clink](https://github.com/chrisant996/clink) fork
 
+### v1.1.42
+
+- Added `clink history --bare` flag to omit history item numbers.
+- Added several Lua functions:
+    - `io.popenrw()` is like `io.popen()`, but returns both a read file handle and a write file handle (see documentation for important usage warning).
+    - `os.createtmpfile()` creates a unique named temporary file, with control over the prefix and suffix and path.
+    - `os.getfullpathname()` to get the full path name for a file.
+    - `os.getlongpathname()` to get the long path name for a file.
+    - `os.getshortpathname()` to get the 8.3 short path name (if available) for a file.
+- Improved argument validation for Clink's Lua APIs.  This could expose bugs in existing scripts, so there is also a `lua.strict` setting that can be disabled to revert back to loose argument validation.
+- Updated documentation.
+- Fixed `clink history compact` so that it forces compaction as intended.
+- Fixed completion for `clink set` so that filename completion works in string settings.
+- Fixed backwards return value from `rl.invokecommand()`.
+- Fixed console input/output modes across `luafunc:` key bindings, in case the Lua functions spawn a process that alters the console mode without restoring it.
+
 ### v1.1.41
 
 - Added `terminal.adjust_cursor_style` setting as a workaround to avoid interfering with the Windows 10 Cursor Shape console setting.  There are several trade-offs, though.
