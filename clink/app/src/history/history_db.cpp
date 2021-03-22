@@ -717,6 +717,7 @@ class read_line_iter
 public:
                             read_line_iter(const history_db& db, unsigned int this_size);
     history_db::line_id     next(str_iter& out);
+    unsigned int            get_bank() const { return m_bank_index; }
 
 private:
     bool                    next_bank();
@@ -724,7 +725,7 @@ private:
     read_lock               m_lock;
     read_lock::line_iter    m_line_iter;
     unsigned int            m_buffer_size;
-    unsigned int            m_bank_index = 0;
+    unsigned int            m_bank_index = bank_none;
 };
 
 //------------------------------------------------------------------------------
@@ -738,10 +739,9 @@ read_line_iter::read_line_iter(const history_db& db, unsigned int this_size)
 //------------------------------------------------------------------------------
 bool read_line_iter::next_bank()
 {
-    while (m_bank_index < sizeof_array(m_db.m_bank_handles))
+    while (++m_bank_index < sizeof_array(m_db.m_bank_handles))
     {
-        unsigned int bank_index = m_bank_index++;
-        bank_handles handles = m_db.get_bank(bank_index);
+        bank_handles handles = m_db.get_bank(m_bank_index);
         if (handles)
         {
             char* buffer = (char*)(this + 1);
@@ -797,6 +797,12 @@ history_db::line_id history_db::iter::next(str_iter& out)
     return impl ? ((read_line_iter*)impl)->next(out) : 0;
 }
 
+//------------------------------------------------------------------------------
+unsigned int history_db::iter::get_bank() const
+{
+    return impl ? ((read_line_iter*)impl)->get_bank() : bank_none;
+}
+
 
 
 //------------------------------------------------------------------------------
@@ -835,7 +841,7 @@ static bool extract_ctag(const read_lock& lock, concurrency_tag& tag)
 }
 
 //------------------------------------------------------------------------------
-static void rewrite_master_bank(write_lock& lock)
+static void rewrite_master_bank(write_lock& lock, size_t* _kept=nullptr, size_t* _deleted=nullptr)
 {
     history_read_buffer buffer;
 
@@ -845,6 +851,11 @@ static void rewrite_master_bank(write_lock& lock)
     std::vector<auto_free_str> lines_to_keep;
     while (iter.next(out))
         lines_to_keep.push_back(std::move(auto_free_str(out.get_pointer(), out.length())));
+
+    if (_kept)
+        *_kept = lines_to_keep.size();
+    if (_deleted)
+        *_deleted = iter.get_deleted_count();
 
     // Clear and write new tag.
     concurrency_tag tag;
@@ -858,7 +869,7 @@ static void rewrite_master_bank(write_lock& lock)
 }
 
 //------------------------------------------------------------------------------
-static void migrate_history(const char* path)
+static void migrate_history(const char* path, bool m_diagnostic)
 {
     str<280> removals;
     removals = path;
@@ -881,6 +892,7 @@ static void migrate_history(const char* path)
         str<> old_file;
         path::get_directory(path, old_file);
         path::append(old_file, ".history");
+        DIAG("... migrate from '%s'\n", old_file.c_str());
 
         // Open the old history file and try to migrate.
         FILE* old = fopen(old_file.c_str(), "r");
@@ -976,6 +988,7 @@ void history_db::reap()
                 continue;
 
         path.truncate(path.length() - 1);
+        DIAG("... reap session file '%s'\n", path.c_str());
 
         removals = path.c_str();
         removals << ".removals";
@@ -986,6 +999,10 @@ void history_db::reap()
             bank_handles reap_handles;
             reap_handles.m_handle_lines = open_file(path.c_str());
             reap_handles.m_handle_removals = open_file(removals.c_str(), true/*if_exists*/);
+
+            if (reap_handles.m_handle_removals)
+                DIAG("... reap session file '%s'\n", removals.c_str());
+
             {
                 // WARNING: ALWAYS LOCK MASTER BEFORE SESSION!
                 bank_handles master_handles = get_bank(bank_master);
@@ -998,6 +1015,7 @@ void history_db::reap()
                     src.apply_removals(dest);
                 }
             }
+
             reap_handles.close();
         }
 
@@ -1014,10 +1032,11 @@ void history_db::initialise()
 
     str<280> path;
     get_file_path(path, false);
+    DIAG("... master file '%s'\n", path.c_str());
 
     // Migrate existing history.
     if (os::get_path_type(path.c_str()) == os::path_type_invalid)
-        migrate_history(path.c_str());
+        migrate_history(path.c_str(), m_diagnostic);
 
     // Open the master bank file.
     m_bank_handles[bank_master].m_handle_lines = open_file(path.c_str());
@@ -1045,11 +1064,15 @@ void history_db::initialise()
         return;
 
     get_file_path(path, true);
+    DIAG("... session file '%s'\n", path.c_str());
+
     m_bank_handles[bank_session].m_handle_lines = open_file(path.c_str());
     if (g_dupe_mode.get() == 2) // 'erase_prev'
     {
         str<280> removals;
         removals << path << ".removals";
+        DIAG("... removals file '%s'\n", removals.c_str());
+
         m_bank_handles[bank_session].m_handle_removals = open_file(removals.c_str());
     }
 
@@ -1112,9 +1135,13 @@ void history_db::load_internal()
 
     history_read_buffer buffer;
 
+    DIAG("... loading history\n");
+
     const history_db& const_this = *this;
     const_this.for_each_bank([&] (unsigned int bank_index, const read_lock& lock)
     {
+        DIAG("... ... %s bank", bank_index == bank_master ? "master" : "session");
+
         if (bank_index == bank_master)
         {
             m_master_ctag.clear();
@@ -1127,12 +1154,15 @@ void history_db::load_internal()
 
         str_iter out;
         line_id_impl id;
+        unsigned int num_lines = 0;
         while (id = iter.next(out))
         {
             const char* line = out.get_pointer();
             int buffer_offset = int(line - buffer.data());
             buffer.data()[buffer_offset + out.length()] = '\0';
             add_history(line);
+
+            num_lines++;
 
             id.bank_index = bank_index;
             m_index_map.push_back(id.outer);
@@ -1146,8 +1176,12 @@ void history_db::load_internal()
         if (bank_index == bank_master)
             m_master_deleted_count = iter.get_deleted_count();
 
+        DIAG(":  lines active %u / deleted %u\n", num_lines, iter.get_deleted_count());
+
         return true;
     });
+
+    DIAG("... total lines active %zu\n", m_index_map.size());
 }
 
 //------------------------------------------------------------------------------
@@ -1167,8 +1201,12 @@ void history_db::load_rl_history(bool can_clean)
 //------------------------------------------------------------------------------
 void history_db::clear()
 {
+    DIAG("... clearing history\n");
+
     for_each_bank([&] (unsigned int bank_index, write_lock& lock)
     {
+        DIAG("... ... %s bank\n", bank_index == bank_master ? "master" : "session");
+
         lock.clear();
         if (bank_index == bank_master)
         {
@@ -1190,13 +1228,14 @@ void history_db::compact(bool force)
     size_t limit = get_max_history();
     if (limit > 0 && !force)
     {
-        LOG("History:  %u active, %u deleted", m_master_len, m_master_deleted_count);
+        LOG("History:  %zu active, %zu deleted", m_master_len, m_master_deleted_count);
+        DIAG("... prune:  lines active %zu / limit %zu\n", m_master_len, limit);
 
         // Delete oldest history entries that exceed it.  This only marks them as
         // deleted; compacting is a separate operation.
         if (m_master_len > limit)
         {
-            int removed = 0;
+            unsigned int removed = 0;
             while (m_master_len > limit)
             {
                 line_id_impl id;
@@ -1210,11 +1249,13 @@ void history_db::compact(bool force)
                 if (!remove(m_index_map[0]))
                 {
                     LOG("failed to remove");
+                    DIAG("... ... failed to remove line at offset %u\n", id.offset);
                     break;
                 }
                 removed++;
             }
             LOG("History:  removed %u", removed);
+            DIAG("... ... lines removed %u\n", removed);
         }
     }
 
@@ -1223,9 +1264,17 @@ void history_db::compact(bool force)
     size_t threshold = (limit ? max(limit, m_min_compact_threshold) : 2500);
     if (force || m_master_deleted_count > threshold)
     {
+        DIAG("... compact:  rewrite master bank\n");
+
+        size_t kept, deleted;
         write_lock lock(get_bank(bank_master));
-        rewrite_master_bank(lock);
-        LOG("Compacted history:  %u active, %u deleted", m_master_len, m_master_deleted_count);
+        rewrite_master_bank(lock, &kept, &deleted);
+        LOG("Compacted history:  %zu active, %zu deleted", kept, deleted);
+        DIAG("... ... lines active %zu / purged %zu\n", kept, deleted);
+    }
+    else
+    {
+        DIAG("... skip compact; threshold is %zu, actual marked for delete is %zu\n", threshold, m_master_deleted_count);
     }
 }
 
@@ -1416,4 +1465,11 @@ history_db::iter history_db::read_lines(char* buffer, unsigned int size)
         ret.impl = uintptr_t(new (buffer) read_line_iter(*this, size));
 
     return ret;
+}
+
+//------------------------------------------------------------------------------
+bool history_db::has_bank(unsigned char bank) const
+{
+    assert(bank < sizeof_array(m_bank_handles));
+    return !!m_bank_handles[bank].m_handle_lines;
 }

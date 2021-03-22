@@ -13,9 +13,13 @@
 #include <getopt.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <assert.h>
 
 //------------------------------------------------------------------------------
 void puts_help(const char* const*, int);
+
+//------------------------------------------------------------------------------
+static bool s_diag = false;
 
 //------------------------------------------------------------------------------
 class history_scope
@@ -36,6 +40,9 @@ history_scope::history_scope()
     // Load settings.
     app_context::get()->get_settings_path(m_path);
     settings::load(m_path.c_str());
+
+    if (s_diag)
+        m_history.enable_diagnostic_output();
 
     m_history.initialise();
 }
@@ -110,8 +117,15 @@ static void print_history(unsigned int tail_count, bool bare)
     HANDLE hout = GetStdHandle(STD_OUTPUT_HANDLE);
     bool translate = is_console(hout);
 
+    unsigned int num_from[2] = {};
     for (; iter.next(line); ++index)
     {
+        if (s_diag)
+        {
+            assert(iter.get_bank() < sizeof_array(num_from));
+            num_from[iter.get_bank()]++;
+        }
+
         utf8.clear();
         if (bare)
             utf8.format("%.*s", line.length(), line.get_pointer());
@@ -119,6 +133,17 @@ static void print_history(unsigned int tail_count, bool bare)
             utf8.format("%5u  %.*s", index, line.length(), line.get_pointer());
 
         print_history_item(hout, utf8.c_str(), translate ? &utf16 : nullptr);
+    }
+
+    if (s_diag)
+    {
+        if (history->has_bank(bank_master))
+            fprintf(stderr, "... printed %u lines from master bank\n", num_from[bank_master]);
+        if (history->has_bank(bank_session))
+            fprintf(stderr, "... printed %u lines from session bank\n", num_from[bank_session]);
+
+        // Load history to report diagnostic info about active/deleted lines.
+        history->load_rl_history(false/*can_clean*/);
     }
 }
 
@@ -204,7 +229,8 @@ static int compact()
 static int print_expansion(const char* line)
 {
     history_scope history;
-    history->load_rl_history(false/*can_limit*/);
+    history->load_rl_history(false/*can_clean*/);
+
     str<> out;
     history->expand(line, out);
     puts(out.c_str());
@@ -227,6 +253,7 @@ static int print_help()
 
     static const char* const help_options[] = {
         "--bare",       "Omit item numbers when printing history.",
+        "--diag",       "Print diagnostic info to stderr.",
     };
 
     puts(g_clink_header);
@@ -306,6 +333,8 @@ int history(int argc, char** argv)
         bool remove = true;
         if (_stricmp(argv[i], "--bare") == 0)
             bare = true;
+        else if (_stricmp(argv[i], "--diag") == 0)
+            s_diag = true;
         else
             remove = false;
 

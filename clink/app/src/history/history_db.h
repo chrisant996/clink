@@ -104,6 +104,7 @@ public:
                                 iter(iter&& other);
                                 ~iter();
         line_id                 next(str_iter& out);
+        unsigned int            get_bank() const;
 
     private:
                                 iter() = default;
@@ -125,6 +126,9 @@ public:
     template <int S> iter       read_lines(char (&buffer)[S]);
     iter                        read_lines(char* buffer, unsigned int buffer_size);
 
+    void                        enable_diagnostic_output() { m_diagnostic = true; }
+    bool                        has_bank(unsigned char bank) const;
+
     static expand_result        expand(const char* line, str_base& out);
 
 private:
@@ -144,6 +148,8 @@ private:
     size_t                      m_master_deleted_count;
 
     size_t                      m_min_compact_threshold = 200;
+
+    bool                        m_diagnostic = false;
 };
 
 //------------------------------------------------------------------------------
@@ -151,3 +157,5 @@ template <int S> history_db::iter history_db::read_lines(char (&buffer)[S])
 {
     return read_lines(buffer, S);
 }
+
+#define DIAG(fmt, ...)          do { if (m_diagnostic) fprintf(stderr, fmt, __VA_ARGS__); } while (false)
