@@ -1188,7 +1188,7 @@ void history_db::clear()
 void history_db::compact(bool force)
 {
     size_t limit = get_max_history();
-    if (limit > 0)
+    if (limit > 0 && !force)
     {
         LOG("History:  %u active, %u deleted", m_master_len, m_master_deleted_count);
 
@@ -1220,10 +1220,8 @@ void history_db::compact(bool force)
 
     // Since the ratio of deleted lines to active lines is already known here,
     // this is the most convenient/performant place to compact the master bank.
-    size_t threshold = (force ? 0 :
-                        limit ? max(limit, m_min_compact_threshold) :
-                        2500);
-    if (m_master_deleted_count > threshold)
+    size_t threshold = (limit ? max(limit, m_min_compact_threshold) : 2500);
+    if (force || m_master_deleted_count > threshold)
     {
         write_lock lock(get_bank(bank_master));
         rewrite_master_bank(lock);
