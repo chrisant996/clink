@@ -980,8 +980,8 @@ void history_db::reap()
         removals = path.c_str();
         removals << ".removals";
 
-        int file_size = os::get_file_size(path.c_str());
-        if (file_size > 0)
+        if (os::get_file_size(path.c_str()) > 0 ||
+            os::get_file_size(removals.c_str()) > 0)
         {
             bank_handles reap_handles;
             reap_handles.m_handle_lines = open_file(path.c_str());
