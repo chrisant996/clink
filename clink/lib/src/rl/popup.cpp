@@ -19,6 +19,8 @@ extern "C" {
 extern int _rl_menu_complete_wraparound;
 };
 
+extern bool is_conemu();
+
 #include "popup.h"
 
 //------------------------------------------------------------------------------
@@ -579,6 +581,8 @@ static HWND get_console_window()
             {
                 // The first pass uses GetConsoleWindow.
                 hwndConsole = GetConsoleWindow();
+                if (is_conemu())
+                    return hwndConsole;
             }
             break;
         case 2:
