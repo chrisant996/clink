@@ -89,18 +89,21 @@ static void print_history(unsigned int tail_count, bool bare)
     str_iter line;
     history_read_buffer buffer;
 
-    int count = 0;
+    unsigned int count = 0;
+    unsigned int skip = 0;
+    if (tail_count != UINT_MAX)
     {
         history_db::iter iter = history->read_lines(buffer.data(), buffer.size());
         while (iter.next(line))
             ++count;
+        if (count > tail_count)
+            skip = count - tail_count;
     }
 
-    int index = 1;
+    unsigned int index = 1;
     history_db::iter iter = history->read_lines(buffer.data(), buffer.size());
 
-    int skip = count - tail_count;
-    for (int i = 0; i < skip; ++i, ++index, iter.next(line));
+    for (unsigned int i = 0; i < skip; ++i, ++index, iter.next(line));
 
     str<> utf8;
     wstr<> utf16;
@@ -113,7 +116,7 @@ static void print_history(unsigned int tail_count, bool bare)
         if (bare)
             utf8.format("%.*s", line.length(), line.get_pointer());
         else
-            utf8.format("%5d  %.*s", index, line.length(), line.get_pointer());
+            utf8.format("%5u  %.*s", index, line.length(), line.get_pointer());
 
         print_history_item(hout, utf8.c_str(), translate ? &utf16 : nullptr);
     }
@@ -124,16 +127,21 @@ static bool print_history(const char* arg, bool bare)
 {
     if (arg == nullptr)
     {
-        print_history(INT_MIN, bare);
+        print_history(UINT_MAX, bare);
         return true;
     }
 
     // Check the argument is just digits.
+    unsigned int tail_count = 0;
     for (const char* c = arg; *c; ++c)
-        if (unsigned(*c - '0') > 10)
+    {
+        if (*c < '0' || *c > '9')
             return false;
+        tail_count *= 10;
+        tail_count += (unsigned char)*c - '0';
+    }
 
-    print_history(atoi(arg), bare);
+    print_history(tail_count, bare);
     return true;
 }
 
