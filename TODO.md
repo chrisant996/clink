@@ -7,7 +7,7 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 ## Issues
 - **MYSTERY:** Corrupted clink_history -- not sure how, when, or why -- but after having made changes to history, and debugged through issues and aborting some debugging sessions, my clink_history file had a bug chunk of contiguous NUL bytes.
 - Sometimes session history does not show up in `clink history`, at least not inside `io.popen()`.
-- Windows Terminal crashes on exit after `clink inject`!
+- Windows Terminal crashes on exit after `clink inject`!  The current release version crashes.  Older versions don't crash, and a locally built version from the terminal repo's HEAD doesn't crash.  I think the crash is probably a bug in Windows Terminal, not related to Clink.
 
 <br/>
 <br/>
