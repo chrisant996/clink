@@ -5,6 +5,7 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 # RELEASE
 
 ## Issues
+- **MYSTERY:** Corrupted clink_history -- not sure how, when, or why -- but after having made changes to history, and debugged through issues and aborting some debugging sessions, my clink_history file had a bug chunk of contiguous NUL bytes.
 - Sometimes session history does not show up in `clink history`, at least not inside `io.popen()`.
 - Windows Terminal crashes on exit after `clink inject`!
 
