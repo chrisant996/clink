@@ -5,7 +5,7 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 # RELEASE
 
 ## Issues
-- **MYSTERY:** Corrupted clink_history -- not sure how, when, or why -- but after having made changes to history, and debugged through issues and aborting some debugging sessions, my clink_history file had a bug chunk of contiguous NUL bytes.
+- **MYSTERY:** Corrupted clink_history -- not sure how, when, or why -- but after having made changes to history, debugging through issues, and aborting some debugging sessions my clink_history file had a big chunk of contiguous NUL bytes.
 - Sometimes session history does not show up in `clink history`, at least not inside `io.popen()`.
 - Windows Terminal crashes on exit after `clink inject`!  The current release version crashes.  Older versions don't crash, and a locally built version from the terminal repo's HEAD doesn't crash.  I think the crash is probably a bug in Windows Terminal, not related to Clink.
 
@@ -25,9 +25,6 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 - Provide a way for a custom classifier to apply a classification anywhere (not just to a pre-parsed word), and to apply any arbitrary CSI SGR code to a word or to anywhere.
 
 ## Low Priority
-- `os.getshortname()`
-- `os.getlongname()`
-- `os.getfullpathname()`
 - Maybe `"-foo="..parser("a", "b", "c")` could actually be detected somehow?  Maybe it could adjust the parsed word list in response to the existence of the arglink?
 - Make scrolling key bindings work at the pager prompt.  Note that it would need to revise how the scroll routines identify the bottom line (currently they use Readline's bottom line, but the pager displays output past that point).
 - Add a hook function for inserting matches.
