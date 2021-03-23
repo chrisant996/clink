@@ -3,7 +3,7 @@
 
 <!-- ----------------------------------------------------- -->
 <head>
-<title>Clink v1.1.42</title>
+<title>Clink v1.1.44</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Rambla:wght@400;700&family=Roboto&family=Fira+Mono&display=swap');
 html {
@@ -409,7 +409,7 @@ var hljs=function(){"use strict";function e(n){Object.freeze(n);var t="function"
         </td>
         <td style="text-align:right">
             <div id="header">
-                <div id="title">Clink v1.1.42</div>
+                <div id="title">Clink v1.1.44</div>
                 <div id="url">
                     <a href="http://github.com/chrisant996/clink">
                         http://github.com/chrisant996/clink
@@ -727,6 +727,11 @@ var hljs=function(){"use strict";function e(n){Object.freeze(n);var t="function"
 <td>When false, Lua scripts are loaded once and are only reloaded if forced (see <a href="#lua-scripts-location">The Location of Lua Scripts</a> for details).  When true, Lua scripts are loaded each time the edit prompt is activated.</td>
 </tr>
 <tr>
+<td align="center"><code>lua.strict</code></td>
+<td align="center">True</td>
+<td>When enabled, argument errors cause Lua scripts to fail.  This may expose bugs in some older scripts, causing them to fail where they used to succeed. In that case you can try turning this off, but please alert the script owner about the issue so they can fix the script.</td>
+</tr>
+<tr>
 <td align="center"><code>lua.traceback_on_error</code></td>
 <td align="center">False</td>
 <td>Prints stack trace on Lua errors.</td>
@@ -841,6 +846,7 @@ See <code>clink inject --help</code> for more information.</dd>
 <dt>clink autorun</dt>
 <dd>
 Manages Clink's entry in CMD.EXE's autorun section, which can automatically inject Clink when starting CMD.EXE.<br/>
+When Clink is installed for autorun, the automatic inject can be overridden by setting the <code>CLINK_NOAUTORUN</code> environment variable (to any value).<br/>
 See <code>clink autorun --help</code> for more information.</dd>
 </p>
 
@@ -2198,6 +2204,8 @@ clink.argmatcher("foo")
 :addarg({ "two", "too" })
 :addarg({ clink.filematches, "$stdin", "$stdout" })</code></pre></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="clink.generator">clink.generator</a></div> <div class="signature">( [<span class="arg_name">priority</span>:integer] ) : table</div></div><div class="body"><p class="desc">Creates and returns a new match generator object.  Define on the object a <code>generate()</code> function which gets called in increasing <span class="arg">priority</span> order (low values to high values) when generating matches for completion.  See <a href="#matchgenerators">Match Generators</a> for more information.</p></div></div><hr/>
+<div class="function"><div class="header"> <div class="name"><a name="clink.getsession">clink.getsession</a></div> <div class="signature">() : string</div></div><div class="body"><p class="desc">Returns the current Clink session id.</p><p class="desc"> This is needed when using <code>io.popen()</code> (or similar functions) to invoke <code>clink history</code> or <code>clink info</code> while Clink is installed for autorun.  The popen API spawns a new CMD.exe, which gets a new Clink instance injected, so the history or info command will use the new session unless explicitly directed to use the calling session.</p><pre class="language-lua"><code>local c = os.getalias("clink")
+local r = io.popen(c.." --session "..clink.getsession().." history")</code></pre></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="clink.is_match">clink.is_match</a></div> <div class="signature">( <span class="arg_name">needle</span>:string, <span class="arg_name">candidate</span>:string ) : boolean</div></div><div class="body deprecated"><p class="desc"><strong>Deprecated; don't use this.</strong>  See <a href="#clink.generator">clink.generator</a> for more information.</p><p class="desc">This returns true if <span class="arg">needle</span> is a prefix of <span class="arg">candidate</span> with a case insensitive comparison.</p><p class="desc"> Normally in Clink v1.x and higher the <span class="arg">needle</span> will be an empty string because the generators are no longer responsible for filtering matches.  The match pipeline itself handles that internally now.</p></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="clink.lower">clink.lower</a></div> <div class="signature">( <span class="arg_name">text</span>:string ) : string</div></div><div class="body"><p class="desc">This API correctly converts UTF8 strings to lowercase, with international linguistic awareness.</p><pre class="language-lua"><code>clink.lower("Hello World") -- returns "hello world"</code></pre></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="clink.match_display_filter">clink.match_display_filter</a></div> <div class="signature">function variable</div></div><div class="body deprecated"><p class="desc"><strong>Deprecated; don't use this.</strong>  See <a href="#clink.ondisplaymatches">clink.ondisplaymatches</a> for more information.</p><p class="desc">A match generator can set this varible to a filter function that is called before displaying matches.  It is reset every time match generation is invoked.  The filter function receives table argument containing the matches that are going to be displayed, and it returns a table filtered as required by the match generator.</p><p class="desc"> See <a href="#filteringthematchdisplay">Filtering the Match Display</a> for more information.</p></div></div><hr/>
@@ -2594,6 +2602,18 @@ string.matchlen("abx", "abx")       -- returns -1</code></pre></div></div><hr/>
         <div class="section" id="changes">
 <h1 id="changes">Changes</h1>
 <h2 id="releases-from-chrisant996clink-fork">Releases from <a href="https://github.com/chrisant996/clink">chrisant996/clink</a> fork</h2>
+<h3 id="v1144">v1.1.44</h3>
+<ul>
+<li>Added <code>clink.getsession()</code>.</li>
+<li>Added <code>%CLINK_NOAUTORUN%</code> which overrides automatic inject when Clink is installed for autorun.</li>
+<li>Fixed <a href="https://github.com/chrisant996/clink/issues/92">#92</a>; <code>clink-popup-history</code> and similar commands not working with ConEmu and Cmder (regression introduced in v1.1.25).</li>
+</ul>
+<h3 id="v1143">v1.1.43</h3>
+<ul>
+<li>Added <code>clink history --diag</code> flag that prints diagnostic information while performing history operations.</li>
+<li>Minor optimization in <code>clink history</code> when printing the full list of history items.</li>
+<li>Fixed <code>clink history compact</code> so it actually performs compaction.</li>
+</ul>
 <h3 id="v1142">v1.1.42</h3>
 <ul>
 <li>Added <code>clink history --bare</code> flag to omit history item numbers.</li>
