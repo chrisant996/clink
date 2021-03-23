@@ -363,8 +363,21 @@ int inject(int argc, char** argv)
             puts(help_usage);
             puts("Options:");
             puts_help(help, sizeof_array(help));
+            puts("When installed for autorun, the automatic inject can be overridden by\n"
+                 "setting the CLINK_NOAUTORUN environment variable (to any value).");
             return ret;
         }
+    }
+
+    // Cancel autorun if CLINK_NOAUTORUN is set.
+    str<32> noautorun;
+    if (is_autorun && os::get_env("clink_noautorun", noautorun))
+    {
+        static const char c_msg[] = "Clink autorun is disabled by CLINK_NOAUTORUN.\n";
+        wstr<> wmsg(c_msg);
+        DWORD written;
+        WriteConsoleW(GetStdHandle(STD_OUTPUT_HANDLE), wmsg.c_str(), wmsg.length(), &written, nullptr);
+        return 1;
     }
 
     // Unless a target pid was specified on the command line search for a

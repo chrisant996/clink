@@ -5,6 +5,7 @@
 ### v1.1.44
 
 - Added `clink.getsession()`.
+- Added `%CLINK_NOAUTORUN%` which overrides automatic inject when Clink is installed for autorun.
 - Fixed [#92](https://github.com/chrisant996/clink/issues/92); `clink-popup-history` and similar commands not working with ConEmu and Cmder (regression introduced in v1.1.25).
 
 ### v1.1.43

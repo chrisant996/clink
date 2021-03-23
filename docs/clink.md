@@ -211,6 +211,7 @@ See <code>clink inject --help</code> for more information.</dd>
 <dt>clink autorun</dt>
 <dd>
 Manages Clink's entry in CMD.EXE's autorun section, which can automatically inject Clink when starting CMD.EXE.<br/>
+When Clink is installed for autorun, the automatic inject can be overridden by setting the <code>CLINK_NOAUTORUN</code> environment variable (to any value).<br/>
 See <code>clink autorun --help</code> for more information.</dd>
 </p>
 
