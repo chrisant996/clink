@@ -61,6 +61,7 @@ static void show_usage()
     };
     static const char* help_options[] = {
         "--profile <dir>", "Use <dir> as Clink's profile directory",
+        "--session <id>",  "Override Clink's session id (for history and info)",
         "--version",       "Print Clink's version and exit",
     };
 
@@ -122,9 +123,12 @@ int loader(int argc, char** argv)
 {
     seh_scope seh;
 
+    int session = 0;
+
     struct option options[] = {
         { "help",    no_argument,       nullptr, 'h' },
         { "profile", required_argument, nullptr, 'p' },
+        { "session", required_argument, nullptr, '~' },
         { "version", no_argument,       nullptr, 'v' },
         { nullptr,   0,                 nullptr, 0 }
     };
@@ -154,12 +158,20 @@ int loader(int argc, char** argv)
             puts(CLINK_VERSION_STR);
             return 0;
 
+        case '~':
+            session = atoi(optarg);
+            break;
+
         case '?':
         default:
             show_usage();
             return 0;
         }
     }
+
+    // Override session.
+    if (session)
+        app_context::override_id(session);
 
     // Dispatch the verb if one was found.
     int ret = 0;

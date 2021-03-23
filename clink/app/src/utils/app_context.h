@@ -36,6 +36,8 @@ public:
     void        get_script_path_readable(str_base& out) const;
     void        update_env() const;
 
+    static void override_id(int id);
+
 private:
     void        get_script_path(str_base& out, bool readable) const;
     desc        m_desc;

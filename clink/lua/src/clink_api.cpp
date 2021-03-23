@@ -227,6 +227,26 @@ static int to_uppercase(lua_State* state)
     return map_string(state, transform_mode::upper);
 }
 
+//------------------------------------------------------------------------------
+/// -name:  clink.getsession
+/// -ret:   string
+/// -show:  local c = os.getalias("clink")
+/// -show:  local r = io.popen(c.." --session "..clink.getsession().." history")
+/// Returns the current Clink session id.
+///
+/// This is needed when using <code>io.popen()</code> (or similar functions) to
+/// invoke <code>clink history</code> or <code>clink info</code> while Clink is
+/// installed for autorun.  The popen API spawns a new CMD.exe, which gets a new
+/// Clink instance injected, so the history or info command will use the new
+/// session unless explicitly directed to use the calling session.
+static int get_session(lua_State* state)
+{
+    str<32> session;
+    session.format("%d", GetCurrentProcessId());
+    lua_pushlstring(state, session.c_str(), session.length());
+    return 1;
+}
+
 
 
 //------------------------------------------------------------------------------
@@ -250,6 +270,7 @@ void clink_lua_initialise(lua_state& lua)
         { "lower",                  &to_lowercase },
         { "print",                  &clink_print },
         { "upper",                  &to_uppercase },
+        { "getsession",             &get_session },
         // Backward compatibility with the Clink 0.4.8 API.  Clink 1.0.0a1 had
         // moved these APIs away from "clink.", but backward compatibility
         // requires them here as well.

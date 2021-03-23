@@ -296,3 +296,10 @@ void app_context::update_env() const
     os::set_env("=clink.profile", m_desc.state_dir);
     os::set_env("=clink.scripts", m_desc.script_path);
 }
+
+//------------------------------------------------------------------------------
+/*static*/ void app_context::override_id(int id)
+{
+    app_context* app = const_cast<app_context*>(get());
+    app->m_id = id;
+}
