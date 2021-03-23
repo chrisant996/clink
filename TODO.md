@@ -6,7 +6,6 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 
 ## Issues
 - **MYSTERY:** Corrupted clink_history -- not sure how, when, or why -- but after having made changes to history, debugging through issues, and aborting some debugging sessions my clink_history file had a big chunk of contiguous NUL bytes.
-- Sometimes session history does not show up in `clink history`, at least not inside `io.popen()`.  Ah, it happens when `clink autorun` is configured.
 
 <br/>
 <br/>
