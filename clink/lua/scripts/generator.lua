@@ -206,8 +206,8 @@ end
 --- -arg:   func:function
 --- -arg:   priority:integer
 --- -show:  -- Deprecated form:
---- -show:  local function match_generator_func(text, first, last, match_builder)
---- -show:  &nbsp; -- `text` is the line text.
+--- -show:  local function match_generator_func(text, first, last)
+--- -show:  &nbsp; -- `text` is the word text.
 --- -show:  &nbsp; -- `first` is the index of the beginning of the end word.
 --- -show:  &nbsp; -- `last` is the index of the end of the end word.
 --- -show:  &nbsp; -- `clink.add_match()` is used to add matches.
