@@ -3,7 +3,7 @@
 
 <!-- ----------------------------------------------------- -->
 <head>
-<title>Clink v1.1.44</title>
+<title>Clink v1.1.45</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Rambla:wght@400;700&family=Roboto&family=Fira+Mono&display=swap');
 html {
@@ -409,7 +409,7 @@ var hljs=function(){"use strict";function e(n){Object.freeze(n);var t="function"
         </td>
         <td style="text-align:right">
             <div id="header">
-                <div id="title">Clink v1.1.44</div>
+                <div id="title">Clink v1.1.45</div>
                 <div id="url">
                     <a href="http://github.com/chrisant996/clink">
                         http://github.com/chrisant996/clink
@@ -2244,8 +2244,8 @@ function foo_prompt:filter(prompt)
 &nbsp; return os.date("%a %H:%M").." "..prompt
 end</code></pre></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="clink.register_match_generator">clink.register_match_generator</a></div> <div class="signature">( <span class="arg_name">func</span>:function, <span class="arg_name">priority</span>:integer ) : nil</div></div><div class="body deprecated"><p class="desc"><strong>Deprecated; don't use this.</strong>  See <a href="#clink.generator">clink.generator</a> for more information.</p><p class="desc">Registers a generator function for producing matches.  This behaves similarly to v0.4.8, but not identically.  The Clink schema has changed significantly enough that there is no direct 1:1 translation; generators are called at a different time than before and have access to more information than before.</p><pre class="language-lua"><code>-- Deprecated form:
-local function match_generator_func(text, first, last, match_builder)
-&nbsp; -- `text` is the line text.
+local function match_generator_func(text, first, last)
+&nbsp; -- `text` is the word text.
 &nbsp; -- `first` is the index of the beginning of the end word.
 &nbsp; -- `last` is the index of the end of the end word.
 &nbsp; -- `clink.add_match()` is used to add matches.
@@ -2602,6 +2602,10 @@ string.matchlen("abx", "abx")       -- returns -1</code></pre></div></div><hr/>
         <div class="section" id="changes">
 <h1 id="changes">Changes</h1>
 <h2 id="releases-from-chrisant996clink-fork">Releases from <a href="https://github.com/chrisant996/clink">chrisant996/clink</a> fork</h2>
+<h3 id="v1145">v1.1.45</h3>
+<ul>
+<li>Fixed <a href="https://github.com/chrisant996/clink/issues/93">#93</a>; stdout is sometimes broken by Cmder init.bat.</li>
+</ul>
 <h3 id="v1144">v1.1.44</h3>
 <ul>
 <li>Added <code>clink.getsession()</code>.</li>
