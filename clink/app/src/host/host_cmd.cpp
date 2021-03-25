@@ -8,6 +8,7 @@
 #include "utils/app_context.h"
 #include "utils/hook_setter.h"
 #include "utils/seh_scope.h"
+#include "utils/reset_stdio.h"
 
 #include <core/base.h>
 #include <core/log.h>
@@ -442,6 +443,12 @@ BOOL WINAPI host_cmd::read_console(
     const wchar_t* prompt = host_cmd::get()->m_prompt.get();
     if (prompt == nullptr || *prompt == L'\0')
         return ReadConsoleW(input, chars, max_chars, read_in, control);
+
+    // Cmder uses a bunch of redirection before injecting Clink, which can leave
+    // the CMD host process in an inconsistent state, causing Clink's C runtime
+    // to get initialized with incorrect handles.  This will reset them on the
+    // first call, and then disables itself so subsequent calls do nothing.
+    reset_stdio_handles();
 
     {
         // Surround the entire edit_line() scope, otherwise any time Clink
