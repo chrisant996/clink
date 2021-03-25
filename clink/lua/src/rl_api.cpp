@@ -150,15 +150,38 @@ static int expand_tilde(lua_State* state)
 /// or nil if the variable name is not recognized.
 static int get_rl_variable(lua_State* state)
 {
-    const char* string = checkstring(state, 1);
-    if (!string)
+    const char* name = checkstring(state, 1);
+    if (!name)
         return 0;
 
-    const char* rl_cvar = rl_variable_value(string);
+    const char* rl_cvar = rl_variable_value(name);
     if (rl_cvar == nullptr)
         return 0;
 
     lua_pushstring(state, rl_cvar);
+    return 1;
+}
+
+//------------------------------------------------------------------------------
+/// -name:  rl.setvariable
+/// -arg:   name:string
+/// -arg:   value:string
+/// -ret:   boolean
+/// Sets the named Readline configuration variable to the value.  Returns
+/// whether it was successful, or nil if the variable name is not recognized.
+static int set_rl_variable(lua_State* state)
+{
+    const char* name = checkstring(state, 1);
+    const char* value = checkstring(state, 2);
+    if (!name || !value)
+        return 0;
+
+    const char* rl_cvar = rl_variable_value(name);
+    if (rl_cvar == nullptr)
+        return 0;
+
+    int failed = rl_variable_bind(name, value);
+    lua_pushboolean(state, !failed);
     return 1;
 }
 
@@ -348,6 +371,7 @@ void rl_lua_initialise(lua_state& lua)
         { "collapsetilde",          &collapse_tilde },
         { "expandtilde",            &expand_tilde },
         { "getvariable",            &get_rl_variable },
+        { "setvariable",            &set_rl_variable },
         { "isvariabletrue",         &is_rl_variable_true },
         { "invokecommand",          &invoke_command },
         { "getlastcommand",         &get_last_command },
