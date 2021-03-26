@@ -167,8 +167,14 @@ static int get_rl_variable(lua_State* state)
 /// -arg:   name:string
 /// -arg:   value:string
 /// -ret:   boolean
-/// Sets the named Readline configuration variable to the value.  Returns
-/// whether it was successful, or nil if the variable name is not recognized.
+/// Temporarily overrides the named Readline configuration variable to the
+/// specified value.  The return value reports whether it was successful, or is
+/// nil if the variable name is not recognized.
+///
+/// <strong>Note:</strong> This does not write the value into a config file.
+/// Instead it updates the variable in memory, temporarily overriding whatever
+/// is present in any config files.  When config files are reloaded, they may
+/// replace the value again.
 static int set_rl_variable(lua_State* state)
 {
     const char* name = checkstring(state, 1);
