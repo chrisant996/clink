@@ -700,9 +700,22 @@ local matcher = clink.argmatcher("samp")
 
 #### Filtering Match Completions
 
-A match generator or `luafunc:` key binding can use <a href="#clink.onfiltermatches">clink.onfiltermatches()</a> to register a function that will be called after matches are generated but before they are displayed or inserted.  The match filter function can remove matches, but cannot add matches (use a match generator instead).
+A match generator or `luafunc:` key binding can use <a href="#clink.onfiltermatches">clink.onfiltermatches()</a> to register a function that will be called after matches are generated but before they are displayed or inserted.
 
-If only one match remains after filtering, then many commands will insert the match without displaying it.  This makes it possible to spawn a process (such as <a href="https://github.com/junegunn/fzf">fzf</a>) to perform enhanced completion by interactively filtering the matches and keeping only one selected match.
+The function receives a table argument containing the matches to be displayed, a string argument indicating the completion type, and a boolean argument indicating whether filename completion is desired. The table argument has a `match` string field and a `type` string field; these are the same as in <a href="builder:addmatch">builder:addmatch()</a>.
+
+The possible completion types are:
+
+Type | Description | Example
+---|---|---
+`"?"`  | List the possible completions. | `possible-completions` or `popup-complete`
+`"*"`  |Insert all of the possible completions. | `insert-completions`
+`"\t"` | Do standard completion. | `complete`
+`"!"`  | Do standard completion, and list all possible completions if there is more than one. | `complete` (when the `show-all-if-ambiguous` config variable is set)
+`"@"`  | Do standard completion, and list all possible completions if there is more than one and partial completion is not possible. | `complete` (when the `show-all-if-unmodified` config variable is set)
+`"%"`  | Do menu completion (cycle through possible completions). | `menu-complete` or `old-menu-complete`
+
+The return value is a table with the input matches filtered as desired. The match filter function can remove matches, but cannot add matches (use a match generator instead).  If only one match remains after filtering, then many commands will insert the match without displaying it.  This makes it possible to spawn a process (such as <a href="https://github.com/junegunn/fzf">fzf</a>) to perform enhanced completion by interactively filtering the matches and keeping only one selected match.
 
 ```lua
 settings.add("fzf.height", "40%", "Height to use for the --height flag")
