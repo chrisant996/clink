@@ -269,18 +269,20 @@ static DWORD find_inject_target()
 //------------------------------------------------------------------------------
 void get_profile_path(const char* in, str_base& out)
 {
-    if (in[0] == '~' && (in[1] == '\\' || in[1] == '/'))
+    os::get_current_dir(out);
+
+    if (in[0] == '~' && (!in[1] || path::is_separator(in[1])))
     {
         wchar_t dir[MAX_PATH];
         if (SHGetFolderPathW(0, CSIDL_LOCAL_APPDATA, nullptr, 0, dir) == S_OK)
         {
             out = dir;
-            out << (in + 1);
-            return;
+            ++in;
+            while (path::is_separator(*in))
+                ++in;
         }
     }
 
-    os::get_current_dir(out);
     path::append(out, in);
     path::normalise(out);
 }

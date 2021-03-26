@@ -132,6 +132,48 @@ bool prev_buffer::equals(const char* s, int len) const
 static line_editor_impl* s_editor = nullptr;
 
 //------------------------------------------------------------------------------
+void reset_generate_matches()
+{
+    if (!s_editor)
+        return;
+
+    s_editor->reset_generate_matches();
+}
+
+//------------------------------------------------------------------------------
+void update_matches()
+{
+    if (!s_editor)
+        return;
+
+    s_editor->update_matches();
+}
+
+//------------------------------------------------------------------------------
+static bool is_endword_tilde(const line_state& line)
+{
+    // Tilde expansion has a quirk:  tilde by itself should generate completions
+    // and tilde followed by a path separator should generate completions, but
+    // tilde followed by anything else should not.  This violates the principle
+    // that generators produce consistent results without being influenced by
+    // the word prefix.  So, any time the word starts with tilde we have to
+    // reset the flags.
+
+    unsigned int offset = line.get_end_word_offset();
+    while (offset < line.get_cursor())
+    {
+        char c = line.get_line()[offset];
+        if (c == '~')
+            return true;
+        if (c != '"')
+            break;
+        offset++;
+    }
+
+    return false;
+}
+
+//------------------------------------------------------------------------------
 line_editor_impl::line_editor_impl(const desc& desc)
 : m_module(desc.shell_name, desc.input)
 , m_desc(desc)
@@ -310,26 +352,38 @@ void line_editor_impl::reset_generate_matches()
 {
     set_flag(flag_generate);
     set_flag(flag_select);
+    m_prev_key.reset();
+    m_prev_generate.clear();
 }
 
 //------------------------------------------------------------------------------
 void line_editor_impl::update_matches()
 {
-    if (check_flag(flag_generate))
+    // Get flag states because we're about to clear them.
+    bool generate = check_flag(flag_generate);
+    bool select = check_flag(flag_select);
+
+    // Clear flag states before running generators, so that generators can use
+    // reset_generate_matches().
+    clear_flag(flag_generate);
+    clear_flag(flag_select);
+
+    if (generate)
     {
         line_state line = get_linestate();
+        if (is_endword_tilde(line))
+            reset_generate_matches();
+
         match_pipeline pipeline(m_matches);
         pipeline.reset();
         pipeline.generate(line, m_generators);
-        clear_flag(flag_generate);
     }
 
-    if (check_flag(flag_select))
+    if (select)
     {
         match_pipeline pipeline(m_matches);
         pipeline.select(m_needle.c_str());
         pipeline.sort();
-        clear_flag(flag_select);
     }
 }
 
@@ -988,6 +1042,9 @@ void line_editor_impl::update_internal()
     // for deciding whether to sort/select, after deciding whether to generate.
     if (update_prev_generate >= 0)
         m_prev_generate.set(m_buffer.get_buffer(), update_prev_generate);
+
+    if (is_endword_tilde(get_linestate()))
+        reset_generate_matches();
 }
 
 void line_editor_impl::before_display()
@@ -995,22 +1052,6 @@ void line_editor_impl::before_display()
     assert(s_editor);
     if (s_editor)
         s_editor->classify();
-}
-
-void reset_generate_matches()
-{
-    if (!s_editor)
-        return;
-
-    s_editor->reset_generate_matches();
-}
-
-void update_matches()
-{
-    if (!s_editor)
-        return;
-
-    s_editor->update_matches();
 }
 
 matches* maybe_regenerate_matches(const char* needle, bool popup)

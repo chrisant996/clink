@@ -36,10 +36,28 @@ static class : public match_generator
         str<288> root;
         line.get_end_word(root);
 
-        bool expanded_tilde;
+        bool expanded_tilde = false;
         {
-            char* expanded_root = tilde_expand(root.c_str());
-            expanded_tilde = (expanded_root && strcmp(expanded_root, root.c_str()) != 0);
+            bool reset_regen = false;
+            char* expanded_root = nullptr;
+            if (root.length())
+            {
+                expanded_root = tilde_expand(root.c_str());
+                expanded_tilde = (expanded_root && strcmp(expanded_root, root.c_str()) != 0);
+            }
+            else if (line.get_cursor() > line.get_end_word_offset())
+            {
+                str<288> tmp;
+                concat_strip_quotes(tmp, line.get_line() + line.get_end_word_offset(), line.get_cursor() - line.get_end_word_offset());
+                // Tilde by itself should be expanded when completion occurs,
+                // but not when just listing occurs (type '?').
+                if (tmp.c_str()[0] == '~' && tmp.c_str()[1] == '\0' && rl_completion_type != '?')
+                {
+                    path::append(tmp, "");
+                    expanded_root = tilde_expand(tmp.c_str());
+                    expanded_tilde = (expanded_root && strcmp(expanded_root, tmp.c_str()) != 0);
+                }
+            }
             if (expanded_tilde)
                 root = expanded_root;
             free(expanded_root);

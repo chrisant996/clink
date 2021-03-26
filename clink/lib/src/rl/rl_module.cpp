@@ -663,6 +663,20 @@ static char** alternative_matches(const char* text, int start, int end)
         // Strip quotes so `"foo\"ba` can complete to `"foo\bar"`.  Stripping
         // quotes may seem surprising, but it's what CMD does and it works well.
         concat_strip_quotes(tmp, text);
+
+        if (rl_complete_with_tilde_expansion)
+        {
+            char* expanded = tilde_expand(tmp.c_str());
+            if (expanded && strcmp(tmp.c_str(), expanded) != 0)
+            {
+                bool add_sep = (tmp.c_str()[0] == '~' && tmp.c_str()[1] == '\0');
+                tmp = expanded;
+                if (add_sep)
+                    path::append(tmp, "");
+            }
+            free(expanded);
+        }
+
         tmp.concat("*");
         pattern = tmp.c_str();
     }
