@@ -53,7 +53,7 @@ static setting_bool g_filter_prompt(
     "Enable prompt filtering by Lua scripts",
     true);
 
-static setting_bool g_save_history(
+setting_bool g_save_history(
     "history.save",
     "Save history between sessions",
     "Changing this setting only takes effect for new instances.",
@@ -590,19 +590,14 @@ bool host::edit_line(const char* prompt, str_base& out)
 
     if (init_history)
     {
-        if (g_save_history.get())
+        if (m_history && g_save_history.get() != m_history->has_bank(bank_master))
         {
-            if (!m_history)
-                m_history = new history_db;
+            delete m_history;
+            m_history = 0;
         }
-        else
-        {
-            if (m_history)
-            {
-                delete m_history;
-                m_history = nullptr;
-            }
-        }
+
+        if (!m_history)
+            m_history = new history_db(g_save_history.get());
 
         if (m_history)
         {

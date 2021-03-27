@@ -16,6 +16,9 @@
 #include <assert.h>
 
 //------------------------------------------------------------------------------
+extern setting_bool g_save_history;
+
+//------------------------------------------------------------------------------
 void puts_help(const char* const*, int);
 
 //------------------------------------------------------------------------------
@@ -26,12 +29,12 @@ class history_scope
 {
 public:
                     history_scope();
-    history_db*     operator -> ()      { return &m_history; }
-    history_db&     operator * ()       { return m_history; }
+    history_db*     operator -> ()      { return m_history; }
+    history_db&     operator * ()       { return *m_history; }
 
 private:
     str<280>        m_path;
-    history_db      m_history;
+    history_db*     m_history;
 };
 
 //------------------------------------------------------------------------------
@@ -41,10 +44,12 @@ history_scope::history_scope()
     app_context::get()->get_settings_path(m_path);
     settings::load(m_path.c_str());
 
-    if (s_diag)
-        m_history.enable_diagnostic_output();
+    m_history = new history_db(g_save_history.get());
 
-    m_history.initialise();
+    if (s_diag)
+        m_history->enable_diagnostic_output();
+
+    m_history->initialise();
 }
 
 
@@ -219,9 +224,15 @@ static int clear()
 static int compact()
 {
     history_scope history;
-    history->compact(true/*force*/);
-
-    puts("History compacted.");
+    if (history->has_bank(bank_master))
+    {
+        history->compact(true/*force*/);
+        puts("History compacted.");
+    }
+    else
+    {
+        puts("History is not saved, so compact has nothing to do.");
+    }
     return 0;
 }
 

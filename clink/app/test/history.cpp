@@ -33,6 +33,7 @@ struct test_history_db
     : public history_db
 {
     test_history_db()
+    : history_db(true/*use_master_bank*/)
     {
         initialise();
     }

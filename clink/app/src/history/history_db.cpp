@@ -222,9 +222,15 @@ bank_handles::operator bool () const
 void bank_handles::close()
 {
     if (m_handle_removals)
+    {
         CloseHandle(m_handle_removals);
+        m_handle_removals = nullptr;
+    }
     if (m_handle_lines)
+    {
         CloseHandle(m_handle_lines);
+        m_handle_lines = nullptr;
+    }
 }
 
 
@@ -930,7 +936,8 @@ static void migrate_history(const char* path, bool m_diagnostic)
 
 
 //------------------------------------------------------------------------------
-history_db::history_db()
+history_db::history_db(bool use_master_bank)
+: m_use_master_bank(use_master_bank)
 {
     memset(m_bank_handles, 0, sizeof(m_bank_handles));
     m_master_len = 0;
@@ -979,7 +986,8 @@ void history_db::reap()
         // History files have no extension.  Don't reap supplement files such as
         // *.removals files.
         const char* ext = path::get_extension(path.c_str());
-        if (ext)
+        bool local = (ext && _stricmp(ext, ".local") == 0);
+        if (ext && !local)
             continue;
 
         path << "~";
@@ -990,11 +998,21 @@ void history_db::reap()
         path.truncate(path.length() - 1);
         DIAG("... reap session file '%s'\n", path.c_str());
 
+        if (local)
+        {
+            os::unlink(path.c_str()); // simply delete local files, i.e. `history.save` is false.
+            continue;
+        }
+
         removals = path.c_str();
         removals << ".removals";
 
-        if (os::get_file_size(path.c_str()) > 0 ||
-            os::get_file_size(removals.c_str()) > 0)
+        if (!m_use_master_bank)
+        {
+            // Don't copy; only delete.
+        }
+        else if (os::get_file_size(path.c_str()) > 0 ||
+                 os::get_file_size(removals.c_str()) > 0)
         {
             bank_handles reap_handles;
             reap_handles.m_handle_lines = open_file(path.c_str());
@@ -1032,42 +1050,56 @@ void history_db::initialise()
 
     str<280> path;
     get_file_path(path, false);
-    DIAG("... master file '%s'\n", path.c_str());
 
-    // Migrate existing history.
-    if (os::get_path_type(path.c_str()) == os::path_type_invalid)
-        migrate_history(path.c_str(), m_diagnostic);
-
-    // Open the master bank file.
-    m_bank_handles[bank_master].m_handle_lines = open_file(path.c_str());
-
-    // Retrieve concurrency tag from start of master bank.
-    m_master_ctag.clear();
+    if (m_use_master_bank)
     {
-        read_lock lock(get_bank(bank_master), false);
-        extract_ctag(lock, m_master_ctag);
-    }
+        DIAG("... master file '%s'\n", path.c_str());
 
-    // No concurrency tag?  Inject one.
-    if (m_master_ctag.empty())
-    {
-        write_lock lock(get_bank(bank_master));
-        if (!extract_ctag(lock, m_master_ctag))
+        // Migrate existing history.
+        if (os::get_path_type(path.c_str()) == os::path_type_invalid)
+            migrate_history(path.c_str(), m_diagnostic);
+
+        // Open the master bank file.
+        m_bank_handles[bank_master].m_handle_lines = open_file(path.c_str());
+
+        // Retrieve concurrency tag from start of master bank.
+        m_master_ctag.clear();
         {
-            rewrite_master_bank(lock);
+            read_lock lock(get_bank(bank_master), false);
             extract_ctag(lock, m_master_ctag);
         }
-    }
-    LOG("master bank ctag: %s", m_master_ctag.get());
 
-    if (g_shared.get())
-        return;
+        // No concurrency tag?  Inject one.
+        if (m_master_ctag.empty())
+        {
+            write_lock lock(get_bank(bank_master));
+            if (!extract_ctag(lock, m_master_ctag))
+            {
+                rewrite_master_bank(lock);
+                extract_ctag(lock, m_master_ctag);
+            }
+        }
+        LOG("master bank ctag: %s", m_master_ctag.get());
+
+        // If history is shared, there is only the master bank.
+        if (g_shared.get())
+            return;
+    }
+    else
+    {
+        DIAG("... no master file\n");
+        assert(!m_bank_handles[bank_master].m_handle_lines);
+        assert(!m_bank_handles[bank_master].m_handle_removals);
+        m_master_ctag.clear();
+    }
 
     get_file_path(path, true);
+    if (!m_use_master_bank)
+        path << ".local";
     DIAG("... session file '%s'\n", path.c_str());
 
     m_bank_handles[bank_session].m_handle_lines = open_file(path.c_str());
-    if (g_dupe_mode.get() == 2) // 'erase_prev'
+    if (m_use_master_bank && g_dupe_mode.get() == 2) // 'erase_prev'
     {
         str<280> removals;
         removals << path << ".removals";
@@ -1082,7 +1114,7 @@ void history_db::initialise()
 //------------------------------------------------------------------------------
 unsigned int history_db::get_active_bank() const
 {
-    return g_shared.get() ? bank_master : bank_session;
+    return (m_use_master_bank && g_shared.get()) ? bank_master : bank_session;
 }
 
 //------------------------------------------------------------------------------
@@ -1191,7 +1223,7 @@ void history_db::load_rl_history(bool can_clean)
 
     // The `clink history` command needs to be able to avoid cleaning the master
     // history file.
-    if (can_clean)
+    if (can_clean && m_use_master_bank)
     {
         compact();
         load_internal();
@@ -1225,6 +1257,14 @@ void history_db::clear()
 //------------------------------------------------------------------------------
 void history_db::compact(bool force)
 {
+    if (!m_use_master_bank)
+    {
+        assert(false);
+        LOG("History:  compact is disabled because master bank is disabled");
+        DIAG("... compact:  nothing to do because master bank is disabled");
+        return;
+    }
+
     size_t limit = get_max_history();
     if (limit > 0 && !force)
     {

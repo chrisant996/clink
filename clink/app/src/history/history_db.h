@@ -112,7 +112,7 @@ public:
         uintptr_t               impl = 0;
     };
 
-                                history_db();
+                                history_db(bool use_master_bank);
                                 ~history_db();
     void                        initialise();
     void                        load_rl_history(bool can_clean=true);
@@ -149,6 +149,7 @@ private:
 
     size_t                      m_min_compact_threshold = 200;
 
+    bool                        m_use_master_bank = false;
     bool                        m_diagnostic = false;
 };
 
