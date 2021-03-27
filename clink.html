@@ -3,7 +3,7 @@
 
 <!-- ----------------------------------------------------- -->
 <head>
-<title>Clink v1.1.45</title>
+<title>Clink v1.1.46</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Rambla:wght@400;700&family=Roboto&family=Fira+Mono&display=swap');
 html {
@@ -409,7 +409,7 @@ var hljs=function(){"use strict";function e(n){Object.freeze(n);var t="function"
         </td>
         <td style="text-align:right">
             <div id="header">
-                <div id="title">Clink v1.1.45</div>
+                <div id="title">Clink v1.1.46</div>
                 <div id="url">
                     <a href="http://github.com/chrisant996/clink">
                         http://github.com/chrisant996/clink
@@ -1460,8 +1460,49 @@ local matcher = clink.argmatcher(&quot;samp&quot;)
 <a name="filteringmatchcompletions"/>
 
 <h4 id="filtering-match-completions">Filtering Match Completions</h4>
-<p>A match generator or <code>luafunc:</code> key binding can use <a href="#clink.onfiltermatches">clink.onfiltermatches()</a> to register a function that will be called after matches are generated but before they are displayed or inserted.  The match filter function can remove matches, but cannot add matches (use a match generator instead).</p>
-<p>If only one match remains after filtering, then many commands will insert the match without displaying it.  This makes it possible to spawn a process (such as <a href="https://github.com/junegunn/fzf">fzf</a>) to perform enhanced completion by interactively filtering the matches and keeping only one selected match.</p>
+<p>A match generator or <code>luafunc:</code> key binding can use <a href="#clink.onfiltermatches">clink.onfiltermatches()</a> to register a function that will be called after matches are generated but before they are displayed or inserted.</p>
+<p>The function receives a table argument containing the matches to be displayed, a string argument indicating the completion type, and a boolean argument indicating whether filename completion is desired. The table argument has a <code>match</code> string field and a <code>type</code> string field; these are the same as in <a href="builder:addmatch">builder:addmatch()</a>.</p>
+<p>The possible completion types are:</p>
+<table>
+<thead>
+<tr>
+<th>Type</th>
+<th>Description</th>
+<th>Example</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>&quot;?&quot;</code></td>
+<td>List the possible completions.</td>
+<td><code>possible-completions</code> or <code>popup-complete</code></td>
+</tr>
+<tr>
+<td><code>&quot;*&quot;</code></td>
+<td>Insert all of the possible completions.</td>
+<td><code>insert-completions</code></td>
+</tr>
+<tr>
+<td><code>&quot;\t&quot;</code></td>
+<td>Do standard completion.</td>
+<td><code>complete</code></td>
+</tr>
+<tr>
+<td><code>&quot;!&quot;</code></td>
+<td>Do standard completion, and list all possible completions if there is more than one.</td>
+<td><code>complete</code> (when the <code>show-all-if-ambiguous</code> config variable is set)</td>
+</tr>
+<tr>
+<td><code>&quot;@&quot;</code></td>
+<td>Do standard completion, and list all possible completions if there is more than one and partial completion is not possible.</td>
+<td><code>complete</code> (when the <code>show-all-if-unmodified</code> config variable is set)</td>
+</tr>
+<tr>
+<td><code>&quot;%&quot;</code></td>
+<td>Do menu completion (cycle through possible completions).</td>
+<td><code>menu-complete</code> or <code>old-menu-complete</code></td>
+</tr>
+</tbody></table>
+<p>The return value is a table with the input matches filtered as desired. The match filter function can remove matches, but cannot add matches (use a match generator instead).  If only one match remains after filtering, then many commands will insert the match without displaying it.  This makes it possible to spawn a process (such as <a href="https://github.com/junegunn/fzf">fzf</a>) to perform enhanced completion by interactively filtering the matches and keeping only one selected match.</p>
 <pre><code class="language-lua">settings.add(&quot;fzf.height&quot;, &quot;40%&quot;, &quot;Height to use for the --height flag&quot;)
 settings.add(&quot;fzf.exe_location&quot;, &quot;&quot;, &quot;Location of fzf.exe if not on the PATH&quot;)
 
@@ -2570,6 +2611,7 @@ end</code></pre></div></div><hr/>
 
 &nbsp; rl.invokecommand("old-menu-complete")
 end</code></pre></div></div><hr/>
+<div class="function"><div class="header"> <div class="name"><a name="rl.setvariable">rl.setvariable</a></div> <div class="signature">( <span class="arg_name">name</span>:string, <span class="arg_name">value</span>:string ) : boolean</div></div><div class="body"><p class="desc">Temporarily overrides the named Readline configuration variable to the specified value.  The return value reports whether it was successful, or is nil if the variable name is not recognized.</p><p class="desc"> <strong>Note:</strong> This does not write the value into a config file. Instead it updates the variable in memory, temporarily overriding whatever is present in any config files.  When config files are reloaded, they may replace the value again.</p></div></div><hr/>
 </div><div class="group"><h5 class="group_name"><a name="rl_buffer">rl_buffer</a></h5><div class="function"><div class="header"> <div class="name"><a name="rl_buffer:beginoutput">rl_buffer:beginoutput</a></div> <div class="signature">() : nil</div></div><div class="body"><p class="desc">Advances the output cursor to the next line after the Readline input buffer so that subsequent output doesn't overwrite the input buffer display.</p></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="rl_buffer:beginundogroup">rl_buffer:beginundogroup</a></div> <div class="signature">() : nil</div></div><div class="body"><p class="desc">Starts a new undo group.  This is useful for grouping together multiple editing actions into a single undo operation.</p></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="rl_buffer:ding">rl_buffer:ding</a></div> <div class="signature">() : nil</div></div><div class="body"><p class="desc">Dings the bell.  If the <code>bell-style</code> Readline variable is <code>visible</code> then it flashes the cursor instead.</p></div></div><hr/>
@@ -2602,6 +2644,12 @@ string.matchlen("abx", "abx")       -- returns -1</code></pre></div></div><hr/>
         <div class="section" id="changes">
 <h1 id="changes">Changes</h1>
 <h2 id="releases-from-chrisant996clink-fork">Releases from <a href="https://github.com/chrisant996/clink">chrisant996/clink</a> fork</h2>
+<h3 id="v1146">v1.1.46</h3>
+<ul>
+<li>Added <code>rl.setvariable()</code> to temporarily override the value of a Readline config variable.</li>
+<li>The completion commands now also expand tilde by itself (<code>~</code>), in addition to tilde followed by a path separator (<code>~\etc</code>).</li>
+<li>Fixed <a href="https://github.com/chrisant996/clink/issues/94">#94</a>; setting <code>history.save</code> to False also disables interactive history in subsequent sessions.</li>
+</ul>
 <h3 id="v1145">v1.1.45</h3>
 <ul>
 <li>Fixed <a href="https://github.com/chrisant996/clink/issues/93">#93</a>; stdout is sometimes broken by Cmder init.bat.</li>
