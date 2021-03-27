@@ -152,22 +152,35 @@ void update_matches()
 //------------------------------------------------------------------------------
 static bool is_endword_tilde(const line_state& line)
 {
-    // Tilde expansion has a quirk:  tilde by itself should generate completions
-    // and tilde followed by a path separator should generate completions, but
-    // tilde followed by anything else should not.  This violates the principle
-    // that generators produce consistent results without being influenced by
-    // the word prefix.  So, any time the word starts with tilde we have to
-    // reset the flags.
+    // Tilde expansion is quirky:
+    //  - Tilde by itself should generate completions.
+    //  - Tilde followed by a path separator should generate completions.
+    //  - Tilde followed by anything else should not.
+    //  - Tilde by itself should not list possible completions.
+    // Any time the end word is just a tilde it means it could be a bare tilde
+    // or a tilde followed by something other than a path separator.  Since that
+    // has conditional behavior, it violates the principle that generators
+    // produce consistent results without being influenced by the word prefix.
+    // Therefore it's necessary to reset match generation so subsequent
+    // completions can work.
 
-    unsigned int offset = line.get_end_word_offset();
-    while (offset < line.get_cursor())
+    bool tilde = false;
+    for (unsigned int offset = line.get_end_word_offset(); true; ++offset)
     {
-        char c = line.get_line()[offset];
-        if (c == '~')
-            return true;
-        if (c != '"')
+        if (offset > line.get_cursor())
             break;
-        offset++;
+        if (offset == line.get_cursor())
+            return tilde;
+
+        char c = line.get_line()[offset];
+        if (c == '"')
+            continue;
+        if (c == '~' && !tilde)
+        {
+            tilde = true;
+            continue;
+        }
+        break;
     }
 
     return false;
@@ -371,9 +384,6 @@ void line_editor_impl::update_matches()
     if (generate)
     {
         line_state line = get_linestate();
-        if (is_endword_tilde(line))
-            reset_generate_matches();
-
         match_pipeline pipeline(m_matches);
         pipeline.reset();
         pipeline.generate(line, m_generators);

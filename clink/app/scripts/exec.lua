@@ -57,7 +57,7 @@ function exec_generator:generate(line_state, match_builder)
 
     -- We're only interested in exec completion if this is the first word of
     -- the line.
-    if line_state:getwordcount() > 1 then
+    if line_state:getwordcount() > 1 or line_state:getendword() == "~" then
         return false
     end
 
@@ -76,9 +76,7 @@ function exec_generator:generate(line_state, match_builder)
     local match_cwd = settings.get("exec.cwd")
 
     local paths = nil
-    local text = line_state:getword(1)
-    local expanded
-    text, expanded = rl.expandtilde(text)
+    local text, expanded = rl.expandtilde(line_state:getword(1))
     local text_dir = (path.getdirectory(text) or ""):gsub("/", "\\")
     if #text_dir == 0 then
         -- Add console aliases as matches.

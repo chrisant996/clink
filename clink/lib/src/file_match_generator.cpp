@@ -36,31 +36,21 @@ static class : public match_generator
         str<288> root;
         line.get_end_word(root);
 
-        bool expanded_tilde = false;
+        bool expanded_tilde;
         {
-            bool reset_regen = false;
-            char* expanded_root = nullptr;
-            if (root.length())
-            {
-                expanded_root = tilde_expand(root.c_str());
-                expanded_tilde = (expanded_root && strcmp(expanded_root, root.c_str()) != 0);
-            }
-            else if (line.get_cursor() > line.get_end_word_offset())
-            {
-                str<288> tmp;
-                concat_strip_quotes(tmp, line.get_line() + line.get_end_word_offset(), line.get_cursor() - line.get_end_word_offset());
-                // Tilde by itself should be expanded when completion occurs,
-                // but not when just listing occurs (type '?').
-                if (tmp.c_str()[0] == '~' && tmp.c_str()[1] == '\0' && rl_completion_type != '?')
-                {
-                    path::append(tmp, "");
-                    expanded_root = tilde_expand(tmp.c_str());
-                    expanded_tilde = (expanded_root && strcmp(expanded_root, tmp.c_str()) != 0);
-                }
-            }
+            bool just_tilde = (strcmp(root.c_str(), "~") == 0);
+            char* expanded_root = tilde_expand(root.c_str());
+            expanded_tilde = (expanded_root && strcmp(expanded_root, root.c_str()) != 0);
             if (expanded_tilde)
+            {
                 root = expanded_root;
+                if (just_tilde)
+                    path::append(root, "");
+            }
             free(expanded_root);
+
+            if (just_tilde && rl_completion_type == '?')
+                return true;
         }
 
         path::normalise_separators(root);
@@ -99,14 +89,21 @@ static class : public match_generator
     {
         str_iter end_word = line.get_end_word();
         const char* start = end_word.get_pointer();
-
         const char* c = start + end_word.length();
-        for (; c > start; --c)
-            if (path::is_separator(c[-1]))
-                break;
 
-        if (start[0] && start[1] == ':')
-            c = max(start + 2, c);
+        if (end_word.length() == 1 && *start == '~')
+        {
+            // Tilde by itself should be expanded, so keep the whole word.
+        }
+        else
+        {
+            for (; c > start; --c)
+                if (path::is_separator(c[-1]))
+                    break;
+
+            if (start[0] && start[1] == ':')
+                c = max(start + 2, c);
+        }
 
         info.truncate = 0;
         info.keep = int(c - start);
