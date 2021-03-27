@@ -6,6 +6,7 @@
 
 - Added `rl.setvariable()` to temporarily override the value of a Readline config variable.
 - The completion commands now also expand tilde by itself (`~`), in addition to tilde followed by a path separator (`~\etc`).
+- Fixed [#94](https://github.com/chrisant996/clink/issues/94); setting `history.save` to False also disables interactive history in subsequent sessions.
 
 ### v1.1.45
 
