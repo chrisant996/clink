@@ -71,7 +71,11 @@ static int rl_history_search_flags;
 
 /* begin_clink_change */
 int _rl_history_point_at_end_of_anchored_search = 0;
+#if (defined (__MSDOS__) && !defined (__DJGPP__)) || (defined (_WIN32) && !defined (__CYGWIN__))
+int _rl_search_case_fold = 1;
+#else
 int _rl_search_case_fold = 0;
+#endif
 /* end_clink_change */
 
 static char *history_search_string;
