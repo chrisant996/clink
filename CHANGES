@@ -4,6 +4,7 @@
 
 ### v1.1.47
 
+- Added default key binding for <kbd>Ctrl</kbd>+<kbd>Space</kbd> to invoke `old-menu-complete`, which is the most similar to CMD's standard <kbd>Tab</kbd> behavior.
 - Fixed `search-ignore-case` config variable to be on by default.
 
 ### v1.1.46

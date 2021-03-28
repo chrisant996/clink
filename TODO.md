@@ -5,6 +5,8 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 # RELEASE
 
 ## Issues
+- `A-C-j` and `A-C-m` not registering properly.  Maybe others?
+- Do `"\e\C-J"` and `"\A-\C-j"` resolve to the same thing?  They should...
 
 ## Mystery
 - **MYSTERY:** Corrupted clink_history -- not sure how, when, or why -- but after having made changes to history, debugging through issues, and aborting some debugging sessions my clink_history file had a big chunk of contiguous NUL bytes.

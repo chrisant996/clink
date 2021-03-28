@@ -1299,6 +1299,7 @@ rl_module::rl_module(const char* shell_name, terminal_in* input)
         { "\\d",            "backward-kill-word" },      // ctrl-backspace
         { "\\e[2~",         "overwrite-mode" },          // ins
         { bindableEsc,      "clink-reset-line" },        // esc
+        { "\e[27;5;32~",    "old-menu-complete" },       // ctrl-space
         { "\\C-c",          "clink-ctrl-c" },            // ctrl-c
         { "\\C-v",          "clink-paste" },             // ctrl-v
         { "\\C-z",          "undo" },                    // ctrl-z
