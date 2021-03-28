@@ -136,18 +136,23 @@ find_streqn (const char *a, const char *b, int len)
       size_t v1, v2;
       mbstate_t ps1, ps2;
       WCHAR_T wc1, wc2;
+      size_t lenb;
+
+      memset (&ps1, 0, sizeof (ps1));
+      memset (&ps2, 0, sizeof (ps2));
+      lenb = strlen (b);
 
       do
 	{
-	  v1 = MBRTOWC (&wc1, a, 1, &ps1);
-	  v2 = MBRTOWC (&wc2, b, 1, &ps2);
+	  v1 = MBRTOWC (&wc1, a, len, &ps1);
+	  v2 = MBRTOWC (&wc2, b, lenb, &ps2);
 	  if (v1 == 0 && v2 == 0)
 	    return 1;
 	  else if (MB_INVALIDCH (v1) || MB_INVALIDCH (v2))
 	    {
 	      if (*a != *b)		/* do byte comparison */
 		return 0;
-	      a++; b++; len--;
+	      a++; b++; len--; lenb--;
 	      continue;
 	    }
 	  wc1 = towlower (wc1);
@@ -157,6 +162,7 @@ find_streqn (const char *a, const char *b, int len)
 	  a += v1;
 	  b += v1;
 	  len -= v1;
+	  lenb -= v2;
 	}
       while (len != 0);
       return 1;
