@@ -10,7 +10,7 @@ See the [issues](https://github.com/chrisant996/clink/issues) page for known iss
 
 ### Screenshot
 
-![image](https://chrisant996.github.io/images/clink_demo.png)
+![image](https://chrisant996.github.io/clink/images/clink_demo.png)
 
 ### Features
 
