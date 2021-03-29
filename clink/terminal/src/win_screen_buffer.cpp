@@ -25,6 +25,22 @@
 #endif
 
 //------------------------------------------------------------------------------
+static ansi_handler s_native_ansi_handler = ansi_handler::unknown;
+static ansi_handler s_current_ansi_handler = ansi_handler::unknown;
+static const char* s_consolez_dll = nullptr;
+static const char* s_found_what = nullptr;
+
+ansi_handler get_native_ansi_handler()
+{
+    return s_native_ansi_handler;
+}
+
+ansi_handler get_current_ansi_handler()
+{
+    return s_current_ansi_handler;
+}
+
+//------------------------------------------------------------------------------
 static const char* s_conemu_dll = nullptr;
 bool is_conemu()
 {
@@ -34,16 +50,21 @@ bool is_conemu()
 //------------------------------------------------------------------------------
 static const char* const conemu_dll_names[] =
 {
-    "conemuhk.dll",
-    "conemuhk32.dll",
-    "conemuhk64.dll",
+    "ConEmuHk.dll",
+    "ConEmuHk32.dll",
+    "ConEmuHk64.dll",
     nullptr
 };
-static const char* const ansi_dll_names[] =
+static const char* const ansicon_dll_names[] =
 {
-    "ansi.dll",
-    "ansi32.dll",
-    "ansi64.dll",
+    "ANSI.dll",
+    "ANSI32.dll",
+    "ANSI64.dll",
+    nullptr
+};
+static const char* const consolez_dll_names[] =
+{
+    "ConsoleHook.dll",
     nullptr
 };
 
@@ -68,10 +89,10 @@ static setting_enum g_terminal_emulation(
     "Controls VT emulation",
     "Clink can emulate Virtual Terminal processing if the console doesn't\n"
     "natively. When set to 'emulate' then Clink performs VT emulation and handles\n"
-    "ANSI escape codes. When 'native' then Clink passes all output directly to the\n"
+    "ANSI escape codes. When 'native' then Clink passes output directly to the\n"
     "console. Or when 'auto' then Clink performs VT emulation unless native\n"
     "terminal support is detected (such as when hosted inside ConEmu, Windows\n"
-    "Terminal, or Windows 10 new console).",
+    "Terminal, or Windows 10 new console, or when using ANSICON).",
     "native,emulate,auto",
     2);
 
@@ -96,40 +117,19 @@ void win_screen_buffer::begin()
     if (!m_handle)
         open();
 
-    static bool detect_conemu = true;
-    if (detect_conemu)
+    static bool detect_native_ansi_handler = true;
+    if (detect_native_ansi_handler)
     {
-        detect_conemu = false;
-        s_conemu_dll = is_dll_loaded(conemu_dll_names);
-    }
+        detect_native_ansi_handler = false;
 
-    GetConsoleMode(m_handle, &m_prev_mode);
-
-    CONSOLE_SCREEN_BUFFER_INFO csbi;
-    GetConsoleScreenBufferInfo(m_handle, &csbi);
-    m_default_attr = csbi.wAttributes & attr_mask_all;
-    m_bold = !!(m_default_attr & attr_mask_bold);
-
-    bool native_vt = m_native_vt;
-    const char* found_what = nullptr;
-    switch (g_terminal_emulation.get())
-    {
-    case 0:
-        native_vt = true;
-        break;
-
-    case 1:
-        native_vt = false;
-        break;
-
-    case 2:
         do
         {
             // Check for ConEmu.
-            found_what = s_conemu_dll;
-            if (found_what)
+            s_conemu_dll = is_dll_loaded(conemu_dll_names);
+            if (s_conemu_dll)
             {
-                native_vt = true;
+                s_found_what = s_conemu_dll;
+                s_native_ansi_handler = ansi_handler::conemu;
                 break;
             }
 
@@ -137,8 +137,17 @@ void win_screen_buffer::begin()
             str<16> wt_session;
             if (os::get_env("WT_SESSION", wt_session))
             {
-                native_vt = true;
-                found_what = "WT_SESSION";
+                s_found_what = "WT_SESSION";
+                s_native_ansi_handler = ansi_handler::winterminal;
+                break;
+            }
+
+            // Check for Ansi dlls loaded.
+            const char* foundwhat = is_dll_loaded(ansicon_dll_names);
+            if (foundwhat)
+            {
+                s_found_what = foundwhat;
+                s_native_ansi_handler = ansi_handler::ansicon;
                 break;
             }
 
@@ -157,22 +166,52 @@ void win_screen_buffer::begin()
                     size != sizeof(data) ||
                     data != 0)
                 {
-                    native_vt = true;
-                    found_what = "Windows build >= 15063, console V2";
-                    break;
+                    s_found_what = "Windows build >= 15063, console V2";
+                    s_native_ansi_handler = ansi_handler::winconsolev2;
+                    // DON'T BREAK; CONTINUE DETECTING -- because ConsoleZ
+                    // doesn't provide ANSI handling, but it also defeats
+                    // ConsoleV2 ANSI handling.
                 }
             }
 #pragma warning(pop)
 
-            // Check for Ansi dlls loaded.
-            found_what = is_dll_loaded(ansi_dll_names);
-            if (found_what)
+            // Check for ConsoleZ dlls loaded.
+            s_consolez_dll = is_dll_loaded(consolez_dll_names);
+            if (s_consolez_dll && s_native_ansi_handler == ansi_handler::winconsolev2)
             {
-                native_vt = true;
+                // Downgrade to basic support since ConsoleZ doesn't support
+                // 256 color or 24 bit color.
+                s_found_what = s_consolez_dll;
+                s_native_ansi_handler = ansi_handler::winconsole;
                 break;
             }
         }
         while (false);
+    }
+
+    GetConsoleMode(m_handle, &m_prev_mode);
+
+    CONSOLE_SCREEN_BUFFER_INFO csbi;
+    GetConsoleScreenBufferInfo(m_handle, &csbi);
+    m_default_attr = csbi.wAttributes & attr_mask_all;
+    m_bold = !!(m_default_attr & attr_mask_bold);
+
+    bool native_vt = m_native_vt;
+    switch (g_terminal_emulation.get())
+    {
+    case 0:
+        native_vt = true;
+        s_current_ansi_handler = s_native_ansi_handler;
+        break;
+
+    case 1:
+        native_vt = false;
+        s_current_ansi_handler = ansi_handler::clink;
+        break;
+
+    case 2:
+        native_vt = s_native_ansi_handler >= ansi_handler::first_native;
+        s_current_ansi_handler = native_vt ? s_native_ansi_handler : ansi_handler::clink;
         break;
     }
 
@@ -180,8 +219,8 @@ void win_screen_buffer::begin()
     {
         if (!native_vt)
             LOG("Using emulated terminal support.");
-        else if (found_what)
-            LOG("Using native terminal support; found '%s'.", found_what);
+        else if (s_found_what)
+            LOG("Using native terminal support; found '%s'.", s_found_what);
         else
             LOG("Using native terminal support.");
     }

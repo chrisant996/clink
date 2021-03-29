@@ -9,6 +9,22 @@ class str_base;
 enum find_line_mode : int;
 
 //------------------------------------------------------------------------------
+enum class ansi_handler : int
+{
+    unknown,
+    clink,
+    first_native,
+    conemu = first_native,
+    ansicon,
+    winterminal,
+    winconsolev2,
+    winconsole,
+    max
+};
+ansi_handler get_native_ansi_handler();
+ansi_handler get_current_ansi_handler();
+
+//------------------------------------------------------------------------------
 class screen_buffer
 {
 public:

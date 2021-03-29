@@ -2,6 +2,11 @@
 
 ## Releases from [chrisant996/clink](https://github.com/chrisant996/clink) fork
 
+### v1.1.48
+
+- Added `clink.getansihost()` function to get Clink's best guess who will process ANSI escape codes (can be useful for avoiding 256 bit and 24 bit color codes, for example).
+- Added detection for being hosted in ConsoleZ.
+
 ### v1.1.47
 
 - Added default key binding for <kbd>Ctrl</kbd>+<kbd>Space</kbd> to invoke `old-menu-complete`, which is the most similar to CMD's standard <kbd>Tab</kbd> behavior.

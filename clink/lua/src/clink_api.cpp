@@ -12,6 +12,7 @@
 #include <core/str.h>
 #include <core/str_iter.h>
 #include <core/str_transform.h>
+#include <terminal/screen_buffer.h>
 #include <readline/readline.h>
 
 #include <unordered_set>
@@ -247,6 +248,53 @@ static int get_session(lua_State* state)
     return 1;
 }
 
+//------------------------------------------------------------------------------
+/// -name:  clink.getansihost
+/// -ret:   string
+/// Returns a string indicating who Clink thinks will currently handle ANSI
+/// escape codes.  This can change based on the <code>terminal.emulation</code>
+/// setting.  This always returns <code>"unknown"</code> until the first edit
+/// prompt (see <a href="#clink.onbeginedit">clink.onbeginedit()</a>).
+///
+/// This can be useful in choosing what kind of ANSI escape codes to use, but it
+/// is a best guess and is not necessarily 100% reliable.
+///
+/// <table>
+/// <tr><th>Return</th><th>Description</th></tr>
+/// <tr><td>"unknown"</td><td>Clink doesn't know.</td></tr>
+/// <tr><td>"clink"</td><td>Clink is emulating ANSI support.  256 color and 24 bit color escape
+///     codes are mapped to the nearest of the 16 basic colors.</td></tr>
+/// <tr><td>"conemu"</td><td>Clink thinks ANSI escape codes will be handled by ConEmu.</td></tr>
+/// <tr><td>"ansicon"</td><td>Clink thinks ANSI escape codes will be handled by ANSICON.</td></tr>
+/// <tr><td>"winterminal"</td><td>Clink thinks ANSI escape codes will be handled by Windows
+///     Terminal.</td></tr>
+/// <tr><td>"winconsole"</td><td>Clink thinks ANSI escape codes will be handled by the default
+///     console support in Windows, but Clink detected a terminal replacement that won't support 256
+///     color or 24 bit color.</td></tr>
+/// <tr><td>"winconsolev2"</td><td>Clink thinks ANSI escape codes will be handled by the default
+///     console support in Windows, or it might be handled by a terminal replacement that Clink
+///     wasn't able to detect.</td></tr>
+/// </table>
+static int get_ansi_host(lua_State* state)
+{
+    static const char* const s_handlers[] =
+    {
+        "unknown",
+        "clink",
+        "conemu",
+        "ansicon",
+        "winterminal",
+        "winconsolev2",
+        "winconsole",
+    };
+
+    static_assert(sizeof_array(s_handlers) == size_t(ansi_handler::max), "must match ansi_handler enum");
+
+    size_t handler = size_t(get_current_ansi_handler());
+    lua_pushstring(state, s_handlers[handler]);
+    return 1;
+}
+
 
 
 //------------------------------------------------------------------------------
@@ -271,6 +319,7 @@ void clink_lua_initialise(lua_state& lua)
         { "print",                  &clink_print },
         { "upper",                  &to_uppercase },
         { "getsession",             &get_session },
+        { "getansihost",            &get_ansi_host },
         // Backward compatibility with the Clink 0.4.8 API.  Clink 1.0.0a1 had
         // moved these APIs away from "clink.", but backward compatibility
         // requires them here as well.

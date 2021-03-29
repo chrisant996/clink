@@ -77,7 +77,6 @@ extern int          _rl_last_v_pos;
 #endif
 } // extern "C"
 
-extern bool is_conemu();
 extern void host_add_history(int rl_history_index, const char* line);
 extern void host_remove_history(int rl_history_index, const char* line);
 extern void sort_match_list(char** matches, int len);
@@ -1461,7 +1460,7 @@ void rl_module::on_begin_line(const context& context)
                     goto concat_verbatim;
                 if (osc.visible)
                     rl_prompt.concat(osc.output.c_str(), osc.output.length());
-                else if (is_conemu())
+                else if (get_native_ansi_handler() == ansi_handler::conemu)
                     goto concat_verbatim;
                 else if (osc.command >= '0' && osc.command <= '2')
                     set_console_title(osc.param.c_str());
