@@ -3,7 +3,7 @@
 
 <!-- ----------------------------------------------------- -->
 <head>
-<title>Clink v1.1.46</title>
+<title>Clink v1.1.47</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Rambla:wght@400;700&family=Roboto&family=Fira+Mono&display=swap');
 html {
@@ -409,7 +409,7 @@ var hljs=function(){"use strict";function e(n){Object.freeze(n);var t="function"
         </td>
         <td style="text-align:right">
             <div id="header">
-                <div id="title">Clink v1.1.46</div>
+                <div id="title">Clink v1.1.47</div>
                 <div id="url">
                     <a href="http://github.com/chrisant996/clink">
                         http://github.com/chrisant996/clink
@@ -950,7 +950,7 @@ Echos key sequences to use in the .inputrc files for binding keys to Clink comma
 </tr>
 <tr>
 <td align="center"><code>search-ignore-case</code></td>
-<td align="center">off</td>
+<td align="center">on</td>
 <td>Controls whether the history search commands ignore case.</td>
 </tr>
 </tbody></table>
@@ -2644,6 +2644,11 @@ string.matchlen("abx", "abx")       -- returns -1</code></pre></div></div><hr/>
         <div class="section" id="changes">
 <h1 id="changes">Changes</h1>
 <h2 id="releases-from-chrisant996clink-fork">Releases from <a href="https://github.com/chrisant996/clink">chrisant996/clink</a> fork</h2>
+<h3 id="v1147">v1.1.47</h3>
+<ul>
+<li>Added default key binding for <kbd>Ctrl</kbd>+<kbd>Space</kbd> to invoke <code>old-menu-complete</code>, which is the most similar to CMD&#39;s standard <kbd>Tab</kbd> behavior.</li>
+<li>Fixed <code>search-ignore-case</code> config variable to be on by default.</li>
+</ul>
 <h3 id="v1146">v1.1.46</h3>
 <ul>
 <li>Added <code>rl.setvariable()</code> to temporarily override the value of a Readline config variable.</li>
