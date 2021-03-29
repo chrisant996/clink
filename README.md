@@ -8,6 +8,10 @@ Downloads are available from the [releases](https://github.com/chrisant996/clink
 
 See the [issues](https://github.com/chrisant996/clink/issues) page for known issues or to file new issues.
 
+### Screenshot
+
+![image](https://chrisant996.github.io/images/clink_demo.png)
+
 ### Features
 
 - The same line editing as Bash (from the [GNU Readline library](https://tiswww.case.edu/php/chet/readline/rltop.html) version 8.1).
