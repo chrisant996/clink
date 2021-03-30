@@ -417,6 +417,12 @@ void host_cmd::edit_line(const wchar_t* prompt, wchar_t* chars, int max_chars)
             write_line_feed();
         }
     }
+
+    // Reset the captured prompt so that `set /p VAR=""` works properly.  It's a
+    // degenerate case where ReadConsoleW is called again without an intervening
+    // call to WriteConsoleW.  It's incorrect to rely on WriteConsoleW for
+    // clearing the captured prompt.
+    m_prompt.clear();
 }
 
 //------------------------------------------------------------------------------

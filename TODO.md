@@ -92,14 +92,8 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 
 # BACKLOG
 
-- [#542](https://github.com/mridgers/clink/issues/542) VS Code not capturing std output
 - A way to disable/enable clink once injected.
-- [#532](https://github.com/mridgers/clink/issues/532) paste newlines, run as separate lines
-  - It's pretty risky to just paste-and-go.
-  - Maybe add an option to convert newlines into "&" instead?
-  - Or maybe let readline do multiline editing and accept them all as a batch on **Enter**?
 - [#486](https://github.com/mridgers/clink/issues/486) **Ctrl+C** doesn't always work properly _[might be the auto-answer prompt setting]_
-- [#20](https://github.com/chrisant996/clink/issues/20) Cmd gets unresponsive after "set /p" command.  _[Seems to mostly work, though `set /p FOO=""` doesn't prompt for input.]_
 
 <br/>
 <br/>

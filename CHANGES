@@ -6,6 +6,7 @@
 
 - Added `clink.getansihost()` function to get Clink's best guess who will process ANSI escape codes (can be useful for avoiding 256 bit and 24 bit color codes, for example).
 - Added detection for being hosted in ConsoleZ.
+- Fixed [#20](https://github.com/chrisant996/clink/issues/20); `set /p VAR=""` shows the normal command prompt text instead of empty prompt text.
 
 ### v1.1.47
 
