@@ -7,6 +7,7 @@
 - Added `clink.classifier()` to enable coloring the input line independently from argmatchers.
 - Added `word_classifications:applycolor()` to apply SGR escape codes anywhere in the input line.
 - Removed `word_classifications:iswordclassified()`.
+- Fixed the Product Version string in the binary file version resources.
 
 ### v1.1.48
 
