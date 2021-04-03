@@ -126,7 +126,7 @@ workspace("clink")
     setup_cfg("release")
     setup_cfg("debug")
 
-    includedirs(".build")               -- for clink_commit.h
+    includedirs(path.getabsolute(".build"))     -- for clink_commit.h
 
     configuration("debug")
         optimize("off")
