@@ -78,15 +78,15 @@ end
 --------------------------------------------------------------------------------
 local function write_clink_commit_file(commit)
     local clink_commit_file
-    local clink_commit_file_name = to.."/clink_commit.h"
+    local clink_commit_file_name = ".build/clink_commit.h"
     local clink_commit_string = "#pragma once\n#define CLINK_COMMIT "..commit.."\n"
     local old_commit_string = ""
 
     clink_commit_file = io.open(path.getabsolute(clink_commit_file_name), "r")
     if clink_commit_file then
         old_commit_string = clink_commit_file:read("*all")
+	    clink_commit_file:close()
     end
-    clink_commit_file:close()
 
     if old_commit_string ~= clink_commit_string then
         clink_commit_file = io.open(path.getabsolute(clink_commit_file_name), "w")
@@ -104,9 +104,11 @@ end
 --------------------------------------------------------------------------------
 clink_git_name, clink_git_commit = get_git_info()
 
-workspace("clink")
-    write_clink_commit_file(clink_git_commit)
+-- Ideally I want to write clink_commit.h only when generating a workspace.
+-- But for now it runs on _ALL_ actions.
+write_clink_commit_file(clink_git_commit)
 
+workspace("clink")
     configurations({"debug", "release", "final"})
     platforms({"x32", "x64"})
     location(to)
@@ -124,7 +126,7 @@ workspace("clink")
     setup_cfg("release")
     setup_cfg("debug")
 
-    includedirs(to)                     -- for clink_commit.h
+    includedirs(".build")               -- for clink_commit.h
 
     configuration("debug")
         optimize("off")
