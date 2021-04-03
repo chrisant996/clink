@@ -126,8 +126,6 @@ workspace("clink")
     setup_cfg("release")
     setup_cfg("debug")
 
-    includedirs(path.getabsolute(".build"))     -- for clink_commit.h
-
     configuration("debug")
         optimize("off")
         defines("DEBUG")
@@ -157,6 +155,9 @@ workspace("clink")
     configuration("gmake")
         defines("__MSVCRT_VERSION__=0x0601")
         defines("WINVER=0x0502")
+
+    configuration("*")
+        includedirs(".build")           -- for clink_commit.h
 
 --------------------------------------------------------------------------------
 project("readline")
