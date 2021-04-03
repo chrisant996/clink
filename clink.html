@@ -3,7 +3,7 @@
 
 <!-- ----------------------------------------------------- -->
 <head>
-<title>Clink v1.1.48</title>
+<title>Clink v1.2.0</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Rambla:wght@400;700&family=Roboto&family=Fira+Mono&display=swap');
 html {
@@ -409,7 +409,7 @@ var hljs=function(){"use strict";function e(n){Object.freeze(n);var t="function"
         </td>
         <td style="text-align:right">
             <div id="header">
-                <div id="title">Clink v1.1.48</div>
+                <div id="title">Clink v1.2.0</div>
                 <div id="url">
                     <a href="http://github.com/chrisant996/clink">
                         http://github.com/chrisant996/clink
@@ -1375,88 +1375,6 @@ clink.argmatcher()
 :addflags(&quot;-a&quot;, &quot;-b&quot;, &quot;/?&quot;, &quot;/h&quot;)   -- Flags
 </code></pre>
 <p>With the shorthand form flags are implied rather than declared.  When a shorthand table&#39;s first value is a string starting with <code>-</code> or <code>/</code> then the table is interpreted as flags.  Note that it&#39;s still possible with shorthand form to mix flag prefixes, and even add additional flag prefixes, such as <code>{ <span class="hljs-string">'-a'</span>, <span class="hljs-string">'/b'</span>, <span class="hljs-string">'=c'</span> }</code>.</p>
-<a name="classifywords"/>
-
-<h4 id="coloring-the-input-text">Coloring The Input Text</h4>
-<p>When the <code>clink.colorize_input</code> setting is enabled, argmatchers apply colors to the input text by parsing it.</p>
-<p>In cases where an argmatcher isn&#39;t able to color the input text in the desired manner, it&#39;s also possible to supply a classifier function that can override how the argmatcher would color the input text.  An argmatcher&#39;s classifier function is called once for each word the argmatcher parses, but it can classify any words (not just the word it was called for).  Each argmatcher can have its own function, so when there are linked argmatchers more than one function may be invoked.</p>
-<p>Words are colored by classifying the words, and each classification has an associated color.</p>
-<table>
-<thead>
-<tr>
-<th>Code</th>
-<th>Classification</th>
-<th>Color</th>
-</tr>
-</thead>
-<tbody><tr>
-<td><code>&quot;a&quot;</code></td>
-<td>Argument; used for words that match a list of preset argument matches.</td>
-<td><code>color.arg</code> or <code>color.input</code></td>
-</tr>
-<tr>
-<td><code>&quot;c&quot;</code></td>
-<td>Shell command; used for CMD command names.</td>
-<td><code>color.cmd</code></td>
-</tr>
-<tr>
-<td><code>&quot;d&quot;</code></td>
-<td>Doskey alias.</td>
-<td><code>color.doskey</code></td>
-</tr>
-<tr>
-<td><code>&quot;f&quot;</code></td>
-<td>Flag; used for flags that match a list of preset flag matches.</td>
-<td><code>color.flag</code></td>
-</tr>
-<tr>
-<td><code>&quot;o&quot;</code></td>
-<td>Other; used for file names and words that don&#39;t fit any of the other classifications.</td>
-<td><code>color.input</code></td>
-</tr>
-<tr>
-<td><code>&quot;n&quot;</code></td>
-<td>None; used for words that aren&#39;t recognized as part of the expected input syntax</td>
-<td><code>color.unexpected</code></td>
-</tr>
-</tbody></table>
-<p>The <code>clink set</code> command has different syntax depending on the setting type, so the argmatcher for <code>clink</code> needs help in order to get everything right.  A custom generator function parses the input text to provide appropriate matches, and a custom classifier function classifies the words.</p>
-<pre><code class="language-lua">-- In this example, the argmatcher matches a directory as the first argument and
--- a file as the second argument.  It uses a word classifier function to classify
--- directories (words that end with a path separator) as &quot;unexpected&quot; in the
--- second argument position.
-
-local function classify_handler(arg_index, word, word_index, line_state, classify)
-    -- `arg_index` is the argument position in the argmatcher.
-    -- In this example only position 2 needs special treatent.
-    if arg_index ~= 2 then
-        return
-    end
-
-    -- `arg_index` is the argument position in the argmatcher.
-    -- `word_index` is the word position in the `line_state`.
-    -- Ex1: in `samp dir file` for the word `dir` the argument index is 1 and
-    -- the word index is 2.
-    -- Ex2: in `samp --help dir file` for the word `dir` the argument index is
-    -- still 1, but the word index is 3.
-
-    -- `word` is the word the classifier function was called for and `word_index`
-    -- is its position in the line.  Because `line_state` is also provided, the
-    -- function can examine any words in the input line.
-    if word:sub(-1) == &quot;\\&quot; then
-        -- The word appears to be a directory, but this example expects only
-        -- files are expected in argument position 2.  Here the word gets
-        -- classified as &quot;n&quot; (unexpected) so it gets colored differently.
-        classify:classifyword(&quot;n&quot;)
-    end
-end
-
-local matcher = clink.argmatcher(&quot;samp&quot;)
-:addflags(&quot;--help&quot;)
-:addarg({ clink.dirmatches })
-:addarg({ clink.filematches })
-:setclassifier(classify_handler)
-</code></pre>
 <a name="filteringmatchcompletions"/>
 
 <h4 id="filtering-match-completions">Filtering Match Completions</h4>
@@ -1614,6 +1532,105 @@ end
 <li>So if a match generator made contextual decisions during match generation (other than filtering) then it could potentially behave differently in Clink v1.x than it did in v0.x.</li>
 </ul>
 </blockquote>
+<a name="classifywords"/>
+
+<h2 id="coloring-the-input-text">Coloring The Input Text</h2>
+<p>When the <code>clink.colorize_input</code> setting is enabled, <a href="#argumentcompletion">argmatcher</a> automatically apply colors to the input text by parsing it.</p>
+<p>It&#39;s possible for an argmatcher to provide a function to override how its arguments are colored.  This function is called once for each of the argmatcher&#39;s arguments.</p>
+<p>It&#39;s also possible to register a classifier function for the whole input line.  This function is very similar to a match generator; classifier functions are called in priority order, and a classifier can choose to stop the classification process.</p>
+<h4 id="setting-a-classifier-function-in-an-argmatcher">Setting a classifier function in an argmatcher</h4>
+<p>In cases where an <a href="#argumentcompletion">argmatcher</a> isn&#39;t able to color the input text in the desired manner, it&#39;s possible to supply a classifier function that overrides how the argmatcher colors the input text.  An argmatcher&#39;s classifier function is called once for each word the argmatcher parses, but it can classify any words (not just the word it was called for).  Each argmatcher can have its own classifier function, so when there are linked argmatchers more than one function may be invoked.</p>
+<p>Words are colored by classifying the words, and each classification has an associated color.  See <a href="#word_classifications:classifyword">word_classifications:classifyword()</a> for the available classification codes.</p>
+<p>The <code>clink set</code> command has different syntax depending on the setting type, so the argmatcher for <code>clink</code> needs help in order to get everything right.  A custom generator function parses the input text to provide appropriate matches, and a custom classifier function applies appropriate coloring.</p>
+<pre><code class="language-lua">-- In this example, the argmatcher matches a directory as the first argument and
+-- a file as the second argument.  It uses a word classifier function to classify
+-- directories (words that end with a path separator) as &quot;unexpected&quot; in the
+-- second argument position.
+
+local function classify_handler(arg_index, word, word_index, line_state, classifications)
+    -- `arg_index` is the argument position in the argmatcher.
+    -- In this example only position 2 needs special treatent.
+    if arg_index ~= 2 then
+        return
+    end
+
+    -- `arg_index` is the argument position in the argmatcher.
+    -- `word_index` is the word position in the `line_state`.
+    -- Ex1: in `samp dir file` for the word `dir` the argument index is 1 and
+    -- the word index is 2.
+    -- Ex2: in `samp --help dir file` for the word `dir` the argument index is
+    -- still 1, but the word index is 3.
+
+    -- `word` is the word the classifier function was called for and `word_index`
+    -- is its position in the line.  Because `line_state` is also provided, the
+    -- function can examine any words in the input line.
+    if word:sub(-1) == &quot;\\&quot; then
+        -- The word appears to be a directory, but this example expects only
+        -- files in argument position 2.  Here the word gets classified as &quot;n&quot;
+        -- (unexpected) so it gets colored differently.
+        classifications:classifyword(word_index, &quot;n&quot;)
+    end
+end
+
+local matcher = clink.argmatcher(&quot;samp&quot;)
+:addflags(&quot;--help&quot;)
+:addarg({ clink.dirmatches })
+:addarg({ clink.filematches })
+:setclassifier(classify_handler)
+</code></pre>
+<h4 id="setting-a-classifier-function-for-the-whole-input-line">Setting a classifier function for the whole input line</h4>
+<p>In some cases it may be desireable to use a custom classifier to apply coloring in an input line.</p>
+<p>First create a classifier object:</p>
+<pre><code class="language-lua">local my_classifier = clink.classifier(priority)
+</code></pre>
+<p>The <span class="arg">priority</span> argument is a number that influences when the classifier gets called, with lower numbers going before higher numbers.</p>
+<p>Next define a classify function on the object, taking the following form:</p>
+<pre><code class="language-lua">function my_classifier:classify(commands)
+    -- commands is a table of { line_state, classifications } objects, one per
+    -- command in the input line.  For example, &quot;echo hello &amp; echo world&quot; is two
+    -- commands:  &quot;echo hello&quot; and &quot;echo world&quot;.
+end
+</code></pre>
+<p><span class="arg">commands</span> is a table of tables, with the following scheme:
+<span class="tablescheme">{ {line_state:<a href="#line">line</a>, classifications:<a href="#word_classifications">word_classifications</a>}, ... }</span>.</p>
+<p>If no further classifiers need to be called then the function should return true.  Returning false or nil continues letting other classifiers get called.</p>
+<pre><code class="language-lua">-- In this example, a custom classifier applies colors to command separators and
+-- redirection symbols in the input line.
+local cmdsep_classifier = clink.classifier(50)
+function cmdsep_classifier:classify(commands)
+    -- The `classifications:classifyword()` method can only affect the words for
+    -- the corresponding command.  However, this example doesn&#39;t need to parse
+    -- words within commands, it just wants to parse the whole line.  And since
+    -- each command&#39;s `classifications:applycolor()` method can apply color
+    -- anywhere in the entire input line, this example can simply use the first
+    -- command&#39;s `classifications` object.
+    if commands[1] then
+        local line_state = commands[1].line_state
+        local classifications = commands[1].classifications
+        local line = line_state:getline()
+        local quote = false
+        local i = 1
+        while (i &lt;= #line) do
+            local c = line:sub(i,i)
+            if c == &#39;^&#39; then
+                i = i + 1
+            elseif c == &#39;&quot;&#39; then
+                quote = not quote
+            elseif quote then
+            elseif c == &#39;&amp;&#39; or c == &#39;|&#39; then
+                classifications:applycolor(i, 1, &quot;95&quot;)
+            elseif c == &#39;&gt;&#39; or c == &#39;&lt;&#39; then
+                classifications:applycolor(i, 1, &quot;35&quot;)
+                if line:sub(i,i+1) == &#39;&gt;&amp;&#39; then
+                    i = i + 1
+                    classifications:applycolor(i, 1, &quot;35&quot;)
+                end
+            end
+            i = i + 1
+        end
+    end
+end
+</code></pre>
 <a name="customisingtheprompt"/>
 
 <h2 id="customising-the-prompt">Customising The Prompt</h2>
@@ -2230,6 +2247,7 @@ builder:addmatches({
 <div class="function"><div class="header"> <div class="name"><a name="builder:setsuppressquoting">builder:setsuppressquoting</a></div> <div class="signature">( [<span class="arg_name">state</span>:integer] ) : nil</div></div><div class="body"><p class="desc">Sets whether to suppress quoting for the matches.  Set to 0 for normal quoting, or 1 to suppress quoting, or 2 to suppress end quotes.  For example the env var match generator sets this to 1 to overcome the quoting that would normally happen for "%" characters in filenames.</p></div></div><hr/>
 </div><div class="group"><h5 class="group_name"><a name="clink">clink</a></h5><div class="function"><div class="header"> <div class="name"><a name="clink.add_match">clink.add_match</a></div> <div class="signature">( <span class="arg_name">match</span>:string ) : nil</div></div><div class="body deprecated"><p class="desc"><strong>Deprecated; don't use this.</strong>  See <a href="#builder:addmatch">builder:addmatch</a> for more information.</p><p class="desc">This is a shim that lets clink.register_match_generator continue to work for now, despite being obsolete.</p></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="clink.argmatcher">clink.argmatcher</a></div> <div class="signature">( [<span class="arg_name">priority</span>:integer], <span class="arg_name">commands...</span>:string ) : <a href="#_argmatcher">_argmatcher</a></div></div><div class="body"><p class="desc">Creates and returns a new argument matcher parser object.  Use <a href="#_argmatcher:addarg">:addarg()</a> and etc to add arguments, flags, other parsers, and more.  See <a href="#argumentcompletion">Argument Completion</a> for more information.</p><p class="desc"> If one <span class="arg">command</span> is provided and an argument matcher parser object is already associated with the command, this returns the existing parser rather than creating a new parser.  Using :addarg() starts at arg position 1, making it possible to merge new args and etc into the existing parser.</p></div></div><hr/>
+<div class="function"><div class="header"> <div class="name"><a name="clink.classifier">clink.classifier</a></div> <div class="signature">( [<span class="arg_name">priority</span>:integer] ) : table</div></div><div class="body"><p class="desc">Creates and returns a new word classifier object.  Define on the object a <code>classify()</code> function which gets called in increasing <span class="arg">priority</span> order (low values to high values) when classifying words for coloring the input.  See <a href="#classifywords">Coloring The Input Text</a> for more information.</p></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="clink.dirmatches">clink.dirmatches</a></div> <div class="signature">( <span class="arg_name">word</span>:string ) : table</div></div><div class="body"><p class="desc">You can use this function in an argmatcher to supply directory matches. This automatically handles Readline tilde completion.</p><pre class="language-lua"><code>-- Make "cd" generate directory matches (no files).
 clink.argmatcher("cd")
 :addflags("/d")
@@ -2250,11 +2268,11 @@ clink.argmatcher("foo")
 local r = io.popen(c.." --session "..clink.getsession().." history")</code></pre></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="clink.is_match">clink.is_match</a></div> <div class="signature">( <span class="arg_name">needle</span>:string, <span class="arg_name">candidate</span>:string ) : boolean</div></div><div class="body deprecated"><p class="desc"><strong>Deprecated; don't use this.</strong>  See <a href="#clink.generator">clink.generator</a> for more information.</p><p class="desc">This returns true if <span class="arg">needle</span> is a prefix of <span class="arg">candidate</span> with a case insensitive comparison.</p><p class="desc"> Normally in Clink v1.x and higher the <span class="arg">needle</span> will be an empty string because the generators are no longer responsible for filtering matches.  The match pipeline itself handles that internally now.</p></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="clink.lower">clink.lower</a></div> <div class="signature">( <span class="arg_name">text</span>:string ) : string</div></div><div class="body"><p class="desc">This API correctly converts UTF8 strings to lowercase, with international linguistic awareness.</p><pre class="language-lua"><code>clink.lower("Hello World") -- returns "hello world"</code></pre></div></div><hr/>
+<div class="function"><div class="header"> <div class="name"><a name="clink.match_display_filter">clink.match_display_filter</a></div> <div class="signature">function variable</div></div><div class="body deprecated"><p class="desc"><strong>Deprecated; don't use this.</strong>  See <a href="#clink.ondisplaymatches">clink.ondisplaymatches</a> for more information.</p><p class="desc">A match generator can set this varible to a filter function that is called before displaying matches.  It is reset every time match generation is invoked.  The filter function receives table argument containing the matches that are going to be displayed, and it returns a table filtered as required by the match generator.</p><p class="desc"> See <a href="#filteringthematchdisplay">Filtering the Match Display</a> for more information.</p></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="clink.match_display_filter">clink.match_display_filter</a></div> <div class="signature">function variable</div></div><div class="body deprecated"><p class="desc"><strong>Deprecated; don't use this.</strong>  See <a href="#builder:addmatch">builder:addmatch</a> for more information.</p><p class="desc">This is no longer used.</p><pre class="language-lua"><code>clink.match_display_filter = function(matches)
 &nbsp; -- Transform matches.
 &nbsp; return matches
 end</code></pre></div></div><hr/>
-<div class="function"><div class="header"> <div class="name"><a name="clink.match_display_filter">clink.match_display_filter</a></div> <div class="signature">function variable</div></div><div class="body deprecated"><p class="desc"><strong>Deprecated; don't use this.</strong>  See <a href="#clink.ondisplaymatches">clink.ondisplaymatches</a> for more information.</p><p class="desc">A match generator can set this varible to a filter function that is called before displaying matches.  It is reset every time match generation is invoked.  The filter function receives table argument containing the matches that are going to be displayed, and it returns a table filtered as required by the match generator.</p><p class="desc"> See <a href="#filteringthematchdisplay">Filtering the Match Display</a> for more information.</p></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="clink.matches_are_files">clink.matches_are_files</a></div> <div class="signature">( [<span class="arg_name">files</span>:boolean] ) : nil</div></div><div class="body deprecated"><p class="desc"><strong>Deprecated; don't use this.</strong>  See <a href="#builder:addmatch">builder:addmatch</a> for more information.</p><p class="desc">This is no longer needed, because now it's inferred from the match type when adding matches.</p></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="clink.onbeginedit">clink.onbeginedit</a></div> <div class="signature">( <span class="arg_name">func</span>:function ) : nil</div></div><div class="body"><p class="desc">Registers <span class="arg">func</span> to be called when Clink's edit prompt is activated.  The function receives no arguments and has no return values.</p></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="clink.ondisplaymatches">clink.ondisplaymatches</a></div> <div class="signature">( <span class="arg_name">func</span>:function ) : nil</div></div><div class="body"><p class="desc">Registers <span class="arg">func</span> to be called when Clink is about to display matches.  See <a href="#filteringthematchdisplay">Filtering the Match Display</a> for more information.</p><pre class="language-lua"><code>local function my_filter(matches, popup)
@@ -2637,14 +2655,25 @@ settings.add("color.mymno", "bright magenta", "Color setting")</code></pre></div
 <div class="function"><div class="header"> <div class="name"><a name="string.matchlen">string.matchlen</a></div> <div class="signature">( <span class="arg_name">a</span>:string, <span class="arg_name">b</span>:string ) : integer</div></div><div class="body"><p class="desc">Returns how many characters match at the beginning of the strings, or -1 if the entire strings match.  This respects the <code>match.ignore_case</code> and <code>match.ignore_accents</code> Clink settings.</p><pre class="language-lua"><code>string.matchlen("abx", "a")         -- returns 1
 string.matchlen("abx", "aby")       -- returns 2
 string.matchlen("abx", "abx")       -- returns -1</code></pre></div></div><hr/>
-</div><div class="group"><h5 class="group_name"><a name="word_classifications">word_classifications</a></h5><div class="function"><div class="header"> <div class="name"><a name="word_classifications:classifyword">word_classifications:classifyword</a></div> <div class="signature">( <span class="arg_name">word_index</span>:integer, <span class="arg_name">word_class</span>:string ) : nil</div></div><div class="body"><p class="desc">This classifies the indicated word so that it can be colored appropriately. See <a href="#classifywords">Coloring The Input Text</a> for more information, including the available <span class="arg">word_class</span> codes.</p></div></div><hr/>
-<div class="function"><div class="header"> <div class="name"><a name="word_classifications:iswordclassified">word_classifications:iswordclassified</a></div> <div class="signature">( <span class="arg_name">word_index</span>:integer ) : boolean</div></div><div class="body"><p class="desc">This returns whether the indicated word is already classified.  The classifier functions get called A LOT, so they need to be fast.  If a particular word can be slow to analyze then checking whether it's already been classified can help speed up the classifier.</p></div></div><hr/>
+</div><div class="group"><h5 class="group_name"><a name="word_classifications">word_classifications</a></h5><div class="function"><div class="header"> <div class="name"><a name="word_classifications:applycolor">word_classifications:applycolor</a></div> <div class="signature">( <span class="arg_name">start</span>:integer, <span class="arg_name">length</span>:integer, <span class="arg_name">color</span>:string ) : nil</div></div><div class="body"><p class="desc">Applies an ANSI <a href="https://en.wikipedia.org/wiki/ANSI_escape_code#SGR">SGR escape code</a> to some characters in the input line.</p><p class="desc"> <span class="arg">start</span> is where to begin applying the SGR code.</p><p class="desc"> <span class="arg">length</span> is the number of characters to affect.</p><p class="desc"> <span class="arg">color</span> is the SGR parameters sequence to apply (for example <code>"7"</code> is the code for reverse video, which swaps the foreground and background colors).</p><p class="desc"> See <a href="#classifywords">Coloring The Input Text</a> for more information.</p></div></div><hr/>
+<div class="function"><div class="header"> <div class="name"><a name="word_classifications:classifyword">word_classifications:classifyword</a></div> <div class="signature">( <span class="arg_name">word_index</span>:integer, <span class="arg_name">word_class</span>:string ) : nil</div></div><div class="body"><p class="desc">This classifies the indicated word so that it can be colored appropriately.</p><p class="desc"> The <span class="arg">word_class</span> is one of the following codes:</p><p class="desc"> <table> <tr><th>Code</th><th>Classification</th><th>Clink Color Setting</th></tr> <tr><td><code>"a"</code></td><td>Argument; used for words that match a list of preset argument matches.</td><td><code>color.arg</code> or <code>color.input</code></td></tr> <tr><td><code>"c"</code></td><td>Shell command; used for CMD command names.</td><td><code>color.cmd</code></td></tr> <tr><td><code>"d"</code></td><td>Doskey alias.</td><td><code>color.doskey</code></td></tr> <tr><td><code>"f"</code></td><td>Flag; used for flags that match a list of preset flag matches.</td><td><code>color.flag</code></td></tr> <tr><td><code>"o"</code></td><td>Other; used for file names and words that don't fit any of the other classifications.</td><td><code>color.input</code></td></tr> <tr><td><code>"n"</code></td><td>None; used for words that aren't recognized as part of the expected input syntax.</td><td><code>color.unexpected</code></td></tr> <tr><td><code>"m"</code></td><td>Prefix that can be combined with another code (for the first word) to indicate the command has an argmatcher (e.g. <code>"mc"</code> or <code>"md"</code>).</td><td><code>color.argmatcher</code> or the other code's color</td></tr> </table></p><p class="desc"> See <a href="#classifywords">Coloring The Input Text</a> for more information.</p></div></div><hr/>
 </div><div class="group"><h5 class="group_name"><a name="[other]">[other]</a></h5><div class="function"><div class="header"> <div class="name"><a name="rl_state">rl_state</a></div> <div class="signature">table variable</div></div><div class="body deprecated"><p class="desc"><strong>Deprecated; don't use this.</strong>  See <a href="#line">line</a> for more information.</p><p class="desc">This is an obsolete global variable that was set while running match generators.  It has been superseded by the <a href="#line">line</a> type parameter passed into match generator functions when using the new <a href="#clink.generator">clink.generator</a> API.</p></div></div><hr/>
 </div>
         </div>
         <div class="section" id="changes">
 <h1 id="changes">Changes</h1>
 <h2 id="releases-from-chrisant996clink-fork">Releases from <a href="https://github.com/chrisant996/clink">chrisant996/clink</a> fork</h2>
+<h3 id="v12">v1.2</h3>
+<ul>
+<li>First official release from <a href="https://github.com/chrisant996/clink">chrisant996/clink</a> fork.</li>
+</ul>
+<h3 id="v1149">v1.1.49</h3>
+<ul>
+<li>Added <code>clink.classifier()</code> to enable coloring the input line independently from argmatchers.</li>
+<li>Added <code>word_classifications:applycolor()</code> to apply SGR escape codes anywhere in the input line.</li>
+<li>Removed <code>word_classifications:iswordclassified()</code>.</li>
+<li>Fixed the Product Version string in the binary file version resources.</li>
+</ul>
 <h3 id="v1148">v1.1.48</h3>
 <ul>
 <li>Added <code>clink.getansihost()</code> function to get Clink&#39;s best guess who will process ANSI escape codes (can be useful for avoiding 256 bit and 24 bit color codes, for example).</li>
