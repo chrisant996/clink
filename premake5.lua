@@ -75,12 +75,38 @@ local function clink_exe(name)
     kind("consoleapp")
 end
 
+--------------------------------------------------------------------------------
+local function write_clink_commit_file(commit)
+    local clink_commit_file
+    local clink_commit_file_name = to.."/clink_commit.h"
+    local clink_commit_string = "#pragma once\n#define CLINK_COMMIT "..commit.."\n"
+    local old_commit_string = ""
+
+    clink_commit_file = io.open(path.getabsolute(clink_commit_file_name), "r")
+    if clink_commit_file then
+        old_commit_string = clink_commit_file:read("*all")
+    end
+    clink_commit_file:close()
+
+    if old_commit_string ~= clink_commit_string then
+        clink_commit_file = io.open(path.getabsolute(clink_commit_file_name), "w")
+        if not clink_commit_file then
+            error("Unable to write '"..clink_commit_file_name.."'.")
+        end
+        clink_commit_file:write(clink_commit_string)
+        clink_commit_file:close()
+        print("Generated "..clink_commit_file_name.."...")
+    end
+end
+
 
 
 --------------------------------------------------------------------------------
 clink_git_name, clink_git_commit = get_git_info()
 
 workspace("clink")
+    write_clink_commit_file(clink_git_commit)
+
     configurations({"debug", "release", "final"})
     platforms({"x32", "x64"})
     location(to)
@@ -93,11 +119,12 @@ workspace("clink")
     exceptionhandling("off")
     defines("HAVE_CONFIG_H")
     defines("HANDLE_MULTIBYTE")
-    defines("CLINK_COMMIT="..clink_git_commit)
 
     setup_cfg("final")
     setup_cfg("release")
     setup_cfg("debug")
+
+    includedirs(to)                     -- for clink_commit.h
 
     configuration("debug")
         optimize("off")
