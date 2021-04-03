@@ -231,6 +231,9 @@ local function classify_handler(arg_index, word, word_index, line_state, classif
 
         -- Classify the setting value.
         local idx = word_index + 1
+        if idx > line_state:getwordcount() then
+            return true
+        end
         if info.type == "color" then
             color_handler(idx, line_state, classify)
             return true
