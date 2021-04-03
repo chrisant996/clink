@@ -9,6 +9,7 @@
 
 #include <core/base.h>
 #include <lib/line_state.h>
+#include <lib/word_classifications.h>
 
 #include <assert.h>
 
@@ -39,58 +40,49 @@ lua_word_classifier::lua_word_classifier(lua_state& state)
 }
 
 //------------------------------------------------------------------------------
-void lua_word_classifier::classify(const line_state& line, word_classifications& classifications, const char* already_classified)
+void lua_word_classifier::classify(const std::vector<line_state>& commands, word_classifications& classifications)
 {
     lua_State* state = m_state.get_state();
     save_stack_top ss(state);
 
     // Call to Lua to generate matches.
     lua_getglobal(state, "clink");
-    lua_pushliteral(state, "_parse_word_types");
+    lua_pushliteral(state, "_classify");
     lua_rawget(state, -2);
 
-    line_state_lua line_lua(line);
-    line_lua.push(state);
+    // Build the lua objects for the line_state and word_classifications for
+    // each command.
+    std::vector<line_state_lua> linestates;
+    std::vector<lua_word_classifications> wordclassifications;
+    linestates.reserve(commands.size());
+    wordclassifications.reserve(commands.size());
+    for (const auto& line : commands)
+    {
+        linestates.emplace_back(line);
+        wordclassifications.emplace_back(classifications, classifications.add_command(line), line.get_word_count());
+    }
 
-    lua_word_classifications classifications_lua(already_classified);
-    classifications_lua.push(state);
+    // Package the lua objects into a table.
+    lua_createtable(state, int(linestates.size()), 0);
+    for (size_t ii = 0; ii < linestates.size();)
+    {
+        lua_createtable(state, 2, 0);
 
-    if (m_state.pcall(state, 2, 1) != 0)
+        lua_pushliteral(state, "line_state");
+        linestates[ii].push(state);
+        lua_rawset(state, -3);
+
+        lua_pushliteral(state, "classifications");
+        wordclassifications[ii].push(state);
+        lua_rawset(state, -3);
+
+        lua_rawseti(state, -2, int(++ii));
+    }
+
+    if (m_state.pcall(state, 1, 1) != 0)
     {
         if (const char* error = lua_tostring(state, -1))
             m_state.print_error(error);
         return;
-    }
-
-    const char* ret = lua_tostring(state, -1);
-    bool has_argmatcher = (ret[0] == 'm');
-    if (has_argmatcher)
-        ret++;
-
-    const std::vector<word>& words(line.get_words());
-    for (unsigned int i = 0; i < strlen(ret); i++)
-    {
-        word_class_info* info = classifications.push_back();
-        info->start = words[i].offset;
-        info->end = info->start + words[i].length;
-        info->word_class = to_word_class(ret[i]);
-        info->argmatcher = (i == 0 && has_argmatcher);
-    }
-
-    unsigned int target_count = min<unsigned int>(classifications_lua.size(), line.get_word_count());
-    for (unsigned int i = classifications.size(); i < target_count; i++)
-    {
-        word_class_info* info = classifications.push_back();
-        info->start = words[i].offset;
-        info->end = info->start + words[i].length;
-        info->word_class = word_class::none;
-        info->argmatcher = false;
-    }
-
-    for (unsigned int i = 0; i < classifications_lua.size(); i++)
-    {
-        word_class wc;
-        if (classifications_lua.get_word_class(i, wc))
-            classifications[i]->word_class = wc;
     }
 }

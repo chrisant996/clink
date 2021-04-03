@@ -8,6 +8,7 @@
 #include "line_state_lua.h"
 
 #include <lib/line_state.h>
+#include <lib/word_classifications.h>
 
 extern "C" {
 #include <lua.h>
@@ -20,40 +21,19 @@ extern "C" {
 //------------------------------------------------------------------------------
 static lua_word_classifications::method g_methods[] = {
     { "classifyword",     &lua_word_classifications::classify_word },
-    { "iswordclassified", &lua_word_classifications::is_word_classified },
+    { "applycolor",       &lua_word_classifications::apply_color },
     {}
 };
 
 
 
 //------------------------------------------------------------------------------
-lua_word_classifications::lua_word_classifications(const char* classifications)
+lua_word_classifications::lua_word_classifications(word_classifications& classifications, unsigned int index_offset, unsigned int num_words)
 : lua_bindable("word_classifications", g_methods)
+, m_classifications(classifications)
+, m_index_offset(index_offset)
+, m_num_words(num_words)
 {
-    m_classifications = classifications;
-}
-
-//------------------------------------------------------------------------------
-/// -name:  word_classifications:iswordclassified
-/// -arg:   word_index:integer
-/// -ret:   boolean
-/// This returns whether the indicated word is already classified.  The
-/// classifier functions get called A LOT, so they need to be fast.  If a
-/// particular word can be slow to analyze then checking whether it's already
-/// been classified can help speed up the classifier.
-int lua_word_classifications::is_word_classified(lua_State* state)
-{
-    if (!lua_isnumber(state, 1))
-        return 0;
-
-    int index = int(lua_tointeger(state, 1)) - 1;
-    char wc;
-    if ((unsigned int)index < m_classifications.length())
-        wc = m_classifications.c_str()[index];
-    else
-        wc = ' ';
-    lua_pushboolean(state, wc != ' ');
-    return 1;
 }
 
 //------------------------------------------------------------------------------
@@ -61,20 +41,40 @@ int lua_word_classifications::is_word_classified(lua_State* state)
 /// -arg:   word_index:integer
 /// -arg:   word_class:string
 /// This classifies the indicated word so that it can be colored appropriately.
+///
+/// The <span class="arg">word_class</span> is one of the following codes:
+///
+/// <table>
+/// <tr><th>Code</th><th>Classification</th><th>Clink Color Setting</th></tr>
+/// <tr><td><code>"a"</code></td><td>Argument; used for words that match a list of preset argument matches.</td><td><code>color.arg</code> or <code>color.input</code></td></tr>
+/// <tr><td><code>"c"</code></td><td>Shell command; used for CMD command names.</td><td><code>color.cmd</code></td></tr>
+/// <tr><td><code>"d"</code></td><td>Doskey alias.</td><td><code>color.doskey</code></td></tr>
+/// <tr><td><code>"f"</code></td><td>Flag; used for flags that match a list of preset flag matches.</td><td><code>color.flag</code></td></tr>
+/// <tr><td><code>"o"</code></td><td>Other; used for file names and words that don't fit any of the other classifications.</td><td><code>color.input</code></td></tr>
+/// <tr><td><code>"n"</code></td><td>None; used for words that aren't recognized as part of the expected input syntax.</td><td><code>color.unexpected</code></td></tr>
+/// <tr><td><code>"m"</code></td><td>Prefix that can be combined with another code (for the first word) to indicate the command has an argmatcher (e.g. <code>"mc"</code> or <code>"md"</code>).</td><td><code>color.argmatcher</code> or the other code's color</td></tr>
+/// </table>
+///
 /// See <a href="#classifywords">Coloring The Input Text</a> for more
-/// information, including the available <span class="arg">word_class</span> codes.
+/// information.
 int lua_word_classifications::classify_word(lua_State* state)
 {
     if (!lua_isnumber(state, 1) || !lua_isstring(state, 2))
         return 0;
 
-    int index = int(lua_tointeger(state, 1)) - 1;
+    const unsigned int index = static_cast<unsigned int>(int(lua_tointeger(state, 1)) - 1);
     const char* s = lua_tostring(state, 2);
     if (!s)
         return 0;
+    if (index >= m_num_words)
+        return luaL_error(state, "word_index out of bounds");
+
+    const bool has_argmatcher = (*s == 'm');
+    if (has_argmatcher)
+        s++;
 
     char wc;
-    switch (s[0])
+    switch (*s)
     {
     case 'o':
     case 'c':
@@ -82,48 +82,50 @@ int lua_word_classifications::classify_word(lua_State* state)
     case 'a':
     case 'f':
     case 'n':
-        wc = s[0];
+        wc = *s;
         break;
     default:
         wc = 'o';
         break;
     }
 
-    classify_word(index, wc);
+    m_classifications.classify_word(m_index_offset + index, wc);
+    if (has_argmatcher && index == 0)
+        m_classifications.set_word_has_argmatcher(m_index_offset);
     return 0;
 }
 
 //------------------------------------------------------------------------------
-bool lua_word_classifications::get_word_class(int word_index_zero_based, word_class& wc) const
+/// -name:  word_classifications:applycolor
+/// -arg:   start:integer
+/// -arg:   length:integer
+/// -arg:   color:string
+/// Applies an ANSI <a href="https://en.wikipedia.org/wiki/ANSI_escape_code#SGR">SGR escape code</a>
+/// to some characters in the input line.
+///
+/// <span class="arg">start</span> is where to begin applying the SGR code.
+///
+/// <span class="arg">length</span> is the number of characters to affect.
+///
+/// <span class="arg">color</span> is the SGR parameters sequence to apply (for example <code>"7"</code> is the code for reverse video, which swaps the foreground and background colors).
+///
+/// See <a href="#classifywords">Coloring The Input Text</a> for more
+/// information.
+int lua_word_classifications::apply_color(lua_State* state)
 {
-    if (word_index_zero_based < 0)
-        return false;
+    if (!lua_isnumber(state, 1) || !lua_isnumber(state, 2) || !lua_isstring(state, 3))
+        return 0;
 
-    if ((unsigned int)word_index_zero_based >= m_classifications.length())
-        return false;
+    unsigned int start = (unsigned int)(lua_tointeger(state, 1)) - 1;
+    unsigned int length = (unsigned int)(lua_tointeger(state, 2));
+    const char* color = lua_tostring(state, 3);
+    if (!color)
+        return 0;
 
-    char c = m_classifications.c_str()[word_index_zero_based];
-    if (c == ' ')
-        return false;
+    char face = m_classifications.ensure_face(color);
+    if (!face)
+        return 0;
 
-    wc = to_word_class(c);
-    return true;
-}
-
-//------------------------------------------------------------------------------
-void lua_word_classifications::classify_word(int word_index_zero_based, char wc)
-{
-    assert(word_index_zero_based < 72); // Dubious; word_classifications is a fixed_array of 72.
-
-    if (word_index_zero_based < 0)
-        return;
-
-    if ((unsigned int)word_index_zero_based >= m_classifications.length())
-    {
-        while ((unsigned int)word_index_zero_based >= m_classifications.length())
-            m_classifications.concat("                ");
-        m_classifications.truncate(word_index_zero_based + 1);
-    }
-
-    m_classifications.data()[word_index_zero_based] = wc;
+    m_classifications.apply_face(start, length, face);
+    return 0;
 }

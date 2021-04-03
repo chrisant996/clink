@@ -31,6 +31,8 @@ const int simple_input_states = (RL_STATE_MOREINPUT |
 
 extern setting_bool g_classify_words;
 
+extern bool is_showing_argmatchers();
+
 
 
 //------------------------------------------------------------------------------
@@ -747,20 +749,27 @@ void line_editor_impl::classify()
     line_state line = get_linestate();
     collect_words(false);
 
-    // Copy the old classifications so it's possible to identify whether they've
-    // changed.  Keep track of how many words
-    word_classifications old_classifications;
-    {
-        const word_class_info* info = m_classifications.front();
-        for (int n = m_classifications.size(); n--; info++)
-            *old_classifications.push_back() = *info;
-    }
-    m_classifications.clear();
+    // Hang on to the old classifications so it's possible to detect changes.
+    word_classifications old_classifications(std::move(m_classifications));
+    m_classifications.init(strlen(line.get_line()));
 
-    // Parse word types for coloring the input line.
+    // Count number of commands so we can pre-allocate words_storage so that
+    // emplace_back() doesn't invalidate pointers (references) stored in
+    // linestates.
+    unsigned int num_commands = 0;
+    for (const auto& word : m_words)
+    {
+        if (word.command_word)
+            num_commands++;
+    }
+
+    // Build vector containing one line_state per command.
     int i = 0;
     int command_word_offset = 0;
     std::vector<word> words;
+    std::vector<std::vector<word>> words_storage;
+    std::vector<line_state> linestates;
+    words_storage.reserve(num_commands);
     while (true)
     {
         if (!words.empty() && (i >= m_words.size() || m_words[i].command_word))
@@ -776,47 +785,16 @@ void line_editor_impl::classify()
                      m_buffer.get_buffer()[command_char_offset - 2] == ' ')
                 command_char_offset--;
 
-            line_state linestate(
+            words_storage.emplace_back(std::move(words));
+            assert(words.empty());
+
+            linestates.emplace_back(
                 m_buffer.get_buffer(),
                 m_buffer.get_cursor(),
                 command_char_offset,
-                words
+                words_storage.back()
             );
 
-            str<16> already_classified;
-            {
-                for (int j = 0; j < words.size(); j++)
-                {
-                    if (already_classified.length() == j &&
-                        command_word_offset + j < old_classifications.size() &&
-                        old_classifications[command_word_offset + j]->start == m_words[j].offset &&
-                        old_classifications[command_word_offset + j]->end == m_words[j].offset + m_words[j].length)
-                    {
-                        static const char word_class_chars[] = "ocdafn";
-                        static_assert(_countof(word_class_chars) - 1 == int(word_class::max), "word_class_chars and word_class don't agree!");
-                        already_classified.concat(&word_class_chars[int(old_classifications[command_word_offset + j]->word_class)], 1);
-                    }
-                }
-
-                if (already_classified.length() > 0)
-                {
-                    assert(command_word_offset < old_classifications.size()); // Must be true because of preceding loop.
-                    if (!m_prev_classify.get() ||
-                        memcmp(m_prev_classify.get(),
-                               line.get_line() + words[0].offset,
-                               old_classifications[command_word_offset + already_classified.length() - 1]->end - old_classifications[command_word_offset]->start) != 0)
-                        already_classified.clear();
-                }
-            }
-
-#ifdef DEBUG
-            if (dbg_get_env_int("DEBUG_CLASSIFY"))
-                printf("already classified '%s'\n", already_classified.c_str());
-#endif
-
-            m_classifier->classify(linestate, m_classifications, already_classified.c_str());
-
-            words.clear();
             command_word_offset = i;
         }
 
@@ -827,36 +805,27 @@ void line_editor_impl::classify()
         i++;
     }
 
+    m_classifier->classify(linestates, m_classifications);
+    m_classifications.finish(is_showing_argmatchers());
+
 #ifdef DEBUG
     if (dbg_get_env_int("DEBUG_CLASSIFY"))
     {
         static const char *const word_class_name[] = {"other", "command", "doskey", "arg", "flag", "none"};
         printf("CLASSIFIED '%s' -- ", m_buffer.get_buffer());
-        for (auto c : m_classifications)
-            printf(" %s", word_class_name[int(c.word_class)]);
+        word_class wc;
+        for (unsigned int i = 0; i < m_classifications.size(); ++i)
+        {
+            if (m_classifications.get_word_class(i, wc))
+                printf(" %d:%s", i, word_class_name[int(wc)]);
+        }
         printf("\n");
     }
 #endif
 
     m_prev_classify.set(m_buffer.get_buffer(), m_buffer.get_length());
 
-    bool changed = (old_classifications.size() != m_classifications.size());
-    if (!changed)
-    {
-        int n = old_classifications.size();
-        for (const word_class_info *oldc = old_classifications.front(), *newc = m_classifications.front(); n--; oldc++, newc++)
-        {
-            if (oldc->start != newc->start ||
-                oldc->end != newc->end ||
-                oldc->word_class != newc->word_class)
-            {
-                changed = true;
-                break;
-            }
-        }
-    }
-
-    if (changed)
+    if (!old_classifications.equals(m_classifications))
         m_buffer.set_need_draw();
 }
 

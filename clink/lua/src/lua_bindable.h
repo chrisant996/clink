@@ -10,6 +10,8 @@ extern "C" {
 #include <lauxlib.h>
 }
 
+#include <assert.h>
+
 //------------------------------------------------------------------------------
 template <class T>
 class lua_bindable
@@ -114,12 +116,20 @@ void lua_bindable<T>::unbind()
 template <class T>
 void lua_bindable<T>::push(lua_State* state)
 {
+#ifdef DEBUG
+    int top = lua_gettop(state);
+#endif
+
     m_state = state;
 
     if (m_registry_ref == LUA_NOREF)
         bind();
 
     lua_rawgeti(m_state, LUA_REGISTRYINDEX, m_registry_ref);
+
+#ifdef DEBUG
+    assert(top + 1 == lua_gettop(state));
+#endif
 }
 
 //------------------------------------------------------------------------------

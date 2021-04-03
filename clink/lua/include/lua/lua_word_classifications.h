@@ -7,20 +7,24 @@
 
 struct lua_State;
 enum class word_class : unsigned char;
+class word_classifications;
 
 //------------------------------------------------------------------------------
+// word_classifications collects the coloring info for the whole input line.
+// lua_word_classifications wraps it to apply coloring info only to the words
+// for a given line_state (group of words for a command) from the input line.
 class lua_word_classifications
     : public lua_bindable<lua_word_classifications>
 {
 public:
-                            lua_word_classifications(const char* classifications);
-    int                     is_word_classified(lua_State* state);
+                            lua_word_classifications(word_classifications& classifications, unsigned int index_offset, unsigned int num_words);
     int                     classify_word(lua_State* state);
+    int                     apply_color(lua_State* state);
 
-    unsigned int            size() const { return m_classifications.length(); }
     bool                    get_word_class(int word_index_zero_based, word_class& wc) const;
-    void                    classify_word(int word_index_zero_based, char wc);
 
 private:
-    str<16>                 m_classifications;
+    word_classifications&   m_classifications;
+    const unsigned int      m_index_offset;
+    const unsigned int      m_num_words;
 };

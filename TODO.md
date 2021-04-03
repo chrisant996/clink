@@ -22,7 +22,6 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 ## Medium Priority
 - Add a `history.dupe_mode` that behaves like 4Dos/4NT/Take Command from JPSoft:  **Up**/**Down** then **Enter** remembers the history position so that **Enter**, **Down**, **Enter**, **Down**, **Enter**, etc can be used to replay a series of commands.  In the meantime, `operate-and-get-next` achieves the same result albeit with a slightly different (and more efficient) workflow.
 - Symlink support (displaying matches, and whether to append a path separator).
-- Provide a way for a custom classifier to apply a classification anywhere (not just to a pre-parsed word), and to apply any arbitrary CSI SGR code to a word or to anywhere.
 
 ## Low Priority
 - Maybe `"-foo="..parser("a", "b", "c")` could actually be detected somehow?  Maybe it could adjust the parsed word list in response to the existence of the arglink?

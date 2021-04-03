@@ -9,6 +9,7 @@
 #include "matches.h"
 #include "match_pipeline.h"
 #include "word_classifier.h"
+#include "word_classifications.h"
 #include "popup.h"
 
 #include <core/base.h>
@@ -400,6 +401,12 @@ static const char* s_flag_color = nullptr;
 static const char* s_none_color = nullptr;
 
 //------------------------------------------------------------------------------
+bool is_showing_argmatchers()
+{
+    return !!s_argmatcher_color;
+}
+
+//------------------------------------------------------------------------------
 static char get_face_func(int in, int active_begin, int active_end)
 {
     if (in >= active_begin && in < active_end)
@@ -407,46 +414,9 @@ static char get_face_func(int in, int active_begin, int active_end)
 
     if (s_classifications)
     {
-        static const char c_faces[] =
-        {
-            'o',    // other
-            'c',    // command
-            'd',    // doskey
-            'a',    // arg
-            'f',    // flag
-            'n',    // none
-        };
-        static_assert(_countof(c_faces) == int(word_class::max), "c_faces and word_class don't agree!");
-
-        static int num_infos = 0;
-        static const word_class_info* cur_info = nullptr;
-
-        if (!in)
-        {
-            num_infos = s_classifications->size();
-            cur_info = num_infos ? s_classifications->front() : nullptr;
-        }
-
-        if (cur_info && in >= cur_info->start)
-        {
-            while (num_infos && in >= cur_info->end)
-            {
-                num_infos--;
-                cur_info++;
-            }
-
-            if (num_infos)
-            {
-                if (in < cur_info->start)
-                    return s_input_color ? '2' : '0';
-                if (in < cur_info->end)
-                {
-                    if (cur_info->argmatcher && s_argmatcher_color)
-                        return 'm';
-                    return c_faces[int(cur_info->word_class)];
-                }
-            }
-        }
+        char face = s_classifications->get_face(in);
+        if (face != ' ')
+            return face;
     }
 
     return s_input_color ? '2' : '0';
@@ -475,6 +445,16 @@ static void puts_face_func(const char* s, const char* face, int n)
             switch (cur_face)
             {
             default:
+                if (s_classifications)
+                {
+                    const char* color = s_classifications->get_face_output(cur_face);
+                    if (color)
+                    {
+                        out << "\x1b[" << color << "m";
+                        break;
+                    }
+                }
+                // fall through
             case '0':   out << c_normal; break;
             case '1':   out << "\x1b[0;7m"; break;
 

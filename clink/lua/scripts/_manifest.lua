@@ -9,6 +9,7 @@ return {
         "console.lua",
         "generator.lua",
         "arguments.lua",
+        "classifier.lua",
         "debugger.lua",
     }
 }

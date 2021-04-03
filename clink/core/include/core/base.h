@@ -76,9 +76,9 @@ struct no_copy
 
 private:
             no_copy(const no_copy&) = delete;
-            no_copy(const no_copy&&) = delete;
-    void    operator = (const no_copy&) = delete;
-    void    operator = (const no_copy&&) = delete;
+            no_copy(no_copy&&) = delete;
+    no_copy& operator = (const no_copy&) = delete;
+    no_copy& operator = (no_copy&&) = delete;
 };
 
 //------------------------------------------------------------------------------

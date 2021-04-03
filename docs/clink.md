@@ -637,65 +637,6 @@ clink.argmatcher()
 
 With the shorthand form flags are implied rather than declared.  When a shorthand table's first value is a string starting with `-` or `/` then the table is interpreted as flags.  Note that it's still possible with shorthand form to mix flag prefixes, and even add additional flag prefixes, such as <code>{ <span class="hljs-string">'-a'</span>, <span class="hljs-string">'/b'</span>, <span class="hljs-string">'=c'</span> }</code>.
 
-<a name="classifywords"/>
-
-#### Coloring The Input Text
-
-When the `clink.colorize_input` setting is enabled, argmatchers apply colors to the input text by parsing it.
-
-In cases where an argmatcher isn't able to color the input text in the desired manner, it's also possible to supply a classifier function that can override how the argmatcher would color the input text.  An argmatcher's classifier function is called once for each word the argmatcher parses, but it can classify any words (not just the word it was called for).  Each argmatcher can have its own function, so when there are linked argmatchers more than one function may be invoked.
-
-Words are colored by classifying the words, and each classification has an associated color.
-
-Code | Classification | Color
----|---|---
-`"a"`|Argument; used for words that match a list of preset argument matches.|`color.arg` or `color.input`
-`"c"`|Shell command; used for CMD command names.|`color.cmd`
-`"d"`|Doskey alias.|`color.doskey`
-`"f"`|Flag; used for flags that match a list of preset flag matches.|`color.flag`
-`"o"`|Other; used for file names and words that don't fit any of the other classifications.|`color.input`
-`"n"`|None; used for words that aren't recognized as part of the expected input syntax|`color.unexpected`
-
-The `clink set` command has different syntax depending on the setting type, so the argmatcher for `clink` needs help in order to get everything right.  A custom generator function parses the input text to provide appropriate matches, and a custom classifier function classifies the words.
-
-```lua
--- In this example, the argmatcher matches a directory as the first argument and
--- a file as the second argument.  It uses a word classifier function to classify
--- directories (words that end with a path separator) as "unexpected" in the
--- second argument position.
-
-local function classify_handler(arg_index, word, word_index, line_state, classify)
-    -- `arg_index` is the argument position in the argmatcher.
-    -- In this example only position 2 needs special treatent.
-    if arg_index ~= 2 then
-        return
-    end
-
-    -- `arg_index` is the argument position in the argmatcher.
-    -- `word_index` is the word position in the `line_state`.
-    -- Ex1: in `samp dir file` for the word `dir` the argument index is 1 and
-    -- the word index is 2.
-    -- Ex2: in `samp --help dir file` for the word `dir` the argument index is
-    -- still 1, but the word index is 3.
-
-    -- `word` is the word the classifier function was called for and `word_index`
-    -- is its position in the line.  Because `line_state` is also provided, the
-    -- function can examine any words in the input line.
-    if word:sub(-1) == "\\" then
-        -- The word appears to be a directory, but this example expects only
-        -- files are expected in argument position 2.  Here the word gets
-        -- classified as "n" (unexpected) so it gets colored differently.
-        classify:classifyword("n")
-    end
-end
-
-local matcher = clink.argmatcher("samp")
-:addflags("--help")
-:addarg({ clink.dirmatches })
-:addarg({ clink.filematches })
-:setclassifier(classify_handler)
-```
-
 <a name="filteringmatchcompletions"/>
 
 #### Filtering Match Completions
@@ -832,6 +773,128 @@ end
 > - When a match display filter is set, then match generation is also re-run whenever matches are displayed.
 > - Normally match generation only happens at the start of a new word.  The full set of potential matches is remembered and dynamically filtered based on further typing.
 > - So if a match generator made contextual decisions during match generation (other than filtering) then it could potentially behave differently in Clink v1.x than it did in v0.x.
+
+<a name="classifywords"/>
+
+## Coloring The Input Text
+
+When the `clink.colorize_input` setting is enabled, [argmatcher](#argumentcompletion) automatically apply colors to the input text by parsing it.
+
+It's possible for an argmatcher to provide a function to override how its arguments are colored.  This function is called once for each of the argmatcher's arguments.
+
+It's also possible to register a classifier function for the whole input line.  This function is very similar to a match generator; classifier functions are called in priority order, and a classifier can choose to stop the classification process.
+
+#### Setting a classifier function in an argmatcher
+
+In cases where an [argmatcher](#argumentcompletion) isn't able to color the input text in the desired manner, it's possible to supply a classifier function that overrides how the argmatcher colors the input text.  An argmatcher's classifier function is called once for each word the argmatcher parses, but it can classify any words (not just the word it was called for).  Each argmatcher can have its own classifier function, so when there are linked argmatchers more than one function may be invoked.
+
+Words are colored by classifying the words, and each classification has an associated color.  See [word_classifications:classifyword()](#word_classifications:classifyword) for the available classification codes.
+
+The `clink set` command has different syntax depending on the setting type, so the argmatcher for `clink` needs help in order to get everything right.  A custom generator function parses the input text to provide appropriate matches, and a custom classifier function applies appropriate coloring.
+
+```lua
+-- In this example, the argmatcher matches a directory as the first argument and
+-- a file as the second argument.  It uses a word classifier function to classify
+-- directories (words that end with a path separator) as "unexpected" in the
+-- second argument position.
+
+local function classify_handler(arg_index, word, word_index, line_state, classifications)
+    -- `arg_index` is the argument position in the argmatcher.
+    -- In this example only position 2 needs special treatent.
+    if arg_index ~= 2 then
+        return
+    end
+
+    -- `arg_index` is the argument position in the argmatcher.
+    -- `word_index` is the word position in the `line_state`.
+    -- Ex1: in `samp dir file` for the word `dir` the argument index is 1 and
+    -- the word index is 2.
+    -- Ex2: in `samp --help dir file` for the word `dir` the argument index is
+    -- still 1, but the word index is 3.
+
+    -- `word` is the word the classifier function was called for and `word_index`
+    -- is its position in the line.  Because `line_state` is also provided, the
+    -- function can examine any words in the input line.
+    if word:sub(-1) == "\\" then
+        -- The word appears to be a directory, but this example expects only
+        -- files in argument position 2.  Here the word gets classified as "n"
+        -- (unexpected) so it gets colored differently.
+        classifications:classifyword(word_index, "n")
+    end
+end
+
+local matcher = clink.argmatcher("samp")
+:addflags("--help")
+:addarg({ clink.dirmatches })
+:addarg({ clink.filematches })
+:setclassifier(classify_handler)
+```
+
+#### Setting a classifier function for the whole input line
+
+In some cases it may be desireable to use a custom classifier to apply coloring in an input line.
+
+First create a classifier object:
+
+```lua
+local my_classifier = clink.classifier(priority)
+```
+
+The <span class="arg">priority</span> argument is a number that influences when the classifier gets called, with lower numbers going before higher numbers.
+
+Next define a classify function on the object, taking the following form:
+
+```lua
+function my_classifier:classify(commands)
+    -- commands is a table of { line_state, classifications } objects, one per
+    -- command in the input line.  For example, "echo hello & echo world" is two
+    -- commands:  "echo hello" and "echo world".
+end
+```
+
+<span class="arg">commands</span> is a table of tables, with the following scheme:
+<span class="tablescheme">{ {line_state:<a href="#line">line</a>, classifications:<a href="#word_classifications">word_classifications</a>}, ... }</span>.
+
+If no further classifiers need to be called then the function should return true.  Returning false or nil continues letting other classifiers get called.
+
+```lua
+-- In this example, a custom classifier applies colors to command separators and
+-- redirection symbols in the input line.
+local cmdsep_classifier = clink.classifier(50)
+function cmdsep_classifier:classify(commands)
+    -- The `classifications:classifyword()` method can only affect the words for
+    -- the corresponding command.  However, this example doesn't need to parse
+    -- words within commands, it just wants to parse the whole line.  And since
+    -- each command's `classifications:applycolor()` method can apply color
+    -- anywhere in the entire input line, this example can simply use the first
+    -- command's `classifications` object.
+    if commands[1] then
+        local line_state = commands[1].line_state
+        local classifications = commands[1].classifications
+        local line = line_state:getline()
+        local quote = false
+        local i = 1
+        while (i <= #line) do
+            local c = line:sub(i,i)
+            if c == '^' then
+                i = i + 1
+            elseif c == '"' then
+                quote = not quote
+            elseif quote then
+            elseif c == '&' or c == '|' then
+                classifications:applycolor(i, 1, "95")
+            elseif c == '>' or c == '<' then
+                classifications:applycolor(i, 1, "35")
+                if line:sub(i,i+1) == '>&' then
+                    i = i + 1
+                    classifications:applycolor(i, 1, "35")
+                end
+            end
+            i = i + 1
+        end
+    end
+end
+```
 
 <a name="customisingtheprompt"/>
 

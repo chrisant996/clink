@@ -13,6 +13,7 @@
 #include "line_state.h"
 #include "matches_impl.h"
 #include "word_classifier.h"
+#include "word_classifications.h"
 #include "rl/rl_module.h"
 #include "rl/rl_buffer.h"
 

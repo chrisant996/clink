@@ -155,7 +155,7 @@ static int add(lua_State* state)
         return 0;
 
     if (settings::find(name))
-        return luaL_error(state, "Setting " LUA_QS " already exists", name);
+        return luaL_error(state, "setting " LUA_QS " already exists", name);
 
     switch (lua_type(state, 2))
     {

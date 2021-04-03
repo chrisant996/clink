@@ -10,6 +10,7 @@
 #include <lib/editor_module.h>
 #include <lib/matches.h>
 #include <lib/word_classifier.h>
+#include <lib/word_classifications.h>
 #include <readline/readline.h>
 
 #include <stdio.h>
@@ -206,8 +207,9 @@ void line_editor_tester::run()
         });
 
         str<> c;
-        for (auto wc : *classifications)
+        for (unsigned int i = 0; i < classifications->size(); ++i)
         {
+            const word_class_info& wc = *(*classifications)[i];
             switch (wc.word_class)
             {
             default:                    c.concat("o", 1); break;
@@ -216,6 +218,7 @@ void line_editor_tester::run()
             case word_class::arg:       c.concat("a", 1); break;
             case word_class::flag:      c.concat("f", 1); break;
             case word_class::none:      c.concat("n", 1); break;
+            case word_class::invalid:   break;
             }
         }
 

@@ -50,7 +50,6 @@ function _argreader._new(root)
         _matcher = root,
         _arg_index = 1,
         _stack = {},
-        _word_types = nil,
     }, _argreader)
     return reader
 end
@@ -90,20 +89,18 @@ function _argreader:update(word, word_index)
 
     -- Some matchers have no args at all.  Or ran out of args.
     if not arg then
-        if self._word_types then
-            local t
+        if self._word_classifier then
             if matcher._no_file_generation then
-                t = "n" --none
+                self._word_classifier:classifyword(word_index, "n")  --none
             else
-                t = "o" --other
+                self._word_classifier:classifyword(word_index, "o")  --other
             end
-            self:_add_word_type(t)
         end
         return
     end
 
     -- Parse the word type.
-    if self._word_types then
+    if self._word_classifier then
         if matcher._classify_func and matcher._classify_func(arg_index, word, word_index, self._line_state, self._word_classifier) then
             -- The classifier function says it handled the word.
         else
@@ -143,7 +140,7 @@ function _argreader:update(word, word_index)
                     end
                 end
             end
-            self:_add_word_type(t)
+            self._word_classifier:classifyword(word_index, t)
         end
     end
 
@@ -171,13 +168,6 @@ function _argreader:_pop()
     end
 
     return false
-end
-
---------------------------------------------------------------------------------
-function _argreader:_add_word_type(t)
-    if self._word_types then
-        table.insert(self._word_types, t)
-    end
 end
 
 
@@ -751,58 +741,10 @@ end
 
 
 
-------------------------------------------------------------------------------
--- This returns a string with classifications produced automatically by the
--- argmatcher.  word_classifier is also filled in with explicit classifications
--- that supersede the implicit classifications.
-function clink._parse_word_types(line_state, word_classifier)
-    local parsed_word_types = {}
-
-    local argmatcher, has_argmatcher = _find_argmatcher(line_state, true)
-
-    local word_count = line_state:getwordcount()
-    local first_word = line_state:getword(1) or ""
-    if word_count > 1 or string.len(first_word) > 0 then
-        local word_info = line_state:getwordinfo(1)
-        local command_offset = line_state:getcommandoffset()
-        if has_argmatcher then
-            table.insert(parsed_word_types, "m"); --argmatcher found
-        end
-        if word_info.alias then
-            table.insert(parsed_word_types, "d"); --doskey
-        elseif clink.is_cmd_command(first_word) then
-            table.insert(parsed_word_types, "c"); --command
-        else
-            table.insert(parsed_word_types, "o"); --other
-        end
-    end
-
-    if argmatcher then
-        local reader = _argreader(argmatcher)
-        reader._line_state = line_state
-        reader._word_classifier = word_classifier
-        reader._word_types = parsed_word_types
-
-        -- Consume words and use them to move through matchers' arguments.
-        for word_index = 2, word_count do
-            local word = line_state:getword(word_index)
-            reader:update(word, word_index)
-        end
-    end
-
-    local s = ""
-    for _, t in ipairs(parsed_word_types) do
-        s = s..t
-    end
-
-    return s
-end
-
-
-
 --------------------------------------------------------------------------------
 clink.argmatcher_generator_priority = 24
 local argmatcher_generator = clink.generator(clink.argmatcher_generator_priority)
+local argmatcher_classifier = clink.classifier(clink.argmatcher_generator_priority)
 
 --------------------------------------------------------------------------------
 function argmatcher_generator:generate(line_state, match_builder)
@@ -845,6 +787,45 @@ function argmatcher_generator:getwordbreakinfo(line_state)
     end
 
     return 0
+end
+
+--------------------------------------------------------------------------------
+function argmatcher_classifier:classify(commands)
+    for _,command in ipairs(commands) do
+        local line_state = command.line_state
+        local word_classifier = command.classifications
+
+        local argmatcher, has_argmatcher = _find_argmatcher(line_state, true)
+
+        local word_count = line_state:getwordcount()
+        local first_word = line_state:getword(1) or ""
+        if word_count > 1 or string.len(first_word) > 0 then
+            local word_info = line_state:getwordinfo(1)
+            local command_offset = line_state:getcommandoffset()
+            local m = has_argmatcher and "m" or ""
+            if word_info.alias then
+                word_classifier:classifyword(1, m.."d"); --doskey
+            elseif clink.is_cmd_command(first_word) then
+                word_classifier:classifyword(1, m.."c"); --command
+            else
+                word_classifier:classifyword(1, m.."o"); --other
+            end
+        end
+
+        if argmatcher then
+            local reader = _argreader(argmatcher)
+            reader._line_state = line_state
+            reader._word_classifier = word_classifier
+
+            -- Consume words and use them to move through matchers' arguments.
+            for word_index = 2, word_count do
+                local word = line_state:getword(word_index)
+                reader:update(word, word_index)
+            end
+        end
+    end
+
+    return false -- continue
 end
 
 
