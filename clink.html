@@ -2208,6 +2208,21 @@ end
 </code></pre>
 <h3 id="zlua">z.lua</h3>
 <p>The <a href="https://github.com/skywind3000/z.lua">z.lua</a> tool is a faster way to navigate directories, and it integrates with Clink.</p>
+<h1 id="troubleshooting-tips">Troubleshooting Tips</h1>
+<p>If something seems to malfunction, here are some things to try that often help track down what&#39;s going wrong:</p>
+<ul>
+<li>Check if anti-malware software blocked Clink from injecting.</li>
+<li>Check <code>clink info</code>.  E.g. does the state dir look right, do the script paths look right, do the inputrc files look right?</li>
+<li>Check <code>clink set</code>.  E.g. do the settings look right?</li>
+<li>Check the <code>clink.log</code> file for clues (its location is reported by <code>clink info</code>).</li>
+</ul>
+<p>When reporting an issue, please include the following which answer a bunch of commonly relevant questions and saves time:</p>
+<ul>
+<li>Please describe what was expected to happen.</li>
+<li>Please describe what actually happened.</li>
+<li>Please include the output from <code>clink info</code> and <code>clink set</code>.</li>
+<li>Please include the <code>clink.log</code> file (the location is reported by <code>clink info</code>).</li>
+</ul>
         </div>
         <h1 id="lua-api">Lua API Reference</h1>
         This section describes the Clink Lua API extensions.
