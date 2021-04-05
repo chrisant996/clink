@@ -9,6 +9,18 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 ## Mystery
 - **MYSTERY:** Corrupted clink_history -- not sure how, when, or why -- but after having made changes to history, debugging through issues, and aborting some debugging sessions my clink_history file had a big chunk of contiguous NUL bytes.
 
+## Add a "Troubleshooting Tips" section in the documentation:
+- Check if anti-malware software blocked Clink from injecting.
+- Check `clink info`.  E.g. does the state dir look right, do the script paths look right, do the inputrc files look right?
+- Check `clink set`.  E.g. do the settings look right?
+- Check the `clink.log` file for clues (its location is reported by `clink info`).
+- When reporting an issue:
+  - Please describe what was expected to happen.
+  - Please describe what actually happened.
+  - Please include the output from `clink info` and `clink set`.
+  - Please include the `clink.log` file (the location is reported by `clink info`).
+  - Including those answers a bunch of commonly relevant questions, which saves everyone involved a bunch of time.
+
 <br/>
 <br/>
 
