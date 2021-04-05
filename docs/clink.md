@@ -1190,3 +1190,20 @@ end
 ### z.lua
 
 The [z.lua](https://github.com/skywind3000/z.lua) tool is a faster way to navigate directories, and it integrates with Clink.
+
+# Troubleshooting Tips
+
+If something seems to malfunction, here are some things to try that often help track down what's going wrong:
+
+- Check if anti-malware software blocked Clink from injecting.
+- Check `clink info`.  E.g. does the state dir look right, do the script paths look right, do the inputrc files look right?
+- Check `clink set`.  E.g. do the settings look right?
+- Check the `clink.log` file for clues (its location is reported by `clink info`).
+
+When reporting an issue, please include the following which answer a bunch of commonly relevant questions and saves time:
+
+- Please describe what was expected to happen.
+- Please describe what actually happened.
+- Please include the output from `clink info` and `clink set`.
+- Please include the `clink.log` file (the location is reported by `clink info`).
+
