@@ -71,6 +71,14 @@ setting* find(const char* name)
     if (i != get_map().end())
         return i->second;
 
+    size_t len = strlen(name);
+    if (len > c_max_len_name)
+    {
+        str<> trunc_name(name);
+        trunc_name.truncate(c_max_len_name);
+        return find(trunc_name.c_str());
+    }
+
     return nullptr;
 }
 
@@ -416,6 +424,7 @@ setting::setting(
 , m_long_desc(long_desc ? long_desc : "")
 , m_type(type)
 {
+    assert(strlen(name) == m_name.length());
     assert(strlen(short_desc) == m_short_desc.length());
     assert(!settings::find(m_name.c_str()));
 

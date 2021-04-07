@@ -37,6 +37,9 @@ private:
 namespace settings
 {
 
+const unsigned int c_max_len_name = 32;
+const unsigned int c_max_len_short_desc = 48;
+
 setting_iter        first();
 setting*            find(const char* name);
 bool                load(const char* file);
@@ -87,8 +90,8 @@ public:
 
 protected:
                     setting(const char* name, const char* short_desc, const char* long_desc, type_e type);
-    str<32, false>  m_name;
-    str<48, false>  m_short_desc;
+    str<settings::c_max_len_name + 1, false> m_name;
+    str<settings::c_max_len_short_desc + 1, false> m_short_desc;
     str<128>        m_long_desc;
     type_e          m_type;
 
