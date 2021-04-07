@@ -3,7 +3,7 @@
 
 <!-- ----------------------------------------------------- -->
 <head>
-<title>Clink v1.2.0</title>
+<title>Clink v1.2.1</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Rambla:wght@400;700&family=Roboto&family=Fira+Mono&display=swap');
 html {
@@ -409,7 +409,7 @@ var hljs=function(){"use strict";function e(n){Object.freeze(n);var t="function"
         </td>
         <td style="text-align:right">
             <div id="header">
-                <div id="title">Clink v1.2.0</div>
+                <div id="title">Clink v1.2.1</div>
                 <div id="url">
                     <a href="http://github.com/chrisant996/clink">
                         http://github.com/chrisant996/clink
@@ -2657,7 +2657,7 @@ end</code></pre></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="rl_buffer:refreshline">rl_buffer:refreshline</a></div> <div class="signature">() : nil</div></div><div class="body"><p class="desc">Redraws the input line.</p></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="rl_buffer:remove">rl_buffer:remove</a></div> <div class="signature">( <span class="arg_name">from</span>:integer, <span class="arg_name">to</span>:integer ) : nil</div></div><div class="body"><p class="desc">Removes text from the input line starting at cursor position <span class="arg">from</span> through <span class="arg">to</span>.</p><p class="desc"> Note:  the input line is UTF8, and removing only part of a multi-byte Unicode character may have undesirable results.</p></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="rl_buffer:setcursor">rl_buffer:setcursor</a></div> <div class="signature">( <span class="arg_name">cursor</span>:integer ) : integer</div></div><div class="body"><p class="desc">Sets the cursor position in the input line and returns the previous cursor position.  <span class="arg">cursor</span> can be from 1 to rl_buffer:getlength().</p><p class="desc"> Note:  the input line is UTF8, and setting the cursor position inside a multi-byte Unicode character may have undesirable results.</p></div></div><hr/>
-</div><div class="group"><h5 class="group_name"><a name="settings">settings</a></h5><div class="function"><div class="header"> <div class="name"><a name="settings.add">settings.add</a></div> <div class="signature">( <span class="arg_name">name</span>:string, <span class="arg_name">default</span>:..., [<span class="arg_name">short_desc</span>:string], [<span class="arg_name">long_desc</span>:string] ) : boolean</div></div><div class="body"><p class="desc">Adds a setting to the list of Clink settings and includes it in <code>clink set</code>.  The new setting is named <span class="arg">name</span> and has a default value <span class="arg">default</span> when the setting isn't explicitly set.</p><p class="desc"> The type of <span class="arg">default</span> determines what kind of setting is added:  boolean, integer, and string values add the corresponding setting type.  Or if the type is table then an enum setting is added:  the table defines the accepted values, and the first value is the default value.  Or if it's a string type and the name starts with "color." then a color setting is added.</p><p class="desc"> <span class="arg">name</span> can't be more than 31 characters.<br/> <span class="arg">short_desc</span> is an optional quick summary description and can't be more than 47 characters.<br/> <span class="arg">long_desc</span> is an optional long description.</p><pre class="language-lua"><code>settings.add("myscript.myabc", true, "Boolean setting")
+</div><div class="group"><h5 class="group_name"><a name="settings">settings</a></h5><div class="function"><div class="header"> <div class="name"><a name="settings.add">settings.add</a></div> <div class="signature">( <span class="arg_name">name</span>:string, <span class="arg_name">default</span>:..., [<span class="arg_name">short_desc</span>:string], [<span class="arg_name">long_desc</span>:string] ) : boolean</div></div><div class="body"><p class="desc">Adds a setting to the list of Clink settings and includes it in <code>clink set</code>.  The new setting is named <span class="arg">name</span> and has a default value <span class="arg">default</span> when the setting isn't explicitly set.</p><p class="desc"> The type of <span class="arg">default</span> determines what kind of setting is added:  boolean, integer, and string values add the corresponding setting type.  Or if the type is table then an enum setting is added:  the table defines the accepted values, and the first value is the default value.  Or if it's a string type and the name starts with "color." then a color setting is added.</p><p class="desc"> <span class="arg">name</span> can't be more than 32 characters.<br/> <span class="arg">short_desc</span> is an optional quick summary description and can't be more than 48 characters.<br/> <span class="arg">long_desc</span> is an optional long description.</p><pre class="language-lua"><code>settings.add("myscript.myabc", true, "Boolean setting")
 settings.add("myscript.mydef", 100, "Number setting")
 settings.add("myscript.myghi", "abc", "String setting")
 settings.add("myscript.myjkl", {"x","y","z"}, "Enum setting")
@@ -2678,6 +2678,14 @@ string.matchlen("abx", "abx")       -- returns -1</code></pre></div></div><hr/>
         <div class="section" id="changes">
 <h1 id="changes">Changes</h1>
 <h2 id="releases-from-chrisant996clink-fork">Releases from <a href="https://github.com/chrisant996/clink">chrisant996/clink</a> fork</h2>
+<h3 id="v121">v1.2.1</h3>
+<ul>
+<li>Added Troubleshooting Tips section in the documentation.</li>
+<li>Added backward compatibility for <code>clink set</code> with v0.4.9.  Old setting names and values are not documented, but are automatically mapped to the appropriate new setting(s).  This was done so that suggestions in old web sites and posts can usually continue to work, to reduce confusion and support burden.</li>
+<li>Fixed <a href="https://github.com/chrisant996/clink/issues/97">#97</a>; VS2017 error C2039: &#39;min&#39;: is not a member of &#39;std&#39;.</li>
+<li>Fixed <a href="https://github.com/chrisant996/clink/issues/96">#96</a>; wrong setting string (the name of a setting was accidentally truncated).</li>
+<li>Fixed some slightly inaccurate/incomplete migration from old settings to new settings.</li>
+</ul>
 <h3 id="v12">v1.2</h3>
 <ul>
 <li>First official release from <a href="https://github.com/chrisant996/clink">chrisant996/clink</a> fork.</li>
