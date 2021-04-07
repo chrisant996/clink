@@ -144,9 +144,9 @@ template <typename S, typename... V> void add_impl(lua_State* state, V... value)
 /// if it's a string type and the name starts with "color." then a color setting
 /// is added.
 ///
-/// <span class="arg">name</span> can't be more than 31 characters.<br/>
+/// <span class="arg">name</span> can't be more than 32 characters.<br/>
 /// <span class="arg">short_desc</span> is an optional quick summary description
-/// and can't be more than 47 characters.<br/>
+/// and can't be more than 48 characters.<br/>
 /// <span class="arg">long_desc</span> is an optional long description.
 static int add(lua_State* state)
 {
