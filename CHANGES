@@ -2,6 +2,12 @@
 
 ## Releases from [chrisant996/clink](https://github.com/chrisant996/clink) fork
 
+### v1.2.1
+
+- Added Troubleshooting Tips section in the documentation.
+- Added backward compatibility for `clink set` with v0.4.9.  Old setting names and values are not documented, but are automatically mapped to the appropriate new setting(s).  This was done so that suggestions in old web sites and posts can usually continue to work, to reduce confusion and support burden.
+- Fixed [#97](https://github.com/chrisant996/clink/issues/97); VS2017 error C2039: 'min': is not a member of 'std'.
+
 ### v1.2
 
 - First official release from [chrisant996/clink](https://github.com/chrisant996/clink) fork.
