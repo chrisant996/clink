@@ -100,7 +100,7 @@ void word_classifications::finish(bool show_argmatchers)
 
     for (const auto& info : m_info)
     {
-        const size_t end = std::min(info.end, m_length);
+        const size_t end = min<unsigned int>(info.end, m_length);
         for (size_t pos = info.start; pos < end; ++pos)
         {
             if (info.argmatcher && show_argmatchers)
