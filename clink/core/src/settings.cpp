@@ -93,7 +93,7 @@ static bool set_setting(const char* name, const char* value, const char* comment
 }
 
 //------------------------------------------------------------------------------
-static bool migrate_setting(const char* name, const char* value)
+bool migrate_setting(const char* name, const char* value, std::vector<setting_name_value>& out)
 {
     // `esc_clears_line` is no longer a setting; bind `\e[27;27~` to whatever
     // command is desired in the inputrc file (defaults to `clink-reset-line`).
@@ -102,29 +102,43 @@ static bool migrate_setting(const char* name, const char* value)
     // file and `set LS_COLORS` to set the colors.  Also certain `color.*` Clink
     // settings.
 
+    out.clear();
+
     if (stricmp(name, "exec_match_style") == 0)
     {
-        int x = atoi(value);
-        set_setting("exec.path", (x>=0) ? "1" : "0");
-        set_setting("exec.cwd",  (x>=1) ? "1" : "0");
-        set_setting("exec.dirs", (x>=2) ? "1" : "0");
+        int x = value ? atoi(value) : 2;
+        out.emplace_back("exec.enable", (x>=0) ? "1" : "0");
+        if (x >= 0)
+        {
+            out.emplace_back("exec.path", (x>=0) ? "1" : "0");
+            out.emplace_back("exec.cwd",  (x>=1) ? "1" : "0");
+            out.emplace_back("exec.dirs", (x>=2) ? "1" : "0");
+        }
         return true;
     }
     else if (stricmp(name, "prompt_colour") == 0)
     {
-        int attr = atoi(value);
+        int attr = value ? atoi(value) : -1;
         if (attr < 0)
+        {
+            if (!value)
+            {
+                out.emplace_back("color.prompt", "");
+                return true;
+            }
             return false;
+        }
         static const char* const dos_color_names[] = { "bla", "blu", "red", "cya", "gre", "mag", "yel", "whi" };
         str<> tmp;
         if (attr & 0x08)
             tmp << "bri ";
         tmp << dos_color_names[attr & 0x07];
-        return set_setting("color.prompt", tmp.c_str());
+        out.emplace_back("color.prompt", tmp.c_str());
+        return true;
     }
     else if (stricmp(name, "strip_crlf_on_paste") == 0)
     {
-        switch (atoi(value))
+        switch (value ? atoi(value) : 2)
         {
         case 0: value = "crlf"; break;
         case 1: value = "delete"; break;
@@ -135,24 +149,39 @@ static bool migrate_setting(const char* name, const char* value)
     else if (stricmp(name, "ansi_code_support") == 0)
     {
         name = "terminal.emulation";
-        value = atoi(value) ? "auto" : "native";
+        value = (!value || atoi(value)) ? "auto" : "native";
+    }
+    else if (stricmp(name, "history_file_lines") == 0)
+    {
+        int x = value ? atoi(value) : 2500;
+        bool disable = x < 0;
+        out.emplace_back("history.save", disable ? "0" : "1");
+        if (!disable)
+        {
+            if (x > 0)
+                out.emplace_back("history.max_lines", value);
+            else if (x == 0)
+                out.emplace_back("history.max_lines", "50000"); // Simulate unlimited.
+            else
+                out.emplace_back("history.max_lines", "10000");
+        }
     }
     else
     {
         static constexpr struct {
             const char* old_name;
             const char* new_name;
+            const char* default_value;
         } map_names[] =
         {   // OLD NAME                      NEW NAME
-            { "ctrld_exits",                "cmd.ctrld_exits" },
-            { "space_prefix_match_files",   "exec.space_prefix" },
-            { "terminate_autoanswer",       "cmd.auto_answer" },
-            { "history_file_lines",         "history.max_lines" },
-            { "history_ignore_space",       "history.ignore_space" },
-            { "history_dupe_mode",          "history.dupe_mode" },
-            { "history_io",                 "history.save" },
-            { "history_expand_mode",        "history.expand_mode" },
-            { "use_altgr_substitute",       "terminal.use_altgr_substitute" },
+            { "ctrld_exits",                "cmd.ctrld_exits",                  "1" },
+            { "space_prefix_match_files",   "exec.space_prefix",                "1" },
+            { "terminate_autoanswer",       "cmd.auto_answer",                  "0" },
+            { "history_ignore_space",       "history.ignore_space",             "0" },
+            { "history_dupe_mode",          "history.dupe_mode",                "2" },
+            { "history_io",                 "history.shared",                   "0" },
+            { "history_expand_mode",        "history.expand_mode",              "4" },
+            { "use_altgr_substitute",       "terminal.use_altgr_substitute",    "1" },
         };
 
         const char* old_name = name;
@@ -162,6 +191,8 @@ static bool migrate_setting(const char* name, const char* value)
             if (stricmp(old_name, map_name.old_name) == 0)
             {
                 name = map_name.new_name;
+                if (!value)
+                    value = map_name.default_value;
                 break;
             }
 
@@ -169,7 +200,8 @@ static bool migrate_setting(const char* name, const char* value)
             return false;
     }
 
-    return set_setting(name, value);
+    out.emplace_back(name, value);
+    return true;
 }
 
 //------------------------------------------------------------------------------
@@ -267,7 +299,12 @@ bool load(const char* file)
         // Migrate old setting.
         if (migrating)
         {
-            migrate_setting(line_data, value);
+            std::vector<settings::setting_name_value> migrated_settings;
+            if (migrate_setting(line_data, value, migrated_settings))
+            {
+                for (const auto& pair : migrated_settings)
+                    set_setting(pair.name.c_str(), pair.value.c_str());
+            }
             continue;
         }
 

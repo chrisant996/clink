@@ -6,6 +6,7 @@
 #include "str.h"
 
 #include <map>
+#include <vector>
 
 class setting;
 
@@ -40,6 +41,20 @@ setting_iter        first();
 setting*            find(const char* name);
 bool                load(const char* file);
 bool                save(const char* file);
+
+struct setting_name_value
+{
+    setting_name_value(const char* name, const char* value)
+    : name(name)
+    , value(value)
+    {
+    }
+
+    str_moveable    name;
+    str_moveable    value;
+};
+
+bool                migrate_setting(const char* name, const char* value, std::vector<setting_name_value>& out);
 
 };
 

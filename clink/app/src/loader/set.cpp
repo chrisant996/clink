@@ -98,6 +98,22 @@ static bool print_value(const char* key)
     const setting* setting = settings::find(key);
     if (setting == nullptr)
     {
+        std::vector<settings::setting_name_value> migrated_settings;
+        if (migrate_setting(key, nullptr, migrated_settings))
+        {
+            bool ret = true;
+            bool printed = false;
+            for (const auto& pair : migrated_settings)
+            {
+                if (printed)
+                    puts("");
+                else
+                    printed = true;
+                ret = print_value(pair.name.c_str()) && ret;
+            }
+            return ret;
+        }
+
         printf("ERROR: Setting '%s' not found.\n", key);
         return false;
     }
@@ -124,31 +140,31 @@ static bool print_value(const char* key)
 }
 
 //------------------------------------------------------------------------------
-static bool set_value(const char* key, char** argv=nullptr, int argc=0)
+static bool set_value_impl(const char* key, const char* value)
 {
     setting* setting = settings::find(key);
     if (setting == nullptr)
     {
+        std::vector<settings::setting_name_value> migrated_settings;
+        if (migrate_setting(key, value, migrated_settings))
+        {
+            bool ret = true;
+            for (const auto& pair : migrated_settings)
+                ret = set_value_impl(pair.name.c_str(), pair.value.c_str()) && ret;
+            return ret;
+        }
+
         printf("ERROR: Setting '%s' not found.\n", key);
         return false;
     }
 
-    str<> value;
-    if (!argc)
+    if (!value)
     {
         setting->set();
     }
     else
     {
-        for (int c = argc; c--;)
-        {
-            if (value.length())
-                value << " ";
-            value << *argv;
-            argv++;
-        }
-
-        if (!setting->set(value.c_str()))
+        if (!setting->set(value))
         {
             printf("ERROR: Failed to set value '%s'.\n", key);
             return false;
@@ -157,8 +173,26 @@ static bool set_value(const char* key, char** argv=nullptr, int argc=0)
 
     str<> result;
     setting->get_descriptive(result);
-    printf("Setting '%s' %sset to '%s'\n", key, argc ? "" : "re", result.c_str());
+    printf("Setting '%s' %sset to '%s'\n", key, value ? "" : "re", result.c_str());
     return true;
+}
+
+//------------------------------------------------------------------------------
+static bool set_value(const char* key, char** argv=nullptr, int argc=0)
+{
+    if (!argc)
+        return set_value_impl(key, nullptr);
+
+    str<> value;
+    for (int c = argc; c--;)
+    {
+        if (value.length())
+            value << " ";
+        value << *argv;
+        argv++;
+    }
+
+    return set_value_impl(key, value.c_str());
 }
 
 //------------------------------------------------------------------------------
