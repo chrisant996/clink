@@ -590,7 +590,9 @@ bool host::edit_line(const char* prompt, str_base& out)
 
     if (init_history)
     {
-        if (m_history && g_save_history.get() != m_history->has_bank(bank_master))
+        if (m_history &&
+            ((g_save_history.get() != m_history->has_bank(bank_master)) ||
+             m_history->is_stale_name()))
         {
             delete m_history;
             m_history = 0;

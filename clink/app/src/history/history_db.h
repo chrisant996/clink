@@ -128,6 +128,7 @@ public:
 
     void                        enable_diagnostic_output() { m_diagnostic = true; }
     bool                        has_bank(unsigned char bank) const;
+    bool                        is_stale_name() const;
 
     static expand_result        expand(const char* line, str_base& out);
 
@@ -142,6 +143,7 @@ private:
     bool                        remove_internal(line_id id, bool guard_ctag);
     void*                       m_alive_file;
     bank_handles                m_bank_handles[bank_count];
+    str<32>                     m_bank_filenames[bank_count];
     concurrency_tag             m_master_ctag;
     std::vector<line_id>        m_index_map;
     size_t                      m_master_len;

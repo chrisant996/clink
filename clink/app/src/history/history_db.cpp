@@ -943,9 +943,16 @@ history_db::history_db(bool use_master_bank)
     m_master_len = 0;
     m_master_deleted_count = 0;
 
+    // Remember the bank file names so they are stable for the lifetime of this
+    // history_db.  Otherwise changing %CLINK_HISTORY_LABEL% can change the file
+    // name prematurely and history can bleed across during reap().  This also
+    // enables is_stale_name() to identify when the history_db instance needs to
+    // be recreated.
+    get_file_path(m_bank_filenames[bank_master], false);
+    get_file_path(m_bank_filenames[bank_session], true);
+
     // Create a self-deleting file to used to indicate this session's alive
-    str<280> path;
-    get_file_path(path, true);
+    str<280> path(m_bank_filenames[bank_session].c_str());
     path << "~";
 
     DWORD flags = FILE_FLAG_DELETE_ON_CLOSE|FILE_ATTRIBUTE_HIDDEN;
@@ -977,8 +984,7 @@ void history_db::reap()
 {
     // Fold each session found that has no valid alive file.
     str<280> path;
-    get_file_path(path, false);
-    path << "_*";
+    path << m_bank_filenames[bank_master] << "_*";
 
     str<280> removals;
     for (globber i(path.c_str()); i.next(path);)
@@ -1049,7 +1055,7 @@ void history_db::initialise()
         return;
 
     str<280> path;
-    get_file_path(path, false);
+    path << m_bank_filenames[bank_master];
 
     if (m_use_master_bank)
     {
@@ -1093,7 +1099,8 @@ void history_db::initialise()
         m_master_ctag.clear();
     }
 
-    get_file_path(path, true);
+    path.clear();
+    path << m_bank_filenames[bank_session];
     if (!m_use_master_bank)
         path << ".local";
     DIAG("... session file '%s'\n", path.c_str());
@@ -1512,4 +1519,12 @@ bool history_db::has_bank(unsigned char bank) const
 {
     assert(bank < sizeof_array(m_bank_handles));
     return !!m_bank_handles[bank].m_handle_lines;
+}
+
+//------------------------------------------------------------------------------
+bool history_db::is_stale_name() const
+{
+    str<280> path;
+    get_file_path(path, false);
+    return !path.equals(m_bank_filenames[bank_master].c_str());
 }

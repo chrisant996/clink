@@ -1134,19 +1134,9 @@ function print_date(rl_buffer)
 end
 ```
 
-## Saved command history
+## Saved Command History
 
-Here's how the saved history works:
-
-When the `history.saved` setting is enabled, then the command history is loaded and saved as follows (or when the setting is disabled, then it isn't saved between sessions).
-
-Every time a new input line starts, Clink reloads the master history list and prunes it not to exceed the `history.max_lines` setting.
-
-For performance reasons, deleting a history line marks the line as deleted without rewriting the history file.  When the number of deleted lines gets too large (exceeding the max lines or 200, whichever is larger) then the history file is compacted:  the file is rewritten with the deleted lines removed.
-
-You can force the history file to be compacted regardless of the number of deleted lines by running `history compact`.
-
-When the `history.shared` setting is enabled, then all instances of Clink update the master history file and reload it every time a new input line starts.  This gives the effect that all instances of Clink share the same history -- a command entered in one instance will appear in other instances' history the next time they start an input line.  When the setting is disabled, then each instance of Clink loads the master file but doesn't append its own history back to the master file until after it exits, giving the effect that once an instance starts its history is isolated from other instances' history.
+Clink has a list of commands from the current session, and it can be saved and loaded across sessions.
 
 A line won't be added to history if either of the following are true:
 - The first word in the line matches one of the words in the `history.dont_add_to_history_cmds` setting.
@@ -1159,6 +1149,28 @@ Line|Description
 `somecmd`|Expands doskey alias and adds to history.
 <code>&nbsp;somecmd</code>|Doesn't expand doskey alias and doesn't add to history.
 `;somecmd`|Doesn't expand doskey alias but does add to history.
+
+### The master history file
+
+When the `history.saved` setting is enabled, then the command history is loaded and saved as follows (or when the setting is disabled, then it isn't saved between sessions).
+
+Every time a new input line starts, Clink reloads the master history list and prunes it not to exceed the `history.max_lines` setting.
+
+For performance reasons, deleting a history line marks the line as deleted without rewriting the history file.  When the number of deleted lines gets too large (exceeding the max lines or 200, whichever is larger) then the history file is compacted:  the file is rewritten with the deleted lines removed.
+
+You can force the history file to be compacted regardless of the number of deleted lines by running `history compact`.
+
+### Shared command history
+
+When the `history.shared` setting is enabled, then all instances of Clink update the master history file and reload it every time a new input line starts.  This gives the effect that all instances of Clink share the same history -- a command entered in one instance will appear in other instances' history the next time they start an input line.
+
+When the setting is disabled, then each instance of Clink loads the master file but doesn't append its own history back to the master file until after it exits, giving the effect that once an instance starts its history is isolated from other instances' history.
+
+### Multiple master history files
+
+Normally Clink saves a single saved master history list.  All instances of Clink load and save the same master history list.
+
+It's also possible to make one or more instances of Clink use a different saved master history list by setting the `%CLINK_HISTORY_LABEL%` environment variable.  This can be up to 32 alphanumeric characters, and is appended to the master history file name.  Changing the `%CLINK_HISTORY_LABEL%` environment variable takes effect at the next input line.
 
 # Sample Scripts
 
