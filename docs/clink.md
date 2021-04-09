@@ -188,7 +188,7 @@ Settings and history are persisted to disk from session to session. The location
 - Windows XP: `c:\Documents and Settings\<username>\Local Settings\Application Data\clink`
 - Windows Vista onwards: `c:\Users\<username>\AppData\Local\clink`
 
-All of the above locations can be overridden using the <code>--profile <span class="arg">path</span></code> command line option which is specified when injecting Clink into cmd.exe using `clink inject`.
+All of the above locations can be overridden using the <code>--profile <span class="arg">path</span></code> command line option which is specified when injecting Clink into cmd.exe using `clink inject`.  Or with the `%CLINK_PROFILE%` environment variable if it is already present when Clink is injected (this envvar takes precedence over any other mechanism of specifying a profile directory, if more than one was used).
 
 You can use `clink info` to find the directories and configuration files for the current Clink session.
 
