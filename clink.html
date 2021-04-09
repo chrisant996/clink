@@ -3,7 +3,7 @@
 
 <!-- ----------------------------------------------------- -->
 <head>
-<title>Clink v1.2.1</title>
+<title>Clink v1.2.2</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Rambla:wght@400;700&family=Roboto&family=Fira+Mono&display=swap');
 html {
@@ -409,7 +409,7 @@ var hljs=function(){"use strict";function e(n){Object.freeze(n);var t="function"
         </td>
         <td style="text-align:right">
             <div id="header">
-                <div id="title">Clink v1.2.1</div>
+                <div id="title">Clink v1.2.2</div>
                 <div id="url">
                     <a href="http://github.com/chrisant996/clink">
                         http://github.com/chrisant996/clink
@@ -826,7 +826,7 @@ var hljs=function(){"use strict";function e(n){Object.freeze(n);var t="function"
 <li>Windows XP: <code>c:\Documents and Settings\&lt;username&gt;\Local Settings\Application Data\clink</code></li>
 <li>Windows Vista onwards: <code>c:\Users\&lt;username&gt;\AppData\Local\clink</code></li>
 </ul>
-<p>All of the above locations can be overridden using the <code>--profile <span class="arg">path</span></code> command line option which is specified when injecting Clink into cmd.exe using <code>clink inject</code>.</p>
+<p>All of the above locations can be overridden using the <code>--profile <span class="arg">path</span></code> command line option which is specified when injecting Clink into cmd.exe using <code>clink inject</code>.  Or with the <code>%CLINK_PROFILE%</code> environment variable if it is already present when Clink is injected (this envvar takes precedence over any other mechanism of specifying a profile directory, if more than one was used).</p>
 <p>You can use <code>clink info</code> to find the directories and configuration files for the current Clink session.</p>
 <h2 id="command-line-options">Command Line Options</h2>
 <p>
@@ -2157,13 +2157,8 @@ function print_date(rl_buffer)
     print(os.date(&quot;%A %B %d, %Y   %I:%M %p&quot;))
 end
 </code></pre>
-<h2 id="saved-command-history">Saved command history</h2>
-<p>Here&#39;s how the saved history works:</p>
-<p>When the <code>history.saved</code> setting is enabled, then the command history is loaded and saved as follows (or when the setting is disabled, then it isn&#39;t saved between sessions).</p>
-<p>Every time a new input line starts, Clink reloads the master history list and prunes it not to exceed the <code>history.max_lines</code> setting.</p>
-<p>For performance reasons, deleting a history line marks the line as deleted without rewriting the history file.  When the number of deleted lines gets too large (exceeding the max lines or 200, whichever is larger) then the history file is compacted:  the file is rewritten with the deleted lines removed.</p>
-<p>You can force the history file to be compacted regardless of the number of deleted lines by running <code>history compact</code>.</p>
-<p>When the <code>history.shared</code> setting is enabled, then all instances of Clink update the master history file and reload it every time a new input line starts.  This gives the effect that all instances of Clink share the same history -- a command entered in one instance will appear in other instances&#39; history the next time they start an input line.  When the setting is disabled, then each instance of Clink loads the master file but doesn&#39;t append its own history back to the master file until after it exits, giving the effect that once an instance starts its history is isolated from other instances&#39; history.</p>
+<h2 id="saved-command-history">Saved Command History</h2>
+<p>Clink has a list of commands from the current session, and it can be saved and loaded across sessions.</p>
 <p>A line won&#39;t be added to history if either of the following are true:</p>
 <ul>
 <li>The first word in the line matches one of the words in the <code>history.dont_add_to_history_cmds</code> setting.</li>
@@ -2190,6 +2185,17 @@ end
 <td>Doesn&#39;t expand doskey alias but does add to history.</td>
 </tr>
 </tbody></table>
+<h3 id="the-master-history-file">The master history file</h3>
+<p>When the <code>history.saved</code> setting is enabled, then the command history is loaded and saved as follows (or when the setting is disabled, then it isn&#39;t saved between sessions).</p>
+<p>Every time a new input line starts, Clink reloads the master history list and prunes it not to exceed the <code>history.max_lines</code> setting.</p>
+<p>For performance reasons, deleting a history line marks the line as deleted without rewriting the history file.  When the number of deleted lines gets too large (exceeding the max lines or 200, whichever is larger) then the history file is compacted:  the file is rewritten with the deleted lines removed.</p>
+<p>You can force the history file to be compacted regardless of the number of deleted lines by running <code>history compact</code>.</p>
+<h3 id="shared-command-history">Shared command history</h3>
+<p>When the <code>history.shared</code> setting is enabled, then all instances of Clink update the master history file and reload it every time a new input line starts.  This gives the effect that all instances of Clink share the same history -- a command entered in one instance will appear in other instances&#39; history the next time they start an input line.</p>
+<p>When the setting is disabled, then each instance of Clink loads the master file but doesn&#39;t append its own history back to the master file until after it exits, giving the effect that once an instance starts its history is isolated from other instances&#39; history.</p>
+<h3 id="multiple-master-history-files">Multiple master history files</h3>
+<p>Normally Clink saves a single saved master history list.  All instances of Clink load and save the same master history list.</p>
+<p>It&#39;s also possible to make one or more instances of Clink use a different saved master history list by setting the <code>%CLINK_HISTORY_LABEL%</code> environment variable.  This can be up to 32 alphanumeric characters, and is appended to the master history file name.  Changing the <code>%CLINK_HISTORY_LABEL%</code> environment variable takes effect at the next input line.</p>
 <h1 id="sample-scripts">Sample Scripts</h1>
 <p>Here are a few samples of what can be done with Clink.</p>
 <h3 id="clink-completions">clink-completions</h3>
@@ -2678,6 +2684,10 @@ string.matchlen("abx", "abx")       -- returns -1</code></pre></div></div><hr/>
         <div class="section" id="changes">
 <h1 id="changes">Changes</h1>
 <h2 id="releases-from-chrisant996clink-fork">Releases from <a href="https://github.com/chrisant996/clink">chrisant996/clink</a> fork</h2>
+<h3 id="v122">v1.2.2</h3>
+<ul>
+<li>Added <code>%CLINK_HISTORY_LABEL%</code> environment variable to use a different master history file (fixes <a href="https://github.com/chrisant996/clink/issues/99">#99</a>).</li>
+</ul>
 <h3 id="v121">v1.2.1</h3>
 <ul>
 <li>Added Troubleshooting Tips section in the documentation.</li>
