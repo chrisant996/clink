@@ -6,6 +6,7 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 
 ## Issues
 - Add syntax for argmatchers to defer adding args, to facilitate adding args by parsing help text from a program.
+- `popup-complete` doesn't respect wildcards anymore?
 
 ## Mystery
 - **MYSTERY:** Corrupted clink_history -- not sure how, when, or why -- but after having made changes to history, debugging through issues, and aborting some debugging sessions my clink_history file had a big chunk of contiguous NUL bytes.
