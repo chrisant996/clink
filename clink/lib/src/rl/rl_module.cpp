@@ -202,8 +202,9 @@ static setting_color g_color_unexpected(
 static setting_bool g_match_wild(
     "match.wild",
     "menu-complete matches ? and * wildcards",
-    "Matches ? and * wildcards when using any of the menu-complete commands.\n"
-    "Turn this off to behave how bash does.",
+    "Matches ? and * wildcards when using any of the menu-complete commands or the\n"
+    "clink-popup-complete command.\n"
+    "Turn this off to behave how bash does, and not match wildcards.",
     true);
 
 static setting_bool g_rl_hide_stderr(
@@ -637,7 +638,8 @@ static char** alternative_matches(const char* text, int start, int end)
 
     str<> tmp;
     const char* pattern = nullptr;
-    if (g_match_wild.get() && rl_completion_type == '%')
+    // '%' is menu complete; s_is_popup is popup complete.
+    if (g_match_wild.get() && (rl_completion_type == '%' || s_is_popup))
     {
         // Strip quotes so `"foo\"ba` can complete to `"foo\bar"`.  Stripping
         // quotes may seem surprising, but it's what CMD does and it works well.
