@@ -1302,8 +1302,9 @@ rl_module::rl_module(const char* shell_name, terminal_in* input)
         { "\\M-\\C-k",      "add-history" },             // alt-ctrl-k
         { "\\M-\\C-n",      "clink-old-menu-complete-numbers"},// alt-ctrl-n
         { "\\e[27;8;78~",   "clink-popup-complete-numbers"},// alt-ctrl-N
+        { "\\M-\\C-u",      "clink-up-directory" },      // alt-ctrl-u (from Clink 0.4.9)
         { "\\M-\\C-w",      "clink-copy-word" },         // alt-ctrl-w
-        { "\\e[5;5~",       "clink-up-directory" },      // ctrl-pgup
+        { "\\e[5;5~",       "clink-up-directory" },      // ctrl-pgup (changed in Clink 1.0.0)
         { "\\e\\eOS",       "clink-exit" },              // alt-f4
         { "\\e[1;3H",       "clink-scroll-top" },        // alt-home
         { "\\e[1;3F",       "clink-scroll-bottom" },     // alt-end

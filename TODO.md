@@ -5,10 +5,6 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 # RELEASE
 
 ## Issues
-- Investigate drawbacks of restoring deprecated key bindings (e.g. Ctrl+Alt+U which was replaced by Ctrl+PgUp).
-  - The old clink_inputrc_base defined Alt+U, but the key binding conflicted with a Readline key binding -- Readline should win.
-  - The old clink_inputrc_base defined Ctrl+Alt+U => investigate further.
-  - What other key bindings changed?
 - Add syntax for argmatchers to defer adding args/flags, to facilitate adding args/flags by parsing help text from a program.
 - Add a `history.dupe_mode` that behaves like 4Dos/4NT/Take Command from JPSoft:  **Up**/**Down** then **Enter** remembers the history position so that **Enter**, **Down**, **Enter**, **Down**, **Enter**, etc can be used to replay a series of commands.  In the meantime, `operate-and-get-next` achieves the same result albeit with a slightly different (and more efficient) workflow.
 

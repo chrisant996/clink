@@ -16,7 +16,7 @@ Clink combines the native Windows shell cmd.exe with the powerful command line e
   - Incremental history search (<kbd>Ctrl</kbd>+<kbd>R</kbd> and <kbd>Ctrl</kbd>+<kbd>S</kbd>).
   - Powerful completion (<kbd>Tab</kbd>).
   - Undo (<kbd>Ctrl</kbd>+<kbd>Z</kbd>).
-  - Automatic `cd ..` (<kbd>Ctrl</kbd>+<kbd>PgUp</kbd>).
+  - Automatic `cd ..` (<kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>U</kbd>).
   - Environment variable expansion (<kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>E</kbd>).
   - Doskey alias expansion (<kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>F</kbd>).
   - Scroll the screen buffer (<kbd>Alt</kbd>+<kbd>Up</kbd>, etc).
