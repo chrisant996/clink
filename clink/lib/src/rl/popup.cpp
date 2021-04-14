@@ -56,6 +56,7 @@ static int s_past_flag;
 static bool s_display_filter;
 static bool s_descriptions;
 static bool s_autosize;
+static bool s_reverse_find;
 static wstr<32> s_find;
 static bool s_reset_find_on_next_char = false;
 
@@ -66,7 +67,12 @@ enum class find_mode { next, previous, incremental };
 static bool find_in_list(HWND hwnd, find_mode mode)
 {
     int dir = (find_mode::previous == mode) ? -1 : 1;
-    int row = (find_mode::incremental == mode) ? 0 : max(0, ListView_GetCurSel(hwnd)) + dir;
+    if (s_reverse_find)
+        dir = 0 - dir;
+
+    int row = max(0, ListView_GetCurSel(hwnd)) + dir;
+    if (find_mode::incremental == mode)
+        row = s_reverse_find ? s_num_completions - 1 : 0;
 
     if (find_mode::incremental != mode)
         s_reset_find_on_next_char = true;
@@ -647,6 +653,7 @@ popup_list_result do_popup_list(
     int past_flag,
     bool completing,
     bool auto_complete,
+    bool reverse_find,
     int& current,
     str_base& out,
     bool display_filter)
@@ -656,6 +663,7 @@ popup_list_result do_popup_list(
 
     s_past_flag = past_flag;
     s_display_filter = display_filter;
+    s_reverse_find = reverse_find;
     s_descriptions = false;
     s_autosize = IsWindowsVistaOrGreater();
 
@@ -722,7 +730,9 @@ popup_list_result do_popup_list(
     s_num_completions = num_items;
     s_len_prefix = len_prefix;
     s_current = current;
-    if (s_current < 0 || s_current >= s_num_completions)
+    if (s_current >= s_num_completions)
+        s_current = s_num_completions - 1;
+    else if (s_current < 0)
         s_current = 0;
     s_hwnd_popup = create_popup_window(hwndConsole, title, &csbi);
     if (!s_hwnd_popup)

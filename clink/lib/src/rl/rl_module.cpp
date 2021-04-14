@@ -917,7 +917,8 @@ int clink_popup_complete(int count, int invoking_key)
     str<32> choice;
     switch (do_popup_list("Completions", (const char **)matches, match_count,
                           len_prefix, past_flag, completing,
-                          true/*auto_complete*/, current, choice, any_descriptions))
+                          true/*auto_complete*/, false/*reverse_find*/,
+                          current, choice, any_descriptions))
     {
     case popup_list_result::cancel:
         break;
@@ -990,7 +991,8 @@ int clink_popup_history(int count, int invoking_key)
     str<> choice;
     popup_list_result result = do_popup_list("History",
         (const char **)history, total, 0, 0,
-        false/*completing*/, false/*auto_complete*/, current, choice);
+        false/*completing*/, false/*auto_complete*/, true/*reverse_find*/,
+        current, choice);
     switch (result)
     {
     case popup_list_result::cancel:

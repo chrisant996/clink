@@ -23,6 +23,7 @@ popup_list_result do_popup_list(
     int past_flag,
     bool completing,
     bool auto_complete,
+    bool reverse_find,
     int& current,
     str_base& out,
     bool display_filter=false);

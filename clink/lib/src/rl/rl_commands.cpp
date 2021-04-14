@@ -471,7 +471,8 @@ int clink_popup_directories(int count, int invoking_key)
     int current = total - 1;
     popup_list_result result = do_popup_list("Directories",
         (const char **)history, total, 0, 0,
-        false/*completing*/, false/*auto_complete*/, current, choice);
+        false/*completing*/, false/*auto_complete*/, false/*reverse_find*/,
+        current, choice);
     switch (result)
     {
     case popup_list_result::cancel:
