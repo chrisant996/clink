@@ -50,6 +50,7 @@ int clink_info(int argc, char** argv)
     // Inputrc environment variables.
     static const char* const env_vars[] = {
         "clink_inputrc",
+        "", // Magic value handled specially below.
         "userprofile",
         "localappdata",
         "appdata",
@@ -66,12 +67,20 @@ int clink_info(int argc, char** argv)
     bool labeled = false;
     for (const char* env_var : env_vars)
     {
+        bool use_state_dir = !*env_var;
         const char* label = labeled ? "" : "inputrc";
         labeled = true;
-        printf("%-*s : %%%s%%\n", spacing, label, env_var);
+        if (use_state_dir)
+            printf("%-*s : %s\n", spacing, label, "state directory (see above)");
+        else
+            printf("%-*s : %%%s%%\n", spacing, label, env_var);
 
         str<280> out;
-        if (!os::get_env(env_var, out))
+        if (use_state_dir)
+        {
+            app_context::get()->get_state_dir(out);
+        }
+        else if (!os::get_env(env_var, out))
         {
             printf("%-*s     (unset)\n", spacing, "");
             continue;

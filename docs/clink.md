@@ -268,6 +268,7 @@ Readline itself can also be configured to add custom keybindings and macros by c
 
 Clink searches in the directories referenced by the following environment variables and loads any `.inputrc` or `_inputrc` files present, in the order listed here:
 - `%CLINK_INPUTRC%`
+- The Clink profile directory (see the "state" line from `clink info`).
 - `%USERPROFILE%`
 - `%LOCALAPPDATA%`
 - `%APPDATA%`
