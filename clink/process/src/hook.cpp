@@ -50,8 +50,11 @@ hookptr_t hook_iat(
     int find_by_name
 )
 {
-    LOG("Attempting to hook IAT for module %p", base);
-    LOG("Target is %s,%s (by_name=%d)", dll, func_name, find_by_name);
+    LOG("Attempting to hook IAT for module %p.", base);
+    if (find_by_name)
+        LOG("Target is %s (by name).", func_name);
+    else
+        LOG("Target is %s in %s (by address).", func_name, dll);
 
     hookptr_t* import;
 
@@ -65,20 +68,21 @@ hookptr_t hook_iat(
         hookptr_t func_addr = get_proc_addr(dll, func_name);
         if (func_addr == nullptr)
         {
-            LOG("Failed to find function '%s' in '%s'", func_name, dll);
+            LOG("Failed to find %s in %s.", func_name, dll);
             return nullptr;
         }
 
+        LOG("Looking up import by address %p.", func_addr);
         import = (hookptr_t*)pe.get_import_by_addr(nullptr, (pe_info::funcptr_t)func_addr);
     }
 
     if (import == nullptr)
     {
-        LOG("Unable to find import in IAT (by_name=%d)", find_by_name);
+        LOG("Unable to find import in IAT.");
         return nullptr;
     }
 
-    LOG("Found import at %p (value = %p)", import, *import);
+    LOG("Found import at %p (value is %p).", import, *import);
 
     hookptr_t prev_addr = *import;
     write_addr(import, hook);
@@ -132,7 +136,7 @@ bool add_repair_iat_node(
     bool find_by_name
 )
 {
-    LOG("Attempting to hook IAT for module %p.", base);
+    LOG("Attempting to hook IAT for module %p (repair).", base);
 
     hookptr_t* import;
 

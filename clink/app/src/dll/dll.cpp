@@ -47,7 +47,16 @@ static void failed()
 {
     str<280> buffer;
     app_context::get()->get_state_dir(buffer);
-    fprintf(stderr, "Failed to load Clink.\nSee log for details (%s).\n", buffer.c_str());
+    fprintf(stderr, "Failed to load Clink.\n");
+    if (app_context::get()->is_logging_enabled())
+    {
+        app_context::get()->get_log_path(buffer);
+        fprintf(stderr, "See log file for details (%s).\n", buffer.c_str());
+    }
+    else
+    {
+        fprintf(stderr, "Enable logging for details.\n");
+    }
 }
 
 //------------------------------------------------------------------------------
@@ -88,7 +97,7 @@ INT_PTR WINAPI initialise_clink(const app_context::desc& app_desc)
 
     auto* app_ctx = new app_context(app_desc);
 
-    // Start a log file.
+    // Start logger.
     if (app_ctx->is_logging_enabled())
     {
         str<256> log_path;
@@ -100,14 +109,21 @@ INT_PTR WINAPI initialise_clink(const app_context::desc& app_desc)
     // What process is the DLL loaded into?
     str<64> host_name;
     if (!get_host_name(host_name))
+    {
+        ERR("Unable to get host name.");
         return false;
+    }
 
     SYSTEMTIME now;
     GetLocalTime(&now);
     LOG("---- %04u/%02u/%02u %02u:%02u:%02u.%03u -------------------------------------------------",
         now.wYear, now.wMonth, now.wDay,
         now.wHour, now.wMinute, now.wSecond, now.wMilliseconds);
-    LOG("Host process is '%s'", host_name.c_str());
+    LOG("Host process is '%s' (pid %d)", host_name.c_str(), app_ctx->get_id());
+
+    str<> dll_path;
+    app_ctx->get_binaries_dir(dll_path);
+    LOG("DLL path is '%s'", dll_path.c_str());
 
     {
 #pragma warning(push)
@@ -131,7 +147,7 @@ INT_PTR WINAPI initialise_clink(const app_context::desc& app_desc)
 #pragma warning(pop)
     }
 
-    // Search for a supported host.
+    // Search for a supported host (keep in sync with inject_dll in inject.cpp).
     struct {
         const char* name;
         host*       (*creator)();
@@ -147,7 +163,7 @@ INT_PTR WINAPI initialise_clink(const app_context::desc& app_desc)
     // Bail out if this isn't a supported host.
     if (g_host == nullptr)
     {
-        LOG("Unknown host.");
+        LOG("Unknown host '%s'.", host_name.c_str());
         return false;
     }
 

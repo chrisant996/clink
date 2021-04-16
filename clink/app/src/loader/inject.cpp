@@ -104,7 +104,7 @@ static void copy_dll(str_base& dll_path)
 
     if (os::get_path_type(target_path.c_str()) != os::path_type_file)
     {
-        LOG("Failed to create origin file at '%s'.", target_path.c_str());
+        LOG("Failed to create origin file at '%s'", target_path.c_str());
         return;
     }
 
@@ -209,12 +209,30 @@ static void* inject_dll(DWORD target_pid)
     // Check Dll's version.
     if (!check_dll_version(dll_path.c_str()))
     {
-        ERR("DLL failed version check.");
-        return 0;
+        LOG("EXE version: %08x %08x", MAKELONG(CLINK_VERSION_MINOR, CLINK_VERSION_MAJOR), MAKELONG(CLINK_VERSION_PATCH, 0));
+        fprintf(stderr, "DLL version mismatch.\n");
+        return nullptr;
+    }
+
+    // Check for supported host (keep in sync with initialise_clink in dll.cpp).
+    process cmd_process(target_pid);
+    {
+        str<> host;
+        if (!cmd_process.get_file_name(host))
+        {
+            ERR("Unable to get host name.");
+            return nullptr;
+        }
+
+        const char* host_name = path::get_name(host.c_str());
+        if (!host_name || stricmp(host_name, "cmd.exe"))
+        {
+            LOG("Unknown host '%s'.", host_name ? host_name : "<no name>");
+            return nullptr;
+        }
     }
 
     // Inject Clink DLL.
-    process cmd_process(target_pid);
     return cmd_process.inject_module(dll_path.c_str());
 }
 
@@ -286,6 +304,37 @@ void get_profile_path(const char* in, str_base& out)
     path::append(out, in);
     path::normalise(out);
 }
+
+//------------------------------------------------------------------------------
+class injection_error_reporter
+{
+public:
+    injection_error_reporter(int target_pid, const char* log_path)
+        : m_target_pid(target_pid), m_log_path(log_path)
+    {
+    }
+
+    ~injection_error_reporter()
+    {
+        if (!m_ok)
+        {
+            static const char c_msg_pid[] = "Unable to inject Clink in process id %d.\n";
+            static const char c_msg_nopid[] = "Unable to inject Clink.\n";
+            fprintf(stderr, m_target_pid ? c_msg_pid : c_msg_nopid, m_target_pid);
+
+            static const char c_msg_enable_log[] = "Enable logging for details.\n";
+            static const char c_msg_see_log[] = "See log file for details (%s).\n";
+            fprintf(stderr, m_log_path ? c_msg_see_log : c_msg_enable_log, m_log_path);
+        }
+    }
+
+    void set_ok() { m_ok = true; }
+
+private:
+    bool m_ok = false;
+    int m_target_pid = 0;
+    const char* m_log_path = nullptr;
+};
 
 //------------------------------------------------------------------------------
 int inject(int argc, char** argv)
@@ -375,12 +424,46 @@ int inject(int argc, char** argv)
     str<32> noautorun;
     if (is_autorun && os::get_env("clink_noautorun", noautorun))
     {
+        // Using WriteConsoleW to suppress the text if output is redirected so
+        // that it doesn't interfere with scripted parsing.
         static const char c_msg[] = "Clink autorun is disabled by CLINK_NOAUTORUN.\n";
         wstr<> wmsg(c_msg);
         DWORD written;
         WriteConsoleW(GetStdHandle(STD_OUTPUT_HANDLE), wmsg.c_str(), wmsg.length(), &written, nullptr);
         return 1;
     }
+
+    // Start a log file.
+    str<256> log_path;
+    if (app_desc.log)
+    {
+        app_context::get()->get_log_path(log_path);
+
+        // The app_context singleton was created before the --profile flag was
+        // parsed, so compensate here.
+        if (app_desc.state_dir[0])
+        {
+            str<> log_name;
+            path::get_name(log_path.c_str(), log_name);
+            log_path.copy(app_desc.state_dir);
+            log_path.concat(log_name.c_str());
+        }
+
+        // Restart the log file on every inject.  The DLL also restarts the log
+        // file on successful inject.  So the beginning of any log file contains
+        // EITHER info about a failed inject, or info from a successful inject.
+        unlink(log_path.c_str());
+        new file_logger(log_path.c_str());
+
+        SYSTEMTIME now;
+        GetLocalTime(&now);
+        LOG("---- %04u/%02u/%02u %02u:%02u:%02u.%03u -------------------------------------------------",
+            now.wYear, now.wMonth, now.wDay,
+            now.wHour, now.wMinute, now.wSecond, now.wMilliseconds);
+        LOG("Injecting Clink...");
+    }
+
+    injection_error_reporter errrep(target_pid, app_desc.log ? log_path.c_str() : nullptr);
 
     // Unless a target pid was specified on the command line search for a
     // compatible parent process.
@@ -393,9 +476,21 @@ int inject(int argc, char** argv)
         }
     }
 
+    // Does the process exist?
+    {
+        HANDLE handle = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, FALSE, target_pid);
+        if (!handle)
+            ERR("Failed to open process %d.", target_pid);
+        else
+            CloseHandle(handle);
+        if (!handle)
+            return ret;
+    }
+
     // Check to see if clink is already installed.
     if (is_clink_present(target_pid))
     {
+        errrep.set_ok();
         if (app_desc.script_path[0])
         {
             // Get the address to SetEnvironmentVariableW directly from
@@ -416,6 +511,10 @@ int inject(int argc, char** argv)
 
             process(target_pid).remote_call(func, L"=clink.scripts.inject", value);
         }
+        else
+        {
+            fprintf(stderr, "Clink already loaded in process %d.\n", target_pid);
+        }
         return ret;
     }
 
@@ -424,11 +523,17 @@ int inject(int argc, char** argv)
     if (remote_dll_base == nullptr)
         return ret;
 
+    // Detach from log file so the DLL can take over.
+    delete file_logger::get();
+
     // Remotely call Clink's initialisation function.
     void* our_dll_base = vm().get_alloc_base("");
     uintptr_t init_func = uintptr_t(remote_dll_base);
     init_func += uintptr_t(initialise_clink) - uintptr_t(our_dll_base);
     ret = (process(target_pid).remote_call((process::funcptr_t)init_func, app_desc) == nullptr);
+
+    if (!ret)
+        errrep.set_ok();
 
     return is_autorun ? 0 : ret;
 }
