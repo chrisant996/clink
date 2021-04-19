@@ -5,9 +5,9 @@
 
 #include <core/base.h>
 #include <core/str.h>
+#include <core/str_map.h>
 
 #include <vector>
-#include <map>
 
 class line_state;
 
@@ -39,15 +39,7 @@ struct word_class_info
 //------------------------------------------------------------------------------
 class word_classifications : public no_copy
 {
-    struct cmp_str
-    {
-        bool operator()(const char* a, const char* b) const
-        {
-            return stricmp(a, b) < 0;
-        }
-    };
-
-    typedef std::map<const char*, char, cmp_str> faces_map;
+    typedef str_map_caseless<char>::type faces_map;
 
 public:
                     word_classifications() = default;

@@ -4,6 +4,7 @@
 #pragma once
 
 #include "str.h"
+#include "str_map.h"
 
 #include <map>
 #include <vector>
@@ -11,16 +12,7 @@
 class setting;
 
 //------------------------------------------------------------------------------
-struct cmp_str
-{
-    bool operator()(const char* a, const char* b) const
-    {
-        return stricmp(a, b) < 0;
-    }
-};
-
-//------------------------------------------------------------------------------
-typedef std::map<const char*, setting*, cmp_str> setting_map;
+typedef str_map_caseless<setting*>::type setting_map;
 
 //------------------------------------------------------------------------------
 class setting_iter
