@@ -73,6 +73,10 @@ static int _rl_char_search_callback PARAMS((_rl_callback_generic_arg *));
 
 int _rl_optimize_typeahead = 1;	/* rl_insert tries to read typeahead */
 
+/* begin_clink_change */
+rl_voidfunc_t *rl_buffer_changing_hook = 0;
+/* end_clink_change */
+
 /* **************************************************************** */
 /*								    */
 /*			Insert and Delete			    */
@@ -90,6 +94,11 @@ rl_insert_text (const char *string)
   l = (string && *string) ? strlen (string) : 0;
   if (l == 0)
     return 0;
+
+/* begin_clink_change */
+  if (rl_buffer_changing_hook)
+    rl_buffer_changing_hook ();
+/* end_clink_change */
 
   if (rl_end + l >= rl_line_buffer_len)
     rl_extend_line_buffer (rl_end + l);
@@ -138,6 +147,11 @@ rl_delete_text (int from, int to)
     }
   if (from < 0)
     from = 0;
+
+/* begin_clink_change */
+  if (rl_buffer_changing_hook)
+    rl_buffer_changing_hook ();
+/* end_clink_change */
 
   text = rl_copy_text (from, to);
 

@@ -18,7 +18,6 @@
 #include <new>
 #include <Windows.h>
 extern "C" {
-#include <readline/readline.h>
 #include <readline/history.h>
 }
 
@@ -51,11 +50,14 @@ static setting_enum g_dupe_mode(
     "history.dupe_mode",
     "Controls how duplicate entries are handled",
     "If a line is a duplicate of an existing history entry Clink will erase\n"
-    "the duplicate when this is set to 'erase_prev'. A value of 'ignore' will\n"
+    "the duplicate when this is set to 'erase_prev'.  A value of 'ignore' will\n"
     "not add a line to the history if it already exists, and a value of 'add'\n"
-    "will always add lines.\n"
+    "will always add lines.  A value of 'sticky' will add lines, except after\n"
+    "reusing a history line in which case the history search position stays on\n"
+    "that line so next/prev history can continue from there (e.g. replaying\n"
+    "commands via Up many times, Enter, Down, Enter, etc).\n"
     "Note that history is not deduplicated when reading/writing to disk.",
-    "add,ignore,erase_prev",
+    "add,ignore,erase_prev,sticky",
     2);
 
 static setting_enum g_expand_mode(
@@ -75,6 +77,11 @@ static size_t get_max_history()
     if (!limit || limit > 50000)
         limit = 50000;
     return limit;
+}
+
+bool get_sticky_history_mode()
+{
+    return g_dupe_mode.get() == 3;
 }
 
 
@@ -1332,13 +1339,7 @@ bool history_db::add(const char* line)
     if (!line[0] || (g_ignore_space.get() && (line[0] == ' ' || line[0] == '\t')))
         return false;
 
-    // Ignore when operate-and-get-next was used, so that we don't rearrange history while it's
-    // trying to set the history context.
-    if (rl_has_saved_history())
-        return false;
-
     // Handle duplicates.
-    int mode = g_dupe_mode.get();
     switch (g_dupe_mode.get())
     {
     case 1:

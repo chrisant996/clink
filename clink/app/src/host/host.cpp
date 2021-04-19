@@ -24,13 +24,14 @@
 #include <lua/lua_state.h>
 #include <lua/lua_match_generator.h>
 #include <terminal/terminal.h>
-#include <readline/readline.h>
 
 #include <list>
 #include <memory>
 
 extern "C" {
 #include <lua.h>
+#include <readline/readline.h>
+#include <readline/history.h>
 }
 
 //------------------------------------------------------------------------------
@@ -78,6 +79,7 @@ static setting_bool g_reload_scripts(
 extern setting_bool g_classify_words;
 extern setting_color g_color_prompt;
 
+extern bool get_sticky_history_mode();
 extern void reset_keyseq_to_name_map();
 
 
@@ -671,6 +673,29 @@ bool host::edit_line(const char* prompt, str_base& out)
                     break;
             }
 
+            // Determine whether to add the line to history.  Must happen before
+            // calling expand() because that resets the history position.
+            bool add_history = true;
+            if (rl_has_saved_history())
+            {
+                // Don't add to history when operate-and-get-next was used, as
+                // that would defeat the command.
+                add_history = false;
+            }
+            else if (get_sticky_history_mode())
+            {
+                // The only way to get the history length is to reset the
+                // history by calling using_history() and then get the current
+                // history position by calling where_history().
+                int history_pos = where_history();
+                using_history();
+                int history_len = where_history();
+                history_set_pos(history_pos);
+                // Don't add the line to history if history was searched in
+                // 'sticky' mode.
+                add_history = (history_pos == history_len);
+            }
+
             // Handle history event expansion.  expand() is a static method,
             // so can call it even when m_history is nullptr.
             if (m_history->expand(out.c_str(), out) == history_db::expand_print)
@@ -707,7 +732,7 @@ bool host::edit_line(const char* prompt, str_base& out)
             }
 
             // Add the line to the history.
-            if (m_history)
+            if (add_history)
                 m_history->add(out.c_str());
         }
         break;

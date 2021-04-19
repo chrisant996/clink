@@ -101,6 +101,7 @@ static str_moveable s_pending_luafunc;
 static bool         s_has_pending_luafunc = false;
 static bool         s_has_override_rl_last_func = false;
 static rl_command_func_t* s_override_rl_last_func = nullptr;
+static int          s_init_history_pos = -1;
 
 //------------------------------------------------------------------------------
 static setting_color g_color_input(
@@ -229,6 +230,8 @@ static setting_bool g_debug_log_terminal(
     "the log file.",
     false);
 #endif
+
+extern bool get_sticky_history_mode();
 
 
 
@@ -618,6 +621,18 @@ static bool ensure_matches_size(char**& matches, int count, int& reserved)
         reserved = new_reserve;
     }
     return true;
+}
+
+//------------------------------------------------------------------------------
+static void buffer_changing()
+{
+    // Reset the history position for the next input line prompt, upon changing
+    // the input text at all.
+    if (s_init_history_pos >= 0)
+    {
+        s_init_history_pos = -1;
+        using_history();
+    }
 }
 
 //------------------------------------------------------------------------------
@@ -1181,6 +1196,7 @@ rl_module::rl_module(const char* shell_name, terminal_in* input)
     rl_instream = in_stream;
     rl_outstream = out_stream;
     _rl_visual_bell_func = visible_bell;
+    rl_buffer_changing_hook = buffer_changing;
 
     rl_readline_name = shell_name;
     rl_catch_signals = 0;
@@ -1513,6 +1529,10 @@ concat_verbatim:
     auto handler = [] (char* line) { rl_module::get()->done(line); };
     rl_callback_handler_install(rl_prompt.c_str(), handler);
 
+    // Apply the remembered history position from the previous command, if any.
+    if (s_init_history_pos >= 0)
+        history_set_pos(s_init_history_pos);
+
     if (_rl_colored_stats || _rl_colored_completion_prefix)
         _rl_parse_colors();
 
@@ -1524,6 +1544,10 @@ concat_verbatim:
 //------------------------------------------------------------------------------
 void rl_module::on_end_line()
 {
+    // When 'sticky' mode is enabled, remember the history position for the next
+    // input line prompt.
+    s_init_history_pos = get_sticky_history_mode() ? where_history() : -1;
+
     if (m_rl_buffer != nullptr)
     {
         rl_line_buffer = m_rl_buffer;
