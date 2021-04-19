@@ -16,6 +16,10 @@
 
 #include <initializer_list>
 
+extern "C" {
+#include <readline/history.h>
+};
+
 //------------------------------------------------------------------------------
 extern "C" {
 char* tgetstr(char*, char**);
@@ -543,10 +547,10 @@ TEST_CASE("history limit")
     history.set_min_compact_threshold(atoi(max_lines));
 
     concurrency_tag ctag;
-    ctag.set( history.get_master_tag() );
+    ctag.set(history.get_master_tag());
 
-    for( const char* line : history_lines )
-        history.add( line );
+    for(const char* line : history_lines)
+        history.add(line);
     history.load_rl_history();
 
     SECTION("Stable ctag")
@@ -601,22 +605,99 @@ TEST_CASE("history limit")
         REQUIRE(os::get_file_size(master_path) == line_bytes + history.get_master_tag_size());
 
         ctag.clear();
-        ctag.set( history.get_master_tag() );
+        ctag.set(history.get_master_tag());
 
-        SECTION( "Not compacted again" )
+        SECTION("Not compacted again")
         {
-            history.add( history_lines[2-1] );
+            history.add(history_lines[2-1]);
             history.load_rl_history();
 
-            REQUIRE( history.get_master_length() == 3 );
-            REQUIRE( history.get_master_deleted_count() == 1 );
-            REQUIRE( strcmp( ctag.get(), history.get_master_tag() ) == 0 );
+            REQUIRE(history.get_master_length() == 3);
+            REQUIRE(history.get_master_deleted_count() == 1);
+            REQUIRE(strcmp( ctag.get(), history.get_master_tag() ) == 0);
 
-            size_t line_bytes = ( strlen( history_lines[3-1] ) + 1 +
-                                  strlen( history_lines[4-1] ) + 1 +
-                                  strlen( history_lines[5-1] ) + 1 +
-                                  strlen( history_lines[2-1] ) + 1 );
-            REQUIRE( os::get_file_size( master_path ) == line_bytes + history.get_master_tag_size() );
+            size_t line_bytes = (strlen(history_lines[3-1]) + 1 +
+                                 strlen(history_lines[4-1]) + 1 +
+                                 strlen(history_lines[5-1]) + 1 +
+                                 strlen(history_lines[2-1]) + 1);
+            REQUIRE(os::get_file_size(master_path) == line_bytes + history.get_master_tag_size());
         }
+    }
+}
+
+//------------------------------------------------------------------------------
+TEST_CASE("history unique")
+{
+    const char* master_path = "clink_history";
+
+    // Start with an empty state dir.
+    const char* empty_fs[] = { nullptr };
+    fs_fixture fs(empty_fs);
+
+    // This sets the state id to something explicit.
+    static const char* env_desc[] = {
+        "=clink.id", "493",
+        nullptr
+    };
+    env_fixture env(env_desc);
+
+    app_context::desc context_desc;
+    context_desc.inherit_id = true;
+    str_base(context_desc.state_dir).copy(fs.get_root());
+    app_context context(context_desc);
+
+    // Set history to shared with default limit (to relax preceding low limit),
+    // and allow duplicates.
+    settings::find("history.shared")->set("true");
+    settings::find("history.max_lines")->set();
+    settings::find("history.dupe_mode")->set("add");
+
+    // Fill the history. reload() call will fill Readline.
+    static const char* history_lines[] = {
+        "aaa",
+        "bbb",
+        "ccc",
+        "ccc",
+        "bbb",
+        "aaa",
+        "bbb",
+        "bbb",
+        "bbb",
+    };
+
+    test_history_db history;
+    history.clear();
+
+    concurrency_tag ctag;
+    ctag.set(history.get_master_tag());
+
+    for(const char* line : history_lines)
+        history.add(line);
+    history.load_rl_history();
+
+    SECTION("Stable ctag")
+    {
+        REQUIRE(strcmp(ctag.get(), history.get_master_tag()) == 0);
+    }
+
+    SECTION("Duplicates")
+    {
+        REQUIRE(history.get_master_length() == sizeof_array(history_lines));
+        REQUIRE(history.get_master_deleted_count() == 0);
+        REQUIRE(strcmp(ctag.get(), history.get_master_tag()) == 0);
+    }
+
+    SECTION("Unique")
+    {
+        history.compact(true/*force*/, true/*uniq*/);
+        history.load_rl_history();
+
+        REQUIRE(history.get_master_length() == 3);
+        REQUIRE(history.get_master_deleted_count() == 0);
+        REQUIRE(strcmp(ctag.get(), history.get_master_tag()) != 0);
+
+        REQUIRE(strcmp(history_get(1)->line, "ccc") == 0);
+        REQUIRE(strcmp(history_get(2)->line, "aaa") == 0);
+        REQUIRE(strcmp(history_get(3)->line, "bbb") == 0);
     }
 }

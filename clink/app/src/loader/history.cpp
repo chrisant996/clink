@@ -221,12 +221,12 @@ static int clear()
 }
 
 //------------------------------------------------------------------------------
-static int compact()
+static int compact(bool uniq)
 {
     history_scope history;
     if (history->has_bank(bank_master))
     {
-        history->compact(true/*force*/);
+        history->compact(true/*force*/, uniq);
         puts("History compacted.");
     }
     else
@@ -265,6 +265,7 @@ static int print_help()
     static const char* const help_options[] = {
         "--bare",       "Omit item numbers when printing history.",
         "--diag",       "Print diagnostic info to stderr.",
+        "--unique",     "Remove duplicates when compacting history.",
     };
 
     puts(g_clink_header);
@@ -332,20 +333,43 @@ static int history_bash(int argc, char** argv)
 }
 
 //------------------------------------------------------------------------------
+static bool is_flag(const char* arg, const char* flag, unsigned int min_len=-1)
+{
+    unsigned int matched_len = 0;
+    while (*arg == *flag)
+    {
+        ++arg;
+        ++flag;
+        ++matched_len;
+    }
+
+    if (*arg)
+        return false;
+
+    if (*flag && matched_len < min_len)
+        return false;
+
+    return true;
+}
+
+//------------------------------------------------------------------------------
 int history(int argc, char** argv)
 {
     // Check to see if the user asked from some help!
     bool bare = false;
+    bool uniq = false;
     for (int i = 1; i < argc; ++i)
     {
-        if (_stricmp(argv[i], "--help") == 0 || _stricmp(argv[i], "-h") == 0)
+        if (is_flag(argv[i], "--help", 3) || is_flag(argv[i], "-h"))
             return print_help();
 
         bool remove = true;
-        if (_stricmp(argv[i], "--bare") == 0)
+        if (is_flag(argv[i], "--bare", 3))
             bare = true;
-        else if (_stricmp(argv[i], "--diag") == 0)
+        else if (is_flag(argv[i], "--diag", 3))
             s_diag = true;
+        else if (is_flag(argv[i], "--unique", 3))
+            uniq = true;
         else
             remove = false;
 
@@ -374,7 +398,7 @@ int history(int argc, char** argv)
 
         // 'compact' command
         if (_stricmp(verb, "compact") == 0)
-            return compact();
+            return compact(uniq);
 
         // 'delete' command
         if (_stricmp(verb, "delete") == 0)

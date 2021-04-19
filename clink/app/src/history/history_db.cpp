@@ -11,6 +11,7 @@
 #include <core/settings.h>
 #include <core/str.h>
 #include <core/str_tokeniser.h>
+#include <core/str_map.h>
 #include <core/path.h>
 #include <core/log.h>
 #include <assert.h>
@@ -179,7 +180,7 @@ public:
                         ~auto_free_str() { free(m_ptr); }
 
     auto_free_str&      operator=(const char* s) { set(s); return *this; }
-    auto_free_str&      operator=(auto_free_str&& other) { m_ptr = other.m_ptr; other.m_ptr = nullptr; return *this; }
+    auto_free_str&      operator=(auto_free_str&& other) { free(m_ptr); m_ptr = other.m_ptr; other.m_ptr = nullptr; return *this; }
     void                set(const char* s, int len = -1);
     const char*         get() const { return m_ptr; }
 
@@ -860,16 +861,35 @@ static bool extract_ctag(const read_lock& lock, concurrency_tag& tag)
 }
 
 //------------------------------------------------------------------------------
-static void rewrite_master_bank(write_lock& lock, size_t* _kept=nullptr, size_t* _deleted=nullptr)
+static void rewrite_master_bank(write_lock& lock, size_t* _kept=nullptr, size_t* _deleted=nullptr, bool uniq=false, size_t* _dups=nullptr)
 {
     history_read_buffer buffer;
+    str_map_case<size_t>::type seen;
+
+    if (_dups)
+        *_dups = 0;
 
     // Read lines to keep into vector.
     str_iter out;
     read_lock::line_iter iter(lock, buffer.data(), buffer.size());
     std::vector<auto_free_str> lines_to_keep;
     while (iter.next(out))
-        lines_to_keep.push_back(std::move(auto_free_str(out.get_pointer(), out.length())));
+    {
+        auto_free_str line(out.get_pointer(), out.length());
+        if (uniq)
+        {
+            auto const lookup = seen.find(line.get());
+            if (lookup != seen.end())
+            {
+                // Reuse the old entry so the map stays valid.
+                line = std::move(lines_to_keep[lookup->second]);
+                if (_dups)
+                    ++(*_dups);
+            }
+            seen.insert_or_assign(line.get(), lines_to_keep.size());
+        }
+        lines_to_keep.emplace_back(std::move(line));
+    }
 
     if (_kept)
         *_kept = lines_to_keep.size();
@@ -884,7 +904,10 @@ static void rewrite_master_bank(write_lock& lock, size_t* _kept=nullptr, size_t*
 
     // Write lines from vector.
     for (auto const& line : lines_to_keep)
-        lock.add(line.get());
+    {
+        if (line.get())
+            lock.add(line.get());
+    }
 }
 
 //------------------------------------------------------------------------------
@@ -1275,7 +1298,7 @@ void history_db::clear()
 }
 
 //------------------------------------------------------------------------------
-void history_db::compact(bool force)
+void history_db::compact(bool force, bool uniq)
 {
     if (!m_use_master_bank)
     {
@@ -1326,11 +1349,19 @@ void history_db::compact(bool force)
     {
         DIAG("... compact:  rewrite master bank\n");
 
-        size_t kept, deleted;
+        size_t kept, deleted, dups;
         write_lock lock(get_bank(bank_master));
-        rewrite_master_bank(lock, &kept, &deleted);
-        LOG("Compacted history:  %zu active, %zu deleted", kept, deleted);
-        DIAG("... ... lines active %zu / purged %zu\n", kept, deleted);
+        rewrite_master_bank(lock, &kept, &deleted, uniq, &dups);
+        if (uniq)
+        {
+            LOG("Compacted history:  %zu active, %zu deleted, %zu duplicates removed", kept, deleted, dups);
+            DIAG("... ... lines active %zu / purged %zu / duplicates removed %zu\n", kept, deleted, dups);
+        }
+        else
+        {
+            LOG("Compacted history:  %zu active, %zu deleted", kept, deleted);
+            DIAG("... ... lines active %zu / purged %zu\n", kept, deleted);
+        }
     }
     else
     {
