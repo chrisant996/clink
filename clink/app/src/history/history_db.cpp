@@ -52,12 +52,9 @@ static setting_enum g_dupe_mode(
     "If a line is a duplicate of an existing history entry Clink will erase\n"
     "the duplicate when this is set to 'erase_prev'.  A value of 'ignore' will\n"
     "not add a line to the history if it already exists, and a value of 'add'\n"
-    "will always add lines.  A value of 'sticky' will add lines, except after\n"
-    "reusing a history line in which case the history search position stays on\n"
-    "that line so next/prev history can continue from there (e.g. replaying\n"
-    "commands via Up many times, Enter, Down, Enter, etc).\n"
+    "will always add lines.\n"
     "Note that history is not deduplicated when reading/writing to disk.",
-    "add,ignore,erase_prev,sticky",
+    "add,ignore,erase_prev",
     2);
 
 static setting_enum g_expand_mode(
@@ -71,6 +68,15 @@ static setting_enum g_expand_mode(
     "off,on,not_squoted,not_dquoted,not_quoted",
     4);
 
+static setting_bool g_sticky_search(
+    "history.sticky_search",
+    "Makes it easy to replay a series of commands",
+    "When enabled, reusing a history line does not add the reused line to the end\n"
+    "of the history, and it leaves the history search position on the reused line\n"
+    "so next/prev history can continue from there (e.g. replaying commands via Up\n"
+    "many times, Enter, Down, Enter, Down, Enter, etc).",
+    false);
+
 static size_t get_max_history()
 {
     size_t limit = use_get_max_history_instead::g_max_history.get();
@@ -79,9 +85,9 @@ static size_t get_max_history()
     return limit;
 }
 
-bool get_sticky_history_mode()
+bool get_sticky_search_history()
 {
-    return g_dupe_mode.get() == 3;
+    return g_sticky_search.get();
 }
 
 

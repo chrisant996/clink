@@ -79,7 +79,8 @@ static setting_bool g_reload_scripts(
 extern setting_bool g_classify_words;
 extern setting_color g_color_prompt;
 
-extern bool get_sticky_history_mode();
+extern bool get_sticky_search_history();
+extern bool has_sticky_search_position();
 extern void reset_keyseq_to_name_map();
 
 
@@ -682,7 +683,7 @@ bool host::edit_line(const char* prompt, str_base& out)
                 // that would defeat the command.
                 add_history = false;
             }
-            else if (get_sticky_history_mode())
+            else if (get_sticky_search_history() && has_sticky_search_position())
             {
                 // The only way to get the history length is to reset the
                 // history by calling using_history() and then get the current
