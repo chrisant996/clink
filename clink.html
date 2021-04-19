@@ -3,7 +3,7 @@
 
 <!-- ----------------------------------------------------- -->
 <head>
-<title>Clink v1.2.2</title>
+<title>Clink v1.2.3</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Rambla:wght@400;700&family=Roboto&family=Fira+Mono&display=swap');
 html {
@@ -409,7 +409,7 @@ var hljs=function(){"use strict";function e(n){Object.freeze(n);var t="function"
         </td>
         <td style="text-align:right">
             <div id="header">
-                <div id="title">Clink v1.2.2</div>
+                <div id="title">Clink v1.2.3</div>
                 <div id="url">
                     <a href="http://github.com/chrisant996/clink">
                         http://github.com/chrisant996/clink
@@ -444,7 +444,7 @@ var hljs=function(){"use strict";function e(n){Object.freeze(n);var t="function"
 <li>Incremental history search (<kbd>Ctrl</kbd>+<kbd>R</kbd> and <kbd>Ctrl</kbd>+<kbd>S</kbd>).</li>
 <li>Powerful completion (<kbd>Tab</kbd>).</li>
 <li>Undo (<kbd>Ctrl</kbd>+<kbd>Z</kbd>).</li>
-<li>Automatic <code>cd ..</code> (<kbd>Ctrl</kbd>+<kbd>PgUp</kbd>).</li>
+<li>Automatic <code>cd ..</code> (<kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>U</kbd>).</li>
 <li>Environment variable expansion (<kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>E</kbd>).</li>
 <li>Doskey alias expansion (<kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>F</kbd>).</li>
 <li>Scroll the screen buffer (<kbd>Alt</kbd>+<kbd>Up</kbd>, etc).</li>
@@ -674,7 +674,7 @@ var hljs=function(){"use strict";function e(n){Object.freeze(n);var t="function"
 <tr>
 <td align="center"><code>history.dupe_mode</code></td>
 <td align="center"><code>erase_prev</code></td>
-<td>If a line is a duplicate of an existing history entry Clink will erase the duplicate when this is set <code>erase_prev</code>. Setting it to <code>ignore</code> will not add duplicates to the history, and setting it to <code>add</code> will always add lines.</td>
+<td>If a line is a duplicate of an existing history entry Clink will erase the duplicate when this is set to &#39;erase_prev&#39;. Setting it to &#39;ignore&#39; will not add duplicates to the history, and setting it to &#39;add&#39; will always add lines.</td>
 </tr>
 <tr>
 <td align="center"><code>history.expand_mode</code></td>
@@ -694,12 +694,17 @@ var hljs=function(){"use strict";function e(n){Object.freeze(n);var t="function"
 <tr>
 <td align="center"><code>history.save</code></td>
 <td align="center">True</td>
-<td>Saves history between sessions.</td>
+<td>Saves history between sessions. When disabled, history is neither read from nor written to a master history list; history for each session exists only in memory until the session ends.</td>
 </tr>
 <tr>
 <td align="center"><code>history.shared</code></td>
 <td align="center">False</td>
 <td>When history is shared, all instances of Clink update the master history list after each command and reload the master history list on each prompt.  When history is not shared, each instance updates the master history list on exit.</td>
+</tr>
+<tr>
+<td align="center"><code>history.sticky_search</code></td>
+<td align="center">False</td>
+<td>When enabled, reusing a history line does not add the reused line to the end of the history, and it leaves the history search position on the reused line so next/prev history can continue from there (e.g. replaying commands via <kbd>Up</kbd> several times then <kbd>Enter</kbd>, <kbd>Down</kbd>, <kbd>Enter</kbd>, etc).</td>
 </tr>
 <tr>
 <td align="center"><code>lua.break_on_error</code></td>
@@ -754,7 +759,7 @@ var hljs=function(){"use strict";function e(n){Object.freeze(n);var t="function"
 <tr>
 <td align="center"><code>match.wild</code></td>
 <td align="center">True</td>
-<td>Matches <code>?</code> and <code>*</code> wildcards when using any of the <code>menu-complete</code> commands. Turn this off to behave how bash does.</td>
+<td>Matches <code>?</code> and <code>*</code> wildcards when using any of the <code>menu-complete</code> commands or the <code>clink-popup-complete</code> command. Turn this off to behave how bash does, and not match wildcards.</td>
 </tr>
 <tr>
 <td align="center"><code>readline.hide_stderr</code></td>
@@ -902,6 +907,7 @@ Echos key sequences to use in the .inputrc files for binding keys to Clink comma
 <p>Clink searches in the directories referenced by the following environment variables and loads any <code>.inputrc</code> or <code>_inputrc</code> files present, in the order listed here:</p>
 <ul>
 <li><code>%CLINK_INPUTRC%</code></li>
+<li>The Clink profile directory (see the &quot;state&quot; line from <code>clink info</code>).</li>
 <li><code>%USERPROFILE%</code></li>
 <li><code>%LOCALAPPDATA%</code></li>
 <li><code>%APPDATA%</code></li>
@@ -2684,6 +2690,16 @@ string.matchlen("abx", "abx")       -- returns -1</code></pre></div></div><hr/>
         <div class="section" id="changes">
 <h1 id="changes">Changes</h1>
 <h2 id="releases-from-chrisant996clink-fork">Releases from <a href="https://github.com/chrisant996/clink">chrisant996/clink</a> fork</h2>
+<h3 id="v123">v1.2.3</h3>
+<ul>
+<li>Added <code>history.sticky_search</code> mode for <code>history.dupe_mode</code> setting.</li>
+<li>Added failure reporting and logging when <code>clink inject</code> fails.</li>
+<li>Added <code>--unique</code> flag for use with <code>clink history compact --unique</code> to remove duplicate entries from the history list.</li>
+<li>The <code>clink-popup-complete</code> command now matches wildcards.</li>
+<li>Restored the <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>U</kbd> key binding from v0.4.9 (moves the current working directory up one level).</li>
+<li>Fixed searching for inputrc files to also search in the profile directory (regression introduced in v1.0.0).</li>
+<li>Fixed incremental search in the History popup list to search in reverse order (bottom to top).</li>
+</ul>
 <h3 id="v122">v1.2.2</h3>
 <ul>
 <li>Added <code>%CLINK_HISTORY_LABEL%</code> environment variable to use a different master history file (fixes <a href="https://github.com/chrisant996/clink/issues/99">#99</a>).</li>
