@@ -16,6 +16,7 @@
 #include <core/os.h>
 #include <core/path.h>
 #include <core/str_hash.h>
+#include <core/str_unordered_set.h>
 #include <core/settings.h>
 #include <core/log.h>
 #include <terminal/ecma48_iter.h>
@@ -772,24 +773,6 @@ static char** alternative_matches(const char* text, int start, int end)
 }
 
 //------------------------------------------------------------------------------
-struct match_hasher
-{
-    size_t operator()(const char* match) const
-    {
-        return str_hash(match);
-    }
-};
-
-//------------------------------------------------------------------------------
-struct match_comparator
-{
-    bool operator()(const char* m1, const char* m2) const
-    {
-        return strcmp(m1, m2) == 0;
-    }
-};
-
-//------------------------------------------------------------------------------
 static match_display_filter_entry** match_display_filter(char** matches, bool popup)
 {
     if (!s_matches)
@@ -806,7 +789,7 @@ static match_display_filter_entry** match_display_filter(char** matches, bool po
         const int debug_filter = dbg_get_env_int("DEBUG_FILTER");
 #endif
 
-        std::unordered_set<const char*, match_hasher, match_comparator> seen;
+        str_unordered_set seen;
         unsigned int tortoise = 1;
         unsigned int hare = 1;
         while (filtered_matches[hare])

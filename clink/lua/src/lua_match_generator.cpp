@@ -10,6 +10,7 @@
 #include "match_builder_lua.h"
 
 #include <core/str_hash.h>
+#include <core/str_unordered_set.h>
 #include <lib/line_state.h>
 #include <lib/matches.h>
 #include <terminal/ecma48_iter.h>
@@ -25,26 +26,6 @@ extern "C" {
 #include <unordered_set>
 
 extern void sort_match_list(char** matches, int len);
-
-//------------------------------------------------------------------------------
-struct match_hasher
-{
-    size_t operator()(const char* match) const
-    {
-        return str_hash(match);
-    }
-};
-
-//------------------------------------------------------------------------------
-struct match_comparator
-{
-    bool operator()(const char* m1, const char* m2) const
-    {
-        return strcmp(m1, m2) == 0;
-    }
-};
-
-
 
 //------------------------------------------------------------------------------
 lua_match_generator::lua_match_generator(lua_state& state)
@@ -510,7 +491,7 @@ void lua_match_generator::filter_matches(char** matches, char completion_type, b
         return;
 
     // Hash the filtered matches to be kept.
-    std::unordered_set<const char*, match_hasher, match_comparator> keep_typeless;
+    str_unordered_set keep_typeless;
     int num_matches = int(lua_rawlen(state, -1));
     for (int i = 1; i <= num_matches; ++i)
     {
