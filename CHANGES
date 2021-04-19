@@ -2,6 +2,16 @@
 
 ## Releases from [chrisant996/clink](https://github.com/chrisant996/clink) fork
 
+### v1.2.3
+
+- Added `history.sticky_search` mode for `history.dupe_mode` setting.
+- Added failure reporting and logging when `clink inject` fails.
+- Added `--unique` flag for use with `clink history compact --unique` to remove duplicate entries from the history list.
+- The `clink-popup-complete` command now matches wildcards.
+- Restored the <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>U</kbd> key binding from v0.4.9 (moves the current working directory up one level).
+- Fixed searching for inputrc files to also search in the profile directory (regression introduced in v1.0.0).
+- Fixed incremental search in the History popup list to search in reverse order (bottom to top).
+
 ### v1.2.2
 
 - Added `%CLINK_HISTORY_LABEL%` environment variable to use a different master history file (fixes [#99](https://github.com/chrisant996/clink/issues/99)).
