@@ -5,7 +5,13 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 # RELEASE
 
 ## Issues
-- Add syntax for argmatchers to defer adding args/flags, to facilitate adding args/flags by parsing help text from a program.
+- Add syntax for argmatchers to defer adding args/flags, to facilitate adding args/flags by parsing help text from a program.  This is more complex than I first thought:
+  - It gets overly complicated for a script to handle arg2 or deeper (needs list of preceding args, preceding flags for args, etc -- not to mention linked parsers).
+  - To support input line coloring it needs to run code simply due to input from the user, regardless whether any completion is invoked.
+  - It should not block while waiting for an external app to run.  This suggests maybe using Lua coroutines, but then:
+    - How to avoid blocking while waiting for piped output to complete?
+    - How to make it difficult for a script to deviate from the efficient non-blocking pattern?
+  - How to make it clear what a script needs to supply?  E.g. for which arg(s) and flag(s) and which command, etc?
 
 ## Mystery
 - **MYSTERY:** Corrupted clink_history -- not sure how, when, or why -- but after having made changes to history, debugging through issues, and aborting some debugging sessions my clink_history file had a big chunk of contiguous NUL bytes.
