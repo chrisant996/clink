@@ -674,7 +674,7 @@ var hljs=function(){"use strict";function e(n){Object.freeze(n);var t="function"
 <tr>
 <td align="center"><code>history.dupe_mode</code></td>
 <td align="center"><code>erase_prev</code></td>
-<td>If a line is a duplicate of an existing history entry Clink will erase the duplicate when this is set to &#39;erase_prev&#39;. Setting it to &#39;ignore&#39; will not add duplicates to the history, and setting it to &#39;add&#39; will always add lines.</td>
+<td>If a line is a duplicate of an existing history entry Clink will erase the duplicate when this is set to &#39;erase_prev&#39;. Setting it to &#39;ignore&#39; will not add duplicates to the history, and setting it to &#39;add&#39; will always add lines (except when overridden by <code>history.sticky_search</code>).</td>
 </tr>
 <tr>
 <td align="center"><code>history.expand_mode</code></td>
@@ -2692,13 +2692,14 @@ string.matchlen("abx", "abx")       -- returns -1</code></pre></div></div><hr/>
 <h2 id="releases-from-chrisant996clink-fork">Releases from <a href="https://github.com/chrisant996/clink">chrisant996/clink</a> fork</h2>
 <h3 id="v123">v1.2.3</h3>
 <ul>
-<li>Added <code>history.sticky_search</code> mode for <code>history.dupe_mode</code> setting.</li>
+<li>Added <code>history.sticky_search</code> setting:  when enabled, reusing a history line does not add the reused line to the end of the history, and it leaves the history search position on the reused line so next/prev history can continue from there (e.g. replaying commands via <kbd>Up</kbd> several times then <kbd>Enter</kbd>, <kbd>Down</kbd>, <kbd>Enter</kbd>, etc).</li>
 <li>Added failure reporting and logging when <code>clink inject</code> fails.</li>
 <li>Added <code>--unique</code> flag for use with <code>clink history compact --unique</code> to remove duplicate entries from the history list.</li>
 <li>The <code>clink-popup-complete</code> command now matches wildcards.</li>
 <li>Restored the <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>U</kbd> key binding from v0.4.9 (moves the current working directory up one level).</li>
 <li>Fixed searching for inputrc files to also search in the profile directory (regression introduced in v1.0.0).</li>
 <li>Fixed incremental search in the History popup list to search in reverse order (bottom to top).</li>
+<li>Fixed <code>clink-popup-history</code> to set the history search position like other history search commands do, so that it plays well with the <code>history.sticky_search</code> setting.</li>
 </ul>
 <h3 id="v122">v1.2.2</h3>
 <ul>
