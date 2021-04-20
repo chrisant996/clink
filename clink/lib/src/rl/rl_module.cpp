@@ -235,6 +235,7 @@ static setting_bool g_debug_log_terminal(
 extern bool get_sticky_search_history();
 
 bool has_sticky_search_position() { return s_init_history_pos >= 0; }
+void clear_sticky_search_position() { s_init_history_pos = -1; }
 
 
 
@@ -633,7 +634,7 @@ static void buffer_changing()
     // the input text at all.
     if (s_init_history_pos >= 0)
     {
-        s_init_history_pos = -1;
+        clear_sticky_search_position();
         using_history();
     }
 }
@@ -1531,7 +1532,10 @@ void rl_module::on_end_line()
 {
     // When 'sticky' mode is enabled, remember the history position for the next
     // input line prompt.
-    s_init_history_pos = get_sticky_search_history() ? where_history() : -1;
+    if (get_sticky_search_history())
+        s_init_history_pos = where_history();
+    else
+        clear_sticky_search_position();
 
     if (m_rl_buffer != nullptr)
     {
