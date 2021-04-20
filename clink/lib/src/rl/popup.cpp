@@ -546,13 +546,14 @@ static HWND create_popup_window(HWND hwndConsole, LPCSTR title, const CONSOLE_SC
     // Set cur sel *after* getting rect for item 0, otherwise item 0 may not be
     // the top visible item and its coordinates could be negative.
     ListView_SetCurSel(s_hwnd_list, s_current);
-    ListView_EnsureVisible(s_hwnd_list, s_current, false);
 
     LONG cyPopup = rcItem.top + (rcItem.bottom - rcItem.top) * 10; // The items.
     cyPopup += (rcPopup.bottom - rcPopup.top) - (rcPopupClient.bottom - rcPopupClient.top); // The caption and chrome.
     rcPopup.bottom = rcPopup.top + cyPopup;
     SetWindowPos(hwndPopup, NULL, rcPopup.left, rcPopup.top, rcPopup.right - rcPopup.left, rcPopup.bottom - rcPopup.top, SWP_NOOWNERZORDER|SWP_NOZORDER);
     snap_to_workspace(hwndPopup);
+
+    ListView_Scroll(s_hwnd_list, 0, (s_current - 5) * (rcItem.bottom - rcItem.top));
 
     ShowWindow(hwndPopup, SW_SHOW);
     return hwndPopup;
