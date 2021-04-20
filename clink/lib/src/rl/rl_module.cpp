@@ -44,8 +44,7 @@ extern int _rl_history_point_at_end_of_anchored_search;
 extern int rl_complete_with_tilde_expansion;
 extern void _rl_reset_completion_state(void);
 extern void _rl_free_match_list(char** list);
-extern void rl_history_search_reinit(int flags);
-extern void make_history_line_current(HIST_ENTRY *);
+extern void rl_replace_from_history(HIST_ENTRY *entry, int flags);
 #define HIDDEN_FILE(fn) ((fn)[0] == '.')
 #if defined (COLOR_SUPPORT)
 #include <readline/parse-colors.h>
@@ -1004,20 +1003,12 @@ int clink_popup_history(int count, int invoking_key)
     case popup_list_result::select:
     case popup_list_result::use:
         {
-            HIST_ENTRY *temp = nullptr;
-            int oldpos;
+            rl_maybe_save_line();
+            rl_maybe_replace_line();
 
             current = indices[current];
-
-            oldpos = where_history();
             history_set_pos(current);
-            rl_history_search_reinit(ANCHORED_SEARCH);
-            temp = current_history();
-            history_set_pos(oldpos);
-
-            rl_maybe_save_line();
-
-            make_history_line_current(temp);
+            rl_replace_from_history(current_history(), 0);
 
             bool point_at_end = (!search_len || _rl_history_point_at_end_of_anchored_search);
             rl_point = point_at_end ? rl_end : search_len;

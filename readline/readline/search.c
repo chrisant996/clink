@@ -81,16 +81,12 @@ int _rl_search_case_fold = 0;
 static char *history_search_string;
 static int history_string_size;
 
-/* begin_clink_change */
-/*static*/ void make_history_line_current PARAMS((HIST_ENTRY *));
-/* end_clink_change */
+static void make_history_line_current PARAMS((HIST_ENTRY *));
 static int noninc_search_from_pos PARAMS((char *, int, int, int, int *));
 static int noninc_dosearch PARAMS((char *, int, int));
 static int noninc_search PARAMS((int, int));
 static int rl_history_search_internal PARAMS((int, int));
-/* begin_clink_change */
-//static void rl_history_search_reinit PARAMS((int));
-/* end_clink_change */
+static void rl_history_search_reinit PARAMS((int));
 
 static _rl_search_cxt *_rl_nsearch_init PARAMS((int, int));
 static void _rl_nsearch_abort PARAMS((_rl_search_cxt *));
