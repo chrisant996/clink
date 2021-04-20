@@ -4,13 +4,14 @@
 
 ### v1.2.3
 
-- Added `history.sticky_search` mode for `history.dupe_mode` setting.
+- Added `history.sticky_search` setting:  when enabled, reusing a history line does not add the reused line to the end of the history, and it leaves the history search position on the reused line so next/prev history can continue from there (e.g. replaying commands via <kbd>Up</kbd> several times then <kbd>Enter</kbd>, <kbd>Down</kbd>, <kbd>Enter</kbd>, etc).
 - Added failure reporting and logging when `clink inject` fails.
 - Added `--unique` flag for use with `clink history compact --unique` to remove duplicate entries from the history list.
 - The `clink-popup-complete` command now matches wildcards.
 - Restored the <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>U</kbd> key binding from v0.4.9 (moves the current working directory up one level).
 - Fixed searching for inputrc files to also search in the profile directory (regression introduced in v1.0.0).
 - Fixed incremental search in the History popup list to search in reverse order (bottom to top).
+- Fixed `clink-popup-history` to set the history search position like other history search commands do, so that it plays well with the `history.sticky_search` setting.
 
 ### v1.2.2
 
