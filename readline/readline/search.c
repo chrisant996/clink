@@ -95,9 +95,7 @@ static int _rl_nsearch_dispatch PARAMS((_rl_search_cxt *, int));
 /* Make the data from the history entry ENTRY be the contents of the
    current line.  This doesn't do anything with rl_point; the caller
    must set it. */
-/* begin_clink_change */
-/*static*/ void
-/* end_clink_change */
+static void
 make_history_line_current (HIST_ENTRY *entry)
 {
   _rl_replace_text (entry->line, 0, rl_end);
