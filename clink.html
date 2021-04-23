@@ -3,7 +3,7 @@
 
 <!-- ----------------------------------------------------- -->
 <head>
-<title>Clink v1.2.3</title>
+<title>Clink v1.2.4</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Rambla:wght@400;700&family=Roboto&family=Fira+Mono&display=swap');
 html {
@@ -409,7 +409,7 @@ var hljs=function(){"use strict";function e(n){Object.freeze(n);var t="function"
         </td>
         <td style="text-align:right">
             <div id="header">
-                <div id="title">Clink v1.2.3</div>
+                <div id="title">Clink v1.2.4</div>
                 <div id="url">
                     <a href="http://github.com/chrisant996/clink">
                         http://github.com/chrisant996/clink
@@ -448,6 +448,7 @@ var hljs=function(){"use strict";function e(n){Object.freeze(n);var t="function"
 <li>Environment variable expansion (<kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>E</kbd>).</li>
 <li>Doskey alias expansion (<kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>F</kbd>).</li>
 <li>Scroll the screen buffer (<kbd>Alt</kbd>+<kbd>Up</kbd>, etc).</li>
+<li><kbd>Shift</kbd>+Arrow keys to select text, typing replaces selected text, etc.</li>
 <li>(press <kbd>Alt</kbd>+<kbd>H</kbd> for many more...)</li>
 </ul>
 </li>
@@ -1096,6 +1097,38 @@ Echos key sequences to use in the .inputrc files for binding keys to Clink comma
 <tr>
 <td align="center"><code>clink-up-directory</code></td>
 <td>Changes to the parent directory.</td>
+</tr>
+<tr>
+<td align="center"><code>cua-backward-char</code></td>
+<td>Extends the selection and moves back a character.</td>
+</tr>
+<tr>
+<td align="center"><code>cua-backward-word</code></td>
+<td>Extends the selection and moves back a word.</td>
+</tr>
+<tr>
+<td align="center"><code>cua-beg-of-line</code></td>
+<td>Extends the selection and moves to the start of the current line.</td>
+</tr>
+<tr>
+<td align="center"><code>cua-copy</code></td>
+<td>Copies the selection to the clipboard.</td>
+</tr>
+<tr>
+<td align="center"><code>cua-cut</code></td>
+<td>Cuts the selection to the clipboard.</td>
+</tr>
+<tr>
+<td align="center"><code>cua-end-of-line</code></td>
+<td>Extends the selection and moves to the end of the line.</td>
+</tr>
+<tr>
+<td align="center"><code>cua-forward-char</code></td>
+<td>Extends the selection and moves forward a character.</td>
+</tr>
+<tr>
+<td align="center"><code>cua-forward-word</code></td>
+<td>Extends the selection and moves forward a word.</td>
 </tr>
 <tr>
 <td align="center"><code>old-menu-complete-backward</code></td>
@@ -2682,14 +2715,23 @@ settings.add("color.mymno", "bright magenta", "Color setting")</code></pre></div
 <div class="function"><div class="header"> <div class="name"><a name="string.matchlen">string.matchlen</a></div> <div class="signature">( <span class="arg_name">a</span>:string, <span class="arg_name">b</span>:string ) : integer</div></div><div class="body"><p class="desc">Returns how many characters match at the beginning of the strings, or -1 if the entire strings match.  This respects the <code>match.ignore_case</code> and <code>match.ignore_accents</code> Clink settings.</p><pre class="language-lua"><code>string.matchlen("abx", "a")         -- returns 1
 string.matchlen("abx", "aby")       -- returns 2
 string.matchlen("abx", "abx")       -- returns -1</code></pre></div></div><hr/>
-</div><div class="group"><h5 class="group_name"><a name="word_classifications">word_classifications</a></h5><div class="function"><div class="header"> <div class="name"><a name="word_classifications:applycolor">word_classifications:applycolor</a></div> <div class="signature">( <span class="arg_name">start</span>:integer, <span class="arg_name">length</span>:integer, <span class="arg_name">color</span>:string ) : nil</div></div><div class="body"><p class="desc">Applies an ANSI <a href="https://en.wikipedia.org/wiki/ANSI_escape_code#SGR">SGR escape code</a> to some characters in the input line.</p><p class="desc"> <span class="arg">start</span> is where to begin applying the SGR code.</p><p class="desc"> <span class="arg">length</span> is the number of characters to affect.</p><p class="desc"> <span class="arg">color</span> is the SGR parameters sequence to apply (for example <code>"7"</code> is the code for reverse video, which swaps the foreground and background colors).</p><p class="desc"> See <a href="#classifywords">Coloring The Input Text</a> for more information.</p></div></div><hr/>
-<div class="function"><div class="header"> <div class="name"><a name="word_classifications:classifyword">word_classifications:classifyword</a></div> <div class="signature">( <span class="arg_name">word_index</span>:integer, <span class="arg_name">word_class</span>:string ) : nil</div></div><div class="body"><p class="desc">This classifies the indicated word so that it can be colored appropriately.</p><p class="desc"> The <span class="arg">word_class</span> is one of the following codes:</p><p class="desc"> <table> <tr><th>Code</th><th>Classification</th><th>Clink Color Setting</th></tr> <tr><td><code>"a"</code></td><td>Argument; used for words that match a list of preset argument matches.</td><td><code>color.arg</code> or <code>color.input</code></td></tr> <tr><td><code>"c"</code></td><td>Shell command; used for CMD command names.</td><td><code>color.cmd</code></td></tr> <tr><td><code>"d"</code></td><td>Doskey alias.</td><td><code>color.doskey</code></td></tr> <tr><td><code>"f"</code></td><td>Flag; used for flags that match a list of preset flag matches.</td><td><code>color.flag</code></td></tr> <tr><td><code>"o"</code></td><td>Other; used for file names and words that don't fit any of the other classifications.</td><td><code>color.input</code></td></tr> <tr><td><code>"n"</code></td><td>None; used for words that aren't recognized as part of the expected input syntax.</td><td><code>color.unexpected</code></td></tr> <tr><td><code>"m"</code></td><td>Prefix that can be combined with another code (for the first word) to indicate the command has an argmatcher (e.g. <code>"mc"</code> or <code>"md"</code>).</td><td><code>color.argmatcher</code> or the other code's color</td></tr> </table></p><p class="desc"> See <a href="#classifywords">Coloring The Input Text</a> for more information.</p></div></div><hr/>
+</div><div class="group"><h5 class="group_name"><a name="word_classifications">word_classifications</a></h5><div class="function"><div class="header"> <div class="name"><a name="word_classifications:applycolor">word_classifications:applycolor</a></div> <div class="signature">( <span class="arg_name">start</span>:integer, <span class="arg_name">length</span>:integer, <span class="arg_name">color</span>:string, [<span class="arg_name">overwrite</span>:boolean] ) : nil</div></div><div class="body"><p class="desc">Applies an ANSI <a href="https://en.wikipedia.org/wiki/ANSI_escape_code#SGR">SGR escape code</a> to some characters in the input line.</p><p class="desc"> <span class="arg">start</span> is where to begin applying the SGR code.</p><p class="desc"> <span class="arg">length</span> is the number of characters to affect.</p><p class="desc"> <span class="arg">color</span> is the SGR parameters sequence to apply (for example <code>"7"</code> is the code for reverse video, which swaps the foreground and background colors).</p><p class="desc"> By default the color is applied to the characters even if some of them are already colored.  But if <span class="arg">overwrite</span> is <code>false</code> each character is only colored if it hasn't been yet.</p><p class="desc"> See <a href="#classifywords">Coloring The Input Text</a> for more information.</p></div></div><hr/>
+<div class="function"><div class="header"> <div class="name"><a name="word_classifications:classifyword">word_classifications:classifyword</a></div> <div class="signature">( <span class="arg_name">word_index</span>:integer, <span class="arg_name">word_class</span>:string, [<span class="arg_name">overwrite</span>:boolean] ) : nil</div></div><div class="body"><p class="desc">This classifies the indicated word so that it can be colored appropriately.</p><p class="desc"> The <span class="arg">word_class</span> is one of the following codes:</p><p class="desc"> <table> <tr><th>Code</th><th>Classification</th><th>Clink Color Setting</th></tr> <tr><td><code>"a"</code></td><td>Argument; used for words that match a list of preset argument matches.</td><td><code>color.arg</code> or <code>color.input</code></td></tr> <tr><td><code>"c"</code></td><td>Shell command; used for CMD command names.</td><td><code>color.cmd</code></td></tr> <tr><td><code>"d"</code></td><td>Doskey alias.</td><td><code>color.doskey</code></td></tr> <tr><td><code>"f"</code></td><td>Flag; used for flags that match a list of preset flag matches.</td><td><code>color.flag</code></td></tr> <tr><td><code>"o"</code></td><td>Other; used for file names and words that don't fit any of the other classifications.</td><td><code>color.input</code></td></tr> <tr><td><code>"n"</code></td><td>None; used for words that aren't recognized as part of the expected input syntax.</td><td><code>color.unexpected</code></td></tr> <tr><td><code>"m"</code></td><td>Prefix that can be combined with another code (for the first word) to indicate the command has an argmatcher (e.g. <code>"mc"</code> or <code>"md"</code>).</td><td><code>color.argmatcher</code> or the other code's color</td></tr> </table></p><p class="desc"> By default the classification is applied to the word even if the word has already been classified.  But if <span class="arg">overwrite</span> is <code>false</code> the word is only classified if it hasn't been yet.</p><p class="desc"> See <a href="#classifywords">Coloring The Input Text</a> for more information.</p></div></div><hr/>
 </div><div class="group"><h5 class="group_name"><a name="[other]">[other]</a></h5><div class="function"><div class="header"> <div class="name"><a name="rl_state">rl_state</a></div> <div class="signature">table variable</div></div><div class="body deprecated"><p class="desc"><strong>Deprecated; don't use this.</strong>  See <a href="#line">line</a> for more information.</p><p class="desc">This is an obsolete global variable that was set while running match generators.  It has been superseded by the <a href="#line">line</a> type parameter passed into match generator functions when using the new <a href="#clink.generator">clink.generator</a> API.</p></div></div><hr/>
 </div>
         </div>
         <div class="section" id="changes">
 <h1 id="changes">Changes</h1>
 <h2 id="releases-from-chrisant996clink-fork">Releases from <a href="https://github.com/chrisant996/clink">chrisant996/clink</a> fork</h2>
+<h3 id="v124">v1.2.4</h3>
+<ul>
+<li>Added support for <kbd>Shift</kbd>+<kbd>Arrows</kbd> to select text and typing to replace selected text.</li>
+<li>Added optional argument to <code>word_classifications:classifyword()</code> and <code>word_classifications:applycolor()</code> to allow only applying color where another color hasn&#39;t yet been applied.</li>
+<li>Fixed first <kbd>Up</kbd> after reusing a history line so that it gets the reused history line, rather than getting the previous history line.</li>
+<li>Fixed <code>add-history</code> command to not add blank lines to history.</li>
+<li>Fixed input coloring for <code>clink set</code> and any color setting name (regression introduced in v1.2).</li>
+<li>Fixed <a href="https://github.com/chrisant996/clink/issues/106">#106</a>; history missing <code>--bare</code> option (regression introduced in v1.2.3).</li>
+</ul>
 <h3 id="v123">v1.2.3</h3>
 <ul>
 <li>Added <code>history.sticky_search</code> setting:  when enabled, reusing a history line does not add the reused line to the end of the history, and it leaves the history search position on the reused line so next/prev history can continue from there (e.g. replaying commands via <kbd>Up</kbd> several times then <kbd>Enter</kbd>, <kbd>Down</kbd>, <kbd>Enter</kbd>, etc).</li>
