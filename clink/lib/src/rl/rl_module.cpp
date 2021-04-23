@@ -280,16 +280,9 @@ static void last_func_hook_func()
 //------------------------------------------------------------------------------
 void override_rl_last_func(rl_command_func_t* func)
 {
+    cua_after_command();
     s_has_override_rl_last_func = true;
     s_override_rl_last_func = func;
-
-    // Set rl_last_func so that cua processing (which relies on rl_last_func)
-    // works even with commands invoked inside luafunc commands.  But it gets
-    // overwritten when the macro invocation returns, so s_override_rl_last_func
-    // handles setting it the final time.
-    rl_last_func = func;
-
-    cua_after_command();
 }
 
 
