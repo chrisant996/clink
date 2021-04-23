@@ -9,6 +9,7 @@
 - Fixed first <kbd>Up</kbd> after reusing a history line so that it gets the reused history line, rather than getting the previous history line.
 - Fixed `add-history` command to not add blank lines to history.
 - Fixed input coloring for `clink set` and any color setting name (regression introduced in v1.2).
+- Fixed [#107](https://github.com/chrisant996/clink/issues/107); autorun reports inject failures (regression introduced in v1.2.3).
 - Fixed [#106](https://github.com/chrisant996/clink/issues/106); history missing `--bare` option (regression introduced in v1.2.3).
 
 ### v1.2.3
