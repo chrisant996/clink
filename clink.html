@@ -2729,7 +2729,10 @@ string.matchlen("abx", "abx")       -- returns -1</code></pre></div></div><hr/>
 <li>Added optional argument to <code>word_classifications:classifyword()</code> and <code>word_classifications:applycolor()</code> to allow only applying color where another color hasn&#39;t yet been applied.</li>
 <li>Fixed first <kbd>Up</kbd> after reusing a history line so that it gets the reused history line, rather than getting the previous history line.</li>
 <li>Fixed <code>add-history</code> command to not add blank lines to history.</li>
+<li>Fixed <code>rl.setmatches()</code> (regression introduced in v1.1.26).</li>
 <li>Fixed input coloring for <code>clink set</code> and any color setting name (regression introduced in v1.2).</li>
+<li>Fixed potential crash with <code>clink history --session</code>.</li>
+<li>Fixed <a href="https://github.com/chrisant996/clink/issues/107">#107</a>; autorun reports inject failures (regression introduced in v1.2.3).</li>
 <li>Fixed <a href="https://github.com/chrisant996/clink/issues/106">#106</a>; history missing <code>--bare</code> option (regression introduced in v1.2.3).</li>
 </ul>
 <h3 id="v123">v1.2.3</h3>
