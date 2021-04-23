@@ -398,6 +398,8 @@ void host_cmd::edit_line(const wchar_t* prompt, wchar_t* chars, int max_chars)
         str<1024> out;
         while (1)
         {
+            // WARNING:  Settings are not valid here; they are not loaded until
+            // inside of host::edit_line().
             out.clear();
             if (host::edit_line(utf8_prompt.c_str(), out))
             {

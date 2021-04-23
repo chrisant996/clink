@@ -11,6 +11,7 @@
 - Fixed `rl.setmatches()` (regression introduced in v1.1.26).
 - Fixed input coloring for `clink set` and any color setting name (regression introduced in v1.2).
 - Fixed potential crash with `clink history --session`.
+- Fixed <kbd>Ctrl</kbd>+<kbd>D</kbd> when `cmd.ctrld_exits` is disabled; it didn't exit, but it did still discard the input line and start a new prompt.
 - Fixed [#107](https://github.com/chrisant996/clink/issues/107); autorun reports inject failures (regression introduced in v1.2.3).
 - Fixed [#106](https://github.com/chrisant996/clink/issues/106); history missing `--bare` option (regression introduced in v1.2.3).
 

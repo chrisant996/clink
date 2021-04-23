@@ -38,6 +38,7 @@ extern "C" {
 #include <compat/display_matches.h>
 #include <readline/posixdir.h>
 #include <readline/history.h>
+extern int _rl_eof_char;
 extern int _rl_bell_preference;
 extern int _rl_match_hidden_files;
 extern int _rl_history_point_at_end_of_anchored_search;
@@ -1195,6 +1196,11 @@ rl_module::rl_module(const char* shell_name, terminal_in* input)
 
     rl_readline_name = shell_name;
     rl_catch_signals = 0;
+
+    {
+        const setting* setting = settings::find("cmd.ctrld_exits");
+        _rl_eof_char = (!setting || setting->get()) ? CTRL('D') : -1;
+    }
 
     // Readline needs a tweak of its handling of 'meta' (i.e. IO bytes >=0x80)
     // so that it handles UTF-8 correctly (convert=input, output=output)
