@@ -2732,6 +2732,7 @@ string.matchlen("abx", "abx")       -- returns -1</code></pre></div></div><hr/>
 <li>Fixed <code>rl.setmatches()</code> (regression introduced in v1.1.26).</li>
 <li>Fixed input coloring for <code>clink set</code> and any color setting name (regression introduced in v1.2).</li>
 <li>Fixed potential crash with <code>clink history --session</code>.</li>
+<li>Fixed <kbd>Ctrl</kbd>+<kbd>D</kbd> when <code>cmd.ctrld_exits</code> is disabled; it didn&#39;t exit, but it did still discard the input line and start a new prompt.</li>
 <li>Fixed <a href="https://github.com/chrisant996/clink/issues/107">#107</a>; autorun reports inject failures (regression introduced in v1.2.3).</li>
 <li>Fixed <a href="https://github.com/chrisant996/clink/issues/106">#106</a>; history missing <code>--bare</code> option (regression introduced in v1.2.3).</li>
 </ul>
