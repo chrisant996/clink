@@ -36,6 +36,16 @@ static void success()
 {
     if (!app_context::get()->is_quiet())
     {
+        // Add a blank line if our logo follows anything else (the goal is to
+        // put a blank line after CMD's "Microsoft Windows ..." logo), but don't
+        // add a blank line if our logo is at the very top of the window.
+        CONSOLE_SCREEN_BUFFER_INFO csbi = { sizeof(csbi) };
+        if (GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &csbi))
+        {
+            if (csbi.dwCursorPosition.Y > 0)
+                puts("");
+        }
+
         // Using printf instead of puts ensures there's only one blank line
         // between the header and the subsequent prompt.
         printf("%s", g_clink_header);
