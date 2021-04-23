@@ -77,5 +77,5 @@ private:
 // Dumps from pos to top of stack (use negative pos for relative position, use
 // positive pos for absolute position, or use 0 for entire stack).
 #ifdef DEBUG
-void dump_lua_stack(lua_State* state, int pos);
+void dump_lua_stack(lua_State* state, int pos=0);
 #endif
