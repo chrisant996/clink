@@ -227,6 +227,14 @@ setting_bool g_classify_words(
     "Lua scripts.",
     true);
 
+// This is here because it's about Readline, not CMD, and exposing it from
+// host_cmd.cpp caused linkage errors for the tests.
+setting_bool g_ctrld_exits(
+    "cmd.ctrld_exits",
+    "Pressing Ctrl-D exits session",
+    "Ctrl-D exits cmd.exe when used on an empty line.",
+    true);
+
 #define CAN_LOG_RL_TERMINAL
 #ifdef CAN_LOG_RL_TERMINAL
 static setting_bool g_debug_log_terminal(
@@ -1197,10 +1205,7 @@ rl_module::rl_module(const char* shell_name, terminal_in* input)
     rl_readline_name = shell_name;
     rl_catch_signals = 0;
 
-    {
-        const setting* setting = settings::find("cmd.ctrld_exits");
-        _rl_eof_char = (!setting || setting->get()) ? CTRL('D') : -1;
-    }
+    _rl_eof_char = g_ctrld_exits.get() ? CTRL('D') : -1;
 
     // Readline needs a tweak of its handling of 'meta' (i.e. IO bytes >=0x80)
     // so that it handles UTF-8 correctly (convert=input, output=output)

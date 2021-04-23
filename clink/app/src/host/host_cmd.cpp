@@ -29,11 +29,7 @@ extern bool s_force_reload_scripts;
 extern "C" void reset_wcwidths();
 
 //------------------------------------------------------------------------------
-static setting_bool g_ctrld_exits(
-    "cmd.ctrld_exits",
-    "Pressing Ctrl-D exits session",
-    "Ctrl-D exits cmd.exe when used on an empty line.",
-    true);
+extern setting_bool g_ctrld_exits;
 
 static setting_enum g_autoanswer(
     "cmd.auto_answer",
