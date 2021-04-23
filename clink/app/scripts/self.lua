@@ -272,7 +272,7 @@ local set = clink.argmatcher()
 
 --------------------------------------------------------------------------------
 local history = clink.argmatcher()
-:addflags("--help")
+:addflags("--help", "--bare", "--unique")
 :addarg(
     "add",
     "clear"     .. nothing,

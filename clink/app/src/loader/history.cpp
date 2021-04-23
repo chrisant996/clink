@@ -336,7 +336,7 @@ static int history_bash(int argc, char** argv)
 static bool is_flag(const char* arg, const char* flag, unsigned int min_len=-1)
 {
     unsigned int matched_len = 0;
-    while (*arg == *flag)
+    while (*arg && *arg == *flag)
     {
         ++arg;
         ++flag;
