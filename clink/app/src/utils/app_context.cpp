@@ -115,12 +115,15 @@ app_context::app_context(const desc& desc)
 
     path::normalise(script_path);
 
-    m_id = process().get_pid();
-    if (desc.inherit_id)
+    if (m_desc.id == 0)
     {
-        str<16, false> env_id;
-        if (os::get_env("=clink.id", env_id))
-            m_id = atoi(env_id.c_str());
+        m_desc.id = process().get_pid();
+        if (desc.inherit_id)
+        {
+            str<16, false> env_id;
+            if (os::get_env("=clink.id", env_id))
+                m_desc.id = atoi(env_id.c_str());
+        }
     }
 
     update_env();
@@ -129,7 +132,7 @@ app_context::app_context(const desc& desc)
 //-----------------------------------------------------------------------------
 int app_context::get_id() const
 {
-    return m_id;
+    return m_desc.id;
 }
 
 //------------------------------------------------------------------------------
@@ -315,15 +318,8 @@ void app_context::get_script_path_readable(str_base& out) const
 void app_context::update_env() const
 {
     str<48> id_str;
-    id_str.format("%d", m_id);
+    id_str.format("%d", m_desc.id);
     os::set_env("=clink.id", id_str.c_str());
     os::set_env("=clink.profile", m_desc.state_dir);
     os::set_env("=clink.scripts", m_desc.script_path);
-}
-
-//------------------------------------------------------------------------------
-/*static*/ void app_context::override_id(int id)
-{
-    app_context* app = const_cast<app_context*>(get());
-    app->m_id = id;
 }

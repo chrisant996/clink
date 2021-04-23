@@ -159,7 +159,7 @@ int loader(int argc, char** argv)
             return 0;
 
         case '~':
-            session = atoi(optarg);
+            app_desc.id = atoi(optarg);
             break;
 
         case '?':
@@ -168,10 +168,6 @@ int loader(int argc, char** argv)
             return 0;
         }
     }
-
-    // Override session.
-    if (session)
-        app_context::override_id(session);
 
     // Dispatch the verb if one was found.
     int ret = 0;

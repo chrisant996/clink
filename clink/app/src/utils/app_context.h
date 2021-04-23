@@ -15,9 +15,10 @@ public:
     struct desc
     {
                 desc();
+        int     id = 0;             // 0 auto-detects id.
         bool    quiet = false;
         bool    log = true;
-        bool    inherit_id = false;
+        bool    inherit_id = false; // Allow auto-detecting id from environment.
         char    unused = 0;
         char    state_dir[510]; // = {}; (this crashes cl.exe v18.00.21005.1)
         char    script_path[510]; // = {}; (this crashes cl.exe v18.00.21005.1)
@@ -41,5 +42,4 @@ public:
 private:
     void        get_script_path(str_base& out, bool readable) const;
     desc        m_desc;
-    int         m_id;
 };
