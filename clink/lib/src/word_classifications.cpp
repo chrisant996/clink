@@ -176,21 +176,23 @@ char word_classifications::ensure_face(const char* sgr)
 }
 
 //------------------------------------------------------------------------------
-void word_classifications::apply_face(unsigned int start, unsigned int length, char face)
+void word_classifications::apply_face(unsigned int start, unsigned int length, char face, bool overwrite)
 {
     while (length > 0 && start < m_length)
     {
-        m_faces[start] = face;
+        if (overwrite || m_faces[start] == ' ')
+            m_faces[start] = face;
         start++;
         length--;
     }
 }
 
 //------------------------------------------------------------------------------
-void word_classifications::classify_word(unsigned int index, char wc)
+void word_classifications::classify_word(unsigned int index, char wc, bool overwrite)
 {
     assert(index < m_info.size());
-    m_info[index].word_class = to_word_class(wc);
+    if (overwrite || !is_word_classified(index))
+        m_info[index].word_class = to_word_class(wc);
 }
 
 //------------------------------------------------------------------------------

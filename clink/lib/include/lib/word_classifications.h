@@ -61,8 +61,8 @@ public:
     const char*     get_face_output(char face) const;
 
     char            ensure_face(const char* sgr);
-    void            apply_face(unsigned int start, unsigned int len, char face);
-    void            classify_word(unsigned int index, char wc);
+    void            apply_face(unsigned int start, unsigned int len, char face, bool overwrite=true);
+    void            classify_word(unsigned int index, char wc, bool overwrite=true);
     bool            is_word_classified(unsigned int index);
 
 private:

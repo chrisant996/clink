@@ -91,9 +91,9 @@ function _argreader:update(word, word_index)
     if not arg then
         if self._word_classifier then
             if matcher._no_file_generation then
-                self._word_classifier:classifyword(word_index, "n")  --none
+                self._word_classifier:classifyword(word_index, "n", false)  --none
             else
-                self._word_classifier:classifyword(word_index, "o")  --other
+                self._word_classifier:classifyword(word_index, "o", false)  --other
             end
         end
         return
@@ -140,7 +140,7 @@ function _argreader:update(word, word_index)
                     end
                 end
             end
-            self._word_classifier:classifyword(word_index, t)
+            self._word_classifier:classifyword(word_index, t, false)
         end
     end
 
@@ -804,11 +804,11 @@ function argmatcher_classifier:classify(commands)
             local command_offset = line_state:getcommandoffset()
             local m = has_argmatcher and "m" or ""
             if word_info.alias then
-                word_classifier:classifyword(1, m.."d"); --doskey
+                word_classifier:classifyword(1, m.."d", false); --doskey
             elseif clink.is_cmd_command(first_word) then
-                word_classifier:classifyword(1, m.."c"); --command
+                word_classifier:classifyword(1, m.."c", false); --command
             else
-                word_classifier:classifyword(1, m.."o"); --other
+                word_classifier:classifyword(1, m.."o", false); --other
             end
         end
 

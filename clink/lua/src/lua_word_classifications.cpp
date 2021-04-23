@@ -40,6 +40,7 @@ lua_word_classifications::lua_word_classifications(word_classifications& classif
 /// -name:  word_classifications:classifyword
 /// -arg:   word_index:integer
 /// -arg:   word_class:string
+/// -arg:   [overwrite:boolean]
 /// This classifies the indicated word so that it can be colored appropriately.
 ///
 /// The <span class="arg">word_class</span> is one of the following codes:
@@ -55,6 +56,10 @@ lua_word_classifications::lua_word_classifications(word_classifications& classif
 /// <tr><td><code>"m"</code></td><td>Prefix that can be combined with another code (for the first word) to indicate the command has an argmatcher (e.g. <code>"mc"</code> or <code>"md"</code>).</td><td><code>color.argmatcher</code> or the other code's color</td></tr>
 /// </table>
 ///
+/// By default the classification is applied to the word even if the word has
+/// already been classified.  But if <span class="arg">overwrite</span> is
+/// <code>false</code> the word is only classified if it hasn't been yet.
+///
 /// See <a href="#classifywords">Coloring The Input Text</a> for more
 /// information.
 int lua_word_classifications::classify_word(lua_State* state)
@@ -64,6 +69,7 @@ int lua_word_classifications::classify_word(lua_State* state)
 
     const unsigned int index = static_cast<unsigned int>(int(lua_tointeger(state, 1)) - 1);
     const char* s = lua_tostring(state, 2);
+    bool overwrite = !lua_isboolean(state, 3) || lua_toboolean(state, 3);
     if (!s)
         return 0;
     if (index >= m_num_words)
@@ -89,7 +95,7 @@ int lua_word_classifications::classify_word(lua_State* state)
         break;
     }
 
-    m_classifications.classify_word(m_index_offset + index, wc);
+    m_classifications.classify_word(m_index_offset + index, wc, overwrite);
     if (has_argmatcher && index == 0)
         m_classifications.set_word_has_argmatcher(m_index_offset);
     return 0;
@@ -100,6 +106,7 @@ int lua_word_classifications::classify_word(lua_State* state)
 /// -arg:   start:integer
 /// -arg:   length:integer
 /// -arg:   color:string
+/// -arg:   [overwrite:boolean]
 /// Applies an ANSI <a href="https://en.wikipedia.org/wiki/ANSI_escape_code#SGR">SGR escape code</a>
 /// to some characters in the input line.
 ///
@@ -108,6 +115,10 @@ int lua_word_classifications::classify_word(lua_State* state)
 /// <span class="arg">length</span> is the number of characters to affect.
 ///
 /// <span class="arg">color</span> is the SGR parameters sequence to apply (for example <code>"7"</code> is the code for reverse video, which swaps the foreground and background colors).
+///
+/// By default the color is applied to the characters even if some of them are
+/// already colored.  But if <span class="arg">overwrite</span> is
+/// <code>false</code> each character is only colored if it hasn't been yet.
 ///
 /// See <a href="#classifywords">Coloring The Input Text</a> for more
 /// information.
@@ -119,6 +130,7 @@ int lua_word_classifications::apply_color(lua_State* state)
     unsigned int start = (unsigned int)(lua_tointeger(state, 1)) - 1;
     unsigned int length = (unsigned int)(lua_tointeger(state, 2));
     const char* color = lua_tostring(state, 3);
+    bool overwrite = !lua_isboolean(state, 4) || lua_toboolean(state, 4);
     if (!color)
         return 0;
 
@@ -126,6 +138,6 @@ int lua_word_classifications::apply_color(lua_State* state)
     if (!face)
         return 0;
 
-    m_classifications.apply_face(start, length, face);
+    m_classifications.apply_face(start, length, face, overwrite);
     return 0;
 }
