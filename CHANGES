@@ -8,7 +8,9 @@
 - Added optional argument to `word_classifications:classifyword()` and `word_classifications:applycolor()` to allow only applying color where another color hasn't yet been applied.
 - Fixed first <kbd>Up</kbd> after reusing a history line so that it gets the reused history line, rather than getting the previous history line.
 - Fixed `add-history` command to not add blank lines to history.
+- Fixed `rl.setmatches()` (regression introduced in v1.1.26).
 - Fixed input coloring for `clink set` and any color setting name (regression introduced in v1.2).
+- Fixed potential crash with `clink history --session`.
 - Fixed [#107](https://github.com/chrisant996/clink/issues/107); autorun reports inject failures (regression introduced in v1.2.3).
 - Fixed [#106](https://github.com/chrisant996/clink/issues/106); history missing `--bare` option (regression introduced in v1.2.3).
 
