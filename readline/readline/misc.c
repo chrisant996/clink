@@ -636,7 +636,7 @@ rl_get_previous_history (int count, int key)
       if (prev_use_curr)
 	{
 	  temp = current_history ();
-	  prev_is_curr = 0;
+	  prev_use_curr = 0;
 	}
       else
 /* end_clink_change */
