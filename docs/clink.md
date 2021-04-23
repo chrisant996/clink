@@ -20,6 +20,7 @@ Clink combines the native Windows shell cmd.exe with the powerful command line e
   - Environment variable expansion (<kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>E</kbd>).
   - Doskey alias expansion (<kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>F</kbd>).
   - Scroll the screen buffer (<kbd>Alt</kbd>+<kbd>Up</kbd>, etc).
+  - <kbd>Shift</kbd>+Arrow keys to select text, typing replaces selected text, etc.
   - (press <kbd>Alt</kbd>+<kbd>H</kbd> for many more...)
 - Directory shortcuts;
   - Typing a directory name followed by a path separator is a shortcut for `cd /d` to that directory.
@@ -347,6 +348,14 @@ Name | Description
 `clink-show-help`|Lists the currently active key bindings using friendly key names.
 `clink-show-help-raw`|Lists the currently active key bindings using raw key sequences.
 `clink-up-directory`|Changes to the parent directory.
+`cua-backward-char`|Extends the selection and moves back a character.
+`cua-backward-word`|Extends the selection and moves back a word.
+`cua-beg-of-line`|Extends the selection and moves to the start of the current line.
+`cua-copy`|Copies the selection to the clipboard.
+`cua-cut`|Cuts the selection to the clipboard.
+`cua-end-of-line`|Extends the selection and moves to the end of the line.
+`cua-forward-char`|Extends the selection and moves forward a character.
+`cua-forward-word`|Extends the selection and moves forward a word.
 `old-menu-complete-backward`|Like `old-menu-complete`, but in reverse.
 `remove-history`|While searching history, removes the current line from the history.
 

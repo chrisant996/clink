@@ -26,6 +26,7 @@ See the [issues](https://github.com/chrisant996/clink/issues) page for known iss
   - Environment variable expansion (<kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>E</kbd>).
   - Doskey alias expansion (<kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>F</kbd>).
   - Scroll the screen buffer (<kbd>Alt</kbd>+<kbd>Up</kbd>, etc).
+  - <kbd>Shift</kbd>+Arrow keys to select text, typing replaces selected text, etc.
   - (press <kbd>Alt</kbd>+<kbd>H</kbd> for many more...)
 - Directory shortcuts;
   - Typing a directory name followed by a path separator is a shortcut for `cd /d` to that directory.
