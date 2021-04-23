@@ -696,7 +696,7 @@ bool host::edit_line(const char* prompt, str_base& out)
                 // that would defeat the command.
                 add_history = false;
             }
-            else if (get_sticky_search_history() && has_sticky_search_position())
+            else if (!out.empty() && get_sticky_search_history() && has_sticky_search_position())
             {
                 // The only way to get the history length is to reset the
                 // history by calling using_history() and then get the current
