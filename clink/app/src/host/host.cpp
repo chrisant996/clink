@@ -142,31 +142,36 @@ static bool history_line_differs(int history_pos, const char* line)
 //------------------------------------------------------------------------------
 int macro_hook_func(const char* macro)
 {
-    if (!macro || strnicmp(macro, "luafunc:", 8) != 0)
-        return 0;
+    bool is_luafunc = (macro && strnicmp(macro, "luafunc:", 8) == 0);
 
-    str<> func_name;
-    func_name = macro + 8;
-    func_name.trim();
+    if (is_luafunc)
+    {
+        str<> func_name;
+        func_name = macro + 8;
+        func_name.trim();
 
-    // TODO: Ideally optimize this so that it only resets match generation if
-    // the Lua function triggers completion.
-    extern void reset_generate_matches();
-    reset_generate_matches();
+        // TODO: Ideally optimize this so that it only resets match generation if
+        // the Lua function triggers completion.
+        extern void reset_generate_matches();
+        reset_generate_matches();
 
-    HANDLE std_handles[2] = { GetStdHandle(STD_INPUT_HANDLE), GetStdHandle(STD_OUTPUT_HANDLE) };
-    DWORD prev_mode[2];
-    static_assert(_countof(std_handles) == _countof(prev_mode), "array sizes much match");
-    for (size_t i = 0; i < _countof(std_handles); ++i)
-        GetConsoleMode(std_handles[i], &prev_mode[i]);
+        HANDLE std_handles[2] = { GetStdHandle(STD_INPUT_HANDLE), GetStdHandle(STD_OUTPUT_HANDLE) };
+        DWORD prev_mode[2];
+        static_assert(_countof(std_handles) == _countof(prev_mode), "array sizes much match");
+        for (size_t i = 0; i < _countof(std_handles); ++i)
+            GetConsoleMode(std_handles[i], &prev_mode[i]);
 
-    if (!call_lua_rl_global_function(func_name.c_str()))
-        rl_ding();
+        if (!call_lua_rl_global_function(func_name.c_str()))
+            rl_ding();
 
-    for (size_t i = 0; i < _countof(std_handles); ++i)
-        SetConsoleMode(std_handles[i], prev_mode[i]);
+        for (size_t i = 0; i < _countof(std_handles); ++i)
+            SetConsoleMode(std_handles[i], prev_mode[i]);
+    }
 
-    return 1;
+    extern void cua_after_command(bool force_clear);
+    cua_after_command(true/*force_clear*/);
+
+    return is_luafunc;
 }
 
 //------------------------------------------------------------------------------

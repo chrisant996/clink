@@ -23,6 +23,7 @@ extern "C" {
 }
 
 #include <list>
+#include <unordered_set>
 
 
 
@@ -164,6 +165,50 @@ static void strip_crlf(char* line, std::list<str_moveable>& overflow, bool& done
 
 
 //------------------------------------------------------------------------------
+static int s_cua_anchor = -1;
+
+//------------------------------------------------------------------------------
+class cua_selection_manager
+{
+public:
+    cua_selection_manager()
+    : m_anchor(s_cua_anchor)
+    , m_point(rl_point)
+    {
+        if (s_cua_anchor < 0)
+            s_cua_anchor = rl_point;
+    }
+
+    ~cua_selection_manager()
+    {
+        if (g_rl_buffer && (m_anchor != s_cua_anchor || m_point != rl_point))
+            g_rl_buffer->set_need_draw();
+    }
+
+private:
+    int m_anchor;
+    int m_point;
+};
+
+//------------------------------------------------------------------------------
+static void cua_delete()
+{
+    if (s_cua_anchor >= 0)
+    {
+        if (g_rl_buffer)
+        {
+            // Make sure rl_point is lower so it ends up in the right place.
+            if (s_cua_anchor < rl_point)
+                SWAP(s_cua_anchor, rl_point);
+            g_rl_buffer->remove(s_cua_anchor, rl_point);
+        }
+        cua_clear_selection();
+    }
+}
+
+
+
+//------------------------------------------------------------------------------
 int clink_reload(int count, int invoking_key)
 {
     assert(g_result);
@@ -196,6 +241,14 @@ int clink_exit(int count, int invoking_key)
 //------------------------------------------------------------------------------
 int clink_ctrl_c(int count, int invoking_key)
 {
+    if (s_cua_anchor >= 0)
+    {
+        cua_selection_manager mgr;
+        cua_copy(count, invoking_key);
+        cua_clear_selection();
+        return 0;
+    }
+
     clink_reset_line(1, 0);
     write_line_feed();
     rl_newline(1, invoking_key);
@@ -217,9 +270,17 @@ int clink_paste(int count, int invoking_key)
     CloseClipboard();
 
     bool done = false;
+    bool sel = (s_cua_anchor >= 0);
     std::list<str_moveable> overflow;
     strip_crlf(utf8.data(), overflow, done);
+    if (sel)
+    {
+        g_rl_buffer->begin_undo_group();
+        cua_delete();
+    }
     g_rl_buffer->insert(utf8.c_str());
+    if (sel)
+        g_rl_buffer->end_undo_group();
     host_cmd_enqueue_lines(overflow);
     if (done)
     {
@@ -512,10 +573,10 @@ int clink_popup_directories(int count, int invoking_key)
 
 
 
-//----------------------------------------------------------------------------
+//------------------------------------------------------------------------------
 extern bool call_lua_rl_global_function(const char* func_name);
 
-//----------------------------------------------------------------------------
+//------------------------------------------------------------------------------
 int clink_complete_numbers(int count, int invoking_key)
 {
     if (!call_lua_rl_global_function("clink._complete_numbers"))
@@ -523,7 +584,7 @@ int clink_complete_numbers(int count, int invoking_key)
     return 0;
 }
 
-//----------------------------------------------------------------------------
+//------------------------------------------------------------------------------
 int clink_menu_complete_numbers(int count, int invoking_key)
 {
     if (!call_lua_rl_global_function("clink._menu_complete_numbers"))
@@ -531,7 +592,7 @@ int clink_menu_complete_numbers(int count, int invoking_key)
     return 0;
 }
 
-//----------------------------------------------------------------------------
+//------------------------------------------------------------------------------
 int clink_menu_complete_numbers_backward(int count, int invoking_key)
 {
     if (!call_lua_rl_global_function("clink._menu_complete_numbers_backward"))
@@ -539,7 +600,7 @@ int clink_menu_complete_numbers_backward(int count, int invoking_key)
     return 0;
 }
 
-//----------------------------------------------------------------------------
+//------------------------------------------------------------------------------
 int clink_old_menu_complete_numbers(int count, int invoking_key)
 {
     if (!call_lua_rl_global_function("clink._old_menu_complete_numbers"))
@@ -547,7 +608,7 @@ int clink_old_menu_complete_numbers(int count, int invoking_key)
     return 0;
 }
 
-//----------------------------------------------------------------------------
+//------------------------------------------------------------------------------
 int clink_old_menu_complete_numbers_backward(int count, int invoking_key)
 {
     if (!call_lua_rl_global_function("clink._old_menu_complete_numbers_backward"))
@@ -555,10 +616,167 @@ int clink_old_menu_complete_numbers_backward(int count, int invoking_key)
     return 0;
 }
 
-//----------------------------------------------------------------------------
+//------------------------------------------------------------------------------
 int clink_popup_complete_numbers(int count, int invoking_key)
 {
     if (!call_lua_rl_global_function("clink._popup_complete_numbers"))
         rl_ding();
+    return 0;
+}
+
+
+
+//------------------------------------------------------------------------------
+void cua_clear_selection()
+{
+    s_cua_anchor = -1;
+}
+
+//------------------------------------------------------------------------------
+bool cua_point_in_selection(int in)
+{
+    if (s_cua_anchor < 0)
+        return false;
+    if (s_cua_anchor < rl_point)
+        return (s_cua_anchor <= in && in < rl_point);
+    else
+        return (rl_point <= in && in < s_cua_anchor);
+}
+
+//------------------------------------------------------------------------------
+int cua_selection_event_hook(int event)
+{
+    if (!g_rl_buffer)
+        return 0;
+
+    static bool s_cleanup = false;
+
+    switch (event)
+    {
+    case SEL_BEFORE_INSERTCHAR:
+        assert(!s_cleanup);
+        if (s_cua_anchor >= 0)
+        {
+            s_cleanup = true;
+            g_rl_buffer->begin_undo_group();
+            cua_delete();
+        }
+        break;
+    case SEL_AFTER_INSERTCHAR:
+        if (s_cleanup)
+        {
+            g_rl_buffer->end_undo_group();
+            s_cleanup = false;
+        }
+        break;
+    case SEL_BEFORE_DELETE:
+        if (s_cua_anchor < 0 || s_cua_anchor == rl_point)
+            break;
+        cua_delete();
+        return 1;
+    }
+
+    return 0;
+}
+
+//------------------------------------------------------------------------------
+void cua_after_command(bool force_clear)
+{
+    static std::unordered_set<void*> s_map;
+
+    if (s_map.empty())
+    {
+        // No action after a cua command.
+        s_map.emplace(cua_backward_char);
+        s_map.emplace(cua_forward_char);
+        s_map.emplace(cua_backward_word);
+        s_map.emplace(cua_forward_word);
+        s_map.emplace(cua_beg_of_line);
+        s_map.emplace(cua_end_of_line);
+        s_map.emplace(cua_copy);
+        s_map.emplace(cua_cut);
+
+        // No action after scroll commands.
+        s_map.emplace(clink_scroll_line_up);
+        s_map.emplace(clink_scroll_line_down);
+        s_map.emplace(clink_scroll_page_up);
+        s_map.emplace(clink_scroll_page_down);
+        s_map.emplace(clink_scroll_top);
+        s_map.emplace(clink_scroll_bottom);
+
+        // No action after some special commands.
+        s_map.emplace(show_rl_help);
+        s_map.emplace(show_rl_help_raw);
+    }
+
+    // If not a recognized command, clear the cua selection.
+    if (s_map.find(rl_last_func) == s_map.end())
+        cua_clear_selection();
+}
+
+//------------------------------------------------------------------------------
+int cua_backward_char(int count, int invoking_key)
+{
+    cua_selection_manager mgr;
+    return rl_backward_char(count, invoking_key);
+}
+
+//------------------------------------------------------------------------------
+int cua_forward_char(int count, int invoking_key)
+{
+    cua_selection_manager mgr;
+    return rl_forward_char(count, invoking_key);
+}
+
+//------------------------------------------------------------------------------
+int cua_backward_word(int count, int invoking_key)
+{
+    cua_selection_manager mgr;
+    return rl_backward_word(count, invoking_key);
+}
+
+//------------------------------------------------------------------------------
+int cua_forward_word(int count, int invoking_key)
+{
+    cua_selection_manager mgr;
+    return rl_forward_word(count, invoking_key);
+}
+
+//------------------------------------------------------------------------------
+int cua_beg_of_line(int count, int invoking_key)
+{
+    cua_selection_manager mgr;
+    return rl_beg_of_line(count, invoking_key);
+}
+
+//------------------------------------------------------------------------------
+int cua_end_of_line(int count, int invoking_key)
+{
+    cua_selection_manager mgr;
+    return rl_end_of_line(count, invoking_key);
+}
+
+//------------------------------------------------------------------------------
+int cua_copy(int count, int invoking_key)
+{
+    if (g_rl_buffer)
+    {
+        bool has_sel = (s_cua_anchor >= 0);
+        unsigned int len = g_rl_buffer->get_length();
+        unsigned int beg = has_sel ? min<unsigned int>(len, s_cua_anchor) : 0;
+        unsigned int end = has_sel ? min<unsigned int>(len, rl_point) : len;
+        if (beg > end)
+            SWAP(beg, end);
+        if (beg < end)
+            copy_impl(g_rl_buffer->get_buffer() + beg, end - beg);
+    }
+    return 0;
+}
+
+//------------------------------------------------------------------------------
+int cua_cut(int count, int invoking_key)
+{
+    cua_copy(0, 0);
+    cua_delete();
     return 0;
 }

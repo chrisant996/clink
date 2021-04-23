@@ -41,3 +41,17 @@ int     clink_menu_complete_numbers_backward(int count, int invoking_key);
 int     clink_old_menu_complete_numbers(int count, int invoking_key);
 int     clink_old_menu_complete_numbers_backward(int count, int invoking_key);
 int     clink_popup_complete_numbers(int count, int invoking_key);
+
+//------------------------------------------------------------------------------
+void    cua_clear_selection();
+bool    cua_point_in_selection(int in);
+int     cua_selection_event_hook(int event);
+void    cua_after_command(bool force_clear=false);
+int     cua_backward_char(int count, int invoking_key);
+int     cua_forward_char(int count, int invoking_key);
+int     cua_backward_word(int count, int invoking_key);
+int     cua_forward_word(int count, int invoking_key);
+int     cua_beg_of_line(int count, int invoking_key);
+int     cua_end_of_line(int count, int invoking_key);
+int     cua_copy(int count, int invoking_key);
+int     cua_cut(int count, int invoking_key);

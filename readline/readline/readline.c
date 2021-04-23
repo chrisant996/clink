@@ -926,7 +926,7 @@ _rl_dispatch_subseq (register int key, Keymap map, int got_subseq)
 	      if (rl_last_func_hook_func)
 		rl_last_func_hook_func ();
 /* end_clink_change */
-      }
+	    }
 
 	  RL_CHECK_SIGNALS ();
 	}

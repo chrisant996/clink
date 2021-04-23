@@ -110,6 +110,12 @@ static setting_color g_color_input(
     "Used when Clink displays the input line text.",
     "");
 
+static setting_color g_color_selection(
+    "color.selection",
+    "Selection color",
+    "The color for selected text in the input line.",
+    "");
+
 static setting_color g_color_modmark(
     "color.modmark",
     "Modified history line mark color",
@@ -267,6 +273,7 @@ const char* get_last_luafunc()
 //------------------------------------------------------------------------------
 static void last_func_hook_func()
 {
+    cua_after_command();
     s_last_luafunc.clear();
 }
 
@@ -275,6 +282,14 @@ void override_rl_last_func(rl_command_func_t* func)
 {
     s_has_override_rl_last_func = true;
     s_override_rl_last_func = func;
+
+    // Set rl_last_func so that cua processing (which relies on rl_last_func)
+    // works even with commands invoked inside luafunc commands.  But it gets
+    // overwritten when the macro invocation returns, so s_override_rl_last_func
+    // handles setting it the final time.
+    rl_last_func = func;
+
+    cua_after_command();
 }
 
 
@@ -402,6 +417,7 @@ extern "C" int read_key_hook(void)
 //------------------------------------------------------------------------------
 static const word_classifications* s_classifications = nullptr;
 static const char* s_input_color = nullptr;
+static const char* s_selection_color = nullptr;
 static const char* s_argmatcher_color = nullptr;
 static const char* s_arg_color = nullptr;
 static const char* s_flag_color = nullptr;
@@ -418,6 +434,9 @@ static char get_face_func(int in, int active_begin, int active_end)
 {
     if (in >= active_begin && in < active_end)
         return '1';
+
+    if (cua_point_in_selection(in))
+        return '#';
 
     if (s_classifications)
     {
@@ -468,6 +487,7 @@ static void puts_face_func(const char* s, const char* face, int n)
             case '2':   out << fallback_color(s_input_color, c_normal); break;
             case '*':   out << fallback_color(_rl_display_modmark_color, c_normal); break;
             case '<':   out << fallback_color(_rl_display_message_color, c_normal); break;
+            case '#':   out << fallback_color(s_selection_color, "\x1b[0;7m"); break;
 
             case 'o':   out << fallback_color(s_input_color, c_normal); break;
             case 'c':
@@ -636,6 +656,10 @@ static void buffer_changing()
         clear_sticky_search_position();
         using_history();
     }
+
+    // The buffer text is changing, so the selection will be invalidated and
+    // needs to be cleared.
+    cua_clear_selection();
 }
 
 //------------------------------------------------------------------------------
@@ -1174,6 +1198,7 @@ rl_module::rl_module(const char* shell_name, terminal_in* input)
     rl_outstream = out_stream;
     _rl_visual_bell_func = visible_bell;
     rl_buffer_changing_hook = buffer_changing;
+    rl_selection_event_hook = cua_selection_event_hook;
 
     rl_readline_name = shell_name;
     rl_catch_signals = 0;
@@ -1253,6 +1278,14 @@ rl_module::rl_module(const char* shell_name, terminal_in* input)
         rl_add_funmap_entry("clink-old-menu-complete-numbers", clink_old_menu_complete_numbers);
         rl_add_funmap_entry("clink-old-menu-complete-numbers-backward", clink_old_menu_complete_numbers_backward);
         rl_add_funmap_entry("clink-popup-complete-numbers", clink_popup_complete_numbers);
+        rl_add_funmap_entry("cua-backward-char", cua_backward_char);
+        rl_add_funmap_entry("cua-forward-char", cua_forward_char);
+        rl_add_funmap_entry("cua-backward-word", cua_backward_word);
+        rl_add_funmap_entry("cua-forward-word", cua_forward_word);
+        rl_add_funmap_entry("cua-beg-of-line", cua_beg_of_line);
+        rl_add_funmap_entry("cua-end-of-line", cua_end_of_line);
+        rl_add_funmap_entry("cua-copy", cua_copy);
+        rl_add_funmap_entry("cua-cut", cua_cut);
 
         // Override some defaults.
         _rl_bell_preference = VISIBLE_BELL;     // Because audible is annoying.
@@ -1280,6 +1313,14 @@ rl_module::rl_module(const char* shell_name, terminal_in* input)
         { "\\C-v",          "clink-paste" },             // ctrl-v
         { "\\C-z",          "undo" },                    // ctrl-z
         { "\\C-x\\C-r",     "clink-reload" },            // ctrl-x,ctrl-r
+        { "\\e[1;2D",       "cua-backward-char" },       // shift-left
+        { "\\e[1;2C",       "cua-forward-char" },        // shift-right
+        { "\\e[1;6D",       "cua-backward-word" },       // ctrl-shift-left
+        { "\\e[1;6C",       "cua-forward-word" },        // ctrl-shift-right
+        { "\\e[1;2H",       "cua-beg-of-line" },         // shift-home
+        { "\\e[1;2F",       "cua-end-of-line" },         // shift-end
+        { "\\e[2;2~",       "cua-copy" },                // shift-ins
+        { "\\e[3;2~",       "cua-cut" },                 // shift-del
         {}
     };
 
@@ -1486,6 +1527,7 @@ concat_verbatim:
     _rl_face_modmark = '*';
     _rl_face_horizscroll = '<';
     s_input_color = build_color_sequence(g_color_input, m_input_color, true);
+    s_selection_color = build_color_sequence(g_color_selection, m_selection_color, true);
     s_arg_color = build_color_sequence(g_color_arg, m_arg_color, true);
     s_flag_color = build_color_sequence(g_color_flag, m_flag_color, true);
     s_none_color = build_color_sequence(g_color_unexpected, m_none_color, true);
@@ -1499,6 +1541,12 @@ concat_verbatim:
     _rl_command_color = build_color_sequence(g_color_cmd, m_command_color);
     _rl_alias_color = build_color_sequence(g_color_doskey, m_alias_color);
     _rl_filtered_color = build_color_sequence(g_color_filtered, m_filtered_color, true);
+
+    if (!s_selection_color && s_input_color)
+    {
+        m_selection_color.format("%s\x1b[7m", s_input_color);
+        s_selection_color = m_selection_color.c_str();
+    }
 
     if (!_rl_display_message_color)
         _rl_display_message_color = "\x1b[m";
@@ -1536,6 +1584,7 @@ void rl_module::on_end_line()
 
     s_classifications = nullptr;
     s_input_color = nullptr;
+    s_selection_color = nullptr;
     s_arg_color = nullptr;
     s_argmatcher_color = nullptr;
     s_flag_color = nullptr;
@@ -1608,8 +1657,8 @@ void rl_module::on_input(const input& input, result& result, const context& cont
         // Using `rl.invokecommand()` inside a "luafunc:" key binding should
         // set rl_last_func to reflect the last function that was invoked.
         // However, since Readline doesn't set rl_last_func until AFTER the
-        // invoked function returns, rl_last_func can't be set until after
-        // rl_callback_read_char() returns.
+        // invoked function or macro returns, setting rl_last_func won't
+        // "stick" unless it's set after rl_callback_read_char() returns.
         if (s_has_override_rl_last_func)
         {
             rl_last_func = s_override_rl_last_func;

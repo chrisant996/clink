@@ -647,6 +647,13 @@ extern rl_hook_func_t *rl_input_available_hook;
 /* begin_clink_change */
 /* Called before the input buffer is changed. */
 extern rl_voidfunc_t *rl_buffer_changing_hook;
+/* Called when an event occurs that is relevant for a host that implements a
+   text selection model where typing can replace the selection. The function is
+   called with one argument, an enum indicating the type of selection event.
+   The function can return zero to allow the command to continue, or return
+   non-zero to stop further processing. */
+enum selection_event { SEL_BEFORE_INSERTCHAR, SEL_AFTER_INSERTCHAR, SEL_BEFORE_DELETE };
+extern rl_intfunc_t *rl_selection_event_hook;
 /* end_clink_change */
 
 /* begin_clink_change */

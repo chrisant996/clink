@@ -198,6 +198,11 @@ rl_kill_word (int count, int key)
 {
   int orig_point;
 
+/* begin_clink_change */
+  if (rl_selection_event_hook && rl_selection_event_hook (SEL_BEFORE_DELETE))
+    return 0;
+/* end_clink_change */
+
   if (count < 0)
     return (rl_backward_kill_word (-count, key));
   else
@@ -220,6 +225,11 @@ int
 rl_backward_kill_word (int count, int key)
 {
   int orig_point;
+
+/* begin_clink_change */
+  if (rl_selection_event_hook && rl_selection_event_hook (SEL_BEFORE_DELETE))
+    return 0;
+/* end_clink_change */
 
   if (count < 0)
     return (rl_kill_word (-count, key));

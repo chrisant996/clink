@@ -38,6 +38,7 @@ private:
     bool            m_done;
     bool            m_eof;
     str<16>         m_input_color;
+    str<16>         m_selection_color;
     str<16>         m_modmark_color;
     str<16>         m_horizscroll_color;
     str<16>         m_message_color;

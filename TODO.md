@@ -5,6 +5,9 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 # RELEASE
 
 ## Issues
+- In `history.sticky_search` mode the first <kbd>Up</kbd> needs to make the search position the active line, instead of going literally up one.
+
+## Investigate
 - Add syntax for argmatchers to defer adding args/flags, to facilitate adding args/flags by parsing help text from a program.  This is more complex than I first thought:
   - It gets overly complicated for a script to handle arg2 or deeper (needs list of preceding args, preceding flags for args, etc -- not to mention linked parsers).
   - To support input line coloring it needs to run code simply due to input from the user, regardless whether any completion is invoked.
@@ -22,9 +25,6 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 # IMPROVEMENTS
 
 ## High Priority
-- **CUA Selection.**  A mode where rl_mark to rl_point is "selected", similar to the active mark mode.  If the cursor moves or the text changes then the selection automatically gets deactivated.  Modifying the line generally needs to delete the selected text before performing whatever editing operation was invoked.  The key design challenge here is to integrate into Readline with minimal changes that won't require ongoing maintenance.
-- **Interactive completion.**  Similar to <kbd>Ctrl</kbd>+<kbd>Space</kbd> in Powershell and `menu-select` in zsh, etc.  The edge cases can get weird...
-  - Oh but the new `clink.onfiltermatches()` might be even better since it enables integration with custom completion filters (e.g. `fzf`).
 
 ## Medium Priority
 - Symlink support (displaying matches, and whether to append a path separator).
@@ -37,6 +37,8 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
   - And address the sorting problem, and then the match_type stuff can be removed from Readline itself (though Chet may want its performance benefits).
   - And THEN individual matches can have arbitrary values associated -- color, append char, or any per-match data that's desired.
   - But the hard part is handling duplicates (especially with different match types).  Could maybe pass the index in the matches array, but that requires tighter interdependence between Readline and its host.
+- **Interactive completion.**  Similar to <kbd>Ctrl</kbd>+<kbd>Space</kbd> in Powershell and `menu-select` in zsh, etc.  The edge cases can get weird...
+  - Oh but the new `clink.onfiltermatches()` might be even better since it enables integration with custom completion filters (e.g. `fzf`).
 
 ## Tests
 
