@@ -530,7 +530,16 @@ int inject(int argc, char** argv)
     void* our_dll_base = vm().get_alloc_base("");
     uintptr_t init_func = uintptr_t(remote_dll_base);
     init_func += uintptr_t(initialise_clink) - uintptr_t(our_dll_base);
-    ret = (process(target_pid).remote_call((process::funcptr_t)init_func, app_desc) == nullptr);
+    INT_PTR remote_result = INT_PTR(process(target_pid).remote_call((process::funcptr_t)init_func, app_desc));
+
+    // If host validation fails when autorun, then don't report that as a
+    // failure since it's an expected and common case.
+    if (remote_result > 0)          // Success.
+        ret = 0;
+    else if (remote_result < 0)     // Host validation failed.
+        ret = is_autorun ? 0 : 1;
+    else                            // Failure.
+        ret = 1;
 
     if (!ret)
         errrep.set_ok();

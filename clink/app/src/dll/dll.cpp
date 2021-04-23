@@ -181,7 +181,7 @@ INT_PTR WINAPI initialise_clink(const app_context::desc& app_desc)
     if (!g_host->validate())
     {
         LOG("Host validation failed.");
-        return false;
+        return -1;
     }
 
     if (!g_host->initialise())
