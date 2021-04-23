@@ -89,6 +89,10 @@ int max_input_history;	/* backwards compatibility */
    life easier for outside callers. */
 int history_offset;
 
+/* The next prev-history type of command should use the current history entry
+   rather than moving to the previous entry. */
+int history_prev_use_curr = 0;
+
 /* The number of strings currently stored in the history list. */
 int history_length;
 
@@ -123,6 +127,9 @@ history_set_history_state (HISTORY_STATE *state)
   history_size = state->size;
   if (state->flags & HS_STIFLED)
     history_stifled = 1;
+/* begin_clink_change */
+  history_prev_use_curr = 0;
+/* end_clink_change */
 }
 
 /* Begin a session in which the history functions might be used.  This
@@ -131,6 +138,9 @@ void
 using_history (void)
 {
   history_offset = history_length;
+/* begin_clink_change */
+  history_prev_use_curr = 0;
+/* end_clink_change */
 }
 
 /* Return the number of bytes that the primary history entries are using.
@@ -162,6 +172,9 @@ history_set_pos (int pos)
 {
   if (pos > history_length || pos < 0 || !the_history)
     return (0);
+/* begin_clink_change */
+  history_prev_use_curr = 0;
+/* end_clink_change */
   history_offset = pos;
   return (1);
 }

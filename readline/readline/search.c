@@ -610,6 +610,11 @@ rl_history_search_internal (int count, int dir)
   int ret, oldpos, newcol;
   char *t;
 
+/* begin_clink_change */
+  if (history_prev_use_curr)
+    using_history ();
+/* end_clink_change */
+
   rl_maybe_save_line ();
   temp = (HIST_ENTRY *)NULL;
 
@@ -702,6 +707,17 @@ rl_history_search_reinit (int flags)
   rl_history_search_pos = where_history ();
   rl_history_search_len = rl_point;
   rl_history_search_flags = flags;
+
+/* begin_clink_change */
+  if (history_prev_use_curr)
+    {
+      int pos = where_history ();
+      using_history ();
+      rl_history_search_pos = where_history ();
+      history_set_pos (pos);
+      history_prev_use_curr = 1;
+    }
+/* end_clink_change */
 
   prev_line_found = (char *)NULL;
   if (rl_point)

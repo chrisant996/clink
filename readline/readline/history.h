@@ -267,6 +267,10 @@ extern int history_quoting_state;
 
 extern int history_write_timestamps;
 
+/* The next prev-history type of command should use the current history entry
+   rather than moving to the previous entry. */
+extern int history_prev_use_curr;
+
 /* These two are undocumented; the second is reserved for future use */
 extern int history_multiline_entries;
 extern int history_file_version;

@@ -5,7 +5,6 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 # RELEASE
 
 ## Issues
-- In `history.sticky_search` mode the first <kbd>Up</kbd> needs to make the search position the active line, instead of going literally up one.
 
 ## Investigate
 - Add syntax for argmatchers to defer adding args/flags, to facilitate adding args/flags by parsing help text from a program.  This is more complex than I first thought:

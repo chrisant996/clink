@@ -255,6 +255,9 @@ get_history_event (const char *string, int *caller_index, int delimiting_quote)
 
 #define FAIL_SEARCH() \
   do { \
+    /* begin_clink_change */ \
+    history_prev_use_curr = 0; \
+    /* end_clink_change */ \
     history_offset = history_length; xfree (temp) ; return (char *)NULL; \
   } while (0)
 
@@ -284,6 +287,9 @@ get_history_event (const char *string, int *caller_index, int delimiting_quote)
 	  entry = current_history ();
 	  if (entry == 0)
 	    FAIL_SEARCH ();
+/* begin_clink_change */
+	  history_prev_use_curr = 0;
+/* end_clink_change */
 	  history_offset = history_length;
 	
 	  /* If this was a substring search, then remember the

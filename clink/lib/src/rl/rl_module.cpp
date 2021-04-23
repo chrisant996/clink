@@ -240,7 +240,7 @@ static setting_bool g_debug_log_terminal(
 extern bool get_sticky_search_history();
 
 bool has_sticky_search_position() { return s_init_history_pos >= 0; }
-void clear_sticky_search_position() { s_init_history_pos = -1; }
+void clear_sticky_search_position() { s_init_history_pos = -1; history_prev_use_curr = 0; }
 
 
 
@@ -1556,7 +1556,10 @@ concat_verbatim:
 
     // Apply the remembered history position from the previous command, if any.
     if (s_init_history_pos >= 0)
+    {
         history_set_pos(s_init_history_pos);
+        history_prev_use_curr = 1;
+    }
 
     if (_rl_colored_stats || _rl_colored_completion_prefix)
         _rl_parse_colors();
@@ -1572,7 +1575,10 @@ void rl_module::on_end_line()
     // When 'sticky' mode is enabled, remember the history position for the next
     // input line prompt.
     if (get_sticky_search_history())
+    {
         s_init_history_pos = where_history();
+        history_prev_use_curr = 1;
+    }
     else
         clear_sticky_search_position();
 

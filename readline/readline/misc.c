@@ -530,6 +530,10 @@ rl_clear_history (void)
 
   history_offset = history_length = 0;
   rl_undo_list = saved_undo_list;	/* should be NULL */
+
+/* begin_clink_change */
+  history_prev_use_curr = 0;
+/* end_clink_change */
 }
 
 /* **************************************************************** */
@@ -563,6 +567,10 @@ rl_get_next_history (int count, int key)
 
   if (count < 0)
     return (rl_get_previous_history (-count, key));
+
+/* begin_clink_change */
+  history_prev_use_curr = 0;
+/* end_clink_change */
 
   if (count == 0)
     return 0;
@@ -599,6 +607,10 @@ rl_get_previous_history (int count, int key)
 {
   HIST_ENTRY *old_temp, *temp;
   int had_saved_line;
+/* begin_clink_change */
+  int prev_use_curr = history_prev_use_curr;
+  history_prev_use_curr = 0;
+/* end_clink_change */
 
   if (count < 0)
     return (rl_get_next_history (-count, key));
@@ -620,7 +632,15 @@ rl_get_previous_history (int count, int key)
   temp = old_temp = (HIST_ENTRY *)NULL;
   while (count)
     {
-      temp = previous_history ();
+/* begin_clink_change */
+      if (prev_use_curr)
+	{
+	  temp = current_history ();
+	  prev_is_curr = 0;
+	}
+      else
+/* end_clink_change */
+        temp = previous_history ();
       if (temp == 0)
 	break;
 
@@ -709,6 +729,11 @@ rl_has_saved_history (void)
 int
 rl_add_history (int count, int key)
 {
+  if (!rl_end || history_prev_use_curr)
+    {
+      rl_ding ();
+      return 0;
+    }
   add_history (rl_line_buffer);
   if (rl_add_history_hook)
     (*rl_add_history_hook) (history_length - 1, rl_line_buffer);
@@ -731,6 +756,14 @@ rl_remove_history (int count, int key)
   // know what rl_last_func was before rl_remove_history.
   if (rl_last_func != rl_remove_history)
     rl_remove_history_last_func = rl_last_func;
+
+/* begin_clink_change */
+  if (history_prev_use_curr)
+    {
+      rl_ding ();
+      return 0;
+    }
+/* end_clink_change */
 
   HIST_ENTRY **list = history_list ();
   HIST_ENTRY *hist = list ? list[old_where] : 0;
