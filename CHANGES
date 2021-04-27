@@ -2,6 +2,11 @@
 
 ## Releases from [chrisant996/clink](https://github.com/chrisant996/clink) fork
 
+### v1.2.5
+
+- Fixed `history.sticky_search` with anchored history search.
+- Clean up column alignment in `--help` texts.
+
 ### v1.2.4
 
 - Added support for <kbd>Shift</kbd>+<kbd>Arrows</kbd> to select text and typing to replace selected text.
