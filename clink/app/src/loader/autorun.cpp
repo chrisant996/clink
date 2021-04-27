@@ -12,7 +12,7 @@
 typedef int     (dispatch_func_t)(const char*, int);
 str<>           g_clink_args;
 int             g_all_users  = 0;
-void            puts_help(const char* const*, int);
+void            puts_help(const char* const* help_pairs, const char* const* other_pairs=nullptr);
 
 
 
@@ -395,10 +395,10 @@ static void print_help()
     puts("Usage: autorun [options] <verb> [<string>] [-- <clink_args>]\n");
 
     puts("Verbs:");
-    puts_help(help_verbs, sizeof_array(help_verbs));
+    puts_help(help_verbs, help_args);
 
     puts("Options:");
-    puts_help(help_args, sizeof_array(help_args));
+    puts_help(help_args, help_verbs);
 
     puts("Autorun simplifies making modifications to cmd.exe's autorun registry\n"
         "variables. The value of these variables are read and executed by cmd.exe when\n"

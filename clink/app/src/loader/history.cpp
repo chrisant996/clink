@@ -19,7 +19,7 @@
 extern setting_bool g_save_history;
 
 //------------------------------------------------------------------------------
-void puts_help(const char* const*, int);
+void puts_help(const char* const* help_pairs, const char* const* other_pairs=nullptr);
 
 //------------------------------------------------------------------------------
 static bool s_diag = false;
@@ -272,10 +272,10 @@ static int print_help()
     puts("Usage: history <verb> [option]\n");
 
     puts("Verbs:");
-    puts_help(help_verbs, sizeof_array(help_verbs));
+    puts_help(help_verbs, help_options);
 
     puts("Options:");
-    puts_help(help_options, sizeof_array(help_options));
+    puts_help(help_options, help_verbs);
 
     puts("The 'history' command can also emulate Bash's builtin history command. The\n"
         "arguments -c, -d <n>, -p <...> and -s <...> are supported.");

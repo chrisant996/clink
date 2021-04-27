@@ -16,7 +16,7 @@
 #include <getopt.h>
 
 //------------------------------------------------------------------------------
-void puts_help(const char* const*, int);
+void puts_help(const char* const* help_pairs, const char* const* other_pairs=nullptr);
 
 //------------------------------------------------------------------------------
 static void list_keys()
@@ -201,14 +201,14 @@ static void print_help()
     extern const char* g_clink_header;
 
     static const char* const help[] = {
-        "setting_name", "Name of the setting who's value is to be set.",
+        "setting_name", "Name of the setting whose value is to be set.",
         "value",        "Value to set the setting to."
     };
 
     puts(g_clink_header);
     puts("Usage: set [<setting_name> [clear|<value>]]\n");
 
-    puts_help(help, sizeof_array(help));
+    puts_help(help);
 
     puts("If 'settings_name' is omitted then all settings are listed. Omit 'value'\n"
         "for more detailed info about a setting and use a value of 'clear' to reset\n"

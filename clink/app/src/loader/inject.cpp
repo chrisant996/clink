@@ -18,7 +18,7 @@
 
 //------------------------------------------------------------------------------
 INT_PTR WINAPI  initialise_clink(const app_context::desc&);
-void            puts_help(const char* const*, int);
+void            puts_help(const char* const* help_pairs, const char* const* other_pairs=nullptr);
 
 //------------------------------------------------------------------------------
 static bool get_file_info(const wchar_t* file, FILETIME& ft, ULONGLONG& size)
@@ -413,7 +413,7 @@ int inject(int argc, char** argv)
             puts(g_clink_header);
             puts(help_usage);
             puts("Options:");
-            puts_help(help, sizeof_array(help));
+            puts_help(help);
             puts("When installed for autorun, the automatic inject can be overridden by\n"
                  "setting the CLINK_NOAUTORUN environment variable (to any value).");
             return ret;

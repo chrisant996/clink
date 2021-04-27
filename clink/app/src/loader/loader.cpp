@@ -26,15 +26,16 @@ int uninstallscripts(int, char**);
 int testbed(int, char**);
 
 //------------------------------------------------------------------------------
-void puts_help(const char* const* help_pairs, int count)
+void puts_help(const char* const* help_pairs, const char* const* other_pairs=nullptr)
 {
-    count &= ~1;
-
     int max_len = -1;
-    for (int i = 0, n = count; i < n; i += 2)
+    for (int i = 0; help_pairs[i]; i += 2)
         max_len = max((int)strlen(help_pairs[i]), max_len);
+    if (other_pairs)
+        for (int i = 0; other_pairs[i]; i += 2)
+            max_len = max((int)strlen(other_pairs[i]), max_len);
 
-    for (int i = 0, n = count; i < n; i += 2)
+    for (int i = 0; help_pairs[i]; i += 2)
     {
         const char* arg = help_pairs[i];
         const char* desc = help_pairs[i + 1];
@@ -58,11 +59,13 @@ static void show_usage()
         "info",            "Prints information about Clink",
         "echo",            "Echo key sequences",
         "",                "('<verb> --help' for more details)",
+        nullptr
     };
     static const char* help_options[] = {
         "--profile <dir>", "Use <dir> as Clink's profile directory",
         "--session <id>",  "Override Clink's session id (for history and info)",
         "--version",       "Print Clink's version and exit",
+        nullptr
     };
 
     extern const char* g_clink_header;
@@ -71,10 +74,10 @@ static void show_usage()
     puts(help_usage);
 
     puts("Verbs:");
-    puts_help(help_verbs, sizeof_array(help_verbs));
+    puts_help(help_verbs, help_options);
 
     puts("Options:");
-    puts_help(help_options, sizeof_array(help_options));
+    puts_help(help_options, help_verbs);
 }
 
 //------------------------------------------------------------------------------
