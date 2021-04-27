@@ -740,7 +740,7 @@ rl_history_search_reinit (int flags)
 /* begin_clink_change */
 
 static int
-is_history_last_func(rl_command_func_t func)
+is_history_last_func (rl_command_func_t func)
 {
   return (rl_last_func == func ||
           (rl_last_func == rl_remove_history &&
@@ -749,7 +749,7 @@ is_history_last_func(rl_command_func_t func)
 
 /* Get the history search position, or -1 if there's no search. */
 int
-rl_get_history_search_pos()
+rl_get_history_search_pos ()
 {
   if (rl_history_search_len > 0 &&
       (is_history_last_func(rl_history_search_backward) ||
@@ -762,7 +762,7 @@ rl_get_history_search_pos()
 
 /* Get the history search flags. */
 int
-rl_get_history_search_flags()
+rl_get_history_search_flags ()
 {
   return rl_history_search_flags;
 }
