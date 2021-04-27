@@ -46,6 +46,7 @@ extern int rl_complete_with_tilde_expansion;
 extern void _rl_reset_completion_state(void);
 extern void _rl_free_match_list(char** list);
 extern void rl_replace_from_history(HIST_ENTRY *entry, int flags);
+extern int rl_get_history_search_pos(void);
 #define HIDDEN_FILE(fn) ((fn)[0] == '.')
 #if defined (COLOR_SUPPORT)
 #include <readline/parse-colors.h>
@@ -102,7 +103,8 @@ static str_moveable s_pending_luafunc;
 static bool         s_has_pending_luafunc = false;
 static bool         s_has_override_rl_last_func = false;
 static rl_command_func_t* s_override_rl_last_func = nullptr;
-static int          s_init_history_pos = -1;
+static int          s_init_history_pos = -1;    // Sticky history position from previous edit line.
+static int          s_history_search_pos = -1;  // Most recent history search position during current edit line.
 
 //------------------------------------------------------------------------------
 static setting_color g_color_input(
@@ -246,10 +248,54 @@ static setting_bool g_debug_log_terminal(
     false);
 #endif
 
+
+
+//------------------------------------------------------------------------------
 extern bool get_sticky_search_history();
 
+//------------------------------------------------------------------------------
 bool has_sticky_search_position() { return s_init_history_pos >= 0; }
 void clear_sticky_search_position() { s_init_history_pos = -1; history_prev_use_curr = 0; }
+
+//------------------------------------------------------------------------------
+int length_history()
+{
+    // The only way to get the history length is to reset the history position
+    // by calling using_history(), then get the history position by calling
+    // where_history(), then restore the original state.
+    int prev_use_curr = history_prev_use_curr;
+    int history_pos = where_history();
+    using_history();
+    int history_len = where_history();
+    history_set_pos(history_pos);
+    history_prev_use_curr = prev_use_curr;
+    return history_len;
+}
+
+//------------------------------------------------------------------------------
+static bool history_line_differs(int history_pos, const char* line)
+{
+    const HIST_ENTRY* entry = history_get(history_pos + history_base);
+    return (!entry || strcmp(entry->line, line) != 0);
+}
+
+//------------------------------------------------------------------------------
+bool get_sticky_search_add_history(const char* line)
+{
+    // Add the line to history if history was not searched.
+    int history_pos = s_init_history_pos;
+    if (history_pos < 0)
+        return true;
+
+    // Add the line to history if the input line was edited (does not match the
+    // history line).
+    int history_len = length_history();
+    if (history_pos >= history_len || history_line_differs(history_pos, line))
+        return true;
+
+    // Use sticky search; don't add to history.
+    return false;
+}
 
 
 
@@ -1564,6 +1610,7 @@ concat_verbatim:
         history_set_pos(s_init_history_pos);
         history_prev_use_curr = 1;
     }
+    s_history_search_pos = -1;
 
     if (_rl_colored_stats || _rl_colored_completion_prefix)
         _rl_parse_colors();
@@ -1580,7 +1627,16 @@ void rl_module::on_end_line()
     // input line prompt.
     if (get_sticky_search_history())
     {
-        s_init_history_pos = where_history();
+        // Favor current history position unless at the end, else favor history
+        // search position.  If the search position is invalid or the input line
+        // doesn't match the search position, then it works out ok because the
+        // search position gets ignored.
+        int history_pos = where_history();
+        int history_len = length_history();
+        if (history_pos >= 0 && history_pos < history_len)
+            s_init_history_pos = history_pos;
+        else if (s_history_search_pos >= 0 && s_history_search_pos < history_len)
+            s_init_history_pos = s_history_search_pos;
         history_prev_use_curr = 1;
     }
     else
@@ -1660,6 +1716,20 @@ void rl_module::on_input(const input& input, result& result, const context& cont
         s_pending_luafunc.clear();
         s_has_override_rl_last_func = false;
         s_override_rl_last_func = nullptr;
+
+        {
+            // The history search position gets invalidated as soon as a non-
+            // history search command is used.  So to make sticky search work
+            // properly for history searches it's necessary to capture it on
+            // each input, so that by the time rl_newline() is invoked the most
+            // recent history search position has been cached.  It's ok if it
+            // has been invalidated afterwards by aborting search and/or editing
+            // the input line:  because if the input line doesn't match the
+            // history search position line, then sticky search doesn't apply.
+            int pos = rl_get_history_search_pos();
+            if (pos >= 0)
+                s_history_search_pos = pos;
+        }
 
         --len;
         rl_callback_read_char();

@@ -81,6 +81,7 @@ extern setting_color g_color_prompt;
 
 extern bool get_sticky_search_history();
 extern bool has_sticky_search_position();
+extern bool get_sticky_search_add_history(const char* line);
 extern void clear_sticky_search_position();
 extern void reset_keyseq_to_name_map();
 
@@ -130,13 +131,6 @@ int clink_print(lua_State* state)
 bool call_lua_rl_global_function(const char* func_name)
 {
     return s_host_lua && s_host_lua->call_lua_rl_global_function(func_name);
-}
-
-//------------------------------------------------------------------------------
-static bool history_line_differs(int history_pos, const char* line)
-{
-    const HIST_ENTRY* entry = history_get(history_pos + history_base);
-    return (!entry || strcmp(entry->line, line) != 0);
 }
 
 //------------------------------------------------------------------------------
@@ -698,21 +692,13 @@ bool host::edit_line(const char* prompt, str_base& out)
             }
             else if (!out.empty() && get_sticky_search_history() && has_sticky_search_position())
             {
-                // The only way to get the history length is to reset the
-                // history by calling using_history() and then get the current
-                // history position by calling where_history().
-                int prev_use_curr = history_prev_use_curr;
-                int history_pos = where_history();
-                using_history();
-                int history_len = where_history();
-                history_set_pos(history_pos);
-                history_prev_use_curr = prev_use_curr;
-                // Only add the line to history if history was not searched or
-                // the input line was edited (does not match the history line).
-                add_history = (history_pos == history_len || history_line_differs(history_pos, out.c_str()));
-                if (add_history)
-                    clear_sticky_search_position();
+                // Query whether the sticky search position should be added
+                // (i.e. the input line matches the history entry corresponding
+                // to the sticky search history position).
+                add_history = get_sticky_search_add_history(out.c_str());
             }
+            if (add_history)
+                clear_sticky_search_position();
 
             // Handle history event expansion.  expand() is a static method,
             // so can call it even when m_history is nullptr.
