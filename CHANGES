@@ -4,6 +4,8 @@
 
 ### v1.2.5
 
+- Added `os.expandenv()` function.
+- Clink now sets `%=clink.bin%` that points to the Clink binaries directory.  This can be particularly useful for a portable installation of Clink so that scripts can find the Clink binaries directory and construct relative paths to other nearby files.
 - Fixed `history.sticky_search` with anchored history search.
 - Fixed `clink inject --profile` to use correct log file name while initially injecting.
 - Clean up column alignment in `--help` texts.
