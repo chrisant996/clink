@@ -24,6 +24,10 @@
 
 #include <Windows.h>
 
+#if 0
+#define ADMINISTRATOR_TITLE_PREFIX 10056
+#endif
+
 //------------------------------------------------------------------------------
 extern bool s_force_reload_scripts;
 extern "C" void reset_wcwidths();
@@ -37,6 +41,14 @@ static setting_enum g_autoanswer(
     "Automatically answers cmd.exe's 'Terminate batch job (Y/N)?' prompts.\n",
     "off,answer_yes,answer_no",
     0);
+
+#if 0
+static setting_str g_admin_title_prefix(
+    "cmd.admin_title_prefix",
+    "Replaces the console title prefix when elevated",
+    "This replaces the console title prefix when cmd.exe is elevated.",
+    "");
+#endif
 
 
 
@@ -524,6 +536,37 @@ BOOL WINAPI host_cmd::set_env_var(const wchar_t* name, const wchar_t* value)
 }
 
 //------------------------------------------------------------------------------
+#if 0
+DWORD WINAPI host_cmd::format_message(DWORD flags, LPCVOID source, DWORD messageId, DWORD languageId, wchar_t* buffer, DWORD size, va_list* arguments)
+{
+    if ((flags & FORMAT_MESSAGE_FROM_HMODULE) &&
+        source == nullptr &&
+        (messageId & 0x0fffffff) == ADMINISTRATOR_TITLE_PREFIX)
+    {
+        wstr<> prefix(g_admin_title_prefix.get());
+        if (prefix.length())
+        {
+            if (flags & FORMAT_MESSAGE_ALLOCATE_BUFFER)
+            {
+                size = prefix.length() + 1;
+                wchar_t* alloced = static_cast<wchar_t*>(LocalAlloc(LMEM_FIXED, size));
+                if (!alloced)
+                    return 0;
+                *((LPWSTR*)buffer) = alloced;
+                buffer = alloced;
+            }
+
+            wstr_base out(buffer, size);
+            out.copy(prefix.c_str());
+            return out.length();
+        }
+    }
+
+    return FormatMessageW(flags, source, messageId, languageId, buffer, size, arguments);
+}
+#endif
+
+//------------------------------------------------------------------------------
 bool host_cmd::initialise_system()
 {
     // Must hook the one in kernelbase.dll if it's present because CMD links
@@ -534,13 +577,29 @@ bool host_cmd::initialise_system()
         hlib = GetModuleHandleA("kernelbase.dll");
         bool need_kernelbase = hlib && GetProcAddress(hlib, "ReadConsoleW");
 
-        hook_setter hooks;
-        if (need_kernelbase)
-            hooks.add_jmp("kernelbase.dll", "ReadConsoleW", &host_cmd::read_console);
-        else
-            hooks.add_jmp("kernel32.dll", "ReadConsoleW", &host_cmd::read_console);
-        if (!hooks.commit())
-            return false;
+        // ReadConsoleW is required.
+        {
+            hook_setter hooks;
+            if (need_kernelbase)
+                hooks.add_jmp("kernelbase.dll", "ReadConsoleW", &host_cmd::read_console);
+            else
+                hooks.add_jmp("kernel32.dll", "ReadConsoleW", &host_cmd::read_console);
+            if (!hooks.commit())
+                return false;
+        }
+
+#if 0
+        // Try to hook FormatMessageW in order to replace the "Administrator: "
+        // prefix, but ignore failure since it's just a minor convenience.
+        {
+            hook_setter hooks;
+            if (need_kernelbase)
+                hooks.add_jmp("kernelbase.dll", "FormatMessageW", &host_cmd::format_message);
+            else
+                hooks.add_jmp("kernel32.dll", "FormatMessageW", &host_cmd::format_message);
+            hooks.commit();
+        }
+#endif
     }
 
     // Add an alias to Clink so it can be run from anywhere. Similar to adding
