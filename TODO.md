@@ -5,7 +5,6 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 # RELEASE
 
 ## Issues
-- `history.sticky_search`: Anchored search, then Enter, then Anchored search => continues from sticky position, but should reset!
 
 ## Investigate
 - Add syntax for argmatchers to defer adding args/flags, to facilitate adding args/flags by parsing help text from a program.  This is more complex than I first thought:
