@@ -10,6 +10,7 @@
 #include <core/path.h>
 #include <core/settings.h>
 #include <core/str.h>
+#include <core/str_iter.h>
 #include <process/process.h>
 #include <ntverp.h> // for VER_PRODUCTMAJORVERSION to deduce SDK version
 #include <assert.h>
@@ -389,6 +390,67 @@ int set_env(lua_State* state)
 
     bool ok = os::set_env(name, value);
     return lua_osboolresult(state, ok);
+}
+
+//------------------------------------------------------------------------------
+/// -name:  os.expandenv
+/// -arg:   value:string
+/// -ret:   string
+/// Returns <span class="arg">value</span> with any <code>%name%</code>
+/// environment variables expanded.  Names are case insensitive.  Special CMD
+/// syntax is not supported (e.g. <code>%name:str1=str2%</code> or
+/// <code>%name:~offset,length%</code>).
+///
+/// Note: <code>os.getenv("HOME")</code> receives special treatment: if %HOME%
+/// is not set then it is synthesized from %HOMEDRIVE% and %HOMEPATH%, or
+/// from %USERPROFILE%.
+int expand_env(lua_State* state)
+{
+    const char* in = checkstring(state, 1);
+    if (!in)
+        return 0;
+
+    str<280> out;
+    str_iter iter(in);
+    while (iter.more())
+    {
+        const char* start = iter.get_pointer();
+        while (iter.more() && iter.peek() != '%')
+            iter.next();
+        const char* end = iter.get_pointer();
+        if (start < end)
+            out.concat(start, int(end - start));
+
+        if (iter.more())
+        {
+            start = iter.get_pointer();
+            assert(iter.peek() == '%');
+            iter.next();
+
+            const char* name = iter.get_pointer();
+            while (iter.more() && iter.peek() != '%')
+                iter.next();
+
+            str<> var;
+            var.concat(name, int(iter.get_pointer() - name));
+
+            if (iter.more())
+            {
+                assert(iter.peek() == '%');
+                iter.next();
+            }
+            end = iter.get_pointer();
+
+            str<> value;
+            if (!var.empty() && os::get_env(var.c_str(), value))
+                out << value.c_str();
+            else
+                out.concat(start, int(end - start));
+        }
+    }
+
+    lua_pushlstring(state, out.c_str(), out.length());
+    return 1;
 }
 
 //------------------------------------------------------------------------------
@@ -779,6 +841,7 @@ void os_lua_initialise(lua_state& lua)
         { "globfiles",   &glob_files },
         { "getenv",      &get_env },
         { "setenv",      &set_env },
+        { "expandenv",   &expand_env },
         { "getenvnames", &get_env_names },
         { "gethost",     &get_host },
         { "getalias",    &get_alias },
