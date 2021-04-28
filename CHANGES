@@ -5,6 +5,7 @@
 ### v1.2.5
 
 - Fixed `history.sticky_search` with anchored history search.
+- Fixed `clink inject --profile` to use correct log file name while initially injecting.
 - Clean up column alignment in `--help` texts.
 
 ### v1.2.4
