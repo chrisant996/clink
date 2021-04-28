@@ -446,7 +446,7 @@ int inject(int argc, char** argv)
             str<> log_name;
             path::get_name(log_path.c_str(), log_name);
             log_path.copy(app_desc.state_dir);
-            log_path.concat(log_name.c_str());
+            path::append(log_path, log_name.c_str());
         }
 
         // Restart the log file on every inject.  The DLL also restarts the log
