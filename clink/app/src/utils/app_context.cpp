@@ -322,4 +322,8 @@ void app_context::update_env() const
     os::set_env("=clink.id", id_str.c_str());
     os::set_env("=clink.profile", m_desc.state_dir);
     os::set_env("=clink.scripts", m_desc.script_path);
+
+    str<280> bin_dir;
+    get_binaries_dir(bin_dir);
+    os::set_env("=clink.bin", bin_dir.c_str());
 }
