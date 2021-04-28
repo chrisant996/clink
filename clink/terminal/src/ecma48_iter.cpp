@@ -3,6 +3,7 @@
 
 #include "pch.h"
 #include "ecma48_iter.h"
+#include "screen_buffer.h"
 
 #include <core/base.h>
 #include <core/str_tokeniser.h>
@@ -522,4 +523,103 @@ bool ecma48_iter::next_unknown(int c)
     m_code.m_type = ecma48_code::type_chars;
     m_state.state = ecma48_state_char;
     return false;
+}
+
+
+
+//------------------------------------------------------------------------------
+static unsigned int clink_wcwidth(const char* s, unsigned int len)
+{
+    unsigned int count = 0;
+
+    str_iter inner_iter(s, len);
+    while (int c = inner_iter.next())
+        count += clink_wcwidth(c);
+
+    return count;
+}
+
+//------------------------------------------------------------------------------
+void ecma48_processor(const char* in, str_base* out, unsigned int* cell_count, bool bracket, bool apply_title)
+{
+    unsigned int cells = 0;
+
+    ecma48_state state;
+    ecma48_iter iter(in, state);
+    while (const ecma48_code& code = iter.next())
+    {
+        bool c1 = (code.get_type() == ecma48_code::type_c1);
+        if (c1)
+        {
+            if (code.get_code() == ecma48_code::c1_osc)
+            {
+                // For OSC codes, use visible output text if present.  Readline
+                // expects escape codes to be invisible, but `ESC]9;8;"var"ST`
+                // outputs the value of the named env var.
+                ecma48_code::osc osc;
+                if (!code.decode_osc(osc))
+                    goto concat_verbatim;
+                if (osc.visible)
+                {
+                    if (out)
+                        out->concat(osc.output.c_str(), osc.output.length());
+                    if (cell_count)
+                        cells += clink_wcwidth(osc.output.c_str(), osc.output.length());
+                }
+                else if (!apply_title)
+                    goto concat_verbatim;
+                else if (osc.command >= '0' && osc.command <= '2')
+                    set_console_title(osc.param.c_str());
+                else
+                    goto concat_verbatim;
+            }
+            else
+            {
+concat_verbatim:
+                if (out)
+                {
+                    if (bracket) out->concat("\x01", 1);
+                    out->concat(code.get_pointer(), code.get_length());
+                    if (bracket) out->concat("\x02", 1);
+                }
+            }
+        }
+        else
+        {
+            int index = 0;
+            const char* seq = code.get_pointer();
+            const char* end = seq + code.get_length();
+            do
+            {
+                const char* walk = seq;
+                while (walk < end && *walk != '\007')
+                    walk++;
+
+                if (walk > seq)
+                {
+                    unsigned int seq_len = static_cast<unsigned int>(walk - seq);
+                    if (out)
+                        out->concat(seq, seq_len);
+                    if (cell_count)
+                        cells += clink_wcwidth(seq, seq_len);
+                    seq = walk;
+                }
+                if (walk < end && *walk == '\007')
+                {
+                    if (out)
+                    {
+                        if (bracket)
+                            *out << "\001\007\002";
+                        else
+                            *out << "\007";
+                    }
+                    seq++;
+                }
+            }
+            while (seq < end);
+        }
+    }
+
+    if (cell_count)
+        *cell_count = cells;
 }

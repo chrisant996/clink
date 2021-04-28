@@ -137,6 +137,11 @@ static int plainify(const char* s, bool strip)
 {
     int visible_len = 0;
 
+    // TODO:  This does not handle BEL, OSC title codes, or envvar substitution.
+    // Use ecma48_processor() if that becomes necessary, but then s cannot be
+    // in/out since envvar substitutions could make the output string be longer
+    // than the input string.
+
     ecma48_state state;
     ecma48_iter iter(s, state);
     char* plain = const_cast<char *>(s);

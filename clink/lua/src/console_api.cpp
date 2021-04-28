@@ -7,6 +7,7 @@
 #include "terminal/screen_buffer.h" // for set_console_title
 #include "terminal/printer.h"
 #include "terminal/find_line.h"
+#include "terminal/ecma48_iter.h"
 
 #include <core/base.h>
 #include <core/str.h>
@@ -71,6 +72,52 @@ static int scroll(lua_State* state)
     int scrolled = ScrollConsoleRelative(h, amount, scrmode);
     lua_pushinteger(state, scrolled);
     return 1;
+}
+
+//------------------------------------------------------------------------------
+/// -name:  console.cellcount
+/// -arg:   text:string
+/// -ret:   integer
+/// Returns the count of visible character cells that would be consumed if the
+/// <span class="arg">text</span> string were output to the console, accounting
+/// for any ANSI escape codes that may be present in the text.
+///
+/// Note: backspace characters and line endings are counted as visible character
+/// cells and will skew the resulting count.
+static int get_cell_count(lua_State* state)
+{
+    const char* in = checkstring(state, 1);
+    if (!in)
+        return 0;
+
+    unsigned int cells = 0;
+    ecma48_processor(in, nullptr/*out*/, &cells);
+    lua_pushinteger(state, cells);
+    return 1;
+}
+
+//------------------------------------------------------------------------------
+/// -name:  console.plaintext
+/// -arg:   text:string
+/// -ret:   string, integer
+/// Returns the input <span class="arg">text</span> with ANSI escape codes
+/// removed, and the count of visible character cells that would be consumed
+/// if the text were output to the console.
+///
+/// Note: backspace characters and line endings are counted as visible character
+/// cells and will skew the resulting count.
+static int get_plain_text(lua_State* state)
+{
+    const char* in = checkstring(state, 1);
+    if (!in)
+        return 0;
+
+    str<> out;
+    unsigned int cells = 0;
+    ecma48_processor(in, &out, &cells);
+    lua_pushlstring(state, out.c_str(), out.length());
+    lua_pushinteger(state, cells);
+    return 2;
 }
 
 //------------------------------------------------------------------------------
@@ -597,6 +644,8 @@ void console_lua_initialise(lua_state& lua)
         int         (*method)(lua_State*);
     } methods[] = {
         { "scroll",                 &scroll },
+        { "cellcount",              &get_cell_count },
+        { "plaintext",              &get_plain_text },
         { "getwidth",               &get_width },
         { "getheight",              &get_height },
         { "getnumlines",            &get_num_lines },

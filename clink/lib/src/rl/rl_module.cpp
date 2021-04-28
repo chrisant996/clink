@@ -1512,63 +1512,11 @@ void rl_module::on_begin_line(const context& context)
         }
     }
 
-    ecma48_state state;
-    ecma48_iter iter(context.prompt, state);
-    while (const ecma48_code& code = iter.next())
-    {
-        bool c1 = (code.get_type() == ecma48_code::type_c1);
-        if (c1)
-        {
-            if (code.get_code() == ecma48_code::c1_osc)
-            {
-                // For OSC codes, use visible output text if present.  Readline
-                // expects escape codes to be invisible, but `ESC]9;8;"var"ST`
-                // outputs the value of the named env var.
-                ecma48_code::osc osc;
-                if (!code.decode_osc(osc))
-                    goto concat_verbatim;
-                if (osc.visible)
-                    rl_prompt.concat(osc.output.c_str(), osc.output.length());
-                else if (get_native_ansi_handler() == ansi_handler::conemu)
-                    goto concat_verbatim;
-                else if (osc.command >= '0' && osc.command <= '2')
-                    set_console_title(osc.param.c_str());
-                else
-                    goto concat_verbatim;
-            }
-            else
-            {
-concat_verbatim:
-                rl_prompt.concat("\x01", 1);
-                rl_prompt.concat(code.get_pointer(), code.get_length());
-                rl_prompt.concat("\x02", 1);
-            }
-        }
-        else
-        {
-            int index = 0;
-            const char* seq = code.get_pointer();
-            const char* end = seq + code.get_length();
-            do
-            {
-                const char* walk = seq;
-                while (walk < end && *walk != '\007')
-                    walk++;
-
-                if (walk > seq)
-                {
-                    rl_prompt.concat(seq, static_cast<unsigned int>(walk - seq));
-                    seq = walk;
-                }
-                if (walk < end && *walk == '\007')
-                {
-                    rl_prompt << "\001\007\002";
-                    seq++;
-                }
-            }
-            while (seq < end);
-        }
-    }
+    ecma48_processor(context.prompt,
+                     &rl_prompt,
+                     nullptr/*cell_count*/,
+                     true/*bracket*/,
+                     get_native_ansi_handler() != ansi_handler::conemu/*apply_title*/);
 
     rl_prompt.concat("\x01\x1b[m\x02");
     g_last_prompt.clear();

@@ -17,6 +17,7 @@ inline int clink_wcwidth(char32_t c)
 
 //------------------------------------------------------------------------------
 unsigned int cell_count(const char*);
+void ecma48_processor(const char* in, str_base* out, unsigned int* cell_count, bool bracket=false, bool apply_title=false);
 enum ecma48_state_enum;
 
 //------------------------------------------------------------------------------
