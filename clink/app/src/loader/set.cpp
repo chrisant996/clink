@@ -202,7 +202,8 @@ static void print_help()
 
     static const char* const help[] = {
         "setting_name", "Name of the setting whose value is to be set.",
-        "value",        "Value to set the setting to."
+        "value",        "Value to set the setting to.",
+        nullptr
     };
 
     puts(g_clink_header);

@@ -381,11 +381,13 @@ static void print_help()
         "uninstall",         "Does the opposite of 'install'",
         "show",              "Displays the values of cmd.exe's autorun variables",
         "set <string...>",   "Explicitly sets cmd.exe's autorun to <string>",
+        nullptr
     };
 
     static const char* const help_args[] = {
         "-a, --allusers",       "Modifies autorun for all users (requires admin rights).",
         "-h, --help",           "Shows this help text.",
+        nullptr
     };
 
     extern const char* g_clink_header;

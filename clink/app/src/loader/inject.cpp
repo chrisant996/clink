@@ -363,6 +363,7 @@ int inject(int argc, char** argv)
         "-d, --pid <pid>",      "Inject into the process specified by <pid>.",
         "-l, --nolog",          "Disable file logging.",
         "-h, --help",           "Shows this help text.",
+        nullptr
     };
 
     extern const char* g_clink_header;

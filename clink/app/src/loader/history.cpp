@@ -260,12 +260,14 @@ static int print_help()
         "delete <n>",   "Delete Nth item (negative N indexes history backwards).",
         "add <...>",    "Join remaining arguments and appends to the history.",
         "expand <...>", "Print substitution result.",
+        nullptr
     };
 
     static const char* const help_options[] = {
         "--bare",       "Omit item numbers when printing history.",
         "--diag",       "Print diagnostic info to stderr.",
         "--unique",     "Remove duplicates when compacting history.",
+        nullptr
     };
 
     puts(g_clink_header);
