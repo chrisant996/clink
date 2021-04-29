@@ -262,6 +262,42 @@ Or <code>clink --version</code> shows just the version number.</dd>
 Echos key sequences to use in the .inputrc files for binding keys to Clink commands.  Each key pressed prints the associated key sequence on a separate line, until <kbd>Ctrl</kbd>+<kbd>C</kbd> is pressed.</dd>
 </p>
 
+## Portable Configuration
+
+Sometimes it's useful to run Clink from a flash drive or from a network share, especially if you want to use Clink on someone else's computer.
+
+Here's how you can set up a portable configuration for Clink:
+
+1. Put your Lua scripts and other tools in the same directory as the Clink executable files.  For example fzf.exe, z.cmd, oh-my-posh.exe, or etc can all go in the same directory on a flash drive or network share.
+2. Make a batch file such as `portable.bat` that injects Clink using a specific profile directory.
+   - On a flash drive, you can have a portable profile in a subdirectory under the Clink directory.
+   - On a network share, you'll want to copy some initial settings into a local profile directory (a profile directory on a network share will be slow).
+3. In any cmd.exe window on any computer, you can then run the `portable.bat` script to inject Clink and have all your favorite settings and key bindings work.
+
+Here are some sample scripts:
+
+### portable.bat (on a flash drive)
+
+This sample script assumes the portable.bat script is in the Clink directory, and it uses a `clink_portable` profile directory under the Clink directory.
+
+```cmd
+@echo off
+rem -- Do any other desired configuration here, such as loading a doskey macro file.
+call "%~dp0clink.bat" inject --profile "%~dp0clink_portable" %1 %2 %3 %4 %5 %6 %7 %8 %9
+```
+
+### portable.bat (on a network share)
+
+This sample script assumes the portable.bat script is in the Clink directory, and that there is a file `portable_clink_settings` with the settings you want to copy to the local profile directory.
+
+```cmd
+@echo off
+if not exist "%TEMP%\clink_portable" md "%TEMP%\clink_portable" >nul
+if not exist "%TEMP%\clink_portable\clink_settings" copy "%~dp0portable_clink_settings" "%TEMP%\clink_portable\clink_settings" >nul
+rem -- Do any other desired configuration here, such as loading a doskey macro file.
+call "%~dp0clink.bat" inject --profile "%TEMP%\clink_portable" %1 %2 %3 %4 %5 %6 %7 %8 %9
+```
+
 <a name="configreadline"/>
 
 # Configuring Readline
