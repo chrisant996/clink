@@ -540,9 +540,12 @@ static unsigned int clink_wcwidth(const char* s, unsigned int len)
 }
 
 //------------------------------------------------------------------------------
-void ecma48_processor(const char* in, str_base* out, unsigned int* cell_count, bool bracket, bool apply_title)
+void ecma48_processor(const char* in, str_base* out, unsigned int* cell_count, ecma48_processor_flags flags)
 {
     unsigned int cells = 0;
+    bool bracket = !!int(flags & ecma48_processor_flags::bracket);
+    bool apply_title = !!int(flags & ecma48_processor_flags::apply_title);
+    bool plaintext = !!int(flags & ecma48_processor_flags::plaintext);
 
     ecma48_state state;
     ecma48_iter iter(in, state);
@@ -576,7 +579,7 @@ void ecma48_processor(const char* in, str_base* out, unsigned int* cell_count, b
             else
             {
 concat_verbatim:
-                if (out)
+                if (out && !plaintext)
                 {
                     if (bracket) out->concat("\x01", 1);
                     out->concat(code.get_pointer(), code.get_length());

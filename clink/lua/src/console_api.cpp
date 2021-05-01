@@ -114,7 +114,7 @@ static int get_plain_text(lua_State* state)
 
     str<> out;
     unsigned int cells = 0;
-    ecma48_processor(in, &out, &cells);
+    ecma48_processor(in, &out, &cells, ecma48_processor_flags::plaintext);
     lua_pushlstring(state, out.c_str(), out.length());
     lua_pushinteger(state, cells);
     return 2;

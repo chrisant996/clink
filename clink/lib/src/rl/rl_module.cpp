@@ -1512,11 +1512,10 @@ void rl_module::on_begin_line(const context& context)
         }
     }
 
-    ecma48_processor(context.prompt,
-                     &rl_prompt,
-                     nullptr/*cell_count*/,
-                     true/*bracket*/,
-                     get_native_ansi_handler() != ansi_handler::conemu/*apply_title*/);
+    ecma48_processor_flags flags = ecma48_processor_flags::bracket;
+    if (get_native_ansi_handler() != ansi_handler::conemu)
+        flags |= ecma48_processor_flags::apply_title;
+    ecma48_processor(context.prompt, &rl_prompt, nullptr/*cell_count*/, flags);
 
     rl_prompt.concat("\x01\x1b[m\x02");
     g_last_prompt.clear();
