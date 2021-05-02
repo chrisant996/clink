@@ -101,20 +101,70 @@ static void shutdown_clink()
 }
 
 //------------------------------------------------------------------------------
+void start_logger()
+{
+    auto* app_ctx = app_context::get();
+
+    if (app_ctx->is_logging_enabled())
+    {
+        // Discard any existing logger.  This is so Cmder can be compatible with
+        // Clink autorun and still override the scripts and profile paths.
+        if (logger::get())
+            delete logger::get();
+
+        str<256> log_path;
+        app_ctx->get_log_path(log_path);
+        unlink(log_path.c_str()); // Restart the log file on every inject.
+        new file_logger(log_path.c_str());
+
+        SYSTEMTIME now;
+        GetLocalTime(&now);
+        LOG("---- %04u/%02u/%02u %02u:%02u:%02u.%03u -------------------------------------------------",
+            now.wYear, now.wMonth, now.wDay,
+            now.wHour, now.wMinute, now.wSecond, now.wMilliseconds);
+
+        str<64> host_name;
+        if (!get_host_name(host_name))
+            host_name = "<unknown>";
+
+        LOG("Host process is '%s' (pid %d)", host_name.c_str(), app_ctx->get_id());
+
+        str<> dll_path;
+        app_ctx->get_binaries_dir(dll_path);
+        LOG("DLL path is '%s'", dll_path.c_str());
+
+        {
+#pragma warning(push)
+#pragma warning(disable:4996)
+            OSVERSIONINFO ver = { sizeof(ver) };
+            if (GetVersionEx(&ver))
+            {
+                SYSTEM_INFO system_info;
+                GetNativeSystemInfo(&system_info);
+                LOG("Windows version %u.%u.%u (%s)",
+                    ver.dwMajorVersion,
+                    ver.dwMinorVersion,
+                    ver.dwBuildNumber,
+                    (system_info.wProcessorArchitecture == PROCESSOR_ARCHITECTURE_AMD64) ? "x64" : "x86");
+            }
+#ifdef _WIN64
+            LOG("Clink version %s (x64)", CLINK_VERSION_STR);
+#else
+            LOG("Clink version %s (x86)", CLINK_VERSION_STR);
+#endif
+#pragma warning(pop)
+        }
+    }
+}
+
+//------------------------------------------------------------------------------
 INT_PTR WINAPI initialise_clink(const app_context::desc& app_desc)
 {
     seh_scope seh;
 
     auto* app_ctx = new app_context(app_desc);
 
-    // Start logger.
-    if (app_ctx->is_logging_enabled())
-    {
-        str<256> log_path;
-        app_ctx->get_log_path(log_path);
-        unlink(log_path.c_str()); // Restart the log file on every inject.
-        new file_logger(log_path.c_str());
-    }
+    start_logger();
 
     // What process is the DLL loaded into?
     str<64> host_name;
@@ -122,39 +172,6 @@ INT_PTR WINAPI initialise_clink(const app_context::desc& app_desc)
     {
         ERR("Unable to get host name.");
         return false;
-    }
-
-    SYSTEMTIME now;
-    GetLocalTime(&now);
-    LOG("---- %04u/%02u/%02u %02u:%02u:%02u.%03u -------------------------------------------------",
-        now.wYear, now.wMonth, now.wDay,
-        now.wHour, now.wMinute, now.wSecond, now.wMilliseconds);
-    LOG("Host process is '%s' (pid %d)", host_name.c_str(), app_ctx->get_id());
-
-    str<> dll_path;
-    app_ctx->get_binaries_dir(dll_path);
-    LOG("DLL path is '%s'", dll_path.c_str());
-
-    {
-#pragma warning(push)
-#pragma warning(disable:4996)
-        OSVERSIONINFO ver = { sizeof(ver) };
-        if (GetVersionEx(&ver))
-        {
-            SYSTEM_INFO system_info;
-            GetNativeSystemInfo(&system_info);
-            LOG("Windows version %u.%u.%u (%s)",
-                ver.dwMajorVersion,
-                ver.dwMinorVersion,
-                ver.dwBuildNumber,
-                (system_info.wProcessorArchitecture == PROCESSOR_ARCHITECTURE_AMD64) ? "x64" : "x86");
-        }
-#ifdef _WIN64
-        LOG("Clink version %s (x64)", CLINK_VERSION_STR);
-#else
-        LOG("Clink version %s (x86)", CLINK_VERSION_STR);
-#endif
-#pragma warning(pop)
     }
 
     // Search for a supported host (keep in sync with inject_dll in inject.cpp).

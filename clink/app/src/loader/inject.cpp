@@ -506,11 +506,15 @@ int inject(int argc, char** argv)
                 wchar_t s[sizeof_array(app_desc.script_path)];
             };
 
-            string_struct value = {};
-            wstr_base script_path(value.s);
+            string_struct value_scripts = {};
+            string_struct value_state = {};
+            wstr_base script_path(value_scripts.s);
+            wstr_base state_dir(value_state.s);
             to_utf16(script_path, app_desc.script_path);
+            to_utf16(state_dir, app_desc.state_dir);
 
-            process(target_pid).remote_call(func, L"=clink.scripts.inject", value);
+            process(target_pid).remote_call(func, L"=clink.scripts.inject", value_scripts);
+            process(target_pid).remote_call(func, L"=clink.profile.inject", value_state);
         }
         else
         {

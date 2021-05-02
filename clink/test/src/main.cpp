@@ -18,6 +18,12 @@ void host_cmd_enqueue_lines(std::list<str_moveable>& lines)
 }
 
 //------------------------------------------------------------------------------
+void start_logger()
+{
+    assert(false);
+}
+
+//------------------------------------------------------------------------------
 int main(int argc, char** argv)
 {
     argc--, argv++;

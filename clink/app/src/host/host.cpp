@@ -79,6 +79,8 @@ static setting_bool g_reload_scripts(
 extern setting_bool g_classify_words;
 extern setting_color g_color_prompt;
 
+extern void start_logger();
+
 extern bool get_sticky_search_history();
 extern bool has_sticky_search_position();
 extern bool get_sticky_search_add_history(const char* line);
@@ -492,7 +494,8 @@ void host::enqueue_lines(std::list<str_moveable>& lines)
 bool host::edit_line(const char* prompt, str_base& out)
 {
     const app_context* app = app_context::get();
-    app->update_env();
+    bool reset = app->update_env();
+
     path::refresh_pathext();
 
     cwd_restorer cwd;
@@ -517,11 +520,11 @@ bool host::edit_line(const char* prompt, str_base& out)
                                            (m_queued_lines.size() == 1 &&
                                             (m_queued_lines.front().length() == 0 ||
                                              m_queued_lines.front().c_str()[m_queued_lines.front().length() - 1] != '\n')));
-    bool init_scripts = interactive;
+    bool init_scripts = reset || interactive;
     bool send_event = interactive;
     bool init_prompt = interactive;
     bool init_editor = interactive;
-    bool init_history = interactive && !rl_has_saved_history();
+    bool init_history = reset || (interactive && !rl_has_saved_history());
 
     // Set up Lua.
     bool local_lua = g_reload_scripts.get();

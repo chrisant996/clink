@@ -35,7 +35,7 @@ public:
     void        get_history_path(str_base& out) const;
     void        get_script_path(str_base& out) const;
     void        get_script_path_readable(str_base& out) const;
-    void        update_env() const;
+    bool        update_env() const;
 
     static void override_id(int id);
 

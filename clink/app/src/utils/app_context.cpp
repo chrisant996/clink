@@ -14,6 +14,9 @@
 #include <process/vm.h>
 
 //------------------------------------------------------------------------------
+extern void start_logger();
+
+//------------------------------------------------------------------------------
 static setting_str g_clink_path(
     "clink.path",
     "Paths to load Lua scripts from",
@@ -239,6 +242,7 @@ void app_context::get_script_path(str_base& out, bool readable) const
 {
     str<280> tmp;
 
+#if 0
     // Check if a new scripts path has been injected.  This is so Cmder can be
     // compatible with Clink auto-run by updating the scripts path via a second
     // `clink inject` even though Clink is already injected.
@@ -250,6 +254,7 @@ void app_context::get_script_path(str_base& out, bool readable) const
         os::set_env("=clink.scripts", tmp.c_str());
         os::set_env("=clink.scripts.inject", nullptr);
     }
+#endif
 
     // The --scripts flag happens before anything else.
     out.clear();
@@ -315,8 +320,32 @@ void app_context::get_script_path_readable(str_base& out) const
 }
 
 //-----------------------------------------------------------------------------
-void app_context::update_env() const
+bool app_context::update_env() const
 {
+    str<280> tmp;
+    bool reset = false;
+
+    // Check if a new scripts or profile has been injected.  This lets Cmder be
+    // compatible with Clink auto-run by updating the scripts and profile paths
+    // via a second `clink inject` even though Clink is already injected.
+    os::get_env("=clink.scripts.inject", tmp);
+    if (!tmp.empty())
+    {
+        str_base script_path(const_cast<char*>(m_desc.script_path), sizeof_array(m_desc.script_path));
+        script_path.copy(tmp.c_str());
+        os::set_env("=clink.scripts.inject", nullptr);
+        reset = true;
+    }
+    os::get_env("=clink.profile.inject", tmp);
+    if (!tmp.empty())
+    {
+        str_base state_dir(const_cast<char*>(m_desc.state_dir), sizeof_array(m_desc.state_dir));
+        state_dir.copy(tmp.c_str());
+        os::set_env("=clink.profile.inject", nullptr);
+        start_logger(); // Restart the logger since the log file location has changed.
+        reset = true;
+    }
+
     str<48> id_str;
     id_str.format("%d", m_desc.id);
     os::set_env("=clink.id", id_str.c_str());
@@ -326,4 +355,6 @@ void app_context::update_env() const
     str<280> bin_dir;
     get_binaries_dir(bin_dir);
     os::set_env("=clink.bin", bin_dir.c_str());
+
+    return reset;
 }
