@@ -3,7 +3,7 @@
 
 <!-- ----------------------------------------------------- -->
 <head>
-<title>Clink v1.2.4</title>
+<title>Clink v1.2.5</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Rambla:wght@400;700&family=Roboto&family=Fira+Mono&display=swap');
 html {
@@ -356,11 +356,340 @@ hue-6-2: #c18401
 </style>
 <script type="text/javascript">
 /*
-  Highlight.js 10.2.1 (32fb9a1d)
+  Highlight.js 10.7.2 (00233d63)
   License: BSD-3-Clause
-  Copyright (c) 2006-2020, Ivan Sagalaev
+  Copyright (c) 2006-2021, Ivan Sagalaev
 */
-var hljs=function(){"use strict";function e(n){Object.freeze(n);var t="function"==typeof n;return Object.getOwnPropertyNames(n).forEach((function(r){!Object.hasOwnProperty.call(n,r)||null===n[r]||"object"!=typeof n[r]&&"function"!=typeof n[r]||t&&("caller"===r||"callee"===r||"arguments"===r)||Object.isFrozen(n[r])||e(n[r])})),n}class n{constructor(e){void 0===e.data&&(e.data={}),this.data=e.data}ignoreMatch(){this.ignore=!0}}function t(e){return e.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&#x27;")}function r(e,...n){var t={};for(const n in e)t[n]=e[n];return n.forEach((function(e){for(const n in e)t[n]=e[n]})),t}function a(e){return e.nodeName.toLowerCase()}var i=Object.freeze({__proto__:null,escapeHTML:t,inherit:r,nodeStream:function(e){var n=[];return function e(t,r){for(var i=t.firstChild;i;i=i.nextSibling)3===i.nodeType?r+=i.nodeValue.length:1===i.nodeType&&(n.push({event:"start",offset:r,node:i}),r=e(i,r),a(i).match(/br|hr|img|input/)||n.push({event:"stop",offset:r,node:i}));return r}(e,0),n},mergeStreams:function(e,n,r){var i=0,s="",o=[];function l(){return e.length&&n.length?e[0].offset!==n[0].offset?e[0].offset<n[0].offset?e:n:"start"===n[0].event?e:n:e.length?e:n}function c(e){s+="<"+a(e)+[].map.call(e.attributes,(function(e){return" "+e.nodeName+'="'+t(e.value)+'"'})).join("")+">"}function u(e){s+="</"+a(e)+">"}function g(e){("start"===e.event?c:u)(e.node)}for(;e.length||n.length;){var d=l();if(s+=t(r.substring(i,d[0].offset)),i=d[0].offset,d===e){o.reverse().forEach(u);do{g(d.splice(0,1)[0]),d=l()}while(d===e&&d.length&&d[0].offset===i);o.reverse().forEach(c)}else"start"===d[0].event?o.push(d[0].node):o.pop(),g(d.splice(0,1)[0])}return s+t(r.substr(i))}});const s="</span>",o=e=>!!e.kind;class l{constructor(e,n){this.buffer="",this.classPrefix=n.classPrefix,e.walk(this)}addText(e){this.buffer+=t(e)}openNode(e){if(!o(e))return;let n=e.kind;e.sublanguage||(n=`${this.classPrefix}${n}`),this.span(n)}closeNode(e){o(e)&&(this.buffer+=s)}value(){return this.buffer}span(e){this.buffer+=`<span class="${e}">`}}class c{constructor(){this.rootNode={children:[]},this.stack=[this.rootNode]}get top(){return this.stack[this.stack.length-1]}get root(){return this.rootNode}add(e){this.top.children.push(e)}openNode(e){const n={kind:e,children:[]};this.add(n),this.stack.push(n)}closeNode(){if(this.stack.length>1)return this.stack.pop()}closeAllNodes(){for(;this.closeNode(););}toJSON(){return JSON.stringify(this.rootNode,null,4)}walk(e){return this.constructor._walk(e,this.rootNode)}static _walk(e,n){return"string"==typeof n?e.addText(n):n.children&&(e.openNode(n),n.children.forEach(n=>this._walk(e,n)),e.closeNode(n)),e}static _collapse(e){"string"!=typeof e&&e.children&&(e.children.every(e=>"string"==typeof e)?e.children=[e.children.join("")]:e.children.forEach(e=>{c._collapse(e)}))}}class u extends c{constructor(e){super(),this.options=e}addKeyword(e,n){""!==e&&(this.openNode(n),this.addText(e),this.closeNode())}addText(e){""!==e&&this.add(e)}addSublanguage(e,n){const t=e.root;t.kind=n,t.sublanguage=!0,this.add(t)}toHTML(){return new l(this,this.options).value()}finalize(){return!0}}function g(e){return e?"string"==typeof e?e:e.source:null}const d="(-?)(\\b0[xX][a-fA-F0-9]+|(\\b\\d+(\\.\\d*)?|\\.\\d+)([eE][-+]?\\d+)?)",h={begin:"\\\\[\\s\\S]",relevance:0},f={className:"string",begin:"'",end:"'",illegal:"\\n",contains:[h]},p={className:"string",begin:'"',end:'"',illegal:"\\n",contains:[h]},m={begin:/\b(a|an|the|are|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|they|like|more)\b/},b=function(e,n,t={}){var a=r({className:"comment",begin:e,end:n,contains:[]},t);return a.contains.push(m),a.contains.push({className:"doctag",begin:"(?:TODO|FIXME|NOTE|BUG|OPTIMIZE|HACK|XXX):",relevance:0}),a},v=b("//","$"),x=b("/\\*","\\*/"),E=b("#","$");var _=Object.freeze({__proto__:null,IDENT_RE:"[a-zA-Z]\\w*",UNDERSCORE_IDENT_RE:"[a-zA-Z_]\\w*",NUMBER_RE:"\\b\\d+(\\.\\d+)?",C_NUMBER_RE:d,BINARY_NUMBER_RE:"\\b(0b[01]+)",RE_STARTERS_RE:"!|!=|!==|%|%=|&|&&|&=|\\*|\\*=|\\+|\\+=|,|-|-=|/=|/|:|;|<<|<<=|<=|<|===|==|=|>>>=|>>=|>=|>>>|>>|>|\\?|\\[|\\{|\\(|\\^|\\^=|\\||\\|=|\\|\\||~",SHEBANG:(e={})=>{const n=/^#![ ]*\//;return e.binary&&(e.begin=function(...e){return e.map(e=>g(e)).join("")}(n,/.*\b/,e.binary,/\b.*/)),r({className:"meta",begin:n,end:/$/,relevance:0,"on:begin":(e,n)=>{0!==e.index&&n.ignoreMatch()}},e)},BACKSLASH_ESCAPE:h,APOS_STRING_MODE:f,QUOTE_STRING_MODE:p,PHRASAL_WORDS_MODE:m,COMMENT:b,C_LINE_COMMENT_MODE:v,C_BLOCK_COMMENT_MODE:x,HASH_COMMENT_MODE:E,NUMBER_MODE:{className:"number",begin:"\\b\\d+(\\.\\d+)?",relevance:0},C_NUMBER_MODE:{className:"number",begin:d,relevance:0},BINARY_NUMBER_MODE:{className:"number",begin:"\\b(0b[01]+)",relevance:0},CSS_NUMBER_MODE:{className:"number",begin:"\\b\\d+(\\.\\d+)?(%|em|ex|ch|rem|vw|vh|vmin|vmax|cm|mm|in|pt|pc|px|deg|grad|rad|turn|s|ms|Hz|kHz|dpi|dpcm|dppx)?",relevance:0},REGEXP_MODE:{begin:/(?=\/[^/\n]*\/)/,contains:[{className:"regexp",begin:/\//,end:/\/[gimuy]*/,illegal:/\n/,contains:[h,{begin:/\[/,end:/\]/,relevance:0,contains:[h]}]}]},TITLE_MODE:{className:"title",begin:"[a-zA-Z]\\w*",relevance:0},UNDERSCORE_TITLE_MODE:{className:"title",begin:"[a-zA-Z_]\\w*",relevance:0},METHOD_GUARD:{begin:"\\.\\s*[a-zA-Z_]\\w*",relevance:0},END_SAME_AS_BEGIN:function(e){return Object.assign(e,{"on:begin":(e,n)=>{n.data._beginMatch=e[1]},"on:end":(e,n)=>{n.data._beginMatch!==e[1]&&n.ignoreMatch()}})}}),w="of and for in not or if then".split(" ");function N(e,n){return n?+n:function(e){return w.includes(e.toLowerCase())}(e)?0:1}const y={props:["language","code","autodetect"],data:function(){return{detectedLanguage:"",unknownLanguage:!1}},computed:{className(){return this.unknownLanguage?"":"hljs "+this.detectedLanguage},highlighted(){if(!this.autoDetect&&!hljs.getLanguage(this.language))return console.warn(`The language "${this.language}" you specified could not be found.`),this.unknownLanguage=!0,t(this.code);let e;return this.autoDetect?(e=hljs.highlightAuto(this.code),this.detectedLanguage=e.language):(e=hljs.highlight(this.language,this.code,this.ignoreIllegals),this.detectectLanguage=this.language),e.value},autoDetect(){return!(this.language&&(e=this.autodetect,!e&&""!==e));var e},ignoreIllegals:()=>!0},render(e){return e("pre",{},[e("code",{class:this.className,domProps:{innerHTML:this.highlighted}})])}},R={install(e){e.component("highlightjs",y)}},k=t,M=r,{nodeStream:O,mergeStreams:L}=i,A=Symbol("nomatch");return function(t){var a=[],i=Object.create(null),s=Object.create(null),o=[],l=!0,c=/(^(<[^>]+>|\t|)+|\n)/gm,d="Could not find the language '{}', did you forget to load/include a language module?";const h={disableAutodetect:!0,name:"Plain text",contains:[]};var f={noHighlightRe:/^(no-?highlight)$/i,languageDetectRe:/\blang(?:uage)?-([\w-]+)\b/i,classPrefix:"hljs-",tabReplace:null,useBR:!1,languages:null,__emitter:u};function p(e){return f.noHighlightRe.test(e)}function m(e,n,t,r){var a={code:n,language:e};j("before:highlight",a);var i=a.result?a.result:b(a.language,a.code,t,r);return i.code=a.code,j("after:highlight",i),i}function b(e,t,a,s){var o=t;function c(e,n){var t=E.case_insensitive?n[0].toLowerCase():n[0];return Object.prototype.hasOwnProperty.call(e.keywords,t)&&e.keywords[t]}function u(){null!=R.subLanguage?function(){if(""!==L){var e=null;if("string"==typeof R.subLanguage){if(!i[R.subLanguage])return void O.addText(L);e=b(R.subLanguage,L,!0,M[R.subLanguage]),M[R.subLanguage]=e.top}else e=v(L,R.subLanguage.length?R.subLanguage:null);R.relevance>0&&(I+=e.relevance),O.addSublanguage(e.emitter,e.language)}}():function(){if(!R.keywords)return void O.addText(L);let e=0;R.keywordPatternRe.lastIndex=0;let n=R.keywordPatternRe.exec(L),t="";for(;n;){t+=L.substring(e,n.index);const r=c(R,n);if(r){const[e,a]=r;O.addText(t),t="",I+=a,O.addKeyword(n[0],e)}else t+=n[0];e=R.keywordPatternRe.lastIndex,n=R.keywordPatternRe.exec(L)}t+=L.substr(e),O.addText(t)}(),L=""}function h(e){return e.className&&O.openNode(e.className),R=Object.create(e,{parent:{value:R}})}function p(e){return 0===R.matcher.regexIndex?(L+=e[0],1):(S=!0,0)}var m={};function x(t,r){var i=r&&r[0];if(L+=t,null==i)return u(),0;if("begin"===m.type&&"end"===r.type&&m.index===r.index&&""===i){if(L+=o.slice(r.index,r.index+1),!l){const n=Error("0 width match regex");throw n.languageName=e,n.badRule=m.rule,n}return 1}if(m=r,"begin"===r.type)return function(e){var t=e[0],r=e.rule;const a=new n(r),i=[r.__beforeBegin,r["on:begin"]];for(const n of i)if(n&&(n(e,a),a.ignore))return p(t);return r&&r.endSameAsBegin&&(r.endRe=RegExp(t.replace(/[-/\\^$*+?.()|[\]{}]/g,"\\$&"),"m")),r.skip?L+=t:(r.excludeBegin&&(L+=t),u(),r.returnBegin||r.excludeBegin||(L=t)),h(r),r.returnBegin?0:t.length}(r);if("illegal"===r.type&&!a){const e=Error('Illegal lexeme "'+i+'" for mode "'+(R.className||"<unnamed>")+'"');throw e.mode=R,e}if("end"===r.type){var s=function(e){var t=e[0],r=o.substr(e.index),a=function e(t,r,a){let i=function(e,n){var t=e&&e.exec(n);return t&&0===t.index}(t.endRe,a);if(i){if(t["on:end"]){const e=new n(t);t["on:end"](r,e),e.ignore&&(i=!1)}if(i){for(;t.endsParent&&t.parent;)t=t.parent;return t}}if(t.endsWithParent)return e(t.parent,r,a)}(R,e,r);if(!a)return A;var i=R;i.skip?L+=t:(i.returnEnd||i.excludeEnd||(L+=t),u(),i.excludeEnd&&(L=t));do{R.className&&O.closeNode(),R.skip||R.subLanguage||(I+=R.relevance),R=R.parent}while(R!==a.parent);return a.starts&&(a.endSameAsBegin&&(a.starts.endRe=a.endRe),h(a.starts)),i.returnEnd?0:t.length}(r);if(s!==A)return s}if("illegal"===r.type&&""===i)return 1;if(j>1e5&&j>3*r.index)throw Error("potential infinite loop, way more iterations than matches");return L+=i,i.length}var E=y(e);if(!E)throw console.error(d.replace("{}",e)),Error('Unknown language: "'+e+'"');var _=function(e){function n(n,t){return RegExp(g(n),"m"+(e.case_insensitive?"i":"")+(t?"g":""))}class t{constructor(){this.matchIndexes={},this.regexes=[],this.matchAt=1,this.position=0}addRule(e,n){n.position=this.position++,this.matchIndexes[this.matchAt]=n,this.regexes.push([n,e]),this.matchAt+=function(e){return RegExp(e.toString()+"|").exec("").length-1}(e)+1}compile(){0===this.regexes.length&&(this.exec=()=>null);const e=this.regexes.map(e=>e[1]);this.matcherRe=n(function(e,n="|"){for(var t=/\[(?:[^\\\]]|\\.)*\]|\(\??|\\([1-9][0-9]*)|\\./,r=0,a="",i=0;i<e.length;i++){var s=r+=1,o=g(e[i]);for(i>0&&(a+=n),a+="(";o.length>0;){var l=t.exec(o);if(null==l){a+=o;break}a+=o.substring(0,l.index),o=o.substring(l.index+l[0].length),"\\"===l[0][0]&&l[1]?a+="\\"+(+l[1]+s):(a+=l[0],"("===l[0]&&r++)}a+=")"}return a}(e),!0),this.lastIndex=0}exec(e){this.matcherRe.lastIndex=this.lastIndex;const n=this.matcherRe.exec(e);if(!n)return null;const t=n.findIndex((e,n)=>n>0&&void 0!==e),r=this.matchIndexes[t];return n.splice(0,t),Object.assign(n,r)}}class a{constructor(){this.rules=[],this.multiRegexes=[],this.count=0,this.lastIndex=0,this.regexIndex=0}getMatcher(e){if(this.multiRegexes[e])return this.multiRegexes[e];const n=new t;return this.rules.slice(e).forEach(([e,t])=>n.addRule(e,t)),n.compile(),this.multiRegexes[e]=n,n}resumingScanAtSamePosition(){return 0!==this.regexIndex}considerAll(){this.regexIndex=0}addRule(e,n){this.rules.push([e,n]),"begin"===n.type&&this.count++}exec(e){const n=this.getMatcher(this.regexIndex);n.lastIndex=this.lastIndex;let t=n.exec(e);if(this.resumingScanAtSamePosition())if(t&&t.index===this.lastIndex);else{const n=this.getMatcher(0);n.lastIndex=this.lastIndex+1,t=n.exec(e)}return t&&(this.regexIndex+=t.position+1,this.regexIndex===this.count&&this.considerAll()),t}}function i(e,n){const t=e.input[e.index-1],r=e.input[e.index+e[0].length];"."!==t&&"."!==r||n.ignoreMatch()}if(e.contains&&e.contains.includes("self"))throw Error("ERR: contains `self` is not supported at the top-level of a language.  See documentation.");return function t(s,o){const l=s;if(s.compiled)return l;s.compiled=!0,s.__beforeBegin=null,s.keywords=s.keywords||s.beginKeywords;let c=null;if("object"==typeof s.keywords&&(c=s.keywords.$pattern,delete s.keywords.$pattern),s.keywords&&(s.keywords=function(e,n){var t={};return"string"==typeof e?r("keyword",e):Object.keys(e).forEach((function(n){r(n,e[n])})),t;function r(e,r){n&&(r=r.toLowerCase()),r.split(" ").forEach((function(n){var r=n.split("|");t[r[0]]=[e,N(r[0],r[1])]}))}}(s.keywords,e.case_insensitive)),s.lexemes&&c)throw Error("ERR: Prefer `keywords.$pattern` to `mode.lexemes`, BOTH are not allowed. (see mode reference) ");return l.keywordPatternRe=n(s.lexemes||c||/\w+/,!0),o&&(s.beginKeywords&&(s.begin="\\b("+s.beginKeywords.split(" ").join("|")+")(?=\\b|\\s)",s.__beforeBegin=i),s.begin||(s.begin=/\B|\b/),l.beginRe=n(s.begin),s.endSameAsBegin&&(s.end=s.begin),s.end||s.endsWithParent||(s.end=/\B|\b/),s.end&&(l.endRe=n(s.end)),l.terminator_end=g(s.end)||"",s.endsWithParent&&o.terminator_end&&(l.terminator_end+=(s.end?"|":"")+o.terminator_end)),s.illegal&&(l.illegalRe=n(s.illegal)),void 0===s.relevance&&(s.relevance=1),s.contains||(s.contains=[]),s.contains=[].concat(...s.contains.map((function(e){return function(e){return e.variants&&!e.cached_variants&&(e.cached_variants=e.variants.map((function(n){return r(e,{variants:null},n)}))),e.cached_variants?e.cached_variants:function e(n){return!!n&&(n.endsWithParent||e(n.starts))}(e)?r(e,{starts:e.starts?r(e.starts):null}):Object.isFrozen(e)?r(e):e}("self"===e?s:e)}))),s.contains.forEach((function(e){t(e,l)})),s.starts&&t(s.starts,o),l.matcher=function(e){const n=new a;return e.contains.forEach(e=>n.addRule(e.begin,{rule:e,type:"begin"})),e.terminator_end&&n.addRule(e.terminator_end,{type:"end"}),e.illegal&&n.addRule(e.illegal,{type:"illegal"}),n}(l),l}(e)}(E),w="",R=s||_,M={},O=new f.__emitter(f);!function(){for(var e=[],n=R;n!==E;n=n.parent)n.className&&e.unshift(n.className);e.forEach(e=>O.openNode(e))}();var L="",I=0,T=0,j=0,S=!1;try{for(R.matcher.considerAll();;){j++,S?S=!1:R.matcher.considerAll(),R.matcher.lastIndex=T;const e=R.matcher.exec(o);if(!e)break;const n=x(o.substring(T,e.index),e);T=e.index+n}return x(o.substr(T)),O.closeAllNodes(),O.finalize(),w=O.toHTML(),{relevance:I,value:w,language:e,illegal:!1,emitter:O,top:R}}catch(n){if(n.message&&n.message.includes("Illegal"))return{illegal:!0,illegalBy:{msg:n.message,context:o.slice(T-100,T+100),mode:n.mode},sofar:w,relevance:0,value:k(o),emitter:O};if(l)return{illegal:!1,relevance:0,value:k(o),emitter:O,language:e,top:R,errorRaised:n};throw n}}function v(e,n){n=n||f.languages||Object.keys(i);var t=function(e){const n={relevance:0,emitter:new f.__emitter(f),value:k(e),illegal:!1,top:h};return n.emitter.addText(e),n}(e),r=t;return n.filter(y).filter(T).forEach((function(n){var a=b(n,e,!1);a.language=n,a.relevance>r.relevance&&(r=a),a.relevance>t.relevance&&(r=t,t=a)})),r.language&&(t.second_best=r),t}function x(e){return f.tabReplace||f.useBR?e.replace(c,e=>"\n"===e?f.useBR?"&lt;br&gt;":e:f.tabReplace?e.replace(/\t/g,f.tabReplace):e):e}function E(e){let n=null;const t=function(e){var n=e.className+" ";n+=e.parentNode?e.parentNode.className:"";const t=f.languageDetectRe.exec(n);if(t){var r=y(t[1]);return r||(console.warn(d.replace("{}",t[1])),console.warn("Falling back to no-highlight mode for this block.",e)),r?t[1]:"no-highlight"}return n.split(/\s+/).find(e=>p(e)||y(e))}(e);if(p(t))return;j("before:highlightBlock",{block:e,language:t}),f.useBR?(n=document.createElement("div")).innerHTML=e.innerHTML.replace(/\n/g,"").replace(/<br[ /]*>/g,"\n"):n=e;const r=n.textContent,a=t?m(t,r,!0):v(r),i=O(n);if(i.length){const e=document.createElement("div");e.innerHTML=a.value,a.value=L(i,O(e),r)}a.value=x(a.value),j("after:highlightBlock",{block:e,result:a}),e.innerHTML=a.value,e.className=function(e,n,t){var r=n?s[n]:t,a=[e.trim()];return e.match(/\bhljs\b/)||a.push("hljs"),e.includes(r)||a.push(r),a.join(" ").trim()}(e.className,t,a.language),e.result={language:a.language,re:a.relevance,relavance:a.relevance},a.second_best&&(e.second_best={language:a.second_best.language,re:a.second_best.relevance,relavance:a.second_best.relevance})}const w=()=>{if(!w.called){w.called=!0;var e=document.querySelectorAll("pre code");a.forEach.call(e,E)}};function y(e){return e=(e||"").toLowerCase(),i[e]||i[s[e]]}function I(e,{languageName:n}){"string"==typeof e&&(e=[e]),e.forEach(e=>{s[e]=n})}function T(e){var n=y(e);return n&&!n.disableAutodetect}function j(e,n){var t=e;o.forEach((function(e){e[t]&&e[t](n)}))}Object.assign(t,{highlight:m,highlightAuto:v,fixMarkup:function(e){return console.warn("fixMarkup is deprecated and will be removed entirely in v11.0"),console.warn("Please see https://github.com/highlightjs/highlight.js/issues/2534"),x(e)},highlightBlock:E,configure:function(e){f=M(f,e)},initHighlighting:w,initHighlightingOnLoad:function(){window.addEventListener("DOMContentLoaded",w,!1)},registerLanguage:function(e,n){var r=null;try{r=n(t)}catch(n){if(console.error("Language definition for '{}' could not be registered.".replace("{}",e)),!l)throw n;console.error(n),r=h}r.name||(r.name=e),i[e]=r,r.rawDefinition=n.bind(null,t),r.aliases&&I(r.aliases,{languageName:e})},listLanguages:function(){return Object.keys(i)},getLanguage:y,registerAliases:I,requireLanguage:function(e){var n=y(e);if(n)return n;throw Error("The '{}' language is required, but not loaded.".replace("{}",e))},autoDetection:T,inherit:M,addPlugin:function(e){o.push(e)},vuePlugin:R}),t.debugMode=function(){l=!1},t.safeMode=function(){l=!0},t.versionString="10.2.1";for(const n in _)"object"==typeof _[n]&&e(_[n]);return Object.assign(t,_),t}({})}();"object"==typeof exports&&"undefined"!=typeof module&&(module.exports=hljs);hljs.registerLanguage("lua",function(){"use strict";return function(e){var t={begin:"\\[=*\\[",end:"\\]=*\\]",contains:["self"]},a=[e.COMMENT("--(?!\\[=*\\[)","$"),e.COMMENT("--\\[=*\\[","\\]=*\\]",{contains:[t],relevance:10})];return{name:"Lua",keywords:{$pattern:e.UNDERSCORE_IDENT_RE,literal:"true false nil",keyword:"and break do else elseif end for goto if in local not or repeat return then until while",built_in:"_G _ENV _VERSION __index __newindex __mode __call __metatable __tostring __len __gc __add __sub __mul __div __mod __pow __concat __unm __eq __lt __le assert collectgarbage dofile error getfenv getmetatable ipairs load loadfile loadstring module next pairs pcall print rawequal rawget rawset require select setfenv setmetatable tonumber tostring type unpack xpcall arg self coroutine resume yield status wrap create running debug getupvalue debug sethook getmetatable gethook setmetatable setlocal traceback setfenv getinfo setupvalue getlocal getregistry getfenv io lines write close flush open output type read stderr stdin input stdout popen tmpfile math log max acos huge ldexp pi cos tanh pow deg tan cosh sinh random randomseed frexp ceil floor rad abs sqrt modf asin min mod fmod log10 atan2 exp sin atan os exit setlocale date getenv difftime remove time clock tmpname rename execute package preload loadlib loaded loaders cpath config path seeall string sub upper len gfind rep find match char dump gmatch reverse byte format gsub lower table setn insert getn foreachi maxn foreach concat sort remove"},contains:a.concat([{className:"function",beginKeywords:"function",end:"\\)",contains:[e.inherit(e.TITLE_MODE,{begin:"([_a-zA-Z]\\w*\\.)*([_a-zA-Z]\\w*:)?[_a-zA-Z]\\w*"}),{className:"params",begin:"\\(",endsWithParent:!0,contains:a}].concat(a)},e.C_NUMBER_MODE,e.APOS_STRING_MODE,e.QUOTE_STRING_MODE,{className:"string",begin:"\\[=*\\[",end:"\\]=*\\]",contains:[t],relevance:5}])}}}());hljs.registerLanguage("plaintext",function(){"use strict";return function(t){return{name:"Plain text",aliases:["text","txt"],disableAutodetect:!0}}}());hljs.registerLanguage("bash",function(){"use strict";return function(e){const s={};Object.assign(s,{className:"variable",variants:[{begin:/\$[\w\d#@][\w\d_]*/},{begin:/\$\{/,end:/\}/,contains:[{begin:/:-/,contains:[s]}]}]});const t={className:"subst",begin:/\$\(/,end:/\)/,contains:[e.BACKSLASH_ESCAPE]},n={className:"string",begin:/"/,end:/"/,contains:[e.BACKSLASH_ESCAPE,s,t]};t.contains.push(n);const a={begin:/\$\(\(/,end:/\)\)/,contains:[{begin:/\d+#[0-9a-f]+/,className:"number"},e.NUMBER_MODE,s]},i=e.SHEBANG({binary:"(fish|bash|zsh|sh|csh|ksh|tcsh|dash|scsh)",relevance:10}),c={className:"function",begin:/\w[\w\d_]*\s*\(\s*\)\s*\{/,returnBegin:!0,contains:[e.inherit(e.TITLE_MODE,{begin:/\w[\w\d_]*/})],relevance:0};return{name:"Bash",aliases:["sh","zsh"],keywords:{$pattern:/\b-?[a-z\._-]+\b/,keyword:"if then else elif fi for while in do done case esac function",literal:"true false",built_in:"break cd continue eval exec exit export getopts hash pwd readonly return shift test times trap umask unset alias bind builtin caller command declare echo enable help let local logout mapfile printf read readarray source type typeset ulimit unalias set shopt autoload bg bindkey bye cap chdir clone comparguments compcall compctl compdescribe compfiles compgroups compquote comptags comptry compvalues dirs disable disown echotc echoti emulate fc fg float functions getcap getln history integer jobs kill limit log noglob popd print pushd pushln rehash sched setcap setopt stat suspend ttyctl unfunction unhash unlimit unsetopt vared wait whence where which zcompile zformat zftp zle zmodload zparseopts zprof zpty zregexparse zsocket zstyle ztcp",_:"-ne -eq -lt -gt -f -d -e -s -l -a"},contains:[i,e.SHEBANG(),c,a,e.HASH_COMMENT_MODE,n,{className:"",begin:/\\"/},{className:"string",begin:/'/,end:/'/},s]}}}());
+var hljs=function(){"use strict";function e(t){
+return t instanceof Map?t.clear=t.delete=t.set=()=>{
+throw Error("map is read-only")}:t instanceof Set&&(t.add=t.clear=t.delete=()=>{
+throw Error("set is read-only")
+}),Object.freeze(t),Object.getOwnPropertyNames(t).forEach((n=>{var i=t[n]
+;"object"!=typeof i||Object.isFrozen(i)||e(i)})),t}var t=e,n=e;t.default=n
+;class i{constructor(e){
+void 0===e.data&&(e.data={}),this.data=e.data,this.isMatchIgnored=!1}
+ignoreMatch(){this.isMatchIgnored=!0}}function s(e){
+return e.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&#x27;")
+}function a(e,...t){const n=Object.create(null);for(const t in e)n[t]=e[t]
+;return t.forEach((e=>{for(const t in e)n[t]=e[t]})),n}const r=e=>!!e.kind
+;class l{constructor(e,t){
+this.buffer="",this.classPrefix=t.classPrefix,e.walk(this)}addText(e){
+this.buffer+=s(e)}openNode(e){if(!r(e))return;let t=e.kind
+;e.sublanguage||(t=`${this.classPrefix}${t}`),this.span(t)}closeNode(e){
+r(e)&&(this.buffer+="</span>")}value(){return this.buffer}span(e){
+this.buffer+=`<span class="${e}">`}}class o{constructor(){this.rootNode={
+children:[]},this.stack=[this.rootNode]}get top(){
+return this.stack[this.stack.length-1]}get root(){return this.rootNode}add(e){
+this.top.children.push(e)}openNode(e){const t={kind:e,children:[]}
+;this.add(t),this.stack.push(t)}closeNode(){
+if(this.stack.length>1)return this.stack.pop()}closeAllNodes(){
+for(;this.closeNode(););}toJSON(){return JSON.stringify(this.rootNode,null,4)}
+walk(e){return this.constructor._walk(e,this.rootNode)}static _walk(e,t){
+return"string"==typeof t?e.addText(t):t.children&&(e.openNode(t),
+t.children.forEach((t=>this._walk(e,t))),e.closeNode(t)),e}static _collapse(e){
+"string"!=typeof e&&e.children&&(e.children.every((e=>"string"==typeof e))?e.children=[e.children.join("")]:e.children.forEach((e=>{
+o._collapse(e)})))}}class c extends o{constructor(e){super(),this.options=e}
+addKeyword(e,t){""!==e&&(this.openNode(t),this.addText(e),this.closeNode())}
+addText(e){""!==e&&this.add(e)}addSublanguage(e,t){const n=e.root
+;n.kind=t,n.sublanguage=!0,this.add(n)}toHTML(){
+return new l(this,this.options).value()}finalize(){return!0}}function g(e){
+return e?"string"==typeof e?e:e.source:null}
+const u=/\[(?:[^\\\]]|\\.)*\]|\(\??|\\([1-9][0-9]*)|\\./,h="[a-zA-Z]\\w*",d="[a-zA-Z_]\\w*",f="\\b\\d+(\\.\\d+)?",p="(-?)(\\b0[xX][a-fA-F0-9]+|(\\b\\d+(\\.\\d*)?|\\.\\d+)([eE][-+]?\\d+)?)",m="\\b(0b[01]+)",b={
+begin:"\\\\[\\s\\S]",relevance:0},E={className:"string",begin:"'",end:"'",
+illegal:"\\n",contains:[b]},x={className:"string",begin:'"',end:'"',
+illegal:"\\n",contains:[b]},v={
+begin:/\b(a|an|the|are|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|they|like|more)\b/
+},w=(e,t,n={})=>{const i=a({className:"comment",begin:e,end:t,contains:[]},n)
+;return i.contains.push(v),i.contains.push({className:"doctag",
+begin:"(?:TODO|FIXME|NOTE|BUG|OPTIMIZE|HACK|XXX):",relevance:0}),i
+},y=w("//","$"),N=w("/\\*","\\*/"),R=w("#","$");var _=Object.freeze({
+__proto__:null,MATCH_NOTHING_RE:/\b\B/,IDENT_RE:h,UNDERSCORE_IDENT_RE:d,
+NUMBER_RE:f,C_NUMBER_RE:p,BINARY_NUMBER_RE:m,
+RE_STARTERS_RE:"!|!=|!==|%|%=|&|&&|&=|\\*|\\*=|\\+|\\+=|,|-|-=|/=|/|:|;|<<|<<=|<=|<|===|==|=|>>>=|>>=|>=|>>>|>>|>|\\?|\\[|\\{|\\(|\\^|\\^=|\\||\\|=|\\|\\||~",
+SHEBANG:(e={})=>{const t=/^#![ ]*\//
+;return e.binary&&(e.begin=((...e)=>e.map((e=>g(e))).join(""))(t,/.*\b/,e.binary,/\b.*/)),
+a({className:"meta",begin:t,end:/$/,relevance:0,"on:begin":(e,t)=>{
+0!==e.index&&t.ignoreMatch()}},e)},BACKSLASH_ESCAPE:b,APOS_STRING_MODE:E,
+QUOTE_STRING_MODE:x,PHRASAL_WORDS_MODE:v,COMMENT:w,C_LINE_COMMENT_MODE:y,
+C_BLOCK_COMMENT_MODE:N,HASH_COMMENT_MODE:R,NUMBER_MODE:{className:"number",
+begin:f,relevance:0},C_NUMBER_MODE:{className:"number",begin:p,relevance:0},
+BINARY_NUMBER_MODE:{className:"number",begin:m,relevance:0},CSS_NUMBER_MODE:{
+className:"number",
+begin:f+"(%|em|ex|ch|rem|vw|vh|vmin|vmax|cm|mm|in|pt|pc|px|deg|grad|rad|turn|s|ms|Hz|kHz|dpi|dpcm|dppx)?",
+relevance:0},REGEXP_MODE:{begin:/(?=\/[^/\n]*\/)/,contains:[{className:"regexp",
+begin:/\//,end:/\/[gimuy]*/,illegal:/\n/,contains:[b,{begin:/\[/,end:/\]/,
+relevance:0,contains:[b]}]}]},TITLE_MODE:{className:"title",begin:h,relevance:0
+},UNDERSCORE_TITLE_MODE:{className:"title",begin:d,relevance:0},METHOD_GUARD:{
+begin:"\\.\\s*[a-zA-Z_]\\w*",relevance:0},END_SAME_AS_BEGIN:e=>Object.assign(e,{
+"on:begin":(e,t)=>{t.data._beginMatch=e[1]},"on:end":(e,t)=>{
+t.data._beginMatch!==e[1]&&t.ignoreMatch()}})});function k(e,t){
+"."===e.input[e.index-1]&&t.ignoreMatch()}function M(e,t){
+t&&e.beginKeywords&&(e.begin="\\b("+e.beginKeywords.split(" ").join("|")+")(?!\\.)(?=\\b|\\s)",
+e.__beforeBegin=k,e.keywords=e.keywords||e.beginKeywords,delete e.beginKeywords,
+void 0===e.relevance&&(e.relevance=0))}function O(e,t){
+Array.isArray(e.illegal)&&(e.illegal=((...e)=>"("+e.map((e=>g(e))).join("|")+")")(...e.illegal))
+}function A(e,t){if(e.match){
+if(e.begin||e.end)throw Error("begin & end are not supported with match")
+;e.begin=e.match,delete e.match}}function L(e,t){
+void 0===e.relevance&&(e.relevance=1)}
+const I=["of","and","for","in","not","or","if","then","parent","list","value"]
+;function j(e,t,n="keyword"){const i={}
+;return"string"==typeof e?s(n,e.split(" ")):Array.isArray(e)?s(n,e):Object.keys(e).forEach((n=>{
+Object.assign(i,j(e[n],t,n))})),i;function s(e,n){
+t&&(n=n.map((e=>e.toLowerCase()))),n.forEach((t=>{const n=t.split("|")
+;i[n[0]]=[e,B(n[0],n[1])]}))}}function B(e,t){
+return t?Number(t):(e=>I.includes(e.toLowerCase()))(e)?0:1}
+function T(e,{plugins:t}){function n(t,n){
+return RegExp(g(t),"m"+(e.case_insensitive?"i":"")+(n?"g":""))}class i{
+constructor(){
+this.matchIndexes={},this.regexes=[],this.matchAt=1,this.position=0}
+addRule(e,t){
+t.position=this.position++,this.matchIndexes[this.matchAt]=t,this.regexes.push([t,e]),
+this.matchAt+=(e=>RegExp(e.toString()+"|").exec("").length-1)(e)+1}compile(){
+0===this.regexes.length&&(this.exec=()=>null)
+;const e=this.regexes.map((e=>e[1]));this.matcherRe=n(((e,t="|")=>{let n=0
+;return e.map((e=>{n+=1;const t=n;let i=g(e),s="";for(;i.length>0;){
+const e=u.exec(i);if(!e){s+=i;break}
+s+=i.substring(0,e.index),i=i.substring(e.index+e[0].length),
+"\\"===e[0][0]&&e[1]?s+="\\"+(Number(e[1])+t):(s+=e[0],"("===e[0]&&n++)}return s
+})).map((e=>`(${e})`)).join(t)})(e),!0),this.lastIndex=0}exec(e){
+this.matcherRe.lastIndex=this.lastIndex;const t=this.matcherRe.exec(e)
+;if(!t)return null
+;const n=t.findIndex(((e,t)=>t>0&&void 0!==e)),i=this.matchIndexes[n]
+;return t.splice(0,n),Object.assign(t,i)}}class s{constructor(){
+this.rules=[],this.multiRegexes=[],
+this.count=0,this.lastIndex=0,this.regexIndex=0}getMatcher(e){
+if(this.multiRegexes[e])return this.multiRegexes[e];const t=new i
+;return this.rules.slice(e).forEach((([e,n])=>t.addRule(e,n))),
+t.compile(),this.multiRegexes[e]=t,t}resumingScanAtSamePosition(){
+return 0!==this.regexIndex}considerAll(){this.regexIndex=0}addRule(e,t){
+this.rules.push([e,t]),"begin"===t.type&&this.count++}exec(e){
+const t=this.getMatcher(this.regexIndex);t.lastIndex=this.lastIndex
+;let n=t.exec(e)
+;if(this.resumingScanAtSamePosition())if(n&&n.index===this.lastIndex);else{
+const t=this.getMatcher(0);t.lastIndex=this.lastIndex+1,n=t.exec(e)}
+return n&&(this.regexIndex+=n.position+1,
+this.regexIndex===this.count&&this.considerAll()),n}}
+if(e.compilerExtensions||(e.compilerExtensions=[]),
+e.contains&&e.contains.includes("self"))throw Error("ERR: contains `self` is not supported at the top-level of a language.  See documentation.")
+;return e.classNameAliases=a(e.classNameAliases||{}),function t(i,r){const l=i
+;if(i.isCompiled)return l
+;[A].forEach((e=>e(i,r))),e.compilerExtensions.forEach((e=>e(i,r))),
+i.__beforeBegin=null,[M,O,L].forEach((e=>e(i,r))),i.isCompiled=!0;let o=null
+;if("object"==typeof i.keywords&&(o=i.keywords.$pattern,
+delete i.keywords.$pattern),
+i.keywords&&(i.keywords=j(i.keywords,e.case_insensitive)),
+i.lexemes&&o)throw Error("ERR: Prefer `keywords.$pattern` to `mode.lexemes`, BOTH are not allowed. (see mode reference) ")
+;return o=o||i.lexemes||/\w+/,
+l.keywordPatternRe=n(o,!0),r&&(i.begin||(i.begin=/\B|\b/),
+l.beginRe=n(i.begin),i.endSameAsBegin&&(i.end=i.begin),
+i.end||i.endsWithParent||(i.end=/\B|\b/),
+i.end&&(l.endRe=n(i.end)),l.terminatorEnd=g(i.end)||"",
+i.endsWithParent&&r.terminatorEnd&&(l.terminatorEnd+=(i.end?"|":"")+r.terminatorEnd)),
+i.illegal&&(l.illegalRe=n(i.illegal)),
+i.contains||(i.contains=[]),i.contains=[].concat(...i.contains.map((e=>(e=>(e.variants&&!e.cachedVariants&&(e.cachedVariants=e.variants.map((t=>a(e,{
+variants:null},t)))),e.cachedVariants?e.cachedVariants:S(e)?a(e,{
+starts:e.starts?a(e.starts):null
+}):Object.isFrozen(e)?a(e):e))("self"===e?i:e)))),i.contains.forEach((e=>{t(e,l)
+})),i.starts&&t(i.starts,r),l.matcher=(e=>{const t=new s
+;return e.contains.forEach((e=>t.addRule(e.begin,{rule:e,type:"begin"
+}))),e.terminatorEnd&&t.addRule(e.terminatorEnd,{type:"end"
+}),e.illegal&&t.addRule(e.illegal,{type:"illegal"}),t})(l),l}(e)}function S(e){
+return!!e&&(e.endsWithParent||S(e.starts))}function P(e){const t={
+props:["language","code","autodetect"],data:()=>({detectedLanguage:"",
+unknownLanguage:!1}),computed:{className(){
+return this.unknownLanguage?"":"hljs "+this.detectedLanguage},highlighted(){
+if(!this.autoDetect&&!e.getLanguage(this.language))return console.warn(`The language "${this.language}" you specified could not be found.`),
+this.unknownLanguage=!0,s(this.code);let t={}
+;return this.autoDetect?(t=e.highlightAuto(this.code),
+this.detectedLanguage=t.language):(t=e.highlight(this.language,this.code,this.ignoreIllegals),
+this.detectedLanguage=this.language),t.value},autoDetect(){
+return!(this.language&&(e=this.autodetect,!e&&""!==e));var e},
+ignoreIllegals:()=>!0},render(e){return e("pre",{},[e("code",{
+class:this.className,domProps:{innerHTML:this.highlighted}})])}};return{
+Component:t,VuePlugin:{install(e){e.component("highlightjs",t)}}}}const D={
+"after:highlightElement":({el:e,result:t,text:n})=>{const i=H(e)
+;if(!i.length)return;const a=document.createElement("div")
+;a.innerHTML=t.value,t.value=((e,t,n)=>{let i=0,a="";const r=[];function l(){
+return e.length&&t.length?e[0].offset!==t[0].offset?e[0].offset<t[0].offset?e:t:"start"===t[0].event?e:t:e.length?e:t
+}function o(e){a+="<"+C(e)+[].map.call(e.attributes,(function(e){
+return" "+e.nodeName+'="'+s(e.value)+'"'})).join("")+">"}function c(e){
+a+="</"+C(e)+">"}function g(e){("start"===e.event?o:c)(e.node)}
+for(;e.length||t.length;){let t=l()
+;if(a+=s(n.substring(i,t[0].offset)),i=t[0].offset,t===e){r.reverse().forEach(c)
+;do{g(t.splice(0,1)[0]),t=l()}while(t===e&&t.length&&t[0].offset===i)
+;r.reverse().forEach(o)
+}else"start"===t[0].event?r.push(t[0].node):r.pop(),g(t.splice(0,1)[0])}
+return a+s(n.substr(i))})(i,H(a),n)}};function C(e){
+return e.nodeName.toLowerCase()}function H(e){const t=[];return function e(n,i){
+for(let s=n.firstChild;s;s=s.nextSibling)3===s.nodeType?i+=s.nodeValue.length:1===s.nodeType&&(t.push({
+event:"start",offset:i,node:s}),i=e(s,i),C(s).match(/br|hr|img|input/)||t.push({
+event:"stop",offset:i,node:s}));return i}(e,0),t}const $={},U=e=>{
+console.error(e)},z=(e,...t)=>{console.log("WARN: "+e,...t)},K=(e,t)=>{
+$[`${e}/${t}`]||(console.log(`Deprecated as of ${e}. ${t}`),$[`${e}/${t}`]=!0)
+},G=s,V=a,W=Symbol("nomatch");return(e=>{
+const n=Object.create(null),s=Object.create(null),a=[];let r=!0
+;const l=/(^(<[^>]+>|\t|)+|\n)/gm,o="Could not find the language '{}', did you forget to load/include a language module?",g={
+disableAutodetect:!0,name:"Plain text",contains:[]};let u={
+noHighlightRe:/^(no-?highlight)$/i,
+languageDetectRe:/\blang(?:uage)?-([\w-]+)\b/i,classPrefix:"hljs-",
+tabReplace:null,useBR:!1,languages:null,__emitter:c};function h(e){
+return u.noHighlightRe.test(e)}function d(e,t,n,i){let s="",a=""
+;"object"==typeof t?(s=e,
+n=t.ignoreIllegals,a=t.language,i=void 0):(K("10.7.0","highlight(lang, code, ...args) has been deprecated."),
+K("10.7.0","Please use highlight(code, options) instead.\nhttps://github.com/highlightjs/highlight.js/issues/2277"),
+a=e,s=t);const r={code:s,language:a};M("before:highlight",r)
+;const l=r.result?r.result:f(r.language,r.code,n,i)
+;return l.code=r.code,M("after:highlight",l),l}function f(e,t,s,l){
+function c(e,t){const n=v.case_insensitive?t[0].toLowerCase():t[0]
+;return Object.prototype.hasOwnProperty.call(e.keywords,n)&&e.keywords[n]}
+function g(){null!=R.subLanguage?(()=>{if(""===M)return;let e=null
+;if("string"==typeof R.subLanguage){
+if(!n[R.subLanguage])return void k.addText(M)
+;e=f(R.subLanguage,M,!0,_[R.subLanguage]),_[R.subLanguage]=e.top
+}else e=p(M,R.subLanguage.length?R.subLanguage:null)
+;R.relevance>0&&(O+=e.relevance),k.addSublanguage(e.emitter,e.language)
+})():(()=>{if(!R.keywords)return void k.addText(M);let e=0
+;R.keywordPatternRe.lastIndex=0;let t=R.keywordPatternRe.exec(M),n="";for(;t;){
+n+=M.substring(e,t.index);const i=c(R,t);if(i){const[e,s]=i
+;if(k.addText(n),n="",O+=s,e.startsWith("_"))n+=t[0];else{
+const n=v.classNameAliases[e]||e;k.addKeyword(t[0],n)}}else n+=t[0]
+;e=R.keywordPatternRe.lastIndex,t=R.keywordPatternRe.exec(M)}
+n+=M.substr(e),k.addText(n)})(),M=""}function h(e){
+return e.className&&k.openNode(v.classNameAliases[e.className]||e.className),
+R=Object.create(e,{parent:{value:R}}),R}function d(e,t,n){let s=((e,t)=>{
+const n=e&&e.exec(t);return n&&0===n.index})(e.endRe,n);if(s){if(e["on:end"]){
+const n=new i(e);e["on:end"](t,n),n.isMatchIgnored&&(s=!1)}if(s){
+for(;e.endsParent&&e.parent;)e=e.parent;return e}}
+if(e.endsWithParent)return d(e.parent,t,n)}function m(e){
+return 0===R.matcher.regexIndex?(M+=e[0],1):(I=!0,0)}function b(e){
+const n=e[0],i=t.substr(e.index),s=d(R,e,i);if(!s)return W;const a=R
+;a.skip?M+=n:(a.returnEnd||a.excludeEnd||(M+=n),g(),a.excludeEnd&&(M=n));do{
+R.className&&k.closeNode(),R.skip||R.subLanguage||(O+=R.relevance),R=R.parent
+}while(R!==s.parent)
+;return s.starts&&(s.endSameAsBegin&&(s.starts.endRe=s.endRe),
+h(s.starts)),a.returnEnd?0:n.length}let E={};function x(n,a){const l=a&&a[0]
+;if(M+=n,null==l)return g(),0
+;if("begin"===E.type&&"end"===a.type&&E.index===a.index&&""===l){
+if(M+=t.slice(a.index,a.index+1),!r){const t=Error("0 width match regex")
+;throw t.languageName=e,t.badRule=E.rule,t}return 1}
+if(E=a,"begin"===a.type)return function(e){
+const t=e[0],n=e.rule,s=new i(n),a=[n.__beforeBegin,n["on:begin"]]
+;for(const n of a)if(n&&(n(e,s),s.isMatchIgnored))return m(t)
+;return n&&n.endSameAsBegin&&(n.endRe=RegExp(t.replace(/[-/\\^$*+?.()|[\]{}]/g,"\\$&"),"m")),
+n.skip?M+=t:(n.excludeBegin&&(M+=t),
+g(),n.returnBegin||n.excludeBegin||(M=t)),h(n),n.returnBegin?0:t.length}(a)
+;if("illegal"===a.type&&!s){
+const e=Error('Illegal lexeme "'+l+'" for mode "'+(R.className||"<unnamed>")+'"')
+;throw e.mode=R,e}if("end"===a.type){const e=b(a);if(e!==W)return e}
+if("illegal"===a.type&&""===l)return 1
+;if(L>1e5&&L>3*a.index)throw Error("potential infinite loop, way more iterations than matches")
+;return M+=l,l.length}const v=N(e)
+;if(!v)throw U(o.replace("{}",e)),Error('Unknown language: "'+e+'"')
+;const w=T(v,{plugins:a});let y="",R=l||w;const _={},k=new u.__emitter(u);(()=>{
+const e=[];for(let t=R;t!==v;t=t.parent)t.className&&e.unshift(t.className)
+;e.forEach((e=>k.openNode(e)))})();let M="",O=0,A=0,L=0,I=!1;try{
+for(R.matcher.considerAll();;){
+L++,I?I=!1:R.matcher.considerAll(),R.matcher.lastIndex=A
+;const e=R.matcher.exec(t);if(!e)break;const n=x(t.substring(A,e.index),e)
+;A=e.index+n}return x(t.substr(A)),k.closeAllNodes(),k.finalize(),y=k.toHTML(),{
+relevance:Math.floor(O),value:y,language:e,illegal:!1,emitter:k,top:R}}catch(n){
+if(n.message&&n.message.includes("Illegal"))return{illegal:!0,illegalBy:{
+msg:n.message,context:t.slice(A-100,A+100),mode:n.mode},sofar:y,relevance:0,
+value:G(t),emitter:k};if(r)return{illegal:!1,relevance:0,value:G(t),emitter:k,
+language:e,top:R,errorRaised:n};throw n}}function p(e,t){
+t=t||u.languages||Object.keys(n);const i=(e=>{const t={relevance:0,
+emitter:new u.__emitter(u),value:G(e),illegal:!1,top:g}
+;return t.emitter.addText(e),t})(e),s=t.filter(N).filter(k).map((t=>f(t,e,!1)))
+;s.unshift(i);const a=s.sort(((e,t)=>{
+if(e.relevance!==t.relevance)return t.relevance-e.relevance
+;if(e.language&&t.language){if(N(e.language).supersetOf===t.language)return 1
+;if(N(t.language).supersetOf===e.language)return-1}return 0})),[r,l]=a,o=r
+;return o.second_best=l,o}const m={"before:highlightElement":({el:e})=>{
+u.useBR&&(e.innerHTML=e.innerHTML.replace(/\n/g,"").replace(/<br[ /]*>/g,"\n"))
+},"after:highlightElement":({result:e})=>{
+u.useBR&&(e.value=e.value.replace(/\n/g,"&lt;br&gt;"))}},b=/^(<[^>]+>|\t)+/gm,E={
+"after:highlightElement":({result:e})=>{
+u.tabReplace&&(e.value=e.value.replace(b,(e=>e.replace(/\t/g,u.tabReplace))))}}
+;function x(e){let t=null;const n=(e=>{let t=e.className+" "
+;t+=e.parentNode?e.parentNode.className:"";const n=u.languageDetectRe.exec(t)
+;if(n){const t=N(n[1])
+;return t||(z(o.replace("{}",n[1])),z("Falling back to no-highlight mode for this block.",e)),
+t?n[1]:"no-highlight"}return t.split(/\s+/).find((e=>h(e)||N(e)))})(e)
+;if(h(n))return;M("before:highlightElement",{el:e,language:n}),t=e
+;const i=t.textContent,a=n?d(i,{language:n,ignoreIllegals:!0}):p(i)
+;M("after:highlightElement",{el:e,result:a,text:i
+}),e.innerHTML=a.value,((e,t,n)=>{const i=t?s[t]:n
+;e.classList.add("hljs"),i&&e.classList.add(i)})(e,n,a.language),e.result={
+language:a.language,re:a.relevance,relavance:a.relevance
+},a.second_best&&(e.second_best={language:a.second_best.language,
+re:a.second_best.relevance,relavance:a.second_best.relevance})}const v=()=>{
+v.called||(v.called=!0,
+K("10.6.0","initHighlighting() is deprecated.  Use highlightAll() instead."),
+document.querySelectorAll("pre code").forEach(x))};let w=!1;function y(){
+"loading"!==document.readyState?document.querySelectorAll("pre code").forEach(x):w=!0
+}function N(e){return e=(e||"").toLowerCase(),n[e]||n[s[e]]}
+function R(e,{languageName:t}){"string"==typeof e&&(e=[e]),e.forEach((e=>{
+s[e.toLowerCase()]=t}))}function k(e){const t=N(e)
+;return t&&!t.disableAutodetect}function M(e,t){const n=e;a.forEach((e=>{
+e[n]&&e[n](t)}))}
+"undefined"!=typeof window&&window.addEventListener&&window.addEventListener("DOMContentLoaded",(()=>{
+w&&y()}),!1),Object.assign(e,{highlight:d,highlightAuto:p,highlightAll:y,
+fixMarkup:e=>{
+return K("10.2.0","fixMarkup will be removed entirely in v11.0"),K("10.2.0","Please see https://github.com/highlightjs/highlight.js/issues/2534"),
+t=e,
+u.tabReplace||u.useBR?t.replace(l,(e=>"\n"===e?u.useBR?"&lt;br&gt;":e:u.tabReplace?e.replace(/\t/g,u.tabReplace):e)):t
+;var t},highlightElement:x,
+highlightBlock:e=>(K("10.7.0","highlightBlock will be removed entirely in v12.0"),
+K("10.7.0","Please use highlightElement now."),x(e)),configure:e=>{
+e.useBR&&(K("10.3.0","'useBR' will be removed entirely in v11.0"),
+K("10.3.0","Please see https://github.com/highlightjs/highlight.js/issues/2559")),
+u=V(u,e)},initHighlighting:v,initHighlightingOnLoad:()=>{
+K("10.6.0","initHighlightingOnLoad() is deprecated.  Use highlightAll() instead."),
+w=!0},registerLanguage:(t,i)=>{let s=null;try{s=i(e)}catch(e){
+if(U("Language definition for '{}' could not be registered.".replace("{}",t)),
+!r)throw e;U(e),s=g}
+s.name||(s.name=t),n[t]=s,s.rawDefinition=i.bind(null,e),s.aliases&&R(s.aliases,{
+languageName:t})},unregisterLanguage:e=>{delete n[e]
+;for(const t of Object.keys(s))s[t]===e&&delete s[t]},
+listLanguages:()=>Object.keys(n),getLanguage:N,registerAliases:R,
+requireLanguage:e=>{
+K("10.4.0","requireLanguage will be removed entirely in v11."),
+K("10.4.0","Please see https://github.com/highlightjs/highlight.js/pull/2844")
+;const t=N(e);if(t)return t
+;throw Error("The '{}' language is required, but not loaded.".replace("{}",e))},
+autoDetection:k,inherit:V,addPlugin:e=>{(e=>{
+e["before:highlightBlock"]&&!e["before:highlightElement"]&&(e["before:highlightElement"]=t=>{
+e["before:highlightBlock"](Object.assign({block:t.el},t))
+}),e["after:highlightBlock"]&&!e["after:highlightElement"]&&(e["after:highlightElement"]=t=>{
+e["after:highlightBlock"](Object.assign({block:t.el},t))})})(e),a.push(e)},
+vuePlugin:P(e).VuePlugin}),e.debugMode=()=>{r=!1},e.safeMode=()=>{r=!0
+},e.versionString="10.7.2";for(const e in _)"object"==typeof _[e]&&t(_[e])
+;return Object.assign(e,_),e.addPlugin(m),e.addPlugin(D),e.addPlugin(E),e})({})
+}();"object"==typeof exports&&"undefined"!=typeof module&&(module.exports=hljs);hljs.registerLanguage("lua",(()=>{"use strict";return e=>{
+const t="\\[=*\\[",a="\\]=*\\]",n={begin:t,end:a,contains:["self"]
+},o=[e.COMMENT("--(?!\\[=*\\[)","$"),e.COMMENT("--\\[=*\\[",a,{contains:[n],
+relevance:10})];return{name:"Lua",keywords:{$pattern:e.UNDERSCORE_IDENT_RE,
+literal:"true false nil",
+keyword:"and break do else elseif end for goto if in local not or repeat return then until while",
+built_in:"_G _ENV _VERSION __index __newindex __mode __call __metatable __tostring __len __gc __add __sub __mul __div __mod __pow __concat __unm __eq __lt __le assert collectgarbage dofile error getfenv getmetatable ipairs load loadfile loadstring module next pairs pcall print rawequal rawget rawset require select setfenv setmetatable tonumber tostring type unpack xpcall arg self coroutine resume yield status wrap create running debug getupvalue debug sethook getmetatable gethook setmetatable setlocal traceback setfenv getinfo setupvalue getlocal getregistry getfenv io lines write close flush open output type read stderr stdin input stdout popen tmpfile math log max acos huge ldexp pi cos tanh pow deg tan cosh sinh random randomseed frexp ceil floor rad abs sqrt modf asin min mod fmod log10 atan2 exp sin atan os exit setlocale date getenv difftime remove time clock tmpname rename execute package preload loadlib loaded loaders cpath config path seeall string sub upper len gfind rep find match char dump gmatch reverse byte format gsub lower table setn insert getn foreachi maxn foreach concat sort remove"
+},contains:o.concat([{className:"function",beginKeywords:"function",end:"\\)",
+contains:[e.inherit(e.TITLE_MODE,{
+begin:"([_a-zA-Z]\\w*\\.)*([_a-zA-Z]\\w*:)?[_a-zA-Z]\\w*"}),{className:"params",
+begin:"\\(",endsWithParent:!0,contains:o}].concat(o)
+},e.C_NUMBER_MODE,e.APOS_STRING_MODE,e.QUOTE_STRING_MODE,{className:"string",
+begin:t,end:a,contains:[n],relevance:5}])}}})());hljs.registerLanguage("dos",(()=>{"use strict";return e=>{
+const t=e.COMMENT(/^\s*@?rem\b/,/$/,{relevance:10});return{
+name:"Batch file (DOS)",aliases:["bat","cmd"],case_insensitive:!0,
+illegal:/\/\*/,keywords:{
+keyword:"if else goto for in do call exit not exist errorlevel defined equ neq lss leq gtr geq",
+built_in:"prn nul lpt3 lpt2 lpt1 con com4 com3 com2 com1 aux shift cd dir echo setlocal endlocal set pause copy append assoc at attrib break cacls cd chcp chdir chkdsk chkntfs cls cmd color comp compact convert date dir diskcomp diskcopy doskey erase fs find findstr format ftype graftabl help keyb label md mkdir mode more move path pause print popd pushd promt rd recover rem rename replace restore rmdir shift sort start subst time title tree type ver verify vol ping net ipconfig taskkill xcopy ren del"
+},contains:[{className:"variable",begin:/%%[^ ]|%[^ ]+?%|![^ ]+?!/},{
+className:"function",begin:"^\\s*[A-Za-z._?][A-Za-z0-9_$#@~.?]*(:|\\s+label)",
+end:"goto:eof",contains:[e.inherit(e.TITLE_MODE,{
+begin:"([_a-zA-Z]\\w*\\.)*([_a-zA-Z]\\w*:)?[_a-zA-Z]\\w*"}),t]},{
+className:"number",begin:"\\b\\d+",relevance:0},t]}}})());hljs.registerLanguage("plaintext",(()=>{"use strict";return t=>({
+name:"Plain text",aliases:["text","txt"],disableAutodetect:!0})})());
 
     function go()
     {
@@ -409,17 +738,17 @@ var hljs=function(){"use strict";function e(n){Object.freeze(n);var t="function"
         </td>
         <td style="text-align:right">
             <div id="header">
-                <div id="title">Clink v1.2.4</div>
+                <div id="title">Clink v1.2.5</div>
                 <div id="url">
-                    <a href="http://github.com/chrisant996/clink">
-                        http://github.com/chrisant996/clink
+                    <a href="https://github.com/chrisant996/clink">
+                        https://github.com/chrisant996/clink
                     </a>
                 </div>
                 <div id="author">
                     <a href="mailto:sparrowhawk996@gmail.com">Christopher Antos</a> (renovater)
                 </div>
                 <div id="author">
-                    <a href="http://twitter.com/choddlander">Martin Ridgers</a> (creator)
+                    <a href="https://twitter.com/choddlander">Martin Ridgers</a> (creator)
                 </div>
             </div>
         </td>
@@ -901,6 +1230,33 @@ Or <code>clink --version</code> shows just the version number.</dd>
 Echos key sequences to use in the .inputrc files for binding keys to Clink commands.  Each key pressed prints the associated key sequence on a separate line, until <kbd>Ctrl</kbd>+<kbd>C</kbd> is pressed.</dd>
 </p>
 
+<h2 id="portable-configuration">Portable Configuration</h2>
+<p>Sometimes it&#39;s useful to run Clink from a flash drive or from a network share, especially if you want to use Clink on someone else&#39;s computer.</p>
+<p>Here&#39;s how you can set up a portable configuration for Clink:</p>
+<ol>
+<li>Put your Lua scripts and other tools in the same directory as the Clink executable files.  For example fzf.exe, z.cmd, oh-my-posh.exe, or etc can all go in the same directory on a flash drive or network share.</li>
+<li>Make a batch file such as <code>portable.bat</code> that injects Clink using a specific profile directory.<ul>
+<li>On a flash drive, you can have a portable profile in a subdirectory under the Clink directory.</li>
+<li>On a network share, you&#39;ll want to copy some initial settings into a local profile directory (a profile directory on a network share will be slow).</li>
+</ul>
+</li>
+<li>In any cmd.exe window on any computer, you can then run the <code>portable.bat</code> script to inject Clink and have all your favorite settings and key bindings work.</li>
+</ol>
+<p>Here are some sample scripts:</p>
+<h3 id="portablebat-on-a-flash-drive">portable.bat (on a flash drive)</h3>
+<p>This sample script assumes the portable.bat script is in the Clink directory, and it uses a <code>clink_portable</code> profile directory under the Clink directory.</p>
+<pre><code class="language-cmd">@echo off
+rem -- Do any other desired configuration here, such as loading a doskey macro file.
+call &quot;%~dp0clink.bat&quot; inject --profile &quot;%~dp0clink_portable&quot; %1 %2 %3 %4 %5 %6 %7 %8 %9
+</code></pre>
+<h3 id="portablebat-on-a-network-share">portable.bat (on a network share)</h3>
+<p>This sample script assumes the portable.bat script is in the Clink directory, and that there is a file <code>portable_clink_settings</code> with the settings you want to copy to the local profile directory.</p>
+<pre><code class="language-cmd">@echo off
+if not exist &quot;%TEMP%\clink_portable&quot; md &quot;%TEMP%\clink_portable&quot; &gt;nul
+if not exist &quot;%TEMP%\clink_portable\clink_settings&quot; copy &quot;%~dp0portable_clink_settings&quot; &quot;%TEMP%\clink_portable\clink_settings&quot; &gt;nul
+rem -- Do any other desired configuration here, such as loading a doskey macro file.
+call &quot;%~dp0clink.bat&quot; inject --profile &quot;%TEMP%\clink_portable&quot; %1 %2 %3 %4 %5 %6 %7 %8 %9
+</code></pre>
 <a name="configreadline"/>
 
 <h1 id="configuring-readline">Configuring Readline</h1>
@@ -2425,7 +2781,8 @@ local foo_prompt = clink.promptfilter(10)
 function foo_prompt:filter(prompt)
 &nbsp; return "FOO "..prompt.." >>" --,false  -- Adding ,false stops further filtering.
 end</code></pre></div></div><hr/>
-</div><div class="group"><h5 class="group_name"><a name="console">console</a></h5><div class="function"><div class="header"> <div class="name"><a name="console.findnextline">console.findnextline</a></div> <div class="signature">( <span class="arg_name">starting_line</span>:integer, [<span class="arg_name">text</span>:string], [<span class="arg_name">mode</span>:string], [<span class="arg_name">attr</span>:integer], [<span class="arg_name">attrs</span>:table of integers], [<span class="arg_name">mask</span>:string] ) : integer</div></div><div class="body"><p class="desc">Searches downwards (forwards) for a line containing the specified text and/or attributes, starting at line <span class="arg">starting_line</span>. The matching line number is returned, or 0 if no matching line is found.</p><p class="desc"> This behaves the same as <a href="#console.findprevline">console.findprevline()</a> except that it searches in the opposite direction.</p></div></div><hr/>
+</div><div class="group"><h5 class="group_name"><a name="console">console</a></h5><div class="function"><div class="header"> <div class="name"><a name="console.cellcount">console.cellcount</a></div> <div class="signature">( <span class="arg_name">text</span>:string ) : integer</div></div><div class="body"><p class="desc">Returns the count of visible character cells that would be consumed if the <span class="arg">text</span> string were output to the console, accounting for any ANSI escape codes that may be present in the text.</p><p class="desc"> Note: backspace characters and line endings are counted as visible character cells and will skew the resulting count.</p></div></div><hr/>
+<div class="function"><div class="header"> <div class="name"><a name="console.findnextline">console.findnextline</a></div> <div class="signature">( <span class="arg_name">starting_line</span>:integer, [<span class="arg_name">text</span>:string], [<span class="arg_name">mode</span>:string], [<span class="arg_name">attr</span>:integer], [<span class="arg_name">attrs</span>:table of integers], [<span class="arg_name">mask</span>:string] ) : integer</div></div><div class="body"><p class="desc">Searches downwards (forwards) for a line containing the specified text and/or attributes, starting at line <span class="arg">starting_line</span>. The matching line number is returned, or 0 if no matching line is found.</p><p class="desc"> This behaves the same as <a href="#console.findprevline">console.findprevline()</a> except that it searches in the opposite direction.</p></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="console.findprevline">console.findprevline</a></div> <div class="signature">( <span class="arg_name">starting_line</span>:integer, [<span class="arg_name">text</span>:string], [<span class="arg_name">mode</span>:string], [<span class="arg_name">attr</span>:integer], [<span class="arg_name">attrs</span>:table of integers], [<span class="arg_name">mask</span>:string] ) : integer</div></div><div class="body"><p class="desc">Searches upwards (backwards) for a line containing the specified text and/or attributes, starting at line <span class="arg">starting_line</span>.  The matching line number is returned, or 0 if no matching line is found, or -1 if an invalid regular expression is provided.</p><p class="desc"> You can search for text, attributes, or both.  Include the <span class="arg">text</span> argument to search for text, and include either the <span class="arg">attr</span> or <span class="arg">attrs</span> argument to search for attributes.  If both text and attribute(s) are passed, then the attribute(s) must be found within the found text.  If only attribute(s) are passed, then they must be found anywhere in the line.  See <a href="#console.linehascolor">console.linehascolor()</a> for more information about the color codes.</p><p class="desc"> The <span class="arg">mode</span> argument selects how the search behaves. To use a regular expression, pass "regex".  To use a case insensitive search, pass "icase".  These can be combined by separating them with a comma.  The regular expression syntax is the ECMAScript syntax described <a href="https://docs.microsoft.com/en-us/cpp/standard-library/regular-expressions-cpp">here</a>.</p><p class="desc"> Any trailing whitespace is ignored when searching.  This especially affects the <code>$</code> (end of line) regex operator.</p><p class="desc"> <span class="arg">mask</span> is optional and can be "fore" or "back" to only match foreground or background colors, respectively.</p><p class="desc"> <strong>Note:</strong> Although most of the arguments are optional, the order of provided arguments is important.</p><p class="desc"> The following example provides a pair of <code>find_prev_colored_line</code> and <code>find_next_colored_line</code> functions.  The functions can be bound to keys via the <code>luafunc:</code> macro syntax in a .inputrc file. They scroll the screen buffer to the previous or next line that contains "warn" or "error" colored red or yellow.</p><pre class="language-lua"><code>local was_top
 local found_index
 
@@ -2513,6 +2870,7 @@ end</code></pre></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="console.getwidth">console.getwidth</a></div> <div class="signature">() : integer</div></div><div class="body"><p class="desc">Returns the width of the console screen buffer in characters.</p></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="console.islinedefaultcolor">console.islinedefaultcolor</a></div> <div class="signature">( <span class="arg_name">line</span>:integer ) : boolean</div></div><div class="body"><p class="desc">Returns whether line number <span class="arg">line</span> uses only the default text color.</p></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="console.linehascolor">console.linehascolor</a></div> <div class="signature">( <span class="arg_name">line</span>:integer, [<span class="arg_name">attr</span>:integer], [<span class="arg_name">attrs</span>:table of integers], [<span class="arg_name">mask</span>:string] ) : boolean</div></div><div class="body"><p class="desc">Returns whether line number <span class="arg">line</span> contains the DOS color code <span class="arg">attr</span>, or any of the DOS color codes in <span class="arg">attrs</span> (either an integer or a table of integers must be provided, but not both).  <span class="arg">mask</span> is optional and can be "fore" or "back" to only match foreground or background colors, respectively.</p><p class="desc"> The low 4 bits of the color code are the foreground color, and the high 4 bits of the color code are the background color.  This refers to the default 16 color palette used by console windows.  When 256 color or 24-bit color ANSI escape codes have been used, the closest of the 16 colors is used.</p><p class="desc"> To build a color code, add the corresponding Foreground color and the Background color values from this table:</p><p class="desc"> <table><tr><th align="center">Foreground</th><th align="center">Background</th><th>Color</th></tr> <tr><td align="center">0</td><td align="center">0</td><td><div class="colorsample" style="background-color:#000000">&nbsp;</div> Black</td></tr> <tr><td align="center">1</td><td align="center">16</td><td><div class="colorsample" style="background-color:#000080">&nbsp;</div> Dark Blue</td></tr> <tr><td align="center">2</td><td align="center">32</td><td><div class="colorsample" style="background-color:#008000">&nbsp;</div> Dark Green</td></tr> <tr><td align="center">3</td><td align="center">48</td><td><div class="colorsample" style="background-color:#008080">&nbsp;</div> Dark Cyan</td></tr> <tr><td align="center">4</td><td align="center">64</td><td><div class="colorsample" style="background-color:#800000">&nbsp;</div> Dark Red</td></tr> <tr><td align="center">5</td><td align="center">80</td><td><div class="colorsample" style="background-color:#800080">&nbsp;</div> Dark Magenta</td></tr> <tr><td align="center">6</td><td align="center">96</td><td><div class="colorsample" style="background-color:#808000">&nbsp;</div> Dark Yellow</td></tr> <tr><td align="center">7</td><td align="center">112</td><td><div class="colorsample" style="background-color:#c0c0c0">&nbsp;</div> Gray</td></tr> <tr><td align="center">8</td><td align="center">128</td><td><div class="colorsample" style="background-color:#808080">&nbsp;</div> Dark Gray</td></tr> <tr><td align="center">9</td><td align="center">144</td><td><div class="colorsample" style="background-color:#0000ff">&nbsp;</div> Bright Blue</td></tr> <tr><td align="center">10</td><td align="center">160</td><td><div class="colorsample" style="background-color:#00ff00">&nbsp;</div> Bright Green</td></tr> <tr><td align="center">11</td><td align="center">176</td><td><div class="colorsample" style="background-color:#00ffff">&nbsp;</div> Bright Cyan</td></tr> <tr><td align="center">12</td><td align="center">192</td><td><div class="colorsample" style="background-color:#ff0000">&nbsp;</div> Bright Red</td></tr> <tr><td align="center">13</td><td align="center">208</td><td><div class="colorsample" style="background-color:#ff00ff">&nbsp;</div> Bright Magenta</td></tr> <tr><td align="center">14</td><td align="center">224</td><td><div class="colorsample" style="background-color:#ffff00">&nbsp;</div> Bright Yellow</td></tr> <tr><td align="center">15</td><td align="center">240</td><td><div class="colorsample" style="background-color:#ffffff">&nbsp;</div> White</td></tr> </table></p></div></div><hr/>
+<div class="function"><div class="header"> <div class="name"><a name="console.plaintext">console.plaintext</a></div> <div class="signature">( <span class="arg_name">text</span>:string ) : string, integer</div></div><div class="body"><p class="desc">Returns the input <span class="arg">text</span> with ANSI escape codes removed, and the count of visible character cells that would be consumed if the text were output to the console.</p><p class="desc"> Note: backspace characters and line endings are counted as visible character cells and will skew the resulting count.</p></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="console.screengrab">console.screengrab</a></div> <div class="signature">( <span class="arg_name">candidate_pattern</span>:string, <span class="arg_name">accept_pattern</span>:string ) : table</div></div><div class="body"><p class="desc">Uses the provided Lua string patterns to collect text from the current console screen and returns a table of matching text snippets.  The snippets are ordered by distance from the input line.</p><p class="desc"> For example <span class="arg">candidate_pattern</span> could specify a pattern that identifies words, and <span class="arg">accept_pattern</span> could specify a pattern that matches words composed of hexadecimal digits.</p><pre class="language-lua"><code>local matches = console.screengrab(
 &nbsp;       "[^%w]*(%w%w[%w]+)",   -- Words with 3 or more letters are candidates.
 &nbsp;       "^%x+$")               -- A candidate containing only hexadecimal digits is a match.</code></pre></div></div><hr/>
@@ -2551,6 +2909,7 @@ line:getcommandoffset() == 4</code></pre></div></div><hr/>
 </div><div class="group"><h5 class="group_name"><a name="os">os</a></h5><div class="function"><div class="header"> <div class="name"><a name="os.chdir">os.chdir</a></div> <div class="signature">( <span class="arg_name">path</span>:string ) : boolean</div></div><div class="body"><p class="desc">Changes the current directory to <span class="arg">path</span> and returns whether it was successful.</p></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="os.copy">os.copy</a></div> <div class="signature">( <span class="arg_name">src</span>:string, <span class="arg_name">dest</span>:string ) : boolean</div></div><div class="body"><p class="desc">Copies the <span class="arg">src</span> file to the <span class="arg">dest</span> file.</p></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="os.createtmpfile">os.createtmpfile</a></div> <div class="signature">( [<span class="arg_name">prefix</span>:string], [<span class="arg_name">ext</span>:string], [<span class="arg_name">path</span>:string], [<span class="arg_name">mode</span>:string] ) : file, string</div></div><div class="body"><p class="desc">Creates a uniquely named file, intended for use as a temporary file.  The name pattern is "<em>location</em> <code>\</code> <em>prefix</em> <code>_</code> <em>processId</em> <code>_</code> <em>uniqueNum</em> <em>extension</em>".</p><p class="desc"> <span class="arg">prefix</span> optionally specifies a prefix for the file name and defaults to "tmp".</p><p class="desc"> <span class="arg">ext</span> optionally specifies a suffix for the file name and defaults to "" (if <span class="arg">ext</span> starts with a period "." then it is a filename extension).</p><p class="desc"> <span class="arg">path</span> optionally specifies a path location in which to create the file.  The default is the system TEMP directory.</p><p class="desc"> <span class="arg">mode</span> optionally specifies "t" for text mode (line endings are translated) or "b" for binary mode (untranslated IO).  The default is "t".</p><p class="desc"> When successful, the function returns a file handle and the file name.</p><p class="desc"> <strong>Note:</strong> Be sure to delete the file when finished, or it will be leaked.</p><p class="desc"> If the function is unable to create a file it returns nil, an error message, and an error number.  For example if the directory is inaccessible, or if there are already too many files, or invalid file name characters are used, or etc.</p></div></div><hr/>
+<div class="function"><div class="header"> <div class="name"><a name="os.expandenv">os.expandenv</a></div> <div class="signature">( <span class="arg_name">value</span>:string ) : string</div></div><div class="body"><p class="desc">Returns <span class="arg">value</span> with any <code>%name%</code> environment variables expanded.  Names are case insensitive.  Special CMD syntax is not supported (e.g. <code>%name:str1=str2%</code> or <code>%name:~offset,length%</code>).</p><p class="desc"> Note: <code>os.getenv("HOME")</code> receives special treatment: if %HOME% is not set then it is synthesized from %HOMEDRIVE% and %HOMEPATH%, or from %USERPROFILE%.</p></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="os.getalias">os.getalias</a></div> <div class="signature">( <span class="arg_name">name</span>:string ) : string | nil</div></div><div class="body"><p class="desc">Returns command string for doskey alias <span class="arg">name</span>, or nil if the named alias does not exist.</p></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="os.getaliases">os.getaliases</a></div> <div class="signature">() : table</div></div><div class="body"><p class="desc">Returns doskey aliases in a table with the following scheme: <span class="tablescheme">{ {name:string, command:string}, ... }</span>.</p></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="os.getbatterystatus">os.getbatterystatus</a></div> <div class="signature">() : table</div></div><div class="body"><p class="desc">Returns a table containing the battery status for the device, or nil if an error occurs.  The returned table has the following scheme:</p><pre class="language-lua"><code>{
@@ -2723,6 +3082,17 @@ string.matchlen("abx", "abx")       -- returns -1</code></pre></div></div><hr/>
         <div class="section" id="changes">
 <h1 id="changes">Changes</h1>
 <h2 id="releases-from-chrisant996clink-fork">Releases from <a href="https://github.com/chrisant996/clink">chrisant996/clink</a> fork</h2>
+<h3 id="v125">v1.2.5</h3>
+<ul>
+<li>Added <code>os.expandenv()</code> function to expand environment variables in a string.</li>
+<li>Added <code>console.cellcount()</code> function to count the cells a string will use when displayed.</li>
+<li>Added <code>console.plaintext()</code> function to remove ANSI escape codes from a string.</li>
+<li>Clink now sets <code>%=clink.bin%</code> that points to the Clink binaries directory.  This can be particularly useful for a portable installation of Clink so that scripts can find the Clink binaries directory and construct relative paths to other nearby files.</li>
+<li>Clean up column alignment in <code>--help</code> texts.</li>
+<li>Fixed <code>history.sticky_search</code> with anchored history search.</li>
+<li>Fixed <code>clink inject --profile</code> to use correct log file name while initially injecting.</li>
+<li>Fixed Clink autorun to be more compatible with Cmder (<a href="https://github.com/cmderdev/cmder/issues/2536">Cmder #2536</a>).</li>
+</ul>
 <h3 id="v124">v1.2.4</h3>
 <ul>
 <li>Added support for <kbd>Shift</kbd>+<kbd>Arrows</kbd> to select text and typing to replace selected text.</li>
