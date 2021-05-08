@@ -91,9 +91,16 @@ static class : public match_generator
         const char* start = end_word.get_pointer();
         const char* c = start + end_word.length();
 
-        if (end_word.length() == 1 && *start == '~')
+        if (is_tilde(start, end_word.length()))
         {
             // Tilde by itself should be expanded, so keep the whole word.
+        }
+        else if (is_dots(start, end_word.length()))
+        {
+            // `.` or `..` should be kept so that matches can include `.` or
+            // `..` directories.  Bash includes `.` and `..` but only when those
+            // match typed text (i.e. when there's no input text, they are not
+            // considered possible matches).
         }
         else
         {
@@ -107,6 +114,21 @@ static class : public match_generator
 
         info.truncate = 0;
         info.keep = int(c - start);
+    }
+
+private:
+    bool is_tilde(const char* word, unsigned int len) const
+    {
+        return (len == 1 && word[0] == '~');
+    }
+
+    bool is_dots(const char* word, unsigned int len) const
+    {
+        if (len < 1 || len > 2 || word[0] != '.')
+            return false;
+        if (len == 2 && word[1] != '.')
+            return false;
+        return true;
     }
 } g_file_generator;
 

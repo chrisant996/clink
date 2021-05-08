@@ -57,8 +57,15 @@ function exec_generator:generate(line_state, match_builder)
 
     -- We're only interested in exec completion if this is the first word of
     -- the line.
-    if line_state:getwordcount() > 1 or line_state:getendword() == "~" then
+    local endword = line_state:getendword()
+    if line_state:getwordcount() > 1 or endword == "~" then
         return false
+    elseif endword == "." or endword == ".." then
+        -- This is to mimic how bash seems to work when completing `.` or `..`
+        -- as the first word in a command line.
+        -- See https://github.com/chrisant996/clink/issues/111.
+        match_builder:addmatch({ match = endword, type = "dir" })
+        return true
     end
 
     -- If enabled, lines prefixed with whitespace disable executable matching.

@@ -44,6 +44,23 @@ globber::globber(const char* pattern)
         }
     }
 
+    // Include `.` and `..` directories if the pattern's filename part is
+    // exactly `.` or `..`.
+    if (pattern)
+    {
+        const char* name = path::get_name(pattern);
+        if (name && name[0] == '.')
+        {
+            unsigned int index = 1;
+            if (name[index] == '.')
+                index++;
+            if (name[index] == '*')
+                index++;
+            if (name[index] == '\0')
+                dots(true);
+        }
+    }
+
     wstr<280> wglob(pattern);
     m_handle = FindFirstFileW(wglob.c_str(), &m_data);
     if (m_handle == INVALID_HANDLE_VALUE)
