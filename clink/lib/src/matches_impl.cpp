@@ -577,14 +577,26 @@ bool matches_impl::add_match(const match_desc& desc)
     if (m_coalesced || match == nullptr || !*match)
         return false;
 
-    if (desc.type == match_type::none)
+    char* sep = rl_last_path_separator(match);
+    bool ends_with_sep = (sep && !sep[1]);
+
+    if (desc.type == match_type::none && ends_with_sep)
+        type = match_type::dir;
+
+    // insert_match() relies on Clink always including a trailing path separator
+    // on directory matches, so add one if the caller omitted it.
+    const char* store_match;
+    if (type == match_type::dir && !ends_with_sep)
     {
-        char* sep = rl_last_path_separator(match);
-        if (sep && !sep[1])
-            type = match_type::dir;
+        str<32> tmp(match);
+        path::append(tmp, "");
+        store_match = m_store.store_front(tmp.c_str());
+    }
+    else
+    {
+        store_match = m_store.store_front(match);
     }
 
-    const char* store_match = m_store.store_front(match);
     if (!store_match)
         return false;
 
