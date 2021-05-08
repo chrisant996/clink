@@ -3,7 +3,7 @@
 
 <!-- ----------------------------------------------------- -->
 <head>
-<title>Clink v1.2.5</title>
+<title>Clink v1.2.6</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Rambla:wght@400;700&family=Roboto&family=Fira+Mono&display=swap');
 html {
@@ -738,7 +738,7 @@ name:"Plain text",aliases:["text","txt"],disableAutodetect:!0})})());
         </td>
         <td style="text-align:right">
             <div id="header">
-                <div id="title">Clink v1.2.5</div>
+                <div id="title">Clink v1.2.6</div>
                 <div id="url">
                     <a href="https://github.com/chrisant996/clink">
                         https://github.com/chrisant996/clink
@@ -3082,6 +3082,13 @@ string.matchlen("abx", "abx")       -- returns -1</code></pre></div></div><hr/>
         <div class="section" id="changes">
 <h1 id="changes">Changes</h1>
 <h2 id="releases-from-chrisant996clink-fork">Releases from <a href="https://github.com/chrisant996/clink">chrisant996/clink</a> fork</h2>
+<h3 id="v126">v1.2.6</h3>
+<ul>
+<li>Fixed tilde expansion for directory by itself; now <code>~\</code> can change the working directory to the <code>~</code> directory.</li>
+<li>Fixed pagination when displaying completions that take more than 1 line to display.</li>
+<li>Fixed inserting directory match completions when a Lua script didn&#39;t include a trailing path separator in the directory match.</li>
+<li>Fixed <a href="https://github.com/chrisant996/clink/issues/111">#111</a>; <code>..</code> completion is different from bash.</li>
+</ul>
 <h3 id="v125">v1.2.5</h3>
 <ul>
 <li>Added <code>os.expandenv()</code> function to expand environment variables in a string.</li>
