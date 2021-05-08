@@ -421,6 +421,18 @@ static bool intercept_directory(str_base& inout)
         }
     }
 
+    // Tilde expansion.
+    if (tmp.first_of('~') >= 0)
+    {
+        char* expanded_path = tilde_expand(tmp.c_str());
+        if (expanded_path)
+        {
+            if (!tmp.equals(expanded_path))
+                tmp = expanded_path;
+            free(expanded_path);
+        }
+    }
+
     if (os::get_path_type(tmp.c_str()) != os::path_type_dir)
         return false;
 
