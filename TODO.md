@@ -5,7 +5,6 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 # RELEASE
 
 ## Issues
-- When a match takes more than 1 line to display, the pager shows too many lines.  E.g. in my local `c:\tmp` directory pressing <kbd>Alt</kbd>+<kbd>=</kbd> reproduces the problem.
 
 ## Investigate
 - Add syntax for argmatchers to defer adding args/flags, to facilitate adding args/flags by parsing help text from a program.  This is more complex than I first thought:

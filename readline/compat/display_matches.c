@@ -871,6 +871,20 @@ static int display_match_list_internal(char **matches, int len, int max, bool on
             append_color_indicator(C_CLR_TO_EOL);
         }
 #endif
+
+        {
+            int lines_for_row = 1;
+            if (printed_len)
+                lines_for_row += (printed_len - 1) / _rl_screenwidth;
+            if (_rl_page_completions && lines > 0 && lines + lines_for_row >= _rl_screenheight)
+            {
+                lines = _rl_internal_pager(lines);
+                if (lines < 0)
+                    return 0;
+            }
+            lines += lines_for_row;
+        }
+
         flush_tmpbuf();
         rl_crlf();
 #if defined(SIGWINCH)
@@ -879,13 +893,6 @@ static int display_match_list_internal(char **matches, int len, int max, bool on
         if (RL_SIG_RECEIVED())
 #endif
             return 0;
-        lines++;
-        if (_rl_page_completions && lines >= (_rl_screenheight - 1) && i < count)
-        {
-            lines = _rl_internal_pager(lines);
-            if (lines < 0)
-                return 0;
-        }
     }
 
     return 0;
