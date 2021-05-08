@@ -6,6 +6,7 @@
 
 - Fixed tilde expansion for directory by itself; now `~\` can change the working directory to the `~` directory.
 - Fixed pagination when displaying completions that take more than 1 line to display.
+- Fixed inserting directory match completions when a Lua script didn't include a trailing path separator in the directory match.
 - Fixed [#111](https://github.com/chrisant996/clink/issues/111); `..` completion is different from bash.
 
 ### v1.2.5
