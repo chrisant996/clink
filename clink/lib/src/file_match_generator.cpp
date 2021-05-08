@@ -117,18 +117,52 @@ static class : public match_generator
     }
 
 private:
-    bool is_tilde(const char* word, unsigned int len) const
+    static bool is_tilde(const char* word, unsigned int len)
     {
         return (len == 1 && word[0] == '~');
     }
 
-    bool is_dots(const char* word, unsigned int len) const
+    static bool is_dots(const char* word, unsigned int len)
     {
-        if (len < 1 || len > 2 || word[0] != '.')
-            return false;
-        if (len == 2 && word[1] != '.')
-            return false;
-        return true;
+        if (!advance_ignore_quotes(word, len))
+            return false;               // Too short.
+        if (word[len] != '.')
+            return false;               // No dot at end.
+
+        if (!advance_ignore_quotes(word, len))
+            return true;                // Exactly ".".
+        if (word[len] == '.' && !advance_ignore_quotes(word, len))
+            return true;                // Exactly "..".
+
+        if (path::is_separator(word[len]))
+            return true;                // Ends with "\." or "\..".
+
+        return false;                   // Else nope.
+    }
+
+    static bool advance_ignore_quotes(const char* word, unsigned int& len)
+    {
+        if (len)
+        {
+            unsigned int seek = len - 1;
+            while (true)
+            {
+                // Finding a non-quote is success.
+                if (word[seek] != '"')
+                {
+                    len = seek;
+                    return true;
+                }
+                // Reaching the beginning is failure.
+                if (!seek)
+                    break;
+                seek--;
+                // Finding a `\"` digraph is failure.
+                if (word[seek] == '\\')
+                    break;
+            }
+        }
+        return false;
     }
 } g_file_generator;
 
