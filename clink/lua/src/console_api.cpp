@@ -44,13 +44,13 @@ static SHORT GetConsoleNumLines(const CONSOLE_SCREEN_BUFFER_INFO& csbi)
 /// <table>
 /// <tr><th>Mode</th><th>Description</th></tr>
 /// <tr><td>"line"</td><td>Scrolls by <span class="arg">amount</span> lines;
-/// negative is up and positive is down.
+/// negative is up and positive is down.</td></tr>
 /// <tr><td>"page"</td><td>Scrolls by <span class="arg">amount</span> pages;
-/// negative is up and positive is down.
+/// negative is up and positive is down.</td></tr>
 /// <tr><td>"end"</td><td>Scrolls to the top if <span class="arg">amount</span>
-/// is negative, or to the bottom if positive.
+/// is negative, or to the bottom if positive.</td></tr>
 /// <tr><td>"absolute"</td><td>Scrolls to line <span class="arg">amount</span>,
-/// from 1 to <a href="#console.getnumlines">console.getnumlines()</a>.
+/// from 1 to <a href="#console.getnumlines">console.getnumlines()</a>.</td></tr>
 /// </table>
 static int scroll(lua_State* state)
 {
