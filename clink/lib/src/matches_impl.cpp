@@ -6,6 +6,7 @@
 #include "match_generator.h"
 
 #include <core/base.h>
+#include <core/settings.h>
 #include <core/str.h>
 #include <core/str_compare.h>
 #include <core/str_tokeniser.h>
@@ -19,6 +20,25 @@
 extern "C" {
 extern int rl_complete_with_tilde_expansion;
 };
+
+//------------------------------------------------------------------------------
+static int s_slash_translation = 0;
+void set_slash_translation(int mode) { s_slash_translation = mode; }
+
+//------------------------------------------------------------------------------
+static setting_enum g_translate_slashes(
+    "match.translate_slashes",
+    "Translate slashes and backslashes",
+    "File and directory completions can be translated to use consistent slashes.\n"
+    "The default is 'system' to use the appropriate path separator for the OS host\n"
+    "(backslashes on Windows).  Use 'slash' to use forward slashes, or 'backslash'\n"
+    "to use backslashes.  Use 'off' to turn off translating slashes from custom\n"
+    "match generators.",
+    "off,system,slash,backslash",
+    1
+);
+
+
 
 //------------------------------------------------------------------------------
 match_type to_match_type(int mode, int attr)
@@ -137,20 +157,20 @@ match_builder::match_builder(matches& matches)
 }
 
 //------------------------------------------------------------------------------
-bool match_builder::add_match(const char* match, match_type type)
+bool match_builder::add_match(const char* match, match_type type, bool already_normalised)
 {
     char suffix = 0;
     match_desc desc = {
         match,
         type
     };
-    return add_match(desc);
+    return add_match(desc, already_normalised);
 }
 
 //------------------------------------------------------------------------------
-bool match_builder::add_match(const match_desc& desc)
+bool match_builder::add_match(const match_desc& desc, bool already_normalized)
 {
-    return ((matches_impl&)m_matches).add_match(desc);
+    return ((matches_impl&)m_matches).add_match(desc, already_normalized);
 }
 
 //------------------------------------------------------------------------------
@@ -529,6 +549,8 @@ void matches_impl::reset()
     m_word_break_position = -1;
     m_filename_completion_desired.reset();
     m_filename_display_desired.reset();
+
+    s_slash_translation = g_translate_slashes.get();
 }
 
 //------------------------------------------------------------------------------
@@ -569,7 +591,7 @@ void matches_impl::set_matches_are_files(bool files)
 }
 
 //------------------------------------------------------------------------------
-bool matches_impl::add_match(const match_desc& desc)
+bool matches_impl::add_match(const match_desc& desc, bool already_normalized)
 {
     const char* match = desc.match;
     match_type type = desc.type;
@@ -583,20 +605,46 @@ bool matches_impl::add_match(const match_desc& desc)
     if (desc.type == match_type::none && ends_with_sep)
         type = match_type::dir;
 
-    // insert_match() relies on Clink always including a trailing path separator
-    // on directory matches, so add one if the caller omitted it.
-    const char* store_match;
+    // Slash translation happens only for dir, file, and none match types.  And
+    // only when `clink.slash_translation` is enabled.  already_normalized means
+    // desc has already been normalized to system format, and a performance
+    // optimization can skip translation if system format is configured.
+    int mode = (s_slash_translation &&
+                (type == match_type::dir ||
+                 type == match_type::file ||
+                 (type == match_type::none &&
+                  m_filename_completion_desired.get()))) ? s_slash_translation : 0;
+    bool translate = (mode > 0 && (mode > 1 || !already_normalized));
+
+    str<280> tmp;
     if (type == match_type::dir && !ends_with_sep)
     {
-        str<32> tmp(match);
+        // insert_match() relies on Clink always including a trailing path
+        // separator on directory matches, so add one if the caller omitted it.
+        tmp = match;
         path::append(tmp, "");
-        store_match = m_store.store_front(tmp.c_str());
+        match = tmp.c_str();
     }
-    else
+    else if (translate)
     {
-        store_match = m_store.store_front(match);
+        tmp = match;
     }
 
+    if (translate)
+    {
+        assert(mode > 0);
+        int sep;
+        switch (mode)
+        {
+        default:    sep = 0; break;
+        case 2:     sep = '/'; break;
+        case 3:     sep = '\\'; break;
+        }
+        path::normalise_separators(tmp, sep);
+        match = tmp.c_str();
+    }
+
+    const char* store_match = m_store.store_front(match);
     if (!store_match)
         return false;
 

@@ -295,6 +295,82 @@ static int get_ansi_host(lua_State* state)
     return 1;
 }
 
+//------------------------------------------------------------------------------
+/// -name:  clink.translateslashes
+/// -arg:   type:integer
+/// -show:  -- This example affects all match generators, by using priority -1 to
+/// -show:  -- run first and returning false to let generators continue.
+/// -show:  -- To instead affect only one generator, call clink.translateslashes()
+/// -show:  -- in its :generate() function and return true.
+/// -show:  local force_slashes = clink.generator(-1)
+/// -show:  function force_slashes:generate()
+/// -show:  &nbsp; clink.translateslashes(2)    -- Convert to slashes.
+/// -show:  &nbsp; return false                 -- Allow generators to continue.
+/// -show:  end
+/// This overrides how Clink translates slashes in completion matches, which is
+/// normally determined by the <code>match.translate_slashes</code> setting.
+///
+/// This is reset every time match generation is invoked, so use a generator to
+/// set this.
+///
+/// The <span class="arg">type</span> specifies how to translate slashes when
+/// generators add matches:
+/// <table>
+/// <tr><th>Type</th><th>Description</th></tr>
+/// <tr><td><code>0</code></td><td>No translation.</td></tr>
+/// <tr><td><code>1</code></td><td>Translate using the system path separator (backslash on Windows).</td></tr>
+/// <tr><td><code>2</code></td><td>Translate to slashes (<code>/</code>).</td></tr>
+/// <tr><td><code>3</code></td><td>Translate to backslashes (<code>\</code>).</td></tr>
+/// </table>
+///
+/// Note:  Clink always generates file matches using the system path separator
+/// (backslash on Windows), regardless what path separator may have been typed
+/// as input.  Setting this to <code>0</code> does not disable normalizing typed
+/// input paths when invoking completion; it only disables translating slashes
+/// in custom generators.
+static int translate_slashes(lua_State* state)
+{
+    bool isnum;
+    int mode = checkinteger(state, 1, &isnum);
+    if (!isnum)
+        return 0;
+
+    if (mode < 0 || mode > 3)
+        mode = 1;
+
+    extern void set_slash_translation(int mode);
+    set_slash_translation(mode);
+    return 0;
+}
+
+//------------------------------------------------------------------------------
+/// -name:  clink.slash_translation
+/// -arg:   type:integer
+/// -deprecated: clink.translateslashes
+/// Controls how Clink will translate the path separating slashes for the
+/// current path being completed. Values for <span class="arg">type</span> are;</br>
+/// -1 - no translation</br>
+/// 0 - to backslashes</br>
+/// 1 - to forward slashes
+static int slash_translation(lua_State* state)
+{
+    if (lua_gettop(state) == 0)
+        return 0;
+
+    if (!lua_isnumber(state, 1))
+        return 0;
+
+    int mode = int(lua_tointeger(state, 1));
+    if (mode < 0)           mode = 0;
+    else if (mode == 0)     mode = 3;
+    else if (mode == 1)     mode = 2;
+    else                    mode = 1;
+
+    extern void set_slash_translation(int mode);
+    set_slash_translation(mode);
+    return 0;
+}
+
 
 
 //------------------------------------------------------------------------------
@@ -320,6 +396,7 @@ void clink_lua_initialise(lua_state& lua)
         { "upper",                  &to_uppercase },
         { "getsession",             &get_session },
         { "getansihost",            &get_ansi_host },
+        { "translateslashes",       &translate_slashes },
         // Backward compatibility with the Clink 0.4.8 API.  Clink 1.0.0a1 had
         // moved these APIs away from "clink.", but backward compatibility
         // requires them here as well.
@@ -338,6 +415,7 @@ void clink_lua_initialise(lua_state& lua)
         { "get_setting_str",        &get_setting_str },
         { "is_dir",                 &is_dir },
         { "is_rl_variable_true",    &is_rl_variable_true },
+        { "slash_translation",      &slash_translation },
     };
 
     lua_State* state = lua.get_state();

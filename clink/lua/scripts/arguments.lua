@@ -485,7 +485,10 @@ function _argmatcher:_generate(line_state, match_builder)
     -- Select between adding flags or matches themselves. Works in conjunction
     -- with getwordbreakinfo()'s return.
     if matcher._flags and matcher:_is_flag(line_state:getendword()) then
-        add_matches(matcher._flags._args[1], match_type)
+        -- Flags are always "arg" type, which helps differentiate them from
+        -- filename completions even when using _deprecated matcher mode, so
+        -- that path normalization can avoid affecting flags like "/c", etc.
+        add_matches(matcher._flags._args[1], "arg")
         return true
     else
         -- When endword is adjacent the previous word and the previous word ends

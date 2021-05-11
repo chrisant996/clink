@@ -68,7 +68,7 @@ private:
     void                    set_suppress_append(bool suppress);
     void                    set_suppress_quoting(int suppress);
     void                    set_matches_are_files(bool files);
-    bool                    add_match(const match_desc& desc);
+    bool                    add_match(const match_desc& desc, bool already_normalised=false);
     unsigned int            get_info_count() const;
     const match_info*       get_infos() const;
     match_info*             get_infos();

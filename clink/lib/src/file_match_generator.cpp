@@ -79,7 +79,7 @@ static class : public match_generator
         {
             root.truncate(root_len);
             path::append(root, buffer.c_str());
-            builder.add_match(root.c_str(), to_match_type(st_mode, attr));
+            builder.add_match(root.c_str(), to_match_type(st_mode, attr), true/*already_normalised*/);
         }
 
         return true;

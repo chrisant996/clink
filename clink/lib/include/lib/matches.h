@@ -148,8 +148,8 @@ class match_builder
 {
 public:
                             match_builder(matches& matches);
-    bool                    add_match(const char* match, match_type type);
-    bool                    add_match(const match_desc& desc);
+    bool                    add_match(const char* match, match_type type, bool already_normalised=false);
+    bool                    add_match(const match_desc& desc, bool already_normalised=false);
     void                    set_append_character(char append);
     void                    set_suppress_append(bool suppress=true);
     void                    set_suppress_quoting(int suppress=1); //0=no, 1=yes, 2=suppress end quote
