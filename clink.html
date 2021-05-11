@@ -3,7 +3,7 @@
 
 <!-- ----------------------------------------------------- -->
 <head>
-<title>Clink v1.2.6</title>
+<title>Clink v1.2.7</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Rambla:wght@400;700&family=Roboto&family=Fira+Mono&display=swap');
 html {
@@ -738,7 +738,7 @@ name:"Plain text",aliases:["text","txt"],disableAutodetect:!0})})());
         </td>
         <td style="text-align:right">
             <div id="header">
-                <div id="title">Clink v1.2.6</div>
+                <div id="title">Clink v1.2.7</div>
                 <div id="url">
                     <a href="https://github.com/chrisant996/clink">
                         https://github.com/chrisant996/clink
@@ -947,6 +947,11 @@ name:"Plain text",aliases:["text","txt"],disableAutodetect:!0})})());
 <td>Used when Clink displays file completions with the &quot;readonly&quot; attribute.</td>
 </tr>
 <tr>
+<td align="center"><code>color.selection</code></td>
+<td align="center"></td>
+<td>The color for selected text in the input line.  If no color is set, then reverse video is used.</td>
+</tr>
+<tr>
 <td align="center"><code>color.unexpected</code></td>
 <td align="center"><code>default</code></td>
 <td>The color for unexpected arguments in the input line when <code>clink.colorize_input</code> is enabled.</td>
@@ -1085,6 +1090,11 @@ name:"Plain text",aliases:["text","txt"],disableAutodetect:!0})})());
 <td align="center"><code>match.sort_dirs</code></td>
 <td align="center"><code>with</code></td>
 <td>How to sort matching directory names. <code>before</code> = before files, <code>with</code> = with files, <code>after</code> = after files.</td>
+</tr>
+<tr>
+<td align="center"><code>match.translate_slashes</code></td>
+<td align="center"><code>system</code></td>
+<td>File and directory completions can be translated to use consistent slashes.  The default is <code>system</code> to use the appropriate path separator for the OS host (backslashes on Windows).  Use <code>slash</code> to use forward slashes, or <code>backslash</code> to use backslashes.  Use <code>off</code> to turn off translating slashes from custom match generators.</td>
 </tr>
 <tr>
 <td align="center"><code>match.wild</code></td>
@@ -2736,6 +2746,16 @@ function g:generate(line_state, match_builder)
 &nbsp; -- `match_builder:<a href="#builder:addmatch">addmatch</a>()` is used to add matches.
 &nbsp; -- return true if handled, or false to let another generator try.
 end</code></pre></div></div><hr/>
+<div class="function"><div class="header"> <div class="name"><a name="clink.slash_translation">clink.slash_translation</a></div> <div class="signature">( <span class="arg_name">type</span>:integer ) : nil</div></div><div class="body deprecated"><p class="desc"><strong>Deprecated; don't use this.</strong>  See <a href="#clink.translateslashes">clink.translateslashes</a> for more information.</p><p class="desc">Controls how Clink will translate the path separating slashes for the current path being completed. Values for <span class="arg">type</span> are;</br> -1 - no translation</br> 0 - to backslashes</br> 1 - to forward slashes</p></div></div><hr/>
+<div class="function"><div class="header"> <div class="name"><a name="clink.translateslashes">clink.translateslashes</a></div> <div class="signature">( <span class="arg_name">type</span>:integer ) : nil</div></div><div class="body"><p class="desc">This overrides how Clink translates slashes in completion matches, which is normally determined by the <code>match.translate_slashes</code> setting.</p><p class="desc"> This is reset every time match generation is invoked, so use a generator to set this.</p><p class="desc"> The <span class="arg">type</span> specifies how to translate slashes when generators add matches: <table> <tr><th>Type</th><th>Description</th></tr> <tr><td><code>0</code></td><td>No translation.</td></tr> <tr><td><code>1</code></td><td>Translate using the system path separator (backslash on Windows).</td></tr> <tr><td><code>2</code></td><td>Translate to slashes (<code>/</code>).</td></tr> <tr><td><code>3</code></td><td>Translate to backslashes (<code>\</code>).</td></tr> </table></p><p class="desc"> Note:  Clink always generates file matches using the system path separator (backslash on Windows), regardless what path separator may have been typed as input.  Setting this to <code>0</code> does not disable normalizing typed input paths when invoking completion; it only disables translating slashes in custom generators.</p><pre class="language-lua"><code>-- This example affects all match generators, by using priority -1 to
+-- run first and returning false to let generators continue.
+-- To instead affect only one generator, call clink.translateslashes()
+-- in its :generate() function and return true.
+local force_slashes = clink.generator(-1)
+function force_slashes:generate()
+&nbsp; clink.translateslashes(2)    -- Convert to slashes.
+&nbsp; return false                 -- Allow generators to continue.
+end</code></pre></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="clink.upper">clink.upper</a></div> <div class="signature">( <span class="arg_name">text</span>:string ) : string</div></div><div class="body"><p class="desc">This API correctly converts UTF8 strings to uppercase, with international linguistic awareness.</p><pre class="language-lua"><code>clink.upper("Hello World") -- returns "HELLO WORLD"</code></pre></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="clink.version_commit">clink.version_commit</a></div> <div class="signature">string variable</div></div><div class="body"><p class="desc">The commit part of the Clink version number. For v1.2.3.<strong>a0f14d</strong> the commit part is a0f14d.</p></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="clink.version_encoded">clink.version_encoded</a></div> <div class="signature">integer variable</div></div><div class="body"><p class="desc">The Clink version number encoded as a single integer following the format <span class="arg">Mmmmpppp</span> where <span class="arg">M</span> is the major part, <span class="arg">m</span> is the minor part, and <span class="arg">p</span> is the patch part of the version number.</p><p class="desc"> For example, Clink v95.6.723 would be <code>950060723</code>.</p><p class="desc"> This format makes it easy to test for feature availability by encoding version numbers from the release notes.</p></div></div><hr/>
@@ -2874,7 +2894,7 @@ end</code></pre></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="console.screengrab">console.screengrab</a></div> <div class="signature">( <span class="arg_name">candidate_pattern</span>:string, <span class="arg_name">accept_pattern</span>:string ) : table</div></div><div class="body"><p class="desc">Uses the provided Lua string patterns to collect text from the current console screen and returns a table of matching text snippets.  The snippets are ordered by distance from the input line.</p><p class="desc"> For example <span class="arg">candidate_pattern</span> could specify a pattern that identifies words, and <span class="arg">accept_pattern</span> could specify a pattern that matches words composed of hexadecimal digits.</p><pre class="language-lua"><code>local matches = console.screengrab(
 &nbsp;       "[^%w]*(%w%w[%w]+)",   -- Words with 3 or more letters are candidates.
 &nbsp;       "^%x+$")               -- A candidate containing only hexadecimal digits is a match.</code></pre></div></div><hr/>
-<div class="function"><div class="header"> <div class="name"><a name="console.scroll">console.scroll</a></div> <div class="signature">( <span class="arg_name">mode</span>:string, <span class="arg_name">amount</span>:integer ) : integer</div></div><div class="body"><p class="desc">Scrolls the console screen buffer and returns the number of lines scrolled up (negative) or down (positive).</p><p class="desc"> The <span class="arg">mode</span> specifies how to scroll: <table> <tr><th>Mode</th><th>Description</th></tr> <tr><td>"line"</td><td>Scrolls by <span class="arg">amount</span> lines; negative is up and positive is down. <tr><td>"page"</td><td>Scrolls by <span class="arg">amount</span> pages; negative is up and positive is down. <tr><td>"end"</td><td>Scrolls to the top if <span class="arg">amount</span> is negative, or to the bottom if positive. <tr><td>"absolute"</td><td>Scrolls to line <span class="arg">amount</span>, from 1 to <a href="#console.getnumlines">console.getnumlines()</a>. </table></p></div></div><hr/>
+<div class="function"><div class="header"> <div class="name"><a name="console.scroll">console.scroll</a></div> <div class="signature">( <span class="arg_name">mode</span>:string, <span class="arg_name">amount</span>:integer ) : integer</div></div><div class="body"><p class="desc">Scrolls the console screen buffer and returns the number of lines scrolled up (negative) or down (positive).</p><p class="desc"> The <span class="arg">mode</span> specifies how to scroll: <table> <tr><th>Mode</th><th>Description</th></tr> <tr><td>"line"</td><td>Scrolls by <span class="arg">amount</span> lines; negative is up and positive is down.</td></tr> <tr><td>"page"</td><td>Scrolls by <span class="arg">amount</span> pages; negative is up and positive is down.</td></tr> <tr><td>"end"</td><td>Scrolls to the top if <span class="arg">amount</span> is negative, or to the bottom if positive.</td></tr> <tr><td>"absolute"</td><td>Scrolls to line <span class="arg">amount</span>, from 1 to <a href="#console.getnumlines">console.getnumlines()</a>.</td></tr> </table></p></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="console.settitle">console.settitle</a></div> <div class="signature">( <span class="arg_name">title</span>:string ) : nil</div></div><div class="body"><p class="desc">Sets the console title text.</p></div></div><hr/>
 </div><div class="group"><h5 class="group_name"><a name="io">io</a></h5><div class="function"><div class="header"> <div class="name"><a name="io.popenrw">io.popenrw</a></div> <div class="signature">( <span class="arg_name">command</span>:string, [<span class="arg_name">mode</span>:string] ) : file, file</div></div><div class="body"><p class="desc">Runs <code>command</code> and returns two file handles:  a file handle for reading output from the command, and a file handle for writing input to the command.</p><p class="desc"> <span class="arg">mode</span> can be <code>"t"</code> for text mode (the default if omitted) or <code>"b"</code> for binary mode.</p><p class="desc"> If the function fails it returns nil, an error message, and an error number.</p><p class="desc"> <fieldset><legend>Warning</legend> This can result in deadlocks unless the command fully reads all of its input before writing any output.  This is because Lua uses blocking IO to read and write file handles.  If the write buffer fills (or the read buffer is empty) then the write (or read) will block and can only become unblocked if the command correspondingly reads (or writes).  But the other command can easily experience the same blocking IO problem on its end, resulting in a deadlock: process 1 is blocked from writing more until process 2 reads, but process 2 can't read because it is blocked from writing until process 1 reads. </fieldset></p><pre class="language-lua"><code>local r,w = io.popenrw("fzf.exe --height 40%")
 
@@ -3082,12 +3102,20 @@ string.matchlen("abx", "abx")       -- returns -1</code></pre></div></div><hr/>
         <div class="section" id="changes">
 <h1 id="changes">Changes</h1>
 <h2 id="releases-from-chrisant996clink-fork">Releases from <a href="https://github.com/chrisant996/clink">chrisant996/clink</a> fork</h2>
+<h3 id="v127">v1.2.7</h3>
+<ul>
+<li>Fixed <a href="https://github.com/chrisant996/clink/issues/113">#113</a>; <code>clink.slash_translation()</code> had been removed (regression introduced in v1.0.0).<ul>
+<li>The new <code>match.translate_slashes</code> setting controls the default behavior for slash translation for completion matches.</li>
+<li>The new <code>clink.translateslashes()</code> API can override slash translation for completion matches (and <code>clink.slash_translation()</code> is supported for backward compatibility).</li>
+</ul>
+</li>
+</ul>
 <h3 id="v126">v1.2.6</h3>
 <ul>
 <li>Fixed tilde expansion for directory by itself; now <code>~\</code> can change the working directory to the <code>~</code> directory.</li>
 <li>Fixed pagination when displaying completions that take more than 1 line to display.</li>
 <li>Fixed inserting directory match completions when a Lua script didn&#39;t include a trailing path separator in the directory match.</li>
-<li>Fixed <a href="https://github.com/chrisant996/clink/issues/111">#111</a>; <code>..</code> completion is different from bash.</li>
+<li>Fixed <a href="https://github.com/chrisant996/clink/issues/111">#111</a>; <code>..</code> completion is different from bash (regression introduced in v1.0.0).</li>
 </ul>
 <h3 id="v125">v1.2.5</h3>
 <ul>
