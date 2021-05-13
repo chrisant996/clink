@@ -1641,8 +1641,10 @@ _rl_find_completion_word (int *fp, int *dp)
 	}
     }
 
+/* begin_clink_change */
   if (rl_adjust_completion_word)
     quote_char = rl_adjust_completion_word(quote_char, &found_quote, &delimiter);
+/* end_clink_change */
 
   if (fp)
     *fp = found_quote;
@@ -2285,13 +2287,19 @@ rl_display_match_list_internal (char **matches, int len, int max, int only_measu
 #else
 	  if (RL_SIG_RECEIVED ())
 #endif
+/* begin_clink_change */
+	    //return;
 	    return 0;
+/* end_clink_change */
 	  lines++;
 	  if (_rl_page_completions && lines >= (_rl_screenheight - 1) && i < count)
 	    {
 	      lines = _rl_internal_pager (lines);
 	      if (lines < 0)
+/* begin_clink_change */
+		//return;
 		return 0;
+/* end_clink_change */
 	    }
 	}
     }
@@ -2308,7 +2316,10 @@ rl_display_match_list_internal (char **matches, int len, int max, int only_measu
 #else
 	  if (RL_SIG_RECEIVED ())
 #endif
+/* begin_clink_change */
+	    //return;
 	    return 0;
+/* end_clink_change */
 	  if (matches[i+1])
 	    {
 	      if (limit == 1 || (i && (limit > 1) && (i % limit) == 0))
@@ -2319,7 +2330,10 @@ rl_display_match_list_internal (char **matches, int len, int max, int only_measu
 		    {
 		      lines = _rl_internal_pager (lines);
 		      if (lines < 0)
+/* begin_clink_change */
+			//return;
 			return 0;
+/* end_clink_change */
 		    }
 		}
 	      else if (max <= printed_len)
@@ -2332,7 +2346,9 @@ rl_display_match_list_internal (char **matches, int len, int max, int only_measu
       rl_crlf ();
     }
 
+/* begin_clink_change */
   return 0;
+/* end_clink_change */
 }
 
 /* begin_clink_change */
@@ -2509,14 +2525,14 @@ make_quoted_replacement (char *match, int mtype, char *qc)
       /* If there is a single match, see if we need to quote it.
          This also checks whether the common prefix of several
 	 matches needs to be quoted. */
-      /* begin_clink_change */
+/* begin_clink_change */
       const char *quotable_match = match + (!rl_complete_with_tilde_expansion && match[0] == '~');
       should_quote = rl_filename_quote_characters
 			//? (_rl_strpbrk (match, rl_filename_quote_characters) != 0)
 			? (_rl_strpbrk (quotable_match, rl_filename_quote_characters) != 0)
 			: 0;
       should_quote |= force_quoting;
-      /* end_clink_change */
+/* end_clink_change */
 
       do_replace = should_quote ? mtype : NO_MATCH;
       /* Quote the replacement, since we found an embedded
@@ -3035,7 +3051,10 @@ rl_complete_internal (int what_to_do)
 /* end_clink_change */
 	{
 	  insert_match (matches[0], start, matches[1] ? MULT_MATCH : SINGLE_MATCH, &quote_char);
+/* begin_clink_change */
+	  //append_to_match (matches[0], delimiter, quote_char, nontrivial_lcd);
 	  append_to_match (matches[0], start, delimiter, quote_char, nontrivial_lcd);
+/* end_clink_change */
 	  break;
 	}
       

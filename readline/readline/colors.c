@@ -133,6 +133,7 @@ _rl_print_prefix_color (void)
     return 1;
 }
   
+/* begin_clink_change */
 bool
 _rl_print_pager_color (void)
 {
@@ -150,6 +151,7 @@ _rl_print_pager_color (void)
   else
     return 1;
 }
+/* end_clink_change */
 
 /* Returns whether any color sequence was printed. */
 bool

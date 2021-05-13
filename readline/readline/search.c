@@ -778,8 +778,12 @@ rl_history_search_forward (int count, int ignore)
   if (count == 0)
     return (0);
 
+/* begin_clink_change */
+  //if (rl_last_func != rl_history_search_forward &&
+  //    rl_last_func != rl_history_search_backward)
   if (!is_history_last_func (rl_history_search_forward) &&
       !is_history_last_func (rl_history_search_backward))
+/* end_clink_change */
     rl_history_search_reinit (ANCHORED_SEARCH);
 
   if (rl_history_search_len == 0)
@@ -796,8 +800,12 @@ rl_history_search_backward (int count, int ignore)
   if (count == 0)
     return (0);
 
+/* begin_clink_change */
+  //if (rl_last_func != rl_history_search_forward &&
+  //    rl_last_func != rl_history_search_backward)
   if (!is_history_last_func (rl_history_search_forward) &&
       !is_history_last_func (rl_history_search_backward))
+/* end_clink_change */
     rl_history_search_reinit (ANCHORED_SEARCH);
 
   if (rl_history_search_len == 0)
@@ -815,8 +823,12 @@ rl_history_substr_search_forward (int count, int ignore)
   if (count == 0)
     return (0);
 
+/* begin_clink_change */
+  //if (rl_last_func != rl_history_substr_search_forward &&
+  //    rl_last_func != rl_history_substr_search_backward)
   if (!is_history_last_func (rl_history_substr_search_forward) &&
       !is_history_last_func (rl_history_substr_search_backward))
+/* end_clink_change */
     rl_history_search_reinit (NON_ANCHORED_SEARCH);
 
   if (rl_history_search_len == 0)
@@ -833,8 +845,12 @@ rl_history_substr_search_backward (int count, int ignore)
   if (count == 0)
     return (0);
 
+/* begin_clink_change */
+  //if (rl_last_func != rl_history_substr_search_forward &&
+  //    rl_last_func != rl_history_substr_search_backward)
   if (!is_history_last_func (rl_history_substr_search_forward) &&
       !is_history_last_func (rl_history_substr_search_backward))
+/* end_clink_change */
     rl_history_search_reinit (NON_ANCHORED_SEARCH);
 
   if (rl_history_search_len == 0)

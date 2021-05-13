@@ -213,12 +213,7 @@ rl_gather_tyi (void)
   int tty;
   register int tem, result;
   int chars_avail, k;
-/* begin_clink_change
- * MSVC compile error
- */
-  //char input;
-  char input = 0;
-/* end_clink_change */
+  char input;
 #if defined(HAVE_SELECT)
   fd_set readfds, exceptfds;
   struct timeval timeout;

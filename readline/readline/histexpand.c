@@ -255,9 +255,9 @@ get_history_event (const char *string, int *caller_index, int delimiting_quote)
 
 #define FAIL_SEARCH() \
   do { \
-    /* begin_clink_change */ \
+/* begin_clink_change */ \
     history_prev_use_curr = 0; \
-    /* end_clink_change */ \
+/* end_clink_change */ \
     history_offset = history_length; xfree (temp) ; return (char *)NULL; \
   } while (0)
 

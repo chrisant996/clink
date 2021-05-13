@@ -48,7 +48,9 @@
 /* Some standard library routines. */
 #include "readline.h"
 #include "history.h"
+/* begin_clink_change */
 #include "histlib.h" // for ANCHORED_SEARCH
+/* end_clink_change */
 
 #include "rlprivate.h"
 #include "rlshell.h"
@@ -71,12 +73,10 @@ _rl_arg_cxt _rl_argcxt;
 int _rl_history_saved_point = -1;
 
 /* begin_clink_change */
-
 /* If non-null, called when rl_add_history adds a history line. */
 rl_history_hook_func_t *rl_add_history_hook = (rl_history_hook_func_t *)NULL;
 /* If non-null, called when rl_remove_history removes a history line. */
 rl_history_hook_func_t *rl_remove_history_hook = (rl_history_hook_func_t *)NULL;
-
 /* end_clink_change */
 
 
@@ -678,7 +678,10 @@ static int saved_history_logical_offset = -1;
 #define HISTORY_FULL() (history_is_stifled () && history_length >= history_max_entries)
 
 static int
+/* begin_clink_change */
+//set_saved_history ()
 set_saved_history (void)
+/* end_clink_change */
 {
   int absolute_offset, count;
 

@@ -1443,15 +1443,15 @@ rl_redisplay (void)
 	      _rl_cr ();
 	      if (modmark)
 		{
-		  /* begin_clink_change */
+/* begin_clink_change */
 		  if (_rl_display_modmark_color)
 		    _rl_output_some_chars (_rl_display_modmark_color, strlen (_rl_display_modmark_color));
-		  /* end_clink_change */
+/* end_clink_change */
 		  _rl_output_some_chars ("*", 1);
-		  /* begin_clink_change */
+/* begin_clink_change */
 		  if (_rl_display_modmark_color)
 		    _rl_output_some_chars (_normal_color, _normal_color_len);
-		  /* end_clink_change */
+/* end_clink_change */
 		}
 
 	      _rl_output_some_chars (local_prompt, nleft);
@@ -2180,15 +2180,15 @@ update_line (char *old, char *old_face, char *new, char *new_face, int current_l
       _rl_cr ();
       if (modmark)
 	{
-	  /* begin_clink_change */
+/* begin_clink_change */
 	  if (_rl_display_modmark_color)
 	    _rl_output_some_chars (_rl_display_modmark_color, strlen (_rl_display_modmark_color));
-	  /* end_clink_change */
+/* end_clink_change */
 	  _rl_output_some_chars ("*", 1);
-	  /* begin_clink_change */
+/* begin_clink_change */
 	  if (_rl_display_modmark_color)
 	    _rl_output_some_chars (_normal_color, _normal_color_len);
-	  /* end_clink_change */
+/* end_clink_change */
 	}
       _rl_output_some_chars (local_prompt, lendiff);
       if (mb_cur_max > 1 && rl_byte_oriented == 0)
@@ -3239,9 +3239,9 @@ _rl_erase_at_end_of_line (int l)
 {
   register int i;
 
-  /* begin_clink_change */
+/* begin_clink_change */
   _rl_output_some_chars (_normal_color, _normal_color_len);
-  /* end_clink_change */
+/* end_clink_change */
 
   _rl_backspace (l);
   for (i = 0; i < l; i++)

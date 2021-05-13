@@ -89,9 +89,11 @@ int max_input_history;	/* backwards compatibility */
    life easier for outside callers. */
 int history_offset;
 
+/* begin_clink_change */
 /* The next prev-history type of command should use the current history entry
    rather than moving to the previous entry. */
 int history_prev_use_curr = 0;
+/* end_clink_change */
 
 /* The number of strings currently stored in the history list. */
 int history_length;

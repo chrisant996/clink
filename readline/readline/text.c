@@ -1014,7 +1014,7 @@ rl_insert (int count, int c)
     {
       /* setting rl_pending_input inhibits setting rl_last_func so we do it
 	 ourselves here */
-      rl_last_func = rl_insert;
+      rl_last_func = rl_insert; 
       _rl_reset_argument ();
       rl_executing_keyseq[rl_key_sequence_length = 0] = '\0';
       r = rl_execute_next (n);
@@ -1044,7 +1044,7 @@ _rl_insert_next (int count)
     _rl_restore_tty_signals ();
 #endif
 
-  return (_rl_insert_char (count, c));
+  return (_rl_insert_char (count, c));  
 }
 
 #if defined (READLINE_CALLBACKS)
