@@ -346,6 +346,7 @@ Name | Default | Description
 :-:|:-:|---
 `completion-auto-query-items`|on|Automatically prompts before displaying completions if they need more than half a screen page.
 `history-point-at-end-of-anchored-search`|off|Puts the cursor at the end of the line when using `history-search-forward` or `history-search-backward`.
+`menu-complete-wraparound`|on|The `menu-complete` family of commands wraps around when reaching the end of the possible completions.
 `search-ignore-case`|on|Controls whether the history search commands ignore case.
 
 ## New Commands
