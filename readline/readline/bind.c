@@ -1443,19 +1443,6 @@ parser_include (char *args)
   return r;
 }
 
-/* begin_clink_change
- * MSVC has issue with "int foo(bar) char* bar; { ... } syntax. It considers the
- * function to have no arguments and complains when assigning function pointer
- * to a variable. The workaround is to forward declare them _before_ assignment.
- */
-#ifdef _MSC_VER
-int parser_if(char*);
-int parser_endif(char*);
-int parser_else(char*);
-int parser_include(char*);
-#endif
-/* end_clink_change */
-  
 /* Associate textual names with actual functions. */
 static const struct {
   const char * const name;
@@ -1881,7 +1868,9 @@ static const struct {
   { "mark-symlinked-directories", &_rl_complete_mark_symlink_dirs, 0 },
   { "match-hidden-files",	&_rl_match_hidden_files,	0 },
   { "menu-complete-display-prefix", &_rl_menu_complete_prefix_first, 0 },
+/* begin_clink_change */
   { "menu-complete-wraparound",	&_rl_menu_complete_wraparound, 0 },
+/* end_clink_change */
   { "meta-flag",		&_rl_meta_flag,			0 },
   { "output-meta",		&_rl_output_meta_chars,		0 },
   { "page-completions",		&_rl_page_completions,		0 },
