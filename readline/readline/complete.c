@@ -1916,11 +1916,11 @@ compute_lcd_of_matches (char **match_list, int matches, const char *text)
 
   for (i = 1, low = 100000; i < matches; i++)
     {
-/* begin_clink_change */
-    int mi0_len = strlen (match_list[i]);
-    int mi1_len = strlen (match_list[i + 1]);
-/* end_clink_change */
 #if defined (HANDLE_MULTIBYTE)
+/* begin_clink_change */
+      int mi0_len = strlen (match_list[i]);
+      int mi1_len = strlen (match_list[i + 1]);
+/* end_clink_change */
       if (MB_CUR_MAX > 1 && rl_byte_oriented == 0)
 	{
 	  memset (&ps1, 0, sizeof (mbstate_t));
