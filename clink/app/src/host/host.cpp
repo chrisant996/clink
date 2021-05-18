@@ -437,6 +437,10 @@ static bool intercept_directory(str_base& inout)
     if (os::get_path_type(tmp.c_str()) != os::path_type_dir)
         return false;
 
+    // Normalize to system path separator, since `cd /d "/foo/"` fails because
+    // the `/d` flag disables `cd` accepting forward slashes in paths.
+    path::normalise_separators(tmp);
+
     inout.format(" cd /d \"%s\"", tmp.c_str());
     return true;
 }
