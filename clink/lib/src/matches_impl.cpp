@@ -24,6 +24,7 @@ extern int rl_complete_with_tilde_expansion;
 //------------------------------------------------------------------------------
 static int s_slash_translation = 0;
 void set_slash_translation(int mode) { s_slash_translation = mode; }
+int get_slash_translation() { return s_slash_translation; }
 
 //------------------------------------------------------------------------------
 static setting_enum g_translate_slashes(
@@ -602,22 +603,22 @@ bool matches_impl::add_match(const match_desc& desc, bool already_normalized)
     char* sep = rl_last_path_separator(match);
     bool ends_with_sep = (sep && !sep[1]);
 
-    if (desc.type == match_type::none && ends_with_sep)
-        type = match_type::dir;
+    if (is_match_type(desc.type, match_type::none) && ends_with_sep)
+        type |= match_type::dir;
 
     // Slash translation happens only for dir, file, and none match types.  And
     // only when `clink.slash_translation` is enabled.  already_normalized means
     // desc has already been normalized to system format, and a performance
     // optimization can skip translation if system format is configured.
     int mode = (s_slash_translation &&
-                (type == match_type::dir ||
-                 type == match_type::file ||
-                 (type == match_type::none &&
+                (is_match_type(type, match_type::dir) ||
+                 is_match_type(type, match_type::file) ||
+                 (is_match_type(type, match_type::none) &&
                   m_filename_completion_desired.get()))) ? s_slash_translation : 0;
     bool translate = (mode > 0 && (mode > 1 || !already_normalized));
 
     str<280> tmp;
-    if (type == match_type::dir && !ends_with_sep)
+    if (is_match_type(type, match_type::dir) && !ends_with_sep)
     {
         // insert_match() relies on Clink always including a trailing path
         // separator on directory matches, so add one if the caller omitted it.

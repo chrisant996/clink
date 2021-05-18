@@ -373,6 +373,14 @@ end
 --------------------------------------------------------------------------------
 function _argmatcher:_is_flag(word)
     local first_char = word:sub(1, 1)
+
+    if first_char == "/" and clink.translateslashes() == 2 then
+        -- When slash translation is set to forward slashes, then disable
+        -- recognizing forward slash as a flag character so that path completion
+        -- can work.  See https://github.com/chrisant996/clink/issues/114.
+        return false
+    end
+
     for i, _ in pairs(self._flagprefix) do
         if first_char == i then
             return true

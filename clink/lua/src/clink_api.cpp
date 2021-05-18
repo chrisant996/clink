@@ -15,6 +15,10 @@
 #include <terminal/screen_buffer.h>
 #include <readline/readline.h>
 
+extern "C" {
+#include <lua.h>
+}
+
 #include <unordered_set>
 
 
@@ -297,7 +301,8 @@ static int get_ansi_host(lua_State* state)
 
 //------------------------------------------------------------------------------
 /// -name:  clink.translateslashes
-/// -arg:   type:integer
+/// -arg:   [mode:integer]
+/// -ret:   integer
 /// -show:  -- This example affects all match generators, by using priority -1 to
 /// -show:  -- run first and returning false to let generators continue.
 /// -show:  -- To instead affect only one generator, call clink.translateslashes()
@@ -313,15 +318,18 @@ static int get_ansi_host(lua_State* state)
 /// This is reset every time match generation is invoked, so use a generator to
 /// set this.
 ///
-/// The <span class="arg">type</span> specifies how to translate slashes when
+/// The <span class="arg">mode</span> specifies how to translate slashes when
 /// generators add matches:
 /// <table>
-/// <tr><th>Type</th><th>Description</th></tr>
+/// <tr><th>Mode</th><th>Description</th></tr>
 /// <tr><td><code>0</code></td><td>No translation.</td></tr>
 /// <tr><td><code>1</code></td><td>Translate using the system path separator (backslash on Windows).</td></tr>
 /// <tr><td><code>2</code></td><td>Translate to slashes (<code>/</code>).</td></tr>
 /// <tr><td><code>3</code></td><td>Translate to backslashes (<code>\</code>).</td></tr>
 /// </table>
+///
+/// If <span class="arg">mode</span> is omitted, then the function returns the
+/// current slash translation mode without changing it.
 ///
 /// Note:  Clink always generates file matches using the system path separator
 /// (backslash on Windows), regardless what path separator may have been typed
@@ -330,6 +338,15 @@ static int get_ansi_host(lua_State* state)
 /// in custom generators.
 static int translate_slashes(lua_State* state)
 {
+    extern void set_slash_translation(int mode);
+    extern int get_slash_translation();
+
+    if (lua_isnoneornil(state, 1))
+    {
+        lua_pushinteger(state, get_slash_translation());
+        return 1;
+    }
+
     bool isnum;
     int mode = checkinteger(state, 1, &isnum);
     if (!isnum)
@@ -338,7 +355,6 @@ static int translate_slashes(lua_State* state)
     if (mode < 0 || mode > 3)
         mode = 1;
 
-    extern void set_slash_translation(int mode);
     set_slash_translation(mode);
     return 0;
 }
