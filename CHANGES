@@ -2,6 +2,10 @@
 
 ## Releases from [chrisant996/clink](https://github.com/chrisant996/clink) fork
 
+### v1.2.8
+
+- Fixed [#114](https://github.com/chrisant996/clink/issues/114); "Clink already loaded in process" error when autorun is installed for both Current User and All Users.
+
 ### v1.2.7
 
 - Fixed [#113](https://github.com/chrisant996/clink/issues/113); `clink.slash_translation()` had been removed (regression introduced in v1.0.0).

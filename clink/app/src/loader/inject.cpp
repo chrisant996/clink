@@ -516,7 +516,7 @@ int inject(int argc, char** argv)
             process(target_pid).remote_call(func, L"=clink.scripts.inject", value_scripts);
             process(target_pid).remote_call(func, L"=clink.profile.inject", value_state);
         }
-        else
+        else if (!is_autorun)
         {
             fprintf(stderr, "Clink already loaded in process %d.\n", target_pid);
         }
