@@ -385,7 +385,8 @@ static bool intercept_directory(str_base& inout)
     {
         if (*p != '.')
         {
-            num_dots = -1;
+            if (!path::is_separator(p[0]) || p[1]) // Allow "...\"
+                num_dots = -1;
             break;
         }
     }
