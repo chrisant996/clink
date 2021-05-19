@@ -3,7 +3,7 @@
 
 <!-- ----------------------------------------------------- -->
 <head>
-<title>Clink v1.2.7</title>
+<title>Clink v1.2.8</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Rambla:wght@400;700&family=Roboto&family=Fira+Mono&display=swap');
 html {
@@ -738,7 +738,7 @@ name:"Plain text",aliases:["text","txt"],disableAutodetect:!0})})());
         </td>
         <td style="text-align:right">
             <div id="header">
-                <div id="title">Clink v1.2.7</div>
+                <div id="title">Clink v1.2.8</div>
                 <div id="url">
                     <a href="https://github.com/chrisant996/clink">
                         https://github.com/chrisant996/clink
@@ -1320,6 +1320,11 @@ call &quot;%~dp0clink.bat&quot; inject --profile &quot;%TEMP%\clink_portable&quo
 <td align="center"><code>history-point-at-end-of-anchored-search</code></td>
 <td align="center">off</td>
 <td>Puts the cursor at the end of the line when using <code>history-search-forward</code> or <code>history-search-backward</code>.</td>
+</tr>
+<tr>
+<td align="center"><code>menu-complete-wraparound</code></td>
+<td align="center">on</td>
+<td>The <code>menu-complete</code> family of commands wraps around when reaching the end of the possible completions.</td>
 </tr>
 <tr>
 <td align="center"><code>search-ignore-case</code></td>
@@ -2747,7 +2752,7 @@ function g:generate(line_state, match_builder)
 &nbsp; -- return true if handled, or false to let another generator try.
 end</code></pre></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="clink.slash_translation">clink.slash_translation</a></div> <div class="signature">( <span class="arg_name">type</span>:integer ) : nil</div></div><div class="body deprecated"><p class="desc"><strong>Deprecated; don't use this.</strong>  See <a href="#clink.translateslashes">clink.translateslashes</a> for more information.</p><p class="desc">Controls how Clink will translate the path separating slashes for the current path being completed. Values for <span class="arg">type</span> are;</br> -1 - no translation</br> 0 - to backslashes</br> 1 - to forward slashes</p></div></div><hr/>
-<div class="function"><div class="header"> <div class="name"><a name="clink.translateslashes">clink.translateslashes</a></div> <div class="signature">( <span class="arg_name">type</span>:integer ) : nil</div></div><div class="body"><p class="desc">This overrides how Clink translates slashes in completion matches, which is normally determined by the <code>match.translate_slashes</code> setting.</p><p class="desc"> This is reset every time match generation is invoked, so use a generator to set this.</p><p class="desc"> The <span class="arg">type</span> specifies how to translate slashes when generators add matches: <table> <tr><th>Type</th><th>Description</th></tr> <tr><td><code>0</code></td><td>No translation.</td></tr> <tr><td><code>1</code></td><td>Translate using the system path separator (backslash on Windows).</td></tr> <tr><td><code>2</code></td><td>Translate to slashes (<code>/</code>).</td></tr> <tr><td><code>3</code></td><td>Translate to backslashes (<code>\</code>).</td></tr> </table></p><p class="desc"> Note:  Clink always generates file matches using the system path separator (backslash on Windows), regardless what path separator may have been typed as input.  Setting this to <code>0</code> does not disable normalizing typed input paths when invoking completion; it only disables translating slashes in custom generators.</p><pre class="language-lua"><code>-- This example affects all match generators, by using priority -1 to
+<div class="function"><div class="header"> <div class="name"><a name="clink.translateslashes">clink.translateslashes</a></div> <div class="signature">( [<span class="arg_name">mode</span>:integer] ) : integer</div></div><div class="body"><p class="desc">This overrides how Clink translates slashes in completion matches, which is normally determined by the <code>match.translate_slashes</code> setting.</p><p class="desc"> This is reset every time match generation is invoked, so use a generator to set this.</p><p class="desc"> The <span class="arg">mode</span> specifies how to translate slashes when generators add matches: <table> <tr><th>Mode</th><th>Description</th></tr> <tr><td><code>0</code></td><td>No translation.</td></tr> <tr><td><code>1</code></td><td>Translate using the system path separator (backslash on Windows).</td></tr> <tr><td><code>2</code></td><td>Translate to slashes (<code>/</code>).</td></tr> <tr><td><code>3</code></td><td>Translate to backslashes (<code>\</code>).</td></tr> </table></p><p class="desc"> If <span class="arg">mode</span> is omitted, then the function returns the current slash translation mode without changing it.</p><p class="desc"> Note:  Clink always generates file matches using the system path separator (backslash on Windows), regardless what path separator may have been typed as input.  Setting this to <code>0</code> does not disable normalizing typed input paths when invoking completion; it only disables translating slashes in custom generators.</p><pre class="language-lua"><code>-- This example affects all match generators, by using priority -1 to
 -- run first and returning false to let generators continue.
 -- To instead affect only one generator, call clink.translateslashes()
 -- in its :generate() function and return true.
@@ -3102,6 +3107,13 @@ string.matchlen("abx", "abx")       -- returns -1</code></pre></div></div><hr/>
         <div class="section" id="changes">
 <h1 id="changes">Changes</h1>
 <h2 id="releases-from-chrisant996clink-fork">Releases from <a href="https://github.com/chrisant996/clink">chrisant996/clink</a> fork</h2>
+<h3 id="v128">v1.2.8</h3>
+<ul>
+<li>Fixed <code>...\</code> or <code>.../</code> to change directories (path separator after several dots).</li>
+<li>Fixed <code>/dirname/</code> to change directories (forward slashes when a directory is the only thing in the input line).</li>
+<li>Fixed <a href="https://github.com/chrisant996/clink/issues/114">#114</a>; &quot;Clink already loaded in process&quot; error when autorun is installed for both Current User and All Users.</li>
+<li>Fixed <a href="https://github.com/chrisant996/clink/issues/113">#113</a>; forward slash translation didn&#39;t work with the <code>cd</code> command.</li>
+</ul>
 <h3 id="v127">v1.2.7</h3>
 <ul>
 <li>Fixed <a href="https://github.com/chrisant996/clink/issues/113">#113</a>; <code>clink.slash_translation()</code> had been removed (regression introduced in v1.0.0).<ul>
