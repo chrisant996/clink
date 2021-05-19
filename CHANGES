@@ -4,6 +4,8 @@
 
 ### v1.2.8
 
+- Fixed `...\` or `.../` to change directories (path separator after several dots).
+- Fixed `/dirname/` to change directories (forward slashes when a directory is the only thing in the input line).
 - Fixed [#114](https://github.com/chrisant996/clink/issues/114); "Clink already loaded in process" error when autorun is installed for both Current User and All Users.
 - Fixed [#113](https://github.com/chrisant996/clink/issues/113); forward slash translation didn't work with the `cd` command.
 
