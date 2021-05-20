@@ -1262,7 +1262,7 @@ If something seems to malfunction, here are some things to try that often help t
 - Check `clink set`.  E.g. do the settings look right?
 - Check the `clink.log` file for clues (its location is reported by `clink info`).
 
-When reporting an issue, please include the following which answer a bunch of commonly relevant questions and saves time:
+When [reporting an issue](https://github.com/chrisant996/clink/issues), please include the following which answer a bunch of commonly relevant questions and saves time:
 
 - Please describe what was expected to happen.
 - Please describe what actually happened.
