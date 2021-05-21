@@ -167,6 +167,58 @@ static int check_dll_version(const char* clink_dll)
 }
 
 //------------------------------------------------------------------------------
+struct wait_monitor : public process_wait_callback
+{
+    bool on_waited(DWORD tick_begin, DWORD wait_result) override
+    {
+        switch (wait_result)
+        {
+        case WAIT_TIMEOUT:
+            {
+                static const char c_msg_slow[] =
+                    "Injecting Clink is taking a long time...";
+                static const char c_msg_timed_out[] =
+                    "Injecting Clink timed out.  An antivirus tool may be blocking Clink.\n"
+                    "Consider adding an exception for Clink in the antivirus tool(s) in use.";
+
+                DWORD elapsed = GetTickCount() - tick_begin;
+                if (elapsed >= 30 * 1000)
+                {
+                    LOG("%s", c_msg_timed_out);
+                    fprintf(stderr, "\n\n%s\n\n", c_msg_timed_out);
+                    break;
+                }
+
+                if (elapsed >= 5000)
+                {
+                    if (m_elapsed < 5000)
+                    {
+                        LOG("%s", c_msg_slow);
+                        fprintf(stderr, "\n\n%s", c_msg_slow);
+                    }
+                    else
+                    {
+                        fputc('.', stderr);
+                    }
+                }
+
+                m_elapsed = elapsed;
+            }
+            return false; // Continue the wait loop.
+
+        default:
+            ERR("WaitForSingleObject returned %d.", wait_result);
+            break;
+        }
+
+        return true; // Stop the wait loop.
+    }
+
+private:
+    DWORD m_elapsed = 0;
+};
+
+//------------------------------------------------------------------------------
 static void* inject_dll(DWORD target_pid)
 {
     // Get path to clink's DLL that we'll inject.
@@ -233,7 +285,8 @@ static void* inject_dll(DWORD target_pid)
     }
 
     // Inject Clink DLL.
-    return cmd_process.inject_module(dll_path.c_str());
+    wait_monitor monitor;
+    return cmd_process.inject_module(dll_path.c_str(), &monitor);
 }
 
 //------------------------------------------------------------------------------

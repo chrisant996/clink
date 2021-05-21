@@ -133,7 +133,7 @@ void process::pause(bool suspend)
 }
 
 //------------------------------------------------------------------------------
-void* process::inject_module(const char* dll_path)
+void* process::inject_module(const char* dll_path, process_wait_callback* callback)
 {
     // Check we can inject into the target.
     if (process().get_arch() != get_arch())
@@ -147,7 +147,7 @@ void* process::inject_module(const char* dll_path)
     pe_info::funcptr_t func = kernel32.get_export("LoadLibraryW");
 
     wstr<280> wpath(dll_path);
-    return remote_call_internal(func, wpath.data(), wpath.length() * sizeof(wchar_t));
+    return remote_call_internal(func, callback, wpath.data(), wpath.length() * sizeof(wchar_t));
 }
 
 //------------------------------------------------------------------------------
@@ -173,7 +173,7 @@ static DWORD WINAPI stdcall_thunk(thunk_data& data)
 }
 
 //------------------------------------------------------------------------------
-void* process::remote_call_internal(pe_info::funcptr_t function, const void* param, int param_size)
+void* process::remote_call_internal(pe_info::funcptr_t function, process_wait_callback* callback, const void* param, int param_size)
 {
     // Open the process so we can operate on it.
     handle process_handle = OpenProcess(PROCESS_QUERY_INFORMATION|PROCESS_CREATE_THREAD,
@@ -222,7 +222,7 @@ void* process::remote_call_internal(pe_info::funcptr_t function, const void* par
         return 0;
     }
 
-    WaitForSingleObject(remote_thread, INFINITE);
+    DWORD wait_result = wait(callback, remote_thread);
     unpause();
 
     void* call_ret = nullptr;
@@ -259,7 +259,7 @@ static DWORD WINAPI stdcall_thunk2(thunk2_data& data)
 }
 
 //------------------------------------------------------------------------------
-void* process::remote_call_internal(pe_info::funcptr_t function, const void* param1, int param1_size, const void* param2, int param2_size)
+void* process::remote_call_internal(pe_info::funcptr_t function, process_wait_callback* callback, const void* param1, int param1_size, const void* param2, int param2_size)
 {
     // Open the process so we can operate on it.
     handle process_handle = OpenProcess(PROCESS_QUERY_INFORMATION|PROCESS_CREATE_THREAD,
@@ -317,12 +317,40 @@ void* process::remote_call_internal(pe_info::funcptr_t function, const void* par
         return 0;
     }
 
-    WaitForSingleObject(remote_thread, INFINITE);
+    DWORD wait_result = wait(callback, remote_thread);
     unpause();
 
     void* call_ret = nullptr;
-    vm.read(&call_ret, remote_thunk_data + offsetof(thunk2_data, out), sizeof(call_ret));
-    vm.free(region);
+    if (wait_result == WAIT_OBJECT_0)
+    {
+        vm.read(&call_ret, remote_thunk_data + offsetof(thunk2_data, out), sizeof(call_ret));
+        vm.free(region);
+    }
 
     return call_ret;
+}
+
+//------------------------------------------------------------------------------
+DWORD process::wait(process_wait_callback* callback, HANDLE remote_thread)
+{
+    DWORD wait_result;
+    if (callback)
+    {
+        DWORD tick_begin = GetTickCount();
+        do
+        {
+            DWORD timeout = callback->get_timeout();
+            wait_result = WaitForSingleObject(remote_thread, timeout);
+            if (wait_result == WAIT_OBJECT_0)
+                break;
+            if (callback->on_waited(tick_begin, wait_result))
+                break;
+        }
+        while (wait_result == WAIT_TIMEOUT);
+    }
+    else
+    {
+        wait_result = WaitForSingleObject(remote_thread, INFINITE);
+    }
+    return wait_result;
 }
