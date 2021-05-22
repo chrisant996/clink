@@ -3,7 +3,7 @@
 
 <!-- ----------------------------------------------------- -->
 <head>
-<title>Clink v1.2.8</title>
+<title>Clink v1.2.9</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Rambla:wght@400;700&family=Roboto&family=Fira+Mono&display=swap');
 html {
@@ -738,7 +738,7 @@ name:"Plain text",aliases:["text","txt"],disableAutodetect:!0})})());
         </td>
         <td style="text-align:right">
             <div id="header">
-                <div id="title">Clink v1.2.8</div>
+                <div id="title">Clink v1.2.9</div>
                 <div id="url">
                     <a href="https://github.com/chrisant996/clink">
                         https://github.com/chrisant996/clink
@@ -2627,12 +2627,12 @@ end
 <h1 id="troubleshooting-tips">Troubleshooting Tips</h1>
 <p>If something seems to malfunction, here are some things to try that often help track down what&#39;s going wrong:</p>
 <ul>
-<li>Check if anti-malware software blocked Clink from injecting.</li>
+<li>Check if anti-malware software blocked Clink from injecting.  Consider adding an exclusion for Clink.</li>
 <li>Check <code>clink info</code>.  E.g. does the state dir look right, do the script paths look right, do the inputrc files look right?</li>
 <li>Check <code>clink set</code>.  E.g. do the settings look right?</li>
 <li>Check the <code>clink.log</code> file for clues (its location is reported by <code>clink info</code>).</li>
 </ul>
-<p>When reporting an issue, please include the following which answer a bunch of commonly relevant questions and saves time:</p>
+<p>When <a href="https://github.com/chrisant996/clink/issues">reporting an issue</a>, please include the following which answer a bunch of commonly relevant questions and saves time:</p>
 <ul>
 <li>Please describe what was expected to happen.</li>
 <li>Please describe what actually happened.</li>
@@ -3107,6 +3107,12 @@ string.matchlen("abx", "abx")       -- returns -1</code></pre></div></div><hr/>
         <div class="section" id="changes">
 <h1 id="changes">Changes</h1>
 <h2 id="releases-from-chrisant996clink-fork">Releases from <a href="https://github.com/chrisant996/clink">chrisant996/clink</a> fork</h2>
+<h3 id="v129">v1.2.9</h3>
+<ul>
+<li>Added detection for possible antivirus interference when injecting Clink.</li>
+<li>Ignore duplicate scripts paths when loading scripts.</li>
+<li>Fixed <a href="https://github.com/chrisant996/clink/issues/118">#118</a>; inputrc is not read from state directory (regression introduced in v1.0.0).</li>
+</ul>
 <h3 id="v128">v1.2.8</h3>
 <ul>
 <li>Fixed <code>...\</code> or <code>.../</code> to change directories (path separator after several dots).</li>
