@@ -1257,7 +1257,7 @@ The [z.lua](https://github.com/skywind3000/z.lua) tool is a faster way to naviga
 
 If something seems to malfunction, here are some things to try that often help track down what's going wrong:
 
-- Check if anti-malware software blocked Clink from injecting.
+- Check if anti-malware software blocked Clink from injecting.  Consider adding an exclusion for Clink.
 - Check `clink info`.  E.g. does the state dir look right, do the script paths look right, do the inputrc files look right?
 - Check `clink set`.  E.g. do the settings look right?
 - Check the `clink.log` file for clues (its location is reported by `clink info`).
