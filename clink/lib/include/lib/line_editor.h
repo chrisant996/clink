@@ -28,6 +28,7 @@ public:
 
         // Optional.
         const char*     shell_name = "clink";
+        const char*     state_dir = nullptr;
         const char*     prompt = "clink $ ";
         const char*     command_delims = nullptr;
         const char*     word_delims = " \t";

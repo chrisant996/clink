@@ -521,7 +521,9 @@ bool host::edit_line(const char* prompt, str_base& out)
     // Load Clink's settings.  The load function handles deferred load for
     // settings declared in scripts.
     str<288> settings_file;
-    app_context::get()->get_settings_path(settings_file);
+    str<288> state_dir;
+    app->get_settings_path(settings_file);
+    app->get_state_dir(state_dir);
     settings::load(settings_file.c_str());
     reset_keyseq_to_name_map();
 
@@ -595,6 +597,7 @@ bool host::edit_line(const char* prompt, str_base& out)
 
     line_editor::desc desc(m_terminal.in, m_terminal.out, m_printer);
     initialise_editor_desc(desc);
+    desc.state_dir = state_dir.c_str();
 
     // Filter the prompt.  Unless processing a multiline doskey macro.
     str<256> filtered_prompt;

@@ -343,13 +343,14 @@ void override_rl_last_func(rl_command_func_t* func)
 
 
 //------------------------------------------------------------------------------
-static void load_user_inputrc()
+static void load_user_inputrc(const char* state_dir)
 {
 #if defined(PLATFORM_WINDOWS)
     // Remember to update clink_info() if anything changes in here.
 
     static const char* const env_vars[] = {
         "clink_inputrc",
+        "", // Magic value handled specially below.
         "userprofile",
         "localappdata",
         "appdata",
@@ -364,12 +365,12 @@ static void load_user_inputrc()
 
     for (const char* env_var : env_vars)
     {
-        str<MAX_PATH> path;
-        int path_length = GetEnvironmentVariable(env_var, path.data(), path.size());
-        if (!path_length || path_length > int(path.size()))
+        str<280> path;
+        if (!*env_var && state_dir && *state_dir)
+            path.copy(state_dir);
+        else if (!*env_var || !os::get_env(env_var, path))
             continue;
 
-        path << "\\";
         int base_len = path.length();
 
         for (int j = 0; j < sizeof_array(file_names); ++j)
@@ -1228,7 +1229,7 @@ static void bind_keyseq_list(const two_strings* list, Keymap map)
 
 
 //------------------------------------------------------------------------------
-rl_module::rl_module(const char* shell_name, terminal_in* input)
+rl_module::rl_module(const char* shell_name, terminal_in* input, const char* state_dir)
 : m_rl_buffer(nullptr)
 , m_prev_group(-1)
 {
@@ -1437,7 +1438,7 @@ rl_module::rl_module(const char* shell_name, terminal_in* input)
     bind_keyseq_list(vi_insertion_key_binds, vi_insertion_keymap);
     bind_keyseq_list(vi_movement_key_binds, vi_movement_keymap);
 
-    load_user_inputrc();
+    load_user_inputrc(state_dir);
 }
 
 //------------------------------------------------------------------------------

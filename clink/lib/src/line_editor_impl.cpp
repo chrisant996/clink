@@ -190,7 +190,7 @@ static bool is_endword_tilde(const line_state& line)
 
 //------------------------------------------------------------------------------
 line_editor_impl::line_editor_impl(const desc& desc)
-: m_module(desc.shell_name, desc.input)
+: m_module(desc.shell_name, desc.input, desc.state_dir)
 , m_desc(desc)
 , m_buffer(desc.command_delims, desc.word_delims, desc.get_quote_pair())
 , m_regen_matches(&m_generators)
