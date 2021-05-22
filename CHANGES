@@ -5,6 +5,8 @@
 ### v1.2.9
 
 - Added detection for possible antivirus interference when injecting Clink.
+- Ignore duplicate scripts paths when loading scripts.
+- Fixed [#118](https://github.com/chrisant996/clink/issues/118); inputrc is not read from state directory (regression introduced in v1.0.0).
 
 ### v1.2.8
 
