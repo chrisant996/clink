@@ -10,6 +10,8 @@
 #include <core/path.h>
 #include <core/str.h>
 #include <core/str_tokeniser.h>
+#include <core/str_transform.h>
+#include <core/str_unordered_set.h>
 #include <core/settings.h>
 
 #include <vector>
@@ -139,6 +141,12 @@ bool host_lua::load_scripts(const char* paths)
 
     bool first = true;
 
+    std::vector<wstr_moveable> seen_strings;
+    wstr_unordered_set seen;
+    wstr<280> transform;
+    wstr_moveable out;
+    str<280> tmp;
+
     str<280> token;
     str_tokeniser tokens(paths, ";");
     while (tokens.next(token))
@@ -157,6 +165,17 @@ bool host_lua::load_scripts(const char* paths)
                 os::get_path_type(clink.c_str()) == os::path_type_file)
                 m_state.do_file(clink.c_str());
         }
+
+        // Load a given directory only once.
+        tmp = token.c_str();
+        path::normalise(tmp);
+        path::maybe_strip_last_separator(tmp);
+        transform = tmp.c_str();
+        str_transform(transform.c_str(), transform.length(), out, transform_mode::lower);
+        if (seen.find(out.c_str()) != seen.end())
+            continue;
+        seen.emplace(out.c_str());
+        seen_strings.emplace_back(std::move(out));
 
         load_script(token.c_str());
     }
