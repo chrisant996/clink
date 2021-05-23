@@ -7,6 +7,20 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 ## Issues
 
 ## Investigate
+
+#### _Prompt Filtering_
+- Async command prompt updating as a way to solve the delay in git repos.
+  - A prompt filter could create a coroutine and register it, and supply a placeholder string in the prompt.
+  - When prompt filtering finishes, Clink could periodically resume registered coroutines while waiting for terminal input.
+  - There needs to be a way to perform non-blocking IO.
+    - Maybe just some kind of `io.popen_coroutine()` API that keeps yielding until the pipe writer is closed.
+    - Maybe Clink can not even resume such a coroutine until the pipe writer is closed.
+  - When a coroutine wants to update the prompt, it could:
+    - Do string manipulation on the prompt string and then ask Clink to redisplay -- simple but limited.
+    - Trigger rerunning rerun prompt filtering, and use the coroutine results (possibly even by the coroutine creation function knowing how to substitute ready results instead of creating a coroutine).
+    - _Guard against a poorly behaved prompt filter accidentally falling into an infinite cycle._
+
+#### _General_
 - Add syntax for argmatchers to defer adding args/flags, to facilitate adding args/flags by parsing help text from a program.  This is more complex than I first thought:
   - It gets overly complicated for a script to handle arg2 or deeper (needs list of preceding args, preceding flags for args, etc -- not to mention linked parsers).
   - To support input line coloring it needs to run code simply due to input from the user, regardless whether any completion is invoked.
@@ -55,9 +69,6 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
   - What to do about completion colors?
   - Make it owner draw and add text like "dir", "alias", etc?
   - Add stat chars when so configured?
-
-**Prompt Filtering**
-- Async command prompt updating as a way to solve the delay in git repos.
 
 **Marking**
 - Marking mode in-app similar to my other shell project?  It's a kludge, but it copies with HTML formatting (and even uses the color scheme).
