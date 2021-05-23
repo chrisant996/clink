@@ -102,7 +102,7 @@ private:
     matches*            get_mutable_matches(bool nosort=false);
     void                update_internal();
     bool                update_input();
-    module::context     get_context(const line_state& line) const;
+    module::context     get_context() const;
     line_state          get_linestate() const;
     void                set_flag(unsigned char flag);
     void                clear_flag(unsigned char flag);

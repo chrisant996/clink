@@ -265,8 +265,7 @@ void line_editor_impl::begin_line()
 
     rl_before_display_function = before_display;
 
-    line_state line = get_linestate();
-    editor_module::context context = get_context(line);
+    editor_module::context context = get_context();
     for (auto module : m_modules)
         module->on_begin_line(context);
 }
@@ -557,8 +556,7 @@ bool line_editor_impl::update_input()
     {
         int columns = m_desc.output->get_columns();
         int rows = m_desc.output->get_rows();
-        line_state line = get_linestate();
-        editor_module::context context = get_context(line);
+        editor_module::context context = get_context();
         for (auto* module : m_modules)
             module->on_terminal_resize(columns, rows, context);
     }
@@ -611,8 +609,7 @@ bool line_editor_impl::update_input()
         {
             rollback<bind_resolver::binding*> _(m_pending_binding, &binding);
 
-            line_state line = get_linestate();
-            editor_module::context context = get_context(line);
+            editor_module::context context = get_context();
             editor_module::input input = { chord.c_str(), chord.length(), id };
             module->on_input(input, result, context);
         }
@@ -841,12 +838,12 @@ line_state line_editor_impl::get_linestate() const
 }
 
 //------------------------------------------------------------------------------
-editor_module::context line_editor_impl::get_context(const line_state& line) const
+editor_module::context line_editor_impl::get_context() const
 {
     auto& pter = const_cast<printer&>(m_printer);
     auto& pger = const_cast<pager&>(static_cast<const pager&>(m_pager));
     auto& buffer = const_cast<rl_buffer&>(m_buffer);
-    return { m_desc.prompt, pter, pger, buffer, line, m_matches, m_classifications };
+    return { m_desc.prompt, pter, pger, buffer, m_matches, m_classifications };
 }
 
 //------------------------------------------------------------------------------

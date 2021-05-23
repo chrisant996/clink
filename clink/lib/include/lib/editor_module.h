@@ -38,7 +38,6 @@ public:
         printer&            printer;
         pager&              pager;
         line_buffer&        buffer;
-        const line_state&   line;
         const matches&      matches;
         const word_classifications& classifications;
     };
