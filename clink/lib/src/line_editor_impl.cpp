@@ -384,6 +384,7 @@ void line_editor_impl::update_matches()
 
     if (generate)
     {
+TODO("ISSUE119 -- Expand doskey macros when necessary (discard when going out of scope).");
         line_state line = get_linestate();
         match_pipeline pipeline(m_matches);
         pipeline.reset();
@@ -742,12 +743,14 @@ void line_editor_impl::classify()
     if (m_prev_classify.equals(m_buffer.get_buffer(), m_buffer.get_length()))
         return;
 
+TODO("ISSUE119 -- Expand doskey macros when necessary (discard when going out of scope).");
     // Use the full line; don't stop at the cursor.
     line_state line = get_linestate();
     collect_words(false);
 
     // Hang on to the old classifications so it's possible to detect changes.
     word_classifications old_classifications(std::move(m_classifications));
+TODO("ISSUE119 -- Keep track of which bytes in expanded line came from the original line, so that only those colored cells are applied back to the original line.");
     m_classifications.init(strlen(line.get_line()));
 
     // Count number of commands so we can pre-allocate words_storage so that
@@ -803,6 +806,7 @@ void line_editor_impl::classify()
     }
 
     m_classifier->classify(linestates, m_classifications);
+TODO("ISSUE119 -- If the original line was expanded per a doskey macro, translate the expanded line's colored cells back into the origina line.");
     m_classifications.finish(is_showing_argmatchers());
 
 #ifdef DEBUG
@@ -982,6 +986,8 @@ void line_editor_impl::update_internal()
             // Defer generating until update_matches().  Must set word break
             // position in the meantime because adjust_completion_word() gets
             // called before the deferred generate().
+TODO("ISSUE119 -- Uh oh, this is problematic for making generators and classifiers automatically expand + collapse doskey macros.");
+TODO("ISSUE119 -- Maybe the set_word_break_position needs to move closer to the generate() calls that it needs to affect?");
             set_flag(flag_generate);
             m_matches.set_word_break_position(line.get_end_word_offset());
             update_prev_generate = len;
@@ -1045,6 +1051,7 @@ matches* maybe_regenerate_matches(const char* needle, bool popup)
     if (debug_filter) puts("REGENERATE_MATCHES");
 #endif
 
+TODO("ISSUE119 -- Expand doskey macros when necessary (discard when going out of scope).");
     std::vector<word> words;
     unsigned int command_offset = s_editor->collect_words(words, regen, collect_words_mode::display_filter);
     line_state line
