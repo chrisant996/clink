@@ -232,7 +232,6 @@ static int uninstall_autorun(const char* clink_path, int wow64)
         }
     }
 
-Sleep(15000);
     // Tidy up.
     close_key(cmd_proc_key);
     free(key_value);
