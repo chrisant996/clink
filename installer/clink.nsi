@@ -157,8 +157,8 @@ Section "Autorun when cmd.exe starts"
     SetShellVarContext all
 
     StrCpy $0 "~\clink"
-    ExecShell "open" "$INSTDIR\clink_x86.exe" 'autorun --allusers uninstall' SW_HIDE
-    ExecShell "open" "$INSTDIR\clink_x86.exe" 'autorun install -- --profile "$0"' SW_HIDE
+    ExecShellWait "open" "$INSTDIR\clink_x86.exe" 'autorun --allusers uninstall' SW_HIDE
+    ExecShellWait "open" "$INSTDIR\clink_x86.exe" 'autorun install -- --profile "$0"' SW_HIDE
 SectionEnd
 
 ;-------------------------------------------------------------------------------
@@ -176,8 +176,8 @@ Section "!un.Application files"
     SectionIn RO
     SetShellVarContext all
 
-    ExecShell "open" "$INSTDIR\clink_x86.exe" "autorun --allusers uninstall" SW_HIDE
-    ExecShell "open" "$INSTDIR\clink_x86.exe" "autorun uninstall" SW_HIDE
+    ExecShellWait "open" "$INSTDIR\clink_x86.exe" "autorun --allusers uninstall" SW_HIDE
+    ExecShellWait "open" "$INSTDIR\clink_x86.exe" "autorun uninstall" SW_HIDE
     Sleep 600
 
     ; Delete the installation directory and root directory if it's empty.
