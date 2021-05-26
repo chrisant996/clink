@@ -59,7 +59,7 @@ static void copy_dll(str_base& dll_path)
     str<280> target_path;
     if (!os::get_temp_dir(target_path))
     {
-        LOG("Unable to get temp path");
+        ERR("Unable to get temp path");
         return;
     }
 
@@ -69,10 +69,9 @@ static void copy_dll(str_base& dll_path)
     path_salt.format("_%08x", str_hash(dll_path.c_str()));
     target_path << path_salt;
 
-    os::make_dir(target_path.c_str());
-    if (os::get_path_type(target_path.c_str()) != os::path_type_dir)
+    if (!os::make_dir(target_path.c_str()))
     {
-        LOG("Unable to create path '%s'", target_path.c_str());
+        ERR("Unable to create path '%s'", target_path.c_str());
         return;
     }
 
@@ -94,18 +93,15 @@ static void copy_dll(str_base& dll_path)
         wstr<280> wcopy_path(target_path.c_str());
         HANDLE out = CreateFileW(wcopy_path.c_str(), GENERIC_WRITE, 0, nullptr,
             CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, nullptr);
-        if (out != INVALID_HANDLE_VALUE)
+        if (out == INVALID_HANDLE_VALUE)
         {
-            DWORD written;
-            WriteFile(out, dll_path.c_str(), dll_path.length(), &written, nullptr);
-            CloseHandle(out);
+            ERR("Failed to create origin file at '%s'", target_path.c_str());
+            return;
         }
-    }
 
-    if (os::get_path_type(target_path.c_str()) != os::path_type_file)
-    {
-        LOG("Failed to create origin file at '%s'", target_path.c_str());
-        return;
+        DWORD written;
+        WriteFile(out, dll_path.c_str(), dll_path.length(), &written, nullptr);
+        CloseHandle(out);
     }
 
     target_path.truncate(target_length);
@@ -115,13 +111,11 @@ static void copy_dll(str_base& dll_path)
         os::get_path_type(target_path.c_str()) != os::path_type_file ||
         is_file_newer(dll_path.c_str(), target_path.c_str()))
     {
-        os::copy(dll_path.c_str(), target_path.c_str());
-    }
-
-    if (os::get_path_type(target_path.c_str()) != os::path_type_file)
-    {
-        LOG("Failed to copy DLL to '%s'", target_path.c_str());
-        return;
+        if (!os::copy(dll_path.c_str(), target_path.c_str()))
+        {
+            ERR("Failed to copy DLL to '%s'", target_path.c_str());
+            return;
+        }
     }
 
     // Copy the PDB to make debugging easier.
@@ -295,7 +289,7 @@ static bool is_clink_present(DWORD target_pid)
     HANDLE th32 = CreateToolhelp32Snapshot(TH32CS_SNAPMODULE, target_pid);
     if (th32 == INVALID_HANDLE_VALUE)
     {
-        LOG("Failed to snapshot module state.");
+        ERR("Failed to snapshot module state.");
         return false;
     }
 
