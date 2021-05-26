@@ -178,7 +178,6 @@ Section "!un.Application files"
 
     ExecShellWait "open" "$INSTDIR\clink_x86.exe" "autorun --allusers uninstall" SW_HIDE
     ExecShellWait "open" "$INSTDIR\clink_x86.exe" "autorun uninstall" SW_HIDE
-    Sleep 600
 
     ; Delete the installation directory and root directory if it's empty.
     ;
