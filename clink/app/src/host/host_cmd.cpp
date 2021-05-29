@@ -381,7 +381,7 @@ bool host_cmd::is_interactive() const
 }
 
 //------------------------------------------------------------------------------
-void host_cmd::edit_line(const wchar_t* prompt, wchar_t* chars, int max_chars)
+void host_cmd::edit_line(const wchar_t* /*prompt*/, wchar_t* chars, int max_chars)
 {
     bool resolved = false;
     wstr_base wout(chars, max_chars);
