@@ -38,6 +38,7 @@ extern "C" {
 #include <compat/display_matches.h>
 #include <readline/posixdir.h>
 #include <readline/history.h>
+extern int _rl_screenwidth;
 extern int _rl_eof_char;
 extern int _rl_bell_preference;
 extern int _rl_match_hidden_files;
@@ -476,6 +477,67 @@ static const char* s_none_color = nullptr;
 bool is_showing_argmatchers()
 {
     return !!s_argmatcher_color;
+}
+
+//------------------------------------------------------------------------------
+// This counts the number of screen lines needed to draw prompt_prefix.
+//
+// Why:  Readline expands the prompt string into a prefix and the last line of
+// the prompt.  Readline draws the prefix only once.  To asynchronously filter
+// the prompt again after it's already been displayed, it's necessary to draw
+// the prefix again.  To do that, it's necessary to know how many lines to move
+// up to reach the beginning of the prompt prefix.
+static int count_prompt_lines(const char* prompt_prefix, int len)
+{
+    if (len <= 0 || !prompt_prefix)
+        return 0;
+
+    assert(_rl_screenwidth > 0);
+    int width = _rl_screenwidth;
+
+    int lines = 0;
+    int cells = 0;
+    bool ignore = false;
+
+    str_iter iter(prompt_prefix, len);
+    while (int c = iter.next())
+    {
+        if (ignore)
+        {
+            if (c == RL_PROMPT_END_IGNORE)
+                ignore = false;
+            continue;
+        }
+        if (c == RL_PROMPT_START_IGNORE)
+        {
+            ignore = true;
+            continue;
+        }
+
+        if (c == '\r')
+        {
+            cells = 0;
+            continue;
+        }
+        if (c == '\n')
+        {
+            lines++;
+            cells = 0;
+            continue;
+        }
+
+        int w = clink_wcwidth(c);
+        if (cells + w > width)
+        {
+            lines++;
+            cells = 0;
+        }
+        cells += w;
+    }
+
+    assert(!cells);
+
+    return lines;
 }
 
 //------------------------------------------------------------------------------
@@ -1459,6 +1521,67 @@ void rl_module::set_keyseq_len(int len)
 }
 
 //------------------------------------------------------------------------------
+void rl_module::set_prompt(const char* prompt)
+{
+    // Readline needs to be told about parts of the prompt that aren't visible
+    // by enclosing them in a pair of 0x01/0x02 chars.
+
+    m_rl_prompt.clear();
+
+    bool force_prompt_color = false;
+    {
+        str<16> tmp;
+        const char* prompt_color = build_color_sequence(g_color_prompt, tmp, true);
+        if (prompt_color)
+        {
+            force_prompt_color = true;
+            m_rl_prompt.format("\x01%s\x02", prompt_color);
+        }
+    }
+
+    ecma48_processor_flags flags = ecma48_processor_flags::bracket;
+    if (get_native_ansi_handler() != ansi_handler::conemu)
+        flags |= ecma48_processor_flags::apply_title;
+    ecma48_processor(prompt, &m_rl_prompt, nullptr/*cell_count*/, flags);
+
+    m_rl_prompt.concat("\x01\x1b[m\x02");
+
+    // Warning:  g_last_prompt is a mutable copy that can be altered in place;
+    // it is not a synonym for m_rl_prompt.
+    g_last_prompt.clear();
+    g_last_prompt.concat(m_rl_prompt.c_str(), m_rl_prompt.length());
+
+    if (g_rl_buffer && g_printer)
+    {
+        // Count the number of lines the prefix takes to display.
+        str_moveable bracketed_prefix;
+        ecma48_processor_flags flags = ecma48_processor_flags::bracket;
+        ecma48_processor(rl_get_local_prompt_prefix(), &bracketed_prefix, nullptr/*cell_count*/, flags);
+        int lines = count_prompt_lines(bracketed_prefix.c_str(), bracketed_prefix.length());
+
+        // Clear the input line and the prompt prefix.
+        rl_clear_visible_line();
+        while (lines-- > 0)
+        {
+TODO("PROMPTFILTER: this can't walk up past the top of the visible area of the terminal display.");
+            // BUGBUG: This can't walk up past the top of the visible area of
+            // the terminal display, so short windows will effectively corrupt
+            // the scrollback history.
+            // INVESTIGATE: Maybe it can check if the cursor line is outside the
+            // visible area, and scroll the screen in chunks to make the ANSI
+            // codes work?
+            // REVIEW: What if the visible area is only one line tall?  Are ANSI
+            // codes able to manipulate it adequately?
+            g_printer->print("\x1b[A\x1b[2K");
+        }
+
+        // Update the prompt and display.
+        rl_set_prompt(m_rl_prompt.c_str());
+        rl_forced_update_display();
+    }
+}
+
+//------------------------------------------------------------------------------
 void rl_module::bind_input(binder& binder)
 {
     int default_group = binder.get_group();
@@ -1492,35 +1615,18 @@ void rl_module::on_begin_line(const context& context)
     }
 #endif
 
+    // Note:  set_prompt() must happen while g_rl_buffer is nullptr otherwise
+    // it will tell Readline about the new prompt, but Readline isn't set up
+    // until rl_callback_handler_install further below.  set_prompt() happens
+    // after g_printer and g_pager are set just in case it ever needs to print
+    // output with ANSI escape code support.
+    assert(!g_rl_buffer);
     g_printer = &context.printer;
     g_pager = &context.pager;
+    set_prompt(context.prompt);
     g_rl_buffer = &context.buffer;
     if (g_classify_words.get())
         s_classifications = &context.classifications;
-
-    // Readline needs to be told about parts of the prompt that aren't visible
-    // by enclosing them in a pair of 0x01/0x02 chars.
-    str<128> rl_prompt;
-
-    bool force_prompt_color = false;
-    {
-        str<16> tmp;
-        const char* prompt_color = build_color_sequence(g_color_prompt, tmp, true);
-        if (prompt_color)
-        {
-            force_prompt_color = true;
-            rl_prompt.format("\x01%s\x02", prompt_color);
-        }
-    }
-
-    ecma48_processor_flags flags = ecma48_processor_flags::bracket;
-    if (get_native_ansi_handler() != ansi_handler::conemu)
-        flags |= ecma48_processor_flags::apply_title;
-    ecma48_processor(context.prompt, &rl_prompt, nullptr/*cell_count*/, flags);
-
-    rl_prompt.concat("\x01\x1b[m\x02");
-    g_last_prompt.clear();
-    g_last_prompt.concat(rl_prompt.c_str(), rl_prompt.length());
 
     _rl_face_modmark = '*';
     _rl_face_horizscroll = '<';
@@ -1550,7 +1656,7 @@ void rl_module::on_begin_line(const context& context)
         _rl_display_message_color = "\x1b[m";
 
     auto handler = [] (char* line) { rl_module::get()->done(line); };
-    rl_callback_handler_install(rl_prompt.c_str(), handler);
+    rl_callback_handler_install(m_rl_prompt.c_str(), handler);
 
     // Apply the remembered history position from the previous command, if any.
     if (s_init_history_pos >= 0)

@@ -643,6 +643,14 @@ rl_expand_prompt (char *prompt)
     }
 }
 
+/* begin_clink_change */
+const char *
+rl_get_local_prompt_prefix (void)
+{
+  return local_prompt_prefix;
+}
+/* end_clink_change */
+
 /* Allocate the various line structures, making sure they can hold MINSIZE
    bytes. If the existing line size can accommodate MINSIZE bytes, don't do
    anything. */

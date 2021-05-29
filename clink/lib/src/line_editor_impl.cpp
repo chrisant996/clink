@@ -152,6 +152,14 @@ void update_matches()
     s_editor->update_matches();
 }
 
+void set_prompt(const char* prompt)
+{
+    if (!s_editor)
+        return;
+
+    s_editor->set_prompt(prompt);
+}
+
 //------------------------------------------------------------------------------
 static bool is_endword_tilde(const line_state& line)
 {
@@ -314,6 +322,13 @@ void line_editor_impl::set_input_idle(input_idle* idle)
     m_idle = idle;
     if (m_idle)
         m_idle->reset();
+}
+
+//------------------------------------------------------------------------------
+void line_editor_impl::set_prompt(const char* prompt)
+{
+    m_desc.prompt = prompt;
+    m_module.set_prompt(prompt);
 }
 
 //------------------------------------------------------------------------------

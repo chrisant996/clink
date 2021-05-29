@@ -320,6 +320,9 @@ extern char *readline PARAMS((const char *));
 
 extern int rl_set_prompt PARAMS((const char *));
 extern int rl_expand_prompt PARAMS((char *));
+/* begin_clink_change */
+extern const char *rl_get_local_prompt_prefix PARAMS((void));
+/* end_clink_change */
 
 extern int rl_initialize PARAMS((void));
 

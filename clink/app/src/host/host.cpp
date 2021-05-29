@@ -510,6 +510,8 @@ void host::enqueue_lines(std::list<str_moveable>& lines)
 //------------------------------------------------------------------------------
 bool host::edit_line(const char* prompt, str_base& out)
 {
+    assert(!m_prompt); // Reentrancy not supported!
+
     const app_context* app = app_context::get();
     bool reset = app->update_env();
 
@@ -557,22 +559,17 @@ bool host::edit_line(const char* prompt, str_base& out)
         m_prompt_filter = nullptr;
         m_lua = nullptr;
     }
-    if (local_lua)
-    {
-        tmp_lua = std::make_unique<host_lua>();
-        tmp_prompt_filter = std::make_unique<prompt_filter>(*tmp_lua);
-    }
-    else
+    if (!local_lua)
     {
         init_scripts = !m_lua;
         send_event |= init_scripts;
-        if (!m_lua)
-            m_lua = new host_lua;
-        if (!m_prompt_filter)
-            m_prompt_filter = new prompt_filter(*m_lua);
     }
-    host_lua& lua = tmp_lua.get() ? *tmp_lua : *m_lua;
-    prompt_filter& prompt_filter = tmp_prompt_filter.get() ? *tmp_prompt_filter : *m_prompt_filter;
+    if (!m_lua)
+        m_lua = new host_lua;
+    if (!m_prompt_filter)
+        m_prompt_filter = new prompt_filter(*m_lua);
+    host_lua& lua = *m_lua;
+    prompt_filter& prompt_filter = *m_prompt_filter;
 
     rollback<host_lua*> rb_lua(s_host_lua, &lua);
 
@@ -603,11 +600,8 @@ bool host::edit_line(const char* prompt, str_base& out)
     str<256> filtered_prompt;
     if (init_prompt)
     {
-        if (g_filter_prompt.get())
-            prompt_filter.filter(prompt, filtered_prompt);
-        else
-            filtered_prompt = prompt;
-        desc.prompt = filtered_prompt.c_str();
+        m_prompt = prompt;
+        desc.prompt = filter_prompt();
     }
 
     // Create the editor and add components to it.
@@ -785,5 +779,25 @@ bool host::edit_line(const char* prompt, str_base& out)
     s_history_db = nullptr;
 
     line_editor_destroy(editor);
+
+    if (local_lua)
+    {
+        delete m_prompt_filter;
+        delete m_lua;
+        m_prompt_filter = nullptr;
+        m_lua = nullptr;
+    }
+
+    m_prompt = nullptr;
+
     return ret;
+}
+
+//------------------------------------------------------------------------------
+const char* host::filter_prompt()
+{
+    m_filtered_prompt.clear();
+    if (g_filter_prompt.get() && m_prompt_filter && m_prompt)
+        m_prompt_filter->filter(m_prompt, m_filtered_prompt);
+    return m_filtered_prompt.c_str();
 }
