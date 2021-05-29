@@ -17,6 +17,7 @@
 #include <core/settings.h>
 #include <terminal/terminal_in.h>
 #include <terminal/terminal_out.h>
+#include <terminal/input_idle.h>
 extern "C" {
 #include <readline/readline.h>
 #include <readline/rldefs.h>
@@ -301,9 +302,18 @@ bool line_editor_impl::add_generator(match_generator& generator)
     return (slot != nullptr) ? *slot = &generator, true : false;
 }
 
+//------------------------------------------------------------------------------
 void line_editor_impl::set_classifier(word_classifier& classifier)
 {
     m_classifier = &classifier;
+}
+
+//------------------------------------------------------------------------------
+void line_editor_impl::set_input_idle(input_idle* idle)
+{
+    m_idle = idle;
+    if (m_idle)
+        m_idle->reset();
 }
 
 //------------------------------------------------------------------------------
@@ -327,8 +337,15 @@ bool line_editor_impl::edit(str_base& out)
         m_insert_on_begin = out.c_str();
 
     // Update first so the init state goes through.
+    input_idle* callback = m_idle;
     while (update())
-        m_desc.input->select();
+    {
+        // Optimize away all subsequent callback cost once it's not needed.
+        if (callback && !callback->is_enabled())
+            callback = nullptr;
+
+        m_desc.input->select(callback);
+    }
 
     return get_line(out);
 }

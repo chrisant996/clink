@@ -4,6 +4,7 @@
 #include "pch.h"
 #include "win_terminal_in.h"
 #include "scroll.h"
+#include "input_idle.h"
 #include "key_tester.h"
 
 #include <core/base.h>
@@ -485,10 +486,10 @@ void win_terminal_in::end()
 }
 
 //------------------------------------------------------------------------------
-void win_terminal_in::select()
+void win_terminal_in::select(input_idle* callback)
 {
     if (!m_buffer_count)
-        read_console();
+        read_console(callback);
 }
 
 //------------------------------------------------------------------------------
@@ -523,7 +524,7 @@ key_tester* win_terminal_in::set_key_tester(key_tester* keys)
 }
 
 //------------------------------------------------------------------------------
-void win_terminal_in::read_console()
+void win_terminal_in::read_console(input_idle* callback)
 {
     // Hide the cursor unless we're accepting input so we don't have to see it
     // jump around as the screen's drawn.
@@ -551,6 +552,23 @@ void win_terminal_in::read_console()
         GetConsoleMode(GetStdHandle(STD_INPUT_HANDLE), &modeIn);
         assert(!(modeIn & ENABLE_PROCESSED_INPUT));
 #endif
+
+        while (callback && callback->is_enabled())
+        {
+            unsigned count = 1;
+            HANDLE handles[2] = { m_stdin };
+
+            HANDLE event = callback->get_waitevent();
+            if (event != 0 && event != INVALID_HANDLE_VALUE)
+                handles[count++] = event;
+
+            DWORD timeout = callback->get_timeout();
+            DWORD result = WaitForMultipleObjects(count, handles, false, timeout);
+            if (result != WAIT_OBJECT_0 + 1 && result != WAIT_TIMEOUT)
+                break;
+
+            callback->on_idle();
+        }
 
         DWORD count;
         INPUT_RECORD record;

@@ -5,6 +5,7 @@
 
 #include "terminal_in.h"
 
+class input_idle;
 class key_tester;
 
 //------------------------------------------------------------------------------
@@ -14,12 +15,12 @@ class win_terminal_in
 public:
     virtual void    begin() override;
     virtual void    end() override;
-    virtual void    select() override;
+    virtual void    select(input_idle* callback=nullptr) override;
     virtual int     read() override;
     virtual key_tester* set_key_tester(key_tester* keys) override;
 
 private:
-    void            read_console();
+    void            read_console(input_idle* callback=nullptr);
     void            process_input(const KEY_EVENT_RECORD& key_event);
     void            push(unsigned int value);
     void            push(const char* seq);

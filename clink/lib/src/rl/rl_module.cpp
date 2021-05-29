@@ -1637,7 +1637,7 @@ void rl_module::on_input(const input& input, result& result, const context& cont
     {
         virtual void begin() override   {}
         virtual void end() override     {}
-        virtual void select() override  {}
+        virtual void select(input_idle*) override {}
         virtual int  read() override    { return *(unsigned char*)(data++); }
         virtual key_tester* set_key_tester(key_tester* keys) override { return nullptr; }
         const char*  data;

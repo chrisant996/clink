@@ -7,6 +7,7 @@
 #include "binder.h"
 #include "editor_module.h"
 #include "input_dispatcher.h"
+#include "terminal/input_idle.h"
 #include "terminal/key_tester.h"
 #include "pager_impl.h"
 #include "line_editor.h"
@@ -50,6 +51,7 @@ public:
     virtual bool        add_module(editor_module& module) override;
     virtual bool        add_generator(match_generator& generator) override;
     virtual void        set_classifier(word_classifier& classifier) override;
+    virtual void        set_input_idle(input_idle* idle) override;
     virtual bool        get_line(str_base& out) override;
     virtual bool        edit(str_base& out) override;
     virtual bool        update() override;
@@ -121,6 +123,7 @@ private:
     modules             m_modules;
     generators          m_generators;
     word_classifier*    m_classifier = nullptr;
+    input_idle*         m_idle = nullptr;
     binder              m_binder;
     bind_resolver       m_bind_resolver = { m_binder };
     words               m_words;
