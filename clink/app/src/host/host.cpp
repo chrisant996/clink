@@ -266,6 +266,23 @@ void host_remove_history(int rl_history_index, const char* line)
         s_history_db->remove(rl_history_index, line);
 }
 
+
+
+//------------------------------------------------------------------------------
+static host* s_host = nullptr;
+void host_filter_prompt()
+{
+    if (!s_host)
+        return;
+
+    const char* prompt = s_host->filter_prompt();
+
+    void set_prompt(const char* prompt);
+    set_prompt(prompt);
+}
+
+
+
 //------------------------------------------------------------------------------
 static void write_line_feed()
 {
@@ -571,6 +588,7 @@ bool host::edit_line(const char* prompt, str_base& out)
     host_lua& lua = *m_lua;
     prompt_filter& prompt_filter = *m_prompt_filter;
 
+    rollback<host*> rb_host(s_host, this);
     rollback<host_lua*> rb_lua(s_host_lua, &lua);
 
     // Load scripts.
@@ -613,6 +631,7 @@ bool host::edit_line(const char* prompt, str_base& out)
         editor->add_generator(file_match_generator());
         if (g_classify_words.get())
             editor->set_classifier(lua);
+        editor->set_input_idle(lua);
     }
 
     if (init_history)

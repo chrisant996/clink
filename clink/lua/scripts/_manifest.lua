@@ -7,6 +7,7 @@ return {
         "core.lua",
         "events.lua",
         "console.lua",
+        "coroutines.lua",
         "generator.lua",
         "arguments.lua",
         "classifier.lua",

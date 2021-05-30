@@ -93,6 +93,7 @@ bool s_force_reload_scripts = false;
 host_lua::host_lua()
 : m_generator(m_state)
 , m_classifier(m_state)
+, m_idle(m_state)
 {
     str<280> bin_path;
     app_context::get()->get_binaries_dir(bin_path);
@@ -121,6 +122,12 @@ host_lua::operator match_generator& ()
 host_lua::operator word_classifier& ()
 {
     return m_classifier;
+}
+
+//------------------------------------------------------------------------------
+host_lua::operator input_idle* ()
+{
+    return &m_idle;
 }
 
 //------------------------------------------------------------------------------

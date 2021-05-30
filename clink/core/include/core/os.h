@@ -20,9 +20,7 @@ enum {
 enum temp_file_mode {
     normal              = 0x0000,   // text mode (translate line endings)
     binary              = 0x0001,   // binary mode (no translation)
-#if 0
     delete_on_close     = 0x0002,   // delete on close (requires FILE_SHARE_DELETE)
-#endif
 };
 
 DEFINE_ENUM_FLAG_OPERATORS(temp_file_mode);
@@ -45,5 +43,8 @@ bool    get_alias(const char* name, str_base& out);
 bool    get_short_path_name(const char* path, str_base& out);
 bool    get_long_path_name(const char* path, str_base& out);
 bool    get_full_path_name(const char* path, str_base& out);
+
+void    map_errno();
+void    map_errno(unsigned long const oserrno);
 
 }; // namespace os

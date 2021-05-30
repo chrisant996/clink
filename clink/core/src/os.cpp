@@ -14,8 +14,6 @@
 
 //------------------------------------------------------------------------------
 extern "C" void __cdecl __acrt_errno_map_os_error(unsigned long const oserrno);
-static void map_errno() { __acrt_errno_map_os_error(GetLastError()); }
-static void map_errno(unsigned long const oserrno) { __acrt_errno_map_os_error(oserrno); }
 
 //------------------------------------------------------------------------------
 // We use UTF8 everywhere, and we need to tell the CRT so that mbrtowc and etc
@@ -31,6 +29,10 @@ static auto_set_locale_utf8 s_auto_utf8;
 
 namespace os
 {
+
+//------------------------------------------------------------------------------
+void map_errno() { __acrt_errno_map_os_error(GetLastError()); }
+void map_errno(unsigned long const oserrno) { __acrt_errno_map_os_error(oserrno); }
 
 //------------------------------------------------------------------------------
 DWORD get_file_attributes(const wchar_t* path)
@@ -250,9 +252,7 @@ FILE* create_temp_file(str_base* out, const char* _prefix, const char* _ext, tem
     // Open mode.
     wstr<16> mode(L"w+xT");
     if (_mode & os::binary) mode << L"b";
-#if 0
     if (_mode & os::delete_on_close) mode << L"D";
-#endif
 
     // Create unique temp file, iterating if necessary.
     FILE* f = nullptr;

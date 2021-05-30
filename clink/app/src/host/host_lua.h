@@ -6,6 +6,7 @@
 #include <core/str.h>
 #include <lua/lua_match_generator.h>
 #include <lua/lua_word_classifier.h>
+#include <lua/lua_input_idle.h>
 #include <lua/lua_state.h>
 #include <functional>
 
@@ -17,6 +18,7 @@ public:
                         operator lua_state& ();
                         operator match_generator& ();
                         operator word_classifier& ();
+                        operator input_idle* ();
     void                load_scripts();
     bool                is_script_path_changed() const;
 
@@ -33,5 +35,6 @@ private:
     lua_state           m_state;
     lua_match_generator m_generator;
     lua_word_classifier m_classifier;
+    lua_input_idle      m_idle;
     str<>               m_prev_script_path;
 };

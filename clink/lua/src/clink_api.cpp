@@ -26,11 +26,11 @@ extern "C" {
 //------------------------------------------------------------------------------
 // Implemented in host.cpp.
 // UNDOCUMENTED, because it's really only useful inside debugger.lua.
-//  / -name:  clink.print
-//  / -arg:   text:string
-//  / -show:  clink.print("\x1b[32mgreen\x1b[m \x1b[35mmagenta\x1b[m")
-//  / This is similar to <code>print()</code>, but this supports ANSI escape
-//  / codes.
+// / -name:  clink.print
+// / -arg:   text:string
+// / -show:  clink.print("\x1b[32mgreen\x1b[m \x1b[35mmagenta\x1b[m")
+// / This is similar to <code>print()</code>, but this supports ANSI escape
+// / codes.
 
 //------------------------------------------------------------------------------
 /// -name:  clink.version_encoded
@@ -387,6 +387,15 @@ static int slash_translation(lua_State* state)
     return 0;
 }
 
+//------------------------------------------------------------------------------
+// UNDOCUMENTED; internal use only.
+static int refilter_prompt(lua_State* state)
+{
+    void host_filter_prompt();
+    host_filter_prompt();
+    return 0;
+}
+
 
 
 //------------------------------------------------------------------------------
@@ -432,6 +441,8 @@ void clink_lua_initialise(lua_state& lua)
         { "is_dir",                 &is_dir },
         { "is_rl_variable_true",    &is_rl_variable_true },
         { "slash_translation",      &slash_translation },
+        // UNDOCUMENTED; internal use only.
+        { "refilterprompt",         &refilter_prompt },
     };
 
     lua_State* state = lua.get_state();
