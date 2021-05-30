@@ -1003,11 +1003,10 @@ end
 -- A prompt filter that appends the current git branch.
 local git_branch_prompt = clink.promptfilter(50)
 function git_branch_prompt:filter(prompt)
-    for line in io.popen("git branch 2>nul"):lines() do
-        local branch = line:match("%* (.+)$")
-        if branch then
-            return prompt.." "..cyan.."["..branch.."]"..normal
-        end
+    local line = io.popen("git branch --show-current 2>nul"):read("*a")
+    local branch = line:match("(.+)\n")
+    if branch then
+        return prompt.." "..cyan.."["..branch.."]"..normal
     end
 end
 

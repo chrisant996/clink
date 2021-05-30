@@ -547,11 +547,16 @@ void win_terminal_in::read_console(input_idle* callback)
     unsigned int buffer_count = m_buffer_count;
     while (buffer_count == m_buffer_count)
     {
-#ifdef DEBUG
         DWORD modeIn;
-        GetConsoleMode(GetStdHandle(STD_INPUT_HANDLE), &modeIn);
-        assert(!(modeIn & ENABLE_PROCESSED_INPUT));
-#endif
+        if (GetConsoleMode(GetStdHandle(STD_INPUT_HANDLE), &modeIn))
+        {
+            // If Lua code uses io.popen():lines() and returns without finishing
+            // reading the output, this can be reached with the console mode set
+            // wrong.  Compensate.
+            assert(!(modeIn & ENABLE_PROCESSED_INPUT));
+            if (modeIn & ENABLE_PROCESSED_INPUT)
+                SetConsoleMode(GetStdHandle(STD_INPUT_HANDLE), modeIn & ~ENABLE_PROCESSED_INPUT);
+        }
 
         while (callback && callback->is_enabled())
         {
