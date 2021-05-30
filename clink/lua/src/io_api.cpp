@@ -155,7 +155,10 @@ static HANDLE dup_handle(HANDLE process_handle, HANDLE h)
                          0,
                          true/*bInheritHandle*/,
                          DUPLICATE_SAME_ACCESS))
+    {
+        os::map_errno();
         return 0;
+    }
     return new_h;
 }
 
@@ -245,8 +248,12 @@ static intptr_t popenrw_internal(const char* command, HANDLE hStdin, HANDLE hStd
     DWORD attrCmd = GetFileAttributesW(cmd_exe);
     if (attrCmd == 0xffffffff)
     {
+        errno_t e = errno;
         if (!search_path(selected_cmd_exe, cmd_exe))
+        {
+            errno = e;
             return 0;
+        }
         cmd_exe = selected_cmd_exe.c_str();
     }
 
@@ -264,7 +271,10 @@ static intptr_t popenrw_internal(const char* command, HANDLE hStdin, HANDLE hStd
         &process_info);
 
     if (!child_status)
+    {
+        os::map_errno();
         return 0;
+    }
 
     CloseHandle(process_info.hThread);
     return reinterpret_cast<intptr_t>(process_info.hProcess);
@@ -295,20 +305,26 @@ struct pipe_pair
             };
 
             local = _wfdopen(handles[index_local], c_mode[write][binary]);
-            remote = dup_handle(GetCurrentProcess(), reinterpret_cast<HANDLE>(_get_osfhandle(handles[index_remote])));
+            if (local)
+                remote = dup_handle(GetCurrentProcess(), reinterpret_cast<HANDLE>(_get_osfhandle(handles[index_remote])));
 
+            errno_t e = errno;
             _close(handles[index_remote]);
             if (!local)
                 _close(handles[index_local]);
+            errno = e;
         }
 
         if (local && remote)
             return true;
 
+        errno_t e = errno;
         if (local) fclose(local);
         if (remote) CloseHandle(remote);
         local = nullptr;
         remote = 0;
+        errno = e;
+
         return false;
     }
 
@@ -397,9 +413,13 @@ static int io_popenrw(lua_State* state)
 
         if (!process_handle)
         {
+            errno_t e = errno;
+
             failed = true;
             lua_pop(state, 2);
             delete info;
+
+            errno = e;
         }
         else
         {
