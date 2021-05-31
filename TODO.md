@@ -8,8 +8,12 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 
 ## Investigate
 
+#### _Coroutines_
+- [ ] Need a way to show visible clues as to what's happening with waits and coroutines.
+- [ ] Need a command that prints diagnostic status for the current input line.
+
 #### _Prompt Filtering_
-- Async command prompt updating as a way to solve the delay in git repos.
+- [x] Async command prompt updating as a way to solve the delay in git repos.
   - [x] Use `clink.addcoroutine()` to register a coroutine to resume while waiting for input.
   - [x] Use `clink.refilterprompt()` to rerun prompt filtering and redisplay.
   - [x] win_terminal_in idle callback.
@@ -26,10 +30,9 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
     - [x] Associate wake event with `popenbuffering*` so yield can be resumed immediately on completion.
     - [x] Associate yieldguard with coroutine.
     - [x] If any coroutine has no yieldguard then resume immediately (subject to throttling).
-  - [ ] Enforce good behavior from coroutines.
+  - [x] Enforce good behavior from coroutines.
     - [x] Event to signal ready for resume (e.g. from `os.popenyield()`).
-    - [ ] Throttle individual greedy coroutines.
-  - [ ] Need a way to show visible clues as to what's happening with waits and coroutines.
+    - [x] Throttle individual greedy coroutines.
 
 #### _General_
 - Add syntax for argmatchers to defer adding args/flags, to facilitate adding args/flags by parsing help text from a program.  This is more complex than I first thought:

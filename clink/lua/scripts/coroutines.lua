@@ -25,11 +25,18 @@ local function after_coroutines()
 end
 
 --------------------------------------------------------------------------------
-local function next_entry_target(entry)
+local function next_entry_target(entry, now)
     if not entry.lastclock then
         return 0
     else
-        return entry.lastclock + entry.frequency
+        -- Throttle any coroutine that's been running for 5 or more seconds and
+        -- wants to run more frequently than every 5 seconds.  They still get to
+        -- run, but only once every 5 seconds.
+        local interval = entry.interval
+        if interval < 5 and now and entry.firstclock and now - entry.firstclock > 5 then
+            interval = 5
+        end
+        return entry.lastclock + interval
     end
 end
 
@@ -50,8 +57,9 @@ end
 function clink._wait_duration()
     if _coroutines_resumable then
         local target
+        local now = os.clock()
         for _,entry in pairs(_coroutines) do
-            local this_target = next_entry_target(entry)
+            local this_target = next_entry_target(entry, now)
             if _coroutine_infinite == entry.coroutine then
                 -- Yield until output is ready; don't influence the timeout.
             elseif not target or target > this_target then
@@ -59,7 +67,7 @@ function clink._wait_duration()
             end
         end
         if target then
-            return target - os.clock()
+            return target - now
         end
     end
 end
@@ -74,8 +82,12 @@ function clink._resume_coroutines()
                 table.insert(remove, _)
             else
                 _coroutines_resumable = true
-                if next_entry_target(entry) < os.clock() then
+                local now = os.clock()
+                if next_entry_target(entry, now) < now then
+                    entry.firstclock = now
                     if coroutine.resume(entry.coroutine, true--[[async]]) then
+                        -- Use live clock so the interval excludes the execution
+                        -- time of the coroutine.
                         entry.lastclock = os.clock()
                     else
                         table.insert(remove, _)
@@ -91,14 +103,14 @@ function clink._resume_coroutines()
 end
 
 --------------------------------------------------------------------------------
-function clink.addcoroutine(coroutine, frequency)
+function clink.addcoroutine(coroutine, interval)
     if type(coroutine) ~= "thread" then
         error("bad argument #1 (coroutine expected)")
     end
-    if frequency ~= nil and type(frequency) ~= "number" then
+    if interval ~= nil and type(interval) ~= "number" then
         error("bad argument #2 (number or nil expected)")
     end
-    _coroutines[coroutine] = { coroutine=coroutine, frequency=frequency or 0 }
+    _coroutines[coroutine] = { coroutine=coroutine, interval=interval or 0 }
     _coroutines_resumable = true
 end
 

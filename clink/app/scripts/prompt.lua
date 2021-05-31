@@ -177,14 +177,9 @@ function clink.promptcoroutine(func)
         dependency_inversion.c = c
 
         if async then
-            -- Add the coroutine and let it run until it yields.
+            -- Add the coroutine.
             clink.addcoroutine(c)
-            local result, _ = coroutine.resume(c, async)
-            if result and coroutine.status(c) ~= "dead" then
-                clink._after_coroutines(refilterprompt_after_coroutines)
-            else
-                entry.refilter = false
-            end
+            clink._after_coroutines(refilterprompt_after_coroutines)
         else
             -- Run the coroutine synchronously if async is disabled.
             local max_iter = 25
