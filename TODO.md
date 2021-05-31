@@ -10,15 +10,26 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 
 #### _Prompt Filtering_
 - Async command prompt updating as a way to solve the delay in git repos.
-  - A prompt filter could create a coroutine and register it, and supply a placeholder string in the prompt.
-  - When prompt filtering finishes, Clink could periodically resume registered coroutines while waiting for terminal input.
-  - There needs to be a way to perform non-blocking IO.
-    - Maybe just some kind of `io.popen_coroutine()` API that keeps yielding until the pipe writer is closed.
-    - Maybe Clink can not even resume such a coroutine until the pipe writer is closed.
-  - When a coroutine wants to update the prompt, it could:
-    - Do string manipulation on the prompt string and then ask Clink to redisplay -- simple but limited.
-    - Trigger rerunning rerun prompt filtering, and use the coroutine results (possibly even by the coroutine creation function knowing how to substitute ready results instead of creating a coroutine).
-    - _Guard against a poorly behaved prompt filter accidentally falling into an infinite cycle._
+  - [x] Use `clink.addcoroutine()` to register a coroutine to resume while waiting for input.
+  - [x] Use `clink.refilterprompt()` to rerun prompt filtering and redisplay.
+  - [x] win_terminal_in idle callback.
+  - [x] host_lua supply idle callback.
+  - [x] Prompt filter can create coroutine for deferred work:
+    - [x] No-op if already created.
+    - [x] Supply cached result if finished.
+    - [x] Coroutine provides its result when finished:  cache result and call `clink.refilterprompt()`.
+  - [x] Determine wait strategy.
+    - [x] `clink.promptfilter()` accepts optional frequency in seconds with millisecond precision.
+    - [x] ~~Allow a configurable delay before showing the prompt if any `io.popenyield()` have been used?  So that for example in small git repos the prompt color doesn't flicker briefly.~~
+  - [x] There needs to be a way to perform non-blocking IO.
+    - [x] Maybe some kind of `io.popenyield()` API that signals an event when ready.
+    - [x] Associate wake event with `popenbuffering*` so yield can be resumed immediately on completion.
+    - [x] Associate yieldguard with coroutine.
+    - [x] If any coroutine has no yieldguard then resume immediately (subject to throttling).
+  - [ ] Enforce good behavior from coroutines.
+    - [x] Event to signal ready for resume (e.g. from `os.popenyield()`).
+    - [ ] Throttle individual greedy coroutines.
+  - [ ] Need a way to show visible clues as to what's happening with waits and coroutines.
 
 #### _General_
 - Add syntax for argmatchers to defer adding args/flags, to facilitate adding args/flags by parsing help text from a program.  This is more complex than I first thought:
