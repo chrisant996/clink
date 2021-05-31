@@ -194,12 +194,11 @@ INT_PTR WINAPI initialise_clink(const app_context::desc& app_desc)
         return false;
     }
 
-    // Validate and initialise.
-    if (!g_host->validate())
-    {
-        LOG("Host validation failed.");
-        return -1;
-    }
+    // Validate and initialise.  Negative means an ignorable error that should
+    // not be reported.
+    int validate = g_host->validate();
+    if (validate <= 0)
+        return validate;
 
     if (!g_host->initialise())
     {

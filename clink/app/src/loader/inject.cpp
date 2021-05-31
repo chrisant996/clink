@@ -588,8 +588,8 @@ int inject(int argc, char** argv)
     // failure since it's an expected and common case.
     if (remote_result > 0)          // Success.
         ret = 0;
-    else if (remote_result < 0)     // Host validation failed.
-        ret = is_autorun ? 0 : 1;
+    else if (remote_result < 0)     // Ignorable failure; don't report error.
+        ret = 0;
     else                            // Failure.
         ret = 1;
 

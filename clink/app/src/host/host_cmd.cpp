@@ -276,10 +276,13 @@ host_cmd::host_cmd()
 }
 
 //------------------------------------------------------------------------------
-bool host_cmd::validate()
+int host_cmd::validate()
 {
     if (!is_interactive())
-        return false;
+    {
+        LOG("Host is not interactive; cancelling inject.");
+        return -1;
+    }
 
     return true;
 }
