@@ -326,8 +326,16 @@ bool host_cmd::initialise()
 //------------------------------------------------------------------------------
 void host_cmd::shutdown()
 {
-    m_doskey.remove_alias("history");
-    m_doskey.remove_alias("clink");
+    str<> clink;
+    str<> history;
+    make_aliases(clink, history);
+
+    // Only remove the aliases if they match what this instance would add.
+    str<> tmp;
+    if (os::get_alias("history", tmp) && tmp.equals(history.c_str()))
+        m_doskey.remove_alias("history");
+    if (os::get_alias("clink", tmp) && tmp.equals(clink.c_str()))
+        m_doskey.remove_alias("clink");
 }
 
 //------------------------------------------------------------------------------
@@ -384,8 +392,45 @@ bool host_cmd::is_interactive() const
 }
 
 //------------------------------------------------------------------------------
+void host_cmd::make_aliases(str_base& clink, str_base& history)
+{
+    str<280> dll_path;
+    app_context::get()->get_binaries_dir(dll_path);
+
+    // Alias to invoke clink.
+    clink.clear();
+    clink << "\"" << dll_path << "\\" CLINK_EXE "\" $*";
+
+    // Alias to operate on the command history.
+    history.clear();
+    history << "\"" << dll_path << "\\" CLINK_EXE "\" " << "history $*";
+}
+
+//------------------------------------------------------------------------------
+void host_cmd::add_aliases(bool force)
+{
+    str<> clink;
+    str<> history;
+    bool need_clink = force || !os::get_alias("clink", clink);
+    bool need_history = force || !os::get_alias("history", history);
+    if (need_clink || need_history)
+    {
+        make_aliases(clink, history);
+        if (need_clink)
+            m_doskey.add_alias("clink", clink.c_str());
+        if (need_history)
+            m_doskey.add_alias("history", history.c_str());
+    }
+}
+
+//------------------------------------------------------------------------------
 void host_cmd::edit_line(const wchar_t* /*prompt*/, wchar_t* chars, int max_chars)
 {
+    // Exiting a nested CMD will remove the aliases, so re-add them if missing.
+    // But don't overwrite them if they already exist: let the user override
+    // them if so desired.
+    add_aliases(false/*force*/);
+
     bool resolved = false;
     wstr_base wout(chars, max_chars);
 
@@ -606,20 +651,8 @@ bool host_cmd::initialise_system()
     }
 
     // Add an alias to Clink so it can be run from anywhere. Similar to adding
-    // it to the path but this way we can add the config path too.
-    {
-        str<280> dll_path;
-        app_context::get()->get_binaries_dir(dll_path);
-
-        str<560> buffer;
-        buffer << "\"" << dll_path << "\\" CLINK_EXE "\" $*";
-        m_doskey.add_alias("clink", buffer.c_str());
-
-        // Add an alias to operate on the command history.
-        buffer.clear();
-        buffer << "\"" << dll_path << "\\" CLINK_EXE "\" " << "history $*";
-        m_doskey.add_alias("history", buffer.c_str());
-    }
+    // it to the path but this way we can add other arguments if needed.
+    add_aliases(true/*force*/);
 
     // Tag the prompt again just incase it got unset by something like
     // setlocal/endlocal in a boot Batch script.
