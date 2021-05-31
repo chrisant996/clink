@@ -54,6 +54,11 @@ static setting_bool g_filter_prompt(
     "Enable prompt filtering by Lua scripts",
     true);
 
+static setting_bool g_prompt_async(
+    "prompt.async",
+    "Enables asynchronous prompt refresh",
+    true);
+
 setting_bool g_save_history(
     "history.save",
     "Save history between sessions",
@@ -272,7 +277,7 @@ void host_remove_history(int rl_history_index, const char* line)
 static host* s_host = nullptr;
 void host_filter_prompt()
 {
-    if (!s_host)
+    if (!s_host || !g_prompt_async.get())
         return;
 
     const char* prompt = s_host->filter_prompt();

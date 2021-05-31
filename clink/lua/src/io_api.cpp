@@ -20,6 +20,14 @@
 //------------------------------------------------------------------------------
 struct popenrw_info;
 static popenrw_info* s_head = nullptr;
+static HANDLE s_wake_event = nullptr;
+
+//------------------------------------------------------------------------------
+void set_io_wake_event(HANDLE event)
+{
+    // Borrow a ref from the caller.
+    s_wake_event = event;
+}
 
 //------------------------------------------------------------------------------
 struct popenrw_info
@@ -370,6 +378,8 @@ struct popen_buffering : public std::enable_shared_from_this<popen_buffering>
             CloseHandle(m_write);
         if (m_ready_event)
             CloseHandle(m_ready_event);
+        if (m_wake_event)
+            CloseHandle(m_wake_event);
     }
 
     bool createthread()
@@ -378,6 +388,13 @@ struct popen_buffering : public std::enable_shared_from_this<popen_buffering>
         assert(!m_thread_handle);
         assert(!m_cancelled);
         assert(!m_ready_event);
+        assert(!m_wake_event);
+        if (s_wake_event)
+        {
+            m_wake_event = dup_handle(GetCurrentProcess(), s_wake_event);
+            if (!m_wake_event)
+                return false;
+        }
         m_ready_event = CreateEvent(nullptr, true, false, nullptr);
         if (!m_ready_event)
             return false;
@@ -439,10 +456,16 @@ TODO("COROUTINES: could use overlapped IO to enable cancelling even a blocking c
                 break;
         }
 
+        // Reset file pointer so the read handle can read from the beginning.
         SetFilePointer(wh, 0, nullptr, FILE_BEGIN);
 
+        // Signal completion events.
         SetEvent(_this->m_ready_event);
-        _this->m_holder = nullptr; // Release threadproc's strong ref.
+        if (_this->m_wake_event)
+            SetEvent(_this->m_wake_event);
+
+        // Release threadproc's strong ref.
+        _this->m_holder = nullptr;
 
         _endthreadex(0);
         return 0;
@@ -452,6 +475,7 @@ TODO("COROUTINES: could use overlapped IO to enable cancelling even a blocking c
     HANDLE m_write;
     HANDLE m_thread_handle = 0;
     HANDLE m_ready_event = 0;
+    HANDLE m_wake_event = 0;
     bool m_suspended = false;
 
     volatile long m_cancelled = false;

@@ -16,16 +16,34 @@ extern "C" {
 }
 
 //------------------------------------------------------------------------------
+extern void set_io_wake_event(HANDLE event);
+
+//------------------------------------------------------------------------------
 lua_input_idle::lua_input_idle(lua_state& state)
 : m_state(state)
 {
 }
 
 //------------------------------------------------------------------------------
+lua_input_idle::~lua_input_idle()
+{
+    set_io_wake_event(nullptr);
+}
+
+//------------------------------------------------------------------------------
 void lua_input_idle::reset()
 {
+    HANDLE old_event = m_event;
+
+    // Create new event before closing old handle, to prevent the OS from
+    // reusing the same event handle after it's closed.
     m_enabled = true;
-    m_event = shared_event::make();
+    m_iterations = 0;
+    m_event = CreateEvent(nullptr, false, false, nullptr);
+    set_io_wake_event(m_event);
+
+    if (old_event)
+        CloseHandle(old_event);
 }
 
 //------------------------------------------------------------------------------
@@ -43,14 +61,34 @@ bool lua_input_idle::is_enabled()
 //------------------------------------------------------------------------------
 unsigned lua_input_idle::get_timeout()
 {
-TODO("COROUTINES: return INFINITE if all coroutines are associated with events.");
-TODO("COROUTINES: return timeout with dynamic throttling otherwise.");
-    //return 16;
-    return 100;
+    m_iterations++;
+
+    lua_State* state = m_state.get_state();
+    save_stack_top ss(state);
+
+    // Call to Lua to check for coroutines.
+    lua_getglobal(state, "clink");
+    lua_pushliteral(state, "_wait_duration");
+    lua_rawget(state, -2);
+
+    if (m_state.pcall(state, 0, 1) != 0)
+    {
+        if (const char* error = lua_tostring(state, -1))
+            m_state.print_error(error);
+
+        return INFINITE;
+    }
+
+    int isnum;
+    double sec = lua_tonumberx(state, -1, &isnum);
+    if (!isnum)
+        return INFINITE;
+
+    return (sec > 0) ? unsigned(sec * 1000) : 0;
 }
 
 //------------------------------------------------------------------------------
-std::shared_ptr<shared_event> lua_input_idle::get_waitevent()
+void* lua_input_idle::get_waitevent()
 {
     if (!m_enabled)
         return nullptr;

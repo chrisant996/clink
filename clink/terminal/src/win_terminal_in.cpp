@@ -563,13 +563,9 @@ void win_terminal_in::read_console(input_idle* callback)
             unsigned count = 1;
             HANDLE handles[2] = { m_stdin };
 
-            std::shared_ptr<shared_event> event = callback->get_waitevent();
+            void* event = callback->get_waitevent();
             if (event)
-            {
-                HANDLE actual_event = event->get_event();
-                if (actual_event)
-                    handles[count++] = actual_event;
-            }
+                handles[count++] = event;
 
             DWORD timeout = callback->get_timeout();
             DWORD result = WaitForMultipleObjects(count, handles, false, timeout);

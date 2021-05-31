@@ -8,9 +8,6 @@ local prompt_filters_unsorted = false
 local prompt_filter_current = nil
 local prompt_filter_coroutines = {}
 
---------------------------------------------------------------------------------
-settings.add("prompt.async", true, "Enables asynchronous prompt updating")
-
 
 
 --------------------------------------------------------------------------------
@@ -180,12 +177,17 @@ function clink.promptcoroutine(func)
         dependency_inversion.c = c
 
         if async then
-            -- Add the coroutine.
+            -- Add the coroutine and let it run until it yields.
             clink.addcoroutine(c)
-            clink._after_coroutines(refilterprompt_after_coroutines)
+            local result, _ = coroutine.resume(c, async)
+            if result and coroutine.status(c) ~= "dead" then
+                clink._after_coroutines(refilterprompt_after_coroutines)
+            else
+                entry.refilter = false
+            end
         else
             -- Run the coroutine synchronously if async is disabled.
-            local max_iter = 5
+            local max_iter = 25
             for iteration = 1, max_iter + 1, 1 do
                 -- Pass false to let it know it is not async.
                 local result, _ = coroutine.resume(c, false--[[async]])
@@ -201,7 +203,7 @@ function clink.promptcoroutine(func)
                 end
                 -- Cap iterations when running synchronously, in case it's
                 -- poorly behaved.
-                if iteration >= 5 then
+                if iteration >= max_iter then
                     -- Ideally this could print an error message about the
                     -- abandoning a misbehaving coroutine, but it would mess up
                     -- the prompt and input line display.
