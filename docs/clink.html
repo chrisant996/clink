@@ -16,7 +16,7 @@
         // Generate a table of contents from h* tags.
         var toc = document.getElementById("toc");
         toc.innerHTML = "";
-        var headings = document.querySelectorAll("h1");
+        var headings = document.querySelectorAll("h1,h2");
         for (var i = 0; i < headings.length; ++i)
         {
             var h = headings[i];

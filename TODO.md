@@ -7,7 +7,6 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 ## Issues
 
 - Update documentation to include a section on Asynchronous Prompt Filtering.
-- The documentation's table of contents needs more sub headings, esp. in the Extending Clink section.
 
 ## Investigate
 - Is session history not getting reaped correctly in certain cases?  Maybe during a compact?

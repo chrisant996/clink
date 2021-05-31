@@ -247,6 +247,11 @@ kbd {
     font-family: "Fira Mono",monospace;
 }
 
+.h2 {
+    font-size: 80%;
+    margin-left: 1rem;
+}
+
 [class^="hljs"] {
     font-family: "Fira Mono",monospace;
 }

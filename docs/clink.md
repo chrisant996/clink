@@ -2,7 +2,7 @@
 
 Clink combines the native Windows shell cmd.exe with the powerful command line editing features of the GNU Readline library, which provides rich completion, history, and line-editing capabilities. Readline is best known for its use in the well-known Unix shell Bash, the standard shell for Mac OS X and many Linux distributions.
 
-# Features
+### Features
 
 - The same line editing as Bash (from the [GNU Readline library](https://tiswww.case.edu/php/chet/readline/rltop.html) version 8.1).
 - History persistence between sessions.
@@ -59,23 +59,13 @@ There are several ways to start Clink.
 2. To manually start, run the Clink shortcut from the Start menu (or the clink.bat located in the install directory).
 3. To establish Clink to an existing `cmd.exe` process, use `<install_dir>\clink.exe inject`.
 
-# Upgrading from Clink v0.4.9
-
-The new Clink tries to be as backward compatible with Clink v0.4.9 as possible. However, in some cases upgrading may require a little bit of configuration work.
-
-- Some key binding sequences have changed; see [Key Bindings](#keybindings) for more information.
-- Match coloring is now done by Readline and is configured differently; see [Completion Colors](#completioncolors) for more information.
-- Settings and history should migrate automatically if the new `clink_settings` and `clink_history` files don't exist (deleting them will cause migration to happen again).  To find the directory that contains these files, run `clink info` and look for the "state" line.
-- Script compatibility should be very good, but some scripts may still encounter problems.  If you do encounter a compatibility problem you can look for an updated version of the script, update the script yourself, or visit the <a href="https://github.com/chrisant996/clink/issues">repo</a> and open an issue describing details about the compatibility problem.
-- Some settings have changed slightly, and there are many new settings.  See [Configuring Clink](#configclink) for more information.
-
-# How Clink Works
+### How Clink Works
 
 When running Clink via the methods above, Clink checks the parent process is supported and injects a DLL into it. The DLL then hooks the WriteConsole() and ReadConsole() Windows functions. The former is so that Clink can capture the current prompt, and the latter hook allows Clink to provide its own Readline-powered command line editing.
 
 <a name="privacy"/>
 
-## Privacy
+### Privacy
 
 Clink does not collect user data.  Clink writes diagnostic information to its local log file, and does not transmit the log file off the local computer.  For the location of the log file, refer to [File Locations](#filelocations) or run `clink info`.
 
@@ -325,7 +315,7 @@ You can use `clink info` to find the directories and configuration files for the
 > - The `clink_inputrc_base` file from v0.4.8 is no longer used.
 > - For backward compatibility, `clink_inputrc` is also loaded from the above locations, but it has been deprecated and may be removed in the future.
 
-## Basic Format
+### Basic Format
 
 The quick version is that mostly you'll use these kinds of lines:
 - <code><span class="arg">keyname</span>: <span class="arg">command</span></code>
@@ -339,7 +329,7 @@ Refer to the Readline [manual](https://tiswww.cwru.edu/php/chet/readline/rltop.h
 
 See [Key Bindings](#keybindings) for more information about binding keys in Clink.
 
-## New Configuration Variables
+### New Configuration Variables
 
 Clink adds some new configuration variables to Readline, beyond what's described in the Readline manual:
 
@@ -350,7 +340,7 @@ Name | Default | Description
 `menu-complete-wraparound`|on|The `menu-complete` family of commands wraps around when reaching the end of the possible completions.
 `search-ignore-case`|on|Controls whether the history search commands ignore case.
 
-## New Commands
+### New Commands
 
 Clink adds some new commands to Readline, beyond what's described in the Readline manual:
 
@@ -599,94 +589,7 @@ function envvar_generator:getwordbreakinfo(line_state)
 end
 ```
 
-<a name="argumentcompletion"/>
-
-## Argument Completion
-
-Clink provides a framework for writing complex argument match generators in Lua.  It works by creating a parser object that describes a command's arguments and flags and then registering the parser with Clink. When Clink detects the command is being entered on the current command line being edited, it uses the parser to generate matches.
-
-Here is an example of a simple parser for the command `foobar`;
-
-```lua
-clink.argmatcher("foobar")
-:addflags("-foo", "-bar")
-:addarg(
-    { "hello", "hi" },      -- Completions for arg #1
-    { "world", "wombles" }  -- Completions for arg #2
-)
-```
-
-This parser describes a command that has two positional arguments each with two potential options. It also has two flags which the parser considers to be position independent meaning that provided the word being completed starts with a certain prefix the parser with attempt to match the from the set of flags.
-
-On the command line completion would look something like this:
-
-<pre style="border-radius:initial;border:initial"><code class="plaintext" style="background-color:black;color:#cccccc">C:&gt;foobar hello -foo wo
-wombles  wonder   world
-C:&gt;foobar hello -foo wo<span style="color:#ffffff">_</span>
-</code></pre>
-
-When displaying possible completions, flag matches are only shown if the flag character has been input (so `command ` and <kbd>Alt</kbd>+<kbd>=</kbd> would list only non-flag matches, or `command -` and <kbd>Alt</kbd>+<kbd>=</kbd> would list only flag matches).
-
 ### More Advanced Stuff
-
-#### Linking Parsers
-
-There are often situations where the parsing of a command's arguments is dependent on the previous words (`git merge ...` compared to `git log ...` for example). For these scenarios Clink allows you to link parsers to arguments' words using Lua's concatenation operator. Parsers can also be concatenated with flags too.
-
-```lua
-a_parser = clink.argmatcher():addarg({ "foo", "bar" })
-b_parser = clink.argmatcher():addarg({ "abc", "123" })
-c_parser = clink.argmatcher()
-c_parser:addarg({ "foobar" .. a_parser })   -- Arg #1 is "foobar", which has args "foo" or "bar".
-c_parser:addarg({ b_parser })               -- Arg #2 is "abc" or "123".
-```
-
-As the example above shows, it is also possible to use a parser without concatenating it to a word. When Clink follows a link to a parser it is permanent and it will not return to the previous parser.
-
-#### Functions As Argument Options
-
-Argument options are not limited solely to strings. Clink also accepts functions too so more context aware argument options can be used.
-
-```lua
-function rainbow_function(word)
-    return { "red", "white", "blue" }
-end
-
-the_parser = clink.argmatcher()
-the_parser:addarg({ "zippy", "bungle", "george" })
-the_parser:addarg({ rainbow_function, "yellow", "green" })
-```
-
-The functions take a single argument which is a word from the command line being edited (or partial word if it is the one under the cursor). Functions should return a table of potential matches.
-
-Some built-in matcher functions are available:
-
-Function | Description
-:-: | ---
-<a href="#clink.dirmatches">clink.dirmatches</a> | Generates directory matches.
-<a href="#clink.filematches">clink.filematches</a> | Generates file matches.
-
-#### Shorthand
-
-It is also possible to omit the `addarg` and `addflags` function calls and use a more declarative shorthand form:
-
-```lua
--- Shorthand form; requires tables.
-clink.argmatcher()
-    { "one", "won" }                -- Arg #1
-    { "two", "too" }                -- Arg #2
-    { "-a", "-b", "/?", "/h" }      -- Flags
-
--- Normal form:
-clink.argmatcher()
-:addarg(
-    { "one", "won" }                -- Arg #1
-    { "two", "too" }                -- Arg #2
-)
-:addflags("-a", "-b", "/?", "/h")   -- Flags
-```
-
-With the shorthand form flags are implied rather than declared.  When a shorthand table's first value is a string starting with `-` or `/` then the table is interpreted as flags.  Note that it's still possible with shorthand form to mix flag prefixes, and even add additional flag prefixes, such as <code>{ <span class="hljs-string">'-a'</span>, <span class="hljs-string">'/b'</span>, <span class="hljs-string">'=c'</span> }</code>.
 
 <a name="filteringmatchcompletions"/>
 
@@ -825,6 +728,95 @@ end
 > - Normally match generation only happens at the start of a new word.  The full set of potential matches is remembered and dynamically filtered based on further typing.
 > - So if a match generator made contextual decisions during match generation (other than filtering) then it could potentially behave differently in Clink v1.x than it did in v0.x.
 
+<a name="argumentcompletion"/>
+
+## Argument Completion
+
+Clink provides a framework for writing complex argument match generators in Lua.  It works by creating a parser object that describes a command's arguments and flags and then registering the parser with Clink. When Clink detects the command is being entered on the current command line being edited, it uses the parser to generate matches.
+
+Here is an example of a simple parser for the command `foobar`;
+
+```lua
+clink.argmatcher("foobar")
+:addflags("-foo", "-bar")
+:addarg(
+    { "hello", "hi" },      -- Completions for arg #1
+    { "world", "wombles" }  -- Completions for arg #2
+)
+```
+
+This parser describes a command that has two positional arguments each with two potential options. It also has two flags which the parser considers to be position independent meaning that provided the word being completed starts with a certain prefix the parser with attempt to match the from the set of flags.
+
+On the command line completion would look something like this:
+
+<pre style="border-radius:initial;border:initial"><code class="plaintext" style="background-color:black;color:#cccccc">C:&gt;foobar hello -foo wo
+wombles  wonder   world
+C:&gt;foobar hello -foo wo<span style="color:#ffffff">_</span>
+</code></pre>
+
+When displaying possible completions, flag matches are only shown if the flag character has been input (so `command ` and <kbd>Alt</kbd>+<kbd>=</kbd> would list only non-flag matches, or `command -` and <kbd>Alt</kbd>+<kbd>=</kbd> would list only flag matches).
+
+### More Advanced Stuff
+
+#### Linking Parsers
+
+There are often situations where the parsing of a command's arguments is dependent on the previous words (`git merge ...` compared to `git log ...` for example). For these scenarios Clink allows you to link parsers to arguments' words using Lua's concatenation operator. Parsers can also be concatenated with flags too.
+
+```lua
+a_parser = clink.argmatcher():addarg({ "foo", "bar" })
+b_parser = clink.argmatcher():addarg({ "abc", "123" })
+c_parser = clink.argmatcher()
+c_parser:addarg({ "foobar" .. a_parser })   -- Arg #1 is "foobar", which has args "foo" or "bar".
+c_parser:addarg({ b_parser })               -- Arg #2 is "abc" or "123".
+```
+
+As the example above shows, it is also possible to use a parser without concatenating it to a word. When Clink follows a link to a parser it is permanent and it will not return to the previous parser.
+
+#### Functions As Argument Options
+
+Argument options are not limited solely to strings. Clink also accepts functions too so more context aware argument options can be used.
+
+```lua
+function rainbow_function(word)
+    return { "red", "white", "blue" }
+end
+
+the_parser = clink.argmatcher()
+the_parser:addarg({ "zippy", "bungle", "george" })
+the_parser:addarg({ rainbow_function, "yellow", "green" })
+```
+
+The functions take a single argument which is a word from the command line being edited (or partial word if it is the one under the cursor). Functions should return a table of potential matches.
+
+Some built-in matcher functions are available:
+
+Function | Description
+:-: | ---
+<a href="#clink.dirmatches">clink.dirmatches</a> | Generates directory matches.
+<a href="#clink.filematches">clink.filematches</a> | Generates file matches.
+
+#### Shorthand
+
+It is also possible to omit the `addarg` and `addflags` function calls and use a more declarative shorthand form:
+
+```lua
+-- Shorthand form; requires tables.
+clink.argmatcher()
+    { "one", "won" }                -- Arg #1
+    { "two", "too" }                -- Arg #2
+    { "-a", "-b", "/?", "/h" }      -- Flags
+
+-- Normal form:
+clink.argmatcher()
+:addarg(
+    { "one", "won" }                -- Arg #1
+    { "two", "too" }                -- Arg #2
+)
+:addflags("-a", "-b", "/?", "/h")   -- Flags
+```
+
+With the shorthand form flags are implied rather than declared.  When a shorthand table's first value is a string starting with `-` or `/` then the table is interpreted as flags.  Note that it's still possible with shorthand form to mix flag prefixes, and even add additional flag prefixes, such as <code>{ <span class="hljs-string">'-a'</span>, <span class="hljs-string">'/b'</span>, <span class="hljs-string">'=c'</span> }</code>.
+
 <a name="classifywords"/>
 
 ## Coloring The Input Text
@@ -834,6 +826,8 @@ When the `clink.colorize_input` setting is enabled, [argmatcher](#argumentcomple
 It's possible for an argmatcher to provide a function to override how its arguments are colored.  This function is called once for each of the argmatcher's arguments.
 
 It's also possible to register a classifier function for the whole input line.  This function is very similar to a match generator; classifier functions are called in priority order, and a classifier can choose to stop the classification process.
+
+### More Advanced Stuff
 
 #### Setting a classifier function in an argmatcher
 
@@ -1232,7 +1226,7 @@ Normally Clink saves a single saved master history list.  All instances of Clink
 
 It's also possible to make one or more instances of Clink use a different saved master history list by setting the `%CLINK_HISTORY_LABEL%` environment variable.  This can be up to 32 alphanumeric characters, and is appended to the master history file name.  Changing the `%CLINK_HISTORY_LABEL%` environment variable takes effect at the next input line.
 
-# Sample Scripts
+## Sample Scripts
 
 Here are a few samples of what can be done with Clink.
 
@@ -1263,7 +1257,17 @@ end
 
 The [z.lua](https://github.com/skywind3000/z.lua) tool is a faster way to navigate directories, and it integrates with Clink.
 
-# Troubleshooting Tips
+## Upgrading from Clink v0.4.9
+
+The new Clink tries to be as backward compatible with Clink v0.4.9 as possible. However, in some cases upgrading may require a little bit of configuration work.
+
+- Some key binding sequences have changed; see [Key Bindings](#keybindings) for more information.
+- Match coloring is now done by Readline and is configured differently; see [Completion Colors](#completioncolors) for more information.
+- Settings and history should migrate automatically if the new `clink_settings` and `clink_history` files don't exist (deleting them will cause migration to happen again).  To find the directory that contains these files, run `clink info` and look for the "state" line.
+- Script compatibility should be very good, but some scripts may still encounter problems.  If you do encounter a compatibility problem you can look for an updated version of the script, update the script yourself, or visit the <a href="https://github.com/chrisant996/clink/issues">repo</a> and open an issue describing details about the compatibility problem.
+- Some settings have changed slightly, and there are many new settings.  See [Configuring Clink](#configclink) for more information.
+
+## Troubleshooting Tips
 
 If something seems to malfunction, here are some things to try that often help track down what's going wrong:
 
