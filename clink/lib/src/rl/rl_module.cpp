@@ -29,7 +29,9 @@
 #include <unordered_set>
 
 extern "C" {
+#include <compat/config.h>
 #include <readline/readline.h>
+#include <readline/rlprivate.h>
 #include <readline/rldefs.h>
 #include <readline/histlib.h>
 #include <readline/keymaps.h>
@@ -38,21 +40,10 @@ extern "C" {
 #include <compat/display_matches.h>
 #include <readline/posixdir.h>
 #include <readline/history.h>
-extern int _rl_screenwidth;
-extern int _rl_eof_char;
-extern int _rl_bell_preference;
-extern int _rl_match_hidden_files;
-extern int _rl_history_point_at_end_of_anchored_search;
-extern int rl_complete_with_tilde_expansion;
-extern void _rl_reset_completion_state(void);
-extern void _rl_free_match_list(char** list);
 extern void rl_replace_from_history(HIST_ENTRY *entry, int flags);
-extern int rl_get_history_search_pos(void);
 #define HIDDEN_FILE(fn) ((fn)[0] == '.')
 #if defined (COLOR_SUPPORT)
 #include <readline/parse-colors.h>
-extern int _rl_colored_stats;
-extern int _rl_colored_completion_prefix;
 #endif
 }
 

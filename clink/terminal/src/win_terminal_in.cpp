@@ -664,7 +664,7 @@ void win_terminal_in::read_console(input_idle* callback)
 }
 
 //------------------------------------------------------------------------------
-extern "C" int rl_editing_mode;
+extern "C" int rl_editing_mode; // Terminal can't #include from Readline.
 void win_terminal_in::process_input(KEY_EVENT_RECORD const& record)
 {
     int key_char = record.uChar.UnicodeChar;

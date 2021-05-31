@@ -13,18 +13,16 @@
 #include "lib/pager.h"
 
 extern "C" {
+#include <compat/config.h>
 #include <readline/readline.h>
-extern char *_rl_untranslate_macro_value(char *seq, int use_escapes);
-extern void _rl_move_vert(int);
-extern int _rl_vis_botlin;
+#include <readline/rlprivate.h>
+extern int complete_get_screenwidth(void);
 }
 
 #include <vector>
 #include <assert.h>
 
 //------------------------------------------------------------------------------
-extern "C" int _rl_print_completions_horizontally;
-extern "C" int complete_get_screenwidth(void);
 extern printer* g_printer;
 extern pager* g_pager;
 extern editor_module::result* g_result;

@@ -13,13 +13,14 @@
 #include <core/match_wild.h>
 #include <core/path.h>
 #include <sys/stat.h>
-#include <readline/readline.h> // for rl_last_path_separator
-
-#include <assert.h>
 
 extern "C" {
-extern int rl_complete_with_tilde_expansion;
+#include <compat/config.h>
+#include <readline/readline.h>
+#include <readline/rlprivate.h>
 };
+
+#include <assert.h>
 
 //------------------------------------------------------------------------------
 static int s_slash_translation = 0;

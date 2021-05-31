@@ -75,8 +75,8 @@ extern "C" {
 
 extern "C" {
 #include "lua.h"
-extern int              _rl_completion_case_map;
-extern const char*      rl_readline_name;
+#include <compat/config.h>
+#include <readline/rlprivate.h>
 }
 
 extern int              get_clink_setting(lua_State* state);

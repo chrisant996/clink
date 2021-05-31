@@ -13,9 +13,10 @@
 #include <core/str.h>
 #include <core/str_tokeniser.h>
 
-//------------------------------------------------------------------------------
-extern "C" int _rl_vis_botlin;
+extern "C" {
+#include <readline/readline.h>
 extern "C" int _rl_last_v_pos;
+};
 
 //------------------------------------------------------------------------------
 extern printer* g_printer;

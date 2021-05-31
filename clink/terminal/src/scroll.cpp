@@ -5,6 +5,7 @@
 #include "scroll.h"
 
 //------------------------------------------------------------------------------
+// Terminal can't #include from Readline.
 extern "C" int _rl_vis_botlin;
 extern "C" int _rl_last_v_pos;
 

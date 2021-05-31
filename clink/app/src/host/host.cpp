@@ -30,7 +30,9 @@
 
 extern "C" {
 #include <lua.h>
+#include <compat/config.h>
 #include <readline/readline.h>
+#include <readline/rlprivate.h>
 #include <readline/history.h>
 }
 

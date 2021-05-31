@@ -50,7 +50,7 @@ extern "C" {
 #endif
 
 //------------------------------------------------------------------------------
-int _rl_output_character_function(int);
+int _rl_output_character_function(int); // Terminal can't #include from Readline.
 
 //------------------------------------------------------------------------------
 int tputs(const char* str, int affcnt, int (*putc_func)(int))

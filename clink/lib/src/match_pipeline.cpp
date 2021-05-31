@@ -13,7 +13,12 @@
 #include <core/str_compare.h>
 #include <core/settings.h>
 #include <terminal/ecma48_iter.h>
+
+extern "C" {
+#include <compat/config.h>
 #include <readline/readline.h>
+#include <readline/rlprivate.h>
+};
 
 #include <algorithm>
 #include <assert.h>
@@ -29,16 +34,7 @@ static setting_enum g_sort_dirs(
 
 
 //------------------------------------------------------------------------------
-extern "C" {
-extern int rl_complete_with_tilde_expansion;
-extern int _rl_completion_case_fold;
-extern int _rl_locale_sort;
-int compare_string(const char* s1, const char* s2, int casefold);
-};
-
 static bool s_nosort = false;
-
-
 
 //------------------------------------------------------------------------------
 static unsigned int normal_selector(

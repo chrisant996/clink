@@ -142,8 +142,11 @@ extern int _rl_walphabetic PARAMS((WCHAR_T));
 /* Try and shortcut the printable ascii characters to cut down the number of
    calls to a libc wcwidth() */
 static inline int
-_rl_wcwidth (wc)
-     WCHAR_T wc;
+/* begin_clink_change */
+//_rl_wcwidth (wc)
+//     WCHAR_T wc;
+_rl_wcwidth (WCHAR_T wc)
+/* end_clink_change */
 {
   switch (wc)
     {

@@ -19,10 +19,11 @@
 #include <terminal/terminal_out.h>
 #include <terminal/input_idle.h>
 extern "C" {
+#include <compat/config.h>
 #include <readline/readline.h>
+#include <readline/rlprivate.h>
 #include <readline/rldefs.h>
 extern Keymap _rl_dispatching_keymap;
-extern void _rl_keyseq_chain_dispose(void);
 }
 
 //------------------------------------------------------------------------------

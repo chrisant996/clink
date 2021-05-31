@@ -10,9 +10,9 @@ extern "C" {
 #include <lua.h>
 #include <lauxlib.h>
 #include <lualib.h>
+#include <compat/config.h>
 #include <readline/readline.h>
-extern void _rl_move_vert(int);
-extern int _rl_vis_botlin;
+#include <readline/rlprivate.h>
 }
 
 #include <assert.h>

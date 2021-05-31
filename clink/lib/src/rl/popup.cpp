@@ -15,8 +15,9 @@
 #include <vector>
 
 extern "C" {
+#include <compat/config.h>
 #include <readline/readline.h>
-extern int _rl_menu_complete_wraparound;
+#include <readline/rlprivate.h>
 };
 
 extern bool is_conemu();
