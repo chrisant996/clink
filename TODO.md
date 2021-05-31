@@ -12,28 +12,6 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 - [ ] Need a way to show visible clues as to what's happening with waits and coroutines.
 - [ ] Need a command that prints diagnostic status for the current input line.
 
-#### _Prompt Filtering_
-- [x] Async command prompt updating as a way to solve the delay in git repos.
-  - [x] Use `clink.addcoroutine()` to register a coroutine to resume while waiting for input.
-  - [x] Use `clink.refilterprompt()` to rerun prompt filtering and redisplay.
-  - [x] win_terminal_in idle callback.
-  - [x] host_lua supply idle callback.
-  - [x] Prompt filter can create coroutine for deferred work:
-    - [x] No-op if already created.
-    - [x] Supply cached result if finished.
-    - [x] Coroutine provides its result when finished:  cache result and call `clink.refilterprompt()`.
-  - [x] Determine wait strategy.
-    - [x] `clink.promptfilter()` accepts optional frequency in seconds with millisecond precision.
-    - [x] ~~Allow a configurable delay before showing the prompt if any `io.popenyield()` have been used?  So that for example in small git repos the prompt color doesn't flicker briefly.~~
-  - [x] There needs to be a way to perform non-blocking IO.
-    - [x] Maybe some kind of `io.popenyield()` API that signals an event when ready.
-    - [x] Associate wake event with `popenbuffering*` so yield can be resumed immediately on completion.
-    - [x] Associate yieldguard with coroutine.
-    - [x] If any coroutine has no yieldguard then resume immediately (subject to throttling).
-  - [x] Enforce good behavior from coroutines.
-    - [x] Event to signal ready for resume (e.g. from `os.popenyield()`).
-    - [x] Throttle individual greedy coroutines.
-
 #### _General_
 - Add syntax for argmatchers to defer adding args/flags, to facilitate adding args/flags by parsing help text from a program.  This is more complex than I first thought:
   - It gets overly complicated for a script to handle arg2 or deeper (needs list of preceding args, preceding flags for args, etc -- not to mention linked parsers).
