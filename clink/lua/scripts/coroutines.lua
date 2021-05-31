@@ -148,16 +148,23 @@ end
 --- The <span class="arg">mode</span> cannot contain <code>"w"</code>, but can
 --- contain <code>"r"</code> (read mode) and/or either <code>"t"</code> for text
 --- mode (the default if omitted) or <code>"b"</code> for binary mode.
+---
+--- <strong>Note:</strong> if the <code>prompt.async</code> setting is disabled
+--- then this turns into a call to `io.popen` instead.
 function io.popenyield(command, mode)
     -- This outer wrapper is implemented in Lua so that it can yield.
+    if settings.get("prompt.async") then
 -- TODO("COROUTINES: ideally avoid having lots of outstanding old commands still running; yield until earlier one(s) complete?")
-    local file, yieldguard = io.popenyield_internal(command, mode)
-    if file and yieldguard then
-        _coroutine_infinite = coroutine.running()
-        while not yieldguard:ready() do
-            coroutine.yield()
+        local file, yieldguard = io.popenyield_internal(command, mode)
+        if file and yieldguard then
+            _coroutine_infinite = coroutine.running()
+            while not yieldguard:ready() do
+                coroutine.yield()
+            end
+            _coroutine_infinite = nil
         end
-        _coroutine_infinite = nil
+        return file
+    else
+        return io.popen(command, mode)
     end
-    return file
 end
