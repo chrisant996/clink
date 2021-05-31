@@ -140,14 +140,14 @@ end
 --- If the <code>prompt.async</code> setting is disabled, then
 --- <code>func(false)</code> is called and runs to completion immediately.
 --- Otherwise, a coroutine is created to run <code>func(true)</code>, and it
---- runs during idle while editing the input line.  (The
---- <span class="arg">func</span> can tell whether it's being asynchronously or
---- synchronously based on whether its argument is true or false, respectively.)
+--- runs during idle while editing the input line.  (The true or false argument
+--- tells <span class="arg">func</span> whether it's being run during idle or
+--- immediately, respectively.)
 ---
 --- The return value is whatever <span class="arg">func</span> returns (only one
---- return value, though).  Until the function completes, nil is returned.
---- After the function completes, its return value is returned (which can be
---- nil).
+--- return value; return a table if multiple return values are needed).  Until
+--- the function completes, nil is returned.  After the function completes, its
+--- return value is returned (which can be nil).
 ---
 --- See <a href="#asyncpromptfiltering">Asynchronous Prompt Filtering</a> for
 --- more information.
