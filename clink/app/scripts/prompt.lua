@@ -137,13 +137,12 @@ end
 --- created the <em>first</em> time each prompt filter calls this in the current
 --- input line.
 ---
---- If the <span class="code">prompt.async</span> setting is disabled, then
---- <span class="arg">func(false)</span> is called and runs to completion
---- immediately.  Otherwise, a coroutine is created to run
---- <span class="arg">func(true)</span>, and it runs during idle while editing
---- the input line.  (The <span class="arg">func</span> can tell whether it's
---- being asynchronously or synchronously based on whether its argument is true
---- or false, respectively.)
+--- If the <code>prompt.async</code> setting is disabled, then
+--- <code>func(false)</code> is called and runs to completion immediately.
+--- Otherwise, a coroutine is created to run <code>func(true)</code>, and it
+--- runs during idle while editing the input line.  (The
+--- <span class="arg">func</span> can tell whether it's being asynchronously or
+--- synchronously based on whether its argument is true or false, respectively.)
 ---
 --- The return value is whatever <span class="arg">func</span> returns (only one
 --- return value, though).  Until the function completes, nil is returned.
