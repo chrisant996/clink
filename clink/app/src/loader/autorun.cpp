@@ -377,7 +377,7 @@ static int dispatch(dispatch_func_t* function, const char* clink_path)
 static void print_help()
 {
     static const char* const help_verbs[] = {
-        "install <args...>", "Installs a command to cmd.exe's autorun to start Clink",
+        "install [-- <args...>]", "Installs a command to cmd.exe's autorun to start Clink",
         "uninstall",         "Does the opposite of 'install'",
         "show",              "Displays the values of cmd.exe's autorun variables",
         "set <string...>",   "Explicitly sets cmd.exe's autorun to <string>",
