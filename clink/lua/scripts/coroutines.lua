@@ -4,6 +4,7 @@
 --------------------------------------------------------------------------------
 clink = clink or {}
 local _coroutines = {}
+local _coroutines_created = {}
 local _after_coroutines = {}
 local _coroutines_resumable = false
 local _coroutine_infinite = nil
@@ -11,6 +12,7 @@ local _coroutine_infinite = nil
 --------------------------------------------------------------------------------
 local function clear_coroutines()
     _coroutines = {}
+    _coroutines_created = {}
     _after_coroutines = {}
     _coroutines_resumable = false
     _coroutine_infinite = nil
@@ -84,7 +86,10 @@ function clink._resume_coroutines()
                 _coroutines_resumable = true
                 local now = os.clock()
                 if next_entry_target(entry, now) < now then
-                    entry.firstclock = now
+                    if not entry.firstclock then
+                        entry.firstclock = now
+                    end
+                    entry.resumed = entry.resumed + 1
                     if coroutine.resume(entry.coroutine, true--[[async]]) then
                         -- Use live clock so the interval excludes the execution
                         -- time of the coroutine.
@@ -103,6 +108,61 @@ function clink._resume_coroutines()
 end
 
 --------------------------------------------------------------------------------
+local function str_rpad(s, width, pad)
+    if width <= #s then
+        return s
+    end
+    return s..string.rep(pad or " ", width - #s)
+end
+
+--------------------------------------------------------------------------------
+function clink._diag_coroutines()
+    local bold = "\x1b[1m"
+    local norm = "\x1b[m"
+
+    local total = 0
+    local dead = 0
+    local threads = {}
+    local max_status_len = 0
+    local max_resumed_len = 0
+    local max_freq_len = 0
+    for _,entry in pairs(_coroutines) do
+        local src
+        local resumed = tostring(entry.resumed)
+        local status = coroutine.status(entry.coroutine)
+        local freq = tostring(entry.interval)
+        if entry.func then
+            local info = debug.getinfo(entry.func, 'S')
+            src=info.short_src.."("..info.linedefined..")"
+        else
+            src="<unknown>"
+        end
+        if max_status_len < #status then
+            max_status_len = #status
+        end
+        if max_resumed_len < #resumed then
+            max_resumed_len = #resumed
+        end
+        if max_freq_len < #freq then
+            max_freq_len = #freq
+        end
+        table.insert(threads, { coroutine=entry.coroutine, status=status, resumed=resumed, freq=freq, src=src })
+    end
+
+    clink.print(bold.."coroutines:"..norm)
+    print("  resumable", _coroutines_resumable)
+    print("  popenyield", _coroutine_infinite)
+    for _,t in ipairs(threads) do
+        local col1 = tostring(t.coroutine):gsub("thread: ", "")
+        local col2 = str_rpad(t.status, max_status_len)
+        local col3 = "ran "..str_rpad(t.resumed, max_resumed_len)
+        local col4 = "freq "..str_rpad(t.freq, max_freq_len)
+        local col5 = t.src
+        print("  "..col1..":  "..col2.."  "..col3.."  "..col4.."  "..col5)
+    end
+end
+
+--------------------------------------------------------------------------------
 function clink.addcoroutine(coroutine, interval)
     if type(coroutine) ~= "thread" then
         error("bad argument #1 (coroutine expected)")
@@ -110,7 +170,8 @@ function clink.addcoroutine(coroutine, interval)
     if interval ~= nil and type(interval) ~= "number" then
         error("bad argument #2 (number or nil expected)")
     end
-    _coroutines[coroutine] = { coroutine=coroutine, interval=interval or 0 }
+    _coroutines[coroutine] = { coroutine=coroutine, interval=interval or 0, resumed=0, func=_coroutines_created[coroutine] }
+    _coroutines_created[coroutine] = nil
     _coroutines_resumable = true
 end
 
@@ -167,4 +228,14 @@ function io.popenyield(command, mode)
     else
         return io.popen(command, mode)
     end
+end
+
+--------------------------------------------------------------------------------
+local orig_coroutine_create = coroutine.create
+function coroutine.create(func)
+    -- Remember original func for diagnostic purposes later.  The table is
+    -- cleared at the beginning of each input line.
+    local thread = orig_coroutine_create(func)
+    _coroutines_created[thread] = func
+    return thread
 end

@@ -1391,6 +1391,9 @@ rl_module::rl_module(const char* shell_name, terminal_in* input, const char* sta
         rl_add_funmap_entry("cua-copy", cua_copy);
         rl_add_funmap_entry("cua-cut", cua_cut);
 
+        extern int clink_diagnostics(int, int);
+        rl_add_funmap_entry("clink-diagnostics", clink_diagnostics);
+
         // Override some defaults.
         _rl_bell_preference = VISIBLE_BELL;     // Because audible is annoying.
         _rl_comment_begin = savestring("::");   // this will do...
@@ -1417,6 +1420,7 @@ rl_module::rl_module(const char* shell_name, terminal_in* input, const char* sta
         { "\\C-v",          "clink-paste" },             // ctrl-v
         { "\\C-z",          "undo" },                    // ctrl-z
         { "\\C-x\\C-r",     "clink-reload" },            // ctrl-x,ctrl-r
+        { "\\C-x\\C-z",     "clink-diagnostics" },       // ctrl-x,ctrl-z
         { "\\e[1;2D",       "cua-backward-char" },       // shift-left
         { "\\e[1;2C",       "cua-forward-char" },        // shift-right
         { "\\e[1;6D",       "cua-backward-word" },       // ctrl-shift-left

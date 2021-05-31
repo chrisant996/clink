@@ -10,6 +10,7 @@
 #include "terminal/terminal_out.h"
 #include "terminal/printer.h"
 #include "utils/app_context.h"
+#include "version.h"
 
 #include <core/globber.h>
 #include <core/os.h>
@@ -831,4 +832,94 @@ const char* host::filter_prompt()
     if (g_filter_prompt.get() && m_prompt_filter && m_prompt)
         m_prompt_filter->filter(m_prompt, m_filtered_prompt);
     return m_filtered_prompt.c_str();
+}
+
+//------------------------------------------------------------------------------
+int clink_diagnostics(int count, int invoking_key)
+{
+    _rl_move_vert(_rl_vis_botlin);
+    puts("");
+
+    static char bold[] = "\x1b[1m";
+    static char norm[] = "\x1b[m";
+    static char lf[] = "\n";
+
+    str<> s;
+    const int spacing = 12;
+    const auto* context = app_context::get();
+
+    // Version and binaries dir.
+
+    s.clear();
+    s << bold << "version:" << norm << lf;
+    s_printer->print(s.c_str(), s.length());
+
+    printf("  %-*s  %s\n", spacing, "version", CLINK_VERSION_STR);
+    context->get_binaries_dir(s);
+    printf("  %-*s  %s\n", spacing, "binaries", s.c_str());
+
+    // Session info.
+
+    s.clear();
+    s <<bold << "session:" << norm << lf;
+    s_printer->print(s.c_str(), s.length());
+
+    printf("  %-*s  %d\n", spacing, "session", context->get_id());
+
+    static const struct {
+        const char* name;
+        void        (app_context::*method)(str_base&) const;
+        bool        suppress_when_empty;
+    } infos[] = {
+        { "profile",    &app_context::get_state_dir },
+        // { "log",        &app_context::get_log_path },
+        // { "settings",   &app_context::get_settings_path },
+        // { "history",    &app_context::get_history_path },
+        { "scripts",    &app_context::get_script_path_readable, true/*suppress_when_empty*/ },
+    };
+
+    for (const auto& info : infos)
+    {
+        (context->*info.method)(s);
+        if (!info.suppress_when_empty || !s.empty())
+            printf("  %-*s  %s\n", spacing, info.name, s.c_str());
+    }
+
+    if (s_host_lua)
+    {
+        lua_state& lua = *s_host_lua;
+        lua_State* state = lua.get_state();
+
+        // Call clink._diag_coroutines to show info on coroutines.
+        lua_getglobal(state, "clink");
+        lua_pushliteral(state, "_diag_coroutines");
+        lua_rawget(state, -2);
+        if (lua.pcall(state, 0, 0) != 0)
+        {
+            puts(lua_tostring(state, -1));
+            lua_pop(state, 2);
+        }
+
+        // Call clink._diag_custom if present.
+        lua_getglobal(state, "clink");
+        lua_pushliteral(state, "_diag_custom");
+        lua_rawget(state, -2);
+        if (lua_isfunction(state, -1))
+        {
+            if (lua.pcall(state, 0, 0) != 0)
+            {
+                puts(lua_tostring(state, -1));
+                lua_pop(state, 2);
+            }
+        }
+        else
+        {
+            lua_pop(state, 1);
+        }
+    }
+
+    puts("");
+
+    rl_forced_update_display();
+    return 0;
 }

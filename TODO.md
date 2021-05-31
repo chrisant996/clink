@@ -12,10 +12,6 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 - Is session history not getting reaped correctly in certain cases?  Maybe during a compact?
 - AutoRun, `cmd.exe`, `cmd echo hello`, `exit` => the `cmd echo hello` is not in the history!
 
-#### _Coroutines_
-- [ ] Need a way to show visible clues as to what's happening with waits and coroutines.
-- [ ] Need a command that prints diagnostic status for the current input line.
-
 #### _General_
 - Add syntax for argmatchers to defer adding args/flags, to facilitate adding args/flags by parsing help text from a program.  This is more complex than I first thought:
   - It gets overly complicated for a script to handle arg2 or deeper (needs list of preceding args, preceding flags for args, etc -- not to mention linked parsers).
