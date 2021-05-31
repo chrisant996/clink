@@ -1037,6 +1037,16 @@ The resulting prompt will look like this:
 
 Readline needs to be told which characters in the prompt are unprintable or invisible.  To help with that, Clink automatically detects most standard ANSI escape codes (and most of ConEmu's non-standard escape codes) and the BEL character (^G, audible bell) and surrounds them with `\001` (^A) and `\002` (^B) characters.  For any other unprintable characters, the `\001` and `\002` characters need to be added manually.  Otherwise Readline misinterprets the length of the prompt and can display the prompt and input line incorrectly in some cases (especially if the input line wraps onto a second line).
 
+### More Advanced Stuff
+
+<a name="asyncpromptfiltering"/>
+
+#### Asynchronous Prompt Filtering
+
+<fieldset><legend>TODO</legend>
+Document how to use asynchronous prompt filtering.
+</fieldset>
+
 # Miscellaneous
 
 <a name="keybindings"/>
