@@ -6,10 +6,12 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 
 ## Issues
 
-## Investigate
-
 - Update documentation to include a section on Asynchronous Prompt Filtering.
 - The documentation's table of contents needs more sub headings, esp. in the Extending Clink section.
+
+## Investigate
+- Is session history not getting reaped correctly in certain cases?  Maybe during a compact?
+- AutoRun, `cmd.exe`, `cmd echo hello`, `exit` => the `cmd echo hello` is not in the history!
 
 #### _Coroutines_
 - [ ] Need a way to show visible clues as to what's happening with waits and coroutines.
