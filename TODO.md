@@ -8,6 +8,9 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 
 ## Investigate
 
+- Update documentation to include a section on Asynchronous Prompt Filtering.
+- The documentation's table of contents needs more sub headings, esp. in the Extending Clink section.
+
 #### _Coroutines_
 - [ ] Need a way to show visible clues as to what's happening with waits and coroutines.
 - [ ] Need a command that prints diagnostic status for the current input line.
