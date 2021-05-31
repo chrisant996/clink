@@ -320,8 +320,6 @@ void line_editor_impl::set_classifier(word_classifier& classifier)
 void line_editor_impl::set_input_idle(input_idle* idle)
 {
     m_idle = idle;
-    if (m_idle)
-        m_idle->reset();
 }
 
 //------------------------------------------------------------------------------

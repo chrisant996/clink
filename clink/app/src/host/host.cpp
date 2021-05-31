@@ -610,6 +610,11 @@ bool host::edit_line(const char* prompt, str_base& out)
     if (send_event)
         lua.send_event("onbeginedit");
 
+    // Reset input idle.  Must happen before filtering the prompt, so that the
+    // wake event is available.
+    if (init_editor || init_prompt)
+        static_cast<input_idle*>(lua)->reset();
+
     line_editor::desc desc(m_terminal.in, m_terminal.out, m_printer);
     initialise_editor_desc(desc);
     desc.state_dir = state_dir.c_str();
