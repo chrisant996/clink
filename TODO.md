@@ -6,6 +6,8 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 
 ## Issues
 
+- **Verify what happens with coroutines and long-running programs!** Might need to make `io.popenyield` smart about not spawning a process until it's the only coroutine for that prompt filter.
+
 ## Investigate
 - Is session history not getting reaped correctly in certain cases?  Maybe during a compact?
 - AutoRun, `cmd.exe`, `cmd echo hello`, `exit` => the `cmd echo hello` is not in the history!
