@@ -1550,8 +1550,11 @@ void rl_module::set_prompt(const char* prompt)
     {
         // Count the number of lines the prefix takes to display.
         str_moveable bracketed_prefix;
-        ecma48_processor_flags flags = ecma48_processor_flags::bracket;
-        ecma48_processor(rl_get_local_prompt_prefix(), &bracketed_prefix, nullptr/*cell_count*/, flags);
+        if (rl_get_local_prompt_prefix())
+        {
+            ecma48_processor_flags flags = ecma48_processor_flags::bracket;
+            ecma48_processor(rl_get_local_prompt_prefix(), &bracketed_prefix, nullptr/*cell_count*/, flags);
+        }
         int lines = count_prompt_lines(bracketed_prefix.c_str(), bracketed_prefix.length());
 
         // Clear the input line and the prompt prefix.
