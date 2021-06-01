@@ -132,24 +132,32 @@ end
 --- -name:  clink.promptcoroutine
 --- -arg:   func:function
 --- -ret:   [return value from func]
---- Creates a coroutine to perform asynchronous work for a prompt filter.  A
---- prompt filter can call this each time it runs, but a coroutine is only
---- created the <em>first</em> time each prompt filter calls this in the current
---- input line.
+--- Creates a coroutine to run the <span class="arg">func</span> function in the
+--- background.  Clink will automatically resume the coroutine repeatedly while
+--- input line editing is idle.  When the <span class="arg">func</span> function
+--- completes, Clink will automatically refresh the prompt by triggering prompt
+--- filtering again.
 ---
---- If the <code>prompt.async</code> setting is disabled, then the coroutine is
---- run to completion immediately.  Otherwise, the coroutine runs during idle
---- while editing the input line.  (The true or false argument tells
---- <span class="arg">func</span> whether it's being run during idle or
---- immediately, respectively.)
+--- A coroutine is only created the first time each prompt filter calls this API
+--- during a given input line session.  Subsequent calls reuse the
+--- already-created coroutine.  (E.g. pressing <kbd>Enter</kbd> ends an input
+--- line session.)
 ---
---- The return value is whatever <span class="arg">func</span> returns (only one
---- return value; return a table if multiple return values are needed).  Until
---- the function completes, nil is returned.  After the function completes, its
---- return value is returned (which can be nil).
+--- The API returns nil until the <span class="arg">func</span> function has
+--- finished.  After that, the API returns whatever the
+--- <span class="arg">func</span> function returned.  The API returns one value;
+--- if multiple return values are needed, return them in a table.
+---
+--- If the <code>prompt.async</code> setting is disabled, then the coroutine
+--- runs to completion immediately before returning.  Otherwise, the coroutine
+--- runs during idle while editing the input line.  The
+--- <span class="arg">func</span> function receives one argument: true if it's
+--- running in the background, or false if it's running immediately.
 ---
 --- See <a href="#asyncpromptfiltering">Asynchronous Prompt Filtering</a> for
 --- more information.
+---
+--- Note: each prompt filter can have at most one prompt coroutine.
 function clink.promptcoroutine(func)
     local entry = prompt_filter_coroutines[prompt_filter_current]
     if entry == nil then

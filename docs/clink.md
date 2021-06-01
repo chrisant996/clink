@@ -1037,9 +1037,98 @@ Readline needs to be told which characters in the prompt are unprintable or invi
 
 #### Asynchronous Prompt Filtering
 
-<fieldset><legend>TODO</legend>
-Document how to use asynchronous prompt filtering.
-</fieldset>
+Prompt filtering needs to be fast, or it can interfere with using the shell (e.g. `git status` can be slow in a large repo).
+
+Clink provides a way for prompt filters to do some initial work and set the prompt, continue doing work in the background, and then refresh the prompt again when the background work is finished.  This is accomplished by using Lua coroutines, but Clink simplifies and streamlines the process.
+
+A prompt filter can call <a href="#clink.promptcoroutine">clink.promptcoroutine(my_func)</a> to run `my_func()` inside a coroutine.  Clink will automatically resume the coroutine repeatedly while input line editing is idle.  When `my_func()` completes, Clink will automatically refresh the prompt by triggering prompt filtering again.
+
+Typically the motivation to use asynchronous prompt filtering is that one or more <code><span class="hljs-built_in">io</span>.<span class="hljs-built_in">popen</span>(<span class="hljs-string">"some slow command"</span>)</code> calls take too long.  They can be replaced with <a href="#io.popenyield">io.popenyield()</a> calls inside the prompt coroutine to let them run in the background.
+
+> **Global data:** If `my_func()` needs to use any global data, then it's important to use <a href="#clink.onbeginedit">clink.onbeginedit()</a> to register an event handler that can reset the global data for each new input line session.  Otherwise the data may accidentally "bleed" across different input line sessions.
+>
+> **Backward compatibility:** A prompt filter must handle backward compatibility itself if it needs to run on versions of Clink that don't support asynchronous prompt filtering (v1.2.9 and lower).  E.g. you can use <code><span class="hljs-keyword">if</span> clink.promptcoroutine <span class="hljs-keyword">then</span></code> to test whether the API exists.
+
+The following example illustrates running `git status` in the background.  It also remembers the status from the previous input line, so that it can reduce flicker by using the color from last time until the background status operation completes.
+
+```lua
+local prev_dir      -- Most recent git repo visited.
+local prev_status   -- Most recent status retrieved for the git repo.
+
+local function get_git_dir(dir)
+    -- Check if the current directory is in a git repo.
+    local child
+    repeat
+        if os.isdir(path.join(dir, ".git")) then
+            return dir
+        end
+        -- Walk up one level to the parent directory.
+        dir,child = path.toparent(dir)
+        -- If child is empty, we've reached the top.
+    until (not child or child == "")
+    return nil
+end
+
+local function get_git_branch()
+    -- Get the current git branch name.
+    local file = io.popen("git branch --show-current 2>nul")
+    local branch = file:read("*a"):match("(.+)\n")
+    file:close()
+    return branch
+end
+
+local function get_git_status()
+    -- The io.popenyield API is like io.popen, but it yields until the output is
+    -- ready to be read.
+    local file = io.popenyield("git --no-optional-locks status --porcelain 2>nul")
+    local status = false
+    for line in file:lines() do
+        -- If there's any output, the status is not clean.  Since this example
+        -- doesn't analyze the details, it can stop once it knows there's any
+        -- output at all.
+        status = true
+        break
+    end
+    file:close()
+    return status
+end
+
+local git_prompt = clink.promptfilter(100)
+function git_prompt:filter(prompt)
+    -- Do nothing if not a git repo.
+    local dir = get_git_dir(os.getcwd())
+    if not dir then
+        return
+    end
+    -- Reset the cached status if in a different repo.
+    if prev_dir ~= dir then
+        prev_status = nil
+        prev_dir = dir
+    end
+    -- Do nothing if git branch not available.
+    local branch = get_git_branch()
+    if not branch or branch == "" then
+        return
+    end
+    -- Start a coroutine to get git status, and returns nil immediately.  The
+    -- coroutine runs in the background, and triggers prompt filtering again
+    -- when it completes.  After it completes the return value here will be the
+    -- result from get_git_status().
+    local status = clink.promptcoroutine(get_git_status)
+    -- If no status yet, use the status from the previous prompt.
+    if status == nil then
+        status = prev_status
+    end
+    -- Choose color for the git branch name:  green if status is clean, yellow
+    -- if status is not clean, or default color if status isn't known yet.
+    local sgr = ""
+    if status ~= nil then
+        sgr = status and "33;1" or "32;1"
+    end
+    -- Prefix the prompt with "[branch]" using the status color.
+    return "\x1b["..sgr.."m["..branch.."]\x1b[m  "..prompt
+end
+```
 
 # Miscellaneous
 

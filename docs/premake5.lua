@@ -30,7 +30,6 @@ local function generate_file(source_path, out)
                 markdown_file(md, out)
             else
                 line = line:gsub("%$%(CLINK_VERSION%)", docver)
-                line = line:gsub("<(/?kbd)>", "&lt;%1&gt;")
                 line = line:gsub("<br>", "&lt;br&gt;")
                 out:write(line .. "\n")
             end

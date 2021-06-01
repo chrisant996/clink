@@ -199,19 +199,23 @@ end
 --- -show:  &nbsp; do_things_with(line)
 --- -show:  end
 --- -show:  file:close()
---- Runs <code>command</code> and returns a read file handle for reading output
---- from the command.  However, it yields until the command has closed the read
---- file handle and the output is ready to be read without blocking.
+--- This is the same as
+--- <code><span class="hljs-built_in">io</span>.<span class="hljs-built_in">popen</span>(<span class="arg">command</span>, <span class="arg">mode</span>)</code>
+--- except that it only supports read mode and it yields until the command has
+--- finished:
 ---
---- It is the same as <code>io.popen</code> except that it only supports read
---- mode, and it yields until the command has finished.
+--- Runs <span class="arg">command</span> and returns a read file handle for
+--- reading output from the command.  It yields until the command has finished
+--- and the complete output is ready to be read without blocking.
 ---
---- The <span class="arg">mode</span> cannot contain <code>"w"</code>, but can
---- contain <code>"r"</code> (read mode) and/or either <code>"t"</code> for text
---- mode (the default if omitted) or <code>"b"</code> for binary mode.
+--- The <span class="arg">mode</span> can contain "r" (read mode) and/or either
+--- "t" for text mode (the default if omitted) or "b" for binary mode.  Write
+--- mode is not supported, so it cannot contain "w".
 ---
 --- <strong>Note:</strong> if the <code>prompt.async</code> setting is disabled
---- then this turns into a call to `io.popen` instead.
+--- then this turns into a call to
+--- <code><span class="hljs-built_in">io</span>.<span class="hljs-built_in">popen</span>(<span class="arg">command</span>, <span class="arg">mode</span>)</code>
+--- instead.
 function io.popenyield(command, mode)
     -- This outer wrapper is implemented in Lua so that it can yield.
     if settings.get("prompt.async") then

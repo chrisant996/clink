@@ -6,8 +6,6 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 
 ## Issues
 
-- Update documentation to include a section on Asynchronous Prompt Filtering.
-
 ## Investigate
 - Is session history not getting reaped correctly in certain cases?  Maybe during a compact?
 - AutoRun, `cmd.exe`, `cmd echo hello`, `exit` => the `cmd echo hello` is not in the history!
