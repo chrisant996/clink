@@ -13,6 +13,7 @@
 - Documentation clarifications and reorganization.
 - Fixed `clink` and `history` aliases getting lost after exiting a nested Clink instance.
 - Fixed some input keys accidentally handled by the OS after certain Lua code is run.
+- Fixed [#123](https://github.com/chrisant996/clink/issues/124); `onfiltermatches()` receives one fewer matches than it should.
 - Fixed [#123](https://github.com/chrisant996/clink/issues/123); Failed to inject (Host validation failed).
 - Fixed [#117](https://github.com/chrisant996/clink/issues/117); Setup causes "System Error".
 
