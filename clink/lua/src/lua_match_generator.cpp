@@ -452,7 +452,7 @@ void lua_match_generator::filter_matches(char** matches, char completion_type, b
     // Convert matches to a Lua table (arg 1).
     str<> tmp;
     lua_createtable(state, match_count, 0);
-    for (int i = 1; i < match_count; ++i)
+    for (int i = 1; i <= match_count; ++i)
     {
         const char* match = matches[i];
         match_type type = match_type::none;
