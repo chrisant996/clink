@@ -242,6 +242,10 @@ kbd {
     margin-bottom: 1.0rem;
 }
 
+#content #api .toc {
+    margin-left: 2rem;
+}
+
 #content #api .show {
     white-space: pre;
     font-family: "Fira Mono",monospace;

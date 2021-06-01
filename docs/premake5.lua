@@ -189,6 +189,14 @@ local function do_docs()
     table.sort(groups, compare_groups)
 
     local api_html = io.open(".build/docs/api_html", "w")
+    api_html:write('<h3>API groups</h3>')
+    api_html:write('<p/><div class="toc">')
+    for _, group in ipairs(groups) do
+        if group.name ~= "Deprecated" then
+            api_html:write('<div class="H1"><a href="#'..group.name..'">'..group.name..'</a></div>')
+        end
+    end
+    api_html:write('</div>')
     for _, group in ipairs(groups) do
         table.sort(group, function (a, b) return a.name[1] < b.name[1] end)
 
