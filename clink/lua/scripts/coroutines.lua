@@ -117,13 +117,13 @@ end
 
 --------------------------------------------------------------------------------
 function clink._diag_coroutines()
-    local bold = "\x1b[1m"
-    local norm = "\x1b[m"
+    local bold = "\x1b[1m"          -- Bold (bright).
+    local norm = "\x1b[m"           -- Normal.
+    local statcolor = "\x1b[35m"    -- Magenta.
 
     local total = 0
     local dead = 0
     local threads = {}
-    local max_status_len = 0
     local max_resumed_len = 0
     local max_freq_len = 0
     for _,entry in pairs(_coroutines) do
@@ -136,9 +136,6 @@ function clink._diag_coroutines()
             src=info.short_src.."("..info.linedefined..")"
         else
             src="<unknown>"
-        end
-        if max_status_len < #status then
-            max_status_len = #status
         end
         if max_resumed_len < #resumed then
             max_resumed_len = #resumed
@@ -154,11 +151,11 @@ function clink._diag_coroutines()
     print("  popenyield", _coroutine_infinite)
     for _,t in ipairs(threads) do
         local col1 = tostring(t.coroutine):gsub("thread: ", "")
-        local col2 = str_rpad(t.status, max_status_len)
-        local col3 = "ran "..str_rpad(t.resumed, max_resumed_len)
+        local col2 = (t.status == "suspended") and "" or (statcolor..t.status..norm.."  ")
+        local col3 = "resumed "..str_rpad(t.resumed, max_resumed_len)
         local col4 = "freq "..str_rpad(t.freq, max_freq_len)
         local col5 = t.src
-        print("  "..col1..":  "..col2.."  "..col3.."  "..col4.."  "..col5)
+        print("  "..col1..":  "..col2..col3.."  "..col4.."  "..col5)
     end
 end
 
