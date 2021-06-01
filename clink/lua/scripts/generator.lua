@@ -130,7 +130,7 @@ end
 --- -arg:   [priority:integer]
 --- -ret:   table
 --- Creates and returns a new match generator object.  Define on the object a
---- <code>generate()</code> function which gets called in increasing
+--- <code>:generate()</code> function which gets called in increasing
 --- <span class="arg">priority</span> order (low values to high values) when
 --- generating matches for completion.  See
 --- <a href="#matchgenerators">Match Generators</a> for more information.

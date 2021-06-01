@@ -949,7 +949,7 @@ Before Clink displays the prompt it filters the prompt through Lua so that the p
 
 Writing a prompt filter is straightforward:
 1. Create a new prompt filter by calling `clink.promptfilter()` along with a priority id which dictates the order in which filters are called. Lower priority ids are called first.
-2. Define a `filter()` function on the returned prompt filter.
+2. Define a `:filter()` function on the returned prompt filter.
 
 The filter function takes a string argument that contains the filtered prompt so far.  If the filter function returns nil, it has no effect.  If the filter function returns a string, that string is used as the new filtered prompt (and may be further modified by other prompt filters with higher priority ids).  If the filter function returns a string and a boolean, then if the boolean is false the prompt filtering is done and no further filter functions are called.
 
@@ -1051,14 +1051,14 @@ Key bindings are defined in .inputrc files.  See the [Configuring Readline](#con
 
 Here is the quick version:
 
-- A key binding is <code><em>name</em>: <em>function</em></code> or <code><em>name</em>: "<em>literal text</em>"</code>.
+- A key binding is <code><span class="arg">name</span>: <span class="arg">function</span></code> or <code><span class="arg">name</span>: "<span class="arg">literal text</span>"</code>.
 - Key names are like this:
   - `C-a` and `"\C-a"` are both <kbd>Ctrl</kbd>+<kbd>a</kbd>.
   - `M-a` and `"\M-a"` are both <kbd>Alt</kbd>+<kbd>a</kbd>.
   - `M-C-a` and `"\M-\C-a"` are both <kbd>Alt</kbd>+<kbd>Ctrl</kbd>+<kbd>a</kbd>.
   - `hello` is just <kbd>h</kbd>; the `ello` is a syntax error and is silently discarded by Readline.
   - `"hello"` is the series of keys <kbd>h</kbd>,<kbd>e</kbd>,<kbd>l</kbd>,<kbd>l</kbd>,<kbd>o</kbd>.
-  - Special keys like <kbd>Up</kbd> are represented by VT220 escape codes such as`"\e[A"` (see table below for more info).
+  - Special keys like <kbd>Up</kbd> are represented by VT220 escape codes such as`"\e[A"` (see [Binding Special Keys](#specialkeys) for more info).
 - Key bindings can be either functions or macros (literal text):
   - `blah-blah` binds to a function named "blah-blah".
   - `"blah-blah"` inserts the literal text "blah-blah".
@@ -1116,6 +1116,8 @@ The `clink-show-help` command is bound to <kbd>Alt</kbd>+<kbd>H</kbd> and lists 
 Clink provides an easy way to find the key sequence for any key combination that Clink supports. Run `clink echo` and then press key combinations; the associated key binding sequence is printed to the console output and can be used for a key binding in the inputrc file.
 
 A chord can be formed by concatenating multiple key binding sequences. For example, `"\C-X"` and `"\e[H"` can be concatenated to form `"\C-X\e[H"` representing the chord <kbd>Ctrl</kbd>+<kbd>X</kbd>,<kbd>Home</kbd>.
+
+<a name="specialkeys"/>
 
 ### Binding special keys
 

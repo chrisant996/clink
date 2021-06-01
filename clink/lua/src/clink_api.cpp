@@ -239,11 +239,13 @@ static int to_uppercase(lua_State* state)
 /// -show:  local r = io.popen(c.." --session "..clink.getsession().." history")
 /// Returns the current Clink session id.
 ///
-/// This is needed when using <code>io.popen()</code> (or similar functions) to
-/// invoke <code>clink history</code> or <code>clink info</code> while Clink is
-/// installed for autorun.  The popen API spawns a new CMD.exe, which gets a new
-/// Clink instance injected, so the history or info command will use the new
-/// session unless explicitly directed to use the calling session.
+/// This is needed when using
+/// <code><span class="hljs-built_in">io</span>.<span class="hljs-built_in">popen</span>()</code>
+/// (or similar functions) to invoke <code>clink history</code> or <code>clink
+/// info</code> while Clink is installed for autorun.  The popen API spawns a
+/// new CMD.exe, which gets a new Clink instance injected, so the history or
+/// info command will use the new session unless explicitly directed to use the
+/// calling session.
 static int get_session(lua_State* state)
 {
     str<32> session;

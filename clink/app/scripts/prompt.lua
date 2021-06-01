@@ -58,7 +58,7 @@ end
 --- -show:  end
 --- Creates and returns a new promptfilter object that is applied in increasing
 --- <span class="arg">priority</span> order (low values to high values).  Define
---- on the object a <code>filter()</code> function that takes a string argument
+--- on the object a <code>:filter()</code> function that takes a string argument
 --- which contains the filtered prompt so far.  The function can return nil to
 --- have no effect, or can return a new prompt string.  It can optionally stop
 --- further prompt filtering by also returning false.  See

@@ -594,8 +594,8 @@ int luaL_YieldGuard::__tostring(lua_State* state)
 /// reading output from the command, and a file handle for writing input to the
 /// command.
 ///
-/// <span class="arg">mode</span> can be <code>"t"</code> for text mode (the
-/// default if omitted) or <code>"b"</code> for binary mode.
+/// <span class="arg">mode</span> can be "t" for text mode (the default if
+/// omitted) or "b" for binary mode.
 ///
 /// If the function fails it returns nil, an error message, and an error number.
 ///

@@ -67,7 +67,7 @@ end
 --- -arg:   [priority:integer]
 --- -ret:   table
 --- Creates and returns a new word classifier object.  Define on the object a
---- <code>classify()</code> function which gets called in increasing
+--- <code>:classify()</code> function which gets called in increasing
 --- <span class="arg">priority</span> order (low values to high values) when
 --- classifying words for coloring the input.  See
 --- <a href="#classifywords">Coloring The Input Text</a> for more information.
