@@ -4,7 +4,16 @@
 
 #### v1.2.10
 
+- Added asynchronous prompt filtering -- scripts can use this to do work in the background (e.g. `git status`) and refresh the prompt when finished.
+    - Added `clink.promptcoroutine()` function to allow a prompt filter to do some work in the background.
+    - Added `io.popenyield()` function to allow a coroutine to yield until the command's complete output is ready.
+    - Added `prompt.async` setting that can disable asynchronous prompt filtering if preferred.
 - Log error codes for failures during `clink inject`.
+- Clarified help text for `clink autorun` (per [#122](https://github.com/chrisant996/clink/issues/122)).
+- Documentation clarifications and reorganization.
+- Fixed `clink` and `history` aliases getting lost after exiting a nested Clink instance.
+- Fixed some input keys accidentally handled by the OS after certain Lua code is run.
+- Fixed [#123](https://github.com/chrisant996/clink/issues/123); Failed to inject (Host validation failed).
 - Fixed [#117](https://github.com/chrisant996/clink/issues/117); Setup causes "System Error".
 
 #### v1.2.9
