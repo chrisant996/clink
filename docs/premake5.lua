@@ -111,6 +111,9 @@ local function parse_doc_tags_impl(out, file)
                 if value == "" and tag == "desc" then
                     desc_tag[#desc_tag] = desc_tag[#desc_tag]..'</p><p class="desc">'
                 else
+                    if tag == "deprecated" then
+                        group = "Deprecated"
+                    end
                     table.insert(desc_tag, value)
                 end
                 desc[tag] = desc_tag
@@ -162,6 +165,15 @@ local function do_docs()
     end
 
     local compare_groups = function (a, b)
+        local a_deprecated = (a.name == "Deprecated")
+        local b_deprecated = (b.name == "Deprecated")
+        if a_deprecated or b_deprecated then
+            if not a_deprecated then
+                return true
+            else
+                return false
+            end
+        end
         local a_other = (a.name == "[other]" and true) or false
         local b_other = (b.name == "[other]" and true) or false
         if a_other or b_other then
@@ -180,7 +192,12 @@ local function do_docs()
     for _, group in ipairs(groups) do
         table.sort(group, function (a, b) return a.name[1] < b.name[1] end)
 
-        api_html:write('<div class="group">')
+        local class group_class = "group"
+        if group.name == "Deprecated" then
+            group_class = group_class.." deprecated"
+        end
+
+        api_html:write('<div class="'..group_class..'">')
         api_html:write('<h5 class="group_name"><a name="'..group.name..'">'..group.name..'</a></h5>')
 
         for _, doc_tag in ipairs(group) do
@@ -193,7 +210,6 @@ local function do_docs()
             local desc = table.concat(doc_tag.desc or {}, " ")
             local show = table.concat(doc_tag.show or {}, "\n")
             local deprecated = (doc_tag.deprecated or { nil })[1]
-            local deprecated_class = (deprecated and " deprecated") or ""
 
             api_html:write('<div class="header">')
                 api_html:write(' <div class="name"><a name="'..name..'">'..name..'</a></div>')
@@ -205,9 +221,9 @@ local function do_docs()
                     end
                     api_html:write(' <div class="signature">('..arg..') : '..ret..'</div>')
                 end
-            api_html:write('</div>')
+            api_html:write('</div>') -- header
 
-            api_html:write('<div class="body'..deprecated_class..'">')
+            api_html:write('<div class="body">')
                 if deprecated then
                     api_html:write('<p class="desc"><strong>Deprecated; don\'t use this.</strong>  See <a href="#'..deprecated..'">'..deprecated..'</a> for more information.</p>')
                 end
@@ -215,13 +231,13 @@ local function do_docs()
                 if #show > 0 then
                     api_html:write('<pre class="language-lua"><code>'..show..'</code></pre>')
                 end
-            api_html:write("</div>")
+            api_html:write("</div>") -- body
 
-            api_html:write("</div>")
+            api_html:write("</div>") -- function
             api_html:write("<hr/>\n")
         end
 
-        api_html:write("</div>")
+        api_html:write("</div>") -- group
     end
     api_html:close()
 
