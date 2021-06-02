@@ -6,16 +6,6 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 
 ## Issues
 
-- **Protect against spawning multiple concurrent generations of popenyield for the same prompt filter.**
-  - Always set/clear coroutine context around invoking a prompt filter.
-  - `clink.promptcoroutine()` can copy the context into a lookaside table to associate it with the coroutine in `clink.addcoroutine()`.
-  - `clink._resumecoroutines()` can set/clear coroutine context around resuming each coroutine.
-  - `io.popenyield()` can use the coroutine context to manage a queue per prompt filter.
-  - Report the queues in `clink._diag_coroutines()`.
-  - `io.popenyield()` can yield early.
-  - `io.popenyield()` can cancel if it's from an older input line's generation.
-  - `io.popenyield()` can keep yielding until it's both the head and the tail.
-
 ## Investigate
 - Is session history not getting reaped correctly in certain cases?  Maybe during a compact?
 - AutoRun, `cmd.exe`, `cmd echo hello`, `exit` => the `cmd echo hello` is not in the history!

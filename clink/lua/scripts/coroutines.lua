@@ -4,10 +4,29 @@
 --------------------------------------------------------------------------------
 clink = clink or {}
 local _coroutines = {}
-local _coroutines_created = {}
-local _after_coroutines = {}
-local _coroutines_resumable = false
-local _coroutine_infinite = nil
+local _coroutines_created = {}          -- Remembers creation info for each coroutine, for use by clink.addcoroutine.
+local _after_coroutines = {}            -- Funcs to run after a pass resuming coroutines.
+local _coroutines_resumable = false     -- When false, coroutines will no longer run.
+local _coroutine_yieldguard = nil       -- Which coroutine is yielding inside popenyield.
+local _coroutine_context = nil          -- Context for queuing io.popenyield calls from a same source.
+local _coroutine_generation = 0         -- ID for current generation of coroutines.
+
+--------------------------------------------------------------------------------
+-- Scheme for entries in _coroutines:
+--
+--  Initialized by clink.addcoroutine:
+--      coroutine:      The coroutine.
+--      func:           The function the coroutine runs.
+--      interval:       Interval at which to schedule the coroutine.
+--      context:        The context in which the coroutine was created.
+--      generation:     The generation to which this coroutine belongs.
+--
+--  Updated by the coroutine management system:
+--      resumed:        Number of times the coroutine has been resumed.
+--      firstclock:     The os.clock() from the beginning of the first resume.
+--      lastclock:      The os.clock() from the end of the last resume.
+--      infinite:       Use INFINITE wait for this coroutine; it's actively inside popenyield.
+--      queued:         Use INFINITE wait for this coroutine; it's queued inside popenyield.
 
 --------------------------------------------------------------------------------
 local function clear_coroutines()
@@ -15,14 +34,55 @@ local function clear_coroutines()
     _coroutines_created = {}
     _after_coroutines = {}
     _coroutines_resumable = false
-    _coroutine_infinite = nil
+    -- Don't touch _coroutine_yieldguard; it only gets cleared when the thread finishes.
+    _coroutine_context = nil
+    _coroutine_generation = _coroutine_generation + 1
 end
 clink.onbeginedit(clear_coroutines)
 
 --------------------------------------------------------------------------------
-local function after_coroutines()
-    for _,func in pairs(_after_coroutines) do
-        func()
+local function release_coroutine_yieldguard()
+    if _coroutine_yieldguard and _coroutine_yieldguard.yieldguard:ready() then
+        local entry = _coroutines[_coroutine_yieldguard.coroutine]
+        if entry and entry.yieldguard == _coroutine_yieldguard.yieldguard then
+            entry.yieldguard = nil
+            _coroutine_yieldguard = nil
+            for _,entry in pairs(_coroutines) do
+                if entry.queued then
+                    entry.queued = nil
+                    break
+                end
+            end
+        end
+    end
+end
+
+--------------------------------------------------------------------------------
+local function get_coroutine_generation()
+    local t = coroutine.running()
+    if t and _coroutines[t] then
+        return _coroutines[t].generation
+    end
+end
+
+--------------------------------------------------------------------------------
+local function set_coroutine_yieldguard(yieldguard)
+    local t = coroutine.running()
+    if yieldguard then
+        _coroutine_yieldguard = { coroutine=t, yieldguard=yieldguard }
+    else
+        release_coroutine_yieldguard()
+    end
+    if t and _coroutines[t] then
+        _coroutines[t].yieldguard = yieldguard
+    end
+end
+
+--------------------------------------------------------------------------------
+local function set_coroutine_queued(queued)
+    local t = coroutine.running()
+    if t and _coroutines[t] then
+        _coroutines[t].queued = queued and true or nil
     end
 end
 
@@ -47,7 +107,7 @@ function clink._after_coroutines(func)
     if type(func) ~= "function" then
         error("bad argument #1 (function expected)")
     end
-    _after_coroutines[func] = func
+    _after_coroutines[func] = func      -- Prevent duplicates.
 end
 
 --------------------------------------------------------------------------------
@@ -60,9 +120,10 @@ function clink._wait_duration()
     if _coroutines_resumable then
         local target
         local now = os.clock()
+        release_coroutine_yieldguard()  -- Dequeue next if necessary.
         for _,entry in pairs(_coroutines) do
             local this_target = next_entry_target(entry, now)
-            if _coroutine_infinite == entry.coroutine then
+            if entry.yieldguard or entry.queued then
                 -- Yield until output is ready; don't influence the timeout.
             elseif not target or target > this_target then
                 target = this_target
@@ -75,10 +136,19 @@ function clink._wait_duration()
 end
 
 --------------------------------------------------------------------------------
+function clink._set_coroutine_context(context)
+    _coroutine_context = context
+end
+
+--------------------------------------------------------------------------------
 function clink._resume_coroutines()
-    if _coroutines_resumable then
-        _coroutines_resumable = false
-        local remove = {}
+    if not _coroutines_resumable then
+        return
+    end
+
+    -- Protected call to resume coroutines.
+    local remove = {}
+    local impl = function()
         for _,entry in pairs(_coroutines) do
             if coroutine.status(entry.coroutine) == "dead" then
                 table.insert(remove, _)
@@ -90,20 +160,43 @@ function clink._resume_coroutines()
                         entry.firstclock = now
                     end
                     entry.resumed = entry.resumed + 1
-                    if coroutine.resume(entry.coroutine, true--[[async]]) then
+                    clink._set_coroutine_context(entry.context)
+                    local ok, ret = coroutine.resume(entry.coroutine, true--[[async]])
+                    if ok then
                         -- Use live clock so the interval excludes the execution
                         -- time of the coroutine.
                         entry.lastclock = os.clock()
                     else
+                        print("")
+                        print("coroutine failed:")
+                        print(ret)
                         table.insert(remove, _)
                     end
                 end
             end
         end
-        for _,c in ipairs(remove) do
-            clink.removecoroutine(c)
-        end
-        after_coroutines()
+    end
+
+    -- Prepare.
+    _coroutines_resumable = false
+    clink._set_coroutine_context(nil)
+
+    -- Protected call.
+    local ok, ret = xpcall(impl, _error_handler_ret)
+    if not ok then
+        print("")
+        print("coroutine failed:")
+        print(ret)
+        -- Don't return yet!  Need to do cleanup.
+    end
+
+    -- Cleanup.
+    clink._set_coroutine_context(nil)
+    for _,c in ipairs(remove) do
+        clink.removecoroutine(c)
+    end
+    for _,func in pairs(_after_coroutines) do
+        func()
     end
 end
 
@@ -119,6 +212,8 @@ end
 function clink._diag_coroutines()
     local bold = "\x1b[1m"          -- Bold (bright).
     local norm = "\x1b[m"           -- Normal.
+    local green = "\x1b[32m"        -- Green.
+    local yellow = "\x1b[33m"       -- Yellow.
     local statcolor = "\x1b[35m"    -- Magenta.
 
     local total = 0
@@ -127,35 +222,38 @@ function clink._diag_coroutines()
     local max_resumed_len = 0
     local max_freq_len = 0
     for _,entry in pairs(_coroutines) do
-        local src
         local resumed = tostring(entry.resumed)
         local status = coroutine.status(entry.coroutine)
         local freq = tostring(entry.interval)
-        if entry.func then
-            local info = debug.getinfo(entry.func, 'S')
-            src=info.short_src.."("..info.linedefined..")"
-        else
-            src="<unknown>"
-        end
         if max_resumed_len < #resumed then
             max_resumed_len = #resumed
         end
         if max_freq_len < #freq then
             max_freq_len = #freq
         end
-        table.insert(threads, { coroutine=entry.coroutine, status=status, resumed=resumed, freq=freq, src=src })
+        table.insert(threads, { coroutine=entry.coroutine, status=status, resumed=resumed, freq=freq, src=entry.src })
     end
 
     clink.print(bold.."coroutines:"..norm)
     print("  resumable", _coroutines_resumable)
-    print("  popenyield", _coroutine_infinite)
+    print("  wait_duration", clink._wait_duration())
+    if _coroutine_yieldguard then
+        local yg = _coroutine_yieldguard.yieldguard
+        print("  yieldguard", (yg:ready() and green.."ready"..norm or yellow.."yield"..norm))
+    end
     for _,t in ipairs(threads) do
-        local col1 = tostring(t.coroutine):gsub("thread: ", "")
-        local col2 = (t.status == "suspended") and "" or (statcolor..t.status..norm.."  ")
-        local col3 = "resumed "..str_rpad(t.resumed, max_resumed_len)
-        local col4 = "freq "..str_rpad(t.freq, max_freq_len)
-        local col5 = t.src
-        print("  "..col1..":  "..col2..col3.."  "..col4.."  "..col5)
+        local key = tostring(t.coroutine):gsub("thread: ", "")
+        local status = (t.status == "suspended") and "" or (statcolor..t.status..norm.."  ")
+        if t.yieldguard then
+            status = status.."  "..yellow.."yieldguard"..norm
+        end
+        if t.queued then
+            status = status.."  "..yellow.."queued"..norm
+        end
+        local res = "resumed "..str_rpad(t.resumed, max_resumed_len)
+        local freq = "freq "..str_rpad(t.freq, max_freq_len)
+        local src = t.src
+        print("  "..key..":  "..status..res.."  "..freq.."  "..src)
     end
 end
 
@@ -167,7 +265,16 @@ function clink.addcoroutine(coroutine, interval)
     if interval ~= nil and type(interval) ~= "number" then
         error("bad argument #2 (number or nil expected)")
     end
-    _coroutines[coroutine] = { coroutine=coroutine, interval=interval or 0, resumed=0, func=_coroutines_created[coroutine] }
+    local created_info = _coroutines_created[coroutine] or {}
+    _coroutines[coroutine] = {
+        coroutine=coroutine,
+        interval=interval or 0,
+        resumed=0,
+        func=created_info.func,
+        context=created_info.context,
+        generation=created_info.generation,
+        src=created_info.src
+    }
     _coroutines_created[coroutine] = nil
     _coroutines_resumable = true
 end
@@ -175,6 +282,7 @@ end
 --------------------------------------------------------------------------------
 function clink.removecoroutine(coroutine)
     if type(coroutine) == "thread" then
+        release_coroutine_yieldguard()
         _coroutines[coroutine] = nil
     elseif coroutine ~= nil then
         error("bad argument #1 (coroutine expected)")
@@ -216,14 +324,27 @@ end
 function io.popenyield(command, mode)
     -- This outer wrapper is implemented in Lua so that it can yield.
     if settings.get("prompt.async") then
--- TODO("COROUTINES: ideally avoid having lots of outstanding old commands still running; yield until earlier one(s) complete?")
+        -- Yield to ensure only one popenyield active at a time.
+        if _coroutine_yieldguard then
+            set_coroutine_queued(true)
+            while _coroutine_yieldguard do
+                coroutine.yield()
+            end
+            set_coroutine_queued(false)
+        end
+        -- Cancel if not from the current prompt filter generation.
+        if get_coroutine_generation() ~= _coroutine_generation then
+            local message = (type(command) == string) and command..": " or ""
+            return nil, message.."canceling popenyield; coroutine is orphaned", -1
+        end
+        -- Start the popenyield.
         local file, yieldguard = io.popenyield_internal(command, mode)
         if file and yieldguard then
-            _coroutine_infinite = coroutine.running()
+            set_coroutine_yieldguard(yieldguard)
             while not yieldguard:ready() do
                 coroutine.yield()
             end
-            _coroutine_infinite = nil
+            set_coroutine_yieldguard(nil)
         end
         return file
     else
@@ -232,11 +353,27 @@ function io.popenyield(command, mode)
 end
 
 --------------------------------------------------------------------------------
+local override_coroutine_src_func = nil
+function coroutine.override_src(func)
+    override_coroutine_src_func = func
+end
+
+--------------------------------------------------------------------------------
 local orig_coroutine_create = coroutine.create
 function coroutine.create(func)
+    -- Get src of func.
+    local src = override_coroutine_src_func or func
+    if src then
+        local info = debug.getinfo(src, 'S')
+        src = info.short_src.."("..info.linedefined..")"
+    else
+        src = "<unknown>"
+    end
+    override_coroutine_src_func = nil
+
     -- Remember original func for diagnostic purposes later.  The table is
     -- cleared at the beginning of each input line.
     local thread = orig_coroutine_create(func)
-    _coroutines_created[thread] = func
+    _coroutines_created[thread] = { func=func, context=_coroutine_context, generation=_coroutine_generation, src=src }
     return thread
 end

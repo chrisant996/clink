@@ -5,8 +5,18 @@
 clink = clink or {}
 local prompt_filters = {}
 local prompt_filters_unsorted = false
-local prompt_filter_current = nil
-local prompt_filter_coroutines = {}
+
+
+
+--------------------------------------------------------------------------------
+local prompt_filter_current = nil       -- Current running prompt filter.
+local prompt_filter_coroutines = {}     -- Up to one coroutine per prompt filter, with cached return value.
+
+--------------------------------------------------------------------------------
+local function set_current_prompt_filter(filter)
+    prompt_filter_current = filter
+    clink._set_coroutine_context(filter)
+end
 
 
 
@@ -23,7 +33,7 @@ function clink._filter_prompt(prompt)
     -- Protected call to prompt filters.
     local impl = function(prompt)
         for _, filter in ipairs(prompt_filters) do
-            prompt_filter_current = filter
+            set_current_prompt_filter(filter)
             local filtered, onwards = filter:filter(prompt)
             if filtered ~= nil then
                 if onwards == false then return filtered end
@@ -34,9 +44,9 @@ function clink._filter_prompt(prompt)
         return prompt
     end
 
-    prompt_filter_current = nil
+    set_current_prompt_filter(nil)
     local ok, ret = xpcall(impl, _error_handler_ret, prompt)
-    prompt_filter_current = nil
+    set_current_prompt_filter(nil)
     if not ok then
         print("")
         print("prompt filter failed:")
@@ -159,15 +169,23 @@ end
 ---
 --- Note: each prompt filter can have at most one prompt coroutine.
 function clink.promptcoroutine(func)
+    if not prompt_filter_current then
+        error("clink.promptcoroutine can only be used in a prompt filter", 2)
+    end
+
     local entry = prompt_filter_coroutines[prompt_filter_current]
     if entry == nil then
-        entry = { done=false, refilter=false, result=nil }
+        local info = debug.getinfo(func, 'S')
+        src=info.short_src.."("..info.linedefined..")"
+
+        entry = { done=false, refilter=false, result=nil, src=src }
         prompt_filter_coroutines[prompt_filter_current] = entry
 
         local async = settings.get("prompt.async")
 
         -- Wrap the supplied function to track completion and end result.
         local dependency_inversion = { c=nil }
+        coroutine.override_src(func)
         local c = coroutine.create(function (async)
             -- Call the supplied function.
             local o = func(async)
