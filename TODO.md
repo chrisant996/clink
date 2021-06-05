@@ -4,6 +4,11 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 
 # RELEASE
 
+- Write unit test for prompt coroutines.
+  - Test basic functionality.
+  - Test generational queueing and abandoning.
+  -
+
 ## Issues
 
 ## Investigate
@@ -15,8 +20,8 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
   - It gets overly complicated for a script to handle arg2 or deeper (needs list of preceding args, preceding flags for args, etc -- not to mention linked parsers).
   - To support input line coloring it needs to run code simply due to input from the user, regardless whether any completion is invoked.
   - It should not block while waiting for an external app to run.  This suggests maybe using Lua coroutines, but then:
-    - How to avoid blocking while waiting for piped output to complete?
-    - How to make it difficult for a script to deviate from the efficient non-blocking pattern?
+    - [x] How to avoid blocking while waiting for piped output to complete?
+    - [x] How to make it difficult for a script to deviate from the efficient non-blocking pattern?
   - How to make it clear what a script needs to supply?  E.g. for which arg(s) and flag(s) and which command, etc?
 
 ## Mystery
