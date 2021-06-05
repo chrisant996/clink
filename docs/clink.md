@@ -63,13 +63,13 @@ There are several ways to start Clink.
 
 When running Clink via the methods above, Clink checks the parent process is supported and injects a DLL into it. The DLL then hooks the WriteConsole() and ReadConsole() Windows functions. The former is so that Clink can capture the current prompt, and the latter hook allows Clink to provide its own Readline-powered command line editing.
 
-<a name="privacy"/>
+<a name="privacy"></a>
 
 ### Privacy
 
 Clink does not collect user data.  Clink writes diagnostic information to its local log file, and does not transmit the log file off the local computer.  For the location of the log file, refer to [File Locations](#filelocations) or run `clink info`.
 
-<a name="configclink"/>
+<a name="configclink"></a>
 
 # Configuring Clink
 
@@ -87,18 +87,18 @@ Name                         | Default | Description
 `cmd.ctrld_exits`            | True    | <kbd>Ctrl</kbd>+<kbd>D</kbd> exits the process when it is pressed on an empty line.
 `color.arg`                  |         | The color for arguments in the input line when `clink.colorize_input` is enabled.
 `color.argmatcher`           |         | The color for the command name in the input line when `clink.colorize_input` is enabled, if the command name has an argmatcher available.
-<a name="color_cmd"/>`color.cmd` | `bold` | Used when Clink displays shell (CMD.EXE) command completions, and in the input line when `clink.colorize_input` is enabled.
-<a name="color_doskey"/>`color.doskey` | `bright cyan` | Used when Clink displays doskey alias completions, and in the input line when `clink.colorize_input` is enabled.
+<a name="color_cmd"></a>`color.cmd` | `bold` | Used when Clink displays shell (CMD.EXE) command completions, and in the input line when `clink.colorize_input` is enabled.
+<a name="color_doskey"></a>`color.doskey` | `bright cyan` | Used when Clink displays doskey alias completions, and in the input line when `clink.colorize_input` is enabled.
 `color.filtered`             | `bold`  | The default color for filtered completions (see <a href="#filteringthematchdisplay">Filtering the Match Display</a>).
 `color.flag`                 | `default` | The color for flags in the input line when `clink.colorize_input` is enabled.
-<a name="color_hidden"/>`color.hidden` | | Used when Clink displays file completions with the "hidden" attribute.
+<a name="color_hidden"></a>`color.hidden` | | Used when Clink displays file completions with the "hidden" attribute.
 `color.horizscroll`          |         | Used when Clink displays the `<` or `>` horizontal scroll indicators when Readline's `horizontal-scroll-mode` variable is set.
 `color.input`                |         | Used when Clink displays the input line text. Note that when `clink.colorize_input` is disabled, the entire input line is displayed using `color.input`.
 `color.interact`             | `bold`  | Used when Clink displays text or prompts such as a pager's `--More?--` prompt.
 `color.message`              | `default` | The color for the message area (e.g. the search prompt message, digit argument prompt message, etc).
 `color.modmark`              |         | Used when Clink displays the `*` mark on modified history lines when Readline's `mark-modified-lines` variable and Clink's `color.input` setting are both set. Falls back to `color.input` if not set.
 `color.prompt`               |         | When set, this is used as the default color for the prompt.  But it's overridden by any colors set by <a href="#customisingtheprompt">Customising The Prompt</a>.
-<a name="color_readonly"/>`color.readonly` | | Used when Clink displays file completions with the "readonly" attribute.
+<a name="color_readonly"></a>`color.readonly` | | Used when Clink displays file completions with the "readonly" attribute.
 `color.selection`            |         | The color for selected text in the input line.  If no color is set, then reverse video is used.
 `color.unexpected`           | `default` | The color for unexpected arguments in the input line when `clink.colorize_input` is enabled.
 `debug.log_terminal`         | False   | Logs all terminal input and output to the clink.log file.  This is intended for diagnostic purposes only, and can make the log file grow significantly.
@@ -122,7 +122,7 @@ Name                         | Default | Description
 `lua.break_on_traceback`     | False   | Breaks into Lua debugger on `traceback()`.
 `lua.debug`                  | False   | Loads a simple embedded command line debugger when enabled. Breakpoints can be added by calling `pause()`.
 `lua.path`                   |         | Value to append to `package.path`. Used to search for Lua scripts specified in `require()` statements.
-<a name="lua_reload_scripts"/>`lua.reload_scripts` | False | When false, Lua scripts are loaded once and are only reloaded if forced (see <a href="#lua-scripts-location">The Location of Lua Scripts</a> for details).  When true, Lua scripts are loaded each time the edit prompt is activated.
+<a name="lua_reload_scripts"></a>`lua.reload_scripts` | False | When false, Lua scripts are loaded once and are only reloaded if forced (see <a href="#lua-scripts-location">The Location of Lua Scripts</a> for details).  When true, Lua scripts are loaded each time the edit prompt is activated.
 `lua.strict`                 | True    | When enabled, argument errors cause Lua scripts to fail.  This may expose bugs in some older scripts, causing them to fail where they used to succeed. In that case you can try turning this off, but please alert the script owner about the issue so they can fix the script.
 `lua.traceback_on_error`     | False   | Prints stack trace on Lua errors.
 `match.ignore_accent`        | True    | Controls accent sensitivity when completing matches. For example, `ä` and `a` are considered equivalent with this enabled.
@@ -143,7 +143,7 @@ Name                         | Default | Description
 > - The `esc_clears_line` setting has been replaced by a `clink-reset-line` command that is by default bound to the <kbd>Escape</kbd> key.  See [Key Bindings](#keybindings) and [Readline](https://tiswww.cwru.edu/php/chet/readline/readline.html) for more information.
 > - The `match_colour` setting has been removed, and Clink now supports Readline's completion coloring.  See [Completion Colors](#completioncolors) for more information.
 
-<a name="colorsettings"/>
+<a name="colorsettings"></a>
 
 ## Color Settings
 
@@ -174,7 +174,7 @@ It's also possible to set any ANSI <a href="https://en.wikipedia.org/wiki/ANSI_e
 
 Be careful, since some escape code sequences might behave strangely.
 
-<a name="filelocations"/>
+<a name="filelocations"></a>
 
 ## File Locations
 
@@ -291,7 +291,7 @@ rem -- Do any other desired configuration here, such as loading a doskey macro f
 call "%~dp0clink.bat" inject --profile "%TEMP%\clink_portable" %1 %2 %3 %4 %5 %6 %7 %8 %9
 ```
 
-<a name="configreadline"/>
+<a name="configreadline"></a>
 
 # Configuring Readline
 
@@ -389,7 +389,7 @@ Name | Description
 `old-menu-complete-backward`|Like `old-menu-complete`, but in reverse.
 `remove-history`|While searching history, removes the current line from the history.
 
-<a name="completioncolors"/>
+<a name="completioncolors"></a>
 
 ## Completion Colors
 
@@ -435,9 +435,9 @@ Typing|Typing does an incremental search.
 
 # Extending Clink
 
-The Readline library allows clients to offer an alternative path for creating completion matches. Clink uses this to hook Lua into the completion process making it possible to script the generation of matches with <a href="https://www.lua.org/docs.html">Lua</a> scripts. The following sections describe this in more detail and show some examples.
+Clink can be extended with <a href="https://www.lua.org/docs.html">Lua</a> scripts to customize startup actions, create completion matches, customize the prompt, and more.  The following sections describe these in more detail and show some examples.
 
-<a name="lua-scripts-location"/>
+<a name="lua-scripts-location"></a>
 
 ## The Location of Lua Scripts
 
@@ -451,7 +451,21 @@ Lua scripts are loaded once and are only reloaded if forced because the scripts 
 
 Run `clink info` to see the script paths for the current session.
 
-<a name="matchgenerators"/>
+### Tips for starting to write Lua scripts
+
+- Loading a Lua script executes it; so when Clink loads Lua scripts from the locations above, it executes the scripts.
+- Code not inside a function is executed immediately when the script is loaded.
+- Usually scripts will register functions to customize various behaviors:
+  - Generate completion matches.
+  - Apply color to input text.
+  - Customize the prompt.
+  - Perform actions before or after the user gets to edit each input line.
+  - Provide new custom commands that can be bound to keys via the "luafunc:" key macro syntax (see <a href="#configreadline">Configuring Readline</a> for more information).
+- Often scripts will also define some functions and variables for use by itself and/or other scripts.
+
+The following sections describe these in more detail and show some examples.
+
+<a name="matchgenerators"></a>
 
 ## Match Generators
 
@@ -591,7 +605,7 @@ end
 
 ### More Advanced Stuff
 
-<a name="filteringmatchcompletions"/>
+<a name="filteringmatchcompletions"></a>
 
 #### Filtering Match Completions
 
@@ -688,7 +702,7 @@ function interceptor:generate(line_state, match_builder)
 end
 ```
 
-<a name="filteringthematchdisplay"/>
+<a name="filteringthematchdisplay"></a>
 
 #### Filtering The Match Display
 
@@ -728,7 +742,7 @@ end
 > - Normally match generation only happens at the start of a new word.  The full set of potential matches is remembered and dynamically filtered based on further typing.
 > - So if a match generator made contextual decisions during match generation (other than filtering) then it could potentially behave differently in Clink v1.x than it did in v0.x.
 
-<a name="argumentcompletion"/>
+<a name="argumentcompletion"></a>
 
 ## Argument Completion
 
@@ -817,7 +831,7 @@ clink.argmatcher()
 
 With the shorthand form flags are implied rather than declared.  When a shorthand table's first value is a string starting with `-` or `/` then the table is interpreted as flags.  Note that it's still possible with shorthand form to mix flag prefixes, and even add additional flag prefixes, such as <code>{ <span class="hljs-string">'-a'</span>, <span class="hljs-string">'/b'</span>, <span class="hljs-string">'=c'</span> }</code>.
 
-<a name="classifywords"/>
+<a name="classifywords"></a>
 
 ## Coloring The Input Text
 
@@ -941,7 +955,7 @@ function cmdsep_classifier:classify(commands)
 end
 ```
 
-<a name="customisingtheprompt"/>
+<a name="customisingtheprompt"></a>
 
 ## Customising The Prompt
 
@@ -1025,7 +1039,7 @@ The resulting prompt will look like this:
 
 <p/>
 
-<a name="escapecodes"/>
+<a name="escapecodes"></a>
 
 ### ANSI escape codes in the prompt string
 
@@ -1033,7 +1047,7 @@ Readline needs to be told which characters in the prompt are unprintable or invi
 
 ### More Advanced Stuff
 
-<a name="asyncpromptfiltering"/>
+<a name="asyncpromptfiltering"></a>
 
 #### Asynchronous Prompt Filtering
 
@@ -1132,7 +1146,7 @@ end
 
 # Miscellaneous
 
-<a name="keybindings"/>
+<a name="keybindings"></a>
 
 ## Key bindings
 
@@ -1206,7 +1220,7 @@ Clink provides an easy way to find the key sequence for any key combination that
 
 A chord can be formed by concatenating multiple key binding sequences. For example, `"\C-X"` and `"\e[H"` can be concatenated to form `"\C-X\e[H"` representing the chord <kbd>Ctrl</kbd>+<kbd>X</kbd>,<kbd>Home</kbd>.
 
-<a name="specialkeys"/>
+<a name="specialkeys"></a>
 
 ### Binding special keys
 
@@ -1250,7 +1264,7 @@ When the `terminal.differentiate_keys` setting is enabled then the following key
 |M   |`\e[27;5;77~`  |`\e[27;6;77~`  |`\em`          |`\eM`          |`\e[27;7;77~`  |`\e[27;8;77~`  |
 |[   |`\e[27;5;219~` |`\e[27;6;219~` |`\e[27;3;219~` |`\e[27;4;219~` |`\e[27;7;219~` |`\e[27;8;219~` |
 
-<a name="luakeybindings"/>
+<a name="luakeybindings"></a>
 
 ### Lua Key Bindings
 
