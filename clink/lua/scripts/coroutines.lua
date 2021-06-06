@@ -308,6 +308,7 @@ function clink._diag_coroutines()
         if _coroutine_yieldguard then
             local yg = _coroutine_yieldguard.yieldguard
             print("  yieldguard", (yg:ready() and green.."ready"..norm or yellow.."yield"..norm))
+            print("  yieldcommand", '"'..yg:command()..'"')
         end
         list_diag(threads, norm)
     end

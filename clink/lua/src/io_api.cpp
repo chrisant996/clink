@@ -493,14 +493,16 @@ struct luaL_YieldGuard
 {
     static luaL_YieldGuard* make_new(lua_State* state);
 
-    void init(std::shared_ptr<popen_buffering>& buffering);
+    void init(std::shared_ptr<popen_buffering>& buffering, const char* command);
 
 private:
     static int ready(lua_State* state);
+    static int command(lua_State* state);
     static int __gc(lua_State* state);
     static int __tostring(lua_State* state);
 
     std::shared_ptr<popen_buffering> m_buffering;
+    str_moveable m_command;
 };
 
 //------------------------------------------------------------------------------
@@ -516,6 +518,7 @@ luaL_YieldGuard* luaL_YieldGuard::make_new(lua_State* state)
     static const luaL_Reg yglib[] =
     {
         {"ready", ready},
+        {"command", luaL_YieldGuard::command}, // Ambiguous because of command arg.
         {"__gc", __gc},
         {"__tostring", __tostring},
         {nullptr, nullptr}
@@ -540,9 +543,10 @@ luaL_YieldGuard* luaL_YieldGuard::make_new(lua_State* state)
 }
 
 //------------------------------------------------------------------------------
-void luaL_YieldGuard::init(std::shared_ptr<popen_buffering>& buffering)
+void luaL_YieldGuard::init(std::shared_ptr<popen_buffering>& buffering, const char* command)
 {
     m_buffering = buffering;
+    m_command = command;
 }
 
 //------------------------------------------------------------------------------
@@ -550,6 +554,14 @@ int luaL_YieldGuard::ready(lua_State* state)
 {
     luaL_YieldGuard* yg = (luaL_YieldGuard*)luaL_checkudata(state, 1, LUA_YIELDGUARD);
     lua_pushboolean(state, yg->m_buffering->is_ready());
+    return 1;
+}
+
+//------------------------------------------------------------------------------
+int luaL_YieldGuard::command(lua_State* state)
+{
+    luaL_YieldGuard* yg = (luaL_YieldGuard*)luaL_checkudata(state, 1, LUA_YIELDGUARD);
+    lua_pushstring(state, yg->m_command.c_str());
     return 1;
 }
 
@@ -749,7 +761,7 @@ static int io_popenyield(lua_State* state)
         popenrw_info::add(info);
         info = nullptr;
 
-        yg->init(buffering);
+        yg->init(buffering, command);
         buffering->go();
 
         failed = false;

@@ -7,11 +7,26 @@
 #include <core/base.h>
 #include <core/str.h>
 #include <core/path.h>
+#include <core/settings.h>
 #include <lua/lua_script_loader.h>
 #include <lua/lua_state.h>
 
 extern "C" {
 #include <lua.h>
+}
+
+//------------------------------------------------------------------------------
+static void set_prompt_async_default()
+{
+    setting* setting = settings::find("prompt.async");
+    setting->set();
+}
+
+//------------------------------------------------------------------------------
+static void set_prompt_async(bool state)
+{
+    setting* setting = settings::find("prompt.async");
+    setting->set(state ? "true" : "false");
 }
 
 //------------------------------------------------------------------------------
@@ -69,17 +84,25 @@ TEST_CASE("Lua coroutines.")
         end\
         \
         function io.popenyield_internal(command, mode)\
-            local yieldguard = {}\
+            local yieldguard = { _ready=false, _command=command }\
             function yieldguard:ready()\
-                return self.is_ready\
+                return self._ready\
             end\
             function yieldguard:setready()\
-                self.is_ready = true\
+                self._ready = true\
+            end\
+            function yieldguard:command()\
+                return self._command\
             end\
             _yieldguard = yieldguard\
             _ran = _ran..'|'..command\
             _command = command\
             return 'fake_file', yieldguard\
+        end\
+        \
+        function io.popen(command, mode)\
+            _ran = _ran..'|'..command\
+            return 'fake_file'\
         end\
         \
         function verify_wait_duration_nil()\
@@ -155,8 +178,20 @@ TEST_CASE("Lua coroutines.")
             return _refilter\
         end\
         \
-        function verify_ran_correct_commands()\
+        function verify_ran_non_orphaned_commands()\
             return _ran == '|1aaa|3aaa|3bbb|3ccc'\
+        end\
+        \
+        function verify_ran_commands_1_disabled()\
+            return _ran == '|1aaa|1bbb|1ccc'\
+        end\
+        \
+        function verify_ran_commands_2_disabled()\
+            return _ran == '|1aaa|1bbb|1ccc|2aaa|2bbb|2ccc'\
+        end\
+        \
+        function verify_ran_commands_3_disabled()\
+            return _ran == '|1aaa|1bbb|1ccc|2aaa|2bbb|2ccc|3aaa|3bbb|3ccc'\
         end\
         \
         function verify_no_coroutines()\
@@ -170,10 +205,10 @@ TEST_CASE("Lua coroutines.")
         \
         local function init()\
             local gen = _gen\
-            local f,yg\
-            f,yg = io.popenyield(gen..'aaa')\
-            f,yg = io.popenyield(gen..'bbb')\
-            f,yg = io.popenyield(gen..'ccc')\
+            local f\
+            f = io.popenyield(gen..'aaa')\
+            f = io.popenyield(gen..'bbb')\
+            f = io.popenyield(gen..'ccc')\
             return gen..'zzz'\
         end\
         \
@@ -186,8 +221,10 @@ TEST_CASE("Lua coroutines.")
 
         REQUIRE(lua.do_string(script));
 
-        SECTION("Overlap")
+        SECTION("Enabled")
         {
+            set_prompt_async(true);
+
             str<> out;
             REQUIRE(verify_ret_true(lua, "reset_coroutine_test"));
 
@@ -239,7 +276,7 @@ TEST_CASE("Lua coroutines.")
             // Allow third popenyield from prompt 3 to continue.
             REQUIRE(verify_ret_true(lua, "set_yieldguard_ready"));
             REQUIRE(verify_ret_true(lua, "verify_resume_coroutines"));
-            REQUIRE(verify_ret_true(lua, "verify_ran_correct_commands"));
+            REQUIRE(verify_ret_true(lua, "verify_ran_non_orphaned_commands"));
 
             REQUIRE(verify_ret_true(lua, "verify_no_coroutines"));
             REQUIRE(verify_ret_true(lua, "verify_refilter"));
@@ -248,7 +285,37 @@ TEST_CASE("Lua coroutines.")
             prompt_filter.filter("", out);
             REQUIRE(out.equals("3zzz"));
 
-            REQUIRE(verify_ret_true(lua, "verify_ran_correct_commands"));
+            REQUIRE(verify_ret_true(lua, "verify_ran_non_orphaned_commands"));
+        }
+
+        SECTION("Disabled")
+        {
+            set_prompt_async(false);
+
+            str<> out;
+            REQUIRE(verify_ret_true(lua, "reset_coroutine_test"));
+
+            // Simulate prompt 1.
+            lua.send_event("onbeginedit");
+            prompt_filter.filter("", out);
+            REQUIRE(out.equals("1zzz"));
+            REQUIRE(verify_ret_true(lua, "verify_ran_commands_1_disabled"));
+
+            // Simulate prompt 2.
+            lua.send_event("onbeginedit");
+            prompt_filter.filter("", out);
+            REQUIRE(out.equals("2zzz"));
+            REQUIRE(verify_ret_true(lua, "verify_ran_commands_2_disabled"));
+
+            // Simulate prompt 3.
+            lua.send_event("onbeginedit");
+            prompt_filter.filter("", out);
+            REQUIRE(out.equals("3zzz"));
+            REQUIRE(verify_ret_true(lua, "verify_ran_commands_3_disabled"));
+
+            REQUIRE(verify_ret_true(lua, "verify_no_coroutines"));
         }
     }
+
+    set_prompt_async_default();
 }
