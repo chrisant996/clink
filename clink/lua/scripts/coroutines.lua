@@ -229,6 +229,15 @@ local function str_rpad(s, width, pad)
 end
 
 --------------------------------------------------------------------------------
+local function table_has_elements(t)
+    if t then
+        for _ in pairs(t) do
+            return true
+        end
+    end
+end
+
+--------------------------------------------------------------------------------
 function clink._diag_coroutines()
     local bold = "\x1b[1m"          -- Bold (bright).
     local norm = "\x1b[m"           -- Normal.
@@ -288,25 +297,25 @@ function clink._diag_coroutines()
         collect_diag(_dead, deadthreads)
     end
 
-    clink.print(bold.."coroutines:"..norm)
-    if show_gen then
-        print("  generation", (mixed_gen and yellow or norm).._coroutine_generation..norm)
-    end
-    print("  resumable", _coroutines_resumable)
-    print("  wait_duration", clink._wait_duration())
-    if _coroutine_yieldguard then
-        local yg = _coroutine_yieldguard.yieldguard
-        print("  yieldguard", (yg:ready() and green.."ready"..norm or yellow.."yield"..norm))
-    end
-    list_diag(threads, norm)
-
-    if _dead then
-        for _ in pairs(_dead) do
-            -- Only list dead coroutines if there are any.
-            clink.print(bold.."dead coroutines:"..norm)
-            list_diag(deadthreads, deadlistcolor)
-            break
+    -- Only list coroutines if there are any, or if there's unfinished state.
+    if table_has_elements(threads) or _coroutines_resumable or _coroutine_yieldguard then
+        clink.print(bold.."coroutines:"..norm)
+        if show_gen then
+            print("  generation", (mixed_gen and yellow or norm).."gen ".._coroutine_generation..norm)
         end
+        print("  resumable", _coroutines_resumable)
+        print("  wait_duration", clink._wait_duration())
+        if _coroutine_yieldguard then
+            local yg = _coroutine_yieldguard.yieldguard
+            print("  yieldguard", (yg:ready() and green.."ready"..norm or yellow.."yield"..norm))
+        end
+        list_diag(threads, norm)
+    end
+
+    -- Only list dead coroutines if there are any.
+    if table_has_elements(_dead_) then
+        clink.print(bold.."dead coroutines:"..norm)
+        list_diag(deadthreads, deadlistcolor)
     end
 end
 
