@@ -241,7 +241,6 @@ function clink.promptcoroutine(func)
             end
             -- Update the entry indicating completion.
             entry.done = true
-            entry.result = output
         end
     end
 
