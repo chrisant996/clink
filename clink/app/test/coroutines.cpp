@@ -57,7 +57,7 @@ TEST_CASE("Lua coroutines.")
         const char* script = "\
         function reset_coroutine_test()\
             _refilter = false\
-            _yieldguard_ready = false\
+            _yieldguard = nil\
             _ran = ''\
             _command = ''\
             _gen = 0\
@@ -71,9 +71,12 @@ TEST_CASE("Lua coroutines.")
         function io.popenyield_internal(command, mode)\
             local yieldguard = {}\
             function yieldguard:ready()\
-                return _yieldguard_ready\
+                return self.is_ready\
             end\
-            _yieldguard_ready = false\
+            function yieldguard:setready()\
+                self.is_ready = true\
+            end\
+            _yieldguard = yieldguard\
             _ran = _ran..'|'..command\
             _command = command\
             return 'fake_file', yieldguard\
@@ -83,32 +86,65 @@ TEST_CASE("Lua coroutines.")
             return clink._wait_duration() == nil\
         end\
         \
+        local function str_rpad(s, width, pad)\
+            if width <= #s then\
+                return s\
+            end\
+            return s..string.rep(pad or ' ', width - #s)\
+        end\
+        \
+        local function print_var(name, value)\
+            print(str_rpad(name, 15), value)\
+        end\
+        \
+        local function report_internals(diag_func)\
+            print()\
+            if diag_func then\
+                diag_func()\
+            end\
+            print_var('_refilter', _refilter)\
+            print_var('_yg_ready', (not _yieldguard and 'nil yg') or (_yieldguard:ready() and 'ready') or 'false')\
+            print_var('_ran', _ran)\
+            print_var('_command', _command)\
+            print_var('_gen', _gen)\
+            clink._diag_coroutines()\
+        end\
+        \
+        local function verify_true(value, diag_func)\
+            if value then\
+                return true\
+            else\
+                report_internals(diag_func)\
+            end\
+        end\
+        \
         function verify_resume_coroutines()\
-            clink._wait_duration()\
+            local dur = clink._wait_duration()\
             if clink._has_coroutines() then\
                 clink._resume_coroutines()\
                 return true\
             end\
+            report_internals()\
         end\
         \
         function verify_notready_1aaa()\
-            clink._wait_duration()\
-            return not _yieldguard_ready and _command == '1aaa'\
+            local dur = clink._wait_duration()\
+            return verify_true(not _yieldguard_ready and _command == '1aaa', function () print_var('dur', dur) end)\
         end\
         \
         function verify_notready_3aaa()\
-            clink._wait_duration()\
-            return not _yieldguard_ready and _command == '3aaa'\
+            local dur = clink._wait_duration()\
+            return verify_true(not _yieldguard_ready and _command == '3aaa', function () print_var('dur', dur) end)\
         end\
         \
         function verify_notready_3bbb()\
-            clink._wait_duration()\
-            return not _yieldguard_ready and _command == '3bbb'\
+            local dur = clink._wait_duration()\
+            return verify_true(not _yieldguard_ready and _command == '3bbb', function () print_var('dur', dur) end)\
         end\
         \
         function verify_notready_3ccc()\
-            clink._wait_duration()\
-            return not _yieldguard_ready and _command == '3ccc'\
+            local dur = clink._wait_duration()\
+            return verify_true(not _yieldguard_ready and _command == '3ccc', function () print_var('dur', dur) end)\
         end\
         \
         function verify_not_refilter()\
@@ -128,7 +164,7 @@ TEST_CASE("Lua coroutines.")
         end\
         \
         function set_yieldguard_ready()\
-            _yieldguard_ready = true\
+            _yieldguard:setready()\
             return true\
         end\
         \
@@ -183,28 +219,24 @@ TEST_CASE("Lua coroutines.")
             REQUIRE(verify_ret_true(lua, "verify_not_refilter"));
 
             // Allow first popenyield from prompt 1 to continue.
-            Sleep(1); // Lua coroutines apparently don't necessarily resume otherwise.
             REQUIRE(verify_ret_true(lua, "set_yieldguard_ready"));
             REQUIRE(verify_ret_true(lua, "verify_resume_coroutines"));
             REQUIRE(verify_ret_true(lua, "verify_notready_3aaa"));
             REQUIRE(verify_ret_true(lua, "verify_not_refilter"));
 
             // Allow first popenyield from prompt 3 to continue.
-            Sleep(1); // Lua coroutines apparently don't necessarily resume otherwise.
             REQUIRE(verify_ret_true(lua, "set_yieldguard_ready"));
             REQUIRE(verify_ret_true(lua, "verify_resume_coroutines"));
             REQUIRE(verify_ret_true(lua, "verify_notready_3bbb"));
             REQUIRE(verify_ret_true(lua, "verify_not_refilter"));
 
             // Allow second popenyield from prompt 3 to continue.
-            Sleep(1); // Lua coroutines apparently don't necessarily resume otherwise.
             REQUIRE(verify_ret_true(lua, "set_yieldguard_ready"));
             REQUIRE(verify_ret_true(lua, "verify_resume_coroutines"));
             REQUIRE(verify_ret_true(lua, "verify_notready_3ccc"));
             REQUIRE(verify_ret_true(lua, "verify_not_refilter"));
 
             // Allow third popenyield from prompt 3 to continue.
-            Sleep(1); // Lua coroutines apparently don't necessarily resume otherwise.
             REQUIRE(verify_ret_true(lua, "set_yieldguard_ready"));
             REQUIRE(verify_ret_true(lua, "verify_resume_coroutines"));
             REQUIRE(verify_ret_true(lua, "verify_ran_correct_commands"));

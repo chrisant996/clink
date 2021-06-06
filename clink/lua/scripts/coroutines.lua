@@ -175,7 +175,7 @@ function clink._resume_coroutines()
             else
                 _coroutines_resumable = true
                 local now = os.clock()
-                if next_entry_target(entry, now) < now then
+                if next_entry_target(entry, now) <= now then
                     if not entry.firstclock then
                         entry.firstclock = now
                     end
