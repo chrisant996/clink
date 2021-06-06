@@ -7,8 +7,6 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 ## Issues
 
 ## Investigate
-- Is session history not getting reaped correctly in certain cases?  Maybe during a compact?
-- AutoRun, `cmd.exe`, `cmd echo hello`, `exit` => the `cmd echo hello` is not in the history!
 
 #### _General_
 - Add syntax for argmatchers to defer adding args/flags, to facilitate adding args/flags by parsing help text from a program.  This is more complex than I first thought:
@@ -18,8 +16,6 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
     - [x] How to avoid blocking while waiting for piped output to complete?
     - [x] How to make it difficult for a script to deviate from the efficient non-blocking pattern?
   - How to make it clear what a script needs to supply?  E.g. for which arg(s) and flag(s) and which command, etc?
-
-## Mystery
 
 <br/>
 <br/>
@@ -117,10 +113,10 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 ## Known Issues
 - Perturbed PROMPT envvar is visible in child processes (e.g. piped shell in various file editors).
 - [#531](https://github.com/mridgers/clink/issues/531) AV detects a trojan on download _[This is likely because of the use of CreateRemoteThread and/or hooking OS APIs.  There might be a way to obfuscate the fact that clink uses those, but ultimately this is kind of an inherent problem.  Getting the binaries digitally signed might be the most effective solution, but that's financially expensive.]_
-- [FIXED] Readline's incremental display updates plus its reliance on ANSI escape codes for cursor positioning seem to make it not able to properly support editing within a line containing surrogate pairs.  I would say that it's a Readline issue, except that git-bash seems to be a bit better at it than Clink is, so maybe Clink isn't hosting Readline correctly.  FIXED: Readline relies on wchar_t being 32 bits, so some shimming was needed to accomplish that when compiling with Visual Studio.
 
 ## Mystery
-- [#480](https://github.com/mridgers/clink/issues/480) Things don't work right when clink is in a path with spaces _[I'm not able to reproduce the problem, so dropping it off the radar for now.]_
+- Is session history not getting reaped correctly in certain cases?  Maybe during a compact?  I think some commands disappear from the history unexpectedly sometimes, but maybe it's correct and I overlooked the catalyst?
+- AutoRun, `cmd.exe`, `cmd echo hello`, `exit` => the `cmd echo hello` is not in the history. _[NOT REPRO.]_
 - Windows 10.0.19042.630 seems to have problems when using WriteConsoleW with ANSI escape codes in a powerline prompt in a git repo.  But Windows 10.0.19041.630 doesn't.
 - Windows Terminal crashes on exit after `clink inject`.  The current release version was crashing (1.6.10571.0).  Older versions don't crash, and a locally built version from the terminal repo's HEAD doesn't crash.  I think the crash is probably a bug in Windows Terminal, not related to Clink.  And after I built it locally, then it stopped crashing with 1.6.10571.0 as well.  Mysterious...
 - Corrupted clink_history -- not sure how, when, or why -- but after having made changes to history, debugging through issues, and aborting some debugging sessions my clink_history file had a big chunk of contiguous NUL bytes. _[UPDATE: the good news is it isn't a Clink issue; the bad news is the SSD drives in my new Alienware m15 R4 keep periodically hitting a BSOD for KERNEL DATA INPAGE ERROR, which zeroes out recently written sectors.]_
