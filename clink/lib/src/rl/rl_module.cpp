@@ -1518,8 +1518,14 @@ void rl_module::set_keyseq_len(int len)
 //------------------------------------------------------------------------------
 void rl_module::set_prompt(const char* prompt)
 {
+    bool redisplay = (g_rl_buffer && g_printer);
+
     // Readline needs to be told about parts of the prompt that aren't visible
     // by enclosing them in a pair of 0x01/0x02 chars.
+
+    str<> prev_prompt;
+    if (redisplay)
+        prev_prompt = m_rl_prompt.c_str();
 
     m_rl_prompt.clear();
 
@@ -1546,7 +1552,7 @@ void rl_module::set_prompt(const char* prompt)
     g_last_prompt.clear();
     g_last_prompt.concat(m_rl_prompt.c_str(), m_rl_prompt.length());
 
-    if (g_rl_buffer && g_printer)
+    if (redisplay && !m_rl_prompt.equals(prev_prompt.c_str()))
     {
         // Count the number of lines the prefix takes to display.
         str_moveable bracketed_prefix;
