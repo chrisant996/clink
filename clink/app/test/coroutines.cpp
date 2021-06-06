@@ -46,14 +46,6 @@ static bool verify_ret_true(lua_state& lua, const char* func_name)
 }
 
 //------------------------------------------------------------------------------
-static bool get_yieldguard_ready(lua_state& lua, str_base& out)
-{
-    // TODO: pcall get_yieldguard_ready
-    // TODO: out = first ret
-    // TODO: return second ret
-}
-
-//------------------------------------------------------------------------------
 TEST_CASE("Lua coroutines.")
 {
     lua_state lua;
@@ -64,11 +56,16 @@ TEST_CASE("Lua coroutines.")
     {
         const char* script = "\
         function reset_coroutine_test()\
+            _refilter = false\
             _yieldguard_ready = false\
             _ran = ''\
             _command = ''\
             _gen = 0\
             return true\
+        end\
+        \
+        function clink.refilterprompt()\
+            _refilter = true\
         end\
         \
         function io.popenyield_internal(command, mode)\
@@ -87,6 +84,7 @@ TEST_CASE("Lua coroutines.")
         end\
         \
         function verify_resume_coroutines()\
+            clink._wait_duration()\
             if clink._has_coroutines() then\
                 clink._resume_coroutines()\
                 return true\
@@ -94,25 +92,39 @@ TEST_CASE("Lua coroutines.")
         end\
         \
         function verify_notready_1aaa()\
+            clink._wait_duration()\
             return not _yieldguard_ready and _command == '1aaa'\
         end\
         \
         function verify_notready_3aaa()\
-print('_yg_ready', _yieldguard_ready)\
-print('_command', _command)\
+            clink._wait_duration()\
             return not _yieldguard_ready and _command == '3aaa'\
         end\
         \
         function verify_notready_3bbb()\
+            clink._wait_duration()\
             return not _yieldguard_ready and _command == '3bbb'\
         end\
         \
         function verify_notready_3ccc()\
+            clink._wait_duration()\
             return not _yieldguard_ready and _command == '3ccc'\
+        end\
+        \
+        function verify_not_refilter()\
+            return not _refilter\
+        end\
+        \
+        function verify_refilter()\
+            return _refilter\
         end\
         \
         function verify_ran_correct_commands()\
             return _ran == '|1aaa|3aaa|3bbb|3ccc'\
+        end\
+        \
+        function verify_no_coroutines()\
+            return clink._has_coroutines() ~= true\
         end\
         \
         function set_yieldguard_ready()\
@@ -132,7 +144,7 @@ print('_command', _command)\
         local pf = clink.promptfilter(1)\
         function pf:filter(prompt)\
             _gen = _gen + 1\
-            return clink.promptcoroutine(init)\
+            return clink.promptcoroutine(init), false\
         end\
         ";
 
@@ -152,6 +164,7 @@ print('_command', _command)\
             REQUIRE(verify_ret_true(lua, "verify_wait_duration_nil"));
             REQUIRE(verify_ret_true(lua, "verify_resume_coroutines"));
             REQUIRE(verify_ret_true(lua, "verify_notready_1aaa"));
+            REQUIRE(verify_ret_true(lua, "verify_not_refilter"));
 
             // Simulate prompt 2.
             lua.send_event("onbeginedit");
@@ -159,6 +172,7 @@ print('_command', _command)\
             REQUIRE(out.equals(""));
             REQUIRE(verify_ret_true(lua, "verify_resume_coroutines"));
             REQUIRE(verify_ret_true(lua, "verify_notready_1aaa"));
+            REQUIRE(verify_ret_true(lua, "verify_not_refilter"));
 
             // Simulate prompt 3.
             lua.send_event("onbeginedit");
@@ -166,38 +180,43 @@ print('_command', _command)\
             REQUIRE(out.equals(""));
             REQUIRE(verify_ret_true(lua, "verify_resume_coroutines"));
             REQUIRE(verify_ret_true(lua, "verify_notready_1aaa"));
+            REQUIRE(verify_ret_true(lua, "verify_not_refilter"));
 
-#if 0
             // Allow first popenyield from prompt 1 to continue.
+            Sleep(1); // Lua coroutines apparently don't necessarily resume otherwise.
             REQUIRE(verify_ret_true(lua, "set_yieldguard_ready"));
             REQUIRE(verify_ret_true(lua, "verify_resume_coroutines"));
             REQUIRE(verify_ret_true(lua, "verify_notready_3aaa"));
+            REQUIRE(verify_ret_true(lua, "verify_not_refilter"));
 
             // Allow first popenyield from prompt 3 to continue.
+            Sleep(1); // Lua coroutines apparently don't necessarily resume otherwise.
             REQUIRE(verify_ret_true(lua, "set_yieldguard_ready"));
             REQUIRE(verify_ret_true(lua, "verify_resume_coroutines"));
             REQUIRE(verify_ret_true(lua, "verify_notready_3bbb"));
+            REQUIRE(verify_ret_true(lua, "verify_not_refilter"));
 
             // Allow second popenyield from prompt 3 to continue.
+            Sleep(1); // Lua coroutines apparently don't necessarily resume otherwise.
             REQUIRE(verify_ret_true(lua, "set_yieldguard_ready"));
             REQUIRE(verify_ret_true(lua, "verify_resume_coroutines"));
             REQUIRE(verify_ret_true(lua, "verify_notready_3ccc"));
+            REQUIRE(verify_ret_true(lua, "verify_not_refilter"));
 
             // Allow third popenyield from prompt 3 to continue.
+            Sleep(1); // Lua coroutines apparently don't necessarily resume otherwise.
             REQUIRE(verify_ret_true(lua, "set_yieldguard_ready"));
             REQUIRE(verify_ret_true(lua, "verify_resume_coroutines"));
             REQUIRE(verify_ret_true(lua, "verify_ran_correct_commands"));
 
-// TODO: verify coroutine is dead and yg ready (?) and refilter is true
+            REQUIRE(verify_ret_true(lua, "verify_no_coroutines"));
+            REQUIRE(verify_ret_true(lua, "verify_refilter"));
 
             // Simulate refilter, which should produce the expected final result.
-            lua.send_event("onbeginedit");
             prompt_filter.filter("", out);
             REQUIRE(out.equals("3zzz"));
 
-// TODO: verify clink._has_coroutines() returns false
             REQUIRE(verify_ret_true(lua, "verify_ran_correct_commands"));
-#endif
         }
     }
 }

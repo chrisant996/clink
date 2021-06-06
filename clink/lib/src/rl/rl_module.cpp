@@ -80,6 +80,8 @@ extern int filter_matches(char** matches);
 extern void update_matches();
 extern matches* maybe_regenerate_matches(const char* needle, bool popup);
 extern setting_color g_color_interact;
+extern int g_prompt_refilter;
+extern int g_prompt_redisplay;
 
 terminal_in*        s_direct_input = nullptr;       // for read_key_hook
 terminal_in*        s_processed_input = nullptr;    // for read thunk
@@ -1554,6 +1556,8 @@ void rl_module::set_prompt(const char* prompt)
 
     if (redisplay && !m_rl_prompt.equals(prev_prompt.c_str()))
     {
+        g_prompt_redisplay++;
+
         // Count the number of lines the prefix takes to display.
         str_moveable bracketed_prefix;
         if (rl_get_local_prompt_prefix())
@@ -1631,6 +1635,7 @@ void rl_module::on_begin_line(const context& context)
     g_rl_buffer = &context.buffer;
     if (g_classify_words.get())
         s_classifications = &context.classifications;
+    g_prompt_refilter = g_prompt_redisplay = 0; // Used only by diagnostic output.
 
     _rl_face_modmark = '*';
     _rl_face_horizscroll = '<';

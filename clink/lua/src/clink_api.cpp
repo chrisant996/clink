@@ -391,11 +391,23 @@ static int slash_translation(lua_State* state)
 
 //------------------------------------------------------------------------------
 // UNDOCUMENTED; internal use only.
+int g_prompt_refilter = 0;
 static int refilter_prompt(lua_State* state)
 {
+    g_prompt_refilter++;
     void host_filter_prompt();
     host_filter_prompt();
     return 0;
+}
+
+//------------------------------------------------------------------------------
+// UNDOCUMENTED; internal use only.
+int g_prompt_redisplay = 0;
+static int get_refilter_redisplay_count(lua_State* state)
+{
+    lua_pushinteger(state, g_prompt_refilter);
+    lua_pushinteger(state, g_prompt_redisplay);
+    return 2;
 }
 
 
@@ -445,6 +457,7 @@ void clink_lua_initialise(lua_state& lua)
         { "slash_translation",      &slash_translation },
         // UNDOCUMENTED; internal use only.
         { "refilterprompt",         &refilter_prompt },
+        { "get_refilter_redisplay_count", &get_refilter_redisplay_count },
     };
 
     lua_State* state = lua.get_state();
@@ -470,6 +483,11 @@ void clink_lua_initialise(lua_state& lua)
     lua_setfield(state, -2, "version_patch");
     lua_pushstring(state, AS_STR(CLINK_COMMIT));
     lua_setfield(state, -2, "version_commit");
+
+#ifdef DEBUG
+    lua_pushboolean(state, true);
+    lua_setfield(state, -2, "DEBUG");
+#endif
 
     lua_setglobal(state, "clink");
 }

@@ -11,6 +11,11 @@ local _coroutine_yieldguard = nil       -- Which coroutine is yielding inside po
 local _coroutine_context = nil          -- Context for queuing io.popenyield calls from a same source.
 local _coroutine_generation = 0         -- ID for current generation of coroutines.
 
+local _dead = nil
+if clink.DEBUG then
+    _dead = {}
+end
+
 --------------------------------------------------------------------------------
 -- Scheme for entries in _coroutines:
 --
@@ -30,6 +35,13 @@ local _coroutine_generation = 0         -- ID for current generation of coroutin
 
 --------------------------------------------------------------------------------
 local function clear_coroutines()
+    local preserve
+    if _coroutine_yieldguard then
+        -- Preserve the active popenyield entry so the system can tell when to
+        -- dequeue the next one.
+        preserve = _coroutines[_coroutine_yieldguard.coroutine]
+    end
+
     _coroutines = {}
     _coroutines_created = {}
     _after_coroutines = {}
@@ -37,6 +49,14 @@ local function clear_coroutines()
     -- Don't touch _coroutine_yieldguard; it only gets cleared when the thread finishes.
     _coroutine_context = nil
     _coroutine_generation = _coroutine_generation + 1
+
+    if _dead then
+        _dead = {}
+    end
+
+    if preserve then
+        _coroutines[preserve.coroutine] = preserve
+    end
 end
 clink.onbeginedit(clear_coroutines)
 
@@ -215,45 +235,78 @@ function clink._diag_coroutines()
     local green = "\x1b[32m"        -- Green.
     local yellow = "\x1b[33m"       -- Yellow.
     local statcolor = "\x1b[35m"    -- Magenta.
+    local deadlistcolor = "\x1b[90m" -- Bright black.
 
-    local total = 0
-    local dead = 0
+    local mixed_gen = false
+    local show_gen = false
     local threads = {}
+    local deadthreads = {}
     local max_resumed_len = 0
     local max_freq_len = 0
-    for _,entry in pairs(_coroutines) do
-        local resumed = tostring(entry.resumed)
-        local status = coroutine.status(entry.coroutine)
-        local freq = tostring(entry.interval)
-        if max_resumed_len < #resumed then
-            max_resumed_len = #resumed
+
+    local function collect_diag(list, threads)
+        for _,entry in pairs(list) do
+            local resumed = tostring(entry.resumed)
+            local status = coroutine.status(entry.coroutine)
+            local freq = tostring(entry.interval)
+            if max_resumed_len < #resumed then
+                max_resumed_len = #resumed
+            end
+            if max_freq_len < #freq then
+                max_freq_len = #freq
+            end
+            if entry.generation ~= _coroutine_generation then
+                if list == _coroutines then
+                    mixed_gen = true
+                end
+                show_gen = true
+            end
+            table.insert(threads, { coroutine=entry.coroutine, generation=entry.generation, status=status, resumed=resumed, freq=freq, src=entry.src })
         end
-        if max_freq_len < #freq then
-            max_freq_len = #freq
+    end
+
+    local function list_diag(threads, plain)
+        for _,t in ipairs(threads) do
+            local key = tostring(t.coroutine):gsub("thread: ", "")
+            local gen = (t.generation == _coroutine_generation) and "" or (yellow.."gen "..t.generation..plain.."  ")
+            local status = (t.status == "suspended") and "" or (statcolor..t.status..plain.."  ")
+            if t.yieldguard then
+                status = status.."  "..yellow.."yieldguard"..plain
+            end
+            if t.queued then
+                status = status.."  "..yellow.."queued"..plain
+            end
+            local res = "resumed "..str_rpad(t.resumed, max_resumed_len)
+            local freq = "freq "..str_rpad(t.freq, max_freq_len)
+            local src = t.src
+            print(plain.."  "..key..":  "..gen..status..res.."  "..freq.."  "..src..norm)
         end
-        table.insert(threads, { coroutine=entry.coroutine, status=status, resumed=resumed, freq=freq, src=entry.src })
+    end
+
+    collect_diag(_coroutines, threads)
+    if _dead then
+        collect_diag(_dead, deadthreads)
     end
 
     clink.print(bold.."coroutines:"..norm)
+    if show_gen then
+        print("  generation", (mixed_gen and yellow or norm).._coroutine_generation..norm)
+    end
     print("  resumable", _coroutines_resumable)
     print("  wait_duration", clink._wait_duration())
     if _coroutine_yieldguard then
         local yg = _coroutine_yieldguard.yieldguard
         print("  yieldguard", (yg:ready() and green.."ready"..norm or yellow.."yield"..norm))
     end
-    for _,t in ipairs(threads) do
-        local key = tostring(t.coroutine):gsub("thread: ", "")
-        local status = (t.status == "suspended") and "" or (statcolor..t.status..norm.."  ")
-        if t.yieldguard then
-            status = status.."  "..yellow.."yieldguard"..norm
+    list_diag(threads, norm)
+
+    if _dead then
+        for _ in pairs(_dead) do
+            -- Only list dead coroutines if there are any.
+            clink.print(bold.."dead coroutines:"..norm)
+            list_diag(deadthreads, deadlistcolor)
+            break
         end
-        if t.queued then
-            status = status.."  "..yellow.."queued"..norm
-        end
-        local res = "resumed "..str_rpad(t.resumed, max_resumed_len)
-        local freq = "freq "..str_rpad(t.freq, max_freq_len)
-        local src = t.src
-        print("  "..key..":  "..status..res.."  "..freq.."  "..src)
     end
 end
 
@@ -283,7 +336,15 @@ end
 function clink.removecoroutine(coroutine)
     if type(coroutine) == "thread" then
         release_coroutine_yieldguard()
+        if _dead then
+            table.insert(_dead, _coroutines[coroutine])
+        end
         _coroutines[coroutine] = nil
+        _coroutines_resumable = false
+        for _ in pairs(_coroutines) do
+            _coroutines_resumable = true
+            break
+        end
     elseif coroutine ~= nil then
         error("bad argument #1 (coroutine expected)")
     end

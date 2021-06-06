@@ -4,11 +4,6 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 
 # RELEASE
 
-- Diag: report how many coroutines there were.
-- Diag: in debug builds leave dead coroutines in the list.
-- Diag: report how many times refilter happened (and also redisplay?).
-- Write unit test for prompt coroutines.
-
 ## Issues
 
 ## Investigate

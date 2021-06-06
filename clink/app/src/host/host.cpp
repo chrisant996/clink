@@ -900,6 +900,16 @@ int clink_diagnostics(int count, int invoking_key)
             lua_pop(state, 2);
         }
 
+        // Call clink._diag_refilter to show info on prompt refiltering.
+        lua_getglobal(state, "clink");
+        lua_pushliteral(state, "_diag_refilter");
+        lua_rawget(state, -2);
+        if (lua.pcall(state, 0, 0) != 0)
+        {
+            puts(lua_tostring(state, -1));
+            lua_pop(state, 2);
+        }
+
         // Call clink._diag_custom if present.
         lua_getglobal(state, "clink");
         lua_pushliteral(state, "_diag_custom");

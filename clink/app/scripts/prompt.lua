@@ -58,6 +58,16 @@ function clink._filter_prompt(prompt)
 end
 
 --------------------------------------------------------------------------------
+function clink._diag_refilter()
+    local refilter,redisplay = clink.get_refilter_redisplay_count()
+    if refilter > 0 or redisplay > 0 then
+        clink.print("\x1b[1mprompt refilter:\x1b[m")
+        print("  refilter", refilter)
+        print("  redisplay", redisplay)
+    end
+end
+
+--------------------------------------------------------------------------------
 --- -name:  clink.promptfilter
 --- -arg:   [priority:integer]
 --- -ret:   table
