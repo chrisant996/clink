@@ -3,7 +3,7 @@
 
 <!-- ----------------------------------------------------- -->
 <head>
-<title>Clink v1.2.9</title>
+<title>Clink v1.2.10</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Rambla:wght@400;700&family=Roboto&family=Fira+Mono&display=swap');
 html {
@@ -249,9 +249,18 @@ kbd {
     margin-bottom: 1.0rem;
 }
 
+#content #api .toc {
+    margin-left: 2rem;
+}
+
 #content #api .show {
     white-space: pre;
     font-family: "Fira Mono",monospace;
+}
+
+.h2 {
+    font-size: 80%;
+    margin-left: 1rem;
 }
 
 [class^="hljs"] {
@@ -696,7 +705,7 @@ name:"Plain text",aliases:["text","txt"],disableAutodetect:!0})})());
         // Generate a table of contents from h* tags.
         var toc = document.getElementById("toc");
         toc.innerHTML = "";
-        var headings = document.querySelectorAll("h1");
+        var headings = document.querySelectorAll("h1,h2");
         for (var i = 0; i < headings.length; ++i)
         {
             var h = headings[i];
@@ -738,7 +747,7 @@ name:"Plain text",aliases:["text","txt"],disableAutodetect:!0})})());
         </td>
         <td style="text-align:right">
             <div id="header">
-                <div id="title">Clink v1.2.9</div>
+                <div id="title">Clink v1.2.10</div>
                 <div id="url">
                     <a href="https://github.com/chrisant996/clink">
                         https://github.com/chrisant996/clink
@@ -757,7 +766,7 @@ name:"Plain text",aliases:["text","txt"],disableAutodetect:!0})})());
         <div class="section" id="documentation">
 <h1 id="what-is-clink">What is Clink?</h1>
 <p>Clink combines the native Windows shell cmd.exe with the powerful command line editing features of the GNU Readline library, which provides rich completion, history, and line-editing capabilities. Readline is best known for its use in the well-known Unix shell Bash, the standard shell for Mac OS X and many Linux distributions.</p>
-<h1 id="features">Features</h1>
+<h3 id="features">Features</h3>
 <ul>
 <li>The same line editing as Bash (from the <a href="https://tiswww.case.edu/php/chet/readline/rltop.html">GNU Readline library</a> version 8.1).</li>
 <li>History persistence between sessions.</li>
@@ -818,23 +827,12 @@ name:"Plain text",aliases:["text","txt"],disableAutodetect:!0})})());
 <li>To manually start, run the Clink shortcut from the Start menu (or the clink.bat located in the install directory).</li>
 <li>To establish Clink to an existing <code>cmd.exe</code> process, use <code>&lt;install_dir&gt;\clink.exe inject</code>.</li>
 </ol>
-<h1 id="upgrading-from-clink-v049">Upgrading from Clink v0.4.9</h1>
-<p>The new Clink tries to be as backward compatible with Clink v0.4.9 as possible. However, in some cases upgrading may require a little bit of configuration work.</p>
-<ul>
-<li>Some key binding sequences have changed; see <a href="#keybindings">Key Bindings</a> for more information.</li>
-<li>Match coloring is now done by Readline and is configured differently; see <a href="#completioncolors">Completion Colors</a> for more information.</li>
-<li>Settings and history should migrate automatically if the new <code>clink_settings</code> and <code>clink_history</code> files don&#39;t exist (deleting them will cause migration to happen again).  To find the directory that contains these files, run <code>clink info</code> and look for the &quot;state&quot; line.</li>
-<li>Script compatibility should be very good, but some scripts may still encounter problems.  If you do encounter a compatibility problem you can look for an updated version of the script, update the script yourself, or visit the <a href="https://github.com/chrisant996/clink/issues">repo</a> and open an issue describing details about the compatibility problem.</li>
-<li>Some settings have changed slightly, and there are many new settings.  See <a href="#configclink">Configuring Clink</a> for more information.</li>
-</ul>
-<h1 id="how-clink-works">How Clink Works</h1>
+<h3 id="how-clink-works">How Clink Works</h3>
 <p>When running Clink via the methods above, Clink checks the parent process is supported and injects a DLL into it. The DLL then hooks the WriteConsole() and ReadConsole() Windows functions. The former is so that Clink can capture the current prompt, and the latter hook allows Clink to provide its own Readline-powered command line editing.</p>
-<a name="privacy"/>
-
-<h2 id="privacy">Privacy</h2>
+<p><a name="privacy"></a></p>
+<h3 id="privacy">Privacy</h3>
 <p>Clink does not collect user data.  Clink writes diagnostic information to its local log file, and does not transmit the log file off the local computer.  For the location of the log file, refer to <a href="#filelocations">File Locations</a> or run <code>clink info</code>.</p>
-<a name="configclink"/>
-
+<p><a name="configclink"></a></p>
 <h1 id="configuring-clink">Configuring Clink</h1>
 <p>The easiest way to configure Clink is to use Clink&#39;s <code>set</code> command line option.  This can list, query, and set Clink&#39;s settings. Run <code>clink set --help</code> from a Clink-installed cmd.exe process to learn more both about how to use it and to get descriptions for Clink&#39;s various options.</p>
 <p>The following table describes the available Clink settings:</p>
@@ -887,12 +885,12 @@ name:"Plain text",aliases:["text","txt"],disableAutodetect:!0})})());
 <td>The color for the command name in the input line when <code>clink.colorize_input</code> is enabled, if the command name has an argmatcher available.</td>
 </tr>
 <tr>
-<td align="center"><a name="color_cmd"/><code>color.cmd</code></td>
+<td align="center"><a name="color_cmd"></a><code>color.cmd</code></td>
 <td align="center"><code>bold</code></td>
 <td>Used when Clink displays shell (CMD.EXE) command completions, and in the input line when <code>clink.colorize_input</code> is enabled.</td>
 </tr>
 <tr>
-<td align="center"><a name="color_doskey"/><code>color.doskey</code></td>
+<td align="center"><a name="color_doskey"></a><code>color.doskey</code></td>
 <td align="center"><code>bright cyan</code></td>
 <td>Used when Clink displays doskey alias completions, and in the input line when <code>clink.colorize_input</code> is enabled.</td>
 </tr>
@@ -907,7 +905,7 @@ name:"Plain text",aliases:["text","txt"],disableAutodetect:!0})})());
 <td>The color for flags in the input line when <code>clink.colorize_input</code> is enabled.</td>
 </tr>
 <tr>
-<td align="center"><a name="color_hidden"/><code>color.hidden</code></td>
+<td align="center"><a name="color_hidden"></a><code>color.hidden</code></td>
 <td align="center"></td>
 <td>Used when Clink displays file completions with the &quot;hidden&quot; attribute.</td>
 </tr>
@@ -942,7 +940,7 @@ name:"Plain text",aliases:["text","txt"],disableAutodetect:!0})})());
 <td>When set, this is used as the default color for the prompt.  But it&#39;s overridden by any colors set by <a href="#customisingtheprompt">Customising The Prompt</a>.</td>
 </tr>
 <tr>
-<td align="center"><a name="color_readonly"/><code>color.readonly</code></td>
+<td align="center"><a name="color_readonly"></a><code>color.readonly</code></td>
 <td align="center"></td>
 <td>Used when Clink displays file completions with the &quot;readonly&quot; attribute.</td>
 </tr>
@@ -1062,7 +1060,7 @@ name:"Plain text",aliases:["text","txt"],disableAutodetect:!0})})());
 <td>Value to append to <code>package.path</code>. Used to search for Lua scripts specified in <code>require()</code> statements.</td>
 </tr>
 <tr>
-<td align="center"><a name="lua_reload_scripts"/><code>lua.reload_scripts</code></td>
+<td align="center"><a name="lua_reload_scripts"></a><code>lua.reload_scripts</code></td>
 <td align="center">False</td>
 <td>When false, Lua scripts are loaded once and are only reloaded if forced (see <a href="#lua-scripts-location">The Location of Lua Scripts</a> for details).  When true, Lua scripts are loaded each time the edit prompt is activated.</td>
 </tr>
@@ -1102,6 +1100,11 @@ name:"Plain text",aliases:["text","txt"],disableAutodetect:!0})})());
 <td>Matches <code>?</code> and <code>*</code> wildcards when using any of the <code>menu-complete</code> commands or the <code>clink-popup-complete</code> command. Turn this off to behave how bash does, and not match wildcards.</td>
 </tr>
 <tr>
+<td align="center"><code>prompt.async</code></td>
+<td align="center">True</td>
+<td>Enables asynchronous prompt refresh.  Turn this off if prompt filter refreshes are annoying or cause problems.</td>
+</tr>
+<tr>
 <td align="center"><code>readline.hide_stderr</code></td>
 <td align="center">False</td>
 <td>Suppresses stderr from the Readline library.  Enable this if Readline error messages are getting in the way.</td>
@@ -1136,8 +1139,7 @@ name:"Plain text",aliases:["text","txt"],disableAutodetect:!0})})());
 <li>The <code>match_colour</code> setting has been removed, and Clink now supports Readline&#39;s completion coloring.  See <a href="#completioncolors">Completion Colors</a> for more information.</li>
 </ul>
 </blockquote>
-<a name="colorsettings"/>
-
+<p><a name="colorsettings"></a></p>
 <h2 id="color-settings">Color Settings</h2>
 <h3 id="friendly-color-names">Friendly Color Names</h3>
 <p>The Clink color settings use the following syntax:</p>
@@ -1163,8 +1165,7 @@ name:"Plain text",aliases:["text","txt"],disableAutodetect:!0})})());
 <h3 id="alternative-sgr-syntax">Alternative SGR Syntax</h3>
 <p>It&#39;s also possible to set any ANSI <a href="https://en.wikipedia.org/wiki/ANSI_escape_code#SGR">SGR escape code</a> using <code>sgr <span class="arg">SGR_parameters</span></code> (for example <code>sgr 7</code> is the code for reverse video, which swaps the foreground and background colors).</p>
 <p>Be careful, since some escape code sequences might behave strangely.</p>
-<a name="filelocations"/>
-
+<p><a name="filelocations"></a></p>
 <h2 id="file-locations">File Locations</h2>
 <p>Settings and history are persisted to disk from session to session. The location of these files depends on which distribution of Clink was used. If you installed Clink using the .exe installer then Clink uses the current user&#39;s non-roaming application data directory. This user directory is usually found in one of the following locations;</p>
 <ul>
@@ -1267,8 +1268,7 @@ if not exist &quot;%TEMP%\clink_portable\clink_settings&quot; copy &quot;%~dp0po
 rem -- Do any other desired configuration here, such as loading a doskey macro file.
 call &quot;%~dp0clink.bat&quot; inject --profile &quot;%TEMP%\clink_portable&quot; %1 %2 %3 %4 %5 %6 %7 %8 %9
 </code></pre>
-<a name="configreadline"/>
-
+<p><a name="configreadline"></a></p>
 <h1 id="configuring-readline">Configuring Readline</h1>
 <p>Readline itself can also be configured to add custom keybindings and macros by creating a Readline init file. There is excellent documentation for all the options available to configure Readline in Readline&#39;s <a href="https://tiswww.cwru.edu/php/chet/readline/rltop.html#Documentation">manual</a>.</p>
 <p>Clink searches in the directories referenced by the following environment variables and loads any <code>.inputrc</code> or <code>_inputrc</code> files present, in the order listed here:</p>
@@ -1290,7 +1290,7 @@ call &quot;%~dp0clink.bat&quot; inject --profile &quot;%TEMP%\clink_portable&quo
 <li>For backward compatibility, <code>clink_inputrc</code> is also loaded from the above locations, but it has been deprecated and may be removed in the future.</li>
 </ul>
 </blockquote>
-<h2 id="basic-format">Basic Format</h2>
+<h3 id="basic-format">Basic Format</h3>
 <p>The quick version is that mostly you&#39;ll use these kinds of lines:</p>
 <ul>
 <li><code><span class="arg">keyname</span>: <span class="arg">command</span></code></li>
@@ -1301,7 +1301,7 @@ call &quot;%~dp0clink.bat&quot; inject --profile &quot;%TEMP%\clink_portable&quo
 <p>If a Readline macro begins with &quot;luafunc:&quot; then Clink interprets it as a Lua key binding and will invoke the named Lua function.  Function names can include periods (such as <code>foo.bar</code>) but cannot include any other punctuation.  See <a href="#luakeybindings">Lua Key Bindings</a> for more information.</p>
 <p>Refer to the Readline <a href="https://tiswww.cwru.edu/php/chet/readline/rltop.html#Documentation">manual</a> for a more thorough explanation of the .inputrc file format, list of available commands, and list of configuration variables and their values.</p>
 <p>See <a href="#keybindings">Key Bindings</a> for more information about binding keys in Clink.</p>
-<h2 id="new-configuration-variables">New Configuration Variables</h2>
+<h3 id="new-configuration-variables">New Configuration Variables</h3>
 <p>Clink adds some new configuration variables to Readline, beyond what&#39;s described in the Readline manual:</p>
 <table>
 <thead>
@@ -1332,7 +1332,7 @@ call &quot;%~dp0clink.bat&quot; inject --profile &quot;%TEMP%\clink_portable&quo
 <td>Controls whether the history search commands ignore case.</td>
 </tr>
 </tbody></table>
-<h2 id="new-commands">New Commands</h2>
+<h3 id="new-commands">New Commands</h3>
 <p>Clink adds some new commands to Readline, beyond what&#39;s described in the Readline manual:</p>
 <table>
 <thead>
@@ -1510,8 +1510,7 @@ call &quot;%~dp0clink.bat&quot; inject --profile &quot;%TEMP%\clink_portable&quo
 <td>While searching history, removes the current line from the history.</td>
 </tr>
 </tbody></table>
-<a name="completioncolors"/>
-
+<p><a name="completioncolors"></a></p>
 <h2 id="completion-colors">Completion Colors</h2>
 <p>When <code>colored-completion-prefix</code> is configured to <code>on</code>, then the &quot;so&quot; color from <code>%LS_COLORS%</code> is used to color the common prefix when displaying possible completions.  The default for &quot;so&quot; is magenta, but for example <code>set LS_COLORS=so=90</code> sets the color to bright black (which shows up as a dark gray).</p>
 <p>When <code>colored-stats</code> is configured to <code>on</code>, then the color definitions from <code>%LS_COLORS%</code> (using ANSI escape codes) are used to color file completions according to their file type or extension.  Each definition is a either a two character type id or a file extension, followed by an equals sign and then the <a href="https://en.wikipedia.org/wiki/ANSI_escape_code#SGR_parameters">SGR parameters</a> for an ANSI escape code.  Multiple definitions are separated by colons.  Also, since <code>%LS_COLORS%</code> doesn&#39;t cover readonly files, hidden files, doskey aliases, or shell commands the <code>color.readonly</code>, <code>color.hidden</code>, <code>color.doskey</code>, and <code>color.cmd</code> <a href="#configclink">Clink settings</a> exist to cover those.</p>
@@ -1580,9 +1579,8 @@ call &quot;%~dp0clink.bat&quot; inject --profile &quot;%TEMP%\clink_portable&quo
 </tr>
 </tbody></table>
 <h1 id="extending-clink">Extending Clink</h1>
-<p>The Readline library allows clients to offer an alternative path for creating completion matches. Clink uses this to hook Lua into the completion process making it possible to script the generation of matches with <a href="https://www.lua.org/docs.html">Lua</a> scripts. The following sections describe this in more detail and show some examples.</p>
-<a name="lua-scripts-location"/>
-
+<p>Clink can be extended with <a href="https://www.lua.org/docs.html">Lua</a> scripts to customize startup actions, create completion matches, customize the prompt, and more.  The following sections describe these in more detail and show some examples.</p>
+<p><a name="lua-scripts-location"></a></p>
 <h2 id="the-location-of-lua-scripts">The Location of Lua Scripts</h2>
 <p>Clink loads all Lua scripts it finds in these directories:</p>
 <ol>
@@ -1593,8 +1591,22 @@ call &quot;%~dp0clink.bat&quot; inject --profile &quot;%TEMP%\clink_portable&quo
 </ol>
 <p>Lua scripts are loaded once and are only reloaded if forced because the scripts locations change, the <code>clink-reload</code> command is invoked (<kbd>Ctrl</kbd>+<kbd>X</kbd>,<kbd>Ctrl</kbd>+<kbd>R</kbd>), or the <code>lua.reload_scripts</code> setting changes (or is True).</p>
 <p>Run <code>clink info</code> to see the script paths for the current session.</p>
-<a name="matchgenerators"/>
-
+<h3 id="tips-for-starting-to-write-lua-scripts">Tips for starting to write Lua scripts</h3>
+<ul>
+<li>Loading a Lua script executes it; so when Clink loads Lua scripts from the locations above, it executes the scripts.</li>
+<li>Code not inside a function is executed immediately when the script is loaded.</li>
+<li>Usually scripts will register functions to customize various behaviors:<ul>
+<li>Generate completion matches.</li>
+<li>Apply color to input text.</li>
+<li>Customize the prompt.</li>
+<li>Perform actions before or after the user gets to edit each input line.</li>
+<li>Provide new custom commands that can be bound to keys via the &quot;luafunc:&quot; key macro syntax (see <a href="#configreadline">Configuring Readline</a> for more information).</li>
+</ul>
+</li>
+<li>Often scripts will also define some functions and variables for use by itself and/or other scripts.</li>
+</ul>
+<p>The following sections describe these in more detail and show some examples.</p>
+<p><a name="matchgenerators"></a></p>
 <h2 id="match-generators">Match Generators</h2>
 <p>These are Lua functions that are called as part of Readline&#39;s completion process.</p>
 <p>First create a match generator object:</p>
@@ -1710,83 +1722,8 @@ function envvar_generator:getwordbreakinfo(line_state)
     end
 end
 </code></pre>
-<a name="argumentcompletion"/>
-
-<h2 id="argument-completion">Argument Completion</h2>
-<p>Clink provides a framework for writing complex argument match generators in Lua.  It works by creating a parser object that describes a command&#39;s arguments and flags and then registering the parser with Clink. When Clink detects the command is being entered on the current command line being edited, it uses the parser to generate matches.</p>
-<p>Here is an example of a simple parser for the command <code>foobar</code>;</p>
-<pre><code class="language-lua">clink.argmatcher(&quot;foobar&quot;)
-:addflags(&quot;-foo&quot;, &quot;-bar&quot;)
-:addarg(
-    { &quot;hello&quot;, &quot;hi&quot; },      -- Completions for arg #1
-    { &quot;world&quot;, &quot;wombles&quot; }  -- Completions for arg #2
-)
-</code></pre>
-<p>This parser describes a command that has two positional arguments each with two potential options. It also has two flags which the parser considers to be position independent meaning that provided the word being completed starts with a certain prefix the parser with attempt to match the from the set of flags.</p>
-<p>On the command line completion would look something like this:</p>
-<pre style="border-radius:initial;border:initial"><code class="plaintext" style="background-color:black;color:#cccccc">C:&gt;foobar hello -foo wo
-wombles  wonder   world
-C:&gt;foobar hello -foo wo<span style="color:#ffffff">_</span>
-</code></pre>
-
-<p>When displaying possible completions, flag matches are only shown if the flag character has been input (so <code>command </code> and <kbd>Alt</kbd>+<kbd>=</kbd> would list only non-flag matches, or <code>command -</code> and <kbd>Alt</kbd>+<kbd>=</kbd> would list only flag matches).</p>
 <h3 id="more-advanced-stuff">More Advanced Stuff</h3>
-<h4 id="linking-parsers">Linking Parsers</h4>
-<p>There are often situations where the parsing of a command&#39;s arguments is dependent on the previous words (<code>git merge ...</code> compared to <code>git log ...</code> for example). For these scenarios Clink allows you to link parsers to arguments&#39; words using Lua&#39;s concatenation operator. Parsers can also be concatenated with flags too.</p>
-<pre><code class="language-lua">a_parser = clink.argmatcher():addarg({ &quot;foo&quot;, &quot;bar&quot; })
-b_parser = clink.argmatcher():addarg({ &quot;abc&quot;, &quot;123&quot; })
-c_parser = clink.argmatcher()
-c_parser:addarg({ &quot;foobar&quot; .. a_parser })   -- Arg #1 is &quot;foobar&quot;, which has args &quot;foo&quot; or &quot;bar&quot;.
-c_parser:addarg({ b_parser })               -- Arg #2 is &quot;abc&quot; or &quot;123&quot;.
-</code></pre>
-<p>As the example above shows, it is also possible to use a parser without concatenating it to a word. When Clink follows a link to a parser it is permanent and it will not return to the previous parser.</p>
-<h4 id="functions-as-argument-options">Functions As Argument Options</h4>
-<p>Argument options are not limited solely to strings. Clink also accepts functions too so more context aware argument options can be used.</p>
-<pre><code class="language-lua">function rainbow_function(word)
-    return { &quot;red&quot;, &quot;white&quot;, &quot;blue&quot; }
-end
-
-the_parser = clink.argmatcher()
-the_parser:addarg({ &quot;zippy&quot;, &quot;bungle&quot;, &quot;george&quot; })
-the_parser:addarg({ rainbow_function, &quot;yellow&quot;, &quot;green&quot; })
-</code></pre>
-<p>The functions take a single argument which is a word from the command line being edited (or partial word if it is the one under the cursor). Functions should return a table of potential matches.</p>
-<p>Some built-in matcher functions are available:</p>
-<table>
-<thead>
-<tr>
-<th align="center">Function</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody><tr>
-<td align="center"><a href="#clink.dirmatches">clink.dirmatches</a></td>
-<td>Generates directory matches.</td>
-</tr>
-<tr>
-<td align="center"><a href="#clink.filematches">clink.filematches</a></td>
-<td>Generates file matches.</td>
-</tr>
-</tbody></table>
-<h4 id="shorthand">Shorthand</h4>
-<p>It is also possible to omit the <code>addarg</code> and <code>addflags</code> function calls and use a more declarative shorthand form:</p>
-<pre><code class="language-lua">-- Shorthand form; requires tables.
-clink.argmatcher()
-    { &quot;one&quot;, &quot;won&quot; }                -- Arg #1
-    { &quot;two&quot;, &quot;too&quot; }                -- Arg #2
-    { &quot;-a&quot;, &quot;-b&quot;, &quot;/?&quot;, &quot;/h&quot; }      -- Flags
-
--- Normal form:
-clink.argmatcher()
-:addarg(
-    { &quot;one&quot;, &quot;won&quot; }                -- Arg #1
-    { &quot;two&quot;, &quot;too&quot; }                -- Arg #2
-)
-:addflags(&quot;-a&quot;, &quot;-b&quot;, &quot;/?&quot;, &quot;/h&quot;)   -- Flags
-</code></pre>
-<p>With the shorthand form flags are implied rather than declared.  When a shorthand table&#39;s first value is a string starting with <code>-</code> or <code>/</code> then the table is interpreted as flags.  Note that it&#39;s still possible with shorthand form to mix flag prefixes, and even add additional flag prefixes, such as <code>{ <span class="hljs-string">'-a'</span>, <span class="hljs-string">'/b'</span>, <span class="hljs-string">'=c'</span> }</code>.</p>
-<a name="filteringmatchcompletions"/>
-
+<p><a name="filteringmatchcompletions"></a></p>
 <h4 id="filtering-match-completions">Filtering Match Completions</h4>
 <p>A match generator or <code>luafunc:</code> key binding can use <a href="#clink.onfiltermatches">clink.onfiltermatches()</a> to register a function that will be called after matches are generated but before they are displayed or inserted.</p>
 <p>The function receives a table argument containing the matches to be displayed, a string argument indicating the completion type, and a boolean argument indicating whether filename completion is desired. The table argument has a <code>match</code> string field and a <code>type</code> string field; these are the same as in <a href="builder:addmatch">builder:addmatch()</a>.</p>
@@ -1905,8 +1842,7 @@ function interceptor:generate(line_state, match_builder)
     return false
 end
 </code></pre>
-<a name="filteringthematchdisplay"/>
-
+<p><a name="filteringthematchdisplay"></a></p>
 <h4 id="filtering-the-match-display">Filtering The Match Display</h4>
 <p>In some instances it may be preferable to display potential matches in an alternative form than the generated matches passed to and used internally by Readline. For example, it might be desirable to display a <code>*</code> next to some matches, or to show additional information about each match. Filtering the match display only affects what is displayed; it doesn&#39;t affect completing matches.</p>
 <p>A match generator can use <a href="#clink.ondisplaymatches">clink.ondisplaymatches()</a> to register a function that will be called before matches are displayed (this is reset every time match generation is invoked).</p>
@@ -1942,12 +1878,86 @@ end
 <li>So if a match generator made contextual decisions during match generation (other than filtering) then it could potentially behave differently in Clink v1.x than it did in v0.x.</li>
 </ul>
 </blockquote>
-<a name="classifywords"/>
+<p><a name="argumentcompletion"></a></p>
+<h2 id="argument-completion">Argument Completion</h2>
+<p>Clink provides a framework for writing complex argument match generators in Lua.  It works by creating a parser object that describes a command&#39;s arguments and flags and then registering the parser with Clink. When Clink detects the command is being entered on the current command line being edited, it uses the parser to generate matches.</p>
+<p>Here is an example of a simple parser for the command <code>foobar</code>;</p>
+<pre><code class="language-lua">clink.argmatcher(&quot;foobar&quot;)
+:addflags(&quot;-foo&quot;, &quot;-bar&quot;)
+:addarg(
+    { &quot;hello&quot;, &quot;hi&quot; },      -- Completions for arg #1
+    { &quot;world&quot;, &quot;wombles&quot; }  -- Completions for arg #2
+)
+</code></pre>
+<p>This parser describes a command that has two positional arguments each with two potential options. It also has two flags which the parser considers to be position independent meaning that provided the word being completed starts with a certain prefix the parser with attempt to match the from the set of flags.</p>
+<p>On the command line completion would look something like this:</p>
+<pre style="border-radius:initial;border:initial"><code class="plaintext" style="background-color:black;color:#cccccc">C:&gt;foobar hello -foo wo
+wombles  wonder   world
+C:&gt;foobar hello -foo wo<span style="color:#ffffff">_</span>
+</code></pre>
 
+<p>When displaying possible completions, flag matches are only shown if the flag character has been input (so <code>command </code> and <kbd>Alt</kbd>+<kbd>=</kbd> would list only non-flag matches, or <code>command -</code> and <kbd>Alt</kbd>+<kbd>=</kbd> would list only flag matches).</p>
+<h3 id="more-advanced-stuff-1">More Advanced Stuff</h3>
+<h4 id="linking-parsers">Linking Parsers</h4>
+<p>There are often situations where the parsing of a command&#39;s arguments is dependent on the previous words (<code>git merge ...</code> compared to <code>git log ...</code> for example). For these scenarios Clink allows you to link parsers to arguments&#39; words using Lua&#39;s concatenation operator. Parsers can also be concatenated with flags too.</p>
+<pre><code class="language-lua">a_parser = clink.argmatcher():addarg({ &quot;foo&quot;, &quot;bar&quot; })
+b_parser = clink.argmatcher():addarg({ &quot;abc&quot;, &quot;123&quot; })
+c_parser = clink.argmatcher()
+c_parser:addarg({ &quot;foobar&quot; .. a_parser })   -- Arg #1 is &quot;foobar&quot;, which has args &quot;foo&quot; or &quot;bar&quot;.
+c_parser:addarg({ b_parser })               -- Arg #2 is &quot;abc&quot; or &quot;123&quot;.
+</code></pre>
+<p>As the example above shows, it is also possible to use a parser without concatenating it to a word. When Clink follows a link to a parser it is permanent and it will not return to the previous parser.</p>
+<h4 id="functions-as-argument-options">Functions As Argument Options</h4>
+<p>Argument options are not limited solely to strings. Clink also accepts functions too so more context aware argument options can be used.</p>
+<pre><code class="language-lua">function rainbow_function(word)
+    return { &quot;red&quot;, &quot;white&quot;, &quot;blue&quot; }
+end
+
+the_parser = clink.argmatcher()
+the_parser:addarg({ &quot;zippy&quot;, &quot;bungle&quot;, &quot;george&quot; })
+the_parser:addarg({ rainbow_function, &quot;yellow&quot;, &quot;green&quot; })
+</code></pre>
+<p>The functions take a single argument which is a word from the command line being edited (or partial word if it is the one under the cursor). Functions should return a table of potential matches.</p>
+<p>Some built-in matcher functions are available:</p>
+<table>
+<thead>
+<tr>
+<th align="center">Function</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="center"><a href="#clink.dirmatches">clink.dirmatches</a></td>
+<td>Generates directory matches.</td>
+</tr>
+<tr>
+<td align="center"><a href="#clink.filematches">clink.filematches</a></td>
+<td>Generates file matches.</td>
+</tr>
+</tbody></table>
+<h4 id="shorthand">Shorthand</h4>
+<p>It is also possible to omit the <code>addarg</code> and <code>addflags</code> function calls and use a more declarative shorthand form:</p>
+<pre><code class="language-lua">-- Shorthand form; requires tables.
+clink.argmatcher()
+    { &quot;one&quot;, &quot;won&quot; }                -- Arg #1
+    { &quot;two&quot;, &quot;too&quot; }                -- Arg #2
+    { &quot;-a&quot;, &quot;-b&quot;, &quot;/?&quot;, &quot;/h&quot; }      -- Flags
+
+-- Normal form:
+clink.argmatcher()
+:addarg(
+    { &quot;one&quot;, &quot;won&quot; }                -- Arg #1
+    { &quot;two&quot;, &quot;too&quot; }                -- Arg #2
+)
+:addflags(&quot;-a&quot;, &quot;-b&quot;, &quot;/?&quot;, &quot;/h&quot;)   -- Flags
+</code></pre>
+<p>With the shorthand form flags are implied rather than declared.  When a shorthand table&#39;s first value is a string starting with <code>-</code> or <code>/</code> then the table is interpreted as flags.  Note that it&#39;s still possible with shorthand form to mix flag prefixes, and even add additional flag prefixes, such as <code>{ <span class="hljs-string">'-a'</span>, <span class="hljs-string">'/b'</span>, <span class="hljs-string">'=c'</span> }</code>.</p>
+<p><a name="classifywords"></a></p>
 <h2 id="coloring-the-input-text">Coloring The Input Text</h2>
 <p>When the <code>clink.colorize_input</code> setting is enabled, <a href="#argumentcompletion">argmatcher</a> automatically apply colors to the input text by parsing it.</p>
 <p>It&#39;s possible for an argmatcher to provide a function to override how its arguments are colored.  This function is called once for each of the argmatcher&#39;s arguments.</p>
 <p>It&#39;s also possible to register a classifier function for the whole input line.  This function is very similar to a match generator; classifier functions are called in priority order, and a classifier can choose to stop the classification process.</p>
+<h3 id="more-advanced-stuff-2">More Advanced Stuff</h3>
 <h4 id="setting-a-classifier-function-in-an-argmatcher">Setting a classifier function in an argmatcher</h4>
 <p>In cases where an <a href="#argumentcompletion">argmatcher</a> isn&#39;t able to color the input text in the desired manner, it&#39;s possible to supply a classifier function that overrides how the argmatcher colors the input text.  An argmatcher&#39;s classifier function is called once for each word the argmatcher parses, but it can classify any words (not just the word it was called for).  Each argmatcher can have its own classifier function, so when there are linked argmatchers more than one function may be invoked.</p>
 <p>Words are colored by classifying the words, and each classification has an associated color.  See <a href="#word_classifications:classifyword">word_classifications:classifyword()</a> for the available classification codes.</p>
@@ -2041,14 +2051,13 @@ function cmdsep_classifier:classify(commands)
     end
 end
 </code></pre>
-<a name="customisingtheprompt"/>
-
+<p><a name="customisingtheprompt"></a></p>
 <h2 id="customising-the-prompt">Customising The Prompt</h2>
 <p>Before Clink displays the prompt it filters the prompt through Lua so that the prompt can be customised. This happens each and every time that the prompt is shown which allows for context sensitive customisations (such as showing the current branch of a git repository).</p>
 <p>Writing a prompt filter is straightforward:</p>
 <ol>
 <li>Create a new prompt filter by calling <code>clink.promptfilter()</code> along with a priority id which dictates the order in which filters are called. Lower priority ids are called first.</li>
-<li>Define a <code>filter()</code> function on the returned prompt filter.</li>
+<li>Define a <code>:filter()</code> function on the returned prompt filter.</li>
 </ol>
 <p>The filter function takes a string argument that contains the filtered prompt so far.  If the filter function returns nil, it has no effect.  If the filter function returns a string, that string is used as the new filtered prompt (and may be further modified by other prompt filters with higher priority ids).  If the filter function returns a string and a boolean, then if the boolean is false the prompt filtering is done and no further filter functions are called.</p>
 <pre><code class="language-lua">local p = clink.promptfilter(30)
@@ -2092,11 +2101,10 @@ end
 -- A prompt filter that appends the current git branch.
 local git_branch_prompt = clink.promptfilter(50)
 function git_branch_prompt:filter(prompt)
-    for line in io.popen(&quot;git branch 2&gt;nul&quot;):lines() do
-        local branch = line:match(&quot;%* (.+)$&quot;)
-        if branch then
-            return prompt..&quot; &quot;..cyan..&quot;[&quot;..branch..&quot;]&quot;..normal
-        end
+    local line = io.popen(&quot;git branch --show-current 2&gt;nul&quot;):read(&quot;*a&quot;)
+    local branch = line:match(&quot;(.+)\n&quot;)
+    if branch then
+        return prompt..&quot; &quot;..cyan..&quot;[&quot;..branch..&quot;]&quot;..normal
     end
 end
 
@@ -2117,25 +2125,112 @@ end
 
 <p/>
 
-<a name="escapecodes"/>
-
+<p><a name="escapecodes"></a></p>
 <h3 id="ansi-escape-codes-in-the-prompt-string">ANSI escape codes in the prompt string</h3>
 <p>Readline needs to be told which characters in the prompt are unprintable or invisible.  To help with that, Clink automatically detects most standard ANSI escape codes (and most of ConEmu&#39;s non-standard escape codes) and the BEL character (^G, audible bell) and surrounds them with <code>\001</code> (^A) and <code>\002</code> (^B) characters.  For any other unprintable characters, the <code>\001</code> and <code>\002</code> characters need to be added manually.  Otherwise Readline misinterprets the length of the prompt and can display the prompt and input line incorrectly in some cases (especially if the input line wraps onto a second line).</p>
-<h1 id="miscellaneous">Miscellaneous</h1>
-<a name="keybindings"/>
+<h3 id="more-advanced-stuff-3">More Advanced Stuff</h3>
+<p><a name="asyncpromptfiltering"></a></p>
+<h4 id="asynchronous-prompt-filtering">Asynchronous Prompt Filtering</h4>
+<p>Prompt filtering needs to be fast, or it can interfere with using the shell (e.g. <code>git status</code> can be slow in a large repo).</p>
+<p>Clink provides a way for prompt filters to do some initial work and set the prompt, continue doing work in the background, and then refresh the prompt again when the background work is finished.  This is accomplished by using Lua coroutines, but Clink simplifies and streamlines the process.</p>
+<p>A prompt filter can call <a href="#clink.promptcoroutine">clink.promptcoroutine(my_func)</a> to run <code>my_func()</code> inside a coroutine.  Clink will automatically resume the coroutine repeatedly while input line editing is idle.  When <code>my_func()</code> completes, Clink will automatically refresh the prompt by triggering prompt filtering again.</p>
+<p>Typically the motivation to use asynchronous prompt filtering is that one or more <code><span class="hljs-built_in">io</span>.<span class="hljs-built_in">popen</span>(<span class="hljs-string">"some slow command"</span>)</code> calls take too long.  They can be replaced with <a href="#io.popenyield">io.popenyield()</a> calls inside the prompt coroutine to let them run in the background.</p>
+<blockquote>
+<p><strong>Global data:</strong> If <code>my_func()</code> needs to use any global data, then it&#39;s important to use <a href="#clink.onbeginedit">clink.onbeginedit()</a> to register an event handler that can reset the global data for each new input line session.  Otherwise the data may accidentally &quot;bleed&quot; across different input line sessions.</p>
+<p><strong>Backward compatibility:</strong> A prompt filter must handle backward compatibility itself if it needs to run on versions of Clink that don&#39;t support asynchronous prompt filtering (v1.2.9 and lower).  E.g. you can use <code><span class="hljs-keyword">if</span> clink.promptcoroutine <span class="hljs-keyword">then</span></code> to test whether the API exists.</p>
+</blockquote>
+<p>The following example illustrates running <code>git status</code> in the background.  It also remembers the status from the previous input line, so that it can reduce flicker by using the color from last time until the background status operation completes.</p>
+<pre><code class="language-lua">local prev_dir      -- Most recent git repo visited.
+local prev_status   -- Most recent status retrieved for the git repo.
 
+local function get_git_dir(dir)
+    -- Check if the current directory is in a git repo.
+    local child
+    repeat
+        if os.isdir(path.join(dir, &quot;.git&quot;)) then
+            return dir
+        end
+        -- Walk up one level to the parent directory.
+        dir,child = path.toparent(dir)
+        -- If child is empty, we&#39;ve reached the top.
+    until (not child or child == &quot;&quot;)
+    return nil
+end
+
+local function get_git_branch()
+    -- Get the current git branch name.
+    local file = io.popen(&quot;git branch --show-current 2&gt;nul&quot;)
+    local branch = file:read(&quot;*a&quot;):match(&quot;(.+)\n&quot;)
+    file:close()
+    return branch
+end
+
+local function get_git_status()
+    -- The io.popenyield API is like io.popen, but it yields until the output is
+    -- ready to be read.
+    local file = io.popenyield(&quot;git --no-optional-locks status --porcelain 2&gt;nul&quot;)
+    local status = false
+    for line in file:lines() do
+        -- If there&#39;s any output, the status is not clean.  Since this example
+        -- doesn&#39;t analyze the details, it can stop once it knows there&#39;s any
+        -- output at all.
+        status = true
+        break
+    end
+    file:close()
+    return status
+end
+
+local git_prompt = clink.promptfilter(100)
+function git_prompt:filter(prompt)
+    -- Do nothing if not a git repo.
+    local dir = get_git_dir(os.getcwd())
+    if not dir then
+        return
+    end
+    -- Reset the cached status if in a different repo.
+    if prev_dir ~= dir then
+        prev_status = nil
+        prev_dir = dir
+    end
+    -- Do nothing if git branch not available.
+    local branch = get_git_branch()
+    if not branch or branch == &quot;&quot; then
+        return
+    end
+    -- Start a coroutine to get git status, and returns nil immediately.  The
+    -- coroutine runs in the background, and triggers prompt filtering again
+    -- when it completes.  After it completes the return value here will be the
+    -- result from get_git_status().
+    local status = clink.promptcoroutine(get_git_status)
+    -- If no status yet, use the status from the previous prompt.
+    if status == nil then
+        status = prev_status
+    end
+    -- Choose color for the git branch name:  green if status is clean, yellow
+    -- if status is not clean, or default color if status isn&#39;t known yet.
+    local sgr = &quot;&quot;
+    if status ~= nil then
+        sgr = status and &quot;33;1&quot; or &quot;32;1&quot;
+    end
+    -- Prefix the prompt with &quot;[branch]&quot; using the status color.
+    return &quot;\x1b[&quot;..sgr..&quot;m[&quot;..branch..&quot;]\x1b[m  &quot;..prompt
+end
+</code></pre>
+<h1 id="miscellaneous">Miscellaneous</h1>
+<p><a name="keybindings"></a></p>
 <h2 id="key-bindings">Key bindings</h2>
 <p>Key bindings are defined in .inputrc files.  See the <a href="#configreadline">Configuring Readline</a> section for more information.</p>
 <p>Here is the quick version:</p>
 <ul>
-<li>A key binding is <code><em>name</em>: <em>function</em></code> or <code><em>name</em>: "<em>literal text</em>"</code>.</li>
+<li>A key binding is <code><span class="arg">name</span>: <span class="arg">function</span></code> or <code><span class="arg">name</span>: "<span class="arg">literal text</span>"</code>.</li>
 <li>Key names are like this:<ul>
 <li><code>C-a</code> and <code>&quot;\C-a&quot;</code> are both <kbd>Ctrl</kbd>+<kbd>a</kbd>.</li>
 <li><code>M-a</code> and <code>&quot;\M-a&quot;</code> are both <kbd>Alt</kbd>+<kbd>a</kbd>.</li>
 <li><code>M-C-a</code> and <code>&quot;\M-\C-a&quot;</code> are both <kbd>Alt</kbd>+<kbd>Ctrl</kbd>+<kbd>a</kbd>.</li>
 <li><code>hello</code> is just <kbd>h</kbd>; the <code>ello</code> is a syntax error and is silently discarded by Readline.</li>
 <li><code>&quot;hello&quot;</code> is the series of keys <kbd>h</kbd>,<kbd>e</kbd>,<kbd>l</kbd>,<kbd>l</kbd>,<kbd>o</kbd>.</li>
-<li>Special keys like <kbd>Up</kbd> are represented by VT220 escape codes such as<code>&quot;\e[A&quot;</code> (see table below for more info).</li>
+<li>Special keys like <kbd>Up</kbd> are represented by VT220 escape codes such as<code>&quot;\e[A&quot;</code> (see <a href="#specialkeys">Binding Special Keys</a> for more info).</li>
 </ul>
 </li>
 <li>Key bindings can be either functions or macros (literal text):<ul>
@@ -2193,6 +2288,7 @@ C-_:                kill-line                       <span class="hljs-comment">#
 <h3 id="discovering-clink-key-sequences">Discovering Clink key sequences</h3>
 <p>Clink provides an easy way to find the key sequence for any key combination that Clink supports. Run <code>clink echo</code> and then press key combinations; the associated key binding sequence is printed to the console output and can be used for a key binding in the inputrc file.</p>
 <p>A chord can be formed by concatenating multiple key binding sequences. For example, <code>&quot;\C-X&quot;</code> and <code>&quot;\e[H&quot;</code> can be concatenated to form <code>&quot;\C-X\e[H&quot;</code> representing the chord <kbd>Ctrl</kbd>+<kbd>X</kbd>,<kbd>Home</kbd>.</p>
+<p><a name="specialkeys"></a></p>
 <h3 id="binding-special-keys">Binding special keys</h3>
 <p>Here is a table of the key binding sequences for the special keys.  Clink primarily uses VT220 emulation for keyboard input, but also uses some Xterm extended key sequences.</p>
 <table>
@@ -2546,8 +2642,7 @@ C-_:                kill-line                       <span class="hljs-comment">#
 <td align="center"><code>\e[27;8;219~</code></td>
 </tr>
 </tbody></table>
-<a name="luakeybindings"/>
-
+<p><a name="luakeybindings"></a></p>
 <h3 id="lua-key-bindings">Lua Key Bindings</h3>
 <p>You can bind a key to a Lua function by binding it to a macro that begins with &quot;luafunc:&quot;.  Clink will invoke the named Lua function when the key binding is input.  Function names can include periods (such as <code>foo.bar</code>) but cannot include any other punctuation.</p>
 <p>The Lua function receives a <a href="#rl_buffer">rl_buffer</a> argument that gives it access to the input buffer.</p>
@@ -2606,7 +2701,7 @@ end
 <h3 id="multiple-master-history-files">Multiple master history files</h3>
 <p>Normally Clink saves a single saved master history list.  All instances of Clink load and save the same master history list.</p>
 <p>It&#39;s also possible to make one or more instances of Clink use a different saved master history list by setting the <code>%CLINK_HISTORY_LABEL%</code> environment variable.  This can be up to 32 alphanumeric characters, and is appended to the master history file name.  Changing the <code>%CLINK_HISTORY_LABEL%</code> environment variable takes effect at the next input line.</p>
-<h1 id="sample-scripts">Sample Scripts</h1>
+<h2 id="sample-scripts">Sample Scripts</h2>
 <p>Here are a few samples of what can be done with Clink.</p>
 <h3 id="clink-completions">clink-completions</h3>
 <p>The <a href="https://github.com/vladimir-kotikov/clink-completions">clink-completions</a> collection of scripts has a bunch of argument matchers and completion generators for things like git, mercurial, npm, and more.</p>
@@ -2624,7 +2719,16 @@ end
 </code></pre>
 <h3 id="zlua">z.lua</h3>
 <p>The <a href="https://github.com/skywind3000/z.lua">z.lua</a> tool is a faster way to navigate directories, and it integrates with Clink.</p>
-<h1 id="troubleshooting-tips">Troubleshooting Tips</h1>
+<h2 id="upgrading-from-clink-v049">Upgrading from Clink v0.4.9</h2>
+<p>The new Clink tries to be as backward compatible with Clink v0.4.9 as possible. However, in some cases upgrading may require a little bit of configuration work.</p>
+<ul>
+<li>Some key binding sequences have changed; see <a href="#keybindings">Key Bindings</a> for more information.</li>
+<li>Match coloring is now done by Readline and is configured differently; see <a href="#completioncolors">Completion Colors</a> for more information.</li>
+<li>Settings and history should migrate automatically if the new <code>clink_settings</code> and <code>clink_history</code> files don&#39;t exist (deleting them will cause migration to happen again).  To find the directory that contains these files, run <code>clink info</code> and look for the &quot;state&quot; line.</li>
+<li>Script compatibility should be very good, but some scripts may still encounter problems.  If you do encounter a compatibility problem you can look for an updated version of the script, update the script yourself, or visit the <a href="https://github.com/chrisant996/clink/issues">repo</a> and open an issue describing details about the compatibility problem.</li>
+<li>Some settings have changed slightly, and there are many new settings.  See <a href="#configclink">Configuring Clink</a> for more information.</li>
+</ul>
+<h2 id="troubleshooting-tips">Troubleshooting Tips</h2>
 <p>If something seems to malfunction, here are some things to try that often help track down what&#39;s going wrong:</p>
 <ul>
 <li>Check if anti-malware software blocked Clink from injecting.  Consider adding an exclusion for Clink.</li>
@@ -2642,9 +2746,9 @@ end
         </div>
         <h1 id="lua-api">Lua API Reference</h1>
         This section describes the Clink Lua API extensions.
-        Also see <a href="https://www.lua.org/docs.html">Lua Documentation</a> for more information about the Lua programming language.
+        Also see <a href="https://www.lua.org/docs.html">Lua Documentation</a> and the <a href="https://www.lua.org/manual/5.2/">Lua 5.2 Manual</a> for more information about the Lua programming language.
         <div class="section" id="api">
-<div class="group"><h5 class="group_name"><a name="_argmatcher">_argmatcher</a></h5><div class="function"><div class="header"> <div class="name"><a name="_argmatcher:addarg">_argmatcher:addarg</a></div> <div class="signature">( <span class="arg_name">choices...</span>:string|table ) : self</div></div><div class="body"><p class="desc">This adds argument matches.  Arguments can be a string, a string linked to another parser by the concatenation operator, a table of arguments, or a function that returns a table of arguments.  See <a href="#argumentcompletion">Argument Completion</a> for more information.</p><pre class="language-lua"><code>local my_parser = clink.argmatcher("git")
+<h3>API groups</h3><p/><div class="toc"><div class="H1"><a href="#_argmatcher">_argmatcher</a></div><div class="H1"><a href="#builder">builder</a></div><div class="H1"><a href="#clink">clink</a></div><div class="H1"><a href="#console">console</a></div><div class="H1"><a href="#io">io</a></div><div class="H1"><a href="#line">line</a></div><div class="H1"><a href="#log">log</a></div><div class="H1"><a href="#os">os</a></div><div class="H1"><a href="#path">path</a></div><div class="H1"><a href="#rl">rl</a></div><div class="H1"><a href="#rl_buffer">rl_buffer</a></div><div class="H1"><a href="#settings">settings</a></div><div class="H1"><a href="#string">string</a></div><div class="H1"><a href="#word_classifications">word_classifications</a></div></div><div class="group"><h5 class="group_name"><a name="_argmatcher">_argmatcher</a></h5><div class="function"><div class="header"> <div class="name"><a name="_argmatcher:addarg">_argmatcher:addarg</a></div> <div class="signature">( <span class="arg_name">choices...</span>:string|table ) : self</div></div><div class="body"><p class="desc">This adds argument matches.  Arguments can be a string, a string linked to another parser by the concatenation operator, a table of arguments, or a function that returns a table of arguments.  See <a href="#argumentcompletion">Argument Completion</a> for more information.</p><pre class="language-lua"><code>local my_parser = clink.argmatcher("git")
 :addarg("add", "status", "commit", "checkout")</code></pre></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="_argmatcher:addflags">_argmatcher:addflags</a></div> <div class="signature">( <span class="arg_name">flags...</span>:string ) : self</div></div><div class="body"><p class="desc">This adds flag matches.  Flags are separate from arguments:  When listing possible completions for an empty word, only arguments are listed.  But when the word being completed starts with the first character of any of the flags, then only flags are listed.  See <a href="#argumentcompletion">Argument Completion</a> for more information.</p><pre class="language-lua"><code>local my_parser = clink.argmatcher("git")
 :addarg({ "add", "status", "commit", "checkout" })
@@ -2656,9 +2760,6 @@ end
 :loop(2)    -- fourth arg loops back to position 2, for one or uno, and so on</code></pre></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="_argmatcher:nofiles">_argmatcher:nofiles</a></div> <div class="signature">() : self</div></div><div class="body"><p class="desc">This makes the parser prevent invoking <a href="#matchgenerators">match generators</a>.  You can use it to "dead end" a parser and suggest no completions.</p></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="_argmatcher:setclassifier">_argmatcher:setclassifier</a></div> <div class="signature">( <span class="arg_name">func</span>:function ) : self</div></div><div class="body"><p class="desc">This registers a function that gets called for each word the argmatcher handles, to classify the word as part of coloring the input text.  See <a href="#classifywords">Coloring The Input Text</a> for more information.</p></div></div><hr/>
-<div class="function"><div class="header"> <div class="name"><a name="_argmatcher:setflagprefix">_argmatcher:setflagprefix</a></div> <div class="signature">( [<span class="arg_name">prefixes...</span>:string] ) : self</div></div><div class="body deprecated"><p class="desc"><strong>Deprecated; don't use this.</strong>  See <a href="#_argmatcher:addflags">_argmatcher:addflags</a> for more information.</p><p class="desc">This overrides the default flag prefix (<code>-</code>).  The flag prefixes are used to switch between matching arguments versus matching flags.  When listing possible completions for an empty word (e.g. <code>command _</code> where the cursor is at the <code>_</code>), only arguments are listed.  And only flags are listed when the word starts with one of the flag prefixes.  Each flag prefix must be a single character, but there can be multiple prefixes.</p><p class="desc"> This is no longer needed because <code>:addflags()</code> does it automatically.</p><pre class="language-lua"><code>local my_parser = clink.argmatcher()
-:setflagprefix("-", "/", "+")
-:addflags("--help", "/?", "+mode")</code></pre></div></div><hr/>
 </div><div class="group"><h5 class="group_name"><a name="builder">builder</a></h5><div class="function"><div class="header"> <div class="name"><a name="builder:addmatch">builder:addmatch</a></div> <div class="signature">( <span class="arg_name">match</span>:string|table, [<span class="arg_name">type</span>:string] ) : boolean</div></div><div class="body"><p class="desc">Adds a match.  If <span class="arg">match</span> is a string, it's added as a match and <span class="arg">type</span> is the optional match type.</p><p class="desc"> Or <span class="arg">match</span> can be a table with the following scheme: <span class="tablescheme">{ match:string, [type:string] }</span>.  If a table element is missing the type field, then the <span class="arg">type</span> argument is used for that element.</p><p class="desc"> If the <span class="arg">type</span> argument is omitted, "none" is assumed.</p><p class="desc"> The match type can affect how the match is inserted, displayed, and colored:</p><p class="desc"> <table> <tr><th>Type</th><th>Description</th></tr> <tr><td>"word"</td><td>Shows the whole word even if it contains slashes.</td></tr> <tr><td>"arg"</td><td>Avoids appending a space if the match ends with a colon or equal sign.</td></tr> <tr><td>"command"</td><td>Displays the match using <a href="#color_cmd">color.cmd</a>.</td></tr> <tr><td>"alias"</td><td>Displays the match using <a href="#color_doskey">color.doskey</a>.</td></tr> <tr><td>"file"</td><td>Shows only the last path component, with appropriate file coloring.</td></tr> <tr><td>"dir"</td><td>Shows only the last path component and adds a trailing path separator, with appropriate directory coloring.</td></tr> <tr><td>"link"</td><td>Shows only the last path component, with appropriate symlink coloring. <em>Not supported yet.</em></td></tr> <tr><td>"none"</td><td>For backward compatibility the match is treated like "file", unless it ends with a path separator in which case it's treated like "dir".</td></tr> </table></p><p class="desc"> <table> <tr><th>Modifier</th><th>Description</th></tr> <tr><td>"hidden"</td><td>This can be combined with "file" or "dir" to use <a href="#color_hidden">color.hidden</a> (e.g. "file,hidden").</td></tr> <tr><td>"readonly"</td><td>This can be combined with "file" or "dir" to use <a href="#color_readonly">color.readonly</a> (e.g. "file,readonly").</td></tr> </table></p><p class="desc"> See <a href="#completioncolors">Completion Colors</a> and <a href="#colorsettings">Color Settings</a> for more information about colors.</p><pre class="language-lua"><code>builder:addmatch("hello") -- type is "none"
 builder:addmatch("some_word", "word")
 builder:addmatch("/flag", "arg")
@@ -2676,9 +2777,8 @@ builder:addmatches({
 <div class="function"><div class="header"> <div class="name"><a name="builder:setappendcharacter">builder:setappendcharacter</a></div> <div class="signature">( [<span class="arg_name">append</span>:string] ) : nil</div></div><div class="body"><p class="desc">Sets character to append after matches.  For example the <code>set</code> match generator uses this to append "=" when completing matches, so that completing <code>set USER</code> becomes <code>set USERDOMAIN=</code> (rather than <code>set USERDOMAIN&nbsp;</code>).</p></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="builder:setsuppressappend">builder:setsuppressappend</a></div> <div class="signature">( [<span class="arg_name">state</span>:boolean] ) : nil</div></div><div class="body"><p class="desc">Sets whether to suppress appending anything after the match except a possible closing quote.  For example the env var match generator uses this.</p></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="builder:setsuppressquoting">builder:setsuppressquoting</a></div> <div class="signature">( [<span class="arg_name">state</span>:integer] ) : nil</div></div><div class="body"><p class="desc">Sets whether to suppress quoting for the matches.  Set to 0 for normal quoting, or 1 to suppress quoting, or 2 to suppress end quotes.  For example the env var match generator sets this to 1 to overcome the quoting that would normally happen for "%" characters in filenames.</p></div></div><hr/>
-</div><div class="group"><h5 class="group_name"><a name="clink">clink</a></h5><div class="function"><div class="header"> <div class="name"><a name="clink.add_match">clink.add_match</a></div> <div class="signature">( <span class="arg_name">match</span>:string ) : nil</div></div><div class="body deprecated"><p class="desc"><strong>Deprecated; don't use this.</strong>  See <a href="#builder:addmatch">builder:addmatch</a> for more information.</p><p class="desc">This is a shim that lets clink.register_match_generator continue to work for now, despite being obsolete.</p></div></div><hr/>
-<div class="function"><div class="header"> <div class="name"><a name="clink.argmatcher">clink.argmatcher</a></div> <div class="signature">( [<span class="arg_name">priority</span>:integer], <span class="arg_name">commands...</span>:string ) : <a href="#_argmatcher">_argmatcher</a></div></div><div class="body"><p class="desc">Creates and returns a new argument matcher parser object.  Use <a href="#_argmatcher:addarg">:addarg()</a> and etc to add arguments, flags, other parsers, and more.  See <a href="#argumentcompletion">Argument Completion</a> for more information.</p><p class="desc"> If one <span class="arg">command</span> is provided and an argument matcher parser object is already associated with the command, this returns the existing parser rather than creating a new parser.  Using :addarg() starts at arg position 1, making it possible to merge new args and etc into the existing parser.</p></div></div><hr/>
-<div class="function"><div class="header"> <div class="name"><a name="clink.classifier">clink.classifier</a></div> <div class="signature">( [<span class="arg_name">priority</span>:integer] ) : table</div></div><div class="body"><p class="desc">Creates and returns a new word classifier object.  Define on the object a <code>classify()</code> function which gets called in increasing <span class="arg">priority</span> order (low values to high values) when classifying words for coloring the input.  See <a href="#classifywords">Coloring The Input Text</a> for more information.</p></div></div><hr/>
+</div><div class="group"><h5 class="group_name"><a name="clink">clink</a></h5><div class="function"><div class="header"> <div class="name"><a name="clink.argmatcher">clink.argmatcher</a></div> <div class="signature">( [<span class="arg_name">priority</span>:integer], <span class="arg_name">commands...</span>:string ) : <a href="#_argmatcher">_argmatcher</a></div></div><div class="body"><p class="desc">Creates and returns a new argument matcher parser object.  Use <a href="#_argmatcher:addarg">:addarg()</a> and etc to add arguments, flags, other parsers, and more.  See <a href="#argumentcompletion">Argument Completion</a> for more information.</p><p class="desc"> If one <span class="arg">command</span> is provided and an argument matcher parser object is already associated with the command, this returns the existing parser rather than creating a new parser.  Using :addarg() starts at arg position 1, making it possible to merge new args and etc into the existing parser.</p></div></div><hr/>
+<div class="function"><div class="header"> <div class="name"><a name="clink.classifier">clink.classifier</a></div> <div class="signature">( [<span class="arg_name">priority</span>:integer] ) : table</div></div><div class="body"><p class="desc">Creates and returns a new word classifier object.  Define on the object a <code>:classify()</code> function which gets called in increasing <span class="arg">priority</span> order (low values to high values) when classifying words for coloring the input.  See <a href="#classifywords">Coloring The Input Text</a> for more information.</p></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="clink.dirmatches">clink.dirmatches</a></div> <div class="signature">( <span class="arg_name">word</span>:string ) : table</div></div><div class="body"><p class="desc">You can use this function in an argmatcher to supply directory matches. This automatically handles Readline tilde completion.</p><pre class="language-lua"><code>-- Make "cd" generate directory matches (no files).
 clink.argmatcher("cd")
 :addflags("/d")
@@ -2693,18 +2793,11 @@ clink.argmatcher("foo")
 :addarg({ "one", "won" })
 :addarg({ "two", "too" })
 :addarg({ clink.filematches, "$stdin", "$stdout" })</code></pre></div></div><hr/>
-<div class="function"><div class="header"> <div class="name"><a name="clink.generator">clink.generator</a></div> <div class="signature">( [<span class="arg_name">priority</span>:integer] ) : table</div></div><div class="body"><p class="desc">Creates and returns a new match generator object.  Define on the object a <code>generate()</code> function which gets called in increasing <span class="arg">priority</span> order (low values to high values) when generating matches for completion.  See <a href="#matchgenerators">Match Generators</a> for more information.</p></div></div><hr/>
+<div class="function"><div class="header"> <div class="name"><a name="clink.generator">clink.generator</a></div> <div class="signature">( [<span class="arg_name">priority</span>:integer] ) : table</div></div><div class="body"><p class="desc">Creates and returns a new match generator object.  Define on the object a <code>:generate()</code> function which gets called in increasing <span class="arg">priority</span> order (low values to high values) when generating matches for completion.  See <a href="#matchgenerators">Match Generators</a> for more information.</p></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="clink.getansihost">clink.getansihost</a></div> <div class="signature">() : string</div></div><div class="body"><p class="desc">Returns a string indicating who Clink thinks will currently handle ANSI escape codes.  This can change based on the <code>terminal.emulation</code> setting.  This always returns <code>"unknown"</code> until the first edit prompt (see <a href="#clink.onbeginedit">clink.onbeginedit()</a>).</p><p class="desc"> This can be useful in choosing what kind of ANSI escape codes to use, but it is a best guess and is not necessarily 100% reliable.</p><p class="desc"> <table> <tr><th>Return</th><th>Description</th></tr> <tr><td>"unknown"</td><td>Clink doesn't know.</td></tr> <tr><td>"clink"</td><td>Clink is emulating ANSI support.  256 color and 24 bit color escape codes are mapped to the nearest of the 16 basic colors.</td></tr> <tr><td>"conemu"</td><td>Clink thinks ANSI escape codes will be handled by ConEmu.</td></tr> <tr><td>"ansicon"</td><td>Clink thinks ANSI escape codes will be handled by ANSICON.</td></tr> <tr><td>"winterminal"</td><td>Clink thinks ANSI escape codes will be handled by Windows Terminal.</td></tr> <tr><td>"winconsole"</td><td>Clink thinks ANSI escape codes will be handled by the default console support in Windows, but Clink detected a terminal replacement that won't support 256 color or 24 bit color.</td></tr> <tr><td>"winconsolev2"</td><td>Clink thinks ANSI escape codes will be handled by the default console support in Windows, or it might be handled by a terminal replacement that Clink wasn't able to detect.</td></tr> </table></p></div></div><hr/>
-<div class="function"><div class="header"> <div class="name"><a name="clink.getsession">clink.getsession</a></div> <div class="signature">() : string</div></div><div class="body"><p class="desc">Returns the current Clink session id.</p><p class="desc"> This is needed when using <code>io.popen()</code> (or similar functions) to invoke <code>clink history</code> or <code>clink info</code> while Clink is installed for autorun.  The popen API spawns a new CMD.exe, which gets a new Clink instance injected, so the history or info command will use the new session unless explicitly directed to use the calling session.</p><pre class="language-lua"><code>local c = os.getalias("clink")
+<div class="function"><div class="header"> <div class="name"><a name="clink.getsession">clink.getsession</a></div> <div class="signature">() : string</div></div><div class="body"><p class="desc">Returns the current Clink session id.</p><p class="desc"> This is needed when using <code><span class="hljs-built_in">io</span>.<span class="hljs-built_in">popen</span>()</code> (or similar functions) to invoke <code>clink history</code> or <code>clink info</code> while Clink is installed for autorun.  The popen API spawns a new CMD.exe, which gets a new Clink instance injected, so the history or info command will use the new session unless explicitly directed to use the calling session.</p><pre class="language-lua"><code>local c = os.getalias("clink")
 local r = io.popen(c.." --session "..clink.getsession().." history")</code></pre></div></div><hr/>
-<div class="function"><div class="header"> <div class="name"><a name="clink.is_match">clink.is_match</a></div> <div class="signature">( <span class="arg_name">needle</span>:string, <span class="arg_name">candidate</span>:string ) : boolean</div></div><div class="body deprecated"><p class="desc"><strong>Deprecated; don't use this.</strong>  See <a href="#clink.generator">clink.generator</a> for more information.</p><p class="desc">This returns true if <span class="arg">needle</span> is a prefix of <span class="arg">candidate</span> with a case insensitive comparison.</p><p class="desc"> Normally in Clink v1.x and higher the <span class="arg">needle</span> will be an empty string because the generators are no longer responsible for filtering matches.  The match pipeline itself handles that internally now.</p></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="clink.lower">clink.lower</a></div> <div class="signature">( <span class="arg_name">text</span>:string ) : string</div></div><div class="body"><p class="desc">This API correctly converts UTF8 strings to lowercase, with international linguistic awareness.</p><pre class="language-lua"><code>clink.lower("Hello World") -- returns "hello world"</code></pre></div></div><hr/>
-<div class="function"><div class="header"> <div class="name"><a name="clink.match_display_filter">clink.match_display_filter</a></div> <div class="signature">function variable</div></div><div class="body deprecated"><p class="desc"><strong>Deprecated; don't use this.</strong>  See <a href="#clink.ondisplaymatches">clink.ondisplaymatches</a> for more information.</p><p class="desc">A match generator can set this varible to a filter function that is called before displaying matches.  It is reset every time match generation is invoked.  The filter function receives table argument containing the matches that are going to be displayed, and it returns a table filtered as required by the match generator.</p><p class="desc"> See <a href="#filteringthematchdisplay">Filtering the Match Display</a> for more information.</p></div></div><hr/>
-<div class="function"><div class="header"> <div class="name"><a name="clink.match_display_filter">clink.match_display_filter</a></div> <div class="signature">function variable</div></div><div class="body deprecated"><p class="desc"><strong>Deprecated; don't use this.</strong>  See <a href="#builder:addmatch">builder:addmatch</a> for more information.</p><p class="desc">This is no longer used.</p><pre class="language-lua"><code>clink.match_display_filter = function(matches)
-&nbsp; -- Transform matches.
-&nbsp; return matches
-end</code></pre></div></div><hr/>
-<div class="function"><div class="header"> <div class="name"><a name="clink.matches_are_files">clink.matches_are_files</a></div> <div class="signature">( [<span class="arg_name">files</span>:boolean] ) : nil</div></div><div class="body deprecated"><p class="desc"><strong>Deprecated; don't use this.</strong>  See <a href="#builder:addmatch">builder:addmatch</a> for more information.</p><p class="desc">This is no longer needed, because now it's inferred from the match type when adding matches.</p></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="clink.onbeginedit">clink.onbeginedit</a></div> <div class="signature">( <span class="arg_name">func</span>:function ) : nil</div></div><div class="body"><p class="desc">Registers <span class="arg">func</span> to be called when Clink's edit prompt is activated.  The function receives no arguments and has no return values.</p></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="clink.ondisplaymatches">clink.ondisplaymatches</a></div> <div class="signature">( <span class="arg_name">func</span>:function ) : nil</div></div><div class="body"><p class="desc">Registers <span class="arg">func</span> to be called when Clink is about to display matches.  See <a href="#filteringthematchdisplay">Filtering the Match Display</a> for more information.</p><pre class="language-lua"><code>local function my_filter(matches, popup)
 &nbsp; local new_matches = {}
@@ -2729,29 +2822,12 @@ end</code></pre></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="clink.onendedit">clink.onendedit</a></div> <div class="signature">( <span class="arg_name">func</span>:function ) : nil</div></div><div class="body"><p class="desc">Registers <span class="arg">func</span> to be called when Clink's edit prompt ends.  The function receives a string argument containing the input text from the edit prompt.  The function returns up to two values.  If the first is not nil then it's a string that replaces the edit prompt text.  If the second is not nil and is false then it stops further onendedit handlers from running.</p><p class="desc"> <strong>Note:</strong>  Be very careful if you replace the text; this has the potential to interfere with or even ruin the user's ability to enter command lines for CMD to process.</p></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="clink.onfiltermatches">clink.onfiltermatches</a></div> <div class="signature">( <span class="arg_name">func</span>:function ) : nil</div></div><div class="body"><p class="desc">Registers <span class="arg">func</span> to be called after Clink generates matches for completion.  See <a href="#filteringmatchcompletions"> Filtering Match Completions</a> for more information.</p></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="clink.oninject">clink.oninject</a></div> <div class="signature">( <span class="arg_name">func</span>:function ) : nil</div></div><div class="body"><p class="desc">Registers <span class="arg">func</span> to be called when Clink is injected into a CMD process.  The function is called only once per session.</p></div></div><hr/>
-<div class="function"><div class="header"> <div class="name"><a name="clink.promptfilter">clink.promptfilter</a></div> <div class="signature">( [<span class="arg_name">priority</span>:integer] ) : table</div></div><div class="body"><p class="desc">Creates and returns a new promptfilter object that is applied in increasing <span class="arg">priority</span> order (low values to high values).  Define on the object a <code>filter()</code> function that takes a string argument which contains the filtered prompt so far.  The function can return nil to have no effect, or can return a new prompt string.  It can optionally stop further prompt filtering by also returning false.  See <a href="#customisingtheprompt">Customising The Prompt</a> for more information.</p><pre class="language-lua"><code>local foo_prompt = clink.promptfilter(80)
+<div class="function"><div class="header"> <div class="name"><a name="clink.promptcoroutine">clink.promptcoroutine</a></div> <div class="signature">( <span class="arg_name">func</span>:function ) : [return value from func]</div></div><div class="body"><p class="desc">Creates a coroutine to run the <span class="arg">func</span> function in the background.  Clink will automatically resume the coroutine repeatedly while input line editing is idle.  When the <span class="arg">func</span> function completes, Clink will automatically refresh the prompt by triggering prompt filtering again.</p><p class="desc"> A coroutine is only created the first time each prompt filter calls this API during a given input line session.  Subsequent calls reuse the already-created coroutine.  (E.g. pressing <kbd>Enter</kbd> ends an input line session.)</p><p class="desc"> The API returns nil until the <span class="arg">func</span> function has finished.  After that, the API returns whatever the <span class="arg">func</span> function returned.  The API returns one value; if multiple return values are needed, return them in a table.</p><p class="desc"> If the <code>prompt.async</code> setting is disabled, then the coroutine runs to completion immediately before returning.  Otherwise, the coroutine runs during idle while editing the input line.  The <span class="arg">func</span> function receives one argument: true if it's running in the background, or false if it's running immediately.</p><p class="desc"> See <a href="#asyncpromptfiltering">Asynchronous Prompt Filtering</a> for more information.</p><p class="desc"> Note: each prompt filter can have at most one prompt coroutine.</p></div></div><hr/>
+<div class="function"><div class="header"> <div class="name"><a name="clink.promptfilter">clink.promptfilter</a></div> <div class="signature">( [<span class="arg_name">priority</span>:integer] ) : table</div></div><div class="body"><p class="desc">Creates and returns a new promptfilter object that is applied in increasing <span class="arg">priority</span> order (low values to high values).  Define on the object a <code>:filter()</code> function that takes a string argument which contains the filtered prompt so far.  The function can return nil to have no effect, or can return a new prompt string.  It can optionally stop further prompt filtering by also returning false.  See <a href="#customisingtheprompt">Customising The Prompt</a> for more information.</p><pre class="language-lua"><code>local foo_prompt = clink.promptfilter(80)
 function foo_prompt:filter(prompt)
 &nbsp; -- Insert the date at the beginning of the prompt.
 &nbsp; return os.date("%a %H:%M").." "..prompt
 end</code></pre></div></div><hr/>
-<div class="function"><div class="header"> <div class="name"><a name="clink.register_match_generator">clink.register_match_generator</a></div> <div class="signature">( <span class="arg_name">func</span>:function, <span class="arg_name">priority</span>:integer ) : nil</div></div><div class="body deprecated"><p class="desc"><strong>Deprecated; don't use this.</strong>  See <a href="#clink.generator">clink.generator</a> for more information.</p><p class="desc">Registers a generator function for producing matches.  This behaves similarly to v0.4.8, but not identically.  The Clink schema has changed significantly enough that there is no direct 1:1 translation; generators are called at a different time than before and have access to more information than before.</p><pre class="language-lua"><code>-- Deprecated form:
-local function match_generator_func(text, first, last)
-&nbsp; -- `text` is the word text.
-&nbsp; -- `first` is the index of the beginning of the end word.
-&nbsp; -- `last` is the index of the end of the end word.
-&nbsp; -- `clink.add_match()` is used to add matches.
-&nbsp; -- return true if handled, or false to let another generator try.
-end
-clink.register_match_generator(match_generator_func, 10)
-
--- Replace with new form:
-local g = clink.generator(10)
-function g:generate(line_state, match_builder)
-&nbsp; -- `line_state` is a <a href="#line">line</a> object.
-&nbsp; -- `match_builder:<a href="#builder:addmatch">addmatch</a>()` is used to add matches.
-&nbsp; -- return true if handled, or false to let another generator try.
-end</code></pre></div></div><hr/>
-<div class="function"><div class="header"> <div class="name"><a name="clink.slash_translation">clink.slash_translation</a></div> <div class="signature">( <span class="arg_name">type</span>:integer ) : nil</div></div><div class="body deprecated"><p class="desc"><strong>Deprecated; don't use this.</strong>  See <a href="#clink.translateslashes">clink.translateslashes</a> for more information.</p><p class="desc">Controls how Clink will translate the path separating slashes for the current path being completed. Values for <span class="arg">type</span> are;</br> -1 - no translation</br> 0 - to backslashes</br> 1 - to forward slashes</p></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="clink.translateslashes">clink.translateslashes</a></div> <div class="signature">( [<span class="arg_name">mode</span>:integer] ) : integer</div></div><div class="body"><p class="desc">This overrides how Clink translates slashes in completion matches, which is normally determined by the <code>match.translate_slashes</code> setting.</p><p class="desc"> This is reset every time match generation is invoked, so use a generator to set this.</p><p class="desc"> The <span class="arg">mode</span> specifies how to translate slashes when generators add matches: <table> <tr><th>Mode</th><th>Description</th></tr> <tr><td><code>0</code></td><td>No translation.</td></tr> <tr><td><code>1</code></td><td>Translate using the system path separator (backslash on Windows).</td></tr> <tr><td><code>2</code></td><td>Translate to slashes (<code>/</code>).</td></tr> <tr><td><code>3</code></td><td>Translate to backslashes (<code>\</code>).</td></tr> </table></p><p class="desc"> If <span class="arg">mode</span> is omitted, then the function returns the current slash translation mode without changing it.</p><p class="desc"> Note:  Clink always generates file matches using the system path separator (backslash on Windows), regardless what path separator may have been typed as input.  Setting this to <code>0</code> does not disable normalizing typed input paths when invoking completion; it only disables translating slashes in custom generators.</p><pre class="language-lua"><code>-- This example affects all match generators, by using priority -1 to
 -- run first and returning false to let generators continue.
 -- To instead affect only one generator, call clink.translateslashes()
@@ -2767,45 +2843,6 @@ end</code></pre></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="clink.version_major">clink.version_major</a></div> <div class="signature">integer variable</div></div><div class="body"><p class="desc">The major part of the Clink version number. For v<strong>1</strong>.2.3.a0f14d the major version is 1.</p></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="clink.version_minor">clink.version_minor</a></div> <div class="signature">integer variable</div></div><div class="body"><p class="desc">The minor part of the Clink version number. For v1.<strong>2</strong>.3.a0f14d the minor version is 2.</p></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="clink.version_patch">clink.version_patch</a></div> <div class="signature">integer variable</div></div><div class="body"><p class="desc">The patch part of the Clink version number. For v1.2.<strong>3</strong>.a0f14d the patch version is 3.</p></div></div><hr/>
-</div><div class="group"><h5 class="group_name"><a name="clink.arg">clink.arg</a></h5><div class="function"><div class="header"> <div class="name"><a name="clink.arg.new_parser">clink.arg.new_parser</a></div> <div class="signature">( ... ) : table</div></div><div class="body deprecated"><p class="desc"><strong>Deprecated; don't use this.</strong>  See <a href="#clink.argmatcher">clink.argmatcher</a> for more information.</p><p class="desc">Creates a new parser and adds <span class="arg">...</span> to it.</p><pre class="language-lua"><code>-- Deprecated form:
-local parser = clink.arg.new_parser(
-&nbsp; { "abc", "def" },       -- arg position 1
-&nbsp; { "ghi", "jkl" },       -- arg position 2
-&nbsp; "--flag1", "--flag2"    -- flags
-)
-
--- Replace with form:
-local parser = clink.argmatcher()
-:addarg("abc", "def")               -- arg position 1
-:addarg("ghi", "jkl")               -- arg position 2
-:addflags("--flag1", "--flag2")     -- flags</code></pre></div></div><hr/>
-<div class="function"><div class="header"> <div class="name"><a name="clink.arg.register_parser">clink.arg.register_parser</a></div> <div class="signature">( <span class="arg_name">cmd</span>:string, <span class="arg_name">parser</span>:table ) : table</div></div><div class="body deprecated"><p class="desc"><strong>Deprecated; don't use this.</strong>  See <a href="#clink.argmatcher">clink.argmatcher</a> for more information.</p><p class="desc">Adds <span class="arg">parser</span> to the first argmatcher for <span class="arg">cmd</span>.  This behaves similarly to v0.4.8, but not identically.  The Clink schema has changed significantly enough that there is no direct 1:1 translation.  Calling <code>clink.arg.register_parser</code> repeatedly with the same command to merge parsers is not supported anymore.</p><pre class="language-lua"><code>-- Deprecated form:
-local parser1 = clink.arg.new_parser("abc", "def")
-local parser2 = clink.arg.new_parser("ghi", "jkl")
-clink.arg.register_parser("foo", parser1)
-clink.arg.register_parser("foo", parser2)
-
--- Replace with new form:
-clink.argmatcher("foo"):addarg(parser1, parser2)
-
--- Warning:  Note that the following are NOT the same as above!
--- This replaces parser1 with parser2:
-clink.argmatcher("foo"):addarg(parser1)
-clink.argmatcher("foo"):addarg(parser2)
--- This uses only parser2 if/when parser1 finishes parsing args:
-clink.argmatcher("foo"):addarg(parser1):addarg(parser2)</code></pre></div></div><hr/>
-</div><div class="group"><h5 class="group_name"><a name="clink.prompt">clink.prompt</a></h5><div class="function"><div class="header"> <div class="name"><a name="clink.prompt.register_filter">clink.prompt.register_filter</a></div> <div class="signature">( <span class="arg_name">filter_func</span>:function, [<span class="arg_name">priority</span>:integer] ) : table</div></div><div class="body deprecated"><p class="desc"><strong>Deprecated; don't use this.</strong>  See <a href="#clink.promptfilter">clink.promptfilter</a> for more information.</p><p class="desc">Registers a prompt filter function.  The capabilities are the same as before but the syntax is changed.</p><pre class="language-lua"><code>-- Deprecated form:
-function foo_prompt()
-&nbsp; clink.prompt.value = "FOO "..clink.prompt.value.." >>"
-&nbsp; --return true  -- Returning true stops further filtering.
-end
-clink.prompt.register_filter(foo_prompt, 10)
-
--- Replace with new form:
-local foo_prompt = clink.promptfilter(10)
-function foo_prompt:filter(prompt)
-&nbsp; return "FOO "..prompt.." >>" --,false  -- Adding ,false stops further filtering.
-end</code></pre></div></div><hr/>
 </div><div class="group"><h5 class="group_name"><a name="console">console</a></h5><div class="function"><div class="header"> <div class="name"><a name="console.cellcount">console.cellcount</a></div> <div class="signature">( <span class="arg_name">text</span>:string ) : integer</div></div><div class="body"><p class="desc">Returns the count of visible character cells that would be consumed if the <span class="arg">text</span> string were output to the console, accounting for any ANSI escape codes that may be present in the text.</p><p class="desc"> Note: backspace characters and line endings are counted as visible character cells and will skew the resulting count.</p></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="console.findnextline">console.findnextline</a></div> <div class="signature">( <span class="arg_name">starting_line</span>:integer, [<span class="arg_name">text</span>:string], [<span class="arg_name">mode</span>:string], [<span class="arg_name">attr</span>:integer], [<span class="arg_name">attrs</span>:table of integers], [<span class="arg_name">mask</span>:string] ) : integer</div></div><div class="body"><p class="desc">Searches downwards (forwards) for a line containing the specified text and/or attributes, starting at line <span class="arg">starting_line</span>. The matching line number is returned, or 0 if no matching line is found.</p><p class="desc"> This behaves the same as <a href="#console.findprevline">console.findprevline()</a> except that it searches in the opposite direction.</p></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="console.findprevline">console.findprevline</a></div> <div class="signature">( <span class="arg_name">starting_line</span>:integer, [<span class="arg_name">text</span>:string], [<span class="arg_name">mode</span>:string], [<span class="arg_name">attr</span>:integer], [<span class="arg_name">attrs</span>:table of integers], [<span class="arg_name">mask</span>:string] ) : integer</div></div><div class="body"><p class="desc">Searches upwards (backwards) for a line containing the specified text and/or attributes, starting at line <span class="arg">starting_line</span>.  The matching line number is returned, or 0 if no matching line is found, or -1 if an invalid regular expression is provided.</p><p class="desc"> You can search for text, attributes, or both.  Include the <span class="arg">text</span> argument to search for text, and include either the <span class="arg">attr</span> or <span class="arg">attrs</span> argument to search for attributes.  If both text and attribute(s) are passed, then the attribute(s) must be found within the found text.  If only attribute(s) are passed, then they must be found anywhere in the line.  See <a href="#console.linehascolor">console.linehascolor()</a> for more information about the color codes.</p><p class="desc"> The <span class="arg">mode</span> argument selects how the search behaves. To use a regular expression, pass "regex".  To use a case insensitive search, pass "icase".  These can be combined by separating them with a comma.  The regular expression syntax is the ECMAScript syntax described <a href="https://docs.microsoft.com/en-us/cpp/standard-library/regular-expressions-cpp">here</a>.</p><p class="desc"> Any trailing whitespace is ignored when searching.  This especially affects the <code>$</code> (end of line) regex operator.</p><p class="desc"> <span class="arg">mask</span> is optional and can be "fore" or "back" to only match foreground or background colors, respectively.</p><p class="desc"> <strong>Note:</strong> Although most of the arguments are optional, the order of provided arguments is important.</p><p class="desc"> The following example provides a pair of <code>find_prev_colored_line</code> and <code>find_next_colored_line</code> functions.  The functions can be bound to keys via the <code>luafunc:</code> macro syntax in a .inputrc file. They scroll the screen buffer to the previous or next line that contains "warn" or "error" colored red or yellow.</p><pre class="language-lua"><code>local was_top
@@ -2901,7 +2938,7 @@ end</code></pre></div></div><hr/>
 &nbsp;       "^%x+$")               -- A candidate containing only hexadecimal digits is a match.</code></pre></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="console.scroll">console.scroll</a></div> <div class="signature">( <span class="arg_name">mode</span>:string, <span class="arg_name">amount</span>:integer ) : integer</div></div><div class="body"><p class="desc">Scrolls the console screen buffer and returns the number of lines scrolled up (negative) or down (positive).</p><p class="desc"> The <span class="arg">mode</span> specifies how to scroll: <table> <tr><th>Mode</th><th>Description</th></tr> <tr><td>"line"</td><td>Scrolls by <span class="arg">amount</span> lines; negative is up and positive is down.</td></tr> <tr><td>"page"</td><td>Scrolls by <span class="arg">amount</span> pages; negative is up and positive is down.</td></tr> <tr><td>"end"</td><td>Scrolls to the top if <span class="arg">amount</span> is negative, or to the bottom if positive.</td></tr> <tr><td>"absolute"</td><td>Scrolls to line <span class="arg">amount</span>, from 1 to <a href="#console.getnumlines">console.getnumlines()</a>.</td></tr> </table></p></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="console.settitle">console.settitle</a></div> <div class="signature">( <span class="arg_name">title</span>:string ) : nil</div></div><div class="body"><p class="desc">Sets the console title text.</p></div></div><hr/>
-</div><div class="group"><h5 class="group_name"><a name="io">io</a></h5><div class="function"><div class="header"> <div class="name"><a name="io.popenrw">io.popenrw</a></div> <div class="signature">( <span class="arg_name">command</span>:string, [<span class="arg_name">mode</span>:string] ) : file, file</div></div><div class="body"><p class="desc">Runs <code>command</code> and returns two file handles:  a file handle for reading output from the command, and a file handle for writing input to the command.</p><p class="desc"> <span class="arg">mode</span> can be <code>"t"</code> for text mode (the default if omitted) or <code>"b"</code> for binary mode.</p><p class="desc"> If the function fails it returns nil, an error message, and an error number.</p><p class="desc"> <fieldset><legend>Warning</legend> This can result in deadlocks unless the command fully reads all of its input before writing any output.  This is because Lua uses blocking IO to read and write file handles.  If the write buffer fills (or the read buffer is empty) then the write (or read) will block and can only become unblocked if the command correspondingly reads (or writes).  But the other command can easily experience the same blocking IO problem on its end, resulting in a deadlock: process 1 is blocked from writing more until process 2 reads, but process 2 can't read because it is blocked from writing until process 1 reads. </fieldset></p><pre class="language-lua"><code>local r,w = io.popenrw("fzf.exe --height 40%")
+</div><div class="group"><h5 class="group_name"><a name="io">io</a></h5><div class="function"><div class="header"> <div class="name"><a name="io.popenrw">io.popenrw</a></div> <div class="signature">( <span class="arg_name">command</span>:string, [<span class="arg_name">mode</span>:string] ) : file, file</div></div><div class="body"><p class="desc">Runs <code>command</code> and returns two file handles:  a file handle for reading output from the command, and a file handle for writing input to the command.</p><p class="desc"> <span class="arg">mode</span> can be "t" for text mode (the default if omitted) or "b" for binary mode.</p><p class="desc"> If the function fails it returns nil, an error message, and an error number.</p><p class="desc"> <fieldset><legend>Warning</legend> This can result in deadlocks unless the command fully reads all of its input before writing any output.  This is because Lua uses blocking IO to read and write file handles.  If the write buffer fills (or the read buffer is empty) then the write (or read) will block and can only become unblocked if the command correspondingly reads (or writes).  But the other command can easily experience the same blocking IO problem on its end, resulting in a deadlock: process 1 is blocked from writing more until process 2 reads, but process 2 can't read because it is blocked from writing until process 1 reads. </fieldset></p><pre class="language-lua"><code>local r,w = io.popenrw("fzf.exe --height 40%")
 
 w:write("hello\n")
 w:write("world\n")
@@ -2915,6 +2952,16 @@ while (true) do
 &nbsp; print(line)
 end
 r:close()</code></pre></div></div><hr/>
+<div class="function"><div class="header"> <div class="name"><a name="io.popenyield">io.popenyield</a></div> <div class="signature">( <span class="arg_name">command</span>:string, [<span class="arg_name">mode</span>:string] ) : file</div></div><div class="body"><p class="desc">This is the same as <code><span class="hljs-built_in">io</span>.<span class="hljs-built_in">popen</span>(<span class="arg">command</span>, <span class="arg">mode</span>)</code> except that it only supports read mode and it yields until the command has finished:</p><p class="desc"> Runs <span class="arg">command</span> and returns a read file handle for reading output from the command.  It yields until the command has finished and the complete output is ready to be read without blocking.</p><p class="desc"> The <span class="arg">mode</span> can contain "r" (read mode) and/or either "t" for text mode (the default if omitted) or "b" for binary mode.  Write mode is not supported, so it cannot contain "w".</p><p class="desc"> <strong>Note:</strong> if the <code>prompt.async</code> setting is disabled then this turns into a call to <code><span class="hljs-built_in">io</span>.<span class="hljs-built_in">popen</span>(<span class="arg">command</span>, <span class="arg">mode</span>)</code> instead.</p><pre class="language-lua"><code>local file = io.popenyield("git status")
+
+while (true) do
+&nbsp; local line = file:read("*line")
+&nbsp; if not line then
+&nbsp;   break
+&nbsp; end
+&nbsp; do_things_with(line)
+end
+file:close()</code></pre></div></div><hr/>
 </div><div class="group"><h5 class="group_name"><a name="line">line</a></h5><div class="function"><div class="header"> <div class="name"><a name="line:getcommandoffset">line:getcommandoffset</a></div> <div class="signature">() : integer</div></div><div class="body"><p class="desc">Returns the offset to the start of the delimited command in the line that's being effectively edited. Note that this may not be the offset of the first command of the line unquoted as whitespace isn't considered for words.</p><pre class="language-lua"><code>-- Given the following line; abc& 123
 -- where commands are separated by & symbols.
 line:getcommandoffset() == 4</code></pre></div></div><hr/>
@@ -3101,26 +3148,111 @@ string.matchlen("abx", "aby")       -- returns 2
 string.matchlen("abx", "abx")       -- returns -1</code></pre></div></div><hr/>
 </div><div class="group"><h5 class="group_name"><a name="word_classifications">word_classifications</a></h5><div class="function"><div class="header"> <div class="name"><a name="word_classifications:applycolor">word_classifications:applycolor</a></div> <div class="signature">( <span class="arg_name">start</span>:integer, <span class="arg_name">length</span>:integer, <span class="arg_name">color</span>:string, [<span class="arg_name">overwrite</span>:boolean] ) : nil</div></div><div class="body"><p class="desc">Applies an ANSI <a href="https://en.wikipedia.org/wiki/ANSI_escape_code#SGR">SGR escape code</a> to some characters in the input line.</p><p class="desc"> <span class="arg">start</span> is where to begin applying the SGR code.</p><p class="desc"> <span class="arg">length</span> is the number of characters to affect.</p><p class="desc"> <span class="arg">color</span> is the SGR parameters sequence to apply (for example <code>"7"</code> is the code for reverse video, which swaps the foreground and background colors).</p><p class="desc"> By default the color is applied to the characters even if some of them are already colored.  But if <span class="arg">overwrite</span> is <code>false</code> each character is only colored if it hasn't been yet.</p><p class="desc"> See <a href="#classifywords">Coloring The Input Text</a> for more information.</p></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="word_classifications:classifyword">word_classifications:classifyword</a></div> <div class="signature">( <span class="arg_name">word_index</span>:integer, <span class="arg_name">word_class</span>:string, [<span class="arg_name">overwrite</span>:boolean] ) : nil</div></div><div class="body"><p class="desc">This classifies the indicated word so that it can be colored appropriately.</p><p class="desc"> The <span class="arg">word_class</span> is one of the following codes:</p><p class="desc"> <table> <tr><th>Code</th><th>Classification</th><th>Clink Color Setting</th></tr> <tr><td><code>"a"</code></td><td>Argument; used for words that match a list of preset argument matches.</td><td><code>color.arg</code> or <code>color.input</code></td></tr> <tr><td><code>"c"</code></td><td>Shell command; used for CMD command names.</td><td><code>color.cmd</code></td></tr> <tr><td><code>"d"</code></td><td>Doskey alias.</td><td><code>color.doskey</code></td></tr> <tr><td><code>"f"</code></td><td>Flag; used for flags that match a list of preset flag matches.</td><td><code>color.flag</code></td></tr> <tr><td><code>"o"</code></td><td>Other; used for file names and words that don't fit any of the other classifications.</td><td><code>color.input</code></td></tr> <tr><td><code>"n"</code></td><td>None; used for words that aren't recognized as part of the expected input syntax.</td><td><code>color.unexpected</code></td></tr> <tr><td><code>"m"</code></td><td>Prefix that can be combined with another code (for the first word) to indicate the command has an argmatcher (e.g. <code>"mc"</code> or <code>"md"</code>).</td><td><code>color.argmatcher</code> or the other code's color</td></tr> </table></p><p class="desc"> By default the classification is applied to the word even if the word has already been classified.  But if <span class="arg">overwrite</span> is <code>false</code> the word is only classified if it hasn't been yet.</p><p class="desc"> See <a href="#classifywords">Coloring The Input Text</a> for more information.</p></div></div><hr/>
-</div><div class="group"><h5 class="group_name"><a name="[other]">[other]</a></h5><div class="function"><div class="header"> <div class="name"><a name="rl_state">rl_state</a></div> <div class="signature">table variable</div></div><div class="body deprecated"><p class="desc"><strong>Deprecated; don't use this.</strong>  See <a href="#line">line</a> for more information.</p><p class="desc">This is an obsolete global variable that was set while running match generators.  It has been superseded by the <a href="#line">line</a> type parameter passed into match generator functions when using the new <a href="#clink.generator">clink.generator</a> API.</p></div></div><hr/>
+</div><div class="group deprecated"><h5 class="group_name"><a name="Deprecated">Deprecated</a></h5><div class="function"><div class="header"> <div class="name"><a name="_argmatcher:setflagprefix">_argmatcher:setflagprefix</a></div> <div class="signature">( [<span class="arg_name">prefixes...</span>:string] ) : self</div></div><div class="body"><p class="desc"><strong>Deprecated; don't use this.</strong>  See <a href="#_argmatcher:addflags">_argmatcher:addflags</a> for more information.</p><p class="desc">This overrides the default flag prefix (<code>-</code>).  The flag prefixes are used to switch between matching arguments versus matching flags.  When listing possible completions for an empty word (e.g. <code>command _</code> where the cursor is at the <code>_</code>), only arguments are listed.  And only flags are listed when the word starts with one of the flag prefixes.  Each flag prefix must be a single character, but there can be multiple prefixes.</p><p class="desc"> This is no longer needed because <code>:addflags()</code> does it automatically.</p><pre class="language-lua"><code>local my_parser = clink.argmatcher()
+:setflagprefix("-", "/", "+")
+:addflags("--help", "/?", "+mode")</code></pre></div></div><hr/>
+<div class="function"><div class="header"> <div class="name"><a name="clink.add_match">clink.add_match</a></div> <div class="signature">( <span class="arg_name">match</span>:string ) : nil</div></div><div class="body"><p class="desc"><strong>Deprecated; don't use this.</strong>  See <a href="#builder:addmatch">builder:addmatch</a> for more information.</p><p class="desc">This is a shim that lets clink.register_match_generator continue to work for now, despite being obsolete.</p></div></div><hr/>
+<div class="function"><div class="header"> <div class="name"><a name="clink.arg.new_parser">clink.arg.new_parser</a></div> <div class="signature">( ... ) : table</div></div><div class="body"><p class="desc"><strong>Deprecated; don't use this.</strong>  See <a href="#clink.argmatcher">clink.argmatcher</a> for more information.</p><p class="desc">Creates a new parser and adds <span class="arg">...</span> to it.</p><pre class="language-lua"><code>-- Deprecated form:
+local parser = clink.arg.new_parser(
+&nbsp; { "abc", "def" },       -- arg position 1
+&nbsp; { "ghi", "jkl" },       -- arg position 2
+&nbsp; "--flag1", "--flag2"    -- flags
+)
+
+-- Replace with form:
+local parser = clink.argmatcher()
+:addarg("abc", "def")               -- arg position 1
+:addarg("ghi", "jkl")               -- arg position 2
+:addflags("--flag1", "--flag2")     -- flags</code></pre></div></div><hr/>
+<div class="function"><div class="header"> <div class="name"><a name="clink.arg.register_parser">clink.arg.register_parser</a></div> <div class="signature">( <span class="arg_name">cmd</span>:string, <span class="arg_name">parser</span>:table ) : table</div></div><div class="body"><p class="desc"><strong>Deprecated; don't use this.</strong>  See <a href="#clink.argmatcher">clink.argmatcher</a> for more information.</p><p class="desc">Adds <span class="arg">parser</span> to the first argmatcher for <span class="arg">cmd</span>.  This behaves similarly to v0.4.8, but not identically.  The Clink schema has changed significantly enough that there is no direct 1:1 translation.  Calling <code>clink.arg.register_parser</code> repeatedly with the same command to merge parsers is not supported anymore.</p><pre class="language-lua"><code>-- Deprecated form:
+local parser1 = clink.arg.new_parser("abc", "def")
+local parser2 = clink.arg.new_parser("ghi", "jkl")
+clink.arg.register_parser("foo", parser1)
+clink.arg.register_parser("foo", parser2)
+
+-- Replace with new form:
+clink.argmatcher("foo"):addarg(parser1, parser2)
+
+-- Warning:  Note that the following are NOT the same as above!
+-- This replaces parser1 with parser2:
+clink.argmatcher("foo"):addarg(parser1)
+clink.argmatcher("foo"):addarg(parser2)
+-- This uses only parser2 if/when parser1 finishes parsing args:
+clink.argmatcher("foo"):addarg(parser1):addarg(parser2)</code></pre></div></div><hr/>
+<div class="function"><div class="header"> <div class="name"><a name="clink.is_match">clink.is_match</a></div> <div class="signature">( <span class="arg_name">needle</span>:string, <span class="arg_name">candidate</span>:string ) : boolean</div></div><div class="body"><p class="desc"><strong>Deprecated; don't use this.</strong>  See <a href="#clink.generator">clink.generator</a> for more information.</p><p class="desc">This returns true if <span class="arg">needle</span> is a prefix of <span class="arg">candidate</span> with a case insensitive comparison.</p><p class="desc"> Normally in Clink v1.x and higher the <span class="arg">needle</span> will be an empty string because the generators are no longer responsible for filtering matches.  The match pipeline itself handles that internally now.</p></div></div><hr/>
+<div class="function"><div class="header"> <div class="name"><a name="clink.match_display_filter">clink.match_display_filter</a></div> <div class="signature">function variable</div></div><div class="body"><p class="desc"><strong>Deprecated; don't use this.</strong>  See <a href="#clink.ondisplaymatches">clink.ondisplaymatches</a> for more information.</p><p class="desc">A match generator can set this varible to a filter function that is called before displaying matches.  It is reset every time match generation is invoked.  The filter function receives table argument containing the matches that are going to be displayed, and it returns a table filtered as required by the match generator.</p><p class="desc"> See <a href="#filteringthematchdisplay">Filtering the Match Display</a> for more information.</p></div></div><hr/>
+<div class="function"><div class="header"> <div class="name"><a name="clink.match_display_filter">clink.match_display_filter</a></div> <div class="signature">function variable</div></div><div class="body"><p class="desc"><strong>Deprecated; don't use this.</strong>  See <a href="#builder:addmatch">builder:addmatch</a> for more information.</p><p class="desc">This is no longer used.</p><pre class="language-lua"><code>clink.match_display_filter = function(matches)
+&nbsp; -- Transform matches.
+&nbsp; return matches
+end</code></pre></div></div><hr/>
+<div class="function"><div class="header"> <div class="name"><a name="clink.matches_are_files">clink.matches_are_files</a></div> <div class="signature">( [<span class="arg_name">files</span>:boolean] ) : nil</div></div><div class="body"><p class="desc"><strong>Deprecated; don't use this.</strong>  See <a href="#builder:addmatch">builder:addmatch</a> for more information.</p><p class="desc">This is no longer needed, because now it's inferred from the match type when adding matches.</p></div></div><hr/>
+<div class="function"><div class="header"> <div class="name"><a name="clink.prompt.register_filter">clink.prompt.register_filter</a></div> <div class="signature">( <span class="arg_name">filter_func</span>:function, [<span class="arg_name">priority</span>:integer] ) : table</div></div><div class="body"><p class="desc"><strong>Deprecated; don't use this.</strong>  See <a href="#clink.promptfilter">clink.promptfilter</a> for more information.</p><p class="desc">Registers a prompt filter function.  The capabilities are the same as before but the syntax is changed.</p><pre class="language-lua"><code>-- Deprecated form:
+function foo_prompt()
+&nbsp; clink.prompt.value = "FOO "..clink.prompt.value.." >>"
+&nbsp; --return true  -- Returning true stops further filtering.
+end
+clink.prompt.register_filter(foo_prompt, 10)
+
+-- Replace with new form:
+local foo_prompt = clink.promptfilter(10)
+function foo_prompt:filter(prompt)
+&nbsp; return "FOO "..prompt.." >>" --,false  -- Adding ,false stops further filtering.
+end</code></pre></div></div><hr/>
+<div class="function"><div class="header"> <div class="name"><a name="clink.register_match_generator">clink.register_match_generator</a></div> <div class="signature">( <span class="arg_name">func</span>:function, <span class="arg_name">priority</span>:integer ) : nil</div></div><div class="body"><p class="desc"><strong>Deprecated; don't use this.</strong>  See <a href="#clink.generator">clink.generator</a> for more information.</p><p class="desc">Registers a generator function for producing matches.  This behaves similarly to v0.4.8, but not identically.  The Clink schema has changed significantly enough that there is no direct 1:1 translation; generators are called at a different time than before and have access to more information than before.</p><pre class="language-lua"><code>-- Deprecated form:
+local function match_generator_func(text, first, last)
+&nbsp; -- `text` is the word text.
+&nbsp; -- `first` is the index of the beginning of the end word.
+&nbsp; -- `last` is the index of the end of the end word.
+&nbsp; -- `clink.add_match()` is used to add matches.
+&nbsp; -- return true if handled, or false to let another generator try.
+end
+clink.register_match_generator(match_generator_func, 10)
+
+-- Replace with new form:
+local g = clink.generator(10)
+function g:generate(line_state, match_builder)
+&nbsp; -- `line_state` is a <a href="#line">line</a> object.
+&nbsp; -- `match_builder:<a href="#builder:addmatch">addmatch</a>()` is used to add matches.
+&nbsp; -- return true if handled, or false to let another generator try.
+end</code></pre></div></div><hr/>
+<div class="function"><div class="header"> <div class="name"><a name="clink.slash_translation">clink.slash_translation</a></div> <div class="signature">( <span class="arg_name">type</span>:integer ) : nil</div></div><div class="body"><p class="desc"><strong>Deprecated; don't use this.</strong>  See <a href="#clink.translateslashes">clink.translateslashes</a> for more information.</p><p class="desc">Controls how Clink will translate the path separating slashes for the current path being completed. Values for <span class="arg">type</span> are;</br> -1 - no translation</br> 0 - to backslashes</br> 1 - to forward slashes</p></div></div><hr/>
+<div class="function"><div class="header"> <div class="name"><a name="rl_state">rl_state</a></div> <div class="signature">table variable</div></div><div class="body"><p class="desc"><strong>Deprecated; don't use this.</strong>  See <a href="#line">line</a> for more information.</p><p class="desc">This is an obsolete global variable that was set while running match generators.  It has been superseded by the <a href="#line">line</a> type parameter passed into match generator functions when using the new <a href="#clink.generator">clink.generator</a> API.</p></div></div><hr/>
 </div>
         </div>
         <div class="section" id="changes">
 <h1 id="changes">Changes</h1>
-<h2 id="releases-from-chrisant996clink-fork">Releases from <a href="https://github.com/chrisant996/clink">chrisant996/clink</a> fork</h2>
-<h3 id="v129">v1.2.9</h3>
+<h3 id="releases-from-chrisant996clink-fork">Releases from <a href="https://github.com/chrisant996/clink">chrisant996/clink</a> fork</h3>
+<h4 id="v1210">v1.2.10</h4>
+<ul>
+<li>Added asynchronous prompt filtering -- scripts can use this to do work in the background (e.g. <code>git status</code>) and refresh the prompt when finished.<ul>
+<li>Added <code>clink.promptcoroutine()</code> function to allow a prompt filter to do some work in the background.</li>
+<li>Added <code>io.popenyield()</code> function to allow a coroutine to yield until the command&#39;s complete output is ready.</li>
+<li>Added <code>prompt.async</code> setting that can disable asynchronous prompt filtering if preferred.</li>
+</ul>
+</li>
+<li>Log error codes for failures during <code>clink inject</code>.</li>
+<li>Clarified help text for <code>clink autorun</code> (per <a href="https://github.com/chrisant996/clink/issues/122">#122</a>).</li>
+<li>Documentation clarifications and reorganization.</li>
+<li>Fixed <code>clink</code> and <code>history</code> aliases getting lost after exiting a nested Clink instance.</li>
+<li>Fixed some input keys accidentally handled by the OS after certain Lua code is run.</li>
+<li>Fixed <a href="https://github.com/chrisant996/clink/issues/124">#124</a>; <code>onfiltermatches()</code> receives one fewer matches than it should.</li>
+<li>Fixed <a href="https://github.com/chrisant996/clink/issues/123">#123</a>; Failed to inject (Host validation failed).</li>
+<li>Fixed <a href="https://github.com/chrisant996/clink/issues/117">#117</a>; Setup causes &quot;System Error&quot;.</li>
+</ul>
+<h4 id="v129">v1.2.9</h4>
 <ul>
 <li>Added detection for possible antivirus interference when injecting Clink.</li>
 <li>Ignore duplicate scripts paths when loading scripts.</li>
 <li>Fixed <a href="https://github.com/chrisant996/clink/issues/118">#118</a>; inputrc is not read from state directory (regression introduced in v1.0.0).</li>
 </ul>
-<h3 id="v128">v1.2.8</h3>
+<h4 id="v128">v1.2.8</h4>
 <ul>
 <li>Fixed <code>...\</code> or <code>.../</code> to change directories (path separator after several dots).</li>
 <li>Fixed <code>/dirname/</code> to change directories (forward slashes when a directory is the only thing in the input line).</li>
 <li>Fixed <a href="https://github.com/chrisant996/clink/issues/114">#114</a>; &quot;Clink already loaded in process&quot; error when autorun is installed for both Current User and All Users.</li>
 <li>Fixed <a href="https://github.com/chrisant996/clink/issues/113">#113</a>; forward slash translation didn&#39;t work with the <code>cd</code> command.</li>
 </ul>
-<h3 id="v127">v1.2.7</h3>
+<h4 id="v127">v1.2.7</h4>
 <ul>
 <li>Fixed <a href="https://github.com/chrisant996/clink/issues/113">#113</a>; <code>clink.slash_translation()</code> had been removed (regression introduced in v1.0.0).<ul>
 <li>The new <code>match.translate_slashes</code> setting controls the default behavior for slash translation for completion matches.</li>
@@ -3128,14 +3260,14 @@ string.matchlen("abx", "abx")       -- returns -1</code></pre></div></div><hr/>
 </ul>
 </li>
 </ul>
-<h3 id="v126">v1.2.6</h3>
+<h4 id="v126">v1.2.6</h4>
 <ul>
 <li>Fixed tilde expansion for directory by itself; now <code>~\</code> can change the working directory to the <code>~</code> directory.</li>
 <li>Fixed pagination when displaying completions that take more than 1 line to display.</li>
 <li>Fixed inserting directory match completions when a Lua script didn&#39;t include a trailing path separator in the directory match.</li>
 <li>Fixed <a href="https://github.com/chrisant996/clink/issues/111">#111</a>; <code>..</code> completion is different from bash (regression introduced in v1.0.0).</li>
 </ul>
-<h3 id="v125">v1.2.5</h3>
+<h4 id="v125">v1.2.5</h4>
 <ul>
 <li>Added <code>os.expandenv()</code> function to expand environment variables in a string.</li>
 <li>Added <code>console.cellcount()</code> function to count the cells a string will use when displayed.</li>
@@ -3146,7 +3278,7 @@ string.matchlen("abx", "abx")       -- returns -1</code></pre></div></div><hr/>
 <li>Fixed <code>clink inject --profile</code> to use correct log file name while initially injecting.</li>
 <li>Fixed Clink autorun to be more compatible with Cmder (<a href="https://github.com/cmderdev/cmder/issues/2536">Cmder #2536</a>).</li>
 </ul>
-<h3 id="v124">v1.2.4</h3>
+<h4 id="v124">v1.2.4</h4>
 <ul>
 <li>Added support for <kbd>Shift</kbd>+<kbd>Arrows</kbd> to select text and typing to replace selected text.</li>
 <li>Added optional argument to <code>word_classifications:classifyword()</code> and <code>word_classifications:applycolor()</code> to allow only applying color where another color hasn&#39;t yet been applied.</li>
@@ -3159,7 +3291,7 @@ string.matchlen("abx", "abx")       -- returns -1</code></pre></div></div><hr/>
 <li>Fixed <a href="https://github.com/chrisant996/clink/issues/107">#107</a>; autorun reports inject failures (regression introduced in v1.2.3).</li>
 <li>Fixed <a href="https://github.com/chrisant996/clink/issues/106">#106</a>; history missing <code>--bare</code> option (regression introduced in v1.2.3).</li>
 </ul>
-<h3 id="v123">v1.2.3</h3>
+<h4 id="v123">v1.2.3</h4>
 <ul>
 <li>Added <code>history.sticky_search</code> setting:  when enabled, reusing a history line does not add the reused line to the end of the history, and it leaves the history search position on the reused line so next/prev history can continue from there (e.g. replaying commands via <kbd>Up</kbd> several times then <kbd>Enter</kbd>, <kbd>Down</kbd>, <kbd>Enter</kbd>, etc).</li>
 <li>Added failure reporting and logging when <code>clink inject</code> fails.</li>
@@ -3170,11 +3302,11 @@ string.matchlen("abx", "abx")       -- returns -1</code></pre></div></div><hr/>
 <li>Fixed incremental search in the History popup list to search in reverse order (bottom to top).</li>
 <li>Fixed <code>clink-popup-history</code> to set the history search position like other history search commands do, so that it plays well with the <code>history.sticky_search</code> setting.</li>
 </ul>
-<h3 id="v122">v1.2.2</h3>
+<h4 id="v122">v1.2.2</h4>
 <ul>
 <li>Added <code>%CLINK_HISTORY_LABEL%</code> environment variable to use a different master history file (fixes <a href="https://github.com/chrisant996/clink/issues/99">#99</a>).</li>
 </ul>
-<h3 id="v121">v1.2.1</h3>
+<h4 id="v121">v1.2.1</h4>
 <ul>
 <li>Added Troubleshooting Tips section in the documentation.</li>
 <li>Added backward compatibility for <code>clink set</code> with v0.4.9.  Old setting names and values are not documented, but are automatically mapped to the appropriate new setting(s).  This was done so that suggestions in old web sites and posts can usually continue to work, to reduce confusion and support burden.</li>
@@ -3182,51 +3314,51 @@ string.matchlen("abx", "abx")       -- returns -1</code></pre></div></div><hr/>
 <li>Fixed <a href="https://github.com/chrisant996/clink/issues/96">#96</a>; wrong setting string (the name of a setting was accidentally truncated).</li>
 <li>Fixed some slightly inaccurate/incomplete migration from old settings to new settings.</li>
 </ul>
-<h3 id="v12">v1.2</h3>
+<h4 id="v12">v1.2</h4>
 <ul>
 <li>First official release from <a href="https://github.com/chrisant996/clink">chrisant996/clink</a> fork.</li>
 </ul>
-<h3 id="v1149">v1.1.49</h3>
+<h4 id="v1149">v1.1.49</h4>
 <ul>
 <li>Added <code>clink.classifier()</code> to enable coloring the input line independently from argmatchers.</li>
 <li>Added <code>word_classifications:applycolor()</code> to apply SGR escape codes anywhere in the input line.</li>
 <li>Removed <code>word_classifications:iswordclassified()</code>.</li>
 <li>Fixed the Product Version string in the binary file version resources.</li>
 </ul>
-<h3 id="v1148">v1.1.48</h3>
+<h4 id="v1148">v1.1.48</h4>
 <ul>
 <li>Added <code>clink.getansihost()</code> function to get Clink&#39;s best guess who will process ANSI escape codes (can be useful for avoiding 256 bit and 24 bit color codes, for example).</li>
 <li>Added detection for being hosted in ConsoleZ.</li>
 <li>Fixed <a href="https://github.com/chrisant996/clink/issues/20">#20</a>; <code>set /p VAR=&quot;&quot;</code> shows the normal command prompt text instead of empty prompt text.</li>
 </ul>
-<h3 id="v1147">v1.1.47</h3>
+<h4 id="v1147">v1.1.47</h4>
 <ul>
 <li>Added default key binding for <kbd>Ctrl</kbd>+<kbd>Space</kbd> to invoke <code>old-menu-complete</code>, which is the most similar to CMD&#39;s standard <kbd>Tab</kbd> behavior.</li>
 <li>Fixed <code>search-ignore-case</code> config variable to be on by default.</li>
 </ul>
-<h3 id="v1146">v1.1.46</h3>
+<h4 id="v1146">v1.1.46</h4>
 <ul>
 <li>Added <code>rl.setvariable()</code> to temporarily override the value of a Readline config variable.</li>
 <li>The completion commands now also expand tilde by itself (<code>~</code>), in addition to tilde followed by a path separator (<code>~\etc</code>).</li>
 <li>Fixed <a href="https://github.com/chrisant996/clink/issues/94">#94</a>; setting <code>history.save</code> to False also disables interactive history in subsequent sessions.</li>
 </ul>
-<h3 id="v1145">v1.1.45</h3>
+<h4 id="v1145">v1.1.45</h4>
 <ul>
 <li>Fixed <a href="https://github.com/chrisant996/clink/issues/93">#93</a>; stdout is sometimes broken by Cmder init.bat.</li>
 </ul>
-<h3 id="v1144">v1.1.44</h3>
+<h4 id="v1144">v1.1.44</h4>
 <ul>
 <li>Added <code>clink.getsession()</code>.</li>
 <li>Added <code>%CLINK_NOAUTORUN%</code> which overrides automatic inject when Clink is installed for autorun.</li>
 <li>Fixed <a href="https://github.com/chrisant996/clink/issues/92">#92</a>; <code>clink-popup-history</code> and similar commands not working with ConEmu and Cmder (regression introduced in v1.1.25).</li>
 </ul>
-<h3 id="v1143">v1.1.43</h3>
+<h4 id="v1143">v1.1.43</h4>
 <ul>
 <li>Added <code>clink history --diag</code> flag that prints diagnostic information while performing history operations.</li>
 <li>Minor optimization in <code>clink history</code> when printing the full list of history items.</li>
 <li>Fixed <code>clink history compact</code> so it actually performs compaction.</li>
 </ul>
-<h3 id="v1142">v1.1.42</h3>
+<h4 id="v1142">v1.1.42</h4>
 <ul>
 <li>Added <code>clink history --bare</code> flag to omit history item numbers.</li>
 <li>Added several Lua functions:<ul>
@@ -3244,14 +3376,14 @@ string.matchlen("abx", "abx")       -- returns -1</code></pre></div></div><hr/>
 <li>Fixed backwards return value from <code>rl.invokecommand()</code>.</li>
 <li>Fixed console input/output modes across <code>luafunc:</code> key bindings, in case the Lua functions spawn a process that alters the console mode without restoring it.</li>
 </ul>
-<h3 id="v1141">v1.1.41</h3>
+<h4 id="v1141">v1.1.41</h4>
 <ul>
 <li>Added <code>terminal.adjust_cursor_style</code> setting as a workaround to avoid interfering with the Windows 10 Cursor Shape console setting.  There are several trade-offs, though.</li>
 <li>Added <code>rl_buffer:refreshline()</code> function to redraw the input line, e.g. in case something has written over it.</li>
 <li>Added <code>os.getpid()</code> function to get the process ID, intended mainly to help salt unique resource names.</li>
 <li>Added <code>clink.onfiltermatches()</code> so scripts can register a callback function to run after Clink generates matches and before it displays them.</li>
 </ul>
-<h3 id="v1140">v1.1.40</h3>
+<h4 id="v1140">v1.1.40</h4>
 <ul>
 <li>Added a group of <code>clink-complete-numbers</code> commands that do completion for numbers from the console screen, bound to <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>N</kbd> by default.</li>
 <li>Added <code>rl.getlastcommand()</code> function that returns the name of the last command invoked by key bindings.</li>
@@ -3260,7 +3392,7 @@ string.matchlen("abx", "abx")       -- returns -1</code></pre></div></div><hr/>
 <li>Fixed various <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>whatever</kbd> combinations (regression introduced in v1.1.39).</li>
 <li>Fixed <code>rl.setmatches()</code> when the input line is not empty and <code>clink.colorize_input</code> is enabled.</li>
 </ul>
-<h3 id="v1139">v1.1.39</h3>
+<h4 id="v1139">v1.1.39</h4>
 <ul>
 <li>Added support for many more key bindings, such as <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+Letter keys.</li>
 <li>Added <code>terminal.differentiate_keys</code> setting that when enabled allows binding <kbd>Ctrl</kbd> + <kbd>H</kbd> or <kbd>I</kbd> or <kbd>M</kbd> or <kbd>[</kbd> separately from <kbd>Backspace</kbd>, <kbd>Tab</kbd>, <kbd>Return</kbd>, or <kbd>Escape</kbd>.</li>
@@ -3270,53 +3402,53 @@ string.matchlen("abx", "abx")       -- returns -1</code></pre></div></div><hr/>
 <li>Fixed <code>terminal.use_altgr_substitute</code> to only affect <kbd>AltGr</kbd> substitute key combinations (it had always broken the <kbd>RightAlt</kbd> key in general on other keyboard layouts).</li>
 <li>Fixed a benign issue with the console input mode in <code>clink echo</code>.</li>
 </ul>
-<h3 id="v1138">v1.1.38</h3>
+<h4 id="v1138">v1.1.38</h4>
 <ul>
 <li>Fixed <a href="https://github.com/chrisant996/clink/issues/84">#84</a>; added <code>terminal.use_altgr_substitute</code> setting.</li>
 <li>Fixed <a href="https://github.com/chrisant996/clink/issues/80">#80</a>; clink.log is not deleted when Cmder injects Clink.</li>
 </ul>
-<h3 id="v1137">v1.1.37</h3>
+<h4 id="v1137">v1.1.37</h4>
 <ul>
 <li>Fixed copy to clipboard (it never cleared the clipboard!).</li>
 <li>Fixed <a href="https://github.com/chrisant996/clink/issues/82">#82</a>; added two new <code>clink.paste_crlf</code> modes: <code>ampersand</code> replaces newlines with ampersands, and <code>crlf</code> pastes newlines as-is and executes any commands ending in a newline.</li>
 <li>Fixed <a href="https://github.com/chrisant996/clink/issues/69">#69</a>; space in the prompt disappears after enter echo: added support for CJK codepages.</li>
 </ul>
-<h3 id="v1136">v1.1.36</h3>
+<h4 id="v1136">v1.1.36</h4>
 <ul>
 <li>Fixed <a href="https://github.com/chrisant996/clink/issues/79">#79</a>; Issue with United States - international keyboard layout (regression introduced in v1.1.0).</li>
 <li>Fixed <a href="https://github.com/chrisant996/clink/issues/78">#78</a>; crash when history file contains a line longer than 8192 characters (regression introduced in v1.1.2-alpha).</li>
 </ul>
-<h3 id="v1135">v1.1.35</h3>
+<h4 id="v1135">v1.1.35</h4>
 <ul>
 <li>Fixed when the <code>mark-directories</code> inputrc variable is <code>off</code> (regression introduced in v1.1.1-alpha).</li>
 <li>Fixed Lua reading from stdin, especially in the Lua debugger (regression introduced in v1.1.25).</li>
 <li>Fixed exponential cost performance bug in Readline when removing duplicate matches.</li>
 </ul>
-<h3 id="v1134">v1.1.34</h3>
+<h4 id="v1134">v1.1.34</h4>
 <ul>
 <li>Fixed copying to clipboard (CF_UNICODETEXT was put on the clipboard correctly, but CF_TEXT was empty and should have been omitted to let Windows automatically convert it from the Unicode text).</li>
 </ul>
-<h3 id="v1133">v1.1.33</h3>
+<h4 id="v1133">v1.1.33</h4>
 <ul>
 <li>Make the &quot;replacing arglink&quot; warning message a little more informative, and write a lua traceback to the Clink log file.</li>
 <li>Fixed <a href="https://github.com/chrisant996/clink/issues/77">#77</a>; with ConsoleZ scrolling does not always work.</li>
 <li>Fixed <a href="https://github.com/chrisant996/clink/issues/76">#76</a>; cannot <code>cd</code> up multiple directories normally.</li>
 </ul>
-<h3 id="v1132">v1.1.32</h3>
+<h4 id="v1132">v1.1.32</h4>
 <ul>
 <li>Added support for non-standard escape codes to set the window title or print environment variables.  Depending on the <code>terminal.emulation</code> setting, the behavior is slightly different.  When <code>emulate</code> Clink processes the escape codes.  When <code>native</code> with ConEmu (and Clink) the escape codes are passed to ConEmu, except that Clink processes the environment variable codes in prompt strings.  When <code>native</code> with other terminals, Clink preprocesses the title and environment variable escape codes in prompt strings, but passes the escape codes to the terminal outside of prompt strings.</li>
 <li>Fixed <a href="https://github.com/chrisant996/clink/issues/67">#67</a>; AutoRun interferes with Cmder.</li>
 </ul>
-<h3 id="v1131">v1.1.31</h3>
+<h4 id="v1131">v1.1.31</h4>
 <ul>
 <li>Fixed <a href="https://github.com/chrisant996/clink/issues/74">#74</a>; clink gets confused by non-standard ConEmu escape codes.</li>
 <li>Fixed <a href="https://github.com/chrisant996/clink/issues/73">#73</a>; <code>exec.space_prefix</code> and other settings defined in Lua scripts don&#39;t take effect until second input line (regression introduced in v1.1.4).</li>
 </ul>
-<h3 id="v1130">v1.1.30</h3>
+<h4 id="v1130">v1.1.30</h4>
 <ul>
 <li>Fixed history compacting on x86 (regression introduced in v1.1.2-alpha).</li>
 </ul>
-<h3 id="v1129">v1.1.29</h3>
+<h4 id="v1129">v1.1.29</h4>
 <ul>
 <li>Added <code>clink installscripts</code> and <code>clink uninstallscripts</code> to make it easy for package managers like Scoop to install/uninstall script packages for use with Clink.  The installed script paths are stored in the registry for the current user.</li>
 <li>Fixed <code>bold</code> vs <code>bright</code> colors to more accurately follow generally accepted ANSI escape code conventions:<ul>
@@ -3330,24 +3462,24 @@ string.matchlen("abx", "abx")       -- returns -1</code></pre></div></div><hr/>
 <li>Fixed the <code>clink --profile</code> flag (regression introduced in v1.1.10).</li>
 <li>Fixed <code>clink info</code> to accurately report the script dirs (it didn&#39;t account for the <code>clink.path</code> setting correctly).</li>
 </ul>
-<h3 id="v1128">v1.1.28</h3>
+<h4 id="v1128">v1.1.28</h4>
 <ul>
 <li>Renamed the <code>log.rl_terminal</code> setting to <code>debug.log_terminal</code>; it has already been repeatedly very useful in multiple was since it was added, so it stays.</li>
 <li>Fixed <a href="https://github.com/chrisant996/clink/issues/70">#70</a>; ctrl+c not working (regression introduced in v1.1.25).</li>
 </ul>
-<h3 id="v1127">v1.1.27</h3>
+<h4 id="v1127">v1.1.27</h4>
 <ul>
 <li>Added <code>color.argmatcher</code> setting which, when set, is used to color a command name if it has an associated argmatcher (this supersedes <code>color.cmd</code>, <code>color.doskey</code>, and <code>color.input</code>).  By default it&#39;s not set.</li>
 <li>Added <code>log.rl_terminal</code> setting which logs all terminal input and output for Readline (this setting may be renamed or removed in the future).</li>
 </ul>
-<h3 id="v1126">v1.1.26</h3>
+<h4 id="v1126">v1.1.26</h4>
 <ul>
 <li>Added <code>rl.invokecommand()</code> which can invoke a Readline command from inside a &quot;luafunc:&quot; key binding.</li>
 <li>Added <code>rl.setmatches()</code> which can override match completions from inside a &quot;luafunc:&quot; key binding.</li>
 <li>Worked around UTF8 key binding problem with Readline which had been causing some meta key bindings (M-x, M-C-x, etc) to sometimes produce garbled key bindings and garbled entries in <code>clink-show-help</code> (<kbd>Alt</kbd>+<kbd>H</kbd>).</li>
 <li>Fixed crash if &quot;luafunc:&quot; key binding macro refers to a symbol that doesn&#39;t exist.</li>
 </ul>
-<h3 id="v1125">v1.1.25</h3>
+<h4 id="v1125">v1.1.25</h4>
 <ul>
 <li>Added <code>clink-find-conhost</code> command that, when in a default (conhost) console window, is equivalent to picking &quot;Find...&quot; from the system menu.</li>
 <li>Added <code>clink-mark-conhost</code> command that, when in a default (conhost) console window, is equivalent to picking &quot;Mark&quot; from the system menu.</li>
@@ -3358,7 +3490,7 @@ string.matchlen("abx", "abx")       -- returns -1</code></pre></div></div><hr/>
 <li>Fixed popup window location and size when using Windows Terminal.</li>
 <li>Fixed input coloring after <code>operate-and-get-next</code>; also fixes brief flicker of incorrect coloring whenever the input line is modified.</li>
 </ul>
-<h3 id="v1124">v1.1.24</h3>
+<h4 id="v1124">v1.1.24</h4>
 <ul>
 <li><code>auto</code> for <code>terminal.emulation</code> now uses native VT support on Windows 10 build 15063 and higher, unless the HKCU\Console\ForceV2 regkey is 0.</li>
 <li>Special quote handling now enables <code>&quot;dir\&quot;fi</code> to complete to <code>&quot;dir\file&quot;</code>.  CMD simply strips quotes during completion, and now Clink behaves similarly.</li>
@@ -3372,13 +3504,13 @@ string.matchlen("abx", "abx")       -- returns -1</code></pre></div></div><hr/>
 <li>Fixed completion in some circumstances.  Readline and Clink didn&#39;t always agree on where the word breaks were; now Clink always tells Readline where the word breaks are (so that completion, input colorization, and lua scripts can all work properly and consistently).</li>
 <li>Fixed 256 color ANSI codes.</li>
 </ul>
-<h3 id="v1123">v1.1.23</h3>
+<h4 id="v1123">v1.1.23</h4>
 <ul>
 <li>Fixed <a href="https://github.com/chrisant996/clink/issues/57">#57</a>; slashes not normalized in some cases.</li>
 <li>Fixed <a href="https://github.com/chrisant996/clink/issues/45">#45</a>; interaction between <code>history.dupe_mode</code>=<code>erase_prev</code> and <code>history.shared</code>=<code>false</code>.</li>
 <li>Fixed <code>menu-complete-wraparound</code> when off and there&#39;s only 1 match.</li>
 </ul>
-<h3 id="v1122">v1.1.22</h3>
+<h4 id="v1122">v1.1.22</h4>
 <ul>
 <li>Added <code>menu-complete-wraparound</code> (on by default) that controls whether completion commands wrap around when cycling past an end (affects popup windows as well).</li>
 <li>Fixed match completion getting stuck (regression introduced in v1.1.19).</li>
@@ -3386,7 +3518,7 @@ string.matchlen("abx", "abx")       -- returns -1</code></pre></div></div><hr/>
 <li>Fixed <code>clink-show-help</code> (<kbd>Alt</kbd>+<kbd>H</kbd>) so it&#39;s able to list <code>C-@</code> bindings.</li>
 <li>Fixed inconsistent mark color.</li>
 </ul>
-<h3 id="v1121">v1.1.21</h3>
+<h4 id="v1121">v1.1.21</h4>
 <ul>
 <li>Added <code>clink.oninject()</code> so scripts can register a callback function to run when Clink is injected into CMD.</li>
 <li>Added <code>console.linehascolor()</code> function that returns whether the specified line contains any of the specified colors.</li>
@@ -3394,7 +3526,7 @@ string.matchlen("abx", "abx")       -- returns -1</code></pre></div></div><hr/>
 <li>Fixed doskey alias parsing for match generators and input line coloring (Clink had been using slightly different parsing rules than CMD does).</li>
 <li>Fixed the &quot;-- More --&quot; prompt while listing key bindings; <kbd>Esc</kbd> didn&#39;t quit, and unexpected keys weren&#39;t ignored.</li>
 </ul>
-<h3 id="v1120">v1.1.20</h3>
+<h4 id="v1120">v1.1.20</h4>
 <ul>
 <li>Now you can bind Lua functions to keys via &quot;luafunc:&quot; macros!  Added new <code>rl_buffer</code> type that gets passed to the Lua function.</li>
 <li>Added a group of <code>console</code> Lua APIs intended mainly for use by Lua function key bindings (e.g. <code>console.scroll()</code>).</li>
@@ -3407,12 +3539,12 @@ string.matchlen("abx", "abx")       -- returns -1</code></pre></div></div><hr/>
 <li>Fixed environment variable completion (regression introduced in v1.1.19).</li>
 <li>Fixed Cmder startup (regression introduced in v1.1.17).  Cmder expects to be able to replace Clink v0.4.9&#39;s clink.lua file, but there is no such thing anymore in newer versions of Clink.  To be properly backwardly compatible with Clink v0.4.9 requires loading clink.lua (if it exists) from the first script directory listed by <code>clink info</code>, and ignoring clink.lua files in all other script directories.</li>
 </ul>
-<h3 id="v1119">v1.1.19</h3>
+<h4 id="v1119">v1.1.19</h4>
 <ul>
 <li>Improved responsiveness while typing:  matches are collected only on demand, instead of always while typing.  This makes it possible to always support match completion for UNC paths.</li>
 <li>Fixed <a href="https://github.com/chrisant996/clink/issues/50">#50</a>; <kbd>Alt</kbd>+<kbd>H</kbd> could warn about likely mistakes in key bindings.</li>
 </ul>
-<h3 id="v1118">v1.1.18</h3>
+<h4 id="v1118">v1.1.18</h4>
 <ul>
 <li>The input text now has context sensitive coloring based on the argmatchers. It&#39;s on by default and can be turned off with <code>clink set clink.colorize_input false</code>.</li>
 <li>Updated the Readline library to 8.1.</li>
@@ -3423,13 +3555,13 @@ string.matchlen("abx", "abx")       -- returns -1</code></pre></div></div><hr/>
 <li>Fixed restoring color after pager when showing help.</li>
 <li>Fixed <code>clink set</code> match completions for color settings.</li>
 </ul>
-<h3 id="v1117">v1.1.17</h3>
+<h4 id="v1117">v1.1.17</h4>
 <ul>
 <li>Added <code>os.getbatterystatus()</code> function that gets battery status information much faster than launching <code>wmic</code>.</li>
 <li>Fixed <a href="https://github.com/chrisant996/clink/issues/44">#44</a>; Path completion doesn&#39;t work with <code>cd /d</code>.</li>
 <li>Fixed loading scripts to ignore loading clink.lua, so that loading scripts behaves like Clink v0.4.9.</li>
 </ul>
-<h3 id="v1116">v1.1.16</h3>
+<h4 id="v1116">v1.1.16</h4>
 <ul>
 <li>Added <code>match.ignore_accent</code> setting (enabled by default) that ignores Latin alphabet diacriticals when completing matches (e.g. <code>ä</code> matches <code>a</code>, <code>ı</code> matches <code>i</code>, <code>ł</code> matches <code>l</code>, etc).</li>
 <li>Fixed <a href="https://github.com/chrisant996/clink/issues/42">#42</a>; history lines are split on special characters.</li>
@@ -3437,7 +3569,7 @@ string.matchlen("abx", "abx")       -- returns -1</code></pre></div></div><hr/>
 <li>Fixed Readline bug inserting dir matches; <code>\win_  foo</code> (cursor at <code>_</code>) would become <code>\Windows\\_  foo</code>.</li>
 <li>Fixed the <code>quoted-insert</code> command to insert just <code>\x1b</code> when <kbd>ESC</kbd> is pressed.</li>
 </ul>
-<h3 id="v1115">v1.1.15</h3>
+<h4 id="v1115">v1.1.15</h4>
 <ul>
 <li>Migrating settings now immediately writes a new settings file, instead of waiting until a setting is changed.</li>
 <li>Added support to detect when running in Windows Terminal and use native terminal support (which enables things like Xterm 256 and 24-bit color support).</li>
@@ -3448,22 +3580,22 @@ string.matchlen("abx", "abx")       -- returns -1</code></pre></div></div><hr/>
 <li>Fixed the <code>clink.print()</code> Lua function so it also works during loading scripts and during prompt filtering.</li>
 <li>Fixed the Readline input text display getting garbled if the filtered prompt includes Xterm&#39;s OSC window title code (<code>\x1b]0;text\x07</code>). Clink doesn&#39;t support that escape code, but at no longer garbles the input text if that escape code is present.</li>
 </ul>
-<h3 id="v1114">v1.1.14</h3>
+<h4 id="v1114">v1.1.14</h4>
 <ul>
 <li>Migrate settings and history from an old version of Clink, if present.  This only happens if the new-version Clink settings or history files don&#39;t exist.  (Deleting an existing new-version Clink settings or history file will cause migration to happen again.)</li>
 <li>Added <code>color.prompt</code> setting for backward compatibility with Clink v0.4.x.</li>
 </ul>
-<h3 id="v1113">v1.1.13</h3>
+<h4 id="v1113">v1.1.13</h4>
 <ul>
 <li>Fixed <code>clink.arg.register_parser</code> backward compatibility.</li>
 </ul>
-<h3 id="v1112">v1.1.12</h3>
+<h4 id="v1112">v1.1.12</h4>
 <ul>
 <li>Added <code>clink.ondisplaymatches()</code> as a replacement for the deprecated <code>clink.match_display_filter</code>.  The new API is able to support popup list windows as well.</li>
 <li>Speculative possible fix for <a href="https://github.com/chrisant996/clink/issues/35">#35</a> Crash when clink on clink.bat.</li>
 <li>Fixed <a href="https://github.com/chrisant996/clink/issues/33">#33</a>; Tab autocomplete, auto-quoting paths doesn&#39;t seem to work as in Clink 0.4.9.</li>
 </ul>
-<h3 id="v1111">v1.1.11</h3>
+<h4 id="v1111">v1.1.11</h4>
 <ul>
 <li>Changed to load Lua scripts only once per session, unless forced to reload them.  This enables backward compatibility for things like <a href="https://github.com/skywind3000/z.lua">z.lua</a> which has certain features that rely on Clink only loading scripts once per session.</li>
 <li>Added <code>clink.onbeginedit()</code> so scripts can register a callback function to run each time the edit prompt is activated.</li>
@@ -3471,11 +3603,11 @@ string.matchlen("abx", "abx")       -- returns -1</code></pre></div></div><hr/>
 <li>Added <code>color.message</code> setting for the Readline message area color (e.g. the search prompt message or digit argument prompt message, etc).</li>
 <li>Fixed stray sticky <code>=</code> appended to completions after typing <code>set </code> and then typing a different command.</li>
 </ul>
-<h3 id="v1110">v1.1.10</h3>
+<h4 id="v1110">v1.1.10</h4>
 <ul>
 <li>Fixed <a href="https://github.com/chrisant996/clink/issues/32">#32</a>; hooking <code>ReadConsoleW</code> on Windows 7.</li>
 </ul>
-<h3 id="v119">v1.1.9</h3>
+<h4 id="v119">v1.1.9</h4>
 <ul>
 <li>Added backward compatibility for <code>clink.match_display_filter</code>.  The clink-completions/git.lua script uses it a lot, and that should all be working now.</li>
 <li><code>settings.add</code> adds a color setting when the type is string and the name starts with &quot;color.&quot;.</li>
@@ -3491,7 +3623,7 @@ string.matchlen("abx", "abx")       -- returns -1</code></pre></div></div><hr/>
 <li>Fixed potentially-missing trailing path separator when <code>menu-complete</code> completes a directory match (regression introduced by wildcard matching in v1.1.5).</li>
 <li>Other obscure minor fixes.</li>
 </ul>
-<h3 id="v118">v1.1.8</h3>
+<h4 id="v118">v1.1.8</h4>
 <ul>
 <li>Fixed file match completions when an argmatcher only generates flag matches.</li>
 <li>Fixed automatic inferring whether Readline should use filename completion and/or display rules (regression introduced by backward compatibility in v1.1.3-alpha).</li>
@@ -3502,7 +3634,7 @@ string.matchlen("abx", "abx")       -- returns -1</code></pre></div></div><hr/>
 </li>
 <li>Fixed backward compatibility for coloring matches (regression introduced by backward compatibility changes in v1.1.4).</li>
 </ul>
-<h3 id="v117">v1.1.7</h3>
+<h4 id="v117">v1.1.7</h4>
 <ul>
 <li>Performance improvement when displaying matches:  When enumerating files and dirs, the <code>os.globfiles</code> and <code>os.globdirs</code> functions have all the info about each file.  Now they can return that info in a table.  This frees the match display function from needing to do any further file system IO.  The performance boost is noticeable.</li>
 <li>Rewrote the color settings:  the .fg and .bg sub-settings are gone, and the main setting now uses a more natural syntax (e.g. <code>clink set color.input bright yellow</code> or <code>clink set color.modmark bright cyan on blue</code>).</li>
@@ -3511,13 +3643,13 @@ string.matchlen("abx", "abx")       -- returns -1</code></pre></div></div><hr/>
 <li>Fixed tab completion for <code>clink set <em>setting</em></code>, and also handle the new color setting syntax.</li>
 <li>Fixed confusing behavior if multiple scripts try to add settings with the same name (now the first one succeeds and the rest report errors).</li>
 </ul>
-<h3 id="v116">v1.1.6</h3>
+<h4 id="v116">v1.1.6</h4>
 <ul>
 <li>Hooked up tilde completion in the <code>cd</code>, <code>md</code>, and <code>rd</code> command argmatchers.</li>
 <li>Hooked up tilde completion with the <code>exec.enable</code> setting (&quot;~\pro&quot; matches &quot;C:\Users\myusername\program.exe&quot;).</li>
 <li>When <code>terminal.emulation</code> is <code>auto</code>, now it also detects ANSI{32|64}.DLL just like Clink 0.4.8 did.</li>
 </ul>
-<h3 id="v115">v1.1.5</h3>
+<h4 id="v115">v1.1.5</h4>
 <ul>
 <li>The <code>menu-complete</code> family of commands now support matching <code>?</code> and <code>*</code> wildcards when the <code>match.wild</code> setting is enabled.</li>
 <li>Added <code>colour.input</code> and <code>colour.modmark</code> settings for coloring Readline&#39;s input line.</li>
@@ -3539,7 +3671,7 @@ string.matchlen("abx", "abx")       -- returns -1</code></pre></div></div><hr/>
 <li>Fixed the <code>exec.cwd</code> Clink setting to default to true, so that the default behavior is consistent with how v0.4.x behaved.</li>
 <li>Fixed the <code>cd</code>, <code>md</code>, <code>rd</code>, etc argmatchers to only match one argument to be consistent with the actual command syntax.</li>
 </ul>
-<h3 id="v114">v1.1.4</h3>
+<h4 id="v114">v1.1.4</h4>
 <ul>
 <li>Automatically detect when running inside ConEmu and disable Clink&#39;s Virtual Terminal emulation.</li>
 <li>Added <code>search-ignore-case</code> inputrc variable that makes the history search commands case insensitive.</li>
@@ -3559,7 +3691,7 @@ string.matchlen("abx", "abx")       -- returns -1</code></pre></div></div><hr/>
 <li>Fixed the key binding list to correctly respect <code>completion-display-width</code>.</li>
 <li><em>No visible effect yet:  internal change that parses the input line to identify colors to use for each word (command, argument, flag, etc), but the colors aren&#39;t yet applied to the input line.</em></li>
 </ul>
-<h3 id="v113-alpha">v1.1.3-alpha</h3>
+<h4 id="v113-alpha">v1.1.3-alpha</h4>
 <ul>
 <li>Fixed argmatcher lookup to be more strict, like in Clink 0.4.9 (match exact names, or name plus an extension from %PATHEXT%).</li>
 <li>Backward compatibility:<ul>
@@ -3585,7 +3717,7 @@ string.matchlen("abx", "abx")       -- returns -1</code></pre></div></div><hr/>
 </ul>
 </li>
 </ul>
-<h3 id="v112-alpha">v1.1.2-alpha</h3>
+<h4 id="v112-alpha">v1.1.2-alpha</h4>
 <ul>
 <li>Documentation is mostly updated; just the argmatcher Lua API and Clink command line options are left to be documented.</li>
 <li>Added <code>history.max_lines</code> setting that controls how many lines of command history to save (1 to 50000, default is 2500).</li>
@@ -3617,7 +3749,7 @@ string.matchlen("abx", "abx")       -- returns -1</code></pre></div></div><hr/>
 </li>
 <li>Set locale to UTF8 much earlier to avoid quirky behavior early in script processing.</li>
 </ul>
-<h3 id="v111-alpha">v1.1.1-alpha</h3>
+<h4 id="v111-alpha">v1.1.1-alpha</h4>
 <ul>
 <li>Exclusively use Readline&#39;s completion implementation.  This (with fixes and enhancements in Readline itself) makes the completion experience much nicer and more sophisticated, and removes a lot of code that was added in v1.0.0a0.</li>
 <li>Exclusively use Readline&#39;s key binding implementation.  This makes it possible to have a single consistent way to set key bindings (inputrc) and for <code>clink-show-help</code> to list all key bindings, and removes a lot of code that was added in v1.0.0a0.</li>
@@ -3737,8 +3869,8 @@ string.matchlen("abx", "abx")       -- returns -1</code></pre></div></div><hr/>
 </li>
 <li>Fixed many other bugs.</li>
 </ul>
-<h2 id="releases-from-mridgersclink-original-repo">Releases from <a href="https://github.com/mridgers/clink">mridgers/clink</a> original repo</h2>
-<h3 id="v100a1-alpha-test-release">v1.0.0a1 <em>(alpha test release)</em></h3>
+<h3 id="releases-from-mridgersclink-original-repo">Releases from <a href="https://github.com/mridgers/clink">mridgers/clink</a> original repo</h3>
+<h4 id="v100a1-alpha-test-release">v1.0.0a1 <em>(alpha test release)</em></h4>
 <ul>
 <li>Improve terminal integration with the Readline library.</li>
 <li>Internal improvements to the built-in ecma48 terminal emulator.</li>
@@ -3752,7 +3884,7 @@ string.matchlen("abx", "abx")       -- returns -1</code></pre></div></div><hr/>
 <li>The origin path now affects the hash in the dll cache, to guard against directory moves.</li>
 <li>More code reorganization.</li>
 </ul>
-<h3 id="v100a0-alpha-test-release">v1.0.0a0 <em>(alpha test release)</em></h3>
+<h4 id="v100a0-alpha-test-release">v1.0.0a0 <em>(alpha test release)</em></h4>
 <ul>
 <li>Extensive code reorganization, refactoring, and rewriting -- multiple times -- almost everything was touched.</li>
 <li>OS integration:<ul>
@@ -3820,11 +3952,11 @@ string.matchlen("abx", "abx")       -- returns -1</code></pre></div></div><hr/>
 <li>Remove <code>clink_inputrc_base</code> file and embed its content (fixes <a href="https://github.com/mridgers/clink/issues/257">mridgers #257</a>).</li>
 <li>Include more metadata in the Clink&#39;s executables.</li>
 </ul>
-<h3 id="v049">v0.4.9</h3>
+<h4 id="v049">v0.4.9</h4>
 <ul>
 <li>Fixed broken Doskey on Win10 (#438, #451)</li>
 </ul>
-<h3 id="v048">v0.4.8</h3>
+<h4 id="v048">v0.4.8</h4>
 <ul>
 <li>Environment variable <code>clink_profile</code> overrides Clink&#39;s profile path (#390).</li>
 <li>Load a clink_inputrc file from Clink&#39;s profile directory (fixes #406).</li>
@@ -3834,7 +3966,7 @@ string.matchlen("abx", "abx")       -- returns -1</code></pre></div></div><hr/>
 </ul>
 </li>
 </ul>
-<h3 id="v047">v0.4.7</h3>
+<h4 id="v047">v0.4.7</h4>
 <ul>
 <li>Bug fixes;<ul>
 <li>Sometimes autorun tries to run clink.exe (#374).</li>
@@ -3842,7 +3974,7 @@ string.matchlen("abx", "abx")       -- returns -1</code></pre></div></div><hr/>
 </ul>
 </li>
 </ul>
-<h3 id="v046">v0.4.6</h3>
+<h4 id="v046">v0.4.6</h4>
 <ul>
 <li>HOME is only set if it is currently unset.</li>
 <li>Readline can be initialised with .inputrc and _inputrc files too (#258).</li>
@@ -3867,7 +3999,7 @@ string.matchlen("abx", "abx")       -- returns -1</code></pre></div></div><hr/>
 </ul>
 </li>
 </ul>
-<h3 id="v045">v0.4.5</h3>
+<h4 id="v045">v0.4.5</h4>
 <ul>
 <li>Improved <code>clink autorun</code>. It now defaults to the Current User registry hive.</li>
 <li><code>clink set</code> gives more details for enumeration-type settings.</li>
@@ -3894,7 +4026,7 @@ string.matchlen("abx", "abx")       -- returns -1</code></pre></div></div><hr/>
 </ul>
 </li>
 </ul>
-<h3 id="v044">v0.4.4</h3>
+<h4 id="v044">v0.4.4</h4>
 <ul>
 <li>Completing .. behaves more like Bash (#277).</li>
 <li>Escape from yes/no question when <kbd>Ctrl</kbd>+<kbd>C</kbd> is pressed.</li>
@@ -3904,7 +4036,7 @@ string.matchlen("abx", "abx")       -- returns -1</code></pre></div></div><hr/>
 <li>Fixed <code>!0</code> causing Clink to crash.</li>
 <li>Save/restore cursor position in case Readline moves it.</li>
 </ul>
-<h3 id="v043">v0.4.3</h3>
+<h4 id="v043">v0.4.3</h4>
 <ul>
 <li>Localised Y/N when auto-answering &quot;terminate?&quot; prompt.</li>
 <li><code>$*</code> would early out if there was no arguments.</li>
@@ -3925,7 +4057,7 @@ string.matchlen("abx", "abx")       -- returns -1</code></pre></div></div><hr/>
 <li>Fixed missing WINCH signals if other processes resize the buffer.</li>
 <li>Support <kbd>Alt</kbd> codes sent from Conhost.</li>
 </ul>
-<h3 id="v042">v0.4.2</h3>
+<h4 id="v042">v0.4.2</h4>
 <ul>
 <li>Prompt colouring no longer requires third party ANSI code utility.</li>
 <li>Override settings with environment variables prefixed with &#39;clink&#39;.</li>
@@ -3940,7 +4072,7 @@ string.matchlen("abx", "abx")       -- returns -1</code></pre></div></div><hr/>
 </ul>
 </li>
 </ul>
-<h3 id="v041">v0.4.1</h3>
+<h4 id="v041">v0.4.1</h4>
 <ul>
 <li>Bug fixes;<ul>
 <li>Various Unicode fixes causing corrupt environment variables.</li>
@@ -3956,7 +4088,7 @@ string.matchlen("abx", "abx")       -- returns -1</code></pre></div></div><hr/>
 <li>Added support for Windows&#39; <kbd>AltGr</kbd> substitute <kbd>Ctrl</kbd>-<kbd>Alt</kbd>.</li>
 <li>Support for Readline&#39;s &#39;menu&#39; style completion (see docs).</li>
 </ul>
-<h3 id="v04">v0.4</h3>
+<h4 id="v04">v0.4</h4>
 <ul>
 <li>New features;<ul>
 <li>Better <code>clink.arg</code> API. Easier, more intuitive, and more powerful.</li>
@@ -3995,7 +4127,7 @@ string.matchlen("abx", "abx")       -- returns -1</code></pre></div></div><hr/>
 </ul>
 </li>
 </ul>
-<h3 id="v03">v0.3</h3>
+<h4 id="v03">v0.3</h4>
 <ul>
 <li>Automatic answering of cmd.exe&#39;s &quot;Terminate batch script?&quot; prompt.</li>
 <li>Coloured prompts (requires ANSICON or ConEmu).</li>
@@ -4033,14 +4165,14 @@ string.matchlen("abx", "abx")       -- returns -1</code></pre></div></div><hr/>
 <li>Start menu shortcut starts in USERPROFILE, like cmd.exe</li>
 <li>Zip distribution is now portable.</li>
 </ul>
-<h3 id="v021">v0.2.1</h3>
+<h4 id="v021">v0.2.1</h4>
 <ul>
 <li>The .history file now merges multiple sessions together.</li>
 <li>Fixed missing y/n, pause, and other prompts.</li>
 <li>Fixed segfault in loader executable.</li>
 <li>Better ConEmu compatibility.</li>
 </ul>
-<h3 id="v02">v0.2</h3>
+<h4 id="v02">v0.2</h4>
 <ul>
 <li>Basic argument completion for <code>git</code>, <code>hg</code>, <code>svn</code>, and <code>p4</code>.</li>
 <li>Traditional Bash clear screen (<kbd>Ctrl</kbd>-<kbd>L</kbd>) and exit shortcuts (<kbd>Ctrl</kbd>-<kbd>D</kbd>).</li>
@@ -4059,13 +4191,13 @@ string.matchlen("abx", "abx")       -- returns -1</code></pre></div></div><hr/>
 <li>Improved hooking so Clink can be shared with other thirdparty utilities that
 also hook cmd.exe (ConEmu, ANSICon, etc.).</li>
 </ul>
-<h3 id="v011">v0.1.1</h3>
+<h4 id="v011">v0.1.1</h4>
 <ul>
 <li>Fixed <kbd>AltGr</kbd>+<kbd>&lt;key&gt;</kbd> on international keyboards.</li>
 <li>Fixed broken completion when directories have a <code>-</code> in their name (Mark Hammond)</li>
 <li>The check for single match scenarios now correctly handles case-insensitivity.</li>
 </ul>
-<h3 id="v01">v0.1</h3>
+<h4 id="v01">v0.1</h4>
 <ul>
 <li>Initial release.</li>
 </ul>
