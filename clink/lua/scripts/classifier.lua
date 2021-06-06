@@ -2,6 +2,9 @@
 -- License: http://opensource.org/licenses/MIT
 
 --------------------------------------------------------------------------------
+-- NOTE: If you add any settings here update set.cpp to load (lua, lib, classifier).
+
+--------------------------------------------------------------------------------
 clink = clink or {}
 local _classifiers = {}
 local _classifiers_unsorted = false

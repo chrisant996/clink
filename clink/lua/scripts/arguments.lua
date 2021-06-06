@@ -1,6 +1,9 @@
 -- Copyright (c) 2016 Martin Ridgers
 -- License: http://opensource.org/licenses/MIT
 
+------------------------------------------------------------------------------
+-- NOTE: If you add any settings here update set.cpp to load (lua, lib, arguments).
+
 --------------------------------------------------------------------------------
 local _arglink = {}
 _arglink.__index = _arglink

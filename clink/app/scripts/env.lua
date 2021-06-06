@@ -2,6 +2,9 @@
 -- License: http://opensource.org/licenses/MIT
 
 --------------------------------------------------------------------------------
+-- NOTE: If you add any settings here update set.cpp to load (lua, app, env).
+
+--------------------------------------------------------------------------------
 local special_env_vars = {
     "cd", "date", "time", "random", "errorlevel",
     "cmdextversion", "cmdcmdline", "highestnumanodenumber"

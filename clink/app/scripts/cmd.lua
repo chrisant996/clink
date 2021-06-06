@@ -4,6 +4,9 @@
 local cmd_generator = clink.generator(40)
 
 --------------------------------------------------------------------------------
+-- NOTE: If you add any settings here update set.cpp to load (lua, app, cmd).
+
+--------------------------------------------------------------------------------
 local cmd_commands = {
     "assoc", "break", "call", "cd", "chcp", "chdir", "cls", "color", "copy",
     "date", "del", "dir", "diskcomp", "diskcopy", "echo", "endlocal", "erase",

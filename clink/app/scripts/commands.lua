@@ -2,6 +2,9 @@
 -- License: http://opensource.org/licenses/MIT
 
 --------------------------------------------------------------------------------
+-- NOTE: If you add any settings here update set.cpp to load (lua, app, commands).
+
+--------------------------------------------------------------------------------
 local function collect_number_matches()
     local matches = console.screengrab("[^%w]*(%w%w[%w]+)", "^%x+$")
     matches["nosort"] = true

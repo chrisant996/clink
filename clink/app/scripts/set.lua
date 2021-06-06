@@ -1,6 +1,10 @@
 -- Copyright (c) 2012 Martin Ridgers
 -- License: http://opensource.org/licenses/MIT
 
+--------------------------------------------------------------------------------
+-- NOTE: If you add any settings here update set.cpp to load (lua, app, set).
+
+--------------------------------------------------------------------------------
 local set_generator = clink.generator(41)
 
 --------------------------------------------------------------------------------

@@ -2,6 +2,9 @@
 -- License: http://opensource.org/licenses/MIT
 
 --------------------------------------------------------------------------------
+-- NOTE: If you add any settings here update set.cpp to load (lua, app, dir).
+
+--------------------------------------------------------------------------------
 clink.argmatcher("cd", "chdir")
 :addflags("/d")
 :addarg(clink.dirmatches)

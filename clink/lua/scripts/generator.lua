@@ -2,6 +2,9 @@
 -- License: http://opensource.org/licenses/MIT
 
 --------------------------------------------------------------------------------
+-- NOTE: If you add any settings here update set.cpp to load (lua, lib, generator).
+
+--------------------------------------------------------------------------------
 clink = clink or {}
 local _generators = {}
 local _generators_unsorted = false
