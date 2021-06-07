@@ -179,6 +179,7 @@ bool migrate_setting(const char* name, const char* value, std::vector<setting_na
             else
                 out.emplace_back("history.max_lines", "10000");
         }
+        return true;
     }
     else
     {
