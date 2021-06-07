@@ -4,6 +4,9 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 
 # RELEASE
 
+- Add setting to use *nix terminal input mode (i.e. <kbd>Esc</kbd> is not handled specially).
+- Add backward compatibility shims for all the config stuff in the `cmder-powerline-prompt` repo.
+
 ## Issues
 
 ## Investigate
