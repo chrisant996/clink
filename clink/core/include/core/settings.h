@@ -51,6 +51,10 @@ struct setting_name_value
 
 bool                migrate_setting(const char* name, const char* value, std::vector<setting_name_value>& out);
 
+#ifdef DEBUG
+bool                get_ever_loaded();
+#endif
+
 };
 
 

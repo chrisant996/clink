@@ -425,19 +425,21 @@ public:
                         if (len <= 1)
                             return true;
                         // Unreachable; gets handled by translate.
-                        assert(strcmp(seq, bindableEsc) != 0);
+                        assert(!bindableEsc || strcmp(seq, bindableEsc) != 0);
                         rl_ding();
                         return false;
                     }
     virtual bool    translate(const char* seq, int len, str_base& out) override
                     {
-                        if (strcmp(seq, bindableEsc) == 0)
+                        if (bindableEsc && strcmp(seq, bindableEsc) == 0)
                         {
                             out = "\x1b";
                             return true;
                         }
                         return false;
                     }
+private:
+    const char* bindableEsc = get_bindable_esc();
 };
 extern "C" int read_key_hook(void)
 {
@@ -1403,7 +1405,7 @@ rl_module::rl_module(const char* shell_name, terminal_in* input, const char* sta
     }
 
     // Bind extended keys so editing follows Windows' conventions.
-    static const char* emacs_key_binds[][2] = {
+    static constexpr const char* const emacs_key_binds[][2] = {
         { "\\e[1;5D",       "backward-word" },           // ctrl-left
         { "\\e[1;5C",       "forward-word" },            // ctrl-right
         { "\\e[F",          "end-of-line" },             // end
@@ -1416,7 +1418,6 @@ rl_module::rl_module(const char* shell_name, terminal_in* input, const char* sta
         { "\\e[3;5~",       "kill-word" },               // ctrl-del
         { "\\d",            "backward-kill-word" },      // ctrl-backspace
         { "\\e[2~",         "overwrite-mode" },          // ins
-        { bindableEsc,      "clink-reset-line" },        // esc
         { "\\e[27;5;32~",   "old-menu-complete" },       // ctrl-space
         { "\\C-c",          "clink-ctrl-c" },            // ctrl-c
         { "\\C-v",          "clink-paste" },             // ctrl-v
@@ -1434,7 +1435,7 @@ rl_module::rl_module(const char* shell_name, terminal_in* input, const char* sta
         {}
     };
 
-    static const char* general_key_binds[][2] = {
+    static constexpr const char* const general_key_binds[][2] = {
         { "\\M-a",          "clink-insert-dot-dot" },    // alt-a
         { "\\M-c",          "clink-copy-cwd" },          // alt-c
         { "\\M-h",          "clink-show-help" },         // alt-h
@@ -1459,12 +1460,11 @@ rl_module::rl_module(const char* shell_name, terminal_in* input, const char* sta
         {}
     };
 
-    static const char* vi_insertion_key_binds[][2] = {
+    static constexpr const char* const vi_insertion_key_binds[][2] = {
         { "\\M-\\C-i",      "tab-insert" },              // alt-ctrl-i
         { "\\M-\\C-j",      "emacs-editing-mode" },      // alt-ctrl-j
         { "\\M-\\C-k",      "kill-line" },               // alt-ctrl-k
         { "\\M-\\C-m",      "emacs-editing-mode" },      // alt-ctrl-m
-        { bindableEsc,      "vi-movement-mode" },        // esc
         { "\\C-_",          "vi-undo-mode" },            // ctrl--
         { "\\M-0",          "vi-arg-digit" },            // alt-0
         { "\\M-1",          "vi-arg-digit" },            // alt-1
@@ -1481,11 +1481,18 @@ rl_module::rl_module(const char* shell_name, terminal_in* input, const char* sta
         {}
     };
 
-    static const char* vi_movement_key_binds[][2] = {
+    static constexpr const char* const vi_movement_key_binds[][2] = {
         { "\\M-\\C-j",      "emacs-editing-mode" },      // alt-ctrl-j
         { "\\M-\\C-m",      "emacs-editing-mode" },      // alt-ctrl-m
         {}
     };
+
+    const char* bindableEsc = get_bindable_esc();
+    if (bindableEsc)
+    {
+        rl_bind_keyseq_in_map(bindableEsc, rl_named_function("clink-reset-line"), emacs_standard_keymap);
+        rl_bind_keyseq_in_map(bindableEsc, rl_named_function("vi-movement-mode"), vi_insertion_keymap);
+    }
 
     rl_unbind_key_in_map(' ', emacs_meta_keymap);
     bind_keyseq_list(general_key_binds, emacs_standard_keymap);

@@ -25,6 +25,10 @@ struct loaded_setting
 static setting_map* g_setting_map = nullptr;
 static std::map<std::string, loaded_setting> g_loaded_settings;
 
+#ifdef DEBUG
+static bool s_ever_loaded = false;
+#endif
+
 //------------------------------------------------------------------------------
 static auto& get_map()
 {
@@ -103,9 +107,6 @@ static bool set_setting(const char* name, const char* value, const char* comment
 //------------------------------------------------------------------------------
 bool migrate_setting(const char* name, const char* value, std::vector<setting_name_value>& out)
 {
-    // `esc_clears_line` is no longer a setting; bind `\e[27;27~` to whatever
-    // command is desired in the inputrc file (defaults to `clink-reset-line`).
-    //
     // `match_colour` is no longer a setting; use `colored-stats` in the inputrc
     // file and `set LS_COLORS` to set the colors.  Also certain `color.*` Clink
     // settings.
@@ -158,6 +159,11 @@ bool migrate_setting(const char* name, const char* value, std::vector<setting_na
     {
         name = "terminal.emulation";
         value = (!value || atoi(value)) ? "auto" : "native";
+    }
+    else if (stricmp(name, "esc_clears_line") == 0)
+    {
+        name = "terminal.raw_esc";
+        value = (!value || !atoi(value)) ? "0" : "1";
     }
     else if (stricmp(name, "history_file_lines") == 0)
     {
@@ -218,6 +224,10 @@ static bool save_internal(const char* file, bool migrating);
 //------------------------------------------------------------------------------
 bool load(const char* file)
 {
+#ifdef DEBUG
+    s_ever_loaded = true;
+#endif
+
     g_loaded_settings.clear();
 
     // Maybe migrate settings.
@@ -408,6 +418,13 @@ bool save(const char* file)
 {
     return save_internal(file, false/*migrating*/);
 }
+
+#ifdef DEBUG
+bool get_ever_loaded()
+{
+    return s_ever_loaded;
+}
+#endif
 
 } // namespace settings
 

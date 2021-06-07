@@ -91,7 +91,11 @@ template <int SIZE> static bool translate_chord(const char* chord, char (&out)[S
     // *exactly* ESC being pressed.  Otherwise any input sequence that begins
     // with ESC matches, and the rest of the sequence shows up as text.
     if (out[0] == '\x1b' && out[1] == '\0')
-        return translate_chord(bindableEsc, out, len);
+    {
+        const char* bindableEsc = get_bindable_esc();
+        if (bindableEsc)
+            return translate_chord(bindableEsc, out, len);
+    }
 
     return true;
 }

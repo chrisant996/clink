@@ -17,6 +17,15 @@
 #include <map>
 
 //------------------------------------------------------------------------------
+static setting_bool g_terminal_raw_esc(
+    "terminal.raw_esc",
+    "Esc sends a literal escape character",
+    "When enabled, pressing Esc sends a literal escape character like in Unix/etc\n"
+    "terminals.  This setting is disabled by default to provide a more predictable,\n"
+    "reliable, and configurable input experience on Windows.\n"
+    "Changing this only affects future Clink sessions, not the current session.",
+    false);
+
 static setting_bool g_differentiate_keys(
     "terminal.differentiate_keys",
     "Use special sequences for Ctrl-H, -I, -M, -[",
@@ -165,6 +174,20 @@ static bool is_vk_recognized(int key_vk)
 #undef CSI
 
 //------------------------------------------------------------------------------
+// Can't use "\x1b\x1b" because Alt+FN gets prefixed with meta Esc and for
+// example Alt+F4 becomes "\x1b\x1bOS".  So because of meta-fication ESCESC is
+// not a unique sequence.
+const char* get_bindable_esc()
+{
+    // Loading this before settings makes it impossible for the setting to ever
+    // take effect, since it takes effect only once during a session.
+    assert(settings::get_ever_loaded());
+
+    static const char* const bindableEsc = g_terminal_raw_esc.get() ? nullptr : "\x1b[27;27~";
+    return bindableEsc;
+}
+
+//------------------------------------------------------------------------------
 // Use unsigned; WCHAR and unsigned short can give wrong results.
 #define IN_RANGE(n1, b, n2)     ((unsigned)((b) - (n1)) <= unsigned((n2) - (n1)))
 inline bool is_lead_surrogate(unsigned int ch) { return IN_RANGE(0xD800, ch, 0xDBFF); }
@@ -281,7 +304,9 @@ static void ensure_keyseqs_to_names()
 
     str<32> builder;
 
-    add_keyseq_to_name(bindableEsc, "Esc", builder, 0);
+    const char* bindableEsc = get_bindable_esc();
+    if (bindableEsc)
+        add_keyseq_to_name(bindableEsc, "Esc", builder, 0);
 
     for (int m = 0; m < sizeof_array(terminfo::kcuu1); m++)
     {
@@ -704,7 +729,11 @@ void win_terminal_in::process_input(KEY_EVENT_RECORD const& record)
 
     // Special treatment for escape.
     if (key_char == 0x1b && (key_vk == VK_ESCAPE || !g_differentiate_keys.get()))
-        return push(bindableEsc);
+    {
+        const char* bindableEsc = get_bindable_esc();
+        if (bindableEsc)
+            return push(bindableEsc);
+    }
 
     // Windows supports an AltGr substitute which we check for here. As it
     // collides with Readline mappings Clink's support can be disabled.

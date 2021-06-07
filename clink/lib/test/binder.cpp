@@ -72,7 +72,7 @@ TEST_CASE("Binder")
             "^",        "^",
             "\\",       "\\",
             "\\t",      "\t",
-            "\\e",      bindableEsc,
+            "\\e",      get_bindable_esc() ? get_bindable_esc() : "\x1b",
             "abc",      "abc",
             "ab",       "abd",
             "^a",       "\x01",

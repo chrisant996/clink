@@ -61,7 +61,7 @@ template <class A> A clamp(A v, A m, A M) { return min(max(v, m), M); }
 //#define PRAGMA_ERROR(s) __pragma(message (FILE_LINE "error: " s))
 
 //------------------------------------------------------------------------------
-extern const char* const bindableEsc;
+extern const char* get_bindable_esc();
 
 //------------------------------------------------------------------------------
 #if defined(DEBUG)

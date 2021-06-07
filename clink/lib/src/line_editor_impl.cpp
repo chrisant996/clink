@@ -538,6 +538,10 @@ LNope:
 //------------------------------------------------------------------------------
 bool line_editor_impl::translate(const char* seq, int len, str_base& out)
 {
+    const char* bindableEsc = get_bindable_esc();
+    if (!bindableEsc)
+        return false;
+
     if (RL_ISSTATE(RL_STATE_NUMERICARG))
     {
         if (strcmp(seq, bindableEsc) == 0)
