@@ -31,6 +31,7 @@
 
 extern "C" {
 #include <lua.h>
+#include <lauxlib.h>
 #include <compat/config.h>
 #include <readline/readline.h>
 #include <readline/rlprivate.h>
@@ -108,29 +109,67 @@ extern str<> g_last_prompt;
 // Documented in clink_api.cpp.
 int clink_print(lua_State* state)
 {
-    // Check we've got one argument...
-    if (lua_gettop(state) != 1)
-        return 0;
+    str<> out;
+    bool nl = true;
+    bool err = false;
 
-    // ...and that the argument is a string.
-    if (!lua_isstring(state, 1))
-        return 0;
+    int n = lua_gettop(state);              // Number of arguments.
+    lua_getglobal(state, "NONL");           // Special value `NONL`.
+    lua_getglobal(state, "tostring");       // Function to convert to string (reused each loop iteration).
 
-    const char* string = lua_tostring(state, 1);
+    for (int i = 1; i <= n; i++)
+    {
+        // Check for magic `NONL` value.
+        if (lua_compare(state, -2, i, LUA_OPEQ))
+        {
+            nl = false;
+            continue;
+        }
+
+        // Call function to convert arg to a string.
+        lua_pushvalue(state, -1);           // Function to be called (tostring).
+        lua_pushvalue(state, i);            // Value to print.
+        if (lua_state::pcall(state, 1, 1) != 0)
+        {
+            if (const char* error = lua_tostring(state, -1))
+            {
+                puts("");
+                puts(error);
+            }
+            return 0;
+        }
+
+        // Get result from the tostring call.
+        size_t l;
+        const char* s = lua_tolstring(state, -1, &l);
+        if (s == NULL)
+        {
+            err = true;
+            break;                          // Allow accumulated output to be printed before erroring out.
+        }
+        lua_pop(state, 1);                  // Pop result.
+
+        // Add tab character to the output.
+        if (i > 1)
+            out << "\t";
+
+        // Add string result to the output.
+        out.concat(s, l);
+    }
 
     if (s_printer)
     {
-        str<> s;
-        int len = int(strlen(string));
-        s.reserve(len + 2);
-        s.concat(string, len);
-        s.concat("\r\n");
-        s_printer->print(s.c_str(), s.length());
+        if (nl)
+            out.concat("\n");
+        s_printer->print(out.c_str(), out.length());
     }
     else
     {
-        printf("%s\r\n", string);
+        printf("%s%s", out.c_str(), nl ? "\n" : "");
     }
+
+    if (err)
+        return luaL_error(state, LUA_QL("tostring") " must return a string to " LUA_QL("print"));
 
     return 0;
 }

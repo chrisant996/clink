@@ -25,12 +25,32 @@ extern "C" {
 
 //------------------------------------------------------------------------------
 // Implemented in host.cpp.
-// UNDOCUMENTED, because it's really only useful inside debugger.lua.
-// / -name:  clink.print
-// / -arg:   text:string
-// / -show:  clink.print("\x1b[32mgreen\x1b[m \x1b[35mmagenta\x1b[m")
-// / This is similar to <code>print()</code>, but this supports ANSI escape
-// / codes.
+/// -name:  clink.print
+/// -arg:   ...
+/// -show:  clink.print("\x1b[32mgreen\x1b[m \x1b[35mmagenta\x1b[m")
+/// -show:  -- Outputs <code>green</code> in green, a space, and <code>magenta</code> in magenta.
+/// -show:
+/// -show:  local a = "hello"
+/// -show:  local world = 73
+/// -show:  clink.print("a", a, "world", world)
+/// -show:  -- Outputs <code>a       hello   world   73</code>.
+/// -show:
+/// -show:  clink.print("hello", NONL)
+/// -show:  clink.print("world")
+/// -show:  -- Outputs <code>helloworld</code>.
+/// This works like <code>print()</code>, but this supports ANSI escape codes.
+///
+/// If the special value <code>NONL</code> is included anywhere in the argument
+/// list then the usual trailing newline is omitted.  This can sometimes be
+/// useful particularly when printing certain ANSI escape codes.
+///
+/// <strong>Note:</strong>  In Clink versions before v1.2.11 the
+/// <code>clink.print()</code> API exists (undocumented) but accepts exactly one
+/// string argument and is therefore not fully compatible with normal
+/// <code>print()</code> syntax.  If you use fewer or more than 1 argument or if
+/// the argument is not a string, then first checking the Clink version (e.g.
+/// <a href="#clink.version_encoded">clink.version_encoded</a>) can avoid
+/// runtime errors.
 
 //------------------------------------------------------------------------------
 /// -name:  clink.version_encoded

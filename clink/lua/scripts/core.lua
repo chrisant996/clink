@@ -2,6 +2,11 @@
 -- License: http://opensource.org/licenses/MIT
 
 --------------------------------------------------------------------------------
+-- Used by `clink.print()` to suppress the usual trailing newline.  The table
+-- address is unique, thus `clink.print()` can test for equality.
+NONL = {}
+
+--------------------------------------------------------------------------------
 -- Provide a stub implementation of pause() if the debugger isn't loaded.
 local _can_pause = true
 if pause == nil then
