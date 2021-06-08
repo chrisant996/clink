@@ -1242,7 +1242,6 @@ Here is a table of the key binding sequences for the special keys.  Clink primar
 |Tab        |`\t`       |`\e[Z`      |`\e[27;5;9~` |`\e[27;6;9~` | -        | -          | -           | -            |
 |Space      |`Space`    | -          |`\e[27;5;32~`|`\e[27;6;32~`| -        | -          |`\e[27;7;32~`|`\e[27;8;32~` |
 |Backspace  |`^h`       |`\e[27;2;8~`|`Rubout`     |`\e[27;6;8~` |`\e^h`    |`\e[27;4;8~`|`\eRubout`   |`\e[27;8;8~`  |
-|Escape     |`\e[27;27~`| -          | -           | -           | -        | -          | -           | -            |
 |F1         |`\eOP`     |`\e[1;2P`   |`\e[1;5P`    |`\e[1;6P`    |`\e\eOP`  |`\e\e[1;2P` |`\e\e[1;5P`  |`\e\e[1;6P`   |
 |F2         |`\eOQ`     |`\e[1;2Q`   |`\e[1;5Q`    |`\e[1;6Q`    |`\e\eOQ`  |`\e\e[1;2Q` |`\e\e[1;5Q`  |`\e\e[1;6Q`   |
 |F3         |`\eOR`     |`\e[1;2R`   |`\e[1;5R`    |`\e[1;6R`    |`\e\eOR`  |`\e\e[1;2R` |`\e\e[1;5R`  |`\e\e[1;6R`   |
@@ -1260,10 +1259,17 @@ When the `terminal.differentiate_keys` setting is enabled then the following key
 
 |    |Ctrl           |Ctrl+Shift     |Alt            |Alt+Shift      |Alt+Ctrl       |Alt+Ctrl+Shift |
 |:-: |:-:            |:-:            |:-:            |:-:            |:-:            |:-:            |
-|H   |`\e[27;5;72~`  |`\e[27;6;72~`  |`\eh`          |`\eH`          |`\e[27;7;72~`  |`\e[27;8;72~`  |
-|I   |`\e[27;5;73~`  |`\e[27;6;73~`  |`\ei`          |`\eI`          |`\e[27;7;73~`  |`\e[27;8;73~`  |
-|M   |`\e[27;5;77~`  |`\e[27;6;77~`  |`\em`          |`\eM`          |`\e[27;7;77~`  |`\e[27;8;77~`  |
-|[   |`\e[27;5;219~` |`\e[27;6;219~` |`\e[27;3;219~` |`\e[27;4;219~` |`\e[27;7;219~` |`\e[27;8;219~` |
+|`H` |`\e[27;5;72~`  |`\e[27;6;72~`  |`\eh`          |`\eH`          |`\e[27;7;72~`  |`\e[27;8;72~`  |
+|`I` |`\e[27;5;73~`  |`\e[27;6;73~`  |`\ei`          |`\eI`          |`\e[27;7;73~`  |`\e[27;8;73~`  |
+|`M` |`\e[27;5;77~`  |`\e[27;6;77~`  |`\em`          |`\eM`          |`\e[27;7;77~`  |`\e[27;8;77~`  |
+|`[` |`\e[27;5;219~` |`\e[27;6;219~` |`\e[27;3;219~` |`\e[27;4;219~` |`\e[27;7;219~` |`\e[27;8;219~` |
+
+The `terminal.raw_esc` setting controls the binding sequence for the <kbd>Esc</kbd> key:
+
+|`terminal.raw_esc` Setting Value|Key Binding Sequence|
+|:-|-|
+|False (the default)|`\e[27;27~`|
+|True (replicate Unix terminal input quirks and issues)|`\e`|
 
 <a name="luakeybindings"></a>
 
