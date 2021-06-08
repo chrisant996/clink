@@ -5,6 +5,7 @@
 #### v1.2.11
 
 - Added `clink.print()` function which behaves like `print()` but with support for ANSI escape codes (and terminal emulation), and also a `NONL` special argument that suppresses the usual newline at the end of the output.
+- Expanded the sample code for async prompt filtering to clarify some things.
 - Fixed [#126](https://github.com/chrisant996/clink/issues/126); allow <kbd>Esc</kbd> to input literal escape character.
     - The new `terminal.raw_esc` setting controls how <kbd>Esc</kbd> input works.
     - Added migration for the old `esc_clears_line` setting.
