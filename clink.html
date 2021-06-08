@@ -3,7 +3,7 @@
 
 <!-- ----------------------------------------------------- -->
 <head>
-<title>Clink v1.2.10</title>
+<title>Clink v1.2.11</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Rambla:wght@400;700&family=Roboto&family=Fira+Mono&display=swap');
 html {
@@ -747,7 +747,7 @@ name:"Plain text",aliases:["text","txt"],disableAutodetect:!0})})());
         </td>
         <td style="text-align:right">
             <div id="header">
-                <div id="title">Clink v1.2.10</div>
+                <div id="title">Clink v1.2.11</div>
                 <div id="url">
                     <a href="https://github.com/chrisant996/clink">
                         https://github.com/chrisant996/clink
@@ -1123,6 +1123,11 @@ name:"Plain text",aliases:["text","txt"],disableAutodetect:!0})})());
 <td align="center"><code>terminal.emulation</code></td>
 <td align="center"><code>auto</code></td>
 <td>Clink can either emulate a virtual terminal and handle ANSI escape codes itself, or let the console host natively handle ANSI escape codes. <code>native</code> = pass output directly to the console host process, <code>emulate</code> = clink handles ANSI escape codes itself, <code>auto</code> = emulate except when running in ConEmu, Windows Terminal, or Windows 10 new console.</td>
+</tr>
+<tr>
+<td align="center"><code>terminal.raw_esc</code></td>
+<td align="center">False</td>
+<td>When enabled, pressing Esc sends a literal escape character like in Unix/etc terminals.  This setting is disabled by default to provide a more predictable, reliable, and configurable input experience on Windows.  Changing this only affects future Clink sessions, not the current session.</td>
 </tr>
 <tr>
 <td align="center"><code>terminal.use_altgr_substitute</code></td>
@@ -2141,7 +2146,7 @@ end
 </blockquote>
 <p>The following example illustrates running <code>git status</code> in the background.  It also remembers the status from the previous input line, so that it can reduce flicker by using the color from last time until the background status operation completes.</p>
 <pre><code class="language-lua">local prev_dir      -- Most recent git repo visited.
-local prev_status   -- Most recent status retrieved for the git repo.
+local prev_info     -- Most recent info retrieved by the coroutine.
 
 local function get_git_dir(dir)
     -- Check if the current directory is in a git repo.
@@ -2181,6 +2186,33 @@ local function get_git_status()
     return status
 end
 
+local function get_git_conflict()
+    -- The io.popenyield API is like io.popen, but it yields until the output is
+    -- ready to be read.
+    local file = io.popenyield(&quot;git diff --name-only --diff-filter=U 2&gt;nul&quot;)
+    local conflict = false
+    for line in file:lines() do
+        -- If there&#39;s any output, there&#39;s a conflict.
+        conflict = true
+        break
+    end
+    file:close()
+    return conflict
+end
+
+local function collect_git_info()
+    -- This is run inside the coroutine, which happens while idle while waiting
+    -- for keyboard input.
+    local info = {}
+    info.status = get_git_status()
+    info.conflict = get_git_conflict()
+    -- Until this returns, the call to clink.promptcoroutine() will keep
+    -- returning nil.  After this returns, subsequent calls to
+    -- clink.promptcoroutine() will keep returning this return value, until a
+    -- new input line begins.
+    return info
+end
+
 local git_prompt = clink.promptfilter(100)
 function git_prompt:filter(prompt)
     -- Do nothing if not a git repo.
@@ -2190,28 +2222,38 @@ function git_prompt:filter(prompt)
     end
     -- Reset the cached status if in a different repo.
     if prev_dir ~= dir then
-        prev_status = nil
+        prev_info = nil
         prev_dir = dir
     end
-    -- Do nothing if git branch not available.
+    -- Do nothing if git branch not available.  Getting the branch name is fast,
+    -- so it can run outside the coroutine.  That way the branch name is visible
+    -- even while the coroutine is running.
     local branch = get_git_branch()
     if not branch or branch == &quot;&quot; then
         return
     end
-    -- Start a coroutine to get git status, and returns nil immediately.  The
-    -- coroutine runs in the background, and triggers prompt filtering again
-    -- when it completes.  After it completes the return value here will be the
-    -- result from get_git_status().
-    local status = clink.promptcoroutine(get_git_status)
+    -- Start a coroutine to collect various git info in the background.  The
+    -- clink.promptcoroutine() call returns nil immediately, and the
+    -- coroutine runs in the background.  After the coroutine finishes, prompt
+    -- filtering is triggered again, and subsequent clink.promptcoroutine()
+    -- calls from this prompt filter immediately return whatever the
+    -- collect_git_info() function returned when it completed.  When a new input
+    -- line begins, the coroutine results are reset to nil to allow new results.
+    local info = clink.promptcoroutine(collect_git_info)
     -- If no status yet, use the status from the previous prompt.
-    if status == nil then
-        status = prev_status
+    if info == nil then
+        info = prev_info or {}
+    else
+        prev_info = info
     end
     -- Choose color for the git branch name:  green if status is clean, yellow
-    -- if status is not clean, or default color if status isn&#39;t known yet.
-    local sgr = &quot;&quot;
-    if status ~= nil then
-        sgr = status and &quot;33;1&quot; or &quot;32;1&quot;
+    -- if status is not clean, red if conflict is present, or default color if
+    -- status isn&#39;t known yet.
+    local sgr = &quot;37;1&quot;
+    if info.conflict then
+        sgr = &quot;31;1&quot;
+    elseif info.status ~= nil then
+        sgr = info.status and &quot;33;1&quot; or &quot;32;1&quot;
     end
     -- Prefix the prompt with &quot;[branch]&quot; using the status color.
     return &quot;\x1b[&quot;..sgr..&quot;m[&quot;..branch..&quot;]\x1b[m  &quot;..prompt
@@ -2449,17 +2491,6 @@ C-_:                kill-line                       <span class="hljs-comment">#
 <td align="center"><code>\e[27;8;8~</code></td>
 </tr>
 <tr>
-<td align="center">Escape</td>
-<td align="center"><code>\e[27;27~</code></td>
-<td align="center">-</td>
-<td align="center">-</td>
-<td align="center">-</td>
-<td align="center">-</td>
-<td align="center">-</td>
-<td align="center">-</td>
-<td align="center">-</td>
-</tr>
-<tr>
 <td align="center">F1</td>
 <td align="center"><code>\eOP</code></td>
 <td align="center"><code>\e[1;2P</code></td>
@@ -2606,7 +2637,7 @@ C-_:                kill-line                       <span class="hljs-comment">#
 </tr>
 </thead>
 <tbody><tr>
-<td align="center">H</td>
+<td align="center"><code>H</code></td>
 <td align="center"><code>\e[27;5;72~</code></td>
 <td align="center"><code>\e[27;6;72~</code></td>
 <td align="center"><code>\eh</code></td>
@@ -2615,7 +2646,7 @@ C-_:                kill-line                       <span class="hljs-comment">#
 <td align="center"><code>\e[27;8;72~</code></td>
 </tr>
 <tr>
-<td align="center">I</td>
+<td align="center"><code>I</code></td>
 <td align="center"><code>\e[27;5;73~</code></td>
 <td align="center"><code>\e[27;6;73~</code></td>
 <td align="center"><code>\ei</code></td>
@@ -2624,7 +2655,7 @@ C-_:                kill-line                       <span class="hljs-comment">#
 <td align="center"><code>\e[27;8;73~</code></td>
 </tr>
 <tr>
-<td align="center">M</td>
+<td align="center"><code>M</code></td>
 <td align="center"><code>\e[27;5;77~</code></td>
 <td align="center"><code>\e[27;6;77~</code></td>
 <td align="center"><code>\em</code></td>
@@ -2633,13 +2664,30 @@ C-_:                kill-line                       <span class="hljs-comment">#
 <td align="center"><code>\e[27;8;77~</code></td>
 </tr>
 <tr>
-<td align="center">[</td>
+<td align="center"><code>[</code></td>
 <td align="center"><code>\e[27;5;219~</code></td>
 <td align="center"><code>\e[27;6;219~</code></td>
 <td align="center"><code>\e[27;3;219~</code></td>
 <td align="center"><code>\e[27;4;219~</code></td>
 <td align="center"><code>\e[27;7;219~</code></td>
 <td align="center"><code>\e[27;8;219~</code></td>
+</tr>
+</tbody></table>
+<p>The <code>terminal.raw_esc</code> setting controls the binding sequence for the <kbd>Esc</kbd> key:</p>
+<table>
+<thead>
+<tr>
+<th align="left"><code>terminal.raw_esc</code> Setting Value</th>
+<th>Key Binding Sequence</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="left">False (the default)</td>
+<td><code>\e[27;27~</code></td>
+</tr>
+<tr>
+<td align="left">True (replicate Unix terminal input quirks and issues)</td>
+<td><code>\e</code></td>
 </tr>
 </tbody></table>
 <p><a name="luakeybindings"></a></p>
@@ -2822,7 +2870,18 @@ end</code></pre></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="clink.onendedit">clink.onendedit</a></div> <div class="signature">( <span class="arg_name">func</span>:function ) : nil</div></div><div class="body"><p class="desc">Registers <span class="arg">func</span> to be called when Clink's edit prompt ends.  The function receives a string argument containing the input text from the edit prompt.  The function returns up to two values.  If the first is not nil then it's a string that replaces the edit prompt text.  If the second is not nil and is false then it stops further onendedit handlers from running.</p><p class="desc"> <strong>Note:</strong>  Be very careful if you replace the text; this has the potential to interfere with or even ruin the user's ability to enter command lines for CMD to process.</p></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="clink.onfiltermatches">clink.onfiltermatches</a></div> <div class="signature">( <span class="arg_name">func</span>:function ) : nil</div></div><div class="body"><p class="desc">Registers <span class="arg">func</span> to be called after Clink generates matches for completion.  See <a href="#filteringmatchcompletions"> Filtering Match Completions</a> for more information.</p></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="clink.oninject">clink.oninject</a></div> <div class="signature">( <span class="arg_name">func</span>:function ) : nil</div></div><div class="body"><p class="desc">Registers <span class="arg">func</span> to be called when Clink is injected into a CMD process.  The function is called only once per session.</p></div></div><hr/>
-<div class="function"><div class="header"> <div class="name"><a name="clink.promptcoroutine">clink.promptcoroutine</a></div> <div class="signature">( <span class="arg_name">func</span>:function ) : [return value from func]</div></div><div class="body"><p class="desc">Creates a coroutine to run the <span class="arg">func</span> function in the background.  Clink will automatically resume the coroutine repeatedly while input line editing is idle.  When the <span class="arg">func</span> function completes, Clink will automatically refresh the prompt by triggering prompt filtering again.</p><p class="desc"> A coroutine is only created the first time each prompt filter calls this API during a given input line session.  Subsequent calls reuse the already-created coroutine.  (E.g. pressing <kbd>Enter</kbd> ends an input line session.)</p><p class="desc"> The API returns nil until the <span class="arg">func</span> function has finished.  After that, the API returns whatever the <span class="arg">func</span> function returned.  The API returns one value; if multiple return values are needed, return them in a table.</p><p class="desc"> If the <code>prompt.async</code> setting is disabled, then the coroutine runs to completion immediately before returning.  Otherwise, the coroutine runs during idle while editing the input line.  The <span class="arg">func</span> function receives one argument: true if it's running in the background, or false if it's running immediately.</p><p class="desc"> See <a href="#asyncpromptfiltering">Asynchronous Prompt Filtering</a> for more information.</p><p class="desc"> Note: each prompt filter can have at most one prompt coroutine.</p></div></div><hr/>
+<div class="function"><div class="header"> <div class="name"><a name="clink.print">clink.print</a></div> <div class="signature">( ... ) : nil</div></div><div class="body"><p class="desc">This works like <code>print()</code>, but this supports ANSI escape codes.</p><p class="desc"> If the special value <code>NONL</code> is included anywhere in the argument list then the usual trailing newline is omitted.  This can sometimes be useful particularly when printing certain ANSI escape codes.</p><p class="desc"> <strong>Note:</strong>  In Clink versions before v1.2.11 the <code>clink.print()</code> API exists (undocumented) but accepts exactly one string argument and is therefore not fully compatible with normal <code>print()</code> syntax.  If you use fewer or more than 1 argument or if the argument is not a string, then first checking the Clink version (e.g. <a href="#clink.version_encoded">clink.version_encoded</a>) can avoid runtime errors.</p><pre class="language-lua"><code>clink.print("\x1b[32mgreen\x1b[m \x1b[35mmagenta\x1b[m")
+-- Outputs <code>green</code> in green, a space, and <code>magenta</code> in magenta.
+
+local a = "hello"
+local world = 73
+clink.print("a", a, "world", world)
+-- Outputs <code>a       hello   world   73</code>.
+
+clink.print("hello", NONL)
+clink.print("world")
+-- Outputs <code>helloworld</code>.</code></pre></div></div><hr/>
+<div class="function"><div class="header"> <div class="name"><a name="clink.promptcoroutine">clink.promptcoroutine</a></div> <div class="signature">( <span class="arg_name">func</span>:function ) : [return value from func]</div></div><div class="body"><p class="desc">Creates a coroutine to run the <span class="arg">func</span> function in the background.  Clink will automatically resume the coroutine repeatedly while input line editing is idle.  When the <span class="arg">func</span> function completes, Clink will automatically refresh the prompt by triggering prompt filtering again.</p><p class="desc"> A coroutine is only created the first time each prompt filter calls this API during a given input line session.  Subsequent calls reuse the already-created coroutine.  (E.g. pressing <kbd>Enter</kbd> ends an input line session.)</p><p class="desc"> The API returns nil until the <span class="arg">func</span> function has finished.  After that, the API returns whatever the <span class="arg">func</span> function returned.  The API returns one value; if multiple return values are needed, return them in a table.</p><p class="desc"> If the <code>prompt.async</code> setting is disabled, then the coroutine runs to completion immediately before returning.  Otherwise, the coroutine runs during idle while editing the input line.  The <span class="arg">func</span> function receives one argument: true if it's running in the background, or false if it's running immediately.</p><p class="desc"> See <a href="#asyncpromptfiltering">Asynchronous Prompt Filtering</a> for more information.</p><p class="desc"> <strong>Note:</strong> each prompt filter can have at most one prompt coroutine.</p></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="clink.promptfilter">clink.promptfilter</a></div> <div class="signature">( [<span class="arg_name">priority</span>:integer] ) : table</div></div><div class="body"><p class="desc">Creates and returns a new promptfilter object that is applied in increasing <span class="arg">priority</span> order (low values to high values).  Define on the object a <code>:filter()</code> function that takes a string argument which contains the filtered prompt so far.  The function can return nil to have no effect, or can return a new prompt string.  It can optionally stop further prompt filtering by also returning false.  See <a href="#customisingtheprompt">Customising The Prompt</a> for more information.</p><pre class="language-lua"><code>local foo_prompt = clink.promptfilter(80)
 function foo_prompt:filter(prompt)
 &nbsp; -- Insert the date at the beginning of the prompt.
@@ -3222,6 +3281,16 @@ end</code></pre></div></div><hr/>
         <div class="section" id="changes">
 <h1 id="changes">Changes</h1>
 <h3 id="releases-from-chrisant996clink-fork">Releases from <a href="https://github.com/chrisant996/clink">chrisant996/clink</a> fork</h3>
+<h4 id="v1211">v1.2.11</h4>
+<ul>
+<li>Added <code>clink.print()</code> function which behaves like <code>print()</code> but with support for ANSI escape codes (and terminal emulation), and also a <code>NONL</code> special argument that suppresses the usual newline at the end of the output.</li>
+<li>Expanded the sample code for async prompt filtering to clarify some things.</li>
+<li>Fixed <a href="https://github.com/chrisant996/clink/issues/126">#126</a>; allow <kbd>Esc</kbd> to input literal escape character.<ul>
+<li>The new <code>terminal.raw_esc</code> setting controls how <kbd>Esc</kbd> input works.</li>
+<li>Added migration for the old <code>esc_clears_line</code> setting.</li>
+</ul>
+</li>
+</ul>
 <h4 id="v1210">v1.2.10</h4>
 <ul>
 <li>Added asynchronous prompt filtering -- scripts can use this to do work in the background (e.g. <code>git status</code>) and refresh the prompt when finished.<ul>
