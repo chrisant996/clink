@@ -177,7 +177,8 @@ end
 --- See <a href="#asyncpromptfiltering">Asynchronous Prompt Filtering</a> for
 --- more information.
 ---
---- Note: each prompt filter can have at most one prompt coroutine.
+--- <strong>Note:</strong> each prompt filter can have at most one prompt
+--- coroutine.
 function clink.promptcoroutine(func)
     if not prompt_filter_current then
         error("clink.promptcoroutine can only be used in a prompt filter", 2)
