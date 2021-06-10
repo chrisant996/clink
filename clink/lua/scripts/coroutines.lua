@@ -204,10 +204,12 @@ function clink._resume_coroutines()
                         entry.lastclock = os.clock()
                     else
                         if _coroutine_canceled then
+                            entry.canceled = true
                         else
                             print("")
                             print("coroutine failed:")
                             print(ret)
+                            entry.error = ret
                         end
                         table.insert(remove, _)
                     end
@@ -260,8 +262,10 @@ end
 function clink._diag_coroutines()
     local bold = "\x1b[1m"          -- Bold (bright).
     local norm = "\x1b[m"           -- Normal.
-    local green = "\x1b[32m"        -- Green.
+    local red = "\x1b[31m"          -- Red.
     local yellow = "\x1b[33m"       -- Yellow.
+    local green = "\x1b[32m"        -- Green.
+    local cyan = "\x1b[36m"         -- Cyan.
     local statcolor = "\x1b[35m"    -- Magenta.
     local deadlistcolor = "\x1b[90m" -- Bright black.
 
@@ -289,25 +293,34 @@ function clink._diag_coroutines()
                 end
                 show_gen = true
             end
-            table.insert(threads, { coroutine=entry.coroutine, generation=entry.generation, status=status, resumed=resumed, freq=freq, src=entry.src })
+            table.insert(threads, { entry=entry, status=status, resumed=resumed, freq=freq })
         end
     end
 
     local function list_diag(threads, plain)
         for _,t in ipairs(threads) do
-            local key = tostring(t.coroutine):gsub("thread: ", "")
-            local gen = (t.generation == _coroutine_generation) and "" or (yellow.."gen "..t.generation..plain.."  ")
+            local key = tostring(t.entry.coroutine):gsub("thread: ", "")..":"
+            local gen = (t.entry.generation == _coroutine_generation) and "" or (yellow.."gen "..t.entry.generation..plain.."  ")
             local status = (t.status == "suspended") and "" or (statcolor..t.status..plain.."  ")
-            if t.yieldguard then
-                status = status.."  "..yellow.."yieldguard"..plain
+            if t.entry.error then
+                gen = red.."error"..plain.."  "..gen
             end
-            if t.queued then
-                status = status.."  "..yellow.."queued"..plain
+            if t.entry.yieldguard then
+                status = status..yellow.."yieldguard"..plain.."  "
+            end
+            if t.entry.queued then
+                status = status..yellow.."queued"..plain.."  "
+            end
+            if t.entry.canceled then
+                status = status..cyan.."canceled"..plain.."  "
             end
             local res = "resumed "..str_rpad(t.resumed, max_resumed_len)
             local freq = "freq "..str_rpad(t.freq, max_freq_len)
-            local src = t.src
-            print(plain.."  "..key..":  "..gen..status..res.."  "..freq.."  "..src..norm)
+            local src = t.entry.src
+            print(plain.."  "..key.."  "..gen..status..res.."  "..freq.."  "..src..norm)
+            if t.entry.error then
+                print(plain.."  "..str_rpad("", #key + 2)..red..t.entry.error..norm)
+            end
         end
     end
 
