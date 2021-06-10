@@ -3,7 +3,7 @@
 
 <!-- ----------------------------------------------------- -->
 <head>
-<title>Clink v1.2.11</title>
+<title>Clink v1.2.12</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Rambla:wght@400;700&family=Roboto&family=Fira+Mono&display=swap');
 html {
@@ -747,7 +747,7 @@ name:"Plain text",aliases:["text","txt"],disableAutodetect:!0})})());
         </td>
         <td style="text-align:right">
             <div id="header">
-                <div id="title">Clink v1.2.11</div>
+                <div id="title">Clink v1.2.12</div>
                 <div id="url">
                     <a href="https://github.com/chrisant996/clink">
                         https://github.com/chrisant996/clink
@@ -2137,7 +2137,7 @@ end
 <p><a name="asyncpromptfiltering"></a></p>
 <h4 id="asynchronous-prompt-filtering">Asynchronous Prompt Filtering</h4>
 <p>Prompt filtering needs to be fast, or it can interfere with using the shell (e.g. <code>git status</code> can be slow in a large repo).</p>
-<p>Clink provides a way for prompt filters to do some initial work and set the prompt, continue doing work in the background, and then refresh the prompt again when the background work is finished.  This is accomplished by using Lua coroutines, but Clink simplifies and streamlines the process.</p>
+<p>Clink provides a way for prompt filters to do some initial work and set the prompt, continue doing work in the background, and then refresh the prompt again when the background work is finished.  This is accomplished by using <a href="https://www.lua.org/manual/5.2/manual.html#2.6">Lua coroutines</a>, but Clink simplifies and streamlines the process.</p>
 <p>A prompt filter can call <a href="#clink.promptcoroutine">clink.promptcoroutine(my_func)</a> to run <code>my_func()</code> inside a coroutine.  Clink will automatically resume the coroutine repeatedly while input line editing is idle.  When <code>my_func()</code> completes, Clink will automatically refresh the prompt by triggering prompt filtering again.</p>
 <p>Typically the motivation to use asynchronous prompt filtering is that one or more <code><span class="hljs-built_in">io</span>.<span class="hljs-built_in">popen</span>(<span class="hljs-string">"some slow command"</span>)</code> calls take too long.  They can be replaced with <a href="#io.popenyield">io.popenyield()</a> calls inside the prompt coroutine to let them run in the background.</p>
 <blockquote>
@@ -3281,6 +3281,11 @@ end</code></pre></div></div><hr/>
         <div class="section" id="changes">
 <h1 id="changes">Changes</h1>
 <h3 id="releases-from-chrisant996clink-fork">Releases from <a href="https://github.com/chrisant996/clink">chrisant996/clink</a> fork</h3>
+<h4 id="v1212">v1.2.12</h4>
+<ul>
+<li>Improved diagnostic output for coroutines (<kbd>Ctrl</kbd>-<kbd>X</kbd>,<kbd>Ctrl</kbd>+<kbd>Z</kbd>), plus more diagnostic info when the <code>lua.debug</code> setting is enabled.</li>
+<li>Fixed potential for a script error when a coroutine gets skipped due to a new prompt starting.</li>
+</ul>
 <h4 id="v1211">v1.2.11</h4>
 <ul>
 <li>Added <code>clink.print()</code> function which behaves like <code>print()</code> but with support for ANSI escape codes (and terminal emulation), and also a <code>NONL</code> special argument that suppresses the usual newline at the end of the output.</li>
