@@ -13,6 +13,8 @@ local _coroutine_generation = 0         -- ID for current generation of coroutin
 
 local _dead = nil
 
+local print = clink.print
+
 --------------------------------------------------------------------------------
 -- Scheme for entries in _coroutines:
 --
