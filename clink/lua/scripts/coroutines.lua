@@ -9,6 +9,7 @@ local _after_coroutines = {}            -- Funcs to run after a pass resuming co
 local _coroutines_resumable = false     -- When false, coroutines will no longer run.
 local _coroutine_yieldguard = nil       -- Which coroutine is yielding inside popenyield.
 local _coroutine_context = nil          -- Context for queuing io.popenyield calls from a same source.
+local _coroutine_canceled = false       -- Becomes true if an orphaned io.popenyield cancels the coroutine.
 local _coroutine_generation = 0         -- ID for current generation of coroutines.
 
 local _dead = nil
@@ -48,6 +49,7 @@ local function clear_coroutines()
     _coroutines_resumable = false
     -- Don't touch _coroutine_yieldguard; it only gets cleared when the thread finishes.
     _coroutine_context = nil
+    _coroutine_canceled = false
     _coroutine_generation = _coroutine_generation + 1
 
     _dead = (settings.get("lua.debug") or clink.DEBUG) and {} or nil
@@ -103,6 +105,12 @@ local function set_coroutine_queued(queued)
     if t and _coroutines[t] then
         _coroutines[t].queued = queued and true or nil
     end
+end
+
+--------------------------------------------------------------------------------
+local function cancel_coroutine(message)
+    _coroutine_canceled = true
+    error(message.."canceling popenyield; coroutine is orphaned")
 end
 
 --------------------------------------------------------------------------------
@@ -165,6 +173,7 @@ end
 --------------------------------------------------------------------------------
 function clink._set_coroutine_context(context)
     _coroutine_context = context
+    _coroutine_canceled = false
 end
 
 --------------------------------------------------------------------------------
@@ -194,9 +203,12 @@ function clink._resume_coroutines()
                         -- time of the coroutine.
                         entry.lastclock = os.clock()
                     else
-                        print("")
-                        print("coroutine failed:")
-                        print(ret)
+                        if _coroutine_canceled then
+                        else
+                            print("")
+                            print("coroutine failed:")
+                            print(ret)
+                        end
                         table.insert(remove, _)
                     end
                 end
@@ -413,7 +425,7 @@ function io.popenyield(command, mode)
         -- Cancel if not from the current prompt filter generation.
         if get_coroutine_generation() ~= _coroutine_generation then
             local message = (type(command) == string) and command..": " or ""
-            return nil, message.."canceling popenyield; coroutine is orphaned", -1
+            cancel_coroutine(message.."canceling popenyield; coroutine is orphaned")
         end
         -- Start the popenyield.
         local file, yieldguard = io.popenyield_internal(command, mode)
