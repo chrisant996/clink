@@ -314,7 +314,7 @@ function clink._diag_coroutines()
     end
 
     -- Only list dead coroutines if there are any.
-    if table_has_elements(_dead_) then
+    if table_has_elements(_dead) then
         clink.print(bold.."dead coroutines:"..norm)
         list_diag(deadthreads, deadlistcolor)
     end
