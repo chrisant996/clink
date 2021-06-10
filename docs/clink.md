@@ -1054,7 +1054,7 @@ Readline needs to be told which characters in the prompt are unprintable or invi
 
 Prompt filtering needs to be fast, or it can interfere with using the shell (e.g. `git status` can be slow in a large repo).
 
-Clink provides a way for prompt filters to do some initial work and set the prompt, continue doing work in the background, and then refresh the prompt again when the background work is finished.  This is accomplished by using Lua coroutines, but Clink simplifies and streamlines the process.
+Clink provides a way for prompt filters to do some initial work and set the prompt, continue doing work in the background, and then refresh the prompt again when the background work is finished.  This is accomplished by using [Lua coroutines](https://www.lua.org/manual/5.2/manual.html#2.6), but Clink simplifies and streamlines the process.
 
 A prompt filter can call <a href="#clink.promptcoroutine">clink.promptcoroutine(my_func)</a> to run `my_func()` inside a coroutine.  Clink will automatically resume the coroutine repeatedly while input line editing is idle.  When `my_func()` completes, Clink will automatically refresh the prompt by triggering prompt filtering again.
 
