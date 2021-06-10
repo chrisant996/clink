@@ -29,6 +29,7 @@ end
 --  Updated by the coroutine management system:
 --      resumed:        Number of times the coroutine has been resumed.
 --      firstclock:     The os.clock() from the beginning of the first resume.
+--      throttleclock:  The os.clock() from the end of the most recent yieldguard.
 --      lastclock:      The os.clock() from the end of the last resume.
 --      infinite:       Use INFINITE wait for this coroutine; it's actively inside popenyield.
 --      queued:         Use INFINITE wait for this coroutine; it's queued inside popenyield.
@@ -65,6 +66,7 @@ local function release_coroutine_yieldguard()
     if _coroutine_yieldguard and _coroutine_yieldguard.yieldguard:ready() then
         local entry = _coroutines[_coroutine_yieldguard.coroutine]
         if entry and entry.yieldguard == _coroutine_yieldguard.yieldguard then
+            entry.throttleclock = os.clock()
             entry.yieldguard = nil
             _coroutine_yieldguard = nil
             for _,entry in pairs(_coroutines) do
@@ -111,12 +113,20 @@ local function next_entry_target(entry, now)
     if not entry.lastclock then
         return 0
     else
-        -- Throttle any coroutine that's been running for 5 or more seconds and
-        -- wants to run more frequently than every 5 seconds.  They still get to
-        -- run, but only once every 5 seconds.
+        -- Multiple kinds of throttling for coroutines:
+        --      - Throttle if running for 5 or more seconds and wants to run
+        --        more frequently than every 5 seconds.  But reset the elapsed
+        --        time every time io.popenyield() finishes.
+        --      - Throttle if running for more than 30 seconds total.
+        -- Throttled coroutines can only run once every 5 seconds.
         local interval = entry.interval
-        if interval < 5 and now and entry.firstclock and now - entry.firstclock > 5 then
-            interval = 5
+        local throttleclock = entry.throttleclock or entry.firstclock
+        if now then
+            if interval < 5 and throttleclock and now - throttleclock > 5 then
+                interval = 5
+            elseif entry.firstclock and now - entry.firstclock > 30 then
+                interval = 5
+            end
         end
         return entry.lastclock + interval
     end
