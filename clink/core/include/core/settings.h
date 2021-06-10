@@ -53,6 +53,7 @@ bool                migrate_setting(const char* name, const char* value, std::ve
 
 #ifdef DEBUG
 bool                get_ever_loaded();
+void                TEST_set_ever_loaded();
 #endif
 
 };

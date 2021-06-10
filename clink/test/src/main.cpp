@@ -4,6 +4,7 @@
 #include "pch.h"
 
 #include "core/str.h"
+#include "core/settings.h"
 
 #include <list>
 #include <assert.h>
@@ -29,6 +30,10 @@ int main(int argc, char** argv)
     argc--, argv++;
 
     bool timer = false;
+
+#ifdef DEBUG
+    settings::TEST_set_ever_loaded();
+#endif
 
     while (argc > 0)
     {

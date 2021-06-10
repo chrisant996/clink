@@ -425,6 +425,11 @@ bool get_ever_loaded()
 {
     return s_ever_loaded;
 }
+
+void TEST_set_ever_loaded()
+{
+    s_ever_loaded = true;
+}
 #endif
 
 } // namespace settings
