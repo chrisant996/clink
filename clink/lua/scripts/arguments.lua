@@ -58,7 +58,7 @@ function _argreader._new(root)
 end
 
 --------------------------------------------------------------------------------
-function _argreader:update(word, word_index)
+function _argreader:update(word, word_index, line_state)
     local arg_match_type = "a" --arg
 
     -- Check for flags and switch matcher if the word is a flag.
@@ -123,11 +123,15 @@ function _argreader:update(word, word_index)
                     local attached_pos = word:find("[:=]")
                     if attached_pos then
                         local prefix = word:sub(1, attached_pos)
-                        for _, i in ipairs(arg) do
-                            if type(i) ~= "function" and i == prefix then
-                                t = arg_match_type
-                                matched = true
-                                break
+                        if arg._links and arg._links[prefix] then
+                            t = arg_match_type
+                        else
+                            for _, i in ipairs(arg) do
+                                if type(i) ~= "function" and i == prefix then
+                                    t = arg_match_type
+                                    matched = true
+                                    break
+                                end
                             end
                         end
                     end
@@ -150,6 +154,17 @@ function _argreader:update(word, word_index)
     -- Does the word lead to another matcher?
     for key, linked in pairs(arg._links) do
         if key == word then
+            if is_flag and word:match("[:=]$") then
+                local info = line_state:getwordinfo(word_index)
+                if info and
+                        line_state:getcursor() ~= info.offset + info.length and
+                        line_state:getline():sub(info.offset + info.length, info.offset + info.length) == " " then
+                    -- Don't follow linked parser on `--foo=` flag if there's a
+                    -- space after the `:` or `=` unless the cursor is on the
+                    -- space.
+                    break
+                end
+            end
             self:_push(linked)
             break
         end
@@ -409,6 +424,13 @@ end
 
 --------------------------------------------------------------------------------
 function _argmatcher:_add(list, addee, prefixes)
+    -- If addee is a flag like --foo= and is not linked, then link it to a
+    -- default parser so its argument doesn't get confused as an arg for its
+    -- parent argmatcher.
+    if prefixes and type(addee) == "string" and addee:match("[:=]$") then
+        addee = addee..clink.argmatcher():addarg(clink.filematches)
+    end
+
     -- Flatten out tables unless the table is a link
     local is_link = (getmetatable(addee) == _arglink)
     if type(addee) == "table" and not is_link and not addee.match then
@@ -462,7 +484,7 @@ function _argmatcher:_generate(line_state, match_builder)
     local word_count = line_state:getwordcount()
     for word_index = 2, (word_count - 1) do
         local word = line_state:getword(word_index)
-        reader:update(word, word_index)
+        reader:update(word, word_index, line_state)
     end
 
     -- There should always be a matcher left on the stack, but the arg_index
@@ -780,7 +802,7 @@ function argmatcher_generator:getwordbreakinfo(line_state)
         local word_count = line_state:getwordcount()
         for word_index = 2, (word_count - 1) do
             local word = line_state:getword(word_index)
-            reader:update(word, word_index)
+            reader:update(word, word_index, line_state)
         end
 
         -- There should always be a matcher left on the stack, but the arg_index
@@ -834,7 +856,7 @@ function argmatcher_classifier:classify(commands)
             -- Consume words and use them to move through matchers' arguments.
             for word_index = 2, word_count do
                 local word = line_state:getword(word_index)
-                reader:update(word, word_index)
+                reader:update(word, word_index, line_state)
             end
         end
     end

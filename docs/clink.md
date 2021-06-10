@@ -777,7 +777,7 @@ When displaying possible completions, flag matches are only shown if the flag ch
 
 #### Linking Parsers
 
-There are often situations where the parsing of a command's arguments is dependent on the previous words (`git merge ...` compared to `git log ...` for example). For these scenarios Clink allows you to link parsers to arguments' words using Lua's concatenation operator. Parsers can also be concatenated with flags too.
+There are often situations where the parsing of a command's arguments is dependent on the previous words (`git merge ...` compared to `git log ...` for example). For these scenarios Clink allows you to link parsers to arguments' words using Lua's concatenation operator.
 
 ```lua
 a_parser = clink.argmatcher():addarg({ "foo", "bar" })
@@ -787,7 +787,44 @@ c_parser:addarg({ "foobar" .. a_parser })   -- Arg #1 is "foobar", which has arg
 c_parser:addarg({ b_parser })               -- Arg #2 is "abc" or "123".
 ```
 
-As the example above shows, it is also possible to use a parser without concatenating it to a word. When Clink follows a link to a parser it is permanent and it will not return to the previous parser.
+As the example above shows, it is also possible to use a parser without concatenating it to a word.
+
+When Clink follows a link to a parser it will only return to the previous parser when the linked parser runs out of arguments.
+
+#### Flags With Arguments
+
+Parsers can be concatenated with flags, too.
+
+Here's an example of a flag that takes an argument:
+
+```lua
+clink.argmatcher("git")
+:addarg({
+    "merge"..clink.argmatcher():addflags({
+        "--strategy"..clink.argmatcher():addarg({
+            "resolve",
+            "recursive",
+            "ours",
+            "octopus",
+            "subtree",
+        })
+    })
+})
+```
+
+A `:` or `=` at the end of a flag indicates the flag takes an argument but requires no space between the flag and its argument.  If such a flag is not linked to a parser, then it automatically gets linked to a parser to match files.  Here's an example with a few flags that take arguments without a space in between:
+
+```lua
+clink.argmatcher("findstr")
+:addflags({
+    "/b", "/e", "/l", "/r", "/s", "/i", "/x", "/v", "/n", "/m", "/o", "/p", "/offline",
+    "/a:"..clink.argmatcher():addarg( "attr" ),
+    "/f:"..clink.argmatcher():addarg( clink.filematches ),
+    "/c:"..clink.argmatcher():addarg( "search_string" ),
+    "/g:", -- This is the same as linking with clink.argmatcher():addarg(clink.filematches).
+    "/d:"..clink.argmatcher():addarg( clink.dirmatches )
+})
+```
 
 #### Functions As Argument Options
 
