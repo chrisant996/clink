@@ -12,9 +12,6 @@ local _coroutine_context = nil          -- Context for queuing io.popenyield cal
 local _coroutine_generation = 0         -- ID for current generation of coroutines.
 
 local _dead = nil
-if clink.DEBUG then
-    _dead = {}
-end
 
 --------------------------------------------------------------------------------
 -- Scheme for entries in _coroutines:
@@ -51,9 +48,7 @@ local function clear_coroutines()
     _coroutine_context = nil
     _coroutine_generation = _coroutine_generation + 1
 
-    if _dead then
-        _dead = {}
-    end
+    _dead = (settings.get("lua.debug") or clink.DEBUG) and {} or nil
 
     if preserve then
         _coroutines[preserve.coroutine] = preserve
