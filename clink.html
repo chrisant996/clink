@@ -3,7 +3,7 @@
 
 <!-- ----------------------------------------------------- -->
 <head>
-<title>Clink v1.2.12</title>
+<title>Clink v1.2.13</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Rambla:wght@400;700&family=Roboto&family=Fira+Mono&display=swap');
 html {
@@ -747,7 +747,7 @@ name:"Plain text",aliases:["text","txt"],disableAutodetect:!0})})());
         </td>
         <td style="text-align:right">
             <div id="header">
-                <div id="title">Clink v1.2.12</div>
+                <div id="title">Clink v1.2.13</div>
                 <div id="url">
                     <a href="https://github.com/chrisant996/clink">
                         https://github.com/chrisant996/clink
@@ -1677,7 +1677,8 @@ function git_branch_autocomplete:generate(line_state, match_builder)
 end
 </code></pre>
 <h3 id="the-getwordbreakinfo-function">The :getwordbreakinfo() Function</h3>
-<p>A generator can influence word breaking for the end word by defining a <code>:getwordbreakinfo()</code> function.  The function takes a <span class="arg">line_state</span> <a href="#line">line</a> object that has information about the current line.  If it returns nil or 0, the end word is truncated to 0 length.  This is the normal behavior, which allows Clink to collect and cache all matches and then filter them based on typing.  Or it can return two numbers:  word break length and an optional end word length.  The end word is split at the word break length:  one word contains the first word break length characters from the end word (if 0 length then it&#39;s discarded), and the next word contains the rest of the end word truncated to the optional word length (0 if omitted).</p>
+<p>If needed, a generator can optionally influence word breaking for the end word by defining a <code>:getwordbreakinfo()</code> function.</p>
+<p>The function takes a <span class="arg">line_state</span> <a href="#line">line</a> object that has information about the current line.  If it returns nil or 0, the end word is truncated to 0 length.  This is the normal behavior, which allows Clink to collect and cache all matches and then filter them based on typing.  Or it can return two numbers:  word break length and an optional end word length.  The end word is split at the word break length:  one word contains the first word break length characters from the end word (if 0 length then it&#39;s discarded), and the next word contains the rest of the end word truncated to the optional word length (0 if omitted).</p>
 <p>For example, when the environment variable match generator sees the end word is <code>abc%USER</code> it returns <code>3,1</code> so that the last two words become &quot;abc&quot; and &quot;%&quot; so that its generator knows it can do environment variable matching.  But when it sees <code>abc%FOO%def</code> it returns <code>8,0</code> so that the last two words become &quot;abc%FOO%&quot; and &quot;&quot; so that its generator won&#39;t do environment variable matching, and also so other generators can produce matches for what follows, since &quot;%FOO%&quot; is an already-completed environment variable and therefore should behave like a word break.  In other words, it breaks the end word differently depending on whether the number of percent signs is odd or even, to account for environent variable syntax rules.</p>
 <p>And when an argmatcher sees the end word begins with a flag character it returns <code>0,1</code> so the end word contains only the flag character in order to switch from argument matching to flag matching.</p>
 <blockquote>
@@ -1904,14 +1905,42 @@ C:&gt;foobar hello -foo wo<span style="color:#ffffff">_</span>
 <p>When displaying possible completions, flag matches are only shown if the flag character has been input (so <code>command </code> and <kbd>Alt</kbd>+<kbd>=</kbd> would list only non-flag matches, or <code>command -</code> and <kbd>Alt</kbd>+<kbd>=</kbd> would list only flag matches).</p>
 <h3 id="more-advanced-stuff-1">More Advanced Stuff</h3>
 <h4 id="linking-parsers">Linking Parsers</h4>
-<p>There are often situations where the parsing of a command&#39;s arguments is dependent on the previous words (<code>git merge ...</code> compared to <code>git log ...</code> for example). For these scenarios Clink allows you to link parsers to arguments&#39; words using Lua&#39;s concatenation operator. Parsers can also be concatenated with flags too.</p>
+<p>There are often situations where the parsing of a command&#39;s arguments is dependent on the previous words (<code>git merge ...</code> compared to <code>git log ...</code> for example). For these scenarios Clink allows you to link parsers to arguments&#39; words using Lua&#39;s concatenation operator.</p>
 <pre><code class="language-lua">a_parser = clink.argmatcher():addarg({ &quot;foo&quot;, &quot;bar&quot; })
 b_parser = clink.argmatcher():addarg({ &quot;abc&quot;, &quot;123&quot; })
 c_parser = clink.argmatcher()
 c_parser:addarg({ &quot;foobar&quot; .. a_parser })   -- Arg #1 is &quot;foobar&quot;, which has args &quot;foo&quot; or &quot;bar&quot;.
 c_parser:addarg({ b_parser })               -- Arg #2 is &quot;abc&quot; or &quot;123&quot;.
 </code></pre>
-<p>As the example above shows, it is also possible to use a parser without concatenating it to a word. When Clink follows a link to a parser it is permanent and it will not return to the previous parser.</p>
+<p>As the example above shows, it is also possible to use a parser without concatenating it to a word.</p>
+<p>When Clink follows a link to a parser it will only return to the previous parser when the linked parser runs out of arguments.</p>
+<h4 id="flags-with-arguments">Flags With Arguments</h4>
+<p>Parsers can be concatenated with flags, too.</p>
+<p>Here&#39;s an example of a flag that takes an argument:</p>
+<pre><code class="language-lua">clink.argmatcher(&quot;git&quot;)
+:addarg({
+    &quot;merge&quot;..clink.argmatcher():addflags({
+        &quot;--strategy&quot;..clink.argmatcher():addarg({
+            &quot;resolve&quot;,
+            &quot;recursive&quot;,
+            &quot;ours&quot;,
+            &quot;octopus&quot;,
+            &quot;subtree&quot;,
+        })
+    })
+})
+</code></pre>
+<p>A <code>:</code> or <code>=</code> at the end of a flag indicates the flag takes an argument but requires no space between the flag and its argument.  If such a flag is not linked to a parser, then it automatically gets linked to a parser to match files.  Here&#39;s an example with a few flags that take arguments without a space in between:</p>
+<pre><code class="language-lua">clink.argmatcher(&quot;findstr&quot;)
+:addflags({
+    &quot;/b&quot;, &quot;/e&quot;, &quot;/l&quot;, &quot;/r&quot;, &quot;/s&quot;, &quot;/i&quot;, &quot;/x&quot;, &quot;/v&quot;, &quot;/n&quot;, &quot;/m&quot;, &quot;/o&quot;, &quot;/p&quot;, &quot;/offline&quot;,
+    &quot;/a:&quot;..clink.argmatcher():addarg( &quot;attr&quot; ),
+    &quot;/f:&quot;..clink.argmatcher():addarg( clink.filematches ),
+    &quot;/c:&quot;..clink.argmatcher():addarg( &quot;search_string&quot; ),
+    &quot;/g:&quot;, -- This is the same as linking with clink.argmatcher():addarg(clink.filematches).
+    &quot;/d:&quot;..clink.argmatcher():addarg( clink.dirmatches )
+})
+</code></pre>
 <h4 id="functions-as-argument-options">Functions As Argument Options</h4>
 <p>Argument options are not limited solely to strings. Clink also accepts functions too so more context aware argument options can be used.</p>
 <pre><code class="language-lua">function rainbow_function(word)
@@ -3281,6 +3310,10 @@ end</code></pre></div></div><hr/>
         <div class="section" id="changes">
 <h1 id="changes">Changes</h1>
 <h3 id="releases-from-chrisant996clink-fork">Releases from <a href="https://github.com/chrisant996/clink">chrisant996/clink</a> fork</h3>
+<h4 id="v1213">v1.2.13</h4>
+<ul>
+<li>Added support for linking a parser to flags ending with <code>:</code> or <code>=</code>; now completion works for the flag&#39;s argument.</li>
+</ul>
 <h4 id="v1212">v1.2.12</h4>
 <ul>
 <li>Improved diagnostic output for coroutines (<kbd>Ctrl</kbd>-<kbd>X</kbd>,<kbd>Ctrl</kbd>+<kbd>Z</kbd>), plus more diagnostic info when the <code>lua.debug</code> setting is enabled.</li>
