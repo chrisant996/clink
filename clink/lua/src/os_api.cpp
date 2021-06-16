@@ -15,6 +15,8 @@
 #include <ntverp.h> // for VER_PRODUCTMAJORVERSION to deduce SDK version
 #include <assert.h>
 
+#include <memory>
+
 //------------------------------------------------------------------------------
 extern setting_bool g_glob_hidden;
 extern setting_bool g_glob_system;
@@ -564,16 +566,20 @@ int get_aliases(lua_State* state)
     if (buffer_size == 0)
         return 1;
 
-    wstr<> buffer;
-    buffer.reserve(buffer_size);
-    ZeroMemory(buffer.data(), buffer.size());   // Avoid race condition!
-    if (GetConsoleAliasesW(buffer.data(), buffer.size(), name.data()) == 0)
+    // Don't use wstr<> because it only uses 15 bits to store the buffer size.
+    buffer_size++;
+    std::unique_ptr<WCHAR[]> buffer = std::unique_ptr<WCHAR[]>(new WCHAR[buffer_size]);
+    if (!buffer)
+        return 1;
+
+    ZeroMemory(buffer.get(), buffer_size * sizeof(WCHAR));    // Avoid race condition!
+    if (GetConsoleAliasesW(buffer.get(), buffer_size, name.data()) == 0)
         return 1;
 
     // Parse the result into a lua table.
     str<> out;
-    WCHAR* alias = buffer.data();
-    for (int i = 1; int(alias - buffer.data()) < buffer_size; ++i)
+    WCHAR* alias = buffer.get();
+    for (int i = 1; int(alias - buffer.get()) < buffer_size; ++i)
     {
         WCHAR* c = wcschr(alias, '=');
         if (c == nullptr)
@@ -588,8 +594,8 @@ int get_aliases(lua_State* state)
         ++c;
         alias = c + wcslen(c) + 1;
     }
-
 #endif // __MINGW32__
+
     return 1;
 }
 
