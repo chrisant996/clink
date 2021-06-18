@@ -73,6 +73,12 @@ Clink does not collect user data.  Clink writes diagnostic information to its lo
 
 # Configuring Clink
 
+## Startup Cmd Script
+
+When Clink is injected, it looks for a `clink_start.cmd` script in the binaries directory and [profile directory](#filelocations).  Clink automatically runs the scripts, if present, when the first CMD prompt is shown after Clink is injected.
+
+You can set the `clink.autostart` setting to run a different command, or set it to "nul" to run no command at all.
+
 <a name="clinksettings"></a>
 
 ## Clink Settings
@@ -83,6 +89,7 @@ The following table describes the available Clink settings:
 
 Name                         | Default | Description
 :--:                         | :-:     | -----------
+`clink.autostart`            |         | This command is automatically run when the first CMD prompt is shown after Clink is injected.  If this is blank (the default), then Clink instead looks for clink_start.cmd in the binaries directory and profile directory and runs them.  Set it to "nul" to not run any autostart command.
 `clink.colorize_input`       | True    | Enables context sensitive coloring for the input text (see <a href="#classifywords">Coloring The Input Text</a>).
 `clink.paste_crlf`           | `crlf`  | What to do with CR and LF characters on paste. Setting this to `delete` deletes them, `space` replaces them with spaces, `ampersand` replaces them with ampersands, and `crlf` pastes them as-is (executing commands that end with a newline).
 `clink.path`                 |         | A list of paths to load Lua scripts. Multiple paths can be delimited semicolons.
