@@ -73,6 +73,10 @@ Clink does not collect user data.  Clink writes diagnostic information to its lo
 
 # Configuring Clink
 
+<a name="clinksettings"></a>
+
+## Clink Settings
+
 The easiest way to configure Clink is to use Clink's `set` command line option.  This can list, query, and set Clink's settings. Run `clink set --help` from a Clink-installed cmd.exe process to learn more both about how to use it and to get descriptions for Clink's various options.
 
 The following table describes the available Clink settings:
@@ -296,7 +300,7 @@ call "%~dp0clink.bat" inject --profile "%TEMP%\clink_portable" %1 %2 %3 %4 %5 %6
 
 # Configuring Readline
 
-Readline itself can also be configured to add custom keybindings and macros by creating a Readline init file. There is excellent documentation for all the options available to configure Readline in Readline's [manual](https://tiswww.cwru.edu/php/chet/readline/rltop.html#Documentation).
+Readline itself can also be configured to add custom keybindings and macros by creating a Readline init file. There is excellent documentation for all the options and commands available to configure Readline in Readline's [manual](https://tiswww.cwru.edu/php/chet/readline/rltop.html#Documentation).
 
 Clink searches in the directories referenced by the following environment variables and loads any `.inputrc` or `_inputrc` files present, in the order listed here:
 - `%CLINK_INPUTRC%`
@@ -394,9 +398,9 @@ Name | Description
 
 ## Completion Colors
 
-When `colored-completion-prefix` is configured to `on`, then the "so" color from `%LS_COLORS%` is used to color the common prefix when displaying possible completions.  The default for "so" is magenta, but for example `set LS_COLORS=so=90` sets the color to bright black (which shows up as a dark gray).
+When the `colored-completion-prefix` [Readline setting](#configreadline) is configured to `on`, then the "so" color from the `%LS_COLORS%` environment variable is used to color the common prefix when displaying possible completions.  The default for "so" is magenta, but for example `set LS_COLORS=so=90` sets the color to bright black (which shows up as a dark gray).
 
-When `colored-stats` is configured to `on`, then the color definitions from `%LS_COLORS%` (using ANSI escape codes) are used to color file completions according to their file type or extension.  Each definition is a either a two character type id or a file extension, followed by an equals sign and then the [SGR parameters](https://en.wikipedia.org/wiki/ANSI_escape_code#SGR_parameters) for an ANSI escape code.  Multiple definitions are separated by colons.  Also, since `%LS_COLORS%` doesn't cover readonly files, hidden files, doskey aliases, or shell commands the `color.readonly`, `color.hidden`, `color.doskey`, and `color.cmd` [Clink settings](#configclink) exist to cover those.
+When `colored-stats` is configured to `on`, then the color definitions from `%LS_COLORS%` (using ANSI escape codes) are used to color file completions according to their file type or extension.  Each definition is a either a two character type id or a file extension, followed by an equals sign and then the [SGR parameters](https://en.wikipedia.org/wiki/ANSI_escape_code#SGR_parameters) for an ANSI escape code.  Multiple definitions are separated by colons.  Also, since `%LS_COLORS%` doesn't cover readonly files, hidden files, doskey aliases, or shell commands the `color.readonly`, `color.hidden`, `color.doskey`, and `color.cmd` [Clink settings](#clinksettings) exist to cover those.
 
 Here is an example where `%LS_COLORS%` defines colors for various types.
 
@@ -420,7 +424,7 @@ Let's break that down:
 
 ## Popup window
 
-The `clink-popup-complete`, `clink-popup-directories`, and `clink-popup-history` commands show a popup window that lists the available completions, directory history, or command history.  Here's how it works:
+The `clink-popup-complete`, `clink-popup-directories`, and `clink-popup-history` [Readline commands](#configreadline) show a popup window that lists the available completions, directory history, or command history.  Here's how they work:
 
 Key | Description
 :-:|---
@@ -434,7 +438,9 @@ Typing|Typing does an incremental search.
 <kbd>Shift</kbd>+<kbd>F3</kbd>|Go to the previous match.
 <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>L</kbd>|Go to the previous match.
 
-# Extending Clink
+<a name="extending-clink"></a>
+
+# Extending Clink With Lua
 
 Clink can be extended with <a href="https://www.lua.org/docs.html">Lua</a> scripts to customize startup actions, create completion matches, customize the prompt, and more.  The following sections describe these in more detail and show some examples.
 
@@ -470,7 +476,7 @@ The following sections describe these in more detail and show some examples.
 
 ## Match Generators
 
-These are Lua functions that are called as part of Readline's completion process.
+These are Lua functions that are called as part of Readline's completion process (for example when pressing <kbd>Tab</kbd>).
 
 First create a match generator object:
 
@@ -875,7 +881,7 @@ With the shorthand form flags are implied rather than declared.  When a shorthan
 
 ## Coloring The Input Text
 
-When the `clink.colorize_input` setting is enabled, [argmatcher](#argumentcompletion) automatically apply colors to the input text by parsing it.
+When the `clink.colorize_input` [setting](#clinksettings) is enabled, [argmatcher](#argumentcompletion) automatically apply colors to the input text by parsing it.
 
 It's possible for an argmatcher to provide a function to override how its arguments are colored.  This function is called once for each of the argmatcher's arguments.
 
@@ -999,7 +1005,7 @@ end
 
 ## Customising The Prompt
 
-Before Clink displays the prompt it filters the prompt through Lua so that the prompt can be customised. This happens each and every time that the prompt is shown which allows for context sensitive customisations (such as showing the current branch of a git repository).
+Before Clink displays the prompt it filters the prompt through [Lua](#extending-clink) so that the prompt can be customised. This happens each and every time that the prompt is shown which allows for context sensitive customisations (such as showing the current branch of a git repository).
 
 Writing a prompt filter is straightforward:
 1. Create a new prompt filter by calling `clink.promptfilter()` along with a priority id which dictates the order in which filters are called. Lower priority ids are called first.
@@ -1351,7 +1357,7 @@ The `terminal.raw_esc` setting controls the binding sequence for the <kbd>Esc</k
 
 ### Lua Key Bindings
 
-You can bind a key to a Lua function by binding it to a macro that begins with "luafunc:".  Clink will invoke the named Lua function when the key binding is input.  Function names can include periods (such as `foo.bar`) but cannot include any other punctuation.
+You can bind a key to a [Lua](#extending-clink) function by [binding](#keybindings) it to a macro that begins with "luafunc:".  Clink will invoke the named Lua function when the key binding is input.  Function names can include periods (such as `foo.bar`) but cannot include any other punctuation.
 
 The Lua function receives a <a href="#rl_buffer">rl_buffer</a> argument that gives it access to the input buffer.
 
