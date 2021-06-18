@@ -88,9 +88,9 @@ static setting_enum g_terminal_emulation(
     "terminal.emulation",
     "Controls VT emulation",
     "Clink can emulate Virtual Terminal processing if the console doesn't\n"
-    "natively. When set to 'emulate' then Clink performs VT emulation and handles\n"
-    "ANSI escape codes. When 'native' then Clink passes output directly to the\n"
-    "console. Or when 'auto' then Clink performs VT emulation unless native\n"
+    "natively.  When set to 'emulate' then Clink performs VT emulation and handles\n"
+    "ANSI escape codes.  When 'native' then Clink passes output directly to the\n"
+    "console.  Or when 'auto' then Clink performs VT emulation unless native\n"
     "terminal support is detected (such as when hosted inside ConEmu, Windows\n"
     "Terminal, or Windows 10 new console, or when using ANSICON).",
     "native,emulate,auto",

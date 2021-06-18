@@ -31,7 +31,7 @@ static setting_bool g_lua_debug(
     "Enables Lua debugging",
     "Loads a simple embedded command line debugger when enabled.\n"
     "The debugger can be activated by inserting a pause() call, which will act\n"
-    "as a breakpoint. Or the debugger can be activated by traceback() calls or\n"
+    "as a breakpoint.  Or the debugger can be activated by traceback() calls or\n"
     "Lua errors by turning on the lua.break_on_traceback or lua.break_on_error\n"
     "settings, respectively.",
     false);
@@ -39,7 +39,7 @@ static setting_bool g_lua_debug(
 static setting_str g_lua_path(
     "lua.path",
     "'require' search path",
-    "Value to append to package.path. Used to search for Lua scripts specified\n"
+    "Value to append to package.path.  Used to search for Lua scripts specified\n"
     "in require() statements.",
     "");
 

@@ -21,9 +21,9 @@ static setting_str g_clink_path(
     "clink.path",
     "Paths to load Lua scripts from",
     "These paths will be searched for Lua scripts that provide custom\n"
-    "match generation, prompt filtering, and etc. Multiple paths should be\n"
-    "delimited by semicolons. Setting this loads scripts from here INSTEAD of\n"
-    "from the Clink binaries directory and config directory.",
+    "match generation, prompt filtering, and etc.  Multiple paths should be\n"
+    "delimited by semicolons.  Setting this loads scripts from here INSTEAD of\n"
+    "from the Clink binaries directory and profile directory.",
     "");
 
 

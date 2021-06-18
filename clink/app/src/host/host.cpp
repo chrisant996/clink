@@ -42,7 +42,7 @@ extern "C" {
 static setting_enum g_ignore_case(
     "match.ignore_case",
     "Case insensitive matching",
-    "Toggles whether case is ignored when selecting matches. The 'relaxed'\n"
+    "Toggles whether case is ignored when selecting matches.  The 'relaxed'\n"
     "option will also consider -/_ as equal.",
     "off,on,relaxed",
     2);

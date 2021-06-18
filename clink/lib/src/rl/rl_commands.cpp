@@ -46,9 +46,9 @@ static setting_enum g_paste_crlf(
     "clink.paste_crlf",
     "Strips CR and LF chars on paste",
     "Setting this to 'space' makes Clink strip CR and LF characters from text\n"
-    "pasted into the current line. Set this to 'delete' to strip all newline\n"
-    "characters to replace them with a space. Set this to 'ampersand' to replace\n"
-    "all newline characters with an ampersand. Or set this to 'crlf' to paste all\n"
+    "pasted into the current line.  Set this to 'delete' to strip all newline\n"
+    "characters to replace them with a space.  Set this to 'ampersand' to replace\n"
+    "all newline characters with an ampersand.  Or set this to 'crlf' to paste all\n"
     "newline characters as-is (executing commands that end with newline).",
     "delete,space,ampersand,crlf",
     3);

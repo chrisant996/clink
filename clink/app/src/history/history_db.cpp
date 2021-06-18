@@ -62,8 +62,8 @@ static setting_enum g_expand_mode(
     "history.expand_mode",
     "Sets how command history expansion is applied",
     "The '!' character in an entered line can be interpreted to introduce\n"
-    "words from the history. That can be enabled and disable by setting this\n"
-    "value to 'on' or 'off'. Or set this to 'not_squoted', 'not_dquoted', or\n"
+    "words from the history.  That can be enabled and disable by setting this\n"
+    "value to 'on' or 'off'.  Or set this to 'not_squoted', 'not_dquoted', or\n"
     "'not_quoted' to skip any '!' character in single, double, or both quotes\n"
     "respectively.",
     "off,on,not_squoted,not_dquoted,not_quoted",

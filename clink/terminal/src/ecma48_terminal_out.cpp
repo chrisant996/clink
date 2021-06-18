@@ -16,10 +16,10 @@ setting_bool g_adjust_cursor_style(
     "terminal.adjust_cursor_style",
     "Adjusts the cursor visibility and shape",
     "Normally Clink adjusts the cursor visibility and shape, but that will override\n"
-    "the Cursor Shape settings for the default Windows console. Disabling this lets\n"
-    "the Cursor Shape settings work, but then Clink can't show Insert Mode via the\n"
-    "cursor shape, the 'visible bell' setting doesn't work, Clink can't support the\n"
-    "ANSI escape codes for cursor shape, and the cursor may flicker or flash\n"
+    "the Cursor Shape settings for the default Windows console.  Disabling this\n"
+    "lets the Cursor Shape settings work, but then Clink can't show Insert Mode via\n"
+    "the cursor shape, the 'visible bell' setting doesn't work, Clink can't support\n"
+    "the ANSI escape codes for cursor shape, and the cursor may flicker or flash\n"
     "strangely while typing.",
     true);
 
