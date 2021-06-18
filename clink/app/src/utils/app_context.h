@@ -30,6 +30,7 @@ public:
     bool        is_quiet() const;
     void        get_binaries_dir(str_base& out) const;
     void        get_state_dir(str_base& out) const;
+    void        get_autostart_command(str_base& out) const;
     void        get_log_path(str_base& out) const;
     void        get_settings_path(str_base& out) const;
     void        get_history_path(str_base& out) const;

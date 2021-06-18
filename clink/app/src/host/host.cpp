@@ -599,12 +599,22 @@ bool host::edit_line(const char* prompt, str_base& out)
     static_assert(str_compare_scope::relaxed == 2, "g_ignore_case values must match str_compare_scope values");
     str_compare_scope compare(g_ignore_case.get(), g_fuzzy_accent.get());
 
-    // Improve performance while replaying doskey macros by not loading scripts
-    // or history, since they aren't used.
+    // Run clinkstart.cmd on inject, if present.
+    static bool s_autostart = true;
+    str_moveable autostart;
     bool interactive = !m_doskey_alias && ((m_queued_lines.size() == 0) ||
                                            (m_queued_lines.size() == 1 &&
                                             (m_queued_lines.front().length() == 0 ||
                                              m_queued_lines.front().c_str()[m_queued_lines.front().length() - 1] != '\n')));
+    if (interactive && s_autostart)
+    {
+        s_autostart = false;
+        app->get_autostart_command(autostart);
+        interactive = autostart.empty();
+    }
+
+    // Improve performance while replaying doskey macros by not loading scripts
+    // or history, since they aren't used.
     bool init_scripts = reset || interactive;
     bool send_event = interactive;
     bool init_prompt = interactive;
@@ -712,6 +722,17 @@ bool host::edit_line(const char* prompt, str_base& out)
     bool ret = false;
     while (1)
     {
+        // Auto-run clinkstart.cmd the first time the edit prompt is invoked.
+        if (autostart.length())
+        {
+            m_terminal.out->begin();
+            m_terminal.out->end();
+            out = autostart.c_str();
+            resolved = true;
+            ret = true;
+            break;
+        }
+
         // Give the directory history queue a crack at the current directory.
         update_dir_history();
 
@@ -840,7 +861,7 @@ bool host::edit_line(const char* prompt, str_base& out)
             out.clear();
     }
 
-    if (ret)
+    if (ret && autostart.empty())
     {
         // If the line is a directory, rewrite the line to invoke the CD command
         // to change to the directory.

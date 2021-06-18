@@ -26,6 +26,15 @@ static setting_str g_clink_path(
     "from the Clink binaries directory and profile directory.",
     "");
 
+static setting_str g_clink_autostart(
+    "clink.autostart",
+    "Command to run when injected",
+    "This command is automatically run when the first CMD prompt is shown after\n"
+    "Clink is injected.  If this is blank (the default), then Clink instead looks\n"
+    "for clink_start.cmd in the binaries directory and profile directory and runs\n"
+    "them.  Set it to \"nul\" to not run any autostart command.",
+    "");
+
 
 
 //------------------------------------------------------------------------------
@@ -191,6 +200,30 @@ void app_context::get_binaries_dir(str_base& out) const
 void app_context::get_state_dir(str_base& out) const
 {
     out.copy(m_desc.state_dir);
+}
+
+//------------------------------------------------------------------------------
+void app_context::get_autostart_command(str_base& out) const
+{
+    g_clink_autostart.get(out);
+    if (out.empty())
+    {
+        str<> file;
+
+        get_binaries_dir(file);
+        path::append(file, "clink_start.cmd");
+        if (os::get_path_type(file.c_str()) == os::path_type_file)
+            out << (out.length() ? " & " : "") << "\"" << file.c_str() << "\"";
+
+        get_state_dir(file);
+        path::append(file, "clink_start.cmd");
+        if (os::get_path_type(file.c_str()) == os::path_type_file)
+            out << (out.length() ? " & " : "") << "\"" << file.c_str() << "\"";
+    }
+    else if (out.iequals("nul") || out.iequals("\"nul\""))
+    {
+        out.clear();
+    }
 }
 
 //------------------------------------------------------------------------------
