@@ -35,6 +35,11 @@ void map_errno() { __acrt_errno_map_os_error(GetLastError()); }
 void map_errno(unsigned long const oserrno) { __acrt_errno_map_os_error(oserrno); }
 
 //------------------------------------------------------------------------------
+static int s_errorlevel = 0;
+void set_errorlevel(int errorlevel) { s_errorlevel = errorlevel; }
+int get_errorlevel() { return s_errorlevel; }
+
+//------------------------------------------------------------------------------
 DWORD get_file_attributes(const wchar_t* path)
 {
     // FindFirstFileW can handle cases that GetFileAttributesW can't (e.g. files
@@ -310,6 +315,13 @@ bool get_env(const char* name, str_base& out)
                 return true;
             }
         }
+        else if (stricmp(name, "ERRORLEVEL") == 0)
+        {
+            out.clear();
+            out.format("%d", os::get_errorlevel());
+            return true;
+        }
+
         map_errno();
         return false;
     }

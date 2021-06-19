@@ -47,4 +47,7 @@ bool    get_full_path_name(const char* path, str_base& out);
 void    map_errno();
 void    map_errno(unsigned long const oserrno);
 
+void    set_errorlevel(int errorlevel);
+int     get_errorlevel();
+
 }; // namespace os

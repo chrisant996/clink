@@ -96,6 +96,7 @@ Name                         | Default | Description
 `clink.promptfilter`         | True    | Enable prompt filtering by Lua scripts.
 `cmd.auto_answer`            | `off`   | Automatically answers cmd.exe's "Terminate batch job (Y/N)?" prompts. `off` = disabled, `answer_yes` = answer Y, `answer_no` = answer N.
 `cmd.ctrld_exits`            | True    | <kbd>Ctrl</kbd>+<kbd>D</kbd> exits the process when it is pressed on an empty line.
+`cmd.get_errorlevel`         | False   | When this is enabled, Clink runs a hidden `echo %errorlevel%` command before each interactive input prompt to retrieve the last exit code for use by Lua scripts.  If you experience problems, try turning this off.  This is off by default.
 `color.arg`                  |         | The color for arguments in the input line when `clink.colorize_input` is enabled.
 `color.argmatcher`           |         | The color for the command name in the input line when `clink.colorize_input` is enabled, if the command name has an argmatcher available.
 <a name="color_cmd"></a>`color.cmd` | `bold` | Used when Clink displays shell (CMD.EXE) command completions, and in the input line when `clink.colorize_input` is enabled.

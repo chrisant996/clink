@@ -85,6 +85,15 @@ static setting_bool g_reload_scripts(
     "effect at the next prompt.",
     false);
 
+setting_bool g_get_errorlevel(
+    "cmd.get_errorlevel",
+    "Trick CMD into revealing the last exit code",
+    "When this is enabled, Clink runs a hidden 'echo %errorlevel%' command before\n"
+    "each interactive input prompt to retrieve the last exit code for use by Lua\n"
+    "scripts.  If you experience problems, try turning this off.  This is off by\n"
+    "default.",
+    false);
+
 extern setting_bool g_classify_words;
 extern setting_color g_color_prompt;
 
@@ -546,6 +555,78 @@ private:
 
 
 //------------------------------------------------------------------------------
+struct autostart_display
+{
+    void save();
+    void restore();
+
+    COORD m_pos = {};
+    COORD m_saved = {};
+    std::unique_ptr<CHAR_INFO[]> m_screen_content;
+};
+
+//------------------------------------------------------------------------------
+void autostart_display::save()
+{
+    CONSOLE_SCREEN_BUFFER_INFO csbi;
+    HANDLE h = GetStdHandle(STD_OUTPUT_HANDLE);
+    if (!GetConsoleScreenBufferInfo(h, &csbi))
+        return;
+    if (csbi.dwCursorPosition.X != 0)
+        return;
+
+    m_pos = csbi.dwCursorPosition;
+    m_saved.X = csbi.dwSize.X;
+    m_saved.Y = 1;
+    m_screen_content = std::unique_ptr<CHAR_INFO[]>(new CHAR_INFO[csbi.dwSize.X]);
+
+    SMALL_RECT sr { 0, m_pos.Y, csbi.dwSize.X - 1, m_pos.Y };
+    if (!ReadConsoleOutput(h, m_screen_content.get(), m_saved, COORD {}, &sr))
+        m_screen_content.reset();
+}
+
+//------------------------------------------------------------------------------
+void autostart_display::restore()
+{
+    CONSOLE_SCREEN_BUFFER_INFO csbi;
+    HANDLE h = GetStdHandle(STD_OUTPUT_HANDLE);
+    if (!GetConsoleScreenBufferInfo(h, &csbi))
+        return;
+    if (csbi.dwCursorPosition.X != 0)
+        return;
+
+    if (m_pos.Y + 1 != csbi.dwCursorPosition.Y)
+        return;
+    if (m_saved.X != csbi.dwSize.X)
+        return;
+
+    SMALL_RECT sr { 0, m_pos.Y, csbi.dwSize.X - 1, m_pos.Y };
+    std::unique_ptr<CHAR_INFO[]> screen_content = std::unique_ptr<CHAR_INFO[]>(new CHAR_INFO[csbi.dwSize.X]);
+    if (!ReadConsoleOutput(h, screen_content.get(), m_saved, COORD {}, &sr))
+        return;
+
+    if (memcmp(screen_content.get(), m_screen_content.get(), sizeof(CHAR_INFO) * m_saved.Y * m_saved.X) != 0)
+        return;
+
+    SetConsoleCursorPosition(h, m_pos);
+}
+
+//------------------------------------------------------------------------------
+static void move_cursor_up_one_line()
+{
+    CONSOLE_SCREEN_BUFFER_INFO csbi;
+    HANDLE h = GetStdHandle(STD_OUTPUT_HANDLE);
+    if (GetConsoleScreenBufferInfo(h, &csbi))
+    {
+        if (csbi.dwCursorPosition.Y > 0)
+            csbi.dwCursorPosition.Y--;
+        SetConsoleCursorPosition(h, csbi.dwCursorPosition);
+    }
+}
+
+
+
+//------------------------------------------------------------------------------
 host::host(const char* name)
 : m_name(name)
 , m_doskey("cmd.exe")
@@ -601,6 +682,7 @@ bool host::edit_line(const char* prompt, str_base& out)
 
     // Run clinkstart.cmd on inject, if present.
     static bool s_autostart = true;
+    static std::unique_ptr<autostart_display> s_autostart_display;
     str_moveable autostart;
     bool interactive = !m_doskey_alias && ((m_queued_lines.size() == 0) ||
                                            (m_queued_lines.size() == 1 &&
@@ -611,6 +693,47 @@ bool host::edit_line(const char* prompt, str_base& out)
         s_autostart = false;
         app->get_autostart_command(autostart);
         interactive = autostart.empty();
+    }
+
+    // Run " echo %ERRORLEVEL% >tmpfile 2>nul" before every interactive prompt.
+    static bool s_inspect_errorlevel = true;
+    bool inspect_errorlevel = false;
+    if (g_get_errorlevel.get())
+    {
+        if (interactive)
+        {
+            if (s_inspect_errorlevel)
+            {
+                inspect_errorlevel = true;
+                interactive = false;
+            }
+            else
+            {
+                str<> tmp_errfile;
+                app->get_log_path(tmp_errfile);
+                path::to_parent(tmp_errfile, nullptr);
+                path::append(tmp_errfile, "clink_errorlevel.txt");
+
+                FILE* f = fopen(tmp_errfile.c_str(), "r");
+                if (f)
+                {
+                    char buffer[32];
+                    memset(buffer, sizeof(buffer), 0);
+                    fgets(buffer, _countof(buffer) - 1, f);
+                    fclose(f);
+                    os::set_errorlevel(atoi(buffer));
+                }
+                else
+                {
+                    os::set_errorlevel(0);
+                }
+            }
+            s_inspect_errorlevel = !s_inspect_errorlevel;
+        }
+    }
+    else
+    {
+        s_inspect_errorlevel = true;
     }
 
     // Improve performance while replaying doskey macros by not loading scripts
@@ -725,11 +848,42 @@ bool host::edit_line(const char* prompt, str_base& out)
         // Auto-run clinkstart.cmd the first time the edit prompt is invoked.
         if (autostart.length())
         {
+            // Remember the original position to be able to restore the cursor
+            // there if the autostart command doesn't output anything.
+            s_autostart_display = std::make_unique<autostart_display>();
+            s_autostart_display->save();
+
             m_terminal.out->begin();
             m_terminal.out->end();
             out = autostart.c_str();
             resolved = true;
             ret = true;
+            break;
+        }
+
+        // Adjust the cursor position if possible, to make the initial prompt
+        // appear on the same line it would have if no autostart script ran.
+        if (s_autostart_display)
+        {
+            s_autostart_display->restore();
+            s_autostart_display.reset();
+        }
+
+        // Before each interactive prompt, run an echo command to interrogate
+        // CMD's internal %ERRORLEVEL% variable.
+        if (inspect_errorlevel)
+        {
+            str<> tmp_errfile;
+            app->get_log_path(tmp_errfile);
+            path::to_parent(tmp_errfile, nullptr);
+            path::append(tmp_errfile, "clink_errorlevel.txt");
+
+            m_terminal.out->begin();
+            m_terminal.out->end();
+            out.format(" echo %%errorlevel%% 2>nul >\"%s\"", tmp_errfile.c_str());
+            resolved = true;
+            ret = true;
+            move_cursor_up_one_line();
             break;
         }
 

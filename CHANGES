@@ -5,6 +5,10 @@
 #### v1.2.14
 
 - Automatically runs `clink_start.cmd` from the binaries directory and/or the profile directory when Clink is injected.
+- Clink is able to retrieve the last exit code for use by Lua scripts.
+    - The new `cmd.get_errorlevel` setting is off by default, but when enabled it retrieves the last exit code from CMD before running Lua scripts.
+    - The new `os.geterrorlevel()` function gets the last exit code (or 0 if the setting is off).
+    - It works by running a hidden command line between each interactive prompt (as if you typed `echo %errorlevel%` yourself every second command you type).  If you experience problems with this, turn it off.
 - Fixed [#130](https://github.com/chrisant996/clink/issues/130); doskey alias completions stop working when there are many aliases.
 
 #### v1.2.13

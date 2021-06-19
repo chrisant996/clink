@@ -354,9 +354,19 @@ int glob_files(lua_State* state)
 /// Returns the value of the named environment variable, or nil if it doesn't
 /// exist.
 ///
-/// Note: <code>os.getenv("HOME")</code> receives special treatment: if %HOME%
-/// is not set then it is synthesized from %HOMEDRIVE% and %HOMEPATH%, or
-/// from %USERPROFILE%.
+/// Note: Certain environment variable names receive special treatment:
+///
+/// <table>
+/// <tr><th>Name</th><th>Special Behavior</th></tr>
+/// <tr><td><code>"HOME"</code></td><td>If %HOME% is not set then a return value
+///     is synthesized from %HOMEDRIVE% and %HOMEPATH%, or from
+///     %USERPROFILE%.</td></tr>
+/// <tr><td><code>"ERRORLEVEL"</code></td><td>When the
+///     <code>cmd.get_errorlevel</code> setting is enabled (it is off by
+///     default) this returns the most recent exit code, just like the
+///     <code>echo %ERRORLEVEL%</code> command displays.  Otherwise this returns
+///     0.</td></tr>
+/// </table>
 int get_env(lua_State* state)
 {
     // Some cmder-powerline-prompt scripts pass nil.  Allow nil for backward
@@ -403,9 +413,8 @@ int set_env(lua_State* state)
 /// syntax is not supported (e.g. <code>%name:str1=str2%</code> or
 /// <code>%name:~offset,length%</code>).
 ///
-/// Note: <code>os.getenv("HOME")</code> receives special treatment: if %HOME%
-/// is not set then it is synthesized from %HOMEDRIVE% and %HOMEPATH%, or
-/// from %USERPROFILE%.
+/// Note: See <a href="#os.getenv">os.getenv()</a> for a list of special
+/// variable names.
 int expand_env(lua_State* state)
 {
     const char* in = checkstring(state, 1);
@@ -516,6 +525,17 @@ static int get_host(lua_State* state)
     host = module;
 
     lua_pushlstring(state, host.c_str(), host.length());
+    return 1;
+}
+
+//------------------------------------------------------------------------------
+/// -name:  os.geterrorlevel
+/// -ret:   integer
+/// Returns the last command's exit code, if the <code>cmd.get_errorlevel</code>
+/// setting is enabled (it is disabled by default).  Otherwise it returns 0.
+static int get_errorlevel(lua_State* state)
+{
+    lua_pushinteger(state, os::get_errorlevel());
     return 1;
 }
 
@@ -850,6 +870,7 @@ void os_lua_initialise(lua_state& lua)
         { "expandenv",   &expand_env },
         { "getenvnames", &get_env_names },
         { "gethost",     &get_host },
+        { "geterrorlevel", &get_errorlevel },
         { "getalias",    &get_alias },
         { "getaliases",  &get_aliases },
         { "getscreeninfo", &get_screen_info },
