@@ -470,7 +470,7 @@ static void set_cursor_visibility(bool state)
 }
 
 //------------------------------------------------------------------------------
-static bool adjust_cursor_on_resize(COORD prev_position)
+static bool adjust_cursor_on_resize(CONSOLE_SCREEN_BUFFER_INFO& _prev_info)
 {
     // Windows will move the cursor onto a new line when it gets clipped on
     // buffer resize. Other terminals clamp along the X axis.
@@ -479,13 +479,42 @@ static bool adjust_cursor_on_resize(COORD prev_position)
 
     CONSOLE_SCREEN_BUFFER_INFO csbi;
     GetConsoleScreenBufferInfo(handle , &csbi);
-    if (prev_position.X < csbi.dwSize.X)
+    const CONSOLE_SCREEN_BUFFER_INFO prev_info = _prev_info;
+    _prev_info = csbi; // Update for next time.
+
+    if (prev_info.dwSize.X == csbi.dwSize.X)
         return false;
+
+#ifdef DEBUG
+    printf("\x1b[s\x1b[H\x1b[7mPREV: width %d pos %d,%d   NEW: width %d pos %d,%d\x1b[m\x1b[K\x1b[u",
+        prev_info.dwSize.X, prev_info.dwCursorPosition.X, prev_info.dwCursorPosition.Y,
+        csbi.dwSize.X, csbi.dwCursorPosition.X, csbi.dwCursorPosition.Y);
+#endif
+
+    int adjust = 0;
+    if (prev_info.dwSize.X > csbi.dwSize.X)
+    {
+        adjust = -1;
+        if (prev_info.dwCursorPosition.X <= csbi.dwCursorPosition.X)
+            return false;
+    }
+    else
+    {
+        adjust = +1;
+        if (prev_info.dwCursorPosition.X >= csbi.dwCursorPosition.X)
+            return false;
+    }
 
     COORD fix_position = {
         short(csbi.dwSize.X - 1),
-        short(csbi.dwCursorPosition.Y - 1)
+        short(csbi.dwCursorPosition.Y + adjust)
     };
+#ifdef DEBUG
+    printf("\x1b[s\x1b[H\x1b[7mPREV: width %d pos %d,%d   NEW: width %d pos %d,%d   \x1b[32mfix_pos %d,%d\x1b[39m\x1b[m\x1b[K\x1b[u",
+        prev_info.dwSize.X, prev_info.dwCursorPosition.X, prev_info.dwCursorPosition.Y,
+        csbi.dwSize.X, csbi.dwCursorPosition.X, csbi.dwCursorPosition.Y,
+        fix_position.X, fix_position.Y);
+#endif
     SetConsoleCursorPosition(handle, fix_position);
     return true;
 }
@@ -681,7 +710,7 @@ void win_terminal_in::read_console(input_idle* callback)
             // Windows will move the cursor onto a new line when it gets clipped
             // on buffer resize.
             reset_wcwidths();
-            if (adjust_cursor_on_resize(csbi.dwCursorPosition))
+            if (adjust_cursor_on_resize(csbi))
                 return;
             break;
         }

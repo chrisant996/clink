@@ -5,6 +5,11 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 # RELEASE
 
 ## Issues
+- Changing the terminal width can cause Readline to be confused regarding on what row to display the prompt.
+  - It's ok when shrinking the width and the input line is a single line.
+  - It goes wrong when expanding the width and the input line is two or more lines.
+  - It goes wrong when shrinking the width and the input line is two or more lines.
+  - _Update: new logic seems to work correctly **if and only if** the window is resized slowly. When resized quickly, the async width change messes things up quickly+badly._
 
 ## Investigate
 
@@ -72,7 +77,6 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 - Why does it install to a versioned path?  The .nsi file says `; Install to a versioned folder to reduce interference between versions.` so use caution when making any change there.
 
 **Miscellaneous**
-- Changing terminal width makes 0.4.8 slowly "walk up the screen".  Changing terminal width works in master, except when the cursor position itself is affected.
 - Is it a problem that `update_internal()` gets called once per char in a key sequence?  Maybe it should only happen after a key that finishes a key binding?
 - Should only fold path separators in pathish matches.
 - How to reasonably support normal completion coloring with `ondisplaymatches` match display filtering?

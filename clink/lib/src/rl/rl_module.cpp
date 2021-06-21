@@ -1881,6 +1881,8 @@ void rl_module::done(const char* line)
 void rl_module::on_terminal_resize(int columns, int rows, const context& context)
 {
 #if 1
+    rl_resize_terminal();
+#elif 0
     rl_reset_screen_size();
     rl_redisplay();
 #else
