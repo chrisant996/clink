@@ -9,6 +9,7 @@
     - The new `cmd.get_errorlevel` setting is off by default, but when enabled it retrieves the last exit code from CMD before running Lua scripts.
     - The new `os.geterrorlevel()` function gets the last exit code (or 0 if the setting is off).
     - It works by running a hidden command line between each interactive prompt (as if you typed `echo %errorlevel%` yourself every second command you type).  If you experience problems with this, turn it off.
+- Improved refreshing the input line when resizing the terminal window.  It's better than before, but there's no way to make it work perfectly because Windows can resize the terminal further while a program is already trying to respond to the terminal having been resized previously.
 - Fixed [#130](https://github.com/chrisant996/clink/issues/130); doskey alias completions stop working when there are many aliases.
 
 #### v1.2.13

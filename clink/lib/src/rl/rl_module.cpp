@@ -1880,15 +1880,17 @@ void rl_module::done(const char* line)
 //------------------------------------------------------------------------------
 void rl_module::on_terminal_resize(int columns, int rows, const context& context)
 {
-#if 1
-    rl_resize_terminal();
-#elif 0
-    rl_reset_screen_size();
-    rl_redisplay();
-#else
-    static int prev_columns = columns;
+    // Windows internally captures various details about output it received in
+    // order to improve its line wrapping behavior.  Those supplemental details
+    // are not available outside conhost itself, so there's no good way for
+    // Clink to predict the actual exact wrapping that will occur.
+    //
+    // So instead Clink uses a simple heuristic that works well most of the
+    // time:  Clink tries to put the cursor on the same row as the original top
+    // line of the input area, so that Readline's rl_resize_terminal() function
+    // can start a new prompt and overwrite the old one.
 
-    int remaining = prev_columns;
+    int remaining = columns;
     int line_count = 1;
 
     auto measure = [&] (const char* input, int length) {
@@ -1908,7 +1910,7 @@ void rl_module::on_terminal_resize(int columns, int rows, const context& context
 
                     ++line_count;
 
-                    remaining = prev_columns - ((remaining < 0) << 1);
+                    remaining = columns - ((remaining < 0) << 1);
                 }
                 break;
 
@@ -1920,16 +1922,16 @@ void rl_module::on_terminal_resize(int columns, int rows, const context& context
                     /* fallthrough */
 
                 case ecma48_code::c0_cr:
-                    remaining = prev_columns;
+                    remaining = columns;
                     break;
 
                 case ecma48_code::c0_ht:
-                    if (int n = 8 - ((prev_columns - remaining) & 7))
+                    if (int n = 8 - ((columns - remaining) & 7))
                         remaining = max(remaining - n, 0);
                     break;
 
                 case ecma48_code::c0_bs:
-                    remaining = min(remaining + 1, prev_columns); // doesn't consider full-width
+                    remaining = min(remaining + 1, columns); // doesn't consider full-width
                     break;
                 }
                 break;
@@ -1937,40 +1939,27 @@ void rl_module::on_terminal_resize(int columns, int rows, const context& context
         }
     };
 
+    // Measure the new number of lines to the cursor position.
     measure(context.prompt, -1);
-
     const line_buffer& buffer = context.buffer;
     const char* buffer_ptr = buffer.get_buffer();
     measure(buffer_ptr, buffer.get_cursor());
     int cursor_line = line_count - 1;
+    int delta = _rl_last_v_pos - cursor_line;
 
-    buffer_ptr += buffer.get_cursor();
-    measure(buffer_ptr, -1);
+    // Move cursor to where the top line should be.
+    CONSOLE_SCREEN_BUFFER_INFO csbi;
+    HANDLE h = GetStdHandle(STD_OUTPUT_HANDLE);
+    GetConsoleScreenBufferInfo(h, &csbi);
+    COORD new_pos = { 0, SHORT(clamp(csbi.dwCursorPosition.Y + delta, 0, csbi.dwSize.Y - 1)) };
+    SetConsoleCursorPosition(h, new_pos);
+    if (new_pos.Y < csbi.srWindow.Top)
+        ScrollConsoleRelative(h, new_pos.Y, SCR_ABSOLUTE);
 
-    static const char* const termcap_up    = tgetstr("ku", nullptr);
-    static const char* const termcap_down  = tgetstr("kd", nullptr);
-    static const char* const termcap_cr    = tgetstr("cr", nullptr);
-    static const char* const termcap_clear = tgetstr("ce", nullptr);
+    // Clear to end of screen.
+    static const char* const termcap_cd = tgetstr("cd", nullptr);
+    context.printer.print(termcap_cd, strlen(termcap_cd));
 
-    auto& printer = context.printer;
-
-    // Move cursor to bottom line.
-    for (int i = line_count - cursor_line; --i;)
-        printer.print(termcap_down, 64);
-
-    printer.print(termcap_cr, 64);
-    do
-    {
-        printer.print(termcap_clear, 64);
-
-        if (--line_count)
-            printer.print(termcap_up, 64);
-    }
-    while (line_count);
-
-    printer.print(context.prompt, 1024);
-    printer.print(buffer.get_buffer(), 1024);
-
-    prev_columns = columns;
-#endif
+    // Let Readline update its display.
+    rl_resize_terminal();
 }
