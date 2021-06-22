@@ -3,7 +3,7 @@
 
 <!-- ----------------------------------------------------- -->
 <head>
-<title>Clink v1.2.13</title>
+<title>Clink v1.2.14</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Rambla:wght@400;700&family=Roboto&family=Fira+Mono&display=swap');
 html {
@@ -747,7 +747,7 @@ name:"Plain text",aliases:["text","txt"],disableAutodetect:!0})})());
         </td>
         <td style="text-align:right">
             <div id="header">
-                <div id="title">Clink v1.2.13</div>
+                <div id="title">Clink v1.2.14</div>
                 <div id="url">
                     <a href="https://github.com/chrisant996/clink">
                         https://github.com/chrisant996/clink
@@ -834,6 +834,11 @@ name:"Plain text",aliases:["text","txt"],disableAutodetect:!0})})());
 <p>Clink does not collect user data.  Clink writes diagnostic information to its local log file, and does not transmit the log file off the local computer.  For the location of the log file, refer to <a href="#filelocations">File Locations</a> or run <code>clink info</code>.</p>
 <p><a name="configclink"></a></p>
 <h1 id="configuring-clink">Configuring Clink</h1>
+<h2 id="startup-cmd-script">Startup Cmd Script</h2>
+<p>When Clink is injected, it looks for a <code>clink_start.cmd</code> script in the binaries directory and <a href="#filelocations">profile directory</a>.  Clink automatically runs the scripts, if present, when the first CMD prompt is shown after Clink is injected.</p>
+<p>You can set the <code>clink.autostart</code> setting to run a different command, or set it to &quot;nul&quot; to run no command at all.</p>
+<p><a name="clinksettings"></a></p>
+<h2 id="clink-settings">Clink Settings</h2>
 <p>The easiest way to configure Clink is to use Clink&#39;s <code>set</code> command line option.  This can list, query, and set Clink&#39;s settings. Run <code>clink set --help</code> from a Clink-installed cmd.exe process to learn more both about how to use it and to get descriptions for Clink&#39;s various options.</p>
 <p>The following table describes the available Clink settings:</p>
 <table>
@@ -845,6 +850,11 @@ name:"Plain text",aliases:["text","txt"],disableAutodetect:!0})})());
 </tr>
 </thead>
 <tbody><tr>
+<td align="center"><code>clink.autostart</code></td>
+<td align="center"></td>
+<td>This command is automatically run when the first CMD prompt is shown after Clink is injected.  If this is blank (the default), then Clink instead looks for clink_start.cmd in the binaries directory and profile directory and runs them.  Set it to &quot;nul&quot; to not run any autostart command.</td>
+</tr>
+<tr>
 <td align="center"><code>clink.colorize_input</code></td>
 <td align="center">True</td>
 <td>Enables context sensitive coloring for the input text (see <a href="#classifywords">Coloring The Input Text</a>).</td>
@@ -873,6 +883,11 @@ name:"Plain text",aliases:["text","txt"],disableAutodetect:!0})})());
 <td align="center"><code>cmd.ctrld_exits</code></td>
 <td align="center">True</td>
 <td><kbd>Ctrl</kbd>+<kbd>D</kbd> exits the process when it is pressed on an empty line.</td>
+</tr>
+<tr>
+<td align="center"><code>cmd.get_errorlevel</code></td>
+<td align="center">False</td>
+<td>When this is enabled, Clink runs a hidden <code>echo %errorlevel%</code> command before each interactive input prompt to retrieve the last exit code for use by Lua scripts.  If you experience problems, try turning this off.  This is off by default.</td>
 </tr>
 <tr>
 <td align="center"><code>color.arg</code></td>
@@ -1275,7 +1290,7 @@ call &quot;%~dp0clink.bat&quot; inject --profile &quot;%TEMP%\clink_portable&quo
 </code></pre>
 <p><a name="configreadline"></a></p>
 <h1 id="configuring-readline">Configuring Readline</h1>
-<p>Readline itself can also be configured to add custom keybindings and macros by creating a Readline init file. There is excellent documentation for all the options available to configure Readline in Readline&#39;s <a href="https://tiswww.cwru.edu/php/chet/readline/rltop.html#Documentation">manual</a>.</p>
+<p>Readline itself can also be configured to add custom keybindings and macros by creating a Readline init file. There is excellent documentation for all the options and commands available to configure Readline in Readline&#39;s <a href="https://tiswww.cwru.edu/php/chet/readline/rltop.html#Documentation">manual</a>.</p>
 <p>Clink searches in the directories referenced by the following environment variables and loads any <code>.inputrc</code> or <code>_inputrc</code> files present, in the order listed here:</p>
 <ul>
 <li><code>%CLINK_INPUTRC%</code></li>
@@ -1517,8 +1532,8 @@ call &quot;%~dp0clink.bat&quot; inject --profile &quot;%TEMP%\clink_portable&quo
 </tbody></table>
 <p><a name="completioncolors"></a></p>
 <h2 id="completion-colors">Completion Colors</h2>
-<p>When <code>colored-completion-prefix</code> is configured to <code>on</code>, then the &quot;so&quot; color from <code>%LS_COLORS%</code> is used to color the common prefix when displaying possible completions.  The default for &quot;so&quot; is magenta, but for example <code>set LS_COLORS=so=90</code> sets the color to bright black (which shows up as a dark gray).</p>
-<p>When <code>colored-stats</code> is configured to <code>on</code>, then the color definitions from <code>%LS_COLORS%</code> (using ANSI escape codes) are used to color file completions according to their file type or extension.  Each definition is a either a two character type id or a file extension, followed by an equals sign and then the <a href="https://en.wikipedia.org/wiki/ANSI_escape_code#SGR_parameters">SGR parameters</a> for an ANSI escape code.  Multiple definitions are separated by colons.  Also, since <code>%LS_COLORS%</code> doesn&#39;t cover readonly files, hidden files, doskey aliases, or shell commands the <code>color.readonly</code>, <code>color.hidden</code>, <code>color.doskey</code>, and <code>color.cmd</code> <a href="#configclink">Clink settings</a> exist to cover those.</p>
+<p>When the <code>colored-completion-prefix</code> <a href="#configreadline">Readline setting</a> is configured to <code>on</code>, then the &quot;so&quot; color from the <code>%LS_COLORS%</code> environment variable is used to color the common prefix when displaying possible completions.  The default for &quot;so&quot; is magenta, but for example <code>set LS_COLORS=so=90</code> sets the color to bright black (which shows up as a dark gray).</p>
+<p>When <code>colored-stats</code> is configured to <code>on</code>, then the color definitions from <code>%LS_COLORS%</code> (using ANSI escape codes) are used to color file completions according to their file type or extension.  Each definition is a either a two character type id or a file extension, followed by an equals sign and then the <a href="https://en.wikipedia.org/wiki/ANSI_escape_code#SGR_parameters">SGR parameters</a> for an ANSI escape code.  Multiple definitions are separated by colons.  Also, since <code>%LS_COLORS%</code> doesn&#39;t cover readonly files, hidden files, doskey aliases, or shell commands the <code>color.readonly</code>, <code>color.hidden</code>, <code>color.doskey</code>, and <code>color.cmd</code> <a href="#clinksettings">Clink settings</a> exist to cover those.</p>
 <p>Here is an example where <code>%LS_COLORS%</code> defines colors for various types.</p>
 <ul>
 <li><code>so=</code> defines the color for the common prefix for possible completions.</li>
@@ -1538,7 +1553,7 @@ call &quot;%~dp0clink.bat&quot; inject --profile &quot;%TEMP%\clink_portable&quo
 <li><code>*.md=4</code> uses underline for .md files.</li>
 </ul>
 <h2 id="popup-window">Popup window</h2>
-<p>The <code>clink-popup-complete</code>, <code>clink-popup-directories</code>, and <code>clink-popup-history</code> commands show a popup window that lists the available completions, directory history, or command history.  Here&#39;s how it works:</p>
+<p>The <code>clink-popup-complete</code>, <code>clink-popup-directories</code>, and <code>clink-popup-history</code> <a href="#configreadline">Readline commands</a> show a popup window that lists the available completions, directory history, or command history.  Here&#39;s how they work:</p>
 <table>
 <thead>
 <tr>
@@ -1583,7 +1598,8 @@ call &quot;%~dp0clink.bat&quot; inject --profile &quot;%TEMP%\clink_portable&quo
 <td>Go to the previous match.</td>
 </tr>
 </tbody></table>
-<h1 id="extending-clink">Extending Clink</h1>
+<p><a name="extending-clink"></a></p>
+<h1 id="extending-clink-with-lua">Extending Clink With Lua</h1>
 <p>Clink can be extended with <a href="https://www.lua.org/docs.html">Lua</a> scripts to customize startup actions, create completion matches, customize the prompt, and more.  The following sections describe these in more detail and show some examples.</p>
 <p><a name="lua-scripts-location"></a></p>
 <h2 id="the-location-of-lua-scripts">The Location of Lua Scripts</h2>
@@ -1613,7 +1629,7 @@ call &quot;%~dp0clink.bat&quot; inject --profile &quot;%TEMP%\clink_portable&quo
 <p>The following sections describe these in more detail and show some examples.</p>
 <p><a name="matchgenerators"></a></p>
 <h2 id="match-generators">Match Generators</h2>
-<p>These are Lua functions that are called as part of Readline&#39;s completion process.</p>
+<p>These are Lua functions that are called as part of Readline&#39;s completion process (for example when pressing <kbd>Tab</kbd>).</p>
 <p>First create a match generator object:</p>
 <pre><code class="language-lua">local my_generator = clink.generator(priority)
 </code></pre>
@@ -1988,7 +2004,7 @@ clink.argmatcher()
 <p>With the shorthand form flags are implied rather than declared.  When a shorthand table&#39;s first value is a string starting with <code>-</code> or <code>/</code> then the table is interpreted as flags.  Note that it&#39;s still possible with shorthand form to mix flag prefixes, and even add additional flag prefixes, such as <code>{ <span class="hljs-string">'-a'</span>, <span class="hljs-string">'/b'</span>, <span class="hljs-string">'=c'</span> }</code>.</p>
 <p><a name="classifywords"></a></p>
 <h2 id="coloring-the-input-text">Coloring The Input Text</h2>
-<p>When the <code>clink.colorize_input</code> setting is enabled, <a href="#argumentcompletion">argmatcher</a> automatically apply colors to the input text by parsing it.</p>
+<p>When the <code>clink.colorize_input</code> <a href="#clinksettings">setting</a> is enabled, <a href="#argumentcompletion">argmatcher</a> automatically apply colors to the input text by parsing it.</p>
 <p>It&#39;s possible for an argmatcher to provide a function to override how its arguments are colored.  This function is called once for each of the argmatcher&#39;s arguments.</p>
 <p>It&#39;s also possible to register a classifier function for the whole input line.  This function is very similar to a match generator; classifier functions are called in priority order, and a classifier can choose to stop the classification process.</p>
 <h3 id="more-advanced-stuff-2">More Advanced Stuff</h3>
@@ -2087,7 +2103,7 @@ end
 </code></pre>
 <p><a name="customisingtheprompt"></a></p>
 <h2 id="customising-the-prompt">Customising The Prompt</h2>
-<p>Before Clink displays the prompt it filters the prompt through Lua so that the prompt can be customised. This happens each and every time that the prompt is shown which allows for context sensitive customisations (such as showing the current branch of a git repository).</p>
+<p>Before Clink displays the prompt it filters the prompt through <a href="#extending-clink">Lua</a> so that the prompt can be customised. This happens each and every time that the prompt is shown which allows for context sensitive customisations (such as showing the current branch of a git repository).</p>
 <p>Writing a prompt filter is straightforward:</p>
 <ol>
 <li>Create a new prompt filter by calling <code>clink.promptfilter()</code> along with a priority id which dictates the order in which filters are called. Lower priority ids are called first.</li>
@@ -2721,7 +2737,7 @@ C-_:                kill-line                       <span class="hljs-comment">#
 </tbody></table>
 <p><a name="luakeybindings"></a></p>
 <h3 id="lua-key-bindings">Lua Key Bindings</h3>
-<p>You can bind a key to a Lua function by binding it to a macro that begins with &quot;luafunc:&quot;.  Clink will invoke the named Lua function when the key binding is input.  Function names can include periods (such as <code>foo.bar</code>) but cannot include any other punctuation.</p>
+<p>You can bind a key to a <a href="#extending-clink">Lua</a> function by <a href="#keybindings">binding</a> it to a macro that begins with &quot;luafunc:&quot;.  Clink will invoke the named Lua function when the key binding is input.  Function names can include periods (such as <code>foo.bar</code>) but cannot include any other punctuation.</p>
 <p>The Lua function receives a <a href="#rl_buffer">rl_buffer</a> argument that gives it access to the input buffer.</p>
 <p>Lua functions can print output, but should first call <a href="#rl_buffer:beginoutput">rl_buffer:beginoutput</a> so that the output doesn&#39;t overwrite the displayed input line.</p>
 <p>Example of a Lua function key binding in a .inputrc file:</p>
@@ -3069,7 +3085,7 @@ line:getcommandoffset() == 4</code></pre></div></div><hr/>
 </div><div class="group"><h5 class="group_name"><a name="os">os</a></h5><div class="function"><div class="header"> <div class="name"><a name="os.chdir">os.chdir</a></div> <div class="signature">( <span class="arg_name">path</span>:string ) : boolean</div></div><div class="body"><p class="desc">Changes the current directory to <span class="arg">path</span> and returns whether it was successful.</p></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="os.copy">os.copy</a></div> <div class="signature">( <span class="arg_name">src</span>:string, <span class="arg_name">dest</span>:string ) : boolean</div></div><div class="body"><p class="desc">Copies the <span class="arg">src</span> file to the <span class="arg">dest</span> file.</p></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="os.createtmpfile">os.createtmpfile</a></div> <div class="signature">( [<span class="arg_name">prefix</span>:string], [<span class="arg_name">ext</span>:string], [<span class="arg_name">path</span>:string], [<span class="arg_name">mode</span>:string] ) : file, string</div></div><div class="body"><p class="desc">Creates a uniquely named file, intended for use as a temporary file.  The name pattern is "<em>location</em> <code>\</code> <em>prefix</em> <code>_</code> <em>processId</em> <code>_</code> <em>uniqueNum</em> <em>extension</em>".</p><p class="desc"> <span class="arg">prefix</span> optionally specifies a prefix for the file name and defaults to "tmp".</p><p class="desc"> <span class="arg">ext</span> optionally specifies a suffix for the file name and defaults to "" (if <span class="arg">ext</span> starts with a period "." then it is a filename extension).</p><p class="desc"> <span class="arg">path</span> optionally specifies a path location in which to create the file.  The default is the system TEMP directory.</p><p class="desc"> <span class="arg">mode</span> optionally specifies "t" for text mode (line endings are translated) or "b" for binary mode (untranslated IO).  The default is "t".</p><p class="desc"> When successful, the function returns a file handle and the file name.</p><p class="desc"> <strong>Note:</strong> Be sure to delete the file when finished, or it will be leaked.</p><p class="desc"> If the function is unable to create a file it returns nil, an error message, and an error number.  For example if the directory is inaccessible, or if there are already too many files, or invalid file name characters are used, or etc.</p></div></div><hr/>
-<div class="function"><div class="header"> <div class="name"><a name="os.expandenv">os.expandenv</a></div> <div class="signature">( <span class="arg_name">value</span>:string ) : string</div></div><div class="body"><p class="desc">Returns <span class="arg">value</span> with any <code>%name%</code> environment variables expanded.  Names are case insensitive.  Special CMD syntax is not supported (e.g. <code>%name:str1=str2%</code> or <code>%name:~offset,length%</code>).</p><p class="desc"> Note: <code>os.getenv("HOME")</code> receives special treatment: if %HOME% is not set then it is synthesized from %HOMEDRIVE% and %HOMEPATH%, or from %USERPROFILE%.</p></div></div><hr/>
+<div class="function"><div class="header"> <div class="name"><a name="os.expandenv">os.expandenv</a></div> <div class="signature">( <span class="arg_name">value</span>:string ) : string</div></div><div class="body"><p class="desc">Returns <span class="arg">value</span> with any <code>%name%</code> environment variables expanded.  Names are case insensitive.  Special CMD syntax is not supported (e.g. <code>%name:str1=str2%</code> or <code>%name:~offset,length%</code>).</p><p class="desc"> Note: See <a href="#os.getenv">os.getenv()</a> for a list of special variable names.</p></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="os.getalias">os.getalias</a></div> <div class="signature">( <span class="arg_name">name</span>:string ) : string | nil</div></div><div class="body"><p class="desc">Returns command string for doskey alias <span class="arg">name</span>, or nil if the named alias does not exist.</p></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="os.getaliases">os.getaliases</a></div> <div class="signature">() : table</div></div><div class="body"><p class="desc">Returns doskey aliases in a table with the following scheme: <span class="tablescheme">{ {name:string, command:string}, ... }</span>.</p></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="os.getbatterystatus">os.getbatterystatus</a></div> <div class="signature">() : table</div></div><div class="body"><p class="desc">Returns a table containing the battery status for the device, or nil if an error occurs.  The returned table has the following scheme:</p><pre class="language-lua"><code>{
@@ -3080,8 +3096,9 @@ line:getcommandoffset() == 4</code></pre></div></div><hr/>
 &nbsp; batterysaver,  -- [boolean] whether Battery Saver mode is active.
 }</code></pre></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="os.getcwd">os.getcwd</a></div> <div class="signature">() : string</div></div><div class="body"><p class="desc">Returns the current directory.</p></div></div><hr/>
-<div class="function"><div class="header"> <div class="name"><a name="os.getenv">os.getenv</a></div> <div class="signature">( <span class="arg_name">name</span>:string ) : string | nil</div></div><div class="body"><p class="desc">Returns the value of the named environment variable, or nil if it doesn't exist.</p><p class="desc"> Note: <code>os.getenv("HOME")</code> receives special treatment: if %HOME% is not set then it is synthesized from %HOMEDRIVE% and %HOMEPATH%, or from %USERPROFILE%.</p></div></div><hr/>
+<div class="function"><div class="header"> <div class="name"><a name="os.getenv">os.getenv</a></div> <div class="signature">( <span class="arg_name">name</span>:string ) : string | nil</div></div><div class="body"><p class="desc">Returns the value of the named environment variable, or nil if it doesn't exist.</p><p class="desc"> Note: Certain environment variable names receive special treatment:</p><p class="desc"> <table> <tr><th>Name</th><th>Special Behavior</th></tr> <tr><td><code>"HOME"</code></td><td>If %HOME% is not set then a return value is synthesized from %HOMEDRIVE% and %HOMEPATH%, or from %USERPROFILE%.</td></tr> <tr><td><code>"ERRORLEVEL"</code></td><td>When the <code>cmd.get_errorlevel</code> setting is enabled (it is off by default) this returns the most recent exit code, just like the <code>echo %ERRORLEVEL%</code> command displays.  Otherwise this returns 0.</td></tr> </table></p></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="os.getenvnames">os.getenvnames</a></div> <div class="signature">() : table</div></div><div class="body"><p class="desc">Returns all environment variables in a table with the following scheme: <span class="tablescheme">{ {name:string, value:string}, ... }</span>.</p></div></div><hr/>
+<div class="function"><div class="header"> <div class="name"><a name="os.geterrorlevel">os.geterrorlevel</a></div> <div class="signature">() : integer</div></div><div class="body"><p class="desc">Returns the last command's exit code, if the <code>cmd.get_errorlevel</code> setting is enabled (it is disabled by default).  Otherwise it returns 0.</p></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="os.getfullpathname">os.getfullpathname</a></div> <div class="signature">( <span class="arg_name">path</span>:string ) : string</div></div><div class="body"><p class="desc">Returns the full path name for <span class="arg">path</span>.</p></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="os.gethost">os.gethost</a></div> <div class="signature">() : string</div></div><div class="body"><p class="desc">Returns the fully qualified file name of the host process.  Currently only CMD.EXE can host Clink.</p></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="os.getlongpathname">os.getlongpathname</a></div> <div class="signature">( <span class="arg_name">path</span>:string ) : string</div></div><div class="body"><p class="desc">Returns the long path name for <span class="arg">path</span>.</p></div></div><hr/>
@@ -3310,6 +3327,18 @@ end</code></pre></div></div><hr/>
         <div class="section" id="changes">
 <h1 id="changes">Changes</h1>
 <h3 id="releases-from-chrisant996clink-fork">Releases from <a href="https://github.com/chrisant996/clink">chrisant996/clink</a> fork</h3>
+<h4 id="v1214">v1.2.14</h4>
+<ul>
+<li>Automatically runs <code>clink_start.cmd</code> from the binaries directory and/or the profile directory when Clink is injected.</li>
+<li>Clink is able to retrieve the last exit code for use by Lua scripts.<ul>
+<li>The new <code>cmd.get_errorlevel</code> setting is off by default, but when enabled it retrieves the last exit code from CMD before running Lua scripts.</li>
+<li>The new <code>os.geterrorlevel()</code> function gets the last exit code (or 0 if the setting is off).</li>
+<li>It works by running a hidden command line between each interactive prompt (as if you typed <code>echo %errorlevel%</code> yourself every second command you type).  If you experience problems with this, turn it off.</li>
+</ul>
+</li>
+<li>Improved refreshing the input line when resizing the terminal window.  It&#39;s better than before, but there&#39;s no way to make it work perfectly because Windows can resize the terminal further while a program is already trying to respond to the terminal having been resized previously.</li>
+<li>Fixed <a href="https://github.com/chrisant996/clink/issues/130">#130</a>; doskey alias completions stop working when there are many aliases.</li>
+</ul>
 <h4 id="v1213">v1.2.13</h4>
 <ul>
 <li>Added support for linking a parser to flags ending with <code>:</code> or <code>=</code>; now completion works for the flag&#39;s argument.</li>
@@ -4316,12 +4345,14 @@ also hook cmd.exe (ConEmu, ANSICon, etc.).</li>
 <h1 id="license">License</h1>
 <p>Clink is distributed under the terms of the <a href="http://www.gnu.org/licenses/gpl.html">GNU General Public License, version 3</a>.</p>
 <h1 id="credits">Credits</h1>
-<h3 id="clink">Clink</h3>
+<h3>Clink</h3>
+
 <p>Clink was originally built by Martin Ridgers (<a href="https://github.com/mridgers/clink">https://github.com/mridgers/clink</a>).<br/>
 Copyright (c) 2012-2018 by Martin Ridgers.</p>
 <p>Clink has been forked and renovated by Christopher Antos (<a href="https://github.com/chrisant996/clink">https://github.com/chrisant996/clink</a>).<br/>
 Portions Copyright (c) 2020-2021 by Christopher Antos.</p>
-<h3 id="libraries">Libraries</h3>
+<h3>Libraries</h3>
+
 <p>GNU Readline library version 8.1 (<a href="https://tiswww.case.edu/php/chet/readline/rltop.html">https://tiswww.case.edu/php/chet/readline/rltop.html</a>).<br/>
 GNU Readline is distributed under the terms of the <a href="http://www.gnu.org/licenses/gpl.html">GNU General Public License, version 3</a>.</p>
 <p>Lua 5.2 (<a href="https://www.lua.org">https://www.lua.org</a>).</p>
