@@ -477,6 +477,7 @@ void win_terminal_in::begin()
     m_buffer_count = 0;
     m_lead_surrogate = 0;
     m_stdin = GetStdHandle(STD_INPUT_HANDLE);
+    m_dimensions = get_dimensions();
     GetConsoleMode(m_stdin, &m_prev_mode);
     set_cursor_visibility(false);
 }
