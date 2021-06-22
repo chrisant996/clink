@@ -1941,6 +1941,7 @@ void rl_module::on_terminal_resize(int columns, int rows, const context& context
 
     // Measure the new number of lines to the cursor position.
     measure(context.prompt, -1);
+    line_count = 1; // Keep only the X component from the prompt, since Readline only redisplays the last line of the prompt.
     const line_buffer& buffer = context.buffer;
     const char* buffer_ptr = buffer.get_buffer();
     measure(buffer_ptr, buffer.get_cursor());
