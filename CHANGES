@@ -2,6 +2,10 @@
 
 ### Releases from [chrisant996/clink](https://github.com/chrisant996/clink) fork
 
+#### v1.2.15
+
+- Fixed [#132](https://github.com/chrisant996/clink/issues/132); multiline prompt gets overwritten when resizing the terminal width (regression introduced in v1.2.14).
+
 #### v1.2.14
 
 - Automatically runs `clink_start.cmd` from the binaries directory and/or the profile directory when Clink is injected.
