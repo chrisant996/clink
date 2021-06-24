@@ -149,6 +149,8 @@ static void reset_handle(intptr_t& h, int fh)
 //------------------------------------------------------------------------------
 void reset_stdio_handles()
 {
+    // ISSUE 93:
+    //
     // Cmder's init.bat script uses a bunch of redirection before launching
     // Clink.  That leaves CMD's current STD handles in an unpredictable state
     // at the moment Clink's dllmain_dispatch is called with DLL_PROCESS_ATTACH
@@ -161,12 +163,13 @@ void reset_stdio_handles()
     // This should be safe because they only use temporary buffering and are
     // always immediately flushed.
 
-    if (!s_can_reset)
-        return;
+    // ISSUE 134:
+    //
+    // When `cmd.get_errorlevel` is true, there's a lot of redirection
+    // happening.  Apparently the STD handles problem can recur, so the reset
+    // code needs to run repeatedly.
 
     reset_handle(s_hStdin, 0);
     reset_handle(s_hStdout, 1);
     reset_handle(s_hStderr, 2);
-
-    s_can_reset = false;
 }

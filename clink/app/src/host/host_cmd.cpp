@@ -508,10 +508,8 @@ BOOL WINAPI host_cmd::read_console(
     if (prompt == nullptr || *prompt == L'\0')
         return ReadConsoleW(input, chars, max_chars, read_in, control);
 
-    // Cmder uses a bunch of redirection before injecting Clink, which can leave
-    // the CMD host process in an inconsistent state, causing Clink's C runtime
-    // to get initialized with incorrect handles.  This will reset them on the
-    // first call, and then disables itself so subsequent calls do nothing.
+    // Redirection in CMD can change CMD's STD handles, causing Clink's C
+    // runtime to have stale handles.  Check and reset them if necessary.
     reset_stdio_handles();
 
     {
