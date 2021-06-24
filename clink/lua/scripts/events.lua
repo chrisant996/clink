@@ -109,6 +109,9 @@ end
 --- the second is not nil and is false then it stops further onendedit handlers
 --- from running.
 ---
+--- Because onendedit can be stopped, a script must be prepared to receive
+--- onbeginedit but not receive a corresponding onendedit.
+---
 --- <strong>Note:</strong>  Be very careful if you replace the text; this has
 --- the potential to interfere with or even ruin the user's ability to enter
 --- command lines for CMD to process.
@@ -189,4 +192,40 @@ function clink._send_onfiltermatches_event(matches, completion_type, filename_co
         end
     end
     return ret
+end
+
+--------------------------------------------------------------------------------
+function clink._diag_events()
+    if not settings.get("lua.debug") then
+        return
+    end
+
+    local bold = "\x1b[1m"          -- Bold (bright).
+    local norm = "\x1b[m"           -- Normal.
+    local print = clink.print
+
+    local any_events = false
+
+    clink.print(bold.."events:"..norm)
+    for event_name,callback_table in pairs (clink._event_callbacks) do
+        local any_callbacks = false
+        for _,f in ipairs(callback_table) do
+            local info = debug.getinfo(f, 'S')
+            if info.short_src ~= "?" then
+                local src = info.short_src.."("..info.linedefined..")"
+
+                if not any_callbacks then
+                    clink.print("  "..event_name..":")
+                    any_callbacks = true
+                    any_events = true
+                end
+
+                print("", src)
+            end
+        end
+    end
+
+    if not any_events then
+        print("  no event callbacks registered")
+    end
 end

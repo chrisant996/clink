@@ -1101,41 +1101,32 @@ int clink_diagnostics(int count, int invoking_key)
         lua_state& lua = *s_host_lua;
         lua_State* state = lua.get_state();
 
-        // Call clink._diag_coroutines to show info on coroutines.
-        lua_getglobal(state, "clink");
-        lua_pushliteral(state, "_diag_coroutines");
-        lua_rawget(state, -2);
-        if (lua.pcall(state, 0, 0) != 0)
+        static const char* const c_diag_functions[] =
         {
-            puts(lua_tostring(state, -1));
-            lua_pop(state, 2);
-        }
+            "_diag_coroutines",
+            "_diag_refilter",
+            "_diag_events",
+            "_diag_custom",
+        };
 
-        // Call clink._diag_refilter to show info on prompt refiltering.
-        lua_getglobal(state, "clink");
-        lua_pushliteral(state, "_diag_refilter");
-        lua_rawget(state, -2);
-        if (lua.pcall(state, 0, 0) != 0)
+        // Call clink diagnostic functions.
+        for (auto const& func_name : c_diag_functions)
         {
-            puts(lua_tostring(state, -1));
-            lua_pop(state, 2);
-        }
-
-        // Call clink._diag_custom if present.
-        lua_getglobal(state, "clink");
-        lua_pushliteral(state, "_diag_custom");
-        lua_rawget(state, -2);
-        if (lua_isfunction(state, -1))
-        {
-            if (lua.pcall(state, 0, 0) != 0)
+            lua_getglobal(state, "clink");
+            lua_pushlstring(state, func_name, strlen(func_name));
+            lua_rawget(state, -2);
+            if (lua_isfunction(state, -1))
             {
-                puts(lua_tostring(state, -1));
-                lua_pop(state, 2);
+                if (lua.pcall(state, 0, 0) != 0)
+                {
+                    puts(lua_tostring(state, -1));
+                    lua_pop(state, 2);
+                }
             }
-        }
-        else
-        {
-            lua_pop(state, 1);
+            else
+            {
+                lua_pop(state, 1);
+            }
         }
     }
 
