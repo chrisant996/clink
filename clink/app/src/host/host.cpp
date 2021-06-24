@@ -757,10 +757,7 @@ bool host::edit_line(const char* prompt, str_base& out)
         m_lua = nullptr;
     }
     if (!local_lua)
-    {
         init_scripts = !m_lua;
-        send_event |= init_scripts;
-    }
     if (!m_lua)
         m_lua = new host_lua;
     if (!m_prompt_filter)
