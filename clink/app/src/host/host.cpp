@@ -1002,8 +1002,15 @@ bool host::edit_line(const char* prompt, str_base& out)
         break;
     }
 
-    if (!resolved && send_event)
-        lua.send_event_cancelable_string_inout("onendedit", out.c_str(), out);
+    if (send_event)
+    {
+        lua_state& state = lua;
+        lua_pushlstring(state.get_state(), out.c_str(), out.length());
+        lua.send_event("onendedit", 1);
+    }
+
+    if (send_event)
+        lua.send_event_cancelable_string_inout("onfilterinput", out.c_str(), out);
 
     if (!resolved)
     {

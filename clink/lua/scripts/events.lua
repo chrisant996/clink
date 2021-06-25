@@ -104,19 +104,31 @@ end
 --- -arg:   func:function
 --- Registers <span class="arg">func</span> to be called when Clink's edit
 --- prompt ends.  The function receives a string argument containing the input
---- text from the edit prompt.  The function returns up to two values.  If the
---- first is not nil then it's a string that replaces the edit prompt text.  If
---- the second is not nil and is false then it stops further onendedit handlers
---- from running.
+--- text from the edit prompt.
 ---
---- Because onendedit can be stopped, a script must be prepared to receive
---- onbeginedit but not receive a corresponding onendedit.
+--- <strong>Breaking Change in v1.2.16:</strong>  The ability to replace the
+--- user's input has been moved to a separate
+--- <a href="#clink.onfilterinput>onfilterinput</a> event.
+function clink.onendedit(func)
+    _add_event_callback("onendedit", func)
+end
+
+--------------------------------------------------------------------------------
+--- -name:  clink.onfilterinput
+--- -arg:   func:function
+--- Registers <span class="arg">func</span> to be called after Clink's edit
+--- prompt ends (it is called after the <a href="#clink.oneditedit>onendedit</a>
+--- event).  The function receives a string argument containing the input text
+--- from the edit prompt.  The function returns up to two values.  If the first
+--- is not nil then it's a string that replaces the edit prompt text.  If the
+--- second is not nil and is false then it stops further onfilterinput handlers
+--- from running.
 ---
 --- <strong>Note:</strong>  Be very careful if you replace the text; this has
 --- the potential to interfere with or even ruin the user's ability to enter
 --- command lines for CMD to process.
-function clink.onendedit(func)
-    _add_event_callback("onendedit", func)
+function clink.onfilterinput(func)
+    _add_event_callback("onfilterinput", func)
 end
 
 --------------------------------------------------------------------------------

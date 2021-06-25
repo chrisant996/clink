@@ -4,7 +4,9 @@
 
 #### v1.2.16
 
-- Clarified documentation that scripts cannot rely on receiving `clink.onendedit()` (it was implied, but now it is stated directly).
+- **Breaking Change:** The `clink.onendedit()` Lua event has been split into two separate events:
+    - `clink.onendedit()` registers a function to be called when the edit prompt ends.
+    - `clink.onfilterinput()` registers a function to be called after the edit prompt ends (and after the onendedit event is sent), and the function can replace the input text.
 - Fixed [#134](https://github.com/chrisant996/clink/issues/134); `print()` can stop working.  Issue [#93](https://github.com/chrisant996/clink/issues/93) can potentially happen any time redirection is used, so the fix must be applied repeatedly (not just after Clink injection).
 
 #### v1.2.15
