@@ -468,7 +468,7 @@ function coroutine.create(func)
     local src = override_coroutine_src_func or func
     if src then
         local info = debug.getinfo(src, 'S')
-        src = info.short_src.."("..info.linedefined..")"
+        src = info.short_src..":"..info.linedefined
     else
         src = "<unknown>"
     end

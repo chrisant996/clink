@@ -187,7 +187,7 @@ function clink.promptcoroutine(func)
     local entry = prompt_filter_coroutines[prompt_filter_current]
     if entry == nil then
         local info = debug.getinfo(func, 'S')
-        src=info.short_src.."("..info.linedefined..")"
+        src=info.short_src..":"..info.linedefined
 
         entry = { done=false, refilter=false, result=nil, src=src }
         prompt_filter_coroutines[prompt_filter_current] = entry

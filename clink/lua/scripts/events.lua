@@ -224,7 +224,7 @@ function clink._diag_events()
         for _,f in ipairs(callback_table) do
             local info = debug.getinfo(f, 'S')
             if info.short_src ~= "?" then
-                local src = info.short_src.."("..info.linedefined..")"
+                local src = info.short_src..":"..info.linedefined
 
                 if not any_callbacks then
                     clink.print("  "..event_name..":")
