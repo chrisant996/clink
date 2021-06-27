@@ -4,6 +4,7 @@
 #include "pch.h"
 #include "line_buffer.h"
 #include "line_state.h"
+#include "word_collector.h"
 #include "popup.h"
 #include "editor_module.h"
 #include "rl_commands.h"
@@ -59,6 +60,7 @@ extern setting_bool g_adjust_cursor_style;
 
 //------------------------------------------------------------------------------
 extern line_buffer* g_rl_buffer;
+extern word_collector* g_word_collector;
 extern bool s_force_reload_scripts;
 extern editor_module::result* g_result;
 extern void host_cmd_enqueue_lines(std::list<str_moveable>& lines);
@@ -333,7 +335,7 @@ int clink_copy_line(int count, int invoking_key)
 //------------------------------------------------------------------------------
 int clink_copy_word(int count, int invoking_key)
 {
-    if (count < 0)
+    if (count < 0 || !g_rl_buffer || !g_word_collector)
     {
 Nope:
         rl_ding();
@@ -341,7 +343,7 @@ Nope:
     }
 
     std::vector<word> words;
-    g_rl_buffer->collect_words(words, collect_words_mode::whole_command);
+    g_word_collector->collect_words(*g_rl_buffer, words, collect_words_mode::whole_command);
 
     if (words.empty())
         goto Nope;

@@ -4,7 +4,10 @@
 #include "pch.h"
 #include "line_state.h"
 
+#include <core/base.h>
 #include <core/str.h>
+#include <core/str_tokeniser.h>
+#include <core/os.h>
 
 #include <vector>
 

@@ -15,6 +15,7 @@
 #include "matches_impl.h"
 #include "word_classifier.h"
 #include "word_classifications.h"
+#include "word_collector.h"
 #include "rl/rl_module.h"
 #include "rl/rl_buffer.h"
 
@@ -116,11 +117,12 @@ private:
                                     bool compare_cursor);
     static void         before_display();
 
+    desc                m_desc;
     rl_module           m_module;
     rl_buffer           m_buffer;
+    word_collector      m_collector;
     prev_buffer         m_prev_classify;
     prev_buffer         m_prev_generate;
-    desc                m_desc;
     modules             m_modules;
     generators          m_generators;
     word_classifier*    m_classifier = nullptr;

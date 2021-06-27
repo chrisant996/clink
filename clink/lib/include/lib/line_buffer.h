@@ -8,9 +8,6 @@
 struct word;
 
 //------------------------------------------------------------------------------
-enum class collect_words_mode { stop_at_cursor, display_filter, whole_command };
-
-//------------------------------------------------------------------------------
 class line_buffer
 {
 public:
@@ -29,5 +26,4 @@ public:
     virtual void            draw() = 0;
     virtual void            redraw() = 0;
     virtual void            set_need_draw() = 0;
-    virtual unsigned int    collect_words(std::vector<word>& words, collect_words_mode mode) const = 0;
 };

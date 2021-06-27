@@ -134,6 +134,7 @@ bool prev_buffer::equals(const char* s, int len) const
 
 //------------------------------------------------------------------------------
 static line_editor_impl* s_editor = nullptr;
+word_collector* g_word_collector = nullptr;
 
 //------------------------------------------------------------------------------
 void reset_generate_matches()
@@ -200,9 +201,9 @@ static bool is_endword_tilde(const line_state& line)
 
 //------------------------------------------------------------------------------
 line_editor_impl::line_editor_impl(const desc& desc)
-: m_module(desc.shell_name, desc.input, desc.state_dir)
-, m_desc(desc)
-, m_buffer(desc.command_delims, desc.word_delims, desc.get_quote_pair())
+: m_desc(desc)
+, m_module(desc.shell_name, desc.input, desc.state_dir)
+, m_collector(desc.command_delims, desc.word_delims, desc.get_quote_pair())
 , m_regen_matches(&m_generators)
 , m_matches(&m_generators)
 , m_printer(*desc.printer)
@@ -262,7 +263,9 @@ void line_editor_impl::begin_line()
     m_prev_key.reset();
 
     assert(!s_editor);
+    assert(!g_word_collector);
     s_editor = this;
+    g_word_collector = &m_collector;
 
     match_pipeline pipeline(m_matches);
     pipeline.reset();
@@ -293,6 +296,7 @@ void line_editor_impl::end_line()
     m_desc.input->end();
 
     s_editor = nullptr;
+    g_word_collector = nullptr;
 
     clear_flag(flag_editing);
 }
@@ -702,7 +706,7 @@ void line_editor_impl::collect_words(bool stop_at_cursor)
 //------------------------------------------------------------------------------
 unsigned int line_editor_impl::collect_words(words& words, matches_impl& matches, collect_words_mode mode)
 {
-    unsigned int command_offset = m_buffer.collect_words(words, mode);
+    unsigned int command_offset = m_collector.collect_words(m_buffer, words, mode);
 
     // The last word can be split by the match generators, to influence word
     // breaks. This is a little clunky but works well enough.
