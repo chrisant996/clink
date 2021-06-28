@@ -5,9 +5,9 @@
 
 #include "host.h"
 #include "prompt.h"
-#include "doskey.h"
 
 #include <core/singleton.h>
+#include <lib/doskey.h>
 
 class lua_state;
 

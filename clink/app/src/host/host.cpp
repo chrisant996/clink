@@ -5,11 +5,6 @@
 #include "host.h"
 #include "host_lua.h"
 #include "prompt.h"
-#include "doskey.h"
-#include "terminal/terminal.h"
-#include "terminal/terminal_out.h"
-#include "terminal/printer.h"
-#include "utils/app_context.h"
 #include "version.h"
 
 #include <core/globber.h>
@@ -19,12 +14,16 @@
 #include <core/str.h>
 #include <core/str_compare.h>
 #include <core/str_tokeniser.h>
+#include <lib/doskey.h>
 #include <lib/match_generator.h>
 #include <lib/line_editor.h>
 #include <lua/lua_script_loader.h>
 #include <lua/lua_state.h>
 #include <lua/lua_match_generator.h>
 #include <terminal/terminal.h>
+#include <terminal/terminal_out.h>
+#include <terminal/printer.h>
+#include <utils/app_context.h>
 
 #include <list>
 #include <memory>

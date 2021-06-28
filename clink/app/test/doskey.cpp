@@ -5,7 +5,7 @@
 
 #include <core/settings.h>
 #include <core/str.h>
-#include <host/doskey.h>
+#include <lib/doskey.h>
 
 //------------------------------------------------------------------------------
 static void use_enhanced(bool state)

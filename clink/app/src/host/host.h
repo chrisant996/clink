@@ -3,10 +3,10 @@
 
 #pragma once
 
-#include "doskey.h"
 #include "history/history_db.h"
 #include "terminal/terminal.h"
 
+#include <lib/doskey.h>
 #include <lib/line_editor.h>
 
 #include <list>
