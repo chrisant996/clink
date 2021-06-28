@@ -40,6 +40,11 @@ void set_errorlevel(int errorlevel) { s_errorlevel = errorlevel; }
 int get_errorlevel() { return s_errorlevel; }
 
 //------------------------------------------------------------------------------
+static wchar_t* s_shell_name = L"cmd.exe";
+void set_shellname(wchar_t* shell_name) { s_shell_name = shell_name; }
+const wchar_t* get_shellname() { return s_shell_name; }
+
+//------------------------------------------------------------------------------
 DWORD get_file_attributes(const wchar_t* path)
 {
     // FindFirstFileW can handle cases that GetFileAttributesW can't (e.g. files
@@ -366,7 +371,7 @@ bool get_alias(const char* name, str_base& out)
     // Get the alias (aka. doskey macro).
     wstr<32> buffer;
     buffer.reserve(8191);
-    if (GetConsoleAliasW(alias_name.data(), buffer.data(), buffer.size(), L"cmd.exe") == 0)
+    if (GetConsoleAliasW(alias_name.data(), buffer.data(), buffer.size(), s_shell_name) == 0)
     {
         map_errno();
         return false;

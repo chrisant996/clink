@@ -8,6 +8,7 @@
 
 #include <core/path.h>
 #include <core/settings.h>
+#include <core/os.h>
 #include <lua/lua_match_generator.h>
 #include <lua/lua_word_classifier.h>
 #include <lua/lua_script_loader.h>
@@ -16,6 +17,8 @@
 //------------------------------------------------------------------------------
 TEST_CASE("Lua word classification")
 {
+    wchar_t* host = const_cast<wchar_t*>(os::get_shellname());
+
     lua_state lua;
     lua_match_generator lua_generator(lua); // This loads the required lua scripts.
     lua_load_script(lua, app, cmd);
@@ -31,15 +34,7 @@ TEST_CASE("Lua word classification")
     tester.get_editor()->add_generator(file_match_generator());
     tester.get_editor()->set_classifier(lua_classifier);
 
-    str<> host;
-    {
-        char module[280];
-        GetModuleFileNameA(nullptr, module, sizeof_array(module));
-        module[sizeof_array(module) - 1] = '\0';
-        path::get_name(module, host);
-    }
-
-    AddConsoleAliasA("dkalias", "text", host.data());
+    AddConsoleAliasW(L"dkalias", L"text", host);
 
     SECTION("Main")
     {
@@ -430,5 +425,5 @@ TEST_CASE("Lua word classification")
         }
     }
 
-    AddConsoleAliasA("dkalias", nullptr, host.data());
+    AddConsoleAliasW(L"dkalias", nullptr, host);
 }

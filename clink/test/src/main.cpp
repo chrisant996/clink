@@ -5,6 +5,7 @@
 
 #include "core/str.h"
 #include "core/settings.h"
+#include "core/os.h"
 
 #include <list>
 #include <assert.h>
@@ -34,6 +35,8 @@ int main(int argc, char** argv)
 #ifdef DEBUG
     settings::TEST_set_ever_loaded();
 #endif
+
+    os::set_shellname(L"clink_test_harness");
 
     while (argc > 0)
     {

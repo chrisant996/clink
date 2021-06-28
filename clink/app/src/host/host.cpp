@@ -628,7 +628,7 @@ static void move_cursor_up_one_line()
 //------------------------------------------------------------------------------
 host::host(const char* name)
 : m_name(name)
-, m_doskey("cmd.exe")
+, m_doskey(os::get_shellname())
 {
     m_terminal = terminal_create();
     m_printer = new printer(*m_terminal.out);

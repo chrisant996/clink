@@ -167,7 +167,7 @@ void host_cmd_enqueue_lines(std::list<str_moveable>& lines)
 //------------------------------------------------------------------------------
 host_cmd::host_cmd()
 : host("cmd.exe")
-, m_doskey("cmd.exe")
+, m_doskey(os::get_shellname())
 {
 }
 

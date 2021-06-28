@@ -29,11 +29,12 @@ class doskey
 {
 public:
                     doskey(const char* shell_name);
+                    doskey(const wchar_t* shell_name);
     bool            add_alias(const char* alias, const char* text);
     bool            remove_alias(const char* alias);
     void            resolve(const char* chars, doskey_alias& out);
 
 private:
     bool            resolve_impl(const str_iter& in, class str_stream* out);
-    const char*     m_shell_name;
+    wstr<16>        m_shell_name;
 };

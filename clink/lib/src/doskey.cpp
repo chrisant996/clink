@@ -152,20 +152,24 @@ doskey::doskey(const char* shell_name)
 }
 
 //------------------------------------------------------------------------------
+doskey::doskey(const wchar_t* shell_name)
+: m_shell_name(shell_name)
+{
+}
+
+//------------------------------------------------------------------------------
 bool doskey::add_alias(const char* alias, const char* text)
 {
     wstr<64> walias(alias);
     wstr<> wtext(text);
-    wstr<64> wshell(m_shell_name);
-    return (AddConsoleAliasW(walias.data(), wtext.data(), wshell.data()) == TRUE);
+    return (AddConsoleAliasW(walias.data(), wtext.data(), m_shell_name.data()) == TRUE);
 }
 
 //------------------------------------------------------------------------------
 bool doskey::remove_alias(const char* alias)
 {
     wstr<64> walias(alias);
-    wstr<64> wshell(m_shell_name);
-    return (AddConsoleAliasW(walias.data(), nullptr, wshell.data()) == TRUE);
+    return (AddConsoleAliasW(walias.data(), nullptr, m_shell_name.data()) == TRUE);
 }
 
 //------------------------------------------------------------------------------
@@ -189,15 +193,14 @@ bool doskey::resolve_impl(const str_iter& in, str_stream* out)
 
     // Find the alias' text. First check it exists.
     wchar_t unused;
-    wstr<32> wshell(m_shell_name);
-    if (!GetConsoleAliasW(walias.data(), &unused, sizeof(unused), wshell.data()))
+    if (!GetConsoleAliasW(walias.data(), &unused, sizeof(unused), m_shell_name.data()))
         if (GetLastError() != ERROR_INSUFFICIENT_BUFFER)
             return false;
 
     // It does. Allocate space and fetch it.
     wstr<4> wtext;
     wtext.reserve(8192, true/*exact*/);
-    GetConsoleAliasW(walias.data(), wtext.data(), wtext.size(), wshell.data());
+    GetConsoleAliasW(walias.data(), wtext.data(), wtext.size(), m_shell_name.data());
     str<4> text(wtext.c_str());
 
     // Early out if no output location was provided:  return true because the
