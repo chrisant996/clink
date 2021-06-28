@@ -10,7 +10,7 @@
 #include <lua/lua_state.h>
 
 //------------------------------------------------------------------------------
-TEST_CASE("Lua arg parsers.")
+TEST_CASE("Lua arg parsers")
 {
     fs_fixture fs;
 

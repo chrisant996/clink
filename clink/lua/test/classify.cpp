@@ -14,7 +14,7 @@
 #include <lua/lua_state.h>
 
 //------------------------------------------------------------------------------
-TEST_CASE("Lua word classification.")
+TEST_CASE("Lua word classification")
 {
     lua_state lua;
     lua_match_generator lua_generator(lua); // This loads the required lua scripts.
