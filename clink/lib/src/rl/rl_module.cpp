@@ -1367,6 +1367,8 @@ rl_module::rl_module(const char* shell_name, terminal_in* input, const char* sta
         rl_add_funmap_entry("clink-copy-line", clink_copy_line);
         rl_add_funmap_entry("clink-copy-word", clink_copy_word);
         rl_add_funmap_entry("clink-copy-cwd", clink_copy_cwd);
+        rl_add_funmap_entry("clink-expand-env-var", clink_expand_env_var);
+        rl_add_funmap_entry("clink-expand-doskey-alias", clink_expand_doskey_alias);
         rl_add_funmap_entry("clink-up-directory", clink_up_directory);
         rl_add_funmap_entry("clink-insert-dot-dot", clink_insert_dot_dot);
         rl_add_funmap_entry("clink-scroll-line-up", clink_scroll_line_up);

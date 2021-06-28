@@ -8,6 +8,7 @@
 #include "popup.h"
 #include "editor_module.h"
 #include "rl_commands.h"
+#include "doskey.h"
 
 #include <core/base.h>
 #include <core/log.h>
@@ -162,6 +163,40 @@ static void strip_crlf(char* line, std::list<str_moveable>& overflow, bool& done
             start = end;
         }
     }
+}
+
+//------------------------------------------------------------------------------
+static void get_word_bounds(const line_buffer& buffer, int* left, int* right)
+{
+    const char* str = buffer.get_buffer();
+    unsigned int cursor = buffer.get_cursor();
+
+    // Determine the word delimiter depending on whether the word's quoted.
+    int delim = 0;
+    for (unsigned int i = 0; i < cursor; ++i)
+    {
+        char c = str[i];
+        delim += (c == '\"');
+    }
+
+    // Search outwards from the cursor for the delimiter.
+    delim = (delim & 1) ? '\"' : ' ';
+    *left = 0;
+    for (int i = cursor - 1; i >= 0; --i)
+    {
+        char c = str[i];
+        if (c == delim)
+        {
+            *left = i + 1;
+            break;
+        }
+    }
+
+    const char* post = strchr(str + cursor, delim);
+    if (post != nullptr)
+        *right = int(post - str);
+    else
+        *right = int(strlen(str));
 }
 
 
@@ -389,6 +424,69 @@ int clink_copy_cwd(int count, int invoking_key)
         path::normalise(tmp);
         copy_impl(tmp.c_str(), tmp.length());
     }
+
+    return 0;
+}
+
+//------------------------------------------------------------------------------
+int clink_expand_env_var(int count, int invoking_key)
+{
+    // Extract the word under the cursor.
+    int word_left, word_right;
+    get_word_bounds(*g_rl_buffer, &word_left, &word_right);
+
+    str<1024> in;
+    in.concat(g_rl_buffer->get_buffer() + word_left, word_right - word_left);
+
+    wstr<> win;
+    to_utf16(win, in.c_str());
+
+    // Do the environment variable expansion.
+    DWORD size = ExpandEnvironmentStringsW(win.c_str(), 0, 0);
+    if (!size)
+        return 0;
+    wstr<1024> wout;
+    wout.reserve(size);
+    size = ExpandEnvironmentStringsW(win.c_str(), wout.data(), wout.size());
+    if (!size || size > wout.size())
+        return 0;
+
+    str<> out;
+    to_utf8(out, wout.c_str());
+
+    // Update Readline with the resulting expansion.
+    g_rl_buffer->begin_undo_group();
+    g_rl_buffer->remove(word_left, word_right);
+    g_rl_buffer->set_cursor(word_left);
+    g_rl_buffer->insert(out.c_str());
+    g_rl_buffer->end_undo_group();
+
+    return 0;
+}
+
+//------------------------------------------------------------------------------
+// Expands a doskey alias (but only the first line, if $T is present).
+int clink_expand_doskey_alias(int count, int invoking_key)
+{
+    doskey_alias alias;
+    doskey doskey("cmd.exe");
+    doskey.resolve(g_rl_buffer->get_buffer(), alias);
+
+    if (!alias)
+    {
+        rl_ding();
+        return 0;
+    }
+
+    str<> expand;
+    alias.next(expand);
+
+    g_rl_buffer->begin_undo_group();
+    g_rl_buffer->remove(0, rl_end);
+    rl_point = 0;
+    if (!expand.empty())
+        g_rl_buffer->insert(expand.c_str());
+    g_rl_buffer->end_undo_group();
 
     return 0;
 }
