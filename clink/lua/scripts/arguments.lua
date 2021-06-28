@@ -58,6 +58,9 @@ function _argreader._new(root)
 end
 
 --------------------------------------------------------------------------------
+-- When word_index is < 0, skip classifying the word, and skip trying to figure
+-- out whether a `-foo:` word should avoid following a linked parser.  This only
+-- happens when parsing extra words from expanding a doskey alias.
 function _argreader:update(word, word_index, line_state)
     local arg_match_type = "a" --arg
 
@@ -92,7 +95,7 @@ function _argreader:update(word, word_index, line_state)
 
     -- Some matchers have no args at all.  Or ran out of args.
     if not arg then
-        if self._word_classifier then
+        if self._word_classifier and word_index >= 0 then
             if matcher._no_file_generation then
                 self._word_classifier:classifyword(word_index, "n", false)  --none
             else
@@ -103,7 +106,7 @@ function _argreader:update(word, word_index, line_state)
     end
 
     -- Parse the word type.
-    if self._word_classifier then
+    if self._word_classifier and word_index >= 0 then
         if matcher._classify_func and matcher._classify_func(arg_index, word, word_index, self._line_state, self._word_classifier) then
             -- The classifier function says it handled the word.
         else
@@ -154,7 +157,7 @@ function _argreader:update(word, word_index, line_state)
     -- Does the word lead to another matcher?
     for key, linked in pairs(arg._links) do
         if key == word then
-            if is_flag and word:match("[:=]$") then
+            if is_flag and word:match("[:=]$") and word_index >= 0 then
                 local info = line_state:getwordinfo(word_index)
                 if info and
                         line_state:getcursor() ~= info.offset + info.length and
@@ -477,8 +480,15 @@ function _argmatcher:_add(list, addee, prefixes)
 end
 
 --------------------------------------------------------------------------------
-function _argmatcher:_generate(line_state, match_builder)
+function _argmatcher:_generate(line_state, match_builder, extra_words)
     local reader = _argreader(self)
+
+    -- Consume extra words from expanded doskey alias.
+    if extra_words then
+        for word_index = 2, #extra_words do
+            reader:update(extra_words[word_index], -1)
+        end
+    end
 
     -- Consume words and use them to move through matchers' arguments.
     local word_count = line_state:getwordcount()
@@ -743,6 +753,29 @@ end
 
 
 --------------------------------------------------------------------------------
+local function _has_argmatcher(first_word)
+    first_word = clink.lower(first_word)
+
+    -- Check for an exact match.
+    local argmatcher = _argmatchers[path.getname(first_word)]
+    if argmatcher then
+        return argmatcher
+    end
+
+    -- If the extension is in PATHEXT then try stripping the extension.
+    if path.isexecext(first_word) then
+        argmatcher = _argmatchers[path.getbasename(first_word)]
+        if argmatcher then
+            return argmatcher
+        end
+    end
+end
+
+--------------------------------------------------------------------------------
+-- Finds an argmatcher for the first word and returns:
+--  argmatcher  = The argmatcher, unless there are too few words to use it.
+--  exists      = True if argmatcher exists (even if too few words to use it).
+--  words       = Table of words to run through reader before continuing.
 local function _find_argmatcher(line_state, check_existence)
     -- Running an argmatcher only makes sense if there's two or more words.
     if line_state:getwordcount() < (check_existence and 1 or 2) then
@@ -752,10 +785,8 @@ local function _find_argmatcher(line_state, check_existence)
         check_existence = nil
     end
 
-    local first_word = clink.lower(line_state:getword(1))
-
-    -- Check for an exact match.
-    local argmatcher = _argmatchers[path.getname(first_word)]
+    local first_word = line_state:getword(1)
+    local argmatcher = _has_argmatcher(first_word)
     if argmatcher then
         if check_existence then
             argmatcher = nil
@@ -763,14 +794,17 @@ local function _find_argmatcher(line_state, check_existence)
         return argmatcher, true
     end
 
-    -- If the extension is in PATHEXT then try stripping the extension.
-    if path.isexecext(first_word) then
-        argmatcher = _argmatchers[path.getbasename(first_word)]
-        if argmatcher then
+    local alias = os.getalias(first_word)
+    if alias and alias ~= "" then
+        local words
+        alias = alias:gsub("%$.*$", "")
+        words = string.explode(alias, " \t", '"')
+        if #words then
+            argmatcher = _has_argmatcher(words[1])
             if check_existence then
                 argmatcher = nil
             end
-            return argmatcher, true
+            return argmatcher, true, words
         end
     end
 end
@@ -784,9 +818,9 @@ local argmatcher_classifier = clink.classifier(clink.argmatcher_generator_priori
 
 --------------------------------------------------------------------------------
 function argmatcher_generator:generate(line_state, match_builder)
-    local argmatcher = _find_argmatcher(line_state)
+    local argmatcher, has_argmatcher, extra_words = _find_argmatcher(line_state)
     if argmatcher then
-        return argmatcher:_generate(line_state, match_builder)
+        return argmatcher:_generate(line_state, match_builder, extra_words)
     end
 
     return false
@@ -794,9 +828,16 @@ end
 
 --------------------------------------------------------------------------------
 function argmatcher_generator:getwordbreakinfo(line_state)
-    local argmatcher = _find_argmatcher(line_state)
+    local argmatcher, has_argmatcher, extra_words = _find_argmatcher(line_state)
     if argmatcher then
         local reader = _argreader(argmatcher)
+
+        -- Consume extra words from expanded doskey alias.
+        if extra_words then
+            for word_index = 2, #extra_words do
+                reader:update(extra_words[word_index], -1)
+            end
+        end
 
         -- Consume words and use them to move through matchers' arguments.
         local word_count = line_state:getwordcount()
@@ -831,7 +872,7 @@ function argmatcher_classifier:classify(commands)
         local line_state = command.line_state
         local word_classifier = command.classifications
 
-        local argmatcher, has_argmatcher = _find_argmatcher(line_state, true)
+        local argmatcher, has_argmatcher, extra_words = _find_argmatcher(line_state, true)
 
         local word_count = line_state:getwordcount()
         local first_word = line_state:getword(1) or ""
@@ -852,6 +893,13 @@ function argmatcher_classifier:classify(commands)
             local reader = _argreader(argmatcher)
             reader._line_state = line_state
             reader._word_classifier = word_classifier
+
+            -- Consume extra words from expanded doskey alias.
+            if extra_words then
+                for word_index = 2, #extra_words do
+                    reader:update(extra_words[word_index], -1)
+                end
+            end
 
             -- Consume words and use them to move through matchers' arguments.
             for word_index = 2, word_count do
