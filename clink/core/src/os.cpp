@@ -363,22 +363,14 @@ bool get_alias(const char* name, str_base& out)
     wstr<32> alias_name;
     alias_name = name;
 
-    wchar_t exe_path[280];
-    if (GetModuleFileNameW(NULL, exe_path, sizeof_array(exe_path)) == 0)
-    {
-error:
-        map_errno();
-        return false;
-    }
-
-    wstr<32> exe_name;
-    exe_name = path::get_name(exe_path);
-
     // Get the alias (aka. doskey macro).
     wstr<32> buffer;
     buffer.reserve(8191);
-    if (GetConsoleAliasW(alias_name.data(), buffer.data(), buffer.size(), exe_name.data()) == 0)
-        goto error;
+    if (GetConsoleAliasW(alias_name.data(), buffer.data(), buffer.size(), L"cmd.exe") == 0)
+    {
+        map_errno();
+        return false;
+    }
 
     if (!buffer.length())
     {

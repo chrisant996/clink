@@ -573,16 +573,8 @@ int get_aliases(lua_State* state)
     lua_createtable(state, 0, 0);
 
 #if !defined(__MINGW32__) && !defined(__MINGW64__)
-    str<280> path;
-    if (!process().get_file_name(path))
-        return 1;
-
-    // Not const because Windows' alias API won't accept it.
-    wstr<> name;
-    name = (char*)path::get_name(path.c_str());
-
     // Get the aliases (aka. doskey macros).
-    int buffer_size = GetConsoleAliasesLengthW(name.data());
+    int buffer_size = GetConsoleAliasesLengthW(L"cmd.exe");
     if (buffer_size == 0)
         return 1;
 
@@ -593,7 +585,7 @@ int get_aliases(lua_State* state)
         return 1;
 
     ZeroMemory(buffer.get(), buffer_size * sizeof(WCHAR));    // Avoid race condition!
-    if (GetConsoleAliasesW(buffer.get(), buffer_size, name.data()) == 0)
+    if (GetConsoleAliasesW(buffer.get(), buffer_size, L"cmd.exe") == 0)
         return 1;
 
     // Parse the result into a lua table.
