@@ -94,25 +94,27 @@ unsigned int word_collector::collect_words(const char* line_buffer, unsigned int
     {
         bool first = true;
         unsigned int doskey_len = 0;
-        command_offset = command.offset;
+
+        if (line_cursor >= command.offset)
+            command_offset = command.offset;
 
         {
             unsigned int first_word_len = 0;
             while (first_word_len < command.length &&
-                    line_buffer[command_offset + first_word_len] != ' ' &&
-                    line_buffer[command_offset + first_word_len] != '\t')
+                    line_buffer[command.offset + first_word_len] != ' ' &&
+                    line_buffer[command.offset + first_word_len] != '\t')
                 first_word_len++;
 
             if (first_word_len > 0)
             {
                 str<32> lookup;
                 str<32> alias;
-                lookup.concat(line_buffer + command_offset, first_word_len);
+                lookup.concat(line_buffer + command.offset, first_word_len);
                 if (os::get_alias(lookup.c_str(), alias))
                 {
-                    unsigned char delim = (doskey_len < command.length) ? line_buffer[command_offset + doskey_len] : 0;
+                    unsigned char delim = (doskey_len < command.length) ? line_buffer[command.offset + doskey_len] : 0;
                     doskey_len = first_word_len;
-                    words.push_back({command_offset, doskey_len, first, true/*is_alias*/, 0, delim});
+                    words.push_back({command.offset, doskey_len, first, true/*is_alias*/, 0, delim});
                     first = false;
                 }
             }

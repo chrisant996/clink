@@ -419,7 +419,6 @@ void line_editor_impl::update_matches()
 
     if (generate)
     {
-TODO("ISSUE119 -- Expand doskey macros when necessary (discard when going out of scope).");
         line_state line = get_linestate();
         match_pipeline pipeline(m_matches);
         pipeline.reset();
@@ -697,14 +696,16 @@ bool line_editor_impl::update_input()
 }
 
 //------------------------------------------------------------------------------
-void line_editor_impl::collect_words(bool stop_at_cursor)
+void line_editor_impl::collect_words(bool for_classify)
 {
-    collect_words_mode mode = stop_at_cursor ? collect_words_mode::stop_at_cursor : collect_words_mode::whole_command;
-    m_command_offset = collect_words(m_words, m_matches, mode);
+    if (for_classify)
+        m_classify_command_offset = collect_words(m_classify_words, nullptr, collect_words_mode::whole_command);
+    else
+        m_command_offset = collect_words(m_words, &m_matches, collect_words_mode::stop_at_cursor);
 }
 
 //------------------------------------------------------------------------------
-unsigned int line_editor_impl::collect_words(words& words, matches_impl& matches, collect_words_mode mode)
+unsigned int line_editor_impl::collect_words(words& words, matches_impl* matches, collect_words_mode mode)
 {
     unsigned int command_offset = m_collector.collect_words(m_buffer, words, mode);
 
@@ -766,7 +767,8 @@ unsigned int line_editor_impl::collect_words(words& words, matches_impl& matches
         end_word->length = keep;
 
         // Need to coordinate with Readline when we redefine word breaks.
-        matches.set_word_break_position(end_word->offset);
+        assert(matches);
+        matches->set_word_break_position(end_word->offset);
     }
 
     return command_offset;
@@ -782,10 +784,9 @@ void line_editor_impl::classify()
     if (m_prev_classify.equals(m_buffer.get_buffer(), m_buffer.get_length()))
         return;
 
-TODO("ISSUE119 -- Expand doskey macros when necessary (discard when going out of scope).");
     // Use the full line; don't stop at the cursor.
-    line_state line = get_linestate();
-    collect_words(false);
+    collect_words(true/*for_classify*/);
+    line_state line = get_linestate(true/*for_classify*/);
 
     // Hang on to the old classifications so it's possible to detect changes.
     word_classifications old_classifications(std::move(m_classifications));
@@ -796,7 +797,7 @@ TODO("ISSUE119 -- Keep track of which bytes in expanded line came from the origi
     // emplace_back() doesn't invalidate pointers (references) stored in
     // linestates.
     unsigned int num_commands = 0;
-    for (const auto& word : m_words)
+    for (const auto& word : m_classify_words)
     {
         if (word.command_word)
             num_commands++;
@@ -811,7 +812,7 @@ TODO("ISSUE119 -- Keep track of which bytes in expanded line came from the origi
     words_storage.reserve(num_commands);
     while (true)
     {
-        if (!words.empty() && (i >= m_words.size() || m_words[i].command_word))
+        if (!words.empty() && (i >= m_classify_words.size() || m_classify_words[i].command_word))
         {
             // Make sure classifiers can tell whether the word has a space
             // before it, so that ` doskeyalias` gets classified as NOT a doskey
@@ -837,15 +838,15 @@ TODO("ISSUE119 -- Keep track of which bytes in expanded line came from the origi
             command_word_offset = i;
         }
 
-        if (i >= m_words.size())
+        if (i >= m_classify_words.size())
             break;
 
-        words.push_back(m_words[i]);
+        words.push_back(m_classify_words[i]);
         i++;
     }
 
     m_classifier->classify(linestates, m_classifications);
-TODO("ISSUE119 -- If the original line was expanded per a doskey macro, translate the expanded line's colored cells back into the origina line.");
+TODO("ISSUE119 -- If the original line was expanded per a doskey macro, translate the expanded line's colored cells back into the original line.");
     m_classifications.finish(is_showing_argmatchers());
 
 #ifdef DEBUG
@@ -870,14 +871,26 @@ TODO("ISSUE119 -- If the original line was expanded per a doskey macro, translat
 }
 
 //------------------------------------------------------------------------------
-line_state line_editor_impl::get_linestate() const
+line_state line_editor_impl::get_linestate(bool for_classify) const
 {
-    return {
-        m_buffer.get_buffer(),
-        m_buffer.get_cursor(),
-        m_command_offset,
-        m_words,
-    };
+    if (for_classify)
+    {
+        return {
+            m_buffer.get_buffer(),
+            m_buffer.get_cursor(),
+            m_classify_command_offset,
+            m_classify_words,
+        };
+    }
+    else
+    {
+        return {
+            m_buffer.get_buffer(),
+            m_buffer.get_cursor(),
+            m_command_offset,
+            m_words,
+        };
+    }
 }
 
 //------------------------------------------------------------------------------
@@ -1025,8 +1038,7 @@ void line_editor_impl::update_internal()
             // Defer generating until update_matches().  Must set word break
             // position in the meantime because adjust_completion_word() gets
             // called before the deferred generate().
-TODO("ISSUE119 -- Uh oh, this is problematic for making generators and classifiers automatically expand + collapse doskey macros.");
-TODO("ISSUE119 -- Maybe the set_word_break_position needs to move closer to the generate() calls that it needs to affect?");
+TODO("ISSUE119 -- Uh oh, word break position matters to Readline and must be relative to the original input line.");
             set_flag(flag_generate);
             m_matches.set_word_break_position(line.get_end_word_offset());
             update_prev_generate = len;
@@ -1090,9 +1102,8 @@ matches* maybe_regenerate_matches(const char* needle, bool popup)
     if (debug_filter) puts("REGENERATE_MATCHES");
 #endif
 
-TODO("ISSUE119 -- Expand doskey macros when necessary (discard when going out of scope).");
     std::vector<word> words;
-    unsigned int command_offset = s_editor->collect_words(words, regen, collect_words_mode::display_filter);
+    unsigned int command_offset = s_editor->collect_words(words, &regen, collect_words_mode::display_filter);
     line_state line
     {
         s_editor->m_buffer.get_buffer(),

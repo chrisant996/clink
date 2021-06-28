@@ -100,14 +100,14 @@ private:
     void                initialise();
     void                begin_line();
     void                end_line();
-    void                collect_words(bool stop_at_cursor=true);
-    unsigned int        collect_words(words& words, matches_impl& matches, collect_words_mode mode);
+    void                collect_words(bool for_classify=false);
+    unsigned int        collect_words(words& words, matches_impl* matches, collect_words_mode mode);
     void                classify();
     matches*            get_mutable_matches(bool nosort=false);
     void                update_internal();
     bool                update_input();
     module::context     get_context() const;
-    line_state          get_linestate() const;
+    line_state          get_linestate(bool for_classify=false) const;
     void                set_flag(unsigned char flag);
     void                clear_flag(unsigned char flag);
     bool                check_flag(unsigned char flag) const;
@@ -121,25 +121,29 @@ private:
     rl_module           m_module;
     rl_buffer           m_buffer;
     word_collector      m_collector;
-    prev_buffer         m_prev_classify;
-    prev_buffer         m_prev_generate;
     modules             m_modules;
     generators          m_generators;
     word_classifier*    m_classifier = nullptr;
     input_idle*         m_idle = nullptr;
     binder              m_binder;
     bind_resolver       m_bind_resolver = { m_binder };
-    words               m_words;
     word_classifications m_classifications;
     matches_impl        m_regen_matches;
     matches_impl        m_matches;
     printer&            m_printer;
     pager_impl          m_pager;
     key_t               m_prev_key;
-    unsigned short      m_command_offset;
     unsigned char       m_keys_size;
     unsigned char       m_flags = 0;
     str<64>             m_needle;
+
+    prev_buffer         m_prev_generate;
+    words               m_words;
+    unsigned short      m_command_offset = 0;
+
+    prev_buffer         m_prev_classify;
+    words               m_classify_words;
+    unsigned short      m_classify_command_offset = 0;
 
     const char*         m_insert_on_begin = nullptr;
 
