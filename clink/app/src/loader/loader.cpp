@@ -148,7 +148,7 @@ int loader(int argc, char** argv)
 
     // Parse arguments
     int arg;
-    while ((arg = getopt_long(argc, argv, "+hp:", options, nullptr)) != -1)
+    while ((arg = getopt_long(argc, argv, "+?hp:", options, nullptr)) != -1)
     {
         switch (arg)
         {

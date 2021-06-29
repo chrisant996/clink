@@ -421,7 +421,7 @@ int inject(int argc, char** argv)
     int i;
     int ret = 1;
     bool is_autorun = false;
-    while ((i = getopt_long(argc, argv, "lqhp:s:d:", options, nullptr)) != -1)
+    while ((i = getopt_long(argc, argv, "?lqhp:s:d:", options, nullptr)) != -1)
     {
         switch (i)
         {

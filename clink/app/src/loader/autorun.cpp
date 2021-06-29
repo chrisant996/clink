@@ -437,7 +437,7 @@ int autorun(int argc, char** argv)
 
     int i;
     int ret = 0;
-    while ((i = getopt_long(argc, argv, "ha", options, nullptr)) != -1)
+    while ((i = getopt_long(argc, argv, "?ha", options, nullptr)) != -1)
     {
         switch (i)
         {
@@ -445,6 +445,7 @@ int autorun(int argc, char** argv)
             g_all_users = 1;
             break;
 
+        case '?':
         case 'h':
             print_help();
             return 0;

@@ -18,7 +18,7 @@ int input_echo(int argc, char** argv)
     for (int i = 1; i < argc; ++i)
     {
         const char* arg = argv[i];
-        if (_stricmp(arg, "--help") == 0 || _stricmp(arg, "-h") == 0)
+        if (_stricmp(arg, "--help") == 0 || _stricmp(arg, "-h") == 0 || _stricmp(arg, "-?") == 0)
         {
             extern const char* g_clink_header;
             puts(g_clink_header);
