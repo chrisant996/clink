@@ -11,12 +11,16 @@
 #include <core/str.h>
 #include <core/str_compare.h>
 #include <core/str_iter.h>
-#include <readline/readline.h>
 #include "lib/matches.h"
 #include "match_builder_lua.h"
 
+#include <vector>
+
 extern "C" {
 #include "lua.h"
+#include <compat/config.h>
+#include <readline/readline.h>
+#include <readline/rlprivate.h>
 extern int              _rl_completion_case_map;
 extern const char*      rl_readline_name;
 }
@@ -235,6 +239,29 @@ static int invoke_command(lua_State* state)
     if (!command)
         return 0;
 
+    if (*command == '"')
+    {
+        str<> tmp(command + 1);
+        if (tmp[tmp.length() - 1] == '"')
+            tmp.truncate(tmp.length() - 1);
+
+        extern int macro_hook_func(const char* macro);
+        if (!macro_hook_func(tmp.c_str()))
+        {
+            int len = 0;
+            char* macro = static_cast<char*>(malloc(tmp.length() * 2 + 1));
+            if (rl_translate_keyseq(tmp.c_str(), macro, &len))
+            {
+                free(macro);
+                return 0;
+            }
+            _rl_with_macro_input(macro);
+        }
+
+        lua_pushinteger(state, true);
+        return 1;
+    }
+
     rl_command_func_t *func = rl_named_function(command);
     if (func == nullptr)
         return 0;
@@ -369,6 +396,80 @@ static int set_matches(lua_State* state)
     return builder_lua.add_matches(state);
 }
 
+//------------------------------------------------------------------------------
+/// -name:  rl.getkeybindings
+/// -arg:   raw:boolean
+/// -ret:   table
+/// -show:  function luafunc_showkeybindings(rl_buffer)
+/// -show:      local bindings = rl.getkeybindings()
+/// -show:      if #bindings <= 0 then
+/// -show:          rl_buffer:refreshline()
+/// -show:          return
+/// -show:      end
+/// -show:
+/// -show:      local line
+/// -show:      local r,w = io.popenrw("fzf.exe --layout=reverse-list")
+/// -show:      if r and w then
+/// -show:          -- Write key bindings to the write pipe.
+/// -show:          for _,kb in ipairs(bindings) do
+/// -show:              w:write(kb.key.." : "..kb.binding.."\n")
+/// -show:          end
+/// -show:          w:close()
+/// -show:
+/// -show:          -- Read filtered matches.
+/// -show:          local ret = {}
+/// -show:          line = r:read('*line')
+/// -show:          r:close()
+/// -show:      end
+/// -show:
+/// -show:      rl_buffer:refreshline()
+/// -show:
+/// -show:      if line and #line > 0 then
+/// -show:          local binding = line:sub(#bindings[1].key + 3 + 1)
+/// -show:          rl.invokecommand(binding)
+/// -show:      end
+/// -show:  end
+/// Returns key bindings in a table with the following scheme:
+/// <span class="tablescheme">{ {key:string, binding:string}, ... }</span>.
+///
+/// The following example demonstrates using this function in a
+/// <a href="#luakeybindings">luafunc: key binding</a> to invoke
+/// <a href="https://github.com/junegunn/fzf">fzf</a> to show a searchable list
+/// of key bindings, and then invoke whichever key binding is selected.
+int get_key_bindings(lua_State* state)
+{
+    bool raw = lua_toboolean(state, 1);
+
+    // Get the key bindings.
+    void show_key_bindings(bool friendly, std::vector<std::pair<str_moveable, str_moveable>>* out);
+    std::vector<std::pair<str_moveable, str_moveable>> bindings;
+    show_key_bindings(!raw, &bindings);
+
+    // Copy the result into a lua table.
+    lua_createtable(state, int(bindings.size()), 0);
+
+    str<> out;
+    int i = 1;
+    for (auto const& pair : bindings)
+    {
+        lua_createtable(state, 0, 2);
+
+        lua_pushliteral(state, "key");
+        lua_pushlstring(state, pair.first.c_str(), pair.first.length());
+        lua_rawset(state, -3);
+
+        lua_pushliteral(state, "binding");
+        lua_pushlstring(state, pair.second.c_str(), pair.second.length());
+        lua_rawset(state, -3);
+
+        lua_rawseti(state, -2, i);
+
+        ++i;
+    }
+
+    return 1;
+}
+
 
 
 //------------------------------------------------------------------------------
@@ -386,6 +487,7 @@ void rl_lua_initialise(lua_state& lua)
         { "invokecommand",          &invoke_command },
         { "getlastcommand",         &get_last_command },
         { "setmatches",             &set_matches },
+        { "getkeybindings",         &get_key_bindings },
     };
 
     lua_State* state = lua.get_state();

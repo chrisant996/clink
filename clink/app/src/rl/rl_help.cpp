@@ -393,7 +393,7 @@ static void append_key_macro(str_base& s, const char* macro)
 }
 
 //------------------------------------------------------------------------------
-static void show_key_bindings(bool friendly)
+void show_key_bindings(bool friendly, std::vector<std::pair<str_moveable, str_moveable>>* out=nullptr)
 {
     Keymap map = rl_get_keymap();
     int offset = 1;
@@ -430,72 +430,84 @@ static void show_key_bindings(bool friendly)
 
     // Calculate columns.
     unsigned int longest = longest_key + 3 + longest_func + 2;
-    int max_width = complete_get_screenwidth();
+    int max_width = out ? 0 : complete_get_screenwidth();
     int columns_that_fit = max_width / longest;
     int columns = max(1, columns_that_fit);
     int total_rows = ((offset - 1) + (columns - 1)) / columns;
 
-    bool vertical = !_rl_print_completions_horizontally;
+    bool vertical = out ? true : !_rl_print_completions_horizontally;
     int index_step = vertical ? total_rows : 1;
 
     // Move cursor past the input line.
-    _rl_move_vert(_rl_vis_botlin);
+    if (!out)
+    {
+        _rl_move_vert(_rl_vis_botlin);
+        g_printer->print("\n");
+    }
+
+    // Display any warnings.
+    if (!out)
+    {
+        g_pager->start_pager(*g_printer);
+        if (warnings.size() > 0)
+        {
+            bool stop = false;
+
+            if (!g_pager->on_print_lines(*g_printer, 1))
+                stop = true;
+            else
+                g_printer->print("\n");
+
+            int num_warnings = stop ? 0 : int(warnings.size());
+            for (int i = 0; i < num_warnings; ++i)
+            {
+                str_moveable& s = warnings[i];
+
+                // Ask the pager what to do.
+                int lines = ((s.length() - 14 + max_width - 1) / max_width); // -14 for escape codes.
+                if (!g_pager->on_print_lines(*g_printer, lines))
+                {
+                    stop = true;
+                    break;
+                }
+
+                // Print the warning.
+                g_printer->print(s.c_str(), s.length());
+                g_printer->print("\n");
+            }
+
+            if (stop || !g_pager->on_print_lines(*g_printer, 1))
+                total_rows = 0;
+            else
+                g_printer->print("\n");
+        }
+    }
 
     // Display the matches.
     str<> str;
-    g_printer->print("\n");
-    g_pager->start_pager(*g_printer);
-    if (warnings.size() > 0)
-    {
-        bool stop = false;
-
-        if (!g_pager->on_print_lines(*g_printer, 1))
-            stop = true;
-        else
-            g_printer->print("\n");
-
-        int num_warnings = stop ? 0 : int(warnings.size());
-        for (int i = 0; i < num_warnings; ++i)
-        {
-            str_moveable& s = warnings[i];
-
-            // Ask the pager what to do.
-            int lines = ((s.length() - 14 + max_width - 1) / max_width); // -14 for escape codes.
-            if (!g_pager->on_print_lines(*g_printer, lines))
-            {
-                stop = true;
-                break;
-            }
-
-            // Print the warning.
-            g_printer->print(s.c_str(), s.length());
-            g_printer->print("\n");
-        }
-
-        if (stop || !g_pager->on_print_lines(*g_printer, 1))
-            total_rows = 0;
-        else
-            g_printer->print("\n");
-    }
+    std::pair<str_moveable, str_moveable> pair;
     for (int i = 0; i < total_rows; ++i)
     {
         int index = vertical ? i : (i * columns);
         index++;
 
         // Ask the pager what to do.
-        int lines = 1;
-        if (!columns_that_fit)
+        if (!out)
         {
-            int len = 3; // " : "
-            len += int(strlen(collector[index].key_name));
-            if (collector[index].func_name)
-                len += int(strlen(collector[index].func_name));
-            else
-                len += min(2 + int(strlen(collector[index].macro_text)), 32);
-            lines += len / g_printer->get_columns();
+            int lines = 1;
+            if (!columns_that_fit)
+            {
+                int len = 3; // " : "
+                len += int(strlen(collector[index].key_name));
+                if (collector[index].func_name)
+                    len += int(strlen(collector[index].func_name));
+                else
+                    len += min(2 + int(strlen(collector[index].macro_text)), 32);
+                lines += len / g_printer->get_columns();
+            }
+            if (!g_pager->on_print_lines(*g_printer, lines))
+                break;
         }
-        if (!g_pager->on_print_lines(*g_printer, lines))
-            break;
 
         // Print the row.
         for (int j = columns - 1; j >= 0; --j)
@@ -503,16 +515,25 @@ static void show_key_bindings(bool friendly)
             if (index >= offset)
                 continue;
 
-            // Format the key binding.
+            // Key name.
             const Keyentry& entry = collector[index];
             str.clear();
-            if (entry.warning)
+            if (!out && entry.warning)
                 str << "\x1b[7m";
             str << entry.key_name;
-            if (entry.warning)
+            if (!out && entry.warning)
                 str << "\x1b[m";
             pad_with_spaces(str, longest_key);
-            str << " : ";
+            if (out)
+                pair.first = str.c_str();
+
+            // Separator.
+            if (!out)
+                str << " : ";
+            else
+                str.clear();
+
+            // Key binding.
             if (entry.func_name)
                 str << entry.func_name;
             if (entry.macro_text)
@@ -521,21 +542,31 @@ static void show_key_bindings(bool friendly)
                 append_key_macro(str, entry.macro_text);
                 str << "\"";
             }
+            if (out)
+                pair.second = str.c_str();
 
             // Pad column with spaces.
             if (j)
                 pad_with_spaces(str, longest);
 
             // Print the key binding.
-            g_printer->print(str.c_str(), str.length());
+            if (!out)
+                g_printer->print(str.c_str(), str.length());
+            else
+                out->emplace_back(std::move(pair));
 
             index += index_step;
         }
 
-        g_printer->print("\n");
+        if (!out)
+            g_printer->print("\n");
     }
 
-    g_printer->print("\n");
+    if (!out)
+    {
+        g_printer->print("\n");
+        g_result->redraw();
+    }
 
     // Tidy up (N.B. the first match is a placeholder and shouldn't be freed).
     while (--offset)
@@ -544,8 +575,6 @@ static void show_key_bindings(bool friendly)
         free(collector[offset].macro_text);
     }
     free(collector);
-
-    g_result->redraw();
 }
 
 //------------------------------------------------------------------------------
