@@ -529,9 +529,9 @@ static int find_line(lua_State* state, int direction)
 ///
 /// The following example provides a pair of <code>find_prev_colored_line</code>
 /// and <code>find_next_colored_line</code> functions.  The functions can be
-/// bound to keys via the <code>luafunc:</code> macro syntax in a .inputrc file.
-/// They scroll the screen buffer to the previous or next line that contains
-/// "warn" or "error" colored red or yellow.
+/// bound to keys via the <a href="#luakeybindings">luafunc: macro syntax</a>
+/// in a .inputrc file.  They scroll the screen buffer to the previous or next
+/// line that contains "warn" or "error" colored red or yellow.
 /// -show:  local was_top
 /// -show:  local found_index
 /// -show:

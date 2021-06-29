@@ -475,7 +475,7 @@ Run `clink info` to see the script paths for the current session.
   - Apply color to input text.
   - Customize the prompt.
   - Perform actions before or after the user gets to edit each input line.
-  - Provide new custom commands that can be bound to keys via the "luafunc:" key macro syntax (see <a href="#configreadline">Configuring Readline</a> for more information).
+  - Provide new custom commands that can be bound to keys via the <a href="#luakeybindings">luafunc: key macro syntax</a>.
 - Often scripts will also define some functions and variables for use by itself and/or other scripts.
 
 The following sections describe these in more detail and show some examples.
@@ -626,7 +626,7 @@ end
 
 #### Filtering Match Completions
 
-A match generator or `luafunc:` key binding can use <a href="#clink.onfiltermatches">clink.onfiltermatches()</a> to register a function that will be called after matches are generated but before they are displayed or inserted.
+A match generator or <a href="#luakeybindings">luafunc: key binding</a> can use <a href="#clink.onfiltermatches">clink.onfiltermatches()</a> to register a function that will be called after matches are generated but before they are displayed or inserted.
 
 The function receives a table argument containing the matches to be displayed, a string argument indicating the completion type, and a boolean argument indicating whether filename completion is desired. The table argument has a `match` string field and a `type` string field; these are the same as in <a href="builder:addmatch">builder:addmatch()</a>.
 

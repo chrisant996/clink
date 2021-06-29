@@ -217,16 +217,15 @@ static int is_rl_variable_true(lua_State* state)
 /// -arg:   [count:integer]
 /// -ret:   boolean | nil
 /// Invokes a Readline command named <span class="arg">command</span>.  May only
-/// be used within a <code>luafunc:</code> key binding.
+/// be used within a <a href="#luakeybindings">luafunc: key binding</a>.
 ///
 /// <span class="arg">count</span> is optional and defaults to 1 if omitted.
 ///
 /// Returns true if the named command succeeds, false if the named command
 /// fails, or nil if the named command doesn't exist.
 ///
-/// Warning:  Invoking more than one Readline command in a <code>luafunc:</code>
-/// key binding could have unexpected results, depending on which commands are
-/// invoked.
+/// Warning:  Invoking more than one Readline command in a luafunc: key binding
+/// could have unexpected results, depending on which commands are invoked.
 static int invoke_command(lua_State* state)
 {
     if (!lua_state::is_in_luafunc())
@@ -297,7 +296,8 @@ static int get_last_command(lua_State* state)
 /// until any action that normally resets the matches (such as moving the cursor
 /// or editing the input line).
 ///
-/// May only be used within a <code>luafunc:</code> key binding.
+/// May only be used within a
+/// <a href="#luakeybindings">luafunc: key binding</a>.
 ///
 /// The syntax is the same as for
 /// <a href="#builder:addmatches()">builder:addmatches()</a> with one addition:
@@ -306,12 +306,12 @@ static int get_last_command(lua_State* state)
 ///
 /// <pre><code class="lua">local matches = {}<br/>matches["nosort"] = true<br/>rl.setmatches(matches)</code></pre>
 ///
-/// This function can be used by a <code>luafunc:</code> key binding to provide
-/// matches based on some special criteria.  For example, a key binding could
-/// collect numbers from the current screen buffer (such as issue numbers,
-/// commit hashes, line numbers, etc) and provide them to Readline as matches,
-/// making it convenient to grab a number from the screen and insert it as a
-/// command line argument.
+/// This function can be used by a
+/// <a href="#luakeybindings">luafunc: key binding</a> to provide matches based
+/// on some special criteria.  For example, a key binding could collect numbers
+/// from the current screen buffer (such as issue numbers, commit hashes, line
+/// numbers, etc) and provide them to Readline as matches, making it convenient
+/// to grab a number from the screen and insert it as a command line argument.
 ///
 /// Match display filtering is also possible by using
 /// <a href="#clink.ondisplaymatches">clink.ondisplaymatches()</a> after setting

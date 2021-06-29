@@ -566,8 +566,7 @@ int get_alias(lua_State* state)
 //------------------------------------------------------------------------------
 /// -name:  os.getaliases
 /// -ret:   table
-/// Returns doskey aliases in a table with the following scheme:
-/// <span class="tablescheme">{ {name:string, command:string}, ... }</span>.
+/// Returns doskey alias names in a table of strings.
 int get_aliases(lua_State* state)
 {
     lua_createtable(state, 0, 0);
