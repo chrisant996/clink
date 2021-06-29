@@ -7,7 +7,9 @@
 - **Breaking Change:** The `clink.onendedit()` Lua event has been split into two separate events:
     - `clink.onendedit()` registers a function to be called when the edit prompt ends.
     - `clink.onfilterinput()` registers a function to be called after the edit prompt ends (and after the onendedit event is sent), and the function can replace the input text.
+- Added `rl.getkeybindings()` function to get a table containing key bindings.  The bindings can be invoked via `rl.invokecommand()`.  For example, a "luafunc:" macro could use this to get key bindings, show an interactive list, and then invoke the selected key binding.
 - Fixed [#134](https://github.com/chrisant996/clink/issues/134); `print()` can stop working.  Issue [#93](https://github.com/chrisant996/clink/issues/93) can potentially happen any time redirection is used, so the fix must be applied repeatedly (not just after Clink injection).
+- Fixed [#119](https://github.com/chrisant996/clink/issues/119); reuse registered parsers for doskey macros.
 
 #### v1.2.15
 
@@ -186,7 +188,7 @@
 - Fixed `clink history compact` so that it forces compaction as intended.
 - Fixed completion for `clink set` so that filename completion works in string settings.
 - Fixed backwards return value from `rl.invokecommand()`.
-- Fixed console input/output modes across `luafunc:` key bindings, in case the Lua functions spawn a process that alters the console mode without restoring it.
+- Fixed console input/output modes across "luafunc:" key bindings, in case the Lua functions spawn a process that alters the console mode without restoring it.
 
 #### v1.1.41
 
