@@ -1014,8 +1014,7 @@ bool host::edit_line(const char* prompt, str_base& out)
     if (!resolved)
     {
         m_doskey.resolve(out.c_str(), m_doskey_alias);
-        if (m_doskey_alias)
-            out.clear();
+        m_doskey_alias.next(out);
     }
 
     if (ret && autostart.empty())
