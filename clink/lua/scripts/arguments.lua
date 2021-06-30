@@ -799,7 +799,7 @@ local function _find_argmatcher(line_state, check_existence)
         local words
         alias = alias:gsub("%$.*$", "")
         words = string.explode(alias, " \t", '"')
-        if #words then
+        if #words > 0 then
             argmatcher = _has_argmatcher(words[1])
             if check_existence then
                 argmatcher = nil
