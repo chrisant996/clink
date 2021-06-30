@@ -9,6 +9,8 @@
 #include <string.h>
 #include <utility>
 
+#include <assert.h>
+
 //------------------------------------------------------------------------------
 inline int  str_len(const char* s)                                   { return int(strlen(s)); }
 inline int  str_len(const wchar_t* s)                                { return int(wcslen(s)); }
@@ -68,12 +70,13 @@ protected:
                         str_impl(str_impl&&);
     void                set_growable(bool state=true);
     str_impl&           operator = (str_impl&&);
-    void                reset_data(TYPE* data, unsigned int size);
+    bool                owns_ptr() const;
+    void                reset_not_owned(TYPE* data, unsigned int size);
+    void                free_data();
 
 private:
     typedef unsigned short ushort;
 
-    void                free_data();
     TYPE*               m_data;
     ushort              m_size : 15;
     ushort              m_growable : 1;
@@ -419,11 +422,14 @@ str_impl<TYPE>& str_impl<TYPE>::operator << (const str_impl& rhs)
 template <typename TYPE>
 str_impl<TYPE>& str_impl<TYPE>::operator = (str_impl&& s)
 {
+    assert(s.m_owns_ptr); // Otherwise our m_data will point into s.
+
     free_data();
 
     memcpy(this, &s, sizeof(*this));
 
-    // This leaves s in a non-reusable state!
+    // This leaves s in a non-reusable state!  But s can be repaired by using
+    // reset_not_owned().
     s.m_data = nullptr;
     s.m_size = 0;
     s.m_length = 0;
@@ -434,12 +440,20 @@ str_impl<TYPE>& str_impl<TYPE>::operator = (str_impl&& s)
 
 //------------------------------------------------------------------------------
 template <typename TYPE>
-void str_impl<TYPE>::reset_data(TYPE* data, unsigned int size)
+bool str_impl<TYPE>::owns_ptr() const
+{
+    return m_owns_ptr;
+}
+
+//------------------------------------------------------------------------------
+template <typename TYPE>
+void str_impl<TYPE>::reset_not_owned(TYPE* data, unsigned int size)
 {
     // reset_data() can be used to repair this back into a reusable state after
     // invoking operator=(str_impl&&).
     m_data = data;
     m_size = size;
+    m_owns_ptr = false;
 }
 
 
@@ -545,6 +559,9 @@ public:
     using       str_base::operator =;
     str_moveable& operator = (str_moveable&&);
 
+    char*       detach();
+    void        free();
+
 private:
     char        m_empty[1];
 };
@@ -560,6 +577,9 @@ public:
     using       wstr_base::operator =;
     wstr_moveable& operator = (wstr_moveable&&);
 
+    wchar_t*    detach();
+    void        free();
+
 protected:
     wchar_t     m_empty[1];
 };
@@ -567,17 +587,61 @@ protected:
 //------------------------------------------------------------------------------
 inline str_moveable& str_moveable::operator = (str_moveable&& s)
 {
-    str_base::operator=(std::move(s));
-    s.reset_data(s.m_empty, _countof(s.m_empty));
+    if (s.owns_ptr())
+    {
+        str_base::operator=(std::move(s));
+        s.reset_not_owned(s.m_empty, _countof(s.m_empty));
+    }
+    else
+    {
+        clear();
+    }
     return *this;
+}
+
+//------------------------------------------------------------------------------
+inline char* str_moveable::detach()
+{
+    char* s = data();
+    reset_not_owned(m_empty, _countof(m_empty));
+    return s;
+}
+
+//------------------------------------------------------------------------------
+inline void str_moveable::free()
+{
+    attach(nullptr, 0);
+    reset_not_owned(m_empty, _countof(m_empty));
 }
 
 //------------------------------------------------------------------------------
 inline wstr_moveable& wstr_moveable::operator = (wstr_moveable&& s)
 {
-    wstr_base::operator=(std::move(s));
-    s.reset_data(s.m_empty, _countof(s.m_empty));
+    if (s.owns_ptr())
+    {
+        wstr_base::operator=(std::move(s));
+        s.reset_not_owned(s.m_empty, _countof(s.m_empty));
+    }
+    else
+    {
+        clear();
+    }
     return *this;
+}
+
+//------------------------------------------------------------------------------
+inline wchar_t* wstr_moveable::detach()
+{
+    wchar_t* s = data();
+    reset_not_owned(m_empty, _countof(m_empty));
+    return s;
+}
+
+//------------------------------------------------------------------------------
+inline void wstr_moveable::free()
+{
+    attach(nullptr, 0);
+    reset_not_owned(m_empty, _countof(m_empty));
 }
 
 
