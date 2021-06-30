@@ -804,10 +804,11 @@ bool host::edit_line(const char* prompt, str_base& out)
     }
 
     // Create the editor and add components to it.
-    line_editor* editor = line_editor_create(desc);
+    line_editor* editor = nullptr;
 
     if (init_editor)
     {
+        editor = line_editor_create(desc);
         editor->add_generator(lua);
         editor->add_generator(file_match_generator());
         if (g_classify_words.get())
@@ -935,7 +936,7 @@ bool host::edit_line(const char* prompt, str_base& out)
             }
             else
             {
-                ret = editor->edit(out);
+                ret = editor && editor->edit(out);
                 if (!ret)
                     break;
             }
