@@ -3,7 +3,7 @@
 
 <!-- ----------------------------------------------------- -->
 <head>
-<title>Clink v1.2.16</title>
+<title>Clink v1.2.17</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Rambla:wght@400;700&family=Roboto&family=Fira+Mono&display=swap');
 html {
@@ -747,7 +747,7 @@ name:"Plain text",aliases:["text","txt"],disableAutodetect:!0})})());
         </td>
         <td style="text-align:right">
             <div id="header">
-                <div id="title">Clink v1.2.16</div>
+                <div id="title">Clink v1.2.17</div>
                 <div id="url">
                     <a href="https://github.com/chrisant996/clink">
                         https://github.com/chrisant996/clink
@@ -1431,7 +1431,7 @@ call &quot;%~dp0clink.bat&quot; inject --profile &quot;%TEMP%\clink_portable&quo
 </tr>
 <tr>
 <td align="center"><code>clink-popup-complete</code></td>
-<td>Show a popup window that lists the available completions.</td>
+<td>Show a <a href="#popupwindow">popup window</a> that lists the available completions.</td>
 </tr>
 <tr>
 <td align="center"><code>clink-popup-complete-numbers</code></td>
@@ -1439,11 +1439,15 @@ call &quot;%~dp0clink.bat&quot; inject --profile &quot;%TEMP%\clink_portable&quo
 </tr>
 <tr>
 <td align="center"><code>clink-popup-directories</code></td>
-<td>Show a popup window of recent current working directories.  In the popup, use <kbd>Enter</kbd> to <code>cd /d</code> to the highlighted directory.  See below more about the popup window.</td>
+<td>Show a <a href="#popupwindow">popup window</a> of recent current working directories.  In the popup, use <kbd>Enter</kbd> to <code>cd /d</code> to the highlighted directory.</td>
 </tr>
 <tr>
 <td align="center"><code>clink-popup-history</code></td>
-<td>Show a popup window that lists the command history (if any text precedes the cursor then it uses an anchored search to filter the list).  In the popup, use <kbd>Enter</kbd> to execute the highlighted command.  See below for more about the popup window.</td>
+<td>Show a <a href="#popupwindow">popup window</a> that lists the command history (if any text precedes the cursor then it uses an anchored search to filter the list).  In the popup, use <kbd>Enter</kbd> to execute the highlighted command.</td>
+</tr>
+<tr>
+<td align="center"><code>clink-popup-show-help</code></td>
+<td>Show a <a href="#popupwindow">popup window</a> that lists the currently active key bindings, and can invoke a selected key binding.  The default key binding for this is <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>H</kbd>.</td>
 </tr>
 <tr>
 <td align="center"><code>clink-reload</code></td>
@@ -1552,8 +1556,9 @@ call &quot;%~dp0clink.bat&quot; inject --profile &quot;%TEMP%\clink_portable&quo
 <li><code>*.pdf=30;105</code> uses black on bright magenta for .pdf files.</li>
 <li><code>*.md=4</code> uses underline for .md files.</li>
 </ul>
+<p><a name="popupwindow"></a></p>
 <h2 id="popup-window">Popup window</h2>
-<p>The <code>clink-popup-complete</code>, <code>clink-popup-directories</code>, and <code>clink-popup-history</code> <a href="#configreadline">Readline commands</a> show a popup window that lists the available completions, directory history, or command history.  Here&#39;s how they work:</p>
+<p>The <code>clink-popup-complete</code>, <code>clink-popup-directories</code>, and <code>clink-popup-history</code> <a href="#configreadline">Readline commands</a> show a searchable popup window that lists the available completions, directory history, or command history.  Here&#39;s how the popup windows work:</p>
 <table>
 <thead>
 <tr>
@@ -2917,6 +2922,7 @@ end</code></pre></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="clink.onfilterinput">clink.onfilterinput</a></div> <div class="signature">( <span class="arg_name">func</span>:function ) : nil</div></div><div class="body"><p class="desc">Registers <span class="arg">func</span> to be called after Clink's edit prompt ends (it is called after the <a href="#clink.oneditedit>onendedit</a> event).  The function receives a string argument containing the input text from the edit prompt.  The function returns up to two values.  If the first is not nil then it's a string that replaces the edit prompt text.  If the second is not nil and is false then it stops further onfilterinput handlers from running.</p><p class="desc"> <strong>Note:</strong>  Be very careful if you replace the text; this has the potential to interfere with or even ruin the user's ability to enter command lines for CMD to process.</p></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="clink.onfiltermatches">clink.onfiltermatches</a></div> <div class="signature">( <span class="arg_name">func</span>:function ) : nil</div></div><div class="body"><p class="desc">Registers <span class="arg">func</span> to be called after Clink generates matches for completion.  See <a href="#filteringmatchcompletions"> Filtering Match Completions</a> for more information.</p></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="clink.oninject">clink.oninject</a></div> <div class="signature">( <span class="arg_name">func</span>:function ) : nil</div></div><div class="body"><p class="desc">Registers <span class="arg">func</span> to be called when Clink is injected into a CMD process.  The function is called only once per session.</p></div></div><hr/>
+<div class="function"><div class="header"> <div class="name"><a name="clink.popuplist">clink.popuplist</a></div> <div class="signature">( <span class="arg_name">title</span>:string, <span class="arg_name">items</span>:table, [<span class="arg_name">index</span>:integer] ) : string, boolean, integer</div></div><div class="body"><p class="desc">Displays a popup list and returns the selected item.  May only be used within a <a href="#luakeybindings">luafunc: key binding</a>.</p><p class="desc"> <span class="arg">title</span> is required and captions the popup list.</p><p class="desc"> <span class="arg">items</span> is a table of strings to display, or a table of items with the following scheme: <span class="tablescheme">{ {display:string, value:string, description:string}, ... }</span>. The <code>display</code> field is displayed in the popup list (or if not present then <code>value</code> is displayed).  The <code>value</code> field is returned if the item is chosen.  The <code>description</code> is optional, and is displayed in a dimmed color in a second column.</p><p class="desc"> <span class="arg">index</span> optionally specifies the default item (or 1 if omitted).</p><p class="desc"> If the popup is canceled or an error occurs, the function returns nil.</p><p class="desc"> Otherwise the 3 return values are:</p><p class="desc"> <ul> <li>string indicating the <code>value</code> field from the selected item (or the <code>display</code> field if no value field is present). <li>boolean which is true if the item was selected with <kbd>Shift</kbd> or <kbd>Ctrl</kbd> pressed. <li>integer indicating the index of the selected item in the original <span class="arg">items</span> table. </ul></p></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="clink.print">clink.print</a></div> <div class="signature">( ... ) : nil</div></div><div class="body"><p class="desc">This works like <code>print()</code>, but this supports ANSI escape codes.</p><p class="desc"> If the special value <code>NONL</code> is included anywhere in the argument list then the usual trailing newline is omitted.  This can sometimes be useful particularly when printing certain ANSI escape codes.</p><p class="desc"> <strong>Note:</strong>  In Clink versions before v1.2.11 the <code>clink.print()</code> API exists (undocumented) but accepts exactly one string argument and is therefore not fully compatible with normal <code>print()</code> syntax.  If you use fewer or more than 1 argument or if the argument is not a string, then first checking the Clink version (e.g. <a href="#clink.version_encoded">clink.version_encoded</a>) can avoid runtime errors.</p><pre class="language-lua"><code>clink.print("\x1b[32mgreen\x1b[m \x1b[35mmagenta\x1b[m")
 -- Outputs <code>green</code> in green, a space, and <code>magenta</code> in magenta.
 
@@ -3211,32 +3217,21 @@ function dir_matches(match_word, word_index, line_state)
 &nbsp; end
 &nbsp; return matches
 end</code></pre></div></div><hr/>
-<div class="function"><div class="header"> <div class="name"><a name="rl.getkeybindings">rl.getkeybindings</a></div> <div class="signature">( <span class="arg_name">raw</span>:boolean ) : table</div></div><div class="body"><p class="desc">Returns key bindings in a table with the following scheme: <span class="tablescheme">{ {key:string, binding:string}, ... }</span>.</p><p class="desc"> The following example demonstrates using this function in a <a href="#luakeybindings">luafunc: key binding</a> to invoke <a href="https://github.com/junegunn/fzf">fzf</a> to show a searchable list of key bindings, and then invoke whichever key binding is selected.</p><pre class="language-lua"><code>function luafunc_showkeybindings(rl_buffer)
+<div class="function"><div class="header"> <div class="name"><a name="rl.getkeybindings">rl.getkeybindings</a></div> <div class="signature">( <span class="arg_name">raw</span>:boolean ) : table</div></div><div class="body"><p class="desc">Returns key bindings in a table with the following scheme: <span class="tablescheme">{ {key:string, binding:string}, ... }</span>.</p><p class="desc"> The following example demonstrates using this function in a <a href="#luakeybindings">luafunc: key binding</a> to invoke <a href="#clink.popuplist">clink.popuplist()</a> to show a searchable list of key bindings, and then invoke whichever key binding is selected.</p><pre class="language-lua"><code>function luafunc_showkeybindings(rl_buffer)
 local bindings = rl.getkeybindings()
 if #bindings <= 0 then
 rl_buffer:refreshline()
 return
 end
 
-local line
-local r,w = io.popenrw("fzf.exe --layout=reverse-list")
-if r and w then
--- Write key bindings to the write pipe.
+local items = {}
 for _,kb in ipairs(bindings) do
-w:write(kb.key.." : "..kb.binding.."\n")
-end
-w:close()
-
--- Read filtered matches.
-local ret = {}
-line = r:read('*line')
-r:close()
+table.insert(items, { value=kb.binding, display=kb.key, description=kb.binding })
 end
 
+local binding, _, index = clink.popuplist("Key Bindings", items)
 rl_buffer:refreshline()
-
-if line and #line > 0 then
-local binding = line:sub(#bindings[1].key + 3 + 1)
+if binding then
 rl.invokecommand(binding)
 end
 end</code></pre></div></div><hr/>
@@ -3358,6 +3353,14 @@ end</code></pre></div></div><hr/>
         <div class="section" id="changes">
 <h1 id="changes">Changes</h1>
 <h3 id="releases-from-chrisant996clink-fork">Releases from <a href="https://github.com/chrisant996/clink">chrisant996/clink</a> fork</h3>
+<h4 id="v1217">v1.2.17</h4>
+<ul>
+<li>Added <code>clink-popup-show-help</code> command to show popup list with searchable list of key bindings and invoke the selected key binding.</li>
+<li>Added <code>clink.popuplist()</code> function to show a popup list.  Only usable from inside a &quot;luafunc:&quot; key binding.</li>
+<li>Incremental search in the popup list window now centers the found item so items above and below it are visible.</li>
+<li>Fixed potential internal error when a doskey alias starts with <code>$</code> (regression introduced in v1.2.16).</li>
+<li>Fixed potential infinite loop when the <code>cmd.auto_answer</code> setting is enabled but an error occurs while retrieving a language string (might be related to <a href="https://github.com/chrisant996/clink/issues/137">#137</a>).</li>
+</ul>
 <h4 id="v1216">v1.2.16</h4>
 <ul>
 <li><strong>Breaking Change:</strong> The <code>clink.onendedit()</code> Lua event has been split into two separate events:<ul>
