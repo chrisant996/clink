@@ -12,6 +12,7 @@
 #include <core/str.h>
 #include <core/str_iter.h>
 #include <core/str_transform.h>
+#include <lib/popup.h>
 #include <terminal/screen_buffer.h>
 #include <readline/readline.h>
 
@@ -253,6 +254,158 @@ static int to_uppercase(lua_State* state)
 }
 
 //------------------------------------------------------------------------------
+/// -name:  clink.popuplist
+/// -arg:   title:string
+/// -arg:   items:table
+/// -arg:   [index:integer]
+/// -ret:   string, boolean, integer
+/// Displays a popup list and returns the selected item.  May only be used
+/// within a <a href="#luakeybindings">luafunc: key binding</a>.
+///
+/// <span class="arg">title</span> is required and captions the popup list.
+///
+/// <span class="arg">items</span> is a table of strings to display, or a table
+/// of items with the following scheme:
+/// <span class="tablescheme">{ {display:string, value:string, description:string}, ... }</span>.
+/// The <code>display</code> field is displayed in the popup list (or if not
+/// present then <code>value</code> is displayed).  The <code>value</code> field
+/// is returned if the item is chosen.  The <code>description</code> is
+/// optional, and is displayed in a dimmed color in a second column.
+///
+/// <span class="arg">index</span> optionally specifies the default item (or 1
+/// if omitted).
+///
+/// If the popup is canceled or an error occurs, the function returns nil.
+///
+/// Otherwise the 3 return values are:
+///
+/// <ul>
+/// <li>string indicating the <code>value</code> field from the selected item
+/// (or the <code>display</code> field if no value field is present).
+/// <li>boolean which is true if the item was selected with <kbd>Shift</kbd> or
+/// <kbd>Ctrl</kbd> pressed.
+/// <li>integer indicating the index of the selected item in the original
+/// <span class="arg">items</span> table.
+/// </ul>
+static int popup_list(lua_State* state)
+{
+    if (!lua_state::is_in_luafunc())
+        return luaL_error(state, "clink.popuplist may only be used in a " LUA_QL("luafunc:") " key binding");
+
+    enum arg_indices { makevaluesonebased, argTitle, argItems, argIndex};
+
+    const char* title = checkstring(state, argTitle);
+    int index = optinteger(state, argIndex, 1) - 1;
+    if (!title || !lua_istable(state, argItems))
+        return 0;
+
+    struct autoptr
+    {
+        autoptr(char* p) : m_p(p) {}
+        autoptr(const autoptr& other) = delete;
+        autoptr(autoptr&& other) { m_p = other.m_p; other.m_p = nullptr; }
+        ~autoptr() { free(m_p); }
+        autoptr& operator=(const autoptr& other) = delete;
+        autoptr& operator=(autoptr&& other) { m_p = other.m_p; other.m_p = nullptr; }
+        const char** operator&() const { return const_cast<const char**>(&m_p); }
+    private:
+        char* m_p;
+    };
+
+    int num_items = int(lua_rawlen(state, argItems));
+    if (!num_items)
+        return 0;
+
+#ifdef DEBUG
+    int top = lua_gettop(state);
+#endif
+
+    std::vector<autoptr> items;
+    items.reserve(num_items);
+    for (int i = 1; i <= num_items; ++i)
+    {
+        lua_rawgeti(state, argItems, i);
+
+        const char* value = nullptr;
+        const char* display = nullptr;
+        const char* description = nullptr;
+
+        if (lua_istable(state, -1))
+        {
+            lua_pushliteral(state, "value");
+            lua_rawget(state, -2);
+            if (lua_isstring(state, -1))
+                value = lua_tostring(state, -1);
+            lua_pop(state, 1);
+
+            lua_pushliteral(state, "display");
+            lua_rawget(state, -2);
+            if (lua_isstring(state, -1))
+                display = lua_tostring(state, -1);
+            lua_pop(state, 1);
+
+            lua_pushliteral(state, "description");
+            lua_rawget(state, -2);
+            if (lua_isstring(state, -1))
+                description = lua_tostring(state, -1);
+            lua_pop(state, 1);
+        }
+        else
+        {
+            display = lua_tostring(state, -1);
+        }
+
+        if (!value && !display)
+            value = display = "";
+        else if (!display)
+            display = value;
+        else if (!value)
+            value = display;
+
+        size_t alloc_size = 3; // NUL terminators.
+        alloc_size += strlen(value);
+        alloc_size += strlen(display);
+        if (description) alloc_size += strlen(description);
+
+        str_moveable s;
+        s.reserve(alloc_size);
+
+        {
+            char* p = s.data();
+            append_string_into_buffer(p, value);
+            append_string_into_buffer(p, display);
+            append_string_into_buffer(p, description);
+        }
+
+        items.emplace_back(s.detach());
+
+        lua_pop(state, 1);
+    }
+
+#ifdef DEBUG
+    assert(lua_gettop(state) == top);
+    assert(num_items == items.size());
+#endif
+
+    str<> out;
+    if (index > items.size()) index = items.size();
+    if (index < 0) index = 0;
+
+    popup_list_result result = do_popup_list(title, &*items.begin(), items.size(), 0, 0, false, false, false, index, out, true/*display_filter*/);
+    switch (result)
+    {
+    case popup_list_result::select:
+    case popup_list_result::use:
+        lua_pushlstring(state, out.c_str(), out.length());
+        lua_pushboolean(state, (result == popup_list_result::use));
+        lua_pushinteger(state, index + 1);
+        return 3;
+    }
+
+    return 0;
+}
+
+//------------------------------------------------------------------------------
 /// -name:  clink.getsession
 /// -ret:   string
 /// -show:  local c = os.getalias("clink")
@@ -453,6 +606,7 @@ void clink_lua_initialise(lua_state& lua)
         { "lower",                  &to_lowercase },
         { "print",                  &clink_print },
         { "upper",                  &to_uppercase },
+        { "popuplist",              &popup_list },
         { "getsession",             &get_session },
         { "getansihost",            &get_ansi_host },
         { "translateslashes",       &translate_slashes },

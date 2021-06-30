@@ -28,3 +28,5 @@ popup_list_result do_popup_list(
     str_base& out,
     bool display_filter=false);
 
+//------------------------------------------------------------------------------
+const char* append_string_into_buffer(char*& buffer, const char* match);

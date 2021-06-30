@@ -13,6 +13,7 @@
 #include <core/str_unordered_set.h>
 #include <lib/line_state.h>
 #include <lib/matches.h>
+#include <lib/popup.h>
 #include <terminal/ecma48_iter.h>
 
 extern "C" {
@@ -112,21 +113,6 @@ void lua_match_generator::get_word_break_info(const line_state& line, word_break
 
     info.truncate = int(lua_tointeger(state, -2));
     info.keep = int(lua_tointeger(state, -1));
-}
-
-//------------------------------------------------------------------------------
-static const char* append_string_into_buffer(char*& buffer, const char* match)
-{
-    const char* ret = buffer;
-    if (match)
-        while (char c = *(match++))
-        {
-            if (c == '\r' || c == '\n' || c == '\t')
-                c = ' ';
-            *(buffer++) = c;
-        }
-    *(buffer++) = '\0';
-    return ret;
 }
 
 //------------------------------------------------------------------------------

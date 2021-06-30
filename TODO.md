@@ -62,7 +62,6 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 - Provide API to generate HTML string from console text.
 - Provide API to copy text to clipboard (e.g. an HTML string generated from console text).
 - Is there some way to show selection markup?  Maybe have a way to have floating windows mark corners of a selection region, or overlay or or more windows to draw an outline around the selected region?
-- Provide API to show a popup list?  But make it fail if used from outside a Readline command.
 - Provide API to show an input box?  But make it fail if used from outside a Readline command.
 
 **Readline**
@@ -95,7 +94,6 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 
 # BACKLOG
 
-- A way to disable/enable clink once injected.
 - [#486](https://github.com/mridgers/clink/issues/486) **Ctrl+C** doesn't always work properly _[might be the auto-answer prompt setting]_
 
 <br/>
@@ -129,6 +127,7 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
   - There is a truncation problem here that does not exist without Clink.
   - However, even CMD itself silently fails to run an inputted command over 8100 characters, despite allowing 8191 characters to be input.
   - So I'm comfortable punting this for now.
+- A way to disable/enable clink once injected.  _[Why?]_
 
 ---
 Chris Antos - sparrowhawk996@gmail.com

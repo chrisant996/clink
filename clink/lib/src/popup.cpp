@@ -10,6 +10,7 @@
 #include <windows.h>
 #include <rpc.h> // for UuidCreateSequential
 #include <commctrl.h>
+#include <windowsx.h>
 #include <shlwapi.h>
 #include <VersionHelpers.h>
 #include <vector>
@@ -37,6 +38,11 @@ static void ListView_SetCurSel(HWND hwnd, int index)
     if (focused >= 0)
         ListView_SetItemState(hwnd, focused, 0, LVIS_SELECTED|LVIS_FOCUSED);
     ListView_SetItemState(hwnd, index, LVIS_SELECTED|LVIS_FOCUSED, LVIS_SELECTED|LVIS_FOCUSED );
+
+    int num = ListView_GetItemCount(hwnd);
+    int per_page = ListView_GetCountPerPage(hwnd);
+    ListView_EnsureVisible(hwnd, num - 1, false);
+    ListView_EnsureVisible(hwnd, max<int>(0, index - (per_page - 1) / 2), false);
 }
 
 //------------------------------------------------------------------------------
@@ -54,9 +60,9 @@ static const char** s_items;
 static int s_num_completions;
 static int s_len_prefix;
 static int s_past_flag;
+static int s_first_column_width;
 static bool s_display_filter;
 static bool s_descriptions;
-static bool s_autosize;
 static bool s_reverse_find;
 static wstr<32> s_find;
 static bool s_reset_find_on_next_char = false;
@@ -83,12 +89,31 @@ static bool find_in_list(HWND hwnd, find_mode mode)
 
     while (row >= 0 && row < s_num_completions)
     {
-        if (StrStrI(s_items[row] + s_past_flag, find.c_str()))
+        const char* p = s_items[row] + s_past_flag;
+
+        if (StrStrI(p, find.c_str()))
         {
-            ListView_EnsureVisible(hwnd, row, false);
             ListView_SetCurSel(hwnd, row);
             return true;
         }
+
+        if (s_display_filter)
+        {
+            p += strlen(p) + 1;
+            if (StrStrI(p, find.c_str()))
+            {
+                ListView_SetCurSel(hwnd, row);
+                return true;
+            }
+
+            p += strlen(p) + 1;
+            if (StrStrI(p, find.c_str()))
+            {
+                ListView_SetCurSel(hwnd, row);
+                return true;
+            }
+        }
+
         row += dir;
     }
 
@@ -248,7 +273,7 @@ static popup_list_result s_result;
 
 //------------------------------------------------------------------------------
 static int rotate_index = 0;
-static WCHAR rotate_strings[4][1024];
+static WCHAR rotate_strings[8][1024];
 
 //------------------------------------------------------------------------------
 inline BYTE AlphaBlend(BYTE a, BYTE b, BYTE a_alpha)
@@ -264,6 +289,47 @@ static COLORREF AlphaBlend(HDC hdc, BYTE fg_alpha)
     return RGB(AlphaBlend(GetRValue(fg), GetRValue(bg), fg_alpha),
                AlphaBlend(GetGValue(fg), GetGValue(bg), fg_alpha),
                AlphaBlend(GetBValue(fg), GetBValue(bg), fg_alpha));
+}
+
+//------------------------------------------------------------------------------
+static void get_cell_text(int row, int column, wstr_base& out)
+{
+    out.clear();
+
+    if (column == 0)
+    {
+        bool filtered = false;
+        const char* display = s_items[row] + s_past_flag + s_len_prefix;
+        if (s_display_filter)
+        {
+            const char* ptr = display + strlen(display) + 1;
+            if (*ptr)
+            {
+                display = ptr;
+                filtered = true;
+            }
+        }
+
+        to_utf16(out, display);
+
+        if (!filtered &&
+            s_past_flag &&
+            IS_MATCH_TYPE_DIR(s_items[row][0]) &&
+            out.length() &&
+            !path::is_separator(out.c_str()[out.length() - 1]))
+        {
+            WCHAR sep[2] = {(unsigned char)rl_preferred_path_separator};
+            out.concat(sep);
+        }
+    }
+    else if (column == 1 && s_display_filter)
+    {
+        const char* ptr = s_items[row];
+        ptr += strlen(ptr) + 1;
+        ptr += strlen(ptr) + 1;
+        out.concat(L"    ");
+        to_utf16(out, ptr);
+    }
 }
 
 //------------------------------------------------------------------------------
@@ -317,41 +383,7 @@ static LRESULT CALLBACK PopupWndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM
                         wstr_base out(rotate_strings[rotate_index], sizeof_array(rotate_strings[rotate_index]));
                         rotate_index = (rotate_index + 1) % sizeof_array(rotate_strings);
 
-                        out.clear();
-                        if (pdi->item.iSubItem == 0)
-                        {
-                            bool filtered = false;
-                            const char* display = s_items[pdi->item.iItem] + s_past_flag + s_len_prefix;
-                            if (s_display_filter)
-                            {
-                                const char* ptr = display + strlen(display) + 1;
-                                if (*ptr)
-                                {
-                                    display = ptr;
-                                    filtered = true;
-                                }
-                            }
-
-                            to_utf16(out, display);
-
-                            if (!filtered &&
-                                s_past_flag &&
-                                IS_MATCH_TYPE_DIR(s_items[pdi->item.iItem][0]) &&
-                                out.length() &&
-                                !path::is_separator(out.c_str()[out.length() - 1]))
-                            {
-                                WCHAR sep[2] = {(unsigned char)rl_preferred_path_separator};
-                                out.concat(sep);
-                            }
-                        }
-                        else if (pdi->item.iSubItem == 1 && s_display_filter)
-                        {
-                            const char* ptr = s_items[pdi->item.iItem];
-                            ptr += strlen(ptr) + 1;
-                            ptr += strlen(ptr) + 1;
-                            out.concat(L"    ");
-                            to_utf16(out, ptr);
-                        }
+                        get_cell_text(pdi->item.iItem, pdi->item.iSubItem, out);
 
                         pdi->item.pszText = out.data();
                     }
@@ -381,10 +413,9 @@ static LRESULT CALLBACK PopupWndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM
             int cxFull = rcClient.right - rcClient.left - GetSystemMetrics(SM_CXVSCROLL);
             if (s_descriptions)
             {
-                int cx = s_autosize ? LVSCW_AUTOSIZE : cxFull / 3;
+                int cx = min<int>(cxFull / 2, s_first_column_width);
                 ListView_SetColumnWidth(s_hwnd_list, 0, cx);
-                cx = s_autosize ? LVSCW_AUTOSIZE_USEHEADER : cxFull - cx;
-                ListView_SetColumnWidth(s_hwnd_list, 1, cx);
+                ListView_SetColumnWidth(s_hwnd_list, 1, cxFull - cx);
             }
             else
             {
@@ -426,14 +457,33 @@ static LRESULT CALLBACK PopupWndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM
             col.mask = LVCF_WIDTH;
             if (s_descriptions)
             {
-                col.cx = s_autosize ? LVSCW_AUTOSIZE : cxFull / 3;
+                s_first_column_width = 60;
+
+                // Measure string widths must be measured directly, because
+                // ListView does not behave as documented with respect to auto
+                // sizing columns in LVS_REPORT view.
+                wstr<> tmp;
+                HDC hdc = GetDC(s_hwnd_list);
+                HFONT use_font = HFONT(SendMessage(s_hwnd_list, WM_GETFONT, 0, 0));
+                HFONT old_font = SelectFont(hdc, use_font);
+                for (int i = 0; i < s_num_completions; ++i)
+                {
+                    SIZE size;
+                    get_cell_text(i, 0, tmp);
+                    if (GetTextExtentPoint32W(hdc, tmp.c_str(), tmp.length(), &size))
+                        s_first_column_width = max<int>(s_first_column_width, size.cx + 16);
+                }
+                SelectFont(hdc, old_font);
+                ReleaseDC(s_hwnd_list, hdc);
+
+                col.cx = min<int>(cxFull / 2, s_first_column_width);
                 ListView_InsertColumn(s_hwnd_list, 0, &col);
-                col.cx = s_autosize ? LVSCW_AUTOSIZE_USEHEADER : cxFull - col.cx;
+                col.cx = cxFull - col.cx;
                 ListView_InsertColumn(s_hwnd_list, 1, &col);
             }
             else
             {
-                col.cx = s_autosize ? LVSCW_AUTOSIZE : cxFull;
+                col.cx = cxFull;
                 ListView_InsertColumn(s_hwnd_list, 0, &col);
             }
 
@@ -667,7 +717,7 @@ popup_list_result do_popup_list(
     s_display_filter = display_filter;
     s_reverse_find = reverse_find;
     s_descriptions = false;
-    s_autosize = IsWindowsVistaOrGreater();
+    s_first_column_width = 0;
 
     out.clear();
     s_result = popup_list_result::cancel;
@@ -784,3 +834,17 @@ popup_list_result do_popup_list(
     return s_result;
 }
 
+//------------------------------------------------------------------------------
+const char* append_string_into_buffer(char*& buffer, const char* match)
+{
+    const char* ret = buffer;
+    if (match)
+        while (char c = *(match++))
+        {
+            if (c == '\r' || c == '\n' || c == '\t')
+                c = ' ';
+            *(buffer++) = c;
+        }
+    *(buffer++) = '\0';
+    return ret;
+}
