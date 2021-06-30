@@ -73,20 +73,21 @@ static int check_auto_answer()
     {
         // cmd.exe's translations are stored in a message table result in
         // the cmd.exe.mui overlay.
+        bool fallback = (!get_mui_string(0x2328, no_yes) ||
+                         !get_mui_string(0x237b, target_prompt));
 
-        if (!get_mui_string(0x2328, no_yes))
-            no_yes = L"ny";
+        // Strip off new line chars.
+        for (wchar_t* c = target_prompt.data(); *c; ++c)
+            if (*c == '\r' || *c == '\n')
+                *c = '\0';
 
-        if (get_mui_string(0x237b, target_prompt))
-        {
-            // Strip off new line chars.
-            for (wchar_t* c = target_prompt.data(); *c; ++c)
-                if (*c == '\r' || *c == '\n')
-                    *c = '\0';
+        // Log what was retrieved.
+        str<72> tmp1(target_prompt.c_str());
+        str<16> tmp2(no_yes.c_str());
+        LOG("Auto-answer; '%s' (%s)", tmp1.c_str(), tmp2.c_str());
 
-            LOG("Auto-answer; '%ls' (%ls)", target_prompt.c_str(), no_yes.c_str());
-        }
-        else
+        // Fall back to English.
+        if (fallback || target_prompt.empty() || no_yes.length() != 2)
         {
             target_prompt = L"Terminate batch job (Y/N)? ";
             no_yes = L"ny";
