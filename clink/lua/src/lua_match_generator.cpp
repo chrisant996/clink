@@ -290,6 +290,10 @@ bool lua_match_generator::match_display_filter(char** matches, match_display_fil
         goto done;
     }
 
+    // Bail out if filter function didn't return a table.
+    if (!lua_istable(state, -1))
+        goto done;
+
     // Convert table returned by the Lua filter function to C.
     int j = 1;
     bool one_column = false;
