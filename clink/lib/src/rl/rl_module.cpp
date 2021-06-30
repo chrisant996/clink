@@ -1380,6 +1380,7 @@ rl_module::rl_module(const char* shell_name, terminal_in* input, const char* sta
         rl_add_funmap_entry("clink-popup-complete", clink_popup_complete);
         rl_add_funmap_entry("clink-popup-history", clink_popup_history);
         rl_add_funmap_entry("clink-popup-directories", clink_popup_directories);
+        rl_add_funmap_entry("clink-popup-show-help", clink_popup_show_help);
         rl_add_funmap_entry("clink-find-conhost", clink_find_conhost);
         rl_add_funmap_entry("clink-mark-conhost", clink_mark_conhost);
         rl_add_funmap_entry("clink-complete-numbers", clink_complete_numbers);
@@ -1441,7 +1442,7 @@ rl_module::rl_module(const char* shell_name, terminal_in* input, const char* sta
         { "\\M-a",          "clink-insert-dot-dot" },    // alt-a
         { "\\M-c",          "clink-copy-cwd" },          // alt-c
         { "\\M-h",          "clink-show-help" },         // alt-h
-        { "\\M-H",          "clink-show-help-raw" },     // alt-H
+        { "\\M-H",          "clink-popup-show-help" },   // alt-H
         { "\\M-\\C-c",      "clink-copy-line" },         // alt-ctrl-c
         { "\\M-\\C-d",      "remove-history" },          // alt-ctrl-d
         { "\\M-\\C-e",      "clink-expand-env-var" },    // alt-ctrl-e

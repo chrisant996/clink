@@ -62,3 +62,23 @@ function clink._popup_complete_numbers()
     collect_number_matches()
     rl.invokecommand("clink-popup-complete")
 end
+
+--------------------------------------------------------------------------------
+function clink._popup_show_help()
+    local bindings = rl.getkeybindings()
+    if #bindings <= 0 then
+        rl_buffer:refreshline()
+        return
+    end
+
+    local items = {}
+    for _,kb in ipairs(bindings) do
+        table.insert(items, { value=kb.binding, display=kb.key, description=kb.binding })
+    end
+
+    local binding, _, index = clink.popuplist("Key Bindings", items)
+    rl_buffer:refreshline()
+    if binding then
+        rl.invokecommand(binding)
+    end
+end

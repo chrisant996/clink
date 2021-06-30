@@ -724,6 +724,14 @@ int clink_popup_complete_numbers(int count, int invoking_key)
     return 0;
 }
 
+//------------------------------------------------------------------------------
+int clink_popup_show_help(int count, int invoking_key)
+{
+    if (!call_lua_rl_global_function("clink._popup_show_help"))
+        rl_ding();
+    return 0;
+}
+
 
 
 //------------------------------------------------------------------------------

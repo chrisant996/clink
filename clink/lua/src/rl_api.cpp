@@ -407,25 +407,14 @@ static int set_matches(lua_State* state)
 /// -show:          return
 /// -show:      end
 /// -show:
-/// -show:      local line
-/// -show:      local r,w = io.popenrw("fzf.exe --layout=reverse-list")
-/// -show:      if r and w then
-/// -show:          -- Write key bindings to the write pipe.
-/// -show:          for _,kb in ipairs(bindings) do
-/// -show:              w:write(kb.key.." : "..kb.binding.."\n")
-/// -show:          end
-/// -show:          w:close()
-/// -show:
-/// -show:          -- Read filtered matches.
-/// -show:          local ret = {}
-/// -show:          line = r:read('*line')
-/// -show:          r:close()
+/// -show:      local items = {}
+/// -show:      for _,kb in ipairs(bindings) do
+/// -show:          table.insert(items, { value=kb.binding, display=kb.key, description=kb.binding })
 /// -show:      end
 /// -show:
+/// -show:      local binding, _, index = clink.popuplist("Key Bindings", items)
 /// -show:      rl_buffer:refreshline()
-/// -show:
-/// -show:      if line and #line > 0 then
-/// -show:          local binding = line:sub(#bindings[1].key + 3 + 1)
+/// -show:      if binding then
 /// -show:          rl.invokecommand(binding)
 /// -show:      end
 /// -show:  end
@@ -434,7 +423,7 @@ static int set_matches(lua_State* state)
 ///
 /// The following example demonstrates using this function in a
 /// <a href="#luakeybindings">luafunc: key binding</a> to invoke
-/// <a href="https://github.com/junegunn/fzf">fzf</a> to show a searchable list
+/// <a href="#clink.popuplist">clink.popuplist()</a> to show a searchable list
 /// of key bindings, and then invoke whichever key binding is selected.
 int get_key_bindings(lua_State* state)
 {

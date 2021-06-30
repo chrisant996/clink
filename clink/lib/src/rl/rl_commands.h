@@ -43,6 +43,7 @@ int     clink_menu_complete_numbers_backward(int count, int invoking_key);
 int     clink_old_menu_complete_numbers(int count, int invoking_key);
 int     clink_old_menu_complete_numbers_backward(int count, int invoking_key);
 int     clink_popup_complete_numbers(int count, int invoking_key);
+int     clink_popup_show_help(int count, int invoking_key);
 
 //------------------------------------------------------------------------------
 void    cua_clear_selection();
