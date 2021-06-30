@@ -376,10 +376,11 @@ Name | Description
 `clink-old-menu-complete-numbers`|Like `old-menu-complete`, but for numbers from the console screen (3 digits or more, up to hexadecimal).
 `clink-old-menu-complete-numbers-backward`|Like `old-menu-complete-backward`, but for numbers from the console screen (3 digits or more, up to hexadecimal).
 `clink-paste`|Paste the clipboard at the cursor.
-`clink-popup-complete`|Show a popup window that lists the available completions.
+`clink-popup-complete`|Show a [popup window](#popupwindow) that lists the available completions.
 `clink-popup-complete-numbers`|Like `clink-popup-complete`, but for numbers from the console screen (3 digits or more, up to hexadecimal).
-`clink-popup-directories`|Show a popup window of recent current working directories.  In the popup, use <kbd>Enter</kbd> to `cd /d` to the highlighted directory.  See below more about the popup window.
-`clink-popup-history`|Show a popup window that lists the command history (if any text precedes the cursor then it uses an anchored search to filter the list).  In the popup, use <kbd>Enter</kbd> to execute the highlighted command.  See below for more about the popup window.
+`clink-popup-directories`|Show a [popup window](#popupwindow) of recent current working directories.  In the popup, use <kbd>Enter</kbd> to `cd /d` to the highlighted directory.
+`clink-popup-history`|Show a [popup window](#popupwindow) that lists the command history (if any text precedes the cursor then it uses an anchored search to filter the list).  In the popup, use <kbd>Enter</kbd> to execute the highlighted command.
+`clink-popup-show-help`|Show a [popup window](#popupwindow) that lists the currently active key bindings, and can invoke a selected key binding.  The default key binding for this is <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>H</kbd>.
 `clink-reload`|Reloads the .inputrc file and the Lua scripts.
 `clink-reset-line`|Clears the current line.
 `clink-scroll-bottom`|Scroll the console window to the bottom (the current input line).
@@ -430,9 +431,11 @@ Let's break that down:
 - `*.pdf=30;105` uses black on bright magenta for .pdf files.
 - `*.md=4` uses underline for .md files.
 
+<a name="popupwindow"></a>
+
 ## Popup window
 
-The `clink-popup-complete`, `clink-popup-directories`, and `clink-popup-history` [Readline commands](#configreadline) show a popup window that lists the available completions, directory history, or command history.  Here's how they work:
+The `clink-popup-complete`, `clink-popup-directories`, and `clink-popup-history` [Readline commands](#configreadline) show a searchable popup window that lists the available completions, directory history, or command history.  Here's how the popup windows work:
 
 Key | Description
 :-:|---
