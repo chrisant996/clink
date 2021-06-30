@@ -58,10 +58,15 @@ static bool get_mui_string(int id, wstr_base& out)
 }
 
 //------------------------------------------------------------------------------
+static char s_answered = 0;
 static int check_auto_answer()
 {
     static wstr<72> target_prompt;
     static wstr<16> no_yes;
+
+    // Don't allow infinite loop due to unaccepted autoanswer.
+    if (s_answered >= 2)
+        return 0;
 
     // Skip the feature if it's not enabled.
     int setting = g_autoanswer.get();
@@ -97,7 +102,15 @@ static int check_auto_answer()
 
     prompt prompt = prompt_utils::extract_from_console();
     if (prompt.get() != nullptr && wcsstr(prompt.get(), target_prompt.c_str()) != 0)
+    {
+        // cmd.exe's PromptUser() method reads a character at a time until
+        // it encounters a \n. The way Clink handle's this is a bit 'wacky'.
+        ++s_answered;
+        if (s_answered >= 2)
+            return '\n';
+
         return (setting == 1) ? no_yes[1] : no_yes[0];
+    }
 
     return 0;
 }
@@ -114,19 +127,12 @@ static BOOL WINAPI single_char_read(
 
     if (reply = check_auto_answer())
     {
-        // cmd.exe's PromptUser() method reads a character at a time until
-        // it encounters a \n. The way Clink handle's this is a bit 'wacky'.
-        static int visit_count = 0;
-
-        ++visit_count;
-        if (visit_count >= 2)
-        {
-            reply = '\n';
-            visit_count = 0;
-        }
-
         *buffer = reply;
         *read_in = 1;
+
+        // Echo Clink's response.
+        DWORD dummy;
+        WriteConsoleW(GetStdHandle(STD_OUTPUT_HANDLE), buffer, 1, &dummy, nullptr);
         return TRUE;
     }
 
@@ -396,6 +402,8 @@ BOOL WINAPI host_cmd::read_console(
     // case for readline.
     if (max_chars == 1)
         return single_char_read(input, chars, max_chars, read_in, control);
+
+    s_answered = 0;
 
     // Sometimes cmd.exe wants line input for reasons other than command entry.
     const wchar_t* prompt = host_cmd::get()->m_prompt.get();

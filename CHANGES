@@ -7,6 +7,8 @@
 - Added `clink-popup-show-help` command to show popup list with searchable list of key bindings and invoke the selected key binding.
 - Added `clink.popuplist()` function to show a popup list.  Only usable from inside a "luafunc:" key binding.
 - Incremental search in the popup list window now centers the found item so items above and below it are visible.
+- Fixed potential internal error when a doskey alias starts with `$` (regression introduced in v1.2.16).
+- Fixed potential infinite loop when the `cmd.auto_answer` setting is enabled but an error occurs while retrieving a language string (might be related to [#137](https://github.com/chrisant996/clink/issues/137)).
 
 #### v1.2.16
 
