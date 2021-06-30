@@ -2,6 +2,12 @@
 
 ### Releases from [chrisant996/clink](https://github.com/chrisant996/clink) fork
 
+#### v1.2.17
+
+- Added `clink-popup-show-help` command to show popup list with searchable list of key bindings and invoke the selected key binding.
+- Added `clink.popuplist()` function to show a popup list.  Only usable from inside a "luafunc:" key binding.
+- Incremental search in the popup list window now centers the found item so items above and below it are visible.
+
 #### v1.2.16
 
 - **Breaking Change:** The `clink.onendedit()` Lua event has been split into two separate events:
