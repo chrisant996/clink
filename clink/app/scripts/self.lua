@@ -284,6 +284,27 @@ local history = clink.argmatcher()
     "expand")
 
 --------------------------------------------------------------------------------
+local installscripts = clink.argmatcher()
+:addflags("--help")
+:addarg(clink.dirmatches)
+:nofiles()
+
+--------------------------------------------------------------------------------
+local function uninstall_handler(match_word, word_index, line_state)
+    local ret = {}
+    for line in io.popen('"'..CLINK_EXE..'" uninstallscripts --list', "r"):lines() do
+        table.insert(ret, line)
+    end
+    return ret
+end
+
+--------------------------------------------------------------------------------
+local uninstallscripts = clink.argmatcher()
+:addflags("--help")
+:addarg(uninstall_handler)
+:nofiles()
+
+--------------------------------------------------------------------------------
 clink.argmatcher(
     "clink",
     "clink_x86.exe",
@@ -294,6 +315,8 @@ clink.argmatcher(
     "history"   .. history,
     "info"      .. nothing,
     "inject"    .. inject,
+    "installscripts" .. installscripts,
+    "uninstallscripts" .. uninstallscripts,
     "set"       .. set)
 :addflags(
     "--help",

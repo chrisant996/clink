@@ -118,7 +118,7 @@ static void print_help(bool install)
 }
 
 //------------------------------------------------------------------------------
-static int installscripts_impl(bool install, int argc, char** argv)
+int installscripts(int argc, char** argv)
 {
     // Parse command line arguments.
     struct option options[] = {
@@ -135,22 +135,48 @@ static int installscripts_impl(bool install, int argc, char** argv)
         default:
         case '?':
         case 'h':
-            print_help(install);
+            print_help(true/*install*/);
             return 0;
         }
     }
 
-    return change_value(install, argv, argc) ? 0 : 1;
-}
-
-//------------------------------------------------------------------------------
-int installscripts(int argc, char** argv)
-{
-    return installscripts_impl(true, argc - 1, argv + 1);
+    return change_value(true/*install*/, argv + optind, argc - optind) ? 0 : 1;
 }
 
 //------------------------------------------------------------------------------
 int uninstallscripts(int argc, char** argv)
 {
-    return installscripts_impl(false, argc - 1, argv + 1);
+    // Parse command line arguments.
+    struct option options[] = {
+        { "help", no_argument, nullptr, 'h' },
+        { "list", no_argument, nullptr, 'l' },
+        {}
+    };
+
+    bool complete = false;
+    int i;
+    while ((i = getopt_long(argc, argv, "+?hl", options, nullptr)) != -1)
+    {
+        switch (i)
+        {
+        default:
+        case '?':
+        case 'h':
+            print_help(false/*install*/);
+            return 0;
+        case 'l':
+            {
+                str<> list;
+                get_installed_scripts(list);
+
+                str_tokeniser tokens(list.c_str(), ";");
+                str_iter token;
+                while (tokens.next(token))
+                    printf("%.*s\n", token.length(), token.get_pointer());
+            }
+            return 0;
+        }
+    }
+
+    return change_value(false/*install*/, argv + optind, argc - optind) ? 0 : 1;
 }
