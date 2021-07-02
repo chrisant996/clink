@@ -4,6 +4,8 @@
 
 #### v1.2.18
 
+- Added completions for `clink installscripts` and `clink uninstallscripts`.
+- Fixed `clink installscripts --help`.
 - Fixed `clink-popup-directories` for directories with spaces.
 
 #### v1.2.17
