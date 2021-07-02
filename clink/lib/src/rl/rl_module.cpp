@@ -641,7 +641,7 @@ static void puts_face_func(const char* s, const char* face, int n)
     if (g_debug_log_terminal.get())
     {
         LOGCURSORPOS();
-        LOG("PUTSFACE \"%*s\", %d", out.length(), out.c_str(), out.length());
+        LOG("PUTSFACE \"%.*s\", %d", out.length(), out.c_str(), out.length());
     }
 #endif
     g_printer->print(out.c_str(), out.length());
@@ -1230,7 +1230,7 @@ static void terminal_log_write(FILE* stream, const char* chars, int char_count)
     {
         assert(g_printer);
         LOGCURSORPOS();
-        LOG("RL_OUTSTREAM \"%*s\", %d", char_count, chars, char_count);
+        LOG("RL_OUTSTREAM \"%.*s\", %d", char_count, chars, char_count);
         g_printer->print(chars, char_count);
         return;
     }
@@ -1248,14 +1248,14 @@ static void terminal_log_write(FILE* stream, const char* chars, int char_count)
         if (GetConsoleMode(h, &dw))
         {
             LOGCURSORPOS();
-            LOG("%s \"%*s\", %d", (stream == stderr) ? "CONERR" : "CONOUT", char_count, chars, char_count);
+            LOG("%s \"%.*s\", %d", (stream == stderr) ? "CONERR" : "CONOUT", char_count, chars, char_count);
             wstr<32> s;
             to_utf16(s, str_iter(chars, char_count));
             WriteConsoleW(h, s.c_str(), s.length(), &dw, nullptr);
         }
         else
         {
-            LOG("%s \"%*s\", %d", (stream == stderr) ? "FILEERR" : "FILEOUT", char_count, chars, char_count);
+            LOG("%s \"%.*s\", %d", (stream == stderr) ? "FILEERR" : "FILEOUT", char_count, chars, char_count);
             WriteFile(h, chars, char_count, &dw, nullptr);
         }
         return;
@@ -1263,7 +1263,7 @@ static void terminal_log_write(FILE* stream, const char* chars, int char_count)
 
     assert(false);
     LOGCURSORPOS();
-    LOG("FWRITE \"%*s\", %d", char_count, chars, char_count);
+    LOG("FWRITE \"%.*s\", %d", char_count, chars, char_count);
     fwrite(chars, char_count, 1, stream);
 }
 #endif
