@@ -25,15 +25,8 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 ## High Priority
 
 ## Medium Priority
-- Symlink support (displaying matches, and whether to append a path separator).
 
 ## Low Priority
-- Make scrolling key bindings work at the pager prompt.  Note that it would need to revise how the scroll routines identify the bottom line (currently they use Readline's bottom line, but the pager displays output past that point).
-- Add a hook function for inserting matches.
-  - The insertion hook can avoid appending a space when inserting a flag/arg that ends in `:` or `=`.
-  - And address the sorting problem, and then the match_type stuff can be removed from Readline itself (though Chet may want its performance benefits).
-  - And THEN individual matches can have arbitrary values associated -- color, append char, or any per-match data that's desired.
-  - But the hard part is handling duplicates (especially with different match types).  Could maybe pass the index in the matches array, but that requires tighter interdependence between Readline and its host.
 - **Interactive completion.**  Similar to <kbd>Ctrl</kbd>+<kbd>Space</kbd> in Powershell and `menu-select` in zsh, etc.  The edge cases can get weird...
   - Oh but the new `clink.onfiltermatches()` might be even better since it enables integration with custom completion filters (e.g. `fzf`).
 
@@ -48,7 +41,7 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 - Use `npm` to run `highlight.js` at compile time?
 
 **Popup Lists**
-- Ability to delete, rearrange, and edit popup list items?
+- Ability to delete, rearrange, and edit popup list items?  _[Can't realistically rearrange or edit history, due to how the history file format works.]_
 - Show the current incremental search string somewhere?
 - Completions:
   - What to do about completion colors?
@@ -59,8 +52,7 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 - Marking mode in-app similar to my other shell project?  It's a kludge, but it copies with HTML formatting (and even uses the color scheme).
 
 **Lua**
-- Provide API to generate HTML string from console text.
-- Provide API to copy text to clipboard (e.g. an HTML string generated from console text).
+- Provide API to copy text to clipboard (plain text or HTML).
 - Is there some way to show selection markup?  Maybe have a way to have floating windows mark corners of a selection region, or overlay or or more windows to draw an outline around the selected region?
 - Provide API to show an input box?  But make it fail if used from outside a Readline command.
 
@@ -76,6 +68,7 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 - How to reasonably support normal completion coloring with `ondisplaymatches` match display filtering?
 - Include `wildmatch()` and an `fnmatch()` wrapper for it.  But should first update it to support UTF8.
 - `LOG()` certain important failure information inside Detours.
+- Make scrolling key bindings work at the pager prompt.  Note that it would need to revise how the scroll routines identify the bottom line (currently they use Readline's bottom line, but the pager displays output past that point).
 
 <br/>
 <br/>
@@ -86,8 +79,13 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 - Displaying matches was slow because Readline writes everything one byte at a time, which incurs significant processing overhead across several layers.
 - Adding a new `rl_completion_display_matches_func` and `display_matches()` resolved the performance satisfactorily.
 - It's now almost possible to revert the changes to feed Readline match type information.  It's only used when displaying matches, and when inserting a match to decide whether to append a path separator.  Could just add a callback for inserting.
+  - The insertion hook could avoid appending a space when inserting a flag/arg that ends in `:` or `=`.
+  - And address the sorting problem, and then the match_type stuff could be removed from Readline itself (though Chet may want its performance benefits).
+  - And THEN individual matches could have arbitrary values associated -- color, append char, or any per-match data that's desired.
+  - But the hard part is handling duplicates (especially with different match types).  Could maybe pass the index in the matches array, but that requires tighter interdependence between Readline and its host.
 - But there's a hurdle:
-  - Readline sorts the matches, making it difficult to translate the sorted index to the unsorted list held by `matches_impl`.  Could use a binary search, but using binary search inside a sort comparator makes the algorithmic complexity O(N * logN * logN) which is even worse than O(N * N).
+  - Readline sorts the matches, making it difficult to translate the sorted index to the unsorted list held by `matches_impl`.  Could use a binary search, but using binary search inside a sort comparator makes the algorithmic complexity O(N * logN * logN).  Caching lookup results prior to searching yields O((N * logN) + (N * logN)), but it's still a big increase in total duration.
+- **SO:** The best compromise might be to embed the original array index at the start of each match, and use a callback to retrieve host data for each match.  It's still invasive to Readline, but at least Readline doesn't need to know any new implementation details such as match types.
 
 <br/>
 <br/>
@@ -128,6 +126,7 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
   - However, even CMD itself silently fails to run an inputted command over 8100 characters, despite allowing 8191 characters to be input.
   - So I'm comfortable punting this for now.
 - A way to disable/enable clink once injected.  _[Why?]_
+- Provide API to generate HTML string from console text.  _[Too complicated; also impossible to support more than 4-bit color.]_
 
 ---
 Chris Antos - sparrowhawk996@gmail.com
