@@ -644,19 +644,33 @@ int clink_popup_directories(int count, int invoking_key)
     case popup_list_result::select:
     case popup_list_result::use:
         {
+            bool end_sep = (history[current][0] &&
+                            path::is_separator(history[current][strlen(history[current]) - 1]));
+
+            char qs[2] = {};
+            if (rl_basic_quote_characters &&
+                rl_basic_quote_characters[0] &&
+                rl_filename_quote_characters &&
+                _rl_strpbrk(history[current], rl_filename_quote_characters) != 0)
+            {
+                qs[0] = rl_basic_quote_characters[0];
+            }
+
+            str<> dir;
+            dir.format("%s%s%s", qs, history[current], qs);
+
             bool use = (result == popup_list_result::use);
             rl_begin_undo_group();
             if (use)
             {
-                rl_replace_line(history[current], 0);
+                if (!end_sep)
+                    dir.concat(PATH_SEP);
+                rl_replace_line(dir.c_str(), 0);
                 rl_point = rl_end;
-                if (!history[current][0] ||
-                    !path::is_separator(history[current][strlen(history[current]) - 1]))
-                    rl_insert_text(PATH_SEP);
             }
             else
             {
-                rl_insert_text(history[current]);
+                rl_insert_text(dir.c_str());
             }
             rl_end_undo_group();
             rl_redisplay();
