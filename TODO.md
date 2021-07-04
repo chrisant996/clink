@@ -2,24 +2,6 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 
 <br/>
 
-# RELEASE
-
-## Issues
-
-## Investigate
-
-#### _General_
-- Add syntax for argmatchers to defer adding args/flags, to facilitate adding args/flags by parsing help text from a program.  This is more complex than I first thought:
-  - It gets overly complicated for a script to handle arg2 or deeper (needs list of preceding args, preceding flags for args, etc -- not to mention linked parsers).
-  - To support input line coloring it needs to run code simply due to input from the user, regardless whether any completion is invoked.
-  - It should not block while waiting for an external app to run.  This suggests maybe using Lua coroutines, but then:
-    - [x] How to avoid blocking while waiting for piped output to complete?
-    - [x] How to make it difficult for a script to deviate from the efficient non-blocking pattern?
-  - How to make it clear what a script needs to supply?  E.g. for which arg(s) and flag(s) and which command, etc?
-
-<br/>
-<br/>
-
 # IMPROVEMENTS
 
 ## High Priority
@@ -37,9 +19,6 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 
 # INVESTIGATE
 
-**Documentation**
-- Use `npm` to run `highlight.js` at compile time?
-
 **Popup Lists**
 - Ability to delete, rearrange, and edit popup list items?  _[Can't realistically rearrange or edit history, due to how the history file format works.]_
 - Show the current incremental search string somewhere?
@@ -56,9 +35,6 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 - Is there some way to show selection markup?  Maybe have a way to have floating windows mark corners of a selection region, or overlay or or more windows to draw an outline around the selected region?
 - Provide API to show an input box?  But make it fail if used from outside a Readline command.
 
-**Readline**
-- Readline 8.1 has slight bug in `update_line`; type `c` then `l`, and it now identifies **2** chars (`cl`) as needing to be displayed; seems like the diff routine has a bug with respect to the new faces capability; it used to only identify `l` as needing to be displayed.
-
 **Installer**
 - Why does it install to a versioned path?  The .nsi file says `; Install to a versioned folder to reduce interference between versions.` so use caution when making any change there.
 
@@ -74,6 +50,8 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 <br/>
 
 # MAINTENANCE
+
+- Readline 8.1 has slight bug in `update_line`; type `c` then `l`, and it now identifies **2** chars (`cl`) as needing to be displayed; seems like the diff routine has a bug with respect to the new faces capability; it used to only identify `l` as needing to be displayed.
 
 ## Remove match type changes from Readline?
 - Displaying matches was slow because Readline writes everything one byte at a time, which incurs significant processing overhead across several layers.
