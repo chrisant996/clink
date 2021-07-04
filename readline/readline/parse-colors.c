@@ -68,7 +68,10 @@ struct bin_str _rl_color_indicator[] =
     { 0, NULL },                        //  no: Normal
     { 0, NULL },                        //  fi: File: default
     { LEN_STR_PAIR ("01;34") },         //  di: Directory: bright blue
-    { LEN_STR_PAIR ("01;36") },         //  ln: Symlink: bright cyan
+/* begin_clink_change */
+    //{ LEN_STR_PAIR ("01;36") },         //  ln: Symlink: bright cyan
+    { LEN_STR_PAIR ("target") },        //  ln: Symlink: color according to target
+/* end_clink_change */
     { LEN_STR_PAIR ("33") },            //  pi: Pipe: yellow/brown
     { LEN_STR_PAIR ("01;35") },         //  so: Socket: bright magenta
     { LEN_STR_PAIR ("01;33") },         //  bd: Block device: bright yellow

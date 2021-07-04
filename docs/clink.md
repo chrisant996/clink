@@ -418,7 +418,7 @@ Type|Description|Default
 `di`|Directories.|`01;34` (bright blue)
 `ex`|Executable files.|`01;32` (bright green)
 `fi`|Normal files.|
-`ln`|Symlinks.  When `ln=target` then symlinks are colored according to the target of the symlink.|`01;36` (bright cyan)
+`ln`|Symlinks.  When `ln=target` then symlinks are colored according to the target of the symlink.|`target`
 `mi`|Missing file or directory.|
 `no`|Normal color.  This is used for anything not covered by one of the other types.<br/>It may be overridden by various other Clink color settings as appropriate depending on the completion type.|
 `or`|Orphaned symlink (the target of the symlink is missing).|
@@ -427,7 +427,7 @@ Type|Description|Default
 Here is an example where `%LS_COLORS%` defines colors for various types.
 
 ```plaintext
-set LS_COLORS=so=90:fi=97:di=93:ex=92:*.pdf=30;105:*.md=4:ln=target
+set LS_COLORS=so=90:fi=97:di=93:ex=92:*.pdf=30;105:*.md=4
 ```
 
 - `so=90` uses bright black (dark gray) for the common prefix for possible completions.
@@ -436,7 +436,6 @@ set LS_COLORS=so=90:fi=97:di=93:ex=92:*.pdf=30;105:*.md=4:ln=target
 - `ex=92` uses bright green for executable files.
 - `*.pdf=30;105` uses black on bright magenta for .pdf files.
 - `*.md=4` uses underline for .md files.
-- `ln=target` colors symlinks according to the target of the symlink.
 
 <a name="popupwindow"></a>
 
