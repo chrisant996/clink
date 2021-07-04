@@ -285,10 +285,6 @@ int glob_impl(lua_State* state, bool dirs_only, bool back_compat=false)
 
             type.clear();
             add_type_tag(type, (attr & FILE_ATTRIBUTE_DIRECTORY) ? "dir" : "file");
-            if (attr & FILE_ATTRIBUTE_HIDDEN)
-                add_type_tag(type, "hidden");
-            if (attr & FILE_ATTRIBUTE_READONLY)
-                add_type_tag(type, "readonly");
             if (attr & FILE_ATTRIBUTE_REPARSE_POINT)
             {
                 add_type_tag(type, "link");
@@ -297,6 +293,10 @@ int glob_impl(lua_State* state, bool dirs_only, bool back_compat=false)
                 if (_wstat64(wfile.c_str(), &st) < 0)
                     add_type_tag(type, "orphaned");
             }
+            if (attr & FILE_ATTRIBUTE_HIDDEN)
+                add_type_tag(type, "hidden");
+            if (attr & FILE_ATTRIBUTE_READONLY)
+                add_type_tag(type, "readonly");
             lua_pushliteral(state, "type");
             lua_pushlstring(state, type.c_str(), type.length());
             lua_rawset(state, -3);
