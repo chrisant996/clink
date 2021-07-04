@@ -407,22 +407,28 @@ Name | Description
 
 ## Completion Colors
 
-When the `colored-completion-prefix` [Readline setting](#configreadline) is configured to `on`, then the "so" color from the `%LS_COLORS%` environment variable is used to color the common prefix when displaying possible completions.  The default for "so" is magenta, but for example `set LS_COLORS=so=90` sets the color to bright black (which shows up as a dark gray).
+The `%LS_COLORS%` environment variable provides color definitions as a series of color definitions separated by colons (`:`).  Each definition is a either a two character type id or a file extension, followed by an equals sign and then the [SGR parameters](https://en.wikipedia.org/wiki/ANSI_escape_code#SGR_parameters) for an ANSI escape code.  The two character type ids are listed below.
 
-When `colored-stats` is configured to `on`, then the color definitions from `%LS_COLORS%` (using ANSI escape codes) are used to color file completions according to their file type or extension.  Each definition is a either a two character type id or a file extension, followed by an equals sign and then the [SGR parameters](https://en.wikipedia.org/wiki/ANSI_escape_code#SGR_parameters) for an ANSI escape code.  Multiple definitions are separated by colons.  Also, since `%LS_COLORS%` doesn't cover readonly files, hidden files, doskey aliases, or shell commands the `color.readonly`, `color.hidden`, `color.doskey`, and `color.cmd` [Clink settings](#clinksettings) exist to cover those.
+When the `colored-completion-prefix` [Readline setting](#configreadline) is configured to `on`, then the "so" color from `%LS_COLORS%` is used to color the common prefix when displaying possible completions.  The default for "so" is magenta, but for example `set LS_COLORS=so=90` sets the color to bright black (which shows up as a dark gray).
+
+When `colored-stats` is configured to `on`, then the color definitions from `%LS_COLORS%` are used to color file completions according to their file type or extension.    Multiple definitions are separated by colons.  Also, since `%LS_COLORS%` doesn't cover readonly files, hidden files, doskey aliases, or shell commands the `color.readonly`, `color.hidden`, `color.doskey`, and `color.cmd` [Clink settings](#clinksettings) exist to cover those.
+
+Type|Description|Default
+-|-|-
+`di`|Directories.|`01;34` (bright blue)
+`ex`|Executable files.|`01;32` (bright green)
+`fi`|Normal files.|
+`ln`|Symlinks.  When `ln=target` then symlinks are colored according to the target of the symlink.|`01;36` (bright cyan)
+`mi`|Missing file or directory.|
+`no`|Normal color.  This is used for anything not covered by one of the other types.  It may be overridden by various other Clink color settings as appropriate depending on the completion type.|
+`or`|Orphaned symlink (the target of the symlink is missing).|
+`so`|Common prefix for possible completions.|`01;35` (bright magenta)
 
 Here is an example where `%LS_COLORS%` defines colors for various types.
 
-- `so=` defines the color for the common prefix for possible completions.
-- `fi=` defines the color for normal files.
-- `di=` defines the color for directories.
-- `ex=` defines the color for executable files.
-
 ```plaintext
-set LS_COLORS=so=90:fi=97:di=93:ex=92:*.pdf=30;105:*.md=4
+set LS_COLORS=so=90:fi=97:di=93:ex=92:*.pdf=30;105:*.md=4:ln=target
 ```
-
-Let's break that down:
 
 - `so=90` uses bright black (dark gray) for the common prefix for possible completions.
 - `fi=97` uses bright white for files.
@@ -430,6 +436,7 @@ Let's break that down:
 - `ex=92` uses bright green for executable files.
 - `*.pdf=30;105` uses black on bright magenta for .pdf files.
 - `*.md=4` uses underline for .md files.
+- `ln=target` colors symlinks according to the target of the symlink.
 
 <a name="popupwindow"></a>
 
