@@ -10,6 +10,7 @@
 #include <assert.h>
 
 #include "hooks.h"
+#include "readline/posixstat.h"
 
 #define sizeof_array(x) (sizeof(x) / sizeof(x[0]))
 
@@ -17,6 +18,7 @@
 static wchar_t  fwrite_buf[2048];
 void            (*rl_fwrite_function)(FILE*, const char*, int)  = NULL;
 void            (*rl_fflush_function)(FILE*)                    = NULL;
+extern int is_exec_ext(const char* ext);
 
 //------------------------------------------------------------------------------
 static int mb_to_wide(const char* mb, wchar_t* fixed_wide, size_t fixed_size, wchar_t** out_wide, int* out_free)
@@ -157,42 +159,85 @@ int hooked_fileno(FILE* stream)
 //------------------------------------------------------------------------------
 int hooked_stat(const char* path, struct hooked_stat* out)
 {
-    int ret = -1;
-    wchar_t buf[2048];
-    size_t characters;
+    memset(out, 0, sizeof(*out));
 
     // Utf8 to wchars.
-    characters = MultiByteToWideChar(CP_UTF8, 0, path, -1, buf, sizeof_array(buf));
-    characters = characters ? characters : sizeof_array(buf) - 1;
+    wchar_t buf[2048];
+    size_t characters = MultiByteToWideChar(CP_UTF8, 0, path, -1, buf, sizeof_array(buf));
+    if (!characters)
+    {
+        errno = ENOENT;
+        return -1;
+    }
     buf[characters] = L'\0';
 
     // Get properties.
-#if 0
-    out->st_size = 0;
-    out->st_mode = 0;
-    WIN32_FILE_ATTRIBUTE_DATA fad;
-    if (GetFileAttributesExW(buf, GetFileExInfoStandard, &fad) != 0)
-    {
-        unsigned dir_bit;
-
-        dir_bit = (fad.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) ? _S_IFDIR : 0;
-
-        out->st_size = fad.nFileSizeLow;
-        out->st_mode |= dir_bit;
-        ret = 0;
-    }
-    else
-        errno = ENOENT;
-#else
     struct _stat64 s;
-    ret = _wstat64(buf, &s);
+    int ret = _wstat64(buf, &s);
     out->st_size = s.st_size;
     out->st_mode = s.st_mode;
     out->st_uid = s.st_uid;
     out->st_gid = s.st_gid;
-#endif
 
     return ret;
+}
+
+//------------------------------------------------------------------------------
+static int is_implied_dir(const wchar_t* path)
+{
+    if (!path)
+        return 0;
+
+    if (path[0] && ((path[0] >= 'A' && path[0] <= 'Z') || (path[0] >= 'a' && path[0] <= 'z')) && path[1] == ':')
+        path += 2;
+
+    if (!path[0])
+        return 1;
+    if ((path[0] == '/' || path[0] == '\\') && !path[1])
+        return 1;
+
+    return 0;
+}
+
+//------------------------------------------------------------------------------
+// This implementation treats _S_IFLNK as a subvariant of _S_IFDIR and _S_IFREG.
+// This makes it possible to tell the type (file or dir) without having to try
+// to follow the symlink, and makes it possible to tell the type even when the
+// symlink is orphaned.
+int hooked_lstat(const char* path, struct hooked_stat* out)
+{
+    memset(out, 0, sizeof(*out));
+
+    // Utf8 to wchars.
+    wchar_t buf[2048];
+    size_t characters = MultiByteToWideChar(CP_UTF8, 0, path, -1, buf, sizeof_array(buf));
+    if (!characters)
+    {
+error:
+        errno = ENOENT;
+        return -1;
+    }
+    buf[characters] = L'\0';
+
+    // Get properties.
+    int mode = 0;
+    WIN32_FILE_ATTRIBUTE_DATA fad;
+    if (!GetFileAttributesExW(buf, GetFileExInfoStandard, &fad))
+        goto error;
+    mode |= (fad.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) ? _S_IFDIR|_S_IEXEC : _S_IFREG;
+    mode |= (fad.dwFileAttributes & FILE_ATTRIBUTE_READONLY) ? _S_IREAD : _S_IREAD|_S_IWRITE;
+    if ((!S_ISDIR(mode) || is_implied_dir(buf)) && is_exec_ext(path))
+        mode |= _S_IEXEC;
+    if (fad.dwFileAttributes & FILE_ATTRIBUTE_REPARSE_POINT)
+        mode |= _S_IFLNK;
+    mode |= (mode & 0700) >> 3;
+    mode |= (mode & 0700) >> 6;
+
+    out->st_mode = mode;
+    out->st_size |= fad.nFileSizeLow;
+    out->st_size |= ((unsigned __int64)fad.nFileSizeHigh) << 32;
+
+    return 0;
 }
 
 //------------------------------------------------------------------------------

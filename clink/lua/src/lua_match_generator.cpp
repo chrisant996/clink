@@ -506,6 +506,7 @@ void lua_match_generator::filter_matches(char** matches, char completion_type, b
                     match = lua_tostring(state, -1);
                 lua_pop(state, 1);
 
+// Filtering matches lets the filter specify colors, so ignore the type.
 #if 0
                 lua_pushliteral(state, "type");
                 lua_rawget(state, -2);

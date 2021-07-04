@@ -5,6 +5,7 @@
 #### v1.2.18
 
 - Added completions for `clink installscripts` and `clink uninstallscripts`.
+- Added support for Readline's coloring and marking of symlinks.
 - Fixed `clink installscripts --help`.
 - Fixed `clink-popup-directories` for directories with spaces.
 

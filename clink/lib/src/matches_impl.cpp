@@ -43,7 +43,7 @@ static setting_enum g_translate_slashes(
 
 
 //------------------------------------------------------------------------------
-match_type to_match_type(int mode, int attr)
+match_type to_match_type(int mode, int attr, const char* path)
 {
     static_assert(int(match_type::none) == MATCH_TYPE_NONE, "match_type enum must match readline constants");
     static_assert(int(match_type::word) == MATCH_TYPE_WORD, "match_type enum must match readline constants");
@@ -52,8 +52,9 @@ match_type to_match_type(int mode, int attr)
     static_assert(int(match_type::alias) == MATCH_TYPE_ALIAS, "match_type enum must match readline constants");
     static_assert(int(match_type::file) == MATCH_TYPE_FILE, "match_type enum must match readline constants");
     static_assert(int(match_type::dir) == MATCH_TYPE_DIR, "match_type enum must match readline constants");
-    static_assert(int(match_type::link) == MATCH_TYPE_LINK, "match_type enum must match readline constants");
     static_assert(int(match_type::mask) == MATCH_TYPE_MASK, "match_type enum must match readline constants");
+    static_assert(int(match_type::link) == MATCH_TYPE_LINK, "match_type enum must match readline constants");
+    static_assert(int(match_type::orphaned) == MATCH_TYPE_ORPHANED, "match_type enum must match readline constants");
     static_assert(int(match_type::hidden) == MATCH_TYPE_HIDDEN, "match_type enum must match readline constants");
     static_assert(int(match_type::readonly) == MATCH_TYPE_READONLY, "match_type enum must match readline constants");
 
@@ -61,13 +62,6 @@ match_type to_match_type(int mode, int attr)
 
     if (mode & _S_IFDIR)
         type = match_type::dir;
-#ifdef _S_IFLNK
-    else if (mode & _S_IFLNK)
-        type = match_type::link;
-#else
-    else if (attr & FILE_ATTRIBUTE_REPARSE_POINT)
-        type = match_type::link;
-#endif
     else
         type = match_type::file;
 
@@ -75,6 +69,22 @@ match_type to_match_type(int mode, int attr)
         type |= match_type::hidden;
     if (attr & FILE_ATTRIBUTE_READONLY)
         type |= match_type::readonly;
+
+#ifdef _S_IFLNK
+    if (mode & _S_IFLNK)
+        type |= match_type::link;
+#else
+    else if (attr & FILE_ATTRIBUTE_REPARSE_POINT)
+        type |= match_type::link;
+#endif
+
+    if (int(type & match_type::link))
+    {
+        wstr<288> wfile(path);
+        struct _stat64 st;
+        if (_wstat64(wfile.c_str(), &st) < 0)
+            type |= match_type::orphaned;
+    }
 
     return type;
 }
@@ -115,12 +125,22 @@ match_type to_match_type(const char* type_name)
             type = (type & ~match_type::mask) | match_type::dir;
         else if (_strnicmp(t, "link", l) == 0 ||
                  _strnicmp(t, "symlink", l) == 0)
-            type = (type & ~match_type::mask) | match_type::link;
+            type |= match_type::link;
         else if (_strnicmp(t, "hidden", l) == 0)
             type |= match_type::hidden;
         else if (_strnicmp(t, "readonly", l) == 0)
             type |= match_type::readonly;
+        else if (_strnicmp(t, "orphaned", l) == 0)
+            type |= match_type::orphaned;
     }
+
+    // Only files and dirs can be links.
+    if (int(type & match_type::link) && !is_match_type(type, match_type::file) && !is_match_type(type, match_type::dir))
+        type &= ~match_type::link;
+
+    // Only links can be orphaned.
+    if ((type & (match_type::link|match_type::orphaned)) == match_type::orphaned)
+        type &= ~match_type::orphaned;
 
     return type;
 }
@@ -140,12 +160,15 @@ void match_type_to_string(match_type type, str_base& out)
         "alias",
         "file",
         "dir",
-        "link",
     };
 
     out.clear();
     out.concat(type_names[int(base)]);
 
+    if (int(type & match_type::link))
+        out.concat(",link");
+    if (int(type & match_type::orphaned))
+        out.concat(",orphaned");
     if (int(type & match_type::hidden))
         out.concat(",hidden");
     if (int(type & match_type::readonly))

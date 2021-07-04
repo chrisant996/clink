@@ -19,19 +19,25 @@ enum class match_type : unsigned char
     alias,          // Displays match using the alias color.
     file,           // Displays match using the file color and only displays the last path component.
     dir,            // Displays match using the directory color, only displays the last path component, and adds a trailing path separator.
-    link,           // Displays match using the symlink color and only displays the last path component.
-    mask = 0x0f,
-    hidden = 0x40,  // Displays file/dir/link matches using the hidden color.
-    readonly = 0x80, // Displays file/dir/link matches using the readonly color.
+    END,
+
+    mask        = 0x07,
+
+    link        = 0x10, // Displays match using the symlink color and only displays the last path component.
+    orphaned    = 0x20, // Displays link matches using the orphaned color.
+    hidden      = 0x40, // Displays file/dir/link matches using the hidden color.
+    readonly    = 0x80, // Displays file/dir/link matches using the readonly color.
 };
 
 DEFINE_ENUM_FLAG_OPERATORS(match_type);
+
+static_assert(((int(match_type::END) - 1) | int(match_type::mask)) <= int(match_type::mask), "match_type overflowed mask bits!");
 
 //------------------------------------------------------------------------------
 inline bool is_pathish(match_type type)
 {
     type &= match_type::mask;
-    return type == match_type::file || type == match_type::dir || type == match_type::link;
+    return type == match_type::file || type == match_type::dir;
 }
 
 //------------------------------------------------------------------------------
@@ -132,7 +138,7 @@ private:
 
 
 //------------------------------------------------------------------------------
-match_type to_match_type(int mode, int attr);
+match_type to_match_type(int mode, int attr, const char* path);
 match_type to_match_type(const char* type_name);
 void match_type_to_string(match_type type, str_base& out);
 

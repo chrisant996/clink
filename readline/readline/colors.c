@@ -184,7 +184,13 @@ _rl_print_color_indicator (const char *f, unsigned char match_type)
 
 /* begin_clink_change */
   if (match_type)
+  {
+#if defined(HAVE_LSTAT) && defined(S_ISLNK)
+    stat_ok = stat_from_match_type (match_type, name, &astat, &linkstat);
+#else
     stat_ok = stat_from_match_type (match_type, name, &astat);
+#endif
+  }
   else
 /* end_clink_change */
 #if defined (HAVE_LSTAT)
@@ -198,6 +204,13 @@ _rl_print_color_indicator (const char *f, unsigned char match_type)
 #if defined (HAVE_LSTAT)
       if (S_ISLNK (mode))
 	{
+/* begin_clink_change */
+#if defined(HAVE_LSTAT) && defined(S_ISLNK)
+	  if (match_type)
+	    linkok = linkstat.st_mode != 0;
+	  else
+#endif
+/* end_clink_change */
 	  linkok = stat (name, &linkstat) == 0;
 	  if (linkok && strncmp (_rl_color_indicator[C_LINK].string, "target", 6) == 0)
 	    mode = linkstat.st_mode;

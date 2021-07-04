@@ -26,6 +26,7 @@ int     hooked_putc(int, FILE*);
 void    hooked_fflush(FILE*);
 int     hooked_fileno(FILE*);
 int     hooked_stat(const char*, struct hooked_stat*);
+int     hooked_lstat(const char*, struct hooked_stat*);
 int     hooked_fstat(int, struct hooked_stat*);
 int     mk_wcwidth(char32_t);
 int     mk_wcswidth(const char32_t *, size_t);
@@ -55,6 +56,7 @@ int     mk_wcswidth(const char32_t *, size_t);
 #   define fflush           hooked_fflush
 #   define fileno           hooked_fileno
 #   define stat             hooked_stat
+#   define lstat            hooked_lstat
 #   define fstat            hooked_fstat
 #endif // BUILD_READLINE
 
@@ -186,7 +188,7 @@ extern wcswidth_t *wcswidth;
 /* #undef HAVE_KILL */
 
 /* Define if you have the lstat function. */
-/* #undef HAVE_LSTAT */
+#define HAVE_LSTAT 1
 
 /* Define if you have the mbrlen function. */
 #define HAVE_MBRLEN 1

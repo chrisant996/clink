@@ -715,7 +715,7 @@ static char adjust_completion_word(char quote_char, int *found_quote, int *delim
 }
 
 //------------------------------------------------------------------------------
-static int is_exec_ext(const char* ext)
+extern "C" int is_exec_ext(const char* ext)
 {
     return path::is_executable_extension(ext);
 }

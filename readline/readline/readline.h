@@ -682,8 +682,9 @@ extern rl_postprocess_lcd_func_t *rl_postprocess_lcd_func;
 #define MATCH_TYPE_ALIAS		5
 #define MATCH_TYPE_FILE			6
 #define MATCH_TYPE_DIR			7
-#define MATCH_TYPE_LINK			8
-#define MATCH_TYPE_MASK			0x0f
+#define MATCH_TYPE_MASK			0x07
+#define MATCH_TYPE_LINK			0x10
+#define MATCH_TYPE_ORPHANED		0x20
 #define MATCH_TYPE_HIDDEN		0x40
 #define MATCH_TYPE_READONLY		0x80
 #define IS_MATCH_TYPE_NONE(x)		(((x) & MATCH_TYPE_MASK) == MATCH_TYPE_NONE)
@@ -693,7 +694,8 @@ extern rl_postprocess_lcd_func_t *rl_postprocess_lcd_func;
 #define IS_MATCH_TYPE_ALIAS(x)		(((x) & MATCH_TYPE_MASK) == MATCH_TYPE_ALIAS)
 #define IS_MATCH_TYPE_FILE(x)		(((x) & MATCH_TYPE_MASK) == MATCH_TYPE_FILE)
 #define IS_MATCH_TYPE_DIR(x)		(((x) & MATCH_TYPE_MASK) == MATCH_TYPE_DIR)
-#define IS_MATCH_TYPE_LINK(x)		(((x) & MATCH_TYPE_MASK) == MATCH_TYPE_LINK)
+#define IS_MATCH_TYPE_LINK(x)		(((x) & MATCH_TYPE_LINK) == MATCH_TYPE_LINK)
+#define IS_MATCH_TYPE_ORPHANED(x)	(((x) & MATCH_TYPE_ORPHANED) == MATCH_TYPE_ORPHANED)
 #define IS_MATCH_TYPE_HIDDEN(x)		(((x) & MATCH_TYPE_HIDDEN) == MATCH_TYPE_HIDDEN)
 #define IS_MATCH_TYPE_READONLY(x)	(((x) & MATCH_TYPE_READONLY) == MATCH_TYPE_READONLY)
 #define IS_MATCH_TYPE_PATHISH(x)	(((x) & MATCH_TYPE_MASK) >= MATCH_TYPE_FILE && \

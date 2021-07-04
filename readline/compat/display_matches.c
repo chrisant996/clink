@@ -227,7 +227,11 @@ static bool append_match_color_indicator(const char *f, unsigned char match_type
     }
 
     if (match_type)
+#if defined(HAVE_LSTAT)
+        stat_ok = stat_from_match_type(match_type, name, &astat, &linkstat);
+#else
         stat_ok = stat_from_match_type(match_type, name, &astat);
+#endif
     else
 #if defined(HAVE_LSTAT)
         stat_ok = lstat(name, &astat);
@@ -240,7 +244,10 @@ static bool append_match_color_indicator(const char *f, unsigned char match_type
 #if defined(HAVE_LSTAT)
         if (S_ISLNK(mode))
         {
-            linkok = stat(name, &linkstat) == 0;
+            if (match_type)
+                linkok = linkstat.st_mode != 0;
+            else
+                linkok = stat(name, &linkstat) == 0;
             if (linkok && strncmp(_rl_color_indicator[C_LINK].string, "target", 6) == 0)
                 mode = linkstat.st_mode;
         }

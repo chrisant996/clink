@@ -67,7 +67,6 @@ match_builder_lua::~match_builder_lua()
 /// <tr><td>"alias"</td><td>Displays the match using <a href="#color_doskey">color.doskey</a>.</td></tr>
 /// <tr><td>"file"</td><td>Shows only the last path component, with appropriate file coloring.</td></tr>
 /// <tr><td>"dir"</td><td>Shows only the last path component and adds a trailing path separator, with appropriate directory coloring.</td></tr>
-/// <tr><td>"link"</td><td>Shows only the last path component, with appropriate symlink coloring. <em>Not supported yet.</em></td></tr>
 /// <tr><td>"none"</td><td>For backward compatibility the match is treated like "file", unless it ends with a path separator in which case it's treated like "dir".</td></tr>
 /// </table>
 ///
@@ -75,6 +74,8 @@ match_builder_lua::~match_builder_lua()
 /// <tr><th>Modifier</th><th>Description</th></tr>
 /// <tr><td>"hidden"</td><td>This can be combined with "file" or "dir" to use <a href="#color_hidden">color.hidden</a> (e.g. "file,hidden").</td></tr>
 /// <tr><td>"readonly"</td><td>This can be combined with "file" or "dir" to use <a href="#color_readonly">color.readonly</a> (e.g. "file,readonly").</td></tr>
+/// <tr><td>"link"</td><td>This can be combined with "file" or "dir" to appropriate symlink coloring (e.g. "file,link").</td></tr>
+/// <tr><td>"orphaned"</td><td>This can be combined with "link" to use appropriate orphaned symlink coloring (e.g. "file,link,orphaned").</td></tr>
 /// </table>
 ///
 /// See <a href="#completioncolors">Completion Colors</a> and

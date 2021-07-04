@@ -274,7 +274,11 @@ extern void _rl_reset_completion_state PARAMS((void));
 extern char _rl_find_completion_word PARAMS((int *, int *));
 extern void _rl_free_match_list PARAMS((char **));
 /* begin_clink_change */
+#if defined(HAVE_LSTAT) && defined(S_ISLNK)
+extern int stat_from_match_type PARAMS((unsigned char, const char*, struct stat*, struct stat*));
+#else
 extern int stat_from_match_type PARAMS((unsigned char, const char*, struct stat*));
+#endif
 /* end_clink_change */
 
 /* display.c */

@@ -855,7 +855,11 @@ is_exec (const char* fn)
 }
 
 int
+#if defined (HAVE_LSTAT) && defined (S_ISLNK)
+stat_from_match_type (unsigned char match_type, const char* fn, struct stat* finfo, struct stat* linkinfo)
+#else
 stat_from_match_type (unsigned char match_type, const char* fn, struct stat* finfo)
+#endif
 {
   /* The match provider already knew the match type, and they can include the
      match type to save us from wasting IO re-testing the match type. */
@@ -863,17 +867,33 @@ stat_from_match_type (unsigned char match_type, const char* fn, struct stat* fin
 
   if (IS_MATCH_TYPE_DIR (match_type))
     finfo->st_mode |= S_IFDIR;
-#ifdef S_ISLNK
-  else if (IS_MATCH_TYPE_LINK (match_type))
-    finfo->st_mode |= S_IFLNK;
-#endif
   else if (!IS_MATCH_TYPE_WORD (match_type) &&
            !IS_MATCH_TYPE_ARG (match_type) &&
            !IS_MATCH_TYPE_ALIAS (match_type))
     finfo->st_mode |= S_IFREG;
 
+#if defined (HAVE_LSTAT) && defined (S_ISLNK)
+  if (IS_MATCH_TYPE_LINK (match_type))
+    finfo->st_mode |= S_IFLNK;
+#endif
+
   if (!S_ISDIR (finfo->st_mode) && is_exec (fn))
     finfo->st_mode |= S_IEXEC;
+
+#if defined (HAVE_LSTAT) && defined (S_ISLNK)
+  if (linkinfo)
+  {
+    if (IS_MATCH_TYPE_ORPHANED (match_type))
+      memset (linkinfo, 0, sizeof(*linkinfo));
+    else
+    {
+      *linkinfo = *finfo;
+      linkinfo->st_mode &= ~_S_IFLNK;
+    }
+    if (S_ISLNK(finfo->st_mode))
+      finfo->st_mode &= ~(_S_IFDIR|_S_IFREG);
+  }
+#endif
 
   return 0;
 }
@@ -919,7 +939,13 @@ stat_char (char *filename, char match_type)
     
 /* begin_clink_change */
   if (match_type >= MATCH_TYPE_NONE)
+  {
+#if defined (HAVE_LSTAT) && defined (S_ISLNK)
+    r = stat_from_match_type (match_type, fn, &finfo, 0);
+#else
     r = stat_from_match_type (match_type, fn, &finfo);
+#endif
+  }
   else
 /* end_clink_change */
 #if defined (HAVE_LSTAT) && defined (S_ISLNK)
@@ -2729,7 +2755,18 @@ append_to_match (char *text, int orig_start, int delimiter, int quote_char, int 
  * Enable match providers to share the match type for efficiency.
  */
       if (rl_completion_matches_include_type && *orig_text > MATCH_TYPE_NONE)
+#if defined (HAVE_LSTAT) && defined (S_ISLNK)
+	{
+	  struct stat linkinfo;
+	  s = stat_from_match_type (*orig_text, filename, &finfo, &linkinfo);
+	  if (nontrivial_match && rl_completion_mark_symlink_dirs == 0)
+	    ;
+	  else
+	    finfo = linkinfo;
+	}
+#else
 	s = stat_from_match_type (*orig_text, filename, &finfo);
+#endif
       else
 /* end_clink_change */
       s = (nontrivial_match && rl_completion_mark_symlink_dirs == 0)
@@ -2763,6 +2800,9 @@ append_to_match (char *text, int orig_start, int delimiter, int quote_char, int 
       /* Don't add anything if the filename is a symlink and resolves to a
 	 directory. */
       else if (s == 0 && S_ISLNK (finfo.st_mode) && path_isdir (filename))
+/* begin_clink_change */
+	_rl_rubout_char (0, 0)
+/* end_clink_change */
 	;
 #endif
       else

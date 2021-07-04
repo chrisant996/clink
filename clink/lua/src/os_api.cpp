@@ -175,6 +175,7 @@ static int is_file(lua_State* state)
 /// -name:  os.ishidden
 /// -arg:   path:string
 /// -ret:   boolean
+/// -deprecated: os.globfiles
 /// Returns whether <span class="arg">path</span> has the hidden attribute set.
 static int is_hidden(lua_State* state)
 {
@@ -288,6 +289,14 @@ int glob_impl(lua_State* state, bool dirs_only, bool back_compat=false)
                 add_type_tag(type, "hidden");
             if (attr & FILE_ATTRIBUTE_READONLY)
                 add_type_tag(type, "readonly");
+            if (attr & FILE_ATTRIBUTE_REPARSE_POINT)
+            {
+                add_type_tag(type, "link");
+                wstr<288> wfile(file.c_str());
+                struct _stat64 st;
+                if (_wstat64(wfile.c_str(), &st) < 0)
+                    add_type_tag(type, "orphaned");
+            }
             lua_pushliteral(state, "type");
             lua_pushlstring(state, type.c_str(), type.length());
             lua_rawset(state, -3);
@@ -312,8 +321,8 @@ int glob_impl(lua_State* state, bool dirs_only, bool back_compat=false)
 /// <span class="tablescheme">{ {name:string, type:string}, ... }</span>.
 ///
 /// The <span class="tablescheme">type</span> string can be "file" or "dir", and
-/// may also contain ",hidden" and ",readonly" depending on the attributes
-/// (making it usable as a match type for
+/// may also contain ",hidden", ",readonly", ",link", and ",orphaned" depending
+/// on the attributes (making it usable as a match type for
 /// <a href="#builder:addmatch">builder:addmatch()</a>).
 ///
 /// Note: any quotation marks (<code>"</code>) in
@@ -336,8 +345,8 @@ int glob_dirs(lua_State* state)
 /// <span class="tablescheme">{ {name:string, type:string}, ... }</span>.
 ///
 /// The <span class="tablescheme">type</span> string can be "file" or "dir", and
-/// may also contain ",hidden" and ",readonly" depending on the attributes
-/// (making it usable as a match type for
+/// may also contain ",hidden", ",readonly", ",link", and ",orphaned" depending
+/// on the attributes (making it usable as a match type for
 /// <a href="#builder:addmatch">builder:addmatch()</a>).
 ///
 /// Note: any quotation marks (<code>"</code>) in

@@ -4,8 +4,14 @@
 #pragma once
 
 #include <stdio.h>
+#include <sys/stat.h>
 
 class str_base;
+
+#define _S_IFLNK        (0x0800)
+#define S_IFLNK         _S_IFLNK
+
+#define S_ISLNK(m)      (((m)&S_IFLNK) == S_IFLNK)
 
 //------------------------------------------------------------------------------
 namespace os
