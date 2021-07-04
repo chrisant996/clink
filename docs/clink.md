@@ -420,7 +420,7 @@ Type|Description|Default
 `fi`|Normal files.|
 `ln`|Symlinks.  When `ln=target` then symlinks are colored according to the target of the symlink.|`01;36` (bright cyan)
 `mi`|Missing file or directory.|
-`no`|Normal color.  This is used for anything not covered by one of the other types.  It may be overridden by various other Clink color settings as appropriate depending on the completion type.|
+`no`|Normal color.  This is used for anything not covered by one of the other types.<br/>It may be overridden by various other Clink color settings as appropriate depending on the completion type.|
 `or`|Orphaned symlink (the target of the symlink is missing).|
 `so`|Common prefix for possible completions.|`01;35` (bright magenta)
 
