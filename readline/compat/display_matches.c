@@ -352,6 +352,8 @@ static bool append_match_color_indicator(const char *f, unsigned char match_type
             override_color = _rl_command_color;
         else if (IS_MATCH_TYPE_ALIAS(match_type))
             override_color = _rl_alias_color;
+        else
+            colored_filetype = C_NORM;
         if (override_color)
         {
             free(filename); // NULL or savestring return value.
