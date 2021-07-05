@@ -790,7 +790,6 @@ void line_editor_impl::classify()
 
     // Hang on to the old classifications so it's possible to detect changes.
     word_classifications old_classifications(std::move(m_classifications));
-TODO("ISSUE119 -- Keep track of which bytes in expanded line came from the original line, so that only those colored cells are applied back to the original line.");
     m_classifications.init(strlen(line.get_line()));
 
     // Count number of commands so we can pre-allocate words_storage so that
@@ -846,7 +845,6 @@ TODO("ISSUE119 -- Keep track of which bytes in expanded line came from the origi
     }
 
     m_classifier->classify(linestates, m_classifications);
-TODO("ISSUE119 -- If the original line was expanded per a doskey macro, translate the expanded line's colored cells back into the original line.");
     m_classifications.finish(is_showing_argmatchers());
 
 #ifdef DEBUG
@@ -1038,7 +1036,6 @@ void line_editor_impl::update_internal()
             // Defer generating until update_matches().  Must set word break
             // position in the meantime because adjust_completion_word() gets
             // called before the deferred generate().
-TODO("ISSUE119 -- Uh oh, word break position matters to Readline and must be relative to the original input line.");
             set_flag(flag_generate);
             m_matches.set_word_break_position(line.get_end_word_offset());
             update_prev_generate = len;
