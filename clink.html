@@ -3,7 +3,7 @@
 
 <!-- ----------------------------------------------------- -->
 <head>
-<title>Clink v1.2.17</title>
+<title>Clink v1.2.18</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Rambla:wght@400;700&family=Roboto&family=Fira+Mono&display=swap');
 html {
@@ -747,7 +747,7 @@ name:"Plain text",aliases:["text","txt"],disableAutodetect:!0})})());
         </td>
         <td style="text-align:right">
             <div id="header">
-                <div id="title">Clink v1.2.17</div>
+                <div id="title">Clink v1.2.18</div>
                 <div id="url">
                     <a href="https://github.com/chrisant996/clink">
                         https://github.com/chrisant996/clink
@@ -1536,18 +1536,61 @@ call &quot;%~dp0clink.bat&quot; inject --profile &quot;%TEMP%\clink_portable&quo
 </tbody></table>
 <p><a name="completioncolors"></a></p>
 <h2 id="completion-colors">Completion Colors</h2>
-<p>When the <code>colored-completion-prefix</code> <a href="#configreadline">Readline setting</a> is configured to <code>on</code>, then the &quot;so&quot; color from the <code>%LS_COLORS%</code> environment variable is used to color the common prefix when displaying possible completions.  The default for &quot;so&quot; is magenta, but for example <code>set LS_COLORS=so=90</code> sets the color to bright black (which shows up as a dark gray).</p>
-<p>When <code>colored-stats</code> is configured to <code>on</code>, then the color definitions from <code>%LS_COLORS%</code> (using ANSI escape codes) are used to color file completions according to their file type or extension.  Each definition is a either a two character type id or a file extension, followed by an equals sign and then the <a href="https://en.wikipedia.org/wiki/ANSI_escape_code#SGR_parameters">SGR parameters</a> for an ANSI escape code.  Multiple definitions are separated by colons.  Also, since <code>%LS_COLORS%</code> doesn&#39;t cover readonly files, hidden files, doskey aliases, or shell commands the <code>color.readonly</code>, <code>color.hidden</code>, <code>color.doskey</code>, and <code>color.cmd</code> <a href="#clinksettings">Clink settings</a> exist to cover those.</p>
+<p>The <code>%LS_COLORS%</code> environment variable provides color definitions as a series of color definitions separated by colons (<code>:</code>).  Each definition is a either a two character type id or a file extension, followed by an equals sign and then the <a href="https://en.wikipedia.org/wiki/ANSI_escape_code#SGR_parameters">SGR parameters</a> for an ANSI escape code.  The two character type ids are listed below.</p>
+<p>When the <code>colored-completion-prefix</code> <a href="#configreadline">Readline setting</a> is configured to <code>on</code>, then the &quot;so&quot; color from <code>%LS_COLORS%</code> is used to color the common prefix when displaying possible completions.  The default for &quot;so&quot; is magenta, but for example <code>set LS_COLORS=so=90</code> sets the color to bright black (which shows up as a dark gray).</p>
+<p>When <code>colored-stats</code> is configured to <code>on</code>, then the color definitions from <code>%LS_COLORS%</code> are used to color file completions according to their file type or extension.    Multiple definitions are separated by colons.  Also, since <code>%LS_COLORS%</code> doesn&#39;t cover readonly files, hidden files, doskey aliases, or shell commands the <code>color.readonly</code>, <code>color.hidden</code>, <code>color.doskey</code>, and <code>color.cmd</code> <a href="#clinksettings">Clink settings</a> exist to cover those.</p>
+<table>
+<thead>
+<tr>
+<th>Type</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>di</code></td>
+<td>Directories.</td>
+<td><code>01;34</code> (bright blue)</td>
+</tr>
+<tr>
+<td><code>ex</code></td>
+<td>Executable files.</td>
+<td><code>01;32</code> (bright green)</td>
+</tr>
+<tr>
+<td><code>fi</code></td>
+<td>Normal files.</td>
+<td></td>
+</tr>
+<tr>
+<td><code>ln</code></td>
+<td>Symlinks.  When <code>ln=target</code> then symlinks are colored according to the target of the symlink.</td>
+<td><code>target</code></td>
+</tr>
+<tr>
+<td><code>mi</code></td>
+<td>Missing file or directory.</td>
+<td></td>
+</tr>
+<tr>
+<td><code>no</code></td>
+<td>Normal color.  This is used for anything not covered by one of the other types.<br/>It may be overridden by various other Clink color settings as appropriate depending on the completion type.</td>
+<td></td>
+</tr>
+<tr>
+<td><code>or</code></td>
+<td>Orphaned symlink (the target of the symlink is missing).</td>
+<td></td>
+</tr>
+<tr>
+<td><code>so</code></td>
+<td>Common prefix for possible completions.</td>
+<td><code>01;35</code> (bright magenta)</td>
+</tr>
+</tbody></table>
 <p>Here is an example where <code>%LS_COLORS%</code> defines colors for various types.</p>
-<ul>
-<li><code>so=</code> defines the color for the common prefix for possible completions.</li>
-<li><code>fi=</code> defines the color for normal files.</li>
-<li><code>di=</code> defines the color for directories.</li>
-<li><code>ex=</code> defines the color for executable files.</li>
-</ul>
 <pre><code class="language-plaintext">set LS_COLORS=so=90:fi=97:di=93:ex=92:*.pdf=30;105:*.md=4
 </code></pre>
-<p>Let&#39;s break that down:</p>
 <ul>
 <li><code>so=90</code> uses bright black (dark gray) for the common prefix for possible completions.</li>
 <li><code>fi=97</code> uses bright white for files.</li>
@@ -2859,7 +2902,7 @@ end
 :loop(2)    -- fourth arg loops back to position 2, for one or uno, and so on</code></pre></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="_argmatcher:nofiles">_argmatcher:nofiles</a></div> <div class="signature">() : self</div></div><div class="body"><p class="desc">This makes the parser prevent invoking <a href="#matchgenerators">match generators</a>.  You can use it to "dead end" a parser and suggest no completions.</p></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="_argmatcher:setclassifier">_argmatcher:setclassifier</a></div> <div class="signature">( <span class="arg_name">func</span>:function ) : self</div></div><div class="body"><p class="desc">This registers a function that gets called for each word the argmatcher handles, to classify the word as part of coloring the input text.  See <a href="#classifywords">Coloring The Input Text</a> for more information.</p></div></div><hr/>
-</div><div class="group"><h5 class="group_name"><a name="builder">builder</a></h5><div class="function"><div class="header"> <div class="name"><a name="builder:addmatch">builder:addmatch</a></div> <div class="signature">( <span class="arg_name">match</span>:string|table, [<span class="arg_name">type</span>:string] ) : boolean</div></div><div class="body"><p class="desc">Adds a match.  If <span class="arg">match</span> is a string, it's added as a match and <span class="arg">type</span> is the optional match type.</p><p class="desc"> Or <span class="arg">match</span> can be a table with the following scheme: <span class="tablescheme">{ match:string, [type:string] }</span>.  If a table element is missing the type field, then the <span class="arg">type</span> argument is used for that element.</p><p class="desc"> If the <span class="arg">type</span> argument is omitted, "none" is assumed.</p><p class="desc"> The match type can affect how the match is inserted, displayed, and colored:</p><p class="desc"> <table> <tr><th>Type</th><th>Description</th></tr> <tr><td>"word"</td><td>Shows the whole word even if it contains slashes.</td></tr> <tr><td>"arg"</td><td>Avoids appending a space if the match ends with a colon or equal sign.</td></tr> <tr><td>"command"</td><td>Displays the match using <a href="#color_cmd">color.cmd</a>.</td></tr> <tr><td>"alias"</td><td>Displays the match using <a href="#color_doskey">color.doskey</a>.</td></tr> <tr><td>"file"</td><td>Shows only the last path component, with appropriate file coloring.</td></tr> <tr><td>"dir"</td><td>Shows only the last path component and adds a trailing path separator, with appropriate directory coloring.</td></tr> <tr><td>"link"</td><td>Shows only the last path component, with appropriate symlink coloring. <em>Not supported yet.</em></td></tr> <tr><td>"none"</td><td>For backward compatibility the match is treated like "file", unless it ends with a path separator in which case it's treated like "dir".</td></tr> </table></p><p class="desc"> <table> <tr><th>Modifier</th><th>Description</th></tr> <tr><td>"hidden"</td><td>This can be combined with "file" or "dir" to use <a href="#color_hidden">color.hidden</a> (e.g. "file,hidden").</td></tr> <tr><td>"readonly"</td><td>This can be combined with "file" or "dir" to use <a href="#color_readonly">color.readonly</a> (e.g. "file,readonly").</td></tr> </table></p><p class="desc"> See <a href="#completioncolors">Completion Colors</a> and <a href="#colorsettings">Color Settings</a> for more information about colors.</p><pre class="language-lua"><code>builder:addmatch("hello") -- type is "none"
+</div><div class="group"><h5 class="group_name"><a name="builder">builder</a></h5><div class="function"><div class="header"> <div class="name"><a name="builder:addmatch">builder:addmatch</a></div> <div class="signature">( <span class="arg_name">match</span>:string|table, [<span class="arg_name">type</span>:string] ) : boolean</div></div><div class="body"><p class="desc">Adds a match.  If <span class="arg">match</span> is a string, it's added as a match and <span class="arg">type</span> is the optional match type.</p><p class="desc"> Or <span class="arg">match</span> can be a table with the following scheme: <span class="tablescheme">{ match:string, [type:string] }</span>.  If a table element is missing the type field, then the <span class="arg">type</span> argument is used for that element.</p><p class="desc"> If the <span class="arg">type</span> argument is omitted, "none" is assumed.</p><p class="desc"> The match type can affect how the match is inserted, displayed, and colored:</p><p class="desc"> <table> <tr><th>Type</th><th>Description</th></tr> <tr><td>"word"</td><td>Shows the whole word even if it contains slashes.</td></tr> <tr><td>"arg"</td><td>Avoids appending a space if the match ends with a colon or equal sign.</td></tr> <tr><td>"command"</td><td>Displays the match using <a href="#color_cmd">color.cmd</a>.</td></tr> <tr><td>"alias"</td><td>Displays the match using <a href="#color_doskey">color.doskey</a>.</td></tr> <tr><td>"file"</td><td>Shows only the last path component, with appropriate file coloring.</td></tr> <tr><td>"dir"</td><td>Shows only the last path component and adds a trailing path separator, with appropriate directory coloring.</td></tr> <tr><td>"none"</td><td>For backward compatibility the match is treated like "file", unless it ends with a path separator in which case it's treated like "dir".</td></tr> </table></p><p class="desc"> <table> <tr><th>Modifier</th><th>Description</th></tr> <tr><td>"hidden"</td><td>This can be combined with "file" or "dir" to use <a href="#color_hidden">color.hidden</a> (e.g. "file,hidden").</td></tr> <tr><td>"readonly"</td><td>This can be combined with "file" or "dir" to use <a href="#color_readonly">color.readonly</a> (e.g. "file,readonly").</td></tr> <tr><td>"link"</td><td>This can be combined with "file" or "dir" to appropriate symlink coloring (e.g. "file,link").</td></tr> <tr><td>"orphaned"</td><td>This can be combined with "link" to use appropriate orphaned symlink coloring (e.g. "file,link,orphaned").</td></tr> </table></p><p class="desc"> See <a href="#completioncolors">Completion Colors</a> and <a href="#colorsettings">Color Settings</a> for more information about colors.</p><pre class="language-lua"><code>builder:addmatch("hello") -- type is "none"
 builder:addmatch("some_word", "word")
 builder:addmatch("/flag", "arg")
 builder:addmatch("abbrev", "alias")
@@ -3118,11 +3161,10 @@ line:getcommandoffset() == 4</code></pre></div></div><hr/>
 &nbsp; winheight,    -- [integer] height of the visible window
 }</code></pre></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="os.getshortpathname">os.getshortpathname</a></div> <div class="signature">( <span class="arg_name">path</span>:string ) : string</div></div><div class="body"><p class="desc">Returns the 8.3 short path name for <span class="arg">path</span>.  This may return the input path if an 8.3 short path name is not available.</p></div></div><hr/>
-<div class="function"><div class="header"> <div class="name"><a name="os.globdirs">os.globdirs</a></div> <div class="signature">( <span class="arg_name">globpattern</span>:string, [<span class="arg_name">extrainfo</span>:boolean] ) : table</div></div><div class="body"><p class="desc">Collects directories matching <span class="arg">globpattern</span> and returns them in a table of strings.</p><p class="desc"> When <span class="arg">extrainfo</span> is true, then the returned table has the following scheme: <span class="tablescheme">{ {name:string, type:string}, ... }</span>.</p><p class="desc"> The <span class="tablescheme">type</span> string can be "file" or "dir", and may also contain ",hidden" and ",readonly" depending on the attributes (making it usable as a match type for <a href="#builder:addmatch">builder:addmatch()</a>).</p><p class="desc"> Note: any quotation marks (<code>"</code>) in <span class="arg">globpattern</span> are stripped.</p></div></div><hr/>
-<div class="function"><div class="header"> <div class="name"><a name="os.globfiles">os.globfiles</a></div> <div class="signature">( <span class="arg_name">globpattern</span>:string, [<span class="arg_name">extrainfo</span>:boolean] ) : table</div></div><div class="body"><p class="desc">Collects files and/or directories matching <span class="arg">globpattern</span> and returns them in a table of strings.</p><p class="desc"> When <span class="arg">extrainfo</span> is true, then the returned table has the following scheme: <span class="tablescheme">{ {name:string, type:string}, ... }</span>.</p><p class="desc"> The <span class="tablescheme">type</span> string can be "file" or "dir", and may also contain ",hidden" and ",readonly" depending on the attributes (making it usable as a match type for <a href="#builder:addmatch">builder:addmatch()</a>).</p><p class="desc"> Note: any quotation marks (<code>"</code>) in <span class="arg">globpattern</span> are stripped.</p></div></div><hr/>
+<div class="function"><div class="header"> <div class="name"><a name="os.globdirs">os.globdirs</a></div> <div class="signature">( <span class="arg_name">globpattern</span>:string, [<span class="arg_name">extrainfo</span>:boolean] ) : table</div></div><div class="body"><p class="desc">Collects directories matching <span class="arg">globpattern</span> and returns them in a table of strings.</p><p class="desc"> When <span class="arg">extrainfo</span> is true, then the returned table has the following scheme: <span class="tablescheme">{ {name:string, type:string}, ... }</span>.</p><p class="desc"> The <span class="tablescheme">type</span> string can be "file" or "dir", and may also contain ",hidden", ",readonly", ",link", and ",orphaned" depending on the attributes (making it usable as a match type for <a href="#builder:addmatch">builder:addmatch()</a>).</p><p class="desc"> Note: any quotation marks (<code>"</code>) in <span class="arg">globpattern</span> are stripped.</p></div></div><hr/>
+<div class="function"><div class="header"> <div class="name"><a name="os.globfiles">os.globfiles</a></div> <div class="signature">( <span class="arg_name">globpattern</span>:string, [<span class="arg_name">extrainfo</span>:boolean] ) : table</div></div><div class="body"><p class="desc">Collects files and/or directories matching <span class="arg">globpattern</span> and returns them in a table of strings.</p><p class="desc"> When <span class="arg">extrainfo</span> is true, then the returned table has the following scheme: <span class="tablescheme">{ {name:string, type:string}, ... }</span>.</p><p class="desc"> The <span class="tablescheme">type</span> string can be "file" or "dir", and may also contain ",hidden", ",readonly", ",link", and ",orphaned" depending on the attributes (making it usable as a match type for <a href="#builder:addmatch">builder:addmatch()</a>).</p><p class="desc"> Note: any quotation marks (<code>"</code>) in <span class="arg">globpattern</span> are stripped.</p></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="os.isdir">os.isdir</a></div> <div class="signature">( <span class="arg_name">path</span>:string ) : boolean</div></div><div class="body"><p class="desc">Returns whether <span class="arg">path</span> is a directory.</p></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="os.isfile">os.isfile</a></div> <div class="signature">( <span class="arg_name">path</span>:string ) : boolean</div></div><div class="body"><p class="desc">Returns whether <span class="arg">path</span> is a file.</p></div></div><hr/>
-<div class="function"><div class="header"> <div class="name"><a name="os.ishidden">os.ishidden</a></div> <div class="signature">( <span class="arg_name">path</span>:string ) : boolean</div></div><div class="body"><p class="desc">Returns whether <span class="arg">path</span> has the hidden attribute set.</p></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="os.mkdir">os.mkdir</a></div> <div class="signature">( <span class="arg_name">path</span>:string ) : boolean</div></div><div class="body"><p class="desc">Creates the directory <span class="arg">path</span> and returns whether it was successful.</p></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="os.move">os.move</a></div> <div class="signature">( <span class="arg_name">src</span>:string, <span class="arg_name">dest</span>:string ) : boolean</div></div><div class="body"><p class="desc">Moves the <span class="arg">src</span> file to the <span class="arg">dest</span> file.</p></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="os.rmdir">os.rmdir</a></div> <div class="signature">( <span class="arg_name">path</span>:string ) : boolean</div></div><div class="body"><p class="desc">Removes the directory <span class="arg">path</span> and returns whether it was successful.</p></div></div><hr/>
@@ -3311,11 +3353,11 @@ clink.argmatcher("foo"):addarg(parser2)
 -- This uses only parser2 if/when parser1 finishes parsing args:
 clink.argmatcher("foo"):addarg(parser1):addarg(parser2)</code></pre></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="clink.is_match">clink.is_match</a></div> <div class="signature">( <span class="arg_name">needle</span>:string, <span class="arg_name">candidate</span>:string ) : boolean</div></div><div class="body"><p class="desc"><strong>Deprecated; don't use this.</strong>  See <a href="#clink.generator">clink.generator</a> for more information.</p><p class="desc">This returns true if <span class="arg">needle</span> is a prefix of <span class="arg">candidate</span> with a case insensitive comparison.</p><p class="desc"> Normally in Clink v1.x and higher the <span class="arg">needle</span> will be an empty string because the generators are no longer responsible for filtering matches.  The match pipeline itself handles that internally now.</p></div></div><hr/>
-<div class="function"><div class="header"> <div class="name"><a name="clink.match_display_filter">clink.match_display_filter</a></div> <div class="signature">function variable</div></div><div class="body"><p class="desc"><strong>Deprecated; don't use this.</strong>  See <a href="#clink.ondisplaymatches">clink.ondisplaymatches</a> for more information.</p><p class="desc">A match generator can set this varible to a filter function that is called before displaying matches.  It is reset every time match generation is invoked.  The filter function receives table argument containing the matches that are going to be displayed, and it returns a table filtered as required by the match generator.</p><p class="desc"> See <a href="#filteringthematchdisplay">Filtering the Match Display</a> for more information.</p></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="clink.match_display_filter">clink.match_display_filter</a></div> <div class="signature">function variable</div></div><div class="body"><p class="desc"><strong>Deprecated; don't use this.</strong>  See <a href="#builder:addmatch">builder:addmatch</a> for more information.</p><p class="desc">This is no longer used.</p><pre class="language-lua"><code>clink.match_display_filter = function(matches)
 &nbsp; -- Transform matches.
 &nbsp; return matches
 end</code></pre></div></div><hr/>
+<div class="function"><div class="header"> <div class="name"><a name="clink.match_display_filter">clink.match_display_filter</a></div> <div class="signature">function variable</div></div><div class="body"><p class="desc"><strong>Deprecated; don't use this.</strong>  See <a href="#clink.ondisplaymatches">clink.ondisplaymatches</a> for more information.</p><p class="desc">A match generator can set this varible to a filter function that is called before displaying matches.  It is reset every time match generation is invoked.  The filter function receives table argument containing the matches that are going to be displayed, and it returns a table filtered as required by the match generator.</p><p class="desc"> See <a href="#filteringthematchdisplay">Filtering the Match Display</a> for more information.</p></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="clink.matches_are_files">clink.matches_are_files</a></div> <div class="signature">( [<span class="arg_name">files</span>:boolean] ) : nil</div></div><div class="body"><p class="desc"><strong>Deprecated; don't use this.</strong>  See <a href="#builder:addmatch">builder:addmatch</a> for more information.</p><p class="desc">This is no longer needed, because now it's inferred from the match type when adding matches.</p></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="clink.prompt.register_filter">clink.prompt.register_filter</a></div> <div class="signature">( <span class="arg_name">filter_func</span>:function, [<span class="arg_name">priority</span>:integer] ) : table</div></div><div class="body"><p class="desc"><strong>Deprecated; don't use this.</strong>  See <a href="#clink.promptfilter">clink.promptfilter</a> for more information.</p><p class="desc">Registers a prompt filter function.  The capabilities are the same as before but the syntax is changed.</p><pre class="language-lua"><code>-- Deprecated form:
 function foo_prompt()
@@ -3347,12 +3389,20 @@ function g:generate(line_state, match_builder)
 &nbsp; -- return true if handled, or false to let another generator try.
 end</code></pre></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="clink.slash_translation">clink.slash_translation</a></div> <div class="signature">( <span class="arg_name">type</span>:integer ) : nil</div></div><div class="body"><p class="desc"><strong>Deprecated; don't use this.</strong>  See <a href="#clink.translateslashes">clink.translateslashes</a> for more information.</p><p class="desc">Controls how Clink will translate the path separating slashes for the current path being completed. Values for <span class="arg">type</span> are;</br> -1 - no translation</br> 0 - to backslashes</br> 1 - to forward slashes</p></div></div><hr/>
+<div class="function"><div class="header"> <div class="name"><a name="os.ishidden">os.ishidden</a></div> <div class="signature">( <span class="arg_name">path</span>:string ) : boolean</div></div><div class="body"><p class="desc"><strong>Deprecated; don't use this.</strong>  See <a href="#os.globfiles">os.globfiles</a> for more information.</p><p class="desc">Returns whether <span class="arg">path</span> has the hidden attribute set.</p></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="rl_state">rl_state</a></div> <div class="signature">table variable</div></div><div class="body"><p class="desc"><strong>Deprecated; don't use this.</strong>  See <a href="#line">line</a> for more information.</p><p class="desc">This is an obsolete global variable that was set while running match generators.  It has been superseded by the <a href="#line">line</a> type parameter passed into match generator functions when using the new <a href="#clink.generator">clink.generator</a> API.</p></div></div><hr/>
 </div>
         </div>
         <div class="section" id="changes">
 <h1 id="changes">Changes</h1>
 <h3 id="releases-from-chrisant996clink-fork">Releases from <a href="https://github.com/chrisant996/clink">chrisant996/clink</a> fork</h3>
+<h4 id="v1218">v1.2.18</h4>
+<ul>
+<li>Added completions for <code>clink installscripts</code> and <code>clink uninstallscripts</code>.</li>
+<li>Added support for Readline&#39;s coloring and marking of symlinks.</li>
+<li>Fixed <code>clink installscripts --help</code>.</li>
+<li>Fixed <code>clink-popup-directories</code> for directories with spaces.</li>
+</ul>
 <h4 id="v1217">v1.2.17</h4>
 <ul>
 <li>Added <code>clink-popup-show-help</code> command to show popup list with searchable list of key bindings and invoke the selected key binding.</li>
