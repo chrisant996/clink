@@ -108,7 +108,7 @@ end
 ---
 --- <strong>Breaking Change in v1.2.16:</strong>  The ability to replace the
 --- user's input has been moved to a separate
---- <a href="#clink.onfilterinput>onfilterinput</a> event.
+--- <a href="#clink.onfilterinput">onfilterinput</a> event.
 function clink.onendedit(func)
     _add_event_callback("onendedit", func)
 end
@@ -117,7 +117,7 @@ end
 --- -name:  clink.onfilterinput
 --- -arg:   func:function
 --- Registers <span class="arg">func</span> to be called after Clink's edit
---- prompt ends (it is called after the <a href="#clink.oneditedit>onendedit</a>
+--- prompt ends (it is called after the <a href="#clink.oneditedit">onendedit</a>
 --- event).  The function receives a string argument containing the input text
 --- from the edit prompt.  The function returns up to two values.  If the first
 --- is not nil then it's a string that replaces the edit prompt text.  If the
