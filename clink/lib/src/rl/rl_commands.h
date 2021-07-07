@@ -46,6 +46,10 @@ int     clink_popup_complete_numbers(int count, int invoking_key);
 int     clink_popup_show_help(int count, int invoking_key);
 
 //------------------------------------------------------------------------------
+bool    point_in_select_complete(int in);
+int     clink_select_complete(int count, int invoking_key);
+
+//------------------------------------------------------------------------------
 void    cua_clear_selection();
 bool    cua_point_in_selection(int in);
 int     cua_selection_event_hook(int event);

@@ -95,3 +95,6 @@ private:
     T&      m_var;
     const T m_rollback;
 };
+
+//------------------------------------------------------------------------------
+template <class T> inline void suppress_unused_var(T var) {}

@@ -43,6 +43,8 @@ public:
     matches_iter            get_iter(const char* pattern) const;
 
     virtual unsigned int    get_match_count() const override;
+    virtual const char*     get_match(unsigned int index) const override;
+    virtual match_type      get_match_type(unsigned int index) const override;
     virtual bool            is_suppress_append() const override;
     virtual shadow_bool     is_filename_completion_desired() const override;
     virtual shadow_bool     is_filename_display_desired() const override;
@@ -56,8 +58,6 @@ public:
     bool                    is_regen_blocked() const { return m_regen_blocked; }
 
 private:
-    virtual const char*     get_match(unsigned int index) const override;
-    virtual match_type      get_match_type(unsigned int index) const override;
     virtual const char*     get_unfiltered_match(unsigned int index) const override;
     virtual match_type      get_unfiltered_match_type(unsigned int index) const override;
 
@@ -73,7 +73,7 @@ private:
     const match_info*       get_infos() const;
     match_info*             get_infos();
     void                    reset();
-    void                    coalesce(unsigned int count_hint);
+    void                    coalesce(unsigned int count_hint, bool restrict=false);
 
 private:
     class store_impl

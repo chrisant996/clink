@@ -10,6 +10,7 @@
 
 #include <core/array.h>
 #include <core/path.h>
+#include <core/match_wild.h>
 #include <core/str_compare.h>
 #include <core/settings.h>
 #include <terminal/ecma48_iter.h>
@@ -48,6 +49,28 @@ static unsigned int normal_selector(
         const char* name = infos[i].match;
         int j = str_compare(needle, name);
         infos[i].select = (j < 0 || !needle[j]);
+        ++select_count;
+    }
+
+    return select_count;
+}
+
+//------------------------------------------------------------------------------
+static unsigned int restrict_selector(
+    const char* needle,
+    match_info* infos,
+    int count)
+{
+    int needle_len = strlen(needle);
+
+    int select_count = 0;
+    for (int i = 0; i < count; ++i)
+    {
+        const char* match = infos[i].match;
+        int match_len = int(strlen(match));
+        while (match_len && path::is_separator((unsigned char)match[match_len - 1]))
+            match_len--;
+        infos[i].select = path::match_wild(str_iter(needle, needle_len), str_iter(match, match_len), !is_pathish(infos[i].type));
         ++select_count;
     }
 
@@ -113,8 +136,6 @@ inline bool sort_worker(wstr_base& l, match_type l_type,
 }
 
 //------------------------------------------------------------------------------
-//#define SORT_MATCH_PIPELINE
-#ifdef SORT_MATCH_PIPELINE // Unused.
 static void alpha_sorter(match_info* infos, int count)
 {
     int order = g_sort_dirs.get();
@@ -131,7 +152,6 @@ static void alpha_sorter(match_info* infos, int count)
 
     std::sort(infos, infos + count, predicate);
 }
-#endif
 
 //------------------------------------------------------------------------------
 static int _cdecl qsort_match_compare(const void* pv1, const void* pv2)
@@ -228,6 +248,39 @@ void match_pipeline::generate(
 }
 
 //------------------------------------------------------------------------------
+void match_pipeline::restrict(str_base& needle) const
+{
+    int count = m_matches.get_info_count();
+    unsigned int selected_count = 0;
+
+    char* expanded = nullptr;
+    if (rl_complete_with_tilde_expansion)
+    {
+        expanded = tilde_expand(needle.c_str());
+        if (expanded && strcmp(needle.c_str(), expanded) != 0)
+            needle = expanded;
+    }
+
+    if (count)
+        selected_count = restrict_selector(needle.c_str(), m_matches.get_infos(), count);
+
+    m_matches.coalesce(selected_count, true/*restrict*/);
+
+    // Trim any wildcards from needle.
+    str_iter iter(needle.c_str(), needle.length());
+    while (iter.more())
+    {
+        const char* ptr = iter.get_pointer();
+        int c = iter.next();
+        if (c == '*' || c == '?')
+        {
+            needle.truncate(int(ptr - needle.c_str()));
+            break;
+        }
+    }
+}
+
+//------------------------------------------------------------------------------
 void match_pipeline::select(const char* needle) const
 {
     int count = m_matches.get_info_count();
@@ -263,14 +316,17 @@ void match_pipeline::select(const char* needle) const
 //------------------------------------------------------------------------------
 void match_pipeline::sort() const
 {
-    // There is no point in sorting here.  Readline re-sorts whatever we do here
-    // anyway.  Unless sorting is turned off in Readline, in which case maybe we
-    // shouldn't be sorting here anyway.
-#ifdef SORT_MATCH_PIPELINE
+    // When Readline completion is used, there's no point in sorting here
+    // because Readline re-sorts whatever we do here anyway.  But when Clink
+    // completion is used (e.g. clink-select-complete), Readline isn't involved
+    // and Clink must sort here.
+
+    if (s_nosort)
+        return;
+
     int count = m_matches.get_match_count();
     if (!count)
         return;
 
     alpha_sorter(m_matches.get_infos(), count);
-#endif
 }

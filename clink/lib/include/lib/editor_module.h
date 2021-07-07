@@ -54,5 +54,6 @@ public:
     virtual void            on_begin_line(const context& context) = 0;
     virtual void            on_end_line() = 0;
     virtual void            on_input(const input& input, result& result, const context& context) = 0;
+    virtual void            on_matches_changed(const context& context, const line_state& line, const char* needle) = 0;
     virtual void            on_terminal_resize(int columns, int rows, const context& context) = 0;
 };

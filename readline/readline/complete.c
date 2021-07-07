@@ -151,8 +151,8 @@ static char *rl_quote_filename PARAMS((char *, int, char *));
 
 static void _rl_complete_sigcleanup PARAMS((int, void *));
 
-static void set_completion_defaults PARAMS((int));
 /* begin_clink_change */
+/*static*/ void set_completion_defaults PARAMS((int));
 /*static*/ int get_y_or_n PARAMS((int));
 /*static*/ int _rl_internal_pager PARAMS((int));
 /*static*/ char *printable_part PARAMS((char *));
@@ -170,15 +170,15 @@ static char **remove_duplicate_matches PARAMS((char **));
 static void insert_match PARAMS((char *, int, int, char *));
 /* begin_clink_change */
 //static int append_to_match PARAMS((char *, int, int, int));
-static int append_to_match PARAMS((char *, int, int, int, int));
+int append_to_match PARAMS((char *, int, int, int, int));
 /* end_clink_change */
 static void insert_all_matches PARAMS((char **, int, char *));
 static int complete_fncmp PARAMS((const char *, int, const char *, int));
 static void display_matches PARAMS((char **));
 static int compute_lcd_of_matches PARAMS((char **, int, const char *));
 static int postprocess_matches PARAMS((char ***, int));
-static int compare_match PARAMS((char *, const char *));
 /* begin_clink_change */
+/*static*/ int compare_match PARAMS((char *, const char *));
 /*static*/ int complete_get_screenwidth PARAMS((void));
 /* end_clink_change */
 
@@ -598,7 +598,10 @@ _rl_complete_sigcleanup (int sig, void *ptr)
 
 /* Set default values for readline word completion.  These are the variables
    that application completion functions can change or inspect. */
-static void
+/* begin_clink_change */
+//static void
+void
+/* end_clink_change */
 set_completion_defaults (int what_to_do)
 {
   /* Only the completion entry function can change these. */
@@ -2686,9 +2689,10 @@ insert_match (char *match, int start, int mtype, char *qc)
    (it's initially set to the what the user has chosen, indicated by the
    value of _rl_complete_mark_symlink_dirs, but may be modified by an
    application's completion function). */
-static int
 /* begin_clink_change */
+//static int
 //append_to_match (char *text, int delimiter, int quote_char, int nontrivial_match)
+int
 append_to_match (char *text, int orig_start, int delimiter, int quote_char, int nontrivial_match)
 /* end_clink_change */
 {
@@ -2879,7 +2883,9 @@ _rl_free_match_list (char **matches)
 /* Compare a possibly-quoted filename TEXT from the line buffer and a possible
    MATCH that is the product of filename completion, which acts on the dequoted
    text. */
-static int
+/* begin_clink_change */
+/*static*/ int
+/* end_clink_change */
 compare_match (char *text, const char *match)
 {
   char *temp;

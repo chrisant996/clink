@@ -83,6 +83,11 @@ void pager_impl::on_input(const input& input, result& result, const context& con
 }
 
 //------------------------------------------------------------------------------
+void pager_impl::on_matches_changed(const context& context, const line_state& line, const char* needle)
+{
+}
+
+//------------------------------------------------------------------------------
 void pager_impl::on_terminal_resize(int columns, int rows, const context& context)
 {
 }

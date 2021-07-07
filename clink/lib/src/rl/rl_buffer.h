@@ -24,6 +24,7 @@ public:
     virtual void            set_need_draw() override;
     virtual void            begin_undo_group() override;
     virtual void            end_undo_group() override;
+    virtual bool            undo() override;
 
 private:
     bool                    m_need_draw;

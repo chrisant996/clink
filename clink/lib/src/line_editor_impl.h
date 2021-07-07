@@ -10,6 +10,7 @@
 #include "terminal/input_idle.h"
 #include "terminal/key_tester.h"
 #include "pager_impl.h"
+#include "selectcomplete_impl.h"
 #include "line_editor.h"
 #include "line_state.h"
 #include "matches_impl.h"
@@ -68,6 +69,7 @@ public:
     virtual void        set_keyseq_len(int len) override;
 
     void                reset_generate_matches();
+    void                force_update_internal(bool restrict=false, bool sort=false);
 
 private:
     typedef editor_module                       module;
@@ -83,9 +85,11 @@ private:
         flag_init       = 1 << 0,
         flag_editing    = 1 << 1,
         flag_generate   = 1 << 2,
-        flag_select     = 1 << 3,
-        flag_done       = 1 << 4,
-        flag_eof        = 1 << 5,
+        flag_restrict   = 1 << 3,
+        flag_select     = 1 << 4,
+        flag_sort       = 1 << 5,
+        flag_done       = 1 << 6,
+        flag_eof        = 1 << 7,
     };
 
     struct key_t
@@ -132,6 +136,7 @@ private:
     matches_impl        m_matches;
     printer&            m_printer;
     pager_impl          m_pager;
+    selectcomplete_impl m_selectcomplete;
     key_t               m_prev_key;
     unsigned char       m_keys_size;
     unsigned char       m_flags = 0;

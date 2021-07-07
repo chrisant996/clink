@@ -755,6 +755,40 @@ static char* visible_part(char *match)
 }
 
 //------------------------------------------------------------------------------
+int printable_len(const char* match)
+{
+    const char* temp = printable_part(match);
+    int len = fnwidth(temp);
+
+    // If present, use the match type to determine whether there will be a
+    // visible stat character, and include it in the max length calculation.
+    if (rl_completion_matches_include_type)
+    {
+        int vis_stat = -1;
+        if (IS_MATCH_TYPE_DIR(match[0]) && (
+#if defined (VISIBLE_STATS)
+            rl_visible_stats ||
+#endif
+#if defined (COLOR_SUPPORT)
+            _rl_colored_stats ||
+#endif
+            _rl_complete_mark_directories))
+        {
+            char *sep = rl_last_path_separator(match);
+            vis_stat = (!sep || sep[1]);
+        }
+#if defined (VISIBLE_STATS)
+        else if (rl_visible_stats && rl_filename_display_desired)
+            vis_stat = stat_char (match + 1, match[0]);
+#endif
+        if (vis_stat > 0)
+            len++;
+    }
+
+    return len;
+}
+
+//------------------------------------------------------------------------------
 static void pad_filename(int len, int pad_to_width)
 {
     int num_spaces = 0;
@@ -1121,34 +1155,7 @@ done_filtered:
     // and find the maximum printed length of a single entry.
     for (max = 0, i = 1; matches[i]; i++)
     {
-        temp = printable_part(matches[i]);
-        len = fnwidth(temp);
-
-        // If present, use the match type to determine whether there will be a
-        // visible stat character, and include it in the max length calculation.
-        if (rl_completion_matches_include_type)
-        {
-            vis_stat = -1;
-            if (IS_MATCH_TYPE_DIR(matches[i][0]) && (
-#if defined (VISIBLE_STATS)
-                rl_visible_stats ||
-#endif
-#if defined (COLOR_SUPPORT)
-                _rl_colored_stats ||
-#endif
-                _rl_complete_mark_directories))
-            {
-                char *sep = rl_last_path_separator(matches[i]);
-                vis_stat = (!sep || sep[1]);
-            }
-#if defined (VISIBLE_STATS)
-            else if (rl_visible_stats && rl_filename_display_desired)
-                vis_stat = stat_char (matches[i] + 1, matches[i][0]);
-#endif
-            if (vis_stat > 0)
-                len++;
-        }
-
+        len = printable_len(matches[i]);
         if (len > max)
             max = len;
     }

@@ -105,3 +105,9 @@ void rl_buffer::end_undo_group()
 {
     rl_end_undo_group();
 }
+
+//------------------------------------------------------------------------------
+bool rl_buffer::undo()
+{
+    return !!rl_do_undo();
+}

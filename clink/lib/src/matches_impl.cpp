@@ -679,7 +679,7 @@ bool matches_impl::add_match(const match_desc& desc, bool already_normalized)
 }
 
 //------------------------------------------------------------------------------
-void matches_impl::coalesce(unsigned int count_hint)
+void matches_impl::coalesce(unsigned int count_hint, bool restrict)
 {
     match_info* infos = get_infos();
 
@@ -711,4 +711,7 @@ void matches_impl::coalesce(unsigned int count_hint)
 
     m_count = j;
     m_coalesced = true;
+
+    if (restrict)
+        m_infos.resize(j);
 }

@@ -23,4 +23,5 @@ extern rl_match_display_filter_func_t *rl_match_display_filter_func;
 extern const char *_rl_filtered_color;
 
 extern void free_filtered_matches(match_display_filter_entry** filtered_matches);
+extern int printable_len(const char* match);
 extern void display_matches(char **matches);

@@ -23,6 +23,7 @@ public:
     virtual bool            remove(unsigned int from, unsigned int to) = 0;
     virtual void            begin_undo_group() = 0;
     virtual void            end_undo_group() = 0;
+    virtual bool            undo() = 0;
     virtual void            draw() = 0;
     virtual void            redraw() = 0;
     virtual void            set_need_draw() = 0;

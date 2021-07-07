@@ -3,6 +3,7 @@
 
 #pragma once
 
+class str_base;
 class line_state;
 class match_generator;
 class matches_impl;
@@ -16,6 +17,7 @@ public:
     void                reset() const;
     void                set_nosort(bool nosort=true);
     void                generate(const line_state& state, const array<match_generator*>& generators) const;
+    void                restrict(str_base& needle) const;
     void                select(const char* needle) const;
     void                sort() const;
 

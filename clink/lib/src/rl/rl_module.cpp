@@ -541,7 +541,7 @@ static char get_face_func(int in, int active_begin, int active_end)
     if (in >= active_begin && in < active_end)
         return '1';
 
-    if (cua_point_in_selection(in))
+    if (cua_point_in_selection(in) || point_in_select_complete(in))
         return '#';
 
     if (s_classifications)
@@ -769,6 +769,35 @@ static void buffer_changing()
 }
 
 //------------------------------------------------------------------------------
+void update_rl_modes_from_matches(const matches* matches, const matches_iter& iter, int count)
+{
+    switch (matches->get_suppress_quoting())
+    {
+    case 1: rl_filename_quoting_desired = 0; break;
+    case 2: rl_completion_suppress_quote = 1; break;
+    }
+
+    rl_completion_suppress_append = matches->is_suppress_append();
+    if (matches->get_append_character())
+        rl_completion_append_character = matches->get_append_character();
+
+    rl_filename_completion_desired = iter.is_filename_completion_desired();
+    rl_filename_display_desired = iter.is_filename_display_desired();
+
+#ifdef DEBUG
+    if (dbg_get_env_int("DEBUG_MATCHES"))
+    {
+        printf("count = %d\n", count);
+        printf("filename completion desired = %d (%s)\n", rl_filename_completion_desired, iter.is_filename_completion_desired().is_explicit() ? "explicit" : "implicit");
+        printf("filename display desired = %d (%s)\n", rl_filename_display_desired, iter.is_filename_display_desired().is_explicit() ? "explicit" : "implicit");
+        printf("is suppress append = %d\n", matches->is_suppress_append());
+        printf("get append character = %u\n", (unsigned char)matches->get_append_character());
+        printf("get suppress quoting = %d\n", matches->get_suppress_quoting());
+    }
+#endif
+}
+
+//------------------------------------------------------------------------------
 static char** alternative_matches(const char* text, int start, int end)
 {
     rl_attempted_completion_over = 1;
@@ -874,30 +903,7 @@ static char** alternative_matches(const char* text, int start, int end)
     while (iter.next());
     matches[count + 1] = nullptr;
 
-    switch (s_matches->get_suppress_quoting())
-    {
-    case 1: rl_filename_quoting_desired = 0; break;
-    case 2: rl_completion_suppress_quote = 1; break;
-    }
-
-    rl_completion_suppress_append = s_matches->is_suppress_append();
-    if (s_matches->get_append_character())
-        rl_completion_append_character = s_matches->get_append_character();
-
-    rl_filename_completion_desired = iter.is_filename_completion_desired();
-    rl_filename_display_desired = iter.is_filename_display_desired();
-
-#ifdef DEBUG
-    if (debug_matches)
-    {
-        printf("count = %d\n", count);
-        printf("filename completion desired = %d (%s)\n", rl_filename_completion_desired, iter.is_filename_completion_desired().is_explicit() ? "explicit" : "implicit");
-        printf("filename display desired = %d (%s)\n", rl_filename_display_desired, iter.is_filename_display_desired().is_explicit() ? "explicit" : "implicit");
-        printf("is suppress append = %d\n", s_matches->is_suppress_append());
-        printf("get append character = %u\n", (unsigned char)s_matches->get_append_character());
-        printf("get suppress quoting = %d\n", s_matches->get_suppress_quoting());
-    }
-#endif
+    update_rl_modes_from_matches(s_matches, iter, count);
 
     return matches;
 }
@@ -1389,6 +1395,7 @@ rl_module::rl_module(const char* shell_name, terminal_in* input, const char* sta
         rl_add_funmap_entry("clink-old-menu-complete-numbers", clink_old_menu_complete_numbers);
         rl_add_funmap_entry("clink-old-menu-complete-numbers-backward", clink_old_menu_complete_numbers_backward);
         rl_add_funmap_entry("clink-popup-complete-numbers", clink_popup_complete_numbers);
+        rl_add_funmap_entry("clink-select-complete", clink_select_complete);
         rl_add_funmap_entry("cua-backward-char", cua_backward_char);
         rl_add_funmap_entry("cua-forward-char", cua_forward_char);
         rl_add_funmap_entry("cua-backward-word", cua_backward_word);
@@ -1805,6 +1812,21 @@ void rl_module::on_input(const input& input, result& result, const context& cont
                 s_history_search_pos = pos;
         }
 
+        // Capture the previous binding group.  This must be captured before
+        // Readline handles the input, so that Readline commands can set the
+        // binding group (e.g. clink-select-complete).
+        if (m_prev_group < 0)
+        {
+            m_prev_group = result.set_bind_group(0);
+            result.set_bind_group(m_prev_group);
+        }
+
+        // Always make sure result has the real prev group, so that Readline
+        // commands can get the real prev group (not m_catch_group).
+        if (m_prev_group >= 0)
+            result.set_bind_group(m_prev_group);
+
+        // Let Readline handle the next input char.
         --len;
         rl_callback_read_char();
 
@@ -1856,14 +1878,20 @@ void rl_module::on_input(const input& input, result& result, const context& cont
     // Check if Readline wants more input or if we're done.
     if (rl_readline_state & RL_MORE_INPUT_STATES)
     {
-        if (m_prev_group < 0)
-            m_prev_group = result.set_bind_group(m_catch_group);
+        assert(m_prev_group >= 0);
+        int group = result.set_bind_group(m_catch_group);
+        assert(group == m_prev_group || group == m_catch_group);
+        suppress_unused_var(group);
     }
     else if (m_prev_group >= 0)
     {
-        result.set_bind_group(m_prev_group);
         m_prev_group = -1;
     }
+}
+
+//------------------------------------------------------------------------------
+void rl_module::on_matches_changed(const context& context, const line_state& line, const char* needle)
+{
 }
 
 //------------------------------------------------------------------------------

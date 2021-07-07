@@ -146,6 +146,15 @@ void reset_generate_matches()
 }
 
 //------------------------------------------------------------------------------
+void force_update_internal(bool restrict, bool sort)
+{
+    if (!s_editor)
+        return;
+
+    s_editor->force_update_internal(restrict, sort);
+}
+
+//------------------------------------------------------------------------------
 void update_matches()
 {
     if (!s_editor)
@@ -154,6 +163,7 @@ void update_matches()
     s_editor->update_matches();
 }
 
+//------------------------------------------------------------------------------
 void set_prompt(const char* prompt)
 {
     if (!s_editor)
@@ -208,9 +218,11 @@ line_editor_impl::line_editor_impl(const desc& desc)
 , m_matches(&m_generators)
 , m_printer(*desc.printer)
 , m_pager(*this)
+, m_selectcomplete(*this)
 {
     add_module(m_module);
     add_module(m_pager);
+    add_module(m_selectcomplete);
 
     desc.input->set_key_tester(this);
 }
@@ -406,16 +418,28 @@ void line_editor_impl::reset_generate_matches()
 }
 
 //------------------------------------------------------------------------------
+void line_editor_impl::force_update_internal(bool restrict, bool sort)
+{
+    update_internal();
+    if (restrict) set_flag(flag_restrict);
+    if (sort) set_flag(flag_sort);
+}
+
+//------------------------------------------------------------------------------
 void line_editor_impl::update_matches()
 {
     // Get flag states because we're about to clear them.
     bool generate = check_flag(flag_generate);
+    bool restrict = check_flag(flag_restrict);
     bool select = check_flag(flag_select);
+    bool sort = check_flag(flag_sort);
 
     // Clear flag states before running generators, so that generators can use
     // reset_generate_matches().
     clear_flag(flag_generate);
+    clear_flag(flag_restrict);
     clear_flag(flag_select);
+    clear_flag(flag_sort);
 
     if (generate)
     {
@@ -425,11 +449,48 @@ void line_editor_impl::update_matches()
         pipeline.generate(line, m_generators);
     }
 
-    if (select)
+    if (restrict)
+    {
+        match_pipeline pipeline(m_matches);
+
+        // Strip quotes so `"foo\"ba` can complete to `"foo\bar"`.  Stripping
+        // quotes may seem surprising, but it's what CMD does and it works well.
+        str<> tmp;
+        concat_strip_quotes(tmp, m_needle.c_str(), m_needle.length());
+
+        if (rl_complete_with_tilde_expansion)
+        {
+            char* expanded = tilde_expand(tmp.c_str());
+            if (expanded && strcmp(tmp.c_str(), expanded) != 0)
+            {
+                bool add_sep = (tmp.c_str()[0] == '~' && tmp.c_str()[1] == '\0');
+                tmp = expanded;
+                if (add_sep)
+                    path::append(tmp, "");
+            }
+            free(expanded);
+        }
+
+        m_needle = tmp.c_str();
+        m_needle.concat("*", 1);
+        pipeline.restrict(m_needle);
+    }
+
+    if (select || sort)
     {
         match_pipeline pipeline(m_matches);
         pipeline.select(m_needle.c_str());
-        pipeline.sort();
+        if (sort)
+            pipeline.sort();
+    }
+
+    // Tell all the modules that the matches changed.
+    if (generate || restrict || select || sort)
+    {
+        line_state line = get_linestate();
+        editor_module::context context = get_context();
+        for (auto module : m_modules)
+            module->on_matches_changed(context, line, m_needle.c_str());
     }
 }
 
@@ -1031,13 +1092,18 @@ void line_editor_impl::update_internal()
         int len = int(end_word.get_pointer() + end_word.length() - line.get_line());
         if (!m_prev_generate.equals(line.get_line(), len))
         {
-            match_pipeline pipeline(m_matches);
-            pipeline.reset();
-            // Defer generating until update_matches().  Must set word break
-            // position in the meantime because adjust_completion_word() gets
-            // called before the deferred generate().
-            set_flag(flag_generate);
-            m_matches.set_word_break_position(line.get_end_word_offset());
+            // While clink-select-complete is active, generating must be blocked
+            // otherwise it will constantly generate in response to every input.
+            if (!m_selectcomplete.is_active())
+            {
+                match_pipeline pipeline(m_matches);
+                pipeline.reset();
+                // Defer generating until update_matches().  Must set word break
+                // position in the meantime because adjust_completion_word()
+                // gets called before the deferred generate().
+                set_flag(flag_generate);
+                m_matches.set_word_break_position(line.get_end_word_offset());
+            }
             update_prev_generate = len;
         }
     }
@@ -1077,6 +1143,7 @@ void line_editor_impl::update_internal()
         reset_generate_matches();
 }
 
+//------------------------------------------------------------------------------
 void line_editor_impl::before_display()
 {
     assert(s_editor);
@@ -1084,6 +1151,7 @@ void line_editor_impl::before_display()
         s_editor->classify();
 }
 
+//------------------------------------------------------------------------------
 matches* maybe_regenerate_matches(const char* needle, bool popup)
 {
     if (!s_editor || s_editor->m_matches.is_regen_blocked())
@@ -1123,7 +1191,12 @@ matches* maybe_regenerate_matches(const char* needle, bool popup)
 #endif
 
     pipeline.select(needle);
+    // Sorting should be skipped for Readline completion, but should occur for
+    // Clink completion (e.g. clink-select-complete).
+TODO("SELECT-COMPLETE -- sort regenerated matches");
+#if 0
     pipeline.sort();
+#endif
 
 #ifdef DEBUG
     if (debug_filter)

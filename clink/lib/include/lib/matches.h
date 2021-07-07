@@ -119,6 +119,8 @@ class matches
 public:
     virtual matches_iter    get_iter(const char* pattern = nullptr) const = 0;
     virtual unsigned int    get_match_count() const = 0;
+    virtual const char*     get_match(unsigned int index) const = 0;
+    virtual match_type      get_match_type(unsigned int index) const = 0;
     virtual bool            is_suppress_append() const = 0;
     virtual shadow_bool     is_filename_completion_desired() const = 0;
     virtual shadow_bool     is_filename_display_desired() const = 0;
@@ -129,8 +131,6 @@ public:
 
 private:
     friend class matches_iter;
-    virtual const char*     get_match(unsigned int index) const = 0;
-    virtual match_type      get_match_type(unsigned int index) const = 0;
     virtual const char*     get_unfiltered_match(unsigned int index) const { return nullptr; }
     virtual match_type      get_unfiltered_match_type(unsigned int index) const { return match_type::none; }
 };
