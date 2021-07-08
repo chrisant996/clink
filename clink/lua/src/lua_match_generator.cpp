@@ -134,7 +134,10 @@ static int plainify(const char* s, bool strip)
     while (const ecma48_code& code = iter.next())
         if (code.get_type() == ecma48_code::type_chars)
         {
-            visible_len += code.get_length();
+            str_iter inner_iter(code.get_pointer(), code.get_length());
+            while (int c = inner_iter.next())
+                visible_len += clink_wcwidth(c);
+
             if (strip)
             {
                 const char *ptr = code.get_pointer();
