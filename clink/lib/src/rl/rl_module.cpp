@@ -170,6 +170,12 @@ static setting_color g_color_filtered(
     "The default color for filtered completions.",
     "bold");
 
+static setting_color g_color_selected(
+    "color.selected_completion",
+    "Selected completion color",
+    "The color for the selected completion with the clink-select-complete command.",
+    "sgr 1;7");
+
 static setting_color g_color_argmatcher(
     "color.argmatcher",
     "Argmatcher color",
@@ -1672,6 +1678,7 @@ void rl_module::on_begin_line(const context& context)
     _rl_command_color = build_color_sequence(g_color_cmd, m_command_color);
     _rl_alias_color = build_color_sequence(g_color_doskey, m_alias_color);
     _rl_filtered_color = build_color_sequence(g_color_filtered, m_filtered_color, true);
+    _rl_selected_color = build_color_sequence(g_color_selected, m_selected_color);
 
     if (!s_selection_color && s_input_color)
     {
@@ -1745,6 +1752,7 @@ void rl_module::on_end_line()
     _rl_command_color = nullptr;
     _rl_alias_color = nullptr;
     _rl_filtered_color = nullptr;
+    _rl_selected_color = nullptr;
 
     // This prevents any partial Readline state leaking from one line to the next
     rl_readline_state &= ~RL_MORE_INPUT_STATES;

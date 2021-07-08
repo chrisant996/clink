@@ -79,6 +79,7 @@ extern void qsort_match_list (char** matches, int len);
 //------------------------------------------------------------------------------
 rl_match_display_filter_func_t *rl_match_display_filter_func = NULL;
 const char *_rl_filtered_color = NULL;
+const char *_rl_selected_color = NULL;
 
 
 
@@ -92,7 +93,7 @@ static const int _normal_color_len = 3;
 static const int desc_sep_padding = 4;
 
 //------------------------------------------------------------------------------
-static void reset_tmpbuf (void)
+void reset_tmpbuf (void)
 {
     tmpbuf_ptr = tmpbuf_allocated;
     tmpbuf_length = 0;
@@ -141,7 +142,7 @@ static void append_tmpbuf_string(const char* s, int len)
 }
 
 //------------------------------------------------------------------------------
-static void flush_tmpbuf(void)
+void flush_tmpbuf(void)
 {
     if (tmpbuf_length)
     {
@@ -434,6 +435,15 @@ static void append_colored_prefix_end(void)
 {
     append_colored_stat_end();
 }
+
+static void append_selection_color(void)
+{
+    if (is_colored(C_NORM))
+        append_default_color();
+    append_color_indicator(C_LEFT);
+    append_tmpbuf_string(_rl_selected_color ? _rl_selected_color : "7", -1);
+    append_color_indicator(C_RIGHT);
+}
 #endif
 
 //------------------------------------------------------------------------------
@@ -453,7 +463,7 @@ path_isdir(const char *filename)
 
 
 //------------------------------------------------------------------------------
-static int fnappend(const char *to_print, int prefix_bytes, const char *real_pathname, unsigned char match_type)
+static int fnappend(const char *to_print, int prefix_bytes, const char *real_pathname, unsigned char match_type, int selected)
 {
     int printed_len, w;
     const char *s;
@@ -482,22 +492,31 @@ static int fnappend(const char *to_print, int prefix_bytes, const char *real_pat
         prefix_bytes = 0;
 
 #if defined(COLOR_SUPPORT)
-    if (_rl_colored_stats && (prefix_bytes == 0 || _rl_colored_completion_prefix <= 0))
-        append_colored_stat_start(real_pathname, match_type);
+    if (_rl_colored_stats)
+    {
+        if (selected)
+            append_selection_color();
+        else if (prefix_bytes == 0 || _rl_colored_completion_prefix <= 0)
+            append_colored_stat_start(real_pathname, match_type);
+    }
 #endif
 
     if (prefix_bytes && _rl_completion_prefix_display_length > 0)
     {
         char ellipsis = (to_print[prefix_bytes] == '.') ? '_' : '.';
 #if defined(COLOR_SUPPORT)
-        append_colored_prefix_start();
+        if (!selected)
+            append_colored_prefix_start();
 #endif
         for (int i = ELLIPSIS_LEN; i--;)
             append_tmpbuf_char(ellipsis);
 #if defined(COLOR_SUPPORT)
-        append_colored_prefix_end();
-        if (_rl_colored_stats)
-            append_colored_stat_start(real_pathname, match_type); // XXX - experiment
+        if (!selected)
+        {
+            append_colored_prefix_end();
+            if (_rl_colored_stats)
+                append_colored_stat_start(real_pathname, match_type); // XXX - experiment
+        }
 #endif
         printed_len = ELLIPSIS_LEN;
     }
@@ -507,7 +526,8 @@ static int fnappend(const char *to_print, int prefix_bytes, const char *real_pat
         common_prefix_len = prefix_bytes;
         prefix_bytes = 0;
         // Print color indicator start here.
-        append_colored_prefix_start();
+        if (!selected)
+            append_colored_prefix_start();
     }
 #endif
 
@@ -564,9 +584,12 @@ static int fnappend(const char *to_print, int prefix_bytes, const char *real_pat
 #if defined(COLOR_SUPPORT)
             // printed bytes = s - to_print
             // printed bytes should never be > but check for paranoia's sake
-            append_colored_prefix_end();
-            if (_rl_colored_stats)
-                append_colored_stat_start(real_pathname, match_type); // XXX - experiment
+            if (!selected)
+            {
+                append_colored_prefix_end();
+                if (_rl_colored_stats)
+                    append_colored_stat_start(real_pathname, match_type); // XXX - experiment
+            }
 #endif
             common_prefix_len = 0;
         }
@@ -574,7 +597,7 @@ static int fnappend(const char *to_print, int prefix_bytes, const char *real_pat
 
 #if defined (COLOR_SUPPORT)
     // XXX - unconditional for now.
-    if (_rl_colored_stats)
+    if (_rl_colored_stats && !selected)
         append_colored_stat_end();
 #endif
 
@@ -584,13 +607,13 @@ static int fnappend(const char *to_print, int prefix_bytes, const char *real_pat
 // Print filename.  If VISIBLE_STATS is defined and we are using it, check for
 // and output a single character for 'special' filenames.  Return the number of
 // characters we output.
-static int append_filename(char* to_print, char* full_pathname, int prefix_bytes)
+int append_filename(char* to_print, const char* full_pathname, int prefix_bytes, unsigned char type, int selected)
 {
     int printed_len, extension_char, slen, tlen;
     char *s, c, *new_full_pathname, *dn;
     char tmp_slash[3];
 
-    unsigned char match_type = (rl_completion_matches_include_type ? full_pathname[0] : 0);
+    unsigned char match_type = (rl_completion_matches_include_type ? full_pathname[0] : type);
     int filename_display_desired = rl_filename_display_desired || IS_MATCH_TYPE_DIR(match_type);
     if (rl_completion_matches_include_type)
         full_pathname++;
@@ -600,7 +623,7 @@ static int append_filename(char* to_print, char* full_pathname, int prefix_bytes
     // Defer printing if we want to prefix with a color indicator.
     if (_rl_colored_stats == 0 || filename_display_desired == 0)
 #endif
-        printed_len = fnappend(to_print, prefix_bytes, to_print, match_type);
+        printed_len = fnappend(to_print, prefix_bytes, to_print, match_type, selected);
 
     if (filename_display_desired && (
 #if defined (VISIBLE_STATS)
@@ -684,7 +707,7 @@ static int append_filename(char* to_print, char* full_pathname, int prefix_bytes
             // Move colored-stats code inside fnappend()
 #if defined(COLOR_SUPPORT)
             if (_rl_colored_stats)
-                printed_len = fnappend(to_print, prefix_bytes, new_full_pathname, match_type);
+                printed_len = fnappend(to_print, prefix_bytes, new_full_pathname, match_type, selected);
 #endif
 
             xfree(new_full_pathname);
@@ -705,7 +728,7 @@ static int append_filename(char* to_print, char* full_pathname, int prefix_bytes
             // Move colored-stats code inside fnappend()
 #if defined (COLOR_SUPPORT)
             if (_rl_colored_stats)
-                printed_len = fnappend(to_print, prefix_bytes, s, match_type);
+                printed_len = fnappend(to_print, prefix_bytes, s, match_type, selected);
 #endif
         }
 
@@ -725,14 +748,15 @@ static int append_filename(char* to_print, char* full_pathname, int prefix_bytes
             if (_rl_colored_stats && extension_char == rl_preferred_path_separator)
             {
                 s = tilde_expand(full_pathname);
-                append_colored_stat_start(s, match_type);
+                if (!selected)
+                    append_colored_stat_start(s, match_type);
                 xfree(s);
             }
 #endif
             append_tmpbuf_char(extension_char);
             printed_len++;
 #if defined(COLOR_SUPPORT)
-            if (_rl_colored_stats && extension_char == rl_preferred_path_separator)
+            if (_rl_colored_stats && !selected && extension_char == rl_preferred_path_separator)
                 append_colored_stat_end();
 #endif
         }
@@ -789,7 +813,7 @@ int printable_len(const char* match)
 }
 
 //------------------------------------------------------------------------------
-static void pad_filename(int len, int pad_to_width)
+void pad_filename(int len, int pad_to_width, int selected)
 {
     int num_spaces = 0;
     if (pad_to_width <= len)
@@ -800,7 +824,7 @@ static void pad_filename(int len, int pad_to_width)
         return;
 
 #if defined(COLOR_SUPPORT)
-    if (_rl_colored_stats)
+    if (_rl_colored_stats && !selected)
         append_default_color();
 #endif
 
@@ -812,6 +836,11 @@ static void pad_filename(int len, int pad_to_width)
         append_tmpbuf_string(spaces, min(num_spaces, spaces_bytes));
         num_spaces -= spaces_bytes;
     }
+
+#if defined(COLOR_SUPPORT)
+    if (_rl_colored_stats && selected)
+        append_default_color();
+#endif
 }
 
 //------------------------------------------------------------------------------
@@ -901,11 +930,11 @@ static int display_match_list_internal(char **matches, int len, int max, bool on
                 break;
 
             temp = printable_part(matches[l]);
-            printed_len = append_filename(temp, matches[l], sind);
+            printed_len = append_filename(temp, matches[l], sind, 0, 0);
             l += minor_stride;
 
             if (j + 1 < limit && l <= len && matches[l])
-                pad_filename(printed_len, max);
+                pad_filename(printed_len, max, 0);
         }
 #if defined(COLOR_SUPPORT)
         if (_rl_colored_stats)
@@ -1019,7 +1048,7 @@ static int display_filtered_match_list_internal(match_display_filter_entry **mat
             if (show_descriptions && matches[l]->description)
             {
                 int fixed = abs(matches[0]->visible_display) + desc_sep_padding;
-                pad_filename(printed_len, fixed);
+                pad_filename(printed_len, fixed, 0);
                 printed_len = fixed + entry->visible_description;
                 append_tmpbuf_string(entry->description, -1);
             }
@@ -1027,7 +1056,7 @@ static int display_filtered_match_list_internal(match_display_filter_entry **mat
             l += minor_stride;
 
             if (j + 1 < limit && l <= len && matches[l])
-                pad_filename(printed_len, max);
+                pad_filename(printed_len, max, 0);
         }
         append_default_color();
         append_color_indicator(C_CLR_TO_EOL);
@@ -1144,7 +1173,7 @@ done_filtered:
         temp = printable_part(matches[0]);
         rl_crlf();
         reset_tmpbuf();
-        append_filename(temp, matches[0], 0);
+        append_filename(temp, matches[0], 0, 0, 0);
         fwrite(tmpbuf_allocated, tmpbuf_length, 1, rl_outstream);
         rl_crlf();
 

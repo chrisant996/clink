@@ -21,6 +21,13 @@ typedef match_display_filter_entry** rl_match_display_filter_func_t(char**);
 extern rl_match_display_filter_func_t *rl_match_display_filter_func;
 
 extern const char *_rl_filtered_color;
+extern const char *_rl_selected_color;
+
+extern void reset_tmpbuf(void);
+extern void flush_tmpbuf(void);
+// type is ignored when rl_completion_matches_include_type is set.
+extern int append_filename(char* to_print, const char* full_pathname, int prefix_bytes, unsigned char type, int selected);
+extern void pad_filename(int len, int pad_to_width, int selected);
 
 extern void free_filtered_matches(match_display_filter_entry** filtered_matches);
 extern int printable_len(const char* match);

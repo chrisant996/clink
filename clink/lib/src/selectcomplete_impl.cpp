@@ -26,6 +26,7 @@ extern "C" {
 #include <readline/colors.h>
 int compare_match(char* text, const char* match);
 int append_to_match(char* text, int orig_start, int delimiter, int quote_char, int nontrivial_match);
+char* printable_part(char* text);
 void set_completion_defaults(int what_to_do);
 int get_y_or_n(int for_pager);
 extern int _rl_last_v_pos;
@@ -57,6 +58,11 @@ enum {
     bind_id_selectcomplete_escape,
 
     bind_id_selectcomplete_catchall,
+};
+
+//------------------------------------------------------------------------------
+enum {
+    between_cols = 2,
 };
 
 
@@ -108,10 +114,12 @@ cant_activate:
         return false;
     }
 
-TODO("SELECT-COMPLETE -- cancel if no room to display");
+    // Make sure there's room.
+    update_layout();
+    if (m_visible_rows <= 0)
+        goto cant_activate;
 
     // Prompt if too many.
-    update_layout();
     if (rl_completion_auto_query_items ?
         (m_match_rows >= (_rl_screenheight - 1)) :
         (rl_completion_query_items > 0 && m_matches->get_match_count() >= rl_completion_query_items))
@@ -166,12 +174,15 @@ TODO("SELECT-COMPLETE -- cancel if no room to display");
     // Insert first match.
     bool only_one = (m_matches->get_match_count() == 1);
     m_point = m_buffer->get_cursor();
+    m_top = 0;
     m_index = 0;
     insert_match(only_one/*final*/);
 
     // If there's only one match, then we're done.
     if (only_one)
         cancel(result);
+    else
+        update_display();
 
     return true;
 }
@@ -235,18 +246,28 @@ void selectcomplete_impl::on_input(const input& input, result& result, const con
 {
     assert(is_active());
 
+    bool sort = false;
+
     // Convert double Backspace into Escape.
     if (input.id != bind_id_selectcomplete_backspace)
         m_was_backspace = false;
     else if (m_was_backspace)
         goto revert;
 
-    bool sort = false;
+    // Cancel if no matches (which shouldn't be able to happen here).
     int count = m_matches->get_match_count();
     if (!count)
     {
         assert(count);
         cancel(result);
+        return;
+    }
+
+    // Cancel if no room.
+    if (m_visible_rows <= 0)
+    {
+        cancel(result);
+        result.pass();
         return;
     }
 
@@ -259,6 +280,7 @@ next:
         if (m_index >= count)
             m_index = _rl_menu_complete_wraparound ? 0 : count - 1;
 navigated:
+TODO("SELECT-COMPLETE -- top");
         insert_match();
         update_display();
         break;
@@ -400,6 +422,7 @@ revert:
             {
                 m_needle.concat(input.keys, input.len);
 update_needle:
+                m_top = 0;
                 m_index = 0;
                 insert_needle();
                 update_matches(false/*restrict*/, sort);
@@ -421,6 +444,7 @@ update_needle:
 //------------------------------------------------------------------------------
 void selectcomplete_impl::on_matches_changed(const context& context, const line_state& line, const char* needle)
 {
+    m_top = 0;
     m_index = 0;
     m_anchor = line.get_end_word_offset();
 
@@ -460,6 +484,8 @@ void selectcomplete_impl::cancel(editor_module::result& result)
     m_prev_bind_group = -1;
 
     reset_generate_matches();
+
+    update_display();
 }
 
 //------------------------------------------------------------------------------
@@ -493,6 +519,9 @@ void selectcomplete_impl::update_matches(bool restrict, bool sort)
     // Find lcd when starting a new interactive completion.
     if (restrict)
     {
+        // Using m_matches directly means match types are separate from matches.
+        rollback<int> rb(rl_completion_matches_include_type, 0);
+
         m_match_longest = 0;
 
         bool first = true;
@@ -541,17 +570,99 @@ void selectcomplete_impl::update_len()
 //------------------------------------------------------------------------------
 void selectcomplete_impl::update_layout()
 {
-    int cols_that_fit = m_screen_cols / (m_match_longest + 2);
+    int slop_rows = 2;
+
+    int cols_that_fit = m_screen_cols / (m_match_longest + between_cols);
     m_match_cols = max<int>(1, cols_that_fit);
     m_match_rows = (m_matches->get_match_count() + (m_match_cols - 1)) / m_match_cols;
-TODO("SELECT-COMPLETE -- calculate displayable rows");
+
+    int input_height = (_rl_vis_botlin + 1) + (m_match_longest + m_screen_cols - 1) / m_screen_cols;
+    m_visible_rows = m_screen_rows - input_height - slop_rows;
+    if (m_visible_rows < 8)
+        m_visible_rows = 0;
 }
 
 //------------------------------------------------------------------------------
 void selectcomplete_impl::update_display()
 {
-TODO("SELECT-COMPLETE -- update display of matches");
+    if (m_visible_rows > 0)
+    {
+        CONSOLE_SCREEN_BUFFER_INFO csbi;
+        HANDLE h = GetStdHandle(STD_OUTPUT_HANDLE);
+        GetConsoleScreenBufferInfo(h, &csbi);
+        COORD restore = csbi.dwCursorPosition;
+
+        // Using m_matches directly means match types are separate from matches.
+        rollback<int> rb(rl_completion_matches_include_type, 0);
+
+        // Move cursor after the input line.
+        const int vpos = _rl_last_v_pos;
+        _rl_move_vert(_rl_vis_botlin);
+
 TODO("SELECT-COMPLETE -- when possible, only update old selected and new selected");
+
+        // Display matches.
+        int up = 0;
+        if (is_active())
+        {
+            const int count = m_matches->get_match_count();
+            const int rows = min<int>(m_match_rows, m_visible_rows);
+            const int major_stride = _rl_print_completions_horizontally ? m_match_cols : 1;
+            const int minor_stride = _rl_print_completions_horizontally ? 1 : m_match_rows;
+            const int col_width = min<int>(m_match_longest, max<int>(m_screen_cols - between_cols, 1));
+            for (int row = 0; row < rows; row++)
+            {
+                int i = row * major_stride;
+                if (i >= count)
+                    break;
+
+                rl_crlf();
+                up++;
+
+                reset_tmpbuf();
+                for (int col = 0; col < m_match_cols; col++)
+                {
+                    if (i >= count)
+                        break;
+
+                    const int selected = (i == m_index);
+                    const char* const match = m_matches->get_match(i);
+                    char* const temp = printable_part(const_cast<char*>(match));
+                    const int printed_len = append_filename(temp, match, 0, static_cast<unsigned char>(m_matches->get_match_type(i)), selected);
+                    i += minor_stride;
+
+                    if (selected || (col + 1 < m_match_cols && i < count))
+                        pad_filename(printed_len, col_width + between_cols, selected);
+                }
+                flush_tmpbuf();
+
+                // Clear to end of line.
+                m_printer->print("\x1b[K");
+            }
+        }
+        else
+        {
+            // Move cursor to end of last input line.
+            str<16> s;
+            s.format("\x1b[%dG", m_screen_cols + 1);
+            m_printer->print(s.c_str(), s.length());
+        }
+
+        // Clear to end of screen.
+        m_printer->print("\x1b[J");
+
+        // Restore cursor position.
+        if (up > 0)
+        {
+            str<16> s;
+            s.format("\x1b[%dA", up);
+            m_printer->print(s.c_str(), s.length());
+        }
+        _rl_move_vert(vpos);
+        GetConsoleScreenBufferInfo(h, &csbi);
+        restore.Y = csbi.dwCursorPosition.Y;
+        SetConsoleCursorPosition(h, restore);
+    }
 }
 
 //------------------------------------------------------------------------------

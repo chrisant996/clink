@@ -55,6 +55,7 @@ private:
     int             m_screen_rows = 0;
     int             m_match_cols = 0;
     int             m_match_rows = 0;
+    int             m_visible_rows = 0;
 
     // Inserting matches.
     int             m_anchor = -1;
@@ -64,6 +65,7 @@ private:
     bool            m_quoted = false;
 
     // Current match index.
+    int             m_top = 0;
     int             m_index = 0;
 
     // Current input.

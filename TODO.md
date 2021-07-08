@@ -5,12 +5,14 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 # IMPROVEMENTS
 
 ## High Priority
+- `clink-select-complete` command (interactive completion).
+  - Match display filtering.
+  - Scrolling.
+  - Efficient update display.
 
 ## Medium Priority
 
 ## Low Priority
-- **Interactive completion.**  Similar to <kbd>Ctrl</kbd>+<kbd>Space</kbd> in Powershell and `menu-select` in zsh, etc.  The edge cases can get weird...
-  - Oh but the new `clink.onfiltermatches()` might be even better since it enables integration with custom completion filters (e.g. `fzf`).
 
 ## Tests
 
