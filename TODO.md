@@ -5,7 +5,6 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 # IMPROVEMENTS
 
 ## High Priority
-- `clink-select-complete` garbles the display when inserting a match extends the bottom line.
 - Match display filtering for `clink-select-complete` command.
 
 ## Medium Priority

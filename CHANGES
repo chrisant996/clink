@@ -5,6 +5,7 @@
 #### v1.2.19
 
 - Added `clink-select-complete` command which shows an interactive list of possible completions.
+- Added terminal emulation for CGI G, CSI s, and CSI u sequences.
 - Fixed column alignment for match display filtering when some characters take more than one cell to display.
 
 #### v1.2.18
