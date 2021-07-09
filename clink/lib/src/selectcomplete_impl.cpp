@@ -433,23 +433,30 @@ prev:
 delete_completion:
         insert_needle();
         cancel(result);
+        m_inserted = false; // A subsequent activation should not resume.
         break;
 
     case bind_id_selectcomplete_space:
-pass_through_at_end:
-        m_buffer->set_cursor(m_point + m_len + m_quoted); // Past quotes, if any.
+        insert_match(2/*final*/);
         cancel(result);
-        result.pass();
+        m_inserted = false; // A subsequent activation should not resume.
         break;
 
     case bind_id_selectcomplete_enter:
         insert_match(true/*final*/);
         cancel(result);
+        m_inserted = false; // A subsequent activation should not resume.
         break;
 
     case bind_id_selectcomplete_slash:
         if (is_match_type(m_matches->get_match_type(m_index), match_type::dir))
-            goto pass_through_at_end;
+        {
+            m_buffer->set_cursor(m_point + m_len + m_quoted); // Past quotes, if any.
+            cancel(result);
+            m_inserted = false; // A subsequent activation should not resume.
+            result.pass();
+            break;
+        }
         m_needle.concat("/");
         goto delete_completion;
     case bind_id_selectcomplete_backslash:
@@ -457,6 +464,7 @@ pass_through_at_end:
         {
             m_buffer->set_cursor(m_point + m_len); // Inside quotes, if any.
             cancel(result);
+            m_inserted = false; // A subsequent activation should not resume.
             break;
         }
         m_needle.concat("\\");
@@ -481,8 +489,7 @@ revert:
 
     case bind_id_selectcomplete_catchall:
         {
-            bool selfinsert = true;
-
+            // Figure out whether the input is text to be inserted.
             {
                 str_iter iter(input.keys, input.len);
                 while (iter.more())
@@ -490,31 +497,25 @@ revert:
                     unsigned int c = iter.next();
                     if (c < ' ' || c == 0x7f)
                     {
-                        selfinsert = false;
-                        break;
+                        cancel(result);
+                        result.pass();
+                        return;
                     }
                 }
             }
 
-            if (selfinsert)
-            {
-                m_needle.concat(input.keys, input.len);
+            // Insert the text.
+            m_needle.concat(input.keys, input.len);
 update_needle:
-                m_top = 0;
-                m_index = 0;
-                m_prev_displayed = -1;
-                insert_needle();
-                update_matches(false/*restrict*/, sort);
-                if (m_matches->get_match_count())
-                    insert_match();
-                else
-                    cancel(result);
-            }
+            m_top = 0;
+            m_index = 0;
+            m_prev_displayed = -1;
+            insert_needle();
+            update_matches(false/*restrict*/, sort);
+            if (m_matches->get_match_count())
+                insert_match();
             else
-            {
                 cancel(result);
-                result.pass();
-            }
         }
         break;
     }
@@ -831,7 +832,7 @@ void selectcomplete_impl::insert_needle()
 }
 
 //------------------------------------------------------------------------------
-void selectcomplete_impl::insert_match(bool final)
+void selectcomplete_impl::insert_match(int final)
 {
     assert(is_active());
 
@@ -846,6 +847,7 @@ void selectcomplete_impl::insert_match(bool final)
 
     assert(m_index < m_matches->get_match_count());
     const char* match = m_matches->get_match(m_index);
+    match_type type = m_matches->get_match_type(m_index);
 
     char qs[2] = {};
     if (match &&
@@ -866,20 +868,80 @@ void selectcomplete_impl::insert_match(bool final)
     m_buffer->set_cursor(m_anchor);
     m_buffer->insert(qs);
     m_buffer->insert(match);
-    m_buffer->insert(qs);
-    m_point = m_anchor + strlen(qs) + m_needle.length();
     if (final)
     {
         int nontrivial_lcd = compare_match(const_cast<char*>(m_needle.c_str()), match);
-        append_to_match(const_cast<char*>(match), m_anchor, m_delimiter, *qs, nontrivial_lcd);
+        str<> match_with_type;
+        match_with_type.concat(" ");
+        match_with_type.concat(match);
+        *match_with_type.data() = static_cast<unsigned char>(type);
+
+        rollback<int> rb(rl_completion_matches_include_type, true);
+        // UGLY: append_to_match() circumvents the m_buffer abstraction.
+        append_to_match(match_with_type.data(), m_anchor + !!*qs, m_delimiter, *qs, nontrivial_lcd);
+        m_point = m_buffer->get_cursor();
+        m_buffer->insert(qs);
+
+        // Pressing Space to insert a final match needs to maybe add a quote,
+        // and then maybe add a space, depending on what append_to_match did.
+        if (final == 2)
+        {
+            // A space may or may not be present.  Delete it if one is.
+            const int cursor = m_buffer->get_cursor();
+            if (cursor && m_buffer->get_buffer()[cursor - 1] == ' ')
+                m_buffer->remove(cursor - 1, cursor);
+
+            // Add closing quote if a typed or inserted opening quote is present
+            // but no closing quote is present.
+            if (!m_quoted &&
+                m_anchor > 0 &&
+                rl_completer_quote_characters &&
+                rl_completer_quote_characters[0])
+            {
+                char qc = m_buffer->get_buffer()[m_anchor - 1];
+                if (strchr(rl_completer_quote_characters, qc))
+                {
+                    qs[0] = qc;
+                    m_buffer->insert(qs);
+                }
+            }
+
+            // Add space.
+            m_buffer->insert(" ");
+            m_point = m_buffer->get_cursor();
+        }
     }
     else
     {
-        m_buffer->set_cursor(m_point);
+        m_buffer->insert(qs);
+        m_point = m_anchor + strlen(qs) + m_needle.length();
     }
+    m_buffer->set_cursor(m_point);
     m_buffer->end_undo_group();
+
     update_len();
     m_inserted = true;
+
+    const int botlin = _rl_vis_botlin;
+    m_buffer->draw();
+    if (botlin != _rl_vis_botlin)
+    {
+        // Coax the cursor to the end of the input line.
+        const int cursor = m_buffer->get_cursor();
+        m_buffer->set_cursor(m_buffer->get_length());
+        m_buffer->set_need_draw();
+        m_buffer->draw();
+        // Clear to end of screen.
+        m_printer->print("\x1b[J");
+        // Restore cursor position.
+        m_buffer->set_cursor(cursor);
+        m_buffer->set_need_draw();
+        m_buffer->draw();
+        // Update layout.
+        update_layout();
+    }
+}
+
 //------------------------------------------------------------------------------
 int selectcomplete_impl::get_match_row(int index) const
 {

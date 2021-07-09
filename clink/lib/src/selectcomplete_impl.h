@@ -38,7 +38,7 @@ private:
     void            update_top();
     void            update_display();
     void            insert_needle();
-    void            insert_match(bool final=false);
+    void            insert_match(int final=false);
     int             get_match_row(int index) const;
 
     // Initialization state.
