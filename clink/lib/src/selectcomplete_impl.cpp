@@ -56,6 +56,7 @@ enum {
     bind_id_selectcomplete_enter,
     bind_id_selectcomplete_slash,
     bind_id_selectcomplete_backslash,
+    bind_id_selectcomplete_quote,
     bind_id_selectcomplete_escape,
 
     bind_id_selectcomplete_catchall,
@@ -262,6 +263,7 @@ void selectcomplete_impl::bind_input(binder& binder)
     binder.bind(m_bind_group, "\\r", bind_id_selectcomplete_enter);
     binder.bind(m_bind_group, "/", bind_id_selectcomplete_slash);
     binder.bind(m_bind_group, "\\", bind_id_selectcomplete_backslash);
+    binder.bind(m_bind_group, "\"", bind_id_selectcomplete_quote);
     binder.bind(m_bind_group, get_bindable_esc(), bind_id_selectcomplete_escape);
 
     binder.bind(m_bind_group, "", bind_id_selectcomplete_catchall);
@@ -459,6 +461,13 @@ pass_through_at_end:
         }
         m_needle.concat("\\");
         goto delete_completion;
+
+    case bind_id_selectcomplete_quote:
+        insert_needle();
+        cancel(result);
+        m_inserted = false; // A subsequent activation should not resume.
+        result.pass();
+        break;
 
     case bind_id_selectcomplete_escape:
 revert:
