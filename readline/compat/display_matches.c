@@ -88,6 +88,8 @@ static char* tmpbuf_allocated = NULL;
 static char* tmpbuf_ptr = NULL;
 static int tmpbuf_length = 0;
 static int tmpbuf_capacity = 0;
+static char* tmpbuf_rollback_ptr = NULL;
+static int tmpbuf_rollback_length = 0;
 static const char* const _normal_color = "\x1b[m";
 static const int _normal_color_len = 3;
 static const int desc_sep_padding = 4;
@@ -97,6 +99,22 @@ void reset_tmpbuf (void)
 {
     tmpbuf_ptr = tmpbuf_allocated;
     tmpbuf_length = 0;
+    tmpbuf_rollback_ptr = tmpbuf_ptr;
+    tmpbuf_rollback_length = tmpbuf_length;
+}
+
+//------------------------------------------------------------------------------
+void mark_tmpbuf (void)
+{
+    tmpbuf_rollback_ptr = tmpbuf_ptr;
+    tmpbuf_rollback_length = tmpbuf_length;
+}
+
+//------------------------------------------------------------------------------
+void rollback_tmpbuf (void)
+{
+    tmpbuf_ptr = tmpbuf_rollback_ptr;
+    tmpbuf_length = tmpbuf_rollback_length;
 }
 
 //------------------------------------------------------------------------------
@@ -117,7 +135,7 @@ static void grow_tmpbuf (int needsize)
 }
 
 //------------------------------------------------------------------------------
-static void append_tmpbuf_char(char c)
+void append_tmpbuf_char(char c)
 {
     if (tmpbuf_length + 1 > tmpbuf_capacity)
         grow_tmpbuf(tmpbuf_length + 1);
@@ -128,7 +146,7 @@ static void append_tmpbuf_char(char c)
 }
 
 //------------------------------------------------------------------------------
-static void append_tmpbuf_string(const char* s, int len)
+void append_tmpbuf_string(const char* s, int len)
 {
     if (len < 0)
         len = strlen(s);
@@ -817,7 +835,7 @@ void pad_filename(int len, int pad_to_width, int selected)
 {
     int num_spaces = 0;
     if (pad_to_width <= len)
-        num_spaces = 1;
+        num_spaces = selected ? 0 : 1;
     else
         num_spaces = pad_to_width - len;
     if (num_spaces <= 0)

@@ -35,9 +35,11 @@ private:
     void            update_matches(bool restrict=false, bool sort=false);
     void            update_len();
     void            update_layout();
+    void            update_top();
     void            update_display();
     void            insert_needle();
     void            insert_match(bool final=false);
+    int             get_match_row(int index) const;
 
     // Initialization state.
     input_dispatcher& m_dispatcher;
@@ -67,6 +69,7 @@ private:
     // Current match index.
     int             m_top = 0;
     int             m_index = 0;
+    int             m_prev_displayed = -1;
 
     // Current input.
     str<>           m_needle;

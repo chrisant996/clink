@@ -24,6 +24,10 @@ extern const char *_rl_filtered_color;
 extern const char *_rl_selected_color;
 
 extern void reset_tmpbuf(void);
+extern void mark_tmpbuf(void);
+extern void rollback_tmpbuf(void);
+extern void append_tmpbuf_char(char c);
+extern void append_tmpbuf_string(const char* s, int len);
 extern void flush_tmpbuf(void);
 // type is ignored when rl_completion_matches_include_type is set.
 extern int append_filename(char* to_print, const char* full_pathname, int prefix_bytes, unsigned char type, int selected);
