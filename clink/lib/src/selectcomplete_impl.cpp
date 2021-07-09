@@ -696,16 +696,19 @@ void selectcomplete_impl::update_display()
 {
     if (m_visible_rows > 0)
     {
+        // Remember the cursor position so it can be restored later to stay
+        // consistent with Readline's view of the world.
         CONSOLE_SCREEN_BUFFER_INFO csbi;
         HANDLE h = GetStdHandle(STD_OUTPUT_HANDLE);
         GetConsoleScreenBufferInfo(h, &csbi);
         COORD restore = csbi.dwCursorPosition;
+        const int vpos = _rl_last_v_pos;
+        const int cpos = _rl_last_c_pos;
 
         // Using m_matches directly means match types are separate from matches.
         rollback<int> rb(rl_completion_matches_include_type, 0);
 
         // Move cursor after the input line.
-        const int vpos = _rl_last_v_pos;
         _rl_move_vert(_rl_vis_botlin);
 
 #ifdef SHOW_DISPLAY_GENERATION
@@ -719,6 +722,7 @@ void selectcomplete_impl::update_display()
         if (is_active() && count > 0)
         {
             update_top();
+m_prev_displayed = -1;
 
             const int rows = min<int>(m_match_rows, m_visible_rows);
             const int major_stride = _rl_print_completions_horizontally ? m_match_cols : 1;
@@ -813,6 +817,7 @@ void selectcomplete_impl::update_display()
             m_printer->print(s.c_str(), s.length());
         }
         _rl_move_vert(vpos);
+        _rl_last_c_pos = cpos;
         GetConsoleScreenBufferInfo(h, &csbi);
         restore.Y = csbi.dwCursorPosition.Y;
         SetConsoleCursorPosition(h, restore);
