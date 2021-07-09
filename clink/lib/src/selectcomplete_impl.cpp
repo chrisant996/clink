@@ -600,34 +600,45 @@ void selectcomplete_impl::update_matches(bool restrict, bool sort)
     // Find lcd when starting a new interactive completion.
     if (restrict)
     {
-        // Using m_matches directly means match types are separate from matches.
-        rollback<int> rb(rl_completion_matches_include_type, 0);
-
-        m_match_longest = 0;
-
-        bool first = true;
-        matches_iter iter = m_matches->get_iter();
-        while (iter.next())
+        // Update Readline modes based on the available completions.
         {
-            if (first)
-            {
-                first = false;
-                m_needle = iter.get_match();
-            }
-            else
-            {
-                int matching = str_compare(m_needle.c_str(), iter.get_match());
-                m_needle.truncate(matching);
-            }
-
-            int len = printable_len(iter.get_match());
-            if (m_match_longest < len)
-                m_match_longest = len;
+            matches_iter iter = m_matches->get_iter();
+            while (iter.next())
+                ;
+            update_rl_modes_from_matches(m_matches, iter, m_matches->get_match_count());
         }
 
-        m_lcd = m_needle.length();
+        // Determine the longest match.
+        {
+            // Using m_matches directly means match types are separate from matches.
+            rollback<int> rb(rl_completion_matches_include_type, 0);
 
-        update_rl_modes_from_matches(m_matches, iter, m_matches->get_match_count());
+            m_match_longest = 0;
+
+            bool first = true;
+            matches_iter iter = m_matches->get_iter();
+            while (iter.next())
+            {
+                const char* match = iter.get_match();
+                if (first)
+                {
+                    first = false;
+                    m_needle = match;
+                }
+                else
+                {
+                    int matching = str_compare(m_needle.c_str(), match);
+                    m_needle.truncate(matching);
+                }
+
+                match = printable_part(const_cast<char*>(match));
+                int len = printable_len(match);
+                if (m_match_longest < len)
+                    m_match_longest = len;
+            }
+
+            m_lcd = m_needle.length();
+        }
     }
 
 TODO("SELECT-COMPLETE -- to handle match filtering it will be necessary to use a copied char** array rather than directly using matches_impl");
