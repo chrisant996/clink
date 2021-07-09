@@ -192,12 +192,14 @@ void ecma48_terminal_out::write_c1(const ecma48_code& code)
             switch (csi.final)
             {
             case '@': insert_chars(csi);        break;
-            case 'G': m_screen.move_cursor(-m_screen.get_columns(), 0); break;
+            case 'G': set_horiz_cursor(csi);    break;
             case 'H': set_cursor(csi);          break;
             case 'J': erase_in_display(csi);    break;
             case 'K': erase_in_line(csi);       break;
             case 'P': delete_chars(csi);        break;
             case 'm': set_attributes(csi);      break;
+            case 's': save_cursor();            break;
+            case 'u': restore_cursor();         break;
 
             case 'A': m_screen.move_cursor(0, -csi.get_param(0, 1)); break;
             case 'B': m_screen.move_cursor(0,  csi.get_param(0, 1)); break;
@@ -484,12 +486,34 @@ void ecma48_terminal_out::erase_in_line(const ecma48_code::csi_base& csi)
 }
 
 //------------------------------------------------------------------------------
+void ecma48_terminal_out::set_horiz_cursor(const ecma48_code::csi_base& csi)
+{
+    /* CSI Ps G : Cursor Horizontal Absolute [column] (default = 1) (CHA). */
+    int column = csi.get_param(0, 1);
+    m_screen.set_horiz_cursor(column - 1);
+}
+
+//------------------------------------------------------------------------------
 void ecma48_terminal_out::set_cursor(const ecma48_code::csi_base& csi)
 {
     /* CSI Ps ; Ps H : Cursor Position [row;column] (default = [1,1]) (CUP). */
     int row = csi.get_param(0, 1);
     int column = csi.get_param(1, 1);
     m_screen.set_cursor(column - 1, row - 1);
+}
+
+//------------------------------------------------------------------------------
+void ecma48_terminal_out::save_cursor()
+{
+    /* CSI s : Save Current Cursor Position (SCP, SCOSC). */
+    m_screen.save_cursor();
+}
+
+//------------------------------------------------------------------------------
+void ecma48_terminal_out::restore_cursor()
+{
+    /* CSI u : Restore Saved Cursor Position (RCP, SCORC). */
+    m_screen.restore_cursor();
 }
 
 //------------------------------------------------------------------------------

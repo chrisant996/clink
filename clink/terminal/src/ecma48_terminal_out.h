@@ -34,7 +34,10 @@ private:
     void                set_attributes(const ecma48_code::csi_base& csi);
     void                erase_in_display(const ecma48_code::csi_base& csi);
     void                erase_in_line(const ecma48_code::csi_base& csi);
+    void                set_horiz_cursor(const ecma48_code::csi_base& csi);
     void                set_cursor(const ecma48_code::csi_base& csi);
+    void                save_cursor();
+    void                restore_cursor();
     void                insert_chars(const ecma48_code::csi_base& csi);
     void                delete_chars(const ecma48_code::csi_base& csi);
     void                set_private_mode(const ecma48_code::csi_base& csi);

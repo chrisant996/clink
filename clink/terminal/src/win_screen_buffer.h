@@ -26,8 +26,11 @@ public:
     virtual bool    has_native_vt_processing() const override;
     virtual void    clear(clear_type type) override;
     virtual void    clear_line(clear_type type) override;
+    virtual void    set_horiz_cursor(int column) override;
     virtual void    set_cursor(int column, int row) override;
     virtual void    move_cursor(int dx, int dy) override;
+    virtual void    save_cursor() override;
+    virtual void    restore_cursor() override;
     virtual void    insert_chars(int count) override;
     virtual void    delete_chars(int count) override;
     virtual void    set_attributes(const attributes attr) override;
@@ -61,4 +64,6 @@ private:
 
     mutable WCHAR*  m_chars = nullptr;
     mutable SHORT   m_chars_capacity = 0;
+
+    COORD           m_saved_cursor = {};
 };

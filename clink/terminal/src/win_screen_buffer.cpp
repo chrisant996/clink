@@ -413,6 +413,22 @@ void win_screen_buffer::clear_line(clear_type type)
 }
 
 //------------------------------------------------------------------------------
+void win_screen_buffer::set_horiz_cursor(int column)
+{
+    CONSOLE_SCREEN_BUFFER_INFO csbi;
+    GetConsoleScreenBufferInfo(m_handle, &csbi);
+
+    const SMALL_RECT& window = csbi.srWindow;
+    int width = (window.Right - window.Left) + 1;
+    int height = (window.Bottom - window.Top) + 1;
+
+    column = clamp(column, 0, width);
+
+    COORD xy = { window.Left + SHORT(column), csbi.dwCursorPosition.Y };
+    SetConsoleCursorPosition(m_handle, xy);
+}
+
+//------------------------------------------------------------------------------
 void win_screen_buffer::set_cursor(int column, int row)
 {
     CONSOLE_SCREEN_BUFFER_INFO csbi;
@@ -440,6 +456,28 @@ void win_screen_buffer::move_cursor(int dx, int dy)
         SHORT(clamp(csbi.dwCursorPosition.Y + dy, 0, csbi.dwSize.Y - 1)),
     };
     SetConsoleCursorPosition(m_handle, xy);
+}
+
+//------------------------------------------------------------------------------
+void win_screen_buffer::save_cursor()
+{
+    CONSOLE_SCREEN_BUFFER_INFO csbi;
+    GetConsoleScreenBufferInfo(m_handle, &csbi);
+
+    const SMALL_RECT& window = csbi.srWindow;
+    int width = (window.Right - window.Left) + 1;
+    int height = (window.Bottom - window.Top) + 1;
+
+    m_saved_cursor = {
+        SHORT(clamp(csbi.dwCursorPosition.X - window.Left, 0, width)),
+        SHORT(clamp(csbi.dwCursorPosition.Y - window.Top, 0, height)),
+    };
+}
+
+//------------------------------------------------------------------------------
+void win_screen_buffer::restore_cursor()
+{
+    set_cursor(m_saved_cursor.X, m_saved_cursor.Y);
 }
 
 //------------------------------------------------------------------------------

@@ -48,8 +48,11 @@ public:
     virtual bool    has_native_vt_processing() const = 0;
     virtual void    clear(clear_type type) = 0;
     virtual void    clear_line(clear_type type) = 0;
+    virtual void    set_horiz_cursor(int column) = 0;
     virtual void    set_cursor(int column, int row) = 0;
     virtual void    move_cursor(int dx, int dy) = 0;
+    virtual void    save_cursor() = 0;
+    virtual void    restore_cursor() = 0;
     virtual void    insert_chars(int count) = 0;
     virtual void    delete_chars(int count) = 0;
     virtual void    set_attributes(const attributes attr) = 0;
