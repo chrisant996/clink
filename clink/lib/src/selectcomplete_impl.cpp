@@ -121,7 +121,7 @@ cant_activate:
 
     // Prompt if too many.
     if (rl_completion_auto_query_items ?
-        (m_match_rows >= (_rl_screenheight - 1)) :
+        (m_match_rows > m_visible_rows) :
         (rl_completion_query_items > 0 && m_matches->get_match_count() >= rl_completion_query_items))
     {
         // I gave up trying to coax Readline into righting the cursor position
