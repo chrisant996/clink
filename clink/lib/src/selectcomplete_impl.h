@@ -9,6 +9,40 @@
 #include <core/str.h>
 
 class printer;
+struct match_display_filter_entry;
+class matches_iter;
+enum class match_type : unsigned char;
+
+//------------------------------------------------------------------------------
+class match_adapter
+{
+public:
+                    ~match_adapter();
+    const matches*  get_matches() const;
+    void            set_matches(const matches* matches);
+    void            set_filtered_matches(match_display_filter_entry** filtered_matches);
+
+    matches_iter    get_iter();
+    unsigned int    get_match_count() const;
+    const char*     get_match(unsigned int index) const;
+    const char*     get_match_display(unsigned int index) const;
+    unsigned int    get_match_visible_display(unsigned int index) const;
+    const char*     get_match_description(unsigned int index) const;
+    unsigned int    get_match_visible_description(unsigned int index) const;
+    match_type      get_match_type(unsigned int index) const;
+
+    bool            is_display_filtered() const { return !!m_filtered_matches; }
+    bool            has_descriptions() const { return m_has_descriptions; }
+
+private:
+    void            free_filtered();
+
+private:
+    const matches*  m_matches = nullptr;
+    match_display_filter_entry** m_filtered_matches = nullptr;
+    unsigned int    m_filtered_count = 0;
+    bool            m_has_descriptions = false;
+};
 
 //------------------------------------------------------------------------------
 class selectcomplete_impl
@@ -44,7 +78,7 @@ private:
     // Initialization state.
     input_dispatcher& m_dispatcher;
     line_buffer*    m_buffer = nullptr;
-    const matches*  m_matches = nullptr;
+    match_adapter   m_matches;
     printer*        m_printer = nullptr;
     int             m_bind_group = -1;
     int             m_prev_bind_group = -1;

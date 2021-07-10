@@ -65,7 +65,10 @@ enum {
 //------------------------------------------------------------------------------
 enum {
     between_cols = 2,
+    before_desc = 4,
 };
+
+static_assert(between_cols <= before_desc, "description separator can't be less than the column separator");
 
 
 
@@ -73,7 +76,7 @@ enum {
 // Parse ANSI escape codes to determine the visible character length of the
 // string (which gets used for column alignment).  Truncate the string with an
 // ellipsis if it exceeds a maximum visible length.
-static void ellipsify(const char* in, int limit, str_base& out)
+static void ellipsify(const char* in, int limit, str_base& out, bool expand_ctrl)
 {
     int visible_len = 0;
     int truncate_visible = -1;
@@ -86,13 +89,15 @@ static void ellipsify(const char* in, int limit, str_base& out)
     while (visible_len <= limit)
     {
         const ecma48_code& code = iter.next();
+        if (!code)
+            break;
         if (code.get_type() == ecma48_code::type_chars)
         {
             const char* prev = code.get_pointer();
             str_iter inner_iter(code.get_pointer(), code.get_length());
             while (const int c = inner_iter.next())
             {
-                const int clen = clink_wcwidth(c);
+                const int clen = (expand_ctrl && (CTRL_CHAR(c) || c == RUBOUT)) ? 2 : clink_wcwidth(c);
                 if (truncate_visible < 0 && visible_len + clen > limit - 3)
                 {
                     truncate_visible = visible_len;
@@ -101,7 +106,7 @@ static void ellipsify(const char* in, int limit, str_base& out)
                 if (visible_len + clen > limit)
                 {
                     out.truncate(truncate_bytes);
-                    out.concat("...", min<int>(3, max<int>(0, limit - 3)));
+                    out.concat("...", 3);//min<int>(3, max<int>(0, limit - 3)));
                     return;
                 }
                 visible_len += clen;
@@ -119,6 +124,137 @@ static void ellipsify(const char* in, int limit, str_base& out)
 
 
 //------------------------------------------------------------------------------
+match_adapter::~match_adapter()
+{
+    free_filtered();
+}
+
+//------------------------------------------------------------------------------
+const matches* match_adapter::get_matches() const
+{
+    return m_matches;
+}
+
+//------------------------------------------------------------------------------
+void match_adapter::set_matches(const matches* matches)
+{
+    free_filtered();
+    m_matches = matches;
+}
+
+//------------------------------------------------------------------------------
+void match_adapter::set_filtered_matches(match_display_filter_entry** filtered_matches)
+{
+    free_filtered();
+
+    m_filtered_matches = filtered_matches;
+
+    // Skip first filtered match; it's fake, to satisfy Readline's expectation
+    // that matches start at [1].
+    unsigned int count = 0;
+    bool any_desc = false;
+    if (filtered_matches && filtered_matches[0])
+    {
+        while (*(++filtered_matches))
+        {
+            if (!any_desc && (*filtered_matches)->description)
+                any_desc = true;
+            count++;
+        }
+    }
+    m_filtered_count = count;
+    m_has_descriptions = any_desc;
+}
+
+//------------------------------------------------------------------------------
+matches_iter match_adapter::get_iter()
+{
+    assert(m_matches);
+    free_filtered();
+    return m_matches->get_iter();
+}
+
+//------------------------------------------------------------------------------
+unsigned int match_adapter::get_match_count() const
+{
+    if (m_filtered_matches)
+        return m_filtered_count;
+    if (m_matches)
+        return m_matches->get_match_count();
+    return 0;
+}
+
+//------------------------------------------------------------------------------
+const char* match_adapter::get_match(unsigned int index) const
+{
+    if (m_filtered_matches)
+        return m_filtered_matches[index + 1]->match;
+    if (m_matches)
+        return m_matches->get_match(index);
+    return nullptr;
+}
+
+//------------------------------------------------------------------------------
+const char* match_adapter::get_match_display(unsigned int index) const
+{
+    if (m_filtered_matches)
+        return m_filtered_matches[index + 1]->display;
+    if (m_matches)
+        return m_matches->get_match(index);
+    return nullptr;
+}
+
+//------------------------------------------------------------------------------
+unsigned int match_adapter::get_match_visible_display(unsigned int index) const
+{
+    if (m_filtered_matches)
+        return m_filtered_matches[index + 1]->visible_display;
+    if (m_matches)
+    {
+        const char* display = printable_part(const_cast<char*>(m_matches->get_match(index)));
+        return printable_len(display);
+    }
+    return 0;
+}
+
+//------------------------------------------------------------------------------
+const char* match_adapter::get_match_description(unsigned int index) const
+{
+    if (m_filtered_matches)
+        return m_filtered_matches[index + 1]->description;
+    return nullptr;
+}
+
+//------------------------------------------------------------------------------
+unsigned int match_adapter::get_match_visible_description(unsigned int index) const
+{
+    if (m_filtered_matches)
+        return m_filtered_matches[index + 1]->visible_description;
+    return 0;
+}
+
+//------------------------------------------------------------------------------
+match_type match_adapter::get_match_type(unsigned int index) const
+{
+    if (m_filtered_matches)
+        return rl_completion_matches_include_type ? static_cast<match_type>(m_filtered_matches[index + 1]->type) : match_type::none;
+    if (m_matches)
+        return m_matches->get_match_type(index);
+    return match_type::none;
+}
+
+//------------------------------------------------------------------------------
+void match_adapter::free_filtered()
+{
+    free_filtered_matches(m_filtered_matches);
+    m_filtered_matches = nullptr;
+    m_filtered_count = 0;
+    m_has_descriptions = false;
+}
+
+
+
+//------------------------------------------------------------------------------
 static selectcomplete_impl* s_selectcomplete = nullptr;
 
 //------------------------------------------------------------------------------
@@ -131,8 +267,7 @@ selectcomplete_impl::selectcomplete_impl(input_dispatcher& dispatcher)
 bool selectcomplete_impl::activate(editor_module::result& result, bool reactivate)
 {
     assert(m_buffer);
-    assert(m_matches);
-    if (!m_buffer || !m_matches)
+    if (!m_buffer)
         return false;
 
     if (reactivate && m_point >= 0 && m_len >= 0 && m_point + m_len <= m_buffer->get_length() && m_inserted)
@@ -152,13 +287,12 @@ bool selectcomplete_impl::activate(editor_module::result& result, bool reactivat
     m_delimiter = 0;
     reset_generate_matches();
 
-TODO("SELECT-COMPLETE -- if there is a display filter, give it a chance to modify MATCHES (rl_match_display_filter_func)");
     update_matches(true/*restrict*/, true/*sort*/);
     assert(m_anchor >= 0);
     if (m_anchor < 0)
         return false;
 
-    if (!m_matches->get_match_count())
+    if (!m_matches.get_match_count())
     {
 cant_activate:
         m_anchor = -1;
@@ -173,7 +307,7 @@ cant_activate:
     // Prompt if too many.
     if (rl_completion_auto_query_items ?
         (m_match_rows > m_visible_rows) :
-        (rl_completion_query_items > 0 && m_matches->get_match_count() >= rl_completion_query_items))
+        (rl_completion_query_items > 0 && m_matches.get_match_count() >= rl_completion_query_items))
     {
         // I gave up trying to coax Readline into righting the cursor position
         // purely using only ANSI codes.
@@ -191,7 +325,7 @@ cant_activate:
         if (_rl_pager_color)
             _rl_print_pager_color();
         str<> prompt;
-        prompt.format("Display all %d possibilities? (y or n) _", m_matches->get_match_count());
+        prompt.format("Display all %d possibilities? (y or n) _", m_matches.get_match_count());
         m_printer->print(prompt.c_str(), prompt.length());
         if (_rl_pager_color)
             m_printer->print("\x1b[m");
@@ -223,7 +357,7 @@ cant_activate:
     m_was_backspace = false;
 
     // Insert first match.
-    bool only_one = (m_matches->get_match_count() == 1);
+    bool only_one = (m_matches.get_match_count() == 1);
     m_point = m_buffer->get_cursor();
     m_top = 0;
     m_index = 0;
@@ -275,7 +409,7 @@ void selectcomplete_impl::on_begin_line(const context& context)
     assert(!s_selectcomplete);
     s_selectcomplete = this;
     m_buffer = &context.buffer;
-    m_matches = &context.matches;
+    m_matches.set_matches(&context.matches);
     m_printer = &context.printer;
     m_anchor = -1;
 
@@ -289,7 +423,7 @@ void selectcomplete_impl::on_end_line()
 {
     s_selectcomplete = nullptr;
     m_buffer = nullptr;
-    m_matches = nullptr;
+    m_matches.set_matches(nullptr);
     m_printer = nullptr;
     m_anchor = -1;
 }
@@ -308,7 +442,7 @@ void selectcomplete_impl::on_input(const input& input, result& result, const con
         goto revert;
 
     // Cancel if no matches (which shouldn't be able to happen here).
-    int count = m_matches->get_match_count();
+    int count = m_matches.get_match_count();
     if (!count)
     {
         assert(count);
@@ -408,8 +542,8 @@ prev:
             {
                 int ofs = (y < m_top + rows - 1) ? (rows - 1 - y) : (rows - 1);
                 m_index += ofs;
-                if (y + ofs >= m_match_rows || m_index >= m_matches->get_match_count())
-                    m_index = m_matches->get_match_count() - 1;
+                if (y + ofs >= m_match_rows || m_index >= m_matches.get_match_count())
+                    m_index = m_matches.get_match_count() - 1;
                 goto navigated;
             }
         }
@@ -449,7 +583,7 @@ delete_completion:
         break;
 
     case bind_id_selectcomplete_slash:
-        if (is_match_type(m_matches->get_match_type(m_index), match_type::dir))
+        if (is_match_type(m_matches.get_match_type(m_index), match_type::dir))
         {
             m_buffer->set_cursor(m_point + m_len + m_quoted); // Past quotes, if any.
             cancel(result);
@@ -460,7 +594,7 @@ delete_completion:
         m_needle.concat("/");
         goto delete_completion;
     case bind_id_selectcomplete_backslash:
-        if (is_match_type(m_matches->get_match_type(m_index), match_type::dir))
+        if (is_match_type(m_matches.get_match_type(m_index), match_type::dir))
         {
             m_buffer->set_cursor(m_point + m_len); // Inside quotes, if any.
             cancel(result);
@@ -512,7 +646,7 @@ update_needle:
             m_prev_displayed = -1;
             insert_needle();
             update_matches(false/*restrict*/, sort);
-            if (m_matches->get_match_count())
+            if (m_matches.get_match_count())
                 insert_match();
             else
                 cancel(result);
@@ -602,27 +736,56 @@ void selectcomplete_impl::update_matches(bool restrict, bool sort)
     {
         // Update Readline modes based on the available completions.
         {
-            matches_iter iter = m_matches->get_iter();
+            matches_iter iter = m_matches.get_iter();
             while (iter.next())
                 ;
-            update_rl_modes_from_matches(m_matches, iter, m_matches->get_match_count());
+            update_rl_modes_from_matches(m_matches.get_matches(), iter, m_matches.get_match_count());
         }
+    }
 
-        // Determine the longest match.
+    if (rl_match_display_filter_func)
+    {
+        // This is not literally a popup, but it has the same needs as a popup.
+        if (m_matches.get_matches()->match_display_filter(nullptr, nullptr, true/*popup*/))
+        {
+            // Build char** array for filtering.
+            assert(!m_matches.is_display_filtered());
+            assert(rl_completion_matches_include_type);
+            std::vector<autoptr<char>> matches;
+            const unsigned int count = m_matches.get_match_count();
+            for (unsigned int i = 0; i < count; i++)
+            {
+                const char* text = m_matches.get_match(i);
+                const size_t len = strlen(text);
+                char* match = static_cast<char*>(malloc(1 + len + 1));
+                match[0] = static_cast<char>(m_matches.get_match_type(i));
+                memcpy(match + 1, text, len + 1);
+                matches.emplace_back(match);
+            }
+            matches.emplace_back(nullptr);
+
+            // Get filtered matches.
+            match_display_filter_entry** filtered_matches = rl_match_display_filter_func(&*matches.begin());
+            m_matches.set_filtered_matches(filtered_matches);
+        }
+    }
+
+    if (restrict)
+    {
+        // Determine the lcd and the longest match.
         {
             // Using m_matches directly means match types are separate from matches.
             rollback<int> rb(rl_completion_matches_include_type, 0);
 
             m_match_longest = 0;
 
-            bool first = true;
-            matches_iter iter = m_matches->get_iter();
-            while (iter.next())
+            const unsigned int count = m_matches.get_match_count();
+            for (unsigned int i = 0; i < count; i++)
             {
-                const char* match = iter.get_match();
-                if (first)
+                // Update lcd.
+                const char* match = m_matches.get_match(i);
+                if (!i)
                 {
-                    first = false;
                     m_needle = match;
                 }
                 else
@@ -631,8 +794,8 @@ void selectcomplete_impl::update_matches(bool restrict, bool sort)
                     m_needle.truncate(matching);
                 }
 
-                match = printable_part(const_cast<char*>(match));
-                int len = printable_len(match);
+                // Update longest match.
+                int len = m_matches.get_match_visible_display(i);
                 if (m_match_longest < len)
                     m_match_longest = len;
             }
@@ -640,8 +803,6 @@ void selectcomplete_impl::update_matches(bool restrict, bool sort)
             m_lcd = m_needle.length();
         }
     }
-
-TODO("SELECT-COMPLETE -- to handle match filtering it will be necessary to use a copied char** array rather than directly using matches_impl");
 }
 
 //------------------------------------------------------------------------------
@@ -651,9 +812,9 @@ void selectcomplete_impl::update_len()
 
     m_len = 0;
 
-    if (m_index < m_matches->get_match_count() && m_matches)
+    if (m_index < m_matches.get_match_count())
     {
-        size_t len = strlen(m_matches->get_match(m_index));
+        size_t len = strlen(m_matches.get_match(m_index));
         if (len > m_needle.length())
             m_len = len - m_needle.length();
     }
@@ -664,9 +825,9 @@ void selectcomplete_impl::update_layout()
 {
     int slop_rows = 2;
 
-    int cols_that_fit = m_screen_cols / (m_match_longest + between_cols);
+    int cols_that_fit = m_matches.has_descriptions() ? 1 : m_screen_cols / (m_match_longest + between_cols);
     m_match_cols = max<int>(1, cols_that_fit);
-    m_match_rows = (m_matches->get_match_count() + (m_match_cols - 1)) / m_match_cols;
+    m_match_rows = (m_matches.get_match_count() + (m_match_cols - 1)) / m_match_cols;
 
     // +3 for quotes and append character (e.g. space).
     int input_height = (_rl_vis_botlin + 1) + (m_match_longest + 3 + m_screen_cols - 1) / m_screen_cols;
@@ -718,7 +879,7 @@ void selectcomplete_impl::update_display()
         // Display matches.
         int up = 0;
         bool move_to_end = true;
-        const int count = m_matches->get_match_count();
+        const int count = m_matches.get_match_count();
         if (is_active() && count > 0)
         {
             update_top();
@@ -744,6 +905,7 @@ m_prev_displayed = -1;
                 {
                     // Print matches on the row.
                     str<> truncated;
+                    str<> tmp;
                     reset_tmpbuf();
 #ifdef SHOW_DISPLAY_GENERATION
                     append_tmpbuf_char(s_chGen);
@@ -754,27 +916,70 @@ m_prev_displayed = -1;
                             break;
 
                         const int selected = (i == m_index);
-                        const char* const match = m_matches->get_match(i);
-                        char* temp = printable_part(const_cast<char*>(match));
-                        const unsigned char type = static_cast<unsigned char>(m_matches->get_match_type(i));
+                        const char* const display = m_matches.get_match_display(i);
+                        char* temp = m_matches.is_display_filtered() ? const_cast<char*>(display) : printable_part(const_cast<char*>(display));
+                        const unsigned char type = static_cast<unsigned char>(m_matches.get_match_type(i));
 
                         mark_tmpbuf();
-                        int printed_len = append_filename(temp, match, 0, type, selected);
-                        if (printed_len > col_width)
+                        int printed_len;
+                        if (m_matches.is_display_filtered())
                         {
-                            rollback_tmpbuf();
-                            ellipsify(temp, col_width, truncated);
-                            temp = truncated.data();
-                            printed_len = append_filename(temp, match, 0, type, selected);
+                            printed_len = m_matches.get_match_visible_display(i);
+                            if (printed_len > col_width)
+                            {
+                                ellipsify(temp, col_width, truncated, false/*expand_ctrl*/);
+                                temp = truncated.data();
+                                printed_len = cell_count(temp);
+                            }
+                            if (selected)
+                            {
+                                ecma48_processor(temp, &tmp, nullptr, ecma48_processor_flags::plaintext);
+                                temp = tmp.data();
+                            }
+                            append_display(temp, selected);
+                        }
+                        else
+                        {
+                            printed_len = append_filename(temp, display, 0, type, selected);
+                            if (printed_len > col_width)
+                            {
+                                rollback_tmpbuf();
+                                ellipsify(temp, col_width, truncated, true/*expand_ctrl*/);
+                                temp = truncated.data();
+                                printed_len = append_filename(temp, display, 0, type, selected);
+                            }
                         }
 
-                        i += minor_stride;
+                        const int next = i + minor_stride;
 
-                        const bool last_col = (col + 1 >= m_match_cols || i >= count);
-                        if (selected || !last_col)
+                        const char* desc = m_matches.get_match_description(i);
+                        const bool last_col = (col + 1 >= m_match_cols || next >= count);
+                        if (selected || !last_col || desc)
                             pad_filename(printed_len, col_width + (selected ? 0 : between_cols), selected);
+
+                        if (desc)
+                        {
+                            // Leave between_cols at end of line, otherwise "\x1b[K" can erase part
+                            // of the intended output.
+                            const int remaining = m_screen_cols - col_width - before_desc - between_cols;
+                            if (remaining > 0)
+                            {
+                                printed_len = m_matches.get_match_visible_description(i);
+                                if (printed_len > remaining)
+                                {
+                                    ellipsify(desc, remaining, truncated, false/*expand_ctrl*/);
+                                    desc = truncated.data();
+                                    printed_len = cell_count(desc);
+                                }
+                                pad_filename(0, before_desc - (selected ? 0 : between_cols), 0);
+                                append_tmpbuf_string(desc, -1);
+                            }
+                        }
+
                         if (selected && !last_col)
                             pad_filename(0, between_cols, 0);
+
+                        i = next;
                     }
                     flush_tmpbuf();
 
@@ -861,9 +1066,9 @@ void selectcomplete_impl::insert_match(int final)
 
     m_len = 0;
 
-    assert(m_index < m_matches->get_match_count());
-    const char* match = m_matches->get_match(m_index);
-    match_type type = m_matches->get_match_type(m_index);
+    assert(m_index < m_matches.get_match_count());
+    const char* match = m_matches.get_match(m_index);
+    match_type type = m_matches.get_match_type(m_index);
 
     char qs[2] = {};
     if (match &&
@@ -967,7 +1172,7 @@ int selectcomplete_impl::get_match_row(int index) const
 //------------------------------------------------------------------------------
 bool selectcomplete_impl::is_active() const
 {
-    return m_prev_bind_group >= 0 && m_buffer && m_matches && m_printer && m_anchor >= 0 && m_point >= m_anchor;
+    return m_prev_bind_group >= 0 && m_buffer && m_printer && m_anchor >= 0 && m_point >= m_anchor;
 }
 
 

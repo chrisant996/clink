@@ -1192,8 +1192,8 @@ matches* maybe_regenerate_matches(const char* needle, bool popup)
 
     pipeline.select(needle);
     // Sorting should be skipped for Readline completion, but should occur for
-    // Clink completion (e.g. clink-select-complete).
-TODO("SELECT-COMPLETE -- sort regenerated matches");
+    // Clink completion (e.g. clink-select-complete).  Except that currently
+    // only Readline completion can reach here.
 #if 0
     pipeline.sort();
 #endif
