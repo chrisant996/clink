@@ -118,8 +118,12 @@ void rollback_tmpbuf (void)
 }
 
 //------------------------------------------------------------------------------
-static void grow_tmpbuf (int needsize)
+static void grow_tmpbuf (int growby)
 {
+    int needsize = tmpbuf_length + growby + 1;
+    if (needsize <= tmpbuf_capacity)
+        return;
+
     int oldsize = tmpbuf_capacity;
     int newsize;
     char* newbuf;
@@ -131,14 +135,14 @@ static void grow_tmpbuf (int needsize)
         newsize *= 2;
 
     tmpbuf_allocated = (char*)xrealloc(tmpbuf_allocated, newsize);
+    tmpbuf_capacity = newsize;
     tmpbuf_ptr = tmpbuf_allocated + tmpbuf_length;
 }
 
 //------------------------------------------------------------------------------
 void append_tmpbuf_char(char c)
 {
-    if (tmpbuf_length + 1 > tmpbuf_capacity)
-        grow_tmpbuf(tmpbuf_length + 1);
+    grow_tmpbuf(1);
 
     *tmpbuf_ptr = c;
     tmpbuf_ptr++;
@@ -151,8 +155,7 @@ void append_tmpbuf_string(const char* s, int len)
     if (len < 0)
         len = strlen(s);
 
-    if (tmpbuf_length + len > tmpbuf_capacity)
-        grow_tmpbuf(tmpbuf_length + len);
+    grow_tmpbuf(len);
 
     memcpy(tmpbuf_ptr, s, len);
     tmpbuf_ptr += len;
