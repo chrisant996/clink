@@ -299,19 +299,6 @@ static int popup_list(lua_State* state)
     if (!title || !lua_istable(state, argItems))
         return 0;
 
-    struct autoptr
-    {
-        autoptr(char* p) : m_p(p) {}
-        autoptr(const autoptr& other) = delete;
-        autoptr(autoptr&& other) { m_p = other.m_p; other.m_p = nullptr; }
-        ~autoptr() { free(m_p); }
-        autoptr& operator=(const autoptr& other) = delete;
-        autoptr& operator=(autoptr&& other) { m_p = other.m_p; other.m_p = nullptr; }
-        const char** operator&() const { return const_cast<const char**>(&m_p); }
-    private:
-        char* m_p;
-    };
-
     int num_items = int(lua_rawlen(state, argItems));
     if (!num_items)
         return 0;
@@ -320,7 +307,7 @@ static int popup_list(lua_State* state)
     int top = lua_gettop(state);
 #endif
 
-    std::vector<autoptr> items;
+    std::vector<autoptr<const char>> items;
     items.reserve(num_items);
     for (int i = 1; i <= num_items; ++i)
     {

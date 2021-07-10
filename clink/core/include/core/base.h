@@ -97,4 +97,24 @@ private:
 };
 
 //------------------------------------------------------------------------------
+// Remove top-level const qualifier.
+template <class T> struct remove_const { using type = T; };
+template <class T> struct remove_const<const T> { using type = T; };
+template <class T> using remove_const_t = typename remove_const<T>::type;
+
+//------------------------------------------------------------------------------
+template <class T> struct autoptr
+{
+    autoptr(T* p) : m_p(p) {}
+    autoptr(const autoptr<T>& other) = delete;
+    autoptr(autoptr<T>&& other) { m_p = other.m_p; other.m_p = nullptr; }
+    ~autoptr() { free(const_cast<remove_const_t<T>*>(m_p)); }
+    autoptr<T>& operator=(const autoptr<T>& other) = delete;
+    autoptr<T>& operator=(autoptr<T>&& other) { m_p = other.m_p; other.m_p = nullptr; }
+    T** operator&() const { return &const_cast<T*>(m_p); }
+private:
+    T* m_p;
+};
+
+//------------------------------------------------------------------------------
 template <class T> inline void suppress_unused_var(T var) {}
