@@ -591,8 +591,13 @@ delete_completion:
             result.pass();
             break;
         }
-        m_needle.concat("/");
-        goto delete_completion;
+append_not_dup:
+        if (m_needle.length() && path::is_separator(m_needle.c_str()[m_needle.length() - 1]))
+        {
+            m_needle.concat(input.keys, input.len);
+            goto delete_completion;
+        }
+        goto append_to_needle;
     case bind_id_selectcomplete_backslash:
         if (is_match_type(m_matches.get_match_type(m_index), match_type::dir))
         {
@@ -601,8 +606,7 @@ delete_completion:
             m_inserted = false; // A subsequent activation should not resume.
             break;
         }
-        m_needle.concat("\\");
-        goto delete_completion;
+        goto append_not_dup;
 
     case bind_id_selectcomplete_quote:
         insert_needle();
@@ -639,6 +643,7 @@ revert:
             }
 
             // Insert the text.
+append_to_needle:
             m_needle.concat(input.keys, input.len);
 update_needle:
             m_top = 0;
