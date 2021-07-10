@@ -111,6 +111,7 @@ Name                         | Default | Description
 `color.modmark`              |         | Used when Clink displays the `*` mark on modified history lines when Readline's `mark-modified-lines` variable and Clink's `color.input` setting are both set. Falls back to `color.input` if not set.
 `color.prompt`               |         | When set, this is used as the default color for the prompt.  But it's overridden by any colors set by <a href="#customisingtheprompt">Customising The Prompt</a>.
 <a name="color_readonly"></a>`color.readonly` | | Used when Clink displays file completions with the "readonly" attribute.
+`color.selected_completion`  |         | The color for the selected completion with the clink-select-complete command.  If no color is set, then bright reverse video is used.
 `color.selection`            |         | The color for selected text in the input line.  If no color is set, then reverse video is used.
 `color.unexpected`           | `default` | The color for unexpected arguments in the input line when `clink.colorize_input` is enabled.
 `debug.log_terminal`         | False   | Logs all terminal input and output to the clink.log file.  This is intended for diagnostic purposes only, and can make the log file grow significantly.

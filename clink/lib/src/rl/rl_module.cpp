@@ -174,7 +174,7 @@ static setting_color g_color_selected(
     "color.selected_completion",
     "Selected completion color",
     "The color for the selected completion with the clink-select-complete command.",
-    "sgr 1;7");
+    "");
 
 static setting_color g_color_argmatcher(
     "color.argmatcher",
@@ -1684,6 +1684,12 @@ void rl_module::on_begin_line(const context& context)
     {
         m_selection_color.format("%s\x1b[7m", s_input_color);
         s_selection_color = m_selection_color.c_str();
+    }
+
+    if (!_rl_selected_color)
+    {
+        m_selected_color.format("0;1;7");
+        _rl_selected_color = m_selected_color.c_str();
     }
 
     if (!_rl_display_message_color)
