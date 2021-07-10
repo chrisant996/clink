@@ -625,6 +625,24 @@ static int fnappend(const char *to_print, int prefix_bytes, const char *real_pat
     return printed_len;
 }
 
+//------------------------------------------------------------------------------
+void append_display(const char* to_print, int selected)
+{
+    if (selected)
+    {
+        append_selection_color();
+    }
+    else
+    {
+        append_default_color();
+        if (_rl_filtered_color)
+            append_tmpbuf_string(_rl_filtered_color, -1);
+    }
+
+    append_tmpbuf_string(to_print, -1);
+}
+
+//------------------------------------------------------------------------------
 // Print filename.  If VISIBLE_STATS is defined and we are using it, check for
 // and output a single character for 'special' filenames.  Return the number of
 // characters we output.
@@ -1062,9 +1080,7 @@ static int display_filtered_match_list_internal(match_display_filter_entry **mat
             const match_display_filter_entry* entry = matches[l];
 
             printed_len = entry->visible_display;
-            append_default_color();
-            append_tmpbuf_string(filtered_color, filtered_color_len);
-            append_tmpbuf_string(entry->display, -1);
+            append_display(entry->display, 0);
 
             if (show_descriptions && matches[l]->description)
             {
