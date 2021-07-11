@@ -800,28 +800,36 @@ void selectcomplete_impl::update_matches(bool restrict, bool sort)
 
             // Filter the, uh, filtered matches.
             {
-                match_display_filter_entry** hare = filtered_matches + 1;
-                match_display_filter_entry** tortoise = filtered_matches + 1;
-
-                // Need to use printable_part() and etc.
+                // Need to use printable_part() and etc, but types are separate
+                // from matches here.
                 rollback<int> rb(rl_completion_matches_include_type, 0);
 
                 const char* needle = printable_part(const_cast<char*>(m_needle.c_str()));
                 int needle_len = strlen(needle);
 
-                while (*hare)
+                match_display_filter_entry** tortoise = filtered_matches + 1;
+                for (match_display_filter_entry** hare = tortoise; *hare; ++hare)
                 {
-                    if (str_compare(needle, (*hare)->match) < needle_len)
+                    // Discard empty matches.
+                    if (!(*hare)->match[0])
                     {
                         free(*hare);
+                        continue;
                     }
-                    else
+
+                    // Discard matches that don't match the needle.
+                    int cmp = str_compare(needle, (*hare)->match);
+                    if (cmp < 0) cmp = needle_len;
+                    if (cmp < needle_len)
                     {
-                        if (hare != tortoise)
-                            *tortoise = *hare;
-                        tortoise++;
+                        free(*hare);
+                        continue;
                     }
-                    hare++;
+
+                    // Keep the match.
+                    if (hare != tortoise)
+                        *tortoise = *hare;
+                    tortoise++;
                 }
                 *tortoise = nullptr;
             }
