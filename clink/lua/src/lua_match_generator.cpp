@@ -11,6 +11,7 @@
 
 #include <core/str_hash.h>
 #include <core/str_unordered_set.h>
+#include <core/str_compare.h>
 #include <lib/line_state.h>
 #include <lib/matches.h>
 #include <lib/popup.h>
@@ -161,6 +162,8 @@ bool lua_match_generator::match_display_filter(char** matches, match_display_fil
 {
     bool ret = false;
     lua_State* state = m_state.get_state();
+    str<> lcd;
+    bool lcd_initialized = false;
 
     // A small note about the contents of 'matches' - the first match isn't
     // really a match, it's the word being completed. Readline ignores it when
@@ -342,6 +345,18 @@ bool lua_match_generator::match_display_filter(char** matches, match_display_fil
                 if (!display)
                     break;
 
+                if (!lcd_initialized)
+                {
+                    lcd = match;
+                    lcd_initialized = true;
+                }
+                else
+                {
+                    unsigned int matching = match ? str_compare(match, lcd.c_str()) : 0;
+                    if (lcd.length() > matching)
+                        lcd.truncate(matching);
+                }
+
                 size_t alloc_size = sizeof(match_display_filter_entry) + 2;
                 if (match) alloc_size += strlen(match);
                 if (display) alloc_size += strlen(display);
@@ -362,6 +377,7 @@ bool lua_match_generator::match_display_filter(char** matches, match_display_fil
 discard:
                     free(new_match);
                     j--;
+                    break;
                 }
 
                 if (!display[0])
@@ -400,20 +416,27 @@ discard:
     new_matches[j] = nullptr;
 
     // Fill in entry [0]:
+    //  - match is the lcd of the matches.
     //  - display is an empty string.
     //  - visible_display is the max visible_display of the entries.
     //  - visible_display negative means has descriptions (use one column).
     //  - visible_description is the max visible_description of the entries.
     //  - visible_description can be 0 when visible_display is negative; this
     //    means there are descriptions (use one column) but they are all blank.
-    new_matches[0] = (match_display_filter_entry*)malloc(sizeof(match_display_filter_entry));
-    memset(new_matches[0], 0, sizeof(new_matches[0]));
-    new_matches[0]->display = new_matches[0]->buffer;
-    if (one_column)
-        new_matches[0]->visible_display = 0 - max_visible_display;
-    else
-        new_matches[0]->visible_display = max_visible_display;
-    new_matches[0]->visible_description = max_visible_description;
+    {
+        new_matches[0] = (match_display_filter_entry*)malloc(sizeof(match_display_filter_entry) + lcd.length() + 2);
+        memset(new_matches[0], 0, sizeof(*new_matches[0]));
+        char* buffer = new_matches[0]->buffer;
+        new_matches[0]->match = append_string_into_buffer(buffer, lcd.c_str());
+        new_matches[0]->display = append_string_into_buffer(buffer, nullptr);
+        append_string_into_buffer(buffer, nullptr); // Be consistent and add empty column even in the lcd entry.
+
+        if (one_column)
+            new_matches[0]->visible_display = 0 - max_visible_display;
+        else
+            new_matches[0]->visible_display = max_visible_display;
+        new_matches[0]->visible_description = max_visible_description;
+    }
 
     // Remove duplicates.
     if (true)
