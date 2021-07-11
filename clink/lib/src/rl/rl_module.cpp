@@ -924,45 +924,6 @@ static match_display_filter_entry** match_display_filter(char** matches, bool po
     if (!s_matches->match_display_filter(matches, &filtered_matches, popup))
         return nullptr;
 
-    // Remove duplicates.
-    if (filtered_matches[0] && filtered_matches[1])
-    {
-#ifdef DEBUG
-        const int debug_filter = dbg_get_env_int("DEBUG_FILTER");
-#endif
-
-        str_unordered_set seen;
-        unsigned int tortoise = 1;
-        unsigned int hare = 1;
-        while (filtered_matches[hare])
-        {
-            const char* display = filtered_matches[hare]->display;
-            if (!display || !*display)
-                display = filtered_matches[hare]->match;
-            if (seen.find(display) != seen.end())
-            {
-#ifdef DEBUG
-                if (debug_filter)
-                    printf("%u dupe: %s\n", hare, display);
-#endif
-                free(filtered_matches[hare]);
-            }
-            else
-            {
-#ifdef DEBUG
-                if (debug_filter)
-                    printf("%u->%u: %s\n", hare, tortoise, display);
-#endif
-                seen.insert(display);
-                if (hare > tortoise)
-                    filtered_matches[tortoise] = filtered_matches[hare];
-                tortoise++;
-            }
-            hare++;
-        }
-        filtered_matches[tortoise] = nullptr;
-    }
-
     return filtered_matches;
 }
 

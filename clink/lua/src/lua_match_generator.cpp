@@ -395,6 +395,45 @@ discard:
         new_matches[0]->visible_display = max_visible_display;
     new_matches[0]->visible_description = max_visible_description;
 
+    // Remove duplicates.
+    if (true)
+    {
+#ifdef DEBUG
+        const int debug_filter = dbg_get_env_int("DEBUG_FILTER");
+#endif
+
+        str_unordered_set seen;
+        unsigned int tortoise = 1;
+        unsigned int hare = 1;
+        while (new_matches[hare])
+        {
+            const char* display = new_matches[hare]->display;
+            if (!display || !*display)
+                display = new_matches[hare]->match;
+            if (seen.find(display) != seen.end())
+            {
+#ifdef DEBUG
+                if (debug_filter)
+                    printf("%u dupe: %s\n", hare, display);
+#endif
+                free(new_matches[hare]);
+            }
+            else
+            {
+#ifdef DEBUG
+                if (debug_filter)
+                    printf("%u->%u: %s\n", hare, tortoise, display);
+#endif
+                seen.insert(display);
+                if (hare > tortoise)
+                    new_matches[tortoise] = new_matches[hare];
+                tortoise++;
+            }
+            hare++;
+        }
+        new_matches[tortoise] = nullptr;
+    }
+
     *filtered_matches = new_matches;
     ret = true;
 
