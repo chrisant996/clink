@@ -3,7 +3,7 @@
 
 <!-- ----------------------------------------------------- -->
 <head>
-<title>Clink v1.2.19</title>
+<title>Clink v1.2.20</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Rambla:wght@400;700&family=Roboto&family=Fira+Mono&display=swap');
 html {
@@ -747,7 +747,7 @@ name:"Plain text",aliases:["text","txt"],disableAutodetect:!0})})());
         </td>
         <td style="text-align:right">
             <div id="header">
-                <div id="title">Clink v1.2.19</div>
+                <div id="title">Clink v1.2.20</div>
                 <div id="url">
                     <a href="https://github.com/chrisant996/clink">
                         https://github.com/chrisant996/clink
@@ -910,7 +910,7 @@ name:"Plain text",aliases:["text","txt"],disableAutodetect:!0})})());
 <td>Used when Clink displays doskey alias completions, and in the input line when <code>clink.colorize_input</code> is enabled.</td>
 </tr>
 <tr>
-<td align="center"><code>color.filtered</code></td>
+<td align="center"><a name="color_filtered"></a><code>color.filtered</code></td>
 <td align="center"><code>bold</code></td>
 <td>The default color for filtered completions (see <a href="#filteringthematchdisplay">Filtering the Match Display</a>).</td>
 </tr>
@@ -1547,7 +1547,7 @@ call &quot;%~dp0clink.bat&quot; inject --profile &quot;%TEMP%\clink_portable&quo
 <h2 id="completion-colors">Completion Colors</h2>
 <p>The <code>%LS_COLORS%</code> environment variable provides color definitions as a series of color definitions separated by colons (<code>:</code>).  Each definition is a either a two character type id or a file extension, followed by an equals sign and then the <a href="https://en.wikipedia.org/wiki/ANSI_escape_code#SGR_parameters">SGR parameters</a> for an ANSI escape code.  The two character type ids are listed below.</p>
 <p>When the <code>colored-completion-prefix</code> <a href="#configreadline">Readline setting</a> is configured to <code>on</code>, then the &quot;so&quot; color from <code>%LS_COLORS%</code> is used to color the common prefix when displaying possible completions.  The default for &quot;so&quot; is magenta, but for example <code>set LS_COLORS=so=90</code> sets the color to bright black (which shows up as a dark gray).</p>
-<p>When <code>colored-stats</code> is configured to <code>on</code>, then the color definitions from <code>%LS_COLORS%</code> are used to color file completions according to their file type or extension.    Multiple definitions are separated by colons.  Also, since <code>%LS_COLORS%</code> doesn&#39;t cover readonly files, hidden files, doskey aliases, or shell commands the <code>color.readonly</code>, <code>color.hidden</code>, <code>color.doskey</code>, and <code>color.cmd</code> <a href="#clinksettings">Clink settings</a> exist to cover those.</p>
+<p>When <code>colored-stats</code> is configured to <code>on</code>, then the color definitions from <code>%LS_COLORS%</code> are used to color file completions according to their file type or extension.    Multiple definitions are separated by colons.  Also, since <code>%LS_COLORS%</code> doesn&#39;t cover readonly files, hidden files, doskey aliases, or shell commands the <a href="#color_readonly">color.readonly</a>, <a href="#color_hidden">color.hidden</a>, <a href="#color_doskey">color.doskey</a>, and <a href="#color_cmd">color.cmd</a> Clink settings exist to cover those.</p>
 <table>
 <thead>
 <tr>
@@ -1923,18 +1923,23 @@ end
 </code></pre>
 <p><a name="filteringthematchdisplay"></a></p>
 <h4 id="filtering-the-match-display">Filtering The Match Display</h4>
-<p>In some instances it may be preferable to display potential matches in an alternative form than the generated matches passed to and used internally by Readline. For example, it might be desirable to display a <code>*</code> next to some matches, or to show additional information about each match. Filtering the match display only affects what is displayed; it doesn&#39;t affect completing matches.</p>
+<p>In some instances it may be preferable to display potential matches in an alternative form than the generated matches passed to and used internally by Readline. For example, it might be desirable to display a <code>*</code> next to some matches, or to show additional information about each match.</p>
 <p>A match generator can use <a href="#clink.ondisplaymatches">clink.ondisplaymatches()</a> to register a function that will be called before matches are displayed (this is reset every time match generation is invoked).</p>
-<p>The function receives a table argument containing the matches to be displayed, and a boolean argument indicating whether they&#39;ll be displayed in a popup window. The table argument has a <code>match</code> string field and a <code>type</code> string field; these are the same as in <a href="builder:addmatch">builder:addmatch()</a>. The return value is a table with the input matches filtered as required by the match generator. The returned table can also optionally include a <code>display</code> string field and a <code>description</code> string field. When present, <code>display</code> will be displayed as the match instead of the <code>match</code> field, and <code>description</code> will be displayed next to the match. Putting the description in a separate field enables Clink to align the descriptions in a column.</p>
+<p>The function receives a table argument containing the matches to be displayed, and a boolean argument indicating whether they&#39;ll be displayed in a popup window. The table argument has a <code>match</code> string field and a <code>type</code> string field; these are the same as in <a href="builder:addmatch">builder:addmatch()</a>. The return value is a table with the input matches filtered as required by the match generator.</p>
+<p>The returned table can also optionally include a <code>display</code> string field and a <code>description</code> string field. When present, <code>display</code> will be displayed instead of the <code>match</code> field, and <code>description</code> will be displayed next to the match. Putting the description in a separate field enables Clink to align the descriptions in a column.</p>
+<p>Filtering the match display can affect completing matches: the <code>match</code> field is what gets inserted.  It can also affect displaying matches: the <code>display</code> field is displayed if present, otherwise the <code>match</code> field is displayed.</p>
+<p>If a match&#39;s <code>type</code> is &quot;none&quot; or its <code>match</code> field is different from its <code>display</code> field then the match is displayed using the color specified by the <a href="#color_filtered">color.filtered</a> Clink setting, otherwise normal completion coloring is applied.  The <code>display</code> and <code>description</code> fields can include ANSI escape codes to apply other colors if desired.</p>
 <pre><code class="language-lua">local function my_filter(matches, popup)
     local new_matches = {}
+    local magenta = &quot;\x1b[35m&quot;
+    local filtered = settings.get(&quot;color.filtered&quot;)
     for _,m in ipairs(matches) do
         if m.match:find(&quot;[0-9]&quot;) then
             -- Ignore matches with one or more digits.
         else
-            -- Keep the match, and also add * prefix to directory matches.
+            -- Keep the match, and also add a magenta * prefix to directory matches.
             if m.type:find(&quot;^dir&quot;) then
-                m.display = &quot;*&quot;..m.match
+                m.display = magenta..&quot;*&quot;..filtered..m.match
             end
             table.insert(new_matches, m)
         end
@@ -3145,6 +3150,7 @@ line:getcommandoffset() == 4</code></pre></div></div><hr/>
 </div><div class="group"><h5 class="group_name"><a name="os">os</a></h5><div class="function"><div class="header"> <div class="name"><a name="os.chdir">os.chdir</a></div> <div class="signature">( <span class="arg_name">path</span>:string ) : boolean</div></div><div class="body"><p class="desc">Changes the current directory to <span class="arg">path</span> and returns whether it was successful.</p></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="os.copy">os.copy</a></div> <div class="signature">( <span class="arg_name">src</span>:string, <span class="arg_name">dest</span>:string ) : boolean</div></div><div class="body"><p class="desc">Copies the <span class="arg">src</span> file to the <span class="arg">dest</span> file.</p></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="os.createtmpfile">os.createtmpfile</a></div> <div class="signature">( [<span class="arg_name">prefix</span>:string], [<span class="arg_name">ext</span>:string], [<span class="arg_name">path</span>:string], [<span class="arg_name">mode</span>:string] ) : file, string</div></div><div class="body"><p class="desc">Creates a uniquely named file, intended for use as a temporary file.  The name pattern is "<em>location</em> <code>\</code> <em>prefix</em> <code>_</code> <em>processId</em> <code>_</code> <em>uniqueNum</em> <em>extension</em>".</p><p class="desc"> <span class="arg">prefix</span> optionally specifies a prefix for the file name and defaults to "tmp".</p><p class="desc"> <span class="arg">ext</span> optionally specifies a suffix for the file name and defaults to "" (if <span class="arg">ext</span> starts with a period "." then it is a filename extension).</p><p class="desc"> <span class="arg">path</span> optionally specifies a path location in which to create the file.  The default is the system TEMP directory.</p><p class="desc"> <span class="arg">mode</span> optionally specifies "t" for text mode (line endings are translated) or "b" for binary mode (untranslated IO).  The default is "t".</p><p class="desc"> When successful, the function returns a file handle and the file name.</p><p class="desc"> <strong>Note:</strong> Be sure to delete the file when finished, or it will be leaked.</p><p class="desc"> If the function is unable to create a file it returns nil, an error message, and an error number.  For example if the directory is inaccessible, or if there are already too many files, or invalid file name characters are used, or etc.</p></div></div><hr/>
+<div class="function"><div class="header"> <div class="name"><a name="os.debugprint">os.debugprint</a></div> <div class="signature">( ... ) : nil</div></div><div class="body"><p class="desc">This works like <code>print()</code> but writes the output via the OS `OutputDebugString()` API.</p><p class="desc"> This function has no effect if the `lua.debug` Clink setting is off.</p><pre class="language-lua"><code>clink.debugprint("my variable = "..myvar)</code></pre></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="os.expandenv">os.expandenv</a></div> <div class="signature">( <span class="arg_name">value</span>:string ) : string</div></div><div class="body"><p class="desc">Returns <span class="arg">value</span> with any <code>%name%</code> environment variables expanded.  Names are case insensitive.  Special CMD syntax is not supported (e.g. <code>%name:str1=str2%</code> or <code>%name:~offset,length%</code>).</p><p class="desc"> Note: See <a href="#os.getenv">os.getenv()</a> for a list of special variable names.</p></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="os.getalias">os.getalias</a></div> <div class="signature">( <span class="arg_name">name</span>:string ) : string | nil</div></div><div class="body"><p class="desc">Returns command string for doskey alias <span class="arg">name</span>, or nil if the named alias does not exist.</p></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="os.getaliases">os.getaliases</a></div> <div class="signature">() : table</div></div><div class="body"><p class="desc">Returns doskey alias names in a table of strings.</p></div></div><hr/>
@@ -3405,6 +3411,15 @@ end</code></pre></div></div><hr/>
         <div class="section" id="changes">
 <h1 id="changes">Changes</h1>
 <h3 id="releases-from-chrisant996clink-fork">Releases from <a href="https://github.com/chrisant996/clink">chrisant996/clink</a> fork</h3>
+<h4 id="v1220">v1.2.20</h4>
+<ul>
+<li>Added <code>os.debugprint()</code> function to print debug text via the OS <code>OutputDebugString()</code> API.</li>
+<li>Enabled match completion coloring even when using match display filtering.</li>
+<li>Fixed input of slash and backslash in non-directory completions when using the <code>clink-select-complete</code> command.</li>
+<li>Fixed match display filtering in the <code>clink-select-complete</code> command.</li>
+<li>Fixed match display filtering in the <code>clink-popup-complete</code> command.</li>
+<li>Fixed quirk from Readline where it sometimes displays one fewer columns of matches than actually fit on the screen.</li>
+</ul>
 <h4 id="v1219">v1.2.19</h4>
 <ul>
 <li>Added <code>clink-select-complete</code> command which shows an interactive list of possible completions.</li>
