@@ -1605,10 +1605,13 @@ void rl_module::on_begin_line(const context& context)
         {
             s_remind = false;
             if (log)
-                context.printer.print(
-                    "\x1b[93mreminder: Clink is logging terminal input and output.\x1b[m\n"
-                    "\x1b[93mYou can use `clink set log.rl_terminal off` to turn it off.\x1b[m\n"
-                    "\n");
+            {
+                str<> s;
+                s.format("\x1b[93mreminder: Clink is logging terminal input and output.\x1b[m\n"
+                         "\x1b[93mYou can use `clink set %s off` to turn it off.\x1b[m\n"
+                         "\n", g_debug_log_terminal.get_name());
+                context.printer.print(s.c_str(), s.length());
+            }
         }
 
         // Reset the fwrite function so logging changes can take effect immediately.
