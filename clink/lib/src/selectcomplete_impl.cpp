@@ -237,10 +237,24 @@ unsigned int match_adapter::get_match_visible_description(unsigned int index) co
 match_type match_adapter::get_match_type(unsigned int index) const
 {
     if (m_filtered_matches)
-        return rl_completion_matches_include_type ? static_cast<match_type>(m_filtered_matches[index + 1]->type) : match_type::none;
+        return static_cast<match_type>(m_filtered_matches[index + 1]->type);
     if (m_matches)
         return m_matches->get_match_type(index);
     return match_type::none;
+}
+
+//------------------------------------------------------------------------------
+bool match_adapter::is_custom_display(unsigned int index) const
+{
+    if (m_filtered_matches)
+    {
+        if (!m_filtered_matches[index + 1]->match[0])
+            return true;
+        const char* temp = printable_part(const_cast<char*>(m_filtered_matches[index + 1]->match));
+        if (strcmp(temp, m_filtered_matches[index + 1]->display) != 0)
+            return true;
+    }
+    return false;
 }
 
 //------------------------------------------------------------------------------
@@ -923,11 +937,14 @@ m_prev_displayed = -1;
                         const int selected = (i == m_index);
                         const char* const display = m_matches.get_match_display(i);
                         char* temp = m_matches.is_display_filtered() ? const_cast<char*>(display) : printable_part(const_cast<char*>(display));
-                        const unsigned char type = static_cast<unsigned char>(m_matches.get_match_type(i));
+                        const match_type match_type = m_matches.get_match_type(i);
+                        const unsigned char type = static_cast<unsigned char>(match_type);
 
                         mark_tmpbuf();
                         int printed_len;
-                        if (m_matches.is_display_filtered())
+                        if (m_matches.is_display_filtered() &&
+                            (is_match_type(match_type, match_type::none) ||
+                             m_matches.is_custom_display(i)))
                         {
                             printed_len = m_matches.get_match_visible_display(i);
                             if (printed_len > col_width)

@@ -113,7 +113,7 @@ void mark_tmpbuf (void)
 //------------------------------------------------------------------------------
 void rollback_tmpbuf (void)
 {
-    tmpbuf_ptr = tmpbuf_rollback_ptr;
+    tmpbuf_ptr = tmpbuf_rollback_ptr ? tmpbuf_rollback_ptr : tmpbuf_allocated;
     tmpbuf_length = tmpbuf_rollback_length;
 }
 
@@ -1020,6 +1020,7 @@ static int display_filtered_match_list_internal(match_display_filter_entry **mat
     int count, limit, printed_len, lines, cols;
     int i, j, l;
     int major_stride, minor_stride;
+    char* t;
     const char* filtered_color = "\x1b[m";
     int filtered_color_len = 3;
     int show_descriptions = 0;
@@ -1052,6 +1053,36 @@ static int display_filtered_match_list_internal(match_display_filter_entry **mat
 
     if (only_measure)
         return count;
+
+    // Match display filtering has the type separate from the match.
+    int included_type = rl_completion_matches_include_type;
+    rl_completion_matches_include_type = 0;
+
+    // Find the length of the prefix common to all items: length as displayed
+    // characters (common_length) and as a byte index into the matches (sind)
+    int common_length = 0;
+    int sind = 0;
+    if (_rl_completion_prefix_display_length > 0)
+    {
+        t = visible_part(matches[0]->match);
+        common_length = fnwidth(t);
+        sind = strlen(t);
+        if (common_length > max || sind > max)
+            common_length = sind = 0;
+
+        if (common_length > _rl_completion_prefix_display_length && common_length > ELLIPSIS_LEN)
+            max -= common_length - ELLIPSIS_LEN;
+        else
+            common_length = sind = 0;
+    }
+    else if (_rl_colored_completion_prefix > 0)
+    {
+        t = visible_part(matches[0]->match);
+        common_length = fnwidth(t);
+        sind = RL_STRLEN(t);
+        if (common_length > max || sind > max)
+            common_length = sind = 0;
+    }
 
     // Watch out for special case.  If LEN is less than LIMIT, then
     // just do the inner printing loop.
@@ -1088,9 +1119,20 @@ static int display_filtered_match_list_internal(match_display_filter_entry **mat
                 break;
 
             const match_display_filter_entry* entry = matches[l];
+            const char* display = entry->display;
+            char* temp = printable_part(entry->match);
 
-            printed_len = entry->visible_display;
-            append_display(entry->display, 0);
+            if (IS_MATCH_TYPE_NONE(entry->type) ||
+                !entry->match[0] ||
+                strcmp(display, temp) != 0)
+            {
+                printed_len = entry->visible_display;
+                append_display(entry->display, 0);
+            }
+            else
+            {
+                printed_len = append_filename(temp, entry->match, sind, entry->type, 0);
+            }
 
             if (show_descriptions && matches[l]->description)
             {
@@ -1114,16 +1156,21 @@ static int display_filtered_match_list_internal(match_display_filter_entry **mat
 #else
         if (RL_SIG_RECEIVED())
 #endif
+        {
+early_return:
+            rl_completion_matches_include_type = included_type;
             return 0;
+        }
         lines++;
         if (_rl_page_completions && lines >= (_rl_screenheight - 1) && i < count)
         {
             lines = _rl_internal_pager(lines);
             if (lines < 0)
-                return 0;
+                goto early_return;
         }
     }
 
+    rl_completion_matches_include_type = included_type;
     return 1;
 }
 

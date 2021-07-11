@@ -30,6 +30,7 @@ public:
     const char*     get_match_description(unsigned int index) const;
     unsigned int    get_match_visible_description(unsigned int index) const;
     match_type      get_match_type(unsigned int index) const;
+    bool            is_custom_display(unsigned int index) const;
 
     bool            is_display_filtered() const { return !!m_filtered_matches; }
     bool            has_descriptions() const { return m_has_descriptions; }
