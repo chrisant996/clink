@@ -9,9 +9,10 @@
 #include <getopt.h>
 
 //------------------------------------------------------------------------------
-typedef int     (dispatch_func_t)(const char*, int);
+typedef bool    (dispatch_func_t)(const char*, int);
 str<>           g_clink_args;
 int             g_all_users  = 0;
+static bool     s_was_installed = false;
 void            puts_help(const char* const* help_pairs, const char* const* other_pairs=nullptr);
 
 
@@ -181,29 +182,30 @@ static const char* get_cmd_start(const char* cmd)
 }
 
 //------------------------------------------------------------------------------
-static int uninstall_autorun(const char* clink_path, int wow64)
+static bool uninstall_autorun(const char* clink_path, int wow64)
 {
     HKEY cmd_proc_key;
     char* key_value;
-    int ret;
     int left, right;
 
     cmd_proc_key = open_cmd_proc_key(g_all_users, wow64, 1);
     if (cmd_proc_key == nullptr)
     {
         printf("ERROR: Failed to open registry key (%d)\n", GetLastError());
-        return 1;
+        return false;
     }
 
     key_value = nullptr;
     get_value(cmd_proc_key, "AutoRun", &key_value);
 
-    ret = 0;
+    bool ret = 0;
     if (key_value && find_clink_entry(key_value, &left, &right))
     {
         const char* read;
         char* write;
         int i, n;
+
+        s_was_installed = true;
 
         // Copy the key value into itself, skipping clink's entry.
         read = write = key_value;
@@ -221,15 +223,17 @@ static int uninstall_autorun(const char* clink_path, int wow64)
         if (*read == '\0')
         {
             // Empty key. We might as well delete it.
-            if (!delete_value(cmd_proc_key, "AutoRun"))
-            {
-                ret = 1;
-            }
+            ret = delete_value(cmd_proc_key, "AutoRun");
         }
-        else if (!set_value(cmd_proc_key, "AutoRun", read))
+        else
         {
-            ret = 1;
+            ret = set_value(cmd_proc_key, "AutoRun", read);
         }
+    }
+    else
+    {
+        s_was_installed = false;
+        ret = true;
     }
 
     // Tidy up.
@@ -239,7 +243,7 @@ static int uninstall_autorun(const char* clink_path, int wow64)
 }
 
 //------------------------------------------------------------------------------
-static int install_autorun(const char* clink_path, int wow64)
+static bool install_autorun(const char* clink_path, int wow64)
 {
     HKEY cmd_proc_key;
     const char* value;
@@ -256,7 +260,7 @@ static int install_autorun(const char* clink_path, int wow64)
     if (cmd_proc_key == nullptr)
     {
         printf("ERROR: Failed to open registry key (%d)\n", GetLastError());
-        return 1;
+        return false;
     }
 
     key_value = nullptr;
@@ -277,19 +281,17 @@ static int install_autorun(const char* clink_path, int wow64)
 
     // Set it
     value = get_cmd_start(new_value.c_str());
-    i = 0;
-    if (!set_value(cmd_proc_key, "AutoRun", value))
-        i = 1;
+    bool ret = set_value(cmd_proc_key, "AutoRun", value);
 
     // Tidy up.
     close_key(cmd_proc_key);
     free(new_value.data());
     free(key_value);
-    return i;
+    return ret;
 }
 
 //------------------------------------------------------------------------------
-static int show_autorun()
+static bool show_autorun()
 {
     int all_users;
 
@@ -310,7 +312,7 @@ static int show_autorun()
             if (cmd_proc_key == nullptr)
             {
                 printf("ERROR: Failed to open registry key (%d)\n", GetLastError());
-                return 1;
+                return false;
             }
 
             key_value = nullptr;
@@ -329,33 +331,32 @@ static int show_autorun()
     }
 
     puts("");
-    return 0;
+    return true;
 }
 
 //------------------------------------------------------------------------------
-static int set_autorun_value(const char* value, int wow64)
+static bool set_autorun_value(const char* value, int wow64)
 {
     HKEY cmd_proc_key = open_cmd_proc_key(g_all_users, wow64, 1);
     if (cmd_proc_key == nullptr)
     {
         printf("ERROR: Failed to open registry key (%d)\n", GetLastError());
-        return 1;
+        return false;
     }
 
-    int ret;
+    bool ret;
     if (value == nullptr || *value == '\0')
-        ret = !delete_value(cmd_proc_key, "AutoRun");
+        ret = delete_value(cmd_proc_key, "AutoRun");
     else
-        ret = !set_value(cmd_proc_key, "AutoRun", value);
+        ret = set_value(cmd_proc_key, "AutoRun", value);
 
     close_key(cmd_proc_key);
     return ret;
 }
 
 //------------------------------------------------------------------------------
-static int dispatch(dispatch_func_t* function, const char* clink_path)
+static bool dispatch(dispatch_func_t* function, const char* clink_path)
 {
-    int ok;
     int wow64;
     int is_x64_os;
     SYSTEM_INFO system_info;
@@ -364,7 +365,7 @@ static int dispatch(dispatch_func_t* function, const char* clink_path)
     is_x64_os = system_info.wProcessorArchitecture;
     is_x64_os = (is_x64_os == PROCESSOR_ARCHITECTURE_AMD64);
 
-    ok = 1;
+    bool ok = true;
     for (wow64 = 0; wow64 <= is_x64_os; ++wow64)
     {
         ok &= function(clink_path, wow64);
@@ -421,7 +422,6 @@ static void success_message(const char* message)
     show_autorun();
     printf("%s (for %s).\n", message, g_all_users ? "all users" : "current user");
 }
-
 
 //------------------------------------------------------------------------------
 int autorun(int argc, char** argv)
@@ -514,7 +514,9 @@ int autorun(int argc, char** argv)
         if (function == install_autorun)
             msg = "Clink successfully installed to run when cmd.exe starts";
         else if (function == uninstall_autorun)
-            msg = "Clink's autorun entry has been removed";
+            msg = (s_was_installed ?
+                   "Clink's autorun entry has been removed" :
+                   "Clink does not have an autorun entry");
         else if (function == set_autorun_value)
             msg = "Cmd.exe's AutoRun registry key set successfully";
 
