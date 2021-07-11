@@ -951,6 +951,12 @@ static void postprocess_lcd(char* lcd, const char* text)
 }
 
 //------------------------------------------------------------------------------
+static int maybe_strlen(const char* s)
+{
+    return s ? strlen(s) : 0;
+}
+
+//------------------------------------------------------------------------------
 int clink_popup_complete(int count, int invoking_key)
 {
     if (!s_matches)
@@ -985,31 +991,33 @@ int clink_popup_complete(int count, int invoking_key)
     int len_prefix = end_prefix ? end_prefix - orig_text : 0;
 
     // Match display filter.
-    bool any_descriptions = false;
+    bool display_filtered = false;
     match_display_filter_entry** filtered_matches = match_display_filter(matches, true/*popup*/);
     if (filtered_matches && filtered_matches[0] && filtered_matches[1])
     {
+        display_filtered = true;
         _rl_free_match_list(matches);
         free_match_strings = false;
         matches = nullptr;
 
-        completing = false;
-        past_flag = 0;
+        completing = false; // Has intentional side effect of disabling auto_complete.
 
         match_count = 0;
         for (int i = 1; filtered_matches[i]; i++)
-        {
-            any_descriptions = any_descriptions || filtered_matches[i]->description;
-            match_count++;
-        }
+            match_count += !!filtered_matches[i]->match[0]; // Count non-empty matches.
 
         if (match_count)
         {
             matches = (char**)calloc(match_count + 1, sizeof(*matches));
             if (matches)
             {
+                int j = 0;
                 for (int i = 1; filtered_matches[i]; i++)
-                    matches[i - 1] = const_cast<char*>(filtered_matches[i]->buffer);
+                {
+                    if (filtered_matches[i]->match[0]) // Count non-empty matches.
+                        matches[j++] = filtered_matches[i]->buffer - past_flag;
+                }
+                assert(j == match_count);
                 matches[match_count] = nullptr;
             }
         }
@@ -1021,7 +1029,7 @@ int clink_popup_complete(int count, int invoking_key)
     switch (do_popup_list("Completions", (const char **)matches, match_count,
                           len_prefix, past_flag, completing,
                           true/*auto_complete*/, false/*reverse_find*/,
-                          current, choice, any_descriptions))
+                          current, choice, display_filtered))
     {
     case popup_list_result::cancel:
         break;

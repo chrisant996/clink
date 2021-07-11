@@ -117,9 +117,10 @@ void lua_match_generator::get_word_break_info(const line_state& line, word_break
 
 //------------------------------------------------------------------------------
 // Parse ANSI escape codes to determine the visible character length of the
-// string (which gets used for column alignment).  Also optionally strip ANSI
-// escape codes.
-static int plainify(const char* s, bool strip)
+// string (which gets used for column alignment).  When a strip out parameter is
+// supplied, this also strips ANSI escape codes and the strip out parameter
+// receives a pointer to the next character past the nul terminator.
+static int plainify(const char* s, char** strip)
 {
     int visible_len = 0;
 
@@ -147,7 +148,10 @@ static int plainify(const char* s, bool strip)
         }
 
     if (strip)
-        *plain = '\0';
+    {
+        *(plain++) = '\0';
+        *strip = plain;
+    }
 
     return visible_len;
 }
@@ -363,7 +367,7 @@ discard:
                 if (!display[0])
                     goto discard;
                 new_match->display = append_string_into_buffer(buffer, display);
-                new_match->visible_display = plainify(new_match->display, popup);
+                new_match->visible_display = plainify(new_match->display, popup ? &buffer : nullptr);
                 if (new_match->visible_display <= 0)
                     goto discard;
 
@@ -371,7 +375,16 @@ discard:
                 {
                     one_column = true;
                     new_match->description = append_string_into_buffer(buffer, description);
-                    new_match->visible_description = plainify(new_match->description, popup);
+                    new_match->visible_description = plainify(new_match->description, popup ? &buffer : nullptr);
+                }
+                else
+                {
+                    // Must append empty string even when no description,
+                    // because do_popup_list expects 3 nul terminated strings.
+                    // Leave new_match->description nullptr to signal there is
+                    // no description (subtly different than having an empty
+                    // description).
+                    append_string_into_buffer(buffer, description);
                 }
 
                 if (max_visible_display < new_match->visible_display)

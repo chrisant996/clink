@@ -7,7 +7,7 @@ struct match_display_filter_entry
     const char* match;          // Match string (pointer into buffer).
     const char* display;        // Display string (pointer into buffer).
     const char* description;    // Description string (pointer into buffer).
-    unsigned char type;
+    unsigned char type;         // IMPORTANT: Must immediately preceed buffer for compatibility with rl_completion_matches_include_type.
     char buffer[1];             // Variable length buffer containing match, display, and description.
 };
 typedef struct match_display_filter_entry match_display_filter_entry;
