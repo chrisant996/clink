@@ -67,6 +67,8 @@ enum {
 enum {
     between_cols = 2,
     before_desc = 4,
+
+    ellipsis_len = 3,
 };
 
 static_assert(between_cols <= before_desc, "description separator can't be less than the column separator");
@@ -99,7 +101,7 @@ static void ellipsify(const char* in, int limit, str_base& out, bool expand_ctrl
             while (const int c = inner_iter.next())
             {
                 const int clen = (expand_ctrl && (CTRL_CHAR(c) || c == RUBOUT)) ? 2 : clink_wcwidth(c);
-                if (truncate_visible < 0 && visible_len + clen > limit - 3)
+                if (truncate_visible < 0 && visible_len + clen > limit - ellipsis_len)
                 {
                     truncate_visible = visible_len;
                     truncate_bytes = out.length();
@@ -107,7 +109,7 @@ static void ellipsify(const char* in, int limit, str_base& out, bool expand_ctrl
                 if (visible_len + clen > limit)
                 {
                     out.truncate(truncate_bytes);
-                    out.concat("...", 3);//min<int>(3, max<int>(0, limit - 3)));
+                    out.concat("...", min<int>(ellipsis_len, max<int>(0, limit - truncate_visible)));
                     return;
                 }
                 visible_len += clen;
