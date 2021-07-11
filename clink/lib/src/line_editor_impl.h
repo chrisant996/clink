@@ -78,7 +78,7 @@ private:
     typedef std::vector<word>                   words;
     friend void update_matches();
     friend matches* get_mutable_matches(bool nosort);
-    friend matches* maybe_regenerate_matches(const char* needle, bool popup);
+    friend matches* maybe_regenerate_matches(const char* needle, bool popup, bool sort);
 
     enum flags : unsigned char
     {

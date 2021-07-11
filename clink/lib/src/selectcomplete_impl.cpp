@@ -34,6 +34,7 @@ extern int _rl_last_v_pos;
 };
 
 extern void reset_generate_matches();
+extern matches* maybe_regenerate_matches(const char* needle, bool popup, bool sort=false);
 extern void force_update_internal(bool restrict=false, bool sort=false);
 extern void update_matches();
 extern void update_rl_modes_from_matches(const matches* matches, const matches_iter& iter, int count);
@@ -139,7 +140,14 @@ const matches* match_adapter::get_matches() const
 void match_adapter::set_matches(const matches* matches)
 {
     free_filtered();
-    m_matches = matches;
+    m_real_matches = matches;
+    m_matches = m_real_matches;
+}
+
+//------------------------------------------------------------------------------
+void match_adapter::set_regen_matches(const matches* matches)
+{
+    m_matches = matches ? matches : m_real_matches;
 }
 
 //------------------------------------------------------------------------------
@@ -152,18 +160,15 @@ void match_adapter::set_filtered_matches(match_display_filter_entry** filtered_m
     // Skip first filtered match; it's fake, to satisfy Readline's expectation
     // that matches start at [1].
     unsigned int count = 0;
-    bool any_desc = false;
+    bool has_desc = false;
     if (filtered_matches && filtered_matches[0])
     {
+        has_desc = (filtered_matches[0]->visible_display < 0);
         while (*(++filtered_matches))
-        {
-            if (!any_desc && (*filtered_matches)->description)
-                any_desc = true;
             count++;
-        }
     }
     m_filtered_count = count;
-    m_has_descriptions = any_desc;
+    m_has_descriptions = has_desc;
 }
 
 //------------------------------------------------------------------------------
@@ -682,13 +687,12 @@ void selectcomplete_impl::on_matches_changed(const context& context, const line_
     m_prev_displayed = -1;
     m_anchor = line.get_end_word_offset();
 
-    if (is_active())
-    {
-        m_needle = needle;
-        update_len();
-        update_layout();
-        update_display();
-    }
+    // Update the needle regardless whether active.  This is so update_matches()
+    // can filter the filtered matches based on the initial needle.  Because the
+    // matches were initially expanded with "g" matching ".git" and "getopt\"
+    // but only an explicit wildcard (e.g. "*g") should accept ".git".
+    m_needle = needle;
+    update_len();
 }
 
 //------------------------------------------------------------------------------
@@ -726,6 +730,7 @@ void selectcomplete_impl::cancel(editor_module::result& result)
 void selectcomplete_impl::update_matches(bool restrict, bool sort)
 {
     ::force_update_internal(restrict, sort);
+    m_matches.set_regen_matches(nullptr);
 
     // Initialize when starting a new interactive completion.
     if (restrict)
@@ -762,16 +767,20 @@ void selectcomplete_impl::update_matches(bool restrict, bool sort)
         }
     }
 
-    if (rl_match_display_filter_func)
+    // Perform match display filtering.
+    const bool popup = false;
+    bool filtered = false;
+    if (m_matches.get_matches()->match_display_filter(nullptr, nullptr, popup))
     {
-        // This is not literally a popup, but it has the same needs as a popup.
-        if (m_matches.get_matches()->match_display_filter(nullptr, nullptr, true/*popup*/))
+        assert(rl_completion_matches_include_type);
+        if (matches* regen = maybe_regenerate_matches(m_needle.c_str(), popup))
         {
+            m_matches.set_regen_matches(regen);
+
             // Build char** array for filtering.
-            assert(!m_matches.is_display_filtered());
-            assert(rl_completion_matches_include_type);
             std::vector<autoptr<char>> matches;
             const unsigned int count = m_matches.get_match_count();
+            matches.emplace_back(nullptr); // Placeholder for lcd.
             for (unsigned int i = 0; i < count; i++)
             {
                 const char* text = m_matches.get_match(i);
@@ -784,51 +793,113 @@ void selectcomplete_impl::update_matches(bool restrict, bool sort)
             matches.emplace_back(nullptr);
 
             // Get filtered matches.
-            match_display_filter_entry** filtered_matches = rl_match_display_filter_func(&*matches.begin());
-            m_matches.set_filtered_matches(filtered_matches);
-        }
-    }
+            match_display_filter_entry** filtered_matches = nullptr;
+            m_matches.get_matches()->match_display_filter(&*matches.begin(), &filtered_matches, popup);
 
-    if (restrict)
-    {
-        // Determine the lcd and the longest match.
-        {
-            // Using m_matches directly means match types are separate from matches.
-            rollback<int> rb(rl_completion_matches_include_type, 0);
-
-            m_match_longest = 0;
-
-            const unsigned int count = m_matches.get_match_count();
-            for (unsigned int i = 0; i < count; i++)
+            // Filter the, uh, filtered matches.
             {
-                // Update lcd.
-                const char* match = m_matches.get_match(i);
-                if (!i)
-                {
-                    m_needle = match;
-                }
-                else
-                {
-                    int matching = str_compare(m_needle.c_str(), match);
-                    m_needle.truncate(matching);
-                }
+                match_display_filter_entry** hare = filtered_matches + 1;
+                match_display_filter_entry** tortoise = filtered_matches + 1;
 
-                // Update longest match.
-                int len = m_matches.get_match_visible_display(i);
-                if (m_match_longest < len)
-                    m_match_longest = len;
+                // Need to use printable_part() and etc.
+                rollback<int> rb(rl_completion_matches_include_type, 0);
+
+                const char* needle = printable_part(const_cast<char*>(m_needle.c_str()));
+                int needle_len = strlen(needle);
+
+                while (*hare)
+                {
+                    if (str_compare(needle, (*hare)->match) < needle_len)
+                    {
+                        free(*hare);
+                    }
+                    else
+                    {
+                        if (hare != tortoise)
+                            *tortoise = *hare;
+                        tortoise++;
+                    }
+                    hare++;
+                }
+                *tortoise = nullptr;
             }
 
-            m_lcd = m_needle.length();
+            // Use filtered matches.
+            m_matches.set_filtered_matches(filtered_matches);
+            filtered = true;
+
+#ifdef DEBUG
+            if (dbg_get_env_int("DEBUG_FILTER"))
+            {
+                puts("-- SELECTCOMPLETE MATCH_DISPLAY_FILTER");
+                if (filtered_matches && filtered_matches[0])
+                {
+                    // Skip [0]; Readline's expects matches start at [1].
+                    str<> tmp;
+                    while (*(++filtered_matches))
+                    {
+                        match_type_to_string(static_cast<match_type>(filtered_matches[0]->type), tmp);
+                        printf("type '%s', match '%s', display '%s'\n",
+                                tmp.c_str(),
+                                filtered_matches[0]->match,
+                                filtered_matches[0]->display);
+                    }
+                }
+                puts("-- DONE");
+            }
+#endif
         }
     }
+
+    // Determine the lcd.
+    if (restrict)
+    {
+        const unsigned int count = m_matches.get_match_count();
+        for (unsigned int i = 0; i < count; i++)
+        {
+            const char* match = m_matches.get_match(i);
+            if (!i)
+            {
+                m_needle = match;
+            }
+            else
+            {
+                int matching = str_compare(m_needle.c_str(), match);
+                m_needle.truncate(matching);
+            }
+        }
+
+        m_lcd = m_needle.length();
+    }
+
+    // Determine the longest match.
+    if (restrict || filtered)
+    {
+        // Using m_matches directly means match types are separate from matches.
+        // When not filtered, get_match_visible_display() has to synthesize the
+        // visible length by using functions that are influenced by
+        // rl_completion_matches_include_type.
+        rollback<int> rb(rl_completion_matches_include_type, 0);
+
+        if (restrict)
+            m_match_longest = 0;
+
+        const unsigned int count = m_matches.get_match_count();
+        for (unsigned int i = 0; i < count; i++)
+        {
+            int len = m_matches.get_match_visible_display(i);
+            if (m_match_longest < len)
+                m_match_longest = len;
+        }
+    }
+
+    update_layout();
+    update_display();
 }
 
 //------------------------------------------------------------------------------
 void selectcomplete_impl::update_len()
 {
-    assert(is_active());
-
     m_len = 0;
 
     if (m_index < m_matches.get_match_count())

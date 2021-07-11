@@ -78,7 +78,7 @@ extern void sort_match_list(char** matches, int len);
 extern int macro_hook_func(const char* macro);
 extern int filter_matches(char** matches);
 extern void update_matches();
-extern matches* maybe_regenerate_matches(const char* needle, bool popup);
+extern matches* maybe_regenerate_matches(const char* needle, bool popup, bool sort=false);
 extern setting_color g_color_interact;
 extern int g_prompt_refilter;
 extern int g_prompt_redisplay;

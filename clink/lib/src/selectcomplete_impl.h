@@ -20,6 +20,7 @@ public:
                     ~match_adapter();
     const matches*  get_matches() const;
     void            set_matches(const matches* matches);
+    void            set_regen_matches(const matches* matches);
     void            set_filtered_matches(match_display_filter_entry** filtered_matches);
 
     matches_iter    get_iter();
@@ -40,6 +41,7 @@ private:
 
 private:
     const matches*  m_matches = nullptr;
+    const matches*  m_real_matches = nullptr;
     match_display_filter_entry** m_filtered_matches = nullptr;
     unsigned int    m_filtered_count = 0;
     bool            m_has_descriptions = false;

@@ -1152,7 +1152,7 @@ void line_editor_impl::before_display()
 }
 
 //------------------------------------------------------------------------------
-matches* maybe_regenerate_matches(const char* needle, bool popup)
+matches* maybe_regenerate_matches(const char* needle, bool popup, bool sort)
 {
     if (!s_editor || s_editor->m_matches.is_regen_blocked())
         return nullptr;
@@ -1191,12 +1191,8 @@ matches* maybe_regenerate_matches(const char* needle, bool popup)
 #endif
 
     pipeline.select(needle);
-    // Sorting should be skipped for Readline completion, but should occur for
-    // Clink completion (e.g. clink-select-complete).  Except that currently
-    // only Readline completion can reach here.
-#if 0
-    pipeline.sort();
-#endif
+    if (sort)
+        pipeline.sort();
 
 #ifdef DEBUG
     if (debug_filter)
