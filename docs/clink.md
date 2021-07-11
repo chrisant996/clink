@@ -101,7 +101,7 @@ Name                         | Default | Description
 `color.argmatcher`           |         | The color for the command name in the input line when `clink.colorize_input` is enabled, if the command name has an argmatcher available.
 <a name="color_cmd"></a>`color.cmd` | `bold` | Used when Clink displays shell (CMD.EXE) command completions, and in the input line when `clink.colorize_input` is enabled.
 <a name="color_doskey"></a>`color.doskey` | `bright cyan` | Used when Clink displays doskey alias completions, and in the input line when `clink.colorize_input` is enabled.
-`color.filtered`             | `bold`  | The default color for filtered completions (see <a href="#filteringthematchdisplay">Filtering the Match Display</a>).
+<a name="color_filtered"></a>`color.filtered` | `bold` | The default color for filtered completions (see <a href="#filteringthematchdisplay">Filtering the Match Display</a>).
 `color.flag`                 | `default` | The color for flags in the input line when `clink.colorize_input` is enabled.
 <a name="color_hidden"></a>`color.hidden` | | Used when Clink displays file completions with the "hidden" attribute.
 `color.horizscroll`          |         | Used when Clink displays the `<` or `>` horizontal scroll indicators when Readline's `horizontal-scroll-mode` variable is set.
@@ -413,7 +413,7 @@ The `%LS_COLORS%` environment variable provides color definitions as a series of
 
 When the `colored-completion-prefix` [Readline setting](#configreadline) is configured to `on`, then the "so" color from `%LS_COLORS%` is used to color the common prefix when displaying possible completions.  The default for "so" is magenta, but for example `set LS_COLORS=so=90` sets the color to bright black (which shows up as a dark gray).
 
-When `colored-stats` is configured to `on`, then the color definitions from `%LS_COLORS%` are used to color file completions according to their file type or extension.    Multiple definitions are separated by colons.  Also, since `%LS_COLORS%` doesn't cover readonly files, hidden files, doskey aliases, or shell commands the `color.readonly`, `color.hidden`, `color.doskey`, and `color.cmd` [Clink settings](#clinksettings) exist to cover those.
+When `colored-stats` is configured to `on`, then the color definitions from `%LS_COLORS%` are used to color file completions according to their file type or extension.    Multiple definitions are separated by colons.  Also, since `%LS_COLORS%` doesn't cover readonly files, hidden files, doskey aliases, or shell commands the [color.readonly](#color_readonly), [color.hidden](#color_hidden), [color.doskey](#color_doskey), and [color.cmd](#color_cmd) Clink settings exist to cover those.
 
 Type|Description|Default
 -|-|-
@@ -740,16 +740,20 @@ A match generator can use <a href="#clink.ondisplaymatches">clink.ondisplaymatch
 
 The function receives a table argument containing the matches to be displayed, and a boolean argument indicating whether they'll be displayed in a popup window. The table argument has a `match` string field and a `type` string field; these are the same as in <a href="builder:addmatch">builder:addmatch()</a>. The return value is a table with the input matches filtered as required by the match generator. The returned table can also optionally include a `display` string field and a `description` string field. When present, `display` will be displayed as the match instead of the `match` field, and `description` will be displayed next to the match. Putting the description in a separate field enables Clink to align the descriptions in a column.
 
+If a match's `type` is "none" or its `match` field is different from its `display` field then the match is displayed using the color specified by the [color.filtered](#color_filtered) Clink setting, otherwise normal completion coloring is applied.  The `display` and `description` fields can include ANSI escape codes to apply other colors if desired.
+
 ```lua
 local function my_filter(matches, popup)
     local new_matches = {}
+    local magenta = "\x1b[35m"
+    local filtered = settings.get("color.filtered")
     for _,m in ipairs(matches) do
         if m.match:find("[0-9]") then
             -- Ignore matches with one or more digits.
         else
-            -- Keep the match, and also add * prefix to directory matches.
+            -- Keep the match, and also add a magenta * prefix to directory matches.
             if m.type:find("^dir") then
-                m.display = "*"..m.match
+                m.display = magenta.."*"..filtered..m.match
             end
             table.insert(new_matches, m)
         end
