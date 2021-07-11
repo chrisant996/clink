@@ -2,6 +2,14 @@
 
 ### Releases from [chrisant996/clink](https://github.com/chrisant996/clink) fork
 
+#### v1.2.20
+
+- Added `os.debugprint()` function to print debug text via the OS `OutputDebugString()` API.
+- Enabled match completion coloring even when using match display filtering.
+- Fixed quirk from Readline where it sometimes displays one fewer columns of matches than actually fit on the screen.
+- Fixed match display filtering in the `clink-select-complete` command.
+- Fixed input of slash and backslash in non-directory completions when using the `clink-select-complete` command.
+
 #### v1.2.19
 
 - Added `clink-select-complete` command which shows an interactive list of possible completions.
