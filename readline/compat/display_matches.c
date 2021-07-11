@@ -922,8 +922,13 @@ static int display_match_list_internal(char **matches, int len, int max, bool on
     cols = complete_get_screenwidth();
     max += 2;
     limit = cols / max;
+#if 0
+    // Readline pads every column with spaces, so it must avoid reaching the end
+    // of the screen line.  Clink doesn't pad the last column with spaces, so it
+    // can eliminate this limitation.
     if (limit != 1 && (limit * max == cols))
         limit--;
+#endif
 
     // Limit can end up -1 if cols == 0, or 0 if max > cols.  In that case,
     // display 1 match per iteration.
@@ -1023,8 +1028,13 @@ static int display_filtered_match_list_internal(match_display_filter_entry **mat
     cols = complete_get_screenwidth();
     max += 2;
     limit = cols / max;
+#if 0
+    // Readline pads every column with spaces, so it must avoid reaching the end
+    // of the screen line.  Clink doesn't pad the last column with spaces, so it
+    // can eliminate this limitation.
     if (limit != 1 && (limit * max == cols))
         limit--;
+#endif
 
     // Limit can end up -1 if cols == 0, or 0 if max > cols.  In that case,
     // display 1 match per iteration.
