@@ -290,9 +290,6 @@ bool lua_match_generator::match_display_filter(char** matches, match_display_fil
     int max_visible_description = 0;
     int new_len = int(lua_rawlen(state, -1));
     new_matches = (match_display_filter_entry**)calloc(1 + new_len + 1, sizeof(*new_matches));
-    new_matches[0] = (match_display_filter_entry*)malloc(sizeof(match_display_filter_entry));
-    memset(new_matches[0], 0, sizeof(new_matches[0]));
-    new_matches[0]->display = new_matches[0]->buffer;
     for (i = 1; i <= new_len; ++i)
     {
         lua_rawgeti(state, -1, i);
@@ -389,6 +386,16 @@ discard:
     }
     new_matches[j] = nullptr;
 
+    // Fill in entry [0]:
+    //  - display is an empty string.
+    //  - visible_display is the max visible_display of the entries.
+    //  - visible_display negative means has descriptions (use one column).
+    //  - visible_description is the max visible_description of the entries.
+    //  - visible_description can be 0 when visible_display is negative; this
+    //    means there are descriptions (use one column) but they are all blank.
+    new_matches[0] = (match_display_filter_entry*)malloc(sizeof(match_display_filter_entry));
+    memset(new_matches[0], 0, sizeof(new_matches[0]));
+    new_matches[0]->display = new_matches[0]->buffer;
     if (one_column)
         new_matches[0]->visible_display = 0 - max_visible_display;
     else
