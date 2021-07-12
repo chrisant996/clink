@@ -403,6 +403,8 @@ bool selectcomplete_impl::point_within(int in) const
 //------------------------------------------------------------------------------
 void selectcomplete_impl::bind_input(binder& binder)
 {
+    const char* esc = get_bindable_esc();
+
     m_bind_group = binder.create_group("selectcomplete");
     binder.bind(m_bind_group, "\\t", bind_id_selectcomplete_next);
     binder.bind(m_bind_group, "\\e[Z", bind_id_selectcomplete_prev);
@@ -419,7 +421,10 @@ void selectcomplete_impl::bind_input(binder& binder)
     binder.bind(m_bind_group, "/", bind_id_selectcomplete_slash);
     binder.bind(m_bind_group, "\\", bind_id_selectcomplete_backslash);
     binder.bind(m_bind_group, "\"", bind_id_selectcomplete_quote);
-    binder.bind(m_bind_group, get_bindable_esc(), bind_id_selectcomplete_escape);
+
+    binder.bind(m_bind_group, "^g", bind_id_selectcomplete_escape);
+    if (esc)
+        binder.bind(m_bind_group, esc, bind_id_selectcomplete_escape);
 
     binder.bind(m_bind_group, "", bind_id_selectcomplete_catchall);
 }
