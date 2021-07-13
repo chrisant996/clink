@@ -18,6 +18,7 @@ enum
     keycat_cursor,
     keycat_completion,
     keycat_history,
+    keycat_killyank,
     keycat_select,
     keycat_scroll,
     keycat_misc,
