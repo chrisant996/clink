@@ -9,8 +9,8 @@
 #include <terminal/printer.h>
 #include <terminal/terminal.h>
 #include <terminal/ecma48_iter.h>
-#include "lib/editor_module.h"
-#include "lib/pager.h"
+#include "editor_module.h"
+#include "pager.h"
 
 extern "C" {
 #include <compat/config.h>
