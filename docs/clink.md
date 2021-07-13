@@ -366,6 +366,7 @@ Name | Description
 `clink-copy-line`|Copy the current line to the clipboard.
 `clink-copy-word`|Copy the word at the cursor to the clipboard, or copies the nth word if a numeric argument is provided via the `digit-argument` keys.
 `clink-ctrl-c`|Discards the current line and starts a new one (like <kbd>Ctrl</kbd>+<kbd>C</kbd> in CMD.EXE).
+`clink-diagnostics`|Show internal diagnostic information.
 `clink-exit`|Replaces the current line with `exit` and executes it (exits the shell instance).
 `clink-expand-doskey-alias`|Expand the doskey alias (if any) at the beginning of the line.
 `clink-expand-env-vars`|Expand the environment variable (e.g. `%FOOBAR%`) at the cursor.
