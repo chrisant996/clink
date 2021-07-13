@@ -7,6 +7,8 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 ## High Priority
 
 ## Medium Priority
+- Categorized help, with descriptions of commands.
+- `what-is` command to interrogate what is bound to a chord.
 
 ## Low Priority
 

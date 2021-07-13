@@ -177,17 +177,30 @@ static const FUNMAP default_funmap[] = {
   { "vi-complete", rl_vi_complete },
   { "vi-delete", rl_vi_delete },
   { "vi-delete-to", rl_vi_delete_to },
-  { "vi-eWord", rl_vi_eWord },
+/* begin_clink_change
+ * This must go after the long names, so it can find the right command name. */
+  //{ "vi-eWord", rl_vi_eWord },
+/* end_clink_change */
   { "vi-editing-mode", rl_vi_editing_mode },
   { "vi-end-bigword", rl_vi_eWord },
   { "vi-end-word", rl_vi_end_word },
   { "vi-eof-maybe", rl_vi_eof_maybe },
-  { "vi-eword", rl_vi_eword },
-  { "vi-fWord", rl_vi_fWord },	/* BEWARE: name matching is case insensitive */
+/* begin_clink_change */
+  //{ "vi-eword", rl_vi_eword },
+  { "vi-eWord", rl_vi_eWord },	/* BEWARE: name matching is case insensitive */
+  { "vi-eword", rl_vi_eword },	/* BEWARE: name matching is case insensitive */
+/* end_clink_change */
+/* begin_clink_change
+ * This must go after the long names, so it can find the right command name. */
+  //{ "vi-fWord", rl_vi_fWord },	/* BEWARE: name matching is case insensitive */
+/* end_clink_change */
   { "vi-fetch-history", rl_vi_fetch_history },
   { "vi-first-print", rl_vi_first_print },
   { "vi-forward-bigword", rl_vi_fWord },
   { "vi-forward-word", rl_vi_fword },
+/* begin_clink_change */
+  { "vi-fWord", rl_vi_fWord },	/* BEWARE: name matching is case insensitive */
+/* end_clink_change */
   { "vi-fword", rl_vi_fword },	/* BEWARE: name matching is case insensitive */
   { "vi-goto-mark", rl_vi_goto_mark },
   { "vi-insert-beg", rl_vi_insert_beg },

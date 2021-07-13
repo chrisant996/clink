@@ -3,6 +3,27 @@
 
 #pragma once
 
+#include <core/os.h> // Prevent S_IFLNK macro redefinition.
+
+extern "C" {
+#include <compat/config.h>
+#include <readline/readline.h> // For rl_command_func_t.
+}
+
+//------------------------------------------------------------------------------
+enum
+{
+    keycat_none,
+    keycat_basic,
+    keycat_cursor,
+    keycat_completion,
+    keycat_history,
+    keycat_select,
+    keycat_scroll,
+    keycat_misc,
+};
+void    clink_add_funmap_entry(const char *name, rl_command_func_t *function, int cat, const char* desc);
+
 //------------------------------------------------------------------------------
 int     show_rl_help(int, int);
 int     show_rl_help_raw(int, int);

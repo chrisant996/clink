@@ -9,6 +9,7 @@
 #include <terminal/printer.h>
 #include <terminal/terminal.h>
 #include <terminal/ecma48_iter.h>
+#include "rl_commands.h"
 #include "editor_module.h"
 #include "pager.h"
 
@@ -38,17 +39,276 @@ struct Keyentry
 };
 
 //------------------------------------------------------------------------------
+struct Keydesc
+{
+    Keydesc(const char* name, int cat, const char* desc) : name(name), desc(desc), cat(cat) {}
+    const char* name;   // command name
+    const char* desc;   // command description
+    int cat;            // command category
+};
+
+//------------------------------------------------------------------------------
+typedef std::map<rl_command_func_t*, struct Keydesc> keydesc_map;
+static keydesc_map* s_pmap_keydesc = nullptr;
+
+//------------------------------------------------------------------------------
+static const struct {
+    const char* name;
+    rl_command_func_t* func;
+    int cat;
+    const char* desc;
+} c_func_descriptions[] = {
+  { "abort", rl_abort, keycat_basic, "" },
+  { "accept-line", rl_newline, keycat_basic, "" },
+/* begin_clink_change */
+  { "add-history", rl_add_history, keycat_history, "" },
+/* end_clink_change */
+  { "arrow-key-prefix", rl_arrow_keys, keycat_cursor, "" },
+  { "backward-byte", rl_backward_byte, keycat_cursor, "" },
+  { "backward-char", rl_backward_char, keycat_cursor, "" },
+  { "backward-delete-char", rl_rubout, keycat_basic, "" },
+  { "backward-kill-line", rl_backward_kill_line, keycat_basic, "" },
+  { "backward-kill-word", rl_backward_kill_word, keycat_basic, "" },
+  { "backward-word", rl_backward_word, keycat_cursor, "" },
+  { "beginning-of-history", rl_beginning_of_history, keycat_history, "" },
+  { "beginning-of-line", rl_beg_of_line, keycat_basic, "" },
+  { "bracketed-paste-begin", rl_bracketed_paste_begin, keycat_misc, "" },
+  { "call-last-kbd-macro", rl_call_last_kbd_macro, keycat_misc, "" },
+  { "capitalize-word", rl_capitalize_word, keycat_misc, "" },
+  { "character-search", rl_char_search, keycat_basic, "" },
+  { "character-search-backward", rl_backward_char_search, keycat_basic, "" },
+  { "clear-display", rl_clear_display, keycat_misc, "" },
+  { "clear-screen", rl_clear_screen, keycat_misc, "" },
+  { "complete", rl_complete, keycat_completion, "" },
+  { "copy-backward-word", rl_copy_backward_word, keycat_misc, "" },
+  { "copy-forward-word", rl_copy_forward_word, keycat_misc, "" },
+  { "copy-region-as-kill", rl_copy_region_to_kill, keycat_misc, "" },
+  { "delete-char", rl_delete, keycat_basic, "" },
+  { "delete-char-or-list", rl_delete_or_show_completions, keycat_basic, "" },
+  { "delete-horizontal-space", rl_delete_horizontal_space, keycat_basic, "" },
+  { "digit-argument", rl_digit_argument, keycat_misc, "" },
+  { "do-lowercase-version", rl_do_lowercase_version, keycat_misc, "" },
+  { "downcase-word", rl_downcase_word, keycat_misc, "" },
+  { "dump-functions", rl_dump_functions, keycat_misc, "" },
+  { "dump-macros", rl_dump_macros, keycat_misc, "" },
+  { "dump-variables", rl_dump_variables, keycat_misc, "" },
+  { "emacs-editing-mode", rl_emacs_editing_mode, keycat_misc, "" },
+  { "end-kbd-macro", rl_end_kbd_macro, keycat_misc, "" },
+  { "end-of-history", rl_end_of_history, keycat_history, "" },
+  { "end-of-line", rl_end_of_line, keycat_basic, "" },
+  { "exchange-point-and-mark", rl_exchange_point_and_mark, keycat_misc, "" },
+  { "forward-backward-delete-char", rl_rubout_or_delete, keycat_basic, "" },
+  { "forward-byte", rl_forward_byte, keycat_basic, "" },
+  { "forward-char", rl_forward_char, keycat_basic, "" },
+  { "forward-search-history", rl_forward_search_history, keycat_history, "" },
+  { "forward-word", rl_forward_word, keycat_basic, "" },
+  { "history-search-backward", rl_history_search_backward, keycat_history, "" },
+  { "history-search-forward", rl_history_search_forward, keycat_history, "" },
+  { "history-substring-search-backward", rl_history_substr_search_backward, keycat_history, "" },
+  { "history-substring-search-forward", rl_history_substr_search_forward, keycat_history, "" },
+  { "insert-comment", rl_insert_comment, keycat_misc, "" },
+  { "insert-completions", rl_insert_completions, keycat_misc, "" },
+  { "kill-whole-line", rl_kill_full_line, keycat_basic, "" },
+  { "kill-line", rl_kill_line, keycat_basic, "" },
+  { "kill-region", rl_kill_region, keycat_basic, "" },
+  { "kill-word", rl_kill_word, keycat_basic, "" },
+  { "menu-complete", rl_menu_complete, keycat_completion, "" },
+  { "menu-complete-backward", rl_backward_menu_complete, keycat_completion, "" },
+  { "next-history", rl_get_next_history, keycat_history, "" },
+  { "next-screen-line", rl_next_screen_line, keycat_cursor, "" },
+  { "non-incremental-forward-search-history", rl_noninc_forward_search, keycat_history, "" },
+  { "non-incremental-reverse-search-history", rl_noninc_reverse_search, keycat_history, "" },
+  { "non-incremental-forward-search-history-again", rl_noninc_forward_search_again, keycat_history, "" },
+  { "non-incremental-reverse-search-history-again", rl_noninc_reverse_search_again, keycat_history, "" },
+  { "old-menu-complete", rl_old_menu_complete, keycat_completion, "" },
+/* begin_clink_change */
+  { "old-menu-complete-backward", rl_backward_old_menu_complete, keycat_completion, "" },
+/* end_clink_change */
+  { "operate-and-get-next", rl_operate_and_get_next, keycat_history, "" },
+  { "overwrite-mode", rl_overwrite_mode, keycat_basic, "" },
+#if defined (_WIN32)
+  { "paste-from-clipboard", rl_paste_from_clipboard, keycat_basic, "" },
+#endif
+  { "possible-completions", rl_possible_completions, keycat_completion, "" },
+  { "previous-history", rl_get_previous_history, keycat_history, "" },
+  { "previous-screen-line", rl_previous_screen_line, keycat_basic, "" },
+  { "print-last-kbd-macro", rl_print_last_kbd_macro, keycat_misc, "" },
+  { "quoted-insert", rl_quoted_insert, keycat_basic, "" },
+  { "re-read-init-file", rl_re_read_init_file, keycat_misc, "" },
+  { "redraw-current-line", rl_refresh_line, keycat_misc, "" },
+/* begin_clink_change */
+  { "remove-history", rl_remove_history, keycat_history, "" },
+/* end_clink_change */
+  { "reverse-search-history", rl_reverse_search_history, keycat_history, "" },
+  { "revert-line", rl_revert_line, keycat_basic, "" },
+  //{ "self-insert", rl_insert },
+  { "set-mark", rl_set_mark, keycat_misc, "" },
+  { "skip-csi-sequence", rl_skip_csi_sequence, keycat_misc, "" },
+  { "start-kbd-macro", rl_start_kbd_macro, keycat_misc, "" },
+  { "tab-insert", rl_tab_insert, keycat_basic, "" },
+  { "tilde-expand", rl_tilde_expand, keycat_completion, "" },
+  { "transpose-chars", rl_transpose_chars, keycat_basic, "" },
+  { "transpose-words", rl_transpose_words, keycat_basic, "" },
+  { "tty-status", rl_tty_status, keycat_misc, "" },
+  { "undo", rl_undo_command, keycat_basic, "" },
+  { "universal-argument", rl_universal_argument, keycat_misc, "" },
+  { "unix-filename-rubout", rl_unix_filename_rubout, keycat_basic, "" },
+  { "unix-line-discard", rl_unix_line_discard, keycat_basic, "" },
+  { "unix-word-rubout", rl_unix_word_rubout, keycat_basic, "" },
+  { "upcase-word", rl_upcase_word, keycat_misc, "" },
+  { "yank", rl_yank, keycat_misc, "" },
+  { "yank-last-arg", rl_yank_last_arg, keycat_basic, "" },
+  { "yank-nth-arg", rl_yank_nth_arg, keycat_misc, "" },
+  { "yank-pop", rl_yank_pop, keycat_misc, "" },
+
+#if defined (VI_MODE)
+  { "vi-append-eol", rl_vi_append_eol, keycat_none, "" },
+  { "vi-append-mode", rl_vi_append_mode, keycat_none, "" },
+  { "vi-arg-digit", rl_vi_arg_digit, keycat_none, "" },
+  { "vi-back-to-indent", rl_vi_back_to_indent, keycat_none, "" },
+  { "vi-backward-bigword", rl_vi_bWord, keycat_none, "" },
+  { "vi-backward-word", rl_vi_bword, keycat_none, "" },
+  //{ "vi-bWord", rl_vi_bWord },	/* BEWARE: name matching is case insensitive */
+  //{ "vi-bword", rl_vi_bword },	/* BEWARE: name matching is case insensitive */
+  { "vi-change-case", rl_vi_change_case, keycat_none, "" },
+  { "vi-change-char", rl_vi_change_char, keycat_none, "" },
+  { "vi-change-to", rl_vi_change_to, keycat_none, "" },
+  { "vi-char-search", rl_vi_char_search, keycat_none, "" },
+  { "vi-column", rl_vi_column, keycat_none, "" },
+  { "vi-complete", rl_vi_complete, keycat_none, "" },
+  { "vi-delete", rl_vi_delete, keycat_none, "" },
+  { "vi-delete-to", rl_vi_delete_to, keycat_none, "" },
+  //{ "vi-eWord", rl_vi_eWord },
+  { "vi-editing-mode", rl_vi_editing_mode, keycat_none, "" },
+  { "vi-end-bigword", rl_vi_eWord, keycat_none, "" },
+  { "vi-end-word", rl_vi_end_word, keycat_none, "" },
+  { "vi-eof-maybe", rl_vi_eof_maybe, keycat_none, "" },
+  //{ "vi-eword", rl_vi_eword },
+  //{ "vi-fWord", rl_vi_fWord },	/* BEWARE: name matching is case insensitive */
+  { "vi-fetch-history", rl_vi_fetch_history, keycat_none, "" },
+  { "vi-first-print", rl_vi_first_print, keycat_none, "" },
+  { "vi-forward-bigword", rl_vi_fWord, keycat_none, "" },
+  { "vi-forward-word", rl_vi_fword, keycat_none, "" },
+  //{ "vi-fWord", rl_vi_fWord },	/* BEWARE: name matching is case insensitive */
+  { "vi-goto-mark", rl_vi_goto_mark, keycat_none, "" },
+  { "vi-insert-beg", rl_vi_insert_beg, keycat_none, "" },
+  { "vi-insertion-mode", rl_vi_insert_mode, keycat_none, "" },
+  { "vi-match", rl_vi_match, keycat_none, "" },
+  { "vi-movement-mode", rl_vi_movement_mode, keycat_none, "" },
+  { "vi-next-word", rl_vi_next_word, keycat_none, "" },
+  { "vi-overstrike", rl_vi_overstrike, keycat_none, "" },
+  { "vi-overstrike-delete", rl_vi_overstrike_delete, keycat_none, "" },
+  { "vi-prev-word", rl_vi_prev_word, keycat_none, "" },
+  { "vi-put", rl_vi_put, keycat_none, "" },
+  { "vi-redo", rl_vi_redo, keycat_none, "" },
+  { "vi-replace", rl_vi_replace, keycat_none, "" },
+  { "vi-rubout", rl_vi_rubout, keycat_none, "" },
+  { "vi-search", rl_vi_search, keycat_none, "" },
+  { "vi-search-again", rl_vi_search_again, keycat_none, "" },
+  { "vi-set-mark", rl_vi_set_mark, keycat_none, "" },
+  { "vi-subst", rl_vi_subst, keycat_none, "" },
+  { "vi-tilde-expand", rl_vi_tilde_expand, keycat_none, "" },
+  { "vi-unix-word-rubout", rl_vi_unix_word_rubout, keycat_none, "" },
+  { "vi-yank-arg", rl_vi_yank_arg, keycat_none, "" },
+  { "vi-yank-pop", rl_vi_yank_pop, keycat_none, "" },
+  { "vi-yank-to", rl_vi_yank_to, keycat_none, "" },
+#endif /* VI_MODE */
+};
+
+//------------------------------------------------------------------------------
+static void ensure_keydesc_map()
+{
+    static bool s_inited = false;
+    if (!s_inited)
+    {
+        s_inited = true;
+
+        if (!s_pmap_keydesc)
+            s_pmap_keydesc = new keydesc_map;
+
+        FUNMAP** funcs = funmap;
+        while (*funcs != nullptr)
+        {
+            FUNMAP* func = *funcs;
+
+            auto& iter = s_pmap_keydesc->find(func->function);
+            if (iter == s_pmap_keydesc->end())
+                s_pmap_keydesc->emplace(func->function, std::move(Keydesc(func->name, 0, nullptr)));
+            else if (!iter->second.name) // Don't overwrite existing name; works around case sensitivity bug with some VI mode commands.
+                iter->second.name = func->name;
+
+            ++funcs;
+        }
+
+        for (auto const& f : c_func_descriptions)
+        {
+            auto& iter = s_pmap_keydesc->find(f.func);
+            assert(iter != s_pmap_keydesc->end()); // Command no longer exists?
+            if (iter != s_pmap_keydesc->end())
+            {
+                // Command should either not have a name yet, or the name must match.
+                assert(!iter->second.name || !strcmp(iter->second.name, f.name));
+                iter->second.name = f.name;
+                iter->second.desc = f.desc;
+            }
+        }
+
+#ifdef DEBUG
+        for (auto const& i : *s_pmap_keydesc)
+        {
+            assert(i.second.name);
+            // assert(i.second.cat);
+            // assert(i.second.desc);
+        }
+#endif
+    }
+}
+
+//------------------------------------------------------------------------------
+void clink_add_funmap_entry(const char *name, rl_command_func_t *func, int cat, const char* desc)
+{
+    assert(name);
+    assert(func);
+    assert(desc);
+
+    rl_add_funmap_entry(name, func);
+
+    if (!s_pmap_keydesc)
+        s_pmap_keydesc = new keydesc_map;
+
+    auto& iter = s_pmap_keydesc->find(func);
+    if (iter == s_pmap_keydesc->end())
+    {
+        s_pmap_keydesc->emplace(func, std::move(Keydesc(name, cat, desc)));
+    }
+    else
+    {
+        // A command's info should not change.
+        assert(!iter->second.name || !strcmp(iter->second.name, name));
+        assert(!iter->second.cat || iter->second.cat == cat);
+        assert(!iter->second.desc || !strcmp(iter->second.desc, desc));
+        iter->second.name = name;
+        iter->second.cat = cat;
+        iter->second.name = desc;
+    }
+}
+
+//------------------------------------------------------------------------------
 static const char* get_function_name(int (*func_addr)(int, int))
 {
-    FUNMAP** funcs = funmap;
-    while (*funcs != nullptr)
-    {
-        FUNMAP* func = *funcs;
-        if (func->function == func_addr)
-            return func->name;
+    auto& iter = s_pmap_keydesc->find(func_addr);
+    if (iter != s_pmap_keydesc->end())
+        return iter->second.name;
 
-        ++funcs;
-    }
+    return nullptr;
+}
+
+//------------------------------------------------------------------------------
+static const char* get_function_desc(int (*func_addr)(int, int))
+{
+    auto& iter = s_pmap_keydesc->find(func_addr);
+    if (iter != s_pmap_keydesc->end())
+        return iter->second.desc;
 
     return nullptr;
 }
@@ -220,6 +480,8 @@ static Keyentry* collect_keymap(
     std::vector<str_moveable>* warnings)
 {
     int i;
+
+    ensure_keydesc_map();
 
     for (i = 0; i < 256; ++i)
     {
