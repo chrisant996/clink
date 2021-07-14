@@ -31,10 +31,12 @@ extern editor_module::result* g_result;
 //------------------------------------------------------------------------------
 struct Keyentry
 {
+    int cat;
     int sort;
     char* key_name;
     char* macro_text;
     const char* func_name;
+    const char* func_desc;
     bool warning;
 };
 
@@ -52,6 +54,22 @@ typedef std::map<rl_command_func_t*, struct Keydesc> keydesc_map;
 static keydesc_map* s_pmap_keydesc = nullptr;
 
 //------------------------------------------------------------------------------
+static const char* const c_headings[] =
+{
+    "Uncategorized",
+    "Basic",
+    "Cursor Movement",
+    "Completion",
+    "History",
+    "Kill and Yank",
+    "Selection",
+    "Scrolling",
+    "Miscellaneous",
+    "Macros",
+};
+static_assert(sizeof_array(c_headings) == keycat_MAX, "c_headings must have the same number of entries as the keycat enum");
+
+//------------------------------------------------------------------------------
 static const struct {
     const char* name;
     rl_command_func_t* func;
@@ -67,7 +85,7 @@ static const struct {
   { "backward-byte", rl_backward_byte, keycat_cursor, "" },
   { "backward-char", rl_backward_char, keycat_cursor, "Move back a character" },
   { "backward-delete-char", rl_rubout, keycat_basic, "Delete the character behind the cursor point.  A numeric argument means to kill the characters instead of deleting them" },
-  { "backward-kill-line", rl_backward_kill_line, keycat_basic, "Kill backward from the cursor point to the beginning of the current line.  With a negative numeric argument, kills forward from the cursor to the end of the current line" },
+  { "backward-kill-line", rl_backward_kill_line, keycat_killyank, "Kill backward from the cursor point to the beginning of the current line.  With a negative numeric argument, kills forward from the cursor to the end of the current line" },
   { "backward-kill-word", rl_backward_kill_word, keycat_basic, "Kill the word behind the cursor point.  Word boundaries are the same as 'backward-word'" },
   { "backward-word", rl_backward_word, keycat_cursor, "Move back to the start of the current or previous word" },
   { "beginning-of-history", rl_beginning_of_history, keycat_history, "Move to the first line in the history" },
@@ -82,7 +100,7 @@ static const struct {
   { "complete", rl_complete, keycat_completion, "Perform completion on the text before the cursor point" },
   { "copy-backward-word", rl_copy_backward_word, keycat_killyank, "Copy the word before the cursor point to the kill buffer.  The word boundaries are the same as 'backward-word'" },
   { "copy-forward-word", rl_copy_forward_word, keycat_killyank, "Copy the word following the cursor point to the kill buffer.  The word boundaries are the same as 'forward-word'" },
-  { "copy-region-as-kill", rl_copy_region_to_kill, keycat_misc, "Copy the text in the marked region to the kill buffer, so it can be yanked right away" },
+  { "copy-region-as-kill", rl_copy_region_to_kill, keycat_killyank, "Copy the text in the marked region to the kill buffer, so it can be yanked right away" },
   { "delete-char", rl_delete, keycat_basic, "Delete the character at the cursor point" },
   { "delete-char-or-list", rl_delete_or_show_completions, keycat_basic, "Deletes the character at the cursor, or lists completions if at the end of the line" },
   { "delete-horizontal-space", rl_delete_horizontal_space, keycat_basic, "Delete all spaces and tabs around the cursor point" },
@@ -98,19 +116,19 @@ static const struct {
   { "end-of-line", rl_end_of_line, keycat_basic, "Move to the end of the line" },
   { "exchange-point-and-mark", rl_exchange_point_and_mark, keycat_misc, "Swap the cursor point with the mark.  Sets the current cursor position to the saved position, and saves the old cursor position as the mark" },
   { "forward-backward-delete-char", rl_rubout_or_delete, keycat_basic, "Delete the character at the cursor point, unless the cursor is at the end of the line, in which case the character behind the cursor is deleted" },
-  { "forward-byte", rl_forward_byte, keycat_basic, "" },
-  { "forward-char", rl_forward_char, keycat_basic, "Move forward a character" },
+  { "forward-byte", rl_forward_byte, keycat_cursor, "" },
+  { "forward-char", rl_forward_char, keycat_cursor, "Move forward a character" },
   { "forward-search-history", rl_forward_search_history, keycat_history, "Incremental search forward starting at the current line and moving 'down' through the history as necessary.  Sets the marked region to the matched text" },
-  { "forward-word", rl_forward_word, keycat_basic, "Move forward to the end of the next word" },
+  { "forward-word", rl_forward_word, keycat_cursor, "Move forward to the end of the next word" },
   { "history-search-backward", rl_history_search_backward, keycat_history, "Search backward through the history for the string of characters between the start of the current line and the cursor point.  The search string must match at the beginning of a history line.  This is a non-incremental search" },
   { "history-search-forward", rl_history_search_forward, keycat_history, "Search forward through the history for the string of characters between the start of the current line and the cursor point.  The search string must match at the beginning of a history line.  This is a non-incremental search" },
   { "history-substring-search-backward", rl_history_substr_search_backward, keycat_history, "Search backward through the history for the string of characters between the start of the current line and the cursor point.  The search string may match anywhere in a history line.  This is a non-incremental search" },
   { "history-substring-search-forward", rl_history_substr_search_forward, keycat_history, "Search forward through the history for the string of characters between the start of the current line and the cursor point.  The search string may match anywhere in a history line.  This is a non-incremental search" },
   { "insert-comment", rl_insert_comment, keycat_misc, "" },
   { "insert-completions", rl_insert_completions, keycat_misc, "Insert all the completions that 'possible-completions' would list" },
-  { "kill-whole-line", rl_kill_full_line, keycat_basic, "Kill all characters on the current line, no matter where the cursor point is" },
-  { "kill-line", rl_kill_line, keycat_basic, "Kill the text from the cursor point to the end of the line.  With a negative numeric argument, kills backward from the cursor to the beginning of the current line" },
-  { "kill-region", rl_kill_region, keycat_basic, "Kill the text in the current marked region" },
+  { "kill-whole-line", rl_kill_full_line, keycat_killyank, "Kill all characters on the current line, no matter where the cursor point is" },
+  { "kill-line", rl_kill_line, keycat_killyank, "Kill the text from the cursor point to the end of the line.  With a negative numeric argument, kills backward from the cursor to the beginning of the current line" },
+  { "kill-region", rl_kill_region, keycat_killyank, "Kill the text in the current marked region" },
   { "kill-word", rl_kill_word, keycat_basic, "Kill from the cursor point to the end of the current word, or if between words, to the end of the next word.  Word boundaries are the same as 'forward-word'" },
   { "menu-complete", rl_menu_complete, keycat_completion, "Replace the completion word with the common prefix.  Repeated execution steps though the possible completions" },
   { "menu-complete-backward", rl_backward_menu_complete, keycat_completion, "Like 'menu-complete' but in reverse" },
@@ -152,66 +170,66 @@ static const struct {
   { "tty-status", rl_tty_status, keycat_misc, "" },
   { "undo", rl_undo_command, keycat_basic, "Incremental undo, separately remembered for each line" },
   { "universal-argument", rl_universal_argument, keycat_misc, "" },
-  { "unix-filename-rubout", rl_unix_filename_rubout, keycat_basic, "Kill the word behind the cursor point, using white space and the path separator as the word boundaries.  The killed text is saved on the kill-ring" },
-  { "unix-line-discard", rl_unix_line_discard, keycat_basic, "Kill backward from the cursor point to the beginning of the current line" },
-  { "unix-word-rubout", rl_unix_word_rubout, keycat_basic, "Kill the word behind the cursor point, using white space as a word boundary.  The killed text is saved on the kill-ring" },
+  { "unix-filename-rubout", rl_unix_filename_rubout, keycat_killyank, "Kill the word behind the cursor point, using white space and the path separator as the word boundaries.  The killed text is saved on the kill-ring" },
+  { "unix-line-discard", rl_unix_line_discard, keycat_killyank, "Kill backward from the cursor point to the beginning of the current line" },
+  { "unix-word-rubout", rl_unix_word_rubout, keycat_killyank, "Kill the word behind the cursor point, using white space as a word boundary.  The killed text is saved on the kill-ring" },
   { "upcase-word", rl_upcase_word, keycat_misc, "Uppercase the current (or following) word.  With a negative argument, uppercases the previous word, but does not move the cursor point" },
   { "yank", rl_yank, keycat_killyank, "Yank the top of the kill ring into the buffer at the cursor point" },
-  { "yank-last-arg", rl_yank_last_arg, keycat_basic, "Insert last argument from the previous history entry.  With a numeric argument, behaves exactly like 'yank-nth-arg'.  Repeated execution moves back through the history list, inserting the last word (or nth word) of each line in turn" },
+  { "yank-last-arg", rl_yank_last_arg, keycat_history, "Insert last argument from the previous history entry.  With a numeric argument, behaves exactly like 'yank-nth-arg'.  Repeated execution moves back through the history list, inserting the last word (or nth word) of each line in turn" },
   { "yank-nth-arg", rl_yank_nth_arg, keycat_history, "Insert the first argument from the previous history entry (e.g. second word on the line).  With an argument N, inserts the Nth word from the previous history entry (0 refers to the first word).  A negative argument inserts the Nth word from the end of the history entry.  The argument is extracted as if the '!N' history expansion had been specified" },
   { "yank-pop", rl_yank_pop, keycat_killyank, "Rotate the kill-ring and yank the new top; but only if the prior command is 'yank' or 'yank-pop'" },
 
 #if defined (VI_MODE)
-  { "vi-append-eol", rl_vi_append_eol, keycat_none, "" },
-  { "vi-append-mode", rl_vi_append_mode, keycat_none, "" },
-  { "vi-arg-digit", rl_vi_arg_digit, keycat_none, "" },
-  { "vi-back-to-indent", rl_vi_back_to_indent, keycat_none, "" },
-  { "vi-backward-bigword", rl_vi_bWord, keycat_none, "" },
-  { "vi-backward-word", rl_vi_bword, keycat_none, "" },
+  { "vi-append-eol", rl_vi_append_eol, keycat_misc, "" },
+  { "vi-append-mode", rl_vi_append_mode, keycat_misc, "" },
+  { "vi-arg-digit", rl_vi_arg_digit, keycat_misc, "" },
+  { "vi-back-to-indent", rl_vi_back_to_indent, keycat_misc, "" },
+  { "vi-backward-bigword", rl_vi_bWord, keycat_misc, "" },
+  { "vi-backward-word", rl_vi_bword, keycat_misc, "" },
   //{ "vi-bWord", rl_vi_bWord },	/* BEWARE: name matching is case insensitive */
   //{ "vi-bword", rl_vi_bword },	/* BEWARE: name matching is case insensitive */
-  { "vi-change-case", rl_vi_change_case, keycat_none, "" },
-  { "vi-change-char", rl_vi_change_char, keycat_none, "" },
-  { "vi-change-to", rl_vi_change_to, keycat_none, "" },
-  { "vi-char-search", rl_vi_char_search, keycat_none, "" },
-  { "vi-column", rl_vi_column, keycat_none, "" },
-  { "vi-complete", rl_vi_complete, keycat_none, "" },
-  { "vi-delete", rl_vi_delete, keycat_none, "" },
-  { "vi-delete-to", rl_vi_delete_to, keycat_none, "" },
+  { "vi-change-case", rl_vi_change_case, keycat_misc, "" },
+  { "vi-change-char", rl_vi_change_char, keycat_misc, "" },
+  { "vi-change-to", rl_vi_change_to, keycat_misc, "" },
+  { "vi-char-search", rl_vi_char_search, keycat_misc, "" },
+  { "vi-column", rl_vi_column, keycat_misc, "" },
+  { "vi-complete", rl_vi_complete, keycat_misc, "" },
+  { "vi-delete", rl_vi_delete, keycat_misc, "" },
+  { "vi-delete-to", rl_vi_delete_to, keycat_misc, "" },
   //{ "vi-eWord", rl_vi_eWord },
-  { "vi-editing-mode", rl_vi_editing_mode, keycat_none, "When in 'emacs' editing mode, this causes a switch to 'vi' editing mode" },
-  { "vi-end-bigword", rl_vi_eWord, keycat_none, "" },
-  { "vi-end-word", rl_vi_end_word, keycat_none, "" },
-  { "vi-eof-maybe", rl_vi_eof_maybe, keycat_none, "" },
+  { "vi-editing-mode", rl_vi_editing_mode, keycat_misc, "When in 'emacs' editing mode, this causes a switch to 'vi' editing mode" },
+  { "vi-end-bigword", rl_vi_eWord, keycat_misc, "" },
+  { "vi-end-word", rl_vi_end_word, keycat_misc, "" },
+  { "vi-eof-maybe", rl_vi_eof_maybe, keycat_misc, "" },
   //{ "vi-eword", rl_vi_eword },
   //{ "vi-fWord", rl_vi_fWord },	/* BEWARE: name matching is case insensitive */
-  { "vi-fetch-history", rl_vi_fetch_history, keycat_none, "" },
-  { "vi-first-print", rl_vi_first_print, keycat_none, "" },
-  { "vi-forward-bigword", rl_vi_fWord, keycat_none, "" },
-  { "vi-forward-word", rl_vi_fword, keycat_none, "" },
+  { "vi-fetch-history", rl_vi_fetch_history, keycat_misc, "" },
+  { "vi-first-print", rl_vi_first_print, keycat_misc, "" },
+  { "vi-forward-bigword", rl_vi_fWord, keycat_misc, "" },
+  { "vi-forward-word", rl_vi_fword, keycat_misc, "" },
   //{ "vi-fWord", rl_vi_fWord },	/* BEWARE: name matching is case insensitive */
-  { "vi-goto-mark", rl_vi_goto_mark, keycat_none, "" },
-  { "vi-insert-beg", rl_vi_insert_beg, keycat_none, "" },
-  { "vi-insertion-mode", rl_vi_insert_mode, keycat_none, "" },
-  { "vi-match", rl_vi_match, keycat_none, "" },
-  { "vi-movement-mode", rl_vi_movement_mode, keycat_none, "" },
-  { "vi-next-word", rl_vi_next_word, keycat_none, "" },
-  { "vi-overstrike", rl_vi_overstrike, keycat_none, "" },
-  { "vi-overstrike-delete", rl_vi_overstrike_delete, keycat_none, "" },
-  { "vi-prev-word", rl_vi_prev_word, keycat_none, "" },
-  { "vi-put", rl_vi_put, keycat_none, "" },
-  { "vi-redo", rl_vi_redo, keycat_none, "" },
-  { "vi-replace", rl_vi_replace, keycat_none, "" },
-  { "vi-rubout", rl_vi_rubout, keycat_none, "" },
-  { "vi-search", rl_vi_search, keycat_none, "" },
-  { "vi-search-again", rl_vi_search_again, keycat_none, "" },
-  { "vi-set-mark", rl_vi_set_mark, keycat_none, "" },
-  { "vi-subst", rl_vi_subst, keycat_none, "" },
-  { "vi-tilde-expand", rl_vi_tilde_expand, keycat_none, "" },
-  { "vi-unix-word-rubout", rl_vi_unix_word_rubout, keycat_none, "" },
-  { "vi-yank-arg", rl_vi_yank_arg, keycat_none, "" },
-  { "vi-yank-pop", rl_vi_yank_pop, keycat_none, "" },
-  { "vi-yank-to", rl_vi_yank_to, keycat_none, "" },
+  { "vi-goto-mark", rl_vi_goto_mark, keycat_misc, "" },
+  { "vi-insert-beg", rl_vi_insert_beg, keycat_misc, "" },
+  { "vi-insertion-mode", rl_vi_insert_mode, keycat_misc, "" },
+  { "vi-match", rl_vi_match, keycat_misc, "" },
+  { "vi-movement-mode", rl_vi_movement_mode, keycat_misc, "" },
+  { "vi-next-word", rl_vi_next_word, keycat_misc, "" },
+  { "vi-overstrike", rl_vi_overstrike, keycat_misc, "" },
+  { "vi-overstrike-delete", rl_vi_overstrike_delete, keycat_misc, "" },
+  { "vi-prev-word", rl_vi_prev_word, keycat_misc, "" },
+  { "vi-put", rl_vi_put, keycat_misc, "" },
+  { "vi-redo", rl_vi_redo, keycat_misc, "" },
+  { "vi-replace", rl_vi_replace, keycat_misc, "" },
+  { "vi-rubout", rl_vi_rubout, keycat_misc, "" },
+  { "vi-search", rl_vi_search, keycat_misc, "" },
+  { "vi-search-again", rl_vi_search_again, keycat_misc, "" },
+  { "vi-set-mark", rl_vi_set_mark, keycat_misc, "" },
+  { "vi-subst", rl_vi_subst, keycat_misc, "" },
+  { "vi-tilde-expand", rl_vi_tilde_expand, keycat_misc, "" },
+  { "vi-unix-word-rubout", rl_vi_unix_word_rubout, keycat_misc, "" },
+  { "vi-yank-arg", rl_vi_yank_arg, keycat_misc, "" },
+  { "vi-yank-pop", rl_vi_yank_pop, keycat_misc, "" },
+  { "vi-yank-to", rl_vi_yank_to, keycat_misc, "" },
 #endif /* VI_MODE */
 };
 
@@ -249,6 +267,7 @@ static void ensure_keydesc_map()
                 // Command should either not have a name yet, or the name must match.
                 assert(!iter->second.name || !strcmp(iter->second.name, f.name));
                 iter->second.name = f.name;
+                iter->second.cat = f.cat;
                 iter->second.desc = f.desc;
             }
         }
@@ -289,7 +308,7 @@ void clink_add_funmap_entry(const char *name, rl_command_func_t *func, int cat, 
         assert(!iter->second.desc || !strcmp(iter->second.desc, desc));
         iter->second.name = name;
         iter->second.cat = cat;
-        iter->second.name = desc;
+        iter->second.desc = desc;
     }
 }
 
@@ -304,13 +323,17 @@ static const char* get_function_name(int (*func_addr)(int, int))
 }
 
 //------------------------------------------------------------------------------
-static const char* get_function_desc(int (*func_addr)(int, int))
+static bool get_function_info(int (*func_addr)(int, int), const char** desc, int* cat)
 {
     auto& iter = s_pmap_keydesc->find(func_addr);
     if (iter != s_pmap_keydesc->end())
-        return iter->second.desc;
+    {
+        if (desc) *desc = iter->second.desc;
+        if (cat) *cat = iter->second.cat;
+        return true;
+    }
 
-    return nullptr;
+    return false;
 }
 
 //------------------------------------------------------------------------------
@@ -482,6 +505,7 @@ static Keyentry* collect_keymap(
     int* max,
     str<32>& keyseq,
     bool friendly,
+    bool categories,
     std::vector<str_moveable>* warnings)
 {
     int i;
@@ -499,7 +523,7 @@ static Keyentry* collect_keymap(
         {
             unsigned int old_len = keyseq.length();
             concat_key_string(i, keyseq);
-            collector = collect_keymap((Keymap)entry.function, collector, offset, max, keyseq, friendly, warnings);
+            collector = collect_keymap((Keymap)entry.function, collector, offset, max, keyseq, friendly, categories, warnings);
             keyseq.truncate(old_len);
             continue;
         }
@@ -531,13 +555,16 @@ static Keyentry* collect_keymap(
                 continue;
         }
 
+        int cat = keycat_macros;
         const char *name = nullptr;
+        const char *desc = nullptr;
         char *macro = nullptr;
         if (entry.type == ISFUNC)
         {
             name = get_function_name(entry.function);
             if (name == nullptr)
                 continue;
+            get_function_info(entry.function, &desc, &cat);
         }
 
         unsigned int old_len = keyseq.length();
@@ -583,6 +610,8 @@ static Keyentry* collect_keymap(
             }
 
             collector[*offset].func_name = name;
+            collector[*offset].func_desc = desc;
+            collector[*offset].cat = categories ? cat : 0;
             ++(*offset);
         }
 
@@ -597,9 +626,15 @@ static int _cdecl cmp_sort_collector(const void* pv1, const void* pv2)
 {
     const Keyentry* p1 = (const Keyentry*)pv1;
     const Keyentry* p2 = (const Keyentry*)pv2;
+    int cmp;
+
+    // Sort first by category.
+    cmp = (p1->cat) - (p2->cat);
+    if (cmp)
+        return cmp;
 
     // Sort first by modifier keys.
-    int cmp = (p1->sort >> 16) - (p2->sort >> 16);
+    cmp = (p1->sort >> 16) - (p2->sort >> 16);
     if (cmp)
         return cmp;
 
@@ -662,48 +697,116 @@ static void append_key_macro(str_base& s, const char* macro)
 //------------------------------------------------------------------------------
 void show_key_bindings(bool friendly, std::vector<std::pair<str_moveable, str_moveable>>* out=nullptr)
 {
+    bool show_categories = !out && true;
+    bool show_descriptions = !out && false;
+
+    struct show_line
+    {
+        show_line(const char* heading, const Keyentry* entries, int count, int step)
+            : m_heading(heading), m_entries(entries), m_count(count), m_step(step) {}
+
+        const char* const m_heading;
+        const Keyentry* const m_entries;
+        const int m_count;
+        const int m_step;
+    };
+
     Keymap map = rl_get_keymap();
     int offset = 1;
     int max_collect = 64;
     Keyentry* collector = (Keyentry*)malloc(sizeof(Keyentry) * max_collect);
-    collector[0].key_name = nullptr;
-    collector[0].macro_text = nullptr;
-    collector[0].func_name = nullptr;
+    memset(&collector[0], 0, sizeof(collector[0]));
 
-    // Build string up the functions in the active keymap.
+    // Collect the functions in the active keymap.
     str<32> keyseq;
     std::vector<str_moveable> warnings;
-    collector = collect_keymap(map, collector, &offset, &max_collect, keyseq, friendly, (map == emacs_standard_keymap) ? &warnings : nullptr);
+    collector = collect_keymap(map, collector, &offset, &max_collect, keyseq, friendly, show_categories, (map == emacs_standard_keymap) ? &warnings : nullptr);
 
     // Sort the collected keymap.
     qsort(collector + 1, offset - 1, sizeof(*collector), cmp_sort_collector);
 
     // Find the longest key name and function name.
-    unsigned int longest_key = 0;
-    unsigned int longest_func = 0;
+    unsigned int longest_key[keycat_MAX] = {};
+    unsigned int longest_func[keycat_MAX] = {};
     for (int i = 1; i < offset; ++i)
     {
-        unsigned int k = (unsigned int)strlen(collector[i].key_name);
+        const Keyentry& entry = collector[i];
+        int cat = show_categories ? entry.cat : 0;
+        unsigned int k = (unsigned int)strlen(entry.key_name);
         unsigned int f = 0;
-        if (collector[i].func_name)
-            f = (unsigned int)strlen(collector[i].func_name);
-        else if (collector[i].macro_text)
-            f = min(2 + (int)strlen(collector[i].macro_text), 32);
-        if (longest_key < k)
-            longest_key = k;
-        if (longest_func < f)
-            longest_func = f;
+        if (entry.func_name)
+            f = (unsigned int)strlen(entry.func_name);
+        else if (entry.macro_text)
+            f = min(2 + (int)strlen(entry.macro_text), 32);
+        if (cat)
+        {
+            if (longest_key[cat] < k)
+                longest_key[cat] = k;
+            if (longest_func[cat] < f)
+                longest_func[cat] = f;
+        }
+        if (longest_key[0] < k)
+            longest_key[0] = k;
+        if (longest_func[0] < f)
+            longest_func[0] = f;
     }
 
     // Calculate columns.
-    unsigned int longest = longest_key + 3 + longest_func + 2;
-    int max_width = out ? 0 : complete_get_screenwidth();
-    int columns_that_fit = max_width / longest;
-    int columns = max(1, columns_that_fit);
-    int total_rows = ((offset - 1) + (columns - 1)) / columns;
+    auto longest = [&longest_key, &longest_func](int cat) { return longest_key[cat] + 3 + longest_func[cat] + 2; };
+    const int max_width = out ? 0 : complete_get_screenwidth();
+    const int columns_that_fit = show_categories && show_descriptions ? 0 : max_width / longest(0);
+    const int columns = max(1, columns_that_fit);
 
-    bool vertical = out ? true : !_rl_print_completions_horizontally;
-    int index_step = vertical ? total_rows : 1;
+    // Calculate rows.
+    std::vector<show_line> lines;
+    {
+        const bool vertical = out ? true : !_rl_print_completions_horizontally;
+
+        int cat = -1;
+        int sub_begin = 1;
+        for (int k = 1; true; ++k)
+        {
+            const bool last = (k >= offset);
+            const int this_cat = (last ? -2 :
+                                  !show_categories ? -1 :
+                                  collector[k].cat);
+
+            if (this_cat != cat)
+            {
+                int sub_count = k - sub_begin;
+                if (sub_count)
+                {
+                    const int rows = (sub_count + (columns - 1)) / columns;
+                    const int index_step = vertical ? rows : 1;
+
+                    if (show_categories)
+                    {
+                        const char* const heading = c_headings[cat];
+                        if (lines.size())
+                            lines.emplace_back(nullptr, nullptr, 0, 0); // Blank line.
+                        lines.emplace_back(heading, nullptr, 0, 0);
+                    }
+
+                    for (int i = 0; i < rows; ++i)
+                    {
+                        int index = (vertical ? i : (i * columns));
+                        const Keyentry* entries = collector + index + sub_begin;
+                        const int count = min<int>(sub_count, columns);
+                        lines.emplace_back(nullptr, entries, count, index_step);
+                        sub_count -= count;
+                    }
+                }
+
+                assert(sub_count == 0);
+
+                sub_begin = k;
+                cat = this_cat;
+            }
+
+            if (last)
+                break;
+        }
+    }
 
     // Move cursor past the input line.
     if (!out)
@@ -744,7 +847,7 @@ void show_key_bindings(bool friendly, std::vector<std::pair<str_moveable, str_mo
             }
 
             if (stop || !g_pager->on_print_lines(*g_printer, 1))
-                total_rows = 0;
+                lines.clear();
             else
                 g_printer->print("\n");
         }
@@ -753,23 +856,24 @@ void show_key_bindings(bool friendly, std::vector<std::pair<str_moveable, str_mo
     // Display the matches.
     str<> str;
     std::pair<str_moveable, str_moveable> pair;
-    for (int i = 0; i < total_rows; ++i)
+    int cat = - 1;
+    for (auto const& line : lines)
     {
-        int index = vertical ? i : (i * columns);
-        index++;
+        const int cat = show_categories && show_descriptions ? line.m_entries->cat : 0;
 
         // Ask the pager what to do.
         if (!out)
         {
             int lines = 1;
-            if (!columns_that_fit)
+            if (!columns_that_fit && line.m_entries)
             {
+                const Keyentry& entry = *line.m_entries;
                 int len = 3; // " : "
-                len += int(strlen(collector[index].key_name));
-                if (collector[index].func_name)
-                    len += int(strlen(collector[index].func_name));
+                len += int(strlen(entry.key_name));
+                if (entry.func_name)
+                    len += int(strlen(entry.func_name));
                 else
-                    len += min(2 + int(strlen(collector[index].macro_text)), 32);
+                    len += min(2 + int(strlen(entry.macro_text)), 32);
                 lines += len / g_printer->get_columns();
             }
             if (!g_pager->on_print_lines(*g_printer, lines))
@@ -777,52 +881,62 @@ void show_key_bindings(bool friendly, std::vector<std::pair<str_moveable, str_mo
         }
 
         // Print the row.
-        for (int j = columns - 1; j >= 0; --j)
+        if (line.m_entries)
         {
-            if (index >= offset)
-                continue;
-
-            // Key name.
-            const Keyentry& entry = collector[index];
-            str.clear();
-            if (!out && entry.warning)
-                str << "\x1b[7m";
-            str << entry.key_name;
-            if (!out && entry.warning)
-                str << "\x1b[m";
-            pad_with_spaces(str, longest_key);
-            if (out)
-                pair.first = str.c_str();
-
-            // Separator.
-            if (!out)
-                str << " : ";
-            else
-                str.clear();
-
-            // Key binding.
-            if (entry.func_name)
-                str << entry.func_name;
-            if (entry.macro_text)
+            int index = 0;
+            for (int j = line.m_count; j-- > 0;)
             {
-                str << "\"";
-                append_key_macro(str, entry.macro_text);
-                str << "\"";
+                // Key name.
+                const Keyentry& entry = line.m_entries[index];
+                str.clear();
+                if (!out && entry.warning)
+                    str << "\x1b[7m";
+                str << entry.key_name;
+                if (!out && entry.warning)
+                    str << "\x1b[m";
+                pad_with_spaces(str, longest_key[cat]);
+                if (out)
+                    pair.first = str.c_str();
+
+                // Separator.
+                if (!out)
+                    str << " : ";
+                else
+                    str.clear();
+
+                // Key binding.
+                if (entry.func_name)
+                    str << entry.func_name;
+                if (entry.macro_text)
+                {
+                    str << "\"";
+                    append_key_macro(str, entry.macro_text);
+                    str << "\"";
+                }
+                if (out)
+                    pair.second = str.c_str();
+
+                // Pad column with spaces.
+                if (j)
+                    pad_with_spaces(str, longest(cat));
+
+                // Print the key binding.
+                if (!out)
+                    g_printer->print(str.c_str(), str.length());
+                else
+                    out->emplace_back(std::move(pair));
+
+                index += line.m_step;
             }
-            if (out)
-                pair.second = str.c_str();
-
-            // Pad column with spaces.
-            if (j)
-                pad_with_spaces(str, longest);
-
-            // Print the key binding.
+        }
+        else if (line.m_heading)
+        {
             if (!out)
+            {
+                str.clear();
+                str << "\x1b[7m" << line.m_heading << "\x1b[m";
                 g_printer->print(str.c_str(), str.length());
-            else
-                out->emplace_back(std::move(pair));
-
-            index += index_step;
+            }
         }
 
         if (!out)

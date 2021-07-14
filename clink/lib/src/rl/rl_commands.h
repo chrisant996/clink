@@ -22,6 +22,8 @@ enum
     keycat_select,
     keycat_scroll,
     keycat_misc,
+    keycat_macros,
+    keycat_MAX
 };
 void    clink_add_funmap_entry(const char *name, rl_command_func_t *function, int cat, const char* desc);
 
