@@ -409,7 +409,7 @@ static bool translate_keyseq(const char* keyseq, unsigned int len, char** key_na
             }
             else
             {
-                if (*keyseq == '\x1b' && len >= 2)
+                if (*keyseq == '\x1b' && keyseq_end - keyseq >= 2)
                 {
                     if (need_comma > 0)
                         tmp.concat(",", 1);
@@ -417,6 +417,11 @@ static bool translate_keyseq(const char* keyseq, unsigned int len, char** key_na
                     tmp.concat("A-");
                     eqclass |= 4;
                     keyseq++;
+                    if (*keyseq >= 'A' && *keyseq <= 'Z')
+                    {
+                        tmp.concat("S-");
+                        eqclass |= 1;
+                    }
                 }
                 if (*keyseq >= 0 && *keyseq < ' ')
                 {
