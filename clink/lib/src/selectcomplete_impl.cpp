@@ -298,11 +298,9 @@ bool selectcomplete_impl::activate(editor_module::result& result, bool reactivat
 #endif
         insert_needle();
     }
-    else
-    {
-        m_inserted = false;
-        m_quoted = false;
-    }
+
+    m_inserted = false;
+    m_quoted = false;
 
     m_anchor = -1;
     m_delimiter = 0;
@@ -1151,11 +1149,30 @@ void selectcomplete_impl::insert_needle()
 
     m_len = 0;
 
+    const char* match = m_needle.c_str();
+
+    char qs[2] = {};
+    if (match &&
+        !rl_completion_found_quote &&
+        rl_completer_quote_characters &&
+        rl_completer_quote_characters[0] &&
+        rl_filename_completion_desired &&
+        rl_filename_quoting_desired &&
+        rl_filename_quote_characters &&
+        _rl_strpbrk(match, rl_filename_quote_characters) != 0)
+    {
+        qs[0] = rl_completer_quote_characters[0];
+        m_quoted = true;
+    }
+
     m_buffer->begin_undo_group();
     m_buffer->remove(m_anchor, m_buffer->get_cursor());
     m_buffer->set_cursor(m_anchor);
-    m_buffer->insert(m_needle.c_str());
+    m_buffer->insert(qs);
+    m_buffer->insert(match);
     m_point = m_buffer->get_cursor();
+    m_buffer->insert(qs);
+    m_buffer->set_cursor(m_point);
     m_buffer->end_undo_group();
     m_inserted = true;
 }
@@ -1213,12 +1230,15 @@ void selectcomplete_impl::insert_match(int final)
 
         // Pressing Space to insert a final match needs to maybe add a quote,
         // and then maybe add a space, depending on what append_to_match did.
-        if (final == 2)
+        if (final == 2 || !is_match_type(type, match_type::dir))
         {
             // A space may or may not be present.  Delete it if one is.
-            const int cursor = m_buffer->get_cursor();
+            int cursor = m_buffer->get_cursor();
             if (cursor && m_buffer->get_buffer()[cursor - 1] == ' ')
+            {
                 m_buffer->remove(cursor - 1, cursor);
+                cursor--;
+            }
 
             // Add closing quote if a typed or inserted opening quote is present
             // but no closing quote is present.
@@ -1227,6 +1247,19 @@ void selectcomplete_impl::insert_match(int final)
                 rl_completer_quote_characters &&
                 rl_completer_quote_characters[0])
             {
+                // Remove a preceding backslash unless it is preceded by colon.
+                // Because programs compiled with MSVC treat `\"` as an escape.
+                // So `program "c:\dir\" file` is interpreted as having one
+                // argument which is `c:\dir" file`.  Be nice and avoid
+                // inserting such things on behalf of users.
+                if (cursor >= 2 &&
+                    m_buffer->get_buffer()[cursor - 1] == '\\' &&
+                    m_buffer->get_buffer()[cursor - 2] != ':')
+                {
+                    m_buffer->remove(cursor - 1, cursor);
+                    cursor--;
+                }
+
                 char qc = m_buffer->get_buffer()[m_anchor - 1];
                 if (strchr(rl_completer_quote_characters, qc))
                 {
