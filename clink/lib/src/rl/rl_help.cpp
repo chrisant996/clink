@@ -874,7 +874,7 @@ void show_key_bindings(bool friendly, std::vector<key_binding_info>* out=nullptr
     int cat = - 1;
     for (auto const& line : lines)
     {
-        const int cat = show_categories && show_descriptions && line.m_entries ? line.m_entries->cat : 0;
+        const int cat = !out && show_categories && show_descriptions && line.m_entries ? line.m_entries->cat : 0;
 
         // Ask the pager what to do.
         if (!out)
