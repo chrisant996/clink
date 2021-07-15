@@ -29,4 +29,4 @@ popup_list_result do_popup_list(
     bool display_filter=false);
 
 //------------------------------------------------------------------------------
-const char* append_string_into_buffer(char*& buffer, const char* match);
+const char* append_string_into_buffer(char*& buffer, const char* match, bool allow_tabs=false);

@@ -27,6 +27,7 @@ extern int complete_get_screenwidth(void);
 extern printer* g_printer;
 extern pager* g_pager;
 extern editor_module::result* g_result;
+extern void ellipsify(const char* in, int limit, str_base& out, bool expand_ctrl);
 
 //------------------------------------------------------------------------------
 struct Keyentry
@@ -104,7 +105,7 @@ static const struct {
   { "delete-char", rl_delete, keycat_basic, "Delete the character at the cursor point" },
   { "delete-char-or-list", rl_delete_or_show_completions, keycat_basic, "Deletes the character at the cursor, or lists completions if at the end of the line" },
   { "delete-horizontal-space", rl_delete_horizontal_space, keycat_basic, "Delete all spaces and tabs around the cursor point" },
-  { "digit-argument", rl_digit_argument, keycat_misc, "Add this digit to the argument already accumulating, or start a new argument.  Alt+- starts a negative argument" },
+  { "digit-argument", rl_digit_argument, keycat_misc, "Start or accumulate a numeric argument to a command.  Alt+- starts a negative argument" },
   { "do-lowercase-version", rl_do_lowercase_version, keycat_misc, "If the metafied character X is upper case, run the command that is bound to the corresponding metafied lower case character.  The behavior is undefined if X is already lower case" },
   { "downcase-word", rl_downcase_word, keycat_misc, "Lowercase the current (or following) word.  With a negative argument, lowercases the previous word, but does not move the cursor point" },
   { "dump-functions", rl_dump_functions, keycat_misc, "Print all of the functions and their key bindings to the output stream.  If a numeric argument is supplied, formats the output so that it can be made part of an INPUTRC file" },
@@ -628,11 +629,6 @@ static int _cdecl cmp_sort_collector(const void* pv1, const void* pv2)
     const Keyentry* p2 = (const Keyentry*)pv2;
     int cmp;
 
-    // Sort first by category.
-    cmp = (p1->cat) - (p2->cat);
-    if (cmp)
-        return cmp;
-
     // Sort first by modifier keys.
     cmp = (p1->sort >> 16) - (p2->sort >> 16);
     if (cmp)
@@ -648,6 +644,21 @@ static int _cdecl cmp_sort_collector(const void* pv1, const void* pv2)
     if (cmp)
         return cmp;
     return strcmp(p1->key_name, p2->key_name);
+}
+
+//------------------------------------------------------------------------------
+static int _cdecl cmp_sort_collector_cat(const void* pv1, const void* pv2)
+{
+    const Keyentry* p1 = (const Keyentry*)pv1;
+    const Keyentry* p2 = (const Keyentry*)pv2;
+    int cmp;
+
+    // Sort first by category.
+    cmp = (p1->cat) - (p2->cat);
+    if (cmp)
+        return cmp;
+
+    return cmp_sort_collector(pv1, pv2);
 }
 
 //------------------------------------------------------------------------------
@@ -695,10 +706,11 @@ static void append_key_macro(str_base& s, const char* macro)
 }
 
 //------------------------------------------------------------------------------
-void show_key_bindings(bool friendly, std::vector<std::pair<str_moveable, str_moveable>>* out=nullptr)
+struct key_binding_info { str_moveable name; str_moveable binding; const char* desc; const char* cat; };
+void show_key_bindings(bool friendly, std::vector<key_binding_info>* out=nullptr)
 {
-    bool show_categories = !out && true;
-    bool show_descriptions = !out && false;
+    bool show_categories = out || true;
+    bool show_descriptions = out || true;
 
     struct show_line
     {
@@ -723,11 +735,12 @@ void show_key_bindings(bool friendly, std::vector<std::pair<str_moveable, str_mo
     collector = collect_keymap(map, collector, &offset, &max_collect, keyseq, friendly, show_categories, (map == emacs_standard_keymap) ? &warnings : nullptr);
 
     // Sort the collected keymap.
-    qsort(collector + 1, offset - 1, sizeof(*collector), cmp_sort_collector);
+    qsort(collector + 1, offset - 1, sizeof(*collector), out ? cmp_sort_collector : cmp_sort_collector_cat);
 
     // Find the longest key name and function name.
     unsigned int longest_key[keycat_MAX] = {};
     unsigned int longest_func[keycat_MAX] = {};
+    unsigned int desc_pad = show_descriptions ? 1 : 0;
     for (int i = 1; i < offset; ++i)
     {
         const Keyentry& entry = collector[i];
@@ -738,6 +751,7 @@ void show_key_bindings(bool friendly, std::vector<std::pair<str_moveable, str_mo
             f = (unsigned int)strlen(entry.func_name);
         else if (entry.macro_text)
             f = min(2 + (int)strlen(entry.macro_text), 32);
+        f += desc_pad;
         if (cat)
         {
             if (longest_key[cat] < k)
@@ -752,9 +766,9 @@ void show_key_bindings(bool friendly, std::vector<std::pair<str_moveable, str_mo
     }
 
     // Calculate columns.
-    auto longest = [&longest_key, &longest_func](int cat) { return longest_key[cat] + 3 + longest_func[cat] + 2; };
+    auto longest = [&longest_key, &longest_func, desc_pad](int cat) { return longest_key[cat] + 3 + longest_func[cat] + 2 + desc_pad; };
     const int max_width = out ? 0 : complete_get_screenwidth();
-    const int columns_that_fit = show_categories && show_descriptions ? 0 : max_width / longest(0);
+    const int columns_that_fit = show_descriptions ? 0 : max_width / longest(0);
     const int columns = max(1, columns_that_fit);
 
     // Calculate rows.
@@ -854,12 +868,13 @@ void show_key_bindings(bool friendly, std::vector<std::pair<str_moveable, str_mo
     }
 
     // Display the matches.
+    str<> tmp;
     str<> str;
-    std::pair<str_moveable, str_moveable> pair;
+    key_binding_info info;
     int cat = - 1;
     for (auto const& line : lines)
     {
-        const int cat = show_categories && show_descriptions ? line.m_entries->cat : 0;
+        const int cat = show_categories && show_descriptions && line.m_entries ? line.m_entries->cat : 0;
 
         // Ask the pager what to do.
         if (!out)
@@ -868,12 +883,16 @@ void show_key_bindings(bool friendly, std::vector<std::pair<str_moveable, str_mo
             if (!columns_that_fit && line.m_entries)
             {
                 const Keyentry& entry = *line.m_entries;
-                int len = 3; // " : "
-                len += int(strlen(entry.key_name));
-                if (entry.func_name)
-                    len += int(strlen(entry.func_name));
-                else
-                    len += min(2 + int(strlen(entry.macro_text)), 32);
+                int len = longest(cat);
+                if (show_descriptions && len + 1 >= max_width)
+                {
+                    len = longest_key[cat] + 3;
+                    if (entry.func_name)
+                        len += int(strlen(entry.func_name));
+                    else
+                        // TODO: strlen() isn't right; it's UTF8!
+                        len += min(2 + int(strlen(entry.macro_text)), 32);
+                }
                 lines += len / g_printer->get_columns();
             }
             if (!g_pager->on_print_lines(*g_printer, lines))
@@ -896,13 +915,14 @@ void show_key_bindings(bool friendly, std::vector<std::pair<str_moveable, str_mo
                     str << "\x1b[m";
                 pad_with_spaces(str, longest_key[cat]);
                 if (out)
-                    pair.first = str.c_str();
+                {
+                    info.name = str.c_str();
+                    str.clear();
+                }
 
                 // Separator.
                 if (!out)
                     str << " : ";
-                else
-                    str.clear();
 
                 // Key binding.
                 if (entry.func_name)
@@ -913,18 +933,35 @@ void show_key_bindings(bool friendly, std::vector<std::pair<str_moveable, str_mo
                     append_key_macro(str, entry.macro_text);
                     str << "\"";
                 }
+                const int len_name_binding = longest(cat);
+                if (j || (show_descriptions && entry.func_desc && len_name_binding + 1 < max_width))
+                    pad_with_spaces(str, len_name_binding);
                 if (out)
-                    pair.second = str.c_str();
+                {
+                    info.binding = str.c_str();
+                    str.clear();
+                }
 
-                // Pad column with spaces.
-                if (j)
-                    pad_with_spaces(str, longest(cat));
+                // Command description.
+                if (!out)
+                {
+                    if (entry.func_desc)
+                    {
+                        ellipsify(entry.func_desc, max_width - 1 - len_name_binding, tmp, false/*expand_ctrl*/);
+                        str << tmp.c_str();
+                    }
+                }
+                else
+                {
+                    info.desc = entry.func_desc;
+                    info.cat = c_headings[entry.cat];
+                }
 
                 // Print the key binding.
                 if (!out)
                     g_printer->print(str.c_str(), str.length());
                 else
-                    out->emplace_back(std::move(pair));
+                    out->emplace_back(std::move(info));
 
                 index += line.m_step;
             }

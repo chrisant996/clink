@@ -60,12 +60,13 @@ static const char** s_items;
 static int s_num_completions;
 static int s_len_prefix;
 static int s_past_flag;
-static int s_first_column_width;
+static int s_column_width[4];
 static bool s_display_filter;
-static bool s_descriptions;
+static int s_descriptions;
 static bool s_reverse_find;
 static wstr<32> s_find;
 static bool s_reset_find_on_next_char = false;
+static const wchar_t c_spacer[] = L"    ";
 
 //------------------------------------------------------------------------------
 enum class find_mode { next, previous, incremental };
@@ -292,7 +293,7 @@ static COLORREF AlphaBlend(HDC hdc, BYTE fg_alpha)
 }
 
 //------------------------------------------------------------------------------
-static void get_cell_text(int row, int column, wstr_base& out)
+static void get_cell_text(int row, int column, wstr_base& out, bool split_tabs=true)
 {
     out.clear();
 
@@ -322,13 +323,34 @@ static void get_cell_text(int row, int column, wstr_base& out)
             out.concat(sep);
         }
     }
-    else if (column == 1 && s_display_filter)
+    else if (s_display_filter && column <= s_descriptions)
     {
         const char* ptr = s_items[row];
-        ptr += strlen(ptr) + 1;
-        ptr += strlen(ptr) + 1;
-        out.concat(L"    ");
-        to_utf16(out, ptr);
+        ptr += strlen(ptr) + 1; // Skip match.
+        ptr += strlen(ptr) + 1; // Skip display.
+        if (split_tabs)
+        {
+            out.concat(c_spacer); // Leading spaces because trailing spaces could get stripped.
+            int len = 0;
+            while (true)
+            {
+                const char* tab = strchr(ptr, '\t');
+                len = tab ? tab - ptr : strlen(ptr);
+                if (--column <= 0)
+                    break;
+                if (!tab)
+                {
+                    ptr += len;
+                    break;
+                }
+                ptr = tab + 1;
+            }
+            to_utf16(out, str_iter(ptr, len));
+        }
+        else
+        {
+            to_utf16(out, ptr);
+        }
     }
 }
 
@@ -413,9 +435,14 @@ static LRESULT CALLBACK PopupWndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM
             int cxFull = rcClient.right - rcClient.left - GetSystemMetrics(SM_CXVSCROLL);
             if (s_descriptions)
             {
-                int cx = min<int>(cxFull / 2, s_first_column_width);
+                int cx = min<int>(cxFull / 2, s_column_width[0]);
                 ListView_SetColumnWidth(s_hwnd_list, 0, cx);
-                ListView_SetColumnWidth(s_hwnd_list, 1, cxFull - cx);
+                for (int j = 0; j++ < s_descriptions;)
+                {
+                    cxFull -= cx;
+                    cx = min<int>(cxFull, s_column_width[j]);
+                    ListView_SetColumnWidth(s_hwnd_list, j, min<int>(cxFull, cx));
+                }
             }
             else
             {
@@ -457,7 +484,7 @@ static LRESULT CALLBACK PopupWndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM
             col.mask = LVCF_WIDTH;
             if (s_descriptions)
             {
-                s_first_column_width = 60;
+                s_column_width[0] = 60;
 
                 // Measure string widths must be measured directly, because
                 // ListView does not behave as documented with respect to auto
@@ -466,20 +493,43 @@ static LRESULT CALLBACK PopupWndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM
                 HDC hdc = GetDC(s_hwnd_list);
                 HFONT use_font = HFONT(SendMessage(s_hwnd_list, WM_GETFONT, 0, 0));
                 HFONT old_font = SelectFont(hdc, use_font);
+                SIZE indent;
+                const int slop = 16; // For ListView internal padding and margins.
+                if (!GetTextExtentPoint32W(hdc, c_spacer, wcslen(c_spacer), &indent))
+                    indent.cx = 0;
                 for (int i = 0; i < s_num_completions; ++i)
                 {
                     SIZE size;
                     get_cell_text(i, 0, tmp);
                     if (GetTextExtentPoint32W(hdc, tmp.c_str(), tmp.length(), &size))
-                        s_first_column_width = max<int>(s_first_column_width, size.cx + 16);
+                        s_column_width[0] = max<int>(s_column_width[0], size.cx + slop);
+
+                    int j = 1;
+                    get_cell_text(i, 1, tmp, false/*split_tabs*/);
+                    for (const wchar_t* ptr = tmp.c_str(); ptr; ++j)
+                    {
+                        const wchar_t* tab = wcschr(ptr, '\t');
+                        int len = tab ? tab - ptr : wcslen(ptr);
+                        if (GetTextExtentPoint32W(hdc, ptr, len, &size))
+                            s_column_width[j] = max<int>(s_column_width[j], size.cx + slop + indent.cx);
+                        ptr = tab ? tab + 1 : nullptr;
+                    }
                 }
                 SelectFont(hdc, old_font);
                 ReleaseDC(s_hwnd_list, hdc);
 
-                col.cx = min<int>(cxFull / 2, s_first_column_width);
+                col.cx = min<int>(cxFull / 2, s_column_width[0]); // First column gets up to half.
                 ListView_InsertColumn(s_hwnd_list, 0, &col);
-                col.cx = cxFull - col.cx;
-                ListView_InsertColumn(s_hwnd_list, 1, &col);
+
+                for (int j = 0; j++ < s_descriptions;)
+                {
+                    cxFull -= col.cx;
+                    if (j < s_descriptions)
+                        col.cx = s_column_width[j];
+                    else
+                        col.cx = cxFull; // Last column gets the rest.
+                    ListView_InsertColumn(s_hwnd_list, j, &col);
+                }
             }
             else
             {
@@ -716,8 +766,8 @@ popup_list_result do_popup_list(
     s_past_flag = past_flag;
     s_display_filter = display_filter;
     s_reverse_find = reverse_find;
-    s_descriptions = false;
-    s_first_column_width = 0;
+    s_descriptions = 0;
+    memset(s_column_width, 0, sizeof(s_column_width));
 
     out.clear();
     s_result = popup_list_result::cancel;
@@ -752,10 +802,18 @@ popup_list_result do_popup_list(
             ptr += len_display + 1;
             if (*ptr)
             {
-                s_descriptions = true;
-                break;
+                int cols = 1;
+                while (ptr = strchr(ptr, '\t'))
+                {
+                    cols++;
+                    ptr++;
+                }
+                s_descriptions = max<int>(s_descriptions, cols);
             }
         }
+
+        // At most 4 total columns.
+        s_descriptions = min<int>(s_descriptions, sizeof_array(s_column_width) - 1);
     }
 
     // Can't show an empty popup list.
@@ -835,13 +893,13 @@ popup_list_result do_popup_list(
 }
 
 //------------------------------------------------------------------------------
-const char* append_string_into_buffer(char*& buffer, const char* match)
+const char* append_string_into_buffer(char*& buffer, const char* match, bool allow_tabs)
 {
     const char* ret = buffer;
     if (match)
         while (char c = *(match++))
         {
-            if (c == '\r' || c == '\n' || c == '\t')
+            if (c == '\r' || c == '\n' || (c == '\t' && !allow_tabs))
                 c = ' ';
             *(buffer++) = c;
         }

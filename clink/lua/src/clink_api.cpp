@@ -270,7 +270,9 @@ static int to_uppercase(lua_State* state)
 /// The <code>display</code> field is displayed in the popup list (or if not
 /// present then <code>value</code> is displayed).  The <code>value</code> field
 /// is returned if the item is chosen.  The <code>description</code> is
-/// optional, and is displayed in a dimmed color in a second column.
+/// optional, and is displayed in a dimmed color in a second column.  If it
+/// contains tab characters (<code>"\t"</code>) the description string is split
+/// into multiple columns (up to 3).
 ///
 /// <span class="arg">index</span> optionally specifies the default item (or 1
 /// if omitted).
@@ -361,7 +363,7 @@ static int popup_list(lua_State* state)
             char* p = s.data();
             append_string_into_buffer(p, value);
             append_string_into_buffer(p, display);
-            append_string_into_buffer(p, description);
+            append_string_into_buffer(p, description, true/*allow_tabs*/);
         }
 
         items.emplace_back(s.detach());

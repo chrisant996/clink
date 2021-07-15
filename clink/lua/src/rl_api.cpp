@@ -409,7 +409,7 @@ static int set_matches(lua_State* state)
 /// -show:
 /// -show:      local items = {}
 /// -show:      for _,kb in ipairs(bindings) do
-/// -show:          table.insert(items, { value=kb.binding, display=kb.key, description=kb.binding })
+/// -show:          table.insert(items, { value=kb.binding, display=kb.key, description=kb.binding.."\t"..kb.desc })
 /// -show:      end
 /// -show:
 /// -show:      local binding, _, index = clink.popuplist("Key Bindings", items)
@@ -419,19 +419,20 @@ static int set_matches(lua_State* state)
 /// -show:      end
 /// -show:  end
 /// Returns key bindings in a table with the following scheme:
-/// <span class="tablescheme">{ {key:string, binding:string}, ... }</span>.
+/// <span class="tablescheme">{ {key:string, binding:string, desc:string, category:string}, ... }</span>.
 ///
 /// The following example demonstrates using this function in a
 /// <a href="#luakeybindings">luafunc: key binding</a> to invoke
 /// <a href="#clink.popuplist">clink.popuplist()</a> to show a searchable list
 /// of key bindings, and then invoke whichever key binding is selected.
+struct key_binding_info { str_moveable name; str_moveable binding; const char* desc; const char* cat; };
 int get_key_bindings(lua_State* state)
 {
     bool raw = lua_toboolean(state, 1);
 
     // Get the key bindings.
-    void show_key_bindings(bool friendly, std::vector<std::pair<str_moveable, str_moveable>>* out);
-    std::vector<std::pair<str_moveable, str_moveable>> bindings;
+    void show_key_bindings(bool friendly, std::vector<key_binding_info>* out);
+    std::vector<key_binding_info> bindings;
     show_key_bindings(!raw, &bindings);
 
     // Copy the result into a lua table.
@@ -439,16 +440,24 @@ int get_key_bindings(lua_State* state)
 
     str<> out;
     int i = 1;
-    for (auto const& pair : bindings)
+    for (auto const& info : bindings)
     {
         lua_createtable(state, 0, 2);
 
         lua_pushliteral(state, "key");
-        lua_pushlstring(state, pair.first.c_str(), pair.first.length());
+        lua_pushlstring(state, info.name.c_str(), info.name.length());
         lua_rawset(state, -3);
 
         lua_pushliteral(state, "binding");
-        lua_pushlstring(state, pair.second.c_str(), pair.second.length());
+        lua_pushlstring(state, info.binding.c_str(), info.binding.length());
+        lua_rawset(state, -3);
+
+        lua_pushliteral(state, "desc");
+        lua_pushstring(state, info.desc ? info.desc : "");
+        lua_rawset(state, -3);
+
+        lua_pushliteral(state, "category");
+        lua_pushstring(state, info.cat);
         lua_rawset(state, -3);
 
         lua_rawseti(state, -2, i);

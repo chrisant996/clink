@@ -7,13 +7,11 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 ## High Priority
 
 ## Medium Priority
-- Show descriptions for commands.
+- `what-is` command to interrogate what is bound to a chord (and list any other keys that command is bound to).
 - Some way to toggle or control how help is displayed:  categorized with descriptions, categorized, or uncategorized.
 - Maybe a way to skip to next category in pager?
-- `what-is` command to interrogate what is bound to a chord (and list any other keys that command is bound to).
 
 ## Low Priority
-- Alt+1 then Ctrl+X,Ctrl+F prints a bunch of gibberish lines.
 
 ## Tests
 
