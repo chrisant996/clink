@@ -1330,6 +1330,8 @@ rl_module::rl_module(const char* shell_name, terminal_in* input, const char* sta
     rl_macro_hook_func = macro_hook_func;
     rl_last_func_hook_func = last_func_hook_func;
 
+    _rl_comment_begin = savestring("::");   // this will do...
+
     // Add commands.
     static bool s_rl_initialized = false;
     if (!s_rl_initialized)
@@ -1385,7 +1387,6 @@ rl_module::rl_module(const char* shell_name, terminal_in* input, const char* sta
 
         // Override some defaults.
         _rl_bell_preference = VISIBLE_BELL;     // Because audible is annoying.
-        _rl_comment_begin = savestring("::");   // this will do...
         rl_complete_with_tilde_expansion = 1;   // Since CMD doesn't understand tilde.
     }
 
