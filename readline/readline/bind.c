@@ -2606,6 +2606,18 @@ _rl_get_keyname (int key)
       keyname[i++] = (c / 8) + '0';
       c = (c % 8) + '0';
     }
+/* begin_clink_change
+ * Maybe no one uses this function?  Because the modern encoding is UTF8, not
+ * ISO Latin 1.  The preceding code emits invalid UTF and garbles the output.
+ * This changes C. */
+  else if (c >= 160)
+    {
+      keyname[i++] = '\\';
+      keyname[i++] = '0' + ((((unsigned char)c) >> 6) & 0x07);
+      keyname[i++] = '0' + ((((unsigned char)c) >> 3) & 0x07);
+      c = (c % 8) + '0';
+    }
+/* end_clink_change */
 
   /* Now, if the character needs to be quoted with a backslash, do that. */
   if (c == '\\' || c == '"')
