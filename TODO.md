@@ -8,8 +8,7 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 
 ## Medium Priority
 - `what-is` command to interrogate what is bound to a chord (and list any other keys that command is bound to).
-- Some way to toggle or control how help is displayed:  categorized with descriptions, categorized, or uncategorized.
-- Maybe a way to skip to next category in pager?
+- Use digit-argument to control how help is displayed:  categorized with descriptions, categorized, uncategorized with descriptions, or uncategorized.
 
 ## Low Priority
 
