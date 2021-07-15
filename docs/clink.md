@@ -392,8 +392,8 @@ Name | Description
 `clink-scroll-page-up`|Scroll the console window up one page.
 `clink-scroll-top`|Scroll the console window to the top.
 `clink-select-complete`|Like `complete`, but shows interactive menu of matches and responds to arrow keys and typing to filter the matches.
-`clink-show-help`|Lists the currently active key bindings using friendly key names.
-`clink-show-help-raw`|Lists the currently active key bindings using raw key sequences.
+`clink-show-help`|Lists the currently active key bindings using friendly key names.  A numeric argument affects showing categories and descriptions:  0 for neither, 1 for categories, 2 for descriptions, 3 for categories and descriptions (the default).
+`clink-show-help-raw`|Lists the currently active key bindings using raw key sequences.  A numeric argument affects showing categories and descriptions:  0 for neither, 1 for categories, 2 for descriptions, 3 for categories and descriptions (the default).
 `clink-up-directory`|Changes to the parent directory.
 `cua-backward-char`|Extends the selection and moves back a character.
 `cua-backward-word`|Extends the selection and moves back a word.

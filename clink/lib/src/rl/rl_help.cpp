@@ -125,7 +125,7 @@ static const struct {
   { "history-search-forward", rl_history_search_forward, keycat_history, "Search forward through the history for the string of characters between the start of the current line and the cursor point.  The search string must match at the beginning of a history line.  This is a non-incremental search" },
   { "history-substring-search-backward", rl_history_substr_search_backward, keycat_history, "Search backward through the history for the string of characters between the start of the current line and the cursor point.  The search string may match anywhere in a history line.  This is a non-incremental search" },
   { "history-substring-search-forward", rl_history_substr_search_forward, keycat_history, "Search forward through the history for the string of characters between the start of the current line and the cursor point.  The search string may match anywhere in a history line.  This is a non-incremental search" },
-  { "insert-comment", rl_insert_comment, keycat_misc, "" },
+  { "insert-comment", rl_insert_comment, keycat_misc, "Insert '::' at the beginning of the input line and accept the line" },
   { "insert-completions", rl_insert_completions, keycat_misc, "Insert all the completions that 'possible-completions' would list" },
   { "kill-whole-line", rl_kill_full_line, keycat_killyank, "Kill all characters on the current line, no matter where the cursor point is" },
   { "kill-line", rl_kill_line, keycat_killyank, "Kill the text from the cursor point to the end of the line.  With a negative numeric argument, kills backward from the cursor to the beginning of the current line" },
@@ -707,10 +707,10 @@ static void append_key_macro(str_base& s, const char* macro)
 
 //------------------------------------------------------------------------------
 struct key_binding_info { str_moveable name; str_moveable binding; const char* desc; const char* cat; };
-void show_key_bindings(bool friendly, std::vector<key_binding_info>* out=nullptr)
+void show_key_bindings(bool friendly, int mode, std::vector<key_binding_info>* out=nullptr)
 {
-    bool show_categories = out || true;
-    bool show_descriptions = out || true;
+    bool show_categories = out || !!(mode & 1);
+    bool show_descriptions = out || !!(mode & 2);
 
     struct show_line
     {
@@ -934,7 +934,8 @@ void show_key_bindings(bool friendly, std::vector<key_binding_info>* out=nullptr
                     str << "\"";
                 }
                 const int len_name_binding = longest(cat);
-                if (j || (show_descriptions && entry.func_desc && len_name_binding + 1 < max_width))
+                bool show_desc = (show_descriptions && entry.func_desc && len_name_binding + 1 < max_width);
+                if (j || show_desc)
                     pad_with_spaces(str, len_name_binding);
                 if (out)
                 {
@@ -945,7 +946,7 @@ void show_key_bindings(bool friendly, std::vector<key_binding_info>* out=nullptr
                 // Command description.
                 if (!out)
                 {
-                    if (entry.func_desc)
+                    if (show_desc)
                     {
                         ellipsify(entry.func_desc, max_width - 1 - len_name_binding, tmp, false/*expand_ctrl*/);
                         str << tmp.c_str();
@@ -998,13 +999,15 @@ void show_key_bindings(bool friendly, std::vector<key_binding_info>* out=nullptr
 //------------------------------------------------------------------------------
 int show_rl_help(int, int)
 {
-    show_key_bindings(true/*friendly*/);
+    int mode = rl_explicit_arg ? rl_numeric_arg : 3;
+    show_key_bindings(true/*friendly*/, mode);
     return 0;
 }
 
 //------------------------------------------------------------------------------
 int show_rl_help_raw(int, int)
 {
-    show_key_bindings(false/*friendly*/);
+    int mode = rl_explicit_arg ? rl_numeric_arg : 3;
+    show_key_bindings(false/*friendly*/, mode);
     return 0;
 }

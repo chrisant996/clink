@@ -431,9 +431,9 @@ int get_key_bindings(lua_State* state)
     bool raw = lua_toboolean(state, 1);
 
     // Get the key bindings.
-    void show_key_bindings(bool friendly, std::vector<key_binding_info>* out);
+    void show_key_bindings(bool friendly, int mode, std::vector<key_binding_info>* out);
     std::vector<key_binding_info> bindings;
-    show_key_bindings(!raw, &bindings);
+    show_key_bindings(!raw, 0, &bindings);
 
     // Copy the result into a lua table.
     lua_createtable(state, int(bindings.size()), 0);

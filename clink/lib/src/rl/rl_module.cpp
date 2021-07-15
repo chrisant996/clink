@@ -1342,10 +1342,10 @@ rl_module::rl_module(const char* shell_name, terminal_in* input, const char* sta
         rl_remove_history_hook = host_remove_history;
         clink_add_funmap_entry("clink-reload", clink_reload, keycat_misc, "Reloads Lua scripts and the inputrc file(s)");
         clink_add_funmap_entry("clink-reset-line", clink_reset_line, keycat_basic, "Clears the input line.  Can be undone, unlike revert-line");
-        clink_add_funmap_entry("clink-show-help", show_rl_help, keycat_misc, "Show all key bindings");
+        clink_add_funmap_entry("clink-show-help", show_rl_help, keycat_misc, "Show all key bindings.  A numeric argument affects showing categories and descriptions");
         clink_add_funmap_entry("clink-show-help-raw", show_rl_help_raw, keycat_misc, "Show raw key sequence strings for all key bindings");
         clink_add_funmap_entry("clink-exit", clink_exit, keycat_misc, "Exits the CMD instance");
-        clink_add_funmap_entry("clink-ctrl-c", clink_ctrl_c, keycat_basic, "Either copies selected text to the clipboard, or if no text selected cancels the input line and starts a new one");
+        clink_add_funmap_entry("clink-ctrl-c", clink_ctrl_c, keycat_basic, "Copies any selected text to the clipboard, otherwise cancels the input line and starts a new one");
         clink_add_funmap_entry("clink-paste", clink_paste, keycat_basic, "Pastes text from the clipboard");
         clink_add_funmap_entry("clink-copy-line", clink_copy_line, keycat_misc, "Copies the input line to the clipboard");
         clink_add_funmap_entry("clink-copy-word", clink_copy_word, keycat_misc, "Copies the word at the cursor point to the clipboard");
