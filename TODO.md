@@ -7,6 +7,7 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 ## High Priority
 
 ## Medium Priority
+- Add some "time spent" diagnostics for prompt filters, generators, classifiers, match display filters, etc.
 
 ## Low Priority
 
