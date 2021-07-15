@@ -29,6 +29,7 @@ static rl_buffer_lua::method g_methods[] = {
     { "endundogroup",   &rl_buffer_lua::end_undo_group },
     { "beginoutput",    &rl_buffer_lua::begin_output },
     { "refreshline",    &rl_buffer_lua::refresh_line },
+    { "getargument",    &rl_buffer_lua::get_argument },
     { "ding",           &rl_buffer_lua::ding },
     {}
 };
@@ -198,6 +199,20 @@ int rl_buffer_lua::refresh_line(lua_State* state)
     return 0;
 }
 
+//------------------------------------------------------------------------------
+/// -name:  rl_buffer:getargument
+/// -ret:   integer | nil
+/// Returns any accumulated numeric argument (<kbd>Alt</kbd>+Digits, etc), or
+/// nil if no numeric argument has been entered.
+int rl_buffer_lua::refresh_line(lua_State* state)
+{
+    if (rl_explicit_arg)
+    {
+        lua_pushinteger(state, rl_numeric_arg);
+        return 1;
+    }
+    return 0;
+}
 //------------------------------------------------------------------------------
 /// -name:  rl_buffer:ding
 /// Dings the bell.  If the <code>bell-style</code> Readline variable is
