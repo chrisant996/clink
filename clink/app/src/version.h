@@ -14,7 +14,7 @@
 
 #define CLINK_VERSION_MAJOR     1
 #define CLINK_VERSION_MINOR     2
-#define CLINK_VERSION_PATCH     22
+#define CLINK_VERSION_PATCH     23
 #define CLINK_VERSION_STR       AS_STR(CLINK_VERSION_MAJOR) ## "." ##\
                                 AS_STR(CLINK_VERSION_MINOR) ## "." ##\
                                 AS_STR(CLINK_VERSION_PATCH) ## "." ##\
