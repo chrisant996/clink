@@ -3,7 +3,7 @@
 
 <!-- ----------------------------------------------------- -->
 <head>
-<title>Clink v1.2.21</title>
+<title>Clink v1.2.22</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Rambla:wght@400;700&family=Roboto&family=Fira+Mono&display=swap');
 html {
@@ -747,7 +747,7 @@ name:"Plain text",aliases:["text","txt"],disableAutodetect:!0})})());
         </td>
         <td style="text-align:right">
             <div id="header">
-                <div id="title">Clink v1.2.21</div>
+                <div id="title">Clink v1.2.22</div>
                 <div id="url">
                     <a href="https://github.com/chrisant996/clink">
                         https://github.com/chrisant996/clink
@@ -1391,6 +1391,10 @@ call &quot;%~dp0clink.bat&quot; inject --profile &quot;%TEMP%\clink_portable&quo
 <td>Discards the current line and starts a new one (like <kbd>Ctrl</kbd>+<kbd>C</kbd> in CMD.EXE).</td>
 </tr>
 <tr>
+<td align="center"><code>clink-diagnostics</code></td>
+<td>Show internal diagnostic information.</td>
+</tr>
+<tr>
 <td align="center"><code>clink-exit</code></td>
 <td>Replaces the current line with <code>exit</code> and executes it (exits the shell instance).</td>
 </tr>
@@ -1492,15 +1496,19 @@ call &quot;%~dp0clink.bat&quot; inject --profile &quot;%TEMP%\clink_portable&quo
 </tr>
 <tr>
 <td align="center"><code>clink-show-help</code></td>
-<td>Lists the currently active key bindings using friendly key names.</td>
+<td>Lists the currently active key bindings using friendly key names.  A numeric argument affects showing categories and descriptions:  0 for neither, 1 for categories, 2 for descriptions, 3 for categories and descriptions (the default).</td>
 </tr>
 <tr>
 <td align="center"><code>clink-show-help-raw</code></td>
-<td>Lists the currently active key bindings using raw key sequences.</td>
+<td>Lists the currently active key bindings using raw key sequences.  A numeric argument affects showing categories and descriptions:  0 for neither, 1 for categories, 2 for descriptions, 3 for categories and descriptions (the default).</td>
 </tr>
 <tr>
 <td align="center"><code>clink-up-directory</code></td>
 <td>Changes to the parent directory.</td>
+</tr>
+<tr>
+<td align="center"><code>clink-what-is</code></td>
+<td>Show the key binding for the next key sequence that is input.</td>
 </tr>
 <tr>
 <td align="center"><code>cua-backward-char</code></td>
@@ -2979,7 +2987,7 @@ end</code></pre></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="clink.onfilterinput">clink.onfilterinput</a></div> <div class="signature">( <span class="arg_name">func</span>:function ) : nil</div></div><div class="body"><p class="desc">Registers <span class="arg">func</span> to be called after Clink's edit prompt ends (it is called after the <a href="#clink.oneditedit">onendedit</a> event).  The function receives a string argument containing the input text from the edit prompt.  The function returns up to two values.  If the first is not nil then it's a string that replaces the edit prompt text.  If the second is not nil and is false then it stops further onfilterinput handlers from running.</p><p class="desc"> <strong>Note:</strong>  Be very careful if you replace the text; this has the potential to interfere with or even ruin the user's ability to enter command lines for CMD to process.</p></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="clink.onfiltermatches">clink.onfiltermatches</a></div> <div class="signature">( <span class="arg_name">func</span>:function ) : nil</div></div><div class="body"><p class="desc">Registers <span class="arg">func</span> to be called after Clink generates matches for completion.  See <a href="#filteringmatchcompletions"> Filtering Match Completions</a> for more information.</p></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="clink.oninject">clink.oninject</a></div> <div class="signature">( <span class="arg_name">func</span>:function ) : nil</div></div><div class="body"><p class="desc">Registers <span class="arg">func</span> to be called when Clink is injected into a CMD process.  The function is called only once per session.</p></div></div><hr/>
-<div class="function"><div class="header"> <div class="name"><a name="clink.popuplist">clink.popuplist</a></div> <div class="signature">( <span class="arg_name">title</span>:string, <span class="arg_name">items</span>:table, [<span class="arg_name">index</span>:integer] ) : string, boolean, integer</div></div><div class="body"><p class="desc">Displays a popup list and returns the selected item.  May only be used within a <a href="#luakeybindings">luafunc: key binding</a>.</p><p class="desc"> <span class="arg">title</span> is required and captions the popup list.</p><p class="desc"> <span class="arg">items</span> is a table of strings to display, or a table of items with the following scheme: <span class="tablescheme">{ {display:string, value:string, description:string}, ... }</span>. The <code>display</code> field is displayed in the popup list (or if not present then <code>value</code> is displayed).  The <code>value</code> field is returned if the item is chosen.  The <code>description</code> is optional, and is displayed in a dimmed color in a second column.</p><p class="desc"> <span class="arg">index</span> optionally specifies the default item (or 1 if omitted).</p><p class="desc"> If the popup is canceled or an error occurs, the function returns nil.</p><p class="desc"> Otherwise the 3 return values are:</p><p class="desc"> <ul> <li>string indicating the <code>value</code> field from the selected item (or the <code>display</code> field if no value field is present). <li>boolean which is true if the item was selected with <kbd>Shift</kbd> or <kbd>Ctrl</kbd> pressed. <li>integer indicating the index of the selected item in the original <span class="arg">items</span> table. </ul></p></div></div><hr/>
+<div class="function"><div class="header"> <div class="name"><a name="clink.popuplist">clink.popuplist</a></div> <div class="signature">( <span class="arg_name">title</span>:string, <span class="arg_name">items</span>:table, [<span class="arg_name">index</span>:integer] ) : string, boolean, integer</div></div><div class="body"><p class="desc">Displays a popup list and returns the selected item.  May only be used within a <a href="#luakeybindings">luafunc: key binding</a>.</p><p class="desc"> <span class="arg">title</span> is required and captions the popup list.</p><p class="desc"> <span class="arg">items</span> is a table of strings to display, or a table of items with the following scheme: <span class="tablescheme">{ {display:string, value:string, description:string}, ... }</span>. The <code>display</code> field is displayed in the popup list (or if not present then <code>value</code> is displayed).  The <code>value</code> field is returned if the item is chosen.  The <code>description</code> is optional, and is displayed in a dimmed color in a second column.  If it contains tab characters (<code>"\t"</code>) the description string is split into multiple columns (up to 3).</p><p class="desc"> <span class="arg">index</span> optionally specifies the default item (or 1 if omitted).</p><p class="desc"> If the popup is canceled or an error occurs, the function returns nil.</p><p class="desc"> Otherwise the 3 return values are:</p><p class="desc"> <ul> <li>string indicating the <code>value</code> field from the selected item (or the <code>display</code> field if no value field is present). <li>boolean which is true if the item was selected with <kbd>Shift</kbd> or <kbd>Ctrl</kbd> pressed. <li>integer indicating the index of the selected item in the original <span class="arg">items</span> table. </ul></p></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="clink.print">clink.print</a></div> <div class="signature">( ... ) : nil</div></div><div class="body"><p class="desc">This works like <code>print()</code>, but this supports ANSI escape codes.</p><p class="desc"> If the special value <code>NONL</code> is included anywhere in the argument list then the usual trailing newline is omitted.  This can sometimes be useful particularly when printing certain ANSI escape codes.</p><p class="desc"> <strong>Note:</strong>  In Clink versions before v1.2.11 the <code>clink.print()</code> API exists (undocumented) but accepts exactly one string argument and is therefore not fully compatible with normal <code>print()</code> syntax.  If you use fewer or more than 1 argument or if the argument is not a string, then first checking the Clink version (e.g. <a href="#clink.version_encoded">clink.version_encoded</a>) can avoid runtime errors.</p><pre class="language-lua"><code>clink.print("\x1b[32mgreen\x1b[m \x1b[35mmagenta\x1b[m")
 -- Outputs <code>green</code> in green, a space, and <code>magenta</code> in magenta.
 
@@ -3274,7 +3282,7 @@ function dir_matches(match_word, word_index, line_state)
 &nbsp; end
 &nbsp; return matches
 end</code></pre></div></div><hr/>
-<div class="function"><div class="header"> <div class="name"><a name="rl.getkeybindings">rl.getkeybindings</a></div> <div class="signature">( <span class="arg_name">raw</span>:boolean ) : table</div></div><div class="body"><p class="desc">Returns key bindings in a table with the following scheme: <span class="tablescheme">{ {key:string, binding:string}, ... }</span>.</p><p class="desc"> The following example demonstrates using this function in a <a href="#luakeybindings">luafunc: key binding</a> to invoke <a href="#clink.popuplist">clink.popuplist()</a> to show a searchable list of key bindings, and then invoke whichever key binding is selected.</p><pre class="language-lua"><code>function luafunc_showkeybindings(rl_buffer)
+<div class="function"><div class="header"> <div class="name"><a name="rl.getkeybindings">rl.getkeybindings</a></div> <div class="signature">( <span class="arg_name">raw</span>:boolean ) : table</div></div><div class="body"><p class="desc">Returns key bindings in a table with the following scheme: <span class="tablescheme">{ {key:string, binding:string, desc:string, category:string}, ... }</span>.</p><p class="desc"> The following example demonstrates using this function in a <a href="#luakeybindings">luafunc: key binding</a> to invoke <a href="#clink.popuplist">clink.popuplist()</a> to show a searchable list of key bindings, and then invoke whichever key binding is selected.</p><pre class="language-lua"><code>function luafunc_showkeybindings(rl_buffer)
 local bindings = rl.getkeybindings()
 if #bindings <= 0 then
 rl_buffer:refreshline()
@@ -3283,7 +3291,7 @@ end
 
 local items = {}
 for _,kb in ipairs(bindings) do
-table.insert(items, { value=kb.binding, display=kb.key, description=kb.binding })
+table.insert(items, { value=kb.binding, display=kb.key, description=kb.binding.."\t"..kb.desc })
 end
 
 local binding, _, index = clink.popuplist("Key Bindings", items)
@@ -3314,6 +3322,7 @@ end</code></pre></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="rl_buffer:beginundogroup">rl_buffer:beginundogroup</a></div> <div class="signature">() : nil</div></div><div class="body"><p class="desc">Starts a new undo group.  This is useful for grouping together multiple editing actions into a single undo operation.</p></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="rl_buffer:ding">rl_buffer:ding</a></div> <div class="signature">() : nil</div></div><div class="body"><p class="desc">Dings the bell.  If the <code>bell-style</code> Readline variable is <code>visible</code> then it flashes the cursor instead.</p></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="rl_buffer:endundogroup">rl_buffer:endundogroup</a></div> <div class="signature">() : nil</div></div><div class="body"><p class="desc">Ends an undo group.  This is useful for grouping together multiple editing actions into a single undo operation.</p><p class="desc"> Note:  all undo groups are automatically ended when a key binding finishes execution, so this function is only needed if a key binding needs to create more than one undo group.</p></div></div><hr/>
+<div class="function"><div class="header"> <div class="name"><a name="rl_buffer:getargument">rl_buffer:getargument</a></div> <div class="signature">() : integer | nil</div></div><div class="body"><p class="desc">Returns any accumulated numeric argument (<kbd>Alt</kbd>+Digits, etc), or nil if no numeric argument has been entered.</p></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="rl_buffer:getbuffer">rl_buffer:getbuffer</a></div> <div class="signature">() : string</div></div><div class="body"><p class="desc">Returns the current input line.</p></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="rl_buffer:getcursor">rl_buffer:getcursor</a></div> <div class="signature">() : integer</div></div><div class="body"><p class="desc">Returns the cursor position in the input line.</p></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="rl_buffer:getlength">rl_buffer:getlength</a></div> <div class="signature">() : integer</div></div><div class="body"><p class="desc">Returns the length of the input line.</p></div></div><hr/>
@@ -3411,6 +3420,16 @@ end</code></pre></div></div><hr/>
         <div class="section" id="changes">
 <h1 id="changes">Changes</h1>
 <h3 id="releases-from-chrisant996clink-fork">Releases from <a href="https://github.com/chrisant996/clink">chrisant996/clink</a> fork</h3>
+<h4 id="v1222">v1.2.22</h4>
+<ul>
+<li>Added <code>clink-what-is</code> command bound by default to <kbd>Alt</kbd>+<kbd>?</kbd>, which shows the key binding for the next key sequence that is input.</li>
+<li>Added <code>rl.getargument()</code> function to get the accumulated Readline numeric argument, if any.  For use in &quot;luafunc:&quot; macros.</li>
+<li>The <code>clink-show-help</code> command now categorizes key bindings and shows a description for the commands.  Using a numeric argument can control whether categorization and descriptions are used.</li>
+<li>Fixed invoking <code>clink-select-complete</code> while it is already active, so that it doesn&#39;t lose quotes around the current match if it has quotes.</li>
+<li>Fixed <code>clink-show-help</code> to list &quot;Enter&quot; instead of &quot;C-m&quot; for the <kbd>Enter</kbd> key.  Otherwise there&#39;s no way to differentiate between <kbd>Enter</kbd> and <kbd>Ctrl</kbd>+<kbd>M</kbd> when the <code>terminal.differentiate_keys</code> setting is enabled.</li>
+<li>Fixed the <code>insert-comment</code> command, which accidentally fell back to inserting <code>#</code> after the first prompt (that&#39;s what bash inserts, and shouldn&#39;t be used in Clink).</li>
+<li>Fixed the <code>dump-functions</code> command, which accidentally didn&#39;t list UTF8 key sequences correctly.</li>
+</ul>
 <h4 id="v1221">v1.2.21</h4>
 <ul>
 <li>Fixed backwards exit codes from <code>clink autorun</code> commands.</li>
