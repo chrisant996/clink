@@ -326,6 +326,9 @@ static void ensure_keyseqs_to_names()
         add_keyseq_to_name(terminfo::kbks[m], "Bkspc", builder, m);
     }
 
+    builder.clear();
+    add_keyseq_to_name("\x0d", "Enter", builder, 0);
+
     str<32> fn;
     for (int i = 0; i < sizeof_array(terminfo::kfx); )
     {
