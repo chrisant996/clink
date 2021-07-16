@@ -204,7 +204,7 @@ int rl_buffer_lua::refresh_line(lua_State* state)
 /// -ret:   integer | nil
 /// Returns any accumulated numeric argument (<kbd>Alt</kbd>+Digits, etc), or
 /// nil if no numeric argument has been entered.
-int rl_buffer_lua::refresh_line(lua_State* state)
+int rl_buffer_lua::get_argument(lua_State* state)
 {
     if (rl_explicit_arg)
     {
