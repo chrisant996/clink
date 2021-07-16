@@ -2,6 +2,16 @@
 
 ### Releases from [chrisant996/clink](https://github.com/chrisant996/clink) fork
 
+#### v1.2.22
+
+- Added `clink-what-is` command bound by default to <kbd>Alt</kbd>+<kbd>?</kbd>, which shows the key binding for the next key sequence that is input.
+- Added `rl.getargument()` function to get the accumulated Readline numeric argument, if any.  For use in "luafunc:" macros.
+- The `clink-show-help` command now categorizes key bindings and shows a description for the commands.  Using a numeric argument can control whether categorization and descriptions are used.
+- Fixed invoking `clink-select-complete` while it is already active, so that it doesn't lose quotes around the current match if it has quotes.
+- Fixed `clink-show-help` to list "Enter" instead of "C-m" for the <kbd>Enter</kbd> key.  Otherwise there's no way to differentiate between <kbd>Enter</kbd> and <kbd>Ctrl</kbd>+<kbd>M</kbd> when the `terminal.differentiate_keys` setting is enabled.
+- Fixed the `insert-comment` command, which accidentally fell back to inserting `#` after the first prompt (that's what bash inserts, and shouldn't be used in Clink).
+- Fixed the `dump-functions` command, which accidentally didn't list UTF8 key sequences correctly.
+
 #### v1.2.21
 
 - Fixed backwards exit codes from `clink autorun` commands.
