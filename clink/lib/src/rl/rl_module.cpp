@@ -463,6 +463,25 @@ extern "C" int read_key_hook(void)
     return key;
 }
 
+//------------------------------------------------------------------------------
+int read_key_direct(bool wait)
+{
+    if (!s_direct_input)
+    {
+        assert(false);
+        return -1;
+    }
+
+    key_tester* old = s_direct_input->set_key_tester(nullptr);
+
+    if (wait)
+        s_direct_input->select();
+    int key = s_direct_input->read();
+
+    s_direct_input->set_key_tester(old);
+    return key;
+}
+
 
 
 //------------------------------------------------------------------------------
@@ -1344,6 +1363,7 @@ rl_module::rl_module(const char* shell_name, terminal_in* input, const char* sta
         clink_add_funmap_entry("clink-reset-line", clink_reset_line, keycat_basic, "Clears the input line.  Can be undone, unlike revert-line");
         clink_add_funmap_entry("clink-show-help", show_rl_help, keycat_misc, "Show all key bindings.  A numeric argument affects showing categories and descriptions");
         clink_add_funmap_entry("clink-show-help-raw", show_rl_help_raw, keycat_misc, "Show raw key sequence strings for all key bindings");
+        clink_add_funmap_entry("clink-what-is", clink_what_is, keycat_misc, "Show the key binding for the next key sequence input");
         clink_add_funmap_entry("clink-exit", clink_exit, keycat_misc, "Exits the CMD instance");
         clink_add_funmap_entry("clink-ctrl-c", clink_ctrl_c, keycat_basic, "Copies any selected text to the clipboard, otherwise cancels the input line and starts a new one");
         clink_add_funmap_entry("clink-paste", clink_paste, keycat_basic, "Pastes text from the clipboard");
@@ -1443,6 +1463,7 @@ rl_module::rl_module(const char* shell_name, terminal_in* input, const char* sta
         { "\\e[6;3~",       "clink-scroll-page-down" },  // alt-pgdn
         { "\\e[1;3A",       "clink-scroll-line-up" },    // alt-up
         { "\\e[1;3B",       "clink-scroll-line-down" },  // alt-down
+        { "\\e?",           "clink-what-is" },           // alt-?
         {}
     };
 

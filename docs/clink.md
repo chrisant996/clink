@@ -395,6 +395,7 @@ Name | Description
 `clink-show-help`|Lists the currently active key bindings using friendly key names.  A numeric argument affects showing categories and descriptions:  0 for neither, 1 for categories, 2 for descriptions, 3 for categories and descriptions (the default).
 `clink-show-help-raw`|Lists the currently active key bindings using raw key sequences.  A numeric argument affects showing categories and descriptions:  0 for neither, 1 for categories, 2 for descriptions, 3 for categories and descriptions (the default).
 `clink-up-directory`|Changes to the parent directory.
+`clink-what-is`|Show the key binding for the next key sequence that is input.
 `cua-backward-char`|Extends the selection and moves back a character.
 `cua-backward-word`|Extends the selection and moves back a word.
 `cua-beg-of-line`|Extends the selection and moves to the start of the current line.

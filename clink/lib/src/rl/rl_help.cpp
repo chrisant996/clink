@@ -28,6 +28,7 @@ extern printer* g_printer;
 extern pager* g_pager;
 extern editor_module::result* g_result;
 extern void ellipsify(const char* in, int limit, str_base& out, bool expand_ctrl);
+extern int read_key_direct(bool wait);
 
 //------------------------------------------------------------------------------
 struct Keyentry
@@ -1009,5 +1010,122 @@ int show_rl_help_raw(int, int)
 {
     int mode = rl_explicit_arg ? rl_numeric_arg : 3;
     show_key_bindings(false/*friendly*/, mode);
+    return 0;
+}
+
+//------------------------------------------------------------------------------
+int clink_what_is(int, int)
+{
+    ensure_keydesc_map();
+
+    // Move cursor past the input line.
+    _rl_move_vert(_rl_vis_botlin);
+    g_printer->print("\n");
+
+    int type;
+    rl_command_func_t* func = nullptr;
+    str<32> keyseq;
+    bool not_bound = false;
+
+    str<> s;
+    while (true)
+    {
+        int sort = 0;
+        char* key_name = nullptr;
+        int key;
+
+        key = read_key_direct(false/*wait*/);
+        if (key < 0)
+        {
+            if (not_bound)
+                break;
+
+            g_printer->print("\r\x1b[Kwhat-is: ");
+            translate_keyseq(keyseq.c_str(), keyseq.length(), &key_name, true, sort);
+            if (key_name)
+            {
+                s.clear();
+                s << "\x1b[0;1m" << key_name << "\x1b[m,";
+                g_printer->print(s.c_str(), s.length());
+                free(key_name);
+                key_name = nullptr;
+            }
+
+            key = read_key_direct(true/*wait*/);
+        }
+
+        if (key < 0)
+        {
+            func = nullptr;
+            break;
+        }
+
+        concat_key_string(key, keyseq);
+
+        func = rl_function_of_keyseq_len(keyseq.c_str(), keyseq.length(), nullptr, &type);
+        if (type != ISKMAP)
+        {
+            if (func)
+                break;
+            // Read until no more input to capture the full typed key sequence.
+            not_bound = true;
+        }
+    }
+
+    g_printer->print("\r\x1b[J");
+
+    if (keyseq.length())
+    {
+        int sort = 0;
+        char* key_name = nullptr;
+        translate_keyseq(keyseq.c_str(), keyseq.length(), &key_name, true, sort);
+        if (key_name)
+        {
+            s.clear();
+            s << "\x1b[0;1m" << key_name << "\x1b[m" << " : ";
+            free(key_name);
+
+            if (!func)
+            {
+                s << "key is not bound";
+            }
+            else if (type == ISFUNC)
+            {
+                const char* desc = nullptr;
+                const char* name = get_function_name(func);
+                if (!name && func == rl_insert)
+                {
+                    name = "key inserts itself";
+                }
+                else
+                {
+                    if (!get_function_info(func, &desc, nullptr) || !desc || !*desc)
+                        desc = nullptr;
+                }
+                if (name)
+                    s << "\x1b[0;1m" << name << "\x1b[m";
+                else
+                    s << "unknown command";
+                if (desc)
+                    s << " -- " << desc;
+            }
+            else
+            {
+                char* macro = _rl_untranslate_macro_value((char*)func, 0);
+                if (macro)
+                    s << "\"" << macro << "\"";
+                else
+                    s << "unknown macro";
+                free(macro);
+            }
+            s << "\n";
+
+            g_printer->print(s.c_str(), s.length());
+        }
+    }
+
+    g_printer->print("\n");
+    g_result->redraw();
+
     return 0;
 }

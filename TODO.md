@@ -7,7 +7,6 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 ## High Priority
 
 ## Medium Priority
-- `what-is` command to interrogate what is bound to a chord (and list any other keys that command is bound to).
 - Add some "time spent" diagnostics for prompt filters, generators, classifiers, match display filters, etc.
 
 ## Low Priority

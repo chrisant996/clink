@@ -30,6 +30,7 @@ void    clink_add_funmap_entry(const char *name, rl_command_func_t *function, in
 //------------------------------------------------------------------------------
 int     show_rl_help(int, int);
 int     show_rl_help_raw(int, int);
+int     clink_what_is(int, int);
 
 //------------------------------------------------------------------------------
 int     clink_reload(int, int);
