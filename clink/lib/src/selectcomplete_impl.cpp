@@ -556,18 +556,33 @@ prev:
             const int rows = min<int>(m_match_rows, m_visible_rows);
             if (input.id == bind_id_selectcomplete_pgup)
             {
-                int ofs = (y > m_top) ? (y - m_top) : (rows - 1);
-                m_index -= ofs;
-                if (y - ofs < 0 || m_index < 0)
+                if (!y)
+                {
                     m_index = 0;
+                }
+                else
+                {
+                    int new_y = max<int>(0, (y == m_top) ? y - (rows - 1) : m_top);
+                    m_index += (new_y - y);
+                }
                 goto navigated;
             }
             else if (input.id == bind_id_selectcomplete_pgdn)
             {
-                int ofs = (y < m_top + rows - 1) ? (rows - 1 - y) : (rows - 1);
-                m_index += ofs;
-                if (y + ofs >= m_match_rows || m_index >= m_matches.get_match_count())
+                if (y == m_match_rows - 1)
+                {
                     m_index = m_matches.get_match_count() - 1;
+                }
+                else
+                {
+                    int new_y = min<int>(m_match_rows - 1, (y == m_top + rows - 1) ? y + (rows - 1) : m_top + (rows - 1));
+                    m_index += (new_y - y);
+                }
+                if (m_index > m_matches.get_match_count() - 1)
+                {
+                    m_top = max<int>(0, m_match_rows - m_visible_rows);
+                    m_index = m_matches.get_match_count() - 1;
+                }
                 goto navigated;
             }
         }
