@@ -5,6 +5,7 @@
 #### v1.2.23
 
 - Fixed <kbd>PgUp</kbd> and <kbd>PgDn</kbd> in the `clink-select-complete` command, under certain conditions where they don't navigate in the intended manner.
+- Cosmetic change: better key names for <kbd>Enter</kbd> vs <kbd>Ctrl</kbd>+<kbd>M</kbd>, and <kbd>Alt</kbd>+<kbd>Bkspc</kbd> vs <kbd>Alt</kbd>+<kbd>Ctrl</kbd>+<kbd>H</kbd>, depending on the `terminal.differentiate_keys` setting.
 
 #### v1.2.22
 
