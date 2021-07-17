@@ -3,7 +3,7 @@
 
 <!-- ----------------------------------------------------- -->
 <head>
-<title>Clink v1.2.22</title>
+<title>Clink v1.2.23</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Rambla:wght@400;700&family=Roboto&family=Fira+Mono&display=swap');
 html {
@@ -747,7 +747,7 @@ name:"Plain text",aliases:["text","txt"],disableAutodetect:!0})})());
         </td>
         <td style="text-align:right">
             <div id="header">
-                <div id="title">Clink v1.2.22</div>
+                <div id="title">Clink v1.2.23</div>
                 <div id="url">
                     <a href="https://github.com/chrisant996/clink">
                         https://github.com/chrisant996/clink
@@ -3420,6 +3420,11 @@ end</code></pre></div></div><hr/>
         <div class="section" id="changes">
 <h1 id="changes">Changes</h1>
 <h3 id="releases-from-chrisant996clink-fork">Releases from <a href="https://github.com/chrisant996/clink">chrisant996/clink</a> fork</h3>
+<h4 id="v1223">v1.2.23</h4>
+<ul>
+<li>Fixed <kbd>PgUp</kbd> and <kbd>PgDn</kbd> in the <code>clink-select-complete</code> command, under certain conditions where they don&#39;t navigate in the intended manner.</li>
+<li>Cosmetic change: better key names for <kbd>Enter</kbd> vs <kbd>Ctrl</kbd>+<kbd>M</kbd>, and <kbd>Alt</kbd>+<kbd>Bkspc</kbd> vs <kbd>Alt</kbd>+<kbd>Ctrl</kbd>+<kbd>H</kbd>, depending on the <code>terminal.differentiate_keys</code> setting.</li>
+</ul>
 <h4 id="v1222">v1.2.22</h4>
 <ul>
 <li>Added <code>clink-what-is</code> command bound by default to <kbd>Alt</kbd>+<kbd>?</kbd>, which shows the key binding for the next key sequence that is input.</li>
