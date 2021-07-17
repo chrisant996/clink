@@ -271,6 +271,7 @@ struct map_cmp_str
     }
 };
 static std::map<keyseq_key, keyseq_name, map_cmp_str> map_keyseq_to_name;
+static char map_keyseq_differentiate = -1;
 
 //------------------------------------------------------------------------------
 static void add_keyseq_to_name(const char* keyseq, const char* name, str<32>& builder, short int modifier)
@@ -294,15 +295,27 @@ static void add_keyseq_to_name(const char* keyseq, const char* name, str<32>& bu
 }
 
 //------------------------------------------------------------------------------
+static void remove_keyseq_from_name(const char* keyseq)
+{
+    if (!keyseq || !*keyseq)
+        return;
+
+    keyseq_key first(keyseq);
+    map_keyseq_to_name.erase(first);
+}
+
+//------------------------------------------------------------------------------
 static void ensure_keyseqs_to_names()
 {
-    if (!map_keyseq_to_name.empty())
+    if (!map_keyseq_to_name.empty() && map_keyseq_differentiate == !!g_differentiate_keys.get())
         return;
 
     static const char* const mods[] = { "", "S-", "C-", "C-S-", "A-", "A-S-", "A-C-", "A-C-S-" };
     static_assert(sizeof_array(mods) == sizeof_array(terminfo::kcuu1), "modifier name count must match modified key array sizes");
 
     str<32> builder;
+
+    map_keyseq_differentiate = !!g_differentiate_keys.get();
 
     const char* bindableEsc = get_bindable_esc();
     if (bindableEsc)
@@ -326,8 +339,15 @@ static void ensure_keyseqs_to_names()
         add_keyseq_to_name(terminfo::kbks[m], "Bkspc", builder, m);
     }
 
-    builder.clear();
-    add_keyseq_to_name("\x0d", "Enter", builder, 0);
+    if (g_differentiate_keys.get())
+    {
+        builder = mods[0];
+        add_keyseq_to_name("\x0d", "Enter", builder, 0);
+    }
+    else
+    {
+        remove_keyseq_from_name(terminfo::kbks[4]);
+    }
 
     str<32> fn;
     for (int i = 0; i < sizeof_array(terminfo::kfx); )
