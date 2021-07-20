@@ -2,6 +2,11 @@
 -- License: http://opensource.org/licenses/MIT
 
 --------------------------------------------------------------------------------
+local function starts_with(str, start)
+    return string.sub(str, 1, string.len(start)) == start
+end
+
+--------------------------------------------------------------------------------
 local function markdown_file(source_path, out)
     print("  << " .. source_path)
 
@@ -10,9 +15,18 @@ local function markdown_file(source_path, out)
 
     local line_reader = io.lines(out_file)
     for line in line_reader do
-        line = line:gsub("%$%(BEGINDIM%)", "<div style='opacity:0.5'>")
-        line = line:gsub("%$%(ENDDIM%)", "</div>")
-        out:write(line .. "\n")
+        local inc_file = line:match("#INCLUDE %[(.*)%]")
+        if inc_file then
+            line = line:gsub("#INCLUDE %[(.*)%]", "")
+            out:write(line)
+            for inc_line in io.lines(inc_file) do
+                out:write(inc_line.."\n")
+            end
+        else
+            line = line:gsub("%$%(BEGINDIM%)", "<div style='opacity:0.5'>")
+            line = line:gsub("%$%(ENDDIM%)", "</div>")
+            out:write(line .. "\n")
+        end
     end
 end
 

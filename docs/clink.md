@@ -525,54 +525,10 @@ end
 
 If no further match generators need to be called then the function should return true.  Returning false or nil continues letting other match generators get called.
 
-Here is an example script that supplies git branch names as matches for `git checkout`.  It's based on git_branch_autocomplete.lua from [collink.clink-git-extensions](https://github.com/collink/clink-git-extensions).  The version here is updated for the new Clink Lua API, and for illustration purposes it's been simplified to not support git aliases.
+Here is an example script that supplies git branch names as matches for `git checkout`.  This example doesn't handle git aliases, but that could be added with additional script code.
 
 ```lua
-local git_branch_autocomplete = clink.generator(1)
-
-local function string.starts(str, start)
-    return string.sub(str, 1, string.len(start)) == start
-end
-
-local function is_checkout_ac(text)
-    if string.starts(text, "git checkout") then
-        return true
-    end
-    return false
-end
-
-local function get_branches()
-    -- Run git command to get branches.
-    local handle = io.popen("git branch -a 2>&1")
-    local result = handle:read("*a")
-    handle:close()
-    -- Parse the branches from the output.
-    local branches = {}
-    if string.starts(result, "fatal") == false then
-        for branch in string.gmatch(result, "  %S+") do
-            branch = string.gsub(branch, "  ", "")
-            if branch ~= "HEAD" then
-                table.insert(branches, branch)
-            end
-        end
-    end
-    return branches
-end
-
-function git_branch_autocomplete:generate(line_state, match_builder)
-    -- Check if it's a checkout command.
-    if not is_checkout_ac(line_state:getline()) then
-        return false
-    end
-    -- Get branches and add them (does nothing if not in a git repo).
-    local matchCount = 0
-    for _, branch in ipairs(get_branches()) do
-        match_builder:addmatch(branch)
-        matchCount = matchCount + 1
-    end
-    -- If we found branches, then stop other match generators.
-    return matchCount > 0
-end
+#INCLUDE [examples\ex_generate.lua]
 ```
 
 ### The :getwordbreakinfo() Function
@@ -581,7 +537,9 @@ If needed, a generator can optionally influence word breaking for the end word b
 
 The function takes a <span class="arg">line_state</span> <a href="#line">line</a> object that has information about the current line.  If it returns nil or 0, the end word is truncated to 0 length.  This is the normal behavior, which allows Clink to collect and cache all matches and then filter them based on typing.  Or it can return two numbers:  word break length and an optional end word length.  The end word is split at the word break length:  one word contains the first word break length characters from the end word (if 0 length then it's discarded), and the next word contains the rest of the end word truncated to the optional word length (0 if omitted).
 
-For example, when the environment variable match generator sees the end word is `abc%USER` it returns `3,1` so that the last two words become "abc" and "%" so that its generator knows it can do environment variable matching.  But when it sees `abc%FOO%def` it returns `8,0` so that the last two words become "abc%FOO%" and "" so that its generator won't do environment variable matching, and also so other generators can produce matches for what follows, since "%FOO%" is an already-completed environment variable and therefore should behave like a word break.  In other words, it breaks the end word differently depending on whether the number of percent signs is odd or even, to account for environent variable syntax rules.
+A good example to look at is Clink's own built-in environment variable match generator.  It has a `:getwordbreakinfo()` function that understands the `%` syntax of environment variables and produces word break info accordingly.
+
+When the environment variable match generator's `:getwordbreakinfo()` function sees the end word is `abc%USER` it returns `3,1` so that the last two words become "abc" and "%" so that its generator knows it can do environment variable matching.  But when it sees `abc%FOO%def` it returns `8,0` so that the last two words become "abc%FOO%" and "" so that its generator won't do environment variable matching, and also so other generators can produce matches for what follows, since "%FOO%" is an already-completed environment variable and therefore should behave like a word break.  In other words, it breaks the end word differently depending on whether the number of percent signs is odd or even, to account for environent variable syntax rules.
 
 And when an argmatcher sees the end word begins with a flag character it returns `0,1` so the end word contains only the flag character in order to switch from argument matching to flag matching.
 
@@ -657,79 +615,7 @@ Type | Description | Example
 The return value is a table with the input matches filtered as desired. The match filter function can remove matches, but cannot add matches (use a match generator instead).  If only one match remains after filtering, then many commands will insert the match without displaying it.  This makes it possible to spawn a process (such as <a href="https://github.com/junegunn/fzf">fzf</a>) to perform enhanced completion by interactively filtering the matches and keeping only one selected match.
 
 ```lua
-settings.add("fzf.height", "40%", "Height to use for the --height flag")
-settings.add("fzf.exe_location", "", "Location of fzf.exe if not on the PATH")
-
--- Build a command line to launch fzf.
-local function get_fzf()
-    local height = settings.get("fzf.height")
-    local command = settings.get("fzf.exe_location")
-    if not command or command == "" then
-        command = "fzf.exe"
-    else
-        command = os.getshortname(command)
-    end
-    if height and height ~= "" then
-        command = command..' --height '..height
-    end
-    return command
-end
-
-local fzf_complete_intercept = false
-
--- Sample key binding in .inputrc:
---      M-C-x: "luafunc:fzf_complete"
-function fzf_complete(rl_buffer)
-    fzf_complete_intercept = true
-    rl.invokecommand("complete")
-    if fzf_complete_intercept then
-        rl_buffer:ding()
-    end
-    fzf_complete_intercept = false
-    rl_buffer:refreshline()
-end
-
-local function filter_matches(matches, completion_type, filename_completion_desired)
-    if not fzf_complete_intercept then
-        return
-    end
-    -- Start fzf.
-    local r,w = io.popenrw(get_fzf()..' --layout=reverse-list')
-    if not r or not w then
-        return
-    end
-    -- Write matches to the write pipe.
-    for _,m in ipairs(matches) do
-        w:write(m.match.."\n")
-    end
-    w:close()
-    -- Read filtered matches.
-    local ret = {}
-    while (true) do
-        local line = r:read('*line')
-        if not line then
-            break
-        end
-        for _,m in ipairs(matches) do
-            if m.match == line then
-                table.insert(ret, m)
-            end
-        end
-    end
-    r:close()
-    -- Yay, successful; clear it to not ding.
-    fzf_complete_intercept = false
-    return ret
-end
-
-local interceptor = clink.generator(0)
-function interceptor:generate(line_state, match_builder)
-    -- Only intercept when the specific command was used.
-    if fzf_complete_intercept then
-        clink.onfiltermatches(filter_matches)
-    end
-    return false
-end
+#INCLUDE [examples\ex_fzf.lua]
 ```
 
 <a name="filteringthematchdisplay"></a>
@@ -852,15 +738,7 @@ clink.argmatcher("git")
 A `:` or `=` at the end of a flag indicates the flag takes an argument but requires no space between the flag and its argument.  If such a flag is not linked to a parser, then it automatically gets linked to a parser to match files.  Here's an example with a few flags that take arguments without a space in between:
 
 ```lua
-clink.argmatcher("findstr")
-:addflags({
-    "/b", "/e", "/l", "/r", "/s", "/i", "/x", "/v", "/n", "/m", "/o", "/p", "/offline",
-    "/a:"..clink.argmatcher():addarg( "attr" ),
-    "/f:"..clink.argmatcher():addarg( clink.filematches ),
-    "/c:"..clink.argmatcher():addarg( "search_string" ),
-    "/g:", -- This is the same as linking with clink.argmatcher():addarg(clink.filematches).
-    "/d:"..clink.argmatcher():addarg( clink.dirmatches )
-})
+#INCLUDE [examples\ex_findstr.lua]
 ```
 
 #### Functions As Argument Options
@@ -929,41 +807,7 @@ Words are colored by classifying the words, and each classification has an assoc
 The `clink set` command has different syntax depending on the setting type, so the argmatcher for `clink` needs help in order to get everything right.  A custom generator function parses the input text to provide appropriate matches, and a custom classifier function applies appropriate coloring.
 
 ```lua
--- In this example, the argmatcher matches a directory as the first argument and
--- a file as the second argument.  It uses a word classifier function to classify
--- directories (words that end with a path separator) as "unexpected" in the
--- second argument position.
-
-local function classify_handler(arg_index, word, word_index, line_state, classifications)
-    -- `arg_index` is the argument position in the argmatcher.
-    -- In this example only position 2 needs special treatent.
-    if arg_index ~= 2 then
-        return
-    end
-
-    -- `arg_index` is the argument position in the argmatcher.
-    -- `word_index` is the word position in the `line_state`.
-    -- Ex1: in `samp dir file` for the word `dir` the argument index is 1 and
-    -- the word index is 2.
-    -- Ex2: in `samp --help dir file` for the word `dir` the argument index is
-    -- still 1, but the word index is 3.
-
-    -- `word` is the word the classifier function was called for and `word_index`
-    -- is its position in the line.  Because `line_state` is also provided, the
-    -- function can examine any words in the input line.
-    if word:sub(-1) == "\\" then
-        -- The word appears to be a directory, but this example expects only
-        -- files in argument position 2.  Here the word gets classified as "n"
-        -- (unexpected) so it gets colored differently.
-        classifications:classifyword(word_index, "n")
-    end
-end
-
-local matcher = clink.argmatcher("samp")
-:addflags("--help")
-:addarg({ clink.dirmatches })
-:addarg({ clink.filematches })
-:setclassifier(classify_handler)
+#INCLUDE [examples\ex_classify_samp.lua]
 ```
 
 #### Setting a classifier function for the whole input line
@@ -994,42 +838,7 @@ end
 If no further classifiers need to be called then the function should return true.  Returning false or nil continues letting other classifiers get called.
 
 ```lua
--- In this example, a custom classifier applies colors to command separators and
--- redirection symbols in the input line.
-local cmdsep_classifier = clink.classifier(50)
-function cmdsep_classifier:classify(commands)
-    -- The `classifications:classifyword()` method can only affect the words for
-    -- the corresponding command.  However, this example doesn't need to parse
-    -- words within commands, it just wants to parse the whole line.  And since
-    -- each command's `classifications:applycolor()` method can apply color
-    -- anywhere in the entire input line, this example can simply use the first
-    -- command's `classifications` object.
-    if commands[1] then
-        local line_state = commands[1].line_state
-        local classifications = commands[1].classifications
-        local line = line_state:getline()
-        local quote = false
-        local i = 1
-        while (i <= #line) do
-            local c = line:sub(i,i)
-            if c == '^' then
-                i = i + 1
-            elseif c == '"' then
-                quote = not quote
-            elseif quote then
-            elseif c == '&' or c == '|' then
-                classifications:applycolor(i, 1, "95")
-            elseif c == '>' or c == '<' then
-                classifications:applycolor(i, 1, "35")
-                if line:sub(i,i+1) == '>&' then
-                    i = i + 1
-                    classifications:applycolor(i, 1, "35")
-                end
-            end
-            i = i + 1
-        end
-    end
-end
+#INCLUDE [examples\ex_cmd_sep.lua]
 ```
 
 <a name="customisingtheprompt"></a>
@@ -1054,53 +863,7 @@ end
 The following example illustrates setting the prompt, modifying the prompt, using ANSI escape code for colors, running a git command to find the current branch, and stopping any further processing.
 
 ```lua
-local green  = "\x1b[92m"
-local yellow = "\x1b[93m"
-local cyan   = "\x1b[36m"
-local normal = "\x1b[m"
-
--- A prompt filter that discards any prompt so far and sets the
--- prompt to the current working directory.  An ANSI escape code
--- colors it yellow.
-local cwd_prompt = clink.promptfilter(30)
-function cwd_prompt:filter(prompt)
-    return yellow..os.getcwd()..normal
-end
-
--- A prompt filter that inserts the date at the beginning of the
--- the prompt.  An ANSI escape code colors the date green.
-local date_prompt = clink.promptfilter(40)
-function date_prompt:filter(prompt)
-    return green..os.date("%a %H:%M")..normal.." "..prompt
-end
-
--- A prompt filter that may stop further prompt filtering.
--- This is a silly example, but on Wednesdays, it stops the
--- filtering, which in this example prevents git branch
--- detection and the line feed and angle bracket.
-local wednesday_silliness = clink.promptfilter(45)
-function wednesday_silliness:filter(prompt)
-    if os.date("%a") == "Wed" then
-        -- The ,false stops any further filtering.
-        return prompt.." HAPPY HUMP DAY! ", false
-    end
-end
-
--- A prompt filter that appends the current git branch.
-local git_branch_prompt = clink.promptfilter(50)
-function git_branch_prompt:filter(prompt)
-    local line = io.popen("git branch --show-current 2>nul"):read("*a")
-    local branch = line:match("(.+)\n")
-    if branch then
-        return prompt.." "..cyan.."["..branch.."]"..normal
-    end
-end
-
--- A prompt filter that adds a line feed and angle bracket.
-local bracket_prompt = clink.promptfilter(150)
-function bracket_prompt:filter(prompt)
-    return prompt.."\n> "
-end
+#INCLUDE [examples\ex_prompt.lua]
 ```
 
 The resulting prompt will look like this:
@@ -1143,119 +906,7 @@ Typically the motivation to use asynchronous prompt filtering is that one or mor
 The following example illustrates running `git status` in the background.  It also remembers the status from the previous input line, so that it can reduce flicker by using the color from last time until the background status operation completes.
 
 ```lua
-local prev_dir      -- Most recent git repo visited.
-local prev_info     -- Most recent info retrieved by the coroutine.
-
-local function get_git_dir(dir)
-    -- Check if the current directory is in a git repo.
-    local child
-    repeat
-        if os.isdir(path.join(dir, ".git")) then
-            return dir
-        end
-        -- Walk up one level to the parent directory.
-        dir,child = path.toparent(dir)
-        -- If child is empty, we've reached the top.
-    until (not child or child == "")
-    return nil
-end
-
-local function get_git_branch()
-    -- Get the current git branch name.
-    local file = io.popen("git branch --show-current 2>nul")
-    local branch = file:read("*a"):match("(.+)\n")
-    file:close()
-    return branch
-end
-
-local function get_git_status()
-    -- The io.popenyield API is like io.popen, but it yields until the output is
-    -- ready to be read.
-    local file = io.popenyield("git --no-optional-locks status --porcelain 2>nul")
-    local status = false
-    for line in file:lines() do
-        -- If there's any output, the status is not clean.  Since this example
-        -- doesn't analyze the details, it can stop once it knows there's any
-        -- output at all.
-        status = true
-        break
-    end
-    file:close()
-    return status
-end
-
-local function get_git_conflict()
-    -- The io.popenyield API is like io.popen, but it yields until the output is
-    -- ready to be read.
-    local file = io.popenyield("git diff --name-only --diff-filter=U 2>nul")
-    local conflict = false
-    for line in file:lines() do
-        -- If there's any output, there's a conflict.
-        conflict = true
-        break
-    end
-    file:close()
-    return conflict
-end
-
-local function collect_git_info()
-    -- This is run inside the coroutine, which happens while idle while waiting
-    -- for keyboard input.
-    local info = {}
-    info.status = get_git_status()
-    info.conflict = get_git_conflict()
-    -- Until this returns, the call to clink.promptcoroutine() will keep
-    -- returning nil.  After this returns, subsequent calls to
-    -- clink.promptcoroutine() will keep returning this return value, until a
-    -- new input line begins.
-    return info
-end
-
-local git_prompt = clink.promptfilter(100)
-function git_prompt:filter(prompt)
-    -- Do nothing if not a git repo.
-    local dir = get_git_dir(os.getcwd())
-    if not dir then
-        return
-    end
-    -- Reset the cached status if in a different repo.
-    if prev_dir ~= dir then
-        prev_info = nil
-        prev_dir = dir
-    end
-    -- Do nothing if git branch not available.  Getting the branch name is fast,
-    -- so it can run outside the coroutine.  That way the branch name is visible
-    -- even while the coroutine is running.
-    local branch = get_git_branch()
-    if not branch or branch == "" then
-        return
-    end
-    -- Start a coroutine to collect various git info in the background.  The
-    -- clink.promptcoroutine() call returns nil immediately, and the
-    -- coroutine runs in the background.  After the coroutine finishes, prompt
-    -- filtering is triggered again, and subsequent clink.promptcoroutine()
-    -- calls from this prompt filter immediately return whatever the
-    -- collect_git_info() function returned when it completed.  When a new input
-    -- line begins, the coroutine results are reset to nil to allow new results.
-    local info = clink.promptcoroutine(collect_git_info)
-    -- If no status yet, use the status from the previous prompt.
-    if info == nil then
-        info = prev_info or {}
-    else
-        prev_info = info
-    end
-    -- Choose color for the git branch name:  green if status is clean, yellow
-    -- if status is not clean, red if conflict is present, or default color if
-    -- status isn't known yet.
-    local sgr = "37;1"
-    if info.conflict then
-        sgr = "31;1"
-    elseif info.status ~= nil then
-        sgr = info.status and "33;1" or "32;1"
-    end
-    -- Prefix the prompt with "[branch]" using the status color.
-    return "\x1b["..sgr.."m["..branch.."]\x1b[m  "..prompt
-end
+#INCLUDE [examples\ex_async_prompt.lua]
 ```
 
 # Miscellaneous
