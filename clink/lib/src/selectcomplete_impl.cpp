@@ -360,11 +360,10 @@ cant_activate:
         bool yes = get_y_or_n(0) > 0;
 
         // Erase prompt.
-        m_printer->print("\x1b[s");
         _rl_move_vert(_rl_vis_botlin);
         rl_crlf();
         m_printer->print("\x1b[K");
-        m_printer->print("\x1b[u");
+        SetConsoleCursorPosition(h, restore);
 
         if (!yes)
             goto cant_activate;
