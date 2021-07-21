@@ -2,6 +2,10 @@
 
 ### Releases from [chrisant996/clink](https://github.com/chrisant996/clink) fork
 
+#### v1.2.24
+
+- Fixed `clink-select-complete` to not append a space after a flag that ends with `:` or `=` (e.g. `/x:`).
+
 #### v1.2.23
 
 - Fixed <kbd>PgUp</kbd> and <kbd>PgDn</kbd> in the `clink-select-complete` command, under certain conditions where they don't navigate in the intended manner.
