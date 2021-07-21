@@ -1248,9 +1248,11 @@ void selectcomplete_impl::insert_match(int final)
         if (final == 2 || !is_match_type(type, match_type::dir))
         {
             // A space may or may not be present.  Delete it if one is.
+            bool append_space = (final == 2 && is_match_type(type, match_type::dir));
             int cursor = m_buffer->get_cursor();
             if (cursor && m_buffer->get_buffer()[cursor - 1] == ' ')
             {
+                append_space = true;
                 m_buffer->remove(cursor - 1, cursor);
                 cursor--;
             }
@@ -1284,7 +1286,8 @@ void selectcomplete_impl::insert_match(int final)
             }
 
             // Add space.
-            m_buffer->insert(" ");
+            if (append_space)
+                m_buffer->insert(" ");
             m_point = m_buffer->get_cursor();
         }
     }
