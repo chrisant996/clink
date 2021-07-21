@@ -7,7 +7,6 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 ## High Priority
 
 ## Medium Priority
-- `findstr /a` Ctrl+Space => `findstr /a: ` but there should not be a space after the arg.  Bug in `clink-select-complete`, in its custom space-after-match code.
 
 ## Low Priority
 
