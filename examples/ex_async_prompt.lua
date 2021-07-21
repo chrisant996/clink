@@ -66,7 +66,7 @@ local function collect_git_info()
     return info
 end
 
-local git_prompt = clink.promptfilter(100)
+local git_prompt = clink.promptfilter(55)
 function git_prompt:filter(prompt)
     -- Do nothing if not a git repo.
     local dir = get_git_dir(os.getcwd())

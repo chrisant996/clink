@@ -22,7 +22,7 @@ end
 -- This is a silly example, but on Wednesdays, it stops the
 -- filtering, which in this example prevents git branch
 -- detection and the line feed and angle bracket.
-local wednesday_silliness = clink.promptfilter(45)
+local wednesday_silliness = clink.promptfilter(60)
 function wednesday_silliness:filter(prompt)
     if os.date("%a") == "Wed" then
         -- The ,false stops any further filtering.
@@ -31,7 +31,7 @@ function wednesday_silliness:filter(prompt)
 end
 
 -- A prompt filter that appends the current git branch.
-local git_branch_prompt = clink.promptfilter(50)
+local git_branch_prompt = clink.promptfilter(65)
 function git_branch_prompt:filter(prompt)
     local line = io.popen("git branch --show-current 2>nul"):read("*a")
     local branch = line:match("(.+)\n")
