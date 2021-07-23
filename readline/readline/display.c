@@ -205,6 +205,11 @@ int rl_display_fixed = 0;
    This is usually pointing to rl_prompt. */
 char *rl_display_prompt = (char *)NULL;
 
+/* begin_clink_change */
+char *rl_display_rprompt = (char *)NULL;
+int _rl_rprompt_shown = 0;
+/* end_clink_change */
+
 /* Variables used to include the editing mode in the prompt. */
 char *_rl_emacs_mode_str;
 int _rl_emacs_modestr_len;
@@ -785,6 +790,9 @@ rl_redisplay (void)
   char cur_face;
   int hl_begin, hl_end;
   int mb_cur_max = MB_CUR_MAX;
+/* begin_clink_change */
+  int can_show_rprompt;
+/* end_clink_change */
 #if defined (HANDLE_MULTIBYTE)
   WCHAR_T wc;
   size_t wc_bytes;
@@ -1229,6 +1237,28 @@ rl_redisplay (void)
       lb_linenum = newlines;
     }
 
+/* begin_clink_change */
+  /* Determine whether it's possible to show the rprompt. */
+  can_show_rprompt = (rl_rprompt &&                       /* has rprompt */
+                      _rl_term_forward_char &&            /* has termcap */
+                      !newlines &&                        /* only one line */
+                      (rl_display_prompt == rl_prompt ||  /* displaying the real prompt */
+                       ((!rl_display_prompt || !*rl_display_prompt) &&
+                        (!rl_prompt || !*rl_prompt))) &&
+                      (lpos + rl_visible_rprompt_length < _rl_screenwidth - 2)); /* fits */
+  /* If the rprompt is displayed but shouldn't be, then erase it. */
+  if (_rl_rprompt_shown && !can_show_rprompt)
+    {
+      int i;
+      int dpos = _rl_screenwidth - 1 - rl_visible_rprompt_length;
+      for (i = _rl_last_c_pos; i < dpos; i++)
+        tputs (_rl_term_forward_char, 1, _rl_output_character_function);
+      _rl_clear_to_eol (rl_visible_rprompt_length);
+      _rl_backspace (i - _rl_last_c_pos);
+      _rl_rprompt_shown = 0;
+    }
+/* end_clink_change */
+
   /* If we are switching from one line to multiple wrapped lines, we don't
      want to do a dumb update (or we want to make it smarter). */
   if (_rl_quick_redisplay && newlines > 0)
@@ -1637,6 +1667,24 @@ rl_redisplay (void)
 
     _rl_quick_redisplay = 0;
   }
+
+/* begin_clink_change */
+  /* If the rprompt is not displayed and should be, then display it. */
+  if (!_rl_rprompt_shown && can_show_rprompt)
+    {
+      int i;
+      int dpos = _rl_screenwidth - 1 - rl_visible_rprompt_length;
+      for (i = _rl_last_c_pos; i < dpos; i++)
+        tputs (_rl_term_forward_char, 1, _rl_output_character_function);
+      tputs (rl_rprompt, 1, _rl_output_character_function);
+      i = _rl_last_c_pos;
+      cr ();
+      _rl_last_c_pos = i;
+      while (i--)
+        tputs (_rl_term_forward_char, 1, _rl_output_character_function);
+      _rl_rprompt_shown = 1;
+    }
+/* end_clink_change */
 
   RL_UNSETSTATE (RL_STATE_REDISPLAYING);
   _rl_release_sigint ();
@@ -2637,6 +2685,10 @@ rl_on_new_line (void)
   if (visible_line)
     visible_line[0] = '\0';
 
+/* begin_clink_change */
+  _rl_rprompt_shown = 0;
+/* end_clink_change */
+
   _rl_last_c_pos = _rl_last_v_pos = 0;
   _rl_vis_botlin = last_lmargin = 0;
   if (vis_lbreaks)
@@ -3266,6 +3318,11 @@ _rl_erase_at_end_of_line (int l)
 void
 _rl_clear_to_eol (int count)
 {
+/* begin_clink_change */
+  if (_rl_last_v_pos == 0)
+    _rl_rprompt_shown = 0;
+/* end_clink_change */
+
 #ifndef __MSDOS__
   if (_rl_term_clreol)
     tputs (_rl_term_clreol, 1, _rl_output_character_function);

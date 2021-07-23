@@ -9,6 +9,11 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 ## Medium Priority
 
 ## Low Priority
+- Right side prompt string.
+  - [ ] Introduce a separate right side prompt filter?
+  - [ ] Enable the existing prompt filter to also configure the right side prompt string?
+  - [x] Detect when to redisplay the right side prompt string (e.g. Readline uses CSI K on <kbd>Backspace</kbd>, which erases any right side prompt string).  Ideally avoid printing it on every redraw, if possible.
+  - [x] Hide the right side prompt string when the input line is more than 1 line, or when visible local prompt + input line length reaches the right side prompt string column.
 
 ## Tests
 
