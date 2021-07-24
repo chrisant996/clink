@@ -41,7 +41,6 @@ private:
     bool            m_eof;
     str_moveable    m_rl_prompt;
     str_moveable    m_rl_rprompt;
-    unsigned int    m_rl_rprompt_len;
     str<16>         m_input_color;
     str<16>         m_selection_color;
     str<16>         m_modmark_color;

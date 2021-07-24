@@ -89,6 +89,7 @@ static void _rl_move_cursor_relative PARAMS((int, const char *, const char *));
 
 /* Values for FLAGS */
 #define PMT_MULTILINE	0x01
+#define PMT_RPROMPT	0x02
 
 static char *expand_prompt PARAMS((char *, int, int *, int *, int *, int *));
 
@@ -380,6 +381,7 @@ prompt_modestr (int *lenp)
 
 /* Possible values for FLAGS:
 	PMT_MULTILINE	caller indicates that this is part of a multiline prompt
+	PMT_RPROMPT	caller indicates that this is the right side prompt
 */
 
 /* This approximates the number of lines the prompt will take when displayed */
@@ -431,9 +433,14 @@ expand_prompt (char *pmt, int flags, int *lp, int *lip, int *niflp, int *vlp)
 	  if (vlp)
 	    *vlp = l;
 
-	  local_prompt_newlines = (int *) xrealloc (local_prompt_newlines, sizeof (int) * 2);
-	  local_prompt_newlines[0] = 0;
-	  local_prompt_newlines[1] = -1;
+/* begin_clink_change */
+	  if (!(flags & PMT_RPROMPT))
+/* end_clink_change */
+	    {
+	      local_prompt_newlines = (int *) xrealloc (local_prompt_newlines, sizeof (int) * 2);
+	      local_prompt_newlines[0] = 0;
+	      local_prompt_newlines[1] = -1;
+	    }
 
 	  return r;
         }
@@ -445,10 +452,15 @@ expand_prompt (char *pmt, int flags, int *lp, int *lip, int *niflp, int *vlp)
   /* Guess at how many screen lines the prompt will take to size the array that
      keeps track of where the line wraps happen */
   newlines_guess = (_rl_screenwidth > 0) ? APPROX_DIV(l,  _rl_screenwidth) : APPROX_DIV(l, 80);
-  local_prompt_newlines = (int *) xrealloc (local_prompt_newlines, sizeof (int) * (newlines_guess + 1));
-  local_prompt_newlines[newlines = 0] = 0;
-  for (rl = 1; rl <= newlines_guess; rl++)
-    local_prompt_newlines[rl] = -1;
+/* begin_clink_change */
+  if (!(flags & PMT_RPROMPT))
+/* end_clink_change */
+    {
+      local_prompt_newlines = (int *) xrealloc (local_prompt_newlines, sizeof (int) * (newlines_guess + 1));
+      local_prompt_newlines[newlines = 0] = 0;
+      for (rl = 1; rl <= newlines_guess; rl++)
+        local_prompt_newlines[rl] = -1;
+    }
 
   rl = physchars = 0;	/* mode string now part of nprompt */
   invfl = 0;		/* invisible chars in first line of prompt */
@@ -515,7 +527,12 @@ expand_prompt (char *pmt, int flags, int *lp, int *lip, int *niflp, int *vlp)
 	      invflset = 1;
 	    }
 
-	  if (physchars >= (bound = (newlines + 1) * _rl_screenwidth) && local_prompt_newlines[newlines+1] == -1)
+/* begin_clink_change */
+	  //if (physchars >= (bound = (newlines + 1) * _rl_screenwidth) && local_prompt_newlines[newlines+1] == -1)
+	  if (!(flags & PMT_RPROMPT) &&
+	      physchars >= (bound = (newlines + 1) * _rl_screenwidth) &&
+	      local_prompt_newlines[newlines+1] == -1)
+/* end_clink_change */
 	    {
 	      int new;
 	      if (physchars > bound)		/* should rarely happen */
@@ -551,6 +568,23 @@ expand_prompt (char *pmt, int flags, int *lp, int *lip, int *niflp, int *vlp)
   if (nprompt != pmt)
     free (nprompt);
 
+/* begin_clink_change */
+  /* Right side prompt is restricted to one line. */
+  if ((flags & PMT_RPROMPT) && newlines > 0)
+    {
+      xfree (ret);
+      ret = 0;
+      if (lp)
+        *lp = 0;
+      if (lip)
+        *lip = 0;
+      if (niflp)
+        *niflp = 0;
+      if  (vlp)
+        *vlp = 0;
+    }
+/* end_clink_change */
+
   return ret;
 }
 
@@ -572,6 +606,28 @@ _rl_reset_prompt (void)
 }
 
 /* begin_clink_change */
+/* Set up the right-justified prompt.  Call this before calling
+   readline () or rl_callback_handler_install ().  The string should
+   include RL_PROMPT_START_IGNORE and RL_PROMPT_END_IGNORE around
+   invisible characters (escape codes). */
+int
+rl_set_rprompt (const char *rprompt)
+{
+  FREE (rl_rprompt);
+
+  if (rprompt)
+    {
+      rl_rprompt = expand_prompt (rprompt, 0, (int *)NULL, (int *)NULL, (int *)NULL, &rl_visible_rprompt_length);
+    }
+  else
+    {
+      rl_rprompt = (char *)NULL;
+      rl_visible_rprompt_length = 0;
+    }
+
+  return 0;
+}
+
 static void
 tputs_rprompt (const char *s)
 {

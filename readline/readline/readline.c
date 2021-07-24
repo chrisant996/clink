@@ -364,19 +364,6 @@ rl_set_prompt (const char *prompt)
   return 0;
 }
   
-/* begin_clink_change */
-/* Set up the right-justified prompt.  Call this before calling
-   readline () or rl_callback_handler_install (). */
-int
-rl_set_rprompt (const char *rprompt, int visible_len)
-{
-  FREE (rl_rprompt);
-  rl_rprompt = rprompt ? savestring (rprompt) : (char *)NULL;
-  rl_visible_rprompt_length = visible_len;
-  return 0;
-}
-/* end_clink_change */
-
 /* Read a line of input.  Prompt with PROMPT.  An empty PROMPT means
    none.  A return value of NULL means that EOF was encountered. */
 char *

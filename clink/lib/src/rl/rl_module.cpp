@@ -1550,7 +1550,6 @@ void rl_module::set_prompt(const char* prompt, const char* rprompt)
 
     m_rl_prompt.clear();
     m_rl_rprompt.clear();
-    m_rl_rprompt_len = 0;
 
     bool force_prompt_color = false;
     {
@@ -1570,11 +1569,11 @@ void rl_module::set_prompt(const char* prompt, const char* rprompt)
         flags |= ecma48_processor_flags::apply_title;
     ecma48_processor(prompt, &m_rl_prompt, nullptr/*cell_count*/, flags);
     if (rprompt)
-        ecma48_processor(rprompt, &m_rl_rprompt, &m_rl_rprompt_len, flags &= ~ecma48_processor_flags::bracket);
+        ecma48_processor(rprompt, &m_rl_rprompt, nullptr/*cell_count*/, flags);
 
     m_rl_prompt.concat("\x01\x1b[m\x02");
     if (rprompt)
-        m_rl_rprompt.concat("\x1b[m");
+        m_rl_rprompt.concat("\x01\x1b[m\x02");
 
     // Warning:  g_last_prompt is a mutable copy that can be altered in place;
     // it is not a synonym for m_rl_prompt.
@@ -1614,7 +1613,7 @@ TODO("PROMPTFILTER: this can't walk up past the top of the visible area of the t
         // Update the prompt and display.
         rl_set_prompt(m_rl_prompt.c_str());
         if (rprompt)
-            rl_set_rprompt(m_rl_rprompt.c_str(), m_rl_rprompt_len);
+            rl_set_rprompt(m_rl_rprompt.c_str());
         rl_forced_update_display();
     }
 }
@@ -1705,7 +1704,7 @@ void rl_module::on_begin_line(const context& context)
         _rl_display_message_color = "\x1b[m";
 
     auto handler = [] (char* line) { rl_module::get()->done(line); };
-    rl_set_rprompt(m_rl_rprompt.c_str(), m_rl_rprompt_len);
+    rl_set_rprompt(m_rl_rprompt.c_str());
     rl_callback_handler_install(m_rl_prompt.c_str(), handler);
 
     // Apply the remembered history position from the previous command, if any.
