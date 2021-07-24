@@ -1286,11 +1286,9 @@ rl_redisplay (void)
 /* begin_clink_change */
   /* Determine whether it's possible to show the rprompt. */
   can_show_rprompt = (rl_rprompt &&                       /* has rprompt */
-                      _rl_term_forward_char &&            /* has termcap */
+                      (_rl_term_forward_char || _rl_term_ch) && /* has termcap */
                       !newlines &&                        /* only one line */
-                      (rl_display_prompt == rl_prompt ||  /* displaying the real prompt */
-                       ((!rl_display_prompt || !*rl_display_prompt) &&
-                        (!rl_prompt || !*rl_prompt))) &&
+                      rl_display_prompt == rl_prompt &&   /* displaying the real prompt */
                       (lpos + rl_visible_rprompt_length < _rl_screenwidth - 1)); /* fits */
   /* If the rprompt is displayed but shouldn't be, then erase it. */
   if (_rl_rprompt_shown && !can_show_rprompt)
