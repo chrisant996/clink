@@ -3633,6 +3633,11 @@ _rl_redisplay_after_sigwinch (void)
   else
     rl_crlf ();
 
+/* begin_clink_change */
+  /* The right side prompt has been cleared. */
+  _rl_rprompt_shown_len = 0;
+/* end_clink_change */
+
   /* Redraw only the last line of a multi-line prompt. */
   t = strrchr (rl_display_prompt, '\n');
   if (t)
