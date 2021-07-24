@@ -1704,7 +1704,7 @@ void rl_module::on_begin_line(const context& context)
         _rl_display_message_color = "\x1b[m";
 
     auto handler = [] (char* line) { rl_module::get()->done(line); };
-    rl_set_rprompt(m_rl_rprompt.c_str());
+    rl_set_rprompt(m_rl_rprompt.length() ? m_rl_rprompt.c_str() : nullptr);
     rl_callback_handler_install(m_rl_prompt.c_str(), handler);
 
     // Apply the remembered history position from the previous command, if any.

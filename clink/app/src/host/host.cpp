@@ -1062,7 +1062,7 @@ const char* host::filter_prompt(const char** rprompt)
         m_filtered_rprompt = m_rprompt;
     }
     if (rprompt)
-        *rprompt = m_filtered_rprompt.c_str();
+        *rprompt = m_filtered_rprompt.length() ? m_filtered_rprompt.c_str() : nullptr;
     return m_filtered_prompt.c_str();
 }
 
