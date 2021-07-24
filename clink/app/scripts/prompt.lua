@@ -36,12 +36,14 @@ function clink._filter_prompt(prompt, rprompt)
         for _, filter in ipairs(prompt_filters) do
             set_current_prompt_filter(filter)
 
-            if filter.filter or not filter.rightfilter then
-                filtered, onwards = filter:filter(prompt)
-                if filtered ~= nil then
-                    prompt = filtered
-                    if onwards == false then return prompt, rprompt end
-                end
+            -- Always call :filter() to help people to write backward compatible
+            -- prompt filters.  Otherwise it's too easy to write Lua code that
+            -- works on "new" Clink versions but throws a Lua exception on Clink
+            -- versions that don't support RPROMPT.
+            filtered, onwards = filter:filter(prompt)
+            if filtered ~= nil then
+                prompt = filtered
+                if onwards == false then return prompt, rprompt end
             end
 
             if filter.rightfilter then
