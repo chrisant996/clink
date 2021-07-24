@@ -4,6 +4,7 @@
 
 #### v1.2.24
 
+- Added support for `%CLINK_RPROMPT%` to show a right side prompt, and for prompt filters to define a `:rightfilter()` function to filter the right side prompt.
 - Fixed `clink-select-complete` to not append a space after a flag that ends with `:` or `=` (e.g. `/x:`).
 
 #### v1.2.23

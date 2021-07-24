@@ -891,7 +891,7 @@ Readline needs to be told which characters in the prompt are unprintable or invi
 
 #### Right Side Prompt
 
-In addition to the normal prompt filtering, Clink can also show a prompt on the right side of the first line of input.  The right side prompt defaults to the value of the `%RPROMPT%` environment variable, if set, otherwise it is blank.  This right side prompt is automatically hidden if the input line text reaches it.
+In addition to the normal prompt filtering, Clink can also show a prompt on the right side of the first line of input.  The right side prompt defaults to the value of the `%CLINK_RPROMPT%` environment variable, if set, otherwise it is blank.  This right side prompt is automatically hidden if the input line text reaches it.
 
 The right side prompt can be filtered through [Lua](#extending-clink) just like the normal prompt can be.  Simply define a `:rightfilter()` function on the prompt filter returned by a call to `clink.promptfilter()`.  A prompt filter can define both `:filter()` and `:rightfilter()`, or can define only `:filter()`.
 
