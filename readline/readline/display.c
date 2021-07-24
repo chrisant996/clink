@@ -208,7 +208,7 @@ char *rl_display_prompt = (char *)NULL;
 
 /* begin_clink_change */
 char *rl_display_rprompt = (char *)NULL;
-int _rl_rprompt_shown = 0;
+int _rl_rprompt_shown_len = 0;
 /* end_clink_change */
 
 /* Variables used to include the editing mode in the prompt. */
@@ -631,9 +631,7 @@ rl_set_rprompt (const char *rprompt)
 static void
 tputs_rprompt (const char *s)
 {
-  int col = _rl_screenwidth - rl_visible_rprompt_length;
-
-  _rl_rprompt_shown = !!s;
+  int col = _rl_screenwidth - (s ? rl_visible_rprompt_length : _rl_rprompt_shown_len);
 
   if (col <= 0)
     return;
@@ -645,7 +643,7 @@ tputs_rprompt (const char *s)
       if (s)
         tputs (s, 1, _rl_output_character_function);
       else
-        _rl_clear_to_eol (rl_visible_rprompt_length);
+        _rl_clear_to_eol (_rl_rprompt_shown_len);
       buffer = tgoto (_rl_term_ch, 0, _rl_last_c_pos + 1);
       tputs (buffer, 1, _rl_output_character_function);
     }
@@ -658,7 +656,7 @@ tputs_rprompt (const char *s)
       if (s)
         tputs (s, 1, _rl_output_character_function);
       else
-        _rl_clear_to_eol (rl_visible_rprompt_length);
+        _rl_clear_to_eol (_rl_rprompt_shown_len);
       if (!s && i - _rl_last_c_pos < _rl_last_c_pos)
         _rl_backspace (i - _rl_last_c_pos);
       else
@@ -670,6 +668,8 @@ tputs_rprompt (const char *s)
             tputs (_rl_term_forward_char, 1, _rl_output_character_function);
         }
     }
+
+  _rl_rprompt_shown_len = s ? rl_visible_rprompt_length : 0;
 }
 /* end_clink_change */
 
@@ -1347,7 +1347,7 @@ rl_redisplay (void)
                       rl_display_prompt == rl_prompt &&   /* displaying the real prompt */
                       (lpos + rl_visible_rprompt_length < _rl_screenwidth - 1)); /* fits */
   /* If the rprompt is displayed but shouldn't be, then erase it. */
-  if (_rl_rprompt_shown && !can_show_rprompt)
+  if (_rl_rprompt_shown_len && !can_show_rprompt)
     tputs_rprompt (0);
 /* end_clink_change */
 
@@ -1762,7 +1762,7 @@ rl_redisplay (void)
 
 /* begin_clink_change */
   /* If the rprompt is not displayed and should be, then display it. */
-  if (!_rl_rprompt_shown && can_show_rprompt)
+  if (!_rl_rprompt_shown_len && can_show_rprompt)
     tputs_rprompt (rl_rprompt);
 /* end_clink_change */
 
@@ -2766,7 +2766,7 @@ rl_on_new_line (void)
     visible_line[0] = '\0';
 
 /* begin_clink_change */
-  _rl_rprompt_shown = 0;
+  _rl_rprompt_shown_len = 0;
 /* end_clink_change */
 
   _rl_last_c_pos = _rl_last_v_pos = 0;
@@ -3400,7 +3400,7 @@ _rl_clear_to_eol (int count)
 {
 /* begin_clink_change */
   if (_rl_last_v_pos == 0)
-    _rl_rprompt_shown = 0;
+    _rl_rprompt_shown_len = 0;
 /* end_clink_change */
 
 #ifndef __MSDOS__
@@ -3462,7 +3462,7 @@ open_some_spaces (int col)
   register int i;
 
 /* begin_clink_change */
-  if (_rl_last_v_pos == 0 && _rl_rprompt_shown)
+  if (_rl_last_v_pos == 0 && _rl_rprompt_shown_len)
     tputs_rprompt (0);
 /* end_clink_change */
 
@@ -3503,7 +3503,7 @@ delete_chars (int count)
 
 #if !defined (__MSDOS__) && (!defined (__MINGW32__) || defined (NCURSES_VERSION))
 /* begin_clink_change */
-  if (_rl_last_v_pos == 0 && _rl_rprompt_shown)
+  if (_rl_last_v_pos == 0 && _rl_rprompt_shown_len)
     tputs_rprompt (0);
 /* end_clink_change */
   if (_rl_term_DC && *_rl_term_DC)
