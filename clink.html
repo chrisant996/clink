@@ -3,7 +3,7 @@
 
 <!-- ----------------------------------------------------- -->
 <head>
-<title>Clink v1.2.23</title>
+<title>Clink v1.2.24</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Rambla:wght@400;700&family=Roboto&family=Fira+Mono&display=swap');
 html {
@@ -747,7 +747,7 @@ name:"Plain text",aliases:["text","txt"],disableAutodetect:!0})})());
         </td>
         <td style="text-align:right">
             <div id="header">
-                <div id="title">Clink v1.2.23</div>
+                <div id="title">Clink v1.2.24</div>
                 <div id="url">
                     <a href="https://github.com/chrisant996/clink">
                         https://github.com/chrisant996/clink
@@ -1710,15 +1710,15 @@ end
 <p><span class="arg">line_state</span> is a <a href="#line">line</a> object that has information about the current line.</p>
 <p><span class="arg">match_builder</span> is a <a href="#builder">builder</a> object to which matches can be added.</p>
 <p>If no further match generators need to be called then the function should return true.  Returning false or nil continues letting other match generators get called.</p>
-<p>Here is an example script that supplies git branch names as matches for <code>git checkout</code>.  It&#39;s based on git_branch_autocomplete.lua from <a href="https://github.com/collink/clink-git-extensions">collink.clink-git-extensions</a>.  The version here is updated for the new Clink Lua API, and for illustration purposes it&#39;s been simplified to not support git aliases.</p>
+<p>Here is an example script that supplies git branch names as matches for <code>git checkout</code>.  This example doesn&#39;t handle git aliases, but that could be added with additional script code.</p>
 <pre><code class="language-lua">local git_branch_autocomplete = clink.generator(1)
 
-local function string.starts(str, start)
+local function starts_with(str, start)
     return string.sub(str, 1, string.len(start)) == start
 end
 
 local function is_checkout_ac(text)
-    if string.starts(text, &quot;git checkout&quot;) then
+    if starts_with(text, "git checkout") then
         return true
     end
     return false
@@ -1726,15 +1726,15 @@ end
 
 local function get_branches()
     -- Run git command to get branches.
-    local handle = io.popen(&quot;git branch -a 2&gt;&amp;1&quot;)
-    local result = handle:read(&quot;*a&quot;)
+    local handle = io.popen("git branch -a 2>&1")
+    local result = handle:read("*a")
     handle:close()
     -- Parse the branches from the output.
     local branches = {}
-    if string.starts(result, &quot;fatal&quot;) == false then
-        for branch in string.gmatch(result, &quot;  %S+&quot;) do
-            branch = string.gsub(branch, &quot;  &quot;, &quot;&quot;)
-            if branch ~= &quot;HEAD&quot; then
+    if starts_with(result, "fatal") == false then
+        for branch in string.gmatch(result, "  %S+") do
+            branch = string.gsub(branch, "  ", "")
+            if branch ~= "HEAD" then
                 table.insert(branches, branch)
             end
         end
@@ -1743,7 +1743,7 @@ local function get_branches()
 end
 
 function git_branch_autocomplete:generate(line_state, match_builder)
-    -- Check if it&#39;s a checkout command.
+    -- Check if it's a checkout command.
     if not is_checkout_ac(line_state:getline()) then
         return false
     end
@@ -1754,13 +1754,14 @@ function git_branch_autocomplete:generate(line_state, match_builder)
         matchCount = matchCount + 1
     end
     -- If we found branches, then stop other match generators.
-    return matchCount &gt; 0
+    return matchCount > 0
 end
 </code></pre>
 <h3 id="the-getwordbreakinfo-function">The :getwordbreakinfo() Function</h3>
 <p>If needed, a generator can optionally influence word breaking for the end word by defining a <code>:getwordbreakinfo()</code> function.</p>
 <p>The function takes a <span class="arg">line_state</span> <a href="#line">line</a> object that has information about the current line.  If it returns nil or 0, the end word is truncated to 0 length.  This is the normal behavior, which allows Clink to collect and cache all matches and then filter them based on typing.  Or it can return two numbers:  word break length and an optional end word length.  The end word is split at the word break length:  one word contains the first word break length characters from the end word (if 0 length then it&#39;s discarded), and the next word contains the rest of the end word truncated to the optional word length (0 if omitted).</p>
-<p>For example, when the environment variable match generator sees the end word is <code>abc%USER</code> it returns <code>3,1</code> so that the last two words become &quot;abc&quot; and &quot;%&quot; so that its generator knows it can do environment variable matching.  But when it sees <code>abc%FOO%def</code> it returns <code>8,0</code> so that the last two words become &quot;abc%FOO%&quot; and &quot;&quot; so that its generator won&#39;t do environment variable matching, and also so other generators can produce matches for what follows, since &quot;%FOO%&quot; is an already-completed environment variable and therefore should behave like a word break.  In other words, it breaks the end word differently depending on whether the number of percent signs is odd or even, to account for environent variable syntax rules.</p>
+<p>A good example to look at is Clink&#39;s own built-in environment variable match generator.  It has a <code>:getwordbreakinfo()</code> function that understands the <code>%</code> syntax of environment variables and produces word break info accordingly.</p>
+<p>When the environment variable match generator&#39;s <code>:getwordbreakinfo()</code> function sees the end word is <code>abc%USER</code> it returns <code>3,1</code> so that the last two words become &quot;abc&quot; and &quot;%&quot; so that its generator knows it can do environment variable matching.  But when it sees <code>abc%FOO%def</code> it returns <code>8,0</code> so that the last two words become &quot;abc%FOO%&quot; and &quot;&quot; so that its generator won&#39;t do environment variable matching, and also so other generators can produce matches for what follows, since &quot;%FOO%&quot; is an already-completed environment variable and therefore should behave like a word break.  In other words, it breaks the end word differently depending on whether the number of percent signs is odd or even, to account for environent variable syntax rules.</p>
 <p>And when an argmatcher sees the end word begins with a flag character it returns <code>0,1</code> so the end word contains only the flag character in order to switch from argument matching to flag matching.</p>
 <blockquote>
 <p><strong>Note:</strong> The <code>:getwordbreakinfo()</code> function is called very often, so it needs to be very fast or it can cause responsiveness problems while typing.</p>
@@ -1855,20 +1856,20 @@ end
 </tr>
 </tbody></table>
 <p>The return value is a table with the input matches filtered as desired. The match filter function can remove matches, but cannot add matches (use a match generator instead).  If only one match remains after filtering, then many commands will insert the match without displaying it.  This makes it possible to spawn a process (such as <a href="https://github.com/junegunn/fzf">fzf</a>) to perform enhanced completion by interactively filtering the matches and keeping only one selected match.</p>
-<pre><code class="language-lua">settings.add(&quot;fzf.height&quot;, &quot;40%&quot;, &quot;Height to use for the --height flag&quot;)
-settings.add(&quot;fzf.exe_location&quot;, &quot;&quot;, &quot;Location of fzf.exe if not on the PATH&quot;)
+<pre><code class="language-lua">settings.add("fzf.height", "40%", "Height to use for the --height flag")
+settings.add("fzf.exe_location", "", "Location of fzf.exe if not on the PATH")
 
 -- Build a command line to launch fzf.
 local function get_fzf()
-    local height = settings.get(&quot;fzf.height&quot;)
-    local command = settings.get(&quot;fzf.exe_location&quot;)
-    if not command or command == &quot;&quot; then
-        command = &quot;fzf.exe&quot;
+    local height = settings.get("fzf.height")
+    local command = settings.get("fzf.exe_location")
+    if not command or command == "" then
+        command = "fzf.exe"
     else
         command = os.getshortname(command)
     end
-    if height and height ~= &quot;&quot; then
-        command = command..&#39; --height &#39;..height
+    if height and height ~= "" then
+        command = command..' --height '..height
     end
     return command
 end
@@ -1876,10 +1877,10 @@ end
 local fzf_complete_intercept = false
 
 -- Sample key binding in .inputrc:
---      M-C-x: &quot;luafunc:fzf_complete&quot;
+--      M-C-x: "luafunc:fzf_complete"
 function fzf_complete(rl_buffer)
     fzf_complete_intercept = true
-    rl.invokecommand(&quot;complete&quot;)
+    rl.invokecommand("complete")
     if fzf_complete_intercept then
         rl_buffer:ding()
     end
@@ -1892,19 +1893,19 @@ local function filter_matches(matches, completion_type, filename_completion_desi
         return
     end
     -- Start fzf.
-    local r,w = io.popenrw(get_fzf()..&#39; --layout=reverse-list&#39;)
+    local r,w = io.popenrw(get_fzf()..' --layout=reverse-list')
     if not r or not w then
         return
     end
     -- Write matches to the write pipe.
     for _,m in ipairs(matches) do
-        w:write(m.match..&quot;\n&quot;)
+        w:write(m.match.."\n")
     end
     w:close()
     -- Read filtered matches.
     local ret = {}
     while (true) do
-        local line = r:read(&#39;*line&#39;)
+        local line = r:read('*line')
         if not line then
             break
         end
@@ -2018,14 +2019,14 @@ c_parser:addarg({ b_parser })               -- Arg #2 is &quot;abc&quot; or &quo
 })
 </code></pre>
 <p>A <code>:</code> or <code>=</code> at the end of a flag indicates the flag takes an argument but requires no space between the flag and its argument.  If such a flag is not linked to a parser, then it automatically gets linked to a parser to match files.  Here&#39;s an example with a few flags that take arguments without a space in between:</p>
-<pre><code class="language-lua">clink.argmatcher(&quot;findstr&quot;)
+<pre><code class="language-lua">clink.argmatcher("findstr")
 :addflags({
-    &quot;/b&quot;, &quot;/e&quot;, &quot;/l&quot;, &quot;/r&quot;, &quot;/s&quot;, &quot;/i&quot;, &quot;/x&quot;, &quot;/v&quot;, &quot;/n&quot;, &quot;/m&quot;, &quot;/o&quot;, &quot;/p&quot;, &quot;/offline&quot;,
-    &quot;/a:&quot;..clink.argmatcher():addarg( &quot;attr&quot; ),
-    &quot;/f:&quot;..clink.argmatcher():addarg( clink.filematches ),
-    &quot;/c:&quot;..clink.argmatcher():addarg( &quot;search_string&quot; ),
-    &quot;/g:&quot;, -- This is the same as linking with clink.argmatcher():addarg(clink.filematches).
-    &quot;/d:&quot;..clink.argmatcher():addarg( clink.dirmatches )
+    "/b", "/e", "/l", "/r", "/s", "/i", "/x", "/v", "/n", "/m", "/o", "/p", "/offline",
+    "/a:"..clink.argmatcher():addarg( "attr" ),
+    "/f:"..clink.argmatcher():addarg( clink.filematches ),
+    "/c:"..clink.argmatcher():addarg( "search_string" ),
+    "/g:", -- This is the same as linking with clink.argmatcher():addarg(clink.filematches).
+    "/d:"..clink.argmatcher():addarg( clink.dirmatches )
 })
 </code></pre>
 <h4 id="functions-as-argument-options">Functions As Argument Options</h4>
@@ -2085,7 +2086,7 @@ clink.argmatcher()
 <p>The <code>clink set</code> command has different syntax depending on the setting type, so the argmatcher for <code>clink</code> needs help in order to get everything right.  A custom generator function parses the input text to provide appropriate matches, and a custom classifier function applies appropriate coloring.</p>
 <pre><code class="language-lua">-- In this example, the argmatcher matches a directory as the first argument and
 -- a file as the second argument.  It uses a word classifier function to classify
--- directories (words that end with a path separator) as &quot;unexpected&quot; in the
+-- directories (words that end with a path separator) as "unexpected" in the
 -- second argument position.
 
 local function classify_handler(arg_index, word, word_index, line_state, classifications)
@@ -2105,16 +2106,16 @@ local function classify_handler(arg_index, word, word_index, line_state, classif
     -- `word` is the word the classifier function was called for and `word_index`
     -- is its position in the line.  Because `line_state` is also provided, the
     -- function can examine any words in the input line.
-    if word:sub(-1) == &quot;\\&quot; then
+    if word:sub(-1) == "\\" then
         -- The word appears to be a directory, but this example expects only
-        -- files in argument position 2.  Here the word gets classified as &quot;n&quot;
+        -- files in argument position 2.  Here the word gets classified as "n"
         -- (unexpected) so it gets colored differently.
-        classifications:classifyword(word_index, &quot;n&quot;)
+        classifications:classifyword(word_index, "n")
     end
 end
 
-local matcher = clink.argmatcher(&quot;samp&quot;)
-:addflags(&quot;--help&quot;)
+local matcher = clink.argmatcher("samp")
+:addflags("--help")
 :addarg({ clink.dirmatches })
 :addarg({ clink.filematches })
 :setclassifier(classify_handler)
@@ -2140,31 +2141,31 @@ end
 local cmdsep_classifier = clink.classifier(50)
 function cmdsep_classifier:classify(commands)
     -- The `classifications:classifyword()` method can only affect the words for
-    -- the corresponding command.  However, this example doesn&#39;t need to parse
+    -- the corresponding command.  However, this example doesn't need to parse
     -- words within commands, it just wants to parse the whole line.  And since
-    -- each command&#39;s `classifications:applycolor()` method can apply color
+    -- each command's `classifications:applycolor()` method can apply color
     -- anywhere in the entire input line, this example can simply use the first
-    -- command&#39;s `classifications` object.
+    -- command's `classifications` object.
     if commands[1] then
         local line_state = commands[1].line_state
         local classifications = commands[1].classifications
         local line = line_state:getline()
         local quote = false
         local i = 1
-        while (i &lt;= #line) do
+        while (i <= #line) do
             local c = line:sub(i,i)
-            if c == &#39;^&#39; then
+            if c == '^' then
                 i = i + 1
-            elseif c == &#39;&quot;&#39; then
+            elseif c == '"' then
                 quote = not quote
             elseif quote then
-            elseif c == &#39;&amp;&#39; or c == &#39;|&#39; then
-                classifications:applycolor(i, 1, &quot;95&quot;)
-            elseif c == &#39;&gt;&#39; or c == &#39;&lt;&#39; then
-                classifications:applycolor(i, 1, &quot;35&quot;)
-                if line:sub(i,i+1) == &#39;&gt;&amp;&#39; then
+            elseif c == '&' or c == '|' then
+                classifications:applycolor(i, 1, "95")
+            elseif c == '>' or c == '<' then
+                classifications:applycolor(i, 1, "35")
+                if line:sub(i,i+1) == '>&' then
                     i = i + 1
-                    classifications:applycolor(i, 1, &quot;35&quot;)
+                    classifications:applycolor(i, 1, "35")
                 end
             end
             i = i + 1
@@ -2187,10 +2188,10 @@ function p:filter(prompt)
 end
 </code></pre>
 <p>The following example illustrates setting the prompt, modifying the prompt, using ANSI escape code for colors, running a git command to find the current branch, and stopping any further processing.</p>
-<pre><code class="language-lua">local green  = &quot;\x1b[92m&quot;
-local yellow = &quot;\x1b[93m&quot;
-local cyan   = &quot;\x1b[36m&quot;
-local normal = &quot;\x1b[m&quot;
+<pre><code class="language-lua">local green  = "\x1b[92m"
+local yellow = "\x1b[93m"
+local cyan   = "\x1b[36m"
+local normal = "\x1b[m"
 
 -- A prompt filter that discards any prompt so far and sets the
 -- prompt to the current working directory.  An ANSI escape code
@@ -2204,35 +2205,35 @@ end
 -- the prompt.  An ANSI escape code colors the date green.
 local date_prompt = clink.promptfilter(40)
 function date_prompt:filter(prompt)
-    return green..os.date(&quot;%a %H:%M&quot;)..normal..&quot; &quot;..prompt
+    return green..os.date("%a %H:%M")..normal.." "..prompt
 end
 
 -- A prompt filter that may stop further prompt filtering.
 -- This is a silly example, but on Wednesdays, it stops the
 -- filtering, which in this example prevents git branch
 -- detection and the line feed and angle bracket.
-local wednesday_silliness = clink.promptfilter(45)
+local wednesday_silliness = clink.promptfilter(60)
 function wednesday_silliness:filter(prompt)
-    if os.date(&quot;%a&quot;) == &quot;Wed&quot; then
+    if os.date("%a") == "Wed" then
         -- The ,false stops any further filtering.
-        return prompt..&quot; HAPPY HUMP DAY! &quot;, false
+        return prompt.." HAPPY HUMP DAY! ", false
     end
 end
 
 -- A prompt filter that appends the current git branch.
-local git_branch_prompt = clink.promptfilter(50)
+local git_branch_prompt = clink.promptfilter(65)
 function git_branch_prompt:filter(prompt)
-    local line = io.popen(&quot;git branch --show-current 2&gt;nul&quot;):read(&quot;*a&quot;)
-    local branch = line:match(&quot;(.+)\n&quot;)
+    local line = io.popen("git branch --show-current 2>nul"):read("*a")
+    local branch = line:match("(.+)\n")
     if branch then
-        return prompt..&quot; &quot;..cyan..&quot;[&quot;..branch..&quot;]&quot;..normal
+        return prompt.." "..cyan.."["..branch.."]"..normal
     end
 end
 
 -- A prompt filter that adds a line feed and angle bracket.
 local bracket_prompt = clink.promptfilter(150)
 function bracket_prompt:filter(prompt)
-    return prompt..&quot;\n&gt; &quot;
+    return prompt.."\n> "
 end
 </code></pre>
 <p>The resulting prompt will look like this:</p>
@@ -2250,6 +2251,28 @@ end
 <h3 id="ansi-escape-codes-in-the-prompt-string">ANSI escape codes in the prompt string</h3>
 <p>Readline needs to be told which characters in the prompt are unprintable or invisible.  To help with that, Clink automatically detects most standard ANSI escape codes (and most of ConEmu&#39;s non-standard escape codes) and the BEL character (^G, audible bell) and surrounds them with <code>\001</code> (^A) and <code>\002</code> (^B) characters.  For any other unprintable characters, the <code>\001</code> and <code>\002</code> characters need to be added manually.  Otherwise Readline misinterprets the length of the prompt and can display the prompt and input line incorrectly in some cases (especially if the input line wraps onto a second line).</p>
 <h3 id="more-advanced-stuff-3">More Advanced Stuff</h3>
+<p><a name="rightprompt"></a></p>
+<h4 id="right-side-prompt">Right Side Prompt</h4>
+<p>In addition to the normal prompt filtering, Clink can also show a prompt on the right side of the first line of input.  The right side prompt defaults to the value of the <code>%CLINK_RPROMPT%</code> environment variable, if set, otherwise it is blank.  This right side prompt is automatically hidden if the input line text reaches it.</p>
+<p>The right side prompt can be filtered through <a href="#extending-clink">Lua</a> just like the normal prompt can be.  Simply define a <code>:rightfilter()</code> function on the prompt filter returned by a call to <code>clink.promptfilter()</code>.  A prompt filter can define both <code>:filter()</code> and <code>:rightfilter()</code>, or can define only <code>:filter()</code>.</p>
+<p>The <code>:rightfilter()</code> function works the same as the <code>:filter()</code> function, except that it operates on the right side prompt.  It takes a string argument that contains the filtered right side prompt so far.  If the rightfilter function returns nil, it has no effect.  If the rightfilter function returns a string, that string is used as the new filtered right side prompt (and may be further modified by other prompt filters with higher priority ids).  If either the rightfilter function or the normal filter function returns a string and a boolean, then if the boolean is false the prompt filtering is done and no further filter functions are called.</p>
+<p>This example modifies the right side prompt by prepending the current date:</p>
+<pre><code class="language-lua">local p = clink.promptfilter(30)
+function p:filter(prompt)
+    -- The :filter() function must be defined.  But if the prompt filter is
+    -- only interested in modifying the right side prompt, then the :filter()
+    -- function may do nothing.
+end
+function p:rightfilter(prompt)
+    local sep = #prompt > 0 and "  " or ""
+    return os.date()..sep..prompt
+end
+</code></pre>
+<br/>
+
+<blockquote>
+<p><strong>Note:</strong> If the console font and encoding are mismatched, or if some kinds of emoji are present, then the right side prompt might show up positioned incorrectly.  If that happens, try adjusting the font or encoding (e.g. sometimes running <code>chcp utf-8</code> can resolve positioning issues).</p>
+</blockquote>
 <p><a name="asyncpromptfiltering"></a></p>
 <h4 id="asynchronous-prompt-filtering">Asynchronous Prompt Filtering</h4>
 <p>Prompt filtering needs to be fast, or it can interfere with using the shell (e.g. <code>git status</code> can be slow in a large repo).</p>
@@ -2268,20 +2291,20 @@ local function get_git_dir(dir)
     -- Check if the current directory is in a git repo.
     local child
     repeat
-        if os.isdir(path.join(dir, &quot;.git&quot;)) then
+        if os.isdir(path.join(dir, ".git")) then
             return dir
         end
         -- Walk up one level to the parent directory.
         dir,child = path.toparent(dir)
-        -- If child is empty, we&#39;ve reached the top.
-    until (not child or child == &quot;&quot;)
+        -- If child is empty, we've reached the top.
+    until (not child or child == "")
     return nil
 end
 
 local function get_git_branch()
     -- Get the current git branch name.
-    local file = io.popen(&quot;git branch --show-current 2&gt;nul&quot;)
-    local branch = file:read(&quot;*a&quot;):match(&quot;(.+)\n&quot;)
+    local file = io.popen("git branch --show-current 2>nul")
+    local branch = file:read("*a"):match("(.+)\n")
     file:close()
     return branch
 end
@@ -2289,11 +2312,11 @@ end
 local function get_git_status()
     -- The io.popenyield API is like io.popen, but it yields until the output is
     -- ready to be read.
-    local file = io.popenyield(&quot;git --no-optional-locks status --porcelain 2&gt;nul&quot;)
+    local file = io.popenyield("git --no-optional-locks status --porcelain 2>nul")
     local status = false
     for line in file:lines() do
-        -- If there&#39;s any output, the status is not clean.  Since this example
-        -- doesn&#39;t analyze the details, it can stop once it knows there&#39;s any
+        -- If there's any output, the status is not clean.  Since this example
+        -- doesn't analyze the details, it can stop once it knows there's any
         -- output at all.
         status = true
         break
@@ -2305,10 +2328,10 @@ end
 local function get_git_conflict()
     -- The io.popenyield API is like io.popen, but it yields until the output is
     -- ready to be read.
-    local file = io.popenyield(&quot;git diff --name-only --diff-filter=U 2&gt;nul&quot;)
+    local file = io.popenyield("git diff --name-only --diff-filter=U 2>nul")
     local conflict = false
     for line in file:lines() do
-        -- If there&#39;s any output, there&#39;s a conflict.
+        -- If there's any output, there's a conflict.
         conflict = true
         break
     end
@@ -2329,7 +2352,7 @@ local function collect_git_info()
     return info
 end
 
-local git_prompt = clink.promptfilter(100)
+local git_prompt = clink.promptfilter(55)
 function git_prompt:filter(prompt)
     -- Do nothing if not a git repo.
     local dir = get_git_dir(os.getcwd())
@@ -2345,7 +2368,7 @@ function git_prompt:filter(prompt)
     -- so it can run outside the coroutine.  That way the branch name is visible
     -- even while the coroutine is running.
     local branch = get_git_branch()
-    if not branch or branch == &quot;&quot; then
+    if not branch or branch == "" then
         return
     end
     -- Start a coroutine to collect various git info in the background.  The
@@ -2364,15 +2387,15 @@ function git_prompt:filter(prompt)
     end
     -- Choose color for the git branch name:  green if status is clean, yellow
     -- if status is not clean, red if conflict is present, or default color if
-    -- status isn&#39;t known yet.
-    local sgr = &quot;37;1&quot;
+    -- status isn't known yet.
+    local sgr = "37;1"
     if info.conflict then
-        sgr = &quot;31;1&quot;
+        sgr = "31;1"
     elseif info.status ~= nil then
-        sgr = info.status and &quot;33;1&quot; or &quot;32;1&quot;
+        sgr = info.status and "33;1" or "32;1"
     end
-    -- Prefix the prompt with &quot;[branch]&quot; using the status color.
-    return &quot;\x1b[&quot;..sgr..&quot;m[&quot;..branch..&quot;]\x1b[m  &quot;..prompt
+    -- Prefix the prompt with "[branch]" using the status color.
+    return "\x1b["..sgr.."m["..branch.."]\x1b[m  "..prompt
 end
 </code></pre>
 <h1 id="miscellaneous">Miscellaneous</h1>
@@ -3420,6 +3443,11 @@ end</code></pre></div></div><hr/>
         <div class="section" id="changes">
 <h1 id="changes">Changes</h1>
 <h3 id="releases-from-chrisant996clink-fork">Releases from <a href="https://github.com/chrisant996/clink">chrisant996/clink</a> fork</h3>
+<h4 id="v1224">v1.2.24</h4>
+<ul>
+<li>Added support for <code>%CLINK_RPROMPT%</code> to show a right side prompt, and for prompt filters to define a <code>:rightfilter()</code> function to filter the right side prompt.</li>
+<li>Fixed <code>clink-select-complete</code> to not append a space after a flag that ends with <code>:</code> or <code>=</code> (e.g. <code>/x:</code>).</li>
+</ul>
 <h4 id="v1223">v1.2.23</h4>
 <ul>
 <li>Fixed <kbd>PgUp</kbd> and <kbd>PgDn</kbd> in the <code>clink-select-complete</code> command, under certain conditions where they don&#39;t navigate in the intended manner.</li>
