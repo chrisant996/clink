@@ -324,7 +324,7 @@ void host_cmd::add_aliases(bool force)
 }
 
 //------------------------------------------------------------------------------
-void host_cmd::edit_line(const wchar_t* /*prompt*/, wchar_t* chars, int max_chars)
+void host_cmd::edit_line(wchar_t* chars, int max_chars)
 {
     // Exiting a nested CMD will remove the aliases, so re-add them if missing.
     // But don't overwrite them if they already exist: let the user override
@@ -338,7 +338,9 @@ void host_cmd::edit_line(const wchar_t* /*prompt*/, wchar_t* chars, int max_char
     // BUGBUG: This mishandles multi-byte characters!
     // BUGBUG: This mishandles surrogate pairs and combining characters!
     // BUGBUG: This mishandles backspaces inside envvars expanded by OSC codes!
-    str<128> utf8_prompt(m_prompt.get());
+    str_moveable utf8_prompt(m_prompt.get());
+    str_moveable utf8_rprompt;
+    os::get_env("rprompt", utf8_rprompt);
 
     char* write = utf8_prompt.data();
     char* read = write;
@@ -357,7 +359,7 @@ void host_cmd::edit_line(const wchar_t* /*prompt*/, wchar_t* chars, int max_char
             // WARNING:  Settings are not valid here; they are not loaded until
             // inside of host::edit_line().
             out.clear();
-            if (host::edit_line(utf8_prompt.c_str(), out))
+            if (host::edit_line(utf8_prompt.c_str(), utf8_rprompt.c_str(), out))
             {
                 to_utf16(chars, max_chars, out.c_str());
                 break;
@@ -420,7 +422,7 @@ BOOL WINAPI host_cmd::read_console(
         // while it's enabled between ReadConsoleInputW calls.
         console_config cc(input);
         reset_wcwidths();
-        host_cmd::get()->edit_line(prompt, chars, max_chars);
+        host_cmd::get()->edit_line(chars, max_chars);
     }
 
     // ReadConsole will also include the CRLF of the line that was input.

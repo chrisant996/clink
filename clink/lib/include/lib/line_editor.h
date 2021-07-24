@@ -31,6 +31,7 @@ public:
         const char*     shell_name = "clink";
         const char*     state_dir = nullptr;
         const char*     prompt = "clink $ ";
+        const char*     rprompt = nullptr;
         const char*     command_delims = nullptr;
         const char*     word_delims = " \t";
         // const char*     auto_quote_chars = " ";
@@ -51,7 +52,7 @@ public:
     virtual bool        add_generator(match_generator& generator) = 0;
     virtual void        set_classifier(word_classifier& classifier) = 0;
     virtual void        set_input_idle(input_idle* idle) = 0;
-    virtual void        set_prompt(const char* prompt) = 0;
+    virtual void        set_prompt(const char* prompt, const char* rprompt) = 0;
     virtual bool        get_line(str_base& out) = 0;
     virtual bool        edit(str_base& out) = 0;
     virtual bool        update() = 0;

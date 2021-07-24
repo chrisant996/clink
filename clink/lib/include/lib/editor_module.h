@@ -35,6 +35,7 @@ public:
     struct context
     {
         const char*         prompt;
+        const char*         rprompt;
         printer&            printer;
         pager&              pager;
         line_buffer&        buffer;

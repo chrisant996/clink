@@ -26,11 +26,11 @@ public:
     virtual bool    initialise() = 0;
     virtual void    shutdown() = 0;
 
-    const char*     filter_prompt();
+    const char*     filter_prompt(const char** rprompt);
     void            enqueue_lines(std::list<str_moveable>& lines);
 
 protected:
-    bool            edit_line(const char* prompt, str_base& out);
+    bool            edit_line(const char* prompt, const char* rprompt, str_base& out);
     virtual void    initialise_lua(lua_state& lua) = 0;
     virtual void    initialise_editor_desc(line_editor::desc& desc) = 0;
 
@@ -44,6 +44,8 @@ private:
     host_lua*       m_lua = nullptr;
     prompt_filter*  m_prompt_filter = nullptr;
     const char*     m_prompt = nullptr;
+    const char*     m_rprompt = nullptr;
     str<256>        m_filtered_prompt;
+    str<256>        m_filtered_rprompt;
     std::list<str_moveable> m_queued_lines;
 };

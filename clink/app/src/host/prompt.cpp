@@ -156,7 +156,16 @@ prompt_filter::prompt_filter(lua_state& lua)
 //------------------------------------------------------------------------------
 void prompt_filter::filter(const char* in, str_base& out)
 {
+    str<16> dummy;
+    filter(in, "", out, dummy);
+}
+
+//------------------------------------------------------------------------------
+void prompt_filter::filter(const char* in, const char* rin, str_base& out, str_base& rout)
+{
     lua_State* state = m_lua.get_state();
+
+    int top = lua_gettop(state);
 
     // Call Lua to filter prompt
     lua_getglobal(state, "clink");
@@ -164,8 +173,9 @@ void prompt_filter::filter(const char* in, str_base& out)
     lua_rawget(state, -2);
 
     lua_pushstring(state, in);
+    lua_pushstring(state, rin);
 
-    if (m_lua.pcall(state, 1, 1) != 0)
+    if (m_lua.pcall(state, 2, 2) != 0)
     {
         puts(lua_tostring(state, -1));
         lua_pop(state, 2);
@@ -173,10 +183,12 @@ void prompt_filter::filter(const char* in, str_base& out)
     }
 
     // Collect the filtered prompt.
-    const char* prompt = lua_tostring(state, -1);
+    const char* prompt = lua_tostring(state, -2);
+    const char* rprompt = lua_tostring(state, -1);
     out = prompt;
+    rout = rprompt;
 
-    lua_pop(state, 2);
+    lua_settop(state, top);
 }
 
 

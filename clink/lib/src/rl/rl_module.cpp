@@ -1533,7 +1533,7 @@ void rl_module::set_keyseq_len(int len)
 }
 
 //------------------------------------------------------------------------------
-void rl_module::set_prompt(const char* prompt)
+void rl_module::set_prompt(const char* prompt, const char* rprompt)
 {
     bool redisplay = (g_rl_buffer && g_printer);
 
@@ -1541,10 +1541,16 @@ void rl_module::set_prompt(const char* prompt)
     // by enclosing them in a pair of 0x01/0x02 chars.
 
     str<> prev_prompt;
+    str<> prev_rprompt;
     if (redisplay)
+    {
         prev_prompt = m_rl_prompt.c_str();
+        prev_rprompt = m_rl_rprompt.c_str();
+    }
 
     m_rl_prompt.clear();
+    m_rl_rprompt.clear();
+    m_rl_rprompt_len = 0;
 
     bool force_prompt_color = false;
     {
@@ -1554,6 +1560,8 @@ void rl_module::set_prompt(const char* prompt)
         {
             force_prompt_color = true;
             m_rl_prompt.format("\x01%s\x02", prompt_color);
+            if (rprompt)
+                m_rl_rprompt << prompt_color;
         }
     }
 
@@ -1561,15 +1569,20 @@ void rl_module::set_prompt(const char* prompt)
     if (get_native_ansi_handler() != ansi_handler::conemu)
         flags |= ecma48_processor_flags::apply_title;
     ecma48_processor(prompt, &m_rl_prompt, nullptr/*cell_count*/, flags);
+    if (rprompt)
+        ecma48_processor(rprompt, &m_rl_rprompt, &m_rl_rprompt_len, flags &= ~ecma48_processor_flags::bracket);
 
     m_rl_prompt.concat("\x01\x1b[m\x02");
+    if (rprompt)
+        m_rl_rprompt.concat("\x1b[m");
 
     // Warning:  g_last_prompt is a mutable copy that can be altered in place;
     // it is not a synonym for m_rl_prompt.
     g_last_prompt.clear();
     g_last_prompt.concat(m_rl_prompt.c_str(), m_rl_prompt.length());
 
-    if (redisplay && !m_rl_prompt.equals(prev_prompt.c_str()))
+    if (redisplay && (!m_rl_prompt.equals(prev_prompt.c_str()) ||
+                      !m_rl_rprompt.equals(prev_rprompt.c_str())))
     {
         g_prompt_redisplay++;
 
@@ -1600,6 +1613,8 @@ TODO("PROMPTFILTER: this can't walk up past the top of the visible area of the t
 
         // Update the prompt and display.
         rl_set_prompt(m_rl_prompt.c_str());
+        if (rprompt)
+            rl_set_rprompt(m_rl_rprompt.c_str(), m_rl_rprompt_len);
         rl_forced_update_display();
     }
 }
@@ -1649,7 +1664,7 @@ void rl_module::on_begin_line(const context& context)
     assert(!g_rl_buffer);
     g_printer = &context.printer;
     g_pager = &context.pager;
-    set_prompt(context.prompt);
+    set_prompt(context.prompt, context.rprompt);
     g_rl_buffer = &context.buffer;
     if (g_classify_words.get())
         s_classifications = &context.classifications;
@@ -1690,6 +1705,7 @@ void rl_module::on_begin_line(const context& context)
         _rl_display_message_color = "\x1b[m";
 
     auto handler = [] (char* line) { rl_module::get()->done(line); };
+    rl_set_rprompt(m_rl_rprompt.c_str(), m_rl_rprompt_len);
     rl_callback_handler_install(m_rl_prompt.c_str(), handler);
 
     // Apply the remembered history position from the previous command, if any.

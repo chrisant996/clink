@@ -330,10 +330,11 @@ void host_filter_prompt()
     if (!s_host || !g_prompt_async.get())
         return;
 
-    const char* prompt = s_host->filter_prompt();
+    const char* rprompt = nullptr;
+    const char* prompt = s_host->filter_prompt(&rprompt);
 
-    void set_prompt(const char* prompt);
-    set_prompt(prompt);
+    void set_prompt(const char* prompt, const char* rprompt);
+    set_prompt(prompt, rprompt);
 }
 
 
@@ -652,7 +653,7 @@ void host::enqueue_lines(std::list<str_moveable>& lines)
 }
 
 //------------------------------------------------------------------------------
-bool host::edit_line(const char* prompt, str_base& out)
+bool host::edit_line(const char* prompt, const char* rprompt, str_base& out)
 {
     assert(!m_prompt); // Reentrancy not supported!
 
@@ -796,11 +797,11 @@ bool host::edit_line(const char* prompt, str_base& out)
     desc.state_dir = state_dir.c_str();
 
     // Filter the prompt.  Unless processing a multiline doskey macro.
-    str<256> filtered_prompt;
     if (init_prompt)
     {
-        m_prompt = prompt;
-        desc.prompt = filter_prompt();
+        m_prompt = prompt ? prompt : "";
+        m_rprompt = rprompt ? rprompt : "";
+        desc.prompt = filter_prompt(&desc.rprompt);
     }
 
     // Create the editor and add components to it.
@@ -1038,16 +1039,30 @@ bool host::edit_line(const char* prompt, str_base& out)
     }
 
     m_prompt = nullptr;
+    m_rprompt = nullptr;
 
     return ret;
 }
 
 //------------------------------------------------------------------------------
-const char* host::filter_prompt()
+const char* host::filter_prompt(const char** rprompt)
 {
     m_filtered_prompt.clear();
-    if (g_filter_prompt.get() && m_prompt_filter && m_prompt)
-        m_prompt_filter->filter(m_prompt, m_filtered_prompt);
+    m_filtered_rprompt.clear();
+    if (g_filter_prompt.get() && m_prompt_filter)
+    {
+        m_prompt_filter->filter(m_prompt ? m_prompt : "",
+                                m_rprompt ? m_rprompt : "",
+                                m_filtered_prompt,
+                                m_filtered_rprompt);
+    }
+    else
+    {
+        m_filtered_prompt = m_prompt;
+        m_filtered_rprompt = m_rprompt;
+    }
+    if (rprompt)
+        *rprompt = m_filtered_rprompt.c_str();
     return m_filtered_prompt.c_str();
 }
 

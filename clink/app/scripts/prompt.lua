@@ -21,7 +21,7 @@ end
 
 
 --------------------------------------------------------------------------------
-function clink._filter_prompt(prompt)
+function clink._filter_prompt(prompt, rprompt)
     -- Sort by priority if required.
     if prompt_filters_unsorted then
         local lambda = function(a, b) return a._priority < b._priority end
@@ -31,21 +31,33 @@ function clink._filter_prompt(prompt)
     end
 
     -- Protected call to prompt filters.
-    local impl = function(prompt)
+    local impl = function(prompt, rprompt)
+        local filtered, onwards
         for _, filter in ipairs(prompt_filters) do
             set_current_prompt_filter(filter)
-            local filtered, onwards = filter:filter(prompt)
-            if filtered ~= nil then
-                if onwards == false then return filtered end
-                prompt = filtered
+
+            if filter.filter or not filter.rightfilter then
+                filtered, onwards = filter:filter(prompt)
+                if filtered ~= nil then
+                    prompt = filtered
+                    if onwards == false then return prompt, rprompt end
+                end
+            end
+
+            if filter.rightfilter then
+                filtered, onwards = filter:rightfilter(rprompt)
+                if filtered ~= nil then
+                    rprompt = filtered
+                    if onwards == false then return prompt, rprompt end
+                end
             end
         end
 
-        return prompt
+        return prompt, rprompt
     end
 
     set_current_prompt_filter(nil)
-    local ok, ret = xpcall(impl, _error_handler_ret, prompt)
+    local ok, ret, rret = xpcall(impl, _error_handler_ret, prompt, rprompt)
     set_current_prompt_filter(nil)
     if not ok then
         print("")
@@ -54,7 +66,7 @@ function clink._filter_prompt(prompt)
         return false
     end
 
-    return ret
+    return ret, rret
 end
 
 --------------------------------------------------------------------------------

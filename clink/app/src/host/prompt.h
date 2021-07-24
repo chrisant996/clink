@@ -42,7 +42,8 @@ class prompt_filter
 {
 public:
                     prompt_filter(lua_state& lua);
-    void            filter(const char* in, str_base& out);
+    void            filter(const char* in, str_base& out); // For unit tests.
+    void            filter(const char* in, const char* rin, str_base& out, str_base& rout);
 
 private:
     lua_state&      m_lua;

@@ -164,12 +164,12 @@ void update_matches()
 }
 
 //------------------------------------------------------------------------------
-void set_prompt(const char* prompt)
+void set_prompt(const char* prompt, const char* rprompt)
 {
     if (!s_editor)
         return;
 
-    s_editor->set_prompt(prompt);
+    s_editor->set_prompt(prompt, rprompt);
 }
 
 //------------------------------------------------------------------------------
@@ -340,10 +340,10 @@ void line_editor_impl::set_input_idle(input_idle* idle)
 }
 
 //------------------------------------------------------------------------------
-void line_editor_impl::set_prompt(const char* prompt)
+void line_editor_impl::set_prompt(const char* prompt, const char* rprompt)
 {
     m_desc.prompt = prompt;
-    m_module.set_prompt(prompt);
+    m_module.set_prompt(prompt, rprompt);
 }
 
 //------------------------------------------------------------------------------
@@ -958,7 +958,7 @@ editor_module::context line_editor_impl::get_context() const
     auto& pter = const_cast<printer&>(m_printer);
     auto& pger = const_cast<pager&>(static_cast<const pager&>(m_pager));
     auto& buffer = const_cast<rl_buffer&>(m_buffer);
-    return { m_desc.prompt, pter, pger, buffer, m_matches, m_classifications };
+    return { m_desc.prompt, m_desc.rprompt, pter, pger, buffer, m_matches, m_classifications };
 }
 
 //------------------------------------------------------------------------------

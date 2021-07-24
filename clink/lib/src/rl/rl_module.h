@@ -24,7 +24,7 @@ public:
                     ~rl_module();
 
     void            set_keyseq_len(int len);
-    void            set_prompt(const char* prompt);
+    void            set_prompt(const char* prompt, const char* rprompt);
 
 private:
     virtual void    bind_input(binder& binder) override;
@@ -40,6 +40,8 @@ private:
     bool            m_done;
     bool            m_eof;
     str_moveable    m_rl_prompt;
+    str_moveable    m_rl_rprompt;
+    unsigned int    m_rl_rprompt_len;
     str<16>         m_input_color;
     str<16>         m_selection_color;
     str<16>         m_modmark_color;
