@@ -571,6 +571,52 @@ _rl_reset_prompt (void)
   rl_visible_prompt_length = rl_expand_prompt (rl_prompt);
 }
 
+/* begin_clink_change */
+static void
+tputs_rprompt (const char *s)
+{
+  int col = _rl_screenwidth - rl_visible_rprompt_length;
+
+  _rl_rprompt_shown = !!s;
+
+  if (col <= 0)
+    return;
+
+  if (_rl_term_ch)
+    {
+      char *buffer = tgoto (_rl_term_ch, 0, col + 1);
+      tputs (buffer, 1, _rl_output_character_function);
+      if (s)
+        tputs (s, 1, _rl_output_character_function);
+      else
+        _rl_clear_to_eol (rl_visible_rprompt_length);
+      buffer = tgoto (_rl_term_ch, 0, _rl_last_c_pos + 1);
+      tputs (buffer, 1, _rl_output_character_function);
+    }
+  else
+    {
+      int i;
+      int dpos = col;
+      for (i = _rl_last_c_pos; i < dpos; i++)
+        tputs (_rl_term_forward_char, 1, _rl_output_character_function);
+      if (s)
+        tputs (s, 1, _rl_output_character_function);
+      else
+        _rl_clear_to_eol (rl_visible_rprompt_length);
+      if (!s && i - _rl_last_c_pos < _rl_last_c_pos)
+        _rl_backspace (i - _rl_last_c_pos);
+      else
+        {
+          i = _rl_last_c_pos;
+          cr ();
+          _rl_last_c_pos = i;
+          while (i--)
+            tputs (_rl_term_forward_char, 1, _rl_output_character_function);
+        }
+    }
+}
+/* end_clink_change */
+
 /*
  * Expand the prompt string into the various display components, if
  * necessary.
@@ -1245,18 +1291,10 @@ rl_redisplay (void)
                       (rl_display_prompt == rl_prompt ||  /* displaying the real prompt */
                        ((!rl_display_prompt || !*rl_display_prompt) &&
                         (!rl_prompt || !*rl_prompt))) &&
-                      (lpos + rl_visible_rprompt_length < _rl_screenwidth - 2)); /* fits */
+                      (lpos + rl_visible_rprompt_length < _rl_screenwidth - 1)); /* fits */
   /* If the rprompt is displayed but shouldn't be, then erase it. */
   if (_rl_rprompt_shown && !can_show_rprompt)
-    {
-      int i;
-      int dpos = _rl_screenwidth - 1 - rl_visible_rprompt_length;
-      for (i = _rl_last_c_pos; i < dpos; i++)
-        tputs (_rl_term_forward_char, 1, _rl_output_character_function);
-      _rl_clear_to_eol (rl_visible_rprompt_length);
-      _rl_backspace (i - _rl_last_c_pos);
-      _rl_rprompt_shown = 0;
-    }
+    tputs_rprompt (0);
 /* end_clink_change */
 
   /* If we are switching from one line to multiple wrapped lines, we don't
@@ -1671,19 +1709,7 @@ rl_redisplay (void)
 /* begin_clink_change */
   /* If the rprompt is not displayed and should be, then display it. */
   if (!_rl_rprompt_shown && can_show_rprompt)
-    {
-      int i;
-      int dpos = _rl_screenwidth - 1 - rl_visible_rprompt_length;
-      for (i = _rl_last_c_pos; i < dpos; i++)
-        tputs (_rl_term_forward_char, 1, _rl_output_character_function);
-      tputs (rl_rprompt, 1, _rl_output_character_function);
-      i = _rl_last_c_pos;
-      cr ();
-      _rl_last_c_pos = i;
-      while (i--)
-        tputs (_rl_term_forward_char, 1, _rl_output_character_function);
-      _rl_rprompt_shown = 1;
-    }
+    tputs_rprompt (rl_rprompt);
 /* end_clink_change */
 
   RL_UNSETSTATE (RL_STATE_REDISPLAYING);
@@ -3381,6 +3407,11 @@ open_some_spaces (int col)
   char *buffer;
   register int i;
 
+/* begin_clink_change */
+  if (_rl_last_v_pos == 0 && _rl_rprompt_shown)
+    tputs_rprompt (0);
+/* end_clink_change */
+
   /* If IC is defined, then we do not have to "enter" insert mode. */
   if (_rl_term_IC)
     {
@@ -3417,6 +3448,10 @@ delete_chars (int count)
     return;
 
 #if !defined (__MSDOS__) && (!defined (__MINGW32__) || defined (NCURSES_VERSION))
+/* begin_clink_change */
+  if (_rl_last_v_pos == 0 && _rl_rprompt_shown)
+    tputs_rprompt (0);
+/* end_clink_change */
   if (_rl_term_DC && *_rl_term_DC)
     {
       char *buffer;

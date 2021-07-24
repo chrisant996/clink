@@ -137,6 +137,7 @@ char* tgetstr(char* name, char** out)
     case 'kl': str = CSI(D); break; // Left
 
     // Cursor movement.
+    case 'ch': str = CSI(%dG); break;
     case 'cr': str = "\x0d"; break;
     case 'le': str = "\x08"; break;
     case 'nd': str = CSI(C); break;
