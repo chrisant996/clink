@@ -10,23 +10,30 @@ end
 local function markdown_file(source_path, out)
     print("  << " .. source_path)
 
-    local out_file = '.build\\docs\\'..source_path:match('([^/\\]+)$')..'.html'
-    os.execute('marked -o '..out_file..' < '..source_path)
+    local base_name = source_path:match('([^/\\]+)$')
 
-    local line_reader = io.lines(out_file)
-    for line in line_reader do
+    local tmp_name = '.build\\docs\\tmp.'..base_name..'.md'
+    local tmp = io.open(tmp_name, "w")
+    for line in io.lines(source_path) do
         local inc_file = line:match("#INCLUDE %[(.*)%]")
         if inc_file then
-            line = line:gsub("#INCLUDE %[(.*)%]", "")
-            out:write(line)
             for inc_line in io.lines(inc_file) do
-                out:write(inc_line.."\n")
+                tmp:write(inc_line.."\n")
             end
         else
             line = line:gsub("%$%(BEGINDIM%)", "<div style='opacity:0.5'>")
             line = line:gsub("%$%(ENDDIM%)", "</div>")
-            out:write(line .. "\n")
+            tmp:write(line .. "\n")
         end
+    end
+    tmp:close()
+
+    local out_file = '.build\\docs\\'..base_name..'.html'
+    os.execute('marked -o '..out_file..' < '..tmp_name)
+
+    local line_reader = io.lines(out_file)
+    for line in line_reader do
+        out:write(line .. "\n")
     end
 end
 
