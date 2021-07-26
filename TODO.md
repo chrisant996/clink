@@ -27,21 +27,27 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 
 **Marking**
 - Marking mode in-app similar to my other shell project?  It's a kludge, but it copies with HTML formatting (and even uses the color scheme).
+- Is there some way to show selection markup?  Maybe have a way to have floating windows mark corners of a selection region, or overlay or or more windows to draw an outline around the selected region?
 
 **Lua**
-- Provide API to copy text to clipboard (plain text or HTML).
-- Is there some way to show selection markup?  Maybe have a way to have floating windows mark corners of a selection region, or overlay or or more windows to draw an outline around the selected region?
-- Provide API to show an input box?  But make it fail if used from outside a Readline command.
+- Provide API to copy text to clipboard (plain text or HTML)?
 
 **Installer**
 - Why does it install to a versioned path?  The .nsi file says `; Install to a versioned folder to reduce interference between versions.` so use caution when making any change there.
 
 **Miscellaneous**
 - Is it a problem that `update_internal()` gets called once per char in a key sequence?  Maybe it should only happen after a key that finishes a key binding?
-- Should only fold path separators in pathish matches.
 - Include `wildmatch()` and an `fnmatch()` wrapper for it.  But should first update it to support UTF8.
-- `LOG()` certain important failure information inside Detours.
-- Make scrolling key bindings work at the pager prompt.  Note that it would need to revise how the scroll routines identify the bottom line (currently they use Readline's bottom line, but the pager displays output past that point).
+
+<br/>
+<br/>
+
+# LOW LIKELIHOOD
+
+- Make scrolling key bindings work at the pager prompt.  Note that it would need to revise how the scroll routines identify the bottom line (currently they use Readline's bottom line, but the pager displays output past that point).  _[Low value; also, Windows Terminal has scrolling hotkeys that supersede Clink, and it can scroll regardless whether prompting for input.]_
+- `LOG()` certain important failure information inside Detours.  _[Low value; also, I want to avoid making any changes inside Detours.]_
+- Provide API to show an input box?  But make it fail if used from outside a "luafunc:" macro.  _[Questionable usage pattern; just make the "luafunc:" macro invoke a standalone program (or even standalone Lua script) that can accept input however it likes.]_
+- Provide API to set Readline key binding?  _[Convenient, but also makes it very easy for third party scripts to override a user's explicit configuration choices.  In addition to that being a bit overly powerful, I want to avoid support requests caused by third party macros overriding user configuration.]_
 
 <br/>
 <br/>
