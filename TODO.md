@@ -39,7 +39,6 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 **Miscellaneous**
 - Is it a problem that `update_internal()` gets called once per char in a key sequence?  Maybe it should only happen after a key that finishes a key binding?
 - Should only fold path separators in pathish matches.
-- How to reasonably support normal completion coloring with `ondisplaymatches` match display filtering?
 - Include `wildmatch()` and an `fnmatch()` wrapper for it.  But should first update it to support UTF8.
 - `LOG()` certain important failure information inside Detours.
 - Make scrolling key bindings work at the pager prompt.  Note that it would need to revise how the scroll routines identify the bottom line (currently they use Readline's bottom line, but the pager displays output past that point).
@@ -67,8 +66,6 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 <br/>
 
 # BACKLOG
-
-- [#486](https://github.com/mridgers/clink/issues/486) **Ctrl+C** doesn't always work properly _[might be the auto-answer prompt setting]_
 
 <br/>
 <br/>
@@ -103,6 +100,7 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
   - So I'm comfortable punting this for now.
 - A way to disable/enable clink once injected.  _[Why?]_
 - Provide API to generate HTML string from console text.  _[Too complicated; also impossible to support more than 4-bit color.]_
+- [#486](https://github.com/mridgers/clink/issues/486) **Ctrl+C** doesn't always work properly _[Unrelated to Clink; the exact same behavior occurs with plain cmd.exe]_
 
 ---
 Chris Antos - sparrowhawk996@gmail.com
