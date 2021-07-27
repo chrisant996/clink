@@ -7,6 +7,8 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 ## High Priority
 
 ## Medium Priority
+- `findstr /f:%user`<kbd>Tab</kbd> => doesn't complete the envvar name, because of how word breaks are handled.  See TODO comment in `line_editor_impl::collect_words()`.
+
 
 ## Low Priority
 - https://github.com/mridgers/clink/issues/476 -- Maybe add an option for completion of `%envvar%` to actually expand the envvar?

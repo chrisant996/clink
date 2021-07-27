@@ -791,6 +791,8 @@ unsigned int line_editor_impl::collect_words(words& words, matches_impl* matches
                         (rl_completer_quote_characters && strchr(rl_completer_quote_characters, walk[1])) ||
                         (rl_basic_quote_characters && strchr(rl_basic_quote_characters, walk[1])))
                         walk++;
+// TODO: This should probably build a new line_state, otherwise e.g. `/f:%user`
+// isn't able to complete the envvar name.
                     break_info.truncate = walk + 1 - word_start;
                     break_info.keep = end_word->length - break_info.truncate;
                     break;
