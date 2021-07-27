@@ -431,43 +431,7 @@ int expand_env(lua_State* state)
         return 0;
 
     str<280> out;
-    str_iter iter(in);
-    while (iter.more())
-    {
-        const char* start = iter.get_pointer();
-        while (iter.more() && iter.peek() != '%')
-            iter.next();
-        const char* end = iter.get_pointer();
-        if (start < end)
-            out.concat(start, int(end - start));
-
-        if (iter.more())
-        {
-            start = iter.get_pointer();
-            assert(iter.peek() == '%');
-            iter.next();
-
-            const char* name = iter.get_pointer();
-            while (iter.more() && iter.peek() != '%')
-                iter.next();
-
-            str<> var;
-            var.concat(name, int(iter.get_pointer() - name));
-
-            if (iter.more())
-            {
-                assert(iter.peek() == '%');
-                iter.next();
-            }
-            end = iter.get_pointer();
-
-            str<> value;
-            if (!var.empty() && os::get_env(var.c_str(), value))
-                out << value.c_str();
-            else
-                out.concat(start, int(end - start));
-        }
-    }
+    os::expand_env(in, out);
 
     lua_pushlstring(state, out.c_str(), out.length());
     return 1;

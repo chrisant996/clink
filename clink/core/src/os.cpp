@@ -298,6 +298,56 @@ FILE* create_temp_file(str_base* out, const char* _prefix, const char* _ext, tem
 }
 
 //------------------------------------------------------------------------------
+bool expand_env(const char* in, str_base& out)
+{
+    bool expanded = false;
+
+    out.clear();
+
+    str_iter iter(in);
+    while (iter.more())
+    {
+        const char* start = iter.get_pointer();
+        while (iter.more() && iter.peek() != '%')
+            iter.next();
+        const char* end = iter.get_pointer();
+        if (start < end)
+            out.concat(start, int(end - start));
+
+        if (iter.more())
+        {
+            start = iter.get_pointer();
+            assert(iter.peek() == '%');
+            iter.next();
+
+            const char* name = iter.get_pointer();
+            while (iter.more() && iter.peek() != '%')
+                iter.next();
+
+            str<> var;
+            var.concat(name, int(iter.get_pointer() - name));
+            end = iter.get_pointer();
+
+            if (iter.more() && iter.peek() == '%' && !var.empty())
+            {
+                iter.next();
+
+                str<> value;
+                os::get_env(var.c_str(), value);
+                out << value.c_str();
+                expanded = true;
+            }
+            else
+            {
+                out.concat(start, int(end - start));
+            }
+        }
+    }
+
+    return expanded;
+}
+
+//------------------------------------------------------------------------------
 bool get_env(const char* name, str_base& out)
 {
     wstr<32> wname(name);

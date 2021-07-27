@@ -43,6 +43,7 @@ bool    move(const char* src_path, const char* dest_path);
 bool    copy(const char* src_path, const char* dest_path);
 bool    get_temp_dir(str_base& out);
 FILE*   create_temp_file(str_base* out=nullptr, const char* prefix=nullptr, const char* ext=nullptr, temp_file_mode mode=normal, const char* path=nullptr);
+bool    expand_env(const char* in, str_base& out);
 bool    get_env(const char* name, str_base& out);
 bool    set_env(const char* name, const char* value);
 bool    get_alias(const char* name, str_base& out);

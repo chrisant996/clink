@@ -438,21 +438,8 @@ int clink_expand_env_var(int count, int invoking_key)
     str<1024> in;
     in.concat(g_rl_buffer->get_buffer() + word_left, word_right - word_left);
 
-    wstr<> win;
-    to_utf16(win, in.c_str());
-
-    // Do the environment variable expansion.
-    DWORD size = ExpandEnvironmentStringsW(win.c_str(), 0, 0);
-    if (!size)
-        return 0;
-    wstr<1024> wout;
-    wout.reserve(size);
-    size = ExpandEnvironmentStringsW(win.c_str(), wout.data(), wout.size());
-    if (!size || size > wout.size())
-        return 0;
-
     str<> out;
-    to_utf8(out, wout.c_str());
+    os::expand_env(in.c_str(), out);
 
     // Update Readline with the resulting expansion.
     g_rl_buffer->begin_undo_group();
