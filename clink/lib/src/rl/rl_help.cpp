@@ -266,8 +266,29 @@ static void ensure_keydesc_map()
             assert(iter != s_pmap_keydesc->end()); // Command no longer exists?
             if (iter != s_pmap_keydesc->end())
             {
-                // Command should either not have a name yet, or the name must match.
-                assert(!iter->second.name || !strcmp(iter->second.name, f.name));
+                // Command should either not have a name yet, or the name must
+                // match, or be a known exception.
+#ifdef DEBUG
+                if (iter->second.name && strcmp(iter->second.name, f.name))
+                {
+                    static const char* const c_overwritable[] =
+                    {
+                        "insert-last-argument",
+                    };
+
+                    bool keydesc_overwrite = true;
+                    for (auto const& o : c_overwritable)
+                    {
+                        if (!strcmp(o, iter->second.name))
+                        {
+                            keydesc_overwrite = false;
+                            break;
+                        }
+                    }
+
+                    assert(!keydesc_overwrite);
+                }
+#endif
                 iter->second.name = f.name;
                 iter->second.cat = f.cat;
                 iter->second.desc = f.desc;

@@ -1406,6 +1406,9 @@ rl_module::rl_module(const char* shell_name, terminal_in* input, const char* sta
         extern int clink_diagnostics(int, int);
         clink_add_funmap_entry("clink-diagnostics", clink_diagnostics, keycat_misc, "Show internal diagnostic information");
 
+        // Alias some command names for convenient compatibility with bash .inputrc configuration entries.
+        rl_add_funmap_entry("insert-last-argument", rl_yank_last_arg);
+
         // Override some defaults.
         _rl_bell_preference = VISIBLE_BELL;     // Because audible is annoying.
         rl_complete_with_tilde_expansion = 1;   // Since CMD doesn't understand tilde.

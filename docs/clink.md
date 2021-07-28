@@ -405,6 +405,7 @@ Name | Description
 `cua-forward-char`|Extends the selection and moves forward a character.
 `cua-forward-word`|Extends the selection and moves forward a word.
 `cua-select-all`|Extends the selection to the entire current line.
+`insert-last-argument`|A synonym for `yank-last-arg`.
 `old-menu-complete-backward`|Like `old-menu-complete`, but in reverse.
 `remove-history`|While searching history, removes the current line from the history.
 
