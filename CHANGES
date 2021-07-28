@@ -9,12 +9,16 @@
     - `clink-expand-history` performs history expansion on the current input line.
     - `clink-expand-history-and-alias` performs history and doskey alias expansion on the current input line.
     - `clink-expand-line` performs history, doskey alias, and environment variable expansion on the current input line.
+    - `glob-complete-word` performs wildcard completion on the text before the cursor point, with a `*` implicitly appended.
+    - `glob-expand-word` inserts all the wildcard completions that `glob-list-expansions` would list.
+    - `glob-list-expansions` lists the possible wildcard completions of the text before the cursor point.
 - Added some command name synonyms for increased .inputrc file portability with bash:
     - `alias-expand-line` is a synonym for `clink-expand-doskey-alias`.
     - `history-expand-line` is a synonym for `clink-expand-history`.
     - `history-and-alias-expand-line` is a synonym for `clink-expand-history-and-alias`.
     - `insert-last-argument` is a synonym for `yank-last-arg`.
     - `shell-expand-line` is a synonym for `clink-expand-line`.
+- Changed the `match.wild` Clink setting to apply to all completion commands.
 - Removed default key binding <kbd>Alt</kbd>+<kbd>Shift</kbd>+<kbd>H</kbd> for the `clink-show-help-raw` command (it has only niche usefulness).
 - Removed unintended VI mode key binding <kbd>Alt</kbd>+<kbd>Ctrl</kbd>+<kbd>H</kbd>.
 - Fixed `/flag:` and `/flag=` handling quirks, especially when trying to complete an environment variable in `/flag:%env`.
