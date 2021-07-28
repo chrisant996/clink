@@ -1468,7 +1468,6 @@ rl_module::rl_module(const char* shell_name, terminal_in* input, const char* sta
     };
 
     static constexpr const char* const vi_insertion_key_binds[][2] = {
-        { "\\M-\\C-h",      "clink-popup-show-help" },   // alt-ctrl-h
         { "\\M-\\C-i",      "tab-insert" },              // alt-ctrl-i
         { "\\M-\\C-j",      "emacs-editing-mode" },      // alt-ctrl-j
         { "\\M-\\C-k",      "kill-line" },               // alt-ctrl-k
