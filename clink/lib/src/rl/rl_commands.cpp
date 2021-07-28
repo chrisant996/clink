@@ -56,6 +56,7 @@ static setting_enum g_paste_crlf(
     3);
 
 extern setting_bool g_adjust_cursor_style;
+extern setting_bool g_match_wild;
 
 
 
@@ -973,4 +974,52 @@ int cua_cut(int count, int invoking_key)
     cua_copy(0, 0);
     cua_delete();
     return 0;
+}
+
+
+
+//------------------------------------------------------------------------------
+static bool s_globbing_wild = false;
+static bool s_literal_wild = false;
+bool is_globbing_wild() { return s_globbing_wild; }
+bool is_literal_wild() { return s_literal_wild; }
+
+//------------------------------------------------------------------------------
+static int glob_completion_internal(int what_to_do)
+{
+    s_globbing_wild = true;
+    if (!rl_explicit_arg)
+        s_literal_wild = true;
+
+    return rl_complete_internal(what_to_do);
+}
+
+//------------------------------------------------------------------------------
+int glob_complete_word(int count, int invoking_key)
+{
+    if (rl_editing_mode == emacs_mode)
+        rl_explicit_arg = 1; /* force `*' append */
+
+    return glob_completion_internal(rl_completion_mode(glob_complete_word));
+}
+
+//------------------------------------------------------------------------------
+int glob_expand_word(int count, int invoking_key)
+{
+    return glob_completion_internal('*');
+}
+
+//------------------------------------------------------------------------------
+int glob_list_expansions(int count, int invoking_key)
+{
+    return glob_completion_internal('?');
+}
+
+
+
+//------------------------------------------------------------------------------
+void reset_command_states()
+{
+    s_globbing_wild = false;
+    s_literal_wild = false;
 }

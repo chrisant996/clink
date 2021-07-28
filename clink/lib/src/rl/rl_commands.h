@@ -28,6 +28,9 @@ enum
 void    clink_add_funmap_entry(const char *name, rl_command_func_t *function, int cat, const char* desc);
 
 //------------------------------------------------------------------------------
+void    reset_command_states();
+
+//------------------------------------------------------------------------------
 int     show_rl_help(int, int);
 int     show_rl_help_raw(int, int);
 int     clink_what_is(int, int);
@@ -91,3 +94,10 @@ int     cua_end_of_line(int count, int invoking_key);
 int     cua_select_all(int count, int invoking_key);
 int     cua_copy(int count, int invoking_key);
 int     cua_cut(int count, int invoking_key);
+
+//------------------------------------------------------------------------------
+bool    is_globbing_wild();     // Expand wildcards in alternative_matches()?
+bool    is_literal_wild();      // Avoid appending star in alternative_matches()?
+int     glob_complete_word(int count, int invoking_key);
+int     glob_expand_word(int count, int invoking_key);
+int     glob_list_expansions(int count, int invoking_key);

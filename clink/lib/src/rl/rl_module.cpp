@@ -209,7 +209,7 @@ static setting_color g_color_unexpected(
     "values.",
     "default");
 
-static setting_bool g_match_wild(
+setting_bool g_match_wild(
     "match.wild",
     "Match ? and * wildcards when completing",
     "Matches ? and * wildcards when using any of the completion commands.\n"
@@ -824,7 +824,7 @@ void update_rl_modes_from_matches(const matches* matches, const matches_iter& it
 //------------------------------------------------------------------------------
 static bool is_complete_with_wild()
 {
-    return g_match_wild.get();
+    return g_match_wild.get() || is_globbing_wild();
 }
 
 //------------------------------------------------------------------------------
@@ -864,7 +864,8 @@ static char** alternative_matches(const char* text, int start, int end)
             free(expanded);
         }
 
-        tmp.concat("*");
+        if (!is_literal_wild())
+            tmp.concat("*");
         pattern = tmp.c_str();
     }
 
@@ -1410,6 +1411,10 @@ rl_module::rl_module(const char* shell_name, terminal_in* input, const char* sta
         clink_add_funmap_entry("cua-copy", cua_copy, keycat_select, "Copy the selected text to the clipboard");
         clink_add_funmap_entry("cua-cut", cua_cut, keycat_select, "Cut the selected text to the clipboard");
 
+        clink_add_funmap_entry("glob-complete-word", glob_complete_word, keycat_completion, "Perform wildcard completion on the text before the cursor point, with a '*' implicitly appended");
+        clink_add_funmap_entry("glob-expand-word", glob_expand_word, keycat_completion, "Insert all the wildcard completions that 'glob-list-expansions' would list.  If a numeric argument is supplied, a '*' is implicitly appended before completion");
+        clink_add_funmap_entry("glob-list-expansions", glob_list_expansions, keycat_completion, "List the possible wildcard completions of the text before the cursor point.  If a numeric argument is supplied, a '*' is implicitly appended before completion");
+
         extern int clink_diagnostics(int, int);
         clink_add_funmap_entry("clink-diagnostics", clink_diagnostics, keycat_misc, "Show internal diagnostic information");
 
@@ -1443,8 +1448,11 @@ rl_module::rl_module(const char* shell_name, terminal_in* input, const char* sta
         { "\\C-c",          "clink-ctrl-c" },            // ctrl-c
         { "\\C-v",          "clink-paste" },             // ctrl-v
         { "\\C-z",          "undo" },                    // ctrl-z
+        { "\\C-x*",         "glob-expand-word" },        // ctrl-x,*
+        { "\\C-xg",         "glob-list-expansions" },    // ctrl-x,g
         { "\\C-x\\C-r",     "clink-reload" },            // ctrl-x,ctrl-r
         { "\\C-x\\C-z",     "clink-diagnostics" },       // ctrl-x,ctrl-z
+        { "\\M-g",          "glob-complete-word" },      // alt-g
         { "\\e[1;2D",       "cua-backward-char" },       // shift-left
         { "\\e[1;2C",       "cua-forward-char" },        // shift-right
         { "\\e[1;6D",       "cua-backward-word" },       // ctrl-shift-left
@@ -1834,6 +1842,7 @@ void rl_module::on_input(const input& input, result& result, const context& cont
         s_pending_luafunc.clear();
         s_has_override_rl_last_func = false;
         s_override_rl_last_func = nullptr;
+        reset_command_states();
 
         {
             // The history search position gets invalidated as soon as a non-
