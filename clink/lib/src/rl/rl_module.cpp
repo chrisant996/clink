@@ -211,9 +211,8 @@ static setting_color g_color_unexpected(
 
 static setting_bool g_match_wild(
     "match.wild",
-    "menu-complete matches ? and * wildcards",
-    "Matches ? and * wildcards when using any of the menu-complete commands or the\n"
-    "clink-popup-complete command.\n"
+    "Match ? and * wildcards when completing",
+    "Matches ? and * wildcards when using any of the completion commands.\n"
     "Turn this off to behave how bash does, and not match wildcards.",
     true);
 
@@ -823,6 +822,12 @@ void update_rl_modes_from_matches(const matches* matches, const matches_iter& it
 }
 
 //------------------------------------------------------------------------------
+static bool is_complete_with_wild()
+{
+    return g_match_wild.get();
+}
+
+//------------------------------------------------------------------------------
 static char** alternative_matches(const char* text, int start, int end)
 {
     rl_attempted_completion_over = 1;
@@ -840,8 +845,7 @@ static char** alternative_matches(const char* text, int start, int end)
 
     str<> tmp;
     const char* pattern = nullptr;
-    // '%' is menu complete; s_is_popup is popup complete.
-    if (g_match_wild.get() && (rl_completion_type == '%' || s_is_popup))
+    if (is_complete_with_wild())
     {
         // Strip quotes so `"foo\"ba` can complete to `"foo\bar"`.  Stripping
         // quotes may seem surprising, but it's what CMD does and it works well.
