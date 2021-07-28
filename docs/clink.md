@@ -361,6 +361,7 @@ Clink adds some new commands to Readline, beyond what's described in the Readlin
 Name | Description
 :-:|---
 `add-history`|Adds the current line to the history without executing it, and clears the editing line.
+`alias-expand-line`|A synonym for `clink-expand-doskey-alias`.
 `clink-complete-numbers`|Like `complete`, but for numbers from the console screen (3 digits or more, up to hexadecimal).
 `clink-copy-cwd`|Copy the current working directory to the clipboard.
 `clink-copy-line`|Copy the current line to the clipboard.
@@ -370,6 +371,9 @@ Name | Description
 `clink-exit`|Replaces the current line with `exit` and executes it (exits the shell instance).
 `clink-expand-doskey-alias`|Expand the doskey alias (if any) at the beginning of the line.
 `clink-expand-env-var`|Expand the environment variable (e.g. `%FOOBAR%`) at the cursor.
+`clink-expand-history`|Perform history expansion in the current input line.  See the [History](https://tiswww.cwru.edu/php/chet/readline/history.html) manual for information on history expansion.
+`clink-expand-history-and-alias`|Perform history and doskey alias expansion in the current input line.  See the [History](https://tiswww.cwru.edu/php/chet/readline/history.html) manual for information on history expansion.
+`clink-expand-line`|Perform history, doskey alias, and environment variable expansion in the current input line.  See the [History](https://tiswww.cwru.edu/php/chet/readline/history.html) manual for information on history expansion.
 `clink-find-conhost`|Activates the "Find" dialog when running in a standard console window (hosted by the OS conhost).  This is equivalent to picking "Find..." from the console window's system menu.
 `clink-insert-dot-dot`|Inserts `..\` at the cursor.
 `clink-mark-conhost`|Activates the "Mark" mode when running in a standard console window (hosted by the OS conhost).  This is equivalent to picking "Mark" from the console window's system menu.
@@ -405,9 +409,12 @@ Name | Description
 `cua-forward-char`|Extends the selection and moves forward a character.
 `cua-forward-word`|Extends the selection and moves forward a word.
 `cua-select-all`|Extends the selection to the entire current line.
+`history-and-alias-expand-line`|A synonym for `clink-expand-history-and-alias`.
+`history-expand-line`|A synonym for `clink-expand-history`.
 `insert-last-argument`|A synonym for `yank-last-arg`.
 `old-menu-complete-backward`|Like `old-menu-complete`, but in reverse.
 `remove-history`|While searching history, removes the current line from the history.
+`shell-expand-line`|A synonym for `clink-expand-line`.
 
 <a name="completioncolors"></a>
 

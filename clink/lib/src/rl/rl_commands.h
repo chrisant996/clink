@@ -43,6 +43,9 @@ int     clink_copy_word(int count, int invoking_key);
 int     clink_copy_cwd(int count, int invoking_key);
 int     clink_expand_env_var(int count, int invoking_key);
 int     clink_expand_doskey_alias(int count, int invoking_key);
+int     clink_expand_history(int count, int invoking_key);
+int     clink_expand_history_and_alias(int count, int invoking_key);
+int     clink_expand_line(int count, int invoking_key);
 int     clink_up_directory(int count, int invoking_key);
 int     clink_insert_dot_dot(int count, int invoking_key);
 

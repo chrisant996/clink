@@ -1372,6 +1372,9 @@ rl_module::rl_module(const char* shell_name, terminal_in* input, const char* sta
         clink_add_funmap_entry("clink-copy-cwd", clink_copy_cwd, keycat_misc, "Copies the current working directory to the clipboard");
         clink_add_funmap_entry("clink-expand-env-var", clink_expand_env_var, keycat_misc, "Expands environment variables in the word at the cursor point");
         clink_add_funmap_entry("clink-expand-doskey-alias", clink_expand_doskey_alias, keycat_misc, "Expands doskey aliases in the input line");
+        clink_add_funmap_entry("clink-expand-history", clink_expand_history, keycat_misc, "Performs history expansion in the input line");
+        clink_add_funmap_entry("clink-expand-history-and-alias", clink_expand_history_and_alias, keycat_misc, "Performs history and doskey alias expansion in the input line");
+        clink_add_funmap_entry("clink-expand-line", clink_expand_line, keycat_misc, "Performs history, doskey alias, and environment variable expansion in the input line");
         clink_add_funmap_entry("clink-up-directory", clink_up_directory, keycat_misc, "Executes 'cd ..' to move up one directory");
         clink_add_funmap_entry("clink-insert-dot-dot", clink_insert_dot_dot, keycat_misc, "Inserts '..\\' at the cursor point");
         clink_add_funmap_entry("clink-scroll-line-up", clink_scroll_line_up, keycat_scroll, "Scroll up one line");
@@ -1407,7 +1410,11 @@ rl_module::rl_module(const char* shell_name, terminal_in* input, const char* sta
         clink_add_funmap_entry("clink-diagnostics", clink_diagnostics, keycat_misc, "Show internal diagnostic information");
 
         // Alias some command names for convenient compatibility with bash .inputrc configuration entries.
+        rl_add_funmap_entry("alias-expand-line", clink_expand_doskey_alias);
+        rl_add_funmap_entry("history-and-alias-expand-line", clink_expand_history_and_alias);
+        rl_add_funmap_entry("history-expand-line", clink_expand_history);
         rl_add_funmap_entry("insert-last-argument", rl_yank_last_arg);
+        rl_add_funmap_entry("shell-expand-line", clink_expand_line);
 
         // Override some defaults.
         _rl_bell_preference = VISIBLE_BELL;     // Because audible is annoying.
@@ -1467,6 +1474,7 @@ rl_module::rl_module(const char* shell_name, terminal_in* input, const char* sta
         { "\\e[1;3A",       "clink-scroll-line-up" },    // alt-up
         { "\\e[1;3B",       "clink-scroll-line-down" },  // alt-down
         { "\\e?",           "clink-what-is" },           // alt-?
+        { "\\e^",           "clink-expand-history" },    // alt-^
         {}
     };
 

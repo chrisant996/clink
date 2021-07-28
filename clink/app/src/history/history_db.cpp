@@ -1566,3 +1566,11 @@ bool history_db::is_stale_name() const
     get_file_path(path, false);
     return !path.equals(m_bank_filenames[bank_master].c_str());
 }
+
+
+
+//------------------------------------------------------------------------------
+bool expand_history(const char* in, str_base& out)
+{
+    return history_db::expand(in, out) >= history_db::expand_result::expand_ok;
+}

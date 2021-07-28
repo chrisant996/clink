@@ -66,6 +66,12 @@ extern bool s_force_reload_scripts;
 extern editor_module::result* g_result;
 extern void host_cmd_enqueue_lines(std::list<str_moveable>& lines);
 
+// This is implemented in the app layer, which makes it inaccessible to lower
+// layers.  But Readline and History are siblings, so history_db and rl_module
+// and rl_commands should be siblings.  That's a lot of reshuffling for little
+// benefit, so just use a forward decl for now.
+extern bool expand_history(const char* in, str_base& out);
+
 //------------------------------------------------------------------------------
 static void write_line_feed()
 {
@@ -452,30 +458,88 @@ int clink_expand_env_var(int count, int invoking_key)
 }
 
 //------------------------------------------------------------------------------
-// Expands a doskey alias (but only the first line, if $T is present).
-int clink_expand_doskey_alias(int count, int invoking_key)
+enum { el_alias = 1, el_envvar = 2, el_history = 4 };
+static int do_expand_line(int flags)
 {
-    doskey_alias alias;
-    doskey doskey("cmd.exe");
-    doskey.resolve(g_rl_buffer->get_buffer(), alias);
+    bool expanded = false;
+    str<> in;
+    str<> out;
 
-    if (!alias)
+    in = g_rl_buffer->get_buffer();
+
+    if (flags & el_history)
+    {
+        if (expand_history(in.c_str(), out))
+        {
+            in = out.c_str();
+            expanded = true;
+        }
+    }
+
+    if (flags & el_alias)
+    {
+        doskey_alias alias;
+        doskey doskey("cmd.exe");
+        doskey.resolve(in.c_str(), alias);
+        if (alias)
+        {
+            alias.next(out);
+            in = out.c_str();
+            expanded = true;
+        }
+    }
+
+    if (flags & el_envvar)
+    {
+        if (os::expand_env(in.c_str(), out))
+        {
+            in = out.c_str();
+            expanded = true;
+        }
+    }
+
+    if (!expanded)
     {
         rl_ding();
         return 0;
     }
 
-    str<> expand;
-    alias.next(expand);
-
     g_rl_buffer->begin_undo_group();
     g_rl_buffer->remove(0, rl_end);
     rl_point = 0;
-    if (!expand.empty())
-        g_rl_buffer->insert(expand.c_str());
+    if (!out.empty())
+        g_rl_buffer->insert(out.c_str());
     g_rl_buffer->end_undo_group();
 
     return 0;
+}
+
+//------------------------------------------------------------------------------
+// Expands a doskey alias (but only the first line, if $T is present).
+int clink_expand_doskey_alias(int count, int invoking_key)
+{
+    return do_expand_line(el_alias);
+}
+
+//------------------------------------------------------------------------------
+// Performs history expansion.
+int clink_expand_history(int count, int invoking_key)
+{
+    return do_expand_line(el_history);
+}
+
+//------------------------------------------------------------------------------
+// Performs history and doskey alias expansion.
+int clink_expand_history_and_alias(int count, int invoking_key)
+{
+    return do_expand_line(el_history|el_alias);
+}
+
+//------------------------------------------------------------------------------
+// Performs history and doskey alias expansion.
+int clink_expand_line(int count, int invoking_key)
+{
+    return do_expand_line(el_history|el_alias|el_envvar);
 }
 
 //------------------------------------------------------------------------------
