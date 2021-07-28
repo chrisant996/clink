@@ -2,6 +2,24 @@
 
 ### Releases from [chrisant996/clink](https://github.com/chrisant996/clink) fork
 
+#### v1.2.25
+
+- Added `cua-select-all` command to select the entire input line.
+- Added some new expansion commands:
+    - `clink-expand-history` performs history expansion on the current input line.
+    - `clink-expand-history-and-alias` performs history and doskey alias expansion on the current input line.
+    - `clink-expand-line` performs history, doskey alias, and environment variable expansion on the current input line.
+- Added some command name synonyms for increased .inputrc file portability with bash:
+    - `alias-expand-line` is a synonym for `clink-expand-doskey-alias`.
+    - `history-expand-line` is a synonym for `clink-expand-history`.
+    - `history-and-alias-expand-line` is a synonym for `clink-expand-history-and-alias`.
+    - `insert-last-argument` is a synonym for `yank-last-arg`.
+    - `shell-expand-line` is a synonym for `clink-expand-line`.
+- Removed default key binding <kbd>Alt</kbd>+<kbd>Shift</kbd>+<kbd>H</kbd> for the `clink-show-help-raw` command (it has only niche usefulness).
+- Removed unintended VI mode key binding <kbd>Alt</kbd>+<kbd>Ctrl</kbd>+<kbd>H</kbd>.
+- Fixed `/flag:` and `/flag=` handling quirks, especially when trying to complete an environment variable in `/flag:%env`.
+- Fixed quirks about environment variable expansion in the `clink-expand-env-var` command and the `os.expandenv()` function.
+
 #### v1.2.24
 
 - Added support for `%CLINK_RPROMPT%` to show a right side prompt, and for prompt filters to define a `:rightfilter()` function to filter the right side prompt.
