@@ -813,6 +813,7 @@ void cua_after_command(bool force_clear)
         s_map.emplace(cua_forward_word);
         s_map.emplace(cua_beg_of_line);
         s_map.emplace(cua_end_of_line);
+        s_map.emplace(cua_select_all);
         s_map.emplace(cua_copy);
         s_map.emplace(cua_cut);
 
@@ -874,6 +875,15 @@ int cua_end_of_line(int count, int invoking_key)
 {
     cua_selection_manager mgr;
     return rl_end_of_line(count, invoking_key);
+}
+
+//------------------------------------------------------------------------------
+int cua_select_all(int count, int invoking_key)
+{
+    cua_selection_manager mgr;
+    s_cua_anchor = 0;
+    rl_point = rl_end;
+    return 0;
 }
 
 //------------------------------------------------------------------------------

@@ -1399,6 +1399,7 @@ rl_module::rl_module(const char* shell_name, terminal_in* input, const char* sta
         clink_add_funmap_entry("cua-forward-word", cua_forward_word, keycat_select, "Extend selection forward one word");
         clink_add_funmap_entry("cua-beg-of-line", cua_beg_of_line, keycat_select, "Extend selection to the beginning of the line");
         clink_add_funmap_entry("cua-end-of-line", cua_end_of_line, keycat_select, "Extend selection to the end of the line");
+        clink_add_funmap_entry("cua-select-all", cua_select_all, keycat_select, "Extend selection to the entire line");
         clink_add_funmap_entry("cua-copy", cua_copy, keycat_select, "Copy the selected text to the clipboard");
         clink_add_funmap_entry("cua-cut", cua_cut, keycat_select, "Cut the selected text to the clipboard");
 

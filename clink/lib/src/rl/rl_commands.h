@@ -85,5 +85,6 @@ int     cua_backward_word(int count, int invoking_key);
 int     cua_forward_word(int count, int invoking_key);
 int     cua_beg_of_line(int count, int invoking_key);
 int     cua_end_of_line(int count, int invoking_key);
+int     cua_select_all(int count, int invoking_key);
 int     cua_copy(int count, int invoking_key);
 int     cua_cut(int count, int invoking_key);
