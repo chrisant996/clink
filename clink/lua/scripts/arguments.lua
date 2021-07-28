@@ -48,9 +48,10 @@ _argreader.__index = _argreader
 setmetatable(_argreader, { __call = function (x, ...) return x._new(...) end })
 
 --------------------------------------------------------------------------------
-function _argreader._new(root)
+function _argreader._new(root, line_state)
     local reader = setmetatable({
         _matcher = root,
+        _line_state = line_state,
         _arg_index = 1,
         _stack = {},
     }, _argreader)
@@ -61,8 +62,9 @@ end
 -- When word_index is < 0, skip classifying the word, and skip trying to figure
 -- out whether a `-foo:` word should avoid following a linked parser.  This only
 -- happens when parsing extra words from expanding a doskey alias.
-function _argreader:update(word, word_index, line_state)
+function _argreader:update(word, word_index)
     local arg_match_type = "a" --arg
+    local line_state = self._line_state
 
     -- Check for flags and switch matcher if the word is a flag.
     local matcher = self._matcher
@@ -107,7 +109,7 @@ function _argreader:update(word, word_index, line_state)
 
     -- Parse the word type.
     if self._word_classifier and word_index >= 0 then
-        if matcher._classify_func and matcher._classify_func(arg_index, word, word_index, self._line_state, self._word_classifier) then
+        if matcher._classify_func and matcher._classify_func(arg_index, word, word_index, line_state, self._word_classifier) then
             -- The classifier function says it handled the word.
         else
             -- Use the argmatcher's data to classify the word.
@@ -120,20 +122,24 @@ function _argreader:update(word, word_index, line_state)
                 -- :classify function to complement a :generate function.
                 local matched = false
                 if arg_match_type == "f" then
-                    -- When the word is a flag and contains : or = then check if
-                    -- the portion up to and including the : or = is a known
-                    -- flag.  When so, color the whole thing as a flag.
-                    local attached_pos = word:find("[:=]")
-                    if attached_pos then
-                        local prefix = word:sub(1, attached_pos)
-                        if arg._links and arg._links[prefix] then
+                    -- When the word is a flag and ends with : or = then check
+                    -- if the word concatenated with an adjacent following word
+                    -- matches a known flag.  When so, classify both words.
+                    if word:sub(-1):match("[:=]") then
+                        if arg._links and arg._links[word] then
                             t = arg_match_type
                         else
-                            for _, i in ipairs(arg) do
-                                if type(i) ~= "function" and i == prefix then
-                                    t = arg_match_type
-                                    matched = true
-                                    break
+                            local this_info = line_state:getwordinfo(word_index)
+                            local next_info = line_state:getwordinfo(word_index + 1)
+                            if this_info and next_info and this_info.offset + this_info.length == next_info.offset then
+                                local combined_word = word..line_state:getword(word_index + 1)
+                                for _, i in ipairs(arg) do
+                                    if type(i) ~= "function" and i == combined_word then
+                                        t = arg_match_type
+                                        self._word_classifier:classifyword(word_index + 1, t, false)
+                                        matched = true
+                                        break
+                                    end
                                 end
                             end
                         end
@@ -481,7 +487,7 @@ end
 
 --------------------------------------------------------------------------------
 function _argmatcher:_generate(line_state, match_builder, extra_words)
-    local reader = _argreader(self)
+    local reader = _argreader(self, line_state)
 
     -- Consume extra words from expanded doskey alias.
     if extra_words then
@@ -494,7 +500,7 @@ function _argmatcher:_generate(line_state, match_builder, extra_words)
     local word_count = line_state:getwordcount()
     for word_index = 2, (word_count - 1) do
         local word = line_state:getword(word_index)
-        reader:update(word, word_index, line_state)
+        reader:update(word, word_index)
     end
 
     -- There should always be a matcher left on the stack, but the arg_index
@@ -830,7 +836,7 @@ end
 function argmatcher_generator:getwordbreakinfo(line_state)
     local argmatcher, has_argmatcher, extra_words = _find_argmatcher(line_state)
     if argmatcher then
-        local reader = _argreader(argmatcher)
+        local reader = _argreader(argmatcher, line_state)
 
         -- Consume extra words from expanded doskey alias.
         if extra_words then
@@ -843,7 +849,7 @@ function argmatcher_generator:getwordbreakinfo(line_state)
         local word_count = line_state:getwordcount()
         for word_index = 2, (word_count - 1) do
             local word = line_state:getword(word_index)
-            reader:update(word, word_index, line_state)
+            reader:update(word, word_index)
         end
 
         -- There should always be a matcher left on the stack, but the arg_index
@@ -890,8 +896,7 @@ function argmatcher_classifier:classify(commands)
         end
 
         if argmatcher then
-            local reader = _argreader(argmatcher)
-            reader._line_state = line_state
+            local reader = _argreader(argmatcher, line_state)
             reader._word_classifier = word_classifier
 
             -- Consume extra words from expanded doskey alias.
@@ -904,7 +909,7 @@ function argmatcher_classifier:classify(commands)
             -- Consume words and use them to move through matchers' arguments.
             for word_index = 2, word_count do
                 local word = line_state:getword(word_index)
-                reader:update(word, word_index, line_state)
+                reader:update(word, word_index)
             end
         end
     end

@@ -770,6 +770,10 @@ unsigned int line_editor_impl::collect_words(words& words, matches_impl* matches
 {
     unsigned int command_offset = m_collector.collect_words(m_buffer, words, mode);
 
+#ifdef DEBUG
+    const int dbg_row = dbg_get_env_int("DEBUG_COLLECTWORDS");
+#endif
+
     // The last word can be split by the match generators, to influence word
     // breaks. This is a little clunky but works well enough.
     line_state line { m_buffer.get_buffer(), m_buffer.get_cursor(), command_offset, words };
@@ -779,26 +783,21 @@ unsigned int line_editor_impl::collect_words(words& words, matches_impl* matches
         word_break_info break_info = {};
         const char *word_start = m_buffer.get_buffer() + end_word->offset;
 
-        // First try to accommodate `-flag:text` and `-flag=text` (with or
-        // without quotes) so that matching can happen for the `text` portion.
-        if (strchr("-/", *word_start))
+#ifdef DEBUG
+        if (dbg_row > 0)
         {
-            for (const char* walk = word_start; *walk && !isspace((unsigned char)*walk); walk++)
+            str<> tmp;
+            tmp.format("\x1b[s\x1b[%dHcollected words:        ", dbg_row);
+            m_printer.print(tmp.c_str(), tmp.length());
+            for (auto const& w : words)
             {
-                if (strchr(":=", *walk))
-                {
-                    if (walk[1] &&
-                        (rl_completer_quote_characters && strchr(rl_completer_quote_characters, walk[1])) ||
-                        (rl_basic_quote_characters && strchr(rl_basic_quote_characters, walk[1])))
-                        walk++;
-// TODO: This should probably build a new line_state, otherwise e.g. `/f:%user`
-// isn't able to complete the envvar name.
-                    break_info.truncate = walk + 1 - word_start;
-                    break_info.keep = end_word->length - break_info.truncate;
-                    break;
-                }
+                str<> tmp;
+                tmp.format("\x1b[0;37;7m%.*s\x1b[m ", w.length, m_buffer.get_buffer() + w.offset);
+                m_printer.print(tmp.c_str(), tmp.length());
             }
+            m_printer.print("\x1b[K\x1b[u");
         }
+#endif
 
         for (const auto *generator : m_generators)
         {
@@ -829,10 +828,47 @@ unsigned int line_editor_impl::collect_words(words& words, matches_impl* matches
         int keep = min<unsigned int>(break_info.keep, end_word->length);
         end_word->length = keep;
 
+#ifdef DEBUG
+        if (dbg_row > 0)
+        {
+            str<> tmp;
+            int i_word = 1;
+            tmp.format("\x1b[s\x1b[%dHafter word break info:  ", dbg_row + 1);
+            m_printer.print(tmp.c_str(), tmp.length());
+            for (auto const& w : words)
+            {
+                str<> tmp;
+                if (i_word == words.size())
+                {
+                    tmp.format("\x1b[0;35;7m%.*s\x1b[0;37;7m%.*s\x1b[m ",
+                        keep, m_buffer.get_buffer() + w.offset,
+                        w.length - keep, m_buffer.get_buffer() + w.offset + keep);
+                }
+                else
+                {
+                    tmp.format("\x1b[0;37;7m%.*s\x1b[m ", w.length, m_buffer.get_buffer() + w.offset);
+                }
+                m_printer.print(tmp.c_str(), tmp.length());
+                i_word++;
+            }
+            m_printer.print("\x1b[K\x1b[u");
+        }
+#endif
+
         // Need to coordinate with Readline when we redefine word breaks.
         assert(matches);
         matches->set_word_break_position(end_word->offset);
     }
+#ifdef DEBUG
+    else if (dbg_row > 0)
+    {
+        str<> tmp;
+        tmp.format("\x1b[s\x1b[%dH\x1b[mno words collected\x1b[K\x1b[u", dbg_row);
+        m_printer.print(tmp.c_str(), tmp.length());
+        tmp.format("\x1b[s\x1b[%dH\x1b[m\x1b[K\x1b[u", dbg_row + 1);
+        m_printer.print(tmp.c_str(), tmp.length());
+    }
+#endif
 
     return command_offset;
 }

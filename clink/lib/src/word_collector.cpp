@@ -145,14 +145,34 @@ unsigned int word_collector::collect_words(const char* line_buffer, unsigned int
             // Rather that redesign the system or dream up a complex solution,
             // we'll use a simple(ish) mitigation that works the vast majority
             // of the time because / and - are the only flag characters in
-            // widespread use.  If the word starts with / or - and the next
-            // character in the line is = then add it to the word.
-            if (word_length > 1 && strchr("-/", line_buffer[offset]))
+            // widespread use.
+            //
+            // If the word starts with / or - the word gets special treatment:
+            //  - When = immediately follows the end of the word, it is added to
+            //    the word.
+            //  - When : is reached, it splits the word.
+            if (word_length > 1 && strchr("-/", *word_start))
             {
-                while (offset + word_length < command.offset + command.length &&
-                    line_buffer[offset + word_length] == '=')
+                str_iter split_iter(word_start, word_length);
+                while (int c = split_iter.next())
                 {
-                    word_length++;
+                    if (c == ':')
+                    {
+                        const unsigned int split_len = unsigned(split_iter.get_pointer() - word_start);
+                        words.push_back({offset, split_len, first, false/*is_alias*/, 0, ':'});
+                        offset += split_len;
+                        word_length -= split_len;
+                        first = false;
+                        break;
+                    }
+                    else if (!split_iter.more())
+                    {
+                        while (offset + word_length < command.offset + command.length &&
+                               line_buffer[offset + word_length] == '=')
+                        {
+                            word_length++;
+                        }
+                    }
                 }
             }
 
@@ -190,7 +210,7 @@ unsigned int word_collector::collect_words(const char* line_buffer, unsigned int
     }
 
 #ifdef DEBUG
-    if (dbg_get_env_int("DEBUG_COLLECTWORDS"))
+    if (dbg_get_env_int("DEBUG_COLLECTWORDS") < 0)
     {
         for (word& word : words)
         {
