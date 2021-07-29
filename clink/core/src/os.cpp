@@ -333,12 +333,17 @@ bool expand_env(const char* in, unsigned int in_len, str_base& out)
                 iter.next();
 
                 str<> value;
-                os::get_env(var.c_str(), value);
+                if (!os::get_env(var.c_str(), value))
+                {
+                    end++;
+                    goto LLiteral;
+                }
                 out << value.c_str();
                 expanded = true;
             }
             else
             {
+LLiteral:
                 out.concat(start, int(end - start));
             }
         }
