@@ -5,10 +5,8 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 # IMPROVEMENTS
 
 ## High Priority
-- `More?` prompt isn't handled correctly with queued input.
 
 ## Medium Priority
-- Classify queued input lines?
 - https://github.com/mridgers/clink/issues/476 -- Maybe add an option for completion of `%envvar%` to actually expand the envvar?
   - Implemented a prototype, but it's not right because it's a cooperative approach: each generator must be updated to expand envvars.
   - It seems like the line_editor_impl should expand envvars in the line_state before calling generators -- which implies some careful rl_point translations!
@@ -60,6 +58,7 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 - `LOG()` certain important failure information inside Detours.  _[Low value; also, I want to avoid making any changes inside Detours.]_
 - Provide API to show an input box?  But make it fail if used from outside a "luafunc:" macro.  _[Questionable usage pattern; just make the "luafunc:" macro invoke a standalone program (or even standalone Lua script) that can accept input however it likes.]_
 - Provide API to set Readline key binding?  _[Convenient, but also makes it very easy for third party scripts to override a user's explicit configuration choices.  In addition to that being a bit overly powerful, I want to avoid support requests caused by third party macros overriding user configuration.]_
+- Classify queued input lines?  _[Low value, high cost; the module layer knows about coloring, but queued lines are handled by the host layer without ever reaching the module layer.]_
 
 <br/>
 <br/>

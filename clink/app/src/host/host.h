@@ -28,6 +28,7 @@ public:
 
     const char*     filter_prompt(const char** rprompt);
     void            enqueue_lines(std::list<str_moveable>& lines);
+    bool            dequeue_line(wstr_base& out);
 
 protected:
     bool            edit_line(const char* prompt, const char* rprompt, str_base& out);

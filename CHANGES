@@ -22,6 +22,7 @@
 - Changed the `match.wild` Clink setting to apply to all completion commands.
 - Removed default key binding <kbd>Alt</kbd>+<kbd>Shift</kbd>+<kbd>H</kbd> for the `clink-show-help-raw` command (it has only niche usefulness).
 - Removed unintended VI mode key binding <kbd>Alt</kbd>+<kbd>Ctrl</kbd>+<kbd>H</kbd>.
+- Fixed `More?` continuation prompt when pasting multiple lines.
 - Fixed `/flag:` and `/flag=` handling quirks, especially when trying to complete an environment variable in `/flag:%env`.
 - Fixed quirks about environment variable expansion in the `clink-expand-env-var` command and the `os.expandenv()` function.
 

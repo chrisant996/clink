@@ -116,6 +116,45 @@ static int check_auto_answer()
 }
 
 //------------------------------------------------------------------------------
+static bool s_more_continuation = false;
+static void check_more_continuation(const wchar_t* prompt, DWORD len)
+{
+    static wstr<72> more_prompt;
+
+    // Try and find the localised prompt.
+    if (more_prompt.empty())
+    {
+        // cmd.exe's translations are stored in a message table result in
+        // the cmd.exe.mui overlay.
+        bool fallback = (!get_mui_string(0x2532, more_prompt));
+
+        // Strip off new line chars.
+        for (wchar_t* c = more_prompt.data(); *c; ++c)
+            if (*c == '\r' || *c == '\n')
+                *c = '\0';
+
+        // Fall back to English.
+        if (fallback || more_prompt.empty())
+            more_prompt = L"More? ";
+    }
+
+    s_more_continuation = false;
+    for (const wchar_t* more = more_prompt.c_str(); true;)
+    {
+        if (!len && !*more)
+        {
+            s_more_continuation = true;
+            break;
+        }
+        if (!len || !*more || *prompt != *more)
+            break;
+        len--;
+        more++;
+        prompt++;
+    }
+}
+
+//------------------------------------------------------------------------------
 static BOOL WINAPI single_char_read(
     HANDLE input,
     wchar_t* buffer,
@@ -395,6 +434,9 @@ BOOL WINAPI host_cmd::read_console(
 {
     seh_scope seh;
 
+    const bool more_continuation = s_more_continuation;
+    s_more_continuation = false;
+
     // if the input handle isn't a console handle then go the default route.
     if (GetFileType(input) != FILE_TYPE_CHAR)
         return ReadConsoleW(input, chars, max_chars, read_in, control);
@@ -407,22 +449,36 @@ BOOL WINAPI host_cmd::read_console(
 
     s_answered = 0;
 
-    // Sometimes cmd.exe wants line input for reasons other than command entry.
-    const wchar_t* prompt = host_cmd::get()->m_prompt.get();
-    if (prompt == nullptr || *prompt == L'\0')
-        return ReadConsoleW(input, chars, max_chars, read_in, control);
-
-    // Redirection in CMD can change CMD's STD handles, causing Clink's C
-    // runtime to have stale handles.  Check and reset them if necessary.
-    reset_stdio_handles();
-
+    wstr_base line(chars, max_chars);
+    if (more_continuation && host_cmd::get()->dequeue_line(line))
     {
+        // Respond with the dequeued line.
+        DWORD written;
+        while (line.length() && line.c_str()[line.length() - 1] == '\n')
+            line.truncate(line.length() - 1);
+        HANDLE h = GetStdHandle(STD_OUTPUT_HANDLE);
+        WriteConsoleW(h, line.c_str(), line.length(), &written, nullptr);
+        WriteConsoleW(h, L"\r\n", 2, &written, nullptr);
+    }
+    else
+    {
+        // Cmd.exe can want line input for reasons other than command entry.
+        const wchar_t* prompt = host_cmd::get()->m_prompt.get();
+        if (prompt == nullptr || *prompt == L'\0')
+            return ReadConsoleW(input, chars, max_chars, read_in, control);
+
+        // Redirection in CMD can change CMD's STD handles, causing Clink's C
+        // runtime to have stale handles.  Check and reset them if necessary.
+        reset_stdio_handles();
+
         // Surround the entire edit_line() scope, otherwise any time Clink
         // doesn't read input fast enough the OS can handle processed input
         // while it's enabled between ReadConsoleInputW calls.
-        console_config cc(input);
-        reset_wcwidths();
-        host_cmd::get()->edit_line(chars, max_chars);
+        {
+            console_config cc(input);
+            reset_wcwidths();
+            host_cmd::get()->edit_line(chars, max_chars);
+        }
     }
 
     // ReadConsole will also include the CRLF of the line that was input.
@@ -446,17 +502,24 @@ BOOL WINAPI host_cmd::write_console(
 {
     seh_scope seh;
 
-    // if the output handle isn't a console handle then go the default route.
-    if (GetFileType(output) != FILE_TYPE_CHAR)
-        return WriteConsoleW(output, chars, to_write, written, unused);
-
-    if (host_cmd::get()->capture_prompt(chars, to_write))
+    // If the output handle is a console handle then handle prompts.
+    if (GetFileType(output) == FILE_TYPE_CHAR)
     {
-        // Convince caller (cmd.exe) that we wrote something to the console.
-        if (written != nullptr)
-            *written = to_write;
+        // Check if the output looks like the More? continuation prompt.
+        check_more_continuation(chars, to_write);
 
-        return TRUE;
+        // If it's the tagged prompt then convince caller (cmd.exe) that we
+        // wrote something to the console, and return without writing anything.
+        // The ReadConsoleW hook will handle displaying the prompt and accepting
+        // an input line.
+        if (host_cmd::get()->capture_prompt(chars, to_write))
+        {
+            // Convince caller (cmd.exe) that we wrote something to the console.
+            if (written != nullptr)
+                *written = to_write;
+
+            return TRUE;
+        }
     }
 
     return WriteConsoleW(output, chars, to_write, written, unused);

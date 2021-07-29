@@ -653,6 +653,17 @@ void host::enqueue_lines(std::list<str_moveable>& lines)
 }
 
 //------------------------------------------------------------------------------
+bool host::dequeue_line(wstr_base& out)
+{
+    if (m_queued_lines.empty())
+        return false;
+
+    out = m_queued_lines.front().c_str();
+    m_queued_lines.pop_front();
+    return true;
+}
+
+//------------------------------------------------------------------------------
 bool host::edit_line(const char* prompt, const char* rprompt, str_base& out)
 {
     assert(!m_prompt); // Reentrancy not supported!
