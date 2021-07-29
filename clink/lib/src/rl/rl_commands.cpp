@@ -68,6 +68,7 @@ extern bool s_force_reload_scripts;
 extern editor_module::result* g_result;
 extern void host_cmd_enqueue_lines(std::list<str_moveable>& lines);
 extern void host_add_history(int, const char* line);
+extern "C" int show_cursor(int visible);
 
 // This is implemented in the app layer, which makes it inaccessible to lower
 // layers.  But Readline and History are siblings, so history_db and rl_module
@@ -1057,12 +1058,14 @@ LUnlinkFile:
     fclose(file);
     file = nullptr;
 
-    // Save console state.
+    // Save and reset console state.
     HANDLE std_handles[2] = { GetStdHandle(STD_INPUT_HANDLE), GetStdHandle(STD_OUTPUT_HANDLE) };
     DWORD prev_mode[2];
     static_assert(_countof(std_handles) == _countof(prev_mode), "array sizes much match");
     for (size_t i = 0; i < _countof(std_handles); ++i)
         GetConsoleMode(std_handles[i], &prev_mode[i]);
+    SetConsoleMode(std_handles[0], (prev_mode[0] | ENABLE_PROCESSED_INPUT) & ~(ENABLE_WINDOW_INPUT|ENABLE_MOUSE_INPUT));
+    bool was_visible = show_cursor(true);
     rl_clear_signals();
 
     // Build editor command.
@@ -1078,6 +1081,7 @@ LUnlinkFile:
     const int exit_code = _wsystem(wcommand.c_str());
 
     // Restore console state.
+    show_cursor(was_visible);
     for (size_t i = 0; i < _countof(std_handles); ++i)
         SetConsoleMode(std_handles[i], prev_mode[i]);
     rl_set_signals();
