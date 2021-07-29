@@ -7,12 +7,6 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 ## High Priority
 
 ## Medium Priority
-- https://github.com/mridgers/clink/issues/476 -- Maybe add an option for completion of `%envvar%` to actually expand the envvar?
-  - Implemented a prototype, but it's not right because it's a cooperative approach: each generator must be updated to expand envvars.
-  - It seems like the line_editor_impl should expand envvars in the line_state before calling generators -- which implies some careful rl_point translations!
-  - [ ] Or just make all the completion functions first expand envvars in the current word.
-    - That's mostly fine, except it's a little weird for `possible-completions`.
-    - But on the other hand, it's a choice between mysteriously showing no matches vs expanding envvars in place -- neither is very good, but mysterious is more confusing than expanding.
 
 ## Low Priority
 - [ ] Preserve cursor point when performing history, doskey alias, or envvar expansion.

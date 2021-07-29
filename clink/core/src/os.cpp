@@ -298,13 +298,13 @@ FILE* create_temp_file(str_base* out, const char* _prefix, const char* _ext, tem
 }
 
 //------------------------------------------------------------------------------
-bool expand_env(const char* in, str_base& out)
+bool expand_env(const char* in, unsigned int in_len, str_base& out)
 {
     bool expanded = false;
 
     out.clear();
 
-    str_iter iter(in);
+    str_iter iter(in, in_len);
     while (iter.more())
     {
         const char* start = iter.get_pointer();

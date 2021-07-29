@@ -78,6 +78,8 @@ extern void sort_match_list(char** matches, int len);
 extern int macro_hook_func(const char* macro);
 extern int filter_matches(char** matches);
 extern void update_matches();
+extern void reset_generate_matches();
+extern void force_update_internal(bool restrict, bool sort);
 extern matches* maybe_regenerate_matches(const char* needle, bool popup, bool sort=false);
 extern setting_color g_color_interact;
 extern int g_prompt_refilter;
@@ -208,6 +210,12 @@ static setting_color g_color_unexpected(
     "doesn't match any expected\n"
     "values.",
     "default");
+
+setting_bool g_match_expand_envvars(
+    "match.expand_envvars",
+    "Expand envvars when completing",
+    "Expands environment variables in a word before performing completion.",
+    false);
 
 setting_bool g_match_wild(
     "match.wild",
@@ -683,6 +691,57 @@ static int complete_fncmp(const char *convfn, int convlen, const char *filename,
     // _rl_completion_case_fold because (1) this is Windows and (2) the
     // alternative is to write our own wildcard matching implementation.
     return 1;
+}
+
+//------------------------------------------------------------------------------
+static void adjust_completion_defaults()
+{
+    if (!s_matches || !g_rl_buffer || !g_match_expand_envvars.get())
+        return;
+
+    const int word_break = s_matches->get_word_break_position();
+    const int word_len = g_rl_buffer->get_cursor() - word_break;
+    const char* buffer = g_rl_buffer->get_buffer();
+
+#ifdef DEBUG
+    const int dbg_row = dbg_get_env_int("DEBUG_EXPANDENVVARS");
+    if (dbg_row > 0)
+    {
+        str<> tmp;
+        tmp.format("\x1b[s\x1b[%dHexpand envvars in:  ", dbg_row);
+        g_printer->print(tmp.c_str(), tmp.length());
+        tmp.format("\x1b[0;37;7m%.*s\x1b[m", word_len, buffer + word_break);
+        g_printer->print(tmp.c_str(), tmp.length());
+        g_printer->print("\x1b[K\x1b[u");
+    }
+#endif
+
+    str<> out;
+    if (os::expand_env(buffer + word_break, word_len, out))
+    {
+        const bool quoted = (rl_filename_quote_characters &&
+                             rl_completer_quote_characters &&
+                             *rl_completer_quote_characters &&
+                             word_break > 0 &&
+                             buffer[word_break - 1] == *rl_completer_quote_characters);
+        const bool need_quote = !quoted && _rl_strpbrk(out.c_str(), rl_filename_quote_characters);
+        const char qc = need_quote ? *rl_completer_quote_characters : '\0';
+        const char qs[2] = { qc };
+        bool close_quote = qc && buffer[word_break + word_len] != qc;
+
+        g_rl_buffer->begin_undo_group();
+        g_rl_buffer->set_cursor(word_break);
+        g_rl_buffer->remove(word_break, word_break + word_len);
+        if (qc)
+            g_rl_buffer->insert(qs);
+        g_rl_buffer->insert(out.c_str());
+        if (close_quote)
+            g_rl_buffer->insert(qs);
+        g_rl_buffer->end_undo_group();
+
+        force_update_internal(false, false); // Update needle since line changed.
+        reset_generate_matches();
+    }
 }
 
 //------------------------------------------------------------------------------
@@ -1342,6 +1401,7 @@ rl_module::rl_module(const char* shell_name, terminal_in* input, const char* sta
     rl_ignore_some_completions_function = filter_matches;
     rl_attempted_completion_function = alternative_matches;
     rl_menu_completion_entry_function = filename_menu_completion_function;
+    rl_adjust_completion_defaults = adjust_completion_defaults;
     rl_adjust_completion_word = adjust_completion_word;
     rl_completion_display_matches_func = display_matches;
     rl_qsort_match_list_func = sort_match_list;

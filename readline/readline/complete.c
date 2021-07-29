@@ -360,6 +360,10 @@ rl_cpvfunc_t *rl_completion_word_break_hook = (rl_cpvfunc_t *)NULL;
    list of matches.  It can accommodate any special sorting behavior the host
    may require, such as ignoring trailing path separators. */
 rl_qsort_match_list_func_t *rl_qsort_match_list_func = (rl_qsort_match_list_func_t *)NULL;
+/* Hook function to allow an application to adjust the completion defaults
+   before readline tries to perform completion.  This may even change
+   rl_line_buffer, rl_point, rl_end, or etc. */
+rl_voidfunc_t *rl_adjust_completion_defaults = (rl_voidfunc_t *)NULL;
 /* Hook function to allow an application to adjust the found completion
    word before readline tries to complete it. */
 rl_adjcmpwrd_func_t *rl_adjust_completion_word = (rl_adjcmpwrd_func_t *)NULL;
@@ -626,6 +630,11 @@ set_completion_defaults (int what_to_do)
     xfree (orig_text_for_completion);
   orig_text_for_completion = 0;
   orig_text_len_for_completion = 0;
+/* end_clink_change */
+
+/* begin_clink_change */
+  if (rl_adjust_completion_defaults)
+    rl_adjust_completion_defaults ();
 /* end_clink_change */
 }
 

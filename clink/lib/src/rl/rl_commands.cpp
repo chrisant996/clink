@@ -451,7 +451,7 @@ int clink_expand_env_var(int count, int invoking_key)
     in.concat(g_rl_buffer->get_buffer() + word_left, word_right - word_left);
 
     str<> out;
-    os::expand_env(in.c_str(), out);
+    os::expand_env(in.c_str(), in.length(), out);
 
     // Update Readline with the resulting expansion.
     g_rl_buffer->begin_undo_group();
@@ -497,7 +497,7 @@ static int do_expand_line(int flags)
 
     if (flags & el_envvar)
     {
-        if (os::expand_env(in.c_str(), out))
+        if (os::expand_env(in.c_str(), in.length(), out))
         {
             in = out.c_str();
             expanded = true;

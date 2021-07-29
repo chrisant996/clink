@@ -431,7 +431,7 @@ int expand_env(lua_State* state)
         return 0;
 
     str<280> out;
-    os::expand_env(in, out);
+    os::expand_env(in, static_cast<unsigned int>(strlen(in)), out);
 
     lua_pushlstring(state, out.c_str(), out.length());
     return 1;

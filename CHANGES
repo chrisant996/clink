@@ -19,6 +19,7 @@
     - `history-and-alias-expand-line` is a synonym for `clink-expand-history-and-alias`.
     - `insert-last-argument` is a synonym for `yank-last-arg`.
     - `shell-expand-line` is a synonym for `clink-expand-line`.
+- Added a `match.expand_envvars` Clink setting to expand environment variables in a word before performing completion (for [mridgers #476](https://github.com/mridgers/clink/issues/476)).
 - Changed the `match.wild` Clink setting to apply to all completion commands.
 - Removed default key binding <kbd>Alt</kbd>+<kbd>Shift</kbd>+<kbd>H</kbd> for the `clink-show-help-raw` command (it has only niche usefulness).
 - Removed unintended VI mode key binding <kbd>Alt</kbd>+<kbd>Ctrl</kbd>+<kbd>H</kbd>.

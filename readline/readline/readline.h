@@ -677,6 +677,9 @@ extern rl_history_hook_func_t *rl_remove_history_hook;
 extern int rl_backslash_path_sep;
 /* Preferred path separator, used by filename completion. */
 extern char rl_preferred_path_separator;
+/* Function to call for post-processing of set_completion_defaults, before
+   completion is performed. */
+extern rl_voidfunc_t *rl_adjust_completion_defaults;
 /* Function to call for post-processing of _rl_find_completion_word. */
 extern rl_adjcmpwrd_func_t *rl_adjust_completion_word;
 /* Function to call for post-processing of lcd. */

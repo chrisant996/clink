@@ -13,11 +13,41 @@ local special_env_vars = {
 --------------------------------------------------------------------------------
 local envvar_generator = clink.generator(10)
 
+--------------------------------------------------------------------------------
+local function parse_percents(word)
+    local in_out = false
+    local index = nil
+
+    -- Paired percent signs denote already-completed environment variables.
+    -- So use envvar completion for abc%foo%def%USER but not for abc%foo%USER.
+    for i = 1, #word do
+        if word:sub(i, i) == "%" then
+            in_out = not in_out
+            if in_out then
+                index = i - 1
+            else
+                index = i
+            end
+        end
+    end
+
+    return in_out, index
+end
+
+--------------------------------------------------------------------------------
 function envvar_generator:generate(line_state, match_builder)
     -- Does the word end with a percent sign?
     local word = line_state:getendword()
     if word:sub(-1) ~= "%" then
         return false
+    end
+
+    -- If expanding envvars, test whether there's an unterminated envvar.
+    if settings.get("match.expand_envvars") then
+        local in_out, index = parse_percents(word)
+        if not in_out then
+            return false
+        end
     end
 
     local add_matches = function(matches)
@@ -38,25 +68,17 @@ end
 --------------------------------------------------------------------------------
 function envvar_generator:getwordbreakinfo(line_state)
     local word = line_state:getendword()
-    local in_out = false
-    local index = nil
-
-    -- Paired percent signs denote already-completed environment variables.
-    -- So use envvar completion for abc%foo%def%USER but not for abc%foo%USER.
-    for i = 1, #word do
-        if word:sub(i, i) == "%" then
-            in_out = not in_out
-            if in_out then
-                index = i - 1
-            else
-                index = i
-            end
-        end
-    end
+    local in_out, index = parse_percents(word)
 
     -- If there were any percent signs, return word break info to influence the
     -- match generators.
     if index then
+        -- If expanding envvars, return the entire word so it can be expanded.
+        -- This has a side effect that word breaks may confuse some match
+        -- generators if they make unsafe assumptions.
+        if not in_out and settings.get("match.expand_envvars") then
+            return 0, #word
+        end
         return index, (in_out and 1) or 0
     end
 end
