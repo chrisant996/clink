@@ -542,7 +542,7 @@ int clink_expand_history_and_alias(int count, int invoking_key)
 }
 
 //------------------------------------------------------------------------------
-// Performs history and doskey alias expansion.
+// Performs history, doskey alias, and environment variable expansion.
 int clink_expand_line(int count, int invoking_key)
 {
     return do_expand_line(el_history|el_alias|el_envvar);
