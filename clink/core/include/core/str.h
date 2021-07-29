@@ -124,6 +124,7 @@ void str_impl<TYPE>::attach(TYPE* data, unsigned int size)
     {
         clear();
         concat(data, size);
+        free(data);
     }
 }
 
