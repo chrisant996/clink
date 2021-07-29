@@ -1411,6 +1411,7 @@ rl_module::rl_module(const char* shell_name, terminal_in* input, const char* sta
         clink_add_funmap_entry("cua-copy", cua_copy, keycat_select, "Copy the selected text to the clipboard");
         clink_add_funmap_entry("cua-cut", cua_cut, keycat_select, "Cut the selected text to the clipboard");
 
+        clink_add_funmap_entry("edit-and-execute-command", edit_and_execute_command, keycat_misc, "Invoke an editor on the current input line, and execute the result.  This attempts to invoke '%VISUAL%', '%EDITOR%', or 'notepad.exe' as the editor, in that order");
         clink_add_funmap_entry("glob-complete-word", glob_complete_word, keycat_completion, "Perform wildcard completion on the text before the cursor point, with a '*' implicitly appended");
         clink_add_funmap_entry("glob-expand-word", glob_expand_word, keycat_completion, "Insert all the wildcard completions that 'glob-list-expansions' would list.  If a numeric argument is supplied, a '*' is implicitly appended before completion");
         clink_add_funmap_entry("glob-list-expansions", glob_list_expansions, keycat_completion, "List the possible wildcard completions of the text before the cursor point.  If a numeric argument is supplied, a '*' is implicitly appended before completion");
@@ -1450,6 +1451,7 @@ rl_module::rl_module(const char* shell_name, terminal_in* input, const char* sta
         { "\\C-z",          "undo" },                    // ctrl-z
         { "\\C-x*",         "glob-expand-word" },        // ctrl-x,*
         { "\\C-xg",         "glob-list-expansions" },    // ctrl-x,g
+        { "\\C-x\\C-e",     "edit-and-execute-command" }, // ctrl-x,ctrl-e
         { "\\C-x\\C-r",     "clink-reload" },            // ctrl-x,ctrl-r
         { "\\C-x\\C-z",     "clink-diagnostics" },       // ctrl-x,ctrl-z
         { "\\M-g",          "glob-complete-word" },      // alt-g
@@ -1512,6 +1514,7 @@ rl_module::rl_module(const char* shell_name, terminal_in* input, const char* sta
     };
 
     static constexpr const char* const vi_movement_key_binds[][2] = {
+        { "v",              "edit-and-execute-command" }, // v
         { "\\M-\\C-j",      "emacs-editing-mode" },      // alt-ctrl-j
         { "\\M-\\C-m",      "emacs-editing-mode" },      // alt-ctrl-m
         {}

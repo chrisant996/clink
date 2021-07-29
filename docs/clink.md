@@ -409,6 +409,7 @@ Name | Description
 `cua-forward-char`|Extends the selection and moves forward a character.
 `cua-forward-word`|Extends the selection and moves forward a word.
 `cua-select-all`|Extends the selection to the entire current line.
+`edit-and-execute-command`|Invoke an editor on the current input line, and execute the result as commands.  This attempts to invoke %VISUAL%, %EDITOR%, or notepad.exe as the editor, in that order.
 `history-and-alias-expand-line`|A synonym for `clink-expand-history-and-alias`.
 `history-expand-line`|A synonym for `clink-expand-history`.
 `insert-last-argument`|A synonym for `yank-last-arg`.

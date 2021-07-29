@@ -101,3 +101,6 @@ bool    is_literal_wild();      // Avoid appending star in alternative_matches()
 int     glob_complete_word(int count, int invoking_key);
 int     glob_expand_word(int count, int invoking_key);
 int     glob_list_expansions(int count, int invoking_key);
+
+//------------------------------------------------------------------------------
+int     edit_and_execute_command(int count, int invoking_key);

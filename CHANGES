@@ -5,13 +5,14 @@
 #### v1.2.25
 
 - Added `cua-select-all` command to select the entire input line.
+- Added `edit-and-execute-command` command to invoke an editor on the current input line and then execute the results (<kbd>Ctrl</kbd>+<kbd>X</kbd>,<kbd>Ctrl</kbd>+<kbd>E</kbd>).  This attempts to invoke `%VISUAL%`, `%EDITOR%`, or `notepad.exe` as the editor, in that order.
 - Added some new expansion commands:
-    - `clink-expand-history` performs history expansion on the current input line.
+    - `clink-expand-history` performs history expansion on the current input line (<kbd>Alt</kbd>+<kbd>^</kbd>).
     - `clink-expand-history-and-alias` performs history and doskey alias expansion on the current input line.
-    - `clink-expand-line` performs history, doskey alias, and environment variable expansion on the current input line.
-    - `glob-complete-word` performs wildcard completion on the text before the cursor point, with a `*` implicitly appended.
-    - `glob-expand-word` inserts all the wildcard completions that `glob-list-expansions` would list.
-    - `glob-list-expansions` lists the possible wildcard completions of the text before the cursor point.
+    - `clink-expand-line` performs history, doskey alias, and environment variable expansion on the current input line (<kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>E</kbd>).
+    - `glob-complete-word` performs wildcard completion on the text before the cursor point, with a `*` implicitly appended (<kbd>Alt</kbd>+<kbd>G</kbd>).
+    - `glob-expand-word` inserts all the wildcard completions that `glob-list-expansions` would list (<kbd>Ctrl</kbd>+<kbd>X</kbd>,<kbd>*</kbd>).
+    - `glob-list-expansions` lists the possible wildcard completions of the text before the cursor point (<kbd>Ctrl</kbd>+<kbd>X</kbd>,<kbd>g</kbd>).
 - Added some command name synonyms for increased .inputrc file portability with bash:
     - `alias-expand-line` is a synonym for `clink-expand-doskey-alias`.
     - `history-expand-line` is a synonym for `clink-expand-history`.

@@ -5,8 +5,10 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 # IMPROVEMENTS
 
 ## High Priority
+- `More?` prompt isn't handled correctly with queued input.
 
 ## Medium Priority
+- Classify queued input lines?
 - https://github.com/mridgers/clink/issues/476 -- Maybe add an option for completion of `%envvar%` to actually expand the envvar?
   - Implemented a prototype, but it's not right because it's a cooperative approach: each generator must be updated to expand envvars.
   - It seems like the line_editor_impl should expand envvars in the line_state before calling generators -- which implies some careful rl_point translations!
@@ -18,9 +20,7 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 - [ ] Preserve cursor point when performing history, doskey alias, or envvar expansion.
   - It's ok for the cursor to snap to the end of an atomic substring that's being replaced (e.g. if cursor is on the `3` in `a !3 z` then it's ok for the cursor to end up on the space before `z`).
   - [ ] Once the cursor point is preserved, then the default <kbd>Alt</kbd>+<kbd>Ctrl</kbd>+<kbd>E</kbd> binding can be changed from `clink-expand-env-var` to `clink-expand-line`.
-  - [ ] `magic-space` () Perform history expansion on the current line and insert a space.
-- [ ] `edit-and-execute-command` (C-x C-e) Invoke an editor on the current command line, and execute the result as shell commands.  Attempt to invoke
-`%VISUAL%`, `%EDITOR%`, and `%systemroot%\system32\notepad.exe` as the editor, in that order.
+- [ ] `magic-space` () Perform history expansion on the current line and insert a space?
 
 ## Tests
 

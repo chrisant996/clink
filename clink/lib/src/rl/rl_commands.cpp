@@ -44,6 +44,7 @@ extern "C" {
 
 
 //------------------------------------------------------------------------------
+enum { paste_crlf_delete, paste_crlf_space, paste_crlf_ampersand, paste_crlf_crlf };
 static setting_enum g_paste_crlf(
     "clink.paste_crlf",
     "Strips CR and LF chars on paste",
@@ -53,7 +54,7 @@ static setting_enum g_paste_crlf(
     "all newline characters with an ampersand.  Or set this to 'crlf' to paste all\n"
     "newline characters as-is (executing commands that end with newline).",
     "delete,space,ampersand,crlf",
-    3);
+    paste_crlf_crlf);
 
 extern setting_bool g_adjust_cursor_style;
 extern setting_bool g_match_wild;
@@ -66,6 +67,7 @@ extern word_collector* g_word_collector;
 extern bool s_force_reload_scripts;
 extern editor_module::result* g_result;
 extern void host_cmd_enqueue_lines(std::list<str_moveable>& lines);
+extern void host_add_history(int, const char* line);
 
 // This is implemented in the app layer, which makes it inaccessible to lower
 // layers.  But Readline and History are siblings, so history_db and rl_module
@@ -82,14 +84,13 @@ static void write_line_feed()
 }
 
 //------------------------------------------------------------------------------
-static void strip_crlf(char* line, std::list<str_moveable>& overflow, bool& done)
+static void strip_crlf(char* line, std::list<str_moveable>& overflow, int setting, bool* _done)
 {
-    int setting = g_paste_crlf.get();
-
     bool has_overflow = false;
     int prev_was_crlf = 0;
     char* write = line;
     const char* read = line;
+    bool done = false;
     while (*read)
     {
         char c = *read;
@@ -106,19 +107,19 @@ static void strip_crlf(char* line, std::list<str_moveable>& overflow, bool& done
             default:
                 assert(false);
                 // fall through
-            case 0: // delete
+            case paste_crlf_delete:
                 break;
-            case 1: // space
+            case paste_crlf_space:
                 prev_was_crlf = 1;
                 *write = ' ';
                 ++write;
                 break;
-            case 2: // ampersand
+            case paste_crlf_ampersand:
                 prev_was_crlf = 1;
                 *write = '&';
                 ++write;
                 break;
-            case 3: // crlf
+            case paste_crlf_crlf:
                 has_overflow = true;
                 if (c == '\n')
                 {
@@ -170,6 +171,9 @@ static void strip_crlf(char* line, std::list<str_moveable>& overflow, bool& done
             start = end;
         }
     }
+
+    if (_done)
+        *_done = done;
 }
 
 //------------------------------------------------------------------------------
@@ -316,7 +320,7 @@ int clink_paste(int count, int invoking_key)
     bool done = false;
     bool sel = (s_cua_anchor >= 0);
     std::list<str_moveable> overflow;
-    strip_crlf(utf8.data(), overflow, done);
+    strip_crlf(utf8.data(), overflow, g_paste_crlf.get(), &done);
     if (sel)
     {
         g_rl_buffer->begin_undo_group();
@@ -1013,6 +1017,117 @@ int glob_expand_word(int count, int invoking_key)
 int glob_list_expansions(int count, int invoking_key)
 {
     return glob_completion_internal('?');
+}
+
+
+
+//------------------------------------------------------------------------------
+int edit_and_execute_command(int count, int invoking_key)
+{
+    str<> line;
+    if (rl_explicit_arg)
+    {
+        HIST_ENTRY* h = history_get(count);
+        if (!h)
+        {
+LDing:
+            rl_ding();
+            return 0;
+        }
+        line = h->line;
+    }
+    else
+    {
+        line.concat(rl_line_buffer, rl_end);
+        host_add_history(0, line.c_str());
+    }
+
+    str_moveable tmp_file;
+    FILE* file = os::create_temp_file(&tmp_file);
+    if (!file)
+        goto LDing;
+
+    if (fputs(line.c_str(), file) < 0)
+    {
+        fclose(file);
+LUnlinkFile:
+        unlink(tmp_file.c_str());
+        goto LDing;
+    }
+    fclose(file);
+    file = nullptr;
+
+    // Save console state.
+    HANDLE std_handles[2] = { GetStdHandle(STD_INPUT_HANDLE), GetStdHandle(STD_OUTPUT_HANDLE) };
+    DWORD prev_mode[2];
+    static_assert(_countof(std_handles) == _countof(prev_mode), "array sizes much match");
+    for (size_t i = 0; i < _countof(std_handles); ++i)
+        GetConsoleMode(std_handles[i], &prev_mode[i]);
+    rl_clear_signals();
+
+    // Build editor command.
+    str<> editor;
+    str_moveable command;
+    const char* const qs = (strpbrk(tmp_file.c_str(), rl_filename_quote_characters)) ? "\"" : "";
+    if ((!os::get_env("VISUAL", editor) && !os::get_env("EDITOR", editor)) || editor.empty())
+        editor = "%systemroot%\\system32\\notepad.exe";
+    command.format("%s %s%s%s", editor.c_str(), qs, tmp_file.c_str(), qs);
+
+    // Execute editor command.
+    wstr_moveable wcommand(command.c_str());
+    const int exit_code = _wsystem(wcommand.c_str());
+
+    // Restore console state.
+    for (size_t i = 0; i < _countof(std_handles); ++i)
+        SetConsoleMode(std_handles[i], prev_mode[i]);
+    rl_set_signals();
+
+    // Was the editor launched successfully?
+    if (exit_code < 0)
+        goto LUnlinkFile;
+
+    // Read command(s) from temp file.
+    line.clear();
+    wstr_moveable wtmp_file(tmp_file.c_str());
+    file = _wfopen(wtmp_file.c_str(), L"rt");
+    if (!file)
+        goto LUnlinkFile;
+    char buffer[4096];
+    while (true)
+    {
+        const int len = fread(buffer, 1, sizeof(buffer), file);
+        if (len <= 0)
+            break;
+        line.concat(buffer, len);
+    }
+    fclose(file);
+
+    // Trim trailing newlines to avoid redundant blank commands.  Ensure a final
+    // newline so all lines get executed (otherwise it will go into edit mode).
+    while (line.length() && line.c_str()[line.length() - 1] == '\n')
+        line.truncate(line.length() - 1);
+    line.concat("\n");
+
+    // Split into multiple lines.
+    std::list<str_moveable> overflow;
+    strip_crlf(line.data(), overflow, paste_crlf_crlf, nullptr);
+
+    // Replace the input line with the content from the temp file.
+    g_rl_buffer->begin_undo_group();
+    g_rl_buffer->remove(0, rl_end);
+    rl_point = 0;
+    if (!line.empty())
+        g_rl_buffer->insert(line.c_str());
+    g_rl_buffer->end_undo_group();
+
+    // Queue any additional lines.
+    host_cmd_enqueue_lines(overflow);
+
+    // Accept the input and execute it.
+    rl_redisplay();
+    rl_newline(1, invoking_key);
+
+    return 0;
 }
 
 

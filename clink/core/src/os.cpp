@@ -268,7 +268,7 @@ FILE* create_temp_file(str_base* out, const char* _prefix, const char* _ext, tem
     FILE* f = nullptr;
     errno_t err = EINVAL;
     wstr<> wunique;
-    wstr<> wext(_ext);
+    wstr<> wext(_ext ? _ext : "");
     srand(GetTickCount());
     unsigned unique = (rand() & 0xff) + ((rand() & 0xff) << 8);
     for (unsigned attempts = 0xffff + 1; attempts--;)
