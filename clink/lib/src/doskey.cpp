@@ -332,9 +332,14 @@ void doskey::resolve(const char* chars, doskey_alias& out)
                 // is possible for reability, and ` aa &  bb &  cc` will avoid
                 // doskey alias expansion.
                 if (first)
+                {
                     first = false;
+                }
                 else if (command.length() && command.get_pointer()[0] == ' ')
+                {
+                    stream << command.get_pointer()[0];
                     command.next();
+                }
 
                 if (!resolve_impl(command, &stream))
                     stream << str_stream::range(command);
