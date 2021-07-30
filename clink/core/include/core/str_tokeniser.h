@@ -32,6 +32,8 @@ public:
     str_token           next(str_impl<T>& out);
     str_token           next(const T*& start, int& length);
     str_token           next(str_iter_impl<T>& out);
+    int                 peek_delims() const;
+    const T*            get_pointer() const;
 
 private:
     struct quote
@@ -78,6 +80,32 @@ bool str_tokeniser_impl<T>::add_quote_pair(const char* pair)
 
     *q = { pair[0], (pair[1] ? pair[1] : pair[0]) };
     return true;
+}
+
+//------------------------------------------------------------------------------
+template <typename T>
+int str_tokeniser_impl<T>::peek_delims() const
+{
+    str_iter iter = m_iter;
+
+    // Skip initial delimiters.
+    while (int c = iter.peek())
+    {
+        const char* delim = strchr(m_delims, c);
+        if (delim == nullptr)
+            break;
+
+        iter.next();
+    }
+
+    return int(iter.get_pointer() - m_iter.get_pointer());
+}
+
+//------------------------------------------------------------------------------
+template <typename T>
+const T* str_tokeniser_impl<T>::get_pointer() const
+{
+    return m_iter.get_pointer();
 }
 
 //------------------------------------------------------------------------------

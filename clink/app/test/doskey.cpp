@@ -3,6 +3,7 @@
 
 #include "pch.h"
 
+#include <core/base.h>
 #include <core/settings.h>
 #include <core/str.h>
 #include <lib/doskey.h>
@@ -286,4 +287,226 @@ TEST_CASE("Doskey pipe/redirect : new")
     { test("alias " ARGS "|alias " ARGS, "cmd " ARGS "|cmd " ARGS); }
     doskey.remove_alias("alias");
     #undef ARGS
+}
+
+//------------------------------------------------------------------------------
+TEST_CASE("Doskey cursor point")
+{
+    for (int i = 0; i < 2; ++i)
+    {
+        use_enhanced(i != 0);
+
+        str<> line;
+        doskey doskey("shell");
+
+        {
+            static const int c_points[] =
+            {
+                0,  0,
+                2,  2,
+                5,  2,
+                6,  2,
+                7,  3,
+                9,  5,
+                14, 10,
+                20, 16,
+                21, 17,
+            };
+
+            doskey.add_alias("alias", "qq $*");
+            line.clear();
+            //                     111111111122
+            //           0123456789012345678901
+            line.concat("alias  hello world   ");
+            //                     11111111
+            //           012345678901234567
+            //          "qq hello world   "
+            for (int j = 0; j < sizeof_array(c_points); j += 2)
+            {
+                const int from = c_points[j + 0];
+                const int expected = c_points[j + 1];
+                int point = from;
+                doskey_alias alias;
+                doskey.resolve(line.c_str(), alias, &point);
+                REQUIRE(point == expected, [&] () {
+                    printf("%sFROM %d:\nexpected: %d\nactual:   %d", i ? "(enhanced)\n" : "", from, expected, point);
+                });
+            }
+            doskey.remove_alias("alias");
+        }
+
+        {
+            static const int c_points[] =
+            {
+                0,  0,
+                3,  5,
+                4,  11,
+                5,  12,
+                6,  13,
+                7,  18,
+                9,  18,
+                12, 18,
+                13, 18,
+                14, 6,
+                20, 18,
+                23, 18,
+            };
+
+            doskey.add_alias("az", "world $3 $1 xyz");
+            line.clear();
+            //                     11111111112222
+            //           012345678901234567890123
+            line.concat("az  abc hello blah     ");
+            //                     111111111
+            //           0123456789012345678
+            //          "world blah abc xyz"
+            for (int j = 0; j < sizeof_array(c_points); j += 2)
+            {
+                const int from = c_points[j + 0];
+                const int expected = c_points[j + 1];
+                int point = from;
+                doskey_alias alias;
+                doskey.resolve(line.c_str(), alias, &point);
+                REQUIRE(point == expected, [&] () {
+                    printf("%sFROM %d:\nexpected: %d\nactual:   %d", i ? "(enhanced)\n" : "", from, expected, point);
+                });
+            }
+            doskey.remove_alias("az");
+        }
+    }
+}
+
+//------------------------------------------------------------------------------
+TEST_CASE("Doskey cursor point : multiple commands")
+{
+    use_enhanced(true);
+
+    str<> line;
+    doskey doskey("shell");
+
+    static const char prolog[] = "abc & ";
+    static const char epilog[] = " & xyz";
+    const int prolog_len = int(strlen(prolog));
+    const int epilog_len = int(strlen(epilog));
+
+    {
+        static const int c_points[] =
+        {
+            0,  0,
+            2,  2,
+            5,  2,
+            6,  2,
+            7,  3,
+            9,  5,
+            14, 10,
+            20, 16,
+            21, 17,
+        };
+
+        doskey.add_alias("alias", "qq $*");
+        //                       111111111122
+        //             0123456789012345678901
+        line.format("%salias  hello world   %s", prolog, epilog);
+        //                       11111111
+        //             012345678901234567
+        //            "qq hello world   "
+        for (int j = 0; j < sizeof_array(c_points); j += 2)
+        {
+            const int from = prolog_len + c_points[j + 0];
+            const int expected = prolog_len + c_points[j + 1];
+            int point = from;
+            doskey_alias alias;
+            doskey.resolve(line.c_str(), alias, &point);
+            REQUIRE(point == expected, [&] () {
+                printf("FROM %d:\nexpected: %d\nactual:   %d", from, expected, point);
+            });
+        }
+
+        for (int j = 0; j < prolog_len; j++)
+        {
+            const int from = j;
+            const int expected = j;
+            int point = from;
+            doskey_alias alias;
+            doskey.resolve(line.c_str(), alias, &point);
+            REQUIRE(point == expected, [&] () {
+                printf("(prolog)\nFROM %d:\nexpected: %d\nactual:   %d", from, expected, point);
+            });
+        }
+        for (int j = 0; j < epilog_len; j++)
+        {
+            const int from = line.length() - j;
+            int point = from;
+            doskey_alias alias;
+            doskey.resolve(line.c_str(), alias, &point);
+            const int expected = alias.UNITTEST_get_stream().length() - j;
+            REQUIRE(point == expected, [&] () {
+                printf("(epilog)\nFROM %d:\nexpected: %d\nactual:   %d", from, expected, point);
+            });
+        }
+
+        doskey.remove_alias("alias");
+    }
+
+    {
+        static const int c_points[] =
+        {
+            0,  0,
+            3,  5,
+            4,  11,
+            5,  12,
+            6,  13,
+            7,  18,
+            9,  18,
+            12, 18,
+            13, 18,
+            14, 6,
+            20, 18,
+            23, 18,
+        };
+
+        doskey.add_alias("az", "world $3 $1 xyz");
+        //                       11111111112222
+        //             012345678901234567890123
+        line.format("%saz  abc hello blah     %s", prolog, epilog);
+        //                       111111111
+        //             0123456789012345678
+        //            "world blah abc xyz"
+        for (int j = 0; j < sizeof_array(c_points); j += 2)
+        {
+            const int from = prolog_len + c_points[j + 0];
+            const int expected = prolog_len + c_points[j + 1];
+            int point = from;
+            doskey_alias alias;
+            doskey.resolve(line.c_str(), alias, &point);
+            REQUIRE(point == expected, [&] () {
+                printf("FROM %d:\nexpected: %d\nactual:   %d", from, expected, point);
+            });
+        }
+
+        for (int j = 0; j < prolog_len; j++)
+        {
+            const int from = j;
+            const int expected = j;
+            int point = from;
+            doskey_alias alias;
+            doskey.resolve(line.c_str(), alias, &point);
+            REQUIRE(point == expected, [&] () {
+                printf("(prolog)\nFROM %d:\nexpected: %d\nactual:   %d", from, expected, point);
+            });
+        }
+        for (int j = 0; j < epilog_len; j++)
+        {
+            const int from = line.length() - j;
+            int point = from;
+            doskey_alias alias;
+            doskey.resolve(line.c_str(), alias, &point);
+            const int expected = alias.UNITTEST_get_stream().length() - j;
+            REQUIRE(point == expected, [&] () {
+                printf("(epilog)\nFROM %d:\nexpected: %d\nactual:   %d", from, expected, point);
+            });
+        }
+
+        doskey.remove_alias("az");
+    }
 }

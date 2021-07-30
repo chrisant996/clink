@@ -470,6 +470,7 @@ static int do_expand_line(int flags)
     bool expanded = false;
     str<> in;
     str<> out;
+    int point = rl_point;
 
     in = g_rl_buffer->get_buffer();
 
@@ -478,6 +479,7 @@ static int do_expand_line(int flags)
         if (expand_history(in.c_str(), out))
         {
             in = out.c_str();
+            point = -1;
             expanded = true;
         }
     }
@@ -486,7 +488,7 @@ static int do_expand_line(int flags)
     {
         doskey_alias alias;
         doskey doskey("cmd.exe");
-        doskey.resolve(in.c_str(), alias);
+        doskey.resolve(in.c_str(), alias, point < 0 ? nullptr : &point);
         if (alias)
         {
             alias.next(out);
@@ -497,7 +499,7 @@ static int do_expand_line(int flags)
 
     if (flags & el_envvar)
     {
-        if (os::expand_env(in.c_str(), in.length(), out))
+        if (os::expand_env(in.c_str(), in.length(), out, point < 0 ? nullptr : &point))
         {
             in = out.c_str();
             expanded = true;
@@ -515,6 +517,8 @@ static int do_expand_line(int flags)
     rl_point = 0;
     if (!out.empty())
         g_rl_buffer->insert(out.c_str());
+    if (point >= 0 && point <= rl_end)
+        g_rl_buffer->set_cursor(point);
     g_rl_buffer->end_undo_group();
 
     return 0;

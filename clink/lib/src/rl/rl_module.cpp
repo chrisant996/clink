@@ -1532,7 +1532,7 @@ rl_module::rl_module(const char* shell_name, terminal_in* input, const char* sta
         { "\\M-h",          "clink-show-help" },         // alt-h
         { "\\M-\\C-c",      "clink-copy-line" },         // alt-ctrl-c
         { "\\M-\\C-d",      "remove-history" },          // alt-ctrl-d
-        { "\\M-\\C-e",      "clink-expand-env-var" },    // alt-ctrl-e
+        { "\\M-\\C-e",      "clink-expand-line" },       // alt-ctrl-e
         { "\\M-\\C-f",      "clink-expand-doskey-alias" }, // alt-ctrl-f
         { "\\M-\\C-k",      "add-history" },             // alt-ctrl-k
         { "\\M-\\C-n",      "clink-old-menu-complete-numbers"},// alt-ctrl-n

@@ -298,7 +298,7 @@ FILE* create_temp_file(str_base* out, const char* _prefix, const char* _ext, tem
 }
 
 //------------------------------------------------------------------------------
-bool expand_env(const char* in, unsigned int in_len, str_base& out)
+bool expand_env(const char* in, unsigned int in_len, str_base& out, int* point)
 {
     bool expanded = false;
 
@@ -317,6 +317,7 @@ bool expand_env(const char* in, unsigned int in_len, str_base& out)
         if (iter.more())
         {
             start = iter.get_pointer();
+            const int offset = int(start - in);
             assert(iter.peek() == '%');
             iter.next();
 
@@ -340,6 +341,15 @@ bool expand_env(const char* in, unsigned int in_len, str_base& out)
                 }
                 out << value.c_str();
                 expanded = true;
+
+                if (point && *point > offset)
+                {
+                    const int replaced_end = int(iter.get_pointer() - in);
+                    if (*point <= replaced_end)
+                        *point = offset + value.length();
+                    else
+                        *point += value.length() - (replaced_end - offset);
+                }
             }
             else
             {

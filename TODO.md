@@ -9,10 +9,6 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 ## Medium Priority
 
 ## Low Priority
-- [ ] Preserve cursor point when performing history, doskey alias, or envvar expansion.
-  - It's ok for the cursor to snap to the end of an atomic substring that's being replaced (e.g. if cursor is on the `3` in `a !3 z` then it's ok for the cursor to end up on the space before `z`).
-  - [ ] Once the cursor point is preserved, then the default <kbd>Alt</kbd>+<kbd>Ctrl</kbd>+<kbd>E</kbd> binding can be changed from `clink-expand-env-var` to `clink-expand-line`.
-- [ ] `magic-space` () Perform history expansion on the current line and insert a space?
 
 ## Tests
 
@@ -53,6 +49,7 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 - Provide API to show an input box?  But make it fail if used from outside a "luafunc:" macro.  _[Questionable usage pattern; just make the "luafunc:" macro invoke a standalone program (or even standalone Lua script) that can accept input however it likes.]_
 - Provide API to set Readline key binding?  _[Convenient, but also makes it very easy for third party scripts to override a user's explicit configuration choices.  In addition to that being a bit overly powerful, I want to avoid support requests caused by third party macros overriding user configuration.]_
 - Classify queued input lines?  _[Low value, high cost; the module layer knows about coloring, but queued lines are handled by the host layer without ever reaching the module layer.]_
+- `magic-space` () Perform history expansion on the current line and insert a space? _[Low value, low reliability, niche audience.]_
 
 <br/>
 <br/>
