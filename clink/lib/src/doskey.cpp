@@ -541,7 +541,7 @@ void doskey::resolve(const char* chars, doskey_alias& out, int* point)
                 int* sub_point = nullptr;
                 if (point &&
                     *point >= command.get_pointer() - chars &&
-                    *point < (command.get_pointer() - chars) + command.length())
+                    *point < int((command.get_pointer() - chars) + command.length()))
                 {
                     sub_point = point;
                 }
@@ -580,7 +580,7 @@ void doskey::resolve(const char* chars, doskey_alias& out, int* point)
                 }
 #endif
 
-                if (!sub_point && point && *point >= (command.get_pointer() - chars) + command.length())
+                if (!sub_point && point && *point >= int((command.get_pointer() - chars) + command.length()))
                 {
                     *point -= command.length();
                     *point += stream.length() - base_len;
