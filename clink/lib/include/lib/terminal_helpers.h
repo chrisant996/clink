@@ -4,11 +4,10 @@
 #pragma once
 
 #include <core/base.h>
-#include <terminal/terminal.h>
-#include <terminal/terminal_out.h>
 
 //------------------------------------------------------------------------------
 class printer;
+class terminal_out;
 extern printer* g_printer;
 
 //------------------------------------------------------------------------------
@@ -36,23 +35,11 @@ private:
 class printer_context
 {
 public:
-    printer_context(terminal& terminal, printer* printer)
-    : m_terminal(terminal)
-    , m_rb_printer(g_printer, printer)
-    {
-        m_terminal.out->open();
-        m_terminal.out->begin();
-        g_printer = printer;
-    }
-
-    ~printer_context()
-    {
-        m_terminal.out->end();
-        m_terminal.out->close();
-    }
+    printer_context(terminal_out* terminal, printer* printer);
+    ~printer_context();
 
 private:
-    const terminal& m_terminal;
+    terminal_out* const m_terminal;
     rollback<printer*> m_rb_printer;
 };
 

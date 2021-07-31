@@ -22,6 +22,7 @@
 #include <lua/lua_state.h>
 #include <lua/lua_match_generator.h>
 #include <terminal/printer.h>
+#include <terminal/terminal_out.h>
 #include <utils/app_context.h>
 
 #include <list>
@@ -540,7 +541,7 @@ bool host::edit_line(const char* prompt, const char* rprompt, str_base& out)
     path::refresh_pathext();
 
     cwd_restorer cwd;
-    printer_context prt(m_terminal, m_printer);
+    printer_context prt(m_terminal.out, m_printer);
 
     // Load Clink's settings.  The load function handles deferred load for
     // settings declared in scripts.

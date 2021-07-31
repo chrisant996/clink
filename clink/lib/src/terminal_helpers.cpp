@@ -6,6 +6,7 @@
 
 #include <core/settings.h>
 #include <terminal/printer.h>
+#include <terminal/terminal_out.h>
 
 
 
@@ -95,4 +96,25 @@ console_config::console_config(HANDLE handle)
 console_config::~console_config()
 {
     SetConsoleMode(m_handle, m_prev_mode);
+}
+
+
+
+//------------------------------------------------------------------------------
+printer_context::printer_context(terminal_out* terminal, printer* printer)
+: m_terminal(terminal)
+, m_rb_printer(g_printer)
+{
+    m_terminal->open();
+    m_terminal->begin();
+
+    assert(!g_printer);
+    g_printer = printer;
+}
+
+//------------------------------------------------------------------------------
+printer_context::~printer_context()
+{
+    m_terminal->end();
+    m_terminal->close();
 }

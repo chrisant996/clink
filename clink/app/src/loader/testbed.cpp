@@ -24,7 +24,7 @@ int testbed(int, char**)
 
     terminal term = terminal_create();
     printer printer(*term.out);
-    printer_context prt(term, &printer);
+    printer_context prt(term.out, &printer);
     console_config cc(GetStdHandle(STD_INPUT_HANDLE));
 
     line_editor::desc desc = { term.in, term.out, &printer, nullptr };

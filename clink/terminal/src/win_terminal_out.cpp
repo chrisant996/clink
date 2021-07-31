@@ -20,6 +20,8 @@ win_terminal_out::~win_terminal_out()
 //------------------------------------------------------------------------------
 void win_terminal_out::begin()
 {
+    assert(!m_stdout);
+
     m_stdout = GetStdHandle(STD_OUTPUT_HANDLE);
     GetConsoleMode(m_stdout, &m_prev_mode);
 
