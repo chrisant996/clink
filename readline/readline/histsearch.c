@@ -248,7 +248,10 @@ _hs_history_patsearch (const char *string, int direction, int flags)
       pat[len+1] = '\0';
     }
 #else
-  pat = string;
+/* begin_clink_change */
+  //pat = string;
+  pat = (char*)string;
+/* end_clink_change */
 #endif
 
   ret = history_search_internal (pat, direction, flags|PATTERN_SEARCH);

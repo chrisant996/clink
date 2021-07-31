@@ -34,7 +34,7 @@ TEST_CASE("Lua word classification")
     tester.get_editor()->add_generator(file_match_generator());
     tester.get_editor()->set_classifier(lua_classifier);
 
-    AddConsoleAliasW(L"dkalias", L"text", host);
+    AddConsoleAliasW(const_cast<wchar_t*>(L"dkalias"), const_cast<wchar_t*>(L"text"), host);
 
     SECTION("Main")
     {
@@ -425,5 +425,5 @@ TEST_CASE("Lua word classification")
         }
     }
 
-    AddConsoleAliasW(L"dkalias", nullptr, host);
+    AddConsoleAliasW(const_cast<wchar_t*>(L"dkalias"), nullptr, host);
 }

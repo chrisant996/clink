@@ -14,7 +14,14 @@
 #include <share.h>
 
 //------------------------------------------------------------------------------
+#ifdef _MSC_VER
 extern "C" void __cdecl __acrt_errno_map_os_error(unsigned long const oserrno);
+#else
+extern "C" void __cdecl __acrt_errno_map_os_error(unsigned long const oserrno)
+{
+    errno = EAGAIN;
+}
+#endif
 
 //------------------------------------------------------------------------------
 // We use UTF8 everywhere, and we need to tell the CRT so that mbrtowc and etc

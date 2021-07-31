@@ -17,6 +17,10 @@
 #include <memory>
 #include <assert.h>
 
+#ifndef _MSC_VER
+#define USE_PORTABLE
+#endif
+
 //------------------------------------------------------------------------------
 struct popenrw_info;
 static popenrw_info* s_head = nullptr;
@@ -182,13 +186,19 @@ static HANDLE dup_handle(HANDLE process_handle, HANDLE h)
 }
 
 //------------------------------------------------------------------------------
+#ifndef USE_PORTABLE
 extern "C" wchar_t* __cdecl __acrt_wgetpath(
     wchar_t const* const delimited_paths,
     wchar_t*       const result,
     size_t         const result_count
     );
+#endif
+
+//------------------------------------------------------------------------------
 static bool search_path(wstr_base& out, const wchar_t* file)
 {
+#ifndef USE_PORTABLE
+
     wstr_moveable wpath;
     {
         int len = GetEnvironmentVariableW(L"PATH", nullptr, 0);
@@ -228,6 +238,21 @@ static bool search_path(wstr_base& out, const wchar_t* file)
     }
 
     return false;
+
+#else
+
+    wchar_t buf[MAX_PATH];
+
+    wchar_t* file_part;
+    DWORD dw = SearchPathW(nullptr, file, nullptr, sizeof_array(buf), buf, &file_part);
+    if (dw == 0 || dw >= sizeof_array(buf))
+        return false;
+
+    out.clear();
+    out.concat(buf, dw);
+    return true;
+
+#endif
 }
 
 //------------------------------------------------------------------------------

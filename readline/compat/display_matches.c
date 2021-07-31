@@ -67,7 +67,7 @@ extern int errno;
 #define ELLIPSIS_LEN 3
 
 extern int complete_get_screenwidth (void);
-extern int fnwidth (char *string);
+extern int fnwidth (const char *string);
 extern int get_y_or_n (int for_pager);
 extern char* printable_part (char* pathname);
 extern int stat_char (const char *filename, char match_type);
@@ -649,7 +649,8 @@ void append_display(const char* to_print, int selected)
 int append_filename(char* to_print, const char* full_pathname, int prefix_bytes, unsigned char type, int selected)
 {
     int printed_len, extension_char, slen, tlen;
-    char *s, c, *new_full_pathname, *dn;
+    char *s, c, *new_full_pathname;
+    const char *dn;
     char tmp_slash[3];
 
     unsigned char match_type = (rl_completion_matches_include_type ? full_pathname[0] : type);
@@ -731,13 +732,12 @@ int append_filename(char* to_print, const char* full_pathname, int prefix_bytes,
 #endif
             if (_rl_complete_mark_directories)
             {
-                dn = 0;
                 if (rl_directory_completion_hook == 0 && rl_filename_stat_hook)
                 {
-                    dn = savestring(new_full_pathname);
-                    (*rl_filename_stat_hook)(&dn);
+                    char *tmp = savestring(new_full_pathname);
+                    (*rl_filename_stat_hook)(&tmp);
                     xfree(new_full_pathname);
-                    new_full_pathname = dn;
+                    new_full_pathname = tmp;
                 }
                 if (match_type <= MATCH_TYPE_NONE ? path_isdir(new_full_pathname) : IS_MATCH_TYPE_DIR(match_type))
                     extension_char = rl_preferred_path_separator;
@@ -805,13 +805,13 @@ int append_filename(char* to_print, const char* full_pathname, int prefix_bytes,
 }
 
 //------------------------------------------------------------------------------
-static char* visible_part(char *match)
+static const char* visible_part(const char *match)
 {
-    char* t1 = printable_part(match);
+    const char* t1 = printable_part((char*)match);
     if (!rl_filename_display_desired)
         return t1;
     // check again in case of /usr/src/
-    char* t2 = rl_last_path_separator(t1);
+    const char* t2 = rl_last_path_separator(t1);
     if (!t2)
         return t1;
     return t2 + 1;
@@ -820,7 +820,7 @@ static char* visible_part(char *match)
 //------------------------------------------------------------------------------
 int printable_len(const char* match)
 {
-    const char* temp = printable_part(match);
+    const char* temp = printable_part((char*)match);
     int len = fnwidth(temp);
 
     // If present, use the match type to determine whether there will be a
@@ -872,7 +872,8 @@ void pad_filename(int len, int pad_to_width, int selected)
         //static const char spaces[] = "................................................";
         static const char spaces[] = "                                                ";
         const int spaces_bytes = sizeof(spaces) - sizeof(spaces[0]);
-        append_tmpbuf_string(spaces, min(num_spaces, spaces_bytes));
+        const int chunk_len = (num_spaces < spaces_bytes) ? num_spaces : spaces_bytes;
+        append_tmpbuf_string(spaces, chunk_len);
         num_spaces -= spaces_bytes;
     }
 
@@ -888,7 +889,8 @@ static int display_match_list_internal(char **matches, int len, int max, bool on
     int count, limit, printed_len, lines, cols;
     int i, j, k, l;
     int major_stride, minor_stride;
-    char *temp, *t;
+    char *temp;
+    const char *t;
 
     // Find the length of the prefix common to all items: length as displayed
     // characters (common_length) and as a byte index into the matches (sind)
@@ -1020,7 +1022,7 @@ static int display_filtered_match_list_internal(match_display_filter_entry **mat
     int count, limit, printed_len, lines, cols;
     int i, j, l;
     int major_stride, minor_stride;
-    char* t;
+    const char* t;
     const char* filtered_color = "\x1b[m";
     int filtered_color_len = 3;
     int show_descriptions = 0;
@@ -1120,7 +1122,7 @@ static int display_filtered_match_list_internal(match_display_filter_entry **mat
 
             const match_display_filter_entry* entry = matches[l];
             const char* display = entry->display;
-            char* temp = printable_part(entry->match);
+            char* temp = printable_part((char*)entry->match);
 
             if (IS_MATCH_TYPE_NONE(entry->type) ||
                 !entry->match[0] ||

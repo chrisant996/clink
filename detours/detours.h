@@ -38,7 +38,11 @@
 #define _USER32_ 1
 
 #include <windows.h>
-#if (_MSC_VER < 1310)
+#ifdef __MINGW32__
+#define __try
+#define __except(x) while (0)
+#include <strsafe.h>
+#elif (_MSC_VER < 1310)
 #else
 #pragma warning(push)
 #if _MSC_VER > 1400
@@ -118,7 +122,8 @@
 //////////////////////////////////////////////////////////////////////////////
 //
 
-#if (_MSC_VER < 1299)
+#ifndef _MSC_VER
+#elif (_MSC_VER < 1299)
 typedef LONG LONG_PTR;
 typedef ULONG ULONG_PTR;
 #endif
@@ -846,7 +851,9 @@ VOID CALLBACK DetourFinishHelperProcess(_In_ HWND,
 
 //////////////////////////////////////////////////////////////////////////////
 //
-#if (_MSC_VER < 1299)
+#ifdef __MINGW32__
+#include <dbghelp.h>
+#elif (_MSC_VER < 1299)
 #include <imagehlp.h>
 typedef IMAGEHLP_MODULE IMAGEHLP_MODULE64;
 typedef PIMAGEHLP_MODULE PIMAGEHLP_MODULE64;

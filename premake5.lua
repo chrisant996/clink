@@ -76,16 +76,41 @@ local function clink_exe(name)
 end
 
 --------------------------------------------------------------------------------
+-- MinGW's windres tool can't seem to handle string concatenation like rc does,
+-- so I gave up and generate it here.
+local function get_version_info(commit)
+    local clink_version_file_name = "clink/app/src/version.h"
+    local maj, min, pat
+    local x
+    for line in io.lines(clink_version_file_name) do
+        x = line:match("CLINK_VERSION_MAJOR[ \t]+([0-9]+)")
+        if x then maj = x end
+        x = line:match("CLINK_VERSION_MINOR[ \t]+([0-9]+)")
+        if x then min = x end
+        x = line:match("CLINK_VERSION_PATCH[ \t]+([0-9]+)")
+        if x then pat = x end
+    end
+
+    if not maj or not min or not pat then
+        error("Unable to find version number in '"..clink_version_file_name.."'.")
+    end
+
+    local str = '#define CLINK_VERSION_STR "'..maj..'.'..min..'.'..pat..'.'..commit..'"\n'
+    local lstr = '#define CLINK_VERSION_LSTR L"'..maj..'.'..min..'.'..pat..'.'..commit..'"\n'
+    return str..lstr
+end
+
+--------------------------------------------------------------------------------
 local function write_clink_commit_file(commit)
     local clink_commit_file
     local clink_commit_file_name = ".build/clink_commit.h"
-    local clink_commit_string = "#pragma once\n#define CLINK_COMMIT "..commit.."\n"
+    local clink_commit_string = "#pragma once\n#define CLINK_COMMIT "..commit.."\n"..get_version_info(commit)
     local old_commit_string = ""
 
     clink_commit_file = io.open(path.getabsolute(clink_commit_file_name), "r")
     if clink_commit_file then
         old_commit_string = clink_commit_file:read("*all")
-	    clink_commit_file:close()
+        clink_commit_file:close()
     end
 
     if old_commit_string ~= clink_commit_string then
@@ -205,6 +230,10 @@ project("detours")
     files("detours/*.cpp")
     removefiles("detours/uimports.cpp")     -- is included by creatwth.cpp
 
+    configuration("gmake or gmake2")
+        buildoptions("-fpermissive")
+        buildoptions("-std=c++17")
+
 --------------------------------------------------------------------------------
 clink_lib("clink_lib")
     includedirs("clink/lib/include/lib")
@@ -270,13 +299,13 @@ clink_lib("clink_terminal")
 
     includedirs("clink/terminal/src")
     configuration("vs*")
-        exceptionhandling("on")     -- for std::wregex
+        exceptionhandling("on")         -- for std::wregex
         pchheader("pch.h")
         pchsource("clink/terminal/src/pch.cpp")
 
     configuration("gmake or gmake2")
+        buildoptions("-fexceptions")    -- for std::wregex
         buildoptions("-fpermissive")
-        buildoptions("-fexceptions")
         buildoptions("-Wno-multichar")
         buildoptions("-std=c++17")
 
@@ -353,11 +382,12 @@ clink_dll("clink_app_dll")
     configuration("gmake or gmake2")
         buildoptions("-fpermissive")
         buildoptions("-std=c++17")
+        links("gdi32")
 
 --------------------------------------------------------------------------------
 clink_exe("clink_app_exe")
-    flags("OmitDefaultLibrary")
     targetname("clink")
+    flags("OmitDefaultLibrary")
     links("clink_app_dll")
     files("clink/app/src/loader/main.cpp")
     files("clink/app/src/version.rc")
@@ -382,7 +412,6 @@ clink_exe("clink_app_exe")
 
 --------------------------------------------------------------------------------
 clink_exe("clink_test")
-    exceptionhandling("on")
     links("clink_app_common")
     links("clink_core")
     links("clink_lib")
@@ -410,6 +439,8 @@ clink_exe("clink_test")
     files("clink/terminal/test/*.cpp")
     files("clink/test/**")
 
+    exceptionhandling("on")
+
     configuration("vs*")
         pchheader("pch.h")
         pchsource("clink/test/src/pch.cpp")
@@ -417,6 +448,7 @@ clink_exe("clink_test")
     configuration("gmake or gmake2")
         buildoptions("-fpermissive")
         buildoptions("-std=c++17")
+        links("gdi32")
 
 --------------------------------------------------------------------------------
 require "vstudio"

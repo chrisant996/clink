@@ -91,7 +91,10 @@ static void _rl_move_cursor_relative PARAMS((int, const char *, const char *));
 #define PMT_MULTILINE	0x01
 #define PMT_RPROMPT	0x02
 
-static char *expand_prompt PARAMS((char *, int, int *, int *, int *, int *));
+/* begin_clink_change */
+//static char *expand_prompt PARAMS((char *, int, int *, int *, int *, int *));
+static char *expand_prompt PARAMS((const char *, int, int *, int *, int *, int *));
+/* end_clink_change */
 
 #define DEFAULT_LINE_BUFFER_SIZE	1024
 
@@ -388,7 +391,10 @@ prompt_modestr (int *lenp)
 #define APPROX_DIV(n, d)	(((n) < (d)) ? 1 : ((n) / (d)) + 1)
 
 static char *
-expand_prompt (char *pmt, int flags, int *lp, int *lip, int *niflp, int *vlp)
+/* begin_clink_change */
+//expand_prompt (char *pmt, int flags, int *lp, int *lip, int *niflp, int *vlp)
+expand_prompt (const char *pmt, int flags, int *lp, int *lip, int *niflp, int *vlp)
+/* end_clink_change */
 {
   char *r, *ret, *p, *igstart, *nprompt, *ms;
   int l, rl, last, ignoring, ninvis, invfl, invflset, ind, pind, physchars;
@@ -406,7 +412,12 @@ expand_prompt (char *pmt, int flags, int *lp, int *lip, int *niflp, int *vlp)
       strcpy (nprompt + mlen, pmt);
     }
   else
-    nprompt = pmt;
+    {
+/* begin_clink_change */
+      //nprompt = pmt;
+      nprompt = (char*)pmt;
+/* end_clink_change */
+    }
 
   mb_cur_max = MB_CUR_MAX;
 

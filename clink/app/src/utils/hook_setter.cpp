@@ -18,7 +18,7 @@ hook_setter::hook_setter()
     // In order to repair our IAT, we need the base address of our module.
     if (!err)
     {
-        m_self = vm().get_alloc_base("clink");
+        m_self = vm().get_alloc_base((void*)"clink");
         if (m_self == nullptr)
             err = GetLastError();
     }
@@ -134,7 +134,7 @@ bool hook_setter::add_detour(const char* module, const char* name, hookptr_t det
 
     // Hook the target pointer.
     PDETOUR_TRAMPOLINE trampoline;
-    LONG err = DetourAttachEx(&replace, detour, &trampoline, nullptr, nullptr);
+    LONG err = DetourAttachEx(&replace, (PVOID)detour, &trampoline, nullptr, nullptr);
     if (err != NOERROR)
     {
         LOG("Unable to hook %s (error %u).", name, err);

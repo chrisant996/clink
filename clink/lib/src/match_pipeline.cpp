@@ -154,7 +154,7 @@ static void alpha_sorter(match_info* infos, int count)
 }
 
 //------------------------------------------------------------------------------
-static int _cdecl qsort_match_compare(const void* pv1, const void* pv2)
+static int __cdecl qsort_match_compare(const void* pv1, const void* pv2)
 {
     const char** s1 = (const char**)pv1;
     const char** s2 = (const char**)pv2;

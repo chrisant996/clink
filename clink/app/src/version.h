@@ -17,17 +17,16 @@
 #define CLINK_VERSION_PATCH     25
 
 #ifdef _MSC_VER
+#   undef CLINK_VERSION_STR
 #   define CLINK_VERSION_STR    AS_STR(CLINK_VERSION_MAJOR) ## "." ##\
                                 AS_STR(CLINK_VERSION_MINOR) ## "." ##\
                                 AS_STR(CLINK_VERSION_PATCH) ## "." ##\
                                 AS_STR(CLINK_COMMIT)
+#   undef CLINK_VERSION_LSTR
 #   define CLINK_VERSION_LSTR   AS_LSTR(CLINK_VERSION_MAJOR) ## L"." ##\
                                 AS_LSTR(CLINK_VERSION_MINOR) ## L"." ##\
                                 AS_LSTR(CLINK_VERSION_PATCH) ## L"." ##\
                                 AS_LSTR(CLINK_COMMIT)
-#else
-#   define CLINK_VERSION_STR    AS_STR(CLINK_VERSION_MAJOR) "." AS_STR(CLINK_VERSION_MINOR) "." AS_STR(CLINK_VERSION_PATCH) "." AS_STR(CLINK_COMMIT)
-#   define CLINK_VERSION_LSTR   AS_LSTR(CLINK_VERSION_MAJOR) "." AS_LSTR(CLINK_VERSION_MINOR) "." AS_LSTR(CLINK_VERSION_PATCH) "." AS_LSTR(CLINK_COMMIT)
 #endif
 
 

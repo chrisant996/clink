@@ -40,7 +40,6 @@ bool str_compare_scope::current_fuzzy_accents()
 }
 
 //------------------------------------------------------------------------------
-//------------------------------------------------------------------------------
 int normalize_accent(int c)
 {
     // Dipthongs are not supported in fuzzy accent matching.

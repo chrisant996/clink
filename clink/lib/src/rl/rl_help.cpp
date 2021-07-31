@@ -645,7 +645,7 @@ static Keyentry* collect_keymap(
 }
 
 //------------------------------------------------------------------------------
-static int _cdecl cmp_sort_collector(const void* pv1, const void* pv2)
+static int __cdecl cmp_sort_collector(const void* pv1, const void* pv2)
 {
     const Keyentry* p1 = (const Keyentry*)pv1;
     const Keyentry* p2 = (const Keyentry*)pv2;
@@ -669,7 +669,7 @@ static int _cdecl cmp_sort_collector(const void* pv1, const void* pv2)
 }
 
 //------------------------------------------------------------------------------
-static int _cdecl cmp_sort_collector_cat(const void* pv1, const void* pv2)
+static int __cdecl cmp_sort_collector_cat(const void* pv1, const void* pv2)
 {
     const Keyentry* p1 = (const Keyentry*)pv1;
     const Keyentry* p2 = (const Keyentry*)pv2;

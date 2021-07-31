@@ -1137,7 +1137,10 @@ struct readline_state {
   rl_compentry_func_t *menuentryfunc;
   rl_compignore_func_t *ignorefunc;
   rl_completion_func_t *attemptfunc;
-  char *wordbreakchars;
+/* begin_clink_change */
+  //char *wordbreakchars;
+  const char *wordbreakchars;
+/* end_clink_change */
 
   /* options state */
 

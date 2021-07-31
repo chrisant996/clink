@@ -18,7 +18,12 @@
     3.  Observe whether the "hello" message shows up.
         - If yes, then the issue didn't repro.  Try again.
         - If no, then the issue repro'd.
+
+    The root cause is redirection in CMD.EXE changing the STD handles.  So
+    another way to encounter the problems is by async prompt filtering.
 */
+
+#ifndef __MINGW32__
 
 //------------------------------------------------------------------------------
 static bool s_can_reset = true;
@@ -173,3 +178,14 @@ void reset_stdio_handles()
     reset_handle(s_hStdout, 1);
     reset_handle(s_hStderr, 2);
 }
+
+#else // __MINGW32__
+
+//------------------------------------------------------------------------------
+void reset_stdio_handles()
+{
+    // I don't know whether MinGW may have a similar problem (I would assume
+    // so), but the preceding fix is specific to MSVC.
+}
+
+#endif // __MINGW32__
