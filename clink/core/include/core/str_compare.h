@@ -24,7 +24,7 @@ public:
         num_scope_values
     };
 
-                str_compare_scope(int mode, bool fuzzy_accent=false);
+                str_compare_scope(int mode, bool fuzzy_accent);
                 ~str_compare_scope();
     static int  current();
     static bool current_fuzzy_accents();

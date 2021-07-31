@@ -50,7 +50,7 @@ TEST_CASE("Env. vars")
 
     SECTION("Case mapped 1")
     {
-        str_compare_scope _(str_compare_scope::relaxed);
+        str_compare_scope _(str_compare_scope::relaxed, false);
 
         tester.set_input("nullcmd %case_m");
         tester.set_expected_matches("%case_map%");
@@ -59,7 +59,7 @@ TEST_CASE("Env. vars")
 
     SECTION("Case mapped 2")
     {
-        str_compare_scope _(str_compare_scope::relaxed);
+        str_compare_scope _(str_compare_scope::relaxed, false);
 
         tester.set_input("nullcmd %dash-");
         tester.set_expected_matches("%dash-1%", "%dash_2%");

@@ -23,7 +23,7 @@ static int equalsi(lua_State* state)
     if (!a || !b)
         return 0;
 
-    str_compare_scope _(str_compare_scope::caseless);
+    str_compare_scope _(str_compare_scope::caseless, false/*fuzzy_accent*/);
     int result = str_compare(a, b);
 
     lua_pushboolean(state, result == -1);

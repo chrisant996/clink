@@ -68,7 +68,7 @@ TEST_CASE("Directory match generation.")
 
             SECTION("Single (with -/_) 2")
             {
-                str_compare_scope _(str_compare_scope::relaxed);
+                str_compare_scope _(str_compare_scope::relaxed, false);
 
                 cmd << "one-";
                 tester.set_input(cmd.c_str());

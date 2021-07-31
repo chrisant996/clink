@@ -15,7 +15,7 @@
 //------------------------------------------------------------------------------
 int testbed(int, char**)
 {
-    str_compare_scope _(str_compare_scope::relaxed);
+    str_compare_scope _(str_compare_scope::relaxed, false/*fuzzy_accent*/);
 
     // Load the settings from disk, since terminal I/O is affected by settings.
     str<280> settings_file;

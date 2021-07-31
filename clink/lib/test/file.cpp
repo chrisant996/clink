@@ -85,7 +85,7 @@ TEST_CASE("File match generator")
 
         SECTION(dyn_section("Case mapping matches", mode))
         {
-            str_compare_scope _(str_compare_scope::relaxed);
+            str_compare_scope _(str_compare_scope::relaxed, false);
 
             tester.set_input("case-m" DO_COMPLETE);
             tester.set_expected_matches("case_map-1", "case_map_2");

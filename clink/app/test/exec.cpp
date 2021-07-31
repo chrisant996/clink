@@ -77,7 +77,7 @@ TEST_CASE("Executable match generation.")
 
     SECTION("PATH case mapped")
     {
-        str_compare_scope _(str_compare_scope::relaxed);
+        str_compare_scope _(str_compare_scope::relaxed, false);
 
         tester.set_input("one-p");
         tester.set_expected_matches("one_path.exe");
@@ -165,7 +165,7 @@ TEST_CASE("Executable match generation.")
 
         SECTION("All")
         {
-            str_compare_scope _(str_compare_scope::relaxed);
+            str_compare_scope _(str_compare_scope::relaxed, false);
 
             settings::find("exec.dirs")->set("1");
 

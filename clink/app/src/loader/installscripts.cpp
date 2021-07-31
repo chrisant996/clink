@@ -44,7 +44,7 @@ static bool change_value(bool install, char** argv=nullptr, int argc=0)
     str<> old_list;
     get_installed_scripts(old_list);
 
-    str_compare_scope _(str_compare_scope::caseless);
+    str_compare_scope _(str_compare_scope::caseless, false);
     bool uninstalled = false;
 
     // Check if the provided path is present.

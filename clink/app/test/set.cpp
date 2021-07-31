@@ -50,7 +50,7 @@ TEST_CASE("Set command.")
 
     SECTION("Case mapped")
     {
-        str_compare_scope _(str_compare_scope::relaxed);
+        str_compare_scope _(str_compare_scope::relaxed, false);
 
         SECTION("One match")
         {

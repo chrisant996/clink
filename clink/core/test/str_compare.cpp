@@ -11,7 +11,7 @@ TEST_CASE("String compare")
 {
     SECTION("Exact")
     {
-        str_compare_scope _(str_compare_scope::exact);
+        str_compare_scope _(str_compare_scope::exact, false);
 
         REQUIRE(str_compare("abc123!@#", "abc123!@#") == -1);
         REQUIRE(str_compare("ABC123!@#", "abc123!@#") == 0);
@@ -25,7 +25,7 @@ TEST_CASE("String compare")
 
     SECTION("Case insensitive")
     {
-        str_compare_scope _(str_compare_scope::caseless);
+        str_compare_scope _(str_compare_scope::caseless, false);
 
         REQUIRE(str_compare("abc123!@#", "abc123!@#") == -1);
         REQUIRE(str_compare("ABC123!@#", "abc123!@#") == -1);
@@ -39,7 +39,7 @@ TEST_CASE("String compare")
 
     SECTION("Relaxed")
     {
-        str_compare_scope _(str_compare_scope::relaxed);
+        str_compare_scope _(str_compare_scope::relaxed, false);
 
         REQUIRE(str_compare("abc123!@#", "abc123!@#") == -1);
         REQUIRE(str_compare("ABC123!@#", "abc123!@#") == -1);
@@ -53,11 +53,11 @@ TEST_CASE("String compare")
 
     SECTION("Scopes")
     {
-        str_compare_scope outer(str_compare_scope::exact);
+        str_compare_scope outer(str_compare_scope::exact, false);
         {
-            str_compare_scope inner(str_compare_scope::caseless);
+            str_compare_scope inner(str_compare_scope::caseless, false);
             {
-                str_compare_scope inner(str_compare_scope::relaxed);
+                str_compare_scope inner(str_compare_scope::relaxed, false);
                 REQUIRE(str_compare("-", "_") == -1);
             }
             REQUIRE(str_compare("ABC123!@#", "abc123!@#") == -1);

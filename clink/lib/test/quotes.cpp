@@ -69,7 +69,7 @@ TEST_CASE("Quoting")
 
         SECTION("Prefix (case mapped)")
         {
-            str_compare_scope _(str_compare_scope::relaxed);
+            str_compare_scope _(str_compare_scope::relaxed, false);
             tester.set_input("pre-s" DO_COMPLETE);
             tester.set_expected_output("\"pre_space");
             tester.run();
