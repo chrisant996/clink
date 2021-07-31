@@ -178,10 +178,13 @@ workspace("clink")
         defines("_CRT_NONSTDC_NO_WARNINGS")
 
     configuration("gmake or gmake2")
+        defines("CC=gcc")
         defines("__MSVCRT_VERSION__=0x0601")
         defines("_WIN32_WINNT=0x0601")
         defines("WINVER=0x0601")
         buildoptions("-Wno-error=missing-field-initializers")
+        buildoptions("-ffunction-sections")
+        buildoptions("-fdata-sections")
 
     configuration("*")
         includedirs(".build")           -- for clink_commit.h
@@ -449,6 +452,7 @@ clink_exe("clink_test")
         buildoptions("-fpermissive")
         buildoptions("-std=c++17")
         links("gdi32")
+        linkgroups("on")
 
 --------------------------------------------------------------------------------
 require "vstudio"
