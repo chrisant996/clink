@@ -226,6 +226,11 @@ setting_bool g_match_wild(
     "Turn this off to behave how bash does, and not match wildcards.",
     true);
 
+setting_bool g_prompt_async(
+    "prompt.async",
+    "Enables asynchronous prompt refresh",
+    true);
+
 static setting_bool g_rl_hide_stderr(
     "readline.hide_stderr",
     "Suppress stderr from the Readline library",

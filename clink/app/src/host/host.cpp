@@ -53,11 +53,6 @@ static setting_bool g_filter_prompt(
     "Enable prompt filtering by Lua scripts",
     true);
 
-static setting_bool g_prompt_async(
-    "prompt.async",
-    "Enables asynchronous prompt refresh",
-    true);
-
 setting_bool g_save_history(
     "history.save",
     "Save history between sessions",
@@ -91,6 +86,7 @@ setting_bool g_get_errorlevel(
 
 extern setting_bool g_classify_words;
 extern setting_color g_color_prompt;
+extern setting_bool g_prompt_async;
 
 extern void start_logger();
 
