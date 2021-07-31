@@ -2,6 +2,7 @@
 // License: http://opensource.org/licenses/MIT
 
 #include "pch.h"
+#include "terminal_helpers.h"
 
 #include <core/base.h>
 #include <core/settings.h>
@@ -24,7 +25,6 @@ extern int complete_get_screenwidth(void);
 #include <assert.h>
 
 //------------------------------------------------------------------------------
-extern printer* g_printer;
 extern pager* g_pager;
 extern editor_module::result* g_result;
 extern void ellipsify(const char* in, int limit, str_base& out, bool expand_ctrl);

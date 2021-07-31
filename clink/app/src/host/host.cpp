@@ -17,11 +17,10 @@
 #include <lib/doskey.h>
 #include <lib/match_generator.h>
 #include <lib/line_editor.h>
+#include <lib/terminal_helpers.h>
 #include <lua/lua_script_loader.h>
 #include <lua/lua_state.h>
 #include <lua/lua_match_generator.h>
-#include <terminal/terminal.h>
-#include <terminal/terminal_out.h>
 #include <terminal/printer.h>
 #include <utils/app_context.h>
 
@@ -107,80 +106,8 @@ extern void reset_keyseq_to_name_map();
 
 
 //------------------------------------------------------------------------------
-static printer* s_printer = nullptr;
 static host_lua* s_host_lua = nullptr;
 extern str<> g_last_prompt;
-
-
-
-//------------------------------------------------------------------------------
-// Documented in clink_api.cpp.
-int clink_print(lua_State* state)
-{
-    str<> out;
-    bool nl = true;
-    bool err = false;
-
-    int n = lua_gettop(state);              // Number of arguments.
-    lua_getglobal(state, "NONL");           // Special value `NONL`.
-    lua_getglobal(state, "tostring");       // Function to convert to string (reused each loop iteration).
-
-    for (int i = 1; i <= n; i++)
-    {
-        // Check for magic `NONL` value.
-        if (lua_compare(state, -2, i, LUA_OPEQ))
-        {
-            nl = false;
-            continue;
-        }
-
-        // Call function to convert arg to a string.
-        lua_pushvalue(state, -1);           // Function to be called (tostring).
-        lua_pushvalue(state, i);            // Value to print.
-        if (lua_state::pcall(state, 1, 1) != 0)
-        {
-            if (const char* error = lua_tostring(state, -1))
-            {
-                puts("");
-                puts(error);
-            }
-            return 0;
-        }
-
-        // Get result from the tostring call.
-        size_t l;
-        const char* s = lua_tolstring(state, -1, &l);
-        if (s == NULL)
-        {
-            err = true;
-            break;                          // Allow accumulated output to be printed before erroring out.
-        }
-        lua_pop(state, 1);                  // Pop result.
-
-        // Add tab character to the output.
-        if (i > 1)
-            out << "\t";
-
-        // Add string result to the output.
-        out.concat(s, l);
-    }
-
-    if (s_printer)
-    {
-        if (nl)
-            out.concat("\n");
-        s_printer->print(out.c_str(), out.length());
-    }
-    else
-    {
-        printf("%s%s", out.c_str(), nl ? "\n" : "");
-    }
-
-    if (err)
-        return luaL_error(state, LUA_QL("tostring") " must return a string to " LUA_QL("print"));
-
-    return 0;
-}
 
 
 
@@ -188,41 +115,6 @@ int clink_print(lua_State* state)
 bool call_lua_rl_global_function(const char* func_name)
 {
     return s_host_lua && s_host_lua->call_lua_rl_global_function(func_name);
-}
-
-//------------------------------------------------------------------------------
-int macro_hook_func(const char* macro)
-{
-    bool is_luafunc = (macro && strnicmp(macro, "luafunc:", 8) == 0);
-
-    if (is_luafunc)
-    {
-        str<> func_name;
-        func_name = macro + 8;
-        func_name.trim();
-
-        // TODO: Ideally optimize this so that it only resets match generation if
-        // the Lua function triggers completion.
-        extern void reset_generate_matches();
-        reset_generate_matches();
-
-        HANDLE std_handles[2] = { GetStdHandle(STD_INPUT_HANDLE), GetStdHandle(STD_OUTPUT_HANDLE) };
-        DWORD prev_mode[2];
-        static_assert(_countof(std_handles) == _countof(prev_mode), "array sizes much match");
-        for (size_t i = 0; i < _countof(std_handles); ++i)
-            GetConsoleMode(std_handles[i], &prev_mode[i]);
-
-        if (!call_lua_rl_global_function(func_name.c_str()))
-            rl_ding();
-
-        for (size_t i = 0; i < _countof(std_handles); ++i)
-            SetConsoleMode(std_handles[i], prev_mode[i]);
-    }
-
-    extern void cua_after_command(bool force_clear);
-    cua_after_command(true/*force_clear*/);
-
-    return is_luafunc;
 }
 
 //------------------------------------------------------------------------------
@@ -526,30 +418,6 @@ struct cwd_restorer
     cwd_restorer() { os::get_current_dir(m_path); }
     ~cwd_restorer() { os::set_current_dir(m_path.c_str()); }
     str<288> m_path;
-};
-
-//------------------------------------------------------------------------------
-class printer_context
-{
-public:
-    printer_context(terminal& terminal, printer* printer)
-    : m_terminal(terminal)
-    , m_rb_printer(s_printer, printer)
-    {
-        m_terminal.out->open();
-        m_terminal.out->begin();
-        s_printer = printer;
-    }
-
-    ~printer_context()
-    {
-        m_terminal.out->end();
-        m_terminal.out->close();
-    }
-
-private:
-    const terminal& m_terminal;
-    rollback<printer*> m_rb_printer;
 };
 
 
@@ -1095,7 +963,7 @@ int clink_diagnostics(int count, int invoking_key)
 
     s.clear();
     s << bold << "version:" << norm << lf;
-    s_printer->print(s.c_str(), s.length());
+    g_printer->print(s.c_str(), s.length());
 
     printf("  %-*s  %s\n", spacing, "version", CLINK_VERSION_STR);
     context->get_binaries_dir(s);
@@ -1105,7 +973,7 @@ int clink_diagnostics(int count, int invoking_key)
 
     s.clear();
     s <<bold << "session:" << norm << lf;
-    s_printer->print(s.c_str(), s.length());
+    g_printer->print(s.c_str(), s.length());
 
     printf("  %-*s  %d\n", spacing, "session", context->get_id());
 

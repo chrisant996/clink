@@ -59,12 +59,13 @@ static setting_enum g_paste_crlf(
 extern setting_bool g_adjust_cursor_style;
 extern setting_bool g_match_wild;
 
+static bool s_force_reload_scripts;
+
 
 
 //------------------------------------------------------------------------------
 extern line_buffer* g_rl_buffer;
 extern word_collector* g_word_collector;
-extern bool s_force_reload_scripts;
 extern editor_module::result* g_result;
 extern void host_cmd_enqueue_lines(std::list<str_moveable>& lines);
 extern void host_add_history(int, const char* line);
@@ -1144,8 +1145,54 @@ LUnlinkFile:
 
 
 //------------------------------------------------------------------------------
+int macro_hook_func(const char* macro)
+{
+    bool is_luafunc = (macro && strnicmp(macro, "luafunc:", 8) == 0);
+
+    if (is_luafunc)
+    {
+        str<> func_name;
+        func_name = macro + 8;
+        func_name.trim();
+
+        // TODO: Ideally optimize this so that it only resets match generation if
+        // the Lua function triggers completion.
+        extern void reset_generate_matches();
+        reset_generate_matches();
+
+        HANDLE std_handles[2] = { GetStdHandle(STD_INPUT_HANDLE), GetStdHandle(STD_OUTPUT_HANDLE) };
+        DWORD prev_mode[2];
+        static_assert(_countof(std_handles) == _countof(prev_mode), "array sizes much match");
+        for (size_t i = 0; i < _countof(std_handles); ++i)
+            GetConsoleMode(std_handles[i], &prev_mode[i]);
+
+        if (!call_lua_rl_global_function(func_name.c_str()))
+            rl_ding();
+
+        for (size_t i = 0; i < _countof(std_handles); ++i)
+            SetConsoleMode(std_handles[i], prev_mode[i]);
+    }
+
+    cua_after_command(true/*force_clear*/);
+
+    return is_luafunc;
+}
+
+//------------------------------------------------------------------------------
 void reset_command_states()
 {
     s_globbing_wild = false;
     s_literal_wild = false;
+}
+
+//------------------------------------------------------------------------------
+bool is_force_reload_scripts()
+{
+    return s_force_reload_scripts;
+}
+
+//------------------------------------------------------------------------------
+void clear_force_reload_scripts()
+{
+    s_force_reload_scripts = false;
 }

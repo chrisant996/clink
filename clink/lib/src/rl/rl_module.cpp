@@ -11,6 +11,7 @@
 #include "word_classifier.h"
 #include "word_classifications.h"
 #include "popup.h"
+#include "terminal_helpers.h"
 
 #include <core/base.h>
 #include <core/os.h>
@@ -72,6 +73,8 @@ extern int          _rl_last_v_pos;
 #endif
 } // extern "C"
 
+extern int clink_diagnostics(int, int);
+
 extern void host_add_history(int rl_history_index, const char* line);
 extern void host_remove_history(int rl_history_index, const char* line);
 extern void sort_match_list(char** matches, int len);
@@ -87,7 +90,6 @@ extern int g_prompt_redisplay;
 
 terminal_in*        s_direct_input = nullptr;       // for read_key_hook
 terminal_in*        s_processed_input = nullptr;    // for read thunk
-printer*            g_printer = nullptr;
 line_buffer*        g_rl_buffer = nullptr;
 pager*              g_pager = nullptr;
 editor_module::result* g_result = nullptr;
@@ -1478,7 +1480,6 @@ rl_module::rl_module(const char* shell_name, terminal_in* input, const char* sta
         clink_add_funmap_entry("glob-expand-word", glob_expand_word, keycat_completion, "Insert all the wildcard completions that 'glob-list-expansions' would list.  If a numeric argument is supplied, a '*' is implicitly appended before completion");
         clink_add_funmap_entry("glob-list-expansions", glob_list_expansions, keycat_completion, "List the possible wildcard completions of the text before the cursor point.  If a numeric argument is supplied, a '*' is implicitly appended before completion");
 
-        extern int clink_diagnostics(int, int);
         clink_add_funmap_entry("clink-diagnostics", clink_diagnostics, keycat_misc, "Show internal diagnostic information");
 
         // Alias some command names for convenient compatibility with bash .inputrc configuration entries.
@@ -1748,7 +1749,6 @@ void rl_module::on_begin_line(const context& context)
     // after g_printer and g_pager are set just in case it ever needs to print
     // output with ANSI escape code support.
     assert(!g_rl_buffer);
-    g_printer = &context.printer;
     g_pager = &context.pager;
     set_prompt(context.prompt, context.rprompt);
     g_rl_buffer = &context.buffer;
@@ -1861,7 +1861,6 @@ void rl_module::on_end_line()
 
     g_rl_buffer = nullptr;
     g_pager = nullptr;
-    g_printer = nullptr;
 }
 
 //------------------------------------------------------------------------------

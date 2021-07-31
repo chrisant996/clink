@@ -3,6 +3,7 @@
 
 #include "pch.h"
 #include "lua_state.h"
+#include "lib/terminal_helpers.h"
 #include "terminal/scroll.h"
 #include "terminal/screen_buffer.h" // for set_console_title
 #include "terminal/printer.h"
@@ -17,9 +18,6 @@ extern "C" {
 #include <readline/readline.h>
 extern "C" int _rl_last_v_pos;
 };
-
-//------------------------------------------------------------------------------
-extern printer* g_printer;
 
 //------------------------------------------------------------------------------
 static SHORT GetConsoleNumLines(const CONSOLE_SCREEN_BUFFER_INFO& csbi)

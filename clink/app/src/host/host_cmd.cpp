@@ -16,9 +16,9 @@
 #include <lib/doskey.h>
 #include <lib/line_buffer.h>
 #include <lib/line_editor.h>
+#include <lib/terminal_helpers.h>
 #include <lua/lua_script_loader.h>
 #include <process/hook.h>
-#include <terminal/config.h>
 
 #include <Windows.h>
 
@@ -27,7 +27,7 @@
 #endif
 
 //------------------------------------------------------------------------------
-extern bool s_force_reload_scripts;
+extern bool is_force_reload_scripts();
 extern "C" void reset_wcwidths();
 
 //------------------------------------------------------------------------------
@@ -404,7 +404,7 @@ void host_cmd::edit_line(wchar_t* chars, int max_chars)
                 break;
             }
 
-            if (s_force_reload_scripts)
+            if (is_force_reload_scripts())
             {
             }
             else if (g_ctrld_exits.get())

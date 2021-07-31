@@ -13,6 +13,8 @@
 #include <core/str_iter.h>
 #include <core/str_transform.h>
 #include <lib/popup.h>
+#include <lib/terminal_helpers.h>
+#include <terminal/printer.h>
 #include <terminal/screen_buffer.h>
 #include <readline/readline.h>
 
@@ -26,7 +28,6 @@ extern "C" {
 
 
 //------------------------------------------------------------------------------
-// Implemented in host.cpp.
 /// -name:  clink.print
 /// -arg:   ...
 /// -show:  clink.print("\x1b[32mgreen\x1b[m \x1b[35mmagenta\x1b[m")
@@ -53,6 +54,72 @@ extern "C" {
 /// the argument is not a string, then first checking the Clink version (e.g.
 /// <a href="#clink.version_encoded">clink.version_encoded</a>) can avoid
 /// runtime errors.
+static int clink_print(lua_State* state)
+{
+    str<> out;
+    bool nl = true;
+    bool err = false;
+
+    int n = lua_gettop(state);              // Number of arguments.
+    lua_getglobal(state, "NONL");           // Special value `NONL`.
+    lua_getglobal(state, "tostring");       // Function to convert to string (reused each loop iteration).
+
+    for (int i = 1; i <= n; i++)
+    {
+        // Check for magic `NONL` value.
+        if (lua_compare(state, -2, i, LUA_OPEQ))
+        {
+            nl = false;
+            continue;
+        }
+
+        // Call function to convert arg to a string.
+        lua_pushvalue(state, -1);           // Function to be called (tostring).
+        lua_pushvalue(state, i);            // Value to print.
+        if (lua_state::pcall(state, 1, 1) != 0)
+        {
+            if (const char* error = lua_tostring(state, -1))
+            {
+                puts("");
+                puts(error);
+            }
+            return 0;
+        }
+
+        // Get result from the tostring call.
+        size_t l;
+        const char* s = lua_tolstring(state, -1, &l);
+        if (s == NULL)
+        {
+            err = true;
+            break;                          // Allow accumulated output to be printed before erroring out.
+        }
+        lua_pop(state, 1);                  // Pop result.
+
+        // Add tab character to the output.
+        if (i > 1)
+            out << "\t";
+
+        // Add string result to the output.
+        out.concat(s, int(l));
+    }
+
+    if (g_printer)
+    {
+        if (nl)
+            out.concat("\n");
+        g_printer->print(out.c_str(), out.length());
+    }
+    else
+    {
+        printf("%s%s", out.c_str(), nl ? "\n" : "");
+    }
+
+    if (err)
+        return luaL_error(state, LUA_QL("tostring") " must return a string to " LUA_QL("print"));
+
+    return 0;
+}
 
 //------------------------------------------------------------------------------
 /// -name:  clink.version_encoded
@@ -583,7 +650,6 @@ extern int get_env(lua_State* state);
 extern int get_env_names(lua_State* state);
 extern int get_screen_info(lua_State* state);
 extern int is_dir(lua_State* state);
-extern int clink_print(lua_State* state);
 
 //------------------------------------------------------------------------------
 void clink_lua_initialise(lua_state& lua)

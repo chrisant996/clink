@@ -21,73 +21,8 @@ extern "C" {
 }
 
 //------------------------------------------------------------------------------
-extern setting_bool g_adjust_cursor_style;
-
-//------------------------------------------------------------------------------
-extern "C" int show_cursor(int visible)
-{
-    int was_visible = 0;
-
-    HANDLE handle = GetStdHandle(STD_OUTPUT_HANDLE);
-    CONSOLE_CURSOR_INFO info;
-    was_visible = (GetConsoleCursorInfo(handle, &info) && info.bVisible);
-
-    if (!g_adjust_cursor_style.get())
-        return was_visible;
-
-    if (!was_visible != !visible)
-    {
-        info.bVisible = !!visible;
-        SetConsoleCursorInfo(handle, &info);
-    }
-
-    return was_visible;
-}
-
-//------------------------------------------------------------------------------
-static DWORD s_host_input_mode = -1;
-static DWORD s_clink_input_mode = -1;
-
-//------------------------------------------------------------------------------
-void save_host_input_mode(DWORD mode)
-{
-    s_host_input_mode = mode;
-}
-
-//------------------------------------------------------------------------------
-extern "C" void use_host_input_mode()
-{
-    HANDLE h = GetStdHandle(STD_INPUT_HANDLE);
-    if (h && h != INVALID_HANDLE_VALUE)
-    {
-        DWORD mode;
-        if (GetConsoleMode(h, &mode))
-            s_clink_input_mode = mode;
-
-        if (s_host_input_mode != -1)
-            SetConsoleMode(h, s_host_input_mode);
-    }
-}
-
-//------------------------------------------------------------------------------
-extern "C" void use_clink_input_mode()
-{
-    HANDLE h = GetStdHandle(STD_INPUT_HANDLE);
-    if (h && h != INVALID_HANDLE_VALUE)
-    {
-        DWORD mode;
-        if (s_host_input_mode == -1 && GetConsoleMode(h, &mode))
-            s_host_input_mode = mode;
-
-        if (s_clink_input_mode != -1)
-            SetConsoleMode(h, s_clink_input_mode);
-    }
-}
-
-
-
-//------------------------------------------------------------------------------
-bool s_force_reload_scripts = false;
+extern bool is_force_reload_scripts();
+extern void clear_force_reload_scripts();
 
 //------------------------------------------------------------------------------
 host_lua::host_lua()
@@ -137,7 +72,7 @@ void host_lua::load_scripts()
     app_context::get()->get_script_path(script_path);
     load_scripts(script_path.c_str());
     m_prev_script_path = script_path.c_str();
-    s_force_reload_scripts = false;
+    clear_force_reload_scripts();
 }
 
 //------------------------------------------------------------------------------
@@ -243,7 +178,7 @@ void host_lua::load_script(const char* path)
 //------------------------------------------------------------------------------
 bool host_lua::is_script_path_changed() const
 {
-    if (s_force_reload_scripts)
+    if (is_force_reload_scripts())
         return true;
 
     str<280> script_path;

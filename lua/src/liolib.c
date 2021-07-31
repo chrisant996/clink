@@ -419,8 +419,8 @@ static int g_read (lua_State *L, FILE *f, int first) {
 /* begin_clink_change */
 #if defined(_WIN32)
   extern int show_cursor (int visible);
-  extern void use_host_input_mode ();
-  extern void use_clink_input_mode ();
+  extern void use_host_input_mode (void);
+  extern void use_clink_input_mode (void);
   int was_visible = 0;
   if (f == stdin)
   {
