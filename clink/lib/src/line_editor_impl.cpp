@@ -203,7 +203,6 @@ void host_filter_prompt()
 //------------------------------------------------------------------------------
 int host_filter_matches(char** matches)
 {
-    assert(s_callbacks);
     if (s_callbacks)
         s_callbacks->filter_matches(matches);
     return 0;
