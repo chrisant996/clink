@@ -6,6 +6,7 @@
 #include <core/str.h>
 #include <lib/line_editor.h>
 #include <lib/line_buffer.h>
+#include <lib/terminal_helpers.h>
 #include <terminal/terminal_in.h>
 #include <terminal/terminal_out.h>
 
@@ -74,6 +75,7 @@ private:
     test_terminal_in            m_terminal_in;
     test_terminal_out           m_terminal_out;
     printer*                    m_printer;
+    printer_context*            m_printer_context = nullptr;
     std::vector<const char*>    m_expected_matches;
     str<>                       m_expected_classifications;
     const char*                 m_input = nullptr;
