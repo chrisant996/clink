@@ -127,7 +127,7 @@ void prev_buffer::set(const char* s, int len)
 //------------------------------------------------------------------------------
 bool prev_buffer::equals(const char* s, int len) const
 {
-    return m_ptr && m_len == len && memcmp(s, m_ptr, len) == 0 && !m_ptr[len];
+    return m_ptr && m_len == static_cast<unsigned int>(len) && memcmp(s, m_ptr, len) == 0 && !m_ptr[len];
 }
 
 
@@ -900,8 +900,7 @@ void line_editor_impl::classify()
     }
 
     // Build vector containing one line_state per command.
-    int i = 0;
-    int command_word_offset = 0;
+    size_t i = 0;
     std::vector<word> words;
     std::vector<std::vector<word>> words_storage;
     std::vector<line_state> linestates;
@@ -930,8 +929,6 @@ void line_editor_impl::classify()
                 command_char_offset,
                 words_storage.back()
             );
-
-            command_word_offset = i;
         }
 
         if (i >= m_classify_words.size())

@@ -64,19 +64,6 @@ static void strip_code_quotes(const char*& ptr, int& len)
 
 
 //------------------------------------------------------------------------------
-enum ecma48_state_enum
-{
-    ecma48_state_unknown = 0,
-    ecma48_state_char,
-    ecma48_state_esc,
-    ecma48_state_esc_st,
-    ecma48_state_csi_p,
-    ecma48_state_csi_f,
-    ecma48_state_cmd_str,
-    ecma48_state_char_str,
-};
-
-//------------------------------------------------------------------------------
 void ecma48_state::reset()
 {
     state = ecma48_state_unknown;
@@ -210,13 +197,17 @@ bool ecma48_code::decode_osc(osc& out) const
                         wstr<> name;
                         wstr<> value;
 
-                        to_utf16(name, str_iter(ptr, len));
+                        str_iter tmpi(ptr, len);
+                        to_utf16(name, tmpi);
                         DWORD needed = GetEnvironmentVariableW(name.c_str(), 0, 0);
                         value.reserve(needed);
                         needed = GetEnvironmentVariableW(name.c_str(), value.data(), value.size());
 
                         if (needed < value.size())
-                            to_utf8(out.output, wstr_iter(value.c_str(), needed));
+                        {
+                            wstr_iter wtmpi(value.c_str(), needed);
+                            to_utf8(out.output, wtmpi);
+                        }
                         break;
                     }
                 }

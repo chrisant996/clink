@@ -1,13 +1,28 @@
 // Copyright (c) 2021 Christopher Antos
 // License: http://opensource.org/licenses/MIT
 
-#pragma once
-
 #include "pch.h"
 #include "str.h"
 #include "str_transform.h"
 
 #include <assert.h>
+
+//------------------------------------------------------------------------------
+#ifdef __MINGW32__
+inline int __ascii_towlower(int c)
+{
+    if (c >= 0 && c <= 127)
+        return tolower(c);
+    return c;
+}
+
+inline int __ascii_towupper(int c)
+{
+    if (c >= 0 && c <= 127)
+        return toupper(c);
+    return c;
+}
+#endif
 
 //------------------------------------------------------------------------------
 void str_transform(const wchar_t* in, unsigned int len, wstr_base& out, transform_mode mode)

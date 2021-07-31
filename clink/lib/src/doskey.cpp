@@ -209,13 +209,11 @@ bool doskey::resolve_impl(const str_iter& in, str_stream* out, int* point)
     int point_ofs = -1;
     bool point_arg_star = false;
     int point_ofs_star = -1;
-    int alias_start;
-    int alias_end;
     if (point && out)
     {
         const int delim_len = tokens.peek_delims();
-        alias_start = out->length();
-        alias_end = alias_start + token.length() + delim_len;
+        const int alias_start = out->length();
+        const int alias_end = alias_start + token.length() + delim_len;
         if (*point >= alias_start && *point < alias_end)
         {
             // Put point at beginning of whitespace before arg 1.
@@ -305,7 +303,7 @@ bool doskey::resolve_impl(const str_iter& in, str_stream* out, int* point)
 
     if (point && args.size())
     {
-        if (point_arg == args.size())
+        if (point_arg == int(args.size()))
             point_arg = -1;
         point_arg_star = true;
         if (*point < out_len + args.front()->ptr - in.get_pointer())
@@ -452,19 +450,22 @@ bool doskey::resolve_impl(const str_iter& in, str_stream* out, int* point)
     }
 
     // Couldn't figure out where the point belongs?  Put it at the end.
-#ifdef DEBUG_RESOLVEIMPL
-    if (g_printer)
+    if (point)
     {
-        if (point)
+#ifdef DEBUG_RESOLVEIMPL
+        if (g_printer)
         {
             tmp.format("END:\tTlen\t%d\t", stream.trimmed_length());
             g_printer->print(tmp.c_str(), tmp.length());
         }
-        g_printer->print("\x1b[u");
-    }
 #endif
-    if (point)
-        *point = max<int>(alias_start, stream.trimmed_length());
+        *point = max<int>(out_len, stream.trimmed_length());
+    }
+
+#ifdef DEBUG_RESOLVEIMPL
+    if (g_printer)
+        g_printer->print("\x1b[u");
+#endif
 
     return true;
 }

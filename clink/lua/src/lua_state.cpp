@@ -101,13 +101,13 @@ int checkinteger(lua_State* state, int index, bool* pisnum)
 }
 
 //------------------------------------------------------------------------------
-int optinteger(lua_State* state, int index, int default, bool* pisnum)
+int optinteger(lua_State* state, int index, int default_value, bool* pisnum)
 {
     if (lua_isnoneornil(state, index))
     {
         if (pisnum)
             *pisnum = true;
-        return default;
+        return default_value;
     }
 
     return checkinteger(state, index, pisnum);
@@ -126,13 +126,13 @@ const char* checkstring(lua_State* state, int index)
 }
 
 //------------------------------------------------------------------------------
-const char* optstring(lua_State* state, int index, const char* default)
+const char* optstring(lua_State* state, int index, const char* default_value)
 {
     if (g_lua_strict.get())
-        return luaL_optstring(state, index, default);
+        return luaL_optstring(state, index, default_value);
 
     if (lua_gettop(state) < index || !lua_isstring(state, index))
-        return default;
+        return default_value;
 
     return lua_tostring(state, index);
 }

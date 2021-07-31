@@ -57,7 +57,7 @@ void    map_errno(unsigned long const oserrno);
 void    set_errorlevel(int errorlevel);
 int     get_errorlevel();
 
-void    set_shellname(wchar_t* shell_name);
+void    set_shellname(const wchar_t* shell_name);
 const wchar_t* get_shellname();
 
 }; // namespace os

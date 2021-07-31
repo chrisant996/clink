@@ -579,7 +579,7 @@ int inject(int argc, char** argv)
     delete file_logger::get();
 
     // Remotely call Clink's initialisation function.
-    void* our_dll_base = vm().get_alloc_base("");
+    void* our_dll_base = vm().get_alloc_base((void*)"");
     uintptr_t init_func = uintptr_t(remote_dll_base);
     init_func += uintptr_t(initialise_clink) - uintptr_t(our_dll_base);
     INT_PTR remote_result = INT_PTR(process(target_pid).remote_call((process::funcptr_t)init_func, app_desc));

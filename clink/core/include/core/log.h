@@ -7,8 +7,8 @@
 #include "singleton.h"
 
 //------------------------------------------------------------------------------
-#define LOG(...)    logger::info(__FUNCTION__, __LINE__, __VA_ARGS__)
-#define ERR(...)    logger::error(__FUNCTION__, __LINE__, __VA_ARGS__)
+#define LOG(...)    logger::info(__FUNCTION__, __LINE__, ##__VA_ARGS__)
+#define ERR(...)    logger::error(__FUNCTION__, __LINE__, ##__VA_ARGS__)
 
 //------------------------------------------------------------------------------
 class logger

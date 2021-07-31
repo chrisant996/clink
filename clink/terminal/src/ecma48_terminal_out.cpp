@@ -24,7 +24,7 @@ setting_bool g_adjust_cursor_style(
     true);
 
 //------------------------------------------------------------------------------
-extern "C" char *tgetstr(char* name, char** out);
+extern "C" char *tgetstr(const char* name, char** out);
 
 //------------------------------------------------------------------------------
 static int g_enhanced_cursor = 0;

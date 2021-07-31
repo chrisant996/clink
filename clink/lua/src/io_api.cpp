@@ -621,7 +621,7 @@ int luaL_YieldGuard::__tostring(lua_State* state)
 /// process 1 is blocked from writing more until process 2 reads, but process 2
 /// can't read because it is blocked from writing until process 1 reads.
 /// </fieldset>
-static int io_popenrw(lua_State* state)
+/*static*/ int io_popenrw(lua_State* state) // gcc can't handle 'friend' and 'static'.
 {
     const char* command = checkstring(state, 1);
     const char* mode = optstring(state, 2, "t");
@@ -687,7 +687,7 @@ static int io_popenrw(lua_State* state)
 
 //------------------------------------------------------------------------------
 // UNDOCUMENTED; internal use only.  See io.popenyield in coroutines.lua.
-static int io_popenyield(lua_State* state)
+/*static*/ int io_popenyield(lua_State* state) // gcc can't handle 'friend' and 'static'.
 {
     const char* command = checkstring(state, 1);
     const char* mode = optstring(state, 2, "t");

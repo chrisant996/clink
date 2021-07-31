@@ -20,7 +20,19 @@ enum class ecma48_processor_flags { none = 0, bracket = 1<<0, apply_title = 1<<1
 DEFINE_ENUM_FLAG_OPERATORS(ecma48_processor_flags);
 void ecma48_processor(const char* in, str_base* out, unsigned int* cell_count, ecma48_processor_flags flags=ecma48_processor_flags::none);
 unsigned int cell_count(const char*);
-enum ecma48_state_enum;
+
+//------------------------------------------------------------------------------
+enum ecma48_state_enum
+{
+    ecma48_state_unknown = 0,
+    ecma48_state_char,
+    ecma48_state_esc,
+    ecma48_state_esc_st,
+    ecma48_state_csi_p,
+    ecma48_state_csi_f,
+    ecma48_state_cmd_str,
+    ecma48_state_char_str,
+};
 
 //------------------------------------------------------------------------------
 class ecma48_code

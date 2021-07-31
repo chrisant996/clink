@@ -52,7 +52,7 @@ static FILE*        null_stream = (FILE*)1;
 static FILE*        in_stream = (FILE*)2;
 static FILE*        out_stream = (FILE*)3;
 extern "C" int      mk_wcwidth(char32_t);
-extern "C" char*    tgetstr(char*, char**);
+extern "C" char*    tgetstr(const char*, char**);
 static const int    RL_MORE_INPUT_STATES = ~(
                         RL_STATE_CALLBACK|
                         RL_STATE_INITIALIZED|
@@ -1272,7 +1272,8 @@ static void terminal_write_thunk(FILE* stream, const char* chars, int char_count
         if (GetConsoleMode(h, &dw))
         {
             wstr<32> s;
-            to_utf16(s, str_iter(chars, char_count));
+            str_iter tmpi(chars, char_count);
+            to_utf16(s, tmpi);
             WriteConsoleW(h, s.c_str(), s.length(), &dw, nullptr);
         }
         else
@@ -1314,7 +1315,8 @@ static void terminal_log_write(FILE* stream, const char* chars, int char_count)
             LOGCURSORPOS();
             LOG("%s \"%.*s\", %d", (stream == stderr) ? "CONERR" : "CONOUT", char_count, chars, char_count);
             wstr<32> s;
-            to_utf16(s, str_iter(chars, char_count));
+            str_iter tmpi(chars, char_count);
+            to_utf16(s, tmpi);
             WriteConsoleW(h, s.c_str(), s.length(), &dw, nullptr);
         }
         else

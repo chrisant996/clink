@@ -3,6 +3,7 @@
 
 #include "pch.h"
 #include "cielab.h"
+#include "core/base.h"
 
 #include <math.h>
 
@@ -25,7 +26,7 @@ struct xyz
         double d = double(val) / 255;
         if (d > 0.04045)        d = pow(((d + 0.055) / 1.055), 2.4);
         else                    d = (d / 12.92);
-        return max(min(d, 1.0), 0.0);
+        return max<>(min<>(d, 1.0), 0.0);
     }
 
     // XYZ to RGB conversion math shared by each channel
@@ -33,7 +34,7 @@ struct xyz
     {
         if (val > 0.0031308)    val = (1.055 * pow(val, (double(1) / 2.4)) - 0.055);
         else                    val = (val * 12.92);
-        return BYTE(max(min(val * 255.0, 255.0), 0.0));
+        return BYTE(max<>(min<>(val * 255.0, 255.0), 0.0));
     }
 };
 

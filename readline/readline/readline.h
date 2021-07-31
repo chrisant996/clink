@@ -44,9 +44,12 @@ extern "C" {
 #define RL_VERSION_MINOR	1
 
 /* begin_clink_change */
-#define VER_AS_STR(x)    #x
-#define MAKE_LIBRARY_VERSION(maj, min)    VER_AS_STR(maj) ## "." ## VER_AS_STR(min)
-#define RL_LIBRARY_VERSION    MAKE_LIBRARY_VERSION(RL_VERSION_MAJOR, RL_VERSION_MINOR)
+#if defined(_MSC_VER)
+#  undef RL_LIBRARY_VERSION
+#  define VER_AS_STR(x)       #x
+#  define MAKE_LIBRARY_VERSION(maj, min)  VER_AS_STR(maj) ## "." ## VER_AS_STR(min)
+#  define RL_LIBRARY_VERSION  MAKE_LIBRARY_VERSION(RL_VERSION_MAJOR, RL_VERSION_MINOR)
+#endif
 /* end_clink_change */
 
 
@@ -821,7 +824,10 @@ extern const char *rl_basic_word_break_characters_without_backslash;
 /* The list of characters that signal a break between words for
    rl_complete_internal.  The default list is the contents of
    rl_basic_word_break_characters.  */
-extern /*const*/ char *rl_completer_word_break_characters;
+/* begin_clink_change */
+//extern /*const*/ char *rl_completer_word_break_characters;
+extern const char *rl_completer_word_break_characters;
+/* end_clink_change */
 
 /* Hook function to allow an application to set the completion word
    break characters before readline breaks up the line.  Allows

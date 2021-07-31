@@ -15,9 +15,9 @@ class str_base;
 
 //------------------------------------------------------------------------------
 int checkinteger(lua_State* state, int index, bool* isnum=nullptr);
-int optinteger(lua_State* state, int index, int default, bool* isnum=nullptr);
+int optinteger(lua_State* state, int index, int default_value, bool* isnum=nullptr);
 const char* checkstring(lua_State* state, int index);
-const char* optstring(lua_State* state, int index, const char* default);
+const char* optstring(lua_State* state, int index, const char* default_value);
 
 //------------------------------------------------------------------------------
 class lua_state

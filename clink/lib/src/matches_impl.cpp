@@ -673,7 +673,7 @@ bool matches_impl::add_match(const match_desc& desc, bool already_normalized)
     if (!store_match)
         return false;
 
-    m_infos.push_back({ store_match, type });
+    m_infos.push_back({ store_match, type, false });
     ++m_count;
     return true;
 }
@@ -687,7 +687,7 @@ void matches_impl::coalesce(unsigned int count_hint, bool restrict)
     bool all_pathish = true;
 
     unsigned int j = 0;
-    for (int i = 0, n = int(m_infos.size()); i < n && j < count_hint; ++i)
+    for (unsigned int i = 0, n = m_infos.size(); i < n && j < count_hint; ++i)
     {
         if (!infos[i].select)
             continue;

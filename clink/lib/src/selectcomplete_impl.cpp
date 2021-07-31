@@ -452,17 +452,27 @@ void selectcomplete_impl::on_end_line()
 }
 
 //------------------------------------------------------------------------------
-void selectcomplete_impl::on_input(const input& input, result& result, const context& context)
+void selectcomplete_impl::on_input(const input& _input, result& result, const context& context)
 {
     assert(is_active());
 
     bool sort = false;
+    input input = _input;
 
     // Convert double Backspace into Escape.
     if (input.id != bind_id_selectcomplete_backspace)
         m_was_backspace = false;
     else if (m_was_backspace)
-        goto revert;
+    {
+revert:
+        if (m_inserted)
+        {
+            m_buffer->undo();
+            m_inserted = false;
+        }
+        cancel(result);
+        return;
+    }
 
     // Cancel if no matches (which shouldn't be able to happen here).
     int count = m_matches.get_match_count();
@@ -654,14 +664,7 @@ append_not_dup:
         break;
 
     case bind_id_selectcomplete_escape:
-revert:
-        if (m_inserted)
-        {
-            m_buffer->undo();
-            m_inserted = false;
-        }
-        cancel(result);
-        break;
+        goto revert;
 
     case bind_id_selectcomplete_catchall:
         {

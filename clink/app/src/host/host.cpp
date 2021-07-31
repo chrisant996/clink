@@ -580,7 +580,7 @@ void autostart_display::save()
     m_saved.Y = 1;
     m_screen_content = std::unique_ptr<CHAR_INFO[]>(new CHAR_INFO[csbi.dwSize.X]);
 
-    SMALL_RECT sr { 0, m_pos.Y, csbi.dwSize.X - 1, m_pos.Y };
+    SMALL_RECT sr { 0, m_pos.Y, static_cast<SHORT>(csbi.dwSize.X - 1), m_pos.Y };
     if (!ReadConsoleOutput(h, m_screen_content.get(), m_saved, COORD {}, &sr))
         m_screen_content.reset();
 }
@@ -600,7 +600,7 @@ void autostart_display::restore()
     if (m_saved.X != csbi.dwSize.X)
         return;
 
-    SMALL_RECT sr { 0, m_pos.Y, csbi.dwSize.X - 1, m_pos.Y };
+    SMALL_RECT sr { 0, m_pos.Y, static_cast<SHORT>(csbi.dwSize.X - 1), m_pos.Y };
     std::unique_ptr<CHAR_INFO[]> screen_content = std::unique_ptr<CHAR_INFO[]>(new CHAR_INFO[csbi.dwSize.X]);
     if (!ReadConsoleOutput(h, screen_content.get(), m_saved, COORD {}, &sr))
         return;

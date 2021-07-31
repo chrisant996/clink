@@ -209,7 +209,7 @@ struct keyseq_name : public no_copy
     keyseq_name(char* p, short int eqclass, short int order) { s = p; eq = eqclass; o = order; }
     keyseq_name(keyseq_name&& a) { s = a.s; eq = a.eq; o = a.o; a.s = nullptr; }
     ~keyseq_name() { free(s); }
-    keyseq_name& operator=(keyseq_name&& a) { s = a.s; eq = a.eq; o = a.o; a.s = nullptr; }
+    keyseq_name& operator=(keyseq_name&& a) { s = a.s; eq = a.eq; o = a.o; a.s = nullptr; return *this; }
 
     char* s;
     short int eq;
@@ -221,7 +221,7 @@ struct keyseq_key : public no_copy
 {
     keyseq_key(const char* p, bool find = false) { this->s = p; this->find = find; }
     keyseq_key(keyseq_key&& a) { s = a.s; find = a.find; a.s = nullptr; }
-    keyseq_key& operator=(keyseq_key&& a) { s = a.s; find = a.find; a.s = nullptr; }
+    keyseq_key& operator=(keyseq_key&& a) { s = a.s; find = a.find; a.s = nullptr; return *this; }
 
     const char* s;
     bool find;
@@ -723,7 +723,8 @@ void win_terminal_in::process_input(KEY_EVENT_RECORD const& record)
     {
         char buf[32];
         buf[0] = 0;
-        const char* key_name = key_name_from_vk(key_vk, str_base(buf)) ? buf : "UNKNOWN";
+        str_base tmps(buf);
+        const char* key_name = key_name_from_vk(key_vk, tmps) ? buf : "UNKNOWN";
         printf("key event:  %c%c%c %c%c  flags=0x%08.8x  char=0x%04.4x  vk=0x%04.4x  \"%s\"\n",
                 (key_flags & SHIFT_PRESSED) ? 'S' : '_',
                 (key_flags & LEFT_CTRL_PRESSED) ? 'C' : '_',

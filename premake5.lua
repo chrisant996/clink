@@ -152,9 +152,11 @@ workspace("clink")
         defines("_CRT_SECURE_NO_WARNINGS")
         defines("_CRT_NONSTDC_NO_WARNINGS")
 
-    configuration("gmake")
+    configuration("gmake or gmake2")
         defines("__MSVCRT_VERSION__=0x0601")
-        defines("WINVER=0x0502")
+        defines("_WIN32_WINNT=0x0601")
+        defines("WINVER=0x0601")
+        buildoptions("-Wno-error=missing-field-initializers")
 
     configuration("*")
         includedirs(".build")           -- for clink_commit.h
@@ -218,6 +220,10 @@ clink_lib("clink_lib")
         pchheader("pch.h")
         pchsource("clink/lib/src/pch.cpp")
 
+    configuration("gmake or gmake2")
+        buildoptions("-fpermissive")
+        buildoptions("-std=c++17")
+
 --------------------------------------------------------------------------------
 clink_lib("clink_lua")
     includedirs("clink/lua/include/lua")
@@ -236,6 +242,10 @@ clink_lib("clink_lua")
         pchheader("pch.h")
         pchsource("clink/lua/src/pch.cpp")
 
+    configuration("gmake or gmake2")
+        buildoptions("-fpermissive")
+        buildoptions("-std=c++17")
+
 --------------------------------------------------------------------------------
 clink_lib("clink_core")
     includedirs("clink/core/include/core")
@@ -246,6 +256,10 @@ clink_lib("clink_core")
     configuration("vs*")
         pchheader("pch.h")
         pchsource("clink/core/src/pch.cpp")
+
+    configuration("gmake or gmake2")
+        buildoptions("-fpermissive")
+        buildoptions("-std=c++17")
 
 --------------------------------------------------------------------------------
 clink_lib("clink_terminal")
@@ -259,6 +273,12 @@ clink_lib("clink_terminal")
         exceptionhandling("on")     -- for std::wregex
         pchheader("pch.h")
         pchsource("clink/terminal/src/pch.cpp")
+
+    configuration("gmake or gmake2")
+        buildoptions("-fpermissive")
+        buildoptions("-fexceptions")
+        buildoptions("-Wno-multichar")
+        buildoptions("-std=c++17")
 
 --------------------------------------------------------------------------------
 clink_lib("clink_process")
@@ -277,6 +297,10 @@ clink_lib("clink_process")
         omitframepointer("off") -- required by the inject lambda in process::remote_call
         exceptionhandling("off") -- required by the inject lambda in process::remote_call
         -- <SupportJustMyCode>false</SupportJustMyCode> -- required by the inject lambda in process::remote_call
+
+    configuration("gmake or gmake2")
+        buildoptions("-fpermissive")
+        buildoptions("-std=c++17")
 
 --------------------------------------------------------------------------------
 clink_lib("clink_app_common")
@@ -300,6 +324,10 @@ clink_lib("clink_app_common")
         pchheader("pch.h")
         pchsource("clink/app/src/pch.cpp")
 
+    configuration("gmake or gmake2")
+        buildoptions("-fpermissive")
+        buildoptions("-std=c++17")
+
 --------------------------------------------------------------------------------
 clink_dll("clink_app_dll")
     targetname("clink_dll")
@@ -322,6 +350,10 @@ clink_dll("clink_app_dll")
     configuration("vs*")
         links("dbghelp")
 
+    configuration("gmake or gmake2")
+        buildoptions("-fpermissive")
+        buildoptions("-std=c++17")
+
 --------------------------------------------------------------------------------
 clink_exe("clink_app_exe")
     flags("OmitDefaultLibrary")
@@ -343,6 +375,10 @@ clink_exe("clink_app_exe")
     configuration("debug")
         postbuild_copy("clink/app/src/loader/clink.bat", "debug")
         postbuild_copy("clink/app/src/loader/clink.lua", "debug")
+
+    configuration("gmake or gmake2")
+        buildoptions("-fpermissive")
+        buildoptions("-std=c++17")
 
 --------------------------------------------------------------------------------
 clink_exe("clink_test")
@@ -377,6 +413,10 @@ clink_exe("clink_test")
     configuration("vs*")
         pchheader("pch.h")
         pchsource("clink/test/src/pch.cpp")
+
+    configuration("gmake or gmake2")
+        buildoptions("-fpermissive")
+        buildoptions("-std=c++17")
 
 --------------------------------------------------------------------------------
 require "vstudio"

@@ -164,7 +164,7 @@ void app_context::get_binaries_dir(str_base& out) const
 {
     out.clear();
 
-    void* base = vm().get_alloc_base("");
+    void* base = vm().get_alloc_base((void*)"");
     if (base == nullptr)
         return;
 

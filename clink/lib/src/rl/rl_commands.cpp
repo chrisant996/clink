@@ -905,7 +905,7 @@ void cua_after_command(bool force_clear)
     }
 
     // If not a recognized command, clear the cua selection.
-    if (s_map.find(rl_last_func) == s_map.end())
+    if (s_map.find((void*)rl_last_func) == s_map.end())
         cua_clear_selection();
 }
 
@@ -1035,7 +1035,6 @@ int edit_and_execute_command(int count, int invoking_key)
         HIST_ENTRY* h = history_get(count);
         if (!h)
         {
-LDing:
             rl_ding();
             return 0;
         }
@@ -1050,7 +1049,11 @@ LDing:
     str_moveable tmp_file;
     FILE* file = os::create_temp_file(&tmp_file);
     if (!file)
-        goto LDing;
+    {
+LDing:
+        rl_ding();
+        return 0;
+    }
 
     if (fputs(line.c_str(), file) < 0)
     {

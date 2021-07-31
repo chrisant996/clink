@@ -332,7 +332,8 @@ bool win_screen_buffer::get_line_text(int line, str_base& out) const
         len--;
 
     out.clear();
-    to_utf8(out, wstr_iter(m_chars, len));
+    wstr_iter tmpi(m_chars, len);
+    to_utf8(out, tmpi);
     return true;
 }
 
@@ -424,7 +425,7 @@ void win_screen_buffer::set_horiz_cursor(int column)
 
     column = clamp(column, 0, width);
 
-    COORD xy = { window.Left + SHORT(column), csbi.dwCursorPosition.Y };
+    COORD xy = { static_cast<SHORT>(window.Left + column), csbi.dwCursorPosition.Y };
     SetConsoleCursorPosition(m_handle, xy);
 }
 
@@ -441,7 +442,7 @@ void win_screen_buffer::set_cursor(int column, int row)
     column = clamp(column, 0, width);
     row = clamp(row, 0, height);
 
-    COORD xy = { window.Left + SHORT(column), window.Top + SHORT(row) };
+    COORD xy = { static_cast<SHORT>(window.Left + column), static_cast<SHORT>(window.Top + row) };
     SetConsoleCursorPosition(m_handle, xy);
 }
 

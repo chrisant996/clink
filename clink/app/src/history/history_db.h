@@ -161,4 +161,4 @@ template <int S> history_db::iter history_db::read_lines(char (&buffer)[S])
     return read_lines(buffer, S);
 }
 
-#define DIAG(fmt, ...)          do { if (m_diagnostic) fprintf(stderr, fmt, __VA_ARGS__); } while (false)
+#define DIAG(fmt, ...)          do { if (m_diagnostic) fprintf(stderr, fmt, ##__VA_ARGS__); } while (false)

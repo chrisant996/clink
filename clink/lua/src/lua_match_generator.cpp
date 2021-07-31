@@ -223,7 +223,10 @@ bool lua_match_generator::match_display_filter(char** matches, match_display_fil
         if (filtered_matches)
             *filtered_matches = nullptr;
         ret = true;
-        goto done;
+done:
+        top = lua_gettop(state) - top;
+        lua_pop(state, top);
+        return ret;
     }
 
     // Count matches.
@@ -480,10 +483,7 @@ discard:
     *filtered_matches = new_matches;
     ret = true;
 
-done:
-    top = lua_gettop(state) - top;
-    lua_pop(state, top);
-    return ret;
+    goto done;
 }
 
 //------------------------------------------------------------------------------

@@ -70,7 +70,7 @@ extern int complete_get_screenwidth (void);
 extern int fnwidth (char *string);
 extern int get_y_or_n (int for_pager);
 extern char* printable_part (char* pathname);
-extern int stat_char (char *filename, char match_type);
+extern int stat_char (const char *filename, char match_type);
 extern int _rl_internal_pager (int lines);
 extern void qsort_match_list (char** matches, int len);
 

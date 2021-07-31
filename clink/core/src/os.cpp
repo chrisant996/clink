@@ -11,6 +11,7 @@
 #include <fcntl.h>
 #include <sys/stat.h>
 #include <assert.h>
+#include <share.h>
 
 //------------------------------------------------------------------------------
 extern "C" void __cdecl __acrt_errno_map_os_error(unsigned long const oserrno);
@@ -40,8 +41,8 @@ void set_errorlevel(int errorlevel) { s_errorlevel = errorlevel; }
 int get_errorlevel() { return s_errorlevel; }
 
 //------------------------------------------------------------------------------
-static wchar_t* s_shell_name = L"cmd.exe";
-void set_shellname(wchar_t* shell_name) { s_shell_name = shell_name; }
+static const wchar_t* s_shell_name = L"cmd.exe";
+void set_shellname(const wchar_t* shell_name) { s_shell_name = shell_name; }
 const wchar_t* get_shellname() { return s_shell_name; }
 
 //------------------------------------------------------------------------------
@@ -56,7 +57,6 @@ DWORD get_file_attributes(const wchar_t* path)
         DWORD attr = GetFileAttributesW(path);
         if (attr == INVALID_FILE_ATTRIBUTES)
         {
-error:
             map_errno();
             return INVALID_FILE_ATTRIBUTES;
         }
@@ -66,7 +66,10 @@ error:
     WIN32_FIND_DATAW fd;
     HANDLE h = FindFirstFileW(path, &fd);
     if (h == INVALID_HANDLE_VALUE)
-        goto error;
+    {
+        map_errno();
+        return INVALID_FILE_ATTRIBUTES;
+    }
 
     FindClose(h);
     return fd.dwFileAttributes;
@@ -289,7 +292,10 @@ FILE* create_temp_file(str_base* out, const char* _prefix, const char* _ext, tem
     }
 
     if (out)
-        to_utf8(*out, wstr_iter(wpath.c_str(), wpath.length()));
+    {
+        wstr_iter tmpi(wpath.c_str(), wpath.length());
+        to_utf8(*out, tmpi);
+    }
 
     if (!f)
         map_errno(ERROR_NO_MORE_FILES);
@@ -436,7 +442,7 @@ bool get_alias(const char* name, str_base& out)
     // Get the alias (aka. doskey macro).
     wstr<32> buffer;
     buffer.reserve(8191);
-    if (GetConsoleAliasW(alias_name.data(), buffer.data(), buffer.size(), s_shell_name) == 0)
+    if (GetConsoleAliasW(alias_name.data(), buffer.data(), buffer.size(), const_cast<wchar_t*>(s_shell_name)) == 0)
     {
         map_errno();
         return false;
@@ -466,7 +472,10 @@ bool get_short_path_name(const char* path, str_base& out)
         wout.reserve(len);
         len = GetShortPathNameW(wpath.c_str(), wout.data(), wout.size() - 1);
         if (len)
-            to_utf8(out, wstr_iter(wout.c_str(), wout.length()));
+        {
+            wstr_iter tmpi(wout.c_str(), wout.length());
+            to_utf8(out, tmpi);
+        }
     }
 
     if (!len)
@@ -492,7 +501,10 @@ bool get_long_path_name(const char* path, str_base& out)
         wout.reserve(len);
         len = GetLongPathNameW(wpath.c_str(), wout.data(), wout.size() - 1);
         if (len)
-            to_utf8(out, wstr_iter(wout.c_str(), wout.length()));
+        {
+            wstr_iter tmpi(wout.c_str(), wout.length());
+            to_utf8(out, tmpi);
+        }
     }
 
     if (!len)
@@ -518,7 +530,10 @@ bool get_full_path_name(const char* path, str_base& out)
         wout.reserve(len);
         len = GetFullPathNameW(wpath.c_str(), wout.size() - 1, wout.data(), nullptr);
         if (len)
-            to_utf8(out, wstr_iter(wout.c_str(), wout.length()));
+        {
+            wstr_iter tmpi(wout.c_str(), wout.length());
+            to_utf8(out, tmpi);
+        }
     }
 
     if (!len)

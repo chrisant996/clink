@@ -51,7 +51,7 @@ template <class A> A clamp(A v, A m, A M) { return min(max(v, m), M); }
 
 //------------------------------------------------------------------------------
 #define FILE_LINE __FILE__ "(" AS_STR(__LINE__) "): "
-#ifdef HIDE_TODO
+#if !defined(_MSC_VER) || defined(HIDE_TODO)
 #define TODO(s)
 #define WARNING(s)
 #else
@@ -111,7 +111,7 @@ template <class T> struct autoptr
     ~autoptr() { free(const_cast<remove_const_t<T>*>(m_p)); }
     autoptr<T>& operator=(const autoptr<T>& other) = delete;
     autoptr<T>& operator=(autoptr<T>&& other) { m_p = other.m_p; other.m_p = nullptr; }
-    T** operator&() const { return &const_cast<T*>(m_p); }
+    T** operator&() const { return const_cast<T**>(&m_p); }
 private:
     T* m_p;
 };

@@ -201,7 +201,7 @@ void* process::remote_call_internal(pe_info::funcptr_t function, process_wait_ca
     };
 
     vm_write((void*)stdcall_thunk, thunk_size);
-    void* thunk_ptrs[2] = { function };
+    void* thunk_ptrs[2] = { (void*)function };
     char* remote_thunk_data = (char*)vm_write(thunk_ptrs, sizeof(thunk_ptrs));
     vm_write(param, param_size);
     vm.set_access(region, vm::access_rwx); // writeable so thunk() can write output.
@@ -289,7 +289,7 @@ void* process::remote_call_internal(pe_info::funcptr_t function, process_wait_ca
     vm_write((void*)stdcall_thunk2, thunk_size);
 
     int offset_ptrs = write_offset;
-    void* thunk_ptrs[4] = { function }; // func, out, in1, in2
+    void* thunk_ptrs[4] = { (void*)function }; // func, out, in1, in2
     char* remote_thunk_data = (char*)vm_write(thunk_ptrs, sizeof(thunk_ptrs));
 
     void* addr_param1 = vm_write(param1, param1_size);

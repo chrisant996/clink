@@ -47,6 +47,8 @@ int     mk_wcswidth(const char32_t *, size_t);
 #   if defined(BUILD_READLINE)
 #       undef __MINGW32__
 #   endif
+
+#   define RL_LIBRARY_VERSION "8.1"
 #endif
 
 #if defined(BUILD_READLINE)

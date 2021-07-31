@@ -166,8 +166,17 @@ bool str_impl<TYPE>::reserve(unsigned int new_size, bool exact)
 template <typename TYPE>
 void str_impl<TYPE>::free_data()
 {
+#ifdef __MINGW32__
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wfree-nonheap-object" /* gcc fails to account for m_owns_ptr */
+#endif
+
     if (m_owns_ptr)
         free(m_data);
+
+#ifdef __MINGW32__
+#pragma GCC diagnostic pop
+#endif
 }
 
 //------------------------------------------------------------------------------
@@ -349,6 +358,7 @@ bool str_impl<TYPE>::concat(const TYPE* src, int n)
 }
 
 //------------------------------------------------------------------------------
+template <>
 inline bool str_impl<char>::format(const char* format, ...)
 {
     va_list args;
@@ -366,6 +376,7 @@ inline bool str_impl<char>::format(const char* format, ...)
 }
 
 //------------------------------------------------------------------------------
+template <>
 inline bool str_impl<wchar_t>::format(const wchar_t* format, ...)
 {
     va_list args;
@@ -650,7 +661,7 @@ inline void wstr_moveable::free()
 //------------------------------------------------------------------------------
 template <typename T> void concat_strip_quotes(str_impl<T>& out, const T* in, unsigned int len=-1)
 {
-    if (len == -1)
+    if (len == static_cast<unsigned int>(-1))
         len = static_cast<unsigned int>(strlen(in));
 
     // Strip quotes while concatenating.  This may seem surprising, but it's a

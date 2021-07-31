@@ -52,7 +52,8 @@ static bool change_value(bool install, char** argv=nullptr, int argc=0)
     str_iter token;
     while (tokens.next(token))
     {
-        if (str_compare(token, str_iter(value.c_str(), value.length())) == -1)
+        str_iter tmpi(value.c_str(), value.length());
+        if (str_compare(token, tmpi) == -1)
         {
             // If uninstalling, the path is present, so remove it.
             if (install)

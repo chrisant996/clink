@@ -251,7 +251,7 @@ static void ensure_keydesc_map()
         {
             FUNMAP* func = *funcs;
 
-            auto& iter = s_pmap_keydesc->find(func->function);
+            auto const& iter = s_pmap_keydesc->find(func->function);
             if (iter == s_pmap_keydesc->end())
                 s_pmap_keydesc->emplace(func->function, std::move(Keydesc(func->name, 0, nullptr)));
             else if (!iter->second.name) // Don't overwrite existing name; works around case sensitivity bug with some VI mode commands.
@@ -262,7 +262,7 @@ static void ensure_keydesc_map()
 
         for (auto const& f : c_func_descriptions)
         {
-            auto& iter = s_pmap_keydesc->find(f.func);
+            auto const& iter = s_pmap_keydesc->find(f.func);
             assert(iter != s_pmap_keydesc->end()); // Command no longer exists?
             if (iter != s_pmap_keydesc->end())
             {
@@ -318,7 +318,7 @@ void clink_add_funmap_entry(const char *name, rl_command_func_t *func, int cat, 
     if (!s_pmap_keydesc)
         s_pmap_keydesc = new keydesc_map;
 
-    auto& iter = s_pmap_keydesc->find(func);
+    auto const& iter = s_pmap_keydesc->find(func);
     if (iter == s_pmap_keydesc->end())
     {
         s_pmap_keydesc->emplace(func, std::move(Keydesc(name, cat, desc)));
@@ -338,7 +338,7 @@ void clink_add_funmap_entry(const char *name, rl_command_func_t *func, int cat, 
 //------------------------------------------------------------------------------
 static const char* get_function_name(int (*func_addr)(int, int))
 {
-    auto& iter = s_pmap_keydesc->find(func_addr);
+    auto const& iter = s_pmap_keydesc->find(func_addr);
     if (iter != s_pmap_keydesc->end())
         return iter->second.name;
 
@@ -348,7 +348,7 @@ static const char* get_function_name(int (*func_addr)(int, int))
 //------------------------------------------------------------------------------
 static bool get_function_info(int (*func_addr)(int, int), const char** desc, int* cat)
 {
-    auto& iter = s_pmap_keydesc->find(func_addr);
+    auto const& iter = s_pmap_keydesc->find(func_addr);
     if (iter != s_pmap_keydesc->end())
     {
         if (desc) *desc = iter->second.desc;

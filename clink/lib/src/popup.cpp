@@ -345,7 +345,9 @@ static void get_cell_text(int row, int column, wstr_base& out, bool split_tabs=t
                 }
                 ptr = tab + 1;
             }
-            to_utf16(out, str_iter(ptr, len));
+
+            str_iter tmpi(ptr, len);
+            to_utf16(out, tmpi);
         }
         else
         {

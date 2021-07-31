@@ -71,7 +71,17 @@ bool match_wild_impl(const str_iter_impl<T>& _pattern, const str_iter_impl<T>& _
             // Consumed pattern, so it's a match iff file was consumed.
             if (!d)
                 return true;
-            goto back_track;
+back_track:
+            if (depth)
+            {
+                // Backtrack.
+                depth--;
+                pattern.reset_pointer(pattern_stack[depth]);
+                file.reset_pointer(file_stack[depth]);
+                start_of_path_component = path_component_stack[depth];
+                continue;
+            }
+            return false;
         }
 
         bool symbol_matched = false;
@@ -190,19 +200,7 @@ bool match_wild_impl(const str_iter_impl<T>& _pattern, const str_iter_impl<T>& _
         }
 
         if (!symbol_matched)
-        {
-back_track:
-            if (depth)
-            {
-                // Backtrack.
-                depth--;
-                pattern.reset_pointer(pattern_stack[depth]);
-                file.reset_pointer(file_stack[depth]);
-                start_of_path_component = path_component_stack[depth];
-                continue;
-            }
-            return false;
-        }
+            goto back_track;
     }
 }
 

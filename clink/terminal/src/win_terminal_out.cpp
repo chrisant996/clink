@@ -103,7 +103,8 @@ bool win_terminal_out::get_line_text(int line, str_base& out) const
         len--;
 
     out.clear();
-    to_utf8(out, wstr_iter(m_chars, len));
+    wstr_iter tmpi(m_chars, len);
+    to_utf8(out, tmpi);
     return true;
 }
 

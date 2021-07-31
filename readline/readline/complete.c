@@ -131,7 +131,7 @@ rl_iccpfunc_t *rl_is_exec_func = (rl_iccpfunc_t *)NULL;
 #if defined (VISIBLE_STATS)
 /* begin_clink_change */
 //static int stat_char PARAMS((char *));
-int stat_char PARAMS((char *, char));
+int stat_char PARAMS((const char *, char));
 /* end_clink_change */
 #endif
 
@@ -348,7 +348,10 @@ const char *rl_basic_quote_characters = "\"'";
 /* The list of characters that signal a break between words for
    rl_complete_internal.  The default list is the contents of
    rl_basic_word_break_characters.  */
-/*const*/ char *rl_completer_word_break_characters = (/*const*/ char *)NULL;
+/* begin_clink_change */
+///*const*/ char *rl_completer_word_break_characters = (/*const*/ char *)NULL;
+const char *rl_completer_word_break_characters = (const char *)NULL;
+/* end_clink_change */
 
 /* Hook function to allow an application to set the completion word
    break characters before readline breaks up the line.  Allows
@@ -924,7 +927,7 @@ stat_from_match_type (unsigned char match_type, const char* fn, struct stat* fin
 //static int
 //stat_char (char *filename)
 int
-stat_char (char *filename, char match_type)
+stat_char (const char *filename, char match_type)
 /* end_clink_change */
 {
   struct stat finfo;
@@ -1537,7 +1540,11 @@ char
 _rl_find_completion_word (int *fp, int *dp)
 {
   int scan, end, found_quote, delimiter, pass_next, isbrk;
-  char quote_char, *brkchars;
+/* begin_clink_change */
+  //char quote_char, *brkchars;
+  char quote_char;
+  const char *brkchars;
+/* end_clink_change */
 
   end = rl_point;
   found_quote = delimiter = 0;

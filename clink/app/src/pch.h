@@ -34,5 +34,10 @@
 
 #include <core/base.h>
 
-#define CLINK_DLL       "clink_dll_x" ## AS_STR(ARCHITECTURE) ## ".dll"
-#define CLINK_EXE       "clink_x" ## AS_STR(ARCHITECTURE) ## ".exe"
+#ifdef _MSC_VER
+#   define CLINK_DLL    "clink_dll_x" ## AS_STR(ARCHITECTURE) ## ".dll"
+#   define CLINK_EXE    "clink_x" ## AS_STR(ARCHITECTURE) ## ".exe"
+#else
+#   define CLINK_DLL    "clink_dll_x" AS_STR(ARCHITECTURE) ".dll"
+#   define CLINK_EXE    "clink_x" AS_STR(ARCHITECTURE) ".exe"
+#endif

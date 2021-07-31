@@ -76,7 +76,10 @@ static void print_history_item(HANDLE hout, const char* utf8, wstr_base* utf16)
             while (*walk >= 0x20 || *walk == 0x09)
                 walk++;
             if (walk > begin)
-                to_utf16(*utf16, str_iter(begin, int(walk - begin)));
+            {
+                str_iter tmpi(begin, int(walk - begin));
+                to_utf16(*utf16, tmpi);
+            }
             if (!*walk)
                 break;
             wchar_t ctrl[3] = { '^', wchar_t(*walk + 'A' - 1) };

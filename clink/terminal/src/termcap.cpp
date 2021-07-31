@@ -105,7 +105,7 @@ int tgetflag(char* name)
 }
 
 //------------------------------------------------------------------------------
-char* tgetstr(char* name, char** out)
+char* tgetstr(const char* name, char** out)
 {
 #define CSI(x) "\x1b[" #x
 #define SS3(x) "\x1bO" #x
