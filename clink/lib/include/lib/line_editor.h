@@ -11,6 +11,7 @@ class input_idle;
 class terminal_in;
 class terminal_out;
 class printer;
+class host_callbacks;
 class str_base;
 
 //------------------------------------------------------------------------------
@@ -19,13 +20,14 @@ class line_editor
 public:
     struct desc
     {
-                        desc(terminal_in* i, terminal_out* o, printer* p)
-                        : input(i), output(o), printer(p) {}
+                        desc(terminal_in* i, terminal_out* o, printer* p, host_callbacks* c)
+                        : input(i), output(o), printer(p), callbacks(c) {}
 
         // Required.
         terminal_in*    input = nullptr;
         terminal_out*   output = nullptr;
         printer*        printer = nullptr;
+        host_callbacks* callbacks = nullptr;
 
         // Optional.
         const char*     shell_name = "clink";

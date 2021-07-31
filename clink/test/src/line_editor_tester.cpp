@@ -94,7 +94,7 @@ line_editor_tester::line_editor_tester(const line_editor::desc& desc)
 void line_editor_tester::create_line_editor(const line_editor::desc* desc)
 {
     // Create a line editor.
-    line_editor::desc inner_desc(nullptr, nullptr, nullptr);
+    line_editor::desc inner_desc(nullptr, nullptr, nullptr, nullptr);
     if (desc != nullptr)
         inner_desc = *desc;
 

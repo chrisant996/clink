@@ -107,3 +107,6 @@ int     glob_list_expansions(int count, int invoking_key);
 
 //------------------------------------------------------------------------------
 int     edit_and_execute_command(int count, int invoking_key);
+
+//------------------------------------------------------------------------------
+int     clink_diagnostics(int count, int invoking_key);

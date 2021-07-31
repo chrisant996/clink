@@ -52,7 +52,7 @@ TEST_CASE("Executable match generation.")
     lua_match_generator lua_generator(lua);
     lua_load_script(lua, app, exec);
 
-    line_editor::desc desc(nullptr, nullptr, nullptr);
+    line_editor::desc desc(nullptr, nullptr, nullptr, nullptr);
     desc.command_delims = "&|";
     line_editor_tester tester(desc);
     tester.get_editor()->add_generator(lua_generator);

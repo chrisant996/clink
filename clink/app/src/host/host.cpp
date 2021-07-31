@@ -30,10 +30,6 @@
 extern "C" {
 #include <lua.h>
 #include <lauxlib.h>
-#include <compat/config.h>
-#include <readline/readline.h>
-#include <readline/rlprivate.h>
-#include <readline/history.h>
 }
 
 //------------------------------------------------------------------------------
@@ -112,22 +108,6 @@ extern str<> g_last_prompt;
 
 
 //------------------------------------------------------------------------------
-bool call_lua_rl_global_function(const char* func_name)
-{
-    return s_host_lua && s_host_lua->call_lua_rl_global_function(func_name);
-}
-
-//------------------------------------------------------------------------------
-int filter_matches(char** matches)
-{
-    if (s_host_lua)
-        s_host_lua->call_lua_filter_matches(matches, rl_completion_type, rl_filename_completion_desired);
-    return 0;
-}
-
-
-
-//------------------------------------------------------------------------------
 class dir_history_entry : public no_copy
 {
 public:
@@ -180,53 +160,6 @@ static void prev_dir_history(str_base& inout)
     a++;
 
     inout.format(" cd /d \"%s\"", a->get());
-}
-
-//------------------------------------------------------------------------------
-const char** host_copy_dir_history(int* total)
-{
-    if (!s_dir_history.size())
-        return nullptr;
-
-    // Copy the directory list (just a shallow copy of the dir pointers).
-    const char** history = (const char**)malloc(sizeof(*history) * s_dir_history.size());
-    int i = 0;
-    for (auto const& it : s_dir_history)
-        history[i++] = it.get();
-
-    *total = i;
-    return history;
-}
-
-
-
-//------------------------------------------------------------------------------
-static history_db* s_history_db = nullptr;
-void host_add_history(int, const char* line)
-{
-    if (s_history_db)
-        s_history_db->add(line);
-}
-void host_remove_history(int rl_history_index, const char* line)
-{
-    if (s_history_db)
-        s_history_db->remove(rl_history_index, line);
-}
-
-
-
-//------------------------------------------------------------------------------
-static host* s_host = nullptr;
-void host_filter_prompt()
-{
-    if (!s_host || !g_prompt_async.get())
-        return;
-
-    const char* rprompt = nullptr;
-    const char* prompt = s_host->filter_prompt(&rprompt);
-
-    void set_prompt(const char* prompt, const char* rprompt);
-    set_prompt(prompt, rprompt);
 }
 
 
@@ -532,6 +465,71 @@ bool host::dequeue_line(wstr_base& out)
 }
 
 //------------------------------------------------------------------------------
+void host::add_history(const char* line)
+{
+    m_history->add(line);
+}
+
+//------------------------------------------------------------------------------
+void host::remove_history(int rl_history_index, const char* line)
+{
+    m_history->remove(rl_history_index, line);
+}
+
+//------------------------------------------------------------------------------
+void host::filter_prompt()
+{
+    if (!g_prompt_async.get())
+        return;
+
+    const char* rprompt = nullptr;
+    const char* prompt = filter_prompt(&rprompt);
+
+    void set_prompt(const char* prompt, const char* rprompt);
+    set_prompt(prompt, rprompt);
+}
+
+//------------------------------------------------------------------------------
+void host::filter_matches(char** matches)
+{
+    if (m_lua)
+        m_lua->call_lua_filter_matches(matches, rl_completion_type, rl_filename_completion_desired);
+}
+
+//------------------------------------------------------------------------------
+bool host::call_lua_rl_global_function(const char* func_name)
+{
+    return m_lua && m_lua->call_lua_rl_global_function(func_name);
+}
+
+//------------------------------------------------------------------------------
+const char** host::copy_dir_history(int* total)
+{
+    if (!s_dir_history.size())
+        return nullptr;
+
+    // Copy the directory list (just a shallow copy of the dir pointers).
+    const char** history = (const char**)malloc(sizeof(*history) * s_dir_history.size());
+    int i = 0;
+    for (auto const& it : s_dir_history)
+        history[i++] = it.get();
+
+    *total = i;
+    return history;
+}
+
+//------------------------------------------------------------------------------
+void host::get_app_context(int& id, str_base& binaries, str_base& profile, str_base& scripts)
+{
+    const auto* context = app_context::get();
+
+    id = context->get_id();
+    context->get_binaries_dir(binaries);
+    context->get_state_dir(profile);
+    context->get_script_path_readable(scripts);
+}
+
+//------------------------------------------------------------------------------
 bool host::edit_line(const char* prompt, const char* rprompt, str_base& out)
 {
     assert(!m_prompt); // Reentrancy not supported!
@@ -644,7 +642,6 @@ bool host::edit_line(const char* prompt, const char* rprompt, str_base& out)
     host_lua& lua = *m_lua;
     prompt_filter& prompt_filter = *m_prompt_filter;
 
-    rollback<host*> rb_host(s_host, this);
     rollback<host_lua*> rb_lua(s_host_lua, &lua);
 
     // Load scripts.
@@ -671,7 +668,7 @@ bool host::edit_line(const char* prompt, const char* rprompt, str_base& out)
     if (init_editor || init_prompt)
         static_cast<input_idle*>(lua)->reset();
 
-    line_editor::desc desc(m_terminal.in, m_terminal.out, m_printer);
+    line_editor::desc desc(m_terminal.in, m_terminal.out, m_printer, this);
     initialise_editor_desc(desc);
     desc.state_dir = state_dir.c_str();
 
@@ -715,8 +712,6 @@ bool host::edit_line(const char* prompt, const char* rprompt, str_base& out)
             m_history->load_rl_history();
         }
     }
-
-    s_history_db = m_history;
 
     bool resolved = false;
     bool ret = false;
@@ -905,8 +900,6 @@ bool host::edit_line(const char* prompt, const char* rprompt, str_base& out)
         intercept_directory(out);
     }
 
-    s_history_db = nullptr;
-
     line_editor_destroy(editor);
 
     if (local_lua)
@@ -943,95 +936,4 @@ const char* host::filter_prompt(const char** rprompt)
     if (rprompt)
         *rprompt = m_filtered_rprompt.length() ? m_filtered_rprompt.c_str() : nullptr;
     return m_filtered_prompt.c_str();
-}
-
-//------------------------------------------------------------------------------
-int clink_diagnostics(int count, int invoking_key)
-{
-    _rl_move_vert(_rl_vis_botlin);
-    puts("");
-
-    static char bold[] = "\x1b[1m";
-    static char norm[] = "\x1b[m";
-    static char lf[] = "\n";
-
-    str<> s;
-    const int spacing = 12;
-    const auto* context = app_context::get();
-
-    // Version and binaries dir.
-
-    s.clear();
-    s << bold << "version:" << norm << lf;
-    g_printer->print(s.c_str(), s.length());
-
-    printf("  %-*s  %s\n", spacing, "version", CLINK_VERSION_STR);
-    context->get_binaries_dir(s);
-    printf("  %-*s  %s\n", spacing, "binaries", s.c_str());
-
-    // Session info.
-
-    s.clear();
-    s <<bold << "session:" << norm << lf;
-    g_printer->print(s.c_str(), s.length());
-
-    printf("  %-*s  %d\n", spacing, "session", context->get_id());
-
-    static const struct {
-        const char* name;
-        void        (app_context::*method)(str_base&) const;
-        bool        suppress_when_empty;
-    } infos[] = {
-        { "profile",    &app_context::get_state_dir },
-        // { "log",        &app_context::get_log_path },
-        // { "settings",   &app_context::get_settings_path },
-        // { "history",    &app_context::get_history_path },
-        { "scripts",    &app_context::get_script_path_readable, true/*suppress_when_empty*/ },
-    };
-
-    for (const auto& info : infos)
-    {
-        (context->*info.method)(s);
-        if (!info.suppress_when_empty || !s.empty())
-            printf("  %-*s  %s\n", spacing, info.name, s.c_str());
-    }
-
-    if (s_host_lua)
-    {
-        lua_state& lua = *s_host_lua;
-        lua_State* state = lua.get_state();
-
-        static const char* const c_diag_functions[] =
-        {
-            "_diag_coroutines",
-            "_diag_refilter",
-            "_diag_events",
-            "_diag_custom",
-        };
-
-        // Call clink diagnostic functions.
-        for (auto const& func_name : c_diag_functions)
-        {
-            lua_getglobal(state, "clink");
-            lua_pushlstring(state, func_name, strlen(func_name));
-            lua_rawget(state, -2);
-            if (lua_isfunction(state, -1))
-            {
-                if (lua.pcall(state, 0, 0) != 0)
-                {
-                    puts(lua_tostring(state, -1));
-                    lua_pop(state, 2);
-                }
-            }
-            else
-            {
-                lua_pop(state, 1);
-            }
-        }
-    }
-
-    puts("");
-
-    rl_forced_update_display();
-    return 0;
 }

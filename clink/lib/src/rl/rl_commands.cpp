@@ -9,6 +9,7 @@
 #include "editor_module.h"
 #include "rl_commands.h"
 #include "doskey.h"
+#include "terminal_helpers.h"
 
 #include <core/base.h>
 #include <core/log.h>
@@ -20,12 +21,15 @@
 extern "C" {
 #include <readline/readline.h>
 #include <readline/rldefs.h>
+#include <readline/rlprivate.h>
 #include <readline/history.h>
 #include <readline/xmalloc.h>
 }
 
 #include <list>
 #include <unordered_set>
+
+#include "../../../clink/app/src/version.h" // Ugh.
 
 
 
@@ -69,6 +73,7 @@ extern word_collector* g_word_collector;
 extern editor_module::result* g_result;
 extern void host_cmd_enqueue_lines(std::list<str_moveable>& lines);
 extern void host_add_history(int, const char* line);
+extern void host_get_app_context(int& id, str_base& binaries, str_base& profile, str_base& scripts);
 extern "C" int show_cursor(int visible);
 
 // This is implemented in the app layer, which makes it inaccessible to lower
@@ -750,12 +755,12 @@ int clink_popup_directories(int count, int invoking_key)
 
 
 //------------------------------------------------------------------------------
-extern bool call_lua_rl_global_function(const char* func_name);
+extern bool host_call_lua_rl_global_function(const char* func_name);
 
 //------------------------------------------------------------------------------
 int clink_complete_numbers(int count, int invoking_key)
 {
-    if (!call_lua_rl_global_function("clink._complete_numbers"))
+    if (!host_call_lua_rl_global_function("clink._complete_numbers"))
         rl_ding();
     return 0;
 }
@@ -763,7 +768,7 @@ int clink_complete_numbers(int count, int invoking_key)
 //------------------------------------------------------------------------------
 int clink_menu_complete_numbers(int count, int invoking_key)
 {
-    if (!call_lua_rl_global_function("clink._menu_complete_numbers"))
+    if (!host_call_lua_rl_global_function("clink._menu_complete_numbers"))
         rl_ding();
     return 0;
 }
@@ -771,7 +776,7 @@ int clink_menu_complete_numbers(int count, int invoking_key)
 //------------------------------------------------------------------------------
 int clink_menu_complete_numbers_backward(int count, int invoking_key)
 {
-    if (!call_lua_rl_global_function("clink._menu_complete_numbers_backward"))
+    if (!host_call_lua_rl_global_function("clink._menu_complete_numbers_backward"))
         rl_ding();
     return 0;
 }
@@ -779,7 +784,7 @@ int clink_menu_complete_numbers_backward(int count, int invoking_key)
 //------------------------------------------------------------------------------
 int clink_old_menu_complete_numbers(int count, int invoking_key)
 {
-    if (!call_lua_rl_global_function("clink._old_menu_complete_numbers"))
+    if (!host_call_lua_rl_global_function("clink._old_menu_complete_numbers"))
         rl_ding();
     return 0;
 }
@@ -787,7 +792,7 @@ int clink_old_menu_complete_numbers(int count, int invoking_key)
 //------------------------------------------------------------------------------
 int clink_old_menu_complete_numbers_backward(int count, int invoking_key)
 {
-    if (!call_lua_rl_global_function("clink._old_menu_complete_numbers_backward"))
+    if (!host_call_lua_rl_global_function("clink._old_menu_complete_numbers_backward"))
         rl_ding();
     return 0;
 }
@@ -795,7 +800,7 @@ int clink_old_menu_complete_numbers_backward(int count, int invoking_key)
 //------------------------------------------------------------------------------
 int clink_popup_complete_numbers(int count, int invoking_key)
 {
-    if (!call_lua_rl_global_function("clink._popup_complete_numbers"))
+    if (!host_call_lua_rl_global_function("clink._popup_complete_numbers"))
         rl_ding();
     return 0;
 }
@@ -803,7 +808,7 @@ int clink_popup_complete_numbers(int count, int invoking_key)
 //------------------------------------------------------------------------------
 int clink_popup_show_help(int count, int invoking_key)
 {
-    if (!call_lua_rl_global_function("clink._popup_show_help"))
+    if (!host_call_lua_rl_global_function("clink._popup_show_help"))
         rl_ding();
     return 0;
 }
@@ -1145,6 +1150,56 @@ LUnlinkFile:
 
 
 //------------------------------------------------------------------------------
+int clink_diagnostics(int count, int invoking_key)
+{
+    _rl_move_vert(_rl_vis_botlin);
+    puts("");
+
+    static char bold[] = "\x1b[1m";
+    static char norm[] = "\x1b[m";
+    static char lf[] = "\n";
+
+    str<> s;
+    const int spacing = 12;
+
+    int id = 0;
+    str<> binaries;
+    str<> profile;
+    str<> scripts;
+    host_get_app_context(id, binaries, profile, scripts);
+
+    // Version and binaries dir.
+
+    s.clear();
+    s << bold << "version:" << norm << lf;
+    g_printer->print(s.c_str(), s.length());
+
+    printf("  %-*s  %s\n", spacing, "version", CLINK_VERSION_STR);
+    printf("  %-*s  %s\n", spacing, "binaries", binaries.c_str());
+
+    // Session info.
+
+    s.clear();
+    s <<bold << "session:" << norm << lf;
+    g_printer->print(s.c_str(), s.length());
+
+    printf("  %-*s  %d\n", spacing, "session", id);
+
+    printf("  %-*s  %s\n", spacing, "profile", profile.c_str());
+    if (scripts.length())
+        printf("  %-*s  %s\n", spacing, "scripts", scripts.c_str());
+
+    host_call_lua_rl_global_function("clink._diagnostics");
+
+    puts("");
+
+    rl_forced_update_display();
+    return 0;
+}
+
+
+
+//------------------------------------------------------------------------------
 int macro_hook_func(const char* macro)
 {
     bool is_luafunc = (macro && strnicmp(macro, "luafunc:", 8) == 0);
@@ -1166,7 +1221,7 @@ int macro_hook_func(const char* macro)
         for (size_t i = 0; i < _countof(std_handles); ++i)
             GetConsoleMode(std_handles[i], &prev_mode[i]);
 
-        if (!call_lua_rl_global_function(func_name.c_str()))
+        if (!host_call_lua_rl_global_function(func_name.c_str()))
             rl_ding();
 
         for (size_t i = 0; i < _countof(std_handles); ++i)

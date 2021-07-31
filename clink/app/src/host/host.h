@@ -8,6 +8,7 @@
 
 #include <lib/doskey.h>
 #include <lib/line_editor.h>
+#include <lib/host_callbacks.h>
 
 #include <list>
 
@@ -17,7 +18,7 @@ class host_lua;
 class prompt_filter;
 
 //------------------------------------------------------------------------------
-class host
+class host : public host_callbacks
 {
 public:
                     host(const char* name);
@@ -29,6 +30,15 @@ public:
     const char*     filter_prompt(const char** rprompt);
     void            enqueue_lines(std::list<str_moveable>& lines);
     bool            dequeue_line(wstr_base& out);
+
+    // host_callbacks:
+    void            add_history(const char* line) override;
+    void            remove_history(int rl_history_index, const char* line) override;
+    void            filter_prompt() override;
+    void            filter_matches(char** matches) override;
+    bool            call_lua_rl_global_function(const char* func_name) override;
+    const char**    copy_dir_history(int* total) override;
+    void            get_app_context(int& id, str_base& binaries, str_base& profile, str_base& scripts) override;
 
 protected:
     bool            edit_line(const char* prompt, const char* rprompt, str_base& out);

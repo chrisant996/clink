@@ -17,7 +17,7 @@ TEST_CASE("Lua arg parsers")
     lua_state lua;
     lua_match_generator lua_generator(lua);
 
-    line_editor::desc desc(nullptr, nullptr, nullptr);
+    line_editor::desc desc(nullptr, nullptr, nullptr, nullptr);
     desc.command_delims = "&|";
     line_editor_tester tester(desc);
     tester.get_editor()->add_generator(lua_generator);

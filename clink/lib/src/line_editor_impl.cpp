@@ -8,6 +8,7 @@
 #include "match_generator.h"
 #include "match_pipeline.h"
 #include "pager.h"
+#include "host_callbacks.h"
 
 #include <core/base.h>
 #include <core/os.h>
@@ -92,15 +93,9 @@ static bool find_abort_in_keymap(str_base& out)
 //------------------------------------------------------------------------------
 line_editor* line_editor_create(const line_editor::desc& desc)
 {
-    // Check there's at least a terminal and a printer.
-    if (desc.input == nullptr)
-        return nullptr;
-
-    if (desc.output == nullptr)
-        return nullptr;
-
-    if (desc.printer == nullptr)
-        return nullptr;
+    if (desc.input == nullptr) return nullptr;
+    if (desc.output == nullptr) return nullptr;
+    if (desc.printer == nullptr) return nullptr;
 
     return new line_editor_impl(desc);
 }
@@ -134,6 +129,7 @@ bool prev_buffer::equals(const char* s, int len) const
 
 //------------------------------------------------------------------------------
 static line_editor_impl* s_editor = nullptr;
+static host_callbacks* s_callbacks = nullptr;
 word_collector* g_word_collector = nullptr;
 
 //------------------------------------------------------------------------------
@@ -171,6 +167,76 @@ void set_prompt(const char* prompt, const char* rprompt)
 
     s_editor->set_prompt(prompt, rprompt);
 }
+
+
+
+//------------------------------------------------------------------------------
+void host_add_history(int, const char* line)
+{
+    assert(s_callbacks);
+    if (!s_callbacks)
+        return;
+
+    s_callbacks->add_history(line);
+}
+
+//------------------------------------------------------------------------------
+void host_remove_history(int rl_history_index, const char* line)
+{
+    assert(s_callbacks);
+    if (!s_callbacks)
+        return;
+
+    s_callbacks->remove_history(rl_history_index, line);
+}
+
+//------------------------------------------------------------------------------
+void host_filter_prompt()
+{
+    assert(s_callbacks);
+    if (!s_callbacks)
+        return;
+
+    s_callbacks->filter_prompt();
+}
+
+//------------------------------------------------------------------------------
+int host_filter_matches(char** matches)
+{
+    assert(s_callbacks);
+    if (s_callbacks)
+        s_callbacks->filter_matches(matches);
+    return 0;
+}
+
+//------------------------------------------------------------------------------
+bool host_call_lua_rl_global_function(const char* func_name)
+{
+    assert(s_callbacks);
+    return s_callbacks && s_callbacks->call_lua_rl_global_function(func_name);
+}
+
+//------------------------------------------------------------------------------
+const char** host_copy_dir_history(int* total)
+{
+    assert(s_callbacks);
+    if (!s_callbacks)
+        return nullptr;
+
+    return s_callbacks->copy_dir_history(total);
+}
+
+//------------------------------------------------------------------------------
+void host_get_app_context(int& id, str_base& binaries, str_base& profile, str_base& scripts)
+{
+    assert(s_callbacks);
+    if (!s_callbacks)
+        return;
+
+    s_callbacks->get_app_context(id, binaries, profile, scripts);
+}
+
+
 
 //------------------------------------------------------------------------------
 static bool is_endword_tilde(const line_state& line)
@@ -277,6 +343,7 @@ void line_editor_impl::begin_line()
     assert(!s_editor);
     assert(!g_word_collector);
     s_editor = this;
+    s_callbacks = m_desc.callbacks;
     g_word_collector = &m_collector;
 
     match_pipeline pipeline(m_matches);
@@ -308,6 +375,7 @@ void line_editor_impl::end_line()
     m_desc.input->end();
 
     s_editor = nullptr;
+    s_callbacks = nullptr;
     g_word_collector = nullptr;
 
     clear_flag(flag_editing);

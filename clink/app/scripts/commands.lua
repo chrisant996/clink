@@ -82,3 +82,13 @@ function clink._popup_show_help()
         rl.invokecommand(binding)
     end
 end
+
+--------------------------------------------------------------------------------
+function clink._diagnostics()
+    clink._diag_coroutines()
+    clink._diag_refilter()
+    clink._diag_events()
+    if clink._diag_custom then
+        clink._diag_custom()
+    end
+end

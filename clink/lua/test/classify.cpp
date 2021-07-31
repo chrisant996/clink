@@ -27,7 +27,7 @@ TEST_CASE("Lua word classification")
 
     settings::find("clink.colorize_input")->set("true");
 
-    line_editor::desc desc(nullptr, nullptr, nullptr);
+    line_editor::desc desc(nullptr, nullptr, nullptr, nullptr);
     desc.command_delims = "&|";
     line_editor_tester tester(desc);
     tester.get_editor()->add_generator(lua_generator);

@@ -8,6 +8,7 @@
 #include <terminal/terminal.h>
 #include <terminal/terminal_in.h>
 #include <terminal/terminal_out.h>
+#include <terminal/printer.h>
 
 #include <Windows.h>
 #include <xmmintrin.h>
@@ -38,6 +39,7 @@ public:
 
 private:
     terminal        m_terminal;
+    printer*        m_printer;
     line_editor*    m_editor;
     handle          m_thread;
 };
@@ -46,8 +48,9 @@ private:
 void test_editor::start(const char* prompt)
 {
     m_terminal = terminal_create();
+    m_printer = new printer(*m_terminal.out);
 
-    line_editor::desc desc(m_terminal.in, m_terminal.out, nullptr);
+    line_editor::desc desc(m_terminal.in, m_terminal.out, m_printer, nullptr);
     desc.prompt = prompt;
     m_editor = line_editor_create(desc);
 
@@ -67,6 +70,8 @@ void test_editor::end()
     press_keys("\n");
     WaitForSingleObject(m_thread, INFINITE);
     line_editor_destroy(m_editor);
+    delete m_printer;
+    m_printer = nullptr;
     terminal_destroy(m_terminal);
 }
 
