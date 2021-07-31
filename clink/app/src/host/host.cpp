@@ -75,7 +75,7 @@ static setting_bool g_reload_scripts(
     "effect at the next prompt.",
     false);
 
-setting_bool g_get_errorlevel(
+static setting_bool g_get_errorlevel(
     "cmd.get_errorlevel",
     "Trick CMD into revealing the last exit code",
     "When this is enabled, Clink runs a hidden 'echo %errorlevel%' command before\n"

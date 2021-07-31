@@ -105,55 +105,35 @@ static int          s_init_history_pos = -1;    // Sticky history position from 
 static int          s_history_search_pos = -1;  // Most recent history search position during current edit line.
 
 //------------------------------------------------------------------------------
-static setting_color g_color_input(
-    "color.input",
-    "Input text color",
-    "Used when Clink displays the input line text.",
-    "");
+setting_bool g_classify_words(
+    "clink.colorize_input",
+    "Colorize the input text",
+    "When enabled, this colors the words in the input line based on the argmatcher\n"
+    "Lua scripts.",
+    true);
 
-static setting_color g_color_selection(
-    "color.selection",
-    "Selection color",
-    "The color for selected text in the input line.",
-    "");
+// This is here because it's about Readline, not CMD, and exposing it from
+// host_cmd.cpp caused linkage errors for the tests.
+setting_bool g_ctrld_exits(
+    "cmd.ctrld_exits",
+    "Pressing Ctrl-D exits session",
+    "Ctrl-D exits cmd.exe when used on an empty line.",
+    true);
 
-static setting_color g_color_modmark(
-    "color.modmark",
-    "Modified history line mark color",
-    "Used when Clink displays the * mark on modified history lines when\n"
-    "mark-modified-lines is set and color.input is set.",
-    "");
+static setting_color g_color_arg(
+    "color.arg",
+    "Argument color",
+    "The color for arguments in the input line.  Only used when\n"
+    "clink.colorize_input is set.",
+    "bold");
 
-static setting_color g_color_horizscroll(
-    "color.horizscroll",
-    "Horizontal scroll marker color",
-    "Used when Clink displays < or > to indicate the input line can scroll\n"
-    "horizontally when horizontal-scroll-mode is set.",
-    "");
-
-static setting_color g_color_message(
-    "color.message",
-    "Message area color",
-    "The color for the Readline message area (e.g. search prompt, etc).",
-    "default");
-
-setting_color g_color_prompt(
-    "color.prompt",
-    "Prompt color",
-    "When set, this is used as the default color for the prompt.  But it's\n"
-    "overridden by any colors set by prompt filter scripts.",
-    "");
-
-static setting_color g_color_hidden(
-    "color.hidden",
-    "Hidden file completions",
-    "Used when Clink displays file completions with the hidden attribute.",
-    "");
-
-static setting_color g_color_readonly(
-    "color.readonly",
-    "Readonly file completions",
-    "Used when Clink displays file completions with the readonly attribute.",
+static setting_color g_color_argmatcher(
+    "color.argmatcher",
+    "Argmatcher color",
+    "The color for a command name that has an argmatcher.  Only used when\n"
+    "clink.colorize_input is set.  If a command name has an argmatcher available,\n"
+    "then this color will be used for the command name, otherwise the doskey, cmd,\n"
+    "or input color will be used.",
     "");
 
 static setting_color g_color_cmd(
@@ -174,34 +154,69 @@ static setting_color g_color_filtered(
     "The default color for filtered completions.",
     "bold");
 
-static setting_color g_color_selected(
-    "color.selected_completion",
-    "Selected completion color",
-    "The color for the selected completion with the clink-select-complete command.",
-    "");
-
-static setting_color g_color_argmatcher(
-    "color.argmatcher",
-    "Argmatcher color",
-    "The color for a command name that has an argmatcher.  Only used when\n"
-    "clink.colorize_input is set.  If a command name has an argmatcher available,\n"
-    "then this color will be used for the command name, otherwise the doskey, cmd,\n"
-    "or input color will be used.",
-    "");
-
-static setting_color g_color_arg(
-    "color.arg",
-    "Argument color",
-    "The color for arguments in the input line.  Only used when\n"
-    "clink.colorize_input is set.",
-    "bold");
-
 static setting_color g_color_flag(
     "color.flag",
     "Flag color",
     "The color for flags in the input line.  Only used when clink.colorize_input is\n"
     "set.",
     "default");
+
+static setting_color g_color_hidden(
+    "color.hidden",
+    "Hidden file completions",
+    "Used when Clink displays file completions with the hidden attribute.",
+    "");
+
+static setting_color g_color_horizscroll(
+    "color.horizscroll",
+    "Horizontal scroll marker color",
+    "Used when Clink displays < or > to indicate the input line can scroll\n"
+    "horizontally when horizontal-scroll-mode is set.",
+    "");
+
+static setting_color g_color_input(
+    "color.input",
+    "Input text color",
+    "Used when Clink displays the input line text.",
+    "");
+
+static setting_color g_color_message(
+    "color.message",
+    "Message area color",
+    "The color for the Readline message area (e.g. search prompt, etc).",
+    "default");
+
+static setting_color g_color_modmark(
+    "color.modmark",
+    "Modified history line mark color",
+    "Used when Clink displays the * mark on modified history lines when\n"
+    "mark-modified-lines is set and color.input is set.",
+    "");
+
+setting_color g_color_prompt(
+    "color.prompt",
+    "Prompt color",
+    "When set, this is used as the default color for the prompt.  But it's\n"
+    "overridden by any colors set by prompt filter scripts.",
+    "");
+
+static setting_color g_color_readonly(
+    "color.readonly",
+    "Readonly file completions",
+    "Used when Clink displays file completions with the readonly attribute.",
+    "");
+
+static setting_color g_color_selected(
+    "color.selected_completion",
+    "Selected completion color",
+    "The color for the selected completion with the clink-select-complete command.",
+    "");
+
+static setting_color g_color_selection(
+    "color.selection",
+    "Selection color",
+    "The color for selected text in the input line.",
+    "");
 
 static setting_color g_color_unexpected(
     "color.unexpected",
@@ -235,21 +250,6 @@ static setting_bool g_rl_hide_stderr(
     "readline.hide_stderr",
     "Suppress stderr from the Readline library",
     false);
-
-setting_bool g_classify_words(
-    "clink.colorize_input",
-    "Colorize the input text",
-    "When enabled, this colors the words in the input line based on the argmatcher\n"
-    "Lua scripts.",
-    true);
-
-// This is here because it's about Readline, not CMD, and exposing it from
-// host_cmd.cpp caused linkage errors for the tests.
-setting_bool g_ctrld_exits(
-    "cmd.ctrld_exits",
-    "Pressing Ctrl-D exits session",
-    "Ctrl-D exits cmd.exe when used on an empty line.",
-    true);
 
 #define CAN_LOG_RL_TERMINAL
 #ifdef CAN_LOG_RL_TERMINAL
