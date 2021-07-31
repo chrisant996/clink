@@ -63,7 +63,7 @@ static setting_enum g_paste_crlf(
 extern setting_bool g_adjust_cursor_style;
 extern setting_bool g_match_wild;
 
-static bool s_force_reload_scripts;
+static bool s_force_reload_scripts = false;
 
 
 
