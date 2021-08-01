@@ -520,7 +520,6 @@ static int get_errorlevel(lua_State* state)
 /// nil if the named alias does not exist.
 int get_alias(lua_State* state)
 {
-#if !defined(__MINGW32__) && !defined(__MINGW64__)
     const char* name = checkstring(state, 1);
     if (!name)
         return 0;
@@ -531,9 +530,6 @@ int get_alias(lua_State* state)
 
     lua_pushlstring(state, out.c_str(), out.length());
     return 1;
-#else
-    return 0;
-#endif // __MINGW32__
 }
 
 //------------------------------------------------------------------------------
@@ -544,7 +540,6 @@ int get_aliases(lua_State* state)
 {
     lua_createtable(state, 0, 0);
 
-#if !defined(__MINGW32__) && !defined(__MINGW64__)
     // Not const because Windows' alias API won't accept it.
     wchar_t* shell_name = const_cast<wchar_t*>(os::get_shellname());
 
@@ -581,7 +576,6 @@ int get_aliases(lua_State* state)
         ++c;
         alias = c + wcslen(c) + 1;
     }
-#endif // __MINGW32__
 
     return 1;
 }

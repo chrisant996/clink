@@ -9,7 +9,7 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 ## Medium Priority
 
 ## Low Priority
-- `__MINGW32__` disables `os.getalias()` and `os.getaliases()`.  Why?
+- MinGW doesn't work with `io.popenyield()`.  Why?
 
 ## Tests
 
