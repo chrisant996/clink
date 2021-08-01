@@ -176,8 +176,11 @@ int loader(int argc, char** argv)
     int ret = 0;
     if (optind < argc)
     {
-        app_context app_context(app_desc);
+        // Allocate app_context from the heap (not stack) so testbed can replace
+        // it when simulating an injected scenario.
+        app_context* context = new app_context(app_desc);
         ret = dispatch_verb(argv[optind], argc - optind, argv + optind);
+        delete context;
     }
     else
         show_usage();

@@ -237,8 +237,10 @@ bool host_cmd::initialise()
     // Hook the setting of the 'prompt' environment variable so we can tag
     // it and detect command entry via a write hook.
     tag_prompt();
-    hooks.add_iat(nullptr, "SetEnvironmentVariableW", &host_cmd::set_env_var);
-    hooks.add_iat(nullptr, "WriteConsoleW", &host_cmd::write_console);
+    if (!hooks.add_iat(nullptr, "SetEnvironmentVariableW", &host_cmd::set_env_var))
+        return false;
+    if (!hooks.add_iat(nullptr, "WriteConsoleW", &host_cmd::write_console))
+        return false;
 
     // Set a trap to get a callback when cmd.exe fetches PROMPT environment
     // variable.  GetEnvironmentVariableW is always called before displaying the
@@ -257,7 +259,8 @@ bool host_cmd::initialise()
         return ret;
     };
     auto* as_stdcall = static_cast<DWORD (__stdcall *)(LPCWSTR, LPWSTR, DWORD)>(get_environment_variable_w);
-    hooks.add_iat(nullptr, "GetEnvironmentVariableW", as_stdcall);
+    if (!hooks.add_iat(nullptr, "GetEnvironmentVariableW", as_stdcall))
+        return false;
 
     return hooks.commit();
 }

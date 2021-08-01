@@ -19,9 +19,10 @@ public:
         bool    quiet = false;
         bool    log = true;
         bool    inherit_id = false; // Allow auto-detecting id from environment.
+        bool    force = false;      // Skip host check (for testbed).
         char    unused = 0;
-        char    state_dir[510]; // = {}; (this crashes cl.exe v18.00.21005.1)
-        char    script_path[510]; // = {}; (this crashes cl.exe v18.00.21005.1)
+        char    state_dir[510];     // = {}; (this crashes cl.exe v18.00.21005.1)
+        char    script_path[510];   // = {}; (this crashes cl.exe v18.00.21005.1)
     };
 
                 app_context(const desc& desc);

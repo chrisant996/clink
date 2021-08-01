@@ -168,7 +168,9 @@ INT_PTR WINAPI initialise_clink(const app_context::desc& app_desc)
 
     // What process is the DLL loaded into?
     str<64> host_name;
-    if (!get_host_name(host_name))
+    if (app_desc.force)
+        host_name = "cmd.exe";
+    else if (!get_host_name(host_name))
     {
         ERR("Unable to get host name.");
         return false;

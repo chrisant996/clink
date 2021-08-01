@@ -3,6 +3,7 @@
 
 #include "pch.h"
 
+#include <core/os.h>
 #include <core/str_compare.h>
 #include <core/settings.h>
 #include <lib/line_editor.h>
@@ -11,9 +12,15 @@
 #include <terminal/terminal.h>
 #include <terminal/printer.h>
 #include <utils/app_context.h>
+#include <getopt.h>
 
 //------------------------------------------------------------------------------
-int testbed(int, char**)
+extern INT_PTR WINAPI initialise_clink(const app_context::desc&);
+extern void get_profile_path(const char* in, str_base& out);
+extern void puts_help(const char* const* help_pairs, const char* const* other_pairs=nullptr);
+
+//------------------------------------------------------------------------------
+static int editline()
 {
     str_compare_scope _(str_compare_scope::relaxed, false/*fuzzy_accent*/);
 
@@ -32,8 +39,122 @@ int testbed(int, char**)
     editor->add_generator(file_match_generator());
 
     str<> out;
-    while (editor->edit(out));
+    while (editor->edit(out))
+        if (out.equals("exit"))
+            break;
 
     line_editor_destroy(editor);
+
     return 0;
+}
+
+//------------------------------------------------------------------------------
+static int hookline(app_context::desc& app_desc)
+{
+    // Get function in host exe.
+    FARPROC worker = GetProcAddress(nullptr, "testbed_hook_loop");
+    if (!worker)
+    {
+        fputs("Unable to find exported testbed function in exe.", stderr);
+        return 1;
+    }
+
+    SetEnvironmentVariableW(L"prompt", L"clink $ ");
+
+    // Simulate injection.
+    delete app_context::get();
+    if (!initialise_clink(app_desc))
+        return 1;
+
+    // Call function in host exe.
+    worker();
+
+    return 0;
+}
+
+//------------------------------------------------------------------------------
+int testbed(int argc, char** argv)
+{
+    static const char* help_usage = "Usage: testbed [options]\n";
+
+    static const struct option options[] = {
+        { "hook",        no_argument,        nullptr, 'd' },
+        { "scripts",     required_argument,  nullptr, 's' },
+        { "profile",     required_argument,  nullptr, 'p' },
+        { "help",        no_argument,        nullptr, 'h' },
+        { nullptr, 0, nullptr, 0 }
+    };
+
+    static const char* const help[] = {
+        "-d, --hook",           "Hook and use ReadConsoleW.",
+        "-s, --scripts <path>", "Alternative path to load .lua scripts from.",
+        "-p, --profile <path>", "Specifies an alternative path for profile data.",
+        "-h, --help",           "Shows this help text.",
+        nullptr
+    };
+
+    extern const char* g_clink_header;
+
+    // Parse arguments
+    bool hook = false;
+    app_context::desc app_desc;
+    int i;
+    int ret = 1;
+    while ((i = getopt_long(argc, argv, "?hp:s:d", options, nullptr)) != -1)
+    {
+        switch (i)
+        {
+        case 's':
+            {
+                str<> arg(optarg);
+                arg.trim();
+                str_base script_path(app_desc.script_path);
+                os::get_current_dir(script_path);
+                path::append(script_path, arg.c_str());
+                path::normalise(script_path);
+            }
+            break;
+
+        case 'p':
+            {
+                str<> arg(optarg);
+                arg.trim();
+                str_base state_dir(app_desc.state_dir);
+                get_profile_path(arg.c_str(), state_dir);
+            }
+            break;
+
+        case 'd':
+            hook = true;
+            break;
+
+        case '?':
+        case 'h':
+            ret = 0;
+            // fall through
+        default:
+            puts(g_clink_header);
+            puts(help_usage);
+            puts("Options:");
+            puts_help(help);
+            puts("By default this starts a loop of calling editor->edit() directly.  Run\n"
+                 "'clink testbed --hook' to hook the ReadConsoleW API and start a loop of\n"
+                 "calling that, as though it were injected in cmd.exe (editing works, but\n"
+                 "of course nothing happens with the input since the host isn't cmd.exe).");
+            return ret;
+        }
+    }
+
+    if (hook)
+    {
+        app_desc.id = GetCurrentProcessId();
+        app_desc.force = true; // Skip the usual cmd.exe check.
+        ret = hookline(app_desc);
+    }
+    else
+    {
+        ret = editline();
+    }
+
+    return ret;
 }
