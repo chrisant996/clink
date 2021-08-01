@@ -927,6 +927,7 @@ PDETOUR_SYM_INFO DetourLoadImageHlp(VOID);
 #endif
 #endif
 
+#if defined(DETOURS_IA64_OFFLINE_LIBRARY) || defined(DETOURS_IA64)
 #if 1 || defined(DETOURS_IA64)
 
 //
@@ -1072,6 +1073,7 @@ __declspec(align(16)) struct DETOUR_IA64_BUNDLE
     UINT    Copy(_Out_ DETOUR_IA64_BUNDLE *pDst, _Inout_opt_ DETOUR_IA64_BUNDLE* pBundleExtra = NULL) const;
 };
 #endif // DETOURS_IA64
+#endif
 
 #ifdef DETOURS_ARM
 
@@ -1085,6 +1087,12 @@ __declspec(align(16)) struct DETOUR_IA64_BUNDLE
 #ifdef __cplusplus
 extern "C" {
 #endif // __cplusplus
+
+#if defined(DETOURS_X86_OFFLINE_LIBRARY) \
+ || defined(DETOURS_X64_OFFLINE_LIBRARY) \
+ || defined(DETOURS_ARM_OFFLINE_LIBRARY) \
+ || defined(DETOURS_ARM64_OFFLINE_LIBRARY) \
+ || defined(DETOURS_IA64_OFFLINE_LIBRARY)
 
 #define DETOUR_OFFLINE_LIBRARY(x)                                       \
 PVOID WINAPI DetourCopyInstruction##x(_In_opt_ PVOID pDst,              \
@@ -1103,6 +1111,8 @@ DETOUR_OFFLINE_LIBRARY(ARM64)
 DETOUR_OFFLINE_LIBRARY(IA64)
 
 #undef DETOUR_OFFLINE_LIBRARY
+
+#endif // DETOURS_*_OFFLINE_LIBRARY
 
 //////////////////////////////////////////////////////////////////////////////
 //

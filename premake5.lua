@@ -234,11 +234,16 @@ project("luac")
 project("detours")
     kind("staticlib")
     files("detours/*.cpp")
+    removefiles("detours/disolarm.cpp")
+    removefiles("detours/disolarm64.cpp")
+    removefiles("detours/disolia64.cpp")
     removefiles("detours/uimports.cpp")     -- is included by creatwth.cpp
 
     configuration("gmake")
         buildoptions("-fpermissive")
         buildoptions("-std=c++17")
+        buildoptions("-Wno-multichar")
+        buildoptions("-Wno-pointer-arith")
 
 --------------------------------------------------------------------------------
 clink_lib("clink_lib")
