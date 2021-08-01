@@ -99,11 +99,18 @@ bool hook_setter::add_desc(const char* module, const char* name, hookptr_t hook)
     assert(m_desc_count < sizeof_array(m_descs));
     if (m_desc_count >= sizeof_array(m_descs))
     {
+        LOG("Too many hooks in transaction.");
         assert(false);
         return false;
     }
 
     void* base = GetModuleHandleA(module);
+    if (!base)
+    {
+        LOG("Module '%s' is not loaded.", module ? module : "(null)");
+        assert(false);
+        return false;
+    }
 
     hook_iat_desc& desc = m_descs[m_desc_count++];
     desc.base = base;
@@ -152,10 +159,7 @@ bool hook_setter::commit_iat(void* self, const hook_iat_desc& desc)
 {
     hookptr_t addr = hook_iat(desc.base, nullptr, desc.name, desc.hook, 1);
     if (addr == nullptr)
-    {
-        LOG("Unable to hook %s in IAT at base %p", desc.name, desc.base);
         return false;
-    }
 
     // If the target's IAT was hooked then the hook destination is now
     // stored in 'addr'. We hook ourselves with this address to maintain

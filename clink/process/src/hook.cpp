@@ -50,11 +50,10 @@ hookptr_t hook_iat(
     int find_by_name
 )
 {
-    LOG("Attempting to hook IAT for module %p.", base);
     if (find_by_name)
-        LOG("Target is %s (by name).", func_name);
+        LOG("Attempting to hook %s (by name) in IAT for module %p.", func_name, base);
     else
-        LOG("Target is %s in %s (by address).", func_name, dll);
+        LOG("Attempting to hook %s in %s (by address) in IAT for module %p.", func_name, dll, base);
 
     hookptr_t* import;
 
