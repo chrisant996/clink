@@ -11,7 +11,6 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 ## Low Priority
 
 ## Tests
-- `clink drawtest` crashes.
 
 <br/>
 <br/>

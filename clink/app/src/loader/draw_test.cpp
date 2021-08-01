@@ -4,7 +4,9 @@
 #include "pch.h"
 
 #include <core/str_iter.h>
+#include <core/settings.h>
 #include <lib/line_editor.h>
+#include <lib/terminal_helpers.h>
 #include <terminal/terminal.h>
 #include <terminal/terminal_in.h>
 #include <terminal/terminal_out.h>
@@ -42,13 +44,22 @@ private:
     printer*        m_printer;
     line_editor*    m_editor;
     handle          m_thread;
+
+    printer_context* m_printer_context;
+    console_config* m_cc;
 };
 
 //------------------------------------------------------------------------------
 void test_editor::start(const char* prompt)
 {
+#ifdef DEBUG
+    settings::TEST_set_ever_loaded();
+#endif
+
     m_terminal = terminal_create();
     m_printer = new printer(*m_terminal.out);
+    m_printer_context = new printer_context(m_terminal.out, m_printer);
+    m_cc = new console_config();
 
     line_editor::desc desc(m_terminal.in, m_terminal.out, m_printer, nullptr);
     desc.prompt = prompt;
@@ -70,6 +81,8 @@ void test_editor::end()
     press_keys("\n");
     WaitForSingleObject(m_thread, INFINITE);
     line_editor_destroy(m_editor);
+    delete m_cc;
+    delete m_printer_context;
     delete m_printer;
     m_printer = nullptr;
     terminal_destroy(m_terminal);
