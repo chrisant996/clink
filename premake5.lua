@@ -388,6 +388,9 @@ clink_dll("clink_app_dll")
         buildoptions("-std=c++17")
         links("gdi32")
 
+    configuration("gmake2")
+        links("version.res")            -- gmake2 rules are broken
+
 --------------------------------------------------------------------------------
 clink_exe("clink_app_exe")
     targetname("clink")
@@ -413,6 +416,9 @@ clink_exe("clink_app_exe")
     configuration("gmake or gmake2")
         buildoptions("-fpermissive")
         buildoptions("-std=c++17")
+
+    configuration("gmake2")
+        links("version.res")            -- gmake2 rules are broken
 
 --------------------------------------------------------------------------------
 clink_exe("clink_test")
@@ -454,6 +460,9 @@ clink_exe("clink_test")
         buildoptions("-std=c++17")
         links("gdi32")
         linkgroups("on")
+
+    configuration("gmake2")
+        links("version.res")            -- gmake2 rules are broken
 
 --------------------------------------------------------------------------------
 require "vstudio"
