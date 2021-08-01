@@ -173,7 +173,6 @@ void set_prompt(const char* prompt, const char* rprompt)
 //------------------------------------------------------------------------------
 void host_add_history(int, const char* line)
 {
-    assert(s_callbacks);
     if (!s_callbacks)
         return;
 
@@ -183,7 +182,6 @@ void host_add_history(int, const char* line)
 //------------------------------------------------------------------------------
 void host_remove_history(int rl_history_index, const char* line)
 {
-    assert(s_callbacks);
     if (!s_callbacks)
         return;
 
@@ -193,7 +191,6 @@ void host_remove_history(int rl_history_index, const char* line)
 //------------------------------------------------------------------------------
 void host_filter_prompt()
 {
-    assert(s_callbacks);
     if (!s_callbacks)
         return;
 
@@ -211,14 +208,12 @@ int host_filter_matches(char** matches)
 //------------------------------------------------------------------------------
 bool host_call_lua_rl_global_function(const char* func_name)
 {
-    assert(s_callbacks);
     return s_callbacks && s_callbacks->call_lua_rl_global_function(func_name);
 }
 
 //------------------------------------------------------------------------------
 const char** host_copy_dir_history(int* total)
 {
-    assert(s_callbacks);
     if (!s_callbacks)
         return nullptr;
 
@@ -228,7 +223,6 @@ const char** host_copy_dir_history(int* total)
 //------------------------------------------------------------------------------
 void host_get_app_context(int& id, str_base& binaries, str_base& profile, str_base& scripts)
 {
-    assert(s_callbacks);
     if (!s_callbacks)
         return;
 
