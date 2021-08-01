@@ -456,7 +456,7 @@ str_impl<TYPE>& str_impl<TYPE>::operator << (const TYPE (&rhs)[I])
 template <typename TYPE>
 str_impl<TYPE>& str_impl<TYPE>::operator << (const str_impl& rhs)
 {
-    concat(rhs.c_str());
+    concat_no_truncate(rhs.c_str(), rhs.length());
     return *this;
 }
 

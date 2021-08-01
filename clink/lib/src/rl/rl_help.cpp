@@ -366,7 +366,7 @@ static void concat_key_string(int i, str<32>& keyseq)
     assert(i < 256);
 
     char c = (unsigned char)i;
-    keyseq.concat(&c, 1);
+    keyseq.concat_no_truncate(&c, 1);
 }
 
 //------------------------------------------------------------------------------
