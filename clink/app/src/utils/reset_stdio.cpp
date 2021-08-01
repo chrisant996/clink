@@ -23,7 +23,7 @@
     another way to encounter the problems is by async prompt filtering.
 */
 
-#ifndef __MINGW32__
+#if !defined(__MINGW32__) && !defined(__MINGW64__)
 
 //------------------------------------------------------------------------------
 static bool s_can_reset = true;
@@ -179,7 +179,7 @@ void reset_stdio_handles()
     reset_handle(s_hStderr, 2);
 }
 
-#else // __MINGW32__
+#else // __MINGW32__ || __MINGW64__
 
 //------------------------------------------------------------------------------
 void reset_stdio_handles()
@@ -188,4 +188,4 @@ void reset_stdio_handles()
     // so), but the preceding fix is specific to MSVC.
 }
 
-#endif // __MINGW32__
+#endif // __MINGW32__ || __MINGW64__

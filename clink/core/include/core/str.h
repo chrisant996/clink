@@ -167,7 +167,7 @@ bool str_impl<TYPE>::reserve(unsigned int new_size, bool exact)
 template <typename TYPE>
 void str_impl<TYPE>::free_data()
 {
-#ifdef __MINGW32__
+#if defined(__MINGW32__) || defined(__MINGW64__)
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wfree-nonheap-object" /* gcc fails to account for m_owns_ptr */
 #endif
@@ -175,7 +175,7 @@ void str_impl<TYPE>::free_data()
     if (m_owns_ptr)
         free(m_data);
 
-#ifdef __MINGW32__
+#if defined(__MINGW32__) || defined(__MINGW64__)
 #pragma GCC diagnostic pop
 #endif
 }

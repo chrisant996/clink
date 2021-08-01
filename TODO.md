@@ -9,6 +9,8 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 ## Medium Priority
 
 ## Low Priority
+- MinGW build crashes sometime during injection.
+- `__MINGW32__` disables `os.getalias()` and `os.getaliases()`.  Why?
 
 ## Tests
 

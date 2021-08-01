@@ -8,7 +8,7 @@
 #include <assert.h>
 
 //------------------------------------------------------------------------------
-#ifdef __MINGW32__
+#if defined(__MINGW32__) || defined(__MINGW64__)
 inline int __ascii_towlower(int c)
 {
     if (c >= 0 && c <= 127)
