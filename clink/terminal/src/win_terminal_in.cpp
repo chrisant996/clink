@@ -875,45 +875,54 @@ void win_terminal_in::process_input(KEY_EVENT_RECORD const& record)
 
     // This builds Ctrl-<key> c0 codes. Some of these actually come though in
     // key_char and some don't.
-    bool differentiate = false;
-    if ((key_flags & CTRL_PRESSED) && !(key_flags & SHIFT_PRESSED))
+    if (key_flags & CTRL_PRESSED)
     {
-        bool ctrl_code = true;
+        bool ctrl_code = false;
 
-        switch (key_vk)
+        if (!(key_flags & SHIFT_PRESSED) || key_vk == '2' || key_vk == '6')
         {
-        case 'A':   case 'B':   case 'C':   case 'D':
-        case 'E':   case 'F':   case 'G':   case 'H':
-        case 'I':   case 'J':   case 'K':   case 'L':
-        case 'M':   case 'N':   case 'O':   case 'P':
-        case 'Q':   case 'R':   case 'S':   case 'T':
-        case 'U':   case 'V':   case 'W':   case 'X':
-        case 'Y':   case 'Z':
-            if (key_vk == 'H' || key_vk == 'I' || key_vk == 'M')
-                differentiate = g_differentiate_keys.get();
-            if (differentiate)
-                ctrl_code = false;
-            else
+            ctrl_code = true;
+
+            switch (key_vk)
             {
+            case 'A':   case 'B':   case 'C':   case 'D':
+            case 'E':   case 'F':   case 'G':   case 'H':
+            case 'I':   case 'J':   case 'K':   case 'L':
+            case 'M':   case 'N':   case 'O':   case 'P':
+            case 'Q':   case 'R':   case 'S':   case 'T':
+            case 'U':   case 'V':   case 'W':   case 'X':
+            case 'Y':   case 'Z':
+                if ((key_vk == 'H' || key_vk == 'I' || key_vk == 'M') && g_differentiate_keys.get())
+                    goto not_ctrl;
                 key_vk -= 'A' - 1;
                 ctrl_code = true;
-            }
-            break;
-        case '2':       key_vk = 0;         break;
-        case '6':       key_vk = 0x1e;      break;
-        case 0xbd:      key_vk = 0x1f;      break;
-        case 0xdb:
-            if (g_differentiate_keys.get())
-            {
+                break;
+            case '2':
+                if (g_differentiate_keys.get() && !(key_flags & SHIFT_PRESSED))
+                    goto not_ctrl;
+                key_vk = 0;
+                break;
+            case '6':
+                if (g_differentiate_keys.get() && !(key_flags & SHIFT_PRESSED))
+                    goto not_ctrl;
+                key_vk = 0x1e;
+                break;
+            case 0xbd:
+                key_vk = 0x1f;
+                break;
+            case 0xdb:
+                if (g_differentiate_keys.get())
+                    goto not_ctrl;
+                // fall through
+            case 0xdc:
+            case 0xdd:
+                key_vk -= 0xdb - 0x1b;
+                break;
+            default:
+not_ctrl:
                 ctrl_code = false;
                 break;
             }
-            // fall through
-        case 0xdc:
-        case 0xdd:
-            key_vk -= 0xdb - 0x1b;
-            break;
-        default:        ctrl_code = false;  break;
         }
 
         if (ctrl_code)
