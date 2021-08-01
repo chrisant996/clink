@@ -74,8 +74,9 @@ bool hook_setter::commit()
     int failed = 0;
     for (int i = 0; i < m_desc_count; ++i)
     {
-        const hook_iat_desc& desc = m_descs[i];
-        failed += !commit_iat(m_self, desc);
+        const hook_desc& desc = m_descs[i];
+        if (desc.type == iat)
+            failed += !commit_iat(m_self, desc);
     }
     m_desc_count = 0;
 
@@ -94,7 +95,7 @@ bool hook_setter::commit()
 }
 
 //------------------------------------------------------------------------------
-bool hook_setter::add_desc(const char* module, const char* name, hookptr_t hook)
+bool hook_setter::add_internal(hook_type type, const char* module, const char* name, hookptr_t hook)
 {
     assert(m_desc_count < sizeof_array(m_descs));
     if (m_desc_count >= sizeof_array(m_descs))
@@ -104,6 +105,17 @@ bool hook_setter::add_desc(const char* module, const char* name, hookptr_t hook)
         return false;
     }
 
+    if (type == iat)
+        return add_iat(module, name, hookptr_t(hook));
+    else if (type == detour)
+        return add_detour(module, name, hookptr_t(hook));
+    else
+        return false;
+}
+
+//------------------------------------------------------------------------------
+bool hook_setter::add_iat(const char* module, const char* name, hookptr_t hook)
+{
     void* base = GetModuleHandleA(module);
     if (!base)
     {
@@ -112,7 +124,9 @@ bool hook_setter::add_desc(const char* module, const char* name, hookptr_t hook)
         return false;
     }
 
-    hook_iat_desc& desc = m_descs[m_desc_count++];
+    hook_desc& desc = m_descs[m_desc_count++];
+    desc.type = iat;
+    desc.replace = nullptr;
     desc.base = base;
     desc.hook = hook;
     desc.name = name;
@@ -121,30 +135,46 @@ bool hook_setter::add_desc(const char* module, const char* name, hookptr_t hook)
 
 //------------------------------------------------------------------------------
 void* follow_jump(void* addr);
-bool hook_setter::add_detour(const char* module, const char* name, hookptr_t detour)
+bool hook_setter::add_detour(const char* module, const char* name, hookptr_t hook)
 {
-    LOG("Attempting to hook %s in %s with %p.", name, module, detour);
-    PVOID proc = DetourFindFunction(module, name);
-    if (!proc)
+    LOG("Attempting to hook %s in %s with %p.", name, module, hook);
+    HMODULE hModule = GetModuleHandleA(module);
+    if (!hModule)
+    {
+        LOG("Unable to load %s.", module);
+        return false;
+    }
+
+    PBYTE pbCode = (PBYTE)GetProcAddress(hModule, name);
+    if (!pbCode)
     {
         LOG("Unable to find %s in %s.", name, module);
         return false;
     }
 
+    hook_desc& desc = m_descs[m_desc_count++];
+    desc.type = detour;
+    desc.replace = nullptr;
+    desc.base = (void*)hModule;
+    desc.hook = hook;
+    desc.name = name;
+
     // Get the target pointer to hook.
-    PVOID replace = follow_jump(proc);
-    if (!replace)
+    desc.replace = follow_jump(pbCode);
+    if (!desc.replace)
     {
         LOG("Unable to get target address.");
+        m_desc_count--;
         return false;
     }
 
     // Hook the target pointer.
     PDETOUR_TRAMPOLINE trampoline;
-    LONG err = DetourAttachEx(&replace, (PVOID)detour, &trampoline, nullptr, nullptr);
+    LONG err = DetourAttachEx(&desc.replace, (PVOID)hook, &trampoline, nullptr, nullptr);
     if (err != NOERROR)
     {
         LOG("Unable to hook %s (error %u).", name, err);
+        m_desc_count--;
         return false;
     }
 
@@ -155,8 +185,11 @@ bool hook_setter::add_detour(const char* module, const char* name, hookptr_t det
 }
 
 //------------------------------------------------------------------------------
-bool hook_setter::commit_iat(void* self, const hook_iat_desc& desc)
+bool hook_setter::commit_iat(void* self, const hook_desc& desc)
 {
+    if (desc.type != iat)
+        return false;
+
     hookptr_t addr = hook_iat(desc.base, nullptr, desc.name, desc.hook, 1);
     if (addr == nullptr)
         return false;

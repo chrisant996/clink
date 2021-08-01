@@ -9,12 +9,6 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 ## Medium Priority
 
 ## Low Priority
-- MinGW build crashes:
-  - While hooking ReadConsoleW or when it gets called; the callstack appears to show both happening concurrently, which seems like it should be impossible.
-  - The stack frames make it look like it could be a 32/64 bit compilation error:
-    - 00000000`990ff0f0
-    - KernelBase!ReadConsoleW
-    - 000000dc`990ff0f0
 - `__MINGW32__` disables `os.getalias()` and `os.getaliases()`.  Why?
 
 ## Tests

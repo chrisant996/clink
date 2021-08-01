@@ -118,6 +118,8 @@ void* follow_jump(void* addr)
 #elif defined _M_IX86
         // dest = disp32
         dest = (void*)(intptr_t)(*imm);
+#else
+#error Oops!
 #endif
     }
 

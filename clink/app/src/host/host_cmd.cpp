@@ -237,9 +237,9 @@ bool host_cmd::initialise()
     // Hook the setting of the 'prompt' environment variable so we can tag
     // it and detect command entry via a write hook.
     tag_prompt();
-    if (!hooks.add_iat(nullptr, "SetEnvironmentVariableW", &host_cmd::set_env_var))
+    if (!hooks.add(iat, nullptr, "SetEnvironmentVariableW", &host_cmd::set_env_var))
         return false;
-    if (!hooks.add_iat(nullptr, "WriteConsoleW", &host_cmd::write_console))
+    if (!hooks.add(iat, nullptr, "WriteConsoleW", &host_cmd::write_console))
         return false;
 
     // Set a trap to get a callback when cmd.exe fetches PROMPT environment
@@ -259,7 +259,7 @@ bool host_cmd::initialise()
         return ret;
     };
     auto* as_stdcall = static_cast<DWORD (__stdcall *)(LPCWSTR, LPWSTR, DWORD)>(get_environment_variable_w);
-    if (!hooks.add_iat(nullptr, "GetEnvironmentVariableW", as_stdcall))
+    if (!hooks.add(iat, nullptr, "GetEnvironmentVariableW", as_stdcall))
         return false;
 
     return hooks.commit();
@@ -597,9 +597,9 @@ bool host_cmd::initialise_system()
         {
             hook_setter hooks;
             if (need_kernelbase)
-                hooks.add_jmp("kernelbase.dll", "ReadConsoleW", &host_cmd::read_console);
+                hooks.add(detour, "kernelbase.dll", "ReadConsoleW", &host_cmd::read_console);
             else
-                hooks.add_jmp("kernel32.dll", "ReadConsoleW", &host_cmd::read_console);
+                hooks.add(detour, "kernel32.dll", "ReadConsoleW", &host_cmd::read_console);
             if (!hooks.commit())
                 return false;
         }
@@ -610,9 +610,9 @@ bool host_cmd::initialise_system()
         {
             hook_setter hooks;
             if (need_kernelbase)
-                hooks.add_jmp("kernelbase.dll", "FormatMessageW", &host_cmd::format_message);
+                hooks.add(detour, "kernelbase.dll", "FormatMessageW", &host_cmd::format_message);
             else
-                hooks.add_jmp("kernel32.dll", "FormatMessageW", &host_cmd::format_message);
+                hooks.add(detour, "kernel32.dll", "FormatMessageW", &host_cmd::format_message);
             hooks.commit();
         }
 #endif
