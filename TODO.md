@@ -9,7 +9,6 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 ## Medium Priority
 
 ## Low Priority
-- MinGW doesn't work with `io.popenyield()`.  Why?
 
 ## Tests
 

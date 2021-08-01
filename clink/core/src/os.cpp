@@ -270,9 +270,10 @@ FILE* create_temp_file(str_base* out, const char* _prefix, const char* _ext, tem
     unsigned int base_len = wpath.length();
 
     // Open mode.
-    wstr<16> mode(L"w+xT");
-    if (_mode & os::binary) mode << L"b";
-    if (_mode & os::delete_on_close) mode << L"D";
+    str<16> mode("w+");
+    int oflag = _O_CREAT| _O_RDWR|_O_EXCL|_O_SHORT_LIVED;
+    if (_mode & os::binary) { oflag |= _O_BINARY; mode << "b"; }
+    if (_mode & os::delete_on_close) oflag |= _O_TEMPORARY;
 
     // Create unique temp file, iterating if necessary.
     FILE* f = nullptr;
@@ -287,9 +288,23 @@ FILE* create_temp_file(str_base* out, const char* _prefix, const char* _ext, tem
         wpath << wunique;
         wpath << wext;
 
-        f = _wfsopen(wpath.c_str(), mode.c_str(), _SH_DENYNO);
-        if (f)
-            break;
+        // Do a little dance to work around MinGW not supporting the "x" mode
+        // flag in _wsfopen.
+        int fd = _wsopen(wpath.c_str(), oflag, _SH_DENYNO, _S_IREAD|_S_IWRITE);
+        if (fd != -1)
+        {
+            f = _fdopen(fd, mode.c_str());
+            if (f)
+                break;
+            // If _wsopen succeeds but _fdopen fails, then something strange is
+            // going on.  Just error out instead of potentially looping for a
+            // long time in that case (this loop does up to 65536 attempts).
+            _get_errno(&err);
+            _close(fd);
+            _set_errno(err);
+            return nullptr;
+        }
+
         _get_errno(&err);
         if (err == EINVAL || err == EMFILE)
             break;
