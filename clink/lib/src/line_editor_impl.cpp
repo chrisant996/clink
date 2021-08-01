@@ -57,7 +57,7 @@ static bool find_func_in_keymap(str_base& out, rl_command_func_t *func, Keymap m
             if (map[key].function == func)
             {
                 char ch = char((unsigned char)key);
-                out.concat(&ch, 1);
+                out.concat_no_truncate(&ch, 1);
                 return true;
             }
             break;
@@ -65,7 +65,7 @@ static bool find_func_in_keymap(str_base& out, rl_command_func_t *func, Keymap m
             {
                 unsigned int old_len = out.length();
                 char ch = char((unsigned char)key);
-                out.concat(&ch, 1);
+                out.concat_no_truncate(&ch, 1);
                 if (find_func_in_keymap(out, func, FUNCTION_TO_KEYMAP(map, key)))
                     return true;
                 out.truncate(old_len);

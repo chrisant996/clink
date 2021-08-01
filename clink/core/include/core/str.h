@@ -58,6 +58,7 @@ public:
     bool                iequals(const TYPE* rhs) const;
     bool                copy(const TYPE* src);
     bool                concat(const TYPE* src, int n=-1);
+    bool                concat_no_truncate(const TYPE* src, int n);
     bool                format(const TYPE* format, ...);
     TYPE                operator [] (unsigned int i) const;
     str_impl&           operator << (const TYPE* rhs);
@@ -344,17 +345,45 @@ bool str_impl<TYPE>::concat(const TYPE* src, int n)
 
     if (remaining > 0)
     {
-        // Don't use str_ncat, because it stops at nul.  str_impl<> is used for
-        // things that can contain nul characters (like translated chords).  Or
-        // if it were to use str_ncat then it mustn't increment m_length by
-        // remaining since it could result in an uninitialized region of the
-        // string buffer.
-        memcpy(m_data + len, src, remaining * sizeof(TYPE));
-        m_length += remaining;
+        // Egad.  Mingw chooses the (&rhs)[I] variant of operator<< for:
+        //      char buf[10] = {'x'};
+        //      code << buf;
+        // So always be safe and stop copying at a NUL character.
+        //
+        // Callers who need NUL characters included (like translated key
+        // sequence chords, e.g. ^@) must use concat_no_truncate() instead.
+        TYPE* dst = m_data + len;
+        while (remaining-- && *src)
+            *(dst++) = *(src++);
+        m_length = static_cast<unsigned int>(dst - m_data);
         m_data[m_length] = '\0';
     }
 
     return !truncated;
+}
+
+//------------------------------------------------------------------------------
+template <typename TYPE>
+bool str_impl<TYPE>::concat_no_truncate(const TYPE* src, int n)
+{
+    if (src == nullptr)
+        return false;
+    if (n < 0)
+        return false;
+    if (n == 0)
+        return true;
+
+    int len = length();
+    reserve(len + n);
+
+    int remaining = m_size - len - 1;
+    if (remaining < n)
+        return false;
+
+    memcpy(m_data + len, src, n * sizeof(TYPE));
+    m_length += n;
+    m_data[m_length] = '\0';
+    return true;
 }
 
 //------------------------------------------------------------------------------
@@ -365,6 +394,7 @@ inline bool str_impl<char>::format(const char* format, ...)
     va_start(args, format);
 
     int len = vsnprint(m_data, m_size, format, args);
+    assert(len >= 0); // Compiler should comply with spec.
     if (len >= int(m_size) && reserve(len))
         len = vsnprint(m_data, m_size, format, args);
     va_end(args);
