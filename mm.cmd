@@ -145,7 +145,6 @@ goto :eof
 goto :eof
 
 :findmake
-echo %1
 set __MAKE="%~$PATH:1"
 goto :eof
 
