@@ -3,7 +3,9 @@
 
 local to = ".build/"..(_ACTION or "nullaction")
 
-
+if _ACTION == "gmake2" then
+    error("Use `premake5 gmake` instead; gmake2 neglects to link resources.")
+end
 
 --------------------------------------------------------------------------------
 local function get_git_info()
@@ -177,7 +179,7 @@ workspace("clink")
         defines("_CRT_SECURE_NO_WARNINGS")
         defines("_CRT_NONSTDC_NO_WARNINGS")
 
-    configuration("gmake or gmake2")
+    configuration("gmake")
         defines("__MSVCRT_VERSION__=0x0601")
         defines("_WIN32_WINNT=0x0601")
         defines("WINVER=0x0601")
@@ -234,7 +236,7 @@ project("detours")
     files("detours/*.cpp")
     removefiles("detours/uimports.cpp")     -- is included by creatwth.cpp
 
-    configuration("gmake or gmake2")
+    configuration("gmake")
         buildoptions("-fpermissive")
         buildoptions("-std=c++17")
 
@@ -253,7 +255,7 @@ clink_lib("clink_lib")
         pchheader("pch.h")
         pchsource("clink/lib/src/pch.cpp")
 
-    configuration("gmake or gmake2")
+    configuration("gmake")
         buildoptions("-fpermissive")
         buildoptions("-std=c++17")
 
@@ -275,7 +277,7 @@ clink_lib("clink_lua")
         pchheader("pch.h")
         pchsource("clink/lua/src/pch.cpp")
 
-    configuration("gmake or gmake2")
+    configuration("gmake")
         buildoptions("-fpermissive")
         buildoptions("-std=c++17")
 
@@ -290,7 +292,7 @@ clink_lib("clink_core")
         pchheader("pch.h")
         pchsource("clink/core/src/pch.cpp")
 
-    configuration("gmake or gmake2")
+    configuration("gmake")
         buildoptions("-fpermissive")
         buildoptions("-std=c++17")
 
@@ -307,7 +309,7 @@ clink_lib("clink_terminal")
         pchheader("pch.h")
         pchsource("clink/terminal/src/pch.cpp")
 
-    configuration("gmake or gmake2")
+    configuration("gmake")
         buildoptions("-fexceptions")    -- for std::wregex
         buildoptions("-fpermissive")
         buildoptions("-Wno-multichar")
@@ -331,7 +333,7 @@ clink_lib("clink_process")
         exceptionhandling("off") -- required by the inject lambda in process::remote_call
         -- <SupportJustMyCode>false</SupportJustMyCode> -- required by the inject lambda in process::remote_call
 
-    configuration("gmake or gmake2")
+    configuration("gmake")
         buildoptions("-fpermissive")
         buildoptions("-std=c++17")
 
@@ -357,7 +359,7 @@ clink_lib("clink_app_common")
         pchheader("pch.h")
         pchsource("clink/app/src/pch.cpp")
 
-    configuration("gmake or gmake2")
+    configuration("gmake")
         buildoptions("-fpermissive")
         buildoptions("-std=c++17")
 
@@ -383,13 +385,10 @@ clink_dll("clink_app_dll")
     configuration("vs*")
         links("dbghelp")
 
-    configuration("gmake or gmake2")
+    configuration("gmake")
         buildoptions("-fpermissive")
         buildoptions("-std=c++17")
         links("gdi32")
-
-    configuration("gmake2")
-        links("version.res")            -- gmake2 rules are broken
 
 --------------------------------------------------------------------------------
 clink_exe("clink_app_exe")
@@ -413,12 +412,9 @@ clink_exe("clink_app_exe")
         postbuild_copy("clink/app/src/loader/clink.bat", "debug")
         postbuild_copy("clink/app/src/loader/clink.lua", "debug")
 
-    configuration("gmake or gmake2")
+    configuration("gmake")
         buildoptions("-fpermissive")
         buildoptions("-std=c++17")
-
-    configuration("gmake2")
-        links("version.res")            -- gmake2 rules are broken
 
 --------------------------------------------------------------------------------
 clink_exe("clink_test")
@@ -455,14 +451,11 @@ clink_exe("clink_test")
         pchheader("pch.h")
         pchsource("clink/test/src/pch.cpp")
 
-    configuration("gmake or gmake2")
+    configuration("gmake")
         buildoptions("-fpermissive")
         buildoptions("-std=c++17")
         links("gdi32")
         linkgroups("on")
-
-    configuration("gmake2")
-        links("version.res")            -- gmake2 rules are broken
 
 --------------------------------------------------------------------------------
 require "vstudio"
