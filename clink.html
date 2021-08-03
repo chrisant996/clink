@@ -3,7 +3,7 @@
 
 <!-- ----------------------------------------------------- -->
 <head>
-<title>Clink v1.2.24</title>
+<title>Clink v1.2.25</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Rambla:wght@400;700&family=Roboto&family=Fira+Mono&display=swap');
 html {
@@ -747,7 +747,7 @@ name:"Plain text",aliases:["text","txt"],disableAutodetect:!0})})());
         </td>
         <td style="text-align:right">
             <div id="header">
-                <div id="title">Clink v1.2.24</div>
+                <div id="title">Clink v1.2.25</div>
                 <div id="url">
                     <a href="https://github.com/chrisant996/clink">
                         https://github.com/chrisant996/clink
@@ -1095,6 +1095,11 @@ name:"Plain text",aliases:["text","txt"],disableAutodetect:!0})})());
 <td>Prints stack trace on Lua errors.</td>
 </tr>
 <tr>
+<td align="center"><code>match.expand_envvars</code></td>
+<td align="center">False</td>
+<td>Expands environment variables in a word before performing completion.</td>
+</tr>
+<tr>
 <td align="center"><code>match.ignore_accent</code></td>
 <td align="center">True</td>
 <td>Controls accent sensitivity when completing matches. For example, <code>ä</code> and <code>a</code> are considered equivalent with this enabled.</td>
@@ -1117,7 +1122,7 @@ name:"Plain text",aliases:["text","txt"],disableAutodetect:!0})})());
 <tr>
 <td align="center"><code>match.wild</code></td>
 <td align="center">True</td>
-<td>Matches <code>?</code> and <code>*</code> wildcards when using any of the <code>menu-complete</code> commands or the <code>clink-popup-complete</code> command. Turn this off to behave how bash does, and not match wildcards.</td>
+<td>Matches <code>?</code> and <code>*</code> wildcards when using any of the completion commands.  Turn this off to behave how bash does, and not match wildcards (but <code>glob-complete-word</code> always matches wildcards).</td>
 </tr>
 <tr>
 <td align="center"><code>prompt.async</code></td>
@@ -1371,6 +1376,10 @@ call &quot;%~dp0clink.bat&quot; inject --profile &quot;%TEMP%\clink_portable&quo
 <td>Adds the current line to the history without executing it, and clears the editing line.</td>
 </tr>
 <tr>
+<td align="center"><code>alias-expand-line</code></td>
+<td>A synonym for <code>clink-expand-doskey-alias</code>.</td>
+</tr>
+<tr>
 <td align="center"><code>clink-complete-numbers</code></td>
 <td>Like <code>complete</code>, but for numbers from the console screen (3 digits or more, up to hexadecimal).</td>
 </tr>
@@ -1403,8 +1412,20 @@ call &quot;%~dp0clink.bat&quot; inject --profile &quot;%TEMP%\clink_portable&quo
 <td>Expand the doskey alias (if any) at the beginning of the line.</td>
 </tr>
 <tr>
-<td align="center"><code>clink-expand-env-vars</code></td>
+<td align="center"><code>clink-expand-env-var</code></td>
 <td>Expand the environment variable (e.g. <code>%FOOBAR%</code>) at the cursor.</td>
+</tr>
+<tr>
+<td align="center"><code>clink-expand-history</code></td>
+<td>Perform history expansion in the current input line.  See the <a href="https://tiswww.cwru.edu/php/chet/readline/history.html">History</a> manual for information on history expansion.</td>
+</tr>
+<tr>
+<td align="center"><code>clink-expand-history-and-alias</code></td>
+<td>Perform history and doskey alias expansion in the current input line.  See the <a href="https://tiswww.cwru.edu/php/chet/readline/history.html">History</a> manual for information on history expansion.</td>
+</tr>
+<tr>
+<td align="center"><code>clink-expand-line</code></td>
+<td>Perform history, doskey alias, and environment variable expansion in the current input line.  See the <a href="https://tiswww.cwru.edu/php/chet/readline/history.html">History</a> manual for information on history expansion.</td>
 </tr>
 <tr>
 <td align="center"><code>clink-find-conhost</code></td>
@@ -1543,12 +1564,36 @@ call &quot;%~dp0clink.bat&quot; inject --profile &quot;%TEMP%\clink_portable&quo
 <td>Extends the selection and moves forward a word.</td>
 </tr>
 <tr>
+<td align="center"><code>cua-select-all</code></td>
+<td>Extends the selection to the entire current line.</td>
+</tr>
+<tr>
+<td align="center"><code>edit-and-execute-command</code></td>
+<td>Invoke an editor on the current input line, and execute the result as commands.  This attempts to invoke %VISUAL%, %EDITOR%, or notepad.exe as the editor, in that order.</td>
+</tr>
+<tr>
+<td align="center"><code>history-and-alias-expand-line</code></td>
+<td>A synonym for <code>clink-expand-history-and-alias</code>.</td>
+</tr>
+<tr>
+<td align="center"><code>history-expand-line</code></td>
+<td>A synonym for <code>clink-expand-history</code>.</td>
+</tr>
+<tr>
+<td align="center"><code>insert-last-argument</code></td>
+<td>A synonym for <code>yank-last-arg</code>.</td>
+</tr>
+<tr>
 <td align="center"><code>old-menu-complete-backward</code></td>
 <td>Like <code>old-menu-complete</code>, but in reverse.</td>
 </tr>
 <tr>
 <td align="center"><code>remove-history</code></td>
 <td>While searching history, removes the current line from the history.</td>
+</tr>
+<tr>
+<td align="center"><code>shell-expand-line</code></td>
+<td>A synonym for <code>clink-expand-line</code>.</td>
 </tr>
 </tbody></table>
 <p><a name="completioncolors"></a></p>
@@ -3443,6 +3488,40 @@ end</code></pre></div></div><hr/>
         <div class="section" id="changes">
 <h1 id="changes">Changes</h1>
 <h3 id="releases-from-chrisant996clink-fork">Releases from <a href="https://github.com/chrisant996/clink">chrisant996/clink</a> fork</h3>
+<h4 id="v1225">v1.2.25</h4>
+<ul>
+<li>Added <code>cua-select-all</code> command to select the entire input line.</li>
+<li>Added <code>edit-and-execute-command</code> command to invoke an editor on the current input line and then execute the results (<kbd>Ctrl</kbd>+<kbd>X</kbd>,<kbd>Ctrl</kbd>+<kbd>E</kbd>).  This attempts to invoke <code>%VISUAL%</code>, <code>%EDITOR%</code>, or <code>notepad.exe</code> as the editor, in that order.</li>
+<li>Added some new expansion commands:<ul>
+<li><code>clink-expand-history</code> performs history expansion on the current input line (<kbd>Alt</kbd>+<kbd>^</kbd>).</li>
+<li><code>clink-expand-history-and-alias</code> performs history and doskey alias expansion on the current input line.</li>
+<li><code>clink-expand-line</code> performs history, doskey alias, and environment variable expansion on the current input line (<kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>E</kbd>).</li>
+</ul>
+</li>
+<li>Added some new completion commands:<ul>
+<li><code>glob-complete-word</code> performs wildcard completion on the text before the cursor point, with a <code>*</code> implicitly appended (<kbd>Alt</kbd>+<kbd>G</kbd>).</li>
+<li><code>glob-expand-word</code> inserts all the wildcard completions that <code>glob-list-expansions</code> would list (<kbd>Ctrl</kbd>+<kbd>X</kbd>,<kbd>*</kbd>).</li>
+<li><code>glob-list-expansions</code> lists the possible wildcard completions of the text before the cursor point (<kbd>Ctrl</kbd>+<kbd>X</kbd>,<kbd>g</kbd>).</li>
+</ul>
+</li>
+<li>Added some command name synonyms for increased .inputrc file portability with bash:<ul>
+<li><code>alias-expand-line</code> is a synonym for <code>clink-expand-doskey-alias</code>.</li>
+<li><code>history-expand-line</code> is a synonym for <code>clink-expand-history</code>.</li>
+<li><code>history-and-alias-expand-line</code> is a synonym for <code>clink-expand-history-and-alias</code>.</li>
+<li><code>insert-last-argument</code> is a synonym for <code>yank-last-arg</code>.</li>
+<li><code>shell-expand-line</code> is a synonym for <code>clink-expand-line</code>.</li>
+</ul>
+</li>
+<li>Added a <code>match.expand_envvars</code> Clink setting to expand environment variables in a word before performing completion (for <a href="https://github.com/mridgers/clink/issues/476">mridgers #476</a>).</li>
+<li>Changed the <code>match.wild</code> Clink setting to apply to all completion commands.</li>
+<li>Changed default key binding <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>E</kbd> to the <code>clink-expand-line</code> command (not the key binding expands everything, instead of only the env var at the cursor).</li>
+<li>Removed default key binding <kbd>Alt</kbd>+<kbd>Shift</kbd>+<kbd>H</kbd> for the <code>clink-show-help-raw</code> command (it has only niche usefulness).</li>
+<li>Removed unintended VI mode key binding <kbd>Alt</kbd>+<kbd>Ctrl</kbd>+<kbd>H</kbd>.</li>
+<li>Fixed <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>2</kbd> and <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>6</kbd> (regression introduced in v1.1.39).</li>
+<li>Fixed <code>More?</code> continuation prompt when pasting multiple lines.</li>
+<li>Fixed <code>/flag:</code> and <code>/flag=</code> handling quirks, especially when trying to complete an environment variable in <code>/flag:%env</code>.</li>
+<li>Fixed quirks about environment variable expansion in the <code>clink-expand-env-var</code> command and the <code>os.expandenv()</code> function.</li>
+</ul>
 <h4 id="v1224">v1.2.24</h4>
 <ul>
 <li>Added support for <code>%CLINK_RPROMPT%</code> to show a right side prompt, and for prompt filters to define a <code>:rightfilter()</code> function to filter the right side prompt.</li>
