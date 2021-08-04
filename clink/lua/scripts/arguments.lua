@@ -807,10 +807,12 @@ local function _find_argmatcher(line_state, check_existence)
         words = string.explode(alias, " \t", '"')
         if #words > 0 then
             argmatcher = _has_argmatcher(words[1])
-            if check_existence then
-                argmatcher = nil
+            if argmatcher then
+                if check_existence then
+                    argmatcher = nil
+                end
+                return argmatcher, true, words
             end
-            return argmatcher, true, words
         end
     end
 end
