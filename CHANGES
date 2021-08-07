@@ -4,7 +4,7 @@
 
 #### v1.2.26
 
-- Fixed input line coloring for doskey aliases that don't have an argmatcher (regression introduced in v1.2.19).
+- Fixed input line coloring for doskey aliases that don't have an argmatcher (regression introduced in v1.2.16).
 
 #### v1.2.25
 
