@@ -97,10 +97,7 @@
 #endif
 
 #if defined (S_IFLNK) && !defined (S_ISLNK)
-/* begin_clink_change */
-//#define	S_ISLNK(m)	(((m)&S_IFMT) == S_IFLNK)	/* symbolic link */
-#define	S_ISLNK(m)	(((m)&S_IFLNK) == S_IFLNK)	/* symbolic link */
-/* end_clink_change */
+#define	S_ISLNK(m)	(((m)&S_IFMT) == S_IFLNK)	/* symbolic link */
 #endif
 
 #if defined (S_IFSOCK) && !defined (S_ISSOCK)

@@ -4,8 +4,12 @@
 #pragma once
 
 #if !defined(S_IFLNK)
-# define _S_IFLNK    0x0800
-# define S_IFLNK     _S_IFLNK
+static_assert(_S_IFMT == 0xF000, "_S_IFMT is not the expected value");
+static_assert(_S_IFMT == S_IFMT, "_S_IFMT is not equal to S_IFMT");
+# define _S_IFLNK       0x0800
+# define S_IFLNK        _S_IFLNK
+# undef S_ISLNK
+# define S_ISLNK(m)	    (((m)&S_IFLNK) == S_IFLNK)
 #endif
 
 struct hooked_stat
