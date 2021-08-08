@@ -678,15 +678,6 @@ rl_vi_bword (int count, int ignore)
 	if (--rl_point == 0)
 	  break;
 
-/* begin_clink_change
- * Out-of-bounds array access when going backwards one word when rl_point is at
- * the start of the first word, and there's one space character at the start of
- * the line (i.e. rl_point == 1).
- */
-      if (rl_point <= 0)
-          break;
-/* end_clink_change */
-
       /* If this character and the previous character are `opposite', move
 	 back so we don't get messed up by the rl_point++ down there in
 	 the while loop.  Without this code, words like `l;' screw up the
