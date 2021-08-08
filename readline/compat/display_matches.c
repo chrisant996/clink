@@ -1245,7 +1245,7 @@ void display_matches(char** matches)
                 max += desc_sep_padding + max_description;
 
             if ((rl_completion_auto_query_items && _rl_screenheight > 0) ?
-                display_filtered_match_list_internal(filtered_matches, len, max, true) >= (_rl_screenheight - 1) :
+                display_filtered_match_list_internal(filtered_matches, len, max, true) >= (_rl_screenheight - (_rl_vis_botlin + 1)) :
                 rl_completion_query_items > 0 && len >= rl_completion_query_items)
             {
                 if (!prompt_display_matches(len))
@@ -1290,7 +1290,7 @@ done_filtered:
     // If there are many items, then ask the user if she really wants to
     // see them all.
     if ((rl_completion_auto_query_items && _rl_screenheight > 0) ?
-        display_match_list_internal(matches, len, max, true) >= (_rl_screenheight - 1) :
+        display_match_list_internal(matches, len, max, true) >= (_rl_screenheight - (_rl_vis_botlin + 1)) :
         rl_completion_query_items > 0 && len >= rl_completion_query_items)
     {
         if (!prompt_display_matches(len))
