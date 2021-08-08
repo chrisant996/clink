@@ -31,6 +31,7 @@ public:
 private:
     void                write_c1(const ecma48_code& code);
     void                write_c0(int c0);
+    void                write_icf(const ecma48_code& code);
     void                set_attributes(const ecma48_code::csi_base& csi);
     void                erase_in_display(const ecma48_code::csi_base& csi);
     void                erase_in_line(const ecma48_code::csi_base& csi);

@@ -468,10 +468,6 @@ extern void rl_set_screen_size PARAMS((int, int));
 extern void rl_get_screen_size PARAMS((int *, int *));
 extern void rl_reset_screen_size PARAMS((void));
 
-/* begin_clink_change */
-extern rl_voidfunc_t *_rl_visual_bell_func;
-/* end_clink_change */
-
 extern char *rl_get_termcap PARAMS((const char *));
 
 /* Functions for character input. */

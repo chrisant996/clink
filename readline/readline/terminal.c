@@ -156,10 +156,6 @@ char *_rl_term_up;
 /* A visible bell; char if the terminal can be made to flash the screen. */
 static char *_rl_visible_bell;
 
-/* begin_clink_change */
-rl_voidfunc_t *_rl_visual_bell_func = 0;
-/* end_clink_change */
-
 /* Non-zero means the terminal can auto-wrap lines. */
 int _rl_term_autowrap = -1;
 
@@ -767,13 +763,6 @@ rl_ding (void)
 #endif
 	      break;
 	    }
-/* begin_clink_change */
-    else if (_rl_visual_bell_func)
-      {
-        _rl_visual_bell_func ();
-        break;
-      }
-/* end_clink_change */
 	  /* FALLTHROUGH */
 	case AUDIBLE_BELL:
 	  fprintf (stderr, "\007");

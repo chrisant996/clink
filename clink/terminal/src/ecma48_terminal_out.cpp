@@ -67,7 +67,7 @@ static int cursor_style(int style, int visible)
 }
 
 //------------------------------------------------------------------------------
-void visible_bell()
+static void visible_bell()
 {
     if (!g_adjust_cursor_style.get())
         return;
@@ -257,6 +257,15 @@ void ecma48_terminal_out::write_c0(int c0)
 }
 
 //------------------------------------------------------------------------------
+void ecma48_terminal_out::write_icf(const ecma48_code& code)
+{
+    if (code.get_code() == ecma48_code::icf_vb)
+    {
+        visible_bell();
+    }
+}
+
+//------------------------------------------------------------------------------
 void ecma48_terminal_out::write(const char* chars, int length)
 {
     if (length == 1 || (length < 0 && (chars[0] && !chars[1])))
@@ -283,11 +292,16 @@ void ecma48_terminal_out::write(const char* chars, int length)
         {
             tgetstr("vs", nullptr),
             tgetstr("ve", nullptr),
+            tgetstr("vb", nullptr),
         };
 
-        bool intercept = ((length == c_strs[0].len || length == c_strs[1].len) &&
+        bool intercept = ((length == c_strs[0].len ||
+                           length == c_strs[1].len ||
+                           length == c_strs[2].len) &&
                           chars[0] == '\x1b' &&
-                          (strcmp(chars, c_strs[0].str) == 0 || strcmp(chars, c_strs[1].str) == 0));
+                          (strcmp(chars, c_strs[0].str) == 0 ||
+                           strcmp(chars, c_strs[1].str) == 0 ||
+                           strcmp(chars, c_strs[2].str) == 0));
 
         if (!intercept)
         {
@@ -312,6 +326,10 @@ void ecma48_terminal_out::write(const char* chars, int length)
 
         case ecma48_code::type_c1:
             write_c1(code);
+            break;
+
+        case ecma48_code::type_icf:
+            write_icf(code);
             break;
         }
     }

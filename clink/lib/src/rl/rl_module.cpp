@@ -1375,7 +1375,6 @@ rl_module::rl_module(const char* shell_name, terminal_in* input, const char* sta
     rl_fflush_function = terminal_fflush_thunk;
     rl_instream = in_stream;
     rl_outstream = out_stream;
-    _rl_visual_bell_func = visible_bell;
     rl_buffer_changing_hook = buffer_changing;
     rl_selection_event_hook = cua_selection_event_hook;
 

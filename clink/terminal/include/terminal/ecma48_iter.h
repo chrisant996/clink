@@ -57,12 +57,13 @@ public:
 
     enum : unsigned char
     {
-        c1_apc          = 0x5f,
-        c1_csi          = 0x5b,
-        c1_dcs          = 0x50,
-        c1_osc          = 0x5d,
-        c1_pm           = 0x5e,
-        c1_sos          = 0x58,
+        c1_apc          = 0x5f,     // '_'
+        c1_csi          = 0x5b,     // '['
+        c1_dcs          = 0x50,     // 'P'
+        c1_osc          = 0x5d,     // ']'
+        c1_pm           = 0x5e,     // '^'
+        c1_sos          = 0x58,     // 'X'
+        icf_vb          = 0x67,     // 'g'
     };
 
     struct csi_base
