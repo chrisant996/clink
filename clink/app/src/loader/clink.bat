@@ -31,7 +31,11 @@ if "%1"=="" (
 )
 
 :: Pass through to appropriate loader.
+::   As of now, Windows-on-ARM64 runs in an X86 emulation mode
+::   as long as no native ARM64 mode is supported by clink, we fall back to X86 as well
 if /i "%processor_architecture%"=="x86" (
+        "%~dp0\clink_x86.exe" %*
+) else if /i "%processor_architecture%"=="arm64" (
         "%~dp0\clink_x86.exe" %*
 ) else if /i "%processor_architecture%"=="amd64" (
     if defined processor_architew6432 (
