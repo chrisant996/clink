@@ -3393,10 +3393,6 @@ _rl_erase_at_end_of_line (int l)
 {
   register int i;
 
-/* begin_clink_change */
-  _rl_output_some_chars (_normal_color, _normal_color_len);
-/* end_clink_change */
-
   _rl_backspace (l);
   for (i = 0; i < l; i++)
     putc (' ', rl_outstream);
