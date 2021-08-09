@@ -1241,7 +1241,7 @@ parser_if (char *args)
 #endif /* VI_MODE */
   else if (_rl_strnicmp (args, "version", 7) == 0)
     {
-      int rlversion, versionarg, op, previ, major, minor;
+      int rlversion, versionarg, op, previ, major, minor, opresult;
 
       _rl_parsing_conditionalized_out = 1;
       rlversion = RL_VERSION_MAJOR*10 + RL_VERSION_MINOR;
@@ -1301,24 +1301,25 @@ parser_if (char *args)
       switch (op)
 	{
 	case OP_EQ:
-	  _rl_parsing_conditionalized_out = rlversion == versionarg;
+ 	  opresult = rlversion == versionarg;
 	  break;
 	case OP_NE:
-	  _rl_parsing_conditionalized_out = rlversion != versionarg;
+	  opresult = rlversion != versionarg;
 	  break;
 	case OP_GT:
-	  _rl_parsing_conditionalized_out = rlversion > versionarg;
+	  opresult = rlversion > versionarg;
 	  break;
 	case OP_GE:
-	  _rl_parsing_conditionalized_out = rlversion >= versionarg;
+	  opresult = rlversion >= versionarg;
 	  break;
 	case OP_LT:
-	  _rl_parsing_conditionalized_out = rlversion < versionarg;
+	  opresult = rlversion < versionarg;
 	  break;
 	case OP_LE:
-	  _rl_parsing_conditionalized_out = rlversion <= versionarg;
+	  opresult = rlversion <= versionarg;
 	  break;
 	}
+      _rl_parsing_conditionalized_out = 1 - opresult;
     }
   /* Check to see if the first word in ARGS is the same as the
      value stored in rl_readline_name. */
@@ -1442,7 +1443,7 @@ parser_include (char *args)
 
   return r;
 }
-
+  
 /* Associate textual names with actual functions. */
 static const struct {
   const char * const name;
