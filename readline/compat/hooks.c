@@ -178,6 +178,7 @@ int hooked_stat(const char* path, struct hooked_stat* out)
     out->st_mode = s.st_mode;
     out->st_uid = s.st_uid;
     out->st_gid = s.st_gid;
+    out->st_nlink = s.st_nlink;
 
     return ret;
 }
@@ -251,6 +252,7 @@ int hooked_fstat(int fid, struct hooked_stat* out)
     out->st_mode = s.st_mode;
     out->st_uid = s.st_uid;
     out->st_gid = s.st_gid;
+    out->st_nlink = s.st_nlink;
 
     return ret;
 }

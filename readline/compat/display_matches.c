@@ -313,10 +313,8 @@ static bool append_match_color_indicator(const char *f, unsigned char match_type
                 colored_filetype = C_CAP;
             else if ((mode & S_IXUGO) != 0 && is_colored(C_EXEC))
                 colored_filetype = C_EXEC;
-#if 0
             else if ((1 < astat.st_nlink) && is_colored(C_MULTIHARDLINK))
                 colored_filetype = C_MULTIHARDLINK;
-#endif
         }
         else if (S_ISDIR(mode))
         {
@@ -328,10 +326,8 @@ static bool append_match_color_indicator(const char *f, unsigned char match_type
                 colored_filetype = C_STICKY_OTHER_WRITABLE;
             else
 #endif
-#if 0
                 if ((mode & S_IWOTH) != 0 && is_colored(C_OTHER_WRITABLE))
                 colored_filetype = C_OTHER_WRITABLE;
-#endif
 #if defined (S_ISVTX)
                 else if ((mode & S_ISVTX) != 0 && is_colored(C_STICKY))
                     colored_filetype = C_STICKY;

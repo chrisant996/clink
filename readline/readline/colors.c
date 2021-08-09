@@ -253,14 +253,8 @@ _rl_print_color_indicator (const char *f, unsigned char match_type)
             colored_filetype = C_CAP;
           else if ((mode & S_IXUGO) != 0 && is_colored (C_EXEC))
             colored_filetype = C_EXEC;
-/* begin_clink_change */
-#if 0
-/* end_clink_change */
           else if ((1 < astat.st_nlink) && is_colored (C_MULTIHARDLINK))
             colored_filetype = C_MULTIHARDLINK;
-/* begin_clink_change */
-#endif
-/* end_clink_change */
         }
       else if (S_ISDIR (mode))
         {
@@ -272,14 +266,8 @@ _rl_print_color_indicator (const char *f, unsigned char match_type)
             colored_filetype = C_STICKY_OTHER_WRITABLE;
           else
 #endif
-/* begin_clink_change */
-#if 0
-/* end_clink_change */
           if ((mode & S_IWOTH) != 0 && is_colored (C_OTHER_WRITABLE))
             colored_filetype = C_OTHER_WRITABLE;
-/* begin_clink_change */
-#endif
-/* end_clink_change */
 #if defined (S_ISVTX)
           else if ((mode & S_ISVTX) != 0 && is_colored (C_STICKY))
             colored_filetype = C_STICKY;
