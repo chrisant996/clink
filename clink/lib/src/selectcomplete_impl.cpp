@@ -1240,9 +1240,13 @@ void selectcomplete_impl::insert_match(int final)
         *match_with_type.data() = static_cast<unsigned char>(type);
 
         rollback<int> rb(rl_completion_matches_include_type, true);
+        bool append_space = false;
         // UGLY: append_to_match() circumvents the m_buffer abstraction.
         append_to_match(match_with_type.data(), m_anchor + !!*qs, m_delimiter, *qs, nontrivial_lcd);
         m_point = m_buffer->get_cursor();
+
+        bool have_space = (m_buffer->get_buffer()[m_point - 1] == ' ');
+        assert(!have_space || !*qs); // Quote should not occur after a space.
         m_buffer->insert(qs);
 
         // Pressing Space to insert a final match needs to maybe add a quote,
@@ -1250,12 +1254,14 @@ void selectcomplete_impl::insert_match(int final)
         if (final == 2 || !is_match_type(type, match_type::dir))
         {
             // A space may or may not be present.  Delete it if one is.
-            bool append_space = (final == 2 && is_match_type(type, match_type::dir));
+            bool append_space = (final == 2);
             int cursor = m_buffer->get_cursor();
-            if (cursor && m_buffer->get_buffer()[cursor - 1] == ' ')
+            if (have_space)
             {
                 append_space = true;
-                m_buffer->remove(cursor - 1, cursor);
+                have_space = false;
+                m_buffer->remove(m_point - 1, m_point);
+                m_point--;
                 cursor--;
             }
 
@@ -1263,8 +1269,8 @@ void selectcomplete_impl::insert_match(int final)
             // but no closing quote is present.
             if (!m_quoted &&
                 m_anchor > 0 &&
-                rl_completer_quote_characters &&
-                rl_completer_quote_characters[0])
+                rl_completion_found_quote &&
+                rl_completion_quote_character)
             {
                 // Remove a preceding backslash unless it is preceded by colon.
                 // Because programs compiled with MSVC treat `\"` as an escape.
@@ -1279,16 +1285,15 @@ void selectcomplete_impl::insert_match(int final)
                     cursor--;
                 }
 
-                char qc = m_buffer->get_buffer()[m_anchor - 1];
-                if (strchr(rl_completer_quote_characters, qc))
-                {
-                    qs[0] = qc;
+                qs[0] = rl_completion_quote_character;
+                if (m_buffer->get_buffer()[cursor] != qs[0])
                     m_buffer->insert(qs);
-                }
+                else if (append_space)
+                    m_buffer->set_cursor(++cursor);
             }
 
             // Add space.
-            if (append_space)
+            if (append_space && !have_space)
                 m_buffer->insert(" ");
             m_point = m_buffer->get_cursor();
         }
