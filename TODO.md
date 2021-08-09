@@ -7,8 +7,6 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 ## High Priority
 
 ## Medium Priority
-- Enter input at least 2 lines tall, press <kbd>Home</kbd>, invoke `clink-show-help` => cursor ends up in wrong location.
-- Enter input at least 2 lines tall, press <kbd>Home</kbd>, invoke `clink-select-complete` that shows completion query => cursor ends up in wrong location after responding Y or N.
 
 ## Low Priority
 

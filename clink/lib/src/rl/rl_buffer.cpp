@@ -85,6 +85,7 @@ void rl_buffer::draw()
 //------------------------------------------------------------------------------
 void rl_buffer::redraw()
 {
+    printf("\r");
     rl_forced_update_display();
 }
 
