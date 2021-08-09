@@ -1337,7 +1337,7 @@ readline_initialize_everything (void)
   /* If the completion parser's default word break characters haven't
      been set yet, then do so now. */
   if (rl_completer_word_break_characters == (char *)NULL)
-    rl_completer_word_break_characters = (char *)rl_basic_word_break_characters;
+    rl_completer_word_break_characters = rl_basic_word_break_characters;
 
 #if defined (COLOR_SUPPORT)
   if (_rl_colored_stats || _rl_colored_completion_prefix)
