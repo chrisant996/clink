@@ -78,6 +78,7 @@ static int last_isearch_string_len;
 static char * const default_isearch_terminators = "\033\012";
 
 /* begin_clink_change */
+/* Enable case insensitive history search, based on runtime config. */
 extern int find_streqn (const char *a, const char *b, int n);
 #undef STREQN
 #define STREQN(a, b, n) (find_streqn(a, b, n))

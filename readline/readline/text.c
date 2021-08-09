@@ -1171,12 +1171,16 @@ rl_newline (int count, int key)
 int
 rl_do_lowercase_version (int ignore1, int ignore2)
 {
-/* begin_clink_change
- * This function was the same as _rl_null_function(). MSVC's linker would
- * give these two symbols the same address such that do_lowercase == null_func
- * which breaks function pointer comparisons in RL's subseq dispatching...
- */
-  return 1;
+/* begin_clink_change */
+  /* Both rl_do_lowercase_version and _rl_null_function simply returned 0.
+     Some linkers fold identical function implementations so there's only
+     one copy.  That interferes with function pointer comparisons in RL's
+     subseq dispatching.
+     Returning something other than 0 here is a cheap way to force this to
+     be discrete from _rl_null_function, ensuring the functionality won't
+     be broken by linkers.  Since this function is never called, the
+     return value doesn't matter. */
+  return 999999;
 /* end_clink_change */
 }
 

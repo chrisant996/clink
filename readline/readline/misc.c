@@ -754,9 +754,9 @@ rl_remove_history (int count, int key)
   int search_pos = rl_get_history_search_pos();
   int old_where = search_pos >= 0 ? search_pos : where_history();
 
-  // The history search commands use rl_last_func to identify the active history
-  // search mode.  rl_remove_history messes that up, so it gives them a way to
-  // know what rl_last_func was before rl_remove_history.
+  /* The history search commands use rl_last_func to identify the active
+     history search mode.  rl_remove_history messes that up, so it gives
+     them a way to know what rl_last_func was before rl_remove_history. */
   if (rl_last_func != rl_remove_history)
     rl_remove_history_last_func = rl_last_func;
 

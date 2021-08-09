@@ -63,14 +63,14 @@
 /*								    */
 /* **************************************************************** */
 
-/* Preferred path separator character to use during filename
-   completion. */
+/* begin_clink_change */
+/* Filename completion inserts this as the path separator character. */
 char rl_preferred_path_separator = '/';
 
-/* Conditional support for backslash as a path separator. */
+/* If non-zero, adds backslash as a path separator. */
 int rl_backslash_path_sep = 0;
 
-/* Return 1 if C is a path separator character. */
+/* Return non-zero if C is a path separator character. */
 int
 rl_is_path_separator (char c)
 {
@@ -79,7 +79,8 @@ rl_is_path_separator (char c)
   return (c == '/');
 }
 
-/* Return the last path separator in the string, or NULL if not found. */
+/* Return the last path separator in the string, or NULL if not found.
+   (It's like strrchr, but supports multiple path separator characters.) */
 char *
 rl_last_path_separator (const char *string)
 {
@@ -94,13 +95,16 @@ rl_last_path_separator (const char *string)
     }
   return ((char *)NULL);
 }
+/* end_clink_change */
 
 /* Return 0 if C is not a member of the class of characters that belong
    in words, or 1 if it is. */
 
 int _rl_allow_pathname_alphabetic_chars = 0;
 static const char * const pathname_alphabetic_chars = "/-_=~.#$";
+/* begin_clink_change */
 static const char * const pathname_alphabetic_chars_with_backslash = "\\/-_=~.#$";
+/* end_clink_change */
 
 int
 rl_alphabetic (int c)
@@ -109,7 +113,10 @@ rl_alphabetic (int c)
     return (1);
 
   return (_rl_allow_pathname_alphabetic_chars &&
+/* begin_clink_change */
+	    //strchr (pathname_alphabetic_chars, c) != NULL);
 	    strchr (rl_backslash_path_sep ? pathname_alphabetic_chars_with_backslash : pathname_alphabetic_chars, c) != NULL);
+/* end_clink_change */
 }
 
 #if defined (HANDLE_MULTIBYTE)

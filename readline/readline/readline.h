@@ -503,8 +503,8 @@ extern int rl_set_paren_blink_timeout PARAMS((int));
 extern void rl_clear_history PARAMS((void));
 
 /* begin_clink_change */
-/* Returns true if rl_operate_and_get_next has set a saved history offset,
-   so that the host knows not to rearrange history entries yet. */
+/* Returns true if rl_operate_and_get_next has set a saved history
+   offset, so that the host knows not to rearrange history entries yet. */
 extern int rl_has_saved_history PARAMS((void));
 /* end_clink_change */
 
@@ -524,10 +524,8 @@ extern char *rl_filename_completion_function PARAMS((const char *, int));
 extern int rl_completion_mode PARAMS((rl_command_func_t *));
 
 /* begin_clink_change */
-/* Path separator. */
+/* Path separators. */
 extern int rl_is_path_separator PARAMS((char c));
-/* Returns the last path separator character in string, or NULL if not found.
-   (It's like strrchr, but supports multiple path separator characters.) */
 extern char *rl_last_path_separator PARAMS((const char *string));
 /* end_clink_change */
 
@@ -671,11 +669,15 @@ extern rl_intfunc_t *rl_selection_event_hook;
 extern rl_history_hook_func_t *rl_add_history_hook;
 /* Called when rl_remove_history removes a history line. */
 extern rl_history_hook_func_t *rl_remove_history_hook;
-/* Conditional support for backslash as a path separator.
-   This is used by rl_is_path_separator.*/
+
+/* If non-zero, adds backslash as a path separator. */
 extern int rl_backslash_path_sep;
-/* Preferred path separator, used by filename completion. */
+
+/* Filename completion inserts this as the path separator character. */
 extern char rl_preferred_path_separator;
+/* end_clink_change */
+
+/* begin_clink_change */
 /* Function to call for post-processing of set_completion_defaults, before
    completion is performed. */
 extern rl_voidfunc_t *rl_adjust_completion_defaults;
