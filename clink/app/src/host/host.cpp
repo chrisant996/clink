@@ -105,6 +105,29 @@ extern str<> g_last_prompt;
 
 
 //------------------------------------------------------------------------------
+static void get_errorlevel_tmp_name(str_base& out, bool wild=false)
+{
+    app_context::get()->get_log_path(out);
+    path::to_parent(out, nullptr);
+    path::append(out, "clink_errorlevel");
+
+    if (wild)
+    {
+        // "clink_errorlevel*.txt" catches the obsolete clink_errorlevel.txt
+        // file as well.
+        out << "*.txt";
+    }
+    else
+    {
+        str<> name;
+        name.format("_%X.txt", GetCurrentProcessId());
+        out.concat(name.c_str(), name.length());
+    }
+}
+
+
+
+//------------------------------------------------------------------------------
 class dir_history_entry : public no_copy
 {
 public:
@@ -436,6 +459,8 @@ host::host(const char* name)
 //------------------------------------------------------------------------------
 host::~host()
 {
+    purge_old_files();
+
     delete m_prompt_filter;
     delete m_lua;
     delete m_history;
@@ -584,9 +609,7 @@ bool host::edit_line(const char* prompt, const char* rprompt, str_base& out)
             else
             {
                 str<> tmp_errfile;
-                app->get_log_path(tmp_errfile);
-                path::to_parent(tmp_errfile, nullptr);
-                path::append(tmp_errfile, "clink_errorlevel.txt");
+                get_errorlevel_tmp_name(tmp_errfile);
 
                 FILE* f = fopen(tmp_errfile.c_str(), "r");
                 if (f)
@@ -595,6 +618,7 @@ bool host::edit_line(const char* prompt, const char* rprompt, str_base& out)
                     memset(buffer, sizeof(buffer), 0);
                     fgets(buffer, _countof(buffer) - 1, f);
                     fclose(f);
+                    _unlink(tmp_errfile.c_str());
                     os::set_errorlevel(atoi(buffer));
                 }
                 else
@@ -743,9 +767,7 @@ bool host::edit_line(const char* prompt, const char* rprompt, str_base& out)
         if (inspect_errorlevel)
         {
             str<> tmp_errfile;
-            app->get_log_path(tmp_errfile);
-            path::to_parent(tmp_errfile, nullptr);
-            path::append(tmp_errfile, "clink_errorlevel.txt");
+            get_errorlevel_tmp_name(tmp_errfile);
 
             m_terminal.out->begin();
             m_terminal.out->end();
@@ -933,4 +955,19 @@ const char* host::filter_prompt(const char** rprompt)
     if (rprompt)
         *rprompt = m_filtered_rprompt.length() ? m_filtered_rprompt.c_str() : nullptr;
     return m_filtered_prompt.c_str();
+}
+
+//------------------------------------------------------------------------------
+void host::purge_old_files()
+{
+    str<> tmp;
+    get_errorlevel_tmp_name(tmp, true/*wild*/);
+
+    // Purge orphaned clink_errorlevel temporary files older than 30 minutes.
+    const int seconds = 30 * 60/*seconds per minute*/;
+
+    globber i(tmp.c_str());
+    i.older_than(seconds);
+    while (i.next(tmp))
+        _unlink(tmp.c_str());
 }

@@ -19,6 +19,7 @@ public:
     void                hidden(bool state)      { m_hidden = state; }
     void                system(bool state)      { m_system = state; }
     void                dots(bool state)        { m_dots = state; }
+    bool                older_than(int seconds);
     bool                next(str_base& out, bool rooted=true, int* st_mode=nullptr, int* pattr=nullptr);
 
 private:
@@ -34,4 +35,7 @@ private:
     bool                m_hidden;
     bool                m_system;
     bool                m_dots;
+    bool                m_onlyolder;
+    FILETIME            m_olderthan;
+
 };

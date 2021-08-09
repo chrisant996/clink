@@ -17,6 +17,7 @@ globber::globber(const char* pattern)
 , m_hidden(false)
 , m_system(false)
 , m_dots(false)
+, m_onlyolder(false)
 {
     str<32> strip_quotes;
     concat_strip_quotes(strip_quotes, pattern);
@@ -78,6 +79,32 @@ globber::~globber()
 }
 
 //------------------------------------------------------------------------------
+bool globber::older_than(int seconds)
+{
+    SYSTEMTIME systime;
+    GetSystemTime(&systime);
+    if (!SystemTimeToFileTime(&systime, &m_olderthan))
+    {
+        if (m_handle != nullptr)
+            FindClose(m_handle);
+        m_handle = nullptr;
+        return false;
+    }
+
+    ULONGLONG delta = seconds;
+    delta *= ULONGLONG(10000000);
+
+    ULONGLONG* olderthan = reinterpret_cast<ULONGLONG*>(&m_olderthan);
+    if ((*olderthan) <= delta)
+        (*olderthan) = 0;
+    else
+        (*olderthan) -= delta;
+
+    m_onlyolder = true;
+    return true;
+}
+
+//------------------------------------------------------------------------------
 bool globber::next(str_base& out, bool rooted, int* st_mode, int* pattr)
 {
     if (m_handle == nullptr)
@@ -103,6 +130,9 @@ bool globber::next(str_base& out, bool rooted, int* st_mode, int* pattr)
         again |= (attr & FILE_ATTRIBUTE_HIDDEN) && !m_hidden;
         again |= (attr & FILE_ATTRIBUTE_DIRECTORY) && !m_directories;
         again |= !(attr & FILE_ATTRIBUTE_DIRECTORY) && !m_files;
+
+        if (m_onlyolder)
+            again |= !(CompareFileTime(&m_data.ftLastWriteTime, &m_olderthan) < 0);
 
         next_file();
 

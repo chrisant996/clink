@@ -46,6 +46,9 @@ protected:
     virtual void    initialise_editor_desc(line_editor::desc& desc) = 0;
 
 private:
+    void            purge_old_files();
+
+private:
     const char*     m_name;
     doskey          m_doskey;
     doskey_alias    m_doskey_alias;
