@@ -48,6 +48,7 @@
 #include "xmalloc.h"
 
 /* begin_clink_change */
+/* Enable case insensitive history search, based on runtime config. */
 extern int find_streqn (const char *a, const char *b, int n);
 #undef STREQN
 #define STREQN(a, b, n) (find_streqn(a, b, n))

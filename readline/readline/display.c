@@ -210,6 +210,8 @@ int rl_display_fixed = 0;
 char *rl_display_prompt = (char *)NULL;
 
 /* begin_clink_change */
+/* The right side prompt, if any.  This is displayed on the first
+   line of the input text, if there is room past the input text. */
 char *rl_display_rprompt = (char *)NULL;
 int _rl_rprompt_shown_len = 0;
 /* end_clink_change */
@@ -617,10 +619,10 @@ _rl_reset_prompt (void)
 }
 
 /* begin_clink_change */
-/* Set up the right-justified prompt.  Call this before calling
-   readline () or rl_callback_handler_install ().  The string should
-   include RL_PROMPT_START_IGNORE and RL_PROMPT_END_IGNORE around
-   invisible characters (escape codes). */
+/* Set up the right side prompt.  Call this before calling readline ()
+   or rl_callback_handler_install ().  The string should include
+   RL_PROMPT_START_IGNORE and RL_PROMPT_END_IGNORE around invisible
+   characters (escape codes). */
 int
 rl_set_rprompt (const char *rprompt)
 {
@@ -1351,13 +1353,13 @@ rl_redisplay (void)
     }
 
 /* begin_clink_change */
-  /* Determine whether it's possible to show the rprompt. */
+  /* Determine whether it's possible to show the right side prompt. */
   can_show_rprompt = (rl_rprompt &&                       /* has rprompt */
                       (_rl_term_forward_char || _rl_term_ch) && /* has termcap */
                       !newlines &&                        /* only one line */
                       rl_display_prompt == rl_prompt &&   /* displaying the real prompt */
                       (lpos + rl_visible_rprompt_length < _rl_screenwidth - 1)); /* fits */
-  /* If the rprompt is displayed but shouldn't be, then erase it. */
+  /* If the right side prompt is shown but shouldn't be, erase it. */
   if (_rl_rprompt_shown_len && !can_show_rprompt)
     tputs_rprompt (0);
 /* end_clink_change */
@@ -1772,7 +1774,7 @@ rl_redisplay (void)
   }
 
 /* begin_clink_change */
-  /* If the rprompt is not displayed and should be, then display it. */
+  /* If the right side prompt is not shown and should be, display it. */
   if (!_rl_rprompt_shown_len && can_show_rprompt)
     tputs_rprompt (rl_rprompt);
 /* end_clink_change */
@@ -2777,6 +2779,7 @@ rl_on_new_line (void)
     visible_line[0] = '\0';
 
 /* begin_clink_change */
+  /* The right side prompt is only shown on the first line. */
   _rl_rprompt_shown_len = 0;
 /* end_clink_change */
 
@@ -3410,6 +3413,8 @@ void
 _rl_clear_to_eol (int count)
 {
 /* begin_clink_change */
+  /* Flag that the right side prompt is not shown, so it can be
+     redisplayed as appropriate. */
   if (_rl_last_v_pos == 0)
     _rl_rprompt_shown_len = 0;
 /* end_clink_change */
@@ -3473,6 +3478,8 @@ open_some_spaces (int col)
   register int i;
 
 /* begin_clink_change */
+  /* If on the first line and the right side prompt is shown, hide it
+     first to avoid garbling the display. */
   if (_rl_last_v_pos == 0 && _rl_rprompt_shown_len)
     tputs_rprompt (0);
 /* end_clink_change */
@@ -3514,9 +3521,12 @@ delete_chars (int count)
 
 #if !defined (__MSDOS__) && (!defined (__MINGW32__) || defined (NCURSES_VERSION))
 /* begin_clink_change */
+  /* If on the first line and the right side prompt is shown, hide it
+     first to avoid garbling the display. */
   if (_rl_last_v_pos == 0 && _rl_rprompt_shown_len)
     tputs_rprompt (0);
 /* end_clink_change */
+
   if (_rl_term_DC && *_rl_term_DC)
     {
       char *buffer;

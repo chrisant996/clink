@@ -2607,10 +2607,9 @@ _rl_get_keyname (int key)
       keyname[i++] = (c / 8) + '0';
       c = (c % 8) + '0';
     }
-/* begin_clink_change
- * Maybe no one uses this function?  Because the modern encoding is UTF8, not
- * ISO Latin 1.  The preceding code emits invalid UTF and garbles the output.
- * This changes C. */
+/* begin_clink_change */
+  /* The modern encoding is UTF8, not ISO Latin 1.  Print octal escape
+     sequences so the output is valid UTF8.  This changes C. */
   else if (c >= 160)
     {
       keyname[i++] = '\\';
