@@ -3,7 +3,7 @@
 
 <!-- ----------------------------------------------------- -->
 <head>
-<title>Clink v1.2.25</title>
+<title>Clink v1.2.26</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Rambla:wght@400;700&family=Roboto&family=Fira+Mono&display=swap');
 html {
@@ -747,7 +747,7 @@ name:"Plain text",aliases:["text","txt"],disableAutodetect:!0})})());
         </td>
         <td style="text-align:right">
             <div id="header">
-                <div id="title">Clink v1.2.25</div>
+                <div id="title">Clink v1.2.26</div>
                 <div id="url">
                     <a href="https://github.com/chrisant996/clink">
                         https://github.com/chrisant996/clink
@@ -3488,6 +3488,14 @@ end</code></pre></div></div><hr/>
         <div class="section" id="changes">
 <h1 id="changes">Changes</h1>
 <h3 id="releases-from-chrisant996clink-fork">Releases from <a href="https://github.com/chrisant996/clink">chrisant996/clink</a> fork</h3>
+<h4 id="v1226">v1.2.26</h4>
+<ul>
+<li>Fixed input line coloring for doskey aliases that don&#39;t have an argmatcher (regression introduced in v1.2.16).</li>
+<li>Fixed <kbd>Space</kbd> during <code>clink-select-complete</code> when there were already opening and closing quotes present.</li>
+<li>Fixed redrawing multiple lines of input after certain commands such as <code>clink-show-help</code> <kbd>Alt</kbd>+<kbd>H</kbd> (regression introduced in v1.1.20).</li>
+<li>Fixed the <code>completion-auto-query-items</code> config variable to account for multiple lines of input, if present.</li>
+<li>Fixed potential race condition if multiple Clink instances try to get the last errorlevel at the same time.</li>
+</ul>
 <h4 id="v1225">v1.2.25</h4>
 <ul>
 <li>Added <code>cua-select-all</code> command to select the entire input line.</li>
