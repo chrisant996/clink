@@ -7,6 +7,7 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 ## High Priority
 
 ## Medium Priority
+- Argmatcher doesn't understand redirection symbols, and interferes with completion.
 
 ## Low Priority
 
