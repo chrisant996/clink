@@ -8,7 +8,6 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 
 ## Medium Priority
 - Argmatcher doesn't understand redirection symbols, and interferes with completion.
-- `"luafunc:find_prev_colored_line"` not working in Windows Terminal?
 
 ## Low Priority
 
@@ -90,6 +89,7 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 ## Known Issues
 - Perturbed PROMPT envvar is visible in child processes (e.g. piped shell in various file editors).
 - [#531](https://github.com/mridgers/clink/issues/531) AV detects a trojan on download _[This is likely because of the use of CreateRemoteThread and/or hooking OS APIs.  There might be a way to obfuscate the fact that clink uses those, but ultimately this is kind of an inherent problem.  Getting the binaries digitally signed might be the most effective solution, but that's financially expensive.]_
+- [Terminal #10191](https://github.com/microsoft/terminal/issues/10191#issuecomment-897345862) Microsoft Terminal does not allow a console application to know about or access the scrollback history, nor to scroll the screen.  Hopefully it's an oversight.  It blocks Clink's scrolling commands, and also the `console.findline()` function and everything else that relies on access to the scrollback history.
 
 ## Mystery
 - Is session history not getting reaped correctly in certain cases?  Maybe during a compact?  I think some commands disappear from the history unexpectedly sometimes, but maybe it's correct and I overlooked the catalyst?
