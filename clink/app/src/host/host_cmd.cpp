@@ -211,6 +211,59 @@ void host_cmd_enqueue_lines(std::list<str_moveable>& lines)
 
 
 //------------------------------------------------------------------------------
+void host_cmd::command_tokeniser::start(const str_iter& iter, const char* quote_pair)
+{
+    m_start = iter.get_pointer();
+    m_tokeniser = str_tokeniser(iter, "&|");
+    m_tokeniser.add_quote_pair(quote_pair);
+    m_first = true;
+}
+
+//------------------------------------------------------------------------------
+str_token host_cmd::command_tokeniser::next(unsigned int& offset, unsigned int& length)
+{
+    const char* ptr;
+    int len;
+    str_token token = m_tokeniser.next(ptr, len);
+    if (token)
+    {
+        offset = static_cast<unsigned int>(ptr - m_start);
+        length = len;
+
+        // Match the doskey-disabler space in doskey::resolve().
+        if (!m_first && length && m_start[offset] == ' ')
+            offset++, length--;
+
+        m_first = false;
+    }
+    return token;
+}
+
+//------------------------------------------------------------------------------
+void host_cmd::word_tokeniser::start(const str_iter& iter, const char* quote_pair)
+{
+    m_start = iter.get_pointer();
+    m_tokeniser = str_tokeniser(iter, " \t<>=;");
+    m_tokeniser.add_quote_pair(quote_pair);
+}
+
+//------------------------------------------------------------------------------
+str_token host_cmd::word_tokeniser::next(unsigned int& offset, unsigned int& length)
+{
+    const char* ptr;
+    int len;
+    str_token token = m_tokeniser.next(ptr, len);
+    if (token)
+    {
+        offset = static_cast<unsigned int>(ptr - m_start);
+        length = len;
+    }
+    return token;
+}
+
+
+
+//------------------------------------------------------------------------------
 host_cmd::host_cmd()
 : host("cmd.exe")
 , m_doskey(os::get_shellname())
@@ -296,9 +349,8 @@ void host_cmd::initialise_lua(lua_state& lua)
 void host_cmd::initialise_editor_desc(line_editor::desc& desc)
 {
     desc.reset_quote_pair();
-    desc.command_delims = "&|";
-    desc.word_delims = " \t<>=;";
-    // desc.auto_quote_chars = " %=;&^";
+    desc.command_tokeniser = &m_command_tokeniser;
+    desc.word_tokeniser = &m_word_tokeniser;
 }
 
 //------------------------------------------------------------------------------

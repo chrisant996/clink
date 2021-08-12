@@ -6,6 +6,7 @@
 #include "fs_fixture.h"
 #include "line_editor_tester.h"
 
+#include <lib/word_collector.h>
 #include <lua/lua_match_generator.h>
 #include <lua/lua_state.h>
 
@@ -17,8 +18,9 @@ TEST_CASE("Lua arg parsers")
     lua_state lua;
     lua_match_generator lua_generator(lua);
 
+    simple_word_tokeniser command_tokeniser("&|");
     line_editor::desc desc(nullptr, nullptr, nullptr, nullptr);
-    desc.command_delims = "&|";
+    desc.command_tokeniser = &command_tokeniser;
     line_editor_tester tester(desc);
     tester.get_editor()->add_generator(lua_generator);
     tester.get_editor()->add_generator(file_match_generator());
@@ -187,21 +189,21 @@ TEST_CASE("Lua arg parsers")
             tester.run();
         }
 
-        SECTION("Separator && 1")
+        SECTION("Separator && 2")
         {
             tester.set_input("nullcmd &&argcmd t");
             tester.set_expected_matches("two", "three");
             tester.run();
         }
 
-        SECTION("Separator && 2")
+        SECTION("Separator && 3")
         {
             tester.set_input("nullcmd \"&&\" && argcmd t");
             tester.set_expected_matches("two", "three");
             tester.run();
         }
 
-        SECTION("Separator && 3")
+        SECTION("Separator && 4")
         {
             tester.set_input("nullcmd \"&&\"&&argcmd t");
             tester.set_expected_matches("two", "three");

@@ -9,6 +9,7 @@
 #include <core/path.h>
 #include <core/settings.h>
 #include <core/os.h>
+#include <lib/word_collector.h>
 #include <lua/lua_match_generator.h>
 #include <lua/lua_word_classifier.h>
 #include <lua/lua_script_loader.h>
@@ -27,8 +28,9 @@ TEST_CASE("Lua word classification")
 
     settings::find("clink.colorize_input")->set("true");
 
+    simple_word_tokeniser command_tokeniser("&|");
     line_editor::desc desc(nullptr, nullptr, nullptr, nullptr);
-    desc.command_delims = "&|";
+    desc.command_tokeniser = &command_tokeniser;
     line_editor_tester tester(desc);
     tester.get_editor()->add_generator(lua_generator);
     tester.get_editor()->add_generator(file_match_generator());
@@ -323,21 +325,21 @@ TEST_CASE("Lua word classification")
             tester.run();
         }
 
-        SECTION("Separator && 1")
+        SECTION("Separator && 2")
         {
             tester.set_input("nullcmd &&cd t");
             tester.set_expected_classifications("oco");
             tester.run();
         }
 
-        SECTION("Separator && 2")
+        SECTION("Separator && 3")
         {
             tester.set_input("nullcmd \"&&\" && cd t");
             tester.set_expected_classifications("oco");
             tester.run();
         }
 
-        SECTION("Separator && 3")
+        SECTION("Separator && 4")
         {
             tester.set_input("nullcmd \"&&\"&&cd t");
             tester.set_expected_classifications("oco");

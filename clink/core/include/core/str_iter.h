@@ -66,6 +66,8 @@ template <typename T> const T* str_iter_impl<T>::get_next_pointer()
 //------------------------------------------------------------------------------
 template <typename T> void str_iter_impl<T>::reset_pointer(const T* ptr)
 {
+    assert(ptr);
+    assert(ptr <= m_ptr);
     m_ptr = ptr;
 }
 

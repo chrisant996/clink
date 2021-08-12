@@ -13,6 +13,7 @@ class terminal_out;
 class printer;
 class host_callbacks;
 class str_base;
+class collector_tokeniser;
 
 //------------------------------------------------------------------------------
 class line_editor
@@ -34,9 +35,8 @@ public:
         const char*     state_dir = nullptr;
         const char*     prompt = "clink $ ";
         const char*     rprompt = nullptr;
-        const char*     command_delims = nullptr;
-        const char*     word_delims = " \t";
-        // const char*     auto_quote_chars = " ";
+        collector_tokeniser* command_tokeniser = nullptr;
+        collector_tokeniser* word_tokeniser = nullptr;
 
         const char*     get_quote_pair() const { return quote_pair ? quote_pair : ""; }
         void            reset_quote_pair() { quote_pair = "\""; }

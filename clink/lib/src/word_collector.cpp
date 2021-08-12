@@ -8,17 +8,60 @@
 
 #include <core/base.h>
 #include <core/str.h>
-#include <core/str_tokeniser.h>
+#include <core/str_iter.h>
 #include <core/os.h>
 
 #include <vector>
+#include <memory>
 
 //------------------------------------------------------------------------------
-word_collector::word_collector(const char* command_delims, const char* word_delims, const char* quote_pair)
-: m_command_delims(command_delims)
-, m_word_delims(word_delims)
-, m_quote_pair(quote_pair)
+simple_word_tokeniser::simple_word_tokeniser(const char* delims)
+: m_delims(delims)
 {
+}
+
+//------------------------------------------------------------------------------
+simple_word_tokeniser::~simple_word_tokeniser()
+{
+    delete m_tokeniser;
+}
+
+//------------------------------------------------------------------------------
+void simple_word_tokeniser::start(const str_iter& iter, const char* quote_pair)
+{
+    delete m_tokeniser;
+    m_start = iter.get_pointer();
+    m_tokeniser = new str_tokeniser(iter, m_delims);
+    m_tokeniser->add_quote_pair(quote_pair);
+}
+
+//------------------------------------------------------------------------------
+str_token simple_word_tokeniser::next(unsigned int& offset, unsigned int& length)
+{
+    const char* ptr;
+    int len;
+    str_token token = m_tokeniser->next(ptr, len);
+    if (token)
+    {
+        offset = static_cast<unsigned int>(ptr - m_start);
+        length = len;
+    }
+    return token;
+}
+
+
+
+//------------------------------------------------------------------------------
+word_collector::word_collector(collector_tokeniser* command_tokeniser, collector_tokeniser* word_tokeniser, const char* quote_pair)
+: m_command_tokeniser(command_tokeniser)
+, m_word_tokeniser(word_tokeniser)
+, m_quote_pair((quote_pair && *quote_pair) ? quote_pair : "\"")
+{
+    if (!m_word_tokeniser)
+    {
+        m_word_tokeniser = new simple_word_tokeniser();
+        m_delete_word_tokeniser = true;
+    }
 }
 
 //------------------------------------------------------------------------------
@@ -41,38 +84,30 @@ void word_collector::find_command_bounds(const char* buffer, unsigned int length
 
     commands.clear();
 
-    if (m_command_delims == nullptr)
+    if (m_command_tokeniser == nullptr)
     {
         commands.push_back({ 0, line_stop });
         return;
     }
 
-    str_iter token_iter(buffer, line_stop);
-    str_tokeniser tokens(token_iter, m_command_delims);
-    tokens.add_quote_pair(m_quote_pair);
-
-    const char* command_start;
-    int command_length;
-    while (tokens.next(command_start, command_length))
+    m_command_tokeniser->start(str_iter(buffer, length), m_quote_pair);
+    unsigned int command_start;
+    unsigned int command_length;
+    while (m_command_tokeniser->next(command_start, command_length))
     {
-        // Match the doskey-disabler space in doskey::resolve().
-        if (command_start > buffer && command_length && command_start[0] == ' ')
-            command_start++, command_length--;
-
-        unsigned int offset = unsigned(command_start - buffer);
         if (stop_at_cursor)
         {
             // Have we found the command containing the cursor?
-            if (cursor >= offset &&
-                cursor <= offset + command_length)
+            if (cursor >= command_start &&
+                cursor <= command_start + command_length)
             {
-                commands.push_back({ offset, unsigned(command_length) });
+                commands.push_back({ command_start, command_length });
                 return;
             }
         }
         else
         {
-            commands.push_back({ offset, unsigned(command_length) });
+            commands.push_back({ command_start, command_length });
         }
     }
 }
@@ -120,18 +155,17 @@ unsigned int word_collector::collect_words(const char* line_buffer, unsigned int
             }
         }
 
-        str_iter token_iter(line_buffer + command.offset + doskey_len, command.length - doskey_len);
-        str_tokeniser tokens(token_iter, m_word_delims);
-        tokens.add_quote_pair(m_quote_pair);
+        m_word_tokeniser->start(str_iter(line_buffer + command.offset + doskey_len, command.length - doskey_len), m_quote_pair);
         while (1)
         {
-            int word_length = 0;
-            const char *word_start = nullptr;
-            str_token token = tokens.next(word_start, word_length);
+            unsigned int word_offset = 0;
+            unsigned int word_length = 0;
+            str_token token = m_word_tokeniser->next(word_offset, word_length);
             if (!token)
                 break;
 
-            unsigned int offset = unsigned(word_start - line_buffer);
+            word_offset += command.offset + doskey_len;
+            const char* word_start = line_buffer + word_offset;
 
             // Mercy.  We need to know later on if a flag word ends with = but
             // that's never part of a word because it's a word delimiter.  We
@@ -159,16 +193,16 @@ unsigned int word_collector::collect_words(const char* line_buffer, unsigned int
                     if (c == ':')
                     {
                         const unsigned int split_len = unsigned(split_iter.get_pointer() - word_start);
-                        words.push_back({offset, split_len, first, false/*is_alias*/, 0, ':'});
-                        offset += split_len;
+                        words.push_back({word_offset, split_len, first, false/*is_alias*/, 0, ':'});
+                        word_offset += split_len;
                         word_length -= split_len;
                         first = false;
                         break;
                     }
                     else if (!split_iter.more())
                     {
-                        while (offset + word_length < command.offset + command.length &&
-                               line_buffer[offset + word_length] == '=')
+                        while (word_offset + word_length < command.offset + command.length &&
+                               line_buffer[word_offset + word_length] == '=')
                         {
                             word_length++;
                         }
@@ -177,7 +211,7 @@ unsigned int word_collector::collect_words(const char* line_buffer, unsigned int
             }
 
             // Add the word.
-            words.push_back({offset, unsigned(word_length), first, false/*is_alias*/, 0, token.delim});
+            words.push_back({word_offset, unsigned(word_length), first, false/*is_alias*/, 0, token.delim});
 
             first = false;
         }
