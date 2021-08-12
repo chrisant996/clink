@@ -8,6 +8,7 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 
 ## Medium Priority
 - Argmatcher doesn't understand redirection symbols, and interferes with completion.
+- `"luafunc:find_prev_colored_line"` not working in Windows Terminal?
 
 ## Low Priority
 
