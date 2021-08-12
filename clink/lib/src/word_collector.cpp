@@ -90,7 +90,7 @@ void word_collector::find_command_bounds(const char* buffer, unsigned int length
         return;
     }
 
-    m_command_tokeniser->start(str_iter(buffer, length), m_quote_pair);
+    m_command_tokeniser->start(str_iter(buffer, line_stop), m_quote_pair);
     unsigned int command_start;
     unsigned int command_length;
     while (m_command_tokeniser->next(command_start, command_length))
@@ -246,12 +246,14 @@ unsigned int word_collector::collect_words(const char* line_buffer, unsigned int
 #ifdef DEBUG
     if (dbg_get_env_int("DEBUG_COLLECTWORDS") < 0)
     {
+        int i = 0;
         for (word& word : words)
         {
             str<> tmp;
             str_iter it(line_buffer + word.offset, word.length);
             tmp.concat(it.get_pointer(), it.length());
-            printf("WORD '%s'\n", tmp.c_str());
+            printf("WORD %d '%s'\n", i, tmp.c_str());
+            i++;
         }
     }
 #endif
