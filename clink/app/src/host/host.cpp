@@ -77,12 +77,12 @@ static setting_bool g_reload_scripts(
 
 static setting_bool g_get_errorlevel(
     "cmd.get_errorlevel",
-    "Trick CMD into revealing the last exit code",
+    "Retrieve last exit code",
     "When this is enabled, Clink runs a hidden 'echo %errorlevel%' command before\n"
     "each interactive input prompt to retrieve the last exit code for use by Lua\n"
-    "scripts.  If you experience problems, try turning this off.  This is off by\n"
+    "scripts.  If you experience problems, try turning this off.  This is on by\n"
     "default.",
-    false);
+    true);
 
 extern setting_bool g_classify_words;
 extern setting_color g_color_prompt;
