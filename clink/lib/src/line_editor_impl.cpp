@@ -852,6 +852,8 @@ unsigned int line_editor_impl::collect_words(words& words, matches_impl* matches
             m_printer.print(tmp.c_str(), tmp.length());
             for (auto const& w : words)
             {
+                if (w.is_redir_arg)
+                    m_printer.print(">");
                 tmp.format("\x1b[0;37;7m%.*s\x1b[m ", w.length, m_buffer.get_buffer() + w.offset);
                 m_printer.print(tmp.c_str(), tmp.length());
             }
@@ -897,6 +899,8 @@ unsigned int line_editor_impl::collect_words(words& words, matches_impl* matches
             m_printer.print(tmp.c_str(), tmp.length());
             for (auto const& w : words)
             {
+                if (w.is_redir_arg)
+                    m_printer.print(">");
                 if (i_word == words.size())
                 {
                     tmp.format("\x1b[0;35;7m%.*s\x1b[0;37;7m%.*s\x1b[m ",
