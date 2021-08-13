@@ -16,6 +16,7 @@ static input_type get_input_type(int c)
         return iTxt;
     case ' ':
     case '\t':
+    case '\0':
         return iSpc;
     case '0':   case '1':   case '2':   case '3':   case '4':
     case '5':   case '6':   case '7':   case '8':   case '9':
@@ -204,10 +205,13 @@ word_token cmd_word_tokeniser::next(unsigned int& offset, unsigned int& length)
     int c = 0;
     bool in_quote = false;
     tokeniser_state state = sSpc;
-    while (m_iter.more())
+    while (true)
     {
         if (in_quote)
         {
+            if (!m_iter.more())
+                break;
+
             c = m_iter.next();
 
             if (c == cq)
@@ -252,6 +256,11 @@ word_token cmd_word_tokeniser::next(unsigned int& offset, unsigned int& length)
             // Space after a digit needs to include the digit in the word.
             if (new_state == sSpc && state <= sDig)
                 end_word = m_iter.get_pointer();
+
+            // Must handle sARG, etc before halting, so "foo >" registers the
+            // second (and empty) word as a redir_arg.
+            if (!m_iter.more())
+                break;
 
             m_iter.next();
             if (c == '^')

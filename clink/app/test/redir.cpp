@@ -257,6 +257,13 @@ TEST_CASE("Redir parsing")
             tester.set_expected_words(0, "argcmd", "!a", "!b", "y");
             tester.run();
         }
+
+        SECTION("Redir end")
+        {
+            tester.set_input(">a argcmd >");
+            tester.set_expected_words(0, "!a", "argcmd");
+            tester.run();
+        }
     }
 
     SECTION("Negative")
