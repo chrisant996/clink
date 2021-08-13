@@ -9,7 +9,6 @@
 #include <core/path.h>
 #include <core/settings.h>
 #include <core/str_compare.h>
-#include <lib/word_collector.h>
 #include <lua/lua_match_generator.h>
 #include <lua/lua_script_loader.h>
 #include <lua/lua_state.h>
@@ -53,10 +52,8 @@ TEST_CASE("Executable match generation.")
     lua_match_generator lua_generator(lua);
     lua_load_script(lua, app, exec);
 
-    simple_word_tokeniser command_tokeniser("&|");
     line_editor::desc desc(nullptr, nullptr, nullptr, nullptr);
-    desc.command_tokeniser = &command_tokeniser;
-    line_editor_tester tester(desc);
+    line_editor_tester tester(desc, "&|", nullptr);
     tester.get_editor()->add_generator(lua_generator);
     tester.get_editor()->add_generator(file_match_generator());
 

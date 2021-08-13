@@ -11,6 +11,7 @@
 #include <lib/matches.h>
 #include <lib/word_classifier.h>
 #include <lib/word_classifications.h>
+#include <lib/word_collector.h>
 #include <readline/readline.h>
 
 #include <stdio.h>
@@ -85,8 +86,18 @@ line_editor_tester::line_editor_tester()
 }
 
 //------------------------------------------------------------------------------
-line_editor_tester::line_editor_tester(const line_editor::desc& desc)
+line_editor_tester::line_editor_tester(const line_editor::desc& _desc, const char* command_delims, const char* word_delims)
 {
+    line_editor::desc desc(_desc);
+
+    if (command_delims)
+        m_command_tokeniser = new simple_word_tokeniser(command_delims);
+    if (word_delims)
+        m_word_tokeniser = new simple_word_tokeniser(word_delims);
+
+    desc.command_tokeniser = m_command_tokeniser;
+    desc.word_tokeniser = m_word_tokeniser;
+
     create_line_editor(&desc);
 }
 

@@ -7,7 +7,6 @@
 #include "line_editor_tester.h"
 
 #include <core/str_compare.h>
-#include <lib/word_collector.h>
 #include <lua/lua_match_generator.h>
 #include <lua/lua_script_loader.h>
 #include <lua/lua_state.h>
@@ -30,10 +29,8 @@ TEST_CASE("Set command.")
     lua_match_generator lua_generator(lua);
     lua_load_script(lua, app, set);
 
-    simple_word_tokeniser word_tokeniser(" =");
     line_editor::desc desc(nullptr, nullptr, nullptr, nullptr);
-    desc.word_tokeniser = &word_tokeniser;
-    line_editor_tester tester(desc);
+    line_editor_tester tester(desc, nullptr, " =");
     tester.get_editor()->add_generator(lua_generator);
 
     SECTION("Matches")

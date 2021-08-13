@@ -14,6 +14,7 @@ struct word
     unsigned int        length : 16;
     bool                command_word : 1;
     bool                is_alias : 1;
+    bool                is_redir_arg : 1;
     bool                quoted;
     unsigned char       delim;
 };

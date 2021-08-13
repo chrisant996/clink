@@ -92,6 +92,7 @@ int line_state_lua::get_word_count(lua_State* state)
 /// -show:  &nbsp; quoted,  -- [boolean] indicates whether the word is quoted.
 /// -show:  &nbsp; delim,   -- [string] the delimiter character, or an empty string.
 /// -show:  &nbsp; alias,   -- [boolean | nil] true if the word is a doskey alias, otherwise nil.
+/// -show:  &nbsp; redir,   -- [boolean | nil] true if the word is a redirection arg, otherwise nil.
 /// -show:  }
 int line_state_lua::get_word_info(lua_State* state)
 {
@@ -127,6 +128,13 @@ int line_state_lua::get_word_info(lua_State* state)
     if (word.is_alias)
     {
         lua_pushliteral(state, "alias");
+        lua_pushboolean(state, true);
+        lua_rawset(state, -3);
+    }
+
+    if (word.is_redir_arg)
+    {
+        lua_pushliteral(state, "redir");
         lua_pushboolean(state, true);
         lua_rawset(state, -3);
     }

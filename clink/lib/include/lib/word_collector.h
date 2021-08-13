@@ -6,7 +6,7 @@
 #include "line_state.h"
 
 #include <core/str_iter.h>
-#include <core/str_tokeniser.h> // for str_token
+#include <core/str_tokeniser.h>
 
 #include <vector>
 
@@ -15,6 +15,25 @@ class collector_tokeniser;
 
 //------------------------------------------------------------------------------
 enum class collect_words_mode { stop_at_cursor, display_filter, whole_command };
+
+//------------------------------------------------------------------------------
+class word_token
+{
+public:
+    enum : unsigned char { invalid_delim = 0xff };
+                        word_token(char c, bool arg=false) : delim(c), redir_arg(arg) {}
+    explicit            operator bool () const { return (delim != invalid_delim); }
+    unsigned char       delim;          // Preceding delimiter.
+    bool                redir_arg;      // Word is the argument of a redirection symbol.
+};
+
+//------------------------------------------------------------------------------
+class collector_tokeniser
+{
+public:
+    virtual void start(const str_iter& iter, const char* quote_pair) = 0;
+    virtual word_token next(unsigned int& offset, unsigned int& length) = 0;
+};
 
 //------------------------------------------------------------------------------
 class word_collector
@@ -47,14 +66,6 @@ private:
 };
 
 //------------------------------------------------------------------------------
-class collector_tokeniser
-{
-public:
-    virtual void start(const str_iter& iter, const char* quote_pair) = 0;
-    virtual str_token next(unsigned int& offset, unsigned int& length) = 0;
-};
-
-//------------------------------------------------------------------------------
 class simple_word_tokeniser : public collector_tokeniser
 {
 public:
@@ -62,7 +73,7 @@ public:
     ~simple_word_tokeniser();
 
     void start(const str_iter& iter, const char* quote_pair) override;
-    str_token next(unsigned int& offset, unsigned int& length) override;
+    word_token next(unsigned int& offset, unsigned int& length) override;
 
 private:
     const char* m_delims;

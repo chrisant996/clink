@@ -60,7 +60,7 @@ class line_editor_tester
 {
 public:
                                 line_editor_tester();
-                                line_editor_tester(const line_editor::desc& desc);
+                                line_editor_tester(const line_editor::desc& desc, const char* command_delims, const char* word_delims);
                                 ~line_editor_tester();
     line_editor*                get_editor() const;
     void                        set_input(const char* input);
@@ -76,6 +76,8 @@ private:
     test_terminal_out           m_terminal_out;
     printer*                    m_printer;
     printer_context*            m_printer_context = nullptr;
+    collector_tokeniser*        m_command_tokeniser = nullptr;
+    collector_tokeniser*        m_word_tokeniser = nullptr;
     std::vector<const char*>    m_expected_matches;
     str<>                       m_expected_classifications;
     const char*                 m_input = nullptr;

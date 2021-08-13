@@ -9,6 +9,7 @@
 #include <core/base.h>
 #include <core/str.h>
 #include <core/str_iter.h>
+#include <core/str_tokeniser.h>
 #include <core/os.h>
 
 #include <vector>
@@ -36,17 +37,17 @@ void simple_word_tokeniser::start(const str_iter& iter, const char* quote_pair)
 }
 
 //------------------------------------------------------------------------------
-str_token simple_word_tokeniser::next(unsigned int& offset, unsigned int& length)
+word_token simple_word_tokeniser::next(unsigned int& offset, unsigned int& length)
 {
     const char* ptr;
     int len;
     str_token token = m_tokeniser->next(ptr, len);
-    if (token)
-    {
-        offset = static_cast<unsigned int>(ptr - m_start);
-        length = len;
-    }
-    return token;
+    if (!token)
+        return word_token(word_token::invalid_delim);
+
+    offset = static_cast<unsigned int>(ptr - m_start);
+    length = len;
+    return word_token(token.delim);
 }
 
 
@@ -149,7 +150,7 @@ unsigned int word_collector::collect_words(const char* line_buffer, unsigned int
                 {
                     unsigned char delim = (doskey_len < command.length) ? line_buffer[command.offset + doskey_len] : 0;
                     doskey_len = first_word_len;
-                    words.push_back({command.offset, doskey_len, first, true/*is_alias*/, 0, delim});
+                    words.push_back({command.offset, doskey_len, first, true/*is_alias*/, false/*is_redir_arg*/, 0, delim});
                     first = false;
                 }
             }
@@ -160,7 +161,7 @@ unsigned int word_collector::collect_words(const char* line_buffer, unsigned int
         {
             unsigned int word_offset = 0;
             unsigned int word_length = 0;
-            str_token token = m_word_tokeniser->next(word_offset, word_length);
+            word_token token = m_word_tokeniser->next(word_offset, word_length);
             if (!token)
                 break;
 
@@ -185,7 +186,7 @@ unsigned int word_collector::collect_words(const char* line_buffer, unsigned int
             //  - When = immediately follows the end of the word, it is added to
             //    the word.
             //  - When : is reached, it splits the word.
-            if (word_length > 1 && strchr("-/", *word_start))
+            if (!token.redir_arg && word_length > 1 && strchr("-/", *word_start))
             {
                 str_iter split_iter(word_start, word_length);
                 while (int c = split_iter.next())
@@ -193,7 +194,7 @@ unsigned int word_collector::collect_words(const char* line_buffer, unsigned int
                     if (c == ':')
                     {
                         const unsigned int split_len = unsigned(split_iter.get_pointer() - word_start);
-                        words.push_back({word_offset, split_len, first, false/*is_alias*/, 0, ':'});
+                        words.push_back({word_offset, split_len, first, false/*is_alias*/, false/*is_redir_arg*/, 0, ':'});
                         word_offset += split_len;
                         word_length -= split_len;
                         first = false;
@@ -211,7 +212,7 @@ unsigned int word_collector::collect_words(const char* line_buffer, unsigned int
             }
 
             // Add the word.
-            words.push_back({word_offset, unsigned(word_length), first, false/*is_alias*/, 0, token.delim});
+            words.push_back({word_offset, unsigned(word_length), first, false/*is_alias*/, token.redir_arg, 0, token.delim});
 
             first = false;
         }
