@@ -84,7 +84,7 @@ void word_collector_tester::run()
     REQUIRE(command_offset == m_expected_command_offset, report);
     REQUIRE(words.size() == m_expected_words.size() + 1, report);
 
-    for (int i = 0; i < m_expected_words.size(); i++)
+    for (int i = 0; i < int(m_expected_words.size()); i++)
     {
         REQUIRE(words[i].offset <= len);
         REQUIRE(words[i].offset + words[i].length <= len);
