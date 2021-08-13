@@ -9,13 +9,14 @@
 
 //------------------------------------------------------------------------------
 static line_state_lua::method g_methods[] = {
-    { "getline",          &line_state_lua::get_line },
-    { "getcursor",        &line_state_lua::get_cursor },
-    { "getcommandoffset", &line_state_lua::get_command_offset },
-    { "getwordcount",     &line_state_lua::get_word_count },
-    { "getwordinfo",      &line_state_lua::get_word_info },
-    { "getword",          &line_state_lua::get_word },
-    { "getendword",       &line_state_lua::get_end_word },
+    { "getline",                &line_state_lua::get_line },
+    { "getcursor",              &line_state_lua::get_cursor },
+    { "getcommandoffset",       &line_state_lua::get_command_offset },
+    { "getcommandwordindex",    &line_state_lua::get_command_word_index },
+    { "getwordcount",           &line_state_lua::get_word_count },
+    { "getwordinfo",            &line_state_lua::get_word_info },
+    { "getword",                &line_state_lua::get_word },
+    { "getendword",             &line_state_lua::get_end_word },
     {}
 };
 
@@ -60,6 +61,22 @@ int line_state_lua::get_cursor(lua_State* state)
 int line_state_lua::get_command_offset(lua_State* state)
 {
     lua_pushinteger(state, m_line.get_command_offset() + 1);
+    return 1;
+}
+
+//------------------------------------------------------------------------------
+/// -name:  line:getcommandwordindex
+/// -ret:   integer
+/// -show:  -- Given the following line; >x abc
+/// -show:  -- the first word is "x" and is an argument to the redirection symbol,
+/// -show:  -- and the second word is "abc" and is the command word.
+/// -show:  line:getcommandwordindex() == 2
+/// Returns the index of the command word. Usually the index is 1, but if a
+/// redirection symbol occurs before the command name then the index can be
+/// greater than 1.
+int line_state_lua::get_command_word_index(lua_State* state)
+{
+    lua_pushinteger(state, m_line.get_command_word_index() + 1);
     return 1;
 }
 

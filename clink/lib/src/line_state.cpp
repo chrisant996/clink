@@ -43,6 +43,19 @@ unsigned int line_state::get_command_offset() const
 }
 
 //------------------------------------------------------------------------------
+unsigned int line_state::get_command_word_index() const
+{
+    unsigned int i = 0;
+    while (i < m_words.size())
+    {
+        if (!m_words[i].is_redir_arg)
+            break;
+        i++;
+    }
+    return i;
+}
+
+//------------------------------------------------------------------------------
 unsigned int line_state::get_end_word_offset() const
 {
     if (m_words.size() > 0)

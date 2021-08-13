@@ -17,6 +17,7 @@ public:
     int                 get_line(lua_State* state);
     int                 get_cursor(lua_State* state);
     int                 get_command_offset(lua_State* state);
+    int                 get_command_word_index(lua_State* state);
     int                 get_word_count(lua_State* state);
     int                 get_word_info(lua_State* state);
     int                 get_word(lua_State* state);

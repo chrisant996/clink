@@ -7,7 +7,6 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 ## High Priority
 
 ## Medium Priority
-- Update argmatcher to specially handle a word that follows a redirection symbol.
 
 ## Low Priority
 

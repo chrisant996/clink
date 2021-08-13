@@ -59,7 +59,7 @@ void lua_word_classifier::classify(const std::vector<line_state>& commands, word
     for (const auto& line : commands)
     {
         linestates.emplace_back(line);
-        wordclassifications.emplace_back(classifications, classifications.add_command(line), line.get_word_count());
+        wordclassifications.emplace_back(classifications, classifications.add_command(line), line.get_command_word_index(), line.get_word_count());
     }
 
     // Package the lua objects into a table.

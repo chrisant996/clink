@@ -28,10 +28,11 @@ static lua_word_classifications::method g_methods[] = {
 
 
 //------------------------------------------------------------------------------
-lua_word_classifications::lua_word_classifications(word_classifications& classifications, unsigned int index_offset, unsigned int num_words)
+lua_word_classifications::lua_word_classifications(word_classifications& classifications, unsigned int index_offset, unsigned int command_word_index, unsigned int num_words)
 : lua_bindable("word_classifications", g_methods)
 , m_classifications(classifications)
 , m_index_offset(index_offset)
+, m_command_word_index(command_word_index)
 , m_num_words(num_words)
 {
 }
@@ -96,8 +97,8 @@ int lua_word_classifications::classify_word(lua_State* state)
     }
 
     m_classifications.classify_word(m_index_offset + index, wc, overwrite);
-    if (has_argmatcher && index == 0)
-        m_classifications.set_word_has_argmatcher(m_index_offset);
+    if (has_argmatcher && index == m_command_word_index)
+        m_classifications.set_word_has_argmatcher(m_index_offset + index);
     return 0;
 }
 

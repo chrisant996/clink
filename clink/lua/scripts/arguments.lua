@@ -498,9 +498,13 @@ function _argmatcher:_generate(line_state, match_builder, extra_words)
 
     -- Consume words and use them to move through matchers' arguments.
     local word_count = line_state:getwordcount()
-    for word_index = 2, (word_count - 1) do
-        local word = line_state:getword(word_index)
-        reader:update(word, word_index)
+    local command_word_index = line_state:getcommandwordindex()
+    for word_index = command_word_index + 1, (word_count - 1) do
+        local info = line_state:getwordinfo(word_index)
+        if not info.redir then
+            local word = line_state:getword(word_index)
+            reader:update(word, word_index)
+        end
     end
 
     -- There should always be a matcher left on the stack, but the arg_index
@@ -533,7 +537,13 @@ function _argmatcher:_generate(line_state, match_builder, extra_words)
 
     -- Select between adding flags or matches themselves. Works in conjunction
     -- with getwordbreakinfo()'s return.
-    if matcher._flags and matcher:_is_flag(line_state:getendword()) then
+    local endwordinfo = line_state:getwordinfo(line_state:getwordcount())
+    if endwordinfo.redir then
+        -- The word is an argument to a redirection symbol, so generate file
+        -- matches.
+        match_builder:addmatches(clink.filematches(line_state:getendword()))
+        return true
+    elseif matcher._flags and matcher:_is_flag(line_state:getendword()) then
         -- Flags are always "arg" type, which helps differentiate them from
         -- filename completions even when using _deprecated matcher mode, so
         -- that path normalization can avoid affecting flags like "/c", etc.
@@ -544,13 +554,9 @@ function _argmatcher:_generate(line_state, match_builder, extra_words)
         -- with : or = then this is a flag-attached arg, not an arg position.
         if line_state:getwordcount() > 1 then
             local prevwordinfo = line_state:getwordinfo(line_state:getwordcount() - 1)
-            local endwordinfo = line_state:getwordinfo(line_state:getwordcount())
             if prevwordinfo.offset + prevwordinfo.length == endwordinfo.offset and
                     matcher:_is_flag(line_state:getword(line_state:getwordcount() - 1)) and
                     line_state:getline():sub(endwordinfo.offset - 1, endwordinfo.offset - 1):find("[:=]") then
-                -- FUTURE:  Could have a new argmatcher syntax to generate
-                -- matches for "-x:" flags, but it's such a niche scenario that
-                -- it seems reasonable to require a custom :generate() function.
                 match_builder:addmatches(clink.filematches(line_state:getendword()))
                 return true
             end
@@ -759,18 +765,18 @@ end
 
 
 --------------------------------------------------------------------------------
-local function _has_argmatcher(first_word)
-    first_word = clink.lower(first_word)
+local function _has_argmatcher(command_word)
+    command_word = clink.lower(command_word)
 
     -- Check for an exact match.
-    local argmatcher = _argmatchers[path.getname(first_word)]
+    local argmatcher = _argmatchers[path.getname(command_word)]
     if argmatcher then
         return argmatcher
     end
 
     -- If the extension is in PATHEXT then try stripping the extension.
-    if path.isexecext(first_word) then
-        argmatcher = _argmatchers[path.getbasename(first_word)]
+    if path.isexecext(command_word) then
+        argmatcher = _argmatchers[path.getbasename(command_word)]
         if argmatcher then
             return argmatcher
         end
@@ -784,15 +790,17 @@ end
 --  words       = Table of words to run through reader before continuing.
 local function _find_argmatcher(line_state, check_existence)
     -- Running an argmatcher only makes sense if there's two or more words.
-    if line_state:getwordcount() < (check_existence and 1 or 2) then
+    local word_count = line_state:getwordcount()
+    local command_word_index = line_state:getcommandwordindex()
+    if word_count < command_word_index + (check_existence and 0 or 1) then
         return
     end
-    if line_state:getwordcount() > 1 then
+    if word_count > command_word_index then
         check_existence = nil
     end
 
-    local first_word = line_state:getword(1)
-    local argmatcher = _has_argmatcher(first_word)
+    local command_word = line_state:getword(command_word_index)
+    local argmatcher = _has_argmatcher(command_word)
     if argmatcher then
         if check_existence then
             argmatcher = nil
@@ -800,18 +808,21 @@ local function _find_argmatcher(line_state, check_existence)
         return argmatcher, true
     end
 
-    local alias = os.getalias(first_word)
-    if alias and alias ~= "" then
-        local words
-        alias = alias:gsub("%$.*$", "")
-        words = string.explode(alias, " \t", '"')
-        if #words > 0 then
-            argmatcher = _has_argmatcher(words[1])
-            if argmatcher then
-                if check_existence then
-                    argmatcher = nil
+    if command_word_index == 1 then
+        local alias = os.getalias(command_word)
+        if alias and alias ~= "" then
+            -- This doesn't even try to handle redirection symbols in the alias
+            -- because the cost/benefit ratio is unappealing.
+            alias = alias:gsub("%$.*$", "")
+            local words = string.explode(alias, " \t", '"')
+            if #words > 0 then
+                argmatcher = _has_argmatcher(words[1])
+                if argmatcher then
+                    if check_existence then
+                        argmatcher = nil
+                    end
+                    return argmatcher, true, words
                 end
-                return argmatcher, true, words
             end
         end
     end
@@ -849,9 +860,13 @@ function argmatcher_generator:getwordbreakinfo(line_state)
 
         -- Consume words and use them to move through matchers' arguments.
         local word_count = line_state:getwordcount()
-        for word_index = 2, (word_count - 1) do
-            local word = line_state:getword(word_index)
-            reader:update(word, word_index)
+        local command_word_index = line_state:getcommandwordindex()
+        for word_index = command_word_index + 1, (word_count - 1) do
+            local info = line_state:getwordinfo(word_index)
+            if not info.redir then
+                local word = line_state:getword(word_index)
+                reader:update(word, word_index)
+            end
         end
 
         -- There should always be a matcher left on the stack, but the arg_index
@@ -881,19 +896,19 @@ function argmatcher_classifier:classify(commands)
         local word_classifier = command.classifications
 
         local argmatcher, has_argmatcher, extra_words = _find_argmatcher(line_state, true)
+        local command_word_index = line_state:getcommandwordindex()
 
         local word_count = line_state:getwordcount()
-        local first_word = line_state:getword(1) or ""
-        if word_count > 1 or string.len(first_word) > 0 then
-            local word_info = line_state:getwordinfo(1)
-            local command_offset = line_state:getcommandoffset()
+        local command_word = line_state:getword(command_word_index) or ""
+        if #command_word > 0 then
+            local info = line_state:getwordinfo(command_word_index)
             local m = has_argmatcher and "m" or ""
-            if word_info.alias then
-                word_classifier:classifyword(1, m.."d", false); --doskey
-            elseif clink.is_cmd_command(first_word) then
-                word_classifier:classifyword(1, m.."c", false); --command
+            if info.alias then
+                word_classifier:classifyword(command_word_index, m.."d", false); --doskey
+            elseif clink.is_cmd_command(command_word) then
+                word_classifier:classifyword(command_word_index, m.."c", false); --command
             else
-                word_classifier:classifyword(1, m.."o", false); --other
+                word_classifier:classifyword(command_word_index, m.."o", false); --other
             end
         end
 
@@ -909,9 +924,12 @@ function argmatcher_classifier:classify(commands)
             end
 
             -- Consume words and use them to move through matchers' arguments.
-            for word_index = 2, word_count do
-                local word = line_state:getword(word_index)
-                reader:update(word, word_index)
+            for word_index = command_word_index + 1, word_count do
+                local info = line_state:getwordinfo(word_index)
+                if not info.redir then
+                    local word = line_state:getword(word_index)
+                    reader:update(word, word_index)
+                end
             end
         end
     end
