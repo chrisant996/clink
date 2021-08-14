@@ -426,7 +426,6 @@ void prompt_utils::expand_prompt_codes(const char* in, str_base& out, bool singl
         case 'E':   case 'e':   out << "\x1b"; break;
         case 'F':   case 'f':   out << ")"; break;
         case 'G':   case 'g':   out << ">"; break;
-        case 'H':   case 'h':   out << "\x08"; break;
         case 'L':   case 'l':   out << "<"; break;
         case 'Q':   case 'q':   out << "="; break;
         case 'S':   case 's':   out << " "; break;
@@ -439,6 +438,28 @@ void prompt_utils::expand_prompt_codes(const char* in, str_base& out, bool singl
                 GetLocalTime(&systime);
                 loc.format_date(s_extensions, systime, tmp);
                 out << tmp;
+            }
+            break;
+        case 'H':   case 'h':
+            {
+                // CMD's native $H processing for PROMPT seems to have strange
+                // behaviors depending on what is being deleted.  Clink will
+                // interpret $H as deleting the preceding UTF32 character.  In
+                // other words it will handle surrogate pairs, but doesn't try
+                // to deal with complexities like zero width joiners.
+                //
+                // For now this scans from the beginning of the string to find
+                // the width of the last UTF32 character in bytes.  Using many
+                // $H in a prompt string could degrade performance.  It's
+                // probably rarely and sparingly used, so this should suffice.
+                str_iter trim(out.c_str(), out.length());
+                const char* end = out.c_str();
+                while (trim.more())
+                {
+                    end = trim.get_pointer();
+                    trim.next();
+                }
+                out.truncate(static_cast<unsigned int>(end - out.c_str()));
             }
             break;
         case 'M':   case 'm':
