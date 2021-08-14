@@ -381,7 +381,7 @@ void host_cmd::edit_line(wchar_t* chars, int max_chars)
     // BUGBUG: This mishandles backspaces inside envvars expanded by OSC codes!
     str_moveable utf8_prompt(m_prompt.get());
     str_moveable utf8_rprompt;
-    os::get_env("clink_rprompt", utf8_rprompt);
+    prompt_utils::get_rprompt(utf8_rprompt);
 
     char* write = utf8_prompt.data();
     char* read = write;

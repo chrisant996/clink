@@ -54,4 +54,6 @@ class prompt_utils
 {
 public:
     static prompt   extract_from_console();
+    static void     get_rprompt(str_base& rout);
+    static void     expand_prompt_codes(const char* in, str_base& out, bool single_line);
 };
