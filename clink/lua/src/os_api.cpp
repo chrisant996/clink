@@ -811,9 +811,8 @@ static int get_full_path_name(lua_State *state)
 /// -name:  os.getnetconnectionname
 /// -arg:   path:string
 /// -ret:   string
-/// Returns the corresponding network connection name if
-/// <span class="arg">path</span> is a remote drive, or returns an empty string
-/// if it's not a remote drive.
+/// Returns the remote name associated with <span class="arg">path</span>, or an
+/// empty string if it's not a network drive.
 static int get_net_connection_name(lua_State *state)
 {
     const char* path = checkstring(state, 1);
