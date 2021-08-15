@@ -460,6 +460,7 @@ void prompt_utils::expand_prompt_codes(const char* in, str_base& out, bool singl
     locale_info loc;
 
     str_iter iter(in);
+    bool trim_right = false;
     while (iter.more())
     {
         const char* ptr = iter.get_pointer();
@@ -467,6 +468,8 @@ void prompt_utils::expand_prompt_codes(const char* in, str_base& out, bool singl
 
         if (single_line && (c == '\r' || c == '\n'))
             break;
+
+        trim_right = false;
 
         if (c != '$')
         {
@@ -523,6 +526,9 @@ void prompt_utils::expand_prompt_codes(const char* in, str_base& out, bool singl
             }
             break;
         case 'M':   case 'm':
+            // Right side prompt trims trailing spaces if it ends with $M
+            // (single_line corresponds to right side prompt).
+            trim_right = single_line;
             if (are_extensions_enabled())
             {
                 os::get_current_dir(tmp);
@@ -557,6 +563,20 @@ void prompt_utils::expand_prompt_codes(const char* in, str_base& out, bool singl
         // Not supported.
         case 'V':   case 'v':   break;
         case '+':               break;
+        }
+    }
+
+    if (trim_right)
+    {
+        while (true)
+        {
+            unsigned int len = out.length();
+            if (!len)
+                break;
+            len--;
+            if (out.c_str()[len] != ' ')
+                break;
+            out.truncate(len);
         }
     }
 }
