@@ -245,58 +245,6 @@ void locale_info::init(LCTYPE type, str_base& out, const char* def)
 
 
 //------------------------------------------------------------------------------
-static class delay_load_mpr
-{
-public:
-                        delay_load_mpr();
-    bool                init();
-    DWORD               WNetGetConnectionW(LPCWSTR lpLocalName, LPWSTR lpRemoteName, LPDWORD lpnLength);
-private:
-    bool                m_initialized = false;
-    bool                m_ok = false;
-    HMODULE             m_hlib = 0;
-    union
-    {
-        FARPROC         proc[1];
-        struct
-        {
-            DWORD (WINAPI* WNetGetConnectionW)(LPCWSTR lpLocalName, LPWSTR lpRemoteName, LPDWORD lpnLength);
-        };
-    } m_procs;
-} s_mpr;
-
-//------------------------------------------------------------------------------
-delay_load_mpr::delay_load_mpr()
-{
-    ZeroMemory(&m_procs, sizeof(m_procs));
-}
-
-//------------------------------------------------------------------------------
-bool delay_load_mpr::init()
-{
-    if (!m_initialized)
-    {
-        m_initialized = true;
-        m_hlib = LoadLibrary("mpr.dll");
-        if (m_hlib)
-            m_procs.proc[0] = GetProcAddress(m_hlib, "WNetGetConnectionW");
-        m_ok = !!m_procs.WNetGetConnectionW;
-    }
-
-    return m_ok;
-}
-
-//------------------------------------------------------------------------------
-DWORD delay_load_mpr::WNetGetConnectionW(LPCWSTR lpLocalName, LPWSTR lpRemoteName, LPDWORD lpnLength)
-{
-    if (!m_procs.WNetGetConnectionW)
-        return ERROR_NOT_SUPPORTED;
-    return m_procs.WNetGetConnectionW(lpLocalName, lpRemoteName, lpnLength);
-}
-
-
-
-//------------------------------------------------------------------------------
 prompt::prompt()
 : m_data(nullptr)
 {
@@ -575,38 +523,15 @@ void prompt_utils::expand_prompt_codes(const char* in, str_base& out, bool singl
             }
             break;
         case 'M':   case 'm':
-            if (are_extensions_enabled() && s_mpr.init())
+            if (are_extensions_enabled())
             {
                 os::get_current_dir(tmp);
                 if (!tmp.length())
                     break;
-
-                WCHAR drive[4];
-                drive[0] = tmp.c_str()[0];
-                drive[1] = tmp.c_str()[1];
-                drive[2] = '\\';
-                drive[3] = '\0';
-                if (GetDriveTypeW(drive) != DRIVE_REMOTE)
-                    break;
-
-                drive[2] = '\0';
-                WCHAR remote[MAX_PATH];
-                DWORD len = sizeof_array(remote);
-                DWORD err = s_mpr.WNetGetConnectionW(drive, remote, &len);
-
-                switch (err)
-                {
-                case NO_ERROR:
-                    to_utf8(out, remote);
-                    out << " ";
-                    break;
-                case ERROR_NOT_CONNECTED:
-                case ERROR_NOT_SUPPORTED:
-                    break;
-                default:
-                    out << "Unknown";
-                    break;
-                }
+                if (!os::get_net_connection_name(tmp.c_str(), tmp))
+                    out << "Unknown ";
+                else if (tmp.length())
+                    out << tmp.c_str() << " ";
             }
             break;
         case 'N':   case 'n':

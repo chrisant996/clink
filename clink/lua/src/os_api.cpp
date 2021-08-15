@@ -808,6 +808,24 @@ static int get_full_path_name(lua_State *state)
 }
 
 //------------------------------------------------------------------------------
+/// -name:  os.getnetconnectionname
+/// -arg:   path:string
+/// -ret:   string
+/// Returns the corresponding network connection name if
+/// <span class="arg">path</span> is a remote drive, or returns an empty string
+/// if it's not a remote drive.
+static int get_net_connection_name(lua_State *state)
+{
+    const char* path = checkstring(state, 1);
+    if (!path)
+        return 0;
+
+    str<> out;
+    bool ok = os::get_net_connection_name(path, out);
+    return lua_osstringresult(state, out.c_str(), ok, path);
+}
+
+//------------------------------------------------------------------------------
 /// -name:  os.debugprint
 /// -arg:   ...
 /// -show:  clink.debugprint("my variable = "..myvar)
@@ -895,6 +913,7 @@ void os_lua_initialise(lua_state& lua)
         { "getshortpathname", &get_short_path_name },
         { "getlongpathname", &get_long_path_name },
         { "getfullpathname", &get_full_path_name },
+        { "getnetconnectionname", &get_net_connection_name },
         { "debugprint",  &debug_print },
     };
 

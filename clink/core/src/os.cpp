@@ -35,6 +35,58 @@ static auto_set_locale_utf8 s_auto_utf8;
 
 
 
+//------------------------------------------------------------------------------
+static class delay_load_mpr
+{
+public:
+                        delay_load_mpr();
+    bool                init();
+    DWORD               WNetGetConnectionW(LPCWSTR lpLocalName, LPWSTR lpRemoteName, LPDWORD lpnLength);
+private:
+    bool                m_initialized = false;
+    bool                m_ok = false;
+    HMODULE             m_hlib = 0;
+    union
+    {
+        FARPROC         proc[1];
+        struct
+        {
+            DWORD (WINAPI* WNetGetConnectionW)(LPCWSTR lpLocalName, LPWSTR lpRemoteName, LPDWORD lpnLength);
+        };
+    } m_procs;
+} s_mpr;
+
+//------------------------------------------------------------------------------
+delay_load_mpr::delay_load_mpr()
+{
+    ZeroMemory(&m_procs, sizeof(m_procs));
+}
+
+//------------------------------------------------------------------------------
+bool delay_load_mpr::init()
+{
+    if (!m_initialized)
+    {
+        m_initialized = true;
+        m_hlib = LoadLibrary("mpr.dll");
+        if (m_hlib)
+            m_procs.proc[0] = GetProcAddress(m_hlib, "WNetGetConnectionW");
+        m_ok = !!m_procs.WNetGetConnectionW;
+    }
+
+    return m_ok;
+}
+
+//------------------------------------------------------------------------------
+DWORD delay_load_mpr::WNetGetConnectionW(LPCWSTR lpLocalName, LPWSTR lpRemoteName, LPDWORD lpnLength)
+{
+    if (init() && !m_procs.WNetGetConnectionW)
+        return ERROR_NOT_SUPPORTED;
+    return m_procs.WNetGetConnectionW(lpLocalName, lpRemoteName, lpnLength);
+}
+
+
+
 namespace os
 {
 
@@ -565,6 +617,47 @@ bool get_full_path_name(const char* path, str_base& out)
     }
 
     return true;
+}
+
+//------------------------------------------------------------------------------
+bool get_net_connection_name(const char* path, str_base& out)
+{
+    errno = 0;
+
+    WCHAR drive[4];
+    drive[0] = path ? path[0] : '\0';
+    if (drive[0])
+        drive[1] = path[1];
+
+    // Don't clear out until after using path, so the same string buffer can be
+    // used as both input and output.
+    out.clear();
+
+    if (!drive[0])
+        return true;
+
+    drive[2] = '\\';
+    drive[3] = '\0';
+    if (GetDriveTypeW(drive) != DRIVE_REMOTE)
+        return true;
+
+    drive[2] = '\0';
+    WCHAR remote[MAX_PATH];
+    DWORD len = sizeof_array(remote);
+    DWORD err = s_mpr.WNetGetConnectionW(drive, remote, &len);
+
+    switch (err)
+    {
+    case NO_ERROR:
+        to_utf8(out, remote);
+        return true;
+    case ERROR_NOT_CONNECTED:
+    case ERROR_NOT_SUPPORTED:
+        return true;
+    }
+
+    map_errno();
+    return false;
 }
 
 }; // namespace os
