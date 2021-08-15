@@ -3,7 +3,7 @@
 
 <!-- ----------------------------------------------------- -->
 <head>
-<title>Clink v1.2.26</title>
+<title>Clink v1.2.27</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Rambla:wght@400;700&family=Roboto&family=Fira+Mono&display=swap');
 html {
@@ -747,7 +747,7 @@ name:"Plain text",aliases:["text","txt"],disableAutodetect:!0})})());
         </td>
         <td style="text-align:right">
             <div id="header">
-                <div id="title">Clink v1.2.26</div>
+                <div id="title">Clink v1.2.27</div>
                 <div id="url">
                     <a href="https://github.com/chrisant996/clink">
                         https://github.com/chrisant996/clink
@@ -886,8 +886,8 @@ name:"Plain text",aliases:["text","txt"],disableAutodetect:!0})})());
 </tr>
 <tr>
 <td align="center"><code>cmd.get_errorlevel</code></td>
-<td align="center">False</td>
-<td>When this is enabled, Clink runs a hidden <code>echo %errorlevel%</code> command before each interactive input prompt to retrieve the last exit code for use by Lua scripts.  If you experience problems, try turning this off.  This is off by default.</td>
+<td align="center">True</td>
+<td>When this is enabled, Clink runs a hidden <code>echo %errorlevel%</code> command before each interactive input prompt to retrieve the last exit code for use by Lua scripts.  If you experience problems, try turning this off.  This is on by default.</td>
 </tr>
 <tr>
 <td align="center"><code>color.arg</code></td>
@@ -2299,6 +2299,7 @@ end
 <p><a name="rightprompt"></a></p>
 <h4 id="right-side-prompt">Right Side Prompt</h4>
 <p>In addition to the normal prompt filtering, Clink can also show a prompt on the right side of the first line of input.  The right side prompt defaults to the value of the <code>%CLINK_RPROMPT%</code> environment variable, if set, otherwise it is blank.  This right side prompt is automatically hidden if the input line text reaches it.</p>
+<p>Clink expands CMD prompt <code>$</code> codes in <code>%CLINK_RPROMPT%</code>, with a few exceptions:  <code>$+</code> is not supported, <code>$_</code> ends the prompt string (it can&#39;t be more than one line), and <code>$V</code> is not supported.  Additionally, if <code>%CLINK_RPROMPT%</code> ends with <code>$M</code> then trailing spaces are trimmed from the expanded string, to maintain right alignment since <code>$M</code> includes a space if the current drive is a network drive (so e.g. <code>$t $d $m</code> is right-aligned regardless whether the current drive has a remote name).</p>
 <p>The right side prompt can be filtered through <a href="#extending-clink">Lua</a> just like the normal prompt can be.  Simply define a <code>:rightfilter()</code> function on the prompt filter returned by a call to <code>clink.promptfilter()</code>.  A prompt filter can define both <code>:filter()</code> and <code>:rightfilter()</code>, or can define only <code>:filter()</code>.</p>
 <p>The <code>:rightfilter()</code> function works the same as the <code>:filter()</code> function, except that it operates on the right side prompt.  It takes a string argument that contains the filtered right side prompt so far.  If the rightfilter function returns nil, it has no effect.  If the rightfilter function returns a string, that string is used as the new filtered right side prompt (and may be further modified by other prompt filters with higher priority ids).  If either the rightfilter function or the normal filter function returns a string and a boolean, then if the boolean is false the prompt filtering is done and no further filter functions are called.</p>
 <p>This example modifies the right side prompt by prepending the current date:</p>
@@ -3210,6 +3211,10 @@ file:close()</code></pre></div></div><hr/>
 </div><div class="group"><h5 class="group_name"><a name="line">line</a></h5><div class="function"><div class="header"> <div class="name"><a name="line:getcommandoffset">line:getcommandoffset</a></div> <div class="signature">() : integer</div></div><div class="body"><p class="desc">Returns the offset to the start of the delimited command in the line that's being effectively edited. Note that this may not be the offset of the first command of the line unquoted as whitespace isn't considered for words.</p><pre class="language-lua"><code>-- Given the following line; abc& 123
 -- where commands are separated by & symbols.
 line:getcommandoffset() == 4</code></pre></div></div><hr/>
+<div class="function"><div class="header"> <div class="name"><a name="line:getcommandwordindex">line:getcommandwordindex</a></div> <div class="signature">() : integer</div></div><div class="body"><p class="desc">Returns the index of the command word. Usually the index is 1, but if a redirection symbol occurs before the command name then the index can be greater than 1.</p><pre class="language-lua"><code>-- Given the following line; >x abc
+-- the first word is "x" and is an argument to the redirection symbol,
+-- and the second word is "abc" and is the command word.
+line:getcommandwordindex() == 2</code></pre></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="line:getcursor">line:getcursor</a></div> <div class="signature">() : integer</div></div><div class="body"><p class="desc">Returns the position of the cursor.</p></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="line:getendword">line:getendword</a></div> <div class="signature">() : string</div></div><div class="body"><p class="desc">Returns the last word of the line. This is the word that matches are being generated for.</p><p class="desc"> Note:  The returned word omits any quotes.  This helps generators naturally complete <code>"foo\"ba</code> to <code>"foo\bar"</code>.  The raw word including quotes can be obtained using the <code>offset</code> and <code>length</code> fields from <a href="#line:getwordinfo">line:getwordinfo()</a> to extract a substring from the line returned by <a href="#line:getline">line:getline()</a>.</p><pre class="language-lua"><code>line:getword(line:getwordcount()) == line:getendword()</code></pre></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="line:getline">line:getline</a></div> <div class="signature">() : string</div></div><div class="body"><p class="desc">Returns the current line in its entirety.</p></div></div><hr/>
@@ -3221,6 +3226,7 @@ line:getcommandoffset() == 4</code></pre></div></div><hr/>
 &nbsp; quoted,  -- [boolean] indicates whether the word is quoted.
 &nbsp; delim,   -- [string] the delimiter character, or an empty string.
 &nbsp; alias,   -- [boolean | nil] true if the word is a doskey alias, otherwise nil.
+&nbsp; redir,   -- [boolean | nil] true if the word is a redirection arg, otherwise nil.
 }</code></pre></div></div><hr/>
 </div><div class="group"><h5 class="group_name"><a name="log">log</a></h5><div class="function"><div class="header"> <div class="name"><a name="log.info">log.info</a></div> <div class="signature">( <span class="arg_name">message</span>:string ) : nil</div></div><div class="body"><p class="desc">Writes info <span class="arg">message</span> to the Clink log file.  Use this sparingly, or it could cause performance problems or disk space problems.</p></div></div><hr/>
 </div><div class="group"><h5 class="group_name"><a name="os">os</a></h5><div class="function"><div class="header"> <div class="name"><a name="os.chdir">os.chdir</a></div> <div class="signature">( <span class="arg_name">path</span>:string ) : boolean</div></div><div class="body"><p class="desc">Changes the current directory to <span class="arg">path</span> and returns whether it was successful.</p></div></div><hr/>
@@ -3244,6 +3250,7 @@ line:getcommandoffset() == 4</code></pre></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="os.getfullpathname">os.getfullpathname</a></div> <div class="signature">( <span class="arg_name">path</span>:string ) : string</div></div><div class="body"><p class="desc">Returns the full path name for <span class="arg">path</span>.</p></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="os.gethost">os.gethost</a></div> <div class="signature">() : string</div></div><div class="body"><p class="desc">Returns the fully qualified file name of the host process.  Currently only CMD.EXE can host Clink.</p></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="os.getlongpathname">os.getlongpathname</a></div> <div class="signature">( <span class="arg_name">path</span>:string ) : string</div></div><div class="body"><p class="desc">Returns the long path name for <span class="arg">path</span>.</p></div></div><hr/>
+<div class="function"><div class="header"> <div class="name"><a name="os.getnetconnectionname">os.getnetconnectionname</a></div> <div class="signature">( <span class="arg_name">path</span>:string ) : string</div></div><div class="body"><p class="desc">Returns the remote name associated with <span class="arg">path</span>, or an empty string if it's not a network drive.</p></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="os.getpid">os.getpid</a></div> <div class="signature">() : integer</div></div><div class="body"><p class="desc">Returns the CMD.EXE process ID. This is mainly intended to help with salting unique resource names (for example named pipes).</p></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="os.getscreeninfo">os.getscreeninfo</a></div> <div class="signature">() : table</div></div><div class="body"><p class="desc">Returns dimensions of the terminal's buffer and visible window. The returned table has the following scheme:</p><pre class="language-lua"><code>{
 &nbsp; bufwidth,     -- [integer] width of the screen buffer
@@ -3488,6 +3495,13 @@ end</code></pre></div></div><hr/>
         <div class="section" id="changes">
 <h1 id="changes">Changes</h1>
 <h3 id="releases-from-chrisant996clink-fork">Releases from <a href="https://github.com/chrisant996/clink">chrisant996/clink</a> fork</h3>
+<h4 id="v1227">v1.2.27</h4>
+<ul>
+<li>The <code>cmd.get_errorlevel</code> Clink setting is now enabled by default.</li>
+<li>Clink now expands <code>$</code> codes in <code>%CLINK_RPROMPT%</code> before running prompt filters.</li>
+<li>Fixed parsing <code>2&gt;&amp;1</code> style redirection symbols, so the <code>&amp;</code> doesn&#39;t get treated as a command separator.</li>
+<li>Fixed argmatchers to generate file matches for redirection arguments; <code>app.exe &gt;</code> should generate file matches for the <code>&gt;</code> symbol, not matches for the <code>app</code> argmatcher&#39;s first argument.</li>
+</ul>
 <h4 id="v1226">v1.2.26</h4>
 <ul>
 <li>Fixed input line coloring for doskey aliases that don&#39;t have an argmatcher (regression introduced in v1.2.16).</li>
