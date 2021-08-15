@@ -31,12 +31,13 @@ const wchar_t* g_prompt_tags[]       = { g_prompt_tag_hidden, g_prompt_tag };
 //------------------------------------------------------------------------------
 static bool are_extensions_enabled()
 {
-    static bool s_extensions = false;//true;
-    static bool s_initialized = true;//false;
+    static bool s_extensions = true;
+    static bool s_initialized = false;
 
     if (!s_initialized)
     {
         s_initialized = true;
+
         DWORD type;
         WCHAR value[MAX_PATH];
         DWORD len = sizeof(value);
