@@ -5,6 +5,7 @@
 #### v1.2.27
 
 - The `cmd.get_errorlevel` Clink setting is now enabled by default.
+- Clink now expands `$` codes in `%CLINK_RPROMPT%` before running prompt filters.
 - Fixed parsing `2>&1` style redirection symbols, so the `&` doesn't get treated as a command separator.
 - Fixed argmatchers to generate file matches for redirection arguments; `app.exe >` should generate file matches for the `>` symbol, not matches for the `app` argmatcher's first argument.
 
